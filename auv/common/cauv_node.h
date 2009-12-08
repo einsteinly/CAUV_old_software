@@ -25,35 +25,5 @@ class CauvNode
         CauvNode(const string& name, const string& group);
 };
 
-#define LOAD_NODE(NODE)                  \
-                                         \
-NODE* node;                              \
-                                         \
-void cleanup()                           \
-{                                        \
-    cout << "Cleaning up..." << endl;    \
-    CauvNode* oldnode = node;            \
-    node = 0;                            \
-    delete oldnode;                      \
-    cout << "Clean up done." << endl;    \
-}                                        \
-                                         \
-void interrupt(int sig)                  \
-{                                        \
-    cout << endl;                        \
-    cout << "Interrupt caught!" << endl; \
-    cleanup();                           \
-    signal(SIGINT, SIG_DFL);             \
-    raise(sig);                          \
-}                                        \
-                                         \
-int main(int argc, char **argv)          \
-{                                        \
-    signal(SIGINT, interrupt);           \
-    node = new NODE("cauv");             \
-    node->run();                         \
-    cleanup();                           \
-}                                        \
-
 #endif//__CAUV_NODE_H__
 

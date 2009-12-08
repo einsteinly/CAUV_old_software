@@ -19,6 +19,8 @@ MODULES = control
 COMMON = common
 LIBS = cmt
 
+COMMON_PARAMS =
+
 control_LIBS = cmt
 control_PARAMS = -lrt -lftdi
 
@@ -77,7 +79,7 @@ $(MODOBJS): $$(EXEFILES)
 
 EXELIBDEPS = $(patsubst %, $(OBJDIR)/lib%.a, $($(OBJMOD)_LIBS))
 EXELIBS = $($(OBJMOD)_LIBS)
-EXEPARAMS = $($(OBJMOD)_PARAMS)
+EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
 COMMONOBJ = $(OBJDIR)/common.o
 EXEOBJS = $(COMMONOBJ) $(OBJDIR)/$(notdir $@).o
 $(EXES): $$(EXEOBJS) $$(EXELIBDEPS)
@@ -87,7 +89,8 @@ $(EXES): $$(EXEOBJS) $$(EXELIBDEPS)
 
 LIBOBJS = $(patsubst %, $(OBJDIR)/lib%.a, $(LIBS))
 $(LIBOBJS): 
-	$(MAKE) -C lib $($@:$(OBJDIR)/lib%.a:%)
+	@$(ECHO) "  [MAKE] $(patsubst $(OBJDIR)/lib%.a, %, $@) -C lib"
+	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a, %, $@)
 
 
 DF = $(DEPDIR)/$*
@@ -121,5 +124,6 @@ $(DIRS)::
 clean:
 	rm -rf $(DIRS)
 cleanlibs:
+	rm $(LIBOBJS)
 	$(MAKE) -C lib clean
 cleanall: clean cleanlibs

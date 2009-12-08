@@ -10,7 +10,7 @@ class cauv_global
 	public:
 		static cauv_global& current();
 		
-		//static void set_socket(CommunicatingSocket* socket);
+		//static void set_mailbox(SpreadMailbox* socket);
 		
 		void send_trace(const string& msg) const;
 		void send_error(const string& msg) const;
