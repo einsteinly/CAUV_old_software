@@ -69,15 +69,15 @@ modules: makedirs $(EXES)
 makedirs: $(DIRS)
 
 FILES = $(OBJS) $(EMBED)
-OBJMOD = $(notdir $(subst .o, , $@))
-EXEFILES = $(filter $(OBJDIR)/$(OBJMOD)/%, $(FILES) )
+OBJMOD = $(notdir $(subst .o,,$@))
+EXEFILES = $(filter $(OBJDIR)/$(OBJMOD)/%,$(FILES) )
 
 $(MODOBJS): $$(EXEFILES)
 	@$(ECHO)  === Linking $(notdir $@) ===
 	@$(ECHO) "  [LD]    $(EXEFILES) -o $@"
 	@$(LD) -r -o $@ $(EXEFILES)
 
-EXELIBDEPS = $(patsubst %, $(OBJDIR)/lib%.a, $($(OBJMOD)_LIBS))
+EXELIBDEPS = $(patsubst %,$(OBJDIR)/lib%.a,$($(OBJMOD)_LIBS))
 EXELIBS = $($(OBJMOD)_LIBS)
 EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
 COMMONOBJ = $(OBJDIR)/common.o
@@ -87,10 +87,10 @@ $(EXES): $$(EXEOBJS) $$(EXELIBDEPS)
 	@$(ECHO) "  [CPP]   $(EXEOBJS) -o $@"
 	@$(CPP) -o $@ $(EXEOBJS)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)
 
-LIBOBJS = $(patsubst %, $(OBJDIR)/lib%.a, $(LIBS))
+LIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(LIBS))
 $(LIBOBJS): 
-	@$(ECHO) "  [MAKE] $(patsubst $(OBJDIR)/lib%.a, %, $@) -C lib"
-	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a, %, $@)
+	@$(ECHO) "  [MAKE] $(patsubst $(OBJDIR)/lib%.a,%,$@) -C lib"
+	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)
 
 
 DF = $(DEPDIR)/$*
@@ -122,8 +122,11 @@ $(DIRS)::
 
 .PHONY: clean cleanlibs cleanall
 clean:
-	rm -rf $(DIRS)
+	@$(ECHO) "  [RM]    $(DIRS) -rf"
+	@rm -rf $(DIRS)
 cleanlibs:
-	rm $(LIBOBJS)
-	$(MAKE) -C lib clean
+	@$(ECHO) "  [RM]    $(LIBOBJS)"
+	@rm $(LIBOBJS) 2>/dev/null || true
+	@$(ECHO) "  [MAKE]  clean -C lib"
+	@$(MAKE) -C lib clean
 cleanall: clean cleanlibs
