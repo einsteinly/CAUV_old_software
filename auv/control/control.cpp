@@ -1,8 +1,15 @@
+#include "control.h"
+
 #include <iostream>
 
 using namespace std;
 
-int main(int argc, char** argv)
+LOAD_NODE(control_node)
+
+control_node::control_node(const string& group) : cauv_node("Control", group)
 {
-    cout << "Control" << endl;
+}
+
+control_node::~control_node()
+{
 }

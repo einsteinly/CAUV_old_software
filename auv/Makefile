@@ -4,13 +4,18 @@ all: modules
 # ========================
 # Edit me to add new files
 # ========================
-SRCS = control/control.cpp
-RES = 
+SRCS = \
+$(addprefix common/, cauv_node.cpp cauv_global.cpp cauv_utils.cpp) \
+$(addprefix control/, control.cpp) \
+
+RES = \
+$(addprefix common/, cauv_logo_large.txt) \
 
 # ==========================
 # Edit me to add new modules
 # ==========================
 MODULES = control
+COMMON = common
 
 # ================
 # Edit directories
@@ -28,19 +33,40 @@ OBJDIR=.obj
 
 DIRS = $(BINDIR) $(DEPDIR) $(OBJDIR)
 
-OBJS   = ${SRCS:%.cpp=$(OBJDIR)/%.o}
-EMBED  = ${RES:%=$(OBJDIR)/%.e}
-EXES   = ${MODULES:%=$(BINDIR)/%}
+LIBDIRS = $(MODULES) $(COMMON)
 
-.PHONY: modules
-modules: $(EXES)
+OBJS    = ${SRCS:%.cpp=$(OBJDIR)/%.o}
+EMBED   = ${RES:%=$(OBJDIR)/%.e}
+EXES    = ${MODULES:%=$(BINDIR)/%}
+LIBOBJS = ${LIBDIRS:%=$(OBJDIR)/%.o}
 
-EXEOBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,  $(filter $(notdir $@)/%, $(SRCS) ) )
-$(EXES): $$(dir $$@) $$(EXEOBJS)
+
+CPP=g++
+ifdef RELEASE 
+CFLAGS=-Wall -O3
+else
+CFLAGS=-Wall -g
+endif
+override CFLAGS += -I . -MD -MF $(DEPDIR)/$*.d
+
+.PHONY: modules makedirs
+modules: makedirs $(EXES)
+makedirs: $(DIRS)
+
+FILES = $(OBJS) $(EMBED)
+EXEFILES = $(filter $(OBJDIR)/$(notdir $(subst .o, , $@))/%, $(FILES) )
+
+$(LIBOBJS): $$(EXEFILES)
+	@$(ECHO)  === Linking $(notdir $@) ===
+	@$(ECHO) "  [LD]    $(EXEFILES) -o $@"
+	@$(LD) -r -o $@ $(EXEFILES) 
+
+COMMONOBJ = $(OBJDIR)/common.o
+EXEOBJS = $(COMMONOBJ) $(OBJDIR)/$(notdir $@).o
+$(EXES): $$(EXEOBJS)
+	@$(ECHO)  === Making $(notdir $@) binary ===
+	@$(ECHO) "  [CPP]   $(EXEOBJS) -o $@"
 	@$(CPP) -o $@ $(EXEOBJS) 
-	@$(ECHO) === Making $(notdir $@) ===
-	@$(ECHO) [CPP]  $(EXEOBJS) -o $@
-
 
 
 
@@ -49,14 +75,6 @@ $(EXES): $$(dir $$@) $$(EXEOBJS)
 DF = $(DEPDIR)/$*
 
 MAKEFLAGS=--no-print-directory
-
-CPP=g++
-ifdef RELEASE 
-CFLAGS=-Wall -O3
-else
-CFLAGS=-Wall -g
-endif
-override CFLAGS += -MD -MF $(DEPDIR)/$*.d
 
 LDFLAGS=-ldl
 
@@ -75,12 +93,13 @@ CPPF = $(filter %.cpp, $^)
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(@D); mkdir -p $(dir $(DF))
+	@$(ECHO) "  [CPP]   $(CPPF) -o $@"
 	@$(CPP) $(CFLAGS) -c $(CPPF) -o $@
-	@$(ECHO) [CPP]  $(CPPF) -o $@
 	$(GENDEPFILES)
 
-$(OBJDIR)/%.e : $(OBJDIR) %
-	$(LD) -r -b binary $< -o $(OBJDIR)/$<.e
+$(OBJDIR)/%.e : %
+	@$(ECHO) "  [LD]    $< (binary)"
+	@$(LD) -r -b binary $< -o $@
 
 -include $(SRCS:%.cpp=$(DEPDIR)/%.P)
 
