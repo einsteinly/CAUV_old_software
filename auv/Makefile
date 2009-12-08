@@ -4,9 +4,10 @@ all: modules
 # ========================
 # Edit me to add new files
 # ========================
-SRCS = \
-$(addprefix common/, cauv_node.cpp cauv_global.cpp cauv_utils.cpp) \
-$(addprefix control/, control.cpp) \
+SRCS = $(addsuffix .cpp, \
+$(addprefix common/,   cauv_node cauv_global cauv_utils cauv_types) \
+$(addprefix control/,  control xsens_imu) \
+)
 
 RES = \
 $(addprefix common/, cauv_logo_large.txt) \
@@ -16,14 +17,19 @@ $(addprefix common/, cauv_logo_large.txt) \
 # ==========================
 MODULES = control
 COMMON = common
+LIBS = cmt
+
+control_LIBS = cmt
+control_PARAMS = -lrt -lftdi
+
 
 # ================
 # Edit directories
 # ================
 
-BINDIR=bin
-DEPDIR=.deps
-OBJDIR=.obj
+export BINDIR=bin
+export DEPDIR=.deps
+export OBJDIR=.obj
 
 
 # ==========================
@@ -33,13 +39,12 @@ OBJDIR=.obj
 
 DIRS = $(BINDIR) $(DEPDIR) $(OBJDIR)
 
-LIBDIRS = $(MODULES) $(COMMON)
+MODDIRS = $(MODULES) $(COMMON)
 
 OBJS    = ${SRCS:%.cpp=$(OBJDIR)/%.o}
 EMBED   = ${RES:%=$(OBJDIR)/%.e}
 EXES    = ${MODULES:%=$(BINDIR)/%}
-LIBOBJS = ${LIBDIRS:%=$(OBJDIR)/%.o}
-
+MODOBJS = ${MODDIRS:%=$(OBJDIR)/%.o}
 
 CPP=g++
 ifdef RELEASE 
@@ -49,38 +54,44 @@ CFLAGS=-Wall -g
 endif
 override CFLAGS += -I . -MD -MF $(DEPDIR)/$*.d
 
-.PHONY: modules makedirs
-modules: makedirs $(EXES)
-makedirs: $(DIRS)
-
-FILES = $(OBJS) $(EMBED)
-EXEFILES = $(filter $(OBJDIR)/$(notdir $(subst .o, , $@))/%, $(FILES) )
-
-$(LIBOBJS): $$(EXEFILES)
-	@$(ECHO)  === Linking $(notdir $@) ===
-	@$(ECHO) "  [LD]    $(EXEFILES) -o $@"
-	@$(LD) -r -o $@ $(EXEFILES) 
-
-COMMONOBJ = $(OBJDIR)/common.o
-EXEOBJS = $(COMMONOBJ) $(OBJDIR)/$(notdir $@).o
-$(EXES): $$(EXEOBJS)
-	@$(ECHO)  === Making $(notdir $@) binary ===
-	@$(ECHO) "  [CPP]   $(EXEOBJS) -o $@"
-	@$(CPP) -o $@ $(EXEOBJS) 
-
-
-
-
-
-DF = $(DEPDIR)/$*
-
 MAKEFLAGS=--no-print-directory
 
 LDFLAGS=-ldl
 
 ARFLAGS=rvu >/dev/null
 
-ECHO=@echo
+export ECHO=echo
+
+.PHONY: modules makedirs
+modules: makedirs $(EXES)
+makedirs: $(DIRS)
+
+FILES = $(OBJS) $(EMBED)
+OBJMOD = $(notdir $(subst .o, , $@))
+EXEFILES = $(filter $(OBJDIR)/$(OBJMOD)/%, $(FILES) )
+
+$(MODOBJS): $$(EXEFILES)
+	@$(ECHO)  === Linking $(notdir $@) ===
+	@$(ECHO) "  [LD]    $(EXEFILES) -o $@"
+	@$(LD) -r -o $@ $(EXEFILES)
+
+EXELIBDEPS = $(patsubst %, $(OBJDIR)/lib%.a, $($(OBJMOD)_LIBS))
+EXELIBS = $($(OBJMOD)_LIBS)
+EXEPARAMS = $($(OBJMOD)_PARAMS)
+COMMONOBJ = $(OBJDIR)/common.o
+EXEOBJS = $(COMMONOBJ) $(OBJDIR)/$(notdir $@).o
+$(EXES): $$(EXEOBJS) $$(EXELIBDEPS)
+	@$(ECHO)  === Making $(notdir $@) binary ===
+	@$(ECHO) "  [CPP]   $(EXEOBJS) -o $@"
+	@$(CPP) -o $@ $(EXEOBJS)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)
+
+LIBOBJS = $(patsubst %, $(OBJDIR)/lib%.a, $(LIBS))
+$(LIBOBJS): 
+	$(MAKE) -C lib $($@:$(OBJDIR)/lib%.a:%)
+
+
+DF = $(DEPDIR)/$*
+
 
 GENDEPFILES=@cp $(DF).d $(DF).P; \
         sed -e 's/\#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
@@ -106,6 +117,9 @@ $(OBJDIR)/%.e : %
 $(DIRS)::
 	@mkdir -p $@
 
-.PHONY: clean
+.PHONY: clean cleanlibs cleanall
 clean:
 	rm -rf $(DIRS)
+cleanlibs:
+	$(MAKE) -C lib clean
+cleanall: clean cleanlibs

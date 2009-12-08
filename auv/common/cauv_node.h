@@ -7,22 +7,22 @@
 
 using namespace std;
 
-class cauv_node
+class CauvNode
 {
 	public:
-		virtual ~cauv_node();
-
-		void run();
+		virtual ~CauvNode();
+		
+        void run();
 
 	protected:
 		string m_name;
 		string m_group;
 
-		virtual void on_connect();
-		virtual void on_disconnect();
-		virtual void on_run();
+		virtual void onConnect();
+		virtual void onDisconnect();
+		virtual void onRun();
 
-        cauv_node(const string& name, const string& group);
+        CauvNode(const string& name, const string& group);
 };
 
 #define LOAD_NODE(NODE)                  \
@@ -32,7 +32,7 @@ NODE* node;                              \
 void cleanup()                           \
 {                                        \
     cout << "Cleaning up..." << endl;    \
-    cauv_node* oldnode = node;           \
+    CauvNode* oldnode = node;            \
     node = 0;                            \
     delete oldnode;                      \
     cout << "Clean up done." << endl;    \
@@ -40,6 +40,7 @@ void cleanup()                           \
                                          \
 void interrupt(int sig)                  \
 {                                        \
+    cout << endl;                        \
     cout << "Interrupt caught!" << endl; \
     cleanup();                           \
     signal(SIGINT, SIG_DFL);             \

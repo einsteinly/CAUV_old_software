@@ -10,41 +10,41 @@
 
 using namespace std;
 
-void cauv_node::on_connect()
+void CauvNode::onConnect()
 {
 	//cauv_global::set_socket(m_socket);
 }
-void cauv_node::on_disconnect()
+void CauvNode::onDisconnect()
 {
 	//cauv_global::set_socket(0);
 }
-void cauv_node::on_run()
+void CauvNode::onRun()
 {
 }
 
 
-cauv_node::cauv_node(const string& name, const string& group) : m_name(name), m_group(group)
+CauvNode::CauvNode(const string& name, const string& group) : m_name(name), m_group(group)
 {
 }
 
-cauv_node::~cauv_node()
+CauvNode::~CauvNode()
 {
     
 	cout << "Shutting down node" << endl;
 }
 
-void cauv_node::run()
+void CauvNode::run()
 {
 	cauv_global::print_module_header(m_name);
 
-	on_run();
+	onRun();
 
     // SPREAD connect to group named "m_group"
 
-	cin.clear();
+	//cin.clear();
 	
     // This won't do anything until you press enter
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    //cin.ignore(numeric_limits<streamsize>::max(), '\n');
 	cout << "Exiting" << endl;
 }
 

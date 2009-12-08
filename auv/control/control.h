@@ -3,11 +3,18 @@
 
 #include <common/cauv_node.h>
 
-class control_node : public cauv_node
+#include "xsens_imu.h"
+
+class ControlNode : public CauvNode
 {
     public:
-        control_node(const string& group);
-        ~control_node();
+        ControlNode(const string& group);
+        virtual ~ControlNode();
+    
+    protected:
+        XsensIMU* m_xsens;
+
+        virtual void onRun();
 };
 
 #endif//__CONTROL_H__

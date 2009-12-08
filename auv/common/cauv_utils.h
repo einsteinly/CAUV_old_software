@@ -4,14 +4,16 @@
 #include <sstream>
 using namespace std;
 
-class make_string
+class MakeString
 {
     public:
-        stringstream stream;
         operator string() const;
 
         template<class T>
-        make_string& operator<<(T const& VAR) { stream << VAR; return *this; }
+        MakeString& operator<<(T const& VAR) { stream << VAR; return *this; }
+    
+    protected:
+        stringstream stream;
 };
 
 template <typename T, typename U> T convert_to(const U& in)
@@ -27,6 +29,6 @@ inline string to_string (const T& t)
 	return ss.str();
 }
 
-void milli_sleep(int milliseconds);
+void msleep(int milliseconds);
 
 #endif//__CAUV_UTILS_H__

@@ -145,13 +145,6 @@ void cauv_global::print_logo(char* start, char* end, const string& module_name)
 	}
 }
 
-void cauv_global::print_cauv_logo()
-{
-	cout << "\E[m \E[47m   \E[m  \E[47m  \E[m  \E[47m \E[m  \E[47m \E[m \E[47m \E[m  \E[47m \E[m" << endl;
-	cout << "\E[47m \E[m    \E[47m \E[m  \E[47m \E[m \E[47m \E[m  \E[47m \E[m \E[47m \E[m  \E[47m \E[m" << endl;
-	cout << "\E[44m \E[m    \E[44m "/*\E[m\E[34m\u2501\u2501\E[m\E[44m*/"   \E[m \E[44m \E[m  \E[44m \E[m \E[44m \E[m  \E[44m \E[m" << endl;
-	cout << "\E[m \E[44m   \E[m \E[44m \E[m  \E[44m \E[m \E[44m    \E[m  \E[44m  \E[m" << endl;
-}
 void cauv_global::print_module_header(const string& module_name)
 {
 	cauv_global::print_logo(&_binary_common_cauv_logo_large_txt_start, &_binary_common_cauv_logo_large_txt_end, module_name);

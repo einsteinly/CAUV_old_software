@@ -19,9 +19,7 @@ class cauv_global
 		static void error(const string& msg);
 		static void error(const string& exception_type, exception& e);
 		
-		//static void print_logo(const string& filename, const string& module_name);
         static void print_logo(char* start, char* end, const string& module_name);
-		static void print_cauv_logo();
 		static void print_module_header(const string& module_name);
 	
     private:
