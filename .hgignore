@@ -1,5 +1,8 @@
 syntax: glob
 *.swp
+*.o
+*.a
 */bin/*
 */.obj/*
 */.deps/*
+*/tags
