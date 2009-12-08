@@ -1,0 +1,103 @@
+
+
+constant max number of fast threads
+constant max number of slow threads
+
+
+main 
+{
+	Instantiate image processor
+	
+	Call image processor.main while it returns true
+	
+}
+
+image processor
+	constructor
+	{
+		// Create threads up to max number of threads
+		Send threads to the scheduler
+	
+	}
+
+
+	main
+	{
+		// Check for any new messages 
+		
+		switch messages
+		
+		case add node
+		run node factory with paramaters and add instance to node map 	
+			
+		case remove node
+		lock node
+		check to make sure nothing is "listening to a node"
+		stop node "listening to another node"
+		remove any jobs from the scheduler
+		delete node
+		
+		remove node from map
+		delete instance
+		
+		case list nodes
+		iterate around all nodes and send in some kind of format
+		
+		case get or set pameter(s) on a node
+		find a node from map by id and carry oput action as required
+		
+		case quit
+		return false
+	}	
+	
+	destructor
+	{
+		// Halt all threads in a friendly manner 
+		
+		// Delete all nodes
+		
+		// Delete scheduler
+		
+	}
+	
+	
+}
+
+thread object 
+{
+	callable
+	{
+		while thread not ended
+		{
+		 	get new job
+		 	
+		 	lock node
+		 	
+		 	carry out any work
+		 	
+		 	unlock node
+		 	
+		}
+	}
+	
+}
+
+
+singleton Scheduler
+{
+	enum prority
+	add Job to (slow, fast or realtime) queue by pointer
+	{
+		add it to the end of the appropiate queue
+	}
+	
+	get next job
+	{
+		
+	} 
+	
+	
+}
+
+
+jc593@cam.ac.uk
