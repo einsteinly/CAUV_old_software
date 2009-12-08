@@ -1,5 +1,6 @@
-#include "node.h"
+#include "file_input_node.h"
 
 int main(){
-	FileInputNode n;
+	Scheduler s;
+	FileInputNode n(s);
 }

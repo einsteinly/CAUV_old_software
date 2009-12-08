@@ -1,15 +1,27 @@
+#ifndef __FILE_INPUT_NODE_H__
+#define __FILE_INPUT_NODE_H__
+
+#include <vector>
+
 #include "node.h"
 
 
 class FileInputNode: public Node{
 	public:
-		FileInputNode(std::vector<node_id, input_id> children)
-			: // base constructor?
-			{
-
+		FileInputNode(Scheduler& s)
+			: Node(s){
+			// no inputs
+			// registerInputID()
+			registerOutputID("image");
+			// TODO: strong typing using templates for parameters?
+			//registerParamID<std::string>("filename");
+			registerParamID("filename");
+			
+			
 		}
 
-		void exec(){
+	protected:
+		void doWork(){
 			// A) check if any children need a new image (child->isWaiting() == true)
 			// B) check if any children are still using any of this node's outputs // TODO: do reference counting pointers do this for us? I think they might
 			// if A) is not true, return immediately
@@ -20,3 +32,4 @@ class FileInputNode: public Node{
 
 };
 
+#endif // ndef __FILE_INPUT_NODE_H__
