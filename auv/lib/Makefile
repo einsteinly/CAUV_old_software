@@ -3,9 +3,10 @@ all: cmt
 
 .PHONY: cmt
 cmt:
-	@$(ECHO) === Building cmt ===
+	@echo === Building cmt ===
 	@$(MAKE) -C xsens
 	@cp "xsens/libcmt.a" "../$(OBJDIR)/"
+	@echo === Done building cmt ===
 
 .PHONY: clean
 clean:

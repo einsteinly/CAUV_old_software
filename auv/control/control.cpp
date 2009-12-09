@@ -9,7 +9,6 @@
 
 using namespace std;
 
-LOAD_NODE(ControlNode)
 
 ControlNode::ControlNode(const string& group) : CauvNode("Control", group)
 {
@@ -83,4 +82,32 @@ void ControlNode::onRun()
         
 	    msleep(10);
     }
+}
+
+static ControlNode* node;
+
+void cleanup()
+{
+    cout << "Cleaning up..." << endl;
+    CauvNode* oldnode = node;
+    node = 0;
+    delete oldnode;
+    cout << "Clean up done." << endl;
+}
+
+void interrupt(int sig)
+{
+    cout << endl;
+    cout << "Interrupt caught!" << endl;
+    cleanup();
+    signal(SIGINT, SIG_DFL);
+    raise(sig);
+}
+
+int main(int argc, char **argv)
+{
+    signal(SIGINT, interrupt);
+    node = new ControlNode("cauv");
+    node->run();
+    cleanup();
 }

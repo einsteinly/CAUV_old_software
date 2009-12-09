@@ -2,6 +2,8 @@
 #include <sstream>
 #include <fstream>
 
+#include <common/bash_cout.h>
+
 #include "cauv_global.h"
 
 extern char _binary_common_cauv_logo_large_txt_end;
@@ -28,16 +30,15 @@ void cauv_global::set_socket(CommunicatingSocket* socket)
 
 void cauv_global::send_trace(const string& msg) const
 {
-	cout << "\E[1mTRACE:\E[m " << msg << endl;
-/*	TraceMessage m(msg);
+	cout << setcolour("black") << setbold << "TRACE: " << resetcolour << msg << endl;
+/*	TraceMessage m;
+ *  m.msg(msg);
 	try
     {
-        if (m_socket)
-            m_socket->sendMessage(m);
-		else
-			cout << "\E[1;30mError not sent: no socket.\E[m" << endl;
+        if (m_mailbox)
+            m_mailbox->sendMessage(m, LOW_MESS);
     }
-    catch (SocketException& e)
+    catch (SpreadException& e)
     {
         cout << "Error sending debug data: " << e.what() << endl;
     }
@@ -45,7 +46,7 @@ void cauv_global::send_trace(const string& msg) const
 }
 void cauv_global::send_error(const string& msg) const
 {
-	cout << "\E[1;31mERROR: \E[m" << msg << endl;
+	cout << setcolour("red") << setbold << "ERROR: " << resetcolour << msg << endl;
 /*	ErrorMessage m(msg);
 	try
     {
@@ -79,46 +80,47 @@ void cauv_global::error(const string& head, exception& e)
 void cauv_global::print_logo(char* start, char* end, const string& module_name)
 {
 	char* cur = start;
+    stringstream ss;
 	while (cur != end)
 	{
 		if (*cur == '\n')
-			cout << "\E[m" << endl;
+			ss << resetcolour << endl;
 		else if (*cur == *(cur-1))
-			cout << ' ';
+			ss << ' ';
 		else
 		{
 			switch(*cur)
 			{
 				case 'K':
-					cout << "\E[40m ";
-					break;
+					ss << setbg("black") << ' ';
+                    break;
 				case 'R':
-					cout << "\E[41m ";
+					ss << setbg("red") << ' ';
 					break;
 				case 'G':
-					cout << "\E[42m ";
+					ss << setbg("green") << ' ';
 					break;
 				case 'Y':
-					cout << "\E[43m ";
+					ss << setbg("yellow") << ' ';
 					break;
 				case 'B':
-					cout << "\E[44m ";
+					ss << setbg("blue") << ' ';
 					break;
 				case 'M':
-					cout << "\E[45m ";
+					ss << setbg("magenta") << ' ';
 					break;
 				case 'C':
-					cout << "\E[46m ";
+					ss << setbg("cyan") << ' ';
 					break;
 				case 'W':
-					cout << "\E[47m ";
+					ss << setbg("white") << ' ';
 					break;
 				case ' ':
-					cout << "\E[m ";
+					ss << resetcolour << ' ';
 					break;
 				case 'c':
 				{
-					cout << "\E[m\E[1;34m";
+					ss << setcolour("blue") << setbold;
 					int len = 0;
 					while (cur != end && *cur == 'c')
                     {
@@ -129,11 +131,11 @@ void cauv_global::print_logo(char* start, char* end, const string& module_name)
 					{
 						int start = (len - module_name.size())/2;
 						string pad(start, ' ');
-						cout << pad << module_name << pad;
+						ss << pad << module_name << pad;
 					}
 					else
 					{
-						cout << module_name.substr(0, len);
+						ss << module_name.substr(0, len);
 					}
 				}
 					break;
@@ -143,6 +145,7 @@ void cauv_global::print_logo(char* start, char* end, const string& module_name)
 		}
         cur++;
 	}
+    cout << ss.str();
 }
 
 void cauv_global::print_module_header(const string& module_name)

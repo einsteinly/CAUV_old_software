@@ -19,6 +19,8 @@ MODULES = control
 COMMON = common
 LIBS = cmt
 
+COMMON_PARAMS =
+
 control_LIBS = cmt
 control_PARAMS = -lrt -lftdi
 
@@ -67,27 +69,30 @@ modules: makedirs $(EXES)
 makedirs: $(DIRS)
 
 FILES = $(OBJS) $(EMBED)
-OBJMOD = $(notdir $(subst .o, , $@))
-EXEFILES = $(filter $(OBJDIR)/$(OBJMOD)/%, $(FILES) )
+OBJMOD = $(notdir $(subst .o,,$@))
+EXEFILES = $(filter $(OBJDIR)/$(OBJMOD)/%,$(FILES) )
 
 $(MODOBJS): $$(EXEFILES)
-	@$(ECHO)  === Linking $(notdir $@) ===
-	@$(ECHO) "  [LD]    $(EXEFILES) -o $@"
+	@echo  === Linking $(notdir $@) ===
+	@echo "  [LD]    $(EXEFILES) -o $@"
+	@echo
 	@$(LD) -r -o $@ $(EXEFILES)
 
-EXELIBDEPS = $(patsubst %, $(OBJDIR)/lib%.a, $($(OBJMOD)_LIBS))
+EXELIBDEPS = $(patsubst %,$(OBJDIR)/lib%.a,$($(OBJMOD)_LIBS))
 EXELIBS = $($(OBJMOD)_LIBS)
-EXEPARAMS = $($(OBJMOD)_PARAMS)
+EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
 COMMONOBJ = $(OBJDIR)/common.o
 EXEOBJS = $(COMMONOBJ) $(OBJDIR)/$(notdir $@).o
 $(EXES): $$(EXEOBJS) $$(EXELIBDEPS)
-	@$(ECHO)  === Making $(notdir $@) binary ===
-	@$(ECHO) "  [CPP]   $(EXEOBJS) -o $@"
+	@echo  === Making $(notdir $@) binary ===
+	@echo "  [CPP]   $(EXEOBJS) -o $@"
+	@echo
 	@$(CPP) -o $@ $(EXEOBJS)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)
 
-LIBOBJS = $(patsubst %, $(OBJDIR)/lib%.a, $(LIBS))
+LIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(LIBS))
 $(LIBOBJS): 
-	$(MAKE) -C lib $($@:$(OBJDIR)/lib%.a:%)
+	@echo "  [MAKE] $(patsubst $(OBJDIR)/lib%.a,%,$@) -C lib"
+	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)
 
 
 DF = $(DEPDIR)/$*
@@ -104,12 +109,12 @@ CPPF = $(filter %.cpp, $^)
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(@D); mkdir -p $(dir $(DF))
-	@$(ECHO) "  [CPP]   $(CPPF) -o $@"
+	@echo "  [CPP]   $(CPPF) -o $@"
 	@$(CPP) $(CFLAGS) -c $(CPPF) -o $@
 	$(GENDEPFILES)
 
 $(OBJDIR)/%.e : %
-	@$(ECHO) "  [LD]    $< (binary)"
+	@echo "  [LD]    $< (binary)"
 	@$(LD) -r -b binary $< -o $@
 
 -include $(SRCS:%.cpp=$(DEPDIR)/%.P)
@@ -119,7 +124,11 @@ $(DIRS)::
 
 .PHONY: clean cleanlibs cleanall
 clean:
-	rm -rf $(DIRS)
+	@echo "  [RM]    $(DIRS) -rf"
+	@rm -rf $(DIRS)
 cleanlibs:
-	$(MAKE) -C lib clean
+	@echo "  [RM]    $(LIBOBJS)"
+	@rm $(LIBOBJS) 2>/dev/null || true
+	@echo "  [MAKE]  clean -C lib"
+	@$(MAKE) -C lib clean
 cleanall: clean cleanlibs

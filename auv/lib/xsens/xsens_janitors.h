@@ -26,8 +26,13 @@
 
 // required for older gnu c++ compiler versions due to difference in attribute declarations
 #if defined(__GNUC__) && !defined(HAVE_CDECL)
-#   define __cdecl __attribute__((cdecl))
-#   define __stdcall __attribute__((stdcall))
+#   ifdef __x86_64
+#       define __cdecl
+#       define __stdcall assert(false) // no std call on 64 bit machines
+#   else
+#       define __cdecl __attribute__((cdecl))
+#       define __stdcall __attribute__((stdcall))
+#   endif
 #endif
 
 namespace xsens {
@@ -304,6 +309,7 @@ public:
 		{ m_enabled = true; }
 };
 
+#ifndef __x86_64
 //////////////////////////////////////////////////////////////////////////////////////////
 /*! \brief Function calling janitor class
 
@@ -335,6 +341,7 @@ public:
 	void enable(void)
 		{ m_enabled = true; }
 };
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /*! \brief Value restoring janitor class

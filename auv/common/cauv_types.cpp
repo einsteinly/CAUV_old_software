@@ -26,13 +26,13 @@ floatYPR quaternion::to_ypr()
 {
     floatYPR ret;
 
-    double sq0 = w*w;
-    double sq1 = x*x;
-    double sq3 = z*z;
+    float sq0 = w*w;
+    float sq1 = x*x;
+    float sq3 = z*z;
 
     ret.yaw = atan2(2*x*y + 2*w*z , 2*sq0 + 2*sq1- 1);
 
-    double test = x*z - w*y;
+    float test = x*z - w*y;
 	if (test > 0.499999) { // singularity at north pole
 		ret.pitch = M_PI_2;
 		ret.roll = 0;
