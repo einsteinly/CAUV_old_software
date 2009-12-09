@@ -10,6 +10,10 @@ class Image{
         Image(cv::Mat const& cv_image, Source const& source)
             : m_img(cv_image), m_source(source){
         }
+
+        cv::Mat const& cvImg() const{
+            return m_img;
+        }
         
     private:
         cv::Mat m_img;

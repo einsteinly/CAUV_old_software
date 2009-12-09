@@ -22,13 +22,15 @@ class Scheduler{
 
 class id_error: public std::runtime_error{
     public:
-        id_error(const char* str)
+        id_error(std::string str)
             : std::runtime_error(str){
         }
 };
 
 
-typedef boost::variant<float, int, bool, std::string> param_value_t;
+typedef boost::variant<float, int, std::string> param_value_t;
+
+typedef boost::shared_ptr<Node> node_ptr_t;
 
 typedef std::string node_id;
 typedef std::string param_id;
