@@ -33,9 +33,9 @@ class Node{
 
     protected:
         // Protected typedefs
-        typedef boost::shared_ptr<image> image_ptr;
-        typedef std::map<output_id, image_ptr> out_image_map_t;
-        typedef std::map<input_id, image_ptr> in_image_map_t;
+        typedef boost::shared_ptr<Image> image_ptr_t;
+        typedef std::map<output_id, image_ptr_t> out_image_map_t;
+        typedef std::map<input_id, image_ptr_t> in_image_map_t;
 
     public:
         Node(Scheduler& sched)
@@ -144,7 +144,7 @@ class Node{
         
         /* Get the actual image data associated with an output
          */
-        boost::shared_ptr<image> getOutputImage(output_id const& o_id){
+        image_ptr_t getOutputImage(output_id const& o_id){
             boost::lock_guard<boost::mutex> l(m_outputs_lock);
             const out_image_map_t::const_iterator i = m_outputs.find(o_id);
             if(i == m_outputs.end()){
