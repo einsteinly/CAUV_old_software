@@ -7,6 +7,7 @@ all: modules
 SRCS = $(addsuffix .cpp, \
 $(addprefix common/,   cauv_node cauv_global cauv_utils cauv_types) \
 $(addprefix control/,  control xsens_imu) \
+$(addprefix module/,  module) \
 )
 
 RES = \
@@ -15,13 +16,13 @@ $(addprefix common/, cauv_logo_large.txt) \
 # ==========================
 # Edit me to add new modules
 # ==========================
-MODULES = control
-COMMON = common
-LIBS = cmt
+EXEMODULES = control
+LIBMODULES = common module
+EXTLIBS = cmt
 
 COMMON_PARAMS =
 
-control_LIBS = cmt
+control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
 
@@ -41,12 +42,13 @@ export OBJDIR=.obj
 
 DIRS = $(BINDIR) $(DEPDIR) $(OBJDIR)
 
-MODDIRS = $(MODULES) $(COMMON)
+MODULES = $(EXEMODULES) $(LIBMODULES)
 
 OBJS    = ${SRCS:%.cpp=$(OBJDIR)/%.o}
 EMBED   = ${RES:%=$(OBJDIR)/%.e}
-EXES    = ${MODULES:%=$(BINDIR)/%}
-MODOBJS = ${MODDIRS:%=$(OBJDIR)/%.o}
+EXES    = ${EXEMODULES:%=$(BINDIR)/%}
+MODLIBS = ${LIBMODULES:%=$(OBJDIR)/lib%.a}
+MODOBJS = ${MODULES:%=$(OBJDIR)/%.o}
 
 CPP=g++
 ifdef RELEASE 
@@ -57,10 +59,8 @@ endif
 override CFLAGS += -I . -MD -MF $(DEPDIR)/$*.d
 
 MAKEFLAGS=--no-print-directory
-
-LDFLAGS=-ldl
-
-ARFLAGS=rvu >/dev/null
+LDFLAGS=
+ARFLAGS=rcs
 
 export ECHO=echo
 
@@ -76,21 +76,27 @@ $(MODOBJS): $$(EXEFILES)
 	@echo  === Linking $(notdir $@) ===
 	@echo "  [LD]    $(EXEFILES) -o $@"
 	@echo
-	@$(LD) -r -o $@ $(EXEFILES)
+	@$(LD) $(LDFLAGS) -r -o $@ $(EXEFILES)
 
 EXELIBDEPS = $(patsubst %,$(OBJDIR)/lib%.a,$($(OBJMOD)_LIBS))
 EXELIBS = $($(OBJMOD)_LIBS)
 EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
-COMMONOBJ = $(OBJDIR)/common.o
-EXEOBJS = $(COMMONOBJ) $(OBJDIR)/$(notdir $@).o
-$(EXES): $$(EXEOBJS) $$(EXELIBDEPS)
+EXEOBJ = $(patsubst %,$(OBJDIR)/%.o,$(notdir $@))
+$(EXES): $$(EXEOBJ) $$(EXELIBDEPS)
 	@echo  === Making $(notdir $@) binary ===
-	@echo "  [CPP]   $(EXEOBJS) -o $@"
+	@echo "  [CPP]   $(EXEOBJ) -o $@"
 	@echo
-	@$(CPP) -o $@ $(EXEOBJS)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)
+	@$(CPP) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)
 
-LIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(LIBS))
-$(LIBOBJS): 
+MODLIBMOD = $(patsubst lib%.a,%,$(notdir $@))
+MODLIBOBJ = $(patsubst %,$(OBJDIR)/%.o,$(MODLIBMOD))
+$(MODLIBS): $$(MODLIBOBJ)
+	@echo  === Making $(notdir $@) static library ===
+	@echo "  [AR]   $(ARFLAGS) $@ $(MODLIBOBJ)"
+	@$(AR) $(ARFLAGS) $@ $(MODLIBOBJ) >/dev/null
+
+EXTLIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(EXTLIBS))
+$(EXTLIBOBJS): 
 	@echo "  [MAKE] $(patsubst $(OBJDIR)/lib%.a,%,$@) -C lib"
 	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)
 
