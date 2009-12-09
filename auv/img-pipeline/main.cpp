@@ -4,3 +4,4 @@ int main(){
 	Scheduler s;
 	FileInputNode n(s);
 }
+

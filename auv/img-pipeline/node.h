@@ -6,11 +6,10 @@
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
+#include <boost/thread.hpp>
 #include <boost/variant.hpp>
 
-#include "cv.h"
+#include <opencv/cv.h>
 
 #include "pipeline_types.h"
 
@@ -18,7 +17,7 @@
 class Node{
     // Private typedefs
     typedef std::map<output_id, boost::shared_ptr<image> > output_map_t;
-
+    
     typedef boost::tuple<node_id, input_id> output_link_t;
     typedef std::map<output_id, output_link_t> out_link_map_t;
 
