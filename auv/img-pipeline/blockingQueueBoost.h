@@ -1,47 +1,57 @@
+#ifndef __BLOCKINGQUEUEBOOST_H__
+#define __BLOCKINGQUEUEBOOST_H__
+
 #include <queue>
-#include <deque>
+#include <boost/utility.hpp>
 #include <boost/thread/mutex.hpp>
 
 
-template < class T, class Container = std::deque<T> >  class BlockingQueue
+template <typename T> 
+class BlockingQueue : boost::noncopyable
 {
-	public:
-	T front() // Used to obtain the object at the front of the queue
+    public:
+    void push(const T& x) // Used to add a new item to the queue
 	{
-		this->_lock.lock(); // Obtain the lock
-		T x = this->_queue.front(); // Retrieve the object from the front of the queue
-		this->_lock.unlock(); // Release the lock
-		return x;
-	}
-
-	T back() // Used to obtain the object from the back of the queue
-	{
-		this->_lock.lock(); // Obtain the lock
-		T x = this->_queue.back(); // Retrieve the object from the back of the queue
-		this->_lock.unlock(); // Release the lock
-		return x;
-	}
-
-	void push(const T& x) // Used to add a new item to the queue
-	{
-		this->_lock.lock(); // Obtain the lock
-		this->_queue.push(x); // Push the object onto the queue
-		this->_lock.unlock(); // Release the lock
+		boost::mutex::scoped_lock lock(m_queuemutex); // Obtain the lock for this scape
+		this->m_queue.push(x); // Push the object onto the queue
+        m_itemAvailable.notify_one(); // Indicate that a new item has been pushed onto the queue
 	}
 	
-	void pop() // Deletes the next element in the queue
+	T popWait() // Returns and then deletes the next element in the queue, waiting for a new item to be pushed if neccessary. 
 	{
-		this->_lock.lock(); // Obtain the lock
-		this->_queue.pop(); // Delete the next object onto the queue
-		this->_lock.unlock(); // Release the lock
+        boost::mutex::scoped_lock lock(_queuemutex); // Obtain the lock for this scape
+        if (this->_queue.empty()) // Is the queue empty?
+        {
+            _itemAvailable.wait(lock); // Release the lock and wait on a new push
+        }
+        
+        T x = this->m_queue.front(); // Retrieve the object from the front of the queue
+		this->m_queue.pop(); // Delete the next object onto the queue
+		
+        return x;
 	} 
 
-	bool trypop() // Tries to delete the next element in the queue, and returns true if it succeeds, false otherwise
-	{	
-		if (this->_lock.try_lock())
+	bool trypop(T& x, bool waitIfEmpty = false) // Tries to access the next element in the queue, and returns true if it succeeds with the element passed by reference, false otherwise
+    {	
+		boost::mutex::scoped_lock lock(m_queuemutex, boost::try_to_lock_t); // Try to obtain the lock for this scape
+        if (this->lock.owns_lock()) // Did we get the lock
 		{
-			this->_queue.pop(); // Delete the next object onto the queue
-			this->_lock.unlock(); // Release the lock
+			if (this->m_queue.empty()) // Is the queue empty?
+            {
+                if (waitIfEmpty)
+                {
+                    m_itemAvailable.wait(lock); // Release the lock and wait on a new push
+                }
+                else
+                {
+                    return false;
+                }
+                
+            }
+            
+            
+            x = this->_queue.front(); // Retrieve the object from the front of the queue
+            this->_queue.pop(); // Delete the next object onto the queue
 			return true;
 		}
 		else 
@@ -51,9 +61,12 @@ template < class T, class Container = std::deque<T> >  class BlockingQueue
 	}
 
 	private:
-	boost::mutex _lock; // The single lock for the whole queue
-	std::queue <T, Container> _queue;
+	std::queue <T> m_queue;
+    
+    boost::mutex m_queuemutex; // The single lock for the whole queue
+    boost::condition m_itemAvailable; // The condition idicating a new item has been pushed onto an empty queue
 	
- 	
 
 };
+
+#endif
