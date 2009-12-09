@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "file_input_node.h"
+#include "nodes/fileInputNode.h"
 
 int main(){
 	Scheduler s;

@@ -8,8 +8,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "node.h"
-#include "image.h"
+#include "../node.h"
+#include "../image.h"
 
 
 class FileInputNode: public Node{
