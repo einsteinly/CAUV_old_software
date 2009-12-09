@@ -6,6 +6,7 @@
 #include <string>
 
 #include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 #include "node.h"
 #include "image.h"
@@ -33,7 +34,7 @@ class FileInputNode: public Node{
             
             cv::Mat img = cv::imread(fname.c_str());
             
-            r["image"] = image_ptr_t(new Image(img));
+            r["image"] = image_ptr_t(new Image(img, Image::file));
             
             return r;
         }

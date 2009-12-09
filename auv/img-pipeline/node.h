@@ -166,7 +166,7 @@ class Node{
             boost::lock_guard<boost::mutex> l(m_parameters_lock);
             const std::map<param_id, param_value_t>::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
-                return i->second = v;
+                i->second = v;
             }else{
                 throw(id_error("Invalid parameter id"));
             }

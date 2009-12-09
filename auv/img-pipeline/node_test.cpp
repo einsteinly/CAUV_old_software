@@ -10,9 +10,9 @@ int main(){
     n.setParam<std::string>("filename", "test.jpg");
     std::cout << "set filename=" << n.param<std::string>("filename") << std::endl;
     
-    n->exec();
+    n.exec();
     
-    Node::image_ptr_t img = n.getOutputImage("image");
+    boost::shared_ptr<Image> img = n.getOutputImage("image");
     
 }
 
