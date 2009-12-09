@@ -6,9 +6,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 
-class image;
 class Node;
-typedef int Priority;
+enum Priority {
+    low,
+    high,
+    realtime
+};
 
 // until such time as one exists...
 class Scheduler{
@@ -17,9 +20,9 @@ class Scheduler{
 };
 
 
-class parameter_error: public std::runtime_error{
+class id_error: public std::runtime_error{
     public:
-        parameter_error(const char* str)
+        id_error(const char* str)
             : std::runtime_error(str){
         }
 };
