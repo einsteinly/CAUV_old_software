@@ -10,25 +10,28 @@ of the syntax.
 */
 
 %{
-#include <stdio.h>
-#include <string.h>
-#include "msg.h"
+#include <iostream>
+#include <string>
 #include <vector>
+#include <FlexLexer.h>
+#include "msg.h"
+
+using namespace std;
 
 const int DEBUG = 0;
-
-extern int yyparse();
-
-extern int yywrap();
-
-extern int yylex();
 
 //the top level entry of the file - a list of groups
 extern std::vector<Group*>* root;
 
+extern yyFlexLexer* lexer;
+
+int yylex()
+{
+    return lexer->yylex();
+}
 void yyerror(const char *str)
 {
-	fprintf(stderr, "error: %s\n", str);
+	cerr << "error: " << str << endl;
 }
 
 %}
@@ -80,8 +83,11 @@ group_list: /*list can be empty*/
 group: GROUP STR LPAREN ID RPAREN group_contents
 	{	
 		$$ = new Group($4, $2, $6);
-		if(DEBUG) printf("new group %s of id %d\n", $2, $4);
-	}
+		if(DEBUG)
+        {
+            cout << "new group " << $2 << " of id " << $4 << endl;
+	    }
+    }
 	;
 
 group_contents: LBRACE message_list RBRACE
@@ -105,7 +111,10 @@ message_list: /*list can be empty*/
 message: MSG STR LPAREN ID RPAREN msg_contents
 	{
 		$$ = new Message($4, $2, $6);
-		if(DEBUG) printf("new message %s of id %d\n", $2, $4);
+		if(DEBUG)
+        {
+            cout << "new message " << $2 << " of id " << $4 << endl;
+	    }
 	}
 	;
 
@@ -130,6 +139,9 @@ declaration_list: /*list can be empty*/
 declaration: TYPE STR SEMICOLON
 	{
 		$$ = new Declaration($2, $1);	//instantiate a new declaration here
-		if(DEBUG) printf("declaration of %s of type %s.\n", $2, $1);
+		if(DEBUG)
+        {
+            cout << "declaration " << $2 << " of type " << $1 << endl;
+	    }
 	}
 	;

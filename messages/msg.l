@@ -6,17 +6,20 @@ Author: Clemens Wiltsche
 /*
 LEX token definition for the automatic message generation
 */
-
+%option noyywrap
+%option yylineno
 
 %{
-#include <stdio.h>
-#include <string.h>
-#include "msg.yacc.hh"
+#include "msg.h"
+#include "msg.yacc.hpp"
+
+#define IOSTREAM
+
 %}
 
 %%
 
-group			return GROUP;
+group       return GROUP;
 msg			return MSG;
 \{			return LBRACE;
 \}			return RBRACE;
@@ -30,8 +33,3 @@ int|long|double		yylval.string=strdup(yytext); return TYPE;
 [ \t]+			/*ignore whitespace*/
 
 %%
-
-int yywrap()
-{
-	return 1;
-}

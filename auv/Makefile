@@ -50,7 +50,7 @@ EXES    = ${EXEMODULES:%=$(BINDIR)/%}
 MODLIBS = ${LIBMODULES:%=$(OBJDIR)/lib%.a}
 MODOBJS = ${MODULES:%=$(OBJDIR)/%.o}
 
-CPP=g++
+CC=g++
 ifdef RELEASE 
 CFLAGS=-Wall -O3
 else
@@ -84,9 +84,9 @@ EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
 EXEOBJ = $(patsubst %,$(OBJDIR)/%.o,$(notdir $@))
 $(EXES): $$(EXEOBJ) $$(EXELIBDEPS)
 	@echo  === Making $(notdir $@) binary ===
-	@echo "  [CPP]   $(EXEOBJ) -o $@"
+	@echo "  [CC]    $(EXEOBJ) -o $@"
 	@echo
-	@$(CPP) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)
+	@$(CC) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)
 
 MODLIBMOD = $(patsubst lib%.a,%,$(notdir $@))
 MODLIBOBJ = $(patsubst %,$(OBJDIR)/%.o,$(MODLIBMOD))
@@ -111,12 +111,12 @@ GENDEPFILES=@cp $(DF).d $(DF).P; \
 
 CLEANDEPFILES=@-rm -rf $(DEPDIR)
 
-CPPF = $(filter %.cpp, $^)
+CCF = $(filter %.cpp, $^)
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(@D); mkdir -p $(dir $(DF))
-	@echo "  [CPP]   $(CPPF) -o $@"
-	@$(CPP) $(CFLAGS) -c $(CPPF) -o $@
+	@echo "  [CC]    $(CCF) -o $@"
+	@$(CC) $(CFLAGS) -c $(CCF) -o $@
 	$(GENDEPFILES)
 
 $(OBJDIR)/%.e : %
