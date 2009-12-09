@@ -46,8 +46,14 @@
 #		define  B921600 0010007
 #	endif
 // required for gnu c++ compiler due to difference in attribute declarations
-#   define __cdecl __attribute__((cdecl))
-#   define __stdcall __attribute__((stdcall))
+// but don't work on 64bit machines
+#   ifdef __x86_64
+#       define __cdecl
+#       define __stdcall assert(false) // no std call on 64 bit machines
+#   else
+#       define __cdecl __attribute__((cdecl))
+#       define __stdcall __attribute__((stdcall))
+#   endif
 #endif
 
 #ifndef _XSENS_STD_H_2006_09_11
