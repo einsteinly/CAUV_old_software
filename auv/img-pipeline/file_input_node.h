@@ -1,22 +1,43 @@
+#ifndef __FILE_INPUT_NODE_H__
+#define __FILE_INPUT_NODE_H__
+
+#include <map>
+#include <vector>
+#include <string>
+
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
 #include "node.h"
+#include "image.h"
 
 
 class FileInputNode: public Node{
-	public:
-		FileInputNode(std::vector<node_id, input_id> children)
-			: // base constructor?
-			{
+    public:
+        FileInputNode(Scheduler& s)
+            : Node(s){
+            // no inputs
+            // registerInputID()
+            
+            // one output:
+            registerOutputID("image");
+            
+            // one parameter: the filename
+            registerParamID<std::string>("filename", "default.jpg");
+        }
 
-		}
-
-		void exec(){
-			// A) check if any children need a new image (child->isWaiting() == true)
-			// B) check if any children are still using any of this node's outputs // TODO: do reference counting pointers do this for us? I think they might
-			// if A) is not true, return immediately
-			// if B) is true, move aside (copy if necessary? - don't think it is... can probably just delete refcounting pointers to outputs)
-			// make new outputs
-			// TODO: return a list of children that MAY now be able to run (may, since they may be waiting on other parents)
-		}
-
+    protected:
+        out_image_map_t doWork(in_image_map_t const&){
+            out_image_map_t r;
+        
+            std::string fname = param<std::string>("filename");
+            
+            cv::Mat img = cv::imread(fname.c_str());
+            
+            r["image"] = image_ptr_t(new Image(img, Image::file));
+            
+            return r;
+        }
 };
 
+#endif // ndef __FILE_INPUT_NODE_H__
