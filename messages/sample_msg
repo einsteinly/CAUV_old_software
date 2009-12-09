@@ -1,0 +1,17 @@
+group sample_group(40)
+{
+	msg sample_msg_two(23)
+	{
+		int speedx;
+		int speedy;
+		int speedz;
+	}
+
+	msg sample_msg_two(52)
+	{
+		long id;
+		double data;
+	}
+		
+}
+

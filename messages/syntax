@@ -1,0 +1,47 @@
+/*
+CAUV 2009/2010
+Author: Clemens Wiltsche
+*/
+
+/*
+Syntax specification of messages
+The top-level token for a file is group_list
+Quotation marks indicate verbatim occurrence (terminal)
+All other tokens are non-terminals
+Note that the terminals are expanded to indicate the token names 
+internally used.
+*/
+
+group_list ::= group group_list
+
+group ::= GROUP STR LPAREN ID RPAREN group_contents
+
+group_contents ::= LBRACE message_list RBRACE
+
+message_list ::= message message_list
+
+message ::= MSG STR LPAREN ID RPAREN msg_contents
+
+msg_contents ::= LBRACE declaration_list RBRACE
+
+declaration_list ::= declaration declaration_list
+
+declaration ::= TYPE STR ";"
+
+TYPE ::= "int" | "long" | "double" | ...
+
+GROUP ::= "group"
+
+MSG ::= "message"
+
+LBRACE ::= "{"
+
+RBRACE ::= "}"
+
+LPAREN ::= "("
+
+RPAREN ::= ")"
+
+STR ::= [a-zA-Z_][a-zA-Z0-9_]*
+
+ID ::= [0-9]+
