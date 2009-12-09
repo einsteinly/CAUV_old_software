@@ -3,4 +3,10 @@
 
 #include <opencv/cv.h>
 
+class image{
+    public:
+        
+
+};
+
 #endif // ndef __IMAGE_H__

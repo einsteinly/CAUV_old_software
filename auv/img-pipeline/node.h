@@ -29,6 +29,8 @@ class Node{
         //typedef boost::tuple<node_id, output_id> input_link_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
         
+        typedef std::map<input_id, bool> in_bool_map_t;
+
     protected:
         // Protected typedefs
         typedef boost::shared_ptr<image> image_ptr;
@@ -37,22 +39,22 @@ class Node{
 
     public:
         Node(Scheduler& sched)
-            : m_priority(low), m_speed(slow), m_lock(), m_sched(sched){
+            : m_priority(low), m_speed(slow), /*m_lock(),*/ m_sched(sched){
         }
         
         void setInput(input_id const& i_id, node_ptr_t const& n, output_id const& o_id){
-            getLock();
+            // TODO getLock();
             const in_link_map_t::iterator i = m_parent_links.find(i_id);
             if(i == m_parent_links.end()){
                 throw(id_error("Invalid input id"));
             }else{
                 i->second = input_link_t(n, o_id);
             }
-            releaseLock();
+            // TODO: releaseLock();
         }
         
         void setOutput(output_id const& o_id, node_ptr_t const& n, input_id const& i_id){
-            getLock();
+            // TODO: getLock();
             const out_link_map_t::iterator i = m_child_links.find(o_id);
             if(i == m_child_links.end()){
                 throw(id_error("Invalid output id"));
@@ -61,7 +63,7 @@ class Node{
                 // m_child_links[output_id] is a list of output_link_t
                 i->second.push_back(output_link_t(n, i_id));
             }
-            releaseLock();
+            //TODO: releaseLock();
         }
 
         void exec(){
@@ -72,8 +74,8 @@ class Node{
             in_image_map_t inputs;
             out_image_map_t outputs;
             
-            for(in_link_map_t::const_iterator i = parent_links.begin(); i != parent_links.end(); i++)
-                inputs[i->first] = i->second.first->getOutput(i->second.second);
+            for(in_link_map_t::const_iterator i = m_parent_links.begin(); i != m_parent_links.end(); i++)
+                inputs[i->first] = i->second.first->getOutputImage(i->second.second);
             
             if(this->m_speed < medium){
                 // if this is a fast node: request new image from parents before executing
@@ -85,14 +87,15 @@ class Node{
                 _demandNewParentInput();
             }
             
-            m_output_lock.lock();
+            m_outputs_lock.lock();
             m_outputs = outputs;
-            m_output_lock.unlock();
+            m_outputs_lock.unlock();
             
             
             // Record that we've used all of our inputs
             m_new_inputs_lock.lock();
-            BOOST_FOREACH(std::map<input_id, bool>::value_type& v, m_new_inputs)
+            
+            BOOST_FOREACH(in_bool_map_t::value_type& v, m_new_inputs)
                 v.second = false;
             m_new_inputs_lock.unlock();
             
@@ -119,7 +122,7 @@ class Node{
          * Check to see if this node should add itself to the scheduler queue
          */
         void newInput(input_id const& a){
-            boost::lock_guard l = boost::lock_guard(m_new_inputs_lock);
+            boost::lock_guard<boost::mutex> l(m_new_inputs_lock);
             const std::map<input_id, bool>::iterator i = m_new_inputs.find(a);
             
             if(i == m_new_inputs.end()){
@@ -133,17 +136,17 @@ class Node{
          * output. It may be called at the start or end of the child's exec()
          */
         void demandNewOutput(/*output_id ?*/){
-            boost::lock_guard l = boost::lock_guard(m_output_demanded_lock);
+            boost::lock_guard<boost::mutex> l(m_output_demanded_lock);
             m_output_demanded = true;
             
-            checkAddSched();
+            _checkAddSched();
         }
         
         /* Get the actual image data associated with an output
          */
-        boost::shared_ptr<image> getOutput(output_id const& o_id) const{
-            boost::lock_guard l = boost::lock_guard(m_outputs_lock);
-            const output_map_t::const_iterator i = m_outputs.find(o_id);
+        boost::shared_ptr<image> getOutputImage(output_id const& o_id){
+            boost::lock_guard<boost::mutex> l(m_outputs_lock);
+            const out_image_map_t::const_iterator i = m_outputs.find(o_id);
             if(i == m_outputs.end()){
                 // TODO: double check that this releases the lock_guard
                 throw(id_error("Invalid output id"));
@@ -154,13 +157,13 @@ class Node{
         
         /* return all parameter values
          */
-        std::map<parameter_id, param_value> getParamValues() const;
+        std::map<param_id, param_value_t> getParamValues() const;
         
         /* set a single parameter value
          */
         template<typename T>
         void setParam(param_id const& p, T const& v){
-            boost::lock_guard l = boost::lock_guard(m_parameters_lock);
+            boost::lock_guard<boost::mutex> l(m_parameters_lock);
             const std::map<param_id, param_value_t>::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 return i->second = v;
@@ -172,8 +175,8 @@ class Node{
         /* return a single parameter value
          */
         template<typename T>
-        T param(param_id const& p) const{
-            boost::lock_guard l = boost::lock_guard(m_parameters_lock);
+        T param(param_id const& p){
+            boost::lock_guard<boost::mutex> l(m_parameters_lock);
             const std::map<param_id, param_value_t>::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 return boost::get<T>(i->second);
@@ -186,7 +189,7 @@ class Node{
         /* Derived classes override this to do whatever image processing it is
          * that they do.
          */
-        virtual void doWork() = 0;
+        virtual out_image_map_t doWork(in_image_map_t const&) = 0;
                 
         /* Priority of this node; this might change dynamically.
          * Used when this node is added to a scheduler queue
@@ -205,7 +208,7 @@ class Node{
          */
         template<typename T>
         void registerParamID(param_id const& p, T const& default_value){
-            boost::lock_guard l = boost::lock_guard(m_parameters_lock);
+            boost::lock_guard<boost::mutex> l(m_parameters_lock);
             m_parameters[p] = param_value_t(default_value);
         }
         void registerOutputID(output_id const& o){
@@ -228,10 +231,10 @@ class Node{
         /* Check to see if all inputs are new and output is demanded; if so, 
          * add this node to the scheduler queue
          */
-        void checkAddSched(){
+        void _checkAddSched(){
             std::map<input_id, bool>::const_iterator i;
-            boost::lock_guard l1 = boost::lock_guard(m_output_demanded_lock);
-            boost::lock_guard l2 = boost::lock_guard(m_new_inputs_lock);
+            boost::lock_guard<boost::mutex> li(m_output_demanded_lock);
+            boost::lock_guard<boost::mutex> lo(m_new_inputs_lock);
             
             if(!m_output_demanded)
                 return;
@@ -241,6 +244,12 @@ class Node{
                     return;
             
             m_sched.addToQueue(this, m_priority);
+        }
+
+        void _demandNewParentInput() const{
+            // TODO: locking
+            BOOST_FOREACH(in_link_map_t::value_type const& v, m_parent_links)
+                v.second.first->demandNewOutput(); 
         }
         
         
@@ -262,7 +271,7 @@ class Node{
          * was last exec()d
          * Set by newInput(), checked by checkAddSched(), cleared by exec()
          */
-        std::map<input_id, bool> m_new_inputs;
+        in_bool_map_t m_new_inputs;
         boost::mutex m_new_inputs_lock;
         
         /* Has output been demanded of this node?
