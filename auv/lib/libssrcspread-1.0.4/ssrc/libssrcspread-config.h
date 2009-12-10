@@ -129,12 +129,12 @@
 
 
 #if !defined(NS_SSRCSPREAD)
-#  define NS_SSRCSPREAD ssrcspread
+#  define NS_SSRCSPREAD ssrcspread_v1_0_4
 #endif
 
 #if !defined(SWIG_NS_SSRCSPREAD)
-#  define SWIG_NS_SSRCSPREAD ssrcspread
-#  define SWIG_NS_SSRCSPREAD_SYM(sym) ssrcspread ## sym
+#  define SWIG_NS_SSRCSPREAD ssrcspread_v1_0_4
+#  define SWIG_NS_SSRCSPREAD_SYM(sym) ssrcspread_v1_0_4 ## sym
 #endif
 
 #if !defined(LIBSSRCSPREAD_DEFINE_NAMESPACE)
@@ -143,7 +143,7 @@
 
 #if !defined(NS_SSRCSPREAD_DECL_PREFIX)
 #  define NS_SSRCSPREAD_DECL_PREFIX \
-namespace ssrcspread {
+namespace ssrcspread_v1_0_4 {
 #endif
 
 #if !defined(NS_SSRCSPREAD_DECL_SUFFIX)
@@ -152,7 +152,7 @@ namespace ssrcspread {
 #endif
 
 #if !defined(LIBSSRCSPREAD_TEST_DAEMON)
-#  define LIBSSRCSPREAD_TEST_DAEMON "27002"
+#  define LIBSSRCSPREAD_TEST_DAEMON "4803"
 #endif
 
 #if defined(LIBSSRCSPREAD_HAVE_SP_GET_MEMB_INFO)
