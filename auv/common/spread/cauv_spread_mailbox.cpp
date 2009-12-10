@@ -93,18 +93,25 @@ void SpreadMailbox::leaveGroup(const string &groupName)
     }
 }
 
-// Helper functions for creating GroupLists from vectors (caller is responsible for deleting)
-GroupList *makeGroupList(const vector<string> &groups) {
+// Helper functions for converting between GroupLists and vectors (caller is responsible for deleting)
+GroupList *vectorToGroupList(const vector<string> &groups) {
     GroupList *list = new GroupList( groups.size() );
     for( vector<string>::const_iterator i = groups.begin(); i != groups.end(); i++ ) {
         list->add( *i );
     }
     return list;
 }
-GroupList *makeGroupList(const string & group) {
+GroupList *vectorToGroupList(const string & group) {
     GroupList *list = new GroupList( 1 );
     list->add(group);
     return list;
+}
+vector<string> *groupListToVector(const GroupList &groups) {
+    vector<string> *v = new vector<string>( groups.size() );
+    for( unsigned i = 0; i < groups.size(); i++ ) {
+        v->push_back( groups.group(i) );
+    }
+    return v;
 }
 
 int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service serviceType,
@@ -116,7 +123,7 @@ int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service s
 
     int sentBytes;
     try {
-        sentBytes = m_ssrcMailbox->send(spreadMsg);
+        sentBytes = m_ssrcMailbox->send(spreadMsg, *groupNames);
         delete groupNames;
     }
     catch(Error e) {
@@ -140,19 +147,29 @@ int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service s
 
 int SpreadMailbox::sendMessage(ApplicationMessage &message, Spread::service serviceType,
         const string &groupName) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
-    return doSendMessage( message, serviceType, makeGroupList(groupName) );
+    return doSendMessage( message, serviceType, vectorToGroupList(groupName) );
 }
 
 
 int SpreadMailbox::sendMultigroupMessage(ApplicationMessage &message, Spread::service serviceType,
         const vector<string> &groupNames) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
-    return doSendMessage( message, serviceType, makeGroupList(groupNames) );
+    return doSendMessage( message, serviceType, vectorToGroupList(groupNames) );
 }
 
 
 SpreadMessage SpreadMailbox::receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+    Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
+    GroupList groups;
+    m_ssrcMailbox->receive(ssrcMsg, groups);
+    BaseMessage::service_type sType = ssrcMsg.service();
+    if( Is_regular_mess(sType) ) {
+
+    }
 }
+
+
 SpreadMessage SpreadMailbox::receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+    throw runtime_error("Not implemented");
 }
 
 
