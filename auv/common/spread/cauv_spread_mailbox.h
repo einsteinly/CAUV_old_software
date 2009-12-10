@@ -2,6 +2,7 @@
 #define CAUV_SPREAD_MAILBOX_H_INCLUDED
 
 #include <string>
+#include <vector>
 #include <ssrc/spread/Mailbox.h>
 #include "cauv_spread_exceptions.h"
 #include "cauv_spread_messages.h"
@@ -9,14 +10,14 @@
 
 
 /**
- * Timeout is a simple wrapper around Spread::sp_time, the %Spread C
+ * ConnectionTimeout is a simple wrapper around Spread::sp_time, the %Spread C
  * API's struct that facilitates specifying connection
  * timeouts for the Mailbox constructor.  The constructor will convert
- * an integral number into a Timeout instance, allowing you to specify
- * timeouts to the Mailbox constructor as either Timeout instances or
+ * an integral number into a ConnectionTimeout instance, allowing you to specify
+ * timeouts to the Mailbox constructor as either ConnectionTimeout instances or
  * a single number (interpreted as a number of seconds).
  */
-class Timeout : public NS_SSRCSPREAD::Timeout {
+class ConnectionTimeout : public ssrc::spread::Timeout {
 public:
     /**
      * Converts a Spread::sp_time instance to a Timeout instance, copying
@@ -24,7 +25,7 @@ public:
      *
      * @param time The Spread::sp_time instance to convert.
      */
-    Timeout(const Spread::sp_time time) : NS_SSRCSPREAD::Timeout(time) { }
+    ConnectionTimeout(const Spread::sp_time time) : ssrc::spread::Timeout(time) { }
 
     /**
      * Creates a Timeout instance representing a number of seconds
@@ -33,7 +34,7 @@ public:
      * @param sec The number of seconds.
      * @param usec The number of microseconds.
      */
-    Timeout(const long sec = 0, const long usec = 0) : NS_SSRCSPREAD::Timeout(sec, usec) { }
+    ConnectionTimeout(const long sec = 0, const long usec = 0) : ssrc::spread::Timeout(sec, usec) { }
 };
 
 /**
@@ -45,7 +46,7 @@ public:
  */
 class SpreadMailbox {
 public:
-    static const Timeout ZERO_TIMEOUT;
+    static const ConnectionTimeout ZERO_TIMEOUT;
     friend bool operator!(const SpreadMailbox &mailbox) { return mailbox.m_ssrcMailbox->killed(); }
 
     enum MailboxPriority {
@@ -67,7 +68,8 @@ public:
      * @param priority The priority level for this connection. Currently ignored by Spread.
      */
     SpreadMailbox(const std::string &portAndHost, const std::string &internalConnectionName = "",
-                  const bool shouldReceiveMembershipMessages = true, const Timeout &timeout = ZERO_TIMEOUT,
+                  const bool shouldReceiveMembershipMessages = true,
+                  const ConnectionTimeout &timeout = ZERO_TIMEOUT,
                   const MailboxPriority priority = MEDIUM) throw(ConnectionError);
     virtual void disconnect() throw(InvalidSessionError);
 
@@ -89,14 +91,14 @@ public:
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMessage(ApplicationMessage &message, Spread::service serviceType)
+    virtual int sendMessage(ApplicationMessage &message, Spread::service serviceType, const std::string &destinationGroup)
         throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMultigroupMessage(ApplicationMessage &message, Spread::service serviceType)
-        throw(InvalidSessionError, ConnectionError, IllegalMessageError);
+    virtual int sendMultigroupMessage(ApplicationMessage &message, Spread::service serviceType,
+        const std::vector<std::string> &groupNames) throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
     /**
      * Blocks until a message comes in from the Spread daemon. The received messsage may
@@ -118,7 +120,11 @@ public:
     virtual ~SpreadMailbox();
 
 protected:
-    NS_SSRCSPREAD::Mailbox *m_ssrcMailbox;
+    ssrc::spread::Mailbox *m_ssrcMailbox;
+
+private:
+    int doSendMessage( ApplicationMessage &message, Spread::service serviceType,
+        ssrc::spread::GroupList *const groupNames );
 };
 
 /**
@@ -128,7 +134,8 @@ protected:
 class ReconnectingSpreadMailbox : public SpreadMailbox {
 public:
     ReconnectingSpreadMailbox(const std::string &portAndHost, const std::string &privateConnectionName = "",
-                  bool shouldReceiveMembershipMessages = true, const Timeout &timeout = ZERO_TIMEOUT,
+                  bool shouldReceiveMembershipMessages = true,
+                  const ConnectionTimeout &timeout = ZERO_TIMEOUT,
                   MailboxPriority priority = MEDIUM) throw(ConnectionError)
         : SpreadMailbox(portAndHost, privateConnectionName, shouldReceiveMembershipMessages,
                         timeout, priority) {}

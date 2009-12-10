@@ -23,7 +23,8 @@ public:
 
 class IllegalMessageError : public std::logic_error {
 public:
-    explicit IllegalMessageError(const std::string &what) : std::logic_error(what){}
+    explicit IllegalMessageError(const std::string &what = "Illegal messsage structure")
+        : std::logic_error(what){}
 };
 
 #endif // CAUV_SPREAD_EXCEPTIONS_H_INCLUDED
