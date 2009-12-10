@@ -8,6 +8,7 @@ SRCS = $(addsuffix .cpp, \
 $(addprefix common/,   cauv_node cauv_global cauv_utils cauv_types) \
 $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
+$(addprefix img-pipeline/, img-pipeline) \
 )
 
 RES = \
@@ -16,7 +17,7 @@ $(addprefix common/, cauv_logo_large.txt) \
 # ==========================
 # Edit me to add new modules
 # ==========================
-EXEMODULES = control
+EXEMODULES = control img-pipeline
 LIBMODULES = common module
 EXTLIBS = cmt
 
@@ -25,6 +26,8 @@ COMMON_PARAMS =
 control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
+img-pipeline_LIBS = common
+img-pipeline_PARAMS = 
 
 # ================
 # Edit directories
