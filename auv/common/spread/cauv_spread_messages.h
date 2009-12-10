@@ -168,4 +168,5 @@ public:
      */
     virtual const std::string &getAffectedGroupName() const;
 };
+
 #endif // CAUV_SPREAD_MESSAGES_H_INCLUDED

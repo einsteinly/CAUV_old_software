@@ -1,16 +1,20 @@
-#include "cauv_spread_mailbox.h"
+#include <vector>
 #include <ssrc/spread/Mailbox.h>
-using namespace std;
+#include "cauv_spread_mailbox.h"
 
-const Timeout SpreadMailbox::ZERO_TIMEOUT;
+using namespace std;
+using namespace ssrc::spread;
+
+const ConnectionTimeout SpreadMailbox::ZERO_TIMEOUT;
+
 
 SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalConnectionName,
-                  const bool shouldReceiveMembershipMessages, const Timeout &timeout,
+                  const bool shouldReceiveMembershipMessages, const ConnectionTimeout &timeout,
                   const MailboxPriority priority) throw(ConnectionError) {
     try {
-        m_ssrcMailbox = new NS_SSRCSPREAD::Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
-                                    timeout, (NS_SSRCSPREAD::Mailbox::Priority)priority);
-    } catch(NS_SSRCSPREAD::Error e) {
+        m_ssrcMailbox = new Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
+                                    timeout, (Mailbox::Priority)priority);
+    } catch(Error e) {
         const char *errMsg;
 
         switch( e.error() ) {
@@ -42,15 +46,18 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
     }
 }
 
+
 void SpreadMailbox::disconnect() throw(InvalidSessionError) {
     m_ssrcMailbox->kill();
 }
 
-void SpreadMailbox::joinGroup(const string &groupName) throw(ConnectionError, InvalidSessionError, IllegalGroupError) {
+
+void SpreadMailbox::joinGroup(const string &groupName)
+        throw(ConnectionError, InvalidSessionError, IllegalGroupError) {
     try {
         m_ssrcMailbox->join(groupName);
     }
-    catch(NS_SSRCSPREAD::Error e) {
+    catch(Error e) {
         switch( e.error() ) {
         case ILLEGAL_GROUP:
             throw IllegalGroupError();
@@ -65,11 +72,13 @@ void SpreadMailbox::joinGroup(const string &groupName) throw(ConnectionError, In
     }
 }
 
-void SpreadMailbox::leaveGroup(const string &groupName) throw(ConnectionError, InvalidSessionError, IllegalGroupError) {
+
+void SpreadMailbox::leaveGroup(const string &groupName)
+        throw(ConnectionError, InvalidSessionError, IllegalGroupError) {
     try {
         m_ssrcMailbox->leave(groupName);
     }
-    catch(NS_SSRCSPREAD::Error e) {
+    catch(Error e) {
         switch( e.error() ) {
         case ILLEGAL_GROUP:
             throw IllegalGroupError();
@@ -83,6 +92,69 @@ void SpreadMailbox::leaveGroup(const string &groupName) throw(ConnectionError, I
         }
     }
 }
+
+// Helper functions for creating GroupLists from vectors (caller is responsible for deleting)
+GroupList *makeGroupList(const vector<string> &groups) {
+    GroupList *list = new GroupList( groups.size() );
+    for( vector<string>::const_iterator i = groups.begin(); i != groups.end(); i++ ) {
+        list->add( *i );
+    }
+    return list;
+}
+GroupList *makeGroupList(const string & group) {
+    GroupList *list = new GroupList( 1 );
+    list->add(group);
+    return list;
+}
+
+int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service serviceType,
+        GroupList *const groupNames ) {
+    MessageByteBuffer bytes = message.getBytes();
+    ScatterMessage spreadMsg;
+    spreadMsg.add( &bytes.front(), bytes.size() ); // Grab the address of the first element of the byte array in memory
+    spreadMsg.set_service(serviceType);
+
+    int sentBytes;
+    try {
+        sentBytes = m_ssrcMailbox->send(spreadMsg);
+        delete groupNames;
+    }
+    catch(Error e) {
+        delete groupNames;
+
+        switch( e.error() ) {
+        case ILLEGAL_SESSION:
+            throw InvalidSessionError();
+            break;
+        case ILLEGAL_MESSAGE:
+            throw IllegalMessageError();
+            break;
+        default:
+            throw ConnectionError("Connection error occurred during send");
+            break;
+        }
+    }
+
+    return sentBytes;
+}
+
+int SpreadMailbox::sendMessage(ApplicationMessage &message, Spread::service serviceType,
+        const string &groupName) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+    return doSendMessage( message, serviceType, makeGroupList(groupName) );
+}
+
+
+int SpreadMailbox::sendMultigroupMessage(ApplicationMessage &message, Spread::service serviceType,
+        const vector<string> &groupNames) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+    return doSendMessage( message, serviceType, makeGroupList(groupNames) );
+}
+
+
+SpreadMessage SpreadMailbox::receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+}
+SpreadMessage SpreadMailbox::receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+}
+
 
 SpreadMailbox::~SpreadMailbox() {
     delete m_ssrcMailbox;   // Disconnects if not previously disconnected

@@ -8,7 +8,7 @@ SRCS = $(addsuffix .cpp, \
 $(addprefix common/,   cauv_node cauv_global cauv_utils cauv_types) \
 $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
-#$(addprefix common/spread/,  cauv) \ # Coming soon!
+$(addprefix common/spread/,  cauv) \
 $(addprefix img-pipeline/, img-pipeline) \
 )
 
