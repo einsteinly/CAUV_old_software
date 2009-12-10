@@ -367,13 +367,6 @@ class Node{
         bool m_output_demanded;
         boost::recursive_mutex m_output_demanded_lock;
         
-        //TODO: think about locking for adding/removing nodes
-        /* When a child is deleted, it needs to lock it's parent, (and it's
-         * children, but we aren't going to allow nodes that have children to be
-         * deleted), since it's parent may try to call newInput()
-         */
-        //boost::recursive_mutex m_lock;
-        
         /* The scheduler associated with this node:
          * This is used by newInput() and demandNewOutput(), each of which may
          * decide that this node now needs to be executed (this->exec()), so
