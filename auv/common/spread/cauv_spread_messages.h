@@ -11,6 +11,9 @@
  */
 class SpreadMessage {
     friend class SpreadMailbox;
+public:
+    enum MessageType { REGULAR_MESSAGE, MEMBERSHIP_MESSAGE };
+    MessageType getMessageType() { return Is_regular_mess(serviceType) ? REGULAR_MESSAGE : MEMBERSHIP_MESSAGE; }
 
 protected:
     /**
@@ -19,6 +22,7 @@ protected:
      */
     SpreadMessage( const std::string &sender, const Spread::service serviceType,
                    const std::vector<const std::string> &groups, const int messageType );
+    Spread::service serviceType;
 };
 
 
