@@ -94,18 +94,18 @@ private:
                     l.release();
                     
                     
-                    m_mailbox.receiveMessage();
-
+                    SpreadMessage m = m_mailbox.receiveMessage();
 
                     m_observsers_lock.lock();
                     BOOST_FOREACH(mb_observer_ptr_t& p, m_observers){
-                        
+                        if(m->getMessageType() == SpreadMessage::application_message){
+                            p->applicationMessageReceived();
+                        }else{
+                            assert(m->getMessageType() == SpreadMessage::membership_message);
+                            p->membershipMessageReceived();
+                        }
                     }
                     m_observsers_lock.unlock();
-                    //
-                    // do stuff...
-                    // m_mailbox.receiveMessage() I think..
-                    //
                 }
             }
 
