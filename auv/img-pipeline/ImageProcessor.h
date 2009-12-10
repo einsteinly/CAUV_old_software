@@ -13,6 +13,8 @@ const int min_fast_threads; // Mimimum number of threads dedicated to fast proce
 
 enum Priority {slow, fast, realtime};
 
+typedef boost::shared_ptr<Node> nodePtr; // Make a node pointer easier to read
+
 class ImageProcessor // Instantiated by main.cc and the main function is lopped until the program is terminated
 {
     public:    
@@ -51,20 +53,37 @@ class ImageProcessor // Instantiated by main.cc and the main function is lopped 
         switch message
         {
             case addNode:
-            {
-                // call node factory
+                // notePtr node(  call node factory
+                this->m_last_id++; 
+                this->m_node_map[this->m_last_id] = node;
                 
-                
-                
-            }
+                // send message containing this id
+                break;
+            
+           case removeNode:
+               // node_id = get from message
+               try
+               {
+                   this->m_node_map[node_id]->remove(); // Calls the node to remove itself by removing any inputs
+                   this->m_node_map.erase(node_id); // Erases the node from the map
+               }
+               catch (...)
+               {
+                   //send a fail message    
+               }
+                              
+               
+              
+               break;
+                                             
+            
             
         }
     
-    }
+    
     }
 
-    void removeNode();
-	
+
     void listNodes(); 
 
     void getParameters(int node_id);
@@ -80,7 +99,9 @@ class ImageProcessor // Instantiated by main.cc and the main function is lopped 
     }
     
     private:
-    map <int, *node> m_map;
+    map <int, nodePtr> m_node_map; // Contains pointers to all the nodes
+    int m_last_id;
+
 
     void _launchThread(Scheduler& scheduler, Priority priority = realtime) // New threads are spawned with this function
     {
