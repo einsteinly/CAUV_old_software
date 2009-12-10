@@ -99,10 +99,10 @@ private:
                     m_observers_lock.lock();
                     BOOST_FOREACH(mb_observer_ptr_t p, m_observers){
                         if(m->getMessageType() == SpreadMessage::REGULAR_MESSAGE){
-                            p->applicationMessageReceived(m);
+                            p->applicationMessageReceived(boost::dynamic_pointer_cast<ApplicationMessage, SpreadMessage>(m));
                         }else{
                             assert(m->getMessageType() == SpreadMessage::MEMBERSHIP_MESSAGE);
-                            p->membershipMessageReceived(m);
+                            p->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
                         }
                     }
                     m_observers_lock.unlock();
