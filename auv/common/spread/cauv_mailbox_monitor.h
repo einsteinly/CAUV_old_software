@@ -12,23 +12,23 @@
 
 class MailboxObserver {
 public:
-    virtual void applicationMessageReceived(ApplicationMessage const& message) = 0;
-    virtual void membershipMessageReceived(MembershipMessage const& message) = 0;
+    virtual void applicationMessageReceived(boost::shared_ptr<ApplicationMessage> message) = 0;
+    virtual void membershipMessageReceived(boost::shared_ptr<MembershipMessaget> message) = 0;
 }; 
 typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
 class MailboxEventMonitor {
 public:
     MailboxEventMonitor(SpreadMailbox &mailbox)
-        : m_thread_callable(mailbox), m_thread(NULL){
+        : m_thread_callable(mailbox), m_thread(){
     }
 
     void addObserver(mb_observer_ptr_t observer){
-        m_thread_callable.addObserver(ovserver);
+        m_thread_callable.addObserver(observer);
     }
 
     void removeObserver(mb_observer_ptr_t observer){
-        m_thread_callable.removeObserver(ovserver);
+        m_thread_callable.removeObserver(observer);
     }
 
     void clearObservers(){
@@ -41,16 +41,17 @@ public:
      */
     void startMonitoring(){
         if(!m_thread){
-            m_thread = new boost::thread(m_thread_callable);
+            m_thread = new boost::thread(boost::ref(m_thread_callable));
         }
     }
 
     /**
      * Tells the spawned event loop to die.
+     * TODO: should this return immediately, or wait?
      */
     void stopMonitoring(){
-        m_thread_callable.stop() 
-        m_thread = NULL;
+        m_thread_callable.stop() ;
+        m_thread->join();
     }
     
 private:
@@ -70,38 +71,38 @@ private:
             }
 
             void addObserver(mb_observer_ptr_t observer){
-                boost::lock_guard<boost::recursive_mutex> l(m_ovservers_lock); 
-                m_observers.insert(ovserver)
+                boost::lock_guard<boost::recursive_mutex> l(m_observers_lock); 
+                m_observers.insert(observer);
             }
 
             void removeObserver(mb_observer_ptr_t observer){
-                boost::lock_guard<boost::recursive_mutex> l(m_ovservers_lock); 
-                m_observers.erase(ovserver)
+                boost::lock_guard<boost::recursive_mutex> l(m_observers_lock); 
+                m_observers.erase(observer);
             }
 
-            void clearObservers(mb_observer_ptr_t observer){
-               boost::lock_guard<boost::recursive_mutex> l(m_ovservers_lock); 
+            void clearObservers(){
+               boost::lock_guard<boost::recursive_mutex> l(m_observers_lock); 
                m_observers.clear();
             }
 
             void operator()(){
                 for(;;){
-                    boost::lock_guard<boost::recursive_mutex> l(m_stop_lock);
+                    boost::unique_lock<boost::recursive_mutex> l(m_stop_lock);
                     if(m_stop){
                         m_stop = false;
                         return;
                     }
-                    l.release();
+                    l.unlock();
                     
                     boost::shared_ptr<SpreadMessage> m(m_mailbox.receiveMessage());
 
                     m_observers_lock.lock();
-                    BOOST_FOREACH(mb_observer_ptr_t& p, m_observers){
+                    BOOST_FOREACH(mb_observer_ptr_t p, m_observers){
                         if(m->getMessageType() == SpreadMessage::REGULAR_MESSAGE){
-                            p->applicationMessageReceived();
+                            p->applicationMessageReceived(m);
                         }else{
                             assert(m->getMessageType() == SpreadMessage::MEMBERSHIP_MESSAGE);
-                            p->membershipMessageReceived();
+                            p->membershipMessageReceived(m);
                         }
                     }
                     m_observers_lock.unlock();
@@ -109,17 +110,17 @@ private:
             }
 
         private:
-            SpreadMailbox& mailbox;
+            SpreadMailbox& m_mailbox;
 
             boost::recursive_mutex m_stop_lock;
             bool m_stop;
 
             boost::recursive_mutex m_observers_lock;
             std::set<mb_observer_ptr_t> m_observers;
-    }
+    };
 
-    boost::shared_ptr<boost::thread> m_thread;
-    MonitorCallable m_thread_callable;
+    boost::thread *m_thread;
+    MonitorThreadCallable m_thread_callable;
 };
 #endif // CAUV_MAILBOX_MONITOR_H_INCLUDED
 
