@@ -7,10 +7,6 @@
 #include "cauv_spread_messages.h"
 #include "../cauv_application_message.h"
 
-enum MessagePriority {
-    LOW = LOW_PRIORITY, MEDIUM = MEDIUM_PRIORITY, HIGH = HIGH_PRIORITY
-};
-
 
 /**
  * Timeout is a simple wrapper around Spread::sp_time, the %Spread C
@@ -50,6 +46,12 @@ public:
 class SpreadMailbox {
 public:
     static const Timeout ZERO_TIMEOUT;
+    friend bool operator!(const SpreadMailbox &mailbox) { return mailbox.m_ssrcMailbox->killed(); }
+
+    enum MailboxPriority {
+        LOW = LOW_PRIORITY, MEDIUM = MEDIUM_PRIORITY, HIGH = HIGH_PRIORITY
+    };
+
 
     /**
      * @param portAndHost A string of the form "port", "port@domain_name", or "port@ip_address". A
@@ -65,19 +67,19 @@ public:
      * @param priority The priority level for this connection. Currently ignored by Spread.
      */
     SpreadMailbox(const std::string &portAndHost, const std::string &internalConnectionName = "",
-                  bool shouldReceiveMembershipMessages = true, const Timeout &timeout = ZERO_TIMEOUT,
-                  MessagePriority priority = MEDIUM) throw(ConnectionError);
+                  const bool shouldReceiveMembershipMessages = true, const Timeout &timeout = ZERO_TIMEOUT,
+                  const MailboxPriority priority = MEDIUM) throw(ConnectionError);
     virtual void disconnect() throw(InvalidSessionError);
 
     /**
      * @return The internal connection identifier assigned to this mailbox.
      */
-    const std::string &getInternalName();
+    const std::string &getInternalName() const { return m_ssrcMailbox->name(); }
 
     /**
      * @return The unique group name assigned to this mailbox.
      */
-    const std::string &getPrivateGroupName();
+    const std::string &getPrivateGroupName() const {return m_ssrcMailbox->private_group(); }
 
     virtual void joinGroup(const std::string &groupName)
         throw(ConnectionError, InvalidSessionError, IllegalGroupError);
@@ -110,7 +112,13 @@ public:
      */
     virtual SpreadMessage receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
-    int waitingMessageByteCount() throw(InvalidSessionError, ConnectionError);
+    int waitingMessageByteCount() const throw(InvalidSessionError, ConnectionError);
+    bool isConnected() const { return !m_ssrcMailbox->killed(); }
+
+    virtual ~SpreadMailbox();
+
+protected:
+    NS_SSRCSPREAD::Mailbox *m_ssrcMailbox;
 };
 
 /**
@@ -121,7 +129,7 @@ class ReconnectingSpreadMailbox : public SpreadMailbox {
 public:
     ReconnectingSpreadMailbox(const std::string &portAndHost, const std::string &privateConnectionName = "",
                   bool shouldReceiveMembershipMessages = true, const Timeout &timeout = ZERO_TIMEOUT,
-                  MessagePriority priority = MEDIUM) throw(ConnectionError)
+                  MailboxPriority priority = MEDIUM) throw(ConnectionError)
         : SpreadMailbox(portAndHost, privateConnectionName, shouldReceiveMembershipMessages,
                         timeout, priority) {}
 };

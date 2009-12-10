@@ -11,12 +11,14 @@ public:
 
 class InvalidSessionError : public std::logic_error {
 public:
-    explicit InvalidSessionError(const std::string &what) : std::logic_error(what){}
+    explicit InvalidSessionError(const std::string &what = "Mailbox not connected")
+        : std::logic_error(what){}
 };
 
 class IllegalGroupError : public std::logic_error {
 public:
-    explicit IllegalGroupError(const std::string &what) : std::logic_error(what){}
+    explicit IllegalGroupError(const std::string &what = "Group name too long or too short")
+        : std::logic_error(what){}
 };
 
 class IllegalMessageError : public std::logic_error {

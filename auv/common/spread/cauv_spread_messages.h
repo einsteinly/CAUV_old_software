@@ -44,28 +44,28 @@ public:
     /**
      * @return The private group name of the sending connection.
      */
-    const std::string &getSenderName();
+    const std::string &getSenderName() const;
 
     /**
      * @return A value representing the service level (mess, ordered, etc.)
      * and Spread message type (membership, regular) of the message.
      */
-    const Spread::service getServiceType();
+    const Spread::service getServiceType() const;
 
     /**
      * @return The type of the application message as indicated by the sender.
      */
-    const int getMessageType();
+    const int getMessageType() const;
 
     /**
      * @return A list of all groups that received this message.
      */
-    const std::vector<const std::string> &getReceivingGroupNames();
+    const std::vector<const std::string> &getReceivingGroupNames() const;
 
     /**
      * @return The actual application message data.
      */
-    const ApplicationMessage &getMessage();
+    const ApplicationMessage &getMessage() const;
 };
 
 
@@ -84,7 +84,7 @@ public:
     /**
      * @return The name of a group affected by this membership change (precise meaning varies by message type).
      */
-    virtual const std::string &getAffectedGroupName() = 0;
+    virtual const std::string &getAffectedGroupName() const = 0;
 };
 
 
@@ -130,24 +130,24 @@ public:
     /**
      * @return The name of the group for which the membership change is occuring.
      */
-    virtual const std::string &getAffectedGroupName();
+    virtual const std::string &getAffectedGroupName() const;
 
     /**
      * @return A list of members in the affected group after the change has taken place.
      */
-    const std::vector<const std::string> &getRemainingGroupMembers();
+    const std::vector<const std::string> &getRemainingGroupMembers() const;
 
     /**
      * @return The type of membership change event that caused this message.
      */
-    const MembershipMessageCause getCause();
+    const MembershipMessageCause getCause() const;
 
     /**
      * @return A list of all the private group names of those mailboxes which came
      * with the receiving mailbox from the old group membership into this
      * new membership.
      */
-    const std::vector<const std::string> &getTransitioningMemberNames();
+    const std::vector<const std::string> &getTransitioningMemberNames() const;
 };
 
 
@@ -166,6 +166,6 @@ public:
     /**
      * @return The name of the group which this mailbox has left.
      */
-    virtual const std::string &getAffectedGroupName();
+    virtual const std::string &getAffectedGroupName() const;
 };
 #endif // CAUV_SPREAD_MESSAGES_H_INCLUDED
