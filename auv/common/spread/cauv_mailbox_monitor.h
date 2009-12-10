@@ -12,18 +12,18 @@
 
 class MailboxObserver {
 public:
-    virtual void applicationMessageReceived(ApplicationMessage &const message) = 0;
-    virtual void membershipMessageReceived(MembershipMessage &const message) = 0;
+    virtual void applicationMessageReceived(ApplicationMessage const& message) = 0;
+    virtual void membershipMessageReceived(MembershipMessage const& message) = 0;
 }; 
 typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
 class MailboxEventMonitor {
 public:
     MailboxEventMonitor(SpreadMailbox &mailbox)
-        : m_monitor_callable(mailbox), m_thread(NULL){
+        : m_thread_callable(mailbox), m_thread(NULL){
     }
 
-    void addObserver(mb_ovserver_ptr_t observer){
+    void addObserver(mb_observer_ptr_t observer){
         m_thread_callable.addObserver(ovserver);
     }
 
@@ -93,19 +93,18 @@ private:
                     }
                     l.release();
                     
-                    
-                    SpreadMessage m = m_mailbox.receiveMessage();
+                    boost::shared_ptr<SpreadMessage> m(m_mailbox.receiveMessage());
 
-                    m_observsers_lock.lock();
+                    m_observers_lock.lock();
                     BOOST_FOREACH(mb_observer_ptr_t& p, m_observers){
-                        if(m->getMessageType() == SpreadMessage::application_message){
+                        if(m->getMessageType() == SpreadMessage::REGULAR_MESSAGE){
                             p->applicationMessageReceived();
                         }else{
-                            assert(m->getMessageType() == SpreadMessage::membership_message);
+                            assert(m->getMessageType() == SpreadMessage::MEMBERSHIP_MESSAGE);
                             p->membershipMessageReceived();
                         }
                     }
-                    m_observsers_lock.unlock();
+                    m_observers_lock.unlock();
                 }
             }
 
