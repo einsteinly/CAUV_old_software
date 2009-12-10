@@ -21,6 +21,7 @@ class XsensIMU
 
         floatYPR getAttitude();
         void configure(CmtOutputMode &mode, CmtOutputSettings &settings);
+        void setObjectAlignmentMatrix(CmtMatrix m);
 
     private:
         xsens::Cmt3 m_cmt3;
