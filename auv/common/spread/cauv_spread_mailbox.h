@@ -7,6 +7,7 @@
 #include "cauv_spread_exceptions.h"
 #include "cauv_spread_messages.h"
 #include "../cauv_application_message.h"
+#include <boost/shared_ptr.hpp>
 
 
 /**
@@ -105,14 +106,14 @@ public:
      * be anything in the RegularMessage or MembershipMessage hierarchies.
      * @return An object containing the received message and associated metadata.
      */
-    virtual SpreadMessage receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
+    virtual boost::shared_ptr<SpreadMessage> receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
     /**
      * Similar to receiveMessage(), but the message is a group of submessages, allowing for
      * use in the scatter/gather paradigm. See the libssrcspread documentation. Not currently implemented.
      * @return An object containing the received message and associated metadata.
      */
-    virtual SpreadMessage receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
+    virtual boost::shared_ptr<SpreadMessage> receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
     int waitingMessageByteCount() const throw(InvalidSessionError, ConnectionError);
     bool isConnected() const { return !m_ssrcMailbox->killed(); }

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <boost/shared_ptr.hpp>
 #include "../cauv_application_message.h"
 
 /**
@@ -13,7 +14,7 @@ class SpreadMessage {
     friend class SpreadMailbox;
 public:
     enum MessageType { REGULAR_MESSAGE, MEMBERSHIP_MESSAGE };
-    MessageType getMessageType() { return Is_regular_mess(serviceType) ? REGULAR_MESSAGE : MEMBERSHIP_MESSAGE; }
+    virtual MessageType getMessageType() = 0;
 
 protected:
     /**
@@ -36,14 +37,11 @@ class RegularMessage : public SpreadMessage {
 
 protected:
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
-                    const std::vector<const std::string> &groups, const int messageType,
-                    ApplicationMessage &message );
+                    const boost::shared_ptr< std::vector<std::string> >groups, const int messageType,
+                    const MessageByteBuffer &bytes );
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
-                    const std::string groups[], const int numGroups, const int messageType,
-                    ApplicationMessage &message );
-    RegularMessage( const std::string &senderName, const Spread::service serviceType,
-                    const char *const groups[], const int numGroups, const int messageType,
-                    ApplicationMessage &message );
+                    const boost::shared_ptr< std::vector<std::string> >groups, const int messageType,
+                    const char * const bytes, const int byteCount );
 public:
     /**
      * @return The private group name of the sending connection.
@@ -70,6 +68,8 @@ public:
      * @return The actual application message data.
      */
     const ApplicationMessage &getMessage() const;
+
+    virtual MessageType getMessageType();
 };
 
 
@@ -84,6 +84,7 @@ public:
     MembershipMessage( const std::string &sender, const Spread::service serviceType,
                    const std::vector<const std::string> &groups, const int messageType )
         : SpreadMessage(sender, serviceType, groups, messageType) {}
+    virtual MessageType getMessageType();
 public:
     /**
      * @return The name of a group affected by this membership change (precise meaning varies by message type).
@@ -99,11 +100,11 @@ public:
  *   are 'clean up' messages to put the messages in a consistant state before actually
  *   changing memberships."
  */
-class TransitionalMembershipMessage : public MembershipMessage {
+class TransitionMembershipMessage : public MembershipMessage {
     friend class SpreadMailbox;
 
 protected:
-    TransitionalMembershipMessage( const std::string &sender, const Spread::service serviceType,
+    TransitionMembershipMessage( const std::string &sender, const Spread::service serviceType,
                    const std::vector<const std::string> &groups, const int messageType )
         : MembershipMessage(sender, serviceType, groups, messageType) {}
 public:
