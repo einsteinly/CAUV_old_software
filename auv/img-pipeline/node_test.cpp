@@ -21,23 +21,23 @@ int main(){
     node_ptr_t resize_node_2(new ResizeNode(s));
     
     // Arcs
-    in_node->setOutput("image_out", out_node, "image_in");
-    out_node->setInput("image_in", in_node, "image_out");
+    in_node->setOutput(out_node);
+    out_node->setInput(in_node);
 
-    in_node->setOutput("image_out", copy_node, "image_in");
-    copy_node->setInput("image_in", in_node, "image_out");
+    in_node->setOutput(copy_node);
+    copy_node->setInput(in_node);
 
     copy_node->setOutput("image_out_A", resize_node_2, "image_in");
     resize_node_2->setInput("image_in", copy_node, "image_out_A");
 
-    resize_node_2->setOutput("image_out", display_node, "image_in");
-    display_node->setInput("image_in", resize_node_2, "image_out");
+    resize_node_2->setOutput(display_node);
+    display_node->setInput(resize_node_2);
 
     copy_node->setOutput("image_out_B", resize_node, "image_in");
     resize_node->setInput("image_in", copy_node, "image_out_B");
     
-    resize_node->setOutput("image_out", out_node_small, "image_in");
-    out_node_small->setInput("image_in", resize_node, "image_out");
+    resize_node->setOutput(out_node_small);
+    out_node_small->setInput(resize_node);
     
     // Parameters
     in_node->setParam<std::string>("filename", "test.jpg");

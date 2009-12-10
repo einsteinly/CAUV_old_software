@@ -20,10 +20,24 @@ class Scheduler{
 };
 
 
-class id_error: public std::runtime_error{
+class img_pipeline_error: public std::runtime_error{
     public:
-        id_error(std::string str)
+        img_pipeline_error(std::string const& str)
             : std::runtime_error(str){
+        }
+};
+
+class id_error: public img_pipeline_error{
+    public:
+        id_error(std::string const& str)
+            : img_pipeline_error(str){
+        }
+};
+
+class link_error: public img_pipeline_error{
+    public:
+        link_error(std::string const& str)
+            : img_pipeline_error(str){
         }
 };
 
