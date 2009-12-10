@@ -8,6 +8,7 @@ SRCS = $(addsuffix .cpp, \
 $(addprefix common/,   cauv_node cauv_global cauv_utils cauv_types) \
 $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
+#$(addprefix common/spread/,  cauv) \ # Coming soon!
 $(addprefix img-pipeline/, img-pipeline) \
 )
 
@@ -27,7 +28,7 @@ control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
 img-pipeline_LIBS = common
-img-pipeline_PARAMS = 
+img-pipeline_PARAMS =
 
 # ================
 # Edit directories
@@ -54,7 +55,7 @@ MODLIBS = ${LIBMODULES:%=$(OBJDIR)/lib%.a}
 MODOBJS = ${MODULES:%=$(OBJDIR)/%.o}
 
 CC=g++
-ifdef RELEASE 
+ifdef RELEASE
 CFLAGS=-Wall -O3
 else
 CFLAGS=-Wall -g
@@ -99,7 +100,7 @@ $(MODLIBS): $$(MODLIBOBJ)
 	@$(AR) $(ARFLAGS) $@ $(MODLIBOBJ) >/dev/null
 
 EXTLIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(EXTLIBS))
-$(EXTLIBOBJS): 
+$(EXTLIBOBJS):
 	@echo "  [MAKE] $(patsubst $(OBJDIR)/lib%.a,%,$@) -C lib"
 	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)
 
