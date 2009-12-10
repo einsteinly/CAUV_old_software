@@ -8,7 +8,7 @@ typedef std::vector<char> MessageByteBuffer;
 class ApplicationMessage {
 public:
     virtual MessageByteBuffer getBytes() = 0;
-    virtual ApplicationMessage *deserialise(const MessageByteBuffer &bytes) = 0;
+    static ApplicationMessage *deserialise(const MessageByteBuffer &bytes);
 };
 
 /*

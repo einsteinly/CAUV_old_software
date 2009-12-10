@@ -22,7 +22,7 @@ protected:
      * in the Spread docs, so they vary depending on what the message type is (see derived classes).
      */
     SpreadMessage( const std::string &sender, const Spread::service serviceType,
-                   const std::vector<const std::string> &groups, const int messageType );
+                   const boost::shared_ptr< std::vector<std::string> >groups, const int messageType );
     Spread::service serviceType;
 };
 
@@ -82,7 +82,7 @@ class MembershipMessage : public SpreadMessage {
 
 public:
     MembershipMessage( const std::string &sender, const Spread::service serviceType,
-                   const std::vector<const std::string> &groups, const int messageType )
+                   const boost::shared_ptr< std::vector<std::string> >groups, const int messageType )
         : SpreadMessage(sender, serviceType, groups, messageType) {}
     virtual MessageType getMessageType();
 public:
@@ -105,13 +105,13 @@ class TransitionMembershipMessage : public MembershipMessage {
 
 protected:
     TransitionMembershipMessage( const std::string &sender, const Spread::service serviceType,
-                   const std::vector<const std::string> &groups, const int messageType )
+                   const boost::shared_ptr< std::vector<std::string> >groups, const int messageType )
         : MembershipMessage(sender, serviceType, groups, messageType) {}
 public:
     /**
      * @return The group whose membership is going to change.
      */
-    virtual const std::string &getAffectedGroupName();
+    virtual const std::string &getAffectedGroupName() const;
 };
 
 
@@ -129,7 +129,7 @@ class RegularMembershipMessage : public MembershipMessage {
 
 protected:
     RegularMembershipMessage( const std::string &sender, const Spread::service serviceType,
-                   const std::vector<const std::string> &groups, const int messageType )
+                   const boost::shared_ptr< std::vector<std::string> >groups, const int messageType )
         : MembershipMessage(sender, serviceType, groups, messageType) {}
 public:
     /**
@@ -165,7 +165,7 @@ class SelfLeaveMessage : public MembershipMessage {
 
 protected:
     SelfLeaveMessage( const std::string &sender, const Spread::service serviceType,
-                   const std::vector<const std::string> &groups, const int messageType )
+                   const boost::shared_ptr< std::vector<std::string> >groups, const int messageType )
         : MembershipMessage(sender, serviceType, groups, messageType) {}
 public:
     /**

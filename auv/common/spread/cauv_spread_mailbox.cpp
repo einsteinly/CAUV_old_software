@@ -1,9 +1,11 @@
 #include <vector>
 #include <ssrc/spread/Mailbox.h>
 #include "cauv_spread_mailbox.h"
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 using namespace ssrc::spread;
+using namespace boost;
 
 const ConnectionTimeout SpreadMailbox::ZERO_TIMEOUT;
 
@@ -106,8 +108,8 @@ GroupList *vectorToGroupList(const string & group) {
     list->add(group);
     return list;
 }
-vector<string> *groupListToVector(const GroupList &groups) {
-    vector<string> *v = new vector<string>( groups.size() );
+shared_ptr< vector<string> > groupListToVector(const GroupList &groups) {
+    shared_ptr< vector<string> > v ( new vector<string>( groups.size() ) );
     for( unsigned i = 0; i < groups.size(); i++ ) {
         v->push_back( groups.group(i) );
     }
@@ -157,18 +159,37 @@ int SpreadMailbox::sendMultigroupMessage(ApplicationMessage &message, Spread::se
 }
 
 
-SpreadMessage SpreadMailbox::receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
     Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
     GroupList groups;
     m_ssrcMailbox->receive(ssrcMsg, groups);
+    shared_ptr< vector<string> > groupVector = groupListToVector(groups);
     BaseMessage::service_type sType = ssrcMsg.service();
-    if( Is_regular_mess(sType) ) {
 
+    // TODO: Make sure each these is being initialised with the appropriate values for its message type
+    if( Is_regular_mess(sType) ) {
+        return shared_ptr<RegularMessage>( new RegularMessage( ssrcMsg.sender(), sType,
+                                           groupVector, ssrcMsg.type(), &ssrcMsg[0],
+                                           ssrcMsg.size() ) );   // [] operator returns ref to underlying array
+    }
+    else {  // Now we know it's a membership message
+        if( Is_transition_mess(sType) ) {
+            return shared_ptr<TransitionMembershipMessage>(
+                new TransitionMembershipMessage( ssrcMsg.sender(), sType, groupVector, ssrcMsg.type() ) );
+        }
+        else if( Is_reg_memb_mess(sType) ) {
+            return shared_ptr<RegularMembershipMessage>(
+                new RegularMembershipMessage( ssrcMsg.sender(), sType, groupVector, ssrcMsg.type() ) );
+        }
+        else { // Is_self_leave(sType)
+            return shared_ptr<SelfLeaveMessage>(
+                new SelfLeaveMessage( ssrcMsg.sender(), sType, groupVector, ssrcMsg.type() ) );
+        }
     }
 }
 
 
-SpreadMessage SpreadMailbox::receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+shared_ptr<SpreadMessage> SpreadMailbox::receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
     throw runtime_error("Not implemented");
 }
 
