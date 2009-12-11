@@ -10,7 +10,7 @@ LEX token definition for the automatic message generation
 %option yylineno
 
 %{
-#include "msg.h"
+#include "msg.syntax.h"
 #include "msg.yacc.hpp"
 
 #define IOSTREAM
@@ -19,17 +19,23 @@ LEX token definition for the automatic message generation
 
 %%
 
-group       return GROUP;
-msg			return MSG;
-\{			return LBRACE;
-\}			return RBRACE;
-\(			return LPAREN;
-\)			return RPAREN;
-;			return SEMICOLON;
-int|long|double		yylval.string=strdup(yytext); return TYPE;
+struct                  return STRUCT;
+group                   return GROUP;
+message                 return MSG;
+list                    return LIST;
+map                     return MAP;
+\{			            return LBRACE;
+\}			            return RBRACE;
+\(			            return LPAREN;
+\)                      return RPAREN;
+\<			            return LT;
+\>                      return GT;
+,                       return COMMA;
+:                       return COLON;
+;                       return SEMICOLON;
 [a-zA-Z_][a-zA-Z0-9_]*	yylval.string=strdup(yytext); return STR;
-[0-9]+			yylval.number=atoi(yytext); return ID;
-\n			/*ignore newlines*/
-[ \t]+			/*ignore whitespace*/
+[0-9]+                  yylval.number=atoi(yytext); return ID;
+\n                      /* ignore newlines */
+[ \t]+                  /* ignore whitespace */
 
 %%

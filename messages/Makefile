@@ -26,13 +26,15 @@ CFLAGS=-Wall -g
 endif
 override CFLAGS += -MD -MF $(DEPDIR)/$*.d
 
-
+.PHONY: all test
 all: $(DIRS) $(BINDIR)/$(EXE)
+
+test:
 	$(BINDIR)/$(EXE) sample_msg
 
 
 $(BINDIR)/$(EXE): $(OBJS)
-	$(CC) $(OBJS) -o $(BINDIR)/$(EXE)
+	$(CC) $(OBJS) -o $(BINDIR)/$(EXE) -lboost_program_options-mt -lboost_filesystem-mt
 
 DF = $(DEPDIR)/$*
 $(OBJDIR)/%.o: %.cpp
@@ -50,7 +52,7 @@ $(OBJDIR)/%.o: %.cpp
 	bison -t -o $*.yacc.cpp --defines=$*.yacc.hpp $<
 
 clean:
-	rm -rf $(DIRS) $(BINDIR)/$(EXE)
+	rm -rf $(DIRS) $(BINDIR)/$(EXE) *.yacc.* *.lex.* *.tab.*
 
 $(DIRS)::
 	@mkdir -p $@

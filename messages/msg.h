@@ -1,64 +1,17 @@
-/*
-    CAUV 2009/2010
-    Author: Clemens Wiltsche
-*/
+#ifndef __MSG_H__
+#define __MSG_H__
 
-/*
-   Syntax-tree definition for the message creation.
-*/
-
-#include <stdint.h>
 #include <vector>
+#include <set>
+#include <string>
+#include "msg.syntax.h"
+#include <FlexLexer.h>
 
-class Node
-{
-    public:
-        void print();
-};
+extern std::vector<Group*> groups;
+extern std::vector<Struct*> structs;
+extern std::set<std::string> valid_types;
 
-class Declaration : public Node
-{
-    private:
-        char *m_type;
-        char *m_name;
+extern yyFlexLexer* lexer;
+int yyparse();
 
-    public:
-        Declaration(char*, char*);
-
-        char* getName();
-        char* getType();
-        void print();
-};
-
-class Message : public Node
-{
-    private:
-        uint32_t m_id;
-        char *m_name;
-        std::vector<Declaration*>* m_declarations;
-
-    public:
-        Message(uint32_t, char*, std::vector<Declaration*>*);
-
-        uint32_t getId();
-        char* getName();
-        Declaration* getDeclaration(size_t);
-        void print();
-
-};
-
-class Group : public Node
-{
-    private:
-        uint32_t m_id;
-        char *m_name;
-        std::vector<Message*>* m_messages;	
-
-    public:
-        Group(uint32_t, char*, std::vector<Message*>*);
-
-        uint32_t getId();
-        char* getName();
-        Message* getMessage(size_t);
-        void print();
-};
+#endif//__MSG_H__

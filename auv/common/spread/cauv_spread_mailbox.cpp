@@ -129,17 +129,16 @@ int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service s
     }
     catch(Error e) {
         switch( e.error() ) {
-        case ILLEGAL_SESSION:
-            throw InvalidSessionError();
-            break;
-        case ILLEGAL_MESSAGE:
-            throw IllegalMessageError();
-            break;
-        default:
-            throw ConnectionError("Connection error occurred during send");
-            break;
+            case ILLEGAL_SESSION:
+                throw InvalidSessionError();
+            case ILLEGAL_MESSAGE:
+                throw IllegalMessageError();
+            default:
+                throw ConnectionError("Connection error occurred during send");
         }
     }
+    // Should never reach this point
+    return 0;
 }
 
 int SpreadMailbox::sendMessage(ApplicationMessage &message, Spread::service serviceType,

@@ -8,61 +8,137 @@ Author: Clemens Wiltsche
    Here lie the declarations of the class-member functions.
    */
 
-#include <stdint.h>	//for uint32_t
-#include <stdio.h>	//for printf
-#include "msg.h"	//for the class definitions
-#include <vector>	//for vector
+#include <boost/cstdint.hpp>     //for uint32_t
+#include <iostream>
+#include <sstream>
+#include "msg.syntax.h" //for the class definitions
+#include <vector>       //for vector
+#include <boost/format.hpp>
 #ifndef foreach
 #   include <boost/foreach.hpp>
 #   define foreach BOOST_FOREACH
 #endif
 
+Node::~Node()
+{
+}
+
+//Type functions
+TypeType Type::getType() const
+{
+    return m_type;
+}
+Type::~Type()
+{
+}
+
+//Type constructor
+Type::Type(TypeType type) : m_type(type)
+{
+}
+
+BaseType::BaseType(char* name) : Type(TYPE_BASE), m_name(name) {}
+BaseType::~BaseType()
+{
+    delete m_name;
+}
+char* BaseType::getName() const
+{
+    return m_name;
+}
+ListType::ListType(Type* valType) : Type(TYPE_LIST), m_valType(valType) {}
+ListType::~ListType()
+{
+    delete m_valType;
+}
+Type* ListType::getValType() const
+{
+    return m_valType;
+}
+MapType::MapType(Type* keyType, Type* valType) : Type(TYPE_MAP), m_keyType(keyType), m_valType(valType) {}
+MapType::~MapType()
+{
+    delete m_keyType;
+    delete m_valType;
+}
+Type* MapType::getKeyType() const
+{
+    return m_keyType;
+}
+Type* MapType::getValType() const
+{
+    return m_valType;
+}
+
+
+string BaseType::to_string() const
+{
+    return m_name;
+}
+string ListType::to_string() const
+{
+    return str(boost::format("list< %1% >") % m_valType->to_string());
+}
+string MapType::to_string() const
+{
+    return str(boost::format("map< %s, %s >") % m_keyType->to_string() % m_valType->to_string());
+}
+
+////
 
 //Declaration functions
-char* Declaration::getName()
+char* Declaration::getName() const
 {
     return m_name;
 }
 
-char* Declaration::getType()
+Type* Declaration::getType() const
 {
     return m_type;
 }
 
-void Declaration::print()
+string Declaration::to_string() const
 {
-    printf("\t\t%s %s;\n", m_type, m_name);
+    return str(boost::format("\t\t%1% : %2%") % m_name % m_type->to_string());
 }
 
 //Declaration constructor
-Declaration::Declaration(char* name, char* type) :
+Declaration::Declaration(char* name, Type* type) :
     m_type(type),
     m_name(name)
 {
+}
+Declaration::~Declaration()
+{
+    delete m_name;
+    delete m_type;
 }
 
 
 ////
 
 //Message functions
-char* Message::getName()
+char* Message::getName() const
 {
     return m_name;
 }
 
-uint32_t Message::getId()
+uint32_t Message::getId() const
 {
     return m_id;
 }
 
-void Message::print()
+string Message::to_string() const
 {
-    printf("\tmsg %s(%d) \n\t{\n", m_name, m_id);
+    stringstream ss;
+    ss << "\tmessage" << m_name << " : " << m_id << endl;
+    ss << "\t{" << endl;
     foreach(Declaration *d, *m_declarations)
     {
-        d->print();
+        ss << d->to_string() << endl;
     }
-    printf("\t}\n");
+    ss << "\t}";
+    return ss.str();
 }
 
 
@@ -73,45 +149,104 @@ Message::Message(uint32_t id, char *name, std::vector<Declaration*>* declaration
     m_declarations(declarations)
 {
 }
-
-Declaration* Message::getDeclaration(size_t declaration_num)
+Message::~Message()
 {
-    return this->m_declarations->at(declaration_num);
+    delete m_name;
+    foreach(Declaration *d, *m_declarations)
+    {
+        delete d;
+    }
+    delete m_declarations;
+}
+
+const std::vector<Declaration*>& Message::getDeclarations() const
+{
+    return *this->m_declarations;
+}
+
+
+////
+
+//Struct functions
+char* Struct::getName() const
+{
+    return m_name;
+}
+
+string Struct::to_string() const
+{
+    stringstream ss;
+    ss << "\tstruct" << m_name << endl;
+    ss << "\t{" << endl;
+    foreach(Declaration *d, *m_declarations)
+    {
+        ss << d->to_string() << endl;
+    }
+    ss << "\t}";
+    return ss.str();
+}
+
+
+//Struct constructor
+Struct::Struct(char *name, std::vector<Declaration*>* declarations) :
+    m_name(name),
+    m_declarations(declarations)
+{
+}
+Struct::~Struct()
+{
+    delete m_name;
+    foreach(Declaration *d, *m_declarations)
+    {
+        delete d;
+    }
+    delete m_declarations;
+}
+
+const std::vector<Declaration*>& Struct::getDeclarations() const
+{
+    return *this->m_declarations;
 }
 
 
 ////
 
 //Group functions
-char* Group::getName()
+char* Group::getName() const
 {
     return m_name;
 }
 
-uint32_t Group::getId()
+string Group::to_string() const
 {
-    return m_id;
-}
-
-void Group::print()
-{
-    printf("group %s(%d) \n{\n", m_name, m_id);
+    stringstream ss;
+    ss << "group" << m_name << endl;
+    ss << "{" << endl;
     foreach(Message *m, *m_messages)
     {
-        m->print();
+        ss << m->to_string() << endl;
     }
-    printf("}\n");
+    ss << "}";
+    return ss.str();
 }
 
 //Group constructor
-Group::Group(uint32_t id, char *name, std::vector<Message*>* messages) :
-    m_id(id),
+Group::Group(char *name, std::vector<Message*>* messages) :
     m_name(name),
     m_messages(messages)
 {
 }
-
-Message* Group::getMessage(size_t message_num)
+Group::~Group()
 {
-    return this->m_messages->at(message_num);
+    delete m_name;
+    foreach(Message *m, *m_messages)
+    {
+        delete m;
+    }
+    delete m_messages;
+}
+
+const std::vector<Message*>& Group::getMessages() const
+{
+    return *this->m_messages;
 }
