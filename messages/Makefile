@@ -34,7 +34,7 @@ test:
 
 
 $(BINDIR)/$(EXE): $(OBJS)
-	$(CC) $(OBJS) -o $(BINDIR)/$(EXE) -lboost_program_options-mt -lboost_filesystem-mt
+	$(CC) $(OBJS) -o $(BINDIR)/$(EXE) -lboost_program_options -lboost_filesystem
 
 DF = $(DEPDIR)/$*
 $(OBJDIR)/%.o: %.cpp

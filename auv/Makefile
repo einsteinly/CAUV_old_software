@@ -131,7 +131,7 @@ CCF = $(filter %.cpp, $^)
 DF = $(DEPDIR)/$*
 $(DEPDIR)/%.d : %.cpp
 	@mkdir -p $(dir $(DF))
-	@echo -n "  [MAKEDEPEND] $(CCF)\E[m"
+	@echo -n "  [MAKEDEPEND] $(CCF)"
 	@$(CC) $(CFLAGS) -M -MG -MF $(DF).d -MT $(OBJDIR)/$*.o $(CCF)   $(SHOWOK)
 
 $(OBJDIR)/%.e : %
