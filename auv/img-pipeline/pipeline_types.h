@@ -1,3 +1,5 @@
+#ifndef __PIPELINE_TYPES_H__
+#define __PIPELINE_TYPES_H__
 
 #include <string>
 #include <exception>
@@ -41,6 +43,13 @@ class link_error: public img_pipeline_error{
         }
 };
 
+class node_type_error: public img_pipeline_error{
+    public:
+        node_type_error(std::string const& str)
+            : img_pipeline_error(str){
+        }
+};
+
 
 typedef boost::variant<float, int, std::string> param_value_t;
 
@@ -50,3 +59,5 @@ typedef std::string node_id;
 typedef std::string param_id;
 typedef std::string input_id;
 typedef std::string output_id;
+
+#endif // ndef __PIPELINE_TYPES_H__

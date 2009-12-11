@@ -49,6 +49,12 @@ class FileOutputNode: public Node{
             
             return r;
         }
+    
+    // Register this node type
+    DECLARE_NFR;
 };
+
+// Register this node type
+DEFINE_NFR(FileOutputNode, nt_file_output);
 
 #endif // ndef __FILE_OUTPUT_NODE_H__

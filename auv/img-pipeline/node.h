@@ -4,6 +4,7 @@
 #include <map>
 #include <list>
 #include <stdexcept>
+#include <iostream>
 
 //#include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
@@ -13,6 +14,7 @@
 
 #include "image.h"
 #include "pipeline_types.h"
+#include "nodeFactory.h"
 
 class Node{
         // Private typedefs

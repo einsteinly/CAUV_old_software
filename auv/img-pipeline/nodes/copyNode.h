@@ -10,6 +10,7 @@
 
 #include "../node.h"
 #include "../image.h"
+#include "../nodeFactory.h"
 
 
 class CopyNode: public Node{
@@ -38,7 +39,14 @@ class CopyNode: public Node{
             
             return r;
         }
+        
+        // Register this node type
+        DECLARE_NFR;
 };
+
+// Register this node type
+DEFINE_NFR(CopyNode, nt_copy);
+
 
 #endif // ndef __COPY_NODE_H__
 
