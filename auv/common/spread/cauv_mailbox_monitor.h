@@ -13,7 +13,7 @@
 class MailboxObserver {
 public:
     virtual void applicationMessageReceived(boost::shared_ptr<ApplicationMessage> message) = 0;
-    virtual void membershipMessageReceived(boost::shared_ptr<MembershipMessaget> message) = 0;
+    virtual void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message) = 0;
 }; 
 typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
