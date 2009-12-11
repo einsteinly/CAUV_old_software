@@ -51,6 +51,8 @@ protected:
                     const StringVectorPtr groups, const int messageType,
                     const MessageByteBuffer &bytes )
             // TODO: Is there some way of just passing all the right parameters to the other constructor?
+            // TODO: Yes, try using magic, it normally works. Don't,
+            // however, use varargs; it breaks constructors.
             : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
               m_messageContents( ApplicationMessage::deserialise( &bytes[0], bytes.size() ) ) {}
     RegularMessage( const std::string &senderName, const Spread::service serviceType,

@@ -19,22 +19,27 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
                         timeout, (Mailbox::Priority)priority) );
     } catch(Error e) {
         const char *errMsg;
-
+        bool critical = false;
+        
         switch( e.error() ) {
         case ILLEGAL_SPREAD:
             errMsg = "Spread daemon port & host were not formatted correctly";
+            critical = true;
             break;
         case CONNECTION_CLOSED:
             errMsg = "Connection to Spread daemon was interrupted";
             break;
         case REJECT_VERSION:
             errMsg = "This client is the wrong version for the specified Spread daemon";
+            critical = true;
             break;
         case REJECT_NO_NAME:
             errMsg = "No private connection name provided";
+            critical = true;
             break;
         case REJECT_ILLEGAL_NAME:
             errMsg = "Illegal private connection name";
+            critical = true;
             break;
         case REJECT_NOT_UNIQUE:
             errMsg = "Private connection name already in use";
@@ -45,7 +50,7 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
             break;
         }
 
-        throw ConnectionError(errMsg);
+        throw ConnectionError(errMsg, critical);
     }
 }
 
@@ -129,16 +134,17 @@ int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service s
     }
     catch(Error e) {
         switch( e.error() ) {
-            case ILLEGAL_SESSION:
-                throw InvalidSessionError();
-            case ILLEGAL_MESSAGE:
-                throw IllegalMessageError();
-            default:
-                throw ConnectionError("Connection error occurred during send");
+        case ILLEGAL_SESSION:
+            throw InvalidSessionError();
+            break;
+        case ILLEGAL_MESSAGE:
+            throw IllegalMessageError();
+            break;
+        default:
+            throw ConnectionError("Connection error occurred during send");
+            break;
         }
     }
-    // Should never reach this point
-    return 0;
 }
 
 int SpreadMailbox::sendMessage(ApplicationMessage &message, Spread::service serviceType,

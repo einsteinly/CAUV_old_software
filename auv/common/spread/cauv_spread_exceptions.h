@@ -6,7 +6,15 @@
 
 class ConnectionError : public std::runtime_error {
 public:
-    explicit ConnectionError(const std::string &what) : std::runtime_error(what){}
+    explicit ConnectionError(const std::string &what, bool critical = false)
+        : std::runtime_error(what), m_critical(critical){}
+    
+    bool critical() const {
+        return m_critical;
+    }
+    
+private:
+    bool m_critical;
 };
 
 class InvalidSessionError : public std::logic_error {

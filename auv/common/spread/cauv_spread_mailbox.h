@@ -119,18 +119,5 @@ private:
         boost::shared_ptr<ssrc::spread::GroupList> const groupNames );
 };
 
-/**
- * A ReconnectingSpreadMailbox automatically handles disconnection problems by trying
-  * to reconnect, retrying whatever operation failed due to disconnection.
- */
-class ReconnectingSpreadMailbox : public SpreadMailbox {
-public:
-    ReconnectingSpreadMailbox(const std::string &portAndHost, const std::string &privateConnectionName = "",
-                  bool shouldReceiveMembershipMessages = true,
-                  const ConnectionTimeout &timeout = ZERO_TIMEOUT,
-                  MailboxPriority priority = MEDIUM) throw(ConnectionError)
-        : SpreadMailbox(portAndHost, privateConnectionName, shouldReceiveMembershipMessages,
-                        timeout, priority) {}
-};
 
 #endif // CAUV_SPREAD_MAILBOX_H_INCLUDED

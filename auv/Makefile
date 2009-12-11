@@ -26,8 +26,7 @@ EXEMODULES = control img-pipeline
 LIBMODULES = common module
 EXTLIBS = cmt
 
-COMMON_PARAMS = -lboost_serialization-mt -lspread -lssrcspread
-
+COMMON_PARAMS = -lboost_serialization -lspread -lssrcspread 
 control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
@@ -68,10 +67,10 @@ CFLAGS=-Wall -O3
 else
 CFLAGS=-Wall -g
 endif
-override CFLAGS += -I .
+override CFLAGS += -I . -I /societies/cauv/install/include/
 
 MAKEFLAGS=--no-print-directory
-LDFLAGS=
+override LDFLAGS += -L /societies/cauv/install/lib/
 ARFLAGS=rcs
 
 SHOWOK = 2>$@.err && if test -s $@.err ; then echo -e "  \E[1;33m[WARNING]\E[m" && cat $@.err ; else echo -e "  \E[1;32m[OK]\E[m" ; fi || echo -e "  \E[1;31m[ERROR]\E[m" && cat $@.err; rm -f $@.err
@@ -97,7 +96,7 @@ EXEOBJ = $(patsubst %,$(OBJDIR)/%.o,$(notdir $@))
 $(EXES): $$(EXEOBJ) $$(EXELIBDEPS)
 	@echo  === Making $(notdir $@) binary ===
 	@echo -n "  [CC]    $(EXEOBJ) -o $@   $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)"
-	@$(CC) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)    $(SHOWOK)
+	@$(CC) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)  $(LDFLAGS)  $(SHOWOK)
 	@echo
 
 MODLIBMOD = $(patsubst lib%.a,%,$(notdir $@))
