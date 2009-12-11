@@ -14,8 +14,9 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
                   const bool shouldReceiveMembershipMessages, const ConnectionTimeout &timeout,
                   const MailboxPriority priority) throw(ConnectionError) {
     try {
-        m_ssrcMailbox = new Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
-                                    timeout, (Mailbox::Priority)priority);
+        m_ssrcMailbox = shared_ptr<Mailbox>(
+            new Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
+                        timeout, (Mailbox::Priority)priority) );
     } catch(Error e) {
         const char *errMsg;
 
@@ -95,21 +96,21 @@ void SpreadMailbox::leaveGroup(const string &groupName)
     }
 }
 
-// Helper functions for converting between GroupLists and vectors (caller is responsible for deleting)
-GroupList *vectorToGroupList(const vector<string> &groups) {
-    GroupList *list = new GroupList( groups.size() );
+// Helper functions for converting between SSRC GroupLists and vectors
+shared_ptr<GroupList> vectorToGroupList(const vector<string> &groups) {
+    shared_ptr<GroupList> list = shared_ptr<GroupList>( new GroupList( groups.size() ) );
     for( vector<string>::const_iterator i = groups.begin(); i != groups.end(); i++ ) {
         list->add( *i );
     }
     return list;
 }
-GroupList *vectorToGroupList(const string & group) {
-    GroupList *list = new GroupList( 1 );
+shared_ptr<GroupList> stringToGroupList(const string & group) {
+    shared_ptr<GroupList> list = shared_ptr<GroupList>( new GroupList( 1 ) );
     list->add(group);
     return list;
 }
-shared_ptr< vector<string> > groupListToVector(const GroupList &groups) {
-    shared_ptr< vector<string> > v ( new vector<string>( groups.size() ) );
+StringVectorPtr groupListToVector(const GroupList &groups) {
+    StringVectorPtr v ( new vector<string>( groups.size() ) );
     for( unsigned i = 0; i < groups.size(); i++ ) {
         v->push_back( groups.group(i) );
     }
@@ -117,20 +118,16 @@ shared_ptr< vector<string> > groupListToVector(const GroupList &groups) {
 }
 
 int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service serviceType,
-        GroupList *const groupNames ) {
+        const shared_ptr<GroupList> groupNames ) {
     MessageByteBuffer bytes = message.getBytes();
     ScatterMessage spreadMsg;
     spreadMsg.add( &bytes.front(), bytes.size() ); // Grab the address of the first element of the byte array in memory
     spreadMsg.set_service(serviceType);
 
-    int sentBytes;
     try {
-        sentBytes = m_ssrcMailbox->send(spreadMsg, *groupNames);
-        delete groupNames;
+        return m_ssrcMailbox->send(spreadMsg, *groupNames);
     }
     catch(Error e) {
-        delete groupNames;
-
         switch( e.error() ) {
         case ILLEGAL_SESSION:
             throw InvalidSessionError();
@@ -143,13 +140,11 @@ int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service s
             break;
         }
     }
-
-    return sentBytes;
 }
 
 int SpreadMailbox::sendMessage(ApplicationMessage &message, Spread::service serviceType,
         const string &groupName) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
-    return doSendMessage( message, serviceType, vectorToGroupList(groupName) );
+    return doSendMessage( message, serviceType, stringToGroupList(groupName) );
 }
 
 
@@ -159,6 +154,19 @@ int SpreadMailbox::sendMultigroupMessage(ApplicationMessage &message, Spread::se
 }
 
 
+RegularMembershipMessage::MessageCause causeFromServiceType( Spread::service serviceType ) {
+    if( Is_caused_join_mess(serviceType) ) {
+        return RegularMembershipMessage::JOIN;
+    }
+    if( Is_caused_disconnect_mess(serviceType) ) {
+        return RegularMembershipMessage::DISCONNECT;
+    }
+    if( Is_caused_leave_mess(serviceType) ) {
+        return RegularMembershipMessage::LEAVE;
+    }
+    return RegularMembershipMessage::NETWORK;
+}
+
 shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
     Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
     GroupList groups;
@@ -166,7 +174,6 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() throw(InvalidSessionEr
     shared_ptr< vector<string> > groupVector = groupListToVector(groups);
     BaseMessage::service_type sType = ssrcMsg.service();
 
-    // TODO: Make sure each these is being initialised with the appropriate values for its message type
     if( Is_regular_mess(sType) ) {
         return shared_ptr<RegularMessage>( new RegularMessage( ssrcMsg.sender(), sType,
                                            groupVector, ssrcMsg.type(), &ssrcMsg[0],
@@ -175,25 +182,35 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() throw(InvalidSessionEr
     else {  // Now we know it's a membership message
         if( Is_transition_mess(sType) ) {
             return shared_ptr<TransitionMembershipMessage>(
-                new TransitionMembershipMessage( ssrcMsg.sender(), sType, groupVector, ssrcMsg.type() ) );
+                new TransitionMembershipMessage( ssrcMsg.sender() ) );
         }
         else if( Is_reg_memb_mess(sType) ) {
+            MembershipInfo info;
+            ssrcMsg.get_membership_info(info);
+            GroupList allMembers;
+            info.get_all_members(allMembers);
+
+            StringVectorPtr changedMembers;
+            if( info.caused_by_network() ) {
+                // For a network partition change, those who entered the new membership
+                // with the changed member are all those now in the same network segment
+                // as the changed member.
+                GroupList localMembers;
+                info.get_local_members(localMembers);
+                changedMembers = groupListToVector(localMembers);
+            }
+            else {
+                changedMembers = StringVectorPtr( new vector<string>(1) );
+                changedMembers->push_back( info.changed_member() );
+            }
+
             return shared_ptr<RegularMembershipMessage>(
-                new RegularMembershipMessage( ssrcMsg.sender(), sType, groupVector, ssrcMsg.type() ) );
+                new RegularMembershipMessage( ssrcMsg.sender(), causeFromServiceType(sType),
+                                              groupListToVector(allMembers), changedMembers ) );
         }
         else { // Is_self_leave(sType)
             return shared_ptr<SelfLeaveMessage>(
-                new SelfLeaveMessage( ssrcMsg.sender(), sType, groupVector, ssrcMsg.type() ) );
+                new SelfLeaveMessage( getPrivateGroupName() ) );
         }
     }
-}
-
-
-shared_ptr<SpreadMessage> SpreadMailbox::receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
-    throw runtime_error("Not implemented");
-}
-
-
-SpreadMailbox::~SpreadMailbox() {
-    delete m_ssrcMailbox;   // Disconnects if not previously disconnected
 }

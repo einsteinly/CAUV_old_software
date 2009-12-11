@@ -2,13 +2,17 @@
 #define CAUV_APPLICATION_MESSAGE_H_INCLUDED
 
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 typedef std::vector<char> MessageByteBuffer;
 
 class ApplicationMessage {
 public:
     virtual MessageByteBuffer getBytes() = 0;
-    static ApplicationMessage *deserialise(const MessageByteBuffer &bytes);
+    static boost::shared_ptr<ApplicationMessage> deserialise(const char *const bytes, const int byteCount) {
+        // TODO: Replace this with something functional
+        return boost::shared_ptr<ApplicationMessage>( (ApplicationMessage *)0 );
+    }
 };
 
 /*

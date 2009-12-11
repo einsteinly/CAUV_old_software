@@ -108,24 +108,15 @@ public:
      */
     virtual boost::shared_ptr<SpreadMessage> receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
-    /**
-     * Similar to receiveMessage(), but the message is a group of submessages, allowing for
-     * use in the scatter/gather paradigm. See the libssrcspread documentation. Not currently implemented.
-     * @return An object containing the received message and associated metadata.
-     */
-    virtual boost::shared_ptr<SpreadMessage> receiveScatterMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
-
     int waitingMessageByteCount() const throw(InvalidSessionError, ConnectionError);
     bool isConnected() const { return !m_ssrcMailbox->killed(); }
 
-    virtual ~SpreadMailbox();
-
 protected:
-    ssrc::spread::Mailbox *m_ssrcMailbox;
+    boost::shared_ptr< ssrc::spread::Mailbox > m_ssrcMailbox;
 
 private:
     int doSendMessage( ApplicationMessage &message, Spread::service serviceType,
-        ssrc::spread::GroupList *const groupNames );
+        boost::shared_ptr<ssrc::spread::GroupList> const groupNames );
 };
 
 /**
