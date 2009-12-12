@@ -26,7 +26,7 @@ EXEMODULES = control img-pipeline
 LIBMODULES = common module
 EXTLIBS = cmt
 
-COMMON_PARAMS = -lboost_serialization -lspread -lssrcspread 
+COMMON_PARAMS = -lboost_serialization -lspread -lssrcspread -lboost_thread
 control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 

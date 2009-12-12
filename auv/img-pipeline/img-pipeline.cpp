@@ -7,6 +7,9 @@
 #include <common/cauv_utils.h>
 #include <common/cauv_types.h>
 
+#include <common/spread/cauv_spread_rc_mailbox.h>
+#include <common/spread/cauv_mailbox_monitor.h>
+
 using namespace std;
 
 
@@ -19,7 +22,6 @@ ImagePipelineNode::~ImagePipelineNode()
 {
 }
 
-
 void ImagePipelineNode::onRun()
 {
     CauvNode::onRun();
@@ -27,14 +29,29 @@ void ImagePipelineNode::onRun()
     // This is the forwarding thread
     // It doesn't do anything yet
     
+    typedef boost::shared_ptr<ReconnectingSpreadMailbox> rsb_ptr_t;
+    rsb_ptr_t rc_mb(new ReconnectingSpreadMailbox(
+        "16707@localhost", "img-pipeline connection"
+    ));
+    
+    MailboxEventMonitor event_monitor(rc_mb);
+
+    event_monitor.addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver));
+    
+    event_monitor.startMonitoring();
+
+    int i = 0;
     while (true) {
-        cout << "Yawn" << endl;
+        if(!(i++ & 0xff))
+            cout << "Nothing happening..." << std::endl;
+
+        cout << "." << std::flush;
         
         //
         // Do stuff here
         //
 
-        msleep(10);
+        msleep(100);
     }
 }
 
