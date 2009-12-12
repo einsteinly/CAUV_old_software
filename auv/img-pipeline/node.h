@@ -13,7 +13,7 @@
 #include <boost/foreach.hpp>
 
 #include "image.h"
-#include "pipeline_types.h"
+#include "pipelineTypes.h"
 #include "nodeFactory.h"
 
 class Node{

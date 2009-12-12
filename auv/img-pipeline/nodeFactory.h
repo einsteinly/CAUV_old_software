@@ -29,7 +29,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include "pipeline_types.h"
+#include "pipelineTypes.h"
 
 
 /* These make registering your new node type a little easier */
