@@ -9,6 +9,7 @@
 
 #include <common/spread/cauv_spread_rc_mailbox.h>
 #include <common/spread/cauv_mailbox_monitor.h>
+#include <common/spread/cauv_msgsrc_mb_observer.h>
 
 using namespace std;
 
@@ -38,7 +39,13 @@ void ImagePipelineNode::onRun()
 
     event_monitor.addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver));
     
+    boost::shared_ptr<MsgSrcMBMonitor> mbm(new MsgSrcMBMonitor);
+    
+    //mbm->addObserver()
+    event_monitor.addObserver(mbm);
+    
     event_monitor.startMonitoring();
+    //mbm->addObserver()
 
     int i = 0;
     while (true) {

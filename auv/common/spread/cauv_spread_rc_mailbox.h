@@ -24,7 +24,8 @@ public:
                               bool recvMembershipMessages = true,
                               ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
                               SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) throw()
-        : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority){
+        : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority),
+          m_connection_state(NC){
         _asyncConnect();
     }
 
