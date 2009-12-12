@@ -6,7 +6,7 @@
 #include <ssrc/spread/Mailbox.h>
 #include "cauv_spread_exceptions.h"
 #include "cauv_spread_messages.h"
-#include "../cauv_application_message.h"
+#include <common/messages.h>
 #include <boost/shared_ptr.hpp>
 
 
@@ -92,13 +92,13 @@ public:
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMessage(ApplicationMessage &message, Spread::service serviceType, const std::string &destinationGroup)
+    virtual int sendMessage(Message &message, Spread::service serviceType, const std::string &destinationGroup)
         throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMultigroupMessage(ApplicationMessage &message, Spread::service serviceType,
+    virtual int sendMultigroupMessage(Message &message, Spread::service serviceType,
         const std::vector<std::string> &groupNames) throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
     /**
@@ -115,7 +115,7 @@ protected:
     boost::shared_ptr< ssrc::spread::Mailbox > m_ssrcMailbox;
 
 private:
-    int doSendMessage( ApplicationMessage &message, Spread::service serviceType,
+    int doSendMessage( Message &message, Spread::service serviceType,
         boost::shared_ptr<ssrc::spread::GroupList> const groupNames );
 };
 

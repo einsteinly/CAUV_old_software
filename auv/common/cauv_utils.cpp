@@ -1,5 +1,7 @@
 #include "cauv_utils.h"
 
+using namespace std;
+
 MakeString::operator string() const {
     return stream.str();
 }

@@ -2,24 +2,35 @@
 #define CAUV_MAILBOX_MONITOR_H_INCLUDED
 
 #include <set>
+#include <iostream>
 
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 
-#include "cauv_spread_mailbox.h"
+#include "cauv_spread_rc_mailbox.h"
 #include "cauv_spread_messages.h"
 
 class MailboxObserver {
 public:
-    virtual void applicationMessageReceived(boost::shared_ptr<ApplicationMessage> message) = 0;
+    virtual void regularMessageReceived(boost::shared_ptr<RegularMessage> message) = 0;
     virtual void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message) = 0;
 };
 typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
+class TestMBObserver: public MailboxObserver{
+    void regularMessageReceived(boost::shared_ptr<RegularMessage> message) {
+        std::cerr << "TestMBObserver: regular message received" << std::endl;
+    }
+    
+    void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message){
+        std::cerr << "TestMBObserver: membership message received" << std::endl;
+    }
+};
+
 class MailboxEventMonitor {
 public:
-    MailboxEventMonitor(SpreadMailbox &mailbox)
+    MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
             : m_thread_callable(mailbox) {
     }
 
@@ -60,7 +71,7 @@ private:
      */
     class MonitorThreadCallable {
     public:
-        MonitorThreadCallable(SpreadMailbox &mailbox)
+        MonitorThreadCallable(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
                 : m_mailbox(mailbox), m_stop_lock(), m_stop(false),
                 m_observers_lock(), m_observers() {
         }
@@ -94,12 +105,12 @@ private:
                 }
                 l.unlock();
 
-                boost::shared_ptr<SpreadMessage> m( m_mailbox.receiveMessage() );
+                boost::shared_ptr<SpreadMessage> m( m_mailbox->receiveMessage() );
 
                 m_observers_lock.lock();
                 if (m->getMessageFlavour() == SpreadMessage::REGULAR_MESSAGE) {
                     BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
-                        p->applicationMessageReceived(boost::dynamic_pointer_cast<ApplicationMessage, SpreadMessage>(m));
+                        p->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
                     }
                 } else {
                     // TODO: do we want to leave asserts in production code?
@@ -113,7 +124,7 @@ private:
         }
 
     private:
-        SpreadMailbox& m_mailbox;
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
 
         boost::recursive_mutex m_stop_lock;
         bool m_stop;

@@ -24,7 +24,7 @@ CFLAGS=-Wall -O3
 else
 CFLAGS=-Wall -g
 endif
-override CFLAGS += -MD -MF $(DEPDIR)/$*.d
+override CFLAGS += -MD -MF $(DEPDIR)/$*.d -I /societies/cauv/install/include/
 
 .PHONY: all test
 all: $(DIRS) $(BINDIR)/$(EXE)
@@ -34,7 +34,7 @@ test:
 
 
 $(BINDIR)/$(EXE): $(OBJS)
-	$(CC) $(OBJS) -o $(BINDIR)/$(EXE) -lboost_program_options -lboost_filesystem
+	$(CC) $(OBJS) -o $(BINDIR)/$(EXE) -L /societies/cauv/install/lib/ -lboost_program_options -lboost_filesystem
 
 DF = $(DEPDIR)/$*
 $(OBJDIR)/%.o: %.cpp

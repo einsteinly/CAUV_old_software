@@ -8,7 +8,7 @@
 class ControlNode : public CauvNode
 {
     public:
-        ControlNode(const string& group);
+        ControlNode(const std::string& group);
         virtual ~ControlNode();
     
     protected:

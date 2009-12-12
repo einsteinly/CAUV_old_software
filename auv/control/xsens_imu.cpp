@@ -1,3 +1,6 @@
+#include <string>
+#include <iostream>
+
 #include <lib/xsens/cmtdef.h>
 #include <lib/xsens/xsens_time.h>
 #include <lib/xsens/xsens_list.h>
@@ -6,6 +9,8 @@
 #include <lib/xsens/cmtpacket.h>
 
 #include "xsens_imu.h"
+
+using namespace std;
 
 XsensException::XsensException(const string& msg) : message(msg) { }
 
@@ -104,7 +109,7 @@ floatYPR XsensIMU::getAttitude()
     } while (!packet.containsOriEuler());
 
     CmtEuler e = packet.getOriEuler();
-    floatYPR ret(e.m_yaw, e.m_pitch, e.m_roll);
+    floatYPR ret = {e.m_yaw, e.m_pitch, e.m_roll};
     return ret;
 }
 

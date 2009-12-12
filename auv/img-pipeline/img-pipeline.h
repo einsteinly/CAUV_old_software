@@ -3,11 +3,10 @@
 
 #include <common/cauv_node.h>
 
-
 class ImagePipelineNode : public CauvNode
 {
     public:
-        ImagePipelineNode(const string& group);
+        ImagePipelineNode(const std::string& group);
         virtual ~ImagePipelineNode();
     
     protected:

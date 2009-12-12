@@ -4,6 +4,12 @@ struct floatYPR
     pitch : float;
     roll : float;
 }
+struct floatXYZ
+{
+    x : float;
+    y : float;
+    z : float;
+}
 
 group control
 {
