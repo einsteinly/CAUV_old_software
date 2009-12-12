@@ -10,18 +10,16 @@
 #   define foreach BOOST_FOREACH
 #endif
 
-using namespace std;
-
 class MakeString
 {
     public:
-        operator string() const;
+        operator std::string() const;
 
         template<class T>
         MakeString& operator<<(T const& VAR) { stream << VAR; return *this; }
     
     protected:
-        stringstream stream;
+        std::stringstream stream;
 };
 
 template <typename T, typename U> T convert_to(const U& in)
@@ -30,15 +28,15 @@ template <typename T, typename U> T convert_to(const U& in)
 }
 
 template <typename T>
-inline string to_string (const T& t)
+inline std::string to_string (const T& t)
 {
-	stringstream ss;
+	std::stringstream ss;
 	ss << t;
 	return ss.str();
 }
 
 void msleep(int milliseconds);
 
-uint16_t sumOnesComplement(vector<uint16_t> bytes);
+uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
 #endif//__CAUV_UTILS_H__

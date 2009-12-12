@@ -44,6 +44,12 @@ class ResizeNode: public Node{
             
             return r;
         }
+    
+    // Register this node type
+    DECLARE_NFR;
 };
+
+// Register this node type
+DEFINE_NFR(ResizeNode, nt_resize);
 
 #endif // ndef __RESIZE_NODE_H__

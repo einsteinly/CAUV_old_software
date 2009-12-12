@@ -24,15 +24,17 @@ CFLAGS=-Wall -O3
 else
 CFLAGS=-Wall -g
 endif
-override CFLAGS += -MD -MF $(DEPDIR)/$*.d
+override CFLAGS += -MD -MF $(DEPDIR)/$*.d -I /societies/cauv/install/include/
 
-
+.PHONY: all test
 all: $(DIRS) $(BINDIR)/$(EXE)
+
+test:
 	$(BINDIR)/$(EXE) sample_msg
 
 
 $(BINDIR)/$(EXE): $(OBJS)
-	$(CC) $(OBJS) -o $(BINDIR)/$(EXE)
+	$(CC) $(OBJS) -o $(BINDIR)/$(EXE) -L /societies/cauv/install/lib/ -lboost_program_options -lboost_filesystem
 
 DF = $(DEPDIR)/$*
 $(OBJDIR)/%.o: %.cpp
@@ -50,7 +52,7 @@ $(OBJDIR)/%.o: %.cpp
 	bison -t -o $*.yacc.cpp --defines=$*.yacc.hpp $<
 
 clean:
-	rm -rf $(DIRS) $(BINDIR)/$(EXE)
+	rm -rf $(DIRS) $(BINDIR)/$(EXE) *.yacc.* *.lex.* *.tab.*
 
 $(DIRS)::
 	@mkdir -p $@

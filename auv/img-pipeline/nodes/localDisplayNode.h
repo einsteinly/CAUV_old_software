@@ -37,6 +37,13 @@ class LocalDisplayNode: public Node{
             
             return r;
         }
+    
+    // Register this node type
+    DECLARE_NFR;
 };
+
+// Register this node type
+DEFINE_NFR(LocalDisplayNode, nt_local_display);
+
 
 #endif // ndef __LOCAL_DISPLAY_NODE_H__

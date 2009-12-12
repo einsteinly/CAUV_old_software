@@ -1,17 +1,38 @@
-group sample_group(40)
+struct floatYPR
 {
-	msg sample_msg_two(23)
-	{
-		int speedx;
-		int speedy;
-		int speedz;
-	}
+    yaw : float;
+    pitch : float;
+    roll : float;
+}
 
-	msg sample_msg_two(52)
+group control
+{
+	message Motor : 2
 	{
-		long id;
-		double data;
-	}
-		
+	    motorId : uint8;
+	    speed : int8;
+    }
+}
+group telemetry
+{
+	message Telemetry : 3
+	{
+	    orientation : floatYPR;
+    }
+}
+group image
+{
+	message Image : 4
+	{
+	    type : int8;
+        image : list<byte>;
+    }
+}
+group debug
+{
+	message Debug : 5
+	{
+	    msg : string;
+    }
 }
 

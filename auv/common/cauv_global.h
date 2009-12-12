@@ -3,8 +3,6 @@
 
 #include <string>
 
-using namespace std;
-
 class cauv_global
 {
 	public:
@@ -12,15 +10,15 @@ class cauv_global
 		
 		//static void set_mailbox(SpreadMailbox* socket);
 		
-		void send_trace(const string& msg) const;
-		void send_error(const string& msg) const;
+		void send_trace(const std::string& msg) const;
+		void send_error(const std::string& msg) const;
 
-		static void trace(const string& msg);
-		static void error(const string& msg);
-		static void error(const string& exception_type, exception& e);
+		static void trace(const std::string& msg);
+		static void error(const std::string& msg);
+		static void error(const std::string& exception_type, std::exception& e);
 		
-        static void print_logo(char* start, char* end, const string& module_name);
-		static void print_module_header(const string& module_name);
+        static void print_logo(char* start, char* end, const std::string& module_name);
+		static void print_module_header(const std::string& module_name);
 	
     private:
 		static cauv_global* m_current;
