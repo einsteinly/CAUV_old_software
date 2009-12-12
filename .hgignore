@@ -2,6 +2,9 @@ syntax: glob
 *.swp
 *.o
 *.a
+*~
+*.old?
+*.orig
 *.lex.*
 *.yacc.*
 *.tab.*
