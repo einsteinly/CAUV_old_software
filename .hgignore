@@ -5,6 +5,7 @@ syntax: glob
 *.lex.*
 *.yacc.*
 *.tab.*
+*.class
 */bin/*
 */.obj/*
 */.deps/*

@@ -28,4 +28,11 @@ group image
         image : list<byte>;
     }
 }
+group debug
+{
+	message Debug : 5
+	{
+	    msg : string;
+    }
+}
 

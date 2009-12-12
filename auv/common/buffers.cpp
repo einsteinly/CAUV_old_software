@@ -1,51 +1,47 @@
 #include "buffers.h"
 
-using namespace std;
-
-char_array_buffer::char_array_buffer(const char *begin, const char *end) :
-    m_begin(begin),
-    m_end(end),
-    m_current(m_begin)
+char_vector_readbuffer::char_vector_readbuffer(const std::vector<char>& bytes) : m_bytes(bytes)
 {
 }
 
-char_array_buffer::int_type char_array_buffer::underflow()
+char_vector_readbuffer::int_type char_vector_readbuffer::underflow()
 {
-    if (m_current == m_end)
+    if (m_pos == m_bytes.size())
         return traits_type::eof();
 
-    return *m_current;
+    return m_bytes[m_pos];
 }
-char_array_buffer::int_type char_array_buffer::uflow()
+char_vector_readbuffer::int_type char_vector_readbuffer::uflow()
 {
-    if (m_current == m_end)
+    if (m_pos == m_bytes.size())
         return traits_type::eof();
 
-    return *m_current++;
+    return m_bytes[m_pos++];
 }
-char_array_buffer::int_type char_array_buffer::pbackfail(int_type ch)
+char_vector_readbuffer::int_type char_vector_readbuffer::pbackfail(int_type ch)
 {
-    if (m_current == m_begin || (ch != traits_type::eof() && ch != m_current[-1]))
+    if (m_pos == 0 || (ch != traits_type::eof() && ch != m_bytes[m_pos - 1]))
         return traits_type::eof();
 
-    return *--m_current;
+    return m_bytes[m_pos--];
 }
-std::streamsize char_array_buffer::showmanyc()
+std::streamsize char_vector_readbuffer::showmanyc()
 {
-    return m_end - m_current;
+    return m_bytes.size() - m_pos;
 }
 
 
 
-char_vector_buffer::char_vector_buffer()
+char_vector_writebuffer::char_vector_writebuffer()
 {
     setp(0,0);
 }
-const vector<char>& char_vector_buffer::getVector() const
+const std::vector<char> char_vector_writebuffer::getVector() const
 {
     return m_buffer;
 }
-char_vector_buffer::int_type char_vector_buffer::overflow(int_type ch)
+
+char_vector_writebuffer::int_type char_vector_writebuffer::overflow(int_type ch)
 {
     m_buffer.push_back(ch);
     return 1;
