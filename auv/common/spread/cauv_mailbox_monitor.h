@@ -13,14 +13,14 @@
 
 class MailboxObserver {
 public:
-    virtual void applicationMessageReceived(boost::shared_ptr<ApplicationMessage> message) = 0;
+    virtual void regularMessageReceived(boost::shared_ptr<RegularMessage> message) = 0;
     virtual void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message) = 0;
 };
 typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
 class TestMBObserver: public MailboxObserver{
-    void applicationMessageReceived(boost::shared_ptr<ApplicationMessage> message) {
-        std::cerr << "TestMBObserver: Application message received" << std::endl;
+    void regularMessageReceived(boost::shared_ptr<RegularMessage> message) {
+        std::cerr << "TestMBObserver: regular message received" << std::endl;
     }
     
     void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message){
@@ -110,7 +110,7 @@ private:
                 m_observers_lock.lock();
                 if (m->getMessageFlavour() == SpreadMessage::REGULAR_MESSAGE) {
                     BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
-                        p->applicationMessageReceived(boost::dynamic_pointer_cast<ApplicationMessage, SpreadMessage>(m));
+                        p->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
                     }
                 } else {
                     // TODO: do we want to leave asserts in production code?

@@ -10,7 +10,8 @@
 
 #include <lib/xsens/cmt3.h>
 
-#include <common/cauv_types.h>
+#include <common/messages.h>
+
 
 class XsensIMU
 {
@@ -29,12 +30,12 @@ class XsensIMU
 };
 
 
-class XsensException : public exception
+class XsensException : public std::exception
 {
     protected:
-        string message;
+        std::string message;
     public:
-        XsensException(const string& msg);
+        XsensException(const std::string& msg);
         ~XsensException() throw();
         virtual const char* what() const throw();
 };

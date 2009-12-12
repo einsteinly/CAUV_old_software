@@ -1,8 +1,6 @@
 #include <streambuf>
 #include <vector>
 
-using namespace std;
-
 class char_array_buffer : public std::streambuf
 {
     public:
@@ -30,7 +28,7 @@ class char_vector_buffer : public std::streambuf
 {
     public:
         char_vector_buffer();
-        const vector<char>& getVector() const;
+        const std::vector<char>& getVector() const;
 
     private:
         int_type overflow(int_type ch);

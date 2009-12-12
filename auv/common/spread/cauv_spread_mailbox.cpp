@@ -4,8 +4,10 @@
 #include <boost/shared_ptr.hpp>
 
 using namespace std;
-using namespace ssrc::spread;
 using namespace boost;
+using ssrc::spread::Mailbox;
+using ssrc::spread::Error;
+using ssrc::spread::GroupList;
 
 const ConnectionTimeout SpreadMailbox::ZERO_TIMEOUT;
 
@@ -122,11 +124,11 @@ StringVectorPtr groupListToVector(const GroupList &groups) {
     return v;
 }
 
-int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service serviceType,
+int SpreadMailbox::doSendMessage( Message &message, Spread::service serviceType,
         const shared_ptr<GroupList> groupNames ) {
-    MessageByteBuffer bytes = message.getBytes();
-    ScatterMessage spreadMsg;
-    spreadMsg.add( &bytes.front(), bytes.size() ); // Grab the address of the first element of the byte array in memory
+    vector<char> bytes = message.toBytes();
+    ssrc::spread::ScatterMessage spreadMsg;
+    spreadMsg.add( &bytes[0], bytes.size() ); // Grab the address of the first element of the byte array in memory
     spreadMsg.set_service(serviceType);
 
     try {
@@ -147,13 +149,13 @@ int SpreadMailbox::doSendMessage( ApplicationMessage &message, Spread::service s
     }
 }
 
-int SpreadMailbox::sendMessage(ApplicationMessage &message, Spread::service serviceType,
+int SpreadMailbox::sendMessage(Message &message, Spread::service serviceType,
         const string &groupName) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
     return doSendMessage( message, serviceType, stringToGroupList(groupName) );
 }
 
 
-int SpreadMailbox::sendMultigroupMessage(ApplicationMessage &message, Spread::service serviceType,
+int SpreadMailbox::sendMultigroupMessage(Message &message, Spread::service serviceType,
         const vector<string> &groupNames) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
     return doSendMessage( message, serviceType, vectorToGroupList(groupNames) );
 }
@@ -173,11 +175,11 @@ RegularMembershipMessage::MessageCause causeFromServiceType( Spread::service ser
 }
 
 shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
-    Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
+    ssrc::spread::Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
     GroupList groups;
     m_ssrcMailbox->receive(ssrcMsg, groups);
     shared_ptr< vector<string> > groupVector = groupListToVector(groups);
-    BaseMessage::service_type sType = ssrcMsg.service();
+    ssrc::spread::BaseMessage::service_type sType = ssrcMsg.service();
 
     if( Is_regular_mess(sType) ) {
         return shared_ptr<RegularMessage>( new RegularMessage( ssrcMsg.sender(), sType,
@@ -190,7 +192,7 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() throw(InvalidSessionEr
                 new TransitionMembershipMessage( ssrcMsg.sender() ) );
         }
         else if( Is_reg_memb_mess(sType) ) {
-            MembershipInfo info;
+            ssrc::spread::MembershipInfo info;
             ssrcMsg.get_membership_info(info);
             GroupList allMembers;
             info.get_all_members(allMembers);

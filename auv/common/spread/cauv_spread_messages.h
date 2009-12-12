@@ -5,7 +5,8 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <ssrc/spread/Mailbox.h>
-#include "../cauv_application_message.h"
+
+#include <common/messages.h>
 
 typedef boost::shared_ptr< std::vector<std::string> > StringVectorPtr;
 
@@ -42,24 +43,24 @@ class RegularMessage : public SpreadMessage {
     friend class SpreadMailbox;
 
 protected:
+    typedef std::vector<char> MessageByteBuffer;
+
     Spread::service m_serviceType;
     StringVectorPtr m_groups;
     int m_messageType;
-    boost::shared_ptr<ApplicationMessage> m_messageContents;
+    MessageByteBuffer m_messageContents;
 
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
                     const MessageByteBuffer &bytes )
             // TODO: Is there some way of just passing all the right parameters to the other constructor?
-            // TODO: Yes, try using magic, it normally works. Don't,
-            // however, use varargs; it breaks constructors.
             : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
-              m_messageContents( ApplicationMessage::deserialise( &bytes[0], bytes.size() ) ) {}
+              m_messageContents( &bytes[0], &bytes[0] + bytes.size() ) {}
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
                     const char * const bytes, const int byteCount )
             : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
-              m_messageContents( ApplicationMessage::deserialise( bytes, byteCount) ) {}
+              m_messageContents(bytes, bytes+byteCount) {}
 
 public:
     /**
@@ -94,7 +95,7 @@ public:
     /**
      * @return The actual application message data.
      */
-    const boost::shared_ptr<ApplicationMessage> getMessage() const {
+    const MessageByteBuffer& getMessage() const {
         return m_messageContents;
     }
 
@@ -223,3 +224,4 @@ public:
 };
 
 #endif // CAUV_SPREAD_MESSAGES_H_INCLUDED
+

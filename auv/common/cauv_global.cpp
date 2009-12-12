@@ -6,6 +6,8 @@
 
 #include "cauv_global.h"
 
+using namespace std;
+
 extern char _binary_common_cauv_logo_large_txt_end;
 extern char _binary_common_cauv_logo_large_txt_start;
 

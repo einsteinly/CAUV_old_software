@@ -1,5 +1,7 @@
 #include "buffers.h"
 
+using namespace std;
+
 char_array_buffer::char_array_buffer(const char *begin, const char *end) :
     m_begin(begin),
     m_end(end),

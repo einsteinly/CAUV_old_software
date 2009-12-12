@@ -97,7 +97,7 @@ public:
     /**
      * @return The number of bytes sent
      */
-    int sendMessage(ApplicationMessage &message, Spread::service serviceType,
+    int sendMessage(Message &message, Spread::service serviceType,
                      const std::string &destinationGroup) {
         const char* errmsg = "Failed to send message "; 
         int r = 0;
@@ -123,7 +123,7 @@ public:
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMultigroupMessage(ApplicationMessage &message,
+    virtual int sendMultigroupMessage(Message &message,
                                       Spread::service serviceType,
                                       const std::vector<std::string> &groupNames) {
         const char* errmsg = "Failed to send multigroup message "; 

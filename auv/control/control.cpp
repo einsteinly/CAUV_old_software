@@ -5,7 +5,7 @@
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
-#include <common/cauv_types.h>
+#include <common/messages.h>
 
 using namespace std;
 
