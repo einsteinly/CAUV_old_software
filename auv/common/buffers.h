@@ -1,13 +1,10 @@
 #include <streambuf>
 #include <vector>
 
-using namespace std;
-
-class char_array_buffer : public std::streambuf
+class char_vector_readbuffer : public std::streambuf
 {
     public:
-        char_array_buffer(const char* begin, const char* end);
-        explicit char_array_buffer(const char* str);
+        char_vector_readbuffer(const std::vector<char>& bytes);
 
     private:
         int_type underflow();
@@ -17,28 +14,27 @@ class char_array_buffer : public std::streambuf
 
         // copy ctor and assignment not implemented;
         // copying not allowed
-        char_array_buffer(const char_array_buffer&);
-        char_array_buffer& operator= (const char_array_buffer&);
+        char_vector_readbuffer(const char_vector_readbuffer&);
+        char_vector_readbuffer& operator= (const char_vector_readbuffer&);
 
     private:
-        const char* const m_begin;
-        const char* const m_end;
-        const char* m_current;
+        const std::vector<char>& m_bytes;
+        size_t m_pos;
 };
 
-class char_vector_buffer : public std::streambuf
+class char_vector_writebuffer : public std::streambuf
 {
     public:
-        char_vector_buffer();
-        const vector<char>& getVector() const;
+        char_vector_writebuffer();
+        const std::vector<char> getVector() const;
 
     private:
         int_type overflow(int_type ch);
 
         // copy ctor and assignment not implemented;
         // copying not allowed
-        char_vector_buffer(const char_vector_buffer&);
-        char_vector_buffer& operator= (const char_vector_buffer&);
+        char_vector_writebuffer(const char_vector_writebuffer&);
+        char_vector_writebuffer& operator= (const char_vector_writebuffer&);
 
     private:
         std::vector<char> m_buffer;
