@@ -48,12 +48,15 @@ void yyerror(const char *str)
 	std::vector<Message*>* msg_list;
 	Struct* strct;
 	Group* grp;
+	EnumVal* enmval;
+	std::vector<EnumVal*>* enmval_list;
+	Enum* enm;
 }
 
 %token MSG LBRACE RBRACE COMMA COLON SEMICOLON START_COMMENT END_COMMENT LPAREN
-RPAREN GROUP LIST MAP STRUCT LT GT
+RPAREN GROUP LIST MAP STRUCT LT GT ENUM EQUALS
 
-%token <number> ID
+%token <number> INT
 %token <string> STR
 
 %type <type> type
@@ -66,6 +69,10 @@ RPAREN GROUP LIST MAP STRUCT LT GT
 %type <msg_list> group_contents
 %type <strct> strct
 %type <grp> group
+%type <enmval> enmval
+%type <enmval_list> enmval_list
+%type <enmval_list> enm_contents
+%type <enm> enm
 
 %%
 
@@ -79,6 +86,10 @@ list:
     | list strct
     {
 		structs.push_back($2);	//append the new struct
+    }
+    | list enm
+    {
+		enums.push_back($2);	//append the new enum
     }
 
 group: GROUP STR group_contents
@@ -114,6 +125,45 @@ strct_contents: LBRACE declaration_list RBRACE
 	}
 	;
 
+enm: ENUM STR enm_contents
+	{	
+		$$ = new Enum($2, $3);
+        valid_types.insert($2);
+		if(DEBUG)
+        {
+            cout << "new enum " << $2 << endl;
+	    }
+    }
+	;
+
+enm_contents: LBRACE enmval_list RBRACE
+	{
+		$$ = $2;
+	}
+	;
+
+enmval_list: /*list can be empty*/
+	{
+		$$ = new std::vector<EnumVal*>();	//base case - return an empty vector
+	}
+	| enmval_list enmval
+	{
+		std::vector<EnumVal*>* v_list = $1;	//create an "alias" to the value list
+		v_list->push_back($2);	//append the new enum value
+		$$ = v_list;	//return the list with the added enmval
+	}
+	;
+
+enmval: STR EQUALS INT SEMICOLON
+	{
+		$$ = new EnumVal($1, $3);	//instantiate a new enum value here
+		if(DEBUG)
+        {
+            cout << "enum value " << $1 << ", with value " << $3 << endl;
+	    }
+	}
+	;
+
 message_list: /*list can be empty*/
 	{
 		$$ = new std::vector<Message*>();	//base case - return empty list of messages
@@ -126,7 +176,7 @@ message_list: /*list can be empty*/
 	}
 	;
 
-message: MSG STR COLON ID msg_contents
+message: MSG STR COLON INT msg_contents
 	{
         if (msg_ids.count($4) != 0)
         {

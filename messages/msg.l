@@ -24,6 +24,7 @@ group                   return GROUP;
 message                 return MSG;
 list                    return LIST;
 map                     return MAP;
+enum                    return ENUM;
 \{			            return LBRACE;
 \}			            return RBRACE;
 \(			            return LPAREN;
@@ -33,8 +34,9 @@ map                     return MAP;
 ,                       return COMMA;
 :                       return COLON;
 ;                       return SEMICOLON;
+=                       return EQUALS;
 [a-zA-Z_][a-zA-Z0-9_]*	yylval.string=strdup(yytext); return STR;
-[0-9]+                  yylval.number=atoi(yytext); return ID;
+[0-9]+                  yylval.number=atoi(yytext); return INT;
 \n                      /* ignore newlines */
 [ \t]+                  /* ignore whitespace */
 

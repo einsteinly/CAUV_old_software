@@ -164,6 +164,78 @@ const std::vector<Declaration*>& Message::getDeclarations() const
     return *this->m_declarations;
 }
 
+/////
+
+//EnumVal functions
+char* EnumVal::getName() const
+{
+    return m_name;
+}
+uint32_t EnumVal::getVal() const
+{
+    return m_val;
+}
+
+string EnumVal::to_string() const
+{
+    stringstream ss;
+    ss << "\t" << m_name << " = " << m_val << ";" << endl;
+    return ss.str();
+}
+
+
+//EnumVal constructor
+EnumVal::EnumVal(char *name, uint32_t val) :
+    m_name(name),
+    m_val(val)
+{
+}
+EnumVal::~EnumVal()
+{
+    delete m_name;
+}
+/////
+
+//Enum functions
+char* Enum::getName() const
+{
+    return m_name;
+}
+
+string Enum::to_string() const
+{
+    stringstream ss;
+    ss << "enum" << m_name << endl;
+    ss << "{" << endl;
+    foreach(EnumVal *v, *m_vals)
+    {
+        ss << v->to_string() << endl;
+    }
+    ss << "}";
+    return ss.str();
+}
+
+
+//Enum constructor
+Enum::Enum(char *name, std::vector<EnumVal*>* vals) :
+    m_name(name),
+    m_vals(vals)
+{
+}
+Enum::~Enum()
+{
+    delete m_name;
+    foreach(EnumVal *d, *m_vals)
+    {
+        delete d;
+    }
+    delete m_vals;
+}
+
+const std::vector<EnumVal*>& Enum::getVals() const
+{
+    return *this->m_vals;
+}
 
 ////
 
@@ -176,13 +248,13 @@ char* Struct::getName() const
 string Struct::to_string() const
 {
     stringstream ss;
-    ss << "\tstruct" << m_name << endl;
-    ss << "\t{" << endl;
+    ss << "struct" << m_name << endl;
+    ss << "{" << endl;
     foreach(Declaration *d, *m_declarations)
     {
         ss << d->to_string() << endl;
     }
-    ss << "\t}";
+    ss << "}";
     return ss.str();
 }
 

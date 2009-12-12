@@ -5,11 +5,16 @@ struct floatYPR
     roll : float;
 }
 
+enum MotorId
+{
+    PROP = 1;
+}
+
 group control
 {
 	message Motor : 2
 	{
-	    motorId : uint8;
+        motorId : MotorId;
 	    speed : int8;
     }
 }
