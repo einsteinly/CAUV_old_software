@@ -147,6 +147,7 @@ int SpreadMailbox::doSendMessage( Message &message, Spread::service serviceType,
             break;
         }
     }
+    return 0;
 }
 
 int SpreadMailbox::sendMessage(Message &message, Spread::service serviceType,
