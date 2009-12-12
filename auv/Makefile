@@ -157,4 +157,6 @@ cleanlibs:
 	@rm $(LIBOBJS) 2>/dev/null || true
 	@echo "  [MAKE]  clean -C lib"
 	@$(MAKE) -C lib clean
+	@echo "  [MAKE]  clean -C ../messages"
+	@$(MAKE) -C ../messages clean
 cleanall: clean cleanlibs
