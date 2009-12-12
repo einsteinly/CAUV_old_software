@@ -125,7 +125,7 @@ $(MSGGEN):
 	@echo "  [MAKE] -C ../messages"
 	@echo -en "\E[0;30m"
 	@$(MAKE) -C ../messages   $(SHOWOK)
-	@echo "  [CP]   ../messages/bin/msg-generator $@"
+	@echo -n "  [CP]   ../messages/bin/msg-generator $@"
 	@cp ../messages/bin/msg-generator $@  $(SHOWOK)
 
 # Ugly hack because andy is fucking lazy

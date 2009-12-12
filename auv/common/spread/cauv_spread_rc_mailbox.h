@@ -98,6 +98,12 @@ public:
     /**
      * @return The number of bytes sent
      */
+    int sendMessage(Message &message, Spread::service serviceType) {
+        return sendMessage(message, serviceType, message.group());
+    }
+    /**
+     * @return The number of bytes sent
+     */
     int sendMessage(Message &message, Spread::service serviceType,
                      const std::string &destinationGroup) {
         const char* errmsg = "Failed to send message "; 

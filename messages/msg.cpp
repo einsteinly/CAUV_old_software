@@ -335,7 +335,7 @@ int createCPPFile(string outputpath)
             std::string className = str(format("%1%Message") % m->getName());
 
             std::stringstream msg_hh_msg_funcs, msg_hh_msg_fields, msg_cpp_msg_funcs, msg_cpp_msg_serial;
-
+            std::stringstream msg_cstrctr_p, msg_cpp_msg_cstrctr_i;
             
             foreach(Declaration* d, m->getDeclarations())
             {
@@ -362,13 +362,21 @@ int createCPPFile(string outputpath)
                 msg_cpp_msg_funcs << endl;
                 
                 msg_cpp_msg_serial << "    ar & m_" << dname << ";" << endl;
+                
+                msg_cstrctr_p << asCPPType(dtype) << " " << dname << ", ";
+                msg_cpp_msg_cstrctr_i << "    m_" << dname << "(" << dname << ")," << endl;
             }
 
+            string msg_cstrctr_ps = msg_cstrctr_p.str();
+            msg_cstrctr_ps = msg_cstrctr_ps.substr(0, msg_cstrctr_ps.length() - 2);
+            string msg_cpp_msg_cstrctr_is = msg_cpp_msg_cstrctr_i.str();
+            msg_cpp_msg_cstrctr_is = msg_cpp_msg_cstrctr_is.substr(0, msg_cpp_msg_cstrctr_is.length() - 2);
 
             msg_hh << "class " << className << " : public Message" << endl;
             msg_hh << "{" << endl;
             msg_hh << "    public:" << endl;
             msg_hh << "        " << className << "();" << endl;
+            msg_hh << "        " << className << "(" << msg_cstrctr_ps << ");" << endl;
             msg_hh << "        " << className << "(const std::vector<char>& bytes);" << endl;
             msg_hh << endl;
             msg_hh << msg_hh_msg_funcs.str();
@@ -382,6 +390,14 @@ int createCPPFile(string outputpath)
             msg_cpp << format("%1%::%1%() : Message(%2%, \"%3%\")") % className % id % gname << endl;
             msg_cpp << "{" << endl;
             msg_cpp << "}" << endl;
+            
+
+            msg_cpp << format("%1%::%1%(%2%) : ") % className % msg_cstrctr_ps << endl;
+            msg_cpp << "    " << format("Message(%1%, \"%2%\"),") % id % gname << endl;
+            msg_cpp << msg_cpp_msg_cstrctr_is << endl;
+            msg_cpp << "{" << endl;
+            msg_cpp << "}" << endl;
+            
             msg_cpp << format("%1%::%1%(const std::vector<char>& bytes) : Message(%2%, \"%3%\")") % className % id % gname << endl;
             msg_cpp << "{" << endl;
             msg_cpp << "    char_vector_readbuffer b(bytes);" << endl;
@@ -695,7 +711,7 @@ int createJavaFile(string outputpath)
 
     //if (!package.empty())
     //    msg_java << "package " << package << ";" << endl;
-    msg_java << "package cauv.network.messages;" << endl;
+    msg_java << "package cauv.auv;" << endl;
 
 
     msg_java << "import java.util.LinkedList;" << endl;
@@ -814,20 +830,41 @@ int createJavaFile(string outputpath)
             msg_java << "class " << className << " extends Message" << endl;
             msg_java << "{" << endl;
             
-            stringstream msg_java_msg_decls, msg_java_msg_serialise, msg_java_msg_deserialise;
+            stringstream msg_java_msg_decls, msg_java_msg_funcs, msg_java_msg_serialise, msg_java_msg_deserialise;
+            stringstream msg_java_msg_cstrctr_p, msg_java_msg_cstrctr_i; 
             foreach(Declaration* d, m->getDeclarations())
             {
                 string dname = d->getName();
                 Type* dtype = d->getType();
            
                 msg_java_msg_decls << "    protected " << asJavaType(dtype) << " m_" << dname << ";" << endl;
+                msg_java_msg_funcs << "    public " << asJavaType(dtype) << " " << dname << "()" << endl;
+                msg_java_msg_funcs << "    {" << endl;
+                msg_java_msg_funcs << "        return m_" << dname << ";" << endl;
+                msg_java_msg_funcs << "    }" << endl;
+                msg_java_msg_funcs << "    public void " << dname << "(" << asJavaType(dtype) << " val)" << endl;
+                msg_java_msg_funcs << "    {" << endl;
+                msg_java_msg_funcs << "        m_" << dname << " = val;" << endl;
+                msg_java_msg_funcs << "    }" << endl;
+                msg_java_msg_funcs << endl;
+                msg_java_msg_cstrctr_p << asJavaType(dtype) << " " << dname << ", ";
+                msg_java_msg_cstrctr_i << "        m_" << dname << " = " << dname << ";" << endl;
                 serialiseJavaType(dtype, str(format("m_%1%") % dname), dname, 2, msg_java_msg_serialise, msg_java_msg_deserialise);
             }
             msg_java << msg_java_msg_decls.str();
             msg_java << endl;
+            msg_java << msg_java_msg_funcs.str();
+            msg_java << endl;
             msg_java << "    public " << className << "()" << endl;
             msg_java << "    {" << endl;
             msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
+            msg_java << "    }" << endl;
+            msg_java << endl;
+            string msg_java_msg_cstrctr_ps = msg_java_msg_cstrctr_p.str();
+            msg_java << "    public " << className << "(" << msg_java_msg_cstrctr_ps.substr(0, msg_java_msg_cstrctr_ps.length() - 2) << ")" << endl;
+            msg_java << "    {" << endl;
+            msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
+            msg_java << msg_java_msg_cstrctr_i.str();
             msg_java << "    }" << endl;
             msg_java << endl;
             msg_java << "    public " << className << "(byte[] bytes) throws IOException" << endl;

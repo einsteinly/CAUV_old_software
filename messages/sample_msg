@@ -7,7 +7,7 @@ struct floatYPR
 
 enum MotorId
 {
-    PROP = 1;
+    PROP = 1, VBOW = 2
 }
 
 group control

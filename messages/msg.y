@@ -142,19 +142,20 @@ enm_contents: LBRACE enmval_list RBRACE
 	}
 	;
 
-enmval_list: /*list can be empty*/
+enmval_list: enmval /*list cannot be empty, must have at least one value*/
 	{
-		$$ = new std::vector<EnumVal*>();	//base case - return an empty vector
+		$$ = new std::vector<EnumVal*>();	//base case - create a vector, and add one element to it
+		$$->push_back($1);
 	}
-	| enmval_list enmval
+	| enmval_list COMMA enmval
 	{
 		std::vector<EnumVal*>* v_list = $1;	//create an "alias" to the value list
-		v_list->push_back($2);	//append the new enum value
+		v_list->push_back($3);	//append the new enum value
 		$$ = v_list;	//return the list with the added enmval
 	}
 	;
 
-enmval: STR EQUALS INT SEMICOLON
+enmval: STR EQUALS INT
 	{
 		$$ = new EnumVal($1, $3);	//instantiate a new enum value here
 		if(DEBUG)
