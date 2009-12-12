@@ -118,8 +118,8 @@ $(MSGSRCS): ../messages/bin/msg-generator $$(MSGSRCMSG)
 	@../messages/bin/msg-generator $(MSGSRCMSG) -o $(MSGSRCROOT)   $(SHOWOK)
 
 ../messages/bin/msg-generator:
-	@echo "  [MAKE] -C ../messages/"
-	@$(MAKE) -C ../messages/
+	@echo "  [MAKE] -C ../messages"
+	@$(MAKE) -C ../messages
 	
 
 
@@ -150,13 +150,14 @@ $(DIRS):
 
 .PHONY: clean cleanlibs cleanall
 clean:
-	@echo "  [RM]    $(DIRS) $(MSGSRCS) -rf"
-	@rm -rf $(DIRS) $(MSGSRCS)
-	@echo "  [MAKE]  clean -C ../messages"
-	@$(MAKE) -C ../messages clean
+	@echo -n "  [RM]    $(DIRS) $(MSGSRCS) -rf"
+	@rm -rf $(DIRS) $(MSGSRCS)  $(SHOWOK)
+cleanmsggen:
+	@echo -n "  [MAKE]  clean -C ../messages"
+	@$(MAKE) -C ../messages clean  $(SHOWOK)
 cleanlibs:
-	@echo "  [RM]    $(LIBOBJS)"
-	@rm $(LIBOBJS) 2>/dev/null || true
-	@echo "  [MAKE]  clean -C lib"
-	@$(MAKE) -C lib clean
-cleanall: clean cleanlibs
+	@echo -n "  [RM]    $(LIBOBJS)"
+	@rm $(LIBOBJS) 2>/dev/null || true  $(SHOWOK)
+	@echo -n"  [MAKE]  clean -C lib"
+	@$(MAKE) -C lib clean  $(SHOWOK)
+cleanall: clean cleanlibs cleanmsggen

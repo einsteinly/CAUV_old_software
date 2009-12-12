@@ -443,7 +443,7 @@ int createCPPFile(string outputpath)
     msg_hh << "class MessageSource" << endl;
     msg_hh << "{" << endl;
     msg_hh << "    public:" << endl;
-    msg_hh << "        void notifyObservers(std::vector<char>& bytes);" << endl;
+    msg_hh << "        void notifyObservers(const std::vector<char>& bytes);" << endl;
     msg_hh << "        void addObserver(boost::shared_ptr<MessageObserver> o);" << endl;
     msg_hh << "        void removeObserver(boost::shared_ptr<MessageObserver> o);" << endl;
     msg_hh << "        void clearObservers();" << endl;
@@ -459,12 +459,12 @@ int createCPPFile(string outputpath)
     msg_cpp << "MessageSource::MessageSource()" << endl;
     msg_cpp << "{" << endl;
     msg_cpp << "}" << endl;
-    msg_cpp << "void MessageSource::notifyObservers(std::vector<char>& bytes)" << endl;
+    msg_cpp << "void MessageSource::notifyObservers(const std::vector<char>& bytes)" << endl;
     msg_cpp << "{" << endl;
     msg_cpp << "    if (bytes.size() < 4)" << endl;
     msg_cpp << "        throw std::out_of_range(\"Buffer too small to contain message id\");" << endl;
     msg_cpp << endl;
-    msg_cpp << "    switch(*reinterpret_cast<uint32_t*>(&bytes[0]))" << endl;
+    msg_cpp << "    switch(*reinterpret_cast<const uint32_t*>(&bytes[0]))" << endl;
     msg_cpp << "    {" << endl;
     foreach(Group* g, groups)
     {
