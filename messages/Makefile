@@ -13,18 +13,20 @@ DEPDIR=.deps
 OBJDIR=.obj
 DIRS = $(BINDIR) $(DEPDIR) $(OBJDIR)
 
-CC=g++
-
 EXE = msg-generator
-SRCS = msg.lex.cpp msg.yacc.cpp msg.syntax.cpp msg.cpp
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
+SRCS = msg.syntax.cpp msg.cpp
+LEX = msg.l
+YACC = msg.y
+GENLEX = $(LEX:.l=.lex.cpp)
+GENYACC = $(YACC:.y=.yacc.cpp) $(YACC:.y=.yacc.hpp)
+OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS) $(GENLEX) $(filter %.cpp,$(GENYACC)))
 
 ifdef RELEASE 
-CFLAGS=-Wall -O3
+CXXFLAGS=-Wall -O3
 else
-CFLAGS=-Wall -g
+CXXFLAGS=-Wall -g
 endif
-override CFLAGS += -MD -MF $(DEPDIR)/$*.d -I /societies/cauv/install/include/
+override CXXFLAGS += -MD -MF $(DEPDIR)/$*.d -I /societies/cauv/install/include/
 
 .PHONY: all test
 all: $(DIRS) $(BINDIR)/$(EXE)
@@ -34,16 +36,20 @@ test:
 
 
 $(BINDIR)/$(EXE): $(OBJS)
-	$(CC) $(OBJS) -o $(BINDIR)/$(EXE) -L /societies/cauv/install/lib/ -lboost_program_options -lboost_filesystem
+	$(CXX) $(OBJS) -o $(BINDIR)/$(EXE) -L /societies/cauv/install/lib/ -lboost_program_options -lboost_filesystem
 
 DF = $(DEPDIR)/$*
+$(DEPDIR)/%.d : %.cpp
+	@mkdir -p $(dir $(DF))
+	@$(CXX) $(CXXFLAGS) -M -MG -MF $(DF).d -MT $(OBJDIR)/$*.o $*.cpp 
+
+-include $(SRCS:%.cpp=$(DEPDIR)/%.d)
+
 $(OBJDIR)/%.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
-	@cp $(DF).d $(DF).P; \
-        sed -e 's/\#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-            -e '/^$$/ d' -e 's/$$/ :/' < $(DF).d >> $(DF).P; \
-        rm -f $(DF).d
--include $(SRCS:%.cpp=$(DEPDIR)/%.P)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+.SECONDARY: $(GENLEX) $(GENYACC)
 
 %.lex.cpp: %.l %.yacc.hpp
 	flex -+ -o $@ $<
@@ -54,5 +60,5 @@ $(OBJDIR)/%.o: %.cpp
 clean:
 	rm -rf $(DIRS) $(BINDIR)/$(EXE) *.yacc.* *.lex.* *.tab.*
 
-$(DIRS)::
+$(DIRS):
 	@mkdir -p $@

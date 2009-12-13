@@ -23,6 +23,7 @@ using namespace boost::filesystem;
 
 std::vector<Group*> groups;
 std::vector<Struct*> structs;
+std::vector<Enum*> enums;
 std::set<string> valid_types = boost::assign::list_of
     ("bool")
     ("byte")
@@ -270,6 +271,21 @@ int createCPPFile(string outputpath)
         msg_hh << "};" << endl;
         msg_hh << endl;
     }
+    foreach(Enum* e, enums)
+    {
+        msg_hh << "enum " << e->getName() << endl;
+        msg_hh << "{" << endl;
+        int i = 0;
+        foreach(EnumVal* v, e->getVals())
+        {
+            if (i++ > 0)
+                msg_hh << "," << endl;
+            msg_hh << "    " << v->getName() << " = " << v->getVal();
+        }
+        msg_hh << endl;
+        msg_hh << "};" << endl;
+        msg_hh << endl;
+    }
     
     msg_hh << "class Message" << endl;
     msg_hh << "{" << endl;
@@ -319,7 +335,7 @@ int createCPPFile(string outputpath)
             std::string className = str(format("%1%Message") % m->getName());
 
             std::stringstream msg_hh_msg_funcs, msg_hh_msg_fields, msg_cpp_msg_funcs, msg_cpp_msg_serial;
-
+            std::stringstream msg_cstrctr_p, msg_cpp_msg_cstrctr_i;
             
             foreach(Declaration* d, m->getDeclarations())
             {
@@ -346,13 +362,21 @@ int createCPPFile(string outputpath)
                 msg_cpp_msg_funcs << endl;
                 
                 msg_cpp_msg_serial << "    ar & m_" << dname << ";" << endl;
+                
+                msg_cstrctr_p << asCPPType(dtype) << " " << dname << ", ";
+                msg_cpp_msg_cstrctr_i << "    m_" << dname << "(" << dname << ")," << endl;
             }
 
+            string msg_cstrctr_ps = msg_cstrctr_p.str();
+            msg_cstrctr_ps = msg_cstrctr_ps.substr(0, msg_cstrctr_ps.length() - 2);
+            string msg_cpp_msg_cstrctr_is = msg_cpp_msg_cstrctr_i.str();
+            msg_cpp_msg_cstrctr_is = msg_cpp_msg_cstrctr_is.substr(0, msg_cpp_msg_cstrctr_is.length() - 2);
 
             msg_hh << "class " << className << " : public Message" << endl;
             msg_hh << "{" << endl;
             msg_hh << "    public:" << endl;
             msg_hh << "        " << className << "();" << endl;
+            msg_hh << "        " << className << "(" << msg_cstrctr_ps << ");" << endl;
             msg_hh << "        " << className << "(const std::vector<char>& bytes);" << endl;
             msg_hh << endl;
             msg_hh << msg_hh_msg_funcs.str();
@@ -366,6 +390,14 @@ int createCPPFile(string outputpath)
             msg_cpp << format("%1%::%1%() : Message(%2%, \"%3%\")") % className % id % gname << endl;
             msg_cpp << "{" << endl;
             msg_cpp << "}" << endl;
+            
+
+            msg_cpp << format("%1%::%1%(%2%) : ") % className % msg_cstrctr_ps << endl;
+            msg_cpp << "    " << format("Message(%1%, \"%2%\"),") % id % gname << endl;
+            msg_cpp << msg_cpp_msg_cstrctr_is << endl;
+            msg_cpp << "{" << endl;
+            msg_cpp << "}" << endl;
+            
             msg_cpp << format("%1%::%1%(const std::vector<char>& bytes) : Message(%2%, \"%3%\")") % className % id % gname << endl;
             msg_cpp << "{" << endl;
             msg_cpp << "    char_vector_readbuffer b(bytes);" << endl;
@@ -406,6 +438,16 @@ int createCPPFile(string outputpath)
         {
             msg_hh << "    ar & val." << d->getName() << ";" << endl;
         }
+        msg_hh << "}" << endl;
+        msg_hh << endl;
+    }
+    msg_hh << endl;
+    foreach(Enum* e, enums)
+    {
+        msg_hh << "template<class Archive>" << endl;
+        msg_hh << "void serialize(Archive & ar, " << e->getName() << " val, const unsigned int version)" << endl;
+        msg_hh << "{" << endl;
+        msg_hh << "    ar & (int32_t)val;" << endl;
         msg_hh << "}" << endl;
         msg_hh << endl;
     }
@@ -586,7 +628,7 @@ static void serialiseJavaType(Type* type, string name, string prefix, int indent
                 else
                 {
                     serialize << indent << name << ".writeInto(s);" << endl;
-                    deserialize << indent << name << " = new " << asJavaType(type) << "(s);" << endl;
+                    deserialize << indent << name << " = " << asJavaType(type) << ".readFrom(s);" << endl;
                 }
             }
             break;
@@ -667,8 +709,10 @@ int createJavaFile(string outputpath)
     string package = package_ss.str();
     trim_right_if(package, is_any_of("."));
 
-    if (!package.empty())
-        msg_java << "package " << package << ";" << endl;
+    //if (!package.empty())
+    //    msg_java << "package " << package << ";" << endl;
+    msg_java << "package cauv.auv;" << endl;
+
 
     msg_java << "import java.util.LinkedList;" << endl;
     msg_java << "import java.util.Vector;" << endl;
@@ -688,20 +732,62 @@ int createJavaFile(string outputpath)
             Type* dtype = d->getType();
        
             msg_java << "    public " << asJavaType(dtype) << " " << dname << ";" << endl;
-            serialiseJavaType(dtype, str(format("%1%") % dname), dname, 2, msg_java_serialise, msg_java_deserialise);
+            serialiseJavaType(dtype, str(format("val.%1%") % dname), dname, 2, msg_java_serialise, msg_java_deserialise);
         }
         msg_java << endl;
         msg_java << "    public " << s->getName() << "()" << endl;
         msg_java << "    {" << endl;
         msg_java << "    }" << endl;
-        msg_java << "    public " << s->getName() << "(DataInputStream s) throws IOException" << endl;
+        msg_java << "    public static " << s->getName() << " readFrom(DataInputStream s) throws IOException" << endl;
         msg_java << "    {" << endl;
+        msg_java << "    " << format("    %1% val = new %1%();") % s->getName() << endl;
         msg_java << msg_java_deserialise.str();
+        msg_java << "        return val;" << endl;
         msg_java << "    }" << endl;
         msg_java << "    public void writeInto(DataOutputStream s) throws IOException" << endl;
         msg_java << "    {" << endl;
+        msg_java << "    " << format("    %1% val = this;") % s->getName() << endl;
         msg_java << msg_java_serialise.str();
         msg_java << "    }" << endl;
+        msg_java << "}" << endl;
+        msg_java << endl;
+    }
+    foreach(Enum* e, enums)
+    {
+        msg_java << "enum " << e->getName() << endl;
+        msg_java << "{" << endl;
+        int i = 0;
+        foreach(EnumVal* v, e->getVals())
+        {
+            if (i++ > 0)
+                msg_java << "," << endl;
+            msg_java << "    " << v->getName();
+        }
+        msg_java << ";" << endl;
+        msg_java << endl;
+        msg_java << "    public static " << e->getName() << " readFrom(DataInputStream s) throws IOException" << endl;
+        msg_java << "    {" << endl;
+        msg_java << "        int val = s.readInt();" << endl;
+        msg_java << "        switch (val)" << endl;
+        msg_java << "        {" << endl;
+        foreach(EnumVal* v, e->getVals())
+        {
+            msg_java << "            case " << v->getVal() << ": return " << v->getName() << ";" << endl;
+        }
+        msg_java << "            default: throw new IllegalArgumentException(\"Unrecognized " << e->getName() << " value: \" + val);" << endl;
+        msg_java << "        }" << endl;
+        msg_java << "    }" << endl;
+        msg_java << "    public void writeInto(DataOutputStream s) throws IOException" << endl;
+        msg_java << "    {" << endl;
+        msg_java << "        switch (this)" << endl;
+        msg_java << "        {" << endl;
+        foreach(EnumVal* v, e->getVals())
+        {
+            msg_java << "            case " << v->getName() << ": s.writeInt(" << v->getVal() << "); break;" << endl;
+        }
+        msg_java << "        }" << endl;
+        msg_java << "    }" << endl;
+        msg_java << endl;
         msg_java << "}" << endl;
         msg_java << endl;
     }
@@ -744,20 +830,41 @@ int createJavaFile(string outputpath)
             msg_java << "class " << className << " extends Message" << endl;
             msg_java << "{" << endl;
             
-            stringstream msg_java_msg_decls, msg_java_msg_serialise, msg_java_msg_deserialise;
+            stringstream msg_java_msg_decls, msg_java_msg_funcs, msg_java_msg_serialise, msg_java_msg_deserialise;
+            stringstream msg_java_msg_cstrctr_p, msg_java_msg_cstrctr_i; 
             foreach(Declaration* d, m->getDeclarations())
             {
                 string dname = d->getName();
                 Type* dtype = d->getType();
            
                 msg_java_msg_decls << "    protected " << asJavaType(dtype) << " m_" << dname << ";" << endl;
+                msg_java_msg_funcs << "    public " << asJavaType(dtype) << " " << dname << "()" << endl;
+                msg_java_msg_funcs << "    {" << endl;
+                msg_java_msg_funcs << "        return m_" << dname << ";" << endl;
+                msg_java_msg_funcs << "    }" << endl;
+                msg_java_msg_funcs << "    public void " << dname << "(" << asJavaType(dtype) << " val)" << endl;
+                msg_java_msg_funcs << "    {" << endl;
+                msg_java_msg_funcs << "        m_" << dname << " = val;" << endl;
+                msg_java_msg_funcs << "    }" << endl;
+                msg_java_msg_funcs << endl;
+                msg_java_msg_cstrctr_p << asJavaType(dtype) << " " << dname << ", ";
+                msg_java_msg_cstrctr_i << "        m_" << dname << " = " << dname << ";" << endl;
                 serialiseJavaType(dtype, str(format("m_%1%") % dname), dname, 2, msg_java_msg_serialise, msg_java_msg_deserialise);
             }
             msg_java << msg_java_msg_decls.str();
             msg_java << endl;
+            msg_java << msg_java_msg_funcs.str();
+            msg_java << endl;
             msg_java << "    public " << className << "()" << endl;
             msg_java << "    {" << endl;
             msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
+            msg_java << "    }" << endl;
+            msg_java << endl;
+            string msg_java_msg_cstrctr_ps = msg_java_msg_cstrctr_p.str();
+            msg_java << "    public " << className << "(" << msg_java_msg_cstrctr_ps.substr(0, msg_java_msg_cstrctr_ps.length() - 2) << ")" << endl;
+            msg_java << "    {" << endl;
+            msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
+            msg_java << msg_java_msg_cstrctr_i.str();
             msg_java << "    }" << endl;
             msg_java << endl;
             msg_java << "    public " << className << "(byte[] bytes) throws IOException" << endl;
@@ -792,18 +899,15 @@ int createJavaFile(string outputpath)
     msg_java << endl;
     msg_java << endl;
 
-    msg_java << "class MessageObserver" << endl;
+    msg_java << "interface MessageObserver" << endl;
     msg_java << "{" << endl;
-    msg_java << "    protected MessageObserver()" << endl;
-    msg_java << "    {" << endl;
-    msg_java << "    }" << endl;
     msg_java << endl;
     foreach(Group* g, groups)
     {
         foreach(Message* m, g->getMessages())
         {
             string className = str(format("%1%Message") % m->getName());
-            msg_java << "    public void on" << className << "(final " << className << " m) {};" << endl;
+            msg_java << "    public void on" << className << "(final " << className << " m);" << endl;
         }
     }
     msg_java << "};" << endl;

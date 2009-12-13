@@ -59,15 +59,18 @@ EXES    = ${EXEMODULES:%=$(BINDIR)/%}
 MODLIBS = ${LIBMODULES:%=$(OBJDIR)/lib%.a}
 MODOBJS = ${MODULES:%=$(OBJDIR)/%.o}
 
+MSGJAVASRCS = ${MSGS:%.msg=%.java}
+
+MSGGEN = $(BINDIR)/msg-generator
+
 SHELL=/bin/bash
 
-CC=g++
 ifdef RELEASE
-CFLAGS=-Wall -O3
+CXXFLAGS=-Wall -O3
 else
-CFLAGS=-Wall -g
+CXXFLAGS=-Wall -g
 endif
-override CFLAGS += -I . -I /societies/cauv/install/include/
+override CXXFLAGS += -I . -I /societies/cauv/install/include/
 
 MAKEFLAGS=--no-print-directory
 override LDFLAGS += -L /societies/cauv/install/lib/
@@ -84,55 +87,63 @@ OBJMOD = $(notdir $(subst .o,,$@))
 EXEFILES = $(filter $(OBJDIR)/$(OBJMOD)/%,$(FILES) )
 
 $(MODOBJS): $$(EXEFILES)
-	@echo  === Linking $(notdir $@) ===
 	@echo -n "  [LD]    $(EXEFILES) -o $@"
 	@$(LD) $(LDFLAGS) -r -o $@ $(EXEFILES)   $(SHOWOK)
-	@echo
 
 EXELIBDEPS = $(patsubst %,$(OBJDIR)/lib%.a,$($(OBJMOD)_LIBS))
 EXELIBS = $($(OBJMOD)_LIBS)
 EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
 EXEOBJ = $(patsubst %,$(OBJDIR)/%.o,$(notdir $@))
 $(EXES): $$(EXEOBJ) $$(EXELIBDEPS)
-	@echo  === Making $(notdir $@) binary ===
-	@echo -n "  [CC]    $(EXEOBJ) -o $@   $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)"
-	@$(CC) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)  $(LDFLAGS)  $(SHOWOK)
-	@echo
+	@echo -en "  [CXX]   $(EXEOBJ) -o $@   $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)"
+	@$(CXX) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)  $(LDFLAGS)  $(SHOWOK)
 
 MODLIBMOD = $(patsubst lib%.a,%,$(notdir $@))
 MODLIBOBJ = $(patsubst %,$(OBJDIR)/%.o,$(MODLIBMOD))
 $(MODLIBS): $$(MODLIBOBJ)
-	@echo  === Making $(notdir $@) static library ===
-	@echo -n "  [AR]   $(ARFLAGS) $@ $(MODLIBOBJ)"
+	@echo -n "  [AR]    $(ARFLAGS) $@ $(MODLIBOBJ)"
 	@$(AR) $(ARFLAGS) $@ $(MODLIBOBJ) >/dev/null    $(SHOWOK)
 
 EXTLIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(EXTLIBS))
 $(EXTLIBOBJS):
 	@echo "  [MAKE] $(patsubst $(OBJDIR)/lib%.a,%,$@) -C lib"
-	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)
+	@echo -en "\E[0;30m"
+	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)   $(SHOWOK)
 
 MSGSRCROOT = $(patsubst %.cpp,%,$(patsubst %.h,%,$@))
 MSGSRCMSG = $(addsuffix .msg,$(MSGSRCROOT))
-$(MSGSRCS): ../messages/bin/msg-generator $$(MSGSRCMSG)
+$(MSGSRCS): $(MSGGEN) $$(MSGSRCMSG)
 	@echo -n "  [MSG-GEN]  $(MSGSRCMSG) -o $(MSGSRCROOT)"
-	@../messages/bin/msg-generator $(MSGSRCMSG) -o $(MSGSRCROOT)   $(SHOWOK)
+	@$(MSGGEN) $(MSGSRCMSG) -o $(MSGSRCROOT)   $(SHOWOK)
+MSGJAVASRCROOT = $(patsubst %.java,%,$@)
+MSGJAVASRCMSG = $(addsuffix .msg,$(MSGJAVASRCROOT))
+$(MSGJAVASRCS): $(MSGGEN) $$(MSGJAVASRCMSG)
+	@echo -n "  [MSG-GEN]  $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT)"
+	@$(MSGGEN) $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT) -l java   $(SHOWOK)
 
-../messages/bin/msg-generator:
+$(MSGGEN):
 	@echo "  [MAKE] -C ../messages"
-	@$(MAKE) -C ../messages
-	
+	@echo -en "\E[0;30m"
+	@$(MAKE) -C ../messages   $(SHOWOK)
+	@echo -n "  [CP]   ../messages/bin/msg-generator $@"
+	@cp ../messages/bin/msg-generator $@  $(SHOWOK)
 
+# Ugly hack because andy is fucking lazy
+.PHONY: export-java
+export-java: $(MSGJAVASRCS)
+	@echo -n "  [SCP] $(MSGJAVASRCS) shell.srcf.ucam.org:/societies/cauv/messages"
+	@scp -q $(MSGJAVASRCS) shell.srcf.ucam.org:/societies/cauv/messages   $(SHOWOK)
 
 
 CLEANDEPFILES=@-rm -rf $(DEPDIR)
 
-CCF = $(filter %.cpp, $^)
+CXXF = $(filter %.cpp, $^)
 
 DF = $(DEPDIR)/$*
 $(DEPDIR)/%.d : %.cpp
 	@mkdir -p $(dir $(DF))
-	@echo -n "  [MAKEDEPEND] $(CCF)"
-	@$(CC) $(CFLAGS) -M -MG -MF $(DF).d -MT $(OBJDIR)/$*.o $(CCF)   $(SHOWOK)
+	@echo -n "  [MAKEDEPEND] $(CXXF)"
+	@$(CXX) $(CXXFLAGS) -M -MG -MF $(DF).d -MT $(OBJDIR)/$*.o $(CXXF)   $(SHOWOK)
 
 $(OBJDIR)/%.e : %
 	@echo -n "  [LD]    $< (binary)"
@@ -142,22 +153,24 @@ $(OBJDIR)/%.e : %
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(@D)
-	@echo -n "  [CC]    $(CCF) -o $@"
-	@$(CC) $(CFLAGS) -c $(CCF) -o $@   $(SHOWOK)
+	@echo -n "  [CXX]   $(CXXF) -o $@"
+	@$(CXX) $(CXXFLAGS) -c $(CXXF) -o $@   $(SHOWOK)
 
 $(DIRS):
 	@mkdir -p $@
 
 .PHONY: clean cleanlibs cleanall
 clean:
-	@echo -n "  [RM]    $(DIRS) $(MSGSRCS) -rf"
-	@rm -rf $(DIRS) $(MSGSRCS)  $(SHOWOK)
+	@echo -n "  [RM]    $(DIRS) $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN)  -rf"
+	@rm -rf $(DIRS) $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN) $(SHOWOK)
 cleanmsggen:
-	@echo -n "  [MAKE]  clean -C ../messages"
+	@echo "  [MAKE]  clean -C ../messages"
+	@echo -en "\E[0;30m"
 	@$(MAKE) -C ../messages clean  $(SHOWOK)
 cleanlibs:
 	@echo -n "  [RM]    $(LIBOBJS)"
 	@rm $(LIBOBJS) 2>/dev/null || true  $(SHOWOK)
-	@echo -n"  [MAKE]  clean -C lib"
+	@echo "  [MAKE]  clean -C lib"
+	@echo -en "\E[0;30m"
 	@$(MAKE) -C lib clean  $(SHOWOK)
 cleanall: clean cleanlibs cleanmsggen

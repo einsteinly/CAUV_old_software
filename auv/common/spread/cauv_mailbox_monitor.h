@@ -6,6 +6,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
 
 #include "cauv_spread_rc_mailbox.h"
@@ -51,8 +52,8 @@ public:
      * Whenever a new message is received, all observers are informed.
      */
     void startMonitoring() {
-        if (!m_thread) {
-            m_thread = new boost::thread( boost::ref(m_thread_callable) );
+        if (m_thread.get() == 0) {
+            m_thread = boost::make_shared<boost::thread>( boost::ref(m_thread_callable) );
         }
     }
 
@@ -133,7 +134,7 @@ private:
         std::set<mb_observer_ptr_t> m_observers;
     };
 
-    boost::thread *m_thread;
+    boost::shared_ptr<boost::thread> m_thread;
     MonitorThreadCallable m_thread_callable;
 };
 #endif // CAUV_MAILBOX_MONITOR_H_INCLUDED

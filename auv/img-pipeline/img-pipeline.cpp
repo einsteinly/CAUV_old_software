@@ -30,22 +30,16 @@ void ImagePipelineNode::onRun()
     // This is the forwarding thread
     // It doesn't do anything yet
     
-    typedef boost::shared_ptr<ReconnectingSpreadMailbox> rsb_ptr_t;
-    rsb_ptr_t rc_mb(new ReconnectingSpreadMailbox(
+    boost::shared_ptr<ReconnectingSpreadMailbox> mailbox(new ReconnectingSpreadMailbox(
         "16707@localhost", "img-pipeline connection"
     ));
-    
-    MailboxEventMonitor event_monitor(rc_mb);
 
-    event_monitor.addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver));
-    
-    boost::shared_ptr<MsgSrcMBMonitor> mbm(new MsgSrcMBMonitor);
-    
-    //mbm->addObserver()
-    event_monitor.addObserver(mbm);
-    
+    mailbox->joinGroup("images");
+    MailboxEventMonitor event_monitor(mailbox);
     event_monitor.startMonitoring();
-    //mbm->addObserver()
+    event_monitor.addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver));
+    boost::shared_ptr<MsgSrcMBMonitor> mbm(new MsgSrcMBMonitor);
+    event_monitor.addObserver(mbm);
 
     int i = 0;
     while (true) {

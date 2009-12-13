@@ -103,6 +103,36 @@ class Message : public Node
         virtual string to_string() const;
 };
 
+class EnumVal : public Node
+{
+    private:
+        char *m_name;
+        int32_t m_val;
+
+    public:
+        EnumVal(char*, uint32_t);
+        virtual ~EnumVal();
+
+        char* getName() const;
+        uint32_t getVal() const;
+        virtual string to_string() const;
+};
+
+class Enum : public Node
+{
+    private:
+        char *m_name;
+        std::vector<EnumVal*>* m_vals;
+
+    public:
+        Enum(char*, std::vector<EnumVal*>*);
+        virtual ~Enum();
+
+        char* getName() const;
+        const std::vector<EnumVal*>& getVals() const;
+        virtual string to_string() const;
+};
+
 class Struct : public Node
 {
     private:
