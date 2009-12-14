@@ -8,8 +8,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "node.h"
-#include "image.h"
+#include "../node.h"
+#include "../image.h"
 
 
 class FileInputNode: public Node{
@@ -20,21 +20,21 @@ class FileInputNode: public Node{
             // registerInputID()
             
             // one output:
-            registerOutputID("image");
+            registerOutputID("image_out");
             
             // one parameter: the filename
             registerParamID<std::string>("filename", "default.jpg");
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t const&){
+        out_image_map_t doWork(in_image_map_t&){
             out_image_map_t r;
         
             std::string fname = param<std::string>("filename");
             
             cv::Mat img = cv::imread(fname.c_str());
             
-            r["image"] = image_ptr_t(new Image(img, Image::file));
+            r["image_out"] = image_ptr_t(new Image(img, Image::file));
             
             return r;
         }

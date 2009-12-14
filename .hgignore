@@ -2,6 +2,9 @@ syntax: glob
 *.swp
 *.o
 *.a
+*.lex.*
+*.yacc.*
+*.tab.*
 */bin/*
 */.obj/*
 */.deps/*

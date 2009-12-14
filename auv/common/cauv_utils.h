@@ -1,7 +1,15 @@
 #ifndef __CAUV_UTILS_H__
 #define __CAUV_UTILS_H__
 
+#include <boost/cstdint.hpp>
 #include <sstream>
+#include <vector>
+
+#ifndef foreach
+#   include <boost/foreach.hpp>
+#   define foreach BOOST_FOREACH
+#endif
+
 using namespace std;
 
 class MakeString
@@ -30,5 +38,7 @@ inline string to_string (const T& t)
 }
 
 void msleep(int milliseconds);
+
+uint16_t sumOnesComplement(vector<uint16_t> bytes);
 
 #endif//__CAUV_UTILS_H__

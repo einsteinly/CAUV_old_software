@@ -37,6 +37,13 @@ ControlNode::ControlNode(const string& group) : CauvNode("Control", group)
         m_xsens = new XsensIMU(0);
         CmtOutputMode om = CMT_OUTPUTMODE_CALIB | CMT_OUTPUTMODE_ORIENT;
         CmtOutputSettings os = CMT_OUTPUTSETTINGS_ORIENTMODE_EULER | CMT_OUTPUTSETTINGS_DATAFORMAT_FLOAT;
+
+        CmtMatrix m;
+        m.m_data[0][0] =  0.0; m.m_data[0][1] =  0.0; m.m_data[0][2] = -1.0; 
+        m.m_data[1][0] =  0.0; m.m_data[1][1] =  1.0; m.m_data[1][2] =  0.0; 
+        m.m_data[2][0] =  1.0; m.m_data[2][1] =  0.0; m.m_data[1][2] =  0.0; 
+
+        m_xsens->setObjectAlignmentMatrix(m);
         m_xsens->configure(om, os);
     } catch (XsensException e) {
         cauv_global::error("Cannot connect to Xsens", e);

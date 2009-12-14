@@ -62,12 +62,10 @@ XsensIMU::XsensIMU(int id)
         throw XsensException("Failed to open Xsens port");
     else
         cout << "done" << endl;
+}
 
-    CmtMatrix m;
-    m.m_data[0][0] =  0.0; m.m_data[0][1] =  0.0; m.m_data[0][2] = -1.0; 
-    m.m_data[1][0] =  0.0; m.m_data[1][1] =  1.0; m.m_data[1][2] =  0.0; 
-    m.m_data[2][0] =  1.0; m.m_data[2][1] =  0.0; m.m_data[1][2] =  0.0; 
-
+void XsensIMU::setObjectAlignmentMatrix(CmtMatrix m)
+{
     m_cmt3.setObjectAlignmentMatrix(m);
 }
 
