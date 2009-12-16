@@ -6,30 +6,27 @@
 #include <stdexcept>
 #include <iostream>
 
-//#include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/variant.hpp>
 #include <boost/foreach.hpp>
 
 #include "image.h"
+#include "imageProcessor.h"
 #include "pipelineTypes.h"
 #include "nodeFactory.h"
 
 class Node{
         // Private typedefs
         typedef boost::shared_ptr<Node> node_ptr_t;
+
         typedef std::pair<node_ptr_t, input_id> output_link_t;
+        typedef std::pair<node_ptr_t, output_id> input_link_t;
+
         typedef std::list<output_link_t> output_link_list_t;
         
-        //typedef boost::tuple<node_id, input_id> output_link_t;
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
-
-        typedef std::pair<node_ptr_t, output_id> input_link_t;
-        
-        //typedef boost::tuple<node_id, output_id> input_link_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
-        
         typedef std::map<input_id, bool> in_bool_map_t;
 
     protected:
@@ -40,7 +37,7 @@ class Node{
 
     public:
         Node(Scheduler& sched)
-            : m_priority(low), m_speed(slow), /*m_lock(),*/ m_sched(sched){
+            : m_priority(low), m_speed(slow), m_sched(sched){
         }
         
         void setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
