@@ -11,6 +11,8 @@
 #include <common/spread/cauv_mailbox_monitor.h>
 #include <common/spread/cauv_msgsrc_mb_observer.h>
 
+#include "imageProcessor.h"
+
 using namespace std;
 
 
@@ -40,6 +42,8 @@ void ImagePipelineNode::onRun()
     event_monitor.addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver));
     boost::shared_ptr<MsgSrcMBMonitor> mbm(new MsgSrcMBMonitor);
     event_monitor.addObserver(mbm);
+
+    ImageProcessor pipeline;
 
     int i = 0;
     while (true) {

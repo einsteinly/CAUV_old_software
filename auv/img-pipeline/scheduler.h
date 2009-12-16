@@ -2,6 +2,12 @@
 #define __SCHEDULER_H__
 
 #include <map>
+#include <list>
+#include <iostream>
+#include <ostream>
+
+#include <boost/thread.hpp>
+#include <boost/foreach.hpp>
 
 #include "../common/blocking_queue.h"
 #include "pipelineTypes.h"
@@ -11,59 +17,72 @@ const int SLOW_THREADS = 2; // Mimimum number of threads dedicated to slow proce
 const int FAST_THREADS = 2; // Mimimum number of threads dedicated to fast processes
 const int REALTIME_THREADS = 1; // Number of realtime threads is fixed
 
-enum SchedulerPriority {slow, fast, realtime};
+enum SchedulerPriority {priority_slow, priority_fast, priority_realtime};
+
+template<typename charT, typename traits>
+std::basic_ostream<charT, traits>& operator<<(
+    std::basic_ostream<charT, traits>& os,
+    SchedulerPriority const& p){
+    switch(p){
+        case priority_slow: os << "priority:slow"; break;
+        case priority_fast: os << "priority:fast"; break;
+        case priority_realtime: os << "priority:realtime"; break;
+        default: os << "priority:UNKNOWN"; 
+    }
+    return os;
+}
 
 // TODO: beginning to really want an image_pipeline namespace
 
 class ImgPipelineThread
 {
     public:
-        ImgPipelineThread(Scheduler* s, SchedulerPriority p)
-            : m_sched(s), m_priority(p){
-        }
-
-        void operator()(){
-            // TODO: platform specific stuff to set the priority of this thread
-            // based on m_priority (using boost::this_thread.native_handle())
-
-            while(m_sched->alive()){
-                // TODO: do stuff
-            }
-        }
+        ImgPipelineThread(Scheduler* s, SchedulerPriority p);
+        void operator()();
 
     private:
         Scheduler* m_sched;
         SchedulerPriority m_priority;
-}
+};
 
 class Scheduler
 {
-    typedef std::map<SchedulerPriority, boost::thread> priority_thread_map_t;
-    typedef std::map<SchedulerPriority, BlockingQueue<node_ptr_t> > priority_queue_map_t;
+    typedef boost::shared_ptr<boost::thread> thread_ptr_t;
+    typedef std::map<SchedulerPriority, std::list<thread_ptr_t> > priority_thread_map_t;
+    typedef BlockingQueue<Node*> node_queue_t;
+    typedef boost::shared_ptr<node_queue_t> queue_ptr_t;
+    typedef std::map<SchedulerPriority, queue_ptr_t> priority_queue_map_t;
     typedef std::map<SchedulerPriority, int> priority_int_map_t;
 
     public:
         Scheduler() : m_stop(true)
         {
-            m_num_threads[slow] = SLOW_THREADS;
-            m_num_threads[fast] = FAST_THREADS;
-            m_num_threads[realtime] = REALTIME_THREADS;
+            m_num_threads[priority_slow] = SLOW_THREADS;
+            m_num_threads[priority_fast] = FAST_THREADS;
+            m_num_threads[priority_realtime] = REALTIME_THREADS;
 
-            m_threads[slow] = std::list<boost::thread>();
-            m_threads[fast] = std::list<boost::thread>();
-            m_threads[realtime] = std::list<boost::thread>();
+            m_threads[priority_slow] = std::list<thread_ptr_t>();
+            m_threads[priority_fast] = std::list<thread_ptr_t>();
+            m_threads[priority_realtime] = std::list<thread_ptr_t>();
 
-            m_queues[slow] = BlockingQueue<node_ptr_t>();
-            m_queues[fast] = BlockingQueue<node_ptr_t>();
-            m_queues[realtime] = BlockingQueue<node_ptr_t>();
+            m_queues[priority_slow] = queue_ptr_t(new node_queue_t());
+            m_queues[priority_fast] = queue_ptr_t(new node_queue_t());
+            m_queues[priority_realtime] = queue_ptr_t(new node_queue_t());
         }
         
         /**
-         * Add a job to a queue
+         * Add a job of a particular priority to the corresponding queue
+         * Can't use smart pointers because nodes have no way to convert 'this'
+         * into a smart pointer.
+         * NB: this IS threadsafe
          */
-        void addJob(node_ptr_t node, Priority p) throw()
+        void addJob(Node* node, SchedulerPriority p) const throw()
         {
-            m_queues[p].push(node);
+            const priority_queue_map_t::const_iterator i = m_queues.find(p);
+            if(i != m_queues.end())
+                i->second->push(node);
+            else
+                std::cerr << __func__ << " Error: no such priority: " << p << std::endl;
         }
         
         /**
@@ -71,12 +90,12 @@ class Scheduler
          * node_ptr_t() is returned if the scheduler is stopped, in this case
          * threads should return from their event loop
          */
-        node_ptr_t waitNextJob(Priority p) throw()
+        Node* waitNextJob(SchedulerPriority p) throw()
         {
             if(m_stop)
-                return node_ptr_t(); 
+                return NULL; 
             else
-                return m_queues[p].popWait();
+                return m_queues[p]->popWait();
         }
         
         /**
@@ -97,10 +116,17 @@ class Scheduler
             priority_thread_map_t::iterator i;
             // NB: BOOST_FOREACH doesn't seem to work properly on std::map
             for(i = m_threads.begin(); i != m_threads.end(); i++){
-                BOOST_FOREACH(boost::thread&, i->second)
-                    t.join();
+                BOOST_FOREACH(thread_ptr_t tp, i->second)
+                    tp->join();
                 i->second.clear();
             }
+        }
+
+        /**
+         * This MUST be called if nodes are removed, otherwise hanging node
+         * pointers may remain in queues.
+         */
+        void clearQueues() throw(){
         }
         
         /**
@@ -117,16 +143,16 @@ class Scheduler
             priority_thread_map_t::iterator i;
             // NB: BOOST_FOREACH doesn't seem to work properly on std::map
             for(i = m_threads.begin(); i != m_threads.end(); i++){
-                for(int j = 0; j < m_num_threads[i.first]; j++)
-                    i->second.push_back(_spawnThread(i.first));
+                for(int j = 0; j < m_num_threads[i->first]; j++)
+                    i->second.push_back(_spawnThread(i->first));
             }
         }
 
     private:
-        boost::thread _spawnThread(SchedulerPriority const& p) const throw()
+        thread_ptr_t _spawnThread(SchedulerPriority const& p) throw()
         {
             // new thread takes a copy of the ImgPipelineThread object
-            return boost::thread(ImgPipelineThread(this, p));
+            return thread_ptr_t(new boost::thread(ImgPipelineThread(this, p)));
         }
 
         // TODO: this should probably have a mutex
@@ -135,7 +161,7 @@ class Scheduler
         priority_queue_map_t m_queues;
         priority_int_map_t m_num_threads;
         priority_thread_map_t m_threads;
-}
+};
 
 
 #endif // ndef __SCHEDULER_H__

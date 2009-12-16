@@ -38,4 +38,31 @@ group image
         image : list<byte>;
     }
 }
+group pipeline
+{
+    message AddNode : 5
+    {
+        unused : int8;
+    }
+
+    message NodeAdded : 6
+    {
+        nodeId : int32;
+    }
+
+    message RemoveNode : 7
+    {
+        nodeId : int32;
+    }
+
+    message SetNodeParameter : 8
+    {
+        nodeId : int32;
+    }
+
+    message GraphDescription : 9
+    {
+        unused : int8;
+    }
+}
 

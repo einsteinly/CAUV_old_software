@@ -37,7 +37,8 @@ class Node{
 
     public:
         Node(Scheduler& sched)
-            : m_priority(low), m_speed(slow), m_sched(sched){
+            : m_priority(priority_slow), m_speed(slow),
+              m_output_demanded(false), m_sched(sched){
         }
         
         void setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
@@ -281,7 +282,7 @@ class Node{
         /* Priority of this node; this might change dynamically.
          * Used when this node is added to a scheduler queue
          */
-        Priority m_priority;
+        SchedulerPriority m_priority;
     
         /* How long does this node take to run?
          * used by exec() to decide when to request new input from parents.
@@ -323,7 +324,11 @@ class Node{
                 if(!i->second)
                     return;
             
-            m_sched.addToQueue(this, m_priority);
+            // TODO: we rely on multiple-reader thread-safety of std::map here,
+            // which is only true if we aren't creating new key-value pairs
+            // using operator[] (which we aren't, and doing so would return a
+            // NULL queue pointer anyway)
+            m_sched.addJob(this, m_priority);
         }
 
         void _demandNewParentInput(){
@@ -375,5 +380,23 @@ class Node{
         Scheduler& m_sched;
 };
 
+class InputNode: public Node{
+    public:
+        void onImageMessage(ImageMessage const&){
+            /** TODO:
+             * Two options:
+             *   don't do anything unless m_output_demanded is true, in which
+             *   case queue this node for execution in the normal manner, and
+             *   let the doWork() function handle image conversion
+             * (I lied, there is only one option, the above is the best thing
+             * to do)
+             *
+             * TODO: it would be nice if this function was called with a
+             * shared_ptr, avoiding the necessity to copy the contents of the
+             * message
+             */
+        }
+    
+};
 
 #endif // ndef __NODE_H__

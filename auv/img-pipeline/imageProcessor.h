@@ -4,116 +4,57 @@
 #include <exception>
 #include <vector>
 #include <stdexcept>
+#include <map>
+#include <set>
 
 #include <boost/shared_ptr.hpp>
 
+#include <common/messages.h>
+
 #include "pipelineTypes.h"
 #include "scheduler.h"
+#include "node.h"
 
-
-class ImageProcessor // Instantiated by main.cc and the main function is lopped until the program is terminated
+/**
+ * ImageProcessor class manages the sending and receiving of messages, and the
+ * corresponding manipulation of the image pipeline graph & it's nodes.
+ */
+class ImageProcessor: public MessageObserver
 {
+        typedef boost::shared_ptr<InputNode> input_node_ptr_t;
+
     public:    
-    // map node id to smart (shared) pointer
-    
-    ImageProcessor() // Creates the scheduler and threads 
-    {
-        // Check the constants are valid
-        assert(min_slow_threads >= 1);
-        assert(min_fast_threads >= 1);
-        assert(max_threads > (min_slow_threads + min_fast_threads + 1));
+        ImageProcessor();
         
-        // Spawn the threads
+        /**
+         * override MessageObserver functions to take actions on messages
+         */
         
-        for(int i = 0; i < min_slow_threads; i++)
-        {
-            this->m_threads.pushback(boost::thread(this->_launchThread,this->m_scheduler,slow));
-        }
-            
-        for(int i = 0; i < min_fast_threads; i++)
-        {
-            this->m_threads.pushback(boost::thread(this->_launchThread,this->m_scheduler,fast));
-        }
-            
-        int numRealtimeThreads = max_threads - (min_slow_threads + min_fast_threads); // Calculate how many realtime threads we need
+        /**
+         * Notify all input nodes when we receive something that could be their
+         * input. It is up to nodes to filter the source of the image to select
+         * their input from others.
+         */
+        void onImageMessage(ImageMessage const& m);
         
-        for(int i = 0; i < numRealtimeThreads; i++)
-        {
-            this->m_threads.pushback(boost::thread(this->_launchThread,this->m_scheduler,realtime));
-        }
-        
-    }
-    
-    bool main(); // Loops round, checking for messages, returns true until it receives a quit messsage
-    {
-        switch message
-        {
-            case addNode:
-                // notePtr node(  call node factory
-                this->m_last_id++; 
-                this->m_node_map[this->m_last_id] = node;
-                
-                // send message containing this id
-                break;
-            
-           case removeNode:
-               // node_id = get from message
-               try
-               {
-                   this->m_node_map[node_id]->remove(); // Calls the node to remove itself by removing any inputs
-                   this->m_node_map.erase(node_id); // Erases the node from the map
-               }
-               catch (...)
-               {
-                   //send a fail message    
-               }
-                              
-               
-              
-               break;
-                                             
-            
-            
-        }
-    
-    
-    }
+        /**
+         * These messages describe modifications to the pipeline
+         */
 
+        void onAddNodeMessage(AddNodeMessage const& m);
+        void onRemoveNodeMessage(RemoveNodeMessage const& m);
+        void onSetNodeParameterMessage(SetNodeParameterMessage const& m);
 
-    void listNodes(); 
+        /** end MessageObserver functions **/
 
-    void getParameters(int node_id);
-
-    void setParameter(int node_id);
-
-    ~ImageProcessor() // Halts all threads and deletes all the nodes
-    {
-        scheduler.kill()
-    }
-      
-    
-    }
+        ~ImageProcessor();
     
     private:
-    map <int, node_ptr_t> m_node_map; // Contains pointers to all the nodes
-    int m_last_id;
+        std::map<node_id, node_ptr_t> m_nodes;
+        std::set<input_node_ptr_t> m_input_nodes;
 
+        Scheduler m_scheduler;
+};
 
-    void _launchThread(Scheduler& scheduler, Priority priority = realtime) // New threads are spawned with this function
-    {
-        while (scheduler.alive()) 
-        {
-            scheduler.getNextJob(priority)->exec(); // Run exec on the next node to be proceeed
-        }
-    }
-        
-    Scheduler m_scheduler;
-    
-    vector <boost::thread> m_threads;
-}
+#endif // ndef __IMAGEPROCESSOR_H__
 
-
-
-
-
-#endif

@@ -9,14 +9,8 @@
 #include <boost/variant.hpp>
 
 class Node;
+class InputNode;
 class Scheduler;
-
-// until such time as one exists...
-//class Scheduler{
-//    public:
-//        void addToQueue(Node* n, Priority p){}
-//};
-
 
 class img_pipeline_error: public std::runtime_error{
     public:
