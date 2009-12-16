@@ -2,11 +2,11 @@
 #include <string>
 #include <exception>
 
-#include "nodes/fileInputNode.h"
-#include "nodes/fileOutputNode.h"
-#include "nodes/localDisplayNode.h"
-#include "nodes/copyNode.h"
-#include "nodes/resizeNode.h"
+#include "../nodes/fileInputNode.h"
+#include "../nodes/fileOutputNode.h"
+#include "../nodes/localDisplayNode.h"
+#include "../nodes/copyNode.h"
+#include "../nodes/resizeNode.h"
 
 int main(){
 	Scheduler s;

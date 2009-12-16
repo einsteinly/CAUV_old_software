@@ -4,16 +4,12 @@
 #include <exception>
 #include <vector>
 #include <stdexcept>
+
 #include <boost/shared_ptr.hpp>
-#include <blockingQueueBoost.h>
 
-const int max_threads; // Maximum number of additional threads created
-const int min_slow_threads; // Mimimum number of threads dedicated to slow processes (if any)
-const int min_fast_threads; // Mimimum number of threads dedicated to fast processes (if any)
+#include "pipelineTypes.h"
+#include "scheduler.h"
 
-enum Priority {slow, fast, realtime};
-
-typedef boost::shared_ptr<Node> nodePtr; // Make a node pointer easier to read
 
 class ImageProcessor // Instantiated by main.cc and the main function is lopped until the program is terminated
 {
@@ -25,7 +21,7 @@ class ImageProcessor // Instantiated by main.cc and the main function is lopped 
         // Check the constants are valid
         assert(min_slow_threads >= 1);
         assert(min_fast_threads >= 1);
-        assert(max_threads > (min_slow_threads + min_fast_threads + 1);
+        assert(max_threads > (min_slow_threads + min_fast_threads + 1));
         
         // Spawn the threads
         
@@ -99,7 +95,7 @@ class ImageProcessor // Instantiated by main.cc and the main function is lopped 
     }
     
     private:
-    map <int, nodePtr> m_node_map; // Contains pointers to all the nodes
+    map <int, node_ptr_t> m_node_map; // Contains pointers to all the nodes
     int m_last_id;
 
 
@@ -117,90 +113,7 @@ class ImageProcessor // Instantiated by main.cc and the main function is lopped 
 }
 
 
-class Scheduler
-{
-public:
-    Scheduler() : alive(true)
-    {
-    
-    }
-    
-    void addJob(node* node, Priority priority) // Add a job to the relevent queue
-    {
-        this->getQueue(priority).push(node);
-    }
-    
-    
-    node* getNextJob(Priority priority) // Get the next availiable job
-    {
-        switch priority // Create a hierarchy of processes
-        {
-            case realtime:
-                if (realtimeQueue.trypop(node* node, false)) // Were we able to obtain a job?
-                {
-                    return node;
-                }
-                
-            case fast:
-                if (fast.trypop(node* node, false)) // Were we able to obtain a job?
-                {
-                    return node;
-                }
-                
-            case slow:
-                if (slowQueue.trypop(node* node, false)) // Were we able to obtain a job?
-                {
-                    return node;
-                }
-            
-            default: // There don't seem to be any jobs, so wait on the priority of the thread
-                return this->getQueue(priority).popWait();
-        }
-    }
-    
-    
-    alive() // True, if kill hasn't been called
-    {   
-        return this->alive;
-    }
-    
-    void kill() // Halt all threads
-    {
-        this->alive = false;
-    }
 
-    private: 
-    BlockingQueue <node*> fastQueue;
-    BlockingQueue <node*> slowQueue;
-    BlockingQueue <node*> realtimeQueue;
-    
-    BlockingQueue& getQueue(Priority priority) // Get's the correct queue object for a given priority
-    {
-        switch priority
-        {
-            case slow:
-                return this->slowQueue;
-                break;
-                
-            case fast:
-                return this->fastQueue;
-                break;
-                
-            case realtime:
-                return this->realtimeQueue;
-                break;
-                
-            default:
-                throw std::out_of_range("Priority must be slow fast or realtime");
-        }
-    }
-    
-    
-        
-    volatile bool alive; 
-    
-    
-}
 
 
 #endif
