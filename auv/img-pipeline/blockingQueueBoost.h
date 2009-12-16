@@ -12,7 +12,7 @@ template <typename T>
 class BlockingQueue : boost::noncopyable
 {
     // Private typedefs
-    typedef boost::lock_guard<boost::mutex> lock_t;
+    typedef boost::unique_lock<boost::mutex> lock_t;
     typedef boost::mutex::scoped_try_lock try_lock_t;
 
     public:
