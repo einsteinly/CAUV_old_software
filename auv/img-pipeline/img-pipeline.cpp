@@ -16,9 +16,9 @@
 using namespace std;
 
 
-ImagePipelineNode::ImagePipelineNode(const string& group) : CauvNode("Control", group)
+ImagePipelineNode::ImagePipelineNode(const string& group)
+    : CauvNode("img-pipeline", group), m_pipeline(new ImageProcessor)
 {
-    // nothing to see here, move along please...
 }
 
 ImagePipelineNode::~ImagePipelineNode()
@@ -27,37 +27,9 @@ ImagePipelineNode::~ImagePipelineNode()
 
 void ImagePipelineNode::onRun()
 {
-    CauvNode::onRun();
-
-    // This is the forwarding thread
-    // It doesn't do anything yet
-    
-    boost::shared_ptr<ReconnectingSpreadMailbox> mailbox(new ReconnectingSpreadMailbox(
-        "16707@localhost", "img-pipeline connection"
-    ));
-
-    mailbox->joinGroup("images");
-    MailboxEventMonitor event_monitor(mailbox);
-    event_monitor.startMonitoring();
-    event_monitor.addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver));
-    boost::shared_ptr<MsgSrcMBMonitor> mbm(new MsgSrcMBMonitor);
-    event_monitor.addObserver(mbm);
-
-    ImageProcessor pipeline;
-
-    int i = 0;
-    while (true) {
-        if(!(i++ & 0xff))
-            cout << "Nothing happening..." << std::endl;
-
-        cout << "." << std::flush;
-        
-        //
-        // Do stuff here
-        //
-
-        msleep(100);
-    }
+    mailbox()->joinGroup("images");
+    eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
+    mailboxMonitor()->addObserver(m_pipeline);
 }
 
 static ImagePipelineNode* node;
