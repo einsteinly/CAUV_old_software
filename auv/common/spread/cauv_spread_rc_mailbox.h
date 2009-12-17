@@ -108,7 +108,7 @@ public:
                      const std::string &destinationGroup) {
         const char* errmsg = "Failed to send message "; 
         int r = 0;
-        if(_waitConnected(20)){
+        if(_waitConnected(100)){
             try{
                 boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
                 if(m_mailbox)
@@ -135,7 +135,7 @@ public:
                                       const std::vector<std::string> &groupNames) {
         const char* errmsg = "Failed to send multigroup message "; 
         int r = 0;
-        if(_waitConnected(20)){
+        if(_waitConnected(100)){
             try{
                 boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
                 if(m_mailbox)
@@ -163,7 +163,7 @@ public:
     virtual boost::shared_ptr<SpreadMessage> receiveMessage() throw() {
         const char* errmsg = "Failed to receive message "; 
         boost::shared_ptr<SpreadMessage> r;
-        if(_waitConnected(20)){
+        if(_waitConnected(500)){
             try{
                 boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
                 if(m_mailbox)
@@ -185,7 +185,7 @@ public:
     int waitingMessageByteCount() throw() {
         std::string errmsg = std::string(__func__) + " error"; 
         int r = 0;
-        if(_waitConnected(20)){
+        if(_waitConnected(100)){
             try{
                 boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
                 if(m_mailbox)

@@ -107,20 +107,22 @@ private:
                 l.unlock();
 
                 boost::shared_ptr<SpreadMessage> m( m_mailbox->receiveMessage() );
-
-                m_observers_lock.lock();
-                if (m->getMessageFlavour() == SpreadMessage::REGULAR_MESSAGE) {
-                    BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
-                        p->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
+                if(m){ 
+                    m_observers_lock.lock();
+                    if (m->getMessageFlavour() == SpreadMessage::REGULAR_MESSAGE) {
+                        BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
+                            p->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
+                        }
+                    } else if(m->getMessageFlavour() == SpreadMessage::MEMBERSHIP_MESSAGE){
+                        BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
+                            p->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
+                        }
+                    } else {
+                        std::cerr << __func__ << " dropping unrecognised message type: "
+                                  << m->getMessageFlavour() << std::endl;
                     }
-                } else {
-                    // TODO: do we want to leave asserts in production code?
-                    assert(m->getMessageFlavour() == SpreadMessage::MEMBERSHIP_MESSAGE);
-                    BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
-                        p->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
-                    }
+                    m_observers_lock.unlock();
                 }
-                m_observers_lock.unlock();
             }
         }
 
