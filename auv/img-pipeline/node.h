@@ -3,6 +3,7 @@
 
 #include <map>
 #include <list>
+#include <set>
 #include <stdexcept>
 #include <iostream>
 
@@ -83,7 +84,33 @@ class Node{
                 i->second = input_link_t();
             }
         }
-  
+
+        void clearInputs(node_ptr_t parent){
+            boost::lock_guard<boost::recursive_mutex> l(m_parent_links_lock);
+            in_link_map_t::iterator i;
+            for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
+                if(i->second.first == parent)
+                    i->second = input_link_t();
+            }
+        }
+ 
+        void clearInputs(){
+            boost::lock_guard<boost::recursive_mutex> l(m_parent_links_lock); 
+            in_link_map_t::iterator i;
+            for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
+                i->second = input_link_t();
+            }
+        }
+
+        std::set<node_ptr_t> parents() const{
+            boost::lock_guard<boost::recursive_mutex> l(m_parent_links_lock); 
+            std::set<node_ptr_t> r;
+            in_link_map_t::const_iterator i;
+            for(i = m_parent_links.begin(); i != m_parent_links.end(); i++)
+                r.insert(i->second.first);
+            return r;
+        }
+
         void setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
             boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
             const out_link_map_t::iterator i = m_child_links.find(o_id);
@@ -134,6 +161,43 @@ class Node{
             }
         }
 
+        void clearOutputs(node_ptr_t child){
+            boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock); 
+            out_link_map_t::iterator i;
+            output_link_list_t::iterator j, t;
+            for(i = m_child_links.begin(); i != m_child_links.end(); i++){
+                j = i->second.begin();
+                while(j != i->second.end()){
+                    if(j->first == child){
+                        t = j;
+                        j++;
+                        i->second.erase(t);
+                    }else{
+                        j++;
+                    }
+                }
+            }
+        }
+
+        void clearOutputs(){
+            boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
+            out_link_map_t::iterator i;
+            for(i = m_child_links.begin(); i != m_child_links.end(); i++){
+                i->second.clear();
+            }
+        }
+
+        std::set<node_ptr_t> children() const{
+            boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
+            std::set<node_ptr_t> r;
+            out_link_map_t::const_iterator i;
+            output_link_list_t::const_iterator j;
+            for(i = m_child_links.begin(); i != m_child_links.end(); i++)
+                for(j = i->second.begin(); j != i->second.end(); j++)
+                    r.insert(j->first);
+            return r;
+        }
+        
         void exec(){
             // take copies of image_ptr s from parents before _demandNewParentInput()
             in_image_map_t inputs;
@@ -204,7 +268,7 @@ class Node{
         /* This is called by the children of this node in order to request new
          * output. It may be called at the start or end of the child's exec()
          */
-        void demandNewOutput(/*output_id ?*/){
+        void demandNewOutput(/*output_id ?*/) throw(){
             boost::lock_guard<boost::recursive_mutex> l(m_output_demanded_lock);
             m_output_demanded = true;
             
@@ -213,7 +277,7 @@ class Node{
         
         /* Get the actual image data associated with an output
          */
-        image_ptr_t getOutputImage(output_id const& o_id){
+        image_ptr_t getOutputImage(output_id const& o_id) const throw(id_error){
             boost::lock_guard<boost::recursive_mutex> l(m_outputs_lock);
             const out_image_map_t::const_iterator i = m_outputs.find(o_id);
             if(i == m_outputs.end() || !i->second){
@@ -226,7 +290,7 @@ class Node{
         
         /* Return a list of valid outputs from this node
          */
-        std::vector<output_id> getOutputIDs(){
+        std::vector<output_id> getOutputIDs() const throw(){
             boost::lock_guard<boost::recursive_mutex> l(m_outputs_lock);
             std::vector<output_id> r;
             out_image_map_t::const_iterator i;
@@ -237,7 +301,7 @@ class Node{
         
         /* Return a list of valid inputs to this node
          */
-        std::vector<input_id> getInputIDs(){
+        std::vector<input_id> getInputIDs() const throw(){
             boost::lock_guard<boost::recursive_mutex> l(m_new_inputs_lock);
             std::vector<input_id> r;
             in_bool_map_t::const_iterator i;
@@ -248,12 +312,12 @@ class Node{
         
         /* return all parameter values
          */
-        std::map<param_id, param_value_t> getParamValues();
+        std::map<param_id, param_value_t> getParamValues() const;
         
         /* set a single parameter value
          */
         template<typename T>
-        void setParam(param_id const& p, T const& v){
+        void setParam(param_id const& p, T const& v) throw(id_error){
             boost::lock_guard<boost::recursive_mutex> l(m_parameters_lock);
             const std::map<param_id, param_value_t>::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
@@ -266,7 +330,7 @@ class Node{
         /* return a single parameter value
          */
         template<typename T>
-        T param(param_id const& p){
+        T param(param_id const& p) const throw(id_error){
             boost::lock_guard<boost::recursive_mutex> l(m_parameters_lock);
             const std::map<param_id, param_value_t>::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
@@ -320,7 +384,7 @@ class Node{
         /* Check to see if all inputs are new and output is demanded; if so, 
          * add this node to the scheduler queue
          */
-        void _checkAddSched(){
+        void _checkAddSched() throw(){
             std::map<input_id, bool>::const_iterator i;
             boost::lock_guard<boost::recursive_mutex> li(m_output_demanded_lock);
             boost::lock_guard<boost::recursive_mutex> lo(m_new_inputs_lock);
@@ -339,7 +403,7 @@ class Node{
             m_sched.addJob(this, m_priority);
         }
 
-        void _demandNewParentInput(){
+        void _demandNewParentInput() throw(){
             boost::lock_guard<boost::recursive_mutex> l(m_parent_links_lock);
             in_link_map_t::const_iterator i;
             for(i = m_parent_links.begin(); i != m_parent_links.end(); i++)
@@ -352,32 +416,32 @@ class Node{
         
         /* maps an input_id to an output of another node */
         in_link_map_t   m_parent_links;
-        boost::recursive_mutex m_parent_links_lock;
+        mutable boost::recursive_mutex m_parent_links_lock;
         
         /* maps an output_id to a list of inputs on other nodes */
         out_link_map_t  m_child_links;
-        boost::recursive_mutex m_child_links_lock;
+        mutable boost::recursive_mutex m_child_links_lock;
         
         /* maps an output_id to an image */
         out_image_map_t m_outputs;
-        boost::recursive_mutex m_outputs_lock;
+        mutable boost::recursive_mutex m_outputs_lock;
         
         /* parameters of the filters */
         std::map<param_id, param_value_t> m_parameters;
-        boost::recursive_mutex m_parameters_lock;
+        mutable boost::recursive_mutex m_parameters_lock;
         
         /* Keep track of which of our inputs have been refreshed since this node
          * was last exec()d
          * Set by newInput(), checked by checkAddSched(), cleared by exec()
          */
         in_bool_map_t m_new_inputs;
-        boost::recursive_mutex m_new_inputs_lock;
+        mutable boost::recursive_mutex m_new_inputs_lock;
         
         /* Has output been demanded of this node?
          * Set by demandNewOutput(), checked by checkAddSched(), cleared by exec()
          */
         bool m_output_demanded;
-        boost::recursive_mutex m_output_demanded_lock;
+        mutable boost::recursive_mutex m_output_demanded_lock;
         
         /* The scheduler associated with this node:
          * This is used by newInput() and demandNewOutput(), each of which may
@@ -390,7 +454,7 @@ class Node{
 
 class InputNode: public Node{
     public:
-        void onImageMessage(ImageMessage const&){
+        void onImageMessage(ImageMessage const&) throw(){
             /** TODO:
              * Two options:
              *   don't do anything unless m_output_demanded is true, in which

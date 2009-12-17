@@ -44,7 +44,19 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
     try{
         node_ptr_t n = _lookupNode(m.nodeId());
         m_nodes.erase(m.nodeId());
-
+       
+        if(n->isInputNode){
+            m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
+        }
+        /* since the graph is linked both ways we have to unlink the node from
+         * it's neighbors _and_ unlink the neigbors from the node
+         */
+        BOOST_FOREACH(node_ptr_t p, n->parents())
+            p->clearOutputs(n);
+        BOOST_FOREACH(node_ptr_t p, n->children())
+            p->clearInputs(n);
+        n->clearOutputs();
+        n->clearInputs(); 
     }catch(std::exception& e){
         std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
     }
