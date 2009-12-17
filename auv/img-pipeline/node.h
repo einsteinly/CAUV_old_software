@@ -11,6 +11,9 @@
 #include <boost/variant.hpp>
 #include <boost/foreach.hpp>
 
+#include <common/cauv_utils.h>
+#include <common/messages.h>
+
 #include "image.h"
 #include "imageProcessor.h"
 #include "pipelineTypes.h"
@@ -45,7 +48,7 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_parent_links_lock);
             const in_link_map_t::iterator i = m_parent_links.find(i_id);
             if(i == m_parent_links.end()){
-                throw(id_error(std::string("setInput: Invalid input id") + std::string(i_id)));
+                throw(id_error(std::string("setInput: Invalid input id") + to_string(i_id)));
             }else{
                 i->second = input_link_t(n, o_id);
             }
@@ -75,7 +78,7 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_parent_links_lock);
             const in_link_map_t::iterator i = m_parent_links.find(i_id);
             if(i == m_parent_links.end()){
-                throw(id_error(std::string("clearInput: Invalid input id") + std::string(i_id)));
+                throw(id_error(std::string("clearInput: Invalid input id") + to_string(i_id)));
             }else{
                 i->second = input_link_t();
             }
@@ -85,7 +88,7 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
             const out_link_map_t::iterator i = m_child_links.find(o_id);
             if(i == m_child_links.end()){
-                throw(id_error(std::string("setOutput: Invalid output id") + std::string(o_id)));
+                throw(id_error(std::string("setOutput: Invalid output id") + to_string(o_id)));
             }else{
                 // An output can be connected to more than one input, so
                 // m_child_links[output_id] is a list of output_link_t
@@ -118,13 +121,13 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
             const out_link_map_t::iterator i = m_child_links.find(o_id);
             if(i == m_child_links.end()){
-                throw(id_error(std::string("clearOutput: Invalid output id") + std::string(o_id)));
+                throw(id_error(std::string("clearOutput: Invalid output id") + to_string(o_id)));
             }else{
                 // An output can be connected to more than one input, so
                 // m_child_links[output_id] is a list of output_link_t
                 output_link_list_t::iterator j = std::find(i->second.begin(), i->second.end(), output_link_t(n, i_id));
                 if(j == i->second.end()){
-                    throw(id_error("clearOutput: Invalid node & input id: (node ID lookup is TODO): " + std::string(i_id)));
+                    throw(id_error("clearOutput: Invalid node & input id: (node ID lookup is TODO): " + to_string(i_id)));
                 }else{
                     i->second.erase(j);
                 }
@@ -192,7 +195,7 @@ class Node{
                 BOOST_FOREACH(in_bool_map_t::value_type const& v, m_new_inputs)
                     std::cerr << v.second << std::endl;
 
-                throw(id_error(std::string("newInput: Invalid input id: ") + std::string(a)));
+                throw(id_error(std::string("newInput: Invalid input id: ") + to_string(a)));
             }else{
                 i->second = true;
             }
@@ -215,7 +218,7 @@ class Node{
             const out_image_map_t::const_iterator i = m_outputs.find(o_id);
             if(i == m_outputs.end() || !i->second){
                 // TODO: double check that this releases the lock_guard
-                throw(id_error(std::string("getOutputImage: Invalid output id: ") + std::string(o_id)));
+                throw(id_error(std::string("getOutputImage: Invalid output id: ") + to_string(o_id)));
             }else{
                 return i->second;
             }
@@ -256,7 +259,7 @@ class Node{
             if(i != m_parameters.end()){
                 i->second = v;
             }else{
-                throw(id_error(std::string("setParam: Invalid parameter id: ") + std::string(p)));
+                throw(id_error(std::string("setParam: Invalid parameter id: ") + to_string(p)));
             }
         }
         
@@ -269,9 +272,14 @@ class Node{
             if(i != m_parameters.end()){
                 return boost::get<T>(i->second);
             }else{
-                throw(id_error(std::string("param: Invalid parameter id: ") + std::string(p)));
+                throw(id_error(std::string("param: Invalid parameter id: ") + to_string(p)));
             }
         }
+        
+        /* input nodes need to be identified so that onImageMessage() can be
+         * efficiently called on only input nodes
+         */
+        static bool isInputNode() throw() { return false; }
         
     protected:
         /* Derived classes override this to do whatever image processing it is
@@ -396,7 +404,11 @@ class InputNode: public Node{
              * message
              */
         }
-    
+   
+        /* input nodes need to be identified so that onImageMessage() can be
+         * efficiently called on only input nodes
+         */
+        static bool isInputNode() throw() { return true; } 
 };
 
 #endif // ndef __NODE_H__

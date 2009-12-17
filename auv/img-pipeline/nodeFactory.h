@@ -4,6 +4,7 @@
  * Hopefully this file hides away all the messy details of registering and
  * creating nodes of different types:
  *
+ * the NodeType enum is defined in messages.msg, add new types there!
  *
  * How to register your shiny new node type
  *
@@ -29,6 +30,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
+#include <common/messages.h>
+
 #include "pipelineTypes.h"
 
 
@@ -39,18 +42,6 @@ const static NodeFactoryRegister s_nfr
 #define DEFINE_NFR(NodeName, nt_ident) \
 const NodeFactoryRegister NodeName::s_nfr = NodeFactoryRegister(nt_ident, creator_ptr_t(new Creator<NodeName>()))
 
-
-/** add new node types here! **/
-enum NodeType{
-    nt_invalid,
-    nt_copy,
-    nt_resize,
-    nt_file_input,
-    nt_file_output,
-    nt_local_display,
-    nt_max_num_node_types = 0xff
-};
-
 /* need to know that nodes exist, but want to #include this file in node.h */
 class Node;
 
@@ -59,14 +50,12 @@ struct CreatorBase{
 };
 typedef boost::shared_ptr<CreatorBase> creator_ptr_t;
 
-
 template<typename T>
 struct Creator: public CreatorBase{
     virtual boost::shared_ptr<Node> create(Scheduler& s) const{
         return boost::shared_ptr<T>(new T(s));
     }
 };
-
 
 /* static magic */
 class NodeFactoryRegister{

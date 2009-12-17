@@ -10,9 +10,38 @@ struct floatXYZ
     y : float;
     z : float;
 }
+struct NodeInput
+{
+    node : int32;
+    input : int32;
+}
+struct NodeOutput
+{
+    node : int32;
+    output : int32;
+}
+struct NodeInputArc
+{
+    dst : int32;
+    src : NodeOutput;
+}
+struct NodeOutputArc
+{
+    dst : NodeInput;
+    src : int32;
+}
 
 enum MotorID { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }
 enum CameraID { FORWARD = 1, DOWN = 2, SONAR = 4 }
+enum NodeType {
+    nt_invalid = 0,
+    nt_copy = 1,
+    nt_resize = 2,
+    nt_file_input = 3,
+    nt_file_output = 4,
+    nt_local_display = 5,
+    nt_max_num_node_types = 255
+}
 
 group control
 {
@@ -42,7 +71,9 @@ group pipeline
 {
     message AddNode : 5
     {
-        unused : int8;
+        nodeType : NodeType;
+        parents : list<NodeInputArc>;
+        children : list<NodeOutputArc>;
     }
 
     message NodeAdded : 6

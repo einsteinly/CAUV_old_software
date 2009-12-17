@@ -1,5 +1,12 @@
 #include "imageProcessor.h"
 
+#include "nodeFactory.h"
+
+/* define the NFR's static members here, since there is no nodeFactory.cpp */
+boost::recursive_mutex NodeFactoryRegister::s_register_lock;
+std::map<NodeType, creator_ptr_t> NodeFactoryRegister::s_register;
+
+
 ImageProcessor::ImageProcessor()
     : m_scheduler(){
     m_scheduler.start();
@@ -12,49 +19,47 @@ void ImageProcessor::onImageMessage(ImageMessage const& m){
 }
 
 void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
-    // TODO
+    try{
+       
+        node_ptr_t node = NodeFactoryRegister::create(m.nodeType(), m_scheduler);
+
+        BOOST_FOREACH(NodeInputArc const& a, m.parents())
+            node->setInput(a.dst, _lookupNode(a.src.node), a.src.output);
+        BOOST_FOREACH(NodeOutputArc const& a, m.children())
+            node->setOutput(a.src, _lookupNode(a.dst.node), a.dst.input);
+
+        m_nodes[_newID(node)] = node;
+
+        if(node->isInputNode){
+            m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
+        }
+    }catch(std::exception& e){
+        std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
+    }
+    // TODO: error message of some sort, or something
+    // TODO: send NodeAddedMessage with new ID?  
 }
 
 void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
-    // TODO
+    try{
+        node_ptr_t n = _lookupNode(m.nodeId());
+        m_nodes.erase(m.nodeId());
+
+    }catch(std::exception& e){
+        std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
+    }
+    // TODO: error message of some sort, or something
 }
 
 void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage const& m){
-    // TODO
+    try{
+        // TODO: requires somewhat complicated message code for variadic values
+        throw(std::runtime_error("not implemented"));//_lookupNode(m.nodeID)->setParam();
+    }catch(std::exception& e){
+        std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
+    }
+    // TODO: error message of some sort, or something
 }
-
-/**
- * Main event loop.
- *
-void main() throw()
-{
-
-
-    switch message
-    {
-        case addNode:
-            // notePtr node(  call node factory
-            this->m_last_id++; 
-            this->m_node_map[this->m_last_id] = node;
-            
-            // send message containing this id
-            break;
-        
-       case removeNode:
-           // node_id = get from message
-           try
-           {
-               this->m_node_map[node_id]->remove(); // Calls the node to remove itself by removing any inputs
-               this->m_node_map.erase(node_id); // Erases the node from the map
-           }
-           catch (...)
-           {
-               //send a fail message    
-           }
-           break;
-     }
-}*/
-
 
 ImageProcessor::~ImageProcessor(){
     m_scheduler.stopWait();

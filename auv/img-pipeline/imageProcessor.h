@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <common/messages.h>
+#include <common/cauv_utils.h>
 
 #include "pipelineTypes.h"
 #include "scheduler.h"
@@ -50,6 +51,23 @@ class ImageProcessor: public MessageObserver
         ~ImageProcessor();
     
     private:
+        /**
+         * Provide a safe id lookup (make sure we don't create NULL nodes)
+         */
+        node_ptr_t _lookupNode(node_id const& id) const throw(id_error){
+            std::map<node_id, node_ptr_t>::const_iterator i = m_nodes.find(id);
+            if(i != m_nodes.end())
+                return i->second;
+            else
+                throw(id_error(std::string("Unknown node id") + to_string(id)));
+        }
+
+        node_id _newID(node_ptr_t n) const throw(){
+            // Can probably do better than this...
+            static node_id id = 1;
+            return id++;
+        }
+
         std::map<node_id, node_ptr_t> m_nodes;
         std::set<input_node_ptr_t> m_input_nodes;
 
