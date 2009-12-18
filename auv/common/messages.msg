@@ -13,22 +13,22 @@ struct floatXYZ
 struct NodeInput
 {
     node : int32;
-    input : int32;
+    input : string;
 }
 struct NodeOutput
 {
     node : int32;
-    output : int32;
+    output : string;
 }
 struct NodeInputArc
 {
-    dst : int32;
+    dst : string;
     src : NodeOutput;
 }
 struct NodeOutputArc
 {
     dst : NodeInput;
-    src : int32;
+    src : string;
 }
 
 enum MotorID { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }

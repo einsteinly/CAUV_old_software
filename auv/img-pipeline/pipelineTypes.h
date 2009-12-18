@@ -46,8 +46,8 @@ typedef boost::variant<float, int, std::string> param_value_t;
 typedef boost::shared_ptr<Node> node_ptr_t;
 
 typedef int32_t node_id;
-typedef int32_t param_id;
-typedef int32_t input_id;
-typedef int32_t output_id;
+typedef std::string param_id;
+typedef std::string input_id;
+typedef std::string output_id;
 
 #endif // ndef __PIPELINE_TYPES_H__

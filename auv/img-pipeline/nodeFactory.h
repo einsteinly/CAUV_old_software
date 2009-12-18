@@ -63,14 +63,14 @@ class NodeFactoryRegister{
     
     public:
         NodeFactoryRegister(NodeType const& n, creator_ptr_t f){
-            boost::lock_guard<boost::recursive_mutex> l(s_register_lock);
-            s_register[n] = f;
+            boost::lock_guard<boost::recursive_mutex> l(registerLock());
+            nodeRegister()[n] = f;
         }
         
         static boost::shared_ptr<Node> create(NodeType const& n, Scheduler& s){
-            boost::lock_guard<boost::recursive_mutex>  l(s_register_lock);
-            nt_creator_map_t::const_iterator i = s_register.find(n);
-            if(i != s_register.end()){
+            boost::lock_guard<boost::recursive_mutex>  l(registerLock());
+            nt_creator_map_t::const_iterator i = nodeRegister().find(n);
+            if(i != nodeRegister().end()){
                 return i->second->create(s);
             }else{
                 throw node_type_error("create: Invalid node type");
@@ -78,9 +78,16 @@ class NodeFactoryRegister{
         }
         
     private:
-        
-        static boost::recursive_mutex s_register_lock;
-        static nt_creator_map_t s_register;
+        /* avoid the static initialisation fiasco: construct on first use
+         */
+        static boost::recursive_mutex& registerLock(){
+            static boost::recursive_mutex s_register_lock;
+            return s_register_lock;
+        }
+        static nt_creator_map_t& nodeRegister(){
+            static nt_creator_map_t s_register;
+            return s_register;
+        } 
 };
 
 

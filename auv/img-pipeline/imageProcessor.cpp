@@ -2,11 +2,6 @@
 
 #include "nodeFactory.h"
 
-/* define the NFR's static members here, since there is no nodeFactory.cpp */
-boost::recursive_mutex NodeFactoryRegister::s_register_lock;
-std::map<NodeType, creator_ptr_t> NodeFactoryRegister::s_register;
-
-
 ImageProcessor::ImageProcessor()
     : m_scheduler(){
     m_scheduler.start();
