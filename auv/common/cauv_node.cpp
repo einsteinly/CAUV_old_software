@@ -42,7 +42,7 @@ boost::shared_ptr<MsgSrcMBMonitor> CauvNode::mailboxMonitor() const{
 
 CauvNode::CauvNode(const string& name, const string& group)
     : m_name(name), m_group(group),
-      m_mailbox(new ReconnectingSpreadMailbox("16707@localhost", name + "-connection")),
+      m_mailbox(new ReconnectingSpreadMailbox("16707@localhost", name)),
       m_event_monitor(new MailboxEventMonitor(m_mailbox)),
       m_mailbox_monitor(new MsgSrcMBMonitor){
     m_event_monitor->addObserver(m_mailbox_monitor);

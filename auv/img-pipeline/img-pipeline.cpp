@@ -17,7 +17,7 @@ using namespace std;
 
 
 ImagePipelineNode::ImagePipelineNode(const string& group)
-    : CauvNode("img-pipeline", group), m_pipeline(new ImageProcessor)
+    : CauvNode("img-pipe", group), m_pipeline(new ImageProcessor)
 {
 }
 
@@ -28,6 +28,7 @@ ImagePipelineNode::~ImagePipelineNode()
 void ImagePipelineNode::onRun()
 {
     mailbox()->joinGroup("images");
+    mailbox()->joinGroup("pipeline");
     eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
     mailboxMonitor()->addObserver(m_pipeline);
 }

@@ -16,12 +16,20 @@ const ConnectionTimeout SpreadMailbox::ZERO_TIMEOUT;
 SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalConnectionName,
                   const bool shouldReceiveMembershipMessages, const ConnectionTimeout &timeout,
                   const MailboxPriority priority) throw(ConnectionError) {
+    // ssrc spread doesn't validate this!
+    if(internalConnectionName.size() > MAX_PRIVATE_NAME){
+        throw(ConnectionError("Private connection name too long", true));
+    }
+
     try {
         m_ssrcMailbox = shared_ptr<Mailbox>(
             new Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
                         timeout, (Mailbox::Priority)priority) );
+        std::cout << "Successfully created spread mailbox: "
+                  << portAndHost << ": "
+                  << internalConnectionName << std::endl;
     } catch(Error e) {
-        const char *errMsg;
+        string errMsg;
         bool critical = false;
         
         switch( e.error() ) {
@@ -45,7 +53,7 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
             critical = true;
             break;
         case REJECT_NOT_UNIQUE:
-            errMsg = "Private connection name already in use";
+            errMsg = string("Private connection name already in use (") + internalConnectionName + string(")");
             break;
         case COULD_NOT_CONNECT:
         default:

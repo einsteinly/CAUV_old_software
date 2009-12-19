@@ -19,15 +19,18 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
         node_ptr_t node = NodeFactoryRegister::create(m.nodeType(), m_scheduler);
 
         BOOST_FOREACH(NodeInputArc const& a, m.parents())
-            node->setInput(a.dst, _lookupNode(a.src.node), a.src.output);
+            node->setInput(a.input, _lookupNode(a.src.node), a.src.output);
         BOOST_FOREACH(NodeOutputArc const& a, m.children())
-            node->setOutput(a.src, _lookupNode(a.dst.node), a.dst.input);
+            node->setOutput(a.output, _lookupNode(a.dst.node), a.dst.input);
 
         m_nodes[_newID(node)] = node;
 
         if(node->isInputNode){
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
+        std::cout << "Node added, (type=" << m.nodeType() << " "
+                  << m.parents().size() << " parents, "
+                  << m.children().size() << " children)" << std::endl;
     }catch(std::exception& e){
         std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
     }

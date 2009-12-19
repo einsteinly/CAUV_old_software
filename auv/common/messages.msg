@@ -22,13 +22,13 @@ struct NodeOutput
 }
 struct NodeInputArc
 {
-    dst : string;
+    input : string;
     src : NodeOutput;
 }
 struct NodeOutputArc
 {
     dst : NodeInput;
-    src : string;
+    output : string;
 }
 
 enum MotorID { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }

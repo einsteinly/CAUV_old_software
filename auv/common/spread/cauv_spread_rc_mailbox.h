@@ -7,8 +7,36 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/thread_time.hpp>
+#include <boost/utility.hpp>
+
+#include <common/cauv_utils.h>
 
 #include "cauv_spread_mailbox.h"
+
+class ErrOnExit: boost::noncopyable{
+    public:
+        ErrOnExit(std::string const& msg)
+            : m_print_err(true), m_msg(msg){
+        }
+
+        ~ErrOnExit(){
+            if(m_print_err)
+                std::cerr << m_msg << std::endl;
+        }
+
+        ErrOnExit& operator+=(std::string const& msg){
+            m_msg += msg;
+            return *this;
+        }
+
+        void no(){
+            m_print_err = false;
+        }
+
+    private:
+        bool m_print_err;
+        std::string m_msg;
+};
 
 /**
  * A ReconnectingSpreadMailbox automatically handles disconnection problems by trying
@@ -18,6 +46,7 @@
  */
 
 class ReconnectingSpreadMailbox{
+    typedef boost::lock_guard<boost::recursive_mutex> lock;
 public:
     ReconnectingSpreadMailbox(std::string const& portAndHost,
                               std::string const& privConnectionName = "",
@@ -25,11 +54,12 @@ public:
                               ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
                               SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) throw()
         : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority),
-          m_connection_state(NC){
+          m_connection_state(NC), m_keep_trying(true){
         _asyncConnect();
     }
 
     ~ReconnectingSpreadMailbox() {
+        m_keep_trying = false;
         if(m_thread.joinable()) m_thread.join();
     }
     
@@ -37,7 +67,6 @@ public:
      * @return The internal connection identifier assigned to this mailbox.
      */
     std::string getInternalName() {
-        boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
         if(m_mailbox)
             return m_mailbox->getInternalName();
         else
@@ -48,7 +77,6 @@ public:
      * @return The unique group name assigned to this mailbox.
      */
     std::string getPrivateGroupName() {
-        boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
         if(m_mailbox)
             return m_mailbox->getPrivateGroupName();
         else
@@ -56,19 +84,20 @@ public:
     }
     
     virtual void joinGroup(const std::string &groupName) throw() {
-        const char* errmsg = "Failed to join group ";
-        if(_waitConnected(100)){
+        ErrOnExit err("Failed to join group ");
+        if(_waitConnected(500)){
             try{
-                boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
-                if(m_mailbox)
+                if(m_mailbox){
                     m_mailbox->joinGroup(groupName);
+                    err.no();
+                }
             }catch(ConnectionError& e){
-                std::cerr << errmsg << groupName << ", " << e.what() << std::endl;
+                err += groupName + ", " + e.what();
                 if(!e.critical()){
                     _asyncConnect();
                 }
             }catch(std::exception& e){
-                std::cerr << errmsg << groupName << ", " << e.what() << std::endl;
+                err += groupName + ", " + e.what(); 
             }
         }else{
             _asyncConnect();
@@ -76,19 +105,20 @@ public:
     }
     
     virtual void leaveGroup(const std::string &groupName) throw() {
-        const char* errmsg = "Failed to leave group ";
-        if(_waitConnected(100)){
+        ErrOnExit err("Failed to leave group ");
+        if(_waitConnected(500)){
             try{
-                boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
-                if(m_mailbox)
+                if(m_mailbox){
                     m_mailbox->leaveGroup(groupName);
+                    err.no();
+                }
             }catch(ConnectionError& e){
-                std::cerr << errmsg << groupName << ", " << e.what() << std::endl;
+                err += groupName + ", " + e.what(); 
                 if(!e.critical()){
                     _asyncConnect();
                 }
             }catch(std::exception& e){
-                std::cerr << errmsg << groupName << ", " << e.what() << std::endl;
+                err += groupName + ", " + e.what(); 
             }
         }else{
             _asyncConnect();
@@ -106,20 +136,21 @@ public:
      */
     int sendMessage(Message &message, Spread::service serviceType,
                      const std::string &destinationGroup) {
-        const char* errmsg = "Failed to send message "; 
+        ErrOnExit err("Failed to send message "); 
         int r = 0;
         if(_waitConnected(100)){
             try{
-                boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
-                if(m_mailbox)
+                if(m_mailbox){
                     r = m_mailbox->sendMessage(message, serviceType, destinationGroup);
+                    err.no();
+                }
             }catch(ConnectionError& e){
-                std::cerr << errmsg << /*message <<*/ " msg to " << destinationGroup << ", " << e.what() << std::endl;
+                err += "to " + destinationGroup + ", " + e.what();
                 if(!e.critical()){
                     _asyncConnect();
                 }
             }catch(std::exception& e){
-                std::cerr << errmsg << /*message <<*/ " msg to " << destinationGroup << ", " << e.what() << std::endl;
+                err += "to " + destinationGroup + ", " + e.what(); 
             }
         }else{
             _asyncConnect();
@@ -133,20 +164,21 @@ public:
     virtual int sendMultigroupMessage(Message &message,
                                       Spread::service serviceType,
                                       const std::vector<std::string> &groupNames) {
-        const char* errmsg = "Failed to send multigroup message "; 
+        ErrOnExit err("Failed to send multigroup message "); 
         int r = 0;
         if(_waitConnected(100)){
             try{
-                boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
-                if(m_mailbox)
+                if(m_mailbox){
                     r = m_mailbox->sendMultigroupMessage(message, serviceType, groupNames);
+                    err.no();
+                }
             }catch(ConnectionError& e){
-                std::cerr << errmsg << /*message <<*/ " msg to " << groupNames.size() << " groups, " << e.what() << std::endl;
+                err += "to " + to_string(groupNames.size()) + " groups, " + e.what();
                 if(!e.critical()){
                     _asyncConnect();
                 }
             }catch(std::exception& e){
-                std::cerr << errmsg << /*message <<*/ " msg to " << groupNames.size() << " groups, " << e.what() << std::endl;
+                err += "to " + to_string(groupNames.size()) + " groups, " + e.what(); 
             }
         }else{
             _asyncConnect();
@@ -161,20 +193,21 @@ public:
      * @return An object containing the received message and associated metadata.
      */
     virtual boost::shared_ptr<SpreadMessage> receiveMessage() throw() {
-        const char* errmsg = "Failed to receive message "; 
+        ErrOnExit err("Failed to receive message ");
         boost::shared_ptr<SpreadMessage> r;
         if(_waitConnected(500)){
             try{
-                boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
-                if(m_mailbox)
+                if(m_mailbox){
                     r = m_mailbox->receiveMessage();
+                    err.no();
+                }
             }catch(ConnectionError& e){
-                std::cerr << errmsg << ", " << e.what() << std::endl;
+                err += e.what();
                 if(!e.critical()){
                     _asyncConnect();
                 }
             }catch(std::exception& e){
-                std::cerr << errmsg << ", " << e.what() << std::endl;
+                err += e.what(); 
             }
         }else{
             _asyncConnect();
@@ -183,20 +216,21 @@ public:
     }
 
     int waitingMessageByteCount() throw() {
-        std::string errmsg = std::string(__func__) + " error"; 
+        ErrOnExit err(std::string(__func__) + " error"); 
         int r = 0;
         if(_waitConnected(100)){
             try{
-                boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
-                if(m_mailbox)
+                if(m_mailbox){
                     r = m_mailbox->waitingMessageByteCount();
+                    err.no();
+                }
             }catch(ConnectionError& e){
-                std::cerr << errmsg << ", " << e.what() << std::endl;
+                err += e.what();
                 if(!e.critical()){
                     _asyncConnect();
                 }
             }catch(std::exception& e){
-                std::cerr << errmsg << ", " << e.what() << std::endl;
+                err += e.what();
             }
         }else{
             _asyncConnect();
@@ -216,9 +250,8 @@ public:
         const float retry_inc = 1.2;
 
         int retry_msecs = min_retry_msecs;
-        for(;;){
+        for(;m_keep_trying;){ 
             try {
-                boost::lock_guard<boost::recursive_mutex> l(m_mailbox_lock);
                 m_mailbox = boost::shared_ptr<SpreadMailbox>(
                      new SpreadMailbox(m_ci.portAndHost,
                                        m_ci.privConnectionName,
@@ -226,7 +259,7 @@ public:
                                        m_ci.timeout,
                                        m_ci.priority)
                 );
-                boost::lock_guard<boost::recursive_mutex> l2(m_connection_state_lock);
+                lock l2(m_connection_state_lock);
                 // yay, finally
                 m_connection_state = CONNECTED;
                 return;
@@ -266,7 +299,7 @@ private:
     ConnectionState _checkConnected() throw(){
         // TODO: m_mailbox->connected() might return false even when we have
         // m_connected_state = CONNECTED
-        boost::lock_guard<boost::recursive_mutex> l(m_connection_state_lock);
+        lock l(m_connection_state_lock);
         return m_connection_state;
     }
 
@@ -288,13 +321,13 @@ private:
         // since this function is almost always called after an error, in which
         // case printing that we are going to try to reconnect is what we want
         // to do anyway.
-        std::cerr << "reconnecting..." << std::endl;
         
         boost::unique_lock<boost::recursive_mutex> l(m_connection_state_lock);
         if (m_connection_state != NC) return;
         m_connection_state = CONNECTING;
         l.unlock();
-        
+
+        std::cerr << "reconnecting..." << std::flush; 
         m_thread = boost::thread(boost::ref(*this));
     }
     
@@ -303,8 +336,20 @@ private:
     boost::recursive_mutex m_connection_state_lock;
     ConnectionState m_connection_state;
     
-    boost::recursive_mutex m_mailbox_lock;
-    boost::shared_ptr<SpreadMailbox> m_mailbox; 
+    // spread is thread-safe, ssrc spread is probably not thread safe in
+    // general, however, it is probably thread safe provided two threads don't
+    // try to send messages at the same time, or receive messages at the same
+    // time.
+    // TODO: mutual exclusion at this level is not practical, so if ssrcspread
+    // causes problems, the easiest solution is to duplicate mailboxes
+    // per-thread. In practise this probably means two mailboxes, one for the
+    // single receing thread, and one mailbox with mutual exclusion for sending
+    // messages (since sending messages will probably only happen from one
+    // thread anyway)
+    boost::shared_ptr<SpreadMailbox> m_mailbox;
+
+    volatile bool m_keep_trying;
+
     boost::thread m_thread;
 };
 
