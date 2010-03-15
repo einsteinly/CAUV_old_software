@@ -13,6 +13,8 @@ syntax: glob
 */.obj/*
 */.deps/*
 */tags
+auv/common/messages.cpp
+auv/common/messages.h
 auv/lib/libssrcspread-1.0.4/config.h.in
 auv/lib/libssrcspread-1.0.4/configure
 auv/lib/libssrcspread-1.0.4/Makefile

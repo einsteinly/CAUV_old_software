@@ -28,6 +28,9 @@ CXXFLAGS=-Wall -g
 endif
 override CXXFLAGS += -MD -MF $(DEPDIR)/$*.d -I /societies/cauv/install/include/
 
+override LDFLAGS += -L /societies/cauv/install/lib -Wl,-rpath,/societies/cauv/install/lib
+
+
 .PHONY: all test
 all: $(DIRS) $(BINDIR)/$(EXE)
 
@@ -36,7 +39,7 @@ test:
 
 
 $(BINDIR)/$(EXE): $(OBJS)
-	$(CXX) $(OBJS) -o $(BINDIR)/$(EXE) -L /societies/cauv/install/lib/ -lboost_program_options -lboost_filesystem
+	$(CXX) $(LDFLAGS) $(OBJS) -o $(BINDIR)/$(EXE) -lboost_program_options -lboost_filesystem
 
 DF = $(DEPDIR)/$*
 $(DEPDIR)/%.d : %.cpp
