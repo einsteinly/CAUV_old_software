@@ -43,16 +43,14 @@ class RegularMessage : public SpreadMessage {
     friend class SpreadMailbox;
 
 protected:
-    typedef std::vector<char> MessageByteBuffer;
-
     Spread::service m_serviceType;
     StringVectorPtr m_groups;
     int m_messageType;
-    MessageByteBuffer m_messageContents;
+    byte_vec_t m_messageContents;
 
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
-                    const MessageByteBuffer &bytes )
+                    const byte_vec_t &bytes )
             // TODO: Is there some way of just passing all the right parameters to the other constructor?
             : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
               m_messageContents( &bytes[0], &bytes[0] + bytes.size() ) {}
@@ -95,7 +93,7 @@ public:
     /**
      * @return The actual application message data.
      */
-    const MessageByteBuffer& getMessage() const {
+    const byte_vec_t& getMessage() const {
         return m_messageContents;
     }
 

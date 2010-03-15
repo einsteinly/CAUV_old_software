@@ -5,7 +5,7 @@ all: modules
 # Edit me to add new files
 # ========================
 SRCS = $(addsuffix .cpp, \
-$(addprefix common/,   cauv_node cauv_global cauv_utils buffers) \
+$(addprefix common/,   cauv_node cauv_global cauv_utils) \
 $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
 $(addprefix common/spread/,  cauv_mailbox_monitor cauv_spread_mailbox cauv_spread_messages) \
