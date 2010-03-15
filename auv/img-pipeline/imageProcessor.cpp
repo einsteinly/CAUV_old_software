@@ -1,9 +1,10 @@
 #include "imageProcessor.h"
-
 #include "nodeFactory.h"
 
-ImageProcessor::ImageProcessor()
-    : m_scheduler(){
+#include <common/messages.h>
+
+ImageProcessor::ImageProcessor(mb_ptr_t mb)
+    : m_scheduler(), m_mailbox(mb){
     m_scheduler.start();
 }
 
@@ -14,6 +15,7 @@ void ImageProcessor::onImageMessage(ImageMessage const& m){
 }
 
 void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
+    node_id new_id = 0;
     try{
        
         node_ptr_t node = NodeFactoryRegister::create(m.nodeType(), m_scheduler);
@@ -22,8 +24,9 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
             node->setInput(a.input, _lookupNode(a.src.node), a.src.output);
         BOOST_FOREACH(NodeOutputArc const& a, m.children())
             node->setOutput(a.output, _lookupNode(a.dst.node), a.dst.input);
-
-        m_nodes[_newID(node)] = node;
+        
+        new_id = _newID(node);
+        m_nodes[new_id] = node;
 
         if(node->isInputNode){
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
@@ -35,7 +38,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
         std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
     }
     // TODO: error message of some sort, or something
-    // TODO: send NodeAddedMessage with new ID?  
+    sendMessage(NodeAddedMessage(new_id));
 }
 
 void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
@@ -69,6 +72,10 @@ void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage const& m)
         std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
     }
     // TODO: error message of some sort, or something
+}
+
+void ImageProcessor::sendMessage(Message const& msg, service_t service_type) const{
+    m_mailbox->sendMessage(msg, service_type);
 }
 
 ImageProcessor::~ImageProcessor(){

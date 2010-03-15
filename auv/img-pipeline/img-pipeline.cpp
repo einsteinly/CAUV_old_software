@@ -17,7 +17,7 @@ using namespace std;
 
 
 ImagePipelineNode::ImagePipelineNode(const string& group)
-    : CauvNode("img-pipe", group), m_pipeline(new ImageProcessor)
+    : CauvNode("img-pipe", group), m_pipeline(new ImageProcessor(mailbox()))
 {
 }
 

@@ -11,6 +11,7 @@
 
 #include <common/messages.h>
 #include <common/cauv_utils.h>
+#include <common/spread/cauv_spread_rc_mailbox.h>
 
 #include "pipelineTypes.h"
 #include "scheduler.h"
@@ -23,9 +24,10 @@
 class ImageProcessor: public MessageObserver
 {
         typedef boost::shared_ptr<InputNode> input_node_ptr_t;
-
+        typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
+        typedef Spread::service service_t;
     public:    
-        ImageProcessor();
+        ImageProcessor(mb_ptr_t mailbox);
         
         /**
          * override MessageObserver functions to take actions on messages
@@ -47,6 +49,11 @@ class ImageProcessor: public MessageObserver
         void onSetNodeParameterMessage(SetNodeParameterMessage const& m);
 
         /** end MessageObserver functions **/
+
+        /**
+         * Use m_mailbox (set by constructor) to send the specified message
+         */
+        void sendMessage(Message const& msg, service_t p = SAFE_MESS) const;
 
         ~ImageProcessor();
     
@@ -72,6 +79,7 @@ class ImageProcessor: public MessageObserver
         std::set<input_node_ptr_t> m_input_nodes;
 
         Scheduler m_scheduler;
+        mb_ptr_t m_mailbox;
 };
 
 #endif // ndef __IMAGEPROCESSOR_H__

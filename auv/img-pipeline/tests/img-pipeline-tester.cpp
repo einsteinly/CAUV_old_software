@@ -40,7 +40,7 @@ class ImagePipelineTesterNode : public CauvNode{
             std::cout << "Add file input node: " << std::flush;
             sent = mailbox()->sendMessage(an, SAFE_MESS);
             std::cout << "sent " << sent << " bytes." << std::endl;
-
+            
             // Add output node
             std::cout << "Add file output node: " << std::flush; 
             // Magically fudge the id values, for now
