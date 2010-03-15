@@ -107,7 +107,7 @@ $(MODLIBS): $$(MODLIBOBJ)
 EXTLIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(EXTLIBS))
 $(EXTLIBOBJS):
 	@echo "  [MAKE] $(patsubst $(OBJDIR)/lib%.a,%,$@) -C lib"
-	@echo -en "\E[0;30m"
+	@echo -en "\E[0;36m"
 	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)   $(SHOWOK)
 
 MSGSRCROOT = $(patsubst %.cpp,%,$(patsubst %.h,%,$@))
@@ -123,7 +123,7 @@ $(MSGJAVASRCS): $(MSGGEN) $$(MSGJAVASRCMSG)
 
 $(MSGGEN):
 	@echo "  [MAKE] -C ../messages"
-	@echo -en "\E[0;30m"
+	@echo -en "\E[0;36m"
 	@$(MAKE) -C ../messages   $(SHOWOK)
 	@echo -n "  [CP]   ../messages/bin/msg-generator $@"
 	@cp ../messages/bin/msg-generator $@  $(SHOWOK)
@@ -165,12 +165,12 @@ clean:
 	@rm -rf $(DIRS) $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN) $(SHOWOK)
 cleanmsggen:
 	@echo "  [MAKE]  clean -C ../messages"
-	@echo -en "\E[0;30m"
+	@echo -en "\E[0;36m"
 	@$(MAKE) -C ../messages clean  $(SHOWOK)
 cleanlibs:
 	@echo -n "  [RM]    $(LIBOBJS)"
 	@rm $(LIBOBJS) 2>/dev/null || true  $(SHOWOK)
 	@echo "  [MAKE]  clean -C lib"
-	@echo -en "\E[0;30m"
+	@echo -en "\E[0;36m"
 	@$(MAKE) -C lib clean  $(SHOWOK)
 cleanall: clean cleanlibs cleanmsggen
