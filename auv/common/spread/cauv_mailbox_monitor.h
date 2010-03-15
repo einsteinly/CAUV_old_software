@@ -21,7 +21,8 @@ typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
 class TestMBObserver: public MailboxObserver{
     void regularMessageReceived(boost::shared_ptr<RegularMessage> message) {
-        std::cerr << "TestMBObserver: regular message received" << std::endl;
+        std::cerr << "TestMBObserver: regular message received:" << std::endl;
+        std::cerr << MessageSource::print(message->getMessage()) << std::endl;
     }
     
     void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message){

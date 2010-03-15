@@ -265,6 +265,8 @@ int createCPPFile(string outputpath)
     msg_cpp << "#include <boost/serialization/vector.hpp>" << endl;
     msg_cpp << "#include <boost/serialization/map.hpp>" << endl;
     msg_cpp << endl;
+    msg_cpp << "#include \"vector_streamops.h\"" << endl;
+    msg_cpp << endl;
     
     
     foreach(Struct* s, structs)
@@ -276,6 +278,18 @@ int createCPPFile(string outputpath)
             msg_hh << "    " << asCPPType(d->getType()) << " " << d->getName() << ";" << endl;
         }
         msg_hh << "};" << endl;
+        msg_hh << "template<typename char_T, typename traits>" << endl;
+        msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
+        msg_hh << "    std::basic_ostream<char_T, traits>& os, " << s->getName() << " const& a)" << endl;
+        msg_hh << "{" << endl;
+        msg_hh << "    os << \"{" << s->getName() << ":\";" << endl;
+        foreach(Declaration* d, s->getDeclarations())
+        {
+            msg_hh << "    os << \" " << d->getName() << "=\" << " << "a." << d->getName() << ";" << endl;
+        }
+        msg_hh << "    os << '}';" << endl;
+        msg_hh << "    return os;" << endl;
+        msg_hh << "}" << endl;
         msg_hh << endl;
     }
     foreach(Enum* e, enums)
@@ -291,6 +305,19 @@ int createCPPFile(string outputpath)
         }
         msg_hh << endl;
         msg_hh << "};" << endl;
+        msg_hh << "template<typename char_T, typename traits>" << endl;
+        msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
+        msg_hh << "    std::basic_ostream<char_T, traits>& os, " << e->getName() << " const& a)" << endl;
+        msg_hh << "{" << endl;
+        msg_hh << "    switch(a)" << endl;
+        msg_hh << "    {" << endl;
+        foreach(EnumVal* v, e->getVals()) 
+        {
+            msg_hh << "    case "<< v->getName() << ": os << \"" << v->getName() << "\"; break;" << endl;
+        }
+        msg_hh << "    }" << endl;
+        msg_hh << "    return os;" << endl;
+        msg_hh << "}" << endl;
         msg_hh << endl;
     }
     
@@ -309,7 +336,18 @@ int createCPPFile(string outputpath)
     msg_hh << "        std::string m_group;" << endl;
     msg_hh << endl;
     msg_hh << "        Message(uint32_t id, std::string group);" << endl;
-    msg_hh << "};" << endl;
+    msg_hh << "};" << endl; 
+    msg_hh << "template<typename char_T, typename traits>" << endl;
+    msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
+    msg_hh << "    std::basic_ostream<char_T, traits>& os, Message const& a)" << endl; 
+    msg_hh << "{" << endl;
+    msg_hh << "    os << \"{Message\";" << endl;
+    msg_hh << "    os << \" id=\" << a.id();" << endl;
+    msg_hh << "    os << \" group=\" << a.group();" << endl;
+    msg_hh << "    os << '}';" << endl;
+    msg_hh << "    return os;" << endl;
+    msg_hh << "}" << endl;
+    msg_hh << endl;
     msg_hh << endl;
 
     msg_cpp << "Message::Message(uint32_t id, std::string group) : m_id(id), m_group(group)" << endl;
@@ -393,6 +431,20 @@ int createCPPFile(string outputpath)
             msg_hh << "    protected:" << endl;
             msg_hh << msg_hh_msg_fields.str();
             msg_hh << "};" << endl;
+            msg_hh << "template<typename char_T, typename traits>" << endl;
+            msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
+            msg_hh << "    std::basic_ostream<char_T, traits>& os, " << className << " const& a)" << endl; 
+            msg_hh << "{" << endl;
+            msg_hh << "    os << \"{" << className << "\";" << endl;
+            foreach(Declaration* d, m->getDeclarations())
+            {
+                msg_hh << "    os << \" " << d->getName() << "=\" << a." << d->getName() << "();" << endl;
+            }
+            //msg_hh << "    os << \"parent=\" << Message(a);" << endl;
+            msg_hh << "    os << '}';" << endl;
+            msg_hh << "    return os;" << endl;
+            msg_hh << "}" << endl;
+            msg_hh << endl;
 
             msg_cpp << format("%1%::%1%() : Message(%2%, \"%3%\")") % className % id % gname << endl;
             msg_cpp << "{" << endl;
@@ -427,6 +479,7 @@ int createCPPFile(string outputpath)
             msg_cpp << msg_cpp_msg_serial.str();
             msg_cpp << "    return oss.str();" << endl;
             msg_cpp << "}" << endl;
+            msg_cpp << endl;
         }
     }
    
@@ -492,6 +545,8 @@ int createCPPFile(string outputpath)
     msg_hh << "class MessageSource" << endl;
     msg_hh << "{" << endl;
     msg_hh << "    public:" << endl;
+    msg_hh << "        static std::string print(const byte_vec_t& bytes);" << endl;
+    msg_hh << endl;    
     msg_hh << "        void notifyObservers(const byte_vec_t& bytes);" << endl;
     msg_hh << "        void addObserver(boost::shared_ptr<MessageObserver> o);" << endl;
     msg_hh << "        void removeObserver(boost::shared_ptr<MessageObserver> o);" << endl;
@@ -535,6 +590,29 @@ int createCPPFile(string outputpath)
     msg_cpp << "        throw(std::out_of_range(\"Unknown message id\"));" << endl;
     msg_cpp << "    }" << endl;
     msg_cpp << "}" << endl;
+    
+    msg_cpp << "std::string MessageSource::print(const byte_vec_t& bytes)" << endl;
+    msg_cpp << "{" << endl;
+    msg_cpp << "    if (bytes.size() < 4)" << endl;
+    msg_cpp << "        return \"{error: Buffer too small to contain message id}\";" << endl;
+    msg_cpp << endl;
+    msg_cpp << "    std::ostringstream os;" << endl;
+    msg_cpp << "    switch(*reinterpret_cast<const uint32_t*>(&bytes[0]))" << endl;
+    msg_cpp << "    {" << endl;
+    foreach(Group* g, groups)
+    {
+        foreach(Message* m, g->getMessages())
+        {
+            std::string className = str(format("%1%Message") % m->getName());
+            msg_cpp << "    case " << m->getId() << ": os << " << className << "(bytes); break;" << endl;
+        }
+    }
+    msg_cpp << "    default:" << endl;
+    msg_cpp << "        os << \"error: Unknown message id\";" << endl;
+    msg_cpp << "    }" << endl;
+    msg_cpp << "    return os.str();" << endl;
+    msg_cpp << "}" << endl;
+
     msg_cpp << "void MessageSource::addObserver(boost::shared_ptr<MessageObserver> o)" << endl;
     msg_cpp << "{" << endl;
     msg_cpp << "    m_obs.push_back(o);" << endl;
