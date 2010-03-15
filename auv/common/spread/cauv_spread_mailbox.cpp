@@ -135,9 +135,9 @@ StringVectorPtr groupListToVector(const GroupList &groups) {
 
 int SpreadMailbox::doSendMessage( Message &message, Spread::service serviceType,
         const shared_ptr<GroupList> groupNames ) {
-    vector<char> bytes = message.toBytes();
+    byte_vec_t bytes = message.toBytes();
     ssrc::spread::ScatterMessage spreadMsg;
-    spreadMsg.add( &bytes[0], bytes.size() ); // Grab the address of the first element of the byte array in memory
+    spreadMsg.add(bytes.data(), bytes.size());
     spreadMsg.set_service(serviceType);
 
     try {

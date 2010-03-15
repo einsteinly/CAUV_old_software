@@ -236,10 +236,12 @@ int createCPPFile(string outputpath)
     string msg_macro = msg_macro_ss.str();
     to_upper(msg_macro);
 
+    msg_hh << "/***  this is a generated file, do not edit ***/" << endl;
     msg_hh << format("#ifndef __%1%_H__") % to_upper_copy(outputfile) << endl;
     msg_hh << format("#define __%1%_H__") % to_upper_copy(outputfile) << endl;
     msg_hh << endl;
     msg_hh << "#include <string>" << endl;
+    msg_hh << "#include <sstream>" << endl;
     msg_hh << "#include <vector>" << endl;
     msg_hh << "#include <list>" << endl;
     msg_hh << "#include <map>" << endl;
@@ -249,9 +251,14 @@ int createCPPFile(string outputpath)
     msg_hh << "#    include <boost/foreach.hpp>" << endl;
     msg_hh << "#    define foreach BOOST_FOREACH" << endl;
     msg_hh << "#endif" << endl;
-    msg_hh << "#include \"buffers.h\"" << endl;
+    msg_hh << endl;
+    msg_hh << "// message data type definitions" << endl;
+    msg_hh << "typedef std::string byte_vec_t;" << endl;
+    msg_hh << "typedef std::ostringstream byte_ostream_t;" << endl;
+    msg_hh << "typedef std::istringstream byte_istream_t;" << endl;
     msg_hh << endl;
     
+    msg_cpp << "/***  this is a generated file, do not edit ***/" << endl;
     msg_cpp << format("#include \"%1%.h\"") % outputfile << endl;
     msg_cpp << "#include <boost/archive/binary_oarchive.hpp>" << endl;
     msg_cpp << "#include <boost/archive/binary_iarchive.hpp>" << endl;
@@ -295,7 +302,7 @@ int createCPPFile(string outputpath)
     msg_hh << "        std::string group() const;" << endl;
     msg_hh << "        uint32_t id() const;" << endl;
     msg_hh << endl;
-    msg_hh << "        virtual const std::vector<char> toBytes() const = 0;" << endl;
+    msg_hh << "        virtual const byte_vec_t toBytes() const = 0;" << endl;
     msg_hh << endl;
     msg_hh << "    protected:" << endl;
     msg_hh << "        uint32_t m_id;" << endl;
@@ -377,11 +384,11 @@ int createCPPFile(string outputpath)
             msg_hh << "    public:" << endl;
             msg_hh << "        " << className << "();" << endl;
             msg_hh << "        " << className << "(" << msg_cstrctr_ps << ");" << endl;
-            msg_hh << "        " << className << "(const std::vector<char>& bytes);" << endl;
+            msg_hh << "        " << className << "(const byte_vec_t& bytes);" << endl;
             msg_hh << endl;
             msg_hh << msg_hh_msg_funcs.str();
             msg_hh << endl;
-            msg_hh << "        virtual const std::vector<char> toBytes() const;" << endl;
+            msg_hh << "        virtual const byte_vec_t toBytes() const;" << endl;
             msg_hh << endl;
             msg_hh << "    protected:" << endl;
             msg_hh << msg_hh_msg_fields.str();
@@ -398,10 +405,10 @@ int createCPPFile(string outputpath)
             msg_cpp << "{" << endl;
             msg_cpp << "}" << endl;
             
-            msg_cpp << format("%1%::%1%(const std::vector<char>& bytes) : Message(%2%, \"%3%\")") % className % id % gname << endl;
+            msg_cpp << format("%1%::%1%(const byte_vec_t& bytes) : Message(%2%, \"%3%\")") % className % id % gname << endl;
             msg_cpp << "{" << endl;
-            msg_cpp << "    char_vector_readbuffer b(bytes);" << endl;
-            msg_cpp << "    boost::archive::binary_iarchive ar(b, boost::archive::no_header);" << endl;
+            msg_cpp << "    byte_istream_t iss(bytes);" << endl;
+            msg_cpp << "    boost::archive::binary_iarchive ar(iss, boost::archive::no_header);" << endl;
             msg_cpp << "    uint32_t buf_id;" << endl;
             msg_cpp << "    ar & buf_id;" << endl;
             msg_cpp << "    if (buf_id != m_id)" << endl;
@@ -412,13 +419,13 @@ int createCPPFile(string outputpath)
             msg_cpp << msg_cpp_msg_serial.str();
             msg_cpp << "}" << endl;
             msg_cpp << msg_cpp_msg_funcs.str() << endl;
-            msg_cpp << "const std::vector<char> " << className << "::toBytes() const" << endl;
+            msg_cpp << "const byte_vec_t " << className << "::toBytes() const" << endl;
             msg_cpp << "{" << endl;
-            msg_cpp << "    char_vector_writebuffer b;" << endl;
-            msg_cpp << "    boost::archive::binary_oarchive ar(b, boost::archive::no_header);" << endl;
+            msg_cpp << "    byte_ostream_t oss;" << endl;
+            msg_cpp << "    boost::archive::binary_oarchive ar(oss, boost::archive::no_header);" << endl;
             msg_cpp << "    ar & m_id;" << endl;
             msg_cpp << msg_cpp_msg_serial.str();
-            msg_cpp << "    return b.getVector();" << endl;
+            msg_cpp << "    return oss.str();" << endl;
             msg_cpp << "}" << endl;
         }
     }
@@ -485,7 +492,7 @@ int createCPPFile(string outputpath)
     msg_hh << "class MessageSource" << endl;
     msg_hh << "{" << endl;
     msg_hh << "    public:" << endl;
-    msg_hh << "        void notifyObservers(const std::vector<char>& bytes);" << endl;
+    msg_hh << "        void notifyObservers(const byte_vec_t& bytes);" << endl;
     msg_hh << "        void addObserver(boost::shared_ptr<MessageObserver> o);" << endl;
     msg_hh << "        void removeObserver(boost::shared_ptr<MessageObserver> o);" << endl;
     msg_hh << "        void clearObservers();" << endl;
@@ -501,7 +508,7 @@ int createCPPFile(string outputpath)
     msg_cpp << "MessageSource::MessageSource()" << endl;
     msg_cpp << "{" << endl;
     msg_cpp << "}" << endl;
-    msg_cpp << "void MessageSource::notifyObservers(const std::vector<char>& bytes)" << endl;
+    msg_cpp << "void MessageSource::notifyObservers(const byte_vec_t& bytes)" << endl;
     msg_cpp << "{" << endl;
     msg_cpp << "    if (bytes.size() < 4)" << endl;
     msg_cpp << "        throw std::out_of_range(\"Buffer too small to contain message id\");" << endl;

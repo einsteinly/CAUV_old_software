@@ -143,7 +143,7 @@ Module::~Module()
 
 void Module::readLoop()
 {
-    vector<char> curMsg;
+    std::string curMsg;
     
     boost::iostreams::stream<FTDISource> iftdi;
 
