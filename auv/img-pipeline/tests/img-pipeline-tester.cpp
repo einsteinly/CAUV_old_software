@@ -43,14 +43,15 @@ class ImagePipelineTesterNode : public CauvNode{
 
             // Add output node
             std::cout << "Add file output node: " << std::flush; 
-            an.nodeType(nt_file_output);
             // Magically fudge the id values, for now
             ai.input = "image_in";
             no.node = 1;
             no.output = "image_out";
             ai.src = no;
             arcs_in.push_back(ai);
+            an = AddNodeMessage(nt_file_output, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);
+
             std::cout << "sent " << sent << " bytes." << std::endl;
             
             //throw(std::runtime_error("test sequence complete"));
@@ -84,4 +85,5 @@ int main(int argc, char **argv)
     node->run();
     cleanup();
 }
+
 

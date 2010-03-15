@@ -9,7 +9,7 @@ $(addprefix common/,   cauv_node cauv_global cauv_utils) \
 $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
 $(addprefix common/spread/,  cauv_mailbox_monitor cauv_spread_mailbox cauv_spread_messages) \
-$(addprefix img-pipeline/, img-pipeline scheduler imageProcessor) \
+$(addprefix img-pipeline/, img-pipeline scheduler imageProcessor nodes/nodes) \
 )
 
 MSGS = $(addsuffix .msg, \
@@ -31,7 +31,7 @@ control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
 img-pipeline_LIBS = common
-img-pipeline_PARAMS =
+img-pipeline_PARAMS = -lcv -lcxcore -lhighgui
 
 # ================
 # Edit directories

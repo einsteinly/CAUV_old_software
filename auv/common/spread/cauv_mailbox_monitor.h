@@ -54,6 +54,8 @@ public:
     void startMonitoring() {
         if (m_thread.get() == 0) {
             m_thread = boost::make_shared<boost::thread>( boost::ref(m_thread_callable) );
+        }else{
+            std::cerr << __func__ << ": already monitoring";
         }
     }
 
@@ -109,14 +111,13 @@ private:
                 boost::shared_ptr<SpreadMessage> m( m_mailbox->receiveMessage() );
                 if(m){ 
                     m_observers_lock.lock();
+                    std::set<mb_observer_ptr_t>::iterator i;
                     if (m->getMessageFlavour() == SpreadMessage::REGULAR_MESSAGE) {
-                        BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
-                            p->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
-                        }
+                        for(i = m_observers.begin(); i != m_observers.end(); i++)
+                            (*i)->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
                     } else if(m->getMessageFlavour() == SpreadMessage::MEMBERSHIP_MESSAGE){
-                        BOOST_FOREACH(mb_observer_ptr_t p, m_observers) {
-                            p->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
-                        }
+                        for(i = m_observers.begin(); i != m_observers.end(); i++) 
+                            (*i)->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
                     } else {
                         std::cerr << __func__ << " dropping unrecognised message type: "
                                   << m->getMessageFlavour() << std::endl;

@@ -479,7 +479,7 @@ int createCPPFile(string outputpath)
         foreach(Message* m, g->getMessages())
         {
             std::string className = str(format("%1%Message") % m->getName());
-            msg_hh << "        void on" << className << "(const " << className << "& m);" << endl;
+            msg_hh << "        virtual void on" << className << "(const " << className << "& m);" << endl;
             msg_cpp << "void MessageObserver::on" << className << "(const " << className << "& m) {}" << endl;
         }
     }
@@ -531,6 +531,8 @@ int createCPPFile(string outputpath)
             msg_cpp << "    }" << endl;
         }
     }
+    msg_cpp << "    default:" << endl;
+    msg_cpp << "        throw(std::out_of_range(\"Unknown message id\"));" << endl;
     msg_cpp << "    }" << endl;
     msg_cpp << "}" << endl;
     msg_cpp << "void MessageSource::addObserver(boost::shared_ptr<MessageObserver> o)" << endl;

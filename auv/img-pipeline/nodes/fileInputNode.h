@@ -43,7 +43,4 @@ class FileInputNode: public Node{
     DECLARE_NFR;
 };
 
-// Register this node type
-DEFINE_NFR(FileInputNode, nt_file_input);
-
 #endif // ndef __FILE_INPUT_NODE_H__

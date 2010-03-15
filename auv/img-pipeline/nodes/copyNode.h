@@ -44,9 +44,5 @@ class CopyNode: public Node{
         DECLARE_NFR;
 };
 
-// Register this node type
-DEFINE_NFR(CopyNode, nt_copy);
-
-
 #endif // ndef __COPY_NODE_H__
 
