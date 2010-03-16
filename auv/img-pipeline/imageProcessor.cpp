@@ -17,7 +17,6 @@ void ImageProcessor::onImageMessage(ImageMessage const& m){
 void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
     node_id new_id = 0;
     try{
-       
         node_ptr_t node = NodeFactoryRegister::create(m.nodeType(), m_scheduler);
 
         BOOST_FOREACH(NodeInputArc const& a, m.parents())
@@ -28,14 +27,14 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
         new_id = _newID(node);
         m_nodes[new_id] = node;
 
-        if(node->isInputNode){
+        if(node->isInputNode()){
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
-        std::cout << "Node added, (type=" << m.nodeType() << " "
-                  << m.parents().size() << " parents, "
-                  << m.children().size() << " children)" << std::endl;
+        info() << "Node added, (type=" << m.nodeType() << " "
+               << m.parents().size() << " parents, "
+               << m.children().size() << " children)";
     }catch(std::exception& e){
-        std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
+        error() << __func__ << ":" << e.what();
     }
     // TODO: error message of some sort, or something
     sendMessage(NodeAddedMessage(new_id));
@@ -46,7 +45,7 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
         node_ptr_t n = _lookupNode(m.nodeId());
         m_nodes.erase(m.nodeId());
        
-        if(n->isInputNode){
+        if(n->isInputNode()){
             m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
         }
         /* since the graph is linked both ways we have to unlink the node from
@@ -59,17 +58,17 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
         n->clearOutputs();
         n->clearInputs(); 
     }catch(std::exception& e){
-        std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
+        error() << __func__ << ":" << e.what();
     }
     // TODO: error message of some sort, or something
 }
 
 void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage const& m){
     try{
-        // TODO: requires somewhat complicated message code for variadic values
-        throw(std::runtime_error("not implemented"));//_lookupNode(m.nodeID)->setParam();
+        node_ptr_t n = _lookupNode(m.nodeId());
+        n->setParam(m);
     }catch(std::exception& e){
-        std::cerr << "error: " << __func__ << " : " << e.what() << std::endl;
+        error() << __func__ << ":" << e.what();
     }
     // TODO: error message of some sort, or something
 }

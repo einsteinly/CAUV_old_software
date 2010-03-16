@@ -40,7 +40,13 @@ enum NodeType {
     nt_file_input = 3,
     nt_file_output = 4,
     nt_local_display = 5,
-    nt_max_num_node_types = 255
+    nt_max_num_node_types = 6
+}
+enum NodeParameterType {
+    pt_int32 = 0,
+    pt_float = 1,
+    pt_string = 2,
+    pt_max_num_parameter_types = 3
 }
 
 group control
@@ -89,6 +95,11 @@ group pipeline
     message SetNodeParameter : 8
     {
         nodeId : int32;
+        paramId : string;
+        paramType : NodeParameterType;
+        intValue : int32;
+        floatValue : float;
+        stringValue : string;
     }
 
     message GraphDescription : 9

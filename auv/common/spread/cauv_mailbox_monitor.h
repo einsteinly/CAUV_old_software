@@ -9,6 +9,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
 
+#include <common/debug.h>
+
 #include "cauv_spread_rc_mailbox.h"
 #include "cauv_spread_messages.h"
 
@@ -21,12 +23,12 @@ typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
 class TestMBObserver: public MailboxObserver{
     void regularMessageReceived(boost::shared_ptr<RegularMessage> message) {
-        std::cerr << "TestMBObserver: regular message received:" << std::endl;
-        std::cerr << MessageSource::print(message->getMessage()) << std::endl;
+        info() << "TestMBObserver: regular message received:" << "\n\t"
+               << MessageSource::print(message->getMessage());
     }
     
     void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message){
-        std::cerr << "TestMBObserver: membership message received" << std::endl;
+        info() << "TestMBObserver: membership message received";
     }
 };
 
@@ -56,7 +58,7 @@ public:
         if (m_thread.get() == 0) {
             m_thread = boost::make_shared<boost::thread>( boost::ref(m_thread_callable) );
         }else{
-            std::cerr << __func__ << ": already monitoring";
+            error() << __func__ << ": already monitoring";
         }
     }
 
@@ -120,8 +122,8 @@ private:
                         for(i = m_observers.begin(); i != m_observers.end(); i++) 
                             (*i)->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
                     } else {
-                        std::cerr << __func__ << " dropping unrecognised message type: "
-                                  << m->getMessageFlavour() << std::endl;
+                        error() << __func__ << "dropping unrecognised message type:"
+                                << m->getMessageFlavour();
                     }
                     m_observers_lock.unlock();
                 }
