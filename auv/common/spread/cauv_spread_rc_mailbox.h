@@ -192,13 +192,13 @@ public:
      * be anything in the RegularMessage or MembershipMessage hierarchies.
      * @return An object containing the received message and associated metadata.
      */
-    virtual boost::shared_ptr<SpreadMessage> receiveMessage() throw() {
+    virtual boost::shared_ptr<SpreadMessage> receiveMessage(int timeout) throw() {
         ErrOnExit err("Failed to receive message ");
         boost::shared_ptr<SpreadMessage> r;
         if(_waitConnected(500)){
             try{
                 if(m_mailbox){
-                    r = m_mailbox->receiveMessage();
+                    r = m_mailbox->receiveMessage(timeout);
                     err.no();
                 }
             }catch(ConnectionError& e){

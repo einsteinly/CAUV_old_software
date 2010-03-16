@@ -85,6 +85,8 @@ class FTDIStream : public boost::iostreams::device<boost::iostreams::bidirection
             {
                 throw FTDIException("Unable to set flow control", ret, &ftdic);
             }
+
+            ftdi_initialised = true;
         }
         
         
@@ -110,17 +112,22 @@ class FTDIStream : public boost::iostreams::device<boost::iostreams::bidirection
         
         void close() 
         {
-            ftdi_usb_close(&ftdic);
-            ftdi_deinit(&ftdic);
+            if (ftdi_initialised)
+            {
+                ftdi_usb_close(&ftdic);
+                ftdi_deinit(&ftdic);
+                ftdi_initialised = false;
+            }
         }
 
         void close(std::ios_base::openmode which) 
         {
-            this->close();
+            close();
         } 
 
     protected:
         struct ftdi_context ftdic;
+        bool ftdi_initialised;
 };
 
 
@@ -143,9 +150,6 @@ class Module : public MessageSource
         ~Module()
         {
             m_running = false;
-            m_readThread->join();
-
-            ftdiStream.close();
         }
 
 
@@ -218,7 +222,7 @@ class Module : public MessageSource
                     curMsg.push_back(c);
                 }
 
-                std::cout << "Module Message  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
+                std::cout << "Message from module  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
                 foreach(char c, curMsg)
                 {
                     std::cout << std::hex << std::setw(2) << std::setfill('0') << c << " " << std::dec;

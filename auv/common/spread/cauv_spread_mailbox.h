@@ -106,7 +106,7 @@ public:
      * be anything in the RegularMessage or MembershipMessage hierarchies.
      * @return An object containing the received message and associated metadata.
      */
-    virtual boost::shared_ptr<SpreadMessage> receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError);
+    virtual boost::shared_ptr<SpreadMessage> receiveMessage(int timeout) throw(InvalidSessionError, ConnectionError, IllegalMessageError);
 
     int waitingMessageByteCount() const throw(InvalidSessionError, ConnectionError);
     bool isConnected() const { return !m_ssrcMailbox->killed(); }
