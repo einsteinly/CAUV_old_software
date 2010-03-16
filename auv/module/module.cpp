@@ -8,7 +8,6 @@
 
 #include <common/cauv_utils.h>
 
-//#include "module_message.h"
 #include "module.h"
 
 
@@ -26,10 +25,10 @@ const char* FTDIException::what() const throw()
 	return message.c_str();
 }
 
-FTDISource::FTDISource() throw()
+FTDIStream::FTDIStream() throw()
 {
 }
-FTDISource::FTDISource(int deviceID) throw(FTDIException)
+FTDIStream::FTDIStream(int deviceID) throw(FTDIException)
 {
     ftdi_init(&ftdic);
 
@@ -73,7 +72,7 @@ FTDISource::FTDISource(int deviceID) throw(FTDIException)
     delete device;
 }
 
-void FTDISource::baudrate(int baudrate) throw(FTDIException)
+void FTDIStream::baudrate(int baudrate) throw(FTDIException)
 {
     int ret;
     if ((ret = ftdi_set_baudrate(&ftdic, baudrate)) < 0)
@@ -81,7 +80,7 @@ void FTDISource::baudrate(int baudrate) throw(FTDIException)
         throw FTDIException("Unable to set baudrate", ret, &ftdic);
     }
 }
-void FTDISource::lineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_parity_type parity) throw(FTDIException)
+void FTDIStream::lineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_parity_type parity) throw(FTDIException)
 {
     int ret;
     if ((ret = ftdi_set_line_property(&ftdic, bits, stopBits, parity)) < 0)
@@ -89,7 +88,7 @@ void FTDISource::lineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, 
         throw FTDIException("Unable to set line property", ret, &ftdic);
     }
 }
-void FTDISource::flowControl(int flowControl) throw(FTDIException)
+void FTDIStream::flowControl(int flowControl) throw(FTDIException)
 {
     int ret;
     if ((ret = ftdi_setflowctrl(&ftdic, flowControl)) < 0)
@@ -98,7 +97,7 @@ void FTDISource::flowControl(int flowControl) throw(FTDIException)
     }
 }
 
-std::streamsize FTDISource::read(char* s, std::streamsize n)
+std::streamsize FTDIStream::read(char* s, std::streamsize n)
 {
     int ret = ftdi_read_data(&ftdic, reinterpret_cast<u_char*>(s), n);
     if (ret < 0)
@@ -107,10 +106,26 @@ std::streamsize FTDISource::read(char* s, std::streamsize n)
     }
     return ret;
 }
-void FTDISource::close() 
+
+std::streamsize FTDIStream::write(const char* s, std::streamsize n)
+{
+    int ret = ftdi_write_data(&ftdic, const_cast<u_char*>(reinterpret_cast<const u_char*>(s)), n);
+    if (ret < 0)
+    {
+        throw FTDIException("unable to write to ftdi device", ret, &ftdic);
+    }
+    return ret;
+}
+
+void FTDIStream::close() 
 {
     ftdi_usb_close(&ftdic);
     ftdi_deinit(&ftdic);
+}
+
+void FTDIStream::close(std::ios_base::openmode which) 
+{
+    this->close();
 }
 
 Module::Module(int deviceID,
@@ -123,7 +138,7 @@ throw(FTDIException)
 {
     cout << "Initializing FTDI source..." << endl;
 
-    ftdiSource = FTDISource(0); 
+    ftdiStream = FTDIStream(0); 
     
     cout << "USB opened..." << endl;
 
@@ -138,19 +153,19 @@ Module::~Module()
     m_running = false;
     m_readThread->join();
 
-    ftdiSource.close();
+    ftdiStream.close();
 }
 
 void Module::readLoop()
 {
-    std::string curMsg;
+    byte_vec_t curMsg;
     
-    boost::iostreams::stream<FTDISource> iftdi;
+    boost::iostreams::stream<FTDIStream> ftdi(ftdiStream);
 
     while (m_running)
     {
         uint32_t startWord;
-        iftdi >> startWord;
+        ftdi >> startWord;
 
         if (startWord != 0xdeadc01d)
         {
@@ -160,14 +175,15 @@ void Module::readLoop()
 
         uint32_t len;
         uint16_t checksum;
-        iftdi >> len;
-        iftdi >> checksum;
+        ftdi >> len;
+        ftdi >> checksum;
 
-        uint16_t buf[4];
-        *reinterpret_cast<uint32_t*>(buf) = startWord;
-        *reinterpret_cast<uint32_t*>(buf+2) = len;
+        uint32_t buf[2];
+        buf[0] = startWord;
+        buf[1] = len;
 
-        vector<uint16_t> vheader(buf, buf+4);
+        uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
+        vector<uint16_t> vheader(buf16, buf16+4);
 
         if (sumOnesComplement(vheader) != checksum)
         {
@@ -179,7 +195,7 @@ void Module::readLoop()
         char c;
         for (uint32_t i = 0; i < len; ++i)
         {
-            iftdi >> c;
+            ftdi >> c;
             curMsg.push_back(c);
         }
 
@@ -189,58 +205,19 @@ void Module::readLoop()
             cout << hex << setw(2) << setfill('0') << c << " " << dec;
         }
         cout << endl;
+
+        this->notifyObservers(curMsg);
     }
 }
 
 
-/*
-int Module::onMessage(Message& data)
+void Module::send(Message& message) throw (FTDIException)
 {
-    cout << data;
-    return 0;
+    boost::iostreams::stream<FTDIStream> ftdi(ftdiStream);
+
+    byte_vec_t bytes = message.toBytes();
+
+    ftdi << 0xdeadc01d;
+    ftdi << bytes.size();
+    ftdi << bytes;
 }
-
-int Module::send(Message& message)
-{
-    int len = packet.length();
-    u_char* rawPacket = new u_char[len];
-    packet.fillByteData(rawPacket);
-
-#ifdef MODULE_DEBUG
-    cout << "Sending " << endl;
-    cout << "    Raw: ";
-    for (int i = 0; i < len; i++)
-    {
-        cout << hex << setfill('0') << setw(2) << (int)rawPacket[i] << " ";
-    }
-    cout << endl;
-
-    cout << "..";
-#endif
-
-    int ret;
-    u_char* p = rawPacket;
-    while (len > 0)
-    {
-        if ((ret = ftdi_write_data(&ftdic, p, len)) < 0)
-        {
-            throw FTDIException("unable to write to ftdi device", ret,& ftdic);
-        }
-        len -= ret;
-        p += ret;
-#ifdef MODULE_DEBUG
-        cout << ".";
-#endif
-
-    }
-#ifdef MODULE_DEBUG
-    cout << endl;
-    cout << "Message sent" << endl;
-#endif
-
-
-    delete[] rawPacket;
-
-    return 0;
-}
-*/
