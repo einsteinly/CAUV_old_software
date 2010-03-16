@@ -31,7 +31,7 @@ control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
 img-pipeline_LIBS = common
-img-pipeline_PARAMS = -lcv -lcxcore -lhighgui
+img-pipeline_PARAMS = -lcv -lcxcore -lhighgui -DDEBUG
 
 # ================
 # Edit directories

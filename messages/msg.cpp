@@ -252,6 +252,8 @@ int createCPPFile(string outputpath)
     msg_hh << "#    define foreach BOOST_FOREACH" << endl;
     msg_hh << "#endif" << endl;
     msg_hh << endl;
+    msg_hh << "#include \"vector_streamops.h\"" << endl;
+    msg_hh << endl;
     msg_hh << "// message data type definitions" << endl;
     msg_hh << "typedef std::string byte_vec_t;" << endl;
     msg_hh << "typedef std::ostringstream byte_ostream_t;" << endl;
@@ -264,8 +266,6 @@ int createCPPFile(string outputpath)
     msg_cpp << "#include <boost/archive/binary_iarchive.hpp>" << endl;
     msg_cpp << "#include <boost/serialization/vector.hpp>" << endl;
     msg_cpp << "#include <boost/serialization/map.hpp>" << endl;
-    msg_cpp << endl;
-    msg_cpp << "#include \"vector_streamops.h\"" << endl;
     msg_cpp << endl;
     
     

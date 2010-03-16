@@ -41,7 +41,7 @@ class node_type_error: public img_pipeline_error{
 };
 
 
-typedef boost::variant<float, int, std::string> param_value_t;
+typedef boost::variant<int32_t, float, std::string> param_value_t;
 
 typedef boost::shared_ptr<Node> node_ptr_t;
 

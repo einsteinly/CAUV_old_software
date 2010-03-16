@@ -14,6 +14,7 @@
 
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <common/debug.h>
 
 #include "image.h"
 #include "imageProcessor.h"
@@ -52,6 +53,7 @@ class Node{
                 throw(id_error(std::string("setInput: Invalid input id") + to_string(i_id)));
             }else{
                 i->second = input_link_t(n, o_id);
+                newInput(i->first);
             }
         }
 
@@ -68,6 +70,7 @@ class Node{
                     throw link_error("setInput: specific parent output must be specified");
                 }
                 m_parent_links.begin()->second = input_link_t(n, parent_outputs[0]);
+                newInput(m_parent_links.begin()->first);
             }else if(m_parent_links.size() > 1){
                 throw link_error("setInput: specific input must be specified");
             }else{
@@ -208,7 +211,7 @@ class Node{
                 inputs[i->first] = i->second.first->getOutputImage(i->second.second);
             m_parent_links_lock.unlock();
             
-            std::cerr << "exec: speed " << m_speed << ", " << inputs.size() << " inputs" << std::endl;
+            info() << "exec: speed" << m_speed << "," << inputs.size() << "inputs";
             if(this->m_speed < medium){
                 // if this is a fast node: request new image from parents before executing
                 _demandNewParentInput();
@@ -314,6 +317,21 @@ class Node{
          */
         std::map<param_id, param_value_t> getParamValues() const;
         
+        /* set a parameter based on a message
+         */
+        void setParam(SetNodeParameterMessage const& m){
+            param_value_t value;
+            switch(m.paramType()){
+                case pt_int32: value = m.intValue(); break;
+                case pt_float: value = m.floatValue(); break;
+                case pt_string: value = m.stringValue(); break;
+                default:
+                    // TODO: throw?
+                    error() << "Unknown parameter type:" << m.paramType();
+            }
+            setParam(m.paramId(), value);
+        }
+
         /* set a single parameter value
          */
         template<typename T>
@@ -321,6 +339,7 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_parameters_lock);
             const std::map<param_id, param_value_t>::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
+                debug() << "param" << p << "set to" << v;
                 i->second = v;
             }else{
                 throw(id_error(std::string("setParam: Invalid parameter id: ") + to_string(p)));
@@ -343,7 +362,7 @@ class Node{
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */
-        static bool isInputNode() throw() { return false; }
+        virtual bool isInputNode() throw() { return false; }
         
     protected:
         /* Derived classes override this to do whatever image processing it is
@@ -392,11 +411,12 @@ class Node{
             if(!m_output_demanded)
                 return;
             
+            // ALL inputs must be new
             for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
                 if(!i->second)
                     return;
             
-            // TODO: we rely on multiple-reader thread-safety of std::map here,
+            // we rely on multiple-reader thread-safety of std::map here,
             // which is only true if we aren't creating new key-value pairs
             // using operator[] (which we aren't, and doing so would return a
             // NULL queue pointer anyway)
@@ -472,7 +492,7 @@ class InputNode: public Node{
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */
-        static bool isInputNode() throw() { return true; } 
+        virtual bool isInputNode() throw() { return true; } 
 };
 
 #endif // ndef __NODE_H__

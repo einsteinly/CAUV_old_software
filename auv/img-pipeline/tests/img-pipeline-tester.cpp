@@ -5,6 +5,7 @@
 
 #include <common/cauv_node.h>
 #include <common/messages.h>
+#include <common/debug.h>
 
 #include <common/spread/cauv_mailbox_monitor.h>
 
@@ -16,15 +17,15 @@ class ImagePipelineTesterNode : public CauvNode{
         }
     protected:
         virtual void onRun(){
-            std::cout << "--- ImagePipelineTesterNode::onRun ---" << std::endl;
+            info() << "--- ImagePipelineTesterNode::onRun ---";
             
-            std::cout << "Add TestMBObserver..." << std::endl;
+            info() << "Add TestMBObserver...";
             eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
             
-            std::cout << "Joining pipeline group..." << std::endl;
+            info() << "Joining pipeline group...";
             mailbox()->joinGroup("pipeline");
             
-            std::cout << "--- start test sequence ---" << std::endl;
+            info() << "--- start test sequence ---";
             /* test message sequence */
             std::vector<NodeInputArc> arcs_in;
             std::vector<NodeOutputArc> arcs_out;
@@ -37,12 +38,14 @@ class ImagePipelineTesterNode : public CauvNode{
             AddNodeMessage an(nt_file_input, arcs_in, arcs_out);
             
             // Add input node
-            std::cout << "Add file input node: " << std::flush;
+            info() << "Add file input node:";
+            info() << "\t" << an;
             sent = mailbox()->sendMessage(an, SAFE_MESS);
-            std::cout << "sent " << sent << " bytes." << std::endl;
+            info() << "\tsent" << sent << "bytes";
             
+
             // Add output node
-            std::cout << "Add file output node: " << std::flush; 
+            info() << "Add file output node:"; 
             // Magically fudge the id values, for now
             ai.input = "image_in";
             no.node = 1;
@@ -50,9 +53,37 @@ class ImagePipelineTesterNode : public CauvNode{
             ai.src = no;
             arcs_in.push_back(ai);
             an = AddNodeMessage(nt_file_output, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            info() << "\t" << an;
+            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            info() << "\tsent" << sent << "bytes";
+            
+            
+            // Set input image parameter
+            info() << "Setting input image parameter:";
+            SetNodeParameterMessage sp;
+            sp.nodeId(1);
+            sp.paramId("filename");
+            sp.paramType(pt_string);
+            sp.stringValue("test.jpg");
+            info() << "\t" << sp;
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
+            
+            info() << "Trying to set invalid parameter:";
+            sp.paramId("void param");
+            info() << "\t" << sp;
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
 
-            std::cout << "sent " << sent << " bytes." << std::endl;
+            
+            info() << "Setting output image parameter:";
+            sp.nodeId(2);
+            sp.paramId("filename");
+            sp.paramType(pt_string);
+            sp.stringValue("pt.out0.jpg");
+            info() << "\t" << sp;
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
             
             //throw(std::runtime_error("test sequence complete"));
         }
@@ -62,17 +93,17 @@ static ImagePipelineTesterNode* node;
 
 void cleanup()
 {
-    std::cout << "Cleaning up..." << std::endl;
+    info() << "Cleaning up...";
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    std::cout << "Clean up done." << std::endl;
+    info() << "Clean up done.";
 }
 
 void interrupt(int sig)
 {
-    std::cout << std::endl;
-    std::cout << "Interrupt caught!" << std::endl;
+    info() << std::endl;
+    info() << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);
