@@ -5,6 +5,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include <common/messages.h>
+
 #include "camera.h"
 #include "camera_observer.h"
 
@@ -26,7 +28,7 @@ int main(int argc, char** argv) {
     
     std::cout << "Opening device id " << std::dec << dev_id << std::endl;
 
-    Webcam cam(0, dev_id);
+    Webcam cam(FORWARD, dev_id);
     
     cam.addObserver( boost::shared_ptr<CameraObserver>( new DotOnImageObserver ) );
     

@@ -6,6 +6,7 @@
 #include <opencv/cv.h>
 
 #include <common/cauv_utils.h>
+#include <common/messages.h>
 
 #include "camera.h"
 
@@ -24,11 +25,14 @@ ImageCaptureException::ImageCaptureException(void) : CameraException("Could not 
 ImageCaptureException::~ImageCaptureException(void) throw() {}
 
 
-Camera::Camera(const uint32_t id) : m_id(id)
+Camera::Camera(const CameraID id) : m_id(id)
+{
+}
+Camera::~Camera()
 {
 }
 
-uint32_t Camera::id() const
+CameraID Camera::id() const
 {
     return m_id;
 }
@@ -63,7 +67,7 @@ CaptureThread::CaptureThread(Webcam &camera, const int interFrameDelay)
 {
 }
 
-CaptureThread::~CaptureThread() {
+void CaptureThread::stop() {
     m_alive = false;  // Alert the image-capture loop that it needs to stop
 }
 
@@ -94,8 +98,8 @@ void CaptureThread::operator()()
 
 
 
-Webcam::Webcam(const uint32_t cameraID, const int deviceID) throw (ImageCaptureException)
-    : Camera(cameraID), m_thread(*this)
+Webcam::Webcam(const CameraID cameraID, const int deviceID) throw (ImageCaptureException)
+    : Camera(cameraID), m_thread_callable(*this)
 {
     m_capture = cv::VideoCapture(deviceID);
     if( !m_capture.isOpened() )
@@ -103,11 +107,16 @@ Webcam::Webcam(const uint32_t cameraID, const int deviceID) throw (ImageCaptureE
         throw ImageCaptureException();
     }
 
-    boost::thread captureThread(boost::ref(m_thread));
+    m_thread = boost::thread(boost::ref(m_thread_callable));
 }
 void Webcam::grabFrameAndBroadcast()
 {
     cv::Mat mat;
     m_capture >> mat;
     broadcastImage(mat);
+}
+
+Webcam::~Webcam() {
+    m_thread_callable.stop();
+    m_thread.join();
 }

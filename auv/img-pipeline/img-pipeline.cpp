@@ -16,12 +16,8 @@
 using namespace std;
 
 
-ImagePipelineNode::ImagePipelineNode(const string& group)
-    : CauvNode("img-pipe", group), m_pipeline(new ImageProcessor(mailbox()))
-{
-}
-
-ImagePipelineNode::~ImagePipelineNode()
+ImagePipelineNode::ImagePipelineNode()
+    : CauvNode("img-pipe"), m_pipeline(new ImageProcessor(mailbox()))
 {
 }
 
@@ -56,7 +52,8 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ImagePipelineNode("cauv");
+    node = new ImagePipelineNode();
     node->run();
     cleanup();
+    return 0;
 }

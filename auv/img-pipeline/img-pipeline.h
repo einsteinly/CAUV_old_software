@@ -10,8 +10,7 @@ class ImageProcessor;
 class ImagePipelineNode : public CauvNode
 {
     public:
-        ImagePipelineNode(const std::string& group);
-        virtual ~ImagePipelineNode();
+        ImagePipelineNode();
     
     protected:
         virtual void onRun();

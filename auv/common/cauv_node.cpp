@@ -14,16 +14,6 @@
 
 using namespace std;
 
-void CauvNode::onConnect()
-{
-    // TODO: eh? when does this get called, and by what?
-}
-
-void CauvNode::onDisconnect()
-{
-    // TODO: eh? when does this get called, and by what?  
-}
-
 void CauvNode::onRun()
 {
 }
@@ -40,15 +30,13 @@ boost::shared_ptr<MsgSrcMBMonitor> CauvNode::mailboxMonitor() const{
     return m_mailbox_monitor;
 }
 
-CauvNode::CauvNode(const string& name, const string& group)
-    : m_name(name), m_group(group),
+CauvNode::CauvNode(const string& name)
+    : m_name(name),
       m_mailbox(new ReconnectingSpreadMailbox("16707@localhost", name)),
       m_event_monitor(new MailboxEventMonitor(m_mailbox)),
       m_mailbox_monitor(new MsgSrcMBMonitor)
 {
     m_event_monitor->addObserver(m_mailbox_monitor);
-    // TODO: do we want to interpret 'group' as a spread group, and join it?
-    // m_mailbox->joinGroup(group);
 }
 
 CauvNode::~CauvNode()
@@ -65,7 +53,8 @@ void CauvNode::run()
 
 	onRun();
 
-    for(;;){
+    while(true)
+    {
         msleep(500);
     }
 }

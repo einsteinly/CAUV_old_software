@@ -11,7 +11,7 @@
 class ControlNode : public CauvNode
 {
     public:
-        ControlNode(const std::string& group);
+        ControlNode();
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;

@@ -20,17 +20,14 @@ class CauvNode
 
 	protected:
 		std::string m_name;
-		std::string m_group;
 
-		virtual void onConnect();
-		virtual void onDisconnect();
 		virtual void onRun();
 
         boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
         boost::shared_ptr<MailboxEventMonitor> eventMonitor() const; 
         boost::shared_ptr<MsgSrcMBMonitor> mailboxMonitor() const;
 
-        CauvNode(const std::string& name, const std::string& group);
+        CauvNode(const std::string& name);
     
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;

@@ -12,7 +12,7 @@
 using namespace std;
 
 
-ControlNode::ControlNode(const string& group) : CauvNode("Control", group)
+ControlNode::ControlNode() : CauvNode("Control")
 {
     // start up the MCB module
     try {
@@ -106,7 +106,8 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ControlNode("cauv");
+    node = new ControlNode();
     node->run();
     cleanup();
+    return 0;
 }

@@ -11,6 +11,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include <common/messages.h>
+
 #include "camera_observer.h"
 
 //const int cam_width = 640, cam_height = 480; //max dimensions of logitech cameras
@@ -43,17 +45,19 @@ class Camera
     typedef std::list< observer_ptr > observer_list;
     
     public:
-        uint32_t id() const;
+        virtual ~Camera();
+        
+        CameraID id() const;
 
         void addObserver(observer_ptr o);
         void removeObserver(observer_ptr o);
         void clearObservers();
     
     protected:
-        uint32_t m_id;
+        CameraID m_id;
         observer_list m_obs;
 
-        Camera(const uint32_t id);
+        Camera(const CameraID id);
 
         void broadcastImage(const cv::Mat &img);
 };
@@ -64,8 +68,9 @@ class CaptureThread
 {
     public:
         CaptureThread(Webcam &camera, const int interFrameDelay = DEFAULT_FRAME_DELAY);
-        ~CaptureThread();
 
+        void stop();
+        
         void setInterFrameDelay(const int delay);
         const int getInterFrameDelay() const;
 
@@ -82,11 +87,13 @@ class CaptureThread
 class Webcam : public Camera
 {
     public:
-        Webcam(const uint32_t cameraID, const int deviceID) throw (ImageCaptureException);
+        Webcam(const CameraID cameraID, const int deviceID) throw (ImageCaptureException);
+        virtual ~Webcam();
     
     protected:
         cv::VideoCapture m_capture;
-        CaptureThread m_thread;
+        CaptureThread m_thread_callable;
+        boost::thread m_thread;
         void grabFrameAndBroadcast();
         
     friend class CaptureThread;
