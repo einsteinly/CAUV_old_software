@@ -386,11 +386,15 @@ class Node{
         template<typename T>
         void setParam(param_id const& p, T const& v) throw(id_error){
             boost::lock_guard<boost::recursive_mutex> l(m_parameters_lock);
-            const std::map<param_id, param_value_t>::iterator i = m_parameters.find(p);
+            std::map<param_id, param_value_t>::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 debug() << "param" << p << "set to" << v;
                 i->second = v;
             }else{
+                error e;
+                e << m_parameters.size() << "valid parameters are:";
+                for(i = m_parameters.begin(); i != m_parameters.end(); i++)
+                    e << i->first << "( =" << i->second << ")";
                 throw(id_error(std::string("setParam: Invalid parameter id: ") + to_string(p)));
             }
             // if all inputs are valid (but not necessarily still new), add

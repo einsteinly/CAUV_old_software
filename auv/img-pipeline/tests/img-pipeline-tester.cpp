@@ -12,11 +12,11 @@
 
 class ImagePipelineTesterNode : public CauvNode{
     public:
-        ImagePipelineTesterNode(std::string const& group)
-            : CauvNode("pipe-test", group){
+        ImagePipelineTesterNode()
+            : CauvNode("pipe-test"){
         }
     protected:
-        fileIOTests(){
+        void fileIOTests(){
             info() << green << "--- File IO Tests ---";
             std::vector<NodeInputArc> arcs_in;
             std::vector<NodeOutputArc> arcs_out;
@@ -114,7 +114,7 @@ class ImagePipelineTesterNode : public CauvNode{
         }
         
         void cameraInputTests(){
-            info() << green << "--- File IO Tests ---";
+            info() << green << "--- Camera Input Tests ---";
             std::vector<NodeInputArc> arcs_in;
             std::vector<NodeOutputArc> arcs_out;
             NodeInputArc ai;
@@ -123,26 +123,40 @@ class ImagePipelineTesterNode : public CauvNode{
             NodeOutput no;
             int sent = 0;
 
-            AddNodeMessage an(nt_file_input, arcs_in, arcs_out);
+            AddNodeMessage an(nt_camera_input, arcs_in, arcs_out);
             
             // Add input node
-            info() << "Add file input node:";
-            info() << "\t" << an;
+            info() << "adding camera input node";
             sent = mailbox()->sendMessage(an, SAFE_MESS);
-            info() << "\tsent" << sent << "bytes";
             
             // Add output node
-            info() << "Add file output node:"; 
+            info() << "adding file output node"; 
             // Magically fudge the id values, for now
             ai.input = "image_in";
-            no.node = 1;
+            no.node = 3;
             no.output = "image_out";
             ai.src = no;
             arcs_in.push_back(ai);
             an = AddNodeMessage(nt_file_output, arcs_in, arcs_out);
-            info() << "\t" << an;
-            sent = mailbox()->sendMessage(an, SAFE_MESS); 
-            info() << "\tsent" << sent << "bytes";
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+
+
+            info() << "setting output image";
+            SetNodeParameterMessage sp(0, "", pt_int32, 0, 0, ""); // initialise everything to supress valgrind's complaints
+            sp.nodeId(4);
+            sp.paramId("filename");
+            sp.paramType(pt_string);
+            sp.stringValue("/home/jc593/Dev/hg-code/auv/camera-out.jpg");
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+
+            info() << "Setting source camera:";
+            sp.nodeId(3);
+            sp.paramId("camera id");
+            sp.stringValue("");
+            sp.paramType(pt_int32);
+            sp.intValue(cam_forward);
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+
         }
         
         virtual void onRun(){
@@ -187,7 +201,7 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ImagePipelineTesterNode("cauv");
+    node = new ImagePipelineTesterNode();
     node->run();
     cleanup();
 }
