@@ -1,23 +1,35 @@
+#include <iostream>
+
+#include <boost/shared_ptr.hpp>
+
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include <stdio.h>
-#include <boost/shared_ptr.hpp>
+
 #include "camera.h"
 #include "camera_observer.h"
 
-class WindowObserver : public CameraObserver {
+class DotOnImageObserver : public CameraObserver {
     public:
-    virtual void onReceiveImage(uint32_t cam_id, const cv::Mat& img) {
-	cv::imshow("CAUV OpenCV test", img);
-    }
+        virtual void onReceiveImage(uint32_t cam_id, const cv::Mat& img) {
+            std::cout << ".";
+            std::flush(std::cout);
+        }
 };
 
-int main() {
-    // Create a window in which the captured images will be presented
-    cv::namedWindow( "CAUV OpenCV test", CV_WINDOW_AUTOSIZE );
-    Webcam cam(1);
-    cam.addObserver( boost::shared_ptr<CameraObserver>( new WindowObserver ) );
+int main(int argc, char** argv) {
+    if (argc != 2)
+    {
+        std::cout << "No device specified" << std::endl;
+        return 1;
+    }
+    int dev_id = atoi(argv[1]);
+    
+    std::cout << "Opening device id " << std::dec << dev_id << std::endl;
 
-    cvDestroyWindow( "CAUV OpenCV test" );
+    Webcam cam(0, dev_id);
+    
+    cam.addObserver( boost::shared_ptr<CameraObserver>( new DotOnImageObserver ) );
+    
+    while(true){}
     return 0;
 }

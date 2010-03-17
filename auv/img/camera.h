@@ -1,13 +1,15 @@
 #ifndef __CAMERA_H__
 #define __CAMERA_H__
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
 #include <string>
 #include <exception>
-#include <vector>
+#include <list>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 #include "camera_observer.h"
 
@@ -15,17 +17,16 @@
 const int DEFAULT_FRAME_DELAY = 200;
 //const cv::Size CAUV_CAM_SIZE(cam_width, cam_height);
 
-using namespace std;
-
-class CameraException : public exception
+class CameraException : public std::exception
 {
-    protected:
-        string reason;
     public:
-        CameraException(const string& _reason);
+        CameraException(const std::string& _reason);
         ~CameraException() throw();
 
         virtual const char *what() const throw();
+    
+    protected:
+        std::string reason;
 };
 
 class ImageCaptureException : public CameraException
@@ -39,18 +40,22 @@ class CameraObserver;
 class Camera
 {
     typedef boost::shared_ptr<CameraObserver> observer_ptr;
-    typedef vector< observer_ptr > observer_vector;
-    protected:
-        uint32_t m_id;
-        observer_vector m_obs;
-        Camera(uint32_t id);
-
-        void broadcastImage(const cv::Mat &img);
+    typedef std::list< observer_ptr > observer_list;
+    
     public:
-        uint32_t id() { return m_id; }
+        uint32_t id() const;
 
         void addObserver(observer_ptr o);
         void removeObserver(observer_ptr o);
+        void clearObservers();
+    
+    protected:
+        uint32_t m_id;
+        observer_list m_obs;
+
+        Camera(const uint32_t id);
+
+        void broadcastImage(const cv::Mat &img);
 };
 
 
@@ -58,31 +63,33 @@ class Webcam;
 class CaptureThread
 {
     public:
-        CaptureThread(Webcam &camera, const int interFrameDelay = DEFAULT_FRAME_DELAY)
-	  : m_camera(camera), m_interFrameDelay(interFrameDelay), m_alive(true) {}
+        CaptureThread(Webcam &camera, const int interFrameDelay = DEFAULT_FRAME_DELAY);
+        ~CaptureThread();
+
+        void setInterFrameDelay(const int delay);
+        const int getInterFrameDelay() const;
+
         void operator()();
-	void setInterFrameDelay(const int delay);
-	const int getInterFrameDelay() const;
-	~CaptureThread();
 
     protected:
         Webcam &m_camera;
-	int m_interFrameDelay;
-	mutable boost::mutex m_frameDelayMutex;
-	bool m_alive;
+        int m_interFrameDelay;
+        mutable boost::mutex m_frameDelayMutex;
+        bool m_alive;
 };
 
 
 class Webcam : public Camera
 {
-    friend class CaptureThread;
+    public:
+        Webcam(const uint32_t cameraID, const int deviceID) throw (ImageCaptureException);
+    
     protected:
         cv::VideoCapture m_capture;
         CaptureThread m_thread;
         void grabFrameAndBroadcast();
         
-    public:
-        Webcam(uint32_t cameraID, int deviceID = 0) throw (ImageCaptureException);
+    friend class CaptureThread;
 };
 
 #endif
