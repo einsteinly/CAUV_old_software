@@ -60,11 +60,11 @@ class ImagePipelineTesterNode : public CauvNode{
             
             // Set input image parameter
             info() << "Setting input image parameter:";
-            SetNodeParameterMessage sp;
+            SetNodeParameterMessage sp(0, "", pt_int32, 0, 0, ""); // initialise everything to supress valgrind's complaints
             sp.nodeId(1);
             sp.paramId("filename");
             sp.paramType(pt_string);
-            sp.stringValue("test.jpg");
+            sp.stringValue("/home/jc593/Dev/hg-code/auv/img-pipeline/tests/test.jpg");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
@@ -80,7 +80,45 @@ class ImagePipelineTesterNode : public CauvNode{
             sp.nodeId(2);
             sp.paramId("filename");
             sp.paramType(pt_string);
-            sp.stringValue("pt.out0.jpg");
+            sp.stringValue("pt-out0.png");
+            info() << "\t" << sp;
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
+
+            
+            info() << "Setting output image compression:";
+            sp.nodeId(2);
+            sp.paramId("jpeg quality");
+            sp.paramType(pt_int32);
+            sp.intValue(80);
+            info() << "\t" << sp;
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
+            
+            
+            info() << "Setting output image parameter:";
+            sp.nodeId(2);
+            sp.paramId("filename");
+            sp.paramType(pt_string);
+            sp.stringValue("pt-out1.tiff");
+            info() << "\t" << sp;
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
+            
+            info() << "Setting output image parameter:";
+            sp.nodeId(2);
+            sp.paramId("filename");
+            sp.paramType(pt_string);
+            sp.stringValue("pt-out0.png");
+            info() << "\t" << sp;
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
+            
+            info() << "Setting output image parameter:";
+            sp.nodeId(2);
+            sp.paramId("filename");
+            sp.paramType(pt_string);
+            sp.stringValue("pt-out0.jpg");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";

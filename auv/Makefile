@@ -33,7 +33,7 @@ control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
 img-pipeline_LIBS = common
-img-pipeline_PARAMS = -lcv -lcxcore -lhighgui -DDEBUG
+img-pipeline_PARAMS = -lcv -lcxcore -lhighgui
 
 webcam_LIBS = common camera
 webcam_PARAMS = -lcv -lhighgui
@@ -73,7 +73,7 @@ SHELL=/bin/bash
 ifdef RELEASE
 CXXFLAGS=-Wall -O3
 else
-CXXFLAGS=-Wall -g
+CXXFLAGS=-Wall -g -DDEBUG=1
 endif
 override CXXFLAGS += -I . -I /societies/cauv/install/include/
 

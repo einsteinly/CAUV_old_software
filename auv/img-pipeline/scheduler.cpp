@@ -1,12 +1,14 @@
 #include "scheduler.h"
 #include "node.h"
 
+#include <common/debug.h>
+
 ImgPipelineThread::ImgPipelineThread(Scheduler* s, SchedulerPriority p)
     : m_sched(s), m_priority(p){
 }
 
 void ImgPipelineThread::operator()(){
-    std::cerr << "ImgPipelineThread (" << m_priority << ") started" << std::endl; 
+    info() << cyan << "ImgPipelineThread (" << m_priority << ") started"; 
     // TODO: platform specific stuff to set the priority of this thread
     // based on m_priority (using boost::this_thread.native_handle())
     
@@ -17,6 +19,6 @@ void ImgPipelineThread::operator()(){
         else
             break;
     }
-    std::cerr << "ImgPipelineThread (" << m_priority << ") stopping" << std::endl;
+    info() << cyan << "ImgPipelineThread (" << m_priority << ") stopping";
 }
 

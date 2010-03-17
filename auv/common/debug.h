@@ -9,6 +9,14 @@
 #include <cctype>
 #include <ctime>
 
+#define DEBUG_MUTEX_OUTPUT
+#define DEBUG_PRINT_THREAD
+
+#if defined(DEBUG_MUTEX_OUTPUT) || defined(DEBUG_PRINT_THREAD)
+#include <boost/thread.hpp>
+#endif
+
+
 /* usage:
  *   debug(1) << stuff; // logs "[HH:MM:SS] stuff", if (DEBUG >= 1)
  *   debug() << stuff << more_stuff << "thing"; // same as debug(1) << ...
@@ -39,7 +47,15 @@ enum bash_colour_e{
     blue  = 34,
     purple = 35,
     cyan  = 36,
-    white = 37
+    light_grey = 37,
+    dark_grey   = 130,
+    light_red   = 131,
+    light_green = 132,
+    yellow      = 133,
+    light_blue  = 134,
+    light_purple = 135,
+    light_cyan  = 136,
+    white       = 137
  };
  enum bash_control_e{
     reset_colour = 0,
@@ -62,11 +78,12 @@ std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, bash_colour_e const& c){
     if(c == no_colour)
         os << reset_colour;
-    else
-        os << "\E[;" << int(c) << "m";
+    else if(int(c) < 100)
+        os << "\E[0;" << int(c) << "m";
+    else 
+        os << "\E[1;" << int(c)-100 << "m";
     return os;
 }
-
 
 
 class NonCopyable
@@ -104,7 +121,11 @@ class SmartStreamBase: NonCopyable
 
     private:
         void printToStream(std::ostream& os)
-        { 
+        {
+            #ifdef DEBUG_MUTEX_OUTPUT
+                boost::lock_guard<boost::recursive_mutex> l(_getMutex(os));
+            #endif
+
             // add timestamp at start of each line:
             time_t raw_time;
             struct tm* gm_time;
@@ -112,13 +133,20 @@ class SmartStreamBase: NonCopyable
 
             if(m_stuffs.size())
             {
+                os << m_col;
+
                 time(&raw_time);
                 gm_time = gmtime(&raw_time);
-                strftime(buffer, 80, "[%H:%M:%S] ", gm_time);
-                os << buffer;
+                strftime(buffer, 80, "[%H:%M:%S", gm_time);
+
+                #ifdef DEBUG_PRINT_THREAD
+                    os << buffer << " T=" << boost::this_thread::get_id() << "] ";
+                #else
+                    os << buffer << "] ";
+                #endif
 
                 // add defined prefix to each line
-                os << m_col << m_prefix;
+                os <<  m_prefix;
             }
             
             // add spaces between consecutive items that do not have spaces
@@ -132,7 +160,9 @@ class SmartStreamBase: NonCopyable
                         os << " ";
                     os << *i;
                     // maybe add a space next time
-                    if(!isspace(*i->rbegin()) && i->rfind("[m") != (i->size()-2))
+                    if(!isspace(*i->rbegin()) && (
+                       i->rfind("\E[") == std::string::npos || 
+                       i->rfind("\E[") < (i->size()-8)))
                     {
                         add_space = true; 
                     }
@@ -155,6 +185,19 @@ class SmartStreamBase: NonCopyable
             }
             return lf;
         }
+
+        // protect cout & cerr to make sure output doesn't become garbled
+        static boost::recursive_mutex& _getMutex(std::ostream& s){
+            typedef boost::shared_ptr<boost::recursive_mutex> mutex_ptr;
+            typedef std::map<void*, mutex_ptr> map_t;
+            static map_t mutex_map;
+            map_t::iterator i = mutex_map.find(&s);
+            if(i != mutex_map.end())
+                return *i->second;
+            else
+                mutex_map[&s] = mutex_ptr(new boost::recursive_mutex);
+            return *mutex_map[&s];
+        }
         
         std::ostream& m_stream;
         const char* m_prefix;
@@ -166,7 +209,7 @@ class SmartStreamBase: NonCopyable
 struct debug: SmartStreamBase
 {
     debug(int level=1)
-        : SmartStreamBase(std::cout, "", no_colour, false), m_level(level)
+        : SmartStreamBase(std::cout, "", brown, true), m_level(level)
     {
     }
 

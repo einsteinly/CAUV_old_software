@@ -8,6 +8,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include <common/debug.h>
+
 #include "../node.h"
 #include "../image.h"
 
@@ -27,18 +29,20 @@ class FileOutputNode: public Node{
             registerParamID<int>("jpeg quality", 95); // 0-100
             registerParamID<int>("png compression", 9); // 0-9
         }
+        
+        virtual bool isOutputNode() throw() { return true; }
 
     protected:
         out_image_map_t doWork(in_image_map_t& inputs){
             out_image_map_t r;
 
-            std::cerr << "fileOutputNode::doWork" << std::endl;
-            
             image_ptr_t img = inputs["image_in"];
             std::string fname = param<std::string>("filename");
             int jpg_qual = param<int>("jpeg quality");
             int png_comp = param<int>("png compression");
-               
+             
+            debug() << "fileOutputNode::doWork()" << *img << "->" << fname;
+
             std::vector<int> imwrite_params;
             imwrite_params.push_back(CV_IMWRITE_JPEG_QUALITY);
             imwrite_params.push_back(jpg_qual);

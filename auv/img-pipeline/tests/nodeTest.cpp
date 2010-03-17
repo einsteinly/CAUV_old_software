@@ -76,8 +76,8 @@ int main(){
     std::cerr << "exec resize node 2" << std::endl;
     resize_node_2->exec();
 
-    std::cerr << "exec display node" << std::endl;
-    display_node->exec();
+    //std::cerr << "exec display node" << std::endl;
+    //display_node->exec();
 
     std::cerr << "exec resize node" << std::endl;
     resize_node->exec();
