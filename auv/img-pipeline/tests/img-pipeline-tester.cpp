@@ -154,7 +154,7 @@ class ImagePipelineTesterNode : public CauvNode{
             sp.paramId("camera id");
             sp.stringValue("");
             sp.paramType(pt_int32);
-            sp.intValue(cam_forward);
+            sp.intValue(cam_file);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
         }
