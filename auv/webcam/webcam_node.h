@@ -1,5 +1,5 @@
-#ifndef __CONTROL_H__
-#define __CONTROL_H__
+#ifndef __WEBCAM_NODE_H__
+#define __WEBCAM_NODE_H__
 
 #include <boost/shared_ptr.hpp>
 
@@ -15,4 +15,4 @@ class WebcamNode : public CauvNode
         boost::shared_ptr<Camera> m_camera;
 };
 
-#endif//__CONTROL_H__
+#endif//__WEBCAM_NODE_H__

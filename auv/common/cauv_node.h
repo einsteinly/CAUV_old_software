@@ -27,7 +27,7 @@ class CauvNode
         boost::shared_ptr<MailboxEventMonitor> eventMonitor() const; 
         boost::shared_ptr<MsgSrcMBMonitor> mailboxMonitor() const;
 
-        CauvNode(const std::string& name);
+        CauvNode(const std::string& name, const char* host="16707@localhost");
     
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
