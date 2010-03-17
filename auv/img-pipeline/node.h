@@ -14,9 +14,9 @@
 
 #include <common/cauv_utils.h>
 #include <common/messages.h>
-#include <common/debug.h>
+#include <common/debug.h> 
+#include <common/image.h>
 
-#include "image.h"
 #include "imageProcessor.h"
 #include "pipelineTypes.h"
 #include "nodeFactory.h"
@@ -465,7 +465,6 @@ class Node{
             m_parent_links[i] = input_link_t();
         }
         
-    private:
         /* Check to see if all inputs are new and output is demanded; if so, 
          * add this node to the scheduler queue
          */
@@ -491,6 +490,7 @@ class Node{
             m_sched.addJob(this, m_priority);
         }
 
+    private:
         bool _allInputsValid() const throw(){
             boost::lock_guard<boost::recursive_mutex> l(m_valid_inputs_lock);
             BOOST_FOREACH(in_bool_map_t::value_type const& v, m_valid_inputs)
@@ -553,25 +553,48 @@ class Node{
 
 class InputNode: public Node{
     public:
-        void onImageMessage(ImageMessage const&) throw(){
-            /** TODO:
-             * Two options:
-             *   don't do anything unless m_output_demanded is true, in which
-             *   case queue this node for execution in the normal manner, and
-             *   let the doWork() function handle image conversion
-             * (I lied, there is only one option, the above is the best thing
-             * to do)
-             *
+        InputNode(Scheduler& sched)
+            : Node(sched){
+        }
+
+        /**
+         * if this image is from the right source:
+         *   take a copy (for now, see TODO, below) of the image: store it, and
+         *   if m_output_demanded, queue this node for execution
+         */
+        void onImageMessage(ImageMessage const& m) throw(){
+            /* TODO: SOON BECAUSE THIS IS IMPORTANT:
              * TODO: it would be nice if this function was called with a
              * shared_ptr, avoiding the necessity to copy the contents of the
              * message
              */
+            if(checkSource(m.image().source(), m.source())){
+                boost::lock_guard<boost::recursive_mutex> l(m_latest_image_lock);
+                m_latest_image = boost::shared_ptr<Image>(new Image(m.image()));
+                _checkAddSched();
+            }
         }
+
+        /**
+         * Input nodes should overload this to set which sources they accept
+         * images from
+         */
+        virtual bool checkSource(Image::Source const& s, CameraID const& c) throw() = 0;
    
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */
-        virtual bool isInputNode() throw() { return true; } 
+        virtual bool isInputNode() throw() { return true; }
+    
+    protected:
+        boost::shared_ptr<Image> latestImage(){
+            boost::lock_guard<boost::recursive_mutex> l(m_latest_image_lock);
+            return m_latest_image;
+        }
+
+    private:
+        boost::shared_ptr<Image> m_latest_image;
+        mutable boost::recursive_mutex m_latest_image_lock;
 };
 
 #endif // ndef __NODE_H__

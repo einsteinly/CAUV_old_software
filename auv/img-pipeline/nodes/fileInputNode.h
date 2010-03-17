@@ -8,10 +8,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <common/debug.h>
-
 #include "../node.h"
-#include "../image.h"
 
 
 class FileInputNode: public Node{
@@ -38,7 +35,7 @@ class FileInputNode: public Node{
             cv::Mat img = cv::imread(fname.c_str());
 
             if(img.size().width > 0 && img.size().height > 0){
-                r["image_out"] = image_ptr_t(new Image(img, Image::file)); 
+                r["image_out"] = image_ptr_t(new Image(img, Image::src_file)); 
                 debug() << "fileInputNode::doWork result:" << fname << "->" << *r["image_out"];
             }else{
                 debug() << "fileInputNode::doWork result:" << fname << "->" << "(no image)";

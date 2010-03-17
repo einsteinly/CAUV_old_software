@@ -32,7 +32,7 @@ struct NodeOutputArc
 }
 
 enum MotorID { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }
-enum CameraID { FORWARD = 1, DOWN = 2, SONAR = 4 }
+enum CameraID { cam_forward = 1, cam_down = 2, cam_sonar = 4 }
 enum NodeType {
     nt_invalid = 0,
     nt_copy = 1,
@@ -40,7 +40,8 @@ enum NodeType {
     nt_file_input = 3,
     nt_file_output = 4,
     nt_local_display = 5,
-    nt_max_num_node_types = 6
+    nt_max_num_node_types = 6,
+    nt_camera_input = 7
 }
 enum NodeParameterType {
     pt_int32 = 0,
@@ -69,8 +70,7 @@ group image
 	message Image : 4
 	{
 	    source : CameraID;
-	    type : int8;
-        image : list<byte>;
+	    image : Image;
     }
 }
 group pipeline

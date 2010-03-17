@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     if (argc != 3)
     {
         std::cout << "Error: Not enough parameters" << std::endl;
-        std::cout << "USAGE: " << argv[0] << " {FORWARD|DOWN} deviceid" << std::endl;
+        std::cout << "USAGE: " << argv[0] << " {forward|down} deviceid" << std::endl;
 
         return 1;
     }
@@ -73,18 +73,18 @@ int main(int argc, char **argv)
     CameraID camera_id;
     uint32_t device_id;
 
-    if (strcasecmp(argv[1], "FORWARD") == 0)
+    if (strcasecmp(argv[1], "forward") == 0)
     {
-        camera_id = FORWARD;
+        camera_id = cam_forward;
     }
-    else if (strcasecmp(argv[1], "DOWN") == 0)
+    else if (strcasecmp(argv[1], "down") == 0)
     {
-        camera_id = DOWN;
+        camera_id = cam_down;
     }
     else
     {
         std::cout << "Error: Unrecognised camera id '" << argv[1] << "'" << std::endl;
-        std::cout << "USAGE: " << argv[0] << " {FORWARD|DOWN} deviceid" << std::endl;
+        std::cout << "USAGE: " << argv[0] << " {forward|down} deviceid" << std::endl;
         return 2;
     }
 

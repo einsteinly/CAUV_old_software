@@ -60,7 +60,7 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
         BOOST_FOREACH(node_ptr_t p, n->children())
             p->clearInputs(n);
         n->clearOutputs();
-        n->clearInputs(); 
+        n->clearInputs();
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }

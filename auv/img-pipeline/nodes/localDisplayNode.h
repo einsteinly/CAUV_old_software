@@ -6,10 +6,8 @@
 #include <string>
 
 #include <opencv/cv.h>
-#include <opencv/highgui.h>
 
 #include "../node.h"
-#include "../image.h"
 
 
 class LocalDisplayNode: public Node{

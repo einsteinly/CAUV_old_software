@@ -16,17 +16,8 @@ class ImagePipelineTesterNode : public CauvNode{
             : CauvNode("pipe-test", group){
         }
     protected:
-        virtual void onRun(){
-            info() << "--- ImagePipelineTesterNode::onRun ---";
-            
-            info() << "Add TestMBObserver...";
-            eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
-            
-            info() << "Joining pipeline group...";
-            mailbox()->joinGroup("pipeline");
-            
-            info() << "--- start test sequence ---";
-            /* test message sequence */
+        fileIOTests(){
+            info() << green << "--- File IO Tests ---";
             std::vector<NodeInputArc> arcs_in;
             std::vector<NodeOutputArc> arcs_out;
             NodeInputArc ai;
@@ -43,7 +34,6 @@ class ImagePipelineTesterNode : public CauvNode{
             sent = mailbox()->sendMessage(an, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
             
-
             // Add output node
             info() << "Add file output node:"; 
             // Magically fudge the id values, for now
@@ -56,7 +46,6 @@ class ImagePipelineTesterNode : public CauvNode{
             info() << "\t" << an;
             sent = mailbox()->sendMessage(an, SAFE_MESS); 
             info() << "\tsent" << sent << "bytes";
-            
             
             // Set input image parameter
             info() << "Setting input image parameter:";
@@ -122,6 +111,54 @@ class ImagePipelineTesterNode : public CauvNode{
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
+        }
+        
+        void cameraInputTests(){
+            info() << green << "--- File IO Tests ---";
+            std::vector<NodeInputArc> arcs_in;
+            std::vector<NodeOutputArc> arcs_out;
+            NodeInputArc ai;
+            NodeOutputArc ao;
+            NodeInput ni;
+            NodeOutput no;
+            int sent = 0;
+
+            AddNodeMessage an(nt_file_input, arcs_in, arcs_out);
+            
+            // Add input node
+            info() << "Add file input node:";
+            info() << "\t" << an;
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            info() << "\tsent" << sent << "bytes";
+            
+            // Add output node
+            info() << "Add file output node:"; 
+            // Magically fudge the id values, for now
+            ai.input = "image_in";
+            no.node = 1;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.push_back(ai);
+            an = AddNodeMessage(nt_file_output, arcs_in, arcs_out);
+            info() << "\t" << an;
+            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            info() << "\tsent" << sent << "bytes";
+        }
+        
+        virtual void onRun(){
+            info() << "--- ImagePipelineTesterNode::onRun ---";
+            
+            info() << "Add TestMBObserver...";
+            eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
+            
+            info() << "Joining pipeline group...";
+            mailbox()->joinGroup("pipeline");
+            
+            info() << "--- start test sequence ---";
+
+            fileIOTests();
+            
+            cameraInputTests();
             
             //throw(std::runtime_error("test sequence complete"));
         }

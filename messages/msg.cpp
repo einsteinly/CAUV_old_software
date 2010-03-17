@@ -256,6 +256,7 @@ int createCPPFile(string outputpath)
     msg_hh << "#endif" << endl;
     msg_hh << endl;
     msg_hh << "#include \"vector_streamops.h\"" << endl;
+    msg_hh << "#include \"image.h\"" << endl;
     msg_hh << endl;
     msg_hh << "// message data type definitions" << endl;
     msg_hh << "typedef std::string byte_vec_t;" << endl;

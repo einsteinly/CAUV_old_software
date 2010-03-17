@@ -8,10 +8,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <common/debug.h>
-
 #include "../node.h"
-#include "../image.h"
 
 
 class FileOutputNode: public Node{
