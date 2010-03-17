@@ -79,6 +79,7 @@ override CXXFLAGS += -I . -I /societies/cauv/install/include/
 
 MAKEFLAGS=--no-print-directory
 override LDFLAGS += -L /societies/cauv/install/lib/
+override CXXLDFLAGS += -Wl,-rpath,/societies/cauv/install/lib/
 ARFLAGS=rcs
 
 SHOWOK = 2>$@.err && if test -s $@.err ; then echo -e "  \E[1;33m[WARNING]\E[m" && cat $@.err ; else echo -e "  \E[1;32m[OK]\E[m" ; fi || echo -e "  \E[1;31m[ERROR]\E[m" && cat $@.err; rm -f $@.err
@@ -101,7 +102,7 @@ EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
 EXEOBJ = $(patsubst %,$(OBJDIR)/%.o,$(notdir $@))
 $(EXES): $$(EXEOBJ) $$(EXELIBDEPS)
 	@echo -en "  [CXX]   $(EXEOBJ) -o $@   $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)"
-	@$(CXX) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)  $(LDFLAGS)  $(SHOWOK)
+	@$(CXX) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS) $(LDFLAGS) $(CXXLDFLAGS)  $(SHOWOK)
 
 MODLIBMOD = $(patsubst lib%.a,%,$(notdir $@))
 MODLIBOBJ = $(patsubst %,$(OBJDIR)/%.o,$(MODLIBMOD))

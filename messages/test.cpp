@@ -12,10 +12,13 @@ using namespace std;
 
 int main()
 {
+    string bytes;
+
+
     DebugMessage m3;
     m3.msg("Hello");
 
-    vector<char> bytes = m3.toBytes();
+    bytes = m3.toBytes();
 
     foreach(char c, bytes)
     {

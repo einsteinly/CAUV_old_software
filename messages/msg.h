@@ -11,6 +11,7 @@ extern std::vector<Group*> groups;
 extern std::vector<Struct*> structs;
 extern std::vector<Enum*> enums;
 extern std::set<std::string> valid_types;
+extern std::vector<std::string> unknown_types;
 
 extern yyFlexLexer* lexer;
 int yyparse();

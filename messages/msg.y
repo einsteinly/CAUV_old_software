@@ -226,8 +226,9 @@ type: STR
     {
         if (valid_types.count($1) == 0)
         {
-            yyerror(str(format("Unrecognised type: %1%") % $1).c_str());
-            YYERROR;
+            unknown_types.push_back($1);
+            //yyerror(str(format("Unrecognised type: %1%") % $1).c_str());
+            //YYERROR;
         }
         $$ = new BaseType($1);
     }

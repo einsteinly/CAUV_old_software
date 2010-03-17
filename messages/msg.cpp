@@ -37,6 +37,8 @@ std::set<string> valid_types = boost::assign::list_of
     ("float")
     ("double")
 ;
+std::vector<string> unknown_types;
+
 std::map<string, string> cpp_conversion = boost::assign::map_list_of
     ("bool", "bool")
     ("byte", "uint8_t")
@@ -242,6 +244,7 @@ int createCPPFile(string outputpath)
     msg_hh << endl;
     msg_hh << "#include <string>" << endl;
     msg_hh << "#include <sstream>" << endl;
+    msg_hh << "#include <stdexcept>" << endl;
     msg_hh << "#include <vector>" << endl;
     msg_hh << "#include <list>" << endl;
     msg_hh << "#include <map>" << endl;
@@ -260,7 +263,7 @@ int createCPPFile(string outputpath)
     msg_hh << "typedef std::istringstream byte_istream_t;" << endl;
     msg_hh << endl;
     
-    msg_cpp << "/***  this is a generated file, do not edit ***/" << endl;
+    msg_cpp << "/***  This is a generated file, do not edit ***/" << endl;
     msg_cpp << format("#include \"%1%.h\"") % outputfile << endl;
     msg_cpp << "#include <boost/archive/binary_oarchive.hpp>" << endl;
     msg_cpp << "#include <boost/archive/binary_iarchive.hpp>" << endl;
@@ -268,6 +271,11 @@ int createCPPFile(string outputpath)
     msg_cpp << "#include <boost/serialization/map.hpp>" << endl;
     msg_cpp << endl;
     
+    foreach(string s, unknown_types)
+    {
+        msg_hh << format("class %1%;") % s << endl;
+    }
+    msg_hh << endl;
     
     foreach(Struct* s, structs)
     {
@@ -379,7 +387,7 @@ int createCPPFile(string outputpath)
             
             std::string className = str(format("%1%Message") % m->getName());
 
-            std::stringstream msg_hh_msg_funcs, msg_hh_msg_fields, msg_cpp_msg_funcs, msg_cpp_msg_serial;
+            std::stringstream msg_hh_msg_funcs, msg_hh_msg_fields, msg_cpp_msg_funcs, msg_cpp_msg_serial, msg_cpp_msg_deserial;
             std::stringstream msg_cstrctr_p, msg_cpp_msg_cstrctr_i;
             
             foreach(Declaration* d, m->getDeclarations())
@@ -407,6 +415,7 @@ int createCPPFile(string outputpath)
                 msg_cpp_msg_funcs << endl;
                 
                 msg_cpp_msg_serial << "    ar & m_" << dname << ";" << endl;
+                msg_cpp_msg_deserial << "    ar & ret.m_" << dname << ";" << endl;
                 
                 msg_cstrctr_p << asCPPType(dtype) << " " << dname << ", ";
                 msg_cpp_msg_cstrctr_i << "    m_" << dname << "(" << dname << ")," << endl;
@@ -422,10 +431,10 @@ int createCPPFile(string outputpath)
             msg_hh << "    public:" << endl;
             msg_hh << "        " << className << "();" << endl;
             msg_hh << "        " << className << "(" << msg_cstrctr_ps << ");" << endl;
-            msg_hh << "        " << className << "(const byte_vec_t& bytes);" << endl;
             msg_hh << endl;
             msg_hh << msg_hh_msg_funcs.str();
             msg_hh << endl;
+            msg_hh << "        static " << className << " fromBytes(const byte_vec_t& bytes);" << endl;
             msg_hh << "        virtual const byte_vec_t toBytes() const;" << endl;
             msg_hh << endl;
             msg_hh << "    protected:" << endl;
@@ -457,20 +466,24 @@ int createCPPFile(string outputpath)
             msg_cpp << "{" << endl;
             msg_cpp << "}" << endl;
             
-            msg_cpp << format("%1%::%1%(const byte_vec_t& bytes) : Message(%2%, \"%3%\")") % className % id % gname << endl;
+            msg_cpp << msg_cpp_msg_funcs.str() << endl;
+            msg_cpp << endl;
+            msg_cpp << format("%1% %1%::fromBytes(const byte_vec_t& bytes)") % className << endl;
             msg_cpp << "{" << endl;
+            msg_cpp << "    " << className << " ret;" << endl;
             msg_cpp << "    byte_istream_t iss(bytes);" << endl;
             msg_cpp << "    boost::archive::binary_iarchive ar(iss, boost::archive::no_header);" << endl;
             msg_cpp << "    uint32_t buf_id;" << endl;
             msg_cpp << "    ar & buf_id;" << endl;
-            msg_cpp << "    if (buf_id != m_id)" << endl;
+            msg_cpp << "    if (buf_id != ret.m_id)" << endl;
             msg_cpp << "    {" << endl;
             msg_cpp << "        throw std::invalid_argument(\"Attempted to create " << className << " with invalid id\");" << endl;
             msg_cpp << "    }" << endl;
+            msg_cpp << msg_cpp_msg_deserial.str();
             msg_cpp << endl;
-            msg_cpp << msg_cpp_msg_serial.str();
+            msg_cpp << "    return ret;" << endl;
             msg_cpp << "}" << endl;
-            msg_cpp << msg_cpp_msg_funcs.str() << endl;
+            msg_cpp << endl;
             msg_cpp << "const byte_vec_t " << className << "::toBytes() const" << endl;
             msg_cpp << "{" << endl;
             msg_cpp << "    byte_ostream_t oss;" << endl;
@@ -577,7 +590,7 @@ int createCPPFile(string outputpath)
             std::string className = str(format("%1%Message") % m->getName());
             msg_cpp << "    case " << m->getId() << ":" << endl; 
             msg_cpp << "    {" << endl;
-            msg_cpp << "        " << className << " m(bytes);" << endl;
+            msg_cpp << "        " << className << " m = " << className << "::fromBytes(bytes);" << endl;
             msg_cpp << "        foreach(boost::shared_ptr<MessageObserver> o, m_obs)" << endl;
             msg_cpp << "        {" << endl;
             msg_cpp << "            o->on" << className << "(m);" << endl;
@@ -604,11 +617,10 @@ int createCPPFile(string outputpath)
         foreach(Message* m, g->getMessages())
         {
             std::string className = str(format("%1%Message") % m->getName());
-            msg_cpp << "    case " << m->getId() << ": os << " << className << "(bytes); break;" << endl;
+            msg_cpp << "        case " << m->getId() << ": os << " << className << "::fromBytes(bytes); break;" << endl;
         }
     }
-    msg_cpp << "    default:" << endl;
-    msg_cpp << "        os << \"error: Unknown message id\";" << endl;
+    msg_cpp << "        default: os << \"error: Unknown message id\"; break;" << endl;
     msg_cpp << "    }" << endl;
     msg_cpp << "    return os.str();" << endl;
     msg_cpp << "}" << endl;
