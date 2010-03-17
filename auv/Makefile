@@ -12,6 +12,7 @@ $(addprefix common/spread/,  cauv_mailbox_monitor cauv_spread_mailbox cauv_sprea
 $(addprefix img-pipeline/, img-pipeline scheduler imageProcessor nodes/nodes) \
 $(addprefix camera/, camera camera_observer) \
 $(addprefix webcam/, webcam_node) \
+$(addprefix fileinput/, fileinput_node) \
 )
 
 MSGS = $(addsuffix .msg, \
@@ -24,7 +25,7 @@ $(addprefix common/, cauv_logo_large.txt) \
 # ==========================
 # Edit me to add new modules
 # ==========================
-EXEMODULES = control img-pipeline webcam
+EXEMODULES = control img-pipeline webcam fileinput
 LIBMODULES = common module camera
 EXTLIBS = cmt
 
@@ -37,6 +38,9 @@ img-pipeline_PARAMS = -lcxcore -lcv -lhighgui -lcvaux -lml
 
 webcam_LIBS = common camera
 webcam_PARAMS = -lcv -lhighgui
+
+fileinput_LIBS = common
+wfileinput_PARAMS = -lcv -lhighgui
 
 # ================
 # Edit directories

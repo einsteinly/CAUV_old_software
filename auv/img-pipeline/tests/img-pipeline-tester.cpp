@@ -146,7 +146,7 @@ class ImagePipelineTesterNode : public CauvNode{
             sp.nodeId(4);
             sp.paramId("filename");
             sp.paramType(pt_string);
-            sp.stringValue("/home/jc593/Dev/hg-code/auv/camera-out.jpg");
+            sp.stringValue("camera-out.jpg");
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
             info() << "Setting source camera:";
@@ -154,7 +154,7 @@ class ImagePipelineTesterNode : public CauvNode{
             sp.paramId("camera id");
             sp.stringValue("");
             sp.paramType(pt_int32);
-            sp.intValue(cam_forward);
+            sp.intValue(cam_file);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
         }

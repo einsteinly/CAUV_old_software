@@ -32,7 +32,7 @@ struct NodeOutputArc
 }
 
 enum MotorID { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }
-enum CameraID { cam_forward = 1, cam_down = 2, cam_sonar = 4 }
+enum CameraID { cam_forward = 1, cam_down = 2, cam_sonar = 4, cam_file = 5 }
 enum NodeType {
     nt_invalid = 0,
     nt_copy = 1,
