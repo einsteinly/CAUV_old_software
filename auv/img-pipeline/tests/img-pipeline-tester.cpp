@@ -12,8 +12,8 @@
 
 class ImagePipelineTesterNode : public CauvNode{
     public:
-        ImagePipelineTesterNode(std::string const& group)
-            : CauvNode(group){
+        ImagePipelineTesterNode()
+            : CauvNode("pipe-test"){
         }
     protected:
         void fileIOTests(){
@@ -123,7 +123,7 @@ class ImagePipelineTesterNode : public CauvNode{
             NodeOutput no;
             int sent = 0;
 
-            AddNodeMessage an(nt_file_input, arcs_in, arcs_out);
+            AddNodeMessage an(nt_camera_input, arcs_in, arcs_out);
             
             // Add input node
             info() << "adding camera input node";
@@ -143,15 +143,16 @@ class ImagePipelineTesterNode : public CauvNode{
 
             info() << "setting output image";
             SetNodeParameterMessage sp(0, "", pt_int32, 0, 0, ""); // initialise everything to supress valgrind's complaints
-            sp.nodeId(3);
+            sp.nodeId(4);
             sp.paramId("filename");
             sp.paramType(pt_string);
             sp.stringValue("/home/jc593/Dev/hg-code/auv/camera-out.jpg");
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
             info() << "Setting source camera:";
-            sp.nodeId(4);
+            sp.nodeId(3);
             sp.paramId("camera id");
+            sp.stringValue("");
             sp.paramType(pt_int32);
             sp.intValue(cam_forward);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
@@ -200,7 +201,7 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ImagePipelineTesterNode("cauv");
+    node = new ImagePipelineTesterNode();
     node->run();
     cleanup();
 }
