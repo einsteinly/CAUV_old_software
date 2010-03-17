@@ -9,7 +9,6 @@
 #include <opencv/highgui.h>
 
 #include "../node.h"
-#include "../image.h"
 
 
 class ResizeNode: public Node{

@@ -28,12 +28,12 @@ EXEMODULES = control img-pipeline webcam
 LIBMODULES = common module camera
 EXTLIBS = cmt
 
-COMMON_PARAMS = -lboost_serialization -lspread -lssrcspread -lboost_thread
+COMMON_PARAMS = -lboost_serialization -lspread -lssrcspread -lboost_thread -lcxcore -lcv
 control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
 img-pipeline_LIBS = common
-img-pipeline_PARAMS = -lcv -lcxcore -lhighgui
+img-pipeline_PARAMS = -lcxcore -lcv -lhighgui -lcvaux -lml
 
 webcam_LIBS = common camera
 webcam_PARAMS = -lcv -lhighgui
