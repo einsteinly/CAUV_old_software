@@ -55,7 +55,7 @@ $(OBJDIR)/%.o: %.cpp
 .SECONDARY: $(GENLEX) $(GENYACC)
 
 %.lex.cpp: %.l %.yacc.hpp
-	flex -+ -o $@ $<
+	flex -+ -o$@ $<
 
 %.yacc.hpp %.yacc.cpp: msg.y
 	bison -t -o $*.yacc.cpp --defines=$*.yacc.hpp $<

@@ -111,7 +111,7 @@ private:
                 }
                 l.unlock();
 
-                boost::shared_ptr<SpreadMessage> m( m_mailbox->receiveMessage() );
+                boost::shared_ptr<SpreadMessage> m( m_mailbox->receiveMessage(200) );
                 if(m){ 
                     m_observers_lock.lock();
                     std::set<mb_observer_ptr_t>::iterator i;

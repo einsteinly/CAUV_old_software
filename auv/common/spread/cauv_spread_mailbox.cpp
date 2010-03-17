@@ -184,10 +184,34 @@ RegularMembershipMessage::MessageCause causeFromServiceType( Spread::service ser
     return RegularMembershipMessage::NETWORK;
 }
 
-shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
     ssrc::spread::Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
     GroupList groups;
+
+    // Select with timeout on descriptor
+    {
+        Spread::mailbox fd = m_ssrcMailbox->descriptor();
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(fd, &fds);
+        
+        struct timeval towait;
+	    towait.tv_sec = timeout / 1000;
+	    towait.tv_usec = (timeout % 1000) * 1000;
+	    
+        int ret = select(fd+1, &fds, NULL, &fds, &towait);
+        if(ret < 0)
+        {
+            throw ConnectionError("Error in select");	        
+        }
+        else if(ret == 0)
+        {
+            return shared_ptr<SpreadMessage>();
+        }
+    }
+
     m_ssrcMailbox->receive(ssrcMsg, groups);
+
     shared_ptr< vector<string> > groupVector = groupListToVector(groups);
     ssrc::spread::BaseMessage::service_type sType = ssrcMsg.service();
 

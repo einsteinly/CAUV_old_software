@@ -236,7 +236,7 @@ int createCPPFile(string outputpath)
     string msg_macro = msg_macro_ss.str();
     to_upper(msg_macro);
 
-    msg_hh << "/***  this is a generated file, do not edit ***/" << endl;
+    msg_hh << "/***  This is a generated file, do not edit ***/" << endl;
     msg_hh << format("#ifndef __%1%_H__") % to_upper_copy(outputfile) << endl;
     msg_hh << format("#define __%1%_H__") % to_upper_copy(outputfile) << endl;
     msg_hh << endl;
@@ -282,10 +282,10 @@ int createCPPFile(string outputpath)
         msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
         msg_hh << "    std::basic_ostream<char_T, traits>& os, " << s->getName() << " const& a)" << endl;
         msg_hh << "{" << endl;
-        msg_hh << "    os << \"{" << s->getName() << ":\";" << endl;
+        msg_hh << "    os << \"" << s->getName() << " {\";" << endl;
         foreach(Declaration* d, s->getDeclarations())
         {
-            msg_hh << "    os << \" " << d->getName() << "=\" << " << "a." << d->getName() << ";" << endl;
+            msg_hh << "    os << \" " << d->getName() << " = \" << " << "a." << d->getName() << ";" << endl;
         }
         msg_hh << "    os << '}';" << endl;
         msg_hh << "    return os;" << endl;
@@ -313,7 +313,7 @@ int createCPPFile(string outputpath)
         msg_hh << "    {" << endl;
         foreach(EnumVal* v, e->getVals()) 
         {
-            msg_hh << "    case "<< v->getName() << ": os << \"" << v->getName() << "\"; break;" << endl;
+            msg_hh << "        case "<< v->getName() << ": os << \"" << v->getName() << "\"; break;" << endl;
         }
         msg_hh << "    }" << endl;
         msg_hh << "    return os;" << endl;
@@ -341,9 +341,9 @@ int createCPPFile(string outputpath)
     msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
     msg_hh << "    std::basic_ostream<char_T, traits>& os, Message const& a)" << endl; 
     msg_hh << "{" << endl;
-    msg_hh << "    os << \"{Message\";" << endl;
-    msg_hh << "    os << \" id=\" << a.id();" << endl;
-    msg_hh << "    os << \" group=\" << a.group();" << endl;
+    msg_hh << "    os << \"Message {\";" << endl;
+    msg_hh << "    os << \" id = \" << a.id();" << endl;
+    msg_hh << "    os << \" group = \" << a.group();" << endl;
     msg_hh << "    os << '}';" << endl;
     msg_hh << "    return os;" << endl;
     msg_hh << "}" << endl;
@@ -435,10 +435,10 @@ int createCPPFile(string outputpath)
             msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
             msg_hh << "    std::basic_ostream<char_T, traits>& os, " << className << " const& a)" << endl; 
             msg_hh << "{" << endl;
-            msg_hh << "    os << \"{" << className << "\";" << endl;
+            msg_hh << "    os << \"" << className << " {\";" << endl;
             foreach(Declaration* d, m->getDeclarations())
             {
-                msg_hh << "    os << \" " << d->getName() << "=\" << a." << d->getName() << "();" << endl;
+                msg_hh << "    os << \" " << d->getName() << " = \" << a." << d->getName() << "();" << endl;
             }
             //msg_hh << "    os << \"parent=\" << Message(a);" << endl;
             msg_hh << "    os << '}';" << endl;
