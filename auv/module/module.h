@@ -3,10 +3,12 @@
 
 #include <ftdi.h>
 #include <iostream>
+#include <iomanip>
 #include <string.h>
 #include <sstream>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/concepts.hpp>

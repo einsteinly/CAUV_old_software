@@ -10,6 +10,7 @@ $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
 $(addprefix common/spread/,  cauv_mailbox_monitor cauv_spread_mailbox cauv_spread_messages) \
 $(addprefix img-pipeline/, img-pipeline scheduler imageProcessor nodes/nodes) \
+$(addprefix img/, camera camera_observer img_daemon) \
 )
 
 MSGS = $(addsuffix .msg, \
@@ -22,7 +23,7 @@ $(addprefix common/, cauv_logo_large.txt) \
 # ==========================
 # Edit me to add new modules
 # ==========================
-EXEMODULES = control img-pipeline
+EXEMODULES = control img-pipeline img
 LIBMODULES = common module
 EXTLIBS = cmt
 
@@ -32,6 +33,9 @@ control_PARAMS = -lrt -lftdi
 
 img-pipeline_LIBS = common
 img-pipeline_PARAMS = -lcv -lcxcore -lhighgui -DDEBUG
+
+img_LIBS = common
+img_PARAMS = -lcv -lhighgui
 
 # ================
 # Edit directories

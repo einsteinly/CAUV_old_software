@@ -12,6 +12,7 @@ LEX token definition for the automatic message generation
 %{
 #include "msg.syntax.h"
 #include "msg.yacc.hpp"
+#include <cstring>
 
 #define IOSTREAM
 
