@@ -72,7 +72,7 @@ public:
                   const bool shouldReceiveMembershipMessages = true,
                   const ConnectionTimeout &timeout = ZERO_TIMEOUT,
                   const MailboxPriority priority = MEDIUM) throw(ConnectionError);
-    virtual void disconnect() throw(InvalidSessionError);
+    virtual void disconnect() throw(ConnectionError);
 
     /**
      * @return The internal connection identifier assigned to this mailbox.
@@ -85,30 +85,30 @@ public:
     const std::string &getPrivateGroupName() const {return m_ssrcMailbox->private_group(); }
 
     virtual void joinGroup(const std::string &groupName)
-        throw(ConnectionError, InvalidSessionError, IllegalGroupError);
+        throw(ConnectionError);
     virtual void leaveGroup(const std::string &groupName)
-        throw(ConnectionError, InvalidSessionError, IllegalGroupError);
+        throw(ConnectionError);
 
     /**
      * @return The number of bytes sent
      */
     virtual int sendMessage(Message const& message, Spread::service serviceType, const std::string &destinationGroup)
-        throw(InvalidSessionError, ConnectionError, IllegalMessageError);
+        throw(ConnectionError);
 
     /**
      * @return The number of bytes sent
      */
     virtual int sendMultigroupMessage(Message const& message, Spread::service serviceType,
-        const std::vector<std::string> &groupNames) throw(InvalidSessionError, ConnectionError, IllegalMessageError);
+        const std::vector<std::string> &groupNames) throw(ConnectionError);
 
     /**
      * Blocks until a message comes in from the Spread daemon. The received messsage may
      * be anything in the RegularMessage or MembershipMessage hierarchies.
      * @return An object containing the received message and associated metadata.
      */
-    virtual boost::shared_ptr<SpreadMessage> receiveMessage(int timeout) throw(InvalidSessionError, ConnectionError, IllegalMessageError);
+    virtual boost::shared_ptr<SpreadMessage> receiveMessage(int timeout) throw(ConnectionError);
 
-    int waitingMessageByteCount() const throw(InvalidSessionError, ConnectionError);
+    int waitingMessageByteCount() const throw(ConnectionError);
     bool isConnected() const { return !m_ssrcMailbox->killed(); }
 
 protected:
