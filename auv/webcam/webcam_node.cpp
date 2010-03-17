@@ -12,6 +12,7 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <common/messages.h>
 #include <camera/camera.h>
 #include <camera/camera_observer.h>
 
@@ -25,8 +26,11 @@ class SpreadCameraObserver : public CameraObserver {
         {
         }
 
-        virtual void onReceiveImage(CameraID cam_id, const cv::Mat& img) {
-            //m_mailbox->send(m);
+        virtual void onReceiveImage(CameraID cam_id, const cv::Mat& img)
+        {
+            Image i(img, Image::src_camera);
+            ImageMessage m(cam_id, i);
+            m_mailbox->sendMessage(m, UNRELIABLE_MESS);
         }
 
     protected:

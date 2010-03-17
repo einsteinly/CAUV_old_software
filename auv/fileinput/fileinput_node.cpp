@@ -26,7 +26,7 @@ void FileinputNode::onRun()
 
     cv::Mat cv_img = cv::imread(m_fname.c_str());
     Image img(cv_img, Image::src_file);
-    mailbox()->sendMessage(ImageMessage(cam_file, img));
+    mailbox()->sendMessage(ImageMessage(cam_file, img), SAFE_MESS);
 }
 
 static FileinputNode* node;

@@ -40,7 +40,7 @@ webcam_LIBS = common camera
 webcam_PARAMS = -lcv -lhighgui
 
 fileinput_LIBS = common
-wfileinput_PARAMS = -lcv -lhighgui
+fileinput_PARAMS = -lcxcore -lcv -lhighgui -lcvaux -lml
 
 # ================
 # Edit directories
