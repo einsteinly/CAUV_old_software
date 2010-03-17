@@ -7,9 +7,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-class ReconnectingSpreadMailbox;
-class MailboxEventMonitor;
-class MsgSrcMBMonitor;
+#include <common/spread/cauv_spread_rc_mailbox.h>
+#include <common/spread/cauv_mailbox_monitor.h>
+#include <common/spread/cauv_msgsrc_mb_observer.h>
 
 class CauvNode
 {

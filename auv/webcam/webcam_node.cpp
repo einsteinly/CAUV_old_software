@@ -36,6 +36,8 @@ class SpreadCameraObserver : public CameraObserver {
 WebcamNode::WebcamNode(const CameraID camera_id, const int device_id)
     : CauvNode("Webcam"), m_camera(new Webcam(camera_id, device_id))
 {
+    mailbox()->joinGroup("pipeline");
+
     m_camera->addObserver( boost::shared_ptr<CameraObserver>( new SpreadCameraObserver(mailbox()) ) );
 }
 
