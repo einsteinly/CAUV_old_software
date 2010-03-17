@@ -19,10 +19,14 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
     try{
         node_ptr_t node = NodeFactoryRegister::create(m.nodeType(), m_scheduler);
 
-        BOOST_FOREACH(NodeInputArc const& a, m.parents())
+        BOOST_FOREACH(NodeInputArc const& a, m.parents()){
             node->setInput(a.input, _lookupNode(a.src.node), a.src.output);
-        BOOST_FOREACH(NodeOutputArc const& a, m.children())
+            _lookupNode(a.src.node)->setOutput(a.src.output, node, a.input);
+        }
+        BOOST_FOREACH(NodeOutputArc const& a, m.children()){
             node->setOutput(a.output, _lookupNode(a.dst.node), a.dst.input);
+            _lookupNode(a.dst.node)->setInput(a.dst.input, node , a.output);
+        }
         
         new_id = _newID(node);
         m_nodes[new_id] = node;

@@ -26,6 +26,8 @@ class LocalDisplayNode: public Node{
             // registerParamID<>(,);
         }
 
+        virtual bool isOutputNode() throw() { return true; }
+
     protected:
         out_image_map_t doWork(in_image_map_t& inputs){
             out_image_map_t r;

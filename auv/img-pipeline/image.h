@@ -33,4 +33,24 @@ class Image{
         Source m_source;
 };
 
+template<typename charT, typename traits>
+std::basic_ostream<charT, traits>& operator<<(
+    std::basic_ostream<charT, traits>& os, Image::Source const& s){
+    switch(s){
+        case Image::file: os << "file"; break;
+        case Image::camera: os << "camera"; break;
+        case Image::sonar: os << "sonar"; break;
+    }
+    return os;
+}
+
+template<typename charT, typename traits>
+std::basic_ostream<charT, traits>& operator<<(
+    std::basic_ostream<charT, traits>& os, Image const& img){
+    os << "{Image src=" << img.source() << " dim="
+       << img.cvMat().size().width << "x"
+       << img.cvMat().size().height << "}";
+    return os;
+}
+
 #endif // ndef __IMAGE_H__

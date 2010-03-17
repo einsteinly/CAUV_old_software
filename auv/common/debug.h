@@ -160,7 +160,9 @@ class SmartStreamBase: NonCopyable
                         os << " ";
                     os << *i;
                     // maybe add a space next time
-                    if(!isspace(*i->rbegin()) && i->rfind("[m") != (i->size()-2))
+                    if(!isspace(*i->rbegin()) && (
+                       i->rfind("\E[") == std::string::npos || 
+                       i->rfind("\E[") < (i->size()-8)))
                     {
                         add_space = true; 
                     }

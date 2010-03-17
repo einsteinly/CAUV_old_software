@@ -26,14 +26,14 @@ class BlockingQueue : boost::noncopyable
     T popWait() // Returns and then deletes the next element in the queue, waiting for a new item to be pushed if neccessary. 
     {
         lock_t lock(m_queuemutex); // Obtain the lock for this scope
-        if (m_queue.empty()) // Is the queue empty?
+        while (m_queue.empty()) // Is the queue empty?
         {
             m_itemAvailable.wait(lock); // Release the lock and wait on a new push
         }
         
         T x = m_queue.front(); // Retrieve the object from the front of the queue
         m_queue.pop(); // Delete the next object onto the queue
-        
+
         return x;
     } 
 
@@ -42,7 +42,7 @@ class BlockingQueue : boost::noncopyable
         try_lock_t lock(m_queuemutex); // Try to obtain the lock for this scope
         if (lock.owns_lock()) // Did we get the lock
         {
-            if (m_queue.empty()) // Is the queue empty?
+            while (m_queue.empty()) // Is the queue empty?
             {
                 if (waitIfEmpty)
                 {

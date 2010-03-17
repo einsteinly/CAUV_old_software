@@ -76,8 +76,10 @@ class Scheduler
          * into a smart pointer.
          * NB: this IS threadsafe
          */
-        void addJob(Node* node, SchedulerPriority p) const throw()
+        void addJob(Node* node, SchedulerPriority p) const throw(scheduler_error)
         {
+            if(!node)
+                throw(scheduler_error("NULL job added to scheduler"));
             const priority_queue_map_t::const_iterator i = m_queues.find(p);
             if(i != m_queues.end())
                 i->second->push(node);

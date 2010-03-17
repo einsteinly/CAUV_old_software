@@ -52,8 +52,13 @@ class Node{
             if(i == m_parent_links.end()){
                 throw(id_error(std::string("setInput: Invalid input id") + to_string(i_id)));
             }else{
-                i->second = input_link_t(n, o_id);
-                newInput(i->first);
+                i->second = input_link_t(n, o_id); 
+                // TODO: if (and only if) there is already an image available
+                // from the parent, we should call newInput here:
+                //newInput(i->first);
+                // else: demand new output from the parent
+                debug() << "node" << this << "input set, demand new output on" <<  n;
+                n->demandNewOutput();
             }
         }
 
@@ -70,7 +75,12 @@ class Node{
                     throw link_error("setInput: specific parent output must be specified");
                 }
                 m_parent_links.begin()->second = input_link_t(n, parent_outputs[0]);
-                newInput(m_parent_links.begin()->first);
+                // TODO: if (and only if) there is already an image available
+                // from the parent, we should call newInput here:
+                //newInput(m_parent_links.begin()->first); 
+                // else: demand new output from the parent
+                debug() << "node" << this << "input set, demand new output on" <<  n;
+                n->demandNewOutput();
             }else if(m_parent_links.size() > 1){
                 throw link_error("setInput: specific input must be specified");
             }else{
@@ -122,11 +132,12 @@ class Node{
             }else{
                 // An output can be connected to more than one input, so
                 // m_child_links[output_id] is a list of output_link_t
+                debug() << green << "adding output link to child: " << n << i_id;
                 i->second.push_back(output_link_t(n, i_id));
             }
         }
 
-        /*  overload for the common case where we're connecting a node with out
+        /*  overload for the common case where we're connecting a node with one
          *  output to a node with one input
          */ 
         void setOutput(node_ptr_t n){
@@ -139,6 +150,7 @@ class Node{
                 }
                 // An output can be connected to more than one input, so
                 // m_child_links[output_id] is a list of output_link_t
+                debug() << green << "adding output link to child: " << n << child_inputs[0]; 
                 m_child_links.begin()->second.push_back(output_link_t(n, child_inputs[0]));
             }else if(m_child_links.size() > 1){
                 throw link_error("setOutput: specific output must be specified");
@@ -159,6 +171,7 @@ class Node{
                 if(j == i->second.end()){
                     throw(id_error("clearOutput: Invalid node & input id: (node ID lookup is TODO): " + to_string(i_id)));
                 }else{
+                    debug() << purple << "removing output link to child: " << j->first << j->second; 
                     i->second.erase(j);
                 }
             }
@@ -168,12 +181,15 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock); 
             out_link_map_t::iterator i;
             output_link_list_t::iterator j, t;
+            // NB: this only works because output_link_list_t is a std::list,
+            // hence iterators aren't invalidated on removal of items
             for(i = m_child_links.begin(); i != m_child_links.end(); i++){
                 j = i->second.begin();
                 while(j != i->second.end()){
                     if(j->first == child){
                         t = j;
                         j++;
+                        debug() << purple << "removing output link to child: " << j->first << j->second; 
                         i->second.erase(t);
                     }else{
                         j++;
@@ -186,6 +202,7 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
             out_link_map_t::iterator i;
             for(i = m_child_links.begin(); i != m_child_links.end(); i++){
+                debug() << purple << "removing output link to all children on:" << i->first;             
                 i->second.clear();
             }
         }
@@ -207,11 +224,20 @@ class Node{
             out_image_map_t outputs;
 
             m_parent_links_lock.lock();
-            for(in_link_map_t::const_iterator i = m_parent_links.begin(); i != m_parent_links.end(); i++)
+            for(in_link_map_t::const_iterator i = m_parent_links.begin(); i != m_parent_links.end(); i++){
                 inputs[i->first] = i->second.first->getOutputImage(i->second.second);
+                if(!inputs[i->first]){
+                    m_parent_links_lock.unlock();
+                    return;
+                }
+            }
             m_parent_links_lock.unlock();
             
-            info() << "exec: speed" << m_speed << "," << inputs.size() << "inputs";
+            debug() << "exec: speed" << m_speed
+                    << "inputs" << inputs.size()
+                    << "outputs" << m_outputs.size()
+                    << "parent links" << m_parent_links.size()
+                    << "child links" << m_child_links.size();
             if(this->m_speed < medium){
                 // if this is a fast node: request new image from parents before executing
                 _demandNewParentInput();
@@ -238,13 +264,20 @@ class Node{
             // for each of this node's outputs
             BOOST_FOREACH(out_link_map_t::value_type& v, m_child_links){
                 // v is a std::pair<output_id, std::list<...> >
-                
-                // for each node connected to the output
-                BOOST_FOREACH(output_link_t& link, v.second){
-                    // link is a std::pair<node_ptr, input_id>
-                    
-                    // notify the node that it has new input
-                    link.first->newInput(link.second);
+                if(!m_outputs[v.first] ||
+                   !m_outputs[v.first]->cvMat().size().width ||
+                   !m_outputs[v.first]->cvMat().size().height){
+                    debug() << "exec() did not fill output:" << v.first;
+                    debug() << v.second.size() << "children will not be prompted";
+                }else{
+                    debug() << "Prompting" << v.second.size() << "children of new output:";
+                    // for each node connected to the output
+                    BOOST_FOREACH(output_link_t& link, v.second){
+                        // link is a std::pair<node_ptr, input_id>
+                        debug() << "prompting new input to child on:" << v.first;
+                        // notify the node that it has new input
+                        link.first->newInput(link.second);
+                    }
                 }
             }
         }
@@ -258,14 +291,28 @@ class Node{
             const std::map<input_id, bool>::iterator i = m_new_inputs.find(a);
             
             if(i == m_new_inputs.end()){
-                std::cerr << "valid inputs:" << std::endl;
+                error() << a << "invalid";
+                error() << "valid inputs:";
                 BOOST_FOREACH(in_bool_map_t::value_type const& v, m_new_inputs)
-                    std::cerr << v.second << std::endl;
+                    error() << v.second;
 
                 throw(id_error(std::string("newInput: Invalid input id: ") + to_string(a)));
             }else{
+                debug() << green << this << "notified of new input: " << a;
                 i->second = true;
+                m_valid_inputs[a] = true;
             }
+            _checkAddSched();
+        }
+    
+        /* mark all inputs as new
+         */
+        void newInput(){
+            debug() << green << this << "notified all inputs new";        
+            std::map<input_id, bool>::iterator i;
+            for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
+                i->second = true;
+            _checkAddSched();
         }
         
         /* This is called by the children of this node in order to request new
@@ -273,9 +320,11 @@ class Node{
          */
         void demandNewOutput(/*output_id ?*/) throw(){
             boost::lock_guard<boost::recursive_mutex> l(m_output_demanded_lock);
-            m_output_demanded = true;
+            if(!m_output_demanded){
+                m_output_demanded = true;
             
-            _checkAddSched();
+                _checkAddSched();
+            }
         }
         
         /* Get the actual image data associated with an output
@@ -284,8 +333,8 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_outputs_lock);
             const out_image_map_t::const_iterator i = m_outputs.find(o_id);
             if(i == m_outputs.end() || !i->second){
-                // TODO: double check that this releases the lock_guard
-                throw(id_error(std::string("getOutputImage: Invalid output id: ") + to_string(o_id)));
+                debug() << __func__ << "non-existent output requested, returning NULL";
+                return image_ptr_t();
             }else{
                 return i->second;
             }
@@ -344,6 +393,10 @@ class Node{
             }else{
                 throw(id_error(std::string("setParam: Invalid parameter id: ") + to_string(p)));
             }
+            // if all inputs are valid (but not necessarily still new), add
+            // this node to the scheduler queue by pretending all input is new
+            if(_allInputsValid())
+                newInput();
         }
         
         /* return a single parameter value
@@ -364,6 +417,11 @@ class Node{
          */
         virtual bool isInputNode() throw() { return false; }
         
+       /* output nodes ignore m_output_demanded: they always execute whenever
+        * there is new input.
+        */
+        virtual bool isOutputNode() throw() { return false; }
+
     protected:
         /* Derived classes override this to do whatever image processing it is
          * that they do.
@@ -391,11 +449,19 @@ class Node{
             m_parameters[p] = param_value_t(default_value);
         }
         void registerOutputID(output_id const& o){
+            boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
+            boost::lock_guard<boost::recursive_mutex> m(m_outputs_lock);
+            
             m_child_links[o] = output_link_list_t();
             m_outputs[o] = image_ptr_t();
         }
         void registerInputID(input_id const& i){
+            boost::lock_guard<boost::recursive_mutex> l(m_new_inputs_lock);
+            boost::lock_guard<boost::recursive_mutex> m(m_valid_inputs_lock);
+            boost::lock_guard<boost::recursive_mutex> n(m_parent_links_lock);
+
             m_new_inputs[i] = false;
+            m_valid_inputs[i] = false;
             m_parent_links[i] = input_link_t();
         }
         
@@ -408,13 +474,15 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> li(m_output_demanded_lock);
             boost::lock_guard<boost::recursive_mutex> lo(m_new_inputs_lock);
             
-            if(!m_output_demanded)
+            if(!isOutputNode() && !m_output_demanded)
                 return;
             
             // ALL inputs must be new
             for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
                 if(!i->second)
                     return;
+
+            // if all inputs are new, all inputs are valid
             
             // we rely on multiple-reader thread-safety of std::map here,
             // which is only true if we aren't creating new key-value pairs
@@ -423,9 +491,17 @@ class Node{
             m_sched.addJob(this, m_priority);
         }
 
+        bool _allInputsValid() const throw(){
+            boost::lock_guard<boost::recursive_mutex> l(m_valid_inputs_lock);
+            BOOST_FOREACH(in_bool_map_t::value_type const& v, m_valid_inputs)
+                if(!v.second) return false;
+            return true;
+        }
+
         void _demandNewParentInput() throw(){
             boost::lock_guard<boost::recursive_mutex> l(m_parent_links_lock);
             in_link_map_t::const_iterator i;
+            debug() << "node" << this << "demanding new output from all parents";
             for(i = m_parent_links.begin(); i != m_parent_links.end(); i++)
                 i->second.first->demandNewOutput();
 
@@ -456,6 +532,9 @@ class Node{
          */
         in_bool_map_t m_new_inputs;
         mutable boost::recursive_mutex m_new_inputs_lock;
+
+        in_bool_map_t m_valid_inputs;
+        mutable boost::recursive_mutex m_valid_inputs_lock;
         
         /* Has output been demanded of this node?
          * Set by demandNewOutput(), checked by checkAddSched(), cleared by exec()
