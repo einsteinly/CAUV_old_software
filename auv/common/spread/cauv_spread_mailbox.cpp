@@ -1,8 +1,13 @@
+#include "cauv_spread_mailbox.h"
+
 #include <iostream>
 #include <vector>
-#include <ssrc/spread/Mailbox.h>
-#include "cauv_spread_mailbox.h"
+
 #include <boost/shared_ptr.hpp>
+
+#include <ssrc/spread/Mailbox.h>
+
+#include <common/cauv_utils.h>
 
 using namespace std;
 using namespace boost;
@@ -85,7 +90,7 @@ void SpreadMailbox::joinGroup(const string &groupName)
             throw InvalidSessionError();
             break;
         default:
-            throw ConnectionError("Connection error occurred during join");
+            throw ConnectionError(MakeString() << "Connection error occurred during join: " << e.error());
             break;
         }
     }
@@ -106,7 +111,7 @@ void SpreadMailbox::leaveGroup(const string &groupName)
             throw InvalidSessionError();
             break;
         default:
-            throw ConnectionError("Connection error occurred during leave");
+            throw ConnectionError(MakeString() << "Connection error occurred during leave: " << e.error());
             break;
         }
     }
@@ -152,7 +157,7 @@ int SpreadMailbox::doSendMessage( Message const& message, Spread::service servic
             throw IllegalMessageError();
             break;
         default:
-            throw ConnectionError("Connection error occurred during send");
+            throw ConnectionError(MakeString() << "Connection error occurred during send: " << e.error());
             break;
         }
     }

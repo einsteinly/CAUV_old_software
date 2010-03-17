@@ -23,7 +23,7 @@ ImagePipelineNode::ImagePipelineNode()
 
 void ImagePipelineNode::onRun()
 {
-    mailbox()->joinGroup("images");
+    mailbox()->joinGroup("image");
     mailbox()->joinGroup("pipeline");
     eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
     mailboxMonitor()->addObserver(m_pipeline);
