@@ -296,7 +296,7 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ImgPipeTestNode(camera_test);
+    node = new ImgPipeTestNode(file_io_test | fileinput_test);
     node->run();
     cleanup();
     return 0;

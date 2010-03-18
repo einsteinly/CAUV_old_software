@@ -5,6 +5,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time.hpp>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -19,6 +20,7 @@
 
 using namespace std;
 
+
 class SpreadCameraObserver : public CameraObserver {
     public:
         SpreadCameraObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
@@ -29,10 +31,9 @@ class SpreadCameraObserver : public CameraObserver {
         virtual void onReceiveImage(CameraID cam_id, const cv::Mat& img)
         {
             Image i(img, Image::src_camera);
-            boost::shared_ptr<ImageMessage> m = boost::make_shared<ImageMessage>(cam_id, i);
-            info() << "Sending image";
+            boost::shared_ptr<ImageMessage> m =
+            boost::make_shared<ImageMessage>(cam_id, i, now());
             m_mailbox->sendMessage(m, UNRELIABLE_MESS);
-            info() << "Send image";
         }
 
     protected:

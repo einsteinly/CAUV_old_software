@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <set>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -46,7 +47,8 @@ class ErrOnExit: boost::noncopyable{
  */
 
 class ReconnectingSpreadMailbox{
-    typedef boost::lock_guard<boost::recursive_mutex> lock;
+    typedef boost::recursive_mutex mutex_t;
+    typedef boost::lock_guard<mutex_t> lock_t;
 public:
     ReconnectingSpreadMailbox(std::string const& portAndHost,
                               std::string const& privConnectionName = "",
@@ -84,44 +86,20 @@ public:
     }
     
     virtual void joinGroup(const std::string &groupName) throw() {
-        ErrOnExit err("Failed to join group ");
-        if(_waitConnected(500)){
-            try{
-                if(m_mailbox){
-                    m_mailbox->joinGroup(groupName);
-                    err.no();
-                }
-            }catch(ConnectionError& e){
-                err += groupName + ", " + e.what();
-                if(!e.critical()){
-                    _asyncConnect();
-                }
-            }catch(std::exception& e){
-                err += groupName + ", " + e.what(); 
-            }
-        }else{
-            _asyncConnect();
+        lock_t l(m_groups_lock);
+        m_groups.insert(groupName);
+        
+        if(m_mailbox && isConnected()){
+            _doJoinGroup(groupName);
         }
     }
     
     virtual void leaveGroup(const std::string &groupName) throw() {
-        ErrOnExit err("Failed to leave group ");
-        if(_waitConnected(500)){
-            try{
-                if(m_mailbox){
-                    m_mailbox->leaveGroup(groupName);
-                    err.no();
-                }
-            }catch(ConnectionError& e){
-                err += groupName + ", " + e.what(); 
-                if(!e.critical()){
-                    _asyncConnect();
-                }
-            }catch(std::exception& e){
-                err += groupName + ", " + e.what(); 
-            }
-        }else{
-            _asyncConnect();
+        lock_t l(m_groups_lock);
+        string_set_t::iterator i;
+        if((i = m_groups.find(groupName)) != m_groups.end()){
+            m_groups.erase(i);
+            _doLeaveGroup(groupName);
         }
     }
     
@@ -149,8 +127,6 @@ public:
                 if(!e.critical()){
                     _asyncConnect();
                 }
-            }catch(std::exception& e){
-                err += "to " + destinationGroup + ", " + e.what(); 
             }
         }else{
             _asyncConnect();
@@ -177,8 +153,6 @@ public:
                 if(!e.critical()){
                     _asyncConnect();
                 }
-            }catch(std::exception& e){
-                err += "to " + to_string(groupNames.size()) + " groups, " + e.what(); 
             }
         }else{
             _asyncConnect();
@@ -206,8 +180,6 @@ public:
                 if(!e.critical()){
                     _asyncConnect();
                 }
-            }catch(std::exception& e){
-                err += e.what(); 
             }
         }else{
             _asyncConnect();
@@ -229,8 +201,6 @@ public:
                 if(!e.critical()){
                     _asyncConnect();
                 }
-            }catch(std::exception& e){
-                err += e.what();
             }
         }else{
             _asyncConnect();
@@ -259,9 +229,8 @@ public:
                                        m_ci.timeout,
                                        m_ci.priority)
                 );
-                lock l2(m_connection_state_lock);
                 // yay, finally
-                m_connection_state = CONNECTED;
+                _doOnConnected();
                 return;
             } catch(ConnectionError& e) {
                 if (e.critical()){
@@ -299,7 +268,7 @@ private:
     ConnectionState _checkConnected() throw(){
         // TODO: m_mailbox->connected() might return false even when we have
         // m_connected_state = CONNECTED
-        lock l(m_connection_state_lock);
+        lock_t l(m_connection_state_lock);
         return m_connection_state;
     }
 
@@ -315,6 +284,50 @@ private:
         return i < attempts; 
     }
 
+    void _doOnConnected() throw(){
+        info() << "mailbox connected";
+        lock_t l2(m_connection_state_lock);
+        m_connection_state = CONNECTED;
+        _synchroniseGroups();
+    }
+
+    void _doJoinGroup(std::string const& g) throw(){
+        ErrOnExit err("Failed to join group ");
+        try{
+            if(m_mailbox){
+                m_mailbox->joinGroup(g);
+                err.no();
+            }
+        }catch(ConnectionError& e){
+            err += g + ", " + e.what();
+            if(!e.critical()){
+                _asyncConnect();
+            }
+        }
+    }
+
+    void _doLeaveGroup(std::string const& g) throw(){
+        ErrOnExit err("Failed to leave group ");
+        try{
+            if(m_mailbox){
+                m_mailbox->leaveGroup(g);
+                err.no(); 
+            }
+        }catch(ConnectionError& e){
+            err += g + ", " + e.what(); 
+            if(!e.critical()){
+                _asyncConnect();
+            }
+        }
+    }
+
+    void _synchroniseGroups() throw(){
+        lock_t l(m_groups_lock);
+        string_set_t::const_iterator i;
+        for(i = m_groups.begin(); i != m_groups.end(); i++)
+            _doJoinGroup(*i);
+    }
+
     void _asyncConnect() throw(){
         // I appreciate that lowlevel functions which print things are really
         // annoying, however this saves a signficiant number of lines of code,
@@ -322,18 +335,18 @@ private:
         // case printing that we are going to try to reconnect is what we want
         // to do anyway.
         
-        boost::unique_lock<boost::recursive_mutex> l(m_connection_state_lock);
+        boost::unique_lock<mutex_t> l(m_connection_state_lock);
         if (m_connection_state != NC) return;
         m_connection_state = CONNECTING;
         l.unlock();
 
-        std::cerr << "reconnecting..." << std::flush; 
+        info() << "reconnecting..."; 
         m_thread = boost::thread(boost::ref(*this));
     }
     
     ConnectionInfo m_ci;
     
-    boost::recursive_mutex m_connection_state_lock;
+    mutex_t m_connection_state_lock;
     ConnectionState m_connection_state;
     
     // spread is thread-safe, ssrc spread is probably not thread safe in
@@ -351,6 +364,13 @@ private:
     volatile bool m_keep_trying;
 
     boost::thread m_thread;
+    
+    /* Groups joined, and groups that we have been asked to join but haven't
+     * necessarily done so yet.
+     */
+    mutex_t m_groups_lock;
+    typedef std::set<std::string> string_set_t;
+    string_set_t m_groups;
 };
 
 #endif // ndef CAUV_SPREAD_RC_MAILBOX_H_INCLUDED

@@ -30,6 +30,11 @@ struct NodeOutputArc
     dst : NodeInput;
     output : string;
 }
+struct TimeStamp
+{
+    secs : int32;
+    msecs : int32;
+}
 
 enum MotorID { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }
 enum CameraID { cam_forward = 1, cam_down = 2, cam_sonar = 4, cam_file = 5 }
@@ -71,6 +76,7 @@ group image
 	{
 	    source : CameraID;
 	    image : Image;
+        time : TimeStamp;
     }
 }
 group pipeline

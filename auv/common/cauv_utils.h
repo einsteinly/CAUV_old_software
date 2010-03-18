@@ -11,6 +11,7 @@
 #   define foreach BOOST_FOREACH
 #endif
 
+
 class MakeString
 {
     public:
@@ -35,6 +36,9 @@ inline std::string to_string (const T& t)
 	ss << t;
 	return ss.str();
 }
+
+struct TimeStamp;
+TimeStamp now();
 
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
