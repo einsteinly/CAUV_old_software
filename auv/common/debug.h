@@ -18,9 +18,9 @@
 
 
 /* usage:
- *   debug(1) << stuff; // logs "[HH:MM:SS] stuff", if (DEBUG >= 1)
+ *   debug(1) << stuff; // prints & logs "[HH:MM:SS] stuff", if (DEBUG <= 1)
  *   debug() << stuff << more_stuff << "thing"; // same as debug(1) << ...
- *   debug(3) << stuff; // only print when DEBUG >= 3
+ *   debug(-7) << stuff; // only print when DEBUG <= -7
  *
  *   if DEBUG is not defined, debug() << ... statements do not print OR LOG
  *   anything
@@ -29,11 +29,15 @@
  *
  *   error() << stuff; // prints (cerr) and logs [HH:MM:SS] ERROR: stuff
  *
+ * if DEBUG_PRINT_THREAD is defined, the timestamp has the thread id appended:
+ *   [HH:MM:SS T=0x123456] 
  *
  * A newline is added automatically, spaces are added automatically between
  * successive stuffs which don't already have spaces at the ends
  *
  *   info() << "1" << 3 << "test " << 4; // prints "[HH:MM:SS] 1 3 test 4\n"
+ *
+ * Timestamps are GMT
  *
  */
 
@@ -156,22 +160,45 @@ class SmartStreamBase: NonCopyable
             {
                 if(i->size())
                 {
-                    if(add_space && !isspace(*i->begin()))
+                    if(add_space && mayAddSpaceNow(*i))
                         os << " ";
                     os << *i;
                     // maybe add a space next time
-                    if(!isspace(*i->rbegin()) && (
-                       i->rfind("\E[") == std::string::npos || 
-                       i->rfind("\E[") < (i->size()-8)))
-                    {
-                        add_space = true; 
-                    }
+                    add_space = mayAddSpaceNext(*i);
                 }
                 i++;
             }
             // if anything was printed, add a newline, reset colour
             if(i != m_stuffs.begin())
                 os << reset_colour << std::endl; 
+        }
+            
+        // space is added between srings s1 s2 if:
+        //   mayAddSpaceNext(s1) == true && mayAddSpaceNow(s2) == true
+        static bool mayAddSpaceNext(std::string const& s){
+            if(isspace(*s.rbegin()))
+                return false;
+            switch(isspace(*s.rbegin())){
+                case ';':
+                case '(':
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        static bool mayAddSpaceNow(std::string const& s){
+            if(isspace(*s.begin()))
+                return false;
+            if(s.find("\E[") == 0)
+                return false;
+            switch(isspace(*s.begin())){
+                case ')':
+                case '=':
+                    return false;
+                default:
+                    return true;
+            }
         }
         
         // initialise on first use

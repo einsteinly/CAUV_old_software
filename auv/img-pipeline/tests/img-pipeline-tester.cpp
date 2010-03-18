@@ -154,8 +154,14 @@ class ImagePipelineTesterNode : public CauvNode{
             sp.paramId("camera id");
             sp.stringValue("");
             sp.paramType(pt_int32);
-            sp.intValue(cam_file);
+            sp.intValue(cam_forward);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
+
+
+            // Add a display node:
+            info() << "Adding local display node:";
+            an = AddNodeMessage(nt_local_display, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
 
         }
         

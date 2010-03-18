@@ -8,6 +8,7 @@
 #include <ssrc/spread/Mailbox.h>
 
 #include <common/cauv_utils.h>
+#include <common/debug.h>
 
 using namespace std;
 using namespace boost;
@@ -30,9 +31,9 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
         m_ssrcMailbox = shared_ptr<Mailbox>(
             new Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
                         timeout, (Mailbox::Priority)priority) );
-        std::cout << "Successfully created spread mailbox: "
-                  << portAndHost << ": "
-                  << internalConnectionName << std::endl;
+        info() << "Successfully created spread mailbox:"
+               << portAndHost << ":"
+               << internalConnectionName
     } catch(Error e) {
         throw ConnectionError(e.error());
     }
