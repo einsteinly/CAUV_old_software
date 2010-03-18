@@ -15,6 +15,9 @@ class Image{
         Image()
             : m_img(), m_source(){
         }
+        ~Image(){
+            delete[] m_img.data;
+        }
 
         Image(cv::Mat const& cv_image, Source const& source)
             : m_img(cv_image), m_source(source){
