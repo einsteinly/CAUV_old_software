@@ -1,9 +1,10 @@
 #ifndef __CAUV_UTILS_H__
 #define __CAUV_UTILS_H__
 
-#include <boost/cstdint.hpp>
 #include <sstream>
 #include <vector>
+
+#include <boost/cstdint.hpp>
 
 #ifndef foreach
 #   include <boost/foreach.hpp>
@@ -34,8 +35,6 @@ inline std::string to_string (const T& t)
 	ss << t;
 	return ss.str();
 }
-
-void msleep(int milliseconds);
 
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 

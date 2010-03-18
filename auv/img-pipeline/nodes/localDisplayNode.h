@@ -31,10 +31,11 @@ class LocalDisplayNode: public Node{
             out_image_map_t r;
 
             image_ptr_t img = inputs["image_in"];
-            
+           
             cv::namedWindow("LocalDisplayNode", CV_WINDOW_AUTOSIZE);
             cv::imshow("LocalDisplayNode", img->cvMat());
-            
+            cv::waitKey(10);
+
             return r;
         }
     

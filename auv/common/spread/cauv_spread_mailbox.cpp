@@ -87,9 +87,9 @@ StringVectorPtr groupListToVector(const GroupList &groups) {
     return v;
 }
 
-int SpreadMailbox::doSendMessage( Message const& message, Spread::service serviceType,
+int SpreadMailbox::doSendMessage( const boost::shared_ptr<Message> message, Spread::service serviceType,
         const shared_ptr<GroupList> groupNames ) {
-    byte_vec_t bytes = message.toBytes();
+    byte_vec_t bytes = message->toBytes();
     ssrc::spread::ScatterMessage spreadMsg;
     spreadMsg.add(bytes.data(), bytes.size());
     spreadMsg.set_service(serviceType);
@@ -103,13 +103,13 @@ int SpreadMailbox::doSendMessage( Message const& message, Spread::service servic
     return 0;
 }
 
-int SpreadMailbox::sendMessage(Message const& message, Spread::service serviceType,
+int SpreadMailbox::sendMessage(const boost::shared_ptr<Message> message, Spread::service serviceType,
         const string &groupName) throw(ConnectionError) {
     return doSendMessage( message, serviceType, stringToGroupList(groupName) );
 }
 
 
-int SpreadMailbox::sendMultigroupMessage(Message const& message, Spread::service serviceType,
+int SpreadMailbox::sendMultigroupMessage(const boost::shared_ptr<Message> message, Spread::service serviceType,
         const vector<string> &groupNames) throw(ConnectionError) {
     return doSendMessage( message, serviceType, vectorToGroupList(groupNames) );
 }

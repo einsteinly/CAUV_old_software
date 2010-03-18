@@ -6,12 +6,6 @@ MakeString::operator string() const {
     return stream.str();
 }
 
-void msleep(int milliseconds)
-{
-    struct timespec t = {t.tv_sec = 0, t.tv_nsec = milliseconds * 1000000};
-    nanosleep(&t, 0);
-}
-
 uint16_t sumOnesComplement(vector<uint16_t> bytes)
 {
     uint32_t sum = 0;

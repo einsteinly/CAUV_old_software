@@ -55,7 +55,7 @@ static bool isCritical(int err)
         case REJECT_VERSION:
         case REJECT_NO_NAME:
         case REJECT_ILLEGAL_NAME:
-        case NET_ERROR_ON_SESSION:
+		case NET_ERROR_ON_SESSION:
             return true;
         default:
             return false;

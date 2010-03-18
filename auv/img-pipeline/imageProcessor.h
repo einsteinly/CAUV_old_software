@@ -53,7 +53,7 @@ class ImageProcessor: public MessageObserver
         /**
          * Use m_mailbox (set by constructor) to send the specified message
          */
-        void sendMessage(Message const& msg, service_t p = SAFE_MESS) const;
+        void sendMessage(const boost::shared_ptr<Message> msg, service_t p = SAFE_MESS) const;
 
         ~ImageProcessor();
     

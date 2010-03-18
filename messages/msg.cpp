@@ -270,6 +270,7 @@ int createCPPFile(string outputpath)
     msg_cpp << "#include <boost/archive/binary_iarchive.hpp>" << endl;
     msg_cpp << "#include <boost/serialization/vector.hpp>" << endl;
     msg_cpp << "#include <boost/serialization/map.hpp>" << endl;
+    msg_cpp << "#include <boost/make_shared.hpp>" << endl;
     msg_cpp << endl;
     
     foreach(string s, unknown_types)
@@ -416,7 +417,7 @@ int createCPPFile(string outputpath)
                 msg_cpp_msg_funcs << endl;
                 
                 msg_cpp_msg_serial << "    ar & m_" << dname << ";" << endl;
-                msg_cpp_msg_deserial << "    ar & ret.m_" << dname << ";" << endl;
+                msg_cpp_msg_deserial << "    ar & ret->m_" << dname << ";" << endl;
                 
                 msg_cstrctr_p << asCPPType(dtype) << " " << dname << ", ";
                 msg_cpp_msg_cstrctr_i << "    m_" << dname << "(" << dname << ")," << endl;
@@ -435,7 +436,7 @@ int createCPPFile(string outputpath)
             msg_hh << endl;
             msg_hh << msg_hh_msg_funcs.str();
             msg_hh << endl;
-            msg_hh << "        static " << className << " fromBytes(const byte_vec_t& bytes);" << endl;
+            msg_hh << "        static boost::shared_ptr<" << className << "> fromBytes(const byte_vec_t& bytes);" << endl;
             msg_hh << "        virtual const byte_vec_t toBytes() const;" << endl;
             msg_hh << endl;
             msg_hh << "    protected:" << endl;
@@ -469,14 +470,14 @@ int createCPPFile(string outputpath)
             
             msg_cpp << msg_cpp_msg_funcs.str() << endl;
             msg_cpp << endl;
-            msg_cpp << format("%1% %1%::fromBytes(const byte_vec_t& bytes)") % className << endl;
+            msg_cpp << format("boost::shared_ptr<%1%> %1%::fromBytes(const byte_vec_t& bytes)") % className << endl;
             msg_cpp << "{" << endl;
-            msg_cpp << "    " << className << " ret;" << endl;
+            msg_cpp << "    " << format("boost::shared_ptr<%1%> ret = boost::make_shared<%1%>();") % className << endl;
             msg_cpp << "    byte_istream_t iss(bytes);" << endl;
             msg_cpp << "    boost::archive::binary_iarchive ar(iss, boost::archive::no_header);" << endl;
             msg_cpp << "    uint32_t buf_id;" << endl;
             msg_cpp << "    ar & buf_id;" << endl;
-            msg_cpp << "    if (buf_id != ret.m_id)" << endl;
+            msg_cpp << "    if (buf_id != ret->m_id)" << endl;
             msg_cpp << "    {" << endl;
             msg_cpp << "        throw std::invalid_argument(\"Attempted to create " << className << " with invalid id\");" << endl;
             msg_cpp << "    }" << endl;
@@ -546,8 +547,8 @@ int createCPPFile(string outputpath)
         foreach(Message* m, g->getMessages())
         {
             std::string className = str(format("%1%Message") % m->getName());
-            msg_hh << "        virtual void on" << className << "(const " << className << "& m);" << endl;
-            msg_cpp << "void MessageObserver::on" << className << "(const " << className << "& m) {}" << endl;
+            msg_hh << "        virtual void on" << className << "(boost::shared_ptr<" << className << "> m);" << endl;
+            msg_cpp << "void MessageObserver::on" << className << "(boost::shared_ptr<" << className << "> m) {}" << endl;
         }
     }
     
@@ -591,7 +592,7 @@ int createCPPFile(string outputpath)
             std::string className = str(format("%1%Message") % m->getName());
             msg_cpp << "    case " << m->getId() << ":" << endl; 
             msg_cpp << "    {" << endl;
-            msg_cpp << "        " << className << " m = " << className << "::fromBytes(bytes);" << endl;
+            msg_cpp << "        " << format("boost::shared_ptr<%1%> m = %1%::fromBytes(bytes);") % className << endl;
             msg_cpp << "        foreach(boost::shared_ptr<MessageObserver> o, m_obs)" << endl;
             msg_cpp << "        {" << endl;
             msg_cpp << "            o->on" << className << "(m);" << endl;

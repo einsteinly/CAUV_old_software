@@ -92,13 +92,13 @@ public:
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMessage(Message const& message, Spread::service serviceType, const std::string &destinationGroup)
+    virtual int sendMessage(boost::shared_ptr<Message> message, Spread::service serviceType, const std::string &destinationGroup)
         throw(ConnectionError);
 
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMultigroupMessage(Message const& message, Spread::service serviceType,
+    virtual int sendMultigroupMessage(boost::shared_ptr<Message> message, Spread::service serviceType,
         const std::vector<std::string> &groupNames) throw(ConnectionError);
 
     /**
@@ -115,7 +115,7 @@ protected:
     boost::shared_ptr< ssrc::spread::Mailbox > m_ssrcMailbox;
 
 private:
-    int doSendMessage( Message const& message, Spread::service serviceType,
+    int doSendMessage(boost::shared_ptr<Message> message, Spread::service serviceType,
         boost::shared_ptr<ssrc::spread::GroupList> const groupNames );
 };
 

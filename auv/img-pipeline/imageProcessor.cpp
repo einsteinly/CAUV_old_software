@@ -1,6 +1,8 @@
 #include "imageProcessor.h"
 #include "nodeFactory.h"
 
+#include <boost/make_shared.hpp>
+
 #include <common/messages.h>
 
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
@@ -42,7 +44,7 @@ void ImageProcessor::onAddNodeMessage(boost::shared_ptr<AddNodeMessage> m){
         error() << __func__ << ":" << e.what();
     }
     // TODO: error message of some sort, or something
-    sendMessage(NodeAddedMessage(new_id));
+    sendMessage(boost::make_shared<NodeAddedMessage>(new_id));
 }
 
 void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<RemoveNodeMessage> m){
@@ -78,7 +80,7 @@ void ImageProcessor::onSetNodeParameterMessage(boost::shared_ptr<SetNodeParamete
     // TODO: error message of some sort, or something
 }
 
-void ImageProcessor::sendMessage(Message const& msg, service_t service_type) const{
+void ImageProcessor::sendMessage(const boost::shared_ptr<Message> msg, service_t service_type) const{
     m_mailbox->sendMessage(msg, service_type);
 }
 

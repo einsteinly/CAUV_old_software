@@ -55,7 +55,7 @@ void CauvNode::run()
 
     while(true)
     {
-        msleep(500);
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
     }
 }
 

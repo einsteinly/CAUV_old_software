@@ -11,6 +11,19 @@
 
 using namespace std;
 
+void sendMotorMessageTest(boost::shared_ptr<MCBModule> mcb)
+{
+    int motor = 1;
+    while(true)
+    {
+        MotorMessage m((MotorID)motor, 0);
+        mcb->send(m);
+
+        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+
+        motor = (motor == 16) ? 1 : motor << 1;
+    }
+}
 
 ControlNode::ControlNode() : CauvNode("Control")
 {
@@ -21,6 +34,8 @@ ControlNode::ControlNode() : CauvNode("Control")
         //m_ins->addObserver(new PrintingModuleObserver());
         cauv_global::trace("MCB Connected");
 
+        boost::thread t(sendMotorMessageTest, boost::ref(m_mcb));
+
         // create a thread to send the alive messages
         // the alive messages keep the motors rom being automatically killed by the motor control board
         //cauv_global::trace("Starting alive thread...");
@@ -29,7 +44,9 @@ ControlNode::ControlNode() : CauvNode("Control")
         //    cauv_global::error("Cannot create alive thread");
         //    exit(-1);
         //}
-    } catch (FTDIException& e) {
+    }
+    catch (FTDIException& e)
+    {
         cauv_global::error("Cannot connect to MCB", e);
         m_mcb.reset();
     }
@@ -79,7 +96,7 @@ void ControlNode::onRun()
 
         cout << fixed << "Yaw: " << att.yaw << " Pitch: " << att.pitch  << " Roll: " << att.roll  << endl;
 
-	    msleep(10);
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(10));
     }
 }
 

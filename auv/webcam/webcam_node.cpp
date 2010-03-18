@@ -29,7 +29,7 @@ class SpreadCameraObserver : public CameraObserver {
         virtual void onReceiveImage(CameraID cam_id, const cv::Mat& img)
         {
             Image i(img, Image::src_camera);
-            ImageMessage m(cam_id, i);
+            boost::shared_ptr<ImageMessage> m = boost::make_shared<ImageMessage>(cam_id, i);
             m_mailbox->sendMessage(m, UNRELIABLE_MESS);
         }
 

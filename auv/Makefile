@@ -132,6 +132,7 @@ $(MSGJAVASRCS): $(MSGGEN) $$(MSGJAVASRCMSG)
 	@$(MSGGEN) $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT) -l java   $(SHOWOK)
 
 $(MSGGEN):
+	@mkdir -p $(dir $@)
 	@echo "  [MAKE] -C ../messages"
 	@echo -en "\E[0;36m"
 	@$(MAKE) -C ../messages   $(SHOWOK)
@@ -159,7 +160,10 @@ $(OBJDIR)/%.e : %
 	@echo -n "  [LD]    $< (binary)"
 	@$(LD) -r -b binary $< -o $@   $(SHOWOK)
 
--include $(SRCS:%.cpp=$(DEPDIR)/%.d)
+
+ALLCPPS = $(SRCS) $(filter %.cpp, $(MSGSRCS))
+-include $(ALLCPPS:%.cpp=$(DEPDIR)/%.d)
+
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(@D)
