@@ -12,10 +12,6 @@ class cauv_global
 		
 		void send_trace(const std::string& msg) const;
 		void send_error(const std::string& msg) const;
-
-		static void trace(const std::string& msg);
-		static void error(const std::string& msg);
-		static void error(const std::string& exception_type, std::exception& e);
 		
         static void print_logo(char* start, char* end, const std::string& module_name);
 		static void print_module_header(const std::string& module_name);

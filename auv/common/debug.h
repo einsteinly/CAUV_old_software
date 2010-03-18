@@ -9,6 +9,8 @@
 #include <cctype>
 #include <ctime>
 
+#include <boost/utility.hpp>  
+
 #define DEBUG_MUTEX_OUTPUT
 #define DEBUG_PRINT_THREAD
 
@@ -16,6 +18,9 @@
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
 #endif
+
+#include <common/cauv_utils.h>
+#include <common/bash_cout.h>
 
 
 /* usage:
@@ -30,6 +35,8 @@
  *
  *   error() << stuff; // prints (cerr) and logs [HH:MM:SS] ERROR: stuff
  *
+ *   warning() << stuff; // prints (cerr) and logs [HH:MM:SS] WARNING: stuff
+ *
  * if DEBUG_PRINT_THREAD is defined, the timestamp has the thread id appended:
  *   [HH:MM:SS T=0x123456] 
  *
@@ -42,70 +49,15 @@
  *
  */
 
-/* bash colours */
-enum bash_colour_e{
-    no_colour = 0,
-    black = 30,
-    red   = 31,
-    green = 32,
-    brown = 33,
-    blue  = 34,
-    purple = 35,
-    cyan  = 36,
-    light_grey = 37,
-    dark_grey   = 130,
-    light_red   = 131,
-    light_green = 132,
-    yellow      = 133,
-    light_blue  = 134,
-    light_purple = 135,
-    light_cyan  = 136,
-    white       = 137
- };
- enum bash_control_e{
-    reset_colour = 0,
-    set_bold = 1
- };
 
 
-template<typename charT, typename traits>
-std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, bash_control_e const& c){
-    switch(c){
-        case reset_colour: os << "\E[m"; break;
-        case set_bold: os << "\E[1m"; break;
-    }
-    return os;
-}
 
-template<typename charT, typename traits>
-std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, bash_colour_e const& c){
-    if(c == no_colour)
-        os << reset_colour;
-    else if(int(c) < 100)
-        os << "\E[0;" << int(c) << "m";
-    else 
-        os << "\E[1;" << int(c)-100 << "m";
-    return os;
-}
-
-
-class NonCopyable
-{
-    public:
-        NonCopyable(){}
-    private:
-        NonCopyable(NonCopyable const&){}
-        NonCopyable& operator=(NonCopyable const&){return *this;}
-};
-
-class SmartStreamBase: NonCopyable
+class SmartStreamBase : boost::noncopyable
 {
     public:
         SmartStreamBase(std::ostream& stream,
-                        const char* prefix = "",
-                        bash_colour_e col = no_colour,
+                        std::string prefix = "",
+                        BashColour::e col = BashColour::None,
                         bool print=true)
             : m_stream(stream), m_prefix(prefix), m_col(col), m_print(print)
         {
@@ -123,6 +75,10 @@ class SmartStreamBase: NonCopyable
     protected:
         // stuff to print
         std::list<std::string> m_stuffs;
+
+        virtual void printPrefix(std::ostream& os)
+        {
+        }
 
     private:
         void printToStream(std::ostream& os)
@@ -151,7 +107,7 @@ class SmartStreamBase: NonCopyable
                 #endif
 
                 // add defined prefix to each line
-                os <<  m_prefix;
+                os << m_prefix;
             }
             
             // add spaces between consecutive items that do not have spaces
@@ -171,7 +127,7 @@ class SmartStreamBase: NonCopyable
             }
             // if anything was printed, add a newline, reset colour
             if(i != m_stuffs.begin())
-                os << reset_colour << std::endl; 
+                os << BashControl::Reset << std::endl; 
         }
             
         // space is added between srings s1 s2 if:
@@ -182,6 +138,8 @@ class SmartStreamBase: NonCopyable
             switch(isspace(*s.rbegin())){
                 case ';':
                 case '(':
+                case '[':
+                case '{':
                     return false;
                 default:
                     return true;
@@ -194,8 +152,10 @@ class SmartStreamBase: NonCopyable
             if(s.find("\E[") == 0)
                 return false;
             switch(isspace(*s.begin())){
-                case ')':
                 case '=':
+                case ')':
+                case ']':
+                case '}':
                     return false;
                 default:
                     return true;
@@ -230,16 +190,15 @@ class SmartStreamBase: NonCopyable
 #endif
         
         std::ostream& m_stream;
-        const char* m_prefix;
-        bash_colour_e m_col;
+        std::string m_prefix;
+        BashColour::e m_col;
         bool m_print;
 };
 
 #if defined(DEBUG)
-struct debug: SmartStreamBase
+struct debug : public SmartStreamBase
 {
-    debug(int level=1)
-        : SmartStreamBase(std::cout, "", brown, true), m_level(level)
+    debug(int level=1) : SmartStreamBase(std::cout, "", BashColour::Cyan), m_level(level)
     {
     }
 
@@ -278,7 +237,7 @@ struct debug: SmartStreamBase
         int m_level;
 };
 #else
-struct debug: NonCopyable
+struct debug : boost::noncopyable
 {
     debug(int level=1)
     {
@@ -302,10 +261,11 @@ struct debug: NonCopyable
 };
 #endif
 
-struct error: SmartStreamBase
+struct error : public SmartStreamBase
 {
-    error()
-        : SmartStreamBase(std::cerr, "ERROR: ", red)
+    error() : SmartStreamBase(std::cerr,
+                              MakeString() << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal,
+                              BashColour::Red)
     {
     }
 
@@ -335,10 +295,43 @@ struct error: SmartStreamBase
     }
 };
 
-struct info: SmartStreamBase
+struct warning : public SmartStreamBase
 {
-    info()
-        : SmartStreamBase(std::cout, "")
+    warning() : SmartStreamBase(std::cerr,
+                                MakeString() << BashIntensity::Bold << "WARNING: " << BashIntensity::Normal,
+                                BashColour::Brown)
+    {
+    }
+
+    template<typename T>
+    warning& operator<<(T const& a)
+    {
+        // convert to a string
+        std::stringstream s;
+        s << a; 
+
+        // push this onto the list of things to print 
+        m_stuffs.push_back(s.str());
+        return *this;
+    }
+
+    /* must handle manipulators (e.g. endl) separately:
+     */
+    warning& operator<<(std::ostream& (*manip)(std::ostream&))
+    {
+        // apply to a string
+        std::stringstream s;
+        s << manip;
+        
+        // and push it onto the list of things to print
+        m_stuffs.push_back(s.str());
+        return *this;
+    }
+};
+
+struct info : public SmartStreamBase
+{
+    info() : SmartStreamBase(std::cout)
     {
     }
 

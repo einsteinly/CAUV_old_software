@@ -48,7 +48,7 @@ class Image{
             ar & m_img.rows;
             ar & m_img.cols;
 
-            debug(-1) << cyan << "Image Serialization:\n\t"
+            debug(-1) << BashColour::Cyan << "Image Serialization:\n\t"
                       << __func__ << type << m_img.elemSize() << m_img.rows << m_img.cols;
             
             ar.save_binary(m_img.data, m_img.rows * m_img.cols * m_img.elemSize());
@@ -68,7 +68,7 @@ class Image{
             
             ar.load_binary(data, size);
 
-            debug(-1) << cyan << "Image Serialization:\n\t"
+            debug(-1) << BashColour::Cyan << "Image Serialization:\n\t"
                       << __func__ << type << typeWidth(type) << rows << cols;
 
             m_img = cv::Mat(rows, cols, type, data);

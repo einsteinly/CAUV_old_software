@@ -47,7 +47,7 @@ class FTDIStream : public boost::iostreams::device<boost::iostreams::bidirection
 
             int deviceCount = ret;
 
-            cauv_global::trace(MakeString() << "Number of devices found: " << deviceCount);
+            info() << "Number of devices found: " << deviceCount;
 
             if (deviceCount == 0)
                 throw FTDIException("Could not open device (No devices found)");
@@ -67,7 +67,7 @@ class FTDIStream : public boost::iostreams::device<boost::iostreams::bidirection
 
             ftdi_list_free(&devices);
 
-            cauv_global::trace(MakeString() << "Module's device (id:" << deviceID << ") found...");
+            info() << "Module's device (id:" << deviceID << ") found...";
 
             if ((ret = ftdi_usb_open_dev(&ftdic, device.get())) < 0)
             {
@@ -141,12 +141,12 @@ class Module : public MessageSource
     public:
         Module(int deviceID) throw(FTDIException) : ftdiStream(deviceID)
         {
-            cauv_global::trace("USB opened...");
+            info() << "USB opened...";
 
             m_running = true;
             m_readThread = boost::make_shared<boost::thread>(&Module::readLoop, this);
 
-            cauv_global::trace("Module thread started");
+            info() << "Module thread started";
         }
 
         ~Module()
@@ -224,12 +224,16 @@ class Module : public MessageSource
                     curMsg.push_back(c);
                 }
 
-                std::cout << "Message from module  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
+                
+#ifdef DEBUG
+                std::stringstream ss;
+                ss << "Message from module  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
                 foreach(char c, curMsg)
                 {
-                    std::cout << std::hex << std::setw(2) << std::setfill('0') << c << " " << std::dec;
+                    ss << std::hex << std::setw(2) << std::setfill('0') << c << " ";
                 }
-                std::cout << std::endl;
+                debug(1) << ss.str();
+#endif
 
                 this->notifyObservers(curMsg);
             }

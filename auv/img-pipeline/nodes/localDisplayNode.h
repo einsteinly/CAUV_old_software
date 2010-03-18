@@ -17,6 +17,8 @@ class LocalDisplayNode: public Node{
             // one input:
             registerInputID("image_in");
             
+            cv::namedWindow("LocalDisplayNode", CV_WINDOW_AUTOSIZE);
+            
             // no outputs
             // registerOutputID();
             
@@ -32,7 +34,6 @@ class LocalDisplayNode: public Node{
 
             image_ptr_t img = inputs["image_in"];
            
-            cv::namedWindow("LocalDisplayNode", CV_WINDOW_AUTOSIZE);
             cv::imshow("LocalDisplayNode", img->cvMat());
             cv::waitKey(10);
 

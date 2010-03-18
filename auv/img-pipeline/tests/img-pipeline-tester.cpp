@@ -3,6 +3,8 @@
 #include <exception>
 #include <stdexcept>
 
+#include <boost/make_shared.hpp>
+
 #include <common/cauv_node.h>
 #include <common/messages.h>
 #include <common/debug.h>
@@ -53,7 +55,7 @@ class ImgPipeTestNode : public CauvNode{
 
     protected:
         void setupFileInputToFile(){
-            info() << green << "--- Setting up pipeline for fileinput->file ---";
+            info() << BashColour::Green << "--- Setting up pipeline for fileinput->file ---";
             std::vector<NodeInputArc> arcs_in;
             std::vector<NodeOutputArc> arcs_out;
             NodeInputArc ai;
@@ -106,7 +108,7 @@ class ImgPipeTestNode : public CauvNode{
         }
             
         void clearPipeline(){
-            info() << green << "--- clearing the pipeline ---";
+            info() << BashColour::Green << "--- clearing the pipeline ---";
             boost::shared_ptr<ClearPipelineMessage> cp;
             
             // clear the pipeline
@@ -115,7 +117,7 @@ class ImgPipeTestNode : public CauvNode{
         }
 
         void setupFileIOTests(){
-            info() << green << "--- Setting up pipeline for file->file tests ---";
+            info() << BashColour::Green << "--- Setting up pipeline for file->file tests ---";
             std::vector<NodeInputArc> arcs_in;
             std::vector<NodeOutputArc> arcs_out;
             NodeInputArc ai;
@@ -196,7 +198,7 @@ class ImgPipeTestNode : public CauvNode{
         }
 
         void setupCameraToDisplay(){
-            info() << green << "--- Setting up pipeline for camera->display ---";
+            info() << BashColour::Green << "--- Setting up pipeline for camera->display ---";
             std::vector<NodeInputArc> arcs_in;
             std::vector<NodeOutputArc> arcs_out;
             NodeInputArc ai;
@@ -216,6 +218,7 @@ class ImgPipeTestNode : public CauvNode{
             int input_node_id = m_obs->waitOnNodeAdded();
 
             info() << "Setting source camera:";
+            sp = boost::make_shared<SetNodeParameterMessage>(0, "", pt_int32, 0, 0, ""); 
             sp->nodeId(input_node_id);
             sp->paramId("camera id");
             sp->stringValue("");
@@ -225,6 +228,11 @@ class ImgPipeTestNode : public CauvNode{
 
             // Add a display node:
             info() << "Adding local display node:";
+            ai.input = "image_in";
+            no.node = input_node_id;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.push_back(ai);
             an = boost::make_shared<AddNodeMessage>(nt_local_display, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);
             m_obs->waitOnNodeAdded();
@@ -270,16 +278,16 @@ static ImgPipeTestNode* node;
 
 void cleanup()
 {
-    info() << red << "Cleaning up...";
+    info() << BashColour::Red << "Cleaning up...";
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    info() << red << "Clean up done.";
+    info() << BashColour::Red << "Clean up done.";
 }
 
 void interrupt(int sig)
 {
-    info() << red << "Interrupt caught!";
+    info() << BashColour::Red << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);
@@ -288,7 +296,7 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ImgPipeTestNode(file_io_test | fileinput_test);
+    node = new ImgPipeTestNode(camera_test);
     node->run();
     cleanup();
     return 0;

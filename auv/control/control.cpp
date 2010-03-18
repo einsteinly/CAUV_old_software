@@ -32,7 +32,7 @@ ControlNode::ControlNode() : CauvNode("Control")
         m_mcb = boost::make_shared<MCBModule>(0);
         //m_ins->addObserver(m_state_updating_observer);
         //m_ins->addObserver(new PrintingModuleObserver());
-        cauv_global::trace("MCB Connected");
+        info() << "MCB Connected";
 
         boost::thread t(sendMotorMessageTest, boost::ref(m_mcb));
 
@@ -47,14 +47,14 @@ ControlNode::ControlNode() : CauvNode("Control")
     }
     catch (FTDIException& e)
     {
-        cauv_global::error("Cannot connect to MCB", e);
+        error() << "Cannot connect to MCB: " << e.what();
         m_mcb.reset();
     }
 
     // start up the Xsens IMU
     try {
         m_xsens = boost::make_shared<XsensIMU>(0);
-        cauv_global::trace("XSens Connected");
+        info() << "XSens Connected";
         
         CmtOutputMode om = CMT_OUTPUTMODE_CALIB | CMT_OUTPUTMODE_ORIENT;
         CmtOutputSettings os = CMT_OUTPUTSETTINGS_ORIENTMODE_EULER | CMT_OUTPUTSETTINGS_DATAFORMAT_FLOAT;
@@ -66,8 +66,8 @@ ControlNode::ControlNode() : CauvNode("Control")
 
         m_xsens->setObjectAlignmentMatrix(m);
         m_xsens->configure(om, os);
-    } catch (XsensException e) {
-        cauv_global::error("Cannot connect to Xsens", e);
+    } catch (XsensException& e) {
+        error() << "Cannot connect to Xsens: " << e.what();
         m_xsens.reset();
     }
 }
@@ -82,7 +82,7 @@ void ControlNode::onRun()
     
     // First check the Xsens is actually connected...
     if (!m_xsens) {
-        cauv_global::error("Xsens must be connected. Killing forwarding thread.");
+        error() << "Xsens must be connected. Killing forwarding thread.";
         return;
     }
 
@@ -94,7 +94,7 @@ void ControlNode::onRun()
         if (att.yaw < 0)
             att.yaw += 360;
 
-        cout << fixed << "Yaw: " << att.yaw << " Pitch: " << att.pitch  << " Roll: " << att.roll  << endl;
+        debug(-1) << fixed << "Yaw: " << att.yaw << " Pitch: " << att.pitch  << " Roll: " << att.roll;
 
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(10));
     }
@@ -104,17 +104,17 @@ static ControlNode* node;
 
 void cleanup()
 {
-    cout << "Cleaning up..." << endl;
+    info() << "Cleaning up..." << endl;
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    cout << "Clean up done." << endl;
+    info() << "Clean up done." << endl;
 }
 
 void interrupt(int sig)
 {
     cout << endl;
-    cout << "Interrupt caught!" << endl;
+    info() << BashColour::Red << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);

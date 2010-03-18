@@ -47,17 +47,17 @@ static WebcamNode* node;
 
 void cleanup()
 {
-    cout << "Cleaning up..." << endl;
+    info() << "Cleaning up..." << endl;
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    cout << "Clean up done." << endl;
+    info() << "Clean up done." << endl;
 }
 
 void interrupt(int sig)
 {
     cout << endl;
-    cout << "Interrupt caught!" << endl;
+    info() << BashColour::Red << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);

@@ -94,7 +94,7 @@ ARFLAGS=rcs
 SHOWOK = 2>$@.err && if test -s $@.err ; then echo -e "  \E[1;33m[WARNING]\E[m" && cat $@.err ; else echo -e "  \E[1;32m[OK]\E[m" ; fi || echo -e "  \E[1;31m[ERROR]\E[m" && cat $@.err; rm -f $@.err
 
 .PHONY: modules makedirs
-modules: makedirs $(EXES)
+modules: makedirs msggen $(EXES)
 makedirs: $(DIRS)
 
 FILES = $(OBJS) $(MSGOBJS) $(EMBED)
@@ -136,11 +136,14 @@ $(MSGJAVASRCS): $(MSGGEN) $$(MSGJAVASRCMSG)
 	@echo -n "  [MSG-GEN]  $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT)"
 	@$(MSGGEN) $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT) -l java   $(SHOWOK)
 
-$(MSGGEN):
-	@mkdir -p $(dir $@)
+.PHONY: msggen
+msggen: $((MSGGEN)
 	@echo "  [MAKE] -C ../messages"
 	@echo -en "\E[0;36m"
 	@$(MAKE) -C ../messages   $(SHOWOK)
+
+$(MSGGEN): ../messages/bin/msg-generator
+	@mkdir -p $(dir $@)
 	@echo -n "  [CP]   ../messages/bin/msg-generator $@"
 	@cp ../messages/bin/msg-generator $@  $(SHOWOK)
 

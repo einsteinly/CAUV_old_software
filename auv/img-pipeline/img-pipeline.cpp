@@ -36,16 +36,16 @@ static ImagePipelineNode* node;
 
 void cleanup()
 {
-    info() << red << "Cleaning up...";
+    info() << "Cleaning up...";
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    info() << red << "Clean up done.";
+    info() << "Clean up done.";
 }
 
 void interrupt(int sig)
 {
-    info() << red << "Interrupt caught!";
+    info() << BashColour::Red << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);

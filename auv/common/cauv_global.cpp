@@ -32,7 +32,6 @@ void cauv_global::set_socket(CommunicatingSocket* socket)
 
 void cauv_global::send_trace(const string& msg) const
 {
-	cout << setcolour("black") << setbold << "TRACE: " << resetcolour << msg << endl;
 /*	TraceMessage m;
  *  m.msg(msg);
 	try
@@ -48,7 +47,6 @@ void cauv_global::send_trace(const string& msg) const
 }
 void cauv_global::send_error(const string& msg) const
 {
-	cout << setcolour("red") << setbold << "ERROR: " << resetcolour << msg << endl;
 /*	ErrorMessage m(msg);
 	try
     {
@@ -64,29 +62,15 @@ void cauv_global::send_error(const string& msg) const
 */
 }
 
-void cauv_global::trace(const string& msg)
-{
-	cauv_global::current().send_trace(msg);
-}
-void cauv_global::error(const string& msg)
-{
-	cauv_global::current().send_error(msg);
-}
-void cauv_global::error(const string& head, exception& e)
-{
-	stringstream ss;
-	ss << head << ": " << e.what();
-	cauv_global::current().send_error(ss.str());
-}
-
 void cauv_global::print_logo(char* start, char* end, const string& module_name)
 {
 	char* cur = start;
     stringstream ss;
-	while (cur != end)
+	ss << endl;
+    while (cur != end)
 	{
 		if (*cur == '\n')
-			ss << resetcolour << endl;
+			ss << BashControl::Reset << endl;
 		else if (*cur == *(cur-1))
 			ss << ' ';
 		else
@@ -94,35 +78,35 @@ void cauv_global::print_logo(char* start, char* end, const string& module_name)
 			switch(*cur)
 			{
 				case 'K':
-					ss << setbg("black") << ' ';
+					ss << BashBackground::Black << ' ';
                     break;
 				case 'R':
-					ss << setbg("red") << ' ';
+					ss << BashBackground::Red << ' ';
 					break;
 				case 'G':
-					ss << setbg("green") << ' ';
+					ss << BashBackground::Green << ' ';
 					break;
 				case 'Y':
-					ss << setbg("yellow") << ' ';
+					ss << BashBackground::Yellow << ' ';
 					break;
 				case 'B':
-					ss << setbg("blue") << ' ';
+					ss << BashBackground::Blue << ' ';
 					break;
 				case 'M':
-					ss << setbg("magenta") << ' ';
+					ss << BashBackground::Magenta << ' ';
 					break;
 				case 'C':
-					ss << setbg("cyan") << ' ';
+					ss << BashBackground::Cyan << ' ';
 					break;
 				case 'W':
-					ss << setbg("white") << ' ';
+					ss << BashBackground::White << ' ';
 					break;
 				case ' ':
-					ss << resetcolour << ' ';
+					ss << BashControl::Reset << ' ';
 					break;
 				case 'c':
 				{
-					ss << setcolour("blue") << setbold;
+					ss << BashColour::Blue << BashIntensity::Bold;
 					int len = 0;
 					while (cur != end && *cur == 'c')
                     {

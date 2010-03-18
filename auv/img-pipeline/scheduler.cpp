@@ -8,7 +8,7 @@ ImgPipelineThread::ImgPipelineThread(Scheduler* s, SchedulerPriority p)
 }
 
 void ImgPipelineThread::operator()(){
-    info() << cyan << "ImgPipelineThread (" << m_priority << ") started"; 
+    info() << BashColour::Cyan << "ImgPipelineThread (" << m_priority << ") started"; 
     // TODO: platform specific stuff to set the priority of this thread
     // based on m_priority (using boost::this_thread.native_handle())
     
@@ -19,6 +19,6 @@ void ImgPipelineThread::operator()(){
         else
             break;
     }
-    info() << cyan << "ImgPipelineThread (" << m_priority << ") stopping";
+    info() << BashColour::Cyan << "ImgPipelineThread (" << m_priority << ") stopping";
 }
 

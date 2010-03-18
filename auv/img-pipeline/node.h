@@ -132,7 +132,7 @@ class Node{
             }else{
                 // An output can be connected to more than one input, so
                 // m_child_links[output_id] is a list of output_link_t
-                debug() << green << "adding output link to child: " << n << i_id;
+                debug() << BashColour::Green << "adding output link to child: " << n << i_id;
                 i->second.push_back(output_link_t(n, i_id));
             }
         }
@@ -150,7 +150,7 @@ class Node{
                 }
                 // An output can be connected to more than one input, so
                 // m_child_links[output_id] is a list of output_link_t
-                debug() << green << "adding output link to child: " << n << child_inputs[0]; 
+                debug() << BashColour::Green << "adding output link to child: " << n << child_inputs[0]; 
                 m_child_links.begin()->second.push_back(output_link_t(n, child_inputs[0]));
             }else if(m_child_links.size() > 1){
                 throw link_error("setOutput: specific output must be specified");
@@ -171,7 +171,7 @@ class Node{
                 if(j == i->second.end()){
                     throw(id_error("clearOutput: Invalid node & input id: (node ID lookup is TODO): " + to_string(i_id)));
                 }else{
-                    debug() << purple << "removing output link to child: " << j->first << j->second; 
+                    debug() << BashColour::Purple << "removing output link to child: " << j->first << j->second; 
                     i->second.erase(j);
                 }
             }
@@ -189,7 +189,7 @@ class Node{
                     if(j->first == child){
                         t = j;
                         j++;
-                        debug() << purple << "removing output link to child: " << j->first << j->second; 
+                        debug() << BashColour::Purple << "removing output link to child: " << j->first << j->second; 
                         i->second.erase(t);
                     }else{
                         j++;
@@ -202,7 +202,7 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> l(m_child_links_lock);
             out_link_map_t::iterator i;
             for(i = m_child_links.begin(); i != m_child_links.end(); i++){
-                debug() << purple << "removing output link to all children on:" << i->first;             
+                debug() << BashColour::Purple << "removing output link to all children on:" << i->first;             
                 i->second.clear();
             }
         }
@@ -300,7 +300,7 @@ class Node{
 
                 throw(id_error(std::string("newInput: Invalid input id: ") + to_string(a)));
             }else{
-                debug() << green << this << "notified of new input: " << a;
+                debug() << BashColour::Green << this << "notified of new input: " << a;
                 i->second = true;
                 m_valid_inputs[a] = true;
             }
@@ -310,7 +310,7 @@ class Node{
         /* mark all inputs as new
          */
         void newInput(){
-            debug() << green << this << "notified all inputs new";        
+            debug() << BashColour::Green << this << "notified all inputs new";        
             std::map<input_id, bool>::iterator i;
             for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
                 i->second = true;
