@@ -14,6 +14,7 @@
 
 #if defined(DEBUG_MUTEX_OUTPUT) || defined(DEBUG_PRINT_THREAD)
 #include <boost/thread.hpp>
+#include <boost/make_shared.hpp>
 #endif
 
 
@@ -213,6 +214,7 @@ class SmartStreamBase: NonCopyable
             return lf;
         }
 
+#if defined(DEBUG_MUTEX_OUTPUT)
         // protect cout & cerr to make sure output doesn't become garbled
         static boost::recursive_mutex& _getMutex(std::ostream& s){
             typedef boost::shared_ptr<boost::recursive_mutex> mutex_ptr;
@@ -222,9 +224,10 @@ class SmartStreamBase: NonCopyable
             if(i != mutex_map.end())
                 return *i->second;
             else
-                mutex_map[&s] = mutex_ptr(new boost::recursive_mutex);
+                mutex_map[&s] = boost::make_shared<boost::recursive_mutex>();
             return *mutex_map[&s];
         }
+#endif
         
         std::ostream& m_stream;
         const char* m_prefix;

@@ -92,7 +92,11 @@ group pipeline
         nodeId : int32;
     }
 
-    message SetNodeParameter : 8
+    message ClearPipeline : 8
+    {
+    }
+
+    message SetNodeParameter : 9
     {
         nodeId : int32;
         paramId : string;
@@ -102,7 +106,7 @@ group pipeline
         stringValue : string;
     }
 
-    message GraphDescription : 9
+    message GraphDescription : 10
     {
         unused : int8;
     }
