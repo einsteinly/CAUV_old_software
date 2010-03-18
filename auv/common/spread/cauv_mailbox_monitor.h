@@ -126,6 +126,8 @@ private:
                                 << m->getMessageFlavour();
                     }
                     m_observers_lock.unlock();
+                }else{
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
                 }
             }
         }

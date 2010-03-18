@@ -33,17 +33,16 @@ static ImagePipelineNode* node;
 
 void cleanup()
 {
-    cout << "Cleaning up..." << endl;
+    info() << red << "Cleaning up...";
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    cout << "Clean up done." << endl;
+    info() << red << "Clean up done.";
 }
 
 void interrupt(int sig)
 {
-    cout << endl;
-    cout << "Interrupt caught!" << endl;
+    info() << red << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);

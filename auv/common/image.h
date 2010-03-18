@@ -47,8 +47,11 @@ class Image{
             ar & type;
             ar & m_img.rows;
             ar & m_img.cols;
-            for(unsigned i = 0; i < m_img.rows*m_img.cols*typeWidth(m_img.type()); i++)
-                ar & ((unsigned char*) m_img.data)[i];
+            
+            for(int i = 0; i < m_img.rows; i++)
+                for(int j = 0; j < m_img.cols; j++)
+                    for(int k = 0; k < typeWidth(m_img.type()); k++)
+                        ar & *(((unsigned char*) m_img.data) + i * m_img.step + j * m_img.elemSize());
         }
         
         template<class Archive>
@@ -60,17 +63,15 @@ class Image{
             ar & rows;
             ar & cols;
             
-            unsigned char* data = new unsigned char[rows*cols*typeWidth(type)];
+            unsigned char* data = new unsigned char[rows * cols * typeWidth(type)];
 
-            for(unsigned i = 0; i < rows*cols*typeWidth(type); i++)
+            for(int i = 0; i < rows * cols * typeWidth(type); i++)
                 ar & data[i];
             
             m_img = cv::Mat(rows, cols, type, data);
-
-            delete data;
         }
-
-        unsigned typeWidth(int cv_type) const{
+        
+        int typeWidth(int cv_type) const{
             unsigned depth = 0;
             unsigned channels = 0;
 
@@ -86,6 +87,7 @@ class Image{
             channels = (cv_type >> CV_CN_SHIFT) + 1;
             return depth * channels;
         }
+        
         
     private:
         cv::Mat m_img;

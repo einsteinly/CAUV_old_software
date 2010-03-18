@@ -22,10 +22,10 @@ FileinputNode::FileinputNode(std::string const& fname)
 
 void FileinputNode::onRun()
 {
-    mailbox()->joinGroup("image"); 
+    //mailbox()->joinGroup("image"); 
 
     cv::Mat cv_img = cv::imread(m_fname.c_str());
-    Image img(cv_img, Image::src_file);
+    Image img(cv_img, Image::src_camera); // pretend to be a camera
     mailbox()->sendMessage(ImageMessage(cam_file, img), SAFE_MESS);
 }
 

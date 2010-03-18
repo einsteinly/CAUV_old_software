@@ -182,17 +182,16 @@ static ImagePipelineTesterNode* node;
 
 void cleanup()
 {
-    info() << "Cleaning up...";
+    info() << red << "Cleaning up...";
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    info() << "Clean up done.";
+    info() << red << "Clean up done.";
 }
 
 void interrupt(int sig)
 {
-    info() << std::endl;
-    info() << "Interrupt caught!";
+    info() << red << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);
@@ -204,6 +203,7 @@ int main(int argc, char **argv)
     node = new ImagePipelineTesterNode();
     node->run();
     cleanup();
+    return 0;
 }
 
 

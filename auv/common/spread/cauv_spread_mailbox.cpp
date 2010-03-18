@@ -34,86 +34,34 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
                   << portAndHost << ": "
                   << internalConnectionName << std::endl;
     } catch(Error e) {
-        string errMsg;
-        bool critical = false;
-        
-        switch( e.error() ) {
-        case ILLEGAL_SPREAD:
-            errMsg = "Spread daemon port & host were not formatted correctly";
-            critical = true;
-            break;
-        case CONNECTION_CLOSED:
-            errMsg = "Connection to Spread daemon was interrupted";
-            break;
-        case REJECT_VERSION:
-            errMsg = "This client is the wrong version for the specified Spread daemon";
-            critical = true;
-            break;
-        case REJECT_NO_NAME:
-            errMsg = "No private connection name provided";
-            critical = true;
-            break;
-        case REJECT_ILLEGAL_NAME:
-            errMsg = "Illegal private connection name";
-            critical = true;
-            break;
-        case REJECT_NOT_UNIQUE:
-            errMsg = string("Private connection name already in use (") + internalConnectionName + string(")");
-            break;
-        case COULD_NOT_CONNECT:
-        default:
-            errMsg = "Could not connect to Spread daemon";
-            break;
-        }
-
-        throw ConnectionError(errMsg, critical);
+        throw ConnectionError(e.error());
     }
 }
 
 
-void SpreadMailbox::disconnect() throw(InvalidSessionError) {
+void SpreadMailbox::disconnect() throw(ConnectionError) {
     m_ssrcMailbox->kill();
 }
 
 
 void SpreadMailbox::joinGroup(const string &groupName)
-        throw(ConnectionError, InvalidSessionError, IllegalGroupError) {
+        throw(ConnectionError) {
     try {
         m_ssrcMailbox->join(groupName);
     }
     catch(Error e) {
-        switch( e.error() ) {
-        case ILLEGAL_GROUP:
-            throw IllegalGroupError();
-            break;
-        case ILLEGAL_SESSION:
-            throw InvalidSessionError();
-            break;
-        default:
-            throw ConnectionError(MakeString() << "Connection error occurred during join: " << e.error());
-            break;
-        }
+        throw ConnectionError(e.error());
     }
 }
 
 
 void SpreadMailbox::leaveGroup(const string &groupName)
-        throw(ConnectionError, InvalidSessionError, IllegalGroupError) {
+        throw(ConnectionError) {
     try {
         m_ssrcMailbox->leave(groupName);
     }
     catch(Error e) {
-        switch( e.error() ) {
-        case ILLEGAL_GROUP:
-            throw IllegalGroupError();
-            break;
-        case ILLEGAL_SESSION:
-            throw InvalidSessionError();
-            break;
-        default:
-            throw ConnectionError(MakeString() << "Connection error occurred during leave: " << e.error());
-            break;
-        }
+        throw ConnectionError(e.error());
     }
 }
 
@@ -149,29 +97,19 @@ int SpreadMailbox::doSendMessage( Message const& message, Spread::service servic
         return m_ssrcMailbox->send(spreadMsg, *groupNames);
     }
     catch(Error e) {
-        switch( e.error() ) {
-        case ILLEGAL_SESSION:
-            throw InvalidSessionError();
-            break;
-        case ILLEGAL_MESSAGE:
-            throw IllegalMessageError();
-            break;
-        default:
-            throw ConnectionError(MakeString() << "Connection error occurred during send: " << e.error());
-            break;
-        }
+        throw ConnectionError(e.error());
     }
     return 0;
 }
 
 int SpreadMailbox::sendMessage(Message const& message, Spread::service serviceType,
-        const string &groupName) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+        const string &groupName) throw(ConnectionError) {
     return doSendMessage( message, serviceType, stringToGroupList(groupName) );
 }
 
 
 int SpreadMailbox::sendMultigroupMessage(Message const& message, Spread::service serviceType,
-        const vector<string> &groupNames) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+        const vector<string> &groupNames) throw(ConnectionError) {
     return doSendMessage( message, serviceType, vectorToGroupList(groupNames) );
 }
 
@@ -189,7 +127,7 @@ RegularMembershipMessage::MessageCause causeFromServiceType( Spread::service ser
     return RegularMembershipMessage::NETWORK;
 }
 
-shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(InvalidSessionError, ConnectionError, IllegalMessageError) {
+shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(ConnectionError) {
     ssrc::spread::Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
     GroupList groups;
 
@@ -207,7 +145,7 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(Inval
         int ret = select(fd+1, &fds, NULL, &fds, &towait);
         if(ret < 0)
         {
-            throw ConnectionError("Error in select");	        
+            throw ConnectionError("Error in select", true);	        
         }
         else if(ret == 0)
         {
@@ -215,7 +153,12 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(Inval
         }
     }
 
-    m_ssrcMailbox->receive(ssrcMsg, groups);
+    try {
+        m_ssrcMailbox->receive(ssrcMsg, groups);
+    }
+    catch(Error& e) {
+        throw ConnectionError(e.error());
+    }
 
     shared_ptr< vector<string> > groupVector = groupListToVector(groups);
     ssrc::spread::BaseMessage::service_type sType = ssrcMsg.service();
