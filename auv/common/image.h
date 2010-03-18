@@ -47,11 +47,14 @@ class Image{
             ar & type;
             ar & m_img.rows;
             ar & m_img.cols;
+
+            debug(-1) << cyan << "Image Serialization:\n\t"
+                      << __func__ << type << m_img.elemSize() << m_img.rows << m_img.cols;
             
             for(int i = 0; i < m_img.rows; i++)
                 for(int j = 0; j < m_img.cols; j++)
                     for(int k = 0; k < typeWidth(m_img.type()); k++)
-                        ar & *(((unsigned char*) m_img.data) + i * m_img.step + j * m_img.elemSize());
+                        ar & *(((unsigned char*) m_img.data) + i * m_img.step + j * m_img.elemSize() + k);
         }
         
         template<class Archive>
@@ -67,7 +70,10 @@ class Image{
 
             for(int i = 0; i < rows * cols * typeWidth(type); i++)
                 ar & data[i];
-            
+
+            debug(-1) << cyan << "Image Serialization:\n\t"
+                      << __func__ << type << typeWidth(type) << rows << cols;
+
             m_img = cv::Mat(rows, cols, type, data);
         }
         
