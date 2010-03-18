@@ -33,7 +33,7 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
                         timeout, (Mailbox::Priority)priority) );
         info() << "Successfully created spread mailbox:"
                << portAndHost << ":"
-               << internalConnectionName
+               << internalConnectionName;
     } catch(Error e) {
         throw ConnectionError(e.error());
     }

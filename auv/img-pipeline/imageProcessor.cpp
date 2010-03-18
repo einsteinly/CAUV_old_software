@@ -8,23 +8,23 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb)
     m_scheduler.start();
 }
 
-void ImageProcessor::onImageMessage(ImageMessage const& m){
+void ImageProcessor::onImageMessage(boost::shared_ptr<ImageMessage> m){
     std::set<input_node_ptr_t>::iterator i;
     debug() << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onImageMessage(m);
 }
 
-void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
+void ImageProcessor::onAddNodeMessage(boost::shared_ptr<AddNodeMessage> m){
     node_id new_id = 0;
     try{
-        node_ptr_t node = NodeFactoryRegister::create(m.nodeType(), m_scheduler);
+        node_ptr_t node = NodeFactoryRegister::create(m->nodeType(), m_scheduler);
 
-        BOOST_FOREACH(NodeInputArc const& a, m.parents()){
+        BOOST_FOREACH(NodeInputArc const& a, m->parents()){
             node->setInput(a.input, _lookupNode(a.src.node), a.src.output);
             _lookupNode(a.src.node)->setOutput(a.src.output, node, a.input);
         }
-        BOOST_FOREACH(NodeOutputArc const& a, m.children()){
+        BOOST_FOREACH(NodeOutputArc const& a, m->children()){
             node->setOutput(a.output, _lookupNode(a.dst.node), a.dst.input);
             _lookupNode(a.dst.node)->setInput(a.dst.input, node , a.output);
         }
@@ -35,9 +35,9 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
         if(node->isInputNode()){
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
-        info() << "Node added, (type=" << m.nodeType() << " "
-               << m.parents().size() << " parents, "
-               << m.children().size() << " children)";
+        info() << "Node added, (type=" << m->nodeType() << " "
+               << m->parents().size() << " parents, "
+               << m->children().size() << " children)";
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
@@ -45,10 +45,10 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage const& m){
     sendMessage(NodeAddedMessage(new_id));
 }
 
-void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
+void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<RemoveNodeMessage> m){
     try{
-        node_ptr_t n = _lookupNode(m.nodeId());
-        m_nodes.erase(m.nodeId());
+        node_ptr_t n = _lookupNode(m->nodeId());
+        m_nodes.erase(m->nodeId());
        
         if(n->isInputNode()){
             m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
@@ -68,9 +68,9 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage const& m){
     // TODO: error message of some sort, or something
 }
 
-void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage const& m){
+void ImageProcessor::onSetNodeParameterMessage(boost::shared_ptr<SetNodeParameterMessage> m){
     try{
-        node_ptr_t n = _lookupNode(m.nodeId());
+        node_ptr_t n = _lookupNode(m->nodeId());
         n->setParam(m);
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();

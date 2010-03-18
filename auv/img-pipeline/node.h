@@ -43,7 +43,7 @@ class Node{
     public:
         Node(Scheduler& sched)
             : m_priority(priority_slow), m_speed(slow),
-              m_output_demanded(false), m_sched(sched){
+              m_exec_queued(false), m_output_demanded(false), m_sched(sched){
         }
         
         void setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
@@ -280,6 +280,8 @@ class Node{
                     }
                 }
             }
+            boost::lock_guard<boost::recursive_mutex> l(m_exec_queued_lock);
+            m_exec_queued = false;
         }
         
         /* Keep a record of which inputs are new (have changed since they were
@@ -368,17 +370,17 @@ class Node{
         
         /* set a parameter based on a message
          */
-        void setParam(SetNodeParameterMessage const& m){
+        void setParam(boost::shared_ptr<SetNodeParameterMessage>  m){
             param_value_t value;
-            switch(m.paramType()){
-                case pt_int32: value = m.intValue(); break;
-                case pt_float: value = m.floatValue(); break;
-                case pt_string: value = m.stringValue(); break;
+            switch(m->paramType()){
+                case pt_int32: value = m->intValue(); break;
+                case pt_float: value = m->floatValue(); break;
+                case pt_string: value = m->stringValue(); break;
                 default:
                     // TODO: throw?
-                    error() << "Unknown parameter type:" << m.paramType();
+                    error() << "Unknown parameter type:" << m->paramType();
             }
-            setParam(m.paramId(), value);
+            setParam(m->paramId(), value);
         }
 
         /* set a single parameter value
@@ -476,6 +478,10 @@ class Node{
             std::map<input_id, bool>::const_iterator i;
             boost::lock_guard<boost::recursive_mutex> li(m_output_demanded_lock);
             boost::lock_guard<boost::recursive_mutex> lo(m_new_inputs_lock);
+            boost::lock_guard<boost::recursive_mutex> lr(m_exec_queued_lock);
+
+            if(m_exec_queued)
+                return;
             
             if(!isOutputNode() && !m_output_demanded)
                 return;
@@ -491,6 +497,7 @@ class Node{
             // which is only true if we aren't creating new key-value pairs
             // using operator[] (which we aren't, and doing so would return a
             // NULL queue pointer anyway)
+            m_exec_queued = true;
             m_sched.addJob(this, m_priority);
         }
 
@@ -512,7 +519,12 @@ class Node{
             BOOST_FOREACH(in_link_map_t::value_type const& v, m_parent_links)
                 v.second.first->demandNewOutput(); 
         }
-        
+            
+        /* prevent nodes (esp. output nodes) from executing in more than one
+         * thread at once
+         */
+        bool m_exec_queued;
+        mutable boost::recursive_mutex m_exec_queued_lock;
         
         /* maps an input_id to an output of another node */
         in_link_map_t   m_parent_links;
@@ -563,18 +575,13 @@ class InputNode: public Node{
 
         /**
          * if this image is from the right source:
-         *   take a copy (for now, see TODO, below) of the image: store it, and
+         *   take a copy of the image message pointer: store it, and
          *   if m_output_demanded, queue this node for execution
          */
-        void onImageMessage(ImageMessage const& m) throw(){
-            /* TODO: SOON BECAUSE THIS IS IMPORTANT:
-             * TODO: it would be nice if this function was called with a
-             * shared_ptr, avoiding the necessity to copy the contents of the
-             * message
-             */
-            if(checkSource(m.image().source(), m.source())){
-                boost::lock_guard<boost::recursive_mutex> l(m_latest_image_lock);
-                m_latest_image = boost::shared_ptr<Image>(new Image(m.image()));
+        void onImageMessage(boost::shared_ptr<ImageMessage> m) throw(){
+            if(checkSource(m->image().source(), m->source())){
+                boost::lock_guard<boost::recursive_mutex> l(m_latest_image_msg_lock);
+                m_latest_image_msg = m;
                 _checkAddSched();
             }
         }
@@ -591,14 +598,14 @@ class InputNode: public Node{
         virtual bool isInputNode() throw() { return true; }
     
     protected:
-        boost::shared_ptr<Image> latestImage(){
-            boost::lock_guard<boost::recursive_mutex> l(m_latest_image_lock);
-            return m_latest_image;
+        boost::shared_ptr<ImageMessage> latestImageMsg(){
+            boost::lock_guard<boost::recursive_mutex> l(m_latest_image_msg_lock);
+            return m_latest_image_msg;
         }
 
     private:
-        boost::shared_ptr<Image> m_latest_image;
-        mutable boost::recursive_mutex m_latest_image_lock;
+        boost::shared_ptr<ImageMessage> m_latest_image_msg;
+        mutable boost::recursive_mutex m_latest_image_msg_lock;
 };
 
 #endif // ndef __NODE_H__

@@ -37,7 +37,9 @@ class CameraInputNode: public InputNode{
             
             debug() << "CameraInputNode::doWork";
         
-            r["image_out"] = latestImage();
+            r["image_out"] = boost::shared_ptr<Image>(
+                new Image(latestImageMsg()->image())
+            );
 
             return r;
         }

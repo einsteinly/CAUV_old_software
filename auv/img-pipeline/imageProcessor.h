@@ -38,15 +38,15 @@ class ImageProcessor: public MessageObserver
          * input. It is up to nodes to filter the source of the image to select
          * their input from others.
          */
-        void onImageMessage(ImageMessage const& m);
+        void onImageMessage(boost::shared_ptr<ImageMessage> m);
         
         /**
          * These messages describe modifications to the pipeline
          */
 
-        void onAddNodeMessage(AddNodeMessage const& m);
-        void onRemoveNodeMessage(RemoveNodeMessage const& m);
-        void onSetNodeParameterMessage(SetNodeParameterMessage const& m);
+        void onAddNodeMessage(boost::shared_ptr<AddNodeMessage> m);
+        void onRemoveNodeMessage(boost::shared_ptr<RemoveNodeMessage> m);
+        void onSetNodeParameterMessage(boost::shared_ptr<SetNodeParameterMessage> m);
 
         /** end MessageObserver functions **/
 
