@@ -619,7 +619,7 @@ int createCPPFile(string outputpath)
         foreach(Message* m, g->getMessages())
         {
             std::string className = str(format("%1%Message") % m->getName());
-            msg_cpp << "        case " << m->getId() << ": os << " << className << "::fromBytes(bytes); break;" << endl;
+            msg_cpp << "        case " << m->getId() << ": os << *" << className << "::fromBytes(bytes); break;" << endl;
         }
     }
     msg_cpp << "        default: os << \"error: Unknown message id\"; break;" << endl;
