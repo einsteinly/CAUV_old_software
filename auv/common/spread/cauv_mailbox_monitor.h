@@ -25,13 +25,10 @@ class TestMBObserver: public MailboxObserver{
 public:
     TestMBObserver()
         : MailboxObserver(){
-        info() << red << "WARNING: "
-               << "Using a TestMBObserver causes every message to be deserialised";
     }
 
     void regularMessageReceived(boost::shared_ptr<RegularMessage> message) {
-        info() << "TestMBObserver: regular message received:" << "\n\t"
-               << MessageSource::print(message->getMessage());
+        info() << "TestMBObserver: regular message received";
     }
     
     void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message){

@@ -556,11 +556,29 @@ int createCPPFile(string outputpath)
             msg_hh << "        virtual void on" << className << "(boost::shared_ptr<" << className << "> m);" << endl;
             msg_cpp << "void MessageObserver::on" << className << "(boost::shared_ptr<" << className << "> m) {}" << endl;
         }
-    }
-    
+    } 
     msg_hh << endl;
     msg_hh << "    protected:" << endl;
     msg_hh << "        MessageObserver();" << endl;
+    msg_hh << "};" << endl;
+
+    
+    msg_hh << endl;
+
+    msg_hh << "class TestMessageObserver: public MessageObserver" << endl;
+    msg_hh << "{" << endl;
+    msg_hh << "    public:" << endl;
+    foreach(Group* g, groups)
+    {
+        foreach(Message* m, g->getMessages())
+        {
+            std::string className = str(format("%1%Message") % m->getName());
+            msg_hh << "        virtual void on" << className << "(boost::shared_ptr<" << className << "> m);" << endl;
+            msg_cpp << "void TestMessageObserver::on" << className << "(boost::shared_ptr<" << className << "> m){" << endl;
+            msg_cpp << "    info() << \"TestMessageObserver:\" << *m;" << endl;
+            msg_cpp << "}" << endl;
+        }
+    }
     msg_hh << "};" << endl;
 
     msg_hh << "class MessageSource" << endl;

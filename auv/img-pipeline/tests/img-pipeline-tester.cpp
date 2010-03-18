@@ -70,14 +70,13 @@ class ImgPipeTestNode : public CauvNode{
             sent = mailbox()->sendMessage(cp, SAFE_MESS);
 
             // Add input node
-            an = boost::make_shared<AddNodeMessage>(nt_file_input, arcs_in, arcs_out); 
-            info() << "adding file input node";
+            an = boost::make_shared<AddNodeMessage>(nt_camera_input, arcs_in, arcs_out); 
+            info() << "adding camera (fileinput) node";
             sent = mailbox()->sendMessage(an, SAFE_MESS); 
             int input_node_id = m_obs->waitOnNodeAdded();
 
             // Add output node
             info() << "adding file output node"; 
-            // Magically fudge the id values, for now
             ai.input = "image_in";
             no.node = input_node_id;
             no.output = "image_out";
@@ -137,7 +136,6 @@ class ImgPipeTestNode : public CauvNode{
             
             // Add output node
             info() << "Add file output node:"; 
-            // Magically fudge the id values, for now
             ai.input = "image_in";
             no.node = file_input_node_id;
             no.output = "image_out";

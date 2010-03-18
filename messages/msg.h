@@ -6,6 +6,7 @@
 #include <string>
 #include "msg.syntax.h"
 #include <FlexLexer.h>
+#include <boost/make_shared.hpp>
 
 extern std::vector<Group*> groups;
 extern std::vector<Struct*> structs;
