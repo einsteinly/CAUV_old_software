@@ -471,6 +471,13 @@ class Node{
             m_parent_links[i] = input_link_t();
         }
         
+        /* allow derived types to stop nodes from being queued for execution:
+         * use with care, excessive use could stop the pipeline.
+         */
+        virtual bool allowQueueExec() throw(){
+            return true;
+        }
+
         /* Check to see if all inputs are new and output is demanded; if so, 
          * add this node to the scheduler queue
          */
@@ -479,6 +486,9 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> li(m_output_demanded_lock);
             boost::lock_guard<boost::recursive_mutex> lo(m_new_inputs_lock);
             boost::lock_guard<boost::recursive_mutex> lr(m_exec_queued_lock);
+            
+            if(!allowQueueExec())
+                return;
 
             if(m_exec_queued)
                 return;
@@ -598,6 +608,10 @@ class InputNode: public Node{
         virtual bool isInputNode() throw() { return true; }
     
     protected:
+        virtual bool allowQueueExec() throw(){
+            return !!latestImageMsg();
+        }
+
         boost::shared_ptr<ImageMessage> latestImageMsg(){
             boost::lock_guard<boost::recursive_mutex> l(m_latest_image_msg_lock);
             return m_latest_image_msg;
