@@ -25,10 +25,11 @@ class ImagePipelineTesterNode : public CauvNode{
             NodeInput ni;
             NodeOutput no;
             int sent = 0;
+            boost::shared_ptr<AddNodeMessage> an;
+            boost::shared_ptr<SetNodeParameterMessage> sp;
 
-            AddNodeMessage an(nt_file_input, arcs_in, arcs_out);
-            
             // Add input node
+            an = boost::make_shared<AddNodeMessage>(nt_file_input, arcs_in, arcs_out);
             info() << "Add file input node:";
             info() << "\t" << an;
             sent = mailbox()->sendMessage(an, SAFE_MESS);
@@ -42,72 +43,73 @@ class ImagePipelineTesterNode : public CauvNode{
             no.output = "image_out";
             ai.src = no;
             arcs_in.push_back(ai);
-            an = AddNodeMessage(nt_file_output, arcs_in, arcs_out);
+            an = boost::make_shared<AddNodeMessage>(nt_file_output, arcs_in, arcs_out);
             info() << "\t" << an;
             sent = mailbox()->sendMessage(an, SAFE_MESS); 
             info() << "\tsent" << sent << "bytes";
             
             // Set input image parameter
             info() << "Setting input image parameter:";
-            SetNodeParameterMessage sp(0, "", pt_int32, 0, 0, ""); // initialise everything to supress valgrind's complaints
-            sp.nodeId(1);
-            sp.paramId("filename");
-            sp.paramType(pt_string);
-            sp.stringValue("img-pipeline/tests/test.jpg");
+            // initialise everything to supress valgrind's complaints 
+            sp = boost::make_shared<SetNodeParameterMessage>(0, "", pt_int32, 0, 0, ""); 
+            sp->nodeId(1);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("img-pipeline/tests/test.jpg");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
             
             info() << "Trying to set invalid parameter:";
-            sp.paramId("void param");
+            sp->paramId("void param");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
 
             
             info() << "Setting output image parameter:";
-            sp.nodeId(2);
-            sp.paramId("filename");
-            sp.paramType(pt_string);
-            sp.stringValue("pt-out0.png");
+            sp->nodeId(2);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("pt-out0.png");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
 
             
             info() << "Setting output image compression:";
-            sp.nodeId(2);
-            sp.paramId("jpeg quality");
-            sp.paramType(pt_int32);
-            sp.intValue(80);
+            sp->nodeId(2);
+            sp->paramId("jpeg quality");
+            sp->paramType(pt_int32);
+            sp->intValue(80);
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
             
             
             info() << "Setting output image parameter:";
-            sp.nodeId(2);
-            sp.paramId("filename");
-            sp.paramType(pt_string);
-            sp.stringValue("pt-out1.tiff");
+            sp->nodeId(2);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("pt-out1.tiff");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
             
             info() << "Setting output image parameter:";
-            sp.nodeId(2);
-            sp.paramId("filename");
-            sp.paramType(pt_string);
-            sp.stringValue("pt-out0.png");
+            sp->nodeId(2);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("pt-out0.png");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
             
             info() << "Setting output image parameter:";
-            sp.nodeId(2);
-            sp.paramId("filename");
-            sp.paramType(pt_string);
-            sp.stringValue("pt-out0.jpg");
+            sp->nodeId(2);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("pt-out0.jpg");
             info() << "\t" << sp;
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             info() << "\tsent" << sent << "bytes";
@@ -122,8 +124,10 @@ class ImagePipelineTesterNode : public CauvNode{
             NodeInput ni;
             NodeOutput no;
             int sent = 0;
+            boost::shared_ptr<AddNodeMessage> an;
+            boost::shared_ptr<SetNodeParameterMessage> sp;
 
-            AddNodeMessage an(nt_camera_input, arcs_in, arcs_out);
+            an = boost::make_shared<AddNodeMessage>(nt_camera_input, arcs_in, arcs_out);
             
             // Add input node
             info() << "adding camera input node";
@@ -137,30 +141,31 @@ class ImagePipelineTesterNode : public CauvNode{
             no.output = "image_out";
             ai.src = no;
             arcs_in.push_back(ai);
-            an = AddNodeMessage(nt_file_output, arcs_in, arcs_out);
+            an = boost::make_shared<AddNodeMessage>(nt_file_output, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);
 
 
             info() << "setting output image";
-            SetNodeParameterMessage sp(0, "", pt_int32, 0, 0, ""); // initialise everything to supress valgrind's complaints
-            sp.nodeId(4);
-            sp.paramId("filename");
-            sp.paramType(pt_string);
-            sp.stringValue("camera-out.jpg");
+            // initialise everything to supress valgrind's complaints
+            sp = boost::make_shared<SetNodeParameterMessage>(0, "", pt_int32, 0, 0, "");
+            sp->nodeId(4);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("camera-out.jpg");
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
             info() << "Setting source camera:";
-            sp.nodeId(3);
-            sp.paramId("camera id");
-            sp.stringValue("");
-            sp.paramType(pt_int32);
-            sp.intValue(cam_forward);
+            sp->nodeId(3);
+            sp->paramId("camera id");
+            sp->stringValue("");
+            sp->paramType(pt_int32);
+            sp->intValue(cam_forward);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
 
             // Add a display node:
             info() << "Adding local display node:";
-            an = AddNodeMessage(nt_local_display, arcs_in, arcs_out);
+            an = boost::make_shared<AddNodeMessage>(nt_local_display, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);
 
         }
