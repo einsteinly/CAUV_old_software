@@ -15,7 +15,8 @@
 #include <common/cauv_utils.h>
 #include <common/messages.h>
 #include <common/debug.h> 
-#include <common/image.h>
+#include <common/image.h> 
+#include <common/bash_cout.h>
 
 #include "imageProcessor.h"
 #include "pipelineTypes.h"
@@ -44,6 +45,8 @@ class Node{
         Node(Scheduler& sched)
             : m_priority(priority_slow), m_speed(slow),
               m_exec_queued(false), m_output_demanded(false), m_sched(sched){
+        }
+        virtual ~Node(){
         }
         
         void setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
@@ -580,7 +583,14 @@ class Node{
 class InputNode: public Node{
     public:
         InputNode(Scheduler& sched)
-            : Node(sched){
+            : Node(sched), ignored(0), processed(0), dropped(0),
+            dropped_since(0), m_processed_latest(true){
+        }
+        virtual ~InputNode(){
+            info() << "~InputNode statistics"
+                   << "\n\tignored" << ignored
+                   << "\n\tprocessed" <<  processed
+                   << "\n\tdropped" <<  dropped; 
         }
 
         /**
@@ -589,10 +599,16 @@ class InputNode: public Node{
          *   if m_output_demanded, queue this node for execution
          */
         void onImageMessage(boost::shared_ptr<ImageMessage> m) throw(){
-            if(checkSource(m->image().source(), m->source())){
+                boost::lock_guard<boost::recursive_mutex> l(m_counters_lock);
+            if(checkSource(m->image().source(), m->source())){ 
                 boost::lock_guard<boost::recursive_mutex> l(m_latest_image_msg_lock);
+                if(!m_processed_latest)
+                    dropped_since++;
+                m_processed_latest = false;
                 m_latest_image_msg = m;
                 _checkAddSched();
+            }else{
+                ignored++;
             }
         }
 
@@ -613,12 +629,28 @@ class InputNode: public Node{
         }
 
         boost::shared_ptr<ImageMessage> latestImageMsg(){
-            boost::lock_guard<boost::recursive_mutex> l(m_latest_image_msg_lock);
+            boost::lock_guard<boost::recursive_mutex> l(m_counters_lock);
+            if(dropped_since > 0){
+                warning() << "Dropped" << dropped_since << "frames since last frame processed";
+                dropped += dropped_since;
+                dropped_since = 0;
+            }
+            processed++;
+            m_processed_latest = true;
+            
+            boost::lock_guard<boost::recursive_mutex> m(m_latest_image_msg_lock);
             return m_latest_image_msg;
         }
 
     private:
+        int ignored;
+        int processed;
+        int dropped;
+        int dropped_since;
+        mutable boost::recursive_mutex m_counters_lock;
+
         boost::shared_ptr<ImageMessage> m_latest_image_msg;
+        bool m_processed_latest;
         mutable boost::recursive_mutex m_latest_image_msg_lock;
 };
 
