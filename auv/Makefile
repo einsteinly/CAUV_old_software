@@ -46,9 +46,14 @@ fileinput_PARAMS = -lcxcore -lcv -lhighgui -lcvaux -lml
 # Edit directories
 # ================
 
-export BINDIR=bin
+ifdef RELEASE
+export BINDIR=bin/release
+export OBJDIR=.obj/release
+else
+export BINDIR=bin/debug
+export OBJDIR=.obj/debug
+endif
 export DEPDIR=.deps
-export OBJDIR=.obj
 
 
 # ==========================
@@ -173,10 +178,16 @@ $(OBJDIR)/%.o: %.cpp
 $(DIRS):
 	@mkdir -p $@
 
-.PHONY: clean cleanlibs cleanall
-clean:
-	@echo -n "  [RM]    $(DIRS) $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN)  -rf"
-	@rm -rf $(DIRS) $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN) $(SHOWOK)
+.PHONY: clean cleanlibs cleanall cleandeps cleangen rebuild rebuildall
+clean: cleandeps cleangen
+	@echo -n "  [RM]    $(BINDIR) $(OBJDIR)  -rf"
+	@rm -rf $(BINDIR) $(OBJDIR) $(SHOWOK)
+cleangen:
+	@echo -n "  [RM]    $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN)  -rf"
+	@rm -rf $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN) $(SHOWOK)
+cleandeps:
+	@echo -n "  [RM]    $(DEPDIR)  -rf"
+	@rm -rf $(DEPDIR)
 cleanmsggen:
 	@echo "  [MAKE]  clean -C ../messages"
 	@echo -en "\E[0;36m"
@@ -188,3 +199,6 @@ cleanlibs:
 	@echo -en "\E[0;36m"
 	@$(MAKE) -C lib clean  $(SHOWOK)
 cleanall: clean cleanlibs cleanmsggen
+
+rebuild: clean all
+rebuildall: cleanall all
