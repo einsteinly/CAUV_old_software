@@ -51,10 +51,7 @@ class Image{
             debug(-1) << cyan << "Image Serialization:\n\t"
                       << __func__ << type << m_img.elemSize() << m_img.rows << m_img.cols;
             
-            for(int i = 0; i < m_img.rows; i++)
-                for(int j = 0; j < m_img.cols; j++)
-                    for(int k = 0; k < typeWidth(m_img.type()); k++)
-                        ar & *(((unsigned char*) m_img.data) + i * m_img.step + j * m_img.elemSize() + k);
+            ar.save_binary(m_img.data, m_img.rows * m_img.cols * m_img.elemSize());
         }
         
         template<class Archive>
@@ -66,10 +63,10 @@ class Image{
             ar & rows;
             ar & cols;
             
-            unsigned char* data = new unsigned char[rows * cols * typeWidth(type)];
-
-            for(int i = 0; i < rows * cols * typeWidth(type); i++)
-                ar & data[i];
+            int size = rows * cols * typeWidth(type);
+            unsigned char* data = new unsigned char[size];
+            
+            ar.load_binary(data, size);
 
             debug(-1) << cyan << "Image Serialization:\n\t"
                       << __func__ << type << typeWidth(type) << rows << cols;
