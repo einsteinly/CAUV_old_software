@@ -16,7 +16,6 @@ class Image{
             : m_img(), m_source(){
         }
         ~Image(){
-            delete[] m_img.data;
         }
 
         Image(cv::Mat const& cv_image, Source const& source)
@@ -67,14 +66,12 @@ class Image{
             ar & cols;
             
             int size = rows * cols * typeWidth(type);
-            unsigned char* data = new unsigned char[size];
+            m_img = cv::Mat(rows, cols, type);
             
-            ar.load_binary(data, size);
+            ar.load_binary(m_img.data, size);
 
             debug(-1) << BashColour::Cyan << "Image Serialization:\n\t"
                       << __func__ << type << typeWidth(type) << rows << cols;
-
-            m_img = cv::Mat(rows, cols, type, data);
         }
         
         int typeWidth(int cv_type) const{

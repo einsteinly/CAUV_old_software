@@ -30,7 +30,9 @@ class SpreadCameraObserver : public CameraObserver {
         {
             Image i(img, Image::src_camera);
             boost::shared_ptr<ImageMessage> m = boost::make_shared<ImageMessage>(cam_id, i);
+            info() << "Sending image";
             m_mailbox->sendMessage(m, UNRELIABLE_MESS);
+            info() << "Send image";
         }
 
     protected:

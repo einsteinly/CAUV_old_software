@@ -9,6 +9,7 @@
 #include <cctype>
 #include <ctime>
 
+#include <boost/date_time.hpp>  
 #include <boost/utility.hpp>  
 
 #define DEBUG_MUTEX_OUTPUT
@@ -24,26 +25,26 @@
 
 
 /* usage:
- *   debug(1) << stuff; // prints & logs "[HH:MM:SS] stuff", if (DEBUG <= 1)
+ *   debug(1) << stuff; // prints & logs "[HH:MM:SS.fffffff] stuff", if (DEBUG <= 1)
  *   debug() << stuff << more_stuff << "thing"; // same as debug(1) << ...
  *   debug(-7) << stuff; // only print when DEBUG <= -7
  *
  *   if DEBUG is not defined, debug() << ... statements do not print OR LOG
  *   anything
  *
- *   info() << stuff; // prints (cout) and logs [HH:MM:SS] stuff
+ *   info() << stuff; // prints (cout) and logs [HH:MM:SS.fffffff] stuff
  *
- *   error() << stuff; // prints (cerr) and logs [HH:MM:SS] ERROR: stuff
+ *   error() << stuff; // prints (cerr) and logs [HH:MM:SS.fffffff] ERROR: stuff
  *
- *   warning() << stuff; // prints (cerr) and logs [HH:MM:SS] WARNING: stuff
+ *   warning() << stuff; // prints (cerr) and logs [HH:MM:SS.fffffff] WARNING: stuff
  *
  * if DEBUG_PRINT_THREAD is defined, the timestamp has the thread id appended:
- *   [HH:MM:SS T=0x123456] 
+ *   [HH:MM:SS.fffffff T=0x123456] 
  *
  * A newline is added automatically, spaces are added automatically between
  * successive stuffs which don't already have spaces at the ends
  *
- *   info() << "1" << 3 << "test " << 4; // prints "[HH:MM:SS] 1 3 test 4\n"
+ *   info() << "1" << 3 << "test " << 4; // prints "[HH:MM:SS.fffffff] 1 3 test 4\n"
  *
  * Timestamps are GMT
  *
@@ -61,6 +62,8 @@ class SmartStreamBase : boost::noncopyable
                         bool print=true)
             : m_stream(stream), m_prefix(prefix), m_col(col), m_print(print)
         {
+            boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
+            stream.imbue(std::locale(stream.getloc(), facet));
         }
 
         ~SmartStreamBase()
@@ -88,26 +91,17 @@ class SmartStreamBase : boost::noncopyable
             #endif
 
             // add timestamp at start of each line:
-            time_t raw_time;
-            struct tm* gm_time;
-            char buffer[80] = "";
-
             if(m_stuffs.size())
             {
-                os << m_col;
-
-                time(&raw_time);
-                gm_time = gmtime(&raw_time);
-                strftime(buffer, 80, "[%H:%M:%S", gm_time);
+                boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
+                os << m_col << "[" << t;
 
                 #ifdef DEBUG_PRINT_THREAD
-                    os << buffer << " T=" << boost::this_thread::get_id() << "] ";
-                #else
-                    os << buffer << "] ";
+                    os << " T=" << boost::this_thread::get_id();
                 #endif
 
                 // add defined prefix to each line
-                os << m_prefix;
+                os << "] " << m_prefix;
             }
             
             // add spaces between consecutive items that do not have spaces
