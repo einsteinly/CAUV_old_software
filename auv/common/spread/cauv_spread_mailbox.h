@@ -84,10 +84,8 @@ public:
      */
     const std::string &getPrivateGroupName() const {return m_ssrcMailbox->private_group(); }
 
-    virtual void joinGroup(const std::string &groupName)
-        throw(ConnectionError);
-    virtual void leaveGroup(const std::string &groupName)
-        throw(ConnectionError);
+    virtual void joinGroup(const std::string &groupName) throw(ConnectionError);
+    virtual void leaveGroup(const std::string &groupName) throw(ConnectionError);
 
     /**
      * @return The number of bytes sent
@@ -117,6 +115,8 @@ protected:
 private:
     int doSendMessage(boost::shared_ptr<Message> message, Spread::service serviceType,
         boost::shared_ptr<ssrc::spread::GroupList> const groupNames );
+
+    void handleSpreadError(ssrc::spread::Error& e) throw(ConnectionError);
 };
 
 

@@ -34,35 +34,38 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
         info() << "Successfully created spread mailbox:"
                << portAndHost << ":"
                << internalConnectionName;
-    } catch(Error e) {
-        throw ConnectionError(e.error());
+    } catch(Error& e) {
+        handleSpreadError(e);
     }
 }
 
 
 void SpreadMailbox::disconnect() throw(ConnectionError) {
-    m_ssrcMailbox->kill();
+    try {
+        m_ssrcMailbox->kill();
+    } catch(Error& e){
+        // NB: can't use handleSpreadError here!
+        throw ConnectionError(e.error());
+    }
 }
 
 
-void SpreadMailbox::joinGroup(const string &groupName)
-        throw(ConnectionError) {
+void SpreadMailbox::joinGroup(const string &groupName) throw(ConnectionError) {
     try {
         m_ssrcMailbox->join(groupName);
     }
-    catch(Error e) {
-        throw ConnectionError(e.error());
+    catch(Error& e) {
+        handleSpreadError(e);
     }
 }
 
 
-void SpreadMailbox::leaveGroup(const string &groupName)
-        throw(ConnectionError) {
+void SpreadMailbox::leaveGroup(const string &groupName) throw(ConnectionError) {
     try {
         m_ssrcMailbox->leave(groupName);
     }
-    catch(Error e) {
-        throw ConnectionError(e.error());
+    catch(Error& e) {
+        handleSpreadError(e);
     }
 }
 
@@ -97,8 +100,8 @@ int SpreadMailbox::doSendMessage( const boost::shared_ptr<Message> message, Spre
     try {
         return m_ssrcMailbox->send(spreadMsg, *groupNames);
     }
-    catch(Error e) {
-        throw ConnectionError(e.error());
+    catch(Error& e) {
+        handleSpreadError(e);
     }
     return 0;
 }
@@ -158,7 +161,7 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(Conne
         m_ssrcMailbox->receive(ssrcMsg, groups);
     }
     catch(Error& e) {
-        throw ConnectionError(e.error());
+        handleSpreadError(e);
     }
 
     shared_ptr< vector<string> > groupVector = groupListToVector(groups);
@@ -204,3 +207,19 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(Conne
         }
     }
 }
+
+/* re-throw, disconnect etc as required */
+void SpreadMailbox::handleSpreadError(Error& e) throw(ConnectionError){
+    if(needsReconnect(e.error())){
+        try{
+            disconnect();
+        }catch(ConnectionError& e2){
+            throw(ConnectionError(MakeString() << "Error whilst "
+                << "dissconnecting following exception, original error:\n\t"
+                << getErrorString(e.error()) << "\nSubsequent error:\n\t"
+                << e2.what(), true, false));
+        }
+    }
+    throw ConnectionError(e.error()); 
+}
+

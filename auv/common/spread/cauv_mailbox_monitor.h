@@ -22,6 +22,13 @@ public:
 typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
 class TestMBObserver: public MailboxObserver{
+public:
+    TestMBObserver()
+        : MailboxObserver(){
+        info() << red << "WARNING: "
+               << "Using a TestMBObserver causes every message to be deserialised";
+    }
+
     void regularMessageReceived(boost::shared_ptr<RegularMessage> message) {
         info() << "TestMBObserver: regular message received:" << "\n\t"
                << MessageSource::print(message->getMessage());

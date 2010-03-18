@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-static std::string getErrorString(int err)
+inline static std::string getErrorString(int err)
 {
     switch( err )
 	{
@@ -46,7 +46,7 @@ static std::string getErrorString(int err)
 			return "Spread error: Unrecognized error";
 	}
 }
-static bool isCritical(int err)
+inline static bool isCritical(int err)
 {
     switch (err)
     {
@@ -62,10 +62,28 @@ static bool isCritical(int err)
     }
 }
 
+inline static bool needsReconnect(int err)
+{
+    switch(err)
+    {
+        case CONNECTION_CLOSED:
+        case NET_ERROR_ON_SESSION:
+            return true;
+        default:
+            return false;
+        
+    }
+}
+
 class ConnectionError : public std::runtime_error {
     public:
-        explicit ConnectionError(const std::string& msg, bool critical = false)
-            : std::runtime_error(msg), m_critical(critical){}
+        explicit ConnectionError(const std::string& msg,
+                                 bool critical = false,
+                                 bool needs_reconnect = true)
+            : std::runtime_error(msg), m_critical(critical),
+              m_needs_reconnect(needs_reconnect){
+        }
+
         explicit ConnectionError(const int error)
             : std::runtime_error(getErrorString(error)), m_critical(isCritical(error)){}
         
@@ -73,8 +91,13 @@ class ConnectionError : public std::runtime_error {
             return m_critical;
         }
         
+        bool needsReconnect() const{
+            return m_needs_reconnect;
+        }
+
     private:
         bool m_critical;
+        bool m_needs_reconnect;
 };
 
 #endif // CAUV_SPREAD_EXCEPTIONS_H_INCLUDED
