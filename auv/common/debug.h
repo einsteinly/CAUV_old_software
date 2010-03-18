@@ -62,8 +62,6 @@ class SmartStreamBase : boost::noncopyable
                         bool print=true)
             : m_stream(stream), m_prefix(prefix), m_col(col), m_print(print)
         {
-            boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
-            stream.imbue(std::locale(stream.getloc(), facet));
         }
 
         ~SmartStreamBase()
@@ -89,6 +87,8 @@ class SmartStreamBase : boost::noncopyable
             #ifdef DEBUG_MUTEX_OUTPUT
                 boost::lock_guard<boost::recursive_mutex> l(_getMutex(os));
             #endif
+            boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
+            os.imbue(std::locale(os.getloc(), facet));
 
             // add timestamp at start of each line:
             if(m_stuffs.size())
