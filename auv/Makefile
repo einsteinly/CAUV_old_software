@@ -80,7 +80,7 @@ MSGGEN = $(BINDIR)/msg-generator
 SHELL=/bin/bash
 
 ifdef RELEASE
-CXXFLAGS=-Wall -O3
+CXXFLAGS=-Wall -g -O3
 else
 CXXFLAGS=-Wall -g -DDEBUG=1
 endif
@@ -178,7 +178,7 @@ $(OBJDIR)/%.o: %.cpp
 $(DIRS):
 	@mkdir -p $@
 
-.PHONY: clean cleanlibs cleanall cleandeps cleangen rebuild rebuildall
+.PHONY: clean cleanlibs cleanall cleandeps cleangen
 clean: cleandeps cleangen
 	@echo -n "  [RM]    $(BINDIR) $(OBJDIR)  -rf"
 	@rm -rf $(BINDIR) $(OBJDIR) $(SHOWOK)
@@ -199,6 +199,3 @@ cleanlibs:
 	@echo -en "\E[0;36m"
 	@$(MAKE) -C lib clean  $(SHOWOK)
 cleanall: clean cleanlibs cleanmsggen
-
-rebuild: clean all
-rebuildall: cleanall all

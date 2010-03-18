@@ -255,8 +255,8 @@ int createCPPFile(string outputpath)
     msg_hh << "#    define foreach BOOST_FOREACH" << endl;
     msg_hh << "#endif" << endl;
     msg_hh << endl;
-    msg_hh << "#include \"vector_streamops.h\"" << endl;
-    msg_hh << "#include \"image.h\"" << endl;
+    msg_hh << "#include <common/vector_streamops.h>" << endl;
+    msg_hh << "#include <common/image.h>" << endl;
     msg_hh << endl;
     msg_hh << "// message data type definitions" << endl;
     msg_hh << "typedef std::string byte_vec_t;" << endl;
@@ -432,7 +432,10 @@ int createCPPFile(string outputpath)
             msg_hh << "{" << endl;
             msg_hh << "    public:" << endl;
             msg_hh << "        " << className << "();" << endl;
-            msg_hh << "        " << className << "(" << msg_cstrctr_ps << ");" << endl;
+            if (m->getDeclarations().size() > 0)
+            {
+                msg_hh << "        " << className << "(" << msg_cstrctr_ps << ");" << endl;
+            }
             msg_hh << endl;
             msg_hh << msg_hh_msg_funcs.str();
             msg_hh << endl;
@@ -462,12 +465,15 @@ int createCPPFile(string outputpath)
             msg_cpp << "}" << endl;
             
 
-            msg_cpp << format("%1%::%1%(%2%) : ") % className % msg_cstrctr_ps << endl;
-            msg_cpp << "    " << format("Message(%1%, \"%2%\"),") % id % gname << endl;
-            msg_cpp << msg_cpp_msg_cstrctr_is << endl;
-            msg_cpp << "{" << endl;
-            msg_cpp << "}" << endl;
-            
+            if (m->getDeclarations().size() > 0)
+            {
+                msg_cpp << format("%1%::%1%(%2%) : ") % className % msg_cstrctr_ps << endl;
+                msg_cpp << "    " << format("Message(%1%, \"%2%\"),") % id % gname << endl;
+                msg_cpp << msg_cpp_msg_cstrctr_is << endl;
+                msg_cpp << "{" << endl;
+                msg_cpp << "}" << endl;
+            }
+
             msg_cpp << msg_cpp_msg_funcs.str() << endl;
             msg_cpp << endl;
             msg_cpp << format("boost::shared_ptr<%1%> %1%::fromBytes(const byte_vec_t& bytes)") % className << endl;
@@ -961,13 +967,16 @@ int createJavaFile(string outputpath)
             msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
             msg_java << "    }" << endl;
             msg_java << endl;
-            string msg_java_msg_cstrctr_ps = msg_java_msg_cstrctr_p.str();
-            msg_java << "    public " << className << "(" << msg_java_msg_cstrctr_ps.substr(0, msg_java_msg_cstrctr_ps.length() - 2) << ")" << endl;
-            msg_java << "    {" << endl;
-            msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
-            msg_java << msg_java_msg_cstrctr_i.str();
-            msg_java << "    }" << endl;
-            msg_java << endl;
+            if (m->getDeclarations().size() > 0)
+            {
+                string msg_java_msg_cstrctr_ps = msg_java_msg_cstrctr_p.str();
+                msg_java << "    public " << className << "(" << msg_java_msg_cstrctr_ps.substr(0, msg_java_msg_cstrctr_ps.length() - 2) << ")" << endl;
+                msg_java << "    {" << endl;
+                msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
+                msg_java << msg_java_msg_cstrctr_i.str();
+                msg_java << "    }" << endl;
+                msg_java << endl;
+            }
             msg_java << "    public " << className << "(byte[] bytes) throws IOException" << endl;
             msg_java << "    {" << endl;
             msg_java << "        super("<< id <<", \""<< gname <<"\");" << endl;
