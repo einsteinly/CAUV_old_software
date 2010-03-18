@@ -85,7 +85,7 @@ class SmartStreamBase : boost::noncopyable
         void printToStream(std::ostream& os)
         {
             #ifdef DEBUG_MUTEX_OUTPUT
-                boost::lock_guard<boost::recursive_mutex> l(_getMutex(os));
+                boost::lock_guard<boost::recursive_mutex> l(getMutex(os));
             #endif
             boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
             os.imbue(std::locale(os.getloc(), facet));
@@ -180,6 +180,12 @@ class SmartStreamBase : boost::noncopyable
             else
                 mutex_map[&s] = boost::make_shared<boost::recursive_mutex>();
             return *mutex_map[&s];
+        }
+        static boost::recursive_mutex& getMutex(std::ostream& s){
+            if(s == std::cout)
+                return _getMutex(std::cerr);
+            else
+                return _getMutex(s);
         }
 #endif
         
