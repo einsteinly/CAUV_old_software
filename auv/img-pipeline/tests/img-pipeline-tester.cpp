@@ -225,13 +225,25 @@ class ImgPipeTestNode : public CauvNode{
             sp->paramType(pt_int32);
             sp->intValue(cam_forward);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
-            
-            // add Canny node
-            info() << "Adding Canny node:";
+
+            // Add convert node: default conversion is RGB->Grey
+            info() << "Adding Colour Conversion node:";
             ai.input = "image_in";
             no.node = input_node_id;
             no.output = "image_out";
             ai.src = no;
+            arcs_in.push_back(ai); 
+            an = boost::make_shared<AddNodeMessage>(nt_convert_colour, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            int convert_node_id = m_obs->waitOnNodeAdded();
+            
+            // add Canny node
+            info() << "Adding Canny node:";
+            ai.input = "image_in";
+            no.node = convert_node_id;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.clear();
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(nt_canny, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);

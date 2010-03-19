@@ -9,6 +9,7 @@
 #include "netInputNode.h"
 #include "houghLinesPNode.h"
 #include "cannyNode.h"
+#include "convertColourNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, nt_copy);
@@ -20,4 +21,5 @@ DEFINE_NFR(CameraInputNode, nt_camera_input);
 DEFINE_NFR(NetInputNode, nt_net_input);
 DEFINE_NFR(HoughLinesPNode, nt_hough_linesp);
 DEFINE_NFR(CannyNode, nt_canny);
+DEFINE_NFR(ConvertColourNode, nt_convert_colour);
 

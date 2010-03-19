@@ -49,7 +49,8 @@ enum NodeType {
     nt_camera_input = 7,
     nt_net_input = 8,
     nt_hough_linesp = 9,
-    nt_canny = 10
+    nt_canny = 10,
+    nt_convert_colour = 11
 }
 enum NodeParameterType {
     pt_int32 = 0,
