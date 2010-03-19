@@ -222,6 +222,15 @@ class Node{
                     r.insert(j->first);
             return r;
         }
+
+        int numChildren() const{
+            int r = 0;
+            lock_t l(m_child_links_lock);
+            out_link_map_t::const_iterator i;
+            for(i = m_child_links.begin(); i != m_child_links.end(); i++)
+                r += i->second.size();
+            return r;
+        }
         
         void exec(){
             // take copies of image_ptr s from parents before _demandNewParentInput()

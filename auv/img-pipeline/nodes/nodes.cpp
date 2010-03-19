@@ -7,6 +7,7 @@
 #include "localDisplayNode.h"
 #include "cameraInputNode.h"
 #include "netInputNode.h"
+#include "houghLinesPNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, nt_copy);
@@ -16,4 +17,5 @@ DEFINE_NFR(ResizeNode, nt_resize);
 DEFINE_NFR(LocalDisplayNode, nt_local_display);
 DEFINE_NFR(CameraInputNode, nt_camera_input);
 DEFINE_NFR(NetInputNode, nt_net_input);
+DEFINE_NFR(HoughLinesPNode, nt_hough_linesp);
 

@@ -16,6 +16,9 @@ class CopyNode: public Node{
     public:
         CopyNode(Scheduler& s)
             : Node(s){
+            // fast node:
+            m_speed = fast;
+
             // one input:
             registerInputID("image_in");
             

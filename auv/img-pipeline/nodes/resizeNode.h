@@ -15,6 +15,9 @@ class ResizeNode: public Node{
     public:
         ResizeNode(Scheduler& s)
             : Node(s){
+            // fast node:
+            m_speed = fast;
+
             // one input:
             registerInputID("image_in");
             
