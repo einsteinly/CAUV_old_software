@@ -129,11 +129,13 @@ class SmartStreamBase : boost::noncopyable
         static bool mayAddSpaceNext(std::string const& s){
             if(isspace(*s.rbegin()))
                 return false;
-            switch(isspace(*s.rbegin())){
-                case ';':
-                case '(':
-                case '[':
-                case '{':
+            if(s.rfind("\E[") != std::string::npos && 
+               s.rfind("\E[") > s.size() - 8 &&
+               *s.rbegin() == 'm')
+                return false;
+            switch(*s.rbegin()){
+                case '=':
+                case '(': case '[': case '{':
                     return false;
                 default:
                     return true;
@@ -145,11 +147,10 @@ class SmartStreamBase : boost::noncopyable
                 return false;
             if(s.find("\E[") == 0)
                 return false;
-            switch(isspace(*s.begin())){
+            switch(*s.begin()){
+                case ',': case '.':
                 case '=':
-                case ')':
-                case ']':
-                case '}':
+                case ')': case ']': case '}':
                     return false;
                 default:
                     return true;
