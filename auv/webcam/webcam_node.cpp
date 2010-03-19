@@ -21,29 +21,59 @@
 using namespace std;
 
 
-class SpreadCameraObserver : public CameraObserver {
+class SpreadCameraObserver : public CameraObserver, public MessageObserver{
+        typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
+        typedef boost::shared_ptr<ImageMessage> imsg_ptr_t;
     public:
-        SpreadCameraObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
-            : m_mailbox(mailbox)
+
+        SpreadCameraObserver(mb_ptr_t mailbox)
+            : m_mailbox(mailbox), m_cam_id(cam_forward), m_msg()
         {
         }
 
         virtual void onReceiveImage(CameraID cam_id, const cv::Mat& img)
         {
-            Image i(img, Image::src_camera);
-            boost::shared_ptr<ImageMessage> m =
-            boost::make_shared<ImageMessage>(cam_id, i, now());
-            m_mailbox->sendMessage(m, UNRELIABLE_MESS);
+            if(!m_msg)
+            {
+                // only do stuff if last image has sent
+                Image i(img, Image::src_camera);
+                imsg_ptr_t m = boost::make_shared<ImageMessage>(cam_id, i, now());
+                m_msg = m;
+                m_cam_id = cam_id;
+                sendImage();
+            }
+        }
+
+        virtual void onImageMessage(imsg_ptr_t m){
+            if(m->source() == m_cam_id && m->image().source() == Image::src_camera)
+            {
+                m_msg.reset();
+            }
+        }
+
+        void sendImage(){
+            debug() << "sending camera image...";
+            m_mailbox->sendMessage(m_msg, UNRELIABLE_MESS);
+            debug() << "(sent)";
         }
 
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
+        mb_ptr_t m_mailbox;
+        CameraID m_cam_id;
+        imsg_ptr_t m_msg;
 };
 
 WebcamNode::WebcamNode(const CameraID camera_id, const int device_id)
-    : CauvNode("Webcam"), m_camera(new Webcam(camera_id, device_id))
+    : CauvNode("Webcam"), m_camera(new Webcam(camera_id, device_id)),
+      m_cam_observer(boost::make_shared<SpreadCameraObserver>(mailbox()))
 {
-    m_camera->addObserver( boost::shared_ptr<CameraObserver>( new SpreadCameraObserver(mailbox()) ) );
+    m_camera->addObserver(m_cam_observer);
+}
+
+void WebcamNode::onRun()
+{
+    mailbox()->joinGroup("image");
+    mailboxMonitor()->addObserver(m_cam_observer);
 }
 
 static WebcamNode* node;

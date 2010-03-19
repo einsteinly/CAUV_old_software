@@ -16,8 +16,8 @@
 
 
 class FileinputObserver: public MessageObserver{
-    public:
         typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
+    public:
     
         FileinputObserver(Image const& img, mb_ptr_t mailbox)
             : MessageObserver(), m_mailbox(mailbox), m_img(img){
@@ -30,9 +30,9 @@ class FileinputObserver: public MessageObserver{
         }
 
         void sendImage(){
-            info() << "sending image...";
-            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(cam_file, m_img, now()), SAFE_MESS);
-            info() << "(sent)";
+            debug() << "sending image...";
+            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(cam_file, m_img, now()), UNRELIABLE_MESS);
+            debug() << "(sent)";
         }
 
     private:
