@@ -107,6 +107,9 @@ Webcam::Webcam(const CameraID cameraID, const int deviceID) throw (ImageCaptureE
         throw ImageCaptureException();
     }
 
+    m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+
     m_thread = boost::thread(boost::ref(m_thread_callable));
 }
 void Webcam::grabFrameAndBroadcast()

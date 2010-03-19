@@ -8,8 +8,9 @@
 
 #include <boost/thread.hpp>
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
-#include "../common/blocking_queue.h"
+#include <common/blocking_queue.h>
 #include "pipelineTypes.h"
 
 // NB: there must be at least one thread of each priority!
@@ -65,9 +66,9 @@ class Scheduler
             m_threads[priority_fast] = std::list<thread_ptr_t>();
             m_threads[priority_realtime] = std::list<thread_ptr_t>();
 
-            m_queues[priority_slow] = queue_ptr_t(new node_queue_t());
-            m_queues[priority_fast] = queue_ptr_t(new node_queue_t());
-            m_queues[priority_realtime] = queue_ptr_t(new node_queue_t());
+            m_queues[priority_slow] = boost::make_shared<node_queue_t>();
+            m_queues[priority_fast] = boost::make_shared<node_queue_t>();
+            m_queues[priority_realtime] = boost::make_shared<node_queue_t>();
         }
         
         /**
@@ -94,6 +95,7 @@ class Scheduler
          */
         Node* waitNextJob(SchedulerPriority p) throw()
         {
+            boost::this_thread::yield();
             if(m_stop)
                 return NULL; 
             else
@@ -154,7 +156,7 @@ class Scheduler
         thread_ptr_t _spawnThread(SchedulerPriority const& p) throw()
         {
             // new thread takes a copy of the ImgPipelineThread object
-            return thread_ptr_t(new boost::thread(ImgPipelineThread(this, p)));
+            return boost::make_shared<boost::thread>(ImgPipelineThread(this, p));
         }
 
         // TODO: this should probably have a mutex

@@ -13,6 +13,7 @@ $(addprefix img-pipeline/, img-pipeline scheduler imageProcessor nodes/nodes) \
 $(addprefix camera/, camera camera_observer) \
 $(addprefix webcam/, webcam_node) \
 $(addprefix fileinput/, fileinput_node) \
+$(addprefix img-viewer/, img-viewer) \
 )
 
 MSGS = $(addsuffix .msg, \
@@ -25,7 +26,7 @@ $(addprefix common/, cauv_logo_large.txt) \
 # ==========================
 # Edit me to add new modules
 # ==========================
-EXEMODULES = control img-pipeline webcam fileinput
+EXEMODULES = control img-pipeline webcam fileinput img-viewer
 LIBMODULES = common module camera
 EXTLIBS = cmt
 
@@ -41,6 +42,9 @@ webcam_PARAMS = -lcv -lhighgui
 
 fileinput_LIBS = common
 fileinput_PARAMS = -lcxcore -lcv -lhighgui -lcvaux -lml
+
+img-viewer_LIBS = common
+img-viewer_PARAMS = -lcv -lhighgui
 
 # ================
 # Edit directories

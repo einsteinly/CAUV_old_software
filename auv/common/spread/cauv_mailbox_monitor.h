@@ -61,6 +61,11 @@ public:
     void startMonitoring() {
         if (m_thread.get() == 0) {
             m_thread = boost::make_shared<boost::thread>( boost::ref(m_thread_callable) );
+
+            struct sched_param param;
+            param.sched_priority = -10;
+            pthread_setschedparam( m_thread->native_handle(), SCHED_OTHER, &param);
+
         }else{
             error() << __func__ << ": already monitoring";
         }
@@ -130,8 +135,6 @@ private:
                                 << m->getMessageFlavour();
                     }
                     m_observers_lock.unlock();
-                }else{
-                    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
                 }
             }
         }

@@ -234,8 +234,15 @@ class Node{
                     return;
                 }
             }
-            m_parent_links_lock.unlock();
+            // Record that we've used all of our inputs
+            m_new_inputs_lock.lock();
+            BOOST_FOREACH(in_bool_map_t::value_type& v, m_new_inputs)
+                v.second = false;
+            m_new_inputs_lock.unlock();
             
+            m_parent_links_lock.unlock();
+
+
             debug() << "exec: speed" << m_speed
                     << "inputs" << inputs.size()
                     << "outputs" << m_outputs.size()
@@ -256,13 +263,9 @@ class Node{
             m_outputs_lock.unlock();
             
             
-            // Record that we've used all of our inputs
-            m_new_inputs_lock.lock();
-            
-            BOOST_FOREACH(in_bool_map_t::value_type& v, m_new_inputs)
-                v.second = false;
-            m_new_inputs_lock.unlock();
-            
+            m_output_demanded_lock.lock();
+            m_output_demanded = false;
+            m_output_demanded_lock.unlock();
             
             // for each of this node's outputs
             BOOST_FOREACH(out_link_map_t::value_type& v, m_child_links){
@@ -283,8 +286,12 @@ class Node{
                     }
                 }
             }
-            boost::lock_guard<boost::recursive_mutex> l(m_exec_queued_lock);
+            
+            m_exec_queued_lock.lock();
             m_exec_queued = false;
+            m_exec_queued_lock.unlock();
+            
+            _checkAddSched();
         }
         
         /* Keep a record of which inputs are new (have changed since they were
@@ -490,19 +497,28 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> lo(m_new_inputs_lock);
             boost::lock_guard<boost::recursive_mutex> lr(m_exec_queued_lock);
             
-            if(!allowQueueExec())
+            if(!allowQueueExec()) {
+                debug() << "Cannot enqueue node" << this << ", allowQueueExec failed"; 
                 return;
+            }
 
-            if(m_exec_queued)
+            if(m_exec_queued) {
+                debug() << "Cannot enqueue node" << this << ", exec queued already"; 
                 return;
-            
-            if(!isOutputNode() && !m_output_demanded)
+            }
+
+            if(!isOutputNode() && !m_output_demanded) {
+                debug() << "Cannot enqueue node" << this << ", no output demanded"; 
                 return;
+            }
             
             // ALL inputs must be new
-            for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
-                if(!i->second)
+            for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++) {
+                if(!i->second) {
+                    debug() << "Cannot enqueue node" << this << ", input is old"; 
                     return;
+                }
+            }
 
             // if all inputs are new, all inputs are valid
             
@@ -598,8 +614,9 @@ class InputNode: public Node{
          *   take a copy of the image message pointer: store it, and
          *   if m_output_demanded, queue this node for execution
          */
-        void onImageMessage(boost::shared_ptr<ImageMessage> m) throw(){
-                boost::lock_guard<boost::recursive_mutex> l(m_counters_lock);
+        void onImageMessage(boost::shared_ptr<ImageMessage> m) throw() {
+            boost::lock_guard<boost::recursive_mutex> l(m_counters_lock);
+            debug() << "Input node received an image";
             if(checkSource(m->image().source(), m->source())){ 
                 boost::lock_guard<boost::recursive_mutex> l(m_latest_image_msg_lock);
                 if(!m_processed_latest)
@@ -625,17 +642,20 @@ class InputNode: public Node{
     
     protected:
         virtual bool allowQueueExec() throw(){
-            return !!latestImageMsg();
+            boost::lock_guard<boost::recursive_mutex> m(m_latest_image_msg_lock);
+            return !!m_latest_image_msg && !m_processed_latest;
         }
 
         boost::shared_ptr<ImageMessage> latestImageMsg(){
             boost::lock_guard<boost::recursive_mutex> l(m_counters_lock);
+            debug() << "Grabbing image";
             if(dropped_since > 0){
                 warning() << "Dropped" << dropped_since << "frames since last frame processed";
                 dropped += dropped_since;
                 dropped_since = 0;
             }
             processed++;
+            debug() << "Processed" << processed << "images";
             m_processed_latest = true;
             
             boost::lock_guard<boost::recursive_mutex> m(m_latest_image_msg_lock);
