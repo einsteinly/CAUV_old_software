@@ -17,6 +17,7 @@ class FileinputNode : public CauvNode
 
     private:
         std::string m_fname;
+        Image m_img;
 };
 
 #endif//__FILEINPUT_NODE_H__

@@ -15,18 +15,42 @@
 #include <common/debug.h>
 
 
+class FileinputObserver: public MessageObserver{
+    public:
+        typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
+    
+        FileinputObserver(Image const& img, mb_ptr_t mailbox)
+            : MessageObserver(), m_mailbox(mailbox), m_img(img){
+            sendImage();
+        }
+
+        virtual void onImageMessage(boost::shared_ptr<ImageMessage> m){
+            if(m->source() == cam_file)
+                sendImage();
+        }
+
+        void sendImage(){
+            info() << "sending image...";
+            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(cam_file, m_img, now()), SAFE_MESS);
+            info() << "(sent)";
+        }
+
+    private:
+        mb_ptr_t m_mailbox;
+        Image m_img;
+};
+
 FileinputNode::FileinputNode(std::string const& fname)
     : CauvNode("Fileinput"), m_fname(fname)
 {
+    cv::Mat cv_img = cv::imread(m_fname.c_str());
+    m_img = Image(cv_img, Image::src_camera); // pretend to be a camera 
 }
 
 void FileinputNode::onRun()
 {
-    //mailbox()->joinGroup("image"); 
-
-    cv::Mat cv_img = cv::imread(m_fname.c_str());
-    Image img(cv_img, Image::src_camera); // pretend to be a camera
-    mailbox()->sendMessage(boost::make_shared<ImageMessage>(cam_file, img, now()), SAFE_MESS);
+    mailbox()->joinGroup("image"); 
+    mailboxMonitor()->addObserver(boost::make_shared<FileinputObserver>(m_img, mailbox()));
 }
 
 static FileinputNode* node;

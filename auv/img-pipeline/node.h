@@ -497,28 +497,30 @@ class Node{
             boost::lock_guard<boost::recursive_mutex> lo(m_new_inputs_lock);
             boost::lock_guard<boost::recursive_mutex> lr(m_exec_queued_lock);
             
-            if(!allowQueueExec()) {
+            if(!allowQueueExec()){
                 debug() << "Cannot enqueue node" << this << ", allowQueueExec failed"; 
                 return;
             }
 
-            if(m_exec_queued) {
+            if(m_exec_queued){
                 debug() << "Cannot enqueue node" << this << ", exec queued already"; 
                 return;
             }
 
-            if(!isOutputNode() && !m_output_demanded) {
+            if(!isOutputNode() && !m_output_demanded){
                 debug() << "Cannot enqueue node" << this << ", no output demanded"; 
                 return;
             }
             
             // ALL inputs must be new
-            for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++) {
-                if(!i->second) {
+            for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++){
+                if(!i->second){
                     debug() << "Cannot enqueue node" << this << ", input is old"; 
                     return;
                 }
             }
+
+            debug() << "queuing node" << this;
 
             // if all inputs are new, all inputs are valid
             
