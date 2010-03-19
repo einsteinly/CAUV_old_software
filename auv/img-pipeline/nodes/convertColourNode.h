@@ -40,7 +40,7 @@ class ConvertColourNode: public Node{
             out->source(img->source());
             
             try{
-                cv::cvtColor(out->cvMat(), img->cvMat(), code);
+                cv::cvtColor(img->cvMat(), out->cvMat(), code);
                 r["image_out"] = out;
             }catch(cv::Exception& e){
                 error() << "ConvertColourNode:\n\t"
