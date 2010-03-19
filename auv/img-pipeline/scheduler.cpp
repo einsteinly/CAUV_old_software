@@ -3,15 +3,22 @@
 
 #include <common/debug.h>
 
+int pthreadPriority(SchedulerPriority const& s){
+    switch(s){
+        case priority_slow: return -10;
+        case priority_fast: return 0;
+        case priority_realtime: return 0;
+    }
+    return 0;
+}
+
 ImgPipelineThread::ImgPipelineThread(Scheduler* s, SchedulerPriority p)
     : m_sched(s), m_priority(p){
 }
 
 void ImgPipelineThread::operator()(){
-    info() << BashColour::Cyan << "ImgPipelineThread (" << m_priority << ") started"; 
-    // TODO: platform specific stuff to set the priority of this thread
-    // based on m_priority (using boost::this_thread.native_handle())
-    
+    info() << BashColour::Cyan << "ImgPipelineThread (" << m_priority << ") started";
+
     Node* job;
     while(m_sched->alive()){
         if((job = m_sched->waitNextJob(m_priority)))

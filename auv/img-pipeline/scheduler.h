@@ -46,6 +46,8 @@ class ImgPipelineThread
         SchedulerPriority m_priority;
 };
 
+int pthreadPriority(SchedulerPriority const& s);
+
 class Scheduler
 {
     typedef boost::shared_ptr<boost::thread> thread_ptr_t;
@@ -156,7 +158,12 @@ class Scheduler
         thread_ptr_t _spawnThread(SchedulerPriority const& p) throw()
         {
             // new thread takes a copy of the ImgPipelineThread object
-            return boost::make_shared<boost::thread>(ImgPipelineThread(this, p));
+            thread_ptr_t t = boost::make_shared<boost::thread>(ImgPipelineThread(this, p));
+            
+            struct sched_param param;
+            param.sched_priority = pthreadPriority(p);
+            pthread_setschedparam(t->native_handle(), SCHED_OTHER, &param); 
+            return t;
         }
 
         // TODO: this should probably have a mutex
