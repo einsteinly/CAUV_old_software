@@ -108,7 +108,7 @@ Webcam::Webcam(const CameraID cameraID, const int deviceID) throw (ImageCaptureE
     }
 
     m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
 
     m_thread = boost::thread(boost::ref(m_thread_callable));
 }

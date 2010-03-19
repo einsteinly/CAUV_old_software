@@ -9,7 +9,7 @@ $(addprefix common/,   cauv_node cauv_global cauv_utils) \
 $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
 $(addprefix common/spread/,  cauv_mailbox_monitor cauv_spread_mailbox cauv_spread_messages) \
-$(addprefix img-pipeline/, img-pipeline scheduler imageProcessor nodes/nodes nodes/cameraInputNode) \
+$(addprefix img-pipeline/, img-pipeline scheduler imageProcessor nodes/nodes ) \
 $(addprefix camera/, camera camera_observer) \
 $(addprefix webcam/, webcam_node) \
 $(addprefix fileinput/, fileinput_node) \
@@ -34,7 +34,7 @@ COMMON_PARAMS = -lboost_serialization -lspread -lssrcspread -lboost_thread -lcxc
 control_LIBS = cmt common module
 control_PARAMS = -lrt -lftdi
 
-img-pipeline_LIBS = common camera
+img-pipeline_LIBS = common
 img-pipeline_PARAMS = -lcxcore -lcv -lhighgui -lcvaux -lml
 
 webcam_LIBS = common camera

@@ -39,6 +39,10 @@ class Image{
             return m_source;
         }
 
+        void source(Source const& s){
+            m_source = s;
+        }
+
         BOOST_SERIALIZATION_SPLIT_MEMBER()
 
         template<class Archive>
