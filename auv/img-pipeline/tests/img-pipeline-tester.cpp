@@ -225,13 +225,25 @@ class ImgPipeTestNode : public CauvNode{
             sp->paramType(pt_int32);
             sp->intValue(cam_forward);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
-
-            // add Hough lines node
-            info() << "Adding Hough lines node:";
+            
+            // add Canny node
+            info() << "Adding Canny node:";
             ai.input = "image_in";
             no.node = input_node_id;
             no.output = "image_out";
             ai.src = no;
+            arcs_in.push_back(ai); 
+            an = boost::make_shared<AddNodeMessage>(nt_canny, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            int canny_node_id = m_obs->waitOnNodeAdded();
+
+            // add Hough lines node
+            info() << "Adding Hough lines node:";
+            ai.input = "image_in";
+            no.node = canny_node_id;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.clear();
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(nt_hough_linesp, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);

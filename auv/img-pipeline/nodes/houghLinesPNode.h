@@ -45,23 +45,34 @@ class HoughLinesPNode: public Node{
             float theta = param<float>("theta");
             int threshold = param<int>("threshold");
             int min_ll = param<int>("minLineLength");
-            int max_lg = param<int>("maxLineGap"); 
+            int max_lg = param<int>("maxLineGap");
 
-            cv::vector<cv::Vec4i> lines; 
-            cv::HoughLinesP(img->cvMat(), lines, rho, theta, threshold, min_ll, max_lg);
+            cv::vector<cv::Vec4i> lines;
+            try{
+                cv::HoughLinesP(img->cvMat(), lines, rho, theta, threshold, min_ll, max_lg);
+
+                if(numChildren()){
+                    // then produce an output image overlay
+                    boost::shared_ptr<Image> out = boost::make_shared<Image>();
+                    out->source(img->source());
+                    
+                    // make a colour copy to draw pretty lines on
+                    cvtColor(img->cvMat(), out->cvMat(), CV_GRAY2BGR);
+
+                    for(unsigned i = 0; i < lines.size(); i++)
+                        cv::line(out->cvMat(),
+                                 cv::Point(lines[i][0], lines[i][1]),
+                                 cv::Point(lines[i][2], lines[i][3]),
+                                 cv::Scalar(0, 0, 255), 3, 8);
+                    r["image_out"] = out;
+                }
+            }catch(cv::Exception& e){
+                error() << "HoughLinesPNode:\n\t"
+                        << e.err << "\n\t"
+                        << "in" << e.func << "," << e.file << ":" << e.line;
+            }
      
             // TODO: send message about where lines are / do further processing
-
-            if(numChildren()){
-                // then produce an output image overlay (use the input image,
-                // don't copy it)
-                for(unsigned i = 0; i < lines.size(); i++)
-                    cv::line(img->cvMat(),
-                             cv::Point(lines[i][0], lines[i][1]),
-                             cv::Point(lines[i][2], lines[i][3]),
-                             cv::Scalar(0, 0, 255), 3, 8);
-                r["image_out"] = img;
-            }
             
             return r;
         }

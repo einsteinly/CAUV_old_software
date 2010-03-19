@@ -259,14 +259,18 @@ class Node{
                     << "outputs" << m_outputs.size()
                     << "parent links" << m_parent_links.size()
                     << "child links" << m_child_links.size();
-            if(this->m_speed < medium){
-                // if this is a fast node: request new image from parents before executing
-                _demandNewParentInput();
-                outputs = this->doWork(inputs);
-            }else{
-                // if this is a slow node, request new images from parents after executing
-                outputs = this->doWork(inputs);
-                _demandNewParentInput();
+            try{
+                if(this->m_speed < medium){
+                    // if this is a fast node: request new image from parents before executing
+                    _demandNewParentInput();
+                    outputs = this->doWork(inputs);
+                }else{
+                    // if this is a slow node, request new images from parents after executing
+                    outputs = this->doWork(inputs);
+                    _demandNewParentInput();
+                }
+            }catch(std::exception& e){
+                error() << "Error executing node: " << this << "\n\t" << e.what();
             }
             
             m_outputs_lock.lock();
