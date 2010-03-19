@@ -84,7 +84,7 @@ MSGGEN = $(BINDIR)/msg-generator
 SHELL=/bin/bash
 
 ifdef RELEASE
-CXXFLAGS=-Wall -g -O3
+CXXFLAGS=-Wall -g -O4
 else
 CXXFLAGS=-Wall -g -DDEBUG=1
 endif

@@ -16,7 +16,7 @@
 #include "camera_observer.h"
 
 //const int cam_width = 640, cam_height = 480; //max dimensions of logitech cameras
-const int DEFAULT_FRAME_DELAY = 200;
+const int DEFAULT_FRAME_DELAY = 0;
 //const cv::Size CAUV_CAM_SIZE(cam_width, cam_height);
 
 class CameraException : public std::exception
