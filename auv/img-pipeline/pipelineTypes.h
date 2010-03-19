@@ -10,6 +10,7 @@
 
 class Node;
 class InputNode;
+class AsynchronousNode;
 class Scheduler;
 
 class img_pipeline_error: public std::runtime_error{

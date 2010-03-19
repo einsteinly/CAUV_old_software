@@ -72,8 +72,8 @@ class ImgPipeTestNode : public CauvNode{
             sent = mailbox()->sendMessage(cp, SAFE_MESS);
 
             // Add input node
-            an = boost::make_shared<AddNodeMessage>(nt_camera_input, arcs_in, arcs_out); 
-            info() << "adding camera (fileinput) node";
+            an = boost::make_shared<AddNodeMessage>(nt_net_input, arcs_in, arcs_out); 
+            info() << "adding net input node";
             sent = mailbox()->sendMessage(an, SAFE_MESS); 
             int input_node_id = m_obs->waitOnNodeAdded();
 

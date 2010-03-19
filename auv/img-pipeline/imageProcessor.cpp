@@ -1,5 +1,6 @@
 #include "imageProcessor.h"
 #include "nodeFactory.h"
+#include "nodes/inputNode.h"
 
 #include <boost/make_shared.hpp>
 

@@ -46,7 +46,8 @@ enum NodeType {
     nt_file_output = 4,
     nt_local_display = 5,
     nt_max_num_node_types = 6,
-    nt_camera_input = 7
+    nt_camera_input = 7,
+    nt_net_input = 8
 }
 enum NodeParameterType {
     pt_int32 = 0,

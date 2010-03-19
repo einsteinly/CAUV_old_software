@@ -1,0 +1,25 @@
+#ifndef __ASYNCHRONOUS_NODE_H__
+#define __ASYNCHRONOUS_NODE_H__
+
+#include "inputNode.h"
+
+// for input nodes that aren't driven by the network
+class AsynchronousNode: public InputNode{
+    public:
+        AsynchronousNode(Scheduler& s)
+            : InputNode(s){
+        }
+
+        virtual bool checkSource(Image::Source const&, CameraID const&) throw(){
+            return false;
+        }
+
+    protected:
+        virtual bool allowQueueExec() throw(){
+            return true;
+        }
+};
+
+
+#endif // ndef __ASYNCHRONOUS_NODE_H__
+
