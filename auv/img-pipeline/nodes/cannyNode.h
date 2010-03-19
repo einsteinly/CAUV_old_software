@@ -27,8 +27,8 @@ class CannyNode: public Node{
             // parameters:
             registerParamID<float>("threshold 1", 50);
             registerParamID<float>("threshold 2", 80);
-            registerParamID<int>("apertureSize", 3);
-            registerParamID<int>("L2gradient", 0);
+            registerParamID<int>("aperture size", 3);
+            registerParamID<int>("L2 gradient", 0);
         }
 
     protected:
@@ -39,18 +39,25 @@ class CannyNode: public Node{
             
             float t1 = param<float>("threshold 1");
             float t2 = param<float>("threshold 2");
-            float ap = param<int>("apertureSize");
-            float g = param<int>("L2gradient");
+            float ap = param<int>("aperture size");
+            float g = param<int>("L2 gradient");
 
             boost::shared_ptr<Image> dst = boost::make_shared<Image>();
             dst->source(img->source());
             try{
-                cv::Canny(dst->cvMat(), dst->cvMat(), t1, t2, ap, g);
+                cv::Canny(img->cvMat(), dst->cvMat(), t1, t2, ap, g);
                 r["image_out"] = dst;
             }catch(cv::Exception& e){
                 error() << "CannyNode:\n\t"
                         << e.err << "\n\t"
-                        << "in" << e.func << "," << e.file << ":" << e.line;
+                        << "in" << e.func << "," << e.file << ":" << e.line << "\n\t"
+                        << "The parameters to this node are:\n\t"
+                        << "threshold 1 = " << param<float>("threshold 1") << "\n\t"
+                        << "threshold 2 = " << param<float>("threshold 2") << "\n\t"
+                        << "aperture size = " << param<int>("aperture size") << "\n\t"
+                        << "L2 gradient = " << param<int>("L2 gradient") << "\n\t"
+                        << "The inputs to this node are:\n\t"
+                        << "*image_in = " << *img;
             }
             
             return r;

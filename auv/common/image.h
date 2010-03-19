@@ -114,10 +114,16 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
+    std::basic_ostream<charT, traits>& os, cv::Mat const& m){
+    os << "{Mat s=" << m.size().width << "x" << m.size().height
+       << " flags=" << std::hex << m.flags << "}";
+    return os;
+}
+
+template<typename charT, typename traits>
+std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, Image const& img){
-    os << "{Image src=" << img.source() << " dim="
-       << img.cvMat().size().width << "x"
-       << img.cvMat().size().height << "}";
+    os << "{Image src=" << img.source() << " mat=" << img.cvMat() << "}";
     return os;
 }
 

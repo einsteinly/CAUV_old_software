@@ -15,7 +15,8 @@
 enum test_e{
     file_io_test = 1,
     fileinput_test = 2,
-    camera_test = 4
+    camera_test = 4,
+    hough_test = 8
 };
 
 class NodeAddedObserver: public MessageObserver{
@@ -273,6 +274,98 @@ class ImgPipeTestNode : public CauvNode{
             sent = mailbox()->sendMessage(an, SAFE_MESS);
             m_obs->waitOnNodeAdded();
         }
+
+        void setupHoughTest(){
+            info() << BashColour::Green << "--- Setting up pipeline for Hough test ---";
+            std::vector<NodeInputArc> arcs_in;
+            std::vector<NodeOutputArc> arcs_out;
+            NodeInputArc ai;
+            NodeOutputArc ao;
+            NodeInput ni;
+            NodeOutput no;
+            int sent = 0;
+            boost::shared_ptr<AddNodeMessage> an;
+            boost::shared_ptr<SetNodeParameterMessage> sp;
+
+            clearPipeline();
+
+            // Add input node
+            info() << "Add file input node:";
+            an = boost::make_shared<AddNodeMessage>(nt_file_input, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            int file_input_node_id = m_obs->waitOnNodeAdded();
+            
+            // Set input image parameter
+            info() << "Setting input image filename";
+            // initialise everything to supress valgrind's complaints 
+            sp = boost::make_shared<SetNodeParameterMessage>(0, "", pt_int32, 0, 0, ""); 
+            sp->nodeId(file_input_node_id);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("img-pipeline/tests/test.jpg");
+            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+
+            // Add convert node: default conversion is RGB->Grey
+            info() << "Adding Colour Conversion node:";
+            ai.input = "image_in";
+            no.node = file_input_node_id;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.push_back(ai); 
+            an = boost::make_shared<AddNodeMessage>(nt_convert_colour, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            int convert_node_id = m_obs->waitOnNodeAdded();
+            
+            info() << "Setting number of channels for conversion output";
+            sp->nodeId(convert_node_id);
+            sp->paramId("channels");
+            sp->paramType(pt_int32);
+            sp->intValue(1);
+            sent = mailbox()->sendMessage(sp, SAFE_MESS); 
+            
+            // add Canny node
+            info() << "Adding Canny node:";
+            ai.input = "image_in";
+            no.node = convert_node_id;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.clear();
+            arcs_in.push_back(ai); 
+            an = boost::make_shared<AddNodeMessage>(nt_canny, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            int canny_node_id = m_obs->waitOnNodeAdded();
+
+            // add Hough lines node
+            info() << "Adding Hough lines node:";
+            ai.input = "image_in";
+            no.node = canny_node_id;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.clear();
+            arcs_in.push_back(ai); 
+            an = boost::make_shared<AddNodeMessage>(nt_hough_linesp, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            int hough_node_id = m_obs->waitOnNodeAdded();
+
+            // Add output node
+            info() << "Add file output node:"; 
+            ai.input = "image_in";
+            no.node = hough_node_id;
+            no.output = "image_out";
+            ai.src = no;
+            arcs_in.clear();
+            arcs_in.push_back(ai);
+            an = boost::make_shared<AddNodeMessage>(nt_file_output, arcs_in, arcs_out);
+            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            int file_output_node_id = m_obs->waitOnNodeAdded();
+            
+            info() << "Setting output image filename:";
+            sp->nodeId(file_output_node_id);
+            sp->paramId("filename");
+            sp->paramType(pt_string);
+            sp->stringValue("hough_out.jpg");
+            sent = mailbox()->sendMessage(sp, SAFE_MESS); 
+        }
         
         virtual void onRun(){
             info() << "--- ImagePipelineTesterNode::onRun ---"; 
@@ -304,6 +397,11 @@ class ImgPipeTestNode : public CauvNode{
                 setupCameraToDisplay();
                 boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
             }
+            
+            if(m_tests_to_run & hough_test){
+                setupHoughTest();
+                boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+            }
         }
     private:
         boost::shared_ptr<NodeAddedObserver> m_obs;
@@ -332,7 +430,7 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ImgPipeTestNode(file_io_test | fileinput_test);
+    node = new ImgPipeTestNode(hough_test);
     node->run();
     cleanup();
     return 0;

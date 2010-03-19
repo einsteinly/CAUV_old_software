@@ -26,6 +26,7 @@ class ConvertColourNode: public Node{
             
             // parameter:
             registerParamID<int>("code", CV_RGB2GRAY);
+            registerParamID<int>("channels", 0);
         }
 
     protected:
@@ -35,17 +36,23 @@ class ConvertColourNode: public Node{
             image_ptr_t img = inputs["image_in"];
             
             int code = param<int>("code");
+            int channels = param<int>("channels");
             
             boost::shared_ptr<Image> out = boost::make_shared<Image>();
             out->source(img->source());
             
             try{
-                cv::cvtColor(img->cvMat(), out->cvMat(), code);
+                cv::cvtColor(img->cvMat(), out->cvMat(), code, channels);
                 r["image_out"] = out;
             }catch(cv::Exception& e){
                 error() << "ConvertColourNode:\n\t"
                         << e.err << "\n\t"
-                        << "in" << e.func << "," << e.file << ":" << e.line;
+                        << "in" << e.func << "," << e.file << ":" << e.line << "\n\t"
+                        << "The parameters to this node are:\n\t"
+                        << "code = " << param<int>("code") << "\n\t"
+                        << "channels = " << param<int>("channels") << "\n\t"
+                        << "The inputs to this node are:\n\t"
+                        << "*image_in = " << *img;
             }
             
             return r;
