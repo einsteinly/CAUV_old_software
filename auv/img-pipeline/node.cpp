@@ -292,6 +292,7 @@ void Node::exec(){
     m_exec_queued = false;
     m_exec_queued_lock.unlock();
     
+
     checkAddSched();
 }
 
@@ -315,16 +316,19 @@ void Node::newInput(input_id const& a){
         i->second = true;
         m_valid_inputs[a] = true;
     }
+    l.unlock();
     checkAddSched();
 }
 
 /* mark all inputs as new
  */
 void Node::newInput(){
+    lock_t m(m_new_inputs_lock); 
     debug() << BashColour::Green << this << "notified all inputs new";        
     std::map<input_id, bool>::iterator i;
     for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
         i->second = true;
+    m.unlock();
     checkAddSched();
 }
 
@@ -341,6 +345,9 @@ void Node::demandNewOutput(/*output_id ?*/) throw(){
             if(!v.second)
                 m_parent_links[v.first].first->demandNewOutput();
         }
+        l.unlock();
+        m.unlock();
+        n.unlock();
         checkAddSched();
     }
 }

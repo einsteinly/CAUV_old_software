@@ -47,7 +47,7 @@ class Node{
         // Private typedefs: only used internally 
         typedef std::map<input_id, bool> in_bool_map_t;
 
-        typedef boost::lock_guard<boost::recursive_mutex> lock_t;
+        typedef boost::unique_lock<boost::recursive_mutex> lock_t;
 
     public:
         Node(Scheduler& sched);
