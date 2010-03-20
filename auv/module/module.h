@@ -173,7 +173,7 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
         {
             std::stringstream ss;
             for (int i = 0; i < n; i++)
-                ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)s[i] << " ";
+                ss << std::hex << std::setw(2) << std::setfill('0') << (int)(u_char)s[i] << " ";
             debug() << "Sending" << ss.str();
 
             return m_ftdic->write(reinterpret_cast<const u_char*>(s), n);
