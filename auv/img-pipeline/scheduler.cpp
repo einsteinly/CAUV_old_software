@@ -17,7 +17,7 @@ ImgPipelineThread::ImgPipelineThread(Scheduler* s, SchedulerPriority p)
 }
 
 void ImgPipelineThread::operator()(){
-    info() << BashColour::Cyan << "ImgPipelineThread (" << m_priority << ") started";
+    info() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") started";
 
     Node* job;
     while(m_sched->alive()){
@@ -26,6 +26,6 @@ void ImgPipelineThread::operator()(){
         else
             break;
     }
-    info() << BashColour::Cyan << "ImgPipelineThread (" << m_priority << ") stopping";
+    warning() <<  "ImgPipelineThread (" << m_priority << ") stopping";
 }
 

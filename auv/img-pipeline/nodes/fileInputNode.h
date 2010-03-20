@@ -8,13 +8,15 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "../node.h"
+#include "asynchronousNode.h"
 
 
-class FileInputNode: public Node{
+class FileInputNode: public AsynchronousNode{
+        typedef boost::lock_guard<boost::recursive_mutex> lock_t;
+
     public:
         FileInputNode(Scheduler& s)
-            : Node(s){
+            : AsynchronousNode(s), m_file_is_new(true){
             // no inputs
             // registerInputID()
             
@@ -23,10 +25,19 @@ class FileInputNode: public Node{
             
             // one parameter: the filename
             registerParamID<std::string>("filename", "default.jpg");
+        } 
+
+        template<typename T>
+        void paramChanged(param_id const& p, T const& new_value){
+            if(p == "filename"){
+                lock_t l(m_file_is_new_lock);
+                m_file_is_new = true;
+            }
         }
 
     protected:
         out_image_map_t doWork(in_image_map_t&){
+            lock_t l(m_file_is_new_lock);
             out_image_map_t r;
             
             debug() << "fileInputNode::doWork";
@@ -36,13 +47,23 @@ class FileInputNode: public Node{
 
             if(img.size().width > 0 && img.size().height > 0){
                 r["image_out"] = image_ptr_t(new Image(img, Image::src_file)); 
+                m_file_is_new = false;
                 debug() << "fileInputNode::doWork result:" << fname << "->" << *r["image_out"];
             }else{
                 debug() << "fileInputNode::doWork result:" << fname << "->" << "(no image)";
             }
 
             return r;
+        } 
+        
+        virtual bool allowQueueExec() throw(){
+            lock_t l(m_file_is_new_lock); 
+            return m_file_is_new;
         }
+
+    private:
+        boost::recursive_mutex m_file_is_new_lock;
+        bool m_file_is_new;
     
     // Register this node type
     DECLARE_NFR;

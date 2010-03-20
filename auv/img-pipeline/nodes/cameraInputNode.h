@@ -11,8 +11,6 @@
 #include "asynchronousNode.h"
 
 class CameraInputNode: public AsynchronousNode{
-        friend class CameraInputObserver;
-
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
     public:
