@@ -9,7 +9,7 @@ $(addprefix common/,   cauv_node cauv_global cauv_utils) \
 $(addprefix control/,  control xsens_imu) \
 $(addprefix module/,  module) \
 $(addprefix common/spread/,  cauv_mailbox_monitor cauv_spread_mailbox cauv_spread_messages) \
-$(addprefix img-pipeline/, img-pipeline scheduler imageProcessor nodes/nodes ) \
+$(addprefix img-pipeline/, img-pipeline scheduler node imageProcessor nodes/nodes ) \
 $(addprefix camera/, camera camera_observer) \
 $(addprefix webcam/, webcam_node) \
 $(addprefix fileinput/, fileinput_node) \
