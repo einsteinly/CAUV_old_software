@@ -18,6 +18,7 @@ void sendMotorMessageTest(boost::shared_ptr<MCBModule> mcb)
     {
         MotorMessage m((MotorID)motor, 0);
         mcb->send(m);
+        debug() << "Sent message" << m;
 
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
