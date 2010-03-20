@@ -101,10 +101,8 @@ class ImgPipeTestNode : public CauvNode{
 
             info() << "Setting source camera:";
             sp->nodeId(input_node_id);
-            sp->paramId("camera id");
-            sp->stringValue("");
-            sp->paramType(pt_int32);
-            sp->intValue(cam_forward);
+            sp->paramId("device id");
+            sp->intValue(0);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
         }
             
