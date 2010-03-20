@@ -98,8 +98,13 @@ ARFLAGS=rcs
 SHOWOK = 2>$@.err && if test -s $@.err ; then echo -e "  \E[1;33m[WARNING]\E[m" && cat $@.err ; else echo -e "  \E[1;32m[OK]\E[m" ; fi || echo -e "  \E[1;31m[ERROR]\E[m" && cat $@.err; rm -f $@.err
 
 .PHONY: modules makedirs
-modules: makedirs msggen $(EXES)
+modules: makedirs $(EXES)
 makedirs: $(DIRS)
+
+.PHONY: $(EXEMODULES)
+EXEMODULEEXE = $(@:%=$(BINDIR)/%)
+$(EXEMODULES): $$(EXEMODULEEXE)
+	@echo "Making $(EXEMODULEEXE)"
 
 FILES = $(OBJS) $(MSGOBJS) $(EMBED)
 OBJMOD = $(notdir $(subst .o,,$@))
@@ -140,11 +145,12 @@ $(MSGJAVASRCS): $(MSGGEN) $$(MSGJAVASRCMSG)
 	@echo -n "  [MSG-GEN]  $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT)"
 	@$(MSGGEN) $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT) -l java   $(SHOWOK)
 
-.PHONY: msggen
-msggen: $((MSGGEN)
+.PHONY: makemsggenerator
+makemsggenerator:
 	@echo "  [MAKE] -C ../messages"
 	@echo -en "\E[0;36m"
 	@$(MAKE) -C ../messages   $(SHOWOK)
+../messages/bin/msg-generator: makemsggenerator
 
 $(MSGGEN): ../messages/bin/msg-generator
 	@mkdir -p $(dir $@)

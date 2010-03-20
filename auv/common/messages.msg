@@ -36,9 +36,9 @@ struct TimeStamp
     msecs : int32;
 }
 
-enum MotorID { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }
-enum CameraID { cam_forward = 1, cam_down = 2, cam_sonar = 4, cam_file = 5 }
-enum NodeType {
+enum MotorID : int8 { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }
+enum CameraID: int8 { cam_forward = 1, cam_down = 2, cam_sonar = 4, cam_file = 5 }
+enum NodeType : int8 {
     nt_invalid = 0,
     nt_copy = 1,
     nt_resize = 2,
@@ -52,7 +52,7 @@ enum NodeType {
     nt_canny = 10,
     nt_convert_colour = 11
 }
-enum NodeParameterType {
+enum NodeParameterType : int8 {
     pt_int32 = 0,
     pt_float = 1,
     pt_string = 2,
