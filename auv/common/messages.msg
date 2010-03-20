@@ -48,7 +48,7 @@ enum NodeType {
     nt_max_num_node_types = 6,
     nt_camera_input = 7,
     nt_net_input = 8,
-    nt_hough_linesp = 9,
+    nt_hough_lines = 9,
     nt_canny = 10,
     nt_convert_colour = 11
 }

@@ -1,9 +1,10 @@
-#ifndef __HOUGH_LINES_P_NODE_H__
-#define __HOUGH_LINES_P_NODE_H__
+#ifndef __HOUGH_LINESNODE_H__
+#define __HOUGH_LINESNODE_H__
 
 #include <map>
 #include <vector>
 #include <string>
+#include <cmath>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -11,9 +12,9 @@
 #include "../node.h"
 
 
-class HoughLinesPNode: public Node{
+class HoughLinesNode: public Node{
     public:
-        HoughLinesPNode(Scheduler& s)
+        HoughLinesNode(Scheduler& s)
             : Node(s){
             // slow node:
             m_speed = slow;
@@ -25,11 +26,16 @@ class HoughLinesPNode: public Node{
             registerOutputID("image_out");
             
             // parameters:
+            registerParamID<bool>("probabalistic", false);
             registerParamID<int>("rho", 1);
             registerParamID<float>("theta", CV_PI/180);
             registerParamID<int>("threshold", 80);
+            // probabalistic only:
             registerParamID<int>("minLineLength", 30);
             registerParamID<int>("maxLineGap", 10);
+            // non-probabalistic only:
+            registerParamID<int>("srn", 0);
+            registerParamID<int>("stn", 0);
         }
         
         // this node should be run even if nothing is connected to its output
@@ -41,16 +47,32 @@ class HoughLinesPNode: public Node{
 
             image_ptr_t img = inputs["image_in"];
             
+            bool probabalistic = param<bool>("probabalistic");
             int rho = param<int>("rho");
             float theta = param<float>("theta");
             int threshold = param<int>("threshold");
             int min_ll = param<int>("minLineLength");
             int max_lg = param<int>("maxLineGap");
+            int srn = param<int>("srn");
+            int stn = param<int>("stn");
 
             cv::vector<cv::Vec4i> lines;
             try{
-                cv::HoughLinesP(img->cvMat(), lines, rho, theta, threshold, min_ll, max_lg);
+                if(probabalistic){
+                    cv::HoughLinesP(img->cvMat(), lines, rho, theta, threshold, min_ll, max_lg);
 
+                }else{
+                    cv::vector<cv::Vec2f> r_theta_lines;
+                    cv::HoughLines(img->cvMat(), r_theta_lines, rho, theta, threshold, srn, stn);
+                    
+                    if(numChildren()){
+                        // convert lines to easy-to-draw form
+                        for(unsigned i = 0; i < r_theta_lines.size(); i++)
+                            lines.push_back(rThetaLineToSegment(r_theta_lines[i],
+                                                                img->cvMat().size()));
+                    }
+                }
+                
                 if(numChildren()){
                     // then produce an output image overlay
                     boost::shared_ptr<Image> out = boost::make_shared<Image>();
@@ -67,7 +89,7 @@ class HoughLinesPNode: public Node{
                     r["image_out"] = out;
                 }
             }catch(cv::Exception& e){
-                error() << "HoughLinesPNode:\n\t"
+                error() << "HoughLinesNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
@@ -76,10 +98,38 @@ class HoughLinesPNode: public Node{
             
             return r;
         }
-    
+
+    private:
+        static cv::Vec4i rThetaLineToSegment(cv::Vec2f const& l, cv::Size const& s){
+            cv::Vec4i r;
+            float rho = l[0];
+            float theta = l[1];
+            double a = std::cos(theta);
+            double b = std::sin(theta);
+            if(std::fabs(a) < 0.001)
+            {
+                r[0] = r[2] = cvRound(rho);
+                r[1] = 0;
+                r[3] = s.height;
+            }else if(std::fabs(b) < 0.001)
+            {
+                r[1] = r[3] = cvRound(rho);
+                r[0] = 0;
+                r[3] = s.width;
+            }
+            else
+            {
+                r[0] = 0;
+                r[1] = cvRound(rho/b);
+                r[2] = cvRound(rho/a);
+                r[3] = 0;
+            }
+            return r;
+        }
+
     // Register this node type
     DECLARE_NFR;
 };
 
-#endif // ndef __HOUGH_LINES_P_NODE_H__
+#endif // ndef __HOUGH_LINESNODE_H__
 

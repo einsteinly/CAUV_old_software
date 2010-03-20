@@ -7,7 +7,7 @@
 #include "localDisplayNode.h"
 #include "cameraInputNode.h"
 #include "netInputNode.h"
-#include "houghLinesPNode.h"
+#include "houghLinesNode.h"
 #include "cannyNode.h"
 #include "convertColourNode.h"
 
@@ -19,7 +19,7 @@ DEFINE_NFR(ResizeNode, nt_resize);
 DEFINE_NFR(LocalDisplayNode, nt_local_display);
 DEFINE_NFR(CameraInputNode, nt_camera_input);
 DEFINE_NFR(NetInputNode, nt_net_input);
-DEFINE_NFR(HoughLinesPNode, nt_hough_linesp);
+DEFINE_NFR(HoughLinesNode, nt_hough_lines);
 DEFINE_NFR(CannyNode, nt_canny);
 DEFINE_NFR(ConvertColourNode, nt_convert_colour);
 
