@@ -390,7 +390,7 @@ int createCPPFile(string outputpath)
             std::string className = str(format("%1%Message") % m->getName());
 
             std::stringstream msg_hh_msg_funcs, msg_hh_msg_fields, msg_cpp_msg_funcs, msg_cpp_msg_serial, msg_cpp_msg_deserial;
-            std::stringstream msg_cstrctr_p, msg_cpp_msg_cstrctr_i;
+            std::stringstream msg_cstrctr_p, msg_cpp_msg_cstrctr_i, msg_cpp_msg_cstrctr_d;
             
             foreach(Declaration* d, m->getDeclarations())
             {
@@ -421,12 +421,15 @@ int createCPPFile(string outputpath)
                 
                 msg_cstrctr_p << asCPPType(dtype) << " " << dname << ", ";
                 msg_cpp_msg_cstrctr_i << "    m_" << dname << "(" << dname << ")," << endl;
+                msg_cpp_msg_cstrctr_d << "    m_" << dname << "()," << endl;
             }
 
             string msg_cstrctr_ps = msg_cstrctr_p.str();
             msg_cstrctr_ps = msg_cstrctr_ps.substr(0, msg_cstrctr_ps.length() - 2);
             string msg_cpp_msg_cstrctr_is = msg_cpp_msg_cstrctr_i.str();
             msg_cpp_msg_cstrctr_is = msg_cpp_msg_cstrctr_is.substr(0, msg_cpp_msg_cstrctr_is.length() - 2);
+            string msg_cpp_msg_cstrctr_ds = msg_cpp_msg_cstrctr_d.str();
+            msg_cpp_msg_cstrctr_ds = msg_cpp_msg_cstrctr_ds.substr(0, msg_cpp_msg_cstrctr_ds.length() - 2);
 
             msg_hh << "class " << className << " : public Message" << endl;
             msg_hh << "{" << endl;
@@ -460,16 +463,25 @@ int createCPPFile(string outputpath)
             msg_hh << "}" << endl;
             msg_hh << endl;
 
-            msg_cpp << format("%1%::%1%() : Message(%2%, \"%3%\")") % className % id % gname << endl;
-            msg_cpp << "{" << endl;
-            msg_cpp << "}" << endl;
-            
 
             if (m->getDeclarations().size() > 0)
             {
+                msg_cpp << format("%1%::%1%() : ") % className << endl;
+                msg_cpp << "    " << format("Message(%1%, \"%2%\"),") % id % gname << endl;
+                msg_cpp << msg_cpp_msg_cstrctr_ds << endl;
+                msg_cpp << "{" << endl;
+                msg_cpp << "}" << endl;
                 msg_cpp << format("%1%::%1%(%2%) : ") % className % msg_cstrctr_ps << endl;
                 msg_cpp << "    " << format("Message(%1%, \"%2%\"),") % id % gname << endl;
                 msg_cpp << msg_cpp_msg_cstrctr_is << endl;
+                msg_cpp << "{" << endl;
+                msg_cpp << "}" << endl;
+            }
+            else
+            {
+                msg_cpp << format("%1%::%1%() : ") % className << endl;
+                msg_cpp << "    " << format("Message(%1%, \"%2%\")") % id % gname << endl;
+                msg_cpp << msg_cpp_msg_cstrctr_ds << endl;
                 msg_cpp << "{" << endl;
                 msg_cpp << "}" << endl;
             }
@@ -479,7 +491,7 @@ int createCPPFile(string outputpath)
             msg_cpp << format("boost::shared_ptr<%1%> %1%::fromBytes(const byte_vec_t& bytes)") % className << endl;
             msg_cpp << "{" << endl;
             msg_cpp << "    " << format("boost::shared_ptr<%1%> ret = boost::make_shared<%1%>();") % className << endl;
-            msg_cpp << "    byte_istream_t iss(bytes);" << endl;
+            msg_cpp << "    byte_istream_t iss(bytes, std::ios_base::out|std::ios_base::in|std::ios_base::binary);" << endl;
             msg_cpp << "    boost::archive::binary_iarchive ar(iss, boost::archive::no_header);" << endl;
             msg_cpp << "    uint32_t buf_id;" << endl;
             msg_cpp << "    ar & buf_id;" << endl;
@@ -494,7 +506,7 @@ int createCPPFile(string outputpath)
             msg_cpp << endl;
             msg_cpp << "const byte_vec_t " << className << "::toBytes() const" << endl;
             msg_cpp << "{" << endl;
-            msg_cpp << "    byte_ostream_t oss;" << endl;
+            msg_cpp << "    byte_ostream_t oss(std::ios_base::out|std::ios_base::in|std::ios_base::binary);" << endl;
             msg_cpp << "    boost::archive::binary_oarchive ar(oss, boost::archive::no_header);" << endl;
             msg_cpp << "    ar & m_id;" << endl;
             msg_cpp << msg_cpp_msg_serial.str();
@@ -525,10 +537,25 @@ int createCPPFile(string outputpath)
     msg_hh << endl;
     foreach(Enum* e, enums)
     {
+        string type = asCPPType(e->getType());
         msg_hh << "template<class Archive>" << endl;
-        msg_hh << "void serialize(Archive & ar, " << e->getName() << " val, const unsigned int version)" << endl;
+        msg_hh << "void save(Archive & ar, const " << e->getName() << "& val, const unsigned int version)" << endl;
         msg_hh << "{" << endl;
-        msg_hh << "    ar & (int32_t)val;" << endl;
+        msg_hh << "    " << format("%1% typedVal = static_cast<const %1%>(val);") % type << endl;
+        msg_hh << "    debug() << \"Adding enum with value\" << typedVal << \"to archive\";" << endl;
+        msg_hh << "    ar << typedVal;" << endl;
+        msg_hh << "}" << endl;
+        msg_hh << "template<class Archive>" << endl;
+        msg_hh << "void load(Archive & ar, " << e->getName() << "& val, const unsigned int version)" << endl;
+        msg_hh << "{" << endl;
+        msg_hh << "    " << format("%1% typedVal;") % type << endl;
+        msg_hh << "    ar >> typedVal;" << endl;
+        msg_hh << "    " << format("val = static_cast<%1%>(typedVal);") % e->getName() << endl;
+        msg_hh << "}" << endl;
+        msg_hh << "template<class Archive>" << endl;
+        msg_hh << "void serialize(Archive & ar, const " << e->getName() << "& val, const unsigned int version)" << endl;
+        msg_hh << "{" << endl;
+        msg_hh << "    split_free(ar, val, version);" << endl;
         msg_hh << "}" << endl;
         msg_hh << endl;
     }
@@ -892,7 +919,7 @@ int createJavaFile(string outputpath)
         msg_java << endl;
         msg_java << "    public static " << e->getName() << " readFrom(DataInputStream s) throws IOException" << endl;
         msg_java << "    {" << endl;
-        msg_java << "        int val = s.readInt();" << endl;
+        msg_java << "        int val = s.readByte();" << endl;
         msg_java << "        switch (val)" << endl;
         msg_java << "        {" << endl;
         foreach(EnumVal* v, e->getVals())
@@ -908,7 +935,7 @@ int createJavaFile(string outputpath)
         msg_java << "        {" << endl;
         foreach(EnumVal* v, e->getVals())
         {
-            msg_java << "            case " << v->getName() << ": s.writeInt(" << v->getVal() << "); break;" << endl;
+            msg_java << "            case " << v->getName() << ": s.writeByte(" << v->getVal() << "); break;" << endl;
         }
         msg_java << "        }" << endl;
         msg_java << "    }" << endl;

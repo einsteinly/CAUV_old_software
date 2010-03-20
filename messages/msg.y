@@ -125,9 +125,9 @@ strct_contents: LBRACE declaration_list RBRACE
 	}
 	;
 
-enm: ENUM STR enm_contents
+enm: ENUM STR COLON type enm_contents
 	{	
-		$$ = new Enum($2, $3);
+		$$ = new Enum($2, $4, $5);
         valid_types.insert($2);
 		if(DEBUG)
         {

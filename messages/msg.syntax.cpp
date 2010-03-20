@@ -202,6 +202,11 @@ char* Enum::getName() const
     return m_name;
 }
 
+Type* Enum::getType() const
+{
+    return m_type;
+}
+
 string Enum::to_string() const
 {
     stringstream ss;
@@ -217,14 +222,16 @@ string Enum::to_string() const
 
 
 //Enum constructor
-Enum::Enum(char *name, std::vector<EnumVal*>* vals) :
+Enum::Enum(char *name, Type *type, std::vector<EnumVal*>* vals) :
     m_name(name),
+    m_type(type),
     m_vals(vals)
 {
 }
 Enum::~Enum()
 {
     delete m_name;
+    delete m_type;
     foreach(EnumVal *d, *m_vals)
     {
         delete d;

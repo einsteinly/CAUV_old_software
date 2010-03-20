@@ -122,13 +122,15 @@ class Enum : public Node
 {
     private:
         char *m_name;
+        Type *m_type;
         std::vector<EnumVal*>* m_vals;
 
     public:
-        Enum(char*, std::vector<EnumVal*>*);
+        Enum(char*, Type*, std::vector<EnumVal*>*);
         virtual ~Enum();
 
         char* getName() const;
+        Type* getType() const;
         const std::vector<EnumVal*>& getVals() const;
         virtual string to_string() const;
 };
