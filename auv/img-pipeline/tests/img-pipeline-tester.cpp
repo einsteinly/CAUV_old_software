@@ -219,10 +219,9 @@ class ImgPipeTestNode : public CauvNode{
             info() << "Setting source camera:";
             sp = boost::make_shared<SetNodeParameterMessage>(0, "", pt_int32, 0, 0, ""); 
             sp->nodeId(input_node_id);
-            sp->paramId("camera id");
-            sp->stringValue("");
+            sp->paramId("device id");
             sp->paramType(pt_int32);
-            sp->intValue(cam_forward);
+            sp->intValue(0);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
             // Add convert node: default conversion is RGB->Grey
