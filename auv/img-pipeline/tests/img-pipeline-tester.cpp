@@ -430,7 +430,26 @@ void interrupt(int sig)
 int main(int argc, char **argv)
 {
     signal(SIGINT, interrupt);
-    node = new ImgPipeTestNode(hough_test);
+    int tests = 0;
+    for(int arg = 1; arg < argc; arg++){
+        std::string s = argv[arg];
+        if(s == "file_io_test") tests |= file_io_test;
+        else if(s == "fileinput_test") tests |= fileinput_test;
+        else if(s == "camera_test") tests |= camera_test;
+        else if(s == "hough_test") tests |= hough_test;
+        else{
+            std::cerr << "Unrecognised argument: " << s << std::endl;
+            std::cerr << "Usage:\n"
+                      << argv[0]
+                      << " [fileinput_test]"
+                      << " [file_io_test]"
+                      << " [camera_test]"
+                      << " [hough_test]" << std::endl;
+            return 1;
+        }
+    }
+
+    node = new ImgPipeTestNode(tests);
     node->run();
     cleanup();
     return 0;
