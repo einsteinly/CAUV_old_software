@@ -250,6 +250,10 @@ int createCPPFile(string outputpath)
     msg_hh << "#include <map>" << endl;
     msg_hh << "#include <boost/cstdint.hpp>" << endl;
     msg_hh << "#include <boost/shared_ptr.hpp>" << endl;
+    msg_hh << "#include <boost/archive/binary_oarchive.hpp>" << endl;
+    msg_hh << "#include <boost/archive/binary_iarchive.hpp>" << endl;
+    msg_hh << "#include <boost/archive/detail/oserializer.hpp>" << endl;
+    msg_hh << "#include <boost/archive/detail/iserializer.hpp>" << endl;
     msg_hh << "#ifndef foreach" << endl;
     msg_hh << "#    include <boost/foreach.hpp>" << endl;
     msg_hh << "#    define foreach BOOST_FOREACH" << endl;
@@ -266,8 +270,6 @@ int createCPPFile(string outputpath)
     
     msg_cpp << "/***  This is a generated file, do not edit ***/" << endl;
     msg_cpp << format("#include \"%1%.h\"") % outputfile << endl;
-    msg_cpp << "#include <boost/archive/binary_oarchive.hpp>" << endl;
-    msg_cpp << "#include <boost/archive/binary_iarchive.hpp>" << endl;
     msg_cpp << "#include <boost/serialization/vector.hpp>" << endl;
     msg_cpp << "#include <boost/serialization/map.hpp>" << endl;
     msg_cpp << "#include <boost/make_shared.hpp>" << endl;
@@ -389,7 +391,7 @@ int createCPPFile(string outputpath)
             
             std::string className = str(format("%1%Message") % m->getName());
 
-            std::stringstream msg_hh_msg_funcs, msg_hh_msg_fields, msg_cpp_msg_funcs, msg_cpp_msg_serial, msg_cpp_msg_deserial;
+            std::stringstream msg_hh_msg_funcs, msg_hh_msg_fields, msg_cpp_msg_funcs, msg_hh_msg_serial;
             std::stringstream msg_cstrctr_p, msg_cpp_msg_cstrctr_i, msg_cpp_msg_cstrctr_d;
             
             foreach(Declaration* d, m->getDeclarations())
@@ -416,8 +418,7 @@ int createCPPFile(string outputpath)
                 msg_hh_msg_funcs << endl;
                 msg_cpp_msg_funcs << endl;
                 
-                msg_cpp_msg_serial << "    ar & m_" << dname << ";" << endl;
-                msg_cpp_msg_deserial << "    ar & ret->m_" << dname << ";" << endl;
+                msg_hh_msg_serial << "            ar & m_" << dname << ";" << endl;
                 
                 msg_cstrctr_p << asCPPType(dtype) << " " << dname << ", ";
                 msg_cpp_msg_cstrctr_i << "    m_" << dname << "(" << dname << ")," << endl;
@@ -445,9 +446,30 @@ int createCPPFile(string outputpath)
             msg_hh << "        static boost::shared_ptr<" << className << "> fromBytes(const byte_vec_t& bytes);" << endl;
             msg_hh << "        virtual const byte_vec_t toBytes() const;" << endl;
             msg_hh << endl;
+            msg_hh << "        template<class Archive>" << endl;
+            msg_hh << "        void save(Archive & ar, const unsigned int version) const" << endl;
+            msg_hh << "        {" << endl;
+            msg_hh << "            ar & m_id;" << endl;
+            msg_hh << msg_hh_msg_serial.str();
+            msg_hh << "        }" << endl;
+            msg_hh << "        template<class Archive>" << endl;
+            msg_hh << "        void load(Archive & ar, const unsigned int version)" << endl;
+            msg_hh << "        {" << endl;
+            msg_hh << "            uint32_t buf_id;" << endl;
+            msg_hh << "            ar & buf_id;" << endl;
+            msg_hh << "            if (buf_id != m_id)" << endl;
+            msg_hh << "            {" << endl;
+            msg_hh << "                throw std::invalid_argument(\"Attempted to create " << className << " with invalid id\");" << endl;
+            msg_hh << "            }" << endl;
+            msg_hh << msg_hh_msg_serial.str();
+            msg_hh << "        }" << endl;
+            msg_hh << "        BOOST_SERIALIZATION_SPLIT_MEMBER()" << endl;
+            msg_hh << endl;
             msg_hh << "    protected:" << endl;
             msg_hh << msg_hh_msg_fields.str();
             msg_hh << "};" << endl;
+            msg_hh << "BOOST_CLASS_IMPLEMENTATION("<<className<<", boost::serialization::object_serializable)" << endl;
+            msg_hh << endl;
             msg_hh << "template<typename char_T, typename traits>" << endl;
             msg_hh << "std::basic_ostream<char_T, traits>& operator<<(" << endl;
             msg_hh << "    std::basic_ostream<char_T, traits>& os, " << className << " const& a)" << endl; 
@@ -493,14 +515,7 @@ int createCPPFile(string outputpath)
             msg_cpp << "    " << format("boost::shared_ptr<%1%> ret = boost::make_shared<%1%>();") % className << endl;
             msg_cpp << "    byte_istream_t iss(bytes, std::ios_base::out|std::ios_base::in|std::ios_base::binary);" << endl;
             msg_cpp << "    boost::archive::binary_iarchive ar(iss, boost::archive::no_header);" << endl;
-            msg_cpp << "    uint32_t buf_id;" << endl;
-            msg_cpp << "    ar & buf_id;" << endl;
-            msg_cpp << "    if (buf_id != ret->m_id)" << endl;
-            msg_cpp << "    {" << endl;
-            msg_cpp << "        throw std::invalid_argument(\"Attempted to create " << className << " with invalid id\");" << endl;
-            msg_cpp << "    }" << endl;
-            msg_cpp << msg_cpp_msg_deserial.str();
-            msg_cpp << endl;
+            msg_cpp << "    ar & *ret;" << endl;
             msg_cpp << "    return ret;" << endl;
             msg_cpp << "}" << endl;
             msg_cpp << endl;
@@ -508,8 +523,7 @@ int createCPPFile(string outputpath)
             msg_cpp << "{" << endl;
             msg_cpp << "    byte_ostream_t oss(std::ios_base::out|std::ios_base::in|std::ios_base::binary);" << endl;
             msg_cpp << "    boost::archive::binary_oarchive ar(oss, boost::archive::no_header);" << endl;
-            msg_cpp << "    ar & m_id;" << endl;
-            msg_cpp << msg_cpp_msg_serial.str();
+            msg_cpp << "    ar & *this;" << endl;
             msg_cpp << "    return oss.str();" << endl;
             msg_cpp << "}" << endl;
             msg_cpp << endl;
@@ -535,34 +549,53 @@ int createCPPFile(string outputpath)
         msg_hh << endl;
     }
     msg_hh << endl;
+    msg_hh << "} // namespace serialization" << endl;
+    msg_hh << endl;
+    msg_hh << "namespace archive {" << endl;
+    msg_hh << "namespace detail {" << endl;
+    msg_hh << endl;
+    
+    msg_cpp << "namespace boost {" << endl;
+    msg_cpp << "namespace archive {" << endl;
+    msg_cpp << "namespace detail {" << endl;
+    msg_cpp << endl;
     foreach(Enum* e, enums)
     {
         string type = asCPPType(e->getType());
-        msg_hh << "template<class Archive>" << endl;
-        msg_hh << "void save(Archive & ar, const " << e->getName() << "& val, const unsigned int version)" << endl;
-        msg_hh << "{" << endl;
-        msg_hh << "    " << format("%1% typedVal = static_cast<const %1%>(val);") % type << endl;
-        msg_hh << "    debug() << \"Adding enum with value\" << typedVal << \"to archive\";" << endl;
-        msg_hh << "    ar << typedVal;" << endl;
-        msg_hh << "}" << endl;
-        msg_hh << "template<class Archive>" << endl;
-        msg_hh << "void load(Archive & ar, " << e->getName() << "& val, const unsigned int version)" << endl;
-        msg_hh << "{" << endl;
-        msg_hh << "    " << format("%1% typedVal;") % type << endl;
-        msg_hh << "    ar >> typedVal;" << endl;
-        msg_hh << "    " << format("val = static_cast<%1%>(typedVal);") % e->getName() << endl;
-        msg_hh << "}" << endl;
-        msg_hh << "template<class Archive>" << endl;
-        msg_hh << "void serialize(Archive & ar, const " << e->getName() << "& val, const unsigned int version)" << endl;
-        msg_hh << "{" << endl;
-        msg_hh << "    split_free(ar, val, version);" << endl;
-        msg_hh << "}" << endl;
-        msg_hh << endl;
-    }
-    msg_hh << "} // namespace serialization" << endl;
-    msg_hh << "} // namespace boost" << endl;
+        string name = e->getName();
 
+        msg_hh << "template<> template <>" << endl; 
+        msg_hh << format("void save_enum_type<binary_oarchive>::invoke<%1%>(binary_oarchive &ar, const %1% &val);") % name << endl;
+        msg_hh << "template<> template <>" << endl; 
+        msg_hh << format("void load_enum_type<binary_iarchive>::invoke<%1%>(binary_iarchive &ar, %1% &val);") % name << endl;
+        msg_hh << endl;
+
+        msg_cpp << "template<> template <>" << endl; 
+        msg_cpp << format("void save_enum_type<binary_oarchive>::invoke<%1%>(binary_oarchive &ar, const %1% &val)") % name << endl;
+        msg_cpp << "{" << endl;
+        msg_cpp << "    " << format("%1% typedVal = static_cast<const %1%>(val);") % type << endl;
+        msg_cpp << "    ar << typedVal;" << endl;
+        msg_cpp << "}" << endl;
+        msg_cpp << "template<> template <>" << endl; 
+        msg_cpp << format("void load_enum_type<binary_iarchive>::invoke<%1%>(binary_iarchive &ar, %1% &val)") % name << endl;
+        msg_cpp << "{" << endl;
+        msg_cpp << "    " << format("%1% typedVal;") % type << endl;
+        msg_cpp << "    ar >> typedVal;" << endl;
+        msg_cpp << "    " << format("val = static_cast<%1%>(typedVal);") % e->getName() << endl;
+        msg_cpp << "}" << endl;
+        msg_cpp << endl;
+
+    }
+    msg_hh << "} // namespace detail" << endl;
+    msg_hh << "} // namespace archive" << endl;
+    msg_hh << "} // namespace boost" << endl;
     msg_hh << endl;
+    
+    msg_cpp << "} // namespace detail" << endl;
+    msg_cpp << "} // namespace archive" << endl;
+    msg_cpp << "} // namespace boost" << endl;
+    msg_cpp << endl;
+
 
     msg_hh << "class MessageObserver" << endl;
     msg_hh << "{" << endl;

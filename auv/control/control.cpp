@@ -34,7 +34,7 @@ ControlNode::ControlNode() : CauvNode("Control")
         //m_ins->addObserver(m_state_updating_observer);
         //m_ins->addObserver(new PrintingModuleObserver());
         info() << "MCB Connected";
-
+        
         boost::thread t(sendMotorMessageTest, boost::ref(m_mcb));
 
         // create a thread to send the alive messages

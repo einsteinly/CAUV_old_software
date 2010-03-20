@@ -255,7 +255,7 @@ class ImgPipeTestNode : public CauvNode{
             ai.src = no;
             arcs_in.clear();
             arcs_in.push_back(ai); 
-            an = boost::make_shared<AddNodeMessage>(nt_hough_linesp, arcs_in, arcs_out);
+            an = boost::make_shared<AddNodeMessage>(nt_hough_lines, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);
             int hough_node_id = m_obs->waitOnNodeAdded();
 
@@ -340,7 +340,7 @@ class ImgPipeTestNode : public CauvNode{
             ai.src = no;
             arcs_in.clear();
             arcs_in.push_back(ai); 
-            an = boost::make_shared<AddNodeMessage>(nt_hough_linesp, arcs_in, arcs_out);
+            an = boost::make_shared<AddNodeMessage>(nt_hough_lines, arcs_in, arcs_out);
             sent = mailbox()->sendMessage(an, SAFE_MESS);
             int hough_node_id = m_obs->waitOnNodeAdded();
 
