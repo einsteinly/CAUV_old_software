@@ -12,14 +12,14 @@
 #include "convertColourNode.h"
 
 // Register node types (actually definitions of static data members)
-DEFINE_NFR(CopyNode, nt_copy);
-DEFINE_NFR(FileInputNode, nt_file_input);
-DEFINE_NFR(FileOutputNode, nt_file_output);
-DEFINE_NFR(ResizeNode, nt_resize);
-DEFINE_NFR(LocalDisplayNode, nt_local_display);
-DEFINE_NFR(CameraInputNode, nt_camera_input);
-DEFINE_NFR(NetInputNode, nt_net_input);
-DEFINE_NFR(HoughLinesNode, nt_hough_lines);
-DEFINE_NFR(CannyNode, nt_canny);
-DEFINE_NFR(ConvertColourNode, nt_convert_colour);
+DEFINE_NFR(CopyNode, NodeType::Copy);
+DEFINE_NFR(FileInputNode, NodeType::File_input);
+DEFINE_NFR(FileOutputNode, NodeType::File_output);
+DEFINE_NFR(ResizeNode, NodeType::Resize);
+DEFINE_NFR(LocalDisplayNode, NodeType::Local_display);
+DEFINE_NFR(CameraInputNode, NodeType::Camera_input);
+DEFINE_NFR(NetInputNode, NodeType::Net_input);
+DEFINE_NFR(HoughLinesNode, NodeType::Hough_lines);
+DEFINE_NFR(CannyNode, NodeType::Canny);
+DEFINE_NFR(ConvertColourNode, NodeType::Convert_colour);
 

@@ -22,10 +22,10 @@ class NetInputNode: public InputNode{
             registerOutputID("image_out");
             
             // one parameter: the source camera
-            registerParamID<int>("camera id", cam_forward);
+            registerParamID<int>("camera id", CameraID::Forward);
         }
         
-        virtual bool checkSource(Image::Source const& s, CameraID const& c) throw(){
+        virtual bool checkSource(Image::Source const& s, CameraID::e const& c) throw(){
             if(s == Image::src_camera && c == param<int>("camera id"))
                 return true;
             return false;

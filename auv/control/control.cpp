@@ -16,7 +16,7 @@ void sendMotorMessageTest(boost::shared_ptr<MCBModule> mcb)
     int motor = 1;
     while(true)
     {
-        MotorMessage m((MotorID)motor, 0);
+        MotorMessage m((MotorID::e)motor, 0);
         mcb->send(m);
         debug() << "Sent message" << m;
 

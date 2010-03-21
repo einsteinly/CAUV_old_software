@@ -25,13 +25,13 @@ class FileinputObserver: public MessageObserver{
         }
 
         virtual void onImageMessage(boost::shared_ptr<ImageMessage> m){
-            if(m->source() == cam_file)
+            if(m->source() == CameraID::File)
                 sendImage();
         }
 
         void sendImage(){
             debug() << "sending image...";
-            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(cam_file, m_img, now()), UNRELIABLE_MESS);
+            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(CameraID::File, m_img, now()), UNRELIABLE_MESS);
             debug() << "(sent)";
         }
 

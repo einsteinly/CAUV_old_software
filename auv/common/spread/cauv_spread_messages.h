@@ -46,19 +46,19 @@ protected:
     Spread::service m_serviceType;
     StringVectorPtr m_groups;
     int m_messageType;
-    byte_vec_t m_messageContents;
+    boost::shared_ptr<byte_vec_t> m_messageContents;
 
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
                     const byte_vec_t &bytes )
             // TODO: Is there some way of just passing all the right parameters to the other constructor?
             : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
-              m_messageContents( &bytes[0], &bytes[0] + bytes.size() ) {}
+              m_messageContents( new byte_vec_t(&bytes[0], &bytes[0] + bytes.size()) ) {}
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
                     const char * const bytes, const int byteCount )
             : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
-              m_messageContents(bytes, bytes+byteCount) {}
+              m_messageContents( new byte_vec_t(bytes, bytes+byteCount) ) {}
 
 public:
     /**
@@ -93,7 +93,7 @@ public:
     /**
      * @return The actual application message data.
      */
-    const byte_vec_t& getMessage() const {
+    boost::shared_ptr<const byte_vec_t> getMessage() const {
         return m_messageContents;
     }
 

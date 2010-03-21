@@ -377,9 +377,9 @@ Node::param_value_map_t Node::parameters() const{
 void Node::setParam(boost::shared_ptr<SetNodeParameterMessage>  m){
     param_value_t value;
     switch(m->paramType()){
-        case pt_int32: value = m->intValue(); break;
-        case pt_float: value = m->floatValue(); break;
-        case pt_string: value = m->stringValue(); break;
+        case NodeParameterType::Int32:  value = m->intValue(); break;
+        case NodeParameterType::Float:  value = m->floatValue(); break;
+        case NodeParameterType::String: value = m->stringValue(); break;
         default:
             // TODO: throw?
             error() << "Unknown parameter type:" << m->paramType();

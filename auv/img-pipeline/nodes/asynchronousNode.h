@@ -10,7 +10,7 @@ class AsynchronousNode: public InputNode{
             : InputNode(s){
         }
 
-        virtual bool checkSource(Image::Source const&, CameraID const&) throw(){
+        virtual bool checkSource(Image::Source const&, CameraID::e const&) throw(){
             return false;
         }
 

@@ -6,12 +6,12 @@
 
 class MsgSrcMBMonitor: public MessageSource, public MailboxObserver{
     public:
-        virtual void regularMessageReceived(boost::shared_ptr<RegularMessage> msg){
+        virtual void regularMessageReceived(boost::shared_ptr<const RegularMessage> msg){
             notifyObservers(msg->getMessage());
         }
         
         /* for now we don't do anything with these */
-        virtual void membershipMessageReceived(boost::shared_ptr<MembershipMessage> msg) { }
+        virtual void membershipMessageReceived(boost::shared_ptr<const MembershipMessage> msg) { }
 };
 
 

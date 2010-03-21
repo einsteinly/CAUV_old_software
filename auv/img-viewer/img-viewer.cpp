@@ -28,7 +28,7 @@ class ImageWindow : public MessageObserver
 };
 
 
-ImageViewer::ImageViewer(const CameraID camera_id, const int device_id)
+ImageViewer::ImageViewer(const CameraID::e camera_id, const int device_id)
     : CauvNode("img-view")
 {
     mailbox()->joinGroup("image");
@@ -66,16 +66,16 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    CameraID camera_id;
+    CameraID::e camera_id;
     uint32_t device_id;
 
     if (strcasecmp(argv[1], "forward") == 0)
     {
-        camera_id = cam_forward;
+        camera_id = CameraID::Forward;
     }
     else if (strcasecmp(argv[1], "down") == 0)
     {
-        camera_id = cam_down;
+        camera_id = CameraID::Down;
     }
     else
     {

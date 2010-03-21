@@ -59,15 +59,15 @@ struct Creator: public CreatorBase{
 
 /* static magic */
 class NodeFactoryRegister{
-    typedef std::map<NodeType, creator_ptr_t> nt_creator_map_t;
+    typedef std::map<NodeType::e, creator_ptr_t> nt_creator_map_t;
     
     public:
-        NodeFactoryRegister(NodeType const& n, creator_ptr_t f){
+        NodeFactoryRegister(NodeType::e const& n, creator_ptr_t f){
             boost::lock_guard<boost::recursive_mutex> l(registerLock());
             nodeRegister()[n] = f;
         }
         
-        static boost::shared_ptr<Node> create(NodeType const& n, Scheduler& s){
+        static boost::shared_ptr<Node> create(NodeType::e const& n, Scheduler& s){
             boost::lock_guard<boost::recursive_mutex>  l(registerLock());
             nt_creator_map_t::const_iterator i = nodeRegister().find(n);
             if(i != nodeRegister().end()){

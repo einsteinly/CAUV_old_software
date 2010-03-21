@@ -9,7 +9,7 @@
 class ImageViewer : public CauvNode
 {
     public:
-        ImageViewer(const CameraID camera_id, const int device_id);
+        ImageViewer(const CameraID::e camera_id, const int device_id);
 };
 
 #endif//__IMG_VIEWER_H__

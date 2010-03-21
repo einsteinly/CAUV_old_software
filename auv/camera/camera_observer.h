@@ -17,7 +17,7 @@ class CameraObserver
     protected:
         CameraObserver();
     public:
-        virtual void onReceiveImage(CameraID cam_id, const cv::Mat& img) = 0;
+        virtual void onReceiveImage(CameraID::e cam_id, const cv::Mat& img) = 0;
 };
 
 

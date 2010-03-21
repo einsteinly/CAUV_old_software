@@ -92,9 +92,9 @@ StringVectorPtr groupListToVector(const GroupList &groups) {
 
 int SpreadMailbox::doSendMessage( const boost::shared_ptr<Message> message, Spread::service serviceType,
         const shared_ptr<GroupList> groupNames ) {
-    byte_vec_t bytes = message->toBytes();
+    boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
     ssrc::spread::ScatterMessage spreadMsg;
-    spreadMsg.add(bytes.data(), bytes.size());
+    spreadMsg.add(bytes->data(), bytes->size());
     spreadMsg.set_service(serviceType);
 
     try {

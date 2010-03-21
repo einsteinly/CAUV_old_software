@@ -36,27 +36,25 @@ struct TimeStamp
     msecs : int32;
 }
 
-enum MotorID : int8 { PROP = 1, HBOW = 2, VBOW = 4, HSTERN = 8, VSTERN = 16 }
-enum CameraID: int8 { cam_forward = 1, cam_down = 2, cam_sonar = 4, cam_file = 5 }
+enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
+enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
 enum NodeType : int8 {
-    nt_invalid = 0,
-    nt_copy = 1,
-    nt_resize = 2,
-    nt_file_input = 3,
-    nt_file_output = 4,
-    nt_local_display = 5,
-    nt_max_num_node_types = 6,
-    nt_camera_input = 7,
-    nt_net_input = 8,
-    nt_hough_lines = 9,
-    nt_canny = 10,
-    nt_convert_colour = 11
+    Invalid = 0,
+    Copy = 1,
+    Resize = 2,
+    File_input = 3,
+    File_output = 4,
+    Local_display = 5,
+    Camera_input = 6,
+    Net_input = 7,
+    Hough_lines = 8,
+    Canny = 9,
+    Convert_colour = 10
 }
 enum NodeParameterType : int8 {
-    pt_int32 = 0,
-    pt_float = 1,
-    pt_string = 2,
-    pt_max_num_parameter_types = 3
+    Int32 = 0,
+    Float = 1,
+    String = 2
 }
 
 group control

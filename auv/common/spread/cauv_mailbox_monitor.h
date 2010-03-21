@@ -16,8 +16,8 @@
 
 class MailboxObserver {
 public:
-    virtual void regularMessageReceived(boost::shared_ptr<RegularMessage> message) = 0;
-    virtual void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message) = 0;
+    virtual void regularMessageReceived(boost::shared_ptr<const RegularMessage> message) = 0;
+    virtual void membershipMessageReceived(boost::shared_ptr<const MembershipMessage> message) = 0;
 };
 typedef boost::shared_ptr<MailboxObserver> mb_observer_ptr_t;
 
@@ -27,11 +27,11 @@ public:
         : MailboxObserver(){
     }
 
-    void regularMessageReceived(boost::shared_ptr<RegularMessage> message) {
+    void regularMessageReceived(boost::shared_ptr<const RegularMessage> message) {
         info() << "TestMBObserver: regular message received";
     }
     
-    void membershipMessageReceived(boost::shared_ptr<MembershipMessage> message){
+    void membershipMessageReceived(boost::shared_ptr<const MembershipMessage> message){
         info() << "TestMBObserver: membership message received";
     }
 };

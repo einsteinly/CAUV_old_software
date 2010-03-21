@@ -22,52 +22,289 @@
 \#include <common/vector_streamops.h>
 \#include <common/image.h>
 
-// message data type definitions
+// Message data type definitions
 typedef std::string byte_vec_t;
 typedef std::ostringstream byte_ostream_t;
 typedef std::istringstream byte_istream_t;
 
 
+// ================
 // Type definitions
-//
-#for t in $unknown_types
+// ================
+
+#for $t in $unknown_types
 class $t;
 #end for
 
-#for s in $structs
+#for $s in $structs
 struct $s.name
 {
-    #for f in $s.fields
+    #for $f in $s.fields
     $toCPPType($f.type) $f.name;
     #end for
-}
+};
 #end for
 
-#for e in $enums
-enum $e.name
+#for $e in $enums
+namespace $e.name
 {
-    #for i,v in $ienumerate($e.values)
-    $v.name = $v.value#if $i < $e.values.len() - 1 then echo "," else echo ""# 
+    enum e
+    {
+        #for $i, $v in $enumerate($e.values)
+        $v.name = $v.value#if $i < $len($e.values) - 1#,#end if# 
+        #end for
+    };
+} // namespace $e.name
+#end for
+
+
+// ===============
+// Message Classes
+// ===============
+
+// Base message class
+class Message
+{
+    public:
+        virtual ~Message();
+
+        std::string group() const;
+        uint32_t id() const;
+
+        virtual boost::shared_ptr<const byte_vec_t> toBytes() const = 0;
+
+    protected:
+        uint32_t m_id;
+        std::string m_group;
+
+        Message(uint32_t id, std::string group);
+
+    template<typename char_T, typename traits>
+    friend std::basic_ostream<char_T, traits>& operator<<(
+        std::basic_ostream<char_T, traits>& os, Message const& m);
+};
+
+#for $g in $groups
+// $g.name group
+
+#for $m in $g.messages
+#set $className = $m.name + "Message"
+class $className : public Message
+{
+    public:
+        ${className}();
+        #if $len($m.fields) > 0
+        ${className}(#slurp
+                     #for i, f in $enumerate($m.fields)
+#*                  *#$toCPPType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
+                     #end for
+#*                  *#);
+        #end if
+
+        #for $f in $m.fields
+        const $toCPPType($f.type)& ${f.name}() const;
+        void ${f.name}($toCPPType($f.type)& $f.name);
+        
+        #end for
+
+        static boost::shared_ptr<${className}> fromBytes(boost::shared_ptr<const byte_vec_t> bytes);
+        virtual boost::shared_ptr<const byte_vec_t> toBytes() const;
+        
+        template<class Archive>
+        void save(Archive & ar, const unsigned int version) const
+        {
+            ar << m_id;
+
+            #for $f in $m.fields
+            ar << m_$f.name;
+            #end for
+        }
+        template<class Archive>
+        void load(Archive & ar, const unsigned int version) const
+        {
+            uint32_t buf_id;
+            ar >> buf_id;
+            if (buf_id != m_id)
+            {
+                throw std::invalid_argument("Attempted to create $className with invalid id");
+            }
+            #for $f in $m.fields
+            ar >> m_$f.name;
+            #end for
+        }
+        BOOST_SERIALIZATION_SPLIT_MEMBER()
+
+    private:
+        #for i, f in $enumerate($m.fields)
+        mutable $toCPPType($f.type) m_$f.name;
+        #end for
+        
+        mutable boost::shared_ptr<const byte_vec_t> m_bytes;
+        void deserialize() const;
+
+    template<typename char_T, typename traits>
+    friend std::basic_ostream<char_T, traits>& operator<<(
+        std::basic_ostream<char_T, traits>& os, $className const& m);
+};
+BOOST_CLASS_IMPLEMENTATION($className, boost::serialization::object_serializable)
+BOOST_CLASS_IS_WRAPPER($className)
+
+#end for
+#end for
+
+
+
+// =======================
+// Message Source/Observer
+// =======================
+
+class MessageObserver
+{
+    public:
+        virtual ~MessageObserver();
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        virtual void on${className}(boost::shared_ptr<const $className> m);
+        #end for
+        #end for
+
+    protected:
+        MessageObserver();
+};
+
+class DebugMessageObserver: public MessageObserver
+{
+    public:
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        virtual void on${className}(boost::shared_ptr<const $className> m);
+        #end for
+        #end for
+};
+class MessageSource
+{
+    public:
+        void notifyObservers(boost::shared_ptr<const byte_vec_t> bytes);
+        void addObserver(boost::shared_ptr<MessageObserver> o);
+        void removeObserver(boost::shared_ptr<MessageObserver> o);
+        void clearObservers();
+
+    protected:
+        std::list< boost::shared_ptr<MessageObserver> > m_obs;
+
+        MessageSource();
+};
+
+
+
+// ===========================
+// Struct & Enum Serialization
+// ===========================
+
+namespace boost {
+namespace serialization {
+
+#for s in $structs
+template<class Archive>
+void serialize(Archive & ar, $s.name& val, const unsigned int version)
+{
+    #for f in $s.fields
+    ar & val.$f.name;
     #end for
 }
 #end for
 
+} // namespace serialization
+} // namespace boost
+
+
+// Enum serialization is pretty hacky for now, since boost::serialization
+// blindly converts all enums to ints for some reason
+
+namespace boost {
+namespace archive {
+namespace detail {
+
+#for e in $enums
+template<> template <>
+void save_enum_type<binary_oarchive>::invoke<$e.name::e>(binary_oarchive &ar, const $e.name::e &val);
+template<> template <>
+void load_enum_type<binary_iarchive>::invoke<$e.name::e>(binary_iarchive &ar, $e.name::e &val);
+
+#end for
+
+} // namespace detail
+} // namespace archive
+} // namespace boost
 
 
 
-
+// =============
 // Printing Code
+// =============
 
-#for s in $structs
+#for $s in $structs
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, $s.name const& s)
 {
-    os << "$s.name {" << endl;
-    #for f in $s.fields
-    os << " $f.name = " << s.$f.name << endl;
+    os << "$s.name {";
+    #for i, f in $enumerate($s.fields)
+    os << " $f.name = " << s.$f.name#if $i < $len($s.fields) - 1#<< ","#end if#;
     #end for
-    os << '}';
+    os << " }";
     return os;
 }
 #end for
+
+#for $e in $enums
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, $e.name::e const& e)
+{
+    switch(e)
+    {
+        #for $v in $e.values
+        case $e.name::$v.name:
+            return os << "$e.name::$v.name";
+        #end for
+        default:
+            return os << "Unknown";
+    }
+    return os;
+}
+#end for
+
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, Message const& m)
+{
+    os << "Message {";
+    os << " id = " << m.m_id << ",";
+    os << " group = " << m.m_group;
+    os << " }";
+    return os;
+}
+
+#for $g in $groups
+#for $m in $g.messages
+#set $className = $m.name + "Message"
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, $className const& m)
+{
+    os << "$className {";
+    #for i, f in $enumerate($m.fields)
+    os << " $f.name = " << m.m_$f.name#if $i < $len($m.fields) - 1#<< ","#end if#;
+    #end for
+    os << " }";
+    return os;
+}
+
+#end for
+#end for
+
+\#endif//__MESSAGES_H__

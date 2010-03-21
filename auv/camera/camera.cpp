@@ -25,14 +25,14 @@ ImageCaptureException::ImageCaptureException(void) : CameraException("Could not 
 ImageCaptureException::~ImageCaptureException(void) throw() {}
 
 
-Camera::Camera(const CameraID id) : m_id(id)
+Camera::Camera(const CameraID::e id) : m_id(id)
 {
 }
 Camera::~Camera()
 {
 }
 
-CameraID Camera::id() const
+CameraID::e Camera::id() const
 {
     return m_id;
 }
@@ -98,7 +98,7 @@ void CaptureThread::operator()()
 
 
 
-Webcam::Webcam(const CameraID cameraID, const int deviceID) throw (ImageCaptureException)
+Webcam::Webcam(const CameraID::e cameraID, const int deviceID) throw (ImageCaptureException)
     : Camera(cameraID), m_thread_callable(*this)
 {
     m_capture = cv::VideoCapture(deviceID);

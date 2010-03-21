@@ -79,7 +79,7 @@ MODOBJS = ${MODULES:%=$(OBJDIR)/%.o}
 
 MSGJAVASRCS = ${MSGS:%.msg=%.java}
 
-MSGGEN = $(BINDIR)/msg-generator
+MSGGEN = ../messages-python/msggen.py
 
 SHELL=/bin/bash
 
@@ -145,17 +145,6 @@ $(MSGJAVASRCS): $(MSGGEN) $$(MSGJAVASRCMSG)
 	@echo -n "  [MSG-GEN]  $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT)"
 	@$(MSGGEN) $(MSGJAVASRCMSG) -o $(MSGJAVASRCROOT) -l java   $(SHOWOK)
 
-.PHONY: makemsggenerator
-makemsggenerator:
-	@echo "  [MAKE] -C ../messages"
-	@echo -en "\E[0;36m"
-	@$(MAKE) -C ../messages   $(SHOWOK)
-../messages/bin/msg-generator: makemsggenerator
-
-$(MSGGEN): ../messages/bin/msg-generator
-	@mkdir -p $(dir $@)
-	@echo -n "  [CP]   ../messages/bin/msg-generator $@"
-	@cp ../messages/bin/msg-generator $@  $(SHOWOK)
 
 # Ugly hack because andy is fucking lazy
 .PHONY: export-java
@@ -196,8 +185,8 @@ clean: cleandeps cleangen
 	@echo -n "  [RM]    $(BINDIR) $(OBJDIR)  -rf"
 	@rm -rf $(BINDIR) $(OBJDIR) $(SHOWOK)
 cleangen:
-	@echo -n "  [RM]    $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN)  -rf"
-	@rm -rf $(MSGSRCS) $(MSGJAVASRCS) $(MSGGEN) $(SHOWOK)
+	@echo -n "  [RM]    $(MSGSRCS) $(MSGJAVASRCS) -rf"
+	@rm -rf $(MSGSRCS) $(MSGJAVASRCS) $(SHOWOK)
 cleandeps:
 	@echo -n "  [RM]    $(DEPDIR)  -rf"
 	@rm -rf $(DEPDIR)

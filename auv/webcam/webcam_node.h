@@ -11,7 +11,7 @@ class SpreadCameraObserver;
 class WebcamNode : public CauvNode
 {
     public:
-        WebcamNode(const CameraID camera_id, const int device_id);
+        WebcamNode(const CameraID::e camera_id, const int device_id);
 
         void onRun();
     

@@ -27,11 +27,11 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
     public:
 
         SpreadCameraObserver(mb_ptr_t mailbox)
-            : m_mailbox(mailbox), m_cam_id(cam_forward), m_msg()
+            : m_mailbox(mailbox), m_cam_id(CameraID::Forward), m_msg()
         {
         }
 
-        virtual void onReceiveImage(CameraID cam_id, const cv::Mat& img)
+        virtual void onReceiveImage(CameraID::e cam_id, const cv::Mat& img)
         {
             if(!m_msg)
             {
@@ -59,11 +59,11 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
 
     protected:
         mb_ptr_t m_mailbox;
-        CameraID m_cam_id;
+        CameraID::e m_cam_id;
         imsg_ptr_t m_msg;
 };
 
-WebcamNode::WebcamNode(const CameraID camera_id, const int device_id)
+WebcamNode::WebcamNode(const CameraID::e camera_id, const int device_id)
     : CauvNode("Webcam"), m_camera(new Webcam(camera_id, device_id)),
       m_cam_observer(boost::make_shared<SpreadCameraObserver>(mailbox()))
 {
@@ -107,16 +107,16 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    CameraID camera_id;
+    CameraID::e camera_id;
     uint32_t device_id;
 
     if (strcasecmp(argv[1], "forward") == 0)
     {
-        camera_id = cam_forward;
+        camera_id = CameraID::Forward;
     }
     else if (strcasecmp(argv[1], "down") == 0)
     {
-        camera_id = cam_down;
+        camera_id = CameraID::Down;
     }
     else
     {

@@ -215,10 +215,10 @@ class Module : public MessageSource
 
         void send(Message& message) throw (FTDIException)
         {
-            byte_vec_t bytes = message.toBytes();
+            boost::shared_ptr<const byte_vec_t> bytes = message.toBytes();
 
             uint32_t startWord = 0xdeadc01d;
-            uint32_t len = bytes.size();
+            uint32_t len = bytes->size();
 
             uint32_t buf[2];
             buf[0] = startWord;
@@ -234,7 +234,7 @@ class Module : public MessageSource
             ar << startWord;
             ar << len;
             ar << checksum;
-            foreach (char c, bytes)
+            foreach (char c, *bytes)
                 ar << c;
         }
 

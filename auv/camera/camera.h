@@ -47,17 +47,17 @@ class Camera
     public:
         virtual ~Camera();
         
-        CameraID id() const;
+        CameraID::e id() const;
 
         void addObserver(observer_ptr o);
         void removeObserver(observer_ptr o);
         void clearObservers();
     
     protected:
-        CameraID m_id;
+        CameraID::e m_id;
         observer_list m_obs;
 
-        Camera(const CameraID id);
+        Camera(const CameraID::e id);
 
         void broadcastImage(const cv::Mat &img);
 };
@@ -87,7 +87,7 @@ class CaptureThread
 class Webcam : public Camera
 {
     public:
-        Webcam(const CameraID cameraID, const int deviceID) throw (ImageCaptureException);
+        Webcam(const CameraID::e cameraID, const int deviceID) throw (ImageCaptureException);
         virtual ~Webcam();
     
     protected:

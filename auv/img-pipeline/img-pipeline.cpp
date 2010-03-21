@@ -27,7 +27,7 @@ void ImagePipelineNode::onRun()
     mailbox()->joinGroup("pipeline");
     #if defined(DEBUG)
     eventMonitor()->addObserver(boost::make_shared<TestMBObserver>()); 
-    mailboxMonitor()->addObserver(boost::make_shared<TestMessageObserver>());
+    mailboxMonitor()->addObserver(boost::make_shared<DebugMessageObserver>());
     #endif
     mailboxMonitor()->addObserver(m_pipeline);
 }
