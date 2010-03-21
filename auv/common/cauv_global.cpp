@@ -8,9 +8,6 @@
 
 using namespace std;
 
-extern char _binary_common_cauv_logo_large_txt_end;
-extern char _binary_common_cauv_logo_large_txt_start;
-
 cauv_global* cauv_global::m_current = 0;
 
 cauv_global::cauv_global() //: m_socket(0)
@@ -134,9 +131,15 @@ void cauv_global::print_logo(char* start, char* end, const string& module_name)
     cout << ss.str();
 }
 
+
 void cauv_global::print_module_header(const string& module_name)
 {
-	cauv_global::print_logo(&_binary_common_cauv_logo_large_txt_start, &_binary_common_cauv_logo_large_txt_end, module_name);
+    static char cauv_logo_large[] = {
+        #include <common/cauv_logo_large.h>
+    };
+	cauv_global::print_logo(cauv_logo_large,
+                            cauv_logo_large + sizeof(cauv_logo_large),
+                            module_name);
 }
 
 

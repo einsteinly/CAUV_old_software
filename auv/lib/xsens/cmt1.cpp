@@ -29,7 +29,9 @@
 #	include <sys/ioctl.h>	// ioctl
 #	include <fcntl.h>		// open, O_RDWR
 #	include <string.h>		// strcpy
+#ifndef __APPLE__
 #	include <malloc.h>		// malloc
+#endif
 #   include <sys/param.h>
 // We have to redefine PATH_MAX from 4096 to CMT_MAX_FILENAME_LENGTH to mainain compatibility
 // The PATH_MAX definition is used by realpath() to determine the maximum path length. According

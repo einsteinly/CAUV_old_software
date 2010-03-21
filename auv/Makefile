@@ -70,9 +70,9 @@ DIRS = $(BINDIR) $(DEPDIR) $(OBJDIR)
 MODULES = $(EXEMODULES) $(LIBMODULES)
 
 MSGSRCS = ${MSGS:%.msg=%.cpp} ${MSGS:%.msg=%.h}
+BININCS = ${RES:%.txt=%.h}
 OBJS    = ${SRCS:%.cpp=$(OBJDIR)/%.o}
 MSGOBJS = ${MSGSRCS:%.cpp=$(OBJDIR)/%.o}
-EMBED   = ${RES:%=$(OBJDIR)/%.e}
 EXES    = ${EXEMODULES:%=$(BINDIR)/%}
 MODLIBS = ${LIBMODULES:%=$(OBJDIR)/lib%.a}
 MODOBJS = ${MODULES:%=$(OBJDIR)/%.o}
@@ -88,14 +88,14 @@ CXXFLAGS=-Wall -g -O4
 else
 CXXFLAGS=-Wall -g -DDEBUG=1
 endif
-override CXXFLAGS += -I . -I /societies/cauv/install/include/
+override CXXFLAGS += -I. -I/societies/cauv/install/include/ -I/opt/local/include/
 
 MAKEFLAGS=--no-print-directory
-override LDFLAGS += -L /societies/cauv/install/lib/
-override CXXLDFLAGS += -Wl,-rpath,/societies/cauv/install/lib/
+override LDFLAGS += -L/societies/cauv/install/lib/ -L/opt/local/lib/
+override CXXLDFLAGS += -Wl,-rpath,/societies/cauv/install/lib/ -Wl,-rpath,/opt/local/lib/
 ARFLAGS=rcs
 
-SHOWOK = 2>$@.err && if test -s $@.err ; then echo -e "  \E[1;33m[WARNING]\E[m" && cat $@.err ; else echo -e "  \E[1;32m[OK]\E[m" ; fi || echo -e "  \E[1;31m[ERROR]\E[m" && cat $@.err; rm -f $@.err
+SHOWOK = 2>$@.err && if test -s $@.err ; then echo -e "  \033[1;33m[WARNING]\033[m" && cat $@.err ; else echo -e "  \033[1;32m[OK]\033[m" ; fi || echo -e "  \033[1;31m[ERROR]\033[m" && cat $@.err; rm -f $@.err
 
 .PHONY: modules makedirs
 modules: makedirs $(EXES)
@@ -106,7 +106,7 @@ EXEMODULEEXE = $(@:%=$(BINDIR)/%)
 $(EXEMODULES): $$(EXEMODULEEXE)
 	@echo "Making $(EXEMODULEEXE)"
 
-FILES = $(OBJS) $(MSGOBJS) $(EMBED)
+FILES = $(OBJS) $(MSGOBJS)
 OBJMOD = $(notdir $(subst .o,,$@))
 EXEFILES = $(filter $(OBJDIR)/$(OBJMOD)/%,$(FILES) )
 
@@ -120,7 +120,7 @@ EXEPARAMS = $($(OBJMOD)_PARAMS) $(COMMON_PARAMS)
 EXEOBJ = $(patsubst %,$(OBJDIR)/%.o,$(notdir $@))
 $(EXES): $$(EXEOBJ) $$(EXELIBDEPS)
 	@echo -en "  [CXX]   $(EXEOBJ) -o $@   $(addprefix -l, $(EXELIBS)) $(EXEPARAMS)"
-	@$(CXX) -o $@ $(EXEOBJ)  -L $(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS) $(LDFLAGS) $(CXXLDFLAGS)  $(SHOWOK)
+	@$(CXX) -o $@ $(EXEOBJ)  -L$(OBJDIR) $(addprefix -l, $(EXELIBS)) $(EXEPARAMS) $(LDFLAGS) $(CXXLDFLAGS)  $(SHOWOK)
 
 MODLIBMOD = $(patsubst lib%.a,%,$(notdir $@))
 MODLIBOBJ = $(patsubst %,$(OBJDIR)/%.o,$(MODLIBMOD))
@@ -131,7 +131,7 @@ $(MODLIBS): $$(MODLIBOBJ)
 EXTLIBOBJS = $(patsubst %,$(OBJDIR)/lib%.a,$(EXTLIBS))
 $(EXTLIBOBJS):
 	@echo "  [MAKE] $(patsubst $(OBJDIR)/lib%.a,%,$@) -C lib"
-	@echo -en "\E[0;36m"
+	@echo -en "\033[0;36m"
 	@$(MAKE) -C lib $(patsubst $(OBJDIR)/lib%.a,%,$@)   $(SHOWOK)
 
 MSGSRCROOT = $(patsubst %.cpp,%,$(patsubst %.h,%,$@))
@@ -163,10 +163,11 @@ $(DEPDIR)/%.d : %.cpp
 	@echo -n "  [MAKEDEPEND] $(CXXF)"
 	@$(CXX) $(CXXFLAGS) -M -MG -MF $(DF).d -MT $(OBJDIR)/$*.o $(CXXF)   $(SHOWOK)
 
-$(OBJDIR)/%.e : %
-	@echo -n "  [LD]    $< (binary)"
-	@$(LD) -r -b binary $< -o $@   $(SHOWOK)
-
+XXD = xxd
+BININCTXTS = $(patsubst %.h,%.txt,$(BININCS))
+$(BININCS): $(BININCTXTS)
+	@echo -n "  [XXD]	$<"
+	@$(XXD) -i - $@ < $<	$(SHOWOK)
 
 ALLCPPS = $(SRCS) $(filter %.cpp, $(MSGSRCS))
 -include $(ALLCPPS:%.cpp=$(DEPDIR)/%.d)
@@ -192,12 +193,12 @@ cleandeps:
 	@rm -rf $(DEPDIR)
 cleanmsggen:
 	@echo "  [MAKE]  clean -C ../messages"
-	@echo -en "\E[0;36m"
+	@echo -en "\033[0;36m"
 	@$(MAKE) -C ../messages clean  $(SHOWOK)
 cleanlibs:
 	@echo -n "  [RM]    $(LIBOBJS)"
 	@rm $(LIBOBJS) 2>/dev/null || true  $(SHOWOK)
 	@echo "  [MAKE]  clean -C lib"
-	@echo -en "\E[0;36m"
+	@echo -en "\033[0;36m"
 	@$(MAKE) -C lib clean  $(SHOWOK)
 cleanall: clean cleanlibs cleanmsggen

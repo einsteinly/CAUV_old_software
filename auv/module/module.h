@@ -21,6 +21,11 @@
 #include <common/cauv_global.h>
 #include <common/messages.h>
 
+// TODO: use consistent type definitions everywhere
+#if defined(__APPLE__)
+typedef unsigned char u_char;
+#endif
+
 class FTDIException : public std::exception
 {
     protected:

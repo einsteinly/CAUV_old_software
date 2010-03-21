@@ -5,6 +5,9 @@
 
 #ifdef _WIN32
 #	include <windows.h>
+#elif defined(__APPLE__)
+#   include <unistd.h>
+#   include <mach/mach_time.h>
 #else
 #	include <unistd.h>
 #   include <sys/time.h>
@@ -75,6 +78,16 @@ uint32_t getTimeOfDay(tm* date_, time_t* secs_)
 		// 86400 = 24*60*60 = secs in a day, this gives us the seconds since midnight
 		return (1000 * ((uint32_t) tp.time % XSENS_SEC_PER_DAY)) + tp.millitm;
 	}
+#elif defined(__APPLE__)
+    uint64_t t = mach_absolute_time();
+    static mach_timebase_info_data_t info = {0};
+
+    if (info.denom == 0)
+        mach_timebase_info(&info);
+
+    uint64_t nanosec = t * (info.numer / info.denom);
+    // seconds since some time... not exactly sure since when
+    return nanosec / 1e9;
 #else
 	timespec tp;
 	clock_gettime(CLOCK_REALTIME, &tp); // compile with -lrt

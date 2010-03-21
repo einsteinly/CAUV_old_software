@@ -30,8 +30,11 @@
 #ifdef _XSENS_LIST_IO
 #	include <iostream>
 #endif
+
 #include <stdlib.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 
 namespace xsens {
 

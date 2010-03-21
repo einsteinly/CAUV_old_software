@@ -51,7 +51,7 @@ template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, BashControl::e const& c)
 {
-    os << "\E[0" << int(c) << "m";
+    os << "\033[0" << int(c) << "m";
     return os;
 }
 
@@ -59,7 +59,7 @@ template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, BashIntensity::e const& c)
 {
-    os << "\E[0" << int(c) << "m";
+    os << "\033[0" << int(c) << "m";
     return os;
 }
 
@@ -70,7 +70,7 @@ std::basic_ostream<charT, traits>& operator<<(
     if(c == BashColour::None)
         os << BashControl::Reset;
     else
-        os << "\E[0;" << int(c) << "m";
+        os << "\033[0;" << int(c) << "m";
     return os;
 }
 
@@ -78,7 +78,7 @@ template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, BashBackground::e const& c)
 {
-    os << "\E[0;" << int(c) << "m";
+    os << "\033[0;" << int(c) << "m";
     return os;
 }
 
