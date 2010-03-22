@@ -11,8 +11,7 @@ add_library (
 target_link_libraries (
     camera
     common
-    cv
-    highgui
+    ${OpenCV_LIBS}
 )
 
 
@@ -23,7 +22,6 @@ add_executable (
 )
 target_link_libraries (
     opencv_test
-    cv
-    highgui
+    ${OpenCV_LIBS}
 )
 

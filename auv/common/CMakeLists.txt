@@ -68,12 +68,11 @@ target_link_libraries (
     common
 
     ${ssrcspread_LIBRARIES}
+    ${OpenCV_LIBS}
     boost_thread
     boost_serialization
     boost_date_time
     boost_iostreams
-    cv
-    cxcore
 )
 
 
