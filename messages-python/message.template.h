@@ -103,7 +103,7 @@ class $className : public Message
 
         #for $f in $m.fields
         const $toCPPType($f.type)& ${f.name}() const;
-        void ${f.name}($toCPPType($f.type)& $f.name);
+        void ${f.name}($toCPPType($f.type) const& $f.name);
         
         #end for
 

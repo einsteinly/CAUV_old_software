@@ -1,7 +1,6 @@
 project (AUV)
 
-# set bin directory
-set (RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}/")
+# TODO: set bin directory somehow?
 
 # set paths for package search scripts
 set (CMAKE_MODULE_PATH ${AUV_SOURCE_DIR} "${AUV_SOURCE_DIR}/cmake/")

@@ -13,13 +13,13 @@
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
-DEFINE_NFR(FileInputNode, NodeType::File_input);
-DEFINE_NFR(FileOutputNode, NodeType::File_output);
+DEFINE_NFR(FileInputNode, NodeType::FileInput);
+DEFINE_NFR(FileOutputNode, NodeType::FileOutput);
 DEFINE_NFR(ResizeNode, NodeType::Resize);
-DEFINE_NFR(LocalDisplayNode, NodeType::Local_display);
-DEFINE_NFR(CameraInputNode, NodeType::Camera_input);
-DEFINE_NFR(NetInputNode, NodeType::Net_input);
-DEFINE_NFR(HoughLinesNode, NodeType::Hough_lines);
+DEFINE_NFR(LocalDisplayNode, NodeType::LocalDisplay);
+DEFINE_NFR(CameraInputNode, NodeType::CameraInput);
+DEFINE_NFR(NetInputNode, NodeType::NetInput);
+DEFINE_NFR(HoughLinesNode, NodeType::HoughLines);
 DEFINE_NFR(CannyNode, NodeType::Canny);
-DEFINE_NFR(ConvertColourNode, NodeType::Convert_colour);
+DEFINE_NFR(ConvertColourNode, NodeType::ConvertColour);
 

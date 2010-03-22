@@ -1,6 +1,6 @@
 
 # subdirs
-#add_subdirectory (tests)
+add_subdirectory (tests)
 
 # sources:
 add_executable (

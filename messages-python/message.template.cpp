@@ -67,7 +67,7 @@ const $toCPPType($f.type)& $className::${f.name}() const
     deserialize();
     return m_$f.name;
 }
-void $className::${f.name}($toCPPType($f.type)& $f.name)
+void $className::${f.name}($toCPPType($f.type) const& $f.name)
 {
     deserialize();
     m_$f.name = $f.name;

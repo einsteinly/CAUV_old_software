@@ -42,16 +42,16 @@ enum NodeType : int8 {
     Invalid = 0,
     Copy = 1,
     Resize = 2,
-    File_input = 3,
-    File_output = 4,
-    Local_display = 5,
-    Camera_input = 6,
-    Net_input = 7,
-    Hough_lines = 8,
+    FileInput = 3,
+    FileOutput = 4,
+    LocalDisplay = 5,
+    CameraInput = 6,
+    NetInput = 7,
+    HoughLines = 8,
     Canny = 9,
-    Convert_colour = 10
+    ConvertColour = 10
 }
-enum NodeParameterType : int8 {
+enum ParamType : int8 {
     Int32 = 0,
     Float = 1,
     String = 2
@@ -108,7 +108,7 @@ group pipeline
     {
         nodeId : int32;
         paramId : string;
-        paramType : NodeParameterType;
+        paramType : ParamType;
         intValue : int32;
         floatValue : float;
         stringValue : string;
