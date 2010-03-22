@@ -12,7 +12,7 @@
 
 class DotOnImageObserver : public CameraObserver {
     public:
-        virtual void onReceiveImage(uint32_t cam_id, const cv::Mat& img) {
+        virtual void onReceiveImage(CameraID::e cam_id, const cv::Mat& img) {
             std::cout << ".";
             std::flush(std::cout);
         }
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     
     std::cout << "Opening device id " << std::dec << dev_id << std::endl;
 
-    Webcam cam(FORWARD, dev_id);
+    Webcam cam(CameraID::Forward, dev_id);
     
     cam.addObserver( boost::shared_ptr<CameraObserver>( new DotOnImageObserver ) );
     

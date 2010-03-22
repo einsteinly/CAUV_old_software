@@ -166,7 +166,7 @@ $(DEPDIR)/%.d : %.cpp
 XXD = xxd
 BININCTXTS = $(patsubst %.h,%.txt,$(BININCS))
 $(BININCS): $(BININCTXTS)
-	@echo -n "  [XXD]	$<"
+	@echo -n "  [XXD]   $<"
 	@$(XXD) -i - $@ < $<	$(SHOWOK)
 
 ALLCPPS = $(SRCS) $(filter %.cpp, $(MSGSRCS))
