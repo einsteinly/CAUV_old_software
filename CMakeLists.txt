@@ -13,5 +13,6 @@ set (CMAKE_CXX_FLAGS_MINSIZEREL "-Os")
 
 add_subdirectory (messages-python)
 add_subdirectory (auv)
+add_subdirectory (gui-pipeline)
 
 
