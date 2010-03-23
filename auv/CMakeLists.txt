@@ -38,7 +38,7 @@ include_directories (${AUV_SOURCE_DIR})
 # subdirectories:
 add_subdirectory (camera)
 add_subdirectory (common)
-#dd_subdirectory (control)
+add_subdirectory (control)
 add_subdirectory (fileinput)
 add_subdirectory (img-pipeline)
 add_subdirectory (img-viewer)

@@ -20,9 +20,10 @@ find_path(ftdi_INCLUDE_DIR
 
 # Finally the library itself
 find_library(ftdi_LIBRARY
-  NAMES libftdi
+  NAMES libftdi.a
   PATHS ${ftdi_PKGCONF_LIBRARY_DIRS}
 )
+#message ("ftdi_PKGCONF_LIBRARY_DIRS=${ftdi_PKGCONF_LIBRARY_DIRS}")
 #message ("ftdi_LIBRARY=${ftdi_LIBRARY}")
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
