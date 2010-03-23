@@ -1,6 +1,6 @@
 project (AUV)
 
-# TODO: set bin directory somehow?
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")
 
 # set paths for package search scripts
 set (CMAKE_MODULE_PATH ${AUV_SOURCE_DIR} "${AUV_SOURCE_DIR}/cmake/")
@@ -21,14 +21,14 @@ endif (Boost_VERSION LESS 104000)
 set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
 include_directories (${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
-message ("Boost include dirs: ${Boost_INCLUDE_DIRS}")
-message ("Boost lib dirs: ${Boost_LIBRARY_DIRS}")
+# message ("Boost include dirs: ${Boost_INCLUDE_DIRS}")
+# message ("Boost lib dirs: ${Boost_LIBRARY_DIRS}")
 
 # openCV paths:
 find_package (OpenCV)
 include_directories (${OpenCV_INCLUDE_DIRS})
-message ("OpenCV include dirs: ${OpenCV_INCLUDE_DIRS}")
-message ("OpenCV libs: ${OpenCV_LIBS}")
+# message ("OpenCV include dirs: ${OpenCV_INCLUDE_DIRS}")
+# message ("OpenCV libs: ${OpenCV_LIBS}")
 
 
 # we expect the source root dir to be in the include path

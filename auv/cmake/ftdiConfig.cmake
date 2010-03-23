@@ -20,7 +20,7 @@ find_path(ftdi_INCLUDE_DIR
 
 # Finally the library itself
 find_library(ftdi_LIBRARY
-  NAMES libftdi.a
+  NAMES ftdi
   PATHS ${ftdi_PKGCONF_LIBRARY_DIRS}
 )
 #message ("ftdi_PKGCONF_LIBRARY_DIRS=${ftdi_PKGCONF_LIBRARY_DIRS}")
