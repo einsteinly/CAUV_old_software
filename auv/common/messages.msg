@@ -116,7 +116,6 @@ group pipeline
 
     message GraphDescription : 10
     {
-        unused : int8;
     }
 }
 

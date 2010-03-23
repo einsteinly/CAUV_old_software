@@ -126,7 +126,7 @@ MessageObserver::~MessageObserver()
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
-void MessageObserver::on${className}(boost::shared_ptr<const $className> m) {}
+void MessageObserver::on${className}(boost::shared_ptr<const $className>) {}
 #end for
 #end for 
 
@@ -161,7 +161,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
     if (bytes->size() < 4)
         throw std::out_of_range("Buffer too small to contain message id");
 
-    switch(*reinterpret_cast<const uint32_t*>(bytes.get()))
+    switch(*reinterpret_cast<const uint32_t*>(bytes->data()))
     {
         #for $g in $groups
         #for $m in $g.messages

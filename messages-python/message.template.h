@@ -111,7 +111,7 @@ class $className : public Message
         virtual boost::shared_ptr<const byte_vec_t> toBytes() const;
         
         template<class Archive>
-        void save(Archive & ar, const unsigned int version) const
+        void save(Archive & ar, const unsigned int /*version*/) const
         {
             ar << m_id;
 
@@ -120,7 +120,7 @@ class $className : public Message
             #end for
         }
         template<class Archive>
-        void load(Archive & ar, const unsigned int version) const
+        void load(Archive & ar, const unsigned int /*version*/) const
         {
             uint32_t buf_id;
             ar >> buf_id;
@@ -208,7 +208,7 @@ namespace serialization {
 
 #for s in $structs
 template<class Archive>
-void serialize(Archive & ar, $s.name& val, const unsigned int version)
+void serialize(Archive & ar, $s.name& val, const unsigned int /*version*/)
 {
     #for f in $s.fields
     ar & val.$f.name;
@@ -294,7 +294,7 @@ std::basic_ostream<char_T, traits>& operator<<(
 #set $className = $m.name + "Message"
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, $className const& m)
+    std::basic_ostream<char_T, traits>& os, $className const& #if $len($m.fields)#m#end if#)
 {
     os << "$className {";
     #for i, f in $enumerate($m.fields)

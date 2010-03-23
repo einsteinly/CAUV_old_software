@@ -46,7 +46,7 @@ class Image{
         BOOST_SERIALIZATION_SPLIT_MEMBER()
 
         template<class Archive>
-        void save(Archive& ar, const unsigned int version) const{
+        void save(Archive& ar, const unsigned int /*version*/) const{
             ar & m_source;
             
             int type = m_img.type();
@@ -61,7 +61,7 @@ class Image{
         }
         
         template<class Archive>
-        void load(Archive& ar, const unsigned int version){
+        void load(Archive& ar, const unsigned int /*version*/){
             ar & m_source;
             
             int type, rows, cols;

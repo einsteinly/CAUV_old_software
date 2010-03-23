@@ -23,7 +23,7 @@ class InputNode: public Node{
          *   take a copy of the image message pointer: store it, and
          *   if m_output_demanded, queue this node for execution
          */
-        void onImageMessage(boost::shared_ptr<ImageMessage> m) throw() {
+        void onImageMessage(boost::shared_ptr<const ImageMessage> m) throw() {
             lock_t l(m_counters_lock);
             debug() << "Input node received an image";
             if(checkSource(m->image().source(), m->source())){ 
@@ -55,7 +55,7 @@ class InputNode: public Node{
             return !!m_latest_image_msg && !m_processed_latest;
         }
 
-        boost::shared_ptr<ImageMessage> latestImageMsg(){
+        boost::shared_ptr<const ImageMessage> latestImageMsg(){
             lock_t l(m_counters_lock);
             debug() << "Grabbing image";
             if(dropped_since > 0){
@@ -78,7 +78,7 @@ class InputNode: public Node{
         int dropped_since;
         mutable boost::recursive_mutex m_counters_lock;
 
-        boost::shared_ptr<ImageMessage> m_latest_image_msg;
+        boost::shared_ptr<const ImageMessage> m_latest_image_msg;
         bool m_processed_latest;
         mutable boost::recursive_mutex m_latest_image_msg_lock;
 };

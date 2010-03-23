@@ -374,7 +374,7 @@ Node::param_value_map_t Node::parameters() const{
 
 /* set a parameter based on a message
  */
-void Node::setParam(boost::shared_ptr<SetNodeParameterMessage>  m){
+void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
     param_value_t value;
     switch(m->paramType()){
         case ParamType::Int32:  value = m->intValue(); break;

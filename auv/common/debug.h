@@ -77,7 +77,7 @@ class SmartStreamBase : boost::noncopyable
         // stuff to print
         std::list<std::string> m_stuffs;
 
-        virtual void printPrefix(std::ostream& os)
+        virtual void printPrefix(std::ostream&)
         {
         }
 

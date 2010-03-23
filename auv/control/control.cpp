@@ -121,7 +121,7 @@ void interrupt(int sig)
     raise(sig);
 }
 
-int main(int argc, char **argv)
+int main(int, char**)
 {
     signal(SIGINT, interrupt);
     node = new ControlNode();

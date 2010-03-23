@@ -11,14 +11,14 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb)
     m_scheduler.start();
 }
 
-void ImageProcessor::onImageMessage(boost::shared_ptr<ImageMessage> m){
+void ImageProcessor::onImageMessage(boost::shared_ptr<const ImageMessage> m){
     std::set<input_node_ptr_t>::iterator i;
     debug() << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onImageMessage(m);
 }
 
-void ImageProcessor::onAddNodeMessage(boost::shared_ptr<AddNodeMessage> m){
+void ImageProcessor::onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m){
     node_id new_id = 0;
     try{
         node_ptr_t node = NodeFactoryRegister::create(m->nodeType(), m_scheduler);
@@ -48,7 +48,7 @@ void ImageProcessor::onAddNodeMessage(boost::shared_ptr<AddNodeMessage> m){
     sendMessage(boost::make_shared<NodeAddedMessage>(new_id));
 }
 
-void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<RemoveNodeMessage> m){
+void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<const RemoveNodeMessage> m){
     try{
         node_ptr_t n = _lookupNode(m->nodeId());
         m_nodes.erase(m->nodeId());
@@ -71,7 +71,7 @@ void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<RemoveNodeMessage> m)
     // TODO: error message of some sort, or something
 }
 
-void ImageProcessor::onSetNodeParameterMessage(boost::shared_ptr<SetNodeParameterMessage> m){
+void ImageProcessor::onSetNodeParameterMessage(boost::shared_ptr<const SetNodeParameterMessage> m){
     try{
         node_ptr_t n = _lookupNode(m->nodeId());
         n->setParam(m);

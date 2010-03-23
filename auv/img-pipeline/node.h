@@ -110,7 +110,7 @@ class Node{
         
         /* set a parameter based on a message
          */
-        void setParam(boost::shared_ptr<SetNodeParameterMessage>  m);
+        void setParam(boost::shared_ptr<const SetNodeParameterMessage>  m);
 
         /* set a single parameter value
          */

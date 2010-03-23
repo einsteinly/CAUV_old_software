@@ -25,7 +25,7 @@ class NodeAddedObserver: public MessageObserver{
             : MessageObserver(), m_node_id(0){
         }
 
-        void onNodeAddedMessage(boost::shared_ptr<NodeAddedMessage> m){
+        void onNodeAddedMessage(boost::shared_ptr<const NodeAddedMessage> m){
             boost::lock_guard<boost::recursive_mutex> l(m_node_id_mutex);
             m_node_id = m->nodeId();
         }
@@ -153,7 +153,7 @@ class ImgPipeTestNode : public CauvNode{
             sp->nodeId(file_input_node_id);
             sp->paramId("filename");
             sp->paramType(ParamType::String);
-            sp->stringValue("img-pipeline/tests/test.jpg");
+            sp->stringValue("test.jpg");
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
             
             info() << "Trying to set invalid parameter:";
@@ -299,7 +299,7 @@ class ImgPipeTestNode : public CauvNode{
             sp->nodeId(file_input_node_id);
             sp->paramId("filename");
             sp->paramType(ParamType::String);
-            sp->stringValue("img-pipeline/tests/test.jpg");
+            sp->stringValue("test.jpg");
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
             // Add convert node: default conversion is RGB->Grey

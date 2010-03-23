@@ -20,7 +20,7 @@ class ImageWindow : public MessageObserver
         {
             cv::namedWindow("Image Viewer", CV_WINDOW_AUTOSIZE);
         }
-        virtual void onImageMessage(boost::shared_ptr<ImageMessage> m)
+        virtual void onImageMessage(boost::shared_ptr<const ImageMessage> m)
         {
             cv::imshow("Image Viewer", m->image().cvMat());
             cv::waitKey(10);
@@ -28,7 +28,7 @@ class ImageWindow : public MessageObserver
 };
 
 
-ImageViewer::ImageViewer(const CameraID::e camera_id, const int device_id)
+ImageViewer::ImageViewer(const CameraID::e, const int)
     : CauvNode("img-view")
 {
     mailbox()->joinGroup("image");

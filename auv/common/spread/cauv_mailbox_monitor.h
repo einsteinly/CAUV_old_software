@@ -27,11 +27,11 @@ public:
         : MailboxObserver(){
     }
 
-    void regularMessageReceived(boost::shared_ptr<const RegularMessage> message) {
+    void regularMessageReceived(boost::shared_ptr<const RegularMessage>) {
         info() << "TestMBObserver: regular message received";
     }
     
-    void membershipMessageReceived(boost::shared_ptr<const MembershipMessage> message){
+    void membershipMessageReceived(boost::shared_ptr<const MembershipMessage>){
         info() << "TestMBObserver: membership message received";
     }
 };

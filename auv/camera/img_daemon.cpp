@@ -12,7 +12,7 @@
 
 class DotOnImageObserver : public CameraObserver {
     public:
-        virtual void onReceiveImage(CameraID::e cam_id, const cv::Mat& img) {
+        virtual void onReceiveImage(CameraID::e, const cv::Mat&) {
             std::cout << ".";
             std::flush(std::cout);
         }

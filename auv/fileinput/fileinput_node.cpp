@@ -24,7 +24,7 @@ class FileinputObserver: public MessageObserver{
             sendImage();
         }
 
-        virtual void onImageMessage(boost::shared_ptr<ImageMessage> m){
+        virtual void onImageMessage(boost::shared_ptr<const ImageMessage> m){
             if(m->source() == CameraID::File)
                 sendImage();
         }

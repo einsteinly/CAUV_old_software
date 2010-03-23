@@ -38,15 +38,15 @@ class ImageProcessor: public MessageObserver
          * input. It is up to nodes to filter the source of the image to select
          * their input from others.
          */
-        virtual void onImageMessage(boost::shared_ptr<ImageMessage> m);
+        virtual void onImageMessage(boost::shared_ptr<const ImageMessage> m);
         
         /**
          * These messages describe modifications to the pipeline
          */
 
-        virtual void onAddNodeMessage(boost::shared_ptr<AddNodeMessage> m);
-        virtual void onRemoveNodeMessage(boost::shared_ptr<RemoveNodeMessage> m);
-        virtual void onSetNodeParameterMessage(boost::shared_ptr<SetNodeParameterMessage> m);
+        virtual void onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m);
+        virtual void onRemoveNodeMessage(boost::shared_ptr<const RemoveNodeMessage> m);
+        virtual void onSetNodeParameterMessage(boost::shared_ptr<const SetNodeParameterMessage> m);
 
         /** end MessageObserver functions **/
 
@@ -69,7 +69,7 @@ class ImageProcessor: public MessageObserver
                 throw(id_error(std::string("Unknown node id") + to_string(id)));
         }
 
-        node_id _newID(node_ptr_t n) const throw(){
+        node_id _newID(node_ptr_t) const throw(){
             // Can probably do better than this...
             static node_id id = 1;
             return id++;

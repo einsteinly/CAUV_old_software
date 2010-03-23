@@ -1,3 +1,4 @@
+# img-pipeline-tester
 add_executable(
     img-pipeline-tester
     img-pipeline-tester.cpp
@@ -8,6 +9,15 @@ target_link_libraries(
     common
 )
 
+add_custom_command(
+    TARGET img-pipeline-tester
+    POST_BUILD
+    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/test.jpg ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/
+    COMMENT "Copying test.jpg for img-pipeline-tester"
+)
+
+
+# debug-test
 add_executable(
     debug-test
     debug-test.cpp
@@ -18,6 +28,8 @@ target_link_libraries(
     common
 )
 
+
+# nodeTest
 add_executable(
     nodeTest
     nodeTest.cpp
