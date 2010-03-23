@@ -19,7 +19,7 @@
 \#    define foreach BOOST_FOREACH
 \#endif
 
-\#include <common/vector_streamops.h>
+\#include <common/streamops.h>
 \#include <common/image.h>
 
 // Message data type definitions
@@ -296,6 +296,7 @@ template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, $className const& #if $len($m.fields)#m#end if#)
 {
+    #if $len($m.fields)#m.deserialize();#end if#
     os << "$className {";
     #for i, f in $enumerate($m.fields)
     os << " $f.name = " << m.m_$f.name#if $i < $len($m.fields) - 1#<< ","#end if#;

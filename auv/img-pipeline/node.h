@@ -13,8 +13,8 @@
 
 #include <common/cauv_utils.h>
 #include <common/messages.h>
-#include <common/debug.h> 
-#include <common/image.h> 
+#include <common/debug.h>
+#include <common/image.h>
 
 #include "imageProcessor.h"
 #include "pipelineTypes.h"
@@ -261,8 +261,11 @@ class Node{
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, Node const& n){
-    os << "{Node links in=" << n.inputLinks()
-       << " links out=" << n.outputLinks() << "}";
+    os << "{Node " << &n
+       << " links in=" << n.inputLinks()
+       << " links out=" << n.outputLinks()
+       << " params=" << n.parameters()
+       << "}";
     return os;
 }
 

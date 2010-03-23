@@ -24,7 +24,7 @@ void Node::setInput(node_ptr_t n){
         // from the parent, we should call newInput here:
         //newInput(m_parent_links.begin()->first); 
         // else: demand new output from the parent
-        debug() << "node" << this << "input set, demand new output on" <<  n;
+        debug() << "node" << *this << "input set, demand new output on" <<  n;
         n->demandNewOutput();
     }else if(m_parent_links.size() > 1){
         throw link_error("setInput: specific input must be specified");
@@ -44,7 +44,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
         // from the parent, we should call newInput here:
         //newInput(i->first);
         // else: demand new output from the parent
-        debug() << "node" << this << "input set, demand new output on" <<  n;
+        debug() << "node" << *this << "input set, demand new output on" <<  n;
         n->demandNewOutput();
     }
 }
@@ -256,7 +256,7 @@ void Node::exec(){
             _demandNewParentInput();
         }
     }catch(std::exception& e){
-        error() << "Error executing node: " << this << "\n\t" << e.what();
+        error() << "Error executing node: " << *this << "\n\t" << e.what();
     }
     
     m_outputs_lock.lock();
@@ -437,7 +437,7 @@ void Node::checkAddSched() throw(){
         }
     }
 
-    debug() << "queuing node" << this;
+    debug() << "Queuing node:" << *this;
 
     // if all inputs are new, all inputs are valid
     
