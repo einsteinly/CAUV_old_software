@@ -2,18 +2,65 @@
 
 #include <QtGui>
 
+#include <boost/thread.hpp>
+#include <boost/ref.hpp>
+
 #include <cmath>
 
 #include <common/debug.h>
+#include <common/cauv_node.h>
+#include <common/messages.h>
 
 #include "renderable/box.h"
+
+class PipelineGuiMsgObs: public MessageObserver{
+    public:
+        PipelineGuiMsgObs(PipelineWidget& p)
+            : m_widget(p){
+        }
+
+        void onNodeAddedMessage(boost::shared_ptr<const ImageMessage> m){
+            debug() << "PiplineGuiMsgObs:" << __func__ << m;
+            //m_widget->addNode();
+        }
+
+        void onNodeParametersMessage(boost::shared_ptr<const NodeParametersMessage> m){
+            debug() << "PiplineGuiMsgObs:" << __func__ << m;
+        }
+
+    private:
+        PipelineWidget& m_widget;
+};
+
+class PipelineGuiCauvNode: public CauvNode{
+    public:
+        PipelineGuiCauvNode(PipelineWidget& p)
+            : CauvNode("pipe-gui"), m_widget(p){
+            mailbox()->joinGroup("pipeline_gui");
+            mailboxMonitor()->addObserver(
+                boost::make_shared<PipelineGuiMsgObs>(boost::ref(p))
+            );
+        }
+    private:
+        PipelineWidget& m_widget;
+};
+
+// creating threads taking parameters (especially in a ctor-initializer) is a
+// little tricky, using an intermediate function smooths the ride a bit:
+void spawnPGCN(PipelineWidget& p){
+    boost::shared_ptr<CauvNode> pgcn =
+        boost::make_shared<PipelineGuiCauvNode>(boost::ref(p));
+    pgcn->run();
+    warning() << __func__ << "run() finished";
+}
 
 PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre_x(0), m_win_centre_y(0),
       m_win_aspect(1), m_win_scale(10),
       m_pixels_per_unit(10),
-      m_last_mouse_pos(){
+      m_last_mouse_pos(),
+      m_cauv_node_thread(boost::thread(spawnPGCN, boost::ref(*this))){
     // TODO: more appropriate QGLFormat?
     
     setMouseTracking(true);
@@ -157,24 +204,40 @@ void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
 }
 
 void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
+    renderable_set_t::iterator i;
     if(!m_owning_mouse.size()){
         int win_dx = event->x() - m_last_mouse_pos.x();
         int win_dy = event->y() - m_last_mouse_pos.y();
         if(event->buttons() & Qt::LeftButton){
-            double dx = win_dx / (m_pixels_per_unit*m_world_size);
-            double dy = -win_dy / (m_pixels_per_unit*m_world_size); // NB -
+            double dx = win_dx / m_pixels_per_unit;
+            double dy = -win_dy / m_pixels_per_unit; // NB -
             m_win_centre_x += dx;
             m_win_centre_y += dy;
             updateGL();
         }
         // else zoom, (TODO)
     }else{
-        renderable_set_t::iterator i;
         for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
             debug() << "sending mouse move event to" << *i;
             (*i)->mouseMoveEvent(MouseEvent(event, *i, *this));
         }
     }
+    renderable_set_t now_receiving_move;
+    // in all cases send the event to things that always track mouse movement:
+    for(i = m_renderables.begin(); i != m_renderables.end(); i++)
+        if((*i)->tracksMouse() && !m_owning_mouse.count(*i)){
+            MouseEvent m = MouseEvent(event, *i, *this);
+            if((*i)->bbox().contains(m.x, m.y)){
+                (*i)->mouseMoveEvent(m);
+                now_receiving_move.insert(*i);
+            }
+        }
+    // and send mouseGoneEvents to things that the mouse has left
+    for(i = m_receiving_move.begin(); i != m_receiving_move.end(); i++)
+        if(!now_receiving_move.count(*i))
+            (*i)->mouseGoneEvent();
+    m_receiving_move = now_receiving_move;
+
     m_last_mouse_pos = event->pos();
 }
 
@@ -191,7 +254,7 @@ void PipelineWidget::updateProjection(){
     glLoadIdentity();
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
-    glTranslatef(m_win_centre_x, m_win_centre_y, 0);
+    glTranslatef(m_win_centre_x/m_world_size, m_win_centre_y/m_world_size, 0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -214,7 +277,7 @@ void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
-    glTranslatef(m_win_centre_x, m_win_centre_y, 0);
+    glTranslatef(m_win_centre_x/m_world_size, m_win_centre_y/m_world_size, 0);
     glMatrixMode(GL_MODELVIEW);}
 
 static int roundToZ(double d){
@@ -231,10 +294,10 @@ void PipelineWidget::drawGrid(){
     
     // projected window coordinates:
     const double divisor = 2 * m_pixels_per_unit;
-    const double min_x = -m_win_centre_x * m_world_size - width()  / divisor;
-    const double min_y = -m_win_centre_y * m_world_size - height() / divisor;
-    const double max_x = -m_win_centre_x * m_world_size + width()  / divisor;
-    const double max_y = -m_win_centre_y * m_world_size + height() / divisor;
+    const double min_x = -m_win_centre_x - width()  / divisor;
+    const double min_y = -m_win_centre_y - height() / divisor;
+    const double max_x = -m_win_centre_x + width()  / divisor;
+    const double max_y = -m_win_centre_y + height() / divisor;
     
     const int min_grid_minor_x = roundToZ(min_x / grid_minor_spacing);
     const int min_grid_minor_y = roundToZ(min_y / grid_minor_spacing);

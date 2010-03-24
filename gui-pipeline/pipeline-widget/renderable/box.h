@@ -7,11 +7,15 @@
 class Box: public Renderable{
     public:
         Box(PipelineWidget& p, double w, double h)
-            : Renderable(p), m_width(w), m_height(h){
+            : Renderable(p), m_width(w), m_height(h), m_click_pos_x(0),
+              m_click_pos_y(0), m_mouseover(false){
         }
 
         virtual void draw(){
-            glColor4f(1.0, 1.0, 1.0, 0.5);
+            if(m_mouseover)
+                glColor4f(1.0, 0.0, 0.0, 0.5);
+            else
+                glColor4f(1.0, 1.0, 1.0, 0.5);
             glBegin(GL_QUADS);
             glVertex2f(0, 0);
             glVertex2f(0, -m_height);
@@ -24,6 +28,8 @@ class Box: public Renderable{
             if(event.buttons & Qt::LeftButton){
                 m_pos_x += event.x - m_click_pos_x;
                 m_pos_y += event.y - m_click_pos_y;
+            }else{
+                m_mouseover = true;
             }
             // need a re-draw
             m_parent.updateGL();
@@ -34,6 +40,19 @@ class Box: public Renderable{
             m_click_pos_y = event.y;
         }
 
+        virtual void mouseGoneEvent(){
+            m_mouseover = false;
+            m_parent.updateGL();
+        }
+        
+        virtual bool tracksMouse(){
+            return true;
+        }
+
+        virtual BBox bbox(){
+            BBox r = {0, -m_height, m_width, 0};
+            return r;
+        }
 
     private:
         double m_width;
@@ -41,6 +60,8 @@ class Box: public Renderable{
 
         double m_click_pos_x;
         double m_click_pos_y;
+
+        bool m_mouseover;
 };
 
 #endif // ndef __MENU_RENDERABLE_H__

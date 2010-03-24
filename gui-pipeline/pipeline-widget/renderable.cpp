@@ -6,11 +6,12 @@
 MouseEvent::MouseEvent(QMouseEvent* qm,
                        boost::shared_ptr<Renderable> r,
                        PipelineWidget const& p)
-    : x((qm->x() - p.width()/2) / p.m_pixels_per_unit + p.m_win_centre_x - r->m_pos_x),
-      y((p.height()/2 - qm->y()) / p.m_pixels_per_unit + p.m_win_centre_y - r->m_pos_y),
+    : x((qm->x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre_x - r->m_pos_x),
+      y((p.height()/2 - qm->y()) / p.m_pixels_per_unit - p.m_win_centre_y - r->m_pos_y),
       buttons(qm->buttons()){
       debug() << "MouseEvent constructed: x=" << x << "y=" << y
-              << "qm: x=" << qm->x() << "y=" << qm->y();
+              << "qm: x=" << qm->x() << "y=" << qm->y()
+              << "wc: x=" << p.m_win_centre_x << "y=" << p.m_win_centre_y;
 }
 
 

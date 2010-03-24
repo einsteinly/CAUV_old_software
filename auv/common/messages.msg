@@ -35,6 +35,12 @@ struct TimeStamp
     secs : int32;
     msecs : int32;
 }
+struct NodeParamValue{
+    type : int32;
+    intValue : int32;
+    floatValue : float;
+    stringValue : string;
+}
 
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
@@ -90,31 +96,37 @@ group pipeline
         children : list<NodeOutputArc>;
     }
 
-    message NodeAdded : 6
+    message RemoveNode : 6
     {
         nodeId : int32;
     }
 
-    message RemoveNode : 7
-    {
-        nodeId : int32;
-    }
-
-    message ClearPipeline : 8
+    message ClearPipeline : 7
     {
     }
 
-    message SetNodeParameter : 9
+    message SetNodeParameter : 8
     {
         nodeId : int32;
         paramId : string;
-        paramType : ParamType;
-        intValue : int32;
-        floatValue : float;
-        stringValue : string;
+        value : NodeParamValue;
+    }
+}
+
+group pipeline_gui
+{ 
+    message NodeAdded : 9
+    {
+        nodeId : int32;
     }
 
-    message GraphDescription : 10
+    message NodeParameters : 10
+    {
+        nodeId : int32;
+        values : map<string, NodeParamValue>;
+    }
+
+    message GraphDescription : 11
     {
     }
 }

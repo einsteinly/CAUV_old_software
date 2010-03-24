@@ -94,7 +94,7 @@ class ListType(Expr):
 
 class MapType(Expr):
     def __init__(self, keyType, valType):
-        self.valType = keyType
+        self.keyType = keyType
         self.valType = valType
     def __repr__(self):
         return "map< %s, %s >" % (self.keyType, self.valType)

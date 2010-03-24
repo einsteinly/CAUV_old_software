@@ -7,8 +7,11 @@
 #include <set>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include "renderable.h"
+
+class PipelineGuiCauvNode;
 
 class PipelineWidget: public QGLWidget{
     Q_OBJECT
@@ -55,6 +58,10 @@ class PipelineWidget: public QGLWidget{
         renderable_set_t m_renderables;
         renderable_set_t m_owning_mouse; // which renderables are involved in
                                          // the current mouse event
+        renderable_set_t m_receiving_move; // renderables currently receiving
+                                           // move events
+
+        boost::thread m_cauv_node_thread;
 };
 
 
