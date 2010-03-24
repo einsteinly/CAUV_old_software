@@ -1,14 +1,12 @@
-#include <QMainWindow>
+#include <QApplication>
 
-#include "ui_standalone.h"
+#include "PipelineWidget.h"
  
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    QMainWindow mw;
-    Ui_standalone ui;
-    ui.setupUi(&mw);
+    PipelineWidget w;
     
-    mw.show();
+    w.show();
     return app.exec();
 }

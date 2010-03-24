@@ -20,6 +20,16 @@ class PipelineWidget: public QGLWidget{
         void mousePressEvent(QMouseEvent *event);
         void mouseMoveEvent(QMouseEvent *event);
     
+    private:
+        void updateProjection();
+        
+        double m_win_centre_x;    // projected coordinates of the window
+        double m_win_centre_y;    //
+        double m_win_aspect;      // actually sqrt(x / y)
+        double m_win_scale;       // width = scale*aspect, height = scale/aspect
+        double m_pixels_per_unit; // size on screen of a line of length 1
+        
+        QPoint m_last_mouse_pos;
 };
 
 

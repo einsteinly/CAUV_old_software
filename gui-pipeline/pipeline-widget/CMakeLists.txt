@@ -4,7 +4,7 @@ project (pipeline-widget)
 find_package(OpenGL REQUIRED)
 
 # for <common/includesstuff> etc
-include (${AUV_SOURCE_DIR})
+include_directories (${AUV_SOURCE_DIR})
 
 set (
     pipeline-widget_srcs

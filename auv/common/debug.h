@@ -12,10 +12,10 @@
 #include <boost/date_time.hpp>  
 #include <boost/utility.hpp>  
 
-#define DEBUG_MUTEX_OUTPUT
-#define DEBUG_PRINT_THREAD
+#define CAUV_DEBUG_MUTEX_OUTPUT
+#define CAUV_DEBUG_PRINT_THREAD
 
-#if defined(DEBUG_MUTEX_OUTPUT) || defined(DEBUG_PRINT_THREAD)
+#if defined(CAUV_DEBUG_MUTEX_OUTPUT) || defined(CAUV_DEBUG_PRINT_THREAD)
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
 #endif
@@ -25,11 +25,11 @@
 
 
 /* usage:
- *   debug(1) << stuff; // prints & logs "[HH:MM:SS.fffffff] stuff", if (DEBUG <= 1)
+ *   debug(1) << stuff; // prints & logs "[HH:MM:SS.fffffff] stuff", if (CAUV_DEBUG <= 1)
  *   debug() << stuff << more_stuff << "thing"; // same as debug(1) << ...
  *   debug(-7) << stuff; // only print when DEBUG <= -7
  *
- *   if DEBUG is not defined, debug() << ... statements do not print OR LOG
+ *   if CAUV_DEBUG is not defined, debug() << ... statements do not print OR LOG
  *   anything
  *
  *   info() << stuff; // prints (cout) and logs [HH:MM:SS.fffffff] stuff
@@ -38,7 +38,7 @@
  *
  *   warning() << stuff; // prints (cerr) and logs [HH:MM:SS.fffffff] WARNING: stuff
  *
- * if DEBUG_PRINT_THREAD is defined, the timestamp has the thread id appended:
+ * if CAUV_DEBUG_PRINT_THREAD is defined, the timestamp has the thread id appended:
  *   [HH:MM:SS.fffffff T=0x123456] 
  *
  * A newline is added automatically, spaces are added automatically between
@@ -84,7 +84,7 @@ class SmartStreamBase : boost::noncopyable
     private:
         void printToStream(std::ostream& os)
         {
-            #ifdef DEBUG_MUTEX_OUTPUT
+            #ifdef CAUV_DEBUG_MUTEX_OUTPUT
                 boost::lock_guard<boost::recursive_mutex> l(getMutex(os));
             #endif
             boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
@@ -96,7 +96,7 @@ class SmartStreamBase : boost::noncopyable
                 boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
                 os << m_col << "[" << t;
 
-                #ifdef DEBUG_PRINT_THREAD
+                #ifdef CAUV_DEBUG_PRINT_THREAD
                     os << " T=" << boost::this_thread::get_id();
                 #endif
 
@@ -169,7 +169,7 @@ class SmartStreamBase : boost::noncopyable
             return lf;
         }
 
-#if defined(DEBUG_MUTEX_OUTPUT)
+#if defined(CAUV_DEBUG_MUTEX_OUTPUT)
         // protect cout & cerr to make sure output doesn't become garbled
         static boost::recursive_mutex& _getMutex(std::ostream& s){
             typedef boost::shared_ptr<boost::recursive_mutex> mutex_ptr;
@@ -196,7 +196,7 @@ class SmartStreamBase : boost::noncopyable
         bool m_print;
 };
 
-#if defined(DEBUG)
+#if defined(CAUV_DEBUG)
 struct debug : public SmartStreamBase
 {
     debug(int level=1) : SmartStreamBase(std::cout, "", BashColour::Cyan), m_level(level)
@@ -206,7 +206,7 @@ struct debug : public SmartStreamBase
     template<typename T>
     debug& operator<<(T const& a)
     {
-        if(int(DEBUG) <= m_level)
+        if(int(CAUV_DEBUG) <= m_level)
         {
             // convert to a string
             std::stringstream s;
@@ -222,7 +222,7 @@ struct debug : public SmartStreamBase
      */
     debug& operator<<(std::ostream& (*manip)(std::ostream&))
     {
-        if(int(DEBUG) <= m_level)
+        if(int(CAUV_DEBUG) <= m_level)
         {
             // apply to a string
             std::stringstream s;

@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 
 project (CAUV)
 
-set (DEBUG_FLAGS "-DDEBUG -Wall -g")
+set (DEBUG_FLAGS "-DCAUV_DEBUG -Wall -g")
 set (OPTIMISATION_FLAGS "-O3 -ffast-math")
 
 set (CMAKE_CXX_FLAGS "${DEBUG_FLAGS}")
