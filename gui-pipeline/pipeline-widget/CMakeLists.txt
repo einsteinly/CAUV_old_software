@@ -3,6 +3,20 @@ project (pipeline-widget)
 # shiny OpenGL
 find_package(OpenGL REQUIRED)
 
+# boost: 
+find_package (Boost 1.40)
+
+if (Boost_VERSION LESS 104000)
+    message(WARNING "Boost version too low (${Boost_VERSION}), assuming SRCF paths")
+    set (Boost_INCLUDE_DIRS "/societies/cauv/install/include/")
+    set (Boost_LIBRARY_DIRS "/societies/cauv/install/lib/")
+endif (Boost_VERSION LESS 104000)
+
+set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
+include_directories (${Boost_INCLUDE_DIRS})
+link_directories (${Boost_LIBRARY_DIRS})
+
+
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
 
@@ -10,6 +24,7 @@ set (
     pipeline-widget_srcs
     pipelineWidget.cpp
     pipelineWidgetPlugin.cpp
+    renderable.cpp
 )
 
 set (
