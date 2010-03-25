@@ -28,11 +28,12 @@ class Box: public Renderable{
             if(event.buttons & Qt::LeftButton){
                 m_pos_x += event.x - m_click_pos_x;
                 m_pos_y += event.y - m_click_pos_y;
-            }else{
+                // need a re-draw
+                m_parent.updateGL();
+            }else if(!m_mouseover){
                 m_mouseover = true;
+                m_parent.updateGL();
             }
-            // need a re-draw
-            m_parent.updateGL();
         }
 
         virtual void mousePressEvent(MouseEvent const& event){

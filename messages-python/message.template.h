@@ -51,8 +51,9 @@ namespace $e.name
     enum e
     {
         #for $i, $v in $enumerate($e.values)
-        $v.name = $v.value#if $i < $len($e.values) - 1#,#end if# 
+        $v.name = $v.value,
         #end for
+        NumValues = $len($e.values)
     };
 } // namespace $e.name
 #end for

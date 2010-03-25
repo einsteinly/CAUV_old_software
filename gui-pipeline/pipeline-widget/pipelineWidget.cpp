@@ -11,6 +11,7 @@
 #include <common/cauv_node.h>
 #include <common/messages.h>
 
+#include "buildMenus.h"
 #include "renderable/box.h"
 
 class PipelineGuiMsgObs: public MessageObserver{
@@ -41,6 +42,11 @@ class PipelineGuiCauvNode: public CauvNode{
                 boost::make_shared<PipelineGuiMsgObs>(boost::ref(p))
             );
         }
+        void sendMessage(boost::shared_ptr<Message> m){
+            // TODO: need mutex protection? think probably not
+            debug() << "PGCN::sendMessage" << m;
+            mailbox()->sendMessage(m, SAFE_MESS);
+        }
     private:
         PipelineWidget& m_widget;
 };
@@ -48,8 +54,9 @@ class PipelineGuiCauvNode: public CauvNode{
 // creating threads taking parameters (especially in a ctor-initializer) is a
 // little tricky, using an intermediate function smooths the ride a bit:
 void spawnPGCN(PipelineWidget& p){
-    boost::shared_ptr<CauvNode> pgcn =
+    boost::shared_ptr<PipelineGuiCauvNode> pgcn =
         boost::make_shared<PipelineGuiCauvNode>(boost::ref(p));
+    p.setCauvNode(pgcn);
     pgcn->run();
     warning() << __func__ << "run() finished";
 }
@@ -58,8 +65,9 @@ PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre_x(0), m_win_centre_y(0),
       m_win_aspect(1), m_win_scale(10),
-      m_pixels_per_unit(10),
+      m_pixels_per_unit(1),
       m_last_mouse_pos(),
+      m_cauv_node(),
       m_cauv_node_thread(boost::thread(spawnPGCN, boost::ref(*this))){
     // TODO: more appropriate QGLFormat?
     
@@ -75,10 +83,49 @@ QSize PipelineWidget::sizeHint() const{
     return QSize(800, 800);
 }
 
+void PipelineWidget::remove(Renderable const* r){
+    renderable_set_t::iterator i;
+
+    // ugh, TODO: some clever wrapping so we can find shared_ptr by ptr
+    for(i = m_renderables.begin(); i != m_renderables.end(); i++)
+        if((*i).get() == r)
+            break;
+
+    if(i != m_renderables.end())
+        m_renderables.erase(i);
+    else
+        warning() << "cannot remove unknown renderable:" << r;
+}
+
+void PipelineWidget::add(renderable_ptr_t r){
+    // TODO: sensible layout hint
+    add(r, 0, 0);
+}
+
+void PipelineWidget::add(renderable_ptr_t r, double x, double y){
+    r->m_pos_x = x;
+    r->m_pos_y = y;
+    m_renderables.insert(r);
+}
+
+void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
+    if(m_cauv_node)
+        warning() << "PipelineWidget::setCauvNode already set";
+    m_cauv_node = c;
+}
+
+void PipelineWidget::sendMessage(boost::shared_ptr<Message> m){
+    if(m_cauv_node)
+        m_cauv_node->sendMessage(m);
+    else
+        error() << "PipelineWidget::sendMessage no associated cauv node";
+}
+
 void PipelineWidget::initializeGL(){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE); 
+    glDepthFunc(GL_LEQUAL);
     
     glShadeModel(GL_SMOOTH);
     glCullFace(GL_BACK);
@@ -99,20 +146,20 @@ void PipelineWidget::paintGL(){
     // debug stuff:
     glBegin(GL_LINES);
     glColor4f(1.0, 0.0, 0.0, 0.5);
-    glVertex2f(-1.0f, 0.0f);
-    glVertex2f(1.0f, 0.0f);
+    glVertex2f(-10.0f, 0.0f);
+    glVertex2f(10.0f, 0.0f);
     
     glColor4f(0.0, 1.0, 0.0, 0.5);
-    glVertex2f(0.0f, -1.0f);
-    glVertex2f(0.0f, 1.0f);
+    glVertex2f(0.0f, -10.0f);
+    glVertex2f(0.0f, 10.0f);
 
     glColor4f(1.0, 0.0, 0.0, 0.5);
-    glVertex2f(-2.0f, -1.75f);
-    glVertex2f(-1.5f, -1.75f);
+    glVertex2f(-20.0f, -17.5f);
+    glVertex2f(-15.0f, -17.5f);
     
     glColor4f(0.0, 1.0, 0.0, 0.5);
-    glVertex2f(-1.75f, -2.0f);
-    glVertex2f(-1.75f, -1.5f);
+    glVertex2f(-17.5f, -20.0f);
+    glVertex2f(-17.5f, -15.0f);
     glEnd();
 
     // draw everything!
@@ -188,6 +235,12 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 		}
 	}
 
+    if(event->buttons() & Qt::RightButton){
+        MouseEvent proxy(event, boost::make_shared<NullRenderable>(), *this);
+        add(buildAddNodeMenu(boost::ref(*this)), proxy.x, proxy.y);
+        // need a re-draw
+        this->updateGL();
+    }
 
     m_last_mouse_pos = event->pos();
 }
@@ -278,7 +331,8 @@ void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
     glTranslatef(m_win_centre_x/m_world_size, m_win_centre_y/m_world_size, 0);
-    glMatrixMode(GL_MODELVIEW);}
+    glMatrixMode(GL_MODELVIEW);
+}
 
 static int roundToZ(double d){
     if (d < 0.0)
@@ -289,8 +343,8 @@ static int roundToZ(double d){
 
 void PipelineWidget::drawGrid(){
     // only draw grid that will be visible:
-    const double grid_major_spacing = 10;
-    const double grid_minor_spacing = 1;
+    const double grid_major_spacing = 100;
+    const double grid_minor_spacing = 10;
     
     // projected window coordinates:
     const double divisor = 2 * m_pixels_per_unit;

@@ -16,6 +16,10 @@ set (LIBS ${LIBS} ${Boost_LIBRARIES})
 include_directories (${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
 
+# FTGL (for text rendering)
+find_package (FTGL)
+include_directories (${FTGL_INCLUDE_DIRS} REQUIRED)
+
 
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
@@ -25,6 +29,8 @@ set (
     pipelineWidget.cpp
     pipelineWidgetPlugin.cpp
     renderable.cpp
+    buildMenus.cpp
+    renderable/text.cpp
 )
 
 set (
@@ -49,6 +55,7 @@ add_library (
 target_link_libraries (
     pipeline-widget
     common
+    ${FTGL_LIBRARIES}
     ${OPENGL_LIBRARY}
     ${QT_LIBRARIES}
 )

@@ -58,5 +58,12 @@ class Renderable{
         PipelineWidget& m_parent;
 };
 
+class NullRenderable: public Renderable{
+    public:
+        NullRenderable() // hackery, please ignore
+            : Renderable(reinterpret_cast<PipelineWidget&>(*this)) { }
+        void draw() { }
+};
+
 #endif // ndef __RENDERABLE_H__
 

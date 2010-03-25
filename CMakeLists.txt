@@ -2,6 +2,14 @@ cmake_minimum_required (VERSION 2.8)
 
 project (CAUV)
 
+# set paths for package search scripts
+set (CMAKE_MODULE_PATH ${CAUV_SOURCE_DIR} "${CAUV_SOURCE_DIR}/cmake/")
+set (ssrcspread_DIR "${CAUV_SOURCE_DIR}/cmake/")
+set (Spread_DIR "${CAUV_SOURCE_DIR}/cmake/")
+set (ftdi_DIR "${CAUV_SOURCE_DIR}/cmake/")
+set (FTGL_DIR "${CAUV_SOURCE_DIR}/cmake/")
+
+
 set (DEBUG_FLAGS "-DCAUV_DEBUG -Wall -g")
 set (OPTIMISATION_FLAGS "-O3 -ffast-math")
 

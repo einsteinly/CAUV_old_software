@@ -2,13 +2,6 @@ project (AUV)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")
 
-# set paths for package search scripts
-set (CMAKE_MODULE_PATH ${AUV_SOURCE_DIR} "${AUV_SOURCE_DIR}/cmake/")
-set (ssrcspread_DIR "${AUV_SOURCE_DIR}/cmake/")
-set (Spread_DIR "${AUV_SOURCE_DIR}/cmake/")
-set (ftdi_DIR "${AUV_SOURCE_DIR}/cmake/")
-
-
 # everything needs boost: 
 find_package (Boost 1.40)
 

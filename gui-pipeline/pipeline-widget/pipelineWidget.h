@@ -12,6 +12,7 @@
 #include "renderable.h"
 
 class PipelineGuiCauvNode;
+class Message;
 
 class PipelineWidget: public QGLWidget{
     Q_OBJECT
@@ -30,6 +31,10 @@ class PipelineWidget: public QGLWidget{
         
         void remove(Renderable const*);
         void add(boost::shared_ptr<Renderable>);
+        void add(boost::shared_ptr<Renderable>, double x, double y);
+        
+        void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
+        void sendMessage(boost::shared_ptr<Message>);
     
     protected:
         void initializeGL();
@@ -60,7 +65,8 @@ class PipelineWidget: public QGLWidget{
                                          // the current mouse event
         renderable_set_t m_receiving_move; // renderables currently receiving
                                            // move events
-
+        
+        boost::shared_ptr<PipelineGuiCauvNode> m_cauv_node;
         boost::thread m_cauv_node_thread;
 };
 
