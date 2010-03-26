@@ -8,12 +8,18 @@
 class Renderable;
 class PipelineWidget;
 
-/* MouseEvents are in projected coordinates */
+/* MouseEvents are in projected coordinates: the constructors are used to
+ * referr the event to another context
+ */
 struct MouseEvent{
+    /* referr from qt coordinates to top-level renderables: */
     MouseEvent(QMouseEvent* qm,
                boost::shared_ptr<Renderable> r,
                PipelineWidget const& p);
-
+    /* referr from a renderable to children (ie, just offset position) */
+    MouseEvent(MouseEvent const& m,
+               boost::shared_ptr<Renderable> r);
+        
     double x, y;
     Qt::MouseButtons buttons;
 };
@@ -30,7 +36,7 @@ struct BBox{
 class Renderable{
     public:
         Renderable(PipelineWidget& p, double x = 0, double y = 0);
-        virtual void draw() = 0;
+        virtual void draw(bool picking) = 0;
 
         /* overload to receive mouse events
          */
@@ -62,7 +68,7 @@ class NullRenderable: public Renderable{
     public:
         NullRenderable() // hackery, please ignore
             : Renderable(reinterpret_cast<PipelineWidget&>(*this)) { }
-        void draw() { }
+        virtual void draw(bool) { }
 };
 
 #endif // ndef __RENDERABLE_H__

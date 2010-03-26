@@ -32,6 +32,7 @@ class PipelineWidget: public QGLWidget{
         void remove(Renderable const*);
         void add(boost::shared_ptr<Renderable>);
         void add(boost::shared_ptr<Renderable>, double x, double y);
+        void addMenu(boost::shared_ptr<Renderable>, double x, double y);
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void sendMessage(boost::shared_ptr<Message>);
@@ -61,6 +62,8 @@ class PipelineWidget: public QGLWidget{
         QPoint m_last_mouse_pos;
         
         renderable_set_t m_renderables;
+        renderable_set_t m_menus;
+
         renderable_set_t m_owning_mouse; // which renderables are involved in
                                          // the current mouse event
         renderable_set_t m_receiving_move; // renderables currently receiving

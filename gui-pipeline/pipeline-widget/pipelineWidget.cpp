@@ -72,7 +72,7 @@ PipelineWidget::PipelineWidget(QWidget *parent)
     // TODO: more appropriate QGLFormat?
     
     setMouseTracking(true);
-    m_renderables.insert(boost::make_shared<Box>(boost::ref(*this), 1, 1));
+    m_renderables.insert(boost::make_shared<Box>(boost::ref(*this), 20, 20));
 }
 
 QSize PipelineWidget::minimumSizeHint() const{
@@ -105,6 +105,13 @@ void PipelineWidget::add(renderable_ptr_t r){
 void PipelineWidget::add(renderable_ptr_t r, double x, double y){
     r->m_pos_x = x;
     r->m_pos_y = y;
+    m_renderables.insert(r);
+}
+
+void PipelineWidget::addMenu(renderable_ptr_t r, double x, double y){
+    r->m_pos_x = x;
+    r->m_pos_y = y;
+    m_menus.insert(r);
     m_renderables.insert(r);
 }
 
@@ -167,7 +174,7 @@ void PipelineWidget::paintGL(){
     for(i = m_renderables.begin(); i != m_renderables.end(); i++){
         glPushMatrix();
         glTranslatef((*i)->m_pos_x, (*i)->m_pos_y, 0);
-        (*i)->draw();
+        (*i)->draw(false);
         glPopMatrix();
     }
 }
@@ -211,7 +218,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
             name_map[n] = *i;
             glPushMatrix();
             glTranslatef((*i)->m_pos_x, (*i)->m_pos_y, 0);
-            (*i)->draw();
+            (*i)->draw(true);
             glPopMatrix();
         }
     }
@@ -234,15 +241,25 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
             }
 		}
 	}
+    bool need_redraw = false;
 
+    if(std::find_first_of(m_owning_mouse.begin(), m_owning_mouse.end(),
+                          m_menus.begin(), m_menus.end()) == m_owning_mouse.end()){
+        for(i = m_menus.begin(); i != m_menus.end(); i++)
+            m_renderables.erase(*i);
+        m_menus.clear();
+        need_redraw = true;
+    }
     if(event->buttons() & Qt::RightButton){
         MouseEvent proxy(event, boost::make_shared<NullRenderable>(), *this);
-        add(buildAddNodeMenu(boost::ref(*this)), proxy.x, proxy.y);
-        // need a re-draw
-        this->updateGL();
+        addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.x, proxy.y);
+        need_redraw = true; 
     }
-
+    
     m_last_mouse_pos = event->pos();
+
+    if(need_redraw)
+        this->updateGL();
 }
 
 void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){

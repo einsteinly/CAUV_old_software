@@ -14,6 +14,12 @@ MouseEvent::MouseEvent(QMouseEvent* qm,
                 << "wc: x=" << p.m_win_centre_x << "y=" << p.m_win_centre_y;
 }
 
+MouseEvent::MouseEvent(MouseEvent const& m,
+                       boost::shared_ptr<Renderable> r)
+    : x(m.x - r->m_pos_x), y(m.y - r->m_pos_y),
+      buttons(m.buttons){
+}
+
 
 Renderable::Renderable(PipelineWidget& p, double x, double y)
     : m_pos_x(x), m_pos_y(y), m_parent(p){

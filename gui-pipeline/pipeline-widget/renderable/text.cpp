@@ -10,11 +10,30 @@
 
 #include <common/debug.h>
 
+
+static void glDBGprintErr(GLuint err){
+	switch(err){
+		case 0: break;
+		case GL_INVALID_ENUM:      error() << "GL_INVALID_ENUM"; break;
+		case GL_INVALID_VALUE:     error() << "GL_INVALID_VALUE"; break;
+		case GL_INVALID_OPERATION: error() << "GL_INVALID_OPERATION"; break;
+		case GL_STACK_OVERFLOW:    error() << "GL_STACK_OVERFLOW"; break;
+		case GL_STACK_UNDERFLOW:   error() << "GL_STACK_UNDERFLOW"; break;
+		case GL_OUT_OF_MEMORY:     error() << "GL_OUT_OF_MEMORY"; break;
+		default:                   error() << "unknown OpenGL error"; break;
+	}
+}
+
+static void glDBGCheckError(){
+    glDBGprintErr(glGetError());
+}
+
+
 Text::Text(PipelineWidget& p, std::string const& text, std::string const& font, int pt)
     : Renderable(boost::ref(p)), m_bbox(), m_font(std::make_pair(font, pt)), m_text(text){
 }
         
-void Text::draw(){
+void Text::draw(bool){
     if(!font()) return;
 
     glEnable(GL_TEXTURE_2D);
@@ -23,9 +42,13 @@ void Text::draw(){
 
     glColor4f(0.0, 0.0, 0.0, 1.0);
     
+    glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT |
+                 GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
     glPushMatrix();
     font()->Render(m_text.c_str());
+    glDBGCheckError();
     glPopMatrix();
+    glPopAttrib();
 
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);

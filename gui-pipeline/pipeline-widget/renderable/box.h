@@ -11,7 +11,7 @@ class Box: public Renderable{
               m_click_pos_y(0), m_mouseover(false){
         }
 
-        virtual void draw(){
+        virtual void draw(bool){
             if(m_mouseover)
                 glColor4f(1.0, 0.0, 0.0, 0.5);
             else

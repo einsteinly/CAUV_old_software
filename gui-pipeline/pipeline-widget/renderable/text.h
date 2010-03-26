@@ -14,7 +14,7 @@ class Text: public Renderable{
              std::string const& font="LiberationSans-Regular.ttf", int pt=10);
         
         virtual bool acceptsMouseEvents(){ return false; }
-        virtual void draw();
+        virtual void draw(bool);
         virtual BBox bbox();
     
     protected:
