@@ -3,19 +3,12 @@ project (AUV)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")
 
 # everything needs boost: 
-find_package (Boost 1.40)
-
-if (Boost_VERSION LESS 104000)
-    message(WARNING "Boost version too low (${Boost_VERSION}), assuming SRCF paths")
-    set (Boost_INCLUDE_DIRS "/societies/cauv/install/include/")
-    set (Boost_LIBRARY_DIRS "/societies/cauv/install/lib/")
-endif (Boost_VERSION LESS 104000)
-
+find_package (CAUVBoost)
 set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
 include_directories (${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
-# message ("Boost include dirs: ${Boost_INCLUDE_DIRS}")
-# message ("Boost lib dirs: ${Boost_LIBRARY_DIRS}")
+message ("Boost include dirs: ${Boost_INCLUDE_DIRS}")
+message ("Boost lib dirs: ${Boost_LIBRARY_DIRS}")
 
 # openCV paths:
 find_package (OpenCV)

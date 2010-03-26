@@ -1,6 +1,6 @@
 #include "text.h"
 
-#include "ftgl/ftgl.h"
+#include "ftgl.h"
 
 #include <QtOpenGL>
 

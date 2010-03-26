@@ -1,6 +1,6 @@
 #include <QApplication>
 
-#include "PipelineWidget.h"
+#include "pipelineWidget.h"
  
 int main(int argc, char *argv[])
 {

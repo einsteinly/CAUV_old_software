@@ -1,6 +1,5 @@
 project (standalone)
 
-include_directories (${pipeline-widget_SOURCE_DIR})
 
 set (
     standalone_srcs
@@ -14,11 +13,12 @@ set (
 
 #qt4_wrap_ui (standalone_UIS_H ${standalone_UIS})
 
+include_directories (${pipeline-widget_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+link_directories (${pipeline-widget_BINARY_DIR})
 
 add_executable (standalone ${standalone_srcs} ${standalone_UIS_H})
 
-link_directories (${pipeline-widget_BINARY_DIR})
 target_link_libraries (
     standalone
     pipeline-widget

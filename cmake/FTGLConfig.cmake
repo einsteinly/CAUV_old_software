@@ -17,7 +17,8 @@ libfind_pkg_check_modules(FTGL_PKGCONF FTGL)
 
 # Include dir
 find_path(FTGL_INCLUDE_DIR
-  NAMES ftgl
+  NAMES ftgl.h
+  PATH_SUFFIXES FTGL
   PATHS ${FTGL_PKGCONF_INCLUDE_DIRS}
 )
 #message ("FTGL_PKGCONF_INCLUDE_DIRS=${FTGL_PKGCONF_INCLUDE_DIRS}")
@@ -25,7 +26,7 @@ find_path(FTGL_INCLUDE_DIR
 
 # Finally the library itself
 find_library(FTGL_LIBRARY
-  NAMES ftgl 
+  NAMES ftgl
   PATHS ${FTGL_PKGCONF_LIBRARY_DIRS}
 )
 #message ("FTGL_PKGCONF_LIBRARY_DIRS=${FTGL_PKGCONF_LIBRARY_DIRS}")
