@@ -36,22 +36,19 @@ Text::Text(PipelineWidget& p, std::string const& text, std::string const& font, 
 void Text::draw(bool){
     if(!font()) return;
 
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glColor4f(0.0, 0.0, 0.0, 1.0);
-    
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT |
                  GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
     glPushMatrix();
-    font()->Render(m_text.c_str());
-    glDBGCheckError();
-    glPopMatrix();
-    glPopAttrib();
-
+    
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0, 0.0, 0.0, 1.0);
+    font()->Render(m_text.c_str());
+    glDBGCheckError();
+
+    glPopMatrix();
+    glPopAttrib();
 }
 
 BBox Text::bbox(){

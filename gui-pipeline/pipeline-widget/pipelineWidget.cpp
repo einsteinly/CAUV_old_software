@@ -10,6 +10,7 @@
 #include <common/debug.h>
 #include <common/cauv_node.h>
 #include <common/messages.h>
+#include <common/bash_cout.h>
 
 #include "buildMenus.h"
 #include "renderable/box.h"
@@ -20,13 +21,13 @@ class PipelineGuiMsgObs: public MessageObserver{
             : m_widget(p){
         }
 
-        void onNodeAddedMessage(boost::shared_ptr<const ImageMessage> m){
-            debug() << "PiplineGuiMsgObs:" << __func__ << m;
+        virtual void onNodeAddedMessage(boost::shared_ptr<const NodeAddedMessage> m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             //m_widget->addNode();
         }
 
-        void onNodeParametersMessage(boost::shared_ptr<const NodeParametersMessage> m){
-            debug() << "PiplineGuiMsgObs:" << __func__ << m;
+        virtual void onNodeParametersMessage(boost::shared_ptr<const NodeParametersMessage> m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
         }
 
     private:
@@ -37,14 +38,25 @@ class PipelineGuiCauvNode: public CauvNode{
     public:
         PipelineGuiCauvNode(PipelineWidget& p)
             : CauvNode("pipe-gui"), m_widget(p){
-            mailbox()->joinGroup("pipeline_gui");
-            mailboxMonitor()->addObserver(
-                boost::make_shared<PipelineGuiMsgObs>(boost::ref(p))
-            );
+            debug() << "PGCN constructed";
         }
+
+        void onRun(){
+            debug() << "PGCN::onRun()";
+            mailbox()->joinGroup("pl_gui");
+            mailboxMonitor()->addObserver(
+                boost::make_shared<PipelineGuiMsgObs>(boost::ref(m_widget))
+            );
+            #ifdef CAUV_DEBUG
+            mailboxMonitor()->addObserver(
+                boost::make_shared<DebugMessageObserver>()
+            );
+            #endif
+        }
+
         void sendMessage(boost::shared_ptr<Message> m){
             // TODO: need mutex protection? think probably not
-            debug() << "PGCN::sendMessage" << m;
+            debug() << "PGCN::sendMessage" << *m;
             mailbox()->sendMessage(m, SAFE_MESS);
         }
     private:
@@ -182,7 +194,7 @@ void PipelineWidget::paintGL(){
 void PipelineWidget::resizeGL(int width, int height){
     m_win_aspect = sqrt(double(width) / height);
     m_win_scale = sqrt(width*height) / m_pixels_per_unit;
-    debug() << __func__
+    debug(-1) << __func__
             << "width=" << width << "height=" << height
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale;
     
@@ -243,13 +255,15 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 	}
     bool need_redraw = false;
 
-    if(std::find_first_of(m_owning_mouse.begin(), m_owning_mouse.end(),
-                          m_menus.begin(), m_menus.end()) == m_owning_mouse.end()){
+    //if(std::find_first_of(m_owning_mouse.begin(), m_owning_mouse.end(),
+    //                      m_menus.begin(), m_menus.end()) == m_owning_mouse.end()){
+    if(m_menus.size()){
         for(i = m_menus.begin(); i != m_menus.end(); i++)
             m_renderables.erase(*i);
         m_menus.clear();
         need_redraw = true;
     }
+    //}
     if(event->buttons() & Qt::RightButton){
         MouseEvent proxy(event, boost::make_shared<NullRenderable>(), *this);
         addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.x, proxy.y);
@@ -314,7 +328,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
 void PipelineWidget::updateProjection(){
     double w = (m_win_scale * m_win_aspect) / m_world_size;
     double h = (m_win_scale / m_win_aspect) / m_world_size;
-    debug() << __func__
+    debug(-1) << __func__
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
@@ -331,7 +345,7 @@ void PipelineWidget::updateProjection(){
 void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     double w = (m_win_scale * m_win_aspect) / m_world_size;
     double h = (m_win_scale / m_win_aspect) / m_world_size;
-    debug() << __func__
+    debug(-1) << __func__
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
@@ -380,7 +394,7 @@ void PipelineWidget::drawGrid(){
     const int max_grid_major_x = roundToZ(max_x / grid_major_spacing);
     const int max_grid_major_y = roundToZ(max_y / grid_major_spacing);
     
-    debug(-1) << "min_x=" << min_x << "max_x=" << max_x
+    debug(-2) << "min_x=" << min_x << "max_x=" << max_x
             << "min_y=" << min_y << "max_y=" << max_y << "\n\t"
             << "min_grid_minor_x=" << min_grid_minor_x
             << "max_grid_minor_x=" << max_grid_minor_x << "\n\t"

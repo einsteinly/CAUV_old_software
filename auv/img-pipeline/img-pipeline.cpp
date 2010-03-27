@@ -25,7 +25,8 @@ void ImagePipelineNode::onRun()
 {
     mailbox()->joinGroup("image");
     mailbox()->joinGroup("pipeline");
-    #if defined(DEBUG)
+    mailbox()->joinGroup("pl_gui");
+    #if defined(CAUV_DEBUG)
     eventMonitor()->addObserver(boost::make_shared<TestMBObserver>()); 
     mailboxMonitor()->addObserver(boost::make_shared<DebugMessageObserver>());
     #endif

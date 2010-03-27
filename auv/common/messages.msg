@@ -113,7 +113,7 @@ group pipeline
     }
 }
 
-group pipeline_gui
+group pl_gui
 { 
     message NodeAdded : 9
     {

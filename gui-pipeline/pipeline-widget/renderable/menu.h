@@ -116,13 +116,12 @@ class Menu: public Renderable{
             double max_x = 0;
             double min_x = 0;
             double y_pos = 0;
-            double previous_height = 0;
-            for(i = items.begin(); i != items.end(); i++){
+            double prev_height = 0;
+            for(i = items.begin(); i != items.end(); i++, y_pos -= prev_height){
                 item_ptr ip = boost::make_shared<item_t>(boost::ref(p), *i);
-                m_items.push_back(ip);
+                m_items.push_back(ip);                
                 ip->m_pos_y = y_pos + ip->bbox().ymin;
-                y_pos -= previous_height;
-                previous_height = ip->bbox().ymax - ip->bbox().ymin;
+                prev_height = ip->bbox().ymax - ip->bbox().ymin;
                 if(ip->bbox().xmax > max_x)
                     max_x = ip->bbox().xmax;
                 if(ip->bbox().xmin < min_x)
