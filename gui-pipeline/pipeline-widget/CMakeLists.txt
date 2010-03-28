@@ -30,7 +30,10 @@ set (
     pipelineWidgetPlugin.cpp
     renderable.cpp
     buildMenus.cpp
+    mouseEvent.cpp
     renderable/text.cpp
+    renderable/node.cpp
+    renderable/draggable.cpp
 )
 
 set (

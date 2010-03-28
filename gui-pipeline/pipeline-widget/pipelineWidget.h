@@ -5,34 +5,56 @@
 #include <QDesignerCustomWidgetInterface>
 
 #include <set>
+#include <map>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include "renderable.h"
+#include "mouseEvent.h"
 
 class PipelineGuiCauvNode;
 class Message;
+class Renderable;
+class Node;
+class Menu;
 
 class PipelineWidget: public QGLWidget{
     Q_OBJECT
-    // private typedefs:
+    // public typedefs:
+    public:
         typedef boost::shared_ptr<Renderable> renderable_ptr_t;
+        typedef boost::shared_ptr<Node> node_ptr_t;
+        typedef boost::shared_ptr<Menu> menu_ptr_t;
+        // TODO: this should really be synchronised with pipelineTypes.h! (need
+        // a pipeline namespace to do that without confusion about Nodes though)
+        typedef int32_t node_id;
+
+    private:
+    // private typedefs:
         typedef std::set<renderable_ptr_t> renderable_set_t;
+        typedef std::map<node_id, node_ptr_t> node_map_t;
+
     // friends:
         friend MouseEvent::MouseEvent(QMouseEvent*,
-                                      boost::shared_ptr<Renderable>,
-                                      PipelineWidget const&);    
+                                      renderable_ptr_t,
+                                      PipelineWidget const&);
+        friend MouseEvent::MouseEvent(renderable_ptr_t,
+                                      PipelineWidget const&);  
     public:
         PipelineWidget(QWidget *parent = 0);
     
         QSize minimumSizeHint() const;        
         QSize sizeHint() const;
         
-        void remove(Renderable const*);
-        void add(boost::shared_ptr<Renderable>);
-        void add(boost::shared_ptr<Renderable>, double x, double y);
-        void addMenu(boost::shared_ptr<Renderable>, double x, double y);
+        void remove(renderable_ptr_t);
+        void remove(menu_ptr_t);
+        void remove(node_ptr_t);
+        void add(renderable_ptr_t);
+        void add(renderable_ptr_t, double x, double y);
+        void addMenu(menu_ptr_t, double x, double y);
+        void addNode(node_ptr_t);
+
+        node_ptr_t node(node_id const&);
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void sendMessage(boost::shared_ptr<Message>);
@@ -44,6 +66,9 @@ class PipelineWidget: public QGLWidget{
         void mousePressEvent(QMouseEvent *event);
         void mouseReleaseEvent(QMouseEvent *event);
         void mouseMoveEvent(QMouseEvent *event);
+
+        void keyPressEvent(QKeyEvent* event);
+        void keyReleaseEvent(QKeyEvent* event);
     
     private:
         void updateProjection();
@@ -62,7 +87,8 @@ class PipelineWidget: public QGLWidget{
         QPoint m_last_mouse_pos;
         
         renderable_set_t m_renderables;
-        renderable_set_t m_menus;
+        menu_ptr_t m_menu;
+        node_map_t m_nodes;
 
         renderable_set_t m_owning_mouse; // which renderables are involved in
                                          // the current mouse event

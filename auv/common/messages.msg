@@ -118,6 +118,7 @@ group pl_gui
     message NodeAdded : 9
     {
         nodeId : int32;
+        nodeType : NodeType;
     }
 
     message NodeParameters : 10

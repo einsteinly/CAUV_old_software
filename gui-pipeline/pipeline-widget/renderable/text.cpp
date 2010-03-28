@@ -11,26 +11,9 @@
 #include <common/debug.h>
 
 
-static void glDBGprintErr(GLuint err){
-	switch(err){
-		case 0: break;
-		case GL_INVALID_ENUM:      error() << "GL_INVALID_ENUM"; break;
-		case GL_INVALID_VALUE:     error() << "GL_INVALID_VALUE"; break;
-		case GL_INVALID_OPERATION: error() << "GL_INVALID_OPERATION"; break;
-		case GL_STACK_OVERFLOW:    error() << "GL_STACK_OVERFLOW"; break;
-		case GL_STACK_UNDERFLOW:   error() << "GL_STACK_UNDERFLOW"; break;
-		case GL_OUT_OF_MEMORY:     error() << "GL_OUT_OF_MEMORY"; break;
-		default:                   error() << "unknown OpenGL error"; break;
-	}
-}
-
-static void glDBGCheckError(){
-    glDBGprintErr(glGetError());
-}
-
-
 Text::Text(PipelineWidget& p, std::string const& text, std::string const& font, int pt)
-    : Renderable(boost::ref(p)), m_bbox(), m_font(std::make_pair(font, pt)), m_text(text){
+    : Renderable(boost::ref(p)), std::string(text), m_bbox(),
+      m_font(std::make_pair(font, pt)){
 }
         
 void Text::draw(bool){
@@ -44,18 +27,16 @@ void Text::draw(bool){
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0, 0.0, 0.0, 1.0);
-    font()->Render(m_text.c_str());
-    glDBGCheckError();
+    font()->Render(c_str());
 
     glPopMatrix();
     glPopAttrib();
 }
 
 BBox Text::bbox(){
-    if(font()){
-        if(!m_bbox){
-            m_bbox = boost::make_shared<FTBBox>(font()->BBox(m_text.c_str()));
-        }
+    if(bboxFont()){
+        if(!m_bbox)
+            updateBbox();
         BBox r = {m_bbox->Lower().X(), m_bbox->Lower().Y(),
                   m_bbox->Upper().X(), m_bbox->Upper().Y()};
         return r;
@@ -65,13 +46,22 @@ BBox Text::bbox(){
     }
 }
 
-boost::shared_ptr<FTFont> Text::font(face_pt_pair_t const& id){
+void Text::updateBbox(){
+    m_bbox = boost::make_shared<FTBBox>(bboxFont()->BBox(c_str()));
+}
+
+
+typedef boost::shared_ptr<FTFont> font_ptr;
+typedef std::pair<std::string, int> face_pt_pair_t;
+
+template<typename font_T>
+static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
     static std::map<face_pt_pair_t, font_ptr> fonts;
     std::map<face_pt_pair_t, font_ptr>::const_iterator i = fonts.find(id);
     if(i != fonts.end()){
         return i->second;
     }
-    font_ptr new_f = boost::make_shared<FTTextureFont>(id.first.c_str());
+    font_ptr new_f = boost::make_shared<font_T>(id.first.c_str());
     if(new_f->Error()){
         error() << "Unable to open font file:" << id.first.c_str();
         new_f.reset();
@@ -84,6 +74,16 @@ boost::shared_ptr<FTFont> Text::font(face_pt_pair_t const& id){
     }
     return new_f;
 }
+
+boost::shared_ptr<FTFont> Text::font(face_pt_pair_t const& id){
+    return ::font<FTBufferFont>(id);
+}
+
+
+boost::shared_ptr<FTFont> Text::bboxFont(face_pt_pair_t const& id){
+    return ::font<FTPixmapFont>(id);
+}
+
 
 
 

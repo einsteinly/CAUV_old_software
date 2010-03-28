@@ -1,7 +1,7 @@
 #include "buildMenus.h"
 
 #include "pipelineWidget.h"
-#include "renderable/menu.h"
+#include "renderable/listMenu.h"
 
 #include <boost/ref.hpp>
 
@@ -24,7 +24,7 @@ struct SendAddNodeMessage{
     NodeType::e m_id;
 };
 
-boost::shared_ptr<Renderable> buildAddNodeMenu(PipelineWidget& p){
+boost::shared_ptr<Menu> buildAddNodeMenu(PipelineWidget& p){
     std::map<std::string, boost::shared_ptr<SendAddNodeMessage> > menu_items;
     
     /* this only works if nodes.cpp is compiled in... don't want to do that
@@ -41,7 +41,7 @@ boost::shared_ptr<Renderable> buildAddNodeMenu(PipelineWidget& p){
             boost::make_shared<SendAddNodeMessage>(boost::ref(p), (NodeType::e)i); 
     
     debug() << __func__ << "returning menu with" << menu_items.size() << "items";
-    return boost::make_shared< Menu<SendAddNodeMessage> >(boost::ref(p), menu_items);
+    return boost::make_shared< ListMenu<SendAddNodeMessage> >(boost::ref(p), menu_items);
 }
 
 

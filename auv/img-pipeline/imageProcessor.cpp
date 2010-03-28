@@ -20,6 +20,7 @@ void ImageProcessor::onImageMessage(boost::shared_ptr<const ImageMessage> m){
 
 void ImageProcessor::onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m){
     node_id new_id = 0;
+    std::map<std::string, NodeParamValue> params;
     try{
         node_ptr_t node = NodeFactoryRegister::create(m->nodeType(), m_scheduler);
 
@@ -35,6 +36,8 @@ void ImageProcessor::onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m)
         new_id = _newID(node);
         m_nodes[new_id] = node;
 
+        params = node->parameters();
+
         if(node->isInputNode()){
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
@@ -45,7 +48,8 @@ void ImageProcessor::onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m)
         error() << __func__ << ":" << e.what();
     }
     // TODO: error message of some sort, or something
-    sendMessage(boost::make_shared<NodeAddedMessage>(new_id));
+    sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType()));
+    sendMessage(boost::make_shared<NodeParametersMessage>(new_id, params));
 }
 
 void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<const RemoveNodeMessage> m){

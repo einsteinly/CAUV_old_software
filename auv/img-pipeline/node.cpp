@@ -365,11 +365,33 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id) const throw(id_err
     }
 }
 
+
+static NodeParamValue toNPV(param_value_t const& v){
+    NodeParamValue r;
+    try{
+        r.intValue = boost::get<int>(v);
+        r.type = ParamType::Int32;
+    }catch(boost::bad_get&){}
+    try{
+        r.floatValue = boost::get<float>(v);
+        r.type = ParamType::Float;
+    }catch(boost::bad_get&){}
+    try{
+        r.stringValue = boost::get<std::string>(v);
+        r.type = ParamType::String;
+    }catch(boost::bad_get&){}
+    return r;
+}
+
 /* return all parameter values
  */
-Node::param_value_map_t Node::parameters() const{
+std::map<std::string, NodeParamValue> Node::parameters() const{
     lock_t l(m_parameters_lock);
-    return m_parameters;
+    std::map<std::string, NodeParamValue> r;
+    param_value_map_t::const_iterator i;
+    for(i = m_parameters.begin(); i != m_parameters.end(); i++)
+        r[i->first] = toNPV(i->second);
+    return r;
 }
 
 /* set a parameter based on a message

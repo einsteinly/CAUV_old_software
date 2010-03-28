@@ -106,7 +106,7 @@ class Node{
         
         /* return all parameter values
          */
-        param_value_map_t parameters() const;
+        std::map<std::string, NodeParamValue> parameters() const;
         
         /* set a parameter based on a message
          */

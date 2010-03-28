@@ -4,36 +4,26 @@
 #include <QMouseEvent>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+
+#include "mouseEvent.h"
 
 class Renderable;
 class PipelineWidget;
-
-/* MouseEvents are in projected coordinates: the constructors are used to
- * referr the event to another context
- */
-struct MouseEvent{
-    /* referr from qt coordinates to top-level renderables: */
-    MouseEvent(QMouseEvent* qm,
-               boost::shared_ptr<Renderable> r,
-               PipelineWidget const& p);
-    /* referr from a renderable to children (ie, just offset position) */
-    MouseEvent(MouseEvent const& m,
-               boost::shared_ptr<Renderable> r);
-        
-    double x, y;
-    Qt::MouseButtons buttons;
-};
 
 
 struct BBox{
     bool contains(double x, double y){
         return (x >= xmin) && (x <= xmax) && (y >= ymin) && (y <= ymax);
     }
+    double w(){ return xmax - xmin; }
+    double h(){ return ymax - ymin; }
+
     double xmin, ymin, xmax, ymax;
 };
 
 
-class Renderable{
+class Renderable: public boost::enable_shared_from_this<Renderable>{
     public:
         Renderable(PipelineWidget& p, double x = 0, double y = 0);
         virtual void draw(bool picking) = 0;
