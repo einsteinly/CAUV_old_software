@@ -23,7 +23,12 @@ set (
     pipelineWidgetPlugin.cpp
     renderable.cpp
     buildMenus.cpp
+    mouseEvent.cpp
+    util.cpp
+    container.cpp
     renderable/text.cpp
+    renderable/node.cpp
+    renderable/draggable.cpp
 )
 
 set (

@@ -113,20 +113,26 @@ group pipeline
     }
 }
 
-group pipeline_gui
+group pl_gui
 { 
     message NodeAdded : 9
     {
         nodeId : int32;
+        nodeType : NodeType;
     }
 
-    message NodeParameters : 10
+    message NodeRemoved : 10
+    {
+        nodeId : int32;
+    }
+
+    message NodeParameters : 11
     {
         nodeId : int32;
         values : map<string, NodeParamValue>;
     }
 
-    message GraphDescription : 11
+    message GraphDescription : 12
     {
     }
 }

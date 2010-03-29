@@ -3,10 +3,11 @@
 
 #include <boost/shared_ptr.hpp>
 
-class Renderable;
+class Menu;
 class PipelineWidget;
 
-boost::shared_ptr<Renderable> buildAddNodeMenu(PipelineWidget&);
+typedef PipelineWidget* pw_ptr_t;
+boost::shared_ptr<Menu> buildAddNodeMenu(pw_ptr_t p);
 
 #endif // ndef __BUILD_MENUS_H__
 

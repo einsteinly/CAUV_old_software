@@ -59,6 +59,9 @@ class CameraInputNode: public AsynchronousNode{
     private:
 
         void openCapture(){
+            #ifdef __APPLE__
+            warning() << "Capture doesn't work without an NSEventLoop";
+            #else
             int dev_id = param<int>("device id");
             lock_t l(m_capture_lock);
             m_capture = cv::VideoCapture(dev_id);
@@ -71,6 +74,7 @@ class CameraInputNode: public AsynchronousNode{
             //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
             m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
             m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
+            #endif
         }
         
         boost::recursive_mutex m_capture_lock;

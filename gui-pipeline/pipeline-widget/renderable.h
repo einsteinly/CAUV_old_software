@@ -5,32 +5,18 @@
 
 #include <boost/shared_ptr.hpp>
 
-class Renderable;
-class PipelineWidget;
+#include "util.h"
+#include "mouseEvent.h"
 
-/* MouseEvents are in projected coordinates */
-struct MouseEvent{
-    MouseEvent(QMouseEvent* qm,
-               boost::shared_ptr<Renderable> r,
-               PipelineWidget const& p);
-
-    double x, y;
-    Qt::MouseButtons buttons;
-};
-
-
-struct BBox{
-    bool contains(double x, double y){
-        return (x >= xmin) && (x <= xmax) && (y >= ymin) && (y <= ymax);
-    }
-    double xmin, ymin, xmax, ymax;
-};
-
+class Container;
 
 class Renderable{
     public:
-        Renderable(PipelineWidget& p, double x = 0, double y = 0);
-        virtual void draw() = 0;
+        // public typedefs
+        typedef Container* container_ptr_t;
+    public:
+        Renderable(container_ptr_t c, Point const& at = Point());
+        virtual void draw(bool picking) = 0;
 
         /* overload to receive mouse events
          */
@@ -48,21 +34,13 @@ class Renderable{
 
         /* used to decide when to pass mouse events when button not pressed
          */
-        virtual BBox bbox(){ BBox r = {0, 0, 0, 0}; return r; }
+        virtual BBox bbox(){ return BBox(); }
         
         // public data:
-        double m_pos_x;
-        double m_pos_y;
+        Point m_pos;
 
     protected:
-        PipelineWidget& m_parent;
-};
-
-class NullRenderable: public Renderable{
-    public:
-        NullRenderable() // hackery, please ignore
-            : Renderable(reinterpret_cast<PipelineWidget&>(*this)) { }
-        void draw() { }
+        container_ptr_t m_context;
 };
 
 #endif // ndef __RENDERABLE_H__

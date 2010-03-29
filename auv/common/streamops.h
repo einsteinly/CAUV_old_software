@@ -38,7 +38,7 @@ std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, std::map<key_T, val_T> const& m){
     os << "map[" << m.size() << "] {";
     for(typename std::map<key_T, val_T>::const_iterator i = m.begin(); i != m.end();){
-        os << i->first << ":" << i->second;
+        os << i->first << " : " << i->second;
         if(++i != m.end())
             os << ", ";
     }
