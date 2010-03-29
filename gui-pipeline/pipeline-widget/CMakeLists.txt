@@ -31,6 +31,7 @@ set (
     renderable.cpp
     buildMenus.cpp
     mouseEvent.cpp
+    util.cpp
     renderable/text.cpp
     renderable/node.cpp
     renderable/draggable.cpp

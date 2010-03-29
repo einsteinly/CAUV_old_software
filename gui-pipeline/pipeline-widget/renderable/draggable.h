@@ -11,8 +11,7 @@ class Draggable: public Renderable{
         virtual void mouseGoneEvent();
 
     protected:
-        double m_click_pos_x;
-        double m_click_pos_y;
+        Point m_click_pos;
 
         bool m_mouseover;
         bool m_pressed;

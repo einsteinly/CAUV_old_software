@@ -6,26 +6,15 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include "util.h"
 #include "mouseEvent.h"
 
 class Renderable;
 class PipelineWidget;
 
-
-struct BBox{
-    bool contains(double x, double y){
-        return (x >= xmin) && (x <= xmax) && (y >= ymin) && (y <= ymax);
-    }
-    double w(){ return xmax - xmin; }
-    double h(){ return ymax - ymin; }
-
-    double xmin, ymin, xmax, ymax;
-};
-
-
 class Renderable: public boost::enable_shared_from_this<Renderable>{
     public:
-        Renderable(PipelineWidget& p, double x = 0, double y = 0);
+        Renderable(PipelineWidget& p, Point const& at = Point());
         virtual void draw(bool picking) = 0;
 
         /* overload to receive mouse events
@@ -44,11 +33,10 @@ class Renderable: public boost::enable_shared_from_this<Renderable>{
 
         /* used to decide when to pass mouse events when button not pressed
          */
-        virtual BBox bbox(){ BBox r = {0, 0, 0, 0}; return r; }
+        virtual BBox bbox(){ return BBox(); }
         
         // public data:
-        double m_pos_x;
-        double m_pos_y;
+        Point m_pos;
 
     protected:
         PipelineWidget& m_parent;

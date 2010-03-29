@@ -6,8 +6,8 @@
 
 class Box: public Draggable{
     public:
-        Box(PipelineWidget& p, double w, double h)
-            : Draggable(p), m_width(w), m_height(h){
+        Box(PipelineWidget& p, double const& w, double const& h)
+            : Draggable(p), m_box(0, -h, w, 0){
         }
 
         virtual void draw(bool){
@@ -15,12 +15,7 @@ class Box: public Draggable{
                 glColor4f(1.0, 0.0, 0.0, 0.5);
             else
                 glColor4f(1.0, 1.0, 1.0, 0.5);
-            glBegin(GL_QUADS);
-            glVertex2f(0, 0);
-            glVertex2f(0, -m_height);
-            glVertex2f(m_width, -m_height);
-            glVertex2f(m_width, 0);
-            glEnd();
+            glBox(m_box);
         }
         
         virtual bool tracksMouse(){
@@ -28,13 +23,11 @@ class Box: public Draggable{
         }
 
         virtual BBox bbox(){
-            BBox r = {0, -m_height, m_width, 0};
-            return r;
+            return m_box;
         }
 
     private:
-        double m_width;
-        double m_height;
+        BBox m_box;
 };
 
 #endif // ndef __BOX_RENDERABLE_H__

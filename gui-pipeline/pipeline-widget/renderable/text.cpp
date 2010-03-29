@@ -26,7 +26,7 @@ void Text::draw(bool){
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(0.0, 0.0, 0.0, 1.0);
+    glColor(Colour(0));
     font()->Render(c_str());
 
     glPopMatrix();
@@ -37,12 +37,10 @@ BBox Text::bbox(){
     if(bboxFont()){
         if(!m_bbox)
             updateBbox();
-        BBox r = {m_bbox->Lower().X(), m_bbox->Lower().Y(),
-                  m_bbox->Upper().X(), m_bbox->Upper().Y()};
-        return r;
+        return BBox(m_bbox->Lower().X(), m_bbox->Lower().Y(),
+                    m_bbox->Upper().X(), m_bbox->Upper().Y());
     }else{
-        BBox r = {0, 0, 10, 1};
-        return r; 
+        return BBox(0, 0, 10, 1); 
     }
 }
 

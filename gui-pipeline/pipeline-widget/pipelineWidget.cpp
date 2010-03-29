@@ -12,6 +12,7 @@
 #include <common/messages.h>
 #include <common/bash_cout.h>
 
+#include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
 #include "renderable/box.h"
@@ -84,8 +85,7 @@ void spawnPGCN(PipelineWidget& p){
 
 PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-      m_win_centre_x(0), m_win_centre_y(0),
-      m_win_aspect(1), m_win_scale(10),
+      m_win_centre(), m_win_aspect(1), m_win_scale(10),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_cauv_node(),
@@ -123,21 +123,20 @@ void PipelineWidget::remove(menu_ptr_t p){
 
 void PipelineWidget::add(renderable_ptr_t r){
     // TODO: sensible layout hint
-    add(r, 0, 0);
+    add(r, Point());
 }
 
-void PipelineWidget::add(renderable_ptr_t r, double x, double y){
-    r->m_pos_x = x;
-    r->m_pos_y = y;
+void PipelineWidget::add(renderable_ptr_t r, Point const& at){
+    r->m_pos = at;
     m_renderables.insert(r);
     this->updateGL();
 }
 
-void PipelineWidget::addMenu(menu_ptr_t r, double x, double y){
+void PipelineWidget::addMenu(menu_ptr_t r,  Point const& at){
     if(m_menu)
         remove(m_menu);
     m_menu = r;
-    add(r, x, y);
+    add(r, at);
 }
 
 void PipelineWidget::addNode(node_ptr_t r){
@@ -215,7 +214,7 @@ void PipelineWidget::paintGL(){
     renderable_set_t::iterator i;
     for(i = m_renderables.begin(); i != m_renderables.end(); i++){
         glPushMatrix();
-        glTranslatef((*i)->m_pos_x, (*i)->m_pos_y, 0);
+        glTranslatef((*i)->m_pos);
         (*i)->draw(false);
         glPopMatrix();
     }
@@ -260,7 +259,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 			glLoadName(n);
             name_map[n] = *i;
             glPushMatrix();
-            glTranslatef((*i)->m_pos_x, (*i)->m_pos_y, 0);
+            glTranslatef((*i)->m_pos);
             (*i)->draw(true);
             glPopMatrix();
         }
@@ -294,7 +293,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 
     if(event->buttons() & Qt::RightButton){
         MouseEvent proxy(event, boost::make_shared<NullRenderable>(), *this);
-        addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.x, proxy.y);
+        addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.pos);
         need_redraw = true; 
     }
     
@@ -309,7 +308,7 @@ void tdf(std::string s){
 }
 
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
-    BBox temp_bbox = {0, -6, 80, 10};
+    BBox temp_bbox(0, -6, 80, 10);
     if(m_menu){
         if(!m_menu->keyPressEvent(event))
             QWidget::keyPressEvent(event);
@@ -318,12 +317,12 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
         // TODO: hotkeys
         switch(event->key()){
             case Qt::Key_A:
-                addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.x, proxy.y);
+                addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.pos);
                 break;
             case Qt::Key_E:
                 addMenu(boost::make_shared< EditText<tdf> >(
                             boost::ref(*this), std::string("edit here"), temp_bbox),
-                        proxy.x, proxy.y);
+                        proxy.pos);
             default:
                 QWidget::keyPressEvent(event);
                 break;
@@ -354,10 +353,9 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
         int win_dx = event->x() - m_last_mouse_pos.x();
         int win_dy = event->y() - m_last_mouse_pos.y();
         if(event->buttons() & Qt::LeftButton){
-            double dx = win_dx / m_pixels_per_unit;
-            double dy = -win_dy / m_pixels_per_unit; // NB -
-            m_win_centre_x += dx;
-            m_win_centre_y += dy;
+            Point d(win_dx / m_pixels_per_unit,
+                    -win_dy / m_pixels_per_unit); // NB -
+            m_win_centre += d;
             this->updateGL();
         }
         // else zoom, (TODO)
@@ -372,7 +370,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
     for(i = m_renderables.begin(); i != m_renderables.end(); i++)
         if((*i)->tracksMouse() && !m_owning_mouse.count(*i)){
             MouseEvent m = MouseEvent(event, *i, *this);
-            if((*i)->bbox().contains(m.x, m.y)){
+            if((*i)->bbox().contains(m.pos)){
                 (*i)->mouseMoveEvent(m);
                 now_receiving_move.insert(*i);
             }
@@ -393,13 +391,13 @@ void PipelineWidget::updateProjection(){
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
-            << "x=" << m_win_centre_x << "y=" << m_win_centre_y;
+            << "wc=" << m_win_centre;
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
-    glTranslatef(m_win_centre_x/m_world_size, m_win_centre_y/m_world_size, 0);
+    glTranslatef(m_win_centre/m_world_size);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -410,7 +408,7 @@ void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
-            << "x=" << m_win_centre_x << "y=" << m_win_centre_y;
+            << "wc=" << m_win_centre;
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -422,7 +420,7 @@ void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
-    glTranslatef(m_win_centre_x/m_world_size, m_win_centre_y/m_world_size, 0);
+    glTranslatef(m_win_centre/m_world_size);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -440,10 +438,10 @@ void PipelineWidget::drawGrid(){
     
     // projected window coordinates:
     const double divisor = 2 * m_pixels_per_unit;
-    const double min_x = -m_win_centre_x - width()  / divisor;
-    const double min_y = -m_win_centre_y - height() / divisor;
-    const double max_x = -m_win_centre_x + width()  / divisor;
-    const double max_y = -m_win_centre_y + height() / divisor;
+    const double min_x = -m_win_centre.x - width()  / divisor;
+    const double min_y = -m_win_centre.y - height() / divisor;
+    const double max_x = -m_win_centre.x + width()  / divisor;
+    const double max_y = -m_win_centre.y + height() / divisor;
     
     const int min_grid_minor_x = roundToZ(min_x / grid_minor_spacing);
     const int min_grid_minor_y = roundToZ(min_y / grid_minor_spacing);
@@ -465,7 +463,8 @@ void PipelineWidget::drawGrid(){
             << "max_grid_major_x=" << max_grid_major_x << "\n\t"
             << "min_grid_major_y=" << min_grid_major_y
             << "max_grid_major_y=" << max_grid_major_y;
-
+    
+    glLineWidth(1);
     glColor4f(0.12, 0.1, 0.1, 0.2);
     glBegin(GL_LINES);
     for(int i = min_grid_minor_y; i <= max_grid_minor_y; i++){

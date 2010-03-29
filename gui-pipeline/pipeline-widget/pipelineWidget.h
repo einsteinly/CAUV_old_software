@@ -50,8 +50,8 @@ class PipelineWidget: public QGLWidget{
         void remove(menu_ptr_t);
         void remove(node_ptr_t);
         void add(renderable_ptr_t);
-        void add(renderable_ptr_t, double x, double y);
-        void addMenu(menu_ptr_t, double x, double y);
+        void add(renderable_ptr_t, Point const& at);
+        void addMenu(menu_ptr_t, Point const& at);
         void addNode(node_ptr_t);
 
         node_ptr_t node(node_id const&);
@@ -75,8 +75,7 @@ class PipelineWidget: public QGLWidget{
         void projectionForPicking(int x, int y);
         void drawGrid();
         
-        double m_win_centre_x;    // projected coordinates of the window
-        double m_win_centre_y;    //
+        Point m_win_centre;       // projected coordinates of the window
         double m_win_aspect;      // actually sqrt(x / y)
         double m_win_scale;       // width = scale*aspect, height = scale/aspect
         double m_pixels_per_unit; // size on screen of a line of length 1

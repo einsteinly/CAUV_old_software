@@ -5,6 +5,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "util.h"
+
 class Renderable;
 class PipelineWidget;
 
@@ -24,7 +26,7 @@ struct MouseEvent{
                boost::shared_ptr<Renderable> r);
     
     /* coordinates in current projection */
-    double x, y;
+    Point pos;
 
     Qt::MouseButtons buttons;
 };

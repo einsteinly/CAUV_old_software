@@ -20,31 +20,26 @@ class ListMenuItem: public Renderable{
               m_onclick(item.second), m_bbox(m_text->bbox()),
               m_hovered(false), m_pressed(false){
             // some space around text:
-            m_bbox.xmin -= 2.0;
-            m_bbox.xmax += 6.0;
-            m_bbox.ymin -= 2.0;
-            m_bbox.ymax += 4.0;
+            m_bbox.min.x -= 2.0;
+            m_bbox.max.x += 6.0;
+            m_bbox.min.y -= 2.0;
+            m_bbox.max.y += 4.0;
         }
 
         virtual void draw(bool picking){
             if(m_pressed)
-                glColor4f(0.6, 0.6, 0.6, 0.9);
+                glColor(Colour(0.6, 0.9));
             else if(m_hovered)
-                glColor4f(0.8, 0.8, 0.8, 0.8);
+                glColor(Colour(0.8, 0.8));
             else
-                glColor4f(0.9, 0.9, 0.9, 0.9);
-            glBegin(GL_QUADS);
-            glVertex2f(m_bbox.xmin, m_bbox.ymax);
-            glVertex2f(m_bbox.xmin, m_bbox.ymin);
-            glVertex2f(m_bbox.xmax, m_bbox.ymin);
-            glVertex2f(m_bbox.xmax, m_bbox.ymax);
-            glEnd();
+                glColor(Colour(0.9, 0.8));
+            glBox(m_bbox);
             if(!picking)
                 m_text->draw(picking);
         } 
         
         virtual void mouseMoveEvent(MouseEvent const& m){
-            if(bbox().contains(m.x, m.y)){
+            if(bbox().contains(m.pos)){
                 m_hovered = true;
                 if(m.buttons & Qt::LeftButton)
                     m_pressed = true;
@@ -57,7 +52,7 @@ class ListMenuItem: public Renderable{
         }
 
         virtual void mousePressEvent(MouseEvent const& m){
-            if(bbox().contains(m.x, m.y)){
+            if(bbox().contains(m.pos)){
                 m_hovered = true;
                 if(m.buttons & Qt::LeftButton)
                     m_pressed = true;
@@ -67,7 +62,7 @@ class ListMenuItem: public Renderable{
         }
 
         virtual void mouseReleaseEvent(MouseEvent const& m){
-            if(m_pressed && bbox().contains(m.x, m.y))
+            if(m_pressed && bbox().contains(m.pos))
                 (*m_onclick)();
             m_pressed = false;
             // TODO: only when necessary
@@ -86,11 +81,11 @@ class ListMenuItem: public Renderable{
         }
 
         void setSpan(double const& xmin, double const& xmax){
-            m_bbox.xmax = xmax;
-            m_bbox.xmin = xmin;
+            m_bbox.max.x = xmax;
+            m_bbox.min.x = xmin;
         }
         void setHeight(double h){
-            m_bbox.ymax = m_bbox.ymin + h;
+            m_bbox.max.y = m_bbox.min.y + h;
         }
 
     private:
@@ -111,31 +106,20 @@ class ListMenu: public Menu{
         typedef std::map<std::string,callable_ptr> item_map_t;
 
         ListMenu(PipelineWidget& p, item_map_t const& items)
-            : Menu(p), m_items(){
+            : Menu(p), m_items(), m_bbox(){
             typename item_map_t::const_iterator i;
-            double max_x = 0;
-            double min_x = 0;
             double y_pos = 0;
             double prev_height = 0;
             for(i = items.begin(); i != items.end(); i++, y_pos -= prev_height){
                 item_ptr ip = boost::make_shared<item_t>(boost::ref(p), *i);
                 m_items.push_back(ip);                
-                ip->m_pos_y = y_pos + ip->bbox().ymin;
-                prev_height = ip->bbox().ymax - ip->bbox().ymin;
-                if(ip->bbox().xmax > max_x)
-                    max_x = ip->bbox().xmax;
-                if(ip->bbox().xmin < min_x)
-                    min_x = ip->bbox().xmin;
+                ip->m_pos.y = y_pos + ip->bbox().min.y;
+                prev_height = ip->bbox().h();
+                m_bbox |= ip->bbox() + ip->m_pos;
             }
             typename std::list<item_ptr>::iterator j;
             for(j = m_items.begin(); j != m_items.end(); j++)
-                (*j)->setSpan(min_x, max_x);
-            m_bbox.xmin = min_x;
-            m_bbox.xmax = max_x;
-            if(m_items.size()){
-                m_bbox.ymin = m_items.back()->bbox().ymin + y_pos;
-                m_bbox.ymax = m_items.front()->bbox().ymax; 
-            }
+                (*j)->setSpan(m_bbox.min.x, m_bbox.max.x);
         }
 
         virtual void draw(bool picking){
@@ -144,7 +128,7 @@ class ListMenu: public Menu{
             glTranslatef(0, 0, 0.1);
             for(i = m_items.begin(); i != m_items.end(); i++){
                 glPushMatrix();
-                glTranslatef((*i)->m_pos_x, (*i)->m_pos_y, 0);
+                glTranslatef((*i)->m_pos);
                 (*i)->draw(picking);
                 glPopMatrix();
             }
@@ -155,7 +139,7 @@ class ListMenu: public Menu{
             std::set<item_ptr> now_hovered_items;
             for(i = m_items.begin(); i != m_items.end(); i++){
                 MouseEvent referred(m, *i);
-                if((*i)->bbox().contains(referred.x, referred.y)){
+                if((*i)->bbox().contains(referred.pos)){
                     (*i)->mouseMoveEvent(referred);
                     now_hovered_items.insert(*i);
                 }
@@ -171,7 +155,7 @@ class ListMenu: public Menu{
             typename std::list<item_ptr>::iterator i;
             for(i = m_items.begin(); i != m_items.end(); i++){
                 MouseEvent referred(m, *i);
-                if((*i)->bbox().contains(referred.x, referred.y)){
+                if((*i)->bbox().contains(referred.pos)){
                     (*i)->mousePressEvent(referred);
                     m_pressed_items.insert(*i);
                 }

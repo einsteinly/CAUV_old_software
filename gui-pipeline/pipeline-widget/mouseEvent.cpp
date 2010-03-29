@@ -1,30 +1,32 @@
 #include "mouseEvent.h"
-#include "pipelineWidget.h"
-#include "renderable.h"
 
 #include <common/debug.h>
+
+#include "pipelineWidget.h"
+#include "renderable.h"
+#include "util.h"
 
 MouseEvent::MouseEvent(QMouseEvent* qm,
                        boost::shared_ptr<Renderable> r,
                        PipelineWidget const& p)
-    : x((qm->x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre_x - r->m_pos_x),
-      y((p.height()/2 - qm->y()) / p.m_pixels_per_unit - p.m_win_centre_y - r->m_pos_y),
+    : pos((qm->x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x - r->m_pos.x,
+          (p.height()/2 - qm->y()) / p.m_pixels_per_unit - p.m_win_centre.y - r->m_pos.y),
       buttons(qm->buttons()){
-      debug(-1) << "MouseEvent constructed: x=" << x << "y=" << y
+      debug(-1) << "MouseEvent constructed: p=" << pos
                 << "qm: x=" << qm->x() << "y=" << qm->y()
-                << "wc: x=" << p.m_win_centre_x << "y=" << p.m_win_centre_y;
+                << "wc: x=" << p.m_win_centre.x << "y=" << p.m_win_centre.y;
 }
 
 MouseEvent::MouseEvent(boost::shared_ptr<Renderable> r,
                        PipelineWidget const& p)
-    : x((p.m_last_mouse_pos.x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre_x - r->m_pos_x),
-      y((p.height()/2 - p.m_last_mouse_pos.y()) / p.m_pixels_per_unit - p.m_win_centre_y - r->m_pos_y),
+    : pos((p.m_last_mouse_pos.x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x - r->m_pos.x,
+          (p.height()/2 - p.m_last_mouse_pos.y()) / p.m_pixels_per_unit - p.m_win_centre.y - r->m_pos.y),
       buttons(0){
 }
 
 MouseEvent::MouseEvent(MouseEvent const& m,
                        boost::shared_ptr<Renderable> r)
-    : x(m.x - r->m_pos_x), y(m.y - r->m_pos_y),
+    : pos(m.pos.x - r->m_pos.x, m.pos.y - r->m_pos.y),
       buttons(m.buttons){
 }
 
