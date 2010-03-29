@@ -7,7 +7,7 @@
 #include <boost/make_shared.hpp>
 
 #include <QKeyEvent>
-#include <QTOpenGL>
+#include <QtOpenGL>
 
 #include <common/debug.h>
 

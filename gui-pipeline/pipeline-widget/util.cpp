@@ -1,6 +1,6 @@
 #include "util.h"
 
-#include <QTOpenGL>
+#include <QtOpenGL>
 
 void glTranslatef(Point const& p, double const& z){
     glTranslatef(p.x, p.y, z);

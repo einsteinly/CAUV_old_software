@@ -87,22 +87,30 @@ class SmartStreamBase : boost::noncopyable
             #ifdef CAUV_DEBUG_MUTEX_OUTPUT
                 boost::lock_guard<boost::recursive_mutex> l(getMutex(os));
             #endif
+            // setting locales on streams seems to cause all sorts of extremely
+            // nasty nastiness (crashing memcheck...), so, use a temporary
+            // stream that nothing else is going to interfere with to get at
+            // the time in the format that we want:
+            std::ostringstream oss;
             boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
-            os.imbue(std::locale(os.getloc(), facet));
+            oss.imbue(std::locale(os.getloc(), facet));
 
             // add timestamp at start of each line:
             if(m_stuffs.size())
             {
                 boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
-                os << m_col << "[" << t;
+                oss << m_col << "[" << t;
 
                 #ifdef CAUV_DEBUG_PRINT_THREAD
-                    os << " T=" << boost::this_thread::get_id();
+                    oss << " T=" << boost::this_thread::get_id();
                 #endif
 
                 // add defined prefix to each line
-                os << "] " << m_prefix;
+                oss << "] " << m_prefix;
             }
+            // make sure oss is stringised so that locale nastiness is all over
+            // and done with
+            os << oss.str();
             
             // add spaces between consecutive items that do not have spaces
             std::list<std::string>::const_iterator i = m_stuffs.begin();

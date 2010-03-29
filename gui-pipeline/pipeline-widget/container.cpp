@@ -1,6 +1,6 @@
 #include "container.h"
 
-#include <QTOpenGL>
+#include <QtOpenGL>
 
 #include "renderable.h"
 
