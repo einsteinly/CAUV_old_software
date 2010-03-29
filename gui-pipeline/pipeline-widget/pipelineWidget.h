@@ -64,6 +64,7 @@ class PipelineWidget: public QGLWidget,
         virtual Point referUp(Point const& p) const;
         virtual void postRedraw();
         virtual void postMenu(menu_ptr_t r, Point const& top_level_position);
+        virtual void removeMenu(menu_ptr_t);
     
     protected:
         void initializeGL();

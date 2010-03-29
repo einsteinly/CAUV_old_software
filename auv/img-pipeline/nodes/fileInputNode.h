@@ -29,7 +29,7 @@ class FileInputNode: public AsynchronousNode{
 
         template<typename T>
         void paramChanged(param_id const& p, T const& new_value){
-            if(p == "filename"){
+            if(p == param_id("filename")){
                 lock_t l(m_file_is_new_lock);
                 m_file_is_new = true;
             }

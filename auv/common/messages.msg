@@ -121,13 +121,18 @@ group pl_gui
         nodeType : NodeType;
     }
 
-    message NodeParameters : 10
+    message NodeRemoved : 10
+    {
+        nodeId : int32;
+    }
+
+    message NodeParameters : 11
     {
         nodeId : int32;
         values : map<string, NodeParamValue>;
     }
 
-    message GraphDescription : 11
+    message GraphDescription : 12
     {
     }
 }

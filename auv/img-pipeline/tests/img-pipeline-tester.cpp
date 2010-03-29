@@ -68,6 +68,8 @@ class ImgPipeTestNode : public CauvNode{
             boost::shared_ptr<SetNodeParameterMessage> sp;
             boost::shared_ptr<ClearPipelineMessage> cp;
             NodeParamValue pv = {0};
+
+            sp = boost::make_shared<SetNodeParameterMessage>();
             
             // clear the pipeline
             cp = boost::make_shared<ClearPipelineMessage>();
@@ -129,6 +131,8 @@ class ImgPipeTestNode : public CauvNode{
             boost::shared_ptr<AddNodeMessage> an;
             boost::shared_ptr<SetNodeParameterMessage> sp;
             NodeParamValue pv = {0};
+
+            sp = boost::make_shared<SetNodeParameterMessage>();
             
             clearPipeline();
 
@@ -217,6 +221,8 @@ class ImgPipeTestNode : public CauvNode{
             boost::shared_ptr<SetNodeParameterMessage> sp;
             NodeParamValue pv = {0};
 
+            sp = boost::make_shared<SetNodeParameterMessage>();
+
             clearPipeline();
 
             // Add input node
@@ -230,6 +236,7 @@ class ImgPipeTestNode : public CauvNode{
             sp->paramId("device id");
             pv.type = ParamType::Int32;
             pv.intValue = 0;
+            sp->value(pv);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
             // Add convert node: default conversion is RGB->Grey
@@ -293,6 +300,8 @@ class ImgPipeTestNode : public CauvNode{
             boost::shared_ptr<SetNodeParameterMessage> sp;
             NodeParamValue pv = {0};
 
+            sp = boost::make_shared<SetNodeParameterMessage>();
+
             clearPipeline();
 
             // Add input node
@@ -307,6 +316,7 @@ class ImgPipeTestNode : public CauvNode{
             sp->paramId("filename");
             pv.type = ParamType::String;
             pv.stringValue = "test.jpg";
+            sp->value(pv);
             sent = mailbox()->sendMessage(sp, SAFE_MESS);
 
             // Add convert node: default conversion is RGB->Grey
@@ -325,6 +335,7 @@ class ImgPipeTestNode : public CauvNode{
             sp->paramId("channels");
             pv.type = ParamType::Int32;
             pv.intValue = 1;
+            sp->value(pv);
             sent = mailbox()->sendMessage(sp, SAFE_MESS); 
             
             // add Canny node
@@ -368,6 +379,7 @@ class ImgPipeTestNode : public CauvNode{
             sp->paramId("filename");
             pv.type = ParamType::String;
             pv.stringValue = "hough_out.jpg";
+            sp->value(pv);
             sent = mailbox()->sendMessage(sp, SAFE_MESS); 
         }
         
@@ -376,8 +388,8 @@ class ImgPipeTestNode : public CauvNode{
             info() << "Add TestMBObserver...";
             eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
             
-            info() << "Joining pipeline group...";
-            mailbox()->joinGroup("pipeline_gui"); 
+            info() << "Joining pl_gui group...";
+            mailbox()->joinGroup("pl_gui"); 
 
             info() << "--- start test sequence ---";
 

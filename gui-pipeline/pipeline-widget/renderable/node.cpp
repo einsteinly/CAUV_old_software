@@ -1,6 +1,9 @@
 #include "node.h"
 #include "text.h"
 #include "editText.h"
+#include "../pipelineWidget.h"
+
+#include <sstream>
 
 #include <common/cauv_utils.h>
 #include <common/messages.h>
@@ -8,18 +11,16 @@
 #include <QtOpenGL>
 
 
-void tempf(std::string s){
-    debug() << "PVPair: Edit done:" << s;
-}
-
-// TODO: own header
+// TODO: own header?
 template<typename value_T>
 class PVPair: public Renderable{
     public:
-        PVPair(container_ptr_t c, std::string const& param, value_T const& value)
-            : Renderable(c), m_bbox(),
-              m_param(boost::make_shared<Text>(c, param + " =")),
-              m_value(boost::make_shared<Text>(c, to_string(value))){
+        typedef Node* node_ptr_t;
+        PVPair(node_ptr_t n, std::string const& param, value_T const& value)
+            : Renderable(n), m_node(n), m_bbox(),
+              m_param(boost::make_shared<Text>(n, param)),
+              m_equals(boost::make_shared<Text>(n, "=")),
+              m_value(boost::make_shared<Text>(n, to_string(value))){
             updateBbox();
         }
 
@@ -27,6 +28,11 @@ class PVPair: public Renderable{
             glPushMatrix();
             glTranslatef(m_param->m_pos);
             m_param->draw(picking);
+            glPopMatrix();
+
+            glPushMatrix();
+            glTranslatef(m_equals->m_pos);
+            m_equals->draw(picking);
             glPopMatrix();
             
             glPushMatrix();
@@ -42,8 +48,8 @@ class PVPair: public Renderable{
                 BBox edit_box = m_value->bbox();
                 edit_box.max.x += 10;
                 m_context->postMenu(
-                    boost::make_shared< EditText<tempf> >(
-                        m_context, *m_value, edit_box
+                    boost::make_shared<EditText<PVPair const&> >(
+                        m_context, *m_value, edit_box, &onValueChanged, boost::ref(*this)
                     ), m_context->referUp(m_pos + m_value->m_pos)
                 );
                 m_context->postRedraw();
@@ -56,21 +62,34 @@ class PVPair: public Renderable{
 
 
     private:
+        static void onValueChanged(PVPair const& pvp, std::string const& s){
+            std::istringstream is(s);
+            value_T v;
+            is >> v;
+            debug() << "PVPair: Edit done:" << s << "->" << v;
+            pvp.m_node->paramValueChanged(*pvp.m_param, v);
+        }
+
         void updateBbox(){
             m_bbox = m_param->bbox();
+            m_equals->m_pos.x = m_bbox.max.x + 3 - m_equals->bbox().min.x;
+            m_bbox |= m_equals->bbox() + m_equals->m_pos;
             m_value->m_pos.x = m_bbox.max.x + 3 - m_value->bbox().min.x;
             m_bbox |= m_value->bbox() + m_value->m_pos;
         }
 
+        node_ptr_t m_node;
+
         BBox m_bbox;
 
         boost::shared_ptr<Text> m_param;
+        boost::shared_ptr<Text> m_equals;
         boost::shared_ptr<Text> m_value;
 };
 
 
-Node::Node(container_ptr_t c, boost::shared_ptr<NodeAddedMessage const> m)
-    : Draggable(c), m_bbox(), m_node_id(m->nodeId()),
+Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
+    : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
       m_node_type(to_string(m->nodeType())),
       m_title(boost::make_shared<Text>(c, m_node_type)){
     m_title->m_pos.x = -m_title->bbox().min.x;
@@ -80,21 +99,21 @@ Node::Node(container_ptr_t c, boost::shared_ptr<NodeAddedMessage const> m)
 }
 
 static boost::shared_ptr<Renderable> makePVPair(
-    Container *c, std::pair<std::string, NodeParamValue> const& p){
+    Node *n, std::pair<std::string, NodeParamValue> const& p){
     switch((ParamType::e) p.second.type){
         case ParamType::Int32:
             return boost::make_shared<PVPair<int> >(
-                    c, p.first, p.second.intValue
+                    n, p.first, p.second.intValue
                 );
         case ParamType::Float:
             return boost::make_shared<PVPair<float> >(
-                    c, p.first, p.second.floatValue
+                    n, p.first, p.second.floatValue
                 );
         default:
             error() << "unknown ParamType";
         case ParamType::String:
             return boost::make_shared<PVPair<std::string> >(
-                    c, p.first, p.second.stringValue
+                    n, p.first, p.second.stringValue
                 );
     }
 }
@@ -158,7 +177,6 @@ int Node::id() const{
     return m_node_id;
 }
 
-
 Point Node::referUp(Point const& p) const{
     return m_context->referUp(p + m_pos);
 }
@@ -169,5 +187,54 @@ void Node::postRedraw(){
 
 void Node::postMenu(menu_ptr_t m, Point const& tlp){
     m_context->postMenu(m, tlp);
+}
+
+void Node::removeMenu(menu_ptr_t m){
+    m_context->removeMenu(m);
+}
+
+template<>
+void Node::paramValueChanged<int>(std::string const& p, int const& v){
+    debug() << "Node::paramValueChanged<int>" << p << v;
+    boost::shared_ptr<SetNodeParameterMessage> sp =
+        boost::make_shared<SetNodeParameterMessage>();
+    NodeParamValue pv = {0};
+
+    sp->nodeId(m_node_id);
+    sp->paramId(p);
+    pv.type = ParamType::Int32;
+    pv.intValue = v;
+    sp->value(pv);
+    m_pw->sendMessage(sp);
+}
+
+template<>
+void Node::paramValueChanged<float>(std::string const& p, float const& v){
+    debug() << "Node::paramValueChanged<float>" << p << v;
+    boost::shared_ptr<SetNodeParameterMessage> sp =
+        boost::make_shared<SetNodeParameterMessage>();
+    NodeParamValue pv = {0};
+
+    sp->nodeId(m_node_id);
+    sp->paramId(p);
+    pv.type = ParamType::Float;
+    pv.floatValue = v;
+    sp->value(pv);
+    m_pw->sendMessage(sp);
+}
+
+template<>
+void Node::paramValueChanged<std::string>(std::string const& p, std::string const& v){
+    debug() << "Node::paramValueChanged<string>" << p << v;
+    boost::shared_ptr<SetNodeParameterMessage> sp =
+        boost::make_shared<SetNodeParameterMessage>();
+    NodeParamValue pv = {0};
+
+    sp->nodeId(m_node_id);
+    sp->paramId(p);
+    pv.type = ParamType::String;
+    pv.stringValue = v;
+    sp->value(pv);
+    m_pw->sendMessage(sp);
 }
 

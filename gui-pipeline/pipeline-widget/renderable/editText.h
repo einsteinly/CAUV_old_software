@@ -11,14 +11,16 @@
 
 #include <common/debug.h>
 
-typedef void (*done_func) (std::string);
-template<done_func done_F>
+template<typename done_arg_T>
 class EditText: public Menu{
     public:
-        EditText(container_ptr_t c, std::string const& text, BBox const& size)
-            : Menu(c), m_bbox(size), m_fixed_size(false),
+        typedef void (*done_fp) (done_arg_T, std::string const&);
+        EditText(container_ptr_t c, std::string const& text, BBox const& size,
+                 done_fp done_f, done_arg_T done_f_arg)
+            : Menu(c), m_bbox(size), m_fixed_size(false), m_edited(false),
               m_txt_prev(boost::make_shared<Text>(c, text)),
               m_txt_post(boost::make_shared<Text>(c, "")),
+              m_done_f(done_f), m_done_f_arg(done_f_arg),
               m_cursor_colour(0.8, 0.1, 0.1, 0.9){
             if(m_bbox.area() > 0)
                 m_fixed_size = true;
@@ -28,14 +30,18 @@ class EditText: public Menu{
         }
 
         virtual ~EditText(){
-            done_F(*m_txt_prev + *m_txt_post);
+            if(m_edited)
+                m_done_f(m_done_f_arg, *m_txt_prev + *m_txt_post);
         }
         
         virtual void draw(bool picking){
+            // keep everything nicely in front:
+            glTranslatef(0, 0, 0.1);
+
             glColor4f(1.0, 1.0, 1.0, 0.8);
             glBox(m_bbox);
 
-            // keep everything else nicely in front:
+            // and the text even more in front:
             glTranslatef(0, 0, 0.1);
             
             GLdouble lh_clip_plane[4] = {1, 0, 0, -m_bbox.min.x};
@@ -86,6 +92,12 @@ class EditText: public Menu{
         virtual bool keyPressEvent(QKeyEvent* event){
             std::string new_text = event->text().toStdString();
             switch(event->key()){
+                case Qt::Key_Enter:
+                case Qt::Key_Return:
+                    debug() << "EditText: key enter";
+                    m_context->removeMenu(shared_from_this());
+                    // this has now probably been destroyed, must return pronto!
+                    return true;
                 case Qt::Key_Left:
                     debug(-1) << "EditText: key left";
                     if(m_txt_prev->size())
@@ -110,6 +122,8 @@ class EditText: public Menu{
                     else
                         return false;
             }
+            // TODO: be more conservative about m_edited
+            m_edited = true;
             updateTextPositions();
             m_context->postRedraw();
             return true; 
@@ -131,8 +145,11 @@ class EditText: public Menu{
 
         BBox m_bbox;
         bool m_fixed_size;
+        bool m_edited;
         boost::shared_ptr<Text> m_txt_prev;
         boost::shared_ptr<Text> m_txt_post;
+        done_fp m_done_f;
+        done_arg_T m_done_f_arg;
 
         Colour m_cursor_colour;
 

@@ -30,7 +30,7 @@ class PipelineGuiMsgObs: public MessageObserver{
         virtual void onNodeAddedMessage(boost::shared_ptr<const NodeAddedMessage> m){
             debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(m->nodeType() != NodeType::Invalid)
-                m_widget->addNode(boost::make_shared<Node>(m_widget, m));
+                m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
         }
 
         virtual void onNodeParametersMessage(boost::shared_ptr<const NodeParametersMessage> m){
@@ -108,17 +108,18 @@ QSize PipelineWidget::sizeHint() const{
 
 void PipelineWidget::remove(renderable_ptr_t p){
     m_renderables.erase(p);
+    this->updateGL();
 }
 
 void PipelineWidget::remove(node_ptr_t n){
     m_nodes.erase(n->id());
-    m_renderables.erase(n);
+    remove(renderable_ptr_t(n));
 }
 
 void PipelineWidget::remove(menu_ptr_t p){
     if(m_menu == p)
         m_menu.reset();
-    m_renderables.erase(p);
+    remove(renderable_ptr_t(p));
 }
 
 void PipelineWidget::add(renderable_ptr_t r){
@@ -172,11 +173,15 @@ Point PipelineWidget::referUp(Point const& p) const{
 }
 
 void PipelineWidget::postRedraw(){
-    updateGL();
+    this->updateGL();
 }
 
 void PipelineWidget::postMenu(menu_ptr_t r, Point const& p){
     addMenu(r, p);
+}
+
+void PipelineWidget::removeMenu(menu_ptr_t r){
+    remove(r);
 }
 
 void PipelineWidget::initializeGL(){
@@ -317,7 +322,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
         this->updateGL();
 }
 
-void tdf(std::string s){
+void tdf(int, std::string const& s){
     debug() << "Edit done:" << s;
 }
 
@@ -334,9 +339,9 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
                 addMenu(buildAddNodeMenu(this), proxy.pos);
                 break;
             case Qt::Key_E:
-                addMenu(boost::make_shared< EditText<tdf> >(
-                        this, std::string("edit here"), temp_bbox),
-                        proxy.pos);
+                addMenu(boost::make_shared< EditText<int> >(
+                            this, std::string("edit here"), temp_bbox, tdf, 0
+                        ), proxy.pos);
                 break;
             default:
                 QWidget::keyPressEvent(event);

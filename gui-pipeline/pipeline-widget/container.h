@@ -24,6 +24,7 @@ class Container{
         virtual Point referUp(Point const& p) const = 0;
         virtual void postRedraw() = 0;
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position) = 0;
+        virtual void removeMenu(menu_ptr_t) = 0;
         
         // draw m_contents
         virtual void draw(bool picking);

@@ -6,6 +6,8 @@
 
 #include <common/messages.h>
 
+// TODO: error() should send an error message of some sort on spread
+
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
     : m_scheduler(), m_mailbox(mb){
     m_scheduler.start();
@@ -47,7 +49,6 @@ void ImageProcessor::onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m)
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
-    // TODO: error message of some sort, or something
     sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType()));
     sendMessage(boost::make_shared<NodeParametersMessage>(new_id, params));
 }
@@ -72,17 +73,17 @@ void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<const RemoveNodeMessa
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
-    // TODO: error message of some sort, or something
 }
 
 void ImageProcessor::onSetNodeParameterMessage(boost::shared_ptr<const SetNodeParameterMessage> m){
     try{
         node_ptr_t n = _lookupNode(m->nodeId());
         n->setParam(m);
+        
+        sendMessage(boost::make_shared<NodeParametersMessage>(m->nodeId(), n->parameters()));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
-    // TODO: error message of some sort, or something
 }
 
 void ImageProcessor::sendMessage(const boost::shared_ptr<Message> msg, service_t service_type) const{
