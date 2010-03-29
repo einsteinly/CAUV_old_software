@@ -11,7 +11,7 @@ class FTBBox;
 
 class Text: public Renderable, public std::string{
     public:
-        Text(PipelineWidget& p, std::string const& text,
+        Text(container_ptr_t c, std::string const& text,
              std::string const& font="LiberationMono-Regular.ttf", int pt=12);
         
         virtual bool acceptsMouseEvents(){ return false; }

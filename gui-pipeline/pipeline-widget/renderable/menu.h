@@ -3,9 +3,9 @@
 
 #include "../renderable.h"
 
-class Menu: public Renderable, boost::enable_shared_from_this<Menu>{
+class Menu: public Renderable{
     public:
-        Menu(PipelineWidget& p) : Renderable(p){ }
+        Menu(container_ptr_t c) : Renderable(c){ }
         virtual bool keyPressEvent(QKeyEvent*){ return false; }
         virtual bool keyReleaseEvent(QKeyEvent*){ return false; }
 };

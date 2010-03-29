@@ -3,16 +3,18 @@
 
 #include <vector>
 
+#include "../container.h"
 #include "draggable.h"
 
 class NodeAddedMessage;
 class NodeParametersMessage;
 class Text;
 
-class Node: public Draggable, boost::enable_shared_from_this<Node>{
+class Node: public Draggable,
+            public Container{
     typedef std::list<boost::shared_ptr<Renderable> > pv_list_t;
     public:
-        Node(PipelineWidget& p, boost::shared_ptr<NodeAddedMessage const> m);
+        Node(container_ptr_t c, boost::shared_ptr<NodeAddedMessage const> m);
         
         void setParams(boost::shared_ptr<NodeParametersMessage const> m);
 
@@ -22,9 +24,13 @@ class Node: public Draggable, boost::enable_shared_from_this<Node>{
         virtual BBox bbox();
 
         int id() const;
+        
+        // implement Container:
+        virtual Point referUp(Point const& p) const;
+        virtual void postRedraw();
+        virtual void postMenu(menu_ptr_t m, Point const& top_level_position);
 
     private:
-
         BBox m_bbox;
         
         int m_node_id;

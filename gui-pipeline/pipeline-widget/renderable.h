@@ -4,17 +4,18 @@
 #include <QMouseEvent>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 #include "util.h"
 #include "mouseEvent.h"
 
-class Renderable;
-class PipelineWidget;
+class Container;
 
-class Renderable: public boost::enable_shared_from_this<Renderable>{
+class Renderable{
     public:
-        Renderable(PipelineWidget& p, Point const& at = Point());
+        // public typedefs
+        typedef Container* container_ptr_t;
+    public:
+        Renderable(container_ptr_t c, Point const& at = Point());
         virtual void draw(bool picking) = 0;
 
         /* overload to receive mouse events
@@ -39,14 +40,7 @@ class Renderable: public boost::enable_shared_from_this<Renderable>{
         Point m_pos;
 
     protected:
-        PipelineWidget& m_parent;
-};
-
-class NullRenderable: public Renderable{
-    public:
-        NullRenderable() // hackery, please ignore
-            : Renderable(reinterpret_cast<PipelineWidget&>(*this)) { }
-        virtual void draw(bool) { }
+        container_ptr_t m_context;
 };
 
 #endif // ndef __RENDERABLE_H__

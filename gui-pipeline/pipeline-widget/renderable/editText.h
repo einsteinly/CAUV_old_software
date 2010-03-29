@@ -7,6 +7,7 @@
 #include <boost/make_shared.hpp>
 
 #include <QKeyEvent>
+#include <QTOpenGL>
 
 #include <common/debug.h>
 
@@ -14,10 +15,10 @@ typedef void (*done_func) (std::string);
 template<done_func done_F>
 class EditText: public Menu{
     public:
-        EditText(PipelineWidget& p, std::string const& text, BBox const& size)
-            : Menu(p), m_bbox(size), m_fixed_size(false),
-              m_txt_prev(boost::make_shared<Text>(boost::ref(p), text)),
-              m_txt_post(boost::make_shared<Text>(boost::ref(p), "")),
+        EditText(container_ptr_t c, std::string const& text, BBox const& size)
+            : Menu(c), m_bbox(size), m_fixed_size(false),
+              m_txt_prev(boost::make_shared<Text>(c, text)),
+              m_txt_post(boost::make_shared<Text>(c, "")),
               m_cursor_colour(0.8, 0.1, 0.1, 0.9){
             if(m_bbox.area() > 0)
                 m_fixed_size = true;
@@ -110,7 +111,7 @@ class EditText: public Menu{
                         return false;
             }
             updateTextPositions();
-            m_parent.updateGL();
+            m_context->postRedraw();
             return true; 
         }
 

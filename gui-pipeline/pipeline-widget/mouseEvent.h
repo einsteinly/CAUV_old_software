@@ -10,18 +10,30 @@
 class Renderable;
 class PipelineWidget;
 
+// FIXME: all the coordinate referring stuff should probably be in Container,
+// rather than here!
+
 /* MouseEvents are in projected coordinates: the constructors are used to
- * referr the event to another context
+ * refer the event to another context
  */
 struct MouseEvent{
-    /* referr from qt coordinates to top-level renderables: */
+    /* refer from qt coordinates to top-level */
+    MouseEvent(QMouseEvent* qm,
+               PipelineWidget const& p);
+
+    /* refer from qt coordinates to top-level renderables: */
     MouseEvent(QMouseEvent* qm,
                boost::shared_ptr<Renderable> r,
                PipelineWidget const& p);
-    /* referr from saved last mouse position to top-level renderables */
+
+    /* refer from saved last mouse position to top-level */
+    MouseEvent(PipelineWidget const& p);
+
+    /* refer from saved last mouse position to top-level renderables */
     MouseEvent(boost::shared_ptr<Renderable> r,
                PipelineWidget const& p);
-    /* referr from a renderable to children (ie, just offset position) */
+
+    /* refer from a renderable to children (ie, just offset position) */
     MouseEvent(MouseEvent const& m,
                boost::shared_ptr<Renderable> r);
     

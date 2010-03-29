@@ -6,8 +6,8 @@
 
 class Box: public Draggable{
     public:
-        Box(PipelineWidget& p, double const& w, double const& h)
-            : Draggable(p), m_box(0, -h, w, 0){
+        Box(container_ptr_t c, double const& w, double const& h)
+            : Draggable(c), m_box(0, -h, w, 0){
         }
 
         virtual void draw(bool){

@@ -5,7 +5,7 @@
 
 class Draggable: public Renderable{
     public:
-        Draggable(PipelineWidget& p);
+        Draggable(container_ptr_t c);
         virtual void mouseMoveEvent(MouseEvent const& event);
         virtual void mousePressEvent(MouseEvent const& event);
         virtual void mouseGoneEvent();

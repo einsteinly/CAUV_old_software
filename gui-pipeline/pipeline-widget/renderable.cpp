@@ -1,8 +1,8 @@
 #include "renderable.h"
 #include "pipelineWidget.h"
 
-Renderable::Renderable(PipelineWidget& p, Point const& at)
-    : m_pos(at), m_parent(p){
+Renderable::Renderable(container_ptr_t c, Point const& at)
+    : m_pos(at), m_context(c){
 }
 
 

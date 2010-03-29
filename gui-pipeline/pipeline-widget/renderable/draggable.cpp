@@ -1,8 +1,8 @@
 #include "draggable.h"
-#include "../pipelineWidget.h"
+#include "../container.h"
 
-Draggable::Draggable(PipelineWidget& p)
-    : Renderable(p), m_click_pos(),
+Draggable::Draggable(container_ptr_t c)
+    : Renderable(c), m_click_pos(),
       m_mouseover(false), m_pressed(false){
 }
 
@@ -10,10 +10,10 @@ void Draggable::mouseMoveEvent(MouseEvent const& event){
     if(m_pressed && (event.buttons & Qt::LeftButton)){
         m_pos += event.pos - m_click_pos;
         // need a re-draw
-        m_parent.updateGL();
+        m_context->postRedraw();
     }else if(!m_mouseover){
         m_mouseover = true;
-        m_parent.updateGL();
+        m_context->postRedraw();
     }
 }
 
@@ -26,7 +26,7 @@ void Draggable::mouseGoneEvent(){
     if(m_mouseover || m_pressed){
         m_mouseover = false;
         m_pressed = false;
-        m_parent.updateGL();
+        m_context->postRedraw();
     }
 }
 

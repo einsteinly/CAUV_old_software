@@ -23,30 +23,30 @@
 
 class PipelineGuiMsgObs: public MessageObserver{
     public:
-        PipelineGuiMsgObs(PipelineWidget& p)
+        PipelineGuiMsgObs(PipelineWidget *p)
             : m_widget(p){
         }
 
         virtual void onNodeAddedMessage(boost::shared_ptr<const NodeAddedMessage> m){
             debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(m->nodeType() != NodeType::Invalid)
-                m_widget.addNode(boost::make_shared<Node>(boost::ref(m_widget), m));
+                m_widget->addNode(boost::make_shared<Node>(m_widget, m));
         }
 
         virtual void onNodeParametersMessage(boost::shared_ptr<const NodeParametersMessage> m){
             debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            boost::shared_ptr<Node> np = m_widget.node(m->nodeId());
+            boost::shared_ptr<Node> np = m_widget->node(m->nodeId());
             if(np)
                 np->setParams(m);
         }
 
     private:
-        PipelineWidget& m_widget;
+        PipelineWidget *m_widget;
 };
 
 class PipelineGuiCauvNode: public CauvNode{
     public:
-        PipelineGuiCauvNode(PipelineWidget& p)
+        PipelineGuiCauvNode(PipelineWidget *p)
             : CauvNode("pipe-gui"), m_widget(p){
             debug() << "PGCN constructed";
         }
@@ -55,7 +55,7 @@ class PipelineGuiCauvNode: public CauvNode{
             debug() << "PGCN::onRun()";
             mailbox()->joinGroup("pl_gui");
             mailboxMonitor()->addObserver(
-                boost::make_shared<PipelineGuiMsgObs>(boost::ref(m_widget))
+                boost::make_shared<PipelineGuiMsgObs>(m_widget)
             );
             #ifdef CAUV_DEBUG
             mailboxMonitor()->addObserver(
@@ -70,15 +70,15 @@ class PipelineGuiCauvNode: public CauvNode{
             mailbox()->sendMessage(m, SAFE_MESS);
         }
     private:
-        PipelineWidget& m_widget;
+        PipelineWidget *m_widget;
 };
 
 // creating threads taking parameters (especially in a ctor-initializer) is a
 // little tricky, using an intermediate function smooths the ride a bit:
-void spawnPGCN(PipelineWidget& p){
+void spawnPGCN(PipelineWidget *p){
     boost::shared_ptr<PipelineGuiCauvNode> pgcn =
-        boost::make_shared<PipelineGuiCauvNode>(boost::ref(p));
-    p.setCauvNode(pgcn);
+        boost::make_shared<PipelineGuiCauvNode>(p);
+    p->setCauvNode(pgcn);
     pgcn->run();
     warning() << __func__ << "run() finished";
 }
@@ -89,13 +89,13 @@ PipelineWidget::PipelineWidget(QWidget *parent)
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_cauv_node(),
-      m_cauv_node_thread(boost::thread(spawnPGCN, boost::ref(*this))){
+      m_cauv_node_thread(boost::thread(spawnPGCN, this)){
     // TODO: more appropriate QGLFormat?
     
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 
-    m_renderables.insert(boost::make_shared<Box>(boost::ref(*this), 20, 20));
+    m_renderables.insert(boost::make_shared<Box>(this, 20, 20));
 }
 
 QSize PipelineWidget::minimumSizeHint() const{
@@ -165,6 +165,20 @@ void PipelineWidget::sendMessage(boost::shared_ptr<Message> m){
         error() << "PipelineWidget::sendMessage no associated cauv node";
 }
 
+
+Point PipelineWidget::referUp(Point const& p) const{
+    // nowhere up to refer to: just return the same point
+    return p;
+}
+
+void PipelineWidget::postRedraw(){
+    updateGL();
+}
+
+void PipelineWidget::postMenu(menu_ptr_t r, Point const& p){
+    addMenu(r, p);
+}
+
 void PipelineWidget::initializeGL(){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
@@ -176,7 +190,7 @@ void PipelineWidget::initializeGL(){
     
     glShadeModel(GL_SMOOTH);
     glCullFace(GL_BACK);
-    glClearColor(0.1, 0.1, 0.1, 1.0);
+    glClearColor(0, 0, 0, 1.0);
     glClearDepth(100.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -292,8 +306,8 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 	}
 
     if(event->buttons() & Qt::RightButton){
-        MouseEvent proxy(event, boost::make_shared<NullRenderable>(), *this);
-        addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.pos);
+        MouseEvent proxy(event, *this);
+        addMenu(buildAddNodeMenu(this), proxy.pos);
         need_redraw = true; 
     }
     
@@ -313,16 +327,17 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
         if(!m_menu->keyPressEvent(event))
             QWidget::keyPressEvent(event);
     }else{
-        MouseEvent proxy(boost::make_shared<NullRenderable>(), *this);
+        MouseEvent proxy(*this);
         // TODO: hotkeys
         switch(event->key()){
             case Qt::Key_A:
-                addMenu(buildAddNodeMenu(boost::ref(*this)), proxy.pos);
+                addMenu(buildAddNodeMenu(this), proxy.pos);
                 break;
             case Qt::Key_E:
                 addMenu(boost::make_shared< EditText<tdf> >(
-                            boost::ref(*this), std::string("edit here"), temp_bbox),
+                        this, std::string("edit here"), temp_bbox),
                         proxy.pos);
+                break;
             default:
                 QWidget::keyPressEvent(event);
                 break;
@@ -433,8 +448,8 @@ static int roundToZ(double d){
 
 void PipelineWidget::drawGrid(){
     // only draw grid that will be visible:
-    const double grid_major_spacing = 100;
-    const double grid_minor_spacing = 10;
+    const double grid_major_spacing = 250;
+    const double grid_minor_spacing = 25;
     
     // projected window coordinates:
     const double divisor = 2 * m_pixels_per_unit;
@@ -465,26 +480,24 @@ void PipelineWidget::drawGrid(){
             << "max_grid_major_y=" << max_grid_major_y;
     
     glLineWidth(1);
-    glColor4f(0.12, 0.1, 0.1, 0.2);
+    glColor(Colour(0.2, 0.125));
     glBegin(GL_LINES);
     for(int i = min_grid_minor_y; i <= max_grid_minor_y; i++){
         glVertex3f(min_x, i*grid_minor_spacing, -0.2);
         glVertex3f(max_x, i*grid_minor_spacing, -0.2);
     }
 
-    glColor4f(0.1, 0.12, 0.1, 0.2);
     for(int i = min_grid_minor_x; i <= max_grid_minor_x; i++){
         glVertex3f(i*grid_minor_spacing, min_y, -0.2);
         glVertex3f(i*grid_minor_spacing, max_y, -0.2);
     }
     
-    glColor4f(0.24, 0.2, 0.2, 0.3);
+    glColor(Colour(0.2, 0.25));
     for(int i = min_grid_major_y; i <= max_grid_major_y; i++){
         glVertex3f(min_x, i*grid_major_spacing, -0.1);
         glVertex3f(max_x, i*grid_major_spacing, -0.1);
     }
 
-    glColor4f(0.2, 0.24, 0.2, 0.3);
     for(int i = min_grid_major_x; i <= max_grid_major_x; i++){
         glVertex3f(i*grid_major_spacing, min_y, -0.1);
         glVertex3f(i*grid_major_spacing, max_y, -0.1);

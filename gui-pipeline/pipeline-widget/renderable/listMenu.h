@@ -15,8 +15,8 @@ template<typename callable>
 class ListMenuItem: public Renderable{
     public:
         typedef boost::shared_ptr<callable> callable_ptr;
-        ListMenuItem(PipelineWidget& p, std::pair<std::string, callable_ptr> const& item)
-            : Renderable(p), m_text(boost::make_shared<Text>(boost::ref(p), item.first)),
+        ListMenuItem(container_ptr_t c, std::pair<std::string, callable_ptr> const& item)
+            : Renderable(c), m_text(boost::make_shared<Text>(c, item.first)),
               m_onclick(item.second), m_bbox(m_text->bbox()),
               m_hovered(false), m_pressed(false){
             // some space around text:
@@ -48,7 +48,7 @@ class ListMenuItem: public Renderable{
                 m_pressed = false;
             }
             // TODO: only when necessary
-            m_parent.updateGL();
+            m_context->postRedraw();
         }
 
         virtual void mousePressEvent(MouseEvent const& m){
@@ -57,7 +57,7 @@ class ListMenuItem: public Renderable{
                 if(m.buttons & Qt::LeftButton)
                     m_pressed = true;
                 // TODO: only when necessary
-                m_parent.updateGL();
+                m_context->postRedraw();
             }
         }
 
@@ -66,14 +66,14 @@ class ListMenuItem: public Renderable{
                 (*m_onclick)();
             m_pressed = false;
             // TODO: only when necessary
-            m_parent.updateGL();
+            m_context->postRedraw();
         }
 
         virtual void mouseGoneEvent(){
             m_hovered = false;
             m_pressed = false;
             // TODO: only when necessary
-            m_parent.updateGL();
+            m_context->postRedraw();
         }
 
         virtual BBox bbox(){
@@ -105,13 +105,13 @@ class ListMenu: public Menu{
         typedef boost::shared_ptr<callable> callable_ptr;
         typedef std::map<std::string,callable_ptr> item_map_t;
 
-        ListMenu(PipelineWidget& p, item_map_t const& items)
-            : Menu(p), m_items(), m_bbox(){
+        ListMenu(container_ptr_t c, item_map_t const& items)
+            : Menu(c), m_items(), m_bbox(){
             typename item_map_t::const_iterator i;
             double y_pos = 0;
             double prev_height = 0;
             for(i = items.begin(); i != items.end(); i++, y_pos -= prev_height){
-                item_ptr ip = boost::make_shared<item_t>(boost::ref(p), *i);
+                item_ptr ip = boost::make_shared<item_t>(c, *i);
                 m_items.push_back(ip);                
                 ip->m_pos.y = y_pos + ip->bbox().min.y;
                 prev_height = ip->bbox().h();

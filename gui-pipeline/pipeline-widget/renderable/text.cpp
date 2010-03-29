@@ -11,8 +11,8 @@
 #include <common/debug.h>
 
 
-Text::Text(PipelineWidget& p, std::string const& text, std::string const& font, int pt)
-    : Renderable(boost::ref(p)), std::string(text), m_bbox(),
+Text::Text(container_ptr_t c, std::string const& text, std::string const& font, int pt)
+    : Renderable(c), std::string(text), m_bbox(),
       m_font(std::make_pair(font, pt)){
 }
         

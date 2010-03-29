@@ -11,6 +11,7 @@
 #include <boost/thread.hpp>
 
 #include "mouseEvent.h"
+#include "container.h"
 
 class PipelineGuiCauvNode;
 class Message;
@@ -18,13 +19,16 @@ class Renderable;
 class Node;
 class Menu;
 
-class PipelineWidget: public QGLWidget{
+class PipelineWidget: public QGLWidget,
+                      public Container{
     Q_OBJECT
     // public typedefs:
     public:
-        typedef boost::shared_ptr<Renderable> renderable_ptr_t;
+        /* inherited from Container:
+         *  renderable_ptr_t
+         *  menu_ptr_t  
+         */
         typedef boost::shared_ptr<Node> node_ptr_t;
-        typedef boost::shared_ptr<Menu> menu_ptr_t;
         // TODO: this should really be synchronised with pipelineTypes.h! (need
         // a pipeline namespace to do that without confusion about Nodes though)
         typedef int32_t node_id;
@@ -35,11 +39,8 @@ class PipelineWidget: public QGLWidget{
         typedef std::map<node_id, node_ptr_t> node_map_t;
 
     // friends:
-        friend MouseEvent::MouseEvent(QMouseEvent*,
-                                      renderable_ptr_t,
-                                      PipelineWidget const&);
-        friend MouseEvent::MouseEvent(renderable_ptr_t,
-                                      PipelineWidget const&);  
+    friend class MouseEvent;
+
     public:
         PipelineWidget(QWidget *parent = 0);
     
@@ -58,6 +59,11 @@ class PipelineWidget: public QGLWidget{
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void sendMessage(boost::shared_ptr<Message>);
+
+        // implement Container:
+        virtual Point referUp(Point const& p) const;
+        virtual void postRedraw();
+        virtual void postMenu(menu_ptr_t r, Point const& top_level_position);
     
     protected:
         void initializeGL();
