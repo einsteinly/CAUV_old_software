@@ -72,8 +72,8 @@ add_library (
 target_link_libraries (
     common-shared
 
-    #${ssrcspread_LIBRARIES}
-    "libssrcspread.so"
+    ${ssrcspread_LIBRARIES}
+    #"libssrcspread.so"
     ${OpenCV_LIBS}
     boost_thread
     boost_serialization
