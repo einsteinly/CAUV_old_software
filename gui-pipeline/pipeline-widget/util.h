@@ -1,6 +1,7 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+#include <cmath>
 
 template<typename T>
 class V2D{
@@ -21,6 +22,8 @@ class V2D{
         friend V2D<T> operator-(V2D<T> const& l, T const& r){ return V2D<T>(l) -= r; }
         friend V2D<T> operator*(V2D<T> const& l, T const& r){ return V2D<T>(l) *= r; }
         friend V2D<T> operator/(V2D<T> const& l, T const& r){ return V2D<T>(l) /= r; }
+        
+        T sxx() const{ return x*x + y*y; }
 
         T x, y;
 };
@@ -87,8 +90,25 @@ class Colour{
 
 // Usful overloaded & utility functions:
 void glTranslatef(Point const& p, double const& z = 0.0);
+void glVertex(Point const& p);
 void glBox(BBox const& b);
+void glArc(double const& radius, double const& start, double const& end, unsigned segments);
+void glSegment(double const& radius, double const& start, double const& end, unsigned segments);
+void glCircle(double const& radius, unsigned segments = 24);
+void glCircleOutline(double const& radius, unsigned segments = 24);
 void glColor(Colour const& c);
+
+template<typename T>
+inline static T roundZ(T const& v){
+    if(v >= 0) return std::floor(v);
+    else return std::ceil(v);
+}
+
+template<typename T>
+inline static T roundA(T const& v){
+    if(v >= 0) return std::ceil(v);
+    else return std::floor(v);
+}
 
 
 #endif // ndef __UTIL_H__

@@ -13,8 +13,8 @@
 
 class ConvertColourNode: public Node{
     public:
-        ConvertColourNode(Scheduler& s)
-            : Node(s){
+        ConvertColourNode(Scheduler& sched, ImageProcessor& pl)
+            : Node(sched, pl){
             // fast node:
             m_speed = fast;
 

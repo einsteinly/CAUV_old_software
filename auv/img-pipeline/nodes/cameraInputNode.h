@@ -14,8 +14,8 @@ class CameraInputNode: public AsynchronousNode{
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
     public:
-        CameraInputNode(Scheduler& s)
-            : AsynchronousNode(s), m_capture(){
+        CameraInputNode(Scheduler& sched, ImageProcessor& pl)
+            : AsynchronousNode(sched, pl), m_capture(){
             // no inputs
             // registerInputID()
             

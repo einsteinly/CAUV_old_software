@@ -19,6 +19,7 @@
 #include "renderable/node.h"
 #include "renderable/menu.h"
 #include "renderable/editText.h"
+#include "renderable/arc.h"
 
 
 class PipelineGuiMsgObs: public MessageObserver{
@@ -95,7 +96,9 @@ PipelineWidget::PipelineWidget(QWidget *parent)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 
+    #ifdef CAUV_DEBUG
     m_renderables.insert(boost::make_shared<Box>(this, 20, 20));
+    #endif
 }
 
 QSize PipelineWidget::minimumSizeHint() const{
@@ -124,7 +127,8 @@ void PipelineWidget::remove(menu_ptr_t p){
 
 void PipelineWidget::add(renderable_ptr_t r){
     // TODO: sensible layout hint
-    add(r, Point());
+    static Point last_add_position = Point();
+    add(r, last_add_position += Point(20, -10));
 }
 
 void PipelineWidget::add(renderable_ptr_t r, Point const& at){
@@ -152,6 +156,46 @@ PipelineWidget::node_ptr_t PipelineWidget::node(node_id const& n){
     warning() << "unknown node renderable:" << n;
     return node_ptr_t();
 }
+
+
+void PipelineWidget::addArc(node_id const& src, std::string const& output,
+                            node_id const& dst, std::string const& input){
+    node_ptr_t s = node(src);
+    node_ptr_t d = node(dst);
+    if(!s || !d)
+        return;
+    renderable_ptr_t s_no = s->outSocket(output);
+    renderable_ptr_t d_ni = d->inSocket(input);
+    if(!s_no || !d_ni)
+        return;
+    addArc(s_no, d_ni);
+}
+
+void PipelineWidget::addArc(renderable_ptr_t src,
+                            node_id const& dst, std::string const& input){
+    node_ptr_t d = node(dst);
+    if(!d) return;
+    renderable_ptr_t d_ni = d->inSocket(input); 
+    if(!d_ni) return;
+    addArc(src, d_ni);
+}
+
+void PipelineWidget::addArc(node_id const& src, std::string const& output,
+                            renderable_ptr_t dst){
+    node_ptr_t s = node(src);
+    if(!s) return;
+    renderable_ptr_t s_no = s->outSocket(output);
+    if(!s_no) return;
+    addArc(s_no, dst);
+}
+
+void PipelineWidget::addArc(renderable_ptr_t src, renderable_ptr_t dst){ 
+    // TODO: prevent duplicate arcs
+    arc_ptr_t a = boost::make_shared<Arc>(this, src, dst);
+    m_arcs.insert(a);
+    add(a, Point());
+}
+
 
 void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
     if(m_cauv_node)
@@ -210,6 +254,7 @@ void PipelineWidget::paintGL(){
     glTranslatef(0.5/m_pixels_per_unit, 0.5/m_pixels_per_unit, 0);
     drawGrid();
     
+    #ifdef CAUV_DEBUG
     // debug stuff:
     glBegin(GL_LINES);
     glColor4f(1.0, 0.0, 0.0, 0.5);
@@ -228,6 +273,7 @@ void PipelineWidget::paintGL(){
     glVertex2f(-17.5f, -20.0f);
     glVertex2f(-17.5f, -15.0f);
     glEnd();
+    #endif
 
     // draw everything!
     renderable_set_t::iterator i;
@@ -335,6 +381,7 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
         MouseEvent proxy(*this);
         // TODO: hotkeys
         switch(event->key()){
+            case Qt::Key_Space:
             case Qt::Key_A:
                 addMenu(buildAddNodeMenu(this), proxy.pos);
                 break;
@@ -444,13 +491,6 @@ void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     glMatrixMode(GL_MODELVIEW);
 }
 
-static int roundToZ(double d){
-    if (d < 0.0)
-        return int(std::ceil(d));
-    else
-        return int(std::floor(d));
-}
-
 void PipelineWidget::drawGrid(){
     // only draw grid that will be visible:
     const double grid_major_spacing = 250;
@@ -463,15 +503,15 @@ void PipelineWidget::drawGrid(){
     const double max_x = -m_win_centre.x + width()  / divisor;
     const double max_y = -m_win_centre.y + height() / divisor;
     
-    const int min_grid_minor_x = roundToZ(min_x / grid_minor_spacing);
-    const int min_grid_minor_y = roundToZ(min_y / grid_minor_spacing);
-    const int max_grid_minor_x = roundToZ(max_x / grid_minor_spacing);
-    const int max_grid_minor_y = roundToZ(max_y / grid_minor_spacing);
+    const int min_grid_minor_x = roundZ(min_x / grid_minor_spacing);
+    const int min_grid_minor_y = roundZ(min_y / grid_minor_spacing);
+    const int max_grid_minor_x = roundZ(max_x / grid_minor_spacing);
+    const int max_grid_minor_y = roundZ(max_y / grid_minor_spacing);
     
-    const int min_grid_major_x = roundToZ(min_x / grid_major_spacing);
-    const int min_grid_major_y = roundToZ(min_y / grid_major_spacing);
-    const int max_grid_major_x = roundToZ(max_x / grid_major_spacing);
-    const int max_grid_major_y = roundToZ(max_y / grid_major_spacing);
+    const int min_grid_major_x = roundZ(min_x / grid_major_spacing);
+    const int min_grid_major_y = roundZ(min_y / grid_major_spacing);
+    const int max_grid_major_x = roundZ(max_x / grid_major_spacing);
+    const int max_grid_major_y = roundZ(max_y / grid_major_spacing);
     
     debug(-2) << "min_x=" << min_x << "max_x=" << max_x
             << "min_y=" << min_y << "max_y=" << max_y << "\n\t"

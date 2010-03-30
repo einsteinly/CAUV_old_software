@@ -8,6 +8,7 @@
 #include <set>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include <common/messages.h>
 #include <common/cauv_utils.h>
@@ -26,6 +27,8 @@ class ImageProcessor: public MessageObserver
         typedef boost::shared_ptr<InputNode> input_node_ptr_t;
         typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
         typedef Spread::service service_t;
+        typedef boost::recursive_mutex mutex_t;
+        typedef boost::unique_lock<mutex_t> lock_t;
     public:    
         ImageProcessor(mb_ptr_t mailbox);
         
@@ -38,15 +41,15 @@ class ImageProcessor: public MessageObserver
          * input. It is up to nodes to filter the source of the image to select
          * their input from others.
          */
-        virtual void onImageMessage(boost::shared_ptr<const ImageMessage> m);
+        virtual void onImageMessage(ImageMessage_ptr m);
         
         /**
          * These messages describe modifications to the pipeline
          */
 
-        virtual void onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m);
-        virtual void onRemoveNodeMessage(boost::shared_ptr<const RemoveNodeMessage> m);
-        virtual void onSetNodeParameterMessage(boost::shared_ptr<const SetNodeParameterMessage> m);
+        virtual void onAddNodeMessage(AddNodeMessage_ptr m);
+        virtual void onRemoveNodeMessage(RemoveNodeMessage_ptr m);
+        virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
 
         /** end MessageObserver functions **/
 
@@ -57,28 +60,30 @@ class ImageProcessor: public MessageObserver
 
         ~ImageProcessor();
     
-    private:
         /**
          * Provide a safe id lookup (make sure we don't create NULL nodes)
          */
-        node_ptr_t _lookupNode(node_id const& id) const throw(id_error){
-            std::map<node_id, node_ptr_t>::const_iterator i = m_nodes.find(id);
-            if(i != m_nodes.end())
-                return i->second;
-            else
-                throw(id_error(std::string("Unknown node id") + to_string(id)));
-        }
+        node_ptr_t lookup(node_id const& id) const throw(id_error);
+        
+        /**
+         * and a safe reverse lookup: 0 is returned for non-existent nodes
+         */
+        node_id lookup(node_ptr_t const& p) const throw();
 
-        node_id _newID(node_ptr_t) const throw(){
-            // Can probably do better than this...
-            static node_id id = 1;
-            return id++;
-        }
-
+    private:
+        void _addNode(node_ptr_t const& p, node_id const& id) throw();
+        void _addNode(node_ptr_t const& p) throw();
+        void _removeNode(node_id const& id) throw(id_error);
+        node_id _newID(node_ptr_t) const throw();
+        
+        mutable mutex_t m_nodes_lock;
         std::map<node_id, node_ptr_t> m_nodes;
+        std::map<node_ptr_t, node_id> m_nodes_rev;
         std::set<input_node_ptr_t> m_input_nodes;
 
         Scheduler m_scheduler;
+
+        mutable mutex_t m_mailbox_lock;
         mb_ptr_t m_mailbox;
 };
 

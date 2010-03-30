@@ -12,6 +12,7 @@ class Node;
 class InputNode;
 class AsynchronousNode;
 class Scheduler;
+class ImageProcessor;
 
 class img_pipeline_error: public std::runtime_error{
     public:

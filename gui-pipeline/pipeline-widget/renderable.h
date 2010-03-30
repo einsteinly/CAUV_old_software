@@ -21,7 +21,7 @@ class Renderable{
         /* overload to receive mouse events
          */
         virtual void mouseMoveEvent(MouseEvent const&){ }
-        virtual void mousePressEvent(MouseEvent const&){ }
+        virtual bool mousePressEvent(MouseEvent const&){ return false; }
         virtual void mouseReleaseEvent(MouseEvent const&){ }
         virtual void mouseGoneEvent(){ }
 
@@ -36,6 +36,10 @@ class Renderable{
          */
         virtual BBox bbox(){ return BBox(); }
         
+        /* return m_pos refered to top level coordinates
+         */
+        Point topLevelPos() const;
+
         // public data:
         Point m_pos;
 

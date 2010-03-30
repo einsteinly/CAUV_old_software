@@ -29,21 +29,4 @@ target_link_libraries(
 )
 
 
-# nodeTest
-add_executable(
-    nodeTest
-    nodeTest.cpp
-    ../scheduler.cpp
-    ../node.cpp
-    ../nodes/nodes.cpp
-)
-
-target_link_libraries(
-    nodeTest
-    cv
-    cxcore
-    highgui
-    common
-)
-
 

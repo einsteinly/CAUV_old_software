@@ -28,11 +28,11 @@ class ListMenuItem: public Renderable{
 
         virtual void draw(bool picking){
             if(m_pressed)
-                glColor(Colour(0.6, 0.9));
+                glColor(Colour(0.50, 0.8));
             else if(m_hovered)
-                glColor(Colour(0.8, 0.8));
+                glColor(Colour(0.75, 0.8));
             else
-                glColor(Colour(0.9, 0.8));
+                glColor(Colour(1.00, 0.5));
             glBox(m_bbox);
             if(!picking)
                 m_text->draw(picking);
@@ -51,14 +51,16 @@ class ListMenuItem: public Renderable{
             m_context->postRedraw();
         }
 
-        virtual void mousePressEvent(MouseEvent const& m){
+        virtual bool mousePressEvent(MouseEvent const& m){
             if(bbox().contains(m.pos)){
                 m_hovered = true;
                 if(m.buttons & Qt::LeftButton)
                     m_pressed = true;
                 // TODO: only when necessary
                 m_context->postRedraw();
+                return true;
             }
+            return false;
         }
 
         virtual void mouseReleaseEvent(MouseEvent const& m){
@@ -108,13 +110,13 @@ class ListMenu: public Menu{
         ListMenu(container_ptr_t c, item_map_t const& items)
             : Menu(c), m_items(), m_bbox(){
             typename item_map_t::const_iterator i;
-            double y_pos = 0;
-            double prev_height = 0;
+            int y_pos = 0;
+            int prev_height = 0;
             for(i = items.begin(); i != items.end(); i++, y_pos -= prev_height){
                 item_ptr ip = boost::make_shared<item_t>(c, *i);
                 m_items.push_back(ip);                
-                ip->m_pos.y = y_pos + ip->bbox().min.y;
-                prev_height = ip->bbox().h();
+                ip->m_pos.y = y_pos + roundZ(ip->bbox().min.y);
+                prev_height = roundA(ip->bbox().h());
                 m_bbox |= ip->bbox() + ip->m_pos;
             }
             typename std::list<item_ptr>::iterator j;
@@ -126,6 +128,8 @@ class ListMenu: public Menu{
             typename std::list<item_ptr>::const_iterator i;
             /* menus are above: */
             glTranslatef(0, 0, 0.1);
+            glColor(Colour(1.0, 0.8));
+            glBox(m_bbox);
             for(i = m_items.begin(); i != m_items.end(); i++){
                 glPushMatrix();
                 glTranslatef((*i)->m_pos);
@@ -151,15 +155,16 @@ class ListMenu: public Menu{
             m_hovered_items = now_hovered_items;
         }
 
-        virtual void mousePressEvent(MouseEvent const& m){
+        virtual bool mousePressEvent(MouseEvent const& m){
             typename std::list<item_ptr>::iterator i;
             for(i = m_items.begin(); i != m_items.end(); i++){
                 MouseEvent referred(m, *i);
                 if((*i)->bbox().contains(referred.pos)){
-                    (*i)->mousePressEvent(referred);
-                    m_pressed_items.insert(*i);
+                    if((*i)->mousePressEvent(referred));
+                        m_pressed_items.insert(*i);
                 }
             }
+            return m_pressed_items.size() > 0;
         }
 
         virtual void mouseReleaseEvent(MouseEvent const& m){

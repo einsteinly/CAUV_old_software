@@ -18,6 +18,7 @@ class Message;
 class Renderable;
 class Node;
 class Menu;
+class Arc;
 
 class PipelineWidget: public QGLWidget,
                       public Container{
@@ -29,6 +30,7 @@ class PipelineWidget: public QGLWidget,
          *  menu_ptr_t  
          */
         typedef boost::shared_ptr<Node> node_ptr_t;
+        typedef boost::shared_ptr<Arc> arc_ptr_t;
         // TODO: this should really be synchronised with pipelineTypes.h! (need
         // a pipeline namespace to do that without confusion about Nodes though)
         typedef int32_t node_id;
@@ -36,6 +38,7 @@ class PipelineWidget: public QGLWidget,
     private:
     // private typedefs:
         typedef std::set<renderable_ptr_t> renderable_set_t;
+        typedef std::set<arc_ptr_t> arc_set_t;
         typedef std::map<node_id, node_ptr_t> node_map_t;
 
     // friends:
@@ -56,6 +59,13 @@ class PipelineWidget: public QGLWidget,
         void addNode(node_ptr_t);
 
         node_ptr_t node(node_id const&);
+        void addArc(node_id const& src, std::string const& output,
+                    node_id const& dst, std::string const& input);
+        void addArc(renderable_ptr_t src,
+                    node_id const& dst, std::string const& input);
+        void addArc(node_id const& src, std::string const& output,
+                    renderable_ptr_t dst);
+        void addArc(renderable_ptr_t src, renderable_ptr_t dst);
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void sendMessage(boost::shared_ptr<Message>);
@@ -95,6 +105,7 @@ class PipelineWidget: public QGLWidget,
         renderable_set_t m_renderables;
         menu_ptr_t m_menu;
         node_map_t m_nodes;
+        arc_set_t m_arcs;
 
         renderable_set_t m_owning_mouse; // which renderables are involved in
                                          // the current mouse event

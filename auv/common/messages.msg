@@ -119,6 +119,8 @@ group pl_gui
     {
         nodeId : int32;
         nodeType : NodeType;
+        inputs : map<string, NodeOutput>;
+        outputs : map<string, list<NodeInput> >;
     }
 
     message NodeRemoved : 10

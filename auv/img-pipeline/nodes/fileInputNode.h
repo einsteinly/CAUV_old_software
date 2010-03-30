@@ -15,8 +15,8 @@ class FileInputNode: public AsynchronousNode{
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
     public:
-        FileInputNode(Scheduler& s)
-            : AsynchronousNode(s), m_file_is_new(true){
+        FileInputNode(Scheduler& sched, ImageProcessor& pl)
+            : AsynchronousNode(sched, pl), m_file_is_new(true){
             // no inputs
             // registerInputID()
             

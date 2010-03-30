@@ -18,6 +18,8 @@ class Container{
 
     protected:
         // protected typedefs
+        // NB: THIS MUST REMAIN A LIST: items must be removable without
+        // invalidating iterstors
         typedef std::list<renderable_ptr_t> renderable_list_t;
 
     public:

@@ -13,8 +13,8 @@
 
 class FileOutputNode: public Node{
     public:
-        FileOutputNode(Scheduler& s)
-            : Node(s){
+        FileOutputNode(Scheduler& sched, ImageProcessor& pl)
+            : Node(sched, pl){
             // one input:
             registerInputID("image_in");
             

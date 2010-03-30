@@ -1,7 +1,4 @@
 #include "node.h"
-#include "text.h"
-#include "editText.h"
-#include "../pipelineWidget.h"
 
 #include <sstream>
 
@@ -9,6 +6,11 @@
 #include <common/messages.h>
 
 #include <QtOpenGL>
+
+#include "../pipelineWidget.h"
+#include "text.h"
+#include "editText.h"
+#include "arc.h"
 
 
 // TODO: own header?
@@ -41,7 +43,7 @@ class PVPair: public Renderable{
             glPopMatrix();
         }
 
-        virtual void mousePressEvent(MouseEvent const& e){
+        virtual bool mousePressEvent(MouseEvent const& e){
             MouseEvent referred(e, m_value);
             if(m_value->bbox().contains(referred.pos)){
                 debug() << "got value hit";
@@ -53,7 +55,9 @@ class PVPair: public Renderable{
                     ), m_context->referUp(m_pos + m_value->m_pos)
                 );
                 m_context->postRedraw();
+                return true;
             }
+            return false;
         }
 
         virtual BBox bbox(){
@@ -87,15 +91,137 @@ class PVPair: public Renderable{
         boost::shared_ptr<Text> m_value;
 };
 
+class NodeIOBlob: public Renderable{
+    public:
+        NodeIOBlob(container_ptr_t c, std::string const& name)
+            : Renderable(c), m_text(boost::make_shared<Text>(c, name)),
+              m_radius(6), m_radius_squared(m_radius*m_radius),
+              m_colour(Colour(0.2, 0.4, 0.6, 0.5)),
+              m_colour_hl(Colour(0.6, 0.7, 0.8, 0.5)),
+              m_outline_colour(Colour(0.1, 0.2, 0.3, 0.5)),
+              m_mouseover(false){
+            // put middle at 0 rather than baseline
+            m_text->m_pos.y = -(m_text->bbox().min.y + m_text->bbox().h()/2);
+        }
+
+        virtual void draw(bool picking){
+            if(m_mouseover)
+                glColor(m_colour_hl);
+            else
+                glColor(m_colour);
+            glCircle(m_radius);
+
+            glColor(m_outline_colour);
+            glLineWidth(1);
+            glCircleOutline(m_radius);
+
+            glTranslatef(m_text->m_pos);
+            m_text->draw(picking);
+        }
+
+        virtual void mouseMoveEvent(MouseEvent const& m){
+            if(!m_mouseover && contains(m.pos)){
+                m_mouseover = true;
+                m_context->postRedraw();
+            }else if(m_mouseover && !contains(m.pos)){
+                m_mouseover = false;
+                m_context->postRedraw();
+            }
+        }
+
+        virtual bool mousePressEvent(MouseEvent const& e){
+            if(e.pos.sxx() < m_radius_squared){
+                // circley bit hit
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+        virtual void mouseReleaseEvent(MouseEvent const&){ }
+
+        virtual void mouseGoneEvent(){
+            if(m_mouseover){
+                m_mouseover = false;
+                m_context->postRedraw();
+            }
+        }
+
+        virtual bool tracksMouse(){
+            return true;
+        }
+
+        virtual BBox bbox(){
+            return BBox(-m_radius, -m_radius, m_radius, m_radius) |
+                   (m_text->bbox() + m_text->m_pos);
+        }
+
+    protected:
+        bool contains(Point const& x) const{
+            if(x.sxx() < m_radius_squared)
+                return true;
+            return false;
+        }
+
+        boost::shared_ptr<Text> m_text;
+
+        double m_radius;
+        double m_radius_squared;
+        Colour m_colour;
+        Colour m_colour_hl;
+        Colour m_outline_colour;
+
+        bool m_mouseover;
+};
+
+class NodeInputBlob: public NodeIOBlob{
+    public:
+        NodeInputBlob(container_ptr_t c, std::string const& n)
+            : NodeIOBlob(c, n){
+            m_text->m_pos.x = -m_text->bbox().min.x + m_radius + 3;
+        }
+};
+
+class NodeOutputBlob: public NodeIOBlob{
+    public:
+        NodeOutputBlob(container_ptr_t c, std::string const& n)
+            : NodeIOBlob(c, n){
+            m_text->m_pos.x = -m_text->bbox().max.x - m_radius - 3;
+        }
+};
 
 Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
       m_node_type(to_string(m->nodeType())),
-      m_title(boost::make_shared<Text>(c, m_node_type)){
-    m_title->m_pos.x = -m_title->bbox().min.x;
-    m_title->m_pos.y = -m_title->bbox().max.y;
-    m_bbox = m_title->bbox() + m_title->m_pos;
+      m_title(boost::make_shared<Text>(c, m_node_type)),
+      m_suppress_dragable(false){
     m_contents.push_back(m_title);
+
+    std::map<std::string, std::vector<NodeInput> >::const_iterator i;
+    for(i = m->outputs().begin(); i != m->outputs().end(); i++){
+        debug() << BashColour::Brown << *i;
+        renderable_ptr_t t = boost::make_shared<NodeOutputBlob>(this, i->first);
+        m_outputs[i->first] = t;
+        m_contents.push_back(t);
+        // add the arcs (if any) from this output:
+        std::vector<NodeInput>::const_iterator k;
+        for(k = i->second.begin(); k != i->second.end(); k++){
+            m_pw->addArc(t, k->node, k->input);
+        }
+    }
+    
+    std::map<std::string, NodeOutput>::const_iterator j;
+    for(j = m->inputs().begin(); j != m->inputs().end(); j++){
+        debug() << BashColour::Brown << *j;
+        renderable_ptr_t t = boost::make_shared<NodeInputBlob>(this, j->first);
+        m_inputs[j->first] = t;
+        m_contents.push_back(t);
+        // if connected, add the arc to this input:
+        if(j->second.node)
+            m_pw->addArc(j->second.node, j->second.output, t);
+    }
+    
+    refreshLayout();
 }
 
 static boost::shared_ptr<Renderable> makePVPair(
@@ -124,43 +250,77 @@ void Node::setParams(boost::shared_ptr<NodeParametersMessage const> m){
         return;
     }
     // remove any old parameters:
-    m_contents.clear();
-    m_params.clear();
-    m_contents.push_back(m_title);
-    m_bbox = m_title->bbox() + m_title->m_pos;
-
-    double lead = 4;
-    double prev_height = m_title->bbox().h();
-    double y_pos = -(prev_height+lead);
-    std::map<std::string, NodeParamValue>::const_iterator i;    
-    for(i = m->values().begin(); i != m->values().end(); i++, y_pos -= (prev_height+lead)){
-        boost::shared_ptr<Renderable> t = makePVPair(this, *i);
-        m_params.push_back(t);
-        m_contents.push_back(t);
-        t->m_pos.y = y_pos - t->bbox().max.y;
-        prev_height = t->bbox().h();
-        m_bbox |= t->bbox() + t->m_pos;
+    renderable_list_t::iterator k, j;
+    for(k = m_contents.begin(); k != m_contents.end(); k=j){
+        j = k;
+        j++;
+        if(m_params.count(*k))
+            m_contents.erase(k);
     }
-    // need to re-draw
-    m_context->postRedraw();
+    m_params.clear();
+
+    std::map<std::string, NodeParamValue>::const_iterator i;    
+    for(i = m->values().begin(); i != m->values().end(); i++){
+        boost::shared_ptr<Renderable> t = makePVPair(this, *i);
+        m_params.insert(t);
+        m_contents.push_back(t);
+    }
+    refreshLayout();
 }
 
-void Node::mousePressEvent(MouseEvent const& e){
-    pv_list_t::const_iterator i;
-    for(i = m_params.begin(); i != m_params.end(); i++){
+bool Node::mousePressEvent(MouseEvent const& e){
+    renderable_list_t::const_iterator i;
+    for(i = m_contents.begin(); i != m_contents.end(); i++){
         MouseEvent referred(e, *i);
         if((*i)->bbox().contains(referred.pos))
-            (*i)->mousePressEvent(referred);
+            if((*i)->mousePressEvent(referred)){
+                m_suppress_dragable = true;
+                return true;
+            }
     }
-    Draggable::mousePressEvent(e);
+    return Draggable::mousePressEvent(e);
+}
+
+void Node::mouseReleaseEvent(MouseEvent const& e){
+    m_suppress_dragable = false;
+    Draggable::mouseReleaseEvent(e);
+}
+
+void Node::mouseMoveEvent(MouseEvent const& e){
+    renderable_list_t::const_iterator i;
+    renderable_set_t now_hovered;
+    for(i = m_contents.begin(); i != m_contents.end(); i++){
+        MouseEvent referred(e, *i);
+        if((*i)->tracksMouse() && (*i)->bbox().contains(referred.pos)){
+            (*i)->mouseMoveEvent(referred);
+            now_hovered.insert(*i);
+        }
+    }
+    renderable_set_t::const_iterator j;
+    for(j = m_hovered.begin(); j != m_hovered.end(); j++){
+        if(!now_hovered.count(*j))
+            (*j)->mouseGoneEvent();
+    }
+    m_hovered = now_hovered;
+    if(!m_suppress_dragable)
+        Draggable::mouseMoveEvent(e);
+}
+
+void Node::mouseGoneEvent(){
+    renderable_set_t::const_iterator i;
+    for(i = m_hovered.begin(); i != m_hovered.end(); i++)
+        (*i)->mouseGoneEvent();
+    m_hovered.clear();
+    if(!m_suppress_dragable)
+        Draggable::mouseGoneEvent();
 }
 
 void Node::draw(bool picking){
     if(m_mouseover)
-        glColor4f(1.0, 0.0, 0.0, 0.5);
+        glColor4f(0.1, 0.5, 0.1, 0.8);
     else
-        glColor4f(1.0, 1.0, 1.0, 0.5);
-    glBox(m_bbox);
+        glColor4f(0.8, 0.8, 0.8, 0.8);
+    glBox(m_back);
     
     Container::draw(picking);
 }
@@ -175,6 +335,26 @@ BBox Node::bbox(){
 
 int Node::id() const{
     return m_node_id;
+}
+
+Node::renderable_ptr_t Node::outSocket(std::string const& id){
+    str_renderable_map_t::const_iterator i = m_outputs.find(id);
+    if(i != m_outputs.end()){
+        return i->second;
+    }else{
+        warning() << "unknown output:" << id << "on node" << m_node_id;
+        return renderable_ptr_t();
+    }
+}
+
+Node::renderable_ptr_t Node::inSocket(std::string const& id){
+    str_renderable_map_t::const_iterator i = m_inputs.find(id);
+    if(i != m_inputs.end()){
+        return i->second;
+    }else{
+        warning() << "unknown input:" << id << "on node" << m_node_id;
+        return renderable_ptr_t();
+    }
 }
 
 Point Node::referUp(Point const& p) const{
@@ -236,5 +416,64 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     pv.stringValue = v;
     sp->value(pv);
     m_pw->sendMessage(sp);
+}
+
+
+void Node::refreshLayout(){
+    int border = 3;
+    int lead = 6;
+    int section_lead = 10;
+    int io_overhang = 6;
+    int prev_height = roundA(m_title->bbox().h());
+    int y_pos = -(prev_height+section_lead);
+    int param_indent = 6;
+
+    m_title->m_pos.x = -m_title->bbox().min.x;
+    m_title->m_pos.y = -m_title->bbox().max.y;
+    m_back = m_title->bbox() + m_title->m_pos;
+    m_back.max.y += border;
+    m_back.min.x -= border;
+    m_back.max.x += border;
+
+    str_renderable_map_t::const_iterator i;
+    for(i = m_inputs.begin(); i != m_inputs.end(); i++, y_pos -= (prev_height+lead)){
+        renderable_ptr_t r = i->second;
+        r->m_pos.y = y_pos - roundA(r->bbox().max.y);
+        r->m_pos.x = m_back.min.x - io_overhang - r->bbox().min.x;
+        prev_height = roundA(r->bbox().h());
+        m_back |= r->bbox() + r->m_pos + Point(io_overhang, 0);
+    }
+    y_pos -= section_lead - lead;
+
+    pv_set_t::const_iterator j;    
+    for(j = m_params.begin(); j != m_params.end(); j++, y_pos -= (prev_height+lead)){
+        (*j)->m_pos.y = y_pos - roundA((*j)->bbox().max.y);
+        (*j)->m_pos.x = param_indent;
+        prev_height = roundA((*j)->bbox().h());
+        m_back |= (*j)->bbox() + (*j)->m_pos;
+    }
+    y_pos -= section_lead - lead;
+    
+    for(i = m_outputs.begin(); i != m_outputs.end(); i++, y_pos -= (prev_height+lead)){
+        renderable_ptr_t r = i->second;
+        r->m_pos.y = y_pos - roundA(r->bbox().max.y);
+        if(r->bbox().w() - io_overhang > m_back.w())
+            r->m_pos.x = m_back.min.x - r->bbox().min.x;
+        else
+            r->m_pos.x = m_back.max.x + io_overhang - r->bbox().max.x;
+        m_back |= r->bbox() + r->m_pos - Point(io_overhang, 0);
+        prev_height = roundA(r->bbox().h());
+    }
+
+    m_back.min.y -= lead;
+
+    m_bbox = m_back;
+    if(m_inputs.size())
+        m_bbox.min.x -= param_indent;
+    if(m_outputs.size())
+        m_bbox.max.x += param_indent;
+
+    // need to re-draw
+    m_context->postRedraw();
 }
 

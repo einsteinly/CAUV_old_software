@@ -17,9 +17,10 @@ void Draggable::mouseMoveEvent(MouseEvent const& event){
     }
 }
 
-void Draggable::mousePressEvent(MouseEvent const& event){
+bool Draggable::mousePressEvent(MouseEvent const& event){
     m_click_pos = event.pos;
     m_pressed = true;
+    return true;
 }
 
 void Draggable::mouseGoneEvent(){

@@ -13,54 +13,64 @@ ImageProcessor::ImageProcessor(mb_ptr_t mb)
     m_scheduler.start();
 }
 
-void ImageProcessor::onImageMessage(boost::shared_ptr<const ImageMessage> m){
+void ImageProcessor::onImageMessage(ImageMessage_ptr m){
+    lock_t l(m_nodes_lock);
     std::set<input_node_ptr_t>::iterator i;
     debug() << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onImageMessage(m);
 }
 
-void ImageProcessor::onAddNodeMessage(boost::shared_ptr<const AddNodeMessage> m){
+void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     node_id new_id = 0;
     std::map<std::string, NodeParamValue> params;
+    std::map<std::string, NodeOutput> inputs;
+    std::map<std::string, std::vector<NodeInput> > outputs;
     try{
-        node_ptr_t node = NodeFactoryRegister::create(m->nodeType(), m_scheduler);
+        node_ptr_t node = NodeFactoryRegister::create(m->nodeType(), m_scheduler, *this);
 
         BOOST_FOREACH(NodeInputArc const& a, m->parents()){
-            node->setInput(a.input, _lookupNode(a.src.node), a.src.output);
-            _lookupNode(a.src.node)->setOutput(a.src.output, node, a.input);
+            node->setInput(a.input, lookup(a.src.node), a.src.output);
+            lookup(a.src.node)->setOutput(a.src.output, node, a.input);
         }
         BOOST_FOREACH(NodeOutputArc const& a, m->children()){
-            node->setOutput(a.output, _lookupNode(a.dst.node), a.dst.input);
-            _lookupNode(a.dst.node)->setInput(a.dst.input, node , a.output);
+            node->setOutput(a.output, lookup(a.dst.node), a.dst.input);
+            lookup(a.dst.node)->setInput(a.dst.input, node , a.output);
         }
         
         new_id = _newID(node);
-        m_nodes[new_id] = node;
-
-        params = node->parameters();
-
+        lock_t l(m_nodes_lock);
+        _addNode(node, new_id);
         if(node->isInputNode()){
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
+        l.unlock();
+
+        params = node->parameters();
+        inputs = node->inputLinks();
+        outputs = node->outputLinks();
+
         info() << "Node added, (type=" << m->nodeType() << " "
                << m->parents().size() << " parents, "
                << m->children().size() << " children)";
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
-    sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType()));
+    sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType(), inputs, outputs));
     sendMessage(boost::make_shared<NodeParametersMessage>(new_id, params));
 }
 
-void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<const RemoveNodeMessage> m){
+void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage_ptr m){
     try{
-        node_ptr_t n = _lookupNode(m->nodeId());
-        m_nodes.erase(m->nodeId());
+        lock_t l(m_nodes_lock);
+        node_ptr_t n = lookup(m->nodeId());
+        _removeNode(m->nodeId());
        
         if(n->isInputNode()){
             m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
         }
+        l.unlock();
+
         /* since the graph is linked both ways we have to unlink the node from
          * it's neighbors _and_ unlink the neigbors from the node
          */
@@ -75,9 +85,9 @@ void ImageProcessor::onRemoveNodeMessage(boost::shared_ptr<const RemoveNodeMessa
     }
 }
 
-void ImageProcessor::onSetNodeParameterMessage(boost::shared_ptr<const SetNodeParameterMessage> m){
+void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage_ptr m){
     try{
-        node_ptr_t n = _lookupNode(m->nodeId());
+        node_ptr_t n = lookup(m->nodeId());
         n->setParam(m);
         
         sendMessage(boost::make_shared<NodeParametersMessage>(m->nodeId(), n->parameters()));
@@ -94,4 +104,48 @@ ImageProcessor::~ImageProcessor(){
     m_scheduler.stopWait();
 }
 
+
+node_ptr_t ImageProcessor::lookup(node_id const& id) const throw(id_error){
+    lock_t l(m_nodes_lock);
+    std::map<node_id, node_ptr_t>::const_iterator i = m_nodes.find(id);
+    if(i != m_nodes.end())
+        return i->second;
+    else
+        throw(id_error(std::string("Unknown node id: ") + to_string(id)));
+}
+
+node_id ImageProcessor::lookup(node_ptr_t const& p) const throw(){
+    lock_t l(m_nodes_lock);
+    std::map<node_ptr_t, node_id>::const_iterator i = m_nodes_rev.find(p);
+    if(i != m_nodes_rev.end())
+        return i->second;
+    else
+        return 0;
+}
+
+void ImageProcessor::_addNode(node_ptr_t const& p, node_id const& id) throw(){
+    lock_t l(m_nodes_lock);
+    m_nodes[id] = p;
+    m_nodes_rev[p] = id;
+}
+
+void ImageProcessor::_addNode(node_ptr_t const& p) throw(){
+    _addNode(p, _newID(p));
+}
+
+void ImageProcessor::_removeNode(node_id const& id) throw(id_error){
+    std::map<node_id, node_ptr_t>::iterator i = m_nodes.find(id);
+    if(i != m_nodes.end()){
+        m_nodes_rev.erase(i->second);
+        m_nodes.erase(i);
+    }else{
+        throw(id_error(std::string("Unknown node id: ") + to_string(id)));
+    }
+}
+
+node_id ImageProcessor::_newID(node_ptr_t) const throw(){
+    // Can probably do better than this...
+    static node_id id = 1;
+    return id++;
+}
 

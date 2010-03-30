@@ -126,14 +126,16 @@ MessageObserver::~MessageObserver()
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
-void MessageObserver::on${className}(boost::shared_ptr<const $className>) {}
+#set $classPtr = $className + "_ptr"
+void MessageObserver::on${className}($classPtr) {}
 #end for
 #end for 
 
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
-void DebugMessageObserver::on${className}(boost::shared_ptr<const $className> m)
+#set $classPtr = $className + "_ptr"
+void DebugMessageObserver::on${className}($classPtr m)
 {
     info() << "DebugMessageObserver: " << *m;
 }

@@ -135,13 +135,13 @@ class SmartStreamBase : boost::noncopyable
         // space is added between srings s1 s2 if:
         //   mayAddSpaceNext(s1) == true && mayAddSpaceNow(s2) == true
         static bool mayAddSpaceNext(std::string const& s){
-            if(isspace(*s.rbegin()))
+            if(isspace(s[0]))
                 return false;
-            if(s.rfind("\E[") != std::string::npos && 
-               s.rfind("\E[") > s.size() - 8 &&
+            if(s.rfind("\033[") != std::string::npos &&
+               (s.size() < 8 || s.rfind("\033[") > s.size() - 8) &&
                *s.rbegin() == 'm')
                 return false;
-            switch(*s.rbegin()){
+            switch(s[0]){
                 case '=':
                 case '(': case '[': case '{':
                     return false;
@@ -151,11 +151,11 @@ class SmartStreamBase : boost::noncopyable
         }
 
         static bool mayAddSpaceNow(std::string const& s){
-            if(isspace(*s.begin()))
+            if(isspace(s[0]))
                 return false;
-            if(s.find("\E[") == 0)
+            if(s.find("\033[") == 0)
                 return false;
-            switch(*s.begin()){
+            switch(s[0]){
                 case ',': case '.':
                 case '=':
                 case ')': case ']': case '}':

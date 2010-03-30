@@ -23,18 +23,14 @@
 class Node{
     public:
         // Public typedefs: used as return types
-        typedef std::pair<node_ptr_t, input_id> output_link_t;
-        typedef std::pair<node_ptr_t, output_id> input_link_t;
+        typedef std::vector<NodeInput> msg_node_in_list_t;
+        typedef std::map<output_id, msg_node_in_list_t> msg_node_output_map_t;
+        typedef std::map<input_id, NodeOutput> msg_node_input_map_t;
 
-        typedef std::list<output_link_t> output_link_list_t;
-
-        typedef std::map<output_id, output_link_list_t> out_link_map_t;
-        typedef std::map<input_id, input_link_t> in_link_map_t;
         typedef std::map<param_id, param_value_t> param_value_map_t;
 
         typedef std::set<output_id> output_id_set_t;
         typedef std::set<input_id> input_id_set_t;
-        
 
     protected:
         // Protected typedefs: useful for derived nodes
@@ -44,13 +40,21 @@ class Node{
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
 
     private:
-        // Private typedefs: only used internally 
-        typedef std::map<input_id, bool> in_bool_map_t;
+        // Private typedefs: only used internally
+        typedef std::pair<node_ptr_t, input_id> output_link_t;
+        typedef std::pair<node_ptr_t, output_id> input_link_t;
 
-        typedef boost::unique_lock<boost::recursive_mutex> lock_t;
+        typedef std::list<output_link_t> output_link_list_t;
+
+        typedef std::map<input_id, bool> in_bool_map_t;
+        typedef std::map<output_id, output_link_list_t> out_link_map_t;
+        typedef std::map<input_id, input_link_t> in_link_map_t;
+        
+        typedef boost::recursive_mutex mutex_t;
+        typedef boost::unique_lock<mutex_t> lock_t;
 
     public:
-        Node(Scheduler& sched);
+        Node(Scheduler& sched, ImageProcessor& pl);
         virtual ~Node(){ }
         
         /* overload for the common case where we're connecting a node with one
@@ -64,7 +68,7 @@ class Node{
         void clearInputs();
 
         input_id_set_t inputs() const; 
-        in_link_map_t inputLinks() const; 
+        msg_node_input_map_t inputLinks() const;
         std::set<node_ptr_t> parents() const;
 
         /*  overload for the common case where we're connecting a node with one
@@ -78,7 +82,7 @@ class Node{
         void clearOutputs();
         
         output_id_set_t outputs() const;
-        out_link_map_t outputLinks() const;
+        msg_node_output_map_t outputLinks() const;
         std::set<node_ptr_t> children() const;
 
         int numChildren() const;
@@ -215,39 +219,39 @@ class Node{
          * thread at once
          */
         bool m_exec_queued;
-        mutable boost::recursive_mutex m_exec_queued_lock;
+        mutable mutex_t m_exec_queued_lock;
         
         /* maps an input_id to an output of another node */
         in_link_map_t   m_parent_links;
-        mutable boost::recursive_mutex m_parent_links_lock;
+        mutable mutex_t m_parent_links_lock;
         
         /* maps an output_id to a list of inputs on other nodes */
         out_link_map_t  m_child_links;
-        mutable boost::recursive_mutex m_child_links_lock;
+        mutable mutex_t m_child_links_lock;
         
         /* maps an output_id to an image */
         out_image_map_t m_outputs;
-        mutable boost::recursive_mutex m_outputs_lock;
+        mutable mutex_t m_outputs_lock;
         
         /* parameters of the filters */
         param_value_map_t m_parameters;
-        mutable boost::recursive_mutex m_parameters_lock;
+        mutable mutex_t m_parameters_lock;
         
         /* Keep track of which of our inputs have been refreshed since this node
          * was last exec()d
          * Set by newInput(), checked by checkAddSched(), cleared by exec()
          */
         in_bool_map_t m_new_inputs;
-        mutable boost::recursive_mutex m_new_inputs_lock;
+        mutable mutex_t m_new_inputs_lock;
 
         in_bool_map_t m_valid_inputs;
-        mutable boost::recursive_mutex m_valid_inputs_lock;
+        mutable mutex_t m_valid_inputs_lock;
         
         /* Has output been demanded of this node?
          * Set by demandNewOutput(), checked by checkAddSched(), cleared by exec()
          */
         bool m_output_demanded;
-        mutable boost::recursive_mutex m_output_demanded_lock;
+        mutable mutex_t m_output_demanded_lock;
         
         /* The scheduler associated with this node:
          * This is used by newInput() and demandNewOutput(), each of which may
@@ -256,6 +260,11 @@ class Node{
          *		_sched->addToQueue(this, _priority);
          */
         Scheduler& m_sched;
+        
+        /* The pipeline manager associated with this node:
+         * Used for sending messages, and node pointer -> node id lookups
+         */
+        ImageProcessor& m_pl;
 };
 
 template<typename char_T, typename traits>

@@ -162,11 +162,20 @@ BOOST_CLASS_IS_WRAPPER($className)
 class MessageObserver
 {
     public:
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        #set $ptrName = $className + "_ptr"
+        typedef boost::shared_ptr<const $className> $ptrName;
+        #end for
+        #end for
+
         virtual ~MessageObserver();
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
-        virtual void on${className}(boost::shared_ptr<const $className> m);
+        #set $ptrName = $className + "_ptr"
+        virtual void on${className}($ptrName m);
         #end for
         #end for
 
@@ -180,7 +189,8 @@ class DebugMessageObserver: public MessageObserver
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
-        virtual void on${className}(boost::shared_ptr<const $className> m);
+        #set $ptrName = $className + "_ptr"
+        virtual void on${className}($ptrName m);
         #end for
         #end for
 };

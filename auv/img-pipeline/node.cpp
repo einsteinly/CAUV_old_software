@@ -1,9 +1,9 @@
 #include "node.h"
 
 
-Node::Node(Scheduler& sched)
+Node::Node(Scheduler& sched, ImageProcessor& pl)
     : m_priority(priority_slow), m_speed(slow),
-      m_exec_queued(false), m_output_demanded(false), m_sched(sched){
+      m_exec_queued(false), m_output_demanded(false), m_sched(sched), m_pl(pl){
 }
 
 
@@ -37,7 +37,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
     lock_t l(m_parent_links_lock);
     const in_link_map_t::iterator i = m_parent_links.find(i_id);
     if(i == m_parent_links.end()){
-        throw(id_error(std::string("setInput: Invalid input id") + to_string(i_id)));
+        throw(id_error("setInput: Invalid input id" + to_string(i_id)));
     }else{
         i->second = input_link_t(n, o_id); 
         // TODO: if (and only if) there is already an image available
@@ -53,7 +53,7 @@ void Node::clearInput(input_id const& i_id){
     lock_t l(m_parent_links_lock);
     const in_link_map_t::iterator i = m_parent_links.find(i_id);
     if(i == m_parent_links.end()){
-        throw(id_error(std::string("clearInput: Invalid input id") + to_string(i_id)));
+        throw(id_error("clearInput: Invalid input id" + to_string(i_id)));
     }else{
         i->second = input_link_t();
     }
@@ -85,9 +85,17 @@ Node::input_id_set_t Node::inputs() const{
     return r;
 }
 
-Node::in_link_map_t Node::inputLinks() const{
+Node::msg_node_input_map_t Node::inputLinks() const{
     lock_t l(m_parent_links_lock);
-    return m_parent_links;
+    msg_node_input_map_t r;
+    in_link_map_t::const_iterator i;
+    for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
+        NodeOutput t;
+        t.node = m_pl.lookup(i->second.first);
+        t.output = i->second.second;
+        r[i->first] = t;
+    }
+    return r;
 }
 
 std::set<node_ptr_t> Node::parents() const{
@@ -127,7 +135,7 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     lock_t l(m_child_links_lock);
     const out_link_map_t::iterator i = m_child_links.find(o_id);
     if(i == m_child_links.end()){
-        throw(id_error(std::string("setOutput: Invalid output id") + to_string(o_id)));
+        throw(id_error("setOutput: Invalid output id" + to_string(o_id)));
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
@@ -140,13 +148,15 @@ void Node::clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id
     lock_t l(m_child_links_lock);
     const out_link_map_t::iterator i = m_child_links.find(o_id);
     if(i == m_child_links.end()){
-        throw(id_error(std::string("clearOutput: Invalid output id") + to_string(o_id)));
+        throw(id_error("clearOutput: Invalid output id" + to_string(o_id)));
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
         output_link_list_t::iterator j = std::find(i->second.begin(), i->second.end(), output_link_t(n, i_id));
         if(j == i->second.end()){
-            throw(id_error("clearOutput: Invalid node & input id: (node ID lookup is TODO): " + to_string(i_id)));
+            throw(id_error("clearOutput: Invalid node & input id: "
+                           + to_string(m_pl.lookup(n)) + ", " 
+                           + to_string(i_id)));
         }else{
             debug() << BashColour::Purple << "removing output link to child: " << j->first << j->second; 
             i->second.erase(j);
@@ -193,9 +203,22 @@ Node::output_id_set_t Node::outputs() const{
     return r;
 }
 
-Node::out_link_map_t Node::outputLinks() const{
+Node::msg_node_output_map_t Node::outputLinks() const{
     lock_t l(m_child_links_lock);
-    return m_child_links;
+    msg_node_output_map_t r;
+    out_link_map_t::const_iterator i;
+    for(i = m_child_links.begin(); i != m_child_links.end(); i++){
+        msg_node_in_list_t input_list;
+        output_link_list_t::const_iterator j;
+        for(j = i->second.begin(); j != i->second.end(); j++){
+            NodeInput t;
+            t.node = m_pl.lookup(j->first);
+            t.input = j->second;
+            input_list.push_back(t);
+        }
+        r[i->first] = input_list;
+    }
+    return r;
 }
 
 std::set<node_ptr_t> Node::children() const{
@@ -310,7 +333,7 @@ void Node::newInput(input_id const& a){
         BOOST_FOREACH(in_bool_map_t::value_type const& v, m_new_inputs)
             error() << v.second;
 
-        throw(id_error(std::string("newInput: Invalid input id: ") + to_string(a)));
+        throw(id_error("newInput: Invalid input id: " + to_string(a)));
     }else{
         debug() << BashColour::Green << this << "notified of new input: " << a;
         i->second = true;
