@@ -1,6 +1,8 @@
 #include "draggable.h"
 #include "../container.h"
 
+using namespace pw;
+
 Draggable::Draggable(container_ptr_t c)
     : Renderable(c), m_click_pos(),
       m_mouseover(false), m_pressed(false){

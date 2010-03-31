@@ -11,6 +11,8 @@
 
 #include <common/debug.h>
 
+namespace pw{
+
 template<typename done_arg_T>
 class EditText: public Menu{
     public:
@@ -155,6 +157,8 @@ class EditText: public Menu{
 
         static const double m_cur_w = 2;
 };
+
+} // namespace pw
 
 #endif // ndef __EDIT_TEXT_RENDERABLE_H__
 

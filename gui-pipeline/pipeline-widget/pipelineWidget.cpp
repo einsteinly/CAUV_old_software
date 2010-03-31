@@ -22,23 +22,42 @@
 #include "renderable/arc.h"
 
 
+namespace pw{
+
+bool operator==(arc_ptr_t a, arc_ptr_t b){
+    return ((a->m_src.lock() == b->m_src.lock() && a->m_dst.lock() == b->m_dst.lock()) ||
+            (a->m_dst.lock() == b->m_src.lock() && a->m_src.lock() == b->m_dst.lock()));
+}
+
 class PipelineGuiMsgObs: public MessageObserver{
     public:
         PipelineGuiMsgObs(PipelineWidget *p)
             : m_widget(p){
         }
 
-        virtual void onNodeAddedMessage(boost::shared_ptr<const NodeAddedMessage> m){
+        virtual void onNodeAddedMessage(NodeAddedMessage_ptr m){
             debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(m->nodeType() != NodeType::Invalid)
                 m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
         }
 
-        virtual void onNodeParametersMessage(boost::shared_ptr<const NodeParametersMessage> m){
+        virtual void onNodeParametersMessage(NodeParametersMessage_ptr m){
             debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             boost::shared_ptr<Node> np = m_widget->node(m->nodeId());
             if(np)
                 np->setParams(m);
+        }
+
+        virtual void onArcAddedMessage(ArcAddedMessage_ptr m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            m_widget->addArc(m->from().node, m->from().output,
+                             m->to().node, m->to().input);
+        }
+
+        virtual void onArcRemovedMessage(ArcRemovedMessage_ptr m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            m_widget->removeArc(m->from().node, m->from().output,
+                                m->to().node, m->to().input);
         }
 
     private:
@@ -58,7 +77,7 @@ class PipelineGuiCauvNode: public CauvNode{
             mailboxMonitor()->addObserver(
                 boost::make_shared<PipelineGuiMsgObs>(m_widget)
             );
-            #ifdef CAUV_DEBUG
+            #if 0
             mailboxMonitor()->addObserver(
                 boost::make_shared<DebugMessageObserver>()
             );
@@ -73,6 +92,10 @@ class PipelineGuiCauvNode: public CauvNode{
     private:
         PipelineWidget *m_widget;
 };
+
+} // namespace pw
+
+using namespace pw;
 
 // creating threads taking parameters (especially in a ctor-initializer) is a
 // little tricky, using an intermediate function smooths the ride a bit:
@@ -96,8 +119,8 @@ PipelineWidget::PipelineWidget(QWidget *parent)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 
-    #ifdef CAUV_DEBUG
-    m_renderables.insert(boost::make_shared<Box>(this, 20, 20));
+    #if 0
+    m_contents.push_back(boost::make_shared<Box>(this, 20, 20));
     #endif
 }
 
@@ -110,7 +133,17 @@ QSize PipelineWidget::sizeHint() const{
 }
 
 void PipelineWidget::remove(renderable_ptr_t p){
-    m_renderables.erase(p);
+    // TODO: really need m_contents to be a set in which iterators remain
+    // stable on erasing, so that this doesn't involve a search:
+    renderable_list_t::iterator i, j;
+    for(i = m_contents.begin(); i != m_contents.end(); i=j){
+        j = i; j++;
+        if(*i == p)
+            m_contents.erase(i);
+    }
+    arc_ptr_t a;
+    if(a = boost::dynamic_pointer_cast<Arc>(p))
+        m_arcs.erase(a);
     this->updateGL();
 }
 
@@ -127,19 +160,29 @@ void PipelineWidget::remove(menu_ptr_t p){
 
 void PipelineWidget::add(renderable_ptr_t r){
     // TODO: sensible layout hint
-    static Point last_add_position = Point();
-    add(r, last_add_position += Point(20, -10));
+    static Point add_position_delta = Point();
+    if(add_position_delta.sxx() > 200)
+        add_position_delta = Point();
+    else
+        add_position_delta += Point(10, -5);
+    MouseEvent last_mouse(*this);
+    add(r, last_mouse.pos + add_position_delta);
 }
 
 void PipelineWidget::add(renderable_ptr_t r, Point const& at){
     r->m_pos = at;
-    m_renderables.insert(r);
+    m_contents.push_back(r);
     this->updateGL();
 }
 
-void PipelineWidget::addMenu(menu_ptr_t r,  Point const& at){
+void PipelineWidget::addMenu(menu_ptr_t r,  Point const& at, bool pressed){
+    debug() << "addMenu:" << r << at << pressed;
     if(m_menu)
         remove(m_menu);
+    if(pressed){
+        m_receiving_move.insert(r);
+        m_owning_mouse.insert(r);
+    }
     m_menu = r;
     add(r, at);
 }
@@ -149,7 +192,7 @@ void PipelineWidget::addNode(node_ptr_t r){
     add(r);
 }
 
-PipelineWidget::node_ptr_t PipelineWidget::node(node_id const& n){
+node_ptr_t PipelineWidget::node(node_id const& n){
     node_map_t::const_iterator i = m_nodes.find(n);
     if(i != m_nodes.end())
         return m_nodes[n];
@@ -171,6 +214,25 @@ void PipelineWidget::addArc(node_id const& src, std::string const& output,
     addArc(s_no, d_ni);
 }
 
+void PipelineWidget::removeArc(node_id const& src, std::string const& output,
+                               node_id const& dst, std::string const& input){
+    node_ptr_t s = node(src);
+    node_ptr_t d = node(dst);
+    if(!s || !d)
+        return; 
+    renderable_ptr_t s_no = s->outSocket(output);
+    renderable_ptr_t d_ni = d->inSocket(input);
+    if(!s_no || !d_ni)
+        return; 
+    arc_ptr_t a = boost::make_shared<Arc>(this, s_no, d_ni);
+    for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
+        if(*i == a){
+            remove(*i);
+            return;
+        }
+    warning() << __func__ << "no such arc" << src << output  << "->" << dst << input;
+}
+
 void PipelineWidget::addArc(renderable_ptr_t src,
                             node_id const& dst, std::string const& input){
     node_ptr_t d = node(dst);
@@ -189,13 +251,17 @@ void PipelineWidget::addArc(node_id const& src, std::string const& output,
     addArc(s_no, dst);
 }
 
-void PipelineWidget::addArc(renderable_ptr_t src, renderable_ptr_t dst){ 
-    // TODO: prevent duplicate arcs
+arc_ptr_t PipelineWidget::addArc(renderable_wkptr_t src, renderable_wkptr_t dst){
     arc_ptr_t a = boost::make_shared<Arc>(this, src, dst);
+    for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
+        if(*i == a){
+            warning() << "duplicate arc will be ignored";
+            return *i;
+        }
     m_arcs.insert(a);
     add(a, Point());
+    return a;
 }
-
 
 void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
     if(m_cauv_node)
@@ -220,13 +286,14 @@ void PipelineWidget::postRedraw(){
     this->updateGL();
 }
 
-void PipelineWidget::postMenu(menu_ptr_t r, Point const& p){
-    addMenu(r, p);
+void PipelineWidget::postMenu(menu_ptr_t m, Point const& p, bool r) {
+    addMenu(m, p, r);
 }
 
 void PipelineWidget::removeMenu(menu_ptr_t r){
     remove(r);
 }
+
 
 void PipelineWidget::initializeGL(){
     glEnable(GL_DEPTH_TEST);
@@ -254,7 +321,7 @@ void PipelineWidget::paintGL(){
     glTranslatef(0.5/m_pixels_per_unit, 0.5/m_pixels_per_unit, 0);
     drawGrid();
     
-    #ifdef CAUV_DEBUG
+    #if 0
     // debug stuff:
     glBegin(GL_LINES);
     glColor4f(1.0, 0.0, 0.0, 0.5);
@@ -276,8 +343,8 @@ void PipelineWidget::paintGL(){
     #endif
 
     // draw everything!
-    renderable_set_t::iterator i;
-    for(i = m_renderables.begin(); i != m_renderables.end(); i++){
+    renderable_list_t::iterator i;
+    for(i = m_contents.begin(); i != m_contents.end(); i++){
         glPushMatrix();
         glTranslatef((*i)->m_pos);
         (*i)->draw(false);
@@ -303,7 +370,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     GLuint pick_buffer[100] = {0};
     GLuint *p;
     GLuint *item;
-    renderable_set_t::iterator i;
+    renderable_list_t::iterator i;
 
     typedef std::map<GLuint, renderable_ptr_t> name_map_t;
     name_map_t name_map;
@@ -319,7 +386,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     glScalef(1.0f/m_world_size, 1.0f/m_world_size, 1.0f);
     glTranslatef(0.5/m_pixels_per_unit, 0.5/m_pixels_per_unit, 0);    
 
-    for(i = m_renderables.begin(); i != m_renderables.end(); i++, n++){
+    for(i = m_contents.begin(); i != m_contents.end(); i++, n++){
         if((*i)->acceptsMouseEvents()){
 			glLoadName(n);
             name_map[n] = *i;
@@ -349,7 +416,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
             if(k == name_map.end()){
                 error() << "gl name" << *item << "does not correspond to renderable";
             }else{
-                debug() << "sending mouse press event to" << k->second;
+                debug(-1) << "sending mouse press event to" << k->second;
                 k->second->mousePressEvent(MouseEvent(event, k->second, *this));
                 m_owning_mouse.insert(k->second);
             }
@@ -406,7 +473,7 @@ void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
 void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
     renderable_set_t::iterator i;
     for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
-       debug() << "sending mouse release event to" << *i;    
+       debug(-1) << "sending mouse release event to" << *i;    
        (*i)->mouseReleaseEvent(MouseEvent(event, *i, *this));
     }
     if(!event->buttons()){
@@ -416,6 +483,7 @@ void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
 
 void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
     renderable_set_t::iterator i;
+    renderable_list_t::iterator j;
     if(!m_owning_mouse.size()){
         int win_dx = event->x() - m_last_mouse_pos.x();
         int win_dy = event->y() - m_last_mouse_pos.y();
@@ -428,18 +496,18 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
         // else zoom, (TODO)
     }else{
         for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
-            debug() << "sending mouse move event to" << *i;
+            debug(-1) << "sending mouse move event to" << *i;
             (*i)->mouseMoveEvent(MouseEvent(event, *i, *this));
         }
     }
     renderable_set_t now_receiving_move = m_owning_mouse;
     // in all cases send the event to things that always track mouse movement:
-    for(i = m_renderables.begin(); i != m_renderables.end(); i++)
-        if((*i)->tracksMouse() && !m_owning_mouse.count(*i)){
-            MouseEvent m = MouseEvent(event, *i, *this);
-            if((*i)->bbox().contains(m.pos)){
-                (*i)->mouseMoveEvent(m);
-                now_receiving_move.insert(*i);
+    for(j = m_contents.begin(); j != m_contents.end(); j++)
+        if((*j)->tracksMouse() && !m_owning_mouse.count(*j)){
+            MouseEvent m = MouseEvent(event, *j, *this);
+            if((*j)->bbox().contains(m.pos)){
+                (*j)->mouseMoveEvent(m);
+                now_receiving_move.insert(*j);
             }
         }
     // and send mouseGoneEvents to things that the mouse has left

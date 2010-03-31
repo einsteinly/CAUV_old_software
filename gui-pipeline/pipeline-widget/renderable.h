@@ -7,13 +7,11 @@
 
 #include "util.h"
 #include "mouseEvent.h"
+#include "pwTypes.h"
 
-class Container;
+namespace pw{
 
 class Renderable{
-    public:
-        // public typedefs
-        typedef Container* container_ptr_t;
     public:
         Renderable(container_ptr_t c, Point const& at = Point());
         virtual void draw(bool picking) = 0;
@@ -38,7 +36,7 @@ class Renderable{
         
         /* return m_pos refered to top level coordinates
          */
-        Point topLevelPos() const;
+        virtual Point topLevelPos() const;
 
         // public data:
         Point m_pos;
@@ -46,6 +44,8 @@ class Renderable{
     protected:
         container_ptr_t m_context;
 };
+
+} // namespace pw
 
 #endif // ndef __RENDERABLE_H__
 

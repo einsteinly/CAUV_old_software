@@ -365,7 +365,7 @@ void Node::demandNewOutput(/*output_id ?*/) throw(){
         lock_t m(m_new_inputs_lock);
         lock_t n(m_parent_links_lock);
         BOOST_FOREACH(in_bool_map_t::value_type& v, m_new_inputs){
-            if(!v.second)
+            if(!v.second && m_parent_links[v.first].first)
                 m_parent_links[v.first].first->demandNewOutput();
         }
         l.unlock();
@@ -505,11 +505,10 @@ void Node::_demandNewParentInput() throw(){
     lock_t l(m_parent_links_lock);
     in_link_map_t::const_iterator i;
     debug() << "node" << this << "demanding new output from all parents";
-    for(i = m_parent_links.begin(); i != m_parent_links.end(); i++)
-        i->second.first->demandNewOutput();
-
-    BOOST_FOREACH(in_link_map_t::value_type const& v, m_parent_links)
-        v.second.first->demandNewOutput(); 
+    for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
+        if(i->second.first)
+            i->second.first->demandNewOutput();
+    }
 }
 
 

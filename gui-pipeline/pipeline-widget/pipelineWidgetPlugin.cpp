@@ -3,6 +3,8 @@
 
 #include <QtPlugin>
 
+using namespace pw;
+
 Q_EXPORT_PLUGIN2(customwidgetplugin, PipelineWidgetPlugin)
 
 PipelineWidgetPlugin::PipelineWidgetPlugin(QObject *parent)

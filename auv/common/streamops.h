@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <set>
 #include <utility>
 
 template<typename T, typename char_T, typename traits>
@@ -40,6 +41,19 @@ std::basic_ostream<char_T, traits>& operator<<(
     for(typename std::map<key_T, val_T>::const_iterator i = m.begin(); i != m.end();){
         os << i->first << " : " << i->second;
         if(++i != m.end())
+            os << ", ";
+    }
+    os << "}";
+    return os;
+}
+
+template<typename T, typename Comp, typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, std::set<T, Comp> const& s){
+    os << "set[" << s.size() << "] {";
+    for(typename std::set<T, Comp>::const_iterator i = s.begin(); i != s.end();){
+        os << *i;
+        if(++i != s.end())
             os << ", ";
     }
     os << "}";

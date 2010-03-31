@@ -32,6 +32,8 @@ class FileInputNode: public AsynchronousNode{
             if(p == param_id("filename")){
                 lock_t l(m_file_is_new_lock);
                 m_file_is_new = true;
+            }else{
+                warning() << "unknown parameter" << p << "set";
             }
         }
 
@@ -54,7 +56,7 @@ class FileInputNode: public AsynchronousNode{
             }
 
             return r;
-        } 
+        }
         
         virtual bool allowQueueExec() throw(){
             lock_t l(m_file_is_new_lock); 

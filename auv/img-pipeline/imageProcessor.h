@@ -50,6 +50,7 @@ class ImageProcessor: public MessageObserver
         virtual void onAddNodeMessage(AddNodeMessage_ptr m);
         virtual void onRemoveNodeMessage(RemoveNodeMessage_ptr m);
         virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
+        virtual void onAddArcMessage(AddArcMessage_ptr m);
 
         /** end MessageObserver functions **/
 

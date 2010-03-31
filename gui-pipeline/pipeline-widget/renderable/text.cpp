@@ -10,6 +10,7 @@
 
 #include <common/debug.h>
 
+using namespace pw;
 
 Text::Text(container_ptr_t c, std::string const& text, std::string const& font, int pt)
     : Renderable(c), std::string(text), m_bbox(),
@@ -74,7 +75,7 @@ static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
 }
 
 boost::shared_ptr<FTFont> Text::font(face_pt_pair_t const& id){
-    return ::font<FTBufferFont>(id);
+    return ::font<FTTextureFont>(id);
 }
 
 

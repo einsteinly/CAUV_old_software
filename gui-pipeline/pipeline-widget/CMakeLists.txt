@@ -29,6 +29,8 @@ set (
     renderable/text.cpp
     renderable/node.cpp
     renderable/draggable.cpp
+    renderable/nodeIO.cpp
+    renderable/arc.cpp
 )
 
 set (

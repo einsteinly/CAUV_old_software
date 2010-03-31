@@ -9,6 +9,8 @@
 class FTFont;
 class FTBBox;
 
+namespace pw{
+
 class Text: public Renderable, public std::string{
     public:
         Text(container_ptr_t c, std::string const& text,
@@ -32,6 +34,8 @@ class Text: public Renderable, public std::string{
         static font_ptr bboxFont(face_pt_pair_t const& id);
 
 
+        // FIXME: texture based fonts don't seem to play well with OS X,
+        // something to do with texture resource management, probably
         font_ptr font(){ return font(m_font); }
         font_ptr bboxFont(){ return bboxFont(m_font); }
 
@@ -39,6 +43,8 @@ class Text: public Renderable, public std::string{
         boost::shared_ptr<FTBBox> m_bbox;
         face_pt_pair_t m_font;
 };
+
+} // namespace pw
 
 #endif // ndef __TEXT_RENDERABLE_H__
 

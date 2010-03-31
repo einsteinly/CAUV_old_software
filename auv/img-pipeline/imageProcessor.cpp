@@ -72,7 +72,7 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage_ptr m){
         l.unlock();
 
         /* since the graph is linked both ways we have to unlink the node from
-         * it's neighbors _and_ unlink the neigbors from the node
+         * it's neighbors _and_ unlink the neighbors from the node
          */
         BOOST_FOREACH(node_ptr_t p, n->parents())
             p->clearOutputs(n);
@@ -91,6 +91,28 @@ void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage_ptr m){
         n->setParam(m);
         
         sendMessage(boost::make_shared<NodeParametersMessage>(m->nodeId(), n->parameters()));
+    }catch(std::exception& e){
+        error() << __func__ << ":" << e.what();
+    }
+}
+
+void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
+    try{
+        node_ptr_t from = lookup(m->from().node);
+        node_ptr_t to = lookup(m->to().node);
+        output_id output = m->from().output;
+        input_id input = m->to().input;
+
+        if(!from) throw id_error(MakeString() << "invalid node:" << m->from().node);
+        if(!to) throw id_error(MakeString() << "invalid node:" << m->to().node);        
+        
+        Node::msg_node_input_map_t il = to->inputLinks();
+
+        from->setOutput(output, to, input);
+        to->setInput(input, from, output);
+        
+        sendMessage(boost::make_shared<ArcRemovedMessage>(il[input], m->to()));
+        sendMessage(boost::make_shared<ArcAddedMessage>(m->from(), m->to()));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }

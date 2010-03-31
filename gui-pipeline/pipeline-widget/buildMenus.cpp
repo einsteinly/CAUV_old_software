@@ -9,6 +9,7 @@
 #include <common/messages.h>
 #include <img-pipeline/nodeFactory.h>
 
+namespace pw{
 
 struct SendAddNodeMessage{
     SendAddNodeMessage(pw_ptr_t p, NodeType::e const& id)
@@ -45,4 +46,5 @@ boost::shared_ptr<Menu> buildAddNodeMenu(pw_ptr_t p){
     return boost::make_shared< ListMenu<SendAddNodeMessage> >(p, menu_items);
 }
 
+} // namespace pw
 

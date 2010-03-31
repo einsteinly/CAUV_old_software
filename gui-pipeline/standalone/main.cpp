@@ -5,7 +5,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    PipelineWidget *w = new PipelineWidget;
+    pw::PipelineWidget *w = new pw::PipelineWidget;
 
     w->show();
     return app.exec();

@@ -111,11 +111,17 @@ group pipeline
         paramId : string;
         value : NodeParamValue;
     }
+
+    message AddArc : 9
+    {
+        from : NodeOutput;
+        to : NodeInput;
+    }
 }
 
 group pl_gui
 { 
-    message NodeAdded : 9
+    message NodeAdded : 10
     {
         nodeId : int32;
         nodeType : NodeType;
@@ -123,19 +129,35 @@ group pl_gui
         outputs : map<string, list<NodeInput> >;
     }
 
-    message NodeRemoved : 10
+    message NodeRemoved : 11
     {
         nodeId : int32;
     }
 
-    message NodeParameters : 11
+    message NodeParameters : 12
     {
         nodeId : int32;
         values : map<string, NodeParamValue>;
     }
 
-    message GraphDescription : 12
+    message GraphDescription : 13
     {
+        nodeTypes : map<int32, NodeType>;
+        nodeInputs : map<int32, map<string, NodeOutput> >;
+        nodeOutputs : map<int32, map<string, list<NodeInput> > >;
+        nodeParams : map<int32, map<string, NodeParamValue> >;
+    }
+
+    message ArcAdded : 14
+    {
+        from : NodeOutput;
+        to : NodeInput;
+    }
+
+    message ArcRemoved : 15
+    {
+        from : NodeOutput;
+        to : NodeInput;
     }
 }
 

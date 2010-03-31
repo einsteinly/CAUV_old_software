@@ -6,9 +6,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include "util.h"
+#include "pwTypes.h"
 
-class Renderable;
-class PipelineWidget;
+namespace pw{
 
 // FIXME: all the coordinate referring stuff should probably be in Container,
 // rather than here!
@@ -42,6 +42,8 @@ struct MouseEvent{
 
     Qt::MouseButtons buttons;
 };
+
+} // namespace pw
 
 #endif // ndef __MOUSE_EVENT_H__
 

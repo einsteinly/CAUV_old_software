@@ -2,16 +2,20 @@
 
 #include <sstream>
 
-#include <common/cauv_utils.h>
-#include <common/messages.h>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <QtOpenGL>
+
+#include <common/cauv_utils.h>
+#include <common/messages.h>
 
 #include "../pipelineWidget.h"
 #include "text.h"
 #include "editText.h"
 #include "arc.h"
+#include "nodeIO.h"
 
+namespace pw{
 
 // TODO: own header?
 template<typename value_T>
@@ -52,7 +56,8 @@ class PVPair: public Renderable{
                 m_context->postMenu(
                     boost::make_shared<EditText<PVPair const&> >(
                         m_context, *m_value, edit_box, &onValueChanged, boost::ref(*this)
-                    ), m_context->referUp(m_pos + m_value->m_pos)
+                    ),
+                    m_context->referUp(m_pos + m_value->m_pos)
                 );
                 m_context->postRedraw();
                 return true;
@@ -91,116 +96,21 @@ class PVPair: public Renderable{
         boost::shared_ptr<Text> m_value;
 };
 
-class NodeIOBlob: public Renderable{
-    public:
-        NodeIOBlob(container_ptr_t c, std::string const& name)
-            : Renderable(c), m_text(boost::make_shared<Text>(c, name)),
-              m_radius(6), m_radius_squared(m_radius*m_radius),
-              m_colour(Colour(0.2, 0.4, 0.6, 0.5)),
-              m_colour_hl(Colour(0.6, 0.7, 0.8, 0.5)),
-              m_outline_colour(Colour(0.1, 0.2, 0.3, 0.5)),
-              m_mouseover(false){
-            // put middle at 0 rather than baseline
-            m_text->m_pos.y = -(m_text->bbox().min.y + m_text->bbox().h()/2);
-        }
+} // namespace pw
 
-        virtual void draw(bool picking){
-            if(m_mouseover)
-                glColor(m_colour_hl);
-            else
-                glColor(m_colour);
-            glCircle(m_radius);
-
-            glColor(m_outline_colour);
-            glLineWidth(1);
-            glCircleOutline(m_radius);
-
-            glTranslatef(m_text->m_pos);
-            m_text->draw(picking);
-        }
-
-        virtual void mouseMoveEvent(MouseEvent const& m){
-            if(!m_mouseover && contains(m.pos)){
-                m_mouseover = true;
-                m_context->postRedraw();
-            }else if(m_mouseover && !contains(m.pos)){
-                m_mouseover = false;
-                m_context->postRedraw();
-            }
-        }
-
-        virtual bool mousePressEvent(MouseEvent const& e){
-            if(e.pos.sxx() < m_radius_squared){
-                // circley bit hit
-                return true;
-            }else{
-                return false;
-            }
-        }
-
-        virtual void mouseReleaseEvent(MouseEvent const&){ }
-
-        virtual void mouseGoneEvent(){
-            if(m_mouseover){
-                m_mouseover = false;
-                m_context->postRedraw();
-            }
-        }
-
-        virtual bool tracksMouse(){
-            return true;
-        }
-
-        virtual BBox bbox(){
-            return BBox(-m_radius, -m_radius, m_radius, m_radius) |
-                   (m_text->bbox() + m_text->m_pos);
-        }
-
-    protected:
-        bool contains(Point const& x) const{
-            if(x.sxx() < m_radius_squared)
-                return true;
-            return false;
-        }
-
-        boost::shared_ptr<Text> m_text;
-
-        double m_radius;
-        double m_radius_squared;
-        Colour m_colour;
-        Colour m_colour_hl;
-        Colour m_outline_colour;
-
-        bool m_mouseover;
-};
-
-class NodeInputBlob: public NodeIOBlob{
-    public:
-        NodeInputBlob(container_ptr_t c, std::string const& n)
-            : NodeIOBlob(c, n){
-            m_text->m_pos.x = -m_text->bbox().min.x + m_radius + 3;
-        }
-};
-
-class NodeOutputBlob: public NodeIOBlob{
-    public:
-        NodeOutputBlob(container_ptr_t c, std::string const& n)
-            : NodeIOBlob(c, n){
-            m_text->m_pos.x = -m_text->bbox().max.x - m_radius - 3;
-        }
-};
+using namespace pw;
 
 Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
       m_node_type(to_string(m->nodeType())),
       m_title(boost::make_shared<Text>(c, m_node_type)),
-      m_suppress_dragable(false){
+      m_suppress_draggable(false){
     m_contents.push_back(m_title);
 
     std::map<std::string, std::vector<NodeInput> >::const_iterator i;
     for(i = m->outputs().begin(); i != m->outputs().end(); i++){
         debug() << BashColour::Brown << *i;
-        renderable_ptr_t t = boost::make_shared<NodeOutputBlob>(this, i->first);
+        renderable_ptr_t t = boost::make_shared<NodeOutputBlob>(this, m_pw, i->first);
         m_outputs[i->first] = t;
         m_contents.push_back(t);
         // add the arcs (if any) from this output:
@@ -213,7 +123,7 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
     std::map<std::string, NodeOutput>::const_iterator j;
     for(j = m->inputs().begin(); j != m->inputs().end(); j++){
         debug() << BashColour::Brown << *j;
-        renderable_ptr_t t = boost::make_shared<NodeInputBlob>(this, j->first);
+        renderable_ptr_t t = boost::make_shared<NodeInputBlob>(this, m_pw, j->first);
         m_inputs[j->first] = t;
         m_contents.push_back(t);
         // if connected, add the arc to this input:
@@ -274,7 +184,7 @@ bool Node::mousePressEvent(MouseEvent const& e){
         MouseEvent referred(e, *i);
         if((*i)->bbox().contains(referred.pos))
             if((*i)->mousePressEvent(referred)){
-                m_suppress_dragable = true;
+                m_suppress_draggable = true;
                 return true;
             }
     }
@@ -282,7 +192,7 @@ bool Node::mousePressEvent(MouseEvent const& e){
 }
 
 void Node::mouseReleaseEvent(MouseEvent const& e){
-    m_suppress_dragable = false;
+    m_suppress_draggable = false;
     Draggable::mouseReleaseEvent(e);
 }
 
@@ -302,7 +212,7 @@ void Node::mouseMoveEvent(MouseEvent const& e){
             (*j)->mouseGoneEvent();
     }
     m_hovered = now_hovered;
-    if(!m_suppress_dragable)
+    if(!m_suppress_draggable)
         Draggable::mouseMoveEvent(e);
 }
 
@@ -311,7 +221,7 @@ void Node::mouseGoneEvent(){
     for(i = m_hovered.begin(); i != m_hovered.end(); i++)
         (*i)->mouseGoneEvent();
     m_hovered.clear();
-    if(!m_suppress_dragable)
+    if(!m_suppress_draggable)
         Draggable::mouseGoneEvent();
 }
 
@@ -337,7 +247,7 @@ int Node::id() const{
     return m_node_id;
 }
 
-Node::renderable_ptr_t Node::outSocket(std::string const& id){
+renderable_ptr_t Node::outSocket(std::string const& id){
     str_renderable_map_t::const_iterator i = m_outputs.find(id);
     if(i != m_outputs.end()){
         return i->second;
@@ -347,7 +257,7 @@ Node::renderable_ptr_t Node::outSocket(std::string const& id){
     }
 }
 
-Node::renderable_ptr_t Node::inSocket(std::string const& id){
+renderable_ptr_t Node::inSocket(std::string const& id){
     str_renderable_map_t::const_iterator i = m_inputs.find(id);
     if(i != m_inputs.end()){
         return i->second;
@@ -355,6 +265,10 @@ Node::renderable_ptr_t Node::inSocket(std::string const& id){
         warning() << "unknown input:" << id << "on node" << m_node_id;
         return renderable_ptr_t();
     }
+}
+
+arc_ptr_t Node::newArc(renderable_wkptr_t src, renderable_wkptr_t dst){
+    return m_pw->addArc(src, dst);
 }
 
 Point Node::referUp(Point const& p) const{
@@ -365,13 +279,19 @@ void Node::postRedraw(){
     m_context->postRedraw();
 }
 
-void Node::postMenu(menu_ptr_t m, Point const& tlp){
-    m_context->postMenu(m, tlp);
+void Node::postMenu(menu_ptr_t m, Point const& p, bool r){
+    m_context->postMenu(m, p, r);
 }
 
 void Node::removeMenu(menu_ptr_t m){
     m_context->removeMenu(m);
 }
+
+void Node::remove(renderable_ptr_t r){
+    error() << __func__ << "unimplemented";
+}
+
+namespace pw{
 
 template<>
 void Node::paramValueChanged<int>(std::string const& p, int const& v){
@@ -417,6 +337,8 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     sp->value(pv);
     m_pw->sendMessage(sp);
 }
+
+} // namespace pw
 
 
 void Node::refreshLayout(){

@@ -11,6 +11,8 @@
 #include "menu.h"
 #include "text.h"
 
+namespace pw{
+
 template<typename callable>
 class ListMenuItem: public Renderable{
     public:
@@ -194,6 +196,8 @@ class ListMenu: public Menu{
         std::set<item_ptr> m_hovered_items;
         std::set<item_ptr> m_pressed_items;
 };
+
+} // namespace pw
 
 #endif // ndef __LIST_MENU_RENDERABLE_H__
 

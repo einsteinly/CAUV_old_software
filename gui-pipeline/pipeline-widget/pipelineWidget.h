@@ -12,37 +12,24 @@
 
 #include "mouseEvent.h"
 #include "container.h"
+#include "pwTypes.h"
 
-class PipelineGuiCauvNode;
 class Message;
-class Renderable;
-class Node;
-class Menu;
-class Arc;
+class NodeAddedMessage;
+class NodeParametersMessage;
+
+namespace pw{
 
 class PipelineWidget: public QGLWidget,
                       public Container{
     Q_OBJECT
-    // public typedefs:
-    public:
-        /* inherited from Container:
-         *  renderable_ptr_t
-         *  menu_ptr_t  
-         */
-        typedef boost::shared_ptr<Node> node_ptr_t;
-        typedef boost::shared_ptr<Arc> arc_ptr_t;
-        // TODO: this should really be synchronised with pipelineTypes.h! (need
-        // a pipeline namespace to do that without confusion about Nodes though)
-        typedef int32_t node_id;
-
-    private:
-    // private typedefs:
+        // private typedefs:
         typedef std::set<renderable_ptr_t> renderable_set_t;
         typedef std::set<arc_ptr_t> arc_set_t;
         typedef std::map<node_id, node_ptr_t> node_map_t;
 
-    // friends:
-    friend class MouseEvent;
+        // friends:
+        friend class MouseEvent;
 
     public:
         PipelineWidget(QWidget *parent = 0);
@@ -50,22 +37,23 @@ class PipelineWidget: public QGLWidget,
         QSize minimumSizeHint() const;        
         QSize sizeHint() const;
         
-        void remove(renderable_ptr_t);
         void remove(menu_ptr_t);
         void remove(node_ptr_t);
         void add(renderable_ptr_t);
         void add(renderable_ptr_t, Point const& at);
-        void addMenu(menu_ptr_t, Point const& at);
+        void addMenu(menu_ptr_t, Point const& at, bool pressed=false);
         void addNode(node_ptr_t);
 
         node_ptr_t node(node_id const&);
         void addArc(node_id const& src, std::string const& output,
                     node_id const& dst, std::string const& input);
+        void removeArc(node_id const& src, std::string const& output,
+                       node_id const& dst, std::string const& input);
         void addArc(renderable_ptr_t src,
                     node_id const& dst, std::string const& input);
         void addArc(node_id const& src, std::string const& output,
                     renderable_ptr_t dst);
-        void addArc(renderable_ptr_t src, renderable_ptr_t dst);
+        arc_ptr_t addArc(renderable_wkptr_t src, renderable_wkptr_t dst);
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void sendMessage(boost::shared_ptr<Message>);
@@ -73,8 +61,10 @@ class PipelineWidget: public QGLWidget,
         // implement Container:
         virtual Point referUp(Point const& p) const;
         virtual void postRedraw();
-        virtual void postMenu(menu_ptr_t r, Point const& top_level_position);
+        virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
+                              bool pressed=false);
         virtual void removeMenu(menu_ptr_t);
+        virtual void remove(renderable_ptr_t);
     
     protected:
         void initializeGL();
@@ -102,7 +92,6 @@ class PipelineWidget: public QGLWidget,
         
         QPoint m_last_mouse_pos;
         
-        renderable_set_t m_renderables;
         menu_ptr_t m_menu;
         node_map_t m_nodes;
         arc_set_t m_arcs;
@@ -116,5 +105,6 @@ class PipelineWidget: public QGLWidget,
         boost::thread m_cauv_node_thread;
 };
 
+} // namespace pw
 
 #endif // ndef __PIPELINE_WIDGET_H__

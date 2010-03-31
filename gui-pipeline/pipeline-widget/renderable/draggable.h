@@ -3,6 +3,8 @@
 
 #include "../renderable.h"
 
+namespace pw{
+
 class Draggable: public Renderable{
     public:
         Draggable(container_ptr_t c);
@@ -16,6 +18,8 @@ class Draggable: public Renderable{
         bool m_mouseover;
         bool m_pressed;
 };
+
+} // namespace pw
 
 #endif // ndef __DRAGGABLE_RENDERABLE_H__
 

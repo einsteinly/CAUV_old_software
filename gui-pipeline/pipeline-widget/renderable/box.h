@@ -3,6 +3,7 @@
 
 #include "draggable.h"
 
+namespace pw{
 
 class Box: public Draggable{
     public:
@@ -29,6 +30,8 @@ class Box: public Draggable{
     private:
         BBox m_box;
 };
+
+} // namespace pw
 
 #endif // ndef __BOX_RENDERABLE_H__
 
