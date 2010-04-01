@@ -51,13 +51,14 @@ class ImageProcessor: public MessageObserver
         virtual void onRemoveNodeMessage(RemoveNodeMessage_ptr m);
         virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
         virtual void onAddArcMessage(AddArcMessage_ptr m);
+        virtual void onGraphRequestMessage(GraphRequestMessage_ptr m);
 
         /** end MessageObserver functions **/
 
         /**
          * Use m_mailbox (set by constructor) to send the specified message
          */
-        void sendMessage(const boost::shared_ptr<Message> msg, service_t p = SAFE_MESS) const;
+        void sendMessage(const boost::shared_ptr<const Message> msg, service_t p = SAFE_MESS) const;
 
         ~ImageProcessor();
     

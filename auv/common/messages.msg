@@ -117,11 +117,15 @@ group pipeline
         from : NodeOutput;
         to : NodeInput;
     }
+
+    message GraphRequest : 10
+    {
+    }
 }
 
 group pl_gui
 { 
-    message NodeAdded : 10
+    message NodeAdded : 15
     {
         nodeId : int32;
         nodeType : NodeType;
@@ -129,18 +133,18 @@ group pl_gui
         outputs : map<string, list<NodeInput> >;
     }
 
-    message NodeRemoved : 11
+    message NodeRemoved : 16
     {
         nodeId : int32;
     }
 
-    message NodeParameters : 12
+    message NodeParameters : 17
     {
         nodeId : int32;
         values : map<string, NodeParamValue>;
     }
 
-    message GraphDescription : 13
+    message GraphDescription : 18
     {
         nodeTypes : map<int32, NodeType>;
         nodeInputs : map<int32, map<string, NodeOutput> >;
@@ -148,13 +152,13 @@ group pl_gui
         nodeParams : map<int32, map<string, NodeParamValue> >;
     }
 
-    message ArcAdded : 14
+    message ArcAdded : 19
     {
         from : NodeOutput;
         to : NodeInput;
     }
 
-    message ArcRemoved : 15
+    message ArcRemoved : 20
     {
         from : NodeOutput;
         to : NodeInput;

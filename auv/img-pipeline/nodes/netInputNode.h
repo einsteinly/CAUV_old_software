@@ -13,8 +13,8 @@
 
 class NetInputNode: public InputNode{
     public:
-        NetInputNode(Scheduler& sched, ImageProcessor& pl)
-            : InputNode(sched, pl){
+        NetInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+            : InputNode(sched, pl, t){
             // no inputs
             // registerInputID()
             

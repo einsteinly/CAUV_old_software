@@ -13,8 +13,8 @@
 
 class ResizeNode: public Node{
     public:
-        ResizeNode(Scheduler& sched, ImageProcessor& pl)
-            : Node(sched, pl){
+        ResizeNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+            : Node(sched, pl, t){
             // fast node:
             m_speed = fast;
 

@@ -13,8 +13,8 @@
 
 class CannyNode: public Node{
     public:
-        CannyNode(Scheduler& sched, ImageProcessor& pl)
-            : Node(sched, pl){
+        CannyNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+            : Node(sched, pl, t){
             // slow node:
             m_speed = slow;
             

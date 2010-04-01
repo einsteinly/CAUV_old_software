@@ -54,8 +54,10 @@ class Node{
         typedef boost::unique_lock<mutex_t> lock_t;
 
     public:
-        Node(Scheduler& sched, ImageProcessor& pl);
+        Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
         virtual ~Node(){ }
+
+        NodeType::e const& type() const;
         
         /* overload for the common case where we're connecting a node with one
          * output to a node with one input
@@ -110,7 +112,7 @@ class Node{
         
         /* return all parameter values
          */
-        std::map<std::string, NodeParamValue> parameters() const;
+        std::map<param_id, NodeParamValue> parameters() const;
         
         /* set a parameter based on a message
          */
@@ -214,7 +216,9 @@ class Node{
     private:
         bool _allInputsValid() const throw(); 
         void _demandNewParentInput() throw();
-            
+        
+        const NodeType::e m_node_type;
+
         /* prevent nodes (esp. output nodes) from executing in more than one
          * thread at once
          */

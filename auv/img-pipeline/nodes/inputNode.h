@@ -7,8 +7,8 @@ class InputNode: public Node{
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
     public:
-        InputNode(Scheduler& sched, ImageProcessor& pl)
-            : Node(sched, pl), ignored(0), processed(0), dropped(0),
+        InputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+            : Node(sched, pl, t), ignored(0), processed(0), dropped(0),
             dropped_since(0), m_processed_latest(true){
         }
         virtual ~InputNode(){

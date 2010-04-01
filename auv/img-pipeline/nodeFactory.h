@@ -47,14 +47,14 @@ const NodeFactoryRegister NodeName::s_nfr = NodeFactoryRegister(nt_ident, creato
 class Node;
 
 struct CreatorBase{
-    virtual boost::shared_ptr<Node> create(Scheduler&, ImageProcessor&) const = 0;
+    virtual boost::shared_ptr<Node> create(Scheduler&, ImageProcessor&, NodeType::e) const = 0;
 };
 typedef boost::shared_ptr<CreatorBase> creator_ptr_t;
 
 template<typename T>
 struct Creator: public CreatorBase{
-    virtual boost::shared_ptr<Node> create(Scheduler& s, ImageProcessor& pl) const{
-        return boost::make_shared<T>(boost::ref(s), boost::ref(pl));
+    virtual boost::shared_ptr<Node> create(Scheduler& s, ImageProcessor& pl, NodeType::e t) const{
+        return boost::make_shared<T>(boost::ref(s), boost::ref(pl), t);
     }
 };
 
@@ -76,7 +76,7 @@ class NodeFactoryRegister{
             lock_t l(registerLock());
             nt_creator_map_t::const_iterator i = nodeRegister().find(n);
             if(i != nodeRegister().end()){
-                return i->second->create(s, pl);
+                return i->second->create(s, pl, n);
             }else{
                 throw node_type_error("create: Invalid node type");
             }

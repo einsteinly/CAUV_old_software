@@ -14,8 +14,8 @@
 
 class CopyNode: public Node{
     public:
-        CopyNode(Scheduler& sched, ImageProcessor& pl)
-            : Node(sched, pl){
+        CopyNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+            : Node(sched, pl, t){
             // fast node:
             m_speed = fast;
 

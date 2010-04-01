@@ -6,8 +6,8 @@
 // for input nodes that aren't driven by the network
 class AsynchronousNode: public InputNode{
     public:
-        AsynchronousNode(Scheduler& sched, ImageProcessor& pl)
-            : InputNode(sched, pl){
+        AsynchronousNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+            : InputNode(sched, pl, t){
         }
 
         virtual bool checkSource(Image::Source const&, CameraID::e const&) throw(){

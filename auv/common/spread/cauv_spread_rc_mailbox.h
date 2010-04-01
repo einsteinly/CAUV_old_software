@@ -106,13 +106,13 @@ public:
     /**
      * @return The number of bytes sent
      */
-    int sendMessage(boost::shared_ptr<Message> message, Spread::service serviceType) {
+    int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType) {
         return sendMessage(message, serviceType, message->group());
     }
     /**
      * @return The number of bytes sent
      */
-    int sendMessage(boost::shared_ptr<Message> message, Spread::service serviceType,
+    int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType,
                      const std::string &destinationGroup) {
         ErrOnExit err("Failed to send message "); 
         int r = 0;
@@ -137,7 +137,7 @@ public:
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMultigroupMessage(boost::shared_ptr<Message> message,
+    virtual int sendMultigroupMessage(boost::shared_ptr<const Message> message,
                                       Spread::service serviceType,
                                       const std::vector<std::string> &groupNames) {
         ErrOnExit err("Failed to send multigroup message "); 

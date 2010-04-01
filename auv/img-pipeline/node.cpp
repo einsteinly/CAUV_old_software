@@ -1,11 +1,15 @@
 #include "node.h"
 
 
-Node::Node(Scheduler& sched, ImageProcessor& pl)
+Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
     : m_priority(priority_slow), m_speed(slow),
-      m_exec_queued(false), m_output_demanded(false), m_sched(sched), m_pl(pl){
+      m_node_type(type), m_exec_queued(false), m_output_demanded(false),
+      m_sched(sched), m_pl(pl){
 }
 
+NodeType::e const& Node::type() const{
+    return m_node_type;
+}
 
 /* overload for the common case where we're connecting a node with one
  * output to a node with one input
@@ -19,7 +23,11 @@ void Node::setInput(node_ptr_t n){
             std::cerr << "Parent has " << parent_outputs.size() << " outputs!" << std::endl;
             throw link_error("setInput: specific parent output must be specified");
         }
-        m_parent_links.begin()->second = input_link_t(n, *parent_outputs.begin());
+        const in_link_map_t::iterator i = m_parent_links.begin();
+        if(i->second.first){
+            throw(link_error("old arc must be removed first"));
+        }
+        i->second = input_link_t(n, *parent_outputs.begin());
         // TODO: if (and only if) there is already an image available
         // from the parent, we should call newInput here:
         //newInput(m_parent_links.begin()->first); 
@@ -39,6 +47,9 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
     if(i == m_parent_links.end()){
         throw(id_error("setInput: Invalid input id" + to_string(i_id)));
     }else{
+        if(i->second.first){
+            throw(link_error("old arc must be removed first"));
+        }
         i->second = input_link_t(n, o_id); 
         // TODO: if (and only if) there is already an image available
         // from the parent, we should call newInput here:
@@ -408,9 +419,9 @@ static NodeParamValue toNPV(param_value_t const& v){
 
 /* return all parameter values
  */
-std::map<std::string, NodeParamValue> Node::parameters() const{
+std::map<param_id, NodeParamValue> Node::parameters() const{
     lock_t l(m_parameters_lock);
-    std::map<std::string, NodeParamValue> r;
+    std::map<param_id, NodeParamValue> r;
     param_value_map_t::const_iterator i;
     for(i = m_parameters.begin(); i != m_parameters.end(); i++)
         r[i->first] = toNPV(i->second);

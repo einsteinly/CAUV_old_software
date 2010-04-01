@@ -90,7 +90,7 @@ StringVectorPtr groupListToVector(const GroupList &groups) {
     return v;
 }
 
-int SpreadMailbox::doSendMessage( const boost::shared_ptr<Message> message, Spread::service serviceType,
+int SpreadMailbox::doSendMessage( const boost::shared_ptr<const Message> message, Spread::service serviceType,
         const shared_ptr<GroupList> groupNames ) {
     boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
     ssrc::spread::ScatterMessage spreadMsg;
@@ -106,13 +106,13 @@ int SpreadMailbox::doSendMessage( const boost::shared_ptr<Message> message, Spre
     return 0;
 }
 
-int SpreadMailbox::sendMessage(const boost::shared_ptr<Message> message, Spread::service serviceType,
+int SpreadMailbox::sendMessage(const boost::shared_ptr<const Message> message, Spread::service serviceType,
         const string &groupName) throw(ConnectionError) {
     return doSendMessage( message, serviceType, stringToGroupList(groupName) );
 }
 
 
-int SpreadMailbox::sendMultigroupMessage(const boost::shared_ptr<Message> message, Spread::service serviceType,
+int SpreadMailbox::sendMultigroupMessage(const boost::shared_ptr<const Message> message, Spread::service serviceType,
         const vector<string> &groupNames) throw(ConnectionError) {
     return doSendMessage( message, serviceType, vectorToGroupList(groupNames) );
 }
