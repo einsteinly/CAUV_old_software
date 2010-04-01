@@ -24,6 +24,8 @@
 
 namespace pw{
 
+// VIATOR EMPTOR: compare actual *arcs* by pointer, reverse arc compares equal
+// to forward arc
 bool operator==(arc_ptr_t a, arc_ptr_t b){
     return ((a->m_src.lock() == b->m_src.lock() && a->m_dst.lock() == b->m_dst.lock()) ||
             (a->m_dst.lock() == b->m_src.lock() && a->m_src.lock() == b->m_dst.lock()));
@@ -39,6 +41,11 @@ class PipelineGuiMsgObs: public MessageObserver{
             debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(m->nodeType() != NodeType::Invalid)
                 m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
+        }
+        
+        virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            m_widget->remove(m_widget->node(m->nodeId()));
         }
 
         virtual void onNodeParametersMessage(NodeParametersMessage_ptr m){
@@ -58,6 +65,78 @@ class PipelineGuiMsgObs: public MessageObserver{
             debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->removeArc(m->from().node, m->from().output,
                                 m->to().node, m->to().input);
+        }
+
+        virtual void onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+
+            typedef std::map<node_id, NodeType::e> node_type_map_t;
+            typedef std::map<node_id, std::map<std::string, NodeOutput> > node_input_map_t;
+            typedef std::map<node_id, std::map<std::string, std::vector<NodeInput> > > node_output_map_t;
+            typedef std::map<node_id, std::map<std::string, NodeParamValue> > node_param_map_t;
+            
+            // remove nodes that shouldn't exist
+            const std::vector<node_ptr_t> current_nodes = m_widget->nodes();
+            std::vector<node_ptr_t>::const_iterator j;
+            for(j = current_nodes.begin(); j != current_nodes.end(); j++)
+                if(!m->nodeTypes().count((*j)->id())){
+                    m_widget->remove(*j);
+                }
+            
+            // make sure all nodes exist with the correct inputs and outputs
+            node_type_map_t::const_iterator i;
+            for(i = m->nodeTypes().begin(); i != m->nodeTypes().end(); i++){
+                node_ptr_t n;
+                if(n = m_widget->node(i->first)); else{
+                    m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, i->first, i->second));
+                    n = m_widget->node(i->first);
+                    debug() << __func__ << "added node" << n << ":" << i->first << i->second;                    
+                }
+                if(!n){
+                    error() << "couldn't add node";
+                    continue;
+                }
+                n->setType(i->second);
+
+                node_output_map_t::const_iterator oi = m->nodeOutputs().find(i->first);
+                if(oi == m->nodeOutputs().end())
+                    error() << __func__ << __LINE__;
+                else
+                    n->setOutputs(oi->second);
+
+                node_input_map_t::const_iterator ii = m->nodeInputs().find(i->first);
+                if(ii == m->nodeInputs().end())
+                    error() << __func__ << __LINE__;
+                else
+                    n->setInputs(ii->second);
+
+                node_param_map_t::const_iterator pi = m->nodeParams().find(i->first);
+                if(pi == m->nodeParams().end())
+                    error() << __func__ << __LINE__;
+                else
+                    n->setParams(pi->second);
+            }
+
+            // now actually add arcs
+            for(i = m->nodeTypes().begin(); i != m->nodeTypes().end(); i++){
+                node_ptr_t n = m_widget->node(i->first);
+                if(!n){
+                    error() << __func__ << __LINE__ <<  "required node not present";
+                    continue;
+                }
+
+                node_output_map_t::const_iterator oi = m->nodeOutputs().find(i->first);
+                if(oi == m->nodeOutputs().end())
+                    error() << __func__ << __LINE__;
+                else
+                    n->setOutputLinks(oi->second);
+
+                node_input_map_t::const_iterator ii = m->nodeInputs().find(i->first);
+                if(ii == m->nodeInputs().end())
+                    error() << __func__ << __LINE__;
+                else
+                    n->setInputLinks(ii->second);
+            }
         }
 
     private:
@@ -82,6 +161,9 @@ class PipelineGuiCauvNode: public CauvNode{
                 boost::make_shared<DebugMessageObserver>()
             );
             #endif
+
+            // get the initial pipeline state:
+            sendMessage(boost::make_shared<GraphRequestMessage>());
         }
 
         void sendMessage(boost::shared_ptr<Message> m){
@@ -144,6 +226,9 @@ void PipelineWidget::remove(renderable_ptr_t p){
     arc_ptr_t a;
     if(a = boost::dynamic_pointer_cast<Arc>(p))
         m_arcs.erase(a);
+    
+    m_owning_mouse.erase(p);
+    m_receiving_move.erase(p);
     this->updateGL();
 }
 
@@ -200,6 +285,12 @@ node_ptr_t PipelineWidget::node(node_id const& n){
     return node_ptr_t();
 }
 
+std::vector<node_ptr_t> PipelineWidget::nodes() const{
+    std::vector<node_ptr_t> r;
+    for(node_map_t::const_iterator i = m_nodes.begin(); i != m_nodes.end(); i++)
+        r.push_back(i->second);
+    return r;
+}
 
 void PipelineWidget::addArc(node_id const& src, std::string const& output,
                             node_id const& dst, std::string const& input){
@@ -212,25 +303,6 @@ void PipelineWidget::addArc(node_id const& src, std::string const& output,
     if(!s_no || !d_ni)
         return;
     addArc(s_no, d_ni);
-}
-
-void PipelineWidget::removeArc(node_id const& src, std::string const& output,
-                               node_id const& dst, std::string const& input){
-    node_ptr_t s = node(src);
-    node_ptr_t d = node(dst);
-    if(!s || !d)
-        return; 
-    renderable_ptr_t s_no = s->outSocket(output);
-    renderable_ptr_t d_ni = d->inSocket(input);
-    if(!s_no || !d_ni)
-        return; 
-    arc_ptr_t a = boost::make_shared<Arc>(this, s_no, d_ni);
-    for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
-        if(*i == a){
-            remove(*i);
-            return;
-        }
-    warning() << __func__ << "no such arc" << src << output  << "->" << dst << input;
 }
 
 void PipelineWidget::addArc(renderable_ptr_t src,
@@ -261,6 +333,47 @@ arc_ptr_t PipelineWidget::addArc(renderable_wkptr_t src, renderable_wkptr_t dst)
     m_arcs.insert(a);
     add(a, Point());
     return a;
+}
+
+void PipelineWidget::removeArc(node_id const& src, std::string const& output,
+                               node_id const& dst, std::string const& input){
+    node_ptr_t s = node(src);
+    node_ptr_t d = node(dst);
+    if(!s || !d)
+        return; 
+    renderable_ptr_t s_no = s->outSocket(output);
+    renderable_ptr_t d_ni = d->inSocket(input);
+    if(!s_no || !d_ni)
+        return; 
+    removeArc(s_no, d_ni);
+}
+
+void PipelineWidget::removeArc(renderable_ptr_t src,
+                               node_id const& dst, std::string const& input){
+    node_ptr_t d = node(dst);
+    if(!d) return; 
+    renderable_ptr_t d_ni = d->inSocket(input);
+    if(!d_ni) return; 
+    removeArc(src, d_ni);
+}
+
+void PipelineWidget::removeArc(node_id const& src, std::string const& output,
+                               renderable_ptr_t dst){
+    node_ptr_t s = node(src);
+    if(!s) return; 
+    renderable_ptr_t s_no = s->outSocket(output);
+    if(!s_no) return; 
+    removeArc(s_no, dst);
+}
+
+void PipelineWidget::removeArc(renderable_ptr_t src, renderable_ptr_t dst){
+    arc_ptr_t a = boost::make_shared<Arc>(this, src, dst);
+    for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
+        if(*i == a){
+            remove(*i);
+            return;
+        }
+    warning() << __func__ << "no such arc" << src <<  "->" << dst;
 }
 
 void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
@@ -456,6 +569,9 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
                 addMenu(boost::make_shared< EditText<int> >(
                             this, std::string("edit here"), temp_bbox, tdf, 0
                         ), proxy.pos);
+                break;
+            case Qt::Key_R:
+                sendMessage(boost::make_shared<GraphRequestMessage>());
                 break;
             default:
                 QWidget::keyPressEvent(event);

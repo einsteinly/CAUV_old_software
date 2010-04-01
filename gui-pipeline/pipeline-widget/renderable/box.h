@@ -10,6 +10,7 @@ class Box: public Draggable{
         Box(container_ptr_t c, double const& w, double const& h)
             : Draggable(c), m_box(0, -h, w, 0){
         }
+        virtual ~Box(){ }
 
         virtual void draw(bool){
             if(m_mouseover)

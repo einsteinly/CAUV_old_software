@@ -9,7 +9,7 @@
 
 using namespace pw;
 
-NodeIOBlob::NodeIOBlob(Node* node, pw_ptr_t pw, std::string const& name)
+NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name)
     : Renderable(node), m_node(node), m_pw(pw),
       m_text(boost::make_shared<Text>(node, name)),
       m_radius(6), m_radius_squared(m_radius*m_radius),
@@ -92,7 +92,7 @@ node_id NodeIOBlob::nodeId() const{
 }
 
 
-NodeInputBlob::NodeInputBlob(Node* d, pw_ptr_t p, std::string const& n)
+NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
     : NodeIOBlob(d, p, n){
     m_text->m_pos.x = -m_text->bbox().min.x + m_radius + 3;
 }
@@ -101,7 +101,7 @@ std::string NodeInputBlob::input() const{
     return *m_text;
 }
 
-NodeOutputBlob::NodeOutputBlob(Node* d, pw_ptr_t p, std::string const& n)
+NodeOutputBlob::NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
     : NodeIOBlob(d, p, n){
     m_text->m_pos.x = -m_text->bbox().max.x - m_radius - 3;
 }

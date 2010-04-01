@@ -1,18 +1,8 @@
 project (pipeline-widget)
 
-# shiny OpenGL
-find_package(OpenGL REQUIRED)
-
-# boost: 
-find_package (CAUVBoost)
-set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
-include_directories (${Boost_INCLUDE_DIRS})
-link_directories (${Boost_LIBRARY_DIRS})
-
 # FTGL (for text rendering)
 find_package (FTGL)
 include_directories (${FTGL_INCLUDE_DIRS} REQUIRED)
-
 
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})

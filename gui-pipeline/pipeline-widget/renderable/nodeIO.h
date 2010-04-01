@@ -12,7 +12,9 @@ namespace pw{
 class NodeIOBlob: public Renderable,
                   public boost::enable_shared_from_this<NodeIOBlob>{
     public:
-        NodeIOBlob(Node* node, pw_ptr_t pw, std::string const& name);
+        typedef Node* node_ptr_t;
+        NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name);
+        virtual ~NodeIOBlob(){ }
 
         virtual void draw(bool picking);
         virtual void mouseMoveEvent(MouseEvent const& m);
@@ -42,19 +44,22 @@ class NodeIOBlob: public Renderable,
 
 class NodeInputBlob: public NodeIOBlob{
     public:
-        NodeInputBlob(Node* d, pw_ptr_t p, std::string const& n);
+        NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n);
+        virtual ~NodeInputBlob(){ }
         std::string input() const;
 };
 
 class NodeOutputBlob: public NodeIOBlob{
     public:
-        NodeOutputBlob(Node* d, pw_ptr_t p, std::string const& n);
+        NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n);
+        virtual ~NodeOutputBlob(){ }        
         std::string output() const;
 };
 
 class FloatingArcHandle: public Menu{
     public:
         FloatingArcHandle(pw_ptr_t pw, arc_ptr_t arc);
+        virtual ~FloatingArcHandle(){ }
         
         virtual void draw(bool);
         virtual void mouseReleaseEvent(MouseEvent const& e);

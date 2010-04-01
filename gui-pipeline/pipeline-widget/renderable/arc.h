@@ -13,6 +13,7 @@ namespace pw{
 class Arc: public Renderable{
     public:
         Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst);
+        virtual ~Arc(){ }
 
         virtual void draw(bool picking); 
         virtual bool acceptsMouseEvents();

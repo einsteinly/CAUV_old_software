@@ -14,6 +14,8 @@ namespace pw{
 class Renderable{
     public:
         Renderable(container_ptr_t c, Point const& at = Point());
+        virtual ~Renderable(){ }
+
         virtual void draw(bool picking) = 0;
 
         /* overload to receive mouse events

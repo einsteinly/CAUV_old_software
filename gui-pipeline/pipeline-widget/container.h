@@ -18,6 +18,8 @@ class Container{
         typedef std::list<renderable_ptr_t> renderable_list_t;
 
     public:
+        virtual ~Container(){ }
+        
         virtual Point referUp(Point const& p) const = 0;
         virtual void postRedraw() = 0;
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,

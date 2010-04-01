@@ -28,6 +28,8 @@ class ListMenuItem: public Renderable{
             m_bbox.max.y += 4.0;
         }
 
+        virtual ~ListMenuItem(){ }
+
         virtual void draw(bool picking){
             if(m_pressed)
                 glColor(Colour(0.50, 0.8));
@@ -125,6 +127,8 @@ class ListMenu: public Menu{
             for(j = m_items.begin(); j != m_items.end(); j++)
                 (*j)->setSpan(m_bbox.min.x, m_bbox.max.x);
         }
+
+        virtual ~ListMenu(){ }
 
         virtual void draw(bool picking){
             typename std::list<item_ptr>::const_iterator i;

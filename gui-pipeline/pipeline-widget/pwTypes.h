@@ -30,6 +30,7 @@ typedef Container* container_ptr_t;
 
 typedef boost::weak_ptr<Renderable> renderable_wkptr_t;
 typedef boost::shared_ptr<Renderable> renderable_ptr_t;
+typedef boost::weak_ptr<Node> node_wkptr_t;
 typedef boost::shared_ptr<Node> node_ptr_t;
 typedef boost::shared_ptr<Arc> arc_ptr_t;
 typedef boost::shared_ptr<Menu> menu_ptr_t;

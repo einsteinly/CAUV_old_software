@@ -8,6 +8,8 @@ namespace pw{
 class Draggable: public Renderable{
     public:
         Draggable(container_ptr_t c);
+        virtual ~Draggable(){ }
+
         virtual void mouseMoveEvent(MouseEvent const& event);
         virtual bool mousePressEvent(MouseEvent const& event);
         virtual void mouseGoneEvent();

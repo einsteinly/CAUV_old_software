@@ -45,15 +45,26 @@ class PipelineWidget: public QGLWidget,
         void addNode(node_ptr_t);
 
         node_ptr_t node(node_id const&);
-        void addArc(node_id const& src, std::string const& output,
+        std::vector<node_ptr_t> nodes() const;
+        
+        // hmm
+        typedef node_id const& ni_r;
+        typedef std::string const& str_r;
+        void addArc(ni_r src, str_r output,
                     node_id const& dst, std::string const& input);
-        void removeArc(node_id const& src, std::string const& output,
-                       node_id const& dst, std::string const& input);
         void addArc(renderable_ptr_t src,
                     node_id const& dst, std::string const& input);
         void addArc(node_id const& src, std::string const& output,
                     renderable_ptr_t dst);
         arc_ptr_t addArc(renderable_wkptr_t src, renderable_wkptr_t dst);
+
+        void removeArc(node_id const& src, std::string const& output,
+                       node_id const& dst, std::string const& input);
+        void removeArc(renderable_ptr_t src,
+                       node_id const& dst, std::string const& input);
+        void removeArc(node_id const& src, std::string const& output,
+                       renderable_ptr_t dst);
+        void removeArc(renderable_ptr_t src, renderable_ptr_t dst);
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void sendMessage(boost::shared_ptr<Message>);
