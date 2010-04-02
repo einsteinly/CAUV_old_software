@@ -93,7 +93,7 @@ class SmartStreamBase : boost::noncopyable
             // the time in the format that we want:
             std::ostringstream oss;
             boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
-            oss.imbue(std::locale(os.getloc(), facet));
+            oss.imbue(std::locale(oss.getloc(), facet));
 
             // add timestamp at start of each line:
             if(m_stuffs.size())

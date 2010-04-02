@@ -195,8 +195,12 @@ PipelineWidget::PipelineWidget(QWidget *parent)
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_cauv_node(),
-      m_cauv_node_thread(boost::thread(spawnPGCN, this)){
+      m_cauv_node_thread(boost::thread(spawnPGCN, this)),
+      m_lock(){
     // TODO: more appropriate QGLFormat?
+    
+    // QueuedConnection should ensure updateGL is called in the main thread
+    connect(this, SIGNAL(redrawPosted()), this, SLOT(updateGL()), Qt::QueuedConnection);
     
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -215,6 +219,7 @@ QSize PipelineWidget::sizeHint() const{
 }
 
 void PipelineWidget::remove(renderable_ptr_t p){
+    lock_t l(m_lock);
     // TODO: really need m_contents to be a set in which iterators remain
     // stable on erasing, so that this doesn't involve a search:
     renderable_list_t::iterator i, j;
@@ -234,22 +239,25 @@ void PipelineWidget::remove(renderable_ptr_t p){
     // cause all sorts of general nastiness.
     // (see above note on really needing a set in which iterators remain stable
     // on erasing)
-        
-    this->updateGL();
+    
+    postRedraw();
 }
 
 void PipelineWidget::remove(node_ptr_t n){
+    lock_t l(m_lock);
     m_nodes.erase(n->id());
     remove(renderable_ptr_t(n));
 }
 
 void PipelineWidget::remove(menu_ptr_t p){
+    lock_t l(m_lock);
     if(m_menu == p)
         m_menu.reset();
     remove(renderable_ptr_t(p));
 }
 
 void PipelineWidget::add(renderable_ptr_t r){
+    lock_t l(m_lock);
     // TODO: sensible layout hint
     static Point add_position_delta = Point();
     if(add_position_delta.sxx() > 8000)
@@ -261,12 +269,14 @@ void PipelineWidget::add(renderable_ptr_t r){
 }
 
 void PipelineWidget::add(renderable_ptr_t r, Point const& at){
+    lock_t l(m_lock);
     r->m_pos = at;
     m_contents.push_back(r);
-    this->updateGL();
+    postRedraw();
 }
 
 void PipelineWidget::addMenu(menu_ptr_t r,  Point const& at, bool pressed){
+    lock_t l(m_lock);
     debug() << "addMenu:" << r << at << pressed;
     if(m_menu)
         remove(m_menu);
@@ -279,11 +289,13 @@ void PipelineWidget::addMenu(menu_ptr_t r,  Point const& at, bool pressed){
 }
 
 void PipelineWidget::addNode(node_ptr_t r){
+    lock_t l(m_lock);
     m_nodes[r->id()] = r;
     add(r);
 }
 
 node_ptr_t PipelineWidget::node(node_id const& n){
+    lock_t l(m_lock);
     node_map_t::const_iterator i = m_nodes.find(n);
     if(i != m_nodes.end())
         return m_nodes[n];
@@ -292,6 +304,7 @@ node_ptr_t PipelineWidget::node(node_id const& n){
 }
 
 std::vector<node_ptr_t> PipelineWidget::nodes() const{
+    lock_t l(m_lock);
     std::vector<node_ptr_t> r;
     for(node_map_t::const_iterator i = m_nodes.begin(); i != m_nodes.end(); i++)
         r.push_back(i->second);
@@ -330,6 +343,7 @@ void PipelineWidget::addArc(node_id const& src, std::string const& output,
 }
 
 arc_ptr_t PipelineWidget::addArc(renderable_wkptr_t src, renderable_wkptr_t dst){
+    lock_t l(m_lock);
     arc_ptr_t a = boost::make_shared<Arc>(this, src, dst);
     for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
         if(*i == a){
@@ -373,6 +387,7 @@ void PipelineWidget::removeArc(node_id const& src, std::string const& output,
 }
 
 void PipelineWidget::removeArc(renderable_ptr_t src, renderable_ptr_t dst){
+    lock_t l(m_lock);
     arc_ptr_t a = boost::make_shared<Arc>(this, src, dst);
     for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
         if(*i == a){
@@ -402,7 +417,9 @@ Point PipelineWidget::referUp(Point const& p) const{
 }
 
 void PipelineWidget::postRedraw(){
-    this->updateGL();
+    // no need to lock m_lock, that's done in the slot
+    debug() << "PipelineWidget::postRedraw";
+    emit redrawPosted();
 }
 
 void PipelineWidget::postMenu(menu_ptr_t m, Point const& p, bool r) {
@@ -431,6 +448,8 @@ void PipelineWidget::initializeGL(){
 }
 
 void PipelineWidget::paintGL(){
+    lock_t l(m_lock);
+    debug() << "PipelineWidget::paintGL";
     updateProjection();
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -486,6 +505,7 @@ void PipelineWidget::resizeGL(int width, int height){
 }
 
 void PipelineWidget::mousePressEvent(QMouseEvent *event){
+    lock_t l(m_lock);
 	GLuint hits = 0;
     GLuint n = 0;
     GLuint pick_buffer[100] = {0};
@@ -554,7 +574,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     m_last_mouse_pos = event->pos();
 
     if(need_redraw)
-        this->updateGL();
+        postRedraw();
 }
 
 void tdf(int, std::string const& s){
@@ -562,6 +582,7 @@ void tdf(int, std::string const& s){
 }
 
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
+    lock_t l(m_lock);
     BBox temp_bbox(0, -6, 80, 10);
     if(m_menu){
         if(!m_menu->keyPressEvent(event))
@@ -590,12 +611,14 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
 }
 
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
+    lock_t l(m_lock);
     if(!m_menu || !m_menu->keyReleaseEvent(event)){
         QWidget::keyReleaseEvent(event);
     }
 }
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
+    lock_t l(m_lock);
     debug(-1) << __func__ << event->delta() << std::hex << event->buttons();
     if(!event->buttons()){
         double scalef = clamp(0.2, (1 + double(event->delta()) / 240), 5);
@@ -606,6 +629,7 @@ void PipelineWidget::wheelEvent(QWheelEvent *event){
 }
 
 void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
+    lock_t l(m_lock);
     renderable_set_t::iterator i;
     for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
        debug(-1) << "sending mouse release event to" << *i;    
@@ -617,6 +641,7 @@ void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
 }
 
 void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
+    lock_t l(m_lock);
     renderable_set_t::iterator i;
     renderable_list_t::iterator j;
     if(!m_owning_mouse.size()){
@@ -626,7 +651,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
             Point d(win_dx / m_pixels_per_unit,
                     -win_dy / m_pixels_per_unit); // NB -
             m_win_centre += d;
-            this->updateGL();
+            postRedraw();
         }
         // else zoom, (TODO)
     }else{

@@ -27,6 +27,8 @@ class PipelineWidget: public QGLWidget,
         typedef std::set<renderable_ptr_t> renderable_set_t;
         typedef std::set<arc_ptr_t> arc_set_t;
         typedef std::map<node_id, node_ptr_t> node_map_t;
+        typedef boost::recursive_mutex mutex_t;
+        typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
         // friends:
         friend class MouseEvent;
@@ -76,6 +78,9 @@ class PipelineWidget: public QGLWidget,
                               bool pressed=false);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
+
+    signals:
+        void redrawPosted();
     
     protected:
         void initializeGL();
@@ -116,6 +121,12 @@ class PipelineWidget: public QGLWidget,
         
         boost::shared_ptr<PipelineGuiCauvNode> m_cauv_node;
         boost::thread m_cauv_node_thread;
+
+        /* a great big mutex around everything since messages can cause all
+         * sorts of havoc if they cause changes to the pipeline while drawing
+         * is in progress, similarly for qt events:
+         */
+        mutable mutex_t m_lock;
 };
 
 } // namespace pw
