@@ -85,8 +85,10 @@ class PipelineWidget: public QGLWidget,
         void mouseReleaseEvent(QMouseEvent *event);
         void mouseMoveEvent(QMouseEvent *event);
 
-        void keyPressEvent(QKeyEvent* event);
-        void keyReleaseEvent(QKeyEvent* event);
+        void keyPressEvent(QKeyEvent *event);
+        void keyReleaseEvent(QKeyEvent *event);
+
+        void wheelEvent(QWheelEvent *event);
     
     private:
         void updateProjection();

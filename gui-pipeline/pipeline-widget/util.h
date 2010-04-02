@@ -89,6 +89,34 @@ class Colour{
 
 
 // Usful overloaded & utility functions:
+
+template<typename T>
+inline static T roundZ(T const& v){
+    if(v >= 0) return std::floor(v);
+    else return std::ceil(v);
+}
+
+template<typename T>
+inline static T roundA(T const& v){
+    if(v >= 0) return std::ceil(v);
+    else return std::floor(v);
+}
+
+template<typename T>
+inline static T min(T const& a, T const& b){
+    return a < b? a : b;
+}
+
+template<typename T>
+inline static T max(T const& a, T const& b){
+    return a > b? a : b;
+}
+
+template<typename T1, typename T2, typename T3>
+inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
+    return (a < low)? low : ((a < high)? a : high);
+}
+
 void glTranslatef(Point const& p, double const& z = 0.0);
 void glVertex(Point const& p);
 void glBox(BBox const& b);
@@ -126,19 +154,6 @@ void glColor(Colour const& c);
 			error() << "unknown OpenGL error: "__FILE__":"<<__LINE__; \
 			break; \
 	}
-
-
-template<typename T>
-inline static T roundZ(T const& v){
-    if(v >= 0) return std::floor(v);
-    else return std::ceil(v);
-}
-
-template<typename T>
-inline static T roundA(T const& v){
-    if(v >= 0) return std::ceil(v);
-    else return std::floor(v);
-}
 
 
 #endif // ndef __UTIL_H__

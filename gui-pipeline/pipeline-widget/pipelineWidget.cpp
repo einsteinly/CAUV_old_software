@@ -252,10 +252,10 @@ void PipelineWidget::remove(menu_ptr_t p){
 void PipelineWidget::add(renderable_ptr_t r){
     // TODO: sensible layout hint
     static Point add_position_delta = Point();
-    if(add_position_delta.sxx() > 200)
+    if(add_position_delta.sxx() > 8000)
         add_position_delta = Point();
     else
-        add_position_delta += Point(10, -5);
+        add_position_delta += Point(20, -10);
     MouseEvent last_mouse(*this);
     add(r, last_mouse.pos + add_position_delta);
 }
@@ -436,8 +436,9 @@ void PipelineWidget::paintGL(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     // scale for world size 'out of screen' is positive z
-    glScalef(1.0f/m_world_size, 1.0f/m_world_size, 1.0f);
-    glTranslatef(0.5/m_pixels_per_unit, 0.5/m_pixels_per_unit, 0);
+    glScalef(m_pixels_per_unit / m_world_size,
+             m_pixels_per_unit / m_world_size, 1.0f);
+    //glTranslatef(m_pixels_per_unit / 2, m_pixels_per_unit / 2, 0);
     drawGrid();
     
     #if 0
@@ -474,7 +475,7 @@ void PipelineWidget::paintGL(){
 
 void PipelineWidget::resizeGL(int width, int height){
     m_win_aspect = sqrt(double(width) / height);
-    m_win_scale = sqrt(width*height) / m_pixels_per_unit;
+    m_win_scale = sqrt(width*height);
     debug(-1) << __func__
             << "width=" << width << "height=" << height
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale;
@@ -503,8 +504,9 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     
     projectionForPicking(event->x(), event->y());
     glLoadIdentity();
-    glScalef(1.0f/m_world_size, 1.0f/m_world_size, 1.0f);
-    glTranslatef(0.5/m_pixels_per_unit, 0.5/m_pixels_per_unit, 0);    
+    glScalef(m_pixels_per_unit / m_world_size,
+             m_pixels_per_unit / m_world_size, 1.0f);
+    //glTranslatef(m_pixels_per_unit / 2, m_pixels_per_unit / 2, 0);  
 
     for(i = m_contents.begin(); i != m_contents.end(); i++, n++){
         if((*i)->acceptsMouseEvents()){
@@ -566,7 +568,7 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
             QWidget::keyPressEvent(event);
     }else{
         MouseEvent proxy(*this);
-        // TODO: hotkeys
+        // TODO: proper consistent & configurable hotkeys
         switch(event->key()){
             case Qt::Key_Space:
             case Qt::Key_A:
@@ -590,6 +592,16 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     if(!m_menu || !m_menu->keyReleaseEvent(event)){
         QWidget::keyReleaseEvent(event);
+    }
+}
+
+void PipelineWidget::wheelEvent(QWheelEvent *event){
+    debug(-1) << __func__ << event->delta() << std::hex << event->buttons();
+    if(!event->buttons()){
+        double scalef = clamp(0.2, (1 + double(event->delta()) / 240), 5);
+        m_pixels_per_unit *= scalef;
+        m_pixels_per_unit = clamp(0.01, m_pixels_per_unit, 4);
+        postRedraw();
     }
 }
 
@@ -655,7 +667,7 @@ void PipelineWidget::updateProjection(){
     glLoadIdentity();
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
-    glTranslatef(m_win_centre/m_world_size);
+    glTranslatef(m_win_centre * m_pixels_per_unit / m_world_size);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -678,7 +690,7 @@ void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
-    glTranslatef(m_win_centre/m_world_size);
+    glTranslatef(m_win_centre * m_pixels_per_unit / m_world_size);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -689,10 +701,11 @@ void PipelineWidget::drawGrid(){
     
     // projected window coordinates:
     const double divisor = 2 * m_pixels_per_unit;
-    const double min_x = -m_win_centre.x - width()  / divisor;
-    const double min_y = -m_win_centre.y - height() / divisor;
-    const double max_x = -m_win_centre.x + width()  / divisor;
-    const double max_y = -m_win_centre.y + height() / divisor;
+    const double edge = m_world_size * m_win_scale / 2;
+    const double min_x = max(-m_win_centre.x - width()  / divisor, -edge);
+    const double min_y = max(-m_win_centre.y - height() / divisor, -edge);
+    const double max_x = min(-m_win_centre.x + width()  / divisor, edge);
+    const double max_y = min(-m_win_centre.y + height() / divisor, edge);
     
     const int min_grid_minor_x = roundZ(min_x / grid_minor_spacing);
     const int min_grid_minor_y = roundZ(min_y / grid_minor_spacing);
@@ -716,7 +729,7 @@ void PipelineWidget::drawGrid(){
             << "max_grid_major_y=" << max_grid_major_y;
     
     glLineWidth(1);
-    glColor(Colour(0.2, 0.125));
+    glColor(Colour(0.2, 0.2));//0.125));
     glBegin(GL_LINES);
     for(int i = min_grid_minor_y; i <= max_grid_minor_y; i++){
         glVertex3f(min_x, i*grid_minor_spacing, -0.2);
@@ -728,7 +741,7 @@ void PipelineWidget::drawGrid(){
         glVertex3f(i*grid_minor_spacing, max_y, -0.2);
     }
     
-    glColor(Colour(0.2, 0.25));
+    glColor(Colour(0.2, 0.4));//0.25));
     for(int i = min_grid_major_y; i <= max_grid_major_y; i++){
         glVertex3f(min_x, i*grid_major_spacing, -0.1);
         glVertex3f(max_x, i*grid_major_spacing, -0.1);
