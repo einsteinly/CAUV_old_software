@@ -58,7 +58,7 @@ class Scheduler
     typedef std::map<SchedulerPriority, int> priority_int_map_t;
 
     public:
-        Scheduler() : m_stop(true)
+        Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_threads()
         {
             m_num_threads[priority_slow] = SLOW_THREADS;
             m_num_threads[priority_fast] = FAST_THREADS;

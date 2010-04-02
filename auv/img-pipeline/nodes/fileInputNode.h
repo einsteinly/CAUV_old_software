@@ -16,7 +16,8 @@ class FileInputNode: public AsynchronousNode{
 
     public:
         FileInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_file_is_new(true){
+            : AsynchronousNode(sched, pl, t), m_file_is_new(true),
+              m_file_is_new_lock(){
             // no inputs
             // registerInputID()
             

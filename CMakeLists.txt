@@ -24,8 +24,8 @@ link_directories (
     "/societies/cauv/install/lib/"
 )
 
-set (ALWAYS_FLAGS "-DPIC -fPIC")
-set (DEBUG_FLAGS "-DCAUV_DEBUG -Wall -g")
+set (ALWAYS_FLAGS "-DPIC -fPIC -Wall")
+set (DEBUG_FLAGS "-DCAUV_DEBUG -g -Wextra -Wno-non-virtual-dtor -Wno-system-headers")
 set (OPTIMISATION_FLAGS "-O3 -ffast-math")
 
 set (CMAKE_CXX_FLAGS "${DEBUG_FLAGS} ${ALWAYS_FLAGS}")

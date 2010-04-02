@@ -85,7 +85,9 @@ class ConnectionError : public std::runtime_error {
         }
 
         explicit ConnectionError(const int error)
-            : std::runtime_error(getErrorString(error)), m_critical(isCritical(error)){}
+            : std::runtime_error(getErrorString(error)),
+              m_critical(isCritical(error)), m_needs_reconnect(false){
+        }
         
         bool critical() const {
             return m_critical;

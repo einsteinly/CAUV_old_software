@@ -15,7 +15,7 @@ class CameraInputNode: public AsynchronousNode{
 
     public:
         CameraInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_capture(){
+            : AsynchronousNode(sched, pl, t), m_capture(), m_capture_lock(){
             // no inputs
             // registerInputID()
             
@@ -77,8 +77,8 @@ class CameraInputNode: public AsynchronousNode{
             #endif
         }
         
-        boost::recursive_mutex m_capture_lock;
         cv::VideoCapture m_capture;
+        boost::recursive_mutex m_capture_lock;
     
     // Register this node type
     DECLARE_NFR;

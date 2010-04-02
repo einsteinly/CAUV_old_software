@@ -39,7 +39,7 @@ public:
 class MailboxEventMonitor {
 public:
     MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
-            : m_thread_callable(mailbox) {
+            : m_thread(), m_thread_callable(mailbox) {
     }
 
     void addObserver(mb_observer_ptr_t observer) {

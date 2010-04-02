@@ -29,7 +29,8 @@ void Text::draw(bool){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor(Colour(0));
     font()->Render(c_str());
-
+    glPrintErr();
+    
     glPopMatrix();
     glPopAttrib();
 }

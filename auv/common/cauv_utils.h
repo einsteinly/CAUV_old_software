@@ -15,6 +15,7 @@
 class MakeString
 {
     public:
+        MakeString() : stream() { }
         operator std::string() const;
 
         template<class T>

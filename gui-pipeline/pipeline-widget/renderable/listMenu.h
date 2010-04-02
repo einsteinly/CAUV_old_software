@@ -166,7 +166,7 @@ class ListMenu: public Menu{
             for(i = m_items.begin(); i != m_items.end(); i++){
                 MouseEvent referred(m, *i);
                 if((*i)->bbox().contains(referred.pos)){
-                    if((*i)->mousePressEvent(referred));
+                    if((*i)->mousePressEvent(referred))
                         m_pressed_items.insert(*i);
                 }
             }

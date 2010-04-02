@@ -5,7 +5,7 @@
 #include <common/messages.h>
 #include <common/debug.h>
 
-#include "NodeIO.h"
+#include "nodeIO.h"
 
 using namespace pw;
 
@@ -58,7 +58,7 @@ NodeOutput Arc::from(){
     renderable_ptr_t sptr = m_src.lock();
     renderable_ptr_t dptr = m_dst.lock();
     boost::shared_ptr<NodeOutputBlob> iptr;
-    NodeOutput r = {0};
+    NodeOutput r = {0, ""};
     if((iptr = boost::dynamic_pointer_cast<NodeOutputBlob>(sptr)) ||
        (iptr = boost::dynamic_pointer_cast<NodeOutputBlob>(dptr))){
         r.node = iptr->nodeId();
@@ -73,7 +73,7 @@ NodeInput Arc::to(){
     renderable_ptr_t sptr = m_src.lock();
     renderable_ptr_t dptr = m_dst.lock();
     boost::shared_ptr<NodeInputBlob> iptr;
-    NodeInput r = {0};
+    NodeInput r = {0, ""};
     if((iptr = boost::dynamic_pointer_cast<NodeInputBlob>(sptr)) ||
        (iptr = boost::dynamic_pointer_cast<NodeInputBlob>(dptr))){
         r.node = iptr->nodeId();

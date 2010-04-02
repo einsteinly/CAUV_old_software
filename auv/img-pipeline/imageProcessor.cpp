@@ -9,7 +9,8 @@
 // TODO: error() should send an error message of some sort on spread
 
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
-    : m_scheduler(), m_mailbox(mb){
+    : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(),
+      m_mailbox_lock(), m_mailbox(mb){
     m_scheduler.start();
 }
 

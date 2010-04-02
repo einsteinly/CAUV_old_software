@@ -227,8 +227,14 @@ void PipelineWidget::remove(renderable_ptr_t p){
     if(a = boost::dynamic_pointer_cast<Arc>(p))
         m_arcs.erase(a);
     
-    m_owning_mouse.erase(p);
-    m_receiving_move.erase(p);
+    // NB: the item may persist in m_receiving_move or m_owning_mouse until the
+    // next mouse event: this is undesirable, but not something that can easily
+    // be fixed, since remove() may be called during mouse events, in which case
+    // removing items from the mentioned sets would invalidate iterators and 
+    // cause all sorts of general nastiness.
+    // (see above note on really needing a set in which iterators remain stable
+    // on erasing)
+        
     this->updateGL();
 }
 
@@ -462,7 +468,8 @@ void PipelineWidget::paintGL(){
         glTranslatef((*i)->m_pos);
         (*i)->draw(false);
         glPopMatrix();
-    }
+    }    
+    glPrintErr();
 }
 
 void PipelineWidget::resizeGL(int width, int height){

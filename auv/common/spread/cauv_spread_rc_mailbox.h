@@ -11,6 +11,7 @@
 #include <boost/utility.hpp>
 
 #include <common/cauv_utils.h>
+#include <common/debug.h>
 
 #include "cauv_spread_mailbox.h"
 
@@ -22,7 +23,7 @@ class ErrOnExit: boost::noncopyable{
 
         ~ErrOnExit(){
             if(m_print_err)
-                std::cerr << m_msg << std::endl;
+                error() << m_msg;
         }
 
         ErrOnExit& operator+=(std::string const& msg){
@@ -56,7 +57,8 @@ public:
                               ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
                               SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) throw()
         : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority),
-          m_connection_state(NC), m_keep_trying(true){
+          m_connection_state_lock(), m_connection_state(NC), m_mailbox(),
+          m_keep_trying(true), m_thread(), m_groups_lock(), m_groups(){
         _asyncConnect();
     }
 

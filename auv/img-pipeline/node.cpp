@@ -3,7 +3,15 @@
 
 Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
     : m_priority(priority_slow), m_speed(slow),
-      m_node_type(type), m_exec_queued(false), m_output_demanded(false),
+      m_node_type(type),
+      m_exec_queued(false), m_exec_queued_lock(),
+      m_parent_links(), m_parent_links_lock(),
+      m_child_links(), m_child_links_lock(),
+      m_outputs(), m_outputs_lock(),
+      m_parameters(), m_parameters_lock(),
+      m_new_inputs(), m_new_inputs_lock(),
+      m_valid_inputs(), m_valid_inputs_lock(),
+      m_output_demanded(false), m_output_demanded_lock(),
       m_sched(sched), m_pl(pl){
 }
 

@@ -60,11 +60,11 @@ class SmartStreamBase : boost::noncopyable
                         std::string prefix = "",
                         BashColour::e col = BashColour::None,
                         bool print=true)
-            : m_stream(stream), m_prefix(prefix), m_col(col), m_print(print)
+            : m_stuffs(), m_stream(stream), m_prefix(prefix), m_col(col), m_print(print)
         {
         }
 
-        ~SmartStreamBase()
+        virtual ~SmartStreamBase()
         {
             // print the contents of this temporary object when it's destroyed,
             if(m_print)
@@ -211,6 +211,10 @@ struct debug : public SmartStreamBase
     {
     }
 
+    virtual ~debug()
+    {
+    }
+
     template<typename T>
     debug& operator<<(T const& a)
     {
@@ -253,6 +257,10 @@ struct debug : boost::noncopyable
         level = level; // suppress warning about unused parameter
     }
 
+    virtual ~debug()
+    {
+    }
+
     template<typename T>
     debug const& operator<<(T const&) const
     {
@@ -275,6 +283,10 @@ struct error : public SmartStreamBase
     error() : SmartStreamBase(std::cerr,
                               MakeString() << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal,
                               BashColour::Red)
+    {
+    }
+
+    virtual ~error()
     {
     }
 
@@ -312,6 +324,10 @@ struct warning : public SmartStreamBase
     {
     }
 
+    virtual ~warning()
+    {
+    }
+
     template<typename T>
     warning& operator<<(T const& a)
     {
@@ -341,6 +357,10 @@ struct warning : public SmartStreamBase
 struct info : public SmartStreamBase
 {
     info() : SmartStreamBase(std::cout)
+    {
+    }
+
+    virtual ~info()
     {
     }
 

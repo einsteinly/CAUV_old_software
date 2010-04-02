@@ -208,7 +208,7 @@ void Node::setType(NodeType::e const& n){
 void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
     // remove any old inputs:
     for(sr_map_iter_t i = m_inputs.begin(); i != m_inputs.end(); i++){
-        std::remove(m_contents.begin(), m_contents.end(), i->second);
+        m_contents.remove(i->second);
         m_pw->removeArc(i->second, m_node_id, i->first);
     }
     m_inputs.clear();
@@ -239,7 +239,7 @@ void Node::setInputLinks(std::map<std::string, NodeOutput> const& inputs){
 void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outputs){
     // remove any old outputs:
     for(sr_map_iter_t i = m_outputs.begin(); i != m_outputs.end(); i++){
-        std::remove(m_contents.begin(), m_contents.end(), i->second);    
+        m_contents.remove(i->second);    
         m_pw->removeArc(m_node_id, i->first, i->second);
     }
     m_outputs.clear();
@@ -440,8 +440,8 @@ void Node::removeMenu(menu_ptr_t m){
     m_context->removeMenu(m);
 }
 
-void Node::remove(renderable_ptr_t r){
-    error() << __func__ << "unimplemented";
+void Node::remove(renderable_ptr_t){
+    error() << __func__ << __LINE__ << "unimplemented";
 }
 
 namespace pw{
@@ -451,7 +451,7 @@ void Node::paramValueChanged<int>(std::string const& p, int const& v){
     debug() << "Node::paramValueChanged<int>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0};
+    NodeParamValue pv = {0, 0, 0, ""};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -466,7 +466,7 @@ void Node::paramValueChanged<float>(std::string const& p, float const& v){
     debug() << "Node::paramValueChanged<float>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0};
+    NodeParamValue pv = {0, 0, 0, ""};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -481,7 +481,7 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0};
+    NodeParamValue pv = {0, 0, 0, ""};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);

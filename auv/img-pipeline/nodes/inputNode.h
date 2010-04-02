@@ -9,7 +9,8 @@ class InputNode: public Node{
     public:
         InputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t), ignored(0), processed(0), dropped(0),
-            dropped_since(0), m_processed_latest(true){
+              dropped_since(0), m_counters_lock(), m_latest_image_msg(),
+              m_processed_latest(true), m_latest_image_msg_lock(){
         }
         virtual ~InputNode(){
             info() << "~InputNode statistics"

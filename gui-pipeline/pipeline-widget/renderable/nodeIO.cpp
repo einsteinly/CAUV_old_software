@@ -123,7 +123,7 @@ void FloatingArcHandle::draw(bool){
     glCircleOutline(3.0);
 }
 
-void FloatingArcHandle::mouseReleaseEvent(MouseEvent const& e){
+void FloatingArcHandle::mouseReleaseEvent(MouseEvent const&){
     // remove first, so that this isn't returned by the pick
     m_context->removeMenu(shared_from_this());
     //remove the arc: arc is re-added when we receive an ArcAddedMessage        

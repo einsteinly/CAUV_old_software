@@ -27,7 +27,7 @@ void cauv_global::set_socket(CommunicatingSocket* socket)
 }
 */
 
-void cauv_global::send_trace(const string& msg) const
+void cauv_global::send_trace(const string&/* msg*/) const
 {
 /*	TraceMessage m;
  *  m.msg(msg);
@@ -42,7 +42,7 @@ void cauv_global::send_trace(const string& msg) const
     }
 */
 }
-void cauv_global::send_error(const string& msg) const
+void cauv_global::send_error(const string&/* msg*/) const
 {
 /*	ErrorMessage m(msg);
 	try

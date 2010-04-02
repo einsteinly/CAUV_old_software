@@ -98,6 +98,36 @@ void glCircle(double const& radius, unsigned segments = 24);
 void glCircleOutline(double const& radius, unsigned segments = 24);
 void glColor(Colour const& c);
 
+#define glCheckError() glPrintErr(glGetError())
+
+#define glPrintErr(err) \
+	switch(GLuint(err)){ \
+		case 0: \
+			break; \
+		case GL_INVALID_ENUM: \
+			error() << "GL_INVALID_ENUM: "__FILE__":"<<__LINE__; \
+			break; \
+		case GL_INVALID_VALUE: \
+			error() << "GL_INVALID_VALUE: "__FILE__":"<<__LINE__; \
+			break; \
+		case GL_INVALID_OPERATION: \
+			error() << "GL_INVALID_OPERATION: "__FILE__":"<<__LINE__; \
+			break; \
+		case GL_STACK_OVERFLOW: \
+			error() << "GL_STACK_OVERFLOW: "__FILE__":"<<__LINE__; \
+			break; \
+		case GL_STACK_UNDERFLOW: \
+			error() << "GL_STACK_UNDERFLOW: "__FILE__":"<<__LINE__; \
+			break; \
+		case GL_OUT_OF_MEMORY: \
+			error() << "GL_OUT_OF_MEMORY: "__FILE__":"<<__LINE__; \
+			break; \
+		default: \
+			error() << "unknown OpenGL error: "__FILE__":"<<__LINE__; \
+			break; \
+	}
+
+
 template<typename T>
 inline static T roundZ(T const& v){
     if(v >= 0) return std::floor(v);
