@@ -95,9 +95,9 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage_ptr m){
          * it's neighbors _and_ unlink the neighbors from the node
          */
         BOOST_FOREACH(node_ptr_t p, n->parents())
-            p->clearOutputs(n);
+            if(p) p->clearOutputs(n); else error() << "bad parent of node" << n;
         BOOST_FOREACH(node_ptr_t p, n->children())
-            p->clearInputs(n);
+            if(p) p->clearInputs(n); else error() << "bad child of node" << n;
         n->clearOutputs();
         n->clearInputs();
         

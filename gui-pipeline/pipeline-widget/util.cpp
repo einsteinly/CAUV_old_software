@@ -57,6 +57,46 @@ void glCircleOutline(double const& radius, unsigned segments){
     glArc(radius, 0, 360, segments);
 }
 
+void glVertices(std::vector<Point> const& points){
+    std::vector<Point>::const_iterator i;
+    for(i = points.begin(); i != points.end(); i++)
+        glVertex(*i);
+}
+
+static std::vector<Point> linearInterp(Point const& a, Point const& b, int segments){
+    float w = 1.0f;
+    const float w_inc = 1.0f/segments;
+    std::vector<Point> r;
+    for(int i = 0; i <= segments; i++, w-=w_inc)
+        r.push_back(a * w + b * (1.0f - w));
+    return r;
+}
+
+static std::vector<Point> linearInterp(std::vector<Point> const& a, std::vector<Point> const& b){
+    std::vector<Point> r;
+    std::vector<Point>::const_iterator i, j;
+    float w = 1.0f;
+    const float w_inc = 1.0f/(a.size()-1);
+    for(i=a.begin(), j=b.begin(); i!=a.end() && j!=b.end(); i++, j++, w-=w_inc)
+        r.push_back(*i * w + *j * (1.0f-w));
+    return r;
+}
+
+void glBezier(Point const& a, Point const& b, Point const& c, Point const& d, int segments){
+    std::vector<Point> ab = linearInterp(a, b, segments);
+    std::vector<Point> bc = linearInterp(b, c, segments);
+    std::vector<Point> cd = linearInterp(c, d, segments);
+    std::vector<Point> abbc = linearInterp(ab, bc);
+    std::vector<Point> bccd = linearInterp(bc, cd);
+    glVertices(linearInterp(abbc, bccd));
+}
+
+void glBezier(Point const& a, Point const& b, Point const& c, int segments){
+    std::vector<Point> ab = linearInterp(a, b, segments);
+    std::vector<Point> bc = linearInterp(b, c, segments);
+    glVertices(linearInterp(ab, bc));
+}
+
 void glColor(Colour const& c){
     glColor4fv(c.rgba);
 }

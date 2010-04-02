@@ -124,6 +124,8 @@ void glArc(double const& radius, double const& start, double const& end, unsigne
 void glSegment(double const& radius, double const& start, double const& end, unsigned segments);
 void glCircle(double const& radius, unsigned segments = 24);
 void glCircleOutline(double const& radius, unsigned segments = 24);
+void glBezier(Point const& a, Point const& b, Point const& c, Point const& d, int segments=24);
+void glBezier(Point const& a, Point const& b, Point const& c, int segments=24);
 void glColor(Colour const& c);
 
 #define glCheckError() glPrintErr(glGetError())

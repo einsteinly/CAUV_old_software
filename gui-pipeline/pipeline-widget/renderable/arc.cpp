@@ -13,6 +13,8 @@ Arc::Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst)
     : Renderable(c), m_src(src), m_dst(dst), m_hanging(false){
 }
 
+// TODO: all the dynamic casting is a bit iffy
+
 void Arc::draw(bool picking){
     if(picking)
         return;
@@ -36,16 +38,31 @@ void Arc::draw(bool picking){
 
     glColor(Colour(1.0, 0.5));
     glLineWidth(1);
-    glBegin(GL_LINES);
-    glVertex(src->topLevelPos());
-    glVertex(dst->topLevelPos());
+    glBegin(GL_LINE_STRIP);
+    
+    bool src_out = !!boost::dynamic_pointer_cast<NodeOutputBlob>(src);
+    bool dst_in =  !!boost::dynamic_pointer_cast<NodeInputBlob>(dst);
+    bool src_in =  !!boost::dynamic_pointer_cast<NodeInputBlob>(src);
+    bool dst_out = !!boost::dynamic_pointer_cast<NodeOutputBlob>(dst);
+    
+    Point sp = src->topLevelPos();
+    Point dp = dst->topLevelPos();
+    Point delta(fabs(sp.x-dp.x)/5 + 20, 0);
+    
+    if(src_out && dst_in)      glBezier(sp, sp + delta, dp - delta, dp);
+    else if(src_in && dst_out) glBezier(sp, sp - delta, dp + delta, dp);
+    else if(src_in)            glBezier(sp, sp - delta, dp);
+    else if(src_out)           glBezier(sp, sp + delta, dp);
+    else if(dst_in)            glBezier(dp, dp - delta, sp);
+    else if(dst_out)           glBezier(dp, dp + delta, sp);
+    
     glEnd();
 
-    glTranslatef(src->topLevelPos());
+    glTranslatef(sp);
     glCircle(4.0);
     glCircleOutline(3.0);
 
-    glTranslatef(dst->topLevelPos() - src->topLevelPos());
+    glTranslatef(dp - sp);
     glCircle(4.0);
     glCircleOutline(3.0);
 }
