@@ -28,7 +28,7 @@ class PipelineWidget: public QGLWidget,
         typedef std::set<arc_ptr_t> arc_set_t;
         typedef std::map<node_id, node_ptr_t> node_map_t;
         typedef boost::recursive_mutex mutex_t;
-        typedef boost::lock_guard<boost::recursive_mutex> lock_t;
+        typedef boost::unique_lock<boost::recursive_mutex> lock_t;
 
         // friends:
         friend class MouseEvent;
@@ -127,6 +127,12 @@ class PipelineWidget: public QGLWidget,
          * is in progress, similarly for qt events:
          */
         mutable mutex_t m_lock;
+        
+        /* only allow one redraw to be queued at any time --- prevent queueing
+         * of miiilllions of re-draws during a whole-graph update
+         */
+        mutable mutex_t m_redraw_posted_lock;
+        bool m_redraw_posted;
 };
 
 } // namespace pw

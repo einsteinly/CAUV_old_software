@@ -506,7 +506,7 @@ void Node::refreshLayout(){
     m_closebutton->m_pos.x = -m_closebutton->bbox().min.x;
     m_closebutton->m_pos.y = -m_closebutton->bbox().min.y;
     m_back = m_closebutton->bbox() + m_closebutton->m_pos;
-    debug() << "closebutton layout:" << m_closebutton->m_pos << m_closebutton->bbox();
+    debug(-1) << "closebutton layout:" << m_closebutton->m_pos << m_closebutton->bbox();
 
     m_title->m_pos.y = y_pos - roundA(m_title->bbox().max.y);
     m_title->m_pos.x = -m_title->bbox().min.x;

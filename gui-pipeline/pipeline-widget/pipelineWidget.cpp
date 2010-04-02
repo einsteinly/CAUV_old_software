@@ -196,7 +196,7 @@ PipelineWidget::PipelineWidget(QWidget *parent)
       m_last_mouse_pos(),
       m_cauv_node(),
       m_cauv_node_thread(boost::thread(spawnPGCN, this)),
-      m_lock(){
+      m_lock(), m_redraw_posted_lock(), m_redraw_posted(false){
     // TODO: more appropriate QGLFormat?
     
     // QueuedConnection should ensure updateGL is called in the main thread
@@ -260,7 +260,7 @@ void PipelineWidget::add(renderable_ptr_t r){
     lock_t l(m_lock);
     // TODO: sensible layout hint
     static Point add_position_delta = Point();
-    if(add_position_delta.sxx() > 8000)
+    if(add_position_delta.sxx() > 64000)
         add_position_delta = Point();
     else
         add_position_delta += Point(20, -10);
@@ -417,9 +417,15 @@ Point PipelineWidget::referUp(Point const& p) const{
 }
 
 void PipelineWidget::postRedraw(){
-    // no need to lock m_lock, that's done in the slot
-    debug() << "PipelineWidget::postRedraw";
-    emit redrawPosted();
+    lock_t l2(m_redraw_posted_lock);
+    if(!m_redraw_posted){
+        m_redraw_posted = true;
+        // no need to lock m_lock, that's done in the slot
+        debug(-2) << "PipelineWidget::postRedraw emitting re-draw signal";
+        emit redrawPosted();
+    }else{
+        debug(-2) << "PipelineWidget::postRedraw NOT emitting re-draw signal";
+    }
 }
 
 void PipelineWidget::postMenu(menu_ptr_t m, Point const& p, bool r) {
@@ -448,8 +454,9 @@ void PipelineWidget::initializeGL(){
 }
 
 void PipelineWidget::paintGL(){
-    lock_t l(m_lock);
-    debug() << "PipelineWidget::paintGL";
+    lock_t l1(m_lock);
+
+    debug(-2) << "PipelineWidget::paintGL";
     updateProjection();
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -490,6 +497,10 @@ void PipelineWidget::paintGL(){
         glPopMatrix();
     }    
     glPrintErr();
+    
+    l1.unlock();
+    lock_t l2(m_redraw_posted_lock);
+    m_redraw_posted = false;
 }
 
 void PipelineWidget::resizeGL(int width, int height){
