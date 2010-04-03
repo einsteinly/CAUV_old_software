@@ -401,23 +401,25 @@ class ImgPipeTestNode : public CauvNode{
     
             if(m_tests_to_run & file_io_test){
                 setupFileIOTests();
-                boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
             }
 
             if(m_tests_to_run & fileinput_test){
                 setupFileInputToFile();
-                boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
             }
             
             if(m_tests_to_run & camera_test){
                 setupCameraToDisplay();
-                boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
             }
             
             if(m_tests_to_run & hough_test){
                 setupHoughTest();
-                boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
             }
+
+            raise(SIGTERM);
         }
     private:
         boost::shared_ptr<NodeAddedObserver> m_obs;

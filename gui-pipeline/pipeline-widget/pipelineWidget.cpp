@@ -38,37 +38,37 @@ class PipelineGuiMsgObs: public MessageObserver{
         }
 
         virtual void onNodeAddedMessage(NodeAddedMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(m->nodeType() != NodeType::Invalid)
                 m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
         }
         
         virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->remove(m_widget->node(m->nodeId()));
         }
 
         virtual void onNodeParametersMessage(NodeParametersMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             boost::shared_ptr<Node> np = m_widget->node(m->nodeId());
             if(np)
                 np->setParams(m);
         }
 
         virtual void onArcAddedMessage(ArcAddedMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->addArc(m->from().node, m->from().output,
                              m->to().node, m->to().input);
         }
 
         virtual void onArcRemovedMessage(ArcRemovedMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->removeArc(m->from().node, m->from().output,
                                 m->to().node, m->to().input);
         }
 
         virtual void onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
 
             typedef std::map<node_id, NodeType::e> node_type_map_t;
             typedef std::map<node_id, std::map<std::string, NodeOutput> > node_input_map_t;
@@ -140,19 +140,19 @@ class PipelineGuiMsgObs: public MessageObserver{
         }
 
         virtual void onStatusMessage(StatusMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
                 np->status(m->status());
         }
         
         virtual void onInputStatusMessage(InputStatusMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
                 np->inputStatus(m->inputId(), m->status());
         }
         
         virtual void onOutpuStatusMessage(OutputStatusMessage_ptr m){
-            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
                 np->outputStatus(m->outputId(), m->status());
         }

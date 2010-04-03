@@ -55,7 +55,7 @@ class Node{
 
     public:
         Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
-        virtual ~Node(){ }
+        virtual ~Node();
 
         NodeType::e const& type() const;
         node_id const& id() const;
@@ -127,7 +127,7 @@ class Node{
             // if all inputs are valid (but not necessarily still new), add
             // this node to the scheduler queue by pretending all input is new
             // and that output is needed
-            if(_allInputsValid()){
+            if(validInputAll()){
                 setNewInput();
                 if(m_outputs.size())
                 // TODO: FIXME: track parameters changed properly - ie,
@@ -206,6 +206,10 @@ class Node{
         void setNewInput(); 
         void clearNewInput();
         bool newInputAll() const;
+
+        void setValidInput(input_id const&);
+        void clearInputValid(input_id const&);
+        bool validInputAll() const;
         
         /* This is called by the children of this node in order to request new
          * output. It may be called at the start or end of the child's exec()
@@ -223,7 +227,6 @@ class Node{
         bool execQueued() const;
 
     private:
-        bool _allInputsValid() const throw(); 
         void _demandNewParentInput() throw();
         void _statusMessage(boost::shared_ptr<Message const>);
         static node_id _newID() throw();
@@ -290,9 +293,8 @@ template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, Node const& n){
     os << "{Node " << &n
-       << " links in=" << n.inputLinks()
-       << " links out=" << n.outputLinks()
-       << " params=" << n.parameters()
+       << " type=" << n.type()
+       << " id=" << n.id()
        << "}";
     return os;
 }

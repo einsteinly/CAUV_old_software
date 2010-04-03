@@ -444,6 +444,7 @@ void Node::status(int s){
         m_bg_col &= Queue_Not_Permitted_Hint;
     if(s & NodeStatus::ExecQueued)
         m_bg_col &= Queued_Hint;
+    m_context->postRedraw();
 }
 
 void Node::inputStatus(std::string const& input_id, int s){

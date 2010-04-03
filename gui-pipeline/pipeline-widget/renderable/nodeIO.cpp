@@ -97,6 +97,7 @@ void NodeIOBlob::status(int s){
     if(s & NodeIOStatus::New) m_colour &= New_Hint;
     if(!(s & NodeIOStatus::Valid)) m_colour &= Invalid_Hint;
     if(s & NodeIOStatus::Demanded) m_colour &= Demanded_Hint;
+    m_context->postRedraw(); 
 }
 
 node_id NodeIOBlob::nodeId() const{
