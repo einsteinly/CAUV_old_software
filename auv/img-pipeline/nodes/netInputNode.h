@@ -40,7 +40,10 @@ class NetInputNode: public InputNode{
             r["image_out"] = boost::shared_ptr<Image>(
                 new Image(latestImageMsg()->image())
             );
-
+            
+            // setAllowQueue() is called by InputNode when a new latestImageMsg
+            // is available
+            clearAllowQueue();
             return r;
         }
     

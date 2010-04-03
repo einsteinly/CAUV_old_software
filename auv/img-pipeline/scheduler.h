@@ -10,6 +10,7 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 
+#include <common/debug.h>
 #include <common/blocking_queue.h>
 #include "pipelineTypes.h"
 
@@ -81,13 +82,17 @@ class Scheduler
          */
         void addJob(Node* node, SchedulerPriority p) const throw(scheduler_error)
         {
+            // we rely on multiple-reader thread-safety of std::map here,
+            // which is only true if we aren't creating new key-value pairs
+            // using operator[] (which we aren't, and doing so would return a
+            // NULL queue pointer anyway)
             if(!node)
                 throw(scheduler_error("NULL job added to scheduler"));
             const priority_queue_map_t::const_iterator i = m_queues.find(p);
             if(i != m_queues.end())
                 i->second->push(node);
             else
-                std::cerr << __func__ << " Error: no such priority: " << p << std::endl;
+                error() << __func__ << " Error: no such priority: " << p;
         }
         
         /**

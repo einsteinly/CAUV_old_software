@@ -13,11 +13,6 @@ class AsynchronousNode: public InputNode{
         virtual bool checkSource(Image::Source const&, CameraID::e const&) throw(){
             return false;
         }
-
-    protected:
-        virtual bool allowQueueExec() throw(){
-            return true;
-        }
 };
 
 

@@ -9,13 +9,18 @@
 
 using namespace pw;
 
+const static Colour Normal_Colour(0.2, 0.4, 0.6, 0.5);
+const static Colour Outline_Colour_Hint(0, 0.5);
+const static Colour Mouseover_Colour_Hint(1, 0.5);
+const static Colour New_Hint(0, 1, 0, 1);
+const static Colour Demanded_Hint(1, 1, 0, 1);
+const static Colour Invalid_Hint(0, 0, 0, 0.5);
+
 NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name)
     : Renderable(node), m_node(node), m_pw(pw),
       m_text(boost::make_shared<Text>(node, name)),
       m_radius(6), m_radius_squared(m_radius*m_radius),
-      m_colour(Colour(0.2, 0.4, 0.6, 0.5)),
-      m_colour_hl(Colour(0.6, 0.7, 0.8, 0.5)),
-      m_outline_colour(Colour(0.1, 0.2, 0.3, 0.5)),
+      m_colour(Normal_Colour),
       m_mouseover(false){
     // put middle at 0 rather than baseline
     m_text->m_pos.y = -(m_text->bbox().min.y + m_text->bbox().h()/2);
@@ -23,12 +28,12 @@ NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name)
 
 void NodeIOBlob::draw(bool picking){
     if(m_mouseover)
-        glColor(m_colour_hl);
+        glColor(m_colour & Mouseover_Colour_Hint);
     else
         glColor(m_colour);
     glCircle(m_radius);
 
-    glColor(m_outline_colour);
+    glColor(m_colour & Outline_Colour_Hint);
     glLineWidth(1);
     glCircleOutline(m_radius);
 
@@ -85,6 +90,13 @@ bool NodeIOBlob::contains(Point const& x) const{
     if(x.sxx() < m_radius_squared)
         return true;
     return false;
+}
+
+void NodeIOBlob::status(int s){
+    m_colour = Normal_Colour;
+    if(s & NodeIOStatus::New) m_colour &= New_Hint;
+    if(!(s & NodeIOStatus::Valid)) m_colour &= Invalid_Hint;
+    if(s & NodeIOStatus::Demanded) m_colour &= Demanded_Hint;
 }
 
 node_id NodeIOBlob::nodeId() const{

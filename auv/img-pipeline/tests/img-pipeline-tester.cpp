@@ -67,7 +67,7 @@ class ImgPipeTestNode : public CauvNode{
             boost::shared_ptr<AddNodeMessage> an;
             boost::shared_ptr<SetNodeParameterMessage> sp;
             boost::shared_ptr<ClearPipelineMessage> cp;
-            NodeParamValue pv = {0, 0, 0, ""};
+            NodeParamValue pv = {0,0,0,"",0};
 
             sp = boost::make_shared<SetNodeParameterMessage>();
             
@@ -130,7 +130,7 @@ class ImgPipeTestNode : public CauvNode{
             int sent = 0;
             boost::shared_ptr<AddNodeMessage> an;
             boost::shared_ptr<SetNodeParameterMessage> sp;
-            NodeParamValue pv = {0, 0, 0, ""};
+            NodeParamValue pv = {0,0,0,"",0};
 
             sp = boost::make_shared<SetNodeParameterMessage>();
             
@@ -219,7 +219,7 @@ class ImgPipeTestNode : public CauvNode{
             int sent = 0;
             boost::shared_ptr<AddNodeMessage> an;
             boost::shared_ptr<SetNodeParameterMessage> sp;
-            NodeParamValue pv = {0, 0, 0, ""};
+            NodeParamValue pv = {0,0,0,"",0};
 
             sp = boost::make_shared<SetNodeParameterMessage>();
 
@@ -298,7 +298,7 @@ class ImgPipeTestNode : public CauvNode{
             int sent = 0;
             boost::shared_ptr<AddNodeMessage> an;
             boost::shared_ptr<SetNodeParameterMessage> sp;
-            NodeParamValue pv = {0, 0, 0, ""};
+            NodeParamValue pv = {0,0,0,"",0};
 
             sp = boost::make_shared<SetNodeParameterMessage>();
 

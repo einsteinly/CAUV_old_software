@@ -139,6 +139,24 @@ class PipelineGuiMsgObs: public MessageObserver{
             }
         }
 
+        virtual void onStatusMessage(StatusMessage_ptr m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
+                np->status(m->status());
+        }
+        
+        virtual void onInputStatusMessage(InputStatusMessage_ptr m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
+                np->inputStatus(m->inputId(), m->status());
+        }
+        
+        virtual void onOutpuStatusMessage(OutputStatusMessage_ptr m){
+            debug() << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
+                np->outputStatus(m->outputId(), m->status());
+        }
+
     private:
         PipelineWidget *m_widget;
 };
@@ -156,7 +174,7 @@ class PipelineGuiCauvNode: public CauvNode{
             mailboxMonitor()->addObserver(
                 boost::make_shared<PipelineGuiMsgObs>(m_widget)
             );
-            #if 0
+            #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
             mailboxMonitor()->addObserver(
                 boost::make_shared<DebugMessageObserver>()
             );

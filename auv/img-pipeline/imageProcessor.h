@@ -76,7 +76,6 @@ class ImageProcessor: public MessageObserver
         void _addNode(node_ptr_t const& p, node_id const& id) throw();
         void _addNode(node_ptr_t const& p) throw();
         void _removeNode(node_id const& id) throw(id_error);
-        node_id _newID(node_ptr_t) const throw();
         
         mutable mutex_t m_nodes_lock;
         std::map<node_id, node_ptr_t> m_nodes;

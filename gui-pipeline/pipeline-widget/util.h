@@ -3,6 +3,36 @@
 
 #include <cmath>
 
+
+// useful utility functions:
+template<typename T>
+inline static T roundZ(T const& v){
+    if(v >= 0) return std::floor(v);
+    else return std::ceil(v);
+}
+
+template<typename T>
+inline static T roundA(T const& v){
+    if(v >= 0) return std::ceil(v);
+    else return std::floor(v);
+}
+
+template<typename T>
+inline static T min(T const& a, T const& b){
+    return a < b? a : b;
+}
+
+template<typename T>
+inline static T max(T const& a, T const& b){
+    return a > b? a : b;
+}
+
+template<typename T1, typename T2, typename T3>
+inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
+    return (a < low)? low : ((a < high)? a : high);
+}
+
+// useful structures:
 template<typename T>
 class V2D{
     public:
@@ -75,48 +105,41 @@ class _BB{
 };
 typedef _BB<double> BBox;
 
-class Colour{
+template<typename T>
+struct ColourValueTraits{static const T min; static const T max; };
+
+template<typename T, typename traits=ColourValueTraits<T> >
+class _Colour{
     public:
-        Colour(float const& v, float const& a = 1.0f){
+        _Colour(T const& v, T const& a = traits::max){
             rgba[0] = rgba[1] = rgba[2] = v; rgba[3] = a;
         }
-        Colour(float const& r, float const& g, float const& b, float const& a = 1.0f){
+        _Colour(T const& r, T const& g, T const& b, T const& a = traits::max){
             rgba[0] = r; rgba[1] = g; rgba[2] = b; rgba[3] = a;
         }
 
-        float rgba[4];
+        _Colour<T, traits>& operator&=(_Colour<T, traits> const& other){
+            // TODO: improve this
+            for(int i = 0; i < 3; i++)
+                rgba[i] = clamp(
+                    traits::min,
+                    (rgba[i] * rgba[3] + other.rgba[i] * other.rgba[3]),
+                    traits::max
+                );
+            rgba[3] = (other.rgba[3] + rgba[3]) / 2;
+            return *this;
+        }
+        friend _Colour<T, traits> operator&(_Colour<T, traits> const& l,
+                                            _Colour<T, traits> const& r){
+            return _Colour<T, traits>(l) &= r;
+        }
+
+        T rgba[4];
 };
+typedef _Colour<float> Colour;
 
 
-// Usful overloaded & utility functions:
-
-template<typename T>
-inline static T roundZ(T const& v){
-    if(v >= 0) return std::floor(v);
-    else return std::ceil(v);
-}
-
-template<typename T>
-inline static T roundA(T const& v){
-    if(v >= 0) return std::ceil(v);
-    else return std::floor(v);
-}
-
-template<typename T>
-inline static T min(T const& a, T const& b){
-    return a < b? a : b;
-}
-
-template<typename T>
-inline static T max(T const& a, T const& b){
-    return a > b? a : b;
-}
-
-template<typename T1, typename T2, typename T3>
-inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
-    return (a < low)? low : ((a < high)? a : high);
-}
-
+// useful overloads etc
 void glTranslatef(Point const& p, double const& z = 0.0);
 void glVertex(Point const& p);
 void glBox(BBox const& b);

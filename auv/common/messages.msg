@@ -40,6 +40,7 @@ struct NodeParamValue{
     intValue : int32;
     floatValue : float;
     stringValue : string;
+    boolValue : int32;
 }
 
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
@@ -57,10 +58,21 @@ enum NodeType : int8 {
     Canny = 9,
     ConvertColour = 10
 }
+enum NodeStatus : int8 {
+    AllowQueue = 1,
+    ExecQueued = 2,
+    Executing = 4
+}
+enum NodeIOStatus : int8 {
+    New = 1,
+    Valid = 2,
+    Demanded = 4
+}
 enum ParamType : int8 {
     Int32 = 0,
     Float = 1,
-    String = 2
+    String = 2,
+    Bool = 3
 }
 
 group control
@@ -162,6 +174,26 @@ group pl_gui
     {
         from : NodeOutput;
         to : NodeInput;
+    }
+
+    message Status : 21
+    {
+        nodeId : int32;
+        status : int32;
+    }
+
+    message InputStatus : 22
+    {
+        nodeId : int32;
+        inputId : string;
+        status : int32;
+    }
+    
+    message OutputStatus : 23
+    {
+        nodeId : int32;
+        outputId : string;
+        status : int32;
     }
 }
 

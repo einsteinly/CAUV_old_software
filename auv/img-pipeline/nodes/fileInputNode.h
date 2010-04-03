@@ -16,8 +16,7 @@ class FileInputNode: public AsynchronousNode{
 
     public:
         FileInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_file_is_new(true),
-              m_file_is_new_lock(){
+            : AsynchronousNode(sched, pl, t){
             // no inputs
             // registerInputID()
             
@@ -28,19 +27,16 @@ class FileInputNode: public AsynchronousNode{
             registerParamID<std::string>("filename", "default.jpg");
         } 
 
-        template<typename T>
-        void paramChanged(param_id const& p, T const& new_value){
-            if(p == param_id("filename")){
-                lock_t l(m_file_is_new_lock);
-                m_file_is_new = true;
-            }else{
+        virtual void paramChanged(param_id const& p){
+            debug() << "FileInputNode::paramChanged";
+            if(p == param_id("filename"))
+                setAllowQueue();
+            else
                 warning() << "unknown parameter" << p << "set";
-            }
         }
 
     protected:
         out_image_map_t doWork(in_image_map_t&){
-            lock_t l(m_file_is_new_lock);
             out_image_map_t r;
             
             debug() << "fileInputNode::doWork";
@@ -50,23 +46,14 @@ class FileInputNode: public AsynchronousNode{
 
             if(img.size().width > 0 && img.size().height > 0){
                 r["image_out"] = image_ptr_t(new Image(img, Image::src_file)); 
-                m_file_is_new = false;
                 debug() << "fileInputNode::doWork result:" << fname << "->" << *r["image_out"];
             }else{
-                debug() << "fileInputNode::doWork result:" << fname << "->" << "(no image)";
+                warning() << "fileInputNode::doWork result:" << fname << "->" << "(no image)";
             }
+            clearAllowQueue();            
 
             return r;
         }
-        
-        virtual bool allowQueueExec() throw(){
-            lock_t l(m_file_is_new_lock); 
-            return m_file_is_new;
-        }
-
-    private:
-        boost::recursive_mutex m_file_is_new_lock;
-        bool m_file_is_new;
     
     // Register this node type
     DECLARE_NFR;

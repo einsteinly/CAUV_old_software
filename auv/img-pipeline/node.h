@@ -58,6 +58,7 @@ class Node{
         virtual ~Node(){ }
 
         NodeType::e const& type() const;
+        node_id const& id() const;
         
         /* overload for the common case where we're connecting a node with one
          * output to a node with one input
@@ -91,20 +92,6 @@ class Node{
         
         void exec();
         
-        /* Keep a record of which inputs are new (have changed since they were
-         * last used by this node)
-         * Check to see if this node should add itself to the scheduler queue
-         */
-        void newInput(input_id const& a);
-    
-        /* mark all inputs as new
-         */
-        void newInput();
-        
-        /* This is called by the children of this node in order to request new
-         * output. It may be called at the start or end of the child's exec()
-         */
-        void demandNewOutput(/*output_id ?*/) throw();
         
         /* Get the actual image data associated with an output
          */
@@ -136,18 +123,23 @@ class Node{
             }
             // provide notification that parameters have changed: principally
             // for asynchronous nodes
-            this->paramChanged<T>(p);
+            this->paramChanged(p);
             // if all inputs are valid (but not necessarily still new), add
             // this node to the scheduler queue by pretending all input is new
-            if(_allInputsValid())
-                newInput();
+            // and that output is needed
+            if(_allInputsValid()){
+                setNewInput();
+                if(m_outputs.size())
+                // TODO: FIXME: track parameters changed properly - ie,
+                // separately to inputs and outputs so this isn't required
+                setNewOutputDemanded("dummy");
+            }
         }
         
         /* Derived types overload this for notification of changed parameters:
          * this notification is only useful for asynchronous nodes.
          */
-        template<typename T>
-        void paramChanged(param_id const&){ }
+        virtual void paramChanged(param_id const&){ }
         
         /* return a single parameter value
          */
@@ -165,12 +157,12 @@ class Node{
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */
-        virtual bool isInputNode() throw() { return false; }
+        virtual bool isInputNode() const throw() { return false; }
         
        /* output nodes ignore m_output_demanded: they always execute whenever
         * there is new input.
         */
-        virtual bool isOutputNode() throw() { return false; }
+        virtual bool isOutputNode() const throw() { return false; }
 
     protected:
         /* Derived classes override this to do whatever image processing it is
@@ -201,23 +193,43 @@ class Node{
         void registerOutputID(output_id const& o);
         void registerInputID(input_id const& i);
         
-        /* allow derived types to stop nodes from being queued for execution:
-         * use with care, excessive use could stop the pipeline.
-         */
-        virtual bool allowQueueExec() throw(){
-            return true;
-        }
-
         /* Check to see if all inputs are new and output is demanded; if so, 
          * add this node to the scheduler queue
          */
         void checkAddSched() throw();
 
+        /* Keep a record of which inputs are new (have changed since they were
+         * last used by this node)
+         * Check to see if this node should add itself to the scheduler queue
+         */
+        void setNewInput(input_id const&);
+        void setNewInput(); 
+        void clearNewInput();
+        bool newInputAll() const;
+        
+        /* This is called by the children of this node in order to request new
+         * output. It may be called at the start or end of the child's exec()
+         */
+        void setNewOutputDemanded(output_id const&);
+        void clearNewOutputDemanded();
+        bool newOutputDemanded() const;
+
+        void setAllowQueue();
+        void clearAllowQueue();
+        bool allowQueue() const;
+
+        void setExecQueued();
+        void clearExecQueued();
+        bool execQueued() const;
+
     private:
         bool _allInputsValid() const throw(); 
         void _demandNewParentInput() throw();
+        void _statusMessage(boost::shared_ptr<Message const>);
+        static node_id _newID() throw();
         
         const NodeType::e m_node_type;
+        const node_id m_id;
 
         /* prevent nodes (esp. output nodes) from executing in more than one
          * thread at once
@@ -243,7 +255,6 @@ class Node{
         
         /* Keep track of which of our inputs have been refreshed since this node
          * was last exec()d
-         * Set by newInput(), checked by checkAddSched(), cleared by exec()
          */
         in_bool_map_t m_new_inputs;
         mutable mutex_t m_new_inputs_lock;
@@ -252,16 +263,20 @@ class Node{
         mutable mutex_t m_valid_inputs_lock;
         
         /* Has output been demanded of this node?
-         * Set by demandNewOutput(), checked by checkAddSched(), cleared by exec()
          */
         bool m_output_demanded;
         mutable mutex_t m_output_demanded_lock;
+
+        /* generic stop: used by derived types
+         */
+        bool m_allow_queue;
+        mutable mutex_t m_allow_queue_lock;
         
         /* The scheduler associated with this node:
-         * This is used by newInput() and demandNewOutput(), each of which may
-         * decide that this node now needs to be executed (this->exec()), so
-         * they add this node to a scheduler queue using:
-         *		_sched->addToQueue(this, _priority);
+         * This is used by checkAddSched(), which may decide that this node now
+         * needs to be executed (this->exec()), so it adds this node to a
+         * scheduler queue using:
+         *		m_sched.addToQueue(this, m_priority);
          */
         Scheduler& m_sched;
         

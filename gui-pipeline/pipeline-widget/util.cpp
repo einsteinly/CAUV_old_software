@@ -2,6 +2,11 @@
 
 #include <QtOpenGL>
 
+template<>
+const float ColourValueTraits<float>::min = 0.0f;
+template<>
+const float ColourValueTraits<float>::max = 1.0f;
+
 void glTranslatef(Point const& p, double const& z){
     glTranslatef(p.x, p.y, z);
 }

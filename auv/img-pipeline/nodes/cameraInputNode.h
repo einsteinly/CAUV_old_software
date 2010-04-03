@@ -51,10 +51,6 @@ class CameraInputNode: public AsynchronousNode{
 
             return r;
         }
-        
-        virtual bool allowQueueExec() throw(){
-            return m_capture.isOpened();
-        }
 
     private:
 
@@ -74,6 +70,7 @@ class CameraInputNode: public AsynchronousNode{
             //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
             m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
             m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
+            setAllowQueue();
             #endif
         }
         

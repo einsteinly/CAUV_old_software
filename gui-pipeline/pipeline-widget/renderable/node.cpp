@@ -172,12 +172,19 @@ class CloseButton: public Renderable{
 
 using namespace pw;
 
+const static Colour Mouseover_Colour_Hint(1, 1, 1, 1);
+const static Colour Normal_BG_Colour(0.8, 0.8, 0.8, 0.8);
+const static Colour Queued_Hint(1, 1, 0, 0.9);
+const static Colour Executing_Hint(0, 1, 0, 0.9);
+const static Colour Queue_Not_Permitted_Hint(1, 0, 0, 0.9);
+
 Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
       m_node_type(to_string(m->nodeType())),
       m_title(boost::make_shared<Text>(c, m_node_type)),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
-      m_suppress_draggable(false){
+      m_suppress_draggable(false),
+      m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
     m_contents.push_back(m_title);
     
@@ -193,7 +200,8 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const&
       m_node_type(to_string(nt)),
       m_title(boost::make_shared<Text>(c, m_node_type)),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),      
-      m_suppress_draggable(false){
+      m_suppress_draggable(false),
+      m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
     m_contents.push_back(m_title);
     refreshLayout();    
@@ -207,7 +215,7 @@ void Node::setType(NodeType::e const& n){
 
 void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
     // remove any old inputs:
-    for(sr_map_iter_t i = m_inputs.begin(); i != m_inputs.end(); i++){
+    for(str_in_map_t::const_iterator i = m_inputs.begin(); i != m_inputs.end(); i++){
         m_contents.remove(i->second);
         m_pw->removeArc(i->second, m_node_id, i->first);
     }
@@ -216,7 +224,7 @@ void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
     std::map<std::string, NodeOutput>::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
         debug() << BashColour::Blue << "Node::" << __func__ << *j;
-        renderable_ptr_t t = boost::make_shared<NodeInputBlob>(
+        in_ptr_t t = boost::make_shared<NodeInputBlob>(
             this, m_pw, j->first
         );
         m_inputs[j->first] = t;
@@ -238,7 +246,7 @@ void Node::setInputLinks(std::map<std::string, NodeOutput> const& inputs){
 
 void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outputs){
     // remove any old outputs:
-    for(sr_map_iter_t i = m_outputs.begin(); i != m_outputs.end(); i++){
+    for(str_out_map_t::const_iterator i = m_outputs.begin(); i != m_outputs.end(); i++){
         m_contents.remove(i->second);    
         m_pw->removeArc(m_node_id, i->first, i->second);
     }
@@ -247,7 +255,7 @@ void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outp
     std::map<std::string, std::vector<NodeInput> >::const_iterator i;    
     for(i = outputs.begin(); i != outputs.end(); i++){
         debug() << BashColour::Blue << "Node::" << __func__ << *i;
-        renderable_ptr_t t = boost::make_shared<NodeOutputBlob>(
+        out_ptr_t t = boost::make_shared<NodeOutputBlob>(
             this, m_pw, i->first
         );
         m_outputs[i->first] = t;
@@ -280,11 +288,15 @@ static boost::shared_ptr<Renderable> makePVPair(
             return boost::make_shared<PVPair<float> >(
                     n, p.first, p.second.floatValue
                 );
-        default:
-            error() << "unknown ParamType";
         case ParamType::String:
             return boost::make_shared<PVPair<std::string> >(
                     n, p.first, p.second.stringValue
+                );
+        default:
+            error() << "unknown ParamType";
+        case ParamType::Bool:
+            return boost::make_shared<PVPair<bool> >(
+                    n, p.first, p.second.boolValue
                 );
     }
 }
@@ -375,9 +387,9 @@ void Node::mouseGoneEvent(){
 
 void Node::draw(bool picking){
     if(m_mouseover)
-        glColor4f(0.1, 0.5, 0.1, 0.8);
+        glColor(m_bg_col & Mouseover_Colour_Hint);
     else
-        glColor4f(0.8, 0.8, 0.8, 0.8);
+        glColor(m_bg_col);
     glBox(m_back);
     
     Container::draw(picking);
@@ -401,7 +413,7 @@ void Node::close(){
 }
 
 renderable_ptr_t Node::outSocket(std::string const& id){
-    str_renderable_map_t::const_iterator i = m_outputs.find(id);
+    str_out_map_t::const_iterator i = m_outputs.find(id);
     if(i != m_outputs.end()){
         return i->second;
     }else{
@@ -411,7 +423,7 @@ renderable_ptr_t Node::outSocket(std::string const& id){
 }
 
 renderable_ptr_t Node::inSocket(std::string const& id){
-    str_renderable_map_t::const_iterator i = m_inputs.find(id);
+    str_in_map_t::const_iterator i = m_inputs.find(id);
     if(i != m_inputs.end()){
         return i->second;
     }else{
@@ -422,6 +434,28 @@ renderable_ptr_t Node::inSocket(std::string const& id){
 
 arc_ptr_t Node::newArc(renderable_wkptr_t src, renderable_wkptr_t dst){
     return m_pw->addArc(src, dst);
+}
+
+void Node::status(int s){
+    m_bg_col = Normal_BG_Colour;
+    if(s & NodeStatus::Executing)
+        m_bg_col &= Executing_Hint;
+    if(!(s & NodeStatus::AllowQueue))
+        m_bg_col &= Queue_Not_Permitted_Hint;
+    if(s & NodeStatus::ExecQueued)
+        m_bg_col &= Queued_Hint;
+}
+
+void Node::inputStatus(std::string const& input_id, int s){
+    str_in_map_t::const_iterator i = m_inputs.find(input_id);
+    if(i->second)
+        i->second->status(s);
+}
+
+void Node::outputStatus(std::string const& output_id, int s){
+    str_out_map_t::const_iterator i = m_outputs.find(output_id);
+    if(i->second)
+        i->second->status(s);
 }
 
 Point Node::referUp(Point const& p) const{
@@ -451,7 +485,7 @@ void Node::paramValueChanged<int>(std::string const& p, int const& v){
     debug() << "Node::paramValueChanged<int>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0, 0, 0, ""};
+    NodeParamValue pv = {0,0,0,"",0};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -466,7 +500,7 @@ void Node::paramValueChanged<float>(std::string const& p, float const& v){
     debug() << "Node::paramValueChanged<float>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0, 0, 0, ""};
+    NodeParamValue pv = {0,0,0,"",0};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -481,12 +515,27 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0, 0, 0, ""};
+    NodeParamValue pv = {0,0,0,"",0};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
     pv.type = ParamType::String;
     pv.stringValue = v;
+    sp->value(pv);
+    m_pw->sendMessage(sp);
+}
+
+template<>
+void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
+    debug() << "Node::paramValueChanged<string>" << p << v;
+    boost::shared_ptr<SetNodeParameterMessage> sp =
+        boost::make_shared<SetNodeParameterMessage>();
+    NodeParamValue pv = {0,0,0,"",0};
+
+    sp->nodeId(m_node_id);
+    sp->paramId(p);
+    pv.type = ParamType::Bool;
+    pv.boolValue = v;
     sp->value(pv);
     m_pw->sendMessage(sp);
 }
@@ -518,7 +567,7 @@ void Node::refreshLayout(){
     m_back.min.x -= border;
     m_back.max.x += border;
 
-    str_renderable_map_t::const_iterator i;
+    str_in_map_t::const_iterator i;
     for(i = m_inputs.begin(); i != m_inputs.end(); i++, y_pos -= (prev_height+lead)){
         renderable_ptr_t r = i->second;
         r->m_pos.y = y_pos - roundA(r->bbox().max.y);
@@ -536,9 +585,10 @@ void Node::refreshLayout(){
         m_back |= (*j)->bbox() + (*j)->m_pos;
     }
     y_pos -= section_lead - lead;
-    
-    for(i = m_outputs.begin(); i != m_outputs.end(); i++, y_pos -= (prev_height+lead)){
-        renderable_ptr_t r = i->second;
+
+    str_out_map_t::const_iterator k;
+    for(k = m_outputs.begin(); k != m_outputs.end(); k++, y_pos -= (prev_height+lead)){
+        renderable_ptr_t r = k->second;
         r->m_pos.y = y_pos - roundA(r->bbox().max.y);
         if(r->bbox().w() - io_overhang > m_back.w())
             r->m_pos.x = m_back.min.x - r->bbox().min.x;

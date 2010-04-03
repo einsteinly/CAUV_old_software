@@ -3,7 +3,7 @@
 
 Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
     : m_priority(priority_slow), m_speed(slow),
-      m_node_type(type),
+      m_node_type(type), m_id(_newID()),
       m_exec_queued(false), m_exec_queued_lock(),
       m_parent_links(), m_parent_links_lock(),
       m_child_links(), m_child_links_lock(),
@@ -12,11 +12,16 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
       m_new_inputs(), m_new_inputs_lock(),
       m_valid_inputs(), m_valid_inputs_lock(),
       m_output_demanded(false), m_output_demanded_lock(),
+      m_allow_queue(true), m_allow_queue_lock(),
       m_sched(sched), m_pl(pl){
 }
 
 NodeType::e const& Node::type() const{
     return m_node_type;
+}
+
+node_id const& Node::id() const{
+    return m_id;
 }
 
 /* overload for the common case where we're connecting a node with one
@@ -35,13 +40,15 @@ void Node::setInput(node_ptr_t n){
         if(i->second.first){
             throw(link_error("old arc must be removed first"));
         }
-        i->second = input_link_t(n, *parent_outputs.begin());
-        // TODO: if (and only if) there is already an image available
-        // from the parent, we should call newInput here:
-        //newInput(m_parent_links.begin()->first); 
-        // else: demand new output from the parent
-        debug() << "node" << *this << "input set, demand new output on" <<  n;
-        n->demandNewOutput();
+        output_id parent_output = *parent_outputs.begin();
+        i->second = input_link_t(n, parent_output);
+        if(n->getOutputImage(parent_output)){
+            debug() << "node" << *this << "input set, output available from" <<  n;
+            setNewInput(m_parent_links.begin()->first);
+        }else{
+            debug() << "node" << *this << "input set, demand new output on" <<  n;
+            n->setNewOutputDemanded(parent_output);
+        }
     }else if(m_parent_links.size() > 1){
         throw link_error("setInput: specific input must be specified");
     }else{
@@ -58,13 +65,15 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
         if(i->second.first){
             throw(link_error("old arc must be removed first"));
         }
-        i->second = input_link_t(n, o_id); 
-        // TODO: if (and only if) there is already an image available
-        // from the parent, we should call newInput here:
-        //newInput(i->first);
-        // else: demand new output from the parent
-        debug() << "node" << *this << "input set, demand new output on" <<  n;
-        n->demandNewOutput();
+        i->second = input_link_t(n, o_id);
+        if(n->getOutputImage(o_id)){
+            debug() << "node" << *this << "input set, output available from" <<  n;
+            setNewInput(m_parent_links.begin()->first);
+        }else{
+            debug() << "node" << *this << "input set, demand new output on" <<  n;
+            n->setNewOutputDemanded(o_id);
+        }
+        n->setNewOutputDemanded(o_id);
     }
 }
 
@@ -264,23 +273,19 @@ void Node::exec(){
     // take copies of image_ptr s from parents before _demandNewParentInput()
     in_image_map_t inputs;
     out_image_map_t outputs;
-
-    m_parent_links_lock.lock();
+    
+    lock_t l(m_parent_links_lock);
     for(in_link_map_t::const_iterator i = m_parent_links.begin(); i != m_parent_links.end(); i++){
         inputs[i->first] = i->second.first->getOutputImage(i->second.second);
         if(!inputs[i->first]){
-            m_parent_links_lock.unlock();
+            warning() << "no output from: " << i->second << "to" << i->first;
             return;
         }
     }
     // Record that we've used all of our inputs
-    m_new_inputs_lock.lock();
-    BOOST_FOREACH(in_bool_map_t::value_type& v, m_new_inputs)
-        v.second = false;
-    m_new_inputs_lock.unlock();
+    clearNewInput();
     
-    m_parent_links_lock.unlock();
-
+    l.unlock();
 
     debug() << "exec: speed" << m_speed
             << "inputs" << inputs.size()
@@ -305,10 +310,8 @@ void Node::exec(){
     m_outputs = outputs;
     m_outputs_lock.unlock();
     
-    
-    m_output_demanded_lock.lock();
-    m_output_demanded = false;
-    m_output_demanded_lock.unlock();
+    if(!this->isOutputNode())
+        clearNewOutputDemanded();
     
     // for each of this node's outputs
     BOOST_FOREACH(out_link_map_t::value_type& v, m_child_links){
@@ -325,73 +328,12 @@ void Node::exec(){
                 // link is a std::pair<node_ptr, input_id>
                 debug() << "prompting new input to child on:" << v.first;
                 // notify the node that it has new input
-                link.first->newInput(link.second);
+                link.first->setNewInput(link.second);
             }
         }
     }
     
-    m_exec_queued_lock.lock();
-    m_exec_queued = false;
-    m_exec_queued_lock.unlock();
-    
-
-    checkAddSched();
-}
-
-/* Keep a record of which inputs are new (have changed since they were
- * last used by this node)
- * Check to see if this node should add itself to the scheduler queue
- */
-void Node::newInput(input_id const& a){
-    lock_t l(m_new_inputs_lock);
-    const std::map<input_id, bool>::iterator i = m_new_inputs.find(a);
-    
-    if(i == m_new_inputs.end()){
-        error() << a << "invalid";
-        error() << "valid inputs:";
-        BOOST_FOREACH(in_bool_map_t::value_type const& v, m_new_inputs)
-            error() << v.second;
-
-        throw(id_error("newInput: Invalid input id: " + to_string(a)));
-    }else{
-        debug() << BashColour::Green << this << "notified of new input: " << a;
-        i->second = true;
-        m_valid_inputs[a] = true;
-    }
-    l.unlock();
-    checkAddSched();
-}
-
-/* mark all inputs as new
- */
-void Node::newInput(){
-    lock_t m(m_new_inputs_lock); 
-    debug() << BashColour::Green << this << "notified all inputs new";        
-    std::map<input_id, bool>::iterator i;
-    for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
-        i->second = true;
-    m.unlock();
-    checkAddSched();
-}
-
-/* This is called by the children of this node in order to request new
- * output. It may be called at the start or end of the child's exec()
- */
-void Node::demandNewOutput(/*output_id ?*/) throw(){
-    lock_t l(m_output_demanded_lock);
-    if(!m_output_demanded){
-        m_output_demanded = true;
-        lock_t m(m_new_inputs_lock);
-        lock_t n(m_parent_links_lock);
-        BOOST_FOREACH(in_bool_map_t::value_type& v, m_new_inputs){
-            if(!v.second && m_parent_links[v.first].first)
-                m_parent_links[v.first].first->demandNewOutput();
-        }
-        l.unlock();
-        m.unlock();
-        n.unlock();
-        checkAddSched();
-    }
+    clearExecQueued();
 }
 
 /* Get the actual image data associated with an output
@@ -409,19 +351,30 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id) const throw(id_err
 
 
 static NodeParamValue toNPV(param_value_t const& v){
-    NodeParamValue r;
+    NodeParamValue r = {0,0,0,"",0};
     try{
         r.intValue = boost::get<int>(v);
         r.type = ParamType::Int32;
+        return r;
     }catch(boost::bad_get&){}
     try{
         r.floatValue = boost::get<float>(v);
         r.type = ParamType::Float;
+        return r;
     }catch(boost::bad_get&){}
     try{
         r.stringValue = boost::get<std::string>(v);
         r.type = ParamType::String;
+        return r;
     }catch(boost::bad_get&){}
+    try{
+        r.boolValue = boost::get<bool>(v);
+        r.type = ParamType::Bool;
+        return r;
+    }catch(boost::bad_get&){}
+    // TODO: throw?
+    error() << "bad parameter value (" << v
+            << "), is the NodeParamValue struct out of sync with param_value_t?";
     return r;
 }
 
@@ -440,10 +393,12 @@ std::map<param_id, NodeParamValue> Node::parameters() const{
  */
 void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
     param_value_t value;
+    using std::string;
     switch((ParamType::e)m->value().type){
-        case ParamType::Int32:  value = m->value().intValue; break;
-        case ParamType::Float:  value = m->value().floatValue; break;
-        case ParamType::String: value = m->value().stringValue; break;
+        case ParamType::Int32:  value = (int)   m->value().intValue;    break;
+        case ParamType::Float:  value = (float) m->value().floatValue;  break;
+        case ParamType::String: value = (string)m->value().stringValue; break;
+        case ParamType::Bool:   value = (bool)  m->value().boolValue;   break;
         default:
             // TODO: throw?
             error() << "Unknown parameter type:" << m->value().type;
@@ -457,6 +412,8 @@ void Node::registerOutputID(output_id const& o){
     
     m_child_links[o] = output_link_list_t();
     m_outputs[o] = image_ptr_t();
+
+    _statusMessage(boost::make_shared<OutputStatusMessage>(m_id, o, 0));    
 }
 
 void Node::registerInputID(input_id const& i){
@@ -467,50 +424,201 @@ void Node::registerInputID(input_id const& i){
     m_new_inputs[i] = false;
     m_valid_inputs[i] = false;
     m_parent_links[i] = input_link_t();
+
+    _statusMessage(boost::make_shared<InputStatusMessage>(m_id, i, 0));
 }
 
 /* Check to see if all inputs are new and output is demanded; if so, 
  * add this node to the scheduler queue
  */
 void Node::checkAddSched() throw(){
-    std::map<input_id, bool>::const_iterator i;
     lock_t li(m_output_demanded_lock);
     lock_t lo(m_new_inputs_lock);
     lock_t lr(m_exec_queued_lock);
+    lock_t la(m_allow_queue_lock);
     
-    if(!allowQueueExec()){
-        debug() << "Cannot enqueue node" << this << ", allowQueueExec failed"; 
+    if(!allowQueue()){
+        debug() << "Cannot enqueue node" << this << ", allowQueue == false"; 
         return;
     }
 
-    if(m_exec_queued){
+    if(execQueued()){
         debug() << "Cannot enqueue node" << this << ", exec queued already"; 
         return;
     }
 
-    if(!isOutputNode() && !m_output_demanded){
+    if(!newOutputDemanded()){
         debug() << "Cannot enqueue node" << this << ", no output demanded"; 
         return;
     }
     
     // ALL inputs must be new
-    for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++){
-        if(!i->second){
-            debug() << "Cannot enqueue node" << this << ", input is old";
-            return;
-        }
+    if(!newInputAll()){
+        debug() << "Cannot enqueue node" << this << ", input is old";
+        return;
     }
-
-    debug() << "Queuing node:" << *this;
-
-    // if all inputs are new, all inputs are valid
     
-    // we rely on multiple-reader thread-safety of std::map here,
-    // which is only true if we aren't creating new key-value pairs
-    // using operator[] (which we aren't, and doing so would return a
-    // NULL queue pointer anyway)
-    m_exec_queued = true;
+    // if all inputs are new, all inputs are valid, no need to check
+    
+    debug() << "Queuing node:" << *this;
+    setExecQueued();
+    
     m_sched.addJob(this, m_priority);
+}
+
+/* Keep a record of which inputs are new (have changed since they were
+ * last used by this node)
+ * Check to see if this node should add itself to the scheduler queue
+ */
+void Node::setNewInput(input_id const& a){
+    lock_t l(m_new_inputs_lock);
+    const std::map<input_id, bool>::iterator i = m_new_inputs.find(a);
+    
+    if(i == m_new_inputs.end()){
+        error() << a << "invalid";
+        error() << "valid inputs:";
+        BOOST_FOREACH(in_bool_map_t::value_type const& v, m_new_inputs)
+        error() << v.second;
+        
+        throw(id_error("newInput: Invalid input id: " + to_string(a)));
+    }else{
+        debug() << BashColour::Green << this << "notified of new input: " << a;
+        i->second = true;
+        m_valid_inputs[a] = true;
+        _statusMessage(boost::make_shared<InputStatusMessage>(
+            m_id, a, NodeIOStatus::New | NodeIOStatus::Valid
+        ));
+    }
+    l.unlock();
+    checkAddSched();
+}
+
+/* mark all inputs as new
+ */
+void Node::setNewInput(){
+    lock_t m(m_new_inputs_lock);
+    debug() << BashColour::Green << this << "notified all inputs new";        
+    std::map<input_id, bool>::iterator i;
+    for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++){
+        i->second = true;
+        m_valid_inputs[i->first] = true;
+        _statusMessage(boost::make_shared<InputStatusMessage>(
+            m_id, i->first, NodeIOStatus::New | NodeIOStatus::Valid
+        ));
+    }
+    m.unlock();
+    checkAddSched();
+}
+
+void Node::clearNewInput(){
+    lock_t m(m_new_inputs_lock);
+    debug() << BashColour::Green << this << "notified all inputs new";        
+    std::map<input_id, bool>::iterator i;
+    for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++){
+        i->second = false;
+        _statusMessage(boost::make_shared<InputStatusMessage>(
+            m_id, i->first, m_valid_inputs[i->first]? NodeIOStatus::Valid : 0
+        ));
+    }
+    m.unlock();
+}
+
+bool Node::newInputAll() const{
+    lock_t m(m_new_inputs_lock);
+    in_bool_map_t::const_iterator i;
+    for(i = m_new_inputs.begin(); i != m_new_inputs.end(); i++)
+        if(!i->second)
+            return false;
+    return true;
+}
+
+/* This is called by the children of this node in order to request new
+ * output. It may be called at the start or end of the child's exec()
+ */
+void Node::setNewOutputDemanded(output_id const& o){
+    lock_t l(m_output_demanded_lock);
+    if(!m_output_demanded){
+        m_output_demanded = true;
+        
+        _statusMessage(boost::make_shared<OutputStatusMessage>(
+            m_id, o, NodeIOStatus::Demanded
+        ));
+        
+        lock_t m(m_new_inputs_lock);
+        lock_t n(m_parent_links_lock);
+        BOOST_FOREACH(in_bool_map_t::value_type& v, m_new_inputs){
+            if(!v.second && m_parent_links[v.first].first)
+                m_parent_links[v.first].first->setNewOutputDemanded(
+                    m_parent_links[v.first].second
+                );
+        }
+        m.unlock();
+        n.unlock();
+    }
+    l.unlock();
+    checkAddSched();
+}
+
+void Node::clearNewOutputDemanded(){
+    lock_t l(m_output_demanded_lock);
+    lock_t m(m_outputs_lock);
+    m_output_demanded = false;
+    out_image_map_t::const_iterator i;
+    for(i = m_outputs.begin(); i != m_outputs.end(); i++)
+        _statusMessage(boost::make_shared<OutputStatusMessage>(m_id, i->first, 0));
+}
+
+bool Node::newOutputDemanded() const{
+    if(this->isOutputNode())
+        return true;
+    lock_t l(m_output_demanded_lock);
+    return m_output_demanded;
+}
+
+void Node::setAllowQueue(){
+    lock_t l(m_allow_queue_lock);
+    m_allow_queue = true;
+    int status = NodeStatus::AllowQueue;
+    if(execQueued()) status |= NodeStatus::ExecQueued;
+    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+    l.unlock();
+    checkAddSched();    
+}
+
+void Node::clearAllowQueue(){
+    lock_t l(m_allow_queue_lock);
+    m_allow_queue = false;
+    int status = 0;
+    if(execQueued()) status |= NodeStatus::ExecQueued;
+    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+}
+
+bool Node::allowQueue() const{
+    lock_t l(m_allow_queue_lock);
+    return m_allow_queue;
+}
+
+void Node::setExecQueued(){
+    lock_t l(m_exec_queued_lock);
+    m_exec_queued = true;
+    int status = NodeStatus::ExecQueued;
+    if(allowQueue()) status |= NodeStatus::AllowQueue;
+    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+}
+
+void Node::clearExecQueued(){
+    lock_t l(m_exec_queued_lock);
+    m_exec_queued = false;
+    int status = 0;
+    if(allowQueue()) status |= NodeStatus::AllowQueue;
+    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+    l.unlock();
+    checkAddSched();
+}
+
+bool Node::execQueued() const{
+    lock_t l(m_exec_queued_lock);
+    return m_exec_queued;
 }
 
 bool Node::_allInputsValid() const throw(){
@@ -526,8 +634,22 @@ void Node::_demandNewParentInput() throw(){
     debug() << "node" << this << "demanding new output from all parents";
     for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
         if(i->second.first)
-            i->second.first->demandNewOutput();
+            i->second.first->setNewOutputDemanded(i->second.second);
     }
 }
 
+void Node::_statusMessage(boost::shared_ptr<Message const> m){
+    #ifndef NO_NODE_IO_STATUS
+    m_pl.sendMessage(m);
+    #endif
+}
+
+node_id Node::_newID() throw(){
+    static node_id id = 1;
+    if(id == ~node_id(0)){
+        error() << "run out of node IDs, starting to recycle";
+        id = 1;
+    }
+    return id++;
+}
 

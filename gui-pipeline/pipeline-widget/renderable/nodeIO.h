@@ -23,7 +23,8 @@ class NodeIOBlob: public Renderable,
         virtual void mouseGoneEvent();
         virtual bool tracksMouse();
         virtual BBox bbox();
-
+        
+        void status(int);
         node_id nodeId() const;
 
     protected:
@@ -36,8 +37,6 @@ class NodeIOBlob: public Renderable,
         double m_radius;
         double m_radius_squared;
         Colour m_colour;
-        Colour m_colour_hl;
-        Colour m_outline_colour;
 
         bool m_mouseover;
 };

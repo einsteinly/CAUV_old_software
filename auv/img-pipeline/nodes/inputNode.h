@@ -11,6 +11,8 @@ class InputNode: public Node{
             : Node(sched, pl, t), ignored(0), processed(0), dropped(0),
               dropped_since(0), m_counters_lock(), m_latest_image_msg(),
               m_processed_latest(true), m_latest_image_msg_lock(){
+            // don't allow the node to be executed until it has input available
+            clearAllowQueue();
         }
         virtual ~InputNode(){
             info() << "~InputNode statistics"
@@ -33,6 +35,7 @@ class InputNode: public Node{
                     dropped_since++;
                 m_processed_latest = false;
                 m_latest_image_msg = m;
+                setAllowQueue();
                 checkAddSched();
             }else{
                 ignored++;
@@ -51,11 +54,6 @@ class InputNode: public Node{
         virtual bool isInputNode() throw() { return true; }
     
     protected:
-        virtual bool allowQueueExec() throw(){
-            lock_t m(m_latest_image_msg_lock);
-            return !!m_latest_image_msg && !m_processed_latest;
-        }
-
         boost::shared_ptr<const ImageMessage> latestImageMsg(){
             lock_t l(m_counters_lock);
             debug() << "Grabbing image";

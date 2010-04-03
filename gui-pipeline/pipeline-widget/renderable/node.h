@@ -26,6 +26,10 @@ class Node: public Draggable,
         typedef std::set<boost::shared_ptr<Renderable> > renderable_set_t;
         typedef renderable_set_t pv_set_t;
         typedef std::map<std::string, renderable_ptr_t> str_renderable_map_t;
+        typedef boost::shared_ptr<NodeInputBlob> in_ptr_t;
+        typedef boost::shared_ptr<NodeOutputBlob> out_ptr_t;
+        typedef std::map<std::string, in_ptr_t> str_in_map_t;
+        typedef std::map<std::string, out_ptr_t> str_out_map_t;
         // iterator typedefs, sorry!
         typedef Node::str_renderable_map_t::const_iterator sr_map_iter_t;
     public:
@@ -55,6 +59,9 @@ class Node: public Draggable,
         renderable_ptr_t outSocket(std::string const& output_id);
         renderable_ptr_t inSocket(std::string const& input_id);
         arc_ptr_t newArc(renderable_wkptr_t src, renderable_wkptr_t dst);
+        void status(int s);
+        void inputStatus(std::string const& input_id, int s);
+        void outputStatus(std::string const& output_id, int s);
         
         // implement Container:
         virtual Point referUp(Point const& p) const;
@@ -85,13 +92,15 @@ class Node: public Draggable,
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;        
         pv_set_t m_params;
-        str_renderable_map_t m_inputs;
-        str_renderable_map_t m_outputs;
+        str_in_map_t m_inputs;
+        str_out_map_t m_outputs;
 
         bool m_suppress_draggable;
 
         renderable_set_t m_hovered;
         renderable_set_t m_pressed;
+
+        Colour m_bg_col;
 };
 
 } // namespace pw

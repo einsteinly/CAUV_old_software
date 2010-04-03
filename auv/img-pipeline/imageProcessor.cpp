@@ -39,7 +39,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
             lookup(a.dst.node)->setInput(a.dst.input, node , a.output);
         }
         
-        new_id = _newID(node);
+        new_id = node->id();
         lock_t l(m_nodes_lock);
         _addNode(node, new_id);
         if(node->isInputNode()){
@@ -210,7 +210,7 @@ void ImageProcessor::_addNode(node_ptr_t const& p, node_id const& id) throw(){
 }
 
 void ImageProcessor::_addNode(node_ptr_t const& p) throw(){
-    _addNode(p, _newID(p));
+    _addNode(p, p->id());
 }
 
 void ImageProcessor::_removeNode(node_id const& id) throw(id_error){
@@ -223,9 +223,4 @@ void ImageProcessor::_removeNode(node_id const& id) throw(id_error){
     }
 }
 
-node_id ImageProcessor::_newID(node_ptr_t) const throw(){
-    // Can probably do better than this...
-    static node_id id = 1;
-    return id++;
-}
 

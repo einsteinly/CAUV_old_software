@@ -27,7 +27,7 @@ class FileOutputNode: public Node{
             registerParamID<int>("png compression", 9); // 0-9
         }
         
-        virtual bool isOutputNode() throw() { return true; }
+        virtual bool isOutputNode() const throw() { return true; }
 
     protected:
         out_image_map_t doWork(in_image_map_t& inputs){
