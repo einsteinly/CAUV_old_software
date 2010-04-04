@@ -311,6 +311,10 @@ void Node::exec(){
 
     debug() << "exec: id=" << m_id << "type=" << m_node_type
             << "speed=" << m_speed << ", " << inputs.size() << "inputs";
+    
+    int status = 0;
+    if(allowQueue()) status |= NodeStatus::AllowQueue;
+    _statusMessage(boost::make_shared<StatusMessage>(m_id, status | NodeStatus::Executing));
     try{
         if(this->m_speed < medium){
             // if this is a fast node: request new image from parents before executing
@@ -324,6 +328,7 @@ void Node::exec(){
     }catch(std::exception& e){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
     }
+    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
 
     m_outputs_lock.lock();
     m_outputs = outputs;

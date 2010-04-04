@@ -26,7 +26,7 @@ void Arc::draw(bool picking){
             return;
         }
     }else if(m_src.expired() || m_dst.expired()){
-        warning() << "hanging arc" << this;
+        //warning() << "hanging arc" << this;
         m_hanging = true;
         return;
     }

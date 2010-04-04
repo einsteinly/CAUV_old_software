@@ -23,7 +23,7 @@ namespace pw{
 
 class Node: public Draggable,
             public Container{
-        typedef std::set<boost::shared_ptr<Renderable> > renderable_set_t;
+        typedef std::set<renderable_ptr_t> renderable_set_t;
         typedef renderable_set_t pv_set_t;
         typedef std::map<std::string, renderable_ptr_t> str_renderable_map_t;
         typedef boost::shared_ptr<NodeInputBlob> in_ptr_t;
@@ -36,14 +36,14 @@ class Node: public Draggable,
         Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m);
         Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt);
         virtual ~Node(){ }
-        
+
         void setType(NodeType::e const&);
         void setInputs(std::map<std::string, NodeOutput> const&);
         void setInputLinks(std::map<std::string, NodeOutput> const&);
         void setOutputs(std::map<std::string, std::vector<NodeInput> > const&);
         void setOutputLinks(std::map<std::string, std::vector<NodeInput> > const&);
         void setParams(std::map<std::string, NodeParamValue> const&);
-        void setParams(boost::shared_ptr<NodeParametersMessage const> m);        
+        void setParams(boost::shared_ptr<NodeParametersMessage const> m);
 
         virtual void draw(bool);
         virtual bool mousePressEvent(MouseEvent const&);
@@ -52,7 +52,7 @@ class Node: public Draggable,
         virtual void mouseGoneEvent();
         virtual bool tracksMouse();
         virtual BBox bbox();
-        
+
         // Node Stuff:
         void close();
         int id() const;
@@ -62,7 +62,7 @@ class Node: public Draggable,
         void status(int s);
         void inputStatus(std::string const& input_id, int s);
         void outputStatus(std::string const& output_id, int s);
-        
+
         // implement Container:
         virtual Point referUp(Point const& p) const;
         virtual void postRedraw();
@@ -70,7 +70,7 @@ class Node: public Draggable,
                               bool pressed=false);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
-        
+
         // specialized for known param types in node.cpp
         template<typename value_T>
         void paramValueChanged(std::string const& param, value_T const& v){
@@ -85,12 +85,12 @@ class Node: public Draggable,
 
         BBox m_bbox;
         BBox m_back;
-        
+
         int m_node_id;
         std::string m_node_type;
-        
+
         text_ptr_t m_title;
-        renderable_ptr_t m_closebutton;        
+        renderable_ptr_t m_closebutton;
         pv_set_t m_params;
         str_in_map_t m_inputs;
         str_out_map_t m_outputs;

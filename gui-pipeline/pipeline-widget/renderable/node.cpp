@@ -27,6 +27,7 @@ class PVPair: public Renderable{
               m_equals(boost::make_shared<Text>(n, "=")),
               m_value(boost::make_shared<Text>(n, to_string(value))){
             updateBbox();
+            m_sort_key = param;
         }
         virtual ~PVPair(){ }
 
@@ -40,7 +41,7 @@ class PVPair: public Renderable{
             glTranslatef(m_equals->m_pos);
             m_equals->draw(picking);
             glPopMatrix();
-            
+
             glPushMatrix();
             glTranslatef(m_value->m_pos);
             m_value->draw(picking);
@@ -104,7 +105,7 @@ class CloseButton: public Renderable{
               m_pressed(false){
         }
         virtual ~CloseButton(){ }
-        
+
         virtual void draw(bool){
             if(m_pressed)
                 glColor(Colour(0, 0.9));
@@ -120,7 +121,7 @@ class CloseButton: public Renderable{
             glVertex2f(m_size/2, m_size/2);
             glEnd();
         }
-        
+
         virtual void mouseMoveEvent(MouseEvent const& event){
             if(bbox().contains(event.pos) && !m_mouseover){
                 m_mouseover = true;
@@ -172,11 +173,11 @@ class CloseButton: public Renderable{
 
 using namespace pw;
 
-const static Colour Mouseover_Colour_Hint(1, 1, 1, 1);
-const static Colour Normal_BG_Colour(0.8, 0.8, 0.8, 0.8);
-const static Colour Queued_Hint(1, 1, 0, 0.9);
-const static Colour Executing_Hint(0, 1, 0, 0.9);
-const static Colour Queue_Not_Permitted_Hint(1, 0, 0, 0.9);
+const static Colour Mouseover_Colour_Hint(1, 1, 1, 0.2);
+const static Colour Normal_BG_Colour(0.7, 0.7, 0.7, 0.8);
+const static Colour Queued_Hint(0.3, 0.3, 0, 0.2);
+const static Colour Executing_Hint(0.0, 0.4, 0.1, 0.2);
+const static Colour Queue_Not_Permitted_Hint(0.4, 0, 0, 0.2);
 
 Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
@@ -187,7 +188,7 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
       m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
     m_contents.push_back(m_title);
-    
+
     setOutputs(m->outputs());
     setOutputLinks(m->outputs());
 
@@ -199,18 +200,18 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const&
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(id),
       m_node_type(to_string(nt)),
       m_title(boost::make_shared<Text>(c, m_node_type)),
-      m_closebutton(boost::make_shared<CloseButton<Node> >(this)),      
+      m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
     m_contents.push_back(m_title);
-    refreshLayout();    
+    refreshLayout();
 }
 
 void Node::setType(NodeType::e const& n){
     m_node_type = to_string(n);
     m_title = boost::make_shared<Text>(m_context, m_node_type);
-    refreshLayout();    
+    refreshLayout();
 }
 
 void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
@@ -241,18 +242,18 @@ void Node::setInputLinks(std::map<std::string, NodeOutput> const& inputs){
         if(j->second.node)
             m_pw->addArc(j->second.node, j->second.output, t);
     }
-    refreshLayout();    
+    refreshLayout();
 }
 
 void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outputs){
     // remove any old outputs:
     for(str_out_map_t::const_iterator i = m_outputs.begin(); i != m_outputs.end(); i++){
-        m_contents.remove(i->second);    
+        m_contents.remove(i->second);
         m_pw->removeArc(m_node_id, i->first, i->second);
     }
     m_outputs.clear();
 
-    std::map<std::string, std::vector<NodeInput> >::const_iterator i;    
+    std::map<std::string, std::vector<NodeInput> >::const_iterator i;
     for(i = outputs.begin(); i != outputs.end(); i++){
         debug() << BashColour::Blue << "Node::" << __func__ << *i;
         out_ptr_t t = boost::make_shared<NodeOutputBlob>(
@@ -261,7 +262,7 @@ void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outp
         m_outputs[i->first] = t;
         m_contents.push_back(t);
     }
-    // NB: layout not refreshed    
+    // NB: layout not refreshed
 }
 
 void Node::setOutputLinks(std::map<std::string, std::vector<NodeInput> > const& outputs){
@@ -274,7 +275,7 @@ void Node::setOutputLinks(std::map<std::string, std::vector<NodeInput> > const& 
             m_pw->addArc(t, k->node, k->input);
         }
     }
-    refreshLayout();    
+    refreshLayout();
 }
 
 static boost::shared_ptr<Renderable> makePVPair(
@@ -312,9 +313,9 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     }
     m_params.clear();
 
-    std::map<std::string, NodeParamValue>::const_iterator i;    
+    std::map<std::string, NodeParamValue>::const_iterator i;
     for(i = params.begin(); i != params.end(); i++){
-        debug() << BashColour::Blue << "Node::" << __func__ << *i;    
+        debug() << BashColour::Blue << "Node::" << __func__ << *i;
         boost::shared_ptr<Renderable> t = makePVPair(this, *i);
         m_params.insert(t);
         m_contents.push_back(t);
@@ -350,7 +351,7 @@ void Node::mouseReleaseEvent(MouseEvent const& e){
     m_suppress_draggable = false;
     renderable_set_t::const_iterator j;
     for(j = m_pressed.begin(); j != m_pressed.end(); j++){
-        MouseEvent referred(e, *j);    
+        MouseEvent referred(e, *j);
         (*j)->mouseReleaseEvent(referred);
     }
     Draggable::mouseReleaseEvent(e);
@@ -391,7 +392,7 @@ void Node::draw(bool picking){
     else
         glColor(m_bg_col);
     glBox(m_back);
-    
+
     Container::draw(picking);
 }
 
@@ -543,7 +544,6 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
 
 } // namespace pw
 
-
 void Node::refreshLayout(){
     int border = 3;
     int lead = 6;
@@ -562,11 +562,10 @@ void Node::refreshLayout(){
     m_title->m_pos.x = -m_title->bbox().min.x;
     prev_height = roundA(m_title->bbox().h());
     y_pos -= (prev_height + section_lead);
-    
+
     m_back |= m_title->bbox() + m_title->m_pos;
     m_back.max.y += border;
     m_back.min.x -= border;
-    m_back.max.x += border;
 
     str_in_map_t::const_iterator i;
     for(i = m_inputs.begin(); i != m_inputs.end(); i++, y_pos -= (prev_height+lead)){
@@ -578,14 +577,23 @@ void Node::refreshLayout(){
     }
     y_pos -= section_lead - lead;
 
-    pv_set_t::const_iterator j;    
-    for(j = m_params.begin(); j != m_params.end(); j++, y_pos -= (prev_height+lead)){
-        (*j)->m_pos.y = y_pos - roundA((*j)->bbox().max.y);
-        (*j)->m_pos.x = param_indent;
-        prev_height = roundA((*j)->bbox().h());
-        m_back |= (*j)->bbox() + (*j)->m_pos;
+    // stop parameter order from jumping around:
+    // TODO: editing here, this is actually rather a tricky structural
+    // problem...
+    std::list<renderable_ptr_t> params;
+    for(pv_set_t::const_iterator j = m_params.begin(); j != m_params.end(); j++)
+        params.push_back(*j);
+    params.sort(lessDereferenced<renderable_ptr_t, renderable_ptr_t>);
+    std::list<renderable_ptr_t>::const_iterator l;
+    for(l = params.begin(); l != params.end(); l++, y_pos -= (prev_height+lead)){
+        (*l)->m_pos.y = y_pos - roundA((*l)->bbox().max.y);
+        (*l)->m_pos.x = param_indent;
+        prev_height = roundA((*l)->bbox().h());
+        m_back |= (*l)->bbox() + (*l)->m_pos;
     }
     y_pos -= section_lead - lead;
+
+    m_back.max.x += border;
 
     str_out_map_t::const_iterator k;
     for(k = m_outputs.begin(); k != m_outputs.end(); k++, y_pos -= (prev_height+lead)){
@@ -599,7 +607,7 @@ void Node::refreshLayout(){
         prev_height = roundA(r->bbox().h());
     }
 
-    m_back.min.y -= lead;
+    m_back.min.y -= border;
 
     m_bbox = m_back;
     if(m_inputs.size())

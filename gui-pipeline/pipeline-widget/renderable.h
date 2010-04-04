@@ -16,6 +16,10 @@ class Renderable{
         Renderable(container_ptr_t c, Point const& at = Point());
         virtual ~Renderable(){ }
 
+        friend bool operator<(Renderable const& l, Renderable const& r){
+            return l.m_sort_key < r.m_sort_key;
+        }
+
         virtual void draw(bool picking) = 0;
 
         /* overload to receive mouse events
@@ -44,8 +48,10 @@ class Renderable{
         Point m_pos;
 
     protected:
+        std::string m_sort_key;
         container_ptr_t m_context;
 };
+
 
 } // namespace pw
 

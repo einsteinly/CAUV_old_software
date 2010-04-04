@@ -18,6 +18,11 @@ inline static T roundA(T const& v){
 }
 
 template<typename T>
+inline static T round(T const& v){
+    return std::floor(v+0.5);
+}
+
+template<typename T>
 inline static T min(T const& a, T const& b){
     return a < b? a : b;
 }
@@ -30,6 +35,11 @@ inline static T max(T const& a, T const& b){
 template<typename T1, typename T2, typename T3>
 inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
     return (a < low)? low : ((a < high)? a : high);
+}
+
+template<typename T1, typename T2>
+bool lessDereferenced(T1 const& l, T2 const& r){
+    return *l < *r;
 }
 
 // useful structures:
@@ -52,7 +62,7 @@ class V2D{
         friend V2D<T> operator-(V2D<T> const& l, T const& r){ return V2D<T>(l) -= r; }
         friend V2D<T> operator*(V2D<T> const& l, T const& r){ return V2D<T>(l) *= r; }
         friend V2D<T> operator/(V2D<T> const& l, T const& r){ return V2D<T>(l) /= r; }
-        
+
         T sxx() const{ return x*x + y*y; }
 
         T x, y;
@@ -66,7 +76,7 @@ class _BB{
         _BB(V2D<T> const& min, V2D<T> const& max) : min(min), max(max){ }
         _BB(T const& xmin, T const& ymin, T const& xmax, T const& ymax)
             : min(xmin, ymin), max(xmax, ymax){ }
-        
+
         _BB<T>& operator|=(_BB<T> const& r){
             if(r.max.x > max.x) max.x = r.max.x;
             if(r.max.y > max.y) max.y = r.max.y;
@@ -74,7 +84,7 @@ class _BB{
             if(r.min.x < min.x) min.x = r.min.x;
             return *this;
         }
-        
+
         _BB<T>& operator&=(_BB<T> const& r){
             if(r.max.x < max.x) max.x = r.max.x;
             if(r.max.y < max.y) max.y = r.max.y;
@@ -100,7 +110,7 @@ class _BB{
         T area() const{ return (max - min).x * (max - min).y; }
         T w() const{ return max.x - min.x; }
         T h() const{ return max.y - min.y; }
-    
+
         V2D<T> min, max;
 };
 typedef _BB<double> BBox;
@@ -108,31 +118,88 @@ typedef _BB<double> BBox;
 template<typename T>
 struct ColourValueTraits{static const T min; static const T max; };
 
-template<typename T, typename traits=ColourValueTraits<T> >
+template<typename T, typename tT=ColourValueTraits<T> >
 class _Colour{
     public:
-        _Colour(T const& v, T const& a = traits::max){
+        typedef _Colour<T, tT> this_t;
+        _Colour(T const& v, T const& a = tT::max){
             rgba[0] = rgba[1] = rgba[2] = v; rgba[3] = a;
         }
-        _Colour(T const& r, T const& g, T const& b, T const& a = traits::max){
+        _Colour(T const& r, T const& g, T const& b, T const& a = tT::max){
             rgba[0] = r; rgba[1] = g; rgba[2] = b; rgba[3] = a;
         }
-
-        _Colour<T, traits>& operator&=(_Colour<T, traits> const& other){
-            // TODO: improve this
-            for(int i = 0; i < 3; i++)
-                rgba[i] = clamp(
-                    traits::min,
-                    (rgba[i] * rgba[3] + other.rgba[i] * other.rgba[3]),
-                    traits::max
-                );
-            rgba[3] = (other.rgba[3] + rgba[3]) / 2;
+        // TODO: don't treat the alpha channel like a colour channel...
+        // scalar multiply (clamped)
+        this_t& operator*=(T const& s){
+            for(int i=0; i<4; i++)
+                rgba[i] = clamp(tT::min, rgba[i] * s, tT::max);
             return *this;
         }
-        friend _Colour<T, traits> operator&(_Colour<T, traits> const& l,
-                                            _Colour<T, traits> const& r){
-            return _Colour<T, traits>(l) &= r;
+        // multiply
+        this_t& operator*=(this_t const& r){
+            for(int i=0; i<4; i++)
+                rgba[i] *= r.rgba[i] / tT::max;
+            return *this;
         }
+        // screen
+        this_t& operator/=(this_t const& r){
+            for(int i=0; i<4; i++)
+                rgba[i] = tT::max - (tT::max-rgba[i]) * (tT::max-r.rgba[i]) / tT::max;
+            return *this;
+        }
+        // add (clamped)
+        this_t& operator+=(this_t const& r){
+            for(int i=0; i<4; i++)
+                rgba[i] = clamp(tT::min, rgba[i] + r.rgba[i], tT::max);
+            return *this;
+        }
+        // subtract (clamped)
+        this_t& operator-=(this_t const& r){
+            for(int i=0; i<4; i++)
+                rgba[i] = clamp(tT::min, rgba[i] - r.rgba[i], tT::max);
+            return *this;
+        }
+        // soft light... probably
+        this_t& operator%=(this_t const& r){
+            for(int i=0; i<4; i++)
+                rgba[i] = std::pow(rgba[i], std::pow(2, 2*((tT::max+tT::min)/2 - r.rgba[i])));
+            return *this;
+        }
+        // hard light
+        this_t& operator&=(this_t const& r){
+            for(int i=0; i<3; i++)
+                if(r.rgba[i] < (tT::max+tT::min)/2)
+                    rgba[i] = ((1-r.a())*rgba[i]) +
+                              r.a()*(rgba[i] * 2 * r.rgba[i]);
+                else
+                    rgba[i] = ((1-r.a())*rgba[i]) +
+                              r.a()*(tT::max - 2 * (tT::max - rgba[i]) * (tT::max - r.rgba[i]));
+            rgba[3] = clamp(tT::min, rgba[3] + r.rgba[3], tT::max);
+            return *this;
+        }
+        // overlay
+        this_t operator|=(this_t const& r){
+            for(int i=0; i<4; i++)
+                if(rgba[i] < (tT::max+tT::min)/2)
+                    rgba[i] *= 2 * r.rgba[i];
+                else
+                    rgba[i] = tT::max - 2 * (tT::max - rgba[i]) * (tT::max - r.rgba[i]);
+            return *this;
+        }
+
+        friend this_t operator*(this_t const& l, T const& r){ return this_t(l) *= r; }
+        friend this_t operator*(this_t const& l, this_t const& r){ return this_t(l) *= r; }
+        friend this_t operator/(this_t const& l, this_t const& r){ return this_t(l) /= r; }
+        friend this_t operator+(this_t const& l, this_t const& r){ return this_t(l) += r; }
+        friend this_t operator-(this_t const& l, this_t const& r){ return this_t(l) -= r; }
+        friend this_t operator%(this_t const& l, this_t const& r){ return this_t(l) %= r; }
+        friend this_t operator&(this_t const& l, this_t const& r){ return this_t(l) &= r; }
+        friend this_t operator|(this_t const& l, this_t const& r){ return this_t(l) |= r; }
+
+        T r() const{ return rgba[0]; }
+        T g() const{ return rgba[1]; }
+        T b() const{ return rgba[2]; }
+        T a() const{ return rgba[3]; }
 
         T rgba[4];
 };
@@ -197,6 +264,12 @@ template<typename charT, typename traits, typename T>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, _BB<T> const& b){
     return os << "BBox {" << b.min << "," << b.max << "}";
+}
+
+template<typename charT, typename traits, typename T>
+std::basic_ostream<charT, traits>& operator<<(
+    std::basic_ostream<charT, traits>& os, _Colour<T> const& c){
+    return os << "(" << c.r() <<","<< c.g() <<","<< c.b() <<","<< c.a() << ")";
 }
 
 #endif // ndef __UTIL_H_STREAMOPS__

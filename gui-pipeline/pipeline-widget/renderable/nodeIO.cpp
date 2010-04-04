@@ -10,11 +10,11 @@
 using namespace pw;
 
 const static Colour Normal_Colour(0.2, 0.4, 0.6, 0.5);
-const static Colour Outline_Colour_Hint(0, 0.5);
-const static Colour Mouseover_Colour_Hint(1, 0.5);
-const static Colour New_Hint(0, 1, 0, 1);
-const static Colour Demanded_Hint(1, 1, 0, 1);
-const static Colour Invalid_Hint(0, 0, 0, 0.5);
+const static Colour Outline_Colour_Hint(0, 0.2);
+const static Colour Mouseover_Colour_Hint(1, 0.2);
+const static Colour New_Hint(0, 1, 0, 0.2);
+const static Colour Demanded_Hint(1, 1, 0, 0.2);
+const static Colour Invalid_Hint(0, 0, 0, 0.4);
 
 NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name)
     : Renderable(node), m_node(node), m_pw(pw),

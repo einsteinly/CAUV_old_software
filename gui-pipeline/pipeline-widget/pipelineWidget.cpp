@@ -42,7 +42,7 @@ class PipelineGuiMsgObs: public MessageObserver{
             if(m->nodeType() != NodeType::Invalid)
                 m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
         }
-        
+
         virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->remove(m_widget->node(m->nodeId()));
@@ -74,7 +74,7 @@ class PipelineGuiMsgObs: public MessageObserver{
             typedef std::map<node_id, std::map<std::string, NodeOutput> > node_input_map_t;
             typedef std::map<node_id, std::map<std::string, std::vector<NodeInput> > > node_output_map_t;
             typedef std::map<node_id, std::map<std::string, NodeParamValue> > node_param_map_t;
-            
+
             // remove nodes that shouldn't exist
             const std::vector<node_ptr_t> current_nodes = m_widget->nodes();
             std::vector<node_ptr_t>::const_iterator j;
@@ -82,7 +82,7 @@ class PipelineGuiMsgObs: public MessageObserver{
                 if(!m->nodeTypes().count((*j)->id())){
                     m_widget->remove(*j);
                 }
-            
+
             // make sure all nodes exist with the correct inputs and outputs
             node_type_map_t::const_iterator i;
             for(i = m->nodeTypes().begin(); i != m->nodeTypes().end(); i++){
@@ -90,7 +90,7 @@ class PipelineGuiMsgObs: public MessageObserver{
                 if(n = m_widget->node(i->first)); else{
                     m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, i->first, i->second));
                     n = m_widget->node(i->first);
-                    debug() << __func__ << "added node" << n << ":" << i->first << i->second;                    
+                    debug() << __func__ << "added node" << n << ":" << i->first << i->second;
                 }
                 if(!n){
                     error() << "couldn't add node";
@@ -144,13 +144,13 @@ class PipelineGuiMsgObs: public MessageObserver{
             if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
                 np->status(m->status());
         }
-        
+
         virtual void onInputStatusMessage(InputStatusMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
                 np->inputStatus(m->inputId(), m->status());
         }
-        
+
         virtual void onOutpuStatusMessage(OutputStatusMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
@@ -216,10 +216,10 @@ PipelineWidget::PipelineWidget(QWidget *parent)
       m_cauv_node_thread(boost::thread(spawnPGCN, this)),
       m_lock(), m_redraw_posted_lock(), m_redraw_posted(false){
     // TODO: more appropriate QGLFormat?
-    
+
     // QueuedConnection should ensure updateGL is called in the main thread
     connect(this, SIGNAL(redrawPosted()), this, SLOT(updateGL()), Qt::QueuedConnection);
-    
+
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 
@@ -249,15 +249,15 @@ void PipelineWidget::remove(renderable_ptr_t p){
     arc_ptr_t a;
     if(a = boost::dynamic_pointer_cast<Arc>(p))
         m_arcs.erase(a);
-    
+
     // NB: the item may persist in m_receiving_move or m_owning_mouse until the
     // next mouse event: this is undesirable, but not something that can easily
     // be fixed, since remove() may be called during mouse events, in which case
-    // removing items from the mentioned sets would invalidate iterators and 
+    // removing items from the mentioned sets would invalidate iterators and
     // cause all sorts of general nastiness.
     // (see above note on really needing a set in which iterators remain stable
     // on erasing)
-    
+
     postRedraw();
 }
 
@@ -346,7 +346,7 @@ void PipelineWidget::addArc(renderable_ptr_t src,
                             node_id const& dst, std::string const& input){
     node_ptr_t d = node(dst);
     if(!d) return;
-    renderable_ptr_t d_ni = d->inSocket(input); 
+    renderable_ptr_t d_ni = d->inSocket(input);
     if(!d_ni) return;
     addArc(src, d_ni);
 }
@@ -365,7 +365,7 @@ arc_ptr_t PipelineWidget::addArc(renderable_wkptr_t src, renderable_wkptr_t dst)
     arc_ptr_t a = boost::make_shared<Arc>(this, src, dst);
     for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
         if(*i == a){
-            warning() << "duplicate arc will be ignored";
+            //warning() << "duplicate arc will be ignored";
             return *i;
         }
     m_arcs.insert(a);
@@ -378,29 +378,29 @@ void PipelineWidget::removeArc(node_id const& src, std::string const& output,
     node_ptr_t s = node(src);
     node_ptr_t d = node(dst);
     if(!s || !d)
-        return; 
+        return;
     renderable_ptr_t s_no = s->outSocket(output);
     renderable_ptr_t d_ni = d->inSocket(input);
     if(!s_no || !d_ni)
-        return; 
+        return;
     removeArc(s_no, d_ni);
 }
 
 void PipelineWidget::removeArc(renderable_ptr_t src,
                                node_id const& dst, std::string const& input){
     node_ptr_t d = node(dst);
-    if(!d) return; 
+    if(!d) return;
     renderable_ptr_t d_ni = d->inSocket(input);
-    if(!d_ni) return; 
+    if(!d_ni) return;
     removeArc(src, d_ni);
 }
 
 void PipelineWidget::removeArc(node_id const& src, std::string const& output,
                                renderable_ptr_t dst){
     node_ptr_t s = node(src);
-    if(!s) return; 
+    if(!s) return;
     renderable_ptr_t s_no = s->outSocket(output);
-    if(!s_no) return; 
+    if(!s_no) return;
     removeArc(s_no, dst);
 }
 
@@ -458,12 +458,12 @@ void PipelineWidget::removeMenu(menu_ptr_t r){
 void PipelineWidget::initializeGL(){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
-    glEnable(GL_CULL_FACE); 
+    glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthFunc(GL_LEQUAL);
-    
+
     glShadeModel(GL_SMOOTH);
     glCullFace(GL_BACK);
     glClearColor(0, 0, 0, 1.0);
@@ -476,7 +476,7 @@ void PipelineWidget::paintGL(){
 
     debug(-2) << "PipelineWidget::paintGL";
     updateProjection();
-    
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     // scale for world size 'out of screen' is positive z
@@ -484,14 +484,14 @@ void PipelineWidget::paintGL(){
              m_pixels_per_unit / m_world_size, 1.0f);
     //glTranslatef(m_pixels_per_unit / 2, m_pixels_per_unit / 2, 0);
     drawGrid();
-    
+
     #if 0
     // debug stuff:
     glBegin(GL_LINES);
     glColor4f(1.0, 0.0, 0.0, 0.5);
     glVertex2f(-10.0f, 0.0f);
     glVertex2f(10.0f, 0.0f);
-    
+
     glColor4f(0.0, 1.0, 0.0, 0.5);
     glVertex2f(0.0f, -10.0f);
     glVertex2f(0.0f, 10.0f);
@@ -499,7 +499,7 @@ void PipelineWidget::paintGL(){
     glColor4f(1.0, 0.0, 0.0, 0.5);
     glVertex2f(-20.0f, -17.5f);
     glVertex2f(-15.0f, -17.5f);
-    
+
     glColor4f(0.0, 1.0, 0.0, 0.5);
     glVertex2f(-17.5f, -20.0f);
     glVertex2f(-17.5f, -15.0f);
@@ -513,9 +513,9 @@ void PipelineWidget::paintGL(){
         glTranslatef((*i)->m_pos);
         (*i)->draw(false);
         glPopMatrix();
-    }    
+    }
     glPrintErr();
-    
+
     l1.unlock();
     lock_t l2(m_redraw_posted_lock);
     m_redraw_posted = false;
@@ -527,9 +527,9 @@ void PipelineWidget::resizeGL(int width, int height){
     debug(-1) << __func__
             << "width=" << width << "height=" << height
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale;
-    
+
     glViewport(0, 0, width, height);
-    
+
     updateProjection();
 }
 
@@ -545,17 +545,17 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     typedef std::map<GLuint, renderable_ptr_t> name_map_t;
     name_map_t name_map;
 
-	glSelectBuffer(sizeof(pick_buffer)/sizeof(GLuint), pick_buffer); 
+	glSelectBuffer(sizeof(pick_buffer)/sizeof(GLuint), pick_buffer);
 	glRenderMode(GL_SELECT);
 
-	glInitNames(); 
+	glInitNames();
 	glPushName(GLuint(-1));
-    
+
     projectionForPicking(event->x(), event->y());
     glLoadIdentity();
     glScalef(m_pixels_per_unit / m_world_size,
              m_pixels_per_unit / m_world_size, 1.0f);
-    //glTranslatef(m_pixels_per_unit / 2, m_pixels_per_unit / 2, 0);  
+    //glTranslatef(m_pixels_per_unit / 2, m_pixels_per_unit / 2, 0);
 
     for(i = m_contents.begin(); i != m_contents.end(); i++, n++){
         if((*i)->acceptsMouseEvents()){
@@ -597,9 +597,9 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     if(event->buttons() & Qt::RightButton){
         MouseEvent proxy(event, *this);
         addMenu(buildAddNodeMenu(this), proxy.pos);
-        need_redraw = true; 
+        need_redraw = true;
     }
-    
+
     m_last_mouse_pos = event->pos();
 
     if(need_redraw)
@@ -652,7 +652,7 @@ void PipelineWidget::wheelEvent(QWheelEvent *event){
     if(!event->buttons()){
         double scalef = clamp(0.2, (1 + double(event->delta()) / 240), 5);
         m_pixels_per_unit *= scalef;
-        m_pixels_per_unit = clamp(0.01, m_pixels_per_unit, 4);
+        m_pixels_per_unit = clamp(0.04, m_pixels_per_unit, 4);
         postRedraw();
     }
 }
@@ -661,7 +661,7 @@ void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
     lock_t l(m_lock);
     renderable_set_t::iterator i;
     for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
-       debug(-1) << "sending mouse release event to" << *i;    
+       debug(-1) << "sending mouse release event to" << *i;
        (*i)->mouseReleaseEvent(MouseEvent(event, *i, *this));
     }
     if(!event->buttons()){
@@ -716,7 +716,7 @@ void PipelineWidget::updateProjection(){
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
             << "wc=" << m_win_centre;
-    
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
@@ -733,15 +733,15 @@ void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
             << "wc=" << m_win_centre;
-    
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     GLint viewport[4] = {0};
     glGetIntegerv(GL_VIEWPORT, viewport);
-    gluPickMatrix((GLdouble)mouse_win_x, (GLdouble)(viewport[3]-mouse_win_y), 
+    gluPickMatrix((GLdouble)mouse_win_x, (GLdouble)(viewport[3]-mouse_win_y),
                   1, 1, viewport);
-    
+
     //glTranslatef(0.375 * w / width(), 0.375 * h / height(), 0);
     glOrtho(-w/2, w/2, -h/2, h/2, -100, 100);
     glTranslatef(m_win_centre * m_pixels_per_unit / m_world_size);
@@ -752,7 +752,7 @@ void PipelineWidget::drawGrid(){
     // only draw grid that will be visible:
     const double grid_major_spacing = 250;
     const double grid_minor_spacing = 25;
-    
+
     // projected window coordinates:
     const double divisor = 2 * m_pixels_per_unit;
     const double edge = m_world_size * m_win_scale / 2;
@@ -760,17 +760,17 @@ void PipelineWidget::drawGrid(){
     const double min_y = max(-m_win_centre.y - height() / divisor, -edge);
     const double max_x = min(-m_win_centre.x + width()  / divisor, edge);
     const double max_y = min(-m_win_centre.y + height() / divisor, edge);
-    
+
     const int min_grid_minor_x = roundZ(min_x / grid_minor_spacing);
     const int min_grid_minor_y = roundZ(min_y / grid_minor_spacing);
     const int max_grid_minor_x = roundZ(max_x / grid_minor_spacing);
     const int max_grid_minor_y = roundZ(max_y / grid_minor_spacing);
-    
+
     const int min_grid_major_x = roundZ(min_x / grid_major_spacing);
     const int min_grid_major_y = roundZ(min_y / grid_major_spacing);
     const int max_grid_major_x = roundZ(max_x / grid_major_spacing);
     const int max_grid_major_y = roundZ(max_y / grid_major_spacing);
-    
+
     debug(-2) << "min_x=" << min_x << "max_x=" << max_x
             << "min_y=" << min_y << "max_y=" << max_y << "\n\t"
             << "min_grid_minor_x=" << min_grid_minor_x
@@ -781,9 +781,11 @@ void PipelineWidget::drawGrid(){
             << "max_grid_major_x=" << max_grid_major_x << "\n\t"
             << "min_grid_major_y=" << min_grid_major_y
             << "max_grid_major_y=" << max_grid_major_y;
-    
-    glLineWidth(1);
-    glColor(Colour(0.2, 0.2));//0.125));
+
+    glLineWidth(round(clamp(0, m_pixels_per_unit, 5)));
+    const float sqrp = std::sqrt(m_pixels_per_unit);
+    const float alpha_div = sqrp < 1? 1/sqrp : 1.0f;
+    glColor(Colour(0.2, 0.3/alpha_div));
     glBegin(GL_LINES);
     for(int i = min_grid_minor_y; i <= max_grid_minor_y; i++){
         glVertex3f(min_x, i*grid_minor_spacing, -0.2);
@@ -794,8 +796,8 @@ void PipelineWidget::drawGrid(){
         glVertex3f(i*grid_minor_spacing, min_y, -0.2);
         glVertex3f(i*grid_minor_spacing, max_y, -0.2);
     }
-    
-    glColor(Colour(0.2, 0.4));//0.25));
+
+    glColor(Colour(0.2, 0.6/alpha_div));
     for(int i = min_grid_major_y; i <= max_grid_major_y; i++){
         glVertex3f(min_x, i*grid_major_spacing, -0.1);
         glVertex3f(max_x, i*grid_major_spacing, -0.1);
