@@ -20,6 +20,7 @@
 #include "renderable/menu.h"
 #include "renderable/editText.h"
 #include "renderable/arc.h"
+#include "renderable/imgNode.h"
 
 
 namespace pw{
@@ -39,8 +40,16 @@ class PipelineGuiMsgObs: public MessageObserver{
 
         virtual void onNodeAddedMessage(NodeAddedMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(m->nodeType() != NodeType::Invalid)
-                m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
+            switch(m->nodeType()){
+                case NodeType::Invalid:
+                    break;
+                case NodeType::GuiOutput:
+                    m_widget->addImgNode(boost::make_shared<ImgNode>(m_widget, m_widget, m));
+                    break;
+                default:
+                    m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
+                    break;
+            }
         }
 
         virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr m){
@@ -50,8 +59,7 @@ class PipelineGuiMsgObs: public MessageObserver{
 
         virtual void onNodeParametersMessage(NodeParametersMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            boost::shared_ptr<Node> np = m_widget->node(m->nodeId());
-            if(np)
+            if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->setParams(m);
         }
 
@@ -88,9 +96,17 @@ class PipelineGuiMsgObs: public MessageObserver{
             for(i = m->nodeTypes().begin(); i != m->nodeTypes().end(); i++){
                 node_ptr_t n;
                 if(n = m_widget->node(i->first)); else{
-                    m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, i->first, i->second));
+                    switch(i->second){
+                        case NodeType::Invalid:
+                            break;
+                        case NodeType::GuiOutput:
+                            m_widget->addImgNode(boost::make_shared<ImgNode>(m_widget, m_widget, i->first, i->second));
+                            break;
+                        default:
+                            m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, i->first, i->second));
+                            break;
+                    }
                     n = m_widget->node(i->first);
-                    debug() << __func__ << "added node" << n << ":" << i->first << i->second;
                 }
                 if(!n){
                     error() << "couldn't add node";
@@ -141,20 +157,26 @@ class PipelineGuiMsgObs: public MessageObserver{
 
         virtual void onStatusMessage(StatusMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
+            if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->status(m->status());
         }
 
         virtual void onInputStatusMessage(InputStatusMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
+            if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->inputStatus(m->inputId(), m->status());
         }
 
         virtual void onOutpuStatusMessage(OutputStatusMessage_ptr m){
             debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(boost::shared_ptr<Node> np = m_widget->node(m->nodeId()))
+            if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->outputStatus(m->outputId(), m->status());
+        }
+
+        virtual void onGuiImageMessage(GuiImageMessage_ptr m){
+            debug(1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            if(imgnode_ptr_t np = m_widget->imgNode(m->nodeId()))
+                np->display(m->image());
         }
 
     private:
@@ -312,11 +334,17 @@ void PipelineWidget::addNode(node_ptr_t r){
     add(r);
 }
 
+void PipelineWidget::addImgNode(imgnode_ptr_t r){
+    lock_t l(m_lock);
+    m_imgnodes[r->id()] = r;
+    addNode(r);
+}
+
 node_ptr_t PipelineWidget::node(node_id const& n){
     lock_t l(m_lock);
     node_map_t::const_iterator i = m_nodes.find(n);
     if(i != m_nodes.end())
-        return m_nodes[n];
+        return i->second;
     warning() << "unknown node renderable:" << n;
     return node_ptr_t();
 }
@@ -327,6 +355,15 @@ std::vector<node_ptr_t> PipelineWidget::nodes() const{
     for(node_map_t::const_iterator i = m_nodes.begin(); i != m_nodes.end(); i++)
         r.push_back(i->second);
     return r;
+}
+
+imgnode_ptr_t PipelineWidget::imgNode(node_id const& n){
+    lock_t l(m_lock);
+    imgnode_map_t::const_iterator i = m_imgnodes.find(n);
+    if(i != m_imgnodes.end())
+        return i->second;
+    warning() << "unknown img node renderable:" << n;
+    return imgnode_ptr_t();
 }
 
 void PipelineWidget::addArc(node_id const& src, std::string const& output,

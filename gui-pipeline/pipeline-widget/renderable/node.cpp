@@ -575,7 +575,8 @@ void Node::refreshLayout(){
         prev_height = roundA(r->bbox().h());
         m_back |= r->bbox() + r->m_pos + Point(io_overhang, 0);
     }
-    y_pos -= section_lead - lead;
+    if(m_inputs.size())
+        y_pos -= section_lead - lead;
 
     // stop parameter order from jumping around:
     // TODO: editing here, this is actually rather a tricky structural
@@ -591,7 +592,21 @@ void Node::refreshLayout(){
         prev_height = roundA((*l)->bbox().h());
         m_back |= (*l)->bbox() + (*l)->m_pos;
     }
-    y_pos -= section_lead - lead;
+    if(params.size())
+        y_pos -= section_lead - lead;
+
+
+    for(renderable_set_t::const_iterator j = m_extra_stuff.begin();
+        j != m_extra_stuff.end(); j++, y_pos -= (prev_height+lead))
+    {
+        renderable_ptr_t r = *j;
+        r->m_pos.y = y_pos - roundA(r->bbox().max.y);
+        r->m_pos.x = param_indent;
+        prev_height = roundA(r->bbox().h());
+        m_back |= r->bbox() + r->m_pos;
+    }
+    if(m_extra_stuff.size())
+        y_pos -= section_lead - lead;
 
     m_back.max.x += border;
 

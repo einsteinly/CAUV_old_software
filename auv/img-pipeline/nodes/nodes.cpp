@@ -10,6 +10,7 @@
 #include "houghLinesNode.h"
 #include "cannyNode.h"
 #include "convertColourNode.h"
+#include "guiOutputNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -22,4 +23,5 @@ DEFINE_NFR(NetInputNode, NodeType::NetInput);
 DEFINE_NFR(HoughLinesNode, NodeType::HoughLines);
 DEFINE_NFR(CannyNode, NodeType::Canny);
 DEFINE_NFR(ConvertColourNode, NodeType::ConvertColour);
+DEFINE_NFR(GuiOutputNode, NodeType::GuiOutput);
 

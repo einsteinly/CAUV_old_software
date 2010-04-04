@@ -9,8 +9,8 @@
 #include <cctype>
 #include <ctime>
 
-#include <boost/date_time.hpp>  
-#include <boost/utility.hpp>  
+#include <boost/date_time.hpp>
+#include <boost/utility.hpp>
 
 #define CAUV_DEBUG_MUTEX_OUTPUT
 #define CAUV_DEBUG_PRINT_THREAD
@@ -39,14 +39,14 @@
  *   warning() << stuff; // prints (cerr) and logs [HH:MM:SS.fffffff] WARNING: stuff
  *
  * if CAUV_DEBUG_PRINT_THREAD is defined, the timestamp has the thread id appended:
- *   [HH:MM:SS.fffffff T=0x123456] 
+ *   [HH:MM:SS.fffffff T=0x123456]
  *
  * A newline is added automatically, spaces are added automatically between
  * successive stuffs which don't already have spaces at the ends
  *
  *   info() << "1" << 3 << "test " << 4; // prints "[HH:MM:SS.fffffff] 1 3 test 4\n"
  *
- * Timestamps are GMT
+ * Timestamps are local time
  *
  */
 
@@ -111,7 +111,7 @@ class SmartStreamBase : boost::noncopyable
             // make sure oss is stringised so that locale nastiness is all over
             // and done with
             os << oss.str();
-            
+
             // add spaces between consecutive items that do not have spaces
             std::list<std::string>::const_iterator i = m_stuffs.begin();
             bool add_space = false;
@@ -129,19 +129,19 @@ class SmartStreamBase : boost::noncopyable
             }
             // if anything was printed, add a newline, reset colour
             if(i != m_stuffs.begin())
-                os << BashControl::Reset << std::endl; 
+                os << BashControl::Reset << std::endl;
         }
-            
+
         // space is added between srings s1 s2 if:
         //   mayAddSpaceNext(s1) == true && mayAddSpaceNow(s2) == true
         static bool mayAddSpaceNext(std::string const& s){
-            if(isspace(s[0]))
+            if(isspace(*s.rbegin()))
                 return false;
             if(s.rfind("\033[") != std::string::npos &&
                (s.size() < 8 || s.rfind("\033[") > s.size() - 8) &&
                *s.rbegin() == 'm')
                 return false;
-            switch(s[0]){
+            switch(*s.rbegin()){
                 case '=':
                 case '(': case '[': case '{':
                     return false;
@@ -164,7 +164,7 @@ class SmartStreamBase : boost::noncopyable
                     return true;
             }
         }
-        
+
         // initialise on first use
         static std::ofstream& logFile()
         {
@@ -197,7 +197,7 @@ class SmartStreamBase : boost::noncopyable
                 return _getMutex(s);
         }
 #endif
-        
+
         std::ostream& m_stream;
         std::string m_prefix;
         BashColour::e m_col;
@@ -222,9 +222,9 @@ struct debug : public SmartStreamBase
         {
             // convert to a string
             std::stringstream s;
-            s << a; 
+            s << a;
 
-            // push this onto the list of things to print 
+            // push this onto the list of things to print
             m_stuffs.push_back(s.str());
         }
         return *this;
@@ -239,7 +239,7 @@ struct debug : public SmartStreamBase
             // apply to a string
             std::stringstream s;
             s << manip;
-            
+
             // and push it onto the list of things to print
             m_stuffs.push_back(s.str());
         }
@@ -271,7 +271,7 @@ struct debug : boost::noncopyable
      */
     debug const& operator<<(std::ostream& (*manip)(std::ostream&)) const
     {
-        manip = manip; // suppress warning about unused parameter 
+        manip = manip; // suppress warning about unused parameter
         // do nothing with the manipulator
         return *this;
     }
@@ -295,9 +295,9 @@ struct error : public SmartStreamBase
     {
         // convert to a string
         std::stringstream s;
-        s << a; 
+        s << a;
 
-        // push this onto the list of things to print 
+        // push this onto the list of things to print
         m_stuffs.push_back(s.str());
         return *this;
     }
@@ -309,7 +309,7 @@ struct error : public SmartStreamBase
         // apply to a string
         std::stringstream s;
         s << manip;
-        
+
         // and push it onto the list of things to print
         m_stuffs.push_back(s.str());
         return *this;
@@ -333,9 +333,9 @@ struct warning : public SmartStreamBase
     {
         // convert to a string
         std::stringstream s;
-        s << a; 
+        s << a;
 
-        // push this onto the list of things to print 
+        // push this onto the list of things to print
         m_stuffs.push_back(s.str());
         return *this;
     }
@@ -347,7 +347,7 @@ struct warning : public SmartStreamBase
         // apply to a string
         std::stringstream s;
         s << manip;
-        
+
         // and push it onto the list of things to print
         m_stuffs.push_back(s.str());
         return *this;
@@ -369,9 +369,9 @@ struct info : public SmartStreamBase
     {
         // convert to a string
         std::stringstream s;
-        s << a; 
+        s << a;
 
-        // push this onto the list of things to print 
+        // push this onto the list of things to print
         m_stuffs.push_back(s.str());
         return *this;
     }
@@ -383,7 +383,7 @@ struct info : public SmartStreamBase
         // apply to a string
         std::stringstream s;
         s << manip;
-        
+
         // and push it onto the list of things to print
         m_stuffs.push_back(s.str());
         return *this;

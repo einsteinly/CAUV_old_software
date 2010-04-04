@@ -56,7 +56,8 @@ enum NodeType : int8 {
     NetInput = 7,
     HoughLines = 8,
     Canny = 9,
-    ConvertColour = 10
+    ConvertColour = 10,
+    GuiOutput = 11
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -194,6 +195,12 @@ group pl_gui
         nodeId : int32;
         outputId : string;
         status : int32;
+    }
+    
+	message GuiImage : 24
+	{
+        nodeId : int32;
+	    image : Image;
     }
 }
 

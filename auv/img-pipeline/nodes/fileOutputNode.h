@@ -5,16 +5,18 @@
 #include <vector>
 #include <string>
 
+#include <boost/algorithm/string/replace.hpp>
+
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "../node.h"
+#include "outputNode.h"
 
 
-class FileOutputNode: public Node{
+class FileOutputNode: public OutputNode{
     public:
         FileOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+            : OutputNode(sched, pl, t), m_counter(0){
             // one input:
             registerInputID("image_in");
             
@@ -22,23 +24,31 @@ class FileOutputNode: public Node{
             // registerOutputID();
             
             // parameters: the filename, jpg compression, png compression
-            registerParamID<std::string>("filename", "default.out.jpg");
+            registerParamID<std::string>("filename", "out.%d.%t.%c.jpg");
             registerParamID<int>("jpeg quality", 95); // 0-100
             registerParamID<int>("png compression", 9); // 0-9
         }
-        
-        virtual bool isOutputNode() const throw() { return true; }
 
     protected:
         out_image_map_t doWork(in_image_map_t& inputs){
+            using boost::algorithm::replace_all_copy;
             out_image_map_t r;
 
             image_ptr_t img = inputs["image_in"];
-            std::string fname = param<std::string>("filename");
+            
+            // replace %d %t and %c with the current date, time and a counter
+            std::string cs = MakeString() << std::setfill('0') << std::setw(5) << m_counter++;
+            std::string fname = replace_all_copy(
+                                    replace_all_copy(
+                                        replace_all_copy(
+                                            param<std::string>("filename"), "%c", cs
+                                        ), "%d", now("%Y-%m-%d")
+                                    ), "%t", now("%H-%M-%s")
+                                );
             int jpg_qual = param<int>("jpeg quality");
             int png_comp = param<int>("png compression");
              
-            debug() << "fileOutputNode::doWork()" << *img << "->" << fname;
+            debug() << "FileOutputNode::doWork()" << *img << "->" << fname;
 
             std::vector<int> imwrite_params;
             imwrite_params.push_back(CV_IMWRITE_JPEG_QUALITY);
@@ -50,6 +60,8 @@ class FileOutputNode: public Node{
             
             return r;
         }
+
+        int m_counter;
     
     // Register this node type
     DECLARE_NFR;

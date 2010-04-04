@@ -198,6 +198,8 @@ class Node{
          */
         void checkAddSched() throw();
 
+        void sendMessage(boost::shared_ptr<Message const>);
+
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)
          * Check to see if this node should add itself to the scheduler queue

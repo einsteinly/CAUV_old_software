@@ -20,7 +20,7 @@ class MakeString
 
         template<class T>
         MakeString& operator<<(T const& VAR) { stream << VAR; return *this; }
-    
+
     protected:
         std::stringstream stream;
 };
@@ -40,6 +40,8 @@ inline std::string to_string (const T& t)
 
 struct TimeStamp;
 TimeStamp now();
+
+std::string now(std::string const& format);
 
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 

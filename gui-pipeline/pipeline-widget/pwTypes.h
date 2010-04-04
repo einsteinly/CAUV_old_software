@@ -23,6 +23,7 @@ class NodeIOBlob;
 class NodeInputBlob;
 class NodeOutputBlob;
 class FloatingArcHandle;
+class ImgNode;
 
 
 typedef PipelineWidget* pw_ptr_t;
@@ -35,6 +36,7 @@ typedef boost::shared_ptr<Node> node_ptr_t;
 typedef boost::shared_ptr<Arc> arc_ptr_t;
 typedef boost::shared_ptr<Menu> menu_ptr_t;
 typedef boost::shared_ptr<Text> text_ptr_t;
+typedef boost::shared_ptr<ImgNode> imgnode_ptr_t;
 
 // TODO: this should really be synchronised with pipelineTypes.h! (need
 // a pipeline namespace to do that without confusion about Nodes though)

@@ -27,6 +27,7 @@ class PipelineWidget: public QGLWidget,
         typedef std::set<renderable_ptr_t> renderable_set_t;
         typedef std::set<arc_ptr_t> arc_set_t;
         typedef std::map<node_id, node_ptr_t> node_map_t;
+        typedef std::map<node_id, imgnode_ptr_t> imgnode_map_t;
         typedef boost::recursive_mutex mutex_t;
         typedef boost::unique_lock<boost::recursive_mutex> lock_t;
 
@@ -45,9 +46,11 @@ class PipelineWidget: public QGLWidget,
         void add(renderable_ptr_t, Point const& at);
         void addMenu(menu_ptr_t, Point const& at, bool pressed=false);
         void addNode(node_ptr_t);
+        void addImgNode(imgnode_ptr_t);
 
         node_ptr_t node(node_id const&);
         std::vector<node_ptr_t> nodes() const;
+        imgnode_ptr_t imgNode(node_id const&);
         
         // hmm
         typedef node_id const& ni_r;
@@ -112,6 +115,7 @@ class PipelineWidget: public QGLWidget,
         
         menu_ptr_t m_menu;
         node_map_t m_nodes;
+        imgnode_map_t m_imgnodes;
         arc_set_t m_arcs;
 
         renderable_set_t m_owning_mouse; // which renderables are involved in

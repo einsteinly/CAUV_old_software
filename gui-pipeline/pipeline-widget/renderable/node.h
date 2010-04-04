@@ -77,10 +77,13 @@ class Node: public Draggable,
             error() << "unimplemented param type for" << param << "=" << v
                     <<", (n="<< id() <<")";
         }
+    
+    protected:
+        void refreshLayout();
+
+        renderable_set_t m_extra_stuff;
 
     private:
-        virtual void refreshLayout();
-
         pw_ptr_t m_pw;
 
         BBox m_bbox;

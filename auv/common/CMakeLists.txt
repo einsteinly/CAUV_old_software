@@ -39,6 +39,7 @@ add_library (
     cauv_global.cpp
     cauv_node.cpp
     cauv_utils.cpp
+    image.cpp
     messages.cpp
     spread/cauv_mailbox_monitor.cpp
     spread/cauv_spread_mailbox.cpp
@@ -64,6 +65,7 @@ add_library (
     cauv_global.cpp
     cauv_node.cpp
     cauv_utils.cpp
+    image.cpp
     messages.cpp
     spread/cauv_mailbox_monitor.cpp
     spread/cauv_spread_mailbox.cpp

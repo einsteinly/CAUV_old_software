@@ -1,5 +1,7 @@
 #include "cauv_utils.h"
 
+#include <boost/date_time.hpp>
+
 #include <common/messages.h>
 
 using namespace std;
@@ -31,3 +33,13 @@ TimeStamp now(){
     r.msecs = diff.fractional_seconds();
     return r;
 }
+
+std::string now(std::string const& format){
+    using namespace boost::posix_time;
+    std::ostringstream oss;
+    time_facet* facet = new time_facet(format.c_str());
+    oss.imbue(std::locale(oss.getloc(), facet));
+    oss << microsec_clock::local_time();
+    return oss.str();
+}
+

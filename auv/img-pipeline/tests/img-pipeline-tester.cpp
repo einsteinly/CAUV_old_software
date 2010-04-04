@@ -385,8 +385,10 @@ class ImgPipeTestNode : public CauvNode{
         
         virtual void onRun(){
             info() << "--- ImagePipelineTesterNode::onRun ---"; 
+            #if defined(USE_DEBUG_MESSAGE_OBSERVERS) 
             info() << "Add TestMBObserver...";
             eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
+            #endif
             
             info() << "Joining pl_gui group...";
             mailbox()->joinGroup("pl_gui"); 

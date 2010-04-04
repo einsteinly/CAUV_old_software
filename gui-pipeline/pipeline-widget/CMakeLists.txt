@@ -21,6 +21,7 @@ set (
     renderable/draggable.cpp
     renderable/nodeIO.cpp
     renderable/arc.cpp
+    renderable/imgNode.cpp
 )
 
 set (

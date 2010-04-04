@@ -26,7 +26,7 @@ class ResizeNode: public Node{
             
             // parameters: scale factor, interpolation mode
             registerParamID<float>("scale factor", 1.0f);
-            registerParamID<int>("interpolation mode", cv::INTER_NEAREST);
+            registerParamID<int>("interpolation mode", cv::INTER_LINEAR);
         }
 
     protected:

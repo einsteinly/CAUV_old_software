@@ -493,6 +493,10 @@ void Node::checkAddSched() throw(){
     m_sched.addJob(this, m_priority);
 }
 
+void Node::sendMessage(boost::shared_ptr<Message const> m){
+    m_pl.sendMessage(m);
+}
+
 /* Keep a record of which inputs are new (have changed since they were
  * last used by this node)
  * Check to see if this node should add itself to the scheduler queue

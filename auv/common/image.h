@@ -4,101 +4,79 @@
 #include <boost/serialization/split_member.hpp>
 
 #include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 #include <common/debug.h>
 
 class Image{
         friend class boost::serialization::access;
     public:
-        enum Source {src_file, src_camera, src_sonar};
+        enum Source {
+            src_file,
+            src_camera,
+            src_sonar,
+            src_pipeline
+        };
         
-        Image()
-            : m_img(), m_source(){
-        }
-        ~Image(){
-        }
+        Image();
+        Image(cv::Mat const& cv_image, Source const& source);
+        Image(Image const& other);
+        ~Image();
 
-        Image(cv::Mat const& cv_image, Source const& source)
-            : m_img(cv_image), m_source(source){
-        }
-        
-        // Copy constructor; take a deep copy of the image data
-        Image(Image const& other)
-            : m_img(other.m_img.clone()), m_source(other.m_source){
-        }
-
-        cv::Mat const& cvMat() const{
-            return m_img;
-        }
-
-        cv::Mat& cvMat(){
-            return m_img;
-        }
-
-        Source source() const{
-            return m_source;
-        }
-
-        void source(Source const& s){
-            m_source = s;
-        }
+        cv::Mat const& cvMat() const;
+        cv::Mat& cvMat();
+        Source source() const;
+        void source(Source const& s);
 
         BOOST_SERIALIZATION_SPLIT_MEMBER()
 
         template<class Archive>
         void save(Archive& ar, const unsigned int /*version*/) const{
             ar & m_source;
-            
-            int type = m_img.type();
-            ar & type;
-            ar & m_img.rows;
-            ar & m_img.cols;
+            ar & m_compress_fmt;
+            ar & m_compress_params;
+            int load_flags = -1;
+            switch(m_img.channels()){
+                case 1: load_flags = 0; break;
+                case 3: load_flags = 1; break;
+                case 4: default: load_flags = -1; break;
+            }
+            ar & load_flags;
 
-            debug(-1) << BashColour::Cyan << "Image Serialization:\n\t"
-                      << __func__ << type << m_img.elemSize() << m_img.rows << m_img.cols;
-            
-            ar.save_binary(m_img.data, m_img.rows * m_img.cols * m_img.elemSize());
+            std::vector<unsigned char> buf;
+            cv::imencode(m_compress_fmt, m_img, buf, m_compress_params);
+            ar & buf;
+
+            debug() << "Image Serialization:\n\t"
+                      << __func__ << m_compress_fmt << m_compress_params << "("
+                      << m_img.rows * m_img.cols * m_img.elemSize() << "->"
+                      << buf.size() << "bytes)";
         }
         
         template<class Archive>
         void load(Archive& ar, const unsigned int /*version*/){
             ar & m_source;
-            
-            int type, rows, cols;
-            ar & type; 
-            ar & rows;
-            ar & cols;
-            
-            int size = rows * cols * typeWidth(type);
-            m_img = cv::Mat(rows, cols, type);
-            
-            ar.load_binary(m_img.data, size);
+            ar & m_compress_fmt;
+            ar & m_compress_params;
+            int load_flags = -1;
+            ar & load_flags;
 
-            debug(-1) << BashColour::Cyan << "Image Serialization:\n\t"
-                      << __func__ << type << typeWidth(type) << rows << cols;
-        }
-        
-        int typeWidth(int cv_type) const{
-            unsigned depth = 0;
-            unsigned channels = 0;
+            std::vector<unsigned char> buf;
+            ar & buf;
+            m_img = cv::imdecode(cv::Mat(buf), load_flags);
 
-            switch(cv_type & CV_MAT_DEPTH_MASK){
-                case CV_8U:  case CV_8S:  depth = 1; break;
-                case CV_16U: case CV_16S: depth = 2; break;
-                case CV_32S: case CV_32F: depth = 4; break;
-                case CV_64F: depth = 8; break;
-                default:
-                    error() << "unknown opencv pixal depth value"
-                            << (cv_type & CV_MAT_DEPTH_MASK);
-            }
-            channels = (cv_type >> CV_CN_SHIFT) + 1;
-            return depth * channels;
+            debug() << "Image Serialization:\n\t"
+                      << __func__ << m_compress_fmt << m_compress_params << "("
+                      << buf.size() << "->"
+                      << m_img.rows * m_img.cols * m_img.elemSize() << "bytes)";
         }
-        
-        
+
     private:
         cv::Mat m_img;
+
         Source m_source;
+        std::string m_compress_fmt;
+        std::vector<int> m_compress_params;
 };
 
 template<typename charT, typename traits>
@@ -108,6 +86,7 @@ std::basic_ostream<charT, traits>& operator<<(
         case Image::src_file: os << "file"; break;
         case Image::src_camera: os << "camera"; break;
         case Image::src_sonar: os << "sonar"; break;
+        case Image::src_pipeline: os << "pipeline"; break;        
     }
     return os;
 }
