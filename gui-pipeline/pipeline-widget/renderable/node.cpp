@@ -365,6 +365,8 @@ void Node::mouseMoveEvent(MouseEvent const& e){
         if((*i)->tracksMouse() && (*i)->bbox().contains(referred.pos)){
             (*i)->mouseMoveEvent(referred);
             now_hovered.insert(*i);
+        }else if(m_pressed.count(*i)){
+            (*i)->mouseMoveEvent(referred);
         }
     }
     renderable_set_t::const_iterator j;

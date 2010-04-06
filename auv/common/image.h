@@ -28,6 +28,8 @@ class Image{
         Source source() const;
         void source(Source const& s);
 
+        void serializeQuality(int);
+
         BOOST_SERIALIZATION_SPLIT_MEMBER()
 
         template<class Archive>

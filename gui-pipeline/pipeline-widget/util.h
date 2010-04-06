@@ -73,6 +73,7 @@ template<typename T>
 class _BB{
     public:
         _BB() : min(), max(){ }
+        _BB(T const& w, T const& h) : min(0, -h), max(w, 0){ }
         _BB(V2D<T> const& min, V2D<T> const& max) : min(min), max(max){ }
         _BB(T const& xmin, T const& ymin, T const& xmax, T const& ymax)
             : min(xmin, ymin), max(xmax, ymax){ }
