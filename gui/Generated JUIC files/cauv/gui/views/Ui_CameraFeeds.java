@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'CameraFeeds.jui'
 **
-** Created: Fri 11. Dec 17:51:41 2009
+** Created: Wed 17. Mar 17:04:03 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -14,12 +14,12 @@ import com.trolltech.qt.gui.*;
 
 public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 {
-    public QWidget gridLayoutWidget;
+    public QHBoxLayout horizontalLayout;
     public QGridLayout gridLayout_2;
-    public QGraphicsView graphicsView_2;
     public QLabel label_2;
-    public QGraphicsView graphicsView;
     public QLabel label;
+    public QGraphicsView graphicsView_2;
+    public QGraphicsView graphicsView;
 
     public Ui_CameraFeeds() { super(); }
 
@@ -27,17 +27,11 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
     {
         CameraFeeds.setObjectName("CameraFeeds");
         CameraFeeds.resize(new QSize(614, 377).expandedTo(CameraFeeds.minimumSizeHint()));
-        gridLayoutWidget = new QWidget(CameraFeeds);
-        gridLayoutWidget.setObjectName("gridLayoutWidget");
-        gridLayoutWidget.setGeometry(new QRect(20, 50, 621, 261));
-        gridLayout_2 = new QGridLayout(gridLayoutWidget);
+        horizontalLayout = new QHBoxLayout(CameraFeeds);
+        horizontalLayout.setObjectName("horizontalLayout");
+        gridLayout_2 = new QGridLayout();
         gridLayout_2.setObjectName("gridLayout_2");
-        graphicsView_2 = new QGraphicsView(gridLayoutWidget);
-        graphicsView_2.setObjectName("graphicsView_2");
-
-        gridLayout_2.addWidget(graphicsView_2, 0, 1, 1, 1);
-
-        label_2 = new QLabel(gridLayoutWidget);
+        label_2 = new QLabel(CameraFeeds);
         label_2.setObjectName("label_2");
         QPalette palette= new QPalette();
         palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText, new QColor(255, 255, 255));
@@ -94,12 +88,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         gridLayout_2.addWidget(label_2, 2, 1, 1, 1);
 
-        graphicsView = new QGraphicsView(gridLayoutWidget);
-        graphicsView.setObjectName("graphicsView");
-
-        gridLayout_2.addWidget(graphicsView, 0, 0, 1, 1);
-
-        label = new QLabel(gridLayoutWidget);
+        label = new QLabel(CameraFeeds);
         label.setObjectName("label");
         QPalette palette1= new QPalette();
         palette1.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText, new QColor(255, 255, 255));
@@ -155,6 +144,19 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
         label.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
         gridLayout_2.addWidget(label, 2, 0, 1, 1);
+
+        graphicsView_2 = new QGraphicsView(CameraFeeds);
+        graphicsView_2.setObjectName("graphicsView_2");
+
+        gridLayout_2.addWidget(graphicsView_2, 0, 1, 1, 1);
+
+        graphicsView = new QGraphicsView(CameraFeeds);
+        graphicsView.setObjectName("graphicsView");
+
+        gridLayout_2.addWidget(graphicsView, 0, 0, 1, 1);
+
+
+        horizontalLayout.addLayout(gridLayout_2);
 
         retranslateUi(CameraFeeds);
 

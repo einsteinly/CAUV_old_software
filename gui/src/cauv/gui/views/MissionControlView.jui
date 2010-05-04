@@ -16,75 +16,10 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QWidget" name="widget" native="true">
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QPushButton" name="newFile">
-        <property name="text">
-         <string>New</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="openFile">
-        <property name="text">
-         <string>Open</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="saveButton">
-        <property name="text">
-         <string>Save</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="saveAsButton">
-        <property name="text">
-         <string>Save As</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>com.trolltech.qt.core.Qt.Orientation.Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QTabWidget" name="openFiles">
      <property name="palette">
       <palette>
        <active>
         <colorrole role="WindowText">
-         <brush brushstyle="SolidPattern">
-          <color alpha="255">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
-          </color>
-         </brush>
-        </colorrole>
-        <colorrole role="Button">
-         <brush brushstyle="SolidPattern">
-          <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
-          </color>
-         </brush>
-        </colorrole>
-        <colorrole role="Light">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
            <red>255</red>
@@ -93,39 +28,57 @@
           </color>
          </brush>
         </colorrole>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Light">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>49</red>
+           <green>49</green>
+           <blue>49</blue>
+          </color>
+         </brush>
+        </colorrole>
         <colorrole role="Midlight">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>245</red>
-           <green>245</green>
-           <blue>245</blue>
+           <red>41</red>
+           <green>41</green>
+           <blue>41</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Dark">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>118</red>
-           <green>118</green>
-           <blue>118</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Mid">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>157</red>
-           <green>157</green>
-           <blue>157</blue>
+           <red>22</red>
+           <green>22</green>
+           <blue>22</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Text">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
           </color>
          </brush>
         </colorrole>
@@ -141,27 +94,27 @@
         <colorrole role="ButtonText">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
-          </color>
-         </brush>
-        </colorrole>
-        <colorrole role="Base">
-         <brush brushstyle="SolidPattern">
-          <color alpha="255">
            <red>255</red>
            <green>255</green>
            <blue>255</blue>
           </color>
          </brush>
         </colorrole>
+        <colorrole role="Base">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
         <colorrole role="Window">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
           </color>
          </brush>
         </colorrole>
@@ -177,9 +130,9 @@
         <colorrole role="AlternateBase">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>245</red>
-           <green>245</green>
-           <blue>245</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
@@ -206,63 +159,63 @@
         <colorrole role="WindowText">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
-          </color>
-         </brush>
-        </colorrole>
-        <colorrole role="Button">
-         <brush brushstyle="SolidPattern">
-          <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
-          </color>
-         </brush>
-        </colorrole>
-        <colorrole role="Light">
-         <brush brushstyle="SolidPattern">
-          <color alpha="255">
            <red>255</red>
            <green>255</green>
            <blue>255</blue>
           </color>
          </brush>
         </colorrole>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Light">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>49</red>
+           <green>49</green>
+           <blue>49</blue>
+          </color>
+         </brush>
+        </colorrole>
         <colorrole role="Midlight">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>245</red>
-           <green>245</green>
-           <blue>245</blue>
+           <red>41</red>
+           <green>41</green>
+           <blue>41</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Dark">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>118</red>
-           <green>118</green>
-           <blue>118</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Mid">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>157</red>
-           <green>157</green>
-           <blue>157</blue>
+           <red>22</red>
+           <green>22</green>
+           <blue>22</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Text">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
           </color>
          </brush>
         </colorrole>
@@ -278,27 +231,27 @@
         <colorrole role="ButtonText">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>0</red>
-           <green>0</green>
-           <blue>0</blue>
-          </color>
-         </brush>
-        </colorrole>
-        <colorrole role="Base">
-         <brush brushstyle="SolidPattern">
-          <color alpha="255">
            <red>255</red>
            <green>255</green>
            <blue>255</blue>
           </color>
          </brush>
         </colorrole>
+        <colorrole role="Base">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </colorrole>
         <colorrole role="Window">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
           </color>
          </brush>
         </colorrole>
@@ -314,9 +267,9 @@
         <colorrole role="AlternateBase">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>245</red>
-           <green>245</green>
-           <blue>245</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
@@ -343,63 +296,63 @@
         <colorrole role="WindowText">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>118</red>
-           <green>118</green>
-           <blue>118</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Button">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Light">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>255</red>
-           <green>255</green>
-           <blue>255</blue>
+           <red>49</red>
+           <green>49</green>
+           <blue>49</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Midlight">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>245</red>
-           <green>245</green>
-           <blue>245</blue>
+           <red>41</red>
+           <green>41</green>
+           <blue>41</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Dark">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>118</red>
-           <green>118</green>
-           <blue>118</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Mid">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>157</red>
-           <green>157</green>
-           <blue>157</blue>
+           <red>22</red>
+           <green>22</green>
+           <blue>22</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Text">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>118</red>
-           <green>118</green>
-           <blue>118</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
@@ -415,27 +368,27 @@
         <colorrole role="ButtonText">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>118</red>
-           <green>118</green>
-           <blue>118</blue>
+           <red>16</red>
+           <green>16</green>
+           <blue>16</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Base">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
           </color>
          </brush>
         </colorrole>
         <colorrole role="Window">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
           </color>
          </brush>
         </colorrole>
@@ -451,9 +404,9 @@
         <colorrole role="AlternateBase">
          <brush brushstyle="SolidPattern">
           <color alpha="255">
-           <red>236</red>
-           <green>236</green>
-           <blue>236</blue>
+           <red>33</red>
+           <green>33</green>
+           <blue>33</blue>
           </color>
          </brush>
         </colorrole>
@@ -478,6 +431,131 @@
        </disabled>
       </palette>
      </property>
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="newFile">
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>New</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>classpath:cauv/gui/resources/document-new.png</normaloff>classpath:cauv/gui/resources/document-new.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="openFile">
+        <property name="text">
+         <string>Open</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>classpath:cauv/gui/resources/document-open.png</normaloff>classpath:cauv/gui/resources/document-open.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="saveButton">
+        <property name="text">
+         <string>Save</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>classpath:cauv/gui/resources/document-save.png</normaloff>classpath:cauv/gui/resources/document-save.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="saveAsButton">
+        <property name="text">
+         <string>Save As</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>classpath:cauv/gui/resources/document-save-as.png</normaloff>classpath:cauv/gui/resources/document-save-as.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="runButton">
+        <property name="text">
+         <string>Run Mission</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>classpath:cauv/gui/resources/icon.png</normaloff>classpath:cauv/gui/resources/icon.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>com.trolltech.qt.core.Qt.Orientation.Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="openFiles">
      <property name="tabPosition">
       <enum>com.trolltech.qt.gui.QTabWidget.TabPosition.North</enum>
      </property>
@@ -506,8 +584,8 @@
       <attribute name="title">
        <string/>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
           <string>Open or create a file to use the mission editor.</string>
