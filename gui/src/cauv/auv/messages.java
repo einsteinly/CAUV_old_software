@@ -2,32 +2,9 @@ package cauv.auv;
 
 import java.util.LinkedList;
 import java.util.Vector;
-import java.util.HashMap;
 import java.io.*;
 
-class floatYPR {
-    public float yaw;
-    public float pitch;
-    public float roll;
-
-    public floatYPR() {
-    }
-
-    public static floatYPR readFrom(DataInputStream s) throws IOException {
-        floatYPR val = new floatYPR();
-        val.yaw = s.readFloat();
-        val.pitch = s.readFloat();
-        val.roll = s.readFloat();
-        return val;
-    }
-
-    public void writeInto(DataOutputStream s) throws IOException {
-        floatYPR val = this;
-        s.writeFloat(val.yaw);
-        s.writeFloat(val.pitch);
-        s.writeFloat(val.roll);
-    }
-}
+import cauv.types.floatYPR;
 
 class floatXYZ {
     public float x;
@@ -346,7 +323,13 @@ class MessageSource {
         if (b.length < 4)
             throw new IllegalArgumentException("Buffer too small to contain message id");
 
-        int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];
+        int b0 = b[0];
+        int b1 = b[1];
+        int b2 = b[2];
+        int b3 = b[3];
+        
+        int id =   b3 | (b2 << 8) | (b1 << 16) | (b0 << 24);
+        
         try {
             switch (id) {
                 case 2: {

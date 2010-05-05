@@ -9,6 +9,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.xy.DefaultTableXYDataset;
 import org.jfree.data.xy.XYSeries;
 
+import cauv.auv.AUV;
 import cauv.gui.ScreenView;
 
 import com.trolltech.qt.gui.*;
@@ -59,6 +60,10 @@ public class TelemetryView extends QWidget implements ScreenView {
         }
         catch(IOException e) {}
     	return pixmap;
+    }
+    
+    public void onConnect(AUV auv){
+    	
     }
     
 	@Override
