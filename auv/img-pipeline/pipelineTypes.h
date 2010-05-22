@@ -24,28 +24,35 @@ class img_pipeline_error: public std::runtime_error{
 class id_error: public img_pipeline_error{
     public:
         id_error(std::string const& str)
-            : img_pipeline_error(str){
+            : img_pipeline_error("id error: " + str){
         }
 };
 
 class link_error: public img_pipeline_error{
     public:
         link_error(std::string const& str)
-            : img_pipeline_error(str){
+            : img_pipeline_error("link error: " + str){
         }
 };
 
 class node_type_error: public img_pipeline_error{
     public:
         node_type_error(std::string const& str)
-            : img_pipeline_error(str){
+            : img_pipeline_error("node type error: " + str){
         }
 };
 
 class scheduler_error: public img_pipeline_error{
     public:
         scheduler_error(std::string const& str)
-            : img_pipeline_error(str){
+            : img_pipeline_error("scheduler error: " + str){
+        }
+};
+
+class parameter_error: public img_pipeline_error{
+    public:
+        parameter_error(std::string const& str)
+            : img_pipeline_error("parameter error: " + str){
         }
 };
 

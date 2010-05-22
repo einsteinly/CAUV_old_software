@@ -50,8 +50,8 @@ class Image{
             ar & buf;
 
             debug() << "Image Serialization:\n\t"
-                      << __func__ << m_compress_fmt << m_compress_params << "("
-                      << m_img.rows * m_img.cols * m_img.elemSize() << "->"
+                      << __func__ << m_compress_fmt << m_compress_params << load_flags
+                      << "(" << m_img.rows * m_img.cols * m_img.elemSize() << "->"
                       << buf.size() << "bytes)";
         }
         
@@ -67,9 +67,9 @@ class Image{
             ar & buf;
             m_img = cv::imdecode(cv::Mat(buf), load_flags);
 
-            debug() << "Image Serialization:\n\t"
-                      << __func__ << m_compress_fmt << m_compress_params << "("
-                      << buf.size() << "->"
+            debug() << "Image Deerialization:\n\t"
+                      << __func__ << m_compress_fmt << m_compress_params << load_flags
+                      << "(" << buf.size() << "->"
                       << m_img.rows * m_img.cols * m_img.elemSize() << "bytes)";
         }
 

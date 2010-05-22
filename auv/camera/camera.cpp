@@ -101,14 +101,19 @@ void CaptureThread::operator()()
 Webcam::Webcam(const CameraID::e cameraID, const int deviceID) throw (ImageCaptureException)
     : Camera(cameraID), m_thread_callable(*this)
 {
+    //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
+   
+    cv::namedWindow( "Webcam", CV_WINDOW_AUTOSIZE ); 
+
+    m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+    
     m_capture = cv::VideoCapture(deviceID);
     if( !m_capture.isOpened() )
     {
         throw ImageCaptureException();
     }
-
-    m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
 
     m_thread = boost::thread(boost::ref(m_thread_callable));
 }
@@ -116,6 +121,8 @@ void Webcam::grabFrameAndBroadcast()
 {
     cv::Mat mat;
     m_capture >> mat;
+    cv::imshow("CAUV OpenCV test", mat);
+    cv::waitKey(10);
     broadcastImage(mat);
 }
 
