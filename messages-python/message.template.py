@@ -1,6 +1,6 @@
 \#  This is a generated file, do not edit
 
-\#import ssrc.spread
+import ssrc.spread
 
 
 \# Type Definitions:

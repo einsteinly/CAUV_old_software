@@ -32,4 +32,5 @@ add_subdirectory (lib)
 add_subdirectory (module)
 add_subdirectory (pinger)
 add_subdirectory (webcam)
+add_subdirectory (scripting)
 

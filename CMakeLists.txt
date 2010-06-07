@@ -38,6 +38,6 @@ set (CMAKE_C_FLAGS "${ALWAYS_FLAGS}")
 
 add_subdirectory (messages-python)
 add_subdirectory (auv)
-add_subdirectory (gui-pipeline)
+#add_subdirectory (gui-pipeline EXCLUDE_FROM_ALL)
 
 
