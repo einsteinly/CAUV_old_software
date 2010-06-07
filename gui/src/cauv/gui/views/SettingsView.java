@@ -1,6 +1,7 @@
 package cauv.gui.views;
 
 import cauv.Config;
+import cauv.auv.AUV;
 import cauv.gui.ScreenView;
 
 import com.trolltech.qt.gui.*;
@@ -26,6 +27,10 @@ public class SettingsView extends QWidget implements ScreenView {
     
     public void load(){
 		ui.gamepadID.setValue(Config.GAMEPAD_ID);
+    }
+    
+    public void onConnect(AUV auv){
+    	
     }
     
 	@Override

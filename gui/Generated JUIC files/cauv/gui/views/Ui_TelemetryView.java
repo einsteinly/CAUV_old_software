@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'TelemetryView.jui'
 **
-** Created: Thu 10. Dec 21:20:24 2009
+** Created: Wed 5. May 15:32:00 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -14,7 +14,7 @@ import com.trolltech.qt.gui.*;
 
 public class Ui_TelemetryView implements com.trolltech.qt.QUiForm<QWidget>
 {
-    public QVBoxLayout verticalLayout;
+    public QHBoxLayout horizontalLayout;
     public QScrollArea graphScroll;
     public QWidget scrollAreaWidgetContents;
     public QVBoxLayout verticalLayout_3;
@@ -31,8 +31,9 @@ public class Ui_TelemetryView implements com.trolltech.qt.QUiForm<QWidget>
     {
         TelemetryView.setObjectName("TelemetryView");
         TelemetryView.resize(new QSize(570, 337).expandedTo(TelemetryView.minimumSizeHint()));
-        verticalLayout = new QVBoxLayout(TelemetryView);
-        verticalLayout.setObjectName("verticalLayout");
+        horizontalLayout = new QHBoxLayout(TelemetryView);
+        horizontalLayout.setMargin(0);
+        horizontalLayout.setObjectName("horizontalLayout");
         graphScroll = new QScrollArea(TelemetryView);
         graphScroll.setObjectName("graphScroll");
         graphScroll.setAutoFillBackground(true);
@@ -41,7 +42,7 @@ public class Ui_TelemetryView implements com.trolltech.qt.QUiForm<QWidget>
         graphScroll.setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents");
-        scrollAreaWidgetContents.setGeometry(new QRect(0, -23, 535, 463));
+        scrollAreaWidgetContents.setGeometry(new QRect(0, 0, 553, 463));
         QPalette palette= new QPalette();
         palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText, new QColor(255, 255, 255));
         palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.Button, new QColor(0, 0, 0));
@@ -277,7 +278,7 @@ public class Ui_TelemetryView implements com.trolltech.qt.QUiForm<QWidget>
 
         graphScroll.setWidget(scrollAreaWidgetContents);
 
-        verticalLayout.addWidget(graphScroll);
+        horizontalLayout.addWidget(graphScroll);
 
         retranslateUi(TelemetryView);
 

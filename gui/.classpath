@@ -14,7 +14,7 @@
 	<classpathentry kind="lib" path="lib/jfreechart/junit.jar"/>
 	<classpathentry kind="lib" path="lib/jfreechart/servlet.jar"/>
 	<classpathentry kind="lib" path="lib/jfreechart/swtgraphics2d.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Andy Pritchard/Documents/dev/lib/qtjambi/qtjambi-4.5.2_01.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Andy Pritchard/Documents/dev/lib/qtjambi/qtjambi-win32-msvc2005-4.5.2_01.jar"/>
+	<classpathentry kind="lib" path="lib/qtjambi/qtjambi-4.5.2_01.jar"/>
+	<classpathentry kind="lib" path="lib/qtjambi/qtjambi-win32-msvc2005-4.5.2_01.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

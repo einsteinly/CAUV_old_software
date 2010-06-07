@@ -13,7 +13,10 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="margin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QScrollArea" name="graphScroll">
      <property name="autoFillBackground">
@@ -32,8 +35,8 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-23</y>
-        <width>535</width>
+        <y>0</y>
+        <width>553</width>
         <height>463</height>
        </rect>
       </property>

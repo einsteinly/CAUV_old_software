@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'GUIMain.jui'
 **
-** Created: Sun 13. Dec 01:05:55 2009
+** Created: Wed 5. May 03:26:39 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
