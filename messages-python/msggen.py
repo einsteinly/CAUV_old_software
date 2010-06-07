@@ -39,14 +39,43 @@ def toCPPType(t):
     else:
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
+pyTypeMap = {
+    "bool" : "bool",
+    "byte" : "str",
+    "int8" : "int",
+    "int16" : "int",
+    "int32" : "int",
+    "uint8" : "int",
+    "uint16" : "int",
+    "uint32" : "int",
+    "string" : "str",
+    "float" : "float",
+    "double" : "float"
+}
+def pyTypeInit(t):
+    if isinstance(t, msggenyacc.BaseType):
+        return "%s()" % pyTypeMap[t.name]
+    elif isinstance(t, msggenyacc.EnumType):
+        return "%s()" % t.enum.name
+    elif isinstance(t, msggenyacc.StructType):
+        return "%s()" % t.struct.name
+    elif isinstance(t, msggenyacc.UnknownType):
+        return "%s()" % t.name
+    elif isinstance(t, msggenyacc.ListType):
+        return "[]"
+    elif isinstance(t, msggenyacc.MapType):
+        return "{}"
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
 
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
-                 choices=["c++", "java"],
+                 choices=["c++", "java", "python"],
                  default="c++",
                  metavar="LANG",
-                 help="output language (java or c++) [default: %default]")
+                 help="output language (java, python or c++) [default: %default]")
     p.add_option("-o", "--output",
                  type="string",
                  metavar="FILE",
@@ -61,7 +90,7 @@ def main():
 
     if options.output == None:
         options.output = args[0]
-                                                     
+
     with open(args[0], "r") as file:
         data = file.read()
     tree = parser.parse(data)
@@ -74,6 +103,11 @@ def main():
         with open(options.output + ".cpp", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.cpp"), searchList=tree)
             t.toCPPType = toCPPType
+            file.write(str(t))
+    elif options.lang == "python":
+        with open(options.output + ".py", "w") as file:
+            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.py"), searchList=tree)
+            t.pyTypeInit = pyTypeInit
             file.write(str(t))
                                                               
 if __name__ == '__main__':
