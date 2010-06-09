@@ -62,7 +62,7 @@ class CombineRGBNode: public Node{
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
 
-            r["output"] = out;
+            r["image"] = out;
             
             return r;
         }

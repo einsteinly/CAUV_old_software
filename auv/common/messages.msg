@@ -62,7 +62,11 @@ enum NodeType : int8 {
     Blur = 13,
     BilateralFilter = 14,
     SplitRGB = 15,
-    CombineRGB = 16
+    CombineRGB = 16,
+    SplitHSV = 17,
+    SplitYUV = 18,
+    CombineYUV = 19,
+    CombineHSV = 20
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

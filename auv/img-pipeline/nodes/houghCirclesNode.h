@@ -31,8 +31,8 @@ class HoughCirclesNode: public Node{
             registerParamID<float>("minDist", 5);
             registerParamID<float>("param1", 100);
             registerParamID<float>("param2", 1000);
-            registerParamID<int>("minRadius", 0);
-            registerParamID<int>("maxRadius", 0);
+            registerParamID<int>("minRadius", 10);
+            registerParamID<int>("maxRadius", 20);
         }
         
         // this node should be run even if nothing is connected to its output
