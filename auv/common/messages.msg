@@ -66,7 +66,9 @@ enum NodeType : int8 {
     SplitHSV = 17,
     SplitYUV = 18,
     CombineYUV = 19,
-    CombineHSV = 20
+    CombineHSV = 20,
+    Levels = 21,
+    Mix = 22
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
