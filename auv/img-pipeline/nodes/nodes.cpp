@@ -13,6 +13,9 @@
 #include "guiOutputNode.h"
 #include "houghCirclesNode.h"
 #include "blurNode.h"
+#include "bilateralFilterNode.h"
+#include "splitRGBNode.h"
+#include "combineRGBNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -28,4 +31,7 @@ DEFINE_NFR(ConvertColourNode, NodeType::ConvertColour);
 DEFINE_NFR(GuiOutputNode, NodeType::GuiOutput);
 DEFINE_NFR(HoughCirclesNode, NodeType::HoughCircles);
 DEFINE_NFR(BlurNode, NodeType::Blur);
+DEFINE_NFR(BilateralFilterNode, NodeType::BilateralFilter);
+DEFINE_NFR(SplitRGBNode, NodeType::SplitRGB);
+DEFINE_NFR(CombineRGBNode, NodeType::CombineRGB);
 

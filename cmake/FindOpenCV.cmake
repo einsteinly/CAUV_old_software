@@ -16,8 +16,6 @@ find_path(OpenCV_INCLUDE_DIR
   PATH_SUFFIXES opencv
   PATHS ${OpenCV_PKGCONF_INCLUDE_DIRS}
 )
-#message ("OpenCV_PKGCONF_INCLUDE_DIRS=${OpenCV_PKGCONF_INCLUDE_DIRS}")
-#message ("OpenCV_INCLUDE_DIR=${OpenCV_INCLUDE_DIR}")
 
 # Finally the libraries
 find_library(OpenCV_LIBCXCORE NAMES cxcore PATHS ${OpenCV_PKGCONF_LIBRARY_DIRS})
@@ -39,6 +37,5 @@ libfind_process(OpenCV)
 #message ("OpenCV_LIBRARIES=${OpenCV_LIBRARIES}")
 
 set (OpenCV_LIBS "${OpenCV_LIBRARIES}")
-message ("OpenCV_LIBS=${OpenCV_LIBS}")
 
 

@@ -22,7 +22,7 @@ class PVPair: public Renderable{
     public:
         typedef Node* node_ptr_t;
         PVPair(node_ptr_t n, std::string const& param, value_T const& value)
-            : Renderable(n), m_node(n), m_bbox(),
+            : Renderable(n), m_node(n), m_bbox(), m_min_value_bbox(0, -3, 13, 10),
               m_param(boost::make_shared<Text>(n, param)),
               m_equals(boost::make_shared<Text>(n, "=")),
               m_value(boost::make_shared<Text>(n, to_string(value))){
@@ -44,16 +44,26 @@ class PVPair: public Renderable{
 
             glPushMatrix();
             glTranslatef(m_value->m_pos);
-            m_value->draw(picking);
+            if(m_value->bbox().area())
+                m_value->draw(picking);
+            else{
+                glColor(Colour(0.8, 0.2, 0.2, 0.5));
+                glBox(m_min_value_bbox);
+            }
             glPopMatrix();
         }
 
         virtual bool mousePressEvent(MouseEvent const& e){
             MouseEvent referred(e, m_value);
-            if(m_value->bbox().contains(referred.pos)){
+            BBox value_bbox = m_value->bbox();
+            if(!value_bbox.area())
+                value_bbox = m_min_value_bbox;
+            if(value_bbox.contains(referred.pos)){
                 debug() << "got value hit";
-                BBox edit_box = m_value->bbox();
-                edit_box.max.x += 10;
+                BBox edit_box = value_bbox;
+                edit_box.max.x += 40;
+                edit_box.min.y -= 3;
+                edit_box.max.y += 3;
                 m_context->postMenu(
                     boost::make_shared<EditText<PVPair const&> >(
                         m_context, *m_value, edit_box, &onValueChanged, boost::ref(*this)
@@ -76,21 +86,26 @@ class PVPair: public Renderable{
             std::istringstream is(s);
             value_T v;
             is >> v;
-            debug() << "PVPair: Edit done:" << s << "->" << v;
+            debug() << "PVPair: Edit done:" << s << "=" << v;
             pvp.m_node->paramValueChanged(*pvp.m_param, v);
         }
 
         void updateBbox(){
+            BBox value_bbox = m_value->bbox();
+            if(!value_bbox.area())
+                value_bbox = m_min_value_bbox;
+            
             m_bbox = m_param->bbox();
             m_equals->m_pos.x = m_bbox.max.x + 3 - m_equals->bbox().min.x;
             m_bbox |= m_equals->bbox() + m_equals->m_pos;
-            m_value->m_pos.x = m_bbox.max.x + 3 - m_value->bbox().min.x;
-            m_bbox |= m_value->bbox() + m_value->m_pos;
+            m_value->m_pos.x = m_bbox.max.x + 3 - value_bbox.min.x;
+            m_bbox |= value_bbox + m_value->m_pos;
         }
 
         node_ptr_t m_node;
 
         BBox m_bbox;
+        BBox m_min_value_bbox;
 
         boost::shared_ptr<Text> m_param;
         boost::shared_ptr<Text> m_equals;

@@ -188,6 +188,12 @@ public class AUV extends QSignalEmitter {
      */
     private CommunicationController controller;
 
+    public static class AUVConnection extends QSignalEmitter {
+        public Signal1<AUV> connect = new Signal1<AUV>();
+        public Signal1<AUV> disconnect = new Signal1<AUV>();
+    };
+    public static AUVConnection connection = new AUVConnection();
+
     /**
      * Telemetry about the AUV that isn't categorised into a device above
      */
@@ -197,7 +203,8 @@ public class AUV extends QSignalEmitter {
     protected float depth = 0.0f;
 
     public AUV(String address, int port) throws UnknownHostException, IOException {
-        controller = new CommunicationController(this, address, port);
+        controller = new AUVController(this, address, port);
+        AUV.connection.connect.emit(this);
     }
 
     public void regsiterConnectionStateObserver(ConnectionStateObserver o) {

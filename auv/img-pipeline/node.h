@@ -27,7 +27,7 @@ class Node{
         typedef std::map<output_id, msg_node_in_list_t> msg_node_output_map_t;
         typedef std::map<input_id, NodeOutput> msg_node_input_map_t;
 
-        typedef std::map<param_id, param_value_t> param_value_map_t;
+        typedef std::map<param_id, std::string> param_tip_map_t;
 
         typedef std::set<output_id> output_id_set_t;
         typedef std::set<input_id> input_id_set_t;
@@ -46,6 +46,7 @@ class Node{
 
         typedef std::list<output_link_t> output_link_list_t;
 
+        typedef std::map<param_id, param_value_t> param_value_map_t;
         typedef std::map<input_id, bool> in_bool_map_t;
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
@@ -150,7 +151,7 @@ class Node{
             if(i != m_parameters.end()){
                 return boost::get<T>(i->second);
             }else{
-                throw(id_error(std::string("param: Invalid parameter id: ") + to_string(p)));
+                throw(id_error("param: Invalid parameter id: " + to_string(p)));
             }
         }
         
@@ -186,9 +187,11 @@ class Node{
          * ids.
          */
         template<typename T>
-        void registerParamID(param_id const& p, T const& default_value){
+        void registerParamID(param_id const& p, T const& default_value,
+                             std::string const& tip=""){
             lock_t l(m_parameters_lock);
             m_parameters[p] = param_value_t(default_value);
+            m_parameter_tips[p] = tip;
         }
         void registerOutputID(output_id const& o);
         void registerInputID(input_id const& i);
@@ -256,6 +259,7 @@ class Node{
         
         /* parameters of the filters */
         param_value_map_t m_parameters;
+        param_tip_map_t m_parameter_tips;
         mutable mutex_t m_parameters_lock;
         
         /* Keep track of which of our inputs have been refreshed since this node

@@ -15,10 +15,11 @@ class Image{
             src_file,
             src_camera,
             src_sonar,
-            src_pipeline
+            src_pipeline,
+            src_unknown
         };
         
-        Image();
+        Image(Source const& source=src_unknown);
         Image(cv::Mat const& cv_image, Source const& source);
         Image(Image const& other);
         ~Image();
@@ -88,7 +89,8 @@ std::basic_ostream<charT, traits>& operator<<(
         case Image::src_file: os << "file"; break;
         case Image::src_camera: os << "camera"; break;
         case Image::src_sonar: os << "sonar"; break;
-        case Image::src_pipeline: os << "pipeline"; break;        
+        case Image::src_pipeline: os << "pipeline"; break;
+        case Image::src_unknown: os << "unknown"; break;
     }
     return os;
 }

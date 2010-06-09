@@ -8,7 +8,7 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
       m_parent_links(), m_parent_links_lock(),
       m_child_links(), m_child_links_lock(),
       m_outputs(), m_outputs_lock(),
-      m_parameters(), m_parameters_lock(),
+      m_parameters(), m_parameter_tips(), m_parameters_lock(),
       m_new_inputs(), m_new_inputs_lock(),
       m_valid_inputs(), m_valid_inputs_lock(),
       m_output_demanded(false), m_output_demanded_lock(),

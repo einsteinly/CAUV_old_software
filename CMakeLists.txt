@@ -1,28 +1,19 @@
 cmake_minimum_required (VERSION 2.8)
 
+# Initialise install directories
+foreach(DIR $ENV{HOME}/install $ENV{HOME} /societies/cauv/install)
+    if (EXISTS ${DIR}/include OR EXISTS ${DIR}/lib)
+        message("Adding ${DIR} to prefix path")
+        set (CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" "${DIR}")
+    endif()
+endforeach(DIR)
+
+
 project (CAUV)
 
 # set paths for package search scripts
-set (CMAKE_MODULE_PATH ${CAUV_SOURCE_DIR} "${CAUV_SOURCE_DIR}/cmake/")
-set (ssrcspread_DIR "${CAUV_SOURCE_DIR}/cmake/")
-set (Spread_DIR "${CAUV_SOURCE_DIR}/cmake/")
-set (ftdi_DIR "${CAUV_SOURCE_DIR}/cmake/")
-set (FTGL_DIR "${CAUV_SOURCE_DIR}/cmake/")
-set (CAUVBoost_DIR "${CAUV_SOURCE_DIR}/cmake/")
-set (OpenCV_DIR "${CAUV_SOURCE_DIR}/cmake/")
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CAUV_SOURCE_DIR}/cmake/")
 
-set (
-    CMAKE_INCLUDE_PATH
-    "${CMAKE_INCLUDE_PATH}"
-    "~/install/"
-    "/societies/cauv/install"
-)
-
-# eugh, hacky
-link_directories (
-    "~/install/lib/"
-    "/societies/cauv/install/lib/"
-)
 
 set (ALWAYS_FLAGS "-DPIC -fPIC -Wall")
 set (DEBUG_FLAGS "-DCAUV_DEBUG -g -Wextra -Wno-non-virtual-dtor -Wno-system-headers")
@@ -38,6 +29,6 @@ set (CMAKE_C_FLAGS "${ALWAYS_FLAGS}")
 
 add_subdirectory (messages-python)
 add_subdirectory (auv)
-#add_subdirectory (gui-pipeline EXCLUDE_FROM_ALL)
+add_subdirectory (gui-pipeline EXCLUDE_FROM_ALL)
 
 

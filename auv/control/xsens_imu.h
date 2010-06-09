@@ -8,7 +8,7 @@
 #ifndef _XSENS_IMU_H
 #define	_XSENS_IMU_H
 
-#include <lib/xsens/cmt3.h>
+#include <xsens/cmt3.h>
 
 #include <common/messages.h>
 
