@@ -15,6 +15,10 @@ syntax: glob
 */tags
 *.out
 *.pyc
+CMakeFiles/*
+CMakeCache.txt
+Makefile
+cmake_install.cmake
 .DS_Store
 messages-python/parsetab.py
 auv/common/messages.cpp
