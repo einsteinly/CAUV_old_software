@@ -1,9 +1,11 @@
 #include "image.h"
 
-const static int Compress_JPEG_Quality = 90;
+#include <algorithm>
 
-Image::Image()
-    : m_img(), m_source(), m_compress_fmt(".jpg"), m_compress_params(){
+const static int Compress_JPEG_Quality = 95;
+
+Image::Image(Source const& src)
+    : m_img(), m_source(src), m_compress_fmt(".jpg"), m_compress_params(){
     m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     m_compress_params.push_back(Compress_JPEG_Quality);
 }
@@ -39,5 +41,20 @@ Image::Source Image::source() const{
 
 void Image::source(Source const& s){
     m_source = s;
+}
+
+void Image::serializeQuality(int q){
+    std::vector<int>::iterator i;
+    if((i = std::find(
+           m_compress_params.begin(), m_compress_params.end(), CV_IMWRITE_JPEG_QUALITY
+       )) != m_compress_params.end()){
+        if(++i != m_compress_params.end())
+            *i = q;
+        else
+            m_compress_params.push_back(q);
+    }else{
+        m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+        m_compress_params.push_back(q);
+    }
 }
 

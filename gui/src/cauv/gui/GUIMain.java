@@ -6,7 +6,7 @@ import cauv.auv.AUV;
 import cauv.auv.MessageSocket;
 import cauv.auv.MessageSocket.ConnectionStateObserver;
 import cauv.gui.Ui_GUIMain;
-import cauv.gui.controllers.ControlHandler;
+import cauv.gui.controllers.PS2ControlHandler;
 import cauv.gui.views.CameraFeeds;
 import cauv.gui.views.MissionControlView;
 import cauv.gui.views.SettingsView;
@@ -76,7 +76,7 @@ public class GUIMain extends QMainWindow implements ConnectionStateObserver {
 		try {
 			AUV auv = new AUV(Config.ADDRESS, Config.AUV_PORT);
 			auv.regsiterConnectionStateObserver(this);
-			new ControlHandler(this.ui, auv);
+			//new ControlHandler(this.ui, auv);
 		} catch (IOException e) {
 			ui.errorMessage.setText("Connecting to AUV failed. Sigh.");
 		} finally {
@@ -84,7 +84,6 @@ public class GUIMain extends QMainWindow implements ConnectionStateObserver {
 			ui.port.setEnabled(true);
 			ui.connectButton.setEnabled(true);
 		}
-
 	}
 
 	public void registerScreen(final ScreenView view) {

@@ -57,7 +57,12 @@ enum NodeType : int8 {
     HoughLines = 8,
     Canny = 9,
     ConvertColour = 10,
-    GuiOutput = 11
+    GuiOutput = 11,
+    HoughCircles = 12,
+    Blur = 13,
+    BilateralFilter = 14,
+    SplitRGB = 15,
+    CombineRGB = 16
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

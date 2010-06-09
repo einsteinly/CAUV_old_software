@@ -33,7 +33,7 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
 
         virtual void onReceiveImage(CameraID::e cam_id, const cv::Mat& img)
         {
-            if(!m_msg)
+            if(!m_msg && img.rows && img.cols)
             {
                 // only do stuff if last image has sent
                 Image i(img, Image::src_camera);
@@ -41,6 +41,10 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
                 m_msg = m;
                 m_cam_id = cam_id;
                 sendImage();
+            }
+            else if(!m_msg)
+            {
+                warning() << "no image";
             }
         }
 
@@ -99,6 +103,7 @@ void interrupt(int sig)
 
 int main(int argc, char **argv)
 {
+/*
     if (argc != 3)
     {
         std::cout << "Error: Not enough parameters" << std::endl;
@@ -106,10 +111,10 @@ int main(int argc, char **argv)
 
         return 1;
     }
-
-    CameraID::e camera_id;
-    uint32_t device_id;
-
+*/
+    CameraID::e camera_id = CameraID::Forward;
+    uint32_t device_id = 0;
+/*
     if (strcasecmp(argv[1], "forward") == 0)
     {
         camera_id = CameraID::Forward;
@@ -126,7 +131,7 @@ int main(int argc, char **argv)
     }
 
     device_id = atoi(argv[2]);
-
+*/
 
     signal(SIGINT, interrupt);
     node = new WebcamNode(camera_id, device_id);

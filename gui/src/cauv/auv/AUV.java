@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.util.Vector;
 
 import cauv.auv.MessageSocket.ConnectionStateObserver;
+import cauv.types.floatYPR;
 
 import com.trolltech.qt.QSignalEmitter;
 
@@ -73,12 +74,16 @@ public class AUV extends QSignalEmitter {
      */
     public class Autopilot<T> extends QSignalEmitter {
 
-        public Signal1<T> targetChanged = new Signal1<T>();
+        public Signal1<Autopilot<T>> targetChanged = new Signal1<Autopilot<T>>();
         public Signal1<Boolean> stateChanged = new Signal1<Boolean>();
 
         protected T target;
-        protected boolean enabled;
+        protected boolean enabled = true;
 
+        public Autopilot(T initialTarget) {
+        	this.target = initialTarget;
+		}
+        
         public T getTarget() {
             return target;
         }
@@ -86,7 +91,7 @@ public class AUV extends QSignalEmitter {
         public void setTarget(T target) {
             if (enabled) {
                 this.target = target;
-                targetChanged.emit(target);
+                targetChanged.emit(this);
             }
         }
 
@@ -101,8 +106,9 @@ public class AUV extends QSignalEmitter {
     }
 
     public class Autopilots {
-        public final Autopilot<Float> DEPTH = new Autopilot<Float>();
-        public final Autopilot<Float> HEADING = new Autopilot<Float>();
+        public final Autopilot<Float> DEPTH = new Autopilot<Float>(0.0f);
+        public final Autopilot<Float> YAW = new Autopilot<Float>(0.0f);
+        public final Autopilot<Float> PITCH = new Autopilot<Float>(0.0f);
     }
 
     public Autopilots autopilots = new Autopilots();
@@ -180,18 +186,18 @@ public class AUV extends QSignalEmitter {
      * The AUV controller handles the messages sent over the network and also
      * monitors for updates to the AUV state, sending messages when necessary.
      */
-    private AUVController controller;
+    private CommunicationController controller;
 
     /**
      * Telemetry about the AUV that isn't categorised into a device above
      */
     public Signal1<floatYPR> orientationChanged = new Signal1<floatYPR>();
-    protected floatYPR orientation;
+    protected floatYPR orientation = new floatYPR();
     public Signal1<Float> depthChanged = new Signal1<Float>();
-    protected float depth;
+    protected float depth = 0.0f;
 
     public AUV(String address, int port) throws UnknownHostException, IOException {
-        controller = new AUVController(this, address, port);
+        controller = new CommunicationController(this, address, port);
     }
 
     public void regsiterConnectionStateObserver(ConnectionStateObserver o) {
@@ -215,5 +221,4 @@ public class AUV extends QSignalEmitter {
     public float getDepth() {
         return depth;
     }
-
 }

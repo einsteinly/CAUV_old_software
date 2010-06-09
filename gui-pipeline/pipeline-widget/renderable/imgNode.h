@@ -2,6 +2,7 @@
 #define __IMGNODE_RENDERABLE_H__
 
 #include "node.h"
+#include "resizeable.h"
 
 #include <common/image.h>
 
@@ -9,15 +10,13 @@ namespace pw{
 
 class TexImg;
 
-class Img: public Renderable{
+class Img: public Resizeable{
     public:
         Img(container_ptr_t c);
         virtual void draw(bool);
-        virtual BBox bbox();
         void display(Image const& img);
 
     private:
-        BBox m_bbox;
         boost::shared_ptr<TexImg> m_img;
 };
 

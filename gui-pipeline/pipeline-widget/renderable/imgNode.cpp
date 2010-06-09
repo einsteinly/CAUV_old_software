@@ -9,7 +9,17 @@ namespace pw{
 
 // nasty solution, but TexImg objects might be destroyed in threads other than
 // the gui thread
-static std::vector<GLuint> Textures_For_Deleting;
+static struct _TFD: public std::vector<GLuint>{
+    ~_TFD(){
+        deleteAndClear();
+    }
+    void deleteAndClear(){
+        if(int n = size()){
+            glDeleteTextures(n, &operator[](0));
+            clear();
+        }
+    }
+} Textures_For_Deleting;
 
 // TODO: something more sophisticated; tiling for large images, dynamic
 // re-allocation of texture ids, checking the capabilities of the graphics
@@ -64,14 +74,32 @@ class TexImg{
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
            
             cv::Mat m;
-            const int w = 400;
-            const int h = w * m_img->cvMat().rows / m_img->cvMat().cols;
+            GLint max_size = 0;
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
+
+            debug() << "max texture size:" << max_size;
+            if(!max_size){
+                error() << "cannot create texture";
+                return;
+            }
+            
+            const int img_w = m_img->cvMat().cols;
+            const int img_h = m_img->cvMat().rows;
+            int w, h;
+            max_size = min(max_size, max(img_w, img_h));
+            if(img_h > img_w){
+                h = max_size;
+                w = h * img_w / img_h;
+            }else{
+                w = max_size;
+                h = w * img_h / img_w;
+            }
             cv::resize(m_img->cvMat(), m, cv::Size(w, h), 0, 0, cv::INTER_LANCZOS4);
             
             if(m.channels() == 4)
@@ -93,26 +121,23 @@ class TexImg{
 using namespace pw;
 
 Img::Img(container_ptr_t c)
-    : Renderable(c), m_bbox(0, 0, 300, 200){
+    : Resizeable(c, BBox(0, 0, 300, 200), BBox(30, 20), BBox(1200, 800)){
 }
 
 void Img::draw(bool picking){
-    if(int n = Textures_For_Deleting.size()){
-        glDeleteTextures(n, &Textures_For_Deleting[0]);
-        Textures_For_Deleting.clear();
-    }
+    // delete any textures waiting to be deleted
+    Textures_For_Deleting.deleteAndClear();
+
     glColor(Colour(0.2, 0.5));
     glBox(m_bbox);
     if(!picking && m_img)
         m_img->draw(m_bbox);
-}
-
-BBox Img::bbox(){
-    return m_bbox;
+    Resizeable::drawHandle();
 }
 
 void Img::display(Image const& img){
     m_img = boost::make_shared<TexImg>(img);
+    aspect(double(img.cvMat().cols) / img.cvMat().rows);
     m_context->postRedraw();
 }
 

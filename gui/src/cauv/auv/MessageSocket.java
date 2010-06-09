@@ -13,7 +13,7 @@ import spread.SpreadMessage;
 
 public class MessageSocket extends MessageSource implements AdvancedMessageListener {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     Vector<SpreadGroup> groups = new Vector<SpreadGroup>();
     Vector<MembershipObserver> m_membership_observers = new Vector<MembershipObserver>();
 
@@ -27,7 +27,7 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
     public SpreadConnection m_connection;
     private Vector<ConnectionStateObserver> m_connection_state_listeners = new Vector<ConnectionStateObserver>();
 
-    public MessageSocket(String address, int port) throws UnknownHostException, IOException {
+    public MessageSocket(String address, int port, String name) throws UnknownHostException, IOException {
         //
         // set up the spread connection.
         // connect to the spread daemon running on the AUV
@@ -36,8 +36,10 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
             m_connection = new SpreadConnection();
             m_connection.add(this);
 
-            try { // register for received messages m_connection.add(this);
-                m_connection.connect(InetAddress.getByName(address), port, "GUI", false, false);
+            try {
+            	// register for received messages
+            	m_connection.add(this);
+                m_connection.connect(InetAddress.getByName(address), port, name, false, true);
             } catch (SpreadException ex) {
                 for (ConnectionStateObserver c : m_connection_state_listeners) {
                     c.onDisconnect(this);
@@ -54,8 +56,8 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
     public void disconnect() throws IOException {
         if (!DEBUG) {
             try {
+                //m_connection.remove(this);
                 m_connection.disconnect();
-                m_connection.remove(this);
             } catch (SpreadException ex) {
                 throw new IOException(ex.getMessage());
             }

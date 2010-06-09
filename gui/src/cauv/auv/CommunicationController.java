@@ -3,17 +3,17 @@ package cauv.auv;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
-class AUVController implements MessageObserver {
+class CommunicationController implements MessageObserver {
 
     protected AUV auv;
     protected MessageSocket messages;
 
-    public AUVController(AUV auv, String address, int port) throws UnknownHostException,
+    public CommunicationController(AUV auv, String address, int port) throws UnknownHostException,
             IOException {
 
         this.auv = auv;
 
-        messages = new MessageSocket(address, port);
+        messages = new MessageSocket(address, port, "GUI");
         messages.addObserver(this);
         messages.joinGroup("control");
         messages.joinGroup("images");

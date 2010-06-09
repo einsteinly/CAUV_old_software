@@ -5,16 +5,13 @@ import cauv.Config;
 import cauv.auv.AUV;
 import cauv.gamepad.PS2Controller;
 import cauv.gamepad.PS2Controller.Button;
-import cauv.gui.Ui_GUIMain;
 
-public class ControlHandler implements cauv.gamepad.PS2InputHandler {
+public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
 
-    public Ui_GUIMain ui;
     AUV auv;
     protected boolean ignoreInput = true;
 
-    public ControlHandler(Ui_GUIMain ui, AUV auv) {
-        this.ui = ui;
+    public PS2ControlHandler(AUV auv) {
         this.auv = auv;
 
         try {
@@ -24,7 +21,7 @@ public class ControlHandler implements cauv.gamepad.PS2InputHandler {
         } catch (IOException e) {
             System.err.println("Gamepad not availible: " + e.getMessage());
         }
-
+/*
         ui.controlsToggle.clicked.connect(this, "toggleInput()");
 
         ui.shutdownButton.released.connect(this, "stop()");
@@ -40,7 +37,7 @@ public class ControlHandler implements cauv.gamepad.PS2InputHandler {
         auv.motors.HSTERN.speedChanged.connect(ui.sliderHStern, "setValue(int)");
         auv.motors.VSTERN.speedChanged.connect(ui.sliderVStern, "setValue(int)");
         auv.motors.PROP.speedChanged.connect(ui.sliderProp, "setValue(int)");
-
+*/
     }
 
     public void toggleInput() {

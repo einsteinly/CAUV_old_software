@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import cauv.Config;
+import cauv.auv.AUV;
 import cauv.gui.ScreenView;
 
 import com.trolltech.qt.gui.*;
@@ -282,6 +283,9 @@ public class MissionControlView extends QWidget implements ScreenView {
         }
     }
     
+    public void onConnect(AUV auv){
+    	
+    }
     
 	@Override
 	public QGraphicsItemInterface getIconWidget() {

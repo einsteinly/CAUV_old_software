@@ -12,7 +12,9 @@ class GuiOutputNode: public OutputNode{
 
             // no outputs
             
-            // no parameters
+            // one parameter: image compression quality for network
+            // transmission
+            registerParamID<int>("jpeg quality", 85); // 0-100
         }
 
     protected:
@@ -21,8 +23,10 @@ class GuiOutputNode: public OutputNode{
             out_image_map_t r;
 
             image_ptr_t img = inputs["image_in"];
-             
-            debug() << "GuiOutputNode::doWork()" << *img;
+            int qual = param<int>("jpeg quality");
+
+            debug() << "GuiOutputNode::doWork()" << id() << *img;
+            img->serializeQuality(qual);
             sendMessage(boost::make_shared<GuiImageMessage>(id(), *img));
 
             return r;

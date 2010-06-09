@@ -22,6 +22,7 @@ set (
     renderable/nodeIO.cpp
     renderable/arc.cpp
     renderable/imgNode.cpp
+    renderable/resizeable.cpp
 )
 
 set (

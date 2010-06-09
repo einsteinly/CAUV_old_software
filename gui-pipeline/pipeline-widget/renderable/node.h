@@ -70,6 +70,7 @@ class Node: public Draggable,
                               bool pressed=false);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
+        virtual void refreshLayout();
 
         // specialized for known param types in node.cpp
         template<typename value_T>
@@ -79,8 +80,6 @@ class Node: public Draggable,
         }
     
     protected:
-        void refreshLayout();
-
         renderable_set_t m_extra_stuff;
 
     private:
