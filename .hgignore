@@ -215,4 +215,4 @@ auv/lib/spread-src-4.1.0/stdutil/src/stdutil.lto
 auv/lib/spread-src-4.1.0/stdutil/src/stdutil.tdo
 auv/lib/spread-src-4.1.0/stdutil/src/stdutil.to
 auv/lib/spread-src-4.1.0/stdutil/src/stdutil/private/stdarch_autoconf.h
-relre:.metadata
+relre:metadata/*
