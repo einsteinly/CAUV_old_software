@@ -4,8 +4,8 @@
 
 const static int Compress_JPEG_Quality = 95;
 
-Image::Image()
-    : m_img(), m_source(), m_compress_fmt(".jpg"), m_compress_params(){
+Image::Image(Source const& src)
+    : m_img(), m_source(src), m_compress_fmt(".jpg"), m_compress_params(){
     m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     m_compress_params.push_back(Compress_JPEG_Quality);
 }

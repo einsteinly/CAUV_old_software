@@ -15,7 +15,6 @@ target_link_libraries (
 )
 
 
-
 add_executable (
     opencv_test
     opencv_test.c

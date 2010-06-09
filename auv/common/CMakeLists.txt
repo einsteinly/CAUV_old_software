@@ -1,6 +1,6 @@
 # required libraries:
-find_package (ssrcspread)
-include_directories (${ssrcspread_INCLUDE_DIRS} REQUIRED)
+find_package (ssrcspread REQUIRED)
+include_directories (${ssrcspread_INCLUDE_DIRS})
 link_directories (${ssrcspread_LIBRARY_DIR})
 
 # abbreviate a little:
@@ -75,7 +75,6 @@ target_link_libraries (
     common-shared
 
     ${ssrcspread_LIBRARIES}
-    #"libssrcspread.so"
     ${OpenCV_LIBS}
     boost_thread
     boost_serialization

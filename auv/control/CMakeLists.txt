@@ -13,8 +13,8 @@ add_executable (
 target_link_libraries (
     control
     common
-    cmt
     module
     ${ftdi_LIBRARIES}
+    cmt
 )
 

@@ -1,12 +1,12 @@
 #include <string>
 #include <iostream>
 
-#include <lib/xsens/cmtdef.h>
-#include <lib/xsens/xsens_time.h>
-#include <lib/xsens/xsens_list.h>
-#include <lib/xsens/cmtscan.h>
-#include <lib/xsens/cmt3.h>
-#include <lib/xsens/cmtpacket.h>
+#include <xsens/cmtdef.h>
+#include <xsens/xsens_time.h>
+#include <xsens/xsens_list.h>
+#include <xsens/cmtscan.h>
+#include <xsens/cmt3.h>
+#include <xsens/cmtpacket.h>
 
 #include "xsens_imu.h"
 
