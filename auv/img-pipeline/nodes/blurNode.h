@@ -6,7 +6,6 @@
 #include <string>
 
 #include <opencv/cv.h>
-#include <opencv/highgui.h>
 
 #include "../node.h"
 
@@ -19,10 +18,10 @@ class BlurNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image_in");
-            
+            registerInputID("image");
+
             // one output
-            registerOutputID("image_out");
+            registerOutputID("image (not copied)");
             
             // parameters: blur type (gaussian, median), kernel radius: must be
             // an odd integer
@@ -34,15 +33,13 @@ class BlurNode: public Node{
         out_image_map_t doWork(in_image_map_t& inputs){
             out_image_map_t r;
 
-            image_ptr_t img = inputs["image_in"];
+            image_ptr_t img = inputs["image"];
             
             std::string ftype = param<std::string>("type");
             int ksize = param<int>("kernel");
 
             if(!(ksize & 1))
                 warning() << "blur kernel size should be odd";
-
-            cv::Mat new_mat;
 
             debug() << "BlurNode:" << ftype << ksize;
 
@@ -53,7 +50,7 @@ class BlurNode: public Node{
             else
                 throw(parameter_error("invalid blur type: " + ftype));
             
-            r["image_out"] = img;
+            r["image (not copied)"] = img;
             
             return r;
         }
