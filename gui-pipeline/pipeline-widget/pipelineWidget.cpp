@@ -230,7 +230,7 @@ void spawnPGCN(PipelineWidget *p){
 }
 
 PipelineWidget::PipelineWidget(QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+    : QGLWidget(QGLFormat(), parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
@@ -500,9 +500,9 @@ void PipelineWidget::initializeGL(){
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthFunc(GL_LEQUAL);
-
     glShadeModel(GL_SMOOTH);
     glCullFace(GL_BACK);
+
     glClearColor(0, 0, 0, 1.0);
     glClearDepth(100.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -16,6 +16,12 @@
 #include "bilateralFilterNode.h"
 #include "splitRGBNode.h"
 #include "combineRGBNode.h"
+#include "splitHSVNode.h"
+#include "splitYUVNode.h"
+#include "combineYUVNode.h"
+#include "combineHSVNode.h"
+#include "levelsNode.h"
+#include "mixNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -34,4 +40,10 @@ DEFINE_NFR(BlurNode, NodeType::Blur);
 DEFINE_NFR(BilateralFilterNode, NodeType::BilateralFilter);
 DEFINE_NFR(SplitRGBNode, NodeType::SplitRGB);
 DEFINE_NFR(CombineRGBNode, NodeType::CombineRGB);
+DEFINE_NFR(SplitHSVNode, NodeType::SplitHSV);
+DEFINE_NFR(SplitYUVNode, NodeType::SplitYUV);
+DEFINE_NFR(CombineYUVNode, NodeType::CombineYUV);
+DEFINE_NFR(CombineHSVNode, NodeType::CombineHSV);
+DEFINE_NFR(LevelsNode, NodeType::Levels);
+DEFINE_NFR(MixNode, NodeType::Mix);
 

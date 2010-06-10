@@ -49,7 +49,7 @@ void Node::setInput(node_ptr_t n){
     if(m_parent_links.size() == 1){
         const output_id_set_t parent_outputs = n->outputs();
         if(parent_outputs.size() != 1){
-            std::cerr << "Parent has " << parent_outputs.size() << " outputs!" << std::endl;
+            error() << "Parent has " << parent_outputs.size() << " outputs!";
             throw link_error("setInput: specific parent output must be specified");
         }
         const in_link_map_t::iterator i = m_parent_links.begin();
@@ -366,7 +366,7 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id) const throw(id_err
     lock_t l(m_outputs_lock);
     const out_image_map_t::const_iterator i = m_outputs.find(o_id);
     if(i == m_outputs.end() || !i->second){
-        debug() << __func__ << "non-existent output requested, returning NULL";
+        warning() << __func__ << "non-existent output" << o_id << "requested, returning NULL";
         return image_ptr_t();
     }else{
         return i->second;
