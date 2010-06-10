@@ -310,7 +310,11 @@ std::basic_ostream<char_T, traits>& operator<<(
     #if $len($m.fields)#m.deserialize();#end if#
     os << "$className {";
     #for i, f in $enumerate($m.fields)
-    os << " $f.name = " << m.m_$f.name#if $i < $len($m.fields) - 1#<< ","#end if#;
+    #if $f.name == "int8" or $f.name == "byte" 
+    os << " $f.name = (int)" << m.m_$f.name#if $i < $len($m.fields) - 1# << ","#end if#;
+    #else
+    os << " $f.name = " << m.m_$f.name#if $i < $len($m.fields) - 1# << ","#end if#;
+    #end if
     #end for
     os << " }";
     return os;

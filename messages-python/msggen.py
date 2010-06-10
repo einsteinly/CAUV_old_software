@@ -39,6 +39,37 @@ def toCPPType(t):
     else:
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
+
+cTypeMap = {
+    "bool" : "int",
+    "byte" : "uint8_t",
+    "int8" : "int8_t",
+    "int16" : "int16_t",
+    "int32" : "int32_t",
+    "uint8" : "uint8_t",
+    "uint16" : "uint16_t",
+    "uint32" : "uint32_t",
+    "string" : "char*",
+    "float" : "float",
+    "double" : "double"
+}
+def toCType(t):
+    if isinstance(t, msggenyacc.BaseType):
+        return cTypeMap[t.name]
+    elif isinstance(t, msggenyacc.EnumType):
+        return "int"
+    elif isinstance(t, msggenyacc.StructType):
+        return "struct " + t.struct.name
+    elif isinstance(t, msggenyacc.UnknownType):
+        return t.name
+    elif isinstance(t, msggenyacc.ListType):
+        raise NotImplementedError("Lists not implemented for C")
+    elif isinstance(t, msggenyacc.MapType):
+        raise NotImplementedError("Maps not implemented for C")
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
+
 pyTypeMap = {
     "bool" : "bool",
     "byte" : "str",
@@ -72,10 +103,10 @@ def pyTypeInit(t):
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
-                 choices=["c++", "java", "python"],
+                 choices=["c++", "c", "java", "python"],
                  default="c++",
                  metavar="LANG",
-                 help="output language (java, python or c++) [default: %default]")
+                 help="output language (java, python, c++ or c) [default: %default]")
     p.add_option("-o", "--output",
                  type="string",
                  metavar="FILE",
@@ -103,6 +134,15 @@ def main():
         with open(options.output + ".cpp", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.cpp"), searchList=tree)
             t.toCPPType = toCPPType
+            file.write(str(t))
+    elif options.lang == "c":
+        with open(options.output + ".h", "w") as file:
+            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.h"), searchList=tree)
+            t.toCType = toCType
+            file.write(str(t))
+        with open(options.output + ".c", "w") as file:
+            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.c"), searchList=tree)
+            t.toCType = toCType
             file.write(str(t))
     elif options.lang == "python":
         with open(options.output + ".py", "w") as file:

@@ -25,7 +25,7 @@ public:
     virtual MessageFlavour getMessageFlavour() const = 0;
 
 protected:
-    SpreadMessage( const std::string &sender ) : m_sender(sender) {}
+    SpreadMessage( const std::string &sender );
 
     /**
      * The meaning of this member depends on the message type.
@@ -50,52 +50,37 @@ protected:
 
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
-                    const byte_vec_t &bytes )
-            // TODO: Is there some way of just passing all the right parameters to the other constructor?
-            : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
-              m_messageContents( new byte_vec_t(&bytes[0], &bytes[0] + bytes.size()) ) {}
+                    const byte_vec_t &bytes );
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
-                    const char * const bytes, const int byteCount )
-            : SpreadMessage(senderName), m_serviceType(serviceType), m_groups(groups), m_messageType(messageType),
-              m_messageContents( new byte_vec_t(bytes, bytes+byteCount) ) {}
+                    const char * const bytes, const int byteCount );
 
 public:
     /**
      * @return The private group name of the sending connection.
      */
-    const std::string &getSenderName() const {
-        return m_sender;
-    }
+    const std::string &getSenderName() const ;
 
     /**
      * @return A value representing the service level (mess, ordered, etc.)
      * and Spread message type (membership, regular) of the message.
      */
-    const Spread::service getServiceType() const {
-        return m_serviceType;
-    }
+    const Spread::service& getServiceType() const ;
 
     /**
      * @return The type of the application message as indicated by the sender.
      */
-    const int getAppMessageType() const {
-        return m_messageType;
-    }
+    int getAppMessageType() const ;
 
     /**
      * @return A list of all groups that received this message.
      */
-    const StringVectorPtr getReceivingGroupNames() const {
-        return m_groups;
-    }
+    const StringVectorPtr getReceivingGroupNames() const;
 
     /**
      * @return The actual application message data.
      */
-    boost::shared_ptr<const byte_vec_t> getMessage() const {
-        return m_messageContents;
-    }
+    boost::shared_ptr<const byte_vec_t> getMessage() const;
 
     virtual MessageFlavour getMessageFlavour() const;
 };
@@ -109,8 +94,7 @@ class MembershipMessage : public SpreadMessage {
     friend class SpreadMailbox;
 
 protected:
-    MembershipMessage( const std::string &sender )
-            : SpreadMessage(sender) {}
+    MembershipMessage( const std::string &sender );
 
 public:
     virtual MessageFlavour getMessageFlavour() const;
@@ -118,9 +102,7 @@ public:
     /**
      * @return The name of a group affected by this membership change (precise meaning varies by message type).
      */
-    const std::string &getAffectedGroupName() const  {
-        return m_sender;
-    }
+    const std::string &getAffectedGroupName() const;
 };
 
 
@@ -135,7 +117,7 @@ class TransitionMembershipMessage : public MembershipMessage {
     friend class SpreadMailbox;
 
 protected:
-    TransitionMembershipMessage( const std::string &sender) : MembershipMessage(sender) {}
+    TransitionMembershipMessage( const std::string &sender);
 public:
     /**
      * @return The group whose membership is going to change.
@@ -168,16 +150,12 @@ public:
     /**
      * @return A list of members in the affected group after the change has taken place.
      */
-    const StringVectorPtr getRemainingGroupMembers() const {
-        return m_remaining;
-    }
+    const StringVectorPtr getRemainingGroupMembers() const ;
 
     /**
      * @return The type of membership change event that caused this message.
      */
-    const MessageCause getCause() const {
-        return m_cause;
-    }
+    MessageCause getCause() const ;
 
     /**
      * Returns a list of group members affected by this membership change.
@@ -188,15 +166,12 @@ public:
      * change in membership (this list includes the changed member itself).
      * @return A list of affected group members.
      */
-    const StringVectorPtr getChangedMemberNames() const {
-        return m_changedMembers;
-    }
+    const StringVectorPtr getChangedMemberNames() const ;
 
 protected:
     RegularMembershipMessage( const std::string &sender, const MessageCause cause,
                               const StringVectorPtr remaining,
-                              const StringVectorPtr changedMembers )
-            : MembershipMessage(sender), m_remaining(remaining), m_changedMembers(changedMembers), m_cause(cause) {}
+                              const StringVectorPtr changedMembers );
 
     StringVectorPtr m_remaining;
     StringVectorPtr m_changedMembers;
@@ -212,8 +187,7 @@ class SelfLeaveMessage : public MembershipMessage {
     friend class SpreadMailbox;
 
 protected:
-    SelfLeaveMessage( const std::string &sender)
-            : MembershipMessage(sender) {}
+    SelfLeaveMessage( const std::string &sender);
 public:
     /**
      * @return The name of the group which this mailbox has left.
