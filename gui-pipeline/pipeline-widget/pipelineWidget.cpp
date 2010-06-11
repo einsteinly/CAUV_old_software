@@ -32,10 +32,11 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
             (a->m_dst.lock() == b->m_src.lock() && a->m_src.lock() == b->m_dst.lock()));
 }
 
-class PipelineGuiMsgObs: public MessageObserver{
+class PipelineGuiMsgObs: public BufferedMessageObserver{
     public:
         PipelineGuiMsgObs(PipelineWidget *p)
             : m_widget(p){
+            setDoubleBuffered(MessageType::GuiImage, true);
         }
 
         virtual void onNodeAddedMessage(NodeAddedMessage_ptr m){
@@ -175,7 +176,7 @@ class PipelineGuiMsgObs: public MessageObserver{
                 np->outputStatus(m->outputId(), m->status());
         }
 
-        virtual void onGuiImageMessage(GuiImageMessage_ptr m){
+        virtual void onGuiImageMessageBuffered(GuiImageMessage_ptr m){
             debug(1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(imgnode_ptr_t np = m_widget->imgNode(m->nodeId()))
                 np->display(m->image());
