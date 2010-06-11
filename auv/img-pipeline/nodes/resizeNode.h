@@ -40,9 +40,14 @@ class ResizeNode: public Node{
             
             cv::Mat new_mat;
 
-            cv::resize(img->cvMat(), new_mat, cv::Size(), scale_fac, scale_fac, interp);
-            
-            r["image_out"] = image_ptr_t(new Image(new_mat, img->source()));
+            try{
+                cv::resize(img->cvMat(), new_mat, cv::Size(), scale_fac, scale_fac, interp);
+                r["image_out"] = image_ptr_t(new Image(new_mat, img->source()));
+            }catch(cv::Exception& e){
+                error() << "ResizeNode:\n\t"
+                        << e.err << "\n\t"
+                        << "in" << e.func << "," << e.file << ":" << e.line;
+            }
             
             return r;
         }

@@ -45,11 +45,15 @@ class BilateralFilterNode: public Node{
             float sigmaSpace = param<float>("sigmaSpace");
 
             debug() << "BilateralFilterNode:" << diameter << sigmaColour << sigmaSpace;
-
-            cv::bilateralFilter(img->cvMat(), out->cvMat(),
-                                diameter, sigmaColour, sigmaSpace);
-            
-            r["image out"] = out;
+            try{
+                cv::bilateralFilter(img->cvMat(), out->cvMat(),
+                                    diameter, sigmaColour, sigmaSpace); 
+                r["image out"] = out;
+            }catch(cv::Exception& e){
+                error() << "BilateralFilterNode:\n\t"
+                        << e.err << "\n\t"
+                        << "in" << e.func << "," << e.file << ":" << e.line;
+            }
             
             return r;
         }

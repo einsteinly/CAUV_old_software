@@ -42,15 +42,20 @@ class BlurNode: public Node{
                 warning() << "blur kernel size should be odd";
 
             debug() << "BlurNode:" << ftype << ksize;
-
-            if(ftype == "median")
-                cv::medianBlur(img->cvMat(), img->cvMat(), ksize);
-            else if(ftype == "gaussian")
-                cv::GaussianBlur(img->cvMat(), img->cvMat(), cv::Size(), ksize, 0);
-            else
-                throw(parameter_error("invalid blur type: " + ftype));
             
-            r["image (not copied)"] = img;
+            try{
+                if(ftype == "median")
+                    cv::medianBlur(img->cvMat(), img->cvMat(), ksize);
+                else if(ftype == "gaussian")
+                    cv::GaussianBlur(img->cvMat(), img->cvMat(), cv::Size(), ksize, 0);
+                else
+                    throw(parameter_error("invalid blur type: " + ftype));
+                r["image (not copied)"] = img;
+            }catch(cv::Exception& e){
+                error() << "BlurNode:\n\t"
+                        << e.err << "\n\t"
+                        << "in" << e.func << "," << e.file << ":" << e.line;
+            }
             
             return r;
         }
