@@ -13,7 +13,7 @@ add_custom_command (
    OUTPUT ${SRCD}/messages.cpp
           ${SRCD}/messages.h
    WORKING_DIRECTORY ${PYMSGD}
-   COMMAND python msggen.py -o ${SRCD}/messages ${SRCD}/messages.msg 
+   COMMAND python msggen.py -l "c++" -o ${SRCD}/messages ${SRCD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
            ${PYMSGD}/message.template.cpp
            ${PYMSGD}/message.template.h

@@ -573,8 +573,8 @@ void Node::checkAddSched() throw(){
     m_sched.addJob(this, m_priority);
 }
 
-void Node::sendMessage(boost::shared_ptr<Message const> m){
-    m_pl.sendMessage(m);
+void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p){
+    m_pl.sendMessage(m, p);
 }
 
 /* Keep a record of which inputs are new (have changed since they were
@@ -593,7 +593,7 @@ void Node::setNewInput(input_id const& a){
         e << a << "invalid, valid inputs:";
         foreach(in_bool_map_t::value_type const& v, m_new_inputs)
             e << v.second;
-        throw(id_error("newInput: Invalid input id: " + to_string(a)));
+        throw id_error("newInput: Invalid input id: " + to_string(a));
     }else{
         debug() << *this << "notified of new input: " << a;
         i->second = true;

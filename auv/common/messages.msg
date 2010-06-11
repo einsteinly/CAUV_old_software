@@ -1,3 +1,8 @@
+enum DebugType : int8 {
+    Trace = 0,
+    Debug = 1,
+    Error = 2
+}
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
 enum NodeType : int8 {
@@ -98,7 +103,7 @@ group debug
 	message Debug : 0
 	{
         type : DebugType;
-	    message : string;
+	    msg : string;
     }
 }
 

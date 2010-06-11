@@ -41,7 +41,7 @@ def toCPPType(t):
         return "ERROR"
 
 cTypeMap = {
-    "bool" : "int",
+    "bool" : "char",
     "byte" : "uint8_t",
     "int8" : "int8_t",
     "int16" : "int16_t",
@@ -57,9 +57,26 @@ def toCType(t):
     if isinstance(t, msggenyacc.BaseType):
         return cTypeMap[t.name]
     elif isinstance(t, msggenyacc.EnumType):
-        return "int"
+        return toCType(t.enum.type)
     elif isinstance(t, msggenyacc.StructType):
         return "struct " + t.struct.name
+    elif isinstance(t, msggenyacc.UnknownType):
+        return t.name
+    elif isinstance(t, msggenyacc.ListType):
+        raise NotImplementedError("Lists not implemented for C")
+    elif isinstance(t, msggenyacc.MapType):
+        raise NotImplementedError("Maps not implemented for C")
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
+
+def cLoadSaveSuffix(t):
+    if isinstance(t, msggenyacc.BaseType):
+        return t.name
+    elif isinstance(t, msggenyacc.EnumType):
+        return t.enum.name
+    elif isinstance(t, msggenyacc.StructType):
+        return t.struct.name
     elif isinstance(t, msggenyacc.UnknownType):
         return t.name
     elif isinstance(t, msggenyacc.ListType):
@@ -100,6 +117,10 @@ def pyTypeInit(t):
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
 
+
+def mapToBaseType(list):
+    return map(lambda x: msggenyacc.BaseType(x), list)
+
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
@@ -124,6 +145,7 @@ def main():
 
     with open(args[0], "r") as file:
         data = file.read()
+
     tree = parser.parse(data)
 
     if options.lang == "c++":
@@ -134,16 +156,23 @@ def main():
         with open(options.output + ".cpp", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.cpp"), searchList=tree)
             t.toCPPType = toCPPType
+            t.headerFile = os.path.basename(options.output + ".h") 
             file.write(str(t))
+    
     elif options.lang == "c":
         with open(options.output + ".h", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.h"), searchList=tree)
             t.toCType = toCType
+            t.loadsavesuffix = cLoadSaveSuffix
+            t.mapToBaseType = mapToBaseType
             file.write(str(t))
         with open(options.output + ".c", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.c"), searchList=tree)
             t.toCType = toCType
+            t.loadsavesuffix = cLoadSaveSuffix
+            t.headerFile = os.path.basename(options.output + ".h") 
             file.write(str(t))
+    
     elif options.lang == "python":
         with open(options.output + ".py", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.py"), searchList=tree)

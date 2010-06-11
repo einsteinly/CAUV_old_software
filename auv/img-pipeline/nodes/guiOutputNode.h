@@ -27,7 +27,7 @@ class GuiOutputNode: public OutputNode{
 
             debug() << "GuiOutputNode::doWork()" << id() << *img;
             img->serializeQuality(qual);
-            sendMessage(boost::make_shared<GuiImageMessage>(id(), *img));
+            sendMessage(boost::make_shared<GuiImageMessage>(id(), *img), UNRELIABLE_MESS);
 
             return r;
         }

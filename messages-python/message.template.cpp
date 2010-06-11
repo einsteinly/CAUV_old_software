@@ -1,5 +1,5 @@
 /***  This is a generated file, do not edit ***/
-\#include "messages.h"
+\#include "${headerFile}"
 \#include <boost/serialization/vector.hpp>
 \#include <boost/serialization/map.hpp>
 \#include <boost/make_shared.hpp>
@@ -180,7 +180,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
         #end for
         #end for
         default:
-            throw(std::out_of_range("Unknown message id"));
+            throw std::out_of_range("Unknown message id");
     }
 }
 

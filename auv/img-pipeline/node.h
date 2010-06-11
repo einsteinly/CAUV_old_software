@@ -58,6 +58,8 @@ class Node{
         typedef boost::recursive_mutex mutex_t;
         typedef boost::unique_lock<mutex_t> lock_t;
 
+        typedef Spread::service service_t;
+    
     public:
         // TODO: shouldn't be necessary to pass `type' here!
         Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
@@ -241,7 +243,7 @@ class Node{
          */
         void checkAddSched() throw();
 
-        void sendMessage(boost::shared_ptr<Message const>);
+        void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS);
 
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)

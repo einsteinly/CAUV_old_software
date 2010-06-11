@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cstring>
 
 #include <boost/shared_ptr.hpp>
 
@@ -149,7 +150,7 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(Conne
         int ret = select(fd+1, &fds, NULL, &fds, &towait);
         if(ret < 0)
         {
-            throw ConnectionError("Error in select", true);	        
+            throw ConnectionError(MakeString() << "Error in select (" << errno << ": " << strerror(errno) << ")", true);	        
         }
         else if(ret == 0)
         {
