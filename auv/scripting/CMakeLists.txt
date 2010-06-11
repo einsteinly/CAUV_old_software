@@ -18,7 +18,7 @@ add_custom_command (
 )
 
 
-add_custom_target (scripting-test ALL
+add_custom_target (scripting-test EXCLUDE_FROM_ALL
     gdb --args python ${SRCD}/test.py
     DEPENDS test.py messages.py
     SOURCES test.py messages.py

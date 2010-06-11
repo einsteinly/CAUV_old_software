@@ -92,6 +92,16 @@ struct NodeParamValue{
     stringValue : string;
 }
 
+
+group debug
+{
+	message Debug : 0
+	{
+        type : DebugType;
+	    message : string;
+    }
+}
+
 group control
 {
 	message Motor : 2
@@ -116,6 +126,7 @@ group image
         time : TimeStamp;
     }
 }
+
 group pipeline
 {
     message AddNode : 5

@@ -14,6 +14,7 @@ using namespace std;
 void sendMotorMessageTest(boost::shared_ptr<MCBModule> mcb)
 {
     int motor = 1;
+    debug() << "Starting motor message test";
     while(true)
     {
         MotorMessage m((MotorID::e)motor, 0);
