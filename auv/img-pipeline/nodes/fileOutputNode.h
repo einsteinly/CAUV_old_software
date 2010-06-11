@@ -21,7 +21,7 @@ class FileOutputNode: public OutputNode{
             registerInputID("image_in");
             
             // no outputs
-            // registerOutputID();
+            // registerOutputID<image_ptr_t>();
             
             // parameters: the filename, jpg compression, png compression
             registerParamID<std::string>("filename", "out.%d.%t.%c.jpg");
@@ -30,9 +30,9 @@ class FileOutputNode: public OutputNode{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
+        out_map_t doWork(in_image_map_t& inputs){
             using boost::algorithm::replace_all_copy;
-            out_image_map_t r;
+            out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
             

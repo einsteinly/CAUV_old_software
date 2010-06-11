@@ -1,48 +1,3 @@
-struct floatYPR
-{
-    yaw : float;
-    pitch : float;
-    roll : float;
-}
-struct floatXYZ
-{
-    x : float;
-    y : float;
-    z : float;
-}
-struct NodeInput
-{
-    node : int32;
-    input : string;
-}
-struct NodeOutput
-{
-    node : int32;
-    output : string;
-}
-struct NodeInputArc
-{
-    input : string;
-    src : NodeOutput;
-}
-struct NodeOutputArc
-{
-    dst : NodeInput;
-    output : string;
-}
-struct TimeStamp
-{
-    secs : int32;
-    msecs : int32;
-}
-struct NodeParamValue{
-    type : int32;
-    intValue : int32;
-    floatValue : float;
-    stringValue : string;
-    boolValue : int32;
-}
-
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
 enum NodeType : int8 {
@@ -68,7 +23,8 @@ enum NodeType : int8 {
     CombineYUV = 19,
     CombineHSV = 20,
     Levels = 21,
-    Mix = 22
+    Mix = 22,
+    Percentile = 23
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -85,6 +41,55 @@ enum ParamType : int8 {
     Float = 1,
     String = 2,
     Bool = 3
+}
+enum OutputType : int8 {
+    Image = 0,
+    Parameter = 1
+}
+
+struct floatYPR
+{
+    yaw : float;
+    pitch : float;
+    roll : float;
+}
+struct floatXYZ
+{
+    x : float;
+    y : float;
+    z : float;
+}
+struct NodeInput
+{
+    node : int32;
+    input : string;
+}
+struct NodeOutput
+{
+    node : int32;
+    output : string;
+    type : OutputType;
+}
+struct NodeInputArc
+{
+    input : string;
+    src : NodeOutput;
+}
+struct NodeOutputArc
+{
+    dst : NodeInput;
+    output : string;
+}
+struct TimeStamp
+{
+    secs : int32;
+    msecs : int32;
+}
+struct NodeParamValue{
+    type : ParamType;
+    intValue : int32;
+    floatValue : float;
+    stringValue : string;
 }
 
 group control
@@ -155,6 +160,7 @@ group pl_gui
         nodeType : NodeType;
         inputs : map<string, NodeOutput>;
         outputs : map<string, list<NodeInput> >;
+        params : map<string, NodeParamValue>;
     }
 
     message NodeRemoved : 16
@@ -165,7 +171,7 @@ group pl_gui
     message NodeParameters : 17
     {
         nodeId : int32;
-        values : map<string, NodeParamValue>;
+        params : map<string, NodeParamValue>;
     }
 
     message GraphDescription : 18
@@ -191,21 +197,21 @@ group pl_gui
     message Status : 21
     {
         nodeId : int32;
-        status : int32;
+        status : NodeStatus;
     }
 
     message InputStatus : 22
     {
         nodeId : int32;
         inputId : string;
-        status : int32;
+        status : NodeIOStatus;
     }
     
     message OutputStatus : 23
     {
         nodeId : int32;
         outputId : string;
-        status : int32;
+        status : NodeIOStatus;
     }
     
 	message GuiImage : 24

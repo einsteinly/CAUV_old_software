@@ -21,7 +21,7 @@ class BlurNode: public Node{
             registerInputID("image");
 
             // one output
-            registerOutputID("image (not copied)");
+            registerOutputID<image_ptr_t>("image (not copied)");
             
             // parameters: blur type (gaussian, median), kernel radius: must be
             // an odd integer
@@ -30,8 +30,8 @@ class BlurNode: public Node{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image"];
             

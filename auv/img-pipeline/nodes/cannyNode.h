@@ -22,7 +22,7 @@ class CannyNode: public Node{
             registerInputID("image_in");
             
             // one output
-            registerOutputID("image_out");
+            registerOutputID<image_ptr_t>("image_out");
             
             // parameters:
             registerParamID<float>("threshold 1", 50);
@@ -32,8 +32,8 @@ class CannyNode: public Node{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
             

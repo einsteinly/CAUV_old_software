@@ -13,104 +13,9 @@
 #include "editText.h"
 #include "arc.h"
 #include "nodeIO.h"
+#include "pvPair.h"
 
 namespace pw{
-
-// TODO: own header?
-template<typename value_T>
-class PVPair: public Renderable{
-    public:
-        typedef Node* node_ptr_t;
-        PVPair(node_ptr_t n, std::string const& param, value_T const& value)
-            : Renderable(n), m_node(n), m_bbox(), m_min_value_bbox(0, -3, 13, 10),
-              m_param(boost::make_shared<Text>(n, param)),
-              m_equals(boost::make_shared<Text>(n, "=")),
-              m_value(boost::make_shared<Text>(n, to_string(value))){
-            updateBbox();
-            m_sort_key = param;
-        }
-        virtual ~PVPair(){ }
-
-        void draw(bool picking){
-            glPushMatrix();
-            glTranslatef(m_param->m_pos);
-            m_param->draw(picking);
-            glPopMatrix();
-
-            glPushMatrix();
-            glTranslatef(m_equals->m_pos);
-            m_equals->draw(picking);
-            glPopMatrix();
-
-            glPushMatrix();
-            glTranslatef(m_value->m_pos);
-            if(m_value->bbox().area())
-                m_value->draw(picking);
-            else{
-                glColor(Colour(0.8, 0.2, 0.2, 0.5));
-                glBox(m_min_value_bbox);
-            }
-            glPopMatrix();
-        }
-
-        virtual bool mousePressEvent(MouseEvent const& e){
-            MouseEvent referred(e, m_value);
-            BBox value_bbox = m_value->bbox();
-            if(!value_bbox.area())
-                value_bbox = m_min_value_bbox;
-            if(value_bbox.contains(referred.pos)){
-                debug() << "got value hit";
-                BBox edit_box = value_bbox;
-                edit_box.max.x += 40;
-                edit_box.min.y -= 3;
-                edit_box.max.y += 3;
-                m_context->postMenu(
-                    boost::make_shared<EditText<PVPair const&> >(
-                        m_context, *m_value, edit_box, &onValueChanged, boost::ref(*this)
-                    ),
-                    m_context->referUp(m_pos + m_value->m_pos)
-                );
-                m_context->postRedraw();
-                return true;
-            }
-            return false;
-        }
-
-        virtual BBox bbox(){
-            return m_bbox;
-        }
-
-
-    private:
-        static void onValueChanged(PVPair const& pvp, std::string const& s){
-            std::istringstream is(s);
-            value_T v;
-            is >> v;
-            debug() << "PVPair: Edit done:" << s << "=" << v;
-            pvp.m_node->paramValueChanged(*pvp.m_param, v);
-        }
-
-        void updateBbox(){
-            BBox value_bbox = m_value->bbox();
-            if(!value_bbox.area())
-                value_bbox = m_min_value_bbox;
-            
-            m_bbox = m_param->bbox();
-            m_equals->m_pos.x = m_bbox.max.x + 3 - m_equals->bbox().min.x;
-            m_bbox |= m_equals->bbox() + m_equals->m_pos;
-            m_value->m_pos.x = m_bbox.max.x + 3 - value_bbox.min.x;
-            m_bbox |= value_bbox + m_value->m_pos;
-        }
-
-        node_ptr_t m_node;
-
-        BBox m_bbox;
-        BBox m_min_value_bbox;
-
-        boost::shared_ptr<Text> m_param;
-        boost::shared_ptr<Text> m_equals;
-        boost::shared_ptr<Text> m_value;
-};
 
 template<typename container_T>
 class CloseButton: public Renderable{
@@ -207,6 +112,9 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
     setOutputs(m->outputs());
     setOutputLinks(m->outputs());
 
+    setParams(m->params());
+    setParamLinks(m->inputs()); // param links are inputs
+
     setInputs(m->inputs());
     setInputLinks(m->inputs());
 }
@@ -236,15 +144,20 @@ void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
         m_pw->removeArc(i->second, m_node_id, i->first);
     }
     m_inputs.clear();
-
+    
     std::map<std::string, NodeOutput>::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
-        debug() << BashColour::Blue << "Node::" << __func__ << *j;
-        in_ptr_t t = boost::make_shared<NodeInputBlob>(
-            this, m_pw, j->first
-        );
-        m_inputs[j->first] = t;
-        m_contents.push_back(t);
+        // don't add any inputs that are actually parameters!
+        // TODO: fix the order-dependance here... really parameters should have
+        // been filtered out by the time this function is called
+        if(!m_params.count(j->first)){
+            debug() << BashColour::Blue << "Node::" << __func__ << *j;
+            in_ptr_t t = boost::make_shared<NodeInputBlob>(
+                this, m_pw, j->first
+            );
+            m_inputs[j->first] = t;
+            m_contents.push_back(t);
+        }
     }
     // NB: layout not refreshed
 }
@@ -252,10 +165,10 @@ void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
 void Node::setInputLinks(std::map<std::string, NodeOutput> const& inputs){
     std::map<std::string, NodeOutput>::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
+        str_in_map_t::const_iterator k = m_inputs.find(j->first);
         // if connected, add the arc to this input:
-        renderable_ptr_t t = m_inputs[j->first];
-        if(j->second.node)
-            m_pw->addArc(j->second.node, j->second.output, t);
+        if(k != m_inputs.end() && j->second.node)
+            m_pw->addArc(j->second.node, j->second.output, k->second);
     }
     refreshLayout();
 }
@@ -284,16 +197,21 @@ void Node::setOutputLinks(std::map<std::string, std::vector<NodeInput> > const& 
     std::map<std::string, std::vector<NodeInput> >::const_iterator i;
     for(i = outputs.begin(); i != outputs.end(); i++){
         // add the arcs (if any) from this output:
-        renderable_ptr_t t = m_outputs[i->first];
-        std::vector<NodeInput>::const_iterator k;
-        for(k = i->second.begin(); k != i->second.end(); k++){
-            m_pw->addArc(t, k->node, k->input);
+        if(m_outputs.count(i->first)){
+            renderable_ptr_t t = m_outputs[i->first];
+            std::vector<NodeInput>::const_iterator k;
+            for(k = i->second.begin(); k != i->second.end(); k++){
+                m_pw->addArc(t, k->node, k->input);
+            }
+        }else{
+            error() << "output link specified for non-existent output:"
+                    << m_node_type << m_node_id << i->first;
         }
     }
     refreshLayout();
 }
 
-static boost::shared_ptr<Renderable> makePVPair(
+static boost::shared_ptr<PVPairEditableBase> makePVPair(
     Node *n, std::pair<std::string, NodeParamValue> const& p){
     switch((ParamType::e) p.second.type){
         case ParamType::Int32:
@@ -312,28 +230,46 @@ static boost::shared_ptr<Renderable> makePVPair(
             error() << "unknown ParamType";
         case ParamType::Bool:
             return boost::make_shared<PVPair<bool> >(
-                    n, p.first, p.second.boolValue
+                    n, p.first, p.second.intValue
                 );
     }
 }
 
 void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     // remove any old parameters:
-    renderable_list_t::iterator k, j;
-    for(k = m_contents.begin(); k != m_contents.end(); k=j){
-        j = k;
-        j++;
-        if(m_params.count(*k))
-            m_contents.erase(k);
+    for(str_inparam_map_t::const_iterator i = m_params.begin(); i != m_params.end(); i++){
+        m_contents.remove(i->second.inblob);
+        m_contents.remove(i->second.pvpair);
+        m_pw->removeArc(i->second.inblob, m_node_id, i->first);
     }
     m_params.clear();
 
-    std::map<std::string, NodeParamValue>::const_iterator i;
-    for(i = params.begin(); i != params.end(); i++){
-        debug() << BashColour::Blue << "Node::" << __func__ << *i;
-        boost::shared_ptr<Renderable> t = makePVPair(this, *i);
-        m_params.insert(t);
-        m_contents.push_back(t);
+    std::map<std::string, NodeParamValue>::const_iterator j;
+    for(j = params.begin(); j != params.end(); j++){
+        debug() << BashColour::Blue << "Node::" << __func__ << *j;
+        InParamPVPair t;
+        t.pvpair = makePVPair(this, *j);
+        t.inblob = boost::make_shared<NodeInputParamBlob>(
+            this, m_pw, j->first
+        );
+        m_params[j->first] = t;
+        m_contents.push_back(t.inblob);
+        m_contents.push_back(t.pvpair);
+    }
+    refreshLayout();
+}
+
+void Node::setParamLinks(std::map<std::string, NodeOutput> const& inputs){
+    std::map<std::string, NodeOutput>::const_iterator j;
+    for(j = inputs.begin(); j != inputs.end(); j++){
+        str_inparam_map_t::const_iterator k = m_params.find(j->first);
+        // if connected, add the arc to this parameter's input:
+        if(k != m_params.end() && j->second.node){
+            m_pw->addArc(j->second.node, j->second.output, k->second.inblob);
+            k->second.pvpair->editable(false);
+        }else{
+            k->second.pvpair->editable(true);
+        }
     }
     refreshLayout();
 }
@@ -343,7 +279,7 @@ void Node::setParams(boost::shared_ptr<NodeParametersMessage const> m){
         error() << "parameters not for this node";
         return;
     }
-    setParams(m->values());
+    setParams(m->params());
 }
 
 bool Node::mousePressEvent(MouseEvent const& e){
@@ -445,8 +381,14 @@ renderable_ptr_t Node::inSocket(std::string const& id){
     if(i != m_inputs.end()){
         return i->second;
     }else{
-        warning() << "unknown input:" << id << "on node" << m_node_id;
-        return renderable_ptr_t();
+        // could be a parameter input:
+        str_inparam_map_t::const_iterator j = m_params.find(id);
+        if(j != m_params.end()){
+            return j->second.inblob;
+        }else{
+            warning() << "unknown input:" << id << "on node" << m_node_id;
+            return renderable_ptr_t();
+        }
     }
 }
 
@@ -467,12 +409,22 @@ void Node::status(int s){
 
 void Node::inputStatus(std::string const& input_id, int s){
     str_in_map_t::const_iterator i = m_inputs.find(input_id);
-    if(i->second)
-        i->second->status(s);
+    if(i == m_inputs.end()){
+        str_inparam_map_t::const_iterator j = m_params.find(input_id);
+        if(j != m_params.end()){
+            j->second.inblob->status(s);
+        }else{
+            warning() << input_id << "is not input or parameter id on this node";
+        }
+    }else{
+        if(i->second)
+            i->second->status(s);
+    }
 }
 
 void Node::outputStatus(std::string const& output_id, int s){
     str_out_map_t::const_iterator i = m_outputs.find(output_id);
+    assert(i != m_outputs.end());
     if(i->second)
         i->second->status(s);
 }
@@ -504,7 +456,7 @@ void Node::paramValueChanged<int>(std::string const& p, int const& v){
     debug() << "Node::paramValueChanged<int>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0,0,0,"",0};
+    NodeParamValue pv = {ParamType::e(0),0,0,""};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -519,7 +471,7 @@ void Node::paramValueChanged<float>(std::string const& p, float const& v){
     debug() << "Node::paramValueChanged<float>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0,0,0,"",0};
+    NodeParamValue pv = {ParamType::e(0),0,0,""};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -534,7 +486,7 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0,0,0,"",0};
+    NodeParamValue pv = {ParamType::e(0),0,0,""};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -549,12 +501,12 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {0,0,0,"",0};
+    NodeParamValue pv = {ParamType::e(0),0,0,""};
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
     pv.type = ParamType::Bool;
-    pv.boolValue = v;
+    pv.intValue = v;
     sp->value(pv);
     m_pw->sendMessage(sp);
 }
@@ -595,21 +547,24 @@ void Node::refreshLayout(){
     if(m_inputs.size())
         y_pos -= section_lead - lead;
 
-    // stop parameter order from jumping around:
-    // TODO: editing here, this is actually rather a tricky structural
-    // problem...
-    std::list<renderable_ptr_t> params;
-    for(pv_set_t::const_iterator j = m_params.begin(); j != m_params.end(); j++)
-        params.push_back(*j);
-    params.sort(lessDereferenced<renderable_ptr_t, renderable_ptr_t>);
-    std::list<renderable_ptr_t>::const_iterator l;
-    for(l = params.begin(); l != params.end(); l++, y_pos -= (prev_height+lead)){
-        (*l)->m_pos.y = y_pos - roundA((*l)->bbox().max.y);
-        (*l)->m_pos.x = param_indent;
-        prev_height = roundA((*l)->bbox().h());
-        m_back |= (*l)->bbox() + (*l)->m_pos;
+    str_inparam_map_t::const_iterator j;
+    for(j = m_params.begin(); j != m_params.end(); j++, y_pos -= (prev_height+lead)){
+        renderable_ptr_t blob = j->second.inblob;
+        renderable_ptr_t pvp = j->second.pvpair;
+        
+        blob->m_pos.y = y_pos - roundA(max(pvp->bbox().max.y, blob->bbox().max.y));
+        pvp->m_pos.y = blob->m_pos.y;
+
+        blob->m_pos.x = m_back.min.x - io_overhang - blob->bbox().min.x;
+        pvp->m_pos.x = blob->m_pos.x + blob->bbox().w() - pvp->bbox().min.x;
+
+        prev_height = roundA(max(pvp->bbox().max.y, blob->bbox().max.y) -
+                             min(pvp->bbox().min.y, blob->bbox().min.y));
+
+        m_back |= blob->bbox() + blob->m_pos + Point(io_overhang, 0);
+        m_back |= pvp->bbox() + pvp->m_pos;
     }
-    if(params.size())
+    if(m_params.size())
         y_pos -= section_lead - lead;
 
 
@@ -636,8 +591,7 @@ void Node::refreshLayout(){
         else
             r->m_pos.x = m_back.max.x + io_overhang - r->bbox().max.x;
         m_back |= r->bbox() + r->m_pos - Point(io_overhang, 0);
-        prev_height = roundA(r->bbox().h());
-    }
+        prev_height = roundA(r->bbox().h());    }
 
     m_back.min.y -= border;
 

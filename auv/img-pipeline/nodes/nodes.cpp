@@ -22,6 +22,7 @@
 #include "combineHSVNode.h"
 #include "levelsNode.h"
 #include "mixNode.h"
+#include "percentileNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -46,4 +47,5 @@ DEFINE_NFR(CombineYUVNode, NodeType::CombineYUV);
 DEFINE_NFR(CombineHSVNode, NodeType::CombineHSV);
 DEFINE_NFR(LevelsNode, NodeType::Levels);
 DEFINE_NFR(MixNode, NodeType::Mix);
+DEFINE_NFR(PercentileNode, NodeType::Percentile);
 

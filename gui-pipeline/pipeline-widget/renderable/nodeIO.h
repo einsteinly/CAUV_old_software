@@ -13,7 +13,8 @@ class NodeIOBlob: public Renderable,
                   public boost::enable_shared_from_this<NodeIOBlob>{
     public:
         typedef Node* node_ptr_t;
-        NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name);
+        NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
+                   bool suppress_text = false);
         virtual ~NodeIOBlob(){ }
 
         virtual void draw(bool picking);
@@ -32,6 +33,7 @@ class NodeIOBlob: public Renderable,
 
         node_ptr_t m_node;
         pw_ptr_t m_pw;
+        bool m_suppress_text;
         boost::shared_ptr<Text> m_text;
 
         double m_radius;
@@ -43,9 +45,17 @@ class NodeIOBlob: public Renderable,
 
 class NodeInputBlob: public NodeIOBlob{
     public:
-        NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n);
+        NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
+                      bool suppress_text = false);
         virtual ~NodeInputBlob(){ }
         std::string input() const;
+};
+
+class NodeInputParamBlob: public NodeInputBlob{
+    public:
+        NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n);
+        virtual ~NodeInputParamBlob(){ }
+        std::string param() const;
 };
 
 class NodeOutputBlob: public NodeIOBlob{

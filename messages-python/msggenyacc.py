@@ -253,7 +253,7 @@ def p_type_map(p):
 
 # Error rule for syntax errors
 def p_error(p):
-    print "Syntax error in input!"
+    print "Syntax error in input!", p
 
 # Build the parser
 parser = yacc.yacc()

@@ -24,12 +24,12 @@ class CombineHSVNode: public Node{
             registerInputID("V");
             
             // output:
-            registerOutputID("image");
+            registerOutputID<image_ptr_t>("image");
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
             image_ptr_t H = inputs["H"];
             image_ptr_t S = inputs["S"];
             image_ptr_t V = inputs["V"];

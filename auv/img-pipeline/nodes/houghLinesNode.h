@@ -23,7 +23,7 @@ class HoughLinesNode: public Node{
             registerInputID("image_in");
             
             // one output
-            registerOutputID("image_out");
+            registerOutputID<image_ptr_t>("image_out");
             
             // parameters:
             registerParamID<bool>("probabalistic", false);
@@ -42,8 +42,8 @@ class HoughLinesNode: public Node{
         virtual bool isOutputNode() throw() { return true; } 
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
             

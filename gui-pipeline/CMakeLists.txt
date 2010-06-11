@@ -2,7 +2,7 @@ project (gui-pipeline)
 
 find_package (Qt4)
 
-if (NOT Qt4_FOUND)
+if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui-pipeline")
 else()
     set (QDESIGNER_EXPORT_WIDGETS TRUE)

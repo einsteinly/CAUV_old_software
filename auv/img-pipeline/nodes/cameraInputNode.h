@@ -20,7 +20,7 @@ class CameraInputNode: public AsynchronousNode{
             // registerInputID()
             
             // one output:
-            registerOutputID("image_out");
+            registerOutputID<image_ptr_t>("image_out");
             
             // one parameter:
             registerParamID<int>("device id", 0);
@@ -35,8 +35,8 @@ class CameraInputNode: public AsynchronousNode{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t&){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t&){
+            out_map_t r;
             
             debug() << "CameraInputNode::doWork";
             

@@ -36,15 +36,6 @@ typedef std::istringstream byte_istream_t;
 class $t;
 #end for
 
-#for $s in $structs
-struct $s.name
-{
-    #for $f in $s.fields
-    $toCPPType($f.type) $f.name;
-    #end for
-};
-#end for
-
 #for $e in $enums
 namespace $e.name
 {
@@ -58,6 +49,14 @@ namespace $e.name
 } // namespace $e.name
 #end for
 
+#for $s in $structs
+struct $s.name
+{
+    #for $f in $s.fields
+    $toCPPType($f.type) $f.name;
+    #end for
+};
+#end for
 
 // ===============
 // Message Classes

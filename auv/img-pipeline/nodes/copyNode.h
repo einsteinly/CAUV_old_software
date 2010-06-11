@@ -23,16 +23,16 @@ class CopyNode: public Node{
             registerInputID("image_in");
             
             // two output:
-            registerOutputID("image_out_A");
-            registerOutputID("image_out_B");
+            registerOutputID<image_ptr_t>("image_out_A");
+            registerOutputID<image_ptr_t>("image_out_B");
             
             // no parameters
             // registerParamID<>();
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
             
             image_ptr_t img = inputs["image_in"];
 

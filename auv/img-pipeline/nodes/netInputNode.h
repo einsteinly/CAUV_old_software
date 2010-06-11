@@ -19,7 +19,7 @@ class NetInputNode: public InputNode{
             // registerInputID()
             
             // one output:
-            registerOutputID("image_out");
+            registerOutputID<image_ptr_t>("image_out");
             
             // one parameter: the source camera
             registerParamID<int>("camera id", CameraID::Forward);
@@ -32,8 +32,8 @@ class NetInputNode: public InputNode{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t&){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t&){
+            out_map_t r;
             
             debug() << "NetInputNode::doWork";
         

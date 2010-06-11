@@ -24,12 +24,12 @@ class CombineYUVNode: public Node{
             registerInputID("V");
             
             // output:
-            registerOutputID("image");
+            registerOutputID<image_ptr_t>("image");
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
             image_ptr_t Y = inputs["Y"];
             image_ptr_t U = inputs["U"];
             image_ptr_t V = inputs["V"];
@@ -40,13 +40,11 @@ class CombineYUVNode: public Node{
             int out_type = CV_MAKETYPE(r_type, 3);
             
             if(Y->cvMat().size() != U->cvMat().size() ||
-               Y->cvMat().size() != V->cvMat().size()){
+               Y->cvMat().size() != V->cvMat().size())
                throw(parameter_error("YUV source channels are not of the same size"));
-            }
 
-            if(r_type != g_type || r_type != b_type){
+            if(r_type != g_type || r_type != b_type)
                 throw(parameter_error("YUV source channels are not of the same type"));
-            }
             
             cv::Mat YUV(Y->cvMat().size(), out_type);
             boost::shared_ptr<Image> out = boost::make_shared<Image>(Y->source());

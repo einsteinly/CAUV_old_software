@@ -15,6 +15,7 @@ class NodeParametersMessage;
 class NodeOutput;
 class NodeInput;
 class NodeParamValue;
+
 // namespace NodeType{ enum e; } // eww, can't forward declare enums, have to
 // drag in messages.h!
 #include <common/messages.h>
@@ -24,11 +25,16 @@ namespace pw{
 class Node: public Draggable,
             public Container{
         typedef std::set<renderable_ptr_t> renderable_set_t;
-        typedef renderable_set_t pv_set_t;
         typedef std::map<std::string, renderable_ptr_t> str_renderable_map_t;
         typedef boost::shared_ptr<NodeInputBlob> in_ptr_t;
+        typedef boost::shared_ptr<NodeInputParamBlob> inparam_ptr_t;
         typedef boost::shared_ptr<NodeOutputBlob> out_ptr_t;
         typedef std::map<std::string, in_ptr_t> str_in_map_t;
+        struct InParamPVPair{
+            inparam_ptr_t inblob;
+            boost::shared_ptr<PVPairEditableBase> pvpair;
+        };
+        typedef std::map<std::string, InParamPVPair> str_inparam_map_t;
         typedef std::map<std::string, out_ptr_t> str_out_map_t;
         // iterator typedefs, sorry!
         typedef Node::str_renderable_map_t::const_iterator sr_map_iter_t;
@@ -44,6 +50,7 @@ class Node: public Draggable,
         void setOutputLinks(std::map<std::string, std::vector<NodeInput> > const&);
         void setParams(std::map<std::string, NodeParamValue> const&);
         void setParams(boost::shared_ptr<NodeParametersMessage const> m);
+        void setParamLinks(std::map<std::string, NodeOutput> const& inputs);        
 
         virtual void draw(bool);
         virtual bool mousePressEvent(MouseEvent const&);
@@ -93,8 +100,8 @@ class Node: public Draggable,
 
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;
-        pv_set_t m_params;
         str_in_map_t m_inputs;
+        str_inparam_map_t m_params;        
         str_out_map_t m_outputs;
 
         bool m_suppress_draggable;

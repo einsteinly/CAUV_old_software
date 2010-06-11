@@ -22,14 +22,14 @@ class SplitYUVNode: public Node{
             registerInputID("image");
             
             // outputs:
-            registerOutputID("Y");
-            registerOutputID("U");
-            registerOutputID("V");
+            registerOutputID<image_ptr_t>("Y");
+            registerOutputID<image_ptr_t>("U");
+            registerOutputID<image_ptr_t>("V");
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
             image_ptr_t img = inputs["image"];
             cv::Mat YUV;
             int conversion_code = 0;

@@ -21,6 +21,8 @@ class Text: public Renderable, public std::string{
         virtual void draw(bool);
         virtual BBox bbox();
         virtual void updateBbox();
+
+        void colour(Colour const& c);
     
     protected:
         typedef boost::shared_ptr<FTFont> font_ptr;
@@ -43,6 +45,7 @@ class Text: public Renderable, public std::string{
     private:
         boost::shared_ptr<FTBBox> m_bbox;
         face_pt_pair_t m_font;
+        Colour m_colour;
 };
 
 } // namespace pw

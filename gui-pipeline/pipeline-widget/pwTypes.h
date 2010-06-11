@@ -21,9 +21,12 @@ class Arc;
 class Text;
 class NodeIOBlob;
 class NodeInputBlob;
+class NodeInputParamBlob;
 class NodeOutputBlob;
 class FloatingArcHandle;
 class ImgNode;
+class PVPairEditableBase;
+template<typename value_T> class PVPair;
 
 
 typedef PipelineWidget* pw_ptr_t;

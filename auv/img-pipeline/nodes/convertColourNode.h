@@ -22,7 +22,7 @@ class ConvertColourNode: public Node{
             registerInputID("image in");
             
             // one output
-            registerOutputID("image out");
+            registerOutputID<image_ptr_t>("image out");
             
             // parameter:
             registerParamID<std::string>("output format", "grey",
@@ -30,8 +30,8 @@ class ConvertColourNode: public Node{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image in"];
             

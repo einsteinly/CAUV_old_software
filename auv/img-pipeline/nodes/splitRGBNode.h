@@ -22,14 +22,14 @@ class SplitRGBNode: public Node{
             registerInputID("image");
             
             // outputs:
-            registerOutputID("R");
-            registerOutputID("G");
-            registerOutputID("B");
+            registerOutputID<image_ptr_t>("R");
+            registerOutputID<image_ptr_t>("G");
+            registerOutputID<image_ptr_t>("B");
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
             image_ptr_t img = inputs["image"];
             int channel_type = CV_MAKETYPE(CV_MAT_DEPTH_MASK & img->cvMat().type(), 1);
             

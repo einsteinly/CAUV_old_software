@@ -22,14 +22,14 @@ class SplitHSVNode: public Node{
             registerInputID("image");
             
             // outputs:
-            registerOutputID("H");
-            registerOutputID("S");
-            registerOutputID("V");
+            registerOutputID<image_ptr_t>("H");
+            registerOutputID<image_ptr_t>("S");
+            registerOutputID<image_ptr_t>("V");
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
             image_ptr_t img = inputs["image"];
             cv::Mat HSV;
             int conversion_code = 0;

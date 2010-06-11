@@ -21,7 +21,7 @@ class FileInputNode: public AsynchronousNode{
             // registerInputID()
             
             // one output:
-            registerOutputID("image_out");
+            registerOutputID<image_ptr_t>("image_out");
             
             // one parameter: the filename
             registerParamID<std::string>("filename", "default.jpg");
@@ -36,8 +36,8 @@ class FileInputNode: public AsynchronousNode{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t&){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t&){
+            out_map_t r;
             
             debug() << "fileInputNode::doWork";
         
@@ -46,9 +46,10 @@ class FileInputNode: public AsynchronousNode{
 
             if(img.size().width > 0 && img.size().height > 0){
                 r["image_out"] = image_ptr_t(new Image(img, Image::src_file)); 
-                debug() << "fileInputNode::doWork result:" << fname << "->" << *r["image_out"];
+                debug() << "fileInputNode::doWork result:" << fname << "->"
+                        << *boost::get<image_ptr_t>(r["image_out"]);
             }else{
-                warning() << "fileInputNode::doWork result:" << fname << "->" << "(no image)";
+                warning() << "fileInputNode::doWork result:" << fname << "-> (no image)";
             }
             clearAllowQueue();            
 

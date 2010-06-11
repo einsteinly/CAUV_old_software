@@ -12,12 +12,14 @@ using namespace pw;
 const static Colour Normal_Colour(0.2, 0.4, 0.6, 0.5);
 const static Colour Outline_Colour_Hint(0, 0.2);
 const static Colour Mouseover_Colour_Hint(1, 0.2);
-const static Colour New_Hint(0, 1, 0, 0.2);
-const static Colour Demanded_Hint(1, 1, 0, 0.2);
-const static Colour Invalid_Hint(0, 0, 0, 0.4);
+const static Colour New_Hint(0, 1, 0, 0.4);
+const static Colour Demanded_Hint(1, 1, 0, 0.4);
+const static Colour Invalid_Hint(0.6, 0, 0, 0.6);
 
-NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name)
+NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
+                       bool suppress_text)
     : Renderable(node), m_node(node), m_pw(pw),
+      m_suppress_text(suppress_text),
       m_text(boost::make_shared<Text>(node, name)),
       m_radius(6), m_radius_squared(m_radius*m_radius),
       m_colour(Normal_Colour),
@@ -37,8 +39,10 @@ void NodeIOBlob::draw(bool picking){
     glLineWidth(1);
     glCircleOutline(m_radius);
 
-    glTranslatef(m_text->m_pos);
-    m_text->draw(picking);
+    if(!m_suppress_text){
+        glTranslatef(m_text->m_pos);
+        m_text->draw(picking);
+    }
 }
 
 void NodeIOBlob::mouseMoveEvent(MouseEvent const& m){
@@ -83,7 +87,7 @@ bool NodeIOBlob::tracksMouse(){
 
 BBox NodeIOBlob::bbox(){
     return BBox(-m_radius, -m_radius, m_radius, m_radius) |
-           (m_text->bbox() + m_text->m_pos);
+           (m_suppress_text? BBox() : (m_text->bbox() + m_text->m_pos));
 }
 
 bool NodeIOBlob::contains(Point const& x) const{
@@ -105,13 +109,23 @@ node_id NodeIOBlob::nodeId() const{
 }
 
 
-NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
-    : NodeIOBlob(d, p, n){
+NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
+                             bool suppress_text)
+    : NodeIOBlob(d, p, n, suppress_text){
     m_text->m_pos.x = -m_text->bbox().min.x + m_radius + 3;
 }
 
 std::string NodeInputBlob::input() const{
     return *m_text;
+}
+
+
+NodeInputParamBlob::NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
+    : NodeInputBlob(d, p, n, true){
+}
+
+std::string NodeInputParamBlob::param() const{
+    return input();
 }
 
 NodeOutputBlob::NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
@@ -175,9 +189,6 @@ void FloatingArcHandle::mouseGoneEvent(){
 }
 
 BBox FloatingArcHandle::bbox(){
-    // big enough that the mouse can't move outside it during a drag
-    // operation
-    //return BBox(-100, -100, 100, 100);
     return BBox();
 }
 

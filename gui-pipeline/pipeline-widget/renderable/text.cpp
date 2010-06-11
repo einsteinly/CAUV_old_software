@@ -14,7 +14,7 @@ using namespace pw;
 
 Text::Text(container_ptr_t c, std::string const& text, std::string const& font, int pt)
     : Renderable(c), std::string(text), m_bbox(),
-      m_font(std::make_pair(font, pt)){
+      m_font(std::make_pair(font, pt)), m_colour(Colour(0)){
 }
         
 void Text::draw(bool){
@@ -27,7 +27,7 @@ void Text::draw(bool){
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor(Colour(0));
+    glColor(m_colour);
     font()->Render(c_str());
     glPrintErr();
     
@@ -50,6 +50,9 @@ void Text::updateBbox(){
     m_bbox = boost::make_shared<FTBBox>(bboxFont()->BBox(c_str()));
 }
 
+void Text::colour(Colour const& c){
+    m_colour = c;
+}
 
 typedef boost::shared_ptr<FTFont> font_ptr;
 typedef std::pair<std::string, int> face_pt_pair_t;

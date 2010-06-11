@@ -21,7 +21,7 @@ class BilateralFilterNode: public Node{
             registerInputID("image in");
             
             // one output
-            registerOutputID("image out");
+            registerOutputID<image_ptr_t>("image out");
             
             // parameters:
             //  diameter - diameter of pixel neighborhood (if 0, computed from
@@ -34,8 +34,8 @@ class BilateralFilterNode: public Node{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image in"];
             boost::shared_ptr<Image> out = boost::make_shared<Image>(img->source());

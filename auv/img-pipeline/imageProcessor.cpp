@@ -57,8 +57,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
-    sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType(), inputs, outputs));
-    sendMessage(boost::make_shared<NodeParametersMessage>(new_id, params));
+    sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType(), inputs, outputs, params));
 }
 
 void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage_ptr m){
@@ -135,10 +134,14 @@ void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
         
         // remove any existing arc to input first:
         Node::msg_node_input_map_t old_il = to->inputLinks();
-        if(old_il[input].node){
-            node_ptr_t old_from = lookup(old_il[input].node);
+        Node::msg_node_input_map_t::const_iterator old_il_in = old_il.find(input);
+        if(old_il_in != old_il.end() && old_il_in->second.node){
+            node_ptr_t old_from = lookup(old_il_in->second.node);
             if(old_from)
-                old_from->clearOutput(old_il[input].output, to, input);
+                old_from->clearOutput(old_il_in->second.output, to, input);
+        }else{
+            error() << "badness: node" << m->to().node
+                    << "has no input link record for input" << input;
         }
         to->clearInput(input);
 

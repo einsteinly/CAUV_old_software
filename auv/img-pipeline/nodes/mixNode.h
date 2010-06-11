@@ -24,7 +24,7 @@ class MixNode: public Node{
             registerInputID("mix");
 
             // one output
-            registerOutputID("image (not copied)");
+            registerOutputID<image_ptr_t>("image (not copied)");
             
             // parameters:
             registerParamID<float>("image fac", 1);
@@ -33,8 +33,8 @@ class MixNode: public Node{
 
     protected:
 
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image"];
             image_ptr_t mix = inputs["mix"];

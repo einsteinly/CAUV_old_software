@@ -20,7 +20,7 @@ class LocalDisplayNode: public Node{
             cv::namedWindow("LocalDisplayNode", CV_WINDOW_AUTOSIZE);
             
             // no outputs
-            // registerOutputID();
+            // registerOutputID<image_ptr_t>();
             
             // no parameter
             // registerParamID<>(,);
@@ -29,8 +29,8 @@ class LocalDisplayNode: public Node{
         virtual bool isOutputNode() const throw() { return true; }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
             

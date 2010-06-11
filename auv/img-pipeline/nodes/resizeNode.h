@@ -22,7 +22,7 @@ class ResizeNode: public Node{
             registerInputID("image_in");
             
             // one output
-            registerOutputID("image_out");
+            registerOutputID<image_ptr_t>("image_out");
             
             // parameters: scale factor, interpolation mode
             registerParamID<float>("scale factor", 1.0f);
@@ -30,8 +30,8 @@ class ResizeNode: public Node{
         }
 
     protected:
-        out_image_map_t doWork(in_image_map_t& inputs){
-            out_image_map_t r;
+        out_map_t doWork(in_image_map_t& inputs){
+            out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
             

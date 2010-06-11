@@ -120,17 +120,17 @@ class PipelineGuiMsgObs: public MessageObserver{
                 else
                     n->setOutputs(oi->second);
 
-                node_input_map_t::const_iterator ii = m->nodeInputs().find(i->first);
-                if(ii == m->nodeInputs().end())
-                    error() << __func__ << __LINE__;
-                else
-                    n->setInputs(ii->second);
-
                 node_param_map_t::const_iterator pi = m->nodeParams().find(i->first);
                 if(pi == m->nodeParams().end())
                     error() << __func__ << __LINE__;
                 else
                     n->setParams(pi->second);
+
+                node_input_map_t::const_iterator ii = m->nodeInputs().find(i->first);
+                if(ii == m->nodeInputs().end())
+                    error() << __func__ << __LINE__;
+                else
+                    n->setInputs(ii->second);
             }
 
             // now actually add arcs
@@ -150,8 +150,10 @@ class PipelineGuiMsgObs: public MessageObserver{
                 node_input_map_t::const_iterator ii = m->nodeInputs().find(i->first);
                 if(ii == m->nodeInputs().end())
                     error() << __func__ << __LINE__;
-                else
+                else{
+                    n->setParamLinks(ii->second);
                     n->setInputLinks(ii->second);
+                }
             }
         }
 
@@ -230,7 +232,7 @@ void spawnPGCN(PipelineWidget *p){
 }
 
 PipelineWidget::PipelineWidget(QWidget *parent)
-    : QGLWidget(QGLFormat(), parent),
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),

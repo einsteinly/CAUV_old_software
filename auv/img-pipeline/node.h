@@ -35,8 +35,11 @@ class Node{
     protected:
         // Protected typedefs: useful for derived nodes
         typedef boost::shared_ptr<Image> image_ptr_t;
+        
+        // NB: order here is important, don't change it!
+        typedef boost::variant<image_ptr_t, param_value_t> output_t;
 
-        typedef std::map<output_id, image_ptr_t> out_image_map_t;
+        typedef std::map<output_id, output_t> out_map_t;
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
 
     private:
@@ -48,6 +51,7 @@ class Node{
 
         typedef std::map<param_id, param_value_t> param_value_map_t;
         typedef std::map<input_id, bool> in_bool_map_t;
+        typedef std::map<param_id, bool> param_bool_map_t;
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
         
@@ -55,6 +59,7 @@ class Node{
         typedef boost::unique_lock<mutex_t> lock_t;
 
     public:
+        // TODO: shouldn't be necessary to pass `type' here!
         Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
         virtual ~Node();
 
@@ -85,8 +90,14 @@ class Node{
         void clearOutputs(node_ptr_t child); 
         void clearOutputs();
         
+        output_id_set_t outputs(int type_index) const;
         output_id_set_t outputs() const;
+        output_id_set_t paramOutputs() const;
+
+        // TODO NPA: include param children
         msg_node_output_map_t outputLinks() const;
+
+        // TODO NPA: include param children
         std::set<node_ptr_t> children() const;
 
         int numChildren() const;
@@ -97,6 +108,10 @@ class Node{
         /* Get the actual image data associated with an output
          */
         image_ptr_t getOutputImage(output_id const& o_id) const throw(id_error);
+        
+        /* Get the parameter associated with a parameter output
+         */
+        param_value_t getOutputParam(output_id const& o_id) const throw(id_error);
         
         /* return all parameter values
          */
@@ -120,21 +135,13 @@ class Node{
                 e << m_parameters.size() << "valid parameters are:";
                 for(i = m_parameters.begin(); i != m_parameters.end(); i++)
                     e << i->first << "( =" << i->second << ")";
-                throw(id_error(std::string("setParam: Invalid parameter id: ") + to_string(p)));
+                throw(id_error("setParam: Invalid parameter id: " + to_string(p)));
             }
             // provide notification that parameters have changed: principally
             // for asynchronous nodes
             this->paramChanged(p);
-            // if all inputs are valid (but not necessarily still new), add
-            // this node to the scheduler queue by pretending all input is new
-            // and that output is needed
-            if(validInputAll()){
-                setNewInput();
-                if(m_outputs.size())
-                // TODO: FIXME: track parameters changed properly - ie,
-                // separately to inputs and outputs so this isn't required
-                setNewOutputDemanded("dummy");
-            }
+            // check to see if the node should be re-scheduled
+            setNewParamValue(p);
         }
         
         /* Derived types overload this for notification of changed parameters:
@@ -142,13 +149,27 @@ class Node{
          */
         virtual void paramChanged(param_id const&){ }
         
-        /* return a single parameter value
+        /* return a single parameter value: retrieves value from parent if the
+         * parameter is linked to the output of a parent
          */
         template<typename T>
         T param(param_id const& p) const throw(id_error){
             lock_t l(m_parameters_lock);
             const param_value_map_t::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
+                const in_link_map_t::const_iterator j = m_parent_links.find(p);
+                if(j != m_parent_links.end() &&
+                   j->second.first){
+                    assert(j->second.first->paramOutputs().count(j->second.second));
+                    debug() << "returning linked parameter value for" << p
+                            << "(linked to" << j->second << ")";
+                    // TODO: this will throw boost::bad_get if there is a
+                    // param_value type mismatch between the output and the
+                    // requested parameter type:
+                    //  a) prevent this happening (somehow...)
+                    //  b) stop everything falling over when it doe happen
+                    return boost::get<T>(j->second.first->getOutputParam(j->second.second));
+                }
                 return boost::get<T>(i->second);
             }else{
                 throw(id_error("param: Invalid parameter id: " + to_string(p)));
@@ -169,7 +190,7 @@ class Node{
         /* Derived classes override this to do whatever image processing it is
          * that they do.
          */
-        virtual out_image_map_t doWork(in_image_map_t&) = 0;
+        virtual out_map_t doWork(in_image_map_t&) = 0;
                 
         /* Priority of this node; this might change dynamically.
          * Used when this node is added to a scheduler queue
@@ -192,8 +213,27 @@ class Node{
             lock_t l(m_parameters_lock);
             m_parameters[p] = param_value_t(default_value);
             m_parameter_tips[p] = tip;
+            m_new_paramvalues[p] = true;
+            // parameters are also inputs...
+            registerInputID(p);
         }
-        void registerOutputID(output_id const& o);
+        /* Template type is used to determine whether this is an image or a
+         * parameter output: supported types
+         *      - image_ptr_t
+         *      - param_value_t
+         */
+        template<typename T>
+        void registerOutputID(output_id const& o){
+            lock_t l(m_child_links_lock);
+            lock_t m(m_outputs_lock);
+            
+            m_child_links[o] = output_link_list_t();
+            m_outputs[o] = output_t(T());
+            
+            _statusMessage(boost::make_shared<OutputStatusMessage>(
+                m_id, o, NodeIOStatus::e(0)
+            ));
+        }
         void registerInputID(input_id const& i);
         
         /* Check to see if all inputs are new and output is demanded; if so, 
@@ -211,6 +251,7 @@ class Node{
         void setNewInput(); 
         void clearNewInput();
         bool newInputAll() const;
+        bool newInput() const;
 
         void setValidInput(input_id const&);
         void clearInputValid(input_id const&);
@@ -231,6 +272,10 @@ class Node{
         void clearExecQueued();
         bool execQueued() const;
 
+        void setNewParamValue(param_id const&);
+        void clearNewParamValues();
+        bool newParamValues() const;
+
     private:
         void _demandNewParentInput() throw();
         void _statusMessage(boost::shared_ptr<Message const>);
@@ -238,38 +283,52 @@ class Node{
         
         const NodeType::e m_node_type;
         const node_id m_id;
-
-        /* prevent nodes (esp. output nodes) from executing in more than one
-         * thread at once
+       
+        /* maps an input_id (including parameters) to an output of another node
          */
-        bool m_exec_queued;
-        mutable mutex_t m_exec_queued_lock;
-        
-        /* maps an input_id to an output of another node */
         in_link_map_t   m_parent_links;
         mutable mutex_t m_parent_links_lock;
         
-        /* maps an output_id to a list of inputs on other nodes */
+        /* maps an output_id to a list of inputs (including parameters) on
+         * other nodes
+         */
         out_link_map_t  m_child_links;
         mutable mutex_t m_child_links_lock;
         
-        /* maps an output_id to an image */
-        out_image_map_t m_outputs;
+        /* maps an output_id to an image or parameter output */
+        out_map_t m_outputs;
         mutable mutex_t m_outputs_lock;
         
         /* parameters of the filters */
         param_value_map_t m_parameters;
         param_tip_map_t m_parameter_tips;
         mutable mutex_t m_parameters_lock;
+
+
+        /** Variables that conrol when the node is scheduled:
+         **/
         
+        /* prevent nodes (esp. output nodes) from executing in more than one
+         * thread at once
+         */
+        bool m_exec_queued;
+        mutable mutex_t m_exec_queued_lock;
+
         /* Keep track of which of our inputs have been refreshed since this node
          * was last exec()d
          */
         in_bool_map_t m_new_inputs;
         mutable mutex_t m_new_inputs_lock;
-
+        
+        /* Which inputs have valid data associated with them:
+         */
         in_bool_map_t m_valid_inputs;
         mutable mutex_t m_valid_inputs_lock;
+
+        /* Which parameters have been changed since this node was last exec()d
+         */
+        param_bool_map_t m_new_paramvalues;
+        mutable mutex_t m_new_paramvalues_lock;
         
         /* Has output been demanded of this node?
          */
@@ -280,6 +339,10 @@ class Node{
          */
         bool m_allow_queue;
         mutable mutex_t m_allow_queue_lock;
+
+
+        /** Other Variables:
+         **/
         
         /* The scheduler associated with this node:
          * This is used by checkAddSched(), which may decide that this node now
