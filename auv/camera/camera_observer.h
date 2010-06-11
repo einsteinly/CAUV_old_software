@@ -1,8 +1,9 @@
 #ifndef __CAMERA_OBSERVER_H__
 #define __CAMERA_OBSERVER_H__
 
-#include <opencv/cv.h>
 #include <vector>
+
+#include <cv.h>
 
 #include "camera.h"
 

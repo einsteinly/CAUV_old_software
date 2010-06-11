@@ -267,7 +267,7 @@ void Node::setParamLinks(std::map<std::string, NodeOutput> const& inputs){
         if(k != m_params.end() && j->second.node){
             m_pw->addArc(j->second.node, j->second.output, k->second.inblob);
             k->second.pvpair->editable(false);
-        }else{
+        }else if(k != m_params.end()){
             k->second.pvpair->editable(true);
         }
     }
