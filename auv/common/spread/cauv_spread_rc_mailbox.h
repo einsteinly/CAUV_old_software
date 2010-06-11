@@ -57,7 +57,7 @@ public:
                               ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
                               SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) throw()
         : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority),
-          m_connection_state_lock(), m_connection_state(NC), m_mailbox(),
+          m_connection_state_lock(), m_connection_state(DISCONNECTED), m_mailbox(),
           m_keep_trying(true), m_thread(), m_groups_lock(), m_groups(){
         _asyncConnect();
     }
@@ -111,6 +111,13 @@ public:
     int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType) {
         return sendMessage(message, serviceType, message->group());
     }
+    
+    void handleConnectionError(ConnectionError& e){
+        if(!e.critical())
+            _asyncConnect();
+        else
+            _disconnect();
+    }
     /**
      * @return The number of bytes sent
      */
@@ -126,9 +133,7 @@ public:
                 }
             }catch(ConnectionError& e){
                 err += "to " + destinationGroup + ", " + e.what();
-                if(!e.critical()){
-                    _asyncConnect();
-                }
+                handleConnectionError(e);
             }
         }else{
             _asyncConnect();
@@ -152,9 +157,7 @@ public:
                 }
             }catch(ConnectionError& e){
                 err += "to " + to_string(groupNames.size()) + " groups, " + e.what();
-                if(!e.critical()){
-                    _asyncConnect();
-                }
+                handleConnectionError(e);
             }
         }else{
             _asyncConnect();
@@ -179,9 +182,7 @@ public:
                 }
             }catch(ConnectionError& e){
                 err += e.what();
-                if(!e.critical()){
-                    _asyncConnect();
-                }
+                handleConnectionError(e);
             }
         }else{
             _asyncConnect();
@@ -200,9 +201,7 @@ public:
                 }
             }catch(ConnectionError& e){
                 err += e.what();
-                if(!e.critical()){
-                    _asyncConnect();
-                }
+                handleConnectionError(e);
             }
         }else{
             _asyncConnect();
@@ -236,6 +235,7 @@ public:
                 return;
             } catch(ConnectionError& e) {
                 if (e.critical()){
+                    _disconnect();
                     throw(e);
                 }else{
                     std::cerr << e.what() << ", trying to reconnect..." << std::endl;
@@ -249,7 +249,7 @@ public:
     }
     
 private:
-    enum ConnectionState {NC=0, CONNECTING=1, CONNECTED=2};
+    enum ConnectionState {DISCONNECTED=0, CONNECTING=1, CONNECTED=2};
 
     struct ConnectionInfo{ 
         ConnectionInfo(std::string const& ph,
@@ -338,12 +338,24 @@ private:
         // to do anyway.
         
         boost::unique_lock<mutex_t> l(m_connection_state_lock);
-        if (m_connection_state != NC) return;
+        if (m_connection_state != DISCONNECTED) return;
         m_connection_state = CONNECTING;
         l.unlock();
 
         info() << "reconnecting..."; 
         m_thread = boost::thread(boost::ref(*this));
+    }
+
+    void _disconnect() throw(){
+        boost::unique_lock<mutex_t> l(m_connection_state_lock);
+        if (m_connection_state == DISCONNECTED) return;
+        m_connection_state = DISCONNECTED; 
+        info() << "disconnecting...";
+        m_mailbox.reset();
+        m_keep_trying = false;
+        if(m_thread.joinable())
+            m_thread.join();
+        m_keep_trying = true;
     }
     
     ConnectionInfo m_ci;
