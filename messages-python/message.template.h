@@ -62,6 +62,21 @@ struct $s.name
 // Message Classes
 // ===============
 
+namespace MessageType
+{
+    enum e
+    {
+        #set $num_values = 0
+        #for $g in $groups
+        #for $m in $g.messages
+        $m.name = $m.id,
+        #set $num_values += 1
+        #end for
+        #end for
+        NumValues = $num_values
+    };
+} // namespace $e.name
+
 // Base message class
 class Message
 {
@@ -180,6 +195,41 @@ class MessageObserver
 
     protected:
         MessageObserver();
+};
+
+class BufferingThreadBase;
+class BufferedMessageObserver: public MessageObserver
+{
+    public:
+        virtual ~BufferedMessageObserver();
+
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        #set $ptrName = $className + "_ptr"
+        virtual void on${className}($ptrName m);
+        #end for
+        #end for
+
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        #set $ptrName = $className + "_ptr"
+        virtual void on${className}Buffered($ptrName m);
+        #end for
+        #end for
+
+        void setDoubleBuffered(MessageType::e, bool);
+
+    protected:
+        BufferedMessageObserver();
+
+    private:
+        template<unsigned, typename T>
+        friend struct BufferingThread;
+
+        std::map<MessageType::e, boost::shared_ptr<boost::thread> > m_boost_threads;
+        std::map<MessageType::e, boost::shared_ptr<BufferingThreadBase> > m_threads;
 };
 
 class DebugMessageObserver: public MessageObserver

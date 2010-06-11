@@ -131,6 +131,119 @@ void MessageObserver::on${className}($classPtr) {}
 #end for
 #end for 
 
+BufferedMessageObserver::BufferedMessageObserver()
+{
+}
+
+BufferedMessageObserver::~BufferedMessageObserver()
+{
+    // TODO: MUST stop all threads before this is destroyed!
+}
+
+struct BufferingThreadBase
+{ 
+    BufferingThreadBase(BufferedMessageObserver& obs)
+        : m_die(false), m_buffer(),
+          m_condition(boost::make_shared<boost::condition_variable>()),
+          m_mutex(boost::make_shared<boost::mutex>()),
+          m_obs(obs)
+    {
+    }
+
+    bool m_die;
+    boost::shared_ptr<const Message> m_buffer;
+    boost::shared_ptr<boost::condition_variable> m_condition;
+    boost::shared_ptr<boost::mutex> m_mutex;
+    BufferedMessageObserver& m_obs;
+};
+
+template<unsigned N_id, typename T>
+struct BufferingThread: public BufferingThreadBase{
+    BufferingThread(BufferedMessageObserver& obs, void (BufferedMessageObserver::*f)(T))
+        : BufferingThreadBase(obs), m_notify(f)
+    {
+    }
+
+    void operator()()
+    {
+        for(;;)
+        {
+            boost::unique_lock<boost::mutex> l(*m_mutex);
+            if(!m_buffer)
+                m_condition->wait(l);
+            if(m_die)
+                break;
+            T temp = boost::dynamic_pointer_cast<typename T::value_type>(m_buffer);
+            l.unlock();
+            (m_obs.*m_notify)(temp);
+        }
+    }
+
+    void (BufferedMessageObserver::*m_notify)(T);
+};
+
+#for $g in $groups
+#for $m in $g.messages
+#set $className = $m.name + "Message"
+#set $classPtr = $className + "_ptr"
+void BufferedMessageObserver::on${className}($classPtr m)
+{
+    boost::shared_ptr<BufferingThreadBase> bt = m_threads[MessageType::$m.name];
+    if(bt)
+    {
+        boost::unique_lock<boost::mutex> l(*(bt->m_mutex));
+        bt->m_buffer = m;
+        l.unlock();
+        bt->m_condition->notify_one();
+    }
+}
+#end for
+#end for
+
+#for $g in $groups
+#for $m in $g.messages
+#set $className = $m.name + "Message"
+#set $classPtr = $className + "_ptr"
+void BufferedMessageObserver::on${className}Buffered($classPtr) {}
+#end for
+#end for
+
+void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
+{
+    if(v && !m_threads[mt])
+    {
+        switch(mt)
+        {
+            #for $g in $groups
+            #for $m in $g.messages
+            #set $className = $m.name + "Message"
+            #set $classPtr = $className + "_ptr"
+            case MessageType::$m.name:
+            {
+                boost::shared_ptr<BufferingThread<MessageType::$m.name, $classPtr> > t =
+                    boost::make_shared<BufferingThread<MessageType::$m.name, $classPtr> >(
+                        boost::ref<BufferedMessageObserver>(*this), &BufferedMessageObserver::on${className}
+                );
+
+                m_boost_threads[MessageType::$m.name] = boost::make_shared<boost::thread>(*t);
+                m_threads[MessageType::$m.name] = t;
+
+                break;
+            }   
+            #end for
+            #end for
+        }
+    }
+    else
+    {
+        m_threads[MessageType::$m.name]->m_die = true;
+        m_threads[MessageType::$m.name]->m_condition->notify_one();
+        m_threads[MessageType::$m.name].reset();
+        m_boost_threads[MessageType::$m.name]->join();
+        m_boost_threads[MessageType::$m.name].reset();
+    }
+}
+
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
