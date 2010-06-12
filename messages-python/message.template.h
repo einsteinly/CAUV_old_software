@@ -200,6 +200,10 @@ class MessageObserver
 class BufferingThreadBase;
 class BufferedMessageObserver: public MessageObserver
 {
+    typedef BufferedMessageObserver this_t;
+    typedef boost::shared_ptr<boost::thread> thread_ptr_t;
+    typedef boost::shared_ptr<BufferingThreadBase> bthread_ptr_t;
+
     public:
         virtual ~BufferedMessageObserver();
 
@@ -225,11 +229,8 @@ class BufferedMessageObserver: public MessageObserver
         BufferedMessageObserver();
 
     private:
-        template<unsigned, typename T>
-        friend struct BufferingThread;
-
-        std::map<MessageType::e, boost::shared_ptr<boost::thread> > m_boost_threads;
-        std::map<MessageType::e, boost::shared_ptr<BufferingThreadBase> > m_threads;
+        std::map<MessageType::e, thread_ptr_t> m_boost_threads;
+        std::map<MessageType::e, bthread_ptr_t> m_threads;
 };
 
 class DebugMessageObserver: public MessageObserver
@@ -319,6 +320,24 @@ std::basic_ostream<char_T, traits>& operator<<(
 }
 #end for
 
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, MessageType::e const& e)
+{
+    switch(e)
+    {
+        #for $g in $groups
+        #for $m in $g.messages
+        case MessageType::$m.name:
+            return os << "MessageType::$m.name";
+        #end for
+        #end for
+        default:
+            return os << "MessageType::Unknown=" << int(e);
+    }
+}
+
+
 #for $e in $enums
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
@@ -331,9 +350,8 @@ std::basic_ostream<char_T, traits>& operator<<(
             return os << "$e.name::$v.name";
         #end for
         default:
-            return os << "Unknown";
+            return os << "$e.name::Unknown=" << int(e);
     }
-    return os;
 }
 #end for
 

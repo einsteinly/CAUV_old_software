@@ -3,6 +3,8 @@
 \#include <boost/serialization/vector.hpp>
 \#include <boost/serialization/map.hpp>
 \#include <boost/make_shared.hpp>
+\#include <boost/thread.hpp>
+\#include <boost/noncopyable.hpp>
 
 // ===============
 // Message Classes
@@ -157,8 +159,9 @@ struct BufferingThreadBase
     BufferedMessageObserver& m_obs;
 };
 
-template<unsigned N_id, typename T>
-struct BufferingThread: public BufferingThreadBase{
+template<typename T>
+struct BufferingThread: public BufferingThreadBase, boost::noncopyable
+{
     BufferingThread(BufferedMessageObserver& obs, void (BufferedMessageObserver::*f)(T))
         : BufferingThreadBase(obs), m_notify(f)
     {
@@ -169,13 +172,27 @@ struct BufferingThread: public BufferingThreadBase{
         for(;;)
         {
             boost::unique_lock<boost::mutex> l(*m_mutex);
+            
             if(!m_buffer)
                 m_condition->wait(l);
-            if(m_die)
+            
+            if(m_die){
                 break;
-            T temp = boost::dynamic_pointer_cast<typename T::value_type>(m_buffer);
-            l.unlock();
-            (m_obs.*m_notify)(temp);
+            }
+
+            if(m_buffer){
+                T temp = boost::dynamic_pointer_cast<typename T::value_type>(m_buffer);
+                if(temp){
+                    m_buffer.reset();
+                    l.unlock();
+                    (m_obs.*m_notify)(temp);
+                }else{
+                    error() << "incorrect message type for this buffer!";
+                }
+            }else{
+                error() << "buffering thread wrongly notified!";
+            }
+
         }
     }
 
@@ -188,13 +205,12 @@ struct BufferingThread: public BufferingThreadBase{
 #set $classPtr = $className + "_ptr"
 void BufferedMessageObserver::on${className}($classPtr m)
 {
-    boost::shared_ptr<BufferingThreadBase> bt = m_threads[MessageType::$m.name];
-    if(bt)
+    if(bthread_ptr_t b_thread = m_threads[MessageType::$m.name])
     {
-        boost::unique_lock<boost::mutex> l(*(bt->m_mutex));
-        bt->m_buffer = m;
+        boost::unique_lock<boost::mutex> l(*(b_thread->m_mutex));
+        b_thread->m_buffer = m;
         l.unlock();
-        bt->m_condition->notify_one();
+        b_thread->m_condition->notify_one();
     }
 }
 #end for
@@ -210,8 +226,17 @@ void BufferedMessageObserver::on${className}Buffered($classPtr) {}
 
 void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
 {
+    using boost::thread;
+    using boost::make_shared;
+    using boost::ref;
+    using boost::shared_ptr;
+
     if(v && !m_threads[mt])
     {
+        assert(!m_boost_threads[mt]);
+        
+        thread_ptr_t boost_thread;
+
         switch(mt)
         {
             #for $g in $groups
@@ -220,27 +245,36 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
             #set $classPtr = $className + "_ptr"
             case MessageType::$m.name:
             {
-                boost::shared_ptr<BufferingThread<MessageType::$m.name, $classPtr> > t =
-                    boost::make_shared<BufferingThread<MessageType::$m.name, $classPtr> >(
-                        boost::ref<BufferedMessageObserver>(*this), &BufferedMessageObserver::on${className}
+                typedef BufferingThread<$classPtr> thread_t;
+                shared_ptr<thread_t> t = make_shared<thread_t>(
+                    ref<this_t>(*this), &this_t::on${className}Buffered
                 );
-
-                m_boost_threads[MessageType::$m.name] = boost::make_shared<boost::thread>(*t);
-                m_threads[MessageType::$m.name] = t;
-
+                m_boost_threads[mt] = make_shared<thread>(ref<thread_t>(*t));
+                m_threads[mt] = t;
                 break;
-            }   
+            }
             #end for
             #end for
+        }
+        
+        if(m_threads[mt])
+        {
+            info() << "Double-Buffering enabled for" << mt << "messages";
+        }
+        else
+        {
+            error() << "Invalid message type:" << mt;
         }
     }
     else
     {
-        m_threads[MessageType::$m.name]->m_die = true;
-        m_threads[MessageType::$m.name]->m_condition->notify_one();
-        m_threads[MessageType::$m.name].reset();
-        m_boost_threads[MessageType::$m.name]->join();
-        m_boost_threads[MessageType::$m.name].reset();
+        m_threads[mt]->m_die = true;
+        m_threads[mt]->m_condition->notify_one();
+        m_threads[mt].reset();
+        m_boost_threads[mt]->join();
+        m_boost_threads[mt].reset();
+
+        info() << "Double-Buffering disabled for" << mt << "messages";        
     }
 }
 
