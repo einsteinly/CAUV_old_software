@@ -19,6 +19,8 @@ target_link_libraries (
 
     common
     boost_date_time
+    boost_filesystem
+    boost_system
     cv
     cxcore
     highgui

@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 
+#include <boost/filesystem.hpp>
+
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -12,16 +14,16 @@
 
 
 class FileInputNode: public AsynchronousNode{
-        typedef boost::lock_guard<boost::recursive_mutex> lock_t;
-
+        typedef boost::unique_lock<boost::recursive_mutex> lock_t;
     public:
         FileInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t){
+            : AsynchronousNode(sched, pl, t), m_dir_mutex(),
+              m_is_directory(false), m_iter(){
             // no inputs
             // registerInputID()
             
             // one output:
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID<image_ptr_t>("image");
             
             // one parameter: the filename
             registerParamID<std::string>("filename", "default.jpg");
@@ -29,10 +31,18 @@ class FileInputNode: public AsynchronousNode{
 
         virtual void paramChanged(param_id const& p){
             debug() << "FileInputNode::paramChanged";
-            if(p == param_id("filename"))
+            if(p == param_id("filename")){
+                lock_t l(m_dir_mutex);
+                std::string fname = param<std::string>("filename");
+                if(boost::filesystem::is_directory(fname))
+                    m_is_directory = true;
+                else
+                    m_is_directory = false;
+                m_iter = boost::filesystem::directory_iterator();
                 setAllowQueue();
-            else
+            }else{
                 warning() << "unknown parameter" << p << "set";
+            }
         }
 
     protected:
@@ -41,23 +51,66 @@ class FileInputNode: public AsynchronousNode{
             
             debug() << "fileInputNode::doWork";
         
-            std::string fname = param<std::string>("filename"); 
-            cv::Mat img = cv::imread(fname.c_str());
+            std::string fname = param<std::string>("filename");
+            image_ptr_t image;
 
-            if(img.size().width > 0 && img.size().height > 0){
-                r["image_out"] = image_ptr_t(new Image(img, Image::src_file)); 
-                debug() << "fileInputNode::doWork result:" << fname << "->"
-                        << *boost::get<image_ptr_t>(r["image_out"]);
+            if(!m_is_directory){
+                image = readImage(fname);
+                clearAllowQueue();
             }else{
-                warning() << "fileInputNode::doWork result:" << fname << "-> (no image)";
+                lock_t l(m_dir_mutex);
+                const boost::filesystem::directory_iterator end;
+                if(m_iter == end)
+                    m_iter = boost::filesystem::directory_iterator(fname);
+                // continue until the directory is exhausted, or an image is
+                // successfully loaded
+                for(; m_iter != end; m_iter++){
+                    debug()  << "considering path:" << m_iter->string();
+                    if(!boost::filesystem::is_directory(m_iter->status()) &&
+                       (image = readImage(m_iter->string(), false))){
+                        m_iter++;
+                        break;
+                    }
+                }
+                if(!image)
+                    warning() << "no images in directory" << fname;
+                // NB: allowQueue not cleared
             }
-            clearAllowQueue();            
+            r["image"] = image;
 
             return r;
         }
+
+        image_ptr_t readImage(std::string const& fname, bool warn=true) const{
+            image_ptr_t r;
+            cv::Mat img;
+
+            try{
+                img = cv::imread(fname.c_str());
+            }catch(cv::Exception& e){
+                error() << "FileInputNode:\n\t"
+                        << e.err << "\n\t"
+                        << "in" << e.func << "," << e.file << ":" << e.line;
+            }
+
+            if(img.size().width > 0 && img.size().height > 0){
+                r = boost::make_shared<Image>(img, Image::src_file);
+                debug() << "fileInputNode::readImage:" << fname << "->" << *r;
+            }else if(warn){
+                warning() << "fileInputNode::readImage:" << fname << "-> (no image)";
+            }
+
+            return r;
+        }
+
+    private:
+        boost::recursive_mutex m_dir_mutex;
+
+        bool m_is_directory;
+        boost::filesystem::directory_iterator m_iter;
     
-    // Register this node type
-    DECLARE_NFR;
+        // Register this node type
+        DECLARE_NFR;
 };
 
 #endif // ndef __FILE_INPUT_NODE_H__
