@@ -15,6 +15,8 @@
 #include "nodeIO.h"
 #include "pvPair.h"
 
+#define MYMACRO() stuff
+
 namespace pw{
 
 template<typename container_T>
@@ -88,6 +90,12 @@ class CloseButton: public Renderable{
         bool m_mouseover;
         bool m_pressed;
 };
+
+template<typename T, typename cT>
+std::basic_ostream<T, cT>& operator<<(
+    std::basic_ostream<T, cT>& os, Node const& n){
+    return os << "Node{" << n.m_node_type << ",id=" << n.m_node_id << "}";
+}
 
 } // namespace pw
 
@@ -212,60 +220,78 @@ void Node::setOutputLinks(std::map<std::string, std::vector<NodeInput> > const& 
 }
 
 static boost::shared_ptr<PVPairEditableBase> makePVPair(
-    Node *n, std::pair<std::string, NodeParamValue> const& p){
+    Node *n, std::pair<std::string, NodeParamValue> const& p, bool editable){
     switch((ParamType::e) p.second.type){
         case ParamType::Int32:
             return boost::make_shared<PVPair<int> >(
-                    n, p.first, p.second.intValue
+                    n, p.first, p.second.intValue, editable
                 );
         case ParamType::Float:
             return boost::make_shared<PVPair<float> >(
-                    n, p.first, p.second.floatValue
+                    n, p.first, p.second.floatValue, editable
                 );
         case ParamType::String:
             return boost::make_shared<PVPair<std::string> >(
-                    n, p.first, p.second.stringValue
+                    n, p.first, p.second.stringValue, editable
                 );
         default:
             error() << "unknown ParamType";
         case ParamType::Bool:
             return boost::make_shared<PVPair<bool> >(
-                    n, p.first, p.second.intValue
+                    n, p.first, p.second.intValue, editable
                 );
     }
 }
 
 void Node::setParams(std::map<std::string, NodeParamValue> const& params){
-    // remove any old parameters:
-    for(str_inparam_map_t::const_iterator i = m_params.begin(); i != m_params.end(); i++){
-        m_contents.remove(i->second.inblob);
-        m_contents.remove(i->second.pvpair);
-        m_pw->removeArc(i->second.inblob, m_node_id, i->first);
-    }
-    m_params.clear();
+    // remove any parameters that no longer exist
+    str_inparam_map_t new_m_params;
+    foreach(str_inparam_map_t::value_type &i, m_params)
+        if(!params.count(i.first)){
+            m_contents.remove(i.second.inblob);
+            m_contents.remove(i.second.pvpair);
+            m_pw->removeArc(i.second.inblob, m_node_id, i.first);
+        }else{
+            new_m_params.insert(i);
+        }
+    m_params = new_m_params;
 
-    std::map<std::string, NodeParamValue>::const_iterator j;
-    for(j = params.begin(); j != params.end(); j++){
-        debug() << BashColour::Blue << "Node::" << __func__ << *j;
-        InParamPVPair t;
-        t.pvpair = makePVPair(this, *j);
-        t.inblob = boost::make_shared<NodeInputParamBlob>(
-            this, m_pw, j->first
-        );
-        m_params[j->first] = t;
-        m_contents.push_back(t.inblob);
-        m_contents.push_back(t.pvpair);
+    typedef std::map<std::string, NodeParamValue> pm_t; // TODO auto
+    foreach(pm_t::value_type const& j, params){
+        str_inparam_map_t::iterator k = m_params.find(j.first);
+        if(k == m_params.end()){
+            debug(3) << BashColour::Blue << *this << "new param:" << j;
+            InParamPVPair t;
+            t.pvpair = makePVPair(this, j, true);
+            t.inblob = boost::make_shared<NodeInputParamBlob>(
+                this, m_pw, j.first
+            );
+            m_params[j.first] = t;
+            m_contents.push_back(t.inblob);
+            m_contents.push_back(t.pvpair);
+        }else{
+            debug(3) << BashColour::Blue << *this << "param updated:" << j;        
+            // leave the 'inblob' alone -- so that any input arc to it remains
+            // valid -- but replace the parameter-value-pair:
+            renderable_list_t::iterator i = std::find(
+                m_contents.begin(), m_contents.end(), k->second.pvpair
+            );
+            assert(i != m_contents.end());
+            assert(k->second.pvpair);
+            k->second.pvpair = makePVPair(this, j, k->second.pvpair->editable());
+            *i = k->second.pvpair;
+        }
     }
     refreshLayout();
 }
 
 void Node::setParamLinks(std::map<std::string, NodeOutput> const& inputs){
-    std::map<std::string, NodeOutput>::const_iterator j;
-    for(j = inputs.begin(); j != inputs.end(); j++){
-        str_inparam_map_t::const_iterator k = m_params.find(j->first);
+    typedef std::map<std::string, NodeOutput> im_t;
+    foreach(im_t::value_type const& j, inputs){
+        str_inparam_map_t::const_iterator k = m_params.find(j.first);
         // if connected, add the arc to this parameter's input:
-        if(k != m_params.end() && j->second.node){
-            m_pw->addArc(j->second.node, j->second.output, k->second.inblob);
+        if(k != m_params.end() && j.second.node){
+            m_pw->addArc(j.second.node, j.second.output, k->second.inblob);
             k->second.pvpair->editable(false);
         }else if(k != m_params.end()){
             k->second.pvpair->editable(true);
@@ -514,13 +540,15 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
 } // namespace pw
 
 void Node::refreshLayout(){
-    int border = 3;
-    int lead = 6;
-    int section_lead = 10;
-    int io_overhang = 6;
+    // yay, lots of random constants: layout is fun
+    const int border = 3;
+    const int lead = 6;
+    const int section_lead = 10;
+    const int io_overhang = 6;
+    const int param_io_overhang = 4;
+    const int param_indent = 6;
     int prev_height = roundA(m_closebutton->bbox().h());
     int y_pos = -prev_height;
-    int param_indent = 6;
 
     m_closebutton->m_pos.x = -m_closebutton->bbox().min.x;
     m_closebutton->m_pos.y = -m_closebutton->bbox().min.y;
@@ -555,8 +583,8 @@ void Node::refreshLayout(){
         blob->m_pos.y = y_pos - roundA(max(pvp->bbox().max.y, blob->bbox().max.y));
         pvp->m_pos.y = blob->m_pos.y;
 
-        blob->m_pos.x = m_back.min.x - io_overhang - blob->bbox().min.x;
-        pvp->m_pos.x = blob->m_pos.x + blob->bbox().w() - pvp->bbox().min.x;
+        blob->m_pos.x = m_back.min.x - param_io_overhang - blob->bbox().min.x;
+        pvp->m_pos.x = param_indent - pvp->bbox().min.x;
 
         prev_height = roundA(max(pvp->bbox().max.y, blob->bbox().max.y) -
                              min(pvp->bbox().min.y, blob->bbox().min.y));

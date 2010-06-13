@@ -38,6 +38,11 @@ class Node: public Draggable,
         typedef std::map<std::string, out_ptr_t> str_out_map_t;
         // iterator typedefs, sorry!
         typedef Node::str_renderable_map_t::const_iterator sr_map_iter_t;
+        
+        // friends
+        template<typename T, typename C>
+        friend std::basic_ostream<T,C>& operator<<(std::basic_ostream<T,C>&, Node const&);
+        
     public:
         Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m);
         Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt);

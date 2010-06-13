@@ -9,8 +9,8 @@ namespace pw{
 
 class PVPairEditableBase: public Renderable{
     public:
-        PVPairEditableBase(Node* n)
-            : Renderable(n), m_editable(true){
+        PVPairEditableBase(Node* n, bool editable=true)
+            : Renderable(n), m_editable(editable){
         }
         virtual ~PVPairEditableBase(){ }
 
@@ -30,8 +30,9 @@ template<typename value_T>
 class PVPair: public PVPairEditableBase{
     public:
         typedef Node* node_ptr_t;
-        PVPair(node_ptr_t n, std::string const& param, value_T const& value)
-            : PVPairEditableBase(n), m_node(n), m_bbox(),
+        PVPair(node_ptr_t n, std::string const& param, value_T const& value,
+               bool editable=true)
+            : PVPairEditableBase(n, editable), m_node(n), m_bbox(),
               m_min_value_bbox(0, -3, 13, 10),
               m_param(boost::make_shared<Text>(n, param)),
               m_equals(boost::make_shared<Text>(n, "=")),

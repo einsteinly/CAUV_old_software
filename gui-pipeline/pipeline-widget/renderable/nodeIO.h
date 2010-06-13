@@ -38,6 +38,7 @@ class NodeIOBlob: public Renderable,
 
         double m_radius;
         double m_radius_squared;
+        Colour m_normal_colour;
         Colour m_colour;
 
         bool m_mouseover;

@@ -9,7 +9,8 @@
 
 using namespace pw;
 
-const static Colour Normal_Colour(0.2, 0.4, 0.6, 0.5);
+const static Colour IO_Normal_Colour(0.2, 0.4, 0.6, 0.5);
+const static Colour Param_Normal_Colour(0.4, 0.4, 0.4, 0.5);
 const static Colour Outline_Colour_Hint(0, 0.2);
 const static Colour Mouseover_Colour_Hint(1, 0.2);
 const static Colour New_Hint(0, 1, 0, 0.4);
@@ -22,7 +23,8 @@ NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
       m_suppress_text(suppress_text),
       m_text(boost::make_shared<Text>(node, name)),
       m_radius(6), m_radius_squared(m_radius*m_radius),
-      m_colour(Normal_Colour),
+      m_normal_colour(IO_Normal_Colour),
+      m_colour(m_normal_colour),
       m_mouseover(false){
     // put middle at 0 rather than baseline
     m_text->m_pos.y = -(m_text->bbox().min.y + m_text->bbox().h()/2);
@@ -97,7 +99,7 @@ bool NodeIOBlob::contains(Point const& x) const{
 }
 
 void NodeIOBlob::status(int s){
-    m_colour = Normal_Colour;
+    m_colour = m_normal_colour;
     if(s & NodeIOStatus::New) m_colour &= New_Hint;
     if(!(s & NodeIOStatus::Valid)) m_colour &= Invalid_Hint;
     if(s & NodeIOStatus::Demanded) m_colour &= Demanded_Hint;
@@ -122,6 +124,10 @@ std::string NodeInputBlob::input() const{
 
 NodeInputParamBlob::NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
     : NodeInputBlob(d, p, n, true){
+    m_normal_colour = Param_Normal_Colour;
+    m_colour = m_normal_colour;
+    m_radius = 4;
+    m_radius_squared = 16;
 }
 
 std::string NodeInputParamBlob::param() const{

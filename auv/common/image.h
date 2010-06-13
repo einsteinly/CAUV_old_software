@@ -49,11 +49,12 @@ class Image{
             std::vector<unsigned char> buf;
             cv::imencode(m_compress_fmt, m_img, buf, m_compress_params);
             ar & buf;
-
+            
+            const float pre = m_img.rows * m_img.cols * m_img.elemSize();
+            const float post = buf.size();
             debug() << "Image Serialization:\n\t"
                       << __func__ << m_compress_fmt << m_compress_params << load_flags
-                      << "(" << m_img.rows * m_img.cols * m_img.elemSize() << "->"
-                      << buf.size() << "bytes)";
+                      << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
         }
         
         template<class Archive>
@@ -68,10 +69,11 @@ class Image{
             ar & buf;
             m_img = cv::imdecode(cv::Mat(buf), load_flags);
 
-            debug() << "Image Deerialization:\n\t"
+            const float post = m_img.rows * m_img.cols * m_img.elemSize();
+            const float pre = buf.size();
+            debug() << "Image Deserialization:\n\t"
                       << __func__ << m_compress_fmt << m_compress_params << load_flags
-                      << "(" << buf.size() << "->"
-                      << m_img.rows * m_img.cols * m_img.elemSize() << "bytes)";
+                      << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
         }
 
     private:
