@@ -59,7 +59,7 @@ public:
      * Whenever a new message is received, all observers are informed.
      */
     void startMonitoring() {
-        if (m_thread.get() == 0) {
+        if(!m_thread){
             m_thread = boost::make_shared<boost::thread>( boost::ref(m_thread_callable) );
 
             struct sched_param param;
@@ -76,8 +76,11 @@ public:
      * TODO: should this return immediately, or wait?
      */
     void stopMonitoring() {
-        m_thread_callable.stop() ;
-        m_thread->join();
+        if(m_thread){
+            m_thread_callable.stop();
+            m_thread->join();
+            m_thead.reset();
+        }
     }
 
 private:
