@@ -2,6 +2,8 @@
 
 #include <QtOpenGL>
 
+const static double Small_Value_D = 1e-6;
+
 template<>
 const float ColourValueTraits<float>::min = 0.0f;
 template<>
@@ -15,13 +17,43 @@ void glVertex(Point const& p){
     glVertex2f(p.x, p.y);
 }
 
-void glBox(BBox const& b){
-    glBegin(GL_QUADS);
+static void _glBox(BBox const& b){
     glVertex2f(b.min.x, b.max.y);
     glVertex2f(b.min.x, b.min.y);
     glVertex2f(b.max.x, b.min.y);
     glVertex2f(b.max.x, b.max.y);
-    glEnd();
+}
+
+void glBox(BBox const& b, double const& cr){
+    const int corner_segs = 8;
+    if(cr < Small_Value_D){
+        glBegin(GL_QUADS);
+        _glBox(b);
+        glEnd();
+    }else{
+        glBegin(GL_QUADS);
+            _glBox(BBox(b.min + Point(cr, cr), b.max - Point(cr, cr)));
+
+            _glBox(BBox(b.min.x     , b.min.y + cr, b.min.x + cr, b.max.y - cr));
+            _glBox(BBox(b.max.x - cr, b.min.y + cr, b.max.x     , b.max.y - cr));
+            _glBox(BBox(b.min.x + cr, b.min.y     , b.max.x - cr, b.min.y + cr));
+            _glBox(BBox(b.min.x + cr, b.max.y - cr, b.max.x - cr, b.max.y     ));
+        glEnd();
+        
+        glPushMatrix();
+            glTranslatef(Point(b.min.x + cr, b.min.y + cr));
+            glSegment(cr, -180, -90, corner_segs);
+
+            glTranslatef(Point(b.w() - 2*cr, 0));
+            glSegment(cr, 90, 180, corner_segs);
+            
+            glTranslatef(Point(0, b.h() - 2*cr));
+            glSegment(cr, 0, 90, corner_segs);
+
+            glTranslatef(Point(2*cr - b.w(), 0));
+            glSegment(cr, -90, 0, corner_segs);
+        glPopMatrix();
+    }
 }
 
 // TODO: fast sin/cos in degrees with lookup tables etc

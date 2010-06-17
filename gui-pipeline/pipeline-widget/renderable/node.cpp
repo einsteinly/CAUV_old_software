@@ -15,32 +15,41 @@
 #include "nodeIO.h"
 #include "pvPair.h"
 
-#define MYMACRO() stuff
-
 namespace pw{
 
 template<typename container_T>
 class CloseButton: public Renderable{
     public:
         CloseButton(container_T* c)
-            : Renderable(c), m_container(c), m_size(8), m_mouseover(false),
+            : Renderable(c), m_container(c), m_size(12), m_mouseover(false),
               m_pressed(false){
         }
         virtual ~CloseButton(){ }
 
         virtual void draw(bool){
             if(m_pressed)
-                glColor(Colour(0, 0.9));
+                glColor(Colour(1, 1));
+            else if(m_mouseover)
+                glColor(Colour(1, 0.5));
+            else
+                glColor(Colour(1, 0.2));
+
+            glBox(bbox(), 3);
+
+            if(m_pressed)
+                glColor(Colour(0, 1));
             else if(m_mouseover)
                 glColor(Colour(0.8, 0, 0, 0.8));
             else
                 glColor(Colour(0, 0.5));
-            glLineWidth(roundA(m_size/4));
+            
+            // TODO: don't draw this with lines - it looks ugly...
+            glLineWidth(roundA(m_size/8));
             glBegin(GL_LINES);
-            glVertex2f(-m_size/2, m_size/2);
-            glVertex2f(m_size/2, -m_size/2);
-            glVertex2f(-m_size/2, -m_size/2);
-            glVertex2f(m_size/2, m_size/2);
+            glVertex2f(2 - m_size/2, m_size/2 - 2);
+            glVertex2f(m_size/2 - 2, 2 - m_size/2);
+            glVertex2f(2 - m_size/2, 2 - m_size/2);
+            glVertex2f(m_size/2 - 2, m_size/2 - 2);
             glEnd();
         }
 
@@ -370,7 +379,7 @@ void Node::draw(bool picking){
         glColor(m_bg_col & Mouseover_Colour_Hint);
     else
         glColor(m_bg_col);
-    glBox(m_back);
+    glBox(m_back, 6);
 
     Container::draw(picking);
 }
@@ -558,7 +567,7 @@ void Node::refreshLayout(){
     m_title->m_pos.y = y_pos - roundA(m_title->bbox().max.y);
     m_title->m_pos.x = -m_title->bbox().min.x;
     prev_height = roundA(m_title->bbox().h());
-    y_pos -= (prev_height + section_lead);
+    y_pos -= (prev_height + lead);
 
     m_back |= m_title->bbox() + m_title->m_pos;
     m_back.max.y += border;
