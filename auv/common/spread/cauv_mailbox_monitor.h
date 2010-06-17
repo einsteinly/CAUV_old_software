@@ -79,7 +79,7 @@ public:
         if(m_thread){
             m_thread_callable.stop();
             m_thread->join();
-            m_thead.reset();
+            m_thread.reset();
         }
     }
 
