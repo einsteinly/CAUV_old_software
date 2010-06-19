@@ -1,0 +1,23 @@
+/***  This is a generated file, do not edit ***/
+\#include "workarounds.h" // _must_ be first
+\#include <boost/python.hpp>
+
+\#include "emit_generated.h"
+\#include "../common/messages.h"
+
+namespace bp = boost::python;
+
+void emitStructs(){
+#for $s in $structs
+    bp::class_<${s.name},
+               boost::shared_ptr<${s.name}>
+              >("${s.name}", bp::no_init)
+        #for $f in $s.fields
+        .def_readwrite("${f.name}", &$s.name::$f.name)
+        #end for
+    ;
+
+#end for
+
+}
+

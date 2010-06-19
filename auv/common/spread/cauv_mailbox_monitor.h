@@ -36,7 +36,7 @@ public:
     }
 };
 
-class MailboxEventMonitor {
+class MailboxEventMonitor: boost::noncopyable {
 public:
     MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
             : m_thread(), m_thread_callable(mailbox) {

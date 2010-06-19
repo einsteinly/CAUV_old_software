@@ -1,0 +1,51 @@
+import python ;
+
+if ! [ python.configured ]
+{
+    ECHO "notice: using default python" ;
+    using python ;
+}
+
+use-project boost
+  : /tmp/jc593/boost/boost_1_43_0 ;
+
+project
+  : requirements <include>../
+                 <include>/tmp/jc593/boost/boost_1_43_0
+                 <include>/societies/cauv/install/include/
+                 <library>/boost/python//boost_python
+                 <library>/boost/thread//boost_thread
+                 <library>/boost/serialization//boost_serialization
+                 <library>/boost/date_time//boost_date_time
+                 <library>/boost/iostreams//boost_iostreams ;
+
+lib cvlib : : <name>cv <search>/societies/cauv/install/lib ;
+lib highguilib : : <name>highgui <search>/societies/cauv/install/lib ;
+
+lib spreadlib : : <name>spread <search>/societies/cauv/install/lib ;
+
+lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>/societies/cauv/install/lib ;
+
+lib libcommon : ../common/messages.cpp
+                ../common/image.cpp 
+                ../common/cauv_node.cpp 
+                ../common/cauv_global.cpp
+                ../common/cauv_utils.cpp
+                ../common/spread/cauv_mailbox_monitor.cpp
+                ../common/spread/cauv_spread_mailbox.cpp
+                ../common/spread/cauv_spread_messages.cpp
+                cvlib
+                highguilib
+                ssrcspreadlib
+              : <define>CAUV_DEBUG ;
+
+python-extension cauv : cauvmodule.cpp
+                        emit_static.cpp
+                        emit_enums.cpp
+                        emit_structs.cpp
+                        emit_messages.cpp
+                        emit_observers.cpp
+                        libcommon
+                      : <define>CAUV_DEBUG ;
+
+

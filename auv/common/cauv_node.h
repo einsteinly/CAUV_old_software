@@ -17,11 +17,10 @@ class CauvNode
 		virtual ~CauvNode();
 		
         void run();
+		virtual void onRun();
 
 	protected:
 		std::string m_name;
-
-		virtual void onRun();
 
         boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
         boost::shared_ptr<MailboxEventMonitor> eventMonitor() const; 

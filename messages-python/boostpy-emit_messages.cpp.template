@@ -1,0 +1,44 @@
+/***  This is a generated file, do not edit ***/
+\#include "workarounds.h" // _must_ be first
+\#include <boost/python.hpp>
+
+\#include "emit_generated.h"
+\#include "../common/messages.h"
+
+namespace bp = boost::python;
+
+void emitMessages(){
+    #for $g in $groups
+    #for $m in $g.messages
+    #set $className = $m.name + "Message"
+
+    ## Cheetah fun to generate the boost::python::init object:
+    #set $initString = "bp::init< "
+    #for $i, $f in enumerate($m.fields)
+        #set $initString = $initString + $toCPPType($f.type)
+        #if $i != $len($m.fields) - 1
+            #set $initString = $initString + ", "
+        #end if
+    #end for
+    #set $initString = $initString + " >()"
+    bp::class_<$className,
+               bp::bases<Message>,
+               boost::shared_ptr<$className>
+              >("$className", $initString)
+        // return policies are all return-by-value, safest, but not the most efficient
+        #for $f in $m.fields
+        .add_property("${f.name}",
+                      bp::make_function(wrap(&${className}::get_${f.name}),
+                                        bp::return_value_policy<bp::copy_const_reference>()
+                      ),
+                      wrap(&${className}::set_${f.name})
+        )
+        #end for
+    ;
+    #end for
+    #end for
+    
+    // hackery for boost::shared_ptr<T const> ... see workarounds.h
+    register_shared_ptrs_to_python<Message>();
+}
+

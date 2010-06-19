@@ -87,36 +87,6 @@ def cLoadSaveSuffix(t):
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
 
-pyTypeMap = {
-    "bool" : "bool",
-    "byte" : "str",
-    "int8" : "int",
-    "int16" : "int",
-    "int32" : "int",
-    "uint8" : "int",
-    "uint16" : "int",
-    "uint32" : "int",
-    "string" : "str",
-    "float" : "float",
-    "double" : "float"
-}
-def pyTypeInit(t):
-    if isinstance(t, msggenyacc.BaseType):
-        return "%s()" % pyTypeMap[t.name]
-    elif isinstance(t, msggenyacc.EnumType):
-        return "%s()" % t.enum.name
-    elif isinstance(t, msggenyacc.StructType):
-        return "%s()" % t.struct.name
-    elif isinstance(t, msggenyacc.UnknownType):
-        return "%s()" % t.name
-    elif isinstance(t, msggenyacc.ListType):
-        return "[]"
-    elif isinstance(t, msggenyacc.MapType):
-        return "{}"
-    else:
-        print "ERROR: " + repr(t) + " is not a type"
-        return "ERROR"
-
 
 def mapToBaseType(list):
     return map(lambda x: msggenyacc.BaseType(x), list)
@@ -173,11 +143,16 @@ def main():
             t.headerFile = os.path.basename(options.output + ".h") 
             file.write(str(t))
     
+
     elif options.lang == "python":
-        with open(options.output + ".py", "w") as file:
-            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.py"), searchList=tree)
-            t.pyTypeInit = pyTypeInit
-            file.write(str(t))
+        compilation_units = ["enums", "structs", "messages", "observers"]
+        for cu in compilation_units:
+            with open(options.output + "emit_" + cu + ".cpp", "w") as file:
+                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]),
+                                                 "boostpy-emit_%s.cpp.template" % cu),
+                             searchList=tree)
+                t.toCPPType = toCPPType
+                file.write(str(t))
                                                               
 if __name__ == '__main__':
     main()

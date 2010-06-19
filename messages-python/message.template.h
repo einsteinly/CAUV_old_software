@@ -119,6 +119,10 @@ class $className : public Message
         #for $f in $m.fields
         const $toCPPType($f.type)& ${f.name}() const;
         void ${f.name}($toCPPType($f.type) const& $f.name);
+
+        // interface for python export: no overloads:
+        const $toCPPType($f.type)& get_${f.name}() const{ return ${f.name}(); }
+        void set_${f.name}($toCPPType($f.type) const& ${f.name}_value){ ${f.name}(${f.name}_value); }
         
         #end for
 
@@ -192,8 +196,11 @@ class MessageObserver
         virtual void on${className}($ptrName m);
         #end for
         #end for
-
-    protected:
+    
+    // Ideally protected, but boost.python pointer_holder requires puplic
+    // default constructor to be available in order to allow pointers to this
+    // type
+    //protected:
         MessageObserver();
 };
 
@@ -225,7 +232,10 @@ class BufferedMessageObserver: public MessageObserver
 
         void setDoubleBuffered(MessageType::e, bool);
 
-    protected:
+    // Ideally protected, but boost.python pointer_holder requires puplic
+    // default constructor to be available in order to allow pointers to this
+    // type
+    //protected:
         BufferedMessageObserver();
 
     private:
@@ -252,10 +262,15 @@ class MessageSource
         void removeObserver(boost::shared_ptr<MessageObserver> o);
         void clearObservers();
 
+    
+    // Ideally protected, but boost.python pointer_holder requires puplic
+    // default constructor to be available in order to allow pointers to this
+    // type
+    // protected:
+        MessageSource();
+
     protected:
         std::list< boost::shared_ptr<MessageObserver> > m_obs;
-
-        MessageSource();
 };
 
 

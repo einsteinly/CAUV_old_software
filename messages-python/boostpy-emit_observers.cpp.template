@@ -1,0 +1,108 @@
+/***  This is a generated file, do not edit ***/
+\#include "workarounds.h" // _must_ be first
+\#include <boost/python.hpp>
+
+\#include "emit_generated.h"
+\#include "../common/messages.h"
+
+namespace bp = boost::python;
+
+class MessageObserverWrapper:
+    public MessageObserver,
+    public bp::wrapper<MessageObserver>
+{
+    public:
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        #set $ptrName = $className + "_ptr"
+        void on${className}($ptrName m){
+            if(bp::override f = this->get_override("on${className}")){
+                GILLock l;
+                f(m);
+            }else
+                MessageObserver::on${className}(m);
+        }
+        #end for
+        #end for
+};
+
+class BufferedMessageObserverWrapper:
+    public BufferedMessageObserver,
+    public bp::wrapper<BufferedMessageObserver>
+{
+    public:
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        #set $ptrName = $className + "_ptr"
+        void on${className}Buffered($ptrName m){
+            if(bp::override f = this->get_override("on${className}Buffered")){
+                GILLock l;
+                f(m);
+            }else
+                BufferedMessageObserver::on${className}Buffered(m);
+        }
+        #end for
+        #end for
+};
+
+void emitObservers(){
+    bp::class_<MessageObserverWrapper,
+               boost::noncopyable,
+               boost::shared_ptr<MessageObserver>
+              >("MessageObserver")
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        .def("on${className}", wrap(&MessageObserverWrapper::on${className}))
+        #end for
+        #end for
+    ;
+
+    bp::class_<BufferedMessageObserverWrapper,
+               bp::bases<MessageObserver>,
+               boost::noncopyable,
+               boost::shared_ptr<BufferedMessageObserver>
+              >("BufferedMessageObserver")
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        .def("on${className}", wrap(&BufferedMessageObserverWrapper::on${className}))
+        #end for
+        #end for
+    ;
+
+    bp::class_<DebugMessageObserver,
+               bp::bases<MessageObserver>,    
+               boost::noncopyable,
+               boost::shared_ptr<DebugMessageObserver>
+              >("DebugMessageObserver")
+        // no need to actually expose the interface
+    ;
+}
+
+//TODO: export message source? probably best not
+
+/*
+
+class MessageSource
+{
+    public:
+        void notifyObservers(boost::shared_ptr<const byte_vec_t> bytes);
+        void addObserver(boost::shared_ptr<MessageObserver> o);
+        void removeObserver(boost::shared_ptr<MessageObserver> o);
+        void clearObservers();
+
+    
+    // Ideally protected, but boost.python pointer_holder requires puplic
+    // default constructor to be available in order to allow pointers to this
+    // type
+    // protected:
+        MessageSource();
+
+    protected:
+        std::list< boost::shared_ptr<MessageObserver> > m_obs;
+};
+*/
+

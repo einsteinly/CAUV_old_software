@@ -47,7 +47,7 @@ class ErrOnExit: boost::noncopyable{
  * the behaviour we want.
  */
 
-class ReconnectingSpreadMailbox{
+class ReconnectingSpreadMailbox: boost::noncopyable{
     typedef boost::recursive_mutex mutex_t;
     typedef boost::lock_guard<mutex_t> lock_t;
 public:
