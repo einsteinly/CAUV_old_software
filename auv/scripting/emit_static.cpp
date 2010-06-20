@@ -125,10 +125,10 @@ void emitMailbox(){
               >("Mailbox", bp::no_init)
         .def("join", wrap(&ReconnectingSpreadMailbox::joinGroup))
         .def("send", wrap((sm_ptr3_t) &ReconnectingSpreadMailbox::sendMessage))
-        /*.def("receive", wrap(&ReconnectingSpreadMailbox::receiveMessage))
-         * this function actually serves no useful purpose other than maybe
-         * testing, and posisibly causing crashes -- so don't expose it
+        /* does this function actually serve any useful purpose other than
+         * maybe testing, and causing crashes? -- don't expose it?
          */
+        .def("receive", wrap(&ReconnectingSpreadMailbox::receiveMessage))
     ;
 
     bp::class_<MessageSource,

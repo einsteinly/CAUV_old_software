@@ -39,6 +39,26 @@ def toCPPType(t):
     else:
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
+def isSTLVector(t):
+    return isinstance(t, msggenyacc.ListType)
+def isSTLMap(t):
+    return isinstance(t, msggenyacc.MapType)
+def CPPContainerTypeName(t):
+    if isinstance(t, msggenyacc.BaseType):
+        return t.name.replace("std::", "")
+    elif isinstance(t, msggenyacc.EnumType):
+        return t.enum.name + "E"
+    elif isinstance(t, msggenyacc.StructType):
+        return t.struct.name
+    elif isinstance(t, msggenyacc.UnknownType):
+        return t.name
+    elif isinstance(t, msggenyacc.ListType):
+        return CPPContainerTypeName(t.valType) + "Vec"
+    elif isinstance(t, msggenyacc.MapType):
+        return "%s%sMap" % (CPPContainerTypeName(t.keyType), CPPContainerTypeName(t.valType))
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
 
 cTypeMap = {
     "bool" : "char",
@@ -152,6 +172,9 @@ def main():
                                                  "boostpy-emit_%s.cpp.template" % cu),
                              searchList=tree)
                 t.toCPPType = toCPPType
+                t.isSTLVector = isSTLVector
+                t.isSTLMap = isSTLMap
+                t.CPPContainerTypeName = CPPContainerTypeName
                 file.write(str(t))
                                                               
 if __name__ == '__main__':
