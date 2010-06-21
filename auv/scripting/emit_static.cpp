@@ -20,6 +20,21 @@ struct Thing{
     }
 };
 
+struct ThingCaller{
+    void setThing(boost::shared_ptr<Thing> const& t){
+        m_thing = t;
+    }
+
+    int callThing(){
+        if(m_thing)
+            return m_thing->foo();
+        return -1;
+    }
+    
+    private:
+        boost::shared_ptr<Thing> m_thing;
+};
+
 struct ThingWrapper: public Thing, bp::wrapper<Thing>{
     int foo(){
         if(bp::override f = this->get_override("foo")){
@@ -107,9 +122,16 @@ class SpreadMessageWrapper:
 
 /*** Actual Functions to Generate the Interface: ***/
 void emitThing(){
-    bp::class_<ThingWrapper, boost::noncopyable>("Thing")
+    bp::class_<ThingWrapper,
+               boost::shared_ptr<ThingWrapper>,
+               boost::noncopyable
+              >("Thing")
         .def("callFoo", wrap(&Thing::callFoo))
         .def("foo", wrap(&Thing::foo))
+    ;
+    bp::class_<ThingCaller, boost::noncopyable>("ThingCaller")
+        .def("setThing", &ThingCaller::setThing)
+        .def("callThing", &ThingCaller::callThing)
     ;
 }
 

@@ -212,6 +212,11 @@ void BufferedMessageObserver::on${className}($classPtr m)
         l.unlock();
         b_thread->m_condition->notify_one();
     }
+    else
+    {
+        on${className}Buffered(m);
+    }
+
 }
 #end for
 #end for
@@ -220,7 +225,7 @@ void BufferedMessageObserver::on${className}($classPtr m)
 #for $m in $g.messages
 #set $className = $m.name + "Message"
 #set $classPtr = $className + "_ptr"
-void BufferedMessageObserver::on${className}Buffered($classPtr) {}
+void BufferedMessageObserver::on${className}Buffered($classPtr) { }
 #end for
 #end for
 
@@ -277,6 +282,29 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
         info() << "Double-Buffering disabled for" << mt << "messages";        
     }
 }
+
+
+DynamicObserver::DynamicObserver(){ }
+DynamicObserver::~DynamicObserver(){ }
+        
+void DynamicObserver::setCallback(MessageType::e id, callback_f_ptr f)
+{
+    m_callbacks[id] = f;
+}
+
+#for $g in $groups
+#for $m in $g.messages
+#set $className = $m.name + "Message"
+#set $ptrName = $className + "_ptr"
+void DynamicObserver::on${className}Buffered($ptrName m)
+{
+    callback_map_t::iterator i = m_callbacks.find(MessageType::$m.name);
+    if(i != m_callbacks.end() && i->second)
+        (*i->second)(m);
+}
+#end for
+#end for
+
 
 #for $g in $groups
 #for $m in $g.messages

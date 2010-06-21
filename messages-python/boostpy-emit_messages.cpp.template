@@ -50,6 +50,8 @@ void emitMessages(){
         )
         #end for
     ;
+    // hackery for boost::shared_ptr<T const> ... see workarounds.h
+    register_shared_ptrs_to_python<$className>();
     #end for
     #end for
     
@@ -77,9 +79,11 @@ template<class T>
 struct vec_item{
     typedef typename T::value_type V;
     static V& get(T& x, int i){
+        static V nothing;
         if(i < 0) i += x.size();
         if(i >= 0 && i < int(x.size())) return x[i];
         IndexError();
+        return nothing;
     }
     static void set(T& x, int i, V const& v){
         if(i < 0) i += x.size();
@@ -101,10 +105,12 @@ struct map_item{
     typedef std::map<Key,Val> Map;
 
     static Val& get(Map& self, const Key idx){
+        static Val nothing;
         typename Map::iterator i = self.find(idx);
         if(i != self.end()) return i->second;
         PyErr_SetString(PyExc_KeyError,"Map key not found");
         bp::throw_error_already_set();
+        return nothing;
     }
 
     static void set(Map& self, const Key idx, const Val val) { self[idx]=val; }

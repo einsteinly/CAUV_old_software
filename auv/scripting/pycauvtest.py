@@ -30,7 +30,14 @@ def main():
             print "mesage received (buffered):", msg
             print "sleeping..."
             time.sleep(500)
+        def onNodeAddedMessage(self, msg):
+            print "mesage received:", msg
+        def onStatusMessageBuffered(self, msg):
+            print "message received (buffered):", msg
+
     m = MMO()
+    m.setDoubleBuffered(cauv.MessageType.Status, True)
+    m.setDoubleBuffered(cauv.MessageType.Image, True)
     print m, "created Observer with overload"
 
     n.addObserver(m)
