@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Wed 5. May 15:32:25 2010
+** Created: Thu 6. May 01:32:04 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -49,7 +49,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QMenu menuFile;
     public QMenu menuOptions;
     public QMenu menuHelp;
-    public QMenu menuView;
     public QStatusBar statusbar;
     public QDockWidget dockWidget;
     public QWidget dockWidgetContents_2;
@@ -449,8 +448,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         menuOptions.setObjectName("menuOptions");
         menuHelp = new QMenu(menubar);
         menuHelp.setObjectName("menuHelp");
-        menuView = new QMenu(menubar);
-        menuView.setObjectName("menuView");
         Main.setMenuBar(menubar);
         statusbar = new QStatusBar(Main);
         statusbar.setObjectName("statusbar");
@@ -540,7 +537,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 
         menubar.addAction(menuFile.menuAction());
         menubar.addAction(menuOptions.menuAction());
-        menubar.addAction(menuView.menuAction());
         menubar.addAction(menuHelp.menuAction());
         menuFile.addAction(actionMoo);
         menuOptions.addAction(actionSettings);
@@ -594,7 +590,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         menuFile.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "File", null));
         menuOptions.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Options", null));
         menuHelp.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Help", null));
-        menuView.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "View", null));
         dockWidget.setWindowTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Messages", null));
         all.setHtml(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+

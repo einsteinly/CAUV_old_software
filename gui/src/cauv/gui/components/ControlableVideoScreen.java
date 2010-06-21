@@ -1,6 +1,5 @@
 package cauv.gui.components;
 
-import cauv.gui.Main;
 import cauv.types.floatYPR;
 
 import com.trolltech.qt.core.QPoint;
@@ -9,15 +8,25 @@ import com.trolltech.qt.gui.*;
 
 public class ControlableVideoScreen extends VideoScreen {
 	
+
+	public static transient int SHOW_NONE = 0;
+	public static transient int SHOW_DOT = 1;
+	public static transient int SHOW_Y_AXIS = 2;
+	public static transient int SHOW_X_AXIS = 4;
+	public static transient int SHOW_TEXT = 8;
+	
+	
+	int elements = SHOW_DOT | SHOW_Y_AXIS | SHOW_X_AXIS | SHOW_TEXT;
+	
 	Ui_ControlableVideoScreen ui = new Ui_ControlableVideoScreen();
 
 	float axisHeight = 120;
 	float axisWidth = 120;
 	
-	float targetPitch = 20;
-	float targetYaw = 10;
+	float targetPitch = 0;
+	float targetYaw = 0;
 
-	float pitch = 30;
+	float pitch = 0;
 	float yaw = 0;
 	
 	boolean updating = false;
@@ -37,6 +46,17 @@ public class ControlableVideoScreen extends VideoScreen {
 		ui.right.clicked.connect(rightClick, "emit()");
 	}
 
+	public void setVisibleElements(int visible){
+		this.elements = visible;
+	}
+	
+	public void setXAxisScale(float value){
+		this.axisWidth = value;
+	}
+	
+	public void setYAxisScale(float value){
+		this.axisHeight = value;
+	}
 	
 	public void setText(String text) {
 		this.ui.label.setText(text);
@@ -87,35 +107,38 @@ public class ControlableVideoScreen extends VideoScreen {
 		floatYPR min = pointToAttitude(0, 0);
 		
 		// y
-		p.drawLine(this.width() / 2, 50, this.width() / 2, this.height()-50);
-
-		for(int i = (int)min.pitch; i < (int)(min.pitch + axisHeight); i += 10){
-			int remainder = (int) (i % 10);
-			int y = this.height() - attitudeToPoint(axisWidth/2, i-remainder).y();
-			
-			if(y > 50 && y < this.height() - 50) {
-				p.drawLine((this.width()/2)-5, y,(this.width()/2), y);
+		if((this.elements & SHOW_Y_AXIS) != 0) {
+			p.drawLine(this.width() / 2, 50, this.width() / 2, this.height()-50);
 	
-				if(Math.abs((i-remainder)-pitch)>5)
-					p.drawText((this.width()/2) + 5, y+4, i-remainder+"°");
+			for(int i = (int)min.pitch; i < (int)(min.pitch + axisHeight); i += 10){
+				int remainder = (int) (i % 10);
+				int y = this.height() - attitudeToPoint(axisWidth/2, i-remainder).y();
+				
+				if(y > 50 && y < this.height() - 50) {
+					p.drawLine((this.width()/2)-5, y,(this.width()/2), y);
+		
+					if(Math.abs((i-remainder)-pitch)>5)
+						p.drawText((this.width()/2) + 5, y+4, i-remainder+"°");
+				}
 			}
 		}
 		
 		//x
-		p.drawLine(50, (this.height() / 2), this.width() - 50, this.height() / 2);
-		
-		for(int i = (int)min.yaw; i < (int)(min.yaw+ axisWidth); i += 10){
-			int remainder = (int) (i % 10);
-			int x = attitudeToPoint(i-remainder, axisHeight/2).x();
+		if((this.elements & SHOW_X_AXIS) != 0) {
+			p.drawLine(50, (this.height() / 2), this.width() - 50, this.height() / 2);
 			
-			if(x > 50 && x < this.width() - 50) {
-				p.drawLine(x, (this.height()/2)-5, x,(this.height()/2));
+			for(int i = (int)min.yaw; i < (int)(min.yaw+ axisWidth); i += 10){
+				int remainder = (int) (i % 10);
+				int x = attitudeToPoint(i-remainder, axisHeight/2).x();
 				
-				if(Math.abs((i-remainder)-yaw)>5)
-					p.drawText(x - 8, (this.height()/2)+15, i-remainder+"°");
+				if(x > 50 && x < this.width() - 50) {
+					p.drawLine(x, (this.height()/2)-5, x,(this.height()/2));
+					
+					if(Math.abs((i-remainder)-yaw)>5)
+						p.drawText(x - 8, (this.height()/2)+15, i-remainder+"°");
+				}
 			}
 		}
-		
 	}
 
 
@@ -134,10 +157,12 @@ public class ControlableVideoScreen extends VideoScreen {
 	}
 	
 	protected void drawDot(QPainter p) {
-		int rad = 4;
-		p.setBrush(QColor.red);
-		QPoint point = attitudeToPoint(targetYaw, targetPitch);
-		p.drawEllipse(point.x() - rad, this.height() - point.y() - rad, 2 * rad, 2 * rad);
+		if((this.elements & SHOW_DOT) != 0) {
+			int rad = 4;
+			p.setBrush(QColor.red);
+			QPoint point = attitudeToPoint(targetYaw, targetPitch);
+			p.drawEllipse(point.x() - rad, this.height() - point.y() - rad, 2 * rad, 2 * rad);
+		}
 	}
 
 	protected void draw(QPainter p) {
@@ -153,10 +178,9 @@ public class ControlableVideoScreen extends VideoScreen {
 		this.draw(p);
 		p.end();
 	}
-
-	@Override
-	protected void mouseMoveEvent(QMouseEvent arg) {
-		if (updating) {
+	
+	protected void handleMouseEvent(QMouseEvent arg){
+		if((this.elements & SHOW_DOT) != 0) {
 			floatYPR attitude = pointToAttitude(arg.x(), this.height()-arg.y());
 			float targetYaw = attitude.yaw;
 			float targetPitch = attitude.pitch;
@@ -170,6 +194,13 @@ public class ControlableVideoScreen extends VideoScreen {
 			Main.trace("end y="+this.attitudeToPoint(yaw, pitch));*/
 			
 			this.setDotLocation(targetYaw, targetPitch);
+		}
+	}
+
+	@Override
+	protected void mouseMoveEvent(QMouseEvent arg) {
+		if (updating) {
+			handleMouseEvent(arg);
 			directionChange.emit(targetYaw, targetPitch);
 		}
 		super.mouseMoveEvent(arg);
@@ -177,6 +208,8 @@ public class ControlableVideoScreen extends VideoScreen {
 
 	@Override
 	protected void mouseReleaseEvent(QMouseEvent arg) {
+		if(updating)
+			directionChange.emit(targetYaw, targetPitch);
 		updating = false;
 		super.mouseReleaseEvent(arg);
 	}
@@ -184,6 +217,7 @@ public class ControlableVideoScreen extends VideoScreen {
 	@Override
 	protected void mousePressEvent(QMouseEvent arg) {
 		updating = true;
+		handleMouseEvent(arg);
 		super.mousePressEvent(arg);
 		this.grabKeyboard();
 	}

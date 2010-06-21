@@ -10,6 +10,7 @@ import cauv.auv.MessageSocket.ConnectionStateObserver;
 import cauv.gui.controllers.PS2ControlHandler;
 import cauv.gui.views.CameraFeeds;
 import cauv.gui.views.MissionControlView;
+import cauv.gui.views.MotorControlView;
 import cauv.gui.views.SettingsView;
 import cauv.gui.views.TelemetryView;
 
@@ -40,6 +41,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver {
 		gui.registerScreen(new CameraFeeds());
 		gui.registerScreen(new TelemetryView());
 		gui.registerScreen(new MissionControlView());
+		gui.registerScreen(new MotorControlView());
 		gui.registerScreen(new SettingsView());
 		
 		gui.show();
@@ -61,7 +63,6 @@ public class Main extends QMainWindow implements ConnectionStateObserver {
 		ui.backButton.hide();
 		ui.backButton.clicked.connect(this, "back()");
 		ui.connectButton.clicked.connect(this, "connect()");
-		Main.trace("Initialisation complete");
 		Main.trace("Initialisation complete");
 	}
 
@@ -118,13 +119,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver {
 				ui.backButton.show();
 				ui.informationStack.setCurrentWidget(view.getScreenWidget());
 			}
-		};
-		
-		// add it to the view menu
-		QMenu menu = new QMenu(this.ui.menuView);
-		menu.setTitle(view.getScreenName());
-		this.ui.menuView.addMenu(menu);
-		
+		};		
 		
 		graphics.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff);
 		graphics.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff);

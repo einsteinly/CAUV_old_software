@@ -76,7 +76,6 @@ public class GUIMain extends QMainWindow implements ConnectionStateObserver {
 		try {
 			AUV auv = new AUV(Config.ADDRESS, Config.AUV_PORT);
 			auv.regsiterConnectionStateObserver(this);
-			//new ControlHandler(this.ui, auv);
 		} catch (IOException e) {
 			ui.errorMessage.setText("Connecting to AUV failed. Sigh.");
 		} finally {

@@ -40,6 +40,10 @@ public class MotionController {
 		auv.autopilots.DEPTH.setTarget(depth);
 	}
 	
+	public void forward(int speed){
+        auv.motors.PROP.setSpeed(speed);
+	}
+	
     public void stop() {
         auv.motors.HBOW.setSpeed(0);
         auv.motors.HSTERN.setSpeed(0);
