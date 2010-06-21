@@ -90,6 +90,9 @@ inline int save_string(struct packet p, int pos, char** val)
 {
     uint32_t len = strlen(*val);
     pos = save_uint32(p,pos,&len);
+
+    p.len += len;
+    p.data = realloc(p.data, p.len);
     memcpy(*val, p.data+pos, len);
     return pos + len;
 }
@@ -101,6 +104,8 @@ inline int load_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val)
 }
 inline int save_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val)
 {
+    p.len += sizeof($toCType($t));
+    p.data = realloc(p.data, p.len);
     *($toCType($t)*)(p.data+pos) = *val;
     return pos + sizeof($toCType($t));
 }

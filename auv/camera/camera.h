@@ -72,7 +72,7 @@ class CaptureThread
         void stop();
         
         void setInterFrameDelay(const int delay);
-        const int getInterFrameDelay() const;
+        int getInterFrameDelay() const;
 
         void operator()();
 

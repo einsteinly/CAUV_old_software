@@ -10,6 +10,276 @@ import msggenyacc
 from msggenyacc import parser
 from Cheetah.Template import Template
 
+
+javaTypeMap = {
+    "bool" : "boolean",
+    "byte" : "byte",
+    "int8" : "byte",
+    "int16" : "short",
+    "int32" : "int",
+    "uint8" : "int",
+    "uint16" : "int",
+    "uint32" : "int",
+    "string" : "String",
+    "float" : "float",
+    "double" : "double"
+}
+def toJavaType(t, box=False):
+    if isinstance(t, msggenyacc.BaseType):
+        s = javaTypeMap[t.name]
+        if box:
+            s = boxJavaType(s)
+        return s
+    elif isinstance(t, msggenyacc.EnumType):
+        return t.enum.name
+    elif isinstance(t, msggenyacc.StructType):
+        return t.struct.name
+    elif isinstance(t, msggenyacc.UnknownType):
+        return t.name
+    elif isinstance(t, msggenyacc.ListType):
+        return "Vector< %s >" % toJavaType(t.valType, True)
+    elif isinstance(t, msggenyacc.MapType):
+        return "HashMap< %s, %s >" % (toJavaType(t.keyType, True), toJavaType(t.valType, True))
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
+
+javaBoxMap = {
+    "boolean" : "Boolean",
+    "byte" : "Byte",
+    "short" : "Short",
+    "int" : "Integer",
+    "float" : "Float",
+    "double" : "Double"
+}
+def boxJavaType(s):
+    if s in javaBoxMap:
+        return javaBoxMap[s]
+    else:
+        return s
+
+
+javaDataFuncs = {
+        "bool" :   {"read" : "readBoolean"        , "write" : "writeBoolean"},
+        "byte" :   {"read" : "readByte"           , "write" : "writeByte"   },
+        "int8" :   {"read" : "readByte"           , "write" : "writeByte"   },
+        "int16" :  {"read" : "readShort"          , "write" : "writeShort"  },
+        "int32" :  {"read" : "readInt"            , "write" : "writeInt"    },
+        "uint8" :  {"read" : "readUnsignedByte"   , "write" : "writeByte"   },
+        "uint16" : {"read" : "readUnsignedShort"  , "write" : "writeShort"  },
+        "uint32" : {"read" : "readInt"            , "write" : "writeInt"    },
+        "float" :  {"read" : "readFloat"          , "write" : "writeFloat"  },
+        "double" : {"read" : "readDouble"         , "write" : "writeDouble" }
+}
+
+def serialiseJavaType(t, name, indentation = 0):
+    indent = indentation * 4 * " ";
+
+    if isinstance(t, msggenyacc.BaseType):
+        if t.name == "string":
+            return indent + "s.writeInt(%s.length());" % name + "\n" + \
+                   indent + "s.writeBytes(%s);" % name
+        else:
+            return indent + "s.%s();" % javaDataFuncs[t.name]["write"]
+    elif isinstance(t, msggenyacc.EnumType):
+        return indent + "%s.writeInto(s);" % name
+    elif isinstance(t, msggenyacc.StructType):
+        return indent + "%s.writeInto(s);" % name
+    elif isinstance(t, msggenyacc.UnknownType):
+        return indent + "%s.writeInto(s);" % name
+    
+    elif isinstance(t, msggenyacc.ListType):
+        vals = {
+            "name": name,
+            "valtype": toJavaType(t.valType),
+            "valvar": "%s_val" % name,
+            "i": "%s_i" % name
+        }
+            
+        return indent + "s.writeLong(%s.size());" % name + "\n" + \
+               indent + "for (int %(i)s = 0; %(i)s < %(name)s.size(); %(i)s++)" % vals + "\n" + \
+               indent + "{" + "\n" + \
+               indent + "    %(valtype)s %(valvar)s = %(name)s.get(%(i)s);" % vals + "\n" + \
+               serialiseJavaType(t.valType, vals["valvar"], indentation + 1) + "\n" + \
+               indent + "}"
+
+    elif isinstance(t, msggenyacc.MapType):
+        vals = {
+            "name": name,
+            "keytype": toJavaType(t.keyType),
+            "keyvar": "%s_key" % name,
+            "valtype": toJavaType(t.valType),
+            "valvar": "%s_val" % name,
+            "i": "%s_i" % name
+        }
+
+        return indent + "s.writeLong(%s.size());" % name + "\n" + \
+               indent + "for (Map.Entry<%(keytype)s, %(valtype)s> %(i)s : %(name)s)" % vals + "\n" + \
+               indent + "{" + "\n" + \
+               indent + "    %(keytype)s %(keyvar)s = %(name)s.getKey();" % vals + "\n" + \
+               serialiseJavaType(t.keyType, vals["keyvar"], indentation + 1) + "\n" + \
+               indent + "    %(valtype)s %(valvar)s = %(name)s.getValue();" % vals + "\n" + \
+               serialiseJavaType(t.valType, vals["valvar"], indentation + 1) + "\n" + \
+               indent + "}"
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
+
+def deserialiseJavaType(t, name, indentation = 0):
+    indent = indentation * 4 * " ";
+
+    if isinstance(t, msggenyacc.BaseType):
+        if t.name == "string":
+            vals = {
+                "name": name,
+                "len": "%s_len" % name,
+                "bytes": "%s_bytes" % name,
+                "i": "%s_i" % name
+            }
+
+            return indent + "int %(len)s = s.readInt();" % vals + "\n" + \
+                   indent + "byte[] %(bytes)s = new byte[%(len)s];" % vals + "\n" + \
+                   indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
+                   indent + "{" + "\n" + \
+                   indent + "    %(bytes)s[%(i)s] = s.readByte();" % vals + "\n" + \
+                   indent + "}" + "\n" + \
+                   indent + "%(name)s = new String(%(bytes)s);" % vals 
+        else:
+            return indent + "s.%s();" % javaDataFuncs[t.name]["read"]
+    elif isinstance(t, msggenyacc.EnumType):
+        return indent + "%s.writeInto(s);" % name
+    elif isinstance(t, msggenyacc.StructType):
+        return indent + "%s.writeInto(s);" % name
+    elif isinstance(t, msggenyacc.UnknownType):
+        return indent + "%s.writeInto(s);" % name
+    
+    elif isinstance(t, msggenyacc.ListType):
+        vals = {
+            "name": name,
+            "len": "%s_len" % name,
+            "valtype": toJavaType(t.valType),
+            "valvar": "%s_val" % name,
+            "i": "%s_i" % name
+        }
+            
+        return indent + "%(len)s = s.readLong();" % vals + "\n" + \
+               indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
+               indent + "{" + "\n" + \
+               indent + "    %(valtype)s %(valvar)s;" % vals + "\n" + \
+               deserialiseJavaType(t.valType, vals["valvar"], indentation + 1) + "\n" + \
+               indent + "    %(name)s.add(%(i)s, %(valvar)s);" % vals + "\n" + \
+               indent + "}"
+
+    elif isinstance(t, msggenyacc.MapType):
+        vals = {
+            "name": name,
+            "len": "%s_len" % name,
+            "keytype": toJavaType(t.keyType),
+            "keyvar": "%s_key" % name,
+            "valtype": toJavaType(t.valType),
+            "valvar": "%s_val" % name,
+            "i": "%s_i" % name
+        }
+
+        return indent + "%(len)s = s.readLong();" % vals + "\n" + \
+               indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
+               indent + "{" + "\n" + \
+               indent + "    %(keytype)s %(keyvar)s;" % vals + "\n" + \
+               deserialiseJavaType(t.keyType, vals["keyvar"], indentation + 1) + "\n" + \
+               indent + "    %(valtype)s %(valvar)s;" % vals + "\n" + \
+               deserialiseJavaType(t.valType, vals["valvar"], indentation + 1) + "\n" + \
+               indent + "    %(name)s.put(%(keyvar)s, %(valvar)s);" % vals + "\n" + \
+               indent + "}"
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
+#tatic void deserialiseJavaType(Type* type, string name, string prefix, int indentation, ostream& serialize, ostream& deserialize)
+#
+#   string indent(indentation * 4, ' ');
+#   switch (type->getType())
+#   {
+#       case TYPE_BASE:
+#       {
+#           BaseType* b = static_cast<BaseType*>(type);
+#           if (b->getName() == string("string"))
+#           {
+#               deserialize << indent << format("int %1%_l%2% = s.readInt();") % prefix % indentation << endl;
+#               deserialize << indent << format("byte[] %1%_b%2% = new byte[%1%_l%2%];") % prefix % indentation << endl;
+#               deserialize << indent << format("for (int i%2% = 0; i%2% < %1%_l%2%; i%2%++)") % prefix % indentation << endl;
+#               deserialize << indent <<        "{" << endl;
+#               deserialize << indent << format("    %1%_b%2%[i%2%] = s.readByte();") % prefix % indentation << endl;
+#               deserialize << indent <<        "}" << endl;
+#               deserialize << indent << format("%3% = new String(%1%_b%2%);") % prefix % indentation % name << endl;
+#           }
+#           else
+#           {
+#               map< string, pair<string,string> >::iterator it = java_data_funcs.find(b->getName());
+#               if (it != java_data_funcs.end())
+#               {
+#                   deserialize << indent << name << " = s."<< it->second.first <<"();" << endl;
+#               }
+#               else
+#               {
+#                   deserialize << indent << name << " = " << asJavaType(type) << ".readFrom(s);" << endl;
+#               }
+#           }
+#           break;
+#       }
+#       case TYPE_LIST:
+#       {
+#           ListType* l = static_cast<ListType*>(type);
+#           
+#           string valTypeStr = asJavaType(l->getValType());
+#           string valVar = str(format("i%1%_val") % indentation);
+#           
+#                   deserialize << indent << format("%1% = new %2%();") % name % asJavaType(type) << endl;
+#           deserialize << indent << format("long %1%_i%2%_max = s.readLong();") % prefix % indentation << endl;
+#           deserialize << indent << format("for (int i%2% = 0; i%2% < %1%_i%2%_max; i%2%++)") % prefix % indentation << endl;
+#           deserialize << indent << "{" << endl;
+#           deserialize << indent << "    " << valTypeStr << " " << valVar << ";" << endl;
+#           
+#           serialiseJavaType(l->getValType(), str(format("i%1%_val") % indentation), prefix, indentation+1, serialize, deserialize);
+#           
+#           
+#           deserialize << indent << format("    %1%.add(i%2%, i%2%_val);") % name % indentation << endl;
+#           deserialize << indent << "}" << endl;
+#           break;
+#       }
+#       case TYPE_MAP:
+#       {
+#           MapType* m = static_cast<MapType*>(type);
+
+#           string keyTypeStr = asJavaType(m->getKeyType());
+#           string valTypeStr = asJavaType(m->getValType());
+#           string keyVar = str(format("i%1%_key") % indentation);
+#           string valVar = str(format("i%1%_val") % indentation);
+
+#           deserialize << indent << format("%1% = new %2%();") % name % asJavaType(type) << endl;
+#           deserialize << indent << format("long i%1%_max = bb.getLong();") % indentation << endl;
+#           deserialize << indent << format("for (int i%1% = 0; i%1% < %1%_max; i%1%++)") % indentation << endl;
+#           deserialize << indent << "{" << endl;
+#           deserialize << indent << "    " << keyTypeStr << " " << keyVar << ";" << endl;
+#           deserialize << indent << "    " << valTypeStr << " " << valVar << ";" << endl;
+#           
+#           serialiseJavaType(m->getKeyType(), str(format("i%1%_key") % indentation), prefix, indentation+1, serialize, deserialize);
+#           serialiseJavaType(m->getValType(), str(format("i%1%_val") % indentation), prefix, indentation+1, serialize, deserialize);
+#           
+#           
+#           deserialize << indent << format("    %1%.put(i%2%_key, i%2%_val);") % name % indentation << endl;
+#           deserialize << indent << "}" << endl;
+#           break;
+#       }
+#       default:
+#           cerr << "Error while processing type" << endl;
+#           return;
+#   }
+#
+
+    
+
+
+
+
 cppTypeMap = {
     "bool" : "bool",
     "byte" : "uint8_t",
@@ -122,6 +392,11 @@ def main():
                  type="string",
                  metavar="FILE",
                  help="output filename(s) prefix (file extension will be added depending on language) [default: INPUT]")
+    p.add_option("-p", "--package",
+                 type="string",
+                 default="cauv",
+                 metavar="PACKAGE",
+                 help="package to put java files in, ignored for other languages [default: %default]")
 
     options, args = p.parse_args()
     
@@ -132,6 +407,7 @@ def main():
 
     if options.output == None:
         options.output = args[0]
+    output = os.path.abspath(options.output)
 
     with open(args[0], "r") as file:
         data = file.read()
@@ -139,35 +415,75 @@ def main():
     tree = parser.parse(data)
 
     if options.lang == "c++":
-        with open(options.output + ".h", "w") as file:
+        with open(output + ".h", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.h"), searchList=tree)
             t.toCPPType = toCPPType
             file.write(str(t))
-        with open(options.output + ".cpp", "w") as file:
+        with open(output + ".cpp", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.cpp"), searchList=tree)
             t.toCPPType = toCPPType
-            t.headerFile = os.path.basename(options.output + ".h") 
+            t.headerFile = os.path.basename(output + ".h") 
             file.write(str(t))
     
     elif options.lang == "c":
-        with open(options.output + ".h", "w") as file:
+        with open(output + ".h", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.h"), searchList=tree)
             t.toCType = toCType
             t.loadsavesuffix = cLoadSaveSuffix
             t.mapToBaseType = mapToBaseType
             file.write(str(t))
-        with open(options.output + ".c", "w") as file:
+        with open(output + ".c", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.c"), searchList=tree)
             t.toCType = toCType
             t.loadsavesuffix = cLoadSaveSuffix
-            t.headerFile = os.path.basename(options.output + ".h") 
+            t.headerFile = os.path.basename(output + ".h") 
             file.write(str(t))
+
+    elif options.lang == "java":
+        rootdir = os.path.join(output, reduce(os.path.join, options.package.split(".")))
+        typedir = os.path.join(rootdir, "types")
+        messagingdir = os.path.join(rootdir, "messaging")
+        if not os.path.exists(rootdir):
+            os.makedirs(rootdir)
+        if not os.path.exists(typedir):
+            os.makedirs(typedir)
+        if not os.path.exists(messagingdir):
+            os.makedirs(messagingdir)
+
+  #     with open(os.path.join(messagingdir, "Serialiser.java"), "w") as file:
+  #         t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "serialiser.template.java"), searchList=tree)
+  #         t.toJavaType = toJavaType
+  #         t.dataFuncs = javaDataFuncs
+  #         t.readwritesuffix = javaReadWriteSuffix
+  #         t.mapToBaseType = mapToBaseType
+  #         t.package = options.package + ".messaging"
+  #         file.write(str(t))
+
+        for s in tree["structs"]:
+            with open(os.path.join(typedir, s.name + ".java"), "w") as file:
+                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "struct.template.java"), searchList=s)
+                t.toJavaType = toJavaType
+                t.serialiseJavaType = serialiseJavaType
+                t.package = options.package + ".types"
+                file.write(str(t))
+        for e in tree["enums"]:
+            print os.path.join(messagingdir, e.name)
+        for g in tree["groups"]:
+            for m in g.messages:
+                with open(os.path.join(messagingdir, m.name + "Message.java"), "w") as file:
+                    t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.java"), searchList=m)
+                    t.toJavaType = toJavaType
+                    t.serialiseJavaType = serialiseJavaType
+                    t.deserialiseJavaType = deserialiseJavaType
+                    t.package = options.package + ".messaging"
+                    t.group = g
+                    file.write(str(t))
     
 
     elif options.lang == "python":
         compilation_units = ["enums", "structs", "messages", "observers"]
         for cu in compilation_units:
-            with open(options.output + "emit_" + cu + ".cpp", "w") as file:
+            with open(output + "emit_" + cu + ".cpp", "w") as file:
                 t = Template(file = os.path.join(os.path.dirname(sys.argv[0]),
                                                  "boostpy-emit_%s.cpp.template" % cu),
                              searchList=tree)

@@ -11,6 +11,7 @@
 
 #include <boost/date_time.hpp>
 #include <boost/utility.hpp>
+#include <boost/variant.hpp>
 
 #define CAUV_DEBUG_MUTEX_OUTPUT
 #define CAUV_DEBUG_PRINT_THREAD
@@ -52,8 +53,7 @@
 
 
 
-
-class SmartStreamBase : boost::noncopyable
+class SmartStreamBase : public boost::noncopyable
 {
     public:
         SmartStreamBase(std::ostream& stream,
@@ -75,7 +75,7 @@ class SmartStreamBase : boost::noncopyable
 
     protected:
         // stuff to print
-        std::list<std::string> m_stuffs;
+        std::list< std::string > m_stuffs;
 
         virtual void printPrefix(std::ostream&)
         {
