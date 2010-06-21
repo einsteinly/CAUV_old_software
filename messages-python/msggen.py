@@ -72,31 +72,31 @@ javaDataFuncs = {
         "double" : {"read" : "readDouble"         , "write" : "writeDouble" }
 }
 
-def serialiseJavaType(t, name, indentation = 0):
+def serialiseJavaType(t, name, indentation = 0, prefix = ""):
     indent = indentation * 4 * " ";
 
     if isinstance(t, msggenyacc.BaseType):
         if t.name == "string":
-            return indent + "s.writeInt(%s.length());" % name + "\n" + \
-                   indent + "s.writeBytes(%s);" % name
+            return indent + "s.writeInt(%s.length());" % (prefix+name) + "\n" + \
+                   indent + "s.writeBytes(%s);" % (prefix+name)
         else:
-            return indent + "s.%s();" % javaDataFuncs[t.name]["write"]
+            return indent + "s.%s(%s);" % (javaDataFuncs[t.name]["write"], prefix+name)
     elif isinstance(t, msggenyacc.EnumType):
-        return indent + "%s.writeInto(s);" % name
+        return indent + "%s.writeInto(s);" % (prefix+name)
     elif isinstance(t, msggenyacc.StructType):
-        return indent + "%s.writeInto(s);" % name
+        return indent + "%s.writeInto(s);" % (prefix+name)
     elif isinstance(t, msggenyacc.UnknownType):
-        return indent + "%s.writeInto(s);" % name
+        return indent + "%s.writeInto(s);" % (prefix+name)
     
     elif isinstance(t, msggenyacc.ListType):
         vals = {
-            "name": name,
+            "name": prefix+name,
             "valtype": toJavaType(t.valType),
             "valvar": "%s_val" % name,
             "i": "%s_i" % name
         }
             
-        return indent + "s.writeLong(%s.size());" % name + "\n" + \
+        return indent + "s.writeLong(%(name)s.size());" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(name)s.size(); %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(valtype)s %(valvar)s = %(name)s.get(%(i)s);" % vals + "\n" + \
@@ -105,7 +105,7 @@ def serialiseJavaType(t, name, indentation = 0):
 
     elif isinstance(t, msggenyacc.MapType):
         vals = {
-            "name": name,
+            "name": prefix+name,
             "keytype": toJavaType(t.keyType),
             "keyvar": "%s_key" % name,
             "valtype": toJavaType(t.valType),
@@ -113,7 +113,7 @@ def serialiseJavaType(t, name, indentation = 0):
             "i": "%s_i" % name
         }
 
-        return indent + "s.writeLong(%s.size());" % name + "\n" + \
+        return indent + "s.writeLong(%(name)s.size());" % vals + "\n" + \
                indent + "for (Map.Entry<%(keytype)s, %(valtype)s> %(i)s : %(name)s)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(keytype)s %(keyvar)s = %(name)s.getKey();" % vals + "\n" + \
@@ -125,13 +125,13 @@ def serialiseJavaType(t, name, indentation = 0):
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
 
-def deserialiseJavaType(t, name, indentation = 0):
+def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
     indent = indentation * 4 * " ";
 
     if isinstance(t, msggenyacc.BaseType):
         if t.name == "string":
             vals = {
-                "name": name,
+                "name": prefix+name,
                 "len": "%s_len" % name,
                 "bytes": "%s_bytes" % name,
                 "i": "%s_i" % name
@@ -145,24 +145,26 @@ def deserialiseJavaType(t, name, indentation = 0):
                    indent + "}" + "\n" + \
                    indent + "%(name)s = new String(%(bytes)s);" % vals 
         else:
-            return indent + "s.%s();" % javaDataFuncs[t.name]["read"]
+            return indent + "%s = s.%s();" % (prefix+name, javaDataFuncs[t.name]["read"])
     elif isinstance(t, msggenyacc.EnumType):
-        return indent + "%s.writeInto(s);" % name
+        return indent + "%s.writeInto(s);" % (prefix+name)
     elif isinstance(t, msggenyacc.StructType):
-        return indent + "%s.writeInto(s);" % name
+        return indent + "%s.writeInto(s);" % (prefix+name)
     elif isinstance(t, msggenyacc.UnknownType):
-        return indent + "%s.writeInto(s);" % name
+        return indent + "%s.writeInto(s);" % (prefix+name)
     
     elif isinstance(t, msggenyacc.ListType):
         vals = {
-            "name": name,
+            "name": prefix+name,
+            "type": toJavaType(t),
             "len": "%s_len" % name,
             "valtype": toJavaType(t.valType),
             "valvar": "%s_val" % name,
             "i": "%s_i" % name
         }
             
-        return indent + "%(len)s = s.readLong();" % vals + "\n" + \
+        return indent + "%(name)s = new %(type)s();" % vals + "\n" + \
+               indent + "long $(len)s = s.readLong();" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(valtype)s %(valvar)s;" % vals + "\n" + \
@@ -172,7 +174,8 @@ def deserialiseJavaType(t, name, indentation = 0):
 
     elif isinstance(t, msggenyacc.MapType):
         vals = {
-            "name": name,
+            "name": prefix+name,
+            "type": toJavaType(t),
             "len": "%s_len" % name,
             "keytype": toJavaType(t.keyType),
             "keyvar": "%s_key" % name,
@@ -181,7 +184,8 @@ def deserialiseJavaType(t, name, indentation = 0):
             "i": "%s_i" % name
         }
 
-        return indent + "%(len)s = s.readLong();" % vals + "\n" + \
+        return indent + "%(name)s = new %(type)s();" % vals + "\n" + \
+               indent + "long %(len)s = s.readLong();" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(keytype)s %(keyvar)s;" % vals + "\n" + \
@@ -193,88 +197,6 @@ def deserialiseJavaType(t, name, indentation = 0):
     else:
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
-#tatic void deserialiseJavaType(Type* type, string name, string prefix, int indentation, ostream& serialize, ostream& deserialize)
-#
-#   string indent(indentation * 4, ' ');
-#   switch (type->getType())
-#   {
-#       case TYPE_BASE:
-#       {
-#           BaseType* b = static_cast<BaseType*>(type);
-#           if (b->getName() == string("string"))
-#           {
-#               deserialize << indent << format("int %1%_l%2% = s.readInt();") % prefix % indentation << endl;
-#               deserialize << indent << format("byte[] %1%_b%2% = new byte[%1%_l%2%];") % prefix % indentation << endl;
-#               deserialize << indent << format("for (int i%2% = 0; i%2% < %1%_l%2%; i%2%++)") % prefix % indentation << endl;
-#               deserialize << indent <<        "{" << endl;
-#               deserialize << indent << format("    %1%_b%2%[i%2%] = s.readByte();") % prefix % indentation << endl;
-#               deserialize << indent <<        "}" << endl;
-#               deserialize << indent << format("%3% = new String(%1%_b%2%);") % prefix % indentation % name << endl;
-#           }
-#           else
-#           {
-#               map< string, pair<string,string> >::iterator it = java_data_funcs.find(b->getName());
-#               if (it != java_data_funcs.end())
-#               {
-#                   deserialize << indent << name << " = s."<< it->second.first <<"();" << endl;
-#               }
-#               else
-#               {
-#                   deserialize << indent << name << " = " << asJavaType(type) << ".readFrom(s);" << endl;
-#               }
-#           }
-#           break;
-#       }
-#       case TYPE_LIST:
-#       {
-#           ListType* l = static_cast<ListType*>(type);
-#           
-#           string valTypeStr = asJavaType(l->getValType());
-#           string valVar = str(format("i%1%_val") % indentation);
-#           
-#                   deserialize << indent << format("%1% = new %2%();") % name % asJavaType(type) << endl;
-#           deserialize << indent << format("long %1%_i%2%_max = s.readLong();") % prefix % indentation << endl;
-#           deserialize << indent << format("for (int i%2% = 0; i%2% < %1%_i%2%_max; i%2%++)") % prefix % indentation << endl;
-#           deserialize << indent << "{" << endl;
-#           deserialize << indent << "    " << valTypeStr << " " << valVar << ";" << endl;
-#           
-#           serialiseJavaType(l->getValType(), str(format("i%1%_val") % indentation), prefix, indentation+1, serialize, deserialize);
-#           
-#           
-#           deserialize << indent << format("    %1%.add(i%2%, i%2%_val);") % name % indentation << endl;
-#           deserialize << indent << "}" << endl;
-#           break;
-#       }
-#       case TYPE_MAP:
-#       {
-#           MapType* m = static_cast<MapType*>(type);
-
-#           string keyTypeStr = asJavaType(m->getKeyType());
-#           string valTypeStr = asJavaType(m->getValType());
-#           string keyVar = str(format("i%1%_key") % indentation);
-#           string valVar = str(format("i%1%_val") % indentation);
-
-#           deserialize << indent << format("%1% = new %2%();") % name % asJavaType(type) << endl;
-#           deserialize << indent << format("long i%1%_max = bb.getLong();") % indentation << endl;
-#           deserialize << indent << format("for (int i%1% = 0; i%1% < %1%_max; i%1%++)") % indentation << endl;
-#           deserialize << indent << "{" << endl;
-#           deserialize << indent << "    " << keyTypeStr << " " << keyVar << ";" << endl;
-#           deserialize << indent << "    " << valTypeStr << " " << valVar << ";" << endl;
-#           
-#           serialiseJavaType(m->getKeyType(), str(format("i%1%_key") % indentation), prefix, indentation+1, serialize, deserialize);
-#           serialiseJavaType(m->getValType(), str(format("i%1%_val") % indentation), prefix, indentation+1, serialize, deserialize);
-#           
-#           
-#           deserialize << indent << format("    %1%.put(i%2%_key, i%2%_val);") % name % indentation << endl;
-#           deserialize << indent << "}" << endl;
-#           break;
-#       }
-#       default:
-#           cerr << "Error while processing type" << endl;
-#           return;
-#   }
-#
-
     
 
 
@@ -464,6 +386,7 @@ def main():
                 t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "struct.template.java"), searchList=s)
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
+                t.deserialiseJavaType = deserialiseJavaType
                 t.package = options.package + ".types"
                 file.write(str(t))
         for e in tree["enums"]:
