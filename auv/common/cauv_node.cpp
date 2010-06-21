@@ -54,9 +54,9 @@ void CauvNode::run()
 	debug() << "Calling onRun";
     onRun();
     
-    //while(true)
-    //{
-	//    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-    //}
+    while(true)
+    {
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+    }
 }
 
