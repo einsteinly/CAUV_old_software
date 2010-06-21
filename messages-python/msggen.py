@@ -358,6 +358,7 @@ def main():
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.c"), searchList=tree)
             t.toCType = toCType
             t.loadsavesuffix = cLoadSaveSuffix
+            t.mapToBaseType = mapToBaseType
             t.headerFile = os.path.basename(output + ".h") 
             file.write(str(t))
 
