@@ -6,7 +6,10 @@ set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 set (MSGSRCD ${AUV_SOURCE_DIR}/common)
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 add_custom_command (
-   OUTPUT ${SRCD}/messages.py
+   OUTPUT ${SRCD}/emit_structs.cpp
+          ${SRCD}/emit_enums.cpp
+          ${SRCD}/emit_messages.cpp
+          ${SRCD}/emit_observers.cpp
    WORKING_DIRECTORY ${PYMSGD}
    COMMAND python msggen.py -l python -o ${SRCD}/ ${MSGSRCD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py

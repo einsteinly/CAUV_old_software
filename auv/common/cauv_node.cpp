@@ -51,11 +51,12 @@ void CauvNode::run()
     
     m_event_monitor->startMonitoring();
 
-	onRun();
-
-    while(true)
-    {
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-    }
+	debug() << "Calling onRun";
+    onRun();
+    
+    //while(true)
+    //{
+	//    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+    //}
 }
 

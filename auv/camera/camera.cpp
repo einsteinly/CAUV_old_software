@@ -76,7 +76,7 @@ void CaptureThread::setInterFrameDelay(const int delay) {
     m_interFrameDelay = delay;
 }
 
-const int CaptureThread::getInterFrameDelay() const {
+int CaptureThread::getInterFrameDelay() const {
     boost::lock_guard<boost::mutex> guard(m_frameDelayMutex);
     return m_interFrameDelay;
 }

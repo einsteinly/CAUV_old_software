@@ -2,12 +2,18 @@
 \#define __MESSAGES_H__
 
 \#include <stdlib.h>
-\#include <stdint.h>
 \#include <string.h>
 
 // ================
 // Type definitions
 // ================
+
+typedef signed char int8_t;
+typedef signed int int16_t;
+typedef signed long int32_t;
+typedef unsigned char uint8_t;
+typedef unsigned int uint16_t;
+typedef unsigned long uint32_t;
 
 #for $t in $unknown_types
 struct $t;
@@ -61,13 +67,13 @@ struct $className
     #end for     
 };
 
-struct $className* empty${className}();
-struct $className* new${className}(#slurp
+struct $className empty${className}();
+struct $className new${className}(#slurp
                                    #for i, f in $enumerate($m.fields)
 #*                                *#$toCType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                                    #end for
 #*                                *#);
-struct ${className}* ${className}FromPacket(struct packet p);
+struct ${className} ${className}FromPacket(struct packet p);
 struct packet ${className}ToPacket(struct $className* m);
 
 #end for 
@@ -78,62 +84,23 @@ struct packet ${className}ToPacket(struct $className* m);
 // =============
 //
 #for $t in $mapToBaseType($base_types)
-#if $t.name == "string"
-inline int load_string(struct packet p, int pos, char** val)
-{
-    uint32_t len;
-    pos = load_uint32(p,pos,&len);
-    *val = *(char**)(p.data+pos);
-    return pos + len;
-}
-inline int save_string(struct packet p, int pos, char** val)
-{
-    uint32_t len = strlen(*val);
-    pos = save_uint32(p,pos,&len);
-    memcpy(*val, p.data+pos, len);
-    return pos + len;
-}
-#else
-inline int load_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val)
-{
-    *val = *($toCType($t)*)(p.data+pos);
-    return pos + sizeof($toCType($t));
-}
-inline int save_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val)
-{
-    *($toCType($t)*)(p.data+pos) = *val;
-    return pos + sizeof($toCType($t));
-}
+int load_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val);
+int save_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val);
+int len_$loadsavesuffix($t)($toCType($t)* val);
 #end if 
 #end for 
 
 
 #for $s in $structs
-inline int load_${s.name}(struct packet p, int pos, $toCType($s)* s)
-{
-    #for $f in $s.fields
-    pos = load_$loadsavesuffix($f.type)(p, pos, &s->$f.name);
-    #end for
-    return pos;
-}
-inline int save_${s.name}(struct packet p, int pos, $toCType($s)* s)
-{
-    #for $f in $s.fields
-    pos = save_$loadsavesuffix($f.type)(p, pos, &s->$f.name);
-    #end for
-    return pos;
-}
+int load_${s.name}(struct packet p, int pos, $toCType($s)* s);
+int save_${s.name}(struct packet p, int pos, $toCType($s)* s);
+int len_${s.name}($toCType($s)* s);
 #end for
 
 #for $e in $enums
-inline int load_${e.name}(struct packet p, int pos, $toCType($e.type)* val)
-{
-    return load_$loadsavesuffix($e.type)(p, pos, val);
-}
-inline int save_${e.name}(struct packet p, int pos, $toCType($e.type)* val)
-{
-    return save_$loadsavesuffix($e.type)(p, pos, val);
-}
+int load_${e.name}(struct packet p, int pos, $toCType($e.type)* val);
+int save_${e.name}(struct packet p, int pos, $toCType($e.type)* val);
+int len_${e.name}($toCType($e.type)* val);
 #end for
 
 #if $len($unknown_types) > 0
@@ -141,6 +108,7 @@ inline int save_${e.name}(struct packet p, int pos, $toCType($e.type)* val)
 #for $t in $unknown_types
 int load_${t}(struct packet p, int pos, struct $t* val);
 int save_${t}(struct packet p, int pos, struct $t* val);
+int len_${t}(struct $t* val);
 #end for
 #end if 
 
