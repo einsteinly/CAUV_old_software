@@ -3,10 +3,11 @@ package cauv.gui;
 import java.io.IOException;
 
 import cauv.auv.AUV;
+import cauv.auv.MessageSocket;
+import cauv.auv.MessageSocket.ConnectionStateObserver;
 import cauv.gui.Ui_GUIMain;
 import cauv.gui.controllers.PS2ControlHandler;
 import cauv.gui.views.CameraFeeds;
-import cauv.gui.views.ConnectionView;
 import cauv.gui.views.MissionControlView;
 import cauv.gui.views.SettingsView;
 import cauv.gui.views.TelemetryView;
@@ -17,7 +18,7 @@ import com.trolltech.qt.core.Qt.Key;
 import com.trolltech.qt.core.Qt.KeyboardModifier;
 import com.trolltech.qt.gui.*;
 
-public class GUIMain extends QMainWindow {
+public class GUIMain extends QMainWindow implements ConnectionStateObserver {
 
 	Ui_GUIMain ui = new Ui_GUIMain();
 	
@@ -25,8 +26,10 @@ public class GUIMain extends QMainWindow {
 
 	public GUIMain() {
 		ui.setupUi(this);
-        ui.controlsToggle.clicked.connect(this, "toggleControls()");
-        AUV.connection.connect.connect(this, "onConnect(AUV)");
+		ui.address.setText(Config.ADDRESS);
+		ui.port.setValue(Config.AUV_PORT);
+		ui.connectButton.clicked.connect(this, "connect()");
+		ui.controlsToggle.clicked.connect(this, "toggleControls()");
 		ui.controls.hide();
 	}
 
@@ -59,18 +62,40 @@ public class GUIMain extends QMainWindow {
 			controlStateChanged.emit(true);
 		}
 	}
-	
-    public void registerScreen(final ScreenView view) {
+
+	protected void connect() {
+		ui.address.setEnabled(false);
+		ui.port.setEnabled(false);
+		ui.connectButton.setEnabled(false);
+		ui.errorMessage.setText("Connecting...");
+		this.repaint();
+
+		Config.ADDRESS = ui.address.text();
+		Config.AUV_PORT = ui.port.value();
+
+		try {
+			AUV auv = new AUV(Config.ADDRESS, Config.AUV_PORT);
+			auv.regsiterConnectionStateObserver(this);
+			//new ControlHandler(this.ui, auv);
+		} catch (IOException e) {
+			ui.errorMessage.setText("Connecting to AUV failed. Sigh.");
+		} finally {
+			ui.address.setEnabled(true);
+			ui.port.setEnabled(true);
+			ui.connectButton.setEnabled(true);
+		}
+	}
+
+	public void registerScreen(final ScreenView view) {
 		// add the main screen to the stack of information panels
 		ui.informationStack.addWidget(view.getScreenWidget());
 
 		// set up a mouse call-back on the icon so that when it's clicked
 		// the main screen is displayed by moving it to the top of the
 		// stack
-		
 		QGraphicsView graphics = new QGraphicsView() {
 			protected void mouseReleaseEvent(QMouseEvent arg) {
-			    ui.informationStack.setCurrentWidget(view.getScreenWidget());
+				ui.informationStack.setCurrentWidget(view.getScreenWidget());
 			}
 		};
 		graphics.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff);
@@ -90,6 +115,17 @@ public class GUIMain extends QMainWindow {
 		scene.setBackgroundBrush(new QBrush(QColor.transparent));
 		graphics.setScene(scene);
 	};
+
+
+	@Override
+	public void onConnect(MessageSocket connection) {
+		ui.mainStack.setCurrentWidget(ui.informationPage);
+	}
+
+	@Override
+	public void onDisconnect(MessageSocket connection) {
+		ui.mainStack.setCurrentWidget(ui.addressPage);
+	}
 	
 	
 	public static void main(String[] args) {
@@ -102,8 +138,7 @@ public class GUIMain extends QMainWindow {
 		}
 
 		GUIMain gui = new GUIMain();
-        gui.registerScreen(new ConnectionView());
-        gui.registerScreen(new CameraFeeds());
+		gui.registerScreen(new CameraFeeds());
 		gui.registerScreen(new TelemetryView());
 		gui.registerScreen(new MissionControlView());
 		gui.registerScreen(new SettingsView());
@@ -116,10 +151,5 @@ public class GUIMain extends QMainWindow {
 			System.err.println("Config error: " + e.getMessage());
 		}
 	}
-
-    public void onConnect(AUV auv) {
-        new ControlHandler(this.ui, auv);
-        ui.informationStack.setCurrentIndex(4);
-    }
 
 }
