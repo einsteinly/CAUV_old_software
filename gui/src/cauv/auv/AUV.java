@@ -45,8 +45,7 @@ public class AUV extends QSignalEmitter {
 
         protected void updateSpeed(int speed) {
             AUV.this.controller.disable();
-            this.speed = speed;
-            speedChanged.emit(speed);
+            this.setSpeed(speed);
             AUV.this.controller.enable();
         }
     }
@@ -61,6 +60,15 @@ public class AUV extends QSignalEmitter {
 
     public Motors motors = new Motors();
 
+    
+    public void stopAllMotors(){
+    	this.motors.HBOW.setSpeed(0);
+    	this.motors.HSTERN.setSpeed(0);
+    	this.motors.VBOW.setSpeed(0);
+    	this.motors.VSTERN.setSpeed(0);
+    	this.motors.PROP.setSpeed(0);
+    }
+    
     /**
      * Represents an autopilot in the AUV. The type of target (e.g. a heading or
      * depth) that the autopilot aims for is passed in using generics. This is

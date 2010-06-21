@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'GUIMain.jui'
 **
-** Created: Mon 21. Jun 13:54:56 2010
+** Created: Thu 6. May 01:36:21 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -662,7 +662,7 @@ public class Ui_GUIMain implements com.trolltech.qt.QUiForm<QMainWindow>
         auvAddressLabel_4.setBuddy(address);
         retranslateUi(GUIMain);
 
-        mainStack.setCurrentIndex(0);
+        mainStack.setCurrentIndex(1);
 
 
         GUIMain.connectSlotsByName();
