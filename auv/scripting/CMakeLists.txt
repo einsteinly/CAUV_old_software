@@ -26,7 +26,7 @@ add_custom_command (
 
 add_custom_command (
     OUTPUT ${BINDIR}/cauvmodule.so
-    COMMAND bash -c '( export BJAM_BUILD_DIR=${BINDIR} \; \
+    COMMAND bash -c '( export BJAM_BUILD_DIR=${BINDIR} \;
                        bjam ${SRCD} )'
     WORKING_DIRECTORY ${SRCD}
     DEPENDS ${SRCD}/emit_structs.cpp

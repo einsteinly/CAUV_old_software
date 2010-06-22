@@ -23,6 +23,23 @@ include_directories (${AUV_SOURCE_DIR})
 # make lib a system path, so that we don't get warnings from it
 include_directories (SYSTEM "${AUV_SOURCE_DIR}/lib")
 
+# python-based message generation
+# how to generate messages.cpp and messages.h
+set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
+set (SRCD ${CMAKE_CURRENT_SOURCE_DIR}/common)
+add_custom_command (
+   OUTPUT ${SRCD}/messages.cpp
+          ${SRCD}/messages.h
+   WORKING_DIRECTORY ${PYMSGD}
+   COMMAND python msggen.py -l "c++" -o ${SRCD}/messages ${SRCD}/messages.msg 
+   DEPENDS ${PYMSGD}/msggen.py
+           ${PYMSGD}/message.template.cpp
+           ${PYMSGD}/message.template.h
+           ${PYMSGD}/msggenyacc.py
+           ${PYMSGD}/msggenlex.py
+           ${SRCD}/messages.msg
+   COMMENT "Generating messages.cpp and mesages.h with messages-python" 
+) 
 
 # subdirectories:
 add_subdirectory (camera)

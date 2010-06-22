@@ -44,7 +44,7 @@ python-extension cauvinterface : [ glob *.cpp ]
                                  libcommon
                                : <define>CAUV_DEBUG ;
 
-install "./cauv/" : cauv
+install "./cauv/" : cauvinterface
                   : <install-dependencies>on
                     <install-type>EXE
                     <install-type>LIB ;

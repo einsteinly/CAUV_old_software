@@ -407,7 +407,9 @@ def main():
     elif options.lang == "python":
         compilation_units = ["enums", "structs", "messages", "observers"]
         for cu in compilation_units:
-            with open(output + "emit_" + cu + ".cpp", "w") as file:
+            # NB: output treated as directory, because CMake seems to strip
+            # trailinig ////// from paths
+            with open(output + "/emit_" + cu + ".cpp", "w") as file:
                 t = Template(file = os.path.join(os.path.dirname(sys.argv[0]),
                                                  "boostpy-emit_%s.cpp.template" % cu),
                              searchList=tree)
