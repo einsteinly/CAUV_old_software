@@ -179,7 +179,7 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
             std::stringstream ss;
             for (int i = 0; i < n; i++)
                 ss << std::hex << std::setw(2) << std::setfill('0') << (int)(u_char)s[i] << " ";
-            debug() << "Sending" << ss.str();
+            debug(-1) << "Sending" << ss.str();
 
             return m_ftdic->write(reinterpret_cast<const u_char*>(s), n);
         }
@@ -231,8 +231,6 @@ class Module : public MessageSource
             uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
             std::vector<uint16_t> vheader(buf16, buf16+4);
             uint16_t checksum = sumOnesComplement(vheader);
-
-            debug() << "About to send message!";
 
             boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
             

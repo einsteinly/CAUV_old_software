@@ -12,10 +12,13 @@ class ControlNode : public CauvNode
 {
     public:
         ControlNode();
+        virtual ~ControlNode();
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
         boost::shared_ptr<XsensIMU> m_xsens;
+    
+        boost::thread m_motorThread, m_aliveThread, m_telemetryThread;
 
         virtual void onRun();
 };

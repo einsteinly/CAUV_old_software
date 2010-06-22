@@ -41,7 +41,7 @@ CauvNode::CauvNode(const string& name, const char* host)
 
 CauvNode::~CauvNode()
 {
-	cout << "Shutting down node" << endl;
+	info() << "Shutting down node";
     m_event_monitor->stopMonitoring();
 }
 
@@ -51,7 +51,6 @@ void CauvNode::run()
     
     m_event_monitor->startMonitoring();
 
-	debug() << "Calling onRun";
     onRun();
     
     while(true)

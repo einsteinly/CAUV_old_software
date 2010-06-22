@@ -22,10 +22,10 @@ const ConnectionTimeout SpreadMailbox::ZERO_TIMEOUT;
 
 SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalConnectionName,
                   const bool shouldReceiveMembershipMessages, const ConnectionTimeout &timeout,
-                  const MailboxPriority priority) throw(ConnectionError) {
+                  const MailboxPriority priority) {
     // ssrc spread doesn't validate this!
     if(internalConnectionName.size() > MAX_PRIVATE_NAME){
-        throw(ConnectionError("Private connection name too long", true));
+        throw ConnectionError("Private connection name too long", true);
     }
 
     try {
@@ -41,7 +41,7 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
 }
 
 
-void SpreadMailbox::disconnect() throw(ConnectionError) {
+void SpreadMailbox::disconnect() {
     try {
         m_ssrcMailbox->kill();
     } catch(Error& e){
@@ -51,7 +51,7 @@ void SpreadMailbox::disconnect() throw(ConnectionError) {
 }
 
 
-void SpreadMailbox::joinGroup(const string &groupName) throw(ConnectionError) {
+void SpreadMailbox::joinGroup(const string &groupName) {
     try {
         m_ssrcMailbox->join(groupName);
     }
@@ -61,7 +61,7 @@ void SpreadMailbox::joinGroup(const string &groupName) throw(ConnectionError) {
 }
 
 
-void SpreadMailbox::leaveGroup(const string &groupName) throw(ConnectionError) {
+void SpreadMailbox::leaveGroup(const string &groupName) {
     try {
         m_ssrcMailbox->leave(groupName);
     }
@@ -108,13 +108,13 @@ int SpreadMailbox::doSendMessage( const boost::shared_ptr<const Message> message
 }
 
 int SpreadMailbox::sendMessage(const boost::shared_ptr<const Message> message, Spread::service serviceType,
-        const string &groupName) throw(ConnectionError) {
+        const string &groupName) {
     return doSendMessage( message, serviceType, stringToGroupList(groupName) );
 }
 
 
 int SpreadMailbox::sendMultigroupMessage(const boost::shared_ptr<const Message> message, Spread::service serviceType,
-        const vector<string> &groupNames) throw(ConnectionError) {
+        const vector<string> &groupNames) {
     return doSendMessage( message, serviceType, vectorToGroupList(groupNames) );
 }
 
@@ -132,7 +132,7 @@ RegularMembershipMessage::MessageCause causeFromServiceType( Spread::service ser
     return RegularMembershipMessage::NETWORK;
 }
 
-shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(ConnectionError) {
+shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() {
     ssrc::spread::Message ssrcMsg;    // We don't expect to have to deal with ScatterMessages on this end
     GroupList groups;
 
@@ -144,17 +144,17 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(Conne
         FD_SET(fd, &fds);
         
         struct timeval towait;
-	    towait.tv_sec = timeout / 1000;
-	    towait.tv_usec = (timeout % 1000) * 1000;
+	    towait.tv_sec = 1;
+	    towait.tv_usec = 0;
 	    
-        int ret = select(fd+1, &fds, NULL, &fds, &towait);
+        int ret = 0;
+        while (ret == 0) {
+            ret = select(fd+1, &fds, NULL, &fds, &towait);
+            boost::this_thread::interruption_point();
+        }
         if(ret < 0)
         {
             throw ConnectionError(MakeString() << "Error in select (" << errno << ": " << strerror(errno) << ")", true);	        
-        }
-        else if(ret == 0)
-        {
-            return shared_ptr<SpreadMessage>();
         }
     }
 
@@ -210,15 +210,15 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage(int timeout) throw(Conne
 }
 
 /* re-throw, disconnect etc as required */
-void SpreadMailbox::handleSpreadError(Error& e) throw(ConnectionError){
+void SpreadMailbox::handleSpreadError(Error& e) {
     if(needsReconnect(e.error())){
         try{
             disconnect();
         }catch(ConnectionError& e2){
-            throw(ConnectionError(MakeString() << "Error whilst "
+            throw ConnectionError(MakeString() << "Error whilst "
                 << "dissconnecting following exception, original error:\n\t"
                 << getErrorString(e.error()) << "\nSubsequent error:\n\t"
-                << e2.what(), true, false));
+                << e2.what(), true, false);
         }
     }
     throw ConnectionError(e.error()); 

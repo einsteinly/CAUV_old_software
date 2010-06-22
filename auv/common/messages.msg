@@ -254,3 +254,19 @@ group pl_gui
     }
 }
 
+
+group mcb
+{
+	message Alive : 40
+	{
+    }
+}
+
+group pressure
+{
+	message Pressure : 50
+	{
+	    fore : uint16;
+	    aft : uint16;
+    }
+}

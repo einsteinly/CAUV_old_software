@@ -55,7 +55,7 @@ public:
                               std::string const& privConnectionName = "",
                               bool recvMembershipMessages = true,
                               ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
-                              SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) throw()
+                              SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) 
         : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority),
           m_connection_state_lock(), m_connection_state(DISCONNECTED), m_mailbox(),
           m_keep_trying(true), m_thread(), m_groups_lock(), m_groups(){
@@ -87,7 +87,7 @@ public:
             return "";
     }
     
-    virtual void joinGroup(const std::string &groupName) throw() {
+    virtual void joinGroup(const std::string &groupName) {
         lock_t l(m_groups_lock);
         m_groups.insert(groupName);
         
@@ -96,10 +96,10 @@ public:
         }
     }
     
-    virtual void leaveGroup(const std::string &groupName) throw() {
+    virtual void leaveGroup(const std::string &groupName) {
         lock_t l(m_groups_lock);
-        string_set_t::iterator i;
-        if((i = m_groups.find(groupName)) != m_groups.end()){
+        string_set_t::iterator i = m_groups.find(groupName);
+        if(i != m_groups.end()){
             m_groups.erase(i);
             _doLeaveGroup(groupName);
         }
@@ -171,13 +171,13 @@ public:
      * be anything in the RegularMessage or MembershipMessage hierarchies.
      * @return An object containing the received message and associated metadata.
      */
-    virtual boost::shared_ptr<SpreadMessage> receiveMessage(int timeout) throw() {
+    virtual boost::shared_ptr<SpreadMessage> receiveMessage() {
         ErrOnExit err("Failed to receive message ");
         boost::shared_ptr<SpreadMessage> r;
         if(_waitConnected(500)){
             try{
                 if(m_mailbox){
-                    r = m_mailbox->receiveMessage(timeout);
+                    r = m_mailbox->receiveMessage();
                     err.no();
                 }
             }catch(ConnectionError& e){
@@ -190,7 +190,7 @@ public:
         return r;
     }
 
-    int waitingMessageByteCount() throw() {
+    int waitingMessageByteCount() {
         ErrOnExit err(std::string(__func__) + " error"); 
         int r = 0;
         if(_waitConnected(100)){
@@ -286,14 +286,14 @@ private:
         return i < attempts; 
     }
 
-    void _doOnConnected() throw(){
+    void _doOnConnected() {
         info() << "mailbox connected";
         lock_t l2(m_connection_state_lock);
         m_connection_state = CONNECTED;
         _synchroniseGroups();
     }
 
-    void _doJoinGroup(std::string const& g) throw(){
+    void _doJoinGroup(std::string const& g) {
         ErrOnExit err("Failed to join group ");
         try{
             if(m_mailbox){
@@ -308,7 +308,7 @@ private:
         }
     }
 
-    void _doLeaveGroup(std::string const& g) throw(){
+    void _doLeaveGroup(std::string const& g) {
         ErrOnExit err("Failed to leave group ");
         try{
             if(m_mailbox){
@@ -323,7 +323,7 @@ private:
         }
     }
 
-    void _synchroniseGroups() throw(){
+    void _synchroniseGroups() {
         lock_t l(m_groups_lock);
         string_set_t::const_iterator i;
         for(i = m_groups.begin(); i != m_groups.end(); i++)
@@ -346,7 +346,7 @@ private:
         m_thread = boost::thread(boost::ref(*this));
     }
 
-    void _disconnect() throw(){
+    void _disconnect() {
         boost::unique_lock<mutex_t> l(m_connection_state_lock);
         if (m_connection_state == DISCONNECTED) return;
         m_connection_state = DISCONNECTED; 

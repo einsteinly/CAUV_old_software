@@ -8,9 +8,13 @@ SonarNode::SonarNode(const std::string& device) : CauvNode("Sonar")
 }
 
 
-void SonarNode::OnRun()
+void SonarNode::onRun()
 {
     m_sonar->init();
+    
+    while (true) {
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    }
 }
 
 

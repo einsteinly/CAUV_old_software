@@ -87,7 +87,6 @@ struct packet ${className}ToPacket(struct $className* m);
 int load_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val);
 int save_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val);
 int len_$loadsavesuffix($t)($toCType($t)* val);
-#end if 
 #end for 
 
 

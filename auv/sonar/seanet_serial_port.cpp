@@ -29,6 +29,8 @@ const char *SonarIsDeadException::what() const throw()
 static void check_is_sonar_dead() 
 {
 	static time_t last_read = 0;
+    
+    boost::this_thread::interruption_point();
 
 	if (last_read && time(NULL) - last_read >= 2) {
 		last_read = 0;
@@ -46,12 +48,17 @@ boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
 {
 	boost::shared_ptr<SeanetPacket> pkt = boost::make_shared<SeanetPacket>();
 
-
 	int rec = 0;
 	int headerReceived = 0;
 	int bodyReceived = 0;
 
 	unsigned char buffer[13];
+        
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
 
 again:
 
@@ -63,22 +70,54 @@ again:
 
 	while (headerReceived < 13)
 	{
-        rec = read(m_fd, &buffer[headerReceived], 13 - headerReceived);
-		check_is_sonar_dead();
-
-		if (rec <= 0) {
-			debug() << "Cannot read from serial - waiting for sonar to connect..";
-            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-		}
-		headerReceived += rec;
+        rec = 0;
+        while (rec == 0) {
+            fd_set set;
+            FD_ZERO (&set);
+            FD_SET (m_fd, &set);
+            rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
+		    check_is_sonar_dead();
+        }
+        if (rec > 0) {
+            rec = read(m_fd, &buffer[headerReceived], 13 - headerReceived);
+		    check_is_sonar_dead();
+            if (rec < 0) {
+                throw SonarIsDeadException();
+            }
+            if (rec == 0) {
+                debug() << "Cannot read from serial - waiting for sonar to connect..";
+                boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            }
+            headerReceived += rec;
+        }
+        else {
+			throw SonarIsDeadException();
+        }
 	}
 
+
 	if (buffer[0] != 0x40) {
-		printf("Error: Out of sync.  Resyncing...\n");
+		warning() << "Error: Out of sync.  Resyncing...";
 		/* Search until a LF is consumed */
 		while (buffer[0] != 0x0A) {
-			rec = read(m_fd, buffer, 1);
-			check_is_sonar_dead();
+            rec = 0;
+            while (rec == 0) {
+                fd_set set;
+                FD_ZERO (&set);
+                FD_SET (m_fd, &set);
+                rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
+                check_is_sonar_dead();
+            }
+            if (rec > 0) {
+                rec = read(m_fd, &buffer[0], 1);
+                check_is_sonar_dead();
+                if (rec < 0) {
+                    throw SonarIsDeadException();
+                }
+            }
+            else {
+                throw SonarIsDeadException();
+            }
 		}
 		goto again;
 	}
@@ -97,15 +136,26 @@ again:
 
 	while (bodyReceived < pkt->m_length - 7)
 	{
-		rec = read(m_fd, &pkt->m_data[13 + bodyReceived], pkt->m_length - 7 - bodyReceived);
-		check_is_sonar_dead();
-		if (rec == 0) {
-			error() << "Cannot read body from serial";
-		} else if (rec < 0) {
-			throw SonarIsDeadException();
-		}
-
-		bodyReceived += rec;
+        rec = 0;
+        while (rec == 0) {
+            fd_set set;
+            FD_ZERO (&set);
+            FD_SET (m_fd, &set);
+            rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
+            check_is_sonar_dead();
+        }
+        if (rec > 0) {
+            rec = read(m_fd, &pkt->m_data[13 + bodyReceived], pkt->m_length - 7 - bodyReceived);
+            rec = read(m_fd, &buffer[0], 1);
+            check_is_sonar_dead();
+            if (rec < 0) {
+                throw SonarIsDeadException();
+            }
+		    bodyReceived += rec;
+        }
+        else {
+            throw SonarIsDeadException();
+        }
 	}
 
 	if (pkt->m_data[pkt->m_length + 5] != 0x0A) {
@@ -128,7 +178,11 @@ void SeanetSerialPort::sendPacket(const SeanetPacket &pkt)
 
 	printf("\n");*/
 	if (pkt.getData()[total_length - 1] != 0x0A) {
-		error() << "Sending corrupt data to the sonar!";
+        std::stringstream data;
+        for (unsigned int i = 0; i < total_length; i++) {
+		    data << hex << setw(2) << setfill('0') << (unsigned int)pkt.getData()[i] << " ";
+	    }
+		error() << "Sending corrupt data to the sonar! " << data.str();
 	}
 
     unsigned int sent = 0;
@@ -171,11 +225,9 @@ SeanetSerialPort::SeanetSerialPort(const std::string file)
 	m_fd = open(file.c_str(), O_RDWR | O_NOCTTY);
 	if (m_fd == -1) {
 		error() << "Cannot open " << file << ": " << strerror(errno);
+        return;
     }
-    else
-    {
-		fcntl(m_fd, F_SETFL, 0);
-    }
+    fcntl(m_fd, F_SETFL, 0);
 	init();
 }
 

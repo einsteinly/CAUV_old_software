@@ -66,8 +66,8 @@ class SeanetSonar
 		/* sets the step size (angular resolution) */
 		void set_step_size(unsigned char size);
 
-        friend void sonarReadThread(boost::shared_ptr<SeanetSonar> sonar);
-        friend void sonarProcessThread(boost::shared_ptr<SeanetSonar> sonar);
+        friend void sonarReadThread(SeanetSonar& sonar);
+        friend void sonarProcessThread(SeanetSonar& sonar);
 	
     
     private:

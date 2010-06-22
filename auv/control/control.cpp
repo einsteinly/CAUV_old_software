@@ -19,11 +19,39 @@ void sendMotorMessageTest(boost::shared_ptr<MCBModule> mcb)
     {
         MotorMessage m((MotorID::e)motor, 0);
         mcb->send(m);
-        debug() << "Sent message" << m;
+        debug() << "Sent " << m;
 
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
         motor = (motor == 16) ? 1 : motor << 1;
+    }
+}
+void sendAlive(boost::shared_ptr<MCBModule> mcb)
+{
+    debug() << "Starting alive message thread";
+    while(true)
+    {
+        AliveMessage m;
+        mcb->send(m);
+        debug() << "Sent " << m;
+        boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+    }
+}
+void readTelemetry(boost::shared_ptr<XsensIMU> xsens)
+{
+    debug() << "Starting Xsense telemetry thread";
+    while(true)
+    {
+        floatYPR att = xsens->getAttitude();
+
+        //update the telemetry state
+        att.yaw = -att.yaw;
+        if (att.yaw < 0)
+            att.yaw += 360;
+
+        debug() << (std::string)(MakeString() << fixed << setprecision(1) << "Yaw: " << att.yaw << " Pitch: " << att.pitch  << " Roll: " << att.roll);
+    
+        boost::this_thread::sleep(boost::posix_time::milliseconds(10));
     }
 }
 
@@ -62,35 +90,33 @@ ControlNode::ControlNode() : CauvNode("Control")
         m_xsens.reset();
     }
 }
+ControlNode::~ControlNode()
+{
+    if (m_motorThread.get_id() != boost::thread::id()) {
+        m_motorThread.interrupt();
+        m_motorThread.join();
+    }
+}
 
 
 void ControlNode::onRun()
 {
     CauvNode::onRun();
-    
-    // First check the Xsens is actually connected...
-    if (!m_xsens) {
-        error() << "Xsens must be connected. Killing forwarding thread.";
-        return;
+   
+    if (m_mcb) {
+        m_motorThread = boost::thread(sendMotorMessageTest, m_mcb);
+        m_aliveThread = boost::thread(sendAlive, m_mcb);
+        m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());
     }
-    if (!m_mcb) {
-        error() << "MCB must be connected. Killing forwarding thread.";
-        return;
+    else {
+        warning() << "MCB not connected. No MCB comms available.";
     }
 
-    debug() << "Started Xsens<->MCB comms";
-    
-    while (true) {
-        floatYPR att = m_xsens->getAttitude();
-
-        //update the telemetry state
-        att.yaw = -att.yaw;
-        if (att.yaw < 0)
-            att.yaw += 360;
-
-        debug() << fixed << setprecision(1) << "Yaw: " << att.yaw << " Pitch: " << att.pitch  << " Roll: " << att.roll;
-
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+    if (m_xsens) {
+        m_telemetryThread = boost::thread(readTelemetry, m_xsens);
+    }
+    else {
+        warning() << "Xsens not connected. Telemetry not available.";
     }
 }
 
