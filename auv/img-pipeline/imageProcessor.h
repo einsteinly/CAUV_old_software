@@ -42,6 +42,7 @@ class ImageProcessor: public MessageObserver
          * their input from others.
          */
         virtual void onImageMessage(ImageMessage_ptr m);
+        virtual void onSonarDataMessage(SonarDataMessage_ptr m);
         
         /**
          * These messages describe modifications to the pipeline
@@ -52,8 +53,11 @@ class ImageProcessor: public MessageObserver
         virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
         virtual void onAddArcMessage(AddArcMessage_ptr m);
         virtual void onGraphRequestMessage(GraphRequestMessage_ptr m);
+        virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
 
         /** end MessageObserver functions **/
+
+        void removeNode(node_id const& n);
 
         /**
          * Use m_mailbox (set by constructor) to send the specified message

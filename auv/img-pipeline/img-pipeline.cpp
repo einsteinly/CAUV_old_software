@@ -26,6 +26,7 @@ void ImagePipelineNode::onRun()
     mailbox()->joinGroup("image");
     mailbox()->joinGroup("pipeline");
     mailbox()->joinGroup("pl_gui");
+    mailbox()->joinGroup("sonarout");
     #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
     eventMonitor()->addObserver(boost::make_shared<TestMBObserver>()); 
     mailboxMonitor()->addObserver(boost::make_shared<DebugMessageObserver>());

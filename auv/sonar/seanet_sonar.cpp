@@ -144,9 +144,9 @@ void SeanetSonar::set_res_range(SeanetHeadParams &params, unsigned int res, unsi
     params.rangeScale = range;// * 10;
 }
 
-void SeanetSonar::set_scan_settings(u_char mode, uint16_t direction, uint16_t width,
-                              u_char gain, uint32_t range, uint32_t radial_res,
-                              u_char angular_res)
+void SeanetSonar::set_scan_settings(unsigned char mode, uint16_t direction, uint16_t width,
+                              unsigned char gain, uint32_t range, uint32_t radial_res,
+                              unsigned char angular_res)
 {
     SeanetHeadParams params;
 
