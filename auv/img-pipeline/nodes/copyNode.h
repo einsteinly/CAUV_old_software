@@ -20,11 +20,11 @@ class CopyNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image_in");
+            registerInputID("image");
             
             // two output:
-            registerOutputID<image_ptr_t>("image_out_A");
-            registerOutputID<image_ptr_t>("image_out_B");
+            registerOutputID<image_ptr_t>("image");
+            registerOutputID<image_ptr_t>("image copy");
             
             // no parameters
             // registerParamID<>();
@@ -34,10 +34,10 @@ class CopyNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
             
-            image_ptr_t img = inputs["image_in"];
+            image_ptr_t img = inputs["image"];
 
-            r["image_out_A"] = img;
-            r["image_out_B"] = image_ptr_t(new Image(*img)); 
+            r["image"] = img;
+            r["image copy"] = image_ptr_t(new Image(*img)); 
             
             return r;
         }

@@ -8,10 +8,12 @@ if ! [ python.configured ]
 
 use-project boost
   : /tmp/jc593/boost/boost_1_43_0 ;
+#  : /Users/james/Development/boost_1_42_0 ;
 
 project
   : requirements <include>../
                  <include>/tmp/jc593/boost/boost_1_43_0
+                 # <include>/Users/james/Development/boost_1_42_0
                  <include>/societies/cauv/install/include/
                  <library>/boost/python//boost_python
                  <library>/boost/thread//boost_thread
@@ -19,12 +21,25 @@ project
                  <library>/boost/date_time//boost_date_time
                  <library>/boost/iostreams//boost_iostreams ;
 
-lib cvlib : : <name>cv <search>/societies/cauv/install/lib ;
-lib highguilib : : <name>highgui <search>/societies/cauv/install/lib ;
+lib cvlib : :
+    <name>cv
+    <search>/societies/cauv/install/lib
+    <search>/usr/local/lib/ ;
 
-lib spreadlib : : <name>spread <search>/societies/cauv/install/lib ;
+lib highguilib : :
+    <name>highgui
+    <search>/societies/cauv/install/lib
+    <search>/usr/local/lib ;
 
-lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>/societies/cauv/install/lib ;
+lib spreadlib : :
+    <name>spread
+    <search>/societies/cauv/install/lib
+    <search>/usr/local/lib ;
+
+lib ssrcspreadlib : spreadlib :
+    <name>ssrcspread
+    <search>/societies/cauv/install/lib
+    <search>/usr/local/lib ;
 
 lib libcommon : ../common/messages.cpp
                 ../common/image.cpp 

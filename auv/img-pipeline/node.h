@@ -141,6 +141,12 @@ class Node{
             }
             // provide notification that parameters have changed: principally
             // for asynchronous nodes
+            // NB:
+            // release parameters lock first to reduce potential for deadlocks:
+            // this means that the parameter we call the function with may no
+            // longer be present when it's body is executed: node
+            // implementations should not rely on it being valid
+            l.unlock();
             this->paramChanged(p);
             // check to see if the node should be re-scheduled
             setNewParamValue(p);

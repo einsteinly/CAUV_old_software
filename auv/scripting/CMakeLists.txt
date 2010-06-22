@@ -23,8 +23,14 @@ add_custom_command (
    COMMENT "Generating emit_enums.cpp, emit_structs.cpp, emit_messages.cpp and emit_observers.cpp with messages-python" 
 )
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set (BJAM_TOOLSET darwin)
+else (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set (BJAM_TOOLSET gcc)
+endif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+
 add_custom_target (bjam-boostpython
-    bjam ${SRCD}
+    bjam --toolset=${BJAM_TOOLSET} -d+2 ${SRCD}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     SOURCES emit_static.h # just for information purposes
             emit_generated.h

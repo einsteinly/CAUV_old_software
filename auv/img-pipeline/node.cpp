@@ -523,21 +523,30 @@ void Node::registerInputID(input_id const& i){
  * add this node to the scheduler queue
  */
 void Node::checkAddSched() throw(){
-    lock_t li(m_output_demanded_lock);
-    lock_t lo(m_new_inputs_lock);
-    lock_t lr(m_exec_queued_lock);
     lock_t la(m_allow_queue_lock);
-    lock_t lp(m_new_paramvalues_lock);
-
+    lock_t lr(m_exec_queued_lock);
+    
     if(!allowQueue()){
         debug() << "Cannot enqueue node" << *this << ", allowQueue == false";
         return;
     }
-
     if(execQueued()){
         debug() << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
+
+    // NB: for now, this lock is required to prevent deadlocks if setAllowQueue
+    // is called from a paramChanged() callback, since validInputAll needs to
+    // (at the moment, and undesirably) lock this in order to check only inputs
+    // and not paramater inputs for validity, and if we don't lock it here the
+    // locking order would be different in the two threads -> deadlock
+    // nastiness
+    lock_t ln(m_parameters_lock);
+
+    lock_t li(m_output_demanded_lock);
+    lock_t lo(m_new_inputs_lock);
+    lock_t lp(m_new_paramvalues_lock);
+
 
     if(!newOutputDemanded()){
         debug() << "Cannot enqueue node" << *this << ", no output demanded";
