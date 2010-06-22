@@ -17,7 +17,8 @@ project
                  <library>/boost/thread//boost_thread
                  <library>/boost/serialization//boost_serialization
                  <library>/boost/date_time//boost_date_time
-                 <library>/boost/iostreams//boost_iostreams ;
+                 <library>/boost/iostreams//boost_iostreams
+  : build-dir $BJAM_BUILD_DIR ;
 
 lib cvlib : : <name>cv <search>/societies/cauv/install/lib ;
 lib highguilib : : <name>highgui <search>/societies/cauv/install/lib ;
@@ -39,13 +40,12 @@ lib libcommon : ../common/messages.cpp
                 ssrcspreadlib
               : <define>CAUV_DEBUG ;
 
-python-extension cauv : cauvmodule.cpp
-                        emit_static.cpp
-                        emit_enums.cpp
-                        emit_structs.cpp
-                        emit_messages.cpp
-                        emit_observers.cpp
-                        libcommon
-                      : <define>CAUV_DEBUG ;
+python-extension cauvinterface : [ glob *.cpp ]
+                                 libcommon
+                               : <define>CAUV_DEBUG ;
 
+install "./cauv/" : cauv
+                  : <install-dependencies>on
+                    <install-type>EXE
+                    <install-type>LIB ;
 
