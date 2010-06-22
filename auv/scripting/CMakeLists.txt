@@ -25,7 +25,8 @@ add_custom_command (
 )
 
 add_custom_command (
-    OUTPUT ${BINDIR}/cauvmodule.so
+    OUTPUT ${SRCD}/cauv/cauvinterface.so
+           ${SRCD}/cauv/libcommon.so
     COMMAND bash -c '( export BJAM_BUILD_DIR=${BINDIR} \;
                        bjam ${SRCD} )'
     WORKING_DIRECTORY ${SRCD}
@@ -39,7 +40,11 @@ add_custom_command (
 
 add_custom_target (scripting-test
     gdb --args python ${SRCD}/pycauvtest.py
-    DEPENDS pycauvtest.py cauvmodule.so
+    DEPENDS pycauvtest.py
+            ${SRCD}/cauv/cauvinterface.so
+            ${SRCD}/cauv/__init__.py
+            ${SRCD}/cauv/messaging.py
+            ${SRCD}/cauv/node.py
     SOURCES pycauvtest.py
     COMMENT "cauv python module test"
 )
