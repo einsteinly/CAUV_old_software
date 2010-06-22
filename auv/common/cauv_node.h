@@ -18,6 +18,9 @@ class CauvNode
 		
         void run();
 		virtual void onRun();
+    
+        // TODO: nicer interface, don't expose mailbox() and co...
+        //void join(std::string const& group);
 
 	protected:
 		std::string m_name;

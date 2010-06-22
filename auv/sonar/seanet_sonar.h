@@ -52,8 +52,9 @@ class SeanetSonar
 		/* Send some default paramaters to the sonar */
 		void sendDefaultParams();
 		
-		void set_scan_settings(u_char def, uint16_t direction, uint16_t width, u_char gain,
-							   uint32_t range, uint32_t radial_res, u_char angular_res);
+		void set_scan_settings(unsigned char def, uint16_t direction, uint16_t width,
+                               unsigned char gain, uint32_t range, uint32_t radial_res,
+                               unsigned char angular_res);
 
 
 		/* units of mm */

@@ -29,7 +29,8 @@ enum NodeType : int8 {
     CombineHSV = 20,
     Levels = 21,
     Mix = 22,
-    Percentile = 23
+    Percentile = 23,
+    SonarInput = 24
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

@@ -21,7 +21,7 @@ add_custom_command (
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
            ${MSGSRCD}/messages.msg
-   COMMENT "Generating emit_enums.cpp, emit_structs.cpp, emit_messages.cpp and emit_observers.cpp with messages-python" 
+   COMMENT "Generating emit_*.cpp with messages-python" 
 )
 
 # this rule is duplicated from ../common because cmake can't track dependencies
