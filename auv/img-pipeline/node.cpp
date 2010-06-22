@@ -523,21 +523,30 @@ void Node::registerInputID(input_id const& i){
  * add this node to the scheduler queue
  */
 void Node::checkAddSched() throw(){
-    lock_t li(m_output_demanded_lock);
-    lock_t lo(m_new_inputs_lock);
-    lock_t lr(m_exec_queued_lock);
     lock_t la(m_allow_queue_lock);
-    lock_t lp(m_new_paramvalues_lock);
-
+    lock_t lr(m_exec_queued_lock);
+    
     if(!allowQueue()){
         debug() << "Cannot enqueue node" << *this << ", allowQueue == false";
         return;
     }
-
     if(execQueued()){
         debug() << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
+
+    // NB: for now, this lock is required to prevent deadlocks if setAllowQueue
+    // is called from a paramChanged() callback, since validInputAll needs to
+    // (at the moment, and undesirably) lock this in order to check only inputs
+    // and not paramater inputs for validity, and if we don't lock it here the
+    // locking order would be different in the two threads -> deadlock
+    // nastiness
+    lock_t ln(m_parameters_lock);
+
+    lock_t li(m_output_demanded_lock);
+    lock_t lo(m_new_inputs_lock);
+    lock_t lp(m_new_paramvalues_lock);
+
 
     if(!newOutputDemanded()){
         debug() << "Cannot enqueue node" << *this << ", no output demanded";
@@ -595,7 +604,6 @@ void Node::setNewInput(input_id const& a){
             e << v.second;
         throw id_error("newInput: Invalid input id: " + to_string(a));
     }else{
-        debug() << *this << "notified of new input: " << a;
         i->second = true;
         m_valid_inputs[a] = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
@@ -686,9 +694,11 @@ void Node::clearInputValid(input_id const& i){
 }
 
 bool Node::validInputAll() const{
-    lock_t l(m_valid_inputs_lock);
     //TODO SOON: better way of excluding parameters from this check
+    // NB: for now, the order of locking here prevents deadlock if
+    // setAllowQueue is called from paramChanged callback
     lock_t n(m_parameters_lock);
+    lock_t l(m_valid_inputs_lock);
     foreach(in_bool_map_t::value_type const& v, m_valid_inputs)
         if(!v.second && !m_parameters.count(v.first))
             return false;
@@ -798,7 +808,6 @@ void Node::setNewParamValue(param_id const& a){
             e << v.second << "\n\t";
         throw(id_error("setNewParamValue: Invalid parameter id: " + to_string(a)));
     }else{
-        debug() << *this << "notified of new paramvalue: " << a;
         i->second = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
             m_id, a, NodeIOStatus::New | NodeIOStatus::Valid

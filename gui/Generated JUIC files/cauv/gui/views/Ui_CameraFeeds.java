@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'CameraFeeds.jui'
 **
-** Created: Mon 21. Jun 13:54:56 2010
+** Created: Fri 11. Jun 12:11:11 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -20,13 +20,20 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
     public QScrollArea scrollArea;
     public QWidget scrollAreaWidgetContents;
     public QVBoxLayout verticalLayout;
-    public VideoScreen videoScreen_2;
+    public VideoScreen forwardCamIcon;
+    public VideoScreen downwardCamIcon;
+    public VideoScreen sonarIcon;
     public QSpacerItem verticalSpacer;
-    public QStackedWidget stackedWidget;
-    public QWidget page;
+    public QStackedWidget feeds;
+    public QWidget forwardCamPage;
     public QHBoxLayout horizontalLayout_2;
-    public ControlableVideoScreen controlableVideoScreen;
-    public QWidget page_2;
+    public ControlableVideoScreen forwardCam;
+    public QWidget downwardCamPage;
+    public QHBoxLayout horizontalLayout_3;
+    public ControlableVideoScreen downwardCam;
+    public QWidget sonarCamPage;
+    public QHBoxLayout horizontalLayout_4;
+    public ControlableVideoScreen sonarCam;
 
     public Ui_CameraFeeds() { super(); }
 
@@ -52,13 +59,29 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
         scrollAreaWidgetContents.setGeometry(new QRect(0, 0, 130, 359));
         verticalLayout = new QVBoxLayout(scrollAreaWidgetContents);
         verticalLayout.setObjectName("verticalLayout");
-        videoScreen_2 = new VideoScreen(scrollAreaWidgetContents);
-        videoScreen_2.setObjectName("videoScreen_2");
-        videoScreen_2.setMinimumSize(new QSize(0, 90));
-        videoScreen_2.setMaximumSize(new QSize(16777215, 90));
-        videoScreen_2.setCursor(new QCursor(Qt.CursorShape.PointingHandCursor));
+        forwardCamIcon = new VideoScreen(scrollAreaWidgetContents);
+        forwardCamIcon.setObjectName("forwardCamIcon");
+        forwardCamIcon.setMinimumSize(new QSize(0, 90));
+        forwardCamIcon.setMaximumSize(new QSize(16777215, 90));
+        forwardCamIcon.setCursor(new QCursor(Qt.CursorShape.PointingHandCursor));
 
-        verticalLayout.addWidget(videoScreen_2);
+        verticalLayout.addWidget(forwardCamIcon);
+
+        downwardCamIcon = new VideoScreen(scrollAreaWidgetContents);
+        downwardCamIcon.setObjectName("downwardCamIcon");
+        downwardCamIcon.setMinimumSize(new QSize(0, 90));
+        downwardCamIcon.setMaximumSize(new QSize(16777215, 90));
+        downwardCamIcon.setCursor(new QCursor(Qt.CursorShape.PointingHandCursor));
+
+        verticalLayout.addWidget(downwardCamIcon);
+
+        sonarIcon = new VideoScreen(scrollAreaWidgetContents);
+        sonarIcon.setObjectName("sonarIcon");
+        sonarIcon.setMinimumSize(new QSize(0, 90));
+        sonarIcon.setMaximumSize(new QSize(16777215, 90));
+        sonarIcon.setCursor(new QCursor(Qt.CursorShape.PointingHandCursor));
+
+        verticalLayout.addWidget(sonarIcon);
 
         verticalSpacer = new QSpacerItem(20, 40, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding);
 
@@ -68,26 +91,50 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         horizontalLayout.addWidget(scrollArea);
 
-        stackedWidget = new QStackedWidget(CameraFeeds);
-        stackedWidget.setObjectName("stackedWidget");
-        page = new QWidget();
-        page.setObjectName("page");
-        horizontalLayout_2 = new QHBoxLayout(page);
+        feeds = new QStackedWidget(CameraFeeds);
+        feeds.setObjectName("feeds");
+        forwardCamPage = new QWidget();
+        forwardCamPage.setObjectName("forwardCamPage");
+        horizontalLayout_2 = new QHBoxLayout(forwardCamPage);
         horizontalLayout_2.setMargin(0);
         horizontalLayout_2.setObjectName("horizontalLayout_2");
-        controlableVideoScreen = new ControlableVideoScreen(page);
-        controlableVideoScreen.setObjectName("controlableVideoScreen");
+        forwardCam = new ControlableVideoScreen(forwardCamPage);
+        forwardCam.setObjectName("forwardCam");
 
-        horizontalLayout_2.addWidget(controlableVideoScreen);
+        horizontalLayout_2.addWidget(forwardCam);
 
-        stackedWidget.addWidget(page);
-        page_2 = new QWidget();
-        page_2.setObjectName("page_2");
-        stackedWidget.addWidget(page_2);
+        feeds.addWidget(forwardCamPage);
+        downwardCamPage = new QWidget();
+        downwardCamPage.setObjectName("downwardCamPage");
+        horizontalLayout_3 = new QHBoxLayout(downwardCamPage);
+        horizontalLayout_3.setSpacing(0);
+        horizontalLayout_3.setMargin(0);
+        horizontalLayout_3.setObjectName("horizontalLayout_3");
+        downwardCam = new ControlableVideoScreen(downwardCamPage);
+        downwardCam.setObjectName("downwardCam");
 
-        horizontalLayout.addWidget(stackedWidget);
+        horizontalLayout_3.addWidget(downwardCam);
+
+        feeds.addWidget(downwardCamPage);
+        sonarCamPage = new QWidget();
+        sonarCamPage.setObjectName("sonarCamPage");
+        horizontalLayout_4 = new QHBoxLayout(sonarCamPage);
+        horizontalLayout_4.setSpacing(0);
+        horizontalLayout_4.setMargin(0);
+        horizontalLayout_4.setObjectName("horizontalLayout_4");
+        sonarCam = new ControlableVideoScreen(sonarCamPage);
+        sonarCam.setObjectName("sonarCam");
+
+        horizontalLayout_4.addWidget(sonarCam);
+
+        feeds.addWidget(sonarCamPage);
+
+        horizontalLayout.addWidget(feeds);
 
         retranslateUi(CameraFeeds);
+
+        feeds.setCurrentIndex(2);
+
 
         CameraFeeds.connectSlotsByName();
     } // setupUi

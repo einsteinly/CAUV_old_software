@@ -196,7 +196,7 @@ class MessageObserver
         virtual void on${className}($ptrName m);
         #end for
         #end for
-    
+
     // Ideally protected, but boost.python pointer_holder requires puplic
     // default constructor to be available in order to allow pointers to this
     // type
@@ -209,7 +209,9 @@ class BufferedMessageObserver: public MessageObserver
 {
     typedef BufferedMessageObserver this_t;
     typedef boost::shared_ptr<boost::thread> thread_ptr_t;
-    typedef boost::shared_ptr<BufferingThreadBase> bthread_ptr_t;
+    typedef boost::shared_ptr<BufferingThreadBase> btthread_ptr_t;
+    typedef std::map<MessageType::e, thread_ptr_t> msgtype_thread_map_t;
+    typedef std::map<MessageType::e, btthread_ptr_t> msgtype_btthread_map_t;
 
     public:
         virtual ~BufferedMessageObserver();
@@ -239,8 +241,33 @@ class BufferedMessageObserver: public MessageObserver
         BufferedMessageObserver();
 
     private:
-        std::map<MessageType::e, thread_ptr_t> m_boost_threads;
-        std::map<MessageType::e, bthread_ptr_t> m_threads;
+        msgtype_thread_map_t m_boost_threads;
+        msgtype_btthread_map_t m_threads;
+};
+
+class DynamicObserver: public BufferedMessageObserver
+{
+    // BEWARE: no type safety here, callbacks that are registered should not
+    // blindly cast to the derived message type that they need, but should
+    // check the result of the cast first
+    typedef void (*callback_f_ptr)(boost::shared_ptr<Message const> m);
+    typedef std::map<MessageType::e, callback_f_ptr> callback_map_t;
+    public:
+        DynamicObserver();
+        virtual ~DynamicObserver();
+        
+        void setCallback(MessageType::e id, callback_f_ptr f);
+
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        #set $ptrName = $className + "_ptr"
+        virtual void on${className}Buffered($ptrName m);
+        #end for
+        #end for
+
+    private:
+       callback_map_t m_callbacks;
 };
 
 class DebugMessageObserver: public MessageObserver

@@ -133,15 +133,6 @@ void MessageObserver::on${className}($classPtr) {}
 #end for
 #end for 
 
-BufferedMessageObserver::BufferedMessageObserver()
-{
-}
-
-BufferedMessageObserver::~BufferedMessageObserver()
-{
-    // TODO: MUST stop all threads before this is destroyed!
-}
-
 struct BufferingThreadBase
 { 
     BufferingThreadBase(BufferedMessageObserver& obs)
@@ -199,19 +190,42 @@ struct BufferingThread: public BufferingThreadBase, boost::noncopyable
     void (BufferedMessageObserver::*m_notify)(T);
 };
 
+BufferedMessageObserver::BufferedMessageObserver()
+{
+}
+
+BufferedMessageObserver::~BufferedMessageObserver()
+{
+    foreach(msgtype_btthread_map_t::value_type& v, m_threads)
+        if(v.second){
+            v.second->m_die = true;
+            v.second->m_condition->notify_one();
+            v.second.reset();
+            assert(m_boost_threads[v.first]);
+            m_boost_threads[v.first]->join();
+            m_boost_threads[v.first].reset();
+            info() << "Double-Buffering disabled for" << v.first << "messages";
+        }
+}
+
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
 #set $classPtr = $className + "_ptr"
 void BufferedMessageObserver::on${className}($classPtr m)
 {
-    if(bthread_ptr_t b_thread = m_threads[MessageType::$m.name])
+    if(btthread_ptr_t b_thread = m_threads[MessageType::$m.name])
     {
         boost::unique_lock<boost::mutex> l(*(b_thread->m_mutex));
         b_thread->m_buffer = m;
         l.unlock();
         b_thread->m_condition->notify_one();
     }
+    else
+    {
+        on${className}Buffered(m);
+    }
+
 }
 #end for
 #end for
@@ -220,7 +234,7 @@ void BufferedMessageObserver::on${className}($classPtr m)
 #for $m in $g.messages
 #set $className = $m.name + "Message"
 #set $classPtr = $className + "_ptr"
-void BufferedMessageObserver::on${className}Buffered($classPtr) {}
+void BufferedMessageObserver::on${className}Buffered($classPtr) { }
 #end for
 #end for
 
@@ -277,6 +291,29 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
         info() << "Double-Buffering disabled for" << mt << "messages";        
     }
 }
+
+
+DynamicObserver::DynamicObserver(){ }
+DynamicObserver::~DynamicObserver(){ }
+        
+void DynamicObserver::setCallback(MessageType::e id, callback_f_ptr f)
+{
+    m_callbacks[id] = f;
+}
+
+#for $g in $groups
+#for $m in $g.messages
+#set $className = $m.name + "Message"
+#set $ptrName = $className + "_ptr"
+void DynamicObserver::on${className}Buffered($ptrName m)
+{
+    callback_map_t::iterator i = m_callbacks.find(MessageType::$m.name);
+    if(i != m_callbacks.end() && i->second)
+        (*i->second)(m);
+}
+#end for
+#end for
+
 
 #for $g in $groups
 #for $m in $g.messages

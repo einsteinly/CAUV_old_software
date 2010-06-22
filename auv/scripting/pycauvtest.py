@@ -1,12 +1,12 @@
 #! /usr/bin/env python
-import cauvnode
-import cauv
+import cauv.node as node
+import cauv.messaging as messaging
 
 import time
 
 def main():
-    n = cauvnode.Node("pycauv")
-    print "created cauvnode.Node"
+    n = node.Node("pycauv")
+    print "created node.Node"
 
     n.join("test")
     print "joined test group"
@@ -17,20 +17,25 @@ def main():
     n.join("invalid group")
     print "attempted to join an invalid group"
 
-    o = cauvnode.Observer()
-    print o, "created cauvnode.Observer"
+    o = node.Observer()
+    print o, "created node.Observer"
 
-    dmo = cauv.DebugMessageObserver()
+    dmo = messaging.DebugMessageObserver()
     print dmo, "created DebugMessageObserver"
 
-    class MMO(cauvnode.Observer):
+    class MMO(node.Observer):
         def onDebugMessage(self, msg):
             print "mesage received:", msg
         def onImageMessageBuffered(self, msg):
-            print "mesage received (buffered):", msg
-            print "sleeping..."
-            time.sleep(500)
+            print "image received:", msg
+        def onNodeAddedMessage(self, msg):
+            print "node added:", msg.nodeId, msg.NodeType
+        def onStatusMessageBuffered(self, msg):
+            print "node status:", msg.nodeId, msg.status
+
     m = MMO()
+    m.setDoubleBuffered(messaging.MessageType.Status, True)
+    m.setDoubleBuffered(messaging.MessageType.Image, True)
     print m, "created Observer with overload"
 
     n.addObserver(m)
@@ -40,7 +45,7 @@ def main():
     n.addObserver(dmo)
     print "added debug observer"
 
-    msg = cauv.DebugMessage(cauv.DebugType.Debug, "test message string!")
+    msg = messaging.DebugMessage(messaging.DebugType.Debug, "test message string!")
     print "created debug message:", msg
 
     for i in xrange(1, 11):
@@ -57,13 +62,18 @@ def main():
     n.mailbox.join("pl_gui")
     n.mailbox.join("images")
     
-    n.send(cauv.ClearPipelineMessage(), "pipeline")
-    print n.receive(1000)
-    n.send(cauv.AddNodeMessage(cauv.NodeType.FileInput,
-                               cauv.NodeInputArcVec(),
-                               cauv.NodeOutputArcVec()), "pipeline")
-    print n.receive(1000)
-
+    n.send(messaging.ClearPipelineMessage(), "pipeline")
+    #print n.receive(1000)
+    n.send(messaging.AddNodeMessage(messaging.NodeType.FileInput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+    #print n.receive(1000)
+    
+    n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOutput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+    
+    
     print "deleting dmo", dmo
     del dmo
     print "deleting o", o

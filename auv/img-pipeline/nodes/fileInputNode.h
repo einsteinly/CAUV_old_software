@@ -34,10 +34,13 @@ class FileInputNode: public AsynchronousNode{
             if(p == param_id("filename")){
                 lock_t l(m_dir_mutex);
                 std::string fname = param<std::string>("filename");
-                if(boost::filesystem::is_directory(fname))
+                if(boost::filesystem::is_directory(fname)){
                     m_is_directory = true;
-                else
+                    closeVideo();
+                }else{
                     m_is_directory = false;
+                    openVideo(fname);
+                }
                 m_iter = boost::filesystem::directory_iterator();
                 setAllowQueue();
             }else{
@@ -55,8 +58,14 @@ class FileInputNode: public AsynchronousNode{
             image_ptr_t image;
 
             if(!m_is_directory){
-                image = readImage(fname);
-                clearAllowQueue();
+                if(!m_capture.isOpened()){
+                    image = readImage(fname);
+                    clearAllowQueue();
+                }else{
+                    image = boost::make_shared<Image>();
+                    m_capture >> image->cvMat();
+                    r["image"] = image;
+                }
             }else{
                 lock_t l(m_dir_mutex);
                 const boost::filesystem::directory_iterator end;
@@ -76,6 +85,8 @@ class FileInputNode: public AsynchronousNode{
                     warning() << "no images in directory" << fname;
                 // NB: allowQueue not cleared
             }
+            if(image)
+                image->source(Image::src_file);
             r["image"] = image;
 
             return r;
@@ -103,14 +114,28 @@ class FileInputNode: public AsynchronousNode{
             return r;
         }
 
+        bool openVideo(std::string const& fname){
+            lock_t l(m_capture_lock);
+            m_capture = cv::VideoCapture(fname);
+            return m_capture.isOpened();
+        }
+
+        void closeVideo(){
+            m_capture.release();
+        }
+
     private:
         boost::recursive_mutex m_dir_mutex;
 
         bool m_is_directory;
         boost::filesystem::directory_iterator m_iter;
+
+        cv::VideoCapture m_capture;
+        boost::recursive_mutex m_capture_lock;
     
         // Register this node type
         DECLARE_NFR;
 };
 
 #endif // ndef __FILE_INPUT_NODE_H__
+

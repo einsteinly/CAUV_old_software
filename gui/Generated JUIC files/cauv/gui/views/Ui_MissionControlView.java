@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'MissionControlView.jui'
 **
-** Created: Mon 21. Jun 13:54:56 2010
+** Created: Wed 5. May 15:47:53 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
