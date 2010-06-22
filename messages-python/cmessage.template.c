@@ -57,7 +57,16 @@ struct ${className} ${className}FromPacket(struct packet p)
 }
 struct packet ${className}ToPacket(struct $className* m)
 {
+    int msgsize = 0;
+    #for $f in $m.fields
+    msgsize = getsize_$loadsavesuffix($f.type)(p, pos, &m->$f.name);
+    #end for
+
+    unsigned char bytes[msgsize];
     struct packet p;
+    p.data = bytes;
+    p.length = msgsize;
+
     int pos = 0;
 
     pos = save_uint32(p, pos, &m->id);

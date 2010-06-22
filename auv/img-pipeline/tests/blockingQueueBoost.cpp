@@ -28,7 +28,7 @@ int main()
     int x;
     for(int i = 0; i < 5; i++){
         x = -1;
-        std::cout << bq.trypop(x, false) << ", " << std::flush;
+        std::cout << bq.tryPop(x, false) << ", " << std::flush;
         std::cout << x << std::endl;
     }
     
@@ -38,7 +38,7 @@ int main()
     
     for(int i = 0; i < 20; i++){
         x = -1;
-        std::cout << "try: " << bq.trypop(x, false) << ", " << std::flush;
+        std::cout << "try: " << bq.tryPop(x, false) << ", " << std::flush;
         std::cout << x << std::flush;
         std::cout << ", wait: " << bq.popWait() << std::endl;
     }
@@ -48,13 +48,13 @@ int main()
     
     std::cout << "cleanup, wait: " << bq.popWait() << std::endl;
     x = -1;
-    std::cout << "cleanup, wait: " << bq.trypop(x, true) << std::flush;
+    std::cout << "cleanup, wait: " << bq.tryPop(x, true) << std::flush;
     std::cout << x << std::endl;
     
     for(bool success = true; success;){
         x = -1;
         success = false;
-        std::cout << "cleanup, try: " << (success = bq.trypop(x, false)) << ", " << std::flush;
+        std::cout << "cleanup, try: " << (success = bq.tryPop(x, false)) << ", " << std::flush;
         std::cout << x << std::endl;
     }
 	
