@@ -23,5 +23,6 @@ BOOST_PYTHON_MODULE(cauvinterface)
     emitStructs();
     emitMessages();
     emitObservers();
+    emitContainers();
 }
 

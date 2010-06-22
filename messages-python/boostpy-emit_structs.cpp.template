@@ -7,17 +7,27 @@
 
 namespace bp = boost::python;
 
+#for $s in $structs
+    #for $f in $s.fields
+        #if $isSTLVector($f.type)
+            $requiredVectorTypes.add($f.type.valType)
+        #else if $isSTLMap($f.type)
+            $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
+        #end if
+    #end for
+#end for
+
 void emitStructs(){
 #for $s in $structs
     bp::class_<${s.name},
                boost::shared_ptr<${s.name}>
               >("${s.name}", bp::no_init)
+        .def(bp::self_ns::str(bp::self_ns::self)) 
         #for $f in $s.fields
         .def_readwrite("${f.name}", &$s.name::$f.name)
         #end for
     ;
 
 #end for
-
 }
 
