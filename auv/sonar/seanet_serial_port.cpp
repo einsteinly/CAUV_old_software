@@ -1,16 +1,19 @@
+#include "seanet_serial_port.h"
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <string>
 #include <iostream>
 
+#include <boost/make_shared.hpp>
+
 #include <common/cauv_global.h>
-#include "sonar_serial.h"
-#include "sonar.h"
-#include "sonar_seanet_packet.h"
+#include <common/cauv_utils.h>
+#include <common/debug.h>
+
+#include "seanet_packet.h"
 
 using namespace std;
 
@@ -23,7 +26,7 @@ const char *SonarIsDeadException::what() const throw()
  * If data hasn't been received recently this resets the current packet, as the
  * sonar is probably dead.
  */
-static void sonar_is_dead() 
+static void check_is_sonar_dead() 
 {
 	static time_t last_read = 0;
 
@@ -39,15 +42,16 @@ static void sonar_is_dead()
  * Blocks until a complete packet has been received.
  * The caller is responsible for freeing the seanet_packet. *
  */
-SonarSeanetPacket *SerialPort::readPacket()
+boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
 {
-	SonarSeanetPacket *pkt = new SonarSeanetPacket();
+	boost::shared_ptr<SeanetPacket> pkt = boost::make_shared<SeanetPacket>();
+
 
 	int rec = 0;
 	int headerReceived = 0;
 	int bodyReceived = 0;
 
-	u_char *buffer = (unsigned char*)malloc(13);
+	unsigned char buffer[13];
 
 again:
 
@@ -60,11 +64,11 @@ again:
 	while (headerReceived < 13)
 	{
         rec = read(m_fd, &buffer[headerReceived], 13 - headerReceived);
-		sonar_is_dead();
+		check_is_sonar_dead();
 
 		if (rec <= 0) {
-			cout << "Cannot read from serial - waiting for sonar to connect.." << endl;
-			sleep(1);
+			debug() << "Cannot read from serial - waiting for sonar to connect..";
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 		}
 		headerReceived += rec;
 	}
@@ -74,33 +78,30 @@ again:
 		/* Search until a LF is consumed */
 		while (buffer[0] != 0x0A) {
 			rec = read(m_fd, buffer, 1);
-			sonar_is_dead();
+			check_is_sonar_dead();
 		}
 		goto again;
 	}
 
-	pkt->m_length = *((unsigned short*)&buffer[5]);
+	pkt->m_length = *reinterpret_cast<unsigned short*>(&buffer[5]);
 	pkt->m_sid = buffer[7];
 	pkt->m_did = buffer[8];
 	pkt->m_count = buffer[9];
 	pkt->m_type = buffer[10];
-	pkt->m_data = new unsigned char[pkt->m_length + 6];
-	pkt->createHeader();
+	pkt->m_data = std::string(pkt->m_length + 6, '\0');
+	pkt->fillHeader();
 
 	headerReceived = 0;
 
 	/* Must read another (length - 7) bytes to end */
 
-	free(buffer);
-
 	while (bodyReceived < pkt->m_length - 7)
 	{
 		rec = read(m_fd, &pkt->m_data[13 + bodyReceived], pkt->m_length - 7 - bodyReceived);
-		sonar_is_dead();
+		check_is_sonar_dead();
 		if (rec == 0) {
-			cauv_global::error("Cannot read body from serial");
+			error() << "Cannot read body from serial";
 		} else if (rec < 0) {
-			delete[] pkt->m_data;
 			throw SonarIsDeadException();
 		}
 
@@ -108,17 +109,17 @@ again:
 	}
 
 	if (pkt->m_data[pkt->m_length + 5] != 0x0A) {
-		printf("Error:  Message doesn't end in 0x0A\n");
+		error() << "Message doesn't end in 0x0A\n";
 	}
 
 	return pkt;
 }
 
-void SerialPort::sendPacket(const SonarSeanetPacket &pkt)
+void SeanetSerialPort::sendPacket(const SeanetPacket &pkt)
 {
 	unsigned int total_length = pkt.getLength() + 6;
 
-	pthread_mutex_lock(&m_send_lock);
+    boost::lock_guard<boost::mutex> l(m_send_lock);
 	/*printf("Sending %d bytes:  ", total_length);
 
 	for(unsigned int i = 0; i < total_length; i++) {
@@ -127,19 +128,18 @@ void SerialPort::sendPacket(const SonarSeanetPacket &pkt)
 
 	printf("\n");*/
 	if (pkt.getData()[total_length - 1] != 0x0A) {
-		cout << "ERROR: Sending corrupt data to the sonar!" << endl;
+		error() << "Sending corrupt data to the sonar!";
 	}
 
     unsigned int sent = 0;
     while (sent < total_length)
     {
-        int ret = write(m_fd, pkt.getData() + sent, total_length - sent);
+        int ret = write(m_fd, pkt.getData().data() + sent, total_length - sent);
         sent += ret;
     }
-	pthread_mutex_unlock(&m_send_lock);
 }
 
-void SerialPort::init()
+void SeanetSerialPort::init()
 {
 	struct termios options;
 
@@ -166,16 +166,16 @@ void SerialPort::init()
 }
 
 /* Opens a serial port, sets m_fd  */
-SerialPort::SerialPort(const char *file)
+SeanetSerialPort::SeanetSerialPort(const std::string file)
 {
-	pthread_mutex_init(&m_send_lock, NULL);
-
-	m_fd = open(file, O_RDWR | O_NOCTTY);
+	m_fd = open(file.c_str(), O_RDWR | O_NOCTTY);
 	if (m_fd == -1) {
-		perror("open_port:  Unable to open serial file");
-		printf("Cannot open %s\n", file);
-	} else
+		error() << "Cannot open " << file << ": " << strerror(errno);
+    }
+    else
+    {
 		fcntl(m_fd, F_SETFL, 0);
+    }
 	init();
 }
 

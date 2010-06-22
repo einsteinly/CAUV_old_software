@@ -52,6 +52,8 @@ enum OutputType : int8 {
     Parameter = 1
 }
 
+
+
 struct floatYPR
 {
     yaw : float;
@@ -90,12 +92,20 @@ struct TimeStamp
     secs : int32;
     msecs : int32;
 }
-struct NodeParamValue{
+struct NodeParamValue
+{
     type : ParamType;
     intValue : int32;
     floatValue : float;
     stringValue : string;
 }
+struct SonarDataLine
+{
+    data: list<byte>;
+    bearing: int32;
+    range: int32;
+}
+
 
 
 group debug
@@ -129,6 +139,13 @@ group image
 	    source : CameraID;
 	    image : Image;
         time : TimeStamp;
+    }
+}
+group sonarout
+{
+	message SonarData : 30
+	{
+        line : SonarDataLine;
     }
 }
 
