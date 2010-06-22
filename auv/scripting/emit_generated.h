@@ -5,6 +5,7 @@ void emitEnums();
 void emitStructs();
 void emitMessages();
 void emitObservers();
+void emitContainers();
 
 #endif // ndef EMIT_DYNAMIC_H
 

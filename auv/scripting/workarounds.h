@@ -1,3 +1,5 @@
+#ifndef HACKY_WORKAROUNDS_H
+#define HACKY_WORKAROUNDS_H
 /*** This file contains various workarounds for doing crazy things with boost
  *** python, like wrapping member functions inside function objects that
  *** release the Global Interpreter Lock, and passing around shared_ptrs to
@@ -198,4 +200,6 @@ void register_shared_ptrs_to_python(){
 
 /** now really end all evil hackery
  **/
+
+#endif // ndef HACKY_WORKAROUNDS_H
 

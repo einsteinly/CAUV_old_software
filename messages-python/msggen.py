@@ -303,6 +303,25 @@ def cLoadSaveSuffix(t):
 def mapToBaseType(list):
     return map(lambda x: msggenyacc.BaseType(x), list)
 
+def addNestedTypes(list_types, map_types):
+    if len(list_types) == 0 and len(map_types) == 0:
+        return list_types, map_types
+    rl = set()
+    rm = set()
+    def addR(t):
+        if isSTLVector(t):
+            rl.add(t.valType)
+        elif isSTLMap(t):
+            rm.add((t.keyType, t.valType))
+    for type in list_types:
+        addR(type)
+    for kt, vt in map_types:
+        addR(kt)
+        addR(vt)
+    recursed = addNestedTypes(rl, rm)
+    return (list_types | rl | recursed[0],
+            map_types | rm | recursed[1])
+
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
@@ -406,6 +425,9 @@ def main():
 
     elif options.lang == "python":
         compilation_units = ["enums", "structs", "messages", "observers"]
+        compilation_units.append("containers") # must be last in list
+        requiredMapTypes = set()
+        requiredVectorTypes = set()
         for cu in compilation_units:
             # NB: output treated as directory, because CMake seems to strip
             # trailinig ////// from paths
@@ -417,7 +439,10 @@ def main():
                 t.isSTLVector = isSTLVector
                 t.isSTLMap = isSTLMap
                 t.CPPContainerTypeName = CPPContainerTypeName
+                t.requiredMapTypes = requiredMapTypes
+                t.requiredVectorTypes = requiredVectorTypes
                 file.write(str(t))
-                                                              
+            requiredVectorTypes, requiredMapTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes)
+
 if __name__ == '__main__':
     main()

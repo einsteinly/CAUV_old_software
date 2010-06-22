@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import cauv.node as node
 import cauv.messaging as messaging
+import cauv.pipeline as pipeline
 
 import time
 
@@ -29,7 +30,7 @@ def main():
         def onImageMessageBuffered(self, msg):
             print "image received:", msg
         def onNodeAddedMessage(self, msg):
-            print "node added:", msg.nodeId, msg.NodeType
+            print "node added:", msg.nodeId, msg.nodeType
         def onStatusMessageBuffered(self, msg):
             print "node status:", msg.nodeId, msg.status
 
@@ -57,6 +58,8 @@ def main():
             #print n.mailbox.receive(1000)
         except Exception, e:
             print e
+
+    time.sleep(3.0)
     
     n.mailbox.join("pipeline")
     n.mailbox.join("pl_gui")
@@ -73,6 +76,17 @@ def main():
                                     messaging.NodeInputArcVec(),
                                     messaging.NodeOutputArcVec()), "pipeline")
     
+    model = pipeline.Model(n)
+    
+    print 'Getting pipeline state...'
+    saved = model.get()
+    print 'before:', saved
+    print 'Clearing pipeline state...'
+    model.clear()
+    print 'Setting pipeline state...'
+    model.set(saved)
+    print 'after:', model.get()
+
     
     print "deleting dmo", dmo
     del dmo
