@@ -209,7 +209,9 @@ class BufferedMessageObserver: public MessageObserver
 {
     typedef BufferedMessageObserver this_t;
     typedef boost::shared_ptr<boost::thread> thread_ptr_t;
-    typedef boost::shared_ptr<BufferingThreadBase> bthread_ptr_t;
+    typedef boost::shared_ptr<BufferingThreadBase> btthread_ptr_t;
+    typedef std::map<MessageType::e, thread_ptr_t> msgtype_thread_map_t;
+    typedef std::map<MessageType::e, btthread_ptr_t> msgtype_btthread_map_t;
 
     public:
         virtual ~BufferedMessageObserver();
@@ -239,8 +241,8 @@ class BufferedMessageObserver: public MessageObserver
         BufferedMessageObserver();
 
     private:
-        std::map<MessageType::e, thread_ptr_t> m_boost_threads;
-        std::map<MessageType::e, bthread_ptr_t> m_threads;
+        msgtype_thread_map_t m_boost_threads;
+        msgtype_btthread_map_t m_threads;
 };
 
 class DynamicObserver: public BufferedMessageObserver

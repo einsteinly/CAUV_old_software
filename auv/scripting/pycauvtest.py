@@ -63,15 +63,16 @@ def main():
     n.mailbox.join("images")
     
     n.send(messaging.ClearPipelineMessage(), "pipeline")
-    print n.receive(1000)
+    #print n.receive(1000)
     n.send(messaging.AddNodeMessage(messaging.NodeType.FileInput,
-                               messaging.NodeInputArcVec(),
-                               messaging.NodeOutputArcVec()), "pipeline")
-    print n.receive(1000)
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+    #print n.receive(1000)
     
-    n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOtput,
-                               messaging.NodeInputArcVec(),
-                               messaging.NodeOutputArcVec()), "pipeline")
+    n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOutput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+    
     
     print "deleting dmo", dmo
     del dmo

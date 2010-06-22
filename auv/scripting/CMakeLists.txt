@@ -24,6 +24,23 @@ add_custom_command (
    COMMENT "Generating emit_enums.cpp, emit_structs.cpp, emit_messages.cpp and emit_observers.cpp with messages-python" 
 )
 
+# this rule is duplicated from ../common because cmake can't track dependencies
+# on generated files in other directories...
+set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
+add_custom_command (
+   OUTPUT ${MSGSRCD}/messages.cpp
+          ${MSGSRCD}/messages.h
+   WORKING_DIRECTORY ${PYMSGD}
+   COMMAND python msggen.py -l "c++" -o ${MSGSRCD}/messages ${MSGSRCD}/messages.msg 
+   DEPENDS ${PYMSGD}/msggen.py
+           ${PYMSGD}/message.template.cpp
+           ${PYMSGD}/message.template.h
+           ${PYMSGD}/msggenyacc.py
+           ${PYMSGD}/msggenlex.py
+           ${MSGSRCD}/messages.msg
+   COMMENT "Generating messages.cpp and mesages.h with messages-python (for bjam)"
+)
+
 add_custom_command (
     OUTPUT ${SRCD}/cauv/cauvinterface.so
            ${SRCD}/cauv/libcommon.so
@@ -34,7 +51,26 @@ add_custom_command (
             ${SRCD}/emit_enums.cpp
             ${SRCD}/emit_messages.cpp
             ${SRCD}/emit_observers.cpp
-            ${MSGSRCD}/
+            ${MSGSRCD}/messages.cpp
+            ${MSGSRCD}/image.cpp 
+            ${MSGSRCD}/cauv_node.cpp 
+            ${MSGSRCD}/cauv_global.cpp
+            ${MSGSRCD}/cauv_utils.cpp
+            ${MSGSRCD}/spread/cauv_mailbox_monitor.cpp
+            ${MSGSRCD}/spread/cauv_spread_mailbox.cpp
+            ${MSGSRCD}/spread/cauv_spread_messages.cpp
+    IMPLICIT_DEPENDS ${SRCD}/emit_structs.cpp
+                     ${SRCD}/emit_enums.cpp
+                     ${SRCD}/emit_messages.cpp
+                     ${SRCD}/emit_observers.cpp
+                     ${MSGSRCD}/messages.cpp
+                     ${MSGSRCD}/image.cpp 
+                     ${MSGSRCD}/cauv_node.cpp 
+                     ${MSGSRCD}/cauv_global.cpp
+                     ${MSGSRCD}/cauv_utils.cpp
+                     ${MSGSRCD}/spread/cauv_mailbox_monitor.cpp
+                     ${MSGSRCD}/spread/cauv_spread_mailbox.cpp
+                     ${MSGSRCD}/spread/cauv_spread_messages.cpp
     COMMENT "Building cauv python module with bjam"
 )
 
