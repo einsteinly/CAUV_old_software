@@ -35,7 +35,7 @@ void SonarNode::onRun()
 #endif
     m_sonar->init();
 
-    mailboxMonitor()->addObserver(boost::make_shared<SonarControlMessageObserver>(m_sonar));
+    addObserver(boost::make_shared<SonarControlMessageObserver>(m_sonar));
 
     while (true) {
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
