@@ -19,18 +19,19 @@ enum NodeType : int8 {
     ConvertColour = 10,
     GuiOutput = 11,
     HoughCircles = 12,
-    Blur = 13,
-    BilateralFilter = 14,
-    SplitRGB = 15,
-    CombineRGB = 16,
-    SplitHSV = 17,
-    SplitYUV = 18,
-    CombineYUV = 19,
-    CombineHSV = 20,
-    Levels = 21,
-    Mix = 22,
-    Percentile = 23,
-    SonarInput = 24
+    GaussianBlur = 13,
+    MedianFilter = 14,
+    BilateralFilter = 15,
+    SplitRGB = 16,
+    CombineRGB = 17,
+    SplitHSV = 18,
+    SplitYUV = 19,
+    CombineYUV = 20,
+    CombineHSV = 21,
+    Levels = 22,
+    Mix = 23,
+    Percentile = 24,
+    SonarInput = 25
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -124,6 +125,45 @@ group control
 	{
 	    motorId : MotorID;
 	    speed : int8;
+    }
+
+    message BearingAutopilotEnabled : 60
+    {
+        enabled : bool;
+        target : uint16;
+    }
+    message BearingAutopilotParams : 70
+    {
+        Kp : float;
+        Ki : float;
+        Kd : float;
+        scale : float;
+    }
+
+    message DepthAutopilotEnabled : 61
+    {
+        enabled : bool;
+        target : uint16;
+    }
+    message DepthAutopilotParams : 71
+    {
+        Kp : float;
+        Ki : float;
+        Kd : float;
+        scale : float;
+    }
+
+    message PitchAutopilotEnabled : 62
+    {
+        enabled : bool;
+        target : int16;
+    }
+    message PitchAutopilotParams : 72
+    {
+        Kp : float;
+        Ki : float;
+        Kd : float;
+        scale : float;
     }
 }
 group telemetry
@@ -252,6 +292,23 @@ group pl_gui
 	{
         nodeId : int32;
 	    image : Image;
+    }
+}
+
+
+group mcb
+{
+	message Alive : 40
+	{
+    }
+}
+
+group pressure
+{
+	message Pressure : 50
+	{
+	    fore : uint16;
+	    aft : uint16;
     }
 }
 

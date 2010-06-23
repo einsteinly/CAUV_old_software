@@ -21,14 +21,14 @@ const char* XsensException::what() const throw ()
     return message.c_str();
 }
 
+
+
 XsensIMU::XsensIMU(int id)
 {
     xsens::List<CmtPortInfo> portInfo;
 
-    cout << "Scanning for connected Xsens devices...";
+    debug() << "Scanning for connected Xsens devices...";
     xsens::cmtScanPorts(portInfo);
-    cout << "done" << endl;
-
 
     if (portInfo.length() == 0) {
         throw XsensException("No MotionTrackers found");
@@ -36,37 +36,37 @@ XsensIMU::XsensIMU(int id)
 
     m_port = portInfo[id];
 
-    cout << "Using COM port " << m_port.m_portName << " at ";
-
+    std::stringstream ss;
+    ss << "Using COM port " << m_port.m_portName << " at ";
     switch (m_port.m_baudrate) {
-        case B9600: cout << "9k6";
+        case B9600: ss << "9k6";
             break;
-        case B19200: cout << "19k2";
+        case B19200: ss << "19k2";
             break;
-        case B38400: cout << "38k4";
+        case B38400: ss << "38k4";
             break;
-        case B57600: cout << "57k6";
+        case B57600: ss << "57k6";
             break;
-        case B115200: cout << "115k2";
+        case B115200: ss << "115k2";
             break;
-        case B230400: cout << "230k4";
+        case B230400: ss << "230k4";
             break;
-        case B460800: cout << "460k8";
+        case B460800: ss << "460k8";
             break;
-        case B921600: cout << "921k6";
+        case B921600: ss << "921k6";
             break;
-        default: cout << "0x%lx" << portInfo[id].m_baudrate;
+        default:
+            ss << "0x%lx" << portInfo[id].m_baudrate;
+            break;
     }
-    cout << " baud" << endl;
+    ss << " baud";
+    debug() << ss.str();
 
-
-    cout << "Opening port...";
+    debug() << "Opening port";
     //open the port which the device is connected to and connect at the device's baudrate.
 
     if (m_cmt3.openPort(m_port.m_portName, m_port.m_baudrate) != XRV_OK)
         throw XsensException("Failed to open Xsens port");
-    else
-        cout << "done" << endl;
 }
 
 void XsensIMU::setObjectAlignmentMatrix(CmtMatrix m)
@@ -82,7 +82,7 @@ void XsensIMU::configure(CmtOutputMode &mode, CmtOutputSettings &settings)
 
     unsigned short sampleFreq;
     sampleFreq = m_cmt3.getSampleFrequency();
-    cout << "Sampling at " << sampleFreq << endl;
+    info() << "Sampling at " << sampleFreq;
 
     CmtDeviceMode deviceMode(mode, settings, sampleFreq);
     // not an MTi-G, remove all GPS related stuff
@@ -110,10 +110,51 @@ floatYPR XsensIMU::getAttitude()
 
     CmtEuler e = packet.getOriEuler();
     floatYPR ret = {e.m_yaw, e.m_pitch, e.m_roll};
+    ret.yaw = -ret.yaw;
+    if (ret.yaw < 0)
+        ret.yaw += 360;
     return ret;
 }
 
 XsensIMU::XsensIMU(const XsensIMU& orig) { }
 
-XsensIMU::~XsensIMU() { }
+
+void XsensIMU::start()
+{
+    if (m_readThread.get_id() == boost::thread::id()) {
+        m_readThread = boost::thread(&XsensIMU::readThread, this);
+    }
+}
+
+XsensIMU::~XsensIMU()
+{
+    if (m_readThread.get_id() != boost::thread::id()) {
+        m_readThread.interrupt();
+        m_readThread.join();
+    }
+}
+
+void XsensIMU::readThread()
+{
+    try {
+        debug() << "Xsens read thread started";
+        while(true)
+        {
+            floatYPR att = getAttitude();
+            
+            foreach(observer_ptr_t o, m_observers)
+            {
+                o->onTelemetry(att);
+            }
+        
+            boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+        }
+    }
+    catch (boost::thread_interrupted&) {
+        debug() << "Xsens read thread interrupted";
+    }
+    debug() << "Xsens read thread ended";
+}
+
+
 

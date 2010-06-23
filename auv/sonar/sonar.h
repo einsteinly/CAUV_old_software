@@ -17,7 +17,7 @@ class SonarNode : public CauvNode
     protected:
         boost::shared_ptr<SeanetSonar> m_sonar;
         
-        virtual void OnRun();
+        virtual void onRun();
 };
 
 #endif

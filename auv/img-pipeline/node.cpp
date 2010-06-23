@@ -87,12 +87,12 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
     lock_t l(m_parent_links_lock);
     const in_link_map_t::iterator i = m_parent_links.find(i_id);
     if(i == m_parent_links.end()){
-        throw(id_error("setInput: Invalid input id" + to_string(i_id)));
+        throw id_error("setInput: Invalid input id" + to_string(i_id));
     }else if(m_parameters.count(i->first) != n->paramOutputs().count(o_id)){
-        throw(link_error("setInput: Parameter <==> Image mismatch"));
+        throw link_error("setInput: Parameter <==> Image mismatch");
     }else{
         if(i->second.first){
-            throw(link_error("old arc must be removed first"));
+            throw link_error("old arc must be removed first");
         }
         debug(3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
         i->second = input_link_t(n, o_id);
@@ -116,7 +116,7 @@ void Node::clearInput(input_id const& i_id){
     lock_t l(m_parent_links_lock);
     const in_link_map_t::iterator i = m_parent_links.find(i_id);
     if(i == m_parent_links.end()){
-        throw(id_error("clearInput: Invalid input id" + to_string(i_id)));
+        throw id_error("clearInput: Invalid input id" + to_string(i_id));
     }else{
         debug(3) << BashColour::Purple << "removing parent link on " << i_id;
         i->second = input_link_t();
@@ -185,7 +185,7 @@ void Node::setOutput(node_ptr_t n){
     if(m_child_links.size() == 1){
         const input_id_set_t child_inputs = n->inputs();
         if(child_inputs.size() != 1){
-            throw(link_error("setOutput: specific child input must be specified"));
+            throw link_error("setOutput: specific child input must be specified");
         }
         setOutput(m_child_links.begin()->first, n, *child_inputs.begin());
     }else if(m_child_links.size() > 1){
@@ -199,9 +199,9 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     lock_t l(m_child_links_lock);
     const out_link_map_t::iterator i = m_child_links.find(o_id);
     if(i == m_child_links.end()){
-        throw(id_error("setOutput: Invalid output id" + to_string(o_id)));
+        throw id_error("setOutput: Invalid output id" + to_string(o_id));
     }else if(paramOutputs().count(o_id) != n->parameters().count(i_id)){
-        throw(link_error("setInput: Parameter <==> Image mismatch"));
+        throw link_error("setInput: Parameter <==> Image mismatch");
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
@@ -214,15 +214,15 @@ void Node::clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id
     lock_t l(m_child_links_lock);
     const out_link_map_t::iterator i = m_child_links.find(o_id);
     if(i == m_child_links.end()){
-        throw(id_error("clearOutput: Invalid output id" + to_string(o_id)));
+        throw id_error("clearOutput: Invalid output id" + to_string(o_id));
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
         output_link_list_t::iterator j = std::find(i->second.begin(), i->second.end(), output_link_t(n, i_id));
         if(j == i->second.end()){
-            throw(id_error("clearOutput: Invalid node & input id: "
+            throw id_error("clearOutput: Invalid node & input id: "
                            + to_string(m_pl.lookup(n)) + ", "
-                           + to_string(i_id)));
+                           + to_string(i_id));
         }else{
             debug(3) << BashColour::Purple << "removing output link to child:" << j->first << j->second;
             i->second.erase(j);
@@ -427,10 +427,10 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id) const throw(id_err
         try{
             r = boost::get<image_ptr_t>(i->second);
         }catch(boost::bad_get&){
-            throw(id_error("requested output is not an image_ptr_t" + to_string(o_id)));
+            throw id_error("requested output is not an image_ptr_t" + to_string(o_id));
         }
     }else{
-        throw(id_error("no such output" + to_string(o_id)));
+        throw id_error("no such output" + to_string(o_id));
     } 
     if(!r) warning() << m_id << "returning NULL image for" << o_id;
     return r;
@@ -444,10 +444,10 @@ param_value_t Node::getOutputParam(output_id const& o_id) const throw(id_error){
         try{
             r = boost::get<param_value_t>(i->second);
         }catch(boost::bad_get&){
-            throw(id_error("requested output is not a param_value_t" + to_string(o_id)));
+            throw id_error("requested output is not a param_value_t" + to_string(o_id));
         }
     }else{
-        throw(id_error("no such output" + to_string(o_id)));
+        throw id_error("no such output" + to_string(o_id));
     }
     return r;
 }
@@ -806,7 +806,7 @@ void Node::setNewParamValue(param_id const& a){
         e << '"' << a << '"' << "invalid, valid paramvalues:\n\t";
         foreach(param_bool_map_t::value_type const& v, m_new_paramvalues)
             e << v.second << "\n\t";
-        throw(id_error("setNewParamValue: Invalid parameter id: " + to_string(a)));
+        throw id_error("setNewParamValue: Invalid parameter id: " + to_string(a));
     }else{
         i->second = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(

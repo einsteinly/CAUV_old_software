@@ -4,9 +4,9 @@
 
 #include <common/cauv_global.h>
 
-#include <common/spread/cauv_spread_rc_mailbox.h>
-#include <common/spread/cauv_mailbox_monitor.h>
-#include <common/spread/cauv_msgsrc_mb_observer.h>
+#include <common/spread/spread_rc_mailbox.h>
+#include <common/spread/mailbox_monitor.h>
+#include <common/spread/msgsrc_mb_observer.h>
 
 #include "cauv_node.h"
 #include "cauv_utils.h"
@@ -41,7 +41,7 @@ CauvNode::CauvNode(const string& name, const char* host)
 
 CauvNode::~CauvNode()
 {
-	cout << "Shutting down node" << endl;
+	info() << "Shutting down node";
     m_event_monitor->stopMonitoring();
 }
 
@@ -51,7 +51,6 @@ void CauvNode::run()
     
     m_event_monitor->startMonitoring();
 
-	debug() << "Calling onRun";
     onRun();
     
     while(true)

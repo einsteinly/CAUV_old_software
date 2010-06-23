@@ -9,7 +9,7 @@
 #include <common/messages.h>
 #include <common/debug.h>
 
-#include <common/spread/cauv_mailbox_monitor.h>
+#include <common/spread/mailbox_monitor.h>
 
 
 enum test_e{

@@ -13,7 +13,7 @@
 #include <common/cauv_utils.h>
 #include <common/debug.h>
 
-#include "cauv_spread_mailbox.h"
+#include "spread_mailbox.h"
 
 class ErrOnExit: boost::noncopyable{
     public:
@@ -55,7 +55,7 @@ public:
                               std::string const& privConnectionName = "",
                               bool recvMembershipMessages = true,
                               ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
-                              SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) throw()
+                              SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM) 
         : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority),
           m_connection_state_lock(), m_connection_state(DISCONNECTED), m_mailbox(),
           m_keep_trying(true), m_thread(), m_groups_lock(), m_groups(){
@@ -87,7 +87,7 @@ public:
             return "";
     }
     
-    virtual void joinGroup(const std::string &groupName) throw() {
+    virtual void joinGroup(const std::string &groupName) {
         lock_t l(m_groups_lock);
         m_groups.insert(groupName);
         
@@ -96,10 +96,10 @@ public:
         }
     }
     
-    virtual void leaveGroup(const std::string &groupName) throw() {
+    virtual void leaveGroup(const std::string &groupName) {
         lock_t l(m_groups_lock);
-        string_set_t::iterator i;
-        if((i = m_groups.find(groupName)) != m_groups.end()){
+        string_set_t::iterator i = m_groups.find(groupName);
+        if(i != m_groups.end()){
             m_groups.erase(i);
             _doLeaveGroup(groupName);
         }
@@ -171,42 +171,46 @@ public:
      * be anything in the RegularMessage or MembershipMessage hierarchies.
      * @return An object containing the received message and associated metadata.
      */
-    virtual boost::shared_ptr<SpreadMessage> receiveMessage(int timeout) throw() {
-        ErrOnExit err("Failed to receive message ");
-        boost::shared_ptr<SpreadMessage> r;
-        if(_waitConnected(500)){
-            try{
-                if(m_mailbox){
-                    r = m_mailbox->receiveMessage(timeout);
-                    err.no();
+    virtual boost::shared_ptr<SpreadMessage> receiveMessage() {
+        while(true)
+        {
+            ErrOnExit err("Failed to receive message ");
+            if(_waitConnected(500)){
+                try{
+                    if(m_mailbox){
+                        boost::shared_ptr<SpreadMessage> r = m_mailbox->receiveMessage();
+                        err.no();
+                        return r;
+                    }
+                }catch(ConnectionError& e){
+                    err += e.what();
+                    handleConnectionError(e);
                 }
-            }catch(ConnectionError& e){
-                err += e.what();
-                handleConnectionError(e);
+            }else{
+                _asyncConnect();
             }
-        }else{
-            _asyncConnect();
         }
-        return r;
     }
 
-    int waitingMessageByteCount() throw() {
-        ErrOnExit err(std::string(__func__) + " error"); 
-        int r = 0;
-        if(_waitConnected(100)){
-            try{
-                if(m_mailbox){
-                    r = m_mailbox->waitingMessageByteCount();
-                    err.no();
+    int waitingMessageByteCount() {
+        while(true)
+        {
+            ErrOnExit err(std::string(__func__) + " error"); 
+            if(_waitConnected(100)){
+                try{
+                    if(m_mailbox){
+                        int r = m_mailbox->waitingMessageByteCount();
+                        err.no();
+                        return r;
+                    }
+                }catch(ConnectionError& e){
+                    err += e.what();
+                    handleConnectionError(e);
                 }
-            }catch(ConnectionError& e){
-                err += e.what();
-                handleConnectionError(e);
+            }else{
+                _asyncConnect();
             }
-        }else{
-            _asyncConnect();
         }
-        return r;
     }
 
     bool isConnected() {
@@ -236,7 +240,7 @@ public:
             } catch(ConnectionError& e) {
                 if (e.critical()){
                     _disconnect();
-                    throw(e);
+                    throw e;
                 }else{
                     std::cerr << e.what() << ", trying to reconnect..." << std::endl;
                 }
@@ -256,7 +260,7 @@ private:
                        std::string const& pcn,
                        bool recvmm,
                        ConnectionTimeout const& t,
-                       SpreadMailbox::MailboxPriority p) throw()
+                       SpreadMailbox::MailboxPriority p)
             : portAndHost(ph), privConnectionName(pcn), recvMembershipMessages(recvmm), timeout(t), priority(p){
         }
 
@@ -267,7 +271,7 @@ private:
         SpreadMailbox::MailboxPriority priority;
     };
 
-    ConnectionState _checkConnected() throw(){
+    ConnectionState _checkConnected(){
         // TODO: m_mailbox->connected() might return false even when we have
         // m_connected_state = CONNECTED
         lock_t l(m_connection_state_lock);
@@ -277,7 +281,7 @@ private:
     /**
      * Return true as soon as possible, or false if timeout is reached.
      */
-    bool _waitConnected(unsigned msecs, unsigned attempts = 5) throw(){
+    bool _waitConnected(unsigned msecs, unsigned attempts = 5){
         // TODO: timed_wait, or similar
         const unsigned dt = msecs / attempts;
         unsigned i = 0;
@@ -286,14 +290,14 @@ private:
         return i < attempts; 
     }
 
-    void _doOnConnected() throw(){
+    void _doOnConnected() {
         info() << "mailbox connected";
         lock_t l2(m_connection_state_lock);
         m_connection_state = CONNECTED;
         _synchroniseGroups();
     }
 
-    void _doJoinGroup(std::string const& g) throw(){
+    void _doJoinGroup(std::string const& g) {
         ErrOnExit err("Failed to join group ");
         try{
             if(m_mailbox){
@@ -308,7 +312,7 @@ private:
         }
     }
 
-    void _doLeaveGroup(std::string const& g) throw(){
+    void _doLeaveGroup(std::string const& g) {
         ErrOnExit err("Failed to leave group ");
         try{
             if(m_mailbox){
@@ -323,14 +327,14 @@ private:
         }
     }
 
-    void _synchroniseGroups() throw(){
+    void _synchroniseGroups() {
         lock_t l(m_groups_lock);
         string_set_t::const_iterator i;
         for(i = m_groups.begin(); i != m_groups.end(); i++)
             _doJoinGroup(*i);
     }
 
-    void _asyncConnect() throw(){
+    void _asyncConnect(){
         // I appreciate that lowlevel functions which print things are really
         // annoying, however this saves a signficiant number of lines of code,
         // since this function is almost always called after an error, in which
@@ -346,7 +350,7 @@ private:
         m_thread = boost::thread(boost::ref(*this));
     }
 
-    void _disconnect() throw(){
+    void _disconnect() {
         boost::unique_lock<mutex_t> l(m_connection_state_lock);
         if (m_connection_state == DISCONNECTED) return;
         m_connection_state = DISCONNECTED; 

@@ -62,16 +62,18 @@ SeanetSonar::SeanetSonar(std::string str) : m_poll_state(POLL_NOTSTARTED), m_cur
     m_state = SENDREBOOT;
 }
 
-void sonarReadThread(boost::shared_ptr<SeanetSonar> sonar);
-void sonarProcessThread(boost::shared_ptr<SeanetSonar> sonar);
+void sonarReadThread(SeanetSonar& sonar);
+void sonarProcessThread(SeanetSonar& sonar);
 void SeanetSonar::init()
 {
-    m_read_thread = boost::thread(sonarReadThread, boost::shared_ptr<SeanetSonar>(this));
-    m_process_thread = boost::thread(sonarProcessThread, boost::shared_ptr<SeanetSonar>(this));
+    debug() << "Initialising sonar";
+    m_read_thread = boost::thread(sonarReadThread, boost::ref<SeanetSonar>(*this));
+    m_process_thread = boost::thread(sonarProcessThread, boost::ref<SeanetSonar>(*this));
 }
 
 SeanetSonar::~SeanetSonar()
 {
+    debug() << "Attempting to interrupt threads";
     if (m_read_thread.get_id() != boost::thread::id()) {
         m_read_thread.interrupt();
         m_read_thread.join();
@@ -201,22 +203,6 @@ void SeanetSonar::set_scan_settings(unsigned char mode, uint16_t direction, uint
 
 
 
-void SeanetSonar::addObserver(boost::shared_ptr<SonarObserver> o)
-{
-    m_obs.push_back(o);
-}
-
-void SeanetSonar::removeObserver(boost::shared_ptr<SonarObserver> o)
-{
-    m_obs.remove(o);
-}
-
-void SeanetSonar::clearObservers()
-{
-    m_obs.clear();
-}
-
-
 bool SeanetHeadData::same_settings(const SeanetHeadData& first, const SeanetHeadData& second)
 {
     return first.hdCtrl == second.hdCtrl && first.gain == second.gain &&
@@ -264,7 +250,7 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
     
     debug() << "Sending data line with range" << dataline->range << "mm and bearing" << dataline->bearing << endl;
     
-    foreach (boost::shared_ptr<SonarObserver> o, m_obs)
+    foreach (observer_ptr_t o, m_observers)
     {
         o->onReceiveDataLine(*dataline);
     }
@@ -274,146 +260,159 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
 
 
 
-void sonarReadThread(boost::shared_ptr<SeanetSonar> sonar)
+void sonarReadThread(SeanetSonar& sonar)
 {
-    boost::shared_ptr<SeanetPacket> pkt;
-    MotorState last_state;
-    SeanetSendDataPacket sendData;
-
-    debug() << "Waiting for first sonar packet";
-
-    info() << "Rebooting sonar";
-    SeanetRebootPacket reboot;
-    sonar->m_serial_port->sendPacket(reboot);
-    
-    while (true)
-    {
-        retry:
-        boost::this_thread::interruption_point();
-
-        try {
-            pkt = sonar->m_serial_port->readPacket();
-        }
-        catch (SonarIsDeadException &e) {
-            warning() << "Sonar hasn't sent an alive message in 3 secs.  Missing, presumed dead.";
-            sonar->m_state = SeanetSonar::SENDREBOOT;
-            sonar->m_cur_data_reqs = 0;
-            goto retry;
-        }
-
-        /*cout << "Received packet: ";
-        for (int j=0; j < pkt->m_length + 6; j++) {
-            printf("%02x ", pkt->m_data[j]);
-        }
-        cout << endl;*/
-
-        /* We want to update our interpretation of the state of the sonar
-         * regardless of what state our state machine is currently in */
+    try {
+        debug() << "Starting read thread";
         
-        switch  (pkt->getType()) {
-            case SeanetMessageType::Alive:
-                debug() << "Alive message received" << endl;
-                sonar->m_motor_state.centered = pkt->getData()[20] & HdInf::Centred;
-                sonar->m_motor_state.motoron = pkt->getData()[20]  & HdInf::MotorOn;
-                sonar->m_motor_state.motoring = pkt->getData()[20] & HdInf::Motoring;
-                sonar->m_motor_state.noparams = pkt->getData()[20] & HdInf::NoParams;
-                sonar->m_motor_state.sentcfg = pkt->getData()[20]  & HdInf::SentCfg;
-                sonar->m_motor_state.time = *(uint32_t*)&pkt->getData()[14];
+        boost::shared_ptr<SeanetPacket> pkt;
+        MotorState last_state;
+        SeanetSendDataPacket sendData;
 
-                if (sonar->m_motor_state != last_state) {
-                    info() << "Transducer centred: " << (sonar->m_motor_state.centered ? "yes" : "no");
-                    info() << "Motor on: "           << (sonar->m_motor_state.motoron ? "yes" : "no");
-                    info() << "Motoring: "           << (sonar->m_motor_state.motoring ? "yes" : "no");
-                    info() << "No params: "          << (sonar->m_motor_state.noparams ? "yes" : "no");
-                    info() << "Sent cfg: "           << (sonar->m_motor_state.sentcfg ? "yes" : "no");
-                }
+        debug() << "Waiting for first sonar packet";
 
-                break;
-            case SeanetMessageType::VersionData:
-                debug() << "Version data received";
-                sonar->m_motor_state.cpuid = *(uint32_t*)&pkt->getData()[14];
-                sonar->m_motor_state.proglength = *(uint32_t*)&pkt->getData()[17];
-                sonar->m_motor_state.checksum = *(uint16_t*)&pkt->getData()[21];
-                break;
-            default:
-                break;
-        }
+        info() << "Rebooting sonar";
+        SeanetRebootPacket reboot;
+        sonar.m_serial_port->sendPacket(reboot);
+    
+        while (true)
+        {
+            retry:
+            boost::this_thread::interruption_point();
 
-        /* Update the state machine and implement the protocol */
-        switch (sonar->m_state) {
-            case SeanetSonar::SENDREBOOT:
-                {
-                    info() << "Rebooting sonar";
-                    SeanetRebootPacket reboot;
-                    sonar->m_serial_port->sendPacket(reboot);
-                    sonar->m_state = SeanetSonar::WAITFORREADY;
-                    sonar->m_motor_state.centered = 0;
-                }
-                break;
-            case SeanetSonar::WAITFORREADY:
-                if (sonar->isReady()) {
-                    debug() << "Moving to state WAITFORVERSION";
-                    sonar->m_state = SeanetSonar::WAITFORVERSION;
-                }
-                break;
-            case SeanetSonar::WAITFORVERSION:
-                if (pkt->getType() == SeanetMessageType::VersionData) {
-                    debug() << "Moving to state WAITFORPARAMS";
-                    sonar->m_state = SeanetSonar::WAITFORPARAMS;
-                    sonar->upload_params(sonar->m_default_params);
-                } else {
-                    static int i = 0;
-                    if (++i % 10 == 0) {
-                        sonar->request_version();
-                        info() << "Requesting version...";
+            try {
+                pkt = sonar.m_serial_port->readPacket();
+            }
+            catch (SonarIsDeadException &e) {
+                warning() << "Sonar hasn't sent an alive message in 3 secs.  Missing, presumed dead.";
+                sonar.m_state = SeanetSonar::SENDREBOOT;
+                sonar.m_cur_data_reqs = 0;
+                goto retry;
+            }
+
+            /*cout << "Received packet: ";
+            for (int j=0; j < pkt->m_length + 6; j++) {
+                printf("%02x ", pkt->m_data[j]);
+            }
+            cout << endl;*/
+
+            /* We want to update our interpretation of the state of the sonar
+             * regardless of what state our state machine is currently in */
+            
+            switch  (pkt->getType()) {
+                case SeanetMessageType::Alive:
+                    debug() << "Alive message received" << endl;
+                    sonar.m_motor_state.centered = pkt->getData()[20] & HdInf::Centred;
+                    sonar.m_motor_state.motoron = pkt->getData()[20]  & HdInf::MotorOn;
+                    sonar.m_motor_state.motoring = pkt->getData()[20] & HdInf::Motoring;
+                    sonar.m_motor_state.noparams = pkt->getData()[20] & HdInf::NoParams;
+                    sonar.m_motor_state.sentcfg = pkt->getData()[20]  & HdInf::SentCfg;
+                    sonar.m_motor_state.time = *(uint32_t*)&pkt->getData()[14];
+
+                    if (sonar.m_motor_state != last_state) {
+                        info() << "Transducer centred: " << (sonar.m_motor_state.centered ? "yes" : "no");
+                        info() << "Motor on: "           << (sonar.m_motor_state.motoron ? "yes" : "no");
+                        info() << "Motoring: "           << (sonar.m_motor_state.motoring ? "yes" : "no");
+                        info() << "No params: "          << (sonar.m_motor_state.noparams ? "yes" : "no");
+                        info() << "Sent cfg: "           << (sonar.m_motor_state.sentcfg ? "yes" : "no");
                     }
-                }
-                break;
-            case SeanetSonar::WAITFORPARAMS:
-                if (sonar->hasParams()) {
-                    sonar->m_state = SeanetSonar::SCANNING;
-                    debug() << "Moving to state SCANNING";
-                    //sonar->set_res_range(2, 700);
-                } else {
-                    warning() << "Hasn't confirmed parameters...";
-                }
 
-                break;
-            case SeanetSonar::SCANNING:
-                /* FIXME:  Maybe do this asynchronously, to ensure we can
-                 * always pull data off the sonar fast enough */
-                 if (pkt->getType() == SeanetMessageType::HeadData) {
-                    sonar->m_cur_data_reqs--;
-                    if (sonar->m_queue.size() > 200) {
-                        error() << "Sonar buffer size exceeded";
+                    break;
+                case SeanetMessageType::VersionData:
+                    debug() << "Version data received";
+                    sonar.m_motor_state.cpuid = *(uint32_t*)&pkt->getData()[14];
+                    sonar.m_motor_state.proglength = *(uint32_t*)&pkt->getData()[17];
+                    sonar.m_motor_state.checksum = *(uint16_t*)&pkt->getData()[21];
+                    break;
+                default:
+                    break;
+            }
+
+            /* Update the state machine and implement the protocol */
+            switch (sonar.m_state) {
+                case SeanetSonar::SENDREBOOT:
+                    {
+                        info() << "Rebooting sonar";
+                        SeanetRebootPacket reboot;
+                        sonar.m_serial_port->sendPacket(reboot);
+                        sonar.m_state = SeanetSonar::WAITFORREADY;
+                        sonar.m_motor_state.centered = 0;
+                    }
+                    break;
+                case SeanetSonar::WAITFORREADY:
+                    if (sonar.isReady()) {
+                        debug() << "Moving to state WAITFORVERSION";
+                        sonar.m_state = SeanetSonar::WAITFORVERSION;
+                    }
+                    break;
+                case SeanetSonar::WAITFORVERSION:
+                    if (pkt->getType() == SeanetMessageType::VersionData) {
+                        debug() << "Moving to state WAITFORPARAMS";
+                        sonar.m_state = SeanetSonar::WAITFORPARAMS;
+                        sonar.upload_params(sonar.m_default_params);
                     } else {
-                        sonar->m_queue.push(pkt);
+                        static int i = 0;
+                        if (++i % 10 == 0) {
+                            sonar.request_version();
+                            info() << "Requesting version...";
+                        }
                     }
-                }
+                    break;
+                case SeanetSonar::WAITFORPARAMS:
+                    if (sonar.hasParams()) {
+                        sonar.m_state = SeanetSonar::SCANNING;
+                        debug() << "Moving to state SCANNING";
+                        //sonar.set_res_range(2, 700);
+                    } else {
+                        warning() << "Hasn't confirmed parameters...";
+                    }
 
-                //info() << "Requesting data..." << endl;
-                while (sonar->m_cur_data_reqs <= 2) {
-                    sonar->m_serial_port->sendPacket(sendData);
-                    sonar->m_cur_data_reqs++; //TODO: Make sure this is correct
-                }
-                break;
-            default:
-                break;
+                    break;
+                case SeanetSonar::SCANNING:
+                    /* FIXME:  Maybe do this asynchronously, to ensure we can
+                     * always pull data off the sonar fast enough */
+                     if (pkt->getType() == SeanetMessageType::HeadData) {
+                        sonar.m_cur_data_reqs--;
+                        if (sonar.m_queue.size() > 200) {
+                            error() << "Sonar buffer size exceeded";
+                        } else {
+                            sonar.m_queue.push(pkt);
+                        }
+                    }
+
+                    //info() << "Requesting data..." << endl;
+                    while (sonar.m_cur_data_reqs <= 2) {
+                        sonar.m_serial_port->sendPacket(sendData);
+                        sonar.m_cur_data_reqs++; //TODO: Make sure this is correct
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            last_state = sonar.m_motor_state;
         }
-
-        last_state = sonar->m_motor_state;
+    } catch (boost::thread_interrupted& e) {
+        debug() << "Read thread interrupted";
     }
+    debug() << "Ending read thread";
 }
 
 
-void sonarProcessThread(boost::shared_ptr<SeanetSonar> sonar)
+void sonarProcessThread(SeanetSonar& sonar)
 {
-    while (true)
-    {
-        boost::this_thread::interruption_point();
+    try {
+        debug() << "Starting processing thread";
+        while (true)
+        {
+            boost::this_thread::interruption_point();
 
-        // Process!
-        boost::shared_ptr<SeanetPacket> pkt = sonar->m_queue.popWait();
-        sonar->process_data(pkt);
+            // Process!
+            boost::shared_ptr<SeanetPacket> pkt = sonar.m_queue.popWait();
+            sonar.process_data(pkt);
+        }
+    } catch (boost::thread_interrupted& e) {
+        debug() << "Processing thread interrupted";
     }
+    debug() << "Ending processing thread";
 }

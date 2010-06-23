@@ -117,7 +117,7 @@ SeanetRebootPacket::SeanetRebootPacket()
 	m_length = 8;
     m_count = m_length - 5;
 
-	m_data = std::string(m_length, '\0');
+	m_data = std::string(m_length+6, '\0');
 	fillHeader();
 }
 

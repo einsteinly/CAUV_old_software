@@ -4,20 +4,16 @@
 // Message Structs
 // ===============
 
-struct packet toPacket(struct Message* m)
+void sendAsPacket(struct Message* m)
 {
     switch (m->id) {
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
         case $m.id:
-            return ${className}ToPacket((struct $className*)m);
+            send${className}AsPacket((struct $className*)m);
         #end for 
         #end for
-    }
-    {
-        struct packet p;
-        return p;
     }
 }
 
@@ -47,19 +43,20 @@ struct $className new${className}(#slurp
 struct ${className} ${className}FromPacket(struct packet p)
 {
     struct $className m = empty${className}();
+    #if $len($m.fields) > 0
     int pos = 4; // Skip the message id (not as safe, but faster)
-
     #for $f in $m.fields
     pos = load_$loadsavesuffix($f.type)(p, pos, &m.$f.name);
     #end for
-
+    
+    #end if
     return m;
 }
-struct packet ${className}ToPacket(struct $className* m)
+void send${className}AsPacket(struct $className* m)
 {
-    int msgsize = 0;
+    int msgsize = 4; // 4 bytes for id
     #for $f in $m.fields
-    msgsize = getsize_$loadsavesuffix($f.type)(p, pos, &m->$f.name);
+    msgsize += len_$loadsavesuffix($f.type)(&m->$f.name);
     #end for
 
     unsigned char bytes[msgsize];
@@ -68,14 +65,12 @@ struct packet ${className}ToPacket(struct $className* m)
     p.length = msgsize;
 
     int pos = 0;
-
     pos = save_uint32(p, pos, &m->id);
-
     #for $f in $m.fields
     pos = save_$loadsavesuffix($f.type)(p, pos, &m->$f.name);
     #end for
 
-    return p;
+    sendPacket(p);
 }
 
 #end for 
@@ -105,7 +100,7 @@ int save_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val)
 int len_$loadsavesuffix($t)($toCType($t)* val)
 {
     uint32_t len = strlen(*val);
-    return len_uint32(len) + len;
+    return len_uint32(&len) + len;
 }
 #else
 int load_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val)
@@ -145,7 +140,7 @@ int len_${s.name}($toCType($s)* s)
 {
     size = 0;
     #for $f in $s.fields
-    size += len_$loadsavesuffix($f.type)(p, size, &s->$f.name);
+    size += len_$loadsavesuffix($f.type)(&s->$f.name);
     #end for
     return size;
 }
@@ -162,7 +157,7 @@ int save_${e.name}(struct packet p, int pos, $toCType($e.type)* val)
 }
 int len_${e.name}($toCType($e.type)* val)
 {
-    return len_$loadsavesuffix($e.type)(p, size, val);
+    return len_$loadsavesuffix($e.type)(val);
 }
 #end for
 
@@ -173,8 +168,7 @@ int len_${e.name}($toCType($e.type)* val)
 
 void sendMessage(struct Message* m)
 {
-    struct packet p = toPacket(m);
-    sendPacket(p);
+    sendAsPacket(m);
 }
 
 #for $g in $groups
@@ -184,16 +178,14 @@ void send${className}(#slurp
                       #for i, f in $enumerate($m.fields)
 #*                   *#$toCType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                       #end for
-#*                   *#add_subdirectory (webcam)
-)
+#*                   *#)
 {
     struct $className m = new${className}(#slurp
                                           #for i, f in $enumerate($m.fields)
 #*                                       *#$f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                                           #end for
 #*                                       *#);
-    struct packet p = ${className}ToPacket(&m);
-    sendPacket(p);
+    send${className}AsPacket(&m);
 }
 #end for 
 #end for 
@@ -213,7 +205,6 @@ void handlePacket(struct packet p)
         #set $className = $m.name + "Message"
         case $m.id:
         {
-            DEBUG("received $className\n");
 	        struct ${className} m = ${className}FromPacket(p);
             handle${className}(&m);
             break;
@@ -221,7 +212,7 @@ void handlePacket(struct packet p)
         #end for 
         #end for
         default:
-            DEBUG("received unknown packet\n");
+            break;
     }
 }
 

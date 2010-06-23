@@ -1,19 +1,19 @@
-/* 
- * File:   xsens_imu.h
- * Author: andy
- *
- * Created on 27 June 2009, 17:14
- */
-
 #ifndef _XSENS_IMU_H
 #define	_XSENS_IMU_H
+
+#include <boost/thread.hpp>
 
 #include <xsens/cmt3.h>
 
 #include <common/messages.h>
 
+class XsensObserver
+{
+    public:
+        virtual void onTelemetry(const floatYPR& attitude) = 0;
+};
 
-class XsensIMU
+class XsensIMU : public Observable<XsensObserver>
 {
     public:
         XsensIMU(int id);
@@ -24,9 +24,14 @@ class XsensIMU
         void configure(CmtOutputMode &mode, CmtOutputSettings &settings);
         void setObjectAlignmentMatrix(CmtMatrix m);
 
-    private:
+        void start();
+
+    protected:
         xsens::Cmt3 m_cmt3;
         CmtPortInfo m_port;
+        boost::thread m_readThread;
+
+        void readThread();
 };
 
 

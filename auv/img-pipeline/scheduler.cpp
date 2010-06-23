@@ -17,15 +17,20 @@ ImgPipelineThread::ImgPipelineThread(Scheduler* s, SchedulerPriority p)
 }
 
 void ImgPipelineThread::operator()(){
-    info() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") started";
+    try {
+        info() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") started";
 
-    Node* job;
-    while(m_sched->alive()){
-        if((job = m_sched->waitNextJob(m_priority)))
-            job->exec();
-        else
-            break;
+        Node* job;
+        while(true){
+            job = m_sched->waitNextJob(m_priority);
+            if(job)
+                job->exec();
+            else
+                break;
+        }
+    } catch (boost::thread_interrupted&) {
+        debug() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") interrupted";
     }
-    warning() <<  "ImgPipelineThread (" << m_priority << ") stopping";
+    info() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") ended";
 }
 

@@ -8,14 +8,19 @@
 
 #include "xsens_imu.h"
 
+class ControlLoops;
 class ControlNode : public CauvNode
 {
     public:
         ControlNode();
+        virtual ~ControlNode();
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
         boost::shared_ptr<XsensIMU> m_xsens;
+        boost::shared_ptr<ControlLoops> m_controlLoops;
+    
+        boost::thread m_motorThread, m_aliveThread, m_telemetryThread;
 
         virtual void onRun();
 };

@@ -4,11 +4,12 @@
 #include <string>
 #include <vector>
 #include <ssrc/spread/Mailbox.h>
-#include "cauv_spread_exceptions.h"
-#include "cauv_spread_messages.h"
-#include <common/messages.h>
 #include <boost/shared_ptr.hpp>
 
+#include <common/messages.h>
+
+#include "spread_exceptions.h"
+#include "spread_messages.h"
 
 /**
  * ConnectionTimeout is a simple wrapper around Spread::sp_time, the %Spread C
@@ -71,8 +72,8 @@ public:
     SpreadMailbox(const std::string &portAndHost, const std::string &internalConnectionName = "",
                   const bool shouldReceiveMembershipMessages = true,
                   const ConnectionTimeout &timeout = ZERO_TIMEOUT,
-                  const MailboxPriority priority = MEDIUM) throw(ConnectionError);
-    virtual void disconnect() throw(ConnectionError);
+                  const MailboxPriority priority = MEDIUM);
+    virtual void disconnect();
 
     /**
      * @return The internal connection identifier assigned to this mailbox.
@@ -84,29 +85,28 @@ public:
      */
     const std::string &getPrivateGroupName() const {return m_ssrcMailbox->private_group(); }
 
-    virtual void joinGroup(const std::string &groupName) throw(ConnectionError);
-    virtual void leaveGroup(const std::string &groupName) throw(ConnectionError);
+    virtual void joinGroup(const std::string &groupName);
+    virtual void leaveGroup(const std::string &groupName);
 
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType, const std::string &destinationGroup)
-        throw(ConnectionError);
+    virtual int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType, const std::string &destinationGroup);
 
     /**
      * @return The number of bytes sent
      */
     virtual int sendMultigroupMessage(boost::shared_ptr<const Message> message, Spread::service serviceType,
-        const std::vector<std::string> &groupNames) throw(ConnectionError);
+        const std::vector<std::string> &groupNames);
 
     /**
      * Blocks until a message comes in from the Spread daemon. The received messsage may
      * be anything in the RegularMessage or MembershipMessage hierarchies.
      * @return An object containing the received message and associated metadata.
      */
-    virtual boost::shared_ptr<SpreadMessage> receiveMessage(int timeout) throw(ConnectionError);
+    virtual boost::shared_ptr<SpreadMessage> receiveMessage();
 
-    int waitingMessageByteCount() const throw(ConnectionError);
+    int waitingMessageByteCount() const;
     bool isConnected() const { return !m_ssrcMailbox->killed(); }
 
 protected:
@@ -116,7 +116,7 @@ private:
     int doSendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType,
         boost::shared_ptr<ssrc::spread::GroupList> const groupNames );
 
-    void handleSpreadError(ssrc::spread::Error& e) throw(ConnectionError);
+    void handleSpreadError(ssrc::spread::Error& e);
 };
 
 

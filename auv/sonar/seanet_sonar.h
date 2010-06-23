@@ -35,16 +35,12 @@ class MotorState {
 };
 
 
-class SeanetSonar
+class SeanetSonar : public Observable<SonarObserver>
 {
 	public:
 	
 		SeanetSonar(std::string file);
 		~SeanetSonar();
-	
-		void addObserver(boost::shared_ptr<SonarObserver> o);
-		void removeObserver(boost::shared_ptr<SonarObserver> o);
-        void clearObservers();
 	
 		/* Initialize and start scanning */
 		void init();
@@ -67,8 +63,8 @@ class SeanetSonar
 		/* sets the step size (angular resolution) */
 		void set_step_size(unsigned char size);
 
-        friend void sonarReadThread(boost::shared_ptr<SeanetSonar> sonar);
-        friend void sonarProcessThread(boost::shared_ptr<SeanetSonar> sonar);
+        friend void sonarReadThread(SeanetSonar& sonar);
+        friend void sonarProcessThread(SeanetSonar& sonar);
 	
     
     private:
@@ -110,8 +106,6 @@ class SeanetSonar
 			WAITFORREADY, WAITFORVERSION,
 			WAITFORPARAMS, SCANNING,
 		} m_state;
-	
-        std::list< boost::shared_ptr<SonarObserver> > m_obs;
 	
 		/* Called when a line of data is received */
 		void process_data(boost::shared_ptr<SeanetPacket> pkt);

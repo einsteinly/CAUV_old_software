@@ -12,7 +12,7 @@
 
 #include <common/messages.h>
 #include <common/cauv_utils.h>
-#include <common/spread/cauv_spread_rc_mailbox.h>
+#include <common/spread/spread_rc_mailbox.h>
 
 #include "pipelineTypes.h"
 #include "scheduler.h"
@@ -31,7 +31,9 @@ class ImageProcessor: public MessageObserver
         typedef boost::unique_lock<mutex_t> lock_t;
     public:    
         ImageProcessor(mb_ptr_t mailbox);
-        
+       
+        void start();
+
         /**
          * override MessageObserver functions to take actions on messages
          */

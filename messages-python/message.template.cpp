@@ -327,27 +327,27 @@ void DebugMessageObserver::on${className}($classPtr m)
 #end for
 
 
+
+UnknownMessageIdException::UnknownMessageIdException(uint32_t id) : m_id(id)
+{
+}
+const char * UnknownMessageIdException::what() const throw()
+{
+    std::string message = MakeString() << "Unknown message id: " << m_id;
+    return message.c_str();
+}
+
+
 MessageSource::MessageSource()
 {
-}
-void MessageSource::addObserver(boost::shared_ptr<MessageObserver> o)
-{
-    m_obs.push_back(o);
-}
-void MessageSource::removeObserver(boost::shared_ptr<MessageObserver> o)
-{
-    m_obs.remove(o);
-}
-void MessageSource::clearObservers()
-{
-    m_obs.clear();
 }
 void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
 {
     if (bytes->size() < 4)
         throw std::out_of_range("Buffer too small to contain message id");
 
-    switch(*reinterpret_cast<const uint32_t*>(bytes->data()))
+    int id = *reinterpret_cast<const uint32_t*>(bytes->data());
+    switch (id)
     {
         #for $g in $groups
         #for $m in $g.messages
@@ -355,7 +355,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
         case $m.id:
         {
             boost::shared_ptr<$className> m = $className::fromBytes(bytes);
-            foreach(boost::shared_ptr<MessageObserver> o, m_obs)
+            foreach(observer_ptr_t o, m_observers)
             {
                 o->on${className}(m);
             }
@@ -364,7 +364,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
         #end for
         #end for
         default:
-            throw std::out_of_range("Unknown message id");
+            throw UnknownMessageIdException(id);
     }
 }
 
