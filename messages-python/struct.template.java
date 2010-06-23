@@ -14,7 +14,7 @@ public class $name {
     {
     }
 
-    public static floatXYZ readFrom(DataInputStream s) throws IOException {
+    public static ${name} readFrom(DataInputStream s) throws IOException {
         $name val = new ${name}();
 #for $f in $fields
 $serialiseJavaType(f.type, f.name, 2, "val.")
