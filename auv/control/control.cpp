@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdint.h>
 
 #include <boost/make_shared.hpp>
 
@@ -11,21 +12,6 @@
 
 using namespace std;
 
-void sendMotorMessageTest(boost::shared_ptr<MCBModule> mcb)
-{
-    int motor = 1;
-    debug() << "Starting motor message test";
-    while(true)
-    {
-        boost::shared_ptr<MotorMessage> m = boost::make_shared<MotorMessage>((MotorID::e)motor, 0);
-        mcb->send(m);
-        debug() << "Sent " << *m;
-
-        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-
-        motor = (motor == 16) ? 1 : motor << 1;
-    }
-}
 void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {
     debug() << "Starting alive message thread";
@@ -33,7 +19,6 @@ void sendAlive(boost::shared_ptr<MCBModule> mcb)
     {
         boost::shared_ptr<AliveMessage> m = boost::make_shared<AliveMessage>();
         mcb->send(m);
-        debug() << "Sent " << *m;
         boost::this_thread::sleep(boost::posix_time::milliseconds(500));
     }
 }
@@ -107,12 +92,29 @@ class ControlLoops : public MessageObserver, public XsensObserver
         virtual void onTelemetry(const floatYPR& attitude)
         {
             if (m_bearingenabled) {
-                debug() << "bearing MV = " << m_bearingcontrol.getMV(attitude.yaw);
+                float mv = m_bearingcontrol.getMV(attitude.yaw);
+                debug() << "MV = " << mv;
+                if (now().secs - lastMotorMessage.secs > motorTimeout) {
+                    // Do motor control
+                    int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
+
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, speed));
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, -speed));
+                }
             }
         }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
+        TimeStamp lastMotorMessage;
+        static const int motorTimeout = 2;
+        
+        virtual void onMotorMessage(MotorMessage_ptr m)
+        {
+            lastMotorMessage = now();
+            m_mcb->send(m);
+        }
+
 
         bool m_bearingenabled;
         PIDControl m_bearingcontrol;
@@ -181,17 +183,9 @@ ControlNode::ControlNode() : CauvNode("Control")
 }
 ControlNode::~ControlNode()
 {
-    if (m_motorThread.get_id() != boost::thread::id()) {
-        m_motorThread.interrupt();
-        m_motorThread.join();
-    }
     if (m_aliveThread.get_id() != boost::thread::id()) {
         m_aliveThread.interrupt();
         m_aliveThread.join();
-    }
-    if (m_telemetryThread.get_id() != boost::thread::id()) {
-        m_telemetryThread.interrupt();
-        m_telemetryThread.join();
     }
 }
 
@@ -203,7 +197,6 @@ void ControlNode::onRun()
     if (m_mcb) {
         m_controlLoops->set_mcb(m_mcb);
         
-        m_motorThread = boost::thread(sendMotorMessageTest, m_mcb);
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
         m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());

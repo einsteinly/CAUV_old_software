@@ -240,7 +240,7 @@ class Module : public MessageSource
         }
 
 
-        void send(boost::shared_ptr<Message> message)
+        void send(boost::shared_ptr<const Message> message)
         {
             m_sendQueue.push(message);
         }
@@ -248,7 +248,7 @@ class Module : public MessageSource
     protected:
         boost::iostreams::stream_buffer<ftdi_device_t> m_ftdiStreamBuffer;
         boost::thread m_readThread, m_sendThread;
-        BlockingQueue< boost::shared_ptr<Message> > m_sendQueue;
+        BlockingQueue< boost::shared_ptr<const Message> > m_sendQueue;
 
 
         void sendLoop()

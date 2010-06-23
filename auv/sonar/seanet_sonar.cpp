@@ -11,26 +11,15 @@
 using namespace std;
 
 
-/*
-SeanetSonarControlMessageObserver::SeanetSonarControlMessageObserver(SeanetSonar *sonar)
+SonarControlMessageObserver::SonarControlMessageObserver(boost::shared_ptr<SeanetSonar> sonar)
 {
     m_sonar = sonar;
 }
 
-void SeanetSonarControlMessageObserver::onSonarControlMessage(const AuvMessage& auvmsg)
+void SonarControlMessageObserver::onSonarControlMessage(boost::shared_ptr<SonarControlMessage> m)
 {
-    switch(auvmsg.getType()) {
-        case CMSG_SONAR_CONTROL:
-        {
-            SeanetSonarControlMessage m = dynamic_cast<const SeanetSonarControlMessage&>(auvmsg);
-            m_sonar->set_scan_settings(m.getMode(), m.getDirection(), m.getWidth(), m.getGain(), m.getRange(), m.getRadialRes(), m.getAngularRes(), m.getUpdateRate());
-        }
-            break;
-        default:
-            break;
-    }
+    m_sonar->set_scan_settings(m->direction(), m->width(), m->gain(), m->range(), m->radialRes(), m->angularRes());
 }
-*/
 
 
 MotorState::MotorState() : centered(0), motoron(0), motoring(0), noparams(0),
@@ -56,7 +45,7 @@ bool MotorState::operator!=(MotorState& rhs) const
 
 
 
-SeanetSonar::SeanetSonar(std::string str) : m_poll_state(POLL_NOTSTARTED), m_cur_data_reqs(0)
+SeanetSonar::SeanetSonar(std::string str) : m_cur_data_reqs(0)
 {
     m_serial_port = boost::make_shared<SeanetSerialPort>(str);
     m_state = SENDREBOOT;
@@ -108,21 +97,19 @@ inline int SeanetSonar::isReady() const
 void SeanetSonar::upload_params(SeanetHeadParams &params)
 {
     SeanetHeadParamsPacket pkt(params);
-
-    m_next_params = params;
     m_serial_port->sendPacket(pkt);
 }
 
 static uint32_t range_from_nbins_adinterval(uint16_t nBins, uint16_t adInterval)
 {
     uint32_t half_ping_time = nBins * adInterval * 320; // in nanoseconds
-    uint32_t range_mm = (half_ping_time * 15) / 10000; // velocity of sound in mm per second
+    uint32_t range_mm = (half_ping_time * 15) / 10000; // speed of sound in mm per second
 
     return range_mm;
 }
 
 /* res has units of cm, range has units of meters */
-void SeanetSonar::set_res_range(SeanetHeadParams &params, unsigned int res, unsigned int range)
+void SeanetSonar::set_res_range(SeanetHeadParams& params, unsigned int res, unsigned int range)
 {
     uint16_t nBins;
     uint16_t adInterval;
@@ -146,59 +133,46 @@ void SeanetSonar::set_res_range(SeanetHeadParams &params, unsigned int res, unsi
     params.rangeScale = range;// * 10;
 }
 
-void SeanetSonar::set_scan_settings(unsigned char mode, uint16_t direction, uint16_t width,
+void SeanetSonar::set_scan_settings(uint16_t direction, uint16_t width,
                               unsigned char gain, uint32_t range, uint32_t radial_res,
                               unsigned char angular_res)
 {
-    SeanetHeadParams params;
-
     info() << "Setting scan settings";
 
     if (width == 6400)
     {
         // Continuous scanning
-        params.hdCtrl |= HdCtrl::Continuous;
-        params.hdCtrl &= ~HdCtrl::StareLLim;
+        m_params.hdCtrl |= HdCtrl::Continuous;
+        m_params.hdCtrl &= ~HdCtrl::StareLLim;
     }
     else if (width == 0)
     {
         // Pinging
-        params.hdCtrl &= ~HdCtrl::Continuous;
-        params.hdCtrl |= HdCtrl::StareLLim;
+        m_params.hdCtrl &= ~HdCtrl::Continuous;
+        m_params.hdCtrl |= HdCtrl::StareLLim;
     }
     else
     {
         // Sector
-        params.hdCtrl &= ~HdCtrl::Continuous;
-        params.hdCtrl &= ~HdCtrl::StareLLim;
+        m_params.hdCtrl &= ~HdCtrl::Continuous;
+        m_params.hdCtrl &= ~HdCtrl::StareLLim;
     }
 
-    params.stepSize = angular_res;
-    params.igainChn1 = gain;
-    params.igainChn2 = gain;
-    params.rangeScale = range;
+    m_params.stepSize = angular_res;
+    m_params.igainChn1 = gain;
+    m_params.igainChn2 = gain;
+    m_params.rangeScale = range;
 
     if (direction - width/2 < 0 ) {
         direction += 6400;
     }
 
-    params.leftLim = direction - width/2;
-    params.rightLim = params.leftLim + width;
+    m_params.leftLim = direction - width/2;
+    m_params.rightLim = m_params.leftLim + width;
 
-    set_res_range(params, radial_res, range);
+    set_res_range(m_params, radial_res, range);
 
-    // Updating default parameters?
-    /*switch(mode)
-    {
-        case CAUV_SONAR_MODE_DEFAULT:
-            m_default_params = params;
-            break;
-        case CAUV_SONAR_MODE_POLL_IMG:
-            m_params = params;
-            upload_params(params);
-            m_poll_state = POLL_GETBEARING;
-            break;
-    }*/
+    upload_params(m_params);
 }
 
 
@@ -213,33 +187,10 @@ bool SeanetHeadData::same_settings(const SeanetHeadData& first, const SeanetHead
 
 void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
 {
-    static SeanetHeadData last_head_data;
     const SeanetHeadData* head_data;
 
     // Get the received data from the packet
     head_data = reinterpret_cast<const SeanetHeadData*>(&pkt->getData()[11]);
-
-    if (!SeanetHeadData::same_settings(last_head_data, *head_data)) {
-        switch (m_poll_state) {
-            case POLL_GETBEARING:
-                m_poll_start_bearing = head_data->bearing;
-                if (m_poll_start_bearing < m_next_params.leftLim || m_poll_start_bearing > m_next_params.rightLim)
-                    m_poll_start_bearing = m_next_params.rightLim;
-
-                m_poll_state = POLL_GOTBEARING;
-                break;
-            case POLL_GOTBEARING:
-                if (head_data->bearing == m_poll_start_bearing) {
-                    // Scan complete
-                    m_poll_state = POLL_NOTSTARTED;
-                }
-                break;
-            default:
-                break;
-        }
-    
-        m_params = m_next_params;
-    }
 
     // FIXME:  Assuming 8-bit mode again
    
@@ -247,15 +198,21 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
     dataline->data = std::vector< uint8_t >(&head_data->bin1, &head_data->bin1 + head_data->dBytes);
     dataline->range = range_from_nbins_adinterval(head_data->dBytes, head_data->adInterval);
     dataline->bearing = head_data->bearing;
+    dataline->bearingRange = head_data->stepSize;
     
-    debug() << "Sending data line with range" << dataline->range << "mm and bearing" << dataline->bearing << endl;
-    
+    //debug() << "Sending data line with range" << dataline->range << "mm, bearing" << dataline->bearing << ", and bearing range " << dataline->bearingRange;
+    //{
+    //    std::stringstream data;
+    //    foreach(uint8_t c, dataline->data) {
+    //        data << hex << setw(2) << setfill('0') << (int)c << " ";
+    //    }
+    //    debug() << data.str();
+    //}
+
     foreach (observer_ptr_t o, m_observers)
     {
         o->onReceiveDataLine(*dataline);
     }
-
-    last_head_data = *head_data;
 }
 
 
@@ -269,12 +226,15 @@ void sonarReadThread(SeanetSonar& sonar)
         MotorState last_state;
         SeanetSendDataPacket sendData;
 
-        debug() << "Waiting for first sonar packet";
+        bool isalive = false;
 
         info() << "Rebooting sonar";
         SeanetRebootPacket reboot;
         sonar.m_serial_port->sendPacket(reboot);
-    
+        debug() << "Moving to state WAITFORREADY";
+        sonar.m_state = SeanetSonar::WAITFORREADY;
+        sonar.m_motor_state.centered = 0;
+
         while (true)
         {
             retry:
@@ -284,9 +244,12 @@ void sonarReadThread(SeanetSonar& sonar)
                 pkt = sonar.m_serial_port->readPacket();
             }
             catch (SonarIsDeadException &e) {
-                warning() << "Sonar hasn't sent an alive message in 3 secs.  Missing, presumed dead.";
-                sonar.m_state = SeanetSonar::SENDREBOOT;
-                sonar.m_cur_data_reqs = 0;
+                if (isalive) {
+                    warning() << "Sonar hasn't sent an alive message in 3 secs.  Missing, presumed dead.";
+                    sonar.m_state = SeanetSonar::SENDREBOOT;
+                    sonar.m_cur_data_reqs = 0;
+                    isalive = false;
+                }
                 goto retry;
             }
 
@@ -301,7 +264,8 @@ void sonarReadThread(SeanetSonar& sonar)
             
             switch  (pkt->getType()) {
                 case SeanetMessageType::Alive:
-                    debug() << "Alive message received" << endl;
+                    debug() << "Alive message received";
+                    isalive = true;
                     sonar.m_motor_state.centered = pkt->getData()[20] & HdInf::Centred;
                     sonar.m_motor_state.motoron = pkt->getData()[20]  & HdInf::MotorOn;
                     sonar.m_motor_state.motoring = pkt->getData()[20] & HdInf::Motoring;
@@ -335,6 +299,7 @@ void sonarReadThread(SeanetSonar& sonar)
                         info() << "Rebooting sonar";
                         SeanetRebootPacket reboot;
                         sonar.m_serial_port->sendPacket(reboot);
+                        debug() << "Moving to state WAITFORREADY";
                         sonar.m_state = SeanetSonar::WAITFORREADY;
                         sonar.m_motor_state.centered = 0;
                     }
@@ -349,10 +314,10 @@ void sonarReadThread(SeanetSonar& sonar)
                     if (pkt->getType() == SeanetMessageType::VersionData) {
                         debug() << "Moving to state WAITFORPARAMS";
                         sonar.m_state = SeanetSonar::WAITFORPARAMS;
-                        sonar.upload_params(sonar.m_default_params);
+                        sonar.upload_params(sonar.m_params);
                     } else {
                         static int i = 0;
-                        if (++i % 10 == 0) {
+                        if (i++ % 10 == 0) {
                             sonar.request_version();
                             info() << "Requesting version...";
                         }
@@ -362,7 +327,6 @@ void sonarReadThread(SeanetSonar& sonar)
                     if (sonar.hasParams()) {
                         sonar.m_state = SeanetSonar::SCANNING;
                         debug() << "Moving to state SCANNING";
-                        //sonar.set_res_range(2, 700);
                     } else {
                         warning() << "Hasn't confirmed parameters...";
                     }
@@ -380,7 +344,7 @@ void sonarReadThread(SeanetSonar& sonar)
                         }
                     }
 
-                    //info() << "Requesting data..." << endl;
+                    //info() << "Requesting data...";
                     while (sonar.m_cur_data_reqs <= 2) {
                         sonar.m_serial_port->sendPacket(sendData);
                         sonar.m_cur_data_reqs++; //TODO: Make sure this is correct

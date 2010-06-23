@@ -177,7 +177,7 @@ class SeanetPacket {
 
         void fillHeader();
     public:
-        const std::string getData() const;
+        const std::string& getData() const;
         unsigned char getType() const;
         unsigned short getLength() const;
 
