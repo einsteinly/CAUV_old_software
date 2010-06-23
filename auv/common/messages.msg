@@ -126,6 +126,45 @@ group control
 	    motorId : MotorID;
 	    speed : int8;
     }
+
+    message BearingAutopilotEnabled : 60
+    {
+        enabled : bool;
+        target : uint16;
+    }
+    message BearingAutopilotParams : 70
+    {
+        Kp : float;
+        Ki : float;
+        Kd : float;
+        scale : float;
+    }
+
+    message DepthAutopilotEnabled : 61
+    {
+        enabled : bool;
+        target : uint16;
+    }
+    message DepthAutopilotParams : 71
+    {
+        Kp : float;
+        Ki : float;
+        Kd : float;
+        scale : float;
+    }
+
+    message PitchAutopilotEnabled : 62
+    {
+        enabled : bool;
+        target : int16;
+    }
+    message PitchAutopilotParams : 72
+    {
+        Kp : float;
+        Ki : float;
+        Kd : float;
+        scale : float;
+    }
 }
 group telemetry
 {
@@ -272,3 +311,4 @@ group pressure
 	    aft : uint16;
     }
 }
+

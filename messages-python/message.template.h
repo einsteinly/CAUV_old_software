@@ -19,6 +19,7 @@
 \#    define foreach BOOST_FOREACH
 \#endif
 
+\#include <common/observable.h>
 \#include <common/streamops.h>
 \#include <common/image.h>
 
@@ -292,23 +293,16 @@ class UnknownMessageIdException : public std::exception
         uint32_t m_id;
 };
 
-class MessageSource
+class MessageSource : public Observable<MessageObserver>
 {
     public:
         void notifyObservers(boost::shared_ptr<const byte_vec_t> bytes);
-        void addObserver(boost::shared_ptr<MessageObserver> o);
-        void removeObserver(boost::shared_ptr<MessageObserver> o);
-        void clearObservers();
-
     
     // Ideally protected, but boost.python pointer_holder requires puplic
     // default constructor to be available in order to allow pointers to this
     // type
     // protected:
         MessageSource();
-
-    protected:
-        std::list< boost::shared_ptr<MessageObserver> > m_obs;
 };
 
 
@@ -432,6 +426,8 @@ std::basic_ostream<char_T, traits>& operator<<(
     #for i, f in $enumerate($m.fields)
     #if hasattr($f.type, "name") and ($f.type.name == "int8" or $f.type.name == "byte") 
     os << " $f.name = " << (int)m.m_$f.name#if $i < $len($m.fields) - 1# << ","#end if#;
+    #elif hasattr($f.type, "name") and ($f.type.name == "string")
+    os << " $f.name = \"" << m.m_$f.name#if $i < $len($m.fields) - 1# << "\","#else# << "\""#end if#;
     #else
     os << " $f.name = " << m.m_$f.name#if $i < $len($m.fields) - 1# << ","#end if#;
     #end if

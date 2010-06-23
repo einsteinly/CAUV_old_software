@@ -19,6 +19,7 @@
 
 #include <common/cauv_utils.h>
 #include <common/cauv_global.h>
+#include <common/blocking_queue.h>
 #include <common/messages.h>
 
 class FTDIException : public std::exception
@@ -211,9 +212,14 @@ class Module : public MessageSource
     public:
         Module(int deviceID) : m_ftdiStreamBuffer(deviceID)
         {
+        }
+
+        void start()
+        {
             if (m_ftdiStreamBuffer.is_open())
             {
-                m_readThread = boost::make_shared<boost::thread>(&Module::readLoop, this);
+                m_readThread = boost::thread(&Module::readLoop, this);
+                m_sendThread = boost::thread(&Module::readLoop, this);
             }
             else
             {
@@ -223,37 +229,61 @@ class Module : public MessageSource
 
         ~Module()
         {
-            m_readThread->interrupt();
-            m_readThread->join();
+            if (m_readThread.get_id() != boost::thread::id()) {
+                m_readThread.interrupt();
+                m_readThread.join();
+            }
+            if (m_sendThread.get_id() != boost::thread::id()) {
+                m_sendThread.interrupt();
+                m_sendThread.join();
+            }
         }
 
 
-        void send(Message& message)
+        void send(boost::shared_ptr<Message> message)
         {
-            boost::shared_ptr<const byte_vec_t> bytes = message.toBytes();
-
-            uint32_t startWord = 0xdeadc01d;
-            uint32_t len = bytes->size();
-
-            uint32_t buf[2];
-            buf[0] = startWord;
-            buf[1] = len;
-            uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
-            std::vector<uint16_t> vheader(buf16, buf16+4);
-            uint16_t checksum = sumOnesComplement(vheader);
-
-            boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
-            
-            ar << startWord;
-            ar << len;
-            ar << checksum;
-            foreach (char c, *bytes)
-                ar << c;
+            m_sendQueue.push(message);
         }
 
     protected:
         boost::iostreams::stream_buffer<ftdi_device_t> m_ftdiStreamBuffer;
-        boost::shared_ptr<boost::thread> m_readThread;
+        boost::thread m_readThread, m_sendThread;
+        BlockingQueue< boost::shared_ptr<Message> > m_sendQueue;
+
+
+        void sendLoop()
+        {
+            debug() << "Started module send thread";
+            try {
+                boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
+                while (true) {
+                    boost::shared_ptr<Message> message = m_sendQueue.popWait();
+                    boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
+
+                    uint32_t startWord = 0xdeadc01d;
+                    uint32_t len = bytes->size();
+
+                    uint32_t buf[2];
+                    buf[0] = startWord;
+                    buf[1] = len;
+                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
+                    std::vector<uint16_t> vheader(buf16, buf16+4);
+                    uint16_t checksum = sumOnesComplement(vheader);
+                    
+                    ar << startWord;
+                    ar << len;
+                    ar << checksum;
+                    foreach (char c, *bytes)
+                        ar << c;
+                }
+            }
+            catch (boost::thread_interrupted&)
+            {
+                debug() << "Module send thread interrupted";
+            }
+
+            debug() << "Ending module send thread";
+        }
 
         void readLoop()
         {

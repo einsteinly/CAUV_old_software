@@ -341,18 +341,6 @@ const char * UnknownMessageIdException::what() const throw()
 MessageSource::MessageSource()
 {
 }
-void MessageSource::addObserver(boost::shared_ptr<MessageObserver> o)
-{
-    m_obs.push_back(o);
-}
-void MessageSource::removeObserver(boost::shared_ptr<MessageObserver> o)
-{
-    m_obs.remove(o);
-}
-void MessageSource::clearObservers()
-{
-    m_obs.clear();
-}
 void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
 {
     if (bytes->size() < 4)
@@ -367,7 +355,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
         case $m.id:
         {
             boost::shared_ptr<$className> m = $className::fromBytes(bytes);
-            foreach(boost::shared_ptr<MessageObserver> o, m_obs)
+            foreach(observer_ptr_t o, m_observers)
             {
                 o->on${className}(m);
             }
