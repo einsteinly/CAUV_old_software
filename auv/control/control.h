@@ -20,7 +20,7 @@ class ControlNode : public CauvNode
         boost::shared_ptr<XsensIMU> m_xsens;
         boost::shared_ptr<ControlLoops> m_controlLoops;
     
-        boost::thread m_motorThread, m_aliveThread, m_telemetryThread;
+        boost::thread m_aliveThread;
 
         virtual void onRun();
 };
