@@ -2,16 +2,41 @@
 
 #include <boost/make_shared.hpp>
 
+#include "display_sonar_observer.h"
+
 SonarNode::SonarNode(const std::string& device) : CauvNode("Sonar")
 {
     m_sonar = boost::make_shared<SeanetSonar>(device);
 }
 
 
+
+class SpreadSonarObserver : public SonarObserver
+{
+    public:
+        SpreadSonarObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox) : m_mailbox(mailbox)
+        {
+        }
+        
+        virtual void onReceiveDataLine(const SonarDataLine& data) 
+        {
+            boost::shared_ptr<SonarDataMessage> m = boost::make_shared<SonarDataMessage>(data);
+            m_mailbox->sendMessage(m, SAFE_MESS);
+        }
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
+};
+
 void SonarNode::onRun()
 {
+    m_sonar->addObserver(boost::make_shared<SpreadSonarObserver>(mailbox()));
+#ifdef DISPLAY_SONAR
+    m_sonar->addObserver(boost::make_shared<DisplaySonarObserver>());
+#endif
     m_sonar->init();
-    
+
+    mailboxMonitor()->addObserver(boost::make_shared<SonarControlMessageObserver>(m_sonar));
+
     while (true) {
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     }

@@ -105,6 +105,7 @@ struct SonarDataLine
 {
     data: list<byte>;
     bearing: int32;
+    bearingRange: int32;
     range: int32;
 }
 
@@ -187,6 +188,18 @@ group sonarout
 	message SonarData : 30
 	{
         line : SonarDataLine;
+    }
+}
+group sonarctl
+{
+	message SonarControl : 32
+	{
+        direction : uint16;
+        width : uint16;
+        gain : uint8;
+        range : uint32;
+        radialRes : uint32;
+        angularRes : uint8;
     }
 }
 
