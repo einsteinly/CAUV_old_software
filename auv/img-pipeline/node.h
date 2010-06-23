@@ -55,8 +55,9 @@ class Node{
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
         
-        typedef boost::recursive_mutex mutex_t;
-        typedef boost::unique_lock<mutex_t> lock_t;
+        typedef boost::shared_mutex mutex_t;
+        typedef boost::upgrade_lock<mutex_t> shared_lock_t;
+        typedef boost::unique_lock<mutex_t> unique_lock_t;
 
         typedef Spread::service service_t;
     
@@ -127,7 +128,7 @@ class Node{
          */
         template<typename T>
         void setParam(param_id const& p, T const& v) throw(id_error){
-            lock_t l(m_parameters_lock);
+            unique_lock_t l(m_parameters_lock);
             param_value_map_t::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 debug() << "param" << p << "set to" << v;
@@ -162,7 +163,7 @@ class Node{
          */
         template<typename T>
         T param(param_id const& p) const throw(id_error){
-            lock_t l(m_parameters_lock);
+            unique_lock_t l(m_parameters_lock);
             const param_value_map_t::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 const in_link_map_t::const_iterator j = m_parent_links.find(p);
@@ -218,7 +219,7 @@ class Node{
         template<typename T>
         void registerParamID(param_id const& p, T const& default_value,
                              std::string const& tip=""){
-            lock_t l(m_parameters_lock);
+            unique_lock_t l(m_parameters_lock);
             m_parameters[p] = param_value_t(default_value);
             m_parameter_tips[p] = tip;
             m_new_paramvalues[p] = true;
@@ -232,8 +233,8 @@ class Node{
          */
         template<typename T>
         void registerOutputID(output_id const& o){
-            lock_t l(m_child_links_lock);
-            lock_t m(m_outputs_lock);
+            unique_lock_t l(m_child_links_lock);
+            unique_lock_t m(m_outputs_lock);
             
             m_child_links[o] = output_link_list_t();
             m_outputs[o] = output_t(T());
@@ -262,7 +263,7 @@ class Node{
         bool newInput() const;
 
         void setValidInput(input_id const&);
-        void clearInputValid(input_id const&);
+        void clearValidInput(input_id const&);
         bool validInputAll() const;
         
         /* This is called by the children of this node in order to request new
