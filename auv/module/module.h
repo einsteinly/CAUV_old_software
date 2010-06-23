@@ -21,11 +21,6 @@
 #include <common/cauv_global.h>
 #include <common/messages.h>
 
-// TODO: use consistent type definitions everywhere
-#if defined(__APPLE__)
-typedef unsigned char u_char;
-#endif
-
 class FTDIException : public std::exception
 {
     protected:
@@ -56,7 +51,7 @@ class FTDIContext : boost::noncopyable
             ftdi_deinit(&ftdic);
         }
 
-        std::vector<usb_device_ptr> usbFindAll() throw(FTDIException)
+        std::vector<usb_device_ptr> usbFindAll()
         {
             struct ftdi_device_list* devices;
             int ret;
@@ -117,7 +112,7 @@ class FTDIContext : boost::noncopyable
             }
         }
         
-        std::streamsize read(u_char* s, std::streamsize n)
+        std::streamsize read(unsigned char* s, std::streamsize n)
         {
             int ret = ftdi_read_data(&ftdic, s, n);
             if (ret < 0)
@@ -127,9 +122,9 @@ class FTDIContext : boost::noncopyable
             return ret;
         }
 
-        std::streamsize write(const u_char* s, std::streamsize n)
+        std::streamsize write(const unsigned char* s, std::streamsize n)
         {
-            int ret = ftdi_write_data(&ftdic, const_cast<u_char*>(s), n);
+            int ret = ftdi_write_data(&ftdic, const_cast<unsigned char*>(s), n);
             if (ret < 0)
             {
                 throw FTDIException("Unable to write to ftdi device", ret, &ftdic);
@@ -147,7 +142,7 @@ template<int baudrate, ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_pa
 class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirectional>
 {
     public:
-        FTDIDevice(int deviceID) throw(FTDIException)
+        FTDIDevice(int deviceID)
         {
             m_ftdic = boost::make_shared<FTDIContext>();
 
@@ -171,17 +166,35 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
         
         std::streamsize read(char* s, std::streamsize n)
         {
-            return m_ftdic->read(reinterpret_cast<u_char*>(s), n);
+            std::streamsize r;
+            while (true) {
+                r = m_ftdic->read(reinterpret_cast<unsigned char*>(s), n);
+                if (r != 0) {
+                    break;
+                }
+                boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+            }
+
+#ifdef DEBUG_MCB_COMMS
+            std::stringstream ss;
+            for (int i = 0; i < r; i++)
+                ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
+            debug() << "Received" << ss.str();
+#endif
+
+            return r;
         }
 
         std::streamsize write(const char* s, std::streamsize n)
         {
+#ifdef DEBUG_MCB_COMMS
             std::stringstream ss;
             for (int i = 0; i < n; i++)
-                ss << std::hex << std::setw(2) << std::setfill('0') << (int)(u_char)s[i] << " ";
-            debug(-1) << "Sending" << ss.str();
+                ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
+            debug() << "Sending" << ss.str();
+#endif
 
-            return m_ftdic->write(reinterpret_cast<const u_char*>(s), n);
+            return m_ftdic->write(reinterpret_cast<const unsigned char*>(s), n);
         }
         
     protected:
@@ -196,14 +209,11 @@ class Module : public MessageSource
     typedef FTDIDevice<baudrate, bits, stopBits, parity, flowControl> ftdi_device_t;
     
     public:
-        Module(int deviceID) throw(FTDIException) : m_ftdiStreamBuffer(deviceID)
+        Module(int deviceID) : m_ftdiStreamBuffer(deviceID)
         {
             if (m_ftdiStreamBuffer.is_open())
             {
-                m_running = true;
-                //m_readThread = boost::make_shared<boost::thread>(&Module::readLoop, this);
-
-                info() << "Module thread started";
+                m_readThread = boost::make_shared<boost::thread>(&Module::readLoop, this);
             }
             else
             {
@@ -213,12 +223,12 @@ class Module : public MessageSource
 
         ~Module()
         {
-            m_running = false;
+            m_readThread->interrupt();
             m_readThread->join();
         }
 
 
-        void send(Message& message) throw (FTDIException)
+        void send(Message& message)
         {
             boost::shared_ptr<const byte_vec_t> bytes = message.toBytes();
 
@@ -243,64 +253,87 @@ class Module : public MessageSource
 
     protected:
         boost::iostreams::stream_buffer<ftdi_device_t> m_ftdiStreamBuffer;
-        volatile bool m_running;
         boost::shared_ptr<boost::thread> m_readThread;
 
         void readLoop()
         {
-            byte_vec_t curMsg;
-            boost::archive::binary_iarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
+            debug() << "Started module read thread";
+           
+            try {
 
-            while (m_running)
-            {
-                uint32_t startWord;
-                ar >> startWord;
+                byte_vec_t curMsg;
+                boost::archive::binary_iarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
 
-                if (startWord != 0xdeadc01d)
+                while (true)
                 {
-                    // Start word doesn't match, drop it
-                    continue;
-                }
+                    boost::this_thread::interruption_point();
+                    uint32_t startWord;
+                    ar >> startWord;
 
-                uint32_t len;
-                uint16_t checksum;
-                ar >> len;
-                ar >> checksum;
+                    if (startWord != 0xdeadc01d)
+                    {
+                        // Start word doesn't match, drop it
+                        warning() << (std::string)(MakeString() << "Start word doesn't match (0x" << std::hex << startWord << " instead of 0xdeadc01d) -- starting to search for it"); 
+                        while (startWord != 0xdeadc01d)
+                        {
+                            char nextByte;
+                            ar >> nextByte;
+                            startWord = (nextByte << 24) | ((startWord >> 8) & 0xffffff);
+                        }
+                    }
 
-                uint32_t buf[2];
-                buf[0] = startWord;
-                buf[1] = len;
+                    uint32_t len;
+                    uint16_t checksum;
+                    ar >> len;
+                    ar >> checksum;
 
-                uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
-                std::vector<uint16_t> vheader(buf16, buf16+4);
+                    uint32_t buf[2];
+                    buf[0] = startWord;
+                    buf[1] = len;
 
-                if (sumOnesComplement(vheader) != checksum)
-                {
-                    // Checksum doesn't match, drop it
-                    continue;
-                }
+                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
+                    std::vector<uint16_t> vheader(buf16, buf16+4);
 
-                curMsg.clear();
-                char c;
-                for (uint32_t i = 0; i < len; ++i)
-                {
-                    ar >> c;
-                    curMsg.push_back(c);
-                }
+                    if (sumOnesComplement(vheader) != checksum)
+                    {
+                        // Checksum doesn't match, drop it
+                        warning() << (std::string)(MakeString() << "Checksum is incorrect (0x" << std::hex << checksum << " instead of 0x" << std::hex << sumOnesComplement(vheader) << ")"); 
+                        continue;
+                    }
 
-                
-#ifdef DEBUG
-                std::stringstream ss;
-                ss << "Message from module  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
-                foreach(char c, curMsg)
-                {
-                    ss << std::hex << std::setw(2) << std::setfill('0') << c << " ";
-                }
-                debug(1) << ss.str();
+                    curMsg.clear();
+                    char c;
+                    for (uint32_t i = 0; i < len; ++i)
+                    {
+                        ar >> c;
+                        curMsg.push_back(c);
+                    }
+
+#ifdef DEBUG_MCB_COMMS
+                    std::stringstream ss;
+                    ss << "Message from module  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
+                    foreach(char c, curMsg)
+                    {
+                        ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)c << " ";
+                    }
+                    debug() << ss.str();
 #endif
 
-                this->notifyObservers(curMsg);
+                    boost::shared_ptr<byte_vec_t> msg = boost::make_shared<byte_vec_t>(curMsg);
+                    try {
+                        this->notifyObservers(msg);
+                    } catch (UnknownMessageIdException& e) {
+                        error() << "Error when receiving message: " << e.what();
+                    }
+                }
+           
             }
+            catch (boost::thread_interrupted&)
+            {
+                debug() << "Module read thread interrupted";
+            }
+
+            debug() << "Ending module read thread";
         }
 };
 

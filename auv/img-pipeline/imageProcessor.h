@@ -31,7 +31,9 @@ class ImageProcessor: public MessageObserver
         typedef boost::unique_lock<mutex_t> lock_t;
     public:    
         ImageProcessor(mb_ptr_t mailbox);
-        
+       
+        void start();
+
         /**
          * override MessageObserver functions to take actions on messages
          */

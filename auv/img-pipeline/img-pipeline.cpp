@@ -23,6 +23,8 @@ ImagePipelineNode::ImagePipelineNode()
 
 void ImagePipelineNode::onRun()
 {
+    m_pipeline->start();
+    
     mailbox()->joinGroup("image");
     mailbox()->joinGroup("pipeline");
     mailbox()->joinGroup("pl_gui");

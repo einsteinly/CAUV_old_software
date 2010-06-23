@@ -327,6 +327,17 @@ void DebugMessageObserver::on${className}($classPtr m)
 #end for
 
 
+
+UnknownMessageIdException::UnknownMessageIdException(uint32_t id) : m_id(id)
+{
+}
+const char * UnknownMessageIdException::what() const throw()
+{
+    std::string message = MakeString() << "Unknown message id: " << m_id;
+    return message.c_str();
+}
+
+
 MessageSource::MessageSource()
 {
 }
@@ -347,7 +358,8 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
     if (bytes->size() < 4)
         throw std::out_of_range("Buffer too small to contain message id");
 
-    switch(*reinterpret_cast<const uint32_t*>(bytes->data()))
+    int id = *reinterpret_cast<const uint32_t*>(bytes->data());
+    switch (id)
     {
         #for $g in $groups
         #for $m in $g.messages
@@ -364,7 +376,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
         #end for
         #end for
         default:
-            throw std::out_of_range("Unknown message id");
+            throw UnknownMessageIdException(id);
     }
 }
 

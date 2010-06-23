@@ -172,41 +172,45 @@ public:
      * @return An object containing the received message and associated metadata.
      */
     virtual boost::shared_ptr<SpreadMessage> receiveMessage() {
-        ErrOnExit err("Failed to receive message ");
-        boost::shared_ptr<SpreadMessage> r;
-        if(_waitConnected(500)){
-            try{
-                if(m_mailbox){
-                    r = m_mailbox->receiveMessage();
-                    err.no();
+        while(true)
+        {
+            ErrOnExit err("Failed to receive message ");
+            if(_waitConnected(500)){
+                try{
+                    if(m_mailbox){
+                        boost::shared_ptr<SpreadMessage> r = m_mailbox->receiveMessage();
+                        err.no();
+                        return r;
+                    }
+                }catch(ConnectionError& e){
+                    err += e.what();
+                    handleConnectionError(e);
                 }
-            }catch(ConnectionError& e){
-                err += e.what();
-                handleConnectionError(e);
+            }else{
+                _asyncConnect();
             }
-        }else{
-            _asyncConnect();
         }
-        return r;
     }
 
     int waitingMessageByteCount() {
-        ErrOnExit err(std::string(__func__) + " error"); 
-        int r = 0;
-        if(_waitConnected(100)){
-            try{
-                if(m_mailbox){
-                    r = m_mailbox->waitingMessageByteCount();
-                    err.no();
+        while(true)
+        {
+            ErrOnExit err(std::string(__func__) + " error"); 
+            if(_waitConnected(100)){
+                try{
+                    if(m_mailbox){
+                        int r = m_mailbox->waitingMessageByteCount();
+                        err.no();
+                        return r;
+                    }
+                }catch(ConnectionError& e){
+                    err += e.what();
+                    handleConnectionError(e);
                 }
-            }catch(ConnectionError& e){
-                err += e.what();
-                handleConnectionError(e);
+            }else{
+                _asyncConnect();
             }
-        }else{
-            _asyncConnect();
         }
-        return r;
     }
 
     bool isConnected() {
@@ -236,7 +240,7 @@ public:
             } catch(ConnectionError& e) {
                 if (e.critical()){
                     _disconnect();
-                    throw(e);
+                    throw e;
                 }else{
                     std::cerr << e.what() << ", trying to reconnect..." << std::endl;
                 }
@@ -256,7 +260,7 @@ private:
                        std::string const& pcn,
                        bool recvmm,
                        ConnectionTimeout const& t,
-                       SpreadMailbox::MailboxPriority p) throw()
+                       SpreadMailbox::MailboxPriority p)
             : portAndHost(ph), privConnectionName(pcn), recvMembershipMessages(recvmm), timeout(t), priority(p){
         }
 
@@ -267,7 +271,7 @@ private:
         SpreadMailbox::MailboxPriority priority;
     };
 
-    ConnectionState _checkConnected() throw(){
+    ConnectionState _checkConnected(){
         // TODO: m_mailbox->connected() might return false even when we have
         // m_connected_state = CONNECTED
         lock_t l(m_connection_state_lock);
@@ -277,7 +281,7 @@ private:
     /**
      * Return true as soon as possible, or false if timeout is reached.
      */
-    bool _waitConnected(unsigned msecs, unsigned attempts = 5) throw(){
+    bool _waitConnected(unsigned msecs, unsigned attempts = 5){
         // TODO: timed_wait, or similar
         const unsigned dt = msecs / attempts;
         unsigned i = 0;
@@ -330,7 +334,7 @@ private:
             _doJoinGroup(*i);
     }
 
-    void _asyncConnect() throw(){
+    void _asyncConnect(){
         // I appreciate that lowlevel functions which print things are really
         // annoying, however this saves a signficiant number of lines of code,
         // since this function is almost always called after an error, in which

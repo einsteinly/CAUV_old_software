@@ -1,5 +1,5 @@
-#ifndef __BLUR_NODE_H__
-#define __BLUR_NODE_H__
+#ifndef __MEDIAN_FILTER_NODE_H__
+#define __MEDIAN_FILTER_NODE_H__
 
 #include <map>
 #include <vector>
@@ -10,9 +10,9 @@
 #include "../node.h"
 
 
-class BlurNode: public Node{
+class MedianFilterNode: public Node{
     public:
-        BlurNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+        MedianFilterNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
             // fast node:
             m_speed = fast;
@@ -23,9 +23,7 @@ class BlurNode: public Node{
             // one output
             registerOutputID<image_ptr_t>("image (not copied)");
             
-            // parameters: blur type (gaussian, median), kernel radius: must be
-            // an odd integer
-            registerParamID<std::string>("type", "gaussian");
+            // parameters: kernel radius: must be an odd integer
             registerParamID<int>("kernel", 3);
         }
 
@@ -35,24 +33,18 @@ class BlurNode: public Node{
 
             image_ptr_t img = inputs["image"];
             
-            std::string ftype = param<std::string>("type");
             int ksize = param<int>("kernel");
 
             if(!(ksize & 1))
-                warning() << "blur kernel size should be odd";
+                warning() << "filter kernel size should be odd";
 
-            debug() << "BlurNode:" << ftype << ksize;
+            debug() << "MedianFilterNode:" << ksize;
             
             try{
-                if(ftype == "median")
-                    cv::medianBlur(img->cvMat(), img->cvMat(), ksize);
-                else if(ftype == "gaussian")
-                    cv::GaussianBlur(img->cvMat(), img->cvMat(), cv::Size(), ksize, 0);
-                else
-                    throw(parameter_error("invalid blur type: " + ftype));
+                cv::medianBlur(img->cvMat(), img->cvMat(), ksize);
                 r["image (not copied)"] = img;
             }catch(cv::Exception& e){
-                error() << "BlurNode:\n\t"
+                error() << "MedianFilterNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
@@ -64,4 +56,4 @@ class BlurNode: public Node{
     DECLARE_NFR;
 };
 
-#endif // ndef __BLUR_NODE_H__
+#endif//__MEDIAN_FILTER_NODE_H__

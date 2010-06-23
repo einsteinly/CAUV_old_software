@@ -11,6 +11,10 @@
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
     : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(),
       m_mailbox_lock(), m_mailbox(mb){
+}
+
+void ImageProcessor::start()
+{
     m_scheduler.start();
 }
 
@@ -220,7 +224,7 @@ node_ptr_t ImageProcessor::lookup(node_id const& id) const throw(id_error){
     if(i != m_nodes.end())
         return i->second;
     else
-        throw(id_error(std::string("Unknown node id: ") + to_string(id)));
+        throw id_error(std::string("Unknown node id: ") + to_string(id));
 }
 
 node_id ImageProcessor::lookup(node_ptr_t const& p) const throw(){
@@ -248,7 +252,7 @@ void ImageProcessor::_removeNode(node_id const& id) throw(id_error){
         m_nodes_rev.erase(i->second);
         m_nodes.erase(i);
     }else{
-        throw(id_error(std::string("Unknown node id: ") + to_string(id)));
+        throw id_error(std::string("Unknown node id: ") + to_string(id));
     }
 }
 

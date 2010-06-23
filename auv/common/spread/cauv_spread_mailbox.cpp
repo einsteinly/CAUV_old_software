@@ -141,15 +141,17 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() {
         Spread::mailbox fd = m_ssrcMailbox->descriptor();
         fd_set fds;
         FD_ZERO(&fds);
-        FD_SET(fd, &fds);
-        
         struct timeval towait;
-	    towait.tv_sec = 1;
-	    towait.tv_usec = 0;
 	    
         int ret = 0;
-        while (ret == 0) {
-            ret = select(fd+1, &fds, NULL, &fds, &towait);
+        while (true) {
+            FD_SET(fd, &fds);
+            towait.tv_sec = 2;
+            towait.tv_usec = 0;
+            ret = select(fd+1, &fds, NULL, NULL, &towait);
+            if (ret != 0) {
+                break;
+            }
             boost::this_thread::interruption_point();
         }
         if(ret < 0)

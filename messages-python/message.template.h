@@ -281,6 +281,17 @@ class DebugMessageObserver: public MessageObserver
         #end for
         #end for
 };
+
+
+class UnknownMessageIdException : public std::exception
+{
+    public:
+        UnknownMessageIdException(uint32_t id);
+        virtual const char * what() const throw();
+    protected:
+        uint32_t m_id;
+};
+
 class MessageSource
 {
     public:

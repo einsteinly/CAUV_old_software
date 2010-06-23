@@ -82,9 +82,7 @@ void MailboxEventMonitor::doMonitoring() {
         }
     } catch (boost::thread_interrupted& e) {
         debug() << "Monitor thread interrupted";
-    } catch (...) {
-        debug() << "WTF";
-    }
+    } 
     debug() << "Ending monitor thread";
 }
 

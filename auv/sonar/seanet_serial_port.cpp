@@ -54,11 +54,10 @@ boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
 
 	unsigned char buffer[13];
         
+    fd_set set;
+    FD_ZERO (&set);
 
     struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
-
 
 again:
 
@@ -72,9 +71,9 @@ again:
 	{
         rec = 0;
         while (rec == 0) {
-            fd_set set;
-            FD_ZERO (&set);
             FD_SET (m_fd, &set);
+            timeout.tv_sec = 2;
+            timeout.tv_usec = 0;
             rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
 		    check_is_sonar_dead();
         }
@@ -102,9 +101,9 @@ again:
 		while (buffer[0] != 0x0A) {
             rec = 0;
             while (rec == 0) {
-                fd_set set;
-                FD_ZERO (&set);
                 FD_SET (m_fd, &set);
+                timeout.tv_sec = 2;
+                timeout.tv_usec = 0;
                 rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
                 check_is_sonar_dead();
             }
@@ -138,9 +137,9 @@ again:
 	{
         rec = 0;
         while (rec == 0) {
-            fd_set set;
-            FD_ZERO (&set);
             FD_SET (m_fd, &set);
+            timeout.tv_sec = 2;
+            timeout.tv_usec = 0;
             rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
             check_is_sonar_dead();
         }
