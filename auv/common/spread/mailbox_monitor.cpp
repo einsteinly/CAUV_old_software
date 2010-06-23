@@ -1,4 +1,4 @@
-#include "cauv_mailbox_monitor.h"
+#include "mailbox_monitor.h"
 
 
 TestMBObserver::TestMBObserver()
@@ -17,21 +17,6 @@ void TestMBObserver::membershipMessageReceived(boost::shared_ptr<const Membershi
 
 MailboxEventMonitor::MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
         : m_thread(), m_mailbox(mailbox) {
-}
-
-void MailboxEventMonitor::addObserver(mb_observer_ptr_t observer) {
-    boost::lock_guard<boost::recursive_mutex> l(m_observers_lock);
-    m_observers.push_back(observer);
-}
-
-void MailboxEventMonitor::removeObserver(mb_observer_ptr_t observer) {
-    boost::lock_guard<boost::recursive_mutex> l(m_observers_lock);
-    m_observers.remove(observer);
-}
-
-void MailboxEventMonitor::clearObservers() {
-    boost::lock_guard<boost::recursive_mutex> l(m_observers_lock);
-    m_observers.clear();
 }
 
 void MailboxEventMonitor::startMonitoring() {
@@ -66,12 +51,12 @@ void MailboxEventMonitor::doMonitoring() {
 
             if (m->getMessageFlavour() == SpreadMessage::REGULAR_MESSAGE)
             {
-                foreach (mb_observer_ptr_t o, m_observers)
+                foreach (observer_ptr_t o, m_observers)
                     o->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
             }
             else if(m->getMessageFlavour() == SpreadMessage::MEMBERSHIP_MESSAGE)
             {
-                foreach (mb_observer_ptr_t o, m_observers)
+                foreach (observer_ptr_t o, m_observers)
                     o->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
             }
             else

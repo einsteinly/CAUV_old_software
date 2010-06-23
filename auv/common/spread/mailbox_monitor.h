@@ -11,8 +11,8 @@
 
 #include <common/debug.h>
 
-#include "cauv_spread_rc_mailbox.h"
-#include "cauv_spread_messages.h"
+#include "spread_rc_mailbox.h"
+#include "spread_messages.h"
 
 class MailboxObserver {
     public:
@@ -28,13 +28,9 @@ class TestMBObserver: public MailboxObserver{
         void membershipMessageReceived(boost::shared_ptr<const MembershipMessage>);
 };
 
-class MailboxEventMonitor: boost::noncopyable {
+class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public boost::noncopyable {
     public:
         MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox);
-
-        void addObserver(mb_observer_ptr_t observer); 
-        void removeObserver(mb_observer_ptr_t observer); 
-        void clearObservers();
 
         /**
          * Spawns a new thread listening for new messages on the associated mailbox.
@@ -50,9 +46,6 @@ class MailboxEventMonitor: boost::noncopyable {
 
     private:
         void doMonitoring();
-
-        boost::recursive_mutex m_observers_lock;
-        std::list<mb_observer_ptr_t> m_observers;
 
         boost::thread m_thread;
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;

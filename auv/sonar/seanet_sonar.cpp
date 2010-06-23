@@ -203,22 +203,6 @@ void SeanetSonar::set_scan_settings(unsigned char mode, uint16_t direction, uint
 
 
 
-void SeanetSonar::addObserver(boost::shared_ptr<SonarObserver> o)
-{
-    m_obs.push_back(o);
-}
-
-void SeanetSonar::removeObserver(boost::shared_ptr<SonarObserver> o)
-{
-    m_obs.remove(o);
-}
-
-void SeanetSonar::clearObservers()
-{
-    m_obs.clear();
-}
-
-
 bool SeanetHeadData::same_settings(const SeanetHeadData& first, const SeanetHeadData& second)
 {
     return first.hdCtrl == second.hdCtrl && first.gain == second.gain &&
@@ -266,7 +250,7 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
     
     debug() << "Sending data line with range" << dataline->range << "mm and bearing" << dataline->bearing << endl;
     
-    foreach (boost::shared_ptr<SonarObserver> o, m_obs)
+    foreach (observer_ptr_t o, m_observers)
     {
         o->onReceiveDataLine(*dataline);
     }

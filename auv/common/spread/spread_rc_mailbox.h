@@ -13,7 +13,7 @@
 #include <common/cauv_utils.h>
 #include <common/debug.h>
 
-#include "cauv_spread_mailbox.h"
+#include "spread_mailbox.h"
 
 class ErrOnExit: boost::noncopyable{
     public:

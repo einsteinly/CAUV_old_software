@@ -38,23 +38,11 @@ CameraID::e Camera::id() const
 }
 
 
-void Camera::addObserver(observer_ptr o)
-{
-    m_obs.push_back(o);
-}
-void Camera::removeObserver(observer_ptr o)
-{
-    m_obs.remove(o);
-}
-void Camera::clearObservers()
-{
-    m_obs.clear();
-}
 
 
 void Camera::broadcastImage(const cv::Mat& img)
 {
-    foreach(observer_ptr o, m_obs)
+    foreach(observer_ptr_t o, m_observers)
     {
         o->onReceiveImage(m_id, img);
     }

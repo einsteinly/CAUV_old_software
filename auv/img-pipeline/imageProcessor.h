@@ -12,7 +12,7 @@
 
 #include <common/messages.h>
 #include <common/cauv_utils.h>
-#include <common/spread/cauv_spread_rc_mailbox.h>
+#include <common/spread/spread_rc_mailbox.h>
 
 #include "pipelineTypes.h"
 #include "scheduler.h"

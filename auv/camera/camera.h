@@ -39,23 +39,15 @@ class ImageCaptureException : public CameraException
 };
 
 class CameraObserver;
-class Camera
+class Camera : public Observable<CameraObserver>
 {
-    typedef boost::shared_ptr<CameraObserver> observer_ptr;
-    typedef std::list< observer_ptr > observer_list;
-    
     public:
         virtual ~Camera();
         
         CameraID::e id() const;
-
-        void addObserver(observer_ptr o);
-        void removeObserver(observer_ptr o);
-        void clearObservers();
     
     protected:
         CameraID::e m_id;
-        observer_list m_obs;
 
         Camera(const CameraID::e id);
 

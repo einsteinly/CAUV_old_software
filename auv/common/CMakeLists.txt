@@ -41,9 +41,9 @@ add_library (
     cauv_utils.cpp
     image.cpp
     messages.cpp
-    spread/cauv_mailbox_monitor.cpp
-    spread/cauv_spread_mailbox.cpp
-    spread/cauv_spread_messages.cpp
+    spread/mailbox_monitor.cpp
+    spread/spread_mailbox.cpp
+    spread/spread_messages.cpp
 )
 target_link_libraries (
     common
@@ -67,9 +67,9 @@ add_library (
     cauv_utils.cpp
     image.cpp
     messages.cpp
-    spread/cauv_mailbox_monitor.cpp
-    spread/cauv_spread_mailbox.cpp
-    spread/cauv_spread_messages.cpp
+    spread/mailbox_monitor.cpp
+    spread/spread_mailbox.cpp
+    spread/spread_messages.cpp
 )
 target_link_libraries (
     common-shared

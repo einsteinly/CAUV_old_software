@@ -4,11 +4,12 @@
 #include <string>
 #include <vector>
 #include <ssrc/spread/Mailbox.h>
-#include "cauv_spread_exceptions.h"
-#include "cauv_spread_messages.h"
-#include <common/messages.h>
 #include <boost/shared_ptr.hpp>
 
+#include <common/messages.h>
+
+#include "spread_exceptions.h"
+#include "spread_messages.h"
 
 /**
  * ConnectionTimeout is a simple wrapper around Spread::sp_time, the %Spread C

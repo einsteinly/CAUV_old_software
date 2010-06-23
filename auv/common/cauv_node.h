@@ -7,9 +7,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <common/spread/cauv_spread_rc_mailbox.h>
-#include <common/spread/cauv_mailbox_monitor.h>
-#include <common/spread/cauv_msgsrc_mb_observer.h>
+#include <common/spread/spread_rc_mailbox.h>
+#include <common/spread/mailbox_monitor.h>
+#include <common/spread/msgsrc_mb_observer.h>
 
 class CauvNode
 {

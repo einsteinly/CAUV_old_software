@@ -1,4 +1,4 @@
-#include "cauv_spread_messages.h"
+#include "spread_messages.h"
 
 SpreadMessage::SpreadMessage( const std::string &sender ) : m_sender(sender) {}
 
