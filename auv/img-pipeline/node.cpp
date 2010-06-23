@@ -21,6 +21,7 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
       m_parameter_tips(),
       m_parameters_lock(),
 
+      m_checking_sched_lock(),
       m_exec_queued(false),
       m_exec_queued_lock(),
       m_new_inputs(),
@@ -71,6 +72,7 @@ void Node::setInput(node_ptr_t n){
         const output_id_set_t parent_outputs = n->outputs();
         if(parent_outputs.size() == 1){
             in_link_map_t::value_type pl = *m_parent_links.begin();
+            l.unlock();
             setInput(pl.first, pl.second.first, pl.second.second);
         }else{
             error() << "Parent has " << parent_outputs.size() << " outputs!";
@@ -88,21 +90,25 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
     const in_link_map_t::iterator i = m_parent_links.find(i_id);
     if(i == m_parent_links.end()){
         throw id_error("setInput: Invalid input id" + to_string(i_id));
+    }else if(n->id() == id()){
+        throw link_error("can't link nodes to themselves: blame shared mutexes being non-recursive");
     }else if(m_parameters.count(i->first) != n->paramOutputs().count(o_id)){
         throw link_error("setInput: Parameter <==> Image mismatch");
     }else{
+        param_id param = i->first;
         if(i->second.first){
             throw link_error("old arc must be removed first");
         }
         debug(3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
         i->second = input_link_t(n, o_id);
-        if(m_parameters.count(i->first)){
+        l.unlock();
+        if(m_parameters.count(param)){
             warning() << "assuming output parameter is available, this needs fixing";
-            setNewParamValue(i->first);
+            setNewParamValue(param);
         }else{
             if(n->getOutputImage(o_id)){
                 debug() << "node" << *this << "input set, output available from" << *n;
-                setNewInput(i->first);
+                setNewInput(param);
             }else{
                 debug() << "node" << *this << "input set, demand new output on" << *n;
                 n->setNewOutputDemanded(o_id);
@@ -159,6 +165,8 @@ Node::msg_node_input_map_t Node::inputLinks() const{
         NodeOutput t;
         t.node = m_pl.lookup(i.second.first);
         t.output = i.second.second;
+        // i.second.first is guaranteed to not be this since nodes self links
+        // are not allowed
         if(i.second.first && i.second.first->paramOutputs().count(i.second.second))
             t.type = OutputType::Parameter;
         else
@@ -187,7 +195,10 @@ void Node::setOutput(node_ptr_t n){
         if(child_inputs.size() != 1){
             throw link_error("setOutput: specific child input must be specified");
         }
-        setOutput(m_child_links.begin()->first, n, *child_inputs.begin());
+        output_id output = m_child_links.begin()->first;
+        input_id input = *child_inputs.begin();
+        l.unlock();
+        setOutput(output, n, input);
     }else if(m_child_links.size() > 1){
         throw link_error("setOutput: specific output must be specified");
     }else{
@@ -196,12 +207,16 @@ void Node::setOutput(node_ptr_t n){
 }
 
 void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
+    // check this first, because paramOutputs locks m_child_links_lock
+    if(paramOutputs().count(o_id) != n->parameters().count(i_id)){
+        throw link_error("setInput: Parameter <==> Image mismatch");
+    }
     unique_lock_t l(m_child_links_lock);
     const out_link_map_t::iterator i = m_child_links.find(o_id);
     if(i == m_child_links.end()){
         throw id_error("setOutput: Invalid output id" + to_string(o_id));
-    }else if(paramOutputs().count(o_id) != n->parameters().count(i_id)){
-        throw link_error("setInput: Parameter <==> Image mismatch");
+    }else if(n->id() == id()){
+        throw link_error("can't link nodes to themselves: blame shared mutexes being non-recursive");
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
@@ -322,8 +337,7 @@ static NodeIOStatus::e operator|(NodeIOStatus::e const& l, NodeIOStatus::e const
 
 // there must be a nicer way to do this...
 #define CallOnDestruct(Type, member) \
-struct _COD{ _COD(Type& m):m(m){} ~_COD(){m.member();} Type& m; }
-
+struct _COD{_COD(Type& m):m(m){}~_COD(){m.member();}Type& m;}
 void Node::exec(){
     CallOnDestruct(Node, clearExecQueued) cod(*this);
     // take copies of image_ptr s from parents before _demandNewParentInput()
@@ -413,8 +427,7 @@ void Node::exec(){
     cl.unlock();
     ol.unlock();
 
-    if(!this->isOutputNode())
-        clearNewOutputDemanded();
+    clearNewOutputDemanded();
 }
 
 /* Get the actual image data associated with an output
@@ -523,33 +536,15 @@ void Node::registerInputID(input_id const& i){
  * add this node to the scheduler queue
  */
 void Node::checkAddSched() throw(){
-    shared_lock_t la(m_allow_queue_lock);
-    shared_lock_t lr(m_exec_queued_lock);
-    
+    unique_lock_t l(m_checking_sched_lock);
     if(!allowQueue()){
-        debug() << "Cannot enqueue node" << *this << ", allowQueue == false";
+        debug() << "Cannot enqueue node" << *this << ", allowQueue false";
         return;
     }
     if(execQueued()){
         debug() << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
-
-    /* no longer necessary with shared locks?
-    // NB: for now, this lock is required to prevent deadlocks if setAllowQueue
-    // is called from a paramChanged() callback, since validInputAll needs to
-    // (at the moment, and undesirably) lock this in order to check only inputs
-    // and not paramater inputs for validity, and if we don't lock it here the
-    // locking order would be different in the two threads -> deadlock
-    // nastiness
-    shared_lock_t ln(m_parameters_lock);
-    */
-
-    shared_lock_t li(m_output_demanded_lock);
-    shared_lock_t lo(m_new_inputs_lock);
-    shared_lock_t lp(m_new_paramvalues_lock);
-
-
     if(!newOutputDemanded()){
         debug() << "Cannot enqueue node" << *this << ", no output demanded";
         return;
@@ -559,7 +554,6 @@ void Node::checkAddSched() throw(){
         debug() << "Cannot enqueue node" << *this << ", input is invalid";
         return;
     }
-    
     // a new paramvalue is not sufficient to trigger repeated execution since
     // this can cause problems for nodes that do not copy output: ALL input and
     // connected param values must be new
@@ -580,7 +574,6 @@ void Node::checkAddSched() throw(){
 
     debug() << "Queuing node:" << *this;
     setExecQueued();
-
     m_sched.addJob(this, m_priority);
 }
 
@@ -593,12 +586,12 @@ void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p){
  * Check to see if this node should add itself to the scheduler queue
  */
 void Node::setNewInput(input_id const& a){
-    unique_lock_t l(m_new_inputs_lock);
-    unique_lock_t m(m_valid_inputs_lock);
-    const in_bool_map_t::iterator i = m_new_inputs.find(a);
     // new input implies it's probably valid.. if not we'll just find out the
     // next time we come to exec()
     setValidInput(a);
+    unique_lock_t l(m_new_inputs_lock);
+    unique_lock_t m(m_valid_inputs_lock);
+    const in_bool_map_t::iterator i = m_new_inputs.find(a);
     debug() << *this << "input new" << a;
     if(i == m_new_inputs.end()){
         error e;

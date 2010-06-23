@@ -55,9 +55,10 @@ class Node{
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
         
+        /**** SHARED LOCKS ARE NOT RECURSIVE ****/
         typedef boost::shared_mutex mutex_t;
-        typedef boost::upgrade_lock<mutex_t> shared_lock_t;
-        typedef boost::unique_lock<mutex_t> unique_lock_t;
+        typedef boost::shared_lock<mutex_t> shared_lock_t;
+        typedef boost::upgrade_lock<mutex_t> unique_lock_t;
 
         typedef Spread::service service_t;
     
@@ -167,9 +168,10 @@ class Node{
             const param_value_map_t::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 const in_link_map_t::const_iterator j = m_parent_links.find(p);
-                if(j != m_parent_links.end() &&
-                   j->second.first){
-                    assert(j->second.first->paramOutputs().count(j->second.second));
+                node_ptr_t node;
+                if(j != m_parent_links.end() && (node = j->second.first)){
+                    output_id outparam = j->second.second;
+                    assert(node->paramOutputs().count(outparam));
                     debug() << "returning linked parameter value for" << p
                             << "(linked to" << j->second << ")";
                     // TODO: this will throw boost::bad_get if there is a
@@ -177,7 +179,8 @@ class Node{
                     // requested parameter type:
                     //  a) prevent this happening (somehow...)
                     //  b) stop everything falling over when it doe happen
-                    return boost::get<T>(j->second.first->getOutputParam(j->second.second));
+                    l.unlock();
+                    return boost::get<T>(node->getOutputParam(outparam));
                 }
                 return boost::get<T>(i->second);
             }else{
@@ -239,6 +242,8 @@ class Node{
             m_child_links[o] = output_link_list_t();
             m_outputs[o] = output_t(T());
             
+            m.unlock();
+            l.unlock();
             _statusMessage(boost::make_shared<OutputStatusMessage>(
                 m_id, o, NodeIOStatus::e(0)
             ));
@@ -251,7 +256,7 @@ class Node{
         void checkAddSched() throw();
 
         void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS);
-
+        
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)
          * Check to see if this node should add itself to the scheduler queue
@@ -314,8 +319,12 @@ class Node{
         mutable mutex_t m_parameters_lock;
 
 
-        /** Variables that conrol when the node is scheduled:
+        /** Variables that control when the node is scheduled:
          **/
+
+        /* Prevent checkAddSched from being run concurrently:
+         */
+        mutable mutex_t m_checking_sched_lock;
         
         /* prevent nodes (esp. output nodes) from executing in more than one
          * thread at once

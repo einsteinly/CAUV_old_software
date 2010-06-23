@@ -77,7 +77,7 @@ class InputNode: public Node{
          * Input nodes should overload this to set which sources they accept
          * images from (Images only)
          */
-        virtual bool checkSource(Image::Source const& s, CameraID::e const& c) throw(){
+        virtual bool checkSource(Image::Source const&, CameraID::e const&) throw(){
             return true;
         }
    
