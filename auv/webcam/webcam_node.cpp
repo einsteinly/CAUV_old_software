@@ -76,8 +76,8 @@ WebcamNode::WebcamNode(const CameraID::e camera_id, const int device_id)
 
 void WebcamNode::onRun()
 {
-    mailbox()->joinGroup("image");
-    mailboxMonitor()->addObserver(m_cam_observer);
+    join("image");
+    addObserver(m_cam_observer);
 }
 
 static WebcamNode* node;

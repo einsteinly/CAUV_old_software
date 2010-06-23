@@ -31,8 +31,8 @@ class ImageWindow : public MessageObserver
 ImageViewer::ImageViewer(const CameraID::e, const int)
     : CauvNode("img-view")
 {
-    mailbox()->joinGroup("image");
-    mailboxMonitor()->addObserver(boost::make_shared<ImageWindow>());
+    join("image");
+    addObserver(boost::make_shared<ImageWindow>());
 }
 
 static ImageViewer* node;

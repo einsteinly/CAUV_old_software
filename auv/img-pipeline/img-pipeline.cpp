@@ -25,15 +25,11 @@ void ImagePipelineNode::onRun()
 {
     m_pipeline->start();
     
-    mailbox()->joinGroup("image");
-    mailbox()->joinGroup("pipeline");
-    mailbox()->joinGroup("pl_gui");
-    mailbox()->joinGroup("sonarout");
-    #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
-    eventMonitor()->addObserver(boost::make_shared<TestMBObserver>()); 
-    mailboxMonitor()->addObserver(boost::make_shared<DebugMessageObserver>());
-    #endif
-    mailboxMonitor()->addObserver(m_pipeline);
+    join("image");
+    join("pipeline");
+    join("pl_gui");
+    join("sonarout");
+    addObserver(m_pipeline);
 }
 
 static ImagePipelineNode* node;
@@ -55,8 +51,9 @@ void interrupt(int sig)
     raise(sig);
 }
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
     node = new ImagePipelineNode();
     node->run();

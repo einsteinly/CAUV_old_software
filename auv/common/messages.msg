@@ -117,6 +117,10 @@ group debug
         type : DebugType;
 	    msg : string;
     }
+    message DebugLevel : 1
+    {
+        level : int32;
+    }
 }
 
 group control

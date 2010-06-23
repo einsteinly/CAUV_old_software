@@ -19,15 +19,15 @@ class CauvNode
         void run();
 		virtual void onRun();
     
-        // TODO: nicer interface, don't expose mailbox() and co...
-        //void join(std::string const& group);
+        void join(std::string const& group);
+        void addObserver(boost::shared_ptr<MessageObserver>);
+        int send(boost::shared_ptr<const Message> message,
+                 Spread::service serviceType = SAFE_MESS);
+
 
 	protected:
 		std::string m_name;
-
         boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
-        boost::shared_ptr<MailboxEventMonitor> eventMonitor() const; 
-        boost::shared_ptr<MsgSrcMBMonitor> mailboxMonitor() const;
 
         CauvNode(const std::string& name, const char* host="16707@localhost");
     

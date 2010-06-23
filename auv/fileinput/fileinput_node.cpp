@@ -49,8 +49,8 @@ FileinputNode::FileinputNode(std::string const& fname)
 
 void FileinputNode::onRun()
 {
-    mailbox()->joinGroup("image"); 
-    mailboxMonitor()->addObserver(boost::make_shared<FileinputObserver>(m_img, mailbox()));
+    join("image"); 
+    addObserver(boost::make_shared<FileinputObserver>(m_img, mailbox()));
 }
 
 static FileinputNode* node;

@@ -399,7 +399,7 @@ class ImgPipeTestNode : public CauvNode{
                 info() << "--- no tests to run ---";
 
             m_obs = boost::make_shared<NodeAddedObserver>();
-            mailboxMonitor()->addObserver(m_obs);
+            addObserver(m_obs);
     
             if(m_tests_to_run & file_io_test){
                 setupFileIOTests();

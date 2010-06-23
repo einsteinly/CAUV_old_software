@@ -54,6 +54,7 @@ target_link_libraries (
     boost_serialization
     boost_date_time
     boost_iostreams
+    boost_program_options
 )
 
 # dynamic lib:
@@ -80,5 +81,6 @@ target_link_libraries (
     boost_serialization
     boost_date_time
     boost_iostreams
+    boost_program_options
 )
 

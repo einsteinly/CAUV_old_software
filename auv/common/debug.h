@@ -12,9 +12,14 @@
 #include <boost/date_time.hpp>
 #include <boost/utility.hpp>
 #include <boost/variant.hpp>
+#include <boost/program_options.hpp>
 
 #define CAUV_DEBUG_MUTEX_OUTPUT
 #define CAUV_DEBUG_PRINT_THREAD
+
+#ifndef CAUV_DEBUG_LEVEL
+#define CAUV_DEBUG_LEVEL 1
+#endif
 
 #if defined(CAUV_DEBUG_MUTEX_OUTPUT) || defined(CAUV_DEBUG_PRINT_THREAD)
 #include <boost/thread.hpp>
@@ -26,32 +31,44 @@
 
 
 /* usage:
- *   debug(1) << stuff; // prints & logs "[HH:MM:SS.fffffff] stuff", if (CAUV_DEBUG <= 1)
- *   debug() << stuff << more_stuff << "thing"; // same as debug(1) << ...
- *   debug(-7) << stuff; // only print when DEBUG <= -7
- *
- *   if CAUV_DEBUG is not defined, debug() << ... statements do not print OR LOG
- *   anything
- *
- *   info() << stuff; // prints (cout) and logs [HH:MM:SS.fffffff] stuff
- *
- *   error() << stuff; // prints (cerr) and logs [HH:MM:SS.fffffff] ERROR: stuff
- *
+ *   info() << stuff;    // prints (cout) and logs [HH:MM:SS.fffffff] stuff 
+ *   error() << stuff;   // prints (cerr) and logs [HH:MM:SS.fffffff] ERROR: stuff
  *   warning() << stuff; // prints (cerr) and logs [HH:MM:SS.fffffff] WARNING: stuff
+ *
+ *   debug() << "stuff";   // prints (cout) and logs [HH:MM:SS.fffffff] stuff
+ *   debug(3) << "stuff";  //
+ *   debug(-4) << "stuff"; //
+ *
+ * The level at which debug statements will be printed can be controlled,
+ * statements are printed when the current debug level is LESS than (or equal
+ * to) the level set in the debug statement:
+ *   debug(1)  // prints when debug level <= 1 (default)
+ *   debug()   // same as debug(1)
+ *   debug(-7) // prints only when debug level <= -7
+ *
+ * The debug level can be determined based on command line options by using the
+ * debug::parseOptions static member function, or the debug::setLevel static
+ * member function
+ *   debug::setLevel(4) // prevent printing of debug messages with level < 4
+ *
+ * if CAUV_NO_DEBUG is defined, debug() statements do not print OR LOG
+ * anything, in this case debug::parseOptions is a no-op
  *
  * if CAUV_DEBUG_PRINT_THREAD is defined, the timestamp has the thread id appended:
  *   [HH:MM:SS.fffffff T=0x123456]
  *
  * A newline is added automatically, spaces are added automatically between
- * successive stuffs which don't already have spaces at the ends
- *
+ * successive stuffs which don't already have spaces at the ends:
  *   info() << "1" << 3 << "test " << 4; // prints "[HH:MM:SS.fffffff] 1 3 test 4\n"
+ *
+ * Some punctuation is also treated magically when considering whether to add
+ * spaces:
+ *   error() << "foo=" << 3 << ", but ("<< 7 << ">" << 4 << ")";
+ *   -> "[HH:MM:SS.fffffff] ERROR: foo=3, but (7 > 4)\n"
  *
  * Timestamps are local time
  *
  */
-
-
 
 class SmartStreamBase : public boost::noncopyable
 {
@@ -73,12 +90,51 @@ class SmartStreamBase : public boost::noncopyable
             printToStream(logFile());
         }
 
+        static void setLevel(int debug_level)
+        {
+            settings().debug_level = debug_level;
+        }
+
+        static int parseOptions(int argc, char** argv)
+        {
+            namespace po = boost::program_options;
+            po::options_description desc("Allowed options");
+            // isn't overloading wonderful...
+            desc.add_options()
+                ("help", "produce help message")
+                ("debug-level", po::value<int>(), "set the level of debug messages (lower=more messages)")
+            ;
+            po::variables_map vm;
+            po::store(po::parse_command_line(argc, argv, desc), vm);
+            po::notify(vm);
+            if(vm.count("help"))
+            {
+                std::cout << desc;
+                return 1;
+            }
+            if(vm.count("debug-level"))
+            {
+                settings().debug_level = vm["debug-level"].as<int>();
+            }
+            return 0;
+        }
+
     protected:
+        struct Settings{
+            int debug_level;
+        };
+
         // stuff to print
         std::list< std::string > m_stuffs;
 
         virtual void printPrefix(std::ostream&)
         {
+        }
+        
+        // initialise on first use
+        static Settings& settings(){
+            static Settings s = { CAUV_DEBUG_LEVEL };
+            return s;
         }
 
     private:
@@ -204,7 +260,7 @@ class SmartStreamBase : public boost::noncopyable
         bool m_print;
 };
 
-#if defined(CAUV_DEBUG)
+#if !defined(CAUV_NO_DEBUG)
 struct debug : public SmartStreamBase
 {
     debug(int level=1) : SmartStreamBase(std::cout, "", BashColour::Cyan), m_level(level)
@@ -218,7 +274,7 @@ struct debug : public SmartStreamBase
     template<typename T>
     debug& operator<<(T const& a)
     {
-        if(int(CAUV_DEBUG) <= m_level)
+        if(settings().debug_level <= m_level)
         {
             // convert to a string
             std::stringstream s;
@@ -234,7 +290,7 @@ struct debug : public SmartStreamBase
      */
     debug& operator<<(std::ostream& (*manip)(std::ostream&))
     {
-        if(int(CAUV_DEBUG) <= m_level)
+        if(settings().debug_level <= m_level)
         {
             // apply to a string
             std::stringstream s;
@@ -275,6 +331,11 @@ struct debug : boost::noncopyable
         // do nothing with the manipulator
         return *this;
     }
+
+    static int parseOptions(int, char**)
+    {
+    }
+    
 };
 #endif
 

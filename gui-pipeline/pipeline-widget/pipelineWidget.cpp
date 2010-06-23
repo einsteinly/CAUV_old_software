@@ -32,6 +32,14 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
             (a->m_dst.lock() == b->m_src.lock() && a->m_src.lock() == b->m_dst.lock()));
 }
 
+struct DBGLevelObserver: MessageObserver
+{
+    void onDebugLevelMessage(DebugLevelMessage_ptr m)
+    {
+        debug::setLevel(m->level());
+    }
+};
+
 class PipelineGuiMsgObs: public BufferedMessageObserver{
     public:
         PipelineGuiMsgObs(PipelineWidget *p)
@@ -195,9 +203,12 @@ class PipelineGuiCauvNode: public CauvNode{
 
         void onRun(){
             debug() << "PGCN::onRun()";
-            mailbox()->joinGroup("pl_gui");
-            mailboxMonitor()->addObserver(
+            join("pl_gui");
+            addObserver(
                 boost::make_shared<PipelineGuiMsgObs>(m_widget)
+            );
+            addObserver(
+                boost::make_shared<DBGLevelObserver>()
             );
             #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
             mailboxMonitor()->addObserver(
