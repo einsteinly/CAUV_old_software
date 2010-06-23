@@ -403,26 +403,26 @@ def main():
 
         for s in tree["structs"]:
             with open(os.path.join(typedir, s.name + ".java"), "w") as file:
-                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "struct.template.java"), searchList=s)
+                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "struct.template.java"), searchList={"s":s})
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
                 t.package = options.package + ".types"
                 file.write(str(t))
         for e in tree["enums"]:
-            with open(os.path.join(messagingdir, e.name + ".java"), "w") as file:
+            with open(os.path.join(typedir, e.name + ".java"), "w") as file:
                 t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "enum.template.java"), searchList={"e":e})
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
-                t.package = options.package + ".messaging"
+                t.package = options.package + ".types"
                 file.write(str(t))
         for g in tree["groups"]:
             #with open(os.path.join(messagingdir, "MessageSource.java"), "w") as file:
             #    t = Template(file
             for m in g.messages:
                 with open(os.path.join(messagingdir, m.name + "Message.java"), "w") as file:
-                    t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.java"), searchList=m)
+                    t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.java"), searchList={"m":m})
                     t.toJavaType = toJavaType
                     t.serialiseJavaType = serialiseJavaType
                     t.deserialiseJavaType = deserialiseJavaType
@@ -431,6 +431,14 @@ def main():
                     file.write(str(t))
         with open (os.path.join(messagingdir, "Message.java"), "w") as file:
             t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "basemessage.template.java"), searchList=[])
+            t.package = options.package + ".messaging"
+            file.write(str(t))
+        with open (os.path.join(messagingdir, "MessageObserver.java"), "w") as file:
+            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messageobserver.template.java"), searchList=tree)
+            t.package = options.package + ".messaging"
+            file.write(str(t))
+        with open (os.path.join(messagingdir, "MessageSource.java"), "w") as file:
+            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messagesource.template.java"), searchList=tree)
             t.package = options.package + ".messaging"
             file.write(str(t))
 
