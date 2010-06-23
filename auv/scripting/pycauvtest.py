@@ -77,6 +77,9 @@ def main():
                                     messaging.NodeOutputArcVec()), "pipeline")
     
     model = pipeline.Model(n)
+
+    print 'Setting debug level to -10'
+    n.send(messaging.DebugLevelMessage(-10), "debug")
     
     print 'Getting pipeline state...'
     saved = model.get()

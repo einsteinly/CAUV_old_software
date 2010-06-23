@@ -28,16 +28,10 @@ class Node(messaging.CauvNode):
         t = threading.Thread(target=self.run)
         t.daemon = True
         t.start()
-
-    def join(self, group):
-        self.mailbox.join(group)
     
     def send(self, message, groups, service_level=ServiceLevel.Safe):
         self.mailbox.send(message, service_level, groups)
     
     #def receive(self, timeout):
     #    return self.mailbox.receive(timeout)
-
-    def addObserver(self, observer):
-        self.monitor.addObserver(observer)
 

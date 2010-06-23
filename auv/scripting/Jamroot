@@ -32,9 +32,9 @@ lib libcommon : ../common/messages.cpp
                 ../common/cauv_node.cpp 
                 ../common/cauv_global.cpp
                 ../common/cauv_utils.cpp
-                ../common/spread/cauv_mailbox_monitor.cpp
-                ../common/spread/cauv_spread_mailbox.cpp
-                ../common/spread/cauv_spread_messages.cpp
+                ../common/spread/mailbox_monitor.cpp
+                ../common/spread/spread_mailbox.cpp
+                ../common/spread/spread_messages.cpp
                 cvlib
                 highguilib
                 ssrcspreadlib

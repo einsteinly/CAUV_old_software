@@ -85,5 +85,6 @@ CauvNode::CauvNode(const string& name, const char* host)
 {
     m_event_monitor->addObserver(m_mailbox_monitor);
     addObserver(boost::make_shared<DBGLevelObserver>());
+    join("debug");
 }
 

@@ -49,7 +49,11 @@ class Model(messaging.BufferedMessageObserver):
         for id in graph.nodeOutputs.keys():
             outputlinks = graph.nodeOutputs[id]
             for output in outputlinks.keys():
-                print 'node', id, 'output', output, '<-', outputlinks[output]
+                links = outputlinks[output]
+                print 'node', id, 'output', output, '->',
+                for link in links:
+                    print link,
+                print
         return s
     
     def set(self, state):

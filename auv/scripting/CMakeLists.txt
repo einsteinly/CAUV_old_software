@@ -56,9 +56,9 @@ add_custom_command (
             ${MSGSRCD}/cauv_node.cpp 
             ${MSGSRCD}/cauv_global.cpp
             ${MSGSRCD}/cauv_utils.cpp
-            ${MSGSRCD}/spread/cauv_mailbox_monitor.cpp
-            ${MSGSRCD}/spread/cauv_spread_mailbox.cpp
-            ${MSGSRCD}/spread/cauv_spread_messages.cpp
+            ${MSGSRCD}/spread/mailbox_monitor.cpp
+            ${MSGSRCD}/spread/spread_mailbox.cpp
+            ${MSGSRCD}/spread/spread_messages.cpp
     IMPLICIT_DEPENDS ${SRCD}/emit_structs.cpp
                      ${SRCD}/emit_enums.cpp
                      ${SRCD}/emit_messages.cpp
@@ -68,9 +68,9 @@ add_custom_command (
                      ${MSGSRCD}/cauv_node.cpp 
                      ${MSGSRCD}/cauv_global.cpp
                      ${MSGSRCD}/cauv_utils.cpp
-                     ${MSGSRCD}/spread/cauv_mailbox_monitor.cpp
-                     ${MSGSRCD}/spread/cauv_spread_mailbox.cpp
-                     ${MSGSRCD}/spread/cauv_spread_messages.cpp
+                     ${MSGSRCD}/spread/mailbox_monitor.cpp
+                     ${MSGSRCD}/spread/spread_mailbox.cpp
+                     ${MSGSRCD}/spread/spread_messages.cpp
     COMMENT "Building cauv python module with bjam"
 )
 

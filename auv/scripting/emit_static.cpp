@@ -88,18 +88,15 @@ class CauvNodeWrapper:
             this->onRun();
         }*/
 
-        int foo(boost::shared_ptr<Message const> m){
+        /*int foo(boost::shared_ptr<Message const> m){
             debug() << "foo called";
             debug() << m;
             std::cerr << "yes, foo was called" << std::endl;
             return 9;
-        }
-
+        }*/
+        
         boost::shared_ptr<ReconnectingSpreadMailbox> get_mailbox() const{
             return CauvNode::mailbox();
-        }
-        boost::shared_ptr<MsgSrcMBMonitor> get_mailboxMonitor() const{
-            return CauvNode::mailboxMonitor();
         }
 };
 
@@ -183,10 +180,13 @@ void emitCauvNode(){
                boost::noncopyable
               >("CauvNode", bp::init<std::string, std::string>())
          .def("run", wrap(&CauvNode::run))
-         .def("onRun", wrap(&CauvNode::onRun))
-         .def("foo", wrap(&CauvNodeWrapper::foo))
+         .def("onRun", wrap(&CauvNodeWrapper::onRun))
+         .def("send", wrap(&CauvNode::send))
+         .def("join", wrap(&CauvNode::join))
+         .def("addObserver", wrap(&CauvNode::addObserver))
+         //.def("foo", wrap(&CauvNodeWrapper::foo))
          .add_property("mailbox", &CauvNodeWrapper::get_mailbox)
-         .add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
+         //.add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
     ;
 }
 
