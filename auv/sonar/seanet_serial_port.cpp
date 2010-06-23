@@ -94,6 +94,13 @@ again:
         }
 	}
 
+    //{
+    //    std::stringstream data;
+    //    for (unsigned int i = 0; i < 13; i++) {
+    //        data << hex << setw(2) << setfill('0') << (int)(unsigned char)buffer[i] << " ";
+    //    }
+    //    debug() << data.str();
+    //}
 
 	if (buffer[0] != 0x40) {
 		warning() << "Error: Out of sync.  Resyncing...";
@@ -145,7 +152,6 @@ again:
         }
         if (rec > 0) {
             rec = read(m_fd, &pkt->m_data[13 + bodyReceived], pkt->m_length - 7 - bodyReceived);
-            rec = read(m_fd, &buffer[0], 1);
             check_is_sonar_dead();
             if (rec < 0) {
                 throw SonarIsDeadException();
@@ -156,8 +162,16 @@ again:
             throw SonarIsDeadException();
         }
 	}
-
-	if (pkt->m_data[pkt->m_length + 5] != 0x0A) {
+    
+    //{
+    //    std::stringstream data;
+    //    for (unsigned int i = 0; i < pkt->m_length + 6; i++) {
+    //        data << hex << setw(2) << setfill('0') << (int)(unsigned char)pkt->m_data[i] << " ";
+    //    }
+    //    debug() << data.str();
+    //}
+	
+    if (pkt->m_data[pkt->m_length + 5] != 0x0A) {
 		error() << "Message doesn't end in 0x0A\n";
 	}
 
@@ -169,19 +183,18 @@ void SeanetSerialPort::sendPacket(const SeanetPacket &pkt)
 	unsigned int total_length = pkt.getLength() + 6;
 
     boost::lock_guard<boost::mutex> l(m_send_lock);
-	/*printf("Sending %d bytes:  ", total_length);
-
-	for(unsigned int i = 0; i < total_length; i++) {
-		printf("%02x ", pkt.getData()[i]);
-	}
-
-	printf("\n");*/
-	if (pkt.getData()[total_length - 1] != 0x0A) {
-        std::stringstream data;
-        for (unsigned int i = 0; i < total_length; i++) {
-		    data << hex << setw(2) << setfill('0') << (unsigned int)pkt.getData()[i] << " ";
-	    }
-		error() << "Sending corrupt data to the sonar! " << data.str();
+    
+    //{
+    //    debug() << "Sending " << total_length << " bytes";
+    //    std::stringstream data;
+    //    for (unsigned int i = 0; i < pkt->m_length + 6; i++) {
+    //        data << hex << setw(2) << setfill('0') << (int)(unsigned char)pkt->getData()[i] << " ";
+    //    }
+    //    debug() << data.str();
+    //}
+	
+    if (pkt.getData()[total_length - 1] != 0x0A) {
+		warning() << "Sending data that doesn't end with a 0x0A";
 	}
 
     unsigned int sent = 0;

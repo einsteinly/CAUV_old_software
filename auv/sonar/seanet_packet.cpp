@@ -78,7 +78,7 @@ void SeanetPacket::fillHeader()
 	m_data[m_length + 5] = 0x0A;
 }
 
-const std::string SeanetPacket::getData() const
+const std::string& SeanetPacket::getData() const
 {
 	return m_data;
 }
