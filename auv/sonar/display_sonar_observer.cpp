@@ -87,7 +87,7 @@ int ccw(T p0_x, T p0_y, T p1_x, T p1_y, T p2_x, T p2_y)
 		return +1;
 	return 0;
 }
-static void scan_thick_arc(cv::Mat* img, int cx, int cy, int radius, float from, float to, u_char value, int thickness)
+static void scan_thick_arc(cv::Mat* img, int cx, int cy, int radius, float from, float to, unsigned char value, int thickness)
 {
     if (from > to)
     {
