@@ -30,7 +30,7 @@ class TexImg{
             : m_img(boost::make_shared<Image>(img)), m_tex_id(0){
             int chs = img.cvMat().channels();
             if(img.cvMat().depth() != CV_8U || (chs!=3 && chs!=4 && chs!=1) ||
-               !img.cvMat().isContinuous()){
+               !img.cvMat().isContinuous() || !img.cvMat().rows || !img.cvMat().cols){
                 error() << "incompatible image type" << img;
                 m_img.reset();
             }
@@ -64,10 +64,13 @@ class TexImg{
 
     private:
         void _genTexture(){
-            if(!m_img){
+            boost::shared_ptr<Image> img = m_img;
+            if(!img){
                 error() << __func__ << __LINE__ << "no image";
                 return;
             }
+            m_img.reset();
+            
             glGenTextures(1, &m_tex_id);
             glBindTexture(GL_TEXTURE_2D, m_tex_id);
 
@@ -89,8 +92,8 @@ class TexImg{
                 return;
             }
             
-            const int img_w = m_img->cvMat().cols;
-            const int img_h = m_img->cvMat().rows;
+            const int img_w = img->cvMat().cols;
+            const int img_h = img->cvMat().rows;
             int w, h;
             max_size = min(max_size, max(img_w, img_h));
             if(img_h > img_w){
@@ -100,7 +103,7 @@ class TexImg{
                 w = max_size;
                 h = w * img_h / img_w;
             }
-            cv::resize(m_img->cvMat(), m, cv::Size(w, h), 0, 0, cv::INTER_LANCZOS4);
+            cv::resize(img->cvMat(), m, cv::Size(w, h), 0, 0, cv::INTER_LANCZOS4);
             
             if(m.channels() == 4)
                 gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGRA, GL_UNSIGNED_BYTE, m.data);
@@ -108,8 +111,6 @@ class TexImg{
                 gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGR, GL_UNSIGNED_BYTE, m.data);
             else if(m.channels() == 1)
                 gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_LUMINANCE, GL_UNSIGNED_BYTE, m.data);
-
-            m_img.reset();
         }
 
         boost::shared_ptr<Image> m_img;
