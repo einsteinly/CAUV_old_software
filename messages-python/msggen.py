@@ -147,11 +147,11 @@ def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
         else:
             return indent + "%s = s.%s();" % (prefix+name, javaDataFuncs[t.name]["read"])
     elif isinstance(t, msggenyacc.EnumType):
-        return indent + "%s.writeInto(s);" % (prefix+name)
+        return indent + "%s.readFrom(s);" % (prefix+name)
     elif isinstance(t, msggenyacc.StructType):
-        return indent + "%s.writeInto(s);" % (prefix+name)
+        return indent + "%s.readFrom(s);" % (prefix+name)
     elif isinstance(t, msggenyacc.UnknownType):
-        return indent + "%s.writeInto(s);" % (prefix+name)
+        return indent + "%s.readFrom(s);" % (prefix+name)
     
     elif isinstance(t, msggenyacc.ListType):
         vals = {
@@ -391,8 +391,16 @@ def main():
                 t.package = options.package + ".types"
                 file.write(str(t))
         for e in tree["enums"]:
-            print os.path.join(messagingdir, e.name)
+            with open(os.path.join(messagingdir, e.name + ".java"), "w") as file:
+                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "enum.template.java"), searchList={"e":e})
+                t.toJavaType = toJavaType
+                t.serialiseJavaType = serialiseJavaType
+                t.deserialiseJavaType = deserialiseJavaType
+                t.package = options.package + ".messaging"
+                file.write(str(t))
         for g in tree["groups"]:
+            #with open(os.path.join(messagingdir, "MessageSource.java"), "w") as file:
+            #    t = Template(file
             for m in g.messages:
                 with open(os.path.join(messagingdir, m.name + "Message.java"), "w") as file:
                     t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.java"), searchList=m)
@@ -402,7 +410,10 @@ def main():
                     t.package = options.package + ".messaging"
                     t.group = g
                     file.write(str(t))
-    
+        with open (os.path.join(messagingdir, "Message.java"), "w") as file:
+            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "basemessage.template.java"), searchList=[])
+            t.package = options.package + ".messaging"
+            file.write(str(t))
 
     elif options.lang == "python":
         compilation_units = ["enums", "structs", "messages", "observers"]
