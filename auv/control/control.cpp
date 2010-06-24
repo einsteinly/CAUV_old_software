@@ -144,8 +144,9 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
 ControlNode::ControlNode() : CauvNode("Control")
 {
-    mailbox()->joinGroup("control");
-    
+    join("control");
+    addObserver(boost::make_shared<DebugMessageObserver>());
+
     // start up the MCB module
     try {
         m_mcb = boost::make_shared<MCBModule>(0);

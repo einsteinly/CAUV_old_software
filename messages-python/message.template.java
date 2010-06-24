@@ -1,9 +1,13 @@
 package $package;
 
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Vector;
 import java.util.HashMap;
 import java.io.*;
+
+import ${rootpackage}.types.*;
+import ${rootpackage}.utils.*;
 
 public class ${m.name}Message extends Message {
     int m_id = $m.id;
@@ -23,7 +27,7 @@ public class ${m.name}Message extends Message {
 
     public byte[] toBytes() throws IOException {
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        DataOutputStream s = new DataOutputStream(bs);
+        LEDataOutputStream s = new LEDataOutputStream(bs);
         s.writeInt(m_id);
 
         #for $f in $m.fields
@@ -37,21 +41,23 @@ $serialiseJavaType(f.type, f.name, 2, "this.")
         super($m.id, "${group.name}");
     }
 
+    #if $len($m.fields) > 0
     public ${m.name}Message(#slurp
                             #for i, f in $enumerate($m.fields)
 #*                         *#$toJavaType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                             #end for
 #*                         *#) {
-
+        super($m.id, "${group.name}");
         #for $f in $m.fields
         this.${f.name} = ${f.name};
         #end for
     }
+    #end if
 
     public ${m.name}Message(byte[] bytes) throws IOException {
         super(${m.id}, "${group.name}");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-        DataInputStream s = new DataInputStream(bs);
+        LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();
         if (buf_id != m_id)
         {

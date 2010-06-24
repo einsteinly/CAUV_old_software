@@ -91,7 +91,7 @@ def serialiseJavaType(t, name, indentation = 0, prefix = ""):
     elif isinstance(t, msggenyacc.ListType):
         vals = {
             "name": prefix+name,
-            "valtype": toJavaType(t.valType),
+            "valtype": toJavaType(t.valType, True),
             "valvar": "%s_val" % name,
             "i": "%s_i" % name
         }
@@ -106,19 +106,19 @@ def serialiseJavaType(t, name, indentation = 0, prefix = ""):
     elif isinstance(t, msggenyacc.MapType):
         vals = {
             "name": prefix+name,
-            "keytype": toJavaType(t.keyType),
+            "keytype": toJavaType(t.keyType, True),
             "keyvar": "%s_key" % name,
-            "valtype": toJavaType(t.valType),
+            "valtype": toJavaType(t.valType, True),
             "valvar": "%s_val" % name,
             "i": "%s_i" % name
         }
 
         return indent + "s.writeLong(%(name)s.size());" % vals + "\n" + \
-               indent + "for (Map.Entry<%(keytype)s, %(valtype)s> %(i)s : %(name)s)" % vals + "\n" + \
+               indent + "for (Map.Entry<%(keytype)s, %(valtype)s> %(i)s : %(name)s.entrySet())" % vals + "\n" + \
                indent + "{" + "\n" + \
-               indent + "    %(keytype)s %(keyvar)s = %(name)s.getKey();" % vals + "\n" + \
+               indent + "    %(keytype)s %(keyvar)s = %(i)s.getKey();" % vals + "\n" + \
                serialiseJavaType(t.keyType, vals["keyvar"], indentation + 1) + "\n" + \
-               indent + "    %(valtype)s %(valvar)s = %(name)s.getValue();" % vals + "\n" + \
+               indent + "    %(valtype)s %(valvar)s = %(i)s.getValue();" % vals + "\n" + \
                serialiseJavaType(t.valType, vals["valvar"], indentation + 1) + "\n" + \
                indent + "}"
     else:
@@ -147,11 +147,11 @@ def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
         else:
             return indent + "%s = s.%s();" % (prefix+name, javaDataFuncs[t.name]["read"])
     elif isinstance(t, msggenyacc.EnumType):
-        return indent + "%s.readFrom(s);" % (prefix+name)
+        return indent + "%s = %s.readFrom(s);" % (prefix+name, toJavaType(t))
     elif isinstance(t, msggenyacc.StructType):
-        return indent + "%s.readFrom(s);" % (prefix+name)
+        return indent + "%s = %s.readFrom(s);" % (prefix+name, toJavaType(t))
     elif isinstance(t, msggenyacc.UnknownType):
-        return indent + "%s.readFrom(s);" % (prefix+name)
+        return indent + "%s = %s.readFrom(s);" % (prefix+name, toJavaType(t))
     
     elif isinstance(t, msggenyacc.ListType):
         vals = {
@@ -164,7 +164,7 @@ def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
         }
             
         return indent + "%(name)s = new %(type)s();" % vals + "\n" + \
-               indent + "long $(len)s = s.readLong();" % vals + "\n" + \
+               indent + "long %(len)s = s.readLong();" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(valtype)s %(valvar)s;" % vals + "\n" + \
@@ -407,6 +407,7 @@ def main():
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
+                t.rootpackage = options.package
                 t.package = options.package + ".types"
                 file.write(str(t))
         for e in tree["enums"]:
@@ -415,6 +416,7 @@ def main():
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
+                t.rootpackage = options.package
                 t.package = options.package + ".types"
                 file.write(str(t))
         for g in tree["groups"]:
@@ -426,19 +428,23 @@ def main():
                     t.toJavaType = toJavaType
                     t.serialiseJavaType = serialiseJavaType
                     t.deserialiseJavaType = deserialiseJavaType
+                    t.rootpackage = options.package
                     t.package = options.package + ".messaging"
                     t.group = g
                     file.write(str(t))
         with open (os.path.join(messagingdir, "Message.java"), "w") as file:
             t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "basemessage.template.java"), searchList=[])
+            t.rootpackage = options.package
             t.package = options.package + ".messaging"
             file.write(str(t))
         with open (os.path.join(messagingdir, "MessageObserver.java"), "w") as file:
             t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messageobserver.template.java"), searchList=tree)
+            t.rootpackage = options.package
             t.package = options.package + ".messaging"
             file.write(str(t))
         with open (os.path.join(messagingdir, "MessageSource.java"), "w") as file:
             t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messagesource.template.java"), searchList=tree)
+            t.rootpackage = options.package
             t.package = options.package + ".messaging"
             file.write(str(t))
 
