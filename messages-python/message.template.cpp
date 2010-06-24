@@ -191,11 +191,13 @@ struct BufferingThread: public BufferingThreadBase, boost::noncopyable
 };
 
 BufferedMessageObserver::BufferedMessageObserver()
+    : m_maps_mtx(boost::make_shared<boost::shared_mutex>())
 {
 }
 
 BufferedMessageObserver::~BufferedMessageObserver()
 {
+    boost::unique_lock<boost::shared_mutex> l(*m_maps_mtx);
     foreach(msgtype_btthread_map_t::value_type& v, m_threads)
         if(v.second){
             v.second->m_die = true;
@@ -214,12 +216,14 @@ BufferedMessageObserver::~BufferedMessageObserver()
 #set $classPtr = $className + "_ptr"
 void BufferedMessageObserver::on${className}($classPtr m)
 {
-    if(btthread_ptr_t b_thread = m_threads[MessageType::$m.name])
+    boost::shared_lock<boost::shared_mutex> l(*m_maps_mtx);
+    msgtype_btthread_map_t::iterator bt = m_threads.find(MessageType::$m.name);
+    if(bt != m_threads.end() && bt->second)
     {
-        boost::unique_lock<boost::mutex> l(*(b_thread->m_mutex));
-        b_thread->m_buffer = m;
+        boost::unique_lock<boost::mutex> l(*(bt->second->m_mutex));
+        bt->second->m_buffer = m;
         l.unlock();
-        b_thread->m_condition->notify_one();
+        bt->second->m_condition->notify_one();
     }
     else
     {
@@ -245,6 +249,7 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
     using boost::ref;
     using boost::shared_ptr;
 
+    boost::unique_lock<boost::shared_mutex> l(*m_maps_mtx);
     if(v && !m_threads[mt])
     {
         assert(!m_boost_threads[mt]);
@@ -269,7 +274,7 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
             }
             #end for
             #end for
-            case MessageType::NumValues:
+            default:
                 break;
         }
         
@@ -403,3 +408,4 @@ void load_enum_type<binary_iarchive>::invoke<$e.name::e>(binary_iarchive &ar, $e
 } // namespace detail
 } // namespace archive
 } // namespace boost
+

@@ -52,7 +52,7 @@ class Image{
             
             const float pre = m_img.rows * m_img.cols * m_img.elemSize();
             const float post = buf.size();
-            debug(-3) << "Image Serialization:\n\t"
+            debug(4) << "Image Serialization:\n\t"
                       << __func__ << m_compress_fmt << m_compress_params << load_flags
                       << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
         }
@@ -71,7 +71,7 @@ class Image{
 
             const float post = m_img.rows * m_img.cols * m_img.elemSize();
             const float pre = buf.size();
-            debug(-3) << "Image Deserialization:\n\t"
+            debug(4) << "Image Deserialization:\n\t"
                       << __func__ << m_compress_fmt << m_compress_params << load_flags
                       << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
         }
