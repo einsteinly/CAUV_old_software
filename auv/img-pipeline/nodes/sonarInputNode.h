@@ -33,8 +33,7 @@ class SonarInputNode: public InputNode{
             
             boost::shared_ptr<SonarDataMessage const> m = latestSonarDataMessage();
 
-            if(m_data.size() &&
-               (m_data.begin()->range != m->line().range) ||
+            if((m_data.size() && (m_data.begin()->range != m->line().range)) ||
                (m_data.begin()->data.size() != m->line().data.size())){
                 m_data.clear();
             }

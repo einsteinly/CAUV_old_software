@@ -92,6 +92,7 @@ class SmartStreamBase : public boost::noncopyable
         static void setLevel(unsigned int debug_level)
         {
             settings().debug_level = debug_level;
+            std::cout << "Debug level set to " << settings().debug_level << std::endl;
         }
 
         static int parseOptions(int argc, char** argv)
@@ -111,9 +112,9 @@ class SmartStreamBase : public boost::noncopyable
                 std::cout << desc;
                 return 1;
             }
-            if(vm.count("debug-level"))
+            if(vm.count("verbose"))
             {
-                setLevel(vm["debug-level"].as<unsigned int>());
+                setLevel(vm["verbose"].as<unsigned int>());
             }
             return 0;
         }

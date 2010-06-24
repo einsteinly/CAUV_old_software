@@ -27,10 +27,16 @@ void sendAlive(boost::shared_ptr<MCBModule> mcb)
 class DebugXsensObserver : public XsensObserver
 {
     public:
+        DebugXsensObserver(unsigned int level = 1) : m_level(level)
+        {
+        }
         virtual void onTelemetry(const floatYPR& attitude)
         {
-            debug() << (std::string)(MakeString() << fixed << setprecision(1) << attitude ); 
+            debug(m_level) << (std::string)(MakeString() << fixed << setprecision(1) << attitude ); 
         }
+
+    protected:
+        unsigned int m_level;
 };
 
 
@@ -78,11 +84,9 @@ struct PIDControl
 class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
-        ControlLoops()
+        ControlLoops() :
+                m_bearingenabled(false)
         {
-            // TODO: Remove these, they're just for testing initially
-            m_bearingenabled = true;
-            m_bearingcontrol.target = 200;
         }
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
@@ -93,7 +97,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             if (m_bearingenabled) {
                 float mv = m_bearingcontrol.getMV(attitude.yaw);
-                debug() << "MV = " << mv;
+                debug(2) << "MV = " << mv;
                 if (now().secs - lastMotorMessage.secs > motorTimeout) {
                     // Do motor control
                     int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
@@ -111,6 +115,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
+            debug(2) << "Forwarding motor message";
             lastMotorMessage = now();
             m_mcb->send(m);
         }
@@ -145,7 +150,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
 ControlNode::ControlNode() : CauvNode("Control")
 {
     join("control");
-    addObserver(boost::make_shared<DebugMessageObserver>());
+    addObserver(boost::make_shared<DebugMessageObserver>(1));
 
     // start up the MCB module
     try {
@@ -201,7 +206,7 @@ void ControlNode::onRun()
         
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
-        //m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());
+        m_mcb->addObserver(boost::make_shared<DebugMessageObserver>(2));
         m_mcb->addObserver(m_controlLoops);
         
         m_mcb->start();
@@ -211,7 +216,7 @@ void ControlNode::onRun()
     }
 
     if (m_xsens) {
-        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>());
+        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
         m_xsens->addObserver(m_controlLoops);
 
         m_xsens->start();
@@ -241,8 +246,9 @@ void interrupt(int sig)
     raise(sig);
 }
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
     node = new ControlNode();
     node->run();
