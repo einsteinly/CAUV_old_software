@@ -380,7 +380,7 @@ std::basic_ostream<char_T, traits>& operator<<(
         #end for
         #end for
         default:
-            return os << "MessageType::Unknown=" << int(e);
+            return os << "MessageType::Unknown (" << int(e) << ")";
     }
 }
 
@@ -397,7 +397,7 @@ std::basic_ostream<char_T, traits>& operator<<(
             return os << "$e.name::$v.name";
         #end for
         default:
-            return os << "$e.name::Unknown=" << int(e);
+            return os << "$e.name::Unknown (" << int(e) << ")";
     }
 }
 #end for
@@ -407,11 +407,24 @@ template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, Message const& m)
 {
-    os << "Message {";
-    os << " id = " << m.m_id << ",";
-    os << " group = " << m.m_group;
-    os << " }";
-    return os;
+    switch (id)
+    {
+        #for $g in $groups
+        #for $m in $g.messages
+        #set $className = $m.name + "Message"
+        case $m.id:
+        {
+            return os << dynamic_cast<$className>(m);
+        }
+        #end for
+        #end for
+        default:
+            os << "Unknown message {";
+            os << " id = " << dec << m.m_id << ",";
+            os << " group = " << m.m_group;
+            os << " }";
+            return os;
+    }
 }
 
 #for $g in $groups

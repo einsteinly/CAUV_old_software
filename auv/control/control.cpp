@@ -91,7 +91,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             if (m_bearingenabled) {
                 float mv = m_bearingcontrol.getMV(attitude.yaw);
-                debug() << "MV = " << mv;
+                debug(2) << "MV = " << mv;
                 if (now().secs - lastMotorMessage.secs > motorTimeout) {
                     // Do motor control
                     int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
@@ -109,7 +109,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
-            debug() << "forwarding motor message";
+            debug(2) << "Forwarding motor message";
             lastMotorMessage = now();
             m_mcb->send(m);
         }
