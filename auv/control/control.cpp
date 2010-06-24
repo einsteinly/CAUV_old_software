@@ -27,10 +27,16 @@ void sendAlive(boost::shared_ptr<MCBModule> mcb)
 class DebugXsensObserver : public XsensObserver
 {
     public:
+        DebugXsensObserver(unsigned int level = 1) : m_level(level)
+        {
+        }
         virtual void onTelemetry(const floatYPR& attitude)
         {
-            debug() << (std::string)(MakeString() << fixed << setprecision(1) << attitude ); 
+            debug(m_level) << (std::string)(MakeString() << fixed << setprecision(1) << attitude ); 
         }
+
+    protected:
+        unsigned int m_level;
 };
 
 
@@ -144,7 +150,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
 ControlNode::ControlNode() : CauvNode("Control")
 {
     join("control");
-    addObserver(boost::make_shared<DebugMessageObserver>());
+    addObserver(boost::make_shared<DebugMessageObserver>(1));
 
     // start up the MCB module
     try {
@@ -200,7 +206,7 @@ void ControlNode::onRun()
         
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
-        m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());
+        m_mcb->addObserver(boost::make_shared<DebugMessageObserver>(2));
         m_mcb->addObserver(m_controlLoops);
         
         m_mcb->start();
@@ -210,7 +216,7 @@ void ControlNode::onRun()
     }
 
     if (m_xsens) {
-//        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>());
+        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
         m_xsens->addObserver(m_controlLoops);
 
         m_xsens->start();

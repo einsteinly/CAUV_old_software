@@ -274,6 +274,8 @@ class DynamicObserver: public BufferedMessageObserver
 class DebugMessageObserver: public MessageObserver
 {
     public:
+        DebugMessageObserver(unsigned int level = 1);
+
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
@@ -281,6 +283,9 @@ class DebugMessageObserver: public MessageObserver
         virtual void on${className}($ptrName m);
         #end for
         #end for
+
+    protected:
+        unsigned int m_level;
 };
 
 

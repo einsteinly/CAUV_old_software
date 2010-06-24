@@ -315,13 +315,18 @@ void DynamicObserver::on${className}Buffered($ptrName m)
 #end for
 
 
+
+DebugMessageObserver::DebugMessageObserver(unsigned int level) : m_level(level)
+{
+}
+
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
 #set $classPtr = $className + "_ptr"
 void DebugMessageObserver::on${className}($classPtr m)
 {
-    info() << "DebugMessageObserver: " << *m;
+    debug(m_level) << "DebugMessageObserver: " << *m;
 }
 #end for
 #end for
