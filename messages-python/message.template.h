@@ -407,20 +407,20 @@ template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, Message const& m)
 {
-    switch (id)
+    switch (m.m_id)
     {
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
         case $m.id:
         {
-            return os << dynamic_cast<$className>(m);
+            return os << *dynamic_cast<const $className*>(&m);
         }
         #end for
         #end for
         default:
             os << "Unknown message {";
-            os << " id = " << dec << m.m_id << ",";
+            os << " id = " << std::dec << m.m_id << ",";
             os << " group = " << m.m_group;
             os << " }";
             return os;
