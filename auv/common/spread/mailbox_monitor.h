@@ -6,13 +6,14 @@
 
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/foreach.hpp>
 
-#include <common/debug.h>
+#include <common/messages_fwd.h>
+#include <common/observable.h>
 
-#include "spread_rc_mailbox.h"
-#include "spread_messages.h"
+class ReconnectingSpreadMailbox;
+class SpreadMessage;
+class RegularMessage;
+class MembershipMessage;
 
 class MailboxObserver {
     public:

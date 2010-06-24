@@ -45,6 +45,8 @@ std::string now(std::string const& format);
 
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
+void msleep(unsigned msecs);
+
 template<typename T1, typename T2>
 static T1 clamp(T1 const& low, T2 const& value, T1 const& high){
     return value > high? high : value < low? low : T1(value); 

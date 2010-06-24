@@ -356,6 +356,14 @@ def main():
     tree = parser.parse(data)
 
     if options.lang == "c++":
+        with open(output + "_fwd.h", "w") as file:
+            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message_fwd.template.h"), searchList=tree)
+            t.toCPPType = toCPPType
+            file.write(str(t))
+        with open(output + "_messages.h", "w") as file:
+            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message_messages.template.h"), searchList=tree)
+            t.toCPPType = toCPPType
+            file.write(str(t))
         with open(output + ".h", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.h"), searchList=tree)
             t.toCPPType = toCPPType

@@ -2,8 +2,11 @@
 
 #include <QtOpenGL>
 
-#include <common/image.h>
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
 
+#include <common/image.h>
+#include <debug/cauv_debug.h>
 
 namespace pw{
 

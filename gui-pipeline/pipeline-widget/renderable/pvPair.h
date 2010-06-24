@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sstream>
 
-#include <common/debug.h>
+#include <debug/debug.h>
 
 #include "node.h"
 

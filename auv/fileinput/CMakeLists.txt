@@ -8,6 +8,7 @@ add_executable (
 # libs
 target_link_libraries (
     fileinput
+    cauv_debug
     common
     cv
     highgui

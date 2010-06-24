@@ -1,5 +1,7 @@
 #include "mailbox_monitor.h"
+#include "spread_rc_mailbox.h"
 
+#include <debug/cauv_debug.h>
 
 TestMBObserver::TestMBObserver()
     : MailboxObserver(){

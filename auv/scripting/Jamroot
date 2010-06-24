@@ -34,7 +34,9 @@ lib libcommon : ../common/messages.cpp
                 ../common/cauv_utils.cpp
                 ../common/spread/mailbox_monitor.cpp
                 ../common/spread/spread_mailbox.cpp
+                ../common/spread/spread_rc_mailbox.cpp
                 ../common/spread/spread_messages.cpp
+                ../debug/cauv_debug.cpp
                 cvlib
                 highguilib
                 ssrcspreadlib

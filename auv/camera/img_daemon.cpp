@@ -2,13 +2,11 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
 #include <common/messages.h>
 
 #include "camera.h"
 #include "camera_observer.h"
+#include "webcam.h"
 
 class DotOnImageObserver : public CameraObserver {
     public:

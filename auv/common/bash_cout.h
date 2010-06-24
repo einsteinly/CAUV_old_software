@@ -2,6 +2,7 @@
 #define __BASH_COUT_H__
 
 #include <iomanip>
+#include <ostream>
 
 /* bash colours */
 namespace BashColour

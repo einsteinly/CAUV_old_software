@@ -1,18 +1,17 @@
 #include <iostream>
-#include <limits>
-#include <string>
 
-#include <common/cauv_global.h>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
+#include <common/messages_fwd.h>
+#include <common/cauv_global.h> 
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
 #include <common/spread/msgsrc_mb_observer.h>
+#include <debug/cauv_debug.h>
 
 #include "cauv_node.h"
 #include "cauv_utils.h"
-
-
-using namespace std;
 
 
 CauvNode::~CauvNode()
@@ -31,7 +30,7 @@ void CauvNode::run()
     
     while(true)
     {
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+	    msleep(500);
     }
 }
 
@@ -77,7 +76,7 @@ struct DBGLevelObserver: MessageObserver
     }
 };
 
-CauvNode::CauvNode(const string& name, const char* host)
+CauvNode::CauvNode(const std::string& name, const char* host)
     : m_name(name),
       m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>(host, name)),
       m_event_monitor(boost::make_shared<MailboxEventMonitor>(m_mailbox)),

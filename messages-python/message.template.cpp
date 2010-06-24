@@ -6,12 +6,15 @@
 \#include <boost/thread.hpp>
 \#include <boost/noncopyable.hpp>
 
+\#include <common/cauv_utils.h>
+\#include <debug/cauv_debug.h>
+
 // ===============
 // Message Classes
 // ===============
 
 // Base message class
-Message::Message(uint32_t id, std::string group) : m_id(id), m_group(group)
+Message::Message(uint32_t id, std::string const& group) : m_id(id), m_group(group)
 {
 }
 
@@ -19,7 +22,7 @@ Message::~Message()
 {
 }
 
-std::string Message::group() const
+std::string const& Message::group() const
 {
     return m_group;
 }

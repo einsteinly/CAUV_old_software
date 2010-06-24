@@ -1,16 +1,15 @@
 #include "cauv_utils.h"
 
-#include <boost/date_time.hpp>
-
 #include <common/messages.h>
 
-using namespace std;
+#include <boost/date_time.hpp>
+#include <boost/thread/thread.hpp>
 
-MakeString::operator string() const {
+MakeString::operator std::string() const {
     return stream.str();
 }
 
-uint16_t sumOnesComplement(vector<uint16_t> bytes)
+uint16_t sumOnesComplement(std::vector<uint16_t> bytes)
 {
     uint32_t sum = 0;
     foreach(uint16_t byte, bytes)
@@ -41,5 +40,9 @@ std::string now(std::string const& format){
     oss.imbue(std::locale(oss.getloc(), facet));
     oss << microsec_clock::local_time();
     return oss.str();
+}
+
+void msleep(unsigned msecs){
+    boost::this_thread::sleep(boost::posix_time::milliseconds(msecs));
 }
 

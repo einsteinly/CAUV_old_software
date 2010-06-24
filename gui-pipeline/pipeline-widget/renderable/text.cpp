@@ -8,7 +8,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 using namespace pw;
 

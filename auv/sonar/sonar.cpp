@@ -4,6 +4,8 @@
 
 #include "display_sonar_observer.h"
 
+#include <debug/cauv_debug.h>
+
 SonarNode::SonarNode(const std::string& device) : CauvNode("Sonar")
 {
     m_sonar = boost::make_shared<SeanetSonar>(device);

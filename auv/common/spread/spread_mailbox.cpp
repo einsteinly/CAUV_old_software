@@ -5,11 +5,12 @@
 #include <cstring>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include <ssrc/spread/Mailbox.h>
 
 #include <common/cauv_utils.h>
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 using namespace std;
 using namespace boost;

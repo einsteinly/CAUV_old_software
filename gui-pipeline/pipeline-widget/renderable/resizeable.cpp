@@ -2,7 +2,7 @@
 
 #include <QtOpenGL>
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 #include "../container.h"
 

@@ -6,7 +6,9 @@
 #include <string>
 #include <utility>
 
-#include <common/debug.h>
+#include <boost/make_shared.hpp>
+
+#include <debug/cauv_debug.h>
 
 #include "menu.h"
 #include "text.h"

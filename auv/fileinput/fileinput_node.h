@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include <boost/shared_ptr.hpp>
-
 #include <common/cauv_node.h>
 
 class FileinputNode : public CauvNode

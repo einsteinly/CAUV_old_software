@@ -2,6 +2,8 @@
 
 #include <boost/make_shared.hpp>
 
+#include <debug/cauv_debug.h>
+
 #include "../pipelineWidget.h"
 #include "text.h"
 #include "arc.h"
