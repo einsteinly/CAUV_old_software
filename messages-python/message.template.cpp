@@ -269,6 +269,8 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
             }
             #end for
             #end for
+            case MessageType::NumValues:
+                break;
         }
         
         if(m_threads[mt])

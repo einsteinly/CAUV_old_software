@@ -396,6 +396,7 @@ void Node::exec(){
     }
     _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
     
+    clearNewOutputDemanded();
 
     unique_lock_t ol(m_outputs_lock);
     shared_lock_t cl(m_child_links_lock);
@@ -430,8 +431,6 @@ void Node::exec(){
                       << v.second.size() << "children will not be prompted";
     cl.unlock();
     ol.unlock();
-
-    clearNewOutputDemanded();
 }
 
 /* Get the actual image data associated with an output
@@ -549,7 +548,7 @@ void Node::checkAddSched() throw(){
         debug() << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
-    if(!newOutputDemanded()){
+    if(!newOutputDemanded() && !newParamValues()){
         debug() << "Cannot enqueue node" << *this << ", no output demanded";
         return;
     }
@@ -798,7 +797,6 @@ bool Node::execQueued() const{
 void Node::setNewParamValue(param_id const& a){
     unique_lock_t l(m_new_paramvalues_lock);
     const param_bool_map_t::iterator i = m_new_paramvalues.find(a);
-
 
     debug() << *this << "paramvalue new" << a;
     if(i == m_new_paramvalues.end()){

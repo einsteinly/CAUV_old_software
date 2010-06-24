@@ -39,6 +39,7 @@ class FileInputNode: public AsynchronousNode{
                     closeVideo();
                 }else{
                     m_is_directory = false;
+                    // try to open as video.. only way to know if it is!
                     openVideo(fname);
                 }
                 m_iter = boost::filesystem::directory_iterator();
@@ -64,6 +65,11 @@ class FileInputNode: public AsynchronousNode{
                 }else{
                     image = boost::make_shared<Image>();
                     m_capture >> image->cvMat();
+                    if(!image->cvMat().rows || !image->cvMat().cols){
+                        debug() << "video stream seems to have finished";
+                        closeVideo();
+                        image.reset();
+                    }
                     r["image"] = image;
                 }
             }else{
@@ -116,8 +122,11 @@ class FileInputNode: public AsynchronousNode{
 
         bool openVideo(std::string const& fname){
             lock_t l(m_capture_lock);
-            m_capture = cv::VideoCapture(fname);
-            return m_capture.isOpened();
+            if(m_capture.open(fname))
+                return true;
+            else
+                m_capture.release();
+            return false;
         }
 
         void closeVideo(){
