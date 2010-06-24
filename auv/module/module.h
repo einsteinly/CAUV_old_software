@@ -176,11 +176,12 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
                 boost::this_thread::sleep(boost::posix_time::milliseconds(100));
             }
 
-#ifdef DEBUG_MCB_COMMS
+            debug(4) << "Received module message";
+#ifndef CAUV_NO_DEBUG
             std::stringstream ss;
             for (int i = 0; i < r; i++)
                 ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
-            debug() << "Received" << ss.str();
+            debug(5) << "Received" << ss.str();
 #endif
 
             return r;
@@ -188,11 +189,12 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
 
         std::streamsize write(const char* s, std::streamsize n)
         {
-#ifdef DEBUG_MCB_COMMS
+            debug(4) << "Sending module message";
+#ifndef CAUV_NO_DEBUG
             std::stringstream ss;
             for (int i = 0; i < n; i++)
                 ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
-            debug() << "Sending" << ss.str();
+            debug(5) << "Sending" << ss.str();
 #endif
 
             return m_ftdic->write(reinterpret_cast<const unsigned char*>(s), n);
@@ -258,8 +260,9 @@ class Module : public MessageSource
             debug() << "Started module send thread";
             try {
                 debug(3) << "Initialising ftdi buffer archive";
-                boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
                 while (true) {
+                    boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
+                    
                     debug(3) << "Waiting for message on send queue";
                     boost::shared_ptr<const Message> message = m_sendQueue.popWait();
                     debug(3) << "Sending message to module: " << *message;
@@ -281,6 +284,7 @@ class Module : public MessageSource
                     ar << checksum;
                     foreach (char c, *bytes)
                         ar << c;
+                    debug(3) << "Wrote message to module.";
                 }
             }
             catch (boost::thread_interrupted&)

@@ -200,7 +200,7 @@ void ControlNode::onRun()
         
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
-        //m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());
+        m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());
         m_mcb->addObserver(m_controlLoops);
         
         m_mcb->start();
