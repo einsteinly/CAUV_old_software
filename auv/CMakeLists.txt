@@ -38,7 +38,7 @@ add_custom_command (
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
            ${SRCD}/messages.msg
-   COMMENT "Generating messages.cpp and mesages.h with messages-python" 
+   COMMENT "Generating messages.cpp and messages.h with messages-python" 
 ) 
 
 # subdirectories:
