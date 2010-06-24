@@ -101,7 +101,7 @@ class SmartStreamBase : public boost::noncopyable
             // isn't overloading wonderful...
             desc.add_options()
                 ("help", "produce help message")
-                ("verbose", po::value<unsigned int>(), "set the level of debug messages")
+                ("verbose,v", po::value<unsigned int>(), "set the verbosity of debug messages")
             ;
             po::variables_map vm;
             po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -302,7 +302,7 @@ struct debug : public SmartStreamBase
     }
 
     private:
-        int m_level;
+        unsigned int m_level;
 };
 #else
 struct debug : boost::noncopyable
