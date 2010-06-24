@@ -35,17 +35,15 @@ class Model(messaging.BufferedMessageObserver):
         s = State()
         print dir(graph)
         for id in graph.nodeTypes.keys():
-            print 'node', id, 'is', graph.nodeTypes[id]
             s.nodes[id] = Node(id, graph.nodeTypes[id])
-            
         for id in graph.nodeParams.keys():
             values = graph.nodeParams[id]
             for param in values.keys():
-                print 'node', id, 'param', param, '=', values[param]
+                s.nodes[id].params[param] = values[param]
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():
-                print 'node', id, 'input', input, '<-', inputlinks[input]
+                s.nodes[id].inarcs[input] = inputlinks[input]
         for id in graph.nodeOutputs.keys():
             outputlinks = graph.nodeOutputs[id]
             for output in outputlinks.keys():

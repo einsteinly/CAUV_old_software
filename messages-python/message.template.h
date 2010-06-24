@@ -242,6 +242,7 @@ class BufferedMessageObserver: public MessageObserver
         BufferedMessageObserver();
 
     private:
+        boost::shared_ptr<boost::shared_mutex> m_maps_mtx;
         msgtype_thread_map_t m_boost_threads;
         msgtype_btthread_map_t m_threads;
 };

@@ -5,7 +5,31 @@ import cauv.pipeline as pipeline
 
 import time
 
-def main():
+def pipelineTest():
+    n = node.Node("pycauv-pl")
+    model = pipeline.Model(n)
+    print 'Setting debug level to -1'
+    n.send(messaging.DebugLevelMessage(-1), "debug")
+    
+    print 'Adding stuff to the pipeline...'
+    n.send(messaging.ClearPipelineMessage(), "pipeline")
+    n.send(messaging.AddNodeMessage(messaging.NodeType.FileInput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+    n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOutput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+
+    print 'Getting pipeline state...'
+    saved = model.get()
+    print 'before:', saved
+    print 'Clearing pipeline state...'
+    model.clear()
+    print 'Setting pipeline state...'
+    model.set(saved)
+    print 'after:', model.get()
+
+def randomTest():
     n = node.Node("pycauv")
     print "created node.Node"
 
@@ -59,38 +83,15 @@ def main():
         except Exception, e:
             print e
 
-    time.sleep(3.0)
-    
-    n.mailbox.join("pipeline")
-    n.mailbox.join("pl_gui")
-    n.mailbox.join("images")
-    
+    time.sleep(3)
     n.send(messaging.ClearPipelineMessage(), "pipeline")
-    #print n.receive(1000)
     n.send(messaging.AddNodeMessage(messaging.NodeType.FileInput,
                                     messaging.NodeInputArcVec(),
                                     messaging.NodeOutputArcVec()), "pipeline")
-    #print n.receive(1000)
-    
     n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOutput,
                                     messaging.NodeInputArcVec(),
                                     messaging.NodeOutputArcVec()), "pipeline")
-    
-    model = pipeline.Model(n)
 
-    print 'Setting debug level to -10'
-    n.send(messaging.DebugLevelMessage(-10), "debug")
-    
-    print 'Getting pipeline state...'
-    saved = model.get()
-    print 'before:', saved
-    print 'Clearing pipeline state...'
-    model.clear()
-    print 'Setting pipeline state...'
-    model.set(saved)
-    print 'after:', model.get()
-
-    
     print "deleting dmo", dmo
     del dmo
     print "deleting o", o
@@ -105,6 +106,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    pipelineTest()
 
 
