@@ -405,14 +405,18 @@ void Node::exec(){
                       << "(ignored)";
         }else if(m_outputs[v.first].which() == v.second.which()){
             m_outputs[v.first] = v.second;
-            output_link_list_t& children = m_child_links[v.first];
-            debug() << "Prompting" << children.size() << "children of new output:";
-            // for each node connected to the output
-            foreach(output_link_t& link, children){
-                // link is a std::pair<node_ptr, input_id>
-                debug() << "prompting new input to child on:" << v.first;
-                // notify the node that it has new input
-                link.first->setNewInput(link.second);
+            out_link_map_t::iterator kids = m_child_links.find(v.first);
+            if(kids != m_child_links.end()){
+                debug() << "Prompting" << kids->second.size() << "children of new output:";
+                // for each node connected to the output
+                foreach(output_link_t& link, kids->second){
+                    // link is a std::pair<node_ptr, input_id>
+                    debug() << "prompting new input to child on:" << v.first;
+                    // notify the node that it has new input
+                    link.first->setNewInput(link.second);
+                }
+            }else{
+                debug() << "no children to prompt";
             }
         }else{
             warning() << "exec() produced output of the wrong type for id:"
