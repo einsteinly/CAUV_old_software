@@ -5,7 +5,7 @@
 
 \#include "emit_generated.h"
 \#include "../common/messages.h"
-\#include "../common/debug.h"
+\#include "../debug/cauv_debug.h"
 
 namespace bp = boost::python;
 

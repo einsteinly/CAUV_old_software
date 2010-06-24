@@ -5,6 +5,7 @@
  * Renderable types
  */
 
+#include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace pw{

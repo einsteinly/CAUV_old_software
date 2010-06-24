@@ -12,15 +12,19 @@ set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 add_custom_command (
    OUTPUT ${SRCD}/messages.cpp
           ${SRCD}/messages.h
+          ${SRCD}/messages_fwd.h
+          ${SRCD}/messages_messages.h
    WORKING_DIRECTORY ${PYMSGD}
    COMMAND python msggen.py -l "c++" -o ${SRCD}/messages ${SRCD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
            ${PYMSGD}/message.template.cpp
+           ${PYMSGD}/message_fwd.template.h
+           ${PYMSGD}/message_messages.template.h
            ${PYMSGD}/message.template.h
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
            ${SRCD}/messages.msg
-   COMMENT "Generating messages.cpp and mesages.h with messages-python" 
+   COMMENT "Generating messages.cpp and mesages*.h with messages-python" 
 )
 
 # rule to make cauv_logo_large.h
@@ -43,11 +47,13 @@ add_library (
     messages.cpp
     spread/mailbox_monitor.cpp
     spread/spread_mailbox.cpp
+    spread/spread_rc_mailbox.cpp
     spread/spread_messages.cpp
 )
 target_link_libraries (
     common
 
+    cauv_debug
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
@@ -70,11 +76,13 @@ add_library (
     messages.cpp
     spread/mailbox_monitor.cpp
     spread/spread_mailbox.cpp
+    spread/spread_rc_mailbox.cpp
     spread/spread_messages.cpp
 )
 target_link_libraries (
     common-shared
 
+    cauv_debug
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread

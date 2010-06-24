@@ -8,6 +8,7 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <debug/cauv_debug.h>
 
 
 using namespace std;

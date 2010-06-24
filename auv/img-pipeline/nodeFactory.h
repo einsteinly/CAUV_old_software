@@ -29,9 +29,10 @@
 #include <list>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 
-#include <common/messages.h>
+#include <common/messages_fwd.h>
 
 #include "pipelineTypes.h"
 

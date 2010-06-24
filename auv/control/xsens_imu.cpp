@@ -8,6 +8,9 @@
 #include <xsens/cmt3.h>
 #include <xsens/cmtpacket.h>
 
+#include <common/messages.h>
+#include <debug/cauv_debug.h>
+
 #include "xsens_imu.h"
 
 using namespace std;
@@ -116,7 +119,7 @@ floatYPR XsensIMU::getAttitude()
     return ret;
 }
 
-XsensIMU::XsensIMU(const XsensIMU& orig) { }
+XsensIMU::XsensIMU(const XsensIMU&) { }
 
 
 void XsensIMU::start()

@@ -12,6 +12,7 @@ add_executable (
 # libs
 target_link_libraries (
     control
+    cauv_debug
     common
     module
     ${ftdi_LIBRARIES}

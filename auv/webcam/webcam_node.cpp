@@ -16,6 +16,8 @@
 #include <common/messages.h>
 #include <camera/camera.h>
 #include <camera/camera_observer.h>
+#include <camera/webcam.h>
+#include <debug/cauv_debug.h>
 
 
 using namespace std;
@@ -103,6 +105,9 @@ void interrupt(int sig)
 
 int main(int argc, char **argv)
 {
+    if(debug::parseOptions(argc, argv))
+        return 0;
+
 /*
     if (argc != 3)
     {

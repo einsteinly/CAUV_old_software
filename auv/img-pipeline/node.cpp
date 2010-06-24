@@ -1,5 +1,8 @@
 #include "node.h"
 
+#include "imageProcessor.h"
+#include "pipelineTypes.h"
+#include "nodeFactory.h"
 
 Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
     : m_priority(priority_slow),

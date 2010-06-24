@@ -7,6 +7,7 @@
 
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <debug/cauv_debug.h>
 
 #include "../pipelineWidget.h"
 #include "text.h"
@@ -255,7 +256,7 @@ static boost::shared_ptr<PVPairEditableBase> makePVPair(
 void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     // remove any parameters that no longer exist
     str_inparam_map_t new_m_params;
-    foreach(str_inparam_map_t::value_type &i, m_params)
+    foreach(str_inparam_map_t::value_type const &i, m_params)
         if(!params.count(i.first)){
             m_contents.remove(i.second.inblob);
             m_contents.remove(i.second.pvpair);

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 #include "seanet_packet.h"
 

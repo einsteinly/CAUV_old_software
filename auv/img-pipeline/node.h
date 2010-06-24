@@ -8,17 +8,19 @@
 #include <iostream>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 #include <boost/variant.hpp>
 
 #include <common/cauv_utils.h>
-#include <common/messages.h>
-#include <common/debug.h>
+#include <common/messages_messages.h>
 #include <common/image.h>
+#include <debug/cauv_debug.h>
 
-#include "imageProcessor.h"
+// TODO: remove this dependency
+#include <ssrc/spread.h>
+
 #include "pipelineTypes.h"
-#include "nodeFactory.h"
 
 class Node{
     public:
@@ -59,7 +61,7 @@ class Node{
         typedef boost::shared_mutex mutex_t;
         typedef boost::shared_lock<mutex_t> shared_lock_t;
         typedef boost::upgrade_lock<mutex_t> unique_lock_t;
-
+        
         typedef Spread::service service_t;
     
     public:
@@ -173,7 +175,8 @@ class Node{
                     output_id outparam = j->second.second;
                     assert(node->paramOutputs().count(outparam));
                     debug() << "returning linked parameter value for" << p
-                            << "(linked to" << j->second << ")";
+                            << "(linked to" << j->second.first
+                            << j->second.second << ")";
                     // TODO: this will throw boost::bad_get if there is a
                     // param_value type mismatch between the output and the
                     // requested parameter type:

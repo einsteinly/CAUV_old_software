@@ -2,13 +2,15 @@
 #define __CONTROL_H__
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include <common/cauv_node.h>
-#include <module/module.h>
-
-#include "xsens_imu.h"
 
 class ControlLoops;
+class MCBModule;
+class XsensIMU;
+class ControlLoops;
+
 class ControlNode : public CauvNode
 {
     public:

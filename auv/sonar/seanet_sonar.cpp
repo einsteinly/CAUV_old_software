@@ -6,6 +6,8 @@
 
 #include <boost/make_shared.hpp>
 
+#include <debug/cauv_debug.h>
+
 #include "seanet_packet.h"
 
 using namespace std;

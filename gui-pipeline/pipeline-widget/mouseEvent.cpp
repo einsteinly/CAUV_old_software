@@ -1,6 +1,6 @@
 #include "mouseEvent.h"
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 #include "pipelineWidget.h"
 #include "renderable.h"

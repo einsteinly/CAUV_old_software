@@ -9,7 +9,7 @@
 #include <QKeyEvent>
 #include <QtOpenGL>
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 namespace pw{
 

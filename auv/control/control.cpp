@@ -9,6 +9,11 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <debug/cauv_debug.h>
+
+#include <module/module.h>
+
+#include "xsens_imu.h"
 
 using namespace std;
 

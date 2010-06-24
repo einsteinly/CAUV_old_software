@@ -1,6 +1,6 @@
 #include <boost/thread.hpp>
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h> 
 #include <common/bash_cout.h>
 
 static BashColour::e colours[] = {

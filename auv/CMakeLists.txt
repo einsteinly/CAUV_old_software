@@ -45,6 +45,7 @@ add_custom_command (
 add_subdirectory (camera)
 add_subdirectory (common)
 add_subdirectory (control)
+add_subdirectory (debug)
 add_subdirectory (fileinput)
 add_subdirectory (img-pipeline)
 add_subdirectory (img-viewer)

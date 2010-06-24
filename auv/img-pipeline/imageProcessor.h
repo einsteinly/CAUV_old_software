@@ -10,7 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include <common/messages.h>
+#include <common/messages_fwd.h>
 #include <common/cauv_utils.h>
 #include <common/spread/spread_rc_mailbox.h>
 

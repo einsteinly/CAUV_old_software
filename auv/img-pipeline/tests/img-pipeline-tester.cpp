@@ -7,9 +7,7 @@
 
 #include <common/cauv_node.h>
 #include <common/messages.h>
-#include <common/debug.h>
-
-#include <common/spread/mailbox_monitor.h>
+#include <debug/cauv_debug.h>
 
 
 enum test_e{

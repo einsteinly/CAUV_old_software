@@ -1,18 +1,18 @@
 #ifndef __CAMERA_OBSERVER_H__
 #define __CAMERA_OBSERVER_H__
 
-#include <vector>
-
-#include <cv.h>
-
-#include "camera.h"
-
-using namespace std;
+#include <common/messages_fwd.h>
 
 const int PROCESSING_OBJECTS = 0;
 const int PROCESSING_GATE = 1;
 
+// Forward declarations
+namespace cv{
+class Mat;
+} // namespace cv
+
 class Camera;
+
 class CameraObserver
 {
     protected:
