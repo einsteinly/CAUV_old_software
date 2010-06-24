@@ -113,6 +113,4 @@ struct MCBModule: Module
     }
 };
 
-typedef Module<38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL> MCBModule;
-
 #endif // __MODULE_H__

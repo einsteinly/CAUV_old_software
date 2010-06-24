@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <stdio.h>
+#include <string.h>
 
 #include <debug/cauv_debug.h>
 
