@@ -36,20 +36,19 @@
  *   warning() << stuff; // prints (cerr) and logs [HH:MM:SS.fffffff] WARNING: stuff
  *
  *   debug() << "stuff";   // prints (cout) and logs [HH:MM:SS.fffffff] stuff
- *   debug(3) << "stuff";  //
- *   debug(-4) << "stuff"; //
+ *   debug(0) << "stuff";  //
  *
  * The level at which debug statements will be printed can be controlled,
- * statements are printed when the current debug level is LESS than (or equal
+ * statements are printed when the current debug level is greater than (or equal
  * to) the level set in the debug statement:
- *   debug(1)  // prints when debug level <= 1 (default)
+ *   debug(1)  // prints when debug level >= 1 (default)
  *   debug()   // same as debug(1)
- *   debug(-7) // prints only when debug level <= -7
+ *   debug(2) // prints only when debug level >= 2
  *
  * The debug level can be determined based on command line options by using the
  * debug::parseOptions static member function, or the debug::setLevel static
  * member function
- *   debug::setLevel(4) // prevent printing of debug messages with level < 4
+ *   debug::setLevel(4) // prevent printing of debug messages with level > 4
  *
  * if CAUV_NO_DEBUG is defined, debug() statements do not print OR LOG
  * anything, in this case debug::parseOptions is a no-op
@@ -90,7 +89,7 @@ class SmartStreamBase : public boost::noncopyable
             printToStream(logFile());
         }
 
-        static void setLevel(int debug_level)
+        static void setLevel(unsigned int debug_level)
         {
             settings().debug_level = debug_level;
         }
@@ -102,7 +101,7 @@ class SmartStreamBase : public boost::noncopyable
             // isn't overloading wonderful...
             desc.add_options()
                 ("help", "produce help message")
-                ("debug-level", po::value<int>(), "set the level of debug messages (lower=more messages)")
+                ("verbose", po::value<unsigned int>(), "set the level of debug messages")
             ;
             po::variables_map vm;
             po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -114,14 +113,14 @@ class SmartStreamBase : public boost::noncopyable
             }
             if(vm.count("debug-level"))
             {
-                settings().debug_level = vm["debug-level"].as<int>();
+                setLevel(vm["debug-level"].as<unsigned int>());
             }
             return 0;
         }
 
     protected:
         struct Settings{
-            int debug_level;
+            unsigned int debug_level;
         };
 
         // stuff to print
@@ -263,7 +262,7 @@ class SmartStreamBase : public boost::noncopyable
 #if !defined(CAUV_NO_DEBUG)
 struct debug : public SmartStreamBase
 {
-    debug(int level=1) : SmartStreamBase(std::cout, "", BashColour::Cyan), m_level(level)
+    debug(unsigned int level=1) : SmartStreamBase(std::cout, "", BashColour::Cyan), m_level(level)
     {
     }
 
@@ -274,7 +273,7 @@ struct debug : public SmartStreamBase
     template<typename T>
     debug& operator<<(T const& a)
     {
-        if(settings().debug_level <= m_level)
+        if(settings().debug_level >= m_level)
         {
             // convert to a string
             std::stringstream s;
@@ -290,7 +289,7 @@ struct debug : public SmartStreamBase
      */
     debug& operator<<(std::ostream& (*manip)(std::ostream&))
     {
-        if(settings().debug_level <= m_level)
+        if(settings().debug_level >= m_level)
         {
             // apply to a string
             std::stringstream s;
@@ -308,7 +307,7 @@ struct debug : public SmartStreamBase
 #else
 struct debug : boost::noncopyable
 {
-    debug(int level=1)
+    debug(unsigned int level=1)
     {
         level = level; // suppress warning about unused parameter
     }

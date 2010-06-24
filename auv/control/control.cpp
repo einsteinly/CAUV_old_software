@@ -181,6 +181,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     }
 
     m_controlLoops = boost::make_shared<ControlLoops>();
+    addObserver(m_controlLoops);
 }
 ControlNode::~ControlNode()
 {
@@ -200,7 +201,7 @@ void ControlNode::onRun()
         
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
-        m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());
+        //m_mcb->addObserver(boost::make_shared<DebugMessageObserver>());
         m_mcb->addObserver(m_controlLoops);
         
         m_mcb->start();

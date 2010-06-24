@@ -28,6 +28,7 @@ public enum $e.name {
             #for $v in $e.values
             case $v.name:
                 $serialiseJavaType($e.type, $str($v.value))
+                break;
             #end for
         }
     }
