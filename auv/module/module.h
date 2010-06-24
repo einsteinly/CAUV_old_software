@@ -219,7 +219,7 @@ class Module : public MessageSource
             if (m_ftdiStreamBuffer.is_open())
             {
                 m_readThread = boost::thread(&Module::readLoop, this);
-                m_sendThread = boost::thread(&Module::readLoop, this);
+                m_sendThread = boost::thread(&Module::sendLoop, this);
             }
             else
             {
@@ -242,7 +242,9 @@ class Module : public MessageSource
 
         void send(boost::shared_ptr<const Message> message)
         {
+            debug(3) << "Adding message to send queue: " << *message;
             m_sendQueue.push(message);
+            debug(2) << "Added message to send queue: " << *message;
         }
 
     protected:
@@ -255,9 +257,13 @@ class Module : public MessageSource
         {
             debug() << "Started module send thread";
             try {
+                debug(3) << "Initialising ftdi buffer archive";
                 boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
                 while (true) {
-                    boost::shared_ptr<Message> message = m_sendQueue.popWait();
+                    debug(3) << "Waiting for message on send queue";
+                    boost::shared_ptr<const Message> message = m_sendQueue.popWait();
+                    debug(3) << "Sending message to module: " << *message;
+                    
                     boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
 
                     uint32_t startWord = 0xdeadc01d;

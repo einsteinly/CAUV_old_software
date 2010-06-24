@@ -78,11 +78,9 @@ struct PIDControl
 class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
-        ControlLoops()
+        ControlLoops() :
+                m_bearingenabled(false)
         {
-            // TODO: Remove these, they're just for testing initially
-            m_bearingenabled = true;
-            m_bearingcontrol.target = 200;
         }
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
@@ -111,6 +109,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
+            debug() << "forwarding motor message";
             lastMotorMessage = now();
             m_mcb->send(m);
         }
@@ -211,7 +210,7 @@ void ControlNode::onRun()
     }
 
     if (m_xsens) {
-        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>());
+//        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>());
         m_xsens->addObserver(m_controlLoops);
 
         m_xsens->start();
@@ -241,8 +240,9 @@ void interrupt(int sig)
     raise(sig);
 }
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
     node = new ControlNode();
     node->run();
