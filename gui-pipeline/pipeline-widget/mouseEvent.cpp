@@ -21,7 +21,7 @@ MouseEvent::MouseEvent(QMouseEvent* qm,
     : pos((qm->x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x - r->m_pos.x,
           (p.height()/2 - qm->y()) / p.m_pixels_per_unit - p.m_win_centre.y - r->m_pos.y),
       buttons(qm->buttons()){
-      debug(-1) << "MouseEvent constructed: p=" << pos
+      debug(2) << "MouseEvent constructed: p=" << pos
                 << "qm: x=" << qm->x() << "y=" << qm->y()
                 << "wc: x=" << p.m_win_centre.x << "y=" << p.m_win_centre.y;
 }

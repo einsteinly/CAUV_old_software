@@ -1,6 +1,8 @@
-package $package
+package $package;
 
-abstract class Message {
+import java.io.IOException;
+
+public abstract class Message {
     public String group() {
         return m_group;
     }

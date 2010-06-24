@@ -5,20 +5,13 @@ import java.util.Vector;
 import java.util.HashMap;
 import java.io.*;
 
+import ${rootpackage}.utils.*; 
+
 public enum $e.name {
 
     #for i, v in $enumerate($e.values)#${v.name}#if $i < $len($e.values) - 1#, #end if##end for#;
 
-    public void writeInto(DataInputStream s) throws IOException {
-        switch (this) {
-            #for $v in $e.values
-            case $v.name:
-                $serialiseJavaType($e.type, $str($v.value))
-            #end for
-        }
-    }
-
-    public static $e.name readFrom(DataInputStream s) throws IOException {
+    public static $e.name readFrom(LEDataInputStream s) throws IOException {
         $toJavaType($e.type) $deserialiseJavaType($e.type, "val")
         switch (val) {
             #for $v in $e.values
@@ -30,6 +23,15 @@ public enum $e.name {
         }
     }
 
+    public void writeInto(LEDataOutputStream s) throws IOException {
+        switch (this) {
+            #for $v in $e.values
+            case $v.name:
+                $serialiseJavaType($e.type, $str($v.value))
+                break;
+            #end for
+        }
+    }
 }
 
 

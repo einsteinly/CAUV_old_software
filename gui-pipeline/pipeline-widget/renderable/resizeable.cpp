@@ -17,7 +17,7 @@ Resizeable::Resizeable(container_ptr_t c, BBox const& s, BBox const& min, BBox
 }
 
 void Resizeable::mouseMoveEvent(MouseEvent const& event){
-    debug(-1) << "Resizeable::mouseMoveEvent(" << event.pos << ")";
+    debug(2) << "Resizeable::mouseMoveEvent(" << event.pos << ")";
     if(m_resizing && (event.buttons & Qt::LeftButton)){
         m_bbox.max.x = (event.pos - m_click_offset).x;
         m_bbox.min.y = (event.pos - m_click_offset).y;
@@ -40,7 +40,7 @@ void Resizeable::mouseMoveEvent(MouseEvent const& event){
 }
 
 bool Resizeable::mousePressEvent(MouseEvent const& event){
-    debug(-1) << "Resizeable::mousePressEvent(" << event.pos << ")";
+    debug(2) << "Resizeable::mousePressEvent(" << event.pos << ")";
     Point blc = Point(m_bbox.max.x, m_bbox.min.y);
     if((Handle_Size + blc).contains(event.pos)){
         m_click_offset = event.pos - blc;
