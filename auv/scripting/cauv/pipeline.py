@@ -31,9 +31,7 @@ class Model(messaging.BufferedMessageObserver):
             raise RuntimeError(
                 'Could not get Description Message from the pipeline, is it running?'
             )
-        print graph
         s = State()
-        print dir(graph)
         for id in graph.nodeTypes.keys():
             s.nodes[id] = Node(id, graph.nodeTypes[id])
         for id in graph.nodeParams.keys():
@@ -43,15 +41,18 @@ class Model(messaging.BufferedMessageObserver):
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():
-                s.nodes[id].inarcs[input] = inputlinks[input]
+                inlink = inputlinks[input]
+                s.nodes[id].inarcs[input] = (inlink.node, inlink.output)
         for id in graph.nodeOutputs.keys():
             outputlinks = graph.nodeOutputs[id]
             for output in outputlinks.keys():
                 links = outputlinks[output]
-                print 'node', id, 'output', output, '->',
+                #print 'node', id, 'output', output, '->',
+                s.nodes[id].outarcs[output] = []
                 for link in links:
-                    print link,
-                print
+                    #print link.node, link.input, ":",
+                    s.nodes[id].outarcs[output].append((link.node, link.input))
+                #print
         return s
     
     def set(self, state):
@@ -62,17 +63,20 @@ class Model(messaging.BufferedMessageObserver):
             id_map[id] = self.addSynchronous(node.type)
         # then set all parameter values
         for id, node in state.nodes.items():
-            for param, value in node.params:
-                self.setParameterSynchronous(id_map[id], param, value)
+            for param in node.params.keys():
+                #print 'set parameter', node, param, '=', node.params[param]
+                self.setParameterSynchronous(id_map[id], param, node.params[param])
         # finally add links
         for id, node in state.nodes.items():
-            # strictly speaking only one of these should be necessary...
-            for input, (node_id, output) in node.inarcs:
-                print input, node_id, output
-                pass
-            for output, (node_id, input) in node.outarcs:
-                print output, node_id, input
-                pass
+            # strictly speaking only one of these should be necessary, since
+            # arcs have two ends...
+            for input in node.inarcs.keys():
+                (other, output) = node.inarcs[input]
+                #print 'set inarc:', id, input, other, output
+                self.addArcSynchronous(id, input, other, output)
+            #for output in node.outarcs.keys():
+            #    (other, input) = node.outarcs[output]
+            #    print 'set outarc:', id, output, other, input
    
     def send(self, msg):
         # send to pipeline via self.__node
@@ -82,7 +86,10 @@ class Model(messaging.BufferedMessageObserver):
     def addSynchronous(self, type):
         return None
     
-    def setParameterSynchronous(self, param, value):
+    def setParameterSynchronous(self, node, param, value):
+        return None
+    
+    def addArcSynchronous(self, src, out, dst, inp):
         return None
 
     # Overloads for observing pipeline-related messages:
