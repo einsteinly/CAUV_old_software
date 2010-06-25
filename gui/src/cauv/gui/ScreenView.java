@@ -12,6 +12,8 @@ public interface ScreenView {
 	public QWidget getScreenWidget();
 	
 	public String getScreenName();
-	
-	public void onConnect(AUV auv);
+
+    public void onConnect(AUV auv);
+    
+    public void onDisconnect(AUV auv);
 }

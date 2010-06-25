@@ -1,6 +1,6 @@
-#192.168.1.6
-#Fri Jun 11 14:42:44 BST 2010
-GAMEPAD_ID=3
-AUV_PORT=4803
-ADDRESS=192.168.1.6
+#10.0.0.108
+#Fri Jun 25 12:08:26 BST 2010
+AUV_PORT=16707
+GAMEPAD_ID=2
+ADDRESS=10.0.0.108
 LAST_PATH=C\:/Users/Andy Pritchard/Documents/dev/cauv/2009/repo-competition/missions

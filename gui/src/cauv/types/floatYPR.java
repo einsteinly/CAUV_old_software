@@ -1,18 +1,22 @@
 package cauv.types;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Vector;
+import java.util.HashMap;
+import java.io.*;
+
+import cauv.utils.*;
 
 public class floatYPR {
     public float yaw;
     public float pitch;
     public float roll;
 
-    public floatYPR() {
+    public floatYPR()
+    {
     }
 
-    public static floatYPR readFrom(DataInputStream s) throws IOException {
+    public static floatYPR readFrom(LEDataInputStream s) throws IOException {
         floatYPR val = new floatYPR();
         val.yaw = s.readFloat();
         val.pitch = s.readFloat();
@@ -20,10 +24,9 @@ public class floatYPR {
         return val;
     }
 
-    public void writeInto(DataOutputStream s) throws IOException {
-        floatYPR val = this;
-        s.writeFloat(val.yaw);
-        s.writeFloat(val.pitch);
-        s.writeFloat(val.roll);
+    public void writeInto(LEDataOutputStream s) throws IOException {
+        s.writeFloat(this.yaw);
+        s.writeFloat(this.pitch);
+        s.writeFloat(this.roll);
     }
 }

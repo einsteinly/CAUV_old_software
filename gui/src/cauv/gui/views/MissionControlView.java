@@ -287,6 +287,12 @@ public class MissionControlView extends QWidget implements ScreenView {
     	
     }
     
+    @Override
+    public void onDisconnect(AUV auv) {
+        // TODO Auto-generated method stub
+        
+    }
+    
 	@Override
 	public QGraphicsItemInterface getIconWidget() {
 		return icon;

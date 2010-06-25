@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Thu 6. May 01:32:04 2010
+** Created: Thu 24. Jun 19:13:55 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -28,9 +28,9 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QSpinBox port;
     public QPushButton connectButton;
     public QLabel errorMessage;
-    public QLabel imageProcLED_3;
-    public QLabel imageProcLED_2;
+    public QLabel controlLED;
     public QLabel imageProcLED;
+    public QLabel aiLED;
     public QWidget widget;
     public QHBoxLayout horizontalLayout_8;
     public QWidget widget_2;
@@ -340,19 +340,12 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 
         horizontalLayout.addWidget(errorMessage);
 
-        imageProcLED_3 = new QLabel(connectionBar);
-        imageProcLED_3.setObjectName("imageProcLED_3");
-        imageProcLED_3.setMinimumSize(new QSize(20, 20));
-        imageProcLED_3.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
+        controlLED = new QLabel(connectionBar);
+        controlLED.setObjectName("controlLED");
+        controlLED.setMinimumSize(new QSize(20, 20));
+        controlLED.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
-        horizontalLayout.addWidget(imageProcLED_3);
-
-        imageProcLED_2 = new QLabel(connectionBar);
-        imageProcLED_2.setObjectName("imageProcLED_2");
-        imageProcLED_2.setMinimumSize(new QSize(20, 20));
-        imageProcLED_2.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
-
-        horizontalLayout.addWidget(imageProcLED_2);
+        horizontalLayout.addWidget(controlLED);
 
         imageProcLED = new QLabel(connectionBar);
         imageProcLED.setObjectName("imageProcLED");
@@ -360,6 +353,13 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         imageProcLED.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
         horizontalLayout.addWidget(imageProcLED);
+
+        aiLED = new QLabel(connectionBar);
+        aiLED.setObjectName("aiLED");
+        aiLED.setMinimumSize(new QSize(20, 20));
+        aiLED.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
+
+        horizontalLayout.addWidget(aiLED);
 
 
         verticalLayout.addWidget(connectionBar);
@@ -564,20 +564,20 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         address.setStatusTip("");
         connectButton.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Connect", null));
         errorMessage.setText("");
-        imageProcLED_3.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("Main", "Image Processing", null));
-        imageProcLED_3.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
-"p, li { white-space: pre-wrap; }\n"+
-"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\"classpath:cauv/gui/resources/red-led.png\" /></p></body></html>", null));
-        imageProcLED_2.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("Main", "Image Processing", null));
-        imageProcLED_2.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
+        controlLED.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("Main", "Image Processing", null));
+        controlLED.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
 "p, li { white-space: pre-wrap; }\n"+
 "</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\"classpath:cauv/gui/resources/red-led.png\" /></p></body></html>", null));
         imageProcLED.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("Main", "Image Processing", null));
         imageProcLED.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
+"p, li { white-space: pre-wrap; }\n"+
+"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\"classpath:cauv/gui/resources/red-led.png\" /></p></body></html>", null));
+        aiLED.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("Main", "Image Processing", null));
+        aiLED.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
 "p, li { white-space: pre-wrap; }\n"+
 "</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
