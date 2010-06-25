@@ -23,15 +23,19 @@
 #include <debug/cauv_debug.h>
 
 
-FTDIException::FTDIException(const std::string& msg) : message(msg) {}
-FTDIException::FTDIException(const std::string& msg, int errCode, ftdi_context* ftdic)
+FTDIException::FTDIException(const std::string& msg) : m_errCode(-1), m_message(msg) {}
+FTDIException::FTDIException(const std::string& msg, int errCode, ftdi_context* ftdic) : m_errCode(errCode)
 {
-    message = MakeString() << msg << ": " << errCode << " (" << ftdi_get_error_string(ftdic) << ")";
+    m_message = MakeString() << msg << ": " << errCode << " (" << ftdi_get_error_string(ftdic) << ")";
 }
 FTDIException::~FTDIException() throw() {}
 const char* FTDIException::what() const throw()
 {
-	return message.c_str();
+	return m_message.c_str();
+}
+int FTDIException::errCode() const
+{
+	return m_errCode;
 }
 
 

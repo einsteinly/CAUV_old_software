@@ -150,7 +150,13 @@ class ControlLoops : public MessageObserver, public XsensObserver
 };
 
 
-
+class NotRootException : public std::exception
+{
+    public:
+        virtual const char* what() const throw() {
+            return "Need to be running as root";
+        }
+};
 
 ControlNode::ControlNode() : CauvNode("Control")
 {
@@ -166,6 +172,9 @@ ControlNode::ControlNode() : CauvNode("Control")
     {
         error() << "Cannot connect to MCB: " << e.what();
         m_mcb.reset();
+        if (e.errCode() == -8) {
+            throw NotRootException();
+        }
     }
 
     // start up the Xsens IMU
@@ -255,8 +264,15 @@ int main(int argc, char** argv)
 {
     debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
-    node = new ControlNode();
-    node->run();
+    
+    try {
+        node = new ControlNode();
+        node->run();
+    }
+    catch (NotRootException& e) {
+        error() << e.what();
+    }
+    
     cleanup();
     return 0;
 }
