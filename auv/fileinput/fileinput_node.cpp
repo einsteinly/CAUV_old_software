@@ -12,7 +12,7 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/messages.h>
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 
 class FileinputObserver: public MessageObserver{
@@ -49,8 +49,8 @@ FileinputNode::FileinputNode(std::string const& fname)
 
 void FileinputNode::onRun()
 {
-    mailbox()->joinGroup("image"); 
-    mailboxMonitor()->addObserver(boost::make_shared<FileinputObserver>(m_img, mailbox()));
+    joinGroup("image"); 
+    addMessageObserver(boost::make_shared<FileinputObserver>(m_img, mailbox()));
 }
 
 static FileinputNode* node;

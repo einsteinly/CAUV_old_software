@@ -58,24 +58,25 @@ class PercentileNode: public Node{
             const int rows = img->cvMat().rows;
             const int cols = img->cvMat().cols;
             const int elem_size = img->cvMat().elemSize();
-            const int row_size = img->cvMat().cols * elem_size; 
             const int num_pixels = rows * cols;
             const int pct_pixel = int(num_pixels * (pct/100.0f) + 0.5f);
 
             std::vector< std::vector<int> > value_histogram(3, std::vector<int>(256, 0));
             
-            unsigned char *rp, *cp, *bp;
+            const unsigned char *rp, *cp, *bp;
             int row, col, ch;
 
-            for(row = 0, rp = img->cvMat().data; row < rows; row++, rp += row_size)
+            for(row = 0; row < rows; row++){
+                rp = img->cvMat().ptr(row);
                 for(col = 0, cp = rp; col < cols; col++, cp += elem_size)
                     for(ch = 0, bp = cp; ch < channels; ch++, bp++)
                         value_histogram[ch][*bp]++;
+            }
             
             int running_total = 0;
             for(int i = 0; i < 256; i++){
-                debug() << "[" << BashColour::White << bar(running_total, num_pixels, 50) << "]"
-                        << i << running_total;
+                debug(6) << "[" << BashColour::White << bar(running_total, num_pixels, 50) << "]"
+                          << i << running_total;
                 if((running_total += value_histogram[0][i]) >= pct_pixel){
                     r["value"] = param_value_t(i);
                     break;

@@ -3,23 +3,24 @@
 
 #include <map>
 #include <list>
-#include <iostream>
 #include <ostream>
 
-#include <boost/thread.hpp>
-#include <boost/foreach.hpp>
-#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
 
-#include <common/debug.h>
 #include <common/blocking_queue.h>
+
 #include "pipelineTypes.h"
+
+// Forward Declarations
+namespace boost{
+class thread_group;
+class thread;
+} // namespace boost
 
 // NB: there must be at least one thread of each priority!
 const int SLOW_THREADS = 2; // Mimimum number of threads dedicated to slow processes
 const int FAST_THREADS = 2; // Mimimum number of threads dedicated to fast processes
 const int REALTIME_THREADS = 1; // Number of realtime threads is fixed
-
-enum SchedulerPriority {priority_slow, priority_fast, priority_realtime};
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
@@ -51,28 +52,15 @@ int pthreadPriority(SchedulerPriority const& s);
 
 class Scheduler
 {
-    typedef boost::shared_ptr<boost::thread> thread_ptr_t;
-    typedef std::map<SchedulerPriority, std::list<thread_ptr_t> > priority_thread_map_t;
+    typedef boost::shared_ptr<boost::thread_group> thread_group_ptr_t;
+    typedef std::map<SchedulerPriority, thread_group_ptr_t > priority_thread_group_map_t;
     typedef BlockingQueue<Node*> node_queue_t;
     typedef boost::shared_ptr<node_queue_t> queue_ptr_t;
     typedef std::map<SchedulerPriority, queue_ptr_t> priority_queue_map_t;
     typedef std::map<SchedulerPriority, int> priority_int_map_t;
 
     public:
-        Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_threads()
-        {
-            m_num_threads[priority_slow] = SLOW_THREADS;
-            m_num_threads[priority_fast] = FAST_THREADS;
-            m_num_threads[priority_realtime] = REALTIME_THREADS;
-
-            m_threads[priority_slow] = std::list<thread_ptr_t>();
-            m_threads[priority_fast] = std::list<thread_ptr_t>();
-            m_threads[priority_realtime] = std::list<thread_ptr_t>();
-
-            m_queues[priority_slow] = boost::make_shared<node_queue_t>();
-            m_queues[priority_fast] = boost::make_shared<node_queue_t>();
-            m_queues[priority_realtime] = boost::make_shared<node_queue_t>();
-        }
+        Scheduler();
         
         /**
          * Add a job of a particular priority to the corresponding queue
@@ -80,103 +68,47 @@ class Scheduler
          * into a smart pointer.
          * NB: this IS threadsafe
          */
-        void addJob(Node* node, SchedulerPriority p) const throw(scheduler_error)
-        {
-            // we rely on multiple-reader thread-safety of std::map here,
-            // which is only true if we aren't creating new key-value pairs
-            // using operator[] (which we aren't, and doing so would return a
-            // NULL queue pointer anyway)
-            if(!node)
-                throw(scheduler_error("NULL job added to scheduler"));
-            const priority_queue_map_t::const_iterator i = m_queues.find(p);
-            if(i != m_queues.end())
-                i->second->push(node);
-            else
-                error() << __func__ << " Error: no such priority: " << p;
-        }
+        void addJob(Node* node, SchedulerPriority p) const;
         
         /**
          * Wait on the next available job of priority p
          * node_ptr_t() is returned if the scheduler is stopped, in this case
          * threads should return from their event loop
          */
-        Node* waitNextJob(SchedulerPriority p) throw()
-        {
-            boost::this_thread::yield();
-            if(m_stop)
-                return NULL; 
-            else
-                return m_queues[p]->popWait();
-        }
+        Node* waitNextJob(SchedulerPriority p);
         
         /**
          * False until start() has been called
          */
-        bool alive() const throw()
-        {   
-            return !m_stop;
-        }
+        bool alive() const;
         
         /**
          * Signal all threads to stop, wait for all threads to finish
          * NB: not threadsafe
          */
-        void stopWait() throw()
-        {
-            m_stop = true;
-            priority_thread_map_t::iterator i;
-            // NB: BOOST_FOREACH doesn't seem to work properly on std::map
-            for(i = m_threads.begin(); i != m_threads.end(); i++){
-                BOOST_FOREACH(thread_ptr_t tp, i->second)
-                    tp->join();
-                i->second.clear();
-            }
-        }
+        void stopWait();
 
         /**
          * This MUST be called if nodes are removed, otherwise hanging node
          * pointers may remain in queues.
          */
-        void clearQueues() throw(){
-        }
+        void clearQueues();
         
         /**
          * Spawn threads and go!
          * NB: not threadsafe
          */
-        void start() throw()
-        {
-            if(!m_stop)
-                return;
-
-            m_stop = false;
-            
-            priority_thread_map_t::iterator i;
-            // NB: BOOST_FOREACH doesn't seem to work properly on std::map
-            for(i = m_threads.begin(); i != m_threads.end(); i++){
-                for(int j = 0; j < m_num_threads[i->first]; j++)
-                    i->second.push_back(_spawnThread(i->first));
-            }
-        }
+        void start();
 
     private:
-        thread_ptr_t _spawnThread(SchedulerPriority const& p) throw()
-        {
-            // new thread takes a copy of the ImgPipelineThread object
-            thread_ptr_t t = boost::make_shared<boost::thread>(ImgPipelineThread(this, p));
-            
-            struct sched_param param;
-            param.sched_priority = pthreadPriority(p);
-            pthread_setschedparam(t->native_handle(), SCHED_OTHER, &param); 
-            return t;
-        }
+        boost::thread* _spawnThread(SchedulerPriority const& p);
 
         // TODO: this should probably have a mutex
         volatile bool m_stop;
         
         priority_queue_map_t m_queues;
         priority_int_map_t m_num_threads;
-        priority_thread_map_t m_threads;
+        priority_thread_group_map_t m_thread_groups;
 };
 
 

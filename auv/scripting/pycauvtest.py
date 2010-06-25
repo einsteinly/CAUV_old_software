@@ -1,12 +1,37 @@
 #! /usr/bin/env python
-import cauvnode
-import cauv
+import cauv.node as node
+import cauv.messaging as messaging
+import cauv.pipeline as pipeline
 
 import time
 
-def main():
-    n = cauvnode.Node("pycauv")
-    print "created cauvnode.Node"
+def pipelineTest():
+    n = node.Node("pycauv-pl")
+    model = pipeline.Model(n)
+    print 'Setting debug level to -3'
+    n.send(messaging.DebugLevelMessage(-3), "debug")
+    
+    print 'Adding stuff to the pipeline...'
+    n.send(messaging.ClearPipelineMessage(), "pipeline")
+    n.send(messaging.AddNodeMessage(messaging.NodeType.FileInput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+    n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOutput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+
+    print 'Getting pipeline state...'
+    saved = model.get()
+    print 'before:', saved
+    print 'Clearing pipeline state...'
+    model.clear()
+    print 'Setting pipeline state...'
+    model.set(saved)
+    print 'after:', model.get()
+
+def randomTest():
+    n = node.Node("pycauv")
+    print "created node.Node"
 
     n.join("test")
     print "joined test group"
@@ -17,20 +42,25 @@ def main():
     n.join("invalid group")
     print "attempted to join an invalid group"
 
-    o = cauvnode.Observer()
-    print o, "created cauvnode.Observer"
+    o = node.Observer()
+    print o, "created node.Observer"
 
-    dmo = cauv.DebugMessageObserver()
+    dmo = messaging.DebugMessageObserver()
     print dmo, "created DebugMessageObserver"
 
-    class MMO(cauvnode.Observer):
+    class MMO(node.Observer):
         def onDebugMessage(self, msg):
             print "mesage received:", msg
         def onImageMessageBuffered(self, msg):
-            print "mesage received (buffered):", msg
-            print "sleeping..."
-            time.sleep(500)
+            print "image received:", msg
+        def onNodeAddedMessage(self, msg):
+            print "node added:", msg.nodeId, msg.nodeType
+        def onStatusMessageBuffered(self, msg):
+            print "node status:", msg.nodeId, msg.status
+
     m = MMO()
+    m.setDoubleBuffered(messaging.MessageType.Status, True)
+    m.setDoubleBuffered(messaging.MessageType.Image, True)
     print m, "created Observer with overload"
 
     n.addObserver(m)
@@ -40,7 +70,7 @@ def main():
     n.addObserver(dmo)
     print "added debug observer"
 
-    msg = cauv.DebugMessage(cauv.DebugType.Debug, "test message string!")
+    msg = messaging.DebugMessage(messaging.DebugType.Debug, "test message string!")
     print "created debug message:", msg
 
     for i in xrange(1, 11):
@@ -52,17 +82,15 @@ def main():
             #print n.mailbox.receive(1000)
         except Exception, e:
             print e
-    
-    n.mailbox.join("pipeline")
-    n.mailbox.join("pl_gui")
-    n.mailbox.join("images")
-    
-    n.send(cauv.ClearPipelineMessage(), "pipeline")
-    print n.receive(1000)
-    n.send(cauv.AddNodeMessage(cauv.NodeType.FileInput,
-                               cauv.NodeInputArcVec(),
-                               cauv.NodeOutputArcVec()), "pipeline")
-    print n.receive(1000)
+
+    time.sleep(3)
+    n.send(messaging.ClearPipelineMessage(), "pipeline")
+    n.send(messaging.AddNodeMessage(messaging.NodeType.FileInput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
+    n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOutput,
+                                    messaging.NodeInputArcVec(),
+                                    messaging.NodeOutputArcVec()), "pipeline")
 
     print "deleting dmo", dmo
     del dmo
@@ -78,6 +106,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    pipelineTest()
 
 

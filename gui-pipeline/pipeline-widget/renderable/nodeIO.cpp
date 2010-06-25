@@ -2,6 +2,8 @@
 
 #include <boost/make_shared.hpp>
 
+#include <debug/cauv_debug.h>
+
 #include "../pipelineWidget.h"
 #include "text.h"
 #include "arc.h"
@@ -170,7 +172,7 @@ void FloatingArcHandle::mouseReleaseEvent(MouseEvent const&){
     if(dropped_on_io = boost::dynamic_pointer_cast<NodeIOBlob>(hit)){
         debug() << "dropped on IO" << dropped_on_io;
         m_arc->m_dst = dropped_on_io;
-        m_pw->sendMessage(
+        m_pw->send(
             boost::make_shared<AddArcMessage>(m_arc->from(), m_arc->to())
         );
     }else{

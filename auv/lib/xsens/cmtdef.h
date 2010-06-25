@@ -1198,7 +1198,7 @@ struct CmtPortInfo {
 		//! equality operator, used for finding items in a list
 	bool operator == (const CmtPortInfo& p) const { return strcmp(m_portName, p.m_portName) == 0; }
 		//! equality operator, used for finding items in a list
-	bool operator == (const uint16_t port) const { return false; }
+	bool operator == (const uint16_t /*port*/) const { return false; }
 #	endif // ifdef _WIN32/Linux
 #endif
 };

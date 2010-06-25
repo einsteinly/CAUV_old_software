@@ -72,7 +72,7 @@ class PipelineWidget: public QGLWidget,
         void removeArc(renderable_ptr_t src, renderable_ptr_t dst);
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
-        void sendMessage(boost::shared_ptr<Message>);
+        void send(boost::shared_ptr<Message>);
 
         // implement Container:
         virtual Point referUp(Point const& p) const;

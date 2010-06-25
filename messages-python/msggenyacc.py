@@ -3,7 +3,11 @@ import ply.yacc as yacc
 # Get the token map from the lexer.  This is required.
 from msggenlex import tokens
 
-class Expr: pass
+class Expr:
+    def __cmp__(self, other):
+        return cmp(str(self), str(other))
+    def __hash__(self):
+        return hash(str(self))
 class Group(Expr):
     def __init__(self, name, messages):
         self.name = name

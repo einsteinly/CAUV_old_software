@@ -1,28 +1,18 @@
-#include <iostream>
-
-#include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include <opencv/cv.h>
+#include "camera.h"
+#include "camera_observer.h"
+#include "webcam.h"
 
 #include <common/cauv_utils.h>
-#include <common/messages.h>
-
-#include "camera.h"
 
 
-using namespace std;
-CameraException::CameraException(const string& _reason) : reason(_reason) {}
-
-CameraException::~CameraException() throw() {}
-
-const char *CameraException::what() const throw()
+CameraException::CameraException(const std::string& _reason)
+    : std::runtime_error(_reason)
 {
-    return reason.c_str();
 }
 
-ImageCaptureException::ImageCaptureException(void) : CameraException("Could not open camera device") {}
-ImageCaptureException::~ImageCaptureException(void) throw() {}
+ImageCaptureException::ImageCaptureException() : CameraException("Could not open camera device") {}
 
 
 Camera::Camera(const CameraID::e id) : m_id(id)
@@ -38,23 +28,11 @@ CameraID::e Camera::id() const
 }
 
 
-void Camera::addObserver(observer_ptr o)
-{
-    m_obs.push_back(o);
-}
-void Camera::removeObserver(observer_ptr o)
-{
-    m_obs.remove(o);
-}
-void Camera::clearObservers()
-{
-    m_obs.clear();
-}
 
 
 void Camera::broadcastImage(const cv::Mat& img)
 {
-    foreach(observer_ptr o, m_obs)
+    foreach(observer_ptr_t o, m_observers)
     {
         o->onReceiveImage(m_id, img);
     }
@@ -91,14 +69,11 @@ void CaptureThread::operator()()
         int delay = m_interFrameDelay;
         m_frameDelayMutex.unlock();
         
-        boost::this_thread::sleep( boost::posix_time::milliseconds(delay) );
+        msleep(delay);
     }
 }
 
-
-
-
-Webcam::Webcam(const CameraID::e cameraID, const int deviceID) throw (ImageCaptureException)
+Webcam::Webcam(const CameraID::e cameraID, const int deviceID)
     : Camera(cameraID), m_thread_callable(*this)
 {
     //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
@@ -130,3 +105,4 @@ Webcam::~Webcam() {
     m_thread_callable.stop();
     m_thread.join();
 }
+

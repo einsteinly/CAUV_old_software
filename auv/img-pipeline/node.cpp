@@ -1,5 +1,8 @@
 #include "node.h"
 
+#include "imageProcessor.h"
+#include "pipelineTypes.h"
+#include "nodeFactory.h"
 
 Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
     : m_priority(priority_slow),
@@ -21,6 +24,7 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
       m_parameter_tips(),
       m_parameters_lock(),
 
+      m_checking_sched_lock(),
       m_exec_queued(false),
       m_exec_queued_lock(),
       m_new_inputs(),
@@ -39,7 +43,7 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
 }
 
 Node::~Node(){
-    debug(3) << BashColour::Purple << "~Node" << *this << ", waiting for pending exec";
+    debug(-3) << BashColour::Purple << "~Node" << *this << ", waiting for pending exec";
     clearAllowQueue();
     // wait for any last execution of the node to finish
     m_exec_queued_lock.lock();
@@ -50,9 +54,8 @@ Node::~Node(){
         m_exec_queued_lock.lock();
     }
     m_exec_queued_lock.unlock();
-    debug(3) << BashColour::Purple << "~Node" << *this << ", done";
+    debug(-3) << BashColour::Purple << "~Node" << *this << ", done";
 }
-
 
 NodeType::e const& Node::type() const{
     return m_node_type;
@@ -66,11 +69,12 @@ node_id const& Node::id() const{
  * output to a node with one input
  */
 void Node::setInput(node_ptr_t n){
-    lock_t l(m_parent_links_lock);
+    unique_lock_t l(m_parent_links_lock);
     if(m_parent_links.size() == 1){
         const output_id_set_t parent_outputs = n->outputs();
         if(parent_outputs.size() == 1){
             in_link_map_t::value_type pl = *m_parent_links.begin();
+            l.unlock();
             setInput(pl.first, pl.second.first, pl.second.second);
         }else{
             error() << "Parent has " << parent_outputs.size() << " outputs!";
@@ -84,25 +88,29 @@ void Node::setInput(node_ptr_t n){
 }
 
 void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
-    lock_t l(m_parent_links_lock);
+    unique_lock_t l(m_parent_links_lock);
     const in_link_map_t::iterator i = m_parent_links.find(i_id);
     if(i == m_parent_links.end()){
-        throw(id_error("setInput: Invalid input id" + to_string(i_id)));
+        throw id_error("setInput: Invalid input id" + to_string(i_id));
+    }else if(n->id() == id()){
+        throw link_error("can't link nodes to themselves: blame shared mutexes being non-recursive");
     }else if(m_parameters.count(i->first) != n->paramOutputs().count(o_id)){
-        throw(link_error("setInput: Parameter <==> Image mismatch"));
+        throw link_error("setInput: Parameter <==> Image mismatch");
     }else{
+        param_id param = i->first;
         if(i->second.first){
-            throw(link_error("old arc must be removed first"));
+            throw link_error("old arc must be removed first");
         }
-        debug(3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
+        debug(-3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
         i->second = input_link_t(n, o_id);
-        if(m_parameters.count(i->first)){
+        l.unlock();
+        if(m_parameters.count(param)){
             warning() << "assuming output parameter is available, this needs fixing";
-            setNewParamValue(i->first);
+            setNewParamValue(param);
         }else{
             if(n->getOutputImage(o_id)){
                 debug() << "node" << *this << "input set, output available from" << *n;
-                setNewInput(i->first);
+                setNewInput(param);
             }else{
                 debug() << "node" << *this << "input set, demand new output on" << *n;
                 n->setNewOutputDemanded(o_id);
@@ -113,20 +121,20 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
 }
 
 void Node::clearInput(input_id const& i_id){
-    lock_t l(m_parent_links_lock);
+    unique_lock_t l(m_parent_links_lock);
     const in_link_map_t::iterator i = m_parent_links.find(i_id);
     if(i == m_parent_links.end()){
-        throw(id_error("clearInput: Invalid input id" + to_string(i_id)));
+        throw id_error("clearInput: Invalid input id" + to_string(i_id));
     }else{
-        debug(3) << BashColour::Purple << "removing parent link on " << i_id;
+        debug(-3) << BashColour::Purple << "removing parent link on " << i_id;
         i->second = input_link_t();
     }
 }
 
 void Node::clearInputs(node_ptr_t parent){
-    lock_t l(m_parent_links_lock);
+    unique_lock_t l(m_parent_links_lock);
     in_link_map_t::iterator i;
-    debug(3) << BashColour::Purple << "removing parent links to" << *parent;
+    debug(-3) << BashColour::Purple << "removing parent links to" << *parent;
     for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
         if(i->second.first == parent)
             i->second = input_link_t();
@@ -134,7 +142,7 @@ void Node::clearInputs(node_ptr_t parent){
 }
 
 void Node::clearInputs(){
-    lock_t l(m_parent_links_lock);
+    unique_lock_t l(m_parent_links_lock);
     in_link_map_t::iterator i;
     for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
         i->second = input_link_t();
@@ -143,7 +151,7 @@ void Node::clearInputs(){
 
 Node::input_id_set_t Node::inputs() const{
     input_id_set_t r;
-    lock_t n(m_parent_links_lock);
+    shared_lock_t n(m_parent_links_lock);
     in_link_map_t::const_iterator i;
     for(i = m_parent_links.begin(); i != m_parent_links.end(); i++)
         if(!m_parameters.count(i->first)) // parameters don't count!
@@ -152,13 +160,15 @@ Node::input_id_set_t Node::inputs() const{
 }
 
 Node::msg_node_input_map_t Node::inputLinks() const{
-    lock_t l(m_parent_links_lock);
+    shared_lock_t l(m_parent_links_lock);
     msg_node_input_map_t r;
     foreach(in_link_map_t::value_type const& i, m_parent_links){
         // parameters _do_ count
         NodeOutput t;
         t.node = m_pl.lookup(i.second.first);
         t.output = i.second.second;
+        // i.second.first is guaranteed to not be this since nodes self links
+        // are not allowed
         if(i.second.first && i.second.first->paramOutputs().count(i.second.second))
             t.type = OutputType::Parameter;
         else
@@ -169,7 +179,7 @@ Node::msg_node_input_map_t Node::inputLinks() const{
 }
 
 std::set<node_ptr_t> Node::parents() const{
-    lock_t l(m_parent_links_lock);
+    unique_lock_t l(m_parent_links_lock);
     std::set<node_ptr_t> r;
     foreach(in_link_map_t::value_type const& i, m_parent_links)
         r.insert(i.second.first); // parameters _do_ count
@@ -181,13 +191,16 @@ std::set<node_ptr_t> Node::parents() const{
  *  output to a node with one input
  */
 void Node::setOutput(node_ptr_t n){
-    lock_t l(m_child_links_lock);
+    unique_lock_t l(m_child_links_lock);
     if(m_child_links.size() == 1){
         const input_id_set_t child_inputs = n->inputs();
         if(child_inputs.size() != 1){
-            throw(link_error("setOutput: specific child input must be specified"));
+            throw link_error("setOutput: specific child input must be specified");
         }
-        setOutput(m_child_links.begin()->first, n, *child_inputs.begin());
+        output_id output = m_child_links.begin()->first;
+        input_id input = *child_inputs.begin();
+        l.unlock();
+        setOutput(output, n, input);
     }else if(m_child_links.size() > 1){
         throw link_error("setOutput: specific output must be specified");
     }else{
@@ -196,35 +209,39 @@ void Node::setOutput(node_ptr_t n){
 }
 
 void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
-    lock_t l(m_child_links_lock);
+    // check this first, because paramOutputs locks m_child_links_lock
+    if(paramOutputs().count(o_id) != n->parameters().count(i_id)){
+        throw link_error("setInput: Parameter <==> Image mismatch");
+    }
+    unique_lock_t l(m_child_links_lock);
     const out_link_map_t::iterator i = m_child_links.find(o_id);
     if(i == m_child_links.end()){
-        throw(id_error("setOutput: Invalid output id" + to_string(o_id)));
-    }else if(paramOutputs().count(o_id) != n->parameters().count(i_id)){
-        throw(link_error("setInput: Parameter <==> Image mismatch"));
+        throw id_error("setOutput: Invalid output id" + to_string(o_id));
+    }else if(n->id() == id()){
+        throw link_error("can't link nodes to themselves: blame shared mutexes being non-recursive");
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
-        debug(3) << BashColour::Green << "adding output link to child: " << *n << i_id;
+        debug(-3) << BashColour::Green << "adding output link to child: " << *n << i_id;
         i->second.push_back(output_link_t(n, i_id));
     }
 }
 
 void Node::clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
-    lock_t l(m_child_links_lock);
+    unique_lock_t l(m_child_links_lock);
     const out_link_map_t::iterator i = m_child_links.find(o_id);
     if(i == m_child_links.end()){
-        throw(id_error("clearOutput: Invalid output id" + to_string(o_id)));
+        throw id_error("clearOutput: Invalid output id" + to_string(o_id));
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
         output_link_list_t::iterator j = std::find(i->second.begin(), i->second.end(), output_link_t(n, i_id));
         if(j == i->second.end()){
-            throw(id_error("clearOutput: Invalid node & input id: "
+            throw id_error("clearOutput: Invalid node & input id: "
                            + to_string(m_pl.lookup(n)) + ", "
-                           + to_string(i_id)));
+                           + to_string(i_id));
         }else{
-            debug(3) << BashColour::Purple << "removing output link to child:" << j->first << j->second;
+            debug(-3) << BashColour::Purple << "removing output link to child:" << j->first << j->second;
             i->second.erase(j);
         }
     }
@@ -237,16 +254,16 @@ struct FirstIs{
     typename T::first_type m_comp;
 };
 void Node::clearOutputs(node_ptr_t child){
-    lock_t l(m_child_links_lock);
-    debug(3) << BashColour::Purple << "removing output links to child:" << *child;
+    unique_lock_t l(m_child_links_lock);
+    debug(-3) << BashColour::Purple << "removing output links to child:" << *child;
     foreach(out_link_map_t::value_type& i, m_child_links)
         i.second.remove_if(FirstIs<output_link_t>(child));
 }
 
 void Node::clearOutputs(){
-    lock_t l(m_child_links_lock);
+    unique_lock_t l(m_child_links_lock);
     foreach(out_link_map_t::value_type& i, m_child_links){
-        debug(3) << BashColour::Purple << "removing output link to children:"
+        debug(-3) << BashColour::Purple << "removing output link to children:"
                  << i.first << "->" << i.second;
         i.second.clear();
     }
@@ -254,7 +271,7 @@ void Node::clearOutputs(){
 
 Node::output_id_set_t Node::outputs(int type_index) const{
     output_id_set_t r;
-    lock_t n(m_child_links_lock);
+    shared_lock_t n(m_child_links_lock);
     foreach(out_link_map_t::value_type const& i, m_child_links){
         const out_map_t::const_iterator j = m_outputs.find(i.first);
         assert(j != m_outputs.end());
@@ -273,7 +290,7 @@ Node::output_id_set_t Node::paramOutputs() const{
 }
 
 Node::msg_node_output_map_t Node::outputLinks() const{
-    lock_t l(m_child_links_lock);
+    shared_lock_t l(m_child_links_lock);
     msg_node_output_map_t r;
     foreach(out_link_map_t::value_type const& i, m_child_links){
         msg_node_in_list_t input_list;
@@ -289,7 +306,7 @@ Node::msg_node_output_map_t Node::outputLinks() const{
 }
 
 std::set<node_ptr_t> Node::children() const{
-    lock_t l(m_child_links_lock);
+    shared_lock_t l(m_child_links_lock);
     std::set<node_ptr_t> r;
     foreach(out_link_map_t::value_type const& i, m_child_links)
         foreach(output_link_list_t::value_type const& j, i.second)
@@ -299,7 +316,7 @@ std::set<node_ptr_t> Node::children() const{
 
 int Node::numChildren() const{
     int r = 0;
-    lock_t l(m_child_links_lock);
+    shared_lock_t l(m_child_links_lock);
     foreach(out_link_map_t::value_type const& i, m_child_links)
         r += i.second.size();
     return r;
@@ -322,29 +339,28 @@ static NodeIOStatus::e operator|(NodeIOStatus::e const& l, NodeIOStatus::e const
 
 // there must be a nicer way to do this...
 #define CallOnDestruct(Type, member) \
-struct _COD{ _COD(Type& m):m(m){} ~_COD(){m.member();} Type& m; }
-
+struct _COD{_COD(Type& m):m(m){}~_COD(){m.member();}Type& m;}
 void Node::exec(){
     CallOnDestruct(Node, clearExecQueued) cod(*this);
     // take copies of image_ptr s from parents before _demandNewParentInput()
     in_image_map_t inputs;
     out_map_t outputs;
 
-    lock_t pl(m_parent_links_lock);
-    lock_t rl(m_parameters_lock);
+    shared_lock_t pl(m_parent_links_lock);
+    shared_lock_t rl(m_parameters_lock);
     
     bool bad_input = false;
     foreach(in_link_map_t::value_type const& v, m_parent_links){
         if(!m_parameters.count(v.first)){
             if(!v.second.first){
                 warning() << "exec: no parent on:" << v.first;
-                clearInputValid(v.first);
+                clearValidInput(v.first);
                 bad_input = true;
             }else{
                 inputs[v.first] = v.second.first->getOutputImage(v.second.second);
                 if(!inputs[v.first]){
                     warning() << "exec: no output from: " << v.second << "to" << v.first;
-                    clearInputValid(v.first);
+                    clearValidInput(v.first);
                     bad_input = true;
                 }
             }
@@ -382,23 +398,28 @@ void Node::exec(){
     }
     _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
     
+    clearNewOutputDemanded();
 
-    lock_t ol(m_outputs_lock);
-    lock_t cl(m_child_links_lock);
+    unique_lock_t ol(m_outputs_lock);
+    shared_lock_t cl(m_child_links_lock);
     foreach(out_map_t::value_type& v, outputs){
         if(!m_outputs.count(v.first)){
             warning() << "exec() produced output at an unknown id:" << v.first
                       << "(ignored)";
         }else if(m_outputs[v.first].which() == v.second.which()){
             m_outputs[v.first] = v.second;
-            output_link_list_t& children = m_child_links[v.first];
-            debug() << "Prompting" << children.size() << "children of new output:";
-            // for each node connected to the output
-            foreach(output_link_t& link, children){
-                // link is a std::pair<node_ptr, input_id>
-                debug() << "prompting new input to child on:" << v.first;
-                // notify the node that it has new input
-                link.first->setNewInput(link.second);
+            out_link_map_t::iterator kids = m_child_links.find(v.first);
+            if(kids != m_child_links.end()){
+                debug() << "Prompting" << kids->second.size() << "children of new output:";
+                // for each node connected to the output
+                foreach(output_link_t& link, kids->second){
+                    // link is a std::pair<node_ptr, input_id>
+                    debug() << "prompting new input to child on:" << v.first;
+                    // notify the node that it has new input
+                    link.first->setNewInput(link.second);
+                }
+            }else{
+                debug() << "no children to prompt";
             }
         }else{
             warning() << "exec() produced output of the wrong type for id:"
@@ -412,42 +433,39 @@ void Node::exec(){
                       << v.second.size() << "children will not be prompted";
     cl.unlock();
     ol.unlock();
-
-    if(!this->isOutputNode())
-        clearNewOutputDemanded();
 }
 
 /* Get the actual image data associated with an output
  */
 Node::image_ptr_t Node::getOutputImage(output_id const& o_id) const throw(id_error){
-    lock_t l(m_outputs_lock);
+    shared_lock_t l(m_outputs_lock);
     const out_map_t::const_iterator i = m_outputs.find(o_id);
     image_ptr_t r;
     if(i != m_outputs.end()){
         try{
             r = boost::get<image_ptr_t>(i->second);
         }catch(boost::bad_get&){
-            throw(id_error("requested output is not an image_ptr_t" + to_string(o_id)));
+            throw id_error("requested output is not an image_ptr_t" + to_string(o_id));
         }
     }else{
-        throw(id_error("no such output" + to_string(o_id)));
+        throw id_error("no such output" + to_string(o_id));
     } 
     if(!r) warning() << m_id << "returning NULL image for" << o_id;
     return r;
 }
 
 param_value_t Node::getOutputParam(output_id const& o_id) const throw(id_error){
-    lock_t l(m_outputs_lock);
+    shared_lock_t l(m_outputs_lock);
     const out_map_t::const_iterator i = m_outputs.find(o_id);
     param_value_t r;
     if(i != m_outputs.end()){
         try{
             r = boost::get<param_value_t>(i->second);
         }catch(boost::bad_get&){
-            throw(id_error("requested output is not a param_value_t" + to_string(o_id)));
+            throw id_error("requested output is not a param_value_t" + to_string(o_id));
         }
     }else{
-        throw(id_error("no such output" + to_string(o_id)));
+        throw id_error("no such output" + to_string(o_id));
     }
     return r;
 }
@@ -483,7 +501,7 @@ static NodeParamValue toNPV(param_value_t const& v){
 /* return all parameter values
  */
 std::map<param_id, NodeParamValue> Node::parameters() const{
-    lock_t l(m_parameters_lock);
+    shared_lock_t l(m_parameters_lock);
     std::map<param_id, NodeParamValue> r;
     foreach(param_value_map_t::value_type const& i, m_parameters)
         r[i.first] = toNPV(i.second);
@@ -508,9 +526,9 @@ void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
 }
 
 void Node::registerInputID(input_id const& i){
-    lock_t l(m_new_inputs_lock);
-    lock_t m(m_valid_inputs_lock);
-    lock_t n(m_parent_links_lock);
+    unique_lock_t l(m_new_inputs_lock);
+    unique_lock_t m(m_valid_inputs_lock);
+    unique_lock_t n(m_parent_links_lock);
 
     m_new_inputs[i] = false;
     m_valid_inputs[i] = false;
@@ -523,23 +541,16 @@ void Node::registerInputID(input_id const& i){
  * add this node to the scheduler queue
  */
 void Node::checkAddSched() throw(){
-    lock_t li(m_output_demanded_lock);
-    lock_t lo(m_new_inputs_lock);
-    lock_t lr(m_exec_queued_lock);
-    lock_t la(m_allow_queue_lock);
-    lock_t lp(m_new_paramvalues_lock);
-
+    unique_lock_t l(m_checking_sched_lock);
     if(!allowQueue()){
-        debug() << "Cannot enqueue node" << *this << ", allowQueue == false";
+        debug() << "Cannot enqueue node" << *this << ", allowQueue false";
         return;
     }
-
     if(execQueued()){
         debug() << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
-
-    if(!newOutputDemanded()){
+    if(!newOutputDemanded() && !newParamValues()){
         debug() << "Cannot enqueue node" << *this << ", no output demanded";
         return;
     }
@@ -548,7 +559,6 @@ void Node::checkAddSched() throw(){
         debug() << "Cannot enqueue node" << *this << ", input is invalid";
         return;
     }
-    
     // a new paramvalue is not sufficient to trigger repeated execution since
     // this can cause problems for nodes that do not copy output: ALL input and
     // connected param values must be new
@@ -569,7 +579,6 @@ void Node::checkAddSched() throw(){
 
     debug() << "Queuing node:" << *this;
     setExecQueued();
-
     m_sched.addJob(this, m_priority);
 }
 
@@ -582,11 +591,12 @@ void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p){
  * Check to see if this node should add itself to the scheduler queue
  */
 void Node::setNewInput(input_id const& a){
-    lock_t l(m_new_inputs_lock);
-    lock_t m(m_valid_inputs_lock);
+    // new input implies it's probably valid.. if not we'll just find out the
+    // next time we come to exec()
+    setValidInput(a);
+    unique_lock_t l(m_new_inputs_lock);
+    unique_lock_t m(m_valid_inputs_lock);
     const in_bool_map_t::iterator i = m_new_inputs.find(a);
-
-
     debug() << *this << "input new" << a;
     if(i == m_new_inputs.end()){
         error e;
@@ -595,7 +605,6 @@ void Node::setNewInput(input_id const& a){
             e << v.second;
         throw id_error("newInput: Invalid input id: " + to_string(a));
     }else{
-        debug() << *this << "notified of new input: " << a;
         i->second = true;
         m_valid_inputs[a] = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
@@ -610,8 +619,8 @@ void Node::setNewInput(input_id const& a){
 /* mark all inputs as new
  */
 void Node::setNewInput(){
-    lock_t m(m_new_inputs_lock);
-    lock_t n(m_valid_inputs_lock);
+    unique_lock_t m(m_new_inputs_lock);
+    unique_lock_t n(m_valid_inputs_lock);
     debug() << *this << "all inputs new";
     foreach(in_bool_map_t::value_type& i, m_new_inputs){
         i.second = true;
@@ -626,8 +635,8 @@ void Node::setNewInput(){
 }
 
 void Node::clearNewInput(){
-    lock_t m(m_new_inputs_lock);
-    lock_t n(m_valid_inputs_lock);
+    unique_lock_t m(m_new_inputs_lock);
+    unique_lock_t n(m_valid_inputs_lock);
     debug() <<  *this << "all inputs old";
     foreach(in_bool_map_t::value_type& i, m_new_inputs){
         i.second = false;
@@ -639,8 +648,8 @@ void Node::clearNewInput(){
 }
 
 bool Node::newInputAll() const{
-    lock_t m(m_new_inputs_lock);
-    lock_t n(m_parent_links_lock);
+    shared_lock_t m(m_new_inputs_lock);
+    shared_lock_t n(m_parent_links_lock);
     foreach(in_link_map_t::value_type const& i, m_parent_links)
         if(i.second.first && // only consider inputs (incl. params) that are connected
            m_new_inputs.count(i.first) &&
@@ -650,8 +659,8 @@ bool Node::newInputAll() const{
 }
 
 bool Node::newInput() const{
-    lock_t l(m_new_inputs_lock);
-    lock_t m(m_parent_links_lock);
+    shared_lock_t l(m_new_inputs_lock);
+    shared_lock_t m(m_parent_links_lock);
     foreach(in_link_map_t::value_type const& i, m_parent_links)
         if(i.second.first && // only consider inputs (incl. params) that are connected
            m_new_inputs.count(i.first) &&
@@ -662,9 +671,9 @@ bool Node::newInput() const{
 
 void Node::setValidInput(input_id const& i){
     using namespace NodeIOStatus;
-    lock_t l(m_valid_inputs_lock);
+    unique_lock_t l(m_valid_inputs_lock);
     if(!m_valid_inputs[i]){
-        lock_t l(m_new_inputs_lock);
+        unique_lock_t l(m_new_inputs_lock);
         m_valid_inputs[i] = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
             m_id, i, m_new_inputs[i]? New | Valid : Valid
@@ -674,10 +683,10 @@ void Node::setValidInput(input_id const& i){
     checkAddSched();
 }
 
-void Node::clearInputValid(input_id const& i){
-    lock_t l(m_valid_inputs_lock);
+void Node::clearValidInput(input_id const& i){
+    unique_lock_t l(m_valid_inputs_lock);
     if(m_valid_inputs[i]){
-        lock_t l(m_new_inputs_lock);
+        unique_lock_t l(m_new_inputs_lock);
         m_valid_inputs[i] = false;
         _statusMessage(boost::make_shared<InputStatusMessage>(
             m_id, i, m_new_inputs[i]? NodeIOStatus::New : NodeIOStatus::e(0)
@@ -686,9 +695,11 @@ void Node::clearInputValid(input_id const& i){
 }
 
 bool Node::validInputAll() const{
-    lock_t l(m_valid_inputs_lock);
     //TODO SOON: better way of excluding parameters from this check
-    lock_t n(m_parameters_lock);
+    // NB: for now, the order of locking here prevents deadlock if
+    // setAllowQueue is called from paramChanged callback
+    shared_lock_t n(m_parameters_lock);
+    shared_lock_t l(m_valid_inputs_lock);
     foreach(in_bool_map_t::value_type const& v, m_valid_inputs)
         if(!v.second && !m_parameters.count(v.first))
             return false;
@@ -699,7 +710,7 @@ bool Node::validInputAll() const{
  * output. It may be called at the start or end of the child's exec()
  */
 void Node::setNewOutputDemanded(output_id const& o){
-    lock_t l(m_output_demanded_lock);
+    unique_lock_t l(m_output_demanded_lock);
     if(!m_output_demanded){
         m_output_demanded = true;
 
@@ -707,8 +718,8 @@ void Node::setNewOutputDemanded(output_id const& o){
             m_id, o, NodeIOStatus::Demanded
         ));
 
-        lock_t m(m_new_inputs_lock);
-        lock_t n(m_parent_links_lock);
+        unique_lock_t m(m_new_inputs_lock);
+        unique_lock_t n(m_parent_links_lock);
         foreach(in_bool_map_t::value_type& v, m_new_inputs){
             if(!v.second && m_parent_links[v.first].first)
                 m_parent_links[v.first].first->setNewOutputDemanded(
@@ -723,8 +734,8 @@ void Node::setNewOutputDemanded(output_id const& o){
 }
 
 void Node::clearNewOutputDemanded(){
-    lock_t l(m_output_demanded_lock);
-    lock_t m(m_outputs_lock);
+    unique_lock_t l(m_output_demanded_lock);
+    unique_lock_t m(m_outputs_lock);
     m_output_demanded = false;
     foreach(out_map_t::value_type const& i, m_outputs)
         _statusMessage(boost::make_shared<OutputStatusMessage>(
@@ -735,12 +746,12 @@ void Node::clearNewOutputDemanded(){
 bool Node::newOutputDemanded() const{
     if(this->isOutputNode())
         return true;
-    lock_t l(m_output_demanded_lock);
+    shared_lock_t l(m_output_demanded_lock);
     return m_output_demanded;
 }
 
 void Node::setAllowQueue(){
-    lock_t l(m_allow_queue_lock);
+    unique_lock_t l(m_allow_queue_lock);
     m_allow_queue = true;
     NodeStatus::e status = NodeStatus::AllowQueue;
     if(execQueued()) status |= NodeStatus::ExecQueued;
@@ -750,7 +761,7 @@ void Node::setAllowQueue(){
 }
 
 void Node::clearAllowQueue(){
-    lock_t l(m_allow_queue_lock);
+    unique_lock_t l(m_allow_queue_lock);
     m_allow_queue = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(execQueued()) status |= NodeStatus::ExecQueued;
@@ -758,12 +769,12 @@ void Node::clearAllowQueue(){
 }
 
 bool Node::allowQueue() const{
-    lock_t l(m_allow_queue_lock);
+    shared_lock_t l(m_allow_queue_lock);
     return m_allow_queue;
 }
 
 void Node::setExecQueued(){
-    lock_t l(m_exec_queued_lock);
+    unique_lock_t l(m_exec_queued_lock);
     m_exec_queued = true;
     NodeStatus::e status = NodeStatus::ExecQueued;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
@@ -771,7 +782,7 @@ void Node::setExecQueued(){
 }
 
 void Node::clearExecQueued(){
-    lock_t l(m_exec_queued_lock);
+    unique_lock_t l(m_exec_queued_lock);
     m_exec_queued = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(allowQueue()) status |= NodeStatus::AllowQueue;
@@ -781,14 +792,13 @@ void Node::clearExecQueued(){
 }
 
 bool Node::execQueued() const{
-    lock_t l(m_exec_queued_lock);
+    shared_lock_t l(m_exec_queued_lock);
     return m_exec_queued;
 }
 
 void Node::setNewParamValue(param_id const& a){
-    lock_t l(m_new_paramvalues_lock);
+    unique_lock_t l(m_new_paramvalues_lock);
     const param_bool_map_t::iterator i = m_new_paramvalues.find(a);
-
 
     debug() << *this << "paramvalue new" << a;
     if(i == m_new_paramvalues.end()){
@@ -796,9 +806,8 @@ void Node::setNewParamValue(param_id const& a){
         e << '"' << a << '"' << "invalid, valid paramvalues:\n\t";
         foreach(param_bool_map_t::value_type const& v, m_new_paramvalues)
             e << v.second << "\n\t";
-        throw(id_error("setNewParamValue: Invalid parameter id: " + to_string(a)));
+        throw id_error("setNewParamValue: Invalid parameter id: " + to_string(a));
     }else{
-        debug() << *this << "notified of new paramvalue: " << a;
         i->second = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
             m_id, a, NodeIOStatus::New | NodeIOStatus::Valid
@@ -809,7 +818,7 @@ void Node::setNewParamValue(param_id const& a){
 }
 
 void Node::clearNewParamValues(){
-    lock_t m(m_new_paramvalues_lock);
+    unique_lock_t m(m_new_paramvalues_lock);
     debug() <<  *this << "all paramvalues old";
     foreach(param_bool_map_t::value_type& i, m_new_paramvalues){
         i.second = false;
@@ -820,7 +829,7 @@ void Node::clearNewParamValues(){
 }
 
 bool Node::newParamValues() const{
-    lock_t l(m_new_paramvalues_lock);
+    shared_lock_t l(m_new_paramvalues_lock);
     foreach(param_bool_map_t::value_type const& i, m_new_paramvalues)
         if(i.second)
             return true;
@@ -828,7 +837,7 @@ bool Node::newParamValues() const{
 }
 
 void Node::_demandNewParentInput() throw(){
-    lock_t l(m_parent_links_lock);
+    unique_lock_t l(m_parent_links_lock);
     debug() << "node" << *this << "demanding new output from all parents";
     foreach(in_link_map_t::value_type& i, m_parent_links)
         if(i.second.first)

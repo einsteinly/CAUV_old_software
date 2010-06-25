@@ -17,6 +17,7 @@ add_executable (
 target_link_libraries (
     img-pipeline
 
+    cauv_debug
     common
     boost_date_time
     boost_filesystem

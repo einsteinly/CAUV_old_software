@@ -7,9 +7,9 @@
 #include <common/cauv_utils.h>
 #include <common/messages.h>
 
-#include <common/spread/cauv_spread_rc_mailbox.h>
-#include <common/spread/cauv_mailbox_monitor.h>
-#include <common/spread/cauv_msgsrc_mb_observer.h>
+#include <common/spread/spread_rc_mailbox.h>
+#include <common/spread/mailbox_monitor.h>
+#include <common/spread/msgsrc_mb_observer.h>
 
 #include "imageProcessor.h"
 
@@ -23,14 +23,13 @@ ImagePipelineNode::ImagePipelineNode()
 
 void ImagePipelineNode::onRun()
 {
-    mailbox()->joinGroup("image");
-    mailbox()->joinGroup("pipeline");
-    mailbox()->joinGroup("pl_gui");
-    #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
-    eventMonitor()->addObserver(boost::make_shared<TestMBObserver>()); 
-    mailboxMonitor()->addObserver(boost::make_shared<DebugMessageObserver>());
-    #endif
-    mailboxMonitor()->addObserver(m_pipeline);
+    m_pipeline->start();
+    
+    joinGroup("image");
+    joinGroup("pipeline");
+    joinGroup("pl_gui");
+    joinGroup("sonarout");
+    addMessageObserver(m_pipeline);
 }
 
 static ImagePipelineNode* node;
@@ -52,8 +51,9 @@ void interrupt(int sig)
     raise(sig);
 }
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
     node = new ImagePipelineNode();
     node->run();

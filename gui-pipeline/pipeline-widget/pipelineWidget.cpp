@@ -7,10 +7,10 @@
 
 #include <cmath>
 
-#include <common/debug.h>
 #include <common/cauv_node.h>
 #include <common/messages.h>
 #include <common/bash_cout.h>
+#include <debug/cauv_debug.h>
 
 #include "util.h"
 #include "renderable.h"
@@ -32,6 +32,14 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
             (a->m_dst.lock() == b->m_src.lock() && a->m_src.lock() == b->m_dst.lock()));
 }
 
+struct DBGLevelObserver: MessageObserver
+{
+    void onDebugLevelMessage(DebugLevelMessage_ptr m)
+    {
+        debug::setLevel(m->level());
+    }
+};
+
 class PipelineGuiMsgObs: public BufferedMessageObserver{
     public:
         PipelineGuiMsgObs(PipelineWidget *p)
@@ -40,7 +48,7 @@ class PipelineGuiMsgObs: public BufferedMessageObserver{
         }
 
         virtual void onNodeAddedMessage(NodeAddedMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             switch(m->nodeType()){
                 case NodeType::Invalid:
                     break;
@@ -54,30 +62,30 @@ class PipelineGuiMsgObs: public BufferedMessageObserver{
         }
 
         virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->remove(m_widget->node(m->nodeId()));
         }
 
         virtual void onNodeParametersMessage(NodeParametersMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->setParams(m);
         }
 
         virtual void onArcAddedMessage(ArcAddedMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->addArc(m->from().node, m->from().output,
                              m->to().node, m->to().input);
         }
 
         virtual void onArcRemovedMessage(ArcRemovedMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             m_widget->removeArc(m->from().node, m->from().output,
                                 m->to().node, m->to().input);
         }
 
         virtual void onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
 
             typedef std::map<node_id, NodeType::e> node_type_map_t;
             typedef std::map<node_id, std::map<std::string, NodeOutput> > node_input_map_t;
@@ -159,25 +167,25 @@ class PipelineGuiMsgObs: public BufferedMessageObserver{
         }
 
         virtual void onStatusMessage(StatusMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->status(m->status());
         }
 
         virtual void onInputStatusMessage(InputStatusMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->inputStatus(m->inputId(), m->status());
         }
 
         virtual void onOutpuStatusMessage(OutputStatusMessage_ptr m){
-            debug(-1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(node_ptr_t np = m_widget->node(m->nodeId()))
                 np->outputStatus(m->outputId(), m->status());
         }
 
         virtual void onGuiImageMessageBuffered(GuiImageMessage_ptr m){
-            debug(1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(imgnode_ptr_t np = m_widget->imgNode(m->nodeId()))
                 np->display(m->image());
         }
@@ -195,24 +203,22 @@ class PipelineGuiCauvNode: public CauvNode{
 
         void onRun(){
             debug() << "PGCN::onRun()";
-            mailbox()->joinGroup("pl_gui");
-            mailboxMonitor()->addObserver(
+            joinGroup("pl_gui");
+
+            addMessageObserver(
                 boost::make_shared<PipelineGuiMsgObs>(m_widget)
             );
+            addMessageObserver(
+                boost::make_shared<DBGLevelObserver>()
+            );
             #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
-            mailboxMonitor()->addObserver(
+            addMessageObserver(
                 boost::make_shared<DebugMessageObserver>()
             );
             #endif
 
             // get the initial pipeline state:
-            sendMessage(boost::make_shared<GraphRequestMessage>());
-        }
-
-        void sendMessage(boost::shared_ptr<Message> m){
-            // TODO: need mutex protection? think probably not
-            debug() << "PGCN::sendMessage" << *m;
-            mailbox()->sendMessage(m, SAFE_MESS);
+            send(boost::make_shared<GraphRequestMessage>());
         }
     private:
         PipelineWidget *m_widget;
@@ -461,11 +467,11 @@ void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
     m_cauv_node = c;
 }
 
-void PipelineWidget::sendMessage(boost::shared_ptr<Message> m){
+void PipelineWidget::send(boost::shared_ptr<Message> m){
     if(m_cauv_node)
-        m_cauv_node->sendMessage(m);
+        m_cauv_node->send(m);
     else
-        error() << "PipelineWidget::sendMessage no associated cauv node";
+        error() << "PipelineWidget::send no associated cauv node";
 }
 
 
@@ -479,10 +485,10 @@ void PipelineWidget::postRedraw(){
     if(!m_redraw_posted){
         m_redraw_posted = true;
         // no need to lock m_lock, that's done in the slot
-        debug(-2) << "PipelineWidget::postRedraw emitting re-draw signal";
+        debug(3) << "PipelineWidget::postRedraw emitting re-draw signal";
         emit redrawPosted();
     }else{
-        debug(-2) << "PipelineWidget::postRedraw NOT emitting re-draw signal";
+        debug(3) << "PipelineWidget::postRedraw NOT emitting re-draw signal";
     }
 }
 
@@ -514,7 +520,7 @@ void PipelineWidget::initializeGL(){
 void PipelineWidget::paintGL(){
     lock_t l1(m_lock);
 
-    debug(-2) << "PipelineWidget::paintGL";
+    debug(3) << "PipelineWidget::paintGL";
     updateProjection();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -564,7 +570,7 @@ void PipelineWidget::paintGL(){
 void PipelineWidget::resizeGL(int width, int height){
     m_win_aspect = sqrt(double(width) / height);
     m_win_scale = sqrt(width*height);
-    debug(-1) << __func__
+    debug(2) << __func__
             << "width=" << width << "height=" << height
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale;
 
@@ -627,7 +633,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
             if(k == name_map.end()){
                 error() << "gl name" << *item << "does not correspond to renderable";
             }else{
-                debug(-1) << "sending mouse press event to" << k->second;
+                debug(2) << "sending mouse press event to" << k->second;
                 k->second->mousePressEvent(MouseEvent(event, k->second, *this));
                 m_owning_mouse.insert(k->second);
             }
@@ -670,7 +676,7 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
                         ), proxy.pos);
                 break;
             case Qt::Key_R:
-                sendMessage(boost::make_shared<GraphRequestMessage>());
+                send(boost::make_shared<GraphRequestMessage>());
                 break;
             default:
                 QWidget::keyPressEvent(event);
@@ -688,7 +694,7 @@ void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
     lock_t l(m_lock);
-    debug(-1) << __func__ << event->delta() << std::hex << event->buttons();
+    debug(2) << __func__ << event->delta() << std::hex << event->buttons();
     if(!event->buttons()){
         double scalef = clamp(0.2, (1 + double(event->delta()) / 240), 5);
         m_pixels_per_unit *= scalef;
@@ -701,7 +707,7 @@ void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
     lock_t l(m_lock);
     renderable_set_t::iterator i;
     for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
-       debug(-1) << "sending mouse release event to" << *i;
+       debug(2) << "sending mouse release event to" << *i;
        (*i)->mouseReleaseEvent(MouseEvent(event, *i, *this));
     }
     if(!event->buttons()){
@@ -725,7 +731,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
         // else zoom, (TODO)
     }else{
         for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
-            debug(-1) << "sending mouse move event to" << *i;
+            debug(2) << "sending mouse move event to" << *i;
             (*i)->mouseMoveEvent(MouseEvent(event, *i, *this));
         }
     }
@@ -751,7 +757,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
 void PipelineWidget::updateProjection(){
     double w = (m_win_scale * m_win_aspect) / m_world_size;
     double h = (m_win_scale / m_win_aspect) / m_world_size;
-    debug(-1) << __func__
+    debug(2) << __func__
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
@@ -768,7 +774,7 @@ void PipelineWidget::updateProjection(){
 void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     double w = (m_win_scale * m_win_aspect) / m_world_size;
     double h = (m_win_scale / m_win_aspect) / m_world_size;
-    debug(-1) << __func__
+    debug(2) << __func__
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
@@ -811,7 +817,7 @@ void PipelineWidget::drawGrid(){
     const int max_grid_major_x = roundZ(max_x / grid_major_spacing);
     const int max_grid_major_y = roundZ(max_y / grid_major_spacing);
 
-    debug(-2) << "min_x=" << min_x << "max_x=" << max_x
+    debug(3) << "min_x=" << min_x << "max_x=" << max_x
             << "min_y=" << min_y << "max_y=" << max_y << "\n\t"
             << "min_grid_minor_x=" << min_grid_minor_x
             << "max_grid_minor_x=" << max_grid_minor_x << "\n\t"

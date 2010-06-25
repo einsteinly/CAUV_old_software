@@ -20,6 +20,21 @@ struct Thing{
     }
 };
 
+struct ThingCaller{
+    void setThing(boost::shared_ptr<Thing> const& t){
+        m_thing = t;
+    }
+
+    int callThing(){
+        if(m_thing)
+            return m_thing->foo();
+        return -1;
+    }
+    
+    private:
+        boost::shared_ptr<Thing> m_thing;
+};
+
 struct ThingWrapper: public Thing, bp::wrapper<Thing>{
     int foo(){
         if(bp::override f = this->get_override("foo")){
@@ -73,18 +88,15 @@ class CauvNodeWrapper:
             this->onRun();
         }*/
 
-        int foo(boost::shared_ptr<Message const> m){
+        /*int foo(boost::shared_ptr<Message const> m){
             debug() << "foo called";
             debug() << m;
             std::cerr << "yes, foo was called" << std::endl;
             return 9;
-        }
-
+        }*/
+        
         boost::shared_ptr<ReconnectingSpreadMailbox> get_mailbox() const{
             return CauvNode::mailbox();
-        }
-        boost::shared_ptr<MsgSrcMBMonitor> get_mailboxMonitor() const{
-            return CauvNode::mailboxMonitor();
         }
 };
 
@@ -107,9 +119,16 @@ class SpreadMessageWrapper:
 
 /*** Actual Functions to Generate the Interface: ***/
 void emitThing(){
-    bp::class_<ThingWrapper, boost::noncopyable>("Thing")
+    bp::class_<ThingWrapper,
+               boost::shared_ptr<ThingWrapper>,
+               boost::noncopyable
+              >("Thing")
         .def("callFoo", wrap(&Thing::callFoo))
         .def("foo", wrap(&Thing::foo))
+    ;
+    bp::class_<ThingCaller, boost::noncopyable>("ThingCaller")
+        .def("setThing", &ThingCaller::setThing)
+        .def("callThing", &ThingCaller::callThing)
     ;
 }
 
@@ -161,10 +180,13 @@ void emitCauvNode(){
                boost::noncopyable
               >("CauvNode", bp::init<std::string, std::string>())
          .def("run", wrap(&CauvNode::run))
-         .def("onRun", wrap(&CauvNode::onRun))
-         .def("foo", wrap(&CauvNodeWrapper::foo))
+         .def("onRun", wrap(&CauvNodeWrapper::onRun))
+         .def("send", wrap(&CauvNode::send))
+         .def("join", wrap(&CauvNode::joinGroup))
+         .def("addObserver", wrap(&CauvNode::addMessageObserver))
+         //.def("foo", wrap(&CauvNodeWrapper::foo))
          .add_property("mailbox", &CauvNodeWrapper::get_mailbox)
-         .add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
+         //.add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
     ;
 }
 

@@ -9,7 +9,7 @@
 #include <QKeyEvent>
 #include <QtOpenGL>
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
 
 namespace pw{
 
@@ -101,7 +101,7 @@ class EditText: public Menu{
                     // this has now probably been destroyed, must return pronto!
                     return true;
                 case Qt::Key_Left:
-                    debug(-1) << "EditText: key left";
+                    debug(2) << "EditText: key left";
                     if(m_txt_prev->size())
                         m_txt_post->insert(m_txt_post->begin(), *m_txt_prev->rbegin());
                     // fall through
@@ -110,7 +110,7 @@ class EditText: public Menu{
                         m_txt_prev->erase(m_txt_prev->end()-1);
                     break;
                 case Qt::Key_Right:
-                    debug(-1) << "EditText: key right";
+                    debug(2) << "EditText: key right";
                     if(m_txt_post->size())
                         *m_txt_prev += (*m_txt_post)[0];
                     // fall through

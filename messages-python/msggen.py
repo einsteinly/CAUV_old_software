@@ -91,7 +91,7 @@ def serialiseJavaType(t, name, indentation = 0, prefix = ""):
     elif isinstance(t, msggenyacc.ListType):
         vals = {
             "name": prefix+name,
-            "valtype": toJavaType(t.valType),
+            "valtype": toJavaType(t.valType, True),
             "valvar": "%s_val" % name,
             "i": "%s_i" % name
         }
@@ -106,19 +106,19 @@ def serialiseJavaType(t, name, indentation = 0, prefix = ""):
     elif isinstance(t, msggenyacc.MapType):
         vals = {
             "name": prefix+name,
-            "keytype": toJavaType(t.keyType),
+            "keytype": toJavaType(t.keyType, True),
             "keyvar": "%s_key" % name,
-            "valtype": toJavaType(t.valType),
+            "valtype": toJavaType(t.valType, True),
             "valvar": "%s_val" % name,
             "i": "%s_i" % name
         }
 
         return indent + "s.writeLong(%(name)s.size());" % vals + "\n" + \
-               indent + "for (Map.Entry<%(keytype)s, %(valtype)s> %(i)s : %(name)s)" % vals + "\n" + \
+               indent + "for (Map.Entry<%(keytype)s, %(valtype)s> %(i)s : %(name)s.entrySet())" % vals + "\n" + \
                indent + "{" + "\n" + \
-               indent + "    %(keytype)s %(keyvar)s = %(name)s.getKey();" % vals + "\n" + \
+               indent + "    %(keytype)s %(keyvar)s = %(i)s.getKey();" % vals + "\n" + \
                serialiseJavaType(t.keyType, vals["keyvar"], indentation + 1) + "\n" + \
-               indent + "    %(valtype)s %(valvar)s = %(name)s.getValue();" % vals + "\n" + \
+               indent + "    %(valtype)s %(valvar)s = %(i)s.getValue();" % vals + "\n" + \
                serialiseJavaType(t.valType, vals["valvar"], indentation + 1) + "\n" + \
                indent + "}"
     else:
@@ -147,11 +147,11 @@ def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
         else:
             return indent + "%s = s.%s();" % (prefix+name, javaDataFuncs[t.name]["read"])
     elif isinstance(t, msggenyacc.EnumType):
-        return indent + "%s.writeInto(s);" % (prefix+name)
+        return indent + "%s = %s.readFrom(s);" % (prefix+name, toJavaType(t))
     elif isinstance(t, msggenyacc.StructType):
-        return indent + "%s.writeInto(s);" % (prefix+name)
+        return indent + "%s = %s.readFrom(s);" % (prefix+name, toJavaType(t))
     elif isinstance(t, msggenyacc.UnknownType):
-        return indent + "%s.writeInto(s);" % (prefix+name)
+        return indent + "%s = %s.readFrom(s);" % (prefix+name, toJavaType(t))
     
     elif isinstance(t, msggenyacc.ListType):
         vals = {
@@ -164,7 +164,7 @@ def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
         }
             
         return indent + "%(name)s = new %(type)s();" % vals + "\n" + \
-               indent + "long $(len)s = s.readLong();" % vals + "\n" + \
+               indent + "long %(len)s = s.readLong();" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(valtype)s %(valvar)s;" % vals + "\n" + \
@@ -303,6 +303,25 @@ def cLoadSaveSuffix(t):
 def mapToBaseType(list):
     return map(lambda x: msggenyacc.BaseType(x), list)
 
+def addNestedTypes(list_types, map_types):
+    if len(list_types) == 0 and len(map_types) == 0:
+        return list_types, map_types
+    rl = set()
+    rm = set()
+    def addR(t):
+        if isSTLVector(t):
+            rl.add(t.valType)
+        elif isSTLMap(t):
+            rm.add((t.keyType, t.valType))
+    for type in list_types:
+        addR(type)
+    for kt, vt in map_types:
+        addR(kt)
+        addR(vt)
+    recursed = addNestedTypes(rl, rm)
+    return (list_types | rl | recursed[0],
+            map_types | rm | recursed[1])
+
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
@@ -337,6 +356,14 @@ def main():
     tree = parser.parse(data)
 
     if options.lang == "c++":
+        with open(output + "_fwd.h", "w") as file:
+            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message_fwd.template.h"), searchList=tree)
+            t.toCPPType = toCPPType
+            file.write(str(t))
+        with open(output + "_messages.h", "w") as file:
+            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message_messages.template.h"), searchList=tree)
+            t.toCPPType = toCPPType
+            file.write(str(t))
         with open(output + ".h", "w") as file:
             t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.h"), searchList=tree)
             t.toCPPType = toCPPType
@@ -384,30 +411,60 @@ def main():
 
         for s in tree["structs"]:
             with open(os.path.join(typedir, s.name + ".java"), "w") as file:
-                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "struct.template.java"), searchList=s)
+                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "struct.template.java"), searchList={"s":s})
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
+                t.rootpackage = options.package
                 t.package = options.package + ".types"
                 file.write(str(t))
         for e in tree["enums"]:
-            print os.path.join(messagingdir, e.name)
+            with open(os.path.join(typedir, e.name + ".java"), "w") as file:
+                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "enum.template.java"), searchList={"e":e})
+                t.toJavaType = toJavaType
+                t.serialiseJavaType = serialiseJavaType
+                t.deserialiseJavaType = deserialiseJavaType
+                t.rootpackage = options.package
+                t.package = options.package + ".types"
+                file.write(str(t))
         for g in tree["groups"]:
+            #with open(os.path.join(messagingdir, "MessageSource.java"), "w") as file:
+            #    t = Template(file
             for m in g.messages:
                 with open(os.path.join(messagingdir, m.name + "Message.java"), "w") as file:
-                    t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.java"), searchList=m)
+                    t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.java"), searchList={"m":m})
                     t.toJavaType = toJavaType
                     t.serialiseJavaType = serialiseJavaType
                     t.deserialiseJavaType = deserialiseJavaType
+                    t.rootpackage = options.package
                     t.package = options.package + ".messaging"
                     t.group = g
                     file.write(str(t))
-    
+        with open (os.path.join(messagingdir, "Message.java"), "w") as file:
+            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "basemessage.template.java"), searchList=[])
+            t.rootpackage = options.package
+            t.package = options.package + ".messaging"
+            file.write(str(t))
+        with open (os.path.join(messagingdir, "MessageObserver.java"), "w") as file:
+            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messageobserver.template.java"), searchList=tree)
+            t.rootpackage = options.package
+            t.package = options.package + ".messaging"
+            file.write(str(t))
+        with open (os.path.join(messagingdir, "MessageSource.java"), "w") as file:
+            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messagesource.template.java"), searchList=tree)
+            t.rootpackage = options.package
+            t.package = options.package + ".messaging"
+            file.write(str(t))
 
     elif options.lang == "python":
         compilation_units = ["enums", "structs", "messages", "observers"]
+        compilation_units.append("containers") # must be last in list
+        requiredMapTypes = set()
+        requiredVectorTypes = set()
         for cu in compilation_units:
-            with open(output + "emit_" + cu + ".cpp", "w") as file:
+            # NB: output treated as directory, because CMake seems to strip
+            # trailinig ////// from paths
+            with open(output + "/emit_" + cu + ".cpp", "w") as file:
                 t = Template(file = os.path.join(os.path.dirname(sys.argv[0]),
                                                  "boostpy-emit_%s.cpp.template" % cu),
                              searchList=tree)
@@ -415,7 +472,10 @@ def main():
                 t.isSTLVector = isSTLVector
                 t.isSTLMap = isSTLMap
                 t.CPPContainerTypeName = CPPContainerTypeName
+                t.requiredMapTypes = requiredMapTypes
+                t.requiredVectorTypes = requiredVectorTypes
                 file.write(str(t))
-                                                              
+            requiredVectorTypes, requiredMapTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes)
+
 if __name__ == '__main__':
     main()

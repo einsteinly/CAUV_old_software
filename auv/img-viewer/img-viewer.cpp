@@ -8,6 +8,7 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <debug/cauv_debug.h>
 
 
 using namespace std;
@@ -31,8 +32,8 @@ class ImageWindow : public MessageObserver
 ImageViewer::ImageViewer(const CameraID::e, const int)
     : CauvNode("img-view")
 {
-    mailbox()->joinGroup("image");
-    mailboxMonitor()->addObserver(boost::make_shared<ImageWindow>());
+    joinGroup("image");
+    addMessageObserver(boost::make_shared<ImageWindow>());
 }
 
 static ImageViewer* node;

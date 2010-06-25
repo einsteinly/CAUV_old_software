@@ -8,17 +8,19 @@
 #include <iostream>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 #include <boost/variant.hpp>
 
 #include <common/cauv_utils.h>
-#include <common/messages.h>
-#include <common/debug.h>
+#include <common/messages_messages.h>
 #include <common/image.h>
+#include <debug/cauv_debug.h>
 
-#include "imageProcessor.h"
+// TODO: remove this dependency
+#include <ssrc/spread.h>
+
 #include "pipelineTypes.h"
-#include "nodeFactory.h"
 
 class Node{
     public:
@@ -55,9 +57,11 @@ class Node{
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
         
-        typedef boost::recursive_mutex mutex_t;
-        typedef boost::unique_lock<mutex_t> lock_t;
-
+        /**** SHARED LOCKS ARE NOT RECURSIVE ****/
+        typedef boost::shared_mutex mutex_t;
+        typedef boost::shared_lock<mutex_t> shared_lock_t;
+        typedef boost::upgrade_lock<mutex_t> unique_lock_t;
+        
         typedef Spread::service service_t;
     
     public:
@@ -127,7 +131,7 @@ class Node{
          */
         template<typename T>
         void setParam(param_id const& p, T const& v) throw(id_error){
-            lock_t l(m_parameters_lock);
+            unique_lock_t l(m_parameters_lock);
             param_value_map_t::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 debug() << "param" << p << "set to" << v;
@@ -141,6 +145,12 @@ class Node{
             }
             // provide notification that parameters have changed: principally
             // for asynchronous nodes
+            // NB:
+            // release parameters lock first to reduce potential for deadlocks:
+            // this means that the parameter we call the function with may no
+            // longer be present when it's body is executed: node
+            // implementations should not rely on it being valid
+            l.unlock();
             this->paramChanged(p);
             // check to see if the node should be re-scheduled
             setNewParamValue(p);
@@ -156,21 +166,24 @@ class Node{
          */
         template<typename T>
         T param(param_id const& p) const throw(id_error){
-            lock_t l(m_parameters_lock);
+            unique_lock_t l(m_parameters_lock);
             const param_value_map_t::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 const in_link_map_t::const_iterator j = m_parent_links.find(p);
-                if(j != m_parent_links.end() &&
-                   j->second.first){
-                    assert(j->second.first->paramOutputs().count(j->second.second));
+                node_ptr_t node;
+                if(j != m_parent_links.end() && (node = j->second.first)){
+                    output_id outparam = j->second.second;
+                    assert(node->paramOutputs().count(outparam));
                     debug() << "returning linked parameter value for" << p
-                            << "(linked to" << j->second << ")";
+                            << "(linked to" << j->second.first
+                            << j->second.second << ")";
                     // TODO: this will throw boost::bad_get if there is a
                     // param_value type mismatch between the output and the
                     // requested parameter type:
                     //  a) prevent this happening (somehow...)
                     //  b) stop everything falling over when it doe happen
-                    return boost::get<T>(j->second.first->getOutputParam(j->second.second));
+                    l.unlock();
+                    return boost::get<T>(node->getOutputParam(outparam));
                 }
                 return boost::get<T>(i->second);
             }else{
@@ -212,7 +225,7 @@ class Node{
         template<typename T>
         void registerParamID(param_id const& p, T const& default_value,
                              std::string const& tip=""){
-            lock_t l(m_parameters_lock);
+            unique_lock_t l(m_parameters_lock);
             m_parameters[p] = param_value_t(default_value);
             m_parameter_tips[p] = tip;
             m_new_paramvalues[p] = true;
@@ -226,12 +239,14 @@ class Node{
          */
         template<typename T>
         void registerOutputID(output_id const& o){
-            lock_t l(m_child_links_lock);
-            lock_t m(m_outputs_lock);
+            unique_lock_t l(m_child_links_lock);
+            unique_lock_t m(m_outputs_lock);
             
             m_child_links[o] = output_link_list_t();
             m_outputs[o] = output_t(T());
             
+            m.unlock();
+            l.unlock();
             _statusMessage(boost::make_shared<OutputStatusMessage>(
                 m_id, o, NodeIOStatus::e(0)
             ));
@@ -244,7 +259,7 @@ class Node{
         void checkAddSched() throw();
 
         void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS);
-
+        
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)
          * Check to see if this node should add itself to the scheduler queue
@@ -256,7 +271,7 @@ class Node{
         bool newInput() const;
 
         void setValidInput(input_id const&);
-        void clearInputValid(input_id const&);
+        void clearValidInput(input_id const&);
         bool validInputAll() const;
         
         /* This is called by the children of this node in order to request new
@@ -307,8 +322,12 @@ class Node{
         mutable mutex_t m_parameters_lock;
 
 
-        /** Variables that conrol when the node is scheduled:
+        /** Variables that control when the node is scheduled:
          **/
+
+        /* Prevent checkAddSched from being run concurrently:
+         */
+        mutable mutex_t m_checking_sched_lock;
         
         /* prevent nodes (esp. output nodes) from executing in more than one
          * thread at once

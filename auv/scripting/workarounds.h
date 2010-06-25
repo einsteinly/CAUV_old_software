@@ -1,3 +1,5 @@
+#ifndef HACKY_WORKAROUNDS_H
+#define HACKY_WORKAROUNDS_H
 /*** This file contains various workarounds for doing crazy things with boost
  *** python, like wrapping member functions inside function objects that
  *** release the Global Interpreter Lock, and passing around shared_ptrs to
@@ -95,30 +97,100 @@ template <class R, class C, class T0> MemberWrap<R, C, T0> wrap(R (C::*p)(T0)){ 
 template <class R, class C, class T0, class T1> MemberWrap<R, C, T0, T1> wrap(R (C::*p)(T0, T1)){ return MemberWrap<R, C, T0, T1>(p); } 
 template <class R, class C, class T0, class T1, class T2> MemberWrap<R, C, T0, T1, T2> wrap(R (C::*p)(T0, T1, T2)){ return MemberWrap<R, C, T0, T1, T2>(p); }
 
+#include <stack>
+//#include <stdexcept>
 
 #include <boost/python.hpp>
 #include <boost/python/signature.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/tss.hpp>
 
-#include <common/debug.h>
+#include <debug/cauv_debug.h>
+#include <common/bash_cout.h>
 
 /** ... but the definitions of the wrappers need boost python (since the whole
  ** point is to wrap with GIL release, so they must be placed after inclusion)
  **/
+class ThreadSaveRestoreBase: boost::noncopyable{
+    public:
+        enum lock_release_e{
+            Acquire,
+            Release
+        };
+        ThreadSaveRestoreBase(lock_release_e const& ar)
+            : m_ar(ar){
+            if(ar == Acquire)
+                acquire();
+            else
+                release();
+        }
+        ~ThreadSaveRestoreBase(){
+            if(m_ar == Acquire)
+                release();
+            else
+                acquire();
+        }
+    private:
+        void release(){
+            threadState().push(PyEval_SaveThread());
+            debug() << BashColour::Purple << threadState().size()
+                    << "PyEval_SaveThread=" << threadState().top();
+        }
+        void acquire(){
+            if(!threadState().size()){
+                //throw std::runtime_error("aquire() does not correspond to release() on this thread");
+                debug() << BashColour::Red << "aquire() does not correspond to release() on this thread";
+                //debug() << BashColour::Red << threadState().size()
+                //        << "PyEval_RestoreThread(" << NULL << ")";
+                //PyEval_RestoreThread(NULL);
+            }else{
+                debug() << BashColour::Purple << threadState().size()
+                        << "PyEval_RestoreThread(" << threadState().top() << ")";
+                PyEval_RestoreThread(threadState().top());
+                threadState().pop();
+            }
+        }
+        static std::stack<PyThreadState*>& threadState(){
+            static boost::thread_specific_ptr< std::stack<PyThreadState*> > save;
+            if(!save.get())
+                save.reset(new std::stack<PyThreadState*>);
+            return *save.get();
+        }
 
+        lock_release_e m_ar;
+};
+
+class ThreadRestore: ThreadSaveRestoreBase{
+    public:
+        ThreadRestore()
+            : ThreadSaveRestoreBase(Acquire){
+        }
+};
+
+class ThreadSave: ThreadSaveRestoreBase{
+    public:
+        ThreadSave()
+            : ThreadSaveRestoreBase(Release){
+        }
+};
+
+//typedef ThreadRestore GILLock;
 class GILLock: boost::noncopyable{
     public:
         GILLock()
             : m_gs(PyGILState_Ensure()){
+            debug() << BashColour::Green << "PyGILState_Ensure=" << m_gs;
         }
         ~GILLock(){
+            debug() << BashColour::Green << "PyGILState_Release(" << m_gs << ")";
             PyGILState_Release(m_gs);
         }
     private:
         PyGILState_STATE m_gs;
 };
 
-class GILRelease: boost::noncopyable{
+typedef ThreadSave GILRelease;
+/*class GILRelease: boost::noncopyable{
     public:
         GILRelease()
             : m_save(PyEval_SaveThread()){
@@ -128,16 +200,28 @@ class GILRelease: boost::noncopyable{
         }
     private:
         PyThreadState *m_save;
-};
+};*/
+
+/*class GILRelease: boost::noncopyable{
+    public:
+        GILRelease(){
+            PyGILState_Release(NULL);
+        }
+        ~GILRelease(){
+            PyGILState_Ensure();
+        }
+    private:
+        //PyGILState_STATE m_gs;
+};*/
 
 template<class R, class C>
 R MemberWrap<R, C>::operator()(C* p){
     GILRelease guard;
     if(m_wrapped){
-        debug(-3) << "wrap ()";
+        debug(4) << "wrap ()";
         return (p->*(this->m_wrapped))();
     }
-    debug(-3) << "wrap () const";
+    debug(4) << "wrap () const";
     assert(this->m_wrapped_const);
     return (p->*(this->m_wrapped_const))();
 }
@@ -145,21 +229,21 @@ R MemberWrap<R, C>::operator()(C* p){
 template <class R, class C, class T0>
 R MemberWrap<R, C, T0>::operator()(C* p, T0_ p0){
     GILRelease guard;
-    debug(-3) << "wrap(T0)";
+    debug(4) << "wrap(T0)";
     return (p->*(this->m_wrapped))(p0);
 }
 
 template <class R, class C, class T0, class T1>
 R MemberWrap<R, C, T0, T1>::operator()(C* p, T0_ p0, T1_ p1){
     GILRelease guard;
-    debug(-3) << "wrap(T0, T1)";
+    debug(4) << "wrap(T0, T1)";
     return (p->*(this->m_wrapped))(p0, p1);
 }
 
 template <class R, class C, class T0, class T1, class T2>
 R MemberWrap<R, C, T0, T1, T2>::operator()(C* p, T0_ p0, T1_ p1, T2_ p2){
     GILRelease guard;
-    debug(-3) << "wrap(T0, T1, T2)";
+    debug(4) << "wrap(T0, T1, T2)";
     return (p->*(this->m_wrapped))(p0, p1, p2);
 }
 
@@ -198,4 +282,6 @@ void register_shared_ptrs_to_python(){
 
 /** now really end all evil hackery
  **/
+
+#endif // ndef HACKY_WORKAROUNDS_H
 

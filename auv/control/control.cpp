@@ -2,33 +2,167 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdint.h>
 
 #include <boost/make_shared.hpp>
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <debug/cauv_debug.h>
+
+#include <module/module.h>
+
+#include "xsens_imu.h"
 
 using namespace std;
 
-void sendMotorMessageTest(boost::shared_ptr<MCBModule> mcb)
+void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {
-    int motor = 1;
-    debug() << "Starting motor message test";
+    debug() << "Starting alive message thread";
     while(true)
     {
-        MotorMessage m((MotorID::e)motor, 0);
+        boost::shared_ptr<AliveMessage> m = boost::make_shared<AliveMessage>();
         mcb->send(m);
-        debug() << "Sent message" << m;
-
-        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-
-        motor = (motor == 16) ? 1 : motor << 1;
+        boost::this_thread::sleep(boost::posix_time::milliseconds(500));
     }
 }
 
+
+class DebugXsensObserver : public XsensObserver
+{
+    public:
+        DebugXsensObserver(unsigned int level = 1) : m_level(level)
+        {
+        }
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
+            debug(m_level) << (std::string)(MakeString() << fixed << setprecision(1) << attitude ); 
+        }
+
+    protected:
+        unsigned int m_level;
+};
+
+
+struct PIDControl
+{
+    double target;
+    double Kp,Ki,Kd,scale;
+    double integral, previous_error;
+    TimeStamp previous_time;
+
+    PIDControl() : target(0), Kp(1), Ki(1), Kd(1), scale(1), integral(0), previous_error(0)
+    {
+        previous_time.secs = 0;
+    }
+    
+    void reset()
+    {
+        integral = 0;
+        previous_error = 0;
+        previous_time.secs = 0;
+    }
+
+    double getMV(double current)
+    {
+        double error = target - current;
+        
+        if (previous_time.secs == 0) {
+            previous_time = now();
+            previous_error = error;
+            return 0;
+        }
+
+        TimeStamp tnow = now();
+        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.msecs - previous_time.msecs) / 1000; // dt is milliseconds
+        previous_time = tnow;
+
+        integral += error*dt;
+        double de = (error-previous_error)/dt;
+        previous_error = error;
+
+        return scale * (Kp * error + Ki * integral + Kd * de);        
+    }
+};
+
+class ControlLoops : public MessageObserver, public XsensObserver
+{
+    public:
+        ControlLoops() :
+                m_bearingenabled(false)
+        {
+        }
+        void set_mcb(boost::shared_ptr<MCBModule> mcb)
+        {
+            m_mcb = mcb;
+        }
+
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
+            if (m_bearingenabled) {
+                float mv = m_bearingcontrol.getMV(attitude.yaw);
+                debug(2) << "MV = " << mv;
+                if (now().secs - lastMotorMessage.secs > motorTimeout) {
+                    // Do motor control
+                    int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
+
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, speed));
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, -speed));
+                }
+            }
+        }
+    
+    protected:
+        boost::shared_ptr<MCBModule> m_mcb;
+        TimeStamp lastMotorMessage;
+        static const int motorTimeout = 2;
+        
+        virtual void onMotorMessage(MotorMessage_ptr m)
+        {
+            debug(2) << "Forwarding motor message";
+            lastMotorMessage = now();
+            m_mcb->send(m);
+        }
+
+
+        bool m_bearingenabled;
+        PIDControl m_bearingcontrol;
+        
+        virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
+        {
+            if (m->enabled()) {
+                m_bearingenabled = true;
+                m_bearingcontrol.reset();
+                m_bearingcontrol.target = m->target();
+            }
+            else {
+                m_bearingenabled = false;
+            }
+        }
+        virtual void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr m)
+        {
+            m_bearingcontrol.Kp = m->Kp();
+            m_bearingcontrol.Ki = m->Ki();
+            m_bearingcontrol.Kd = m->Kd();
+            m_bearingcontrol.scale = m->scale();
+        }
+};
+
+
+class NotRootException : public std::exception
+{
+    public:
+        virtual const char* what() const throw() {
+            return "Need to be running as root";
+        }
+};
+
 ControlNode::ControlNode() : CauvNode("Control")
 {
+    joinGroup("control");
+    addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
+
     // start up the MCB module
     try {
         m_mcb = boost::make_shared<MCBModule>(0);
@@ -38,12 +172,15 @@ ControlNode::ControlNode() : CauvNode("Control")
     {
         error() << "Cannot connect to MCB: " << e.what();
         m_mcb.reset();
+        if (e.errCode() == -8) {
+            throw NotRootException();
+        }
     }
 
     // start up the Xsens IMU
     try {
         m_xsens = boost::make_shared<XsensIMU>(0);
-        info() << "XSens Connected";
+        info() << "Xsens Connected";
         
         CmtOutputMode om = CMT_OUTPUTMODE_CALIB | CMT_OUTPUTMODE_ORIENT;
         CmtOutputSettings os = CMT_OUTPUTSETTINGS_ORIENTMODE_EULER | CMT_OUTPUTSETTINGS_DATAFORMAT_FLOAT;
@@ -51,9 +188,9 @@ ControlNode::ControlNode() : CauvNode("Control")
         CmtMatrix m;
         m.m_data[0][0] =  1.0; m.m_data[0][1] =  0.0; m.m_data[0][2] =  0.0; 
         m.m_data[1][0] =  0.0; m.m_data[1][1] =  1.0; m.m_data[1][2] =  0.0; 
-        m.m_data[2][0] =  0.0; m.m_data[2][1] =  0.0; m.m_data[1][2] =  1.0; 
+        m.m_data[2][0] =  0.0; m.m_data[2][1] =  0.0; m.m_data[2][2] =  1.0; 
 
-        //m_xsens->setObjectAlignmentMatrix(m);
+        m_xsens->setObjectAlignmentMatrix(m);
         m_xsens->configure(om, os);
         
         info() << "XSens Configured";
@@ -61,36 +198,45 @@ ControlNode::ControlNode() : CauvNode("Control")
         error() << "Cannot connect to Xsens: " << e.what();
         m_xsens.reset();
     }
+
+    m_controlLoops = boost::make_shared<ControlLoops>();
+    addMessageObserver(m_controlLoops);
+}
+ControlNode::~ControlNode()
+{
+    if (m_aliveThread.get_id() != boost::thread::id()) {
+        m_aliveThread.interrupt();
+        m_aliveThread.join();
+    }
 }
 
 
 void ControlNode::onRun()
 {
     CauvNode::onRun();
-    
-    // First check the Xsens is actually connected...
-    if (!m_xsens) {
-        error() << "Xsens must be connected. Killing forwarding thread.";
-        return;
+   
+    if (m_mcb) {
+        m_controlLoops->set_mcb(m_mcb);
+        
+        m_aliveThread = boost::thread(sendAlive, m_mcb);
+        
+        m_mcb->addObserver(boost::make_shared<DebugMessageObserver>(2));
+        m_mcb->addObserver(m_controlLoops);
+        
+        m_mcb->start();
     }
-    if (!m_mcb) {
-        error() << "MCB must be connected. Killing forwarding thread.";
-        return;
+    else {
+        warning() << "MCB not connected. No MCB comms available, so no motor control.";
     }
 
-    debug() << "Started Xsens<->MCB comms";
-    
-    while (true) {
-        floatYPR att = m_xsens->getAttitude();
+    if (m_xsens) {
+        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
+        m_xsens->addObserver(m_controlLoops);
 
-        //update the telemetry state
-        att.yaw = -att.yaw;
-        if (att.yaw < 0)
-            att.yaw += 360;
-
-        debug() << fixed << setprecision(1) << "Yaw: " << att.yaw << " Pitch: " << att.pitch  << " Roll: " << att.roll;
-
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+        m_xsens->start();
+    }
+    else {
+        warning() << "Xsens not connected. Telemetry not available.";
     }
 }
 
@@ -114,11 +260,19 @@ void interrupt(int sig)
     raise(sig);
 }
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
-    node = new ControlNode();
-    node->run();
+    
+    try {
+        node = new ControlNode();
+        node->run();
+    }
+    catch (NotRootException& e) {
+        error() << e.what();
+    }
+    
     cleanup();
     return 0;
 }

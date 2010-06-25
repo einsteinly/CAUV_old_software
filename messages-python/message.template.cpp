@@ -6,12 +6,15 @@
 \#include <boost/thread.hpp>
 \#include <boost/noncopyable.hpp>
 
+\#include <common/cauv_utils.h>
+\#include <debug/cauv_debug.h>
+
 // ===============
 // Message Classes
 // ===============
 
 // Base message class
-Message::Message(uint32_t id, std::string group) : m_id(id), m_group(group)
+Message::Message(uint32_t id, std::string const& group) : m_id(id), m_group(group)
 {
 }
 
@@ -19,7 +22,7 @@ Message::~Message()
 {
 }
 
-std::string Message::group() const
+std::string const& Message::group() const
 {
     return m_group;
 }
@@ -133,15 +136,6 @@ void MessageObserver::on${className}($classPtr) {}
 #end for
 #end for 
 
-BufferedMessageObserver::BufferedMessageObserver()
-{
-}
-
-BufferedMessageObserver::~BufferedMessageObserver()
-{
-    // TODO: MUST stop all threads before this is destroyed!
-}
-
 struct BufferingThreadBase
 { 
     BufferingThreadBase(BufferedMessageObserver& obs)
@@ -199,19 +193,46 @@ struct BufferingThread: public BufferingThreadBase, boost::noncopyable
     void (BufferedMessageObserver::*m_notify)(T);
 };
 
+BufferedMessageObserver::BufferedMessageObserver()
+    : m_maps_mtx(boost::make_shared<boost::shared_mutex>())
+{
+}
+
+BufferedMessageObserver::~BufferedMessageObserver()
+{
+    boost::unique_lock<boost::shared_mutex> l(*m_maps_mtx);
+    foreach(msgtype_btthread_map_t::value_type& v, m_threads)
+        if(v.second){
+            v.second->m_die = true;
+            v.second->m_condition->notify_one();
+            v.second.reset();
+            assert(m_boost_threads[v.first]);
+            m_boost_threads[v.first]->join();
+            m_boost_threads[v.first].reset();
+            info() << "Double-Buffering disabled for" << v.first << "messages";
+        }
+}
+
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
 #set $classPtr = $className + "_ptr"
 void BufferedMessageObserver::on${className}($classPtr m)
 {
-    if(bthread_ptr_t b_thread = m_threads[MessageType::$m.name])
+    boost::shared_lock<boost::shared_mutex> l(*m_maps_mtx);
+    msgtype_btthread_map_t::iterator bt = m_threads.find(MessageType::$m.name);
+    if(bt != m_threads.end() && bt->second)
     {
-        boost::unique_lock<boost::mutex> l(*(b_thread->m_mutex));
-        b_thread->m_buffer = m;
+        boost::unique_lock<boost::mutex> l(*(bt->second->m_mutex));
+        bt->second->m_buffer = m;
         l.unlock();
-        b_thread->m_condition->notify_one();
+        bt->second->m_condition->notify_one();
     }
+    else
+    {
+        on${className}Buffered(m);
+    }
+
 }
 #end for
 #end for
@@ -220,7 +241,7 @@ void BufferedMessageObserver::on${className}($classPtr m)
 #for $m in $g.messages
 #set $className = $m.name + "Message"
 #set $classPtr = $className + "_ptr"
-void BufferedMessageObserver::on${className}Buffered($classPtr) {}
+void BufferedMessageObserver::on${className}Buffered($classPtr) { }
 #end for
 #end for
 
@@ -231,6 +252,7 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
     using boost::ref;
     using boost::shared_ptr;
 
+    boost::unique_lock<boost::shared_mutex> l(*m_maps_mtx);
     if(v && !m_threads[mt])
     {
         assert(!m_boost_threads[mt]);
@@ -255,6 +277,8 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
             }
             #end for
             #end for
+            default:
+                break;
         }
         
         if(m_threads[mt])
@@ -278,39 +302,67 @@ void BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
     }
 }
 
+
+DynamicObserver::DynamicObserver(){ }
+DynamicObserver::~DynamicObserver(){ }
+        
+void DynamicObserver::setCallback(MessageType::e id, callback_f_ptr f)
+{
+    m_callbacks[id] = f;
+}
+
+#for $g in $groups
+#for $m in $g.messages
+#set $className = $m.name + "Message"
+#set $ptrName = $className + "_ptr"
+void DynamicObserver::on${className}Buffered($ptrName m)
+{
+    callback_map_t::iterator i = m_callbacks.find(MessageType::$m.name);
+    if(i != m_callbacks.end() && i->second)
+        (*i->second)(m);
+}
+#end for
+#end for
+
+
+
+DebugMessageObserver::DebugMessageObserver(unsigned int level) : m_level(level)
+{
+}
+
 #for $g in $groups
 #for $m in $g.messages
 #set $className = $m.name + "Message"
 #set $classPtr = $className + "_ptr"
 void DebugMessageObserver::on${className}($classPtr m)
 {
-    info() << "DebugMessageObserver: " << *m;
+    debug(m_level) << "DebugMessageObserver: " << *m;
 }
 #end for
 #end for
+
+
+
+UnknownMessageIdException::UnknownMessageIdException(uint32_t id) : m_id(id)
+{
+}
+const char * UnknownMessageIdException::what() const throw()
+{
+    std::string message = MakeString() << "Unknown message id: " << m_id;
+    return message.c_str();
+}
 
 
 MessageSource::MessageSource()
 {
-}
-void MessageSource::addObserver(boost::shared_ptr<MessageObserver> o)
-{
-    m_obs.push_back(o);
-}
-void MessageSource::removeObserver(boost::shared_ptr<MessageObserver> o)
-{
-    m_obs.remove(o);
-}
-void MessageSource::clearObservers()
-{
-    m_obs.clear();
 }
 void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
 {
     if (bytes->size() < 4)
         throw std::out_of_range("Buffer too small to contain message id");
 
-    switch(*reinterpret_cast<const uint32_t*>(bytes->data()))
+    int id = *reinterpret_cast<const uint32_t*>(bytes->data());
+    switch (id)
     {
         #for $g in $groups
         #for $m in $g.messages
@@ -318,7 +370,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
         case $m.id:
         {
             boost::shared_ptr<$className> m = $className::fromBytes(bytes);
-            foreach(boost::shared_ptr<MessageObserver> o, m_obs)
+            foreach(observer_ptr_t o, m_observers)
             {
                 o->on${className}(m);
             }
@@ -327,7 +379,7 @@ void MessageSource::notifyObservers(boost::shared_ptr<const byte_vec_t> bytes)
         #end for
         #end for
         default:
-            throw std::out_of_range("Unknown message id");
+            throw UnknownMessageIdException(id);
     }
 }
 
@@ -364,3 +416,4 @@ void load_enum_type<binary_iarchive>::invoke<$e.name::e>(binary_iarchive &ar, $e
 } // namespace detail
 } // namespace archive
 } // namespace boost
+

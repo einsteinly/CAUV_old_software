@@ -1,9 +1,11 @@
 /***  This is a generated file, do not edit ***/
 \#include "workarounds.h" // _must_ be first
 \#include <boost/python.hpp>
+\#include <boost/python/errors.hpp>
 
 \#include "emit_generated.h"
 \#include "../common/messages.h"
+\#include "../debug/cauv_debug.h"
 
 namespace bp = boost::python;
 
@@ -18,11 +20,22 @@ class MessageObserverWrapper:
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
             if(bp::override f = this->get_override("on${className}")){
+                debug(3) << "MessageObserver: calling override for on${className}";
                 GILLock l;
-                f(m);
-            }else
+                try{
+                    f(m);
+                }catch(bp::error_already_set const &){
+                    error() << __FILE__ << __LINE__ << ":" << __func__ << "Error in python callback:";
+                    if(PyErr_Occurred()){
+                        PyErr_Print();
+                    }
+                }
+            }else{
+                debug(3) << "MessageObserver: no override for on${className}";
                 MessageObserver::on${className}(m);
+            }
         }
+
         #end for
         #end for
 };
@@ -36,13 +49,41 @@ class BufferedMessageObserverWrapper:
         #for $m in $g.messages
         #set $className = $m.name + "Message"
         #set $ptrName = $className + "_ptr"
+        void on${className}($ptrName m){
+            if(bp::override f = this->get_override("on${className}")){
+                debug(3) << "BufferedMessageObserver: calling override for on${className}";
+                GILLock l;
+                try{
+                    f(m);
+                }catch(bp::error_already_set const &){
+                    error() << __FILE__ << __LINE__ << ":" << __func__ << "Error in python callback:";
+                    if(PyErr_Occurred()){
+                        PyErr_Print();
+                    }
+                }
+            }else{
+                debug(3) << "BufferedMessageObserver: no override for on${className}";
+                BufferedMessageObserver::on${className}(m);
+            }
+        }
         void on${className}Buffered($ptrName m){
             if(bp::override f = this->get_override("on${className}Buffered")){
+                debug(3) << "BufferedMessageObserver: calling override for on${className}Buffered";
                 GILLock l;
-                f(m);
-            }else
+                try{
+                    f(m);
+                }catch(bp::error_already_set const &){
+                    error() << __FILE__ << __LINE__ << ":" << __func__ << "Error in python callback:";
+                    if(PyErr_Occurred()){
+                        PyErr_Print();
+                    }
+                }
+            }else{
+                debug(3) << "BufferedMessageObserver: no override for on${className}Buffered";            
                 BufferedMessageObserver::on${className}Buffered(m);
+            }
         }
+
         #end for
         #end for
 };
@@ -50,12 +91,12 @@ class BufferedMessageObserverWrapper:
 void emitObservers(){
     bp::class_<MessageObserverWrapper,
                boost::noncopyable,
-               boost::shared_ptr<MessageObserver>
+               boost::shared_ptr<MessageObserverWrapper>
               >("MessageObserver")
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
-        .def("on${className}", wrap(&MessageObserverWrapper::on${className}))
+        .def("on${className}", &MessageObserverWrapper::on${className})
         #end for
         #end for
     ;
@@ -63,12 +104,14 @@ void emitObservers(){
     bp::class_<BufferedMessageObserverWrapper,
                bp::bases<MessageObserver>,
                boost::noncopyable,
-               boost::shared_ptr<BufferedMessageObserver>
+               boost::shared_ptr<BufferedMessageObserverWrapper>
               >("BufferedMessageObserver")
+        .def("setDoubleBuffered", &BufferedMessageObserver::setDoubleBuffered)
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
-        .def("on${className}", wrap(&BufferedMessageObserverWrapper::on${className}))
+        .def("on${className}", &BufferedMessageObserverWrapper::on${className})
+        .def("on${className}Buffered", &BufferedMessageObserverWrapper::on${className}Buffered)
         #end for
         #end for
     ;

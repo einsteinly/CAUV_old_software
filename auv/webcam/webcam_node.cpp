@@ -16,6 +16,8 @@
 #include <common/messages.h>
 #include <camera/camera.h>
 #include <camera/camera_observer.h>
+#include <camera/webcam.h>
+#include <debug/cauv_debug.h>
 
 
 using namespace std;
@@ -76,8 +78,8 @@ WebcamNode::WebcamNode(const CameraID::e camera_id, const int device_id)
 
 void WebcamNode::onRun()
 {
-    mailbox()->joinGroup("image");
-    mailboxMonitor()->addObserver(m_cam_observer);
+    joinGroup("image");
+    addMessageObserver(m_cam_observer);
 }
 
 static WebcamNode* node;
@@ -103,6 +105,9 @@ void interrupt(int sig)
 
 int main(int argc, char **argv)
 {
+    if(debug::parseOptions(argc, argv))
+        return 0;
+
 /*
     if (argc != 3)
     {

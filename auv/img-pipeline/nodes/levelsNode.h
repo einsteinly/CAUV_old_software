@@ -49,16 +49,17 @@ class LevelsNode: public Node{
 
             // FIXME: should do this with an OpenCV filter with 1-pixel kernel
             const int elem_size = img->cvMat().elemSize();
-            const int row_size = img->cvMat().cols * elem_size;
             unsigned char *rp, *cp, *bp;
             int row, col, ch;
 
-            for(row = 0, rp = img->cvMat().data; row < img->cvMat().rows; row++, rp+= row_size)
+            for(row = 0; row < img->cvMat().rows; row++){
+                rp = img->cvMat().ptr(row);
                 for(col = 0, cp = rp; col < img->cvMat().cols; col++, cp += elem_size)
                     for(ch = 0, bp = cp; ch < img->cvMat().channels(); ch++, bp++)
                         *bp = clamp((unsigned char) 0,
                                     (*bp - black_level) * scale + 0.5,
                                     (unsigned char) 255);
+            }
 
             
             r["image (not copied)"] = img;

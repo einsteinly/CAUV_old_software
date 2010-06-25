@@ -4,7 +4,8 @@
 #include <vector>
 #include <set>
 
-#include <common/debug.h>
+#include <common/messages_fwd.h>
+#include <debug/cauv_debug.h>
 
 #include "../container.h"
 #include "../pwTypes.h"
@@ -18,7 +19,7 @@ class NodeParamValue;
 
 // namespace NodeType{ enum e; } // eww, can't forward declare enums, have to
 // drag in messages.h!
-#include <common/messages.h>
+#include <debug/cauv_debug.h>
 
 namespace pw{
 

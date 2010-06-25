@@ -11,15 +11,27 @@
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
     : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(),
       m_mailbox_lock(), m_mailbox(mb){
+}
+
+void ImageProcessor::start()
+{
     m_scheduler.start();
 }
 
 void ImageProcessor::onImageMessage(ImageMessage_ptr m){
     lock_t l(m_nodes_lock);
-    std::set<input_node_ptr_t>::iterator i;
-    debug() << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
+    std::set<input_node_ptr_t>::iterator i;    
+    debug(2) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onImageMessage(m);
+}
+
+void ImageProcessor::onSonarDataMessage(SonarDataMessage_ptr m){
+    lock_t l(m_nodes_lock);
+    std::set<input_node_ptr_t>::iterator i;        
+    debug(2) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
+    for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
+        (*i)->onSonarDataMessage(m);
 }
 
 void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
@@ -51,7 +63,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
         inputs = node->inputLinks();
         outputs = node->outputLinks();
 
-        info() << "Node added, (type=" << m->nodeType() << " "
+        info() << "Node added: (type=" << m->nodeType() << " "
                << m->parents().size() << " parents, "
                << m->children().size() << " children)";
     }catch(std::exception& e){
@@ -60,50 +72,55 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType(), inputs, outputs, params));
 }
 
+void ImageProcessor::removeNode(node_id const& id){
+    std::vector<ArcRemovedMessage_ptr> arms;
+    lock_t l(m_nodes_lock);
+    node_ptr_t n = lookup(id);
+    
+    // unlink the node first:        
+    Node::msg_node_input_map_t il = n->inputLinks();
+    Node::msg_node_output_map_t ol = n->outputLinks();
+    NodeInput in;
+    in.node = id;
+    for(Node::msg_node_input_map_t::const_iterator i = il.begin(); i != il.end(); i++){
+        in.input = i->first;
+        arms.push_back(boost::make_shared<ArcRemovedMessage>(i->second, in));
+    }
+    NodeOutput out;
+    out.node = id;
+    for(Node::msg_node_output_map_t::const_iterator i = ol.begin(); i != ol.end(); i++){
+        out.output = i->first;
+        for(Node::msg_node_in_list_t::const_iterator j = i->second.begin(); j != i->second.end(); j++)
+            arms.push_back(boost::make_shared<ArcRemovedMessage>(out, *j));
+    }       
+    
+    _removeNode(id); 
+    info() << "Node removed:" << id;
+    
+    if(n->isInputNode()){
+        m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
+    }
+    l.unlock();
+
+    /* since the graph is linked both ways we have to unlink the node from
+     * it's neighbors _and_ unlink the neighbors from the node
+     */
+    BOOST_FOREACH(node_ptr_t p, n->parents())
+        if(p) p->clearOutputs(n); else error() << "bad parent of node" << n;
+    BOOST_FOREACH(node_ptr_t p, n->children())
+        if(p) p->clearInputs(n); else error() << "bad child of node" << n;
+    n->clearOutputs();
+    n->clearInputs();
+    
+    std::vector<ArcRemovedMessage_ptr>::const_iterator i;
+    for(i = arms.begin(); i != arms.end(); i++)
+        sendMessage(*i);
+    sendMessage(boost::make_shared<NodeRemovedMessage>(id));
+}
+
 void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage_ptr m){
     try{
-        std::vector<ArcRemovedMessage_ptr> arms;
-        lock_t l(m_nodes_lock);
-        node_ptr_t n = lookup(m->nodeId());
-        
-        // unlink the node first:        
-        Node::msg_node_input_map_t il = n->inputLinks();
-        Node::msg_node_output_map_t ol = n->outputLinks();
-        NodeInput in;
-        in.node = m->nodeId();
-        for(Node::msg_node_input_map_t::const_iterator i = il.begin(); i != il.end(); i++){
-            in.input = i->first;
-            arms.push_back(boost::make_shared<ArcRemovedMessage>(i->second, in));
-        }
-        NodeOutput out;
-        out.node = m->nodeId();
-        for(Node::msg_node_output_map_t::const_iterator i = ol.begin(); i != ol.end(); i++){
-            out.output = i->first;
-            for(Node::msg_node_in_list_t::const_iterator j = i->second.begin(); j != i->second.end(); j++)
-                arms.push_back(boost::make_shared<ArcRemovedMessage>(out, *j));
-        }       
-        
-        _removeNode(m->nodeId()); 
-        
-        if(n->isInputNode()){
-            m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
-        }
-        l.unlock();
-
-        /* since the graph is linked both ways we have to unlink the node from
-         * it's neighbors _and_ unlink the neighbors from the node
-         */
-        BOOST_FOREACH(node_ptr_t p, n->parents())
-            if(p) p->clearOutputs(n); else error() << "bad parent of node" << n;
-        BOOST_FOREACH(node_ptr_t p, n->children())
-            if(p) p->clearInputs(n); else error() << "bad child of node" << n;
-        n->clearOutputs();
-        n->clearInputs();
-        
-        std::vector<ArcRemovedMessage_ptr>::const_iterator i;
-        for(i = arms.begin(); i != arms.end(); i++)
-            sendMessage(*i);
-        sendMessage(boost::make_shared<NodeRemovedMessage>(m->nodeId()));
+        removeNode(m->nodeId());
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
@@ -113,6 +130,7 @@ void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage_ptr m){
     try{
         node_ptr_t n = lookup(m->nodeId());
         n->setParam(m);
+        info() << "Node parameter set:" << m->nodeId() <<  m->paramId() << m->value();
         
         sendMessage(boost::make_shared<NodeParametersMessage>(m->nodeId(), n->parameters()));
     }catch(std::exception& e){
@@ -147,6 +165,8 @@ void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
 
         from->setOutput(output, to, input);
         to->setInput(input, from, output);
+
+        info() << "Arc added:" << m->from() << "->" << m->to();
         
         sendMessage(boost::make_shared<ArcRemovedMessage>(il[input], m->to()));
         sendMessage(boost::make_shared<ArcAddedMessage>(m->from(), m->to()));
@@ -179,6 +199,16 @@ void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr){
     }
 }
 
+void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr){
+    try{
+        lock_t l(m_nodes_lock);    
+        while(m_nodes.size())
+            removeNode(m_nodes.rbegin()->first);
+    }catch(std::exception& e){
+        error() << __func__ << ":" << e.what();
+    }
+}
+
 void ImageProcessor::sendMessage(const boost::shared_ptr<const Message> msg, service_t service_type) const{
     m_mailbox->sendMessage(msg, service_type);
 }
@@ -194,7 +224,7 @@ node_ptr_t ImageProcessor::lookup(node_id const& id) const throw(id_error){
     if(i != m_nodes.end())
         return i->second;
     else
-        throw(id_error(std::string("Unknown node id: ") + to_string(id)));
+        throw id_error(std::string("Unknown node id: ") + to_string(id));
 }
 
 node_id ImageProcessor::lookup(node_ptr_t const& p) const throw(){
@@ -222,7 +252,7 @@ void ImageProcessor::_removeNode(node_id const& id) throw(id_error){
         m_nodes_rev.erase(i->second);
         m_nodes.erase(i);
     }else{
-        throw(id_error(std::string("Unknown node id: ") + to_string(id)));
+        throw id_error(std::string("Unknown node id: ") + to_string(id));
     }
 }
 

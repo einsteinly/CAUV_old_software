@@ -10,9 +10,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include <common/messages.h>
+#include <common/messages_fwd.h>
 #include <common/cauv_utils.h>
-#include <common/spread/cauv_spread_rc_mailbox.h>
+#include <common/spread/spread_rc_mailbox.h>
 
 #include "pipelineTypes.h"
 #include "scheduler.h"
@@ -31,7 +31,9 @@ class ImageProcessor: public MessageObserver
         typedef boost::unique_lock<mutex_t> lock_t;
     public:    
         ImageProcessor(mb_ptr_t mailbox);
-        
+       
+        void start();
+
         /**
          * override MessageObserver functions to take actions on messages
          */
@@ -42,6 +44,7 @@ class ImageProcessor: public MessageObserver
          * their input from others.
          */
         virtual void onImageMessage(ImageMessage_ptr m);
+        virtual void onSonarDataMessage(SonarDataMessage_ptr m);
         
         /**
          * These messages describe modifications to the pipeline
@@ -52,8 +55,11 @@ class ImageProcessor: public MessageObserver
         virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
         virtual void onAddArcMessage(AddArcMessage_ptr m);
         virtual void onGraphRequestMessage(GraphRequestMessage_ptr m);
+        virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
 
         /** end MessageObserver functions **/
+
+        void removeNode(node_id const& n);
 
         /**
          * Use m_mailbox (set by constructor) to send the specified message

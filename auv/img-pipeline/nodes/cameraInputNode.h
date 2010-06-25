@@ -28,10 +28,11 @@ class CameraInputNode: public AsynchronousNode{
             openCapture();
         }
 
-        template<typename T>
-        void paramChanged(param_id const& p, T const& new_value){
+        virtual void paramChanged(param_id const& p){
             if(p == "device id")
+            {
                 openCapture();
+            }
         }
 
     protected:

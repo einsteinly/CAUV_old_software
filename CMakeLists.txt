@@ -16,8 +16,8 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CAUV_SOURCE_DIR}/cmake/")
 
 
 set (ALWAYS_FLAGS "-DPIC -fPIC -Wall")
-set (DEBUG_FLAGS "-DCAUV_DEBUG=1 -g -Wextra -Wno-non-virtual-dtor -Wno-system-headers")
-set (OPTIMISATION_FLAGS "-O3 -ffast-math")
+set (DEBUG_FLAGS "-DCAUV_DEBUG_LEVEL=1 -g -Wextra -Wno-non-virtual-dtor -Wno-system-headers")
+set (OPTIMISATION_FLAGS "-DCAUV_DEBUG_LEVEL=0 -O3 -ffast-math")
 
 set (CMAKE_CXX_FLAGS "${ALWAYS_FLAGS}")
 set (CMAKE_CXX_FLAGS_DEBUG "${DEBUG_FLAGS}")
@@ -29,6 +29,6 @@ set (CMAKE_C_FLAGS "${ALWAYS_FLAGS}")
 
 add_subdirectory (messages-python)
 add_subdirectory (auv)
-add_subdirectory (gui-pipeline EXCLUDE_FROM_ALL)
+add_subdirectory (gui-pipeline)
 
 

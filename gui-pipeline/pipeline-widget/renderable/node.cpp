@@ -7,6 +7,7 @@
 
 #include <common/cauv_utils.h>
 #include <common/messages.h>
+#include <debug/cauv_debug.h>
 
 #include "../pipelineWidget.h"
 #include "text.h"
@@ -255,7 +256,7 @@ static boost::shared_ptr<PVPairEditableBase> makePVPair(
 void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     // remove any parameters that no longer exist
     str_inparam_map_t new_m_params;
-    foreach(str_inparam_map_t::value_type &i, m_params)
+    foreach(str_inparam_map_t::value_type const &i, m_params)
         if(!params.count(i.first)){
             m_contents.remove(i.second.inblob);
             m_contents.remove(i.second.pvpair);
@@ -269,7 +270,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     foreach(pm_t::value_type const& j, params){
         str_inparam_map_t::iterator k = m_params.find(j.first);
         if(k == m_params.end()){
-            debug(3) << BashColour::Blue << *this << "new param:" << j;
+            debug(-3) << BashColour::Blue << *this << "new param:" << j;
             InParamPVPair t;
             t.pvpair = makePVPair(this, j, true);
             t.inblob = boost::make_shared<NodeInputParamBlob>(
@@ -279,7 +280,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
             m_contents.push_back(t.inblob);
             m_contents.push_back(t.pvpair);
         }else{
-            debug(3) << BashColour::Blue << *this << "param updated:" << j;        
+            debug(-3) << BashColour::Blue << *this << "param updated:" << j;        
             // leave the 'inblob' alone -- so that any input arc to it remains
             // valid -- but replace the parameter-value-pair:
             renderable_list_t::iterator i = std::find(
@@ -398,7 +399,7 @@ int Node::id() const{
 
 void Node::close(){
     debug() << "Node::close" << id();
-    m_pw->sendMessage(boost::make_shared<RemoveNodeMessage>(m_node_id));
+    m_pw->send(boost::make_shared<RemoveNodeMessage>(m_node_id));
 }
 
 renderable_ptr_t Node::outSocket(std::string const& id){
@@ -498,7 +499,7 @@ void Node::paramValueChanged<int>(std::string const& p, int const& v){
     pv.type = ParamType::Int32;
     pv.intValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 template<>
@@ -513,7 +514,7 @@ void Node::paramValueChanged<float>(std::string const& p, float const& v){
     pv.type = ParamType::Float;
     pv.floatValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 template<>
@@ -528,7 +529,7 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     pv.type = ParamType::String;
     pv.stringValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 template<>
@@ -543,7 +544,7 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
     pv.type = ParamType::Bool;
     pv.intValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 } // namespace pw
@@ -562,7 +563,7 @@ void Node::refreshLayout(){
     m_closebutton->m_pos.x = -m_closebutton->bbox().min.x;
     m_closebutton->m_pos.y = -m_closebutton->bbox().min.y;
     m_back = m_closebutton->bbox() + m_closebutton->m_pos;
-    debug(-1) << "closebutton layout:" << m_closebutton->m_pos << m_closebutton->bbox();
+    debug(2) << "closebutton layout:" << m_closebutton->m_pos << m_closebutton->bbox();
 
     m_title->m_pos.y = y_pos - roundA(m_title->bbox().max.y);
     m_title->m_pos.x = -m_title->bbox().min.x;

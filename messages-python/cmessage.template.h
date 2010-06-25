@@ -51,7 +51,7 @@ struct Message
 {
     uint32_t id;
 };
-struct packet toPacket(struct Message* m);
+void sendAsPacket(struct Message* m);
 
 #for $g in $groups
 // $g.name group
@@ -74,7 +74,7 @@ struct $className new${className}(#slurp
                                    #end for
 #*                                *#);
 struct ${className} ${className}FromPacket(struct packet p);
-struct packet ${className}ToPacket(struct $className* m);
+void send${className}AsPacket(struct $className* m);
 
 #end for 
 #end for 
@@ -87,7 +87,6 @@ struct packet ${className}ToPacket(struct $className* m);
 int load_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val);
 int save_$loadsavesuffix($t)(struct packet p, int pos, $toCType($t)* val);
 int len_$loadsavesuffix($t)($toCType($t)* val);
-#end if 
 #end for 
 
 

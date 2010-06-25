@@ -7,9 +7,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <common/spread/cauv_spread_rc_mailbox.h>
-#include <common/spread/cauv_mailbox_monitor.h>
-#include <common/spread/cauv_msgsrc_mb_observer.h>
+#include <common/spread/spread_rc_mailbox.h>
+#include <common/spread/mailbox_monitor.h>
+#include <common/spread/msgsrc_mb_observer.h>
 
 class CauvNode
 {
@@ -18,13 +18,19 @@ class CauvNode
 		
         void run();
 		virtual void onRun();
+    
+        void joinGroup(std::string const& group);
+        void addMessageObserver(boost::shared_ptr<MessageObserver>);
+        void removeMessageObserver(boost::shared_ptr<MessageObserver>);
+        void clearMessageObservers();
+   
+        int send(boost::shared_ptr<const Message> message,
+                 Spread::service serviceType = SAFE_MESS);
+
 
 	protected:
 		std::string m_name;
-
         boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
-        boost::shared_ptr<MailboxEventMonitor> eventMonitor() const; 
-        boost::shared_ptr<MsgSrcMBMonitor> mailboxMonitor() const;
 
         CauvNode(const std::string& name, const char* host="16707@localhost");
     

@@ -17,7 +17,9 @@ project
                  <library>/boost/thread//boost_thread
                  <library>/boost/serialization//boost_serialization
                  <library>/boost/date_time//boost_date_time
-                 <library>/boost/iostreams//boost_iostreams ;
+                 <library>/boost/iostreams//boost_iostreams
+                 <library>/boost/program_options//boost_program_options
+  : build-dir $BJAM_BUILD_DIR ;
 
 lib cvlib : : <name>cv <search>/societies/cauv/install/lib ;
 lib highguilib : : <name>highgui <search>/societies/cauv/install/lib ;
@@ -26,26 +28,27 @@ lib spreadlib : : <name>spread <search>/societies/cauv/install/lib ;
 
 lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>/societies/cauv/install/lib ;
 
+lib bpolib : : <name>boost_program_options <search>/societies/cauv/install/lib/ ;
+
 lib libcommon : ../common/messages.cpp
                 ../common/image.cpp 
                 ../common/cauv_node.cpp 
                 ../common/cauv_global.cpp
                 ../common/cauv_utils.cpp
-                ../common/spread/cauv_mailbox_monitor.cpp
-                ../common/spread/cauv_spread_mailbox.cpp
-                ../common/spread/cauv_spread_messages.cpp
+                ../common/spread/mailbox_monitor.cpp
+                ../common/spread/spread_mailbox.cpp
+                ../common/spread/spread_rc_mailbox.cpp
+                ../common/spread/spread_messages.cpp
+                ../debug/cauv_debug.cpp
                 cvlib
                 highguilib
                 ssrcspreadlib
+                bpolib
               : <define>CAUV_DEBUG ;
 
-python-extension cauv : cauvmodule.cpp
-                        emit_static.cpp
-                        emit_enums.cpp
-                        emit_structs.cpp
-                        emit_messages.cpp
-                        emit_observers.cpp
-                        libcommon
-                      : <define>CAUV_DEBUG ;
+python-extension cauvinterface : [ glob *.cpp ]
+                                 libcommon
+                               : <define>CAUV_DEBUG ;
 
+install "./cauv/" : cauvinterface libcommon ;
 

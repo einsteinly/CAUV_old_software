@@ -7,10 +7,13 @@ class InputNode: public Node{
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
     public:
+        enum Subscription {ImageData, SonarData};
         InputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t), ignored(0), processed(0), dropped(0),
+            : Node(sched, pl, t),m_subscriptions(),
+              ignored(0), processed(0), dropped(0),
               dropped_since(0), m_counters_lock(), m_latest_image_msg(),
-              m_processed_latest(true), m_latest_image_msg_lock(){
+              m_latest_sonardata_msg(), m_processed_latest(true),
+              m_latest_msg_lock(){
             // don't allow the node to be executed until it has input available
             clearAllowQueue();
         }
@@ -19,6 +22,14 @@ class InputNode: public Node{
                    << "\n\tignored" << ignored
                    << "\n\tprocessed" <<  processed
                    << "\n\tdropped" <<  dropped; 
+        }
+        
+        /**
+         * derived nodes must override this in order to receive inputs of a
+         *   particular sort (Images or Sonar data)
+         */
+        virtual std::set<Subscription> const& subscriptions() const{
+            return m_subscriptions;
         }
 
         /**
@@ -29,8 +40,9 @@ class InputNode: public Node{
         void onImageMessage(boost::shared_ptr<const ImageMessage> m) throw() {
             lock_t l(m_counters_lock);
             debug() << "Input node received an image";
-            if(checkSource(m->image().source(), m->source())){ 
-                lock_t l(m_latest_image_msg_lock);
+            if(checkSource(m->image().source(), m->source()) &&
+               subscriptions().count(ImageData)){
+                lock_t l(m_latest_msg_lock);
                 if(!m_processed_latest)
                     dropped_since++;
                 m_processed_latest = false;
@@ -41,12 +53,33 @@ class InputNode: public Node{
                 ignored++;
             }
         }
+        
+        /**
+         * ...
+         */
+        void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
+            lock_t l(m_counters_lock);
+            debug() << "Input node received an image";
+            if(subscriptions().count(SonarData)){
+                lock_t l(m_latest_msg_lock);
+                if(!m_processed_latest)
+                    dropped_since++;
+                m_processed_latest = false;
+                m_latest_sonardata_msg = m;
+                setAllowQueue();
+                checkAddSched();
+            }else{
+                ignored++;
+            }
+        }
 
         /**
          * Input nodes should overload this to set which sources they accept
-         * images from
+         * images from (Images only)
          */
-        virtual bool checkSource(Image::Source const& s, CameraID::e const& c) throw() = 0;
+        virtual bool checkSource(Image::Source const&, CameraID::e const&) throw(){
+            return true;
+        }
    
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
@@ -66,9 +99,28 @@ class InputNode: public Node{
             debug() << "Processed" << processed << "images";
             m_processed_latest = true;
             
-            lock_t m(m_latest_image_msg_lock);
+            lock_t m(m_latest_msg_lock);
             return m_latest_image_msg;
         }
+
+        boost::shared_ptr<const SonarDataMessage> latestSonarDataMessage(){
+            lock_t l(m_counters_lock);
+            debug() << "Grabbing image";
+            if(dropped_since > 0){
+                warning() << "Dropped" << dropped_since << "frames since last frame processed";
+                dropped += dropped_since;
+                dropped_since = 0;
+            }
+            processed++;
+            debug() << "Processed" << processed << "images";
+            m_processed_latest = true;
+            
+            lock_t m(m_latest_msg_lock);
+            return m_latest_sonardata_msg;
+        }
+        
+
+        std::set<Subscription> m_subscriptions;
 
     private:
         int ignored;
@@ -78,8 +130,9 @@ class InputNode: public Node{
         mutable boost::recursive_mutex m_counters_lock;
 
         boost::shared_ptr<const ImageMessage> m_latest_image_msg;
+        boost::shared_ptr<const SonarDataMessage> m_latest_sonardata_msg;
         bool m_processed_latest;
-        mutable boost::recursive_mutex m_latest_image_msg_lock;
+        mutable boost::recursive_mutex m_latest_msg_lock;
 };
 
 #endif // ndef INPUT_NODE_H

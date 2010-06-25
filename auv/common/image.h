@@ -6,8 +6,6 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <common/debug.h>
-
 class Image{
         friend class boost::serialization::access;
     public:
@@ -50,11 +48,11 @@ class Image{
             cv::imencode(m_compress_fmt, m_img, buf, m_compress_params);
             ar & buf;
             
-            const float pre = m_img.rows * m_img.cols * m_img.elemSize();
-            const float post = buf.size();
-            debug() << "Image Serialization:\n\t"
-                      << __func__ << m_compress_fmt << m_compress_params << load_flags
-                      << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
+            //const float pre = m_img.rows * m_img.cols * m_img.elemSize();
+            //const float post = buf.size();
+            //std::cout << "Image Serialization:\n\t"
+            //          << __func__ << m_compress_fmt << m_compress_params << load_flags
+            //          << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
         }
         
         template<class Archive>
@@ -69,11 +67,11 @@ class Image{
             ar & buf;
             m_img = cv::imdecode(cv::Mat(buf), load_flags);
 
-            const float post = m_img.rows * m_img.cols * m_img.elemSize();
-            const float pre = buf.size();
-            debug() << "Image Deserialization:\n\t"
-                      << __func__ << m_compress_fmt << m_compress_params << load_flags
-                      << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
+            //const float post = m_img.rows * m_img.cols * m_img.elemSize();
+            //const float pre = buf.size();
+            //std::cout << "Image Deserialization:\n\t"
+            //          << __func__ << m_compress_fmt << m_compress_params << load_flags
+            //          << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
         }
 
     private:
