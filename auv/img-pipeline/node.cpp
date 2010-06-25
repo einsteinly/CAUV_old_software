@@ -43,7 +43,7 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
 }
 
 Node::~Node(){
-    debug(0) << BashColour::Purple << "~Node" << *this << ", waiting for pending exec";
+    debug(-3) << BashColour::Purple << "~Node" << *this << ", waiting for pending exec";
     clearAllowQueue();
     // wait for any last execution of the node to finish
     m_exec_queued_lock.lock();
@@ -54,9 +54,8 @@ Node::~Node(){
         m_exec_queued_lock.lock();
     }
     m_exec_queued_lock.unlock();
-    debug(0) << BashColour::Purple << "~Node" << *this << ", done";
+    debug(-3) << BashColour::Purple << "~Node" << *this << ", done";
 }
-
 
 NodeType::e const& Node::type() const{
     return m_node_type;
@@ -102,7 +101,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
         if(i->second.first){
             throw link_error("old arc must be removed first");
         }
-        debug(0) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
+        debug(-3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
         i->second = input_link_t(n, o_id);
         l.unlock();
         if(m_parameters.count(param)){
@@ -127,7 +126,7 @@ void Node::clearInput(input_id const& i_id){
     if(i == m_parent_links.end()){
         throw id_error("clearInput: Invalid input id" + to_string(i_id));
     }else{
-        debug(0) << BashColour::Purple << "removing parent link on " << i_id;
+        debug(-3) << BashColour::Purple << "removing parent link on " << i_id;
         i->second = input_link_t();
     }
 }
@@ -135,7 +134,7 @@ void Node::clearInput(input_id const& i_id){
 void Node::clearInputs(node_ptr_t parent){
     unique_lock_t l(m_parent_links_lock);
     in_link_map_t::iterator i;
-    debug(0) << BashColour::Purple << "removing parent links to" << *parent;
+    debug(-3) << BashColour::Purple << "removing parent links to" << *parent;
     for(i = m_parent_links.begin(); i != m_parent_links.end(); i++){
         if(i->second.first == parent)
             i->second = input_link_t();
@@ -223,7 +222,7 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     }else{
         // An output can be connected to more than one input, so
         // m_child_links[output_id] is a list of output_link_t
-        debug(0) << BashColour::Green << "adding output link to child: " << *n << i_id;
+        debug(-3) << BashColour::Green << "adding output link to child: " << *n << i_id;
         i->second.push_back(output_link_t(n, i_id));
     }
 }
@@ -242,7 +241,7 @@ void Node::clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id
                            + to_string(m_pl.lookup(n)) + ", "
                            + to_string(i_id));
         }else{
-            debug(0) << BashColour::Purple << "removing output link to child:" << j->first << j->second;
+            debug(-3) << BashColour::Purple << "removing output link to child:" << j->first << j->second;
             i->second.erase(j);
         }
     }
@@ -256,7 +255,7 @@ struct FirstIs{
 };
 void Node::clearOutputs(node_ptr_t child){
     unique_lock_t l(m_child_links_lock);
-    debug(0) << BashColour::Purple << "removing output links to child:" << *child;
+    debug(-3) << BashColour::Purple << "removing output links to child:" << *child;
     foreach(out_link_map_t::value_type& i, m_child_links)
         i.second.remove_if(FirstIs<output_link_t>(child));
 }
@@ -264,7 +263,7 @@ void Node::clearOutputs(node_ptr_t child){
 void Node::clearOutputs(){
     unique_lock_t l(m_child_links_lock);
     foreach(out_link_map_t::value_type& i, m_child_links){
-        debug(0) << BashColour::Purple << "removing output link to children:"
+        debug(-3) << BashColour::Purple << "removing output link to children:"
                  << i.first << "->" << i.second;
         i.second.clear();
     }

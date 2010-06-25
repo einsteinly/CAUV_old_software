@@ -97,39 +97,77 @@ template <class R, class C, class T0> MemberWrap<R, C, T0> wrap(R (C::*p)(T0)){ 
 template <class R, class C, class T0, class T1> MemberWrap<R, C, T0, T1> wrap(R (C::*p)(T0, T1)){ return MemberWrap<R, C, T0, T1>(p); } 
 template <class R, class C, class T0, class T1, class T2> MemberWrap<R, C, T0, T1, T2> wrap(R (C::*p)(T0, T1, T2)){ return MemberWrap<R, C, T0, T1, T2>(p); }
 
+#include <stack>
+#include <stdexcept>
 
 #include <boost/python.hpp>
 #include <boost/python/signature.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/tss.hpp>
 
 #include <debug/cauv_debug.h>
+#include <common/bash_cout.h>
 
 /** ... but the definitions of the wrappers need boost python (since the whole
  ** point is to wrap with GIL release, so they must be placed after inclusion)
  **/
-
-class GILLock: boost::noncopyable{
+class GILLockBase: boost::noncopyable{
     public:
-        GILLock()
-            : m_gs(PyGILState_Ensure()){
+        enum lock_release_e{
+            Acquire,
+            Release
+        };
+        GILLockBase(lock_release_e const& ar)
+            : m_ar(ar){
+            if(ar == Acquire)
+                acquire();
+            else
+                release();
         }
-        ~GILLock(){
-            PyGILState_Release(m_gs);
+        ~GILLockBase(){
+            if(m_ar == Acquire)
+                release();
+            else
+                acquire();
         }
     private:
-        PyGILState_STATE m_gs;
+        void release(){
+            threadState().push(PyEval_SaveThread());
+            debug() << BashColour::Purple << threadState().size()
+                    << "PyEval_SaveThread=" << threadState().top();
+        }
+        void acquire(){
+            if(!threadState().size()){
+                throw std::runtime_error("aquire() does not correspond to release() on this thread");
+            }else{
+                debug() << BashColour::Purple << threadState().size()
+                        << "PyEval_RestoreThread(" << threadState().top() << ")";
+                PyEval_RestoreThread(threadState().top());
+                threadState().pop();
+            }
+        }
+        static std::stack<PyThreadState*>& threadState(){
+            static boost::thread_specific_ptr< std::stack<PyThreadState*> > save;
+            if(!save.get())
+                save.reset(new std::stack<PyThreadState*>);
+            return *save.get();
+        }
+
+        lock_release_e m_ar;
 };
 
-class GILRelease: boost::noncopyable{
+class GILLock: GILLockBase{
+    public:
+        GILLock()
+            : GILLockBase(Acquire){
+        }
+};
+
+class GILRelease: GILLockBase{
     public:
         GILRelease()
-            : m_save(PyEval_SaveThread()){
+            : GILLockBase(Release){
         }
-        ~GILRelease(){
-            PyEval_RestoreThread(m_save);
-        }
-    private:
-        PyThreadState *m_save;
 };
 
 template<class R, class C>

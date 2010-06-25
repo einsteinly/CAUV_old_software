@@ -45,7 +45,7 @@ SmartStreamBase::~SmartStreamBase()
     printToStream(logFile());
 }
 
-void SmartStreamBase::setLevel(unsigned int debug_level)
+void SmartStreamBase::setLevel(int debug_level)
 {
     settings().debug_level = debug_level;
 }
@@ -57,7 +57,7 @@ int SmartStreamBase::parseOptions(int argc, char** argv)
     // isn't overloading wonderful...
     desc.add_options()
         ("help", "produce help message")
-        ("verbose,v", po::value<unsigned int>(), "set the verbosity of debug messages")
+        ("verbose,v", po::value<int>(), "set the verbosity of debug messages")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -69,7 +69,7 @@ int SmartStreamBase::parseOptions(int argc, char** argv)
     }
     if(vm.count("debug-level"))
     {
-        setLevel(vm["debug-level"].as<unsigned int>());
+        setLevel(vm["debug-level"].as<int>());
     }
     return 0;
 }
@@ -202,7 +202,7 @@ boost::recursive_mutex& SmartStreamBase::getMutex(std::ostream& s){
 
 
 #if !defined(CAUV_NO_DEBUG)
-debug::debug(unsigned int level)
+debug::debug(int level)
     : SmartStreamBase(std::cout, "", BashColour::Cyan),
       m_level(level)
 {

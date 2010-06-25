@@ -42,7 +42,7 @@ add_custom_command (
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
            ${MSGSRCD}/messages.msg
-   COMMENT "Generating messages.cpp and mesages.h with messages-python (for bjam)"
+   COMMENT "Generating messages.cpp and mesages*.h with messages-python (for bjam)"
 )
 
 add_custom_command (
@@ -56,6 +56,8 @@ add_custom_command (
             ${SRCD}/emit_enums.cpp
             ${SRCD}/emit_messages.cpp
             ${SRCD}/emit_observers.cpp
+            ${SRCD}/emit_static.cpp
+            ${SRCD}/workarounds.h
             ${MSGSRCD}/messages.cpp
             ${MSGSRCD}/image.cpp 
             ${MSGSRCD}/cauv_node.cpp 
@@ -68,6 +70,8 @@ add_custom_command (
                      ${SRCD}/emit_enums.cpp
                      ${SRCD}/emit_messages.cpp
                      ${SRCD}/emit_observers.cpp
+                     ${SRCD}/emit_static.cpp
+                     ${SRCD}/workarounds.h
                      ${MSGSRCD}/messages.cpp
                      ${MSGSRCD}/image.cpp 
                      ${MSGSRCD}/cauv_node.cpp 
