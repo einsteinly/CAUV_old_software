@@ -9,7 +9,7 @@ class OutputNode: public Node{
             : Node(sched, pl, t){
         }
         
-        virtual bool isOutputNode() const throw() { return true; }
+        virtual bool isOutputNode() const { return true; }
 };
 
 #endif // ndef _OUTPUT_NODE_H__

@@ -82,7 +82,7 @@ class InputNode: public Node{
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */
-        virtual bool isInputNode() throw() { return true; }
+        virtual bool isInputNode() const { return true; }
     
     protected:
         boost::shared_ptr<const ImageMessage> latestImageMsg(){
