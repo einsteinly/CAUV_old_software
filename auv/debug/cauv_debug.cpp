@@ -67,9 +67,9 @@ int SmartStreamBase::parseOptions(int argc, char** argv)
         std::cout << desc;
         return 1;
     }
-    if(vm.count("debug-level"))
+    if(vm.count("verbose"))
     {
-        setLevel(vm["debug-level"].as<unsigned int>());
+        setLevel(vm["verbose"].as<unsigned int>());
     }
     return 0;
 }
