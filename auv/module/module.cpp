@@ -218,7 +218,7 @@ void Module::start()
     if (m_ftdiStreamBuffer.is_open())
     {
         m_readThread = boost::thread(&Module::readLoop, this);
-        m_sendThread = boost::thread(&Module::readLoop, this);
+        m_sendThread = boost::thread(&Module::sendLoop, this);
     }
     else
     {
