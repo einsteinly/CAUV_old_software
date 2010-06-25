@@ -385,11 +385,11 @@ class ImgPipeTestNode : public CauvNode{
             info() << "--- ImagePipelineTesterNode::onRun ---"; 
             #if defined(USE_DEBUG_MESSAGE_OBSERVERS) 
             info() << "Add TestMBObserver...";
-            eventMonitor()->addObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
+            addMessageObserver(boost::shared_ptr<TestMBObserver>(new TestMBObserver)); 
             #endif
             
             info() << "Joining pl_gui group...";
-            mailbox()->joinGroup("pl_gui"); 
+            joinGroup("pl_gui"); 
 
             info() << "--- start test sequence ---";
 
@@ -397,7 +397,7 @@ class ImgPipeTestNode : public CauvNode{
                 info() << "--- no tests to run ---";
 
             m_obs = boost::make_shared<NodeAddedObserver>();
-            addObserver(m_obs);
+            addMessageObserver(m_obs);
     
             if(m_tests_to_run & file_io_test){
                 setupFileIOTests();

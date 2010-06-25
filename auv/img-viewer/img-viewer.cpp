@@ -32,8 +32,8 @@ class ImageWindow : public MessageObserver
 ImageViewer::ImageViewer(const CameraID::e, const int)
     : CauvNode("img-view")
 {
-    join("image");
-    addObserver(boost::make_shared<ImageWindow>());
+    joinGroup("image");
+    addMessageObserver(boost::make_shared<ImageWindow>());
 }
 
 static ImageViewer* node;

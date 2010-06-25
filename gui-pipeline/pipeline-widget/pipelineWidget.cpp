@@ -203,27 +203,22 @@ class PipelineGuiCauvNode: public CauvNode{
 
         void onRun(){
             debug() << "PGCN::onRun()";
-            join("pl_gui");
-            addObserver(
+            joinGroup("pl_gui");
+
+            addMessageObserver(
                 boost::make_shared<PipelineGuiMsgObs>(m_widget)
             );
-            addObserver(
+            addMessageObserver(
                 boost::make_shared<DBGLevelObserver>()
             );
             #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
-            mailboxMonitor()->addObserver(
+            addMessageObserver(
                 boost::make_shared<DebugMessageObserver>()
             );
             #endif
 
             // get the initial pipeline state:
-            sendMessage(boost::make_shared<GraphRequestMessage>());
-        }
-
-        void sendMessage(boost::shared_ptr<Message> m){
-            // TODO: need mutex protection? think probably not
-            debug() << "PGCN::sendMessage" << *m;
-            mailbox()->sendMessage(m, SAFE_MESS);
+            send(boost::make_shared<GraphRequestMessage>());
         }
     private:
         PipelineWidget *m_widget;
@@ -472,11 +467,11 @@ void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
     m_cauv_node = c;
 }
 
-void PipelineWidget::sendMessage(boost::shared_ptr<Message> m){
+void PipelineWidget::send(boost::shared_ptr<Message> m){
     if(m_cauv_node)
-        m_cauv_node->sendMessage(m);
+        m_cauv_node->send(m);
     else
-        error() << "PipelineWidget::sendMessage no associated cauv node";
+        error() << "PipelineWidget::send no associated cauv node";
 }
 
 
@@ -681,7 +676,7 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
                         ), proxy.pos);
                 break;
             case Qt::Key_R:
-                sendMessage(boost::make_shared<GraphRequestMessage>());
+                send(boost::make_shared<GraphRequestMessage>());
                 break;
             default:
                 QWidget::keyPressEvent(event);

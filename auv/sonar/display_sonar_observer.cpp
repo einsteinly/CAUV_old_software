@@ -5,6 +5,8 @@
 
 #include <debug/cauv_debug.h>
 
+#include "seanet_sonar.h"
+
 using namespace std;
 
 static void set_pixel(cv::Mat* img, int x, int y, unsigned char val)
@@ -126,10 +128,34 @@ static void scan_thick_arc(cv::Mat* img, int cx, int cy, int radius, float from,
         }
 }
 
+static void setRange(int value, void* data)
+{
+    boost::shared_ptr<SeanetSonar> sonar = *reinterpret_cast<boost::shared_ptr<SeanetSonar>*>(data);
+    if (sonar) {
+        sonar->set_range(value+1);
+    }
+}
+static void setRangeRes(int value, void* data)
+{
+    boost::shared_ptr<SeanetSonar> sonar = *reinterpret_cast<boost::shared_ptr<SeanetSonar>*>(data);
+    if (sonar) {
+        sonar->set_range_res(value+1);
+    }
+}
+static void setGain(int value, void* data)
+{
+    boost::shared_ptr<SeanetSonar> sonar = *reinterpret_cast<boost::shared_ptr<SeanetSonar>*>(data);
+    if (sonar) {
+        sonar->set_gain(value);
+    }
+}
 
-DisplaySonarObserver::DisplaySonarObserver() : m_img(400,400,CV_8UC1)
+DisplaySonarObserver::DisplaySonarObserver(boost::shared_ptr<SeanetSonar> sonar) : m_sonar(sonar), m_img(400,400,CV_8UC1)
 {
     cv::namedWindow("Sonar display", CV_WINDOW_AUTOSIZE);
+    cv::createTrackbar("Range", "Sonar display", NULL, 4999, setRange, &m_sonar);
+    cv::createTrackbar("RangeRes", "Sonar display", NULL, 29, setRangeRes, &m_sonar);
+    cv::createTrackbar("Gain", "Sonar display", NULL, 255, setGain, &m_sonar);
 }
 DisplaySonarObserver::~DisplaySonarObserver()
 {

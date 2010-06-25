@@ -20,7 +20,7 @@ SonarControlMessageObserver::SonarControlMessageObserver(boost::shared_ptr<Seane
 
 void SonarControlMessageObserver::onSonarControlMessage(boost::shared_ptr<SonarControlMessage> m)
 {
-    m_sonar->set_scan_settings(m->direction(), m->width(), m->gain(), m->range(), m->radialRes(), m->angularRes());
+    m_sonar->set_params(m->direction(), m->width(), m->gain(), m->range(), m->radialRes(), m->angularRes());
 }
 
 
@@ -44,6 +44,8 @@ bool MotorState::operator!=(MotorState& rhs) const
 {
     return !(*this == rhs);
 }
+
+
 
 
 
@@ -96,7 +98,7 @@ inline int SeanetSonar::isReady() const
 }
 
 /* Send params to the sonar */
-void SeanetSonar::upload_params(SeanetHeadParams &params)
+void SeanetSonar::upload_head_params(SeanetHeadParams &params)
 {
     SeanetHeadParamsPacket pkt(params);
     m_serial_port->sendPacket(pkt);
@@ -110,71 +112,106 @@ static uint32_t range_from_nbins_adinterval(uint16_t nBins, uint16_t adInterval)
     return range_mm;
 }
 
-/* res has units of cm, range has units of meters */
-void SeanetSonar::set_res_range(SeanetHeadParams& params, unsigned int res, unsigned int range)
+
+void SeanetSonar::set_direction(uint16_t direction)
 {
-    uint16_t nBins;
-    uint16_t adInterval;
-    float ping_time;
+    m_current_params.direction = direction;
+    upload_current_params();
+}
+void SeanetSonar::set_width(uint16_t width)
+{
+    m_current_params.width = width;
+    upload_current_params();
+}
+void SeanetSonar::set_gain (unsigned char gain)
+{
+    m_current_params.gain = gain;
+    upload_current_params();
+}
+void SeanetSonar::set_range (uint32_t range)
+{
+    m_current_params.range = range;
+    upload_current_params();
+}
+void SeanetSonar::set_range_res (uint32_t range_res)
+{
+    m_current_params.range_res = range_res;
+    upload_current_params();
+}
+void SeanetSonar::set_angular_res (unsigned char angular_res)
+{
+    m_current_params.angular_res = angular_res;
+    upload_current_params();
+}
+void SeanetSonar::set_params (uint16_t direction,
+                              uint16_t width,
+                              unsigned char gain,
+                              uint32_t range,
+                              uint32_t range_res,
+                              unsigned char angular_res)
+{
+    m_current_params.direction = direction;
+    m_current_params.width = width;
+    m_current_params.gain = gain;
+    m_current_params.range = range;
+    m_current_params.range_res = range_res;
+    m_current_params.angular_res = angular_res;
+    upload_current_params();
+}
 
-    nBins = (range) / res;
 
+void SeanetSonar::upload_current_params()
+{
+    SeanetHeadParams params;
+
+    if (m_current_params.width == 6400)
+    {
+        // Continuous scanning
+        params.hdCtrl |= HdCtrl::Continuous;
+        params.hdCtrl &= ~HdCtrl::StareLLim;
+    }
+    else if (m_current_params.width == 0)
+    {
+        // Pinging
+        params.hdCtrl &= ~HdCtrl::Continuous;
+        params.hdCtrl |= HdCtrl::StareLLim;
+    }
+    else
+    {
+        // Sector
+        params.hdCtrl &= ~HdCtrl::Continuous;
+        params.hdCtrl &= ~HdCtrl::StareLLim;
+    }
+
+    params.stepSize = m_current_params.angular_res;
+    params.igainChn1 = m_current_params.gain;
+    params.igainChn2 = m_current_params.gain;
+    params.rangeScale = m_current_params.range;
+
+    if (m_current_params.direction - m_current_params.width/2 < 0 ) {
+        m_current_params.direction += 6400;
+    }
+
+    params.leftLim = m_current_params.direction - m_current_params.width/2;
+    params.rightLim = params.leftLim + m_current_params.width;
+    
+    uint16_t nBins = m_current_params.range / m_current_params.range_res;
     if (nBins > 1400) {
         warning() << "Someone tried to set the sonar resolution too high. Reducing it.";
         nBins = 1400;
     }
 
-    ping_time = (2 * range * 1000) / 1500; // units of microseconds. 1500 is VoS
-    adInterval = ping_time / (nBins * 0.64); // Sonar has clock time of 640ns
+    float ping_time = (2 * m_current_params.range * 1000) / 1500; // units of microseconds. 1500 is VoS
+    uint16_t adInterval = ping_time / (nBins * 0.64); // Sonar has clock time of 640ns
 
-    info() << "Setting nBins to " << nBins << " and adInterval to " << adInterval;
-    info() << "Range has been set to " << range_from_nbins_adinterval(nBins, adInterval) << "mm";
+    debug() << "Setting nBins to " << nBins << " and adInterval to " << adInterval;
+    debug() << "Range has been set to " << range_from_nbins_adinterval(nBins, adInterval) << "mm";
 
     params.adInterval = adInterval;
     params.nBins = nBins;
-    params.rangeScale = range;// * 10;
-}
+    params.rangeScale = m_current_params.range; // * 10;
 
-void SeanetSonar::set_scan_settings(uint16_t direction, uint16_t width,
-                              unsigned char gain, uint32_t range, uint32_t radial_res,
-                              unsigned char angular_res)
-{
-    info() << "Setting scan settings";
-
-    if (width == 6400)
-    {
-        // Continuous scanning
-        m_params.hdCtrl |= HdCtrl::Continuous;
-        m_params.hdCtrl &= ~HdCtrl::StareLLim;
-    }
-    else if (width == 0)
-    {
-        // Pinging
-        m_params.hdCtrl &= ~HdCtrl::Continuous;
-        m_params.hdCtrl |= HdCtrl::StareLLim;
-    }
-    else
-    {
-        // Sector
-        m_params.hdCtrl &= ~HdCtrl::Continuous;
-        m_params.hdCtrl &= ~HdCtrl::StareLLim;
-    }
-
-    m_params.stepSize = angular_res;
-    m_params.igainChn1 = gain;
-    m_params.igainChn2 = gain;
-    m_params.rangeScale = range;
-
-    if (direction - width/2 < 0 ) {
-        direction += 6400;
-    }
-
-    m_params.leftLim = direction - width/2;
-    m_params.rightLim = m_params.leftLim + width;
-
-    set_res_range(m_params, radial_res, range);
-
-    upload_params(m_params);
+    upload_head_params(params);
 }
 
 
@@ -316,7 +353,7 @@ void sonarReadThread(SeanetSonar& sonar)
                     if (pkt->getType() == SeanetMessageType::VersionData) {
                         debug() << "Moving to state WAITFORPARAMS";
                         sonar.m_state = SeanetSonar::WAITFORPARAMS;
-                        sonar.upload_params(sonar.m_params);
+                        sonar.upload_current_params();
                     } else {
                         static int i = 0;
                         if (i++ % 10 == 0) {

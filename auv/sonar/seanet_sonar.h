@@ -57,24 +57,21 @@ class SeanetSonar : public Observable<SonarObserver>
 		/* Initialize and start scanning */
 		void init();
 	
-		/* Send some default paramaters to the sonar */
-		void sendDefaultParams();
-		
-		void set_scan_settings(uint16_t direction, uint16_t width,
-                               unsigned char gain, uint32_t range, uint32_t radial_res,
-                               unsigned char angular_res);
+        void set_direction(uint16_t direction);
+        void set_width(uint16_t width);
+        void set_gain (unsigned char gain);
+        void set_range (uint32_t range);
+        void set_range_res (uint32_t range_res);
+        void set_angular_res (unsigned char angular_res);
+        
+        void set_params (uint16_t direction,
+                         uint16_t width,
+                         unsigned char gain,
+                         uint32_t range,
+                         uint32_t range_res,
+                         unsigned char angular_res);
 
-
-		/* units of mm */
-		static void set_res_range(SeanetHeadParams &params, unsigned int res, unsigned int range);
-
-		/* sets the operating mode - either sector or continuous */
-		void set_mode_continuous();
-		void set_mode_sector(uint16_t leftLim, uint16_t rightLim);
-	
-		/* sets the step size (angular resolution) */
-		void set_step_size(unsigned char size);
-
+        
         friend void sonarReadThread(SeanetSonar& sonar);
         friend void sonarProcessThread(SeanetSonar& sonar);
 	
@@ -97,27 +94,40 @@ class SeanetSonar : public Observable<SonarObserver>
 		 */
 		int m_cur_data_reqs;
 
-        SeanetHeadParams m_params;
-        
+        struct SonarParams {
+            uint16_t direction;
+            uint16_t width;
+            unsigned char gain;
+            uint32_t range;
+            uint32_t range_res;
+            unsigned char angular_res;
+
+            SonarParams() : direction(0), width(6400), gain(50), range(5000), range_res(10), angular_res(16) {
+            }
+        } m_current_params;
+		
+		// Use this if you change m_current_params
+        void upload_current_params();
+		void upload_head_params(SeanetHeadParams& params);
+
+
+
 		enum SeanetSonarState {
 			SENDREBOOT,
 			WAITFORREADY, WAITFORVERSION,
 			WAITFORPARAMS, SCANNING,
 		} m_state;
-	
-		/* Called when a line of data is received */
+			
+		// Called when a line of data is received
 		void process_data(boost::shared_ptr<SeanetPacket> pkt);
 	
-		/* Returns true if parameters have been received and validated */
+		// Returns true if parameters have been received and validated
 		int hasParams() const;
 		int isReady() const;
 		void wait_for_noparams();
 		void wait_for_hasparams();
 		void wait_for_packet(unsigned char type);
 		void request_version();
-	
-		/* Use this to update the sonar's parameters */
-		void upload_params(SeanetHeadParams& params);
 };
 
 #endif

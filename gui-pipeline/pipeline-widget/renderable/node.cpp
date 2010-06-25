@@ -399,7 +399,7 @@ int Node::id() const{
 
 void Node::close(){
     debug() << "Node::close" << id();
-    m_pw->sendMessage(boost::make_shared<RemoveNodeMessage>(m_node_id));
+    m_pw->send(boost::make_shared<RemoveNodeMessage>(m_node_id));
 }
 
 renderable_ptr_t Node::outSocket(std::string const& id){
@@ -499,7 +499,7 @@ void Node::paramValueChanged<int>(std::string const& p, int const& v){
     pv.type = ParamType::Int32;
     pv.intValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 template<>
@@ -514,7 +514,7 @@ void Node::paramValueChanged<float>(std::string const& p, float const& v){
     pv.type = ParamType::Float;
     pv.floatValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 template<>
@@ -529,7 +529,7 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     pv.type = ParamType::String;
     pv.stringValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 template<>
@@ -544,7 +544,7 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
     pv.type = ParamType::Bool;
     pv.intValue = v;
     sp->value(pv);
-    m_pw->sendMessage(sp);
+    m_pw->send(sp);
 }
 
 } // namespace pw

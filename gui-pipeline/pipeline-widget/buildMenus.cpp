@@ -19,7 +19,7 @@ struct SendAddNodeMessage{
     void operator()(){
         boost::shared_ptr<AddNodeMessage> msg = boost::make_shared<AddNodeMessage>();
         msg->nodeType(m_id);
-        m_widget->sendMessage(msg);
+        m_widget->send(msg);
     }
 
     pw_ptr_t m_widget;

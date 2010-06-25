@@ -106,6 +106,7 @@ again:
 		warning() << "Error: Out of sync.  Resyncing...";
 		/* Search until a LF is consumed */
 		while (buffer[0] != 0x0A) {
+            std::cout << "." << std::flush;
             rec = 0;
             while (rec == 0) {
                 FD_SET (m_fd, &set);

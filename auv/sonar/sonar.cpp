@@ -32,12 +32,12 @@ class SpreadSonarObserver : public SonarObserver
 void SonarNode::onRun()
 {
     m_sonar->addObserver(boost::make_shared<SpreadSonarObserver>(mailbox()));
-#ifdef DISPLAY_SONAR
-    m_sonar->addObserver(boost::make_shared<DisplaySonarObserver>());
-#endif
+//#ifdef DISPLAY_SONAR
+    m_sonar->addObserver(boost::make_shared<DisplaySonarObserver>(m_sonar));
+//#endif
     m_sonar->init();
 
-    addObserver(boost::make_shared<SonarControlMessageObserver>(m_sonar));
+    addMessageObserver(boost::make_shared<SonarControlMessageObserver>(m_sonar));
 
     while (true) {
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));

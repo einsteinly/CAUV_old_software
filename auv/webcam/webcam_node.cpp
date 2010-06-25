@@ -78,8 +78,8 @@ WebcamNode::WebcamNode(const CameraID::e camera_id, const int device_id)
 
 void WebcamNode::onRun()
 {
-    join("image");
-    addObserver(m_cam_observer);
+    joinGroup("image");
+    addMessageObserver(m_cam_observer);
 }
 
 static WebcamNode* node;

@@ -19,8 +19,11 @@ class CauvNode
         void run();
 		virtual void onRun();
     
-        void join(std::string const& group);
-        void addObserver(boost::shared_ptr<MessageObserver>);
+        void joinGroup(std::string const& group);
+        void addMessageObserver(boost::shared_ptr<MessageObserver>);
+        void removeMessageObserver(boost::shared_ptr<MessageObserver>);
+        void clearMessageObservers();
+   
         int send(boost::shared_ptr<const Message> message,
                  Spread::service serviceType = SAFE_MESS);
 

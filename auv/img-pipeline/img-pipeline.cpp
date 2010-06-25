@@ -25,11 +25,11 @@ void ImagePipelineNode::onRun()
 {
     m_pipeline->start();
     
-    join("image");
-    join("pipeline");
-    join("pl_gui");
-    join("sonarout");
-    addObserver(m_pipeline);
+    joinGroup("image");
+    joinGroup("pipeline");
+    joinGroup("pl_gui");
+    joinGroup("sonarout");
+    addMessageObserver(m_pipeline);
 }
 
 static ImagePipelineNode* node;

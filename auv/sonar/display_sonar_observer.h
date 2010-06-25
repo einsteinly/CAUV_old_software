@@ -6,15 +6,17 @@
 
 #include "sonar_observer.h"
 
+class SeanetSonar;
 class DisplaySonarObserver : public SonarObserver
 {
     public:
-        DisplaySonarObserver();
+        DisplaySonarObserver(boost::shared_ptr<SeanetSonar> sonar);
         ~DisplaySonarObserver();
         
         virtual void onReceiveDataLine(const SonarDataLine& data);
     
     protected:
+        boost::shared_ptr<SeanetSonar> m_sonar;
         cv::Mat m_img;
 };
 

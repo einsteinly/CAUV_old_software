@@ -154,8 +154,8 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
 ControlNode::ControlNode() : CauvNode("Control")
 {
-    join("control");
-    addObserver(boost::make_shared<DebugMessageObserver>(1));
+    joinGroup("control");
+    addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
     // start up the MCB module
     try {
@@ -191,7 +191,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     }
 
     m_controlLoops = boost::make_shared<ControlLoops>();
-    addObserver(m_controlLoops);
+    addMessageObserver(m_controlLoops);
 }
 ControlNode::~ControlNode()
 {
