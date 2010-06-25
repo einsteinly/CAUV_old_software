@@ -181,7 +181,7 @@ public class AUV extends QSignalEmitter {
      * @author Andy Pritchard
      * 
      */
-    public static class Camera extends QSignalEmitter {
+    public class Camera extends QSignalEmitter {
 
         public Signal1<Image> imageReceived = new Signal1<Image>();
 
@@ -203,14 +203,74 @@ public class AUV extends QSignalEmitter {
         }
     }
 
+    public class Sonar extends AUV.Camera {
+        
+        public Signal6<Integer,Integer,Integer,Integer,Integer,Integer> paramsChanged = 
+            new Signal6<Integer,Integer,Integer,Integer,Integer,Integer>();
+        
+        protected int direction;
+        protected int width;
+        protected int gain;
+        protected int range;
+        protected int radialRes;
+        protected int angularRes;
+        
+        public Sonar(CameraID id) {
+            super(id);
+        }
+        
+        public int getDirection(){
+            return direction;
+        }
+        
+        public int getAngularRes() {
+            return angularRes;
+        }
+        
+        public int getGain() {
+            return gain;
+        }
+        
+        public int getRadialRes() {
+            return radialRes;
+        }
+        
+        public int getRange() {
+            return range;
+        }
+        
+        public int getWidth() {
+            return width;
+        }
+        
+        public void setParams(int direction, int width, int gain, int range, int radialRes, int angularRes){
+            this.direction = direction;
+            this.width = width;
+            this.gain = gain;
+            this.range = range;
+            this.radialRes = radialRes;
+            this.angularRes = angularRes;
+            
+            paramsChanged.emit(direction, width, gain, range, radialRes, angularRes);
+        }
+        
+        public void updateParams(int direction, int width, int gain, int range, int radialRes, int angularRes){
+            AUV.this.controller.disable();
+            this.setParams(direction, width, gain, range, radialRes, angularRes);
+            AUV.this.controller.enable();
+        }
+    }
+    
     public class Cameras {
         public final Camera FORWARD = new Camera(CameraID.Forward);
         public final Camera DOWNWARD = new Camera(CameraID.Down);
-        public final Camera SONAR = new Camera(CameraID.Sonar);
+        public final Sonar SONAR = new Sonar(CameraID.Sonar);
     }
 
     public Cameras cameras = new Cameras();
 
+   
+    
     /**
      * Logs any messages sent back from the AUV and also logs locally generated
      * error messages regarding the AUV, e.g. connection error messages

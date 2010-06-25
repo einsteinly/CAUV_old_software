@@ -46,8 +46,34 @@ public class CameraFeeds extends QWidget implements ScreenView {
 		//sonar setup
 		ui.sonarCam.setVisibleElements(ControlableVideoScreen.SHOW_TEXT);
 		ui.sonarIcon.clicked.connect(this, "showSonar(QMouseEvent)");
+
+        ui.direction.valueChanged.connect(this, "updateSonarParams()");
+        ui.width.valueChanged.connect(this, "updateSonarParams()");
+        ui.gain.valueChanged.connect(this, "updateSonarParams()");
+        ui.range.valueChanged.connect(this, "updateSonarParams()");
+        ui.radialRes.valueChanged.connect(this, "updateSonarParams()");
+        ui.angularRes.valueChanged.connect(this, "updateSonarParams()");
+		
 	}
 
+	public void updateSonarParams(int direction, int width, int gain, int range, int radialRes, int angularRes){
+	    ui.direction.setValue(direction);
+	    ui.width.setValue(width);
+	    ui.gain.setValue(gain);
+	    ui.range.setValue(range);
+        ui.radialRes.setValue(radialRes);
+        ui.angularRes.setValue(angularRes);
+	}
+	
+	public void updateSonarParams(){
+	    if(auv == null)
+	        return;
+	    auv.cameras.SONAR.setParams(ui.direction.value(), 
+	            ui.width.value(), ui.gain.value(),
+	            ui.range.value(), ui.radialRes.value(),
+	            ui.angularRes.value());
+	}
+	
 	public void onConnect(AUV auv) {
 
 		this.auv = auv;
@@ -56,6 +82,8 @@ public class CameraFeeds extends QWidget implements ScreenView {
 		auv.autopilots.YAW.targetChanged.connect(this, "updateValues()");
 		auv.autopilots.PITCH.targetChanged.connect(this, "updateValues()");
         
+		auv.cameras.SONAR.paramsChanged.connect(this, "updateSonarParams(int, int, int, int, int, int)");
+		
 		
 		// the control interpreters map the buttons on the camera screens to 
 		// sensible actions for that view

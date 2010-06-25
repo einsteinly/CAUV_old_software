@@ -44,7 +44,7 @@ public class BearingAutopilotEnabledMessage extends Message {
         super(60, "control");
     }
 
-    public BearingAutopilotEnabledMessage(boolean enabled, float target) {
+    public BearingAutopilotEnabledMessage(boolean enabled, Float target) {
         super(60, "control");
         this.enabled = enabled;
         this.target = target;

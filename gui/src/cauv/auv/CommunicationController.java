@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 
 import cauv.auv.AUV.Autopilot;
 import cauv.auv.AUV.Motor;
+import cauv.auv.AUV.Sonar;
 import cauv.messaging.BearingAutopilotEnabledMessage;
 import cauv.messaging.BearingAutopilotParamsMessage;
 import cauv.messaging.DebugMessage;
@@ -50,31 +51,60 @@ class CommunicationController extends MessageObserver {
         }
     }
     
+    class SonarController extends Controller {
+        Sonar sonar;
+        
+        public SonarController(Sonar s) {
+            this.sonar = s;
+            s.paramsChanged.connect(this, "onParamsChanged(int, int, int, int, int, int)");
+        }
+        
+        public void onParamsChanged(int direction, int width, int gain, int range, int radialRes, int angularRes){
+            try {
+                messages.sendMessage(new SonarControlMessage(direction, width, gain, range, radialRes, angularRes));
+            } catch (IOException e) {
+                auv.logs.ERROR.log("Error updating sonar: " + e.getMessage());
+            }
+        }
+    }
+    
     class AutopilotController extends Controller {
-        Autopilot<?> autpilot;
+        Autopilot<?> autopilot;
         Class<?> enableMessage;
         Class<?> paramsMessage;
         
         
         public AutopilotController(Autopilot<?> a, Class<?> enableMessage, Class<?> paramsMessage) {
-            this.autpilot = a;
+            this.autopilot = a;
             this.enableMessage = enableMessage;
             this.paramsMessage = paramsMessage;
             a.targetChanged.connect(this, "onTargetChanged(AUV$Autopilot)");
+            a.stateChanged.connect(this, "onStateChanged(boolean)");
+            a.paramsChanged.connect(this, "onParamsChanged(float, float, float, float)");
             
         }
         
+        public void onStateChanged(boolean state){
+            onTargetChanged(autopilot); 
+        }
+        
         public void onTargetChanged(Autopilot<?> autopilot){
-            try {
-                for(Constructor c : enableMessage.getConstructors())
-                    System.out.println(c);
-                
+            try {                
                 Constructor c = enableMessage.getConstructor(boolean.class, autopilot.target.getClass());
                 Message m = (Message) c.newInstance(autopilot.enabled, autopilot.target);
                 messages.sendMessage(m);
             } catch (Exception e) {
-                e.printStackTrace();
-                //auv.logs.ERROR.log("Error updating autopilot: " + e.getMessage());
+                auv.logs.ERROR.log("Error updating autopilot: " + e.getMessage());
+            }
+        }
+        
+        public void onParamsChanged(float Kp, float Ki, float Kd, float scale){
+            try {                
+                Constructor c = paramsMessage.getConstructor(float.class, float.class, float.class, float.class);
+                Message m = (Message) c.newInstance(autopilot.Kp, autopilot.Ki, autopilot.Kd, autopilot.scale);
+                messages.sendMessage(m);
+            } catch (Exception e) {
+                auv.logs.ERROR.log("Error updating autopilot params: " + e.getMessage());
             }
         }
     }
@@ -96,6 +126,7 @@ class CommunicationController extends MessageObserver {
         new MotorController(auv.motors.VBOW);
         new MotorController(auv.motors.VSTERN);
         
+        new SonarController(auv.cameras.SONAR);
         
         new AutopilotController(auv.autopilots.DEPTH, DepthAutopilotEnabledMessage.class, DepthAutopilotParamsMessage.class);
         new AutopilotController(auv.autopilots.PITCH, PitchAutopilotEnabledMessage.class, PitchAutopilotParamsMessage.class);
@@ -105,85 +136,11 @@ class CommunicationController extends MessageObserver {
     }
 
     public void enable() {
-        
         messages.setEnabled(true);
-        /*
-        // autopilots
-        auv.autopilots.DEPTH.targetChanged.connect(this, "updateDepthAutopilot(AUV$Autopilot)");
-        auv.autopilots.DEPTH.stateChanged.connect(this, "updateDepthAutopilot(AUV$Autopilot)");
-        auv.autopilots.DEPTH.paramsChanged.connect(this, "updateDepthAutopilotParams(float, float, float, float)");
-        
-        auv.autopilots.PITCH.targetChanged.connect(this, "updatePitchAutopilot(AUV$Autopilot)");
-        auv.autopilots.YAW.targetChanged.connect(this, "updateYawAutopilot(AUV$Autopilot)");
-        //*/
     }
 
     public void disable() {
         messages.setEnabled(false);
-    }
-
-    protected void updateYawAutopilot(Autopilot<Float> autopilot) {
-        try {
-            messages.sendMessage(new BearingAutopilotEnabledMessage(autopilot.enabled, autopilot.target));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating yaw autopilot: " + e.getMessage());
-        }
-    }
-    
-    protected void updateDepthAutopilot(Autopilot<Float> autopilot) {
-        try {
-            messages.sendMessage(new DepthAutopilotEnabledMessage(autopilot.enabled, autopilot.target));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating depth autopilot: " + e.getMessage());
-        }
-    } 
-    
-    protected void updatePitchAutopilot(Autopilot<Float> autopilot) {
-        try {
-            messages.sendMessage(new PitchAutopilotEnabledMessage(autopilot.enabled, autopilot.target));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating pitch autopilot: " + e.getMessage());
-        }
-    }
-
-    protected void updateHBow(int speed) {
-        try {
-            messages.sendMessage(new MotorMessage(MotorID.HBow, (byte) speed));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating HBOW: " + e.getMessage());
-        }
-    }
-
-    protected void updateVBow(int speed) {
-        try {
-            messages.sendMessage(new MotorMessage(MotorID.VBow, (byte) speed));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating VBOW: " + e.getMessage());
-        }
-    }
-
-    protected void updateHStern(int speed) {
-        try {
-            messages.sendMessage(new MotorMessage(MotorID.HStern, (byte) speed));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating HSTERN: " + e.getMessage());
-        }
-    }
-
-    protected void updateVStern(int speed) {
-        try {
-            messages.sendMessage(new MotorMessage(MotorID.VStern, (byte) speed));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating VSTERN: " + e.getMessage());
-        }
-    }
-
-    protected void updateProp(int speed) {
-        try {
-            messages.sendMessage(new MotorMessage(MotorID.Prop, (byte) speed));
-        } catch (IOException e) {
-            auv.logs.ERROR.log("Error updating PROP: " + e.getMessage());
-        }
     }
 
     @Override
@@ -217,6 +174,11 @@ class CommunicationController extends MessageObserver {
     @Override
     public void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage m) {
         auv.autopilots.PITCH.updateParams(m.Kp, m.Ki, m.Kd, m.scale);
+    }
+    
+    @Override
+    public void onSonarControlMessage(SonarControlMessage m) {
+        auv.cameras.SONAR.updateParams(m.direction, m.width, m.gain, m.range, m.radialRes, m.angularRes);
     }
     
     @Override

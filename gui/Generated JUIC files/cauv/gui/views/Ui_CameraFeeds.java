@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'CameraFeeds.jui'
 **
-** Created: Tue 22. Jun 17:01:06 2010
+** Created: Fri 25. Jun 13:45:44 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -33,7 +33,23 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
     public ControlableVideoScreen downwardCam;
     public QWidget sonarCamPage;
     public QHBoxLayout horizontalLayout_4;
+    public QWidget widget;
+    public QVBoxLayout verticalLayout_2;
     public ControlableVideoScreen sonarCam;
+    public QWidget widget_2;
+    public QHBoxLayout horizontalLayout_5;
+    public QLabel label;
+    public QSpinBox direction;
+    public QLabel label_2;
+    public QSpinBox width;
+    public QLabel label_3;
+    public QSpinBox gain;
+    public QLabel label_4;
+    public QSpinBox range;
+    public QLabel label_5;
+    public QSpinBox radialRes;
+    public QLabel label_6;
+    public QSpinBox angularRes;
 
     public Ui_CameraFeeds() { super(); }
 
@@ -122,10 +138,87 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
         horizontalLayout_4.setSpacing(0);
         horizontalLayout_4.setMargin(0);
         horizontalLayout_4.setObjectName("horizontalLayout_4");
-        sonarCam = new ControlableVideoScreen(sonarCamPage);
+        widget = new QWidget(sonarCamPage);
+        widget.setObjectName("widget");
+        verticalLayout_2 = new QVBoxLayout(widget);
+        verticalLayout_2.setSpacing(0);
+        verticalLayout_2.setMargin(0);
+        verticalLayout_2.setObjectName("verticalLayout_2");
+        sonarCam = new ControlableVideoScreen(widget);
         sonarCam.setObjectName("sonarCam");
 
-        horizontalLayout_4.addWidget(sonarCam);
+        verticalLayout_2.addWidget(sonarCam);
+
+        widget_2 = new QWidget(widget);
+        widget_2.setObjectName("widget_2");
+        horizontalLayout_5 = new QHBoxLayout(widget_2);
+        horizontalLayout_5.setObjectName("horizontalLayout_5");
+        horizontalLayout_5.setContentsMargins(-1, 9, -1, -1);
+        label = new QLabel(widget_2);
+        label.setObjectName("label");
+
+        horizontalLayout_5.addWidget(label);
+
+        direction = new QSpinBox(widget_2);
+        direction.setObjectName("direction");
+
+        horizontalLayout_5.addWidget(direction);
+
+        label_2 = new QLabel(widget_2);
+        label_2.setObjectName("label_2");
+
+        horizontalLayout_5.addWidget(label_2);
+
+        width = new QSpinBox(widget_2);
+        width.setObjectName("width");
+
+        horizontalLayout_5.addWidget(width);
+
+        label_3 = new QLabel(widget_2);
+        label_3.setObjectName("label_3");
+
+        horizontalLayout_5.addWidget(label_3);
+
+        gain = new QSpinBox(widget_2);
+        gain.setObjectName("gain");
+
+        horizontalLayout_5.addWidget(gain);
+
+        label_4 = new QLabel(widget_2);
+        label_4.setObjectName("label_4");
+
+        horizontalLayout_5.addWidget(label_4);
+
+        range = new QSpinBox(widget_2);
+        range.setObjectName("range");
+
+        horizontalLayout_5.addWidget(range);
+
+        label_5 = new QLabel(widget_2);
+        label_5.setObjectName("label_5");
+
+        horizontalLayout_5.addWidget(label_5);
+
+        radialRes = new QSpinBox(widget_2);
+        radialRes.setObjectName("radialRes");
+
+        horizontalLayout_5.addWidget(radialRes);
+
+        label_6 = new QLabel(widget_2);
+        label_6.setObjectName("label_6");
+
+        horizontalLayout_5.addWidget(label_6);
+
+        angularRes = new QSpinBox(widget_2);
+        angularRes.setObjectName("angularRes");
+
+        horizontalLayout_5.addWidget(angularRes);
+
+
+        verticalLayout_2.addWidget(widget_2);
+
+
+        horizontalLayout_4.addWidget(widget);
 
         feeds.addWidget(sonarCamPage);
 
@@ -142,6 +235,12 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
     void retranslateUi(QWidget CameraFeeds)
     {
         CameraFeeds.setWindowTitle(com.trolltech.qt.core.QCoreApplication.translate("CameraFeeds", "Form", null));
+        label.setText(com.trolltech.qt.core.QCoreApplication.translate("CameraFeeds", "Direction", null));
+        label_2.setText(com.trolltech.qt.core.QCoreApplication.translate("CameraFeeds", "Width", null));
+        label_3.setText(com.trolltech.qt.core.QCoreApplication.translate("CameraFeeds", "Gain", null));
+        label_4.setText(com.trolltech.qt.core.QCoreApplication.translate("CameraFeeds", "Range", null));
+        label_5.setText(com.trolltech.qt.core.QCoreApplication.translate("CameraFeeds", "RadialRes", null));
+        label_6.setText(com.trolltech.qt.core.QCoreApplication.translate("CameraFeeds", "AngularRes", null));
     } // retranslateUi
 
 }

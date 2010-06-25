@@ -44,7 +44,7 @@ public class PitchAutopilotEnabledMessage extends Message {
         super(62, "control");
     }
 
-    public PitchAutopilotEnabledMessage(boolean enabled, float target) {
+    public PitchAutopilotEnabledMessage(boolean enabled, Float target) {
         super(62, "control");
         this.enabled = enabled;
         this.target = target;
