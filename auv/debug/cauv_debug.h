@@ -73,12 +73,12 @@ class SmartStreamBase : public boost::noncopyable
 
         virtual ~SmartStreamBase();
 
-        static void setLevel(unsigned int debug_level);
+        static void setLevel(int debug_level);
         static int parseOptions(int argc, char** argv);
 
     protected:
         struct Settings{
-            unsigned int debug_level;
+            int debug_level;
         };
 
         // stuff to print
@@ -115,7 +115,7 @@ class SmartStreamBase : public boost::noncopyable
 #if !defined(CAUV_NO_DEBUG)
 struct debug : public SmartStreamBase
 {
-    debug(unsigned int level=1);
+    debug(int level=1);
     virtual ~debug();
 
     template<typename T>
@@ -138,12 +138,12 @@ struct debug : public SmartStreamBase
     debug& operator<<(std::ostream& (*manip)(std::ostream&));
 
     private:
-        unsigned int m_level;
+        int m_level;
 };
 #else
 struct debug : boost::noncopyable
 {
-    debug(unsigned int level=1){ }
+    debug(int level=1){ }
     virtual ~debug();
 
     template<typename T>

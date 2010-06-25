@@ -30,15 +30,19 @@ set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 add_custom_command (
    OUTPUT ${MSGSRCD}/messages.cpp
           ${MSGSRCD}/messages.h
+          ${MSGSRCD}/messages_fwd.h
+          ${MSGSRCD}/messages_messages.h
    WORKING_DIRECTORY ${PYMSGD}
    COMMAND python msggen.py -l "c++" -o ${MSGSRCD}/messages ${MSGSRCD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
            ${PYMSGD}/message.template.cpp
            ${PYMSGD}/message.template.h
+           ${PYMSGD}/message_fwd.template.h
+           ${PYMSGD}/message_messages.template.h
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
            ${MSGSRCD}/messages.msg
-   COMMENT "Generating messages.cpp and mesages.h with messages-python (for bjam)"
+   COMMENT "Generating messages.cpp and mesages*.h with messages-python (for bjam)"
 )
 
 add_custom_command (
@@ -47,10 +51,13 @@ add_custom_command (
     COMMAND bash -c '( export BJAM_BUILD_DIR=${BINDIR} \;
                        bjam ${SRCD} )'
     WORKING_DIRECTORY ${SRCD}
-    DEPENDS ${SRCD}/emit_structs.cpp
+    DEPENDS ${SRCD}/Jamroot
+            ${SRCD}/emit_structs.cpp
             ${SRCD}/emit_enums.cpp
             ${SRCD}/emit_messages.cpp
             ${SRCD}/emit_observers.cpp
+            ${SRCD}/emit_static.cpp
+            ${SRCD}/workarounds.h
             ${MSGSRCD}/messages.cpp
             ${MSGSRCD}/image.cpp 
             ${MSGSRCD}/cauv_node.cpp 
@@ -63,6 +70,8 @@ add_custom_command (
                      ${SRCD}/emit_enums.cpp
                      ${SRCD}/emit_messages.cpp
                      ${SRCD}/emit_observers.cpp
+                     ${SRCD}/emit_static.cpp
+                     ${SRCD}/workarounds.h
                      ${MSGSRCD}/messages.cpp
                      ${MSGSRCD}/image.cpp 
                      ${MSGSRCD}/cauv_node.cpp 

@@ -7,21 +7,26 @@
 
 namespace bp = boost::python;
 
+void emitStructs(){
 #for $s in $structs
-    #for $f in $s.fields
+    ## Cheetah fun to generate the boost::python::init object:
+    #set $initString = "bp::init< "
+    #for $i, $f in enumerate($s.fields)
         #if $isSTLVector($f.type)
             $requiredVectorTypes.add($f.type.valType)
         #else if $isSTLMap($f.type)
             $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
         #end if
+        #set $initString = $initString + $toCPPType($f.type)
+        #if $i != $len($s.fields) - 1
+            #set $initString = $initString + ", "
+        #end if
     #end for
-#end for
-
-void emitStructs(){
-#for $s in $structs
+    #set $initString = $initString + " >()"
+    ## NB: init string not used: we don't emit c++ constructors for structs
     bp::class_<${s.name},
                boost::shared_ptr<${s.name}>
-              >("${s.name}", bp::no_init)
+              >("${s.name}")
         .def(bp::self_ns::str(bp::self_ns::self)) 
         #for $f in $s.fields
         .def_readwrite("${f.name}", &$s.name::$f.name)

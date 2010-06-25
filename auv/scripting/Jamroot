@@ -18,6 +18,7 @@ project
                  <library>/boost/serialization//boost_serialization
                  <library>/boost/date_time//boost_date_time
                  <library>/boost/iostreams//boost_iostreams
+                 <library>/boost/program_options//boost_program_options
   : build-dir $BJAM_BUILD_DIR ;
 
 lib cvlib : : <name>cv <search>/societies/cauv/install/lib ;
@@ -26,6 +27,8 @@ lib highguilib : : <name>highgui <search>/societies/cauv/install/lib ;
 lib spreadlib : : <name>spread <search>/societies/cauv/install/lib ;
 
 lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>/societies/cauv/install/lib ;
+
+lib bpolib : : <name>boost_program_options <search>/societies/cauv/install/lib/ ;
 
 lib libcommon : ../common/messages.cpp
                 ../common/image.cpp 
@@ -40,6 +43,7 @@ lib libcommon : ../common/messages.cpp
                 cvlib
                 highguilib
                 ssrcspreadlib
+                bpolib
               : <define>CAUV_DEBUG ;
 
 python-extension cauvinterface : [ glob *.cpp ]

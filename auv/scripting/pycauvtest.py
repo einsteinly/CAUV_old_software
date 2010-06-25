@@ -8,8 +8,8 @@ import time
 def pipelineTest():
     n = node.Node("pycauv-pl")
     model = pipeline.Model(n)
-    print 'Setting debug level to -1'
-    n.send(messaging.DebugLevelMessage(-1), "debug")
+    print 'Setting debug level to 1'
+    n.send(messaging.DebugLevelMessage(1), "debug")
     
     print 'Adding stuff to the pipeline...'
     n.send(messaging.ClearPipelineMessage(), "pipeline")

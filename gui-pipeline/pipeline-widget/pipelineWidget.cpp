@@ -185,7 +185,7 @@ class PipelineGuiMsgObs: public BufferedMessageObserver{
         }
 
         virtual void onGuiImageMessageBuffered(GuiImageMessage_ptr m){
-            debug(1) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
+            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
             if(imgnode_ptr_t np = m_widget->imgNode(m->nodeId()))
                 np->display(m->image());
         }

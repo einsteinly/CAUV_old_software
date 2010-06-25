@@ -297,6 +297,9 @@ XsensResultValue Cmt1s::open(  const char *portName,
 						uint32_t readBufSize,
 						uint32_t writeBufSize)
 {
+    writeBufSize = writeBufSize;
+    readBufSize = readBufSize;
+
 	m_endTime = 0;
 
 	CMT1LOG("L1: Open port %s at %d baud\n", portName, baudRate);
@@ -797,6 +800,8 @@ XsensResultValue Cmt1f::create (const char* filename)
 // Create a new file.
 XsensResultValue Cmt1f::create (const wchar_t* filename)
 {
+    filename = filename;
+
 	if (m_isOpen)
 		return m_lastResult = XRV_ALREADYOPEN;
 
