@@ -35,6 +35,7 @@ class SonarInputNode: public InputNode{
 
             if((m_data.size() && (m_data.begin()->range != m->line().range)) ||
                (m_data.begin()->data.size() != m->line().data.size())){
+                debug() << "sonar data parameters changed, discarding data!";
                 m_data.clear();
             }
             
@@ -65,7 +66,7 @@ class SonarInputNode: public InputNode{
                 return r;
             int columns = m_data.begin()->data.size();
             int rows = m_data.size();
-
+            debug() << "accumulating sonar data: r=" << rows << "c=" << columns;
             cv::Mat rm(rows, columns, CV_8UC1, 0);
             data_set_t::iterator it = m_data.begin();
             for(int i = 0; it != m_data.end() && i < rows; i++, it++)
