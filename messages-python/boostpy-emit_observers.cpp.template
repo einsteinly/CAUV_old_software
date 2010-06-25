@@ -20,7 +20,7 @@ class MessageObserverWrapper:
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
             if(bp::override f = this->get_override("on${className}")){
-                debug(-3) << "MessageObserver: calling override for on${className}";
+                debug(3) << "MessageObserver: calling override for on${className}";
                 GILLock l;
                 try{
                     f(m);
@@ -31,7 +31,7 @@ class MessageObserverWrapper:
                     }
                 }
             }else{
-                debug(-3) << "MessageObserver: no override for on${className}";
+                debug(3) << "MessageObserver: no override for on${className}";
                 MessageObserver::on${className}(m);
             }
         }
@@ -51,7 +51,7 @@ class BufferedMessageObserverWrapper:
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
             if(bp::override f = this->get_override("on${className}")){
-                debug(-3) << "BufferedMessageObserver: calling override for on${className}";
+                debug(3) << "BufferedMessageObserver: calling override for on${className}";
                 GILLock l;
                 try{
                     f(m);
@@ -62,13 +62,13 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
-                debug(-3) << "BufferedMessageObserver: no override for on${className}";
+                debug(3) << "BufferedMessageObserver: no override for on${className}";
                 BufferedMessageObserver::on${className}(m);
             }
         }
         void on${className}Buffered($ptrName m){
             if(bp::override f = this->get_override("on${className}Buffered")){
-                debug(-3) << "BufferedMessageObserver: calling override for on${className}Buffered";
+                debug(3) << "BufferedMessageObserver: calling override for on${className}Buffered";
                 GILLock l;
                 try{
                     f(m);
@@ -79,7 +79,7 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
-                debug(-3) << "BufferedMessageObserver: no override for on${className}Buffered";            
+                debug(3) << "BufferedMessageObserver: no override for on${className}Buffered";            
                 BufferedMessageObserver::on${className}Buffered(m);
             }
         }

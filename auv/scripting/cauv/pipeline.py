@@ -2,15 +2,25 @@ import messaging
 import threading
 
 class Node:
-    def __init__(self, id, type, params = {}, inarcs = {}, outarcs = {}):
+    def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):
         self.type = type
-        self.params = params   # param : value
-        self.inarcs = inarcs   # input : (node id, output)
-        self.outarcs = outarcs # output : (node id, input)
+        self.params = parameters  # param : value
+        self.inarcs = inputarcs   # input : (node id, output)
+        self.outarcs = outputarcs # output : (node id, input)
+        if self.params is None:
+            self.params = {}
+        if self.inarcs is None:
+            self.inarcs = {}
+        if self.outarcs is None:
+            self.outarcs = {}
+    def __repr__(self): 
+        return "Node{%s, %s, %s, %s}" % (self.type, self.params, self.inarcs, self.outarcs)
 
 class State:
     def __init__(self):
         self.nodes = {} # id : Node
+    def __repr__(self):
+        return str(self.nodes)
 
 class Model(messaging.BufferedMessageObserver):
     def __init__(self, node):
@@ -43,11 +53,9 @@ class Model(messaging.BufferedMessageObserver):
         s = State()
         for id in graph.nodeTypes.keys():
             s.nodes[id] = Node(id, graph.nodeTypes[id])
-        for id in graph.nodeParams.keys():
-            values = graph.nodeParams[id]
-            for param in values.keys():
-                print 'parameter', param, 'value:', values[param]
-                s.nodes[id].params[param] = values[param]
+        for id, pvps in graph.nodeParams.items():
+            for param, value in pvps.items():
+                s.nodes[id].params[param] = value
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():
@@ -68,25 +76,31 @@ class Model(messaging.BufferedMessageObserver):
     def set(self, state):
         self.clear()
         id_map = {}
+        node_map = {}
         # first ensure all nodes are present
-        for id, node in state.nodes.items():
-            id_map[id] = self.addSynchronous(node.type)
+        for old_id, node in state.nodes.items():
+            id_map[old_id] = self.addSynchronous(node.type)
+            node_map[old_id] = node
+            #print id_map[old_id], 'is new id for', old_id, node.type, node.params
         # then set all parameter values
-        for id, node in state.nodes.items():
+        for old_id, node in state.nodes.items():
+            id = id_map[old_id]
             for param in node.params.keys():
-                #print 'set parameter', node, param, '=', node.params[param]
-                self.setParameterSynchronous(id_map[id], param, node.params[param])
+                #print 'set parameter', id, param, '=', node.params[param]
+                self.setParameterSynchronous(id, param, node.params[param])
         # finally add links
-        for id, node in state.nodes.items():
+        for old_id, node in state.nodes.items():
             # strictly speaking only one of these should be necessary, since
             # arcs have two ends...
+            id = id_map[old_id]
             for input in node.inarcs.keys():
                 (other, output) = node.inarcs[input]
-                #print 'set inarc:', id_map[id], input, other, output
-                self.addArcSynchronous(id_map[id], input, other, output)
+                if other != 0:
+                    self.addArcSynchronous(id, input, id_map[other], output)
             #for output in node.outarcs.keys():
             #    (other, input) = node.outarcs[output]
-            #    print 'set outarc:', id_map[id], output, other, input
+            #    if other != 0:
+            #        print 'set outarc:', id_map[id], output, other, input
    
     def send(self, msg):
         # send to pipeline via self.__node
@@ -103,8 +117,9 @@ class Model(messaging.BufferedMessageObserver):
         if self.node_added is None:
             self.node_added_condition.release()
             raise RuntimeError('No reponse from pipeline, is it running?')
+        r = self.node_added.nodeId
         self.node_added_condition.release()
-        return self.node_added.nodeId
+        return r
     
     def setParameterSynchronous(self, node, param, value, timeout=3.0):
         self.parameter_set_condition.acquire()
@@ -148,7 +163,8 @@ class Model(messaging.BufferedMessageObserver):
         self.node_added_condition.release()
 
     def onNodeRemovedMessage(self, m):
-        print m 
+        #print m
+        pass
 
     def onNodeParametersMessage(self, m):
         # TODO: be discriminating about whether this parameter message actually
@@ -171,27 +187,32 @@ class Model(messaging.BufferedMessageObserver):
         self.arc_added_condition.release()
 
     def onArcRemovedMessage(self, m):
-        print m 
+        #print m
+        pass
 
     def onStatusMessage(self, m):
-        print m 
+        #print m
+        pass
 
     def onInputStatusMessage(self, m):
-        print m 
+        #print m
+        pass
     
     def onOutputStatusMessage(self, m):
-        print m 
+        #print m
+        pass
     
     #def onGuiImageMessage(self, m):
-    #    print m 
+    #    #print m
+    #    pass
 
     def __getSynchronousGraphDescription(self, timeout=3.0):
         self.description_ready_condition.acquire()
         self.graph_description = None
         self.send(messaging.GraphRequestMessage());
-        print '!!\t\twaiting on condition...'
+        #print '!!\t\twaiting on condition...'
         self.description_ready_condition.wait(timeout)
-        print '!!\t\tnotified'
+        #print '!!\t\tnotified'
         self.description_ready_condition.release()
         return self.graph_description
                 
