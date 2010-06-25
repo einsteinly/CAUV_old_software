@@ -108,6 +108,9 @@ int SpreadMailbox::doSendMessage( const boost::shared_ptr<const Message> message
     return 0;
 }
 
+int SpreadMailbox::sendMessage(const boost::shared_ptr<const Message> message, Spread::service serviceType) {
+    return sendMessage( message, serviceType, message->group() );
+}
 int SpreadMailbox::sendMessage(const boost::shared_ptr<const Message> message, Spread::service serviceType,
         const string &groupName) {
     return doSendMessage( message, serviceType, stringToGroupList(groupName) );

@@ -91,6 +91,7 @@ public:
     /**
      * @return The number of bytes sent
      */
+    int sendMessage(const boost::shared_ptr<const Message> message, Spread::service serviceType);
     virtual int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType, const std::string &destinationGroup);
 
     /**
