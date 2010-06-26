@@ -33,7 +33,7 @@ inline static T max(T const& a, T const& b){
 }
 
 template<typename T1, typename T2, typename T3>
-inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
+inline static T2 _clamp(T1 const& low, T2 const& a, T3 const& high){
     return (a < low)? low : ((a < high)? a : high);
 }
 
@@ -130,10 +130,10 @@ class _Colour{
             rgba[0] = r; rgba[1] = g; rgba[2] = b; rgba[3] = a;
         }
         // TODO: don't treat the alpha channel like a colour channel...
-        // scalar multiply (clamped)
+        // scalar multiply (_clamped)
         this_t& operator*=(T const& s){
             for(int i=0; i<4; i++)
-                rgba[i] = clamp(tT::min, rgba[i] * s, tT::max);
+                rgba[i] = _clamp(tT::min, rgba[i] * s, tT::max);
             return *this;
         }
         // multiply
@@ -148,16 +148,16 @@ class _Colour{
                 rgba[i] = tT::max - (tT::max-rgba[i]) * (tT::max-r.rgba[i]) / tT::max;
             return *this;
         }
-        // add (clamped)
+        // add (_clamped)
         this_t& operator+=(this_t const& r){
             for(int i=0; i<4; i++)
-                rgba[i] = clamp(tT::min, rgba[i] + r.rgba[i], tT::max);
+                rgba[i] = _clamp(tT::min, rgba[i] + r.rgba[i], tT::max);
             return *this;
         }
-        // subtract (clamped)
+        // subtract (_clamped)
         this_t& operator-=(this_t const& r){
             for(int i=0; i<4; i++)
-                rgba[i] = clamp(tT::min, rgba[i] - r.rgba[i], tT::max);
+                rgba[i] = _clamp(tT::min, rgba[i] - r.rgba[i], tT::max);
             return *this;
         }
         // soft light... probably
@@ -175,7 +175,7 @@ class _Colour{
                 else
                     rgba[i] = ((1-r.a())*rgba[i]) +
                               r.a()*(tT::max - 2 * (tT::max - rgba[i]) * (tT::max - r.rgba[i]));
-            rgba[3] = clamp(tT::min, rgba[3] + r.rgba[3], tT::max);
+            rgba[3] = _clamp(tT::min, rgba[3] + r.rgba[3], tT::max);
             return *this;
         }
         // overlay

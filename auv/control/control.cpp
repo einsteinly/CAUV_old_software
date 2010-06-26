@@ -24,7 +24,7 @@ void sendAlive(boost::shared_ptr<MCBModule> mcb)
     {
         boost::shared_ptr<AliveMessage> m = boost::make_shared<AliveMessage>();
         mcb->send(m);
-        boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+        msleep(500);
     }
 }
 
@@ -75,7 +75,7 @@ struct PIDControl
         }
 
         TimeStamp tnow = now();
-        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.msecs - previous_time.msecs) / 1000; // dt is milliseconds
+        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.musecs - previous_time.musecs) / 1000; // dt is milliseconds
         previous_time = tnow;
 
         integral += error*dt;
@@ -90,7 +90,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
         ControlLoops() :
-                m_bearingenabled(false)
+                m_bearingenabled(false), m_last_pitch_mv(), m_last_depth_mv()
         {
         }
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
@@ -98,18 +98,76 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_mcb = mcb;
         }
 
+        virtual void onDepthDataThatComesFromSomwehereButNotExactlySureHow(float depth)
+        {
+            m_last_depth_mv = depth;
+
+            float vbow_demand = 0.0f;
+            float vstern_demand = 0.0f;
+
+            if (m_pitchenabled) {
+                debug(2) << "using old pitch MV = " << m_last_pitch_mv;
+                vbow_demand += m_last_pitch_mv;
+                vstern_demand -= m_last_pitch_mv;
+            }
+
+            if (m_depthenabled) {
+                float mv = m_depthcontrol.getMV(m_last_depth_mv);
+                debug(2) << "depth MV = " << mv;
+                vbow_demand += mv;
+                vstern_demand += mv;
+            }
+
+            if (now().secs - lastMotorMessage.secs > motorTimeout) {
+                // Do motor control
+                int8_t vbow_speed   = clamp(-127, vbow_demand,   127);
+                int8_t vstern_speed = clamp(-127, vstern_demand, 127);
+
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow,   vbow_speed));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, vstern_speed));
+            }
+        }
+
         virtual void onTelemetry(const floatYPR& attitude)
         {
+            m_last_pitch_mv = attitude.pitch;
+
+            float hbow_demand = 0.0f;
+            float hstern_demand = 0.0f;
+            float vbow_demand = 0.0f;
+            float vstern_demand = 0.0f;
+
             if (m_bearingenabled) {
                 float mv = m_bearingcontrol.getMV(attitude.yaw);
-                debug(2) << "MV = " << mv;
-                if (now().secs - lastMotorMessage.secs > motorTimeout) {
-                    // Do motor control
-                    int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
+                debug(2) << "bearing MV = " << mv;
+                hbow_demand = mv;
+                hstern_demand = -mv;
+            }
 
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, speed));
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, -speed));
-                }
+            if (m_pitchenabled) {
+                float mv = m_pitchcontrol.getMV(attitude.pitch);
+                debug(2) << "pitch MV = " << mv;
+                vbow_demand += mv;
+                vstern_demand -= mv;
+            }
+
+            if (m_depthenabled) {
+                debug(2) << "using old depth MV = " << m_last_depth_mv;
+                vbow_demand += m_last_depth_mv;
+                vstern_demand += m_last_depth_mv;
+            }
+
+            if (now().secs - lastMotorMessage.secs > motorTimeout) {
+                // Do motor control
+                int8_t hbow_speed   = clamp(-127, hbow_demand,   127);
+                int8_t hstern_speed = clamp(-127, hstern_demand, 127);
+                int8_t vbow_speed   = clamp(-127, vbow_demand,   127);
+                int8_t vstern_speed = clamp(-127, vstern_demand, 127);
+
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow,   hbow_speed));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, hstern_speed));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow,   vbow_speed));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, vstern_speed));
             }
         }
     
@@ -125,9 +183,15 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_mcb->send(m);
         }
 
-
         bool m_bearingenabled;
+        bool m_pitchenabled;
+        bool m_depthenabled;
         PIDControl m_bearingcontrol;
+        PIDControl m_pitchcontrol;
+        PIDControl m_depthcontrol;
+
+        float m_last_pitch_mv;
+        float m_last_depth_mv;
         
         virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
         {
@@ -146,6 +210,44 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_bearingcontrol.Ki = m->Ki();
             m_bearingcontrol.Kd = m->Kd();
             m_bearingcontrol.scale = m->scale();
+        }
+
+        virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
+        {
+            if (m->enabled()) {
+                m_pitchenabled = true;
+                m_pitchcontrol.reset();
+                m_pitchcontrol.target = m->target();
+            }
+            else {
+                m_pitchenabled = false;
+            }
+        }
+        virtual void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr m)
+        {
+            m_pitchcontrol.Kp = m->Kp();
+            m_pitchcontrol.Ki = m->Ki();
+            m_pitchcontrol.Kd = m->Kd();
+            m_pitchcontrol.scale = m->scale();
+        }
+
+        virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
+        {
+            if (m->enabled()) {
+                m_depthenabled = true;
+                m_depthcontrol.reset();
+                m_depthcontrol.target = m->target();
+            }
+            else {
+                m_depthenabled = false;
+            }
+        }
+        virtual void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr m)
+        {
+            m_depthcontrol.Kp = m->Kp();
+            m_depthcontrol.Ki = m->Ki();
+            m_depthcontrol.Kd = m->Kd();
+            m_depthcontrol.scale = m->scale();
         }
 };
 

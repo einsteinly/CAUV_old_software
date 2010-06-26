@@ -92,7 +92,7 @@ struct NodeOutputArc
 struct TimeStamp
 {
     secs : int32;
-    msecs : int32;
+    musecs : int32;
 }
 struct NodeParamValue
 {
