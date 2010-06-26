@@ -5,6 +5,9 @@ import java.net.UnknownHostException;
 import java.util.Vector;
 
 import cauv.auv.MessageSocket.ConnectionStateObserver;
+import cauv.types.CameraID;
+import cauv.types.Image;
+import cauv.types.MotorID;
 import cauv.types.floatYPR;
 
 import com.trolltech.qt.QSignalEmitter;
@@ -51,11 +54,11 @@ public class AUV extends QSignalEmitter {
     }
 
     public class Motors {
-        public final Motor PROP = new Motor(MotorID.PROP);
-        public final Motor HBOW = new Motor(MotorID.HBOW);
-        public final Motor VBOW = new Motor(MotorID.VBOW);
-        public final Motor HSTERN = new Motor(MotorID.HSTERN);
-        public final Motor VSTERN = new Motor(MotorID.VSTERN);
+        public final Motor PROP = new Motor(MotorID.Prop);
+        public final Motor HBOW = new Motor(MotorID.HBow);
+        public final Motor VBOW = new Motor(MotorID.VBow);
+        public final Motor HSTERN = new Motor(MotorID.HStern);
+        public final Motor VSTERN = new Motor(MotorID.VStern);
     }
 
     public Motors motors = new Motors();
@@ -84,9 +87,12 @@ public class AUV extends QSignalEmitter {
 
         public Signal1<Autopilot<T>> targetChanged = new Signal1<Autopilot<T>>();
         public Signal1<Boolean> stateChanged = new Signal1<Boolean>();
+        public Signal4<Float, Float, Float, Float> paramsChanged = new Signal4<Float, Float, Float, Float>();
 
         protected T target;
         protected boolean enabled = true;
+        protected float Kd, Kp, Ki;
+        protected float scale;
 
         public Autopilot(T initialTarget) {
         	this.target = initialTarget;
@@ -98,11 +104,20 @@ public class AUV extends QSignalEmitter {
 
         public void setTarget(T target) {
             if (enabled) {
-                this.target = target;
-                targetChanged.emit(this);
+                if(!this.target.equals(target))
+                {
+                    this.target = target;
+                    targetChanged.emit(this);
+                }
             }
         }
 
+        protected void updateTarget(T target) {
+            AUV.this.controller.disable();
+            this.setTarget(target);
+            AUV.this.controller.enable();
+        }
+        
         public boolean getEnabled() {
             return enabled;
         }
@@ -110,6 +125,44 @@ public class AUV extends QSignalEmitter {
         public void setEnabled(boolean state) {
             this.enabled = state;
             stateChanged.emit(state);
+        }
+
+        protected void updateEnabled(boolean state) {
+            AUV.this.controller.disable();
+            this.setEnabled(state);
+            AUV.this.controller.enable();
+        }
+
+        public float getKp() {
+            return Kp;
+        }
+        
+        public float getKi() {
+            return Ki;
+        }
+        
+        public float getKd() {
+            return Kd;
+        }
+
+        public float getScale(){
+            return scale;
+        }
+        
+        public void setParams(float Kp, float Ki, float Kd, float scale) {
+            if (enabled) {
+                this.Kp = Kp;
+                this.Ki = Ki;
+                this.Kd = Kd;
+                this.scale = scale;
+                paramsChanged.emit(Kp, Ki, Kd, scale);
+            }
+        }
+
+        protected void updateParams(float Kp, float Ki, float Kd, float scale) {
+            AUV.this.controller.disable();
+            this.setParams(Kp, Ki, Kd, scale);
+            AUV.this.controller.enable();
         }
     }
 
@@ -128,36 +181,96 @@ public class AUV extends QSignalEmitter {
      * @author Andy Pritchard
      * 
      */
-    public static class Camera extends QSignalEmitter {
+    public class Camera extends QSignalEmitter {
 
-        public Signal1<Vector<Byte>> imageReceived = new Signal1<Vector<Byte>>();
+        public Signal1<Image> imageReceived = new Signal1<Image>();
 
         protected CameraID id;
 
-        public Vector<Byte> lastImage;
+        public Image lastImage;
 
         public Camera(CameraID id) {
             this.id = id;
         }
 
-        public Vector<Byte> getLastImage() {
+        public Image getLastImage() {
             return lastImage;
         }
 
-        protected void updateImage(Vector<Byte> image) {
+        protected void updateImage(Image image) {
             this.lastImage = image;
             imageReceived.emit(image);
         }
     }
 
+    public class Sonar extends AUV.Camera {
+        
+        public Signal6<Integer,Integer,Integer,Integer,Integer,Integer> paramsChanged = 
+            new Signal6<Integer,Integer,Integer,Integer,Integer,Integer>();
+        
+        protected int direction;
+        protected int width;
+        protected int gain;
+        protected int range;
+        protected int radialRes;
+        protected int angularRes;
+        
+        public Sonar(CameraID id) {
+            super(id);
+        }
+        
+        public int getDirection(){
+            return direction;
+        }
+        
+        public int getAngularRes() {
+            return angularRes;
+        }
+        
+        public int getGain() {
+            return gain;
+        }
+        
+        public int getRadialRes() {
+            return radialRes;
+        }
+        
+        public int getRange() {
+            return range;
+        }
+        
+        public int getWidth() {
+            return width;
+        }
+        
+        public void setParams(int direction, int width, int gain, int range, int radialRes, int angularRes){
+            this.direction = direction;
+            this.width = width;
+            this.gain = gain;
+            this.range = range;
+            this.radialRes = radialRes;
+            this.angularRes = angularRes;
+            
+            paramsChanged.emit(direction, width, gain, range, radialRes, angularRes);
+        }
+        
+        public void updateParams(int direction, int width, int gain, int range, int radialRes, int angularRes){
+            AUV.this.controller.disable();
+            this.setParams(direction, width, gain, range, radialRes, angularRes);
+            AUV.this.controller.enable();
+        }
+    }
+    
     public class Cameras {
-        public final Camera FORWARD = new Camera(CameraID.FORWARD);
-        public final Camera DOWNWARD = new Camera(CameraID.DOWN);
-        public final Camera SONAR = new Camera(CameraID.SONAR);
+        public final Camera FORWARD = new Camera(CameraID.Forward);
+        public final Camera DOWNWARD = new Camera(CameraID.Down);
+        public final Sonar SONAR = new Sonar(CameraID.Sonar);
     }
 
     public Cameras cameras = new Cameras();
 
+   
+    
     /**
      * Logs any messages sent back from the AUV and also logs locally generated
      * error messages regarding the AUV, e.g. connection error messages
@@ -185,6 +298,7 @@ public class AUV extends QSignalEmitter {
 
     public class Logs {
         public Log<String> TRACE = new Log<String>();
+        public Log<String> DEBUG = new Log<String>();
         public Log<String> ERROR = new Log<String>();
     }
 

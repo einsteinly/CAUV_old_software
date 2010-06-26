@@ -3,10 +3,14 @@ package cauv.gui;
 import java.io.IOException;
 import java.util.Vector;
 
+import spread.SpreadGroup;
+import spread.SpreadMessage;
+
 import cauv.Config;
 import cauv.auv.AUV;
 import cauv.auv.MessageSocket;
 import cauv.auv.MessageSocket.ConnectionStateObserver;
+import cauv.auv.MessageSocket.MembershipObserver;
 import cauv.gui.controllers.PS2ControlHandler;
 import cauv.gui.views.CameraFeeds;
 import cauv.gui.views.MissionControlView;
@@ -14,12 +18,13 @@ import cauv.gui.views.MotorControlView;
 import cauv.gui.views.SettingsView;
 import cauv.gui.views.TelemetryView;
 
+import com.trolltech.qt.core.QEventLoop;
 import com.trolltech.qt.core.Qt;
 import com.trolltech.qt.core.Qt.Key;
 import com.trolltech.qt.core.Qt.KeyboardModifier;
 import com.trolltech.qt.gui.*;
 
-public class Main extends QMainWindow implements ConnectionStateObserver {
+public class Main extends QMainWindow implements ConnectionStateObserver, MembershipObserver {
 
 	Ui_Main ui = new Ui_Main();
 	
@@ -161,6 +166,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver {
 	
 	@Override
 	public void onConnect(MessageSocket connection) {
+        connection.addMembershipObserver(this);
 		ui.connectButton.clicked.disconnect(this, "connect()");
 		ui.connectButton.clicked.connect(connection, "disconnect()");
 		ui.address.setEnabled(false);
@@ -189,4 +195,22 @@ public class Main extends QMainWindow implements ConnectionStateObserver {
 		super.keyPressEvent(arg);
 	}
 
+    @Override
+    public void onMembershipChanged(SpreadMessage message) {
+        QEventLoop loop = new QEventLoop();
+        loop.exec();
+        
+        ui.controlLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
+        ui.aiLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
+        ui.imageProcLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
+        
+        for(SpreadGroup g: message.getMembershipInfo().getMembers()){
+            String member = g.toString().substring(1, g.toString().indexOf("#", 2));
+            if(member == "control"){
+                ui.controlLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
+            }
+        }
+        
+        loop.exit();
+    }
 }

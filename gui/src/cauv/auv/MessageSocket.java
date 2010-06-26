@@ -5,6 +5,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Vector;
 
+import cauv.messaging.MessageSource;
+import cauv.messaging.Message;
+
 import spread.AdvancedMessageListener;
 import spread.SpreadConnection;
 import spread.SpreadException;
@@ -13,16 +16,17 @@ import spread.SpreadMessage;
 
 public class MessageSocket extends MessageSource implements AdvancedMessageListener {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
+    protected boolean enabled = true;
     Vector<SpreadGroup> groups = new Vector<SpreadGroup>();
     Vector<MembershipObserver> m_membership_observers = new Vector<MembershipObserver>();
-
+    
     public interface ConnectionStateObserver {
         public void onConnect(MessageSocket connection);
         public void onDisconnect(MessageSocket connection);
     }
     public interface MembershipObserver {
-        public void onMembershipChanged(SpreadGroup [] members);
+        public void onMembershipChanged(SpreadMessage message);
     }
     public SpreadConnection m_connection;
     private Vector<ConnectionStateObserver> m_connection_state_listeners = new Vector<ConnectionStateObserver>();
@@ -31,7 +35,7 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
         //
         // set up the spread connection.
         // connect to the spread daemon running on the AUV
-
+        
         if (!DEBUG) {
             m_connection = new SpreadConnection();
             m_connection.add(this);
@@ -53,6 +57,10 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
         }
     }
 
+    public void setEnabled(boolean state){
+        this.enabled = state;
+    }
+    
     public void disconnect() throws IOException {
         if (!DEBUG) {
             try {
@@ -89,15 +97,25 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
         listener.onConnect(this);
     }
 
-    public void removeConnectionStateListener(ConnectionStateObserver listener) {
+    public void removeConnectionStateObserver(ConnectionStateObserver listener) {
         this.m_connection_state_listeners.remove(listener);
     }
 
+    public void addMembershipObserver(MembershipObserver obs){
+        this.m_membership_observers.add(obs);
+    }
+    
+    public void removeMembershipObserver(MembershipObserver obs) {
+        this.m_membership_observers.remove(obs);
+    }
+    
     public void sendMessage(Message m) throws IOException {
 
         System.out.println("Sending " + m);
 
-        if (!DEBUG) {
+        if(DEBUG) return;
+        
+        if (this.enabled) {
             SpreadMessage spreadMessage = new SpreadMessage();
             spreadMessage.setData(m.toBytes());
             spreadMessage.addGroup(m.group());
@@ -114,7 +132,7 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
     @Override
     public void membershipMessageReceived(SpreadMessage message) {
         for(MembershipObserver o : m_membership_observers)
-            o.onMembershipChanged(message.getMembershipInfo().getMembers());
+            o.onMembershipChanged(message);
     }
 
     @Override

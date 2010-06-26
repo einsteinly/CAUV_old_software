@@ -18,12 +18,14 @@
 class FTDIException : public std::exception
 {
     protected:
-        std::string message;
+        int m_errCode;
+        std::string m_message;
     public:
         FTDIException(const std::string& msg);
         FTDIException(const std::string& msg, int errCode, ftdi_context* ftdic);
         ~FTDIException() throw();
         virtual const char* what() const throw();
+        int errCode() const;
 };
 
 typedef boost::shared_ptr<struct usb_device> usb_device_ptr;

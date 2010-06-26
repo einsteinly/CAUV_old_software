@@ -51,4 +51,9 @@ public class MotorControlView extends QWidget implements ScreenView {
         
         ui.shutdownButton.released.connect(auv, "stopAllMotors()");
 	}
+	
+	@Override
+	public void onDisconnect(AUV auv) {
+	    // TODO Auto-generated method stub
+	}
 }
