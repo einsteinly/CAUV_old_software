@@ -151,7 +151,8 @@ class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
-            : m_mb(mb)
+            : prop_value(-1e9), hbow_value(-1e9), vbow_value(-1e9),
+              hstern_value(-1e9), vstern_value(-1e9), m_mb(mb)
         {
             const MotorDemand no_demand = {0,0,0,0,0};
             for(int i = 0; i < Controller::NumValues; i++)
@@ -308,14 +309,41 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
             
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, clamp(-127, total_demand.prop, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, clamp(-127, total_demand.hbow, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, clamp(-127, total_demand.vbow, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, clamp(-127, total_demand.hstern, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, clamp(-127, total_demand.vstern, 127)));
+            int new_prop_value = clamp(-127, total_demand.prop, 127);
+            int new_hbow_value = clamp(-127, total_demand.hbow, 127);
+            int new_vbow_value = clamp(-127, total_demand.vbow, 127);
+            int new_hstern_value = clamp(-127, total_demand.hstern, 127);
+            int new_vstern_value = clamp(-127, total_demand.vstern, 127);
+
+            if(new_prop_value != prop_value) {
+                prop_value = new_prop_value;
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, new_prop_value));
+            }
+            if(new_hbow_value != hbow_value) {
+                hbow_value = new_hbow_value;
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, new_hbow_value));
+            }
+            if(new_vbow_value != vbow_value) {
+                vbow_value = new_vbow_value;
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, new_vbow_value));
+            }
+            if(new_hstern_value != hstern_value) {
+                hstern_value = new_hstern_value;
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, new_hstern_value));
+            }
+            if(new_vstern_value != vstern_value) {
+                vstern_value = new_vstern_value;
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, new_vstern_value));
+            }
             
             m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
         }
+
+        int prop_value;
+        int hbow_value;
+        int vbow_value;
+        int hstern_value;
+        int vstern_value;
 
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
