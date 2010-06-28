@@ -38,10 +38,11 @@ class CauvNode
 
 	protected:
 		std::string m_name;
+		std::string m_server;
         boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
 
         CauvNode(const std::string& name);
-        
+            
 		virtual void onRun();
         virtual void addOptions(boost::program_options::options_description& desc);
         virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);

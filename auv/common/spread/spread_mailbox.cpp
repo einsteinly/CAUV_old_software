@@ -30,11 +30,14 @@ void SpreadMailbox::connect(const string &portAndHost, const string &internalCon
     }
 
     try {
+        debug() << "Attempting to connect to"
+               << portAndHost << "as"
+               << internalConnectionName;
         m_ssrcMailbox = shared_ptr<Mailbox>(
             new Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
                         timeout, (Mailbox::Priority)priority) );
-        info() << "Successfully created spread mailbox:"
-               << portAndHost << ":"
+        info() << "Successfully created spread mailbox. Connected to"
+               << portAndHost << "as"
                << internalConnectionName;
     } catch(Error& e) {
         handleSpreadError(e);
