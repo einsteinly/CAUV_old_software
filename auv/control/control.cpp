@@ -53,9 +53,11 @@ struct PIDControl
     double Kp,Ki,Kd,scale;
     double integral, previous_error, previous_derror, previous_mv;
     TimeStamp previous_time;
+    bool is_angle;
 
     PIDControl(Controller::e controlee=Controller::NumValues)
-        : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1), integral(0), previous_error(0)
+        : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
+          integral(0), previous_error(0), is_angle(false)
     {
         previous_time.secs = 0;
     }
@@ -69,10 +71,36 @@ struct PIDControl
         previous_time.secs = 0;
     }
 
+    static double mod(double const& d, double const& base)
+    {
+        if(d > 0) {
+            return d - base * std::floor(d / base);
+        }else{
+            return d + base * std::floor(-d / base);
+        }
+    }
+
+    virtual double getErrorAngle(double const& target, double const& current)
+    {
+        double diff = mod(target - current, 360);
+        if(diff >  180) diff -= 360;
+        if(diff < -180) diff += 360;
+        return diff;
+    }
+
+    virtual double getError(double const& target, double const& current)
+    {
+        return target - current;
+    }
+
     double getMV(double current)
     {
-        double error = target - current;
-        
+        double error;
+        if(is_angle)
+            error = getErrorAngle(target, current);
+        else
+            error = getError(target, current);
+
         if (previous_time.secs == 0) {
             previous_time = now();
             previous_error = error;
@@ -99,6 +127,7 @@ struct PIDControl
         );
     }
 };
+
 
 // TODO: move to cauv_utils: clashes with clamp in gui-pipeline at the
 // moment
@@ -136,6 +165,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 msg->demand(m_demand[i]);
                 m_mb->sendMessage(msg, SAFE_MESS);
             }
+            m_controllers[Controller::Bearing].is_angle = true;
         }
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
