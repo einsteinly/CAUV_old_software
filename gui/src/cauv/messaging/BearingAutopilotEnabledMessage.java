@@ -21,7 +21,7 @@ public class BearingAutopilotEnabledMessage extends Message {
         return this.enabled;
     }
 
-    public void target(int target){
+    public void target(float target){
         this.target = target;
     }
     public float target(){
@@ -44,7 +44,7 @@ public class BearingAutopilotEnabledMessage extends Message {
         super(60, "control");
     }
 
-    public BearingAutopilotEnabledMessage(boolean enabled, Float target) {
+    public BearingAutopilotEnabledMessage(Boolean enabled, Float target) {
         super(60, "control");
         this.enabled = enabled;
         this.target = target;
@@ -61,6 +61,6 @@ public class BearingAutopilotEnabledMessage extends Message {
         }
 
         this.enabled = s.readBoolean();
-        this.target = s.readUnsignedShort();
+        this.target = s.readFloat();
     }
 }

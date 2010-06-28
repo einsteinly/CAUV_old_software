@@ -11,6 +11,7 @@ public class MessageObserver
     public void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage m) {}
     public void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage m) {}
     public void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage m) {}
+    public void onDepthCalibrationMessage(DepthCalibrationMessage m) {}
     public void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage m) {}
     public void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage m) {}
     public void onTelemetryMessage(TelemetryMessage m) {}

@@ -35,7 +35,7 @@ public class DebugLevelMessage extends Message {
         super(1, "debug");
     }
 
-    public DebugLevelMessage(int level) {
+    public DebugLevelMessage(Integer level) {
         super(1, "debug");
         this.level = level;
     }

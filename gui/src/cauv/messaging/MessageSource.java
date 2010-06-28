@@ -66,6 +66,13 @@ public class MessageSource
                     }
                     break;
                 }
+                case 80: {
+                    DepthCalibrationMessage m = new DepthCalibrationMessage(b);
+                    for (MessageObserver o : m_obs) {
+                        o.onDepthCalibrationMessage(m);
+                    }
+                    break;
+                }
                 case 62: {
                     PitchAutopilotEnabledMessage m = new PitchAutopilotEnabledMessage(b);
                     for (MessageObserver o : m_obs) {

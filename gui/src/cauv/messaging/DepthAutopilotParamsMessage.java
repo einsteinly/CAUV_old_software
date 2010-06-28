@@ -62,7 +62,7 @@ public class DepthAutopilotParamsMessage extends Message {
         super(71, "control");
     }
 
-    public DepthAutopilotParamsMessage(float Kp, float Ki, float Kd, float scale) {
+    public DepthAutopilotParamsMessage(Float Kp, Float Ki, Float Kd, Float scale) {
         super(71, "control");
         this.Kp = Kp;
         this.Ki = Ki;

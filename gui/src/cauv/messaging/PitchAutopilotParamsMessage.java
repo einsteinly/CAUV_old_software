@@ -62,7 +62,7 @@ public class PitchAutopilotParamsMessage extends Message {
         super(72, "control");
     }
 
-    public PitchAutopilotParamsMessage(float Kp, float Ki, float Kd, float scale) {
+    public PitchAutopilotParamsMessage(Float Kp, Float Ki, Float Kd, Float scale) {
         super(72, "control");
         this.Kp = Kp;
         this.Ki = Ki;
