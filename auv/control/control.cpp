@@ -154,23 +154,28 @@ class ControlLoops : public MessageObserver, public XsensObserver
             : prop_value(-1e9), hbow_value(-1e9), vbow_value(-1e9),
               hstern_value(-1e9), vstern_value(-1e9), m_mb(mb)
         {
-            const MotorDemand no_demand = {0,0,0,0,0};
-            for(int i = 0; i < Controller::NumValues; i++)
-            {
-                m_controlenabled[i] = false;
-                m_controllers[i].reset();
-                m_controllers[i].controlee = (Controller::e)i;
-                m_demand[i] = no_demand;
-                
-                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
-                msg->demand(m_demand[i]);
-                m_mb->sendMessage(msg, SAFE_MESS);
-            }
-            m_controllers[Controller::Bearing].is_angle = true;
         }
+        ~ControlLoops()
+        {
+            stop();
+        }
+
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
             m_mcb = mcb;
+        }
+
+        void start()
+        {
+            stop();
+            m_motorControlLoopThread = boost::thread(&ControlLoops::motorControlLoop, this);
+        }
+        void stop()
+        {
+            if (m_motorControlLoopThread.get_id() != boost::thread::id()) {
+                m_motorControlLoopThread.interrupt();    
+                m_motorControlLoopThread.join();    
+            }
         }
 
         virtual void onTelemetry(const floatYPR& attitude)
@@ -196,8 +201,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 msg->demand(m_demand[Pitch]);
                 m_mb->sendMessage(msg, SAFE_MESS);
             }
-
-            updateMotorControl();
         }
 
         virtual void onPressureMessage(PressureMessage_ptr m)
@@ -211,8 +214,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
                 m_mb->sendMessage(msg, SAFE_MESS);
-
-                updateMotorControl();
             }
         }
     
@@ -231,9 +232,8 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 case MotorID::HStern: m_demand[ManualOverride].hstern = m->speed(); break;
                 case MotorID::VBow: m_demand[ManualOverride].vbow = m->speed(); break;
                 case MotorID::VStern: m_demand[ManualOverride].vstern = m->speed(); break;
+                case MotorID::NumValues: break;
             }
-            
-            updateMotorControl();
         }
 
         
@@ -302,8 +302,43 @@ class ControlLoops : public MessageObserver, public XsensObserver
         }
 
     private:
+        boost::thread m_motorControlLoopThread;
+        
+        void motorControlLoop()
+        {
+            debug() << "Control loop thread started";
+            try {
+                const MotorDemand no_demand = {0,0,0,0,0};
+                for(int i = 0; i < Controller::NumValues; i++)
+                {
+                    m_controlenabled[i] = false;
+                    m_controllers[i].reset();
+                    m_controllers[i].controlee = (Controller::e)i;
+                    m_demand[i] = no_demand;
+                    
+                    boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
+                    msg->demand(m_demand[i]);
+                    m_mb->sendMessage(msg, SAFE_MESS);
+                }
+                m_controllers[Controller::Bearing].is_angle = true;
+                m_controlenabled[Controller::ManualOverride] = true;
+                
+                while(true)
+                {
+                    boost::this_thread::interruption_point();
+                    updateMotorControl();
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(200));
+                }
+
+            } catch (boost::thread_interrupted&) {
+                debug() << "Control loop thread interrupted";
+            }
+            debug() << "Control loop thread exiting";
+        }
+        
         void updateMotorControl()
         {
+            // TODO: This may need a lock. Maybe not, reading/writing ints is atomic. 
             MotorDemand total_demand = {0,0,0,0,0};
             for(int i = 0; i < Controller::NumValues; i++)
                 if(m_controlenabled[i])
@@ -314,26 +349,28 @@ class ControlLoops : public MessageObserver, public XsensObserver
             int new_vbow_value = clamp(-127, total_demand.vbow, 127);
             int new_hstern_value = clamp(-127, total_demand.hstern, 127);
             int new_vstern_value = clamp(-127, total_demand.vstern, 127);
-
-            if(new_prop_value != prop_value) {
-                prop_value = new_prop_value;
-                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, new_prop_value));
-            }
-            if(new_hbow_value != hbow_value) {
-                hbow_value = new_hbow_value;
-                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, new_hbow_value));
-            }
-            if(new_vbow_value != vbow_value) {
-                vbow_value = new_vbow_value;
-                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, new_vbow_value));
-            }
-            if(new_hstern_value != hstern_value) {
-                hstern_value = new_hstern_value;
-                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, new_hstern_value));
-            }
-            if(new_vstern_value != vstern_value) {
-                vstern_value = new_vstern_value;
-                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, new_vstern_value));
+            
+            if(m_mcb) {
+                if(new_prop_value != prop_value) {
+                    prop_value = new_prop_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, new_prop_value));
+                }
+                if(new_hbow_value != hbow_value) {
+                    hbow_value = new_hbow_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, new_hbow_value));
+                }
+                if(new_vbow_value != vbow_value) {
+                    vbow_value = new_vbow_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, new_vbow_value));
+                }
+                if(new_hstern_value != hstern_value) {
+                    hstern_value = new_hstern_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, new_hstern_value));
+                }
+                if(new_vstern_value != vstern_value) {
+                    vstern_value = new_vstern_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, new_vstern_value));
+                }
             }
             
             m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
@@ -469,6 +506,8 @@ void ControlNode::onRun()
     else {
         warning() << "Xsens not connected. Telemetry not available.";
     }
+
+    m_controlLoops->start();
 }
 
 static ControlNode* node;
