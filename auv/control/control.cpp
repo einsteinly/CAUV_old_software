@@ -48,12 +48,14 @@ class DebugXsensObserver : public XsensObserver
 
 struct PIDControl
 {
+    Controller::e controlee;
     double target;
     double Kp,Ki,Kd,scale;
-    double integral, previous_error;
+    double integral, previous_error, previous_derror, previous_mv;
     TimeStamp previous_time;
 
-    PIDControl() : target(0), Kp(1), Ki(1), Kd(1), scale(1), integral(0), previous_error(0)
+    PIDControl(Controller::e controlee=Controller::NumValues)
+        : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1), integral(0), previous_error(0)
     {
         previous_time.secs = 0;
     }
@@ -62,6 +64,8 @@ struct PIDControl
     {
         integral = 0;
         previous_error = 0;
+        previous_derror = 0;
+        previous_mv = 0;
         previous_time.secs = 0;
     }
 
@@ -76,14 +80,23 @@ struct PIDControl
         }
 
         TimeStamp tnow = now();
-        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.msecs - previous_time.msecs) / 1000; // dt is milliseconds
+        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.musecs - previous_time.musecs) / 1000; // dt is milliseconds
         previous_time = tnow;
 
         integral += error*dt;
         double de = (error-previous_error)/dt;
         previous_error = error;
+        previous_derror = de;
+        previous_mv =  scale * (Kp * error + Ki * integral + Kd * de);
 
-        return scale * (Kp * error + Ki * integral + Kd * de);        
+        return previous_mv;
+    }
+
+    boost::shared_ptr<ControllerStateMessage> stateMsg()
+    {
+        return boost::make_shared<ControllerStateMessage>(
+            controlee, previous_mv, previous_error, previous_derror, integral, MotorDemand()
+        );
     }
 };
 
@@ -94,17 +107,34 @@ inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
     return (a < low)? low : ((a < high)? a : high);
 }
 
+MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
+    l.prop += r.prop;
+    l.hbow += r.hbow;
+    l.hstern += r.hstern;
+    l.vbow += r.vbow;
+    l.vstern += r.vstern;
+    return l;
+}
+
+using namespace Controller;
+
 class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
-        ControlLoops()
+        ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+            : m_mb(mb)
         {
             const MotorDemand no_demand = {0};
-            for(int i = 0; i < NumControls; i++)
+            for(int i = 0; i < Controller::NumValues; i++)
             {
                 m_controlenabled[i] = false;
                 m_controllers[i].reset();
+                m_controllers[i].controlee = (Controller::e)i;
                 m_demand[i] = no_demand;
+                
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
+                msg->demand(m_demand[i]);
+                m_mb->sendMessage(msg, SAFE_MESS);
             }
         }
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
@@ -119,6 +149,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 debug(2) << "Bearing Control: MV = " << mv;
                 m_demand[Bearing].hbow = mv;
                 m_demand[Bearing].hstern = -mv;
+               
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Bearing].stateMsg();
+                msg->demand(m_demand[Bearing]);
+                m_mb->sendMessage(msg, SAFE_MESS);
             }
             
             if (m_controlenabled[Pitch]) {
@@ -126,6 +160,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 debug(2) << "Pitch Control: MV = " << mv;
                 m_demand[Pitch].vbow = -mv;
                 m_demand[Pitch].vstern = mv;
+                
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Pitch].stateMsg();
+                msg->demand(m_demand[Pitch]);
+                m_mb->sendMessage(msg, SAFE_MESS);
             }
 
             updateMotorControl();
@@ -138,6 +176,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                                      m_depthCalibration->aftMultiplier() * m->aft());
                 float mv = m_controllers[Depth].getMV(depth);
                 debug(2) << "depth =" << depth << "mv =" << mv;
+                
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
+                msg->demand(m_demand[Depth]);
+                m_mb->sendMessage(msg, SAFE_MESS);
+
                 updateMotorControl();
             }
         }
@@ -152,29 +195,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_mcb->send(m);
         }
 
-        enum Control{ Bearing, Pitch, Depth, ManualOverride, NumControls };
-
-        struct MotorDemand
-        {
-            float prop;
-            float hbow;
-            float hstern;
-            float vbow;
-            float vstern;
-            
-            MotorDemand operator+=(MotorDemand const& r){
-                prop += r.prop;
-                hbow += r.hbow;
-                hstern += r.hstern;
-                vbow += r.vbow;
-                vstern += r.vstern;
-                return *this;
-            }
-        };
         
-        bool m_controlenabled[NumControls];
-        PIDControl m_controllers[NumControls];
-        MotorDemand m_demand[NumControls];
+        bool m_controlenabled[Controller::NumValues];
+        PIDControl m_controllers[Controller::NumValues];
+        MotorDemand m_demand[Controller::NumValues];
         
         virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
         {
@@ -240,7 +264,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         void updateMotorControl()
         {
             MotorDemand total_demand = {0};
-            for(int i = 0; i < NumControls; i++)
+            for(int i = 0; i < Controller::NumValues; i++)
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
             
@@ -249,7 +273,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, clamp(-127, total_demand.vbow, 127)));
             m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, clamp(-127, total_demand.hstern, 127)));
             m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, clamp(-127, total_demand.vstern, 127)));
+            
+            m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
         }
+
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
 
 
@@ -266,7 +294,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     joinGroup("control");
     addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
-    m_controlLoops = boost::make_shared<ControlLoops>();
+    m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
 }
 ControlNode::~ControlNode()
