@@ -52,7 +52,7 @@ public class NodeParametersMessage extends Message {
         super(17, "pl_gui");
     }
 
-    public NodeParametersMessage(int nodeId, HashMap< String, NodeParamValue > params) {
+    public NodeParametersMessage(Integer nodeId, HashMap< String, NodeParamValue > params) {
         super(17, "pl_gui");
         this.nodeId = nodeId;
         this.params = params;

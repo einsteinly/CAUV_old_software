@@ -44,7 +44,7 @@ public class MotorMessage extends Message {
         super(2, "control");
     }
 
-    public MotorMessage(MotorID motorId, byte speed) {
+    public MotorMessage(MotorID motorId, Byte speed) {
         super(2, "control");
         this.motorId = motorId;
         this.speed = speed;

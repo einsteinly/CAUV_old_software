@@ -80,7 +80,7 @@ public class SonarControlMessage extends Message {
         super(32, "sonarctl");
     }
 
-    public SonarControlMessage(int direction, int width, int gain, int range, int radialRes, int angularRes) {
+    public SonarControlMessage(Integer direction, Integer width, Integer gain, Integer range, Integer radialRes, Integer angularRes) {
         super(32, "sonarctl");
         this.direction = direction;
         this.width = width;

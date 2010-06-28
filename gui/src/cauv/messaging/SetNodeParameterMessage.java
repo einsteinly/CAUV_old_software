@@ -54,7 +54,7 @@ public class SetNodeParameterMessage extends Message {
         super(8, "pipeline");
     }
 
-    public SetNodeParameterMessage(int nodeId, String paramId, NodeParamValue value) {
+    public SetNodeParameterMessage(Integer nodeId, String paramId, NodeParamValue value) {
         super(8, "pipeline");
         this.nodeId = nodeId;
         this.paramId = paramId;

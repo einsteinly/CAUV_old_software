@@ -62,7 +62,7 @@ public class BearingAutopilotParamsMessage extends Message {
         super(70, "control");
     }
 
-    public BearingAutopilotParamsMessage(float Kp, float Ki, float Kd, float scale) {
+    public BearingAutopilotParamsMessage(Float Kp, Float Ki, Float Kd, Float scale) {
         super(70, "control");
         this.Kp = Kp;
         this.Ki = Ki;

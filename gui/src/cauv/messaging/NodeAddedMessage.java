@@ -100,7 +100,7 @@ public class NodeAddedMessage extends Message {
         super(15, "pl_gui");
     }
 
-    public NodeAddedMessage(int nodeId, NodeType nodeType, HashMap< String, NodeOutput > inputs, HashMap< String, Vector< NodeInput > > outputs, HashMap< String, NodeParamValue > params) {
+    public NodeAddedMessage(Integer nodeId, NodeType nodeType, HashMap< String, NodeOutput > inputs, HashMap< String, Vector< NodeInput > > outputs, HashMap< String, NodeParamValue > params) {
         super(15, "pl_gui");
         this.nodeId = nodeId;
         this.nodeType = nodeType;
