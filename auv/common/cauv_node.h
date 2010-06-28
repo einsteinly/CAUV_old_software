@@ -42,7 +42,7 @@ class CauvNode
         CauvNode(const std::string& name, const char* host="16707@localhost");
         
 		virtual void onRun();
-        void addOptions(boost::program_options::options_description& desc);
+        virtual void addOptions(boost::program_options::options_description& desc);
     
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
