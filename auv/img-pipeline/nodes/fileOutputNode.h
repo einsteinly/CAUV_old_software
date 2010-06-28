@@ -55,8 +55,15 @@ class FileOutputNode: public OutputNode{
             imwrite_params.push_back(jpg_qual);
             imwrite_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
             imwrite_params.push_back(png_comp);
-
-            cv::imwrite(fname.c_str(), img->cvMat(), imwrite_params);
+            
+            try{
+                cv::imwrite(fname.c_str(), img->cvMat(), imwrite_params);
+            }catch(cv::Exception& e){
+                error() << "GaussianBlurNode:\n\t"
+                        << e.err << "\n\t"
+                        << "in" << e.func << "," << e.file << ":" << e.line;
+                throw(img_pipeline_error("FileOutputNode: could not write file"));
+            }
             
             return r;
         }
