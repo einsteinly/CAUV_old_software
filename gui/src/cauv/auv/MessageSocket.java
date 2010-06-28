@@ -16,7 +16,7 @@ import spread.SpreadMessage;
 
 public class MessageSocket extends MessageSource implements AdvancedMessageListener {
 
-    private static final boolean DEBUG = true;
+    protected static boolean debug = false;
     protected boolean enabled = true;
     Vector<SpreadGroup> groups = new Vector<SpreadGroup>();
     Vector<MembershipObserver> m_membership_observers = new Vector<MembershipObserver>();
@@ -36,7 +36,7 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
         // set up the spread connection.
         // connect to the spread daemon running on the AUV
         
-        if (!DEBUG) {
+        if (!debug) {
             m_connection = new SpreadConnection();
             m_connection.add(this);
 
@@ -57,15 +57,24 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
         }
     }
 
+    public static boolean getDebug(){
+        return debug;
+    }
+    
+    public static void setDebug(boolean state){
+        debug = state;
+    }
+    
     public void setEnabled(boolean state){
         this.enabled = state;
     }
     
     public void disconnect() throws IOException {
-        if (!DEBUG) {
+        if (!debug) {
             try {
                 //m_connection.remove(this);
-                m_connection.disconnect();
+                if(m_connection != null)
+                    m_connection.disconnect();
             } catch (SpreadException ex) {
                 throw new IOException(ex.getMessage());
             }
@@ -77,7 +86,7 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
     }
 
     public void joinGroup(String name) throws IOException {
-        if (!DEBUG) {
+        if (!debug) {
             try {
                 SpreadGroup g = new SpreadGroup();
                 g.join(m_connection, name);
@@ -113,7 +122,7 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
 
         System.out.println("Sending " + m);
 
-        if(DEBUG) return;
+        if(debug) return;
         
         if (this.enabled) {
             SpreadMessage spreadMessage = new SpreadMessage();

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'CameraFeeds.jui'
 **
-** Created: Fri 25. Jun 13:45:44 2010
+** Created: Sun 27. Jun 22:47:57 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -56,7 +56,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
     public void setupUi(QWidget CameraFeeds)
     {
         CameraFeeds.setObjectName("CameraFeeds");
-        CameraFeeds.resize(new QSize(614, 377).expandedTo(CameraFeeds.minimumSizeHint()));
+        CameraFeeds.resize(new QSize(714, 377).expandedTo(CameraFeeds.minimumSizeHint()));
         horizontalLayout = new QHBoxLayout(CameraFeeds);
         horizontalLayout.setObjectName("horizontalLayout");
         scrollArea = new QScrollArea(CameraFeeds);
@@ -156,6 +156,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
         horizontalLayout_5.setContentsMargins(-1, 9, -1, -1);
         label = new QLabel(widget_2);
         label.setObjectName("label");
+        label.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         horizontalLayout_5.addWidget(label);
 
@@ -166,6 +167,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         label_2 = new QLabel(widget_2);
         label_2.setObjectName("label_2");
+        label_2.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         horizontalLayout_5.addWidget(label_2);
 
@@ -176,6 +178,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         label_3 = new QLabel(widget_2);
         label_3.setObjectName("label_3");
+        label_3.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         horizontalLayout_5.addWidget(label_3);
 
@@ -186,6 +189,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         label_4 = new QLabel(widget_2);
         label_4.setObjectName("label_4");
+        label_4.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         horizontalLayout_5.addWidget(label_4);
 
@@ -196,6 +200,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         label_5 = new QLabel(widget_2);
         label_5.setObjectName("label_5");
+        label_5.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         horizontalLayout_5.addWidget(label_5);
 
@@ -206,6 +211,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         label_6 = new QLabel(widget_2);
         label_6.setObjectName("label_6");
+        label_6.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         horizontalLayout_5.addWidget(label_6);
 

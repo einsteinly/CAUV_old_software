@@ -78,6 +78,16 @@ public class CameraFeeds extends QWidget implements ScreenView {
 
 		this.auv = auv;
 
+        auv.cameras.FORWARD.imageReceived.connect(ui.forwardCam, "setImage(Image)");
+        auv.cameras.FORWARD.imageReceived.connect(ui.forwardCamIcon, "setImage(Image)");
+        auv.cameras.FORWARD.imageReceived.connect(this, "updateIcon()");
+        
+        auv.cameras.DOWNWARD.imageReceived.connect(ui.downwardCam, "setImage(Image)");
+        auv.cameras.DOWNWARD.imageReceived.connect(ui.downwardCamIcon, "setImage(Image)");
+
+        auv.cameras.SONAR.imageReceived.connect(ui.sonarCam, "setImage(Image)");
+        auv.cameras.SONAR.imageReceived.connect(ui.sonarIcon, "setImage(Image)");
+		
 		auv.autopilots.DEPTH.targetChanged.connect(this, "updateValues()");
 		auv.autopilots.YAW.targetChanged.connect(this, "updateValues()");
 		auv.autopilots.PITCH.targetChanged.connect(this, "updateValues()");
@@ -155,6 +165,10 @@ public class CameraFeeds extends QWidget implements ScreenView {
 
 	}
 
+	public void updateIcon(){
+	    icon.setPixmap(ui.forwardCamIcon.getPixmap());
+	}
+	
 	@Override
 	public void onDisconnect(AUV auv) {
 	    this.auv = null;

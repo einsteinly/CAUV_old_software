@@ -9,6 +9,7 @@ import cauv.auv.AUV.Motor;
 import cauv.auv.AUV.Sonar;
 import cauv.messaging.BearingAutopilotEnabledMessage;
 import cauv.messaging.BearingAutopilotParamsMessage;
+import cauv.messaging.DebugLevelMessage;
 import cauv.messaging.DebugMessage;
 import cauv.messaging.DepthAutopilotEnabledMessage;
 import cauv.messaging.DepthAutopilotParamsMessage;
@@ -26,13 +27,32 @@ import cauv.types.MotorID;
 
 
 
-class CommunicationController extends MessageObserver {
+public class CommunicationController extends MessageObserver {
   
     protected AUV auv;
     protected MessageSocket messages;
 
+    public MessageSocket getMessageSocket() {
+        return messages;
+    }
     
     class Controller {}
+    
+    class MissionController extends Controller {
+        
+        public MissionController() {
+            auv.runMissionRequested.connect(this, "onMissionRunRequest(String)");
+        }
+        
+        public void onMissionRunRequest(String mission){
+            /*try {
+                messages.sendMessage(new MissionMessage(mission));
+            } catch (IOException e) {
+                auv.logs.ERROR.log("Error sending mission: " + e.getMessage());
+            }*/
+            System.out.println("Will send mission");
+        }
+    }
     
     class MotorController extends Controller {
         Motor motor;
@@ -132,6 +152,11 @@ class CommunicationController extends MessageObserver {
         new AutopilotController(auv.autopilots.PITCH, PitchAutopilotEnabledMessage.class, PitchAutopilotParamsMessage.class);
         new AutopilotController(auv.autopilots.YAW, BearingAutopilotEnabledMessage.class, BearingAutopilotParamsMessage.class);
         
+        new MissionController();
+        
+        auv.debugLevelChanged.connect(this, "sendDebugLevelMessage()");
+        auv.depthChanged.connect(this, "sendDepthCalibrationMessage()");
+        
         enable();
     }
 
@@ -142,11 +167,33 @@ class CommunicationController extends MessageObserver {
     public void disable() {
         messages.setEnabled(false);
     }
+    
+    public void sendDebugLevelMessage(){
+        try {
+            messages.sendMessage(new DebugLevelMessage(auv.getDebugLevel()));
+        } catch (Exception e) {
+            auv.logs.ERROR.log("Error updating debug level: " + e.getMessage());
+        }
+    }
 
+    public void sendDepthCalibrationMessage(){
+        /*try {
+            messages.sendMessage(new DepthCalibrationMessage(auv.getDepth()));
+        } catch (Exception e) {
+            auv.logs.ERROR.log("Error updating debug level: " + e.getMessage());
+        }*/
+        System.out.println("will update depth");
+    }
+    
     @Override
     public void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage m) {
         auv.autopilots.YAW.updateEnabled(m.enabled);
         auv.autopilots.YAW.updateTarget(m.target);
+    }
+    
+    @Override
+    public void onDebugLevelMessage(DebugLevelMessage m) {
+        auv.setDebugLevel(m.level);
     }
     
     @Override
@@ -198,7 +245,7 @@ class CommunicationController extends MessageObserver {
 
     @Override
     public void onPressureMessage(PressureMessage m) {
-        auv.setDepth((m.aft + m.fore)/2);
+        auv.updateDepth((m.aft + m.fore)/2);
     }
     
     @Override

@@ -2,8 +2,11 @@ package cauv.gui.views;
 
 import cauv.Config;
 import cauv.auv.AUV;
+import cauv.auv.MessageSocket;
 import cauv.gui.ScreenView;
+import cauv.messaging.MessageSource;
 
+import com.trolltech.qt.core.Qt.ConnectionType;
 import com.trolltech.qt.gui.*;
 
 public class SettingsView extends QWidget implements ScreenView {
@@ -33,7 +36,8 @@ public class SettingsView extends QWidget implements ScreenView {
         ui.yaw_scale.valueChanged.connect(this, "updateYawParams()");
         
 		load();
-		
+
+        ui.debugMessaging.toggled.connect(this, "setDebug(boolean)");
 		ui.saveSettingsButton.clicked.connect(this, "save()");
     }
 
@@ -96,11 +100,23 @@ public class SettingsView extends QWidget implements ScreenView {
         auv.autopilots.DEPTH.paramsChanged.connect(this, "updateDepthParams(float, float, float, float)");
         auv.autopilots.PITCH.paramsChanged.connect(this, "updatePitchParams(float, float, float, float)");
         auv.autopilots.YAW.paramsChanged.connect(this, "updateYawParams(float, float, float, float)");
+        
+        auv.debugLevelChanged.connect(ui.debugLevel, "setValue(int)");
+        ui.debugLevel.valueChanged.connect(auv, "setDebugLevel(int)");
+        ui.sendDepth.released.connect(this, "calibrateDepth()");
+    }
+    
+    public void setDebug(boolean state){
+        MessageSocket.setDebug(state);
+    }
+    
+    public void calibrateDepth(){
+        auv.calibrateDepth((float)ui.depth.value());
     }
     
     @Override
     public void onDisconnect(AUV auv) {
-        // TODO Auto-generated method stub
+       auv = null;
     }
     
 	@Override

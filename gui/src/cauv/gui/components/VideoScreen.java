@@ -1,5 +1,8 @@
 package cauv.gui.components;
 
+import cauv.types.Image;
+
+import com.trolltech.qt.gui.QImage;
 import com.trolltech.qt.gui.QMouseEvent;
 import com.trolltech.qt.gui.QPaintEvent;
 import com.trolltech.qt.gui.QPainter;
@@ -19,9 +22,23 @@ public class VideoScreen extends QWidget {
         super(parent);
     }
 
+    public void setImage(Image img){
+        QImage qImage = new QImage();
+        byte [] data = new byte[img.data.size()];
+        for(int i = 0; i < img.data.size(); i++)
+            data[i] = img.data.get(i);
+        qImage.loadFromData(data, img.format);
+        this.setPixmap(QPixmap.fromImage(qImage));
+
+    }
+    
     public void setPixmap(QPixmap pixmap){
     	this.pixmap = pixmap;
     	this.repaint();
+    }
+    
+    public QPixmap getPixmap() {
+        return pixmap;
     }
     
     protected void mouseReleaseEvent(QMouseEvent event){

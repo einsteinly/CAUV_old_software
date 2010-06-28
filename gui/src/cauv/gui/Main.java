@@ -17,9 +17,12 @@ import cauv.gui.views.MissionControlView;
 import cauv.gui.views.MotorControlView;
 import cauv.gui.views.SettingsView;
 import cauv.gui.views.TelemetryView;
+import cauv.messaging.GuiImageMessage;
 
 import com.trolltech.qt.core.QEventLoop;
+import com.trolltech.qt.core.QTimer;
 import com.trolltech.qt.core.Qt;
+import com.trolltech.qt.core.Qt.ConnectionType;
 import com.trolltech.qt.core.Qt.Key;
 import com.trolltech.qt.core.Qt.KeyboardModifier;
 import com.trolltech.qt.gui.*;
@@ -33,6 +36,8 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	AUV auv;
 	Vector<ScreenView> views = new Vector<ScreenView>();
 
+	Signal1<Vector<String>> membershipChanged = new Signal1<Vector<String>>();
+	
 	public static void main(String[] args) {
 		QApplication.initialize(args);
 		try {
@@ -68,6 +73,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ui.backButton.hide();
 		ui.backButton.clicked.connect(this, "back()");
 		ui.connectButton.clicked.connect(this, "connect()");
+		this.membershipChanged.connect(this, "updateMembershipLights(Vector)", ConnectionType.BlockingQueuedConnection);
 		Main.trace("Initialisation complete");
 	}
 
@@ -97,7 +103,10 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 			for(ScreenView v: views){
 				v.onConnect(auv);
 			}
-			
+            auv.logs.TRACE.messageLogged.connect(this, "trace(String)", ConnectionType.BlockingQueuedConnection);
+            auv.logs.DEBUG.messageLogged.connect(this, "warning(String)", ConnectionType.BlockingQueuedConnection);
+            auv.logs.ERROR.messageLogged.connect(this, "error(String)", ConnectionType.BlockingQueuedConnection);
+            
 			new PS2ControlHandler(auv);
 		} catch (IOException e) {
 			ui.errorMessage.setText("Connecting to AUV failed. Sigh.");
@@ -132,7 +141,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ScreenIcon icon = new ScreenIcon();
 		icon.addWidget(graphics);
 		icon.setText(view.getScreenName());
-		ui.iconLayout.addWidget(icon, ui.iconLayout.count()/4, ui.iconLayout.count()%4);
+		ui.iconLayout.addWidget(icon, ui.iconLayout.count()/5, ui.iconLayout.count()%5);
 		
 		QGraphicsScene scene = new QGraphicsScene();
 		scene.addItem(view.getIconWidget());
@@ -195,22 +204,33 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		super.keyPressEvent(arg);
 	}
 
-    @Override
-    public void onMembershipChanged(SpreadMessage message) {
-        QEventLoop loop = new QEventLoop();
-        loop.exec();
-        
+	
+	public void updateMembershipLights(Vector<String> members){
         ui.controlLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         ui.aiLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         ui.imageProcLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         
-        for(SpreadGroup g: message.getMembershipInfo().getMembers()){
-            String member = g.toString().substring(1, g.toString().indexOf("#", 2));
+        for(String member : members){
             if(member == "control"){
                 ui.controlLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
             }
+            if(member == "ai"){
+                ui.aiLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
+            }
+            if(member == "imgproc"){
+                ui.imageProcLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
+            }
         }
-        
-        loop.exit();
+	}
+	
+	
+    @Override
+    public void onMembershipChanged(SpreadMessage message) {
+        Vector<String> members = new Vector<String>();
+        for(SpreadGroup g: message.getMembershipInfo().getMembers()){
+            String member = g.toString().substring(1, g.toString().indexOf("#", 2));
+            members.add(member);
+        }
+        membershipChanged.emit(members);
     }
 }

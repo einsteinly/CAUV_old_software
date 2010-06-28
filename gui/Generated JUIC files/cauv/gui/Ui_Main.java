@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Fri 25. Jun 12:37:18 2010
+** Created: Sun 27. Jun 22:43:57 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -45,10 +45,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QSpacerItem verticalSpacer_2;
     public QGridLayout iconLayout;
     public QWidget page_2;
-    public QMenuBar menubar;
-    public QMenu menuFile;
-    public QMenu menuOptions;
-    public QMenu menuHelp;
     public QStatusBar statusbar;
     public QDockWidget dockWidget;
     public QWidget dockWidgetContents_2;
@@ -439,16 +435,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         verticalLayout.addWidget(widget);
 
         Main.setCentralWidget(centralwidget);
-        menubar = new QMenuBar(Main);
-        menubar.setObjectName("menubar");
-        menubar.setGeometry(new QRect(0, 0, 827, 22));
-        menuFile = new QMenu(menubar);
-        menuFile.setObjectName("menuFile");
-        menuOptions = new QMenu(menubar);
-        menuOptions.setObjectName("menuOptions");
-        menuHelp = new QMenu(menubar);
-        menuHelp.setObjectName("menuHelp");
-        Main.setMenuBar(menubar);
         statusbar = new QStatusBar(Main);
         statusbar.setObjectName("statusbar");
         Main.setStatusBar(statusbar);
@@ -534,13 +520,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 
         dockWidget.setWidget(dockWidgetContents_2);
         Main.addDockWidget(com.trolltech.qt.core.Qt.DockWidgetArea.resolve(8), dockWidget);
-
-        menubar.addAction(menuFile.menuAction());
-        menubar.addAction(menuOptions.menuAction());
-        menubar.addAction(menuHelp.menuAction());
-        menuFile.addAction(actionMoo);
-        menuOptions.addAction(actionSettings);
-        menuHelp.addAction(actionPahh_You_wish);
         retranslateUi(Main);
 
         informationStack.setCurrentIndex(0);
@@ -587,9 +566,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 "	background-color: rgb(213, 213, 213);\n"+
 "}", null));
         backButton.setText("");
-        menuFile.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "File", null));
-        menuOptions.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Options", null));
-        menuHelp.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Help", null));
         dockWidget.setWindowTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Messages", null));
         all.setHtml(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+

@@ -15,9 +15,9 @@ import com.trolltech.qt.gui.QMessageBox.StandardButtons;
 
 public class MissionControlView extends QWidget implements ScreenView {
 
-	public Signal1<String> missionRunRequest = new Signal1<String>();
-	
-	private static class Session {
+    AUV auv;
+        
+    private static class Session {
         // an editor session consists of a file (the model data model)
         // and the editor area (the view and control for the model)
 
@@ -41,8 +41,12 @@ public class MissionControlView extends QWidget implements ScreenView {
             SessionManager.registerSession(this);
         }
 
+        public String getContents(){
+            return area.document().toPlainText();
+        }
+        
         public void save() throws FileNotFoundException, IOException {
-            file.writeFile(area.document().toPlainText());
+            file.writeFile(this.getContents());
             modified = false;
         }
 
@@ -99,7 +103,7 @@ public class MissionControlView extends QWidget implements ScreenView {
         public static Session getSession(QTextEdit area) {
             return editorMap.get(area);
         }
-
+        
         public static boolean sessionExists(MissionFile file) {
             return fileMap.containsKey(file.toString());
         }
@@ -134,6 +138,7 @@ public class MissionControlView extends QWidget implements ScreenView {
         ui.saveButton.clicked.connect(this, "saveMissionFile()");
         ui.saveAsButton.clicked.connect(this, "saveAsMissionFile()");
 		ui.openFiles.tabCloseRequested.connect(this, "closeFile(int)");
+		ui.startMission.clicked.connect(this, "runMission()");
     }
 
     
@@ -283,14 +288,28 @@ public class MissionControlView extends QWidget implements ScreenView {
         }
     }
     
+    public void runMission(){
+        // if we don't have a session open and focused then there's nothing
+        // to do, so return
+        if (auv == null || !(ui.openFiles.currentWidget() instanceof QTextEdit)) {
+            return;
+        }
+
+        // if a session exists for this file and the session hasn't been saved
+        // or loaded from a file already then the user has to pick a name
+        // for the file
+        QTextEdit editor = (QTextEdit) ui.openFiles.currentWidget();
+        Session session = SessionManager.getSession(editor);
+        auv.runMission(session.getContents());
+    }
+    
     public void onConnect(AUV auv){
-    	
+        this.auv = auv;
     }
     
     @Override
     public void onDisconnect(AUV auv) {
-        // TODO Auto-generated method stub
-        
+        auv = null;
     }
     
 	@Override

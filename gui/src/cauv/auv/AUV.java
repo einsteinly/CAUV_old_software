@@ -284,11 +284,11 @@ public class AUV extends QSignalEmitter {
 
         public Vector<T> messages = new Vector<T>();
 
-        public Signal1<T> messageLogged = new Signal1<T>();
+        public Signal1<String> messageLogged = new Signal1<String>();
 
         public void log(T message) {
             messages.add(message);
-            messageLogged.emit(message);
+            messageLogged.emit(message.toString());
         }
 
         public Vector<T> getErrorMessages() {
@@ -316,12 +316,19 @@ public class AUV extends QSignalEmitter {
     public Signal1<floatYPR> orientationChanged = new Signal1<floatYPR>();
     protected floatYPR orientation = new floatYPR();
     public Signal1<Float> depthChanged = new Signal1<Float>();
+    public Signal1<Integer> debugLevelChanged = new Signal1<Integer>();
+    public Signal1<String> runMissionRequested = new Signal1<String>();
+    public int debugLevel = 0;
     protected float depth = 0.0f;
 
     public AUV(String address, int port) throws UnknownHostException, IOException {
         controller = new CommunicationController(this, address, port);
     }
 
+    public CommunicationController getController() {
+        return controller;
+    }
+    
     public void regsiterConnectionStateObserver(ConnectionStateObserver o) {
         controller.messages.addConnectionStateObserver(o);
     }
@@ -331,15 +338,38 @@ public class AUV extends QSignalEmitter {
         orientationChanged.emit(orientation);
     }
 
+    public void setDebugLevel(int level){
+        this.debugLevel = level;
+        debugLevelChanged.emit(level);
+    }
+    
+    public int getDebugLevel() {
+        return debugLevel;
+    }
+    
     public floatYPR getOrientation() {
         return orientation;
     }
     
-    protected void setDepth(float depth) {
+    public void runMission(String mission){
+        runMissionRequested.emit(mission);
+    }
+    
+    public void setDepth(float depth) {
         this.depth = depth;
         depthChanged.emit(depth);
     }
+    
+    public void calibrateDepth(float depth){
+        setDepth(depth);
+    }
 
+    public void updateDepth(float depth){
+        this.controller.disable();
+        this.setDepth(depth);
+        this.controller.enable();
+    }
+    
     public float getDepth() {
         return depth;
     }

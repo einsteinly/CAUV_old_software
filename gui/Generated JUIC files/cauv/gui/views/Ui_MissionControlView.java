@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'MissionControlView.jui'
 **
-** Created: Wed 5. May 15:47:53 2010
+** Created: Mon 28. Jun 11:29:15 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -22,6 +22,7 @@ public class Ui_MissionControlView implements com.trolltech.qt.QUiForm<QWidget>
     public QPushButton saveButton;
     public QPushButton saveAsButton;
     public QSpacerItem horizontalSpacer;
+    public QPushButton startMission;
     public QTabWidget openFiles;
     public QWidget tab;
     public QVBoxLayout verticalLayout_2;
@@ -77,6 +78,11 @@ public class Ui_MissionControlView implements com.trolltech.qt.QUiForm<QWidget>
         horizontalSpacer = new QSpacerItem(40, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
 
         horizontalLayout.addItem(horizontalSpacer);
+
+        startMission = new QPushButton(widget);
+        startMission.setObjectName("startMission");
+
+        horizontalLayout.addWidget(startMission);
 
 
         verticalLayout.addWidget(widget);
@@ -171,6 +177,7 @@ public class Ui_MissionControlView implements com.trolltech.qt.QUiForm<QWidget>
         saveButton.setText("");
         saveAsButton.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("MissionControlView", "Save As", null));
         saveAsButton.setText("");
+        startMission.setText(com.trolltech.qt.core.QCoreApplication.translate("MissionControlView", "Run Mission", null));
         label.setText(com.trolltech.qt.core.QCoreApplication.translate("MissionControlView", "Open or create a file to use the mission editor.", null));
         openFiles.setTabText(openFiles.indexOf(tab), "");
     } // retranslateUi
