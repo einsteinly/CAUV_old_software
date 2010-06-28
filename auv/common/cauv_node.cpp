@@ -97,16 +97,17 @@ int CauvNode::parseOptions(int argc, char** argv)
 {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
+    po::positional_options_description pos;
     
-    addOptions(desc);
+    addOptions(desc, pos);
     
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
     po::notify(vm);
 
     return useOptionsMap(vm, desc);
 }
-void CauvNode::addOptions(boost::program_options::options_description& desc)
+void CauvNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
 {
     namespace po = boost::program_options;
     desc.add_options()

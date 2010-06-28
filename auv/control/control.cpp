@@ -99,7 +99,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
     public:
         ControlLoops()
         {
-            const MotorDemand no_demand = {0};
+            const MotorDemand no_demand = {0,0,0,0,0};
             for(int i = 0; i < NumControls; i++)
             {
                 m_controlenabled[i] = false;
@@ -239,7 +239,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
     private:
         void updateMotorControl()
         {
-            MotorDemand total_demand = {0};
+            MotorDemand total_demand = {0,0,0,0,0};
             for(int i = 0; i < NumControls; i++)
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
@@ -320,10 +320,10 @@ void ControlNode::setXsens(int id)
     }
 }
 
-void ControlNode::addOptions(boost::program_options::options_description& desc)
+void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
 {
     namespace po = boost::program_options;
-    CauvNode::addOptions(desc);
+    CauvNode::addOptions(desc, pos);
     
     desc.add_options()
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")

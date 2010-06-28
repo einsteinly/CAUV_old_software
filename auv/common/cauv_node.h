@@ -14,6 +14,7 @@
 namespace boost {
 namespace program_options {
     class options_description;
+    class positional_options_description;
     class variables_map;
 };
 };
@@ -44,7 +45,7 @@ class CauvNode
         CauvNode(const std::string& name);
             
 		virtual void onRun();
-        virtual void addOptions(boost::program_options::options_description& desc);
+        virtual void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
         virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
     
     private:

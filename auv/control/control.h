@@ -27,7 +27,7 @@ class ControlNode : public CauvNode
     
         boost::thread m_aliveThread;
 
-        virtual void addOptions(boost::program_options::options_description& desc);
+        virtual void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
         virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
         virtual void onRun();
 };

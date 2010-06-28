@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <common/cauv_node.h>
+#include <common/messages_fwd.h>
 #include <camera/camera.h>
 
 class SpreadCameraObserver;
@@ -11,13 +12,21 @@ class SpreadCameraObserver;
 class WebcamNode : public CauvNode
 {
     public:
-        WebcamNode(const CameraID::e camera_id, const int device_id);
+        WebcamNode();
 
-        void onRun();
-    
+        void setCameraID(CameraID::e cameraID);
+        void setDeviceID(int deviceID);
+
     protected:
+        CameraID::e m_cameraID;
+        int m_deviceID;
         boost::shared_ptr<Camera> m_camera;
         boost::shared_ptr<SpreadCameraObserver> m_cam_observer;
+        
+        virtual void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
+        virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
+        
+        virtual void onRun();
 };
 
 #endif//__WEBCAM_NODE_H__
