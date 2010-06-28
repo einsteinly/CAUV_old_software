@@ -35,7 +35,7 @@ class PipelineWidget: public QGLWidget,
         friend class MouseEvent;
 
     public:
-        PipelineWidget(QWidget *parent = 0);
+        PipelineWidget(QWidget *parent = 0, int argc = 0, char** argv = NULL);
     
         QSize minimumSizeHint() const;        
         QSize sizeHint() const;
