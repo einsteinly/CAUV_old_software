@@ -135,7 +135,7 @@ group control
     message BearingAutopilotEnabled : 60
     {
         enabled : bool;
-        target : uint16;
+        target : float;
     }
     message BearingAutopilotParams : 70
     {
@@ -148,7 +148,7 @@ group control
     message DepthAutopilotEnabled : 61
     {
         enabled : bool;
-        target : uint16;
+        target : float;
     }
     message DepthAutopilotParams : 71
     {
@@ -158,10 +158,16 @@ group control
         scale : float;
     }
 
+    message DepthCalibration : 80
+    {
+        foreMultiplier : float;
+        aftMultiplier : float;
+    }
+
     message PitchAutopilotEnabled : 62
     {
         enabled : bool;
-        target : int16;
+        target : float;
     }
     message PitchAutopilotParams : 72
     {

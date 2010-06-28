@@ -6,13 +6,16 @@ if ! [ python.configured ]
     using python ;
 }
 
+local BOOST_SOURCE_PATH = /home/cauv/source/boost_1_42_0 ;
+local CAUV_PREFIX = /usr/local ;
+
 use-project boost
-  : /tmp/jc593/boost/boost_1_43_0 ;
+  : $(BOOST_SOURCE_PATH) ;
 
 project
   : requirements <include>../
-                 <include>/tmp/jc593/boost/boost_1_43_0
-                 <include>/societies/cauv/install/include/
+                 <include>$(BOOST_SOURCE_PATH)
+                 <include>$(CAUV_PREFIX)/include/
                  <library>/boost/python//boost_python
                  <library>/boost/thread//boost_thread
                  <library>/boost/serialization//boost_serialization
@@ -21,12 +24,12 @@ project
                  <library>/boost/program_options//boost_program_options
   : build-dir $BJAM_BUILD_DIR ;
 
-lib cvlib : : <name>cv <search>/societies/cauv/install/lib ;
-lib highguilib : : <name>highgui <search>/societies/cauv/install/lib ;
+lib cvlib : : <name>cv <search>$(CAUV_PREFIX)/lib ;
+lib highguilib : : <name>highgui <search>$(CAUV_PREFIX)/lib ;
 
-lib spreadlib : : <name>spread <search>/societies/cauv/install/lib ;
+lib spreadlib : : <name>spread <search>$(CAUV_PREFIX)/lib ;
 
-lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>/societies/cauv/install/lib ;
+lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>$(CAUV_PREFIX)/lib ;
 
 lib bpolib : : <name>boost_program_options <search>/societies/cauv/install/lib/ ;
 

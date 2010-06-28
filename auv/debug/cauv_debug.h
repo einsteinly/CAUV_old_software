@@ -74,7 +74,6 @@ class SmartStreamBase : public boost::noncopyable
         virtual ~SmartStreamBase();
 
         static void setLevel(int debug_level);
-        static int parseOptions(int argc, char** argv);
 
     protected:
         struct Settings{

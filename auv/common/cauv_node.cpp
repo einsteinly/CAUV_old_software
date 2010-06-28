@@ -2,6 +2,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
 
 #include <common/messages_fwd.h>
 #include <common/cauv_global.h> 
@@ -23,7 +24,8 @@ CauvNode::~CauvNode()
 void CauvNode::run()
 {
 	cauv_global::print_module_header(m_name);
-    
+
+    m_mailbox->connect(m_server, m_name);
     m_event_monitor->startMonitoring();
 
     onRun();
@@ -89,10 +91,45 @@ struct DBGLevelObserver: MessageObserver
         debug::setLevel(m->level());
     }
 };
+    
 
-CauvNode::CauvNode(const std::string& name, const char* host)
+int CauvNode::parseOptions(int argc, char** argv)
+{
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    
+    addOptions(desc);
+    
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    return useOptionsMap(vm, desc);
+}
+void CauvNode::addOptions(boost::program_options::options_description& desc)
+{
+    namespace po = boost::program_options;
+    desc.add_options()
+        ("help,h", "Print this help message")
+        ("server,s", po::value<std::string>(&m_server)->default_value("16707@localhost"), "Server address for messages")
+        ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
+    ;
+}
+int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
+{
+    if(vm.count("help"))
+    {
+        std::cout << desc;
+        return 1;
+    }
+    return 0;
+}
+
+
+
+CauvNode::CauvNode(const std::string& name)
     : m_name(name),
-      m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>(host, name)),
+      m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
       m_event_monitor(boost::make_shared<MailboxEventMonitor>(m_mailbox)),
       m_mailbox_monitor(boost::make_shared<MsgSrcMBMonitor>())
 {

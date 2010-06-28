@@ -48,7 +48,6 @@ class InputNode: public Node{
                 m_processed_latest = false;
                 m_latest_image_msg = m;
                 setAllowQueue();
-                checkAddSched();
             }else{
                 ignored++;
             }
@@ -59,7 +58,7 @@ class InputNode: public Node{
          */
         void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
             lock_t l(m_counters_lock);
-            debug() << "Input node received an image";
+            debug() << "Input node received sonar data";
             if(subscriptions().count(SonarData)){
                 lock_t l(m_latest_msg_lock);
                 if(!m_processed_latest)
@@ -67,7 +66,6 @@ class InputNode: public Node{
                 m_processed_latest = false;
                 m_latest_sonardata_msg = m;
                 setAllowQueue();
-                checkAddSched();
             }else{
                 ignored++;
             }
@@ -84,7 +82,7 @@ class InputNode: public Node{
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */
-        virtual bool isInputNode() throw() { return true; }
+        virtual bool isInputNode() const { return true; }
     
     protected:
         boost::shared_ptr<const ImageMessage> latestImageMsg(){

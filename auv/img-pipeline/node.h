@@ -194,12 +194,12 @@ class Node{
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */
-        virtual bool isInputNode() const throw() { return false; }
+        virtual bool isInputNode() const { return false; }
         
        /* output nodes ignore m_output_demanded: they always execute whenever
         * there is new input.
         */
-        virtual bool isOutputNode() const throw() { return false; }
+        virtual bool isOutputNode() const { return false; }
 
     protected:
         /* Derived classes override this to do whatever image processing it is

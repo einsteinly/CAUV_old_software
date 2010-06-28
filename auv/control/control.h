@@ -17,6 +17,9 @@ class ControlNode : public CauvNode
         ControlNode();
         virtual ~ControlNode();
     
+        void setMCB(int id);
+        void setXsens(int id);
+    
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
         boost::shared_ptr<XsensIMU> m_xsens;
@@ -24,6 +27,8 @@ class ControlNode : public CauvNode
     
         boost::thread m_aliveThread;
 
+        virtual void addOptions(boost::program_options::options_description& desc);
+        virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
         virtual void onRun();
 };
 

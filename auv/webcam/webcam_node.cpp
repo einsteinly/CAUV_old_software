@@ -105,7 +105,7 @@ void interrupt(int sig)
 
 int main(int argc, char **argv)
 {
-    if(debug::parseOptions(argc, argv))
+    if(node->parseOptions(argc, argv))
         return 0;
 
 /*

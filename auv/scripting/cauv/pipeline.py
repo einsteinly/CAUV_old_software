@@ -140,9 +140,9 @@ class Model(messaging.BufferedMessageObserver):
         fr = messaging.NodeOutput()
         fr.node = src
         fr.output = out
-        # TODO!!!!!!
+        # TODO: type is currently ignored by pipeline when adding arcs: type is
+        # checked anyway, and incorrect type rejected.
         fr.type = messaging.OutputType.Image
-        # !!!!!!
         to = messaging.NodeInput()
         to.node = dst
         to.input = inp

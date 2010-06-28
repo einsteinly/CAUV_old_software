@@ -21,7 +21,7 @@ using ssrc::spread::GroupList;
 const ConnectionTimeout SpreadMailbox::ZERO_TIMEOUT;
 
 
-SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalConnectionName,
+void SpreadMailbox::connect(const string &portAndHost, const string &internalConnectionName,
                   const bool shouldReceiveMembershipMessages, const ConnectionTimeout &timeout,
                   const MailboxPriority priority) {
     // ssrc spread doesn't validate this!
@@ -30,11 +30,14 @@ SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalCo
     }
 
     try {
+        debug() << "Attempting to connect to"
+               << portAndHost << "as"
+               << internalConnectionName;
         m_ssrcMailbox = shared_ptr<Mailbox>(
             new Mailbox(portAndHost, internalConnectionName, shouldReceiveMembershipMessages,
                         timeout, (Mailbox::Priority)priority) );
-        info() << "Successfully created spread mailbox:"
-               << portAndHost << ":"
+        info() << "Successfully created spread mailbox. Connected to"
+               << portAndHost << "as"
                << internalConnectionName;
     } catch(Error& e) {
         handleSpreadError(e);

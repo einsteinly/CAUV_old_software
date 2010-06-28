@@ -1,0 +1,5 @@
+This is the code that runs on the mbed (www.mbed.org) microcontroller that runs
+the battery management code. 
+
+See also http://hugovincent.com/projects/battery-management-system/
+(If necessary, login with cauv/cauv).

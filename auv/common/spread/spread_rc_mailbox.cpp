@@ -5,6 +5,7 @@
 #include <set>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/thread_time.hpp>
 #include <boost/utility.hpp>
@@ -40,13 +41,7 @@ class ErrOnExit: boost::noncopyable{
 };
 
 
-ReconnectingSpreadMailbox::ReconnectingSpreadMailbox(
-    std::string const& portAndHost,
-    std::string const& privConnectionName,
-    bool recvMembershipMessages,
-    ConnectionTimeout const& timeout,
-    SpreadMailbox::MailboxPriority priority
-) : m_ci(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority),
+ReconnectingSpreadMailbox::ReconnectingSpreadMailbox() :
     m_connection_state_lock(),
     m_connection_state(DISCONNECTED),
     m_mailbox(),
@@ -55,12 +50,24 @@ ReconnectingSpreadMailbox::ReconnectingSpreadMailbox(
     m_groups_lock(),
     m_groups()
 {
-    _asyncConnect();
 }
 
 ReconnectingSpreadMailbox::~ReconnectingSpreadMailbox() {
     m_keep_trying = false;
     if(m_thread.joinable()) m_thread.join();
+}
+
+void ReconnectingSpreadMailbox::connect(
+    std::string const& portAndHost,
+    std::string const& privConnectionName,
+    bool recvMembershipMessages,
+    ConnectionTimeout const& timeout,
+    SpreadMailbox::MailboxPriority priority
+)
+{
+    _disconnect();
+    m_ci = ConnectionInfo(portAndHost, privConnectionName, recvMembershipMessages, timeout, priority);
+    _asyncConnect();
 }
 
 /**
@@ -229,13 +236,12 @@ void ReconnectingSpreadMailbox::operator()(){
     int retry_msecs = min_retry_msecs;
     for(;m_keep_trying;){ 
         try {
-            m_mailbox = boost::shared_ptr<SpreadMailbox>(
-                 new SpreadMailbox(m_ci.portAndHost,
-                                   m_ci.privConnectionName,
-                                   m_ci.recvMembershipMessages,
-                                   m_ci.timeout,
-                                   m_ci.priority)
-            );
+            m_mailbox = boost::make_shared<SpreadMailbox>();
+            m_mailbox->connect(m_ci.portAndHost,
+                               m_ci.privConnectionName,
+                               m_ci.recvMembershipMessages,
+                               m_ci.timeout,
+                               m_ci.priority);
             // yay, finally
             _doOnConnected();
             return;

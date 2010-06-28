@@ -50,30 +50,6 @@ void SmartStreamBase::setLevel(int debug_level)
     settings().debug_level = debug_level;
 }
 
-int SmartStreamBase::parseOptions(int argc, char** argv)
-{
-    namespace po = boost::program_options;
-    po::options_description desc("Allowed options");
-    // isn't overloading wonderful...
-    desc.add_options()
-        ("help", "produce help message")
-        ("verbose,v", po::value<int>(), "set the verbosity of debug messages")
-    ;
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-    if(vm.count("help"))
-    {
-        std::cout << desc;
-        return 1;
-    }
-    if(vm.count("verbose"))
-    {
-        setLevel(vm["verbose"].as<unsigned int>());
-    }
-    return 0;
-}
-
 void SmartStreamBase::printPrefix(std::ostream&)
 {
 }
