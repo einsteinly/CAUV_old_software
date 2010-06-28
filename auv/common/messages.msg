@@ -158,6 +158,12 @@ group control
         scale : float;
     }
 
+    message DepthCalibration : 80
+    {
+        foreMultiplier : float;
+        aftMultiplier : float;
+    }
+
     message PitchAutopilotEnabled : 62
     {
         enabled : bool;

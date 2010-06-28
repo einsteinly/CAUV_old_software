@@ -86,12 +86,25 @@ struct PIDControl
     }
 };
 
+// TODO: move to cauv_utils: clashes with clamp in gui-pipeline at the
+// moment
+template<typename T1, typename T2, typename T3>
+inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
+    return (a < low)? low : ((a < high)? a : high);
+}
+
 class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
-        ControlLoops() :
-                m_bearingenabled(false)
+        ControlLoops()
         {
+            const MotorDemand no_demand = {0};
+            for(int i = 0; i < NumControls; i++)
+            {
+                m_controlenabled[i] = false;
+                m_controllers[i].reset();
+                m_demand[i] = no_demand;
+            }
         }
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
@@ -100,52 +113,141 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         virtual void onTelemetry(const floatYPR& attitude)
         {
-            if (m_bearingenabled) {
-                float mv = m_bearingcontrol.getMV(attitude.yaw);
-                debug(2) << "MV = " << mv;
-                if (now().secs - lastMotorMessage.secs > motorTimeout) {
-                    // Do motor control
-                    int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
+            if (m_controlenabled[Bearing]) {
+                float mv = m_controllers[Bearing].getMV(attitude.yaw);
+                debug(2) << "Bearing Control: MV = " << mv;
+                m_demand[Bearing].hbow = mv;
+                m_demand[Bearing].hstern = -mv;
+            }
+            
+            if (m_controlenabled[Pitch]) {
+                float mv = m_controllers[Pitch].getMV(attitude.pitch);
+                debug(2) << "Pitch Control: MV = " << mv;
+                m_demand[Pitch].vbow = -mv;
+                m_demand[Pitch].vstern = mv;
+            }
 
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, speed));
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, -speed));
-                }
+            updateMotorControl();
+        }
+
+        virtual void onPressureMessage(PressureMessage_ptr m)
+        {
+            if (m_controlenabled[Depth] && m_depthCalibration){
+                float depth = 0.5 * (m_depthCalibration->foreMultiplier() * m->fore() +
+                                     m_depthCalibration->aftMultiplier() * m->aft());
+                float mv = m_controllers[Depth].getMV(depth);
+                debug(2) << "depth =" << depth << "mv =" << mv;
+                updateMotorControl();
             }
         }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
-        TimeStamp lastMotorMessage;
-        static const int motorTimeout = 2;
+        DepthCalibrationMessage_ptr m_depthCalibration;
         
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
-            debug(2) << "Forwarding motor message";
-            lastMotorMessage = now();
+            debug(2) << "Set manual motor demand based on motor message:" << *m;
             m_mcb->send(m);
         }
 
+        enum Control{ Bearing, Pitch, Depth, ManualOverride, NumControls };
 
-        bool m_bearingenabled;
-        PIDControl m_bearingcontrol;
+        struct MotorDemand
+        {
+            float prop;
+            float hbow;
+            float hstern;
+            float vbow;
+            float vstern;
+            
+            MotorDemand operator+=(MotorDemand const& r){
+                prop += r.prop;
+                hbow += r.hbow;
+                hstern += r.hstern;
+                vbow += r.vbow;
+                vstern += r.vstern;
+                return *this;
+            }
+        };
+        
+        bool m_controlenabled[NumControls];
+        PIDControl m_controllers[NumControls];
+        MotorDemand m_demand[NumControls];
         
         virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
         {
             if (m->enabled()) {
-                m_bearingenabled = true;
-                m_bearingcontrol.reset();
-                m_bearingcontrol.target = m->target();
+                m_controlenabled[Bearing] = true;
+                m_controllers[Bearing].reset();
+                m_controllers[Bearing].target = m->target();
             }
             else {
-                m_bearingenabled = false;
+                m_controlenabled[Bearing] = false;
             }
         }
         virtual void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr m)
         {
-            m_bearingcontrol.Kp = m->Kp();
-            m_bearingcontrol.Ki = m->Ki();
-            m_bearingcontrol.Kd = m->Kd();
-            m_bearingcontrol.scale = m->scale();
+            m_controllers[Bearing].Kp = m->Kp();
+            m_controllers[Bearing].Ki = m->Ki();
+            m_controllers[Bearing].Kd = m->Kd();
+            m_controllers[Bearing].scale = m->scale();
+        }
+
+        virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
+        {
+            if (m->enabled()) {
+                m_controlenabled[Pitch] = true;
+                m_controllers[Pitch].reset();
+                m_controllers[Pitch].target = m->target();
+            }
+            else {
+                m_controlenabled[Pitch] = false;
+            }
+        }
+        virtual void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr m)
+        {
+            m_controllers[Pitch].Kp = m->Kp();
+            m_controllers[Pitch].Ki = m->Ki();
+            m_controllers[Pitch].Kd = m->Kd();
+            m_controllers[Pitch].scale = m->scale();
+        }
+
+        virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
+        {
+            if (m->enabled()) {
+                if (!m_depthCalibration) {
+                    warning() << "depth control will not be effective until calibration factors are set";
+                }
+                m_controlenabled[Depth] = true;
+                m_controllers[Depth].reset();
+                m_controllers[Depth].target = m->target();
+            }
+            else {
+                m_controlenabled[Depth] = false;
+            }
+        }
+        virtual void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr m)
+        {
+            m_controllers[Depth].Kp = m->Kp();
+            m_controllers[Depth].Ki = m->Ki();
+            m_controllers[Depth].Kd = m->Kd();
+            m_controllers[Depth].scale = m->scale();
+        }
+
+    private:
+        void updateMotorControl()
+        {
+            MotorDemand total_demand = {0};
+            for(int i = 0; i < NumControls; i++)
+                if(m_controlenabled[i])
+                    total_demand += m_demand[i];
+            
+            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, clamp(-127, total_demand.prop, 127)));
+            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, clamp(-127, total_demand.hbow, 127)));
+            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, clamp(-127, total_demand.vbow, 127)));
+            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, clamp(-127, total_demand.hstern, 127)));
+            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, clamp(-127, total_demand.vstern, 127)));
         }
 };
 
