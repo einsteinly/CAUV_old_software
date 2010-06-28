@@ -385,6 +385,24 @@ class ControlLoops : public MessageObserver, public XsensObserver
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
 
+class MCBForwardingObserver : public MessageObserver
+{
+    public:
+        MCBForwardingObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
+        {
+        }
+
+        virtual void onPressureMessage(PressureMessage_ptr m)
+        {
+            m_mb->sendMessage(m, UNRELIABLE_MESS);
+        }
+        virtual void onDebugMessage(DebugMessage_ptr m)
+        {
+            m_mb->sendMessage(m, SAFE_MESS);
+        }
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+};
 
 class NotRootException : public std::exception
 {
@@ -489,6 +507,7 @@ void ControlNode::onRun()
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
         m_mcb->addObserver(boost::make_shared<DebugMessageObserver>(2));
+        m_mcb->addObserver(boost::make_shared<MCBForwardingObserver>(mailbox()));
         m_mcb->addObserver(m_controlLoops);
         
         m_mcb->start();
