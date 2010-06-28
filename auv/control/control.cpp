@@ -166,6 +166,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 m_mb->sendMessage(msg, SAFE_MESS);
             }
             m_controllers[Controller::Bearing].is_angle = true;
+            m_controlenabled[Controller::ManualOverride] = true;
         }
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
@@ -307,13 +308,18 @@ class ControlLoops : public MessageObserver, public XsensObserver
             for(int i = 0; i < Controller::NumValues; i++)
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
-            
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, clamp(-127, total_demand.prop, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, clamp(-127, total_demand.hbow, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, clamp(-127, total_demand.vbow, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, clamp(-127, total_demand.hstern, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, clamp(-127, total_demand.vstern, 127)));
-            
+
+            if (m_mcb)
+            {
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, clamp(-127, total_demand.prop, 127)));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, clamp(-127, total_demand.hbow, 127)));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, clamp(-127, total_demand.vbow, 127)));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, clamp(-127, total_demand.hstern, 127)));
+                m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, clamp(-127, total_demand.vstern, 127)));
+            }
+            else {
+                warning() << "MCB not connected, cannot send motor messages";
+            }
             m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
         }
 
