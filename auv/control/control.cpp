@@ -222,7 +222,17 @@ class ControlLoops : public MessageObserver, public XsensObserver
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
             debug(2) << "Set manual motor demand based on motor message:" << *m;
-            m_mcb->send(m);
+            
+            switch(m->MotorID)
+            {
+                case MotorID::Prop: m_demand[ManualOverride].prop = m->speed;
+                case MotorID::HBow: m_demand[ManualOverride].hbow = m->speed;
+                case MotorID::HStern: m_demand[ManualOverride].hstern = m->speed;
+                case MotorID::VBow: m_demand[ManualOverride].vbow = m->speed;
+                case MotorID::VStern: m_demand[ManualOverride].vstern = m->speed;
+            }
+            
+            updateMotorControl();
         }
 
         
