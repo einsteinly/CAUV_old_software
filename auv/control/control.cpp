@@ -153,24 +153,28 @@ class ControlLoops : public MessageObserver, public XsensObserver
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
             : m_mb(mb)
         {
-            const MotorDemand no_demand = {0,0,0,0,0};
-            for(int i = 0; i < Controller::NumValues; i++)
-            {
-                m_controlenabled[i] = false;
-                m_controllers[i].reset();
-                m_controllers[i].controlee = (Controller::e)i;
-                m_demand[i] = no_demand;
-                
-                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
-                msg->demand(m_demand[i]);
-                m_mb->sendMessage(msg, SAFE_MESS);
-            }
-            m_controllers[Controller::Bearing].is_angle = true;
-            m_controlenabled[Controller::ManualOverride] = true;
         }
+        ~ControlLoops()
+        {
+            stop();
+        }
+
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
             m_mcb = mcb;
+        }
+
+        void start()
+        {
+            stop();
+            m_motorControlLoopThread = boost::thread(&ControlLoops::motorControlLoop, this);
+        }
+        void stop()
+        {
+            if (m_motorControlLoopThread.get_id() != boost::thread::id()) {
+                m_motorControlLoopThread.interrupt();    
+                m_motorControlLoopThread.join();    
+            }
         }
 
         virtual void onTelemetry(const floatYPR& attitude)
@@ -302,8 +306,44 @@ class ControlLoops : public MessageObserver, public XsensObserver
         }
 
     private:
+        boost::thread m_motorControlLoopThread;
+        
+        void motorControlLoop()
+        {
+            debug() << "Control loop thread started";
+            try {
+                const MotorDemand no_demand = {0,0,0,0,0};
+                for(int i = 0; i < Controller::NumValues; i++)
+                {
+                    m_controlenabled[i] = false;
+                    m_controllers[i].reset();
+                    m_controllers[i].controlee = (Controller::e)i;
+                    m_demand[i] = no_demand;
+                    
+                    boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
+                    msg->demand(m_demand[i]);
+                    m_mb->sendMessage(msg, SAFE_MESS);
+                }
+                m_controllers[Controller::Bearing].is_angle = true;
+                m_controlenabled[Controller::ManualOverride] = true;
+                
+                while(!boost::this_thread::interruption_requested())
+                {
+                    boost::this_thread::interruption_point();
+                    updateMotorControl();
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(200));
+                }
+
+            } catch (boost::thread_interrupted&) {
+                debug() << "Control loop thread interrupted";
+            }
+            debug() << "Control loop thread exiting";
+        }
+        
         void updateMotorControl()
         {
+            // TODO: This may need a lock. Maybe not, reading/writing ints is atomic.
+            
             MotorDemand total_demand = {0,0,0,0,0};
             for(int i = 0; i < Controller::NumValues; i++)
                 if(m_controlenabled[i])
@@ -447,6 +487,8 @@ void ControlNode::onRun()
     else {
         warning() << "Xsens not connected. Telemetry not available.";
     }
+
+    m_controlLoops->start();
 }
 
 static ControlNode* node;
