@@ -44,7 +44,7 @@ public class GuiImageMessage extends Message {
         super(24, "pl_gui");
     }
 
-    public GuiImageMessage(int nodeId, Image image) {
+    public GuiImageMessage(Integer nodeId, Image image) {
         super(24, "pl_gui");
         this.nodeId = nodeId;
         this.image = image;

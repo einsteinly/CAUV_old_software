@@ -54,7 +54,7 @@ public class OutputStatusMessage extends Message {
         super(23, "pl_gui");
     }
 
-    public OutputStatusMessage(int nodeId, String outputId, NodeIOStatus status) {
+    public OutputStatusMessage(Integer nodeId, String outputId, NodeIOStatus status) {
         super(23, "pl_gui");
         this.nodeId = nodeId;
         this.outputId = outputId;

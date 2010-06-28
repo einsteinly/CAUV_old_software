@@ -35,7 +35,7 @@ public class RemoveNodeMessage extends Message {
         super(6, "pipeline");
     }
 
-    public RemoveNodeMessage(int nodeId) {
+    public RemoveNodeMessage(Integer nodeId) {
         super(6, "pipeline");
         this.nodeId = nodeId;
     }

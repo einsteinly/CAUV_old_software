@@ -35,7 +35,7 @@ public class NodeRemovedMessage extends Message {
         super(16, "pl_gui");
     }
 
-    public NodeRemovedMessage(int nodeId) {
+    public NodeRemovedMessage(Integer nodeId) {
         super(16, "pl_gui");
         this.nodeId = nodeId;
     }

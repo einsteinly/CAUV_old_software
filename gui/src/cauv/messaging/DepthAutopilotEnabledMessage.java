@@ -21,7 +21,7 @@ public class DepthAutopilotEnabledMessage extends Message {
         return this.enabled;
     }
 
-    public void target(int target){
+    public void target(float target){
         this.target = target;
     }
     public float target(){
@@ -44,7 +44,7 @@ public class DepthAutopilotEnabledMessage extends Message {
         super(61, "control");
     }
 
-    public DepthAutopilotEnabledMessage(boolean enabled, Float target) {
+    public DepthAutopilotEnabledMessage(Boolean enabled, Float target) {
         super(61, "control");
         this.enabled = enabled;
         this.target = target;
@@ -61,6 +61,6 @@ public class DepthAutopilotEnabledMessage extends Message {
         }
 
         this.enabled = s.readBoolean();
-        this.target = s.readUnsignedShort();
+        this.target = s.readFloat();
     }
 }

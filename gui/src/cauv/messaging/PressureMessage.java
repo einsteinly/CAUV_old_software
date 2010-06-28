@@ -44,7 +44,7 @@ public class PressureMessage extends Message {
         super(50, "pressure");
     }
 
-    public PressureMessage(int fore, int aft) {
+    public PressureMessage(Integer fore, Integer aft) {
         super(50, "pressure");
         this.fore = fore;
         this.aft = aft;

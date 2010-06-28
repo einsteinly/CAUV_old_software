@@ -26,6 +26,8 @@ auv/common/messages_fwd.h
 auv/common/messages_messages.h
 auv/common/messages.h
 auv/common/cauv_logo_large.h
+gui-pipeline/pipeline-widget/moc_pipelineWidget.cxx
+gui-pipeline/pipeline-widget/moc_pipelineWidgetPlugin.cxx
 auv/lib/libssrcspread-1.0.4/config.h.in
 auv/lib/libssrcspread-1.0.4/configure
 auv/lib/libssrcspread-1.0.4/Makefile

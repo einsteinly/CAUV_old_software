@@ -44,7 +44,7 @@ public class StatusMessage extends Message {
         super(21, "pl_gui");
     }
 
-    public StatusMessage(int nodeId, NodeStatus status) {
+    public StatusMessage(Integer nodeId, NodeStatus status) {
         super(21, "pl_gui");
         this.nodeId = nodeId;
         this.status = status;

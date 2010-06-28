@@ -44,7 +44,7 @@ $serialiseJavaType(f.type, f.name, 2, "this.")
     #if $len($m.fields) > 0
     public ${m.name}Message(#slurp
                             #for i, f in $enumerate($m.fields)
-#*                         *#$toJavaType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
+#*                         *#$toJavaType($f.type, 1) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                             #end for
 #*                         *#) {
         super($m.id, "${group.name}");
