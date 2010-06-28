@@ -256,7 +256,7 @@ void Module::sendLoop()
             boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
             
             boost::shared_ptr<const Message> message = m_sendQueue.popWait();
-            debug(3) << "Module sending popped a message off the send queue: " << *message;
+            debug(3) << "Module sending popped a message off the send queue (" << m_sendQueue.size() << "remain)" << *message;
             boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
 
             uint32_t startWord = 0xdeadc01d;

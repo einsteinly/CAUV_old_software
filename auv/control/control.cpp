@@ -48,12 +48,16 @@ class DebugXsensObserver : public XsensObserver
 
 struct PIDControl
 {
+    Controller::e controlee;
     double target;
     double Kp,Ki,Kd,scale;
-    double integral, previous_error;
+    double integral, previous_error, previous_derror, previous_mv;
     TimeStamp previous_time;
+    bool is_angle;
 
-    PIDControl() : target(0), Kp(1), Ki(1), Kd(1), scale(1), integral(0), previous_error(0)
+    PIDControl(Controller::e controlee=Controller::NumValues)
+        : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
+          integral(0), previous_error(0), is_angle(false)
     {
         previous_time.secs = 0;
     }
@@ -62,13 +66,41 @@ struct PIDControl
     {
         integral = 0;
         previous_error = 0;
+        previous_derror = 0;
+        previous_mv = 0;
         previous_time.secs = 0;
+    }
+
+    static double mod(double const& d, double const& base)
+    {
+        if(d > 0) {
+            return d - base * std::floor(d / base);
+        }else{
+            return d + base * std::floor(-d / base);
+        }
+    }
+
+    virtual double getErrorAngle(double const& target, double const& current)
+    {
+        double diff = mod(target - current, 360);
+        if(diff >  180) diff -= 360;
+        if(diff < -180) diff += 360;
+        return diff;
+    }
+
+    virtual double getError(double const& target, double const& current)
+    {
+        return target - current;
     }
 
     double getMV(double current)
     {
-        double error = target - current;
-        
+        double error;
+        if(is_angle)
+            error = getErrorAngle(target, current);
+        else
+            error = getError(target, current);
+
         if (previous_time.secs == 0) {
             previous_time = now();
             previous_error = error;
@@ -76,16 +108,26 @@ struct PIDControl
         }
 
         TimeStamp tnow = now();
-        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.msecs - previous_time.msecs) / 1000; // dt is milliseconds
+        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.musecs - previous_time.musecs) / 1000; // dt is milliseconds
         previous_time = tnow;
 
         integral += error*dt;
         double de = (error-previous_error)/dt;
         previous_error = error;
+        previous_derror = de;
+        previous_mv =  scale * (Kp * error + Ki * integral + Kd * de);
 
-        return scale * (Kp * error + Ki * integral + Kd * de);        
+        return previous_mv;
+    }
+
+    boost::shared_ptr<ControllerStateMessage> stateMsg()
+    {
+        return boost::make_shared<ControllerStateMessage>(
+            controlee, previous_mv, previous_error, previous_derror, integral, MotorDemand()
+        );
     }
 };
+
 
 // TODO: move to cauv_utils: clashes with clamp in gui-pipeline at the
 // moment
@@ -94,22 +136,46 @@ inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
     return (a < low)? low : ((a < high)? a : high);
 }
 
+MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
+    l.prop += r.prop;
+    l.hbow += r.hbow;
+    l.hstern += r.hstern;
+    l.vbow += r.vbow;
+    l.vstern += r.vstern;
+    return l;
+}
+
+using namespace Controller;
+
 class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
-        ControlLoops()
+        ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+            : prop_value(-1e9), hbow_value(-1e9), vbow_value(-1e9),
+              hstern_value(-1e9), vstern_value(-1e9), m_mb(mb)
         {
-            const MotorDemand no_demand = {0};
-            for(int i = 0; i < NumControls; i++)
-            {
-                m_controlenabled[i] = false;
-                m_controllers[i].reset();
-                m_demand[i] = no_demand;
-            }
         }
+        ~ControlLoops()
+        {
+            stop();
+        }
+
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
             m_mcb = mcb;
+        }
+
+        void start()
+        {
+            stop();
+            m_motorControlLoopThread = boost::thread(&ControlLoops::motorControlLoop, this);
+        }
+        void stop()
+        {
+            if (m_motorControlLoopThread.get_id() != boost::thread::id()) {
+                m_motorControlLoopThread.interrupt();    
+                m_motorControlLoopThread.join();    
+            }
         }
 
         virtual void onTelemetry(const floatYPR& attitude)
@@ -119,6 +185,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 debug(2) << "Bearing Control: MV = " << mv;
                 m_demand[Bearing].hbow = mv;
                 m_demand[Bearing].hstern = -mv;
+               
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Bearing].stateMsg();
+                msg->demand(m_demand[Bearing]);
+                m_mb->sendMessage(msg, SAFE_MESS);
             }
             
             if (m_controlenabled[Pitch]) {
@@ -126,9 +196,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 debug(2) << "Pitch Control: MV = " << mv;
                 m_demand[Pitch].vbow = -mv;
                 m_demand[Pitch].vstern = mv;
+                
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Pitch].stateMsg();
+                msg->demand(m_demand[Pitch]);
+                m_mb->sendMessage(msg, SAFE_MESS);
             }
-
-            updateMotorControl();
         }
 
         virtual void onPressureMessage(PressureMessage_ptr m)
@@ -138,7 +210,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
                                      m_depthCalibration->aftMultiplier() * m->aft());
                 float mv = m_controllers[Depth].getMV(depth);
                 debug(2) << "depth =" << depth << "mv =" << mv;
-                updateMotorControl();
+                
+                boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
+                msg->demand(m_demand[Depth]);
+                m_mb->sendMessage(msg, SAFE_MESS);
             }
         }
     
@@ -149,32 +224,22 @@ class ControlLoops : public MessageObserver, public XsensObserver
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
             debug(2) << "Set manual motor demand based on motor message:" << *m;
-            m_mcb->send(m);
+            
+            switch(m->motorId())
+            {
+                case MotorID::Prop: m_demand[ManualOverride].prop = m->speed(); break;
+                case MotorID::HBow: m_demand[ManualOverride].hbow = m->speed(); break;
+                case MotorID::HStern: m_demand[ManualOverride].hstern = m->speed(); break;
+                case MotorID::VBow: m_demand[ManualOverride].vbow = m->speed(); break;
+                case MotorID::VStern: m_demand[ManualOverride].vstern = m->speed(); break;
+                case MotorID::NumValues: break;
+            }
         }
 
-        enum Control{ Bearing, Pitch, Depth, ManualOverride, NumControls };
-
-        struct MotorDemand
-        {
-            float prop;
-            float hbow;
-            float hstern;
-            float vbow;
-            float vstern;
-            
-            MotorDemand operator+=(MotorDemand const& r){
-                prop += r.prop;
-                hbow += r.hbow;
-                hstern += r.hstern;
-                vbow += r.vbow;
-                vstern += r.vstern;
-                return *this;
-            }
-        };
         
-        bool m_controlenabled[NumControls];
-        PIDControl m_controllers[NumControls];
-        MotorDemand m_demand[NumControls];
+        bool m_controlenabled[Controller::NumValues];
+        PIDControl m_controllers[Controller::NumValues];
+        MotorDemand m_demand[Controller::NumValues];
         
         virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr m)
         {
@@ -237,21 +302,107 @@ class ControlLoops : public MessageObserver, public XsensObserver
         }
 
     private:
+        boost::thread m_motorControlLoopThread;
+        
+        void motorControlLoop()
+        {
+            debug() << "Control loop thread started";
+            try {
+                const MotorDemand no_demand = {0,0,0,0,0};
+                for(int i = 0; i < Controller::NumValues; i++)
+                {
+                    m_controlenabled[i] = false;
+                    m_controllers[i].reset();
+                    m_controllers[i].controlee = (Controller::e)i;
+                    m_demand[i] = no_demand;
+                    
+                    boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
+                    msg->demand(m_demand[i]);
+                    m_mb->sendMessage(msg, SAFE_MESS);
+                }
+                m_controllers[Controller::Bearing].is_angle = true;
+                m_controlenabled[Controller::ManualOverride] = true;
+                
+                while(true)
+                {
+                    boost::this_thread::interruption_point();
+                    updateMotorControl();
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(200));
+                }
+
+            } catch (boost::thread_interrupted&) {
+                debug() << "Control loop thread interrupted";
+            }
+            debug() << "Control loop thread exiting";
+        }
+        
         void updateMotorControl()
         {
-            MotorDemand total_demand = {0};
-            for(int i = 0; i < NumControls; i++)
+            // TODO: This may need a lock. Maybe not, reading/writing ints is atomic. 
+            MotorDemand total_demand = {0,0,0,0,0};
+            for(int i = 0; i < Controller::NumValues; i++)
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
             
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, clamp(-127, total_demand.prop, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, clamp(-127, total_demand.hbow, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, clamp(-127, total_demand.vbow, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, clamp(-127, total_demand.hstern, 127)));
-            m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, clamp(-127, total_demand.vstern, 127)));
+            int new_prop_value = clamp(-127, total_demand.prop, 127);
+            int new_hbow_value = clamp(-127, total_demand.hbow, 127);
+            int new_vbow_value = clamp(-127, total_demand.vbow, 127);
+            int new_hstern_value = clamp(-127, total_demand.hstern, 127);
+            int new_vstern_value = clamp(-127, total_demand.vstern, 127);
+            
+            if(m_mcb) {
+                if(new_prop_value != prop_value) {
+                    prop_value = new_prop_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, new_prop_value));
+                }
+                if(new_hbow_value != hbow_value) {
+                    hbow_value = new_hbow_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, new_hbow_value));
+                }
+                if(new_vbow_value != vbow_value) {
+                    vbow_value = new_vbow_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, new_vbow_value));
+                }
+                if(new_hstern_value != hstern_value) {
+                    hstern_value = new_hstern_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, new_hstern_value));
+                }
+                if(new_vstern_value != vstern_value) {
+                    vstern_value = new_vstern_value;
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, new_vstern_value));
+                }
+            }
+            
+            m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
         }
+
+        int prop_value;
+        int hbow_value;
+        int vbow_value;
+        int hstern_value;
+        int vstern_value;
+
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
 
+class MCBForwardingObserver : public MessageObserver
+{
+    public:
+        MCBForwardingObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
+        {
+        }
+
+        virtual void onPressureMessage(PressureMessage_ptr m)
+        {
+            m_mb->sendMessage(m, UNRELIABLE_MESS);
+        }
+        virtual void onDebugMessage(DebugMessage_ptr m)
+        {
+            m_mb->sendMessage(m, SAFE_MESS);
+        }
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+};
 
 class NotRootException : public std::exception
 {
@@ -266,7 +417,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     joinGroup("control");
     addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
-    m_controlLoops = boost::make_shared<ControlLoops>();
+    m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
 }
 ControlNode::~ControlNode()
@@ -320,10 +471,10 @@ void ControlNode::setXsens(int id)
     }
 }
 
-void ControlNode::addOptions(boost::program_options::options_description& desc)
+void ControlNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
 {
     namespace po = boost::program_options;
-    CauvNode::addOptions(desc);
+    CauvNode::addOptions(desc, pos);
     
     desc.add_options()
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
@@ -356,6 +507,7 @@ void ControlNode::onRun()
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
         m_mcb->addObserver(boost::make_shared<DebugMessageObserver>(2));
+        m_mcb->addObserver(boost::make_shared<MCBForwardingObserver>(mailbox()));
         m_mcb->addObserver(m_controlLoops);
         
         m_mcb->start();
@@ -373,6 +525,8 @@ void ControlNode::onRun()
     else {
         warning() << "Xsens not connected. Telemetry not available.";
     }
+
+    m_controlLoops->start();
 }
 
 static ControlNode* node;

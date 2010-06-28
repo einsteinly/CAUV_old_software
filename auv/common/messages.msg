@@ -53,7 +53,12 @@ enum OutputType : int8 {
     Image = 0,
     Parameter = 1
 }
-
+enum Controller : int8 {
+    Bearing = 0,
+    Pitch = 1,
+    Depth = 2,
+    ManualOverride = 3
+}
 
 
 struct floatYPR
@@ -92,7 +97,7 @@ struct NodeOutputArc
 struct TimeStamp
 {
     secs : int32;
-    msecs : int32;
+    musecs : int32;
 }
 struct NodeParamValue
 {
@@ -108,8 +113,14 @@ struct SonarDataLine
     bearingRange: int32;
     range: int32;
 }
-
-
+struct MotorDemand
+{
+    prop: float;
+    hbow: float;
+    vbow: float;
+    hstern: float;
+    vstern : float;
+}
 
 group debug
 {
@@ -249,9 +260,28 @@ group pipeline
     }
 }
 
+group gui
+{
+    message ControllerState : 100
+    {
+        contoller : Controller;
+        mv : float;
+        error : float;
+        derror : float;
+        ierror : float;
+        
+        demand : MotorDemand;
+    }
+   
+    message MotorState : 101
+    {
+        demand : MotorDemand;
+    }
+}
+
 group pl_gui
 { 
-    message NodeAdded : 15
+    message NodeAdded : 115
     {
         nodeId : int32;
         nodeType : NodeType;
@@ -260,18 +290,18 @@ group pl_gui
         params : map<string, NodeParamValue>;
     }
 
-    message NodeRemoved : 16
+    message NodeRemoved : 116
     {
         nodeId : int32;
     }
 
-    message NodeParameters : 17
+    message NodeParameters : 117
     {
         nodeId : int32;
         params : map<string, NodeParamValue>;
     }
 
-    message GraphDescription : 18
+    message GraphDescription : 118
     {
         nodeTypes : map<int32, NodeType>;
         nodeInputs : map<int32, map<string, NodeOutput> >;
@@ -279,39 +309,39 @@ group pl_gui
         nodeParams : map<int32, map<string, NodeParamValue> >;
     }
 
-    message ArcAdded : 19
+    message ArcAdded : 119
     {
         from : NodeOutput;
         to : NodeInput;
     }
 
-    message ArcRemoved : 20
+    message ArcRemoved : 120
     {
         from : NodeOutput;
         to : NodeInput;
     }
 
-    message Status : 21
+    message Status : 121
     {
         nodeId : int32;
         status : NodeStatus;
     }
 
-    message InputStatus : 22
+    message InputStatus : 122
     {
         nodeId : int32;
         inputId : string;
         status : NodeIOStatus;
     }
     
-    message OutputStatus : 23
+    message OutputStatus : 123
     {
         nodeId : int32;
         outputId : string;
         status : NodeIOStatus;
     }
     
-	message GuiImage : 24
+	message GuiImage : 124
 	{
         nodeId : int32;
 	    image : Image;
@@ -334,4 +364,5 @@ group pressure
 	    aft : uint16;
     }
 }
+
 

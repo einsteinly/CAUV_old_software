@@ -6,6 +6,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/program_options.hpp>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -69,15 +71,64 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
         imsg_ptr_t m_msg;
 };
 
-WebcamNode::WebcamNode(const CameraID::e camera_id, const int device_id)
-    : CauvNode("Webcam"), m_camera(new Webcam(camera_id, device_id)),
+WebcamNode::WebcamNode()
+    : CauvNode("Webcam"),
       m_cam_observer(boost::make_shared<SpreadCameraObserver>(mailbox()))
 {
-    m_camera->addObserver(m_cam_observer);
+}
+
+void WebcamNode::setCameraID(CameraID::e cameraID)
+{
+    m_cameraID = cameraID;
+}
+
+void WebcamNode::setDeviceID(int deviceID)
+{
+    m_deviceID = deviceID;
+}
+
+void WebcamNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
+{
+    namespace po = boost::program_options;
+    CauvNode::addOptions(desc, pos);
+   
+    desc.add_options()
+        ("camera-id,c", po::value<std::string>()->required(), "The camera id (forward|down)")
+        ("device-id,c", po::value<int>()->required(), "The device id of the camera");
+
+    pos.add("camera-id", 1);
+    pos.add("device-id", 2);
+}
+int WebcamNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
+{
+    namespace po = boost::program_options;
+    int ret = CauvNode::useOptionsMap(vm, desc);
+    if (ret != 0) return ret;
+
+    if (boost::iequals(vm["camera-id"].as<std::string>(), "forward"))
+    {
+        m_cameraID = CameraID::Forward;
+    }
+    else if (boost::iequals(vm["camera-id"].as<std::string>(), "down"))
+    {
+        m_cameraID = CameraID::Down;
+    }
+    else
+    {
+        error() << "Unrecognised camera id '" << vm["camera-id"].as<std::string>() << "'";
+        return 2;
+    }
+
+    m_deviceID = vm["device-id"].as<int>();  
+
+    return 0;
 }
 
 void WebcamNode::onRun()
 {
+    m_camera = boost::make_shared<Webcam>(m_cameraID, m_deviceID),
+    m_camera->addObserver(m_cam_observer);
+    
     joinGroup("image");
     addMessageObserver(m_cam_observer);
 }
@@ -105,41 +156,12 @@ void interrupt(int sig)
 
 int main(int argc, char **argv)
 {
-    if(node->parseOptions(argc, argv))
-        return 0;
-
-/*
-    if (argc != 3)
-    {
-        std::cout << "Error: Not enough parameters" << std::endl;
-        std::cout << "USAGE: " << argv[0] << " {forward|down} deviceid" << std::endl;
-
-        return 1;
-    }
-*/
-    CameraID::e camera_id = CameraID::Forward;
-    uint32_t device_id = 0;
-/*
-    if (strcasecmp(argv[1], "forward") == 0)
-    {
-        camera_id = CameraID::Forward;
-    }
-    else if (strcasecmp(argv[1], "down") == 0)
-    {
-        camera_id = CameraID::Down;
-    }
-    else
-    {
-        std::cout << "Error: Unrecognised camera id '" << argv[1] << "'" << std::endl;
-        std::cout << "USAGE: " << argv[0] << " {forward|down} deviceid" << std::endl;
-        return 2;
-    }
-
-    device_id = atoi(argv[2]);
-*/
-
     signal(SIGINT, interrupt);
-    node = new WebcamNode(camera_id, device_id);
+    node = new WebcamNode();
+    
+    int ret = node->parseOptions(argc, argv);
+    if (ret != 0) return ret;
+
     node->run();
     cleanup();
     return 0;
