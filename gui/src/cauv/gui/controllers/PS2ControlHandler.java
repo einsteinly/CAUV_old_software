@@ -11,13 +11,42 @@ import cauv.gui.Main;
 public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
 
     AUV auv;
-    MotionController motion;
+    final MotionController motion;
     
-    protected boolean ignoreInput = true;
+    protected boolean ignoreInput = false;
 
-    public PS2ControlHandler(AUV auv) {
+    protected volatile float yawRate = 0;
+    protected volatile float depthRate = 0;
+    protected volatile float pitchRate = 0;
+    
+    public void enable(){
+        this.ignoreInput = false;
+    }
+
+    public void disable(){
+        this.ignoreInput = true;
+    }
+    
+    public PS2ControlHandler(final AUV auv) {
         this.auv = auv;
         motion = new MotionController(auv);
+        
+        final Thread t = new Thread(){
+            public void run(){
+                while(true){
+                    motion.yaw(auv.autopilots.YAW.getTarget() + yawRate);
+                    motion.depth(auv.autopilots.DEPTH.getTarget() + (0.1f * depthRate));
+                    motion.pitch(auv.autopilots.PITCH.getTarget() - pitchRate);
+                    
+                    try {
+                        Thread.sleep(17);
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
         
         try {
             Main.trace(PS2Controller.listControllers());
@@ -29,21 +58,26 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
     }
 
     @Override
-    public void onPressed(final Button button, final float value) {
+    public void onPressed(final Button button, float value) {
 
+        //Main.trace(button + " = " + value);
+        
+        // crappy hack to limit the jitter on the controller 
+        if(Math.abs(value) < 0.2) value = 0;
+        
         if (ignoreInput) return;
         switch (button) {
-            case JOY_L_X:
-            	motion.strafe((int)(value * value * value) * 128);
-                break;
+            case JOY_L_X: 
+                motion.strafe((int) (value * 127)); 
+              break;
             case JOY_L_Y:
-            	motion.depth((int) ((value * value * value) * 128));
+                depthRate = -value;
                 break;
             case JOY_R_X:
-            	motion.yaw((int) ((value * value * value) * 128));
+                yawRate = value;
                 break;
             case JOY_R_Y:
-            	motion.pitch((int) ((value * value * value) * 128));
+                pitchRate = value;
                 break;
 
             case JOY_L:
@@ -69,6 +103,9 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
                 break;
 
             case TRIANGLE:
+                motion.yaw(0f);
+                motion.depth(0f);
+                motion.pitch(0f);
                 break;
             case SQUARE:
                 motion.stop();

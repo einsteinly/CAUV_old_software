@@ -77,8 +77,6 @@ public class PS2Controller
         Component comp = e.getComponent();
         Button btn = null;
 
-        //System.out.println(comp.getIdentifier().toString());
-
         // keypad
         if (comp.getIdentifier().toString().equals("pov") && comp.getPollData() == 0.25)
             btn = Button.UP;
@@ -95,8 +93,7 @@ public class PS2Controller
             btn = Button.JOY_L_Y;
         else if (comp.getIdentifier().toString().equals("rz"))
             btn = Button.JOY_R_X;
-        else if (comp.getIdentifier().toString().equals("z") ||
-                comp.getIdentifier().toString().equals("rx"))
+        else if (comp.getIdentifier().toString().equals("z"))
             btn = Button.JOY_R_Y;
         //circle buttons
         else if (comp.getIdentifier().toString().equals("0") ||

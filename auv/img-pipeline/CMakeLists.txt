@@ -19,6 +19,7 @@ target_link_libraries (
 
     cauv_debug
     common
+    sonar_accumulator
     boost_date_time
     boost_filesystem
     boost_system

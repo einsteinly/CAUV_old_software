@@ -22,8 +22,7 @@ class CopyNode: public Node{
             // one input:
             registerInputID("image");
             
-            // two output:
-            registerOutputID<image_ptr_t>("image");
+            // output:
             registerOutputID<image_ptr_t>("image copy");
             
             // no parameters
@@ -35,9 +34,14 @@ class CopyNode: public Node{
             out_map_t r;
             
             image_ptr_t img = inputs["image"];
-
-            r["image"] = img;
-            r["image copy"] = image_ptr_t(new Image(*img)); 
+            
+            try{
+                r["image copy"] = image_ptr_t(new Image(*img)); 
+            }catch(cv::Exception& e){
+                error() << "CopyNode:\n\t"
+                        << e.err << "\n\t"
+                        << e.func << "," << e.file << ":" << e.line << "\n\t";
+            }
             
             return r;
         }

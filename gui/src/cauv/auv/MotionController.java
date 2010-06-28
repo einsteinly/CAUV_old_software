@@ -9,8 +9,8 @@ public class MotionController {
 	}
 	
 	public void yaw(int speed){
-        auv.motors.VBOW.setSpeed(speed);
-        auv.motors.VSTERN.setSpeed(-speed);
+        auv.motors.HBOW.setSpeed(speed);
+        auv.motors.HSTERN.setSpeed(-speed);
 	}
 	
 	public void yaw(float yaw){
@@ -18,8 +18,8 @@ public class MotionController {
 	}
 	
 	public void pitch(int speed){
-        auv.motors.HBOW.setSpeed(speed);
-        auv.motors.HSTERN.setSpeed(-speed);
+        auv.motors.VBOW.setSpeed(speed);
+        auv.motors.VSTERN.setSpeed(-speed);
 	}
 	
 	public void pitch(float pitch){
@@ -32,8 +32,8 @@ public class MotionController {
 	}
 	
 	public void depth(int speed){
-        auv.motors.HBOW.setSpeed(speed);
-        auv.motors.HSTERN.setSpeed(speed);
+        auv.motors.VBOW.setSpeed(speed);
+        auv.motors.VSTERN.setSpeed(speed);
 	}
 	
 	public void depth(float depth){

@@ -1,3 +1,9 @@
+# lib for img-pipeline
+add_library (
+    sonar_accumulator
+    sonar_accumulator.cpp
+)
+
 # sources
 add_executable (
     sonar
@@ -12,6 +18,7 @@ add_executable (
 # libs
 target_link_libraries (
     sonar
+    sonar_accumulator
     common
 )
 
