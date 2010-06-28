@@ -2,6 +2,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
 
 #include <common/messages_fwd.h>
 #include <common/cauv_global.h> 
@@ -89,6 +90,38 @@ struct DBGLevelObserver: MessageObserver
         debug::setLevel(m->level());
     }
 };
+    
+
+int CauvNode::parseOptions(int argc, char** argv)
+{
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    
+    addOptions(desc);
+    
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+    
+    if(vm.count("help"))
+    {
+        std::cout << desc;
+        return 1;
+    }
+    return 0;
+
+}
+void CauvNode::addOptions(boost::program_options::options_description& desc)
+{
+    namespace po = boost::program_options;
+    desc.add_options()
+        ("help,h", "produce help message")
+        ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "set the verbosity of debug messages")
+    ;
+}
+
+
+
 
 CauvNode::CauvNode(const std::string& name, const char* host)
     : m_name(name),

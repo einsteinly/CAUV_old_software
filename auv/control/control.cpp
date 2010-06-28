@@ -5,6 +5,8 @@
 #include <stdint.h>
 
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
+#include <boost/bind.hpp>
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -111,12 +113,42 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, -speed));
                 }
             }
+            if (m_pitchenabled) {
+                float mv = m_pitchcontrol.getMV(attitude.yaw);
+                debug(2) << "MV = " << mv;
+                if (now().secs - lastMotorMessage.secs > motorTimeout) {
+                    // Do motor control
+                    int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
+
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, speed));
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, -speed));
+                }
+            }
+            if (m_depthenabled) {
+                float mv = m_depthcontrol.getMV(attitude.yaw);
+                debug(2) << "MV = " << mv;
+                if (now().secs - lastMotorMessage.secs > motorTimeout) {
+                    // Do motor control
+                    int8_t speed = mv >= 127 ? 127 : mv <= -127 ? -127 : (int)mv;
+
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, speed));
+                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, speed));
+                }
+            }
         }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
         TimeStamp lastMotorMessage;
         static const int motorTimeout = 2;
+
+        struct {
+            int8_t Prop;
+            int8_t HBow;
+            int8_t HStern;
+            int8_t VBow;
+            int8_t VSterm;
+        } m_motorStates;
         
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
@@ -147,6 +179,52 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_bearingcontrol.Kd = m->Kd();
             m_bearingcontrol.scale = m->scale();
         }
+
+
+        bool m_pitchenabled;
+        PIDControl m_pitchcontrol;
+        
+        virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
+        {
+            if (m->enabled()) {
+                m_pitchenabled = true;
+                m_pitchcontrol.reset();
+                m_pitchcontrol.target = m->target();
+            }
+            else {
+                m_pitchenabled = false;
+            }
+        }
+        virtual void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr m)
+        {
+            m_pitchcontrol.Kp = m->Kp();
+            m_pitchcontrol.Ki = m->Ki();
+            m_pitchcontrol.Kd = m->Kd();
+            m_pitchcontrol.scale = m->scale();
+        }
+
+
+        bool m_depthenabled;
+        PIDControl m_depthcontrol;
+        
+        virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
+        {
+            if (m->enabled()) {
+                m_depthenabled = true;
+                m_depthcontrol.reset();
+                m_depthcontrol.target = m->target();
+            }
+            else {
+                m_depthenabled = false;
+            }
+        }
+        virtual void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr m)
+        {
+            m_depthcontrol.Kp = m->Kp();
+            m_depthcontrol.Ki = m->Ki();
+            m_depthcontrol.Kd = m->Kd();
+            m_depthcontrol.scale = m->scale();
+        }
 };
 
 
@@ -163,9 +241,23 @@ ControlNode::ControlNode() : CauvNode("Control")
     joinGroup("control");
     addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
+    m_controlLoops = boost::make_shared<ControlLoops>();
+    addMessageObserver(m_controlLoops);
+}
+ControlNode::~ControlNode()
+{
+    if (m_aliveThread.get_id() != boost::thread::id()) {
+        m_aliveThread.interrupt();
+        m_aliveThread.join();
+    }
+}
+
+void ControlNode::setMCB(int id)
+{
+    m_mcb.reset();
     // start up the MCB module
     try {
-        m_mcb = boost::make_shared<MCBModule>(0);
+        m_mcb = boost::make_shared<MCBModule>(id);
         info() << "MCB Connected";
     }
     catch (FTDIException& e)
@@ -176,10 +268,13 @@ ControlNode::ControlNode() : CauvNode("Control")
             throw NotRootException();
         }
     }
+}
 
+void ControlNode::setXsens(int id)
+{
     // start up the Xsens IMU
     try {
-        m_xsens = boost::make_shared<XsensIMU>(0);
+        m_xsens = boost::make_shared<XsensIMU>(id);
         info() << "Xsens Connected";
         
         CmtOutputMode om = CMT_OUTPUTMODE_CALIB | CMT_OUTPUTMODE_ORIENT;
@@ -198,18 +293,17 @@ ControlNode::ControlNode() : CauvNode("Control")
         error() << "Cannot connect to Xsens: " << e.what();
         m_xsens.reset();
     }
-
-    m_controlLoops = boost::make_shared<ControlLoops>();
-    addMessageObserver(m_controlLoops);
 }
-ControlNode::~ControlNode()
+
+void ControlNode::addOptions(boost::program_options::options_description& desc)
 {
-    if (m_aliveThread.get_id() != boost::thread::id()) {
-        m_aliveThread.interrupt();
-        m_aliveThread.join();
-    }
+    namespace po = boost::program_options;
+    CauvNode::addOptions(desc);
+    
+    desc.add_options()
+        ("xsens,x", po::value<int>()->default_value(0)->notifier(boost::bind(&ControlNode::setXsens, this, _1)), "USB device id of the Xsens")
+        ("mcb,m", po::value<int>()->default_value(0)->notifier(boost::bind(&ControlNode::setMCB, this, _1)), "FTDI device id of the MCB");
 }
-
 
 void ControlNode::onRun()
 {
@@ -262,11 +356,14 @@ void interrupt(int sig)
 
 int main(int argc, char** argv)
 {
-    debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
     
     try {
         node = new ControlNode();
+    
+        int ret = node->parseOptions(argc, argv);
+        if(ret != 0) return ret;
+        
         node->run();
     }
     catch (NotRootException& e) {

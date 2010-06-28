@@ -53,9 +53,12 @@ void interrupt(int sig)
 
 int main(int argc, char** argv)
 {
-    debug::parseOptions(argc, argv);
     signal(SIGINT, interrupt);
     node = new ImagePipelineNode();
+    
+    int ret = node->parseOptions(argc, argv);
+    if(ret != 0) return ret;
+
     node->run();
     cleanup();
     return 0;

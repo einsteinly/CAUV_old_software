@@ -11,14 +11,21 @@
 #include <common/spread/mailbox_monitor.h>
 #include <common/spread/msgsrc_mb_observer.h>
 
+namespace boost {
+namespace program_options {
+    class options_description;
+};
+};
+
 class CauvNode
 {
 	public:
 		virtual ~CauvNode();
 		
         void run();
-		virtual void onRun();
-    
+
+        int parseOptions(int argc, char** arg);
+
         void joinGroup(std::string const& group);
         void addMessageObserver(boost::shared_ptr<MessageObserver>);
         void removeMessageObserver(boost::shared_ptr<MessageObserver>);
@@ -33,6 +40,9 @@ class CauvNode
         boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
 
         CauvNode(const std::string& name, const char* host="16707@localhost");
+        
+		virtual void onRun();
+        void addOptions(boost::program_options::options_description& desc);
     
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
