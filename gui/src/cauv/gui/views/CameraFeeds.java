@@ -98,19 +98,23 @@ public class CameraFeeds extends QWidget implements ScreenView {
 		// the control interpreters map the buttons on the camera screens to 
 		// sensible actions for that view
 		forwardCamInterpreter = new ControlInterpreter(auv) {
-			public void panUp() {
+			public void panUp(boolean state) {
 				this.motion.depth(auv.autopilots.DEPTH.getTarget() + DEPTH_STEP);
 			}
 
-			public void panRight() {
-				this.motion.strafe(STRAFE_SPEED);
+			public void panRight(boolean state) {
+				if(state)
+				    this.motion.strafe(STRAFE_SPEED);
+				else this.motion.strafe(0);
 			}
 
-			public void panLeft() {
-				this.motion.strafe(-STRAFE_SPEED);
+			public void panLeft(boolean state) {
+				if(state)
+				    this.motion.strafe(-STRAFE_SPEED);
+				else this.motion.strafe(0);
 			}
 
-			public void panDown() {
+			public void panDown(boolean state) {
 				this.motion.depth(auv.autopilots.DEPTH.getTarget() - DEPTH_STEP);
 			}
 
@@ -120,28 +124,36 @@ public class CameraFeeds extends QWidget implements ScreenView {
 			}
 		};
 		
-		this.ui.forwardCam.upClick.connect(forwardCamInterpreter,"panUp()");
-		this.ui.forwardCam.downClick.connect(forwardCamInterpreter,"panDown()");
-		this.ui.forwardCam.leftClick.connect(forwardCamInterpreter,"panLeft()");
-		this.ui.forwardCam.rightClick.connect(forwardCamInterpreter, "panRight()");
+		this.ui.forwardCam.upClick.connect(forwardCamInterpreter,"panUp(boolean)");
+		this.ui.forwardCam.downClick.connect(forwardCamInterpreter,"panDown(boolean)");
+		this.ui.forwardCam.leftClick.connect(forwardCamInterpreter,"panLeft(boolean)");
+		this.ui.forwardCam.rightClick.connect(forwardCamInterpreter, "panRight(boolean)");
 		this.ui.forwardCam.directionChange.connect(forwardCamInterpreter, "focus(float, float)");
 
 		
 		downwardCamInterpreter = new ControlInterpreter(auv) {
-			public void panUp() {
-				this.motion.forward(STRAFE_SPEED);
+			public void panUp(boolean state) {
+			    if(state)
+			        this.motion.forward(STRAFE_SPEED);
+			    else this.motion.forward(0);
 			}
 
-			public void panRight() {
-				this.motion.strafe(STRAFE_SPEED);
+			public void panRight(boolean state) {
+			    if(state)
+			        this.motion.strafe(STRAFE_SPEED);
+			    else this.motion.strafe(0);
 			}
 
-			public void panLeft() {
-				this.motion.strafe(-STRAFE_SPEED);
+			public void panLeft(boolean state) {
+                if(state)
+                    this.motion.strafe(-STRAFE_SPEED);
+                else this.motion.strafe(0);
 			}
 
-			public void panDown() {
-				this.motion.forward(-STRAFE_SPEED);
+			public void panDown(boolean state) {
+                if(state)
+                    this.motion.forward(-STRAFE_SPEED);
+                else this.motion.forward(0);
 			}
 
 			public void focus(float x, float y) {
@@ -150,17 +162,17 @@ public class CameraFeeds extends QWidget implements ScreenView {
 			}
 		};
 
-		this.ui.downwardCam.upClick.connect(downwardCamInterpreter,"panUp()");
-		this.ui.downwardCam.downClick.connect(downwardCamInterpreter,"panDown()");
-		this.ui.downwardCam.leftClick.connect(downwardCamInterpreter,"panLeft()");
-		this.ui.downwardCam.rightClick.connect(downwardCamInterpreter, "panRight()");
+		this.ui.downwardCam.upClick.connect(downwardCamInterpreter,"panUp(boolean)");
+		this.ui.downwardCam.downClick.connect(downwardCamInterpreter,"panDown(boolean)");
+		this.ui.downwardCam.leftClick.connect(downwardCamInterpreter,"panLeft(boolean)");
+		this.ui.downwardCam.rightClick.connect(downwardCamInterpreter, "panRight(boolean)");
 		this.ui.downwardCam.directionChange.connect(downwardCamInterpreter, "focus(float, float)");
 
 		// sonar uses the same controls as the downward cam
-		this.ui.sonarCam.upClick.connect(downwardCamInterpreter,"panUp()");
-		this.ui.sonarCam.downClick.connect(downwardCamInterpreter,"panDown()");
-		this.ui.sonarCam.leftClick.connect(downwardCamInterpreter,"panLeft()");
-		this.ui.sonarCam.rightClick.connect(downwardCamInterpreter, "panRight()");
+		this.ui.sonarCam.upClick.connect(downwardCamInterpreter,"panUp(boolean)");
+		this.ui.sonarCam.downClick.connect(downwardCamInterpreter,"panDown(boolean)");
+		this.ui.sonarCam.leftClick.connect(downwardCamInterpreter,"panLeft(boolean)");
+		this.ui.sonarCam.rightClick.connect(downwardCamInterpreter, "panRight(boolean)");
 		this.ui.sonarCam.directionChange.connect(downwardCamInterpreter, "focus(float, float)");
 
 	}

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'SettingsView.jui'
 **
-** Created: Mon 28. Jun 11:25:29 2010
+** Created: Mon 28. Jun 17:03:15 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -44,12 +44,15 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
     public QSpacerItem verticalSpacer;
     public QSpacerItem verticalSpacer_2;
     public QWidget page_4;
-    public QHBoxLayout horizontalLayout_3;
-    public QSpacerItem horizontalSpacer_6;
     public QHBoxLayout horizontalLayout_2;
+    public QSpacerItem horizontalSpacer_6;
+    public QGridLayout gridLayout_2;
+    public QDoubleSpinBox foreScale;
     public QLabel label_11;
-    public QDoubleSpinBox depth;
+    public QLabel label_12;
+    public QDoubleSpinBox aftScale;
     public QPushButton sendDepth;
+    public QSpacerItem verticalSpacer_3;
     public QSpacerItem horizontalSpacer_5;
     public QWidget page_3;
     public QHBoxLayout horizontalLayout_4;
@@ -83,7 +86,7 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
         toolBox.setObjectName("toolBox");
         page_2 = new QWidget();
         page_2.setObjectName("page_2");
-        page_2.setGeometry(new QRect(0, 0, 550, 224));
+        page_2.setGeometry(new QRect(0, 0, 385, 140));
         gridLayout_3 = new QGridLayout(page_2);
         gridLayout_3.setObjectName("gridLayout_3");
         horizontalSpacer = new QSpacerItem(40, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -250,42 +253,61 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
         toolBox.addItem(page_2, com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Autopilot Settings", null));
         page_4 = new QWidget();
         page_4.setObjectName("page_4");
-        horizontalLayout_3 = new QHBoxLayout(page_4);
-        horizontalLayout_3.setObjectName("horizontalLayout_3");
+        page_4.setGeometry(new QRect(0, 0, 550, 224));
+        horizontalLayout_2 = new QHBoxLayout(page_4);
+        horizontalLayout_2.setObjectName("horizontalLayout_2");
         horizontalSpacer_6 = new QSpacerItem(143, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
 
-        horizontalLayout_3.addItem(horizontalSpacer_6);
+        horizontalLayout_2.addItem(horizontalSpacer_6);
 
-        horizontalLayout_2 = new QHBoxLayout();
-        horizontalLayout_2.setObjectName("horizontalLayout_2");
+        gridLayout_2 = new QGridLayout();
+        gridLayout_2.setObjectName("gridLayout_2");
+        foreScale = new QDoubleSpinBox(page_4);
+        foreScale.setObjectName("foreScale");
+        foreScale.setMinimum(-10000);
+        foreScale.setMaximum(1000);
+        foreScale.setSingleStep(0.01);
+
+        gridLayout_2.addWidget(foreScale, 0, 1, 1, 1);
+
         label_11 = new QLabel(page_4);
         label_11.setObjectName("label_11");
 
-        horizontalLayout_2.addWidget(label_11);
+        gridLayout_2.addWidget(label_11, 0, 0, 1, 1);
 
-        depth = new QDoubleSpinBox(page_4);
-        depth.setObjectName("depth");
-        depth.setMinimum(-10000);
-        depth.setMaximum(1000);
-        depth.setSingleStep(0.01);
+        label_12 = new QLabel(page_4);
+        label_12.setObjectName("label_12");
 
-        horizontalLayout_2.addWidget(depth);
+        gridLayout_2.addWidget(label_12, 1, 0, 1, 1);
+
+        aftScale = new QDoubleSpinBox(page_4);
+        aftScale.setObjectName("aftScale");
+        aftScale.setMinimum(-10000);
+        aftScale.setMaximum(1000);
+        aftScale.setSingleStep(0.01);
+
+        gridLayout_2.addWidget(aftScale, 1, 1, 1, 1);
 
         sendDepth = new QPushButton(page_4);
         sendDepth.setObjectName("sendDepth");
 
-        horizontalLayout_2.addWidget(sendDepth);
+        gridLayout_2.addWidget(sendDepth, 2, 1, 1, 1);
+
+        verticalSpacer_3 = new QSpacerItem(20, 40, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding);
+
+        gridLayout_2.addItem(verticalSpacer_3, 3, 1, 1, 1);
 
 
-        horizontalLayout_3.addLayout(horizontalLayout_2);
+        horizontalLayout_2.addLayout(gridLayout_2);
 
         horizontalSpacer_5 = new QSpacerItem(142, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
 
-        horizontalLayout_3.addItem(horizontalSpacer_5);
+        horizontalLayout_2.addItem(horizontalSpacer_5);
 
         toolBox.addItem(page_4, com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Depth Calibration", null));
         page_3 = new QWidget();
         page_3.setObjectName("page_3");
+        page_3.setGeometry(new QRect(0, 0, 550, 224));
         horizontalLayout_4 = new QHBoxLayout(page_3);
         horizontalLayout_4.setObjectName("horizontalLayout_4");
         horizontalSpacer_8 = new QSpacerItem(184, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -340,7 +362,7 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
         toolBox.addItem(page_3, com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Debug Settings", null));
         page = new QWidget();
         page.setObjectName("page");
-        page.setGeometry(new QRect(0, 0, 550, 224));
+        page.setGeometry(new QRect(0, 0, 230, 38));
         horizontalLayout = new QHBoxLayout(page);
         horizontalLayout.setObjectName("horizontalLayout");
         horizontalSpacer_3 = new QSpacerItem(40, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -466,7 +488,7 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
 
         retranslateUi(SettingsView);
 
-        toolBox.setCurrentIndex(2);
+        toolBox.setCurrentIndex(1);
 
 
         SettingsView.connectSlotsByName();
@@ -483,7 +505,8 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
         label_7.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Pitch", null));
         label_8.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Depth", null));
         toolBox.setItemText(toolBox.indexOf(page_2), com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Autopilot Settings", null));
-        label_11.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Current Depth", null));
+        label_11.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Fore Scale", null));
+        label_12.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Aft Scale", null));
         sendDepth.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Send", null));
         toolBox.setItemText(toolBox.indexOf(page_4), com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Depth Calibration", null));
         label_9.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Debug Level ", null));

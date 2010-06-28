@@ -13,6 +13,7 @@ import cauv.messaging.DebugLevelMessage;
 import cauv.messaging.DebugMessage;
 import cauv.messaging.DepthAutopilotEnabledMessage;
 import cauv.messaging.DepthAutopilotParamsMessage;
+import cauv.messaging.DepthCalibrationMessage;
 import cauv.messaging.InputStatusMessage;
 import cauv.messaging.Message;
 import cauv.messaging.MessageObserver;
@@ -110,10 +111,11 @@ public class CommunicationController extends MessageObserver {
         
         public void onTargetChanged(Autopilot<?> autopilot){
             try {                
-                Constructor c = enableMessage.getConstructor(boolean.class, autopilot.target.getClass());
+                Constructor c = enableMessage.getConstructor(Boolean.class, autopilot.target.getClass());
                 Message m = (Message) c.newInstance(autopilot.enabled, autopilot.target);
                 messages.sendMessage(m);
             } catch (Exception e) {
+                e.printStackTrace();
                 auv.logs.ERROR.log("Error updating autopilot: " + e.getMessage());
             }
         }
@@ -135,10 +137,12 @@ public class CommunicationController extends MessageObserver {
         this.auv = auv;
 
         messages = new MessageSocket(address, port, "GUI");
-        messages.addObserver(this);
         messages.joinGroup("control");
+        messages.joinGroup("debug");
         messages.joinGroup("images");
-        messages.joinGroup("trace");
+        messages.joinGroup("telemetry");
+        messages.joinGroup("sonarout");
+        messages.joinGroup("pressure");
 
         new MotorController(auv.motors.HBOW);
         new MotorController(auv.motors.HSTERN);
@@ -155,9 +159,11 @@ public class CommunicationController extends MessageObserver {
         new MissionController();
         
         auv.debugLevelChanged.connect(this, "sendDebugLevelMessage()");
-        auv.depthChanged.connect(this, "sendDepthCalibrationMessage()");
+        auv.depthCalibrationChanged.connect(this, "sendDepthCalibrationMessage(float, float)");
         
         enable();
+        
+        messages.addObserver(this);
     }
 
     public void enable() {
@@ -176,13 +182,12 @@ public class CommunicationController extends MessageObserver {
         }
     }
 
-    public void sendDepthCalibrationMessage(){
-        /*try {
-            messages.sendMessage(new DepthCalibrationMessage(auv.getDepth()));
+    public void sendDepthCalibrationMessage(float fore, float aft){
+        try {
+            messages.sendMessage(new DepthCalibrationMessage(fore, aft));
         } catch (Exception e) {
-            auv.logs.ERROR.log("Error updating debug level: " + e.getMessage());
-        }*/
-        System.out.println("will update depth");
+            auv.logs.ERROR.log("Error updating depth calibration: " + e.getMessage());
+        }
     }
     
     @Override
@@ -193,7 +198,7 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onDebugLevelMessage(DebugLevelMessage m) {
-        auv.setDebugLevel(m.level);
+        auv.updateDebugLevel(m.level);
     }
     
     @Override
@@ -245,7 +250,8 @@ public class CommunicationController extends MessageObserver {
 
     @Override
     public void onPressureMessage(PressureMessage m) {
-        auv.updateDepth((m.aft + m.fore)/2);
+        auv.updatePressures(m.fore, m.aft);
+        auv.updateDepth((m.aft + m.fore)/2.0f);
     }
     
     @Override

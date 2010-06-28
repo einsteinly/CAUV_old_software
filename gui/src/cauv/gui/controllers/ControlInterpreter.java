@@ -13,9 +13,9 @@ public abstract class ControlInterpreter {
 		this.motion = new MotionController(auv);
 	}
 
-	public abstract void panUp();
-	public abstract void panDown();
-	public abstract void panRight();
-	public abstract void panLeft();
+	public abstract void panUp(boolean state);
+	public abstract void panDown(boolean state);
+	public abstract void panRight(boolean state);
+	public abstract void panLeft(boolean state);
 	public abstract void focus(float x, float y);
 }

@@ -13,8 +13,8 @@ public class MessageSource
     public void notifyObservers(byte[] b) {
         if (b.length < 4)
             throw new IllegalArgumentException("Buffer too small to contain message id");
-
-        int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];
+        
+        int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];   
         try {
             switch (id) {
                 case 0: {

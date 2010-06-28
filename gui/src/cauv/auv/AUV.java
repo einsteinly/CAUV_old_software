@@ -70,6 +70,10 @@ public class AUV extends QSignalEmitter {
     	this.motors.VBOW.setSpeed(0);
     	this.motors.VSTERN.setSpeed(0);
     	this.motors.PROP.setSpeed(0);
+
+        this.autopilots.DEPTH.setEnabled(false);
+        this.autopilots.PITCH.setEnabled(false);
+        this.autopilots.YAW.setEnabled(false);
     }
     
     /**
@@ -316,6 +320,8 @@ public class AUV extends QSignalEmitter {
     public Signal1<floatYPR> orientationChanged = new Signal1<floatYPR>();
     protected floatYPR orientation = new floatYPR();
     public Signal1<Float> depthChanged = new Signal1<Float>();
+    public Signal2<Float, Float> depthCalibrationChanged = new Signal2<Float, Float>();
+    public Signal2<Float, Float> pressureChanged = new Signal2<Float, Float>();
     public Signal1<Integer> debugLevelChanged = new Signal1<Integer>();
     public Signal1<String> runMissionRequested = new Signal1<String>();
     public int debugLevel = 0;
@@ -342,6 +348,18 @@ public class AUV extends QSignalEmitter {
         this.debugLevel = level;
         debugLevelChanged.emit(level);
     }
+
+    public void updateDebugLevel(int level){
+        this.controller.disable();
+        this.setDebugLevel(level);
+        this.controller.enable();
+    }
+
+    public void updatePressures(float fore, float aft){
+        this.controller.disable();
+        pressureChanged.emit(fore, aft);
+        this.controller.enable();
+    }
     
     public int getDebugLevel() {
         return debugLevel;
@@ -360,8 +378,8 @@ public class AUV extends QSignalEmitter {
         depthChanged.emit(depth);
     }
     
-    public void calibrateDepth(float depth){
-        setDepth(depth);
+    public void calibrateDepth(float fore, float aft){
+        depthCalibrationChanged.emit(fore, aft);
     }
 
     public void updateDepth(float depth){
