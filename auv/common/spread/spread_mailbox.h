@@ -69,10 +69,10 @@ public:
      * connection attempt should not time out.
      * @param priority The priority level for this connection. Currently ignored by Spread.
      */
-    SpreadMailbox(const std::string &portAndHost, const std::string &internalConnectionName = "",
-                  const bool shouldReceiveMembershipMessages = true,
-                  const ConnectionTimeout &timeout = ZERO_TIMEOUT,
-                  const MailboxPriority priority = MEDIUM);
+    virtual void connect(const std::string &portAndHost, const std::string &internalConnectionName = "",
+                         const bool shouldReceiveMembershipMessages = true,
+                         const ConnectionTimeout &timeout = ZERO_TIMEOUT,
+                         const MailboxPriority priority = MEDIUM);
     virtual void disconnect();
 
     /**

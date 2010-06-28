@@ -24,7 +24,8 @@ CauvNode::~CauvNode()
 void CauvNode::run()
 {
 	cauv_global::print_module_header(m_name);
-    
+
+    m_mailbox->connect("16707@localhost", m_name);
     m_event_monitor->startMonitoring();
 
     onRun();
@@ -125,9 +126,9 @@ int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::pr
 
 
 
-CauvNode::CauvNode(const std::string& name, const char* host)
+CauvNode::CauvNode(const std::string& name)
     : m_name(name),
-      m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>(host, name)),
+      m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
       m_event_monitor(boost::make_shared<MailboxEventMonitor>(m_mailbox)),
       m_mailbox_monitor(boost::make_shared<MsgSrcMBMonitor>())
 {

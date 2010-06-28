@@ -21,7 +21,7 @@ using ssrc::spread::GroupList;
 const ConnectionTimeout SpreadMailbox::ZERO_TIMEOUT;
 
 
-SpreadMailbox::SpreadMailbox(const string &portAndHost, const string &internalConnectionName,
+void SpreadMailbox::connect(const string &portAndHost, const string &internalConnectionName,
                   const bool shouldReceiveMembershipMessages, const ConnectionTimeout &timeout,
                   const MailboxPriority priority) {
     // ssrc spread doesn't validate this!

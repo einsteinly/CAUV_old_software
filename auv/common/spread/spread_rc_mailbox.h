@@ -22,13 +22,14 @@ class ReconnectingSpreadMailbox: boost::noncopyable{
     typedef boost::recursive_mutex mutex_t;
     typedef boost::lock_guard<mutex_t> lock_t;
 public:
-    ReconnectingSpreadMailbox(std::string const& portAndHost,
-                              std::string const& privConnectionName = "",
-                              bool recvMembershipMessages = true,
-                              ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
-                              SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM);
-
+    ReconnectingSpreadMailbox();
     ~ReconnectingSpreadMailbox();
+    
+    virtual void connect(std::string const& portAndHost,
+                         std::string const& privConnectionName = "",
+                         bool recvMembershipMessages = true,
+                         ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
+                         SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM);
     
     /**
      * @return The internal connection identifier assigned to this mailbox.
@@ -81,6 +82,8 @@ private:
     enum ConnectionState {DISCONNECTED=0, CONNECTING=1, CONNECTED=2};
 
     struct ConnectionInfo{ 
+        ConnectionInfo(){
+        }
         ConnectionInfo(std::string const& ph,
                        std::string const& pcn,
                        bool recvmm,
