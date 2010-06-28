@@ -6,7 +6,6 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
-#include <boost/bind.hpp>
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -301,9 +300,25 @@ void ControlNode::addOptions(boost::program_options::options_description& desc)
     CauvNode::addOptions(desc);
     
     desc.add_options()
-        ("xsens,x", po::value<int>()->default_value(0)->notifier(boost::bind(&ControlNode::setXsens, this, _1)), "USB device id of the Xsens")
-        ("mcb,m", po::value<int>()->default_value(0)->notifier(boost::bind(&ControlNode::setMCB, this, _1)), "FTDI device id of the MCB");
+        ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
+        ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB");
 }
+int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
+{
+    namespace po = boost::program_options;
+    int ret = CauvNode::useOptionsMap(vm, desc);
+    if (ret != 0) return ret;
+
+    if (vm.count("xsens")) {
+        setXsens(vm["xsens"].as<int>());
+    }
+    if (vm.count("mcb")) {
+        setMCB(vm["mcb"].as<int>());
+    }
+    
+    return 0;
+}
+
 
 void ControlNode::onRun()
 {

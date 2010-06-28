@@ -55,7 +55,7 @@ ReconnectingSpreadMailbox::ReconnectingSpreadMailbox(
     m_groups_lock(),
     m_groups()
 {
-    _asyncConnect();
+    //_asyncConnect();
 }
 
 ReconnectingSpreadMailbox::~ReconnectingSpreadMailbox() {

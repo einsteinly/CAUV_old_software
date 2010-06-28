@@ -102,14 +102,8 @@ int CauvNode::parseOptions(int argc, char** argv)
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-    
-    if(vm.count("help"))
-    {
-        std::cout << desc;
-        return 1;
-    }
-    return 0;
 
+    return useOptionsMap(vm, desc);
 }
 void CauvNode::addOptions(boost::program_options::options_description& desc)
 {
@@ -119,7 +113,15 @@ void CauvNode::addOptions(boost::program_options::options_description& desc)
         ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "set the verbosity of debug messages")
     ;
 }
-
+int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
+{
+    if(vm.count("help"))
+    {
+        std::cout << desc;
+        return 1;
+    }
+    return 0;
+}
 
 
 

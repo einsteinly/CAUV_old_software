@@ -14,6 +14,7 @@
 namespace boost {
 namespace program_options {
     class options_description;
+    class variables_map;
 };
 };
 
@@ -43,6 +44,7 @@ class CauvNode
         
 		virtual void onRun();
         virtual void addOptions(boost::program_options::options_description& desc);
+        virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
     
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
