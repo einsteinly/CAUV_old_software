@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 
+#include <boost/make_shared.hpp>
+
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -42,7 +44,7 @@ class ResizeNode: public Node{
 
             try{
                 cv::resize(img->cvMat(), new_mat, cv::Size(), scale_fac, scale_fac, interp);
-                r["image_out"] = image_ptr_t(new Image(new_mat, img->source()));
+                r["image_out"] = boost::make_shared<Image>(new_mat);
             }catch(cv::Exception& e){
                 error() << "ResizeNode:\n\t"
                         << e.err << "\n\t"

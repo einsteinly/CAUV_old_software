@@ -91,8 +91,6 @@ class FileInputNode: public AsynchronousNode{
                     warning() << "no images in directory" << fname;
                 // NB: allowQueue not cleared
             }
-            if(image)
-                image->source(Image::src_file);
             r["image"] = image;
 
             return r;
