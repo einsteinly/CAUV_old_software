@@ -189,7 +189,19 @@ group control
         Kd : float;
         scale : float;
     }
+
+    message StateRequest : 82
+    {
+    }
 }
+group state
+{
+    message State : 81
+    {
+	    orientation : floatYPR;
+    }
+}
+
 group telemetry
 {
 	message Telemetry : 3

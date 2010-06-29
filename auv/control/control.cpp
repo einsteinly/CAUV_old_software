@@ -138,6 +138,29 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     return l;
 }
 
+class StateObserver : public MessageObserver, public XsensObserver
+{
+    public:
+        StateObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+            : m_mb(mb)
+        {
+        }
+        
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
+            m_orientation = attitude;
+        }
+        virtual void onStateRequestMessage(StateRequestMessage_ptr m)
+        {
+            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), SAFE_MESS);
+        }
+
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        
+        floatYPR m_orientation;
+};
+
 using namespace Controller;
 
 class ControlLoops : public MessageObserver, public XsensObserver
@@ -425,6 +448,9 @@ ControlNode::ControlNode() : CauvNode("Control")
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
+    
+    m_stateObserver = boost::make_shared<StateObserver>(mailbox());
+    addMessageObserver(m_stateObserver);
 }
 ControlNode::~ControlNode()
 {
@@ -526,6 +552,7 @@ void ControlNode::onRun()
         m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
         m_xsens->addObserver(boost::make_shared<SpreadForwardingXsensObserver>(mailbox()));
         m_xsens->addObserver(m_controlLoops);
+        m_xsens->addObserver(m_stateObserver);
 
         m_xsens->start();
     }
