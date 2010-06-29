@@ -38,7 +38,7 @@ class BilateralFilterNode: public Node{
             out_map_t r;
 
             image_ptr_t img = inputs["image in"];
-            boost::shared_ptr<Image> out = boost::make_shared<Image>(img->source());
+            boost::shared_ptr<Image> out = boost::make_shared<Image>();
             
             int diameter = param<int>("diameter");
             float sigmaColour = param<float>("sigmaColour");

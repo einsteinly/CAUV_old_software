@@ -49,7 +49,7 @@ class CombineHSVNode: public Node{
             }
             
             cv::Mat HSV(H->cvMat().size(), out_type);
-            boost::shared_ptr<Image> out = boost::make_shared<Image>(H->source());
+            boost::shared_ptr<Image> out = boost::make_shared<Image>();
             
             cv::Mat in[] = {H->cvMat(), S->cvMat(), V->cvMat()};
             int from_to[] = {0,0, 1,1, 2,2};

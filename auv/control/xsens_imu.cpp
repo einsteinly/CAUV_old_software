@@ -143,11 +143,22 @@ void XsensIMU::readThread()
         debug() << "Xsens read thread started";
         while(true)
         {
-            floatYPR att = getAttitude();
+            // Initialize packet for data
+            xsens::Packet packet(1, m_cmt3.isXm());
             
-            foreach(observer_ptr_t o, m_observers)
+            m_cmt3.waitForDataMessage(&packet);
+            if(packet.containsOriEuler())
             {
-                o->onTelemetry(att);
+                CmtEuler e = packet.getOriEuler();
+                floatYPR att = {e.m_yaw, e.m_pitch, e.m_roll};
+                att.yaw = -att.yaw;
+                if (att.yaw < 0)
+                    att.yaw += 360;
+                
+                foreach(observer_ptr_t o, m_observers)
+                {
+                    o->onTelemetry(att);
+                }
             }
         
             boost::this_thread::sleep(boost::posix_time::milliseconds(10));
