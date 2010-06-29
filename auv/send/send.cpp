@@ -32,6 +32,20 @@ int main(int argc, char** argv)
         std::cout << "Sending motor message " << *m << std::endl;
         m_mailbox.sendMessage(m, SAFE_MESS);
     }
+    else if (boost::iequals(msgType, "telemetry")) {
+        if (argc - 2 != 3) {
+            std::cerr << "Error: telemetry message requires exactly three parameters (orientation.ypr)" << std::endl;
+            return 3;
+        }
+        floatYPR orientation;
+        orientation.yaw = boost::lexical_cast<float>(argv[2]);
+        orientation.pitch = boost::lexical_cast<float>(argv[3]);
+        orientation.roll = boost::lexical_cast<float>(argv[4]);
+
+        boost::shared_ptr<TelemetryMessage> m = boost::make_shared<TelemetryMessage>(orientation);
+        std::cout << "Sending telemetry message " << *m << std::endl;
+        m_mailbox.sendMessage(m, SAFE_MESS);
+    }
     else {
         std::cerr << "Error: unknown message type " << msgType << std::endl;
         return 2;
