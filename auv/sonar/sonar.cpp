@@ -1,16 +1,15 @@
 #include "sonar.h"
 
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
 
 #include "display_sonar_observer.h"
 
 #include <debug/cauv_debug.h>
 
-SonarNode::SonarNode(const std::string& device) : CauvNode("Sonar")
+SonarNode::SonarNode() : CauvNode("Sonar")
 {
-    m_sonar = boost::make_shared<SeanetSonar>(device);
 }
-
 
 
 class SpreadSonarObserver : public SonarObserver
@@ -31,6 +30,11 @@ class SpreadSonarObserver : public SonarObserver
 
 void SonarNode::onRun()
 {
+    if(!m_sonar){
+        error() << "no sonar device";
+        return;
+    }
+
     m_sonar->addObserver(boost::make_shared<SpreadSonarObserver>(mailbox()));
 #ifdef DISPLAY_SONAR
     m_sonar->addObserver(boost::make_shared<DisplaySonarObserver>(m_sonar));
@@ -44,6 +48,36 @@ void SonarNode::onRun()
     }
 }
 
+void SonarNode::addOptions(boost::program_options::options_description& desc,
+                           boost::program_options::positional_options_description& pos)
+{
+    namespace po = boost::program_options;
+    CauvNode::addOptions(desc, pos);
+   
+    desc.add_options()
+        ("device,c", po::value<std::string>()->required(), "The device (eg /dev/ttyUSB1)")
+    ;
+
+    pos.add("device", 1);
+}
+
+int SonarNode::useOptionsMap(boost::program_options::variables_map& vm,
+                             boost::program_options::options_description& desc)
+{
+    namespace po = boost::program_options;
+    int ret = CauvNode::useOptionsMap(vm, desc);
+    if (ret != 0) return ret;
+    
+    std::string device = vm["device"].as<std::string>();
+    m_sonar = boost::make_shared<SeanetSonar>(device);
+    
+    if(!m_sonar){
+        error() << "could not open device" << device;
+        return 2;
+    }
+
+    return 0;
+}
 
 static SonarNode* node;
 
@@ -68,13 +102,8 @@ void interrupt(int sig)
 int main(int argc, char** argv)
 {
     signal(SIGINT, interrupt);
-    if (argc != 2)
-    {
-        std::cout << "USAGE: " << argv[0] << " DEVICE" << std::endl;
-        return 1;
-    }
-    std::string device(argv[1]);
-    node = new SonarNode(device);
+    node = new SonarNode();
+    node->parseOptions(argc, argv);
     node->run();
     cleanup();
     return 0;

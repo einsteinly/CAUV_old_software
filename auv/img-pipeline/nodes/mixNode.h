@@ -62,9 +62,7 @@ class MixNode: public Node{
                     col < img->cvMat().cols; col++, img_cp += elem_size, mix_cp += elem_size)
                     for(ch = 0, img_bp = img_cp, mix_bp = mix_cp;
                         ch < img->cvMat().channels(); ch++, img_bp++, mix_bp++)
-                        *img_bp = clamp((unsigned char) 0,
-                                        (*img_bp * img_f) + (*mix_bp * mix_f) + 0.5f,
-                                        (unsigned char) 255);
+                        *img_bp = clamp_cast<unsigned char>(0, (*img_bp * img_f) + (*mix_bp * mix_f) + 0.5f, 255);
             
             r["image (not copied)"] = img;
             

@@ -56,9 +56,7 @@ class LevelsNode: public Node{
                 rp = img->cvMat().ptr(row);
                 for(col = 0, cp = rp; col < img->cvMat().cols; col++, cp += elem_size)
                     for(ch = 0, bp = cp; ch < img->cvMat().channels(); ch++, bp++)
-                        *bp = clamp((unsigned char) 0,
-                                    (*bp - black_level) * scale + 0.5,
-                                    (unsigned char) 255);
+                        *bp = clamp_cast<unsigned char>(0, (*bp - black_level) * scale + 0.5, 255);
             }
 
             

@@ -230,21 +230,22 @@ using namespace pw;
 
 // creating threads taking parameters (especially in a ctor-initializer) is a
 // little tricky, using an intermediate function smooths the ride a bit:
-void spawnPGCN(PipelineWidget *p){
+void spawnPGCN(PipelineWidget *p, int argc, char** argv){
     boost::shared_ptr<PipelineGuiCauvNode> pgcn =
         boost::make_shared<PipelineGuiCauvNode>(p);
     p->setCauvNode(pgcn);
+    pgcn->parseOptions(argc, argv);
     pgcn->run();
     warning() << __func__ << "run() finished";
 }
 
-PipelineWidget::PipelineWidget(QWidget *parent)
+PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_cauv_node(),
-      m_cauv_node_thread(boost::thread(spawnPGCN, this)),
+      m_cauv_node_thread(boost::thread(spawnPGCN, this, argc, argv)),
       m_lock(), m_redraw_posted_lock(), m_redraw_posted(false){
     // TODO: more appropriate QGLFormat?
 

@@ -12,12 +12,17 @@
 class SonarNode : public CauvNode
 {
 	public:
-		SonarNode(const std::string& device);
+		SonarNode();
 	
     protected:
         boost::shared_ptr<SeanetSonar> m_sonar;
         
         virtual void onRun();
+        virtual void addOptions(boost::program_options::options_description& desc,
+                                boost::program_options::positional_options_description& pos);
+        virtual int useOptionsMap(boost::program_options::variables_map& vm,
+                                  boost::program_options::options_description& desc);
+        
 };
 
 #endif
