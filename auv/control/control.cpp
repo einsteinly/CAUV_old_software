@@ -173,6 +173,9 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         virtual void onTelemetry(const floatYPR& attitude)
         {
+            // Forward telemetry data to spared
+            m_mb->sendMessage(boost::make_shared<TelemetryMessage>(attitude), SAFE_MESS);
+
             if (m_controlenabled[Bearing]) {
                 float mv = m_controllers[Bearing].getMV(attitude.yaw);
                 debug(2) << "Bearing Control: MV = " << mv;
@@ -198,6 +201,9 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
+            // forward message to spread:
+            m_mb->sendMessage(m, SAFE_MESS);
+
             if (m_controlenabled[Depth] && m_depthCalibration){
                 float depth = 0.5 * (m_depthCalibration->foreMultiplier() * m->fore() +
                                      m_depthCalibration->aftMultiplier() * m->aft());
@@ -207,6 +213,9 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
                 m_mb->sendMessage(msg, SAFE_MESS);
+
+                boost::shared_ptr<DepthMessage> dm = boost::make_shared<DepthMessage>(depth);
+                m_mb->sendMessage(dm, SAFE_MESS);
             }
         }
     

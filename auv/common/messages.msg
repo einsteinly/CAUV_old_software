@@ -171,7 +171,9 @@ group control
 
     message DepthCalibration : 80
     {
+        foreOffset : float;
         foreMultiplier : float;
+        aftOffset : float;
         aftMultiplier : float;
     }
 

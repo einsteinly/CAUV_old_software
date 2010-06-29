@@ -30,6 +30,7 @@ add_executable (
 )
 target_link_libraries (
     img_daemon
+    camera
     common
     ${OpenCV_LIBS}
 )
