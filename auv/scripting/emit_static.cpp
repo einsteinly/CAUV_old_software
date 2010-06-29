@@ -72,11 +72,11 @@ class CauvNodeWrapper:
     public bp::wrapper<CauvNode>
 {
     public:
-        CauvNodeWrapper(std::string const& name)
+        CauvNodeWrapper(std::string const& name, std::string const& server)
             : CauvNode(name){
+            defaultOptions();
+            m_server = server;
         }
-
-
         
         void onRun(){
             if(bp::override f = this->get_override("onRun")){
