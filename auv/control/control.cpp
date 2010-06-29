@@ -129,13 +129,6 @@ struct PIDControl
 };
 
 
-// TODO: move to cauv_utils: clashes with clamp in gui-pipeline at the
-// moment
-template<typename T1, typename T2, typename T3>
-inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
-    return (a < low)? low : ((a < high)? a : high);
-}
-
 MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     l.prop += r.prop;
     l.hbow += r.hbow;
@@ -351,29 +344,22 @@ class ControlLoops : public MessageObserver, public XsensObserver
             int new_vstern_value = clamp(-127, total_demand.vstern, 127);
             
             if(m_mcb) {
-                if(new_prop_value != prop_value) {
-                    prop_value = new_prop_value;
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::Prop, new_prop_value));
-                }
-                if(new_hbow_value != hbow_value) {
-                    hbow_value = new_hbow_value;
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HBow, new_hbow_value));
-                }
-                if(new_vbow_value != vbow_value) {
-                    vbow_value = new_vbow_value;
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VBow, new_vbow_value));
-                }
-                if(new_hstern_value != hstern_value) {
-                    hstern_value = new_hstern_value;
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::HStern, new_hstern_value));
-                }
-                if(new_vstern_value != vstern_value) {
-                    vstern_value = new_vstern_value;
-                    m_mcb->send(boost::make_shared<MotorMessage>(MotorID::VStern, new_vstern_value));
-                }
+                sendIfNew(MotorID::Prop, prop_value, new_prop_value);
+                sendIfNew(MotorID::HBow, hbow_value, new_hbow_value);
+                sendIfNew(MotorID::VBow, vbow_value, new_vbow_value);
+                sendIfNew(MotorID::HStern, hstern_value, new_hstern_value);
+                sendIfNew(MotorID::VStern, vstern_value, new_vstern_value);
             }
             
             m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
+        }
+
+        void sendIfNew(MotorID::e mid, int& oldvalue, int newvalue)
+        {
+            if(newvalue != oldvalue) {
+                oldvalue = newvalue;
+                m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+            }
         }
 
         int prop_value;
