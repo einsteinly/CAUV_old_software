@@ -180,7 +180,7 @@ std::streamsize FTDIDevice::read(char* s, std::streamsize n)
     std::stringstream ss;
     for (int i = 0; i < r; i++)
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
-    debug(5) << "Received" << ss.str();
+    debug(10) << "Received" << ss.str();
 #endif
 
     return r;
@@ -192,7 +192,7 @@ std::streamsize FTDIDevice::write(const char* s, std::streamsize n)
     std::stringstream ss;
     for (int i = 0; i < n; i++)
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
-    debug(5) << "Sending" << ss.str();
+    debug(10) << "Sending" << ss.str();
 #endif
 
     return m_ftdic->write(reinterpret_cast<const unsigned char*>(s), n);

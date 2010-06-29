@@ -194,6 +194,11 @@ group telemetry
 	{
 	    orientation : floatYPR;
     }
+
+    message Depth : 51
+    {
+        depth : float;
+    }
 }
 group image
 {
@@ -363,6 +368,7 @@ group pressure
 	    fore : uint16;
 	    aft : uint16;
     }
+
 }
 
 

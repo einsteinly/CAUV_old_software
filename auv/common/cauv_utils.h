@@ -47,9 +47,14 @@ uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
 void msleep(unsigned msecs);
 
-template<typename T1, typename T2>
-static T1 clamp(T1 const& low, T2 const& value, T1 const& high){
-    return value > high? high : value < low? low : T1(value); 
+
+template<typename TRet, typename TLow, typename TVal, typename THigh>
+static TRet clamp_cast(TLow const& low, TVal const& value, THigh const& high){
+    return value >= high? high : value <= low? low : TRet(value); 
+}
+template<typename TLow, typename TVal, typename THigh>
+static TVal clamp(TLow const& low, TVal const& value, THigh const& high){
+    return clamp_cast<TVal>(low, value, high);
 }
 
 #endif//__CAUV_UTILS_H__

@@ -17,15 +17,15 @@
    <item>
     <widget class="QToolBox" name="toolBox">
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="page_2">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>550</width>
-        <height>224</height>
+        <width>385</width>
+        <height>140</height>
        </rect>
       </property>
       <attribute name="label">
@@ -319,10 +319,18 @@
       </layout>
      </widget>
      <widget class="QWidget" name="page_4">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>550</width>
+        <height>224</height>
+       </rect>
+      </property>
       <attribute name="label">
        <string>Depth Calibration</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <spacer name="horizontalSpacer_6">
          <property name="orientation">
@@ -337,16 +345,9 @@
         </spacer>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_11">
-           <property name="text">
-            <string>Current Depth</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="depth">
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="foreScale">
            <property name="minimum">
             <double>-10000.000000000000000</double>
            </property>
@@ -358,12 +359,52 @@
            </property>
           </widget>
          </item>
-         <item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Fore Scale</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Aft Scale</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="aftScale">
+           <property name="minimum">
+            <double>-10000.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1000.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
           <widget class="QPushButton" name="sendDepth">
            <property name="text">
             <string>Send</string>
            </property>
           </widget>
+         </item>
+         <item row="3" column="1">
+          <spacer name="verticalSpacer_3">
+           <property name="orientation">
+            <enum>com.trolltech.qt.core.Qt.Orientation.Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
@@ -383,6 +424,14 @@
       </layout>
      </widget>
      <widget class="QWidget" name="page_3">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>550</width>
+        <height>224</height>
+       </rect>
+      </property>
       <attribute name="label">
        <string>Debug Settings</string>
       </attribute>
@@ -490,8 +539,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>550</width>
-        <height>224</height>
+        <width>230</width>
+        <height>38</height>
        </rect>
       </property>
       <attribute name="label">

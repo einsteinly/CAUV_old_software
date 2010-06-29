@@ -234,7 +234,7 @@ void spawnPGCN(PipelineWidget *p, int argc, char** argv){
     boost::shared_ptr<PipelineGuiCauvNode> pgcn =
         boost::make_shared<PipelineGuiCauvNode>(p);
     p->setCauvNode(pgcn);
-    p->parseOptions(argc, argv);
+    pgcn->parseOptions(argc, argv);
     pgcn->run();
     warning() << __func__ << "run() finished";
 }
