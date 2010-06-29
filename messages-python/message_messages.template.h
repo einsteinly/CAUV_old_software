@@ -36,6 +36,8 @@ struct $s.name
     $toCPPType($f.type) $f.name;
     #end for
 };
+BOOST_CLASS_IMPLEMENTATION($s.name, boost::serialization::object_serializable)
+
 #end for
 
 // ===============

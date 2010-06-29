@@ -104,7 +104,8 @@ int SpreadMailbox::doSendMessage(const boost::shared_ptr<const Message> message,
     std::stringstream ss;
     for (unsigned i = 0; i < bytes->size(); i++)
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*bytes)[i] << " ";
-    debug(10) << "->Spread:\n\t" << ss.str();
+    debug(9) << "->Spread: Sending message" << *message;
+    debug(10) << "->Data:\n\t" << ss.str();
 #endif
 
     ssrc::spread::ScatterMessage spreadMsg;
