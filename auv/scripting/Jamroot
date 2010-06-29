@@ -7,7 +7,7 @@ if ! [ python.configured ]
 }
 
 #local BOOST_SOURCE_PATH = /home/cauv/source/boost_1_42_0 ;
-local BOOST_SOURCE_PATH = /Users/james/Development/boost_1_42_0 ;
+local BOOST_SOURCE_PATH = /Users/james/Development/boost_1_43_0 ;
 local CAUV_PREFIX = /usr/local ;
 
 use-project boost
