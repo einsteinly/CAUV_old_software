@@ -5,6 +5,8 @@
 #include "webcam.h"
 
 #include <common/cauv_utils.h>
+#include <common/bash_cout.h>
+#include <debug/cauv_debug.h>
 
 
 CameraException::CameraException(const std::string& _reason)
@@ -63,6 +65,7 @@ void CaptureThread::operator()()
 {
     while(m_alive)
     {   
+        debug(3) << "Grabbing frame for broadcast...";
         m_camera.grabFrameAndBroadcast();
         
         m_frameDelayMutex.lock();
