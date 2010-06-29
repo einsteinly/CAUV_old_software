@@ -383,10 +383,12 @@ class MCBForwardingObserver : public MessageObserver
 
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
+            debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
             m_mb->sendMessage(m, UNRELIABLE_MESS);
         }
         virtual void onDebugMessage(DebugMessage_ptr m)
         {
+            debug(5) << "MCBForwardingObserver: Forwarding debug message:" << *m;
             m_mb->sendMessage(m, SAFE_MESS);
         }
     protected:
