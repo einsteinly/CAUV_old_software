@@ -199,10 +199,18 @@ class ControlLoops : public MessageObserver, public XsensObserver
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
             if (m_controlenabled[Depth] && m_depthCalibration){
-                float depth = 0.5 * (m_depthCalibration->foreMultiplier() * m->fore() +
-                                     m_depthCalibration->aftMultiplier() * m->aft());
+                float fore_depth_calibrated = m_depthCalibration->foreOffset() +
+                                              m_depthCalibration->foreMultiplier()
+                                              * m->fore();
+                float aft_depth_calibrated = m_depthCalibration->aftOffset() +
+                                             m_depthCalibration->aftMultiplier() * m->aft();
+                float depth = 0.5 * (fore_depth_calibrated + aft_depth_calibrated);
+
                 float mv = m_controllers[Depth].getMV(depth);
-                debug(2) << "depth =" << depth << "mv =" << mv;
+
+                debug(2) << "depth: fwd=" << fore_depth_calibrated
+                         << "aft=" << aft_depth_calibrated
+                         << "mean=" << depth << ", mv =" << mv;
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);

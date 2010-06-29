@@ -3,9 +3,13 @@ import threading
 
 class AUV(messaging.BufferedMessageObserver):
     def __init__(self, node):
-        self.__node = node        
+        self.__node = node
         node.join("control")
         node.addObserver(self)
+        
+        ## synchronising stuff
+        self.received_state_condition = threading.Condition()
+        self.received_state = None
 
     def send(self, msg):
         # send to control via self.__node
@@ -16,10 +20,18 @@ class AUV(messaging.BufferedMessageObserver):
         self.HBow(0)
         self.VBow(0)
         self.HStern(0)
-        self.VStern(0) 
+        self.VStern(0)
         self.autobearing(None)
         self.autoPitch(None)
         self.autoDepth(None)
+
+    def bearing(self, timeout=3):
+        self.received_state_condition.acquire()
+        self.received_state = None
+        self.send(messaging.StateRequestMessage())
+        self.received_state_condition.wait(timeout)
+        self.received_state_condition.release()
+        return self.received_state.orientation
 
     def autoBearing(self, bearing):
         if bearing is not None:
@@ -72,3 +84,9 @@ class AUV(messaging.BufferedMessageObserver):
         if value < -127 || value > 127:
             raise ValueError("invalid motor value: %d" % value)
 
+    ## synchronous-ifying stuff
+    def onStateMessage(self, m):
+        self.received_state_condition.acquire()
+        self.received_state = m
+        self.received_state_condition.notify()
+        self.received_state_condition.release()
