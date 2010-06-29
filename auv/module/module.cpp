@@ -153,7 +153,7 @@ FTDIDevice::FTDIDevice(int baudrate,
 
     if (devices.size() == 0)
         throw FTDIException("Could not open device (No devices found)");
-    else if (devices.size() < static_cast<size_t>(deviceID))
+    else if (devices.size() <= static_cast<size_t>(deviceID))
         throw FTDIException("Could not open device (No matching device found)");
 
     m_device = devices[deviceID];
