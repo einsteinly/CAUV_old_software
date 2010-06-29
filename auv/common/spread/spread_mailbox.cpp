@@ -95,9 +95,18 @@ StringVectorPtr groupListToVector(const GroupList &groups) {
     return v;
 }
 
-int SpreadMailbox::doSendMessage( const boost::shared_ptr<const Message> message, Spread::service serviceType,
-        const shared_ptr<GroupList> groupNames ) {
+int SpreadMailbox::doSendMessage(const boost::shared_ptr<const Message> message,
+                                 Spread::service serviceType,
+                                 const shared_ptr<GroupList> groupNames) {
     boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
+
+#ifndef CAUV_NO_DEBUG
+    std::stringstream ss;
+    for (unsigned i = 0; i < bytes->size(); i++)
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*bytes)[i] << " ";
+    debug(10) << "->Spread:\n\t" << ss.str();
+#endif
+
     ssrc::spread::ScatterMessage spreadMsg;
     spreadMsg.add(bytes->data(), bytes->size());
     spreadMsg.set_service(serviceType);
