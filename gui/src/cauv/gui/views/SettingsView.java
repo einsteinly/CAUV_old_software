@@ -111,7 +111,7 @@ public class SettingsView extends QWidget implements ScreenView {
     }
     
     public void calibrateDepth(){
-        auv.calibrateDepth((float)ui.depth.value());
+        auv.calibrateDepth((float)ui.foreScale.value(), (float)ui.aftScale.value());
     }
     
     @Override

@@ -2,7 +2,7 @@
 #define __UTIL_H__
 
 #include <cmath>
-
+#include <common/cauv_utils.h>
 
 // useful utility functions:
 template<typename T>
@@ -30,11 +30,6 @@ inline static T min(T const& a, T const& b){
 template<typename T>
 inline static T max(T const& a, T const& b){
     return a > b? a : b;
-}
-
-template<typename T1, typename T2, typename T3>
-inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
-    return (a < low)? low : ((a < high)? a : high);
 }
 
 template<typename T1, typename T2>

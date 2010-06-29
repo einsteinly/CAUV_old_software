@@ -32,20 +32,59 @@ public class ControlableVideoScreen extends VideoScreen {
 	boolean updating = false;
 
 	public Signal2<Float, Float> directionChange = new Signal2<Float, Float>();
-	public Signal0 upClick = new Signal0();
-	public Signal0 downClick = new Signal0();
-	public Signal0 leftClick = new Signal0();
-	public Signal0 rightClick = new Signal0();
+	public Signal1<Boolean> upClick = new Signal1<Boolean>();
+	public Signal1<Boolean> downClick = new Signal1<Boolean>();
+	public Signal1<Boolean> leftClick = new Signal1<Boolean>();
+	public Signal1<Boolean> rightClick = new Signal1<Boolean>();
 
 	public ControlableVideoScreen(QWidget parent) {
 		super(parent);
 		ui.setupUi(this);
-		ui.up.clicked.connect(upClick, "emit()");
-		ui.down.clicked.connect(downClick, "emit()");
-		ui.left.clicked.connect(leftClick, "emit()");
-		ui.right.clicked.connect(rightClick, "emit()");
+        ui.up.pressed.connect(this, "upPress()");
+        ui.up.released.connect(this, "upRelease()");
+
+        ui.down.pressed.connect(this, "downPress()");
+        ui.down.released.connect(this, "downRelease()");
+
+        ui.left.pressed.connect(this, "leftPress()");
+        ui.left.released.connect(this, "leftRelease()");
+		
+        ui.right.pressed.connect(this, "rightPress()");
+        ui.right.released.connect(this, "rightRelease()");
 	}
 
+    protected void upPress(){
+        upClick.emit(true);
+    }
+    
+    protected void upRelease(){
+        upClick.emit(false);
+    }
+
+    protected void downPress(){
+        downClick.emit(true);
+    }
+    
+    protected void downRelease(){
+        downClick.emit(false);
+    }
+
+    protected void leftPress(){
+        leftClick.emit(true);
+    }
+    
+    protected void leftRelease(){
+        leftClick.emit(false);
+    }
+
+    protected void rightPress(){
+        rightClick.emit(true);
+    }
+    
+    protected void rightRelease(){
+        rightClick.emit(false);
+    }
+	
 	public void setVisibleElements(int visible){
 		this.elements = visible;
 	}

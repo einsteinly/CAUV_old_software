@@ -2,46 +2,62 @@ package cauv.gui.views;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.util.Vector;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.data.time.TimeSeries;
 import org.jfree.data.xy.DefaultTableXYDataset;
 import org.jfree.data.xy.XYSeries;
 
 import cauv.auv.AUV;
 import cauv.gui.ScreenView;
 
+import com.trolltech.qt.core.QTimer;
 import com.trolltech.qt.gui.*;
 import com.trolltech.qt.gui.QPalette.ColorRole;
 
 public class TelemetryView extends QWidget implements ScreenView {
 
+    protected AUV auv;
+    
 	public QGraphicsPixmapItem icon = new QGraphicsPixmapItem();
     Ui_TelemetryView ui = new Ui_TelemetryView();
 
-    XYSeries depthSeries = new XYSeries("Depth", true, false);
-    
+    Vector<Float> depths = new Vector<Float>();
+    Vector<Float> pressureFore = new Vector<Float>();
+    Vector<Float> pressureAft = new Vector<Float>();
     
     public TelemetryView() {
         ui.setupUi(this);
         ui.graphScroll.setBackgroundRole(ColorRole.NoRole);
-        depthSeries.add(depthSeries.getItemCount()+1, depthSeries.getItemCount()+2);
-        depthSeries.add(depthSeries.getItemCount()+1, depthSeries.getItemCount()+4);
-        depthSeries.add(depthSeries.getItemCount()+1, depthSeries.getItemCount()+8);
-        depthSeries.add(depthSeries.getItemCount()+1, depthSeries.getItemCount()+16);
-
-        DefaultTableXYDataset xyDataset= new DefaultTableXYDataset();
-        xyDataset.addSeries(depthSeries);
-        icon.setPixmap(plotIconGraph(xyDataset, 88, 70));
+    
+        QTimer t = new QTimer(this);
+        t.timeout.connect(this, "updateGraphs()");
+        t.setSingleShot(false);
+        t.setInterval(500);
+        t.start();
+        
     }
 
+    protected QPixmap plotGraph(DefaultTableXYDataset dataset, int width, int height){
+
+        JFreeChart chart = ChartFactory.createTimeSeriesChart(
+                null, null, null, dataset, true, false, false);
+        formatChart(chart);
+        // hide the axes in the icon version
+        chart.getXYPlot().getDomainAxis().setVisible(false);
+        chart.getXYPlot().getRangeAxis().setVisible(false);
+        return chartToPixmap(chart, width, height);
+    }
+    
     protected QPixmap plotIconGraph(DefaultTableXYDataset dataset, int width, int height){
 
-    	JFreeChart chart = ChartFactory.createTimeSeriesChart(
-        		null, null, null, dataset, false, false, false);
-    	formatChart(chart);
-    	// hide the axes in the icon version
+        JFreeChart chart = ChartFactory.createTimeSeriesChart(
+                null, null, null, dataset, false, false, false);
+        formatChart(chart);
+        // hide the axes in the icon version
         chart.getXYPlot().getDomainAxis().setVisible(false);
         chart.getXYPlot().getRangeAxis().setVisible(false);
         return chartToPixmap(chart, width, height);
@@ -63,13 +79,50 @@ public class TelemetryView extends QWidget implements ScreenView {
     }
     
     public void onConnect(AUV auv){
-    	
+        this.auv = auv;
+        
+        auv.depthChanged.connect(this, "onDepthData(float)");
+    }
+    
+    public void onPressureData(float fore, float aft){
+        pressureFore.add(fore);
+        if(pressureFore.size() > 500)
+            pressureFore.remove(0);
+        
+        pressureAft.add(fore);
+        if(pressureAft.size() > 500)
+            pressureAft.remove(0);
+        
+    }
+    
+    public void onDepthData(float depth){
+        depths.add(depth);
+        if(depths.size() > 500)
+            depths.remove(0);
+    }
+    
+    public void updateGraphs(){
+
+        XYSeries pressureSeriesFore = new XYSeries("Pressure - Fore", true, false);
+        XYSeries pressureSeriesAft = new XYSeries("Pressure - Aft", true, false);
+        XYSeries depthSeries = new XYSeries("Depth", true, false);
+        for(float depth : depths)
+            depthSeries.add(depthSeries.getItemCount()+1, depth);
+        for(float p : pressureAft)
+            pressureSeriesFore.add(pressureSeriesFore.getItemCount()+1, p);
+        for(float p : pressureFore)
+            pressureSeriesFore.add(pressureSeriesFore.getItemCount()+1, p);
+        DefaultTableXYDataset xyDataset= new DefaultTableXYDataset();
+        xyDataset.addSeries(depthSeries);
+        xyDataset.addSeries(pressureSeriesFore);
+        xyDataset.addSeries(pressureSeriesAft);
+        icon.setPixmap(plotIconGraph(xyDataset, 88, 70));
+        ui.depthGraph.setPixmap(plotGraph(xyDataset, ui.depthGraph.width(), ui.depthGraph.height()));
     }
     
     @Override
     public void onDisconnect(AUV auv) {
-        // TODO Auto-generated method stub
-        
+       auv = null; 
     }
     
 	@Override

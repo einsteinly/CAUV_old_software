@@ -231,6 +231,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
             String member = g.toString().substring(1, g.toString().indexOf("#", 2));
             members.add(member);
         }
-        membershipChanged.emit(members);
+        
+        //membershipChanged.emit(members);
     }
 }
