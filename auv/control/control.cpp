@@ -173,9 +173,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         virtual void onTelemetry(const floatYPR& attitude)
         {
-            // Forward telemetry data to spared
-            m_mb->sendMessage(boost::make_shared<TelemetryMessage>(attitude), SAFE_MESS);
-
             if (m_controlenabled[Bearing]) {
                 float mv = m_controllers[Bearing].getMV(attitude.yaw);
                 debug(2) << "Bearing Control: MV = " << mv;
@@ -201,9 +198,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
-            // forward message to spread:
-            m_mb->sendMessage(m, SAFE_MESS);
-
             if (m_controlenabled[Depth] && m_depthCalibration){
                 float depth = 0.5 * (m_depthCalibration->foreMultiplier() * m->fore() +
                                      m_depthCalibration->aftMultiplier() * m->aft());
@@ -399,6 +393,21 @@ class MCBForwardingObserver : public MessageObserver
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
 
+class SpreadForwardingXsensObserver : public XsensObserver
+{
+    public:
+        SpreadForwardingXsensObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
+        {
+        }
+
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
+            m_mb->sendMessage(boost::make_shared<TelemetryMessage>(attitude), UNRELIABLE_MESS);
+        }
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+};
+
 class NotRootException : public std::exception
 {
     public:
@@ -513,6 +522,7 @@ void ControlNode::onRun()
 
     if (m_xsens) {
         m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
+        m_xsens->addObserver(boost::make_shared<SpreadForwardingXsensObserver>(mailbox()));
         m_xsens->addObserver(m_controlLoops);
 
         m_xsens->start();
