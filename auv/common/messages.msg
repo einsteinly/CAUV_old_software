@@ -296,6 +296,17 @@ group gui
     {
         demand : MotorDemand;
     }
+ 
+     message Script : 102
+     {
+         script : string;
+         timeout : float;
+     }
+
+     message ScriptResponse : 103
+     {
+         response : string;
+     }
 }
 
 group pl_gui

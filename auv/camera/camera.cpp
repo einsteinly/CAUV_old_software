@@ -98,6 +98,7 @@ Webcam::Webcam(const CameraID::e cameraID, const int deviceID)
 void Webcam::grabFrameAndBroadcast()
 {
     cv::Mat mat;
+    std::cout << "." << std::flush;
     m_capture >> mat;
     cv::imshow("CAUV OpenCV test", mat);
     cv::waitKey(10);

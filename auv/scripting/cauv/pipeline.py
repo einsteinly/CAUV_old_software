@@ -1,6 +1,18 @@
 import messaging
 import threading
 
+def intParam(i):
+    r = messaging.NodeParamValue()
+    r.type = messaging.ParamType.Int32
+    r.intValue = i
+    return r
+
+def stringParam(str):
+    r = messaging.NodeParamValue()
+    r.type = messaging.ParamType.String
+    r.stringValue = str
+    return r
+ 
 class Node:
     def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):
         self.type = type

@@ -24,8 +24,8 @@ void emitStructs(){
     #end for
     #set $initString = $initString + " >()"
     ## NB: init string not used: we don't emit c++ constructors for structs
-    bp::class_<${s.name},
-               boost::shared_ptr<${s.name}>
+    bp::class_<${s.name}/*,
+               boost::shared_ptr<${s.name}>*/
               >("${s.name}")
         .def(bp::self_ns::str(bp::self_ns::self)) 
         #for $f in $s.fields

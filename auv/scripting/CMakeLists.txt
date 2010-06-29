@@ -94,4 +94,15 @@ add_custom_target (scripting-test
     COMMENT "cauv python module test"
 )
 
+add_custom_target (pycamtest
+    python ${SRCD}/camtest.py 
+    DEPENDS camtest.py
+            ${SRCD}/cauv/cauvinterface.so
+            ${SRCD}/cauv/__init__.py
+            ${SRCD}/cauv/messaging.py
+            ${SRCD}/cauv/node.py
+            ${SRCD}/cauv/pipeline.py
+    SOURCES pycauvtest.py
+    COMMENT "cauv python module img-pipeline camera test"
+)
 
