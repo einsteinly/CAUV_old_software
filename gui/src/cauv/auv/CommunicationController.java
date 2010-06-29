@@ -14,6 +14,7 @@ import cauv.messaging.DebugMessage;
 import cauv.messaging.DepthAutopilotEnabledMessage;
 import cauv.messaging.DepthAutopilotParamsMessage;
 import cauv.messaging.DepthCalibrationMessage;
+import cauv.messaging.GuiImageMessage;
 import cauv.messaging.InputStatusMessage;
 import cauv.messaging.Message;
 import cauv.messaging.MessageObserver;
@@ -250,6 +251,7 @@ public class CommunicationController extends MessageObserver {
 
     @Override
     public void onPressureMessage(PressureMessage m) {
+        System.out.println(m);
         auv.updatePressures(m.fore, m.aft);
         auv.updateDepth((m.aft + m.fore)/2.0f);
     }
@@ -261,6 +263,7 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onImageMessage(ImageMessage m) {
+        System.out.println(m);
         switch (m.source) {
             case Forward:
                 auv.cameras.FORWARD.updateImage(m.image);
@@ -274,6 +277,12 @@ public class CommunicationController extends MessageObserver {
         }
     }
 
+    @Override
+    public void onGuiImageMessage(GuiImageMessage m) {
+        System.out.println(m);
+    }
+    
+    
     @Override
     public void onMotorMessage(MotorMessage m) {
         switch (m.motorId) {

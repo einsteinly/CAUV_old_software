@@ -35,8 +35,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	
 	AUV auv;
 	Vector<ScreenView> views = new Vector<ScreenView>();
-
-	Signal1<Vector<String>> membershipChanged = new Signal1<Vector<String>>();
+	Vector<String> members = new Vector<String>();
 	
 	public static void main(String[] args) {
 		QApplication.initialize(args);
@@ -73,8 +72,13 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ui.backButton.hide();
 		ui.backButton.clicked.connect(this, "back()");
 		ui.connectButton.clicked.connect(this, "connect()");
-		this.membershipChanged.connect(this, "updateMembershipLights(Vector)", ConnectionType.BlockingQueuedConnection);
 		Main.trace("Initialisation complete");
+		
+		QTimer t = new QTimer(this);
+		t.setInterval(200);
+		t.setSingleShot(false);
+		t.timeout.connect(this, "updateMembershipLights()");
+		t.start();
 	}
 
 	public Main(QWidget parent) {
@@ -205,19 +209,20 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	}
 
 	
-	public void updateMembershipLights(Vector<String> members){
+	public void updateMembershipLights(){
+	    
         ui.controlLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         ui.aiLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         ui.imageProcLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         
         for(String member : members){
-            if(member == "control"){
+            if(member.toLowerCase().equals("control")){
                 ui.controlLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
             }
-            if(member == "ai"){
+            if(member.toLowerCase().equals("ai")){
                 ui.aiLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
             }
-            if(member == "imgproc"){
+            if(member.toLowerCase().equals("img-pipe")){
                 ui.imageProcLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
             }
         }
@@ -226,12 +231,30 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	
     @Override
     public void onMembershipChanged(SpreadMessage message) {
-        Vector<String> members = new Vector<String>();
+        
         for(SpreadGroup g: message.getMembershipInfo().getMembers()){
             String member = g.toString().substring(1, g.toString().indexOf("#", 2));
-            members.add(member);
+            if(!members.contains(member))
+            {
+                members.add(member);
+                auv.logs.TRACE.log(member + " connected");
+            }
         }
         
-        //membershipChanged.emit(members);
+        if(message.getMembershipInfo().isCausedByLeave()){
+            SpreadGroup g = message.getMembershipInfo().getLeft();
+            String member = g.toString().substring(1, g.toString().indexOf("#", 2));
+            if(members.contains(member)){
+                members.remove(member);
+                auv.logs.TRACE.log(member + " left");
+            }
+        }
+        else if(message.getMembershipInfo().isCausedByDisconnect())
+        {
+            SpreadGroup g = message.getMembershipInfo().getDisconnected();
+            String member = g.toString().substring(1, g.toString().indexOf("#", 2));
+            members.remove(member);
+            auv.logs.TRACE.log(member + " disconnected");
+        }
     }
 }
