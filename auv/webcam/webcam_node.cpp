@@ -40,7 +40,7 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
             if(!m_msg && img.rows && img.cols)
             {
                 // only do stuff if last image has sent
-                Image i(img, Image::src_camera);
+                Image i(img);
                 imsg_ptr_t m = boost::make_shared<ImageMessage>(cam_id, i, now());
                 m_msg = m;
                 m_cam_id = cam_id;
@@ -53,7 +53,7 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
         }
 
         virtual void onImageMessage(imsg_ptr_t m){
-            if(m->source() == m_cam_id && m->image().source() == Image::src_camera)
+            if(m->source() == m_cam_id)
             {
                 m_msg.reset();
             }
