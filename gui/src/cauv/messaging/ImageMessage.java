@@ -62,16 +62,33 @@ public class ImageMessage extends Message {
 
     public ImageMessage(byte[] bytes) throws IOException {
         super(4, "image");
+        System.out.println("debug 1");
+        
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+
+        System.out.println("debug 2");
         LEDataInputStream s = new LEDataInputStream(bs);
+        
+
+        System.out.println("debug 3");
         int buf_id = s.readInt();
+
+        System.out.println("debug 4");
         if (buf_id != m_id)
         {
             throw new IllegalArgumentException("Attempted to create ImageMessage with invalid id");
         }
 
+        System.out.println("debug 5");
         this.source = CameraID.readFrom(s);
+
+        System.out.println("debug 6");
         this.image = Image.readFrom(s);
+
+        System.out.println("debug 7");
         this.time = TimeStamp.readFrom(s);
+        
+
+        System.out.println("debug 8");
     }
 }

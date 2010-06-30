@@ -148,6 +148,10 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
     public void regularMessageReceived(SpreadMessage message) {
         // pass the message onto our message factory to convert it to a CAUV
         // message
-        notifyObservers(message.getData());
+        try {
+            notifyObservers(message.getData());
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
     }
 }

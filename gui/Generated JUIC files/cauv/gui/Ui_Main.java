@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Tue 29. Jun 09:35:54 2010
+** Created: Wed 30. Jun 09:09:58 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -17,6 +17,8 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QAction actionSettings;
     public QAction actionMoo;
     public QAction actionPahh_You_wish;
+    public QAction actionOptions;
+    public QAction actionOptions_2;
     public QWidget centralwidget;
     public QVBoxLayout verticalLayout;
     public QWidget connectionBar;
@@ -62,6 +64,8 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QWidget tab_3;
     public QHBoxLayout horizontalLayout_5;
     public QTextEdit traces;
+    public QMenuBar menuBar;
+    public QMenu menuTools;
 
     public Ui_Main() { super(); }
 
@@ -76,6 +80,10 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         actionMoo.setObjectName("actionMoo");
         actionPahh_You_wish = new QAction(Main);
         actionPahh_You_wish.setObjectName("actionPahh_You_wish");
+        actionOptions = new QAction(Main);
+        actionOptions.setObjectName("actionOptions");
+        actionOptions_2 = new QAction(Main);
+        actionOptions_2.setObjectName("actionOptions_2");
         centralwidget = new QWidget(Main);
         centralwidget.setObjectName("centralwidget");
         verticalLayout = new QVBoxLayout(centralwidget);
@@ -520,6 +528,15 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 
         dockWidget.setWidget(dockWidgetContents_2);
         Main.addDockWidget(com.trolltech.qt.core.Qt.DockWidgetArea.resolve(8), dockWidget);
+        menuBar = new QMenuBar(Main);
+        menuBar.setObjectName("menuBar");
+        menuBar.setGeometry(new QRect(0, 0, 827, 22));
+        menuTools = new QMenu(menuBar);
+        menuTools.setObjectName("menuTools");
+        Main.setMenuBar(menuBar);
+
+        menuBar.addAction(menuTools.menuAction());
+        menuTools.addAction(actionOptions_2);
         retranslateUi(Main);
 
         informationStack.setCurrentIndex(0);
@@ -535,6 +552,8 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         actionSettings.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Settings", null));
         actionMoo.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Moo", null));
         actionPahh_You_wish.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Pahh. You wish.", null));
+        actionOptions.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Options", null));
+        actionOptions_2.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Options", null));
         label_3.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
 "p, li { white-space: pre-wrap; }\n"+
@@ -591,6 +610,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 "</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Cambridge AUV GUI</span></p></body></html>", null));
         tabWidget.setTabText(tabWidget.indexOf(tab_3), com.trolltech.qt.core.QCoreApplication.translate("Main", "Trace", null));
+        menuTools.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Tools", null));
     } // retranslateUi
 
 }

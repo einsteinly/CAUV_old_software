@@ -61,7 +61,7 @@ public class MotorControlView extends QWidget implements ScreenView {
 	}
 	
 	@Override
-	public void onDisconnect(AUV auv) {
+	public void onDisconnect() {
 	    // TODO Auto-generated method stub
 	}
 }

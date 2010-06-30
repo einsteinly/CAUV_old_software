@@ -10,7 +10,7 @@ import cauv.types.*;
 import cauv.utils.*;
 
 public class GraphDescriptionMessage extends Message {
-    int m_id = 18;
+    int m_id = 118;
     public HashMap< Integer, NodeType > nodeTypes;
     public HashMap< Integer, HashMap< String, NodeOutput > > nodeInputs;
     public HashMap< Integer, HashMap< String, Vector< NodeInput > > > nodeOutputs;
@@ -116,11 +116,11 @@ public class GraphDescriptionMessage extends Message {
     }
 
     public GraphDescriptionMessage(){
-        super(18, "pl_gui");
+        super(118, "pl_gui");
     }
 
     public GraphDescriptionMessage(HashMap< Integer, NodeType > nodeTypes, HashMap< Integer, HashMap< String, NodeOutput > > nodeInputs, HashMap< Integer, HashMap< String, Vector< NodeInput > > > nodeOutputs, HashMap< Integer, HashMap< String, NodeParamValue > > nodeParams) {
-        super(18, "pl_gui");
+        super(118, "pl_gui");
         this.nodeTypes = nodeTypes;
         this.nodeInputs = nodeInputs;
         this.nodeOutputs = nodeOutputs;
@@ -128,7 +128,7 @@ public class GraphDescriptionMessage extends Message {
     }
 
     public GraphDescriptionMessage(byte[] bytes) throws IOException {
-        super(18, "pl_gui");
+        super(118, "pl_gui");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();
