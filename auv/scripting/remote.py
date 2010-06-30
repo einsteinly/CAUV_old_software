@@ -15,8 +15,8 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
         threading.Thread.__init__(self)
         self.__node = node
         node.addObserver(self)
-        self.eval_context_locals = copy.copy(locals())
-        self.eval_context_globals = copy.copy(globals())
+        self.eval_context_locals = {}
+        self.eval_context_globals = {"msg": self.sendScriptResponse}
         self.eval_queue = []
         self.eval_queue_condition = threading.Condition()
         # TODO: check this line:
@@ -29,6 +29,9 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
     def onScriptMessage(self, m):
         print 'received script:\n%s\n#[end script]' % m.script
         self.eval_queue.append(m.script, m.timeout)
+
+    def sendScriptResponse(self, msg):
+        self.send(msg.ScriptResponseMessage(msg))
 
     def run(self):
         print 'script queue thread started'

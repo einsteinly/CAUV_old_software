@@ -41,7 +41,7 @@ class CameraInputNode: public AsynchronousNode{
             
             debug() << "CameraInputNode::doWork";
             
-            if(!m_capture || !m_capture.isOpened()){
+            if(!m_capture.isOpened()){
                 error() << "camera is not opened";
             }else{
                 boost::shared_ptr<Image> img = boost::make_shared<Image>();

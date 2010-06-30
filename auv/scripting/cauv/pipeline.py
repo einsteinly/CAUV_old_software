@@ -12,6 +12,35 @@ def stringParam(str):
     r.type = messaging.ParamType.String
     r.stringValue = str
     return r
+
+def fromNPV(npv):
+    if npv.type == messaging.ParamType.String:
+        return npv.stringValue
+    elif npv.type == messaging.ParamType.Int32:
+        return npv.intValue
+    elif npv.type == messaging.ParamType.Bool:
+        if npv.intValue != 0:
+            return True
+        else:
+            return False
+    elif npv.type == messaging.ParamType.Float:
+        return npv.floatValue
+
+def toNPV(value):
+    r = messaging.NodeParamValue()
+    if isinstance(value, int) or isinstance(value, long):
+        r.type = messaging.ParamType.Int32
+        r.intValue = value
+    elif isinstance(value, float):
+        r.type = messaging.ParamType.Float
+        r.floatValue = value
+    elif isinstance(value, str):
+        r.type = messaging.ParamType.String
+        r.stringValue = value
+    elif isinstance(value, bool):
+        r.type = messaging.ParamType.Bool
+        r.intValue = int(value)
+    return r
  
 class Node:
     def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):
@@ -37,6 +66,8 @@ class State:
 class Model(messaging.BufferedMessageObserver):
     def __init__(self, node):
         messaging.BufferedMessageObserver.__init__(self)
+        #import time
+        #time.sleep(1)
         self.__node = node
         self.description_ready_condition = threading.Condition()
         self.graph_description = None
@@ -56,18 +87,18 @@ class Model(messaging.BufferedMessageObserver):
     def clear(self):
         self.send(messaging.ClearPipelineMessage())
 
-    def get(self):
-        graph = self.__getSynchronousGraphDescription()
+    def get(self, timeout=3):
+        graph = self.__getSynchronousGraphDescription(3)
         if graph is None:
             raise RuntimeError(
                 'Could not get Description Message from the pipeline, is it running?'
             )
         s = State()
         for id in graph.nodeTypes.keys():
-            s.nodes[id] = Node(id, graph.nodeTypes[id])
+            s.nodes[id] = Node(id, int(graph.nodeTypes[id]))
         for id, pvps in graph.nodeParams.items():
             for param, value in pvps.items():
-                s.nodes[id].params[param] = value
+                s.nodes[id].params[param] = fromNPV(value)
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():
@@ -99,7 +130,7 @@ class Model(messaging.BufferedMessageObserver):
             id = id_map[old_id]
             for param in node.params.keys():
                 #print 'set parameter', id, param, '=', node.params[param]
-                self.setParameterSynchronous(id, param, node.params[param])
+                self.setParameterSynchronous(id, param, toNPV(node.params[param]))
         # finally add links
         for old_id, node in state.nodes.items():
             # strictly speaking only one of these should be necessary, since
@@ -108,7 +139,7 @@ class Model(messaging.BufferedMessageObserver):
             for input in node.inarcs.keys():
                 (other, output) = node.inarcs[input]
                 if other != 0:
-                    self.addArcSynchronous(id, input, id_map[other], output)
+                    self.addArcSynchronous(id_map[other], output, id, input)
             #for output in node.outarcs.keys():
             #    (other, input) = node.outarcs[output]
             #    if other != 0:
@@ -120,10 +151,11 @@ class Model(messaging.BufferedMessageObserver):
 
 
     def addSynchronous(self, type, timeout=3.0):
+        print 'addSynchronous', type, '=', messaging.NodeType(type), timeout
         self.node_added_condition.acquire()
-        self.node_added = None        
+        self.node_added = None
         self.send(messaging.AddNodeMessage(
-            type, messaging.NodeInputArcVec(), messaging.NodeOutputArcVec()
+            messaging.NodeType(type), messaging.NodeInputArcVec(), messaging.NodeOutputArcVec()
         ))
         self.node_added_condition.wait(timeout)
         if self.node_added is None:
@@ -158,6 +190,7 @@ class Model(messaging.BufferedMessageObserver):
         to = messaging.NodeInput()
         to.node = dst
         to.input = inp
+        print 'add arc:', fr, '->', to
         self.send(messaging.AddArcMessage(fr, to))
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:

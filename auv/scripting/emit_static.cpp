@@ -130,7 +130,7 @@ class SpreadMessageWrapper:
 /*** Actual Functions to Generate the Interface: ***/
 void emitThing(){
     bp::class_<Blah>("Blah")
-        .property("monkey", &Blah::monkey)
+        .add_property("monkey", &Blah::monkey)
     ;
     bp::class_<ThingWrapper,
                boost::shared_ptr<ThingWrapper>,

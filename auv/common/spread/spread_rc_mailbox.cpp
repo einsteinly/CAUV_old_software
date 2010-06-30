@@ -247,6 +247,7 @@ void ReconnectingSpreadMailbox::operator()(){
             return;
         } catch(ConnectionError& e) {
             if (e.critical()){
+                warning() << "critical error:" << e.what() << "(will re-throw)";
                 _disconnect();
                 throw e;
             }else{
