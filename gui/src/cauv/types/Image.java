@@ -9,10 +9,9 @@ import cauv.utils.*;
 
 public class Image {
 
-    public CameraID source;
     public String format;
     public int loadFlags;
-    public Vector<Long> compressionParams;
+    public Vector<Integer> compressionParams;
     public Vector<Byte> data;
     
     public Image()
@@ -21,9 +20,6 @@ public class Image {
 
     public static Image readFrom(LEDataInputStream s) throws IOException {
         Image val = new Image();
-        
-        //source
-        val.source = CameraID.readFrom(s);
         
         //format
         int msg_len = s.readInt();
@@ -34,14 +30,17 @@ public class Image {
         }
         val.format = new String(msg_bytes);
         
+        
         // compressionParams
-        val.compressionParams = new Vector< Long >();
-        long data_len = s.readLong();
-        for (int data_i = 0; data_i < data_len; data_i++)
+        val.compressionParams = new Vector< Integer >();
+        long compressionParams_len = s.readLong();
+        System.out.println("Length: " + compressionParams_len);
+        for (int compressionParams_i = 0; compressionParams_i < compressionParams_len; compressionParams_i++)
         {
-            val.compressionParams.add(data_i, s.readLong());
+            val.compressionParams.add(compressionParams_i, s.readInt());
         }
         
+        /*
         // load flags
         val.loadFlags = s.readInt();
         
@@ -52,7 +51,7 @@ public class Image {
         {
             val.data.add(data_i, s.readByte());
         }
-        
+        */
         return val;
     }
 

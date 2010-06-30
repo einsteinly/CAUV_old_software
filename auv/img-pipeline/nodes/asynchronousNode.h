@@ -9,10 +9,6 @@ class AsynchronousNode: public InputNode{
         AsynchronousNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : InputNode(sched, pl, t){
         }
-
-        virtual bool checkSource(Image::Source const&, CameraID::e const&) throw(){
-            return false;
-        }
 };
 
 

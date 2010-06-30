@@ -12,6 +12,7 @@ import cauv.auv.MessageSocket;
 import cauv.auv.MessageSocket.ConnectionStateObserver;
 import cauv.auv.MessageSocket.MembershipObserver;
 import cauv.gui.controllers.PS2ControlHandler;
+import cauv.gui.dialogs.Settings;
 import cauv.gui.views.CameraFeeds;
 import cauv.gui.views.MissionControlView;
 import cauv.gui.views.MotorControlView;
@@ -32,6 +33,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	Ui_Main ui = new Ui_Main();
 	
 	static Main auvGUI;
+	Settings settingsDialog = new Settings();
 	
 	AUV auv;
 	Vector<ScreenView> views = new Vector<ScreenView>();
@@ -51,7 +53,6 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		gui.registerScreen(new TelemetryView());
 		gui.registerScreen(new MissionControlView());
 		gui.registerScreen(new MotorControlView());
-		gui.registerScreen(new SettingsView());
 		
 		gui.show();
 
@@ -72,6 +73,9 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ui.backButton.hide();
 		ui.backButton.clicked.connect(this, "back()");
 		ui.connectButton.clicked.connect(this, "connect()");
+		ui.actionOptions_2.triggered.connect(this, "showSettings()");
+		AUV.registerAUVConnectionObserver(settingsDialog);
+		
 		Main.trace("Initialisation complete");
 		
 		QTimer t = new QTimer(this);
@@ -86,6 +90,10 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ui.setupUi(this);
 	}
 
+	public void showSettings(){
+	    settingsDialog.show();
+	}
+	
 	protected void back(){
 		ui.informationStack.setCurrentWidget(ui.page);
 		ui.backButton.hide();
@@ -104,9 +112,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		try {
 			this.auv = new AUV(Config.ADDRESS, Config.AUV_PORT);
 			auv.regsiterConnectionStateObserver(this);
-			for(ScreenView v: views){
-				v.onConnect(auv);
-			}
+
             auv.logs.TRACE.messageLogged.connect(this, "trace(String)", ConnectionType.BlockingQueuedConnection);
             auv.logs.DEBUG.messageLogged.connect(this, "warning(String)", ConnectionType.BlockingQueuedConnection);
             auv.logs.ERROR.messageLogged.connect(this, "error(String)", ConnectionType.BlockingQueuedConnection);
@@ -123,6 +129,8 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	
 	public void registerScreen(final ScreenView view) {
 		
+	    AUV.registerAUVConnectionObserver(view);
+	    
 		Main.trace("Registering view ["+view.getScreenName()+"]");
 		views.add(view);
 		
@@ -253,8 +261,10 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
         {
             SpreadGroup g = message.getMembershipInfo().getDisconnected();
             String member = g.toString().substring(1, g.toString().indexOf("#", 2));
-            members.remove(member);
-            auv.logs.TRACE.log(member + " disconnected");
+            if(members.contains(member)){
+                members.remove(member);
+                auv.logs.TRACE.log(member + " disconnected");
+            }
         }
     }
 }

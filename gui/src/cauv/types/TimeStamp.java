@@ -9,7 +9,7 @@ import cauv.utils.*;
 
 public class TimeStamp {
     public int secs;
-    public int msecs;
+    public int musecs;
 
     public TimeStamp()
     {
@@ -18,12 +18,12 @@ public class TimeStamp {
     public static TimeStamp readFrom(LEDataInputStream s) throws IOException {
         TimeStamp val = new TimeStamp();
         val.secs = s.readInt();
-        val.msecs = s.readInt();
+        val.musecs = s.readInt();
         return val;
     }
 
     public void writeInto(LEDataOutputStream s) throws IOException {
         s.writeInt(this.secs);
-        s.writeInt(this.msecs);
+        s.writeInt(this.musecs);
     }
 }

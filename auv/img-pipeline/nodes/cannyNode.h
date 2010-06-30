@@ -43,7 +43,6 @@ class CannyNode: public Node{
             float g = param<int>("L2 gradient");
 
             boost::shared_ptr<Image> dst = boost::make_shared<Image>();
-            dst->source(img->source());
             try{
                 cv::Canny(img->cvMat(), dst->cvMat(), t1, t2, ap, g);
                 r["image_out"] = dst;

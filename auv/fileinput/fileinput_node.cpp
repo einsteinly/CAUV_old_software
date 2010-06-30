@@ -44,7 +44,7 @@ FileinputNode::FileinputNode(std::string const& fname)
     : CauvNode("Fileinput"), m_fname(fname)
 {
     cv::Mat cv_img = cv::imread(m_fname.c_str());
-    m_img = Image(cv_img, Image::src_camera); // pretend to be a camera 
+    m_img = Image(cv_img); // pretend to be a camera 
 }
 
 void FileinputNode::onRun()

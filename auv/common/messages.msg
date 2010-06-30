@@ -31,7 +31,8 @@ enum NodeType : int8 {
     Levels = 22,
     Mix = 23,
     Percentile = 24,
-    SonarInput = 25
+    SonarInput = 25,
+    BroadcastImage = 26
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

@@ -3,23 +3,27 @@ package cauv.auv;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.UnknownHostException;
+import java.util.Vector;
 
 import cauv.auv.AUV.Autopilot;
 import cauv.auv.AUV.Motor;
 import cauv.auv.AUV.Sonar;
 import cauv.messaging.BearingAutopilotEnabledMessage;
 import cauv.messaging.BearingAutopilotParamsMessage;
+import cauv.messaging.ControllerStateMessage;
 import cauv.messaging.DebugLevelMessage;
 import cauv.messaging.DebugMessage;
 import cauv.messaging.DepthAutopilotEnabledMessage;
 import cauv.messaging.DepthAutopilotParamsMessage;
 import cauv.messaging.DepthCalibrationMessage;
+import cauv.messaging.DepthMessage;
 import cauv.messaging.GuiImageMessage;
 import cauv.messaging.InputStatusMessage;
 import cauv.messaging.Message;
 import cauv.messaging.MessageObserver;
 import cauv.messaging.MotorMessage;
 import cauv.messaging.ImageMessage;
+import cauv.messaging.MotorStateMessage;
 import cauv.messaging.PitchAutopilotEnabledMessage;
 import cauv.messaging.PitchAutopilotParamsMessage;
 import cauv.messaging.PressureMessage;
@@ -30,12 +34,18 @@ import cauv.types.MotorID;
 
 
 public class CommunicationController extends MessageObserver {
-  
+
     protected AUV auv;
     protected MessageSocket messages;
 
     public MessageSocket getMessageSocket() {
         return messages;
+    }
+
+    
+    public interface AUVConnectionObserver {
+        public void onConnect(AUV auv);
+        public void onDisconnect();
     }
     
     class Controller {}
@@ -123,7 +133,7 @@ public class CommunicationController extends MessageObserver {
         
         public void onParamsChanged(float Kp, float Ki, float Kd, float scale){
             try {                
-                Constructor c = paramsMessage.getConstructor(float.class, float.class, float.class, float.class);
+                Constructor c = paramsMessage.getConstructor(Float.class, Float.class, Float.class, Float.class);
                 Message m = (Message) c.newInstance(autopilot.Kp, autopilot.Ki, autopilot.Kd, autopilot.scale);
                 messages.sendMessage(m);
             } catch (Exception e) {
@@ -140,7 +150,7 @@ public class CommunicationController extends MessageObserver {
         messages = new MessageSocket(address, port, "GUI");
         messages.joinGroup("control");
         messages.joinGroup("debug");
-        messages.joinGroup("images");
+        messages.joinGroup("image");
         messages.joinGroup("telemetry");
         messages.joinGroup("sonarout");
         messages.joinGroup("pressure");
@@ -160,7 +170,7 @@ public class CommunicationController extends MessageObserver {
         new MissionController();
         
         auv.debugLevelChanged.connect(this, "sendDebugLevelMessage()");
-        auv.depthCalibrationChanged.connect(this, "sendDepthCalibrationMessage(float, float)");
+        auv.depthCalibrationChanged.connect(this, "sendDepthCalibrationMessage(float, float, float, float)");
         
         enable();
         
@@ -183,9 +193,9 @@ public class CommunicationController extends MessageObserver {
         }
     }
 
-    public void sendDepthCalibrationMessage(float fore, float aft){
+    public void sendDepthCalibrationMessage( float foreOffset, float foreScale, float aftOffset, float aftScale){
         try {
-            messages.sendMessage(new DepthCalibrationMessage(fore, aft));
+            messages.sendMessage(new DepthCalibrationMessage(foreOffset, foreScale, aftOffset, aftScale));
         } catch (Exception e) {
             auv.logs.ERROR.log("Error updating depth calibration: " + e.getMessage());
         }
@@ -235,6 +245,16 @@ public class CommunicationController extends MessageObserver {
     }
     
     @Override
+    public void onControllerStateMessage(ControllerStateMessage m) {
+        
+    }
+    
+    @Override
+    public void onMotorStateMessage(MotorStateMessage m) {
+    
+    }
+    
+    @Override
     public void onDebugMessage(DebugMessage m) {
         switch(m.type){
             case Debug:
@@ -250,10 +270,13 @@ public class CommunicationController extends MessageObserver {
     }
 
     @Override
+    public void onDepthMessage(DepthMessage m) {
+        auv.updateDepth(m.depth);
+    }
+    
+    @Override
     public void onPressureMessage(PressureMessage m) {
-        System.out.println(m);
         auv.updatePressures(m.fore, m.aft);
-        auv.updateDepth((m.aft + m.fore)/2.0f);
     }
     
     @Override
@@ -263,6 +286,7 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onImageMessage(ImageMessage m) {
+        System.out.println("on image message");
         System.out.println(m);
         switch (m.source) {
             case Forward:
@@ -279,6 +303,7 @@ public class CommunicationController extends MessageObserver {
 
     @Override
     public void onGuiImageMessage(GuiImageMessage m) {
+        System.out.println("on gui image message");
         System.out.println(m);
     }
     

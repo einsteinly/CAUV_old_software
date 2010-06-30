@@ -1,6 +1,6 @@
-#leszek-laptop.local
-#Tue Jun 29 10:34:10 BST 2010
-GAMEPAD_ID=2
+#red-herring.local
+#Wed Jun 30 09:50:44 BST 2010
 AUV_PORT=16707
-ADDRESS=leszek-laptop.local
+GAMEPAD_ID=3
+ADDRESS=red-herring.local
 LAST_PATH=C\:/Users/Andy Pritchard/Documents/dev/cauv/2009/repo-competition/missions

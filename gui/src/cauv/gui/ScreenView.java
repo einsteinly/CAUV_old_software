@@ -1,11 +1,12 @@
 package cauv.gui;
 
 import cauv.auv.AUV;
+import cauv.auv.CommunicationController.AUVConnectionObserver;
 
 import com.trolltech.qt.gui.QGraphicsItemInterface;
 import com.trolltech.qt.gui.QWidget;
 
-public interface ScreenView {
+public interface ScreenView extends AUVConnectionObserver {
 
 	public QGraphicsItemInterface getIconWidget();
 	
@@ -15,5 +16,5 @@ public interface ScreenView {
 
     public void onConnect(AUV auv);
     
-    public void onDisconnect(AUV auv);
+    public void onDisconnect();
 }

@@ -40,8 +40,7 @@ class InputNode: public Node{
         void onImageMessage(boost::shared_ptr<const ImageMessage> m) throw() {
             lock_t l(m_counters_lock);
             debug() << "Input node received an image";
-            if(checkSource(m->image().source(), m->source()) &&
-               subscriptions().count(ImageData)){
+            if(subscriptions().count(ImageData)){
                 lock_t l(m_latest_msg_lock);
                 if(!m_processed_latest)
                     dropped_since++;
@@ -71,14 +70,6 @@ class InputNode: public Node{
             }
         }
 
-        /**
-         * Input nodes should overload this to set which sources they accept
-         * images from (Images only)
-         */
-        virtual bool checkSource(Image::Source const&, CameraID::e const&) throw(){
-            return true;
-        }
-   
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
          */

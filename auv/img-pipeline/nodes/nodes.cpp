@@ -25,6 +25,7 @@
 #include "mixNode.h"
 #include "percentileNode.h"
 #include "sonarInputNode.h"
+#include "broadcastImageNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -52,4 +53,5 @@ DEFINE_NFR(LevelsNode, NodeType::Levels);
 DEFINE_NFR(MixNode, NodeType::Mix);
 DEFINE_NFR(PercentileNode, NodeType::Percentile);
 DEFINE_NFR(SonarInputNode, NodeType::SonarInput);
+DEFINE_NFR(BroadcastImageNode, NodeType::BroadcastImage);
 

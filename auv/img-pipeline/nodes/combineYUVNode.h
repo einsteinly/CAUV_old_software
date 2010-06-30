@@ -47,7 +47,7 @@ class CombineYUVNode: public Node{
                 throw(parameter_error("YUV source channels are not of the same type"));
             
             cv::Mat YUV(Y->cvMat().size(), out_type);
-            boost::shared_ptr<Image> out = boost::make_shared<Image>(Y->source());
+            boost::shared_ptr<Image> out = boost::make_shared<Image>();
             
             cv::Mat in[] = {Y->cvMat(), U->cvMat(), V->cvMat()};
             int from_to[] = {0,0, 1,1, 2,2};
