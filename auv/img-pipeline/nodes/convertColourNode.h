@@ -57,7 +57,7 @@ class ConvertColourNode: public Node{
                 throw parameter_error("Invalid output format: " + out_fmt);
             }
             
-            boost::shared_ptr<Image> out = boost::make_shared<Image>(img->source());
+            boost::shared_ptr<Image> out = boost::make_shared<Image>();
             if(conversion_code != 0){
                 try{
                     cv::cvtColor(img->cvMat(), out->cvMat(), conversion_code, 0);

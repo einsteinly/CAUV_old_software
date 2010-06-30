@@ -76,7 +76,6 @@ class HoughLinesNode: public Node{
                 if(numChildren()){
                     // then produce an output image overlay
                     boost::shared_ptr<Image> out = boost::make_shared<Image>();
-                    out->source(img->source());
                     
                     // make a colour copy to draw pretty lines on
                     cvtColor(img->cvMat(), out->cvMat(), CV_GRAY2BGR);

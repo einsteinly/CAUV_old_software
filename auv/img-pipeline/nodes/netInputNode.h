@@ -26,12 +26,6 @@ class NetInputNode: public InputNode{
             // one parameter: the source camera
             registerParamID<int>("camera id", CameraID::Forward);
         }
-        
-        virtual bool checkSource(Image::Source const& s, CameraID::e const& c) throw(){
-            if(s == Image::src_camera && c == param<int>("camera id"))
-                return true;
-            return false;
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

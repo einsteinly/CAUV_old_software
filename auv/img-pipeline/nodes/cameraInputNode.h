@@ -46,7 +46,6 @@ class CameraInputNode: public AsynchronousNode{
             }else{
                 boost::shared_ptr<Image> img = boost::make_shared<Image>();
                 m_capture >> img->cvMat();
-                img->source(Image::src_camera);
                 r["image_out"] = img;
             }
 
