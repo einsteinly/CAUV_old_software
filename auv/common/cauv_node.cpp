@@ -25,7 +25,7 @@ void CauvNode::run()
 {
 	cauv_global::print_module_header(m_name);
 
-    m_mailbox->connect(m_server, m_name);
+    m_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
     m_event_monitor->startMonitoring();
 
     onRun();
@@ -117,7 +117,8 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
     namespace po = boost::program_options;
     desc.add_options()
         ("help,h", "Print this help message")
-        ("server,s", po::value<std::string>(&m_server)->default_value("16707@localhost"), "Server address for messages")
+        ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Server address for messages")
+        ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Server port for messages")
         ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
     ;
 }

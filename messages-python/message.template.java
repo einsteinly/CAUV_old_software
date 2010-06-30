@@ -12,33 +12,45 @@ import ${rootpackage}.utils.*;
 public class ${m.name}Message extends Message {
     int m_id = $m.id;
     #for $f in $m.fields
-    public $toJavaType($f.type) $f.name;
+    protected $toJavaType($f.type) $f.name;
     #end for
 
+    private byte[] bytes;
+
     #for $f in $m.fields
-    public void ${f.name}($toJavaType(f.type) ${f.name}){
+    public void ${f.name}($toJavaType(f.type) ${f.name}) {
+        deserialise();
         this.${f.name} = ${f.name};
     }
-    public $toJavaType(f.type) ${f.name}(){
+    public $toJavaType(f.type) ${f.name}() {
+        deserialise();
         return this.${f.name};
     }
 
     #end for
 
     public byte[] toBytes() throws IOException {
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        LEDataOutputStream s = new LEDataOutputStream(bs);
-        s.writeInt(m_id);
+        if (bytes != null)
+        {
+            return bytes;
+        }
+        else
+        {
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            LEDataOutputStream s = new LEDataOutputStream(bs);
+            s.writeInt(m_id);
 
-        #for $f in $m.fields
-$serialiseJavaType(f.type, f.name, 2, "this.")
-        #end for
+            #for $f in $m.fields
+$serialiseJavaType(f.type, f.name, 3, "this.")
+            #end for
 
-        return bs.toByteArray();
+            return bs.toByteArray();
+        }
     }
 
     public ${m.name}Message(){
         super($m.id, "${group.name}");
+        this.bytes = null;
     }
 
     #if $len($m.fields) > 0
@@ -48,24 +60,38 @@ $serialiseJavaType(f.type, f.name, 2, "this.")
                             #end for
 #*                         *#) {
         super($m.id, "${group.name}");
+        this.bytes = null;
+
         #for $f in $m.fields
         this.${f.name} = ${f.name};
         #end for
     }
     #end if
 
-    public ${m.name}Message(byte[] bytes) throws IOException {
+    public ${m.name}Message(byte[] bytes) {
         super(${m.id}, "${group.name}");
-        ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-        LEDataInputStream s = new LEDataInputStream(bs);
-        int buf_id = s.readInt();
-        if (buf_id != m_id)
-        {
-            throw new IllegalArgumentException("Attempted to create ${m.name}Message with invalid id");
-        }
+        this.bytes = bytes;
+    }
 
-        #for $f in $m.fields
-$deserialiseJavaType(f.type, f.name, 2, "this.")
-        #end for
+    public void deserialise() {
+        try { 
+            if (bytes != null)
+            {
+                ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+                LEDataInputStream s = new LEDataInputStream(bs);
+                int buf_id = s.readInt();
+                if (buf_id != m_id)
+                {
+                    throw new IllegalArgumentException("Attempted to create ${m.name}Message with invalid id");
+                }
+
+                #for $f in $m.fields
+$deserialiseJavaType(f.type, f.name, 4, "this.")
+                #end for
+
+                bytes = null;
+            }
+        }
+        catch (IOException e) {}
     }
 }

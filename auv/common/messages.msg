@@ -33,7 +33,8 @@ enum NodeType : int8 {
     Percentile = 24,
     SonarInput = 25,
     BroadcastImage = 26,
-    VideoFileOutput = 27
+    VideoFileOutput = 27,
+    Invert = 28
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

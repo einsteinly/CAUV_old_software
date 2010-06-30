@@ -15,22 +15,20 @@ public class MessageSource
             throw new IllegalArgumentException("Buffer too small to contain message id");
 
         int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];
-        try {
-            switch (id) {
-                #for $g in $groups
-                #for $m in $g.messages
-                #set $className = $m.name + "Message"
-                case $m.id: {
-                    $className m = new ${className}(b);
-                    for (MessageObserver o : m_obs) {
-                        o.on${className}(m);
-                    }
-                    break;
+        
+        switch (id) {
+            #for $g in $groups
+            #for $m in $g.messages
+            #set $className = $m.name + "Message"
+            case $m.id: {
+                $className m = new ${className}(b);
+                for (MessageObserver o : m_obs) {
+                    o.on${className}(m);
                 }
-                #end for
-                #end for
+                break;
             }
-        } catch (IOException e) {
+            #end for
+            #end for
         }
     }
 

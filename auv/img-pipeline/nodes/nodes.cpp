@@ -27,6 +27,7 @@
 #include "sonarInputNode.h"
 #include "broadcastImageNode.h"
 #include "videoFileOutputNode.h"
+#include "invertNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -56,6 +57,7 @@ DEFINE_NFR(PercentileNode, NodeType::Percentile);
 DEFINE_NFR(SonarInputNode, NodeType::SonarInput);
 DEFINE_NFR(BroadcastImageNode, NodeType::BroadcastImage);
 DEFINE_NFR(VideoFileOutputNode, NodeType::VideoFileOutput);
+DEFINE_NFR(InvertNode, NodeType::Invert);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
 
