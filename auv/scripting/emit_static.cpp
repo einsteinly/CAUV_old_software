@@ -72,8 +72,10 @@ class CauvNodeWrapper:
     public bp::wrapper<CauvNode>
 {
     public:
-        CauvNodeWrapper(std::string const& name, std::string const& host="16707@localhost")
-            : CauvNode(name, host.c_str()){
+        CauvNodeWrapper(std::string const& name, std::string const& server)
+            : CauvNode(name){
+            defaultOptions();
+            m_server = server;
         }
         
         void onRun(){

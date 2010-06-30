@@ -49,9 +49,9 @@ class SplitYUVNode: public Node{
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
             
-            boost::shared_ptr<Image> Y = boost::make_shared<Image>(img->source());
-            boost::shared_ptr<Image> U = boost::make_shared<Image>(img->source());
-            boost::shared_ptr<Image> V = boost::make_shared<Image>(img->source()); 
+            boost::shared_ptr<Image> Y = boost::make_shared<Image>();
+            boost::shared_ptr<Image> U = boost::make_shared<Image>();
+            boost::shared_ptr<Image> V = boost::make_shared<Image>(); 
             Y->cvMat() = cv::Mat(img->cvMat().size(), channel_type);
             U->cvMat() = cv::Mat(img->cvMat().size(), channel_type);
             V->cvMat() = cv::Mat(img->cvMat().size(), channel_type);

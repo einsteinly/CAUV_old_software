@@ -91,8 +91,6 @@ class FileInputNode: public AsynchronousNode{
                     warning() << "no images in directory" << fname;
                 // NB: allowQueue not cleared
             }
-            if(image)
-                image->source(Image::src_file);
             r["image"] = image;
 
             return r;
@@ -111,7 +109,7 @@ class FileInputNode: public AsynchronousNode{
             }
 
             if(img.size().width > 0 && img.size().height > 0){
-                r = boost::make_shared<Image>(img, Image::src_file);
+                r = boost::make_shared<Image>(img);
                 debug() << "fileInputNode::readImage:" << fname << "->" << *r;
             }else if(warn){
                 warning() << "fileInputNode::readImage:" << fname << "-> (no image)";

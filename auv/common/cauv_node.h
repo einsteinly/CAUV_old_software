@@ -26,6 +26,7 @@ class CauvNode
 		
         void run();
 
+        int defaultOptions();
         int parseOptions(int argc, char** arg);
 
         void joinGroup(std::string const& group);
@@ -35,8 +36,7 @@ class CauvNode
    
         int send(boost::shared_ptr<const Message> message,
                  Spread::service serviceType = SAFE_MESS);
-
-
+        
 	protected:
 		std::string m_name;
 		std::string m_server;
@@ -45,8 +45,10 @@ class CauvNode
         CauvNode(const std::string& name);
             
 		virtual void onRun();
-        virtual void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
-        virtual int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
+        virtual void addOptions(boost::program_options::options_description& desc,
+                                boost::program_options::positional_options_description& pos);
+        virtual int useOptionsMap(boost::program_options::variables_map& vm,
+                                  boost::program_options::options_description& desc);
     
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;

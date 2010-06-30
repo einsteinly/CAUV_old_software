@@ -138,6 +138,29 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     return l;
 }
 
+class StateObserver : public MessageObserver, public XsensObserver
+{
+    public:
+        StateObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+            : m_mb(mb)
+        {
+        }
+        
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
+            m_orientation = attitude;
+        }
+        virtual void onStateRequestMessage(StateRequestMessage_ptr m)
+        {
+            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), SAFE_MESS);
+        }
+
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        
+        floatYPR m_orientation;
+};
+
 using namespace Controller;
 
 class ControlLoops : public MessageObserver, public XsensObserver
@@ -199,14 +222,25 @@ class ControlLoops : public MessageObserver, public XsensObserver
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
             if (m_controlenabled[Depth] && m_depthCalibration){
-                float depth = 0.5 * (m_depthCalibration->foreMultiplier() * m->fore() +
-                                     m_depthCalibration->aftMultiplier() * m->aft());
+                float fore_depth_calibrated = m_depthCalibration->foreOffset() +
+                                              m_depthCalibration->foreMultiplier()
+                                              * m->fore();
+                float aft_depth_calibrated = m_depthCalibration->aftOffset() +
+                                             m_depthCalibration->aftMultiplier() * m->aft();
+                float depth = 0.5 * (fore_depth_calibrated + aft_depth_calibrated);
+
                 float mv = m_controllers[Depth].getMV(depth);
-                debug(2) << "depth =" << depth << "mv =" << mv;
+
+                debug(2) << "depth: fwd=" << fore_depth_calibrated
+                         << "aft=" << aft_depth_calibrated
+                         << "mean=" << depth << ", mv =" << mv;
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
                 m_mb->sendMessage(msg, SAFE_MESS);
+
+                boost::shared_ptr<DepthMessage> dm = boost::make_shared<DepthMessage>(depth);
+                m_mb->sendMessage(dm, SAFE_MESS);
             }
         }
     
@@ -380,11 +414,28 @@ class MCBForwardingObserver : public MessageObserver
 
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
+            debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
             m_mb->sendMessage(m, UNRELIABLE_MESS);
         }
         virtual void onDebugMessage(DebugMessage_ptr m)
         {
+            debug(5) << "MCBForwardingObserver: Forwarding debug message:" << *m;
             m_mb->sendMessage(m, SAFE_MESS);
+        }
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+};
+
+class SpreadForwardingXsensObserver : public XsensObserver
+{
+    public:
+        SpreadForwardingXsensObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
+        {
+        }
+
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
+            m_mb->sendMessage(boost::make_shared<TelemetryMessage>(attitude), UNRELIABLE_MESS);
         }
     protected:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
@@ -405,6 +456,9 @@ ControlNode::ControlNode() : CauvNode("Control")
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
+    
+    m_stateObserver = boost::make_shared<StateObserver>(mailbox());
+    addMessageObserver(m_stateObserver);
 }
 ControlNode::~ControlNode()
 {
@@ -440,7 +494,7 @@ void ControlNode::setXsens(int id)
         info() << "Xsens Connected";
         
         CmtOutputMode om = CMT_OUTPUTMODE_CALIB | CMT_OUTPUTMODE_ORIENT;
-        CmtOutputSettings os = CMT_OUTPUTSETTINGS_ORIENTMODE_EULER | CMT_OUTPUTSETTINGS_DATAFORMAT_FLOAT;
+        CmtOutputSettings os = CMT_OUTPUTSETTINGS_ORIENTMODE_EULER | CMT_OUTPUTSETTINGS_DATAFORMAT_FLOAT | CMT_OUTPUTSETTINGS_CALIBMODE_ACCMAG;
 
         CmtMatrix m;
         m.m_data[0][0] =  1.0; m.m_data[0][1] =  0.0; m.m_data[0][2] =  0.0; 
@@ -504,7 +558,9 @@ void ControlNode::onRun()
 
     if (m_xsens) {
         m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
+        m_xsens->addObserver(boost::make_shared<SpreadForwardingXsensObserver>(mailbox()));
         m_xsens->addObserver(m_controlLoops);
+        m_xsens->addObserver(m_stateObserver);
 
         m_xsens->start();
     }

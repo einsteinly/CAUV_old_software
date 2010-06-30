@@ -91,7 +91,11 @@ struct DBGLevelObserver: MessageObserver
         debug::setLevel(m->level());
     }
 };
-    
+
+int CauvNode::defaultOptions()
+{
+    return parseOptions(0, NULL);
+}
 
 int CauvNode::parseOptions(int argc, char** argv)
 {

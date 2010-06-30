@@ -74,7 +74,7 @@ void CaptureThread::operator()()
 }
 
 Webcam::Webcam(const CameraID::e cameraID, const int deviceID)
-    : Camera(cameraID), m_thread_callable(*this)
+    : Camera(cameraID), m_thread_callable(boost::ref(*this))
 {
     //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
     //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);

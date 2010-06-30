@@ -24,3 +24,18 @@ target_link_libraries (
     ${OpenCV_LIBS}
 )
 
+add_executable (
+   img_daemon
+   img_daemon.cpp
+)
+target_link_libraries (
+    img_daemon
+    camera
+    common
+    ${OpenCV_LIBS}
+)
+
+
+
+
+

@@ -33,9 +33,9 @@ class SplitRGBNode: public Node{
             image_ptr_t img = inputs["image"];
             int channel_type = CV_MAKETYPE(CV_MAT_DEPTH_MASK & img->cvMat().type(), 1);
             
-            boost::shared_ptr<Image> R = boost::make_shared<Image>(img->source());
-            boost::shared_ptr<Image> G = boost::make_shared<Image>(img->source());
-            boost::shared_ptr<Image> B = boost::make_shared<Image>(img->source()); 
+            boost::shared_ptr<Image> R = boost::make_shared<Image>();
+            boost::shared_ptr<Image> G = boost::make_shared<Image>();
+            boost::shared_ptr<Image> B = boost::make_shared<Image>(); 
             R->cvMat() = cv::Mat(img->cvMat().size(), channel_type);
             G->cvMat() = cv::Mat(img->cvMat().size(), channel_type);
             B->cvMat() = cv::Mat(img->cvMat().size(), channel_type);

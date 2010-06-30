@@ -31,7 +31,8 @@ enum NodeType : int8 {
     Levels = 22,
     Mix = 23,
     Percentile = 24,
-    SonarInput = 25
+    SonarInput = 25,
+    BroadcastImage = 26
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -171,7 +172,9 @@ group control
 
     message DepthCalibration : 80
     {
+        foreOffset : float;
         foreMultiplier : float;
+        aftOffset : float;
         aftMultiplier : float;
     }
 
@@ -187,7 +190,19 @@ group control
         Kd : float;
         scale : float;
     }
+
+    message StateRequest : 82
+    {
+    }
 }
+group state
+{
+    message State : 81
+    {
+	    orientation : floatYPR;
+    }
+}
+
 group telemetry
 {
 	message Telemetry : 3

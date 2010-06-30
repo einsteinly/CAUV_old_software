@@ -2,6 +2,7 @@
 #define __IMAGE_H__
 
 #include <boost/serialization/split_member.hpp>
+#include <boost/serialization/level.hpp>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -9,23 +10,13 @@
 class Image{
         friend class boost::serialization::access;
     public:
-        enum Source {
-            src_file,
-            src_camera,
-            src_sonar,
-            src_pipeline,
-            src_unknown
-        };
-        
-        Image(Source const& source=src_unknown);
-        Image(cv::Mat const& cv_image, Source const& source);
+        Image();
+        Image(cv::Mat const& cv_image);
         Image(Image const& other);
         ~Image();
 
         cv::Mat const& cvMat() const;
         cv::Mat& cvMat();
-        Source source() const;
-        void source(Source const& s);
 
         void serializeQuality(int);
 
@@ -33,7 +24,6 @@ class Image{
 
         template<class Archive>
         void save(Archive& ar, const unsigned int /*version*/) const{
-            ar & m_source;
             ar & m_compress_fmt;
             ar & m_compress_params;
             int load_flags = -1;
@@ -57,7 +47,6 @@ class Image{
         
         template<class Archive>
         void load(Archive& ar, const unsigned int /*version*/){
-            ar & m_source;
             ar & m_compress_fmt;
             ar & m_compress_params;
             int load_flags = -1;
@@ -77,23 +66,10 @@ class Image{
     private:
         cv::Mat m_img;
 
-        Source m_source;
         std::string m_compress_fmt;
         std::vector<int> m_compress_params;
 };
-
-template<typename charT, typename traits>
-std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, Image::Source const& s){
-    switch(s){
-        case Image::src_file: os << "file"; break;
-        case Image::src_camera: os << "camera"; break;
-        case Image::src_sonar: os << "sonar"; break;
-        case Image::src_pipeline: os << "pipeline"; break;
-        case Image::src_unknown: os << "unknown"; break;
-    }
-    return os;
-}
+BOOST_CLASS_IMPLEMENTATION(Image, boost::serialization::object_serializable)
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
@@ -106,7 +82,7 @@ std::basic_ostream<charT, traits>& operator<<(
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os, Image const& img){
-    os << "{Image src=" << img.source() << " mat=" << img.cvMat() << "}";
+    os << "{Image mat=" << img.cvMat() << "}";
     return os;
 }
 
