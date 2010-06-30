@@ -55,3 +55,6 @@ DEFINE_NFR(PercentileNode, NodeType::Percentile);
 DEFINE_NFR(SonarInputNode, NodeType::SonarInput);
 DEFINE_NFR(BroadcastImageNode, NodeType::BroadcastImage);
 
+boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
+
+
