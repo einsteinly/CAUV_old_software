@@ -40,6 +40,7 @@ class CauvNode
 	protected:
 		std::string m_name;
 		std::string m_server;
+		unsigned int m_port;
         boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
 
         CauvNode(const std::string& name);
