@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0" language="jambi">
- <class>SettingsView</class>
- <widget class="QWidget" name="SettingsView">
+ <class>Settings</class>
+ <widget class="QDialog" name="Settings">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>568</width>
-    <height>354</height>
+    <width>576</width>
+    <height>407</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>550</width>
-        <height>224</height>
+        <width>558</width>
+        <height>277</height>
        </rect>
       </property>
       <attribute name="label">
@@ -441,8 +441,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>550</width>
-        <height>224</height>
+        <width>558</width>
+        <height>246</height>
        </rect>
       </property>
       <attribute name="label">
@@ -579,8 +579,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>550</width>
-        <height>224</height>
+        <width>558</width>
+        <height>246</height>
        </rect>
       </property>
       <attribute name="label">
@@ -690,8 +690,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>550</width>
-        <height>224</height>
+        <width>558</width>
+        <height>246</height>
        </rect>
       </property>
       <attribute name="label">

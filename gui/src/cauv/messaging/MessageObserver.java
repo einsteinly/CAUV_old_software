@@ -14,7 +14,10 @@ public class MessageObserver
     public void onDepthCalibrationMessage(DepthCalibrationMessage m) {}
     public void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage m) {}
     public void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage m) {}
+    public void onStateRequestMessage(StateRequestMessage m) {}
+    public void onStateMessage(StateMessage m) {}
     public void onTelemetryMessage(TelemetryMessage m) {}
+    public void onDepthMessage(DepthMessage m) {}
     public void onImageMessage(ImageMessage m) {}
     public void onSonarDataMessage(SonarDataMessage m) {}
     public void onSonarControlMessage(SonarControlMessage m) {}
@@ -24,6 +27,8 @@ public class MessageObserver
     public void onSetNodeParameterMessage(SetNodeParameterMessage m) {}
     public void onAddArcMessage(AddArcMessage m) {}
     public void onGraphRequestMessage(GraphRequestMessage m) {}
+    public void onControllerStateMessage(ControllerStateMessage m) {}
+    public void onMotorStateMessage(MotorStateMessage m) {}
     public void onNodeAddedMessage(NodeAddedMessage m) {}
     public void onNodeRemovedMessage(NodeRemovedMessage m) {}
     public void onNodeParametersMessage(NodeParametersMessage m) {}

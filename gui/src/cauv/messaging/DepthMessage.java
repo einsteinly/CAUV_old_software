@@ -9,15 +9,15 @@ import java.io.*;
 import cauv.types.*;
 import cauv.utils.*;
 
-public class NodeRemovedMessage extends Message {
-    int m_id = 116;
-    public int nodeId;
+public class DepthMessage extends Message {
+    int m_id = 51;
+    public float depth;
 
-    public void nodeId(int nodeId){
-        this.nodeId = nodeId;
+    public void depth(float depth){
+        this.depth = depth;
     }
-    public int nodeId(){
-        return this.nodeId;
+    public float depth(){
+        return this.depth;
     }
 
 
@@ -26,30 +26,30 @@ public class NodeRemovedMessage extends Message {
         LEDataOutputStream s = new LEDataOutputStream(bs);
         s.writeInt(m_id);
 
-        s.writeInt(this.nodeId);
+        s.writeFloat(this.depth);
 
         return bs.toByteArray();
     }
 
-    public NodeRemovedMessage(){
-        super(116, "pl_gui");
+    public DepthMessage(){
+        super(51, "telemetry");
     }
 
-    public NodeRemovedMessage(Integer nodeId) {
-        super(116, "pl_gui");
-        this.nodeId = nodeId;
+    public DepthMessage(Float depth) {
+        super(51, "telemetry");
+        this.depth = depth;
     }
 
-    public NodeRemovedMessage(byte[] bytes) throws IOException {
-        super(116, "pl_gui");
+    public DepthMessage(byte[] bytes) throws IOException {
+        super(51, "telemetry");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();
         if (buf_id != m_id)
         {
-            throw new IllegalArgumentException("Attempted to create NodeRemovedMessage with invalid id");
+            throw new IllegalArgumentException("Attempted to create DepthMessage with invalid id");
         }
 
-        this.nodeId = s.readInt();
+        this.depth = s.readFloat();
     }
 }

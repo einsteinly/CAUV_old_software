@@ -1,18 +1,18 @@
 /********************************************************************************
-** Form generated from reading ui file 'SettingsView.jui'
+** Form generated from reading ui file 'Settings.jui'
 **
-** Created: Wed 30. Jun 08:33:12 2010
+** Created: Wed 30. Jun 09:10:26 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
 ********************************************************************************/
 
-package cauv.gui.views;
+package cauv.gui.dialogs;
 
 import com.trolltech.qt.core.*;
 import com.trolltech.qt.gui.*;
 
-public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
+public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
 {
     public QVBoxLayout verticalLayout;
     public QToolBox toolBox;
@@ -89,19 +89,19 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
     public QSpinBox gamepadID;
     public QSpacerItem horizontalSpacer_4;
 
-    public Ui_SettingsView() { super(); }
+    public Ui_Settings() { super(); }
 
-    public void setupUi(QWidget SettingsView)
+    public void setupUi(QDialog Settings)
     {
-        SettingsView.setObjectName("SettingsView");
-        SettingsView.resize(new QSize(568, 354).expandedTo(SettingsView.minimumSizeHint()));
-        verticalLayout = new QVBoxLayout(SettingsView);
+        Settings.setObjectName("Settings");
+        Settings.resize(new QSize(576, 407).expandedTo(Settings.minimumSizeHint()));
+        verticalLayout = new QVBoxLayout(Settings);
         verticalLayout.setObjectName("verticalLayout");
-        toolBox = new QToolBox(SettingsView);
+        toolBox = new QToolBox(Settings);
         toolBox.setObjectName("toolBox");
         page_2 = new QWidget();
         page_2.setObjectName("page_2");
-        page_2.setGeometry(new QRect(0, 0, 550, 224));
+        page_2.setGeometry(new QRect(0, 0, 558, 277));
         gridLayout_3 = new QGridLayout(page_2);
         gridLayout_3.setObjectName("gridLayout_3");
         horizontalSpacer = new QSpacerItem(40, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -339,10 +339,10 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
 
         gridLayout_3.addItem(verticalSpacer_2, 2, 1, 1, 1);
 
-        toolBox.addItem(page_2, com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Autopilot Settings", null));
+        toolBox.addItem(page_2, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Autopilot Settings", null));
         page_4 = new QWidget();
         page_4.setObjectName("page_4");
-        page_4.setGeometry(new QRect(0, 0, 550, 224));
+        page_4.setGeometry(new QRect(0, 0, 558, 246));
         horizontalLayout_2 = new QHBoxLayout(page_4);
         horizontalLayout_2.setObjectName("horizontalLayout_2");
         horizontalSpacer_6 = new QSpacerItem(143, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -414,10 +414,10 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
 
         horizontalLayout_2.addItem(horizontalSpacer_5);
 
-        toolBox.addItem(page_4, com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Depth Calibration", null));
+        toolBox.addItem(page_4, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth Calibration", null));
         page_3 = new QWidget();
         page_3.setObjectName("page_3");
-        page_3.setGeometry(new QRect(0, 0, 550, 224));
+        page_3.setGeometry(new QRect(0, 0, 558, 246));
         horizontalLayout_4 = new QHBoxLayout(page_3);
         horizontalLayout_4.setObjectName("horizontalLayout_4");
         horizontalSpacer_8 = new QSpacerItem(184, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -469,10 +469,10 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
 
         horizontalLayout_4.addItem(horizontalSpacer_7);
 
-        toolBox.addItem(page_3, com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Debug Settings", null));
+        toolBox.addItem(page_3, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Settings", null));
         page = new QWidget();
         page.setObjectName("page");
-        page.setGeometry(new QRect(0, 0, 550, 224));
+        page.setGeometry(new QRect(0, 0, 558, 246));
         horizontalLayout = new QHBoxLayout(page);
         horizontalLayout.setObjectName("horizontalLayout");
         horizontalSpacer_3 = new QSpacerItem(40, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -542,49 +542,49 @@ public class Ui_SettingsView implements com.trolltech.qt.QUiForm<QWidget>
 
         horizontalLayout.addItem(horizontalSpacer_4);
 
-        toolBox.addItem(page, com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Gamepad Settings", null));
+        toolBox.addItem(page, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Gamepad Settings", null));
 
         verticalLayout.addWidget(toolBox);
 
-        retranslateUi(SettingsView);
+        retranslateUi(Settings);
 
         toolBox.setCurrentIndex(0);
 
 
-        SettingsView.connectSlotsByName();
+        Settings.connectSlotsByName();
     } // setupUi
 
-    void retranslateUi(QWidget SettingsView)
+    void retranslateUi(QDialog Settings)
     {
-        SettingsView.setWindowTitle(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Form", null));
-        label_3.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Ki", null));
-        label_4.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Kd", null));
-        label_5.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "scale", null));
-        label_6.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Yaw", null));
-        label_2.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Kp", null));
-        label_7.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Pitch", null));
-        label_8.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Depth", null));
-        depthEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Enabled", null));
-        label_15.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Depth Control", null));
-        label_16.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Yaw Control", null));
-        yawEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Enabled", null));
-        pitchEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Enabled", null));
-        label_17.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Pitch Control", null));
+        Settings.setWindowTitle(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Dialog", null));
+        label_3.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Ki", null));
+        label_4.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Kd", null));
+        label_5.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "scale", null));
+        label_6.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Yaw", null));
+        label_2.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Kp", null));
+        label_7.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Pitch", null));
+        label_8.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth", null));
+        depthEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
+        label_15.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth Control", null));
+        label_16.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Yaw Control", null));
+        yawEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
+        pitchEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
+        label_17.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Pitch Control", null));
         depthActual.setText("");
         yawActual.setText("");
         pitchActual.setText("");
-        toolBox.setItemText(toolBox.indexOf(page_2), com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Autopilot Settings", null));
-        label_11.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Fore Offset", null));
-        label_12.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Fore Scale", null));
-        label_13.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Aft Offset", null));
-        label_14.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Aft Scale", null));
-        toolBox.setItemText(toolBox.indexOf(page_4), com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Depth Calibration", null));
-        label_9.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Debug Level ", null));
-        label_10.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Debug Messaging", null));
+        toolBox.setItemText(toolBox.indexOf(page_2), com.trolltech.qt.core.QCoreApplication.translate("Settings", "Autopilot Settings", null));
+        label_11.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Fore Offset", null));
+        label_12.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Fore Scale", null));
+        label_13.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Aft Offset", null));
+        label_14.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Aft Scale", null));
+        toolBox.setItemText(toolBox.indexOf(page_4), com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth Calibration", null));
+        label_9.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Level ", null));
+        label_10.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Messaging", null));
         debugMessaging.setText("");
-        toolBox.setItemText(toolBox.indexOf(page_3), com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Debug Settings", null));
-        label.setText(com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Gamepad ID", null));
-        toolBox.setItemText(toolBox.indexOf(page), com.trolltech.qt.core.QCoreApplication.translate("SettingsView", "Gamepad Settings", null));
+        toolBox.setItemText(toolBox.indexOf(page_3), com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Settings", null));
+        label.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Gamepad ID", null));
+        toolBox.setItemText(toolBox.indexOf(page), com.trolltech.qt.core.QCoreApplication.translate("Settings", "Gamepad Settings", null));
     } // retranslateUi
 
 }

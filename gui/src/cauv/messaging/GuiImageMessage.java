@@ -10,7 +10,7 @@ import cauv.types.*;
 import cauv.utils.*;
 
 public class GuiImageMessage extends Message {
-    int m_id = 24;
+    int m_id = 124;
     public int nodeId;
     public Image image;
 
@@ -41,17 +41,17 @@ public class GuiImageMessage extends Message {
     }
 
     public GuiImageMessage(){
-        super(24, "pl_gui");
+        super(124, "pl_gui");
     }
 
     public GuiImageMessage(Integer nodeId, Image image) {
-        super(24, "pl_gui");
+        super(124, "pl_gui");
         this.nodeId = nodeId;
         this.image = image;
     }
 
     public GuiImageMessage(byte[] bytes) throws IOException {
-        super(24, "pl_gui");
+        super(124, "pl_gui");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();

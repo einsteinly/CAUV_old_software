@@ -1,26 +1,22 @@
-package cauv.gui.views;
+package cauv.gui.dialogs;
 
 import cauv.Config;
 import cauv.auv.AUV;
 import cauv.auv.MessageSocket;
-import cauv.gui.ScreenView;
-import cauv.messaging.MessageSource;
+import cauv.auv.CommunicationController.AUVConnectionObserver;
 import cauv.types.floatYPR;
 
-import com.trolltech.qt.core.Qt.ConnectionType;
 import com.trolltech.qt.gui.*;
 
-public class SettingsView extends QWidget implements ScreenView {
+public class Settings extends QDialog implements AUVConnectionObserver {
 
+    Ui_Settings ui = new Ui_Settings();
     AUV auv;
     
-	public QGraphicsPixmapItem icon = new QGraphicsPixmapItem();
-    Ui_SettingsView ui = new Ui_SettingsView();
-	
-    public SettingsView() {
+    
+    public Settings() {
         ui.setupUi(this);
-		icon.setPixmap(new QPixmap("classpath:cauv/gui/resources/settings.png"));
-
+        
         ui.depth_Kp.valueChanged.connect(this, "updateDepthParams()");
         ui.depth_Ki.valueChanged.connect(this, "updateDepthParams()");
         ui.depth_Kd.valueChanged.connect(this, "updateDepthParams()");
@@ -36,18 +32,18 @@ public class SettingsView extends QWidget implements ScreenView {
         ui.yaw_Kd.valueChanged.connect(this, "updateYawParams()");
         ui.yaw_scale.valueChanged.connect(this, "updateYawParams()");
         
-		load();
+        load();
 
         ui.debugMessaging.toggled.connect(this, "setDebug(boolean)");
-		ui.gamepadID.valueChanged.connect(this, "save()");
+        ui.gamepadID.valueChanged.connect(this, "save()");
     }
 
     public void save(){
-    	Config.GAMEPAD_ID = ui.gamepadID.value();
+        Config.GAMEPAD_ID = ui.gamepadID.value();
     }
     
     public void load(){
-		ui.gamepadID.setValue(Config.GAMEPAD_ID);
+        ui.gamepadID.setValue(Config.GAMEPAD_ID);
     }
         
     public void updateDepthParams(float Kp, float Ki, float Kd, float scale){
@@ -130,7 +126,11 @@ public class SettingsView extends QWidget implements ScreenView {
         auv.depthChanged.connect(this, "updateDepthActual(float)");
         auv.orientationChanged.connect(this, "updateOrientationActual(floatYPR)");
     }
-
+    
+    public void onDisconnect() {
+       auv = null;
+    }
+    
     public void updateDepthActual(float depth){
         ui.depthActual.setText("Actual: " + depth);
     }
@@ -172,24 +172,4 @@ public class SettingsView extends QWidget implements ScreenView {
         auv.calibrateDepth((float)ui.foreOffset.value(), (float)ui.foreScale.value(),
                 (float)ui.aftOffset.value(), (float)ui.aftScale.value());
     }
-    
-    @Override
-    public void onDisconnect() {
-       auv = null;
-    }
-    
-	@Override
-	public QGraphicsItemInterface getIconWidget() {
-		return icon;
-	}
-
-	@Override
-	public QWidget getScreenWidget() {
-		return this;
-	}
-
-	@Override
-	public String getScreenName() {
-		return "Settings";
-	}
 }
