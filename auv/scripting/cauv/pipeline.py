@@ -1,5 +1,6 @@
 import messaging
 import threading
+import pickle
 
 def intParam(i):
     r = messaging.NodeParamValue()
@@ -86,6 +87,16 @@ class Model(messaging.BufferedMessageObserver):
 
     def clear(self):
         self.send(messaging.ClearPipelineMessage())
+
+    def save(self, picklefname):
+        with open(picklefname, 'wb') as outf:
+            saved = self.get(3.0)
+            pickle.dump(saved, outf)
+    
+    def load(self, picklefname):
+        with open(picklefname, 'rb') as inf:
+            saved = pickle.load(inf)
+            self.set(saved)
 
     def get(self, timeout=3):
         graph = self.__getSynchronousGraphDescription(3)

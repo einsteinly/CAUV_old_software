@@ -4,6 +4,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 
+#include <common/cauv_utils.h>
 #include <common/messages.h>
 #include <common/spread/spread_mailbox.h>
 
@@ -18,7 +19,7 @@ int main(int argc, char** argv)
     std::string msgType(argv[1]);
 
     SpreadMailbox m_mailbox;
-    m_mailbox.connect("16707@localhost", "send");
+    m_mailbox.connect("16708@localhost", "send");
     
     if (boost::iequals(msgType, "motor")) {
         if (argc - 2 != 2) {
@@ -48,6 +49,9 @@ int main(int argc, char** argv)
         {
             std::cout << "Sending telemetry message " << *m << std::endl;
             m_mailbox.sendMessage(m, SAFE_MESS);
+            m_mailbox.sendMessage(m, SAFE_MESS);
+            m_mailbox.sendMessage(m, SAFE_MESS);
+            msleep(1);
         }
     }
     else {
