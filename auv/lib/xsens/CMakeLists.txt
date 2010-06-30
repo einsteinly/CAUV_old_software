@@ -1,6 +1,8 @@
 find_library (rt_LIBRARY rt)
 #message ("rt library is ${rt_LIBRARY}")
 
+#set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG -D_LOG_TO_STDOUT -D_LOG_CMT1 -D_LOG_CMT2 -D_LOG_CMT3 -D_LOG_CMT_SCAN ")
+
 add_library (
     cmt STATIC
 
