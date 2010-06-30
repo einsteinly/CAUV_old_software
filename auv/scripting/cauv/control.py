@@ -85,7 +85,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.VBow(value)
         self.VStern(value)
 
-    def H(self.value):
+    def H(self, value):
         self.HBow(value)
         self.HStern(value)
 

@@ -195,6 +195,12 @@ group control
     message StateRequest : 82
     {
     }
+    
+    message Script : 102
+    {
+        script : string;
+        timeout : float;
+    }
 }
 group state
 {
@@ -297,12 +303,6 @@ group gui
     message MotorState : 101
     {
         demand : MotorDemand;
-    }
-
-    message Script : 102
-    {
-        script : string;
-        timeout : float;
     }
 
     message ScriptResponse : 103

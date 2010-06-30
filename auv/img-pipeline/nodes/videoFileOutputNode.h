@@ -74,8 +74,8 @@ class VideoFileOutputNode: public OutputNode{
         }
 
         void openVideo(std::string const& fname, cv::Size const& size){
-            // TODO: automagical FPS detection
-            bool r = m_writer.open(fname, CV_FOURCC('M','J','P','G'), 10 /*fps*/, size, true);
+            // TODO: automagical FPS detection 
+            bool r = m_writer.open(fname, CV_FOURCC('M','P','G','2'), 10 /*fps*/, size, true);
             if(!r || !m_writer.isOpened()){
                 error() << "could not open video writier";
                 clearAllowQueue();

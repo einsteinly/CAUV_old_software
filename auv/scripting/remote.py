@@ -3,6 +3,8 @@
 import cauv
 import cauv.messaging as msg
 import cauv.node as node
+import cauv.control
+import cauv.pipeline
 
 import threading
 import copy
@@ -24,8 +26,18 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
         self.start()
 
     def resetEnvironment(self):
-        self.eval_context_locals = {}
-        self.eval_context_globals = {"response": self.sendScriptResponse}
+        #node = cauv.node.Node("pymote")
+        auv = cauv.control.AUV(self.__node)
+        plmodel = cauv.pipeline.Model(self.__node)
+        self.eval_context_locals = { }
+        self.eval_context_globals = {
+            "response": self.sendScriptResponse,
+            "node" : self.__node,
+            "auv" : auv,
+            "control" : cauv.control,
+            "pipeline" : plmodel,
+            "msg" : cauv.messaging
+        }
 
     def send(self, m):
         self.__node.send(m, "gui")
@@ -35,8 +47,8 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
         self.eval_queue.put((m.script, m.timeout))
 
     def sendScriptResponse(self, m):
-        print 'sending script response:', m
-        self.send(msg.ScriptResponseMessage(m))
+        print 'sending script response:', str(m)
+        self.send(msg.ScriptResponseMessage(str(m)))
 
     def run(self):
         print 'script queue thread started'
