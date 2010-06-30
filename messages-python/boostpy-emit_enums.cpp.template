@@ -7,6 +7,12 @@
 
 namespace bp = boost::python;
 
+struct enum_pickler : bp::pickle_suite{
+    static boost::python::tuple getinitargs(MessageType::e const& e){
+        return boost::python::make_tuple(int(e));
+    }
+};
+
 void emitEnums(){
     // MessageType Enum
 
@@ -17,6 +23,8 @@ void emitEnums(){
         #end for
         #end for
         .value("NumValues", MessageType::NumValues)
+        // boost python pickling of emails is b0rked, and this don't fix it
+        //.def_pickle(enum_pickler())
     ;
     
     // Generated Enums

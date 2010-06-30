@@ -10,7 +10,7 @@ import cauv.types.*;
 import cauv.utils.*;
 
 public class NodeRemovedMessage extends Message {
-    int m_id = 16;
+    int m_id = 116;
     public int nodeId;
 
     public void nodeId(int nodeId){
@@ -32,16 +32,16 @@ public class NodeRemovedMessage extends Message {
     }
 
     public NodeRemovedMessage(){
-        super(16, "pl_gui");
+        super(116, "pl_gui");
     }
 
     public NodeRemovedMessage(Integer nodeId) {
-        super(16, "pl_gui");
+        super(116, "pl_gui");
         this.nodeId = nodeId;
     }
 
     public NodeRemovedMessage(byte[] bytes) throws IOException {
-        super(16, "pl_gui");
+        super(116, "pl_gui");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();

@@ -13,8 +13,10 @@ public class MessageSource
     public void notifyObservers(byte[] b) {
         if (b.length < 4)
             throw new IllegalArgumentException("Buffer too small to contain message id");
+
+        int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];
+        System.out.println("Message id: " + id);
         
-        int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];   
         try {
             switch (id) {
                 case 0: {
@@ -87,6 +89,20 @@ public class MessageSource
                     }
                     break;
                 }
+                case 82: {
+                    StateRequestMessage m = new StateRequestMessage(b);
+                    for (MessageObserver o : m_obs) {
+                        o.onStateRequestMessage(m);
+                    }
+                    break;
+                }
+                case 81: {
+                    StateMessage m = new StateMessage(b);
+                    for (MessageObserver o : m_obs) {
+                        o.onStateMessage(m);
+                    }
+                    break;
+                }
                 case 3: {
                     TelemetryMessage m = new TelemetryMessage(b);
                     for (MessageObserver o : m_obs) {
@@ -94,8 +110,16 @@ public class MessageSource
                     }
                     break;
                 }
+                case 51: {
+                    DepthMessage m = new DepthMessage(b);
+                    for (MessageObserver o : m_obs) {
+                        o.onDepthMessage(m);
+                    }
+                    break;
+                }
                 case 4: {
                     ImageMessage m = new ImageMessage(b);
+                    System.out.println("image");
                     for (MessageObserver o : m_obs) {
                         o.onImageMessage(m);
                     }
@@ -157,70 +181,84 @@ public class MessageSource
                     }
                     break;
                 }
-                case 15: {
+                case 100: {
+                    ControllerStateMessage m = new ControllerStateMessage(b);
+                    for (MessageObserver o : m_obs) {
+                        o.onControllerStateMessage(m);
+                    }
+                    break;
+                }
+                case 101: {
+                    MotorStateMessage m = new MotorStateMessage(b);
+                    for (MessageObserver o : m_obs) {
+                        o.onMotorStateMessage(m);
+                    }
+                    break;
+                }
+                case 115: {
                     NodeAddedMessage m = new NodeAddedMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onNodeAddedMessage(m);
                     }
                     break;
                 }
-                case 16: {
+                case 116: {
                     NodeRemovedMessage m = new NodeRemovedMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onNodeRemovedMessage(m);
                     }
                     break;
                 }
-                case 17: {
+                case 117: {
                     NodeParametersMessage m = new NodeParametersMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onNodeParametersMessage(m);
                     }
                     break;
                 }
-                case 18: {
+                case 118: {
                     GraphDescriptionMessage m = new GraphDescriptionMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onGraphDescriptionMessage(m);
                     }
                     break;
                 }
-                case 19: {
+                case 119: {
                     ArcAddedMessage m = new ArcAddedMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onArcAddedMessage(m);
                     }
                     break;
                 }
-                case 20: {
+                case 120: {
                     ArcRemovedMessage m = new ArcRemovedMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onArcRemovedMessage(m);
                     }
                     break;
                 }
-                case 21: {
+                case 121: {
                     StatusMessage m = new StatusMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onStatusMessage(m);
                     }
                     break;
                 }
-                case 22: {
+                case 122: {
                     InputStatusMessage m = new InputStatusMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onInputStatusMessage(m);
                     }
                     break;
                 }
-                case 23: {
+                case 123: {
                     OutputStatusMessage m = new OutputStatusMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onOutputStatusMessage(m);
                     }
                     break;
                 }
-                case 24: {
+                case 124: {
                     GuiImageMessage m = new GuiImageMessage(b);
                     for (MessageObserver o : m_obs) {
                         o.onGuiImageMessage(m);

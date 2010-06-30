@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Vector;
 
+import cauv.auv.CommunicationController.AUVConnectionObserver;
 import cauv.auv.MessageSocket.ConnectionStateObserver;
+import cauv.gui.ScreenView;
 import cauv.types.CameraID;
 import cauv.types.Image;
 import cauv.types.MotorID;
@@ -127,6 +129,7 @@ public class AUV extends QSignalEmitter {
         }
 
         public void setEnabled(boolean state) {
+            System.out.println("enabled " + state);
             this.enabled = state;
             stateChanged.emit(state);
         }
@@ -320,19 +323,28 @@ public class AUV extends QSignalEmitter {
     public Signal1<floatYPR> orientationChanged = new Signal1<floatYPR>();
     protected floatYPR orientation = new floatYPR();
     public Signal1<Float> depthChanged = new Signal1<Float>();
-    public Signal2<Float, Float> depthCalibrationChanged = new Signal2<Float, Float>();
+    public Signal4<Float, Float, Float, Float> depthCalibrationChanged = new Signal4<Float, Float, Float, Float>();
     public Signal2<Float, Float> pressureChanged = new Signal2<Float, Float>();
     public Signal1<Integer> debugLevelChanged = new Signal1<Integer>();
     public Signal1<String> runMissionRequested = new Signal1<String>();
     public int debugLevel = 0;
     protected float depth = 0.0f;
+    protected static Vector<AUVConnectionObserver> observers = new Vector<AUVConnectionObserver>();
+    
 
     public AUV(String address, int port) throws UnknownHostException, IOException {
         controller = new CommunicationController(this, address, port);
+        for(AUVConnectionObserver o: observers){
+            o.onConnect(this);
+        }
     }
 
     public CommunicationController getController() {
         return controller;
+    }
+    
+    public static void registerAUVConnectionObserver(AUVConnectionObserver obs){
+        observers.add(obs);
     }
     
     public void regsiterConnectionStateObserver(ConnectionStateObserver o) {
@@ -378,8 +390,8 @@ public class AUV extends QSignalEmitter {
         depthChanged.emit(depth);
     }
     
-    public void calibrateDepth(float fore, float aft){
-        depthCalibrationChanged.emit(fore, aft);
+    public void calibrateDepth(float foreOffset, float foreScale, float aftOffset, float aftScale){
+        depthCalibrationChanged.emit(foreOffset, foreScale, aftOffset, aftScale);
     }
 
     public void updateDepth(float depth){

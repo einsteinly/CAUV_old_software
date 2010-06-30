@@ -10,7 +10,7 @@ import cauv.types.*;
 import cauv.utils.*;
 
 public class ArcAddedMessage extends Message {
-    int m_id = 19;
+    int m_id = 119;
     public NodeOutput from;
     public NodeInput to;
 
@@ -41,17 +41,17 @@ public class ArcAddedMessage extends Message {
     }
 
     public ArcAddedMessage(){
-        super(19, "pl_gui");
+        super(119, "pl_gui");
     }
 
     public ArcAddedMessage(NodeOutput from, NodeInput to) {
-        super(19, "pl_gui");
+        super(119, "pl_gui");
         this.from = from;
         this.to = to;
     }
 
     public ArcAddedMessage(byte[] bytes) throws IOException {
-        super(19, "pl_gui");
+        super(119, "pl_gui");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();

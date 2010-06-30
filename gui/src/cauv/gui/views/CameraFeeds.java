@@ -182,7 +182,7 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	}
 	
 	@Override
-	public void onDisconnect(AUV auv) {
+	public void onDisconnect() {
 	    this.auv = null;
 	}
 	

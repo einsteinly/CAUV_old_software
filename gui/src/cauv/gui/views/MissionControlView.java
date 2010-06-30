@@ -308,7 +308,7 @@ public class MissionControlView extends QWidget implements ScreenView {
     }
     
     @Override
-    public void onDisconnect(AUV auv) {
+    public void onDisconnect() {
         auv = null;
     }
     

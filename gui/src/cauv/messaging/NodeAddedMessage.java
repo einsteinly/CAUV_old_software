@@ -10,7 +10,7 @@ import cauv.types.*;
 import cauv.utils.*;
 
 public class NodeAddedMessage extends Message {
-    int m_id = 15;
+    int m_id = 115;
     public int nodeId;
     public NodeType nodeType;
     public HashMap< String, NodeOutput > inputs;
@@ -97,11 +97,11 @@ public class NodeAddedMessage extends Message {
     }
 
     public NodeAddedMessage(){
-        super(15, "pl_gui");
+        super(115, "pl_gui");
     }
 
     public NodeAddedMessage(Integer nodeId, NodeType nodeType, HashMap< String, NodeOutput > inputs, HashMap< String, Vector< NodeInput > > outputs, HashMap< String, NodeParamValue > params) {
-        super(15, "pl_gui");
+        super(115, "pl_gui");
         this.nodeId = nodeId;
         this.nodeType = nodeType;
         this.inputs = inputs;
@@ -110,7 +110,7 @@ public class NodeAddedMessage extends Message {
     }
 
     public NodeAddedMessage(byte[] bytes) throws IOException {
-        super(15, "pl_gui");
+        super(115, "pl_gui");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();

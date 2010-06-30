@@ -11,14 +11,30 @@ import cauv.utils.*;
 
 public class DepthCalibrationMessage extends Message {
     int m_id = 80;
+    public float foreOffset;
     public float foreMultiplier;
+    public float aftOffset;
     public float aftMultiplier;
+
+    public void foreOffset(float foreOffset){
+        this.foreOffset = foreOffset;
+    }
+    public float foreOffset(){
+        return this.foreOffset;
+    }
 
     public void foreMultiplier(float foreMultiplier){
         this.foreMultiplier = foreMultiplier;
     }
     public float foreMultiplier(){
         return this.foreMultiplier;
+    }
+
+    public void aftOffset(float aftOffset){
+        this.aftOffset = aftOffset;
+    }
+    public float aftOffset(){
+        return this.aftOffset;
     }
 
     public void aftMultiplier(float aftMultiplier){
@@ -34,7 +50,9 @@ public class DepthCalibrationMessage extends Message {
         LEDataOutputStream s = new LEDataOutputStream(bs);
         s.writeInt(m_id);
 
+        s.writeFloat(this.foreOffset);
         s.writeFloat(this.foreMultiplier);
+        s.writeFloat(this.aftOffset);
         s.writeFloat(this.aftMultiplier);
 
         return bs.toByteArray();
@@ -44,9 +62,11 @@ public class DepthCalibrationMessage extends Message {
         super(80, "control");
     }
 
-    public DepthCalibrationMessage(Float foreMultiplier, Float aftMultiplier) {
+    public DepthCalibrationMessage(Float foreOffset, Float foreMultiplier, Float aftOffset, Float aftMultiplier) {
         super(80, "control");
+        this.foreOffset = foreOffset;
         this.foreMultiplier = foreMultiplier;
+        this.aftOffset = aftOffset;
         this.aftMultiplier = aftMultiplier;
     }
 
@@ -60,7 +80,9 @@ public class DepthCalibrationMessage extends Message {
             throw new IllegalArgumentException("Attempted to create DepthCalibrationMessage with invalid id");
         }
 
+        this.foreOffset = s.readFloat();
         this.foreMultiplier = s.readFloat();
+        this.aftOffset = s.readFloat();
         this.aftMultiplier = s.readFloat();
     }
 }

@@ -10,7 +10,7 @@ import cauv.types.*;
 import cauv.utils.*;
 
 public class ArcRemovedMessage extends Message {
-    int m_id = 20;
+    int m_id = 120;
     public NodeOutput from;
     public NodeInput to;
 
@@ -41,17 +41,17 @@ public class ArcRemovedMessage extends Message {
     }
 
     public ArcRemovedMessage(){
-        super(20, "pl_gui");
+        super(120, "pl_gui");
     }
 
     public ArcRemovedMessage(NodeOutput from, NodeInput to) {
-        super(20, "pl_gui");
+        super(120, "pl_gui");
         this.from = from;
         this.to = to;
     }
 
     public ArcRemovedMessage(byte[] bytes) throws IOException {
-        super(20, "pl_gui");
+        super(120, "pl_gui");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();

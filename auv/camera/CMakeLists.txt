@@ -34,8 +34,3 @@ target_link_libraries (
     common
     ${OpenCV_LIBS}
 )
-
-
-
-
-

@@ -3,6 +3,7 @@ import threading
 
 class AUV(messaging.BufferedMessageObserver):
     def __init__(self, node):
+        messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("control")
         node.addObserver(self)
@@ -36,7 +37,7 @@ class AUV(messaging.BufferedMessageObserver):
     def autoBearing(self, bearing):
         if bearing is not None:
             self.send(messaging.BearingAutopilotEnabledMessage(True, bearing))
-        else
+        else:
             self.send(messaging.BearingAutopilotEnabledMessage(False, 0))
 
     def autoDepth(self, depth):
@@ -81,7 +82,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
 
     def checkRange(self, value):
-        if value < -127 || value > 127:
+        if value < -127 or value > 127:
             raise ValueError("invalid motor value: %d" % value)
 
     ## synchronous-ifying stuff

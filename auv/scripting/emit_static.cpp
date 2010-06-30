@@ -9,10 +9,18 @@
 namespace bp = boost::python;
 
 
+struct Blah{
+    int monkey;
+};
+
 /*** Support Wrappers, etc. ***/
 struct Thing{
     int callFoo(){
         return this->foo();
+    }
+
+    int getMonkey(Blah m){
+        return m.monkey;
     }
 
     virtual int foo(){
@@ -121,6 +129,9 @@ class SpreadMessageWrapper:
 
 /*** Actual Functions to Generate the Interface: ***/
 void emitThing(){
+    bp::class_<Blah>("Blah")
+        .add_property("monkey", &Blah::monkey)
+    ;
     bp::class_<ThingWrapper,
                boost::shared_ptr<ThingWrapper>,
                boost::noncopyable

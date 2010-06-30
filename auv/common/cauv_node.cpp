@@ -111,7 +111,8 @@ int CauvNode::parseOptions(int argc, char** argv)
 
     return useOptionsMap(vm, desc);
 }
-void CauvNode::addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos)
+void CauvNode::addOptions(boost::program_options::options_description& desc,
+                          boost::program_options::positional_options_description& /*pos*/)
 {
     namespace po = boost::program_options;
     desc.add_options()

@@ -63,10 +63,4 @@ public class MotorMessage extends Message {
         this.motorId = MotorID.readFrom(s);
         this.speed = s.readByte();
     }
-    
-    @Override
-    public String toString() {
-        return this.getClass().getName() + ": {\n\tID: " + this.id() + "\n\tGroup: " + this.group()
-                + "\n\tSpeed: " + this.speed + "\n\tMotor: " + this.motorId.name() + "\n}";
-    }
 }

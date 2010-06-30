@@ -10,7 +10,7 @@ import cauv.types.*;
 import cauv.utils.*;
 
 public class OutputStatusMessage extends Message {
-    int m_id = 23;
+    int m_id = 123;
     public int nodeId;
     public String outputId;
     public NodeIOStatus status;
@@ -51,18 +51,18 @@ public class OutputStatusMessage extends Message {
     }
 
     public OutputStatusMessage(){
-        super(23, "pl_gui");
+        super(123, "pl_gui");
     }
 
     public OutputStatusMessage(Integer nodeId, String outputId, NodeIOStatus status) {
-        super(23, "pl_gui");
+        super(123, "pl_gui");
         this.nodeId = nodeId;
         this.outputId = outputId;
         this.status = status;
     }
 
     public OutputStatusMessage(byte[] bytes) throws IOException {
-        super(23, "pl_gui");
+        super(123, "pl_gui");
         ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
         LEDataInputStream s = new LEDataInputStream(bs);
         int buf_id = s.readInt();
