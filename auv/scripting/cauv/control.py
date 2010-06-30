@@ -81,6 +81,14 @@ class AUV(messaging.BufferedMessageObserver):
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
 
+    def V(self, value):
+        self.VBow(value)
+        self.VStern(value)
+
+    def H(self.value):
+        self.HBow(value)
+        self.HStern(value)
+
     def checkRange(self, value):
         if value < -127 or value > 127:
             raise ValueError("invalid motor value: %d" % value)

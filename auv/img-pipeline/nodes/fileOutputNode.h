@@ -59,7 +59,7 @@ class FileOutputNode: public OutputNode{
             try{
                 cv::imwrite(fname.c_str(), img->cvMat(), imwrite_params);
             }catch(cv::Exception& e){
-                error() << "GaussianBlurNode:\n\t"
+                error() << "FileOutputNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
                 throw(img_pipeline_error("FileOutputNode: could not write file"));

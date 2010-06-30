@@ -27,7 +27,7 @@ class FileInputNode: public AsynchronousNode{
             
             // one parameter: the filename
             registerParamID<std::string>("filename", "default.jpg");
-        } 
+        }
 
         virtual void paramChanged(param_id const& p){
             debug() << "FileInputNode::paramChanged";
