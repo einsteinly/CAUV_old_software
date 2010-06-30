@@ -7,9 +7,14 @@ export PYTHON_PATH="$SCRIPTING_DIR:$PYTHONPATH"
 
 python -i -c "import cauv
 import cauv.messaging as msg
-import cauv.pipeline as pl
+import cauv.pipeline as pipeline
 import cauv.control as control
-import cauv.node as node
+import cauv.node
+
+node = cauv.node.Node('py-start')
+auv = control.AUV(node)
+pl = pipeline.Model(node)
+
 "
 
 

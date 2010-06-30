@@ -22,7 +22,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.VBow(0)
         self.HStern(0)
         self.VStern(0)
-        self.autobearing(None)
+        self.autoBearing(None)
         self.autoPitch(None)
         self.autoDepth(None)
 
@@ -62,23 +62,23 @@ class AUV(messaging.BufferedMessageObserver):
         self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale))
 
     def Prop(self, value):
-        checkRange(value)
+        self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.Prop, value))
 
     def HBow(self, value):
-        checkRange(value)
+        self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.HBow, value))
 
     def VBow(self, value):
-        checkRange(value)
+        self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VBow, value))
 
     def HStern(self, value):
-        checkRange(value)
+        self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.HStern, value))
 
     def VStern(self, value):
-        checkRange(value)
+        self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
 
     def checkRange(self, value):
