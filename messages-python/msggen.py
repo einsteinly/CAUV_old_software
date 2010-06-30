@@ -96,7 +96,7 @@ def serialiseJavaType(t, name, indentation = 0, prefix = ""):
             "i": "%s_i" % name
         }
             
-        return indent + "s.writeLong(%(name)s.size());" % vals + "\n" + \
+        return indent + "s.writeInt(%(name)s.size());" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(name)s.size(); %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(valtype)s %(valvar)s = %(name)s.get(%(i)s);" % vals + "\n" + \
@@ -113,7 +113,7 @@ def serialiseJavaType(t, name, indentation = 0, prefix = ""):
             "i": "%s_i" % name
         }
 
-        return indent + "s.writeLong(%(name)s.size());" % vals + "\n" + \
+        return indent + "s.writeInt(%(name)s.size());" % vals + "\n" + \
                indent + "for (Map.Entry<%(keytype)s, %(valtype)s> %(i)s : %(name)s.entrySet())" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(keytype)s %(keyvar)s = %(i)s.getKey();" % vals + "\n" + \
@@ -164,7 +164,7 @@ def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
         }
             
         return indent + "%(name)s = new %(type)s();" % vals + "\n" + \
-               indent + "long %(len)s = s.readLong();" % vals + "\n" + \
+               indent + "long %(len)s = s.readInt();" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(valtype)s %(valvar)s;" % vals + "\n" + \
@@ -185,7 +185,7 @@ def deserialiseJavaType(t, name, indentation = 0, prefix = ""):
         }
 
         return indent + "%(name)s = new %(type)s();" % vals + "\n" + \
-               indent + "long %(len)s = s.readLong();" % vals + "\n" + \
+               indent + "long %(len)s = s.readInt();" % vals + "\n" + \
                indent + "for (int %(i)s = 0; %(i)s < %(len)s; %(i)s++)" % vals + "\n" + \
                indent + "{" + "\n" + \
                indent + "    %(keytype)s %(keyvar)s;" % vals + "\n" + \
