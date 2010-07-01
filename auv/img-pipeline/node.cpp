@@ -108,7 +108,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
             warning() << "assuming output parameter is available, this needs fixing";
             setNewParamValue(param);
         }else{
-            if(n->getOutputImage(o_id)){
+            if(n->getOutputImage(o_id, true)){
                 debug() << "node" << *this << "input set, output available from" << *n;
                 setNewInput(param);
             }else{
@@ -437,7 +437,8 @@ void Node::exec(){
 
 /* Get the actual image data associated with an output
  */
-Node::image_ptr_t Node::getOutputImage(output_id const& o_id) const throw(id_error){
+Node::image_ptr_t Node::getOutputImage(output_id const& o_id,
+                                       bool suppress_null_warning) const throw(id_error){
     shared_lock_t l(m_outputs_lock);
     const out_map_t::const_iterator i = m_outputs.find(o_id);
     image_ptr_t r;
@@ -450,7 +451,8 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id) const throw(id_err
     }else{
         throw id_error("no such output" + to_string(o_id));
     } 
-    if(!r) warning() << m_id << "returning NULL image for" << o_id;
+    if(!r && !suppress_null_warning)
+        warning() << m_id << "returning NULL image for" << o_id;
     return r;
 }
 

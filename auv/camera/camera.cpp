@@ -5,6 +5,8 @@
 #include "webcam.h"
 
 #include <common/cauv_utils.h>
+#include <common/bash_cout.h>
+#include <debug/cauv_debug.h>
 
 
 CameraException::CameraException(const std::string& _reason)
@@ -63,6 +65,7 @@ void CaptureThread::operator()()
 {
     while(m_alive)
     {   
+        debug(3) << "Grabbing frame for broadcast...";
         m_camera.grabFrameAndBroadcast();
         
         m_frameDelayMutex.lock();
@@ -95,6 +98,7 @@ Webcam::Webcam(const CameraID::e cameraID, const int deviceID)
 void Webcam::grabFrameAndBroadcast()
 {
     cv::Mat mat;
+    std::cout << "." << std::flush;
     m_capture >> mat;
     cv::imshow("CAUV OpenCV test", mat);
     cv::waitKey(10);

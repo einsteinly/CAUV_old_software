@@ -75,6 +75,7 @@ again:
             timeout.tv_sec = 2;
             timeout.tv_usec = 0;
             rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
+            debug(4) << "rec1 = " << rec;
 		    check_is_sonar_dead();
         }
         if (rec > 0) {
@@ -113,6 +114,7 @@ again:
                 timeout.tv_sec = 2;
                 timeout.tv_usec = 0;
                 rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
+                debug(4) << "rec2 = " << rec;
                 check_is_sonar_dead();
             }
             if (rec > 0) {
@@ -149,6 +151,7 @@ again:
             timeout.tv_sec = 2;
             timeout.tv_usec = 0;
             rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
+            debug(4) << "rec3 = " << rec;
             check_is_sonar_dead();
         }
         if (rec > 0) {

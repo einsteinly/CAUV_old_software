@@ -78,8 +78,17 @@ class HoughCirclesNode: public Node{
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
-     
-            // TODO: send message about where circles are / do further processing
+            
+            std::vector<Circle> msg_circles;
+            for(unsigned i = 0; i < circles.size(); i++){
+                Circle c;
+                c.centre.x = circles[i][0];
+                c.centre.y = circles[i][1];
+                c.centre.z = 0;
+                c.radius = circles[i][2];
+                msg_circles.push_back(c);
+            }
+            sendMessage(boost::make_shared<HoughCirclesMessage>(msg_circles));
             
             return r;
         }

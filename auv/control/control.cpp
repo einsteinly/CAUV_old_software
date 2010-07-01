@@ -230,6 +230,9 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 float depth = 0.5 * (fore_depth_calibrated + aft_depth_calibrated);
 
                 float mv = m_controllers[Depth].getMV(depth);
+                
+                m_demand[Depth].vbow = mv;
+                m_demand[Depth].vstern = mv;
 
                 debug(2) << "depth: fwd=" << fore_depth_calibrated
                          << "aft=" << aft_depth_calibrated
@@ -243,6 +246,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 m_mb->sendMessage(dm, SAFE_MESS);
             }
         }
+        virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m)
+        {
+            m_depthCalibration = m;
+        }
+        
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;

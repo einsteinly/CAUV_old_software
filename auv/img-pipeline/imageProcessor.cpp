@@ -55,6 +55,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
         lock_t l(m_nodes_lock);
         _addNode(node, new_id);
         if(node->isInputNode()){
+            debug() << "adding input node:" << *node;
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
         l.unlock();
@@ -98,6 +99,7 @@ void ImageProcessor::removeNode(node_id const& id){
     info() << "Node removed:" << id;
     
     if(n->isInputNode()){
+        debug() << "removing input node:" << *n;
         m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
     }
     l.unlock();
@@ -157,7 +159,7 @@ void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
             node_ptr_t old_from = lookup(old_il_in->second.node);
             if(old_from)
                 old_from->clearOutput(old_il_in->second.output, to, input);
-        }else{
+        }else if(old_il_in == old_il.end()){
             error() << "badness: node" << m->to().node
                     << "has no input link record for input" << input;
         }

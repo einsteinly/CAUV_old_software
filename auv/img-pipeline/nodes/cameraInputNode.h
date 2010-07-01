@@ -10,12 +10,14 @@
 
 #include "asynchronousNode.h"
 
+#define MAX_DEVICES 5
+
 class CameraInputNode: public AsynchronousNode{
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
     public:
         CameraInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_capture(), m_capture_lock(){
+            : AsynchronousNode(sched, pl, t), m_capture(), m_current_device(-1){
             // no inputs
             // registerInputID()
             
@@ -59,23 +61,35 @@ class CameraInputNode: public AsynchronousNode{
             warning() << "Capture doesn't work without an NSEventLoop";
             #else
             int dev_id = param<int>("device id");
-            lock_t l(m_capture_lock);
-            m_capture = cv::VideoCapture(dev_id);
-            
-            if(!m_capture.isOpened()){
-                error() << "could not open camera" << dev_id;
-                return;
-            } 
-            //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-            //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-            m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-            m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
-            setAllowQueue();
+            if(dev_id >= MAX_DEVICES || dev_id < 0){
+                error() << "invalid camera:" << dev_id;
+            }else{
+                bool l = m_capture_lock[dev_id].try_lock();
+                if(!l){
+                    error() << "camera already open" << dev_id;
+                }else{
+                    if(m_current_device != -1)
+                        m_capture_lock[m_current_device].unlock();
+                    m_current_device = dev_id;
+                    m_capture = cv::VideoCapture(dev_id);
+                    
+                    if(!m_capture.isOpened()){
+                        error() << "could not open camera" << dev_id;
+                        return;
+                    } 
+                    //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+                    //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+                    m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+                    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
+                    setAllowQueue();
+                }
+            }
             #endif
         }
         
         cv::VideoCapture m_capture;
-        boost::recursive_mutex m_capture_lock;
+        int m_current_device;
+        static boost::try_mutex m_capture_lock[MAX_DEVICES];
     
     // Register this node type
     DECLARE_NFR;

@@ -32,7 +32,9 @@ enum NodeType : int8 {
     Mix = 23,
     Percentile = 24,
     SonarInput = 25,
-    BroadcastImage = 26
+    BroadcastImage = 26,
+    VideoFileOutput = 27,
+    Invert = 28
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -122,6 +124,16 @@ struct MotorDemand
     hstern: float;
     vstern : float;
 }
+struct Line
+{
+    a : floatXYZ;
+    b : floatXYZ;
+}
+struct Circle
+{
+    centre : floatXYZ;
+    radius : float;
+}
 
 group debug
 {
@@ -193,6 +205,12 @@ group control
 
     message StateRequest : 82
     {
+    }
+
+    message Script : 102
+    {
+        script : string;
+        timeout : float;
     }
 }
 group state
@@ -280,6 +298,19 @@ group pipeline
     }
 }
 
+group processing
+{
+    message HoughLines : 130
+    {
+         lines : list<Line>;
+    }
+
+    message HoughCircles : 131
+    {
+        circles : list<Circle>;
+    }
+}
+
 group gui
 {
     message ControllerState : 100
@@ -296,6 +327,11 @@ group gui
     message MotorState : 101
     {
         demand : MotorDemand;
+    }
+
+    message ScriptResponse : 103
+    {
+        response : string;
     }
 }
 

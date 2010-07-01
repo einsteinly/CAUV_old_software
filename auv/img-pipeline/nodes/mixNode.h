@@ -48,7 +48,9 @@ class MixNode: public Node{
                (mix->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
                 throw(parameter_error("images must be unsigned bytes"));
             if(img->cvMat().size() != mix->cvMat().size())
-                throw(parameter_error("images msut be the same size"));
+                throw(parameter_error("images must be the same size"));
+            if(img->cvMat().channels() != mix->cvMat().channels())
+                throw(parameter_error("images must have the same number of channels"));
 
             const int elem_size = img->cvMat().elemSize();
             const int row_size = img->cvMat().cols * elem_size;

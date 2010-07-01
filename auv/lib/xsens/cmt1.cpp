@@ -61,6 +61,10 @@
 #	define FTELL()		ftello(m_handle)
 #endif
 
+#ifdef _DEBUG
+#include <stdarg.h>
+#endif
+
 // The namespace of all Xsens software since 2006.
 namespace xsens {
 

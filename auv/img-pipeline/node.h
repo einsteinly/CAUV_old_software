@@ -113,7 +113,8 @@ class Node{
         
         /* Get the actual image data associated with an output
          */
-        image_ptr_t getOutputImage(output_id const& o_id) const throw(id_error);
+        image_ptr_t getOutputImage(output_id const& o_id,
+                                   bool suppress_null_warning = false) const throw(id_error);
         
         /* Get the parameter associated with a parameter output
          */

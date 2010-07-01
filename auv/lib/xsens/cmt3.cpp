@@ -26,18 +26,20 @@
 #include <math.h>
 #include "xsens_janitors.h"
 
+#define QUOTE(arg) #arg
+
 #ifdef _LOG_CMT3
 #	define CMT3LOG		CMTLOG
-#	define CMT3EXITLOG	JanitorLogFunc<XsensResultValue,uint32_t> _cmtExitLog(CMTLOG,"L3: " __FUNCTION__ " returns %u\n",m_lastResult);
+#	define CMT3EXITLOG
+//#	define CMT3EXITLOG	JanitorLogFunc<XsensResultValue,uint32_t> _cmtExitLog(CMTLOG,"L3: " QUOTE(__FUNCTION__) " returns %u\n",m_lastResult);
 #else
 #	define CMT3LOG(...)
 #	define CMT3EXITLOG
 #endif
-//#	define CMT3EXITLOG
 
 #ifdef _LOG_CMT3_DATA
 #	define CMT3LOGDAT		CMTLOG
-#	define CMT3EXITLOGDAT	JanitorLogFunc<XsensResultValue,uint32_t> _cmtExitLog(CMTLOG,"L3: " __FUNCTION__ " returns %u\n",m_lastResult);
+#	define CMT3EXITLOGDAT	JanitorLogFunc<XsensResultValue,uint32_t> _cmtExitLog(CMTLOG,"L3: " QUOTE(__FUNCTION__) " returns %u\n",m_lastResult);
 #else
 #	define CMT3LOGDAT(...)
 #	define CMT3EXITLOGDAT
