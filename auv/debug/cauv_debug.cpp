@@ -55,6 +55,7 @@ SmartStreamBase::~SmartStreamBase()
         settings().cauv_node->send(
             boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str())
         );
+        recursive() = false;
     }
 }
 
