@@ -355,7 +355,7 @@ node_ptr_t PipelineWidget::node(node_id const& n){
     node_map_t::const_iterator i = m_nodes.find(n);
     if(i != m_nodes.end())
         return i->second;
-    warning() << "unknown node renderable:" << n;
+    //warning() << "unknown node renderable:" << n;
     return node_ptr_t();
 }
 
@@ -372,7 +372,7 @@ imgnode_ptr_t PipelineWidget::imgNode(node_id const& n){
     imgnode_map_t::const_iterator i = m_imgnodes.find(n);
     if(i != m_imgnodes.end())
         return i->second;
-    warning() << "unknown img node renderable:" << n;
+    //warning() << "unknown img node renderable:" << n;
     return imgnode_ptr_t();
 }
 

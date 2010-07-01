@@ -159,7 +159,7 @@ void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
             node_ptr_t old_from = lookup(old_il_in->second.node);
             if(old_from)
                 old_from->clearOutput(old_il_in->second.output, to, input);
-        }else{
+        }else if(old_il_in == old_il.end()){
             error() << "badness: node" << m->to().node
                     << "has no input link record for input" << input;
         }

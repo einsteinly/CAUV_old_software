@@ -38,7 +38,7 @@ class SonarInputNode: public InputNode{
             
             // NB: output is not copied! use a CopyNode if you don't want to
             // stamp all over the buffer
-            r["image"] = m_accumulator.img();
+            r["sonar image"] = m_accumulator.img();
 
             clearAllowQueue();
 
