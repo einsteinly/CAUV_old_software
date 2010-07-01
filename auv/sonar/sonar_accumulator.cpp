@@ -132,7 +132,7 @@ static void scan_thick_arc(cv::Mat* img, int cx, int cy, int radius, float from,
 }
 
 SonarAccumulator::SonarAccumulator()
-    : m_img(boost::make_shared<Image>(cv::Mat(400,400,CV_8UC1)))
+    : m_img(boost::make_shared<Image>(cv::Mat(400,400,CV_8UC1,0)))
 {
 }
 void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
