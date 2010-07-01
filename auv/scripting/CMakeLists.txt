@@ -94,6 +94,13 @@ add_custom_target (scripting-test
     COMMENT "cauv python module test"
 )
 
+add_custom_target (scripting
+    echo "scripting built"
+    DEPENDS camtest.py
+            ${SRCD}/cauv/cauvinterface.so
+            ${SRCD}/cauv/libcommon.so
+)
+
 add_custom_target (pycamtest
     python ${SRCD}/camtest.py 
     DEPENDS camtest.py
