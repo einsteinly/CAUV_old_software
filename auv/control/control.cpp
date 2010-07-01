@@ -150,7 +150,7 @@ class StateObserver : public MessageObserver, public XsensObserver
         {
             m_orientation = attitude;
         }
-        virtual void onStateRequestMessage(StateRequestMessage_ptr m)
+        virtual void onStateRequestMessage(StateRequestMessage_ptr)
         {
             m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), SAFE_MESS);
         }
@@ -168,8 +168,15 @@ class ControlLoops : public MessageObserver, public XsensObserver
     public:
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
             : prop_value(-1e9), hbow_value(-1e9), vbow_value(-1e9),
-              hstern_value(-1e9), vstern_value(-1e9), m_mb(mb)
+              hstern_value(-1e9), vstern_value(-1e9), m_max_motor_delta(256/*12*/),
+              m_motor_updates_per_second(5), m_mb(mb)
         {
+            const MotorMap def = {5, -5, 127, -127};
+            prop_map = def;
+            hbow_map = def;
+            vbow_map = def;
+            hstern_map = def;
+            vstern_map = def;
         }
         ~ControlLoops()
         {
@@ -336,6 +343,48 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Depth].scale = m->scale();
         }
 
+        virtual void onMotorRamprateMessage(MotorRampRateMessage_ptr m)
+        {
+            // MCB currently handles ramping: don't limit it
+            //if(m->maxDelta() >= 127)
+            //    warning() << "maximum motor delta set exceptionally high:" << m->maxDelta();
+            m_max_motor_delta = m->maxDelta();
+            m_motor_updates_per_second = m->updatesPerSecond();
+            debug() << "Set motor ramp limit:" << m_max_motor_delta
+                    << ", update rate:" << m_motor_updates_per_second;
+        }
+
+        virtual void onSetMotorMapMessage(SetMotorMapMessage_ptr m)
+        {
+            if(m->mapping().zeroPlus >= m->mapping().maxPlus ||
+               m->mapping().zeroMinus <= m->mapping().maxMinus)
+            {
+                error() << "Invalid motor mapping for" << m->motor() << ":" << m->mapping();
+                return;
+            }
+                
+            if(m->mapping().zeroPlus < 0 ||
+               m->mapping().zeroMinus > 0 ||
+               m->mapping().maxPlus < 100 ||
+               m->mapping().maxPlus > 150 ||
+               m->mapping().maxMinus > -100 ||
+               m->mapping().maxMinus < -150)
+            {
+                warning() << "Unusual motor mapping for" << m->motor() << ":" << m->mapping();
+            }
+
+            switch(m->motor())
+            {
+                default:
+                case MotorID::Prop: prop_map = m->mapping(); break;
+                case MotorID::HBow: hbow_map = m->mapping(); break;
+                case MotorID::VBow: vbow_map = m->mapping(); break;
+                case MotorID::HStern: hstern_map = m->mapping(); break;
+                case MotorID::VStern: vstern_map = m->mapping(); break;
+            }
+            debug() << "Set motor mapping:" << m->motor() << ":" << m->mapping();
+        }
+
     private:
         boost::thread m_motorControlLoopThread;
         
@@ -362,13 +411,47 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 {
                     boost::this_thread::interruption_point();
                     updateMotorControl();
-                    boost::this_thread::sleep(boost::posix_time::milliseconds(200));
+                    if(m_motor_updates_per_second)
+                        msleep(1000/m_motor_updates_per_second);
                 }
 
             } catch (boost::thread_interrupted&) {
                 debug() << "Control loop thread interrupted";
             }
             debug() << "Control loop thread exiting";
+        }
+
+        int motorMap(float const& demand_value, MotorID::e mid)
+        {
+            MotorMap m = {0, 0, 127, -127};
+            switch(mid)
+            {
+                default:
+                case MotorID::Prop: m = prop_map; break;
+                case MotorID::HBow: m = hbow_map; break;
+                case MotorID::VBow: m = vbow_map; break;
+                case MotorID::HStern: m = hstern_map; break;
+                case MotorID::VStern: m = vstern_map; break;
+            }
+            /*
+             *        -127                           0                            127
+             * demand:  |---------------------------|0|----------------------------| 
+             * output:     |---------------|         0            |----------------|
+             *             ^               ^                      ^                ^
+             *             maxMinus     zeroMinus               zeroPlus        maxPlus
+             */
+            if(demand_value <= m.maxMinus)
+                return -127;
+            else if(demand_value < m.zeroMinus)
+                //eg:      -30     + (   -30      -   -120    ) *     (-50) / 127 = -65
+                return m.zeroMinus + (m.zeroMinus - m.maxMinus) * demand_value / 127;
+            else if(demand_value < m.zeroPlus)
+                return 0;
+            else if(demand_value <= m.maxPlus)
+                //eg:     50      + (  127     -     50    ) *    80        / 127 = 86
+                return m.zeroPlus + (m.maxPlus - m.zeroPlus) * demand_value / 127;
+            else
+                return 127;
         }
         
         void updateMotorControl()
@@ -379,21 +462,31 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
             
-            int new_prop_value = clamp(-127, total_demand.prop, 127);
-            int new_hbow_value = clamp(-127, total_demand.hbow, 127);
-            int new_vbow_value = clamp(-127, total_demand.vbow, 127);
-            int new_hstern_value = clamp(-127, total_demand.hstern, 127);
-            int new_vstern_value = clamp(-127, total_demand.vstern, 127);
+            int new_prop_value = clamp(-127, motorMap(total_demand.prop, MotorID::Prop), 127);
+            int new_hbow_value = clamp(-127, motorMap(total_demand.hbow, MotorID::HBow), 127);
+            int new_vbow_value = clamp(-127, motorMap(total_demand.vbow, MotorID::VBow), 127);
+            int new_hstern_value = clamp(-127, motorMap(total_demand.hstern, MotorID::HStern), 127);
+            int new_vstern_value = clamp(-127, motorMap(total_demand.vstern, MotorID::VStern), 127);
             
             if(m_mcb) {
-                sendIfNew(MotorID::Prop, prop_value, new_prop_value);
-                sendIfNew(MotorID::HBow, hbow_value, new_hbow_value);
-                sendIfNew(MotorID::VBow, vbow_value, new_vbow_value);
-                sendIfNew(MotorID::HStern, hstern_value, new_hstern_value);
-                sendIfNew(MotorID::VStern, vstern_value, new_vstern_value);
+                sendWithMaxDelta(MotorID::Prop, prop_value, new_prop_value, m_max_motor_delta);
+                sendWithMaxDelta(MotorID::HBow, hbow_value, new_hbow_value, m_max_motor_delta);
+                sendWithMaxDelta(MotorID::VBow, vbow_value, new_vbow_value, m_max_motor_delta);
+                sendWithMaxDelta(MotorID::HStern, hstern_value, new_hstern_value, m_max_motor_delta);
+                sendWithMaxDelta(MotorID::VStern, vstern_value, new_vstern_value, m_max_motor_delta);
             }
             
             m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
+        }
+
+        void sendWithMaxDelta(MotorID::e mid, int& oldvalue, int newvalue, unsigned maxDelta)
+        {
+            if(abs(newvalue - oldvalue) <= maxDelta)
+                sendIfNew(mid, oldvalue, newvalue);
+            else if(newvalue < oldvalue)
+                sendIfNew(mid, oldvalue, oldvalue - maxDelta);
+            else
+                sendIfNew(mid, oldvalue, oldvalue + maxDelta);
         }
 
         void sendIfNew(MotorID::e mid, int& oldvalue, int newvalue)
@@ -409,6 +502,15 @@ class ControlLoops : public MessageObserver, public XsensObserver
         int vbow_value;
         int hstern_value;
         int vstern_value;
+
+        MotorMap prop_map;
+        MotorMap hbow_map;
+        MotorMap vbow_map;
+        MotorMap hstern_map;
+        MotorMap vstern_map;
+
+        unsigned m_max_motor_delta;
+        unsigned m_motor_updates_per_second;
 
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };

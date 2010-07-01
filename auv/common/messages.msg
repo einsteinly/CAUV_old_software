@@ -134,6 +134,13 @@ struct Circle
     centre : floatXYZ;
     radius : float;
 }
+struct MotorMap
+{
+    zeroPlus : int32;
+    zeroMinus : int32;
+    maxPlus : int32;
+    maxMinus : int32;
+}
 
 group debug
 {
@@ -211,6 +218,18 @@ group control
     {
         script : string;
         timeout : float;
+    }
+
+    message MotorRampRate : 83
+    {
+        maxDelta : int32;
+        updatesPerSecond : int32;
+    }
+
+    message SetMotorMap : 84
+    {
+        motor : MotorID;
+        mapping : MotorMap;
     }
 }
 group state
