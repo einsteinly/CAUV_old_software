@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     std::string msgType(argv[1]);
 
     SpreadMailbox m_mailbox;
-    m_mailbox.connect("16708@localhost", "send");
+    m_mailbox.connect("16707@localhost", "send");
     
     if (boost::iequals(msgType, "motor")) {
         if (argc - 2 != 2) {
