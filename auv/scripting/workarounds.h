@@ -133,7 +133,7 @@ class ThreadSaveRestoreBase: boost::noncopyable{
     private:
         void release(){
             threadState().push(PyEval_SaveThread());
-            debug() << BashColour::Purple << threadState().size()
+            debug(9) << BashColour::Purple << threadState().size()
                     << "PyEval_SaveThread=" << threadState().top();
         }
         void acquire(){
@@ -144,7 +144,7 @@ class ThreadSaveRestoreBase: boost::noncopyable{
                 //        << "PyEval_RestoreThread(" << NULL << ")";
                 //PyEval_RestoreThread(NULL);
             }else{
-                debug() << BashColour::Purple << threadState().size()
+                debug(9) << BashColour::Purple << threadState().size()
                         << "PyEval_RestoreThread(" << threadState().top() << ")";
                 PyEval_RestoreThread(threadState().top());
                 threadState().pop();
@@ -179,10 +179,10 @@ class GILLock: boost::noncopyable{
     public:
         GILLock()
             : m_gs(PyGILState_Ensure()){
-            debug() << BashColour::Green << "PyGILState_Ensure=" << m_gs;
+            debug(9) << BashColour::Green << "PyGILState_Ensure=" << m_gs;
         }
         ~GILLock(){
-            debug() << BashColour::Green << "PyGILState_Release(" << m_gs << ")";
+            debug(9) << BashColour::Green << "PyGILState_Release(" << m_gs << ")";
             PyGILState_Release(m_gs);
         }
     private:

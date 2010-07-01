@@ -7,8 +7,8 @@
 
 int pthreadPriority(SchedulerPriority const& s){
     switch(s){
-        case priority_slow: return -10;
-        case priority_fast: return 0;
+        case priority_slow: return -15;
+        case priority_fast: return -5;
         case priority_realtime: return 0;
     }
     return 0;

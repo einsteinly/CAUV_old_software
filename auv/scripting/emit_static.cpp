@@ -192,7 +192,7 @@ void emitMessage(){
 void emitCauvNode(){
     bp::class_<CauvNodeWrapper,
                boost::noncopyable
-              >("CauvNode", bp::init<std::string, std::string>())
+              >("CauvNode", bp::init<std::string, std::string, unsigned>())
          .def("run", wrap(&CauvNode::run))
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
          .def("send", wrap(&CauvNode::send))

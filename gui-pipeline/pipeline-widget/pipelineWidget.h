@@ -73,7 +73,8 @@ class PipelineWidget: public QGLWidget,
         
         void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void send(boost::shared_ptr<Message>);
-
+        
+        node_ptr_t nodeAt(Point const& p) const;
         // implement Container:
         virtual Point referUp(Point const& p) const;
         virtual void postRedraw();

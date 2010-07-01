@@ -24,15 +24,16 @@
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
 #endif
+#include <boost/thread/tss.hpp>
 
 #include <common/cauv_utils.h>
 #include <common/bash_cout.h>
+#include <common/cauv_node.h>
+#include <common/messages_messages.h>
 
 
-
-SmartStreamBase::SmartStreamBase(std::ostream& stream, std::string const& prefix,
-                                 BashColour::e col, bool print)
-    : m_stuffs(), m_stream(stream), m_prefix(prefix), m_col(col), m_print(print)
+SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool print)
+    : m_stuffs(), m_stream(stream), m_col(col), m_print(print)
 {
 }
 
@@ -43,6 +44,18 @@ SmartStreamBase::~SmartStreamBase()
         printToStream(m_stream);
     // always log
     printToStream(logFile());
+    // TODO: possible nastiness when setCauvNode is called from a different
+    // thread while this is going on
+    // if there's a cauv_node set, and this isn't a recursive call, send debug messages
+    if(settings().cauv_node && !recursive()){
+        recursive() = true;
+        std::ostringstream oss;
+        oss << settings().program_name << ":";
+        printToStream(oss);
+        settings().cauv_node->send(
+            boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str())
+        );
+    }
 }
 
 void SmartStreamBase::setLevel(int debug_level)
@@ -50,13 +63,37 @@ void SmartStreamBase::setLevel(int debug_level)
     settings().debug_level = debug_level;
 }
 
+void SmartStreamBase::setCauvNode(CauvNode* n)
+{
+    settings().cauv_node = n;
+}
+
+void SmartStreamBase::setProgramName(std::string const& n)
+{
+    settings().program_name = n;
+}
+
+void SmartStreamBase::setLogfileName(std::string const& n)
+{
+    settings().logfile_name = n;
+}
+
 void SmartStreamBase::printPrefix(std::ostream&)
 {
+}
+int SmartStreamBase::debugType() const
+{
+    return DebugType::Trace;
 }
 
 // initialise on first use
 SmartStreamBase::Settings& SmartStreamBase::settings(){
-    static Settings s = { CAUV_DEBUG_LEVEL };
+    static Settings s = {
+        CAUV_DEBUG_LEVEL,
+        NULL,
+        "unknown",
+        ""
+    };
     return s;
 }
 
@@ -84,7 +121,8 @@ void SmartStreamBase::printToStream(std::ostream& os)
         #endif
 
         // add defined prefix to each line
-        oss << "] " << m_prefix;
+        oss << "] ";
+        printPrefix(oss);
     }
     // make sure oss is stringised so that locale nastiness is all over
     // and done with
@@ -143,14 +181,34 @@ bool SmartStreamBase::mayAddSpaceNow(std::string const& s){
     }
 }
 
+bool& SmartStreamBase::recursive(){
+    static boost::thread_specific_ptr<bool> r;
+    if(!r.get())
+        r.reset(new bool(false));
+    return *r.get();
+}
+
 // initialise on first use
 std::ofstream& SmartStreamBase::logFile()
 {
     static std::ofstream lf;
+    static std::string lfn = settings().logfile_name;
+
+    if(settings().logfile_name.size() == 0){
+        if(settings().program_name.size())
+            settings().logfile_name = settings().program_name + ".log";
+        else
+            settings().logfile_name = "unknown.log";
+    }
+    if(lfn != settings().logfile_name)
+    {
+        lf.close();
+        lfn = settings().logfile_name;
+    }
     if(!lf.is_open())
     {
-        lf.open("log.out", std::ios::out | std::ios::app);
-        lf << "\n\n----------\nProgram Started" << std::endl;
+        lf.open(lfn.c_str(), std::ios::out | std::ios::app);
+        lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
     }
     return lf;
 }
@@ -179,7 +237,7 @@ boost::recursive_mutex& SmartStreamBase::getMutex(std::ostream& s){
 
 #if !defined(CAUV_NO_DEBUG)
 debug::debug(int level)
-    : SmartStreamBase(std::cout, "", BashColour::Cyan),
+    : SmartStreamBase(std::cout, BashColour::Cyan),
       m_level(level)
 {
 }
@@ -203,6 +261,16 @@ debug& debug::operator<<(std::ostream& (*manip)(std::ostream&))
     }
     return *this;
 }
+
+void debug::printPrefix(std::ostream& os)
+{
+    os << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal;
+}
+int debug::debugType() const
+{
+    return DebugType::Trace;
+}
+
 #endif
 
 
@@ -210,7 +278,6 @@ debug& debug::operator<<(std::ostream& (*manip)(std::ostream&))
 /*** error() << ***/ 
 error::error()
     : SmartStreamBase(std::cerr,
-                      MakeString() << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal,
                       BashColour::Red)
 {
 }
@@ -230,13 +297,19 @@ error& error::operator<<(std::ostream& (*manip)(std::ostream&))
     return *this;
 }
 
+void error::printPrefix(std::ostream& os)
+{
+    os << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal;
+}
+int error::debugType() const
+{
+    return DebugType::Trace;
+}
 
 
 /*** warning() << ***/ 
 warning::warning()
-    : SmartStreamBase(std::cerr,
-                      MakeString() << BashIntensity::Bold << "WARNING: " << BashIntensity::Normal,
-                      BashColour::Brown)
+    : SmartStreamBase(std::cerr, BashColour::Brown)
 {
 }
 
@@ -255,6 +328,14 @@ warning& warning::operator<<(std::ostream& (*manip)(std::ostream&))
     return *this;
 }
 
+void warning::printPrefix(std::ostream& os)
+{
+    os << BashIntensity::Bold << "WARNING: " << BashIntensity::Normal;
+}
+int warning::debugType() const
+{
+    return DebugType::Trace;
+}
 
 
 /*** info() << ***/
@@ -275,5 +356,13 @@ info& info::operator<<(std::ostream& (*manip)(std::ostream&))
     // and push it onto the list of things to print
     m_stuffs.push_back(s.str());
     return *this;
+}
+
+void info::printPrefix(std::ostream&)
+{
+}
+int info::debugType() const
+{
+    return DebugType::Trace;
 }
 

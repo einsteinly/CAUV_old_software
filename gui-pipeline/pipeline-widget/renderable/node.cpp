@@ -119,8 +119,8 @@ const static Colour Queue_Not_Permitted_Hint(0.4, 0, 0, 0.2);
 
 Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
-      m_node_type(to_string(m->nodeType())),
-      m_title(boost::make_shared<Text>(c, m_node_type)),
+      m_node_type(m->nodeType()),
+      m_title(boost::make_shared<Text>(c, to_string(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
@@ -139,8 +139,8 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
 
 Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(id),
-      m_node_type(to_string(nt)),
-      m_title(boost::make_shared<Text>(c, m_node_type)),
+      m_node_type(nt),
+      m_title(boost::make_shared<Text>(c, to_string(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
@@ -150,8 +150,8 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const&
 }
 
 void Node::setType(NodeType::e const& n){
-    m_node_type = to_string(n);
-    m_title = boost::make_shared<Text>(m_context, m_node_type);
+    m_node_type = n;
+    m_title = boost::make_shared<Text>(m_context, to_string(m_node_type));
     refreshLayout();
 }
 
@@ -395,6 +395,10 @@ BBox Node::bbox(){
 
 int Node::id() const{
     return m_node_id;
+}
+
+NodeType::e Node::type() const{
+    return m_node_type;
 }
 
 void Node::close(){
