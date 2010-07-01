@@ -32,9 +32,9 @@ def addSynchronousPair(node, sendf, recvf, send_name = None, recv_name = None):
 '''
 
 class Node(messaging.CauvNode):
-    def __init__(self, name, spread="16707@localhost"):
+    def __init__(self, name, spreadserver="localhost", spreadport=16707):
         print 'CauvNode.__init__ ...'
-        messaging.CauvNode.__init__(self, name, spread)
+        messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
         print '__run ...'
         self.__run()
 

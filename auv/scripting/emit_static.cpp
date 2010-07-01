@@ -80,10 +80,11 @@ class CauvNodeWrapper:
     public bp::wrapper<CauvNode>
 {
     public:
-        CauvNodeWrapper(std::string const& name, std::string const& server)
+        CauvNodeWrapper(std::string const& name, std::string const& server, unsigned port)
             : CauvNode(name){
             defaultOptions();
             m_server = server;
+            m_port = port;
         }
         
         void onRun(){

@@ -92,9 +92,22 @@ class HoughLinesNode: public Node{
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
-     
-            // TODO: send message about where lines are / do further processing
             
+            std::vector<Line> msg_lines;
+            for(unsigned i = 0; i < lines.size(); i++){
+                Line l;
+                floatXYZ a, b;
+                a.z = b.z = 0;
+                a.x = lines[i][0];
+                a.y = lines[i][1];
+                b.x = lines[i][2];
+                b.y = lines[i][3];
+                l.a = a;
+                l.b = b;
+                msg_lines.push_back(l);
+            }
+            sendMessage(boost::make_shared<HoughLinesMessage>(msg_lines));
+
             return r;
         }
 

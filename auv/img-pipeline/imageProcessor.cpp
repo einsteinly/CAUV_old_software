@@ -55,6 +55,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
         lock_t l(m_nodes_lock);
         _addNode(node, new_id);
         if(node->isInputNode()){
+            debug() << "adding input node:" << *node;
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
         l.unlock();
@@ -98,6 +99,7 @@ void ImageProcessor::removeNode(node_id const& id){
     info() << "Node removed:" << id;
     
     if(n->isInputNode()){
+        debug() << "removing input node:" << *n;
         m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
     }
     l.unlock();

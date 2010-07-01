@@ -17,7 +17,7 @@ class CameraInputNode: public AsynchronousNode{
 
     public:
         CameraInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_capture(){
+            : AsynchronousNode(sched, pl, t), m_capture(), m_current_device(-1){
             // no inputs
             // registerInputID()
             
@@ -64,10 +64,13 @@ class CameraInputNode: public AsynchronousNode{
             if(dev_id >= MAX_DEVICES || dev_id < 0){
                 error() << "invalid camera:" << dev_id;
             }else{
-                boost::try_mutex::scoped_try_lock l(m_capture_lock[dev_id]);
+                bool l = m_capture_lock[dev_id].try_lock();
                 if(!l){
                     error() << "camera already open" << dev_id;
                 }else{
+                    if(m_current_device != -1)
+                        m_capture_lock[m_current_device].unlock();
+                    m_current_device = dev_id;
                     m_capture = cv::VideoCapture(dev_id);
                     
                     if(!m_capture.isOpened()){
@@ -85,6 +88,7 @@ class CameraInputNode: public AsynchronousNode{
         }
         
         cv::VideoCapture m_capture;
+        int m_current_device;
         static boost::try_mutex m_capture_lock[MAX_DEVICES];
     
     // Register this node type
