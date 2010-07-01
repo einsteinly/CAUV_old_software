@@ -55,7 +55,7 @@ void SonarNode::addOptions(boost::program_options::options_description& desc,
     CauvNode::addOptions(desc, pos);
    
     desc.add_options()
-        ("device,c", po::value<std::string>()->required(), "The device (eg /dev/ttyUSB1)")
+        ("device,d", po::value<std::string>()->required(), "The device (eg /dev/ttyUSB1)")
     ;
 
     pos.add("device", 1);
