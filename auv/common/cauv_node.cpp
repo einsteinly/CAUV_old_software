@@ -103,7 +103,8 @@ int CauvNode::defaultOptions()
 
 int CauvNode::parseOptions(int argc, char** argv)
 {
-    debug::setProgramName(boost::filesystem::path(argv[0]).leaf());
+    if(argv)
+        debug::setProgramName(boost::filesystem::path(argv[0]).leaf());
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     po::positional_options_description pos;
