@@ -6,9 +6,9 @@ if ! [ python.configured ]
     using python ;
 }
 
-#local BOOST_SOURCE_PATH = /home/cauv/source/boost_1_42_0 ;
+local BOOST_SOURCE_PATH = /home/cauv/source/boost_1_42_0 ;
 #local BOOST_SOURCE_PATH = /Users/james/Development/boost_1_43_0 ;
-local BOOST_SOURCE_PATH = /cauv/boost_1_43_0 ;
+#local BOOST_SOURCE_PATH = /cauv/boost_1_43_0 ;
 local CAUV_PREFIX = /usr/local ;
 
 use-project boost
@@ -22,6 +22,7 @@ project
                  <library>/boost/thread//boost_thread
                  <library>/boost/serialization//boost_serialization
                  <library>/boost/date_time//boost_date_time
+                 <library>/boost/system//boost_system
                  <library>/boost/iostreams//boost_iostreams
                  <library>/boost/program_options//boost_program_options
   : build-dir $BJAM_BUILD_DIR ;
@@ -33,7 +34,8 @@ lib spreadlib : : <name>spread <search>$(CAUV_PREFIX)/lib ;
 
 lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>$(CAUV_PREFIX)/lib ;
 
-lib bpolib : : <name>boost_program_options <search>/societies/cauv/install/lib/ ;
+lib bpolib : : <name>boost_program_options <search>$(CAUV_PREFIX)/lib  ;
+lib bslib : : <name>boost_system <search>$(CAUV_PREFIX)/lib ;
 
 lib libcommon : ../common/messages.cpp
                 ../common/image.cpp 
