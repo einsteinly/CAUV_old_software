@@ -206,7 +206,7 @@ group control
     message StateRequest : 82
     {
     }
-    
+
     message Script : 102
     {
         script : string;
