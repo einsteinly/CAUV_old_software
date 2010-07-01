@@ -375,6 +375,7 @@ void sonarReadThread(SeanetSonar& sonar)
                     /* FIXME:  Maybe do this asynchronously, to ensure we can
                      * always pull data off the sonar fast enough */
                      if (pkt->getType() == SeanetMessageType::HeadData) {
+                        debug(3) << "Data received";
                         sonar.m_cur_data_reqs--;
                         if (sonar.m_queue.size() > 200) {
                             error() << "Sonar buffer size exceeded";
@@ -387,6 +388,7 @@ void sonarReadThread(SeanetSonar& sonar)
                     while (sonar.m_cur_data_reqs <= 2) {
                         sonar.m_serial_port->sendPacket(sendData);
                         sonar.m_cur_data_reqs++; //TODO: Make sure this is correct
+                        debug(3) << "Requesting" << sonar.m_cur_data_reqs << "sonar data";
                     }
                     break;
                 default:
