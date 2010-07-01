@@ -20,7 +20,7 @@ public class SonarDataLine {
     public static SonarDataLine readFrom(LEDataInputStream s) throws IOException {
         SonarDataLine val = new SonarDataLine();
         val.data = new Vector< Byte >();
-        long data_len = s.readLong();
+        long data_len = s.readInt();
         for (int data_i = 0; data_i < data_len; data_i++)
         {
             byte data_val;
@@ -34,7 +34,7 @@ public class SonarDataLine {
     }
 
     public void writeInto(LEDataOutputStream s) throws IOException {
-        s.writeLong(this.data.size());
+        s.writeInt(this.data.size());
         for (int data_i = 0; data_i < this.data.size(); data_i++)
         {
             Byte data_val = this.data.get(data_i);

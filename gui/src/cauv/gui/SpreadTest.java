@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 import cauv.auv.MessageSocket;
 import cauv.messaging.ImageMessage;
 import cauv.messaging.MessageObserver;
+import cauv.messaging.TelemetryMessage;
 
 public class SpreadTest extends MessageObserver {
 
@@ -15,16 +16,16 @@ public class SpreadTest extends MessageObserver {
      * @throws UnknownHostException 
      */
     public static void main(String[] args) throws UnknownHostException, IOException {
-       MessageSocket s = new MessageSocket("red-herring.local", 16707, "SpreadTest");
+       MessageSocket s = new MessageSocket("leszek-laptop.local", 16708, "SpreadTest");
        s.joinGroup("control");
        s.joinGroup("debug");
        s.joinGroup("image");
        s.joinGroup("telemetry");
        s.joinGroup("sonarout");
+       s.joinGroup("pressure");
        
        s.addObserver(new SpreadTest());
        
-       s.joinGroup("pressure");
        
        System.out.println("connected");
        
@@ -32,11 +33,6 @@ public class SpreadTest extends MessageObserver {
            Thread.yield();
        }
        
-    }
-    
-    @Override
-    public void onImageMessage(ImageMessage m) {
-        System.out.println("image message: "+ m);
     }
 
 }

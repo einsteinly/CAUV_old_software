@@ -2,6 +2,8 @@ package cauv.gui.components;
 
 import cauv.types.Image;
 
+import com.trolltech.qt.gui.QBrush;
+import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QImage;
 import com.trolltech.qt.gui.QMouseEvent;
 import com.trolltech.qt.gui.QPaintEvent;
@@ -12,6 +14,8 @@ import com.trolltech.qt.gui.QWidget;
 public class VideoScreen extends QWidget {
     QPixmap pixmap = new QPixmap();
 
+    Image i;
+    
     public Signal1<QMouseEvent> clicked = new Signal1<QMouseEvent>();
     
     
@@ -23,6 +27,10 @@ public class VideoScreen extends QWidget {
     }
 
     public void setImage(Image img){
+        if(img == null) return;
+        if(img == i) return;
+        i = img;
+        
         QImage qImage = new QImage();
         byte [] data = new byte[img.data.size()];
         for(int i = 0; i < img.data.size(); i++)
@@ -46,6 +54,7 @@ public class VideoScreen extends QWidget {
     }
     
     protected void paintImage(QPainter p){
+        p.fillRect(this.rect(), new QBrush(QColor.black));
     	p.drawPixmap(this.contentsRect(), this.pixmap);
     }
     

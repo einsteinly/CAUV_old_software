@@ -9,29 +9,29 @@ import java.io.*;
 import cauv.types.*;
 import cauv.utils.*;
 
-public class DebugMessage extends Message {
-    int m_id = 0;
-    protected DebugType type;
-    protected String msg;
+public class ScriptMessage extends Message {
+    int m_id = 102;
+    protected String script;
+    protected float timeout;
 
     private byte[] bytes;
 
-    public void type(DebugType type) {
+    public void script(String script) {
         deserialise();
-        this.type = type;
+        this.script = script;
     }
-    public DebugType type() {
+    public String script() {
         deserialise();
-        return this.type;
+        return this.script;
     }
 
-    public void msg(String msg) {
+    public void timeout(float timeout) {
         deserialise();
-        this.msg = msg;
+        this.timeout = timeout;
     }
-    public String msg() {
+    public float timeout() {
         deserialise();
-        return this.msg;
+        return this.timeout;
     }
 
 
@@ -46,29 +46,29 @@ public class DebugMessage extends Message {
             LEDataOutputStream s = new LEDataOutputStream(bs);
             s.writeInt(m_id);
 
-            this.type.writeInto(s);
-            s.writeInt(this.msg.length());
-            s.writeBytes(this.msg);
+            s.writeInt(this.script.length());
+            s.writeBytes(this.script);
+            s.writeFloat(this.timeout);
 
             return bs.toByteArray();
         }
     }
 
-    public DebugMessage(){
-        super(0, "debug");
+    public ScriptMessage(){
+        super(102, "control");
         this.bytes = null;
     }
 
-    public DebugMessage(DebugType type, String msg) {
-        super(0, "debug");
+    public ScriptMessage(String script, Float timeout) {
+        super(102, "control");
         this.bytes = null;
 
-        this.type = type;
-        this.msg = msg;
+        this.script = script;
+        this.timeout = timeout;
     }
 
-    public DebugMessage(byte[] bytes) {
-        super(0, "debug");
+    public ScriptMessage(byte[] bytes) {
+        super(102, "control");
         this.bytes = bytes;
     }
 
@@ -81,17 +81,17 @@ public class DebugMessage extends Message {
                 int buf_id = s.readInt();
                 if (buf_id != m_id)
                 {
-                    throw new IllegalArgumentException("Attempted to create DebugMessage with invalid id");
+                    throw new IllegalArgumentException("Attempted to create ScriptMessage with invalid id");
                 }
 
-                this.type = DebugType.readFrom(s);
-                int msg_len = s.readInt();
-                byte[] msg_bytes = new byte[msg_len];
-                for (int msg_i = 0; msg_i < msg_len; msg_i++)
+                int script_len = s.readInt();
+                byte[] script_bytes = new byte[script_len];
+                for (int script_i = 0; script_i < script_len; script_i++)
                 {
-                    msg_bytes[msg_i] = s.readByte();
+                    script_bytes[script_i] = s.readByte();
                 }
-                this.msg = new String(msg_bytes);
+                this.script = new String(script_bytes);
+                this.timeout = s.readFloat();
 
                 bytes = null;
             }

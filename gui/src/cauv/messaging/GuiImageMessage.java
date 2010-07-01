@@ -11,56 +11,84 @@ import cauv.utils.*;
 
 public class GuiImageMessage extends Message {
     int m_id = 124;
-    public int nodeId;
-    public Image image;
+    protected int nodeId;
+    protected Image image;
 
-    public void nodeId(int nodeId){
+    private byte[] bytes;
+
+    public void nodeId(int nodeId) {
+        deserialise();
         this.nodeId = nodeId;
     }
-    public int nodeId(){
+    public int nodeId() {
+        deserialise();
         return this.nodeId;
     }
 
-    public void image(Image image){
+    public void image(Image image) {
+        deserialise();
         this.image = image;
     }
-    public Image image(){
+    public Image image() {
+        deserialise();
         return this.image;
     }
 
 
     public byte[] toBytes() throws IOException {
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        LEDataOutputStream s = new LEDataOutputStream(bs);
-        s.writeInt(m_id);
+        if (bytes != null)
+        {
+            return bytes;
+        }
+        else
+        {
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            LEDataOutputStream s = new LEDataOutputStream(bs);
+            s.writeInt(m_id);
 
-        s.writeInt(this.nodeId);
-        this.image.writeInto(s);
+            s.writeInt(this.nodeId);
+            this.image.writeInto(s);
 
-        return bs.toByteArray();
+            return bs.toByteArray();
+        }
     }
 
     public GuiImageMessage(){
         super(124, "pl_gui");
+        this.bytes = null;
     }
 
     public GuiImageMessage(Integer nodeId, Image image) {
         super(124, "pl_gui");
+        this.bytes = null;
+
         this.nodeId = nodeId;
         this.image = image;
     }
 
-    public GuiImageMessage(byte[] bytes) throws IOException {
+    public GuiImageMessage(byte[] bytes) {
         super(124, "pl_gui");
-        ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-        LEDataInputStream s = new LEDataInputStream(bs);
-        int buf_id = s.readInt();
-        if (buf_id != m_id)
-        {
-            throw new IllegalArgumentException("Attempted to create GuiImageMessage with invalid id");
-        }
+        this.bytes = bytes;
+    }
 
-        this.nodeId = s.readInt();
-        this.image = Image.readFrom(s);
+    public void deserialise() {
+        try { 
+            if (bytes != null)
+            {
+                ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+                LEDataInputStream s = new LEDataInputStream(bs);
+                int buf_id = s.readInt();
+                if (buf_id != m_id)
+                {
+                    throw new IllegalArgumentException("Attempted to create GuiImageMessage with invalid id");
+                }
+
+                this.nodeId = s.readInt();
+                this.image = Image.readFrom(s);
+
+                bytes = null;
+            }
+        }
+        catch (IOException e) {}
     }
 }

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Wed 30. Jun 09:09:58 2010
+** Created: Wed 30. Jun 14:27:54 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -30,6 +30,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QSpinBox port;
     public QPushButton connectButton;
     public QLabel errorMessage;
+    public QLabel pipeGUILED;
     public QLabel controlLED;
     public QLabel imageProcLED;
     public QLabel aiLED;
@@ -64,6 +65,10 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QWidget tab_3;
     public QHBoxLayout horizontalLayout_5;
     public QTextEdit traces;
+    public QWidget tab_5;
+    public QVBoxLayout verticalLayout_3;
+    public QTextEdit pythonDisplay;
+    public QLineEdit pythonConsole;
     public QMenuBar menuBar;
     public QMenu menuTools;
 
@@ -344,6 +349,13 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 
         horizontalLayout.addWidget(errorMessage);
 
+        pipeGUILED = new QLabel(connectionBar);
+        pipeGUILED.setObjectName("pipeGUILED");
+        pipeGUILED.setMinimumSize(new QSize(20, 20));
+        pipeGUILED.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
+
+        horizontalLayout.addWidget(pipeGUILED);
+
         controlLED = new QLabel(connectionBar);
         controlLED.setObjectName("controlLED");
         controlLED.setMinimumSize(new QSize(20, 20));
@@ -448,7 +460,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         Main.setStatusBar(statusbar);
         dockWidget = new QDockWidget(Main);
         dockWidget.setObjectName("dockWidget");
-        dockWidget.setMinimumSize(new QSize(145, 139));
+        dockWidget.setMinimumSize(new QSize(145, 165));
         dockWidget.setFloating(false);
         dockWidget.setFeatures(com.trolltech.qt.gui.QDockWidget.DockWidgetFeature.createQFlags(com.trolltech.qt.gui.QDockWidget.DockWidgetFeature.DockWidgetFloatable,com.trolltech.qt.gui.QDockWidget.DockWidgetFeature.DockWidgetMovable));
         dockWidgetContents_2 = new QWidget();
@@ -523,6 +535,28 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         horizontalLayout_5.addWidget(traces);
 
         tabWidget.addTab(tab_3, new QIcon(new QPixmap("classpath:cauv/gui/resources/icons/comment_go.png")), com.trolltech.qt.core.QCoreApplication.translate("Main", "Trace", null));
+        tab_5 = new QWidget();
+        tab_5.setObjectName("tab_5");
+        verticalLayout_3 = new QVBoxLayout(tab_5);
+        verticalLayout_3.setSpacing(0);
+        verticalLayout_3.setMargin(0);
+        verticalLayout_3.setObjectName("verticalLayout_3");
+        pythonDisplay = new QTextEdit(tab_5);
+        pythonDisplay.setObjectName("pythonDisplay");
+        pythonDisplay.setFrameShape(com.trolltech.qt.gui.QFrame.Shape.Box);
+        pythonDisplay.setFrameShadow(com.trolltech.qt.gui.QFrame.Shadow.Plain);
+        pythonDisplay.setLineWidth(0);
+        pythonDisplay.setVerticalScrollBarPolicy(com.trolltech.qt.core.Qt.ScrollBarPolicy.ScrollBarAlwaysOn);
+        pythonDisplay.setReadOnly(true);
+
+        verticalLayout_3.addWidget(pythonDisplay);
+
+        pythonConsole = new QLineEdit(tab_5);
+        pythonConsole.setObjectName("pythonConsole");
+
+        verticalLayout_3.addWidget(pythonConsole);
+
+        tabWidget.addTab(tab_5, com.trolltech.qt.core.QCoreApplication.translate("Main", "Python Console", null));
 
         horizontalLayout_2.addWidget(tabWidget);
 
@@ -540,7 +574,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         retranslateUi(Main);
 
         informationStack.setCurrentIndex(0);
-        tabWidget.setCurrentIndex(0);
+        tabWidget.setCurrentIndex(4);
 
 
         Main.connectSlotsByName();
@@ -562,6 +596,12 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         address.setStatusTip("");
         connectButton.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Connect", null));
         errorMessage.setText("");
+        pipeGUILED.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("Main", "Pipeline GUI", null));
+        pipeGUILED.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
+"p, li { white-space: pre-wrap; }\n"+
+"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\"classpath:cauv/gui/resources/red-led.png\" /></p></body></html>", null));
         controlLED.setToolTip(com.trolltech.qt.core.QCoreApplication.translate("Main", "Control", null));
         controlLED.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
@@ -610,6 +650,12 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 "</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Cambridge AUV GUI</span></p></body></html>", null));
         tabWidget.setTabText(tabWidget.indexOf(tab_3), com.trolltech.qt.core.QCoreApplication.translate("Main", "Trace", null));
+        pythonDisplay.setHtml(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
+"p, li { white-space: pre-wrap; }\n"+
+"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Cambridge AUV GUI - Python Terminal</span></p></body></html>", null));
+        tabWidget.setTabText(tabWidget.indexOf(tab_5), com.trolltech.qt.core.QCoreApplication.translate("Main", "Python Console", null));
         menuTools.setTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Tools", null));
     } // retranslateUi
 

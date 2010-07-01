@@ -20,9 +20,12 @@ import cauv.gui.views.SettingsView;
 import cauv.gui.views.TelemetryView;
 import cauv.messaging.GuiImageMessage;
 
+import com.trolltech.qt.core.QEvent;
 import com.trolltech.qt.core.QEventLoop;
+import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QTimer;
 import com.trolltech.qt.core.Qt;
+import com.trolltech.qt.core.QEvent.Type;
 import com.trolltech.qt.core.Qt.ConnectionType;
 import com.trolltech.qt.core.Qt.Key;
 import com.trolltech.qt.core.Qt.KeyboardModifier;
@@ -38,6 +41,9 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	AUV auv;
 	Vector<ScreenView> views = new Vector<ScreenView>();
 	Vector<String> members = new Vector<String>();
+	Vector<String> commandHistory = new Vector<String>();
+	String last;
+	int history = 0;
 	
 	public static void main(String[] args) {
 		QApplication.initialize(args);
@@ -75,6 +81,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ui.connectButton.clicked.connect(this, "connect()");
 		ui.actionOptions_2.triggered.connect(this, "showSettings()");
 		AUV.registerAUVConnectionObserver(settingsDialog);
+        ui.pythonConsole.returnPressed.connect(this, "sendPython()");
 		
 		Main.trace("Initialisation complete");
 		
@@ -83,13 +90,35 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		t.setSingleShot(false);
 		t.timeout.connect(this, "updateMembershipLights()");
 		t.start();
+		
+
+        ui.pythonConsole.installEventFilter(this);
 	}
 
-	public Main(QWidget parent) {
-		super(parent);
-		ui.setupUi(this);
-	}
 
+	public boolean eventFilter(QObject obj, QEvent event) {
+	    
+	    if (obj == ui.pythonConsole)
+	    {
+	        if (event.type() == Type.KeyPress)
+	        {
+	            QKeyEvent keyEvent = (QKeyEvent)event;
+	            if (keyEvent.key() == Key.Key_Up.value())
+	            {
+	                 historyUp();
+	                 return true;
+	            }
+	            else if(keyEvent.key() == Key.Key_Down.value())
+	            {
+	                historyDown();
+	                return true;
+	            }
+	        }
+	        return false;
+	    }
+	    return super.eventFilter(obj, event);
+	}
+	
 	public void showSettings(){
 	    settingsDialog.show();
 	}
@@ -116,6 +145,8 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
             auv.logs.TRACE.messageLogged.connect(this, "trace(String)", ConnectionType.BlockingQueuedConnection);
             auv.logs.DEBUG.messageLogged.connect(this, "warning(String)", ConnectionType.BlockingQueuedConnection);
             auv.logs.ERROR.messageLogged.connect(this, "error(String)", ConnectionType.BlockingQueuedConnection);
+            
+            auv.scripting.CONSOLE.responseReceieved.connect(ui.pythonDisplay, "append(String)");
             
 			new PS2ControlHandler(auv);
 		} catch (IOException e) {
@@ -185,6 +216,44 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		Main.message(icon + message);
 	}
 	
+	public void updateHistoryEdit(){
+	    if(history == 0) return;
+	    if(!commandHistory.isEmpty() && commandHistory.size() >= history )
+	    ui.pythonConsole.setText(commandHistory.get(commandHistory.size() - history));
+	}
+	
+	public void historyUp(){
+	    if(this.history == 0){
+	        this.last = ui.pythonConsole.text();
+	    }
+	    
+	    if(history < commandHistory.size())
+	        history++;
+	    updateHistoryEdit();	   
+	}
+	    
+	public void historyDown(){
+	    if(history > 0)
+	        history--;
+	    updateHistoryEdit();
+	        
+	    if(this.history == 0){
+	        ui.pythonConsole.setText(this.last);
+	    }	    
+	}
+	
+	public void sendPython(){
+	    if(auv != null) {
+	        ui.pythonDisplay.append(ui.pythonConsole.text());
+	        auv.scripting.CONSOLE.run(ui.pythonConsole.text());
+	        commandHistory.add(ui.pythonConsole.text());
+	        history = 0;
+	        ui.pythonConsole.clear();
+	    } else {
+	        ui.pythonDisplay.append("AUV not connected");
+	    }
+	}
+	
 	@Override
 	public void onConnect(MessageSocket connection) {
         connection.addMembershipObserver(this);
@@ -201,6 +270,12 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ui.address.setEnabled(true);
 		ui.port.setEnabled(true);
 		ui.connectButton.setText("Connect");
+
+		members.clear();
+		updateMembershipLights();
+		
+        ui.connectButton.clicked.connect(this, "connect()");
+        ui.connectButton.clicked.disconnect(connection, "disconnect()");
 	}
 
 	@Override
@@ -222,6 +297,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
         ui.controlLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         ui.aiLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         ui.imageProcLED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
+        ui.pipeGUILED.setText("<img src=\"classpath:cauv/gui/resources/red-led.png\" />");
         
         for(String member : members){
             if(member.toLowerCase().equals("control")){
@@ -232,6 +308,9 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
             }
             if(member.toLowerCase().equals("img-pipe")){
                 ui.imageProcLED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
+            }
+            if(member.toLowerCase().equals("pipe-gui")){
+                ui.pipeGUILED.setText("<img src=\"classpath:cauv/gui/resources/green-led.png\" />");
             }
         }
 	}

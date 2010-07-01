@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QToolBox" name="toolBox">
@@ -364,11 +367,14 @@
           </item>
           <item row="0" column="5">
            <widget class="QLabel" name="depthActual">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="text">
              <string/>
-            </property>
-            <property name="alignment">
-             <set>com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight|com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter</set>
             </property>
            </widget>
           </item>
@@ -377,18 +383,12 @@
             <property name="text">
              <string/>
             </property>
-            <property name="alignment">
-             <set>com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight|com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter</set>
-            </property>
            </widget>
           </item>
           <item row="2" column="5">
            <widget class="QLabel" name="pitchActual">
             <property name="text">
              <string/>
-            </property>
-            <property name="alignment">
-             <set>com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight|com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter</set>
             </property>
            </widget>
           </item>
@@ -442,7 +442,7 @@
         <x>0</x>
         <y>0</y>
         <width>558</width>
-        <height>246</height>
+        <height>277</height>
        </rect>
       </property>
       <attribute name="label">
@@ -580,7 +580,7 @@
         <x>0</x>
         <y>0</y>
         <width>558</width>
-        <height>246</height>
+        <height>277</height>
        </rect>
       </property>
       <attribute name="label">
@@ -691,7 +691,7 @@
         <x>0</x>
         <y>0</y>
         <width>558</width>
-        <height>246</height>
+        <height>277</height>
        </rect>
       </property>
       <attribute name="label">

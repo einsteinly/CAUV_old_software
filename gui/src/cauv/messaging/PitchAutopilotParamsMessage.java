@@ -11,78 +11,110 @@ import cauv.utils.*;
 
 public class PitchAutopilotParamsMessage extends Message {
     int m_id = 72;
-    public float Kp;
-    public float Ki;
-    public float Kd;
-    public float scale;
+    protected float Kp;
+    protected float Ki;
+    protected float Kd;
+    protected float scale;
 
-    public void Kp(float Kp){
+    private byte[] bytes;
+
+    public void Kp(float Kp) {
+        deserialise();
         this.Kp = Kp;
     }
-    public float Kp(){
+    public float Kp() {
+        deserialise();
         return this.Kp;
     }
 
-    public void Ki(float Ki){
+    public void Ki(float Ki) {
+        deserialise();
         this.Ki = Ki;
     }
-    public float Ki(){
+    public float Ki() {
+        deserialise();
         return this.Ki;
     }
 
-    public void Kd(float Kd){
+    public void Kd(float Kd) {
+        deserialise();
         this.Kd = Kd;
     }
-    public float Kd(){
+    public float Kd() {
+        deserialise();
         return this.Kd;
     }
 
-    public void scale(float scale){
+    public void scale(float scale) {
+        deserialise();
         this.scale = scale;
     }
-    public float scale(){
+    public float scale() {
+        deserialise();
         return this.scale;
     }
 
 
     public byte[] toBytes() throws IOException {
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        LEDataOutputStream s = new LEDataOutputStream(bs);
-        s.writeInt(m_id);
+        if (bytes != null)
+        {
+            return bytes;
+        }
+        else
+        {
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            LEDataOutputStream s = new LEDataOutputStream(bs);
+            s.writeInt(m_id);
 
-        s.writeFloat(this.Kp);
-        s.writeFloat(this.Ki);
-        s.writeFloat(this.Kd);
-        s.writeFloat(this.scale);
+            s.writeFloat(this.Kp);
+            s.writeFloat(this.Ki);
+            s.writeFloat(this.Kd);
+            s.writeFloat(this.scale);
 
-        return bs.toByteArray();
+            return bs.toByteArray();
+        }
     }
 
     public PitchAutopilotParamsMessage(){
         super(72, "control");
+        this.bytes = null;
     }
 
     public PitchAutopilotParamsMessage(Float Kp, Float Ki, Float Kd, Float scale) {
         super(72, "control");
+        this.bytes = null;
+
         this.Kp = Kp;
         this.Ki = Ki;
         this.Kd = Kd;
         this.scale = scale;
     }
 
-    public PitchAutopilotParamsMessage(byte[] bytes) throws IOException {
+    public PitchAutopilotParamsMessage(byte[] bytes) {
         super(72, "control");
-        ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-        LEDataInputStream s = new LEDataInputStream(bs);
-        int buf_id = s.readInt();
-        if (buf_id != m_id)
-        {
-            throw new IllegalArgumentException("Attempted to create PitchAutopilotParamsMessage with invalid id");
-        }
+        this.bytes = bytes;
+    }
 
-        this.Kp = s.readFloat();
-        this.Ki = s.readFloat();
-        this.Kd = s.readFloat();
-        this.scale = s.readFloat();
+    public void deserialise() {
+        try { 
+            if (bytes != null)
+            {
+                ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+                LEDataInputStream s = new LEDataInputStream(bs);
+                int buf_id = s.readInt();
+                if (buf_id != m_id)
+                {
+                    throw new IllegalArgumentException("Attempted to create PitchAutopilotParamsMessage with invalid id");
+                }
+
+                this.Kp = s.readFloat();
+                this.Ki = s.readFloat();
+                this.Kd = s.readFloat();
+                this.scale = s.readFloat();
+
+                bytes = null;
+            }
+        }
+        catch (IOException e) {}
     }
 }

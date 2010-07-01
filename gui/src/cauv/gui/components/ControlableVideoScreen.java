@@ -1,10 +1,16 @@
 package cauv.gui.components;
 
+import java.awt.Label;
+
 import cauv.types.floatYPR;
 
 import com.trolltech.qt.core.QPoint;
+import com.trolltech.qt.core.QPointF;
+import com.trolltech.qt.core.Qt.BGMode;
 import com.trolltech.qt.core.Qt.Key;
+import com.trolltech.qt.core.Qt.TextFormat;
 import com.trolltech.qt.gui.*;
+import com.trolltech.qt.gui.QPalette.ColorRole;
 
 public class ControlableVideoScreen extends VideoScreen {
 	
@@ -51,6 +57,7 @@ public class ControlableVideoScreen extends VideoScreen {
 		
         ui.right.pressed.connect(this, "rightPress()");
         ui.right.released.connect(this, "rightRelease()");
+        
 	}
 
     protected void upPress(){
@@ -141,7 +148,8 @@ public class ControlableVideoScreen extends VideoScreen {
 	
 	protected void drawAxes(QPainter p) {
 		// draw the axes
-		p.setBrush(QColor.black);
+        p.setBrush(QColor.white);
+        p.setPen(QColor.white);
 
 		floatYPR min = pointToAttitude(0, 0);
 		
@@ -194,19 +202,36 @@ public class ControlableVideoScreen extends VideoScreen {
 		repaint();
 		super.keyPressEvent(arg);
 	}
-	
-	protected void drawDot(QPainter p) {
-		if((this.elements & SHOW_DOT) != 0) {
-			int rad = 4;
-			p.setBrush(QColor.red);
-			QPoint point = attitudeToPoint(targetYaw, targetPitch);
-			p.drawEllipse(point.x() - rad, this.height() - point.y() - rad, 2 * rad, 2 * rad);
-		}
-	}
+    
+    protected void drawDot(QPainter p) {
+        if((this.elements & SHOW_DOT) != 0) {
+            int rad = 4;
+            p.setBrush(QColor.red);
+            QPoint point = attitudeToPoint(targetYaw, targetPitch);
+            p.drawEllipse(point.x() - rad, this.height() - point.y() - rad, 2 * rad, 2 * rad);
+        }
+    }
+    
+    protected void drawText(QPainter p) {
+        /*QPainterPath path = new QPainterPath();
+        path.addText(new QPointF(50, 60), new QFont("Arial", 11), ui.label.text());
+       
+        QColor color = new QColor(QColor.white);
+        color.setAlphaF(0.3);
+        //QBrush brush = new QBrush(color);
+        //p.fillPath(path, brush);
+        
+        p.setPen(new QPen(color, 4));
+        p.drawPath(path);
+        
+        //p.setPen(new QPen(QColor.black, 1));
+        //p.drawPath(path);*/
+    }
 
 	protected void draw(QPainter p) {
 		this.paintImage(p);
 		this.drawAxes(p);
+        this.drawText(p);
 		this.drawDot(p);
 	}
 

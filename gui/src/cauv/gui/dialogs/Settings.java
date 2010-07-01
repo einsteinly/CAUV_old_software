@@ -84,6 +84,7 @@ public class Settings extends QDialog implements AUVConnectionObserver {
     }
     
     public void updateYawParams(){
+        System.out.println("updating yaw");
         if(auv == null) return;
         auv.autopilots.YAW.setParams((float)ui.yaw_Kp.value(),
                 (float) ui.yaw_Ki.value(),

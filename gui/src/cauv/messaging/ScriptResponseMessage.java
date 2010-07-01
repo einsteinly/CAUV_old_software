@@ -9,19 +9,19 @@ import java.io.*;
 import cauv.types.*;
 import cauv.utils.*;
 
-public class DepthMessage extends Message {
-    int m_id = 51;
-    protected float depth;
+public class ScriptResponseMessage extends Message {
+    int m_id = 103;
+    protected String response;
 
     private byte[] bytes;
 
-    public void depth(float depth) {
+    public void response(String response) {
         deserialise();
-        this.depth = depth;
+        this.response = response;
     }
-    public float depth() {
+    public String response() {
         deserialise();
-        return this.depth;
+        return this.response;
     }
 
 
@@ -36,26 +36,27 @@ public class DepthMessage extends Message {
             LEDataOutputStream s = new LEDataOutputStream(bs);
             s.writeInt(m_id);
 
-            s.writeFloat(this.depth);
+            s.writeInt(this.response.length());
+            s.writeBytes(this.response);
 
             return bs.toByteArray();
         }
     }
 
-    public DepthMessage(){
-        super(51, "telemetry");
+    public ScriptResponseMessage(){
+        super(103, "gui");
         this.bytes = null;
     }
 
-    public DepthMessage(Float depth) {
-        super(51, "telemetry");
+    public ScriptResponseMessage(String response) {
+        super(103, "gui");
         this.bytes = null;
 
-        this.depth = depth;
+        this.response = response;
     }
 
-    public DepthMessage(byte[] bytes) {
-        super(51, "telemetry");
+    public ScriptResponseMessage(byte[] bytes) {
+        super(103, "gui");
         this.bytes = bytes;
     }
 
@@ -68,10 +69,16 @@ public class DepthMessage extends Message {
                 int buf_id = s.readInt();
                 if (buf_id != m_id)
                 {
-                    throw new IllegalArgumentException("Attempted to create DepthMessage with invalid id");
+                    throw new IllegalArgumentException("Attempted to create ScriptResponseMessage with invalid id");
                 }
 
-                this.depth = s.readFloat();
+                int response_len = s.readInt();
+                byte[] response_bytes = new byte[response_len];
+                for (int response_i = 0; response_i < response_len; response_i++)
+                {
+                    response_bytes[response_i] = s.readByte();
+                }
+                this.response = new String(response_bytes);
 
                 bytes = null;
             }

@@ -157,13 +157,11 @@ public class AUV extends QSignalEmitter {
         }
         
         public void setParams(float Kp, float Ki, float Kd, float scale) {
-            if (enabled) {
-                this.Kp = Kp;
-                this.Ki = Ki;
-                this.Kd = Kd;
-                this.scale = scale;
-                paramsChanged.emit(Kp, Ki, Kd, scale);
-            }
+            this.Kp = Kp;
+            this.Ki = Ki;
+            this.Kd = Kd;
+            this.scale = scale;
+            paramsChanged.emit(Kp, Ki, Kd, scale);
         }
 
         protected void updateParams(float Kp, float Ki, float Kd, float scale) {
@@ -190,7 +188,7 @@ public class AUV extends QSignalEmitter {
      */
     public class Camera extends QSignalEmitter {
 
-        public Signal1<Image> imageReceived = new Signal1<Image>();
+        //public Signal1<Image> imageReceived = new Signal1<Image>();
 
         protected CameraID id;
 
@@ -206,7 +204,7 @@ public class AUV extends QSignalEmitter {
 
         protected void updateImage(Image image) {
             this.lastImage = image;
-            imageReceived.emit(image);
+            //imageReceived.emit(image);
         }
     }
 
@@ -277,6 +275,25 @@ public class AUV extends QSignalEmitter {
     public Cameras cameras = new Cameras();
 
    
+    public class Script extends QSignalEmitter {
+
+        public Signal1<String> executionRequested = new Signal1<String>();
+        public Signal1<String> responseReceieved = new Signal1<String>();
+
+        public Script() {
+        }
+        
+        public void run(String mission){
+            executionRequested.emit(mission);
+        }
+    }
+    
+    public class Scripting {
+        public final Script CONSOLE = new Script();
+        public final Script MISSION = new Script();
+    }
+
+    public Scripting scripting = new Scripting();
     
     /**
      * Logs any messages sent back from the AUV and also logs locally generated
@@ -326,7 +343,6 @@ public class AUV extends QSignalEmitter {
     public Signal4<Float, Float, Float, Float> depthCalibrationChanged = new Signal4<Float, Float, Float, Float>();
     public Signal2<Float, Float> pressureChanged = new Signal2<Float, Float>();
     public Signal1<Integer> debugLevelChanged = new Signal1<Integer>();
-    public Signal1<String> runMissionRequested = new Signal1<String>();
     public int debugLevel = 0;
     protected float depth = 0.0f;
     protected static Vector<AUVConnectionObserver> observers = new Vector<AUVConnectionObserver>();
@@ -379,10 +395,6 @@ public class AUV extends QSignalEmitter {
     
     public floatYPR getOrientation() {
         return orientation;
-    }
-    
-    public void runMission(String mission){
-        runMissionRequested.emit(mission);
     }
     
     public void setDepth(float depth) {

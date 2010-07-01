@@ -3,6 +3,7 @@ package cauv.auv;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Time;
 import java.util.Vector;
 
 import cauv.messaging.MessageSource;
@@ -14,12 +15,16 @@ import spread.SpreadException;
 import spread.SpreadGroup;
 import spread.SpreadMessage;
 
-public class MessageSocket extends MessageSource implements AdvancedMessageListener {
+public class MessageSocket extends MessageSource  {
 
+    protected Vector<byte[]> messages = new Vector<byte[]>();
+    
     protected static boolean debug = false;
     protected boolean enabled = true;
     Vector<SpreadGroup> groups = new Vector<SpreadGroup>();
     Vector<MembershipObserver> m_membership_observers = new Vector<MembershipObserver>();
+    protected volatile boolean connected = false;
+    
     
     public interface ConnectionStateObserver {
         public void onConnect(MessageSocket connection);
@@ -36,14 +41,70 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
         // set up the spread connection.
         // connect to the spread daemon running on the AUV
         
+        if(connected)
+            disconnect();
+        
+        System.out.println("trying to connect");
+        
         if (!debug) {
             m_connection = new SpreadConnection();
-            m_connection.add(this);
-
+           
             try {
             	// register for received messages
-            	m_connection.add(this);
-                m_connection.connect(InetAddress.getByName(address), port, name, false, true);
+                m_connection.connect(InetAddress.getByName(address), port, name, true, true);
+
+                this.connected = true;
+                
+                 Thread notifications = new Thread(){
+                    public void run(){
+                        System.out.println("notification thread started");
+                        
+                        while(connected) {
+                            byte [] message = null;
+                                if(!messages.isEmpty())
+                                    message = messages.remove(0);
+                            
+                            if(message != null) {
+                                //System.out.println("notifcation sent, " + messages.size() + " remaining");
+                                MessageSocket.this.notifyObservers(message);
+                            } 
+                            
+                            Thread.yield();
+                        }
+
+                        System.out.println("notification thread ended");
+                    }
+                };
+                notifications.setDaemon(true);
+                notifications.start();
+                
+                
+                Thread receieve = new Thread(){
+                    public void run(){
+                        System.out.println("receieve thread started");
+                        
+                        while(connected) {
+                            try {
+                                SpreadMessage m = m_connection.receive();
+                                if(m.isMembership()){
+                                    for(MembershipObserver o : m_membership_observers)
+                                        o.onMembershipChanged(m);
+                                }
+                                else {
+                                    messages.add(m.getData());
+                                    //System.out.println(System.currentTimeMillis()+" Added to buffer,  size is now " + messages.size());
+                                }
+                            } catch (Exception ex) {
+                                System.err.println(ex.getMessage());
+                            }
+                        }
+
+                        System.out.println("receieve thread ended");
+                    }
+                };
+                receieve.setDaemon(true);
+                receieve.start();
+            
             } catch (SpreadException ex) {
                 for (ConnectionStateObserver c : m_connection_state_listeners) {
                     c.onDisconnect(this);
@@ -70,9 +131,13 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
     }
     
     public void disconnect() throws IOException {
+        if(!this.connected)
+            return;
+        
+        this.connected = false;
+        
         if (!debug) {
             try {
-                //m_connection.remove(this);
                 if(m_connection != null)
                     m_connection.disconnect();
             } catch (SpreadException ex) {
@@ -137,21 +202,34 @@ public class MessageSocket extends MessageSource implements AdvancedMessageListe
             }
         }
     }
-
+/*
     @Override
     public void membershipMessageReceived(SpreadMessage message) {
-        for(MembershipObserver o : m_membership_observers)
-            o.onMembershipChanged(message);
+        //for(MembershipObserver o : m_membership_observers)
+        //    o.onMembershipChanged(message);
     }
 
     @Override
     public void regularMessageReceived(SpreadMessage message) {
         // pass the message onto our message factory to convert it to a CAUV
         // message
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+        
+        System.out.println("Size:" + messages.size());
+        
+        synchronized (messages) {
+            //System.out.println("message" + messages.size());
+            messages.add(message.getData());
+        }
+        
         try {
-            notifyObservers(message.getData());
+            while(m_connection.poll()){
+                System.out.println("more messages exist");
+                SpreadMessage m = m_connection.receive();
+                messages.add(message.getData());
+            }
         } catch (Exception ex){
             ex.printStackTrace();
         }
-    }
+    }*/
 }

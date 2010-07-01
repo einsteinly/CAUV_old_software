@@ -1630,9 +1630,9 @@ NOT SUPPORTED IN 1.1	*/
 			
 			int previous_socket_timeout = 100;
 
-
             try
             {
+
 			        try {
 				    previous_socket_timeout = connection.socket.getSoTimeout();
 				    connection.socket.setSoTimeout(100);
@@ -1817,6 +1817,7 @@ NOT SUPPORTED IN 1.1	*/
                 ///////////////////////////////
                 System.out.println("SpreadException: " + e.toString() );
             }
+
 		}
 	}
 

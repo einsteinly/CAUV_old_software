@@ -29,6 +29,8 @@ public class MessageObserver
     public void onGraphRequestMessage(GraphRequestMessage m) {}
     public void onControllerStateMessage(ControllerStateMessage m) {}
     public void onMotorStateMessage(MotorStateMessage m) {}
+    public void onScriptMessage(ScriptMessage m) {}
+    public void onScriptResponseMessage(ScriptResponseMessage m) {}
     public void onNodeAddedMessage(NodeAddedMessage m) {}
     public void onNodeRemovedMessage(NodeRemovedMessage m) {}
     public void onNodeParametersMessage(NodeParametersMessage m) {}

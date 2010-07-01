@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import cauv.auv.AUV.Autopilot;
 import cauv.auv.AUV.Motor;
+import cauv.auv.AUV.Script;
 import cauv.auv.AUV.Sonar;
 import cauv.messaging.BearingAutopilotEnabledMessage;
 import cauv.messaging.BearingAutopilotParamsMessage;
@@ -27,6 +28,8 @@ import cauv.messaging.MotorStateMessage;
 import cauv.messaging.PitchAutopilotEnabledMessage;
 import cauv.messaging.PitchAutopilotParamsMessage;
 import cauv.messaging.PressureMessage;
+import cauv.messaging.ScriptMessage;
+import cauv.messaging.ScriptResponseMessage;
 import cauv.messaging.SonarControlMessage;
 import cauv.messaging.TelemetryMessage;
 import cauv.types.MotorID;
@@ -50,19 +53,18 @@ public class CommunicationController extends MessageObserver {
     
     class Controller {}
     
-    class MissionController extends Controller {
+    class ScriptController extends Controller {
         
-        public MissionController() {
-            auv.runMissionRequested.connect(this, "onMissionRunRequest(String)");
+        public ScriptController(Script s) {
+            s.executionRequested.connect(this, "onRunRequest(String)");
         }
         
-        public void onMissionRunRequest(String mission){
-            /*try {
-                messages.sendMessage(new MissionMessage(mission));
+        public void onRunRequest(String mission){
+            try {
+                messages.sendMessage(new ScriptMessage(mission, 10f));
             } catch (IOException e) {
-                auv.logs.ERROR.log("Error sending mission: " + e.getMessage());
-            }*/
-            System.out.println("Will send mission");
+                auv.logs.ERROR.log("Error sending script: " + e.getMessage());
+            }
         }
     }
     
@@ -154,6 +156,7 @@ public class CommunicationController extends MessageObserver {
         messages.joinGroup("telemetry");
         messages.joinGroup("sonarout");
         messages.joinGroup("pressure");
+        messages.joinGroup("gui");
 
         new MotorController(auv.motors.HBOW);
         new MotorController(auv.motors.HSTERN);
@@ -166,8 +169,9 @@ public class CommunicationController extends MessageObserver {
         new AutopilotController(auv.autopilots.DEPTH, DepthAutopilotEnabledMessage.class, DepthAutopilotParamsMessage.class);
         new AutopilotController(auv.autopilots.PITCH, PitchAutopilotEnabledMessage.class, PitchAutopilotParamsMessage.class);
         new AutopilotController(auv.autopilots.YAW, BearingAutopilotEnabledMessage.class, BearingAutopilotParamsMessage.class);
-        
-        new MissionController();
+
+        new ScriptController(auv.scripting.CONSOLE);
+        new ScriptController(auv.scripting.MISSION);
         
         auv.debugLevelChanged.connect(this, "sendDebugLevelMessage()");
         auv.depthCalibrationChanged.connect(this, "sendDepthCalibrationMessage(float, float, float, float)");
@@ -203,45 +207,45 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage m) {
-        auv.autopilots.YAW.updateEnabled(m.enabled);
-        auv.autopilots.YAW.updateTarget(m.target);
+        auv.autopilots.YAW.updateEnabled(m.enabled());
+        auv.autopilots.YAW.updateTarget(m.target());
     }
     
     @Override
     public void onDebugLevelMessage(DebugLevelMessage m) {
-        auv.updateDebugLevel(m.level);
+        auv.updateDebugLevel(m.level());
     }
     
     @Override
     public void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage m) {
-        auv.autopilots.YAW.updateParams(m.Kp, m.Ki, m.Kd, m.scale);
+        auv.autopilots.YAW.updateParams(m.Kp(), m.Ki(), m.Kd(), m.scale());
     }
     
     @Override
     public void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage m) {
-        auv.autopilots.DEPTH.updateEnabled(m.enabled);
-        auv.autopilots.DEPTH.updateTarget(m.target);
+        auv.autopilots.DEPTH.updateEnabled(m.enabled());
+        auv.autopilots.DEPTH.updateTarget(m.target());
     }
     
     @Override
     public void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage m) {
-        auv.autopilots.DEPTH.updateParams(m.Kp, m.Ki, m.Kd, m.scale);
+        auv.autopilots.DEPTH.updateParams(m.Kp(), m.Ki(), m.Kd(), m.scale());
     }
     
     @Override
     public void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage m) {
-        auv.autopilots.PITCH.updateEnabled(m.enabled);
-        auv.autopilots.PITCH.updateTarget(m.target);
+        auv.autopilots.PITCH.updateEnabled(m.enabled());
+        auv.autopilots.PITCH.updateTarget(m.target());
     }
     
     @Override
     public void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage m) {
-        auv.autopilots.PITCH.updateParams(m.Kp, m.Ki, m.Kd, m.scale);
+        auv.autopilots.PITCH.updateParams(m.Kp(), m.Ki(), m.Kd(), m.scale());
     }
     
     @Override
     public void onSonarControlMessage(SonarControlMessage m) {
-        auv.cameras.SONAR.updateParams(m.direction, m.width, m.gain, m.range, m.radialRes, m.angularRes);
+        auv.cameras.SONAR.updateParams(m.direction(), m.width(), m.gain(), m.range(), m.radialRes(), m.angularRes());
     }
     
     @Override
@@ -254,49 +258,54 @@ public class CommunicationController extends MessageObserver {
     
     }
     
+    
+    
+    @Override
+    public void onScriptResponseMessage(ScriptResponseMessage m) {
+        auv.scripting.CONSOLE.responseReceieved.emit(m.response());
+    }
+    
     @Override
     public void onDebugMessage(DebugMessage m) {
-        switch(m.type){
+        switch(m.type()){
             case Debug:
-               auv.logs.DEBUG.log(m.msg);
+               auv.logs.DEBUG.log(m.msg());
                 break;
             case Trace:
-                auv.logs.TRACE.log(m.msg);
+                auv.logs.TRACE.log(m.msg());
                 break;
             case Error: 
-                auv.logs.ERROR.log(m.msg);
+                auv.logs.ERROR.log(m.msg());
                 break;
         }
     }
 
     @Override
     public void onDepthMessage(DepthMessage m) {
-        auv.updateDepth(m.depth);
+        auv.updateDepth(m.depth());
     }
     
     @Override
     public void onPressureMessage(PressureMessage m) {
-        auv.updatePressures(m.fore, m.aft);
+        auv.updatePressures(m.fore(), m.aft());
     }
     
     @Override
     public void onTelemetryMessage(TelemetryMessage m) {
-        auv.setOrientation(m.orientation);
+        auv.setOrientation(m.orientation());
     }
     
     @Override
     public void onImageMessage(ImageMessage m) {
-        System.out.println("on image message");
-        System.out.println(m);
-        switch (m.source) {
+        switch (m.source()) {
             case Forward:
-                auv.cameras.FORWARD.updateImage(m.image);
+                auv.cameras.FORWARD.updateImage(m.image());
                 break;
             case Down:
-                auv.cameras.DOWNWARD.updateImage(m.image);
+                auv.cameras.DOWNWARD.updateImage(m.image());
                 break;
             case Sonar:
-                auv.cameras.SONAR.updateImage(m.image);
+                auv.cameras.SONAR.updateImage(m.image());
                 break;
         }
     }
@@ -310,21 +319,21 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onMotorMessage(MotorMessage m) {
-        switch (m.motorId) {
+        switch (m.motorId()) {
             case Prop:
-                auv.motors.PROP.updateSpeed(m.speed);
+                auv.motors.PROP.updateSpeed(m.speed());
                 break;
             case HBow:
-                auv.motors.HBOW.updateSpeed(m.speed);
+                auv.motors.HBOW.updateSpeed(m.speed());
                 break;
             case HStern:
-                auv.motors.HSTERN.updateSpeed(m.speed);
+                auv.motors.HSTERN.updateSpeed(m.speed());
                 break;
             case VBow:
-                auv.motors.VBOW.updateSpeed(m.speed);
+                auv.motors.VBOW.updateSpeed(m.speed());
                 break;
             case VStern:
-                auv.motors.VSTERN.updateSpeed(m.speed);
+                auv.motors.VSTERN.updateSpeed(m.speed());
                 break;
         }
     }

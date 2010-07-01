@@ -14,9 +14,10 @@ public class Image {
     public Vector<Integer> compressionParams;
     public Vector<Byte> data;
     
+    static int count = 0;
+    
     public Image()
-    {
-    }
+    {}
 
     public static Image readFrom(LEDataInputStream s) throws IOException {
         Image val = new Image();
@@ -33,29 +34,34 @@ public class Image {
         
         // compressionParams
         val.compressionParams = new Vector< Integer >();
-        long compressionParams_len = s.readLong();
-        System.out.println("Length: " + compressionParams_len);
+        int compressionParams_len = s.readInt();
         for (int compressionParams_i = 0; compressionParams_i < compressionParams_len; compressionParams_i++)
         {
             val.compressionParams.add(compressionParams_i, s.readInt());
         }
         
-        /*
+        
         // load flags
         val.loadFlags = s.readInt();
         
         // data
         val.data = new Vector< Byte >();
-        data_len = s.readLong();
+        int data_len = s.readInt();
         for (int data_i = 0; data_i < data_len; data_i++)
         {
             val.data.add(data_i, s.readByte());
         }
-        */
+        
         return val;
     }
 
     public void writeInto(LEDataOutputStream s) throws IOException {
         throw new RuntimeException("Not implemented yet.");
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        count--;
+        System.out.println("Count =  "+count);
     }
 }

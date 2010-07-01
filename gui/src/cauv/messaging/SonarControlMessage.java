@@ -11,77 +11,101 @@ import cauv.utils.*;
 
 public class SonarControlMessage extends Message {
     int m_id = 32;
-    public int direction;
-    public int width;
-    public int gain;
-    public int range;
-    public int radialRes;
-    public int angularRes;
+    protected int direction;
+    protected int width;
+    protected int gain;
+    protected int range;
+    protected int radialRes;
+    protected int angularRes;
 
-    public void direction(int direction){
+    private byte[] bytes;
+
+    public void direction(int direction) {
+        deserialise();
         this.direction = direction;
     }
-    public int direction(){
+    public int direction() {
+        deserialise();
         return this.direction;
     }
 
-    public void width(int width){
+    public void width(int width) {
+        deserialise();
         this.width = width;
     }
-    public int width(){
+    public int width() {
+        deserialise();
         return this.width;
     }
 
-    public void gain(int gain){
+    public void gain(int gain) {
+        deserialise();
         this.gain = gain;
     }
-    public int gain(){
+    public int gain() {
+        deserialise();
         return this.gain;
     }
 
-    public void range(int range){
+    public void range(int range) {
+        deserialise();
         this.range = range;
     }
-    public int range(){
+    public int range() {
+        deserialise();
         return this.range;
     }
 
-    public void radialRes(int radialRes){
+    public void radialRes(int radialRes) {
+        deserialise();
         this.radialRes = radialRes;
     }
-    public int radialRes(){
+    public int radialRes() {
+        deserialise();
         return this.radialRes;
     }
 
-    public void angularRes(int angularRes){
+    public void angularRes(int angularRes) {
+        deserialise();
         this.angularRes = angularRes;
     }
-    public int angularRes(){
+    public int angularRes() {
+        deserialise();
         return this.angularRes;
     }
 
 
     public byte[] toBytes() throws IOException {
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        LEDataOutputStream s = new LEDataOutputStream(bs);
-        s.writeInt(m_id);
+        if (bytes != null)
+        {
+            return bytes;
+        }
+        else
+        {
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            LEDataOutputStream s = new LEDataOutputStream(bs);
+            s.writeInt(m_id);
 
-        s.writeShort(this.direction);
-        s.writeShort(this.width);
-        s.writeByte(this.gain);
-        s.writeInt(this.range);
-        s.writeInt(this.radialRes);
-        s.writeByte(this.angularRes);
+            s.writeShort(this.direction);
+            s.writeShort(this.width);
+            s.writeByte(this.gain);
+            s.writeInt(this.range);
+            s.writeInt(this.radialRes);
+            s.writeByte(this.angularRes);
 
-        return bs.toByteArray();
+            return bs.toByteArray();
+        }
     }
 
     public SonarControlMessage(){
         super(32, "sonarctl");
+        this.bytes = null;
     }
 
     public SonarControlMessage(Integer direction, Integer width, Integer gain, Integer range, Integer radialRes, Integer angularRes) {
         super(32, "sonarctl");
+        this.bytes = null;
+
         this.direction = direction;
         this.width = width;
         this.gain = gain;
@@ -90,21 +114,33 @@ public class SonarControlMessage extends Message {
         this.angularRes = angularRes;
     }
 
-    public SonarControlMessage(byte[] bytes) throws IOException {
+    public SonarControlMessage(byte[] bytes) {
         super(32, "sonarctl");
-        ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-        LEDataInputStream s = new LEDataInputStream(bs);
-        int buf_id = s.readInt();
-        if (buf_id != m_id)
-        {
-            throw new IllegalArgumentException("Attempted to create SonarControlMessage with invalid id");
-        }
+        this.bytes = bytes;
+    }
 
-        this.direction = s.readUnsignedShort();
-        this.width = s.readUnsignedShort();
-        this.gain = s.readUnsignedByte();
-        this.range = s.readInt();
-        this.radialRes = s.readInt();
-        this.angularRes = s.readUnsignedByte();
+    public void deserialise() {
+        try { 
+            if (bytes != null)
+            {
+                ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+                LEDataInputStream s = new LEDataInputStream(bs);
+                int buf_id = s.readInt();
+                if (buf_id != m_id)
+                {
+                    throw new IllegalArgumentException("Attempted to create SonarControlMessage with invalid id");
+                }
+
+                this.direction = s.readUnsignedShort();
+                this.width = s.readUnsignedShort();
+                this.gain = s.readUnsignedByte();
+                this.range = s.readInt();
+                this.radialRes = s.readInt();
+                this.angularRes = s.readUnsignedByte();
+
+                bytes = null;
+            }
+        }
+        catch (IOException e) {}
     }
 }

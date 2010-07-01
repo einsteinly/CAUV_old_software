@@ -11,45 +11,71 @@ import cauv.utils.*;
 
 public class MotorStateMessage extends Message {
     int m_id = 101;
-    public MotorDemand demand;
+    protected MotorDemand demand;
 
-    public void demand(MotorDemand demand){
+    private byte[] bytes;
+
+    public void demand(MotorDemand demand) {
+        deserialise();
         this.demand = demand;
     }
-    public MotorDemand demand(){
+    public MotorDemand demand() {
+        deserialise();
         return this.demand;
     }
 
 
     public byte[] toBytes() throws IOException {
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        LEDataOutputStream s = new LEDataOutputStream(bs);
-        s.writeInt(m_id);
+        if (bytes != null)
+        {
+            return bytes;
+        }
+        else
+        {
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            LEDataOutputStream s = new LEDataOutputStream(bs);
+            s.writeInt(m_id);
 
-        this.demand.writeInto(s);
+            this.demand.writeInto(s);
 
-        return bs.toByteArray();
+            return bs.toByteArray();
+        }
     }
 
     public MotorStateMessage(){
         super(101, "gui");
+        this.bytes = null;
     }
 
     public MotorStateMessage(MotorDemand demand) {
         super(101, "gui");
+        this.bytes = null;
+
         this.demand = demand;
     }
 
-    public MotorStateMessage(byte[] bytes) throws IOException {
+    public MotorStateMessage(byte[] bytes) {
         super(101, "gui");
-        ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
-        LEDataInputStream s = new LEDataInputStream(bs);
-        int buf_id = s.readInt();
-        if (buf_id != m_id)
-        {
-            throw new IllegalArgumentException("Attempted to create MotorStateMessage with invalid id");
-        }
+        this.bytes = bytes;
+    }
 
-        this.demand = MotorDemand.readFrom(s);
+    public void deserialise() {
+        try { 
+            if (bytes != null)
+            {
+                ByteArrayInputStream bs = new ByteArrayInputStream(bytes);
+                LEDataInputStream s = new LEDataInputStream(bs);
+                int buf_id = s.readInt();
+                if (buf_id != m_id)
+                {
+                    throw new IllegalArgumentException("Attempted to create MotorStateMessage with invalid id");
+                }
+
+                this.demand = MotorDemand.readFrom(s);
+
+                bytes = null;
+            }
+        }
+        catch (IOException e) {}
     }
 }

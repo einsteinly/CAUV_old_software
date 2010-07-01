@@ -300,7 +300,7 @@ public class MissionControlView extends QWidget implements ScreenView {
         // for the file
         QTextEdit editor = (QTextEdit) ui.openFiles.currentWidget();
         Session session = SessionManager.getSession(editor);
-        auv.runMission(session.getContents());
+        auv.scripting.MISSION.run(session.getContents());
     }
     
     public void onConnect(AUV auv){

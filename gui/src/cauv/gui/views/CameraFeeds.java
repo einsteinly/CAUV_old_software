@@ -7,6 +7,7 @@ import cauv.gui.controllers.ControlInterpreter;
 import cauv.gui.views.Ui_CameraFeeds;
 
 import com.trolltech.qt.core.QTimer;
+import com.trolltech.qt.core.Qt.ConnectionType;
 import com.trolltech.qt.gui.*;
 
 public class CameraFeeds extends QWidget implements ScreenView {
@@ -32,6 +33,12 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	    timer.setSingleShot(false);
 	    timer.timeout.connect(this, "updateValues()");
 	    timer.start();
+	    
+	    QTimer t = new QTimer(this);
+	    t.setInterval(300);
+	    t.setSingleShot(false);
+	    t.timeout.connect(this, "updateCams()");
+	    t.start();
 	    
 		ui.setupUi(this);
 		//forward cam setup
@@ -77,8 +84,8 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	public void onConnect(AUV auv) {
 
 		this.auv = auv;
-
-        auv.cameras.FORWARD.imageReceived.connect(ui.forwardCam, "setImage(Image)");
+		
+        /*auv.cameras.FORWARD.imageReceived.connect(ui.forwardCam, "setImage(Image)");
         auv.cameras.FORWARD.imageReceived.connect(ui.forwardCamIcon, "setImage(Image)");
         auv.cameras.FORWARD.imageReceived.connect(this, "updateIcon()");
         
@@ -87,6 +94,7 @@ public class CameraFeeds extends QWidget implements ScreenView {
 
         auv.cameras.SONAR.imageReceived.connect(ui.sonarCam, "setImage(Image)");
         auv.cameras.SONAR.imageReceived.connect(ui.sonarIcon, "setImage(Image)");
+		*/
 		
 		auv.autopilots.DEPTH.targetChanged.connect(this, "updateValues()");
 		auv.autopilots.YAW.targetChanged.connect(this, "updateValues()");
@@ -177,6 +185,14 @@ public class CameraFeeds extends QWidget implements ScreenView {
 
 	}
 
+	public void updateCams(){
+	    if(auv == null) return;
+        this.ui.forwardCam.setImage(auv.cameras.FORWARD.getLastImage());
+        this.ui.downwardCam.setImage(auv.cameras.DOWNWARD.getLastImage());
+        this.ui.sonarCam.setImage(auv.cameras.SONAR.getLastImage());
+        updateIcon();
+	}
+	
 	public void updateIcon(){
 	    icon.setPixmap(ui.forwardCamIcon.getPixmap());
 	}

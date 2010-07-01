@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Settings.jui'
 **
-** Created: Wed 30. Jun 09:10:26 2010
+** Created: Wed 30. Jun 14:55:24 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -95,6 +95,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
     {
         Settings.setObjectName("Settings");
         Settings.resize(new QSize(576, 407).expandedTo(Settings.minimumSizeHint()));
+        Settings.setSizeGripEnabled(true);
         verticalLayout = new QVBoxLayout(Settings);
         verticalLayout.setObjectName("verticalLayout");
         toolBox = new QToolBox(Settings);
@@ -308,19 +309,17 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
 
         depthActual = new QLabel(widget);
         depthActual.setObjectName("depthActual");
-        depthActual.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
+        depthActual.setMinimumSize(new QSize(100, 0));
 
         gridLayout.addWidget(depthActual, 0, 5, 1, 1);
 
         yawActual = new QLabel(widget);
         yawActual.setObjectName("yawActual");
-        yawActual.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         gridLayout.addWidget(yawActual, 1, 5, 1, 1);
 
         pitchActual = new QLabel(widget);
         pitchActual.setObjectName("pitchActual");
-        pitchActual.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignRight,com.trolltech.qt.core.Qt.AlignmentFlag.AlignVCenter));
 
         gridLayout.addWidget(pitchActual, 2, 5, 1, 1);
 
@@ -342,7 +341,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         toolBox.addItem(page_2, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Autopilot Settings", null));
         page_4 = new QWidget();
         page_4.setObjectName("page_4");
-        page_4.setGeometry(new QRect(0, 0, 558, 246));
+        page_4.setGeometry(new QRect(0, 0, 558, 277));
         horizontalLayout_2 = new QHBoxLayout(page_4);
         horizontalLayout_2.setObjectName("horizontalLayout_2");
         horizontalSpacer_6 = new QSpacerItem(143, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -417,7 +416,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         toolBox.addItem(page_4, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth Calibration", null));
         page_3 = new QWidget();
         page_3.setObjectName("page_3");
-        page_3.setGeometry(new QRect(0, 0, 558, 246));
+        page_3.setGeometry(new QRect(0, 0, 558, 277));
         horizontalLayout_4 = new QHBoxLayout(page_3);
         horizontalLayout_4.setObjectName("horizontalLayout_4");
         horizontalSpacer_8 = new QSpacerItem(184, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -472,7 +471,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         toolBox.addItem(page_3, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Settings", null));
         page = new QWidget();
         page.setObjectName("page");
-        page.setGeometry(new QRect(0, 0, 558, 246));
+        page.setGeometry(new QRect(0, 0, 558, 277));
         horizontalLayout = new QHBoxLayout(page);
         horizontalLayout.setObjectName("horizontalLayout");
         horizontalSpacer_3 = new QSpacerItem(40, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
