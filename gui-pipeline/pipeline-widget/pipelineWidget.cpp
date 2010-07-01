@@ -697,9 +697,9 @@ void PipelineWidget::wheelEvent(QWheelEvent *event){
     lock_t l(m_lock);
     debug(2) << __func__ << event->delta() << std::hex << event->buttons();
     if(!event->buttons()){
-        double scalef = clamp(0.2, (1 + double(event->delta()) / 240), 5);
-        m_pixels_per_unit *= scalef;
-        m_pixels_per_unit = clamp(0.04, m_pixels_per_unit, 4);
+        m_scrolldelta += event->delta();
+        double scalef = pow(1.2, double(m_scrolldelta / 240));
+        m_pixels_per_unit = clamp(0.04, scalef, 4);
         postRedraw();
     }
 }
