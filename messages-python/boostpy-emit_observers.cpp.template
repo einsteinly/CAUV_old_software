@@ -84,13 +84,14 @@ class BufferedMessageObserverWrapper:
             }
         }
 
+        #end for
+        #end for
+
         void setDoubleBuffered(MessageType::e, bool){
             error() << "double-buffering threads screw python locking;"
                     << "double-buffering will not be enabled";
         }
 
-        #end for
-        #end for
 };
 
 void emitObservers(){
