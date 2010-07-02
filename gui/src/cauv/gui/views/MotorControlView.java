@@ -47,17 +47,17 @@ public class MotorControlView extends QWidget implements ScreenView {
 		auv.motors.VBOW.speedChanged.connect(ui.sliderVBow, "setValue(int)");
 		auv.motors.VSTERN.speedChanged.connect(ui.sliderVStern, "setValue(int)");
 		
-        ui.sliderProp.sliderReleased.connect(this, "setPropSpeed()");
-        ui.sliderHBow.sliderMoved.connect(auv.motors.HBOW, "setSpeed(int)");
-        ui.sliderHStern.sliderMoved.connect(auv.motors.HSTERN, "setSpeed(int)");
-        ui.sliderVBow.sliderMoved.connect(auv.motors.VBOW, "setSpeed(int)");
-        ui.sliderVStern.sliderMoved.connect(auv.motors.VSTERN, "setSpeed(int)");
+        ui.sliderProp.sliderMoved.connect(auv.motors.PROP, "set(Integer)");
+        ui.sliderHBow.sliderMoved.connect(auv.motors.HBOW, "set(Integer)");
+        ui.sliderHStern.sliderMoved.connect(auv.motors.HSTERN, "set(Integer)");
+        ui.sliderVBow.sliderMoved.connect(auv.motors.VBOW, "set(Integer)");
+        ui.sliderVStern.sliderMoved.connect(auv.motors.VSTERN, "set(Integer)");
         
         ui.shutdownButton.released.connect(auv, "stopAllMotors()");
 	}
 	
 	public void setPropSpeed(){
-	    auv.motors.PROP.setSpeed(ui.sliderProp.value());
+	    auv.motors.PROP.set(ui.sliderProp.value());
 	}
 	
 	@Override

@@ -48,11 +48,11 @@ public class Settings extends QDialog implements AUVConnectionObserver {
         ui.gamepadID.setValue(Config.GAMEPAD_ID);
     }
         
-    public void updateDepthParams(float Kp, float Ki, float Kd, float scale){
-        ui.depth_Kp.setText(Float.toString(Kp));
-        ui.depth_Ki.setText(Float.toString(Ki));
-        ui.depth_Kd.setText(Float.toString(Kd));
-        ui.depth_scale.setText(Float.toString(scale));
+    public void updateDepthParamsUI(){
+        ui.depth_Kp.setText(Float.toString(auv.autopilots.DEPTH.getKp()));
+        ui.depth_Ki.setText(Float.toString(auv.autopilots.DEPTH.getKi()));
+        ui.depth_Kd.setText(Float.toString(auv.autopilots.DEPTH.getKd()));
+        ui.depth_scale.setText(Float.toString(auv.autopilots.DEPTH.getScale()));
     }
     
     public void updateDepthParams(){
@@ -63,11 +63,11 @@ public class Settings extends QDialog implements AUVConnectionObserver {
                 Float.valueOf(ui.depth_scale.text()));
     }
     
-    public void updatePitchParams(float Kp, float Ki, float Kd, float scale){
-        ui.pitch_Kp.setText(Float.toString(Kp));
-        ui.pitch_Ki.setText(Float.toString(Ki));
-        ui.pitch_Kd.setText(Float.toString(Kd));
-        ui.pitch_scale.setText(Float.toString(scale));
+    public void updatePitchParamsUI(){
+        ui.pitch_Kp.setText(Float.toString(auv.autopilots.PITCH.getKp()));
+        ui.pitch_Ki.setText(Float.toString(auv.autopilots.PITCH.getKi()));
+        ui.pitch_Kd.setText(Float.toString(auv.autopilots.PITCH.getKd()));
+        ui.pitch_scale.setText(Float.toString(auv.autopilots.PITCH.getScale()));
     }
     
     public void updatePitchParams(){
@@ -78,11 +78,11 @@ public class Settings extends QDialog implements AUVConnectionObserver {
                 Float.valueOf(ui.pitch_scale.text()));
     }  
     
-    public void updateYawParams(float Kp, float Ki, float Kd, float scale){
-        ui.yaw_Kp.setText(Float.toString(Kp));
-        ui.yaw_Ki.setText(Float.toString(Ki));
-        ui.yaw_Kd.setText(Float.toString(Kd));
-        ui.yaw_scale.setText(Float.toString(scale));
+    public void updateYawParamsUI(){
+        ui.yaw_Kp.setText(Float.toString(auv.autopilots.YAW.getKp()));
+        ui.yaw_Ki.setText(Float.toString(auv.autopilots.YAW.getKi()));
+        ui.yaw_Kd.setText(Float.toString(auv.autopilots.YAW.getKd()));
+        ui.yaw_scale.setText(Float.toString(auv.autopilots.YAW.getScale()));
     }
     
     public void updateYawParams(){
@@ -97,9 +97,9 @@ public class Settings extends QDialog implements AUVConnectionObserver {
     public void onConnect(AUV auv){
         this.auv = auv;
         
-        auv.autopilots.DEPTH.paramsChanged.connect(this, "updateDepthParams(float, float, float, float)");
-        auv.autopilots.PITCH.paramsChanged.connect(this, "updatePitchParams(float, float, float, float)");
-        auv.autopilots.YAW.paramsChanged.connect(this, "updateYawParams(float, float, float, float)");
+        auv.autopilots.DEPTH.paramsChanged.connect(this, "updateDepthParamsUI()");
+        auv.autopilots.PITCH.paramsChanged.connect(this, "updatePitchParamsUI()");
+        auv.autopilots.YAW.paramsChanged.connect(this, "updateYawParamsUI()");
         
         auv.debugLevelChanged.connect(ui.debugLevel, "setValue(int)");
         ui.debugLevel.valueChanged.connect(auv, "setDebugLevel(int)");
@@ -110,19 +110,19 @@ public class Settings extends QDialog implements AUVConnectionObserver {
         ui.foreScale.valueChanged.connect(this, "calibrateDepth()");
 
         ui.depthEnabled.toggled.connect(auv.autopilots.DEPTH, "setEnabled(boolean)");
-        auv.autopilots.DEPTH.stateChanged.connect(ui.depthEnabled, "setChecked(boolean)");
+        auv.autopilots.DEPTH.enabledChanged.connect(ui.depthEnabled, "setChecked(boolean)");
         ui.depthTarget.returnPressed.connect(this, "updateDepthTarget()");
         auv.autopilots.DEPTH.targetChanged.connect(this, "updateDepthTarget(AUV$Autopilot)");
         
 
         ui.yawEnabled.toggled.connect(auv.autopilots.YAW, "setEnabled(boolean)");
-        auv.autopilots.YAW.stateChanged.connect(ui.yawEnabled, "setChecked(boolean)");
+        auv.autopilots.YAW.enabledChanged.connect(ui.yawEnabled, "setChecked(boolean)");
         ui.yawTarget.returnPressed.connect(this, "updateYawTarget()");
         auv.autopilots.YAW.targetChanged.connect(this, "updateYawTarget(AUV$Autopilot)");
         
 
         ui.pitchEnabled.toggled.connect(auv.autopilots.PITCH, "setEnabled(boolean)");
-        auv.autopilots.PITCH.stateChanged.connect(ui.pitchEnabled, "setChecked(boolean)");
+        auv.autopilots.PITCH.enabledChanged.connect(ui.pitchEnabled, "setChecked(boolean)");
         ui.pitchTarget.returnPressed.connect(this, "updatePitchTarget()");
         auv.autopilots.PITCH.targetChanged.connect(this, "updatePitchTarget(AUV$Autopilot)");
 

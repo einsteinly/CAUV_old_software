@@ -15,6 +15,7 @@ import org.jfree.data.xy.DefaultTableXYDataset;
 import org.jfree.data.xy.XYSeries;
 
 import cauv.auv.AUV;
+import cauv.auv.AUV.DataStream;
 import cauv.gui.ScreenView;
 import cauv.types.MotorDemand;
 import cauv.types.floatYPR;
@@ -228,21 +229,21 @@ public class TelemetryView extends QWidget implements ScreenView {
         auv.depthChanged.connect(depth, "onPointData(Object)");
         auv.pressureChanged.connect(this, "onPressureData(float, float)");
         auv.orientationChanged.connect(orientation, "onPointData(Object)");
-        auv.autopilots.DEPTH.controllerStateUpdated.connect(this, "onDepthControllerStateUpdated(float, float, float, float, MotorDemand)");
-        auv.autopilots.PITCH.controllerStateUpdated.connect(this, "onPitchControllerStateUpdated(float, float, float, float, MotorDemand)");
-        auv.autopilots.YAW.controllerStateUpdated.connect(this, "onYawControllerStateUpdated(float, float, float, float, MotorDemand)");
+        auv.autopilots.DEPTH.demandsStream.onChange.connect(this, "onDepthControllerStateUpdated(AUV$DataStream)");
+        auv.autopilots.PITCH.demandsStream.onChange.connect(this, "onPitchControllerStateUpdated(AUV$DataStream)");
+        auv.autopilots.YAW.demandsStream.onChange.connect(this, "onYawControllerStateUpdated(AUV$DataStream)");
     }
     
-    public void onDepthControllerStateUpdated(float mv, float error, float derror, float ierror, MotorDemand demand){
-        depthDemands.onPointData(demand);
+    public void onDepthControllerStateUpdated(DataStream<MotorDemand> demand){
+        depthDemands.onPointData(demand.get());
     }
     
-    public void onPitchControllerStateUpdated(float mv, float error, float derror, float ierror, MotorDemand demand){
-        pitchDemands.onPointData(demand);
+    public void onPitchControllerStateUpdated(DataStream<MotorDemand> demand){
+        pitchDemands.onPointData(demand.get());
     }
     
-    public void onYawControllerStateUpdated(float mv, float error, float derror, float ierror, MotorDemand demand){
-        yawDemands.onPointData(demand);
+    public void onYawControllerStateUpdated(DataStream<MotorDemand> demand){
+        yawDemands.onPointData(demand.get());
     }
     
     public void onPressureData(float fore, float aft){

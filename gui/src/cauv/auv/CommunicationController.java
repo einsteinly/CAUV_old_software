@@ -113,8 +113,8 @@ public class CommunicationController extends MessageObserver {
             this.enableMessage = enableMessage;
             this.paramsMessage = paramsMessage;
             a.targetChanged.connect(this, "onTargetChanged(AUV$Autopilot)");
-            a.stateChanged.connect(this, "onStateChanged(boolean)");
-            a.paramsChanged.connect(this, "onParamsChanged(float, float, float, float)");
+            a.enabledChanged.connect(this, "onStateChanged(boolean)");
+            a.paramsChanged.connect(this, "onParamsChanged()");
             
         }
         
@@ -124,8 +124,8 @@ public class CommunicationController extends MessageObserver {
         
         public void onTargetChanged(Autopilot<?> autopilot){
             try {                
-                Constructor c = enableMessage.getConstructor(Boolean.class, autopilot.target.getClass());
-                Message m = (Message) c.newInstance(autopilot.enabled, autopilot.target);
+                Constructor c = enableMessage.getConstructor(Boolean.class, autopilot.getTarget().getClass());
+                Message m = (Message) c.newInstance(autopilot.getEnabled(), autopilot.getTarget());
                 messages.sendMessage(m);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -133,10 +133,10 @@ public class CommunicationController extends MessageObserver {
             }
         }
         
-        public void onParamsChanged(float Kp, float Ki, float Kd, float scale){
+        public void onParamsChanged(){
             try {                
                 Constructor c = paramsMessage.getConstructor(Float.class, Float.class, Float.class, Float.class);
-                Message m = (Message) c.newInstance(autopilot.Kp, autopilot.Ki, autopilot.Kd, autopilot.scale);
+                Message m = (Message) c.newInstance(autopilot.getKp(), autopilot.getKi(), autopilot.getKd(), autopilot.getScale());
                 messages.sendMessage(m);
             } catch (Exception e) {
                 auv.logs.ERROR.log("Error updating autopilot params: " + e.getMessage());
@@ -181,6 +181,10 @@ public class CommunicationController extends MessageObserver {
         messages.addObserver(this);
     }
 
+    public boolean getEnabled(){
+        return messages.enabled;
+    }
+    
     public void enable() {
         messages.setEnabled(true);
     }
@@ -254,13 +258,13 @@ public class CommunicationController extends MessageObserver {
         cauv.types.Controller c = m.contoller();
         switch(c){
             case Bearing:
-                auv.autopilots.YAW.controllerStateUpdated.emit(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
+                auv.autopilots.YAW.updateControllerState(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
                 break;
             case Pitch:
-                auv.autopilots.PITCH.controllerStateUpdated.emit(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
+                auv.autopilots.PITCH.updateControllerState(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
                 break;
             case Depth:
-                auv.autopilots.DEPTH.controllerStateUpdated.emit(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
+                auv.autopilots.DEPTH.updateControllerState(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
                 break;
         }
     }
@@ -333,19 +337,19 @@ public class CommunicationController extends MessageObserver {
     public void onMotorMessage(MotorMessage m) {
         switch (m.motorId()) {
             case Prop:
-                auv.motors.PROP.updateSpeed(m.speed());
+                auv.motors.PROP.update((int)m.speed());
                 break;
             case HBow:
-                auv.motors.HBOW.updateSpeed(m.speed());
+                auv.motors.HBOW.update((int)m.speed());
                 break;
             case HStern:
-                auv.motors.HSTERN.updateSpeed(m.speed());
+                auv.motors.HSTERN.update((int)m.speed());
                 break;
             case VBow:
-                auv.motors.VBOW.updateSpeed(m.speed());
+                auv.motors.VBOW.update((int)m.speed());
                 break;
             case VStern:
-                auv.motors.VSTERN.updateSpeed(m.speed());
+                auv.motors.VSTERN.update((int)m.speed());
                 break;
         }
     }

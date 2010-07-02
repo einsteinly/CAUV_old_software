@@ -2,6 +2,7 @@ package cauv.auv;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Vector;
 
 import cauv.auv.CommunicationController.AUVConnectionObserver;
@@ -17,6 +18,77 @@ import com.trolltech.qt.QSignalEmitter;
 
 public class AUV extends QSignalEmitter {
 
+    
+    public class DataStream<T> extends QSignalEmitter {
+        
+        public Signal1<DataStream<T>> onChange = new Signal1<DataStream<T>>();
+        
+        T latest;
+        
+        public void update(T data){
+            boolean state = AUV.this.controller.getEnabled();
+            AUV.this.controller.disable();
+            this.set(data);
+            if(state)
+                AUV.this.controller.enable();
+        }
+        
+        public void set(T data) {
+            this.onChange.emit(this);
+            this.latest = data;
+        }
+        
+        public T get() {
+            return latest;
+        }
+    }
+    
+    public class MemorisingDataStream<T> extends DataStream<T> {
+        Vector<T> history = new Vector<T>();
+        
+        int maximum;
+        
+        public MemorisingDataStream(int maximum) {
+            this.maximum = maximum;
+        }
+        
+        public void set(T data) {
+            this.history.add(data);
+            
+            if(!history.isEmpty() && history.size() > maximum)
+                history.remove(0);
+            
+            super.set(data);
+        };
+        
+        public void clear(){
+            history.clear();
+        }
+        
+        public Vector<T> getHistory() {
+            return history;
+        }
+    }
+    
+    
+    public abstract class MultipleDataStreamEmitter extends QSignalEmitter {
+        
+        public HashMap<String, DataStream<?>> dataStreams = new HashMap<String, DataStream<?>>();
+        
+        protected void addStream(String name, DataStream<?> data){
+            this.dataStreams.put(name, data);
+        }
+        
+        protected DataStream<?> getStream(String name){
+            return dataStreams.get(name);
+        }
+        
+        public HashMap<String, DataStream<?>> getDataStreams() {
+            return dataStreams;
+        }
+    }
+   
+    
     /**
      * Represents a motor in the AUV. All motors available are listed in the
      * Motors class Setting the motor speed (via setSpeed) will fire the
@@ -26,12 +98,12 @@ public class AUV extends QSignalEmitter {
      * 
      * @author Andy Pritchard
      */
-    public class Motor extends QSignalEmitter {
-        public Signal1<Integer> speedChanged = new Signal1<Integer>();
-
-        protected int speed;
+    public class Motor extends DataStream<Integer> {
+        
         protected MotorID id;
 
+        public Signal1<Integer> speedChanged  = new Signal1<Integer>();
+        
         public Motor(MotorID id) {
             this.id = id;
         }
@@ -39,20 +111,11 @@ public class AUV extends QSignalEmitter {
         public MotorID getID() {
             return id;
         }
-
-        public int getSpeed() {
-            return speed;
-        }
-
-        public void setSpeed(int speed) {
-            this.speed = speed;
-            speedChanged.emit(speed);
-        }
-
-        protected void updateSpeed(int speed) {
-            AUV.this.controller.disable();
-            this.setSpeed(speed);
-            AUV.this.controller.enable();
+        
+        @Override
+        public void set(Integer data) {
+            this.speedChanged.emit(data);
+            super.set(data);
         }
     }
 
@@ -68,11 +131,11 @@ public class AUV extends QSignalEmitter {
 
     
     public void stopAllMotors(){
-    	this.motors.HBOW.setSpeed(0);
-    	this.motors.HSTERN.setSpeed(0);
-    	this.motors.VBOW.setSpeed(0);
-    	this.motors.VSTERN.setSpeed(0);
-    	this.motors.PROP.setSpeed(0);
+    	this.motors.HBOW.set(0);
+    	this.motors.HSTERN.set(0);
+    	this.motors.VBOW.set(0);
+    	this.motors.VSTERN.set(0);
+    	this.motors.PROP.set(0);
 
         this.autopilots.DEPTH.setEnabled(false);
         this.autopilots.PITCH.setEnabled(false);
@@ -90,31 +153,42 @@ public class AUV extends QSignalEmitter {
      * @param <T>
      *            The type of the target the autopilot uses
      */
-    public class Autopilot<T> extends QSignalEmitter {
+    public class Autopilot<T> extends MultipleDataStreamEmitter{
 
+        
+        public MemorisingDataStream<MotorDemand> demandsStream = new MemorisingDataStream<MotorDemand>(5000);
+        public DataStream<T> targetStream = new DataStream<T>();
+        public DataStream<Boolean> enabledStream = new DataStream<Boolean>();
+        public MemorisingDataStream<Float> KpStream = new MemorisingDataStream<Float>(5000);
+        public MemorisingDataStream<Float> KiStream = new MemorisingDataStream<Float>(5000);
+        public MemorisingDataStream<Float> KdStream = new MemorisingDataStream<Float>(5000);
+        public MemorisingDataStream<Float> scaleStream = new MemorisingDataStream<Float>(5000);
+        
         public Signal1<Autopilot<T>> targetChanged = new Signal1<Autopilot<T>>();
-        public Signal1<Boolean> stateChanged = new Signal1<Boolean>();
-        public Signal4<Float, Float, Float, Float> paramsChanged = new Signal4<Float, Float, Float, Float>();
-        public Signal5<Float, Float, Float, Float, MotorDemand> controllerStateUpdated = new Signal5<Float, Float, Float, Float, MotorDemand>();
-
-        protected T target;
-        protected boolean enabled = true;
-        protected float Kd, Kp, Ki;
-        protected float scale;
-
+        public Signal1<Boolean> enabledChanged = new Signal1<Boolean>();
+        public Signal0 paramsChanged = new Signal0();
+        
         public Autopilot(T initialTarget) {
-        	this.target = initialTarget;
+            addStream("demands", demandsStream);
+            addStream("target", targetStream);
+            addStream("enabled", enabledStream);
+            addStream("Kp", KpStream);
+            addStream("Ki", KiStream);
+            addStream("Kd", KdStream);
+            addStream("scale", scaleStream);
+            
+            targetStream.latest = initialTarget;
 		}
         
         public T getTarget() {
-            return target;
+            return targetStream.latest;
         }
 
         public void setTarget(T target) {
-            if (enabled) {
-                if(!this.target.equals(target))
+            if (getEnabled()) {
+                if(!this.getTarget().equals(target))
                 {
-                    this.target = target;
+                    targetStream.set(target);
                     targetChanged.emit(this);
                 }
             }
@@ -122,53 +196,66 @@ public class AUV extends QSignalEmitter {
 
         protected void updateTarget(T target) {
             AUV.this.controller.disable();
-            this.setTarget(target);
+            targetStream.update(target);
+            targetChanged.emit(this);
             AUV.this.controller.enable();
         }
         
         public boolean getEnabled() {
-            return enabled;
+            return (enabledStream.latest == null)? true : enabledStream.latest;
         }
 
         public void setEnabled(boolean state) {
-            System.out.println("enabled " + state);
-            this.enabled = state;
-            stateChanged.emit(state);
+            enabledStream.set(state);
+            enabledChanged.emit(state);
         }
 
         protected void updateEnabled(boolean state) {
             AUV.this.controller.disable();
-            this.setEnabled(state);
+            enabledChanged.emit(state);
+            enabledStream.update(state);
             AUV.this.controller.enable();
         }
 
         public float getKp() {
-            return Kp;
+            return (KpStream.latest == null) ? 0 : KpStream.latest;
         }
         
         public float getKi() {
-            return Ki;
+            return (KiStream.latest == null) ? 0 : KiStream.latest;
         }
         
         public float getKd() {
-            return Kd;
+            return (KdStream.latest == null) ? 0 : KdStream.latest;
         }
 
         public float getScale(){
-            return scale;
+            return (scaleStream.latest == null) ? 0 : scaleStream.latest;
+        }
+        
+        public MotorDemand getDemands() {
+            return demandsStream.latest;
+        }
+        
+        public void updateControllerState(float mv, float error, float derror, float ierror, MotorDemand demand){
+            demandsStream.update(demand);
         }
         
         public void setParams(float Kp, float Ki, float Kd, float scale) {
-            this.Kp = Kp;
-            this.Ki = Ki;
-            this.Kd = Kd;
-            this.scale = scale;
-            paramsChanged.emit(Kp, Ki, Kd, scale);
+            KpStream.set(Kp);
+            KiStream.set(Ki);
+            KdStream.set(Kd);
+            scaleStream.set(scale);
+            paramsChanged.emit();
         }
 
         protected void updateParams(float Kp, float Ki, float Kd, float scale) {
             AUV.this.controller.disable();
-            this.setParams(Kp, Ki, Kd, scale);
+            KpStream.update(Kp);
+            KiStream.update(Ki);
+            KdStream.update(Kd);
+            scaleStream.update(scale);
+            paramsChanged.emit();
             AUV.this.controller.enable();
         }
     }

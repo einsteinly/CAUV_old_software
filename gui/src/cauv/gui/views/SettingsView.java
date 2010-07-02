@@ -111,19 +111,19 @@ public class SettingsView extends QWidget implements ScreenView {
         ui.foreScale.valueChanged.connect(this, "calibrateDepth()");
 
         ui.depthEnabled.toggled.connect(auv.autopilots.DEPTH, "setEnabled(boolean)");
-        auv.autopilots.DEPTH.stateChanged.connect(ui.depthEnabled, "setChecked(boolean)");
+        auv.autopilots.DEPTH.enabledChanged.connect(ui.depthEnabled, "setChecked(boolean)");
         ui.depthValue.valueChanged.connect(this, "updateDepthTarget(double)");
         auv.autopilots.DEPTH.targetChanged.connect(this, "updateDepthTarget()");
         
 
         ui.yawEnabled.toggled.connect(auv.autopilots.YAW, "setEnabled(boolean)");
-        auv.autopilots.YAW.stateChanged.connect(ui.yawEnabled, "setChecked(boolean)");
+        auv.autopilots.YAW.enabledChanged.connect(ui.yawEnabled, "setChecked(boolean)");
         ui.yawTarget.valueChanged.connect(this, "updateYawTarget(double)");
         auv.autopilots.YAW.targetChanged.connect(this, "updateYawTarget()");
         
 
         ui.pitchEnabled.toggled.connect(auv.autopilots.PITCH, "setEnabled(boolean)");
-        auv.autopilots.PITCH.stateChanged.connect(ui.pitchEnabled, "setChecked(boolean)");
+        auv.autopilots.PITCH.enabledChanged.connect(ui.pitchEnabled, "setChecked(boolean)");
         ui.pitchTarget.valueChanged.connect(this, "updatePitchTarget(double)");
         auv.autopilots.PITCH.targetChanged.connect(this, "updatePitchTarget()");
 

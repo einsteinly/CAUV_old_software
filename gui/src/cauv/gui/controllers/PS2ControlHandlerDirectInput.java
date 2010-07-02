@@ -66,10 +66,10 @@ public class PS2ControlHandlerDirectInput implements cauv.gamepad.PS2InputHandle
             case X:
                 break;
             case R1:
-            	motion.forward((int) (auv.motors.PROP.getSpeed() + 16));
+            	motion.forward((int) (auv.motors.PROP.get() + 16));
                 break;
             case R2:
-            	motion.forward((int) (auv.motors.PROP.getSpeed() - 16));
+            	motion.forward((int) (auv.motors.PROP.get() - 16));
                 break;
 
             case UP:
