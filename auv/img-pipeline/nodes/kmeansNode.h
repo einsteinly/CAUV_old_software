@@ -132,7 +132,7 @@ class KMeansNode: public Node{
             for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
                 for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                 {
-                    size_t best_cl_i = UINT_MAX;      
+                    size_t best_cl_i = K;
                     unsigned int best_cl_sqdiff = UINT_MAX;      
                     for (size_t i = 0; i < m_clusters.size(); i++) {
                         cluster& cl = m_clusters[i];
@@ -147,7 +147,8 @@ class KMeansNode: public Node{
                             best_cl_sqdiff = sqdiff;
                         }
                     }
-                    clusteridsMat.at<unsigned char>(x,y) = clamp_cast<unsigned char>((unsigned char)0, best_cl_i, (unsigned char)255);
+                    assert(best_cl_i < (unsigned int)K);
+                    clusteridsMat.at<unsigned char>(y,x) = clamp_cast<unsigned char>((unsigned char)0, best_cl_i, (unsigned char)255);
                     cluster& best_cl = m_clusters[best_cl_i];
                     for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
                     {
@@ -178,12 +179,12 @@ class KMeansNode: public Node{
                 for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
                     for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                     {
-                        cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(x,y)];
+                        cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
 
                         for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
                         {
                             *img_bp = cl.centre[ch];
-                        {
+                        }
                     }
             }
             
