@@ -34,7 +34,8 @@ enum NodeType : int8 {
     SonarInput = 25,
     BroadcastImage = 26,
     VideoFileOutput = 27,
-    Invert = 28
+    Invert = 28,
+    KMeans = 29
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

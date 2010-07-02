@@ -47,11 +47,8 @@ int main(int argc, char** argv)
         boost::shared_ptr<TelemetryMessage> m = boost::make_shared<TelemetryMessage>(orientation);
         while(true)
         {
-            std::cout << "Sending telemetry message " << *m << std::endl;
+            //std::cout << "Sending telemetry message " << *m << std::endl;
             m_mailbox.sendMessage(m, SAFE_MESS);
-            m_mailbox.sendMessage(m, SAFE_MESS);
-            m_mailbox.sendMessage(m, SAFE_MESS);
-            msleep(1);
         }
     }
     else {

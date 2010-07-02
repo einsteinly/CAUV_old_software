@@ -298,8 +298,12 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 msg->demand(m_demand[Depth]);
                 m_mb->sendMessage(msg, SAFE_MESS);
 
-                boost::shared_ptr<DepthMessage> dm = boost::make_shared<DepthMessage>(depth);
-                m_mb->sendMessage(dm, SAFE_MESS);
+                //FIXME: Make this less shit
+                static int i = 0;
+                if (i++ % 10 == 0) {
+                    boost::shared_ptr<DepthMessage> dm = boost::make_shared<DepthMessage>(depth);
+                    m_mb->sendMessage(dm, SAFE_MESS);
+                }
             }
         }
         virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m)
@@ -601,7 +605,11 @@ class SpreadForwardingXsensObserver : public XsensObserver
 
         virtual void onTelemetry(const floatYPR& attitude)
         {
-            m_mb->sendMessage(boost::make_shared<TelemetryMessage>(attitude), UNRELIABLE_MESS);
+            //FIXME: Make this less shit
+            static int i = 0;
+            if (i++ % 50 == 0) {
+                m_mb->sendMessage(boost::make_shared<TelemetryMessage>(attitude), UNRELIABLE_MESS);
+            }
         }
     protected:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
