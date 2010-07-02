@@ -12,7 +12,7 @@ SonarNode::SonarNode() : CauvNode("Sonar")
 }
 
 
-class SpreadSonarObserver : public SonarObserver
+class SpreadSonarObserver : public SonarObserver, public MessageObserver
 {
     public:
         SpreadSonarObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox) : m_mailbox(mailbox)
@@ -21,11 +21,21 @@ class SpreadSonarObserver : public SonarObserver
         
         virtual void onReceiveDataLine(const SonarDataLine& data) 
         {
-            boost::shared_ptr<SonarDataMessage> m = boost::make_shared<SonarDataMessage>(data);
+            SonarDataLine yawAdjustedData = data;
+            yawAdjustedData.bearing -= int(m_orientation.yaw*6400/360);
+                
+            boost::shared_ptr<SonarDataMessage> m = boost::make_shared<SonarDataMessage>(yawAdjustedData);
             m_mailbox->sendMessage(m, SAFE_MESS);
         }
     protected:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
+
+        floatYPR m_orientation;
+
+        virtual void onTelemetryMessage(TelemetryMessage_ptr m)
+        {
+            m_orientation = m->orientation();
+        }
 };
 
 void SonarNode::onRun()
@@ -35,13 +45,17 @@ void SonarNode::onRun()
         return;
     }
 
-    m_sonar->addObserver(boost::make_shared<SpreadSonarObserver>(mailbox()));
+    boost::shared_ptr<SpreadSonarObserver> spreadSonarObserver = boost::make_shared<SpreadSonarObserver>(mailbox());
+    m_sonar->addObserver(spreadSonarObserver);
+    addMessageObserver(spreadSonarObserver);
+
 #ifdef DISPLAY_SONAR
     m_sonar->addObserver(boost::make_shared<DisplaySonarObserver>(m_sonar));
 #endif
-    m_sonar->init();
 
     addMessageObserver(boost::make_shared<SonarControlMessageObserver>(m_sonar));
+    
+    m_sonar->init();
 
     while (true) {
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));

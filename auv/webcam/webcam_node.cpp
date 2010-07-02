@@ -37,18 +37,21 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
 
         virtual void onReceiveImage(CameraID::e cam_id, const cv::Mat& img)
         {
-            if(!m_msg && img.rows && img.cols)
+            if(!m_msg)
             {
-                // only do stuff if last image has sent
-                Image i(img);
-                imsg_ptr_t m = boost::make_shared<ImageMessage>(cam_id, i, now());
-                m_msg = m;
-                m_cam_id = cam_id;
-                sendImage();
-            }
-            else if(!m_msg)
-            {
-                warning() << "no image";
+                if (img.rows && img.cols)
+                {
+                    // only do stuff if last image has sent
+                    Image i(img);
+                    imsg_ptr_t m = boost::make_shared<ImageMessage>(cam_id, i, now());
+                    m_msg = m;
+                    m_cam_id = cam_id;
+                    sendImage();
+                }
+                else
+                {
+                    warning() << "no image";
+                }
             }
         }
 
