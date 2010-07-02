@@ -45,6 +45,8 @@ class KMeansNode: public Node{
         {
             std::vector<unsigned char> centre;
             unsigned int size;
+            
+            std::vector<unsigned char> valsum;
         };
 
         std::vector< cluster > m_clusters;
@@ -67,6 +69,9 @@ class KMeansNode: public Node{
                 error() << "must be at least one cluster";
                 return r;
             }
+            else if (K > 255) {
+                error() << "too many clusters";
+            }
 
             if (m_channels != img->cvMat().channels()) {
                 m_clusters.clear();
@@ -81,6 +86,7 @@ class KMeansNode: public Node{
                     // Random cluster centre
                     for (int c = 0; c < m_channels; c++) {
                         cl.centre.push_back(randbyte());
+                        cl.valsum.push_back(0);
                     }
                     cl.size = 0;
                     m_clusters.push_back(cl);
@@ -114,16 +120,66 @@ class KMeansNode: public Node{
             cv::Mat clusteridsMat(cols, rows, CV_8UC1);
             boost::shared_ptr<Image> clusterids = boost::make_shared<Image>(clusteridsMat);
 
+            // Clear val sums and sizes (val sum for single pass mean calculation)
+            for (size_t i = 0; i < m_clusters.size(); i++) {
+                cluster& cl = m_clusters[i];
+                for(ch = 0; ch < m_channels; ch++)
+                {
+                    cl.valsum[ch] = 0;
+                    cl.size = 0;
+                }
+            }
+
             // Assign each pixel to the nearest cluster
             for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
                 for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
+                {
+                    size_t best_cl_i = UINT_MAX;      
+                    unsigned int best_cl_sqdiff = UINT_MAX;      
+                    for (size_t i = 0; i < m_clusters.size(); i++) {
+                        cluster& cl = m_clusters[i];
+                        unsigned int sqdiff = 0;
+                        for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
+                        {
+                            sqdiff += (*img_bp - cl.centre[ch]) * (*img_bp - cl.centre[ch]);
+                        }
+
+                        if (sqdiff < best_cl_sqdiff) {
+                            best_cl_i = i;
+                            best_cl_sqdiff = sqdiff;
+                        }
+                    }
+                    clusteridsMat.at<unsigned char>(x,y) = clamp_cast<unsigned char>((unsigned char)0, best_cl_i, (unsigned char)255);
+                    cluster& best_cl = m_clusters[best_cl_i];
                     for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
                     {
-                        clusteridsMat.at<unsigned char>(x,y) = 80;
-                        *img_bp = *img_bp;
+                        best_cl.valsum[ch] += *img_bp;
+                        best_cl.size++;
                     }
+                }
 
-            colorise = colorise;
+            // Change cluster centres (means) based on mean of pixel values
+            for (size_t i = 0; i < m_clusters.size(); i++) {
+                cluster& cl = m_clusters[i];
+                for(ch = 0; ch < m_channels; ch++)
+                {
+                    cl.centre[ch] = cl.valsum[ch]/cl.size;
+                }
+            }
+
+            if (colorise) {
+                // Colorise if necessary
+
+                for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
+                    for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
+                    {
+                        cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(x,y)];
+
+                        for (size_t i = 0; i < m_clusters.size(); i++) {
+                            *img_bp = cl.centre[ch];
+                        }
+                    }
+            }
             
             r["cluster ids"] = clusterids;
             r["image (not copied)"] = img;
