@@ -13,12 +13,12 @@
 
 using namespace std;
 
-static void set_pixel(cv::Mat* img, int x, int y, unsigned char val)
+static void set_pixel(cv::Mat& img, int x, int y, unsigned char val)
 {
-    if (x < 0 || y < 0 || x >= img->size().width || y >= img->size().height) {
+    if (x < 0 || y < 0 || x >= img.size().width || y >= img.size().height) {
         return;
     }
-    img->at<unsigned char>(y, x) = val;
+    img.at<unsigned char>(y, x) = val;
 }
 
 struct rect { int min_y, max_y, min_x, max_x; };
@@ -95,7 +95,7 @@ int ccw(T p0_x, T p0_y, T p1_x, T p1_y, T p2_x, T p2_y)
 		return +1;
 	return 0;
 }
-static void scan_thick_arc(cv::Mat* img, int cx, int cy, int radius, float from, float to, unsigned char value, int thickness)
+static void scan_thick_arc(cv::Mat& img, int cx, int cy, int radius, float from, float to, unsigned char value, int thickness)
 {
     if (from > to)
     {
@@ -180,7 +180,7 @@ void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
                 if (ccw((float)cx,(float)cy,from_x,from_y,(float)x,(float)y) * ccw((float)cx,(float)cy,to_x,to_y,(float)x,(float)y) == 1) // Same side
                     continue;
 
-                set_pixel(&m_img->cvMat(), y, x, line.data[b]);
+                set_pixel(m_img->cvMat(), y, x, line.data[b]);
             }
     }
 }

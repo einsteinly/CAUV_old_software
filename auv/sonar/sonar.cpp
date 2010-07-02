@@ -25,6 +25,7 @@ class SpreadSonarObserver : public SonarObserver, public MessageObserver
             yawAdjustedData.bearing -= int(m_orientation.yaw*6400/360);
                 
             boost::shared_ptr<SonarDataMessage> m = boost::make_shared<SonarDataMessage>(yawAdjustedData);
+            std::cout << "=";
             m_mailbox->sendMessage(m, SAFE_MESS);
         }
     protected:
