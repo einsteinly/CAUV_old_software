@@ -3,6 +3,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 #include <common/messages_fwd.h>
 #include <common/cauv_global.h> 
@@ -18,22 +19,29 @@
 CauvNode::~CauvNode()
 {
 	info() << "Shutting down node";
-    m_event_monitor->stopMonitoring();
+    debug::setCauvNode(NULL);
+    m_event_monitor->stopMonitoringAsync();
 }
 
-void CauvNode::run()
+void CauvNode::run(bool synchronous)
 {
 	cauv_global::print_module_header(m_name);
 
     m_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
-    m_event_monitor->startMonitoring();
+    if(!synchronous)
+        m_event_monitor->startMonitoringAsync();
+
+    debug::setCauvNode(this);
 
     onRun();
-    
-    while(true)
-    {
-	    msleep(500);
-    }
+
+    if(synchronous)
+        m_event_monitor->startMonitoringSync();
+    else
+        while(true)
+        {
+            msleep(500);
+        }
 }
 
 void CauvNode::onRun()
@@ -99,6 +107,8 @@ int CauvNode::defaultOptions()
 
 int CauvNode::parseOptions(int argc, char** argv)
 {
+    if(argv)
+        debug::setProgramName(boost::filesystem::path(argv[0]).leaf());
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     po::positional_options_description pos;

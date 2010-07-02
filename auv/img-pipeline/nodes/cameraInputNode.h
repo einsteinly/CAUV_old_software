@@ -30,6 +30,12 @@ class CameraInputNode: public AsynchronousNode{
             openCapture();
         }
 
+        virtual ~CameraInputNode(){
+            m_capture = cv::VideoCapture();
+            if(m_current_device != -1)
+                m_capture_lock[m_current_device].unlock();
+        }
+
         virtual void paramChanged(param_id const& p){
             if(p == "device id")
             {

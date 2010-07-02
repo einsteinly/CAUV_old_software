@@ -475,6 +475,13 @@ void PipelineWidget::send(boost::shared_ptr<Message> m){
         error() << "PipelineWidget::send no associated cauv node";
 }
 
+node_ptr_t PipelineWidget::nodeAt(Point const& p) const{
+    foreach(node_map_t::value_type const& v, m_nodes){
+        if(v.second->bbox().contains(p - v.second->m_pos))
+            return v.second;
+    }
+    return node_ptr_t();
+}
 
 Point PipelineWidget::referUp(Point const& p) const{
     // nowhere up to refer to: just return the same point
@@ -665,6 +672,7 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
             QWidget::keyPressEvent(event);
     }else{
         MouseEvent proxy(*this);
+        node_ptr_t current_node = nodeAt(proxy.pos);
         // TODO: proper consistent & configurable hotkeys
         switch(event->key()){
             case Qt::Key_Space:
@@ -678,6 +686,15 @@ void PipelineWidget::keyPressEvent(QKeyEvent* event){
                 break;
             case Qt::Key_R:
                 send(boost::make_shared<GraphRequestMessage>());
+                break;
+            case Qt::Key_D:
+                if(current_node){
+                    send(boost::make_shared<AddNodeMessage>(
+                        current_node->type(),
+                        std::vector<NodeInputArc>(),
+                        std::vector<NodeOutputArc>()
+                    ));
+                }
                 break;
             default:
                 QWidget::keyPressEvent(event);
@@ -697,9 +714,9 @@ void PipelineWidget::wheelEvent(QWheelEvent *event){
     lock_t l(m_lock);
     debug(2) << __func__ << event->delta() << std::hex << event->buttons();
     if(!event->buttons()){
-        double scalef = clamp(0.2, (1 + double(event->delta()) / 240), 5);
-        m_pixels_per_unit *= scalef;
-        m_pixels_per_unit = clamp(0.04, m_pixels_per_unit, 4);
+        m_scrolldelta += event->delta();
+        double scalef = pow(1.2, double(m_scrolldelta / 240));
+        m_pixels_per_unit = clamp(0.04, scalef, 4);
         postRedraw();
     }
 }

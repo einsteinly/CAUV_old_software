@@ -21,7 +21,9 @@ project
                  <library>/boost/python//boost_python
                  <library>/boost/thread//boost_thread
                  <library>/boost/serialization//boost_serialization
+                 <library>/boost/system//boost_system
                  <library>/boost/date_time//boost_date_time
+                 <library>/boost/system//boost_system
                  <library>/boost/iostreams//boost_iostreams
                  <library>/boost/program_options//boost_program_options
   : build-dir $BJAM_BUILD_DIR ;
@@ -33,7 +35,8 @@ lib spreadlib : : <name>spread <search>$(CAUV_PREFIX)/lib ;
 
 lib ssrcspreadlib : spreadlib : <name>ssrcspread <search>$(CAUV_PREFIX)/lib ;
 
-lib bpolib : : <name>boost_program_options <search>/societies/cauv/install/lib/ ;
+lib bpolib : : <name>boost_program_options <search>$(CAUV_PREFIX)/lib  ;
+lib bslib : : <name>boost_system <search>$(CAUV_PREFIX)/lib ;
 
 lib libcommon : ../common/messages.cpp
                 ../common/image.cpp 

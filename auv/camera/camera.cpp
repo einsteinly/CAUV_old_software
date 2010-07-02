@@ -82,7 +82,7 @@ Webcam::Webcam(const CameraID::e cameraID, const int deviceID)
     //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
     //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
    
-    cv::namedWindow( "Webcam", CV_WINDOW_AUTOSIZE ); 
+    //cv::namedWindow( "Webcam", CV_WINDOW_AUTOSIZE ); 
 
     m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
     m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
@@ -100,8 +100,8 @@ void Webcam::grabFrameAndBroadcast()
     cv::Mat mat;
     std::cout << "." << std::flush;
     m_capture >> mat;
-    cv::imshow("CAUV OpenCV test", mat);
-    cv::waitKey(10);
+//    cv::imshow("CAUV OpenCV test", mat);
+//    cv::waitKey(10);
     broadcastImage(mat);
 }
 

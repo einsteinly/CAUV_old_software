@@ -46,6 +46,7 @@ ReconnectingSpreadMailbox::ReconnectingSpreadMailbox() :
     m_connection_state(DISCONNECTED),
     m_mailbox(),
     m_keep_trying(true),
+    m_no_threads(false),
     m_thread(),
     m_groups_lock(),
     m_groups()
@@ -130,7 +131,7 @@ int ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<const Message> mess
                                            const std::string &destinationGroup) {
     ErrOnExit err("Failed to send message "); 
     int r = 0;
-    if(_waitConnected(100)){
+    if(_waitConnected(500)){
         try{
             if(m_mailbox){
                 r = m_mailbox->sendMessage(message, serviceType, destinationGroup);
@@ -154,7 +155,7 @@ int ReconnectingSpreadMailbox::sendMultigroupMessage(boost::shared_ptr<const Mes
                                                      const std::vector<std::string> &groupNames) {
     ErrOnExit err("Failed to send multigroup message "); 
     int r = 0;
-    if(_waitConnected(100)){
+    if(_waitConnected(500)){
         try{
             if(m_mailbox){
                 r = m_mailbox->sendMultigroupMessage(message, serviceType, groupNames);
@@ -180,7 +181,7 @@ boost::shared_ptr<SpreadMessage> ReconnectingSpreadMailbox::receiveMessage() {
     while(true)
     {
         ErrOnExit err("Failed to receive message ");
-        if(_waitConnected(500)){
+        if(_waitConnected(1000)){
             try{
                 if(m_mailbox){
                     boost::shared_ptr<SpreadMessage> r = m_mailbox->receiveMessage();
@@ -251,7 +252,7 @@ void ReconnectingSpreadMailbox::operator()(){
                 _disconnect();
                 throw e;
             }else{
-                std::cerr << e.what() << ", trying to reconnect..." << std::endl;
+                error() << e.what() << ", trying to reconnect...";
             }
         }
         boost::this_thread::sleep(boost::posix_time::milliseconds(retry_msecs)); 
@@ -325,19 +326,22 @@ void ReconnectingSpreadMailbox::_synchroniseGroups() {
 }
 
 void ReconnectingSpreadMailbox::_asyncConnect(){
-    // I appreciate that lowlevel functions which print things are really
-    // annoying, however this saves a signficiant number of lines of code,
-    // since this function is almost always called after an error, in which
-    // case printing that we are going to try to reconnect is what we want
-    // to do anyway.
-    
     boost::unique_lock<mutex_t> l(m_connection_state_lock);
     if (m_connection_state != DISCONNECTED) return;
     m_connection_state = CONNECTING;
     l.unlock();
-
-    info() << "reconnecting..."; 
-    m_thread = boost::thread(boost::ref(*this));
+    if(!m_no_threads){
+        // I appreciate that lowlevel functions which print things are really
+        // annoying, however this saves a signficiant number of lines of code,
+        // since this function is almost always called after an error, in which
+        // case printing that we are going to try to reconnect is what we want
+        // to do anyway.
+        info() << "reconnecting..."; 
+        m_thread = boost::thread(boost::ref(*this));
+    }else{
+        info() << "reconnecting (synchronously)...";
+        operator()();
+    }
 }
 
 void ReconnectingSpreadMailbox::_disconnect() {

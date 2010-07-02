@@ -67,7 +67,7 @@ class VideoFileOutputNode: public OutputNode{
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
                 closeVideo(); 
-                throw(img_pipeline_error("VideoFileOutputNode: could not write file"));
+                throw img_pipeline_error("VideoFileOutputNode: could not write file");
             }
             
             return r;
@@ -75,7 +75,7 @@ class VideoFileOutputNode: public OutputNode{
 
         void openVideo(std::string const& fname, cv::Size const& size){
             // TODO: automagical FPS detection 
-            bool r = m_writer.open(fname, CV_FOURCC('M','P','G','2'), 10 /*fps*/, size, true);
+            bool r = m_writer.open(fname, CV_FOURCC('M','P','G','2'), 25 /*fps*/, size, true);
             if(!r || !m_writer.isOpened()){
                 error() << "could not open video writier";
                 clearAllowQueue();

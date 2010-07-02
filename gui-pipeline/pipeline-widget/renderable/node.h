@@ -69,6 +69,7 @@ class Node: public Draggable,
         // Node Stuff:
         void close();
         int id() const;
+        NodeType::e type() const;
         renderable_ptr_t outSocket(std::string const& output_id);
         renderable_ptr_t inSocket(std::string const& input_id);
         arc_ptr_t newArc(renderable_wkptr_t src, renderable_wkptr_t dst);
@@ -102,7 +103,7 @@ class Node: public Draggable,
         BBox m_back;
 
         int m_node_id;
-        std::string m_node_type;
+        NodeType::e m_node_type;
 
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;

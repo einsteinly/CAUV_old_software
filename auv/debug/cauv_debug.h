@@ -63,28 +63,38 @@ class recursive_mutex;
  *
  */
 
+// Forward Declarations
+class CauvNode;
+
 class SmartStreamBase : public boost::noncopyable
 {
     public:
         SmartStreamBase(std::ostream& stream,
-                        std::string const& prefix = "",
                         BashColour::e col = BashColour::None,
                         bool print=true);
 
         virtual ~SmartStreamBase();
 
         static void setLevel(int debug_level);
+        static void setCauvNode(CauvNode*);
+        static void setProgramName(std::string const&);
+        static void setLogfileName(std::string const&);
 
     protected:
         struct Settings{
             int debug_level;
+            CauvNode* cauv_node;
+            std::string program_name;
+            std::string logfile_name;
         };
 
         // stuff to print
         std::list< std::string > m_stuffs;
 
         virtual void printPrefix(std::ostream&);
-        
+        // can't forward declare enums...
+        virtual int debugType() const;
+
         // initialise on first use
         static Settings& settings();
 
@@ -95,6 +105,9 @@ class SmartStreamBase : public boost::noncopyable
         //   mayAddSpaceNext(s1) == true && mayAddSpaceNow(s2) == true
         static bool mayAddSpaceNext(std::string const& s);
         static bool mayAddSpaceNow(std::string const& s);
+        
+        // per-thread:
+        static bool& recursive();
 
         // initialise on first use
         static std::ofstream& logFile();
@@ -106,7 +119,6 @@ class SmartStreamBase : public boost::noncopyable
 #endif
 
         std::ostream& m_stream;
-        std::string m_prefix;
         BashColour::e m_col;
         bool m_print;
 };
@@ -135,6 +147,9 @@ struct debug : public SmartStreamBase
     /* must handle manipulators (e.g. endl) separately:
      */
     debug& operator<<(std::ostream& (*manip)(std::ostream&));
+    
+    virtual void printPrefix(std::ostream&);
+    virtual int debugType() const;
 
     private:
         int m_level;
@@ -180,6 +195,9 @@ struct error : public SmartStreamBase
     /* must handle manipulators (e.g. endl) separately:
      */
     error& operator<<(std::ostream& (*manip)(std::ostream&));
+    
+    virtual void printPrefix(std::ostream&);
+    virtual int debugType() const;
 };
 
 struct warning : public SmartStreamBase
@@ -202,6 +220,9 @@ struct warning : public SmartStreamBase
     /* must handle manipulators (e.g. endl) separately:
      */
     warning& operator<<(std::ostream& (*manip)(std::ostream&));
+    
+    virtual void printPrefix(std::ostream&);
+    virtual int debugType() const;
 };
 
 struct info : public SmartStreamBase
@@ -224,6 +245,9 @@ struct info : public SmartStreamBase
     /* must handle manipulators (e.g. endl) separately:
      */
     info& operator<<(std::ostream& (*manip)(std::ostream&));
+    
+    virtual void printPrefix(std::ostream&);
+    virtual int debugType() const;
 };
 
 #endif // ndef __CAUV_DEBUG_H__

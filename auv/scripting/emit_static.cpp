@@ -99,6 +99,10 @@ class CauvNodeWrapper:
             this->onRun();
         }*/
 
+        void run(){
+            CauvNode::run(true);
+        }
+
         /*int foo(boost::shared_ptr<Message const> m){
             debug() << "foo called";
             debug() << m;
@@ -192,8 +196,8 @@ void emitMessage(){
 void emitCauvNode(){
     bp::class_<CauvNodeWrapper,
                boost::noncopyable
-              >("CauvNode", bp::init<std::string, std::string>())
-         .def("run", wrap(&CauvNode::run))
+              >("CauvNode", bp::init<std::string, std::string, unsigned>())
+         .def("run", wrap(&CauvNodeWrapper::run))
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))

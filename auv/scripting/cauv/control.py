@@ -80,6 +80,41 @@ class AUV(messaging.BufferedMessageObserver):
     def vstern(self, value):
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
+    
+    def motorMap(self, motor_id, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
+        #
+        #        -127                           0                            127
+        # demand:  |---------------------------|0|----------------------------| 
+        # output:     |---------------|         0            |----------------|
+        #             ^               ^                      ^                ^
+        #             maxMinus     zeroMinus               zeroPlus        maxPlus
+        #
+        m = messaging.MotorMap()
+        m.zeroPlus = zero_plus
+        m.zeroMinus = zero_minus
+        m.maxPlus = max_plus
+        m.maxMinus = max_minus
+        self.send(messaging.SetMotorMapMessage(motor_id, m))
+
+    def propMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
+        # see doc for motorMap
+        self.motorMap(messaging.MotorID.Prop, zero_plus, zero_minus, max_plus, max_minus)
+
+    def hbowMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
+        # see doc for motorMap        
+        self.motorMap(messaging.MotorID.HBow, zero_plus, zero_minus, max_plus, max_minus)
+
+    def vbowMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
+        # see doc for motorMap        
+        self.motorMap(messaging.MotorID.VBow, zero_plus, zero_minus, max_plus, max_minus)
+
+    def vsternMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
+        # see doc for motorMap        
+        self.motorMap(messaging.MotorID.VStern, zero_plus, zero_minus, max_plus, max_minus)
+
+    def hsternMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
+        # see doc for motorMap        
+        self.motorMap(messaging.MotorID.HStern, zero_plus, zero_minus, max_plus, max_minus)
 
     def v(self, value):
         self.vbow(value)

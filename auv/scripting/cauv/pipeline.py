@@ -90,7 +90,7 @@ class Model(messaging.BufferedMessageObserver):
 
     def save(self, picklefname):
         with open(picklefname, 'wb') as outf:
-            saved = self.get(3.0)
+            saved = self.get(5.0)
             pickle.dump(saved, outf)
     
     def load(self, picklefname):
@@ -98,8 +98,8 @@ class Model(messaging.BufferedMessageObserver):
             saved = pickle.load(inf)
             self.set(saved)
 
-    def get(self, timeout=3):
-        graph = self.__getSynchronousGraphDescription(3)
+    def get(self, timeout=5):
+        graph = self.__getSynchronousGraphDescription(timeout)
         if graph is None:
             raise RuntimeError(
                 'Could not get Description Message from the pipeline, is it running?'
