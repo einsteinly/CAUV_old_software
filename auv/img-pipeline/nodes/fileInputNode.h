@@ -59,6 +59,7 @@ class FileInputNode: public AsynchronousNode{
             image_ptr_t image;
 
             if(!m_is_directory){
+                lock_t cl(m_capture_lock);
                 if(!m_capture.isOpened()){
                     image = readImage(fname);
                     clearAllowQueue();
