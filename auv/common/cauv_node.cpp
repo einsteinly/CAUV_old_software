@@ -23,6 +23,17 @@ CauvNode::~CauvNode()
     m_event_monitor->stopMonitoring();
 }
 
+void CauvNode::runMailbox()
+{
+    m_mailbox->useThreads(false);
+    while(true)
+    {
+        m_mailbox->run();
+        warning() << "mailbox->run() finished, will restart in 200ms";
+        msleep(200);
+    }
+}
+
 void CauvNode::run()
 {
 	cauv_global::print_module_header(m_name);

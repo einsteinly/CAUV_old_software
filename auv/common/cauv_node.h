@@ -23,7 +23,8 @@ class CauvNode
 {
 	public:
 		virtual ~CauvNode();
-		
+		 
+        void runMailbox();
         void run();
 
         int defaultOptions();

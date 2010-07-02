@@ -42,6 +42,10 @@ class Node(messaging.CauvNode):
         t = threading.Thread(target=self.run)
         t.daemon = True
         t.start()
+
+        t = threading.Thread(target=self.runMailbox)
+        t.daemon = True
+        t.start()
     
     def send(self, message, groups, service_level=ServiceLevel.Safe):
         self.mailbox.send(message, service_level, groups)

@@ -194,6 +194,7 @@ void emitCauvNode(){
                boost::noncopyable
               >("CauvNode", bp::init<std::string, std::string, unsigned>())
          .def("run", wrap(&CauvNode::run))
+         .def("runMailbox", wrap(&CauvNode::runMailbox))
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))
