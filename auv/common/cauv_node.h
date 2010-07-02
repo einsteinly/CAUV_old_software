@@ -24,8 +24,7 @@ class CauvNode
 	public:
 		virtual ~CauvNode();
 		 
-        void runMailbox();
-        void run();
+        void run(bool synchronous=false);
 
         int defaultOptions();
         int parseOptions(int argc, char** arg);

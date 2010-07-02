@@ -37,13 +37,10 @@ class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public
          * Spawns a new thread listening for new messages on the associated mailbox.
          * Whenever a new message is received, all observers are informed.
          */
-        void startMonitoring(); 
+        void startMonitoringAsync();
+        void stopMonitoringAsync();
 
-        /**
-         * Tells the spawned event loop to die.
-         * TODO: should this return immediately, or wait?
-         */
-        void stopMonitoring();
+        void startMonitoringSync();
 
     private:
         void doMonitoring();

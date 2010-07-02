@@ -31,17 +31,12 @@ public:
                          ConnectionTimeout const& timeout = SpreadMailbox::ZERO_TIMEOUT,
                          SpreadMailbox::MailboxPriority priority = SpreadMailbox::MEDIUM);
     
-    /* should a thread be started in order to connect (ut=true), or should the
-     * mailbox rely on run() being called
+    /* should a thread be started in order to connect (ut=true), or should all
+     * connection attempts be synchronous
      */
     void useThreads(bool ut){
         m_no_threads = !ut;
     }
-
-    /* run using external thread: do not start any threads; this function will
-     * only return if an error forces the mailbox to disconnect
-     */
-    void run();
 
     /**
      * @return The internal connection identifier assigned to this mailbox.

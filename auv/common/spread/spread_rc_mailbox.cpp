@@ -71,10 +71,6 @@ void ReconnectingSpreadMailbox::connect(
     _asyncConnect();
 }
 
-void ReconnectingSpreadMailbox::run() {
-    operator()();
-}
-
 /**
  * @return The internal connection identifier assigned to this mailbox.
  */
@@ -330,20 +326,21 @@ void ReconnectingSpreadMailbox::_synchroniseGroups() {
 }
 
 void ReconnectingSpreadMailbox::_asyncConnect(){
+    boost::unique_lock<mutex_t> l(m_connection_state_lock);
+    if (m_connection_state != DISCONNECTED) return;
+    m_connection_state = CONNECTING;
+    l.unlock();
     if(!m_no_threads){
         // I appreciate that lowlevel functions which print things are really
         // annoying, however this saves a signficiant number of lines of code,
         // since this function is almost always called after an error, in which
         // case printing that we are going to try to reconnect is what we want
         // to do anyway.
-        
-        boost::unique_lock<mutex_t> l(m_connection_state_lock);
-        if (m_connection_state != DISCONNECTED) return;
-        m_connection_state = CONNECTING;
-        l.unlock();
-
         info() << "reconnecting..."; 
         m_thread = boost::thread(boost::ref(*this));
+    }else{
+        info() << "reconnecting (synchronously)...";
+        operator()();
     }
 }
 
