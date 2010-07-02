@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include <boost/make_shared.hpp>
+#include <boost/ref.hpp>
 
 #include <opencv/cv.h>
 
@@ -133,7 +134,8 @@ static void scan_thick_arc(cv::Mat* img, int cx, int cy, int radius, float from,
 
 SonarAccumulator::SonarAccumulator()
     : m_img(boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1)))
-{
+{   
+    assert(m_img->cvMat().data);
 }
 void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
 {
