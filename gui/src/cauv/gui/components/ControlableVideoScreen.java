@@ -113,7 +113,19 @@ public class ControlableVideoScreen extends VideoScreen {
 		this.targetPitch = pitch;
 		this.repaint();
 	}
+	
+	public void setYaw(float yaw){
+	    this.yaw = yaw;
+	}
+	
+	public void setPitch(float pitch) {
+        this.pitch = pitch;
+    }
 
+	public void setAttitude(floatYPR orientation){
+        this.setYaw(orientation.yaw);
+        this.setPitch(orientation.pitch);
+	}
 	
 	protected floatYPR pointToAttitude(int x, int y){
 		floatYPR ret =  new floatYPR();
@@ -157,14 +169,14 @@ public class ControlableVideoScreen extends VideoScreen {
 		if((this.elements & SHOW_Y_AXIS) != 0) {
 			p.drawLine(this.width() / 2, 50, this.width() / 2, this.height()-50);
 	
-			for(int i = (int)min.pitch; i < (int)(min.pitch + axisHeight); i += 10){
-				int remainder = (int) (i % 10);
+			for(int i = (int)min.pitch; i < (int)(min.pitch + axisHeight); i += 5){
+				int remainder = (int) (i % 5);
 				int y = this.height() - attitudeToPoint(axisWidth/2, i-remainder).y();
 				
 				if(y > 50 && y < this.height() - 50) {
 					p.drawLine((this.width()/2)-5, y,(this.width()/2), y);
 		
-					if(Math.abs((i-remainder)-pitch)>5)
+					if(Math.abs((i-remainder)-pitch)>2.5)
 						p.drawText((this.width()/2) + 5, y+4, i-remainder+"°");
 				}
 			}
@@ -174,14 +186,14 @@ public class ControlableVideoScreen extends VideoScreen {
 		if((this.elements & SHOW_X_AXIS) != 0) {
 			p.drawLine(50, (this.height() / 2), this.width() - 50, this.height() / 2);
 			
-			for(int i = (int)min.yaw; i < (int)(min.yaw+ axisWidth); i += 10){
-				int remainder = (int) (i % 10);
+			for(int i = (int)min.yaw; i < (int)(min.yaw+ axisWidth); i += 5){
+				int remainder = (int) (i % 5);
 				int x = attitudeToPoint(i-remainder, axisHeight/2).x();
 				
 				if(x > 50 && x < this.width() - 50) {
 					p.drawLine(x, (this.height()/2)-5, x,(this.height()/2));
 					
-					if(Math.abs((i-remainder)-yaw)>5)
+					if(Math.abs((i-remainder)-yaw)>2.5)
 						p.drawText(x - 8, (this.height()/2)+15, i-remainder+"°");
 				}
 			}

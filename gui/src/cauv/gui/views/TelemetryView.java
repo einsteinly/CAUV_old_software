@@ -1,6 +1,7 @@
 package cauv.gui.views;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
@@ -8,12 +9,14 @@ import java.util.Vector;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.AxisSpace;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.xy.DefaultTableXYDataset;
 import org.jfree.data.xy.XYSeries;
 
 import cauv.auv.AUV;
 import cauv.gui.ScreenView;
+import cauv.types.MotorDemand;
 import cauv.types.floatYPR;
 
 import com.trolltech.qt.core.QTimer;
@@ -53,7 +56,11 @@ public class TelemetryView extends QWidget implements ScreenView {
         
         Vector<Series<?>> series = new Vector<Series<?>>();
         
-        public GraphView() {
+        int max, min;
+        
+        public GraphView(int min, int max) {
+            this.max = max;
+            this.min = min;
             this.setMaximumHeight(150);
         }
         
@@ -95,6 +102,33 @@ public class TelemetryView extends QWidget implements ScreenView {
                                 namedSeries.put(s.getName() + " Roll", new XYSeries(s.getName() + " Roll", true, false));
                             xySeries = namedSeries.get(s.getName() + " Roll");
                             xySeries.add(xySeries.getItemCount()+1, ((floatYPR) t).roll);
+                        } else if(t instanceof MotorDemand){
+                           t = (MotorDemand) t;
+
+                           if(!namedSeries.containsKey(s.getName() + " Prop"))
+                               namedSeries.put(s.getName() + " Prop", new XYSeries(s.getName() + " Prop", true, false));
+                           XYSeries xySeries = namedSeries.get(s.getName() + " Prop");
+                           xySeries.add(xySeries.getItemCount()+1, ((MotorDemand) t).prop);
+                           
+                           if(!namedSeries.containsKey(s.getName() + " HBow"))
+                               namedSeries.put(s.getName() + " HBow", new XYSeries(s.getName() + " HBow", true, false));
+                           xySeries = namedSeries.get(s.getName() + " HBow");
+                           xySeries.add(xySeries.getItemCount()+1, ((MotorDemand) t).hbow);
+                           
+                           if(!namedSeries.containsKey(s.getName() + " HStern"))
+                               namedSeries.put(s.getName() + " HStern", new XYSeries(s.getName() + " HStern", true, false));
+                           xySeries = namedSeries.get(s.getName() + " HStern");
+                           xySeries.add(xySeries.getItemCount()+1, ((MotorDemand) t).hstern);
+                           
+                           if(!namedSeries.containsKey(s.getName() + " VBow"))
+                               namedSeries.put(s.getName() + " VBow", new XYSeries(s.getName() + " VBow", true, false));
+                           xySeries = namedSeries.get(s.getName() + " VBow");
+                           xySeries.add(xySeries.getItemCount()+1, ((MotorDemand) t).vbow);
+                           
+                           if(!namedSeries.containsKey(s.getName() + " VStern"))
+                               namedSeries.put(s.getName() + " VStern", new XYSeries(s.getName() + " VStern", true, false));
+                           xySeries = namedSeries.get(s.getName() + " VStern");
+                           xySeries.add(xySeries.getItemCount()+1, ((MotorDemand) t).vstern);
                         }
                     }
                 }
@@ -113,6 +147,11 @@ public class TelemetryView extends QWidget implements ScreenView {
             
             chart.getXYPlot().getDomainAxis().setVisible(false);
             chart.getXYPlot().getRangeAxis().setVisible(true);
+            chart.getXYPlot().getRangeAxis().setTickLabelPaint(Color.white);
+            
+            
+            chart.getXYPlot().getRangeAxis().setAutoRange(false);
+            chart.getXYPlot().getRangeAxis().setRange(min, max);
             
             try {
                 QPixmap pm = new QPixmap();
@@ -126,34 +165,53 @@ public class TelemetryView extends QWidget implements ScreenView {
         }   
     }
     
-    
     protected AUV auv;
     
 	public QGraphicsPixmapItem icon = new QGraphicsPixmapItem();
     Ui_TelemetryView ui = new Ui_TelemetryView();
     
     Series<Float> depth = new Series<Float>("Depth", 500);
-    Series<Float> forePressure = new Series<Float>("Pressure Fore", 500);
-    Series<Float> aftPressure = new Series<Float>("Pressure Aft", 500);
-    Series<floatYPR> orientation = new Series<floatYPR>("Oritentation", 500);
+    Series<Float> forePressure = new Series<Float>("Pressure Fore", 5000);
+    Series<Float> aftPressure = new Series<Float>("Pressure Aft", 5000);
+    Series<floatYPR> orientation = new Series<floatYPR>("Oritentation", 5000);
+    Series<MotorDemand> depthDemands = new Series<MotorDemand>("Depth Demands", 5000);
+    Series<MotorDemand> yawDemands = new Series<MotorDemand>("Yaw Demands", 5000);
+    Series<MotorDemand> pitchDemands = new Series<MotorDemand>("Pitch Demands", 5000);
+
     
     Vector<GraphView> graphs = new Vector<GraphView>();
     
-    public TelemetryView() {
+    public TelemetryView() {        
+        
         ui.setupUi(this);
         ui.graphScroll.setBackgroundRole(ColorRole.NoRole);
 
-        GraphView pressures = new GraphView();
+        GraphView pressures = new GraphView(0, 10);
         pressures.addSeries(depth);
         pressures.addSeries(forePressure);
         pressures.addSeries(aftPressure);
         graphs.add(pressures);
         ui.graphsLayout.addWidget(pressures);
         
-        GraphView orientations = new GraphView();
+        GraphView orientations = new GraphView(0, 360);
         orientations.addSeries(orientation);
         graphs.add(orientations);
         ui.graphsLayout.addWidget(orientations);
+        
+        GraphView depthDemandsGraph = new GraphView(-127, 127);
+        depthDemandsGraph.addSeries(depthDemands);
+        graphs.add(depthDemandsGraph);
+        ui.graphsLayout_2.addWidget(depthDemandsGraph);
+        
+        GraphView yawDemandsGraph = new GraphView(-127, 127);
+        yawDemandsGraph.addSeries(yawDemands);
+        graphs.add(yawDemandsGraph);
+        ui.graphsLayout_2.addWidget(yawDemandsGraph);
+        
+        GraphView pitchDemandsGraph = new GraphView(-127, 127);
+        pitchDemandsGraph.addSeries(pitchDemands);
+        graphs.add(pitchDemandsGraph);
+        ui.graphsLayout_2.addWidget(pitchDemandsGraph);
         
         
         QTimer t = new QTimer(this);
@@ -170,6 +228,21 @@ public class TelemetryView extends QWidget implements ScreenView {
         auv.depthChanged.connect(depth, "onPointData(Object)");
         auv.pressureChanged.connect(this, "onPressureData(float, float)");
         auv.orientationChanged.connect(orientation, "onPointData(Object)");
+        auv.autopilots.DEPTH.controllerStateUpdated.connect(this, "onDepthControllerStateUpdated(float, float, float, float, MotorDemand)");
+        auv.autopilots.PITCH.controllerStateUpdated.connect(this, "onPitchControllerStateUpdated(float, float, float, float, MotorDemand)");
+        auv.autopilots.YAW.controllerStateUpdated.connect(this, "onYawControllerStateUpdated(float, float, float, float, MotorDemand)");
+    }
+    
+    public void onDepthControllerStateUpdated(float mv, float error, float derror, float ierror, MotorDemand demand){
+        depthDemands.onPointData(demand);
+    }
+    
+    public void onPitchControllerStateUpdated(float mv, float error, float derror, float ierror, MotorDemand demand){
+        pitchDemands.onPointData(demand);
+    }
+    
+    public void onYawControllerStateUpdated(float mv, float error, float derror, float ierror, MotorDemand demand){
+        yawDemands.onPointData(demand);
     }
     
     public void onPressureData(float fore, float aft){
@@ -182,6 +255,9 @@ public class TelemetryView extends QWidget implements ScreenView {
         for(GraphView gv : graphs){
             gv.updatePixmap();
         }
+
+        icon.setPixmap(graphs.get(0).pixmap().scaled(100, 100));
+        
         /*
         
         DefaultTableXYDataset pressureDataset= new DefaultTableXYDataset();

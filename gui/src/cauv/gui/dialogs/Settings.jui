@@ -51,124 +51,7 @@
        <item row="1" column="1">
         <widget class="QWidget" name="widget" native="true">
          <layout class="QGridLayout" name="gridLayout">
-          <item row="5" column="3">
-           <widget class="QDoubleSpinBox" name="yaw_Ki">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="4">
-           <widget class="QDoubleSpinBox" name="yaw_Kd">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="5">
-           <widget class="QDoubleSpinBox" name="yaw_scale">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="3">
-           <widget class="QDoubleSpinBox" name="pitch_Ki">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="4">
-           <widget class="QDoubleSpinBox" name="pitch_Kd">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="5">
-           <widget class="QDoubleSpinBox" name="pitch_scale">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="3">
-           <widget class="QDoubleSpinBox" name="depth_Ki">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="4">
-           <widget class="QDoubleSpinBox" name="depth_Kd">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="5">
-           <widget class="QDoubleSpinBox" name="depth_scale">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="3">
+          <item row="1" column="3">
            <widget class="QLabel" name="label_3">
             <property name="text">
              <string>Ki</string>
@@ -178,7 +61,7 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="4">
+          <item row="1" column="4">
            <widget class="QLabel" name="label_4">
             <property name="text">
              <string>Kd</string>
@@ -188,7 +71,7 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="5">
+          <item row="1" column="5">
            <widget class="QLabel" name="label_5">
             <property name="text">
              <string>scale</string>
@@ -198,7 +81,7 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="1">
+          <item row="2" column="1">
            <widget class="QLabel" name="label_6">
             <property name="text">
              <string>Yaw</string>
@@ -208,46 +91,7 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="2">
-           <widget class="QDoubleSpinBox" name="yaw_Kp">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="2">
-           <widget class="QDoubleSpinBox" name="pitch_Kp">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="2">
-           <widget class="QDoubleSpinBox" name="depth_Kp">
-            <property name="minimum">
-             <double>-10000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
+          <item row="1" column="2">
            <widget class="QLabel" name="label_2">
             <property name="text">
              <string>Kp</string>
@@ -257,7 +101,7 @@
             </property>
            </widget>
           </item>
-          <item row="9" column="1">
+          <item row="7" column="1">
            <widget class="QLabel" name="label_7">
             <property name="text">
              <string>Pitch</string>
@@ -277,52 +121,64 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="3">
-           <widget class="QCheckBox" name="depthEnabled">
+          <item row="2" column="2">
+           <widget class="QLineEdit" name="yaw_Kp">
+            <property name="text">
+             <string>1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QLineEdit" name="yaw_Ki">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="QLineEdit" name="yaw_Kd">
+            <property name="text">
+             <string>-40</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="5">
+           <widget class="QLineEdit" name="yaw_scale">
+            <property name="text">
+             <string>1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QCheckBox" name="yawEnabled">
             <property name="text">
              <string>Enabled</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_15">
+          <item row="3" column="5">
+           <widget class="QLabel" name="yawActual">
             <property name="text">
-             <string>Depth Control</string>
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="0" column="4">
-           <widget class="QDoubleSpinBox" name="depthValue">
-            <property name="minimum">
-             <double>-1000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>1000.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_16">
+          <item row="8" column="2">
+           <widget class="QCheckBox" name="pitchEnabled">
             <property name="text">
-             <string>Yaw Control</string>
+             <string>Enabled</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="4">
-           <widget class="QDoubleSpinBox" name="yawTarget">
-            <property name="minimum">
-             <double>-1000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>1000.000000000000000</double>
+          <item row="8" column="5">
+           <widget class="QLabel" name="pitchActual">
+            <property name="text">
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="3" column="3">
-           <spacer name="verticalSpacer_6">
+          <item row="9" column="2">
+           <spacer name="verticalSpacer_7">
             <property name="orientation">
              <enum>com.trolltech.qt.core.Qt.Orientation.Vertical</enum>
             </property>
@@ -334,42 +190,31 @@
             </property>
            </spacer>
           </item>
-          <item row="1" column="3">
-           <widget class="QCheckBox" name="yawEnabled">
+          <item row="4" column="2">
+           <spacer name="verticalSpacer_8">
+            <property name="orientation">
+             <enum>com.trolltech.qt.core.Qt.Orientation.Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="11" column="2">
+           <widget class="QCheckBox" name="depthEnabled">
             <property name="text">
              <string>Enabled</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="3">
-           <widget class="QCheckBox" name="pitchEnabled">
-            <property name="text">
-             <string>Enabled</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="4">
-           <widget class="QDoubleSpinBox" name="pitchTarget">
-            <property name="minimum">
-             <double>-1000.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>1000.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="label_17">
-            <property name="text">
-             <string>Pitch Control</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="5">
+          <item row="11" column="5">
            <widget class="QLabel" name="depthActual">
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>150</width>
               <height>0</height>
              </size>
             </property>
@@ -378,17 +223,80 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="5">
-           <widget class="QLabel" name="yawActual">
+          <item row="7" column="2">
+           <widget class="QLineEdit" name="pitch_Kp">
             <property name="text">
-             <string/>
+             <string>0</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="5">
-           <widget class="QLabel" name="pitchActual">
+          <item row="7" column="3">
+           <widget class="QLineEdit" name="pitch_Ki">
             <property name="text">
-             <string/>
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="4">
+           <widget class="QLineEdit" name="pitch_Kd">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="5">
+           <widget class="QLineEdit" name="pitch_scale">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="2">
+           <widget class="QLineEdit" name="depth_Kp">
+            <property name="text">
+             <string>40</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="3">
+           <widget class="QLineEdit" name="depth_Ki">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="4">
+           <widget class="QLineEdit" name="depth_Kd">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="5">
+           <widget class="QLineEdit" name="depth_scale">
+            <property name="text">
+             <string>1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QLineEdit" name="yawTarget">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="3">
+           <widget class="QLineEdit" name="pitchTarget">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="3">
+           <widget class="QLineEdit" name="depthTarget">
+            <property name="text">
+             <string>0</string>
             </property>
            </widget>
           </item>

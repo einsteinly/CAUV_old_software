@@ -76,8 +76,8 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ui.setupUi(this);
 		ui.address.setText(Config.ADDRESS);
 		ui.port.setValue(Config.AUV_PORT);
-		ui.backButton.hide();
-		ui.backButton.clicked.connect(this, "back()");
+		//ui.backButton.hide();
+		//ui.backButton.clicked.connect(this, "back()");
 		ui.connectButton.clicked.connect(this, "connect()");
 		ui.actionOptions_2.triggered.connect(this, "showSettings()");
 		AUV.registerAUVConnectionObserver(settingsDialog);
@@ -114,7 +114,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	                return true;
 	            }
 	        }
-	        return false;
+	        return super.eventFilter(obj, event);
 	    }
 	    return super.eventFilter(obj, event);
 	}
@@ -125,7 +125,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	
 	protected void back(){
 		ui.informationStack.setCurrentWidget(ui.page);
-		ui.backButton.hide();
+		//ui.backButton.hide();
 	}
 	
 	protected void connect() {
@@ -173,7 +173,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		// stack
 		QGraphicsView graphics = new QGraphicsView() {
 			protected void mouseReleaseEvent(QMouseEvent arg) {
-				ui.backButton.show();
+				//ui.backButton.show();
 				ui.informationStack.setCurrentWidget(view.getScreenWidget());
 			}
 		};		
@@ -184,7 +184,7 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 		ScreenIcon icon = new ScreenIcon();
 		icon.addWidget(graphics);
 		icon.setText(view.getScreenName());
-		ui.iconLayout.addWidget(icon, ui.iconLayout.count()/5, ui.iconLayout.count()%5);
+		ui.iconLayout.addWidget(icon);
 		
 		QGraphicsScene scene = new QGraphicsScene();
 		scene.addItem(view.getIconWidget());

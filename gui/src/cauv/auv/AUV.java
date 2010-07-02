@@ -9,6 +9,7 @@ import cauv.auv.MessageSocket.ConnectionStateObserver;
 import cauv.gui.ScreenView;
 import cauv.types.CameraID;
 import cauv.types.Image;
+import cauv.types.MotorDemand;
 import cauv.types.MotorID;
 import cauv.types.floatYPR;
 
@@ -94,6 +95,7 @@ public class AUV extends QSignalEmitter {
         public Signal1<Autopilot<T>> targetChanged = new Signal1<Autopilot<T>>();
         public Signal1<Boolean> stateChanged = new Signal1<Boolean>();
         public Signal4<Float, Float, Float, Float> paramsChanged = new Signal4<Float, Float, Float, Float>();
+        public Signal5<Float, Float, Float, Float, MotorDemand> controllerStateUpdated = new Signal5<Float, Float, Float, Float, MotorDemand>();
 
         protected T target;
         protected boolean enabled = true;

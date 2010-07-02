@@ -34,12 +34,12 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
         final Thread t = new Thread(){
             public void run(){
                 while(true){
-                    motion.yaw(auv.autopilots.YAW.getTarget() + yawRate);
+                    motion.yaw(auv.autopilots.YAW.getTarget() + (0.1f * yawRate));
                     motion.depth(auv.autopilots.DEPTH.getTarget() + (0.1f * depthRate));
-                    motion.pitch(auv.autopilots.PITCH.getTarget() - pitchRate);
+                    motion.pitch(auv.autopilots.PITCH.getTarget() - (0.1f * pitchRate));
                     
                     try {
-                        Thread.sleep(17);
+                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                     }
                 }
@@ -103,9 +103,9 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
                 break;
 
             case TRIANGLE:
-                motion.yaw(0f);
-                motion.depth(0f);
-                motion.pitch(0f);
+                motion.yaw(auv.getOrientation().yaw);
+                motion.depth(auv.getDepth());
+                motion.pitch(auv.getOrientation().pitch);
                 break;
             case SQUARE:
                 motion.stop();

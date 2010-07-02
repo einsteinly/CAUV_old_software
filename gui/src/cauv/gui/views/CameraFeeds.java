@@ -15,8 +15,8 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	public static transient final float DEPTH_STEP = 0.2f;
 	public static transient final int STRAFE_SPEED = 100;
 
-	public static transient final float H_FOV = 120;
-	public static transient final float V_FOV = 120;
+	public static transient final float H_FOV = 30;
+	public static transient final float V_FOV = 25;
 
 	public QGraphicsPixmapItem icon = new QGraphicsPixmapItem();
 	Ui_CameraFeeds ui = new Ui_CameraFeeds();
@@ -35,7 +35,7 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	    timer.start();
 	    
 	    QTimer t = new QTimer(this);
-	    t.setInterval(300);
+	    t.setInterval(100);
 	    t.setSingleShot(false);
 	    t.timeout.connect(this, "updateCams()");
 	    t.start();
@@ -188,13 +188,20 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	public void updateCams(){
 	    if(auv == null) return;
         this.ui.forwardCam.setImage(auv.cameras.FORWARD.getLastImage());
+        if(!ui.forwardCam.getPixmap().isNull())
+            this.ui.forwardCamIcon.setPixmap(ui.forwardCam.getPixmap().scaled(ui.forwardCamIcon.width(), ui.forwardCamIcon.height()));
         this.ui.downwardCam.setImage(auv.cameras.DOWNWARD.getLastImage());
+        if(!ui.downwardCam.getPixmap().isNull())
+            this.ui.downwardCamIcon.setPixmap(ui.downwardCam.getPixmap().scaled(ui.downwardCamIcon.width(), ui.downwardCamIcon.height()));
         this.ui.sonarCam.setImage(auv.cameras.SONAR.getLastImage());
+        if(!ui.sonarCam.getPixmap().isNull())
+            this.ui.sonarIcon.setPixmap(ui.sonarCam.getPixmap().scaled(ui.sonarIcon.width(), ui.sonarIcon.height()));
         updateIcon();
 	}
 	
 	public void updateIcon(){
-	    icon.setPixmap(ui.forwardCamIcon.getPixmap());
+	    if(!ui.forwardCamIcon.getPixmap().isNull())
+	        icon.setPixmap(ui.forwardCamIcon.getPixmap().scaled(130, 100));
 	}
 	
 	@Override
@@ -219,6 +226,11 @@ public class CameraFeeds extends QWidget implements ScreenView {
     		this.ui.forwardCam.setDotLocation(auv.autopilots.YAW.getTarget(), auv.autopilots.PITCH.getTarget());
             this.ui.downwardCam.setDotLocation(auv.autopilots.YAW.getTarget(), auv.autopilots.PITCH.getTarget());
             this.ui.sonarCam.setDotLocation(auv.autopilots.YAW.getTarget(), auv.autopilots.PITCH.getTarget());
+
+            this.ui.forwardCam.setAttitude(auv.getOrientation());
+            this.ui.downwardCam.setAttitude(auv.getOrientation());
+            this.ui.sonarCam.setAttitude(auv.getOrientation());
+
 	    }
 	    
 		this.ui.forwardCam.setText(s);

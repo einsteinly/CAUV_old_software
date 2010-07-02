@@ -1933,35 +1933,58 @@ p, li { white-space: pre-wrap; }
            <number>0</number>
           </property>
           <item>
-           <widget class="QPushButton" name="backButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="styleSheet">
-             <string>#backButton {
-	border-style: none;
-	background-color: rgb(213, 213, 213);
-}</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>classpath:cauv/gui/resources/icons/arrow-left.png</normaloff>classpath:cauv/gui/resources/icons/arrow-left.png</iconset>
-            </property>
-            <property name="iconSize">
+           <widget class="QWidget" name="widget_3" native="true">
+            <property name="minimumSize">
              <size>
-              <width>12</width>
-              <height>12</height>
+              <width>100</width>
+              <height>0</height>
              </size>
             </property>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QScrollArea" name="scrollArea">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>130</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="horizontalScrollBarPolicy">
+                <enum>com.trolltech.qt.core.Qt.ScrollBarPolicy.ScrollBarAlwaysOff</enum>
+               </property>
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="scrollAreaWidgetContents_2">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>128</width>
+                  <height>302</height>
+                 </rect>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_5">
+                 <item>
+                  <layout class="QVBoxLayout" name="iconLayout"/>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
@@ -2035,13 +2058,6 @@ p, li { white-space: pre-wrap; }
              </property>
             </spacer>
            </item>
-           <item row="1" column="2">
-            <layout class="QGridLayout" name="iconLayout">
-             <property name="spacing">
-              <number>15</number>
-             </property>
-            </layout>
-           </item>
           </layout>
          </widget>
          <widget class="QWidget" name="page_2"/>
@@ -2052,7 +2068,6 @@ p, li { white-space: pre-wrap; }
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
     <size>

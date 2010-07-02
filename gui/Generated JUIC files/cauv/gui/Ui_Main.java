@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Wed 30. Jun 14:27:54 2010
+** Created: Thu 1. Jul 09:47:50 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -38,7 +38,12 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QHBoxLayout horizontalLayout_8;
     public QWidget widget_2;
     public QVBoxLayout verticalLayout_2;
-    public QPushButton backButton;
+    public QWidget widget_3;
+    public QVBoxLayout verticalLayout_4;
+    public QScrollArea scrollArea;
+    public QWidget scrollAreaWidgetContents_2;
+    public QVBoxLayout verticalLayout_5;
+    public QVBoxLayout iconLayout;
     public QStackedWidget informationStack;
     public QWidget page;
     public QGridLayout gridLayout;
@@ -46,9 +51,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QSpacerItem horizontalSpacer_3;
     public QSpacerItem verticalSpacer;
     public QSpacerItem verticalSpacer_2;
-    public QGridLayout iconLayout;
     public QWidget page_2;
-    public QStatusBar statusbar;
     public QDockWidget dockWidget;
     public QWidget dockWidgetContents_2;
     public QHBoxLayout horizontalLayout_2;
@@ -397,18 +400,39 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         verticalLayout_2 = new QVBoxLayout(widget_2);
         verticalLayout_2.setMargin(0);
         verticalLayout_2.setObjectName("verticalLayout_2");
-        backButton = new QPushButton(widget_2);
-        backButton.setObjectName("backButton");
-        QSizePolicy sizePolicy3 = new QSizePolicy(com.trolltech.qt.gui.QSizePolicy.Policy.Fixed, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding);
+        widget_3 = new QWidget(widget_2);
+        widget_3.setObjectName("widget_3");
+        widget_3.setMinimumSize(new QSize(100, 0));
+        verticalLayout_4 = new QVBoxLayout(widget_3);
+        verticalLayout_4.setSpacing(0);
+        verticalLayout_4.setMargin(0);
+        verticalLayout_4.setObjectName("verticalLayout_4");
+        scrollArea = new QScrollArea(widget_3);
+        scrollArea.setObjectName("scrollArea");
+        QSizePolicy sizePolicy3 = new QSizePolicy(com.trolltech.qt.gui.QSizePolicy.Policy.Minimum, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding);
         sizePolicy3.setHorizontalStretch((byte)0);
         sizePolicy3.setVerticalStretch((byte)0);
-        sizePolicy3.setHeightForWidth(backButton.sizePolicy().hasHeightForWidth());
-        backButton.setSizePolicy(sizePolicy3);
-        backButton.setCursor(new QCursor(Qt.CursorShape.PointingHandCursor));
-        backButton.setIcon(new QIcon(new QPixmap("classpath:cauv/gui/resources/icons/arrow-left.png")));
-        backButton.setIconSize(new QSize(12, 12));
+        sizePolicy3.setHeightForWidth(scrollArea.sizePolicy().hasHeightForWidth());
+        scrollArea.setSizePolicy(sizePolicy3);
+        scrollArea.setMinimumSize(new QSize(130, 0));
+        scrollArea.setHorizontalScrollBarPolicy(com.trolltech.qt.core.Qt.ScrollBarPolicy.ScrollBarAlwaysOff);
+        scrollArea.setWidgetResizable(true);
+        scrollAreaWidgetContents_2 = new QWidget();
+        scrollAreaWidgetContents_2.setObjectName("scrollAreaWidgetContents_2");
+        scrollAreaWidgetContents_2.setGeometry(new QRect(0, 0, 128, 302));
+        verticalLayout_5 = new QVBoxLayout(scrollAreaWidgetContents_2);
+        verticalLayout_5.setObjectName("verticalLayout_5");
+        iconLayout = new QVBoxLayout();
+        iconLayout.setObjectName("iconLayout");
 
-        verticalLayout_2.addWidget(backButton);
+        verticalLayout_5.addLayout(iconLayout);
+
+        scrollArea.setWidget(scrollAreaWidgetContents_2);
+
+        verticalLayout_4.addWidget(scrollArea);
+
+
+        verticalLayout_2.addWidget(widget_3);
 
 
         horizontalLayout_8.addWidget(widget_2);
@@ -438,12 +462,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 
         gridLayout.addItem(verticalSpacer_2, 0, 2, 1, 1);
 
-        iconLayout = new QGridLayout();
-        iconLayout.setSpacing(15);
-        iconLayout.setObjectName("iconLayout");
-
-        gridLayout.addLayout(iconLayout, 1, 2, 1, 1);
-
         informationStack.addWidget(page);
         page_2 = new QWidget();
         page_2.setObjectName("page_2");
@@ -455,9 +473,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         verticalLayout.addWidget(widget);
 
         Main.setCentralWidget(centralwidget);
-        statusbar = new QStatusBar(Main);
-        statusbar.setObjectName("statusbar");
-        Main.setStatusBar(statusbar);
         dockWidget = new QDockWidget(Main);
         dockWidget.setObjectName("dockWidget");
         dockWidget.setMinimumSize(new QSize(145, 165));
@@ -620,11 +635,6 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
 "p, li { white-space: pre-wrap; }\n"+
 "</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"+
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\"classpath:cauv/gui/resources/red-led.png\" /></p></body></html>", null));
-        backButton.setStyleSheet(com.trolltech.qt.core.QCoreApplication.translate("Main", "#backButton {\n"+
-"	border-style: none;\n"+
-"	background-color: rgb(213, 213, 213);\n"+
-"}", null));
-        backButton.setText("");
         dockWidget.setWindowTitle(com.trolltech.qt.core.QCoreApplication.translate("Main", "Messages", null));
         all.setHtml(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+

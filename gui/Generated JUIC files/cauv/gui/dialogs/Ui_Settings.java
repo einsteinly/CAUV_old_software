@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Settings.jui'
 **
-** Created: Wed 30. Jun 14:55:24 2010
+** Created: Fri 2. Jul 11:56:06 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -21,38 +21,36 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
     public QSpacerItem horizontalSpacer;
     public QWidget widget;
     public QGridLayout gridLayout;
-    public QDoubleSpinBox yaw_Ki;
-    public QDoubleSpinBox yaw_Kd;
-    public QDoubleSpinBox yaw_scale;
-    public QDoubleSpinBox pitch_Ki;
-    public QDoubleSpinBox pitch_Kd;
-    public QDoubleSpinBox pitch_scale;
-    public QDoubleSpinBox depth_Ki;
-    public QDoubleSpinBox depth_Kd;
-    public QDoubleSpinBox depth_scale;
     public QLabel label_3;
     public QLabel label_4;
     public QLabel label_5;
     public QLabel label_6;
-    public QDoubleSpinBox yaw_Kp;
-    public QDoubleSpinBox pitch_Kp;
-    public QDoubleSpinBox depth_Kp;
     public QLabel label_2;
     public QLabel label_7;
     public QLabel label_8;
-    public QCheckBox depthEnabled;
-    public QLabel label_15;
-    public QDoubleSpinBox depthValue;
-    public QLabel label_16;
-    public QDoubleSpinBox yawTarget;
-    public QSpacerItem verticalSpacer_6;
+    public QLineEdit yaw_Kp;
+    public QLineEdit yaw_Ki;
+    public QLineEdit yaw_Kd;
+    public QLineEdit yaw_scale;
     public QCheckBox yawEnabled;
-    public QCheckBox pitchEnabled;
-    public QDoubleSpinBox pitchTarget;
-    public QLabel label_17;
-    public QLabel depthActual;
     public QLabel yawActual;
+    public QCheckBox pitchEnabled;
     public QLabel pitchActual;
+    public QSpacerItem verticalSpacer_7;
+    public QSpacerItem verticalSpacer_8;
+    public QCheckBox depthEnabled;
+    public QLabel depthActual;
+    public QLineEdit pitch_Kp;
+    public QLineEdit pitch_Ki;
+    public QLineEdit pitch_Kd;
+    public QLineEdit pitch_scale;
+    public QLineEdit depth_Kp;
+    public QLineEdit depth_Ki;
+    public QLineEdit depth_Kd;
+    public QLineEdit depth_scale;
+    public QLineEdit yawTarget;
+    public QLineEdit pitchTarget;
+    public QLineEdit depthTarget;
     public QSpacerItem horizontalSpacer_2;
     public QSpacerItem verticalSpacer;
     public QSpacerItem verticalSpacer_2;
@@ -113,137 +111,41 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         widget.setObjectName("widget");
         gridLayout = new QGridLayout(widget);
         gridLayout.setObjectName("gridLayout");
-        yaw_Ki = new QDoubleSpinBox(widget);
-        yaw_Ki.setObjectName("yaw_Ki");
-        yaw_Ki.setMinimum(-10000);
-        yaw_Ki.setMaximum(10000);
-        yaw_Ki.setSingleStep(0.01);
-
-        gridLayout.addWidget(yaw_Ki, 5, 3, 1, 1);
-
-        yaw_Kd = new QDoubleSpinBox(widget);
-        yaw_Kd.setObjectName("yaw_Kd");
-        yaw_Kd.setMinimum(-10000);
-        yaw_Kd.setMaximum(10000);
-        yaw_Kd.setSingleStep(0.01);
-
-        gridLayout.addWidget(yaw_Kd, 5, 4, 1, 1);
-
-        yaw_scale = new QDoubleSpinBox(widget);
-        yaw_scale.setObjectName("yaw_scale");
-        yaw_scale.setMinimum(-10000);
-        yaw_scale.setMaximum(10000);
-        yaw_scale.setSingleStep(0.01);
-
-        gridLayout.addWidget(yaw_scale, 5, 5, 1, 1);
-
-        pitch_Ki = new QDoubleSpinBox(widget);
-        pitch_Ki.setObjectName("pitch_Ki");
-        pitch_Ki.setMinimum(-10000);
-        pitch_Ki.setMaximum(10000);
-        pitch_Ki.setSingleStep(0.01);
-
-        gridLayout.addWidget(pitch_Ki, 9, 3, 1, 1);
-
-        pitch_Kd = new QDoubleSpinBox(widget);
-        pitch_Kd.setObjectName("pitch_Kd");
-        pitch_Kd.setMinimum(-10000);
-        pitch_Kd.setMaximum(10000);
-        pitch_Kd.setSingleStep(0.01);
-
-        gridLayout.addWidget(pitch_Kd, 9, 4, 1, 1);
-
-        pitch_scale = new QDoubleSpinBox(widget);
-        pitch_scale.setObjectName("pitch_scale");
-        pitch_scale.setMinimum(-10000);
-        pitch_scale.setMaximum(10000);
-        pitch_scale.setSingleStep(0.01);
-
-        gridLayout.addWidget(pitch_scale, 9, 5, 1, 1);
-
-        depth_Ki = new QDoubleSpinBox(widget);
-        depth_Ki.setObjectName("depth_Ki");
-        depth_Ki.setMinimum(-10000);
-        depth_Ki.setMaximum(10000);
-        depth_Ki.setSingleStep(0.01);
-
-        gridLayout.addWidget(depth_Ki, 10, 3, 1, 1);
-
-        depth_Kd = new QDoubleSpinBox(widget);
-        depth_Kd.setObjectName("depth_Kd");
-        depth_Kd.setMinimum(-10000);
-        depth_Kd.setMaximum(10000);
-        depth_Kd.setSingleStep(0.01);
-
-        gridLayout.addWidget(depth_Kd, 10, 4, 1, 1);
-
-        depth_scale = new QDoubleSpinBox(widget);
-        depth_scale.setObjectName("depth_scale");
-        depth_scale.setMinimum(-10000);
-        depth_scale.setMaximum(10000);
-        depth_scale.setSingleStep(0.01);
-
-        gridLayout.addWidget(depth_scale, 10, 5, 1, 1);
-
         label_3 = new QLabel(widget);
         label_3.setObjectName("label_3");
         label_3.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
-        gridLayout.addWidget(label_3, 4, 3, 1, 1);
+        gridLayout.addWidget(label_3, 1, 3, 1, 1);
 
         label_4 = new QLabel(widget);
         label_4.setObjectName("label_4");
         label_4.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
-        gridLayout.addWidget(label_4, 4, 4, 1, 1);
+        gridLayout.addWidget(label_4, 1, 4, 1, 1);
 
         label_5 = new QLabel(widget);
         label_5.setObjectName("label_5");
         label_5.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
-        gridLayout.addWidget(label_5, 4, 5, 1, 1);
+        gridLayout.addWidget(label_5, 1, 5, 1, 1);
 
         label_6 = new QLabel(widget);
         label_6.setObjectName("label_6");
         label_6.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
-        gridLayout.addWidget(label_6, 5, 1, 1, 1);
-
-        yaw_Kp = new QDoubleSpinBox(widget);
-        yaw_Kp.setObjectName("yaw_Kp");
-        yaw_Kp.setMinimum(-10000);
-        yaw_Kp.setMaximum(10000);
-        yaw_Kp.setSingleStep(0.01);
-
-        gridLayout.addWidget(yaw_Kp, 5, 2, 1, 1);
-
-        pitch_Kp = new QDoubleSpinBox(widget);
-        pitch_Kp.setObjectName("pitch_Kp");
-        pitch_Kp.setMinimum(-10000);
-        pitch_Kp.setMaximum(10000);
-        pitch_Kp.setSingleStep(0.01);
-
-        gridLayout.addWidget(pitch_Kp, 9, 2, 1, 1);
-
-        depth_Kp = new QDoubleSpinBox(widget);
-        depth_Kp.setObjectName("depth_Kp");
-        depth_Kp.setMinimum(-10000);
-        depth_Kp.setMaximum(10000);
-        depth_Kp.setSingleStep(0.01);
-
-        gridLayout.addWidget(depth_Kp, 10, 2, 1, 1);
+        gridLayout.addWidget(label_6, 2, 1, 1, 1);
 
         label_2 = new QLabel(widget);
         label_2.setObjectName("label_2");
         label_2.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
-        gridLayout.addWidget(label_2, 4, 2, 1, 1);
+        gridLayout.addWidget(label_2, 1, 2, 1, 1);
 
         label_7 = new QLabel(widget);
         label_7.setObjectName("label_7");
         label_7.setAlignment(com.trolltech.qt.core.Qt.AlignmentFlag.createQFlags(com.trolltech.qt.core.Qt.AlignmentFlag.AlignCenter));
 
-        gridLayout.addWidget(label_7, 9, 1, 1, 1);
+        gridLayout.addWidget(label_7, 7, 1, 1, 1);
 
         label_8 = new QLabel(widget);
         label_8.setObjectName("label_8");
@@ -251,77 +153,119 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
 
         gridLayout.addWidget(label_8, 10, 1, 1, 1);
 
-        depthEnabled = new QCheckBox(widget);
-        depthEnabled.setObjectName("depthEnabled");
+        yaw_Kp = new QLineEdit(widget);
+        yaw_Kp.setObjectName("yaw_Kp");
 
-        gridLayout.addWidget(depthEnabled, 0, 3, 1, 1);
+        gridLayout.addWidget(yaw_Kp, 2, 2, 1, 1);
 
-        label_15 = new QLabel(widget);
-        label_15.setObjectName("label_15");
+        yaw_Ki = new QLineEdit(widget);
+        yaw_Ki.setObjectName("yaw_Ki");
 
-        gridLayout.addWidget(label_15, 0, 2, 1, 1);
+        gridLayout.addWidget(yaw_Ki, 2, 3, 1, 1);
 
-        depthValue = new QDoubleSpinBox(widget);
-        depthValue.setObjectName("depthValue");
-        depthValue.setMinimum(-1000);
-        depthValue.setMaximum(1000);
-        depthValue.setSingleStep(0.01);
+        yaw_Kd = new QLineEdit(widget);
+        yaw_Kd.setObjectName("yaw_Kd");
 
-        gridLayout.addWidget(depthValue, 0, 4, 1, 1);
+        gridLayout.addWidget(yaw_Kd, 2, 4, 1, 1);
 
-        label_16 = new QLabel(widget);
-        label_16.setObjectName("label_16");
+        yaw_scale = new QLineEdit(widget);
+        yaw_scale.setObjectName("yaw_scale");
 
-        gridLayout.addWidget(label_16, 1, 2, 1, 1);
-
-        yawTarget = new QDoubleSpinBox(widget);
-        yawTarget.setObjectName("yawTarget");
-        yawTarget.setMinimum(-1000);
-        yawTarget.setMaximum(1000);
-
-        gridLayout.addWidget(yawTarget, 1, 4, 1, 1);
-
-        verticalSpacer_6 = new QSpacerItem(20, 40, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding);
-
-        gridLayout.addItem(verticalSpacer_6, 3, 3, 1, 1);
+        gridLayout.addWidget(yaw_scale, 2, 5, 1, 1);
 
         yawEnabled = new QCheckBox(widget);
         yawEnabled.setObjectName("yawEnabled");
 
-        gridLayout.addWidget(yawEnabled, 1, 3, 1, 1);
-
-        pitchEnabled = new QCheckBox(widget);
-        pitchEnabled.setObjectName("pitchEnabled");
-
-        gridLayout.addWidget(pitchEnabled, 2, 3, 1, 1);
-
-        pitchTarget = new QDoubleSpinBox(widget);
-        pitchTarget.setObjectName("pitchTarget");
-        pitchTarget.setMinimum(-1000);
-        pitchTarget.setMaximum(1000);
-
-        gridLayout.addWidget(pitchTarget, 2, 4, 1, 1);
-
-        label_17 = new QLabel(widget);
-        label_17.setObjectName("label_17");
-
-        gridLayout.addWidget(label_17, 2, 2, 1, 1);
-
-        depthActual = new QLabel(widget);
-        depthActual.setObjectName("depthActual");
-        depthActual.setMinimumSize(new QSize(100, 0));
-
-        gridLayout.addWidget(depthActual, 0, 5, 1, 1);
+        gridLayout.addWidget(yawEnabled, 3, 2, 1, 1);
 
         yawActual = new QLabel(widget);
         yawActual.setObjectName("yawActual");
 
-        gridLayout.addWidget(yawActual, 1, 5, 1, 1);
+        gridLayout.addWidget(yawActual, 3, 5, 1, 1);
+
+        pitchEnabled = new QCheckBox(widget);
+        pitchEnabled.setObjectName("pitchEnabled");
+
+        gridLayout.addWidget(pitchEnabled, 8, 2, 1, 1);
 
         pitchActual = new QLabel(widget);
         pitchActual.setObjectName("pitchActual");
 
-        gridLayout.addWidget(pitchActual, 2, 5, 1, 1);
+        gridLayout.addWidget(pitchActual, 8, 5, 1, 1);
+
+        verticalSpacer_7 = new QSpacerItem(20, 40, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding);
+
+        gridLayout.addItem(verticalSpacer_7, 9, 2, 1, 1);
+
+        verticalSpacer_8 = new QSpacerItem(20, 40, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding);
+
+        gridLayout.addItem(verticalSpacer_8, 4, 2, 1, 1);
+
+        depthEnabled = new QCheckBox(widget);
+        depthEnabled.setObjectName("depthEnabled");
+
+        gridLayout.addWidget(depthEnabled, 11, 2, 1, 1);
+
+        depthActual = new QLabel(widget);
+        depthActual.setObjectName("depthActual");
+        depthActual.setMinimumSize(new QSize(150, 0));
+
+        gridLayout.addWidget(depthActual, 11, 5, 1, 1);
+
+        pitch_Kp = new QLineEdit(widget);
+        pitch_Kp.setObjectName("pitch_Kp");
+
+        gridLayout.addWidget(pitch_Kp, 7, 2, 1, 1);
+
+        pitch_Ki = new QLineEdit(widget);
+        pitch_Ki.setObjectName("pitch_Ki");
+
+        gridLayout.addWidget(pitch_Ki, 7, 3, 1, 1);
+
+        pitch_Kd = new QLineEdit(widget);
+        pitch_Kd.setObjectName("pitch_Kd");
+
+        gridLayout.addWidget(pitch_Kd, 7, 4, 1, 1);
+
+        pitch_scale = new QLineEdit(widget);
+        pitch_scale.setObjectName("pitch_scale");
+
+        gridLayout.addWidget(pitch_scale, 7, 5, 1, 1);
+
+        depth_Kp = new QLineEdit(widget);
+        depth_Kp.setObjectName("depth_Kp");
+
+        gridLayout.addWidget(depth_Kp, 10, 2, 1, 1);
+
+        depth_Ki = new QLineEdit(widget);
+        depth_Ki.setObjectName("depth_Ki");
+
+        gridLayout.addWidget(depth_Ki, 10, 3, 1, 1);
+
+        depth_Kd = new QLineEdit(widget);
+        depth_Kd.setObjectName("depth_Kd");
+
+        gridLayout.addWidget(depth_Kd, 10, 4, 1, 1);
+
+        depth_scale = new QLineEdit(widget);
+        depth_scale.setObjectName("depth_scale");
+
+        gridLayout.addWidget(depth_scale, 10, 5, 1, 1);
+
+        yawTarget = new QLineEdit(widget);
+        yawTarget.setObjectName("yawTarget");
+
+        gridLayout.addWidget(yawTarget, 3, 3, 1, 1);
+
+        pitchTarget = new QLineEdit(widget);
+        pitchTarget.setObjectName("pitchTarget");
+
+        gridLayout.addWidget(pitchTarget, 8, 3, 1, 1);
+
+        depthTarget = new QLineEdit(widget);
+        depthTarget.setObjectName("depthTarget");
+
+        gridLayout.addWidget(depthTarget, 11, 3, 1, 1);
 
 
         gridLayout_3.addWidget(widget, 1, 1, 1, 1);
@@ -563,15 +507,27 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         label_2.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Kp", null));
         label_7.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Pitch", null));
         label_8.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth", null));
-        depthEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
-        label_15.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth Control", null));
-        label_16.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Yaw Control", null));
+        yaw_Kp.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "1", null));
+        yaw_Ki.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        yaw_Kd.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "-40", null));
+        yaw_scale.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "1", null));
         yawEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
-        pitchEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
-        label_17.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Pitch Control", null));
-        depthActual.setText("");
         yawActual.setText("");
+        pitchEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
         pitchActual.setText("");
+        depthEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
+        depthActual.setText("");
+        pitch_Kp.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        pitch_Ki.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        pitch_Kd.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        pitch_scale.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        depth_Kp.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "40", null));
+        depth_Ki.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        depth_Kd.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        depth_scale.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "1", null));
+        yawTarget.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        pitchTarget.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        depthTarget.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
         toolBox.setItemText(toolBox.indexOf(page_2), com.trolltech.qt.core.QCoreApplication.translate("Settings", "Autopilot Settings", null));
         label_11.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Fore Offset", null));
         label_12.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Fore Scale", null));

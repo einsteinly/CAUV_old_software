@@ -14,8 +14,6 @@ public class Image {
     public Vector<Integer> compressionParams;
     public Vector<Byte> data;
     
-    static int count = 0;
-    
     public Image()
     {}
 
@@ -57,11 +55,5 @@ public class Image {
 
     public void writeInto(LEDataOutputStream s) throws IOException {
         throw new RuntimeException("Not implemented yet.");
-    }
-    
-    @Override
-    protected void finalize() throws Throwable {
-        count--;
-        System.out.println("Count =  "+count);
     }
 }

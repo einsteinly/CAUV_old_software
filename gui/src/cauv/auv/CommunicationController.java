@@ -229,6 +229,7 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage m) {
+        System.out.println(m);
         auv.autopilots.DEPTH.updateParams(m.Kp(), m.Ki(), m.Kd(), m.scale());
     }
     
@@ -250,12 +251,22 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onControllerStateMessage(ControllerStateMessage m) {
-        
+        cauv.types.Controller c = m.contoller();
+        switch(c){
+            case Bearing:
+                auv.autopilots.YAW.controllerStateUpdated.emit(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
+                break;
+            case Pitch:
+                auv.autopilots.PITCH.controllerStateUpdated.emit(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
+                break;
+            case Depth:
+                auv.autopilots.DEPTH.controllerStateUpdated.emit(m.mv(), m.error(), m.derror(), m.ierror(), m.demand());
+                break;
+        }
     }
     
     @Override
     public void onMotorStateMessage(MotorStateMessage m) {
-    
     }
     
     
@@ -267,6 +278,7 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onDebugMessage(DebugMessage m) {
+        System.out.println(m);
         switch(m.type()){
             case Debug:
                auv.logs.DEBUG.log(m.msg());

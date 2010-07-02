@@ -86,6 +86,10 @@ public class MessageSocket extends MessageSource  {
                         while(connected) {
                             try {
                                 SpreadMessage m = m_connection.receive();
+                                
+                                if(m.getSender().equals(m_connection.getPrivateGroup()))
+                                    continue;
+                                
                                 if(m.isMembership()){
                                     for(MembershipObserver o : m_membership_observers)
                                         o.onMembershipChanged(m);
