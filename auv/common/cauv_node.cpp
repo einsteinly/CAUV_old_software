@@ -20,24 +20,28 @@ CauvNode::~CauvNode()
 {
 	info() << "Shutting down node";
     debug::setCauvNode(NULL);
-    m_event_monitor->stopMonitoring();
+    m_event_monitor->stopMonitoringAsync();
 }
 
-void CauvNode::run()
+void CauvNode::run(bool synchronous)
 {
 	cauv_global::print_module_header(m_name);
 
     m_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
-    m_event_monitor->startMonitoring();
+    if(!synchronous)
+        m_event_monitor->startMonitoringAsync();
 
     debug::setCauvNode(this);
 
     onRun();
-    
-    while(true)
-    {
-	    msleep(500);
-    }
+
+    if(synchronous)
+        m_event_monitor->startMonitoringSync();
+    else
+        while(true)
+        {
+            msleep(500);
+        }
 }
 
 void CauvNode::onRun()

@@ -21,7 +21,7 @@ MailboxEventMonitor::MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMai
         : m_thread(), m_mailbox(mailbox) {
 }
 
-void MailboxEventMonitor::startMonitoring() {
+void MailboxEventMonitor::startMonitoringAsync() {
     if(m_thread.get_id() == boost::thread::id()){
         m_thread = boost::thread( &MailboxEventMonitor::doMonitoring, this );
 
@@ -34,7 +34,7 @@ void MailboxEventMonitor::startMonitoring() {
     }
 }
 
-void MailboxEventMonitor::stopMonitoring() {
+void MailboxEventMonitor::stopMonitoringAsync() {
     if (m_thread.get_id() != boost::thread::id())
     {
         debug() << "Interrupting monitor thread";
@@ -43,9 +43,13 @@ void MailboxEventMonitor::stopMonitoring() {
     }
 }
 
+void MailboxEventMonitor::startMonitoringSync() {
+    doMonitoring();
+}
+
 void MailboxEventMonitor::doMonitoring() {
     try {
-        debug() << "Started monitor thread";
+        debug() << "Started monitoring";
         while(true) {
             boost::shared_ptr<SpreadMessage> m( m_mailbox->receiveMessage() );
 
@@ -70,6 +74,6 @@ void MailboxEventMonitor::doMonitoring() {
     } catch (boost::thread_interrupted& e) {
         debug() << "Monitor thread interrupted";
     } 
-    debug() << "Ending monitor thread";
+    debug() << "Ending monitoring";
 }
 

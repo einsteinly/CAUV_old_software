@@ -304,7 +304,7 @@ void error::printPrefix(std::ostream& os)
 }
 int error::debugType() const
 {
-    return DebugType::Trace;
+    return DebugType::Error;
 }
 
 
@@ -335,7 +335,7 @@ void warning::printPrefix(std::ostream& os)
 }
 int warning::debugType() const
 {
-    return DebugType::Trace;
+    return DebugType::Error;
 }
 
 

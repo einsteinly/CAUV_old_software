@@ -20,7 +20,7 @@ class MessageObserverWrapper:
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
             if(bp::override f = this->get_override("on${className}")){
-                debug(6) << "MessageObserver: calling override for on${className}";
+                debug(12) << "MessageObserver: calling override for on${className}";
                 GILLock l;
                 try{
                     f(m);
@@ -31,7 +31,7 @@ class MessageObserverWrapper:
                     }
                 }
             }else{
-                debug(6) << "MessageObserver: no override for on${className}";
+                debug(12) << "MessageObserver: no override for on${className}";
                 MessageObserver::on${className}(m);
             }
         }
@@ -51,7 +51,7 @@ class BufferedMessageObserverWrapper:
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
             if(bp::override f = this->get_override("on${className}")){
-                debug(6) << "BufferedMessageObserver: calling override for on${className}";
+                debug(12) << "BufferedMessageObserver: calling override for on${className}";
                 GILLock l;
                 try{
                     f(m);
@@ -62,13 +62,13 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
-                debug(6) << "BufferedMessageObserver: no override for on${className}";
+                debug(12) << "BufferedMessageObserver: no override for on${className}";
                 BufferedMessageObserver::on${className}(m);
             }
         }
         void on${className}Buffered($ptrName m){
             if(bp::override f = this->get_override("on${className}Buffered")){
-                debug(6) << "BufferedMessageObserver: calling override for on${className}Buffered";
+                debug(12) << "BufferedMessageObserver: calling override for on${className}Buffered";
                 GILLock l;
                 try{
                     f(m);
@@ -79,13 +79,19 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
-                debug(6) << "BufferedMessageObserver: no override for on${className}Buffered";            
+                debug(12) << "BufferedMessageObserver: no override for on${className}Buffered";            
                 BufferedMessageObserver::on${className}Buffered(m);
             }
         }
 
         #end for
         #end for
+
+        void setDoubleBuffered(MessageType::e, bool){
+            error() << "double-buffering threads screw python locking;"
+                    << "double-buffering will not be enabled";
+        }
+
 };
 
 void emitObservers(){
@@ -106,7 +112,7 @@ void emitObservers(){
                boost::noncopyable,
                boost::shared_ptr<BufferedMessageObserverWrapper>
               >("BufferedMessageObserver")
-        .def("setDoubleBuffered", &BufferedMessageObserver::setDoubleBuffered)
+        .def("setDoubleBuffered", &BufferedMessageObserverWrapper::setDoubleBuffered)
         #for $g in $groups
         #for $m in $g.messages
         #set $className = $m.name + "Message"
