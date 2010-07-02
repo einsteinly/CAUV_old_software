@@ -163,7 +163,9 @@ class KMeansNode: public Node{
                 cluster& cl = m_clusters[i];
                 for(ch = 0; ch < m_channels; ch++)
                 {
-                    cl.centre[ch] = cl.valsum[ch]/cl.size;
+                    if (cl.size != 0) {
+                        cl.centre[ch] = cl.valsum[ch]/cl.size;
+                    }
                 }
             }
 
