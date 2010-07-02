@@ -215,21 +215,21 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	        s = "Auv not connected";
 	    } else {
     		s = "Depth [Target]: " + auv.autopilots.DEPTH.getTarget() + "\n";
-    		s += "Depth [Actual]: " + auv.getDepth() + "\n\n";
+    		s += "Depth [Actual]: " + auv.telemetry.DEPTH.getDepth() + "\n\n";
     		
     		s += "Yaw [Target]: " + auv.autopilots.YAW.getTarget() + "\n";
-    		s += "Yaw [Actual]: " + auv.getOrientation().yaw + "\n\n";
+    		s += "Yaw [Actual]: " + auv.telemetry.ORIENTATION.getYaw() + "\n\n";
     		
     		s += "Pitch [Target]: " + auv.autopilots.PITCH.getTarget() + "\n";
-    		s += "Pitch [Actual]: " + auv.getOrientation().pitch;
+    		s += "Pitch [Actual]: " + auv.telemetry.ORIENTATION.getPitch();
 
     		this.ui.forwardCam.setDotLocation(auv.autopilots.YAW.getTarget(), auv.autopilots.PITCH.getTarget());
             this.ui.downwardCam.setDotLocation(auv.autopilots.YAW.getTarget(), auv.autopilots.PITCH.getTarget());
             this.ui.sonarCam.setDotLocation(auv.autopilots.YAW.getTarget(), auv.autopilots.PITCH.getTarget());
 
-            this.ui.forwardCam.setAttitude(auv.getOrientation());
-            this.ui.downwardCam.setAttitude(auv.getOrientation());
-            this.ui.sonarCam.setAttitude(auv.getOrientation());
+            this.ui.forwardCam.setAttitude(auv.telemetry.ORIENTATION.getOrientation());
+            this.ui.downwardCam.setAttitude(auv.telemetry.ORIENTATION.getOrientation());
+            this.ui.sonarCam.setAttitude(auv.telemetry.ORIENTATION.getOrientation());
 
 	    }
 	    

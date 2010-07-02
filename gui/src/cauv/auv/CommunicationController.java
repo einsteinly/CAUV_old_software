@@ -298,7 +298,7 @@ public class CommunicationController extends MessageObserver {
 
     @Override
     public void onDepthMessage(DepthMessage m) {
-        auv.updateDepth(m.depth());
+        auv.telemetry.DEPTH.updateDepth(m.depth());
     }
     
     @Override
@@ -308,7 +308,7 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onTelemetryMessage(TelemetryMessage m) {
-        auv.setOrientation(m.orientation());
+        auv.telemetry.ORIENTATION.updateOrientation(m.orientation());
     }
     
     @Override
