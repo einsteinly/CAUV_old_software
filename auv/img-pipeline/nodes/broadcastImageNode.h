@@ -27,7 +27,7 @@ class BroadcastImageNode: public OutputNode{
             int camid = param<int>("camera id");
             int qual = param<int>("jpeg quality");
 
-            debug() << "BroadcastImageNode::doWork()" << camid << *img;
+            debug(4) << "BroadcastImageNode::doWork()" << camid << *img;
             img->serializeQuality(qual);
             sendMessage(boost::make_shared<ImageMessage>((CameraID::e)camid, *img, now()), UNRELIABLE_MESS);
 

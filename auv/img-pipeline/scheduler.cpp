@@ -31,7 +31,7 @@ void ImgPipelineThread::operator()(){
                 break;
         }
     } catch (boost::thread_interrupted&) {
-        debug() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") interrupted";
+        info() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") interrupted";
     }
     info() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") ended";
 }

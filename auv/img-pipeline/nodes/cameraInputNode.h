@@ -47,7 +47,7 @@ class CameraInputNode: public AsynchronousNode{
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
             
-            debug() << "CameraInputNode::doWork";
+            debug(4) << "CameraInputNode::doWork";
             
             if(!m_capture.isOpened()){
                 error() << "camera is not opened";

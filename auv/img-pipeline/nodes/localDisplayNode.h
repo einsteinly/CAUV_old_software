@@ -34,7 +34,7 @@ class LocalDisplayNode: public Node{
 
             image_ptr_t img = inputs["image_in"];
             
-            debug() << "LocalDisplayNode::doWork";
+            debug(4) << "LocalDisplayNode::doWork";
            
             cv::imshow("LocalDisplayNode", img->cvMat());
             cv::waitKey(10);

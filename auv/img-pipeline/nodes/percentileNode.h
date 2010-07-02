@@ -75,7 +75,7 @@ class PercentileNode: public Node{
             
             int running_total = 0;
             for(int i = 0; i < 256; i++){
-                debug(6) << "[" << BashColour::White << bar(running_total, num_pixels, 50) << "]"
+                debug(9) << "[" << BashColour::White << bar(running_total, num_pixels, 50) << "]"
                           << i << running_total;
                 if((running_total += value_histogram[0][i]) >= pct_pixel){
                     r["value"] = param_value_t(i);

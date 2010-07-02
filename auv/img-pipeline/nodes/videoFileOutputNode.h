@@ -32,7 +32,7 @@ class VideoFileOutputNode: public OutputNode{
         }
 
         virtual void paramChanged(param_id const& p){
-            debug() << "VideoFileOutputNode::paramChanged";
+            debug(4) << "VideoFileOutputNode::paramChanged";
             if(p == param_id("filename")){
                 closeVideo();
                 setAllowQueue();
@@ -56,7 +56,7 @@ class VideoFileOutputNode: public OutputNode{
                                     ), "%t", now("%H-%M-%s")
                                 );
              
-            debug() << "VideoFileOutputNode::doWork()" << *img << "->" << fname;
+            debug(4) << "VideoFileOutputNode::doWork()" << *img << "->" << fname;
             
             try{
                 if(!m_writer.isOpened())

@@ -38,7 +38,7 @@ class MedianFilterNode: public Node{
             if(!(ksize & 1))
                 warning() << "filter kernel size should be odd";
 
-            debug() << "MedianFilterNode:" << ksize;
+            debug(4) << "MedianFilterNode:" << ksize;
             
             try{
                 cv::medianBlur(img->cvMat(), img->cvMat(), ksize);

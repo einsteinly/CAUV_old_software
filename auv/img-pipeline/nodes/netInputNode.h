@@ -31,7 +31,7 @@ class NetInputNode: public InputNode{
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
             
-            debug() << "NetInputNode::doWork";
+            debug(4) << "NetInputNode::doWork";
         
             r["image_out"] = boost::shared_ptr<Image>(
                 new Image(latestImageMsg()->image())

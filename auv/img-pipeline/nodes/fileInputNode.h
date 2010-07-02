@@ -30,7 +30,7 @@ class FileInputNode: public AsynchronousNode{
         }
 
         virtual void paramChanged(param_id const& p){
-            debug() << "FileInputNode::paramChanged";
+            debug(4) << "FileInputNode::paramChanged";
             if(p == param_id("filename")){
                 lock_t l(m_dir_mutex);
                 std::string fname = param<std::string>("filename");
@@ -53,7 +53,7 @@ class FileInputNode: public AsynchronousNode{
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
             
-            debug() << "fileInputNode::doWork";
+            debug(4) << "fileInputNode::doWork";
         
             std::string fname = param<std::string>("filename");
             image_ptr_t image;
@@ -80,7 +80,7 @@ class FileInputNode: public AsynchronousNode{
                 // continue until the directory is exhausted, or an image is
                 // successfully loaded
                 for(; m_iter != end; m_iter++){
-                    debug()  << "considering path:" << m_iter->string();
+                    debug(4)  << "considering path:" << m_iter->string();
                     if(!boost::filesystem::is_directory(m_iter->status()) &&
                        (image = readImage(m_iter->string(), false))){
                         m_iter++;
@@ -110,7 +110,7 @@ class FileInputNode: public AsynchronousNode{
 
             if(img.size().width > 0 && img.size().height > 0){
                 r = boost::make_shared<Image>(img);
-                debug() << "fileInputNode::readImage:" << fname << "->" << *r;
+                debug(4) << "fileInputNode::readImage:" << fname << "->" << *r;
             }else if(warn){
                 warning() << "fileInputNode::readImage:" << fname << "-> (no image)";
             }
