@@ -300,6 +300,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Bearing].Ki = m->Ki();
             m_controllers[Bearing].Kd = m->Kd();
             m_controllers[Bearing].scale = m->scale();
+            m_controllers[Bearing].reset();
         }
 
         virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
@@ -319,6 +320,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Pitch].Ki = m->Ki();
             m_controllers[Pitch].Kd = m->Kd();
             m_controllers[Pitch].scale = m->scale();
+            m_controllers[Pitch].reset();
         }
 
         virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
@@ -341,6 +343,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Depth].Ki = m->Ki();
             m_controllers[Depth].Kd = m->Kd();
             m_controllers[Depth].scale = m->scale();
+            m_controllers[Depth].reset();
         }
 
         virtual void onMotorRamprateMessage(MotorRampRateMessage_ptr m)

@@ -108,7 +108,7 @@ class PipelineWidget: public QGLWidget,
         double m_win_aspect;      // actually sqrt(x / y)
         double m_win_scale;       // width = scale*aspect, height = scale/aspect
         double m_scrolldelta;     // sum of scroll deltas
-        double m_pixels_per_unit; // size on screen of a line of length 3
+        double m_pixels_per_unit; // size on screen of a line of length 1
 
         const static int m_world_size = 100; // scale everything down by this much,
                                              // since canonical view volume is 1x1x1
