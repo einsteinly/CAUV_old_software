@@ -180,9 +180,10 @@ class KMeansNode: public Node{
                     {
                         cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(x,y)];
 
-                        for (size_t i = 0; i < m_clusters.size(); i++) {
+                        for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
+                        {
                             *img_bp = cl.centre[ch];
-                        }
+                        {
                     }
             }
             
