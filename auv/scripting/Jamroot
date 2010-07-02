@@ -21,6 +21,7 @@ project
                  <library>/boost/python//boost_python
                  <library>/boost/thread//boost_thread
                  <library>/boost/serialization//boost_serialization
+                 <library>/boost/system//boost_system
                  <library>/boost/date_time//boost_date_time
                  <library>/boost/system//boost_system
                  <library>/boost/iostreams//boost_iostreams

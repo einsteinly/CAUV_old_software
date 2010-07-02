@@ -211,8 +211,8 @@ class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
-            : prop_value(-1e9), hbow_value(-1e9), vbow_value(-1e9),
-              hstern_value(-1e9), vstern_value(-1e9), m_max_motor_delta(255/*12*/),
+            : prop_value(0), hbow_value(0), vbow_value(0),
+              hstern_value(0), vstern_value(0), m_max_motor_delta(255/*12*/),
               m_motor_updates_per_second(5), m_mb(mb)
         {
             const MotorMap def = {5, -5, 127, -127};
@@ -349,6 +349,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Bearing].Ki = m->Ki();
             m_controllers[Bearing].Kd = m->Kd();
             m_controllers[Bearing].scale = m->scale();
+            m_controllers[Bearing].reset();
         }
 
         virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
@@ -368,6 +369,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Pitch].Ki = m->Ki();
             m_controllers[Pitch].Kd = m->Kd();
             m_controllers[Pitch].scale = m->scale();
+            m_controllers[Pitch].reset();
         }
 
         virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
@@ -390,6 +392,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Depth].Ki = m->Ki();
             m_controllers[Depth].Kd = m->Kd();
             m_controllers[Depth].scale = m->scale();
+            m_controllers[Depth].reset();
         }
 
         virtual void onMotorRampRateMessage(MotorRampRateMessage_ptr m)
@@ -493,18 +496,18 @@ class ControlLoops : public MessageObserver, public XsensObserver
              *             ^               ^                      ^                ^
              *             maxMinus     zeroMinus               zeroPlus        maxPlus
              */
-            if(demand_value <= m.maxMinus)
-                return -127;
-            else if(demand_value < m.zeroMinus)
+            if(demand_value < -127)
+                return m.maxMinus;
+            else if(demand_value < 0)
                 //eg:      -30     + (   -30      -   -120    ) *     (-50) / 127 = -65
                 return m.zeroMinus + (m.zeroMinus - m.maxMinus) * demand_value / 127;
-            else if(demand_value < m.zeroPlus)
+            else if(demand_value == 0)
                 return 0;
-            else if(demand_value <= m.maxPlus)
+            else if(demand_value <= 127)
                 //eg:     50      + (  127     -     50    ) *    80        / 127 = 86
                 return m.zeroPlus + (m.maxPlus - m.zeroPlus) * demand_value / 127;
             else
-                return 127;
+                return m.maxPlus;
         }
         
         void updateMotorControl()
