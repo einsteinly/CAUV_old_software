@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <deque>
 #include <stdint.h>
 
 #include <boost/make_shared.hpp>
@@ -45,19 +46,27 @@ class DebugXsensObserver : public XsensObserver
         unsigned int m_level;
 };
 
+int operator-(TimeStamp const& l, TimeStamp const& r)
+{
+    int secs_delta = l.secs - r.secs;
+    int msecs_delta = (l.musecs - r.musecs) / 1000;
+    return 1000 * secs_delta + msecs_delta;
+}
 
 struct PIDControl
 {
     Controller::e controlee;
     double target;
     double Kp,Ki,Kd,scale;
-    double integral, previous_error, previous_derror, previous_mv;
+    double integral, previous_derror, previous_mv;
+    std::deque< std::pair<TimeStamp, double> > previous_errors;
     TimeStamp previous_time;
     bool is_angle;
+    int retain_samples_msecs;
 
     PIDControl(Controller::e controlee=Controller::NumValues)
         : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
-          integral(0), previous_error(0), is_angle(false)
+          integral(0), is_angle(false), retain_samples_msecs(500)
     {
         previous_time.secs = 0;
     }
@@ -65,7 +74,7 @@ struct PIDControl
     void reset()
     {
         integral = 0;
-        previous_error = 0;
+        previous_errors.clear();
         previous_derror = 0;
         previous_mv = 0;
         previous_time.secs = 0;
@@ -84,13 +93,40 @@ struct PIDControl
     {
         double diff = mod(target - current, 360);
         if(diff >  180) diff -= 360;
-        if(diff < -180) diff += 360;
+        if(diff <= -180) diff += 360;
         return diff;
     }
 
     virtual double getError(double const& target, double const& current)
     {
         return target - current;
+    }
+
+    double smoothedDerivative()
+    {
+        int n_derivatives = 0;
+        double derivative_sum = 0;
+
+        if(!previous_errors.size()){
+            warning() << "no derivative samples available";        
+            return 0.0;
+        }
+
+        for(int i = 0;i < int(previous_errors.size())-1; i++){
+            int dt_msecs = (previous_errors[i+1].first - previous_errors[i].first);
+            if(dt_msecs != 0){
+                // TODO: multiply this by 
+                derivative_sum += (previous_errors[i+1].second - previous_errors[i].second) / dt_msecs;
+                n_derivatives++;
+            }else{
+                warning() << "controller update frequency < 1ms";
+            }
+        }
+        if(!n_derivatives){
+            warning() << "no derivative samples used";
+            return 0.0;
+        }
+        return derivative_sum / n_derivatives;
     }
 
     double getMV(double current)
@@ -103,17 +139,20 @@ struct PIDControl
 
         if (previous_time.secs == 0) {
             previous_time = now();
-            previous_error = error;
+            previous_errors.push_back(std::make_pair(previous_time, error));
             return 0;
         }
 
         TimeStamp tnow = now();
-        double dt = (tnow.secs - previous_time.secs) * 1000 + (tnow.musecs - previous_time.musecs) / 1000; // dt is milliseconds
+        previous_errors.push_back(std::make_pair(tnow, error));
+        if(tnow - previous_errors.front().first > retain_samples_msecs)
+            previous_errors.pop_front(); 
+
+        double dt = tnow - previous_time; // dt is milliseconds
         previous_time = tnow;
 
         integral += error*dt;
-        double de = (error-previous_error)/dt;
-        previous_error = error;
+        double de = smoothedDerivative();
         previous_derror = de;
         previous_mv =  scale * (Kp * error + Ki * integral + Kd * de);
 
@@ -122,9 +161,14 @@ struct PIDControl
 
     boost::shared_ptr<ControllerStateMessage> stateMsg()
     {
-        return boost::make_shared<ControllerStateMessage>(
-            controlee, previous_mv, previous_error, previous_derror, integral, MotorDemand()
-        );
+        if(previous_errors.size())
+            return boost::make_shared<ControllerStateMessage>(
+                controlee, previous_mv, previous_errors.back().second, previous_derror, integral, MotorDemand()
+            );
+        else
+            return boost::make_shared<ControllerStateMessage>(
+                controlee, previous_mv, 0, previous_derror, integral, MotorDemand()
+            ); 
     }
 };
 
@@ -168,7 +212,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
     public:
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
             : prop_value(-1e9), hbow_value(-1e9), vbow_value(-1e9),
-              hstern_value(-1e9), vstern_value(-1e9), m_max_motor_delta(256/*12*/),
+              hstern_value(-1e9), vstern_value(-1e9), m_max_motor_delta(255/*12*/),
               m_motor_updates_per_second(5), m_mb(mb)
         {
             const MotorMap def = {5, -5, 127, -127};
@@ -177,6 +221,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
             vbow_map = def;
             hstern_map = def;
             vstern_map = def;
+            /* tmp test stuff: */
+            MotorRampRateMessage_ptr mrrm = boost::make_shared<MotorRampRateMessage>(255, 5);
+            onMotorRampRateMessage(mrrm);
+            SetMotorMapMessage_ptr smmm = boost::make_shared<SetMotorMapMessage>(MotorID::Prop, def);
+            onSetMotorMapMessage(smmm);
         }
         ~ControlLoops()
         {
@@ -300,7 +349,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Bearing].Ki = m->Ki();
             m_controllers[Bearing].Kd = m->Kd();
             m_controllers[Bearing].scale = m->scale();
-            m_controllers[Bearing].reset();
         }
 
         virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr m)
@@ -320,7 +368,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Pitch].Ki = m->Ki();
             m_controllers[Pitch].Kd = m->Kd();
             m_controllers[Pitch].scale = m->scale();
-            m_controllers[Pitch].reset();
         }
 
         virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr m)
@@ -343,10 +390,9 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Depth].Ki = m->Ki();
             m_controllers[Depth].Kd = m->Kd();
             m_controllers[Depth].scale = m->scale();
-            m_controllers[Depth].reset();
         }
 
-        virtual void onMotorRamprateMessage(MotorRampRateMessage_ptr m)
+        virtual void onMotorRampRateMessage(MotorRampRateMessage_ptr m)
         {
             // MCB currently handles ramping: don't limit it
             //if(m->maxDelta() >= 127)
@@ -386,6 +432,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 case MotorID::VStern: vstern_map = m->mapping(); break;
             }
             debug() << "Set motor mapping:" << m->motor() << ":" << m->mapping();
+            
+            double test_values[] = {-200, -150, -100, -50, -4, 0, 3, 50, 100, 150, 200};
+            for(int i = 0; i < 11; i++)
+                debug() << "new map example: " << test_values[i] << "->" << motorMap(test_values[i], m->motor());
         }
 
     private:
@@ -484,7 +534,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         void sendWithMaxDelta(MotorID::e mid, int& oldvalue, int newvalue, unsigned maxDelta)
         {
-            if(abs(newvalue - oldvalue) <= maxDelta)
+            if(unsigned(abs(newvalue - oldvalue)) <= maxDelta)
                 sendIfNew(mid, oldvalue, newvalue);
             else if(newvalue < oldvalue)
                 sendIfNew(mid, oldvalue, oldvalue - maxDelta);
