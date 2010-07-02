@@ -166,9 +166,8 @@ class KMeansNode: public Node{
                 {
                     for(ch = 0; ch < m_channels; ch++)
                     {
-                        debug() << i << ".valsum[" << ch << "] =" << (int)cl.valsum[ch];
                         cl.centre[ch] = cl.valsum[ch]/cl.size;
-                        debug() << i << ".centre[" << ch << "] =" << (int) cl.centre[ch];
+                        debug(5) << i << ".centre[" << ch << "] =" << (int) cl.centre[ch];
                     }
                 }
             }
