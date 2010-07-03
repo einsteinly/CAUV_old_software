@@ -160,6 +160,11 @@ struct debug : boost::noncopyable
     debug(int level=1){ }
     virtual ~debug();
 
+    static void setLevel(int){ }
+    static void setCauvNode(CauvNode*){ }
+    static void setProgramName(std::string const&){ }
+    static void setLogfileName(std::string const&){ }
+
     template<typename T>
     debug const& operator<<(T const&) const
     {
