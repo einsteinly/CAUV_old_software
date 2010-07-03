@@ -158,7 +158,7 @@ struct debug : public SmartStreamBase
 struct debug : boost::noncopyable
 {
     debug(int level=1){ }
-    virtual ~debug();
+    virtual ~debug(){ }
 
     static void setLevel(int){ }
     static void setCauvNode(CauvNode*){ }
