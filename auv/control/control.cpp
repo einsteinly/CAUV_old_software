@@ -222,10 +222,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
             hstern_map = def;
             vstern_map = def;
             /* tmp test stuff: */
-            MotorRampRateMessage_ptr mrrm = boost::make_shared<MotorRampRateMessage>(255, 5);
-            onMotorRampRateMessage(mrrm);
-            SetMotorMapMessage_ptr smmm = boost::make_shared<SetMotorMapMessage>(MotorID::Prop, def);
-            onSetMotorMapMessage(smmm);
+            //MotorRampRateMessage_ptr mrrm = boost::make_shared<MotorRampRateMessage>(255, 5);
+            //onMotorRampRateMessage(mrrm);
+            //SetMotorMapMessage_ptr smmm = boost::make_shared<SetMotorMapMessage>(MotorID::Prop, def);
+            //onSetMotorMapMessage(smmm);
         }
         ~ControlLoops()
         {
