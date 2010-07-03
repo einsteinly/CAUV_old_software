@@ -7,10 +7,11 @@ class AUV(messaging.BufferedMessageObserver):
         self.__node = node
         node.join("control")
         node.addObserver(self)
+        self.current_bearing = None
         
         ## synchronising stuff
-        self.received_state_condition = threading.Condition()
-        self.received_state = None
+        #self.received_state_condition = threading.Condition()
+        #self.received_state = None
 
     def send(self, msg):
         # send to control via self.__node
@@ -25,14 +26,16 @@ class AUV(messaging.BufferedMessageObserver):
         self.bearing(None)
         self.pitch(None)
         self.depth(None)
-
-    def bearing(self, timeout=3):
-        self.received_state_condition.acquire()
-        self.received_state = None
-        self.send(messaging.StateRequestMessage())
-        self.received_state_condition.wait(timeout)
-        self.received_state_condition.release()
-        return self.received_state.orientation
+    
+    def getBearing(self):
+        return self.current_bearing
+    #def getBearing(self, timeout=3):
+    #    self.received_state_condition.acquire()
+    #    self.received_state = None
+    #    self.send(messaging.StateRequestMessage())
+    #    self.received_state_condition.wait(timeout)
+    #    self.received_state_condition.release()
+    #    return self.received_state.orientation
 
     def bearing(self, bearing):
         if bearing is not None:
@@ -131,10 +134,13 @@ class AUV(messaging.BufferedMessageObserver):
     def checkRange(self, value):
         if value < -127 or value > 127:
             raise ValueError("invalid motor value: %d" % value)
+    
+    def onTelemetryMessage(self, m):
+        self.bearing = m.orientation.yaw
 
     ## synchronous-ifying stuff
-    def onStateMessage(self, m):
-        self.received_state_condition.acquire()
-        self.received_state = m
-        self.received_state_condition.notify()
-        self.received_state_condition.release()
+    #def onStateMessage(self, m):
+    #    self.received_state_condition.acquire()
+    #    self.received_state = m
+    #    self.received_state_condition.notify()
+    #    self.received_state_condition.release()

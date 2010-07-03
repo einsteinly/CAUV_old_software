@@ -6,9 +6,8 @@ if ! [ python.configured ]
     using python ;
 }
 
-#local BOOST_SOURCE_PATH = /home/cauv/source/boost_1_42_0 ;
-#local BOOST_SOURCE_PATH = /Users/james/Development/boost_1_43_0 ;
-local BOOST_SOURCE_PATH = /cauv/boost_1_43_0 ;
+import os ;
+local BOOST_SOURCE_PATH = [ os.environ BOOST_ROOT ] ;
 local CAUV_PREFIX = /usr/local ;
 
 use-project boost
@@ -52,11 +51,11 @@ lib libcommon : ../common/messages.cpp
                 highguilib
                 ssrcspreadlib
                 bpolib
-              : <define>CAUV_DEBUG ;
+              : <define>CAUV_NO_DEBUG ;
 
 python-extension cauvinterface : [ glob *.cpp ]
                                  libcommon
-                               : <define>CAUV_DEBUG ;
+                               : <define>CAUV_NO_DEBUG ;
 
 install "./cauv/" : cauvinterface libcommon ;
 

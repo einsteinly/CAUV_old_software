@@ -35,7 +35,8 @@ enum NodeType : int8 {
     BroadcastImage = 26,
     VideoFileOutput = 27,
     Invert = 28,
-    KMeans = 29
+    KMeans = 29,
+    MixValue = 30
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -127,8 +128,8 @@ struct MotorDemand
 }
 struct Line
 {
-    a : floatXYZ;
-    b : floatXYZ;
+    centre : floatXYZ;
+    angle : float;
 }
 struct Circle
 {
@@ -163,7 +164,7 @@ group control
 	    motorId : MotorID;
 	    speed : int8;
     }
-
+    
     message BearingAutopilotEnabled : 60
     {
         enabled : bool;
@@ -231,6 +232,10 @@ group control
     {
         motor : MotorID;
         mapping : MotorMap;
+    }
+
+	message ResetMCB : 85
+	{
     }
 }
 group state
@@ -439,7 +444,14 @@ group pressure
 	    fore : uint16;
 	    aft : uint16;
     }
+}
 
+group ai
+{
+    message AI : 200
+    {
+        msg : string;
+    }
 }
 
 

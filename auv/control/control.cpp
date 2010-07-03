@@ -222,10 +222,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
             hstern_map = def;
             vstern_map = def;
             /* tmp test stuff: */
-            MotorRampRateMessage_ptr mrrm = boost::make_shared<MotorRampRateMessage>(255, 5);
-            onMotorRampRateMessage(mrrm);
-            SetMotorMapMessage_ptr smmm = boost::make_shared<SetMotorMapMessage>(MotorID::Prop, def);
-            onSetMotorMapMessage(smmm);
+            //MotorRampRateMessage_ptr mrrm = boost::make_shared<MotorRampRateMessage>(255, 5);
+            //onMotorRampRateMessage(mrrm);
+            //SetMotorMapMessage_ptr smmm = boost::make_shared<SetMotorMapMessage>(MotorID::Prop, def);
+            //onSetMotorMapMessage(smmm);
         }
         ~ControlLoops()
         {
@@ -315,7 +315,15 @@ class ControlLoops : public MessageObserver, public XsensObserver
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
         DepthCalibrationMessage_ptr m_depthCalibration;
+       
         
+        virtual void onResetMCBMessage(ResetMCBMessage_ptr m)
+        {
+            debug() << "Resetting MCB";
+            m_mcb->send(m);
+        }
+
+
         virtual void onMotorMessage(MotorMessage_ptr m)
         {
             debug(2) << "Set manual motor demand based on motor message:" << *m;
@@ -692,7 +700,9 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     
     desc.add_options()
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
-        ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB");
+        ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB")
+        ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
+        ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale");
 }
 int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
 {
@@ -705,6 +715,11 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     }
     if (vm.count("mcb")) {
         setMCB(vm["mcb"].as<int>());
+    }
+    if (vm.count("depth-offset") && vm.count("depth-scale")) {
+        float offset = vm["depth-offset"].as<float>();
+        float scale = vm["depth-scale"].as<float>();
+        m_controlLoops->onDepthCalibrationMessage(boost::make_shared<DepthCalibrationMessage>(offset,scale,offset,scale));
     }
     
     return 0;

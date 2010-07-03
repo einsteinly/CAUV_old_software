@@ -17,6 +17,7 @@ BOOST_PYTHON_MODULE(cauvinterface)
     emitMailbox();
     emitCauvNode();
     emitSpreadMessage();
+    emitAIMessageObserver();
 
     // generated stuff:
     emitEnums();

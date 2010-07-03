@@ -45,6 +45,9 @@ class Node(messaging.CauvNode):
     
     def send(self, message, groups, service_level=ServiceLevel.Safe):
         self.mailbox.send(message, service_level, groups)
+
+    #def send(self, message):
+    #    self.mailbox.send(message, ServiceLevel.Safe, message.group())
     
     #def receive(self, timeout):
     #    return self.mailbox.receive(timeout)

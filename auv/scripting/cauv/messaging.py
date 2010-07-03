@@ -3,3 +3,6 @@
 
 from cauvinterface import *
 
+# until it works...
+AIMessageObserver = BufferedMessageObserver
+

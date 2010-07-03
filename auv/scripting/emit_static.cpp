@@ -115,6 +115,29 @@ class CauvNodeWrapper:
         }
 };
 
+/*
+class AIMessageObserver:
+    public BufferedMessageObserver,
+    public bp::wrapper<BufferedMessageObserver>
+{
+    public:
+        // only check for overrides of onAIMessage
+        void onAIMessage(AIMessage_ptr m){
+            if(bp::override f = this->get_override("onAIMessage")){
+                GILLock l;
+                try{
+                    f(m);
+                }catch(bp::error_already_set const &){
+                    error() << __FILE__ << __LINE__ << ":" << __func__ << "Error in python callback:";
+                    if(PyErr_Occurred()){
+                        PyErr_Print();
+                    }
+                }
+            }
+        }
+};
+*/
+
 
 class SpreadMessageWrapper:
     public SpreadMessage,
@@ -189,6 +212,7 @@ void emitMessage(){
                boost::noncopyable,
                boost::shared_ptr<Message>
               >("__Message", bp::no_init)
+        //.add_property("group", &Message::group)
     ;
 }
 
@@ -228,5 +252,15 @@ void emitSpreadMessage(){
                boost::shared_ptr<MembershipMessage>
               >("__MembershipMessage", bp::no_init)
     ;
+}
+
+
+void emitAIMessageObserver(){
+    /*bp::class_<AIMessageObserver,
+               boost::noncopyable,
+               boost::shared_ptr<AIMessageObserver>
+              >("AIMessageObserver")
+        .def("onAIMessage", &wrap(BufferedMessageObserver::onAIMessage))
+   ;*/
 }
 
