@@ -251,10 +251,6 @@ group telemetry
 	message Telemetry : 3
 	{
 	    orientation : floatYPR;
-    }
-
-    message Depth : 51
-    {
         depth : float;
     }
 }
