@@ -75,7 +75,9 @@ again:
             timeout.tv_sec = 2;
             timeout.tv_usec = 0;
             rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
-            debug(4) << "rec1 = " << rec;
+            if (rec == 0) {
+                debug(4) << "Timeout when receiving header";
+            }
 		    check_is_sonar_dead();
         }
         if (rec > 0) {
@@ -107,18 +109,21 @@ again:
 		warning() << "Error: Out of sync.  Resyncing...";
 		/* Search until a LF is consumed */
 		while (buffer[0] != 0x0A) {
-            std::cout << "." << std::flush;
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)buffer[0] << " " << std::flush;
             rec = 0;
             while (rec == 0) {
                 FD_SET (m_fd, &set);
                 timeout.tv_sec = 2;
                 timeout.tv_usec = 0;
                 rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
-                debug(4) << "rec2 = " << rec;
+                if (rec == 0) {
+                    debug(4) << "Timeout when resyncing";
+                }
                 check_is_sonar_dead();
             }
             if (rec > 0) {
                 rec = read(m_fd, &buffer[0], 1);
+                std::cout << rec << ":" << std::flush;
                 check_is_sonar_dead();
                 if (rec < 0) {
                     throw SonarIsDeadException();
@@ -151,7 +156,9 @@ again:
             timeout.tv_sec = 2;
             timeout.tv_usec = 0;
             rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
-            debug(4) << "rec3 = " << rec;
+            if (rec == 0) {
+                debug(4) << "Timeout when receving body";
+            }
             check_is_sonar_dead();
         }
         if (rec > 0) {
