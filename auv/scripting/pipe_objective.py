@@ -43,6 +43,8 @@ def PipeFollowCompleteDemand(aiTypes.Demand):
 def PipeFollowObjective(msg.BufferedObserver):
     def __init__(self, node):
         self.__node = node
+        self.__node.addObserver(self)
+        self.__node.join("processing")
         self.completed = threading.Condition()
     def send(self, obj):
         self.__node.send(msg.AIMessage(pickle.dumps(obj)), "ai")
@@ -51,7 +53,14 @@ def PipeFollowObjective(msg.BufferedObserver):
         if len(m.lines) == 0:
             print 'no lines!'
             return
-        
+        # TODO: aggregation / actual selection of best line
+        best = m.lines[0]
+        PipeFollowDemand d
+        d.bearing = best.angle
+        d.strafe = 50 * (best.centre.x - 0.5)
+        d.prop = 50
+        d.depth = 2.5
+        self.send(d)
 
     def run(self):
         self.completed.wait()
