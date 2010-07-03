@@ -115,6 +115,7 @@ class CauvNodeWrapper:
         }
 };
 
+/*
 class AIMessageObserver:
     public BufferedMessageObserver,
     public bp::wrapper<BufferedMessageObserver>
@@ -123,11 +124,19 @@ class AIMessageObserver:
         // only check for overrides of onAIMessage
         void onAIMessage(AIMessage_ptr m){
             if(bp::override f = this->get_override("onAIMessage")){
-                GILLock l; 
-                f();
+                GILLock l;
+                try{
+                    f(m);
+                }catch(bp::error_already_set const &){
+                    error() << __FILE__ << __LINE__ << ":" << __func__ << "Error in python callback:";
+                    if(PyErr_Occurred()){
+                        PyErr_Print();
+                    }
+                }
             }
         }
 };
+*/
 
 
 class SpreadMessageWrapper:
@@ -203,7 +212,7 @@ void emitMessage(){
                boost::noncopyable,
                boost::shared_ptr<Message>
               >("__Message", bp::no_init)
-        .def("group", wrap(&Mailbox::group))
+        .add_property("group", &Message::group)
     ;
 }
 
@@ -247,11 +256,11 @@ void emitSpreadMessage(){
 
 
 void emitAIMessageObserver(){
-    bp::class_<AIMessageObserver,
+    /*bp::class_<AIMessageObserver,
                boost::noncopyable,
-               boost::shared_ptr<MessageObserver>
+               boost::shared_ptr<AIMessageObserver>
               >("AIMessageObserver")
-        .def("onAIMessage", &wrap(AIMessageObserver::onAIMessage))
-   ;
+        .def("onAIMessage", &wrap(BufferedMessageObserver::onAIMessage))
+   ;*/
 }
 
