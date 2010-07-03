@@ -15,6 +15,10 @@ public class MessageObserver
     public void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage m) {}
     public void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage m) {}
     public void onStateRequestMessage(StateRequestMessage m) {}
+    public void onScriptMessage(ScriptMessage m) {}
+    public void onMotorRampRateMessage(MotorRampRateMessage m) {}
+    public void onSetMotorMapMessage(SetMotorMapMessage m) {}
+    public void onResetMCBMessage(ResetMCBMessage m) {}
     public void onStateMessage(StateMessage m) {}
     public void onTelemetryMessage(TelemetryMessage m) {}
     public void onDepthMessage(DepthMessage m) {}
@@ -27,9 +31,10 @@ public class MessageObserver
     public void onSetNodeParameterMessage(SetNodeParameterMessage m) {}
     public void onAddArcMessage(AddArcMessage m) {}
     public void onGraphRequestMessage(GraphRequestMessage m) {}
+    public void onHoughLinesMessage(HoughLinesMessage m) {}
+    public void onHoughCirclesMessage(HoughCirclesMessage m) {}
     public void onControllerStateMessage(ControllerStateMessage m) {}
     public void onMotorStateMessage(MotorStateMessage m) {}
-    public void onScriptMessage(ScriptMessage m) {}
     public void onScriptResponseMessage(ScriptResponseMessage m) {}
     public void onNodeAddedMessage(NodeAddedMessage m) {}
     public void onNodeRemovedMessage(NodeRemovedMessage m) {}

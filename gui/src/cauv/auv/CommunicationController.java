@@ -28,6 +28,7 @@ import cauv.messaging.MotorStateMessage;
 import cauv.messaging.PitchAutopilotEnabledMessage;
 import cauv.messaging.PitchAutopilotParamsMessage;
 import cauv.messaging.PressureMessage;
+import cauv.messaging.ResetMCBMessage;
 import cauv.messaging.ScriptMessage;
 import cauv.messaging.ScriptResponseMessage;
 import cauv.messaging.SonarControlMessage;
@@ -155,6 +156,7 @@ public class CommunicationController extends MessageObserver {
         messages.joinGroup("image");
         messages.joinGroup("telemetry");
         messages.joinGroup("sonarout");
+        messages.joinGroup("sonarctl");
         messages.joinGroup("pressure");
         messages.joinGroup("gui");
 
@@ -174,6 +176,7 @@ public class CommunicationController extends MessageObserver {
         new ScriptController(auv.scripting.MISSION);
         
         auv.debugLevelChanged.connect(this, "sendDebugLevelMessage()");
+        auv.resetMCB.connect(this, "sendResetMCBMessage()");
         auv.depthCalibrationChanged.connect(this, "sendDepthCalibrationMessage(float, float, float, float)");
         
         enable();
@@ -192,12 +195,20 @@ public class CommunicationController extends MessageObserver {
     public void disable() {
         messages.setEnabled(false);
     }
-    
+
     public void sendDebugLevelMessage(){
         try {
             messages.sendMessage(new DebugLevelMessage(auv.getDebugLevel()));
         } catch (Exception e) {
             auv.logs.ERROR.log("Error updating debug level: " + e.getMessage());
+        }
+    }
+
+    public void sendResetMCBMessage(){
+        try {
+            messages.sendMessage(new ResetMCBMessage());
+        } catch (Exception e) {
+            auv.logs.ERROR.log("Error reseting MCB: " + e.getMessage());
         }
     }
 
@@ -233,7 +244,6 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage m) {
-        System.out.println(m);
         auv.autopilots.DEPTH.updateParams(m.Kp(), m.Ki(), m.Kd(), m.scale());
     }
     
@@ -282,7 +292,6 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onDebugMessage(DebugMessage m) {
-        System.out.println(m);
         switch(m.type()){
             case Debug:
                auv.logs.DEBUG.log(m.msg());
@@ -302,8 +311,14 @@ public class CommunicationController extends MessageObserver {
     }
     
     @Override
+    public void onDepthCalibrationMessage(DepthCalibrationMessage m) {
+        auv.updateDepthCalibration(m.foreOffset(), m.foreMultiplier(), m.aftOffset(), m.aftMultiplier());
+    }
+    
+    @Override
     public void onPressureMessage(PressureMessage m) {
-        auv.updatePressures(m.fore(), m.aft());
+        auv.telemetry.PRESSURE.aftStream.update(m.aft());
+        auv.telemetry.PRESSURE.foreStream.update(m.fore());
     }
     
     @Override
@@ -315,13 +330,13 @@ public class CommunicationController extends MessageObserver {
     public void onImageMessage(ImageMessage m) {
         switch (m.source()) {
             case Forward:
-                auv.cameras.FORWARD.updateImage(m.image());
+                auv.cameras.FORWARD.update(m.image());
                 break;
             case Down:
-                auv.cameras.DOWNWARD.updateImage(m.image());
+                auv.cameras.DOWNWARD.update(m.image());
                 break;
             case Sonar:
-                auv.cameras.SONAR.updateImage(m.image());
+                auv.cameras.SONAR.update(m.image());
                 break;
         }
     }

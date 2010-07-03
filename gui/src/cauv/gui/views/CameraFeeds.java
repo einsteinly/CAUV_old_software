@@ -29,7 +29,7 @@ public class CameraFeeds extends QWidget implements ScreenView {
 
 	public CameraFeeds() {
 	    QTimer timer = new QTimer(this);
-	    timer.setInterval(200);
+	    timer.setInterval(50);
 	    timer.setSingleShot(false);
 	    timer.timeout.connect(this, "updateValues()");
 	    timer.start();
@@ -84,17 +84,6 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	public void onConnect(AUV auv) {
 
 		this.auv = auv;
-		
-        /*auv.cameras.FORWARD.imageReceived.connect(ui.forwardCam, "setImage(Image)");
-        auv.cameras.FORWARD.imageReceived.connect(ui.forwardCamIcon, "setImage(Image)");
-        auv.cameras.FORWARD.imageReceived.connect(this, "updateIcon()");
-        
-        auv.cameras.DOWNWARD.imageReceived.connect(ui.downwardCam, "setImage(Image)");
-        auv.cameras.DOWNWARD.imageReceived.connect(ui.downwardCamIcon, "setImage(Image)");
-
-        auv.cameras.SONAR.imageReceived.connect(ui.sonarCam, "setImage(Image)");
-        auv.cameras.SONAR.imageReceived.connect(ui.sonarIcon, "setImage(Image)");
-		*/
 		
 		auv.autopilots.DEPTH.targetChanged.connect(this, "updateValues()");
 		auv.autopilots.YAW.targetChanged.connect(this, "updateValues()");
@@ -187,13 +176,13 @@ public class CameraFeeds extends QWidget implements ScreenView {
 
 	public void updateCams(){
 	    if(auv == null) return;
-        this.ui.forwardCam.setImage(auv.cameras.FORWARD.getLastImage());
+        this.ui.forwardCam.setImage(auv.cameras.FORWARD.get());
         if(!ui.forwardCam.getPixmap().isNull())
             this.ui.forwardCamIcon.setPixmap(ui.forwardCam.getPixmap().scaled(ui.forwardCamIcon.width(), ui.forwardCamIcon.height()));
-        this.ui.downwardCam.setImage(auv.cameras.DOWNWARD.getLastImage());
+        this.ui.downwardCam.setImage(auv.cameras.DOWNWARD.get());
         if(!ui.downwardCam.getPixmap().isNull())
             this.ui.downwardCamIcon.setPixmap(ui.downwardCam.getPixmap().scaled(ui.downwardCamIcon.width(), ui.downwardCamIcon.height()));
-        this.ui.sonarCam.setImage(auv.cameras.SONAR.getLastImage());
+        this.ui.sonarCam.setImage(auv.cameras.SONAR.get());
         if(!ui.sonarCam.getPixmap().isNull())
             this.ui.sonarIcon.setPixmap(ui.sonarCam.getPixmap().scaled(ui.sonarIcon.width(), ui.sonarIcon.height()));
         updateIcon();
@@ -214,7 +203,9 @@ public class CameraFeeds extends QWidget implements ScreenView {
 	    if(auv == null) {
 	        s = "Auv not connected";
 	    } else {
-    		s = "Depth [Target]: " + auv.autopilots.DEPTH.getTarget() + "\n";
+            s = "Prop Speed: " + auv.motors.PROP.get() + "\n\n";
+            
+            s += "Depth [Target]: " + auv.autopilots.DEPTH.getTarget() + "\n";
     		s += "Depth [Actual]: " + auv.telemetry.DEPTH.getDepth() + "\n\n";
     		
     		s += "Yaw [Target]: " + auv.autopilots.YAW.getTarget() + "\n";

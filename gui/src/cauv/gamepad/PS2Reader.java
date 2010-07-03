@@ -37,7 +37,7 @@ public class PS2Reader extends Thread
                 }
 
                 // Give the CPU a rest...
-                Thread.sleep(20);
+                Thread.sleep(50);
             }
             catch (InterruptedException ex) {
             }

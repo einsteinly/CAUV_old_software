@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Thu 1. Jul 09:47:50 2010
+** Created: Sat 3. Jul 10:55:26 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -589,7 +589,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         retranslateUi(Main);
 
         informationStack.setCurrentIndex(0);
-        tabWidget.setCurrentIndex(4);
+        tabWidget.setCurrentIndex(0);
 
 
         Main.connectSlotsByName();

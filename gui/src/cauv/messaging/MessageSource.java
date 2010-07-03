@@ -94,6 +94,34 @@ public class MessageSource
                 }
                 break;
             }
+            case 102: {
+                ScriptMessage m = new ScriptMessage(b);
+                for (MessageObserver o : m_obs) {
+                    o.onScriptMessage(m);
+                }
+                break;
+            }
+            case 83: {
+                MotorRampRateMessage m = new MotorRampRateMessage(b);
+                for (MessageObserver o : m_obs) {
+                    o.onMotorRampRateMessage(m);
+                }
+                break;
+            }
+            case 84: {
+                SetMotorMapMessage m = new SetMotorMapMessage(b);
+                for (MessageObserver o : m_obs) {
+                    o.onSetMotorMapMessage(m);
+                }
+                break;
+            }
+            case 85: {
+                ResetMCBMessage m = new ResetMCBMessage(b);
+                for (MessageObserver o : m_obs) {
+                    o.onResetMCBMessage(m);
+                }
+                break;
+            }
             case 81: {
                 StateMessage m = new StateMessage(b);
                 for (MessageObserver o : m_obs) {
@@ -178,6 +206,20 @@ public class MessageSource
                 }
                 break;
             }
+            case 130: {
+                HoughLinesMessage m = new HoughLinesMessage(b);
+                for (MessageObserver o : m_obs) {
+                    o.onHoughLinesMessage(m);
+                }
+                break;
+            }
+            case 131: {
+                HoughCirclesMessage m = new HoughCirclesMessage(b);
+                for (MessageObserver o : m_obs) {
+                    o.onHoughCirclesMessage(m);
+                }
+                break;
+            }
             case 100: {
                 ControllerStateMessage m = new ControllerStateMessage(b);
                 for (MessageObserver o : m_obs) {
@@ -189,13 +231,6 @@ public class MessageSource
                 MotorStateMessage m = new MotorStateMessage(b);
                 for (MessageObserver o : m_obs) {
                     o.onMotorStateMessage(m);
-                }
-                break;
-            }
-            case 102: {
-                ScriptMessage m = new ScriptMessage(b);
-                for (MessageObserver o : m_obs) {
-                    o.onScriptMessage(m);
                 }
                 break;
             }

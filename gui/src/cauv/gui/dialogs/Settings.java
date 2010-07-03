@@ -102,6 +102,7 @@ public class Settings extends QDialog implements AUVConnectionObserver {
         auv.autopilots.YAW.paramsChanged.connect(this, "updateYawParamsUI()");
         
         auv.debugLevelChanged.connect(ui.debugLevel, "setValue(int)");
+        ui.resetMCB.released.connect(auv, "resetMCB()");
         ui.debugLevel.valueChanged.connect(auv, "setDebugLevel(int)");
         
         ui.aftOffset.valueChanged.connect(this, "calibrateDepth()");
@@ -172,7 +173,7 @@ public class Settings extends QDialog implements AUVConnectionObserver {
     }
     
     public void calibrateDepth(){
-        auv.calibrateDepth((float)ui.foreOffset.value(), (float)ui.foreScale.value(),
+        auv.setDepthCalibration((float)ui.foreOffset.value(), (float)ui.foreScale.value(),
                 (float)ui.aftOffset.value(), (float)ui.aftScale.value());
     }
 }

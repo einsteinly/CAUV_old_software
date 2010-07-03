@@ -195,8 +195,8 @@ public class TelemetryView extends QWidget implements ScreenView {
             }
         }
 
-        if(auv != null)
-        auv.autopilots.DEPTH.setTarget((float)Math.random()*1000);
+        //if(auv != null)
+        //auv.autopilots.DEPTH.setTarget((float)Math.random()*1000);
     }
     
     @Override

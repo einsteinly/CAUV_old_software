@@ -20,7 +20,7 @@
    <item>
     <widget class="QToolBox" name="toolBox">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="page_2">
       <property name="geometry">
@@ -349,8 +349,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>558</width>
-        <height>277</height>
+        <width>297</width>
+        <height>72</height>
        </rect>
       </property>
       <attribute name="label">
@@ -576,6 +576,13 @@
            </property>
           </spacer>
          </item>
+         <item row="3" column="1">
+          <widget class="QPushButton" name="resetMCB">
+           <property name="text">
+            <string>Reset MCB</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -598,8 +605,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>558</width>
-        <height>277</height>
+        <width>230</width>
+        <height>38</height>
        </rect>
       </property>
       <attribute name="label">
