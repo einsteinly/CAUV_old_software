@@ -150,25 +150,72 @@ class KMeansNode: public Node{
                     assert(best_cl_i < (unsigned int)K);
                     clusteridsMat.at<unsigned char>(y,x) = clamp_cast<unsigned char>((unsigned char)0, best_cl_i, (unsigned char)255);
                     cluster& best_cl = m_clusters[best_cl_i];
+                    best_cl.size++;
                     for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
                     {
                         best_cl.valsum[ch] += *img_bp;
-                        best_cl.size++;
                     }
                 }
+
+            // Find empty clusters, and assign to them the most distant point
+            for (size_t i = 0; i < m_clusters.size(); i++)
+            {
+                cluster& cl = m_clusters[i];
+                if (cl.size == 0)
+                {
+                    int farthest_point_x = -1;
+                    int farthest_point_y = -1;
+                    unsigned int farthest_point_sqdist = 0;
+
+                    for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
+                        for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
+                        {
+                            cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
+                            if(cl.size < 2)
+                            {
+                                break;
+                            }
+                            
+                            unsigned int sqdist = 0;
+                            for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
+                            {
+                                sqdist += (*img_bp - cl.centre[ch]) * (*img_bp - cl.centre[ch]);
+                            }
+                            
+                            if (sqdiff > farthest_point_sqdist) {
+                                farthest_point_sqdist = sqdist;
+                                farthest_point_x = x;
+                                farthest_point_y = y;
+                            }
+                        }
+                   
+                    assert(farthest_point_x != -1 && farthest_point_y != -1)
+                    
+                    int farthest_point_clid = clusteridsMat.at<unsigned char>(farthest_point_y,farthest_point_x);
+                    cluster& farthest_point_cl = m_clusters[farthest_point_clid];
+                    clusteridsMat.at<unsigned char>(farthest_point_y,farthest_point_x) = i;
+                    
+                    farthest_point_cl.size--;
+                    cl.size++;
+                    for(ch = 0, img_bp = y * row_size + x * elem_size; ch < m_channels; ch++, img_bp++)
+                    {
+                        farthest_point_cl.valsum[ch] -= *img_bp;
+                        cl.valsum[ch] += *img_bp;
+                    }
+                }
+            }
+
 
             // Change cluster centres (means) based on mean of pixel values
             for (size_t i = 0; i < m_clusters.size(); i++)
             {
                 cluster& cl = m_clusters[i];
-                debug() << i << ".size =" << cl.size;
-                if (cl.size != 0)
+                assert(cl.size != 0);
+                
+                for(ch = 0; ch < m_channels; ch++)
                 {
-                    for(ch = 0; ch < m_channels; ch++)
-                    {
-                        cl.centre[ch] = cl.valsum[ch]/cl.size;
-                        debug(5) << i << ".centre[" << ch << "] =" << (int) cl.centre[ch];
-                    }
+                    cl.centre[ch] = cl.valsum[ch]/cl.size;
+                    debug(5) << i << ".centre[" << ch << "] =" << (int) cl.centre[ch];
                 }
             }
 
