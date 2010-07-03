@@ -5,6 +5,7 @@ import cauv
 import cauv.node as node
 import cauv.messaging as msg
 
+import math
 import time
 import traceback
 
@@ -26,7 +27,7 @@ class LoggingObserver(msg.BufferedMessageObserver):
         self.pitch = None
         self.roll = None
         self.start_time = time.clock()
-        self.last_time = None
+        self.last_time = 0
         self.speed_forwards = 0
         self.speed_rigt = 0
         self.x = 0
@@ -79,12 +80,12 @@ class LoggingObserver(msg.BufferedMessageObserver):
         self.speed_forwards = m.demand.prop * prop_speed_conversion
         net_h_power = m.demand.hbow + m.demand.hstern
         self.speed_right = net_h_power * strafe_speed_conversion
-        self.writeline()
+        self.writeLine()
 
     def onTelemetryMessage(self, m):
         self.yaw = m.orientation.yaw
         self.pitch = m.orientation.pitch
-        self.roll = m.orietnation.roll
+        self.roll = m.orientation.roll
         self.depth = m.depth
         self.writeLine()
     

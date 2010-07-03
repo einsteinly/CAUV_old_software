@@ -21,8 +21,8 @@ def dfu():
     ), "control")
 
     auv.bearingParams(1, 0, -80, 1)
-    auv.depthParams(-40, 0, 0, 1)
-    auv.pitchParams(1, 0, 0, 1)
+    auv.depthParams(40, 0, 0, 1)
+    #auv.pitchParams(1, 0, 0, 1)
 
     auv.propMap(10, -10, 127, -127)
     auv.vbowMap(10, -10, 127, -127)
@@ -31,18 +31,23 @@ def dfu():
     auv.hsternMap(10, -10, 127, -127)
 
     time.sleep(2)
-    bearing = auv.getBearing()
-    if bearing is None:
-        print 'no bearing information!'
-        time.sleep(5)
-        bearing = 90
+    #bearing = auv.getBearing()
+    #if bearing is None:
+    #    print 'no bearing information!'
+    #    time.sleep(5)
+    #    bearing = 90
+    bearing = 325
 
     try:
+        print 'setting bearing:'
+        auv.bearing(bearing)
+        time.sleep(2)
+
         print 'diving...'
         auv.depth(2)
         time.sleep(5)
         print 'forwards...'
-        auv.prop(100)
+        auv.prop(127)
         time.sleep(30)
         print 'stop...'
         auv.prop(0)
@@ -51,7 +56,7 @@ def dfu():
         auv.bearing(bearing + 180)
         time.sleep(10)
         print 'forwards...'
-        auv.prop(100)
+        auv.prop(127)
         time.sleep(40)
         print 'surface...'
         auv.depth(0)
