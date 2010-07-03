@@ -10,10 +10,10 @@ import time
 import pickle
 import optparse
 
-def savepl(spread, fname):
+def savepl(spread, port, fname):
     with open(fname, 'wb') as outf:
         print 'Connecting...'
-        n = node.Node("py-plsave", spread)
+        n = node.Node("py-plsave", spread, port)
 
         print 'Initializing pipeline model...'        
         model = pipeline.Model(n)
@@ -29,10 +29,10 @@ def savepl(spread, fname):
         print 'Done.'
 
 
-def loadpl(spread, fname):
+def loadpl(spread, port, fname):
     with open(fname, 'rb') as inf:
         print 'Connecting...'        
-        n = node.Node("py-plsave", spread)
+        n = node.Node("py-plsave", spread, port)
 
         print 'Initializing pipeline model...'
         model = pipeline.Model(n)
@@ -56,12 +56,13 @@ if __name__ == '__main__':
 
     parser = optparse.OptionParser()
     parser.add_option("-f", "--file", dest="fname", default="pipeline.pickle")
-    parser.add_option("-s", "--spread", dest="spread", default="16707@localhost")
+    parser.add_option("-s", "--spread", dest="spread", default="localhost")
+    parser.add_option("-p", "--port", dest="port", type='int', default=16707)
     (opts, args) = parser.parse_args()
     if len(args) == 0 or args[0].lower() == 'save':
-        savepl(opts.spread, opts.fname)
-    elif len(args) == 1:
-        loadpl(opts.spread, opts.fname)
+        savepl(opts.spread, opts.port, opts.fname)
+    elif len(args) == 1 and args[0].lower() == 'load':
+        loadpl(opts.spread, opts.port, opts.fname)
     else:
         print 'usage: savepl [-f filename] (load|save)'
 

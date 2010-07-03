@@ -554,7 +554,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;
-                m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                if (mid == MotorID::VBow)
+                    m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
+                else
+                    m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
             }
         }
 
