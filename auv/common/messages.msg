@@ -128,8 +128,8 @@ struct MotorDemand
 }
 struct Line
 {
-    a : floatXYZ;
-    b : floatXYZ;
+    centre : floatXYZ;
+    angle : float;
 }
 struct Circle
 {
@@ -440,7 +440,14 @@ group pressure
 	    fore : uint16;
 	    aft : uint16;
     }
+}
 
+group ai
+{
+    message AI : 200
+    {
+        msg : string;
+    }
 }
 
 
