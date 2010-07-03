@@ -115,6 +115,20 @@ class CauvNodeWrapper:
         }
 };
 
+class AIMessageObserver:
+    public BufferedMessageObserver,
+    public bp::wrapper<BufferedMessageObserver>
+{
+    public:
+        // only check for overrides of onAIMessage
+        void onAIMessage(AIMessage_ptr m){
+            if(bp::override f = this->get_override("onAIMessage")){
+                GILLock l; 
+                f();
+            }
+        }
+};
+
 
 class SpreadMessageWrapper:
     public SpreadMessage,
@@ -189,6 +203,7 @@ void emitMessage(){
                boost::noncopyable,
                boost::shared_ptr<Message>
               >("__Message", bp::no_init)
+        .def("group", wrap(&Mailbox::group))
     ;
 }
 
@@ -228,5 +243,15 @@ void emitSpreadMessage(){
                boost::shared_ptr<MembershipMessage>
               >("__MembershipMessage", bp::no_init)
     ;
+}
+
+
+void emitAIMessageObserver(){
+    bp::class_<AIMessageObserver,
+               boost::noncopyable,
+               boost::shared_ptr<MessageObserver>
+              >("AIMessageObserver")
+        .def("onAIMessage", &wrap(AIMessageObserver::onAIMessage))
+   ;
 }
 
