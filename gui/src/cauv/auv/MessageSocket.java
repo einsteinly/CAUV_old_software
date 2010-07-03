@@ -19,7 +19,7 @@ public class MessageSocket extends MessageSource  {
 
     protected Vector<byte[]> messages = new Vector<byte[]>();
     
-    protected static boolean debug = false;
+    protected static boolean debug = true;
     protected boolean enabled = true;
     Vector<SpreadGroup> groups = new Vector<SpreadGroup>();
     Vector<MembershipObserver> m_membership_observers = new Vector<MembershipObserver>();

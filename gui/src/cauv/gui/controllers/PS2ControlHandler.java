@@ -103,9 +103,9 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
                 break;
 
             case TRIANGLE:
-                motion.yaw(auv.getOrientation().yaw);
-                motion.depth(auv.getDepth());
-                motion.pitch(auv.getOrientation().pitch);
+                motion.yaw(auv.telemetry.ORIENTATION.getYaw());
+                motion.depth(auv.telemetry.DEPTH.getDepth());
+                motion.pitch(auv.telemetry.ORIENTATION.getPitch());
                 break;
             case SQUARE:
                 motion.stop();

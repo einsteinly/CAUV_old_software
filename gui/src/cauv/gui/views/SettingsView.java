@@ -127,8 +127,8 @@ public class SettingsView extends QWidget implements ScreenView {
         ui.pitchTarget.valueChanged.connect(this, "updatePitchTarget(double)");
         auv.autopilots.PITCH.targetChanged.connect(this, "updatePitchTarget()");
 
-        auv.depthChanged.connect(this, "updateDepthActual(float)");
-        auv.orientationChanged.connect(this, "updateOrientationActual(floatYPR)");
+        auv.telemetry.DEPTH.depthChanged.connect(this, "updateDepthActual(float)");
+        auv.telemetry.ORIENTATION.orientationChanged.connect(this, "updateOrientationActual(floatYPR)");
     }
 
     public void updateDepthActual(float depth){
