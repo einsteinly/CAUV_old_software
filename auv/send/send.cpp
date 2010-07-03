@@ -21,7 +21,18 @@ int main(int argc, char** argv)
     SpreadMailbox m_mailbox;
     m_mailbox.connect("16707@localhost", "send");
     
-    if (boost::iequals(msgType, "motor")) {
+    if (boost::iequals(msgType, "resetmcb")) {
+        if (argc - 2 != 0) {
+            std::cerr << "Error: reset MCB message requires exactly zero parameters" << std::endl;
+            return 3;
+        }
+        
+        boost::shared_ptr<ResetMCBMessage> m = boost::make_shared<ResetMCBMessage>();
+    
+        std::cout << "Sending reset MCB message " << *m << std::endl;
+        m_mailbox.sendMessage(m, SAFE_MESS);
+    }
+    else if (boost::iequals(msgType, "motor")) {
         if (argc - 2 != 2) {
             std::cerr << "Error: motor message requires exactly two parameters (motorid, speed)" << std::endl;
             return 3;
@@ -34,7 +45,7 @@ int main(int argc, char** argv)
         std::cout << "Sending motor message " << *m << std::endl;
         m_mailbox.sendMessage(m, SAFE_MESS);
     }
-    else if (boost::iequals(msgType, "telemetry")) {
+    else if (boost::iequals(msgType, "telemetryspam")) {
         if (argc - 2 != 3) {
             std::cerr << "Error: telemetry message requires exactly three parameters (orientation.ypr)" << std::endl;
             return 3;

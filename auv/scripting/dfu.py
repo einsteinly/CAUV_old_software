@@ -4,11 +4,11 @@ import cauv
 import cauv.messaging as msg
 import cauv.node
 
-import aiTypes
+#import aiTypes
 
-import cPickle as pickle
+#import cPickle as pickle
 import time
-import threading
+#import threading
 import math
 
 
@@ -38,29 +38,34 @@ def dfu():
     print 'current bearing is', bearing
     
     try:
-    print 'diving...' 
-    auv.depth(2)
-    time.sleep(5)
-    
-    print 'forward...'
-    auv.prop(100)
-    time.sleep(30)
-    
-    print 'stop...'
-    auv.prop(0)
-    time.sleep(5)
+        print 'diving...' 
+        auv.depth(2)
+        time.sleep(5)
+        
+        print 'forward...'
+        auv.prop(100)
+        time.sleep(30)
+        
+        print 'stop...'
+        auv.prop(0)
+        time.sleep(5)
 
-    print 'turning...'
-    auv.bearing(bearing - 180)
-    time.sleep(20)
+        print 'turning...'
+        auv.bearing(bearing - 180)
+        time.sleep(20)
 
-    print 'forward...'
-    auv.prop(100)
-    time.sleep(40)
+        print 'forward...'
+        auv.prop(100)
+        time.sleep(40)
 
-    print 'surfacing...'
-    auv.depth(0)
-    time.sleep(20)
+        print 'surfacing...'
+        auv.depth(0)
+        time.sleep(20)
+     except:
+         auv.depth(0)
+         time.sleep(10)
+         auv.stop()
+         time.sleep(1)
 
 if __name__ == '__main__'
     dfu()
