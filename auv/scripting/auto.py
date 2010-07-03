@@ -10,24 +10,6 @@ import aiTypes
 import cPickle as pickle
 import time
 
-
-'''
-# set-up calibration factors
-node.send(msg.DepthCalibrationMessage(
-    -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
-))
-
-auv.bearingParams(1, 0, -80, 1)
-auv.depthPatams(-40, 0, 0, 1)
-auv.pitchParams(1, 0, 0, 1)
-
-auv.propMap(10, -10, 127, -127)
-auv.vbowMap(10, -10, 127, -127)
-auv.hbowMap(10, -10, 127, -127)
-auv.vsternMap(10, -10, 127, -127)
-auv.hsternMap(10, -10, 127, -127)
-'''
-
 class Effects:
     (bearing,
      depth,
@@ -53,12 +35,26 @@ class DummyAUV:
     def prop(self, speed):
         if not Effects.prop in self.effects:
             self.effects.append(Effects.prop)
-    def stop(self)
+    def stop(self):
         self.bearing()
         self.depth()
         self.pitch()
         self.strafe()
         self.prop()
+
+class TestAUV:
+    def bearing(self, bearing):
+        print 'bearing', bearing
+    def depth(self, depth):
+        print 'depth', depth
+    def pitch(self, pitch):
+        print 'pitch', pitch
+    def strafe(self, speed):
+        print 'strafe', speed
+    def prop(self, speed):
+        print 'speed', speed
+    def stop(self):
+        print 'STOP'
 
 class DemandWrap:
     def __init__(self, demand):

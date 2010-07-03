@@ -12,7 +12,7 @@ import threading
 import math
 import traceback
 
-def PipeFollowDemand(aiTypes.Demand):
+class PipeFollowDemand(aiTypes.Demand):
     def __init__(self, prop = None, strafe = None, bearing = None):
         aiType.Demand.__init__(self)
         self.priority = 0
@@ -32,7 +32,7 @@ def PipeFollowDemand(aiTypes.Demand):
     def cleanup(self, auv):
         pass
 
-def PipeFollowCompleteDemand(aiTypes.Demand):
+class PipeFollowCompleteDemand(aiTypes.Demand):
     def __init__(self):
         aiType.Demand.__init__(self)
         self.priority = 1
@@ -40,7 +40,7 @@ def PipeFollowCompleteDemand(aiTypes.Demand):
         auv.depth(0)
         auv.prop(0)
 
-def PipeFollowObjective(msg.BufferedObserver):
+class PipeFollowObjective(msg.BufferedObserver):
     def __init__(self, node):
         self.__node = node
         self.__node.addObserver(self)
