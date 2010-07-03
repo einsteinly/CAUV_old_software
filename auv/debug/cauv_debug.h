@@ -176,7 +176,7 @@ struct debug : boost::noncopyable
         return *this;
     }
 
-    static int parseOptions(int, char**){ }
+    static int parseOptions(int, char**){ return 0; }
 };
 #endif
 
