@@ -9,6 +9,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include <common/messages.h>
+
 #include "../node.h"
 
 
@@ -26,13 +28,13 @@ class HoughLinesNode: public Node{
             registerOutputID<image_ptr_t>("image_out");
             
             // parameters:
-            registerParamID<bool>("probabalistic", false);
+            registerParamID<bool>("probabalistic", true);
             registerParamID<int>("rho", 1);
             registerParamID<float>("theta", CV_PI/180);
             registerParamID<int>("threshold", 80);
             // probabalistic only:
-            registerParamID<int>("minLineLength", 30);
-            registerParamID<int>("maxLineGap", 10);
+            registerParamID<int>("minLineLength", 20);
+            registerParamID<int>("maxLineGap", 5);
             // non-probabalistic only:
             registerParamID<int>("srn", 0);
             registerParamID<int>("stn", 0);
@@ -93,17 +95,41 @@ class HoughLinesNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
+            // lines[] corrdinates are in pixels, top left origin
             std::vector<Line> msg_lines;
+            const float width = img->cvMat().cols;
+            const float height = img->cvMat().rows;
+            debug(2) << "HoughLines: detected" << lines.size() << "lines";
             for(unsigned i = 0; i < lines.size(); i++){
                 Line l;
-                floatXYZ a, b;
-                a.z = b.z = 0;
-                a.x = lines[i][0];
-                a.y = lines[i][1];
-                b.x = lines[i][2];
-                b.y = lines[i][3];
-                l.a = a;
-                l.b = b;
+                floatXYZ centre = {0, 0, 0};
+                float angle; // straight up is 0
+                centre.x = (lines[i][0] + lines[i][2]) / (2 * width);
+                centre.y = (lines[i][1] + lines[i][3]) / (2 * height);
+                floatXYZ top = {0, 0, 0};
+                floatXYZ btm = {0, 0, 0};
+                if(lines[i][1] > lines[i][3]){
+                    btm.x = lines[i][0];
+                    btm.y = lines[i][1];
+                    top.x = lines[i][2];
+                    top.y = lines[i][3];
+                }else{
+                    top.x = lines[i][0];
+                    top.y = lines[i][1];
+                    btm.x = lines[i][2];
+                    btm.y = lines[i][3];
+                }
+
+                angle = std::atan2(top.y - btm.y, top.x-btm.x);
+                //floatXYZ a, b;
+                //a.z = b.z = 0;
+                //a.x = lines[i][0] / width;
+                //a.y = lines[i][1] / height;
+                //b.x =  / width;
+                //b.y = lines[i][3] / height;
+                //l.a = a;
+                //l.b = b;
+                debug(3) << "line:" << l;                
                 msg_lines.push_back(l);
             }
             sendMessage(boost::make_shared<HoughLinesMessage>(msg_lines));

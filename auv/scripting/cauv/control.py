@@ -7,6 +7,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.__node = node
         node.join("control")
         node.addObserver(self)
+        self.current_bearing = None
         
         ## synchronising stuff
         #self.received_state_condition = threading.Condition()
@@ -26,8 +27,8 @@ class AUV(messaging.BufferedMessageObserver):
         self.pitch(None)
         self.depth(None)
     
-    def getbearing(self):
-        return self.bearing
+    def getBearing(self):
+        return self.current_bearing
     #def getBearing(self, timeout=3):
     #    self.received_state_condition.acquire()
     #    self.received_state = None

@@ -7,6 +7,7 @@ void emitThing(); // test stuff
 void emitMailbox();
 void emitMessage();
 void emitCauvNode();
+void emitAIMessageObserver();
 
 void emitSpreadMessage(); // not really needed?
 
