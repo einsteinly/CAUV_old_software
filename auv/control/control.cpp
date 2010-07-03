@@ -813,6 +813,7 @@ void ControlNode::onRun()
     }
 
     m_controlLoops->start();
+    m_telemetryBroadcaster->start();
 }
 
 static ControlNode* node;
