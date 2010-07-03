@@ -4,7 +4,7 @@
 # Based on makefile provided with examples with JackOSX
 # 	Copyright (c) 2004-2009 JackOSX.com
 #
-# To build, you need a recent GCC, a 64-bit processor, and the following
+# To build, you need a recent GCC, and the following
 # libraries: GSL, JACK, and Intel Threading Building Blocks.
 #
 # Hugo Vincent, February 2010.
@@ -12,7 +12,7 @@
 # Note: gcc-4.5 has -march=atom -mtune=atom. 
 
 CXX       = g++
-CXXFLAGS  = -m64 -mtune=generic -mfpmath=sse -msse -msse2 -msse3 -mssse3 
+CXXFLAGS  = -mtune=generic -mfpmath=sse -msse -msse2 -msse3 -mssse3 
 CXXFLAGS += -O3 -ffast-math -funroll-loops -fprefetch-loop-arrays -fomit-frame-pointer
 CXXFLAGS += -ftracer -ftree-vectorize 
 # CXXFLAGS += -g -ftree-vectorizer-verbose=4
