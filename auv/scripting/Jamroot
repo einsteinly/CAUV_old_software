@@ -52,11 +52,11 @@ lib libcommon : ../common/messages.cpp
                 highguilib
                 ssrcspreadlib
                 bpolib
-              : <define>CAUV_DEBUG ;
+              : <define>CAUV_NO_DEBUG ;
 
 python-extension cauvinterface : [ glob *.cpp ]
                                  libcommon
-                               : <define>CAUV_DEBUG ;
+                               : <define>CAUV_NO_DEBUG ;
 
 install "./cauv/" : cauvinterface libcommon ;
 
