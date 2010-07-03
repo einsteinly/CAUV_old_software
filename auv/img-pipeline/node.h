@@ -135,7 +135,7 @@ class Node{
             unique_lock_t l(m_parameters_lock);
             param_value_map_t::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
-                debug() << "param" << p << "set to" << v;
+                debug(2) << "param" << p << "set to" << v;
                 i->second = v;
             }else{
                 error e;
@@ -175,7 +175,7 @@ class Node{
                 if(j != m_parent_links.end() && (node = j->second.first)){
                     output_id outparam = j->second.second;
                     assert(node->paramOutputs().count(outparam));
-                    debug() << "returning linked parameter value for" << p
+                    debug(4) << "returning linked parameter value for" << p
                             << "(linked to" << j->second.first
                             << j->second.second << ")";
                     // TODO: this will throw boost::bad_get if there is a

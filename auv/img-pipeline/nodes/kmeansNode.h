@@ -46,7 +46,7 @@ class KMeansNode: public Node{
             std::vector<unsigned char> centre;
             unsigned int size;
             
-            std::vector<unsigned char> valsum;
+            std::vector<int> valsum;
         };
 
         std::vector< cluster > m_clusters;
@@ -109,16 +109,14 @@ class KMeansNode: public Node{
                 }
             }
 
-            debug() << "KMeansNode: " << K;
-            
             int y, x, ch;
             int rows = img->cvMat().rows, cols = img->cvMat().cols;
             const int elem_size = img->cvMat().elemSize();
             const int row_size = cols * elem_size;
             unsigned char *img_rp, *img_cp, *img_bp;
 
-            cv::Mat clusteridsMat(cols, rows, CV_8UC1);
-            boost::shared_ptr<Image> clusterids = boost::make_shared<Image>(clusteridsMat);
+            boost::shared_ptr<Image> clusterids = boost::make_shared<Image>(cv::Mat(rows, cols, CV_8UC1));
+            cv::Mat clusteridsMat = clusterids->cvMat();
 
             // Clear val sums and sizes (val sum for single pass mean calculation)
             for (size_t i = 0; i < m_clusters.size(); i++) {
@@ -126,15 +124,15 @@ class KMeansNode: public Node{
                 for(ch = 0; ch < m_channels; ch++)
                 {
                     cl.valsum[ch] = 0;
-                    cl.size = 0;
                 }
+                cl.size = 0;
             }
 
             // Assign each pixel to the nearest cluster
             for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
                 for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                 {
-                    size_t best_cl_i = UINT_MAX;      
+                    size_t best_cl_i = K;
                     unsigned int best_cl_sqdiff = UINT_MAX;      
                     for (size_t i = 0; i < m_clusters.size(); i++) {
                         cluster& cl = m_clusters[i];
@@ -149,7 +147,8 @@ class KMeansNode: public Node{
                             best_cl_sqdiff = sqdiff;
                         }
                     }
-                    clusteridsMat.at<unsigned char>(x,y) = clamp_cast<unsigned char>((unsigned char)0, best_cl_i, (unsigned char)255);
+                    assert(best_cl_i < (unsigned int)K);
+                    clusteridsMat.at<unsigned char>(y,x) = clamp_cast<unsigned char>((unsigned char)0, best_cl_i, (unsigned char)255);
                     cluster& best_cl = m_clusters[best_cl_i];
                     for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
                     {
@@ -159,12 +158,16 @@ class KMeansNode: public Node{
                 }
 
             // Change cluster centres (means) based on mean of pixel values
-            for (size_t i = 0; i < m_clusters.size(); i++) {
+            for (size_t i = 0; i < m_clusters.size(); i++)
+            {
                 cluster& cl = m_clusters[i];
-                for(ch = 0; ch < m_channels; ch++)
+                debug() << i << ".size =" << cl.size;
+                if (cl.size != 0)
                 {
-                    if (cl.size != 0) {
+                    for(ch = 0; ch < m_channels; ch++)
+                    {
                         cl.centre[ch] = cl.valsum[ch]/cl.size;
+                        debug(5) << i << ".centre[" << ch << "] =" << (int) cl.centre[ch];
                     }
                 }
             }
@@ -175,9 +178,10 @@ class KMeansNode: public Node{
                 for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
                     for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                     {
-                        cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(x,y)];
+                        cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
 
-                        for (size_t i = 0; i < m_clusters.size(); i++) {
+                        for(ch = 0, img_bp = img_cp; ch < m_channels; ch++, img_bp++)
+                        {
                             *img_bp = cl.centre[ch];
                         }
                     }

@@ -109,10 +109,10 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
             setNewParamValue(param);
         }else{
             if(n->getOutputImage(o_id, true)){
-                debug() << "node" << *this << "input set, output available from" << *n;
+                debug(4) << "node" << *this << "input set, output available from" << *n;
                 setNewInput(param);
             }else{
-                debug() << "node" << *this << "input set, demand new output on" << *n;
+                debug(4) << "node" << *this << "input set, demand new output on" << *n;
                 n->setNewOutputDemanded(o_id);
             }
         }
@@ -377,8 +377,8 @@ void Node::exec(){
 
     pl.unlock();
 
-    debug() << "exec: id=" << m_id << "type=" << m_node_type
-            << "speed=" << m_speed << ", " << inputs.size() << "inputs";
+    debug(4) << "exec: id=" << m_id << "type=" << m_node_type
+             << "speed=" << m_speed << ", " << inputs.size() << "inputs";
     
     NodeStatus::e status = NodeStatus::e(0);
     if(allowQueue()) status |= NodeStatus::AllowQueue;
@@ -410,16 +410,16 @@ void Node::exec(){
             m_outputs[v.first] = v.second;
             out_link_map_t::iterator kids = m_child_links.find(v.first);
             if(kids != m_child_links.end()){
-                debug() << "Prompting" << kids->second.size() << "children of new output:";
+                debug(5) << "Prompting" << kids->second.size() << "children of new output:";
                 // for each node connected to the output
                 foreach(output_link_t& link, kids->second){
                     // link is a std::pair<node_ptr, input_id>
-                    debug() << "prompting new input to child on:" << v.first;
+                    debug(5) << "prompting new input to child on:" << v.first;
                     // notify the node that it has new input
                     link.first->setNewInput(link.second);
                 }
             }else{
-                debug() << "no children to prompt";
+                debug(5) << "no children to prompt";
             }
         }else{
             warning() << "exec() produced output of the wrong type for id:"
@@ -545,41 +545,41 @@ void Node::registerInputID(input_id const& i){
 void Node::checkAddSched() throw(){
     unique_lock_t l(m_checking_sched_lock);
     if(!allowQueue()){
-        debug() << "Cannot enqueue node" << *this << ", allowQueue false";
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", allowQueue false";
         return;
     }
     if(execQueued()){
-        debug() << "Cannot enqueue node" << *this << ", exec queued already";
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
     if(!newOutputDemanded() && !newParamValues()){
-        debug() << "Cannot enqueue node" << *this << ", no output demanded";
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", no output demanded";
         return;
     }
 
     if(!validInputAll()){
-        debug() << "Cannot enqueue node" << *this << ", input is invalid";
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", input is invalid";
         return;
     }
     // a new paramvalue is not sufficient to trigger repeated execution since
     // this can cause problems for nodes that do not copy output: ALL input and
     // connected param values must be new
     if(!newInputAll()){
-        debug() << "Cannot enqueue node" << *this << ", some input is old";
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", some input is old";
         return;
     }
     //if(!newParamValues()){
     //    // ALL inputs must be new for slow nodes
     //    if(!newInputAll() && m_speed < medium){
-    //        debug() << "Cannot enqueue node" << *this << ", some input is old";
+    //        debug(2) << "Cannot enqueue node" << *this << ", some input is old";
     //        return;
     //    }else if(!newInput()){
-    //        debug() << "Cannot enqueue node" << *this << ", all input is old";
+    //        debug(2) << "Cannot enqueue node" << *this << ", all input is old";
     //        return;
     //    }
     //}
 
-    debug() << "Queuing node:" << *this;
+    debug(4) << __func__ << "Queuing node:" << *this;
     setExecQueued();
     m_sched.addJob(this, m_priority);
 }
@@ -599,7 +599,7 @@ void Node::setNewInput(input_id const& a){
     unique_lock_t l(m_new_inputs_lock);
     unique_lock_t m(m_valid_inputs_lock);
     const in_bool_map_t::iterator i = m_new_inputs.find(a);
-    debug() << *this << "input new" << a;
+    debug(5) << *this << "input new" << a;
     if(i == m_new_inputs.end()){
         error e;
         e << a << "invalid, valid inputs:";
@@ -623,7 +623,7 @@ void Node::setNewInput(input_id const& a){
 void Node::setNewInput(){
     unique_lock_t m(m_new_inputs_lock);
     unique_lock_t n(m_valid_inputs_lock);
-    debug() << *this << "all inputs new";
+    debug(5) << *this << "all inputs new";
     foreach(in_bool_map_t::value_type& i, m_new_inputs){
         i.second = true;
         m_valid_inputs[i.first] = true;
@@ -639,7 +639,7 @@ void Node::setNewInput(){
 void Node::clearNewInput(){
     unique_lock_t m(m_new_inputs_lock);
     unique_lock_t n(m_valid_inputs_lock);
-    debug() <<  *this << "all inputs old";
+    debug(5) <<  *this << "all inputs old";
     foreach(in_bool_map_t::value_type& i, m_new_inputs){
         i.second = false;
         _statusMessage(boost::make_shared<InputStatusMessage>(
@@ -802,7 +802,7 @@ void Node::setNewParamValue(param_id const& a){
     unique_lock_t l(m_new_paramvalues_lock);
     const param_bool_map_t::iterator i = m_new_paramvalues.find(a);
 
-    debug() << *this << "paramvalue new" << a;
+    debug(5) << *this << "paramvalue new" << a;
     if(i == m_new_paramvalues.end()){
         error e;
         e << '"' << a << '"' << "invalid, valid paramvalues:\n\t";
@@ -821,7 +821,7 @@ void Node::setNewParamValue(param_id const& a){
 
 void Node::clearNewParamValues(){
     unique_lock_t m(m_new_paramvalues_lock);
-    debug() <<  *this << "all paramvalues old";
+    debug(5) <<  *this << "all paramvalues old";
     foreach(param_bool_map_t::value_type& i, m_new_paramvalues){
         i.second = false;
         _statusMessage(boost::make_shared<InputStatusMessage>(
@@ -840,7 +840,7 @@ bool Node::newParamValues() const{
 
 void Node::_demandNewParentInput() throw(){
     unique_lock_t l(m_parent_links_lock);
-    debug() << "node" << *this << "demanding new output from all parents";
+    debug(5) << "node" << *this << "demanding new output from all parents";
     foreach(in_link_map_t::value_type& i, m_parent_links)
         if(i.second.first)
             i.second.first->setNewOutputDemanded(i.second.second);

@@ -21,7 +21,7 @@ void ImageProcessor::start()
 void ImageProcessor::onImageMessage(ImageMessage_ptr m){
     lock_t l(m_nodes_lock);
     std::set<input_node_ptr_t>::iterator i;    
-    debug(2) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
+    debug(5) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onImageMessage(m);
 }
@@ -29,7 +29,7 @@ void ImageProcessor::onImageMessage(ImageMessage_ptr m){
 void ImageProcessor::onSonarDataMessage(SonarDataMessage_ptr m){
     lock_t l(m_nodes_lock);
     std::set<input_node_ptr_t>::iterator i;        
-    debug() << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
+    debug(5) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
     for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
         (*i)->onSonarDataMessage(m);
 }
@@ -55,7 +55,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
         lock_t l(m_nodes_lock);
         _addNode(node, new_id);
         if(node->isInputNode()){
-            debug() << "adding input node:" << *node;
+            debug(6) << "adding input node:" << *node;
             m_input_nodes.insert(boost::dynamic_pointer_cast<InputNode, Node>(node));
         }
         l.unlock();
@@ -99,7 +99,7 @@ void ImageProcessor::removeNode(node_id const& id){
     info() << "Node removed:" << id;
     
     if(n->isInputNode()){
-        debug() << "removing input node:" << *n;
+        debug(6) << "removing input node:" << *n;
         m_input_nodes.erase(boost::dynamic_pointer_cast<InputNode, Node>(n));
     }
     l.unlock();

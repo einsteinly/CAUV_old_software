@@ -48,7 +48,7 @@ class FileOutputNode: public OutputNode{
             int jpg_qual = param<int>("jpeg quality");
             int png_comp = param<int>("png compression");
              
-            debug() << "FileOutputNode::doWork()" << *img << "->" << fname;
+            debug(4) << "FileOutputNode::doWork()" << *img << "->" << fname;
 
             std::vector<int> imwrite_params;
             imwrite_params.push_back(CV_IMWRITE_JPEG_QUALITY);

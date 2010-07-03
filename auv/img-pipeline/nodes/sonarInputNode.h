@@ -28,7 +28,7 @@ class SonarInputNode: public InputNode{
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
             
-            debug() << "SonarInputNode::doWork";
+            debug(4) << "SonarInputNode::doWork";
             
             boost::shared_ptr<SonarDataMessage const> m = latestSonarDataMessage();
             if(!m)

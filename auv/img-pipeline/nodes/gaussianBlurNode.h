@@ -38,7 +38,7 @@ class GaussianBlurNode: public Node{
             if(sigma < 0)
                 warning() << "gaussian blur sigma must be positive";
 
-            debug() << "GaussianBlurNode:" << sigma;
+            debug(4) << "GaussianBlurNode:" << sigma;
             
             try{
                 cv::GaussianBlur(img->cvMat(), img->cvMat(), cv::Size(1+6*sigma, 1+6*sigma), sigma);

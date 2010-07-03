@@ -39,7 +39,7 @@ class InputNode: public Node{
          */
         void onImageMessage(boost::shared_ptr<const ImageMessage> m) throw() {
             lock_t l(m_counters_lock);
-            debug() << "Input node received an image";
+            debug(4) << "Input node received an image";
             if(subscriptions().count(ImageData)){
                 lock_t l(m_latest_msg_lock);
                 if(!m_processed_latest)
@@ -57,7 +57,7 @@ class InputNode: public Node{
          */
         void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
             lock_t l(m_counters_lock);
-            debug() << "Input node received sonar data";
+            debug(4) << "Input node received sonar data";
             if(subscriptions().count(SonarData)){
                 lock_t l(m_latest_msg_lock);
                 if(!m_processed_latest)
@@ -78,14 +78,14 @@ class InputNode: public Node{
     protected:
         boost::shared_ptr<const ImageMessage> latestImageMsg(){
             lock_t l(m_counters_lock);
-            debug() << "Grabbing image";
+            debug(4) << "Grabbing image";
             if(dropped_since > 0){
-                warning() << "Dropped" << dropped_since << "frames since last frame processed";
+                debug() << "Dropped" << dropped_since << "frames since last frame processed";
                 dropped += dropped_since;
                 dropped_since = 0;
             }
             processed++;
-            debug() << "Processed" << processed << "images";
+            debug(4) << "Processed" << processed << "images";
             m_processed_latest = true;
             
             lock_t m(m_latest_msg_lock);
@@ -94,14 +94,14 @@ class InputNode: public Node{
 
         boost::shared_ptr<const SonarDataMessage> latestSonarDataMessage(){
             lock_t l(m_counters_lock);
-            debug() << "Grabbing image";
+            debug(4) << "Grabbing image";
             if(dropped_since > 0){
-                warning() << "Dropped" << dropped_since << "frames since last frame processed";
+                warning() << "Dropped" << dropped_since << "lines since last line processed";
                 dropped += dropped_since;
                 dropped_since = 0;
             }
             processed++;
-            debug() << "Processed" << processed << "images";
+            debug(4) << "Processed" << processed << "images";
             m_processed_latest = true;
             
             lock_t m(m_latest_msg_lock);
