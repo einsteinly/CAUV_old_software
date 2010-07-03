@@ -182,14 +182,14 @@ class KMeansNode: public Node{
                                 sqdist += (*img_bp - cl.centre[ch]) * (*img_bp - cl.centre[ch]);
                             }
                             
-                            if (sqdiff > farthest_point_sqdist) {
+                            if (sqdist > farthest_point_sqdist) {
                                 farthest_point_sqdist = sqdist;
                                 farthest_point_x = x;
                                 farthest_point_y = y;
                             }
                         }
                    
-                    assert(farthest_point_x != -1 && farthest_point_y != -1)
+                    assert(farthest_point_x != -1 && farthest_point_y != -1);
                     
                     int farthest_point_clid = clusteridsMat.at<unsigned char>(farthest_point_y,farthest_point_x);
                     cluster& farthest_point_cl = m_clusters[farthest_point_clid];
@@ -197,7 +197,7 @@ class KMeansNode: public Node{
                     
                     farthest_point_cl.size--;
                     cl.size++;
-                    for(ch = 0, img_bp = y * row_size + x * elem_size; ch < m_channels; ch++, img_bp++)
+                    for(ch = 0, img_bp = img->cvMat().data + y * row_size + x * elem_size; ch < m_channels; ch++, img_bp++)
                     {
                         farthest_point_cl.valsum[ch] -= *img_bp;
                         cl.valsum[ch] += *img_bp;
