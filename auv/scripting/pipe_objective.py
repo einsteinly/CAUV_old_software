@@ -62,6 +62,9 @@ def PipeFollowObjective(msg.BufferedObserver):
         d.depth = 2.5
         self.send(d)
 
+    #TODO: end of pipe
+    #      turn around and follow the pipe the other way
+
     def run(self):
         self.completed.wait()
 
