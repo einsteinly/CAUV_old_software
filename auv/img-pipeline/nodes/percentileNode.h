@@ -21,7 +21,9 @@ class PercentileNode: public Node{
             registerInputID("image");
 
             // one output parameter
-            registerOutputID<param_value_t>("value");
+            registerOutputID<param_value_t>("ch1 value");
+            registerOutputID<param_value_t>("ch2 value");
+            registerOutputID<param_value_t>("ch3 value");
             
             // parameter: 
             registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
@@ -48,8 +50,8 @@ class PercentileNode: public Node{
                 throw(parameter_error("image must be continuous"));
             if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
                 throw(parameter_error("image must be unsigned bytes"));
-            if(img->cvMat().channels() != 1)
-                throw(parameter_error("image must be single channel"));
+            if(img->cvMat().channels() > 3)
+                throw(parameter_error("image must be <= 3-channel"));
                 // TODO: support vector parameters
             
             float pct = param<float>("percentile");
@@ -72,18 +74,29 @@ class PercentileNode: public Node{
                     for(ch = 0, bp = cp; ch < channels; ch++, bp++)
                         value_histogram[ch][*bp]++;
             }
+
+            param_value_t channel_results[3] = {
+                param_value_t(int(0)),
+                param_value_t(int(0)),
+                param_value_t(int(0))
+            };
             
-            int running_total = 0;
-            for(int i = 0; i < 256; i++){
-                debug(9) << "[" << BashColour::White << bar(running_total, num_pixels, 50) << "]"
-                          << i << running_total;
-                if((running_total += value_histogram[0][i]) >= pct_pixel){
-                    r["value"] = param_value_t(i);
-                    break;
+            for(int ch = 0; ch < channels; ch++){
+                int running_total = 0;
+                for(int i = 0; i < 256; i++){
+                    debug(9) << "[" << BashColour::White << bar(running_total, num_pixels, 50) << "]"
+                              << i << running_total;
+                    if((running_total += value_histogram[0][i]) >= pct_pixel){
+                        channel_results[ch] = param_value_t(i);
+                        break;
+                    }
                 }
             }
 
-            
+            r["ch1 value"] = channel_results[0];
+            r["ch2 value"] = channel_results[1];
+            r["ch3 value"] = channel_results[2];
+
             return r;
         }
     
