@@ -39,15 +39,26 @@ class DummyAUV:
     def __init__(self):
         self.effects = []
     def bearing(self, bearing):
-        self.effects.append(Effects.bearing)
+        if not Effects.bearing in self.effects:
+            self.effects.append(Effects.bearing)
     def depth(self, depth):
-        self.effects.append(Effects.depth)
+        if not Effects.depth in self.effects:
+            self.effects.append(Effects.depth)
     def pitch(self, pitch):
-        self.effects.append(Effects.pitch)
-    def h(self, speed):
-        self.effects.append(Effects.strafe)
+        if not Effects.pitch in self.effects:
+            self.effects.append(Effects.pitch)
+    def strafe(self, speed):
+        if not Effects.strage in self.effects:
+            self.effects.append(Effects.strafe)
     def prop(self, speed):
-        self.effects.append(Effects.prop)
+        if not Effects.prop in self.effects:
+            self.effects.append(Effects.prop)
+    def stop(self)
+        self.bearing()
+        self.depth()
+        self.pitch()
+        self.strafe()
+        self.prop()
 
 class DemandWrap:
     def __init__(self, demand):
@@ -72,8 +83,9 @@ class Controller(msg.AIMessageObserver):
             print 'unknown ai message:', received
     
     def addDemand(self, demand):
-        # TODO: be sensible about demand conflicts
-
+        # TODO: be sensible about demand conflicts, etc
+        
+        # TEMP: ONLY ONE OBJCTIVE IS POSSIBLE:
         # new demands from the same source override old ones
         if self.current_demand is None or \
            self.current_demand.source == demand.source or \
@@ -81,6 +93,7 @@ class Controller(msg.AIMessageObserver):
             self.current_demand.cleanup(self.auv)
             self.current_demand = demand
             self.current_demand.execute(self.auv)
+            
 
 if __name__ == '__main__':
     node = cauv.node.Node('py-auto')

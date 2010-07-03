@@ -129,7 +129,7 @@ class HoughLinesNode: public Node{
                 //b.y = lines[i][3] / height;
                 //l.a = a;
                 //l.b = b;
-                debug(3) << "line:" << l;                
+                debug(3) << "line:" << l;
                 msg_lines.push_back(l);
             }
             sendMessage(boost::make_shared<HoughLinesMessage>(msg_lines));
