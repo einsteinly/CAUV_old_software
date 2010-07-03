@@ -46,16 +46,17 @@ int main(int argc, char** argv)
         m_mailbox.sendMessage(m, SAFE_MESS);
     }
     else if (boost::iequals(msgType, "telemetryspam")) {
-        if (argc - 2 != 3) {
-            std::cerr << "Error: telemetry message requires exactly three parameters (orientation.ypr)" << std::endl;
+        if (argc - 2 != 4) {
+            std::cerr << "Error: telemetry message requires exactly four parameters (orientation.ypr, depth)" << std::endl;
             return 3;
         }
         floatYPR orientation;
         orientation.yaw = boost::lexical_cast<float>(argv[2]);
         orientation.pitch = boost::lexical_cast<float>(argv[3]);
         orientation.roll = boost::lexical_cast<float>(argv[4]);
+        float depth = boost::lexical_cast<float>(argv[5]);
 
-        boost::shared_ptr<TelemetryMessage> m = boost::make_shared<TelemetryMessage>(orientation);
+        boost::shared_ptr<TelemetryMessage> m = boost::make_shared<TelemetryMessage>(orientation, depth);
         while(true)
         {
             //std::cout << "Sending telemetry message " << *m << std::endl;

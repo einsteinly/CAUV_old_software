@@ -10,6 +10,7 @@ class ControlLoops;
 class MCBModule;
 class XsensIMU;
 class StateObserver;
+class TelemetryBroadcaster;
 
 class ControlNode : public CauvNode
 {
@@ -25,6 +26,7 @@ class ControlNode : public CauvNode
         boost::shared_ptr<XsensIMU> m_xsens;
         boost::shared_ptr<ControlLoops> m_controlLoops;
         boost::shared_ptr<StateObserver> m_stateObserver;
+        boost::shared_ptr<TelemetryBroadcaster> m_telemetryBroadcaster;
     
         boost::thread m_aliveThread;
 
