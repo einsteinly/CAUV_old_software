@@ -220,3 +220,10 @@ auv/lib/spread-src-4.1.0/stdutil/src/stdutil.tdo
 auv/lib/spread-src-4.1.0/stdutil/src/stdutil.to
 auv/lib/spread-src-4.1.0/stdutil/src/stdutil/private/stdarch_autoconf.h
 relre:metadata/*
+auv/pinger/PingerListenD
+auv/pinger/Makefile.dep
+auv/scripting/emit_containers.cpp
+auv/scripting/emit_enums.cpp
+auv/scripting/emit_messages.cpp
+auv/scripting/emit_observers.cpp
+auv/scripting/emit_structs.cpp
