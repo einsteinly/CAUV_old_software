@@ -164,7 +164,7 @@ group control
 	    motorId : MotorID;
 	    speed : int8;
     }
-
+    
     message BearingAutopilotEnabled : 60
     {
         enabled : bool;
@@ -232,6 +232,10 @@ group control
     {
         motor : MotorID;
         mapping : MotorMap;
+    }
+
+	message ResetMCB : 85
+	{
     }
 }
 group state
