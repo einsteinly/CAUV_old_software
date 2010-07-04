@@ -9,7 +9,7 @@ import cauv.utils.*;
 
 public enum NodeType {
 
-    Invalid, Copy, Resize, FileInput, FileOutput, LocalDisplay, CameraInput, NetInput, HoughLines, Canny, ConvertColour, GuiOutput, HoughCircles, GaussianBlur, MedianFilter, BilateralFilter, SplitRGB, CombineRGB, SplitHSV, SplitYUV, CombineYUV, CombineHSV, Levels, Mix, Percentile, SonarInput, BroadcastImage, Invert;
+    Invalid, Copy, Resize, FileInput, FileOutput, LocalDisplay, CameraInput, NetInput, HoughLines, Canny, ConvertColour, GuiOutput, HoughCircles, GaussianBlur, MedianFilter, BilateralFilter, SplitRGB, CombineRGB, SplitHSV, SplitYUV, CombineYUV, CombineHSV, Levels, Mix, Percentile, SonarInput, BroadcastImage, VideoFileOutput, Invert, KMeans, MixValue;
 
     public static NodeType readFrom(LEDataInputStream s) throws IOException {
         byte val = s.readByte();
@@ -69,7 +69,13 @@ public enum NodeType {
             case 26:
                 return BroadcastImage;
             case 27:
+                return VideoFileOutput;
+            case 28:
                 return Invert;
+            case 29:
+                return KMeans;
+            case 30:
+                return MixValue;
             default:
                 throw new IllegalArgumentException("Unrecognized NodeType value: " + val);
         }
@@ -158,8 +164,17 @@ public enum NodeType {
             case BroadcastImage:
                 s.writeByte(26);
                 break;
-            case Invert:
+            case VideoFileOutput:
                 s.writeByte(27);
+                break;
+            case Invert:
+                s.writeByte(28);
+                break;
+            case KMeans:
+                s.writeByte(29);
+                break;
+            case MixValue:
+                s.writeByte(30);
                 break;
         }
     }

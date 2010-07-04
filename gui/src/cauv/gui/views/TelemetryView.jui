@@ -32,6 +32,12 @@
        <height>0</height>
       </size>
      </property>
+     <property name="maximumSize">
+      <size>
+       <width>130</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <property name="dragDropMode">
       <enum>com.trolltech.qt.gui.QAbstractItemView.DragDropMode.NoDragDrop</enum>
      </property>

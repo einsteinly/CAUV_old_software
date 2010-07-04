@@ -124,7 +124,7 @@
    <item>
     <widget class="QStackedWidget" name="feeds">
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="forwardCamPage">
       <layout class="QHBoxLayout" name="horizontalLayout_2">

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Main.jui'
 **
-** Created: Thu 1. Jul 09:47:50 2010
+** Created: Sun 4. Jul 00:28:14 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -23,6 +23,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
     public QVBoxLayout verticalLayout;
     public QWidget connectionBar;
     public QHBoxLayout horizontalLayout;
+    public QPushButton emergencyStop;
     public QLabel label_3;
     public QWidget connectPanel;
     public QHBoxLayout horizontalLayout_6;
@@ -152,6 +153,14 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         horizontalLayout = new QHBoxLayout(connectionBar);
         horizontalLayout.setObjectName("horizontalLayout");
         horizontalLayout.setContentsMargins(6, 2, 2, 2);
+        emergencyStop = new QPushButton(connectionBar);
+        emergencyStop.setObjectName("emergencyStop");
+        emergencyStop.setIcon(new QIcon(new QPixmap("classpath:cauv/gui/resources/red_button.png")));
+        emergencyStop.setIconSize(new QSize(20, 20));
+        emergencyStop.setFlat(true);
+
+        horizontalLayout.addWidget(emergencyStop);
+
         label_3 = new QLabel(connectionBar);
         label_3.setObjectName("label_3");
 
@@ -419,7 +428,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         scrollArea.setWidgetResizable(true);
         scrollAreaWidgetContents_2 = new QWidget();
         scrollAreaWidgetContents_2.setObjectName("scrollAreaWidgetContents_2");
-        scrollAreaWidgetContents_2.setGeometry(new QRect(0, 0, 128, 302));
+        scrollAreaWidgetContents_2.setGeometry(new QRect(0, 0, 128, 301));
         verticalLayout_5 = new QVBoxLayout(scrollAreaWidgetContents_2);
         verticalLayout_5.setObjectName("verticalLayout_5");
         iconLayout = new QVBoxLayout();
@@ -589,7 +598,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         retranslateUi(Main);
 
         informationStack.setCurrentIndex(0);
-        tabWidget.setCurrentIndex(4);
+        tabWidget.setCurrentIndex(0);
 
 
         Main.connectSlotsByName();
@@ -603,6 +612,7 @@ public class Ui_Main implements com.trolltech.qt.QUiForm<QMainWindow>
         actionPahh_You_wish.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Pahh. You wish.", null));
         actionOptions.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Options", null));
         actionOptions_2.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "Options", null));
+        emergencyStop.setText("");
         label_3.setText(com.trolltech.qt.core.QCoreApplication.translate("Main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"+
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"+
 "p, li { white-space: pre-wrap; }\n"+

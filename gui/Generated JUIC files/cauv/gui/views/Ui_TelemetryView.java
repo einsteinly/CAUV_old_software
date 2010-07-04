@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'TelemetryView.jui'
 **
-** Created: Sat 3. Jul 00:01:54 2010
+** Created: Sun 4. Jul 02:44:47 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -36,6 +36,7 @@ public class Ui_TelemetryView implements com.trolltech.qt.QUiForm<QWidget>
         listWidget = new QListWidget(TelemetryView);
         listWidget.setObjectName("listWidget");
         listWidget.setMinimumSize(new QSize(130, 0));
+        listWidget.setMaximumSize(new QSize(130, 16777215));
         listWidget.setDragDropMode(com.trolltech.qt.gui.QAbstractItemView.DragDropMode.NoDragDrop);
         listWidget.setAlternatingRowColors(true);
         listWidget.setSelectionMode(com.trolltech.qt.gui.QAbstractItemView.SelectionMode.MultiSelection);

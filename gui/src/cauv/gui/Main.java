@@ -129,6 +129,8 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 	}
 	
 	protected void connect() {
+	    AUV.getAllStreams().clear();
+	    
 		ui.address.setEnabled(false);
 		ui.port.setEnabled(false);
 		ui.connectButton.setEnabled(false);
@@ -142,6 +144,8 @@ public class Main extends QMainWindow implements ConnectionStateObserver, Member
 			this.auv = new AUV(Config.ADDRESS, Config.AUV_PORT);
 			auv.regsiterConnectionStateObserver(this);
 
+	        ui.emergencyStop.clicked.connect(auv, "stopAllMotors()");
+			
             auv.logs.TRACE.messageLogged.connect(this, "trace(String)", ConnectionType.BlockingQueuedConnection);
             auv.logs.DEBUG.messageLogged.connect(this, "warning(String)", ConnectionType.BlockingQueuedConnection);
             auv.logs.ERROR.messageLogged.connect(this, "error(String)", ConnectionType.BlockingQueuedConnection);

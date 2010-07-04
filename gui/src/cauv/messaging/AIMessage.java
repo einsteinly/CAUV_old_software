@@ -9,29 +9,19 @@ import java.io.*;
 import cauv.types.*;
 import cauv.utils.*;
 
-public class TelemetryMessage extends Message {
-    int m_id = 3;
-    protected floatYPR orientation;
-    protected float depth;
+public class AIMessage extends Message {
+    int m_id = 200;
+    protected String msg;
 
     private byte[] bytes;
 
-    public void orientation(floatYPR orientation) {
+    public void msg(String msg) {
         deserialise();
-        this.orientation = orientation;
+        this.msg = msg;
     }
-    public floatYPR orientation() {
+    public String msg() {
         deserialise();
-        return this.orientation;
-    }
-
-    public void depth(float depth) {
-        deserialise();
-        this.depth = depth;
-    }
-    public float depth() {
-        deserialise();
-        return this.depth;
+        return this.msg;
     }
 
 
@@ -46,28 +36,27 @@ public class TelemetryMessage extends Message {
             LEDataOutputStream s = new LEDataOutputStream(bs);
             s.writeInt(m_id);
 
-            this.orientation.writeInto(s);
-            s.writeFloat(this.depth);
+            s.writeInt(this.msg.length());
+            s.writeBytes(this.msg);
 
             return bs.toByteArray();
         }
     }
 
-    public TelemetryMessage(){
-        super(3, "telemetry");
+    public AIMessage(){
+        super(200, "ai");
         this.bytes = null;
     }
 
-    public TelemetryMessage(floatYPR orientation, Float depth) {
-        super(3, "telemetry");
+    public AIMessage(String msg) {
+        super(200, "ai");
         this.bytes = null;
 
-        this.orientation = orientation;
-        this.depth = depth;
+        this.msg = msg;
     }
 
-    public TelemetryMessage(byte[] bytes) {
-        super(3, "telemetry");
+    public AIMessage(byte[] bytes) {
+        super(200, "ai");
         this.bytes = bytes;
     }
 
@@ -80,11 +69,16 @@ public class TelemetryMessage extends Message {
                 int buf_id = s.readInt();
                 if (buf_id != m_id)
                 {
-                    throw new IllegalArgumentException("Attempted to create TelemetryMessage with invalid id");
+                    throw new IllegalArgumentException("Attempted to create AIMessage with invalid id");
                 }
 
-                this.orientation = floatYPR.readFrom(s);
-                this.depth = s.readFloat();
+                int msg_len = s.readInt();
+                byte[] msg_bytes = new byte[msg_len];
+                for (int msg_i = 0; msg_i < msg_len; msg_i++)
+                {
+                    msg_bytes[msg_i] = s.readByte();
+                }
+                this.msg = new String(msg_bytes);
 
                 bytes = null;
             }
