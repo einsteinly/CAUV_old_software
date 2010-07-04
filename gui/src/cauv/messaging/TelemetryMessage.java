@@ -12,6 +12,7 @@ import cauv.utils.*;
 public class TelemetryMessage extends Message {
     int m_id = 3;
     protected floatYPR orientation;
+    protected float depth;
 
     private byte[] bytes;
 
@@ -22,6 +23,15 @@ public class TelemetryMessage extends Message {
     public floatYPR orientation() {
         deserialise();
         return this.orientation;
+    }
+
+    public void depth(float depth) {
+        deserialise();
+        this.depth = depth;
+    }
+    public float depth() {
+        deserialise();
+        return this.depth;
     }
 
 
@@ -37,6 +47,7 @@ public class TelemetryMessage extends Message {
             s.writeInt(m_id);
 
             this.orientation.writeInto(s);
+            s.writeFloat(this.depth);
 
             return bs.toByteArray();
         }
@@ -47,11 +58,12 @@ public class TelemetryMessage extends Message {
         this.bytes = null;
     }
 
-    public TelemetryMessage(floatYPR orientation) {
+    public TelemetryMessage(floatYPR orientation, Float depth) {
         super(3, "telemetry");
         this.bytes = null;
 
         this.orientation = orientation;
+        this.depth = depth;
     }
 
     public TelemetryMessage(byte[] bytes) {
@@ -72,6 +84,7 @@ public class TelemetryMessage extends Message {
                 }
 
                 this.orientation = floatYPR.readFrom(s);
+                this.depth = s.readFloat();
 
                 bytes = null;
             }

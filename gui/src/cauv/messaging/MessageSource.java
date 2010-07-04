@@ -3,8 +3,7 @@ package cauv.messaging;
 import java.util.LinkedList;
 import java.io.*;
 
-public class MessageSource
-{
+public class MessageSource {
     protected LinkedList<MessageObserver> m_obs = new LinkedList<MessageObserver>();
 
     protected MessageSource() {
@@ -15,7 +14,9 @@ public class MessageSource
             throw new IllegalArgumentException("Buffer too small to contain message id");
 
         int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];
-        
+
+        System.out.println("message " + id + " receieved");
+
         switch (id) {
             case 0: {
                 DebugMessage m = new DebugMessage(b);
@@ -133,13 +134,6 @@ public class MessageSource
                 TelemetryMessage m = new TelemetryMessage(b);
                 for (MessageObserver o : m_obs) {
                     o.onTelemetryMessage(m);
-                }
-                break;
-            }
-            case 51: {
-                DepthMessage m = new DepthMessage(b);
-                for (MessageObserver o : m_obs) {
-                    o.onDepthMessage(m);
                 }
                 break;
             }
@@ -322,6 +316,13 @@ public class MessageSource
                 PressureMessage m = new PressureMessage(b);
                 for (MessageObserver o : m_obs) {
                     o.onPressureMessage(m);
+                }
+                break;
+            }
+            case 200: {
+                AIMessage m = new AIMessage(b);
+                for (MessageObserver o : m_obs) {
+                    o.onAIMessage(m);
                 }
                 break;
             }

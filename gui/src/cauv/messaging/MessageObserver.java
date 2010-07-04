@@ -21,7 +21,6 @@ public class MessageObserver
     public void onResetMCBMessage(ResetMCBMessage m) {}
     public void onStateMessage(StateMessage m) {}
     public void onTelemetryMessage(TelemetryMessage m) {}
-    public void onDepthMessage(DepthMessage m) {}
     public void onImageMessage(ImageMessage m) {}
     public void onSonarDataMessage(SonarDataMessage m) {}
     public void onSonarControlMessage(SonarControlMessage m) {}
@@ -48,4 +47,5 @@ public class MessageObserver
     public void onGuiImageMessage(GuiImageMessage m) {}
     public void onAliveMessage(AliveMessage m) {}
     public void onPressureMessage(PressureMessage m) {}
+    public void onAIMessage(AIMessage m) {}
 }

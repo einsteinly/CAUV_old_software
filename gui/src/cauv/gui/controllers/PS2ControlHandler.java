@@ -37,12 +37,12 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
         final Thread t = new Thread(){
             public void run(){
                 while(true){
-                    motion.yaw(auv.autopilots.YAW.getTarget() + (0.1f * yawRate));
-                    motion.depth(auv.autopilots.DEPTH.getTarget() + (0.01f * depthRate));
-                    motion.pitch(auv.autopilots.PITCH.getTarget() - (0.1f * pitchRate));
+                    motion.yaw(auv.autopilots.YAW.getTarget() + (yawRate));
+                    motion.depth(auv.autopilots.DEPTH.getTarget() + (0.1f * depthRate));
+                    motion.pitch(auv.autopilots.PITCH.getTarget() - (pitchRate));
                     
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                     }
                 }
@@ -72,19 +72,19 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
         switch (button) {
             case JOY_L_X: 
                 if(enableL)
-                    motion.strafe((int) (value * 127)); 
+                    motion.strafe((int) ((value * value * value) * 127)); 
               break;
             case JOY_L_Y:
                 if(enableL)
-                    depthRate = -value;
+                    depthRate = (value * value * value);
                 break;
             case JOY_R_X:
                 if(enableR)
-                    yawRate = value;
+                    yawRate = (value * value * value);
                 break;
             case JOY_R_Y:
                 if(enableR)
-                    pitchRate = value;
+                    pitchRate = (value * value * value);
                 break;
 
             case JOY_L:
@@ -100,12 +100,17 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
                 }
                 break;
             case X:
+                if(value == 1)
+                    motion.forward(127);
+                else motion.forward(0);
                 break;
             case R1:
-            	motion.forward((int) (auv.motors.PROP.get() + 16));
+                if(value == 1)
+                    motion.forward((int) (auv.motors.PROP.get() + 16));
                 break;
             case R2:
-            	motion.forward((int) (auv.motors.PROP.get() - 16));
+                if(value == 1)
+                    motion.forward((int) (auv.motors.PROP.get() - 16));
                 break;
 
             case UP:

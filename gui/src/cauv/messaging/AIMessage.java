@@ -9,19 +9,19 @@ import java.io.*;
 import cauv.types.*;
 import cauv.utils.*;
 
-public class DepthMessage extends Message {
-    int m_id = 51;
-    protected float depth;
+public class AIMessage extends Message {
+    int m_id = 200;
+    protected String msg;
 
     private byte[] bytes;
 
-    public void depth(float depth) {
+    public void msg(String msg) {
         deserialise();
-        this.depth = depth;
+        this.msg = msg;
     }
-    public float depth() {
+    public String msg() {
         deserialise();
-        return this.depth;
+        return this.msg;
     }
 
 
@@ -36,26 +36,27 @@ public class DepthMessage extends Message {
             LEDataOutputStream s = new LEDataOutputStream(bs);
             s.writeInt(m_id);
 
-            s.writeFloat(this.depth);
+            s.writeInt(this.msg.length());
+            s.writeBytes(this.msg);
 
             return bs.toByteArray();
         }
     }
 
-    public DepthMessage(){
-        super(51, "telemetry");
+    public AIMessage(){
+        super(200, "ai");
         this.bytes = null;
     }
 
-    public DepthMessage(Float depth) {
-        super(51, "telemetry");
+    public AIMessage(String msg) {
+        super(200, "ai");
         this.bytes = null;
 
-        this.depth = depth;
+        this.msg = msg;
     }
 
-    public DepthMessage(byte[] bytes) {
-        super(51, "telemetry");
+    public AIMessage(byte[] bytes) {
+        super(200, "ai");
         this.bytes = bytes;
     }
 
@@ -68,10 +69,16 @@ public class DepthMessage extends Message {
                 int buf_id = s.readInt();
                 if (buf_id != m_id)
                 {
-                    throw new IllegalArgumentException("Attempted to create DepthMessage with invalid id");
+                    throw new IllegalArgumentException("Attempted to create AIMessage with invalid id");
                 }
 
-                this.depth = s.readFloat();
+                int msg_len = s.readInt();
+                byte[] msg_bytes = new byte[msg_len];
+                for (int msg_i = 0; msg_i < msg_len; msg_i++)
+                {
+                    msg_bytes[msg_i] = s.readByte();
+                }
+                this.msg = new String(msg_bytes);
 
                 bytes = null;
             }

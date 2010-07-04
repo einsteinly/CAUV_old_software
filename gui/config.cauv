@@ -1,6 +1,6 @@
-#10.0.0.108
-#Sat Jul 03 12:02:33 BST 2010
+#red-herring.local
+#Sun Jul 04 02:47:47 BST 2010
 GAMEPAD_ID=2
 AUV_PORT=16707
-ADDRESS=10.0.0.108
+ADDRESS=red-herring.local
 LAST_PATH=C\:/Users/Andy Pritchard/Documents/dev/cauv/2009/repo-competition/missions

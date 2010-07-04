@@ -9,6 +9,7 @@ import cauv.auv.AUV.Autopilot;
 import cauv.auv.AUV.Motor;
 import cauv.auv.AUV.Script;
 import cauv.auv.AUV.Sonar;
+import cauv.auv.MessageSocket.ConnectionStateObserver;
 import cauv.messaging.BearingAutopilotEnabledMessage;
 import cauv.messaging.BearingAutopilotParamsMessage;
 import cauv.messaging.ControllerStateMessage;
@@ -17,7 +18,6 @@ import cauv.messaging.DebugMessage;
 import cauv.messaging.DepthAutopilotEnabledMessage;
 import cauv.messaging.DepthAutopilotParamsMessage;
 import cauv.messaging.DepthCalibrationMessage;
-import cauv.messaging.DepthMessage;
 import cauv.messaging.GuiImageMessage;
 import cauv.messaging.InputStatusMessage;
 import cauv.messaging.Message;
@@ -37,14 +37,10 @@ import cauv.types.MotorID;
 
 
 
-public class CommunicationController extends MessageObserver {
+public class CommunicationController extends MessageObserver implements ConnectionStateObserver {
 
     protected AUV auv;
     protected MessageSocket messages;
-
-    public MessageSocket getMessageSocket() {
-        return messages;
-    }
 
     
     public interface AUVConnectionObserver {
@@ -52,12 +48,15 @@ public class CommunicationController extends MessageObserver {
         public void onDisconnect();
     }
     
-    class Controller {}
+    abstract class Controller implements ConnectionStateObserver {
+    }
     
     class ScriptController extends Controller {
         
+        Script script;
+        
         public ScriptController(Script s) {
-            s.executionRequested.connect(this, "onRunRequest(String)");
+            script = s;
         }
         
         public void onRunRequest(String mission){
@@ -67,6 +66,16 @@ public class CommunicationController extends MessageObserver {
                 auv.logs.ERROR.log("Error sending script: " + e.getMessage());
             }
         }
+        
+        @Override
+        public void onConnect(MessageSocket connection) {
+            script.executionRequested.connect(this, "onRunRequest(String)");
+        }
+        
+        @Override
+        public void onDisconnect(MessageSocket connection) {
+            script.executionRequested.disconnect(this, "onRunRequest(String)");
+        }
     }
     
     class MotorController extends Controller {
@@ -74,7 +83,6 @@ public class CommunicationController extends MessageObserver {
         
         public MotorController(Motor m) {
             this.motor = m;
-            m.speedChanged.connect(this, "onSpeedChanged(int)");
         }
         
         public void onSpeedChanged(int speed){
@@ -84,6 +92,16 @@ public class CommunicationController extends MessageObserver {
                 auv.logs.ERROR.log("Error updating "+motor.getID().name()+": " + e.getMessage());
             }
         }
+        
+        @Override
+        public void onConnect(MessageSocket connection) {
+            motor.speedChanged.connect(this, "onSpeedChanged(int)");   
+        }
+        
+        @Override
+        public void onDisconnect(MessageSocket connection) {
+            motor.speedChanged.disconnect(this, "onSpeedChanged(int)");
+        }
     }
     
     class SonarController extends Controller {
@@ -91,7 +109,6 @@ public class CommunicationController extends MessageObserver {
         
         public SonarController(Sonar s) {
             this.sonar = s;
-            s.paramsChanged.connect(this, "onParamsChanged(int, int, int, int, int, int)");
         }
         
         public void onParamsChanged(int direction, int width, int gain, int range, int radialRes, int angularRes){
@@ -100,6 +117,16 @@ public class CommunicationController extends MessageObserver {
             } catch (IOException e) {
                 auv.logs.ERROR.log("Error updating sonar: " + e.getMessage());
             }
+        }
+        
+        @Override
+        public void onConnect(MessageSocket connection) {
+            sonar.paramsChanged.connect(this, "onParamsChanged(int, int, int, int, int, int)");
+        }
+        
+        @Override
+        public void onDisconnect(MessageSocket connection) {
+            sonar.paramsChanged.disconnect(this, "onParamsChanged(int, int, int, int, int, int)");
         }
     }
     
@@ -113,9 +140,6 @@ public class CommunicationController extends MessageObserver {
             this.autopilot = a;
             this.enableMessage = enableMessage;
             this.paramsMessage = paramsMessage;
-            a.targetChanged.connect(this, "onTargetChanged(AUV$Autopilot)");
-            a.enabledChanged.connect(this, "onStateChanged(boolean)");
-            a.paramsChanged.connect(this, "onParamsChanged()");
             
         }
         
@@ -143,6 +167,20 @@ public class CommunicationController extends MessageObserver {
                 auv.logs.ERROR.log("Error updating autopilot params: " + e.getMessage());
             }
         }
+        
+        @Override
+        public void onConnect(MessageSocket connection) {
+            autopilot.targetChanged.connect(this, "onTargetChanged(AUV$Autopilot)");
+            autopilot.enabledChanged.connect(this, "onStateChanged(boolean)");
+            autopilot.paramsChanged.connect(this, "onParamsChanged()");
+        }
+        
+        @Override
+        public void onDisconnect(MessageSocket connection) {
+            autopilot.targetChanged.disconnect(this, "onTargetChanged(AUV$Autopilot)");
+            autopilot.enabledChanged.disconnect(this, "onStateChanged(boolean)");
+            autopilot.paramsChanged.disconnect(this, "onParamsChanged()");
+        }
     }
     
     public CommunicationController(AUV auv, String address, int port) throws UnknownHostException,
@@ -160,24 +198,22 @@ public class CommunicationController extends MessageObserver {
         messages.joinGroup("pressure");
         messages.joinGroup("gui");
 
-        new MotorController(auv.motors.HBOW);
-        new MotorController(auv.motors.HSTERN);
-        new MotorController(auv.motors.PROP);
-        new MotorController(auv.motors.VBOW);
-        new MotorController(auv.motors.VSTERN);
+        messages.addConnectionStateObserver(this);
         
-        new SonarController(auv.cameras.SONAR);
+        messages.addConnectionStateObserver(new MotorController(auv.motors.HBOW));
+        messages.addConnectionStateObserver(new MotorController(auv.motors.HSTERN));
+        messages.addConnectionStateObserver(new MotorController(auv.motors.PROP));
+        messages.addConnectionStateObserver(new MotorController(auv.motors.VBOW));
+        messages.addConnectionStateObserver(new MotorController(auv.motors.VSTERN));
         
-        new AutopilotController(auv.autopilots.DEPTH, DepthAutopilotEnabledMessage.class, DepthAutopilotParamsMessage.class);
-        new AutopilotController(auv.autopilots.PITCH, PitchAutopilotEnabledMessage.class, PitchAutopilotParamsMessage.class);
-        new AutopilotController(auv.autopilots.YAW, BearingAutopilotEnabledMessage.class, BearingAutopilotParamsMessage.class);
+        messages.addConnectionStateObserver(new SonarController(auv.cameras.SONAR));
+        
+        messages.addConnectionStateObserver(new AutopilotController(auv.autopilots.DEPTH, DepthAutopilotEnabledMessage.class, DepthAutopilotParamsMessage.class));
+        messages.addConnectionStateObserver(new AutopilotController(auv.autopilots.PITCH, PitchAutopilotEnabledMessage.class, PitchAutopilotParamsMessage.class));
+        messages.addConnectionStateObserver(new AutopilotController(auv.autopilots.YAW, BearingAutopilotEnabledMessage.class, BearingAutopilotParamsMessage.class));
 
-        new ScriptController(auv.scripting.CONSOLE);
-        new ScriptController(auv.scripting.MISSION);
-        
-        auv.debugLevelChanged.connect(this, "sendDebugLevelMessage()");
-        auv.resetMCB.connect(this, "sendResetMCBMessage()");
-        auv.depthCalibrationChanged.connect(this, "sendDepthCalibrationMessage(float, float, float, float)");
+        messages.addConnectionStateObserver(new ScriptController(auv.scripting.CONSOLE));
+        messages.addConnectionStateObserver(new ScriptController(auv.scripting.MISSION));
         
         enable();
         
@@ -304,11 +340,6 @@ public class CommunicationController extends MessageObserver {
                 break;
         }
     }
-
-    @Override
-    public void onDepthMessage(DepthMessage m) {
-        auv.telemetry.DEPTH.updateDepth(m.depth());
-    }
     
     @Override
     public void onDepthCalibrationMessage(DepthCalibrationMessage m) {
@@ -323,6 +354,7 @@ public class CommunicationController extends MessageObserver {
     
     @Override
     public void onTelemetryMessage(TelemetryMessage m) {
+        auv.telemetry.DEPTH.updateDepth(m.depth());
         auv.telemetry.ORIENTATION.updateOrientation(m.orientation());
     }
     
@@ -367,5 +399,22 @@ public class CommunicationController extends MessageObserver {
                 auv.motors.VSTERN.update((int)m.speed());
                 break;
         }
+    }
+
+    @Override
+    public void onConnect(MessageSocket connection) {
+        auv.debugLevelChanged.connect(this, "sendDebugLevelMessage()");
+        auv.resetMCB.connect(this, "sendResetMCBMessage()");
+        auv.depthCalibrationChanged.connect(this, "sendDepthCalibrationMessage(float, float, float, float)");
+    }
+
+    @Override
+    public void onDisconnect(MessageSocket connection) {
+        auv.debugLevelChanged.disconnect(this, "sendDebugLevelMessage()");
+        auv.resetMCB.disconnect(this, "sendResetMCBMessage()");
+        auv.depthCalibrationChanged.disconnect(this, "sendDepthCalibrationMessage(float, float, float, float)");
+        this.messages = null;
+        
+        auv.onDisconnect();
     }
 }
