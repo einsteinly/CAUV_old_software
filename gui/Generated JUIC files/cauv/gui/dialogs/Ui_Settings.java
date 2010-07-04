@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Settings.jui'
 **
-** Created: Fri 2. Jul 11:56:06 2010
+** Created: Sat 3. Jul 14:36:13 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -78,6 +78,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
     public QSpacerItem verticalSpacer_4;
     public QCheckBox debugMessaging;
     public QSpacerItem verticalSpacer_5;
+    public QPushButton resetMCB;
     public QSpacerItem horizontalSpacer_7;
     public QWidget page;
     public QHBoxLayout horizontalLayout;
@@ -405,6 +406,11 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
 
         gridLayout_4.addItem(verticalSpacer_5, 0, 1, 1, 1);
 
+        resetMCB = new QPushButton(page_3);
+        resetMCB.setObjectName("resetMCB");
+
+        gridLayout_4.addWidget(resetMCB, 3, 1, 1, 1);
+
 
         horizontalLayout_4.addLayout(gridLayout_4);
 
@@ -537,6 +543,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         label_9.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Level ", null));
         label_10.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Messaging", null));
         debugMessaging.setText("");
+        resetMCB.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Reset MCB", null));
         toolBox.setItemText(toolBox.indexOf(page_3), com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Settings", null));
         label.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Gamepad ID", null));
         toolBox.setItemText(toolBox.indexOf(page), com.trolltech.qt.core.QCoreApplication.translate("Settings", "Gamepad Settings", null));

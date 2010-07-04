@@ -9,19 +9,29 @@ import java.io.*;
 import cauv.types.*;
 import cauv.utils.*;
 
-public class DepthMessage extends Message {
-    int m_id = 51;
-    protected float depth;
+public class MotorRampRateMessage extends Message {
+    int m_id = 83;
+    protected int maxDelta;
+    protected int updatesPerSecond;
 
     private byte[] bytes;
 
-    public void depth(float depth) {
+    public void maxDelta(int maxDelta) {
         deserialise();
-        this.depth = depth;
+        this.maxDelta = maxDelta;
     }
-    public float depth() {
+    public int maxDelta() {
         deserialise();
-        return this.depth;
+        return this.maxDelta;
+    }
+
+    public void updatesPerSecond(int updatesPerSecond) {
+        deserialise();
+        this.updatesPerSecond = updatesPerSecond;
+    }
+    public int updatesPerSecond() {
+        deserialise();
+        return this.updatesPerSecond;
     }
 
 
@@ -36,26 +46,28 @@ public class DepthMessage extends Message {
             LEDataOutputStream s = new LEDataOutputStream(bs);
             s.writeInt(m_id);
 
-            s.writeFloat(this.depth);
+            s.writeInt(this.maxDelta);
+            s.writeInt(this.updatesPerSecond);
 
             return bs.toByteArray();
         }
     }
 
-    public DepthMessage(){
-        super(51, "telemetry");
+    public MotorRampRateMessage(){
+        super(83, "control");
         this.bytes = null;
     }
 
-    public DepthMessage(Float depth) {
-        super(51, "telemetry");
+    public MotorRampRateMessage(Integer maxDelta, Integer updatesPerSecond) {
+        super(83, "control");
         this.bytes = null;
 
-        this.depth = depth;
+        this.maxDelta = maxDelta;
+        this.updatesPerSecond = updatesPerSecond;
     }
 
-    public DepthMessage(byte[] bytes) {
-        super(51, "telemetry");
+    public MotorRampRateMessage(byte[] bytes) {
+        super(83, "control");
         this.bytes = bytes;
     }
 
@@ -68,10 +80,11 @@ public class DepthMessage extends Message {
                 int buf_id = s.readInt();
                 if (buf_id != m_id)
                 {
-                    throw new IllegalArgumentException("Attempted to create DepthMessage with invalid id");
+                    throw new IllegalArgumentException("Attempted to create MotorRampRateMessage with invalid id");
                 }
 
-                this.depth = s.readFloat();
+                this.maxDelta = s.readInt();
+                this.updatesPerSecond = s.readInt();
 
                 bytes = null;
             }

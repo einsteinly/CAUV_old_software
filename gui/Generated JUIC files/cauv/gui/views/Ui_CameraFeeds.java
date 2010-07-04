@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'CameraFeeds.jui'
 **
-** Created: Sun 27. Jun 22:47:57 2010
+** Created: Sat 3. Jul 10:55:15 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -232,7 +232,7 @@ public class Ui_CameraFeeds implements com.trolltech.qt.QUiForm<QWidget>
 
         retranslateUi(CameraFeeds);
 
-        feeds.setCurrentIndex(2);
+        feeds.setCurrentIndex(0);
 
 
         CameraFeeds.connectSlotsByName();

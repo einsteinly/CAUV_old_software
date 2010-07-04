@@ -473,10 +473,10 @@
        </rect>
       </property>
       <property name="minimum">
-       <number>-100</number>
+       <number>-127</number>
       </property>
       <property name="maximum">
-       <number>100</number>
+       <number>127</number>
       </property>
       <property name="orientation">
        <enum>com.trolltech.qt.core.Qt.Orientation.Vertical</enum>
@@ -492,10 +492,10 @@
        </rect>
       </property>
       <property name="minimum">
-       <number>-100</number>
+       <number>-127</number>
       </property>
       <property name="maximum">
-       <number>100</number>
+       <number>127</number>
       </property>
       <property name="orientation">
        <enum>com.trolltech.qt.core.Qt.Orientation.Horizontal</enum>
@@ -511,10 +511,10 @@
        </rect>
       </property>
       <property name="minimum">
-       <number>-100</number>
+       <number>-127</number>
       </property>
       <property name="maximum">
-       <number>100</number>
+       <number>127</number>
       </property>
       <property name="orientation">
        <enum>com.trolltech.qt.core.Qt.Orientation.Vertical</enum>
@@ -530,10 +530,10 @@
        </rect>
       </property>
       <property name="minimum">
-       <number>-100</number>
+       <number>-127</number>
       </property>
       <property name="maximum">
-       <number>100</number>
+       <number>127</number>
       </property>
       <property name="orientation">
        <enum>com.trolltech.qt.core.Qt.Orientation.Vertical</enum>
@@ -549,10 +549,10 @@
        </rect>
       </property>
       <property name="minimum">
-       <number>-100</number>
+       <number>-127</number>
       </property>
       <property name="maximum">
-       <number>100</number>
+       <number>127</number>
       </property>
       <property name="orientation">
        <enum>com.trolltech.qt.core.Qt.Orientation.Horizontal</enum>

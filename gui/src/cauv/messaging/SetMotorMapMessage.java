@@ -9,29 +9,29 @@ import java.io.*;
 import cauv.types.*;
 import cauv.utils.*;
 
-public class TelemetryMessage extends Message {
-    int m_id = 3;
-    protected floatYPR orientation;
-    protected float depth;
+public class SetMotorMapMessage extends Message {
+    int m_id = 84;
+    protected MotorID motor;
+    protected MotorMap mapping;
 
     private byte[] bytes;
 
-    public void orientation(floatYPR orientation) {
+    public void motor(MotorID motor) {
         deserialise();
-        this.orientation = orientation;
+        this.motor = motor;
     }
-    public floatYPR orientation() {
+    public MotorID motor() {
         deserialise();
-        return this.orientation;
+        return this.motor;
     }
 
-    public void depth(float depth) {
+    public void mapping(MotorMap mapping) {
         deserialise();
-        this.depth = depth;
+        this.mapping = mapping;
     }
-    public float depth() {
+    public MotorMap mapping() {
         deserialise();
-        return this.depth;
+        return this.mapping;
     }
 
 
@@ -46,28 +46,28 @@ public class TelemetryMessage extends Message {
             LEDataOutputStream s = new LEDataOutputStream(bs);
             s.writeInt(m_id);
 
-            this.orientation.writeInto(s);
-            s.writeFloat(this.depth);
+            this.motor.writeInto(s);
+            this.mapping.writeInto(s);
 
             return bs.toByteArray();
         }
     }
 
-    public TelemetryMessage(){
-        super(3, "telemetry");
+    public SetMotorMapMessage(){
+        super(84, "control");
         this.bytes = null;
     }
 
-    public TelemetryMessage(floatYPR orientation, Float depth) {
-        super(3, "telemetry");
+    public SetMotorMapMessage(MotorID motor, MotorMap mapping) {
+        super(84, "control");
         this.bytes = null;
 
-        this.orientation = orientation;
-        this.depth = depth;
+        this.motor = motor;
+        this.mapping = mapping;
     }
 
-    public TelemetryMessage(byte[] bytes) {
-        super(3, "telemetry");
+    public SetMotorMapMessage(byte[] bytes) {
+        super(84, "control");
         this.bytes = bytes;
     }
 
@@ -80,11 +80,11 @@ public class TelemetryMessage extends Message {
                 int buf_id = s.readInt();
                 if (buf_id != m_id)
                 {
-                    throw new IllegalArgumentException("Attempted to create TelemetryMessage with invalid id");
+                    throw new IllegalArgumentException("Attempted to create SetMotorMapMessage with invalid id");
                 }
 
-                this.orientation = floatYPR.readFrom(s);
-                this.depth = s.readFloat();
+                this.motor = MotorID.readFrom(s);
+                this.mapping = MotorMap.readFrom(s);
 
                 bytes = null;
             }

@@ -105,6 +105,7 @@ public class SettingsView extends QWidget implements ScreenView {
         auv.debugLevelChanged.connect(ui.debugLevel, "setValue(int)");
         ui.debugLevel.valueChanged.connect(auv, "setDebugLevel(int)");
         
+        auv.depthCalibrationChanged.connect(ui.debugLevel, "updateDepthCalibration(float, float, float, float)");
         ui.aftOffset.valueChanged.connect(this, "calibrateDepth()");
         ui.aftScale.valueChanged.connect(this, "calibrateDepth()");
         ui.foreOffset.valueChanged.connect(this, "calibrateDepth()");
@@ -168,8 +169,15 @@ public class SettingsView extends QWidget implements ScreenView {
         MessageSocket.setDebug(state);
     }
     
+    public void updateDepthCalibration(float foreOffset, float foreScale, float aftOffset, float aftScale){
+        ui.foreOffset.setValue(foreOffset);
+        ui.foreScale.setValue(foreScale);
+        ui.aftOffset.setValue(aftOffset);
+        ui.aftScale.setValue(aftScale);
+    }
+    
     public void calibrateDepth(){
-        auv.calibrateDepth((float)ui.foreOffset.value(), (float)ui.foreScale.value(),
+        auv.setDepthCalibration((float)ui.foreOffset.value(), (float)ui.foreScale.value(),
                 (float)ui.aftOffset.value(), (float)ui.aftScale.value());
     }
     

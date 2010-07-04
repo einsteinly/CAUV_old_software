@@ -7,7 +7,6 @@ import java.util.Vector;
 
 import cauv.auv.CommunicationController.AUVConnectionObserver;
 import cauv.auv.MessageSocket.ConnectionStateObserver;
-import cauv.gui.ScreenView;
 import cauv.types.CameraID;
 import cauv.types.Image;
 import cauv.types.MotorDemand;
@@ -51,8 +50,8 @@ public class AUV extends QSignalEmitter {
         }
         
         public void set(T data) {
-            this.onChange.emit(this);
             this.latest = data;
+            this.onChange.emit(this);
         }
         
         public T get() {
@@ -76,10 +75,11 @@ public class AUV extends QSignalEmitter {
         }
         
         public void set(T data) {
-            this.history.add(data);
-            
+
             if(!history.isEmpty() && history.size() > maximum)
                 history.remove(0);
+            
+            this.history.add(data);
             
             super.set(data);
         };
@@ -130,6 +130,7 @@ public class AUV extends QSignalEmitter {
         public Motor(MotorID id) {
             super(id.name());
             this.id = id;
+            this.latest = 0;
         }
 
         public MotorID getID() {
@@ -138,6 +139,11 @@ public class AUV extends QSignalEmitter {
         
         @Override
         public void set(Integer data) {
+            if(data > 127)
+                data = 127;
+            if(data < -127)
+                data = -127;
+            
             this.speedChanged.emit(data);
             super.set(data);
         }
@@ -181,6 +187,11 @@ public class AUV extends QSignalEmitter {
 
         
         public MemorisingDataStream<MotorDemand> demandsStream;
+        public MemorisingDataStream<Float> errorStream;
+        public MemorisingDataStream<Float> derrorStream;
+        public MemorisingDataStream<Float> ierrorStream;
+        public MemorisingDataStream<Float> mvStream;
+        
         public MemorisingDataStream<T> targetStream;
         public DataStream<Boolean> enabledStream;
         public MemorisingDataStream<Float> KpStream;
@@ -196,13 +207,21 @@ public class AUV extends QSignalEmitter {
         
         public Autopilot(String name, T initialTarget) {
             
-            demandsStream = new MemorisingDataStream<MotorDemand>(name + " Demands", 5000);
-            targetStream = new MemorisingDataStream<T>(name + " Target", 5000);
+            errorStream = new MemorisingDataStream<Float>(name + " Error", 1000);
+            derrorStream = new MemorisingDataStream<Float>(name + " dError", 1000);
+            ierrorStream = new MemorisingDataStream<Float>(name + " iError", 1000);
+            mvStream = new MemorisingDataStream<Float>(name + " mv", 1000);
+            demandsStream = new MemorisingDataStream<MotorDemand>(name + " Demands", 1000);
+            
+            targetStream = new MemorisingDataStream<T>(name + " Target", 1000);
             enabledStream = new DataStream<Boolean>(name + " Enabled");
-            KpStream = new MemorisingDataStream<Float>(name + " Kp", 5000);
-            KiStream = new MemorisingDataStream<Float>(name + " Ki", 5000);
-            KdStream = new MemorisingDataStream<Float>(name + " Kd", 5000);
-            scaleStream = new MemorisingDataStream<Float>(name + " Scale", 5000);
+            
+            KpStream = new MemorisingDataStream<Float>(name + " Kp", 1000);
+            KiStream = new MemorisingDataStream<Float>(name + " Ki", 1000);
+            KdStream = new MemorisingDataStream<Float>(name + " Kd", 1000);
+            scaleStream = new MemorisingDataStream<Float>(name + " Scale", 1000);
+            
+            
             
             addStream(demandsStream);
             addStream(targetStream);
@@ -274,6 +293,10 @@ public class AUV extends QSignalEmitter {
         
         public void updateControllerState(float mv, float error, float derror, float ierror, MotorDemand demand){
             demandsStream.update(demand);
+            mvStream.update(mv);
+            errorStream.update(error);
+            derrorStream.update(derror);
+            ierrorStream.update(ierror);
         }
         
         public void setParams(float Kp, float Ki, float Kd, float scale) {
@@ -304,31 +327,18 @@ public class AUV extends QSignalEmitter {
     public Autopilots autopilots = new Autopilots();
 
     /**
-     * Represents a camera in the AUV. When a new image is received the
-     * imageReceived signal is emitted. Images cannot be sent to the AUV
+     * Represents a camera in the AUV.
      * 
      * @author Andy Pritchard
      * 
      */
-    public class Camera extends QSignalEmitter {
-
-        //public Signal1<Image> imageReceived = new Signal1<Image>();
+    public class Camera extends DataStream<Image> {
 
         protected CameraID id;
 
-        public Image lastImage;
-
         public Camera(CameraID id) {
+            super(id.name());
             this.id = id;
-        }
-
-        public Image getLastImage() {
-            return lastImage;
-        }
-
-        protected void updateImage(Image image) {
-            this.lastImage = image;
-            //imageReceived.emit(image);
         }
     }
 
@@ -399,16 +409,24 @@ public class AUV extends QSignalEmitter {
     public Cameras cameras = new Cameras();
 
    
-    public class Script extends QSignalEmitter {
+    public class Script extends DataStream<String> {
 
         public Signal1<String> executionRequested = new Signal1<String>();
         public Signal1<String> responseReceieved = new Signal1<String>();
 
         public Script() {
+            super("Scripting");
         }
         
         public void run(String mission){
             executionRequested.emit(mission);
+        }
+        
+        public void update(String response){
+            AUV.this.controller.disable();
+            responseReceieved.emit(response);
+            super.update(response);
+            AUV.this.controller.enable();
         }
     }
     
@@ -455,9 +473,9 @@ public class AUV extends QSignalEmitter {
     
     public class Orientation extends MultipleDataStreamEmitter {
 
-        public MemorisingDataStream<Float> yawStream = new MemorisingDataStream<Float>("Yaw", 5000);
-        public MemorisingDataStream<Float> pitchStream = new MemorisingDataStream<Float>("Pitch", 5000);
-        public MemorisingDataStream<Float> rollStream = new MemorisingDataStream<Float>("Roll", 5000);
+        public MemorisingDataStream<Float> yawStream = new MemorisingDataStream<Float>("Yaw", 1000);
+        public MemorisingDataStream<Float> pitchStream = new MemorisingDataStream<Float>("Pitch", 1000);
+        public MemorisingDataStream<Float> rollStream = new MemorisingDataStream<Float>("Roll", 1000);
 
         public Signal1<Float> yawChanged = new Signal1<Float>();
         public Signal1<Float> pitchChanged = new Signal1<Float>();
@@ -498,20 +516,23 @@ public class AUV extends QSignalEmitter {
             AUV.this.controller.disable();
             yawStream.update(yaw);
             yawChanged.emit(yaw);
+            orientationChanged.emit(getOrientation());
             AUV.this.controller.enable();
         }
         
         public void updatePitch(Float pitch) {
             AUV.this.controller.disable();
-            yawStream.update(pitch);
-            yawChanged.emit(pitch);
+            pitchStream.update(pitch);
+            pitchChanged.emit(pitch);
+            orientationChanged.emit(getOrientation());
             AUV.this.controller.enable();
         }
         
         public void updateRoll(Float roll) {
             AUV.this.controller.disable();
-            yawStream.update(roll);
-            yawChanged.emit(roll);
+            rollStream.update(roll);
+            rollChanged.emit(roll);
+            orientationChanged.emit(getOrientation());
             AUV.this.controller.enable();
         }
         
@@ -527,7 +548,7 @@ public class AUV extends QSignalEmitter {
         public Signal1<Float> depthChanged = new Signal1<Float>();
         
         public Depth() {
-            super("Depth", 5000);
+            super("Depth", 1000);
             latest = 0f;
         }
 
@@ -543,12 +564,37 @@ public class AUV extends QSignalEmitter {
         }
     }
     
-    
+    public class Pressure extends MultipleDataStreamEmitter {
+
+        public MemorisingDataStream<Integer> aftStream = new MemorisingDataStream<Integer>("Aft", 1000);
+        public MemorisingDataStream<Integer> foreStream = new MemorisingDataStream<Integer>("Fore", 1000);
+        
+        public Pressure() {
+            addStream(aftStream);
+            addStream(foreStream);
+
+            aftStream.latest = 0;
+            foreStream.latest = 0;
+        }
+
+        public void updateFore(int fore){
+            AUV.this.controller.disable();
+            foreStream.update(fore);
+            AUV.this.controller.enable();
+        }
+
+        public void updateAft(int aft){
+            AUV.this.controller.disable();
+            aftStream.update(aft);
+            AUV.this.controller.enable();
+        }
+    }
     
     
     public class Telemetry {
         public Orientation ORIENTATION = new Orientation();
         public Depth DEPTH = new Depth();
+        public Pressure PRESSURE = new Pressure();
     }
     
     public Telemetry telemetry = new Telemetry();
@@ -563,13 +609,14 @@ public class AUV extends QSignalEmitter {
      * Telemetry about the AUV that isn't categorised into a device above
      */
     public Signal4<Float, Float, Float, Float> depthCalibrationChanged = new Signal4<Float, Float, Float, Float>();
-    public Signal2<Float, Float> pressureChanged = new Signal2<Float, Float>();
     public Signal1<Integer> debugLevelChanged = new Signal1<Integer>();
+    public Signal0 resetMCB = new Signal0();
     public int debugLevel = 0;
     protected static Vector<AUVConnectionObserver> observers = new Vector<AUVConnectionObserver>();
     
 
     public AUV(String address, int port) throws UnknownHostException, IOException {
+        //AUV.allStreams.clear();
         controller = new CommunicationController(this, address, port);
         for(AUVConnectionObserver o: observers){
             o.onConnect(this);
@@ -588,6 +635,10 @@ public class AUV extends QSignalEmitter {
         controller.messages.addConnectionStateObserver(o);
     }
 
+    public void resetMCB(){
+        resetMCB.emit();
+    }
+    
     public void setDebugLevel(int level){
         this.debugLevel = level;
         debugLevelChanged.emit(level);
@@ -599,17 +650,24 @@ public class AUV extends QSignalEmitter {
         this.controller.enable();
     }
 
-    public void updatePressures(float fore, float aft){
-        this.controller.disable();
-        pressureChanged.emit(fore, aft);
-        this.controller.enable();
-    }
-    
     public int getDebugLevel() {
         return debugLevel;
     }
         
-    public void calibrateDepth(float foreOffset, float foreScale, float aftOffset, float aftScale){
+    public void setDepthCalibration(float foreOffset, float foreScale, float aftOffset, float aftScale){
         depthCalibrationChanged.emit(foreOffset, foreScale, aftOffset, aftScale);
+    }
+        
+    public void updateDepthCalibration(float foreOffset, float foreScale, float aftOffset, float aftScale){
+        AUV.this.controller.disable();
+        depthCalibrationChanged.emit(foreOffset, foreScale, aftOffset, aftScale);
+        AUV.this.controller.enable();
+    }
+    
+    protected void onDisconnect(){
+        for(AUVConnectionObserver o : observers){
+            o.onDisconnect();
+        }
+        AUV.allStreams.clear();
     }
 }

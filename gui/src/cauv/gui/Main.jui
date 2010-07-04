@@ -465,6 +465,26 @@
         <number>2</number>
        </property>
        <item>
+        <widget class="QPushButton" name="emergencyStop">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>classpath:cauv/gui/resources/red_button.png</normaloff>classpath:cauv/gui/resources/red_button.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label_3">
          <property name="text">
           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -1973,7 +1993,7 @@ p, li { white-space: pre-wrap; }
                   <x>0</x>
                   <y>0</y>
                   <width>128</width>
-                  <height>302</height>
+                  <height>301</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -2107,7 +2127,7 @@ p, li { white-space: pre-wrap; }
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>4</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_4">
         <attribute name="icon">

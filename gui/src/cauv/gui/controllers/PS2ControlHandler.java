@@ -18,6 +18,9 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
     protected volatile float yawRate = 0;
     protected volatile float depthRate = 0;
     protected volatile float pitchRate = 0;
+
+    protected boolean enableL = false;
+    protected boolean enableR = false;
     
     public void enable(){
         this.ignoreInput = false;
@@ -34,12 +37,12 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
         final Thread t = new Thread(){
             public void run(){
                 while(true){
-                    motion.yaw(auv.autopilots.YAW.getTarget() + (0.1f * yawRate));
+                    motion.yaw(auv.autopilots.YAW.getTarget() + (yawRate));
                     motion.depth(auv.autopilots.DEPTH.getTarget() + (0.1f * depthRate));
-                    motion.pitch(auv.autopilots.PITCH.getTarget() - (0.1f * pitchRate));
+                    motion.pitch(auv.autopilots.PITCH.getTarget() - (pitchRate));
                     
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                     }
                 }
@@ -68,29 +71,46 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
         if (ignoreInput) return;
         switch (button) {
             case JOY_L_X: 
-                motion.strafe((int) (value * 127)); 
+                if(enableL)
+                    motion.strafe((int) ((value * value * value) * 127)); 
               break;
             case JOY_L_Y:
-                depthRate = -value;
+                if(enableL)
+                    depthRate = (value * value * value);
                 break;
             case JOY_R_X:
-                yawRate = value;
+                if(enableR)
+                    yawRate = (value * value * value);
                 break;
             case JOY_R_Y:
-                pitchRate = value;
+                if(enableR)
+                    pitchRate = (value * value * value);
                 break;
 
             case JOY_L:
+                if(value == 1){
+                    enableL = !enableL;
+                    System.out.println("L Enabled = "+enableL);
+                }
                 break;
             case JOY_R:
+                if(value == 1){
+                    enableR = !enableR;
+                    System.out.println("R Enabled = "+enableR);
+                }
                 break;
             case X:
+                if(value == 1)
+                    motion.forward(127);
+                else motion.forward(0);
                 break;
             case R1:
-            	motion.forward((int) (auv.motors.PROP.get() + 16));
+                if(value == 1)
+                    motion.forward((int) (auv.motors.PROP.get() + 16));
                 break;
             case R2:
-            	motion.forward((int) (auv.motors.PROP.get() - 16));
+                if(value == 1)
+                    motion.forward((int) (auv.motors.PROP.get() - 16));
                 break;
 
             case UP:
@@ -111,6 +131,8 @@ public class PS2ControlHandler implements cauv.gamepad.PS2InputHandler {
                 motion.stop();
                 break;
             case CIRCLE:
+                System.out.println("surfacing");
+                motion.depth(0f);
                 break;
         }
     }

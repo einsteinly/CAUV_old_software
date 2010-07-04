@@ -3,6 +3,7 @@ package cauv.gui.views;
 import java.awt.Color;
 import java.awt.Paint;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -41,8 +42,9 @@ public class TelemetryView extends QWidget implements ScreenView {
             series.add(stream);
             this.max = max;
             this.min = min;
-            
+
             this.setMinimumHeight(150);
+            this.setMinimumWidth(100);
         }
         
         public GraphView(Vector<MemorisingDataStream<?>> streams, String title, int min, int max) {
@@ -73,9 +75,11 @@ public class TelemetryView extends QWidget implements ScreenView {
                 Vector<?> points = s.getHistory();
                 XYSeries xySeries = new XYSeries(s.getName(), true, false);
                 
-                for(Object t : points){
-                    if(!(t instanceof Number)) break;
-                    xySeries.add(xySeries.getItemCount()+1, (Number) t);
+                synchronized (points) {
+                    for(Object t : points){
+                        if(!(t instanceof Number)) break;
+                        xySeries.add(xySeries.getItemCount()+1, (Number) t);
+                    }
                 }
 
                 dataset.addSeries(xySeries);
@@ -155,13 +159,19 @@ public class TelemetryView extends QWidget implements ScreenView {
         
         Vector<MemorisingDataStream<?>> streams = new Vector<MemorisingDataStream<?>>();
         
+        String name = "";
+        
         for(QListWidgetItem item : ui.listWidget.selectedItems()) {
             MemorisingDataStream<?> stream = (MemorisingDataStream<?>) item.data(0);
             streams.add(stream);
+            name += stream.getName()+", ";
         }
         
-        GraphView graph = new GraphView(streams, "Many Many Graphs", 0, 10);
-        graph.setWindowTitle("Many Many Graphs");
+        name = "["+name.substring(0, name.length()-2)+"]";
+        
+        
+        GraphView graph = new GraphView(streams, name, 0, 10);
+        graph.setWindowTitle(name);
         graphs.add(graph);
         ui.graphs.addSubWindow(graph);
         graph.showNormal();
@@ -186,6 +196,14 @@ public class TelemetryView extends QWidget implements ScreenView {
     
     public void updateGraphs(){
         
+        if(auv == null){
+            ui.listWidget.clear();
+            ui.graphs.closeAllSubWindows();
+            graphs.clear();
+        }//else {
+        //    auv.telemetry.ORIENTATION.updateYaw((float)Math.random());
+        //}
+        
         for(GraphView gv : graphs){
             try {
                 gv.updatePixmap();
@@ -194,17 +212,11 @@ public class TelemetryView extends QWidget implements ScreenView {
                 return;
             }
         }
-
-        if(auv != null)
-        auv.autopilots.DEPTH.setTarget((float)Math.random()*1000);
     }
     
     @Override
     public void onDisconnect() {
        auv = null; 
-       
-       ui.listWidget.clear();
-       ui.graphs.closeAllSubWindows();
     }
     
 	@Override

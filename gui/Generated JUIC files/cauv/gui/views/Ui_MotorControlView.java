@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'MotorControlView.jui'
 **
-** Created: Thu 6. May 01:36:59 2010
+** Created: Sat 3. Jul 14:52:44 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -99,32 +99,32 @@ public class Ui_MotorControlView implements com.trolltech.qt.QUiForm<QWidget>
         sliderProp = new QSlider(widget_4);
         sliderProp.setObjectName("sliderProp");
         sliderProp.setGeometry(new QRect(190, 10, 20, 81));
-        sliderProp.setMinimum(-100);
-        sliderProp.setMaximum(100);
+        sliderProp.setMinimum(-127);
+        sliderProp.setMaximum(127);
         sliderProp.setOrientation(com.trolltech.qt.core.Qt.Orientation.Vertical);
         sliderHBow = new QSlider(widget_4);
         sliderHBow.setObjectName("sliderHBow");
         sliderHBow.setGeometry(new QRect(300, 30, 151, 19));
-        sliderHBow.setMinimum(-100);
-        sliderHBow.setMaximum(100);
+        sliderHBow.setMinimum(-127);
+        sliderHBow.setMaximum(127);
         sliderHBow.setOrientation(com.trolltech.qt.core.Qt.Orientation.Horizontal);
         sliderVBow = new QSlider(widget_4);
         sliderVBow.setObjectName("sliderVBow");
         sliderVBow.setGeometry(new QRect(500, 10, 20, 81));
-        sliderVBow.setMinimum(-100);
-        sliderVBow.setMaximum(100);
+        sliderVBow.setMinimum(-127);
+        sliderVBow.setMaximum(127);
         sliderVBow.setOrientation(com.trolltech.qt.core.Qt.Orientation.Vertical);
         sliderVStern = new QSlider(widget_4);
         sliderVStern.setObjectName("sliderVStern");
         sliderVStern.setGeometry(new QRect(550, 10, 20, 81));
-        sliderVStern.setMinimum(-100);
-        sliderVStern.setMaximum(100);
+        sliderVStern.setMinimum(-127);
+        sliderVStern.setMaximum(127);
         sliderVStern.setOrientation(com.trolltech.qt.core.Qt.Orientation.Vertical);
         sliderHStern = new QSlider(widget_4);
         sliderHStern.setObjectName("sliderHStern");
         sliderHStern.setGeometry(new QRect(300, 80, 151, 19));
-        sliderHStern.setMinimum(-100);
-        sliderHStern.setMaximum(100);
+        sliderHStern.setMinimum(-127);
+        sliderHStern.setMaximum(127);
         sliderHStern.setOrientation(com.trolltech.qt.core.Qt.Orientation.Horizontal);
         label_3 = new QLabel(widget_4);
         label_3.setObjectName("label_3");

@@ -576,6 +576,13 @@
            </property>
           </spacer>
          </item>
+         <item row="3" column="1">
+          <widget class="QPushButton" name="resetMCB">
+           <property name="text">
+            <string>Reset MCB</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
