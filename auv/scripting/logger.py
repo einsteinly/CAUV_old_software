@@ -101,6 +101,7 @@ class LoggingObserver(msg.BufferedMessageObserver):
             else:
                 self.action = 'pipeline detected left (%g,%g), %s' % (m.lines[0].centre.x, m.lines[0].centre.y, anglemsg)
             self.writeLine()
+            self.action = ''
     
     def onHoughCirclesMesage(self, m):
         if len(m.circles):
