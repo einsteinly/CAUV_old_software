@@ -69,7 +69,6 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         self.__node.addObserver(self)
         self.__node.join("processing")
         self.completed = threading.Condition()#
-        self.bearing = 0
         self.turning = False
     def send(self, obj):
         self.__node.send(msg.AIMessage(pickle.dumps(obj)), "ai")
@@ -92,15 +91,15 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
                 bestHeadingDiff = 360 # > 180
                 for line in m.lines:
                     lineBearing = line.angle + self.bearing
-                    diff = angleDiff(line.angle, previousPipeHeading)
+                    diff = angleDiff(line.angle, self.previousPipeHeading)
                     if diff < bestHeadingDiff:
                         bestHeadingDiff = diff
                         best = line
         
-        previousPipeHeading = best.angle + self.bearing
+        self.previousPipeHeading = best.angle + self.bearing
 
         d = PipeFollowDemand()
-        d.bearing = self.bearing + best.angle
+        d.bearing = self.previousPipeHeading
         d.strafe = 50 * (best.centre.x - 0.5)
         d.depth = follow_depth
         d.prop = follow_prop
