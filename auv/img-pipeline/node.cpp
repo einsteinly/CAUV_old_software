@@ -416,7 +416,8 @@ void Node::exec(){
                     // link is a std::pair<node_ptr, input_id>
                     debug(5) << "prompting new input to child on:" << v.first;
                     // notify the node that it has new input
-                    link.first->setNewInput(link.second);
+                    if(link.first)
+                        link.first->setNewInput(link.second);
                 }
             }else{
                 debug(5) << "no children to prompt";
@@ -473,7 +474,7 @@ param_value_t Node::getOutputParam(output_id const& o_id) const throw(id_error){
 }
 
 static NodeParamValue toNPV(param_value_t const& v){
-    NodeParamValue r = {ParamType::Int32,0,0,""};
+    NodeParamValue r (ParamType::Int32,0,0,"");
     try{
         r.intValue = boost::get<int>(v);
         r.type = ParamType::Int32;

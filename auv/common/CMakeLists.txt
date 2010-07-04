@@ -27,6 +27,12 @@ add_custom_command (
    COMMENT "Generating messages.cpp and mesages*.h with messages-python" 
 )
 
+add_custom_target (
+    messages
+    echo "messages dummy target"
+    DEPENDS messages.h
+)
+
 # rule to make cauv_logo_large.h
 add_custom_command (
     OUTPUT ${SRCD}/cauv_logo_large.h

@@ -33,7 +33,7 @@
 
 % Pinger Output specs
 pinger_freq = 12e3; % 12 kHz
-chirp_time = 0.5e-3; % 0.5 msec
+chirp_time = 10e-3; % 10 msec
 det_filter_width = 50; % width of peak filter in Hz for detector
 
 % Sound card specs
@@ -44,13 +44,13 @@ snr = 12; % signal-to-noise ratio in decibels
 speed_of_sound = 1550; % m/sec
 
 % Radius of circle that hydrophones lie on (each 120 degrees)
-baseline = 0.202; % chosen so edge of triangle = 35 cm
+baseline = sin(deg2rad(60)) * 0.28; % measured dimensions of hydrophone mounts
 
 % Processing upsample ratio
 proc_rs = 8; % if CPU load is tight, this could be dropped to 4.
 
 % FFT length to use for correlation
-fftlen = 2048;
+fftlen = 8192;
 % fftlen = 2^nextpow2(2 * length(data) - 1); % Strictly correct version
 
 % Hydrophone positions
@@ -97,7 +97,7 @@ performance_elevation = zeros(length(angles), length(elevs));
 for j = 1:length(angles)
     this_ang = angles(j);
     %matlabpool local 2
-    parfor k = 1:length(elevs)
+    for k = 1:length(elevs)
         this_elev = elevs(k);
 
         %--- Generate "truth" signals from pinger -------------------------
@@ -206,7 +206,7 @@ for j = 1:length(angles)
             decoded_elevations, this_elev).^2));
 
         printf(['Angle: %g RMSE: %g -- Elev: %g ' ...
-            'RMSE: %g :: Time %g ms'], this_ang, performance_bearing(j, k), ...
+            'RMSE: %g :: Time %g ms\n'], this_ang, performance_bearing(j, k), ...
             this_elev, performance_elevation(j, k), perftime / mcsize * 1e3);
     end
 end

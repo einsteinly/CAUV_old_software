@@ -215,13 +215,13 @@ class ControlLoops : public MessageObserver, public XsensObserver
               hstern_value(0), vstern_value(0), m_max_motor_delta(255/*12*/),
               m_motor_updates_per_second(5), m_mb(mb)
         {
-            const MotorMap def = {5, -5, 127, -127};
+            const MotorMap def(5, -5, 127, -127);
             prop_map = def;
             hbow_map = def;
             vbow_map = def;
             hstern_map = def;
             vstern_map = def;
-            /* tmp test stuff: */
+            //. tmp test stuff:
             //MotorRampRateMessage_ptr mrrm = boost::make_shared<MotorRampRateMessage>(255, 5);
             //onMotorRampRateMessage(mrrm);
             //SetMotorMapMessage_ptr smmm = boost::make_shared<SetMotorMapMessage>(MotorID::Prop, def);
@@ -297,13 +297,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
                 m_mb->sendMessage(msg, SAFE_MESS);
-
-                //FIXME: Make this less shit
-                static int i = 0;
-                if (i++ % 10 == 0) {
-                    boost::shared_ptr<DepthMessage> dm = boost::make_shared<DepthMessage>(depth);
-                    m_mb->sendMessage(dm, SAFE_MESS);
-                }
             }
         }
         virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m)
@@ -460,7 +453,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             debug() << "Control loop thread started";
             try {
-                const MotorDemand no_demand = {0,0,0,0,0};
+                const MotorDemand no_demand(0,0,0,0,0);
                 for(int i = 0; i < Controller::NumValues; i++)
                 {
                     m_controlenabled[i] = false;
@@ -491,7 +484,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         int motorMap(float const& demand_value, MotorID::e mid)
         {
-            MotorMap m = {0, 0, 127, -127};
+            MotorMap m(0, 0, 127, -127);
             switch(mid)
             {
                 default:
@@ -525,7 +518,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         void updateMotorControl()
         {
             // TODO: This may need a lock. Maybe not, reading/writing ints is atomic. 
-            MotorDemand total_demand = {0,0,0,0,0};
+            MotorDemand total_demand(0,0,0,0,0);
             for(int i = 0; i < Controller::NumValues; i++)
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
@@ -561,7 +554,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;
-                m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                if (mid == MotorID::VBow)
+                    m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
+                else
+                    m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
             }
         }
 
@@ -581,6 +577,77 @@ class ControlLoops : public MessageObserver, public XsensObserver
         unsigned m_motor_updates_per_second;
 
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+};
+
+class TelemetryBroadcaster : public MessageObserver, public XsensObserver
+{
+    public:
+        TelemetryBroadcaster(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
+        {
+        }
+
+        ~TelemetryBroadcaster()
+        {
+            stop();
+        }
+
+        void start()
+        {
+            stop();
+            m_telemetryThread = boost::thread(&TelemetryBroadcaster::sendTelemetry, this);
+        }
+        void stop()
+        {
+            if (m_telemetryThread.get_id() != boost::thread::id()) {
+                m_telemetryThread.interrupt();    
+                m_telemetryThread.join();    
+            }
+        }
+
+
+        virtual void onTelemetry(const floatYPR& attitude)
+        {
+            m_orientation = attitude;
+        }
+
+        virtual void onPressureMessage(PressureMessage_ptr m)
+        {
+            if (m_depthCalibration){
+                float fore_depth_calibrated = m_depthCalibration->foreOffset() +
+                                              m_depthCalibration->foreMultiplier()
+                                              * m->fore();
+                float aft_depth_calibrated = m_depthCalibration->aftOffset() +
+                                             m_depthCalibration->aftMultiplier() * m->aft();
+                m_depth = 0.5 * (fore_depth_calibrated + aft_depth_calibrated);
+            }
+        }
+        virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m)
+        {
+            m_depthCalibration = m;
+        }
+    protected:
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+
+        DepthCalibrationMessage_ptr m_depthCalibration;
+    
+        floatYPR m_orientation;
+        float m_depth;
+        
+        boost::thread m_telemetryThread;
+        void sendTelemetry()
+        {
+            try {
+                debug() << "Send telemetry thread started";
+                while(true)
+                {
+                    m_mb->sendMessage(boost::make_shared<TelemetryMessage>(m_orientation, m_depth), SAFE_MESS);
+                    msleep(100);
+                }
+            } catch (boost::thread_interrupted&) {
+                debug() << "Send telemetry thread interrupted";
+            }
+            debug() << "Send telemetry thread ending";
+        }
 };
 
 class MCBForwardingObserver : public MessageObserver
@@ -604,25 +671,6 @@ class MCBForwardingObserver : public MessageObserver
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
 
-class SpreadForwardingXsensObserver : public XsensObserver
-{
-    public:
-        SpreadForwardingXsensObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
-        {
-        }
-
-        virtual void onTelemetry(const floatYPR& attitude)
-        {
-            //FIXME: Make this less shit
-            static int i = 0;
-            if (i++ % 50 == 0) {
-                m_mb->sendMessage(boost::make_shared<TelemetryMessage>(attitude), UNRELIABLE_MESS);
-            }
-        }
-    protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
-};
-
 class NotRootException : public std::exception
 {
     public:
@@ -641,6 +689,9 @@ ControlNode::ControlNode() : CauvNode("Control")
     
     m_stateObserver = boost::make_shared<StateObserver>(mailbox());
     addMessageObserver(m_stateObserver);
+    
+    m_telemetryBroadcaster = boost::make_shared<TelemetryBroadcaster>(mailbox());
+    addMessageObserver(m_telemetryBroadcaster);
 }
 ControlNode::~ControlNode()
 {
@@ -721,6 +772,9 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
         float scale = vm["depth-scale"].as<float>();
         m_controlLoops->onDepthCalibrationMessage(boost::make_shared<DepthCalibrationMessage>(offset,scale,offset,scale));
     }
+    else if (vm.count("depth-offset") || vm.count("depth-scale")) {
+        warning() << "Need both offset and depth for calibration; ignoring calibration input";   
+    }
     
     return 0;
 }
@@ -737,6 +791,7 @@ void ControlNode::onRun()
         
         m_mcb->addObserver(boost::make_shared<DebugMessageObserver>(2));
         m_mcb->addObserver(boost::make_shared<MCBForwardingObserver>(mailbox()));
+        m_mcb->addObserver(m_telemetryBroadcaster);
         m_mcb->addObserver(m_controlLoops);
         
         m_mcb->start();
@@ -747,7 +802,7 @@ void ControlNode::onRun()
 
     if (m_xsens) {
         m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
-        m_xsens->addObserver(boost::make_shared<SpreadForwardingXsensObserver>(mailbox()));
+        m_xsens->addObserver(m_telemetryBroadcaster);
         m_xsens->addObserver(m_controlLoops);
         m_xsens->addObserver(m_stateObserver);
 
@@ -758,6 +813,7 @@ void ControlNode::onRun()
     }
 
     m_controlLoops->start();
+    m_telemetryBroadcaster->start();
 }
 
 static ControlNode* node;

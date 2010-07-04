@@ -35,6 +35,15 @@ struct $s.name
     #for $f in $s.fields
     $toCPPType($f.type) $f.name;
     #end for
+        
+    ${s.name}();
+    #if len($s.fields) > 0
+    ${s.name}(#slurp
+              #for i, f in $enumerate($s.fields)
+#*           *#$toCPPType($f.type) $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
+              #end for
+#*           *#);
+    #end if 
 };
 BOOST_CLASS_IMPLEMENTATION($s.name, boost::serialization::object_serializable)
 

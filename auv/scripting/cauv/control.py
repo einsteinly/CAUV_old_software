@@ -123,7 +123,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.vbow(value)
         self.vstern(value)
 
-    def h(self, value):
+    def strafe(self, value):
         self.hbow(value)
         self.hstern(value)
 
