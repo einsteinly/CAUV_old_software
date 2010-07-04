@@ -59,6 +59,12 @@ class PipeFollowCompleteDemand(aiTypes.Demand):
         auv.depth(0)
         auv.prop(0)
 
+def mod(x,m):
+    if x > 0:
+        return x - m*floor(x/m)
+    else:
+        return -x + m*floor(-x/m)
+
 def angleDiff(a,b):
     d = mod(a-b, 360)
     while d <= -180:
