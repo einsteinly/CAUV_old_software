@@ -181,10 +181,16 @@ class Node{
                     // TODO: this will throw boost::bad_get if there is a
                     // param_value type mismatch between the output and the
                     // requested parameter type:
-                    //  a) prevent this happening (somehow...)
-                    //  b) stop everything falling over when it doe happen
+                    //  prevent this happening (somehow...)
                     l.unlock();
-                    return boost::get<T>(node->getOutputParam(outparam));
+                    try{
+                        return boost::get<T>(node->getOutputParam(outparam));
+                    }catch(boost::bad_get& e){
+                        warning() << "parameter output not available / bad get:"
+                                  << j->second.first << j->second.second
+                                  << ", non-linked value will be returned";
+
+                    }
                 }
                 return boost::get<T>(i->second);
             }else{
