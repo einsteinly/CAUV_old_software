@@ -65,7 +65,7 @@ def angleDiff(a,b):
         d = d + 360
     while d > 180:
         d = d - 360
-
+    return d
 
 class PipeFollowObjective(msg.BufferedMessageObserver):
     def __init__(self, node):
@@ -74,9 +74,18 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         self.__node.addObserver(self)
         self.__node.join("processing")
         self.lock = threading.Lock()
+        self.bearing = 0
+
     def send(self, obj):
         self.__node.send(msg.AIMessage(pickle.dumps(obj)), "ai")
     
+    def lineBearing(self, l):
+        b = l.angle
+        if b <= -90:
+            b = b + 180
+        if b > 90:
+            b = b - 180
+        return self.bearing + b
 
     def onTelemetryMessage(self, m):
         self.bearing = m.orientation.yaw
@@ -87,18 +96,26 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
             return
         self.lock.acquire()
 
-        best = m.lines[0]
+        best = None
         if len(m.lines) > 1:
-            if self.previousPipeHeading != None:
-                bestHeadingDiff = 360 # > 180
-                for line in m.lines:
-                    lineBearing = line.angle + self.bearing
-                    diff = angleDiff(line.angle, self.previousPipeHeading)
-                    if diff < bestHeadingDiff:
-                        bestHeadingDiff = diff
-                        best = line
+            bestHeadingDiff = 45 # Don't want a sudden sharp turn
+            if self.previousPipeHeading == None:
+                self.previousPipeHeading = self.bearing
+                bestHeadingDiff = 360 # fuck it, accept all lines
+            for line in m.lines:
+                bearing = lineBearing(line)
+                diff = abs(angleDiff(bearing, self.previousPipeHeading))
+                if diff < bestHeadingDiff:
+                    bestHeadingDiff = diff
+                    best = line
+        else:
+            best = m.lines[0]
         
-        self.previousPipeHeading = best.angle + self.bearing
+        if best == None:
+            print 'motherfucker, no good lines'
+            return
+
+        self.previousPipeHeading = lineBearing(best)
 
         d = PipeFollowDemand()
         d.bearing = self.previousPipeHeading
