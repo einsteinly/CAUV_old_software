@@ -97,14 +97,17 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         
         best = None
         if len(m.lines) > 1:
-            if self.previousPipeHeading != None:
-                bestHeadingDiff = 45 # Don't want a sudden sharp turn
-                for line in m.lines:
-                    bearing = lineBearing(line)
-                    diff = abs(angleDiff(bearing, self.previousPipeHeading))
-                    if diff < bestHeadingDiff:
-                        bestHeadingDiff = diff
-                        best = line
+            bestHeadingDiff = 45 # Don't want a sudden sharp turn
+            if self.previousPipeHeading == None:
+                self.previousPipeHeading = self.bearing
+                bestHeadingDiff = 360 # fuck it, accept all lines
+            
+            for line in m.lines:
+                bearing = lineBearing(line)
+                diff = abs(angleDiff(bearing, self.previousPipeHeading))
+                if diff < bestHeadingDiff:
+                    bestHeadingDiff = diff
+                    best = line
         else:
             best = m.lines[0]
         
