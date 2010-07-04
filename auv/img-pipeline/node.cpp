@@ -473,7 +473,7 @@ param_value_t Node::getOutputParam(output_id const& o_id) const throw(id_error){
 }
 
 static NodeParamValue toNPV(param_value_t const& v){
-    NodeParamValue r = {ParamType::Int32,0,0,""};
+    NodeParamValue r (ParamType::Int32,0,0,"");
     try{
         r.intValue = boost::get<int>(v);
         r.type = ParamType::Int32;

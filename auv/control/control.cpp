@@ -215,7 +215,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
               hstern_value(0), vstern_value(0), m_max_motor_delta(255/*12*/),
               m_motor_updates_per_second(5), m_mb(mb)
         {
-            const MotorMap def = {5, -5, 127, -127};
+            const MotorMap def(5, -5, 127, -127);
             prop_map = def;
             hbow_map = def;
             vbow_map = def;
@@ -453,7 +453,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             debug() << "Control loop thread started";
             try {
-                const MotorDemand no_demand = {0,0,0,0,0};
+                const MotorDemand no_demand(0,0,0,0,0);
                 for(int i = 0; i < Controller::NumValues; i++)
                 {
                     m_controlenabled[i] = false;
@@ -484,7 +484,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
 
         int motorMap(float const& demand_value, MotorID::e mid)
         {
-            MotorMap m = {0, 0, 127, -127};
+            MotorMap m(0, 0, 127, -127);
             switch(mid)
             {
                 default:
@@ -518,7 +518,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         void updateMotorControl()
         {
             // TODO: This may need a lock. Maybe not, reading/writing ints is atomic. 
-            MotorDemand total_demand = {0,0,0,0,0};
+            MotorDemand total_demand(0,0,0,0,0);
             for(int i = 0; i < Controller::NumValues; i++)
                 if(m_controlenabled[i])
                     total_demand += m_demand[i];
