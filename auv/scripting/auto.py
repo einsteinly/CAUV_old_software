@@ -65,8 +65,8 @@ class DemandWrap:
 
 class Controller(msg.AIMessageObserver):
     def __init__(self, auv):
-        self.auv = auv
         msg.AIMessageObserver.__init__(self)
+        self.auv = auv
         #self.executing_demands = {} # priority (int) : Demand
         self.current_demand = None
 
@@ -88,8 +88,10 @@ class Controller(msg.AIMessageObserver):
            self.current_demand.priority < demand.priority:
             print 'executing new demand'
             self.current_demand.cleanup(self.auv)
+            self.current_demand.cleanup(TestAUV())
             self.current_demand = demand
             self.current_demand.execute(self.auv)
+            self.current_demand.cleanup(TestAUV())
             
 
 if __name__ == '__main__':
