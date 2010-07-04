@@ -40,8 +40,9 @@ class PipeFollowCompleteDemand(aiTypes.Demand):
         auv.depth(0)
         auv.prop(0)
 
-class PipeFollowObjective(msg.BufferedObserver):
+class PipeFollowObjective(msg.BufferedMessageObserver):
     def __init__(self, node):
+        msg.BufferedMessageObserver.__init__(self)
         self.__node = node
         self.__node.addObserver(self)
         self.__node.join("processing")
@@ -55,7 +56,7 @@ class PipeFollowObjective(msg.BufferedObserver):
             return
         # TODO: aggregation / actual selection of best line
         best = m.lines[0]
-        PipeFollowDemand d
+        d = PipeFollowDemand()
         d.bearing = best.angle
         d.strafe = 50 * (best.centre.x - 0.5)
         d.prop = 50
@@ -66,6 +67,7 @@ class PipeFollowObjective(msg.BufferedObserver):
     #      turn around and follow the pipe the other way
 
     def run(self):
+        self.completed.acquire()
         self.completed.wait()
 
 if __name__ == '__main__':
