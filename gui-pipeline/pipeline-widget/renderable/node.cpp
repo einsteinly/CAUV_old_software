@@ -496,7 +496,7 @@ void Node::paramValueChanged<int>(std::string const& p, int const& v){
     debug() << "Node::paramValueChanged<int>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {ParamType::e(0),0,0,""};
+    NodeParamValue pv (ParamType::e(0),0,0,"");
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -511,7 +511,7 @@ void Node::paramValueChanged<float>(std::string const& p, float const& v){
     debug() << "Node::paramValueChanged<float>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {ParamType::e(0),0,0,""};
+    NodeParamValue pv (ParamType::e(0),0,0,"");
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -526,7 +526,7 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {ParamType::e(0),0,0,""};
+    NodeParamValue pv (ParamType::e(0),0,0,"");
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
@@ -541,7 +541,7 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = {ParamType::e(0),0,0,""};
+    NodeParamValue pv (ParamType::e(0),0,0,"");
 
     sp->nodeId(m_node_id);
     sp->paramId(p);

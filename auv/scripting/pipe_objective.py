@@ -40,28 +40,55 @@ class PipeFollowCompleteDemand(aiTypes.Demand):
         auv.depth(0)
         auv.prop(0)
 
+def angleDiff(a,b):
+    d = mod(a-b, 360)
+    while d <= -180:
+        d = d + 360
+    while d > 180
+        d = d - 360
+
+
 class PipeFollowObjective(msg.BufferedMessageObserver):
     def __init__(self, node):
         msg.BufferedMessageObserver.__init__(self)
         self.__node = node
         self.__node.addObserver(self)
         self.__node.join("processing")
-        self.completed = threading.Condition()
+        self.completed = threading.Condition()#
+        self.bearing = 0
     def send(self, obj):
         self.__node.send(msg.AIMessage(pickle.dumps(obj)), "ai")
     
+
+    def onTelemetryMessage(self, m):
+        self.bearing = m.orientation.yaw
+
     def onHoughLinesMessage(self, m):
         if len(m.lines) == 0:
             print 'no lines!'
             return
-        # TODO: aggregation / actual selection of best line
+        
         best = m.lines[0]
+        if len(m.lines) > 1:
+            if self.previousPipeHeading != None:
+                bestHeadingDiff = 360 # > 180
+                for line in m.lines:
+                    lineBearing = line.angle + self.bearing
+                    diff = angleDiff(line.angle, previousPipeHeading)
+                    if diff < bestHeadingDiff:
+                        bestHeadingDiff = diff
+                        best = line
+        
+        previousPipeHeading = best.angle + self.bearing
+
         d = PipeFollowDemand()
-        d.bearing = best.angle
+        d.bearing = previousPipeHeading
         d.strafe = 50 * (best.centre.x - 0.5)
         d.prop = 50
         d.depth = 2.5
         self.send(d)
+
+
 
     #TODO: end of pipe
     #      turn around and follow the pipe the other way
