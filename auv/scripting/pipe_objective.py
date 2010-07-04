@@ -74,15 +74,15 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
                 bestHeadingDiff = 360 # > 180
                 for line in m.lines:
                     lineBearing = line.angle + self.bearing
-                    diff = angleDiff(line.angle, previousPipeHeading)
+                    diff = angleDiff(line.angle, self.previousPipeHeading)
                     if diff < bestHeadingDiff:
                         bestHeadingDiff = diff
                         best = line
         
-        previousPipeHeading = best.angle + self.bearing
+        self.previousPipeHeading = best.angle + self.bearing
 
         d = PipeFollowDemand()
-        d.bearing = previousPipeHeading
+        d.bearing = self.previousPipeHeading
         d.strafe = 50 * (best.centre.x - 0.5)
         d.prop = 50
         d.depth = 2.5
