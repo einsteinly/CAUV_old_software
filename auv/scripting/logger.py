@@ -26,10 +26,10 @@ class LoggingObserver(msg.BufferedMessageObserver):
         self.yaw = None
         self.pitch = None
         self.roll = None
-        self.start_time = time.clock()
+        self.start_time = time.time()
         self.last_time = 0
         self.speed_forwards = 0
-        self.speed_rigt = 0
+        self.speed_right = 0
         self.x = 0
         self.y = 0
         self.depth = 0
@@ -39,15 +39,15 @@ class LoggingObserver(msg.BufferedMessageObserver):
         self.log.close()
 
     def writeLine(self):
-        t = time.clock() - self.start_time
+        t = time.time() - self.start_time
         dt = t - self.last_time
-        self.x += dt * self.speed_forwards * math.cos(math.degrees(self.yaw))
-        self.y += dt * self.speed_forwards * math.sin(math.degrees(self.yaw))
-        self.x += dt * self.speed_right * math.sin(math.degrees(self.yaw))
-        self.y += -dt * self.speed_right * math.cos(math.degrees(self.yaw))
+        self.x += dt * self.speed_forwards * math.cos(math.radians(self.yaw))
+        self.y += dt * self.speed_forwards * math.sin(math.radians(self.yaw))
+        self.x += dt * self.speed_right * math.sin(math.radians(self.yaw))
+        self.y += -dt * self.speed_right * math.cos(math.radians(self.yaw))
         
         self.last_time = t
-        line = "'(%g,%g,%g,%g,%s)'" % (t, self.x, self.y, self.depth, self.action)
+        line = "'(%g,%g,%g,%g,'%s')'" % (t, self.x, self.y, self.depth, self.action)
         print line
         self.log.write(line)
 
