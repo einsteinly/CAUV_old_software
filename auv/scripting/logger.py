@@ -97,9 +97,9 @@ class LoggingObserver(msg.BufferedMessageObserver):
             else:
                 anglemsg = 'angled right at apparent %d degrees' % (m.lines[0].angle)
             if m.lines[0].centre > 0.5:
-                self.action = 'pipeline detected right (%g), %s' % (m.lines[0].centre, anglemsg)
+                self.action = 'pipeline detected right (%g,%g), %s' % (m.lines[0].centre.x, m.lines[0].centre.y, anglemsg)
             else:
-                self.action = 'pipeline detected left (%g), %s' % (m.lines[0].centre, anglemsg)
+                self.action = 'pipeline detected left (%g,%g), %s' % (m.lines[0].centre.x, m.lines[0].centre.y, anglemsg)
             self.writeLine()
     
     def onHoughCirclesMesage(self, m):
