@@ -15,7 +15,7 @@ class Effects:
      depth,
      pitch,
      prop,
-     strafe) = range(1, 4)
+     strafe) = range(1, 6)
 
 class DummyAUV:
     def __init__(self):
