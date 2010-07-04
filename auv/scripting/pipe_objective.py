@@ -15,11 +15,13 @@ import traceback
 follow_depth = 2.5
 follow_prop = 100
 reverse_delay = 2
+max_turns = 4
 
 class PipeFollowDemand(aiTypes.Demand):
     def __init__(self, prop = None, strafe = None, bearing = None):
         aiType.Demand.__init__(self)
         self.priority = 0
+        self.source = 'PFD'
         self.prop = prop
         self.strafe = strafe
         self.bearing = bearing
@@ -39,6 +41,8 @@ class PipeFollowDemand(aiTypes.Demand):
 class TurnAround(aiTypes.Demand):
     def __init__(self, bearing):
         aiType.Demand.__init__(self)
+        self.source = 'PFD'
+        self.priority = 1
         self.bearing = bearing
     def execute(self, auv):
         auv.prop(0)
@@ -49,7 +53,8 @@ class TurnAround(aiTypes.Demand):
 class PipeFollowCompleteDemand(aiTypes.Demand):
     def __init__(self):
         aiType.Demand.__init__(self)
-        self.priority = 1
+        self.source = 'PFD'        
+        self.priority = 2
     def execute(self, auv):
         auv.depth(0)
         auv.prop(0)
@@ -68,8 +73,7 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         self.__node = node
         self.__node.addObserver(self)
         self.__node.join("processing")
-        self.completed = threading.Condition()#
-        self.turning = False
+        self.lock = threading.Lock()
     def send(self, obj):
         self.__node.send(msg.AIMessage(pickle.dumps(obj)), "ai")
     
@@ -81,10 +85,8 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         if len(m.lines) == 0:
             print 'no lines!'
             return
-        if self.turning:
-            print 'turning: ignoring lines'
-            return
-        
+        self.lock.acquire()
+
         best = m.lines[0]
         if len(m.lines) > 1:
             if self.previousPipeHeading != None:
@@ -105,6 +107,7 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         d.prop = follow_prop
         self.last_line_time = time.time()
         self.send(d)
+        self.lock.release()        
 
 
 
@@ -112,16 +115,21 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
     #      turn around and follow the pipe the other way
 
     def run(self):
+        turns = 0
         while True:
             time.sleep(200)
+            self.lock.acquire()            
             if last_line_time is not None and time.time() - self.last_line_time > reverse_delay:
                 print 'not seen pipe for a while: turning around'
-                self.turning = True
                 self.send(TurnAround(self.bearing + 180))
+                turns += 1
                 time.sleep(8)
-                self.turning = False
-        self.completed.acquire()
-        self.completed.wait()
+            self.lock.release()
+            if turns > max_turns:
+                print 'turned too many times: stopping'
+                self.send(PipeFollowCompleteDemand())
+                time.sleep(5)
+                break
 
 if __name__ == '__main__':
     node = cauv.node.Node('py-pipe')    

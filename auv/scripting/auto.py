@@ -75,7 +75,7 @@ class Controller(msg.AIMessageObserver):
         if isinstance(received, aiTypes.Demand):
             print 'received demand:', received
             self.addDemand(received)
-        else
+        else:
             print 'unknown ai message:', received
     
     def addDemand(self, demand):
@@ -86,6 +86,7 @@ class Controller(msg.AIMessageObserver):
         if self.current_demand is None or \
            self.current_demand.source == demand.source or \
            self.current_demand.priority < demand.priority:
+            print 'executing new demand'
             self.current_demand.cleanup(self.auv)
             self.current_demand = demand
             self.current_demand.execute(self.auv)
