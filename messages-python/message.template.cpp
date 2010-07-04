@@ -9,6 +9,31 @@
 \#include <common/cauv_utils.h>
 \#include <debug/cauv_debug.h>
 
+
+// =======
+// Structs
+// =======
+
+#for $s in $structs
+${s.name}::${s.name}()
+{
+}
+#if $len($s.fields) > 0
+${s.name}::${s.name}(#slurp
+                     #for i, f in $enumerate($s.fields)
+#*                  *#$toCPPType($f.type) $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
+                     #end for
+#*                  *#) : #slurp
+                          #for i, f in $enumerate($s.fields)
+#*                       *#${f.name}($f.name)#if $i < $len($s.fields) - 1#, #end if##slurp
+                          #end for
+{
+}
+#end if
+
+#end for 
+
+
 // ===============
 // Message Classes
 // ===============

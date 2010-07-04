@@ -112,7 +112,7 @@ floatYPR XsensIMU::getAttitude()
     } while (!packet.containsOriEuler());
 
     CmtEuler e = packet.getOriEuler();
-    floatYPR ret = {e.m_yaw, e.m_pitch, e.m_roll};
+    floatYPR ret(e.m_yaw, e.m_pitch, e.m_roll);
     ret.yaw = -ret.yaw;
     if (ret.yaw < 0)
         ret.yaw += 360;
@@ -150,7 +150,7 @@ void XsensIMU::readThread()
             if(packet.containsOriEuler())
             {
                 CmtEuler e = packet.getOriEuler();
-                floatYPR att = {e.m_yaw, e.m_pitch, e.m_roll};
+                floatYPR att(e.m_yaw, e.m_pitch, e.m_roll);
                 att.yaw = -att.yaw;
                 if (att.yaw < 0)
                     att.yaw += 360;
