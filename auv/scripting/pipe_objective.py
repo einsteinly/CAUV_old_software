@@ -12,6 +12,10 @@ import threading
 import math
 import traceback
 
+follow_depth = 2.5
+follow_prop = 100
+reverse_delay = 2
+
 class PipeFollowDemand(aiTypes.Demand):
     def __init__(self, prop = None, strafe = None, bearing = None):
         aiType.Demand.__init__(self)
@@ -32,6 +36,16 @@ class PipeFollowDemand(aiTypes.Demand):
     def cleanup(self, auv):
         pass
 
+class TurnAround(aiTypes.Demand):
+    def __init__(self, bearing):
+        aiType.Demand.__init__(self)
+        self.bearing = bearing
+    def execute(self, auv):
+        auv.prop(0)
+        auv.bearing(self.bearing)
+    def cleanup(self, auv):
+        pass
+
 class PipeFollowCompleteDemand(aiTypes.Demand):
     def __init__(self):
         aiType.Demand.__init__(self)
@@ -44,7 +58,7 @@ def angleDiff(a,b):
     d = mod(a-b, 360)
     while d <= -180:
         d = d + 360
-    while d > 180
+    while d > 180:
         d = d - 360
 
 
@@ -56,6 +70,7 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         self.__node.join("processing")
         self.completed = threading.Condition()#
         self.bearing = 0
+        self.turning = False
     def send(self, obj):
         self.__node.send(msg.AIMessage(pickle.dumps(obj)), "ai")
     
@@ -66,6 +81,9 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
     def onHoughLinesMessage(self, m):
         if len(m.lines) == 0:
             print 'no lines!'
+            return
+        if self.turning:
+            print 'turning: ignoring lines'
             return
         
         best = m.lines[0]
@@ -82,10 +100,11 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
         previousPipeHeading = best.angle + self.bearing
 
         d = PipeFollowDemand()
-        d.bearing = previousPipeHeading
+        d.bearing = self.bearing + best.angle
         d.strafe = 50 * (best.centre.x - 0.5)
-        d.prop = 50
-        d.depth = 2.5
+        d.depth = follow_depth
+        d.prop = follow_prop
+        self.last_line_time = time.time()
         self.send(d)
 
 
@@ -94,6 +113,14 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
     #      turn around and follow the pipe the other way
 
     def run(self):
+        while True:
+            time.sleep(200)
+            if last_line_time is not None and time.time() - self.last_line_time > reverse_delay:
+                print 'not seen pipe for a while: turning around'
+                self.turning = True
+                self.send(TurnAround(self.bearing + 180))
+                time.sleep(8)
+                self.turning = False
         self.completed.acquire()
         self.completed.wait()
 
