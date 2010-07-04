@@ -134,7 +134,7 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
     def run(self):
         turns = 0
         while True:
-            time.sleep(200)
+            time.sleep(0.2)
             self.lock.acquire()            
             if last_line_time is not None and time.time() - self.last_line_time > reverse_delay:
                 print 'not seen pipe for a while: turning around'
