@@ -38,11 +38,6 @@ inline std::string to_string (const T& t)
 	return ss.str();
 }
 
-template<typename T1, typename T2, typename T3>
-inline static T2 clamp(T1 const& low, T2 const& a, T3 const& high){
-    return (a < low)? low : ((a < high)? a : high);
-}
-
 struct TimeStamp;
 TimeStamp now();
 
