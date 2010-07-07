@@ -226,7 +226,7 @@
           <item row="7" column="2">
            <widget class="QLineEdit" name="pitch_Kp">
             <property name="text">
-             <string>0</string>
+             <string>-1.2</string>
             </property>
            </widget>
           </item>
@@ -247,14 +247,14 @@
           <item row="7" column="5">
            <widget class="QLineEdit" name="pitch_scale">
             <property name="text">
-             <string>0</string>
+             <string>1</string>
             </property>
            </widget>
           </item>
           <item row="10" column="2">
            <widget class="QLineEdit" name="depth_Kp">
             <property name="text">
-             <string>40</string>
+             <string>70</string>
             </property>
            </widget>
           </item>
@@ -349,8 +349,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>558</width>
-        <height>277</height>
+        <width>297</width>
+        <height>72</height>
        </rect>
       </property>
       <attribute name="label">
@@ -487,8 +487,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>558</width>
-        <height>277</height>
+        <width>199</width>
+        <height>104</height>
        </rect>
       </property>
       <attribute name="label">
@@ -605,8 +605,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>558</width>
-        <height>277</height>
+        <width>230</width>
+        <height>38</height>
        </rect>
       </property>
       <attribute name="label">

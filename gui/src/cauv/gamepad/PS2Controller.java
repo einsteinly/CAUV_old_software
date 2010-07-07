@@ -77,6 +77,8 @@ public class PS2Controller
         Component comp = e.getComponent();
         Button btn = null;
 
+        System.out.println(comp.getIdentifier().toString());        
+        
         // keypad
         if (comp.getIdentifier().toString().equals("pov") && comp.getPollData() == 0.25)
             btn = Button.UP;

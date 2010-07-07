@@ -15,7 +15,7 @@ public class MessageSource {
 
         int id = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0];
 
-        System.out.println("message " + id + " receieved");
+        //System.out.println("message " + id + " receieved");
 
         switch (id) {
             case 0: {

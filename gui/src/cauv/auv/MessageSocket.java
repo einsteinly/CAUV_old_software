@@ -60,7 +60,7 @@ public class MessageSocket extends MessageSource {
                     public void getMessages() throws InterruptedIOException, SpreadException {
                         SpreadMessage m = m_connection.receive();
 
-                        System.out.println("getting messages");
+                        //System.out.println("getting messages");
 
                         // ignore messsages from ourself
                         if (m.getSender().equals(m_connection.getPrivateGroup())) return;
@@ -90,7 +90,7 @@ public class MessageSocket extends MessageSource {
 
                             // wake up the notification thread
                             synchronized (this) {
-                                System.out.println("waking up notificaion thread");
+                                //System.out.println("waking up notificaion thread");
                                 this.notify();
                             }
 
@@ -98,7 +98,7 @@ public class MessageSocket extends MessageSource {
 
                         // wake the thread up so it dies
                         synchronized (this) {
-                            System.out.println("waking up notificaion thread");
+                            //System.out.println("waking up notificaion thread");
                             this.notify();
                         }
                         
@@ -116,7 +116,7 @@ public class MessageSocket extends MessageSource {
                         while (connected) {
                             while (!messages.isEmpty()) {
 
-                                System.out.println("running notifications");
+                                //System.out.println("running notifications");
 
                                 byte[] message = null;
                                 if (!messages.isEmpty()) message = messages.remove(0);
@@ -127,7 +127,7 @@ public class MessageSocket extends MessageSource {
                             }
                             try {
                                 synchronized (receieve) {
-                                        System.out.println("notification waiting for messages");
+                                        //System.out.println("notification waiting for messages");
                                         receieve.wait();
                                 }
                             } catch (InterruptedException e) {

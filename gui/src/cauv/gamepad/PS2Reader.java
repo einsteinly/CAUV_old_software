@@ -29,8 +29,8 @@ public class PS2Reader extends Thread
         while (true) {
             try {
                 if(!controller.poll()) {
-                    System.err.println("Failed to poll. Dropping out.");
-                    return;
+                //    System.err.println("Failed to poll. Dropping out.");
+                //    return;
                 }
                 EventQueue queue = controller.getEventQueue();
                 Event event = new Event();

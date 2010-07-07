@@ -16,12 +16,9 @@ import cauv.gui.dialogs.Settings;
 import cauv.gui.views.CameraFeeds;
 import cauv.gui.views.MissionControlView;
 import cauv.gui.views.MotorControlView;
-import cauv.gui.views.SettingsView;
 import cauv.gui.views.TelemetryView;
-import cauv.messaging.GuiImageMessage;
 
 import com.trolltech.qt.core.QEvent;
-import com.trolltech.qt.core.QEventLoop;
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QTimer;
 import com.trolltech.qt.core.Qt;

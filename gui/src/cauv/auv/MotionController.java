@@ -45,10 +45,6 @@ public class MotionController {
 	}
 	
     public void stop() {
-        auv.motors.HBOW.set(0);
-        auv.motors.HSTERN.set(0);
-        auv.motors.PROP.set(0);
-        auv.motors.VBOW.set(0);
-        auv.motors.VSTERN.set(0);
+        auv.stopAllMotors();
     }
 }

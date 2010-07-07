@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'Settings.jui'
 **
-** Created: Sat 3. Jul 14:36:13 2010
+** Created: Sun 4. Jul 10:00:13 2010
 **      by: Qt User Interface Compiler version 4.5.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -286,7 +286,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         toolBox.addItem(page_2, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Autopilot Settings", null));
         page_4 = new QWidget();
         page_4.setObjectName("page_4");
-        page_4.setGeometry(new QRect(0, 0, 558, 277));
+        page_4.setGeometry(new QRect(0, 0, 297, 72));
         horizontalLayout_2 = new QHBoxLayout(page_4);
         horizontalLayout_2.setObjectName("horizontalLayout_2");
         horizontalSpacer_6 = new QSpacerItem(143, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -361,7 +361,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         toolBox.addItem(page_4, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Depth Calibration", null));
         page_3 = new QWidget();
         page_3.setObjectName("page_3");
-        page_3.setGeometry(new QRect(0, 0, 558, 277));
+        page_3.setGeometry(new QRect(0, 0, 199, 104));
         horizontalLayout_4 = new QHBoxLayout(page_3);
         horizontalLayout_4.setObjectName("horizontalLayout_4");
         horizontalSpacer_8 = new QSpacerItem(184, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -421,7 +421,7 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         toolBox.addItem(page_3, com.trolltech.qt.core.QCoreApplication.translate("Settings", "Debug Settings", null));
         page = new QWidget();
         page.setObjectName("page");
-        page.setGeometry(new QRect(0, 0, 558, 277));
+        page.setGeometry(new QRect(0, 0, 230, 38));
         horizontalLayout = new QHBoxLayout(page);
         horizontalLayout.setObjectName("horizontalLayout");
         horizontalSpacer_3 = new QSpacerItem(40, 20, com.trolltech.qt.gui.QSizePolicy.Policy.Expanding, com.trolltech.qt.gui.QSizePolicy.Policy.Minimum);
@@ -523,11 +523,11 @@ public class Ui_Settings implements com.trolltech.qt.QUiForm<QDialog>
         pitchActual.setText("");
         depthEnabled.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "Enabled", null));
         depthActual.setText("");
-        pitch_Kp.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
+        pitch_Kp.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "-1.2", null));
         pitch_Ki.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
         pitch_Kd.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
-        pitch_scale.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
-        depth_Kp.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "40", null));
+        pitch_scale.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "1", null));
+        depth_Kp.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "70", null));
         depth_Ki.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
         depth_Kd.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "0", null));
         depth_scale.setText(com.trolltech.qt.core.QCoreApplication.translate("Settings", "1", null));
