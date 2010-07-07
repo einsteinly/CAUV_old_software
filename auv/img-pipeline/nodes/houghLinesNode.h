@@ -101,7 +101,6 @@ class HoughLinesNode: public Node{
             const float height = img->cvMat().rows;
             debug(2) << "HoughLines: detected" << lines.size() << "lines";
             for(unsigned i = 0; i < lines.size(); i++){
-                Line l;
                 floatXYZ centre(0, 0, 0);
                 float angle; // straight up is 0
                 centre.x = (lines[i][0] + lines[i][2]) / (2 * width);
@@ -120,7 +119,10 @@ class HoughLinesNode: public Node{
                     btm.y = lines[i][3];
                 }
 
-                angle = std::atan2(top.y - btm.y, top.x-btm.x);
+                Line l;
+                l.angle = std::atan2(top.y - btm.y, top.x-btm.x);
+                l.centre = centre;
+                
                 //floatXYZ a, b;
                 //a.z = b.z = 0;
                 //a.x = lines[i][0] / width;

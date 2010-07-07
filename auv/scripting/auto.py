@@ -15,7 +15,7 @@ class Effects:
      depth,
      pitch,
      prop,
-     strafe) = range(1, 4)
+     strafe) = range(1, 6)
 
 class DummyAUV:
     def __init__(self):
@@ -65,8 +65,8 @@ class DemandWrap:
 
 class Controller(msg.AIMessageObserver):
     def __init__(self, auv):
-        self.auv = auv
         msg.AIMessageObserver.__init__(self)
+        self.auv = auv
         #self.executing_demands = {} # priority (int) : Demand
         self.current_demand = None
 
@@ -75,7 +75,7 @@ class Controller(msg.AIMessageObserver):
         if isinstance(received, aiTypes.Demand):
             print 'received demand:', received
             self.addDemand(received)
-        else
+        else:
             print 'unknown ai message:', received
     
     def addDemand(self, demand):
@@ -86,9 +86,12 @@ class Controller(msg.AIMessageObserver):
         if self.current_demand is None or \
            self.current_demand.source == demand.source or \
            self.current_demand.priority < demand.priority:
+            print 'executing new demand'
             self.current_demand.cleanup(self.auv)
+            self.current_demand.cleanup(TestAUV())
             self.current_demand = demand
             self.current_demand.execute(self.auv)
+            self.current_demand.cleanup(TestAUV())
             
 
 if __name__ == '__main__':

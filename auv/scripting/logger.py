@@ -97,17 +97,18 @@ class LoggingObserver(msg.BufferedMessageObserver):
             else:
                 anglemsg = 'angled right at apparent %d degrees' % (m.lines[0].angle)
             if m.lines[0].centre > 0.5:
-                self.action = 'pipeline detected right (%g), %s' % (m.lines[0].centre, anglemsg)
+                self.action = 'pipeline detected right (%g,%g), %s' % (m.lines[0].centre.x, m.lines[0].centre.y, anglemsg)
             else:
-                self.action = 'pipeline detected left (%g), %s' % (m.lines[0].centre, anglemsg)
+                self.action = 'pipeline detected left (%g,%g), %s' % (m.lines[0].centre.x, m.lines[0].centre.y, anglemsg)
             self.writeLine()
+            self.action = ''
     
     def onHoughCirclesMesage(self, m):
         if len(m.circles):
             if m.circles[0].centre > 0.5:
-                self.action = 'buoy detected right (%g)' % (m.circles[0].centre)
+                self.action = 'buoy detected right (%g,%g)' % (m.circles[0].centre.x, m.circles[0].centre.y)
             else:
-                self.action = 'buoy detected left (%g)' % (m.circles[0].centre)
+                self.action = 'buoy detected left (%g,%g)' % (m.circles[0].centre.x, m.circles[0].centre.y)
 
 if __name__ == '__main__':
     n = node.Node("py-log")
