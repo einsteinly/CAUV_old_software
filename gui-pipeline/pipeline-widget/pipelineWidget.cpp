@@ -10,6 +10,7 @@
 #include <common/cauv_node.h>
 #include <common/messages.h>
 #include <common/bash_cout.h>
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include "util.h"

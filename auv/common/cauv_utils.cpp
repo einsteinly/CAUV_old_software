@@ -29,7 +29,7 @@ TimeStamp now(){
     boost::posix_time::ptime current_time = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration diff = current_time - epoch;
     r.secs = diff.total_seconds();
-    r.musecs = diff.fractional_seconds();
+    r.msecs = diff.fractional_seconds();
     return r;
 }
 
