@@ -28,6 +28,7 @@ project
   : build-dir $BJAM_BUILD_DIR ;
 
 lib cvlib : : <name>cv <search>$(CAUV_PREFIX)/lib ;
+lib cxcorelib : : <name>cxcore <search>$(CAUV_PREFIX)/lib ;
 lib highguilib : : <name>highgui <search>$(CAUV_PREFIX)/lib ;
 
 lib spreadlib : : <name>spread <search>$(CAUV_PREFIX)/lib ;
@@ -48,6 +49,7 @@ lib libcommon : ../common/messages.cpp
                 ../common/spread/spread_messages.cpp
                 ../debug/cauv_debug.cpp
                 cvlib
+                cxcorelib
                 highguilib
                 ssrcspreadlib
                 bpolib
