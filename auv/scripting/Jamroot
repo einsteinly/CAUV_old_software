@@ -8,7 +8,7 @@ if ! [ python.configured ]
 
 import os ;
 local BOOST_SOURCE_PATH = [ os.environ BOOST_ROOT ] ;
-local CAUV_PREFIX = /usr/local ;
+local CAUV_PREFIX = [ os.environ CAUV_PREFIX ] ;
 
 use-project boost
   : $(BOOST_SOURCE_PATH) ;
