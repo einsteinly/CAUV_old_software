@@ -7,8 +7,8 @@ export LD_LIBRARY_PATH="$SCRIPTING_DIR/cauv/:$LD_LIBRARY_PATH"
 export DYLD_LIBRARY_PATH="$SCRIPTING_DIR/cauv/:$DYLD_LIBRARY_PATH"
 export PYTHON_PATH="$SCRIPTING_DIR:$PYTHONPATH"
 
-echo "LD path: $LD_LIBRARY_PATH"
-echo "DYLD path: $DYLD_LIBRARY_PATH"
+#echo "LD path: $LD_LIBRARY_PATH"
+#echo "DYLD path: $DYLD_LIBRARY_PATH"
 
 python -i -c "import cauv
 import cauv.messaging as msg
