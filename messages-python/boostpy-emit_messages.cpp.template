@@ -28,8 +28,7 @@ void emitMessages(){
     #end for
     #set $initString = $initString + " >()"
     bp::class_<$className,
-               bp::bases<Message>,
-               boost::shared_ptr<$className>
+               bp::bases<Message>
               >("$className", $initString)
         // self_ns shouldn't be necessary here... gcc sux
         .def(bp::self_ns::str(bp::self_ns::self))

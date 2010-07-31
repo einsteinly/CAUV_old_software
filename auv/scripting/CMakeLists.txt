@@ -45,11 +45,12 @@ add_custom_command (
    COMMENT "Generating messages.cpp and mesages*.h with messages-python (for bjam)"
 )
 
+set (BJAM_NUM_JOBS 2)
 add_custom_command (
     OUTPUT ${SRCD}/cauv/cauvinterface.so
            ${SRCD}/cauv/libcommon.so
     COMMAND bash -c '( export BJAM_BUILD_DIR=${BINDIR} \;
-                       bjam ${SRCD} )'
+                       bjam -j ${BJAM_NUM_JOBS} ${SRCD} )'
     WORKING_DIRECTORY ${SRCD}
     DEPENDS ${SRCD}/Jamroot
             ${SRCD}/emit_structs.cpp

@@ -354,35 +354,35 @@ def main():
         data = file.read()
 
     tree = parser.parse(data)
-
+    
+    msgdir = os.path.dirname(sys.argv[0])
     if options.lang == "c++":
         with open(output + "_fwd.h", "w") as file:
-            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message_fwd.template.h"), searchList=tree)
-            t.toCPPType = toCPPType
+            t = Template(file=os.path.join(msgdir, "message_fwd.template.h"), searchList=tree)
             file.write(str(t))
         with open(output + "_messages.h", "w") as file:
-            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message_messages.template.h"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "message_messages.template.h"), searchList=tree)
             t.toCPPType = toCPPType
             file.write(str(t))
         with open(output + ".h", "w") as file:
-            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.h"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "message.template.h"), searchList=tree)
             t.toCPPType = toCPPType
             file.write(str(t))
         with open(output + ".cpp", "w") as file:
-            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.cpp"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "message.template.cpp"), searchList=tree)
             t.toCPPType = toCPPType
             t.headerFile = os.path.basename(output + ".h") 
             file.write(str(t))
     
     elif options.lang == "c":
         with open(output + ".h", "w") as file:
-            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.h"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "cmessage.template.h"), searchList=tree)
             t.toCType = toCType
             t.loadsavesuffix = cLoadSaveSuffix
             t.mapToBaseType = mapToBaseType
             file.write(str(t))
         with open(output + ".c", "w") as file:
-            t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "cmessage.template.c"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "cmessage.template.c"), searchList=tree)
             t.toCType = toCType
             t.loadsavesuffix = cLoadSaveSuffix
             t.mapToBaseType = mapToBaseType
@@ -401,7 +401,7 @@ def main():
             os.makedirs(messagingdir)
 
   #     with open(os.path.join(messagingdir, "Serialiser.java"), "w") as file:
-  #         t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "serialiser.template.java"), searchList=tree)
+  #         t = Template(file = os.path.join(msgdir, "serialiser.template.java"), searchList=tree)
   #         t.toJavaType = toJavaType
   #         t.dataFuncs = javaDataFuncs
   #         t.readwritesuffix = javaReadWriteSuffix
@@ -411,7 +411,7 @@ def main():
 
         for s in tree["structs"]:
             with open(os.path.join(typedir, s.name + ".java"), "w") as file:
-                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "struct.template.java"), searchList={"s":s})
+                t = Template(file = os.path.join(msgdir, "struct.template.java"), searchList={"s":s})
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
@@ -420,7 +420,7 @@ def main():
                 file.write(str(t))
         for e in tree["enums"]:
             with open(os.path.join(typedir, e.name + ".java"), "w") as file:
-                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "enum.template.java"), searchList={"e":e})
+                t = Template(file = os.path.join(msgdir, "enum.template.java"), searchList={"e":e})
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
@@ -432,7 +432,7 @@ def main():
             #    t = Template(file
             for m in g.messages:
                 with open(os.path.join(messagingdir, m.name + "Message.java"), "w") as file:
-                    t = Template(file = os.path.join(os.path.dirname(sys.argv[0]), "message.template.java"), searchList={"m":m})
+                    t = Template(file = os.path.join(msgdir, "message.template.java"), searchList={"m":m})
                     t.toJavaType = toJavaType
                     t.serialiseJavaType = serialiseJavaType
                     t.deserialiseJavaType = deserialiseJavaType
@@ -441,17 +441,17 @@ def main():
                     t.group = g
                     file.write(str(t))
         with open (os.path.join(messagingdir, "Message.java"), "w") as file:
-            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "basemessage.template.java"), searchList=[])
+            t= Template(file = os.path.join(msgdir, "basemessage.template.java"), searchList=[])
             t.rootpackage = options.package
             t.package = options.package + ".messaging"
             file.write(str(t))
         with open (os.path.join(messagingdir, "MessageObserver.java"), "w") as file:
-            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messageobserver.template.java"), searchList=tree)
+            t= Template(file = os.path.join(msgdir, "messageobserver.template.java"), searchList=tree)
             t.rootpackage = options.package
             t.package = options.package + ".messaging"
             file.write(str(t))
         with open (os.path.join(messagingdir, "MessageSource.java"), "w") as file:
-            t= Template(file = os.path.join(os.path.dirname(sys.argv[0]), "messagesource.template.java"), searchList=tree)
+            t= Template(file = os.path.join(msgdir, "messagesource.template.java"), searchList=tree)
             t.rootpackage = options.package
             t.package = options.package + ".messaging"
             file.write(str(t))
@@ -463,10 +463,9 @@ def main():
         requiredVectorTypes = set()
         for cu in compilation_units:
             # NB: output treated as directory, because CMake seems to strip
-            # trailinig ////// from paths
+            # trailing ////// from paths
             with open(output + "/emit_" + cu + ".cpp", "w") as file:
-                t = Template(file = os.path.join(os.path.dirname(sys.argv[0]),
-                                                 "boostpy-emit_%s.cpp.template" % cu),
+                t = Template(file = os.path.join(msgdir, "boostpy-emit_%s.cpp.template" % cu),
                              searchList=tree)
                 t.toCPPType = toCPPType
                 t.isSTLVector = isSTLVector
