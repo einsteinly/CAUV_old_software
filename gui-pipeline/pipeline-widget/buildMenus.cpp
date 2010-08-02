@@ -5,7 +5,7 @@
 
 #include <boost/ref.hpp>
 
-#include <common/cauv_utils.h>
+#include <utility/string.h>
 #include <common/messages.h>
 #include <img-pipeline/nodeFactory.h>
 
@@ -29,17 +29,19 @@ struct SendAddNodeMessage{
 boost::shared_ptr<Menu> buildAddNodeMenu(pw_ptr_t p){
     std::map<std::string, boost::shared_ptr<SendAddNodeMessage> > menu_items;
     
+    debug() << "buildAddNodeMenu";
+
     /* this only works if nodes.cpp is compiled in... don't want to do that
     std::list<NodeType::e> available = NodeFactoryRegister::list();
     std::list<NodeType::e>::const_iterator i;
     for(i = available.begin(); i != available.end(); i++)
-        menu_items[to_string(*i)] = boost::make_shared<SendAddNodeMessage>(p, *i);
+        menu_items[toStr(*i)] = boost::make_shared<SendAddNodeMessage>(p, *i);
     */
     /* instead rely on generated NodeType::NumValues, and NodeTypes being
      * consecutive
      */
     for(int i = 0; i < NodeType::NumValues; i++)
-        menu_items[to_string((NodeType::e)i)] =
+        menu_items[toStr((NodeType::e)i)] =
             boost::make_shared<SendAddNodeMessage>(p, (NodeType::e)i); 
     
     debug() << __func__ << "returning menu with" << menu_items.size() << "items";

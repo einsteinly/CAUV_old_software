@@ -12,6 +12,7 @@
 #include <boost/thread.hpp>
 #include <boost/variant.hpp>
 
+#include <utility/string.h>
 #include <common/cauv_utils.h>
 #include <common/messages_messages.h>
 #include <common/image.h>
@@ -142,7 +143,7 @@ class Node{
                 e << m_parameters.size() << "valid parameters are:";
                 for(i = m_parameters.begin(); i != m_parameters.end(); i++)
                     e << i->first << "( =" << i->second << ")";
-                throw(id_error("setParam: Invalid parameter id: " + to_string(p)));
+                throw(id_error("setParam: Invalid parameter id: " + toStr(p)));
             }
             // provide notification that parameters have changed: principally
             // for asynchronous nodes
@@ -194,7 +195,7 @@ class Node{
                 }
                 return boost::get<T>(i->second);
             }else{
-                throw(id_error("param: Invalid parameter id: " + to_string(p)));
+                throw(id_error("param: Invalid parameter id: " + toStr(p)));
             }
         }
         

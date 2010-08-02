@@ -7,6 +7,7 @@
 
 #include <opencv/cv.h>
 
+#include <utility/rounding.h>
 #include <common/cauv_utils.h>
 
 #include "../node.h"

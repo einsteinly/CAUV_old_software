@@ -23,6 +23,7 @@ set (
     renderable/arc.cpp
     renderable/imgNode.cpp
     renderable/resizeable.cpp
+    renderable/overKey.cpp
 )
 
 set (

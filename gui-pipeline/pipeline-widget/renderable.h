@@ -1,11 +1,10 @@
 #ifndef __RENDERABLE_H__
 #define __RENDERABLE_H__
 
-#include <QMouseEvent>
-
 #include <boost/shared_ptr.hpp>
 
 #include "util.h"
+#include "keyEvent.h"
 #include "mouseEvent.h"
 #include "pwTypes.h"
 
@@ -29,6 +28,11 @@ class Renderable{
         virtual void mouseReleaseEvent(MouseEvent const&){ }
         virtual void mouseGoneEvent(){ }
 
+        /* overload to receive keyboard events
+         */
+        virtual void keyPressEvent(KeyEvent const&){ }
+        virtual void keyReleaseEvent(KeyEvent const&){ }
+
         /* Should mouse events be passed even if not button is pressed?
          */
         virtual bool tracksMouse(){ return false; }
@@ -51,7 +55,6 @@ class Renderable{
         std::string m_sort_key;
         container_ptr_t m_context;
 };
-
 
 } // namespace pw
 

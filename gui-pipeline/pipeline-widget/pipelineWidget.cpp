@@ -13,9 +13,12 @@
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
+#include <utility/defer.h>
+
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
+#include "renderable/overKey.h"
 #include "renderable/box.h"
 #include "renderable/node.h"
 #include "renderable/menu.h"
@@ -240,6 +243,12 @@ void spawnPGCN(PipelineWidget *p, int argc, char** argv){
     warning() << __func__ << "run() finished";
 }
 
+// TODO: move this somewhere appropriate... probably a member function
+Point lastMousePosition(PipelineWidget const& pw){
+    MouseEvent proxy(pw);
+    return proxy.pos;
+}
+
 PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10),
@@ -255,6 +264,23 @@ PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
 
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+
+#if 1 || DEFERRED_CALLBACK_ARGUMENT_EVALUATION_TEST
+    OverKey ok = OverKey(this, Point(0, 0));
+    boost::shared_ptr<KeyAction> cb = boost::make_shared<KeyAction>(
+        boost::bind(
+            &PipelineWidget::addMenu,
+            this,
+            Defer(boost::function<menu_ptr_t()>(boost::bind(buildAddNodeMenu, this))),
+            Defer<Point>(boost::bind(lastMousePosition, boost::cref(*this))),
+            false
+        )
+    );
+    ok.registerKey(Qt::Key_A, Qt::NoModifier, cb);
+    debug() << "calling callback...";
+    cb->onPress();
+    debug() << "all done";
+#endif
 
     #if 0
     m_contents.push_back(boost::make_shared<Box>(this, 20, 20));

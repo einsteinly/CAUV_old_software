@@ -10,6 +10,7 @@
 #include <boost/thread/thread_time.hpp>
 #include <boost/utility.hpp>
 
+#include <utility/string.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
@@ -162,7 +163,7 @@ int ReconnectingSpreadMailbox::sendMultigroupMessage(boost::shared_ptr<const Mes
                 err.no();
             }
         }catch(ConnectionError& e){
-            err += "to " + to_string(groupNames.size()) + " groups, " + e.what();
+            err += "to " + toStr(groupNames.size()) + " groups, " + e.what();
             handleConnectionError(e);
         }
     }else{

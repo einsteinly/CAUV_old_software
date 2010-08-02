@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <utility/string.h>
 #include <debug/debug.h>
 
 #include "node.h"
@@ -36,7 +37,7 @@ class PVPair: public PVPairEditableBase{
               m_min_value_bbox(0, -3, 13, 10),
               m_param(boost::make_shared<Text>(n, param)),
               m_equals(boost::make_shared<Text>(n, "=")),
-              m_value(boost::make_shared<Text>(n, to_string(value))){
+              m_value(boost::make_shared<Text>(n, toStr(value))){
             updateBbox();
             m_sort_key = param;
         }

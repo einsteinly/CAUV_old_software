@@ -102,7 +102,7 @@ class HoughLinesNode: public Node{
             debug(2) << "HoughLines: detected" << lines.size() << "lines";
             for(unsigned i = 0; i < lines.size(); i++){
                 floatXYZ centre(0, 0, 0);
-                float angle; // straight up is 0
+                //float angle; // straight up is 0
                 centre.x = (lines[i][0] + lines[i][2]) / (2 * width);
                 centre.y = (lines[i][1] + lines[i][3]) / (2 * height);
                 floatXYZ top(0, 0, 0);

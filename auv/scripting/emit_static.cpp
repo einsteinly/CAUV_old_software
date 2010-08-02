@@ -209,8 +209,8 @@ void emitMailbox(){
 
 void emitMessage(){
     bp::class_<MessageWrapper,
-               boost::noncopyable,
-               boost::shared_ptr<Message>
+               boost::noncopyable/*,
+               boost::shared_ptr<Message>*/
               >("__Message", bp::no_init)
         //.add_property("group", &Message::group)
     ;

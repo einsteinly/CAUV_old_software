@@ -88,8 +88,8 @@ add_library (
 target_link_libraries (
     common-shared
 
-    #${ssrcspread_LIBRARIES}
-    "libssrcspread.so"
+    ${ssrcspread_LIBRARIES}
+    #"libssrcspread.so"
     cauv_debug
     ${OpenCV_LIBS}
     boost_thread

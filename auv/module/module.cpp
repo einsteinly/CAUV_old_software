@@ -16,6 +16,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/thread.hpp>
 
+#include <utility/string.h>
 #include <common/cauv_utils.h>
 #include <common/cauv_global.h>
 #include <common/blocking_queue.h>

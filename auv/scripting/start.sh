@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SCRIPTING_DIR="$(pwd)"
-echo "Scripting dir is: $SCRIPTING_DIR"
+#echo "Scripting dir is: $SCRIPTING_DIR"
 
 export LD_LIBRARY_PATH="$SCRIPTING_DIR/cauv/:$LD_LIBRARY_PATH"
 export DYLD_LIBRARY_PATH="$SCRIPTING_DIR/cauv/:$DYLD_LIBRARY_PATH"

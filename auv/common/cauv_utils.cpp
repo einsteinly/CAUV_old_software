@@ -5,10 +5,6 @@
 #include <boost/date_time.hpp>
 #include <boost/thread/thread.hpp>
 
-MakeString::operator std::string() const {
-    return stream.str();
-}
-
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes)
 {
     uint32_t sum = 0;

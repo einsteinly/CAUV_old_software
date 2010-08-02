@@ -1,5 +1,7 @@
 #include "mouseEvent.h"
 
+#include <QMouseEvent>
+
 #include <debug/cauv_debug.h>
 
 #include "pipelineWidget.h"

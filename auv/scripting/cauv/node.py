@@ -33,9 +33,9 @@ class ServiceLevel:
 
 class Node(messaging.CauvNode):
     def __init__(self, name, spreadserver="localhost", spreadport=16707):
-        print 'CauvNode.__init__ ...'
+        #print 'CauvNode.__init__ ...'
         messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
-        print '__run ...'
+        #print '__run ...'
         self.__run()
 
     def __run(self):

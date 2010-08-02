@@ -2,36 +2,11 @@
 #define __UTIL_H__
 
 #include <cmath>
+
+#include <utility/rounding.h>
 #include <common/cauv_utils.h>
 
 // useful utility functions:
-template<typename T>
-inline static T roundZ(T const& v){
-    if(v >= 0) return std::floor(v);
-    else return std::ceil(v);
-}
-
-template<typename T>
-inline static T roundA(T const& v){
-    if(v >= 0) return std::ceil(v);
-    else return std::floor(v);
-}
-
-template<typename T>
-inline static T round(T const& v){
-    return std::floor(v+0.5);
-}
-
-template<typename T>
-inline static T min(T const& a, T const& b){
-    return a < b? a : b;
-}
-
-template<typename T>
-inline static T max(T const& a, T const& b){
-    return a > b? a : b;
-}
-
 template<typename T1, typename T2>
 bool lessDereferenced(T1 const& l, T2 const& r){
     return *l < *r;

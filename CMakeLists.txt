@@ -19,7 +19,7 @@ set (ALWAYS_FLAGS "-DPIC -fPIC -Wall")
 set (DEBUG_FLAGS "-DCAUV_DEBUG_LEVEL=1 -g -Wextra -Wno-non-virtual-dtor -Wno-system-headers")
 set (OPTIMISATION_FLAGS "-DCAUV_DEBUG_LEVEL=0 -O3 -ffast-math")
 
-set (CMAKE_CXX_FLAGS "${ALWAYS_FLAGS}")
+set (CMAKE_CXX_FLAGS "${ALWAYS_FLAGS} -fvisibility-inlines-hidden")
 set (CMAKE_CXX_FLAGS_DEBUG "${DEBUG_FLAGS}")
 set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${DEBUG_FLAGS} ${OPTIMISATION_FLAGS}")
 set (CMAKE_CXX_FLAGS_RELEASE "${OPTIMISATION_FLAGS}")
@@ -27,8 +27,11 @@ set (CMAKE_CXX_FLAGS_MINSIZEREL "-Os -ffast-math")
 
 set (CMAKE_C_FLAGS "${ALWAYS_FLAGS}")
 
-add_subdirectory (messages-python)
-add_subdirectory (auv)
-add_subdirectory (gui-pipeline EXCLUDE_FROM_ALL)
+# include the root source dir in the search path for all subprojects
+include_directories (${CAUV_SOURCE_DIR})
 
+add_subdirectory (auv)
+add_subdirectory (gui-pipeline)
+add_subdirectory (messages-python)
+add_subdirectory (utility)
 

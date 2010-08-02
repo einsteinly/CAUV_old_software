@@ -7,17 +7,20 @@
 #include <list>
 
 #include <boost/utility.hpp>
+#include <boost/scoped_ptr.hpp>
 
-#define CAUV_DEBUG_MUTEX_OUTPUT
+#define CAUV_DEBUG_MUTEXES
 #define CAUV_DEBUG_PRINT_THREAD
 
 #ifndef CAUV_DEBUG_LEVEL
 #define CAUV_DEBUG_LEVEL 1
 #endif
 
-#if defined(CAUV_DEBUG_MUTEX_OUTPUT) || defined(CAUV_DEBUG_PRINT_THREAD)
+#if defined(CAUV_DEBUG_MUTEXES) || defined(CAUV_DEBUG_PRINT_THREAD)
 namespace boost{
-class recursive_mutex;
+class mutex;
+template<typename T>
+class unique_lock;
 } // namespace boost
 #endif
 
@@ -112,10 +115,15 @@ class SmartStreamBase : public boost::noncopyable
         // initialise on first use
         static std::ofstream& logFile();
 
-#if defined(CAUV_DEBUG_MUTEX_OUTPUT)
-        // protect cout & cerr to make sure output doesn't become garbled
-        static boost::recursive_mutex& _getMutex(std::ostream& s);
-        static boost::recursive_mutex& getMutex(std::ostream& s);
+#if defined(CAUV_DEBUG_MUTEXES)
+        typedef boost::mutex mutex_t;
+        typedef boost::unique_lock<mutex_t> lock_t;
+
+        // protect each stream to make sure output doesn't become garbled
+        static mutex_t& getMutex(std::ostream& s);
+
+        static boost::scoped_ptr<mutex_t> m_mutex;
+        boost::scoped_ptr<lock_t> m_lock;
 #endif
 
         std::ostream& m_stream;

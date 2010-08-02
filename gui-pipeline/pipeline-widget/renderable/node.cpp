@@ -5,7 +5,7 @@
 
 #include <QtOpenGL>
 
-#include <common/cauv_utils.h>
+#include <utility/string.h>
 #include <common/messages.h>
 #include <debug/cauv_debug.h>
 
@@ -120,7 +120,7 @@ const static Colour Queue_Not_Permitted_Hint(0.4, 0, 0, 0.2);
 Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage const> m)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(m->nodeId()),
       m_node_type(m->nodeType()),
-      m_title(boost::make_shared<Text>(c, to_string(m_node_type))),
+      m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
@@ -140,7 +140,7 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
 Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt)
     : Draggable(c), m_pw(pw), m_bbox(), m_node_id(id),
       m_node_type(nt),
-      m_title(boost::make_shared<Text>(c, to_string(m_node_type))),
+      m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
@@ -151,7 +151,7 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const&
 
 void Node::setType(NodeType::e const& n){
     m_node_type = n;
-    m_title = boost::make_shared<Text>(m_context, to_string(m_node_type));
+    m_title = boost::make_shared<Text>(m_context, toStr(m_node_type));
     refreshLayout();
 }
 

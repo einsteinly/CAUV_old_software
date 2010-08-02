@@ -13,14 +13,7 @@
 #include <boost/variant.hpp>
 #include <boost/program_options.hpp>
 
-#define CAUV_DEBUG_MUTEX_OUTPUT
-#define CAUV_DEBUG_PRINT_THREAD
-
-#ifndef CAUV_DEBUG_LEVEL
-#define CAUV_DEBUG_LEVEL 1
-#endif
-
-#if defined(CAUV_DEBUG_MUTEX_OUTPUT) || defined(CAUV_DEBUG_PRINT_THREAD)
+#if defined(CAUV_DEBUG_MUTEXES) || defined(CAUV_DEBUG_PRINT_THREAD)
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
 #endif
@@ -32,8 +25,20 @@
 #include <common/messages_messages.h>
 
 
+// static data member definition:
+#if defined(CAUV_DEBUG_MUTEXES)
+boost::scoped_ptr<boost::mutex> SmartStreamBase::m_mutex(new boost::mutex);
+#endif
+
+
 SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool print)
-    : m_stuffs(), m_stream(stream), m_col(col), m_print(print)
+    : m_stuffs(),
+#if defined(CAUV_DEBUG_MUTEXES)
+      m_lock(new lock_t(*m_mutex)),
+#endif
+      m_stream(stream),
+      m_col(col),
+      m_print(print)
 {
 }
 
@@ -100,8 +105,8 @@ SmartStreamBase::Settings& SmartStreamBase::settings(){
 
 void SmartStreamBase::printToStream(std::ostream& os)
 {
-    #ifdef CAUV_DEBUG_MUTEX_OUTPUT
-        boost::lock_guard<boost::recursive_mutex> l(getMutex(os));
+    #ifdef CAUV_DEBUG_MUTEXES
+        lock_t l(getMutex(os));
     #endif
     // setting locales on streams seems to cause all sorts of extremely
     // nasty nastiness (crashing memcheck...), so, use a temporary
@@ -214,26 +219,26 @@ std::ofstream& SmartStreamBase::logFile()
     return lf;
 }
 
-#if defined(CAUV_DEBUG_MUTEX_OUTPUT)
+#if defined(CAUV_DEBUG_MUTEXES)
 // protect cout & cerr to make sure output doesn't become garbled
-boost::recursive_mutex& SmartStreamBase::_getMutex(std::ostream& s){
-    typedef boost::shared_ptr<boost::recursive_mutex> mutex_ptr;
+boost::mutex& _getMutex(std::ostream& s){
+    typedef boost::shared_ptr<boost::mutex> mutex_ptr;
     typedef std::map<void*, mutex_ptr> map_t;
     static map_t mutex_map;
     map_t::iterator i = mutex_map.find(&s);
     if(i != mutex_map.end())
         return *i->second;
     else
-        mutex_map[&s] = boost::make_shared<boost::recursive_mutex>();
+        mutex_map[&s] = boost::make_shared<boost::mutex>();
     return *mutex_map[&s];
 }
-boost::recursive_mutex& SmartStreamBase::getMutex(std::ostream& s){
-    if(s == std::cout)
+boost::mutex& SmartStreamBase::getMutex(std::ostream& s){
+    if(s == std::cout || s == std::clog)
         return _getMutex(std::cerr);
     else
         return _getMutex(s);
 }
-#endif
+#endif // defined(CAUV_DEBUG_MUTEXES)
 
 
 #if !defined(CAUV_NO_DEBUG)
@@ -263,16 +268,15 @@ debug& debug::operator<<(std::ostream& (*manip)(std::ostream&))
     return *this;
 }
 
-void debug::printPrefix(std::ostream& os)
+void debug::printPrefix(std::ostream&)
 {
-    os << BashIntensity::Bold << "ERROR: " << BashIntensity::Normal;
 }
 int debug::debugType() const
 {
     return DebugType::Trace;
 }
 
-#endif
+#endif // !defined(CAUV_NO_DEBUG)
 
 
 

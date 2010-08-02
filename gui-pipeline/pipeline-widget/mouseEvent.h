@@ -1,12 +1,15 @@
 #ifndef __MOUSE_EVENT_H__
 #define __MOUSE_EVENT_H__
 
-#include <QMouseEvent>
+#include <Qt>
 
 #include <boost/shared_ptr.hpp>
 
 #include "util.h"
 #include "pwTypes.h"
+
+// forward declarations
+class QMouseEvent;
 
 namespace pw{
 

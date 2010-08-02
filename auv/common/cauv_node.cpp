@@ -5,6 +5,7 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
+#include <utility/string.h>
 #include <common/messages_fwd.h>
 #include <common/cauv_global.h> 
 #include <common/spread/spread_rc_mailbox.h>
