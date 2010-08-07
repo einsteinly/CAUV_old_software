@@ -25,12 +25,12 @@ renderable_ptr_t Container::pick(Point const& p){
     return renderable_ptr_t();
 }
 
-void Container::draw(bool picking){
+void Container::draw(drawtype_e::e flags){
     renderable_list_t::iterator i;
     for(i = m_contents.begin(); i != m_contents.end(); i++){
         glPushMatrix();
         glTranslatef((*i)->m_pos);
-        (*i)->draw(picking);
+        (*i)->draw(flags);
         glPopMatrix();
     }
 }

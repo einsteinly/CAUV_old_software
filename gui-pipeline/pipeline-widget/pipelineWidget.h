@@ -36,6 +36,7 @@ class PipelineWidget: public QGLWidget,
 
     public:
         PipelineWidget(QWidget *parent = 0, int argc = 0, char** argv = NULL);
+        void initKeyBindings();
     
         QSize minimumSizeHint() const;        
         QSize sizeHint() const;
@@ -103,6 +104,13 @@ class PipelineWidget: public QGLWidget,
         void updateProjection();
         void projectionForPicking(int x, int y);
         void drawGrid();
+
+        // hotkey functions
+        Point lastMousePosition() const;
+        void duplicateNodeAtMouse();
+        void removeNodeAtMouse();
+        void testEditBoxMenu();
+
         
         Point m_win_centre;       // projected coordinates of the window
         double m_win_aspect;      // actually sqrt(x / y)
@@ -115,6 +123,7 @@ class PipelineWidget: public QGLWidget,
         
         QPoint m_last_mouse_pos;
         
+        ok::overlay_ptr_t m_overkey;
         menu_ptr_t m_menu;
         node_map_t m_nodes;
         imgnode_map_t m_imgnodes;

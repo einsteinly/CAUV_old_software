@@ -32,7 +32,7 @@ NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
     m_text->m_pos.y = -(m_text->bbox().min.y + m_text->bbox().h()/2);
 }
 
-void NodeIOBlob::draw(bool picking){
+void NodeIOBlob::draw(drawtype_e::e flags){
     if(m_mouseover)
         glColor(m_colour & Mouseover_Colour_Hint);
     else
@@ -45,7 +45,7 @@ void NodeIOBlob::draw(bool picking){
 
     if(!m_suppress_text){
         glTranslatef(m_text->m_pos);
-        m_text->draw(picking);
+        m_text->draw(flags);
     }
 }
 
@@ -151,7 +151,7 @@ FloatingArcHandle::FloatingArcHandle(pw_ptr_t pw, arc_ptr_t arc)
     m_click_pos = Point();
 }
 
-void FloatingArcHandle::draw(bool){
+void FloatingArcHandle::draw(drawtype_e::e){
     glColor(Colour(0.6, 0.7, 0.8, 0.5));
     glTranslatef(0, 0, 0.3);
     glCircle(5.0);

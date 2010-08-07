@@ -18,7 +18,7 @@ class Text: public Renderable, public std::string{
         virtual ~Text(){ }
 
         virtual bool acceptsMouseEvents(){ return false; }
-        virtual void draw(bool);
+        virtual void draw(drawtype_e::e flags);
         virtual BBox bbox();
         virtual void updateBbox();
 

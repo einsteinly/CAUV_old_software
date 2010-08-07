@@ -14,8 +14,8 @@ add_custom_command (
           ${SRCD}/messages.h
           ${SRCD}/messages_fwd.h
           ${SRCD}/messages_messages.h
-   WORKING_DIRECTORY ${PYMSGD}
-   COMMAND python msggen.py -l "c++" -o ${SRCD}/messages ${SRCD}/messages.msg 
+#   WORKING_DIRECTORY ${PYMSGD}
+   COMMAND python ${PYMSGD}/msggen.py -l "c++" -o ${SRCD}/messages ${SRCD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
            ${PYMSGD}/message.template.cpp
            ${PYMSGD}/message_fwd.template.h

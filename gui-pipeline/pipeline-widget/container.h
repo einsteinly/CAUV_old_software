@@ -30,7 +30,7 @@ class Container{
         virtual void refreshLayout(){ };
         
         // draw m_contents
-        virtual void draw(bool picking);
+        virtual void draw(drawtype_e::e flags);
 
         // union of bboxes of m_contents (translated to respective positions),
         // derived types will probably want to override this in order to

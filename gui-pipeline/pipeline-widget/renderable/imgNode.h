@@ -13,7 +13,7 @@ class TexImg;
 class Img: public Resizeable{
     public:
         Img(container_ptr_t c);
-        virtual void draw(bool);
+        virtual void draw(drawtype_e::e flags);
         void display(Image const& img);
 
     private:

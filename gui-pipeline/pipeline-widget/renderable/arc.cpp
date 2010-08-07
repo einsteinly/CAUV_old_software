@@ -15,8 +15,8 @@ Arc::Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst)
 
 // TODO: all the dynamic casting is a bit iffy
 
-void Arc::draw(bool picking){
-    if(picking)
+void Arc::draw(drawtype_e::e flags){
+    if(flags & drawtype_e::picking)
         return;
     if(m_hanging){
         if(!m_src.expired() && !m_dst.expired()){

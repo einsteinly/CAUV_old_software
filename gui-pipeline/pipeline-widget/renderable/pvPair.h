@@ -43,15 +43,15 @@ class PVPair: public PVPairEditableBase{
         }
         virtual ~PVPair(){ }
 
-        void draw(bool picking){
+        void draw(drawtype_e::e flags){
             glPushMatrix();
             glTranslatef(m_param->m_pos);
-            m_param->draw(picking);
+            m_param->draw(flags);
             glPopMatrix();
 
             glPushMatrix();
             glTranslatef(m_equals->m_pos);
-            m_equals->draw(picking);
+            m_equals->draw(flags);
             glPopMatrix();
 
             glPushMatrix();
@@ -62,7 +62,7 @@ class PVPair: public PVPairEditableBase{
                 else
                     m_value->colour(Colour(0, 0.5));
 
-                m_value->draw(picking);
+                m_value->draw(flags);
             }else{
                 glColor(Colour(0.8, 0.2, 0.2, 0.5));
                 glBox(m_min_value_bbox);

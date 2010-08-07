@@ -17,7 +17,7 @@ Text::Text(container_ptr_t c, std::string const& text, std::string const& font, 
       m_font(std::make_pair(font, pt)), m_colour(Colour(0)){
 }
         
-void Text::draw(bool){
+void Text::draw(drawtype_e::e){
     if(!font()) return;
 
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT |
@@ -57,6 +57,20 @@ void Text::colour(Colour const& c){
 typedef boost::shared_ptr<FTFont> font_ptr;
 typedef std::pair<std::string, int> face_pt_pair_t;
 
+// TODO: find a home for this
+#include <set>
+bool onceCheck(const char* name){
+    // Note that we compare names by POINTER: names should be constant string
+    // literals, and in order to use the same name from multiple places
+    // constant compression must be on.
+    static std::set<const char*> once;
+    if(once.count(name))
+        return false;
+    once.insert(name);
+    return true;
+}
+#define once(name) if(onceCheck(#name))
+
 template<typename font_T>
 static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
     static std::map<face_pt_pair_t, font_ptr> fonts;
@@ -66,7 +80,8 @@ static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
     }
     font_ptr new_f = boost::make_shared<font_T>(id.first.c_str());
     if(new_f->Error()){
-        error() << "Unable to open font file:" << id.first.c_str();
+        once(unable_to_open_font)
+            error() << "Unable to open font file:" << id.first.c_str();
         new_f.reset();
         // TODO: fallback font?
     }else if (!new_f->FaceSize(id.second)){

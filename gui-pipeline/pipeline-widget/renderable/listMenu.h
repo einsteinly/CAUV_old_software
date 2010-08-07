@@ -32,7 +32,7 @@ class ListMenuItem: public Renderable{
 
         virtual ~ListMenuItem(){ }
 
-        virtual void draw(bool picking){
+        virtual void draw(drawtype_e::e flags){
             if(m_pressed)
                 glColor(Colour(0.50, 0.8));
             else if(m_hovered)
@@ -40,8 +40,8 @@ class ListMenuItem: public Renderable{
             else
                 glColor(Colour(1.00, 0.5));
             glBox(m_bbox);
-            if(!picking)
-                m_text->draw(picking);
+            if(!(flags & drawtype_e::picking))
+                m_text->draw(flags);
         } 
         
         virtual void mouseMoveEvent(MouseEvent const& m){
@@ -132,7 +132,7 @@ class ListMenu: public Menu{
 
         virtual ~ListMenu(){ }
 
-        virtual void draw(bool picking){
+        virtual void draw(drawtype_e::e flags){
             typename std::list<item_ptr>::const_iterator i;
             /* menus are above: */
             glTranslatef(0, 0, 0.1);
@@ -141,7 +141,7 @@ class ListMenu: public Menu{
             for(i = m_items.begin(); i != m_items.end(); i++){
                 glPushMatrix();
                 glTranslatef((*i)->m_pos);
-                (*i)->draw(picking);
+                (*i)->draw(flags);
                 glPopMatrix();
             }
         }

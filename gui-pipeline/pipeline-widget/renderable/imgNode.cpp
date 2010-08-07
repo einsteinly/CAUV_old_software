@@ -128,13 +128,13 @@ Img::Img(container_ptr_t c)
     : Resizeable(c, BBox(0, 0, 300, 200), BBox(30, 20), BBox(1200, 800)){
 }
 
-void Img::draw(bool picking){
+void Img::draw(drawtype_e::e flags){
     // delete any textures waiting to be deleted
     Textures_For_Deleting.deleteAndClear();
 
     glColor(Colour(0.2, 0.5));
     glBox(m_bbox);
-    if(!picking && m_img)
+    if(!(flags & drawtype_e::picking) && m_img)
         m_img->draw(m_bbox);
     Resizeable::drawHandle();
 }

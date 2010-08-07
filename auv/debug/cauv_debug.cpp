@@ -166,6 +166,7 @@ bool SmartStreamBase::mayAddSpaceNext(std::string const& s){
     switch(*s.rbegin()){
         case '=':
         case '(': case '[': case '{':
+        case '"': case '\'':
             return false;
         default:
             return true;
@@ -181,6 +182,7 @@ bool SmartStreamBase::mayAddSpaceNow(std::string const& s){
         case ',': case '.':
         case '=':
         case ')': case ']': case '}':
+        case '"': case '\'':
             return false;
         default:
             return true;

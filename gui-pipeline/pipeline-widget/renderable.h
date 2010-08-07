@@ -12,6 +12,7 @@ namespace pw{
 
 class Renderable{
     public:
+
         Renderable(container_ptr_t c, Point const& at = Point());
         virtual ~Renderable(){ }
 
@@ -19,7 +20,7 @@ class Renderable{
             return l.m_sort_key < r.m_sort_key;
         }
 
-        virtual void draw(bool picking) = 0;
+        virtual void draw(drawtype_e::e flags) = 0;
 
         /* overload to receive mouse events
          */
@@ -30,8 +31,8 @@ class Renderable{
 
         /* overload to receive keyboard events
          */
-        virtual void keyPressEvent(KeyEvent const&){ }
-        virtual void keyReleaseEvent(KeyEvent const&){ }
+        virtual bool keyPressEvent(KeyEvent const&){ return false; }
+        virtual bool keyReleaseEvent(KeyEvent const&){ return false; }
 
         /* Should mouse events be passed even if not button is pressed?
          */

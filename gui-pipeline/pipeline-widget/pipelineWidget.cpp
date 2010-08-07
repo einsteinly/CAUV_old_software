@@ -18,7 +18,7 @@
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
-#include "renderable/overKey.h"
+#include "renderable/OverKey.h"
 #include "renderable/box.h"
 #include "renderable/node.h"
 #include "renderable/menu.h"
@@ -29,7 +29,7 @@
 
 namespace pw{
 
-// VIATOR EMPTOR: compare actual *arcs* by pointer, reverse arc compares equal
+// CAVEAT VIATOR: compare actual *arcs* by pointer, reverse arc compares equal
 // to forward arc
 bool operator==(arc_ptr_t a, arc_ptr_t b){
     return ((a->m_src.lock() == b->m_src.lock() && a->m_dst.lock() == b->m_dst.lock()) ||
@@ -243,17 +243,12 @@ void spawnPGCN(PipelineWidget *p, int argc, char** argv){
     warning() << __func__ << "run() finished";
 }
 
-// TODO: move this somewhere appropriate... probably a member function
-Point lastMousePosition(PipelineWidget const& pw){
-    MouseEvent proxy(pw);
-    return proxy.pos;
-}
-
 PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
+      m_overkey(boost::make_shared<ok::OverKey>(this)),
       m_cauv_node(),
       m_cauv_node_thread(boost::thread(spawnPGCN, this, argc, argv)),
       m_lock(), m_redraw_posted_lock(), m_redraw_posted(false){
@@ -265,26 +260,54 @@ PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 
-#if 1 || DEFERRED_CALLBACK_ARGUMENT_EVALUATION_TEST
-    OverKey ok = OverKey(this, Point(0, 0));
-    boost::shared_ptr<KeyAction> cb = boost::make_shared<KeyAction>(
-        boost::bind(
-            &PipelineWidget::addMenu,
-            this,
-            Defer(boost::function<menu_ptr_t()>(boost::bind(buildAddNodeMenu, this))),
-            Defer<Point>(boost::bind(lastMousePosition, boost::cref(*this))),
-            false
-        )
-    );
-    ok.registerKey(Qt::Key_A, Qt::NoModifier, cb);
-    debug() << "calling callback...";
-    cb->onPress();
-    debug() << "all done";
-#endif
+    initKeyBindings();
+}
 
-    #if 0
-    m_contents.push_back(boost::make_shared<Box>(this, 20, 20));
-    #endif
+void PipelineWidget::initKeyBindings(){
+    // Set-up hotkeys: TODO: load key bindings from file
+    ok::action_ptr_t an_menu_act = boost::make_shared<ok::Action>(
+        boost::bind(&PipelineWidget::addMenu, this,
+            Defer(boost::function<menu_ptr_t()>(boost::bind(buildAddNodeMenu, this))),
+            Defer<Point>(boost::bind(&PipelineWidget::lastMousePosition, this)),
+            false
+        ), 
+        ok::Action::null_f,
+        "add node"
+    );
+    
+    ok::action_ptr_t et_menu_act = boost::make_shared<ok::Action>(
+        boost::bind(&PipelineWidget::testEditBoxMenu, this),
+        ok::Action::f_t(),
+        "test"
+    );
+
+    ok::action_ptr_t gm_msg_act = boost::make_shared<ok::Action>(
+        boost::bind(&PipelineWidget::send, this,
+            boost::make_shared<GraphRequestMessage>()
+        ),
+        ok::Action::null_f,
+        "reload"
+    );
+
+    ok::action_ptr_t cp_node_act = boost::make_shared<ok::Action>(
+        boost::bind(&PipelineWidget::duplicateNodeAtMouse, this),
+        ok::Action::null_f,
+        "duplicate"
+    );
+
+    ok::action_ptr_t rm_node_act = boost::make_shared<ok::Action>(
+        boost::bind(&PipelineWidget::removeNodeAtMouse, this),
+        ok::Action::null_f,
+        "remove"
+    );
+
+    m_overkey->registerKey(Qt::Key_Space, Qt::NoModifier, an_menu_act);
+    m_overkey->registerKey(Qt::Key_A, Qt::NoModifier, an_menu_act);
+    m_overkey->registerKey(Qt::Key_E, Qt::NoModifier, et_menu_act);
+    m_overkey->registerKey(Qt::Key_R, Qt::NoModifier, gm_msg_act);
+    m_overkey->registerKey(Qt::Key_D, Qt::NoModifier, cp_node_act);
+    m_overkey->registerKey(Qt::Key_D, Qt::ControlModifier, cp_node_act);
+    m_overkey->registerKey(Qt::Key_X, Qt::NoModifier, rm_node_act);
 }
 
 QSize PipelineWidget::minimumSizeHint() const{
@@ -564,7 +587,11 @@ void PipelineWidget::paintGL(){
     glScalef(m_pixels_per_unit / m_world_size,
              m_pixels_per_unit / m_world_size, 1.0f);
     //glTranslatef(m_pixels_per_unit / 2, m_pixels_per_unit / 2, 0);
+
+    // the grid is somewhat special, since what is drawn depends on the
+    // projection
     drawGrid();
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     #if 0
     // debug stuff:
@@ -586,15 +613,20 @@ void PipelineWidget::paintGL(){
     glVertex2f(-17.5f, -15.0f);
     glEnd();
     #endif
-
-    // draw everything!
-    renderable_list_t::iterator i;
-    for(i = m_contents.begin(); i != m_contents.end(); i++){
+    
+    foreach(renderable_ptr_t r, m_contents){
         glPushMatrix();
-        glTranslatef((*i)->m_pos);
-        (*i)->draw(false);
+        glTranslatef(r->m_pos);
+        r->draw(drawtype_e::no_flags);
         glPopMatrix();
     }
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glPushMatrix();
+    glTranslatef(m_overkey->m_pos);
+    m_overkey->draw(drawtype_e::no_flags);
+    glPopMatrix();
+    
     glPrintErr();
 
     l1.unlock();
@@ -644,7 +676,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
             name_map[n] = *i;
             glPushMatrix();
             glTranslatef((*i)->m_pos);
-            (*i)->draw(true);
+            (*i)->draw(drawtype_e::picking);
             glPopMatrix();
         }
     }
@@ -687,54 +719,21 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
         postRedraw();
 }
 
-void tdf(int, std::string const& s){
-    debug() << "Edit done:" << s;
-}
-
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
     lock_t l(m_lock);
-    BBox temp_bbox(0, -6, 80, 10);
     if(m_menu){
         if(!m_menu->keyPressEvent(event))
             QWidget::keyPressEvent(event);
-    }else{
-        MouseEvent proxy(*this);
-        node_ptr_t current_node = nodeAt(proxy.pos);
-        // TODO: proper consistent & configurable hotkeys
-        switch(event->key()){
-            case Qt::Key_Space:
-            case Qt::Key_A:
-                addMenu(buildAddNodeMenu(this), proxy.pos);
-                break;
-            case Qt::Key_E:
-                addMenu(boost::make_shared< EditText<int> >(
-                            this, std::string("edit here"), temp_bbox, tdf, 0
-                        ), proxy.pos);
-                break;
-            case Qt::Key_R:
-                send(boost::make_shared<GraphRequestMessage>());
-                break;
-            case Qt::Key_D:
-                if(current_node){
-                    send(boost::make_shared<AddNodeMessage>(
-                        current_node->type(),
-                        std::vector<NodeInputArc>(),
-                        std::vector<NodeOutputArc>()
-                    ));
-                }
-                break;
-            default:
-                QWidget::keyPressEvent(event);
-                break;
-        }
-    }
+    }else if(!m_overkey->keyPressEvent(event))
+        QWidget::keyPressEvent(event);
 }
 
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     lock_t l(m_lock);
-    if(!m_menu || !m_menu->keyReleaseEvent(event)){
+    if(m_menu && !m_menu->keyReleaseEvent(event)){
         QWidget::keyReleaseEvent(event);
-    }
+    }else if(!m_overkey->keyReleaseEvent(event))
+        QWidget::keyReleaseEvent(event);
 }
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
@@ -901,3 +900,41 @@ void PipelineWidget::drawGrid(){
     glEnd();
 }
 
+
+// TODO: move this somewhere appropriate... probably a member function
+void tdf(int, std::string const& s){
+    debug() << "Edit done:" << s;
+}
+
+Point PipelineWidget::lastMousePosition() const{
+    MouseEvent proxy(*this);
+    return proxy.pos;
+}
+
+void PipelineWidget::duplicateNodeAtMouse(){
+    debug() << __func__;
+    node_ptr_t current_node = nodeAt(lastMousePosition());
+    if(current_node)
+        send(boost::make_shared<AddNodeMessage>(
+            current_node->type(),
+            std::vector<NodeInputArc>(),
+            std::vector<NodeOutputArc>()
+        ));
+}
+
+void PipelineWidget::removeNodeAtMouse(){
+    debug() << __func__;
+    node_ptr_t current_node = nodeAt(lastMousePosition());
+    if(current_node)
+        send(boost::make_shared<RemoveNodeMessage>(
+            current_node->id()
+        ));
+}
+
+void PipelineWidget::testEditBoxMenu(){
+    debug() << __func__;
+    addMenu(boost::make_shared< EditText<int> >(
+        this, std::string("edit here"), BBox(0, -6, 80, 10), tdf, 0
+    ), lastMousePosition());
+    postRedraw();
+}

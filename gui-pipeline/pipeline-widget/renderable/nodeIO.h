@@ -17,7 +17,7 @@ class NodeIOBlob: public Renderable,
                    bool suppress_text = false);
         virtual ~NodeIOBlob(){ }
 
-        virtual void draw(bool picking);
+        virtual void draw(drawtype_e::e flags);
         virtual void mouseMoveEvent(MouseEvent const& m);
         virtual bool mousePressEvent(MouseEvent const& e);
         virtual void mouseReleaseEvent(MouseEvent const&);
@@ -71,7 +71,7 @@ class FloatingArcHandle: public Menu{
         FloatingArcHandle(pw_ptr_t pw, arc_ptr_t arc);
         virtual ~FloatingArcHandle(){ }
         
-        virtual void draw(bool);
+        virtual void draw(drawtype_e::e flags);
         virtual void mouseReleaseEvent(MouseEvent const& e);
         virtual void mouseMoveEvent(MouseEvent const& e);
         virtual void mouseGoneEvent();

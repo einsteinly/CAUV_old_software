@@ -27,7 +27,7 @@ class CloseButton: public Renderable{
         }
         virtual ~CloseButton(){ }
 
-        virtual void draw(bool){
+        virtual void draw(drawtype_e::e){
             if(m_pressed)
                 glColor(Colour(1, 1));
             else if(m_mouseover)
@@ -166,7 +166,7 @@ void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
     std::map<std::string, NodeOutput>::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
         // don't add any inputs that are actually parameters!
-        // TODO: fix the order-dependance here... really parameters should have
+        // TODO: fix the order-dependence here... really parameters should have
         // been filtered out by the time this function is called
         if(!m_params.count(j->first)){
             debug() << BashColour::Blue << "Node::" << __func__ << *j;
@@ -375,14 +375,14 @@ void Node::mouseGoneEvent(){
         Draggable::mouseGoneEvent();
 }
 
-void Node::draw(bool picking){
+void Node::draw(drawtype_e::e flags){
     if(m_mouseover)
         glColor(m_bg_col & Mouseover_Colour_Hint);
     else
         glColor(m_bg_col);
     glBox(m_back, 6);
 
-    Container::draw(picking);
+    Container::draw(flags);
 }
 
 bool Node::tracksMouse(){
