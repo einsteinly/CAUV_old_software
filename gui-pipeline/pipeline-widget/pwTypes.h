@@ -56,6 +56,14 @@ typedef int32_t node_id;
 // Types for OverKey:
 namespace ok{
 
+namespace keystate_e{
+enum e{
+    released = 0x0,
+    pressed = 0x1,
+    num_values = 0x2
+};
+} // namespace keystate_e
+
 class Action;
 class Key;
 class OverKey;

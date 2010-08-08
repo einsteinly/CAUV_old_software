@@ -1,11 +1,15 @@
 #ifndef __OVERKEY_RENDERABLE_H__
 #define __OVERKEY_RENDERABLE_H__
 
+#include <map>
+#include <string>
+
 #include <Qt>
 
 #include <boost/function.hpp>
 
 #include "../renderable.h"
+#include "../container.h"
 
 namespace pw{
 namespace ok{
@@ -37,7 +41,13 @@ class Action{
 class Key: public Renderable{
     public:
         typedef std::map<Qt::KeyboardModifiers, renderable_ptr_t> textmap_t;
-        Key(container_ptr_t c, double const& w, double const& h, textmap_t const& text=textmap_t());
+        Key(container_ptr_t, keycode_t const&, BBox const&, textmap_t const& text);
+        Key(container_ptr_t, keycode_t const&, BBox const&,
+            Qt::KeyboardModifiers m1 = 0, std::string const& t1 = "",
+            Qt::KeyboardModifiers m2 = 0, std::string const& t2 = "",
+            Qt::KeyboardModifiers m3 = 0, std::string const& t3 = "",
+            Qt::KeyboardModifiers m4 = 0, std::string const& t4 = "");
+
         virtual ~Key();
 
         virtual void draw(drawtype_e::e);
@@ -45,7 +55,16 @@ class Key: public Renderable{
 
         virtual BBox bbox();
 
+        keycode_t const& keyCode() const;
+        void state(keystate_e::e s);
+
+    protected:
+        keystate_e::e m_state;
+
     private:
+        void centerText();
+        
+        keycode_t m_keycode;
         textmap_t m_text;
         BBox m_box;
 };
@@ -57,16 +76,27 @@ struct KeyBind{
 };
 
 
-class OverKey: public Renderable{
+class OverKey: public Renderable,
+               public Container{
     public:
-        typedef std::map<keycode_t, key_ptr_t> layout_map_t;
+        typedef std::multimap<keycode_t, key_ptr_t> layout_map_t;
         typedef std::map<KeyBind, action_ptr_t> action_map_t;
 
-        OverKey(container_ptr_t container);
+        OverKey(container_ptr_t parent);
 
+        // Implement container:
+        virtual Point referUp(Point const& p) const;
+        virtual void postRedraw();
+        virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
+                              bool pressed=false);
+        virtual void removeMenu(menu_ptr_t);
+        virtual void remove(renderable_ptr_t); 
+
+        // Handle key presses
         virtual bool keyPressEvent(QKeyEvent *event);
         virtual bool keyReleaseEvent(QKeyEvent *event);
         
+        // Interface for registering keys
         void registerKey(KeyBind const&, action_ptr_t);
         void registerKey(keycode_t const&, modifiers_t const&, action_ptr_t);
 

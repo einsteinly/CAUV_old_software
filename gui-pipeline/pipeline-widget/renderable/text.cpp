@@ -59,17 +59,14 @@ typedef std::pair<std::string, int> face_pt_pair_t;
 
 // TODO: find a home for this
 #include <set>
-bool onceCheck(const char* name){
-    // Note that we compare names by POINTER: names should be constant string
-    // literals, and in order to use the same name from multiple places
-    // constant compression must be on.
-    static std::set<const char*> once;
+bool onceCheck(std::string const& name){
+    static std::set<std::string> once;
     if(once.count(name))
         return false;
     once.insert(name);
     return true;
 }
-#define once(name) if(onceCheck(#name))
+#define once(name) if(onceCheck(name))
 
 template<typename font_T>
 static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
@@ -80,7 +77,7 @@ static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
     }
     font_ptr new_f = boost::make_shared<font_T>(id.first.c_str());
     if(new_f->Error()){
-        once(unable_to_open_font)
+        once(id.first)
             error() << "Unable to open font file:" << id.first.c_str();
         new_f.reset();
         // TODO: fallback font?
