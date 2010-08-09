@@ -56,10 +56,10 @@ Key::Key(container_ptr_t c, keycode_t const& kc, BBox const& size,
          Qt::KeyboardModifiers m3, std::string const& t3,
          Qt::KeyboardModifiers m4, std::string const& t4)
     : Renderable(c), m_state(keystate_e::released), m_keycode(kc), m_text(), m_box(size){
-    m_text[m1] = boost::make_shared<Text>(c, t1, "LiberationSans-Regular.ttf", 10);
-    if(m2) m_text[m2] = boost::make_shared<Text>(c, t2, "LiberationSans-Regular.ttf", 10);
-    if(m3) m_text[m3] = boost::make_shared<Text>(c, t3, "LiberationSans-Regular.ttf", 10);
-    if(m4) m_text[m4] = boost::make_shared<Text>(c, t4, "LiberationSans-Regular.ttf", 10);
+    m_text[m1] = boost::make_shared<Text>(c, t1, "LiberationSans-Regular.ttf", 12);
+    if(m2) m_text[m2] = boost::make_shared<Text>(c, t2, "LiberationSans-Regular.ttf", 12);
+    if(m3) m_text[m3] = boost::make_shared<Text>(c, t3, "LiberationSans-Regular.ttf", 12);
+    if(m4) m_text[m4] = boost::make_shared<Text>(c, t4, "LiberationSans-Regular.ttf", 12);
     
     centerText();
 }
@@ -69,14 +69,16 @@ Key::~Key(){
 
 void Key::draw(drawtype_e::e){
     glColor(BG_Colours[m_state]);
-    glBox(m_box, m_box.h()/5);
+    glBox(m_box, m_box.h()/8);
 }
 
 void Key::draw(Qt::KeyboardModifiers const& mods){
     draw(drawtype_e::no_flags);
     if(m_text.count(mods)){
-        glColor(Text_Colours[m_state]);
         glTranslatef(m_text[mods]->m_pos);
+        //glColor(Colour(1, 0.2));
+        //glBox(m_text[mods]->bbox());
+        glColor(Text_Colours[m_state]);
         m_text[mods]->draw(drawtype_e::no_flags);
     }
 }
@@ -96,7 +98,8 @@ void Key::state(keystate_e::e s){
 void Key::centerText(){
     foreach(textmap_t::value_type v, m_text){
         v.second->m_pos = m_pos + Point((bbox().w()/2 - v.second->bbox().w()/2) + v.second->bbox().min.x,
-                                        bbox().h()/2);
+                                        -bbox().h()/2);
+        debug() << "text position:" << v.second->m_pos.x << v.second->m_pos.y;
     }
 }
 
@@ -124,10 +127,34 @@ class ReturnKey: public Key{
                 return;
             // TODO: fix this
             glColor(BG_Colours[m_state]);
-            glBox(m_top, m_top.h()/5);
-            glTranslatef(m_step, -m_descend, 0);
-            glBox(BBox(m_top.min.x, m_top.min.y, m_top.max.x-m_step, m_top.min.y+m_descend),
-                  m_top.h()/5);
+            /*
+             *        *-------------*
+             *        | 2222221111  |
+             *        |422222211113 |
+             *        | 22222211113 |
+             *        *----* 511113 |  -
+             *             | 511113 |  |
+             *             | 511113 |  | descend
+             *             |  1111  |  |
+             *             *--------*  - 
+             *   step |----|
+             */
+            const float corner = m_top.h() / 8;
+            // 1
+            glBox(BBox(m_top.min.x + m_step + corner, m_top.min.y - m_descend,
+                       m_top.max.x - corner         , m_top.max.y));
+            // 2
+            glBox(BBox(m_top.min.x + corner         , m_top.min.y,
+                       m_top.min.x + m_step + corner, m_top.max.y));
+            // 3
+            glBox(BBox(m_top.max.x - corner, m_top.min.y + corner - m_descend,
+                       m_top.max.x         , m_top.max.y - corner));
+            // 4
+            glBox(BBox(m_top.min.x         , m_top.min.y + corner,
+                       m_top.min.x + corner, m_top.max.y - corner));
+            // 5
+            glBox(BBox(m_top.min.x + m_step         , m_top.min.y + corner - m_descend,
+                       m_top.min.x + m_step + corner, m_top.min.y));
         }
         virtual void draw(Qt::KeyboardModifiers const& /*mods*/){
             draw(drawtype_e::no_flags);
@@ -139,9 +166,9 @@ class ReturnKey: public Key{
         float m_descend;
 };
 
-const float key_w = 30;
-const float key_h = 30;
-const float key_p = 2;
+const float key_w = 48;
+const float key_h = 48;
+const float key_p = 3;
 
 /* keymap init function:
  * TODO: detect the keyboard layout (Qt, OS?) and load from file
@@ -155,12 +182,15 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     
     const BBox b(0, -key_h, key_w, 0);
     const BBox s(0, -key_h/2, key_w, 0);
-    const BBox esc_box(0, -key_h/2, key_w + key_w/8, 0);
-    const BBox bksp_box(0, -key_h, key_w + key_w/4, 0);
-    const BBox cps_box(0, -key_h, key_w + key_w/2, 0);
-    const BBox lshift_box(0, -key_h, key_w + key_w/8, 0);
-    const BBox rshift_box(0, -key_h, 2*key_w + key_w/8 + key_p, 0);
+    const BBox esc_box(0, -key_h/2, key_w + key_w/4, 0);
+    const BBox bksp_box(0, -key_h, key_w + key_w/2, 0);
+    const BBox cps_box(0, -key_h, key_w + 3*key_w/4, 0);
+    const BBox lshift_box(0, -key_h, key_w + key_w/4, 0);
+    const BBox rshift_box(0, -key_h, 2*key_w + key_w/4 + key_p, 0);
+    const BBox fn_box = b;//(0, -key_h, key_w*3.0/4, 0);
     const BBox space_box(0, -key_h, key_w*5 + key_p*4, 0);
+    const float enter_step = key_w/4;
+    const float enter_descend = key_h + key_p;
     
     Point pos(0, 0);
 
@@ -228,7 +258,7 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<Key>(c, Qt::Key_P,   b, none, "p", shift, "P"),
         boost::make_shared<Key>(c, Qt::Key_BraceLeft,  b, none, "[", shift, "{"),
         boost::make_shared<Key>(c, Qt::Key_BraceRight, b, none, "]", shift, "}"),
-        boost::make_shared<ReturnKey>(c, Qt::Key_Return,  b, 2, 8)
+        boost::make_shared<ReturnKey>(c, Qt::Key_Return,  b, enter_step, enter_descend)
     };
     pos.x = 0;
     pos.y -= key_h + key_p;
@@ -291,12 +321,12 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     }
     
     const key_ptr_t fn_row[] = {
-        boost::make_shared<Key>(c, Qt::Key_NumLock, b, none, ""), // !!!
+        boost::make_shared<Key>(c, Qt::Key_NumLock, fn_box, none, ""), // !!!
         boost::make_shared<Key>(c, Qt::Key_Meta,    b, none, "ctrl"),
         boost::make_shared<Key>(c, Qt::Key_Alt,     b, none, "opt"),
         boost::make_shared<Key>(c, Qt::Key_Control, lshift_box, none, "cmd"),
         boost::make_shared<Key>(c, Qt::Key_Space,   space_box, none, ""),
-        boost::make_shared<Key>(c, Qt::Key_Control, b, none, "cmd"),
+        boost::make_shared<Key>(c, Qt::Key_Control, lshift_box, none, "cmd"),
         boost::make_shared<Key>(c, Qt::Key_Enter,   b, none, "")
     };
     pos.x = 0;
@@ -314,7 +344,7 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     key_ptr_t dk = boost::make_shared<Key>(c, Qt::Key_Down,    s, none, "");
     key_ptr_t rk = boost::make_shared<Key>(c, Qt::Key_Right,   s, none, "");
 
-    pos.y -= key_h/2 + key_p;
+    pos.y -= key_h/2;
     lk->m_pos = pos;
     pos.x += key_w + key_p;
     dk->m_pos = pos;
