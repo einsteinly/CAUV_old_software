@@ -127,7 +127,7 @@ class EditText: public Menu{
             // TODO: be more conservative about m_edited
             m_edited = true;
             updateTextPositions();
-            m_context->postRedraw();
+            m_context->postRedraw(0);
             return true; 
         }
 

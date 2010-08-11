@@ -340,7 +340,7 @@ void PipelineWidget::remove(renderable_ptr_t p){
     // (see above note on really needing a set in which iterators remain stable
     // on erasing)
 
-    postRedraw();
+    postRedraw(0);
 }
 
 void PipelineWidget::remove(node_ptr_t n){
@@ -372,7 +372,7 @@ void PipelineWidget::add(renderable_ptr_t r, Point const& at){
     lock_t l(m_lock);
     r->m_pos = at;
     m_contents.push_back(r);
-    postRedraw();
+    postRedraw(0);
 }
 
 void PipelineWidget::addMenu(menu_ptr_t r,  Point const& at, bool pressed){
@@ -538,15 +538,25 @@ Point PipelineWidget::referUp(Point const& p) const{
     return p;
 }
 
-void PipelineWidget::postRedraw(){
+void PipelineWidget::postRedraw(float delay){
     lock_t l2(m_redraw_posted_lock);
-    if(!m_redraw_posted){
-        m_redraw_posted = true;
+    if(delay != 0.0f){
         // no need to lock m_lock, that's done in the slot
-        debug(3) << "PipelineWidget::postRedraw emitting re-draw signal";
-        emit redrawPosted();
-    }else{
-        debug(3) << "PipelineWidget::postRedraw NOT emitting re-draw signal";
+        m_redraw_posted = true;
+        if(delay != 0.0f){
+            QTimer::singleShot(delay * 1000, this, SIGNAL(redrawPosted()));
+            debug(3) << "PipelineWidget::postRedraw re-draw signal with delay=" << delay;
+        }else{
+            debug(3) << "PipelineWidget::postRedraw emitting re-draw signal";
+            emit redrawPosted();
+        }
+    }else{ 
+        if(!m_redraw_posted){
+            m_redraw_posted = true;
+            emit redrawPosted();
+        }else{
+            debug(3) << BashColour::Red << "PipelineWidget::postRedraw NOT emitting re-draw signal";
+        }
     }
 }
 
@@ -716,24 +726,21 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     m_last_mouse_pos = event->pos();
 
     if(need_redraw)
-        postRedraw();
+        postRedraw(0);
 }
 
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
     lock_t l(m_lock);
-    if(m_menu){
-        if(!m_menu->keyPressEvent(event))
-            QWidget::keyPressEvent(event);
-    }else if(!m_overkey->keyPressEvent(event))
-        QWidget::keyPressEvent(event);
+    if((m_menu && !m_menu->keyPressEvent(event)) || !m_menu)
+        if(!m_overkey->keyPressEvent(event))
+            ;//QWidget::keyPressEvent(event);
 }
 
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     lock_t l(m_lock);
-    if(m_menu && !m_menu->keyReleaseEvent(event)){
-        QWidget::keyReleaseEvent(event);
-    }else if(!m_overkey->keyReleaseEvent(event))
-        QWidget::keyReleaseEvent(event);
+    if((m_menu && !m_menu->keyReleaseEvent(event)) || !m_menu)
+        if(!m_overkey->keyReleaseEvent(event))
+            ;//QWidget::keyReleaseEvent(event);
 }
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
@@ -743,7 +750,7 @@ void PipelineWidget::wheelEvent(QWheelEvent *event){
         m_scrolldelta += event->delta();
         double scalef = pow(1.2, double(m_scrolldelta / 240));
         m_pixels_per_unit = clamp(0.04, scalef, 4);
-        postRedraw();
+        postRedraw(0);
     }
 }
 
@@ -770,7 +777,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
             Point d(win_dx / m_pixels_per_unit,
                     -win_dy / m_pixels_per_unit); // NB -
             m_win_centre += d;
-            postRedraw();
+            postRedraw(0);
         }
         // else zoom, (TODO)
     }else{
@@ -936,5 +943,5 @@ void PipelineWidget::testEditBoxMenu(){
     addMenu(boost::make_shared< EditText<int> >(
         this, std::string("edit here"), BBox(0, -6, 80, 10), tdf, 0
     ), lastMousePosition());
-    postRedraw();
+    postRedraw(0);
 }

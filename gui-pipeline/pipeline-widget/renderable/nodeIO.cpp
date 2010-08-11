@@ -52,10 +52,10 @@ void NodeIOBlob::draw(drawtype_e::e flags){
 void NodeIOBlob::mouseMoveEvent(MouseEvent const& m){
     if(!m_mouseover && contains(m.pos)){
         m_mouseover = true;
-        m_context->postRedraw();
+        m_context->postRedraw(0);
     }else if(m_mouseover && !contains(m.pos)){
         m_mouseover = false;
-        m_context->postRedraw();
+        m_context->postRedraw(0);
     }
 }
 
@@ -81,7 +81,7 @@ void NodeIOBlob::mouseReleaseEvent(MouseEvent const&){
 void NodeIOBlob::mouseGoneEvent(){
     if(m_mouseover){
         m_mouseover = false;
-        m_context->postRedraw();
+        m_context->postRedraw(0);
     }
 }
 
@@ -105,7 +105,7 @@ void NodeIOBlob::status(int s){
     if(s & NodeIOStatus::New) m_colour &= New_Hint;
     if(!(s & NodeIOStatus::Valid)) m_colour &= Invalid_Hint;
     if(s & NodeIOStatus::Demanded) m_colour &= Demanded_Hint;
-    m_context->postRedraw(); 
+    m_context->postRedraw(0); 
 }
 
 node_id NodeIOBlob::nodeId() const{
@@ -185,7 +185,7 @@ void FloatingArcHandle::mouseMoveEvent(MouseEvent const& e){
     if(e.buttons & Qt::LeftButton){
         m_pos += e.pos - m_click_pos;
         // need a re-draw
-        m_context->postRedraw();
+        m_context->postRedraw(0);
     }
 }
 

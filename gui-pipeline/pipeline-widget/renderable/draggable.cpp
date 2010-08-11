@@ -12,10 +12,10 @@ void Draggable::mouseMoveEvent(MouseEvent const& event){
     if(m_pressed && (event.buttons & Qt::LeftButton)){
         m_pos += event.pos - m_click_pos;
         // need a re-draw
-        m_context->postRedraw();
+        m_context->postRedraw(0);
     }else if(!m_mouseover){
         m_mouseover = true;
-        m_context->postRedraw();
+        m_context->postRedraw(0);
     }
 }
 
@@ -29,7 +29,7 @@ void Draggable::mouseGoneEvent(){
     if(m_mouseover || m_pressed){
         m_mouseover = false;
         m_pressed = false;
-        m_context->postRedraw();
+        m_context->postRedraw(0);
     }
 }
 

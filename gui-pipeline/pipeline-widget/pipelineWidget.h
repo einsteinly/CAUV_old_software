@@ -78,7 +78,7 @@ class PipelineWidget: public QGLWidget,
         node_ptr_t nodeAt(Point const& p) const;
         // implement Container:
         virtual Point referUp(Point const& p) const;
-        virtual void postRedraw();
+        virtual void postRedraw(float delay_secs);
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false);
         virtual void removeMenu(menu_ptr_t);

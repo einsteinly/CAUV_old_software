@@ -51,7 +51,7 @@ class Key: public Renderable{
         virtual ~Key();
 
         virtual void draw(drawtype_e::e);
-        virtual void draw(Qt::KeyboardModifiers const& mods);
+        virtual void draw(Qt::KeyboardModifiers const& mods, Colour const& mul);
 
         virtual BBox bbox();
 
@@ -84,9 +84,11 @@ class OverKey: public Renderable,
 
         OverKey(container_ptr_t parent);
 
+        BBox bbox();
+
         // Implement container:
         virtual Point referUp(Point const& p) const;
-        virtual void postRedraw();
+        virtual void postRedraw(float delay);
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false);
         virtual void removeMenu(menu_ptr_t);
@@ -105,9 +107,18 @@ class OverKey: public Renderable,
         void setLayout(layout_map_t const&);
 
     private:
+        BBox _calcBbox() const;
+        float _fnow() const;
+        float _alphaFrac() const;
+        
+        BBox m_bbox;
         layout_map_t m_layout;
         action_map_t m_actions;
         Qt::KeyboardModifiers m_current_modifiers;
+        
+        float m_last_kp_time;
+        float m_prev_kp_time;
+        bool m_key_held;
 };
 
 } // namespace ok

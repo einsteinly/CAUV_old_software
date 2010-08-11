@@ -54,7 +54,7 @@ class ListMenuItem: public Renderable{
                 m_pressed = false;
             }
             // TODO: only when necessary
-            m_context->postRedraw();
+            m_context->postRedraw(0);
         }
 
         virtual bool mousePressEvent(MouseEvent const& m){
@@ -63,7 +63,7 @@ class ListMenuItem: public Renderable{
                 if(m.buttons & Qt::LeftButton)
                     m_pressed = true;
                 // TODO: only when necessary
-                m_context->postRedraw();
+                m_context->postRedraw(0);
                 return true;
             }
             return false;
@@ -74,14 +74,14 @@ class ListMenuItem: public Renderable{
                 (*m_onclick)();
             m_pressed = false;
             // TODO: only when necessary
-            m_context->postRedraw();
+            m_context->postRedraw(0);
         }
 
         virtual void mouseGoneEvent(){
             m_hovered = false;
             m_pressed = false;
             // TODO: only when necessary
-            m_context->postRedraw();
+            m_context->postRedraw(0);
         }
 
         virtual BBox bbox(){

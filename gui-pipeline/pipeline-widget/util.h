@@ -87,7 +87,7 @@ class _BB{
 typedef _BB<double> BBox;
 
 template<typename T>
-struct ColourValueTraits{static const T min; static const T max; };
+struct ColourValueTraits{static const T min; static const T max;};
 
 template<typename T, typename tT=ColourValueTraits<T> >
 class _Colour{
@@ -183,8 +183,8 @@ void glVertex(Point const& p);
 void glBox(BBox const& b, double const& corner_radius = 0.0f);
 void glArc(double const& radius, double const& start, double const& end, unsigned segments);
 void glSegment(double const& radius, double const& start, double const& end, unsigned segments);
-void glCircle(double const& radius, unsigned segments = 24);
-void glCircleOutline(double const& radius, unsigned segments = 24);
+void glCircle(double const& radius, unsigned segments = 16);
+void glCircleOutline(double const& radius, unsigned segments = 16);
 void glBezier(Point const& a, Point const& b, Point const& c, Point const& d, int segments=24);
 void glBezier(Point const& a, Point const& b, Point const& c, int segments=24);
 void glColor(Colour const& c);

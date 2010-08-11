@@ -142,7 +142,7 @@ void Img::draw(drawtype_e::e flags){
 void Img::display(Image const& img){
     m_img = boost::make_shared<TexImg>(img);
     aspect(double(img.cvMat().cols) / img.cvMat().rows);
-    m_context->postRedraw();
+    m_context->postRedraw(0);
 }
 
 

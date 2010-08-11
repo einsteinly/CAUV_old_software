@@ -57,14 +57,14 @@ class CloseButton: public Renderable{
         virtual void mouseMoveEvent(MouseEvent const& event){
             if(bbox().contains(event.pos) && !m_mouseover){
                 m_mouseover = true;
-                m_context->postRedraw();
+                m_context->postRedraw(0);
             }
         }
 
         virtual bool mousePressEvent(MouseEvent const& event){
             if(bbox().contains(event.pos)){
                 m_pressed = true;
-                m_context->postRedraw();
+                m_context->postRedraw(0);
                 return true;
             }
             return false;
@@ -75,14 +75,14 @@ class CloseButton: public Renderable{
                 m_container->close();
             }
             m_pressed = false;
-            m_context->postRedraw();
+            m_context->postRedraw(0);
         }
 
         virtual void mouseGoneEvent(){
             if(m_pressed || m_mouseover){
                 m_pressed = false;
                 m_mouseover = false;
-                m_context->postRedraw();
+                m_context->postRedraw(0);
             }
         }
 
@@ -444,7 +444,7 @@ void Node::status(int s){
         m_bg_col &= Queue_Not_Permitted_Hint;
     if(s & NodeStatus::ExecQueued)
         m_bg_col &= Queued_Hint;
-    m_context->postRedraw();
+    m_context->postRedraw(0);
 }
 
 void Node::inputStatus(std::string const& input_id, int s){
@@ -473,8 +473,8 @@ Point Node::referUp(Point const& p) const{
     return m_context->referUp(p + m_pos);
 }
 
-void Node::postRedraw(){
-    m_context->postRedraw();
+void Node::postRedraw(float delay){
+    m_context->postRedraw(delay);
 }
 
 void Node::postMenu(menu_ptr_t m, Point const& p, bool r){
@@ -644,6 +644,6 @@ void Node::refreshLayout(){
         m_bbox.max.x += param_indent;
 
     // need to re-draw
-    m_context->postRedraw();
+    m_context->postRedraw(0);
 }
 

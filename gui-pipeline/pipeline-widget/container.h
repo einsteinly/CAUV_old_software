@@ -21,7 +21,7 @@ class Container{
         virtual ~Container(){ }
         
         virtual Point referUp(Point const& p) const = 0;
-        virtual void postRedraw() = 0;
+        virtual void postRedraw(float delay_secs) = 0;
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false) = 0;
         virtual void removeMenu(menu_ptr_t) = 0;

@@ -87,7 +87,7 @@ class PVPair: public PVPairEditableBase{
                     ),
                     m_context->referUp(m_pos + m_value->m_pos)
                 );
-                m_context->postRedraw();
+                m_context->postRedraw(0);
                 return true;
             }
             return false;

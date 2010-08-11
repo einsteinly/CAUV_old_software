@@ -79,7 +79,7 @@ class Node: public Draggable,
 
         // implement Container:
         virtual Point referUp(Point const& p) const;
-        virtual void postRedraw();
+        virtual void postRedraw(float delay);
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false);
         virtual void removeMenu(menu_ptr_t);

@@ -1,8 +1,13 @@
 #include "OverKey.h"
 
+#include <limits>
+
 #include <QtOpenGL>
 
 #include <boost/make_shared.hpp>
+// TODO <util/time.h>
+#include <boost/date_time.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 #include <debug/cauv_debug.h>
 
@@ -11,6 +16,25 @@
 
 using namespace pw;
 using namespace pw::ok;
+
+// Layout Constants, etc:
+
+const static int Key_Font_Size = 12;
+const static int Corner_Segments = 8;
+const static float Key_W = 48;
+const static float Key_H = 48;
+const static float Key_P = 3;
+const static float BG_Border = 32;
+
+const static Colour OK_BG_Colour(0, 0.8);
+const static Colour Key_BG_Colours[keystate_e::num_values] = {
+    Colour(1, 1, 1, 0.4), // released
+    Colour(1, 1, 1, 0.8)  // pressed
+};
+const static Colour Key_Text_Colours[keystate_e::num_values] = {
+    Colour(0, 0, 0, 0.6),
+    Colour(0, 0, 0, 1.0)
+};
 
 Action::f_t Action::null_f = Action::f_t();
 
@@ -36,16 +60,6 @@ void Action::onRelease() const{
         on_release_f();
 }
 
-
-const static Colour BG_Colours[keystate_e::num_values] = {
-    Colour(1, 1, 1, 0.2), // released
-    Colour(1, 1, 1, 0.4)  // pressed
-};
-const static Colour Text_Colours[keystate_e::num_values] = {
-    Colour(0, 0, 0, 0.3),
-    Colour(0, 0, 0, 1.0)
-};
-
 Key::Key(container_ptr_t c, keycode_t const& kc, BBox const& size, textmap_t const& text)
     : Renderable(c), m_state(keystate_e::released), m_keycode(kc), m_text(text), m_box(size){
 }
@@ -56,10 +70,10 @@ Key::Key(container_ptr_t c, keycode_t const& kc, BBox const& size,
          Qt::KeyboardModifiers m3, std::string const& t3,
          Qt::KeyboardModifiers m4, std::string const& t4)
     : Renderable(c), m_state(keystate_e::released), m_keycode(kc), m_text(), m_box(size){
-    m_text[m1] = boost::make_shared<Text>(c, t1, "LiberationSans-Regular.ttf", 12);
-    if(m2) m_text[m2] = boost::make_shared<Text>(c, t2, "LiberationSans-Regular.ttf", 12);
-    if(m3) m_text[m3] = boost::make_shared<Text>(c, t3, "LiberationSans-Regular.ttf", 12);
-    if(m4) m_text[m4] = boost::make_shared<Text>(c, t4, "LiberationSans-Regular.ttf", 12);
+    m_text[m1] = boost::make_shared<Text>(c, t1, "LiberationSans-Regular.ttf", Key_Font_Size);
+    if(m2) m_text[m2] = boost::make_shared<Text>(c, t2, "LiberationSans-Regular.ttf", Key_Font_Size);
+    if(m3) m_text[m3] = boost::make_shared<Text>(c, t3, "LiberationSans-Regular.ttf", Key_Font_Size);
+    if(m4) m_text[m4] = boost::make_shared<Text>(c, t4, "LiberationSans-Regular.ttf", Key_Font_Size);
     
     centerText();
 }
@@ -67,18 +81,18 @@ Key::Key(container_ptr_t c, keycode_t const& kc, BBox const& size,
 Key::~Key(){
 }
 
-void Key::draw(drawtype_e::e){
-    glColor(BG_Colours[m_state]);
-    glBox(m_box, m_box.h()/8);
+void Key::draw(drawtype_e::e){ 
 }
 
-void Key::draw(Qt::KeyboardModifiers const& mods){
-    draw(drawtype_e::no_flags);
+void Key::draw(Qt::KeyboardModifiers const& mods, Colour const& mul){
+    glColor(Key_BG_Colours[m_state] * mul);
+    glBox(m_box, m_box.h()/8);
+
     if(m_text.count(mods)){
         glTranslatef(m_text[mods]->m_pos);
         //glColor(Colour(1, 0.2));
         //glBox(m_text[mods]->bbox());
-        glColor(Text_Colours[m_state]);
+        glColor(Key_Text_Colours[m_state] * mul);
         m_text[mods]->draw(drawtype_e::no_flags);
     }
 }
@@ -92,7 +106,10 @@ keycode_t const& Key::keyCode() const{
 }
 
 void Key::state(keystate_e::e s){
-    m_state = s;
+    if(m_state != s){
+        m_state = s;
+        m_context->postRedraw(0);
+    }
 }
 
 void Key::centerText(){
@@ -122,20 +139,17 @@ class ReturnKey: public Key{
               m_top(top_size), m_step(step), m_descend(descend){
         }
         
-        virtual void draw(drawtype_e::e flags){
-            if(flags & drawtype_e::picking)
-                return;
-            // TODO: fix this
-            glColor(BG_Colours[m_state]);
+        virtual void draw(Qt::KeyboardModifiers const& /*mods*/, Colour const& mul){
+            glColor(Key_BG_Colours[m_state] * mul);
             /*
              *        *-------------*
-             *        | 2222221111  |
-             *        |422222211113 |
-             *        | 22222211113 |
+             *        | A222211111B |
+             *        | 42222111113 |
+             *        | E2222111113 |
              *        *----* 511113 |  -
              *             | 511113 |  |
              *             | 511113 |  | descend
-             *             |  1111  |  |
+             *             | D1111C |  |
              *             *--------*  - 
              *   step |----|
              */
@@ -155,9 +169,22 @@ class ReturnKey: public Key{
             // 5
             glBox(BBox(m_top.min.x + m_step         , m_top.min.y + corner - m_descend,
                        m_top.min.x + m_step + corner, m_top.min.y));
-        }
-        virtual void draw(Qt::KeyboardModifiers const& /*mods*/){
-            draw(drawtype_e::no_flags);
+            // A
+            glTranslatef(corner, -corner, 0);
+            glSegment(corner, -90, 0, Corner_Segments);
+            // B
+            glTranslatef(m_top.w() - 2*corner, 0, 0);
+            glSegment(corner, 0, 90, Corner_Segments);
+            // C
+            glTranslatef(0, 2*corner - (m_descend+m_top.h()), 0);
+            glSegment(corner, 90, 180, Corner_Segments);
+            // D
+            glTranslatef(m_step + 2*corner - m_top.w(), 0, 0);
+            glSegment(corner, -180, -90, Corner_Segments);
+            // E
+            glTranslatef(-m_step, m_descend, 0);
+            glSegment(corner, -180, -90, Corner_Segments);
+
         }
         
     private:
@@ -166,9 +193,6 @@ class ReturnKey: public Key{
         float m_descend;
 };
 
-const float key_w = 48;
-const float key_h = 48;
-const float key_p = 3;
 
 /* keymap init function:
  * TODO: detect the keyboard layout (Qt, OS?) and load from file
@@ -180,17 +204,17 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     Qt::KeyboardModifiers alt = Qt::AltModifier;
     Qt::KeyboardModifiers num = Qt::KeypadModifier;
     
-    const BBox b(0, -key_h, key_w, 0);
-    const BBox s(0, -key_h/2, key_w, 0);
-    const BBox esc_box(0, -key_h/2, key_w + key_w/4, 0);
-    const BBox bksp_box(0, -key_h, key_w + key_w/2, 0);
-    const BBox cps_box(0, -key_h, key_w + 3*key_w/4, 0);
-    const BBox lshift_box(0, -key_h, key_w + key_w/4, 0);
-    const BBox rshift_box(0, -key_h, 2*key_w + key_w/4 + key_p, 0);
-    const BBox fn_box = b;//(0, -key_h, key_w*3.0/4, 0);
-    const BBox space_box(0, -key_h, key_w*5 + key_p*4, 0);
-    const float enter_step = key_w/4;
-    const float enter_descend = key_h + key_p;
+    const BBox b(0, -Key_H, Key_W, 0);
+    const BBox s(0, -Key_H/2, Key_W, 0);
+    const BBox esc_box(0, -Key_H/2, Key_W + Key_W/4, 0);
+    const BBox bksp_box(0, -Key_H, Key_W + Key_W/2, 0);
+    const BBox cps_box(0, -Key_H, Key_W + 3*Key_W/4, 0);
+    const BBox lshift_box(0, -Key_H, Key_W + Key_W/4, 0);
+    const BBox rshift_box(0, -Key_H, 2*Key_W + Key_W/4 + Key_P, 0);
+    const BBox fn_box = b;//(0, -Key_H, Key_W*3.0/4, 0);
+    const BBox space_box(0, -Key_H, Key_W*5 + Key_P*4, 0);
+    const float enter_step = Key_W/4;
+    const float enter_descend = Key_H + Key_P;
     
     Point pos(0, 0);
 
@@ -213,7 +237,7 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     for(unsigned i = 0; i < sizeof(top_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = top_row[i];
         k->m_pos = pos;
-        pos.x += k->bbox().w() + key_p;
+        pos.x += k->bbox().w() + Key_P;
         if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
         r.insert(std::make_pair(k->keyCode(), k)); 
     }
@@ -235,11 +259,11 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<Key>(c, Qt::Key_Backspace, bksp_box, none, "")
     };
     pos.x = 0;
-    pos.y -= key_h/2 + key_p;
+    pos.y -= Key_H/2 + Key_P;
     for(unsigned i = 0; i < sizeof(num_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = num_row[i];
         k->m_pos = pos;
-        pos.x += k->bbox().w() + key_p;
+        pos.x += k->bbox().w() + Key_P;
         if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
         r.insert(std::make_pair(k->keyCode(), k)); 
     }
@@ -261,11 +285,11 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<ReturnKey>(c, Qt::Key_Return,  b, enter_step, enter_descend)
     };
     pos.x = 0;
-    pos.y -= key_h + key_p;
+    pos.y -= Key_H + Key_P;
     for(unsigned i = 0; i < sizeof(qw_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = qw_row[i];
         k->m_pos = pos;
-        pos.x += k->bbox().w() + key_p;
+        pos.x += k->bbox().w() + Key_P;
         if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
         r.insert(std::make_pair(k->keyCode(), k)); 
     }
@@ -286,11 +310,11 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<Key>(c, Qt::Key_Backslash,  b, none, "\\", shift, "|")
     };
     pos.x = 0;
-    pos.y -= key_h + key_p;
+    pos.y -= Key_H + Key_P;
     for(unsigned i = 0; i < sizeof(as_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = as_row[i];
         k->m_pos = pos;
-        pos.x += k->bbox().w() + key_p;
+        pos.x += k->bbox().w() + Key_P;
         if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
         r.insert(std::make_pair(k->keyCode(), k));
     }
@@ -311,11 +335,11 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<Key>(c, Qt::Key_Shift,   rshift_box, none, "")
     };
     pos.x = 0;
-    pos.y -= key_h + key_p;
+    pos.y -= Key_H + Key_P;
     for(unsigned i = 0; i < sizeof(zx_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = zx_row[i];
         k->m_pos = pos;
-        pos.x += k->bbox().w() + key_p;
+        pos.x += k->bbox().w() + Key_P;
         if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
         r.insert(std::make_pair(k->keyCode(), k)); 
     }
@@ -330,11 +354,11 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<Key>(c, Qt::Key_Enter,   b, none, "")
     };
     pos.x = 0;
-    pos.y -= key_h + key_p;
+    pos.y -= Key_H + Key_P;
     for(unsigned i = 0; i < sizeof(fn_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = fn_row[i];
         k->m_pos = pos;
-        pos.x += k->bbox().w() + key_p;
+        pos.x += k->bbox().w() + Key_P;
         if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
         r.insert(std::make_pair(k->keyCode(), k)); 
     }
@@ -344,12 +368,12 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     key_ptr_t dk = boost::make_shared<Key>(c, Qt::Key_Down,    s, none, "");
     key_ptr_t rk = boost::make_shared<Key>(c, Qt::Key_Right,   s, none, "");
 
-    pos.y -= key_h/2;
+    pos.y -= Key_H/2;
     lk->m_pos = pos;
-    pos.x += key_w + key_p;
+    pos.x += Key_W + Key_P;
     dk->m_pos = pos;
-    uk->m_pos = pos + Point(0, key_h/2 + key_p/2);
-    pos.x += key_w + key_p;
+    uk->m_pos = pos + Point(0, Key_H/2 + Key_P/2);
+    pos.x += Key_W + Key_P;
     rk->m_pos = pos;
 
     r.insert(std::make_pair(lk->keyCode(), lk));
@@ -362,17 +386,24 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
 
 
 OverKey::OverKey(container_ptr_t parent)
-    : Renderable(parent), Container(), m_layout(), m_actions(){
+    : Renderable(parent), Container(), m_bbox(), m_layout(), m_actions(),
+      m_last_kp_time(std::numeric_limits<float>::quiet_NaN()),
+      m_prev_kp_time(std::numeric_limits<float>::quiet_NaN()), 
+      m_key_held(false){
     m_layout = appleEnGBKeys(this);
+    m_bbox = _calcBbox();
 }
 
+BBox OverKey::bbox(){
+    return m_bbox;
+}
 
 Point OverKey::referUp(Point const& p) const{
     return m_context->referUp(p + m_pos);
 }
 
-void OverKey::postRedraw(){
-    m_context->postRedraw();
+void OverKey::postRedraw(float delay){
+    m_context->postRedraw(delay);
 }
 
 void OverKey::postMenu(menu_ptr_t m, Point const& tlp, bool p){
@@ -395,8 +426,19 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
     std::pair<layout_map_t::iterator, layout_map_t::iterator> eq = m_layout.equal_range(b.keycode);
     for(i = eq.first; i != eq.second; i++)
         i->second->state(keystate_e::pressed);
-    if(eq.first != eq.second)
-        postRedraw();
+    
+    if(event->text().size() && !event->isAutoRepeat()){
+        m_prev_kp_time = m_last_kp_time;
+        m_last_kp_time = _fnow();
+    }
+
+    //TODO: FIXME NEXT EDITING HERE ETC... track m_key_held properly
+    //if(event->isAutoRepeat())
+        m_key_held = true;
+    //else
+    //    m_key_held = false;
+    
+    debug() << "keyPressEvent:" << event->text().toStdString() << b.keycode << b.modifiers << m_last_kp_time << m_prev_kp_time;
 
     if(m_actions.count(b)){
         m_actions[b]->onPress();
@@ -413,8 +455,8 @@ bool OverKey::keyReleaseEvent(QKeyEvent *event){
     std::pair<layout_map_t::iterator, layout_map_t::iterator> eq = m_layout.equal_range(b.keycode);
     for(i = eq.first; i != eq.second; i++)
         i->second->state(keystate_e::released);
-    if(eq.first != eq.second)
-        postRedraw();
+    
+    m_key_held = false;
 
     if(m_actions.count(b)){
         m_actions[b]->onRelease();
@@ -440,12 +482,119 @@ void OverKey::draw(drawtype_e::e flags){
     if(flags & drawtype_e::picking)
         return;
     
-    typedef std::pair<keycode_t, key_ptr_t> layout_value_t;
-    foreach(layout_value_t r, m_layout){
-        glPushMatrix();
-        glTranslatef(r.second->m_pos);
-        r.second->draw(m_current_modifiers);
-        glPopMatrix();
+    const float fac = _alphaFrac();
+    
+    if(fac > 0.0f){
+        //debug() << fac;
+
+        glColor(OK_BG_Colour * Colour(1, fac));
+        glBox(bbox(), BG_Border);
+        
+        glTranslatef(0, 0, 0.1);
+
+        typedef std::pair<keycode_t, key_ptr_t> layout_value_t;
+        foreach(layout_value_t r, m_layout){
+            glPushMatrix();
+            glTranslatef(r.second->m_pos);
+            r.second->draw(m_current_modifiers, Colour(1, fac));
+            glPopMatrix();
+        }
+    
+        postRedraw(1.0/30);
     }
 }
+
+BBox OverKey::_calcBbox() const{
+    BBox r;
+    layout_map_t::const_iterator i;
+    for(i = m_layout.begin(); i != m_layout.end(); i++)
+        r |= i->second->bbox() + i->second->m_pos;
+    r.min -= BG_Border;
+    r.max += BG_Border;
+    return r;
+}
+
+namespace bpt = boost::posix_time;
+float OverKey::_fnow() const{
+    float now = 0.0f;
+    bpt::ptime epoch(boost::gregorian::date(2010,8,10));
+    bpt::ptime current_time = bpt::microsec_clock::local_time();
+    bpt::time_duration diff = current_time - epoch;
+    now = diff.total_seconds();
+    now += float(diff.fractional_seconds()) / bpt::time_duration::ticks_per_second();
+    return now;
+}
+
+float OverKey::_alphaFrac() const{
+    // based on the current time, how opaque should things be drawn?
+    float now = _fnow();
+    float last_time = 0.0f;
+    float delta = 0.0f;
+    float r = 0.0f;
+    bool typing = false;
+        
+    // sanitise previous time... just makes things easier:
+    last_time = 0;
+    if(boost::math::isnan(m_last_kp_time))
+        last_time = 0;
+    else
+        last_time = m_last_kp_time;
+    delta = now - last_time;
+
+    if(!boost::math::isnan(m_prev_kp_time) && last_time - m_prev_kp_time < 0.3)
+        typing = true;
+    
+    debug() << "typing=" << typing << "delta=" << delta
+            << "lt=" << last_time << "pt=" << m_prev_kp_time;
+    r = 0.0f;
+
+    if(m_key_held){
+        // slow things down
+        delta /= 3;
+    }
+        
+    if(!typing){
+        /*
+         *   alpha mul
+         *      ^
+         *   1 -|     oooo
+         *      |    o    ooo
+         * .75 -|   o        oo
+         *      |   o          oo
+         * .5  -|   o            ooo
+         *      |  o                oooo
+         * .25 -|  o                    oooo
+         *      | o                         oooo
+         *   0 -oo------------------------------oooooooooooooo-> time since 
+         *      '    '    '    '    '    '    '    '    '    '    last key
+         *     0.0  0.4  0.8  1.2  1.6  2.0  2.4  2.8
+         */
+        if(delta < 0.16){
+            r = 0.02;
+        }else if(delta < 0.24){
+            r = 0.25 * (delta-0.16) / 0.08;
+        }else if(delta < 0.08){
+            r = 0.25 + 0.5 * (delta-0.24) / 0.08;
+        }else if(delta < 0.1){
+            r = 0.75 + 0.25 * (delta-0.32) / 0.08;
+        }else if(delta < 0.16){
+            r = 1.0;
+        }else if(delta < 0.2){
+            r = 0.1 - 0.25 * (delta - 0.48) / 0.16; 
+        }else if(delta < 0.5){
+            r = 0.75 - 0.5 * (delta - 0.8) / 1.2;
+        }else if(delta < 0.67){
+            r = 0.25 - 0.25 * (delta - 2.0) / 0.68;
+        }else{
+            r = 0;
+        }
+    }
+    else{
+        // TODO
+        ;
+    }
+    
+    return r;
+}
+
 
