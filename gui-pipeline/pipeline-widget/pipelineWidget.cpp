@@ -308,6 +308,9 @@ void PipelineWidget::initKeyBindings(){
     m_overkey->registerKey(Qt::Key_D, Qt::NoModifier, cp_node_act);
     m_overkey->registerKey(Qt::Key_D, Qt::ControlModifier, cp_node_act);
     m_overkey->registerKey(Qt::Key_X, Qt::NoModifier, rm_node_act);
+
+    m_overkey->m_pos = Point(-m_overkey->bbox().w()/2 - m_overkey->bbox().min.x,
+                             -m_overkey->bbox().h()/2 - m_overkey->bbox().min.y);
 }
 
 QSize PipelineWidget::minimumSizeHint() const{
@@ -630,12 +633,15 @@ void PipelineWidget::paintGL(){
         r->draw(drawtype_e::no_flags);
         glPopMatrix();
     }
-    glClear(GL_DEPTH_BUFFER_BIT);
 
-    glPushMatrix();
+    // draw overlays:
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glScalef(1.0f / m_world_size, 1.0f / m_world_size, 1.0f);
+    // erm... undo the projection transformation: TODO: separate updateProjection for overlays so this isn't necessary
+    glTranslatef(-m_win_centre);
     glTranslatef(m_overkey->m_pos);
     m_overkey->draw(drawtype_e::no_flags);
-    glPopMatrix();
     
     glPrintErr();
 

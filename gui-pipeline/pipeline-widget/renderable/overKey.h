@@ -3,10 +3,14 @@
 
 #include <map>
 #include <string>
+#include <set>
 
 #include <Qt>
 
 #include <boost/function.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/member.hpp>
 
 #include "../renderable.h"
 #include "../container.h"
@@ -16,6 +20,8 @@ namespace ok{
 
 typedef int keycode_t;
 typedef Qt::KeyboardModifiers modifiers_t;
+
+namespace bmi = boost::multi_index;
 
 class Action{
     public:
@@ -105,6 +111,57 @@ class OverKey: public Renderable,
         void draw(drawtype_e::e);
         
         void setLayout(layout_map_t const&);
+        
+
+        /**** callback mechanism that should be somewhere else.... ****/
+
+        // TODO: FIXME FIRST NOW SOON OR SOMETIME: this callback mechanism, and
+        // the way that it is used relies on callbacks being added, processed
+        // and removed from one thread: there is no locking. Further, the
+        // postRedraw() function must be used to make sure that draw() is
+        // called as/just after any events need to be processed - and that
+        // function will ONLY work from a thread with a Qt event loop (because
+        // of the way that it is implemented in PipelineWidget), so. Viator
+        // emptor: you have been warned.
+
+        // TODO: add this interface to Container; implement using QTimer in PipelineWidget 
+
+        /**** types ****/
+        typedef boost::function<void()> callback_t;
+        struct _Callback{
+            _Callback(float const& t, std::string const& n, callback_t const& cb)
+                : time(t), name(n), callback(cb){
+            }
+
+            float time;
+            std::string name;
+            callback_t callback;
+        };
+        struct time_index{};
+        struct name_index{};
+        typedef bmi::multi_index_container<
+            _Callback,
+            bmi::indexed_by<
+                bmi::ordered_non_unique<
+                    bmi::tag<time_index>, bmi::member<_Callback, float, &_Callback::time>
+                >,
+                bmi::ordered_non_unique<
+                    bmi::tag<name_index>, bmi::member<_Callback, std::string, &_Callback::name>
+                >
+            >
+        > cb_map_t;
+        typedef cb_map_t::index<name_index>::type cb_map_by_name_t;
+        typedef cb_map_t::index<time_index>::type cb_map_by_time_t;
+        /**** end callback mechanism types ****/
+
+
+        /**** callback mechanism that should be somewhere else.... ****/
+        virtual void postDelayedCallback(std::string const& name,
+                                         callback_t const& foo,
+                                         float delay_secs);
+        virtual void processDelayedCallbacks();
+        virtual void cancelDelayedCallbacks(std::string const& name);
+        /**** end callback mechanism functions ****/
 
     private:
         BBox _calcBbox() const;
@@ -118,7 +175,13 @@ class OverKey: public Renderable,
         
         float m_last_kp_time;
         float m_prev_kp_time;
-        bool m_key_held;
+        std::set<keycode_t> m_held_keys;
+        float m_last_no_keys_time;
+        
+        /**** callback mechanism that should be somewhere else.... ****/
+        cb_map_t m_delayed_callbacks;
+        float m_last_cb_processing_time;
+        /**** end callback mechanism data ****/
 };
 
 } // namespace ok

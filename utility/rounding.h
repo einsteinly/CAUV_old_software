@@ -34,6 +34,7 @@ template<typename TRet, typename TLow, typename TVal, typename THigh>
 inline static TRet clamp_cast(TLow const& low, TVal const& value, THigh const& high){
     return value >= high? high : value <= low? low : TRet(value); 
 }
+
 template<typename TLow, typename TVal, typename THigh>
 inline static TVal clamp(TLow const& low, TVal const& value, THigh const& high){
     return clamp_cast<TVal>(low, value, high);

@@ -18,7 +18,7 @@ class V2D{
     public:
         V2D() : x(0), y(0){ }
         V2D(T const& x, T const& y) : x(x), y(y){ }
-
+        
         V2D<T>& operator+=(V2D<T> const& r){ x += r.x; y += r.y; return *this; }
         V2D<T>& operator-=(V2D<T> const& r){ x -= r.x; y -= r.y; return *this; }
         V2D<T>& operator+=(T const& r){ x += r; y += r; return *this; }
@@ -32,6 +32,8 @@ class V2D{
         friend V2D<T> operator-(V2D<T> const& l, T const& r){ return V2D<T>(l) -= r; }
         friend V2D<T> operator*(V2D<T> const& l, T const& r){ return V2D<T>(l) *= r; }
         friend V2D<T> operator/(V2D<T> const& l, T const& r){ return V2D<T>(l) /= r; }
+
+        V2D<T> operator-(){ return V2D<T>(-x, -y); }
 
         T sxx() const{ return x*x + y*y; }
 

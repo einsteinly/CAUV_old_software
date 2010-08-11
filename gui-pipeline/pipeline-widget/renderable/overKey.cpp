@@ -5,10 +5,13 @@
 #include <QtOpenGL>
 
 #include <boost/make_shared.hpp>
-// TODO <util/time.h>
+// TODO <utilty/time.h>
 #include <boost/date_time.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/bind.hpp>
 
+#include <utility/rounding.h>
+#include <utility/string.h>
 #include <debug/cauv_debug.h>
 
 #include "util.h"
@@ -116,7 +119,7 @@ void Key::centerText(){
     foreach(textmap_t::value_type v, m_text){
         v.second->m_pos = m_pos + Point((bbox().w()/2 - v.second->bbox().w()/2) + v.second->bbox().min.x,
                                         -bbox().h()/2);
-        debug() << "text position:" << v.second->m_pos.x << v.second->m_pos.y;
+        debug(9) << "text position:" << v.second->m_pos.x << v.second->m_pos.y;
     }
 }
 
@@ -389,7 +392,10 @@ OverKey::OverKey(container_ptr_t parent)
     : Renderable(parent), Container(), m_bbox(), m_layout(), m_actions(),
       m_last_kp_time(std::numeric_limits<float>::quiet_NaN()),
       m_prev_kp_time(std::numeric_limits<float>::quiet_NaN()), 
-      m_key_held(false){
+      m_held_keys(),
+      m_last_no_keys_time(0.0f),
+      m_delayed_callbacks(),
+      m_last_cb_processing_time(0.0f){
     m_layout = appleEnGBKeys(this);
     m_bbox = _calcBbox();
 }
@@ -420,9 +426,14 @@ void OverKey::remove(renderable_ptr_t){
 
 bool OverKey::keyPressEvent(QKeyEvent *event){
     KeyBind b = {event->key(), event->modifiers()};
-
     m_current_modifiers = b.modifiers;
     layout_map_t::iterator i;
+
+    // remove any key-release callbacks for this key - don't want to update the
+    // graphic to show the key as being released now that it has been pressed
+    // again
+    cancelDelayedCallbacks(mkStr() << "keyrel" << b.keycode);
+
     std::pair<layout_map_t::iterator, layout_map_t::iterator> eq = m_layout.equal_range(b.keycode);
     for(i = eq.first; i != eq.second; i++)
         i->second->state(keystate_e::pressed);
@@ -430,15 +441,15 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
     if(event->text().size() && !event->isAutoRepeat()){
         m_prev_kp_time = m_last_kp_time;
         m_last_kp_time = _fnow();
+    }else if(b.modifiers && !m_held_keys.size()){
+        // if there is only a modifier being held
+        m_last_kp_time = _fnow();
     }
 
-    //TODO: FIXME NEXT EDITING HERE ETC... track m_key_held properly
-    //if(event->isAutoRepeat())
-        m_key_held = true;
-    //else
-    //    m_key_held = false;
+    m_held_keys.insert(b.keycode);
     
-    debug() << "keyPressEvent:" << event->text().toStdString() << b.keycode << b.modifiers << m_last_kp_time << m_prev_kp_time;
+    debug() << "keyPressEvent:" << event->text().toStdString() << b.keycode
+            << b.modifiers << m_last_kp_time << m_prev_kp_time;
 
     if(m_actions.count(b)){
         m_actions[b]->onPress();
@@ -453,10 +464,31 @@ bool OverKey::keyReleaseEvent(QKeyEvent *event){
     m_current_modifiers = b.modifiers;
     layout_map_t::iterator i;
     std::pair<layout_map_t::iterator, layout_map_t::iterator> eq = m_layout.equal_range(b.keycode);
-    for(i = eq.first; i != eq.second; i++)
-        i->second->state(keystate_e::released);
     
-    m_key_held = false;
+    bool typing = m_last_kp_time - m_prev_kp_time < 0.3;
+    if(typing)
+        for(i = eq.first; i != eq.second; i++)
+            i->second->state(keystate_e::released);
+    else{
+        for(i = eq.first; i != eq.second; i++)
+            postDelayedCallback(
+                mkStr() << "keyrel" << b.keycode,
+                boost::bind(&Key::state, i->second, keystate_e::released),
+                0.5
+            );
+        // FIXME... since for now delayed callbacks are processed in draw():
+        if(eq.first != eq.second)
+            postRedraw(0.5);
+    }
+    
+    m_held_keys.erase(b.keycode);
+    if(!m_held_keys.size())
+        m_last_no_keys_time = _fnow();
+        
+    debug() << "keyReleaseEvent:" << event->text().toStdString() << b.keycode
+            << b.modifiers << m_last_kp_time << m_prev_kp_time
+            << m_held_keys.size();
+
 
     if(m_actions.count(b)){
         m_actions[b]->onRelease();
@@ -481,11 +513,13 @@ void OverKey::registerKey(keycode_t const& key, modifiers_t const& mods,
 void OverKey::draw(drawtype_e::e flags){
     if(flags & drawtype_e::picking)
         return;
+
+    processDelayedCallbacks();
     
     const float fac = _alphaFrac();
     
     if(fac > 0.0f){
-        //debug() << fac;
+        debug(9) << BashColour::White << "alpha frac:" << fac;
 
         glColor(OK_BG_Colour * Colour(1, fac));
         glBox(bbox(), BG_Border);
@@ -500,7 +534,40 @@ void OverKey::draw(drawtype_e::e flags){
             glPopMatrix();
         }
     
-        postRedraw(1.0/30);
+        postRedraw(1.0/20);
+    }
+}
+
+void OverKey::postDelayedCallback(std::string const& name,
+                                  callback_t const& foo,
+                                  float delay_secs){
+    m_delayed_callbacks.insert(_Callback(_fnow() + delay_secs, name, foo));
+}
+
+void OverKey::cancelDelayedCallbacks(std::string const& name){
+    cb_map_by_name_t& callbacks_by_name = m_delayed_callbacks.get<name_index>();
+    cb_map_by_name_t::iterator b = callbacks_by_name.lower_bound(name);
+    cb_map_by_name_t::iterator e = callbacks_by_name.upper_bound(name);
+    callbacks_by_name.erase(b, e);
+}
+
+void OverKey::processDelayedCallbacks(){
+    cb_map_by_time_t::iterator b, e, i;
+    cb_map_by_time_t& callbacks_by_time = m_delayed_callbacks.get<time_index>();
+    float now = _fnow();
+    int count = 0;
+
+    b = callbacks_by_time.lower_bound(m_last_cb_processing_time);
+    e = callbacks_by_time.upper_bound(now);
+    for(i = b; i != e; i++, count++)
+        i->callback();
+    
+    callbacks_by_time.erase(b, e);
+    m_last_cb_processing_time = now;
+
+    if(count){
+        debug() << now << "processed" << count << "delayed callbacks";
+        debug() << m_delayed_callbacks.size() << "remain";
     }
 }
 
@@ -516,10 +583,12 @@ BBox OverKey::_calcBbox() const{
 
 namespace bpt = boost::posix_time;
 float OverKey::_fnow() const{
+    static bpt::ptime fnow_base;
     float now = 0.0f;
-    bpt::ptime epoch(boost::gregorian::date(2010,8,10));
+    if(fnow_base == bpt::not_a_date_time)
+        fnow_base = bpt::microsec_clock::local_time();
     bpt::ptime current_time = bpt::microsec_clock::local_time();
-    bpt::time_duration diff = current_time - epoch;
+    bpt::time_duration diff = current_time - fnow_base;
     now = diff.total_seconds();
     now += float(diff.fractional_seconds()) / bpt::time_duration::ticks_per_second();
     return now;
@@ -532,6 +601,7 @@ float OverKey::_alphaFrac() const{
     float delta = 0.0f;
     float r = 0.0f;
     bool typing = false;
+    bool key_held = false;
         
     // sanitise previous time... just makes things easier:
     last_time = 0;
@@ -544,13 +614,14 @@ float OverKey::_alphaFrac() const{
     if(!boost::math::isnan(m_prev_kp_time) && last_time - m_prev_kp_time < 0.3)
         typing = true;
     
-    debug() << "typing=" << typing << "delta=" << delta
-            << "lt=" << last_time << "pt=" << m_prev_kp_time;
+    debug(5) << "typing=" << typing << "delta=" << delta
+             << "lt=" << last_time << "pt=" << m_prev_kp_time;
     r = 0.0f;
 
-    if(m_key_held){
+    if(m_held_keys.size() && now - m_last_no_keys_time > 0.8){
+        key_held = true;
         // slow things down
-        delta /= 3;
+        delta /= 2;
     }
         
     if(!typing){
@@ -569,29 +640,19 @@ float OverKey::_alphaFrac() const{
          *      '    '    '    '    '    '    '    '    '    '    last key
          *     0.0  0.4  0.8  1.2  1.6  2.0  2.4  2.8
          */
-        if(delta < 0.16){
-            r = 0.02;
-        }else if(delta < 0.24){
-            r = 0.25 * (delta-0.16) / 0.08;
-        }else if(delta < 0.08){
-            r = 0.25 + 0.5 * (delta-0.24) / 0.08;
-        }else if(delta < 0.1){
-            r = 0.75 + 0.25 * (delta-0.32) / 0.08;
-        }else if(delta < 0.16){
-            r = 1.0;
-        }else if(delta < 0.2){
-            r = 0.1 - 0.25 * (delta - 0.48) / 0.16; 
-        }else if(delta < 0.5){
-            r = 0.75 - 0.5 * (delta - 0.8) / 1.2;
-        }else if(delta < 0.67){
-            r = 0.25 - 0.25 * (delta - 2.0) / 0.68;
-        }else{
-            r = 0;
-        }
+        if     (delta < 0.16) r = 0.02;
+        else if(delta < 0.24) r = 0.02 + 0.23 * (delta-0.16) / 0.08;
+        else if(delta < 0.32) r = 0.25 + 0.50 * (delta-0.24) / 0.08;
+        else if(delta < 0.40) r = 0.75 + 0.25 * (delta-0.32) / 0.08;
+        else if(delta < 0.48) r = 1.00;
+        else if(delta < 0.80) r = 1.00 - 0.25 * (delta-0.48) / 0.32; 
+        else if(delta < 2.00) r = 0.75 - 0.50 * (delta-0.80) / 1.20;
+        else if(delta < 2.68) r = 0.25 - 0.25 * (delta-2.00) / 0.68;
+        else /*delta > 2.68*/ r = 0.00;
     }
-    else{
-        // TODO
-        ;
+    
+    if(key_held && delta > 0.4){
+        r = max(0.5f, r);
     }
     
     return r;
