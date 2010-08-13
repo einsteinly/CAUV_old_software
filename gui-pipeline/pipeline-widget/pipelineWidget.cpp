@@ -272,7 +272,8 @@ void PipelineWidget::initKeyBindings(){
             false
         ), 
         ok::Action::null_f,
-        "add node"
+        "add node",
+        boost::make_shared<Text>(this, "add node", "LiberationSans-Regular.ttf", 12)
     );
     
     ok::action_ptr_t et_menu_act = boost::make_shared<ok::Action>(
@@ -286,19 +287,22 @@ void PipelineWidget::initKeyBindings(){
             boost::make_shared<GraphRequestMessage>()
         ),
         ok::Action::null_f,
-        "reload"
+        "reload",
+        boost::make_shared<Text>(this, "reload", "LiberationSans-Regular.ttf", 12)
     );
 
     ok::action_ptr_t cp_node_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::duplicateNodeAtMouse, this),
         ok::Action::null_f,
-        "duplicate"
+        "duplicate",
+        boost::make_shared<Text>(this, "duplicate", "LiberationSans-Regular.ttf", 12)
     );
 
     ok::action_ptr_t rm_node_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::removeNodeAtMouse, this),
         ok::Action::null_f,
-        "remove"
+        "remove",
+        boost::make_shared<Text>(this, "remove", "LiberationSans-Regular.ttf", 12)
     );
 
     m_overkey->registerKey(Qt::Key_Space, Qt::NoModifier, an_menu_act);
@@ -309,8 +313,7 @@ void PipelineWidget::initKeyBindings(){
     m_overkey->registerKey(Qt::Key_D, Qt::ControlModifier, cp_node_act);
     m_overkey->registerKey(Qt::Key_X, Qt::NoModifier, rm_node_act);
 
-    m_overkey->m_pos = Point(-m_overkey->bbox().w()/2 - m_overkey->bbox().min.x,
-                             -m_overkey->bbox().h()/2 - m_overkey->bbox().min.y);
+    m_overkey->m_pos = -m_overkey->bbox().c();
 }
 
 QSize PipelineWidget::minimumSizeHint() const{

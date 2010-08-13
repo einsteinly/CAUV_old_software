@@ -37,6 +37,8 @@ class Action{
         void onPress() const;
         void onRelease() const;
 
+        void drawDecal(BBox const& area);
+
     private:
         const f_t on_press_f;
         const f_t on_release_f;
@@ -63,6 +65,7 @@ class Key: public Renderable{
 
         keycode_t const& keyCode() const;
         void state(keystate_e::e s);
+        keystate_e::e state() const;
 
     protected:
         keystate_e::e m_state;
@@ -76,7 +79,9 @@ class Key: public Renderable{
 };
 
 struct KeyBind{
+    KeyBind(keycode_t const& kc, modifiers_t const& m);
     bool operator<(KeyBind const& r) const;
+
     keycode_t keycode;
     modifiers_t modifiers;
 };

@@ -31,12 +31,16 @@ const static float BG_Border = 32;
 
 const static Colour OK_BG_Colour(0, 0.8);
 const static Colour Key_BG_Colours[keystate_e::num_values] = {
-    Colour(1, 1, 1, 0.4), // released
-    Colour(1, 1, 1, 0.8)  // pressed
+    Colour(1, 0.3), // released
+    Colour(1, 0.9)  // pressed
 };
 const static Colour Key_Text_Colours[keystate_e::num_values] = {
-    Colour(0, 0, 0, 0.6),
-    Colour(0, 0, 0, 1.0)
+    Colour(0.1, 0.6),
+    Colour(0.1, 1.0)
+};
+const static Colour Key_Decal_Colours[keystate_e::num_values] = {
+    Colour(0, 0.9),
+    Colour(0, 1.0)
 };
 
 Action::f_t Action::null_f = Action::f_t();
@@ -62,6 +66,26 @@ void Action::onRelease() const{
     if(on_release_f)
         on_release_f();
 }
+
+void Action::drawDecal(BBox const& area){
+    if(m_decal){
+        float scale = 1.0f;
+        BBox const& db = m_decal->bbox();
+        if(db.area()){
+            if(area.w() / db.w() < scale)
+                scale = area.w() / db.w();
+            if(area.h() / db.h() < scale)
+                scale = area.h() / db.h();
+        }
+        glPushMatrix();
+        glTranslatef(area.c());
+        glScalef(scale, scale, 1.0f);
+        glTranslatef(-db.c());
+        m_decal->draw(drawtype_e::no_flags);
+        glPopMatrix();
+    }
+}
+
 
 Key::Key(container_ptr_t c, keycode_t const& kc, BBox const& size, textmap_t const& text)
     : Renderable(c), m_state(keystate_e::released), m_keycode(kc), m_text(text), m_box(size){
@@ -115,6 +139,10 @@ void Key::state(keystate_e::e s){
     }
 }
 
+keystate_e::e Key::state() const{
+    return m_state;
+}
+
 void Key::centerText(){
     foreach(textmap_t::value_type v, m_text){
         v.second->m_pos = m_pos + Point((bbox().w()/2 - v.second->bbox().w()/2) + v.second->bbox().min.x,
@@ -123,6 +151,9 @@ void Key::centerText(){
     }
 }
 
+KeyBind::KeyBind(keycode_t const& kc, modifiers_t const& m)
+    : keycode(kc), modifiers(m){
+}
 
 bool KeyBind::operator<(KeyBind const& r) const{
     if(int(keycode) < int(r.keycode))
@@ -425,7 +456,7 @@ void OverKey::remove(renderable_ptr_t){
 }
 
 bool OverKey::keyPressEvent(QKeyEvent *event){
-    KeyBind b = {event->key(), event->modifiers()};
+    KeyBind b(event->key(), event->modifiers());
     m_current_modifiers = b.modifiers;
     layout_map_t::iterator i;
 
@@ -448,8 +479,9 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
 
     m_held_keys.insert(b.keycode);
     
-    debug() << "keyPressEvent:" << event->text().toStdString() << b.keycode
-            << b.modifiers << m_last_kp_time << m_prev_kp_time;
+    if(!event->isAutoRepeat())
+        debug() << "keyPressEvent:" << event->text().toStdString() << b.keycode
+                << b.modifiers << m_last_kp_time << m_prev_kp_time;
 
     if(m_actions.count(b)){
         m_actions[b]->onPress();
@@ -459,7 +491,7 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
 }
 
 bool OverKey::keyReleaseEvent(QKeyEvent *event){
-    KeyBind b = {event->key(), event->modifiers()};
+    KeyBind b(event->key(), event->modifiers());
 
     m_current_modifiers = b.modifiers;
     layout_map_t::iterator i;
@@ -506,7 +538,7 @@ void OverKey::registerKey(KeyBind const& binding, action_ptr_t act){
 
 void OverKey::registerKey(keycode_t const& key, modifiers_t const& mods,
                           action_ptr_t act){
-    KeyBind binding = {key, mods};
+    KeyBind binding(key, mods);
     registerKey(binding, act);
 }
 
@@ -515,7 +547,6 @@ void OverKey::draw(drawtype_e::e flags){
         return;
 
     processDelayedCallbacks();
-    
     const float fac = _alphaFrac();
     
     if(fac > 0.0f){
@@ -528,13 +559,26 @@ void OverKey::draw(drawtype_e::e flags){
 
         typedef std::pair<keycode_t, key_ptr_t> layout_value_t;
         foreach(layout_value_t r, m_layout){
+            const key_ptr_t k = r.second;
             glPushMatrix();
-            glTranslatef(r.second->m_pos);
-            r.second->draw(m_current_modifiers, Colour(1, fac));
+            glTranslatef(k->m_pos);
+            glPushMatrix();
+            k->draw(m_current_modifiers, Colour(1, fac));
+            glPopMatrix();
+            glCheckError();
+            KeyBind potential_kb(k->keyCode(), m_current_modifiers);
+            if(m_actions.count(potential_kb)){
+                BBox draw_area = k->bbox();
+                draw_area *= 0.85f;
+                draw_area.max.y -= draw_area.h() * 0.45;
+                glColor(Key_Decal_Colours[k->state()]);
+                m_actions[potential_kb]->drawDecal(draw_area);
+            }
             glPopMatrix();
         }
-    
-        postRedraw(1.0/20);
+        
+        if(_fnow() - m_last_kp_time < 3.0f)
+            postRedraw(1.0/20);
     }
 }
 
@@ -622,6 +666,9 @@ float OverKey::_alphaFrac() const{
         key_held = true;
         // slow things down
         delta /= 2;
+    }else if(!m_held_keys.size()){
+        // speed things up
+        delta *= 2;
     }
         
     if(!typing){
@@ -652,7 +699,7 @@ float OverKey::_alphaFrac() const{
     }
     
     if(key_held && delta > 0.4){
-        r = max(0.5f, r);
+        r = max(0.8f, r);
     }
     
     return r;

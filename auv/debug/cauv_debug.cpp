@@ -128,8 +128,10 @@ void SmartStreamBase::printToStream(std::ostream& os)
 
         // add defined prefix to each line
         oss << "] ";
-        printPrefix(oss);
     }
+
+    printPrefix(oss);
+
     // make sure oss is stringised so that locale nastiness is all over
     // and done with
     os << oss.str();

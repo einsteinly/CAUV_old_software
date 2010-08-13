@@ -33,7 +33,7 @@ class V2D{
         friend V2D<T> operator*(V2D<T> const& l, T const& r){ return V2D<T>(l) *= r; }
         friend V2D<T> operator/(V2D<T> const& l, T const& r){ return V2D<T>(l) /= r; }
 
-        V2D<T> operator-(){ return V2D<T>(-x, -y); }
+        V2D<T> operator-() const{ return V2D<T>(-x, -y); }
 
         T sxx() const{ return x*x + y*y; }
 
@@ -69,6 +69,13 @@ class _BB{
         _BB<T>& operator+=(V2D<T> const& p){ min += p; max += p; return *this; }
         _BB<T>& operator-=(V2D<T> const& p){ min -= p; max -= p; return *this; }
 
+        _BB<T>& operator*=(T const& s){
+            const V2D<T> centre = c();
+            min = centre - (centre - min) * s;
+            max = centre + (max - centre) * s;
+            return *this;
+        }
+
         friend _BB<T> operator|(_BB<T> const& l, _BB<T> const& r){ return _BB<T>(l) |= r; }
         friend _BB<T> operator&(_BB<T> const& l, _BB<T> const& r){ return _BB<T>(l) &= r; }
         friend _BB<T> operator+(_BB<T> const& l, V2D<T> const& r){ return _BB<T>(l) += r; }
@@ -82,7 +89,10 @@ class _BB{
         }
         T area() const{ return (max - min).x * (max - min).y; }
         T w() const{ return max.x - min.x; }
-        T h() const{ return max.y - min.y; }
+        T h() const{ return max.y - min.y; } 
+
+        V2D<T> c() const{ return (min + max) / 2; }
+        V2D<T> size() const{ return max - min; }
 
         V2D<T> min, max;
 };
