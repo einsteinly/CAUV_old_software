@@ -245,7 +245,7 @@ void spawnPGCN(PipelineWidget *p, int argc, char** argv){
 
 PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-      m_win_centre(), m_win_aspect(1), m_win_scale(10),
+      m_win_centre(), m_win_aspect(1), m_win_scale(10), m_scrolldelta(0),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_overkey(boost::make_shared<ok::OverKey>(this)),
@@ -642,7 +642,7 @@ void PipelineWidget::paintGL(){
     glLoadIdentity();
     glScalef(1.0f / m_world_size, 1.0f / m_world_size, 1.0f);
     // erm... undo the projection transformation: TODO: separate updateProjection for overlays so this isn't necessary
-    glTranslatef(-m_win_centre);
+    glTranslatef(-m_win_centre*m_pixels_per_unit);
     glTranslatef(m_overkey->m_pos);
     m_overkey->draw(drawtype_e::no_flags);
     
@@ -741,15 +741,17 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
     lock_t l(m_lock);
     if((m_menu && !m_menu->keyPressEvent(event)) || !m_menu)
-        if(!m_overkey->keyPressEvent(event))
-            ;//QWidget::keyPressEvent(event);
+        m_overkey->keyPressEvent(event);
+        //if(!m_overkey->keyPressEvent(event))
+        //    QWidget::keyPressEvent(event);
 }
 
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     lock_t l(m_lock);
     if((m_menu && !m_menu->keyReleaseEvent(event)) || !m_menu)
-        if(!m_overkey->keyReleaseEvent(event))
-            ;//QWidget::keyReleaseEvent(event);
+        m_overkey->keyReleaseEvent(event);
+        //if(!m_overkey->keyReleaseEvent(event))
+        //    QWidget::keyReleaseEvent(event);
 }
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
@@ -916,6 +918,22 @@ void PipelineWidget::drawGrid(){
     glEnd();
 }
 
+
+PipelineWidget::node_set_t PipelineWidget::parents(node_id n) const{
+    node_set_t r;
+    foreach(arc_ptr_t a, m_arcs) 
+        if(!a->m_hanging && a->to().node == n && a->from().node)
+            r.insert(a->from().node);
+    return r;
+}
+
+PipelineWidget::node_set_t PipelineWidget::children(node_id n) const{
+    node_set_t r;
+    foreach(arc_ptr_t a, m_arcs)
+        if(!a->m_hanging && a->from().node == n && a->to().node)
+            r.insert(a->to().node);
+    return r;
+}
 
 // TODO: move this somewhere appropriate... probably a member function
 void tdf(int, std::string const& s){

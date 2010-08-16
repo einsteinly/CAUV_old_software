@@ -87,21 +87,29 @@ void Action::drawDecal(BBox const& area){
 }
 
 
-Key::Key(container_ptr_t c, keycode_t const& kc, BBox const& size, textmap_t const& text)
-    : Renderable(c), m_state(keystate_e::released), m_keycode(kc), m_text(text), m_box(size){
+Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, BBox const& size,
+         textmap_t const& text)
+    : Renderable(c), m_state(keystate_e::released), m_keycodes(), m_text(text), m_box(size){
+
+    if(kc1) m_keycodes.push_back(kc1);
+    if(kc2) m_keycodes.push_back(kc2);
 }
 
-Key::Key(container_ptr_t c, keycode_t const& kc, BBox const& size,
+Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, BBox const& size,
          Qt::KeyboardModifiers m1, std::string const& t1,
          Qt::KeyboardModifiers m2, std::string const& t2,
          Qt::KeyboardModifiers m3, std::string const& t3,
          Qt::KeyboardModifiers m4, std::string const& t4)
-    : Renderable(c), m_state(keystate_e::released), m_keycode(kc), m_text(), m_box(size){
+    : Renderable(c), m_state(keystate_e::released), m_keycodes(), m_text(), m_box(size){
+
+    if(kc1) m_keycodes.push_back(kc1);
+    if(kc2) m_keycodes.push_back(kc2);
+
     m_text[m1] = boost::make_shared<Text>(c, t1, "LiberationSans-Regular.ttf", Key_Font_Size);
     if(m2) m_text[m2] = boost::make_shared<Text>(c, t2, "LiberationSans-Regular.ttf", Key_Font_Size);
     if(m3) m_text[m3] = boost::make_shared<Text>(c, t3, "LiberationSans-Regular.ttf", Key_Font_Size);
     if(m4) m_text[m4] = boost::make_shared<Text>(c, t4, "LiberationSans-Regular.ttf", Key_Font_Size);
-    
+
     centerText();
 }
 
@@ -128,8 +136,8 @@ BBox Key::bbox(){
     return m_box;
 }
 
-keycode_t const& Key::keyCode() const{
-    return m_keycode;
+std::vector<keycode_t> const& Key::keyCodes() const{
+    return m_keycodes;
 }
 
 void Key::state(keystate_e::e s){
@@ -167,9 +175,9 @@ bool KeyBind::operator<(KeyBind const& r) const{
 
 class ReturnKey: public Key{
     public:
-        ReturnKey(container_ptr_t c, keycode_t const& kc, BBox const& top_size,
-                  float step = 2, float descend = 8)
-            : Key(c, kc, top_size | (top_size - Point(0, descend))),
+        ReturnKey(container_ptr_t c, keycode_t const& kc, keycode_t const& kc2,
+                  BBox const& top_size, float step = 2, float descend = 8)
+            : Key(c, kc, kc2, top_size | (top_size - Point(0, descend))),
               m_top(top_size), m_step(step), m_descend(descend){
         }
         
@@ -253,44 +261,47 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     Point pos(0, 0);
 
     const key_ptr_t top_row[] = {
-        boost::make_shared<Key>(c, Qt::Key_Escape, esc_box, none, "esc"),
-        boost::make_shared<Key>(c, Qt::Key_F1,  s, none, "F1"),
-        boost::make_shared<Key>(c, Qt::Key_F2,  s, none, "F2"),
-        boost::make_shared<Key>(c, Qt::Key_F3,  s, none, "F3"),
-        boost::make_shared<Key>(c, Qt::Key_F4,  s, none, "F4"),
-        boost::make_shared<Key>(c, Qt::Key_F5,  s, none, "F5"),
-        boost::make_shared<Key>(c, Qt::Key_F6,  s, none, "F6"),
-        boost::make_shared<Key>(c, Qt::Key_F7,  s, none, "F7"),
-        boost::make_shared<Key>(c, Qt::Key_F8,  s, none, "F8"),
-        boost::make_shared<Key>(c, Qt::Key_F9,  s, none, "F9"),
-        boost::make_shared<Key>(c, Qt::Key_F10, s, none, "F10"),
-        boost::make_shared<Key>(c, Qt::Key_F11, s, none, "F11"),
-        boost::make_shared<Key>(c, Qt::Key_F12, s, none, "F12"),
-        boost::make_shared<Key>(c, Qt::Key_Eject, esc_box, none, "")
+        boost::make_shared<Key>(c, Qt::Key_Escape, 0, esc_box, none, "esc"),
+        boost::make_shared<Key>(c, Qt::Key_F1, 0,  s, none, "F1"),
+        boost::make_shared<Key>(c, Qt::Key_F2, 0,  s, none, "F2"),
+        boost::make_shared<Key>(c, Qt::Key_F3, 0,  s, none, "F3"),
+        boost::make_shared<Key>(c, Qt::Key_F4, 0,  s, none, "F4"),
+        boost::make_shared<Key>(c, Qt::Key_F5, 0,  s, none, "F5"),
+        boost::make_shared<Key>(c, Qt::Key_F6, 0,  s, none, "F6"),
+        boost::make_shared<Key>(c, Qt::Key_F7, 0,  s, none, "F7"),
+        boost::make_shared<Key>(c, Qt::Key_F8, 0,  s, none, "F8"),
+        boost::make_shared<Key>(c, Qt::Key_F9, 0,  s, none, "F9"),
+        boost::make_shared<Key>(c, Qt::Key_F10, 0, s, none, "F10"),
+        boost::make_shared<Key>(c, Qt::Key_F11, 0, s, none, "F11"),
+        boost::make_shared<Key>(c, Qt::Key_F12, 0, s, none, "F12"),
+        boost::make_shared<Key>(c, Qt::Key_Eject, 0, esc_box, none, "")
     };
     for(unsigned i = 0; i < sizeof(top_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = top_row[i];
         k->m_pos = pos;
         pos.x += k->bbox().w() + Key_P;
-        if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
-        r.insert(std::make_pair(k->keyCode(), k)); 
+        foreach(keycode_t kc, k->keyCodes()){
+            if(r.count(kc)) warning() << "duplicate keycode" << kc;
+            r.insert(std::make_pair(kc, k));
+        } 
     }
     
     const key_ptr_t num_row[] = {
-        boost::make_shared<Key>(c, Qt::Key_section, b, none, "",  shift, "±"),
-        boost::make_shared<Key>(c, Qt::Key_1,       b, none, "1", shift, "!"),
-        boost::make_shared<Key>(c, Qt::Key_2,       b, none, "2", shift, "@"),
-        boost::make_shared<Key>(c, Qt::Key_3,       b, none, "3", shift, ""),
-        boost::make_shared<Key>(c, Qt::Key_4,       b, none, "4", shift, "$"),
-        boost::make_shared<Key>(c, Qt::Key_5,       b, none, "5", shift, "%"),
-        boost::make_shared<Key>(c, Qt::Key_6,       b, none, "6", shift, "^"),
-        boost::make_shared<Key>(c, Qt::Key_7,       b, none, "7", shift, "&", num, "7"),
-        boost::make_shared<Key>(c, Qt::Key_8,       b, none, "8", shift, "*", num, "8"),
-        boost::make_shared<Key>(c, Qt::Key_9,       b, none, "9", shift, "(", num, "9"),
-        boost::make_shared<Key>(c, Qt::Key_0,       b, none, "0", shift, ")", num, "/"),
-        boost::make_shared<Key>(c, Qt::Key_Minus,   b, none, "-", shift, "_", num, "="),
-        boost::make_shared<Key>(c, Qt::Key_Equal,   b, none, "=", shift, "+"),
-        boost::make_shared<Key>(c, Qt::Key_Backspace, bksp_box, none, "")
+        boost::make_shared<Key>(c, Qt::Key_section, 0, b, none, "",  shift, "±"),
+        boost::make_shared<Key>(c, Qt::Key_1, 0,       b, none, "1", shift, "!"),
+        boost::make_shared<Key>(c, Qt::Key_2, 0,       b, none, "2", shift, "@"),
+        boost::make_shared<Key>(c, Qt::Key_3, 0,       b, none, "3", shift, ""),
+        boost::make_shared<Key>(c, Qt::Key_4, 0,       b, none, "4", shift, "$"),
+        boost::make_shared<Key>(c, Qt::Key_5, 0,       b, none, "5", shift, "%"),
+        boost::make_shared<Key>(c, Qt::Key_6, 0,       b, none, "6", shift, "^"),
+        // oops... make_shared only accepts up to 10 arguments
+        key_ptr_t(new Key(c, Qt::Key_7, 0,       b, none, "7", shift, "&", num, "7")),
+        key_ptr_t(new Key(c, Qt::Key_8, 0,       b, none, "8", shift, "*", num, "8")),
+        key_ptr_t(new Key(c, Qt::Key_9, 0,       b, none, "9", shift, "(", num, "9")),
+        key_ptr_t(new Key(c, Qt::Key_0, 0,       b, none, "0", shift, ")", num, "/")),
+        key_ptr_t(new Key(c, Qt::Key_Minus, 0,   b, none, "-", shift, "_", num, "=")),
+        boost::make_shared<Key>(c, Qt::Key_Equal, 0,   b, none, "=", shift, "+"),
+        boost::make_shared<Key>(c, Qt::Key_Backspace, 0, bksp_box, none, "")
     };
     pos.x = 0;
     pos.y -= Key_H/2 + Key_P;
@@ -298,25 +309,27 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         key_ptr_t k = num_row[i];
         k->m_pos = pos;
         pos.x += k->bbox().w() + Key_P;
-        if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
-        r.insert(std::make_pair(k->keyCode(), k)); 
+        foreach(keycode_t kc, k->keyCodes()){
+            if(r.count(kc)) warning() << "duplicate keycode" << kc;
+            r.insert(std::make_pair(kc, k));
+        } 
     }
 
     const key_ptr_t qw_row[] = {
-        boost::make_shared<Key>(c, Qt::Key_Tab, bksp_box, none, ""),
-        boost::make_shared<Key>(c, Qt::Key_Q,   b, none, "q", shift, "Q"),
-        boost::make_shared<Key>(c, Qt::Key_W,   b, none, "w", shift, "W"),
-        boost::make_shared<Key>(c, Qt::Key_E,   b, none, "e", shift, "E"),
-        boost::make_shared<Key>(c, Qt::Key_R,   b, none, "r", shift, "R"),
-        boost::make_shared<Key>(c, Qt::Key_T,   b, none, "t", shift, "T"),
-        boost::make_shared<Key>(c, Qt::Key_Y,   b, none, "y", shift, "Y"),
-        boost::make_shared<Key>(c, Qt::Key_U,   b, none, "u", shift, "U"),
-        boost::make_shared<Key>(c, Qt::Key_I,   b, none, "i", shift, "I"),
-        boost::make_shared<Key>(c, Qt::Key_O,   b, none, "o", shift, "O"),
-        boost::make_shared<Key>(c, Qt::Key_P,   b, none, "p", shift, "P"),
-        boost::make_shared<Key>(c, Qt::Key_BraceLeft,  b, none, "[", shift, "{"),
-        boost::make_shared<Key>(c, Qt::Key_BraceRight, b, none, "]", shift, "}"),
-        boost::make_shared<ReturnKey>(c, Qt::Key_Return,  b, enter_step, enter_descend)
+        boost::make_shared<Key>(c, Qt::Key_Tab, 0, bksp_box, none, ""),
+        boost::make_shared<Key>(c, Qt::Key_Q, 0,   b, none, "q", shift, "Q"),
+        boost::make_shared<Key>(c, Qt::Key_W, 0,   b, none, "w", shift, "W"),
+        boost::make_shared<Key>(c, Qt::Key_E, 0,   b, none, "e", shift, "E"),
+        boost::make_shared<Key>(c, Qt::Key_R, 0,   b, none, "r", shift, "R"),
+        boost::make_shared<Key>(c, Qt::Key_T, 0,   b, none, "t", shift, "T"),
+        boost::make_shared<Key>(c, Qt::Key_Y, 0,   b, none, "y", shift, "Y"),
+        boost::make_shared<Key>(c, Qt::Key_U, 0,   b, none, "u", shift, "U"),
+        boost::make_shared<Key>(c, Qt::Key_I, 0,   b, none, "i", shift, "I"),
+        boost::make_shared<Key>(c, Qt::Key_O, 0,   b, none, "o", shift, "O"),
+        boost::make_shared<Key>(c, Qt::Key_P, 0,   b, none, "p", shift, "P"),
+        boost::make_shared<Key>(c, Qt::Key_BraceLeft, 0,  b, none, "[", shift, "{"),
+        boost::make_shared<Key>(c, Qt::Key_BraceRight, 0, b, none, "]", shift, "}"),
+        boost::make_shared<ReturnKey>(c, Qt::Key_Return, 0,  b, enter_step, enter_descend)
     };
     pos.x = 0;
     pos.y -= Key_H + Key_P;
@@ -324,24 +337,26 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         key_ptr_t k = qw_row[i];
         k->m_pos = pos;
         pos.x += k->bbox().w() + Key_P;
-        if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
-        r.insert(std::make_pair(k->keyCode(), k)); 
+        foreach(keycode_t kc, k->keyCodes()){
+            if(r.count(kc)) warning() << "duplicate keycode" << kc;
+            r.insert(std::make_pair(kc, k));
+        } 
     }
 
     const key_ptr_t as_row[] = {
-        boost::make_shared<Key>(c, Qt::Key_CapsLock, cps_box, none, ""),
-        boost::make_shared<Key>(c, Qt::Key_A, b, none, "a", shift, "A"),
-        boost::make_shared<Key>(c, Qt::Key_S, b, none, "s", shift, "S"),
-        boost::make_shared<Key>(c, Qt::Key_D, b, none, "d", shift, "D"),
-        boost::make_shared<Key>(c, Qt::Key_F, b, none, "f", shift, "F"),
-        boost::make_shared<Key>(c, Qt::Key_G, b, none, "g", shift, "G"),
-        boost::make_shared<Key>(c, Qt::Key_H, b, none, "h", shift, "H"),
-        boost::make_shared<Key>(c, Qt::Key_J, b, none, "j", shift, "J"),
-        boost::make_shared<Key>(c, Qt::Key_K, b, none, "k", shift, "K"),
-        boost::make_shared<Key>(c, Qt::Key_L, b, none, "l", shift, "L"),
-        boost::make_shared<Key>(c, Qt::Key_Semicolon,  b, none, ";", shift, ":"),
-        boost::make_shared<Key>(c, Qt::Key_Apostrophe, b, none, "'", shift, "\""),
-        boost::make_shared<Key>(c, Qt::Key_Backslash,  b, none, "\\", shift, "|")
+        boost::make_shared<Key>(c, Qt::Key_CapsLock, 0, cps_box, none, ""),
+        boost::make_shared<Key>(c, Qt::Key_A, 0, b, none, "a", shift, "A"),
+        boost::make_shared<Key>(c, Qt::Key_S, 0, b, none, "s", shift, "S"),
+        boost::make_shared<Key>(c, Qt::Key_D, 0, b, none, "d", shift, "D"),
+        boost::make_shared<Key>(c, Qt::Key_F, 0, b, none, "f", shift, "F"),
+        boost::make_shared<Key>(c, Qt::Key_G, 0, b, none, "g", shift, "G"),
+        boost::make_shared<Key>(c, Qt::Key_H, 0, b, none, "h", shift, "H"),
+        boost::make_shared<Key>(c, Qt::Key_J, 0, b, none, "j", shift, "J"),
+        boost::make_shared<Key>(c, Qt::Key_K, 0, b, none, "k", shift, "K"),
+        boost::make_shared<Key>(c, Qt::Key_L, 0, b, none, "l", shift, "L"),
+        boost::make_shared<Key>(c, Qt::Key_Semicolon, 0,  b, none, ";", shift, ":"),
+        boost::make_shared<Key>(c, Qt::Key_Apostrophe, 0, b, none, "'", shift, "\""),
+        boost::make_shared<Key>(c, Qt::Key_Backslash, 0,  b, none, "\\", shift, "|")
     };
     pos.x = 0;
     pos.y -= Key_H + Key_P;
@@ -349,24 +364,26 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         key_ptr_t k = as_row[i];
         k->m_pos = pos;
         pos.x += k->bbox().w() + Key_P;
-        if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
-        r.insert(std::make_pair(k->keyCode(), k));
+        foreach(keycode_t kc, k->keyCodes()){
+            if(r.count(kc)) warning() << "duplicate keycode" << kc;
+            r.insert(std::make_pair(kc, k));
+        }
     }
 
     const key_ptr_t zx_row[] = {
-        boost::make_shared<Key>(c, Qt::Key_Shift,   lshift_box, none, ""),
-        boost::make_shared<Key>(c, Qt::Key_AsciiTilde, b, none, "`", shift, "~"), //? 
-        boost::make_shared<Key>(c, Qt::Key_Z,       b, none, "z", shift, "Z"),
-        boost::make_shared<Key>(c, Qt::Key_X,       b, none, "x", shift, "X"),
-        boost::make_shared<Key>(c, Qt::Key_C,       b, none, "c", shift, "C"),
-        boost::make_shared<Key>(c, Qt::Key_V,       b, none, "v", shift, "V"),
-        boost::make_shared<Key>(c, Qt::Key_B,       b, none, "b", shift, "B"),
-        boost::make_shared<Key>(c, Qt::Key_N,       b, none, "n", shift, "N"),
-        boost::make_shared<Key>(c, Qt::Key_M,       b, none, "m", shift, "M"),
-        boost::make_shared<Key>(c, Qt::Key_Comma,   b, none, ",", shift, "<"),
-        boost::make_shared<Key>(c, Qt::Key_Period,  b, none, ".", shift, ">"),
-        boost::make_shared<Key>(c, Qt::Key_Slash,   b, none, "/", shift, "?"),
-        boost::make_shared<Key>(c, Qt::Key_Shift,   rshift_box, none, "")
+        boost::make_shared<Key>(c, Qt::Key_Shift, 0,   lshift_box, none, ""),
+        boost::make_shared<Key>(c, Qt::Key_AsciiTilde, 0, b, none, "`", shift, "~"), //? 
+        boost::make_shared<Key>(c, Qt::Key_Z, 0,       b, none, "z", shift, "Z"),
+        boost::make_shared<Key>(c, Qt::Key_X, 0,       b, none, "x", shift, "X"),
+        boost::make_shared<Key>(c, Qt::Key_C, 0,       b, none, "c", shift, "C"),
+        boost::make_shared<Key>(c, Qt::Key_V, 0,       b, none, "v", shift, "V"),
+        boost::make_shared<Key>(c, Qt::Key_B, 0,       b, none, "b", shift, "B"),
+        boost::make_shared<Key>(c, Qt::Key_N, 0,       b, none, "n", shift, "N"),
+        boost::make_shared<Key>(c, Qt::Key_M, 0,       b, none, "m", shift, "M"),
+        boost::make_shared<Key>(c, Qt::Key_Comma, Qt::Key_Less,     b, none, ",", shift, "<"),
+        boost::make_shared<Key>(c, Qt::Key_Period, Qt::Key_Greater, b, none, ".", shift, ">"),
+        boost::make_shared<Key>(c, Qt::Key_Slash, Qt::Key_Question, b, none, "/", shift, "?"),
+        boost::make_shared<Key>(c, Qt::Key_Shift, 0,   rshift_box, none, "")
     };
     pos.x = 0;
     pos.y -= Key_H + Key_P;
@@ -374,18 +391,20 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         key_ptr_t k = zx_row[i];
         k->m_pos = pos;
         pos.x += k->bbox().w() + Key_P;
-        if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
-        r.insert(std::make_pair(k->keyCode(), k)); 
+        foreach(keycode_t kc, k->keyCodes()){
+            if(r.count(kc)) warning() << "duplicate keycode" << kc;
+            r.insert(std::make_pair(kc, k));
+        }
     }
     
     const key_ptr_t fn_row[] = {
-        boost::make_shared<Key>(c, Qt::Key_NumLock, fn_box, none, ""), // !!!
-        boost::make_shared<Key>(c, Qt::Key_Meta,    b, none, "ctrl"),
-        boost::make_shared<Key>(c, Qt::Key_Alt,     b, none, "opt"),
-        boost::make_shared<Key>(c, Qt::Key_Control, lshift_box, none, "cmd"),
-        boost::make_shared<Key>(c, Qt::Key_Space,   space_box, none, ""),
-        boost::make_shared<Key>(c, Qt::Key_Control, lshift_box, none, "cmd"),
-        boost::make_shared<Key>(c, Qt::Key_Enter,   b, none, "")
+        boost::make_shared<Key>(c, Qt::Key_NumLock, 0, fn_box, none, ""), // !!!
+        boost::make_shared<Key>(c, Qt::Key_Meta, 0,    b, none, "ctrl"),
+        boost::make_shared<Key>(c, Qt::Key_Alt, 0,     b, none, "opt"),
+        boost::make_shared<Key>(c, Qt::Key_Control, 0, lshift_box, none, "cmd"),
+        boost::make_shared<Key>(c, Qt::Key_Space, 0,   space_box, none, ""),
+        boost::make_shared<Key>(c, Qt::Key_Control, 0, lshift_box, none, "cmd"),
+        boost::make_shared<Key>(c, Qt::Key_Enter, 0,   b, none, "")
     };
     pos.x = 0;
     pos.y -= Key_H + Key_P;
@@ -393,14 +412,16 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         key_ptr_t k = fn_row[i];
         k->m_pos = pos;
         pos.x += k->bbox().w() + Key_P;
-        if(r.count(k->keyCode())) warning() << "duplicate keycode" << k->keyCode();
-        r.insert(std::make_pair(k->keyCode(), k)); 
+        foreach(keycode_t kc, k->keyCodes()){
+            if(r.count(kc)) warning() << "duplicate keycode" << kc;
+            r.insert(std::make_pair(kc, k));
+        } 
     }
 
-    key_ptr_t lk = boost::make_shared<Key>(c, Qt::Key_Left,    s, none, "");
-    key_ptr_t uk = boost::make_shared<Key>(c, Qt::Key_Up,      s, none, "");
-    key_ptr_t dk = boost::make_shared<Key>(c, Qt::Key_Down,    s, none, "");
-    key_ptr_t rk = boost::make_shared<Key>(c, Qt::Key_Right,   s, none, "");
+    key_ptr_t lk = boost::make_shared<Key>(c, Qt::Key_Left, 0,    s, none, "");
+    key_ptr_t uk = boost::make_shared<Key>(c, Qt::Key_Up, 0,      s, none, "");
+    key_ptr_t dk = boost::make_shared<Key>(c, Qt::Key_Down, 0,    s, none, "");
+    key_ptr_t rk = boost::make_shared<Key>(c, Qt::Key_Right, 0,   s, none, "");
 
     pos.y -= Key_H/2;
     lk->m_pos = pos;
@@ -409,11 +430,11 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
     uk->m_pos = pos + Point(0, Key_H/2 + Key_P/2);
     pos.x += Key_W + Key_P;
     rk->m_pos = pos;
-
-    r.insert(std::make_pair(lk->keyCode(), lk));
-    r.insert(std::make_pair(uk->keyCode(), uk));
-    r.insert(std::make_pair(dk->keyCode(), dk));
-    r.insert(std::make_pair(rk->keyCode(), rk));
+    
+    foreach(keycode_t kc, lk->keyCodes()) r.insert(std::make_pair(kc, lk));
+    foreach(keycode_t kc, uk->keyCodes()) r.insert(std::make_pair(kc, uk));
+    foreach(keycode_t kc, dk->keyCodes()) r.insert(std::make_pair(kc, dk));
+    foreach(keycode_t kc, rk->keyCodes()) r.insert(std::make_pair(kc, rk));
 
     return r;
 }
@@ -421,8 +442,8 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
 
 OverKey::OverKey(container_ptr_t parent)
     : Renderable(parent), Container(), m_bbox(), m_layout(), m_actions(),
-      m_last_kp_time(std::numeric_limits<float>::quiet_NaN()),
-      m_prev_kp_time(std::numeric_limits<float>::quiet_NaN()), 
+      m_last_kp_time(std::numeric_limits<float>::min()),
+      m_prev_kp_time(std::numeric_limits<float>::min()), 
       m_held_keys(),
       m_last_no_keys_time(0.0f),
       m_delayed_callbacks(),
@@ -464,20 +485,37 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
     // graphic to show the key as being released now that it has been pressed
     // again
     cancelDelayedCallbacks(mkStr() << "keyrel" << b.keycode);
-
+    
+    // NB: these iterators are re-used below
     std::pair<layout_map_t::iterator, layout_map_t::iterator> eq = m_layout.equal_range(b.keycode);
     for(i = eq.first; i != eq.second; i++)
         i->second->state(keystate_e::pressed);
     
-    if(event->text().size() && !event->isAutoRepeat()){
+    if(/*event->text().size() && */!event->isAutoRepeat()){
         m_prev_kp_time = m_last_kp_time;
         m_last_kp_time = _fnow();
-    }else if(b.modifiers && !m_held_keys.size()){
+    }/*else if(b.modifiers && !m_held_keys.size()){
         // if there is only a modifier being held
         m_last_kp_time = _fnow();
-    }
-
-    m_held_keys.insert(b.keycode);
+    }*/
+    
+    // modifier keys are counted as 'held' based on m_current_modifiers
+    // TODO: don't do this, and simulate key events based on changes to
+    // m_current_modifiers instead
+    /* errr... scrap that: TODO still stands though
+    switch(b.keycode){
+        case Qt::Key_Shift:
+        case Qt::Key_Control:
+        case Qt::Key_Meta:
+        case Qt::Key_Alt:
+        case Qt::Key_AltGr:
+            break;
+        default:*/
+            for(i = eq.first; i != eq.second; i++){
+                m_held_keys.insert(i->second);
+                debug() << BashColour::Red << "key pressed" << i->second;
+            }
+    /*}*/
     
     if(!event->isAutoRepeat())
         debug() << "keyPressEvent:" << event->text().toStdString() << b.keycode
@@ -513,9 +551,16 @@ bool OverKey::keyReleaseEvent(QKeyEvent *event){
             postRedraw(0.5);
     }
     
-    m_held_keys.erase(b.keycode);
-    if(!m_held_keys.size())
-        m_last_no_keys_time = _fnow();
+    if(m_layout.count(b.keycode)){
+        for(i = eq.first; i != eq.second; i++){
+            m_held_keys.erase(i->second);
+            debug() << BashColour::Brown << "key released" << i->second;
+        }
+        if(!m_held_keys.size()){
+            m_last_no_keys_time = _fnow();
+            debug() << BashColour::Green << "all keys released";
+        }
+    }
         
     debug() << "keyReleaseEvent:" << event->text().toStdString() << b.keycode
             << b.modifiers << m_last_kp_time << m_prev_kp_time
@@ -556,23 +601,30 @@ void OverKey::draw(drawtype_e::e flags){
         glBox(bbox(), BG_Border);
         
         glTranslatef(0, 0, 0.1);
-
+        
+        // don't draw keys with more than one code twice
+        std::set<key_ptr_t> drawn;
         typedef std::pair<keycode_t, key_ptr_t> layout_value_t;
         foreach(layout_value_t r, m_layout){
             const key_ptr_t k = r.second;
+            if(drawn.count(k))
+                continue;
+            drawn.insert(k);
             glPushMatrix();
             glTranslatef(k->m_pos);
             glPushMatrix();
             k->draw(m_current_modifiers, Colour(1, fac));
             glPopMatrix();
             glCheckError();
-            KeyBind potential_kb(k->keyCode(), m_current_modifiers);
-            if(m_actions.count(potential_kb)){
-                BBox draw_area = k->bbox();
-                draw_area *= 0.85f;
-                draw_area.max.y -= draw_area.h() * 0.45;
-                glColor(Key_Decal_Colours[k->state()]);
-                m_actions[potential_kb]->drawDecal(draw_area);
+            foreach(keycode_t kc, k->keyCodes()){
+                KeyBind potential_kb(kc, m_current_modifiers);
+                if(m_actions.count(potential_kb)){
+                    BBox draw_area = k->bbox();
+                    draw_area *= 0.85f;
+                    draw_area.max.y -= draw_area.h() * 0.45;
+                    glColor(Key_Decal_Colours[k->state()]);
+                    m_actions[potential_kb]->drawDecal(draw_area);
+                }
             }
             glPopMatrix();
         }
@@ -643,8 +695,10 @@ float OverKey::_alphaFrac() const{
     float now = _fnow();
     float last_time = 0.0f;
     float delta = 0.0f;
+    float nokey_delta = 0.0f;
     float r = 0.0f;
     bool typing = false;
+    const bool keys_actually_held = m_held_keys.size();
     bool key_held = false;
         
     // sanitise previous time... just makes things easier:
@@ -654,19 +708,22 @@ float OverKey::_alphaFrac() const{
     else
         last_time = m_last_kp_time;
     delta = now - last_time;
+    nokey_delta = now - m_last_no_keys_time;
 
-    if(!boost::math::isnan(m_prev_kp_time) && last_time - m_prev_kp_time < 0.3)
+    // shift modifier counts as typing
+    if(last_time - m_prev_kp_time < 0.3 &&
+       !(m_current_modifiers & ~Qt::ShiftModifier))
         typing = true;
     
     debug(5) << "typing=" << typing << "delta=" << delta
              << "lt=" << last_time << "pt=" << m_prev_kp_time;
     r = 0.0f;
 
-    if(m_held_keys.size() && now - m_last_no_keys_time > 0.8){
+    if(keys_actually_held && nokey_delta > 0.8){
         key_held = true;
         // slow things down
         delta /= 2;
-    }else if(!m_held_keys.size()){
+    }else if(!keys_actually_held){
         // speed things up
         delta *= 2;
     }
@@ -698,7 +755,8 @@ float OverKey::_alphaFrac() const{
         else /*delta > 2.68*/ r = 0.00;
     }
     
-    if(key_held && delta > 0.4){
+    //
+    if(/*key_held*/ keys_actually_held && (delta > 0.4 || keys_actually_held > 1)){
         r = max(0.8f, r);
     }
     

@@ -49,8 +49,8 @@ class Action{
 class Key: public Renderable{
     public:
         typedef std::map<Qt::KeyboardModifiers, renderable_ptr_t> textmap_t;
-        Key(container_ptr_t, keycode_t const&, BBox const&, textmap_t const& text);
-        Key(container_ptr_t, keycode_t const&, BBox const&,
+        Key(container_ptr_t, keycode_t const&, keycode_t const&, BBox const&, textmap_t const& text);
+        Key(container_ptr_t, keycode_t const&, keycode_t const&, BBox const&,
             Qt::KeyboardModifiers m1 = 0, std::string const& t1 = "",
             Qt::KeyboardModifiers m2 = 0, std::string const& t2 = "",
             Qt::KeyboardModifiers m3 = 0, std::string const& t3 = "",
@@ -63,7 +63,7 @@ class Key: public Renderable{
 
         virtual BBox bbox();
 
-        keycode_t const& keyCode() const;
+        std::vector<keycode_t> const& keyCodes() const;
         void state(keystate_e::e s);
         keystate_e::e state() const;
 
@@ -73,7 +73,7 @@ class Key: public Renderable{
     private:
         void centerText();
         
-        keycode_t m_keycode;
+        std::vector<keycode_t> m_keycodes;
         textmap_t m_text;
         BBox m_box;
 };
@@ -126,8 +126,8 @@ class OverKey: public Renderable,
         // postRedraw() function must be used to make sure that draw() is
         // called as/just after any events need to be processed - and that
         // function will ONLY work from a thread with a Qt event loop (because
-        // of the way that it is implemented in PipelineWidget), so. Viator
-        // emptor: you have been warned.
+        // of the way that it is implemented in PipelineWidget), so. caveat
+        // viator: you have been warned.
 
         // TODO: add this interface to Container; implement using QTimer in PipelineWidget 
 
@@ -180,7 +180,7 @@ class OverKey: public Renderable,
         
         float m_last_kp_time;
         float m_prev_kp_time;
-        std::set<keycode_t> m_held_keys;
+        std::set<key_ptr_t> m_held_keys;
         float m_last_no_keys_time;
         
         /**** callback mechanism that should be somewhere else.... ****/

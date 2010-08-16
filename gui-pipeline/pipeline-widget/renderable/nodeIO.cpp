@@ -112,7 +112,6 @@ node_id NodeIOBlob::nodeId() const{
     return m_node->id();
 }
 
-
 NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
                              bool suppress_text)
     : NodeIOBlob(d, p, n, suppress_text){

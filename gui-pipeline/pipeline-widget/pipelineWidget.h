@@ -27,6 +27,7 @@ class PipelineWidget: public QGLWidget,
         typedef std::set<renderable_ptr_t> renderable_set_t;
         typedef std::set<arc_ptr_t> arc_set_t;
         typedef std::map<node_id, node_ptr_t> node_map_t;
+        typedef std::set<node_id> node_set_t;
         typedef std::map<node_id, imgnode_ptr_t> imgnode_map_t;
         typedef boost::recursive_mutex mutex_t;
         typedef boost::unique_lock<boost::recursive_mutex> lock_t;
@@ -104,6 +105,9 @@ class PipelineWidget: public QGLWidget,
         void updateProjection();
         void projectionForPicking(int x, int y);
         void drawGrid();
+
+        node_set_t parents(node_id n) const;
+        node_set_t children(node_id n) const;
 
         // hotkey functions
         Point lastMousePosition() const;
