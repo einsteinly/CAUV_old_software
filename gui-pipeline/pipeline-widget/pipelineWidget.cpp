@@ -7,14 +7,13 @@
 
 #include <cmath>
 
-#include <common/cauv_node.h>
-#include <common/messages.h>
 #include <common/bash_cout.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include <utility/defer.h>
 
+#include "pipelineWidgetNode.h"
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
@@ -36,212 +35,9 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
             (a->m_dst.lock() == b->m_src.lock() && a->m_src.lock() == b->m_dst.lock()));
 }
 
-struct DBGLevelObserver: MessageObserver
-{
-    void onDebugLevelMessage(DebugLevelMessage_ptr m)
-    {
-        debug::setLevel(m->level());
-    }
-};
-
-class PipelineGuiMsgObs: public BufferedMessageObserver{
-    public:
-        PipelineGuiMsgObs(PipelineWidget *p)
-            : m_widget(p){
-            setDoubleBuffered(MessageType::GuiImage, true);
-        }
-
-        virtual void onNodeAddedMessage(NodeAddedMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            switch(m->nodeType()){
-                case NodeType::Invalid:
-                    break;
-                case NodeType::GuiOutput:
-                    m_widget->addImgNode(boost::make_shared<ImgNode>(m_widget, m_widget, m));
-                    break;
-                default:
-                    m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
-                    break;
-            }
-        }
-
-        virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            m_widget->remove(m_widget->node(m->nodeId()));
-        }
-
-        virtual void onNodeParametersMessage(NodeParametersMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(node_ptr_t np = m_widget->node(m->nodeId()))
-                np->setParams(m);
-        }
-
-        virtual void onArcAddedMessage(ArcAddedMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            m_widget->addArc(m->from().node, m->from().output,
-                             m->to().node, m->to().input);
-        }
-
-        virtual void onArcRemovedMessage(ArcRemovedMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            m_widget->removeArc(m->from().node, m->from().output,
-                                m->to().node, m->to().input);
-        }
-
-        virtual void onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-
-            typedef std::map<node_id, NodeType::e> node_type_map_t;
-            typedef std::map<node_id, std::map<std::string, NodeOutput> > node_input_map_t;
-            typedef std::map<node_id, std::map<std::string, std::vector<NodeInput> > > node_output_map_t;
-            typedef std::map<node_id, std::map<std::string, NodeParamValue> > node_param_map_t;
-
-            // remove nodes that shouldn't exist
-            const std::vector<node_ptr_t> current_nodes = m_widget->nodes();
-            std::vector<node_ptr_t>::const_iterator j;
-            for(j = current_nodes.begin(); j != current_nodes.end(); j++)
-                if(!m->nodeTypes().count((*j)->id())){
-                    m_widget->remove(*j);
-                }
-
-            // make sure all nodes exist with the correct inputs and outputs
-            node_type_map_t::const_iterator i;
-            for(i = m->nodeTypes().begin(); i != m->nodeTypes().end(); i++){
-                node_ptr_t n;
-                if(n = m_widget->node(i->first)); else{
-                    switch(i->second){
-                        case NodeType::Invalid:
-                            break;
-                        case NodeType::GuiOutput:
-                            m_widget->addImgNode(boost::make_shared<ImgNode>(m_widget, m_widget, i->first, i->second));
-                            break;
-                        default:
-                            m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, i->first, i->second));
-                            break;
-                    }
-                    n = m_widget->node(i->first);
-                }
-                if(!n){
-                    error() << "couldn't add node";
-                    continue;
-                }
-                n->setType(i->second);
-
-                node_output_map_t::const_iterator oi = m->nodeOutputs().find(i->first);
-                if(oi == m->nodeOutputs().end())
-                    error() << __func__ << __LINE__;
-                else
-                    n->setOutputs(oi->second);
-
-                node_param_map_t::const_iterator pi = m->nodeParams().find(i->first);
-                if(pi == m->nodeParams().end())
-                    error() << __func__ << __LINE__;
-                else
-                    n->setParams(pi->second);
-
-                node_input_map_t::const_iterator ii = m->nodeInputs().find(i->first);
-                if(ii == m->nodeInputs().end())
-                    error() << __func__ << __LINE__;
-                else
-                    n->setInputs(ii->second);
-            }
-
-            // now actually add arcs
-            for(i = m->nodeTypes().begin(); i != m->nodeTypes().end(); i++){
-                node_ptr_t n = m_widget->node(i->first);
-                if(!n){
-                    error() << __func__ << __LINE__ <<  "required node not present";
-                    continue;
-                }
-
-                node_output_map_t::const_iterator oi = m->nodeOutputs().find(i->first);
-                if(oi == m->nodeOutputs().end())
-                    error() << __func__ << __LINE__;
-                else
-                    n->setOutputLinks(oi->second);
-
-                node_input_map_t::const_iterator ii = m->nodeInputs().find(i->first);
-                if(ii == m->nodeInputs().end())
-                    error() << __func__ << __LINE__;
-                else{
-                    n->setParamLinks(ii->second);
-                    n->setInputLinks(ii->second);
-                }
-            }
-        }
-
-        virtual void onStatusMessage(StatusMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(node_ptr_t np = m_widget->node(m->nodeId()))
-                np->status(m->status());
-        }
-
-        virtual void onInputStatusMessage(InputStatusMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(node_ptr_t np = m_widget->node(m->nodeId()))
-                np->inputStatus(m->inputId(), m->status());
-        }
-
-        virtual void onOutpuStatusMessage(OutputStatusMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(node_ptr_t np = m_widget->node(m->nodeId()))
-                np->outputStatus(m->outputId(), m->status());
-        }
-
-        virtual void onGuiImageMessageBuffered(GuiImageMessage_ptr m){
-            debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-            if(imgnode_ptr_t np = m_widget->imgNode(m->nodeId()))
-                np->display(m->image());
-        }
-
-    private:
-        PipelineWidget *m_widget;
-};
-
-class PipelineGuiCauvNode: public CauvNode{
-    public:
-        PipelineGuiCauvNode(PipelineWidget *p)
-            : CauvNode("pipe-gui"), m_widget(p){
-            debug() << "PGCN constructed";
-        }
-
-        void onRun(){
-            debug() << "PGCN::onRun()";
-            joinGroup("pl_gui");
-
-            addMessageObserver(
-                boost::make_shared<PipelineGuiMsgObs>(m_widget)
-            );
-            addMessageObserver(
-                boost::make_shared<DBGLevelObserver>()
-            );
-            #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
-            addMessageObserver(
-                boost::make_shared<DebugMessageObserver>()
-            );
-            #endif
-
-            // get the initial pipeline state:
-            send(boost::make_shared<GraphRequestMessage>());
-        }
-    private:
-        PipelineWidget *m_widget;
-};
-
 } // namespace pw
 
 using namespace pw;
-
-// creating threads taking parameters (especially in a ctor-initializer) is a
-// little tricky, using an intermediate function smooths the ride a bit:
-void spawnPGCN(PipelineWidget *p, int argc, char** argv){
-    boost::shared_ptr<PipelineGuiCauvNode> pgcn =
-        boost::make_shared<PipelineGuiCauvNode>(p);
-    p->setCauvNode(pgcn);
-    pgcn->parseOptions(argc, argv);
-    pgcn->run();
-    warning() << __func__ << "run() finished";
-}
 
 PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
@@ -265,17 +61,19 @@ PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
 
 void PipelineWidget::initKeyBindings(){
     // Set-up hotkeys: TODO: load key bindings from file
+    const char* dec_font = "LiberationSans-Regular.ttf";
+    const int dec_font_size = 12;
     ok::action_ptr_t an_menu_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::addMenu, this,
             Defer(boost::function<menu_ptr_t()>(boost::bind(buildAddNodeMenu, this))),
             Defer<Point>(boost::bind(&PipelineWidget::lastMousePosition, this)),
             false
-        ), 
+        ),
         ok::Action::null_f,
         "add node",
-        boost::make_shared<Text>(this, "add node", "LiberationSans-Regular.ttf", 12)
+        boost::make_shared<Text>(this, "add node", dec_font, dec_font_size)
     );
-    
+
     ok::action_ptr_t et_menu_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::testEditBoxMenu, this),
         ok::Action::f_t(),
@@ -288,21 +86,28 @@ void PipelineWidget::initKeyBindings(){
         ),
         ok::Action::null_f,
         "reload",
-        boost::make_shared<Text>(this, "reload", "LiberationSans-Regular.ttf", 12)
+        boost::make_shared<Text>(this, "reload", dec_font, dec_font_size)
     );
 
     ok::action_ptr_t cp_node_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::duplicateNodeAtMouse, this),
         ok::Action::null_f,
         "duplicate",
-        boost::make_shared<Text>(this, "duplicate", "LiberationSans-Regular.ttf", 12)
+        boost::make_shared<Text>(this, "duplicate", dec_font, dec_font_size)
     );
 
     ok::action_ptr_t rm_node_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::removeNodeAtMouse, this),
         ok::Action::null_f,
         "remove",
-        boost::make_shared<Text>(this, "remove", "LiberationSans-Regular.ttf", 12)
+        boost::make_shared<Text>(this, "remove", dec_font, dec_font_size)
+    );
+
+    ok::action_ptr_t it_layout_act = boost::make_shared<ok::Action>(
+        boost::bind(&PipelineWidget::iterateLayout, this),
+        ok::Action::null_f,
+        "auto-layout",
+        boost::make_shared<Text>(this, "auto-layout", dec_font, dec_font_size)
     );
 
     m_overkey->registerKey(Qt::Key_Space, Qt::NoModifier, an_menu_act);
@@ -312,6 +117,7 @@ void PipelineWidget::initKeyBindings(){
     m_overkey->registerKey(Qt::Key_D, Qt::NoModifier, cp_node_act);
     m_overkey->registerKey(Qt::Key_D, Qt::ControlModifier, cp_node_act);
     m_overkey->registerKey(Qt::Key_X, Qt::NoModifier, rm_node_act);
+    m_overkey->registerKey(Qt::Key_L, Qt::NoModifier, it_layout_act);
 
     m_overkey->m_pos = -m_overkey->bbox().c();
 }
@@ -546,9 +352,9 @@ Point PipelineWidget::referUp(Point const& p) const{
 
 void PipelineWidget::postRedraw(float delay){
     lock_t l2(m_redraw_posted_lock);
+    // no need to lock m_lock, that's done in the slot
     if(delay != 0.0f){
-        // no need to lock m_lock, that's done in the slot
-        m_redraw_posted = true;
+        //m_redraw_posted = true;
         if(delay != 0.0f){
             QTimer::singleShot(delay * 1000, this, SIGNAL(redrawPosted()));
             debug(3) << "PipelineWidget::postRedraw re-draw signal with delay=" << delay;
@@ -556,7 +362,7 @@ void PipelineWidget::postRedraw(float delay){
             debug(3) << "PipelineWidget::postRedraw emitting re-draw signal";
             emit redrawPosted();
         }
-    }else{ 
+    }else{
         if(!m_redraw_posted){
             m_redraw_posted = true;
             emit redrawPosted();
@@ -629,7 +435,7 @@ void PipelineWidget::paintGL(){
     glVertex2f(-17.5f, -15.0f);
     glEnd();
     #endif
-    
+
     foreach(renderable_ptr_t r, m_contents){
         glPushMatrix();
         glTranslatef(r->m_pos);
@@ -645,7 +451,7 @@ void PipelineWidget::paintGL(){
     glTranslatef(-m_win_centre*m_pixels_per_unit);
     glTranslatef(m_overkey->m_pos);
     m_overkey->draw(drawtype_e::no_flags);
-    
+
     glPrintErr();
 
     l1.unlock();
@@ -921,7 +727,7 @@ void PipelineWidget::drawGrid(){
 
 PipelineWidget::node_set_t PipelineWidget::parents(node_id n) const{
     node_set_t r;
-    foreach(arc_ptr_t a, m_arcs) 
+    foreach(arc_ptr_t a, m_arcs)
         if(!a->m_hanging && a->to().node == n && a->from().node)
             r.insert(a->from().node);
     return r;
@@ -972,3 +778,89 @@ void PipelineWidget::testEditBoxMenu(){
     ), lastMousePosition());
     postRedraw(0);
 }
+
+
+static float mass(node_ptr_t){
+    return 1.0f;
+}
+
+void PipelineWidget::iterateLayout(){
+    // - overlapping nodes repel each other, and all nodes repel each other
+    // - arcs attract in a straight line with squared growth (but small)
+    //
+    // ... yes, this function is O(n**2) in nodes, and O(n) in arcs, it should
+    // probably be better than that if it is going to handle large layouts
+    // smoothly
+    
+    const float scale        =  0.01f;
+    const float area_enlarge =  1.10f;
+    const float node_area_1  =  0.50f * scale;
+    const float node_dist_0  =  1.00f * scale;
+    const float node_dist_1  = -1.00f * scale;
+    const float node_dist_2  =  0.00f * scale;
+    const float arc_length_0 =  1.00f * scale;
+    const float arc_length_1 =  0.00f * scale;
+    const float arc_length_2 = -0.01f * scale;
+
+    typedef V2D<float> vec_t;
+
+    node_map_t::iterator n1, n2;
+    node_ptr_t np1, np2;
+    renderable_ptr_t ah1, ah2;
+    vec_t displ, force;
+    BBox overlap;
+    
+    // arc forces:
+    foreach(arc_ptr_t a, m_arcs)
+        if(!a->m_hanging && a->to().node && a->from().node &&
+           (n1 = m_nodes.find(a->from().node)) != m_nodes.end() &&
+           (n2 = m_nodes.find(a->to().node)) != m_nodes.end()){
+            ah1 = a->fromOutput();
+            ah2 = a->toInput();
+            np1 = n1->second;
+            np2 = n2->second;
+            displ = vec_t(np2->m_pos + ah2->m_pos - np1->m_pos - ah1->m_pos);
+            // this force never repels
+            force = displ.unit() * min<float>(0.0f,
+                arc_length_0 +
+                displ.len() * arc_length_1 +
+                displ.sxx() * arc_length_2
+            );
+            debug(5) << "arc" << np1 << "<->" << np2
+                     << "displ=" << displ << "force=" << force;
+            np1->m_pos -= Point(force / mass(np1));
+            np2->m_pos += Point(force / mass(np2));
+        }
+    
+    // overlaps & distances
+    for(n1 = m_nodes.begin(); n1 != m_nodes.end(); n1++){
+        np1 = n1->second;
+        n2 = n1;
+        n2++;
+        for(; n2 != m_nodes.end(); n2++){
+            np2 = n2->second;
+            overlap = (np1->bbox() * area_enlarge + np1->m_pos) &
+                      (np2->bbox() * area_enlarge + np2->m_pos);
+            displ = vec_t(np2->m_pos - np1->m_pos);
+            if(displ.sxx() == 0)
+                displ = vec_t(0.01, 0.01);
+            // this force never attracts:
+            force = displ.unit() * max<float>(0.0f,
+                overlap.area() * node_area_1 +
+                node_dist_0 + 
+                displ.len() * node_dist_1 +
+                displ.sxx() * node_dist_2
+            ); 
+            debug(5) << "area/dist" << np1 << "<->" << np2
+                     << "displ=" << displ
+                     << "(len=" << displ.len() << "sxx=" << displ.sxx() << ")"
+                     << "area=" << overlap.area()
+                     << "force=" << force;
+            np1->m_pos -= Point(force / mass(np1));
+            np2->m_pos += Point(force / mass(np2));
+        }
+    }
+
+    postRedraw(0);
+}
+

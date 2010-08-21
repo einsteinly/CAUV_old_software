@@ -21,6 +21,9 @@ class Arc: public Renderable{
         // TODO: eww, introduces dependency on messages.h
         NodeOutput from(); 
         NodeInput to();
+
+        renderable_ptr_t fromOutput();
+        renderable_ptr_t toInput();
         
         renderable_wkptr_t m_src;
         renderable_wkptr_t m_dst;

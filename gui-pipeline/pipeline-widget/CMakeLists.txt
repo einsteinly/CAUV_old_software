@@ -10,6 +10,7 @@ include_directories (${AUV_SOURCE_DIR})
 set (
     pipeline-widget_srcs
     pipelineWidget.cpp
+    pipelineWidgetNode.cpp
     pipelineWidgetPlugin.cpp
     renderable.cpp
     buildMenus.cpp

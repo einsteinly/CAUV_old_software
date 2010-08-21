@@ -513,7 +513,7 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
         default:*/
             for(i = eq.first; i != eq.second; i++){
                 m_held_keys.insert(i->second);
-                debug() << BashColour::Red << "key pressed" << i->second;
+                debug(2) << BashColour::Red << "key pressed" << i->second;
             }
     /*}*/
     
@@ -554,11 +554,11 @@ bool OverKey::keyReleaseEvent(QKeyEvent *event){
     if(m_layout.count(b.keycode)){
         for(i = eq.first; i != eq.second; i++){
             m_held_keys.erase(i->second);
-            debug() << BashColour::Brown << "key released" << i->second;
+            debug(2) << BashColour::Brown << "key released" << i->second;
         }
         if(!m_held_keys.size()){
             m_last_no_keys_time = _fnow();
-            debug() << BashColour::Green << "all keys released";
+            debug(2) << BashColour::Green << "all keys released";
         }
     }
         

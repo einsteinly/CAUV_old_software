@@ -13,7 +13,8 @@ Arc::Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst)
     : Renderable(c), m_src(src), m_dst(dst), m_hanging(false){
 }
 
-// TODO: all the dynamic casting is a bit iffy
+// TODO: all the dynamic casting is a bit iffy: if this is only going to work
+// with nodeoutput/nodeinputs, then that's what should be stored
 
 void Arc::draw(drawtype_e::e flags){
     if(flags & drawtype_e::picking)
@@ -72,32 +73,44 @@ bool Arc::acceptsMouseEvents(){
 }
 
 NodeOutput Arc::from(){
-    renderable_ptr_t sptr = m_src.lock();
-    renderable_ptr_t dptr = m_dst.lock();
-    boost::shared_ptr<NodeOutputBlob> iptr;
+    boost::shared_ptr<NodeOutputBlob> optr;
     NodeOutput r (0, "", OutputType::Image);
-    if((iptr = boost::dynamic_pointer_cast<NodeOutputBlob>(sptr)) ||
-       (iptr = boost::dynamic_pointer_cast<NodeOutputBlob>(dptr))){
-        r.node = iptr->nodeId();
-        r.output = iptr->output();
-    }else{
-        warning() << "Arc::from() neither src nor dst is a NodeOutput";
+    if(optr = boost::dynamic_pointer_cast<NodeOutputBlob>(fromOutput())){
+        r.node = optr->nodeId();
+        r.output = optr->output();
     }
     return r;
 }
 
 NodeInput Arc::to(){
-    renderable_ptr_t sptr = m_src.lock();
-    renderable_ptr_t dptr = m_dst.lock();
     boost::shared_ptr<NodeInputBlob> iptr;
     NodeInput r (0, "");
-    if((iptr = boost::dynamic_pointer_cast<NodeInputBlob>(sptr)) ||
-       (iptr = boost::dynamic_pointer_cast<NodeInputBlob>(dptr))){
+    if(iptr = boost::dynamic_pointer_cast<NodeInputBlob>(toInput())){
         r.node = iptr->nodeId();
         r.input = iptr->input();
-    }else{
-        warning() << "Arc::to() neither src nor dst is a NodeInput";
     }
     return r;
 }
 
+
+renderable_ptr_t Arc::fromOutput(){
+    renderable_ptr_t sptr = m_src.lock();
+    renderable_ptr_t dptr = m_dst.lock();
+    boost::shared_ptr<NodeOutputBlob> optr;
+    if(!((optr = boost::dynamic_pointer_cast<NodeOutputBlob>(sptr)) ||
+         (optr = boost::dynamic_pointer_cast<NodeOutputBlob>(dptr)))){
+        warning() << "Arc::fromOutput() neither src nor dst is a NodeOutput";
+    }
+    return optr;
+}
+
+renderable_ptr_t Arc::toInput(){
+    renderable_ptr_t sptr = m_src.lock();
+    renderable_ptr_t dptr = m_dst.lock();
+    boost::shared_ptr<NodeInputBlob> iptr;
+    if(!((iptr = boost::dynamic_pointer_cast<NodeInputBlob>(sptr)) ||
+         (iptr = boost::dynamic_pointer_cast<NodeInputBlob>(dptr)))){
+        warning() << "Arc::fromOutput() neither src nor dst is a NodeInput";
+    }
+    return iptr;
+}

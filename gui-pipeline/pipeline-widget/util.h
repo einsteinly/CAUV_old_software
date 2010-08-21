@@ -18,6 +18,8 @@ class V2D{
     public:
         V2D() : x(0), y(0){ }
         V2D(T const& x, T const& y) : x(x), y(y){ }
+        template<typename T2>
+        explicit V2D(V2D<T2> const& r) : x(r.x), y(r.y){ }
         
         V2D<T>& operator+=(V2D<T> const& r){ x += r.x; y += r.y; return *this; }
         V2D<T>& operator-=(V2D<T> const& r){ x -= r.x; y -= r.y; return *this; }
@@ -34,7 +36,9 @@ class V2D{
         friend V2D<T> operator/(V2D<T> const& l, T const& r){ return V2D<T>(l) /= r; }
 
         V2D<T> operator-() const{ return V2D<T>(-x, -y); }
-
+        
+        V2D<T> unit() const{ return *this / len(); }
+        T len() const{ return std::sqrt(sxx()); }
         T sxx() const{ return x*x + y*y; }
 
         T x, y;
@@ -57,12 +61,12 @@ class _BB{
             if(r.min.x < min.x) min.x = r.min.x;
             return *this;
         }
-
+        
         _BB<T>& operator&=(_BB<T> const& r){
-            if(r.max.x < max.x) max.x = r.max.x;
-            if(r.max.y < max.y) max.y = r.max.y;
-            if(r.min.y > min.y) min.y = r.min.y;
-            if(r.min.x > min.x) min.x = r.min.x;
+            if(r.max.x < max.x) max.x = (r.max.x < min.x)? min.x : r.max.x;
+            if(r.max.y < max.y) max.y = (r.max.y < min.y)? min.y : r.max.y;
+            if(r.min.y > min.y) min.y = (r.min.y > max.y)? max.y : r.min.y;
+            if(r.min.x > min.x) min.x = (r.min.x > max.x)? max.x : r.min.x;
             return *this;
         }
 
@@ -80,6 +84,7 @@ class _BB{
         friend _BB<T> operator&(_BB<T> const& l, _BB<T> const& r){ return _BB<T>(l) &= r; }
         friend _BB<T> operator+(_BB<T> const& l, V2D<T> const& r){ return _BB<T>(l) += r; }
         friend _BB<T> operator-(_BB<T> const& l, V2D<T> const& r){ return _BB<T>(l) -= r; }
+        friend _BB<T> operator*(_BB<T> const& l, T const& s){ return _BB<T>(l) *= s; }
 
         bool contains(T const& x, T const& y) const{
             return (x >= min.x) && (x <= max.x) && (y >= min.y) && (y <= max.y);

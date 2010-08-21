@@ -114,6 +114,7 @@ class PipelineWidget: public QGLWidget,
         void duplicateNodeAtMouse();
         void removeNodeAtMouse();
         void testEditBoxMenu();
+        void iterateLayout();
 
         
         Point m_win_centre;       // projected coordinates of the window
