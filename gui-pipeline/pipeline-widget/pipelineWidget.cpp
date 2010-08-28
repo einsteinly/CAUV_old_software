@@ -131,6 +131,8 @@ QSize PipelineWidget::sizeHint() const{
 }
 
 void PipelineWidget::remove(renderable_ptr_t p){
+    if(!p)
+        return;
     lock_t l(m_lock);
     // TODO: really need m_contents to be a set in which iterators remain
     // stable on erasing, so that this doesn't involve a search:
@@ -156,6 +158,8 @@ void PipelineWidget::remove(renderable_ptr_t p){
 }
 
 void PipelineWidget::remove(node_ptr_t n){
+    if(!n)
+        return;
     lock_t l(m_lock);
     m_nodes.erase(n->id());
     remove(renderable_ptr_t(n));
@@ -169,6 +173,10 @@ void PipelineWidget::remove(menu_ptr_t p){
 }
 
 void PipelineWidget::add(renderable_ptr_t r){
+    if(!r){
+        warning() << "attempt to add NULL renderable";
+        return;
+    }
     lock_t l(m_lock);
     // TODO: sensible layout hint
     static Point add_position_delta = Point();
@@ -354,6 +362,7 @@ void PipelineWidget::postRedraw(float delay){
     lock_t l2(m_redraw_posted_lock);
     // no need to lock m_lock, that's done in the slot
     if(delay != 0.0f){
+        // allow immediate redraws to still get through...
         //m_redraw_posted = true;
         if(delay != 0.0f){
             QTimer::singleShot(delay * 1000, this, SIGNAL(redrawPosted()));

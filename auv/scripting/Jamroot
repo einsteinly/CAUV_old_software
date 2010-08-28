@@ -15,6 +15,7 @@ use-project boost
 
 project
   : requirements <include>../
+                 <include>../../
                  <include>$(BOOST_SOURCE_PATH)
                  <include>$(CAUV_PREFIX)/include/
                  <library>/boost/python//boost_python
