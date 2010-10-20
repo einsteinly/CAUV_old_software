@@ -135,7 +135,7 @@ void cauv_global::print_logo(char* start, char* end, const string& module_name)
 void cauv_global::print_module_header(const string& module_name)
 {
     static char cauv_logo_large[] = {
-        #include <common/cauv_logo_large.h>
+        #include <generated/cauv_logo_large.h>
     };
 	cauv_global::print_logo(cauv_logo_large,
                             cauv_logo_large + sizeof(cauv_logo_large),

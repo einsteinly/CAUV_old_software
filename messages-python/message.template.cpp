@@ -1,5 +1,5 @@
 /***  This is a generated file, do not edit ***/
-\#include "${headerFile}"
+\#include <generated/messages.h>
 \#include <boost/serialization/vector.hpp>
 \#include <boost/serialization/map.hpp>
 \#include <boost/make_shared.hpp>

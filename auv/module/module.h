@@ -13,7 +13,7 @@
 
 #include <common/cauv_utils.h>
 #include <common/blocking_queue.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 
 class FTDIException : public std::exception
 {

@@ -14,8 +14,8 @@
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
-#include <common/messages.h>
-#include <common/messages.h>
+#include <generated/messages.h>
+#include <generated/messages.h>
 #include <camera/camera.h>
 #include <camera/camera_observer.h>
 #include <camera/webcam.h>

@@ -5,7 +5,7 @@
 
 #include <xsens/cmt3.h>
 
-#include <common/messages_fwd.h>
+#include <generated/messages_fwd.h>
 #include <common/observable.h>
 
 class XsensObserver

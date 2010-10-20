@@ -12,7 +12,7 @@ add_custom_command (
           ${SRCD}/emit_messages.cpp
           ${SRCD}/emit_observers.cpp
    WORKING_DIRECTORY ${PYMSGD}
-   COMMAND python msggen.py -l python -o "${SRCD}/" ${MSGSRCD}/messages.msg 
+   COMMAND python msggen.py -l python -o "${SRCD}/" ${PYMSGD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
            ${PYMSGD}/boostpy-emit_enums.cpp.template
            ${PYMSGD}/boostpy-emit_structs.cpp.template
@@ -20,29 +20,8 @@ add_custom_command (
            ${PYMSGD}/boostpy-emit_observers.cpp.template
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
-           ${MSGSRCD}/messages.msg
+           ${PYMSGD}/messages.msg
    COMMENT "Generating emit_*.cpp with messages-python" 
-)
-
-# this rule is duplicated from ../common because cmake can't track dependencies
-# on generated files in other directories...
-set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
-add_custom_command (
-   OUTPUT ${MSGSRCD}/messages.cpp
-          ${MSGSRCD}/messages.h
-          ${MSGSRCD}/messages_fwd.h
-          ${MSGSRCD}/messages_messages.h
-   WORKING_DIRECTORY ${PYMSGD}
-   COMMAND python msggen.py -l "c++" -o ${MSGSRCD}/messages ${MSGSRCD}/messages.msg 
-   DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/message.template.cpp
-           ${PYMSGD}/message.template.h
-           ${PYMSGD}/message_fwd.template.h
-           ${PYMSGD}/message_messages.template.h
-           ${PYMSGD}/msggenyacc.py
-           ${PYMSGD}/msggenlex.py
-           ${MSGSRCD}/messages.msg
-   COMMENT "Generating messages.cpp and mesages*.h with messages-python (for bjam)"
 )
 
 set (BJAM_NUM_JOBS 2)
@@ -52,7 +31,8 @@ add_custom_command (
     COMMAND bash -c '( export BJAM_BUILD_DIR=${BINDIR} \;
                        bjam -j ${BJAM_NUM_JOBS} ${SRCD} )'
     WORKING_DIRECTORY ${SRCD}
-    DEPENDS ${SRCD}/Jamroot
+    DEPENDS common
+            ${SRCD}/Jamroot
             ${SRCD}/emit_structs.cpp
             ${SRCD}/emit_enums.cpp
             ${SRCD}/emit_messages.cpp

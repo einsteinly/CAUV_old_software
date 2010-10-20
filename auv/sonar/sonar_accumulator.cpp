@@ -8,7 +8,7 @@
 
 #include <opencv/cv.h>
 
-#include <common/messages.h>
+#include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
 using namespace std;

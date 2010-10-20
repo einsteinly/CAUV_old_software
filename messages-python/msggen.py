@@ -325,10 +325,10 @@ def addNestedTypes(list_types, map_types):
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
-                 choices=["c++", "c", "java", "python"],
-                 default="c++",
+                 choices=["c++-headers", "c++-impl", "c", "java", "python"],
+                 default="c++-headers",
                  metavar="LANG",
-                 help="output language (java, python, c++ or c) [default: %default]")
+                 help="output language (java, python, c++-headers, c++-impl or c) [default: %default]")
     p.add_option("-o", "--output",
                  type="string",
                  metavar="FILE",
@@ -356,7 +356,7 @@ def main():
     tree = parser.parse(data)
     
     msgdir = os.path.dirname(sys.argv[0])
-    if options.lang == "c++":
+    if options.lang == "c++-headers":
         with open(output + "_fwd.h", "w") as file:
             t = Template(file=os.path.join(msgdir, "message_fwd.template.h"), searchList=tree)
             file.write(str(t))
@@ -368,10 +368,11 @@ def main():
             t = Template(file = os.path.join(msgdir, "message.template.h"), searchList=tree)
             t.toCPPType = toCPPType
             file.write(str(t))
+
+    elif options.lang == "c++-impl":
         with open(output + ".cpp", "w") as file:
             t = Template(file = os.path.join(msgdir, "message.template.cpp"), searchList=tree)
             t.toCPPType = toCPPType
-            t.headerFile = os.path.basename(output + ".h") 
             file.write(str(t))
     
     elif options.lang == "c":

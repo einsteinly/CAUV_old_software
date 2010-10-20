@@ -22,7 +22,7 @@
 #include <common/cauv_utils.h>
 #include <common/bash_cout.h>
 #include <common/cauv_node.h>
-#include <common/messages_messages.h>
+#include <generated/messages_messages.h>
 
 
 // static data member definition:

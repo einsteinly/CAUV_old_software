@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <common/messages.h>
+#include <generated/messages.h>
 
 class SonarObserver
 {

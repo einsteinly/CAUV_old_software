@@ -7,7 +7,7 @@
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <common/messages_fwd.h>
+#include <generated/messages_fwd.h>
 #include <common/observable.h>
 
 class ReconnectingSpreadMailbox;

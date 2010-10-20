@@ -41,7 +41,6 @@ add_custom_command (
    COMMENT "Generating messages.cpp and messages.h with messages-python" 
 ) 
 
-# subdirectories:
 add_subdirectory (camera)
 add_subdirectory (common)
 add_subdirectory (control)

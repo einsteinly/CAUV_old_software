@@ -6,7 +6,7 @@
 #include <list>
 
 #include <common/cauv_node.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 #include <common/blocking_queue.h>
 
 #include "sonar_observer.h"

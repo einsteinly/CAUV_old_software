@@ -4,7 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <common/cauv_node.h>
-#include <common/messages_fwd.h>
+#include <generated/messages_fwd.h>
 #include <camera/camera.h>
 
 class SpreadCameraObserver;

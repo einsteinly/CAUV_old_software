@@ -30,8 +30,9 @@ set (CMAKE_C_FLAGS "${ALWAYS_FLAGS}")
 # include the root source dir in the search path for all subprojects
 include_directories (${CAUV_SOURCE_DIR})
 
+add_subdirectory (messages-python)
+add_subdirectory (generated)
 add_subdirectory (auv)
 add_subdirectory (gui-pipeline)
-add_subdirectory (messages-python)
 add_subdirectory (utility)
 

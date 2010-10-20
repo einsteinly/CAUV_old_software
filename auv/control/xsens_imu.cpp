@@ -8,7 +8,7 @@
 #include <xsens/cmt3.h>
 #include <xsens/cmtpacket.h>
 
-#include <common/messages.h>
+#include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
 #include "xsens_imu.h"

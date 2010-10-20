@@ -6,7 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include <ssrc/spread/Mailbox.h>
 
-#include <common/messages.h>
+#include <generated/messages.h>
 
 typedef boost::shared_ptr< std::vector<std::string> > StringVectorPtr;
 

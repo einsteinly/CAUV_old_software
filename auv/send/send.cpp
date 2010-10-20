@@ -5,7 +5,7 @@
 #include <boost/make_shared.hpp>
 
 #include <common/cauv_utils.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 #include <common/spread/spread_mailbox.h>
 
 int main(int argc, char** argv)

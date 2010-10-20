@@ -5,7 +5,7 @@
 #include <boost/make_shared.hpp>
 
 #include <utility/string.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 
 // TODO: error() should send an error message of some sort on spread
 

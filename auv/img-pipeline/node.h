@@ -14,7 +14,7 @@
 
 #include <utility/string.h>
 #include <common/cauv_utils.h>
-#include <common/messages_messages.h>
+#include <generated/messages_messages.h>
 #include <common/image.h>
 #include <debug/cauv_debug.h>
 

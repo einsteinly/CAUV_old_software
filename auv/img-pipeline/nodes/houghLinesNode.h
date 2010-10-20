@@ -9,7 +9,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <common/messages.h>
+#include <generated/messages.h>
 
 #include "../node.h"
 

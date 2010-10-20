@@ -32,7 +32,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 
-#include <common/messages_fwd.h>
+#include <generated/messages_fwd.h>
 
 #include "pipelineTypes.h"
 

@@ -6,7 +6,7 @@
 #include <boost/make_shared.hpp>
 
 #include <common/cauv_node.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
 

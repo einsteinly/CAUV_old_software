@@ -1,7 +1,7 @@
 #ifndef __CAUV_MSGSRC_MAILBOX_H__
 #define __CAUV_MSGSRC_MAILBOX_H__
 
-#include <common/messages.h>
+#include <generated/messages.h>
 #include "mailbox_monitor.h"
 
 class MsgSrcMBMonitor: public MessageSource, public MailboxObserver{
