@@ -105,10 +105,10 @@ Key::Key(container_ptr_t c, keycode_t const& kc1, keycode_t const& kc2, BBox con
     if(kc1) m_keycodes.push_back(kc1);
     if(kc2) m_keycodes.push_back(kc2);
 
-    m_text[m1] = boost::make_shared<Text>(c, t1, "LiberationSans-Regular.ttf", Key_Font_Size);
-    if(m2) m_text[m2] = boost::make_shared<Text>(c, t2, "LiberationSans-Regular.ttf", Key_Font_Size);
-    if(m3) m_text[m3] = boost::make_shared<Text>(c, t3, "LiberationSans-Regular.ttf", Key_Font_Size);
-    if(m4) m_text[m4] = boost::make_shared<Text>(c, t4, "LiberationSans-Regular.ttf", Key_Font_Size);
+    m_text[m1] = boost::make_shared<Text>(c, t1, "sans", Key_Font_Size);
+    if(m2) m_text[m2] = boost::make_shared<Text>(c, t2, "sans", Key_Font_Size);
+    if(m3) m_text[m3] = boost::make_shared<Text>(c, t3, "sans", Key_Font_Size);
+    if(m4) m_text[m4] = boost::make_shared<Text>(c, t4, "sans", Key_Font_Size);
 
     centerText();
 }

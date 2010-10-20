@@ -33,6 +33,6 @@ include_directories (${CAUV_SOURCE_DIR})
 add_subdirectory (messages-python)
 add_subdirectory (generated)
 add_subdirectory (auv)
-add_subdirectory (gui-pipeline)
+add_subdirectory (gui)
 add_subdirectory (utility)
 

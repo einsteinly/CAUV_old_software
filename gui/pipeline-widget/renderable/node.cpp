@@ -6,7 +6,7 @@
 #include <QtOpenGL>
 
 #include <utility/string.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
 #include "../pipelineWidget.h"

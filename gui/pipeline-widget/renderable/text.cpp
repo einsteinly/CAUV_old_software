@@ -3,12 +3,21 @@
 #include "FTGL/ftgl.h"
 
 #include <QtOpenGL>
+#include <QResource>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
 
 #include <debug/cauv_debug.h>
+
+const static unsigned char Mono_Font_Data[] = {
+#include "../LiberationMono-Regular.h"
+};
+
+const static unsigned char Sans_Font_Data[] = {
+#include "../LiberationSans-Regular.h"
+};
 
 using namespace pw;
 
@@ -75,10 +84,20 @@ static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
     if(i != fonts.end()){
         return i->second;
     }
-    font_ptr new_f = boost::make_shared<font_T>(id.first.c_str());
+    font_ptr new_f;
+    
+    if (id.first == "mono")
+        new_f = boost::make_shared<font_T>(Mono_Font_Data, sizeof(Mono_Font_Data));
+    else if(id.first == "sans")
+        new_f = boost::make_shared<font_T>(Sans_Font_Data, sizeof(Sans_Font_Data));
+    else
+        new_f = boost::make_shared<font_T>(id.first.c_str());
+    
     if(new_f->Error()){
         once(id.first)
-            error() << "Unable to open font file:" << id.first.c_str();
+            error() << "Unable to open font:" << id.first.c_str() 
+                    << "error" << new_f->Error()
+                    << sizeof(Mono_Font_Data) << sizeof(Sans_Font_Data);
         new_f.reset();
         // TODO: fallback font?
     }else if (!new_f->FaceSize(id.second)){

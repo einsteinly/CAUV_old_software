@@ -22,10 +22,9 @@ cmake_install.cmake
 .DS_Store
 messages-python/parsetab.py
 auv/common/messages.cpp
-auv/common/messages_fwd.h
-auv/common/messages_messages.h
-auv/common/messages.h
-auv/common/cauv_logo_large.h
+generated/*.h
+gui/pipeline-widget/LiberationMono-Regular.h
+gui/pipeline-widget/LiberationSans-Regular.h
 gui-pipeline/pipeline-widget/moc_pipelineWidget.cxx
 gui-pipeline/pipeline-widget/moc_pipelineWidgetPlugin.cxx
 auv/lib/libssrcspread-1.0.4/config.h.in
