@@ -6,7 +6,7 @@
 #include <boost/ref.hpp>
 
 #include <utility/string.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 #include <img-pipeline/nodeFactory.h>
 
 namespace pw{

@@ -61,7 +61,7 @@ PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
 
 void PipelineWidget::initKeyBindings(){
     // Set-up hotkeys: TODO: load key bindings from file
-    const char* dec_font = "LiberationSans-Regular.ttf";
+    const char* dec_font = "sans";
     const int dec_font_size = 12;
     ok::action_ptr_t an_menu_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::addMenu, this,

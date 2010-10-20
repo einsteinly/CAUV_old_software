@@ -41,6 +41,3 @@ add_custom_target (
     COMMENT "Depending on generated logo header"
 )
 
-
-
-

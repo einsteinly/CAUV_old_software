@@ -1,7 +1,7 @@
 #ifndef __ARC_RENDERABLE_H__
 #define __ARC_RENDERABLE_H__
 
-#include <common/messages.h>
+#include <generated/messages.h>
 
 #include "../renderable.h"
 #include "../pwTypes.h"

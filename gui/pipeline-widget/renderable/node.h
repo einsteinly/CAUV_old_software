@@ -4,7 +4,7 @@
 #include <vector>
 #include <set>
 
-#include <common/messages_fwd.h>
+#include <generated/messages_fwd.h>
 #include <debug/cauv_debug.h>
 
 #include "../container.h"

@@ -4,9 +4,9 @@ Important things:
 auv/		    - folder containing code that runs on the AUV
 messages-python/ - python code to automatically generate code for the messaging
                    system (automatically invoked by the build system)
-gui/		    - java (Qt Jambi) Graphical User Interface for
+gui/ 		    - GUI code: c++ (Qt) GUI for configuring the image processing
+                  pipeline and a java (Qt Jambi) Graphical User Interface for
                   remote-controlling the AUV, viewing telemetry, etc.
-gui-pipeline/ 	- c++ (Qt) GUI for configuring the image processing pipeline
 generated/      - generated headers that are shared between multiple targets
                   (mostly messaging system headers). add messages-shared or
                   logo-shared as explicit dependencies if a target needs these

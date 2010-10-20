@@ -2,7 +2,6 @@
 
 #include <QtOpenGL>
 
-#include <common/messages.h>
 #include <debug/cauv_debug.h>
 
 #include "nodeIO.h"

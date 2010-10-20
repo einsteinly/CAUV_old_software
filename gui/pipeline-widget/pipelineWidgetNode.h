@@ -2,7 +2,7 @@
 #define __PIPELINE_WIDGET_NODE_H__
 
 #include <common/cauv_node.h>
-#include <common/messages.h>
+#include <generated/messages.h>
 
 #include "pwTypes.h"
 

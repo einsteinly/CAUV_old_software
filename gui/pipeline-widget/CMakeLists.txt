@@ -7,6 +7,9 @@ include_directories (${FTGL_INCLUDE_DIRS} REQUIRED)
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
 
+# abbreviate a little:
+set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
+
 set (
     pipeline-widget_srcs
     pipelineWidget.cpp
@@ -44,6 +47,8 @@ add_library (
     pipeline-widget SHARED
     ${pipeline-widget_srcs}
     ${pipeline-widget_MOC_SRCS}
+    ${SRCD}/LiberationSans-Regular.h
+    ${SRCD}/LiberationMono-Regular.h
 )
 
 target_link_libraries (
@@ -52,5 +57,17 @@ target_link_libraries (
     ${FTGL_LIBRARIES}
     ${OPENGL_LIBRARY}
     ${QT_LIBRARIES}
+)
+add_custom_command (
+    OUTPUT ${SRCD}/LiberationSans-Regular.h
+    COMMAND xxd -i - ${SRCD}/LiberationSans-Regular.h < ${SRCD}/LiberationSans-Regular.ttf 
+    DEPENDS ${SRCD}/LiberationSans-Regular.ttf
+    COMMENT "Header-ising sans font for pipeline-widget"
+)
+add_custom_command (
+    OUTPUT ${SRCD}/LiberationMono-Regular.h
+    COMMAND xxd -i - ${SRCD}/LiberationMono-Regular.h < ${SRCD}/LiberationMono-Regular.ttf
+    DEPENDS ${SRCD}/LiberationMono-Regular.ttf
+    COMMENT "Header-ising mono font for pipeline-widget"
 )
 

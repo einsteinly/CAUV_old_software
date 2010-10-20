@@ -14,7 +14,7 @@ namespace pw{
 class Text: public Renderable, public std::string{
     public:
         Text(container_ptr_t c, std::string const& text,
-             std::string const& font="LiberationMono-Regular.ttf", int pt=12);
+             std::string const& font="sans", int pt=12);
         virtual ~Text(){ }
 
         virtual bool acceptsMouseEvents(){ return false; }

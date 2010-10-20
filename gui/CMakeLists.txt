@@ -20,6 +20,6 @@ else()
     link_directories (${Boost_LIBRARY_DIRS})
 
     add_subdirectory (pipeline-widget)
-    add_subdirectory (standalone)
+    add_subdirectory (gui-pipeline)
 
 endif ()
