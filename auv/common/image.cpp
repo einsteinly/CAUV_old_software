@@ -39,7 +39,7 @@ cv::Mat& Image::cvMat(){
 void Image::serializeQuality(int q){
     std::vector<int>::iterator i;
     if((i = std::find(
-           m_compress_params.begin(), m_compress_params.end(), CV_IMWRITE_JPEG_QUALITY
+           m_compress_params.begin(), m_compress_params.end(), int(CV_IMWRITE_JPEG_QUALITY)
        )) != m_compress_params.end()){
         if(++i != m_compress_params.end())
             *i = q;

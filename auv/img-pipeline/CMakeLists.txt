@@ -23,8 +23,6 @@ target_link_libraries (
     boost_date_time
     boost_filesystem
     boost_system
-    cv
-    cxcore
-    highgui
+    ${OpenCV_LIBS}
 )
 
