@@ -20,7 +20,18 @@ else
     echo "umask 002" >> ~/.profile
 fi
 
+if grep -q "^alias cmake='/societies/cauv/install/bin/cmake'" ~/.bashrc; then
+    echo "not adding cmake alias to ~/.bashrc (already exists)"
+else
+    echo "adding cmake alias to ~/.bashrc"
+    echo "alias cmake='/societies/cauv/install/bin/cmake'" >> ~/.bashrc
+fi
 
-
+if grep -q "^alias bjam='/societies/cauv/install/bin/bjam'" ~/.bashrc; then
+    echo "not adding bjam alias to ~/.bashrc (already exists)"
+else
+    echo "adding bjam alias to ~/.bashrc"
+    echo "alias bjam='/societies/cauv/install/bin/bjam'" >> ~/.bashrc
+fi
 
 
