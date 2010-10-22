@@ -41,3 +41,17 @@ else
     echo "export BOOST_BUILD_PATH=/societies/cauv/build/boost/" >> ~/.profile
 fi
 
+if grep -q "^export BOOST_ROOT=/societies/cauv/build/boost/" ~/.profile; then
+    echo "not setting BOOST_ROOT in ~/.profile (already set)"
+else
+    echo "setting BOOST_ROOT in ~/.profile"
+    echo "export BOOST_ROOT=/societies/cauv/build/boost/" >> ~/.profile
+fi
+
+if grep -q "^export CAUV_PREFIX=/societies/cauv/install" ~/.profile; then
+    echo "not setting CAUV_PREFIX in ~/.profile (already set)"
+else
+    echo "setting CAUV_PREFIX in ~/.profile"
+    echo "export CAUV_PREFIX=/societies/cauv/install" >> ~/.profile
+fi
+
