@@ -1,7 +1,7 @@
 #include "workarounds.h" // _must_ be first
 #include <boost/python.hpp> // oh yes :)
 
-#include "../common/messages.h"
+#include "../../generated/messages.h"
 #include "../common/cauv_node.h"
 
 #include "emit_static.h"

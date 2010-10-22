@@ -4,7 +4,7 @@
 \#include <boost/python/str.hpp>
 
 \#include "emit_generated.h"
-\#include "../common/messages.h"
+\#include "../generated/messages.h"
 
 namespace bp = boost::python;
 /** Helper structures for exporting instances of STL containers:

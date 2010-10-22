@@ -27,11 +27,17 @@ else
     echo "alias cmake='/societies/cauv/install/bin/cmake'" >> ~/.bashrc
 fi
 
-if grep -q "^alias bjam='/societies/cauv/install/bin/bjam'" ~/.bashrc; then
-    echo "not adding bjam alias to ~/.bashrc (already exists)"
+if grep -q "^export PATH=/societies/cauv/install/bin:\$PATH" ~/.profile; then
+    echo "not adding cauv/install/bin to PATH in ~/.profile (already set)"
 else
-    echo "adding bjam alias to ~/.bashrc"
-    echo "alias bjam='/societies/cauv/install/bin/bjam'" >> ~/.bashrc
+    echo "adding cauv/install/bin to PATH in ~/.profile"
+    echo "export PATH=/societies/cauv/install/bin:\$PATH" >> ~/.profile
 fi
 
+if grep -q "^export BOOST_BUILD_PATH=/societies/cauv/build/boost/" ~/.profile; then
+    echo "not setting BOOST_BUILD_PATH in ~/.profile (already set)"
+else
+    echo "setting BOOST_BUILD_PATH in ~/.profile"
+    echo "export BOOST_BUILD_PATH=/societies/cauv/build/boost/" >> ~/.profile
+fi
 

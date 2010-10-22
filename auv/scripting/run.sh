@@ -1,0 +1,14 @@
+#!/bin/sh
+
+SCRIPTING_DIR="$(pwd)"
+#echo "Scripting dir is: $SCRIPTING_DIR"
+
+export LD_LIBRARY_PATH="$SCRIPTING_DIR/cauv/:$LD_LIBRARY_PATH"
+export DYLD_LIBRARY_PATH="$SCRIPTING_DIR/cauv/:$DYLD_LIBRARY_PATH"
+export PYTHON_PATH="$SCRIPTING_DIR:$PYTHONPATH"
+
+#echo "LD path: $LD_LIBRARY_PATH"
+#echo "DYLD path: $DYLD_LIBRARY_PATH"
+
+python $1
+
