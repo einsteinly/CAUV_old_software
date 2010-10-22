@@ -7,7 +7,7 @@ if [ -a ~/.hgrc ]; then
 else
     echo "creating ~/.hgrc"
     # add user name and user id strings
-    whoami | xargs getent passwd | sed "s/\([^:]\+\):[x:0 -9]*:\([^:,]*\).*/[ui]\nusername = \1 <\2>\n/" >> ~/.hgrc
+    whoami | xargs getent passwd | sed "s/\([^:]\+\):[x:0 -9]*:\([^:,]*\).*/[ui]\nusername = \2 <\1@cam.ac.uk>\n/" >> ~/.hgrc
 fi
 
 if grep -q "^[[:space:]]*umask[[:space:]]\+002" ~/.profile; then
