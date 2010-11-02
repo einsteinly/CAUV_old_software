@@ -2,6 +2,9 @@
 \#ifndef __MESSAGE_FWD_H__
 \#define __MESSAGE_FWD_H__
 
+// standard integral types (int32_t etc)
+\#include <cstdint>
+
 // =========================
 // Forward Type Declarations
 // =========================
