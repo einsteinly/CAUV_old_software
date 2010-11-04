@@ -1,0 +1,6 @@
+classname: Project
+module: pitz.project
+order_method_name: by_milestone_status_pscore_created_time
+title: cauv
+uuid: !!python/object:uuid.UUID
+  int: 6915932614321907892402658296689213522
