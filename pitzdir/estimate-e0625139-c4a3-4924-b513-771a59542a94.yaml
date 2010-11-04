@@ -1,0 +1,11 @@
+created_time: &id001 2010-11-04 18:25:34.453739
+description: Small project, best dealt with by one person, probably taking several
+  hours.
+modified_time: *id001
+points: 5
+pscore: 0
+title: small project
+type: estimate
+uuid: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+yaml_file_saved: 2010-11-04 18:25:34.454671
