@@ -1,0 +1,32 @@
+components: []
+created_time: 2010-11-04 18:53:52.424211
+description: 'Given a 360-degree sonar sweep, it should be possible to locate the
+  position of
+
+  the AUV relative to previous sonar images.
+
+
+  This should probably be implemented as an image processing pipeline node,
+
+  previous images could be cachd for short-term relative position information, or
+
+  loaded from disk as reference images for absolute positioning.'
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2010-11-04 18:55:01.738364
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tag: sonar
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+title: Sonar Localisation
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 252327981180241802766199876826531987370
+yaml_file_saved: 2010-11-04 18:55:01.738729

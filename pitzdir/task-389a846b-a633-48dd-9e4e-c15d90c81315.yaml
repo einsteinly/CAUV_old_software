@@ -1,0 +1,35 @@
+components: []
+created_time: &id001 2010-11-04 19:18:48.673334
+description: 'Yes please :)
+
+
+  There are probably two separate fields in which we can use SLAM: 2D from sonar
+
+  data, and 3D using camera images in more highly-featured environments.
+
+
+  SLAM would actually probably not be very useful in the competition, but in the
+
+  long term if we ever want to send an AUV somewhere actually unknown, then it is
+
+  essential.'
+estimate: !!python/object:uuid.UUID
+  int: 221360562648380518769412743827279781563
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 331996142187771955882707416418215780478
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+title: Simultaneous Location and Mapping
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 75239067287087234329855077271042790165
+yaml_file_saved: 2010-11-04 19:18:48.674034
