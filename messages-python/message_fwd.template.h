@@ -3,7 +3,7 @@
 \#define __MESSAGE_FWD_H__
 
 // standard integral types (int32_t etc)
-\#include <cstdint>
+\#include <boost/cstdint.hpp>
 
 // =========================
 // Forward Type Declarations

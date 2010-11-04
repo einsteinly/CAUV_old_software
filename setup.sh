@@ -34,6 +34,14 @@ else
     echo "export PATH=/societies/cauv/install/bin:\$PATH" >> ~/.profile
 fi
 
+CAUVPYPATH="/societies/cauv/install/lib/python2.6/site-packages/"
+if grep -q "^export PYTHONPATH=$CAUVPYPATH:\$PYTHONPATH" ~/.profile; then
+    echo "not adding $CAUVPYPATH to PYTHONPATH in ~/.profile (already set)"
+else
+    echo "adding $CAUVPYPATH to PYTHONPATH in ~/.profile"
+    echo "export PYTHONPATH=$CAUVPYPATH:\$PYTHONPATH" >> ~/.profile
+fi
+
 if grep -q "^export BOOST_BUILD_PATH=/societies/cauv/build/boost/" ~/.profile; then
     echo "not setting BOOST_BUILD_PATH in ~/.profile (already set)"
 else
