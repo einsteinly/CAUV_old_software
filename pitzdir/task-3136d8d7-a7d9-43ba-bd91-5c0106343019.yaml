@@ -1,0 +1,34 @@
+components: []
+created_time: &id001 2010-11-05 10:21:30.863956
+description: 'Pipeline manipulation MUST be absolutely robust, all possible operations
+  should
+
+  be tested, lots, with and without the pipeline running, and with various
+
+  set-ups.
+
+  We also need tests that are reasonably good at exposing concurrency issues --
+
+  this probably means artificially reducing the resources of one of more
+
+  processes in a varying way as tests are repeated.'
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+- !!python/object:uuid.UUID
+  int: 197286768475377705411888986497368205084
+title: Tests for img-pipeline
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 65416953910297741178200899262157697049
+yaml_file_saved: 2010-11-05 10:21:30.864738

@@ -1,0 +1,24 @@
+components: []
+created_time: &id001 2010-11-05 10:26:50.233343
+description: 'Lots of parameters support only a finite set of values. This is not
+  represented
+
+  in the GUI, it should be. Sliders may also be appropriate for some values.'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 275376028904049931937057396630085839418
+title: Better Parameter Widgets for GUI
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 190689487526671798994527796900256549054
+yaml_file_saved: 2010-11-05 10:26:50.234205

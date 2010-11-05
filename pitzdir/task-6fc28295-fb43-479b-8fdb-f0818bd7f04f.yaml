@@ -1,0 +1,26 @@
+components: []
+created_time: &id001 2010-11-05 10:13:44.982099
+description: 'A robust pipe-following ''objective'' script, (or whatever fits into
+  the new
+
+  control design). One exists, but it was hacked together very quickly, and it
+
+  didn''t work.'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 154609098728873674441152855601256671864
+title: Robust Script to Follow a Pipe
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 148554261718688181447502465540629721167
+yaml_file_saved: 2010-11-05 10:13:44.982825

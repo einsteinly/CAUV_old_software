@@ -1,0 +1,27 @@
+components: []
+created_time: &id001 2010-11-05 10:16:40.913295
+description: 'For serialisation / de-serialisation we should probably use our own
+
+  boost::archive type that takes care of things like 64/32-bit issues. See also
+
+  ''Replace Spread''. A more efficient messaging base layer may(will) need to be
+
+  aware of serialisation.'
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 292557765731504791880568992605661195763
+title: Implement a Boost Archive for Serialisation
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 152269525812862065198261561734123737574
+yaml_file_saved: 2010-11-05 10:16:40.914021

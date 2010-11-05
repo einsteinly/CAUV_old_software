@@ -1,0 +1,23 @@
+components: []
+created_time: &id001 2010-11-05 10:24:24.963930
+description: "Tests for the scripting interface:\n - Check that messages are sent\
+  \ correctly.\n - Test concurrency (GIL locking is a pain...)\n - Cover all functions\
+  \ exposed"
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 197286768475377705411888986497368205084
+title: Scripting interface tests
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 125915331745495019372036525200300736084
+yaml_file_saved: 2010-11-05 10:24:24.964781

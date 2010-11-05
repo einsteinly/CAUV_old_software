@@ -1,0 +1,22 @@
+components: []
+created_time: &id001 2010-11-05 10:24:58.972153
+description: !!python/str "It may be necessary to port the java gui to c++\u2026 whilst\
+  \ a lot of work this\nisn't necessarily very difficult."
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 275376028904049931937057396630085839418
+title: Integrate the Pipeline Widget in the GUI
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 181213822512908501735795060686691902425
+yaml_file_saved: 2010-11-05 10:24:58.973034

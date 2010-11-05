@@ -1,0 +1,24 @@
+components: []
+created_time: &id001 2010-11-05 10:14:21.103325
+description: 'A robust ''objective'' script (or whatever fits into the new control
+  design) to
+
+  track an object such as a moving buoy.'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 154609098728873674441152855601256671864
+title: Robust Script to Track an Object
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 216091191503341103866945999127967304341
+yaml_file_saved: 2010-11-05 10:14:21.104083

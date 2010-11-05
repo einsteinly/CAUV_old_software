@@ -1,0 +1,21 @@
+components: []
+created_time: &id001 2010-11-05 10:27:36.093902
+description: 'Verify that it works, and make sure it is completely reliable at restarting
+
+  dead processes. It would be great if it could also detect deadlocks.'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags: []
+title: Watchdog process (pervert)
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 82965263845022505181538746628602760494
+yaml_file_saved: 2010-11-05 10:27:36.094745

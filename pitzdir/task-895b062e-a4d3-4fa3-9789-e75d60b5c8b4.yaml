@@ -1,0 +1,30 @@
+components: []
+created_time: &id001 2010-11-05 10:13:04.973415
+description: 'The current design consists of a set of python scripts, one of which
+  arbitrates
+
+  demands from ''objective'' scripts, which send requests for movements, based on
+
+  messages that they are receiving.
+
+  Arbitration should probably be at a higher level than this, since the current
+
+  design could easily get stuck oscillating between two objectives.'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 154609098728873674441152855601256671864
+title: High-Level Control Design
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 182576859826624242511530137314028538036
+yaml_file_saved: 2010-11-05 10:13:04.974145
