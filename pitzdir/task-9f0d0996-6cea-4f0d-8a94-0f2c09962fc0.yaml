@@ -1,6 +1,6 @@
 components: []
 created_time: &id001 2010-11-05 10:15:30.842670
-description: !!python/str "Because Strong AI must be possible with 1GHz\u2026 Though\
+description: !!python/str "Because Strong AI must be possible with 1GHz... Though\
   \ in all seriousness, we\nneed something that can at least cope with unforeseen\
   \ situations in a way that\nmeans we don't loose the vehicle. This is very non-trivial."
 estimate: !!python/object:uuid.UUID

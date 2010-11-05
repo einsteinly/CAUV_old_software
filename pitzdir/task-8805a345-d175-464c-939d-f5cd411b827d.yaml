@@ -5,7 +5,7 @@ description: !!python/str "Use CUDA for image processing operations, where appro
   that we want images to sometimes be 'resident' in graphics memory -- in which\n\
   case the Image class with either have to be CUDA aware, or the pipeline will\nhave\
   \ to be aware of where an image is when passing it between nodes of\ndifferent sorts.\n\
-  \nI don't really know much about this\u2026"
+  \nI don't really know much about this..."
 estimate: !!python/object:uuid.UUID
   int: 232728329951956224362343003393279330573
 milestone: !!python/object:uuid.UUID

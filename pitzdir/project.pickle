@@ -2421,7 +2421,7 @@ p720
 I0
 sS'description'
 p721
-S"Use CUDA for image processing operations, where appropriate.\nThis will probably require some modifications to the pipeline itself. It may be\nthat we want images to sometimes be 'resident' in graphics memory -- in which\ncase the Image class with either have to be CUDA aware, or the pipeline will\nhave to be aware of where an image is when passing it between nodes of\ndifferent sorts.\n\nI don't really know much about this\xe2\x80\xa6"
+S"Use CUDA for image processing operations, where appropriate.\nThis will probably require some modifications to the pipeline itself. It may be\nthat we want images to sometimes be 'resident' in graphics memory -- in which\ncase the Image class with either have to be CUDA aware, or the pipeline will\nhave to be aware of where an image is when passing it between nodes of\ndifferent sorts.\n\nI don't really know much about this..."
 p722
 sS'title'
 p723
