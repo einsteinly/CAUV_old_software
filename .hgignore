@@ -23,6 +23,9 @@ cmake_install.cmake
 messages-python/parsetab.py
 auv/common/messages.cpp
 generated/*.h
+pitzdir/project.pickle
+pitzdir/pitz.pid
+pitzdir/me.yaml
 gui/pipeline-widget/LiberationMono-Regular.h
 gui/pipeline-widget/LiberationSans-Regular.h
 gui-pipeline/pipeline-widget/moc_pipelineWidget.cxx
