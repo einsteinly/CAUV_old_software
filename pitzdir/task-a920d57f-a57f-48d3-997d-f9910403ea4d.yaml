@@ -19,7 +19,7 @@ status: !!python/object:uuid.UUID
 tags:
 - !!python/object:uuid.UUID
   int: 154609098728873674441152855601256671864
-title: Name for the 'AI' Component
+title: Name for the AI Component
 type: task
 uuid: !!python/object:uuid.UUID
   int: 224810015053565018235550575287590971981
