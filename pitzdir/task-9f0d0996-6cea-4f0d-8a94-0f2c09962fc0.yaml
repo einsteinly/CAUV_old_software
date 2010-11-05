@@ -16,7 +16,7 @@ status: !!python/object:uuid.UUID
 tags:
 - !!python/object:uuid.UUID
   int: 154609098728873674441152855601256671864
-title: Actual 'AI' Implementation
+title: Actual AI Implementation
 type: task
 uuid: !!python/object:uuid.UUID
   int: 211414945648581029574801206858663473088
