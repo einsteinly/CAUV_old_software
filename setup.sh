@@ -38,9 +38,10 @@ fi
 
 function clean_up
 {
+    e1=$(echo "$1" | sed 's/\(\.\|\/\|\*\|\[\|\]\|\\\|\$\)/\\&/g') # Blargh
     if grep -q "$1" $2 ; then
         echo "cleaning up \"$1\" from $2"
-        grep -Fv "$1" $2 >$2
+        sed -i.cauv-bak "/$e1/d" $2
     fi
 }
 
