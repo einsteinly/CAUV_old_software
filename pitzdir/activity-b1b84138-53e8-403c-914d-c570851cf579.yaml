@@ -1,0 +1,15 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 263484739648898995288495580675464106490
+created_time: &id001 2010-11-10 21:14:22.208674
+description: ''
+entity: !!python/object:uuid.UUID
+  int: 211414945648581029574801206858663473088
+modified_time: *id001
+pscore: 0
+title: Leszek Swirski set description from Because Strong A... to Because Strong A...
+  on 9f0d09
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 236230060695269885899055947352314279289
+who_did_it: *id002
+yaml_file_saved: 2010-11-10 21:14:22.211642
