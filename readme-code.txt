@@ -15,6 +15,12 @@ generated/      - generated headers that are shared between multiple targets
 utility/	    - c++ files shared between gui/ and auv/ and anywhere else they
                   are needed (headers only)
 
+pitzdir/        - directory containing the files of the issue tracker (pitz):
+                  to see a list of tasks from the command line, run:
+                    pitz-tasks --detailed-view
+
+django/         - code for the web interface of the issue tracker (pitz)
+
 Less important things:
 cmake/		    - files for the build system
 CMakeLists.txt	- top-level build file for the CMake build system

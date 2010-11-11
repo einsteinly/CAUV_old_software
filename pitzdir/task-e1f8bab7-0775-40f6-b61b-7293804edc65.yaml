@@ -1,0 +1,37 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-11-11 14:32:52.162184
+description: 'The electronics team would like a simple push-button GUI to drive motors
+  so
+
+  that they can test without someone typing things into python.
+
+
+  The simplest way to do this might be with a simple app running on the sub,
+
+  accessed via vnc, or alternatively the client needs to be able to run on
+
+  whatever sort of laptop the elctronics team are going to use for this, and to
+
+  work with zero configuration (or, at least one-time saved configuration).'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 197286768475377705411888986497368205084
+- !!python/object:uuid.UUID
+  int: 275376028904049931937057396630085839418
+title: Simple GUI for motor testing
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 300367775701770874148425266261476170853
+yaml_file_saved: 2010-11-11 14:32:52.165351
