@@ -4,7 +4,7 @@ import os
 TRACKER_LOCATION = os.getcwd()
 AUTH_PROFILE_MODULE = 'track.UserProfile' #tells django to link user profile to django auth users
 LOGIN_REDIRECT_URL = '/' #where should people be redirected to if login succesful (and no next page provided)
-PITZ_DIR = '\\'.join(TRACKER_LOCATION.split('\\')[0:-2])+'\\pitzdir' #pitzdir
+PITZ_DIR = os.sep.join(TRACKER_LOCATION.split(os.sep)[0:-2])+os.sep+'pitzdir' #pitzdir
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
