@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+{% for key, value in items.items %}
+<div id="item_key">{{ key }}</div>
+<div id="item_value">{{ value }}</div>
+{% endfor %}
+{% endblock %}

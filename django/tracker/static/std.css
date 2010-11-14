@@ -1,0 +1,22 @@
+#login_wrapper{
+text-align: center;
+}
+#login_box{
+margin-left: auto;
+margin-right: auto;
+text-align: center;
+width: 20em;
+padding: 1em;
+background-color: #ccddff;
+}
+#header{
+padding: 0.5em;
+background-color: #ccddff;
+overflow: auto;
+}
+#header_location{
+float: left;
+}
+#header_user{
+float: right;
+}

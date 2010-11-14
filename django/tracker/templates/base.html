@@ -1,0 +1,18 @@
+<html>
+<head>
+    <title>Tracker</title>
+    <link rel="stylesheet" href="/static/std.css">
+</head>
+<body>
+<div id="wrapper">
+    <div id="header">
+        <div id="header_location"><a href="/">Home</a> {% block location %}{% endblock %}</div>
+        <div id="header_user">You are logged in as <b>{{ request.user }}</b>. <a href="/accounts/logout/">Logout</a></div>
+    </div>
+    <div id="content">
+    {% block content %}
+    {% endblock %}
+    </div>
+</div>
+</body>
+</html>
