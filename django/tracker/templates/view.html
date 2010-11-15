@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
-{% for key, value in items.items %}
-<div id="item_key">{{ key }}</div>
-<div id="item_value">{{ value }}</div>
+{% for key, value in items %}
+<div id="item_key"><a{% if key.1 %} href="/view/{{ key.1 }}/"{% endif %}><b>{{ key.0 }}</b></a></div>
+{% for item in value %}
+<div id="item_value"><a{% if item.1 %} href="/view/{{item.1}}/"{% endif %}>{{ item.0 }}</a></div>
+{% endfor %}
 {% endfor %}
 {% endblock %}

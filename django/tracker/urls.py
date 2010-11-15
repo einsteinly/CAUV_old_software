@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     # Example:
     # (r'^tracker/', include('tracker.foo.urls')),
     (r'^$', views.view),
+    (r'^view/(?P<uuid>[a-f0-9\-]+)/$', views.view),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
