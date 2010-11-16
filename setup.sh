@@ -2,7 +2,7 @@
 
 set -e
 
-if [ -a ~/.hgrc ]; then
+if [ -a ~/.hgrc ] ; then
     echo "not creating ~/.hgrc (already exists)"
 else
     echo "creating ~/.hgrc"
@@ -10,56 +10,44 @@ else
     whoami | xargs getent passwd | sed "s/\([^:]\+\):[x:0 -9]*:\([^:,]*\).*/[ui]\nusername = \2 <\1@cam.ac.uk>\n/" >> ~/.hgrc
 fi
 
-if grep -q "^[[:space:]]*umask[[:space:]]\+002" ~/.profile; then
+
+if grep -q "^[[:space:]]*umask[[:space:]]\+002" ${HOME}/.profile ; then
     echo "umask already set correctly in ~/.profile"
-elif grep -q "^[[:space:]]*umask[[:space:]]\+022" ~/.profile; then
+elif grep -q "^[[:space:]]*umask[[:space:]]\+022" ${HOME}/.profile ; then
     echo "changing umask setting in ~/.profile"
-    sed -i.cauv-saved "s/^\([[:space:]]*\)umask[[:space:]]\+022/\1umask 002/" ~/.profile
+    sed -i.cauv-saved "s/^\([[:space:]]*\)umask[[:space:]]\+022/\1umask 002/" ${HOME}/.profile
 else
     echo "adding umask setting to ~/.profile"
-    echo "umask 002" >> ~/.profile
+    echo "umask 002" >> ${HOME}/.profile
 fi
 
-if grep -q "^alias cmake='/societies/cauv/install/bin/cmake'" ~/.bashrc; then
-    echo "not adding cmake alias to ~/.bashrc (already exists)"
+
+CAUV_PROFILE=/societies/cauv/cauv_profile
+SOURCE_CAUV_PROFILE="[ -f ${CAUV_PROFILE} ] && source ${CAUV_PROFILE}"
+if grep -Fqx "${SOURCE_CAUV_PROFILE}" ${HOME}/.profile ; then
+    echo "already sourcing cauv_profile"
 else
-    echo "adding cmake alias to ~/.bashrc"
-    echo "alias cmake='/societies/cauv/install/bin/cmake'" >> ~/.bashrc
+    echo "sourcing cauv_profile in ~/.profile..."
+    echo "${SOURCE_CAUV_PROFILE}" >> ${HOME}/.profile
 fi
+    
 
-if grep -q "^export PATH=/societies/cauv/install/bin:\$PATH" ~/.profile; then
-    echo "not adding cauv/install/bin to PATH in ~/.profile (already set)"
-else
-    echo "adding cauv/install/bin to PATH in ~/.profile"
-    echo "export PATH=/societies/cauv/install/bin:\$PATH" >> ~/.profile
-fi
 
-CAUVPYPATH="/societies/cauv/install/lib/python2.6/site-packages/"
-if grep -q "^export PYTHONPATH=$CAUVPYPATH:\$PYTHONPATH" ~/.profile; then
-    echo "not adding $CAUVPYPATH to PYTHONPATH in ~/.profile (already set)"
-else
-    echo "adding $CAUVPYPATH to PYTHONPATH in ~/.profile"
-    echo "export PYTHONPATH=$CAUVPYPATH:\$PYTHONPATH" >> ~/.profile
-fi
 
-if grep -q "^export BOOST_BUILD_PATH=/societies/cauv/build/boost/" ~/.profile; then
-    echo "not setting BOOST_BUILD_PATH in ~/.profile (already set)"
-else
-    echo "setting BOOST_BUILD_PATH in ~/.profile"
-    echo "export BOOST_BUILD_PATH=/societies/cauv/build/boost/" >> ~/.profile
-fi
+# This shouldn't be necessary after a while
 
-if grep -q "^export BOOST_ROOT=/societies/cauv/build/boost/" ~/.profile; then
-    echo "not setting BOOST_ROOT in ~/.profile (already set)"
-else
-    echo "setting BOOST_ROOT in ~/.profile"
-    echo "export BOOST_ROOT=/societies/cauv/build/boost/" >> ~/.profile
-fi
+function clean_up
+{
+    e1=$(echo "$1" | sed 's/\(\.\|\/\|\*\|\[\|\]\|\\\|\$\)/\\&/g') # Blargh
+    if grep -q "$1" $2 ; then
+        echo "cleaning up \"$1\" from $2"
+        sed -i.cauv-bak "/$e1/d" $2
+    fi
+}
 
-if grep -q "^export CAUV_PREFIX=/societies/cauv/install" ~/.profile; then
-    echo "not setting CAUV_PREFIX in ~/.profile (already set)"
-else
-    echo "setting CAUV_PREFIX in ~/.profile"
-    echo "export CAUV_PREFIX=/societies/cauv/install" >> ~/.profile
-fi
-
+clean_up 'export PATH=/societies/cauv/install/bin:$PATH' ${HOME}/.profile
+clean_up 'export PYTHONPATH=/societies/cauv/install/lib/python2.6/site-packages/:$PYTHONPATH' ${HOME}/.profile
+clean_up 'export BOOST_BUILD_PATH=/societies/cauv/build/boost/' ${HOME}/.profile
+clean_up 'export BOOST_ROOT=/societies/cauv/build/boost/' ${HOME}/.profile
+clean_up 'export CAUV_PREFIX=/societies/cauv/install' ${HOME}/.profile
+clean_up "alias cmake='/societies/cauv/install/bin/cmake'" ${HOME}/.bashrc
