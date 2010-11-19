@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load switch %}
+{% block breadcrumbs %}<a href="/">Home</a> - <a href="/view/bag/{{ entity.type }}">{{ entity.type }}</a> - {{ entity.title }}{% endblock %}
+{% block content %}
+{{ entity.title }}
+{% for property in entity.properties %}
+<div id="property"><b>{{ property.name }}</b>:
+{% switch property.type %}
+{% case "value" %}
+{{ property.value }}
+{% case "entity" %}
+ <a href="/view/entity/{{ property.value.uuid }}/">{{ property.value.title }}</a></div>
+{% case "valuelist" %}
+{% for value in property.value %}
+{{ value }}
+{% endfor %}
+{% case "entitylist" %}
+{% for entity in property.value %}
+ <a href="/view/entity/{{ entity.uuid }}/">{{ entity.title }}</a></div>
+{% endfor %}
+{% endswitch %}
+{% endfor %}
+{% endblock %}
