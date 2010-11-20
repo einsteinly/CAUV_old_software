@@ -30,7 +30,7 @@ def motorTest():
     auv.vsternMap(10, -10, 127, -127)
     auv.hsternMap(10, -10, 127, -127)
     
-    delay = 1
+    delay = 5
 
     auv.stop()
     print 'prop forwards:'
