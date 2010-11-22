@@ -57,7 +57,10 @@ class FileOutputNode: public OutputNode{
             imwrite_params.push_back(png_comp);
             
             try{
-                cv::imwrite(fname.c_str(), img->cvMat(), imwrite_params);
+                if(img->cvMat().rows == 0 || img->cvMat().cols == 0)
+                    cv::imwrite(fname.c_str(), img->cvMat(), imwrite_params);
+                else
+                    error() << "FileoutputNode: no image!";
             }catch(cv::Exception& e){
                 error() << "FileOutputNode:\n\t"
                         << e.err << "\n\t"
