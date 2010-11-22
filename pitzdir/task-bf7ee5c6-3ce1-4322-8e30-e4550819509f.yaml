@@ -1,0 +1,27 @@
+components: []
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-11-22 20:49:06.876339
+description: "The output file name is re-calculated for each new invalid frame: this\
+  \ means\nthat for names with timestamps in a large number of files are created (probably\n\
+  with significant overheard)\n\nIf a frame in the video is invalid data (e.g. wrong\
+  \ number of channels, or \n0x0 size), then the previous filename should still be\
+  \ retained.\n\nNote however that once a file has had valid data written to it, we\
+  \ don't want\nit to ever be overwritten on disk."
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: *id002
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+title: img-pipeline Video Output Node creates video files even when input is invalid
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 254541436976911159997371505159551144095
+yaml_file_saved: 2010-11-22 20:49:06.877258

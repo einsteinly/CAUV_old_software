@@ -1,0 +1,30 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-11-22 20:40:16.880525
+description: 'The camera lights should be controllable via messages.
+
+
+  This a new light control message type, updates to the control program to
+
+  forward it, and possibly some changes to the MCB code in order to respond to
+
+  commands to switch the lights on and off.'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 292557765731504791880568992605661195763
+title: Allow Light Control via Messages
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 109440154217856387638248328286945191394
+yaml_file_saved: 2010-11-22 20:40:16.881496
