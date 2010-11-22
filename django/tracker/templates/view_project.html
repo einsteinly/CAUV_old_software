@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block breadcrumbs %}Home{% endblock %}
+{% block content %}
+{{ disp_object.title }}
+{% for bag in bags %}
+<div id="item_key"><a href="/view/bag/{{ bag.ref }}"><b>{{ bag.title }}</b></a></div>
+<ul>
+{% for entity in bag.elements %}
+<li><a href="/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
+{% endfor %}
+</ul>
+{% endfor %}
+{% endblock %}

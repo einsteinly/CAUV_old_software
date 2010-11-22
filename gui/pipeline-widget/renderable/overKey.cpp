@@ -1,4 +1,4 @@
-#include "OverKey.h"
+#include "overKey.h"
 
 #include <limits>
 
@@ -14,7 +14,7 @@
 #include <utility/string.h>
 #include <debug/cauv_debug.h>
 
-#include "util.h"
+#include "../util.h"
 #include "text.h"
 
 using namespace pw;
