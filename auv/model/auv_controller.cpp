@@ -126,7 +126,6 @@ void AUVController::onSonarControlMessage(SonarControlMessage_ptr message) {
 void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
     m_auv.sensors.depth->set(message->depth());
     m_auv.sensors.orientation->set(message->orientation());
-    
 }
 
 void AUVController::onPressureMessage(PressureMessage_ptr message){
