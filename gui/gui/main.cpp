@@ -3,42 +3,27 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdint.h>
 
-#include <common/cauv_node.h>
-#include <debug/cauv_debug.h>
+#include "cauvgui.h"
 
-#include "ui_mainwindow.h"
-
-
-class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
-    public:
-        CauvGui(QWidget *parent = 0) : CauvNode("CauvGui"){
-            setupUi(this);
-        }
-
-        void onRun()
-        {
-
-            CauvNode::onRun();
-            show();
-        }
-};
-
+using namespace std;
 
 static CauvGui* node;
+static QApplication* app;
 
 void cleanup()
 {
-    info() << "Cleaning up..." << std::endl;
+    info() << "Cleaning up..." << endl;
     CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
-    info() << "Clean up done." << std::endl;
+    info() << "Clean up done." << endl;
 }
 
 void interrupt(int sig)
 {
-    std::cout << std::endl;
+    cout << endl;
     info() << BashColour::Red << "Interrupt caught!";
     cleanup();
     signal(SIGINT, SIG_DFL);
@@ -47,11 +32,17 @@ void interrupt(int sig)
 
 int main(int argc, char** argv)
 {
-    QApplication app(argc, argv);
+    app = new QApplication(argc, argv);
+
     signal(SIGINT, interrupt);
+
     node = new CauvGui();
+
+    int ret = node->parseOptions(argc, argv);
+    if(ret != 0) return ret;
+
     node->run();
-    app.exec();
+
     cleanup();
     return 0;
 }
