@@ -27,13 +27,33 @@ class disp_property():
             else:
                 self.type = 'value'
 
+class disp_bag_by_type():
+    def __init__(self, bag):
+        # split bag into dictionary by type
+        self.by_type = {}
+        for e in bag:
+            typeid = e['type']
+            if self.by_type.has_key(typeid):
+                self.by_type[typeid].append(e)
+            else:
+                self.by_type[typeid] = [e]
+        print self.by_type
+
 class disp_entity():
-    def __init__(self, entity):
+    def __init__(self, entity, related=[]):
         self.properties = [disp_property(x, entity[x]) for x in entity]
         self.type = entity.plural_name
         self.title = entity['title']
         self.subs = []
-       
+        # fingers crossed...
+        #for x in related:
+        #    print disp_entity(x)
+        #    print x['title']
+        #    print x.plural_name
+        #    print [disp_property(y, x[y]) for y in x]
+        #self.related = [disp_entity(x) for x in related]
+        self.related = disp_bag_by_type(related)
+
 class disp_bag():
     def __init__(self, bag, ref):
         self.title = bag.title
@@ -56,12 +76,24 @@ def view_bag(request, ref):
     return render_to_response('view_bag.html', locals())
     
 def view_entity(request, uuid):
+    uuid_obj = UUID(uuid)
     p = Project.from_pitzdir(settings.PITZ_DIR)
     try:
-        e = p.by_uuid(UUID(uuid))
+        e = p.by_uuid(uuid_obj)
     except ValueError:
         raise Http404
     if not isinstance(e, Entity):
         raise Http404
-    entity = disp_entity(e)
+    # # find things which have this entity listed as their entity... like
+    # # comments :)
+    # related = p.matches_dict(entity=e)
+
+    # find anything with any field as this entity (eep!)
+    related = []
+    for k in [x[0] for x in p.attributes]:
+        # python magic: pass dictionary as explicit kwargs:
+        matches = p.matches_dict(**{k:e}) 
+        if len(matches):
+            related += matches
+    entity = disp_entity(e, related)
     return render_to_response('view_entity.html', locals())

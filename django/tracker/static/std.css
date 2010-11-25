@@ -1,11 +1,20 @@
 * {
     font: 12px/16px Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
 /* ewww link colours: screw usability */
 a { color: #444; text-decoration: none; }
 a:hover { color: #888; }
 
+ul{
+    margin: 0 0 0 25pt;
+}
+
+#content{
+    margin: 0 3pt;
+}
 
 #login_wrapper{
 text-align: center;
@@ -39,12 +48,21 @@ background-color: #e9f0ff;
 border-radius: 3pt;
 }
 #property{
+font: 10px/12px Helvetica, Arial, sans-serif;    
+padding: 0pt 5pt;
+margin: 0pt 0;
+color: #888;
+}
+#property #description{  
+font: 12px/16px Helvetica, Arial, sans-serif;    
 padding: 3pt 5pt;
 margin: 3pt 0;
 background-color: #e9f0ff;
 -moz-border-radius: 3pt;
 -webkit-border-radius: 3pt;
 border-radius: 3pt;
+color: #000;
+visibility:visible;
 }
 #bag{
 background-color: #e9f0ff;
@@ -54,11 +72,36 @@ margin: 3pt 0;
 -webkit-border-radius: 3pt;
 border-radius: 3pt;
 }
-#bag #item_key a{
+#bag ul{
+list-style: none;
+}
+#item_key{
 font: 16px/30px Helvetica, Arial, sans-serif;
 padding: 3pt 5pt;
 margin: 3pt 0;
 }
-#bag ul{
-list-style: none;
+#item_key a{
+font: 16px/30px Helvetica, Arial, sans-serif;
+padding: 3pt 5pt;
+margin: 3pt 0;
+}
+#bag #comment ul li{
+padding: 0;
+margin: 0 0 15pt 0;
+}
+#bag #comment ul li h4{
+font-weight: bold;
+}
+#bag #comment ul li h4 a{
+font-weight: bold;
+}
+#bag #task ul li{
+padding: 0;
+margin: 0 0 15pt 0;
+}
+#bag #task ul li h4{
+font-weight: bold;
+}
+#bag #task ul li h4 a{
+font-weight: bold;
 }

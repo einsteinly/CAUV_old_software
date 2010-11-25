@@ -7,24 +7,50 @@
     {{ entity.title }}
 </div>
 {% for property in entity.properties %}
-<div id="property"><b>{{ property.name }}</b>:
-    {% switch property.type %}
-    {% case "value" %}
-    {% comment %} {{ property.value|markdown }} ... some time, need to distinguish
-    between big text field values and little things like timestamps in a sensible
-    way first though ;) {% endcomment %}
-    {{ property.value|force_escape|linebreaksbr }}
-    {% case "entity" %}
-     <a href="/view/entity/{{ property.value.uuid }}/">{{ property.value.title }}</a>
-    {% case "valuelist" %}
-    {% for value in property.value %}
-    {{ value }}
-    {% endfor %}
-    {% case "entitylist" %}
-    {% for entity in property.value %}
-     <a href="/view/entity/{{ entity.uuid }}/">{{ entity.title }}</a>
-    {% endfor %}
-    {% endswitch %}
+<div id="property">
+    <div id="{{ property.name }}">
+        {{ property.name }}:
+        {%comment%} need django 1.2...
+        {% if property.value|length > 80 %}
+        <br>
+        {% endif %}A
+        {% endcomment %}
+
+        {% switch property.type %}
+        {% case "value" %}
+        {% comment %} {{ property.value|markdown }} ... some time, need to distinguish
+        between big text field values and little things like timestamps in a sensible
+        way first though ;) {% endcomment %}
+        {{ property.value|force_escape|linebreaksbr }}
+        {% case "entity" %}
+         <a href="/view/entity/{{ property.value.uuid }}/">{{ property.value.title }}</a>
+        {% case "valuelist" %}
+        {% for value in property.value %}
+        {{ value }}
+        {% endfor %}
+        {% case "entitylist" %}
+        {% for entity in property.value %}
+         <a href="/view/entity/{{ entity.uuid }}/">{{ entity.title }}</a>
+        {% endfor %}
+        {% endswitch %}
+    </div>
 </div>
 {% endfor %}
+
+{% for type,values in entity.related.by_type.items %}
+<div id="bag">
+    <div id="{{ type }}">
+        <div id="item_key"> {{ type }}{{ values|pluralize }} </div>
+        <ul>
+        {% for e in values %}
+        <li>
+        <h4><a href="/view/entity/{{ e.uuid }}">{{ e.title }}</a></h4>
+        {{ e.description|force_escape|linebreaksbr }}
+        </li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endfor %}
+
 {% endblock %}
