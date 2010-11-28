@@ -1,0 +1,34 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-11-28 17:04:18.236246
+description: 'We currently have static, PID controllers for yaw, pitch and depth.
+  We can do
+
+  better!
+
+
+  The yaw/pitch/control data should be used to feedback and control the PID
+
+  parameters, at the very least.
+
+
+  One requirement is that whatever happens the parameters will remain within sane
+
+  values, though.'
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags: []
+title: Implement on-line Control Loop Tuning
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 168542573981500185375940989407146100173
+yaml_file_saved: 2010-11-28 17:04:18.237205

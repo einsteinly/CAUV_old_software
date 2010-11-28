@@ -37,7 +37,6 @@ class disp_bag_by_type():
                 self.by_type[typeid].append(e)
             else:
                 self.by_type[typeid] = [e]
-        print self.by_type
 
 class disp_entity():
     def __init__(self, entity, related=[]):
@@ -92,8 +91,10 @@ def view_entity(request, uuid):
     related = []
     for k in [x[0] for x in p.attributes]:
         # python magic: pass dictionary as explicit kwargs:
-        matches = p.matches_dict(**{k:e}) 
-        if len(matches):
-            related += matches
+        matches = p.matches_dict(**{k:e})
+        # TODO: faster intersection...
+        for m in matches:
+            if not m in related:
+                related.append(m)
     entity = disp_entity(e, related)
     return render_to_response('view_entity.html', locals())

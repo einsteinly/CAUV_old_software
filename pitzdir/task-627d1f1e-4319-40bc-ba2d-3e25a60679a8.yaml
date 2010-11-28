@@ -1,0 +1,31 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-11-28 17:01:15.245293
+description: "The AUV needs to be able to avoid obstacles, ideally it should use sonar\
+  \ and\nimage data to do this, but just using images might be enough.\n\nWe could:\n\
+  \ - detect the divergence of the whole image as an obstacle is approached\n - detect\
+  \ that an object fills the entire frame\n - do something more intelligent\n\nThis\
+  \ task should consist of implementing an image processing node(s) and/or python\n\
+  sripts that give early enough warning of an obstacle infront of the vehicle\nfor\
+  \ it to be avoided."
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+- !!python/object:uuid.UUID
+  int: 331996142187771955882707416418215780478
+title: Implement Obstacle Avoidance
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 130914011846547222144231396164778752424
+yaml_file_saved: 2010-11-28 17:01:15.246432

@@ -1,0 +1,35 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-11-28 16:53:42.036339
+description: 'The AUV needs to be able to search for things in it''s environment,
+  this
+
+  requires some kind of search-pattern movement to cover an area, whilst avoiding
+
+  obstacles (see separate task).
+
+
+  This should be implemented in python, the main difficulties will be
+
+  integrating with other scripts (don''t want to search whilst doing something
+
+  else!) and the obstacle avoidance problem.'
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 154609098728873674441152855601256671864
+title: Design and Implement a Search Pattern
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 266290652382279442329566583548531423635
+yaml_file_saved: 2010-11-28 16:53:42.037434
