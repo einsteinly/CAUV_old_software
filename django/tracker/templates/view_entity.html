@@ -6,6 +6,12 @@
 <div id="entity_title">
     {{ entity.title }}
 </div>
+{% comment %}
+Admin options
+{% endcomment %}
+{% if request.user.is_staff %}
+    {% if entity.is_person %}<div id="property"><a href="/accounts/user/{{ entity.uuid }}/">Associate Django user with this Pitz profile</a></div>{% endif %}
+{% endif %}
 {% for property in entity.properties %}
 <div id="property">
     <div id="{{ property.name }}">

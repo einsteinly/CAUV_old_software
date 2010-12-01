@@ -17,9 +17,10 @@ urlpatterns = patterns('',
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
     
-    #login/logout screens
+    #login/logout/some pitz account admin screens
     (r'^accounts/login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}),
     (r'^accounts/logout/$', 'django.contrib.auth.views.logout', {'template_name': 'logout.html'}),
+    (r'^accounts/user/(?P<uuid>[a-f0-9\-]+)/$', views.useruuids),
 
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
