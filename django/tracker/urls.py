@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     (r'^$', views.view_project),
     (r'^view/entity/(?P<uuid>[a-f0-9\-]+)/$', views.view_entity),
     (r'^view/bag/(?P<ref>[a-zA-Z0-9\-]+)/$', views.view_bag),
+    (r'^edit/entity/(?P<uuid>[a-f0-9\-]+)/$', views.edit_entity),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:

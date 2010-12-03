@@ -3,8 +3,8 @@
 {% block content %}
 {{ disp_object.title }}
 {% for bag in bags %}
-<div id="bag">
-    <div id="item_key"><a href="/view/bag/{{ bag.ref }}">{{ bag.title }}</a></div>
+<div class="bag">
+    <div class="item_key"><a href="/view/bag/{{ bag.ref }}">{{ bag.title }}</a></div>
     <ul>
     {% for entity in bag.elements %}
     <li><a href="/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>

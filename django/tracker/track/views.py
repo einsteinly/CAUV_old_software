@@ -9,6 +9,18 @@ from uuid import UUID
 from tracker import settings
 from tracker.track import models, appforms
 
+def get_entity_or_404(uuid, project=None):
+    uuid_obj = UUID(uuid)
+    if not project:
+        project = Project.from_pitzdir(settings.PITZ_DIR)
+    try:
+        e = project.by_uuid(uuid_obj)
+    except ValueError:
+        raise Http404
+    if not isinstance(e, Entity):
+        raise Http404
+    return e
+    
 #custom representations: pitz own repesentation methods are orientated to the command line
 class disp_property():
     def __init__(self, name, value):
@@ -78,14 +90,8 @@ def view_bag(request, ref):
     return render_to_response('view_bag.html', locals())
     
 def view_entity(request, uuid):
-    uuid_obj = UUID(uuid)
     p = Project.from_pitzdir(settings.PITZ_DIR)
-    try:
-        e = p.by_uuid(uuid_obj)
-    except ValueError:
-        raise Http404
-    if not isinstance(e, Entity):
-        raise Http404
+    e = get_entity_or_404(uuid, p)
     # # find things which have this entity listed as their entity... like
     # # comments :)
     # related = p.matches_dict(entity=e)
@@ -101,19 +107,29 @@ def view_entity(request, uuid):
                 related.append(m)
     entity = disp_entity(e, related)
     return render_to_response('view_entity.html', locals())
+    
+@login_required
+def edit_entity(request, uuid):
+    p = Project.from_pitzdir(settings.PITZ_DIR)
+    entity = get_entity_or_404(uuid, p)
+    entity_form = appforms.make_entity_form(entity)
+    if request.method == 'POST':
+        form = entity_form(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect(to='/view/entity/'+uuid+'/')
+    else:
+        form = entity_form()
+    return render_to_response('form.html', locals())
 
 @permission_required('is_staff')
 def useruuids(request, uuid):
-    uuid_obj = UUID(uuid)
     p = Project.from_pitzdir(settings.PITZ_DIR)
-    try:
-        user = p.by_uuid(uuid_obj)
-    except ValueError:
-        raise Http404
+    e = get_entity_or_404(uuid, p)
     if not isinstance(user, p.classes['person']):
         raise Http404 #if someone tries to set some non-person entity as that persons user
     if request.method == 'POST':
-        form = appforms.useruuid(request.POST)
+        form = appforms.useruuid_form(request.POST)
         if form.is_valid():
             profile = form.save(commit=False)
             profile.uuid = uuid
@@ -121,8 +137,8 @@ def useruuids(request, uuid):
             return redirect(to='/view/entity/'+uuid+'/')
     else:
         try:
-            form = appforms.useruuid(instance=models.UserProfile.objects.get(uuid=uuid))
+            form = appforms.useruuid_form(instance=models.UserProfile.objects.get(uuid=uuid))
         except models.UserProfile.DoesNotExist:
-            form = appforms.useruuid()
+            form = appforms.useruuid_form()
     return render_to_response('form.html', locals())
     
