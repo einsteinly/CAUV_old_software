@@ -26,6 +26,10 @@ class GaussianBlurNode: public Node{
             // parameters: sigma: standard deviation of blur
             registerParamID<float>("sigma", 1);
         }
+    
+        virtual ~GaussianBlurNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

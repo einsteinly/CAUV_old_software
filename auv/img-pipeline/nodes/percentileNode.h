@@ -28,6 +28,10 @@ class PercentileNode: public Node{
             // parameter: 
             registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
         }
+    
+        virtual ~PercentileNode(){
+            stop();
+        }
 
     protected:
         static std::string bar(float value, float max, int w){

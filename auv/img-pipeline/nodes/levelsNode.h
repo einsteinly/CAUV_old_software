@@ -30,6 +30,10 @@ class LevelsNode: public Node{
             registerParamID<int>("white level", 255);
             registerParamID<int>("black level", 0);
         }
+    
+        virtual ~LevelsNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

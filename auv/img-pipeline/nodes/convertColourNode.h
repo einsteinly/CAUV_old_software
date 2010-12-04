@@ -28,6 +28,10 @@ class ConvertColourNode: public Node{
             registerParamID<std::string>("output format", "grey",
                                          "output format: rgb or grey");
         }
+    
+        virtual ~ConvertColourNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

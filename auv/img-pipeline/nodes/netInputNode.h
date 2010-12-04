@@ -26,6 +26,10 @@ class NetInputNode: public InputNode{
             // one parameter: the source camera
             registerParamID<int>("camera id", CameraID::Forward);
         }
+    
+        virtual ~NetInputNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

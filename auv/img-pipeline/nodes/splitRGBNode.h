@@ -26,6 +26,10 @@ class SplitRGBNode: public Node{
             registerOutputID<image_ptr_t>("G");
             registerOutputID<image_ptr_t>("B");
         }
+    
+        virtual ~SplitRGBNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

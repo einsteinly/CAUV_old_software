@@ -70,6 +70,12 @@ class Node{
         Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
         virtual ~Node();
 
+        /* Destructors of derived types that have any member variables should
+         * call this FIRST: it will only return when exec() has finished and it
+         * is safe to continue destructing.
+         */
+        void stop();
+
         NodeType::e const& type() const;
         node_id const& id() const;
         

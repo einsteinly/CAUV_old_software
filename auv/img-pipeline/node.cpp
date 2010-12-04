@@ -43,7 +43,12 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
 }
 
 Node::~Node(){
-    debug(-3) << BashColour::Purple << "~Node" << *this << ", waiting for pending exec";
+    if(allowQueue())
+        error() << type() << " does not correctly stop() before destructing!";
+}
+
+void Node::stop(){
+    debug(-3) << BashColour::Purple << "stop()" << *this << ", waiting for pending exec";
     clearAllowQueue();
     // wait for any last execution of the node to finish
     m_exec_queued_lock.lock();
@@ -54,7 +59,7 @@ Node::~Node(){
         m_exec_queued_lock.lock();
     }
     m_exec_queued_lock.unlock();
-    debug(-3) << BashColour::Purple << "~Node" << *this << ", done";
+    debug(-3) << BashColour::Purple << "stop()" << *this << ", done";
 }
 
 NodeType::e const& Node::type() const{

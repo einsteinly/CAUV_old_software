@@ -31,6 +31,7 @@ class CameraInputNode: public AsynchronousNode{
         }
 
         virtual ~CameraInputNode(){
+            stop();
             m_capture = cv::VideoCapture();
             if(m_current_device != -1)
                 m_capture_lock[m_current_device].unlock();

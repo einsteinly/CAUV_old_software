@@ -32,6 +32,10 @@ class BilateralFilterNode: public Node{
             registerParamID<float>("sigmaColour", 0);
             registerParamID<float>("sigmaSpace", 5);
         }
+    
+        virtual ~BilateralFilterNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

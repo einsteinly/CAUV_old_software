@@ -32,6 +32,10 @@ class MixValueNode: public Node{
             registerParamID<int>("ch2", 0);
             registerParamID<int>("ch3", 0);
         }
+    
+        virtual ~MixValueNode(){
+            stop();
+        }
 
     protected:
 
