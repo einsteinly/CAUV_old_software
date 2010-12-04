@@ -10,5 +10,5 @@ export PYTHON_PATH="$SCRIPTING_DIR:$PYTHONPATH"
 #echo "LD path: $LD_LIBRARY_PATH"
 #echo "DYLD path: $DYLD_LIBRARY_PATH"
 
-python $1
+python $@
 
