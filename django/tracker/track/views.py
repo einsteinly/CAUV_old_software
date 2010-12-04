@@ -86,7 +86,12 @@ def view_project(request):
     
 def view_bag(request, ref):
     p = Project.from_pitzdir(settings.PITZ_DIR)
-    bag = disp_bag(p.__getattribute__(ref),ref)
+    pitz_bag = p.__getattribute__(ref)
+    for f in request.GET.getlist('filter'):
+        name, expr, value = f.split(',')
+        if expr == u'eq':
+            pitz_bag = pitz_bag.matches_dict(**{name:value})
+    bag = disp_bag(pitz_bag,ref)
     return render_to_response('view_bag.html', locals())
     
 def view_entity(request, uuid):
