@@ -1,0 +1,247 @@
+components: []
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-11-22 21:05:37.826303
+description: "See backtrace below. Probably because a zero-size or otherwise invalid\
+  \ image\nis being serialised.\n\n\nProgram received signal SIGABRT, Aborted.\n[Switching\
+  \ to Thread 0xb6dffb70 (LWP 6375)]\n0x0012d422 in __kernel_vsyscall ()\n(gdb) bt\n\
+  #0  0x0012d422 in __kernel_vsyscall ()\n#1  0x008d44d1 in *__GI_raise (sig=6) at\
+  \ ../nptl/sysdeps/unix/sysv/linux/raise.c:64\n#2  0x008d7932 in *__GI_abort () at\
+  \ abort.c:92\n#3  0x008304df in __gnu_cxx::__verbose_terminate_handler() () from\
+  \ /usr/lib/libstdc++.so.6\n#4  0x0082e415 in ?? () from /usr/lib/libstdc++.so.6\n\
+  #5  0x0082e452 in std::terminate() () from /usr/lib/libstdc++.so.6\n#6  0x0082e591\
+  \ in __cxa_throw () from /usr/lib/libstdc++.so.6\n#7  0x002b9963 in cv::error (exc=...)\
+  \ at cxcore/cxsystem.cpp:194\n#8  0x003dfae9 in cv::imencode (ext=..., image=...,\
+  \ buf=..., params=...) at highgui/loadsave.cpp:422\n#9  0x08390dee in void Image::save<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) const ()\n#10 0x0838ed5c in void boost::serialization::access::member_save<boost::archive::binary_oarchive,\
+  \ Image const>(boost::archive::binary_oarchive&, Image const&, unsigned int) ()\n\
+  #11 0x0838d773 in boost::serialization::detail::member_saver<boost::archive::binary_oarchive,\
+  \ Image>::invoke(boost::archive::binary_oarchive&, Image const&, unsigned int) ()\n\
+  #12 0x0838d272 in void boost::serialization::split_member<boost::archive::binary_oarchive,\
+  \ Image>(boost::archive::binary_oarchive&, Image&, unsigned int) ()\n#13 0x0838ca7d\
+  \ in void Image::serialize<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) ()\n#14 0x0838c598 in void boost::serialization::access::serialize<boost::archive::binary_oarchive,\
+  \ Image>(boost::archive::binary_oarchive&, Image&, unsigned int) ()\n#15 0x0838bf88\
+  \ in void boost::serialization::serialize<boost::archive::binary_oarchive, Image>(boost::archive::binary_oarchive&,\
+  \ Image&, unsigned int) ()\n#16 0x0838b3e6 in void boost::serialization::serialize_adl<boost::archive::binary_oarchive,\
+  \ Image>(boost::archive::binary_oarchive&, Image&, unsigned int) ()\n#17 0x08387d89\
+  \ in boost::archive::detail::oserializer<boost::archive::binary_oarchive, Image>::save_object_data(boost::archive::detail::basic_oarchive&,\
+  \ void const*) const ()\n#18 0x006c7e2f in boost::archive::detail::basic_oarchive::save_object(void\
+  \ const*, boost::archive::detail::basic_oserializer const&) () from /usr/lib/libboost_serialization.so.1.43.0\n\
+  #19 0x0837855e in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_standard::invoke<Image>(boost::archive::binary_oarchive&,\
+  \ Image const&) ()\n#20 0x08377c8b in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_conditional::invoke<Image>(boost::archive::binary_oarchive&,\
+  \ Image const&) ()\n#21 0x083772cf in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::invoke<Image>(boost::archive::binary_oarchive&,\
+  \ Image const&) ()\n#22 0x0837690a in void boost::archive::save<boost::archive::binary_oarchive,\
+  \ Image const>(boost::archive::binary_oarchive&, Image const&) ()\n#23 0x08375bf6\
+  \ in void boost::archive::detail::common_oarchive<boost::archive::binary_oarchive>::save_override<Image\
+  \ const>(Image const&, int) ()\n#24 0x083751bf in void boost::archive::basic_binary_oarchive<boost::archive::binary_oarchive>::save_override<Image>(Image\
+  \ const&, int) ()\n#25 0x08374806 in void boost::archive::binary_oarchive_impl<boost::archive::binary_oarchive,\
+  \ char, std::char_traits<char> >::save_override<Image>(Image&, int) ()\n#26 0x083738b8\
+  \ in boost::archive::binary_oarchive& boost::archive::detail::interface_oarchive<boost::archive::binary_oarchive>::operator<<\
+  \ <Image>(Image&) ()#27 0x0836f4cb in void GuiImageMessage::save<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) const ()\n#28 0x0836e41a in void boost::serialization::access::member_save<boost::archive::binary_oarchive,\
+  \ GuiImageMessage const>(boost::archive::binary_oarchive&, GuiImageMessage const&,\
+  \ unsigned int) ()\n#29 0x0836d791 in boost::serialization::detail::member_saver<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>::invoke(boost::archive::binary_oarchive&, GuiImageMessage const&,\
+  \ unsigned int) ()\n#30 0x0836cb06 in void boost::serialization::split_member<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#31 0x0836b863 in void GuiImageMessage::serialize<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) ()\n#32 0x08368305 in void boost::serialization::access::serialize<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#33 0x08366828 in void boost::serialization::serialize<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#34 0x0835e767 in void boost::serialization::serialize_adl<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#35 0x0835307f in boost::archive::detail::oserializer<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>::save_object_data(boost::archive::detail::basic_oarchive&, void\
+  \ const*) const ()\n#36 0x006c7e2f in boost::archive::detail::basic_oarchive::save_object(void\
+  \ const*, boost::archive::detail::basic_oserializer const&) () from /usr/lib/libboost_serialization.so.1.43.0\n\
+  #37 0x0832d6db in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_standard::invoke<GuiImageMessage>(boost::archive::binary_oarchive&,\
+  \ GuiImageMessage const&) ()\n#38 0x0832c3b3 in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_conditional::invoke<GuiImageMessage>(boost::archive::binary_oarchive&,\
+  \ GuiImageMessage const&) ()#39 0x0832b4cb in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::invoke<GuiImageMessage>(boost::archive::binary_oarchive&,\
+  \ GuiImageMessage const&) ()\n#40 0x0832578d in void boost::archive::save<boost::archive::binary_oarchive,\
+  \ GuiImageMessage const>(boost::archive::binary_oarchive&, GuiImageMessage const&)\
+  \ ()\n#41 0x08321768 in void boost::archive::detail::common_oarchive<boost::archive::binary_oarchive>::save_override<GuiImageMessage\
+  \ const>(GuiImageMessage const&, int) ()\n#42 0x0831b427 in void boost::archive::basic_binary_oarchive<boost::archive::binary_oarchive>::save_override<GuiImageMessage>(GuiImageMessage\
+  \ const&, int) ()\n#43 0x08310d8e in void boost::archive::binary_oarchive_impl<boost::archive::binary_oarchive,\
+  \ char, std::char_traits<char> >::save_override<GuiImageMessage const>(GuiImageMessage\
+  \ const&, int) ()\n\n\n#44 0x083000d8 in boost::archive::binary_oarchive& boost::archive::detail::interface_oarchive<boost::archive::binary_oarchive>::operator<<\
+  \ <GuiImageMessage const>(GuiImageMessage const&) ()\n#45 0x082e97ce in boost::archive::binary_oarchive&\
+  \ boost::archive::detail::interface_oarchive<boost::archive::binary_oarchive>::operator&<GuiImageMessage\
+  \ const>(GuiImageMessage const&) ()\n#46 0x082c844a in GuiImageMessage::toBytes()\
+  \ const ()\n#47 0x083b49fd in SpreadMailbox::doSendMessage(boost::shared_ptr<Message\
+  \ const>, int, boost::shared_ptr<ssrcspread_v1_0_5::GroupList>) ()\n#48 0x083b4e3b\
+  \ in SpreadMailbox::sendMessage(boost::shared_ptr<Message const>, int, std::string\
+  \ const&) ()\n#49 0x083bb367 in ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<Message\
+  \ const>, int, std::string const&) ()\n#50 0x083bb1be in ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<Message\
+  \ const>, int) ()\n#51 0x081fb602 in ImageProcessor::sendMessage(boost::shared_ptr<Message\
+  \ const>, int) const ()\n#52 0x0821c96b in Node::sendMessage(boost::shared_ptr<Message\
+  \ const>, int) ()\n#53 0x08259d8b in GuiOutputNode::doWork(std::map<std::string,\
+  \ boost::shared_ptr<Image>, std::less<std::string>, std::allocator<std::pair<std::string\
+  \ const, boost::shared_ptr<Image> > > >&) ()\n#54 0x0821a7c0 in Node::exec() ()\n\
+  #55 0x08245fec in ImgPipelineThread::operator()() ()\n---Type <return> to continue,\
+  \ or q <return> to quit---\n#56 0x0824e88a in boost::detail::thread_data<ImgPipelineThread>::run()\
+  \ ()\n#57 0x0068a825 in thread_proxy () from /usr/lib/libboost_thread.so.1.43.0\n\
+  #58 0x0066c80e in start_thread (arg=0xb6dffb70) at pthread_create.c:300\n#59 0x00976a0e\
+  \ in clone () at ../sysdeps/unix/sysv/linux/i386/clone.S:130\n(gdb) q\nA debugging\
+  \ session is active.\n\n        Inferior 1 [process 6370] will be killed.\n\nQuit\
+  \ anyway? (y or n) n\nNot confirmed.\n(gdb) thread apply\nPlease specify a thread\
+  \ ID list\n(gdb) thread aply all bt\nNo symbol \"aply\" in current context.\n(gdb)\
+  \ thread apply all bt\n\nThread 8 (Thread 0xb4dfbb70 (LWP 6379)):\n#0  0x0012d422\
+  \ in __kernel_vsyscall ()\n#1  0x00670e15 in pthread_cond_wait@@GLIBC_2.3.2 () at\
+  \ ../nptl/sysdeps/unix/sysv/linux/i386/i686/../i486/pthread_cond_wait.S:122\n#2\
+  \  0x0824992c in void boost::condition_variable_any::wait<boost::unique_lock<boost::mutex>\
+  \ >(boost::unique_lock<boost::mutex>&) ()\n#3  0x0824896e in BlockingQueue<Node*>::popWait()\
+  \ ()\n#4  0x0824699f in Scheduler::waitNextJob(SchedulerPriority) ()\n#5  0x08245fd4\
+  \ in ImgPipelineThread::operator()() ()\n#6  0x0824e88a in boost::detail::thread_data<ImgPipelineThread>::run()\
+  \ ()\n#7  0x0068a825 in thread_proxy () from /usr/lib/libboost_thread.so.1.43.0#8\
+  \  0x0066c80e in start_thread (arg=0xb4dfbb70) at pthread_create.c:300\n#9  0x00976a0e\
+  \ in clone () at ../sysdeps/unix/sysv/linux/i386/clone.S:130\n\nThread 7 (Thread\
+  \ 0xb55fcb70 (LWP 6378)):\n#0  0x0012d422 in __kernel_vsyscall ()\n#1  0x00670e15\
+  \ in pthread_cond_wait@@GLIBC_2.3.2 () at ../nptl/sysdeps/unix/sysv/linux/i386/i686/../i486/pthread_cond_wait.S:122\n\
+  #2  0x0824992c in void boost::condition_variable_any::wait<boost::unique_lock<boost::mutex>\
+  \ >(boost::unique_lock<boost::mutex>&) ()\n#3  0x0824896e in BlockingQueue<Node*>::popWait()\
+  \ ()\n#4  0x0824699f in Scheduler::waitNextJob(SchedulerPriority) ()\n#5  0x08245fd4\
+  \ in ImgPipelineThread::operator()() ()\n#6  0x0824e88a in boost::detail::thread_data<ImgPipelineThread>::run()\
+  \ ()\n#7  0x0068a825 in thread_proxy () from /usr/lib/libboost_thread.so.1.43.0#8\
+  \  0x0066c80e in start_thread (arg=0xb55fcb70) at pthread_create.c:300\n#9  0x00976a0e\
+  \ in clone () at ../sysdeps/unix/sysv/linux/i386/clone.S:130\n\nThread 6 (Thread\
+  \ 0xb5dfdb70 (LWP 6377)):\n#0  0x0012d422 in __kernel_vsyscall ()\n#1  0x00670e15\
+  \ in pthread_cond_wait@@GLIBC_2.3.2 () at ../nptl/sysdeps/unix/sysv/linux/i386/i686/../i486/pthread_cond_wait.S:122\n\
+  \n#3  0x0824896e in BlockingQueue<Node*>::popWait() ()\n#4  0x0824699f in Scheduler::waitNextJob(SchedulerPriority)\
+  \ ()\n#5  0x08245fd4 in ImgPipelineThread::operator()() ()\n#6  0x0824e88a in boost::detail::thread_data<ImgPipelineThread>::run()\
+  \ ()\n#7  0x0068a825 in thread_proxy () from /usr/lib/libboost_thread.so.1.43.0\n\
+  #8  0x0066c80e in start_thread (arg=0xb5dfdb70) at pthread_create.c:300\n#9  0x00976a0e\
+  \ in clone () at ../sysdeps/unix/sysv/linux/i386/clone.S:130\n\nThread 5 (Thread\
+  \ 0xb65feb70 (LWP 6376)):\n#0  0x0012d422 in __kernel_vsyscall ()\n#1  0x0096fb71\
+  \ in select () from /lib/tls/i686/cmov/libc.so.6\n#2  0x003eb2dc in mainloop_v4l2\
+  \ (capture=0x85fc490) at highgui/cvcap_v4l.cpp:1233\n#3  0x003eb5fc in icvGrabFrameCAM_V4L\
+  \ (this=0x85ea698) at highgui/cvcap_v4l.cpp:1323\n#4  CvCaptureCAM_V4L_CPP::grabFrame\
+  \ (this=0x85ea698) at highgui/cvcap_v4l.cpp:2822\n#5  0x003e5903 in cvGrabFrame\
+  \ (capture=0x0) at highgui/cvcap.cpp:72\n#6  0x003e5a66 in cv::VideoCapture::grab\
+  \ (this=0x85ef590) at highgui/cvcap.cpp:367\n#7  0x003e5f39 in cv::VideoCapture::operator>>\
+  \ (this=0x85ef590, image=...) at highgui/cvcap.cpp:390\n#8  0x08255982 in CameraInputNode::doWork(std::map<std::string,\
+  \ boost::shared_ptr<Image>, std::less<std::string>, std::allocator<std::pair<std::string\
+  \ const, boost::shared_ptr<Image> > > >&) ()\n#9  0x0821a7c0 in Node::exec() ()\n\
+  #10 0x08245fec in ImgPipelineThread::operator()() ()\n#11 0x0824e88a in boost::detail::thread_data<ImgPipelineThread>::run()\
+  \ ()\n#12 0x0068a825 in thread_proxy () from /usr/lib/libboost_thread.so.1.43.0\n\
+  #13 0x0066c80e in start_thread (arg=0xb65feb70) at pthread_create.c:300\n#14 0x00976a0e\
+  \ in clone () at ../sysdeps/unix/sysv/linux/i386/clone.S:130\n\nThread 4 (Thread\
+  \ 0xb6dffb70 (LWP 6375)):\n#0  0x0012d422 in __kernel_vsyscall ()\n---Type <return>\
+  \ to continue, or q <return> to quit---\n#1  0x008d44d1 in *__GI_raise (sig=6) at\
+  \ ../nptl/sysdeps/unix/sysv/linux/raise.c:64\n#2  0x008d7932 in *__GI_abort () at\
+  \ abort.c:92\n#3  0x008304df in __gnu_cxx::__verbose_terminate_handler() () from\
+  \ /usr/lib/libstdc++.so.6\n#4  0x0082e415 in ?? () from /usr/lib/libstdc++.so.6\n\
+  #5  0x0082e452 in std::terminate() () from /usr/lib/libstdc++.so.6\n#6  0x0082e591\
+  \ in __cxa_throw () from /usr/lib/libstdc++.so.6\n#7  0x002b9963 in cv::error (exc=...)\
+  \ at cxcore/cxsystem.cpp:194\n#8  0x003dfae9 in cv::imencode (ext=..., image=...,\
+  \ buf=..., params=...) at highgui/loadsave.cpp:422\n#9  0x08390dee in void Image::save<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) const ()\n#10 0x0838ed5c in void boost::serialization::access::member_save<boost::archive::binary_oarchive,\
+  \ Image const>(boost::archive::binary_oarchive&, Image const&, unsigned int) ()#11\
+  \ 0x0838d773 in boost::serialization::detail::member_saver<boost::archive::binary_oarchive,\
+  \ Image>::invoke(boost::archive::binary_oarchive&, Image const&, unsigned int) ()\n\
+  #12 0x0838d272 in void boost::serialization::split_member<boost::archive::binary_oarchive,\
+  \ Image>(boost::archive::binary_oarchive&, Image&, unsigned int) ()\n#13 0x0838ca7d\
+  \ in void Image::serialize<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) ()\n#14 0x0838c598 in void boost::serialization::access::serialize<boost::archive::binary_oarchive,\
+  \ Image>(boost::archive::binary_oarchive&, Image&, unsigned int) ()\n#15 0x0838bf88\
+  \ in void boost::serialization::serialize<boost::archive::binary_oarchive, Image>(boost::archive::binary_oarchive&,\
+  \ Image&, unsigned int) ()\n#16 0x0838b3e6 in void boost::serialization::serialize_adl<boost::archive::binary_oarchive,\
+  \ Image>(boost::archive::binary_oarchive&, Image&, unsigned int) ()\n#17 0x08387d89\
+  \ in boost::archive::detail::oserializer<boost::archive::binary_oarchive, Image>::save_object_data(boost::archive::detail::basic_oarchive&,\
+  \ void const*) const ()\n#18 0x006c7e2f in boost::archive::detail::basic_oarchive::save_object(void\
+  \ const*, boost::archive::detail::basic_oserializer const&) () from /usr/lib/libboost_serialization.so.1.43.0\n\
+  #19 0x0837855e in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_standard::invoke<Image>(boost::archive::binary_oarchive&,\
+  \ Image const&) ()\n#20 0x08377c8b in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_conditional::invoke<Image>(boost::archive::binary_oarchive&,\
+  \ Image const&) ()\n#21 0x083772cf in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::invoke<Image>(boost::archive::binary_oarchive&,\
+  \ Image const&) ()\n#22 0x0837690a in void boost::archive::save<boost::archive::binary_oarchive,\
+  \ Image const>(boost::archive::binary_oarchive&, Image const&) ()#23 0x08375bf6\
+  \ in void boost::archive::detail::common_oarchive<boost::archive::binary_oarchive>::save_override<Image\
+  \ const>(Image const&, int) ()\n#24 0x083751bf in void boost::archive::basic_binary_oarchive<boost::archive::binary_oarchive>::save_override<Image>(Image\
+  \ const&, int) ()\n#25 0x08374806 in void boost::archive::binary_oarchive_impl<boost::archive::binary_oarchive,\
+  \ char, std::char_traits<char> >::save_override<Image>(Image&, int) ()\n#26 0x083738b8\
+  \ in boost::archive::binary_oarchive& boost::archive::detail::interface_oarchive<boost::archive::binary_oarchive>::operator<<\
+  \ <Image>(Image&) ()\n#27 0x0836f4cb in void GuiImageMessage::save<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) const ()\n#28 0x0836e41a in void boost::serialization::access::member_save<boost::archive::binary_oarchive,\
+  \ GuiImageMessage const>(boost::archive::binary_oarchive&, GuiImageMessage const&,\
+  \ unsigned int) ()\n#29 0x0836d791 in boost::serialization::detail::member_saver<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>::invoke(boost::archive::binary_oarchive&, GuiImageMessage const&,\
+  \ unsigned int) ()\n\n#30 0x0836cb06 in void boost::serialization::split_member<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#31 0x0836b863 in void GuiImageMessage::serialize<boost::archive::binary_oarchive>(boost::archive::binary_oarchive&,\
+  \ unsigned int) ()\n#32 0x08368305 in void boost::serialization::access::serialize<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#33 0x08366828 in void boost::serialization::serialize<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#34 0x0835e767 in void boost::serialization::serialize_adl<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>(boost::archive::binary_oarchive&, GuiImageMessage&, unsigned\
+  \ int) ()\n#35 0x0835307f in boost::archive::detail::oserializer<boost::archive::binary_oarchive,\
+  \ GuiImageMessage>::save_object_data(boost::archive::detail::basic_oarchive&, void\
+  \ const*) const ()\n#36 0x006c7e2f in boost::archive::detail::basic_oarchive::save_object(void\
+  \ const*, boost::archive::detail::basic_oserializer const&) () from /usr/lib/libboost_serialization.so.1.43.0\n\
+  #37 0x0832d6db in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_standard::invoke<GuiImageMessage>(boost::archive::binary_oarchive&,\
+  \ GuiImageMessage const&) ()\n#38 0x0832c3b3 in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::save_conditional::invoke<GuiImageMessage>(boost::archive::binary_oarchive&,\
+  \ GuiImageMessage const&) ()\n#39 0x0832b4cb in void boost::archive::detail::save_non_pointer_type<boost::archive::binary_oarchive>::invoke<GuiImageMessage>(boost::archive::binary_oarchive&,\
+  \ GuiImageMessage const&) ()\n#40 0x0832578d in void boost::archive::save<boost::archive::binary_oarchive,\
+  \ GuiImageMessage const>(boost::archive::binary_oarchive&, GuiImageMessage const&)\
+  \ ()\n#41 0x08321768 in void boost::archive::detail::common_oarchive<boost::archive::binary_oarchive>::save_override<GuiImageMessage\
+  \ const>(GuiImageMessage const&, int) ()\n#42 0x0831b427 in void boost::archive::basic_binary_oarchive<boost::archive::binary_oarchive>::save_override<GuiImageMessage>(GuiImageMessage\
+  \ const&, int) ()\n#43 0x08310d8e in void boost::archive::binary_oarchive_impl<boost::archive::binary_oarchive,\
+  \ char, std::char_traits<char> >::save_override<GuiImageMessage const>(GuiImageMessage\
+  \ const&, int) ()\n#44 0x083000d8 in boost::archive::binary_oarchive& boost::archive::detail::interface_oarchive<boost::archive::binary_oarchive>::operator<<\
+  \ <GuiImageMessage const>(GuiImageMessage const&) ()\n#45 0x082e97ce in boost::archive::binary_oarchive&\
+  \ boost::archive::detail::interface_oarchive<boost::archive::binary_oarchive>::operator&<GuiImageMessage\
+  \ const>(GuiImageMessage const&) ()\n#46 0x082c844a in GuiImageMessage::toBytes()\
+  \ const ()\n#47 0x083b49fd in SpreadMailbox::doSendMessage(boost::shared_ptr<Message\
+  \ const>, int, boost::shared_ptr<ssrcspread_v1_0_5::GroupList>) ()\n#48 0x083b4e3b\
+  \ in SpreadMailbox::sendMessage(boost::shared_ptr<Message const>, int, std::string\
+  \ const&) ()\n#49 0x083bb367 in ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<Message\
+  \ const>, int, std::string const&) ()\n#50 0x083bb1be in ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<Message\
+  \ const>, int) ()\n#51 0x081fb602 in ImageProcessor::sendMessage(boost::shared_ptr<Message\
+  \ const>, int) const ()\n#52 0x0821c96b in Node::sendMessage(boost::shared_ptr<Message\
+  \ const>, int) ()\n#53 0x08259d8b in GuiOutputNode::doWork(std::map<std::string,\
+  \ boost::shared_ptr<Image>, std::less<std::string>, std::allocator<std::pair<std::string\
+  \ const, boost::shared_ptr<Image> > > >&) ()\n#54 0x0821a7c0 in Node::exec() ()\n\
+  #55 0x08245fec in ImgPipelineThread::operator()() ()\n#56 0x0824e88a in boost::detail::thread_data<ImgPipelineThread>::run()\
+  \ ()\n---Type <return> to continue, or q <return> to quit---\n#57 0x0068a825 in\
+  \ thread_proxy () from /usr/lib/libboost_thread.so.1.43.0\n#58 0x0066c80e in start_thread\
+  \ (arg=0xb6dffb70) at pthread_create.c:300\n#59 0x00976a0e in clone () at ../sysdeps/unix/sysv/linux/i386/clone.S:130\n\
+  \nThread 3 (Thread 0xb77d1b70 (LWP 6374)):\n#0  0x0012d422 in __kernel_vsyscall\
+  \ ()\n#1  0x0096fb71 in select () from /lib/tls/i686/cmov/libc.so.6\n#2  0x083b5091\
+  \ in SpreadMailbox::receiveMessage() ()\n#3  0x083bb924 in ReconnectingSpreadMailbox::receiveMessage()\
+  \ ()\n#4  0x083b1d9d in MailboxEventMonitor::doMonitoring() ()#5  0x083b3b55 in\
+  \ boost::_mfi::mf0<void, MailboxEventMonitor>::operator()(MailboxEventMonitor*)\
+  \ const ()\n#6  0x083b3af4 in void boost::_bi::list1<boost::_bi::value<MailboxEventMonitor*>\
+  \ >::operator()<boost::_mfi::mf0<void, MailboxEventMonitor>, boost::_bi::list0>(boost::_bi::type<void>,\
+  \ boost::_mfi::mf0<void, MailboxEventMonitor>&, boost::_bi::list0&, int) ()\n#7\
+  \  0x083b3ab4 in boost::_bi::bind_t<void, boost::_mfi::mf0<void, MailboxEventMonitor>,\
+  \ boost::_bi::list1<boost::_bi::value<MailboxEventMonitor*> > >::operator()() ()\n\
+  #8  0x083b3a76 in boost::detail::thread_data<boost::_bi::bind_t<void, boost::_mfi::mf0<void,\
+  \ MailboxEventMonitor>, boost::_bi::list1<boost::_bi::value<MailboxEventMonitor*>\
+  \ > > >::run() ()\n#9  0x0068a825 in thread_proxy () from /usr/lib/libboost_thread.so.1.43.0\n\
+  #10 0x0066c80e in start_thread (arg=0xb77d1b70) at pthread_create.c:300\n#11 0x00976a0e\
+  \ in clone () at ../sysdeps/unix/sysv/linux/i386/clone.S:130\n\nThread 1 (Thread\
+  \ 0xb7fd3760 (LWP 6370)):\n#0  0x0012d422 in __kernel_vsyscall ()\n#1  0x00671142\
+  \ in pthread_cond_timedwait@@GLIBC_2.3.2 () at ../nptl/sysdeps/unix/sysv/linux/i386/i686/../i486/pthread_cond_timedwait.S:179#2\
+  \  0x0068baf5 in boost::this_thread::sleep(boost::posix_time::ptime const&) () from\
+  \ /usr/lib/libboost_thread.so.1.43.0\n#3  0x082224c7 in void boost::this_thread::sleep<boost::date_time::subsecond_duration<boost::posix_time::time_duration,\
+  \ 1000ll> >(boost::date_time::subsecond_duration<boost::posix_time::time_duration,\
+  \ 1000ll> const&) ()\n#4  0x082b303e in msleep(unsigned int) ()\n#5  0x082a6627\
+  \ in CauvNode::run(bool) ()\n#6  0x08214864 in main ()"
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: 2010-12-04 12:02:13.825706
+owner: *id001
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+title: 'Fix img-pipeline crash on load (in serialisation: imencode)'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 110616937811986620707986484640412459057
+yaml_file_saved: 2010-12-04 12:02:13.832491
