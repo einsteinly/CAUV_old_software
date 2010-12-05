@@ -12,6 +12,7 @@ control/	- low-level control program: this program runs PID controllers and
               communicates in real-time to the Main Control Board
 img-pipeline/	- image processing pipeline code, see img-pipeline/nodes/ for
                   how to add a new type of image processing operation
+python-module/  - python module used by scripting/
 sonar/		- sonar library and standalone application for testing
 pinger/		- code for hydrophone communication / processing (unknown state?)
 debug/		- debug output library
