@@ -3,16 +3,15 @@ operation (and a few(!) test and development toys for some of that code).
 
 In order of importance and relevance:
 
-scripting/	- python scripts to control the high-level actions of the AUV, also
-              contains the c++ (boost-python) for the python access to the
-              messaging system.
+scripting/	- python scripts to control the high-level actions of the AUV
 common/		- library used by c++ programs to talk to the messaging system:
               provides some other common utilities
 control/	- low-level control program: this program runs PID controllers and
               communicates in real-time to the Main Control Board
 img-pipeline/	- image processing pipeline code, see img-pipeline/nodes/ for
                   how to add a new type of image processing operation
-python-module/  - python module used by scripting/
+python-module/  - python module used by scripting: contains the c++
+                  (boost-python) for the python access to the messaging system.
 sonar/		- sonar library and standalone application for testing
 pinger/		- code for hydrophone communication / processing (unknown state?)
 debug/		- debug output library
