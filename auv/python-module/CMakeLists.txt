@@ -33,16 +33,24 @@ add_custom_target (python-module ALL
             ${SRCD}/cauv/__init__.py
             ${SRCD}/cauv/messaging.py
             ${SRCD}/cauv/node.py
-    COMMENT "Python Module Target"
+    COMMENT "Python module target: copying skeleton components"
 )
 
-add_custom_target (python-module-test
-    export PYTHONPATH=$$PYTHONPATH:${BINDIR} && ${PYTHON_EXECUTABLE} ${SRCD}/module-test.py
-    DEPENDS python-module
-            module-test.py
-    SOURCES module-test.py
-    COMMENT "cauv python module test"
+add_custom_command (
+    TARGET python-module
+    POST_BUILD
+    COMMAND ln -sf ${BINDIR}/cauvinterface.so ${SRCD}/cauvinterface.so
+    COMMENT "Linking module back to source tree"
 )
+
+#add_custom_command (
+#    TARGET python-module
+#    POST_BUILD
+#    COMMAND export PYTHONPATH=$$PYTHONPATH:${BINDIR} && ${PYTHON_EXECUTABLE} ${SRCD}/module-test.py
+#    DEPENDS module-test.py
+#    SOURCES module-test.py
+#    COMMENT "CAUV python module test"
+#)
 
 # python-based message generation
 # how to generate messages.py

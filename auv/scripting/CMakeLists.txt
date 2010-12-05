@@ -1,28 +1,32 @@
 project (scripting)
 
-set (PYMODD ${PYTHON-MODULE_BUILD_DIR})
+set (PYMODD ${AUV_SOURCE_DIR}/python-module/)
+set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_package(PythonInterp)
 
 
 add_custom_target (scripting-test
-    export PYTHONPATH=$$PYTHONPATH:${PYMODD} && echo $$PYTHONPATH && gdb --args ${PYTHON_EXECUTABLE} ${SRCD}/pycauvtest.py -
+    export PYTHONPATH=$$PYTHONPATH:${PYMODD} && echo $$PYTHONPATH && gdb --args ${SRCD}/run.sh ${SRCD}/pycauvtest.py -
     DEPENDS pycauvtest.py
-            python-module
     SOURCES pycauvtest.py
     COMMENT "cauv python module test"
 )
+add_dependencies(scripting-test python-module)
+
 
 add_custom_target (scripting
-    DEPENDS python-module
     COMMENT "scripting target: depends on python-module"
 )
+add_dependencies(scripting python-module)
+
+message ("Python Module Build Dir: ${PYMODD}")
 
 add_custom_target (pycamtest
-    export PYTHONPATH=$$PYTHONPATH:${PYMODD} && ${PYTHON_EXECUTABLE} ${SRCD}/camtest.py 
+    export PYTHONPATH=$$PYTHONPATH:${PYMODD} && echo $$PYTHONPATH && ${SRCD}/run.sh ${SRCD}/camtest.py 
     DEPENDS camtest.py
-            python-module
     SOURCES pycauvtest.py
     COMMENT "cauv python module img-pipeline camera test"
 )
+add_dependencies(pycamtest python-module)
 
