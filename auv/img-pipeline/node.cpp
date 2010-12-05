@@ -43,22 +43,30 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
 }
 
 Node::~Node(){
-    if(allowQueue())
-        error() << type() << " does not correctly stop() before destructing!";
+    debug() << "~Node" << *this;
 }
 
 void Node::stop(){
-    debug(-3) << BashColour::Purple << "stop()" << *this << ", waiting for pending exec";
-    //clearAllowQueue();
-    // wait for any last execution of the node to finish
-    //m_exec_queued_lock.lock();
-    //while(m_exec_queued){
-    //    m_exec_queued_lock.unlock();
-    //    clearAllowQueue();
-    //    boost::this_thread::sleep(boost::posix_time::milliseconds(20));
-    //    m_exec_queued_lock.lock();
-    //}
-    //m_exec_queued_lock.unlock();
+    debug(-3) << BashColour::Purple << "stop()" << *this << "check...";
+    // check that the node is not executing: if it is then there should still
+    // be a shared pointer hanging around, and this node should not be being
+    // destroyed, so complain loudly!
+    int err = 0;
+    if(!m_parent_links_lock.try_lock())    err |= 1;
+    if(!m_child_links_lock.try_lock())     err |= 1 << 1;
+    if(!m_outputs_lock.try_lock())         err |= 1 << 2;
+    if(!m_parameters_lock.try_lock())      err |= 1 << 3;
+    if(!m_checking_sched_lock.try_lock())  err |= 1 << 4;
+    if(!m_exec_queued_lock.try_lock())     err |= 1 << 5;
+    if(!m_new_inputs_lock.try_lock())      err |= 1 << 6;
+    if(!m_valid_inputs_lock.try_lock())    err |= 1 << 7;
+    if(!m_new_paramvalues_lock.try_lock()) err |= 1 << 8;
+    if(!m_output_demanded_lock.try_lock()) err |= 1 << 9;
+    if(!m_allow_queue_lock.try_lock())     err |= 1 << 10;
+    
+    if(err)
+        error() << this << "SUPER BADNESS: destruct with locked mutexes:" << err;
+
     debug(-3) << BashColour::Purple << "stop()" << *this << ", done";
 }
 
@@ -587,7 +595,7 @@ void Node::checkAddSched() throw(){
 
     debug(4) << __func__ << "Queuing node:" << *this;
     setExecQueued();
-    m_sched.addJob(this, m_priority);
+    m_sched.addJob(shared_from_this(), m_priority);
 }
 
 void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p){

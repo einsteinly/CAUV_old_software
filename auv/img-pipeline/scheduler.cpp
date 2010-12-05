@@ -24,6 +24,7 @@ void ImgPipelineThread::operator()(){
 
         node_ptr_t job;
         while(true){
+            job.reset();
             job = m_sched->waitNextJob(m_priority);
             if(job)
                 job->exec();
@@ -72,9 +73,11 @@ void Scheduler::addJob(node_wkptr_t node, SchedulerPriority p) const
 }
 
 /**
- * Wait on the next available job of priority p
- * node_ptr_t() is returned if the scheduler is stopped, in this case
- * threads should return from their event loop
+ * Wait on the next available job of priority p: if a node has been destroyed
+ * (.lock() returns empty shared pointer) then continue to wait until there's a
+ * job from a node that is still alive.
+ * An empty shared pointer is returned if the scheduler is stopped, in this case
+ * threads should return from their event loop.
  */
 node_ptr_t Scheduler::waitNextJob(SchedulerPriority p)
 {
