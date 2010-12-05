@@ -1,6 +1,6 @@
 # required libraries:
 find_package (ssrcspread)
-include_directories (${ssrcspread_INCLUDE_DIRS} REQUIRED)
+include_directories (${ssrcspread_INCLUDE_DIR} REQUIRED)
 link_directories (${ssrcspread_LIBRARY_DIR})
 
 # abbreviate a little:
