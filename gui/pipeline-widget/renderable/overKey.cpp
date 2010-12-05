@@ -278,7 +278,8 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<Key>(c, Qt::Key_F10, 0, s, none, "F10"),
         boost::make_shared<Key>(c, Qt::Key_F11, 0, s, none, "F11"),
         boost::make_shared<Key>(c, Qt::Key_F12, 0, s, none, "F12"),
-        boost::make_shared<Key>(c, Qt::Key_Eject, 0, esc_box, none, "")
+        //boost::make_shared<Key>(c, Qt::Key_Eject, 0, esc_box, none, "") TODO: newer Qt
+        boost::make_shared<Key>(c, 0x010000b9, 0, esc_box, none, "")
     };
     for(unsigned i = 0; i < sizeof(top_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = top_row[i];
