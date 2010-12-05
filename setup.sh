@@ -21,8 +21,15 @@ else
     echo "umask 002" >> ${HOME}/.profile
 fi
 
+if [ -e "/homes/groups/other/sauc-e" ] ; then
+    CAUV_PROFILE="/homes/groups/other/sauc-e/cauv_profile"
+elif [ -e "/societies/cauv/" ] ; then
+    CAUV_PROFILE="/societies/cauv/cauv_profile"
+else
+    echo "Couldn't find the CAUV home directory, are you in the right groups?"
+    exit 1
+fi
 
-CAUV_PROFILE=/societies/cauv/cauv_profile
 SOURCE_CAUV_PROFILE="[ -f ${CAUV_PROFILE} ] && source ${CAUV_PROFILE}"
 if grep -Fqx "${SOURCE_CAUV_PROFILE}" ${HOME}/.profile ; then
     echo "already sourcing cauv_profile"
