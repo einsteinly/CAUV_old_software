@@ -49,16 +49,16 @@ Node::~Node(){
 
 void Node::stop(){
     debug(-3) << BashColour::Purple << "stop()" << *this << ", waiting for pending exec";
-    clearAllowQueue();
+    //clearAllowQueue();
     // wait for any last execution of the node to finish
-    m_exec_queued_lock.lock();
-    while(m_exec_queued){
-        m_exec_queued_lock.unlock();
-        clearAllowQueue();
-        boost::this_thread::sleep(boost::posix_time::milliseconds(20));
-        m_exec_queued_lock.lock();
-    }
-    m_exec_queued_lock.unlock();
+    //m_exec_queued_lock.lock();
+    //while(m_exec_queued){
+    //    m_exec_queued_lock.unlock();
+    //    clearAllowQueue();
+    //    boost::this_thread::sleep(boost::posix_time::milliseconds(20));
+    //    m_exec_queued_lock.lock();
+    //}
+    //m_exec_queued_lock.unlock();
     debug(-3) << BashColour::Purple << "stop()" << *this << ", done";
 }
 

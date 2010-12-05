@@ -11,6 +11,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 #include <boost/variant.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <utility/string.h>
 #include <common/cauv_utils.h>
@@ -23,7 +24,7 @@
 
 #include "pipelineTypes.h"
 
-class Node{
+class Node: public boost::enable_shared_from_this<Node>{
     public:
         // Public typedefs: used as return types
         typedef std::vector<NodeInput> msg_node_in_list_t;
