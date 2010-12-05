@@ -1,73 +1,40 @@
 project (scripting)
 
-# python-based message generation
-# how to generate messages.py
 set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 set (MSGSRCD ${AUV_SOURCE_DIR}/common)
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (BINDIR ${CMAKE_CURRENT_BINARY_DIR})
-add_custom_command (
-   OUTPUT ${SRCD}/emit_structs.cpp
-          ${SRCD}/emit_enums.cpp
-          ${SRCD}/emit_messages.cpp
-          ${SRCD}/emit_observers.cpp
-   WORKING_DIRECTORY ${PYMSGD}
-   COMMAND python msggen.py -l python -o "${SRCD}/" ${PYMSGD}/messages.msg 
-   DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/boostpy-emit_enums.cpp.template
-           ${PYMSGD}/boostpy-emit_structs.cpp.template
-           ${PYMSGD}/boostpy-emit_messages.cpp.template
-           ${PYMSGD}/boostpy-emit_observers.cpp.template
-           ${PYMSGD}/msggenyacc.py
-           ${PYMSGD}/msggenlex.py
-           ${PYMSGD}/messages.msg
-   COMMENT "Generating emit_*.cpp with messages-python" 
-)
+
+find_package(PythonInterp)
+find_package(PythonLibs)
+include_directories (${PYTHON_INCLUDE_DIRS})
 
 set (BJAM_NUM_JOBS 2)
-add_custom_command (
-    OUTPUT ${SRCD}/cauv/cauvinterface.so
-           ${SRCD}/cauv/libcommon.so
-    COMMAND bash -c '( export BJAM_BUILD_DIR=${BINDIR} \;
-                       bjam -j ${BJAM_NUM_JOBS} ${SRCD} )'
-    WORKING_DIRECTORY ${SRCD}
-    DEPENDS common
-            ${SRCD}/Jamroot
-            ${SRCD}/emit_structs.cpp
-            ${SRCD}/emit_enums.cpp
-            ${SRCD}/emit_messages.cpp
-            ${SRCD}/emit_observers.cpp
-            ${SRCD}/emit_static.cpp
-            ${SRCD}/workarounds.h
-            ${MSGSRCD}/messages.cpp
-            ${MSGSRCD}/image.cpp 
-            ${MSGSRCD}/cauv_node.cpp 
-            ${MSGSRCD}/cauv_global.cpp
-            ${MSGSRCD}/cauv_utils.cpp
-            ${MSGSRCD}/spread/mailbox_monitor.cpp
-            ${MSGSRCD}/spread/spread_mailbox.cpp
-            ${MSGSRCD}/spread/spread_messages.cpp
-    IMPLICIT_DEPENDS ${SRCD}/emit_structs.cpp
-                     ${SRCD}/emit_enums.cpp
-                     ${SRCD}/emit_messages.cpp
-                     ${SRCD}/emit_observers.cpp
-                     ${SRCD}/emit_static.cpp
-                     ${SRCD}/workarounds.h
-                     ${MSGSRCD}/messages.cpp
-                     ${MSGSRCD}/image.cpp 
-                     ${MSGSRCD}/cauv_node.cpp 
-                     ${MSGSRCD}/cauv_global.cpp
-                     ${MSGSRCD}/cauv_utils.cpp
-                     ${MSGSRCD}/spread/mailbox_monitor.cpp
-                     ${MSGSRCD}/spread/spread_mailbox.cpp
-                     ${MSGSRCD}/spread/spread_messages.cpp
-    COMMENT "Building cauv python module with bjam"
+
+link_libraries (boost_python)
+
+add_library (cauvinterface SHARED  
+    cauvinterfacemodule.cpp
+    emit_containers.cpp
+    emit_enums.cpp
+    emit_messages.cpp
+    emit_observers.cpp
+    emit_static.cpp
+    emit_structs.cpp
+    workarounds.h
+)
+set_target_properties(cauvinterface PROPERTIES PREFIX "")
+
+target_link_libraries (cauvinterface
+    common
+    cauv_debug
 )
 
+
 add_custom_target (scripting-test
-    gdb --args python ${SRCD}/pycauvtest.py
+    export PYTHONPATH=$$PYTHONPATH:${BINDIR} && echo $$PYTHONPATH && gdb --args ${PYTHON_EXECUTABLE} ${SRCD}/pycauvtest.py -
     DEPENDS pycauvtest.py
-            ${SRCD}/cauv/cauvinterface.so
+            cauvinterface
             ${SRCD}/cauv/__init__.py
             ${SRCD}/cauv/messaging.py
             ${SRCD}/cauv/node.py
@@ -78,19 +45,40 @@ add_custom_target (scripting-test
 add_custom_target (scripting
     echo "scripting built"
     DEPENDS camtest.py
-            ${SRCD}/cauv/cauvinterface.so
-            ${SRCD}/cauv/libcommon.so
+            cauvinterface
 )
 
 add_custom_target (pycamtest
-    python ${SRCD}/camtest.py 
+    ${PYTHON_EXECUTABLE} ${SRCD}/camtest.py 
     DEPENDS camtest.py
-            ${SRCD}/cauv/cauvinterface.so
+            cauvinterface
             ${SRCD}/cauv/__init__.py
             ${SRCD}/cauv/messaging.py
             ${SRCD}/cauv/node.py
             ${SRCD}/cauv/pipeline.py
     SOURCES pycauvtest.py
     COMMENT "cauv python module img-pipeline camera test"
+)
+
+# python-based message generation
+# how to generate messages.py
+add_custom_command (
+   OUTPUT ${SRCD}/emit_containers.cpp
+          ${SRCD}/emit_enums.cpp
+          ${SRCD}/emit_messages.cpp
+          ${SRCD}/emit_observers.cpp
+          ${SRCD}/emit_structs.cpp
+   WORKING_DIRECTORY ${PYMSGD}
+   COMMAND ./msggen.py -l python -o "${SRCD}/" ${PYMSGD}/messages.msg 
+   DEPENDS ${PYMSGD}/msggen.py
+           ${PYMSGD}/boostpy-emit_containers.cpp.template
+           ${PYMSGD}/boostpy-emit_enums.cpp.template
+           ${PYMSGD}/boostpy-emit_messages.cpp.template
+           ${PYMSGD}/boostpy-emit_observers.cpp.template
+           ${PYMSGD}/boostpy-emit_structs.cpp.template
+           ${PYMSGD}/msggenyacc.py
+           ${PYMSGD}/msggenlex.py
+           ${PYMSGD}/messages.msg
+   COMMENT "Generating emit_*.cpp with messages-python" 
 )
 
