@@ -471,7 +471,7 @@ void PipelineWidget::paintGL(){
 void PipelineWidget::resizeGL(int width, int height){
     m_win_aspect = sqrt(double(width) / height);
     m_win_scale = sqrt(width*height);
-    debug(2) << __func__
+    debug(3) << __func__
             << "width=" << width << "height=" << height
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale;
 
@@ -555,18 +555,18 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
     lock_t l(m_lock);
-    if((m_menu && !m_menu->keyPressEvent(event)) || !m_menu)
+    if(m_menu)
+        m_menu->keyPressEvent(event);
+    else
         m_overkey->keyPressEvent(event);
-        //if(!m_overkey->keyPressEvent(event))
-        //    QWidget::keyPressEvent(event);
 }
 
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     lock_t l(m_lock);
-    if((m_menu && !m_menu->keyReleaseEvent(event)) || !m_menu)
-        m_overkey->keyReleaseEvent(event);
-        //if(!m_overkey->keyReleaseEvent(event))
-        //    QWidget::keyReleaseEvent(event);
+    if(m_menu)
+        m_menu->keyReleaseEvent(event);
+    // always send key release events: otherwise keys can get stuck on
+    m_overkey->keyReleaseEvent(event);
 }
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
@@ -608,7 +608,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
         // else zoom, (TODO)
     }else{
         for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
-            debug(2) << "sending mouse move event to" << *i;
+            debug(4) << "sending mouse move event to" << *i;
             (*i)->mouseMoveEvent(MouseEvent(event, *i, *this));
         }
     }
@@ -634,7 +634,7 @@ void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
 void PipelineWidget::updateProjection(){
     double w = (m_win_scale * m_win_aspect) / m_world_size;
     double h = (m_win_scale / m_win_aspect) / m_world_size;
-    debug(2) << __func__
+    debug(3) << __func__
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit
@@ -651,7 +651,7 @@ void PipelineWidget::updateProjection(){
 void PipelineWidget::projectionForPicking(int mouse_win_x, int mouse_win_y){
     double w = (m_win_scale * m_win_aspect) / m_world_size;
     double h = (m_win_scale / m_win_aspect) / m_world_size;
-    debug(2) << __func__
+    debug(3) << __func__
             << "w=" << w << "h=" << h
             << "aspect=" << m_win_aspect << "scale=" << m_win_scale
             << "res=" << m_pixels_per_unit

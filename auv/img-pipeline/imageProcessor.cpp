@@ -106,12 +106,12 @@ void ImageProcessor::removeNode(node_id const& id){
     l.unlock();
 
     /* since the graph is linked both ways we have to unlink the node from
-     * it's neighbors _and_ unlink the neighbors from the node
+     * it's neighbours _and_ unlink the neighbours from the node
      */
     BOOST_FOREACH(node_ptr_t p, n->parents())
-        if(p) p->clearOutputs(n); else error() << "bad parent of node" << n;
+        if(p) p->clearOutputs(n);
     BOOST_FOREACH(node_ptr_t p, n->children())
-        if(p) p->clearInputs(n); else error() << "bad child of node" << n;
+        if(p) p->clearInputs(n);
     n->clearOutputs();
     n->clearInputs();
     

@@ -1,0 +1,41 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-05 11:40:34.916251
+description: 'There are significant library organiation changes in OpenCV 2.2, but
+  also the
+
+  introduction of lots of new shiny things (like gpu-scceleration) that we''re
+
+  going to want to use.
+
+
+  This will require some changes to our CMake find-opencv script: this script
+
+  (or, rather, a better replacement for it) may even be included in CMake now.
+
+
+  Some source code changes are also likely to be necessary.
+
+
+  See http://opencv.willowgarage.com/wiki/OpenCV%20Change%20Logs for changelogs.
+
+  In particular we should be using CV_RGB2HSV_FULL for colour conversion.'
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: *id001
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+pscore: 0
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+title: Update to OpenCV 2.2
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 147378121427258628850633717783871382464
+yaml_file_saved: 2010-12-05 11:40:34.919121

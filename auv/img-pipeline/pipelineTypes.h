@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/variant.hpp>
 
 class Node;
@@ -65,6 +66,7 @@ enum SchedulerPriority {
 typedef boost::variant<int32_t, float, std::string, bool> param_value_t;
 
 typedef boost::shared_ptr<Node> node_ptr_t;
+typedef boost::weak_ptr<Node> node_wkptr_t;
 
 typedef int32_t node_id;
 typedef std::string param_id;
