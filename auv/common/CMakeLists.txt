@@ -48,5 +48,36 @@ target_link_libraries (
     boost_iostreams
     boost_program_options
 )
+
+# dynamic lib:
+add_library (
+    common-shared SHARED
+    EXCLUDE_FROM_ALL
+    
+    cauv_global.cpp
+    cauv_node.cpp
+    cauv_utils.cpp
+    image.cpp
+    messages.cpp
+    spread/mailbox_monitor.cpp
+    spread/spread_mailbox.cpp
+    spread/spread_rc_mailbox.cpp
+    spread/spread_messages.cpp
+)
+target_link_libraries (
+    common-shared
+
+    ${ssrcspread_LIBRARIES}
+    #"libssrcspread.so"
+    cauv_debug
+    ${OpenCV_LIBS}
+    boost_thread
+    boost_serialization
+    boost_date_time
+    boost_iostreams
+    boost_program_options
+)
+
 add_dependencies(common logo-shared messages-shared)
+add_dependencies(common-shared logo-shared messages-shared)
 
