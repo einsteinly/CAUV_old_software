@@ -20,7 +20,7 @@ inline static T round(T const& v){
     return std::floor(v+0.5);
 }
 
-template<typename T>
+/*template<typename T>
 inline static T min(T const& a, T const& b){
     return a < b? a : b;
 }
@@ -28,7 +28,7 @@ inline static T min(T const& a, T const& b){
 template<typename T>
 inline static T max(T const& a, T const& b){
     return a > b? a : b;
-}
+}*/
 
 template<typename TRet, typename TLow, typename TVal, typename THigh>
 inline static TRet clamp_cast(TLow const& low, TVal const& value, THigh const& high){

@@ -762,7 +762,7 @@ float OverKey::_alphaFrac() const{
     
     //
     if(/*key_held*/ keys_actually_held && (delta > 0.4 || keys_actually_held > 1)){
-        r = max(0.8f, r);
+        r = std::max(0.8f, r);
     }
     
     return r;

@@ -11,8 +11,7 @@ target_link_libraries (
     common
     camera
     boost_date_time
-    cv
-    highgui
+    ${OpenCV_LIBS}
 )
 
 

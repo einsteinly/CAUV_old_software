@@ -2,10 +2,11 @@
 
 #include <QtGui>
 
+#include <cmath>
+#include <algorithm>
+
 #include <boost/thread.hpp>
 #include <boost/ref.hpp>
-
-#include <cmath>
 
 #include <common/bash_cout.h>
 #include <common/cauv_utils.h>
@@ -679,10 +680,10 @@ void PipelineWidget::drawGrid(){
     // projected window coordinates:
     const double divisor = 2 * m_pixels_per_unit;
     const double edge = m_world_size * m_win_scale / 2;
-    const double min_x = max(-m_win_centre.x - width()  / divisor, -edge);
-    const double min_y = max(-m_win_centre.y - height() / divisor, -edge);
-    const double max_x = min(-m_win_centre.x + width()  / divisor, edge);
-    const double max_y = min(-m_win_centre.y + height() / divisor, edge);
+    const double min_x = std::max(-m_win_centre.x - width()  / divisor, -edge);
+    const double min_y = std::max(-m_win_centre.y - height() / divisor, -edge);
+    const double max_x = std::min(-m_win_centre.x + width()  / divisor, edge);
+    const double max_y = std::min(-m_win_centre.y + height() / divisor, edge);
 
     const int min_grid_minor_x = roundZ(min_x / grid_minor_spacing);
     const int min_grid_minor_y = roundZ(min_y / grid_minor_spacing);
@@ -830,7 +831,7 @@ void PipelineWidget::iterateLayout(){
             np2 = n2->second;
             displ = vec_t(np2->m_pos + ah2->m_pos - np1->m_pos - ah1->m_pos);
             // this force never repels
-            force = displ.unit() * min<float>(0.0f,
+            force = displ.unit() * std::min<float>(0.0f,
                 arc_length_0 +
                 displ.len() * arc_length_1 +
                 displ.sxx() * arc_length_2
@@ -854,7 +855,7 @@ void PipelineWidget::iterateLayout(){
             if(displ.sxx() == 0)
                 displ = vec_t(0.01, 0.01);
             // this force never attracts:
-            force = displ.unit() * max<float>(0.0f,
+            force = displ.unit() * std::max<float>(0.0f,
                 overlap.area() * node_area_1 +
                 node_dist_0 + 
                 displ.len() * node_dist_1 +

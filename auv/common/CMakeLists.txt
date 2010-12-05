@@ -1,7 +1,9 @@
 # required libraries:
-find_package (ssrcspread)
+find_package (ssrcspread REQUIRED)
 include_directories (${ssrcspread_INCLUDE_DIR} REQUIRED)
 link_directories (${ssrcspread_LIBRARY_DIR})
+
+find_package (OpenCV REQUIRED)
 
 # abbreviate a little:
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
@@ -12,7 +14,7 @@ set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 add_custom_command (
    OUTPUT ${SRCD}/messages.cpp
 #   WORKING_DIRECTORY ${PYMSGD}
-   COMMAND python ${PYMSGD}/msggen.py -l "c++-impl" -o ${SRCD}/messages ${PYMSGD}/messages.msg 
+   COMMAND ${PYMSGD}/msggen.py -l "c++-impl" -o ${SRCD}/messages ${PYMSGD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
            ${PYMSGD}/message.template.cpp
            ${PYMSGD}/msggenyacc.py
