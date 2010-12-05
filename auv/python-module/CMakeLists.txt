@@ -33,7 +33,7 @@ add_custom_target (python-module ALL
             ${SRCD}/cauv/__init__.py
             ${SRCD}/cauv/messaging.py
             ${SRCD}/cauv/node.py
-    COMMENT "Python module target: copying skeleton components"
+    COMMENT "Python module target: depending on .py files"
 )
 
 add_custom_command (
