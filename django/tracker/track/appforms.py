@@ -31,7 +31,9 @@ def get_EntityChoiceField(entity_type):
                 super(EntityChoiceField, self).__init__(choices=[[e.uuid, e] for e in self.entity_type.all()], **kwargs)
         def clean(self, value):
             uuid = super(EntityChoiceField, self).clean(value)
-            return self.entity_type.all().by_uuid(UUID(uuid))
+            if uuid:
+                return self.entity_type.all().by_uuid(UUID(uuid))
+            return None
     EntityChoiceField.entity_type = entity_type
     return EntityChoiceField
 

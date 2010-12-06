@@ -45,11 +45,25 @@
     </div>
 </div>
 {% endfor %}
-
-{% for type,values in entity.related.by_type.items %}
+{% for bag, field in related %}
+<div class="bag">
+    <div class="{{ bag.ref }}">
+        <div class="item_key"> {{ bag.ref }} - <a href="/add/entity/{{ bag.ref }}/?{{ field }}={{ entity.uuid }}">Add new</a></div>
+        <ul>
+        {% for e in bag.elements %}
+        <li>
+        <h4><a href="/view/entity/{{ e.uuid }}">{{ e.title }}</a></h4>
+        {{ e.description|force_escape|linebreaksbr }}
+        </li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endfor %}
+{% for type, values in related2.by_type.items %}
 <div class="bag">
     <div class="{{ type }}">
-        <div class="item_key"> {{ type }}{{ values|pluralize }} </div>
+        <div class="item_key"> {{ type }}{{ values|pluralize }}</div>
         <ul>
         {% for e in values %}
         <li>
@@ -61,5 +75,4 @@
     </div>
 </div>
 {% endfor %}
-
 {% endblock %}
