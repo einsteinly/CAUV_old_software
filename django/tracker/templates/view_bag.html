@@ -3,6 +3,7 @@
 {% block content %}
 <div class="bag">
     <div class="item_key"> {{ bag.title }} </div>
+    <div id="toolbox"><a href="/add/entity/{{ bag.ref }}">Add</a></div>
     <ul>
     {% for entity in bag.elements %}
     <li><a href="/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
