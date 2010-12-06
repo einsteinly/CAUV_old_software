@@ -36,7 +36,8 @@ enum NodeType : int8 {
     VideoFileOutput = 27,
     Invert = 28,
     KMeans = 29,
-    MixValue = 30
+    MixValue = 30,
+    GrabCut = 32
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

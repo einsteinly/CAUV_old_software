@@ -481,6 +481,11 @@ void Node::postMenu(menu_ptr_t m, Point const& p, bool r){
     m_context->postMenu(m, p, r);
 }
 
+void Node::postText(const std::string &text, const std::string &font)
+{
+	m_context->postText(text,font);
+}
+
 void Node::removeMenu(menu_ptr_t m){
     m_context->removeMenu(m);
 }

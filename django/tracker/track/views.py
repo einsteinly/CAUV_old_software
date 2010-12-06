@@ -64,7 +64,7 @@ class disp_entity():
         #    print x.plural_name
         #    print [disp_property(y, x[y]) for y in x]
         #self.related = [disp_entity(x) for x in related]
-        self.related = disp_bag_by_type(related)
+        self.related = related
     def is_person(self):
         return self.type=='people'
 
@@ -103,34 +103,74 @@ def view_entity(request, uuid):
 
     # find anything with any field as this entity (eep!)
     related = []
+    related2 = []
     for k in [x[0] for x in p.attributes]:
         # python magic: pass dictionary as explicit kwargs:
         matches = p.matches_dict(**{k:e})
         # TODO: faster intersection...
         for m in matches:
             if not m in related:
-                related.append(m)
+                related2.append(m)
+    related2 = disp_bag_by_type(related2)
+    for plural_name in p.plural_names:
+        print plural_name
+        for entity_type in p.plural_names[plural_name].allowed_types:
+            print p.plural_names[plural_name].allowed_types[entity_type]
+            if (isinstance(p.plural_names[plural_name].allowed_types[entity_type], list) and p.plural_names[plural_name].allowed_types[entity_type][0] == p.classes[e['type']]) or p.plural_names[plural_name].allowed_types[entity_type] == p.classes[e['type']]:
+                related.append((disp_bag(p.__getattribute__(plural_name).matches_dict(**{entity_type:e}),plural_name),entity_type))
     entity = disp_entity(e, related)
     return render_to_response('view_entity.html', locals())
     
 @login_required
 def edit_entity(request, uuid):
     p = Project.from_pitzdir(settings.PITZ_DIR)
+    try:
+        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+    except models.UserProfile.DoesNotExist:
+        user = p.people.matches_dict(**{'title': 'no owner'})[0]
     entity = get_entity_or_404(uuid, p)
-    entity_form = appforms.make_entity_form(entity)
+    entity_form = appforms.make_entity_form(p.classes[entity['type']], entity)
     if request.method == 'POST':
         form = entity_form(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect(to='/view/entity/'+uuid+'/')
+            form.save(user)
+            return redirect(to='/view/entity/'+str(uuid)+'/')
     else:
         form = entity_form()
+    entity = disp_entity(entity)
+    return render_to_response('form.html', locals())
+
+@login_required
+def add_entity(request, plural_name):
+    p = Project.from_pitzdir(settings.PITZ_DIR)
+    try:
+        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+    except models.UserProfile.DoesNotExist:
+        user = p.people.matches_dict(**{'title': 'no owner'})[0]
+    entity_form = appforms.make_entity_form(p.plural_names[plural_name])
+    if request.method == 'POST':
+        form = entity_form(request.POST)
+        if form.is_valid():
+            form.save(user)
+            return redirect(to='/view/entity/'+str(form.entity.uuid)+'/')
+    elif request.method == 'GET':
+        i={}
+        for x in request.GET:
+            if isinstance(p.plural_names[plural_name].allowed_types[x], list):
+                i[x] = [request.GET[x],]
+            else:
+                i[x] = request.GET[x]
+        print i
+        form = entity_form(i)
+    else:
+        form = entity_form()
+    entity = disp_entity(form.entity)
     return render_to_response('form.html', locals())
 
 @permission_required('is_staff')
 def useruuids(request, uuid):
     p = Project.from_pitzdir(settings.PITZ_DIR)
-    e = get_entity_or_404(uuid, p)
+    user = get_entity_or_404(uuid, p)
     if not isinstance(user, p.classes['person']):
         raise Http404 #if someone tries to set some non-person entity as that persons user
     if request.method == 'POST':
@@ -145,5 +185,6 @@ def useruuids(request, uuid):
             form = appforms.useruuid_form(instance=models.UserProfile.objects.get(uuid=uuid))
         except models.UserProfile.DoesNotExist:
             form = appforms.useruuid_form()
+    entity = disp_entity(user)
     return render_to_response('form.html', locals())
     
