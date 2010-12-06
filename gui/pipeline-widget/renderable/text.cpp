@@ -38,6 +38,7 @@ void Text::draw(drawtype_e::e){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor(m_colour);
     font()->Render(c_str());	// this bit is the bit that writes the text
+    // instead of using font() ->render() use m_context->postText(text,font);
     glPrintErr();
     
     glPopMatrix();
