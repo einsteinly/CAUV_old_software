@@ -386,6 +386,14 @@ void PipelineWidget::postMenu(menu_ptr_t m, Point const& p, bool r) {
     addMenu(m, p, r);
 }
 
+void PipelineWidget::postText(const std::string &text, const std::string &font)
+{
+	// need to create QString copies of text and font
+	// need to call renderText(double x, double y ...
+	// x, y, z are all set to zero
+	// set tex
+}
+
 void PipelineWidget::removeMenu(menu_ptr_t r){
     remove(r);
 }
