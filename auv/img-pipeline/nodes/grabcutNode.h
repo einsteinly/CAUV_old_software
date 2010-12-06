@@ -24,7 +24,6 @@ class GrabCutNode: public Node{
             // two input:
             registerInputID("image");
 	    registerInputID("mask");
-	    //TODO might want to pass some rectangle of interest
             
             // one output
             registerOutputID<image_ptr_t>("image_out (not copied)");
@@ -32,7 +31,11 @@ class GrabCutNode: public Node{
             // parameters:
 	    //	iterations: the number of iterations
             registerParamID<int>("iterations", 8);
-	    //TODO select rect param
+            registerParamID<int>("x", 0);
+            registerParamID<int>("y", 0);
+            registerParamID<int>("width", 0);
+            registerParamID<int>("height", 0);
+            registerParamID<bool>("use_mask", false);
         }
     
         virtual ~GrabCutNode(){
@@ -50,13 +53,24 @@ class GrabCutNode: public Node{
             image_ptr_t mask = inputs["mask"];
             
             int iterations = param<int>("iterations");
+            int x = param<int>("x");
+            int y = param<int>("y");
+            int width = param<int>("width");
+            int height = param<int>("height");
+            bool use_mask = param<int>("use_mask");
 
 	    cv::Mat bgdModel, fgdModel;
-	    cv::Rect rect;
+	    cv::Rect rect(x, y, width, height);
+            int mode = cv::GC_EVAL;
+            if(use_mask)
+                mode = cv::GC_INIT_WITH_MASK;
+            if(width && height)
+                mode = cv::GC_INIT_WITH_RECT;
+
             try{
-	    //perform grabcut iteraions
+	    //perform grabcut iterations
                     cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
-		    		fgdModel, iterations, cv::GC_INIT_WITH_MASK);
+		    		fgdModel, iterations, mode);
                     
             }catch(cv::Exception& e){
                 error() << "GrabCutNode:\n\t"
