@@ -102,6 +102,7 @@ class OverKey: public Renderable,
         virtual void postRedraw(float delay);
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false);
+		virtual void postText(const std::string &text, const std::string &font);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t); 
 
