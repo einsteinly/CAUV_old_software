@@ -116,15 +116,38 @@ def view_entity(request, uuid):
 @login_required
 def edit_entity(request, uuid):
     p = Project.from_pitzdir(settings.PITZ_DIR)
+    try:
+        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+    except models.UserProfile.DoesNotExist:
+        user = p.people.matches_dict(**{'title': 'no owner'})[0]
     entity = get_entity_or_404(uuid, p)
-    entity_form = appforms.make_entity_form(entity)
+    entity_form = appforms.make_entity_form(p.classes[entity['type']], entity)
     if request.method == 'POST':
         form = entity_form(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect(to='/view/entity/'+uuid+'/')
+            form.save(user)
+            return redirect(to='/view/entity/'+str(uuid)+'/')
     else:
         form = entity_form()
+    entity = disp_entity(entity)
+    return render_to_response('form.html', locals())
+
+@login_required
+def add_entity(request, plural_name):
+    p = Project.from_pitzdir(settings.PITZ_DIR)
+    try:
+        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+    except models.UserProfile.DoesNotExist:
+        user = p.people.matches_dict(**{'title': 'no owner'})[0]
+    entity_form = appforms.make_entity_form(p.plural_names[plural_name])
+    if request.method == 'POST':
+        form = entity_form(request.POST)
+        if form.is_valid():
+            form.save(user)
+            return redirect(to='/view/entity/'+str(form.entity.uuid)+'/')
+    else:
+        form = entity_form()
+    entity = disp_entity(form.entity)
     return render_to_response('form.html', locals())
 
 @permission_required('is_staff')

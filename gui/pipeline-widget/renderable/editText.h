@@ -1,5 +1,5 @@
 #ifndef __EDIT_TEXT_RENDERABLE_H__
-#define __EDIT_TEXT_RENDERABLE_H__
+#define __EDIT_TEXT_RENDEABLE_H__
 
 #include "menu.h"
 #include "text.h"
@@ -8,6 +8,7 @@
 
 #include <QKeyEvent>
 #include <QtOpenGL>
+#include <QClipboard>
 
 #include <debug/cauv_debug.h>
 
@@ -29,6 +30,7 @@ class EditText: public Menu{
             else
                 error() << "only fixed size version is implemented";
             updateTextPositions();
+            undo_occured = false;
         }
 
         virtual ~EditText(){
@@ -93,37 +95,110 @@ class EditText: public Menu{
 
         virtual bool keyPressEvent(QKeyEvent* event){
             std::string new_text = event->text().toStdString();
-            switch(event->key()){
-                case Qt::Key_Enter:
-                case Qt::Key_Return:
-                    debug() << "EditText: key enter";
-                    m_context->removeMenu(shared_from_this());
-                    // this has now probably been destroyed, must return pronto!
-                    return true;
-                case Qt::Key_Left:
-                    debug(2) << "EditText: key left";
-                    if(m_txt_prev->size())
-                        m_txt_post->insert(m_txt_post->begin(), *m_txt_prev->rbegin());
-                    // fall through
-                case Qt::Key_Backspace:
-                    if(m_txt_prev->size())
-                        m_txt_prev->erase(m_txt_prev->end()-1);
-                    break;
-                case Qt::Key_Right:
-                    debug(2) << "EditText: key right";
-                    if(m_txt_post->size())
-                        *m_txt_prev += (*m_txt_post)[0];
-                    // fall through
-                case Qt::Key_Delete:
-                    if(m_txt_post->size())
-                        m_txt_post->erase(m_txt_post->begin());
-                    break;
-                default:
-                    if(new_text.size())
-                        *m_txt_prev += new_text;
-                    else
-                        return false;
-            }
+            if ( event->modifiers() == Qt::ControlModifier )
+            {
+				switch(event->key())
+				{
+					case Qt::Key_V:
+						if(new_text.size())
+						{
+							QClipboard *cb = QApplication::clipboard();
+							QString text = cb->text();
+							if ( text != "" )
+							{
+								// clipboard has something in it
+								undo_redo_store =  *m_txt_prev;
+								undo_occured = false;
+								*m_txt_prev += text.toStdString();	// add clipboard text
+							}
+						}
+						else
+							return false;
+						break;
+					case Qt::Key_D:
+						// deletes the string
+						if (new_text.size() )
+						{
+							undo_redo_store =  *m_txt_prev;
+							undo_occured = false;
+							m_txt_prev->clear();
+						}
+						else
+							return false;
+						break;
+					case Qt::Key_Z:
+						// undos something
+						if ( !undo_occured )
+						{
+							// an undo hasn't occured before, undo change
+							undo_occured = true;
+							redo_store = *m_txt_prev;
+							m_txt_prev->clear();
+							*m_txt_prev += undo_redo_store;
+						}
+						break;
+					case Qt::Key_Y:
+						// redoes something
+						if ( undo_occured )
+						{
+							// an undo has occured before, enabled
+							undo_occured = false;
+							undo_redo_store =  *m_txt_prev;
+							m_txt_prev->clear();
+							*m_txt_prev += redo_store;
+						}
+						break;
+					default:
+						// do fuck all, go work out on your shake weight if you have one
+						break;
+				}
+			}            
+            else
+            {
+				switch(event->key()){
+					case Qt::Key_Enter:
+					case Qt::Key_Return:
+						debug() << "EditText: key enter";
+						m_context->removeMenu(shared_from_this());
+						// this has now probably been destroyed, must return pronto!
+						return true;
+					case Qt::Key_Left:
+						debug(2) << "EditText: key left";
+						if(m_txt_prev->size())
+							m_txt_post->insert(m_txt_post->begin(), *m_txt_prev->rbegin());
+						// fall through
+					case Qt::Key_Backspace:
+						if(m_txt_prev->size())
+						{
+							undo_redo_store =  *m_txt_prev;
+							undo_occured = false;
+							m_txt_prev->erase(m_txt_prev->end()-1);
+						}
+						break;
+					case Qt::Key_Right:
+						debug(2) << "EditText: key right";
+						if(m_txt_post->size())
+							*m_txt_prev += (*m_txt_post)[0];
+						// fall through
+					case Qt::Key_Delete:
+						if(m_txt_post->size())
+						{
+							undo_redo_store = *m_txt_prev;
+							undo_occured = false;
+							m_txt_post->erase(m_txt_post->begin());
+						}
+						break;
+					default:
+						if(new_text.size())
+						{
+							undo_redo_store = *m_txt_prev;
+							undo_occured = false;
+							*m_txt_prev += new_text;
+						}
+						else
+							return false;
+				}
+			}
             // TODO: be more conservative about m_edited
             m_edited = true;
             updateTextPositions();
@@ -150,6 +225,9 @@ class EditText: public Menu{
         bool m_edited;
         boost::shared_ptr<Text> m_txt_prev;
         boost::shared_ptr<Text> m_txt_post;
+        std::string undo_redo_store;
+        std::string redo_store;
+        bool undo_occured;	// if true, then redo is then enabled
         done_fp m_done_f;
         done_arg_T m_done_f_arg;
 
