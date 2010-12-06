@@ -25,7 +25,7 @@ Text::Text(container_ptr_t c, std::string const& text, std::string const& font, 
     : Renderable(c), std::string(text), m_bbox(),
       m_font(std::make_pair(font, pt)), m_colour(Colour(0)){
 }
-        
+
 void Text::draw(drawtype_e::e){
     if(!font()) return;
 
@@ -37,7 +37,7 @@ void Text::draw(drawtype_e::e){
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor(m_colour);
-    font()->Render(c_str());
+    font()->Render(c_str());	// this bit is the bit that writes the text
     glPrintErr();
     
     glPopMatrix();
