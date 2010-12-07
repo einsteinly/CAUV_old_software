@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-class SonarDataLine;
+struct SonarDataLine;
 class Image;
 
 namespace cv

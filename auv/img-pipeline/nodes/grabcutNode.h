@@ -57,7 +57,7 @@ class GrabCutNode: public Node{
             int y = param<int>("y");
             int width = param<int>("width");
             int height = param<int>("height");
-            bool use_mask = param<int>("use_mask");
+            bool use_mask = param<bool>("use_mask");
 
 	    cv::Mat bgdModel, fgdModel;
 	    cv::Rect rect(x, y, width, height);
@@ -71,6 +71,7 @@ class GrabCutNode: public Node{
 	    //perform grabcut iterations
                     cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
 		    		fgdModel, iterations, mode);
+                    r["image_out (not copied)"] = img;
                     
             }catch(cv::Exception& e){
                 error() << "GrabCutNode:\n\t"
