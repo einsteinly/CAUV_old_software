@@ -65,7 +65,11 @@ class GrabCutNode: public Node{
             if(use_mask)
                 mode = cv::GC_INIT_WITH_MASK;
             if(width && height)
+            {
                 mode = cv::GC_INIT_WITH_RECT;
+                mask->cvMat().setTo(cv::GC_BGD);
+                (mask->cvMat()(rect)).setTo(cv::Scalar(cv::GC_PR_FGD));
+            }
 
             try{
 	    //perform grabcut iterations
