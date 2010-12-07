@@ -62,7 +62,7 @@ MEDIA_ROOT = SITE_ROOT+'/static/'
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = ROOT_URL+'/media/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '%@p%d#%65td-&xbviu348dx90=x&zlkw4wls$8+_f$3ca4n%v2'

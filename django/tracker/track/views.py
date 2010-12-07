@@ -157,7 +157,7 @@ def edit_entity(request, uuid):
         form = entity_form(request.POST)
         if form.is_valid():
             form.save(user)
-            return redirect(to='/view/entity/'+str(uuid)+'/')
+            return redirect(to=settings.ROOT_URL+'/view/entity/'+str(uuid)+'/')
     else:
         form = entity_form()
     entity = disp_entity(entity)
@@ -175,7 +175,7 @@ def add_entity(request, plural_name):
         form = entity_form(request.POST)
         if form.is_valid():
             form.save(user)
-            return redirect(to='/view/entity/'+str(form.entity.uuid)+'/')
+            return redirect(to=settings.ROOT_URL+'/view/entity/'+str(form.entity.uuid)+'/')
     elif request.method == 'GET':
         i={}
         for x in request.GET:
