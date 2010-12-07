@@ -27,7 +27,7 @@ class HistogramNode: public Node{
             // no output
             
             // parameter: 
-            registerParamID<float>("number of bins", 30);
+            registerParamID<int>("number of bins", 30);
             
         }
     
@@ -77,7 +77,7 @@ class HistogramNode: public Node{
             cv::Mat histImg = cv::Mat::zeros(bins*scale, bins*scale, CV_8UC3);
             std::vector<float> binVal;
             for( int h = 0; h < bins; h++ ){
-                    binVal[h] = hist.at<float>(h)/imgsize;
+                    binVal.push_back(hist.at<float>(h)/imgsize);
                 }
          
             //This is the messaging bit
