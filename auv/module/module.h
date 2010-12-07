@@ -108,11 +108,12 @@ class Module : public MessageSource
         const int flowControl;
 };
 
-struct MCBModule: Module
+class MCBModule : public Module
 {
-    MCBModule(int deviceID)
-        : Module(38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL, deviceID){
-    }
+    public:
+        MCBModule(int deviceID)
+            : Module(38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL, deviceID){
+        }
 };
 
 #endif // __MODULE_H__

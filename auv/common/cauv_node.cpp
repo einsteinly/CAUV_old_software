@@ -39,7 +39,7 @@ void CauvNode::run(bool synchronous)
     if(synchronous)
         m_event_monitor->startMonitoringSync();
     else
-        while(true)
+        while(!m_interupted)
         {
             msleep(500);
         }
@@ -144,12 +144,16 @@ int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::pr
 }
 
 
+void CauvNode::stopNode(){
+    m_interupted = true;
+}
 
 CauvNode::CauvNode(const std::string& name)
     : m_name(name),
       m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
       m_event_monitor(boost::make_shared<MailboxEventMonitor>(m_mailbox)),
-      m_mailbox_monitor(boost::make_shared<MsgSrcMBMonitor>())
+      m_mailbox_monitor(boost::make_shared<MsgSrcMBMonitor>()),
+      m_interupted(false)
 {
     m_event_monitor->addObserver(m_mailbox_monitor);
     
