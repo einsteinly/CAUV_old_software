@@ -10,6 +10,8 @@
 #include <QtOpenGL>
 #include <QClipboard>
 
+#include <vector>		// needed for the undo function
+
 #include <debug/cauv_debug.h>
 
 namespace pw{
@@ -30,7 +32,9 @@ class EditText: public Menu{
             else
                 error() << "only fixed size version is implemented";
             updateTextPositions();
-            undo_occured = false;
+            undo_position = 0;
+            undoPreStorage.push_back(*m_txt_prev);	// sets the first member to whatever is already there
+            undoPstStorage.push_back(*m_txt_post);
         }
 
         virtual ~EditText(){
@@ -107,9 +111,8 @@ class EditText: public Menu{
 							if ( text != "" )
 							{
 								// clipboard has something in it
-								undo_redo_store =  *m_txt_prev;
-								undo_occured = false;
 								*m_txt_prev += text.toStdString();	// add clipboard text
+								updateUndo();	// updates the undo buffer
 							}
 						}
 						else
@@ -119,34 +122,27 @@ class EditText: public Menu{
 						// deletes the string
 						if (new_text.size() )
 						{
-							undo_redo_store =  *m_txt_prev;
-							undo_occured = false;
 							m_txt_prev->clear();
+							m_txt_post->clear();
+							updateUndo();	// updates the undo
 						}
 						else
 							return false;
 						break;
 					case Qt::Key_Z:
-						// undos something
-						if ( !undo_occured )
-						{
-							// an undo hasn't occured before, undo change
-							undo_occured = true;
-							redo_store = *m_txt_prev;
-							m_txt_prev->clear();
-							*m_txt_prev += undo_redo_store;
-						}
+						// undos
+						if ( undo_position )
+							--undo_position; // undo_position != 0
+						if ( undo_position > undoPreStorage.size() -1 )
+							undo_position = undoPreStorage.size() -1;
+						writeUndoRedo();						
 						break;
 					case Qt::Key_Y:
-						// redoes something
-						if ( undo_occured )
-						{
-							// an undo has occured before, enabled
-							undo_occured = false;
-							undo_redo_store =  *m_txt_prev;
-							m_txt_prev->clear();
-							*m_txt_prev += redo_store;
-						}
+						// redoes
+						++undo_position;
+						if ( undo_position > undoPreStorage.size() -1 )
+							undo_position = undoPreStorage.size() -1;
+						writeUndoRedo();
 						break;
 					default:
 						// do fuck all, go work out on your shake weight if you have one
@@ -170,9 +166,8 @@ class EditText: public Menu{
 					case Qt::Key_Backspace:
 						if(m_txt_prev->size())
 						{
-							undo_redo_store =  *m_txt_prev;
-							undo_occured = false;
 							m_txt_prev->erase(m_txt_prev->end()-1);
+							updateUndo();	// undates the undo
 						}
 						break;
 					case Qt::Key_Right:
@@ -183,17 +178,15 @@ class EditText: public Menu{
 					case Qt::Key_Delete:
 						if(m_txt_post->size())
 						{
-							undo_redo_store = *m_txt_prev;
-							undo_occured = false;
 							m_txt_post->erase(m_txt_post->begin());
+							updateUndo();	// undates the undo
 						}
 						break;
 					default:
 						if(new_text.size())
 						{
-							undo_redo_store = *m_txt_prev;
-							undo_occured = false;
 							*m_txt_prev += new_text;
+							updateUndo();	// undates the undo
 						}
 						else
 							return false;
@@ -225,9 +218,36 @@ class EditText: public Menu{
         bool m_edited;
         boost::shared_ptr<Text> m_txt_prev;
         boost::shared_ptr<Text> m_txt_post;
-        std::string undo_redo_store;
-        std::string redo_store;
-        bool undo_occured;	// if true, then redo is then enabled
+        
+        void updateUndo(  )
+        {
+			// this updates the undo storage
+			// needs to check what position is active and deletes above it
+			std::string pre = *m_txt_prev;
+			std::string post = *m_txt_post;
+			while ( undo_position + 1 != undoPreStorage.size() )
+			{
+				undoPreStorage.pop_back();	// deal with it James, it aint pretty, but it works
+				undoPstStorage.pop_back();
+			}
+			undoPreStorage.push_back(pre);	
+			undoPstStorage.push_back(post);
+			undo_position = undoPreStorage.size() -1;	// sets it at the end
+		}
+		
+		void writeUndoRedo()
+		{
+			// this is called when undo or redo has been pressed and the array number corrected
+			m_txt_prev->clear();
+			m_txt_post->clear();
+			*m_txt_prev += undoPreStorage[undo_position];
+			*m_txt_post += undoPstStorage[undo_position];
+		}
+        
+        std::vector<std::string> undoPreStorage;
+        std::vector<std::string> undoPstStorage;
+        unsigned int undo_position;
+        
         done_fp m_done_f;
         done_arg_T m_done_f_arg;
 
