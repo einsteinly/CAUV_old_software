@@ -1,0 +1,12 @@
+attached_files: !!python/unicode ''
+created_by: !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: 2010-12-07 13:21:31.938485
+description: ''
+modified_time: 2010-12-07 13:21:31.943579
+pscore: null
+title: !!python/unicode 'Tim Lui'
+type: person
+uuid: !!python/object:uuid.UUID
+  int: 55576107349434758232075247564061712184
+yaml_file_saved: 2010-12-07 13:21:31.948450

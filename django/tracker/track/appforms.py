@@ -103,10 +103,11 @@ def make_entity_form(entity_type, project, initial=None):
                 changed.append((x, self.cleaned_data[x]))
                 self.entity[x] = self.cleaned_data[x] #for each bit of data in the cleaned data, assign it to the entity
         if self.isnew:
-            entity['created_by'] = user
+            self.entity['created_by'] = user
         if len(changed):
-            activity = Activity(title=str(user)+" changed "+str(entity),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=entity)
+	    print self.entity
+            activity = Activity(title=str(user)+" changed "+str(self.entity),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=self.entity)
             activity.to_yaml_file(settings.PITZ_DIR)
-            entity.to_yaml_file(settings.PITZ_DIR)
+            self.entity.to_yaml_file(settings.PITZ_DIR)
         return
     return type('entity_form', (forms.BaseForm,), { 'base_fields': fields, 'entity':entity, 'isnew': isnew, 'save': save })
