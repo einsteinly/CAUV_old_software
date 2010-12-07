@@ -40,7 +40,8 @@ def spiral():
     square=2
     bearing=0
     power=64
-
+    unit = 3
+    
     try:
         print 'setting bearing %d...' %bearing
         auv.bearingAndWait(bearing)            #Starting search at north direction
@@ -55,7 +56,7 @@ def spiral():
 
             auv.prop(power)
             print 'Moving forward for %d seconds' %(3*i)
-            time.sleep(3*i)        #The time for which the AUV goes forward depends on the radius of the square
+            time.sleep(unit*i)        #The time for which the AUV goes forward depends on the radius of the square
             auv.prop(0)            #shut off motor
             time.sleep(5)        #wait for the AUV to stop
             print 'stoping'           
@@ -66,7 +67,7 @@ def spiral():
             auv.bearingAndWait(bearing)
 
             auv.prop(127)        #same as above, for the second part of the half square
-            time.sleep(3*i)        
+            time.sleep(unit*i)        
             auv.prop(power)
             print 'Moving forward for %d seconds' %(3*i)
             time.sleep(5)
