@@ -21,5 +21,6 @@ else()
 
     add_subdirectory (pipeline-widget)
     add_subdirectory (gui-pipeline)
+    add_subdirectory (gui)
 
 endif ()

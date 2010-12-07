@@ -40,9 +40,10 @@ def spiral():
     square=2
     bearing=0
     power=64
-
+    unit = 3
+    
     try:
-        print 'setting bearing:'
+        print 'setting bearing %d...' %bearing
         auv.bearingAndWait(bearing)            #Starting search at north direction
 
         print 'diving...'
@@ -50,34 +51,32 @@ def spiral():
         
         print 'spiral...'
               
-        for i in range(2*square): #making individual half squares
-            print 'Performing %d half circle' % i
+        for i in range(1, 2*square): #making individual half squares
+            print 'Performing %dth half circle' % i
+
             auv.prop(power)
-            print 'Moving forward'
-            time.sleep(3*i)        #The time for which the AUV goes forward depends on the radius of the square
+            print 'Moving forward for %d seconds' %(3*i)
+            time.sleep(unit*i)        #The time for which the AUV goes forward depends on the radius of the square
             auv.prop(0)            #shut off motor
             time.sleep(5)        #wait for the AUV to stop
             print 'stoping'           
             bearing += 90        #Turn 90 degree
             if bearing>=360:
                 bearing-=360
+            print 'setting bearing %d' %bearing
             auv.bearingAndWait(bearing)
-            print 'turning 90 degree'
-            
 
             auv.prop(127)        #same as above, for the second part of the half square
-            time.sleep(3*i)        
+            time.sleep(unit*i)        
             auv.prop(power)
-            print 'Moving forward'
+            print 'Moving forward for %d seconds' %(3*i)
             time.sleep(5)
             print 'stoping'
             bearing += 90
             if bearing>=360:
                 bearing-=360
-            auv.bearing(bearing)
-            auv.bearingAndWait()        
-            print 'turning 90 degree'
-             
+            print 'setting bearing %d' %bearing
+            auv.bearingAndWait(bearing)        
                     
         print 'surface...'    
         auv.depthAndWait(0)
@@ -91,6 +90,7 @@ def spiral():
 
 if __name__ == '__main__':
     spiral()
+
 
 
 

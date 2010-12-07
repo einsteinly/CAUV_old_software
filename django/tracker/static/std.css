@@ -101,6 +101,10 @@ border-radius: 3pt;
 .bag ul{
 list-style: none;
 }
+#project .bag ul{
+height: 200;
+overflow: auto;
+}
 .bag_title{
 font: 16px/30px Helvetica, Arial, sans-serif;
 padding: 3pt 5pt;
