@@ -67,7 +67,7 @@ class $className;
 // =======================
 
 class MessageObserver;
-class BufferingThreadBase;
+struct BufferingThreadBase;
 class BufferedMessageObserver;
 class DynamicObserver;
 class DebugMessageObserver;
