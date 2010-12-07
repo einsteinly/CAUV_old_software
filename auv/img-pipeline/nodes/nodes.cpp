@@ -31,6 +31,7 @@
 #include "kmeansNode.h"
 #include "mixValueNode.h"
 #include "grabcutNode.h"
+#include "histogramNode.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -64,6 +65,7 @@ DEFINE_NFR(InvertNode, NodeType::Invert);
 DEFINE_NFR(KMeansNode, NodeType::KMeans);
 DEFINE_NFR(MixValueNode, NodeType::MixValue);
 DEFINE_NFR(GrabCutNode, NodeType::GrabCut);
+DEFINE_NFR(HistogramNode, NodeType::Histogram);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
 
