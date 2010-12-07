@@ -12,16 +12,20 @@
 #include "scalepicker.h"
 #include "plot.h"
 
-extern QApplication* app;
-
-CauvGui::CauvGui(QWidget *parent) : CauvNode("CauvGui"){
+CauvGui::CauvGui(QApplication& app, QWidget *parent) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
     joinGroup("control");
+}
+
+void CauvGui::closeEvent(QCloseEvent* event){
+    std::cout << "stopping node" << std::endl;
+    CauvNode::stopNode();
 }
 
 void CauvGui::onRun()
 {
     CauvNode::onRun();
+
     Plot* plot = new Plot();
 
     setCentralWidget(plot);
@@ -29,12 +33,13 @@ void CauvGui::onRun()
     (void) new CanvasPicker(plot);
 
     // The scale picker translates mouse clicks
-    // int o clicked() signals
+    // in to clicked() signals
 
     ScalePicker *scalePicker = new ScalePicker(plot);
     plot->connect(scalePicker, SIGNAL(clicked(int, double)),
         plot, SLOT(insertCurve(int, double)));
 
     show();
-    app->exec();
+    m_application.exec();
 }
+

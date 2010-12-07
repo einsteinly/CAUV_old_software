@@ -10,7 +10,6 @@
 using namespace std;
 
 static CauvGui* node;
-static QApplication* app;
 
 void cleanup()
 {
@@ -32,11 +31,11 @@ void interrupt(int sig)
 
 int main(int argc, char** argv)
 {
-    app = new QApplication(argc, argv);
+    QApplication app(argc, argv);
 
     signal(SIGINT, interrupt);
 
-    node = new CauvGui();
+    node = new CauvGui(app);
 
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;

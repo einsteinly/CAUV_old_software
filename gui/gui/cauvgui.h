@@ -14,11 +14,18 @@
 
 
 class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
+
+    Q_OBJECT
+
     public:
-        CauvGui(QWidget *parent = 0);
+        CauvGui(QApplication& app, QWidget *parent = 0);
 
     protected:
         virtual void onRun();
+
+        virtual void closeEvent(QCloseEvent *);
+
+        QApplication &m_application;
 };
 
 #endif // CAUVGUI_H

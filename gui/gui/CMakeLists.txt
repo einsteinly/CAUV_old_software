@@ -24,6 +24,7 @@ set (
     guicpp_H
     canvaspicker.h
     scalepicker.h
+    cauvgui.h
     plot.h
     colorbar.h
 )

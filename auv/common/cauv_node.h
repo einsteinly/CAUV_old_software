@@ -23,6 +23,7 @@ class CauvNode
 {
 	public:
 		virtual ~CauvNode();
+                virtual void stopNode();
 		 
         void run(bool synchronous=false);
 
@@ -50,11 +51,13 @@ class CauvNode
                                 boost::program_options::positional_options_description& pos);
         virtual int useOptionsMap(boost::program_options::variables_map& vm,
                                   boost::program_options::options_description& desc);
-    
+
+
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
         boost::shared_ptr<MailboxEventMonitor> m_event_monitor;
         boost::shared_ptr<MsgSrcMBMonitor> m_mailbox_monitor;
+        volatile bool m_interupted;
 };
 
 #endif//__CAUV_NODE_H__
