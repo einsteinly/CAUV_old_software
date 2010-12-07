@@ -51,7 +51,7 @@ class thread;
 class shared_mutex;
 } // namespace boost
 
-class BufferingThreadBase;
+struct BufferingThreadBase;
 class BufferedMessageObserver: public MessageObserver
 {
     typedef BufferedMessageObserver this_t;

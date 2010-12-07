@@ -473,6 +473,11 @@ void OverKey::postMenu(menu_ptr_t m, Point const& tlp, bool p){
     m_context->postMenu(m, tlp, p);
 }
 
+void OverKey::postText(const std::string &text, const std::string &font)
+{
+	// write it
+}
+
 void OverKey::removeMenu(menu_ptr_t m){
     m_context->removeMenu(m);
 }

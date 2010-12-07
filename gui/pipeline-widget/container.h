@@ -24,6 +24,7 @@ class Container{
         virtual void postRedraw(float delay_secs) = 0;
         virtual void postMenu(menu_ptr_t m, Point const& top_level_position,
                               bool pressed=false) = 0;
+		virtual void postText(const std::string &text, const std::string &font) = 0;
         virtual void removeMenu(menu_ptr_t) = 0;
         virtual void remove(renderable_ptr_t) = 0; 
         virtual renderable_ptr_t pick(Point const& p);

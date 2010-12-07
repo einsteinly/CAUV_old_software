@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block breadcrumbs %}<a href="/">Home</a> - <a href="/view/bag/{{ entity.type }}">{{ entity.type }}</a> - <a href="/view/entity/{{ entity.uuid }}">{{ entity.title }}</a> - Editing{% endblock %}
+{% block breadcrumbs %}<a href="{{ ROOT_URL }}/">Home</a> - <a href="{{ ROOT_URL }}/view/bag/{{ entity.type }}">{{ entity.type }}</a> - <a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}">{{ entity.title }}</a> - Editing{% endblock %}
 {% block content %}
 <form action="" method="post">
 {% comment %}{% csrf_token %}{% endcomment %}

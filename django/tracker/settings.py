@@ -1,10 +1,27 @@
 import os
 # Django settings for tracker project.
 # location of tracker project (used to to make some relative paths absolute)
-TRACKER_LOCATION = os.getcwd()
+SITE_ROOT = os.path.dirname(os.path.realpath(__file__)) 
 AUTH_PROFILE_MODULE = 'track.UserProfile' #tells django to link user profile to django auth users
 LOGIN_REDIRECT_URL = '/' #where should people be redirected to if login succesful (and no next page provided)
-PITZ_DIR = os.sep.join(TRACKER_LOCATION.split(os.sep)[0:-2])+os.sep+'pitzdir' #pitzdir
+PITZ_DIR = os.sep.join([os.sep.join(SITE_ROOT.split(os.sep)[0:-2]), 'pitzdir']) #pitzdir
+
+if "SCRIPT_NAME" in os.environ:
+    ROOT_URL = os.environ["SCRIPT_NAME"]
+else:
+    ROOT_URL = ""
+
+LOGIN_REDIRECT_URL = ROOT_URL+"/accounts/profile"
+LOGIN_URL = ROOT_URL+"/accounts/login"
+LOGOUT_URL = ROOT_URL+"/accounts/logout"
+SESSION_COOKIE_PATH = ROOT_URL+"/"
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash if there is a path component (optional in other cases).
+# Examples: "http://media.lawrence.com", "http://example.com/media/"
+MEDIA_URL = ROOT_URL + '/static/'
+STATIC_URL = ROOT_URL + "/static/"
+
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -16,7 +33,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'django.db.backends.sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = TRACKER_LOCATION+'/db/db.db'             # Or path to database file if using sqlite3.
+DATABASE_NAME = SITE_ROOT+'/db/db.db'             # Or path to database file if using sqlite3.
 DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -41,12 +58,7 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = TRACKER_LOCATION+'/static/'
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash if there is a path component (optional in other cases).
-# Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/static/'
+MEDIA_ROOT = SITE_ROOT+'/static/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -63,6 +75,13 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.load_template_source',
 )
 
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
+TEMPLATE_CONTEXT_PROCESSORS += (
+    'django.core.context_processors.request',
+    'django.core.context_processors.i18n',
+    'tracker.track.context_processors.root_url',
+)
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -73,7 +92,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'tracker.urls'
 
 TEMPLATE_DIRS = (
-    TRACKER_LOCATION+"/templates"
+    SITE_ROOT+"/templates"
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

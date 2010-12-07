@@ -10,9 +10,10 @@ estimate: !!python/object:uuid.UUID
   int: 232728329951956224362343003393279330573
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-04 12:22:05.324189
+modified_time: 2010-12-07 13:06:07.886031
 owner: !!python/object:uuid.UUID
   int: 78002556280449588393479432476918080669
+points: null
 pscore: 0
 status: !!python/object:uuid.UUID
   int: 300208156334241880201290222579226582105
@@ -23,4 +24,4 @@ title: Sonar Movement Compensation
 type: task
 uuid: !!python/object:uuid.UUID
   int: 74632870439063453352218554463672053920
-yaml_file_saved: 2010-12-04 12:22:05.324222
+yaml_file_saved: 2010-12-07 13:06:07.891078
