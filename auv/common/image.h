@@ -7,6 +7,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include <common/streamops.h>
 #include <debug/cauv_debug.h>
 
 class Image{

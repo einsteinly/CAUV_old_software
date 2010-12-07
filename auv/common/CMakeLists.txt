@@ -46,6 +46,7 @@ target_link_libraries (
     boost_serialization
     boost_date_time
     boost_iostreams
+    boost_signals
     boost_program_options
 )
 
@@ -75,6 +76,7 @@ target_link_libraries (
     boost_serialization
     boost_date_time
     boost_iostreams
+    boost_signals
     boost_program_options
 )
 

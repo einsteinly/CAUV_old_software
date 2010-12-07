@@ -262,7 +262,7 @@ private:
 public:
 	
 	JanitorFunc2<Param1Type,Param2Type,ResultType>(t_func_JanitorFunc func, Param1Type& control1, Param2Type& control2, bool enabl = true) :
-		m_funcJF(func), m_control1(control1), m_control1(control2), m_enabled(enabl) {}
+		m_funcJF(func), m_control1(control1), m_control2(control2), m_enabled(enabl) {}
 	~JanitorFunc2<Param1Type,Param2Type,ResultType>()
 	{
 		if (m_enabled)

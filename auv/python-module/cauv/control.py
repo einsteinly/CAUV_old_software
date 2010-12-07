@@ -7,6 +7,7 @@ class AUV(messaging.BufferedMessageObserver):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("control")
+        node.join("telemetry")
         node.addObserver(self)
         self.current_bearing = None
         self.current_depth = None
@@ -54,10 +55,12 @@ class AUV(messaging.BufferedMessageObserver):
         self.bearing(bearing)
         while time.time() - startTime < timeout:
             if self.current_bearing == None or min((bearing - self.current_bearing) % 360, (self.current_bearing - bearing) % 360) > epsilon:
-                print 'bearing waiting'
+                #print 'bearing waiting'
                 self.bearingCV.acquire()
                 self.bearingCV.wait(timeout - time.time() + startTime)
                 self.bearingCV.release()
+            else:
+                break
                 
     def depth(self, depth):
         if depth is not None:
@@ -73,6 +76,8 @@ class AUV(messaging.BufferedMessageObserver):
                 self.depthCV.acquire()
                 self.depthCV.wait(timeout - time.time() + startTime)
                 self.depthCV.release()
+            else:
+                break
 
     def pitch(self, pitch):
         if pitch is not None:
@@ -88,6 +93,8 @@ class AUV(messaging.BufferedMessageObserver):
                 self.pitchCV.acquire()
                 self.pitchCV.wait(timeout - time.time() + startTime)
                 self.pitchCV.release()
+            else:
+                break
 
     def bearingParams(self, kp, ki, kd, scale):
         self.send(messaging.BearingAutopilotParamsMessage(kp, ki, kd, scale))
@@ -171,6 +178,7 @@ class AUV(messaging.BufferedMessageObserver):
     
     def onTelemetryMessage(self, m):
         #self.bearing = m.orientation.yaw
+        #print "message"
         self.current_bearing = m.orientation.yaw
         self.current_depth = m.depth
         self.current_pitch = m.orientation.pitch

@@ -37,6 +37,7 @@ enum NodeType : int8 {
     Invert = 28,
     KMeans = 29,
     MixValue = 30,
+    Crop = 31,  
     GrabCut = 32
 }
 enum NodeStatus : int8 {
