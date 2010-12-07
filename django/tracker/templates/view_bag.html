@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
-{% block breadcrumbs %}<a href="/">Home</a> - {{ bag.title }}{% endblock %}
+{% block breadcrumbs %}<a href="{{ ROOT_URL }}/">Home</a> - {{ bag.title }}{% endblock %}
 {% block content %}
 <div class="bag">
     <div class="item_key"> {{ bag.title }} </div>
+    <div id="toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}">Add</a></div>
     <ul>
     {% for entity in bag.elements %}
-    <li><a href="/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
+    <li><a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
     {% endfor %}
     </ul>
 </div>

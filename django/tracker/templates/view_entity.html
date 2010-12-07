@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load markup %}
 {% load switch %}
-{% block breadcrumbs %}<a href="/">Home</a> - <a href="/view/bag/{{ entity.type }}">{{ entity.type }}</a> - {{ entity.title }}{% endblock %}
+{% block breadcrumbs %}<a href="{{ ROOT_URL }}/">Home</a> - <a href="{{ ROOT_URL }}/view/bag/{{ entity.type }}">{{ entity.type }}</a> - {{ entity.title }}{% endblock %}
 {% block content %}
 <div id="entity_title">
     {{ entity.title }}
@@ -11,9 +11,9 @@
     Admin options
     {% endcomment %}
     {% if request.user.is_staff %}
-        {% if entity.is_person %}| <a href="/accounts/user/{{ entity.uuid }}/">Associate Django user with this Pitz profile</a> {% endif %}
+        {% if entity.is_person %}| <a href="{{ ROOT_URL }}/accounts/user/{{ entity.uuid }}/">Associate Django user with this Pitz profile</a> {% endif %}
     {% endif %}
-    | <a href="/edit/entity/{{ entity.uuid }}/">Edit</a> |
+    | <a href="{{ ROOT_URL }}/edit/entity/{{ entity.uuid }}/">Edit</a> |
 </div>
 {% for property in entity.properties %}
 <div class="property">
@@ -32,34 +32,32 @@
         way first though ;) {% endcomment %}
         {{ property.value|force_escape|linebreaksbr }}
         {% case "entity" %}
-         <a href="/view/entity/{{ property.value.uuid }}/">{{ property.value.title }}</a>
+         <a href="{{ ROOT_URL }}/view/entity/{{ property.value.uuid }}/">{{ property.value.title }}</a>
         {% case "valuelist" %}
         {% for value in property.value %}
         {{ value }}
         {% endfor %}
         {% case "entitylist" %}
         {% for entity in property.value %}
-         <a href="/view/entity/{{ entity.uuid }}/">{{ entity.title }}</a>
+         <a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}/">{{ entity.title }}</a>
         {% endfor %}
         {% endswitch %}
     </div>
 </div>
 {% endfor %}
-
-{% for type,values in entity.related.by_type.items %}
+{% for bag, field in related %}
 <div class="bag">
-    <div class="{{ type }}">
-        <div class="item_key"> {{ type }}{{ values|pluralize }} </div>
+    <div class="bag_expanded">
+        <div class="bag_title"> {{ bag.ref }} - <a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}/?{{ field }}={{ entity.uuid }}">add new</a></div>
         <ul>
-        {% for e in values %}
+        {% for e in bag.elements %}
         <li>
-        <h4><a href="/view/entity/{{ e.uuid }}">{{ e.title }}</a></h4>
-        {{ e.description|force_escape|linebreaksbr }}
+        <h4><a href="{{ ROOT_URL }}/view/entity/{{ e.uuid }}">{{ e.title }}</a></h4>
+        {{ e.description|force_escape|linebreaksbr|truncatewords:30 }}
         </li>
         {% endfor %}
         </ul>
     </div>
 </div>
 {% endfor %}
-
 {% endblock %}

@@ -1,5 +1,6 @@
 import messaging
 import threading
+import time
 
 class AUV(messaging.BufferedMessageObserver):
     def __init__(self, node):
@@ -8,6 +9,11 @@ class AUV(messaging.BufferedMessageObserver):
         node.join("control")
         node.addObserver(self)
         self.current_bearing = None
+        self.current_depth = None
+        self.current_pitch = None
+        self.bearingCV = threading.Condition()
+        self.depthCV = threading.Condition()
+        self.pitchCV = threading.Condition()
         
         ## synchronising stuff
         #self.received_state_condition = threading.Condition()
@@ -43,17 +49,45 @@ class AUV(messaging.BufferedMessageObserver):
         else:
             self.send(messaging.BearingAutopilotEnabledMessage(False, 0))
 
+    def bearingAndWait(self, bearing, epsilon = 5, timeout = 30):
+        startTime = time.time()
+        self.bearing(bearing)
+        while time.time() - startTime < timeout:
+            if self.current_bearing == None or min((bearing - self.current_bearing) % 360, (self.current_bearing - bearing) % 360) > epsilon:
+                print 'bearing waiting'
+                self.bearingCV.acquire()
+                self.bearingCV.wait(timeout - time.time() + startTime)
+                self.bearingCV.release()
+                
     def depth(self, depth):
         if depth is not None:
             self.send(messaging.DepthAutopilotEnabledMessage(True, depth))
         else:
             self.send(messaging.DepthAutopilotEnabledMessage(False, 0))
 
+    def depthAndWait(self, depth, epsilon = 5, timeout = 30):
+        startTime = time.time()
+        self.depth(depth)
+        while time.time() - startTime < timeout:
+            if self.current_depth == None or abs(depth - self.current_depth) > epsilon:
+                self.depthCV.acquire()
+                self.depthCV.wait(timeout - time.time() + startTime)
+                self.depthCV.release()
+
     def pitch(self, pitch):
         if pitch is not None:
             self.send(messaging.PitchAutopilotEnabledMessage(True, pitch))
         else:
             self.send(messaging.PitchAutopilotEnabledMessage(False, 0))
+
+    def pitchAndWait(self, pitch, epsilon = 5, timeout = 30):
+        startTime = time.time()
+        self.pitch(pitch)
+        while time.time() - startTime < timeout:
+            if self.current_pitch == None or min((pitch - self.current_pitch) % 360, (self.current_pitch - pitch) % 360) > epsilon:
+                self.pitchCV.acquire()
+                self.pitchCV.wait(timeout - time.time() + startTime)
+                self.pitchCV.release()
 
     def bearingParams(self, kp, ki, kd, scale):
         self.send(messaging.BearingAutopilotParamsMessage(kp, ki, kd, scale))
@@ -71,7 +105,7 @@ class AUV(messaging.BufferedMessageObserver):
     def hbow(self, value):
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.HBow, value))
-
+   
     def vbow(self, value):
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VBow, value))
@@ -136,7 +170,19 @@ class AUV(messaging.BufferedMessageObserver):
             raise ValueError("invalid motor value: %d" % value)
     
     def onTelemetryMessage(self, m):
-        self.bearing = m.orientation.yaw
+        #self.bearing = m.orientation.yaw
+        self.current_bearing = m.orientation.yaw
+        self.current_depth = m.depth
+        self.current_pitch = m.orientation.pitch
+        self.bearingCV.acquire()
+        self.depthCV.acquire()
+        self.pitchCV.acquire()
+        self.bearingCV.notifyAll()
+        self.depthCV.notifyAll()
+        self.pitchCV.notifyAll()
+        self.bearingCV.release()
+        self.depthCV.release()
+        self.pitchCV.release()
 
     ## synchronous-ifying stuff
     #def onStateMessage(self, m):
