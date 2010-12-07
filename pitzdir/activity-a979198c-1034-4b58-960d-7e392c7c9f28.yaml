@@ -1,0 +1,18 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-07 13:08:27.298342
+description: "status changed to started\ndescription changed to It's really irritating\
+  \ to have to type long filenames into the gui because\r\npaste isn't supported.\
+  \ It should be.\r\nCopy/Paste of groups of nodes (maybe even in a cross-application\
+  \ or persistent\r\nway(!)) would also be useful.\npoints changed to None\nowner\
+  \ changed to AndrewNewbold"
+entity: !!python/object:uuid.UUID
+  int: 13817543869687276051022020268325500779
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task 0a6529 Support Copy/Paste>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 225268317364731320063937057611572879144
+who_did_it: *id002
+yaml_file_saved: 2010-12-07 13:08:27.298436

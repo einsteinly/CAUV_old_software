@@ -46,6 +46,14 @@ background-color: #e9d0ff;
 -webkit-border-radius: 3pt;
 border-radius: 3pt;
 }
+.bag_toolbox{
+padding: 3pt 5pt;
+margin: 6pt 0;
+background-color: #e9d0ff;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+}
 #entity_title{
 font: 16px/30px Helvetica, Arial, sans-serif;
 padding: 3pt 5pt;
@@ -93,33 +101,23 @@ border-radius: 3pt;
 .bag ul{
 list-style: none;
 }
-.item_key{
+.bag_title{
 font: 16px/30px Helvetica, Arial, sans-serif;
 padding: 3pt 5pt;
 margin: 3pt 0;
 }
-.item_key a{
+.bag_title a{
 font: 16px/30px Helvetica, Arial, sans-serif;
 padding: 3pt 5pt;
 margin: 3pt 0;
 }
-.bag .comment ul li{
+.bag .bag_expanded ul li{
 padding: 0;
 margin: 0 0 15pt 0;
 }
-.bag .comment ul li h4{
+.bag .bag_expanded ul li h4{
 font-weight: bold;
 }
-.bag .comment ul li h4 a{
-font-weight: bold;
-}
-.bag .task ul li{
-padding: 0;
-margin: 0 0 15pt 0;
-}
-.bag .task ul li h4{
-font-weight: bold;
-}
-.bag .task ul li h4 a{
+.bag .bag_expanded ul li h4 a{
 font-weight: bold;
 }

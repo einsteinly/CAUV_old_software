@@ -1,5 +1,5 @@
 from django import forms
-from tracker.track import models
+from tracker.track import models, extras
 from datetime import datetime
 from pitz.entity import Entity, Activity
 from uuid import UUID
@@ -16,10 +16,10 @@ class Textarea(forms.CharField):
         super(Textarea, self).__init__(widget=forms.Textarea, **kwargs)
 
 #defs for first run fields
-basic_fields = {'description': Textarea, 'title': forms.CharField}
 type_to_field = {
                 datetime: forms.DateField,
-                int: forms.IntegerField
+                int: forms.IntegerField,
+                str: Textarea
                     }
 
 def get_EntityChoiceField(entity_type):                    
@@ -52,29 +52,29 @@ def get_EntityMultipleChoiceField(entity_type):
     return EntityMultipleChoiceField
         
 def analyse(entity_type):
-    fields = basic_fields
-    entity_type.allowed_types.update(Entity.allowed_types)
-    for data_type in entity_type.allowed_types:
-        if isinstance(entity_type.allowed_types[data_type], list):
-            if issubclass(entity_type.allowed_types[data_type][0], Entity):
-                fields[data_type] = get_EntityMultipleChoiceField(entity_type.allowed_types[data_type][0])
-        elif issubclass(entity_type.allowed_types[data_type], Entity):
-            fields[data_type] = get_EntityChoiceField(entity_type.allowed_types[data_type])
+    variables = extras.get_all_variables(entity_type)
+    fields={}
+    for var_name in variables:
+        if isinstance(variables[var_name], list):
+            if issubclass(variables[var_name][0], Entity):
+                fields[var_name] = get_EntityMultipleChoiceField(variables[var_name][0])
+        elif issubclass(variables[var_name], Entity):
+            fields[var_name] = get_EntityChoiceField(variables[var_name])
         else:
             try:
-                fields[data_type] = type_to_field[type(entity_type.allowed_types[data_type])]
+                fields[var_name] = type_to_field[variables[var_name]]
             except KeyError: #fallback on text field
-                fields[data_type] = forms.CharField
+                fields[var_name] = forms.CharField
     return fields
         
-def make_entity_form(entity_type, initial=None):
-    field_classes = analyse(entity_type)
+def make_entity_form(entity_type, project, initial=None):
+    field_classes = analyse(entity_type) # get field types +names
     fields = {}
-    if initial:
+    
+    if initial: #if were given some data, try and generate from said data, otherwise fall back to default, then empty
         entity = initial
         for field_class in field_classes:
             try:
-                print field_class
                 fields[field_class] = field_classes[field_class](initial=initial[field_class], required=False)
             except KeyError:
                 fields[field_class] = field_classes[field_class](required=False)
@@ -82,7 +82,15 @@ def make_entity_form(entity_type, initial=None):
     else:
         for field_class in field_classes:
             fields[field_class] = field_classes[field_class](required=False)
-        entity = entity_type(title='',description='')#need to set description + title otherwise we get errors
+        i = {}
+        for x in entity_type.required_fields:
+            if entity_type.required_fields[x] == None:
+                i[x] = ''
+            elif callable(entity_type.required_fields[x]):
+                i[x] = entity_type.required_fields[x](project)
+            else:
+                i[x] = entity_type.required_fields[x]
+        entity = entity_type(**i)#need to set required fields
         isnew = True
     def save(self, user):
         changed = []
@@ -95,10 +103,11 @@ def make_entity_form(entity_type, initial=None):
                 changed.append((x, self.cleaned_data[x]))
                 self.entity[x] = self.cleaned_data[x] #for each bit of data in the cleaned data, assign it to the entity
         if self.isnew:
-            entity['created_by'] = user
+            self.entity['created_by'] = user
         if len(changed):
-            activity = Activity(title=str(user)+" changed "+str(entity),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=entity)
+	    print self.entity
+            activity = Activity(title=str(user)+" changed "+str(self.entity),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=self.entity)
             activity.to_yaml_file(settings.PITZ_DIR)
-            entity.to_yaml_file(settings.PITZ_DIR)
+            self.entity.to_yaml_file(settings.PITZ_DIR)
         return
     return type('entity_form', (forms.BaseForm,), { 'base_fields': fields, 'entity':entity, 'isnew': isnew, 'save': save })

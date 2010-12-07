@@ -7,7 +7,7 @@ from pitz.bag import Bag
 from pitz.entity import Entity
 from uuid import UUID
 from tracker import settings
-from tracker.track import models, appforms
+from tracker.track import models, appforms, extras
 
 def get_entity_or_404(uuid, project=None):
     uuid_obj = UUID(uuid)
@@ -82,7 +82,7 @@ def view_project(request):
             bags.append(disp_bag(p.__getattribute__(type),type))
         except AttributeError:
             continue
-    return render_to_response('view_project.html', locals())
+    return render_to_response('view_project.html', locals(), context_instance=RequestContext(request))
     
 def view_bag(request, ref):
     p = Project.from_pitzdir(settings.PITZ_DIR)
@@ -90,9 +90,9 @@ def view_bag(request, ref):
     for f in request.GET.getlist('filter'):
         name, expr, value = f.split(',')
         if expr == u'eq':
-            pitz_bag = pitz_bag.matches_dict(**{name:value})
+            pitz_bag = pitz_bag.matches_dict(**{str(name):value})
     bag = disp_bag(pitz_bag,ref)
-    return render_to_response('view_bag.html', locals())
+    return render_to_response('view_bag.html', locals(), context_instance=RequestContext(request))
     
 def view_entity(request, uuid):
     p = Project.from_pitzdir(settings.PITZ_DIR)
@@ -103,23 +103,22 @@ def view_entity(request, uuid):
 
     # find anything with any field as this entity (eep!)
     related = []
-    related2 = []
-    for k in [x[0] for x in p.attributes]:
-        # python magic: pass dictionary as explicit kwargs:
-        matches = p.matches_dict(**{k:e})
-        # TODO: faster intersection...
-        for m in matches:
-            if not m in related:
-                related2.append(m)
-    related2 = disp_bag_by_type(related2)
+    #related2 = []
+    #for k in [x[0] for x in p.attributes]:
+    #    # python magic: pass dictionary as explicit kwargs:
+    #    matches = p.matches_dict(**{k:e})
+    #    # TODO: faster intersection...
+    #    for m in matches:
+    #        if not m in related:
+    #            related2.append(m)
+    #related2 = disp_bag_by_type(related2)
     for plural_name in p.plural_names:
-        print plural_name
-        for entity_type in p.plural_names[plural_name].allowed_types:
-            print p.plural_names[plural_name].allowed_types[entity_type]
-            if (isinstance(p.plural_names[plural_name].allowed_types[entity_type], list) and p.plural_names[plural_name].allowed_types[entity_type][0] == p.classes[e['type']]) or p.plural_names[plural_name].allowed_types[entity_type] == p.classes[e['type']]:
-                related.append((disp_bag(p.__getattribute__(plural_name).matches_dict(**{entity_type:e}),plural_name),entity_type))
+        fields = extras.get_all_variables(p.plural_names[plural_name])
+        for field_name in fields:
+            if fields[field_name]==type(e):
+                related.append((disp_bag(p.__getattribute__(plural_name).matches_dict(**{field_name:e}),plural_name),field_name))
     entity = disp_entity(e, related)
-    return render_to_response('view_entity.html', locals())
+    return render_to_response('view_entity.html', locals(), context_instance=RequestContext(request))
     
 @login_required
 def edit_entity(request, uuid):
@@ -129,7 +128,7 @@ def edit_entity(request, uuid):
     except models.UserProfile.DoesNotExist:
         user = p.people.matches_dict(**{'title': 'no owner'})[0]
     entity = get_entity_or_404(uuid, p)
-    entity_form = appforms.make_entity_form(p.classes[entity['type']], entity)
+    entity_form = appforms.make_entity_form(p.classes[entity['type']], p, entity)
     if request.method == 'POST':
         form = entity_form(request.POST)
         if form.is_valid():
@@ -138,7 +137,7 @@ def edit_entity(request, uuid):
     else:
         form = entity_form()
     entity = disp_entity(entity)
-    return render_to_response('form.html', locals())
+    return render_to_response('form.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 def add_entity(request, plural_name):
@@ -147,7 +146,7 @@ def add_entity(request, plural_name):
         user = p.by_uuid(UUID(request.user.get_profile().uuid))
     except models.UserProfile.DoesNotExist:
         user = p.people.matches_dict(**{'title': 'no owner'})[0]
-    entity_form = appforms.make_entity_form(p.plural_names[plural_name])
+    entity_form = appforms.make_entity_form(p.plural_names[plural_name], p)
     if request.method == 'POST':
         form = entity_form(request.POST)
         if form.is_valid():
@@ -156,7 +155,7 @@ def add_entity(request, plural_name):
     elif request.method == 'GET':
         i={}
         for x in request.GET:
-            if isinstance(p.plural_names[plural_name].allowed_types[x], list):
+            if isinstance(entity_form.base_fields[x], list):
                 i[x] = [request.GET[x],]
             else:
                 i[x] = request.GET[x]
@@ -165,7 +164,7 @@ def add_entity(request, plural_name):
     else:
         form = entity_form()
     entity = disp_entity(form.entity)
-    return render_to_response('form.html', locals())
+    return render_to_response('form.html', locals(), context_instance=RequestContext(request))
 
 @permission_required('is_staff')
 def useruuids(request, uuid):
@@ -186,5 +185,5 @@ def useruuids(request, uuid):
         except models.UserProfile.DoesNotExist:
             form = appforms.useruuid_form()
     entity = disp_entity(user)
-    return render_to_response('form.html', locals())
-    
+    return render_to_response('form.html', locals(), context_instance=RequestContext(request))
+

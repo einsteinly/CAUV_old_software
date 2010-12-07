@@ -1,0 +1,12 @@
+attached_files: !!python/unicode ''
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-07 13:07:50.527472
+description: !!python/unicode 'an336@cam.ac.uk'
+modified_time: 2010-12-07 13:07:50.528294
+pscore: null
+title: !!python/unicode 'AndrewNewbold'
+type: person
+uuid: !!python/object:uuid.UUID
+  int: 310335243187813391613547921585838429236
+yaml_file_saved: 2010-12-07 13:07:50.532893

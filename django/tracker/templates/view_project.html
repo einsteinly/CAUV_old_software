@@ -4,11 +4,11 @@
 {{ disp_object.title }}
 {% for bag in bags %}
 <div class="bag">
-    <div class="item_key"><a href="/view/bag/{{ bag.ref }}">{{ bag.title }}</a></div>
-    <div id="toolbox"><a href="/add/entity/{{ bag.ref }}">Add</a></div>
+    <div class="bag_title"><a href="{{ ROOT_URL }}/view/bag/{{ bag.ref }}">{{ bag.title }}</a></div>
+    <div class="bag_toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}">Add</a></div>
     <ul>
     {% for entity in bag.elements %}
-    <li><a href="/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
+        <li><a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
     {% endfor %}
     </ul>
 </div>

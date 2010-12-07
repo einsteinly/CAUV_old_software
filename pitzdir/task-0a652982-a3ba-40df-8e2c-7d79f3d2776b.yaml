@@ -1,23 +1,20 @@
 components: []
-created_time: &id001 2010-11-05 10:25:51.353196
-description: 'It''s really irritating to have to type long filenames into the gui
-  because
-
-  paste isn''t supported. It should be.
-
-  Copy/Paste of groups of nodes (maybe even in a cross-application or persistent
-
-  way(!)) would also be useful.'
+created_time: 2010-11-05 10:25:51.353196
+description: !!python/unicode "It's really irritating to have to type long filenames\
+  \ into the gui because\r\npaste isn't supported. It should be.\r\nCopy/Paste of\
+  \ groups of nodes (maybe even in a cross-application or persistent\r\nway(!)) would\
+  \ also be useful."
 estimate: !!python/object:uuid.UUID
   int: 298257563599997189979885110366072744596
 milestone: !!python/object:uuid.UUID
   int: 336087129598010674063812125499293341845
-modified_time: *id001
+modified_time: 2010-12-07 13:08:36.763507
 owner: !!python/object:uuid.UUID
-  int: 78002556280449588393479432476918080669
+  int: 310335243187813391613547921585838429236
+points: null
 pscore: 0
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 300208156334241880201290222579226582105
 tags:
 - !!python/object:uuid.UUID
   int: 275376028904049931937057396630085839418
@@ -25,4 +22,4 @@ title: Support Copy/Paste
 type: task
 uuid: !!python/object:uuid.UUID
   int: 13817543869687276051022020268325500779
-yaml_file_saved: 2010-11-05 10:25:51.353959
+yaml_file_saved: 2010-12-07 13:08:36.763757
