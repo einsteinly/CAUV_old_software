@@ -30,6 +30,7 @@
 #include "invertNode.h"
 #include "kmeansNode.h"
 #include "mixValueNode.h"
+#include "cropNode.h"
 #include "grabcutNode.h"
 #include "histogramNode.h"
 
@@ -64,6 +65,7 @@ DEFINE_NFR(VideoFileOutputNode, NodeType::VideoFileOutput);
 DEFINE_NFR(InvertNode, NodeType::Invert);
 DEFINE_NFR(KMeansNode, NodeType::KMeans);
 DEFINE_NFR(MixValueNode, NodeType::MixValue);
+DEFINE_NFR(CropNode, NodeType::Crop);
 DEFINE_NFR(GrabCutNode, NodeType::GrabCut);
 DEFINE_NFR(HistogramNode, NodeType::Histogram);
 
