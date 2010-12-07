@@ -18,8 +18,8 @@ class HistogramNode: public Node{
     public:
         HistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
-            // slow node:
-            m_speed = slow;
+            // fast node:
+            m_speed = fast;
             
             // one input:
             registerInputID("image_in");
@@ -36,7 +36,7 @@ class HistogramNode: public Node{
         }
         
         // this node should be run even if nothing is connected to its output
-        virtual bool isOutputNode() throw() { return true; } 
+        virtual bool isOutputNode() { return true; } 
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){
