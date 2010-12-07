@@ -10,7 +10,7 @@ export PYTHONPATH="$SCRIPTING_DIR:$SCRIPTING_DIR/../python-module/:$PYTHONPATH"
 #echo "LD path: $LD_LIBRARY_PATH"
 #echo "DYLD path: $DYLD_LIBRARY_PATH"
 
-python -i -c "import cauv
+gdb --args python -i -c "import cauv
 import cauv.messaging as msg
 import cauv.pipeline as pipeline
 import cauv.control as control
