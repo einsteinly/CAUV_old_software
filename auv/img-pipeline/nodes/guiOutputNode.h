@@ -16,6 +16,10 @@ class GuiOutputNode: public OutputNode{
             // transmission
             registerParamID<int>("jpeg quality", 85); // 0-100
         }
+    
+        virtual ~GuiOutputNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){
@@ -24,10 +28,14 @@ class GuiOutputNode: public OutputNode{
 
             image_ptr_t img = inputs["image_in"];
             int qual = param<int>("jpeg quality");
-
-            debug(4) << "GuiOutputNode::doWork()" << id() << *img;
-            img->serializeQuality(qual);
-            sendMessage(boost::make_shared<GuiImageMessage>(id(), *img), UNRELIABLE_MESS);
+            
+            if(img->cvMat().rows != 0 && img->cvMat().cols != 0){
+                debug(4) << "GuiOutputNode::doWork()" << id() << *img;
+                img->serializeQuality(qual);
+                sendMessage(boost::make_shared<GuiImageMessage>(id(), *img), UNRELIABLE_MESS);
+            }else{
+                error() << "GuiOutputNode: no image to send";
+            }
 
             return r;
         }

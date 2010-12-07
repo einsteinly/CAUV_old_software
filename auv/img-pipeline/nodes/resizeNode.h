@@ -30,6 +30,10 @@ class ResizeNode: public Node{
             registerParamID<float>("scale factor", 1.0f);
             registerParamID<int>("interpolation mode", cv::INTER_LINEAR);
         }
+    
+        virtual ~ResizeNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

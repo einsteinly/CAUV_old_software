@@ -39,6 +39,11 @@ class KMeansNode: public Node{
             registerParamID<int>("K", 5);
             registerParamID<int>("colorise", 1);
         }
+    
+        virtual ~KMeansNode()
+        {
+            stop();
+        }
         
     protected:
         struct cluster

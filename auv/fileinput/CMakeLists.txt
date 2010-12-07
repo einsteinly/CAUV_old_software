@@ -10,7 +10,6 @@ target_link_libraries (
     fileinput
     cauv_debug
     common
-    cv
-    highgui
+    ${OpenCV_LIBS}
 )
 

@@ -9,8 +9,7 @@ add_executable (
 target_link_libraries (
     img-viewer
     common
-    cv
-    highgui
+    ${OpenCV_LIBS}
 )
 
 

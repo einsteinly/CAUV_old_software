@@ -54,7 +54,7 @@ class Scheduler
 {
     typedef boost::shared_ptr<boost::thread_group> thread_group_ptr_t;
     typedef std::map<SchedulerPriority, thread_group_ptr_t > priority_thread_group_map_t;
-    typedef BlockingQueue<Node*> node_queue_t;
+    typedef BlockingQueue<node_wkptr_t> node_queue_t;
     typedef boost::shared_ptr<node_queue_t> queue_ptr_t;
     typedef std::map<SchedulerPriority, queue_ptr_t> priority_queue_map_t;
     typedef std::map<SchedulerPriority, int> priority_int_map_t;
@@ -68,14 +68,14 @@ class Scheduler
          * into a smart pointer.
          * NB: this IS threadsafe
          */
-        void addJob(Node* node, SchedulerPriority p) const;
+        void addJob(node_wkptr_t node, SchedulerPriority p) const;
         
         /**
          * Wait on the next available job of priority p
          * node_ptr_t() is returned if the scheduler is stopped, in this case
          * threads should return from their event loop
          */
-        Node* waitNextJob(SchedulerPriority p);
+        node_ptr_t waitNextJob(SchedulerPriority p);
         
         /**
          * False until start() has been called

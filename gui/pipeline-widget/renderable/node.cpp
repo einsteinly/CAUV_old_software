@@ -594,14 +594,14 @@ void Node::refreshLayout(){
         renderable_ptr_t blob = j->second.inblob;
         renderable_ptr_t pvp = j->second.pvpair;
         
-        blob->m_pos.y = y_pos - roundA(max(pvp->bbox().max.y, blob->bbox().max.y));
+        blob->m_pos.y = y_pos - roundA(std::max(pvp->bbox().max.y, blob->bbox().max.y));
         pvp->m_pos.y = blob->m_pos.y;
 
         blob->m_pos.x = m_back.min.x - param_io_overhang - blob->bbox().min.x;
         pvp->m_pos.x = param_indent - pvp->bbox().min.x;
 
-        prev_height = roundA(max(pvp->bbox().max.y, blob->bbox().max.y) -
-                             min(pvp->bbox().min.y, blob->bbox().min.y));
+        prev_height = roundA(std::max(pvp->bbox().max.y, blob->bbox().max.y) -
+                             std::min(pvp->bbox().min.y, blob->bbox().min.y));
 
         m_back |= blob->bbox() + blob->m_pos + Point(io_overhang, 0);
         m_back |= pvp->bbox() + pvp->m_pos;

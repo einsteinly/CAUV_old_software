@@ -34,6 +34,10 @@ class HoughCirclesNode: public Node{
             registerParamID<int>("minRadius", 10);
             registerParamID<int>("maxRadius", 20);
         }
+    
+        virtual ~HoughCirclesNode(){
+            stop();
+        }
         
         // this node should be run even if nothing is connected to its output
         virtual bool isOutputNode() throw() { return true; } 

@@ -39,6 +39,10 @@ class HoughLinesNode: public Node{
             registerParamID<int>("srn", 0);
             registerParamID<int>("stn", 0);
         }
+    
+        virtual ~HoughLinesNode(){
+            stop();
+        }
         
         // this node should be run even if nothing is connected to its output
         virtual bool isOutputNode() throw() { return true; } 

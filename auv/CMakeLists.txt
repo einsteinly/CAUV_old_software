@@ -7,14 +7,10 @@ find_package (Boost 1.40 REQUIRED)
 set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
 include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
-message ("-- Boost include dirs: ${Boost_INCLUDE_DIRS}")
-message ("-- Boost lib dirs: ${Boost_LIBRARY_DIRS}")
 
 # openCV paths:
 find_package (OpenCV REQUIRED)
 include_directories (SYSTEM ${OpenCV_INCLUDE_DIRS})
-message ("-- OpenCV include dir: ${OpenCV_INCLUDE_DIRS}")
-message ("-- OpenCV libs: ${OpenCV_LIBS}")
 
 # we expect the source root dir to be in the include path
 include_directories (${AUV_SOURCE_DIR})
@@ -33,6 +29,7 @@ add_subdirectory (lib)
 add_subdirectory (module)
 #add_subdirectory (pervert)
 add_subdirectory (pinger)
+add_subdirectory (python-module)
 add_subdirectory (scripting)
 add_subdirectory (send)
 add_subdirectory (sonar)

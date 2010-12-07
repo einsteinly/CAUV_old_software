@@ -98,7 +98,7 @@ class TexImg{
             const int img_w = img->cvMat().cols;
             const int img_h = img->cvMat().rows;
             int w, h;
-            max_size = min(max_size, max(img_w, img_h));
+            max_size = std::min(max_size, std::max(img_w, img_h));
             if(img_h > img_w){
                 h = max_size;
                 w = h * img_w / img_h;

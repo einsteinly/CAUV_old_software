@@ -45,3 +45,5 @@ target_link_libraries (
     common
 )
 
+add_dependencies (sonar messages-shared)
+

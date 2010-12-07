@@ -17,6 +17,10 @@ class BroadcastImageNode: public OutputNode{
             registerParamID<int>("camera id", (int)CameraID::Forward); // 0-100
             registerParamID<int>("jpeg quality", 85); // 0-100
         }
+    
+        virtual ~BroadcastImageNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

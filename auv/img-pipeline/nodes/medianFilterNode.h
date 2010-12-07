@@ -26,6 +26,10 @@ class MedianFilterNode: public Node{
             // parameters: kernel radius: must be an odd integer
             registerParamID<int>("kernel", 3);
         }
+        
+        virtual ~MedianFilterNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

@@ -28,6 +28,7 @@ class VideoFileOutputNode: public OutputNode{
         }
 
         virtual ~VideoFileOutputNode(){
+            stop();
             closeVideo();
         }
 

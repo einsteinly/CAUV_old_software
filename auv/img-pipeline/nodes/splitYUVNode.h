@@ -26,6 +26,10 @@ class SplitYUVNode: public Node{
             registerOutputID<image_ptr_t>("U");
             registerOutputID<image_ptr_t>("V");
         }
+    
+        virtual ~SplitYUVNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

@@ -20,6 +20,10 @@
 using namespace pw;
 using namespace pw::ok;
 
+// Behaviour Defining Constants:
+const static float Typing_Max_Delta = 0.3;
+const static float Release_Delay = 0.5;
+
 // Layout Constants, etc:
 
 const static int Key_Font_Size = 12;
@@ -274,7 +278,8 @@ OverKey::layout_map_t appleEnGBKeys(container_ptr_t c){
         boost::make_shared<Key>(c, Qt::Key_F10, 0, s, none, "F10"),
         boost::make_shared<Key>(c, Qt::Key_F11, 0, s, none, "F11"),
         boost::make_shared<Key>(c, Qt::Key_F12, 0, s, none, "F12"),
-        boost::make_shared<Key>(c, Qt::Key_Eject, 0, esc_box, none, "")
+        //boost::make_shared<Key>(c, Qt::Key_Eject, 0, esc_box, none, "") TODO: newer Qt
+        boost::make_shared<Key>(c, 0x010000b9, 0, esc_box, none, "")
     };
     for(unsigned i = 0; i < sizeof(top_row) / sizeof(key_ptr_t); i++){
         key_ptr_t k = top_row[i];
@@ -518,8 +523,8 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
     /*}*/
     
     if(!event->isAutoRepeat())
-        debug() << "keyPressEvent:" << event->text().toStdString() << b.keycode
-                << b.modifiers << m_last_kp_time << m_prev_kp_time;
+        debug() << "keyPressEvent:" << event->text().toStdString() << "k=" << b.keycode
+                << "ms=" << b.modifiers << "lt=" << m_last_kp_time << "pt=" << m_prev_kp_time;
 
     if(m_actions.count(b)){
         m_actions[b]->onPress();
@@ -535,7 +540,7 @@ bool OverKey::keyReleaseEvent(QKeyEvent *event){
     layout_map_t::iterator i;
     std::pair<layout_map_t::iterator, layout_map_t::iterator> eq = m_layout.equal_range(b.keycode);
     
-    bool typing = m_last_kp_time - m_prev_kp_time < 0.3;
+    bool typing = m_last_kp_time - m_prev_kp_time < Typing_Max_Delta;
     if(typing)
         for(i = eq.first; i != eq.second; i++)
             i->second->state(keystate_e::released);
@@ -544,11 +549,11 @@ bool OverKey::keyReleaseEvent(QKeyEvent *event){
             postDelayedCallback(
                 mkStr() << "keyrel" << b.keycode,
                 boost::bind(&Key::state, i->second, keystate_e::released),
-                0.5
+                Release_Delay
             );
         // FIXME... since for now delayed callbacks are processed in draw():
         if(eq.first != eq.second)
-            postRedraw(0.5);
+            postRedraw(Release_Delay);
     }
     
     if(m_layout.count(b.keycode)){
@@ -711,11 +716,11 @@ float OverKey::_alphaFrac() const{
     nokey_delta = now - m_last_no_keys_time;
 
     // shift modifier counts as typing
-    if(last_time - m_prev_kp_time < 0.3 &&
+    if(last_time - m_prev_kp_time < Typing_Max_Delta &&
        !(m_current_modifiers & ~Qt::ShiftModifier))
         typing = true;
     
-    debug(5) << "typing=" << typing << "delta=" << delta
+    debug(3) << "typing=" << typing << "delta=" << delta
              << "lt=" << last_time << "pt=" << m_prev_kp_time;
     r = 0.0f;
 
@@ -757,7 +762,7 @@ float OverKey::_alphaFrac() const{
     
     //
     if(/*key_held*/ keys_actually_held && (delta > 0.4 || keys_actually_held > 1)){
-        r = max(0.8f, r);
+        r = std::max(0.8f, r);
     }
     
     return r;

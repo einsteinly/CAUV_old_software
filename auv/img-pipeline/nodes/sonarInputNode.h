@@ -23,6 +23,10 @@ class SonarInputNode: public InputNode{
             // one output:
             registerOutputID<image_ptr_t>("sonar image");
         }
+    
+        virtual ~SonarInputNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

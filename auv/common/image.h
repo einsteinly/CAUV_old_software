@@ -7,6 +7,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include <debug/cauv_debug.h>
+
 class Image{
         friend class boost::serialization::access;
     public:
@@ -35,7 +37,14 @@ class Image{
             ar & load_flags;
 
             std::vector<unsigned char> buf;
-            cv::imencode(m_compress_fmt, m_img, buf, m_compress_params);
+            try{
+                cv::imencode(m_compress_fmt, m_img, buf, m_compress_params);
+            }catch(cv::Exception& e){
+                error() << "OpenCV couldn't encode image:"
+                        << "format:" << m_compress_fmt 
+                        << "params:" << m_compress_params
+                        << "size:" << m_img.rows << "x" << m_img.cols;
+            }
             ar & buf;
             
             //const float pre = m_img.rows * m_img.cols * m_img.elemSize();
@@ -54,7 +63,13 @@ class Image{
 
             std::vector<unsigned char> buf;
             ar & buf;
-            m_img = cv::imdecode(cv::Mat(buf), load_flags);
+            try{
+                m_img = cv::imdecode(cv::Mat(buf), load_flags);
+            }catch(cv::Exception& e){
+                error() << "OpenCV couldn't decode image:"
+                        << "format:" << m_compress_fmt 
+                        << "params:" << m_compress_params;
+            }
 
             //const float post = m_img.rows * m_img.cols * m_img.elemSize();
             //const float pre = buf.size();

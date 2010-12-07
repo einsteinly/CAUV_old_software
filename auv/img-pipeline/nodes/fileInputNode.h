@@ -48,6 +48,10 @@ class FileInputNode: public AsynchronousNode{
                 warning() << "unknown parameter" << p << "set";
             }
         }
+        
+        virtual ~FileInputNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

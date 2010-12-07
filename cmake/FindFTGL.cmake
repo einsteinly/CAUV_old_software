@@ -42,7 +42,4 @@ set(FTGL_PROCESS_LIBS
     FREETYPE_LIBRARIES)
 libfind_process(FTGL)
 
-message ("-- FTGL include dirs = ${FTGL_INCLUDE_DIRS}")
-message ("-- FTGL libraries = ${FTGL_LIBRARIES}")
-
 

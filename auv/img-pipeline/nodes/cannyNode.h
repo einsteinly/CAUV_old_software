@@ -30,6 +30,10 @@ class CannyNode: public Node{
             registerParamID<int>("aperture size", 3);
             registerParamID<int>("L2 gradient", 0);
         }
+    
+        virtual ~CannyNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

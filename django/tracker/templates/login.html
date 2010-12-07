@@ -7,11 +7,12 @@
 </body>
 <div id="login_wrapper">
 <div id="login_box"><h2>CAUV Project Tracker</h2><br>Please login<br><form action="{% url django.contrib.auth.views.login %}" method="post">
-{% csrf_token %}
+{% comment %}{% csrf_token %}{% endcomment %}
 {{ form.as_p }}
 <input type="submit" value="Submit" />
 <input type="hidden" name="next" value="{{ next }}" />
 </form>
+If you were already logged in when you were redirected to this page, you may not have the required permissions.
 </div>
 </div>
 </html>

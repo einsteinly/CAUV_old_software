@@ -22,8 +22,9 @@ void ImgPipelineThread::operator()(){
     try {
         info() << BashColour::Brown << "ImgPipelineThread (" << m_priority << ") started";
 
-        Node* job;
+        node_ptr_t job;
         while(true){
+            job.reset();
             job = m_sched->waitNextJob(m_priority);
             if(job)
                 job->exec();
@@ -58,14 +59,12 @@ Scheduler::Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_thread_gro
  * into a smart pointer.
  * NB: this IS threadsafe
  */
-void Scheduler::addJob(Node* node, SchedulerPriority p) const
+void Scheduler::addJob(node_wkptr_t node, SchedulerPriority p) const
 {
     // we rely on multiple-reader thread-safety of std::map here,
     // which is only true if we aren't creating new key-value pairs
     // using operator[] (which we aren't, and doing so would return a
     // NULL queue pointer anyway)
-    if(!node)
-        throw scheduler_error("NULL job added to scheduler");
     const priority_queue_map_t::const_iterator i = m_queues.find(p);
     if(i != m_queues.end())
         i->second->push(node);
@@ -74,17 +73,21 @@ void Scheduler::addJob(Node* node, SchedulerPriority p) const
 }
 
 /**
- * Wait on the next available job of priority p
- * node_ptr_t() is returned if the scheduler is stopped, in this case
- * threads should return from their event loop
+ * Wait on the next available job of priority p: if a node has been destroyed
+ * (.lock() returns empty shared pointer) then continue to wait until there's a
+ * job from a node that is still alive.
+ * An empty shared pointer is returned if the scheduler is stopped, in this case
+ * threads should return from their event loop.
  */
-Node* Scheduler::waitNextJob(SchedulerPriority p)
+node_ptr_t Scheduler::waitNextJob(SchedulerPriority p)
 {
     boost::this_thread::yield();
-    if(m_stop)
-        return NULL; 
-    else
-        return m_queues[p]->popWait();
+    node_ptr_t n;
+
+    while(!n && !m_stop)
+        n = m_queues[p]->popWait().lock();
+
+    return n;
 }
 
 /**

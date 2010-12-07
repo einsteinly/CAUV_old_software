@@ -28,6 +28,10 @@ class CopyNode: public Node{
             // no parameters
             // registerParamID<>();
         }
+    
+        virtual ~CopyNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

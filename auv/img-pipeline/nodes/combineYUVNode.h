@@ -26,6 +26,10 @@ class CombineYUVNode: public Node{
             // output:
             registerOutputID<image_ptr_t>("image");
         }
+    
+        virtual ~CombineYUVNode(){
+            stop();
+        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

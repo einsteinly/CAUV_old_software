@@ -25,6 +25,10 @@ class LocalDisplayNode: public Node{
             // no parameter
             // registerParamID<>(,);
         }
+        
+        virtual ~LocalDisplayNode(){
+            stop();
+        }
 
         virtual bool isOutputNode() const throw() { return true; }
 

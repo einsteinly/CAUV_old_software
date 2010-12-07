@@ -30,6 +30,10 @@ class MixNode: public Node{
             registerParamID<float>("image fac", 1);
             registerParamID<float>("mix fac", 1);
         }
+    
+        virtual ~MixNode(){
+            stop();
+        }
 
     protected:
 

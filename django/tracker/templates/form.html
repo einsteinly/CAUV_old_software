@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block breadcrumbs %}<a href="/">Home</a> - <a href="/view/bag/{{ entity.type }}">{{ entity.type }}</a> - <a href="/view/entity/{{ entity.uuid }}">{{ entity.title }}</a> - Editing{% endblock %}
+{% block content %}
+<form action="" method="post">
+{% comment %}{% csrf_token %}{% endcomment %}
+{% for field in form %}
+        <div class="property">
+            {{ field.errors }}
+            {{ field.label_tag }}: <div class="field">{{ field }}</div>
+        </div>
+{% endfor %}
+<div id="toolbox">
+<input type="submit" value="Save" />
+<input type="hidden" name="next" value="{{ next }}" />
+</div>
+{% endblock %}
