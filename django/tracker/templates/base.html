@@ -6,7 +6,7 @@
 <body>
 <div id="wrapper">
     <div id="header">
-        <div id="header_location"><a href="{{ ROOT_URL }}/">Home</a> {% block location %}{% endblock %}</div>
+        <div id="header_location">{% block breadcrumbs %}<a href="{{ ROOT_URL }}/">Home</a> {% endblock %}</div>
         <div id="header_user">You are logged in as <b>{{ request.user }}</b>. <a href="{{ ROOT_URL }}/accounts/logout/">Logout</a></div>
     </div>
     <div id="content">
