@@ -50,7 +50,7 @@ def spiral():
         
         print 'spiral...'
               
-        for i in range(2*square): #making individual half squares
+        for i in range(1, 2*square): #making individual half squares
             print 'Performing %d half circle' % i
             auv.prop(power)
             print 'Moving forward'
@@ -74,8 +74,7 @@ def spiral():
             bearing += 90
             if bearing>=360:
                 bearing-=360
-            auv.bearing(bearing)
-            auv.bearingAndWait()        
+            auv.bearingAndWait(bearing)        
             print 'turning 90 degree'
              
                     
