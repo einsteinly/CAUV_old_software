@@ -1,0 +1,19 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: &id001 2010-12-07 16:29:12.212545
+description: "description changed to This is more of a pipe-dream than an immediate\
+  \ goal, but nevertheless, it would\r\nbe awesome if we could do something like this:\r\
+  \n\r\nhttp://mi.eng.cam.ac.uk/~qp202/my_papers/BMVC09/\r\n\r\nAnd then use the resulting\
+  \ 3D meshes for object recognition / navigation.\r\n\r\nThe environment reconstuction\
+  \ case amounts to SLAM, but I think the most useful\r\napplication would be in object\
+  \ recognition.\npoints changed to None"
+entity: !!python/object:uuid.UUID
+  int: 169352632321095334468253388073032596086
+modified_time: *id001
+pscore: 0
+title: Jason Wyatt changed <pitz.Task 7f6821 Object/Environment Reconstruction>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 42011287752797164704605055492041042103
+who_did_it: *id002
+yaml_file_saved: 2010-12-07 16:29:12.212642

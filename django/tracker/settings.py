@@ -3,7 +3,6 @@ import os
 # location of tracker project (used to to make some relative paths absolute)
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__)) 
 AUTH_PROFILE_MODULE = 'track.UserProfile' #tells django to link user profile to django auth users
-LOGIN_REDIRECT_URL = '/' #where should people be redirected to if login succesful (and no next page provided)
 PITZ_DIR = os.sep.join([os.sep.join(SITE_ROOT.split(os.sep)[0:-2]), 'pitzdir']) #pitzdir
 
 if "SCRIPT_NAME" in os.environ:
@@ -11,10 +10,10 @@ if "SCRIPT_NAME" in os.environ:
 else:
     ROOT_URL = ""
 
-LOGIN_REDIRECT_URL = ROOT_URL+"/accounts/profile"
+LOGIN_REDIRECT_URL = ROOT_URL+"/"
 LOGIN_URL = ROOT_URL+"/accounts/login"
 LOGOUT_URL = ROOT_URL+"/accounts/logout"
-SESSION_COOKIE_PATH = ROOT_URL+"/"
+SESSION_COOKIE_PATH = "/"
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).

@@ -111,3 +111,16 @@ def make_entity_form(entity_type, project, initial=None):
             self.entity.to_yaml_file(settings.PITZ_DIR)
         return
     return type('entity_form', (forms.BaseForm,), { 'base_fields': fields, 'entity':entity, 'isnew': isnew, 'save': save })
+
+def make_order_filter_forms(entity_type):
+    analysis = analyse(entity_type)
+    choices = [(x, x) for x in analysis]
+    choices.append(('','None'))
+    class order_form(forms.Form):
+        order_by = forms.ChoiceField(choices=choices,label='Order by',initial='')
+        reverse = forms.BooleanField(label='Reverse', required=False)
+    class filter_form(forms.Form):
+        a = forms.ChoiceField(choices=choices, label='Filter by')
+        b = forms.ChoiceField(choices=(('lte','<='),('gte','>='),('eq','==')),label='',initial='eq')
+        c = forms.CharField(label='')
+    return order_form, filter_form
