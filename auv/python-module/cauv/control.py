@@ -127,7 +127,7 @@ class AUV(messaging.BufferedMessageObserver):
         # see doc for motorMap
         self.motorMap(messaging.MotorID.Prop, zero_plus, zero_minus, max_plus, max_minus)
 
-    def hbowMap(self, zero_plus, zero_mbearinginus, max_plus = 127, max_minus = -127):
+    def hbowMap(self, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
         # see doc for motorMap        
         self.motorMap(messaging.MotorID.HBow, zero_plus, zero_minus, max_plus, max_minus)
 

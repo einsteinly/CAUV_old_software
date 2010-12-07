@@ -11,7 +11,7 @@ import traceback
 
 
 def spiral(): 
-    node = cauv.node.Node('pu-spiral')                #Create a node of the spread messaging service
+    node = cauv.node.Node('py-spiral')                #Create a node of the spread messaging service
     auv = control.AUV(node)                        #Create a python object for the control of the AUV
     
     print 'setting calibration...'                #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
