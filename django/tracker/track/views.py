@@ -82,7 +82,7 @@ def view_project(request):
             bags.append(disp_bag(p.__getattribute__(type),type))
         except AttributeError:
             continue
-    return render_to_response('view_project.html', locals())
+    return render_to_response('view_project.html', locals(), context_instance=RequestContext(request))
     
 def view_bag(request, ref):
     p = Project.from_pitzdir(settings.PITZ_DIR)
@@ -92,7 +92,7 @@ def view_bag(request, ref):
         if expr == u'eq':
             pitz_bag = pitz_bag.matches_dict(**{str(name):value})
     bag = disp_bag(pitz_bag,ref)
-    return render_to_response('view_bag.html', locals())
+    return render_to_response('view_bag.html', locals(), context_instance=RequestContext(request))
     
 def view_entity(request, uuid):
     p = Project.from_pitzdir(settings.PITZ_DIR)
@@ -118,7 +118,7 @@ def view_entity(request, uuid):
             if fields[field_name]==type(e):
                 related.append((disp_bag(p.__getattribute__(plural_name).matches_dict(**{field_name:e}),plural_name),field_name))
     entity = disp_entity(e, related)
-    return render_to_response('view_entity.html', locals())
+    return render_to_response('view_entity.html', locals(), context_instance=RequestContext(request))
     
 @login_required
 def edit_entity(request, uuid):
@@ -137,7 +137,7 @@ def edit_entity(request, uuid):
     else:
         form = entity_form()
     entity = disp_entity(entity)
-    return render_to_response('form.html', locals())
+    return render_to_response('form.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 def add_entity(request, plural_name):
@@ -164,7 +164,7 @@ def add_entity(request, plural_name):
     else:
         form = entity_form()
     entity = disp_entity(form.entity)
-    return render_to_response('form.html', locals())
+    return render_to_response('form.html', locals(), context_instance=RequestContext(request))
 
 @permission_required('is_staff')
 def useruuids(request, uuid):
@@ -185,5 +185,5 @@ def useruuids(request, uuid):
         except models.UserProfile.DoesNotExist:
             form = appforms.useruuid_form()
     entity = disp_entity(user)
-    return render_to_response('form.html', locals())
-    
+    return render_to_response('form.html', locals(), context_instance=RequestContext(request))
+
