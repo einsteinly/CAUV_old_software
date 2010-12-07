@@ -71,7 +71,7 @@ class GrabCutNode: public Node{
 	    //perform grabcut iterations
                     cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
 		    		fgdModel, iterations, mode);
-                    r["image_out (not copied)"] = img->cvMat();
+                    r["image_out (not copied)"] = img;
                     
             }catch(cv::Exception& e){
                 error() << "GrabCutNode:\n\t"
