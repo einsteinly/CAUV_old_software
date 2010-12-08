@@ -30,7 +30,7 @@ class CentreFinderNode : public Node{
             
         }
     
-        virtual ~HistogramSegmentationNode(){
+        virtual ~CentreFinderNode(){
             stop();
         }
         
