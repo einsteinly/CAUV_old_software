@@ -16,7 +16,8 @@ class Textarea(forms.CharField):
         super(Textarea, self).__init__(widget=forms.Textarea, **kwargs)
 
 #this defines the descriptions that math to pscores
-pscore_choices = ((0, 'Useless'),
+pscore_choices = ((None, 'N/A'),
+                  (0, 'Useless'),
                   (1, 'Would be nice'),
 		  (2, 'Long term goal'),
 		  (3, 'Short term goal'),
@@ -141,6 +142,6 @@ def make_order_filter_forms(entity_type):
         reverse = forms.BooleanField(label='Reverse', required=False)
     class filter_form(forms.Form):
         a = forms.ChoiceField(choices=choices, label='Filter by')
-        b = forms.ChoiceField(choices=(('lte','<='),('gte','>='),('eq','=='),('neq','!=')),label='',initial='eq')
+        b = forms.ChoiceField(choices=(('eq','equals'),('neq','does not equal')),label='',initial='eq')
         c = forms.CharField(label='')
     return order_form, filter_form

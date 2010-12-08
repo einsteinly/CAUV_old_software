@@ -27,6 +27,10 @@ class disp_property():
     def __init__(self, name, value):
         self.name = name
         self.value = value
+	if self.name == 'pscore' and self.value:
+	    self.value = dict(appforms.pscore_choices)[int(value)]
+	else:
+	    self.value = value
         if isinstance(value, list):
             try:   
                 if isinstance(value[0], Entity):
