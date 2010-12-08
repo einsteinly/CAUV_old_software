@@ -82,7 +82,6 @@ def analyse(entity_type):
 	        fields[var_name] = name_to_field[var_name]
 	    except KeyError:
 	        try:
-		    print variables[var_name]
                     fields[var_name] = type_to_field[variables[var_name]]
                 except KeyError: #fallback on text field
                     fields[var_name] = forms.CharField
