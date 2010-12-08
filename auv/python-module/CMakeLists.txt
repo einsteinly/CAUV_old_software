@@ -9,8 +9,6 @@ find_package(PythonInterp)
 find_package(PythonLibs)
 include_directories (${PYTHON_INCLUDE_DIRS})
 
-link_libraries (boost_python)
-
 add_library (cauvinterface SHARED  
     cauvinterfacemodule.cpp
     emit_containers.cpp
@@ -23,9 +21,12 @@ add_library (cauvinterface SHARED
 )
 set_target_properties(cauvinterface PROPERTIES PREFIX "")
 
+message ("Python Libs: ${PYTHON_LIBRARIES}")
 target_link_libraries (cauvinterface
     common
     cauv_debug
+    boost_python
+    ${PYTHON_LIBRARIES}
 )
 
 add_custom_target (python-module ALL
@@ -36,12 +37,23 @@ add_custom_target (python-module ALL
     COMMENT "Python module target: depending on .py files"
 )
 
-add_custom_command (
-    TARGET python-module
-    POST_BUILD
-    COMMAND ln -sf ${BINDIR}/cauvinterface.so ${SRCD}/cauvinterface.so
-    COMMENT "Linking module back to source tree"
-)
+if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
+    add_custom_command (
+        TARGET python-module
+        POST_BUILD
+        COMMAND ln -sf ${BINDIR}/cauvinterface.so ${SRCD}/cauvinterface.so
+        COMMENT "Linking module back to source tree"
+    )
+elseif (${CMAKE_SYSTEM_NAME} MATCHES Darwin)
+    add_custom_command (
+        TARGET python-module
+        POST_BUILD
+        COMMAND ln -sf ${BINDIR}/cauvinterface.dylib ${SRCD}/cauvinterface.so
+        COMMENT "Linking module back to source tree"
+    )
+else ()
+    message(FATAL "Unknown platform: can't create python module link")
+endif ()
 
 #add_custom_command (
 #    TARGET python-module

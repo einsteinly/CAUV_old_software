@@ -1,0 +1,198 @@
+Help on Bag in module pitz.bag object:
+
+class BBaagg(_abcoll.MutableSequence)
+ |  Bags act like lists with a few extra methods.
+ |  
+ |  Method resolution order:
+ |      Bag
+ |      _abcoll.MutableSequence
+ |      _abcoll.Sequence
+ |      _abcoll.Sized
+ |      _abcoll.Iterable
+ |      _abcoll.Container
+ |      __builtin__.object
+ |  
+ |  Methods defined here:
+ |  
+ |  ____aadddd____(self, other)
+ |  
+ |  ____ccaallll____(self, **d)
+ |      Now can just pass the filters right into the bag.
+ |  
+ |  ____ccoonnttaaiinnss____(self, element)
+ |  
+ |  ____ddeelliitteemm____(self, element)
+ |  
+ |  ____ggeettiitteemm____(self, i)
+ |      Allow lookups by index or uuid.
+ |  
+ |  ____ggeettsslliiccee____(self, i, j)
+ |  
+ |  ____ggeettssttaattee____(self)
+ |  
+ |  ____iinniitt____(self, title='', html_filename=None, uuid=None, pathname=None, entities=(), order_method=<function by_pscore_and_milestone>, jinja_template=None, shell_mode=False, **kwargs)
+ |  
+ |  ____iitteerr____(self)
+ |  
+ |  ____lleenn____(self)
+ |  
+ |  ____rreepprr____(self)
+ |  
+ |  ____sseettiitteemm____(self, index, element)
+ |  
+ |  ____sseettssttaattee____(self, d)
+ |  
+ |  ____ssttrr____(self)
+ |  
+ |  aappppeenndd(self, e, rerun_sort_after_append=True)
+ |      Put an entity in this bag and update related dictionaries.
+ |      You can disable the sorting function if you set the
+ |      rerun_sort_after_append to False.
+ |  
+ |  bbyy__ffrraagg(self, frag)
+ |  
+ |  bbyy__uuuuiidd(self, obj)
+ |      Return an entity with uuid obj if we can.  Otherwise, return obj.
+ |  
+ |  ccuussttoomm__vviieeww(self, entity_view='summarized_view', color=False)
+ |      Print the entities using the entity view given.
+ |  
+ |  ddooeess__nnoott__mmaattcchh__ddiicctt(self, **d)
+ |  
+ |  ggrreepp(self, phrase, ignore_case=False)
+ |      Return a new bag, filtering the entities in this bag by the ones
+ |      that match the results of::
+ |      
+ |          $ grep phrase <files>
+ |      
+ |      where <files> are the files for all the entities in this bag.
+ |      
+ |      This function depends (of course) on files living in the
+ |      filesystem and on a command-line program named grep.
+ |  
+ |  iinnddeexx(self, value)
+ |  
+ |  iinnsseerrtt(self, index, element)
+ |  
+ |  mmaattcchheess__ddiicctt(self, **d)
+ |  
+ |  oorrddeerr(self, order_method=None)
+ |      Put all the entities into order based on either the order_method
+ |      parameter or self.order_method.
+ |  
+ |  ppoopp(self, index=-1)
+ |  
+ |  rreeppllaaccee__oobbjjeeccttss__wwiitthh__ppooiinntteerrss(self)
+ |      Just like replace_pointers_with_objects, but reversed.
+ |  
+ |  rreeppllaaccee__ppooiinntteerrss__wwiitthh__oobbjjeeccttss(self)
+ |      Tell all the entities inside to replace their pointers to
+ |      objects with the objects themselves.
+ |  
+ |  ssoorrtt(self, cmp=None, key=None, reverse=False)
+ |  
+ |  ttoo__ccssvv(self, filepath, *columns)
+ |      Write out a CSV file for this bag listing the columns specified,
+ |      AND the UUID at the very end.
+ |  
+ |  ttoo__hhttmmll(self, filepath)
+ |      Write this bag out as HTML to a file at filepath.
+ |  
+ |  vvaalluueess(self, attr)
+ |      Return a sorted list of tuples like (value, count) for all the
+ |      values for the attr.
+ |  
+ |  wwaallkk__tthhrroouugghh__eelleemmeennttss(self)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors defined here:
+ |  
+ |  aattttrriibbuutteess
+ |      Return a sorted list of tuplies like (attribute, count) for all
+ |      attributes in any entity in this bag.
+ |  
+ |  bbyy__oowwnneerr__vviieeww
+ |  
+ |  ccoolloorriizzeedd__bbyy__oowwnneerr__vviieeww
+ |  
+ |  ccoolloorriizzeedd__ddeettaaiilleedd__vviieeww
+ |  
+ |  ccoonntteennttss
+ |      Describe count by type of the contents of this bag.
+ |      
+ |      >>> Bag().contents
+ |      '(empty)'
+ |      
+ |      >>> from pitz.entity import Entity
+ |      >>> Bag().append(Entity(title="blah")).contents
+ |      '(1 entity entities)'
+ |  
+ |  ddeettaaiilleedd__vviieeww
+ |  
+ |  hhttmmll
+ |      Return a string containing this bag formatted as HTML.
+ |  
+ |  hhttmmll__ffiilleennaammee
+ |  
+ |  lleennggtthh
+ |  
+ |  ppiittzzddiirr
+ |  
+ |  sshheellll__mmooddee
+ |  
+ |  ssuummmmaarriizzeedd__vviieeww
+ |  
+ |  ttiittllee__uunnddeerrlliinnee
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes defined here:
+ |  
+ |  ____aabbssttrraaccttmmeetthhooddss____ = frozenset([])
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from _abcoll.MutableSequence:
+ |  
+ |  ____iiaadddd____(self, values)
+ |  
+ |  eexxtteenndd(self, values)
+ |  
+ |  rreemmoovvee(self, value)
+ |  
+ |  rreevveerrssee(self)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from _abcoll.Sequence:
+ |  
+ |  ____rreevveerrsseedd____(self)
+ |  
+ |  ccoouunntt(self, value)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Class methods inherited from _abcoll.Sized:
+ |  
+ |  ____ssuubbccllaasssshhooookk____(cls, C) from abc.ABCMeta
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from _abcoll.Sized:
+ |  
+ |  ____ddiicctt____
+ |      dictionary for instance variables (if defined)
+ |  
+ |  ____wweeaakkrreeff____
+ |      list of weak references to the object (if defined)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes inherited from _abcoll.Sized:
+ |  
+ |  ____mmeettaaccllaassss____ = <class 'abc.ABCMeta'>
+ |      Metaclass for defining Abstract Base Classes (ABCs).
+ |      
+ |      Use this metaclass to create an ABC.  An ABC can be subclassed
+ |      directly, and then acts as a mix-in class.  You can also register
+ |      unrelated concrete classes (even built-in classes) and unrelated
+ |      ABCs as 'virtual subclasses' -- these and their descendants will
+ |      be considered subclasses of the registering ABC by the built-in
+ |      issubclass() function, but the registering ABC won't show up in
+ |      their MRO (Method Resolution Order) nor will method
+ |      implementations defined by the registering ABC be callable (not
+ |      even via super()).

@@ -2,6 +2,7 @@ from django.shortcuts import render_to_response, redirect#responses
 from django.http import Http404 #404 error
 from django.template import RequestContext #used by django to prevent cross site request forgery for forms (django will through an error if form submitted without csrf token)
 from django.contrib.auth.decorators import permission_required, login_required #Use @login_required to require login for a view
+from django.forms.formsets import formset_factory
 from pitz.project import Project
 from pitz.bag import Bag
 from pitz.entity import Entity
@@ -87,10 +88,33 @@ def view_project(request):
 def view_bag(request, ref):
     p = Project.from_pitzdir(settings.PITZ_DIR)
     pitz_bag = p.__getattribute__(ref)
-    for f in request.GET.getlist('filter'):
-        name, expr, value = f.split(',')
-        if expr == u'eq':
-            pitz_bag = pitz_bag.matches_dict(**{str(name):value})
+    order_form, filter_form = appforms.make_order_filter_forms(p.plural_names[ref])
+    if request.POST:
+        order_forms = formset_factory(order_form, extra=2)(request.POST, prefix='order')
+        filter_forms = formset_factory(filter_form, extra=2)(request.POST, prefix='filter')
+        equal_filter_dict = {}
+        for form in filter_forms.forms:
+            if form.is_valid() and len(form.cleaned_data):
+	        if form.cleaned_data['b']==u'eq':
+                    equal_filter_dict[str(form.cleaned_data['a'])] = form.cleaned_data['c']
+        if len(equal_filter_dict):
+            pitz_bag = pitz_bag.matches_dict(**equal_filter_dict)
+        order_list = []
+        for form in order_forms.forms:
+            if form.is_valid() and len(form.cleaned_data):
+                order_list.append((form.cleaned_data['order_by'],form.cleaned_data['reverse']))
+        def special_cmp(e1,e2):
+            for o in order_list:
+                result = cmp(e1[str(o[0])],e2[str(o[0])])
+                if result != 0:
+                   if o[1]:
+                       result=-result
+                   return result
+            return 0
+        pitz_bag.order(order_method=special_cmp)
+    else:
+        order_forms = formset_factory(order_form, extra=2)(prefix='order')
+        filter_forms = formset_factory(filter_form, extra=2)(prefix='filter')
     bag = disp_bag(pitz_bag,ref)
     return render_to_response('view_bag.html', locals(), context_instance=RequestContext(request))
     
@@ -133,7 +157,7 @@ def edit_entity(request, uuid):
         form = entity_form(request.POST)
         if form.is_valid():
             form.save(user)
-            return redirect(to='/view/entity/'+str(uuid)+'/')
+            return redirect(to=settings.ROOT_URL+'/view/entity/'+str(uuid)+'/')
     else:
         form = entity_form()
     entity = disp_entity(entity)
@@ -151,7 +175,7 @@ def add_entity(request, plural_name):
         form = entity_form(request.POST)
         if form.is_valid():
             form.save(user)
-            return redirect(to='/view/entity/'+str(form.entity.uuid)+'/')
+            return redirect(to=settings.ROOT_URL+'/view/entity/'+str(form.entity.uuid)+'/')
     elif request.method == 'GET':
         i={}
         for x in request.GET:

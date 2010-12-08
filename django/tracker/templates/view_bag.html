@@ -3,7 +3,22 @@
 {% block content %}
 <div class="bag">
     <div class="item_key"> {{ bag.title }} </div>
-    <div id="toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}">Add</a></div>
+    <div id="toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}">Add</a>
+    <form action="" method="post" >
+    {{ order_forms.management_form }}
+    {% for form in order_forms.forms  %}
+        {% for field in form %}
+            {{ field.label_tag }}: {{ field }}
+	{% endfor %}
+    {% endfor %} 
+    {{ filter_forms.management_form }}
+    {% for form in filter_forms.forms %}
+    	{% for field in form %}
+	    {% if not field.is_hidden %}{{ field.label_tag }}: {% endif %}{{ field }}
+	{% endfor %}
+    {% endfor %}
+    <input type="submit" value="Go" /> 
+    </form></div>
     <ul>
     {% for entity in bag.elements %}
     <li><a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>

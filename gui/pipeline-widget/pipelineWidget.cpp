@@ -401,6 +401,9 @@ void PipelineWidget::postText(const std::string &text, const std::string &font)
 	// need to call renderText(double x, double y ...
 	// x, y, z are all set to zero
 	// set tex
+	QString text_stuff = QString::fromStdString(text);
+	QString text_font = QString::fromStdString(font);
+	renderText(0.0,0.0,0.0,text_stuff,text_font);
 }
 
 void PipelineWidget::removeMenu(menu_ptr_t r){
