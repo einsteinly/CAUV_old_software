@@ -41,7 +41,8 @@ enum NodeType : int8 {
     GrabCut = 32,
     Histogram = 33,
     HistogramSegmentation = 34,
-    QuickSegment = 35
+    Centre = 35,
+    QuickSegment = 36
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
