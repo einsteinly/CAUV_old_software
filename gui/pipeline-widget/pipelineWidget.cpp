@@ -1,12 +1,21 @@
 #include "pipelineWidget.h"
 
-#include <QtGui>
-
 #include <cmath>
 #include <algorithm>
 
 #include <boost/thread.hpp>
 #include <boost/ref.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/operators.hpp>
+//#include <boost/graph/adjacency_list.hpp>
+//#include <boost/graph/graphviz.hpp>
+
+#include <QtGui>
+
+#include <graphviz/types.h>
+#include <graphviz/gvc.h>
+#include <graphviz/graph.h>
 
 #include <common/bash_cout.h>
 #include <common/cauv_utils.h>
@@ -388,7 +397,7 @@ void PipelineWidget::postMenu(menu_ptr_t m, Point const& p, bool r) {
 
 void PipelineWidget::postText(const std::string &text, const std::string &font)
 {
-	// need to create QString copies of text and font
+    // need to create QString copies of text and font
 	// need to call renderText(double x, double y ...
 	// x, y, z are all set to zero
 	// set tex
@@ -802,7 +811,285 @@ static float mass(node_ptr_t){
     return 1.0f;
 }
 
+
+
+namespace graphviz {
+
+class Graph;
+class Node
+{
+    public:
+        std::string name() const
+        {
+            return agnameof(const_cast<Agnode_t*>(m_node));
+        }
+        pointf coord() const
+        {
+            return ND_coord(const_cast<Agnode_t*>(m_node));
+        }
+
+        template<typename T>
+        void attr(std::string name, T val)
+        {
+            agset(m_node, const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(val).c_str()));
+        }
+
+        std::string attr(std::string name) const
+        {
+            char* c = agget(const_cast<Agnode_t*>(m_node), const_cast<char*>(name.c_str()));
+            return c ? c : "";
+        }
+
+    protected:
+        Node(Agnode_t* node) : m_node(node) {}
+        Agnode_t* m_node;
+        friend class Graph;
+};
+class Edge
+{
+    public:
+
+    protected:
+        Edge(Agedge_t* edge) : m_edge(edge) {}
+        Agedge_t* m_edge;
+        friend class Graph;
+};
+
+
+void AgraphDeleter(Agraph_t* v) {
+    agclose(v);
+}     
+class Graph
+{
+    public:
+        Graph(std::string name, int type)
+            : nodes(this),
+              m_G( boost::shared_ptr<Agraph_t>( agopen(const_cast<char*>(name.c_str()), type), AgraphDeleter ) )
+        {
+        }
+
+        Node node(std::string name)
+        {
+            return Node(agnode(m_G.get(), const_cast<char*>(name.c_str())));
+        }
+        Edge edge(Node& n1, Node& n2)
+        {
+            return Edge(agedge(m_G.get(), n1.m_node, n2.m_node));
+        }
+        Graph subGraph(std::string name)
+        {
+            return Graph(agsubg(m_G.get(), const_cast<char*>(name.c_str())), m_root ? m_root : boost::shared_ptr<Graph>(this)); 
+        }
+
+        Agraph_t* get()
+        {
+            return m_G.get();
+        }
+
+        template<typename T>
+        void addGraphAttr(std::string name, T defaultval)
+        {
+            agraphattr(m_G.get(), const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(defaultval).c_str()));
+        }
+        template<typename T>
+        void addNodeAttr(std::string name, T defaultval)
+        {
+            agnodeattr(m_G.get(), const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(defaultval).c_str()));
+        }
+
+
+        struct NodeList
+        {
+            public:
+                NodeList(Graph* graph) : m_graph(graph)
+                {
+                }
+                
+                struct NodeListIterator : public boost::forward_iterator_helper<NodeListIterator, Node, std::ptrdiff_t, Node*, Node&>
+                {
+                    public:
+                        Node operator*() const
+                        {
+                            return Node(m_node);
+                        }
+                        void operator++()
+                        {
+                            m_node = agnxtnode(m_graph.get(), m_node);
+                        }
+                        bool operator==(const NodeListIterator& i) const 
+                        {
+                            return m_node == i.m_node;
+                        }
+
+                    protected:
+                        NodeListIterator(boost::shared_ptr<Agraph_t> graph, Agnode_t* node) : m_graph(graph), m_node(node)
+                        {
+                        }
+
+                        boost::shared_ptr<Agraph_t> m_graph;
+                        Agnode_t* m_node;
+                
+                    friend class NodeList;
+                };
+                typedef NodeListIterator iterator;
+                typedef NodeListIterator const_iterator;
+
+
+                iterator begin() const
+                {
+                    return iterator(m_graph->m_G, agfstnode(m_graph->m_G.get()));
+                }
+                iterator end() const
+                {
+                    return iterator(m_graph->m_G, NULL);
+                }
+
+            protected:
+                Graph* m_graph;
+        };
+
+        NodeList nodes;
+        //EdgeList edges;
+
+    protected:
+        Graph(Agraph_t* G, boost::shared_ptr<Graph> root) : nodes(this), m_G(boost::shared_ptr<Agraph_t>(G, AgraphDeleter)), m_root(root) {}
+        
+        boost::shared_ptr<Agraph_t> m_G;
+        boost::shared_ptr<Graph> m_root;
+};
+
+void ContextDeleter(GVC_t* v) {
+    gvFreeContext(v);
+}     
+class Context
+{
+    public:
+        Context()
+        {
+            m_GVC = boost::shared_ptr<GVC_t>(gvContext(), ContextDeleter);
+        }
+        
+        GVC_t* get()
+        {
+            return m_GVC.get();
+        }
+
+
+    protected:
+        boost::shared_ptr<GVC_t> m_GVC;
+};
+
+
+}
+
 void PipelineWidget::iterateLayout(){
+    namespace gv = graphviz;
+    
+    gv::Context c;
+
+    float dpi = 96;
+
+    gv::Graph g("nodes", AGDIGRAPH);
+    g.addGraphAttr("dpi", dpi);
+    g.addGraphAttr("rankdir", "LR");
+    g.addGraphAttr("nodesep", 1.0);
+    g.addGraphAttr("ranksep", 1.0);
+    g.addNodeAttr("shape","box");
+    g.addNodeAttr("height", 1);
+    g.addNodeAttr("width", 1);
+
+    foreach(const node_map_t::value_type& n, m_nodes)
+    {
+        g.node(boost::lexical_cast<std::string>(n.first));
+    }
+    foreach(arc_ptr_t a, m_arcs)
+    {
+        gv::Node n1 = g.node(boost::lexical_cast<std::string>(a->from().node));
+        gv::Node n2 = g.node(boost::lexical_cast<std::string>(a->to().node));
+        
+        g.edge(n1, n2);
+    }
+
+    foreach(gv::Node n, g.nodes)
+    {
+        node_map_t::iterator np = m_nodes.find(boost::lexical_cast<node_id>(n.name()));
+        if (np != m_nodes.end()) {
+            n.attr("width", np->second->bbox().w() / dpi);
+            n.attr("height", np->second->bbox().h() / dpi);
+        }
+    }
+
+
+    gvLayout(c.get(), g.get(), "dot");
+    gvRenderFilename(c.get(), g.get(), "png", "out.png");
+
+    foreach(const gv::Node& n, g.nodes)
+    {
+        std::stringstream ss;
+        ss << n.name() << ": " << n.coord().x << "," << n.coord().y;
+        std::cout << ss.str() << std::endl;
+        
+        node_map_t::iterator np = m_nodes.find(boost::lexical_cast<node_id>(n.name()));
+        if (np != m_nodes.end()) {
+            np->second->m_pos = Point(n.coord().x - np->second->bbox().w() / 2.0, n.coord().y + np->second->bbox().h() / 2.0);   
+        }
+    }
+ 
+    gvFreeLayout(c.get(), g.get());
+
+/*
+
+    using namespace boost;
+
+    typedef adjacency_list< vecS, vecS, directedS,
+            boost::property< vertex_name_t, int32_t >,
+            no_property
+        > Graph;
+    Graph g;
+    
+    typedef property_map < Graph, vertex_name_t >::type node_name_map_t;
+    node_name_map_t node_names = get(vertex_name, g);
+    
+    typedef graph_traits < Graph >::vertex_descriptor Vertex;
+    typedef std::map < int32_t, Vertex > nameVertexMap;
+    nameVertexMap nodes;
+    
+    foreach(arc_ptr_t a, m_arcs)
+    {
+        nameVertexMap::iterator pos;
+        bool inserted;
+        
+        Vertex u;
+        tie(pos, inserted) = nodes.insert(std::make_pair(a->from().node, Vertex()));
+        if (inserted)
+        {
+            u = add_vertex(g);
+            node_names[u] = a->from().node;
+            pos->second = u;
+        }
+        else
+        {
+            u = pos->second;
+        }
+        
+        Vertex v;
+        tie(pos, inserted) = nodes.insert(std::make_pair(a->to().node, Vertex()));
+        if (inserted)
+        {
+            v = add_vertex(g);
+            node_names[u] = a->to().node;
+            pos->second = v;
+        }
+        else
+        {
+            v = pos->second;
+        }
+
+        add_edge(u, v, g);
+    }*/
+
+    return;
+
     // - overlapping nodes repel each other, and all nodes repel each other
     // - arcs attract in a straight line with squared growth (but small)
     //

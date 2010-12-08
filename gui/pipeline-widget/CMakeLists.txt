@@ -4,8 +4,13 @@ project (pipeline-widget)
 find_package (FTGL)
 include_directories (${FTGL_INCLUDE_DIRS} REQUIRED)
 
+find_package (GraphViz REQUIRED)
+include_directories (${graphviz_INCLUDE_DIRS})
+link_directories (${graphviz_LIBRARY_DIRS})
+
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
+
 
 # abbreviate a little:
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
@@ -57,6 +62,7 @@ target_link_libraries (
     ${FTGL_LIBRARIES}
     ${OPENGL_LIBRARY}
     ${QT_LIBRARIES}
+    ${graphviz_LIBRARIES}
 )
 add_custom_command (
     OUTPUT ${SRCD}/LiberationSans-Regular.h
