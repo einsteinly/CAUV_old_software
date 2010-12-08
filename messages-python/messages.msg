@@ -342,6 +342,13 @@ group processing
         bins : list<float>;
         type : string;
     }
+
+    message Centre : 133
+    {
+        name : string;
+        x : float;
+        y : float;
+    }
 }
 
 group gui

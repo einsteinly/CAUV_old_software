@@ -11,13 +11,14 @@ import traceback
 
 class Confirmer(messaging.BufferedMessageObserver):
 
-    def __init__(self, node, auv):
+    def __init__(self, node, auv, name):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
         node.addObserver(self)
+        self.bin = bin
 
-    def Confirm(): 
+    def confirm(): 
         #node = cauv.node.Node('py-confirm')             #Create a node of the spread messaging service
         #auv = control.AUV(node)                         #Create a python object for the control of the AUV
         #detect = ColFinder(node, 14, 'Hue')             #Turn on the colour detection script
@@ -51,10 +52,15 @@ class Confirmer(messaging.BufferedMessageObserver):
         print 'Complete.'
 
         return 0
-    
+
+    def onCentreMessage(self, m):
+        if(m.name == self.name):
+            cv.acquire()
+            cv.notify()
+            cv.notify()
+
 if __name__ == '__main__':
-    Search()
-
-
-
-
+    node = cauv.node.Node('Confirm')
+    Confimer(node, auv, 'Yellow').confirm()
+    while True:
+        time.sleep(5)

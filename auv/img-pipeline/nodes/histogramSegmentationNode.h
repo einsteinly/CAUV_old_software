@@ -63,8 +63,8 @@ class HistogramSegmentationNode: public Node{
             float binMax = (bin + 1) * binWidth;
             cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC3);
 
-            for(int i = 0; i < img->cvMat().cols; i++) {
-                for(int j = 0; j < img->cvMat().rows; j++) {
+            for(int i = 0; i < img->cvMat().rows; i++) {
+                for(int j = 0; j < img->cvMat().cols; j++) {
                    if(img->cvMat().at<uint8_t>(i, j) > binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
                        out.at<uint8_t>(i, j) = 255;
                    }
