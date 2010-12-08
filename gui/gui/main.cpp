@@ -1,15 +1,16 @@
 #include <QApplication>
-#include <QPushButton>
 
 #include <iostream>
 #include <sstream>
 #include <stdint.h>
 
 #include "cauvgui.h"
+#include "gamepad/playstationinput.h"
 
 using namespace std;
 
 static CauvGui* node;
+
 
 void cleanup()
 {
@@ -32,10 +33,17 @@ void interrupt(int sig)
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
+    node = new CauvGui(app);
+
+    try {
+        info() << GamepadInput::listDevices();
+        PlaystationInput gi(0);
+        gi.connect(&gi, SIGNAL(X(bool)), &gi, SLOT(printIt(bool)));
+    } catch (char const* ex){
+        error() << ex;
+    }
 
     signal(SIGINT, interrupt);
-
-    node = new CauvGui(app);
 
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;
