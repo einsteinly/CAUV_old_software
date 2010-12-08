@@ -9,16 +9,18 @@ import time
 class BrightnessDetect(messaging.BufferedMessageObserver):
     
    
-    def __init__(self, node, bin, channel='Value', tolerance=1, maxcount=500):
+    def __init__(self, node, channel='Value', skewTolerance=1, meanTolerance=1 maxcount=500):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
         node.addObserver(self)
         self.bin = bin
-        self.tolerance = tolerance
+        self.skewTolerance = skewTolerance
+        self.meanTolerance = meanTolerance
         self.maxcount = maxcount
         self.channel = channel        
-        self.movingMean=0
+        self.skewMovingMean=0
+        self.meanskewMovingMean=0        
         self.count = 0
         self.detect = 0
 
@@ -46,22 +48,42 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
             mean = total1 / len(m.bins)
             stdev= (total2/len(m.bins)-mean**2)**0.5
             skewness = (total3/len(m.bins)-3*mean*stdev**2-mean**3)/stdev**3
-            print 'Skewness:', skewness
+            print 'Mean: %f, Skewness: %f', %(mean, skewness)
+
+
             
-            if skewness<self.movingMean-self.tolerance:
+            if skewness<self.skewMovingMean-self.skewTolerance:
                 self.detect = 1
-                print "Things just got brighter"
+                print "Things just got brighter from skewness"
                 
             else:
                 self.detect = 0
                 if self.count==0:
-                    self.movingMean = skewness
+                    self.skewMovingMean = skewness
                 else:
-                    self.movingMean = (self.count*self.movingMean+skewness)/(self.count+1)
+                    self.skewMovingMean = (self.count*self.skewMovingMean+skewness)/(self.count+1)
                     
                 if self.count < self.maxcount-2:
                     self.count += 1
-                print 'Moving average of skewness: %f' %self.movingMean
+                print 'Moving average of skewness: %f' %self.skewMovingMean
+
+
+
+            if mean>self.meanMovingMean-self.meanTolerance:
+                self.detect = 1
+                print "Things just got brighter from mean"
+                
+            else:
+                self.detect = 0
+                if self.count==0:
+                    self.meanMovingMean = mean
+                else:
+                    self.meanMovingMean = (self.count*self.meanMovingMean+mean)/(self.count+1)
+                    
+                if self.count < self.maxcount-2:
+                    self.count += 1
+                print 'Moving average of mean: %f' %self.meanMovingMean
+
           
 
 
