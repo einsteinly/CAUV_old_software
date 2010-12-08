@@ -10,8 +10,7 @@ from colourfinder import ColourFinder as ColFinder
 import time
 import traceback
 
-
-def Search(): 
+def Search():
     node = cauv.node.Node('py-search')              #Create a node of the spread messaging service
     auv = control.AUV(node)                         #Create a python object for the control of the AUV
     detect = ColFinder(node, 14)                 #Turn on the colour detection script
@@ -39,21 +38,21 @@ def Search():
     #    time.sleep(5)
     #    bearing = 90
 
-    square=2
-    bearing=0
-    power=64
+    square = 2
+    bearing = 0
+    power = 64
     unit = 3
-    depth =0.5 
-        
+    depth = 0.5 
+
     try:
         print 'setting bearing %d...' %bearing
         auv.bearingAndWait(bearing)                         #Starting search at north direction
 
         print 'diving...'
         auv.depthAndWait(depth)                                 #make sure it is at depth 2m
-        
+
         print 'spiral...'
-              
+
         for i in range(1, 2*square):                        #making individual half squares
             print 'Performing %dth half circle' % i
 
@@ -72,7 +71,7 @@ def Search():
                         return 0                            #Insert object confirmation and reaction sequence here later
                     else:    
                         pass                                #Keep waiting
-                        
+
                 time.sleep(unit*i)        
                 auv.prop(0)                                 #shut off motor
                 time.sleep(5)                               #wait for the AUV to stop
@@ -86,7 +85,6 @@ def Search():
         print 'surface...'    
         auv.depthAndWait(0)
 
-        
     except Exception:
         traceback.print_exc()
         auv.depth(0)
@@ -94,10 +92,6 @@ def Search():
     print 'Complete'
 
     return 0
-    
+
 if __name__ == '__main__':
     Search()
-
-
-
-

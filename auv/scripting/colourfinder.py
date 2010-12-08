@@ -10,6 +10,7 @@ class ColourFinder(messaging.BufferedMessageObserver):
     
    
     def __init__(self, node, bin, channel = 'Hue', tolerance=0.1, maxcount=500):
+
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
@@ -21,8 +22,6 @@ class ColourFinder(messaging.BufferedMessageObserver):
         self.movingMean=0
         self.count = 0
         self.detect = 0
-
-
 
     def onHistogramMessage(self, m):
         if m.type == self.channel:
