@@ -595,7 +595,22 @@ void Node::checkAddSched() throw(){
 
     debug(4) << __func__ << "Queuing node:" << *this;
     setExecQueued();
-    m_sched.addJob(shared_from_this(), m_priority);
+    try{
+        m_sched.addJob(shared_from_this(), m_priority);
+    }catch(boost::bad_weak_ptr& e){
+        warning() << "no other shared pointers exist";
+        // TODO: do this in a better way... when this function is called from
+        // constuctors (eg CameraInputNode), there exist no other shared
+        // pointers to allowed shared_from_this to work --- so crashes happen.
+        // really we should have a separate init function for node
+        // initialisation allowing the node factory to hold a shared pointer
+        // before any complex initialisation is done
+        // really we should have a separate init function for node
+        // initialisation allowing the node factory to hold a shared pointer
+        // before any complex initialisation is done.
+        unique_lock_t l(m_exec_queued_lock);
+        m_exec_queued = true;
+    }
 }
 
 void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p){
