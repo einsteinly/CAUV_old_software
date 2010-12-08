@@ -183,7 +183,6 @@ def add_entity(request, plural_name):
                 i[x] = [request.GET[x],]
             else:
                 i[x] = request.GET[x]
-        print i
         form = entity_form(i)
     else:
         form = entity_form()

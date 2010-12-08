@@ -105,7 +105,6 @@ def make_entity_form(entity_type, project, initial=None):
         if self.isnew:
             self.entity['created_by'] = user
         if len(changed):
-	    print self.entity
             activity = Activity(title=str(user)+" changed "+str(self.entity),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=self.entity)
             activity.to_yaml_file(settings.PITZ_DIR)
             self.entity.to_yaml_file(settings.PITZ_DIR)
