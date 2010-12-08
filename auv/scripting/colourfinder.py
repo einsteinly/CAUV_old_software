@@ -47,6 +47,6 @@ class ColourFinder(messaging.BufferedMessageObserver):
 if __name__ == '__main__':
     node = cauv.node.Node('ColFind')
     auv = control.AUV(node)
-    detect = ColourFinder(node, 14, 'Value')
+    detect = ColourFinder(node, 14)
     while True:
         time.sleep(5)

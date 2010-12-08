@@ -9,7 +9,7 @@ import time
 class BrightnessDetect(messaging.BufferedMessageObserver):
     
    
-    def __init__(self, node, channel='Value', skewTolerance=1, meanTolerance=1 maxcount=500):
+    def __init__(self, node, channel='Value', skewTolerance=1, meanTolerance=1, maxcount=500):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
@@ -20,7 +20,7 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
         self.maxcount = maxcount
         self.channel = channel        
         self.skewMovingMean=0
-        self.meanskewMovingMean=0        
+        self.meansMovingMean=0        
         self.count = 0
         self.detect = 0
 
@@ -48,7 +48,7 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
             mean = total1 / len(m.bins)
             stdev= (total2/len(m.bins)-mean**2)**0.5
             skewness = (total3/len(m.bins)-3*mean*stdev**2-mean**3)/stdev**3
-            print 'Mean: %f, Skewness: %f', %(mean, skewness)
+            print 'Mean: %f, Skewness: %f' %(mean, skewness)
 
 
             
@@ -90,6 +90,6 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
 if __name__ == '__main__':
     node = cauv.node.Node('BrigDet')
     auv = control.AUV(node)
-    detect = BrightnessDetect(node, 14)
+    detect = BrightnessDetect(node)
     while True:
         time.sleep(5)
