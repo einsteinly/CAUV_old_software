@@ -9,7 +9,7 @@ import time
 class BrightnessDetect(messaging.BufferedMessageObserver):
     
    
-    def __init__(self, node, bin, channel='Value', tolerance=0.1, maxcount=500):
+    def __init__(self, node, bin, channel='Value', tolerance=1, maxcount=500):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
