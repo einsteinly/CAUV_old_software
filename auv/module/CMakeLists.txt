@@ -3,7 +3,7 @@ include_directories (${ftdi_INCLUDE_DIRS})
 link_directories (${ftdi_LIBRARY_DIRS})
 
 # sources
-add_LIBRARY (
+add_library (
     module STATIC
     module.cpp
 )
@@ -12,8 +12,8 @@ add_LIBRARY (
 target_link_libraries (
     module
     common
-    ${ftdi_LIBRARIES}
     boost_iostreams
+    ${ftdi_LIBRARIES}
 )
 
 

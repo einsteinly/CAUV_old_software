@@ -1,15 +1,15 @@
 #ifndef __MODULE_H
 #define __MODULE_H__
 
-#include <ftdi.h>
 #include <string.h>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/utility.hpp>
-#include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/concepts.hpp>
+
+#include <ftdi.hpp>
 
 #include <common/cauv_utils.h>
 #include <common/blocking_queue.h>
@@ -22,7 +22,7 @@ class FTDIException : public std::exception
         std::string m_message;
     public:
         FTDIException(const std::string& msg);
-        FTDIException(const std::string& msg, int errCode, ftdi_context* ftdic);
+        FTDIException(const std::string& msg, int errCode, Ftdi::Context* ftdic);
         ~FTDIException() throw();
         virtual const char* what() const throw();
         int errCode() const;
@@ -33,12 +33,9 @@ typedef boost::shared_ptr<struct usb_device> usb_device_ptr;
 class FTDIContext : boost::noncopyable
 {
     public:
-        FTDIContext();
-        ~FTDIContext();
-
-        std::vector<usb_device_ptr> usbFindAll();
-
-        void openDevice(usb_device_ptr dev);
+        void open(int vendor, int product);
+        void open(int vendor, int product, int index);
+        void open(int vendor, int product, const std::string& description, const std::string& serial = std::string(), int index = 0);
         void setBaudRate(int baudrate);
         void setLineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_parity_type parity);
         void setFlowControl(int flowControl);
@@ -47,20 +44,19 @@ class FTDIContext : boost::noncopyable
         std::streamsize write(const unsigned char* s, std::streamsize n);
 
     protected:
-        struct ftdi_context ftdic;
-        bool m_usb_open;
+        struct Ftdi::Context ftdic;
 };
 
 
 class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirectional>
 {
     public:
-        FTDIDevice(int baudrate,
+        FTDIDevice(int vendor, int product, int index,
+                   int baudrate,
                    ftdi_bits_type const& bits,
                    ftdi_stopbits_type const& stopBits,
                    ftdi_parity_type const& parity,
-                   int flowControl,
-                   int deviceID);
+                   int flowControl);
         
         std::streamsize read(char* s, std::streamsize n);
         std::streamsize write(const char* s, std::streamsize n);
@@ -81,24 +77,32 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
 class Module : public MessageSource
 {
     public:
-        Module(int baudrate,
-               ftdi_bits_type const& bits,
-               ftdi_stopbits_type const& stopBits,
-               ftdi_parity_type const& parity,
-               int flowControl,
-               int deviceID);
-
-        void start();
-        ~Module();
+        Module(boost::shared_ptr< std::basic_streambuf<char> > streamBuffer);
+        virtual ~Module();
+        
+        virtual void start();
         void send(boost::shared_ptr<const Message> message);
 
     protected:
-        boost::iostreams::stream_buffer<FTDIDevice> m_ftdiStreamBuffer;
+        boost::shared_ptr< std::basic_streambuf<char> > m_streamBuffer;
         boost::thread m_readThread, m_sendThread;
         BlockingQueue< boost::shared_ptr<const Message> > m_sendQueue;
 
         void sendLoop();
         void readLoop();
+};
+
+class FTDIModule : public Module
+{
+    public:
+        FTDIModule(int vendor, int product, int index,
+                   int baudrate,
+                   ftdi_bits_type const& bits,
+                   ftdi_stopbits_type const& stopBits,
+                   ftdi_parity_type const& parity,
+                   int flowControl);
+        
+        virtual void start();
 
     private:
         const int baudrate;
@@ -108,11 +112,11 @@ class Module : public MessageSource
         const int flowControl;
 };
 
-class MCBModule : public Module
+class MCBModule : public FTDIModule
 {
     public:
-        MCBModule(int deviceID)
-            : Module(38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL, deviceID){
+        MCBModule(int index)
+            : FTDIModule(0x0403, 0x6001, index, 38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL){
         }
 };
 

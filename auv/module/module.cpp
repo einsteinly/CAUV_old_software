@@ -1,6 +1,5 @@
 #include "module.h"
 
-#include <ftdi.h>
 #include <iostream>
 #include <iomanip>
 #include <string.h>
@@ -25,9 +24,9 @@
 
 
 FTDIException::FTDIException(const std::string& msg) : m_errCode(-1), m_message(msg) {}
-FTDIException::FTDIException(const std::string& msg, int errCode, ftdi_context* ftdic) : m_errCode(errCode)
+FTDIException::FTDIException(const std::string& msg, int errCode, Ftdi::Context* ftdic) : m_errCode(errCode)
 {
-    m_message = MakeString() << msg << ": " << errCode << " (" << ftdi_get_error_string(ftdic) << ")";
+    m_message = MakeString() << msg << ": " << errCode << " (" << ftdic->error_string() << ")";
 }
 FTDIException::~FTDIException() throw() {}
 const char* FTDIException::what() const throw()
@@ -40,76 +39,50 @@ int FTDIException::errCode() const
 }
 
 
-FTDIContext::FTDIContext() : m_usb_open(false)
-{
-    ftdi_init(&ftdic);
-}
-FTDIContext::~FTDIContext()
-{
-    if (m_usb_open)
-    {
-        debug() << "Closing context USB...";
-        ftdi_usb_close(&ftdic);
-    }
-    ftdi_deinit(&ftdic);
-}
 
-std::vector<usb_device_ptr> FTDIContext::usbFindAll()
+void FTDIContext::open(int vendor, int product)
 {
-    struct ftdi_device_list* devices;
-    int ret;
-    if ((ret = ftdi_usb_find_all(&ftdic, &devices, 0x0403, 0x6001)) < 0)
-    {
-        throw FTDIException("ftdi_usb_find_all failed", ret, &ftdic);
-    }
-    std::vector<usb_device_ptr> v;
-    
-    struct ftdi_device_list* pdevices = devices;
-    while (ret--)
-    {
-        if (pdevices == 0)
-        {
-            throw FTDIException("Error loading devices");
-        }
-        v.push_back(usb_device_ptr(pdevices->dev));
-        pdevices = pdevices->next;
-    }
-    ftdi_list_free(&devices);
-
-    return v;
-}
-
-void FTDIContext::openDevice(usb_device_ptr dev)
-{
-    int ret;
-    if ((ret = ftdi_usb_open_dev(&ftdic, dev.get())) < 0)
+    int ret = ftdic.open(vendor, product);
+    if (ret < 0)
     {
         throw FTDIException("Unable to open ftdi device", ret, &ftdic);
     }
-    m_usb_open = true;
+    debug() << "USB opened...";
+}
+void FTDIContext::open(int vendor, int product, int index)
+{
+    open(vendor, product, std::string(), std::string(), index);
+}
+void FTDIContext::open(int vendor, int product, const std::string& description, const std::string& serial, int index)
+{
+    int ret = ftdic.open(vendor, product, description, serial, index);
+    if (ret < 0)
+    {
+        throw FTDIException("Unable to open ftdi device", ret, &ftdic);
+    }
     debug() << "USB opened...";
 }
 
 void FTDIContext::setBaudRate(int baudrate)
 {
-    int ret;
-    if ((ret = ftdi_set_baudrate(&ftdic, baudrate)) < 0)
+    int ret = ftdic.set_baud_rate(baudrate);
+    if (ret < 0)
     {
         throw FTDIException("Unable to set baudrate", ret, &ftdic);
     }
 }
 void FTDIContext::setLineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_parity_type parity)
 {
-    int ret;
-    if ((ret = ftdi_set_line_property(&ftdic, bits, stopBits, parity)) < 0)
+    int ret = ftdic.set_line_property(bits, stopBits, parity);
+    if (ret < 0)
     {
         throw FTDIException("Unable to set line property", ret, &ftdic);
     }
 }
 void FTDIContext::setFlowControl(int flowControl)
 {
-    int ret;
-    if ((ret = ftdi_setflowctrl(&ftdic, flowControl)) < 0)
+    int ret = ftdic.set_flow_control(flowControl);
+    if (ret < 0)
     {
         throw FTDIException("Unable to set flow control", ret, &ftdic);
     }
@@ -117,7 +90,7 @@ void FTDIContext::setFlowControl(int flowControl)
 
 std::streamsize FTDIContext::read(unsigned char* s, std::streamsize n)
 {
-    int ret = ftdi_read_data(&ftdic, s, n);
+    int ret = ftdic.read(s, n);
     if (ret < 0)
     {
         throw FTDIException("Unable to read from ftdi device", ret, &ftdic);
@@ -127,7 +100,7 @@ std::streamsize FTDIContext::read(unsigned char* s, std::streamsize n)
 
 std::streamsize FTDIContext::write(const unsigned char* s, std::streamsize n)
 {
-    int ret = ftdi_write_data(&ftdic, const_cast<unsigned char*>(s), n);
+    int ret = ftdic.write(const_cast<unsigned char*>(s), n);
     if (ret < 0)
     {
         throw FTDIException("Unable to write to ftdi device", ret, &ftdic);
@@ -137,30 +110,18 @@ std::streamsize FTDIContext::write(const unsigned char* s, std::streamsize n)
 
 
 
-FTDIDevice::FTDIDevice(int baudrate,
+FTDIDevice::FTDIDevice(int vendor, int product, int index,
+                       int baudrate,
                        ftdi_bits_type const& bits,
                        ftdi_stopbits_type const& stopBits,
                        ftdi_parity_type const& parity,
-                       int flowControl,
-                       int deviceID)
+                       int flowControl)
     : boost::iostreams::device<boost::iostreams::bidirectional>(),
       baudrate(baudrate), bits(bits), stopBits(stopBits), parity(parity), flowControl(flowControl)
 {
     m_ftdic = boost::make_shared<FTDIContext>();
 
-    std::vector<usb_device_ptr> devices = m_ftdic->usbFindAll();
-
-    info() << "Number of devices found: " << devices.size();
-
-    if (devices.size() == 0)
-        throw FTDIException("Could not open device (No devices found)");
-    else if (devices.size() <= static_cast<size_t>(deviceID))
-        throw FTDIException("Could not open device (No matching device found)");
-
-    m_device = devices[deviceID];
-    info() << "Module's device (id:" << deviceID << ") found...";
-
-    m_ftdic->openDevice(m_device);
+    m_ftdic->open(vendor, product, index);
     m_ftdic->setBaudRate(baudrate);
     m_ftdic->setLineProperty(bits, stopBits, parity);
     m_ftdic->setFlowControl(flowControl);
@@ -199,38 +160,12 @@ std::streamsize FTDIDevice::write(const char* s, std::streamsize n)
     return m_ftdic->write(reinterpret_cast<const unsigned char*>(s), n);
 }
 
-
-Module::Module(int baudrate,
-               ftdi_bits_type const& bits,
-               ftdi_stopbits_type const& stopBits,
-               ftdi_parity_type const& parity,
-               int flowControl,
-               int deviceID)
-    : MessageSource(),
-      m_ftdiStreamBuffer(FTDIDevice(baudrate, bits, stopBits, parity, flowControl, deviceID)),
+Module::Module(boost::shared_ptr< std::basic_streambuf<char> > streamBuffer)
+    : m_streamBuffer(streamBuffer),
       m_sendThread(),
-      m_sendQueue(),
-      baudrate(baudrate),
-      bits(bits),
-      stopBits(stopBits),
-      parity(parity),
-      flowControl(flowControl)
+      m_sendQueue()
 {
 }
-
-void Module::start()
-{
-    if (m_ftdiStreamBuffer.is_open())
-    {
-        m_readThread = boost::thread(&Module::readLoop, this);
-        m_sendThread = boost::thread(&Module::sendLoop, this);
-    }
-    else
-    {
-        error() << "FTDI Stream could not be opened";
-    }
-}
-
 Module::~Module()
 {
     if (m_readThread.get_id() != boost::thread::id()) {
@@ -242,7 +177,11 @@ Module::~Module()
         m_sendThread.join();
     }
 }
-
+void Module::start()
+{
+    m_readThread = boost::thread(&Module::readLoop, this);
+    m_sendThread = boost::thread(&Module::sendLoop, this);
+}
 
 void Module::send(boost::shared_ptr<const Message> message)
 {
@@ -254,7 +193,7 @@ void Module::sendLoop()
     debug() << "Started module send thread";
     try {
         while (true) {
-            boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
+            boost::archive::binary_oarchive ar(*m_streamBuffer, boost::archive::no_header);
             
             boost::shared_ptr<const Message> message = m_sendQueue.popWait();
             debug(3) << "Module sending popped a message off the send queue (" << m_sendQueue.size() << "remain)" << *message;
@@ -292,7 +231,7 @@ void Module::readLoop()
     try {
 
         byte_vec_t curMsg;
-        boost::archive::binary_iarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
+        boost::archive::binary_iarchive ar(*m_streamBuffer, boost::archive::no_header);
 
         while (true)
         {
@@ -364,6 +303,34 @@ void Module::readLoop()
     }
 
     debug() << "Ending module read thread";
+}
+
+
+FTDIModule::FTDIModule(int vendor, int product, int index,
+                       int baudrate,
+                       ftdi_bits_type const& bits,
+                       ftdi_stopbits_type const& stopBits,
+                       ftdi_parity_type const& parity,
+                       int flowControl)
+    : Module( boost::make_shared<boost::iostreams::stream_buffer<FTDIDevice> >(FTDIDevice(vendor, product, index, baudrate, bits, stopBits, parity, flowControl))),
+      baudrate(baudrate),
+      bits(bits),
+      stopBits(stopBits),
+      parity(parity),
+      flowControl(flowControl)
+{
+}
+
+void FTDIModule::start()
+{
+    if (boost::static_pointer_cast< boost::iostreams::stream_buffer<FTDIDevice> >(m_streamBuffer)->is_open())
+    {
+        this->Module::start();
+    }
+    else
+    {
+        error() << "FTDI Stream could not be opened";
+    }
 }
 
 
