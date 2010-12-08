@@ -34,6 +34,7 @@
 #include "grabcutNode.h"
 #include "histogramNode.h"
 #include "histogramSegmentationNode.h"
+#include "centreFinderNode.h"
 #include "quickSegmentNode.h"
 
 // Register node types (actually definitions of static data members)
@@ -71,6 +72,7 @@ DEFINE_NFR(CropNode, NodeType::Crop);
 DEFINE_NFR(GrabCutNode, NodeType::GrabCut);
 DEFINE_NFR(HistogramNode, NodeType::Histogram);
 DEFINE_NFR(HistogramSegmentationNode, NodeType::HistogramSegmentation);
+DEFINE_NFR(CentreFinderNode, NodeType::Centre);
 DEFINE_NFR(QuickSegmentNode, NodeType::QuickSegment);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];

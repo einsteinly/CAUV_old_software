@@ -27,6 +27,10 @@ class disp_property():
     def __init__(self, name, value):
         self.name = name
         self.value = value
+	if self.name == 'pscore' and self.value:
+	    self.value = dict(appforms.pscore_choices)[int(value)]
+	else:
+	    self.value = value
         if isinstance(value, list):
             try:   
                 if isinstance(value[0], Entity):
@@ -97,12 +101,17 @@ def view_bag(request, ref):
         order_forms = formset_factory(order_form, extra=2)(request.GET, prefix='order')
         filter_forms = formset_factory(filter_form, extra=2)(request.GET, prefix='filter')
         equal_filter_dict = {}
+	not_equal_filter_dict = {}
         for form in filter_forms.forms:
             if form.is_valid() and len(form.cleaned_data):
 	        if form.cleaned_data['b']==u'eq':
                     equal_filter_dict[str(form.cleaned_data['a'])] = form.cleaned_data['c']
+		elif form.cleaned_data['b']==u'neq':
+		    not_equal_filter_dict[str(form.cleaned_data['a'])] = form.cleaned_data['c']
         if len(equal_filter_dict):
             pitz_bag = pitz_bag.matches_dict(**equal_filter_dict)
+	if len(not_equal_filter_dict):
+	    pitz_bag = extras.filter_neq(pitz_bag, not_equal_filter_dict)
         order_list = []
         for form in order_forms.forms:
             if form.is_valid() and len(form.cleaned_data):
