@@ -10,7 +10,7 @@ import time
 import traceback
 
 
-def spiral(): 
+def Spiral(): 
     node = cauv.node.Node('py-spiral')                #Create a node of the spread messaging service
     auv = control.AUV(node)                        #Create a python object for the control of the AUV
     
@@ -54,30 +54,19 @@ def spiral():
         for i in range(1, 2*square): #making individual half squares
             print 'Performing %dth half circle' % i
 
-            auv.prop(power)
-            print 'Moving forward for %d seconds' %(3*i)
-            time.sleep(unit*i)        #The time for which the AUV goes forward depends on the radius of the square
-            auv.prop(0)            #shut off motor
-            time.sleep(5)        #wait for the AUV to stop
-            print 'stoping'           
-            bearing += 90        #Turn 90 degree
-            if bearing>=360:
-                bearing-=360
-            print 'setting bearing %d' %bearing
-            auv.bearingAndWait(bearing)
-
-            auv.prop(127)        #same as above, for the second part of the half square
-            time.sleep(unit*i)        
-            auv.prop(power)
-            print 'Moving forward for %d seconds' %(3*i)
-            time.sleep(5)
-            print 'stoping'
-            bearing += 90
-            if bearing>=360:
-                bearing-=360
-            print 'setting bearing %d' %bearing
-            auv.bearingAndWait(bearing)        
-                    
+            for j in ragne(2): #making individual half squares
+                auv.prop(power)
+                print 'Moving forward for %d seconds' %(3*i)
+                time.sleep(unit*i)        #The time for which the AUV goes forward depends on the radius of the square
+                auv.prop(0)            #shut off motor
+                time.sleep(5)        #wait for the AUV to stop
+                print 'stoping'           
+                bearing += 90        #Turn 90 degree
+                if bearing>=360:
+                    bearing-=360
+                print 'setting bearing %d' %bearing
+                auv.bearingAndWait(bearing)
+            
         print 'surface...'    
         auv.depthAndWait(0)
 
