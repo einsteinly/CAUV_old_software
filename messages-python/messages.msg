@@ -178,6 +178,10 @@ group control
         Kp : float;
         Ki : float;
         Kd : float;
+        Ap : float;
+        Ai : float;
+        Ad : float;
+        thr : float;
         scale : float;
     }
 
@@ -191,6 +195,10 @@ group control
         Kp : float;
         Ki : float;
         Kd : float;
+        Ap : float;
+        Ai : float;
+        Ad : float;
+        thr : float;
         scale : float;
     }
 
@@ -212,6 +220,10 @@ group control
         Kp : float;
         Ki : float;
         Kd : float;
+        Ap : float;
+        Ai : float;
+        Ad : float;
+        thr : float;
         scale : float;
     }
 
