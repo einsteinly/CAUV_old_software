@@ -9,7 +9,7 @@ import time
 class ColourFinder(messaging.BufferedMessageObserver):
     
    
-    def __init__(self, node, bin, channel, tolerance=0.1, maxcount=500):
+    def __init__(self, node, bin, channel = 'Hue', tolerance=0.1, maxcount=500):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
@@ -29,7 +29,6 @@ class ColourFinder(messaging.BufferedMessageObserver):
             if m.bins[self.bin]>self.movingMean+self.tolerance:
                 self.detect = 1
                 print "Bin %d is big" % self.bin
-                return
             else:
                 self.detect = 0
                 if self.count==0:
@@ -39,7 +38,7 @@ class ColourFinder(messaging.BufferedMessageObserver):
                     
                 if self.count < self.maxcount-2:
                     self.count += 1
-                print 'Moving average: ', self.movingMean
+                print 'Moving average of bin %d: %f' %(self.bin, self.movingMean)
           
             accum = 0
             for i, bin in enumerate(m.bins):
@@ -49,6 +48,6 @@ class ColourFinder(messaging.BufferedMessageObserver):
 if __name__ == '__main__':
     node = cauv.node.Node('ColFind')
     auv = control.AUV(node)
-    detect = ColourFinder(node, 14)
+    detect = ColourFinder(node, 14, 'Value')
     while True:
         time.sleep(5)

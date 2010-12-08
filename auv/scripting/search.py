@@ -14,7 +14,7 @@ import traceback
 def Search(): 
     node = cauv.node.Node('py-search')              #Create a node of the spread messaging service
     auv = control.AUV(node)                         #Create a python object for the control of the AUV
-    detect = ColFinder(node, 14, 'Hue')                 #Turn on the colour detection script
+    detect = ColFinder(node, 14)                 #Turn on the colour detection script
         
     print 'setting calibration...'                  #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
     # set-up calibration factors
