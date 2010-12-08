@@ -13,7 +13,6 @@
 
 #include "../node.h"
 
-
 class HistogramNode: public Node{
     public:
         HistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -27,7 +26,8 @@ class HistogramNode: public Node{
             // no output
             
             // parameter: 
-            registerParamID<int>("number of bins", 30);
+            registerParamID<int>("Number of bins", 42);
+            registerParamID<std::string>("Channel type", "Unnamed");
             
         }
     
@@ -42,7 +42,8 @@ class HistogramNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
             
-            int bins = param<int>("number of bins");
+            int bins = param<int>("Number of bins");
+            std::string type = param<std::string>("Channel type");
             
             image_ptr_t img = inputs["image_in"];
             
@@ -58,9 +59,9 @@ class HistogramNode: public Node{
             // and the saturation to 32 levels
             int histSize[] = {bins};
             // hue varies from 0 to 179, see cvtColor
-            float hranges[] = { 0, 180 };
+            float hranges[] = {0, 256};
 
-            const float* ranges[] = { hranges};
+            const float* ranges[] = {hranges};
             cv::MatND hist;
             // we compute the histogram from the 0-th and 1-st channels
             int channels[] = {0};
@@ -69,23 +70,21 @@ class HistogramNode: public Node{
                 hist, 1, histSize, ranges,
                 true, // the histogram is uniform
                 false );
-            double maxVal=0;
+            double maxVal = 0;
             minMaxLoc(hist, 0, &maxVal, 0, 0);
-            int imgsize = img->cvMat().rows*img->cvMat().cols;
+            int imgsize = img->cvMat().rows * img->cvMat().cols;
 
             int scale = 10;
-            cv::Mat histImg = cv::Mat::zeros(bins*scale, bins*scale, CV_8UC3);
+            cv::Mat histImg = cv::Mat::zeros(bins * scale, bins * scale, CV_8UC3);
             std::vector<float> binVal;
-            for( int h = 0; h < bins; h++ ){
-                    binVal.push_back(hist.at<float>(h)/imgsize);
-                }
+            for(int h = 0; h < bins; h++){
+                binVal.push_back(hist.at<float>(h) / imgsize);
+            }
          
             //This is the messaging bit
-            sendMessage(boost::make_shared<HistogramMessage>(binVal));     
+            sendMessage(boost::make_shared<HistogramMessage>(binVal, type));     
             return r;
         }
-
-
 
     // Register this node type
     DECLARE_NFR;

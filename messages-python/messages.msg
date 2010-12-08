@@ -39,7 +39,8 @@ enum NodeType : int8 {
     MixValue = 30,
     Crop = 31,
     GrabCut = 32,
-    Histogram = 33
+    Histogram = 33,
+    HistogramSegmentation = 34
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -337,6 +338,7 @@ group processing
     message Histogram : 132
     {
         bins : list<float>;
+        type : string;
     }
 }
 
