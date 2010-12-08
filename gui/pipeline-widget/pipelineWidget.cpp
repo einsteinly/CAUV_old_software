@@ -5,17 +5,10 @@
 
 #include <boost/thread.hpp>
 #include <boost/ref.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/operators.hpp>
 //#include <boost/graph/adjacency_list.hpp>
 //#include <boost/graph/graphviz.hpp>
 
 #include <QtGui>
-
-#include <graphviz/types.h>
-#include <graphviz/gvc.h>
-#include <graphviz/graph.h>
 
 #include <common/bash_cout.h>
 #include <common/cauv_utils.h>
@@ -27,6 +20,7 @@
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
+#include "graphviz.h"
 #include "renderable/overKey.h"
 #include "renderable/box.h"
 #include "renderable/node.h"
@@ -816,174 +810,6 @@ static float mass(node_ptr_t){
 
 
 
-namespace graphviz {
-
-class Graph;
-class Node
-{
-    public:
-        std::string name() const
-        {
-            return agnameof(const_cast<Agnode_t*>(m_node));
-        }
-        pointf coord() const
-        {
-            return ND_coord(const_cast<Agnode_t*>(m_node));
-        }
-
-        template<typename T>
-        void attr(std::string name, T val)
-        {
-            agset(m_node, const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(val).c_str()));
-        }
-
-        std::string attr(std::string name) const
-        {
-            char* c = agget(const_cast<Agnode_t*>(m_node), const_cast<char*>(name.c_str()));
-            return c ? c : "";
-        }
-
-    protected:
-        Node(Agnode_t* node) : m_node(node) {}
-        Agnode_t* m_node;
-        friend class Graph;
-};
-class Edge
-{
-    public:
-
-    protected:
-        Edge(Agedge_t* edge) : m_edge(edge) {}
-        Agedge_t* m_edge;
-        friend class Graph;
-};
-
-
-void AgraphDeleter(Agraph_t* v) {
-    agclose(v);
-}     
-class Graph
-{
-    public:
-        Graph(std::string name, int type)
-            : nodes(this),
-              m_G( boost::shared_ptr<Agraph_t>( agopen(const_cast<char*>(name.c_str()), type), AgraphDeleter ) )
-        {
-        }
-
-        Node node(std::string name)
-        {
-            return Node(agnode(m_G.get(), const_cast<char*>(name.c_str())));
-        }
-        Edge edge(Node& n1, Node& n2)
-        {
-            return Edge(agedge(m_G.get(), n1.m_node, n2.m_node));
-        }
-        Graph subGraph(std::string name)
-        {
-            return Graph(agsubg(m_G.get(), const_cast<char*>(name.c_str())), m_root ? m_root : boost::shared_ptr<Graph>(this)); 
-        }
-
-        Agraph_t* get()
-        {
-            return m_G.get();
-        }
-
-        template<typename T>
-        void addGraphAttr(std::string name, T defaultval)
-        {
-            agraphattr(m_G.get(), const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(defaultval).c_str()));
-        }
-        template<typename T>
-        void addNodeAttr(std::string name, T defaultval)
-        {
-            agnodeattr(m_G.get(), const_cast<char*>(name.c_str()), const_cast<char*>(boost::lexical_cast<std::string>(defaultval).c_str()));
-        }
-
-
-        struct NodeList
-        {
-            public:
-                NodeList(Graph* graph) : m_graph(graph)
-                {
-                }
-                
-                struct NodeListIterator : public boost::forward_iterator_helper<NodeListIterator, Node, std::ptrdiff_t, Node*, Node&>
-                {
-                    public:
-                        Node operator*() const
-                        {
-                            return Node(m_node);
-                        }
-                        void operator++()
-                        {
-                            m_node = agnxtnode(m_graph.get(), m_node);
-                        }
-                        bool operator==(const NodeListIterator& i) const 
-                        {
-                            return m_node == i.m_node;
-                        }
-
-                    protected:
-                        NodeListIterator(boost::shared_ptr<Agraph_t> graph, Agnode_t* node) : m_graph(graph), m_node(node)
-                        {
-                        }
-
-                        boost::shared_ptr<Agraph_t> m_graph;
-                        Agnode_t* m_node;
-                
-                    friend class NodeList;
-                };
-                typedef NodeListIterator iterator;
-                typedef NodeListIterator const_iterator;
-
-
-                iterator begin() const
-                {
-                    return iterator(m_graph->m_G, agfstnode(m_graph->m_G.get()));
-                }
-                iterator end() const
-                {
-                    return iterator(m_graph->m_G, NULL);
-                }
-
-            protected:
-                Graph* m_graph;
-        };
-
-        NodeList nodes;
-        //EdgeList edges;
-
-    protected:
-        Graph(Agraph_t* G, boost::shared_ptr<Graph> root) : nodes(this), m_G(boost::shared_ptr<Agraph_t>(G, AgraphDeleter)), m_root(root) {}
-        
-        boost::shared_ptr<Agraph_t> m_G;
-        boost::shared_ptr<Graph> m_root;
-};
-
-void ContextDeleter(GVC_t* v) {
-    gvFreeContext(v);
-}     
-class Context
-{
-    public:
-        Context()
-        {
-            m_GVC = boost::shared_ptr<GVC_t>(gvContext(), ContextDeleter);
-        }
-        
-        GVC_t* get()
-        {
-            return m_GVC.get();
-        }
-
-
-    protected:
-        boost::shared_ptr<GVC_t> m_GVC;
-};
-
-
-}
 
 void PipelineWidget::iterateLayout(){
     namespace gv = graphviz;
@@ -1023,8 +849,8 @@ void PipelineWidget::iterateLayout(){
     }
 
 
-    gvLayout(c.get(), g.get(), "dot");
-    gvRenderFilename(c.get(), g.get(), "png", "out.png");
+    gv::gvLayout(c.get(), g.get(), "dot");
+    gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
 
     foreach(const gv::Node& n, g.nodes)
     {
@@ -1038,136 +864,7 @@ void PipelineWidget::iterateLayout(){
         }
     }
  
-    gvFreeLayout(c.get(), g.get());
-
-/*
-
-    using namespace boost;
-
-    typedef adjacency_list< vecS, vecS, directedS,
-            boost::property< vertex_name_t, int32_t >,
-            no_property
-        > Graph;
-    Graph g;
-    
-    typedef property_map < Graph, vertex_name_t >::type node_name_map_t;
-    node_name_map_t node_names = get(vertex_name, g);
-    
-    typedef graph_traits < Graph >::vertex_descriptor Vertex;
-    typedef std::map < int32_t, Vertex > nameVertexMap;
-    nameVertexMap nodes;
-    
-    foreach(arc_ptr_t a, m_arcs)
-    {
-        nameVertexMap::iterator pos;
-        bool inserted;
-        
-        Vertex u;
-        tie(pos, inserted) = nodes.insert(std::make_pair(a->from().node, Vertex()));
-        if (inserted)
-        {
-            u = add_vertex(g);
-            node_names[u] = a->from().node;
-            pos->second = u;
-        }
-        else
-        {
-            u = pos->second;
-        }
-        
-        Vertex v;
-        tie(pos, inserted) = nodes.insert(std::make_pair(a->to().node, Vertex()));
-        if (inserted)
-        {
-            v = add_vertex(g);
-            node_names[u] = a->to().node;
-            pos->second = v;
-        }
-        else
-        {
-            v = pos->second;
-        }
-
-        add_edge(u, v, g);
-    }*/
-
-    return;
-
-    // - overlapping nodes repel each other, and all nodes repel each other
-    // - arcs attract in a straight line with squared growth (but small)
-    //
-    // ... yes, this function is O(n**2) in nodes, and O(n) in arcs, it should
-    // probably be better than that if it is going to handle large layouts
-    // smoothly
-    
-    const float scale        =  0.01f;
-    const float area_enlarge =  1.10f;
-    const float node_area_1  =  0.50f * scale;
-    const float node_dist_0  =  1.00f * scale;
-    const float node_dist_1  = -1.00f * scale;
-    const float node_dist_2  =  0.00f * scale;
-    const float arc_length_0 =  1.00f * scale;
-    const float arc_length_1 =  0.00f * scale;
-    const float arc_length_2 = -0.01f * scale;
-
-    typedef V2D<float> vec_t;
-
-    node_map_t::iterator n1, n2;
-    node_ptr_t np1, np2;
-    renderable_ptr_t ah1, ah2;
-    vec_t displ, force;
-    BBox overlap;
-    
-    // arc forces:
-    foreach(arc_ptr_t a, m_arcs)
-        if(!a->m_hanging && a->to().node && a->from().node &&
-           (n1 = m_nodes.find(a->from().node)) != m_nodes.end() &&
-           (n2 = m_nodes.find(a->to().node)) != m_nodes.end()){
-            ah1 = a->fromOutput();
-            ah2 = a->toInput();
-            np1 = n1->second;
-            np2 = n2->second;
-            displ = vec_t(np2->m_pos + ah2->m_pos - np1->m_pos - ah1->m_pos);
-            // this force never repels
-            force = displ.unit() * std::min<float>(0.0f,
-                arc_length_0 +
-                displ.len() * arc_length_1 +
-                displ.sxx() * arc_length_2
-            );
-            debug(5) << "arc" << np1 << "<->" << np2
-                     << "displ=" << displ << "force=" << force;
-            np1->m_pos -= Point(force / mass(np1));
-            np2->m_pos += Point(force / mass(np2));
-        }
-    
-    // overlaps & distances
-    for(n1 = m_nodes.begin(); n1 != m_nodes.end(); n1++){
-        np1 = n1->second;
-        n2 = n1;
-        n2++;
-        for(; n2 != m_nodes.end(); n2++){
-            np2 = n2->second;
-            overlap = (np1->bbox() * area_enlarge + np1->m_pos) &
-                      (np2->bbox() * area_enlarge + np2->m_pos);
-            displ = vec_t(np2->m_pos - np1->m_pos);
-            if(displ.sxx() == 0)
-                displ = vec_t(0.01, 0.01);
-            // this force never attracts:
-            force = displ.unit() * std::max<float>(0.0f,
-                overlap.area() * node_area_1 +
-                node_dist_0 + 
-                displ.len() * node_dist_1 +
-                displ.sxx() * node_dist_2
-            ); 
-            debug(5) << "area/dist" << np1 << "<->" << np2
-                     << "displ=" << displ
-                     << "(len=" << displ.len() << "sxx=" << displ.sxx() << ")"
-                     << "area=" << overlap.area()
-                     << "force=" << force;
-            np1->m_pos -= Point(force / mass(np1));
-            np2->m_pos += Point(force / mass(np2));
-        }
-    }
+    gv::gvFreeLayout(c.get(), g.get());
 
     postRedraw(0);
 }
