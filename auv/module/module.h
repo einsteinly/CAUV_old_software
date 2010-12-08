@@ -9,7 +9,14 @@
 #include <boost/utility.hpp>
 #include <boost/iostreams/concepts.hpp>
 
-#include <ftdi.hpp>
+#ifdef USE_FTDIPP
+    #include <ftdi.hpp>
+    #define PICK_FTDI(A,B) A
+#else
+    #include <ftdi.h>
+    #define PICK_FTDI(A,B) B
+#endif
+
 
 #include <common/cauv_utils.h>
 #include <common/blocking_queue.h>
@@ -22,7 +29,8 @@ class FTDIException : public std::exception
         std::string m_message;
     public:
         FTDIException(const std::string& msg);
-        FTDIException(const std::string& msg, int errCode, Ftdi::Context* ftdic);
+        FTDIException(const std::string& msg, int errCode, PICK_FTDI(Ftdi::Context, ftdi_context)* ftdic);
+        
         ~FTDIException() throw();
         virtual const char* what() const throw();
         int errCode() const;
@@ -44,7 +52,7 @@ class FTDIContext : boost::noncopyable
         std::streamsize write(const unsigned char* s, std::streamsize n);
 
     protected:
-        struct Ftdi::Context ftdic;
+        PICK_FTDI(Ftdi::Context, ftdi_context) ftdic;
 };
 
 

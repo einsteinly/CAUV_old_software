@@ -24,10 +24,11 @@
 
 
 FTDIException::FTDIException(const std::string& msg) : m_errCode(-1), m_message(msg) {}
-FTDIException::FTDIException(const std::string& msg, int errCode, Ftdi::Context* ftdic) : m_errCode(errCode)
+FTDIException::FTDIException(const std::string& msg, int errCode, PICK_FTDI(Ftdi::Context,ftdi_context)* ftdic) : m_errCode(errCode)
 {
-    m_message = MakeString() << msg << ": " << errCode << " (" << ftdic->error_string() << ")";
+    m_message = MakeString() << msg << ": " << errCode << " (" << PICK_FTDI(ftdic->error_string(),ftdi_get_error_string(ftdic))<< ")";
 }
+
 FTDIException::~FTDIException() throw() {}
 const char* FTDIException::what() const throw()
 {
@@ -42,7 +43,7 @@ int FTDIException::errCode() const
 
 void FTDIContext::open(int vendor, int product)
 {
-    int ret = ftdic.open(vendor, product);
+    int ret = PICK_FTDI(ftdic.open(vendor, product), ftdi_usb_open(&ftdic, vendor, product));
     if (ret < 0)
     {
         throw FTDIException("Unable to open ftdi device", ret, &ftdic);
@@ -55,7 +56,19 @@ void FTDIContext::open(int vendor, int product, int index)
 }
 void FTDIContext::open(int vendor, int product, const std::string& description, const std::string& serial, int index)
 {
+#ifdef USE_FTDIPP
     int ret = ftdic.open(vendor, product, description, serial, index);
+#else
+    const char* c_description = NULL;
+    const char* c_serial = NULL;
+    if (!description.empty())
+        c_description = description.c_str();
+    if (!serial.empty())
+        c_serial = serial.c_str();
+
+    int ret = ftdi_usb_open_desc_index(&ftdic, vendor, product, c_description, c_serial, index);
+#endif
+    
     if (ret < 0)
     {
         throw FTDIException("Unable to open ftdi device", ret, &ftdic);
@@ -65,7 +78,7 @@ void FTDIContext::open(int vendor, int product, const std::string& description, 
 
 void FTDIContext::setBaudRate(int baudrate)
 {
-    int ret = ftdic.set_baud_rate(baudrate);
+    int ret = PICK_FTDI(ftdic.set_baud_rate(baudrate),ftdi_set_baudrate(&ftdic, baudrate));
     if (ret < 0)
     {
         throw FTDIException("Unable to set baudrate", ret, &ftdic);
@@ -73,7 +86,7 @@ void FTDIContext::setBaudRate(int baudrate)
 }
 void FTDIContext::setLineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_parity_type parity)
 {
-    int ret = ftdic.set_line_property(bits, stopBits, parity);
+    int ret = PICK_FTDI(ftdic.set_line_property(bits, stopBits, parity),ftdi_set_line_property(&ftdic, bits, stopBits, parity));
     if (ret < 0)
     {
         throw FTDIException("Unable to set line property", ret, &ftdic);
@@ -81,7 +94,7 @@ void FTDIContext::setLineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBi
 }
 void FTDIContext::setFlowControl(int flowControl)
 {
-    int ret = ftdic.set_flow_control(flowControl);
+    int ret = PICK_FTDI(ftdic.set_flow_control(flowControl),ftdi_setflowctrl(&ftdic, flowControl));
     if (ret < 0)
     {
         throw FTDIException("Unable to set flow control", ret, &ftdic);
@@ -90,7 +103,7 @@ void FTDIContext::setFlowControl(int flowControl)
 
 std::streamsize FTDIContext::read(unsigned char* s, std::streamsize n)
 {
-    int ret = ftdic.read(s, n);
+    int ret = PICK_FTDI(ftdic.read(s, n),ftdi_read_data(&ftdic, s, n));
     if (ret < 0)
     {
         throw FTDIException("Unable to read from ftdi device", ret, &ftdic);
@@ -100,7 +113,7 @@ std::streamsize FTDIContext::read(unsigned char* s, std::streamsize n)
 
 std::streamsize FTDIContext::write(const unsigned char* s, std::streamsize n)
 {
-    int ret = ftdic.write(const_cast<unsigned char*>(s), n);
+    int ret = PICK_FTDI(ftdic.write(const_cast<unsigned char*>(s), n),ftdi_write_data(&ftdic, const_cast<unsigned char*>(s), n));
     if (ret < 0)
     {
         throw FTDIException("Unable to write to ftdi device", ret, &ftdic);
@@ -332,5 +345,4 @@ void FTDIModule::start()
         error() << "FTDI Stream could not be opened";
     }
 }
-
 

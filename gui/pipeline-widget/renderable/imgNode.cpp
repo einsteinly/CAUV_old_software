@@ -161,7 +161,6 @@ ImgNode::ImgNode(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e 
 }
 
 void ImgNode::display(Image const& img){
-    debug() << "ImgNode::display" << img;
     m_img->display(img);
 }
 
