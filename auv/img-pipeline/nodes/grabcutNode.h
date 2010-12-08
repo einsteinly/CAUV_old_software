@@ -67,15 +67,13 @@ class GrabCutNode: public Node{
             if(width && height)
             {
                 mode = cv::GC_INIT_WITH_RECT;
-                mask->cvMat().setTo(cv::GC_BGD);
-                (mask->cvMat()(rect)).setTo(cv::Scalar(cv::GC_PR_FGD));
             }
 
             try{
 	    //perform grabcut iterations
                     cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
 		    		fgdModel, iterations, mode);
-                    r["image_out (not copied)"] = img;
+                    r["image_out (not copied)"] = mask;
                     
             }catch(cv::Exception& e){
                 error() << "GrabCutNode:\n\t"
