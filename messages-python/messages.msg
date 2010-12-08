@@ -40,7 +40,8 @@ enum NodeType : int8 {
     Crop = 31,
     GrabCut = 32,
     Histogram = 33,
-    HistogramSegmentation = 34
+    HistogramSegmentation = 34,
+    Centre = 35
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -339,6 +340,13 @@ group processing
     {
         bins : list<float>;
         type : string;
+    }
+    
+    message Centre : 133
+    {
+        name : string;
+        x : float;
+        y : float;
     }
 }
 
