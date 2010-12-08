@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 {% block breadcrumbs %}Home{% endblock %}
 {% block content %}
-{{ disp_object.title }}
+{% if pitz_user %}
+<div id="toolbox">| <a href="{{ ROOT_URL }}/view/bag/tasks/?order-TOTAL_FORMS=2&order-INITIAL_FORMS=0&order-0-order_by=pscore&filter-TOTAL_FORMS=2&filter-INITIAL_FORMS=0&filter-0-a=owner&filter-0-b=eq&filter-0-c={{ pitz_user.title }}" >My Tasks</a> |
+ <a href="{{ ROOT_URL }}/view/bag/tasks/?order-TOTAL_FORMS=2&order-INITIAL_FORMS=0&order-0-order_by=pscore&filter-TOTAL_FORMS=2&filter-INITIAL_FORMS=0&filter-0-a=owner&filter-0-b=eq&filter-0-c=no+owner">Unassigned Tasks</a> |</div>{% comment %}if these break, then check the filter pattern hasn't changed{% endcomment %}
+{% endif %}
 <div id="project">
 {% for bag in bags %}
 <div class="bag">

@@ -4,7 +4,7 @@
 <div class="bag">
     <div class="item_key"> {{ bag.title }} </div>
     <div id="toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}">Add</a>
-    <form action="" method="post" >
+    <form action="" method="get" >
     {{ order_forms.management_form }}
     {% for form in order_forms.forms  %}
         {% for field in form %}

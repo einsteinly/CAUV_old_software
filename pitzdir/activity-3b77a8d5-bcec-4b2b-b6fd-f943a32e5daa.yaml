@@ -1,0 +1,19 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: &id001 2010-12-08 12:33:01.463003
+description: "pscore changed to 3\ndescription changed to pscore changed to 1\r\n\
+  status changed to paused\r\ndescription changed to Create a more flexible filtering/ordering\
+  \ system\r\ntags changed to [<pitz.Tag accf92 pitz>]\r\ntitle changed to Webapp\
+  \ filtering/ordering system\r\npoints changed to None\r\nowner changed to Jason\
+  \ Wyatt\r\nestimate changed to small project\nentity changed to None"
+entity: !!python/object:uuid.UUID
+  int: 290414649309620079279449451723247040979
+modified_time: *id001
+pscore: 0
+title: Jason Wyatt changed <pitz.Activity da7bd3 Jason Wyatt changed <pitz.Task 5187d9
+  Webapp filtering/order...>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 79045759456356553331778981334092766634
+who_did_it: *id002
+yaml_file_saved: 2010-12-08 12:33:01.463116

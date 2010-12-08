@@ -78,6 +78,10 @@ class disp_bag():
 def view_project(request):
     p = Project.from_pitzdir(settings.PITZ_DIR)
     bags = []
+    try:
+    	pitz_user = p.by_uuid(UUID(request.user.get_profile().uuid))
+    except:
+    	pass
     for type in p.plural_names:
         try:
             bags.append(disp_bag(p.__getattribute__(type),type))
@@ -89,9 +93,9 @@ def view_bag(request, ref):
     p = Project.from_pitzdir(settings.PITZ_DIR)
     pitz_bag = p.__getattribute__(ref)
     order_form, filter_form = appforms.make_order_filter_forms(p.plural_names[ref])
-    if request.POST:
-        order_forms = formset_factory(order_form, extra=2)(request.POST, prefix='order')
-        filter_forms = formset_factory(filter_form, extra=2)(request.POST, prefix='filter')
+    if request.GET:
+        order_forms = formset_factory(order_form, extra=2)(request.GET, prefix='order')
+        filter_forms = formset_factory(filter_form, extra=2)(request.GET, prefix='filter')
         equal_filter_dict = {}
         for form in filter_forms.forms:
             if form.is_valid() and len(form.cleaned_data):
