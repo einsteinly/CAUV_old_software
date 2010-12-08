@@ -9,8 +9,6 @@ find_package(PythonInterp)
 find_package(PythonLibs)
 include_directories (${PYTHON_INCLUDE_DIRS})
 
-link_libraries (boost_python)
-
 add_library (cauvinterface SHARED  
     cauvinterfacemodule.cpp
     emit_containers.cpp
@@ -23,9 +21,12 @@ add_library (cauvinterface SHARED
 )
 set_target_properties(cauvinterface PROPERTIES PREFIX "")
 
+message ("Python Libs: ${PYTHON_LIBRARIES}")
 target_link_libraries (cauvinterface
     common
     cauv_debug
+    boost_python
+    ${PYTHON_LIBRARIES}
 )
 
 add_custom_target (python-module ALL
