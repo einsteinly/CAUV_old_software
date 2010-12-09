@@ -29,7 +29,7 @@ class HistogramSegmentationNode: public OutputNode{
             registerInputID("image_in");
             
             //One output
-            registerOutputID<image_ptr_t>("Segments");
+            registerOutputID<image_ptr_t>("Pixels");
             
             //Parameters
             registerParamID<int>("Number of bins", 42);
@@ -71,7 +71,7 @@ class HistogramSegmentationNode: public OutputNode{
                 }
             }
 
-            r["Segments"] = boost::make_shared<Image>(out);
+            r["Pixels"] = boost::make_shared<Image>(out);
             return r;
         }
 

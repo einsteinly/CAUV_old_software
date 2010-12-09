@@ -20,6 +20,6 @@ class CentreTest(messaging.BufferedMessageObserver):
 if __name__ == '__main__':
     node = cauv.node.Node('CentreTest')
     auv = control.AUV(node)
-    f = CentreTest(node)
+    c = CentreTest(node)
     while True:
         time.sleep(5)
