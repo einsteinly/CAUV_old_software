@@ -23,7 +23,8 @@ find_library(ftdi_LIBRARY
   NAMES ftdi
   PATHS ${ftdi_PKGCONF_LIBRARY_DIRS}
 )
-if (USE_FTDIPP)
+if (CAUV_USE_FTDIPP)
+    message ("-- Using ftdipp")
     find_library(ftdipp_LIBRARY
       NAMES ftdipp
       PATHS ${ftdi_PKGCONF_LIBRARY_DIRS}
@@ -38,7 +39,7 @@ set(ftdi_PROCESS_LIBS
     ftdi_LIBRARY ftdipp_LIBRARY)
 libfind_process(ftdi)
 
-message ("ftdi_INCLUDE_DIRS=${ftdi_INCLUDE_DIRS}")
-message ("ftdi_LIBRARIES=${ftdi_LIBRARIES}")
+#message ("ftdi_INCLUDE_DIRS=${ftdi_INCLUDE_DIRS}")
+#message ("ftdi_LIBRARIES=${ftdi_LIBRARIES}")
 
 
