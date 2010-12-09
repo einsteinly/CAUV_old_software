@@ -11,6 +11,9 @@
 #   define foreach BOOST_FOREACH
 #endif
 
+#include <utility/string.h>
+#include <utility/rounding.h>
+
 
 template <typename T, typename U> T convert_to(const U& in)
 {
@@ -25,6 +28,5 @@ std::string now(std::string const& format);
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
 void msleep(unsigned msecs);
-
 
 #endif//__CAUV_UTILS_H__

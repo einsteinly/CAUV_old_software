@@ -19,3 +19,10 @@ target_link_libraries (
     cmt
 )
 
+if (CAUV_USE_FTDIPP)
+    add_definitions(-DCAUV_USE_FTDIPP)
+endif()
+if (CAUV_MCB_IS_FTDI)
+    add_definitions(-DCAUV_MCB_IS_FTDI)
+endif()
+

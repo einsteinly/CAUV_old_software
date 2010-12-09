@@ -3,20 +3,23 @@
 
 #include <string.h>
 #include <vector>
+#include <fstream>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 #include <boost/utility.hpp>
 #include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
 
-#ifdef USE_FTDIPP
+#ifdef CAUV_USE_FTDIPP
     #include <ftdi.hpp>
     #define PICK_FTDI(A,B) A
 #else
     #include <ftdi.h>
     #define PICK_FTDI(A,B) B
 #endif
-
 
 #include <common/cauv_utils.h>
 #include <common/blocking_queue.h>
@@ -35,8 +38,6 @@ class FTDIException : public std::exception
         virtual const char* what() const throw();
         int errCode() const;
 };
-
-typedef boost::shared_ptr<struct usb_device> usb_device_ptr;
 
 class FTDIContext : boost::noncopyable
 {
@@ -82,25 +83,173 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
 };
 
 
+template<typename T>
 class Module : public MessageSource
 {
+    typedef T device_t;
+    typedef boost::iostreams::stream_buffer<device_t> buffer_t;
     public:
-        Module(boost::shared_ptr< std::basic_streambuf<char> > streamBuffer);
-        virtual ~Module();
-        
-        virtual void start();
-        void send(boost::shared_ptr<const Message> message);
+        Module(device_t device)
+            : m_streamBuffer(device),
+              m_sendThread(),
+              m_sendQueue()
+        {
+        }
 
-    protected:
-        boost::shared_ptr< std::basic_streambuf<char> > m_streamBuffer;
+        virtual ~Module()
+        {
+            if (m_readThread.get_id() != boost::thread::id()) {
+                m_readThread.interrupt();
+                m_readThread.join();
+            }
+            if (m_sendThread.get_id() != boost::thread::id()) {
+                m_sendThread.interrupt();
+                m_sendThread.join();
+            }
+        }
+        
+        virtual void start()
+        {
+            if (m_streamBuffer.is_open())
+            {
+                m_readThread = boost::thread(&Module<T>::readLoop, this);
+                m_sendThread = boost::thread(&Module<T>::sendLoop, this);
+            }
+            else
+            {
+                error() << "Stream could not be opened";
+            }
+        }
+
+        void send(boost::shared_ptr<const Message> message)
+        {
+            m_sendQueue.push(message);
+        }
+
+
+        buffer_t m_streamBuffer;
         boost::thread m_readThread, m_sendThread;
         BlockingQueue< boost::shared_ptr<const Message> > m_sendQueue;
 
-        void sendLoop();
-        void readLoop();
+        void sendLoop()
+        {
+            debug() << "Started module send thread";
+            try {
+                while (true) {
+                    boost::archive::binary_oarchive ar(m_streamBuffer, boost::archive::no_header);
+                    
+                    boost::shared_ptr<const Message> message = m_sendQueue.popWait();
+                    debug(3) << "Module sending popped a message off the send queue (" << m_sendQueue.size() << "remain)" << *message;
+                    boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
+
+                    uint32_t startWord = 0xdeadc01d;
+                    uint32_t len = bytes->size();
+
+                    uint32_t buf[2];
+                    buf[0] = startWord;
+                    buf[1] = len;
+                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
+                    std::vector<uint16_t> vheader(buf16, buf16+4);
+                    uint16_t checksum = sumOnesComplement(vheader);
+                    
+                    ar << startWord;
+                    ar << len;
+                    ar << checksum;
+                    foreach (char c, *bytes)
+                        ar << c;
+                }
+            }
+            catch (boost::thread_interrupted&)
+            {
+                debug() << "Module send thread interrupted";
+            }
+
+            debug() << "Ending module send thread";
+        }
+
+        void readLoop()
+        {
+            debug() << "Started module read thread";
+           
+            try {
+
+                byte_vec_t curMsg;
+                boost::archive::binary_iarchive ar(m_streamBuffer, boost::archive::no_header);
+
+                while (true)
+                {
+                    boost::this_thread::interruption_point();
+                    uint32_t startWord;
+                    ar >> startWord;
+
+                    if (startWord != 0xdeadc01d)
+                    {
+                        // Start word doesn't match, drop it
+                        warning() << (std::string)(MakeString() << "Start word doesn't match (0x" << std::hex << startWord << " instead of 0xdeadc01d) -- starting to search for it"); 
+                        while (startWord != 0xdeadc01d)
+                        {
+                            char nextByte;
+                            ar >> nextByte;
+                            startWord = (nextByte << 24) | ((startWord >> 8) & 0xffffff);
+                        }
+                    }
+
+                    uint32_t len;
+                    uint16_t checksum;
+                    ar >> len;
+                    ar >> checksum;
+
+                    uint32_t buf[2];
+                    buf[0] = startWord;
+                    buf[1] = len;
+
+                    uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
+                    std::vector<uint16_t> vheader(buf16, buf16+4);
+
+                    if (sumOnesComplement(vheader) != checksum)
+                    {
+                        // Checksum doesn't match, drop it
+                        warning() << (std::string)(MakeString() << "Checksum is incorrect (0x" << std::hex << checksum << " instead of 0x" << std::hex << sumOnesComplement(vheader) << ")"); 
+                        continue;
+                    }
+
+                    curMsg.clear();
+                    char c;
+                    for (uint32_t i = 0; i < len; ++i)
+                    {
+                        ar >> c;
+                        curMsg.push_back(c);
+                    }
+
+#ifdef DEBUG_MCB_COMMS
+                    std::stringstream ss;
+                    ss << "Message from module  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
+                    foreach(char c, curMsg)
+                    {
+                        ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)c << " ";
+                    }
+                    debug() << ss.str();
+#endif
+
+                    boost::shared_ptr<byte_vec_t> msg = boost::make_shared<byte_vec_t>(curMsg);
+                    try {
+                        this->notifyObservers(msg);
+                    } catch (UnknownMessageIdException& e) {
+                        error() << "Error when receiving message: " << e.what();
+                    }
+                }
+           
+            }
+            catch (boost::thread_interrupted&)
+            {
+                debug() << "Module read thread interrupted";
+            }
+
+            debug() << "Ending module read thread";
+        }
 };
 
-class FTDIModule : public Module
+class FTDIModule : public Module<FTDIDevice>
 {
     public:
         FTDIModule(int vendor, int product, int index,
@@ -109,8 +258,6 @@ class FTDIModule : public Module
                    ftdi_stopbits_type const& stopBits,
                    ftdi_parity_type const& parity,
                    int flowControl);
-        
-        virtual void start();
 
     private:
         const int baudrate;
@@ -120,12 +267,35 @@ class FTDIModule : public Module
         const int flowControl;
 };
 
+class FileModule : public Module<boost::iostreams::file>
+{
+    public:
+        FileModule(const std::string& filename);
+};
+
+
+#ifdef CAUV_MCB_IS_FTDI
 class MCBModule : public FTDIModule
 {
     public:
         MCBModule(int index)
-            : FTDIModule(0x0403, 0x6001, index, 38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL){
+            : FTDIModule(0x0403, 0x6001, index, 38400, BITS_8, STOP_BIT_1, NONE, SIO_DISABLE_FLOW_CTRL)
+        {
         }
 };
+#else
+class MCBModule : public FileModule
+{
+    public:
+        //MCBModule(int index)
+        //    : FileModule("/dev/ttyUSB" + to_string(index))
+        //{
+        //}
+        MCBModule(const std::string& filename)
+            : FileModule(filename)
+        {
+        }
+};
+#endif
 
 #endif // __MODULE_H__
