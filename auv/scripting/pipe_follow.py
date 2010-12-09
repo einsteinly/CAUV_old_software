@@ -3,7 +3,7 @@ import cauv.messaging as messaging
 import cauv.control as control
 import cauv.node
 import threading
-from math import degrees
+from math import degrees, cos, sin
 
 class PipeFinder(messaging.BufferedMessageObserver):
     def __init__(self, node, auv, centre_name, target, error, proportion=30):
@@ -20,26 +20,27 @@ class PipeFinder(messaging.BufferedMessageObserver):
     def onHoughLinesMessage(self, m):
         if len(m.lines):
             angle = sum([x.angle for x in m.lines])/len(m.lines)
-            corrected_angle=degrees(angle)+90
-            corrected_angle=min((corrected_angle)%180,(-corrected_angle)%180)
+            corrected_angle=degrees(angle)%180-90
             current_bearing = self.auv.getBearing()
             if current_bearing: #watch out for none bearings
                 self.auv.bearing((current_bearing+corrected_angle)%360)
             if len(m.lines) == 2:
-                width = ((m.lines[0].centre.x-m.lines[1].centre.x)**2+(m.lines[0].centre.y-m.lines[1].centre.y)**2)**0.5
+                dot_product = cos(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)+sin(angle)*(m.lines[0].centre.y-m.lines[1].centre.y)
+                width = ((m.lines[0].centre.x-m.lines[1].centre.x-cos(angle)*dot_product)**2+(m.lines[0].centre.y-m.lines[1].centre.y-sin(angle)*dot_product)**2)**0.5
                 if abs(width-self.target)>self.error:
                     dive=2*(width-self.target)
-                    #self.auv.depth(self.auv.current_depth+(0.1)*abs(width-self.target))
+                    if self.auv.current_depth:
+                        self.auv.depth(self.auv.current_depth+(0.1)*abs(width-self.target))
                 else:
                     dive=0
-                print (corrected_angle, dive)
+                print 'Turn: %f, Change in depth: %f' %(corrected_angle, dive)
             else:
-                print (corrected_angle, "not enough lines for depth calculations.")
+                print 'Turn: %f, Not enough lines for depth calculations.' %(corrected_angle)
 
     def onCentreMessage(self, m):
-        if m.name == self.center_name:
-            print (m.x-0.5)*self.proportion
-            self.auv.strafe((m.x-0.5)*self.proportion)
+        if m.name == self.centre_name:
+            print 'Set strafe: %i' %(int((m.x-0.5)*self.proportion))
+            self.auv.strafe(int((m.x-0.5)*self.proportion))
 
 def setup():
     auv_node = cauv.node.Node('py-auv-pf')                #Create a node of the spread messaging service
