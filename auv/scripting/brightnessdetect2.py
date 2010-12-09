@@ -18,16 +18,19 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
         self.detect = 0
         self.skewMovingMean = MovingAverage('lower', skewTolerance, maxcount)         #A class to calculate the moving average of last maxcount number of sample, and set trigger flag when sample is outside tolerance range
         self.meanMovingMean = MovingAverage('upper', meanTolerance, maxcount)
+    
+    def print_bins(self, m):
+        #Routine to display all the bin values
+        accum = 0
+        for i, bin in enumerate(m.bins):
+            accum += bin
+            print 'bin %d: %f, accum: %f' %(i, bin, accum)    
 
     def onHistogramMessage(self, m):
         if m.type == self.channel:
  
-            #Routine to display all the bin values
-            accum = 0
-            for i, bin in enumerate(m.bins):
-                accum += bin
-                print 'bin %d: %f, accum: %f' %(i, bin, accum)
- 
+            #self.print_bins(m)
+            
             #Routine to calculate the skewness of the histogram
             total1 = 0
             total2 = 0
