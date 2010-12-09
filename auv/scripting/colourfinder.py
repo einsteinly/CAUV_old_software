@@ -7,8 +7,7 @@ import cauv.node
 import time
 
 class ColourFinder(messaging.BufferedMessageObserver):
-    
-   
+
     def __init__(self, node, bin, channel = 'Hue', tolerance=0.1, maxcount=500):
 
         messaging.BufferedMessageObserver.__init__(self)
