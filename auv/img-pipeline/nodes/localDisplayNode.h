@@ -8,12 +8,16 @@
 #include <opencv/cv.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
 
-class LocalDisplayNode: public Node{
+class LocalDisplayNode: public OutputNode{
     public:
         LocalDisplayNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+            : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // one input:
             registerInputID("image_in");
             
@@ -29,8 +33,6 @@ class LocalDisplayNode: public Node{
         virtual ~LocalDisplayNode(){
             stop();
         }
-
-        virtual bool isOutputNode() const throw() { return true; }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

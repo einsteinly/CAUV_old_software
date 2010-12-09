@@ -17,7 +17,11 @@ class CameraInputNode: public AsynchronousNode{
 
     public:
         CameraInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_capture(), m_current_device(-1){
+            : AsynchronousNode(sched, pl, t), m_capture(),
+              m_current_device(-1){
+        }
+
+        void init(){
             // no inputs
             // registerInputID()
             

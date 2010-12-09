@@ -23,6 +23,10 @@ class KMeansNode: public Node{
                 bytedist(0, 255),
                 randbyte(gen, bytedist)
         {
+        }
+
+        void init()
+        {
             // fast node:
             m_speed = fast;
 

@@ -16,6 +16,9 @@ class InvertNode: public Node{
     public:
         InvertNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // fast node:
             m_speed = fast;
 
@@ -38,8 +41,17 @@ class InvertNode: public Node{
 
             image_ptr_t img = inputs["image"];
             
+	    if ((int)img->cvMat().elemSize() != img->cvMat().channels()){
+	        error() << "InvertNode:\n\t"
+                        << "Invalid image input - must be 8-bit";
+                return r;
+            }
+	    
+	    if(!img->cvMat().isContinuous())
+                throw(parameter_error("image must be continuous"));
+
             const int elem_size = img->cvMat().elemSize();
-            const int row_size = img->cvMat().cols * elem_size;
+            const int row_size = img->cvMat().cols*img->cvMat().elemSize(); // elem_size;
             unsigned char *img_rp, *img_cp, *img_bp;
             int row, col, ch;
 

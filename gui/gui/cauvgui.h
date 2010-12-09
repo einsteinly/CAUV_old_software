@@ -9,6 +9,8 @@
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
+#include <model/auv_model.h>
+
 #include "ui_mainwindow.h"
 #include "pipelineWidget.h"
 

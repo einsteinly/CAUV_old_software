@@ -17,6 +17,9 @@ class VideoFileOutputNode: public OutputNode{
     public:
         VideoFileOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t), m_writer(), m_counter(0){
+        }
+
+        void init(){
             // one input:
             registerInputID("image");
             

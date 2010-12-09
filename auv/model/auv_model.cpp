@@ -2,7 +2,7 @@
 
 
 void AUV::Motor::set(int8_t data) {
-    if (data > 127)
+    if (data >= 127)
         data = 127;
 
     if (data < -127)

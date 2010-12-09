@@ -18,6 +18,9 @@ class CropNode: public Node{
     public:
         CropNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // fast node:
             m_speed = fast;
 

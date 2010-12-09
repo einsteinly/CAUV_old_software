@@ -18,6 +18,9 @@ class GrabCutNode: public Node{
     public:
         GrabCutNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // slow node:
             m_speed = slow;
             
@@ -41,9 +44,6 @@ class GrabCutNode: public Node{
         virtual ~GrabCutNode(){
             stop();
         }
-        
-        // this node should be run even if nothing is connected to its output
-        virtual bool isOutputNode() throw() { return true; } 
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

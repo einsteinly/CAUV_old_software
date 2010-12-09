@@ -1,5 +1,5 @@
-#ifndef __HISTOGRAMSEGMENT_H__
-#define __HISTOGRAMSEGMENT_H__
+#ifndef __CENTREFINDER_H__
+#define __CENTREFINDER_H__
 
 #include <map>
 #include <vector>
@@ -14,30 +14,27 @@
 #include "../node.h"
 #include "outputNode.h"
 
-
-class HistogramSegmentationNode: public OutputNode{
+class CentreFinderNode : public OutputNode{
     public:
-        HistogramSegmentationNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+        CentreFinderNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
         }
 
         void init(){
-            // fast node:
+            //Fast node
             m_speed = fast;
             
             //One input
             registerInputID("image_in");
             
-            //One output
-            registerOutputID<image_ptr_t>("Segments");
+            //No output
             
             //Parameters
-            registerParamID<int>("Number of bins", 42);
-            registerParamID<int>("Bin", 0);
+            registerParamID<std::string>("Name", "Unnamed");
             
         }
     
-        virtual ~HistogramSegmentationNode(){
+        virtual ~CentreFinderNode(){
             stop();
         }
 
@@ -45,8 +42,7 @@ class HistogramSegmentationNode: public OutputNode{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            int bins = param<int>("Number of bins");
-            int bin = param<int>("Bin");
+            std::string name = param<std::string>("Name");
 
             image_ptr_t img = inputs["image_in"];
 
@@ -58,20 +54,21 @@ class HistogramSegmentationNode: public OutputNode{
                 throw(parameter_error("Image must have only one channel."));
                 //TODO: support vector parameters
 
-            float binWidth = 256 / bins;
-            float binMin = bin * binWidth;
-            float binMax = (bin + 1) * binWidth;
-            cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC1);
+            int totalX = 0;
+            int totalY = 0;
+            int sum = 0;
 
-            for(int i = 0; i < img->cvMat().rows; i++) {
-                for(int j = 0; j < img->cvMat().cols; j++) {
-                   if(img->cvMat().at<uint8_t>(i, j) > binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
-                       out.at<uint8_t>(i, j) = 255;
+            for(int i = 0; i < img->cvMat().cols; i++) {
+                for(int j = 0; j < img->cvMat().rows; j++) {
+                   if(img->cvMat().at<uint8_t>(i, j) > 127) {
+                       totalX += i;
+                       totalY += j;
+                       sum++;
                    }
                 }
             }
 
-            r["Segments"] = boost::make_shared<Image>(out);
+            sendMessage(boost::make_shared<CentreMessage>(name, totalX / sum, totalY / sum));
             return r;
         }
 
@@ -79,4 +76,4 @@ class HistogramSegmentationNode: public OutputNode{
     DECLARE_NFR;
 };
 
-#endif //ndef __HISTOGRAMSEGMENT_H__
+#endif //ndef __CENTREFINDER_H__

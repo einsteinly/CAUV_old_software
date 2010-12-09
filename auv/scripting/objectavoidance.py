@@ -5,7 +5,7 @@ import cauv
 import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
-from colourfinder import ColourFinder as ColFinder
+from brightnessdetect import BrightnessDetect as
 
 import time
 import traceback
@@ -14,7 +14,7 @@ import traceback
 def ObjectAvoidance(): 
     node = cauv.node.Node('py-objectavoid')         #Create a node of the spread messaging service
     auv = control.AUV(node)                         #Create a python object for the control of the AUV
-    detect = ColFinder(node, 28, 'Value')                    #Turn on the colour detection script
+    detect = BrightnessDetect(node)                    #Turn on the colour detection script
         
     print 'setting calibration...'                  #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
     # set-up calibration factors

@@ -86,7 +86,7 @@ class PipelineWidget: public QGLWidget,
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
 
-    signals:
+    Q_SIGNALS:
         void redrawPosted();
     
     protected:

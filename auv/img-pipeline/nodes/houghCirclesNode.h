@@ -10,12 +10,16 @@
 #include <opencv/highgui.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
 
-class HoughCirclesNode: public Node{
+class HoughCirclesNode: public OutputNode{
     public:
         HoughCirclesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+            : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // slow node:
             m_speed = slow;
             
@@ -38,9 +42,6 @@ class HoughCirclesNode: public Node{
         virtual ~HoughCirclesNode(){
             stop();
         }
-        
-        // this node should be run even if nothing is connected to its output
-        virtual bool isOutputNode() throw() { return true; } 
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){
