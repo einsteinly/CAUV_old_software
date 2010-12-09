@@ -65,7 +65,7 @@ class HistogramSegmentationNode: public OutputNode{
 
             for(int i = 0; i < img->cvMat().rows; i++) {
                 for(int j = 0; j < img->cvMat().cols; j++) {
-                   if(img->cvMat().at<uint8_t>(i, j) > binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
+                   if(img->cvMat().at<uint8_t>(i, j) >= binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
                        out.at<uint8_t>(i, j) = 255;
                    }
                 }
