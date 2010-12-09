@@ -2,6 +2,7 @@ project (guicpp)
 
 # required libraries:
 find_package (Qwt5)
+find_package (OIS)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
@@ -9,18 +10,19 @@ else()
     if (NOT QWT_FOUND)
         message(WARNING "QWT not found, not building gui")
     else()
+        # using both Qt slots and Boost signals so need no keywords
+        ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
         include_directories (SYSTEM ${QWT_INCLUDE_DIR} REQUIRED)
         link_directories (${QWT_LIBRARY})
+        link_directories (${OIS_LIBRARIES})
 
         set (
             guicpp_srcs
             main.cpp
             cauvgui.cpp
-            canvaspicker.cpp
-            scalepicker.cpp
-            plot.cpp
-            colorbar.cpp
+            gamepad/gamepadinput.cpp
+            gamepad/playstationinput.cpp
         )
 
         set (
@@ -30,11 +32,9 @@ else()
 
         set (
             guicpp_H
-            canvaspicker.h
-            scalepicker.h
+            gamepad/playstationinput.h
+            gamepad/gamepadinput.h
             cauvgui.h
-            plot.h
-            colorbar.h
         )
 
         qt4_wrap_ui (guicpp_UIS_H ${guicpp_UIS})
@@ -53,9 +53,11 @@ else()
             guicpp
             cauv_debug
             common
+            model
             pipeline-widget
             ${QT_LIBRARIES}
             ${QWT_LIBRARY}
+            ${OIS_LIBRARIES}
         )
 
         add_custom_command(

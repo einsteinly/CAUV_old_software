@@ -61,8 +61,8 @@ public:
 
 
     bool pushState(bool state);
-    const bool popState();
-    const bool enabled();
+    bool popState();
+    bool enabled();
 
 
 protected:
