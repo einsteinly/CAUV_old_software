@@ -6,14 +6,15 @@ import threading
 from math import degrees, cos, sin
 
 class PipeFinder(messaging.BufferedMessageObserver):
-    def __init__(self, node, auv, centre_name, target, error, proportion=30):
+    def __init__(self, node, auv, centre_name, target, error, strafe_p=30, depth_p=0.1):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         self.auv = auv
         node.join("processing")
         node.addObserver(self)
         self.centre_name = centre_name
-        self.proportion = proportion
+        self.strafe_p = strafe_p
+        self.depth_p = depth_p
         self.target = target
         self.error = error
 
@@ -23,14 +24,14 @@ class PipeFinder(messaging.BufferedMessageObserver):
             corrected_angle=degrees(angle)%180-90
             current_bearing = self.auv.getBearing()
             if current_bearing: #watch out for none bearings
-                self.auv.bearing((current_bearing+corrected_angle)%360)
+                self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
             if len(m.lines) == 2:
-                dot_product = cos(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)+sin(angle)*(m.lines[0].centre.y-m.lines[1].centre.y)
-                width = ((m.lines[0].centre.x-m.lines[1].centre.x-cos(angle)*dot_product)**2+(m.lines[0].centre.y-m.lines[1].centre.y-sin(angle)*dot_product)**2)**0.5
+                #
+                width = abs(sin(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)-cos(angle)*(m.lines[0].centre.y-m.lines[1].centre.y))
                 if abs(width-self.target)>self.error:
                     dive=2*(width-self.target)
                     if self.auv.current_depth:
-                        self.auv.depth(self.auv.current_depth+(0.1)*abs(width-self.target))
+                        self.auv.depth(self.auv.current_depth+(self.depth_p)*abs(width-self.target))
                 else:
                     dive=0
                 print 'Turn: %f, Change in depth: %f' %(corrected_angle, dive)
