@@ -58,17 +58,26 @@ class CentreFinderNode : public OutputNode{
             int totalY = 0;
             int sum = 0;
 
-            for(int i = 0; i < img->cvMat().cols; i++) {
-                for(int j = 0; j < img->cvMat().rows; j++) {
-                   if(img->cvMat().at<uint8_t>(i, j) > 127) {
-                       totalX += i;
-                       totalY += j;
-                       sum++;
-                   }
+            for(int i = 0; i < img->cvMat().cols; i++){
+                for(int j = 0; j < img->cvMat().rows; j++){
+                    if(img->cvMat().at<uint8_t>(i, j) > 127){
+                        totalX += i;
+                        totalY += j;
+                        sum++;
+                    }
                 }
             }
 
-            sendMessage(boost::make_shared<CentreMessage>(name, totalX / sum, totalY / sum));
+            float x = 0;
+            float y = 0;
+            if(sum == 0){
+                x = 0;
+                y = 0;
+            } else {
+                x = ((float) totalX) / ((float) sum);
+                y = ((float) totalY) / ((float) sum);
+            }
+            sendMessage(boost::make_shared<CentreMessage>(name, x / img->cvMat().cols, y / img->cvMat().rows));
             return r;
         }
 
