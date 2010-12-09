@@ -566,11 +566,12 @@ void Node::checkAddSched() throw(){
         debug(4) << __func__ << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
-    bool od = newOutputDemanded();
-    bool npv = newParamValues();
-    if(!od && !npv){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", no output demanded:"
-                 << "new parameters:" << npv << "output demanded:" << od;
+
+    const bool out_demanded = newOutputDemanded();
+    const bool new_pvs = newParamValues();
+    if(out_demanded == false && new_pvs == false){
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", no demand:"
+                 << "new params=" << new_pvs << "output demand=" << out_demanded;
         return;
     }
 

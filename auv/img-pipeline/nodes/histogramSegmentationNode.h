@@ -12,11 +12,13 @@
 #include <generated/messages.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
-class HistogramSegmentationNode: public Node{
+
+class HistogramSegmentationNode: public OutputNode{
     public:
         HistogramSegmentationNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+            : OutputNode(sched, pl, t){
             // fast node:
             m_speed = fast;
             
@@ -35,9 +37,6 @@ class HistogramSegmentationNode: public Node{
         virtual ~HistogramSegmentationNode(){
             stop();
         }
-        
-        // this node should be run even if nothing is connected to its output
-        virtual bool isOutputNode() { return false; } 
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

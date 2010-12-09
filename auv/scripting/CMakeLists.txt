@@ -20,7 +20,7 @@ add_custom_target (scripting
 )
 add_dependencies(scripting python-module)
 
-message ("Python Module Build Dir: ${PYMODD}")
+#message ("Python Module Build Dir: ${PYMODD}")
 
 add_custom_target (pycamtest
     export PYTHONPATH=$$PYTHONPATH:${PYMODD} && echo $$PYTHONPATH && ${SRCD}/run.sh ${SRCD}/camtest.py 
