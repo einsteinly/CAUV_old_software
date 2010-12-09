@@ -53,7 +53,7 @@ def dfu():
         auv.prop(0)
         time.sleep(4)
         print 'turning...'
-        auv.bearing(bearing + 180)
+        auv.bearing((bearing + 180) % 360)
         time.sleep(10)
         print 'forwards...'
         auv.prop(127)
@@ -70,6 +70,3 @@ def dfu():
 
 if __name__ == '__main__':
     dfu()
-
-
-
