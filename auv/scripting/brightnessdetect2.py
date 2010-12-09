@@ -9,15 +9,15 @@ import time
 class BrightnessDetect(messaging.BufferedMessageObserver):
     
    
-    def __init__(self, node, channel='Value', skewTolerance=1, meanTolerance=5, maxcount=500):
+    def __init__(self, node, channel='Value', skewTolerance=1, meanTolerance=5, maxcount=200):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
         node.addObserver(self)
         self.channel = channel        
         self.detect = 0
-        self.skewMovingMean = MovingAverage(upper, skewTolerance, maxcount)         #A class to calculate the moving average of last maxcount number of sample, and set trigger flag when sample is outside tolerance range
-        self.meanMovingMean = MovingAverage(upper, meanTolerance, maxcount)
+        self.skewMovingMean = MovingAverage('lower', skewTolerance, maxcount)         #A class to calculate the moving average of last maxcount number of sample, and set trigger flag when sample is outside tolerance range
+        self.meanMovingMean = MovingAverage('upper', meanTolerance, maxcount)
 
     def onHistogramMessage(self, m):
         if m.type == self.channel:
@@ -50,17 +50,19 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
                 if self.skewMovingMean.trigger == 1:
                     self.detect = 1
                     print "Things just got brighter judging from changing skewness"
+                    return 0
                 else if self.meanMovingMean.trigger == 1:
                     self.detect = 1
                     print "Things just got brighter judging from changing mean"
+                    return 0
                 else:
                     self.detect = 0
                         
             print 'count', self.skewMovingMean.count.
-            print 'Moving average of skewness: %f' %self.skewMovingMean.movingMean
-            print 'Moving average of mean: %f' %self.meanMovingMean.movingMean
-            print 'Standard error of skewness: %f' %self.skewMovingMean.movingError
-            print 'Standard error of mean: %f' %self.meanMovingMean.movingError
+            print 'Moving average of skewness:', self.skewMovingMean.movingMean
+            print 'Moving average of mean:', self.meanMovingMean.movingMean
+            print 'Standard error of skewness:', self.skewMovingMean.movingError
+            print 'Standard error of mean:', self.meanMovingMean.movingError
           
 
 

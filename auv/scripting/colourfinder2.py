@@ -11,7 +11,7 @@ import time
 class ColourFinder(messaging.BufferedMessageObserver):
     
    
-    def __init__(self, node, bin, channel = 'Hue', tolerance=0.1, maxcount=500):
+    def __init__(self, node, bin, channel = 'Hue', tolerance=0.1, maxcount=200):
 
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
@@ -21,29 +21,36 @@ class ColourFinder(messaging.BufferedMessageObserver):
         self.maxcount = maxcount
         self.channel = channel        
         self.detect = 0
-        self.binMovingmean = MovingAverage(upper, tolerance, maxcount)         #A class to calculate the moving average of last maxcount number of sample, and set trigger flag when sample is outside tolerance range
+        self.binMovingmean = MovingAverage('upper', tolerance, maxcount)         #A class to calculate the moving average of last maxcount number of sample, and set trigger flag when sample is outside tolerance range
 
     def onHistogramMessage(self, m):
         if m.type == self.channel:
+
+            #accum = 0                #Print out all the values of the bins
+            #for i, bin in enumerate(m.bins):
+            #    accum += bin
+            #    print 'bin %d: %f, accum: %f' %(i, bin, accum)
+        
             self.binMovingmean.update(m.bins[self.bin])
+            print 'bin %d: %f' %(self.bin, m.bins[self.bin])            
             
             if self.binMovingmean.trigger == 1:
                 self.detect = 1
                 print "Bin %d is big" % self.bin
+                return 0
             else:
                 self.detect = 0
+                
 
+            print 'Count :', self.binMovingmean.count
             print 'Moving average of bin %d is: %f' %(self.bin, self.binMovingmean.movingMean)
             print 'Standard error of bin %d is: %f' %(self.bin, self.binMovingmean.movingError)
             
-            accum = 0
-            for i, bin in enumerate(m.bins):
-                accum += bin
-                print 'bin %d: %f, accum: %f' %(i, bin, accum)
+
 
 if __name__ == '__main__':
     node = cauv.node.Node('ColFind')
     auv = control.AUV(node)
-    detect = ColourFinder(node, 14, 'Value')
+    detect = ColourFinder(node, 11)
     while True:
         time.sleep(5)
