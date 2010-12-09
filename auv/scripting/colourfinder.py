@@ -4,6 +4,8 @@ import cauv
 import cauv.control as control
 import cauv.node
 
+from movingaverage import MovingAverage
+
 import time
 
 class ColourFinder(messaging.BufferedMessageObserver):
