@@ -609,7 +609,7 @@ void Node::checkAddSched() throw(){
         // initialisation allowing the node factory to hold a shared pointer
         // before any complex initialisation is done.
         unique_lock_t l(m_exec_queued_lock);
-        m_exec_queued = true;
+        m_exec_queued = false;
     }
 }
 
