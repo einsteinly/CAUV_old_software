@@ -556,7 +556,7 @@ void Node::registerInputID(input_id const& i){
 /* Check to see if all inputs are new and output is demanded; if so,
  * add this node to the scheduler queue
  */
-void Node::checkAddSched() throw(){
+void Node::checkAddSched(){
     unique_lock_t l(m_checking_sched_lock);
     if(!allowQueue()){
         debug(4) << __func__ << "Cannot enqueue node" << *this << ", allowQueue false";
@@ -599,22 +599,7 @@ void Node::checkAddSched() throw(){
 
     debug(4) << __func__ << "Queuing node:" << *this;
     setExecQueued();
-    try{
-        m_sched.addJob(shared_from_this(), m_priority);
-    }catch(boost::bad_weak_ptr& e){
-        warning() << "no other shared pointers exist";
-        // TODO: do this in a better way... when this function is called from
-        // constuctors (eg CameraInputNode), there exist no other shared
-        // pointers to allowed shared_from_this to work --- so crashes happen.
-        // really we should have a separate init function for node
-        // initialisation allowing the node factory to hold a shared pointer
-        // before any complex initialisation is done
-        // really we should have a separate init function for node
-        // initialisation allowing the node factory to hold a shared pointer
-        // before any complex initialisation is done.
-        unique_lock_t l(m_exec_queued_lock);
-        m_exec_queued = false;
-    }
+    m_sched.addJob(shared_from_this(), m_priority);
 }
 
 void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p){

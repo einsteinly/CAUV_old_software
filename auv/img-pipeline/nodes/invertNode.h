@@ -16,6 +16,9 @@ class InvertNode: public Node{
     public:
         InvertNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // fast node:
             m_speed = fast;
 

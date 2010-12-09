@@ -17,6 +17,9 @@ class HoughCirclesNode: public OutputNode{
     public:
         HoughCirclesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // slow node:
             m_speed = slow;
             

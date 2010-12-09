@@ -7,6 +7,9 @@ class GuiOutputNode: public OutputNode{
     public:
         GuiOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t), m_counter(0){
+        }
+
+        void init(){
             // one input:
             registerInputID("image_in");
 

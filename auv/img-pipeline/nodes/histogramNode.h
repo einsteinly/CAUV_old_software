@@ -18,6 +18,9 @@ class HistogramNode: public OutputNode{
     public:
         HistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // fast node:
             m_speed = fast;
             

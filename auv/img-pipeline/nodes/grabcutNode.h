@@ -18,6 +18,9 @@ class GrabCutNode: public Node{
     public:
         GrabCutNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // slow node:
             m_speed = slow;
             

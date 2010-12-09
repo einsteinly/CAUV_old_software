@@ -12,11 +12,15 @@
 #include <generated/messages.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
-class CentreFinderNode : public Node{
+class CentreFinderNode : public OutputNode{
     public:
         CentreFinderNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+            : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             //Fast node
             m_speed = fast;
             
@@ -32,11 +36,6 @@ class CentreFinderNode : public Node{
     
         virtual ~CentreFinderNode(){
             stop();
-        }
-        
-        //This node should be run even if nothing is connected to its output
-        virtual bool isOutputNode(){
-            return true;
         }
 
     protected:

@@ -15,6 +15,9 @@ class SonarInputNode: public InputNode{
     public:
         SonarInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : InputNode(sched, pl, t), m_accumulator(){
+        }
+
+        void init(){
             // InputNode stuff: subscribe to sonar data // TODO: nicer interface for this
             InputNode::m_subscriptions.insert(SonarData);
 

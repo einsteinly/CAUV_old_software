@@ -19,6 +19,9 @@ class HoughLinesNode: public OutputNode{
     public:
         HoughLinesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // slow node:
             m_speed = slow;
             

@@ -15,6 +15,9 @@ class LocalDisplayNode: public OutputNode{
     public:
         LocalDisplayNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // one input:
             registerInputID("image_in");
             

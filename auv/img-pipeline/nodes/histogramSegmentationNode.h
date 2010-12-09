@@ -19,6 +19,9 @@ class HistogramSegmentationNode: public OutputNode{
     public:
         HistogramSegmentationNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // fast node:
             m_speed = fast;
             

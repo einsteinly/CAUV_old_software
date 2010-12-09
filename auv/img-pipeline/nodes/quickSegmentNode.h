@@ -10,12 +10,16 @@
 #include <generated/messages.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
 
-class QuickSegmentNode: public Node{
+class QuickSegmentNode: public OutputNode{
     public:
         QuickSegmentNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+            : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             // fast node:
             m_speed = fast;
             
@@ -33,9 +37,6 @@ class QuickSegmentNode: public Node{
             stop();
         }
         
-        // this node should be run even if nothing is connected to its output
-        virtual bool isOutputNode() throw() { return true; } 
-
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;

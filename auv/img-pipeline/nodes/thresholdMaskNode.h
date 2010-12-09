@@ -16,6 +16,9 @@ class ThresholdMaskNode: public Node{
     public:
         ThresholdMaskNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // fast node:
             m_speed = fast;
 
@@ -27,8 +30,6 @@ class ThresholdMaskNode: public Node{
 
             // one parameter
             registerParamID<int>("threshold (>= is masked)",127);
-
-               
         }
         
         virtual ~ThresholdMaskNode(){
