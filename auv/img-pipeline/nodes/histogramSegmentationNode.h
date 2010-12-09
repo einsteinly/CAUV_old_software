@@ -22,13 +22,13 @@ class HistogramSegmentationNode: public OutputNode{
             // fast node:
             m_speed = fast;
             
-            // one input:
+            //One input
             registerInputID("image_in");
             
-            // no output
+            //One output
             registerOutputID<image_ptr_t>("Segments");
             
-            // parameter: 
+            //Parameters
             registerParamID<int>("Number of bins", 42);
             registerParamID<int>("Bin", 0);
             
@@ -41,27 +41,27 @@ class HistogramSegmentationNode: public OutputNode{
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
-            
+
             int bins = param<int>("Number of bins");
             int bin = param<int>("Bin");
-            
+
             image_ptr_t img = inputs["image_in"];
-            
+
             if(!img->cvMat().isContinuous())
                 throw(parameter_error("Image must be continuous."));
             if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
-                throw(parameter_error("Image must be unsigned bytes."));
+                throw(parameter_error("Image must have unsigned bytes."));
             if(img->cvMat().channels() > 1)
-                throw(parameter_error("Image must have only single channel."));
-                // TODO: support vector parameters
+                throw(parameter_error("Image must have only one channel."));
+                //TODO: support vector parameters
 
             float binWidth = 256 / bins;
             float binMin = bin * binWidth;
             float binMax = (bin + 1) * binWidth;
-            cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC3);
+            cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC1);
 
-            for(int i = 0; i < img->cvMat().cols; i++) {
-                for(int j = 0; j < img->cvMat().rows; j++) {
+            for(int i = 0; i < img->cvMat().rows; i++) {
+                for(int j = 0; j < img->cvMat().cols; j++) {
                    if(img->cvMat().at<uint8_t>(i, j) > binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
                        out.at<uint8_t>(i, j) = 255;
                    }
@@ -72,8 +72,8 @@ class HistogramSegmentationNode: public OutputNode{
             return r;
         }
 
-    // Register this node type
+    //Register this node type
     DECLARE_NFR;
 };
 
-#endif // ndef __HISTOGRAMSEGMENT_H__
+#endif //ndef __HISTOGRAMSEGMENT_H__

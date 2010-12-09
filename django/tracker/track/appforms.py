@@ -10,17 +10,36 @@ class useruuid_form(forms.ModelForm):
         model = models.UserProfile
         exclude = ('uuid')
 
-#textarea fields (since we cant pass the required args to charfield when we call it)
+#textarea and pscore  fields (since when we call fields, we dont know what field we are calling, so cant pass required arguments)
 class Textarea(forms.CharField):
     def __init__(self, **kwargs):
         super(Textarea, self).__init__(widget=forms.Textarea, **kwargs)
+
+#this defines the descriptions that math to pscores
+pscore_choices = ((None, 'N/A'),
+                  (0, 'Useless'),
+                  (1, 'Would be nice'),
+		  (2, 'Long term goal'),
+		  (3, 'Short term goal'),
+		  (4, 'Urgent'),
+		  (5, 'Critical'))
+
+class PscoreField(forms.ChoiceField):
+    def __init__(self, **kwargs):
+        super(PscoreField, self).__init__(choices = pscore_choices, **kwargs)
 
 #defs for first run fields
 type_to_field = {
                 datetime: forms.DateField,
                 int: forms.IntegerField,
-                str: Textarea
+                str: Textarea,
+		unicode: Textarea
                     }
+
+name_to_field = {
+                'title': forms.CharField,
+		'pscore': PscoreField
+		}
 
 def get_EntityChoiceField(entity_type):                    
     class EntityChoiceField(forms.ChoiceField):
@@ -50,7 +69,7 @@ def get_EntityMultipleChoiceField(entity_type):
             return [entities.by_uuid(UUID(uuid)) for uuid in uuids]
     EntityMultipleChoiceField.entity_type = entity_type
     return EntityMultipleChoiceField
-        
+
 def analyse(entity_type):
     variables = extras.get_all_variables(entity_type)
     fields={}
@@ -62,9 +81,12 @@ def analyse(entity_type):
             fields[var_name] = get_EntityChoiceField(variables[var_name])
         else:
             try:
-                fields[var_name] = type_to_field[variables[var_name]]
-            except KeyError: #fallback on text field
-                fields[var_name] = forms.CharField
+	        fields[var_name] = name_to_field[var_name]
+	    except KeyError:
+	        try:
+                    fields[var_name] = type_to_field[variables[var_name]]
+                except KeyError: #fallback on text field
+                    fields[var_name] = forms.CharField
     return fields
         
 def make_entity_form(entity_type, project, initial=None):
@@ -120,6 +142,6 @@ def make_order_filter_forms(entity_type):
         reverse = forms.BooleanField(label='Reverse', required=False)
     class filter_form(forms.Form):
         a = forms.ChoiceField(choices=choices, label='Filter by')
-        b = forms.ChoiceField(choices=(('lte','<='),('gte','>='),('eq','==')),label='',initial='eq')
+        b = forms.ChoiceField(choices=(('eq','equals'),('neq','does not equal')),label='',initial='eq')
         c = forms.CharField(label='')
     return order_form, filter_form
