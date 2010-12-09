@@ -566,8 +566,11 @@ void Node::checkAddSched() throw(){
         debug(4) << __func__ << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
-    if(!newOutputDemanded() && !newParamValues()){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", no output demanded";
+    bool od = newOutputDemanded();
+    bool npv = newParamValues();
+    if(!od && !npv){
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", no output demanded:"
+                 << "new parameters:" << npv << "output demanded:" << od;
         return;
     }
 
@@ -609,7 +612,7 @@ void Node::checkAddSched() throw(){
         // initialisation allowing the node factory to hold a shared pointer
         // before any complex initialisation is done.
         unique_lock_t l(m_exec_queued_lock);
-        m_exec_queued = true;
+        m_exec_queued = false;
     }
 }
 
