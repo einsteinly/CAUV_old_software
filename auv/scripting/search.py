@@ -5,7 +5,7 @@ import cauv
 import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
-from colourfinder import ColourFinder as ColFinder
+from colourfinder2 import ColourFinder as ColFinder
 
 import time
 import traceback
