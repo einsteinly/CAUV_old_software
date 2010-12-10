@@ -18,10 +18,8 @@ class PipeFinder(messaging.BufferedMessageObserver):
         self.depth_p = depth_p
         self.target = target
         self.error = error
-        self.enable = 0
 
     def onHoughLinesMessage(self, m):
-        if self.enable == 1:
             if len(m.lines):
                 angle = sum([x.angle for x in m.lines])/len(m.lines)
                 corrected_angle=degrees(angle)%180-90
@@ -41,7 +39,6 @@ class PipeFinder(messaging.BufferedMessageObserver):
                     print 'Turn: %f, Not enough or too many lines for depth estimate.' %(corrected_angle)
 
     def onCentreMessage(self, m):
-        if self.enable == 1:
             if m.name == self.centre_name:
                 print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
                 self.auv.strafe(int((m.x-0.5)*self.strafe_p))
