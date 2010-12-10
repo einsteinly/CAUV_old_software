@@ -17,56 +17,78 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
         self.centre_name = centre_name
         self.histogram_name = histogram_name
         self.binsStart = None
+        self.binsPrevious = None
         self.ms = 1
         self.cv = threading.Condition()
         self.failed = False
         self.parallelsAppeared = False
         self.noLines = 0
+        self.enabled = False
 
     def onCentreMessage(self, m):
-        if m.name == self.centre_name:
+        if m.name == self.centre_name and self.enabled == True:
             print 'Set strafe (confirm): %i' % (int((m.x - 0.5) * self.strafe_p))
             self.auv.strafe(int((m.x - 0.5) * self.strafe_p))
 
     def onHistogramMessage(self, m):
-        if m.type == self.histogram_name:
+        if m.type == self.histogram_name and self.enabled == True:
             if self.binsStart == None:
                 for j, indBin in enumerate(self.bin):
+                    self.binsPrevious[j] = m.bins[indBin]
                     self.binsStart[j] = m.bins[indBin]
             if self.ms % 15 == 0:
                 for j, indBin in enumerate(self.bin):
                    binsNow[j] = m.bins[indBin]
-                if sum([x for x in self.binsNow]) < sum([x for x in self.binsStart]) - 0.05:
+                if sum([x for x in self.binsNow]) < sum([x for x in self.binsPrevious]) - 0.05:
                     self.cv.acquire()
                     self.cv.notify()
                     self.failed = True
                     self.cv.release()
 
+
+
+                #if sum([x for x in self.binsNow]) < sum([x for x in self.binsPrevious]) - 0.05:
+                    #self.score -= 1
+                #elif sum([x for x in self.binsNow]) > sum([x for x in self.binsPrevious]) + 0.05:
+                    #self.score += 1
+                #if score < -10 + frame * 
+                    #self.cv.acquire()
+                    #self.cv.notify()
+                    #self.failed = True
+                    #self.cv.release()
+                self.binsPrevious = binsNow
+            self.ms += 1
+
     def onHoughLinesMessage(self, m):
-        linesFound == False
-        for i, line1 in enumerate(m.lines):
-            for j, line2 in enumerate(m.lines):
-                if degrees(abs(line1.angle - line2.angle)) < 15:
-                    linesFound = True
-        if parallelsAppeared == False and linesFound == True:
-            parallelsAppeared = True
-        elif parallellsAppeared == True and linesFound == True:
-            self.noLines = 0
-        elif parallellsAppeared == True and linesFound == False:   
-            self.noLines += 1
-        if self.noLines == 15:
-            self.cv.acquire()
-            self.cv.notify()
-            self.failed = True
-            self.cv.release()            
+        if self.enabled == True:
+            linesFound == False
+            for i, line1 in enumerate(m.lines):
+                for j, line2 in enumerate(m.lines):
+                    if degrees(abs(line1.angle - line2.angle)) < 15 and i != j:
+                        linesFound = True
+            if parallelsAppeared == False and linesFound == True:
+                parallelsAppeared = True
+            elif parallellsAppeared == True and linesFound == True:
+                self.noLines = 0
+            elif parallellsAppeared == True and linesFound == False:   
+                self.noLines += 1
+            if self.noLines == 15:
+                self.cv.acquire()
+                self.cv.notify()
+                self.failed = True
+                self.cv.release()            
 
     def confirm(self):
+        self.enabled = True
         self.cv.acquire()
         self.cv.wait(12)
         if self.failed == True:
             self.cv.release()
             return False
         else:
+            if sum([x for x in self.binsNow]) < sum([x for x in self.binsStart] + 0.2):
+                self.cv.release()
+                return False
             self.cv.release()
             return True
 
@@ -91,6 +113,7 @@ def setup():
     auv.hsternMap(10, -10, 127, -127)
 
     pf = PipeConfirmer(auv_node, auv, 'pipe', 'Hue', [11, 12])
+    print pf.confirm()
     return pf
     
 if __name__ == "__main__":
