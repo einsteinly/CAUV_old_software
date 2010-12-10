@@ -60,5 +60,5 @@ class MovingAverage():
             if self.count < self.maxcount:                    #update count if not reached maxcount
                 self.count += 1
 
-            elif self.movingError!=0 & self.st_on==1:
+            elif self.movingError!=0 and self.st_on==1:
                 self.tolerance = self.st_multiplier*self.movingError

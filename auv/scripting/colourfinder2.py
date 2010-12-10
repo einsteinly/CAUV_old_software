@@ -7,6 +7,7 @@ import cauv.node
 from movingaverage import MovingAverage
 
 import time
+import threading
 
 class ColourFinder(messaging.BufferedMessageObserver):
     
@@ -22,6 +23,7 @@ class ColourFinder(messaging.BufferedMessageObserver):
         self.no_trigger = no_trigger
         self.detect = 0
         self.binMovingmean = []
+        self.lock = threading.Lock()
         for uni_bin in self.bin:
             self.binMovingmean.append(MovingAverage('upper', tolerance=0.15, maxcount=200, st_multiplier=2, st_on = 1))         #A class to calculate the moving average of last maxcount number of sample, mulitplier sets the tolerance range mulitplier and set trigger flag when sample is outside tolerance range
 
@@ -31,6 +33,12 @@ class ColourFinder(messaging.BufferedMessageObserver):
         for i, bin in enumerate(m.bins):
             accum += bin
             print 'bin %d: %f, accum: %f' %(i, bin, accum)    
+
+    def detected(self):
+        self.lock.acquire()
+        r = self.detect
+        self.lock.release()
+        return r
 
     def onHistogramMessage(self, m):
         if m.type == self.channel:
@@ -42,8 +50,10 @@ class ColourFinder(messaging.BufferedMessageObserver):
                 self.binMovingmean[j].update(m.bins[uni_bin])
                 #print 'bin %d: %f' %(uni_bin, m.bins[uni_bin])            
                 
-                if (self.binMovingmean[j].trigger > self.no_trigger) & self.detect==0:
+                if (self.binMovingmean[j].trigger > self.no_trigger) and self.detected()==0:
+                    self.lock.acquire()
                     self.detect = 1
+                    self.lock.release()
                     #print "Looks like we have found something!!!"     
                     break
                 #else:

@@ -28,7 +28,7 @@ class PipeFinder(messaging.BufferedMessageObserver):
                 current_bearing = self.auv.getBearing()
                 if current_bearing: #watch out for none bearings
                     self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
-                if len(m.lines) == 2:
+                if len(m.lines) == 2 and degrees(abs(m.lines[0].angle-m.lines[1].angle))< 15:
                     width = abs(sin(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)-cos(angle)*(m.lines[0].centre.y-m.lines[1].centre.y)) #modulus of the cross product of the delta posistion of centres of 2 lines, and a unit vector of a line
                     if abs(width-self.target)>self.error:
                         dive=(self.depth_p)*(width-self.target)

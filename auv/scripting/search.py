@@ -65,28 +65,34 @@ def Search():
             print 'Performing %dth half circle' % i
 
             for j in range(2):                              #perform 2 turns for each half revolutions
-                auv.prop(power)
+                progress = 0                                #counter of progress in seconds
+                startTime = time.time()                
                 print 'Moving forward and searching for %d seconds' %(3*i)
-                startTime = time.time()
-                while (time.time()-startTime) < unit*i:     #The time for which the AUV goes forward depends on the radius of the revolution
-                    if yellowFinder.detect == None:                #There might be a threading problem here
-                        yellowFinderCV.acquire()
-                        flag = yellowFinder.detect
-                        yellowFinderCV.release()
-                    flag = yellowFinder.detect
+                while progress < (unit*i):     #The time for which the AUV goes forward depends on the radius of the revolution
+                    auv.prop(power)                
+                    progress = time.time() - startTime    #Updating progress
                     
-                    #print 'Detect flag is:',flag
-                    if flag==1:                   
+                    if yellowFinder.detected()==1:                   
+                        #Quick stop
                         auv.prop(-127)
-                        print 'found something, qick stop'
+                        print 'found something, quick stop'
                         time.sleep(2)
                         auv.prop(0)
+                        
+                        #Pipe confirmation
+                        
+                        #if pipe is not found, continue the search, and note the new startTime
+                        startTime = time.time()
+                        
+                        #if 
+                        #enable follower when pipe is confirmed
                         follower.enable=1
                         time.sleep(20)
                         print 'surface...'    
                         #auv.depthAndWait(0)   
                         auv.depth(0)   
                         return 0                            #Insert object confirmation and reaction sequence here later
+
 
 
                 time.sleep(unit*i)        
