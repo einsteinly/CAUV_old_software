@@ -1,6 +1,10 @@
 #include "cauvgui.h"
 
 #include <math.h>
+#include <model/auv_controller.h>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
@@ -15,6 +19,10 @@ void CauvGui::closeEvent(QCloseEvent*){
 void CauvGui::onRun()
 {
     CauvNode::onRun();
+
+    boost::shared_ptr<AUV> auv = boost::make_shared<AUV>();
+    boost::shared_ptr<AUVController> auvController = boost::make_shared<AUVController>(auv);
+    addMessageObserver(auvController);
 
     /*Plot* plot = new Plot();
 

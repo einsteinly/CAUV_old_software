@@ -36,11 +36,6 @@ GamepadInput::GamepadInput(const unsigned int id)
    }
 
     m_controller = joys[id];
-
-    // start a timer to read the controller
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(processEvents()));
-    timer->start(200);
 }
 
 InputManager * GamepadInput::getInputSystem(){
@@ -129,13 +124,13 @@ bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index)
 void GamepadInput::processEvents(){
     m_controller->capture();
     if( !m_controller->buffered() )
-            handleNonBuffered();
+        handleNonBuffered();
 }
 
 void GamepadInput::handleNonBuffered(){
     const JoyStickState &joy = m_controller->getJoyStickState();
     for( unsigned int i = 0; i < joy.mAxes.size(); ++i ) {
-            std::cout << "\nAxis " << i << " X: " << joy.mAxes[i].abs;
+        std::cout << "\nAxis " << i << " X: " << joy.mAxes[i].abs;
     }
 }
 
