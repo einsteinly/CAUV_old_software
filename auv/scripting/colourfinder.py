@@ -4,11 +4,12 @@ import cauv
 import cauv.control as control
 import cauv.node
 
+from movingaverage import MovingAverage
+
 import time
 
 class ColourFinder(messaging.BufferedMessageObserver):
-    
-   
+
     def __init__(self, node, bin, channel = 'Hue', tolerance=0.1, maxcount=500):
 
         messaging.BufferedMessageObserver.__init__(self)
@@ -47,6 +48,6 @@ class ColourFinder(messaging.BufferedMessageObserver):
 if __name__ == '__main__':
     node = cauv.node.Node('ColFind')
     auv = control.AUV(node)
-    detect = ColourFinder(node, 14)
+    detect = ColourFinder(node, 14, 'Value')
     while True:
         time.sleep(5)

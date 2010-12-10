@@ -19,6 +19,9 @@ class FileInputNode: public AsynchronousNode{
         FileInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : AsynchronousNode(sched, pl, t), m_dir_mutex(),
               m_is_directory(false), m_iter(){
+        }
+
+        void init(){
             // no inputs
             // registerInputID()
             

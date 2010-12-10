@@ -12,12 +12,16 @@
 #include <generated/messages.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
-class HistogramNode: public Node{
+class HistogramNode: public OutputNode{
     public:
         HistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
-            //Fast node
+            : OutputNode(sched, pl, t){
+        }
+
+        void init(){
+            // fast node:
             m_speed = fast;
             
             //One input
@@ -33,11 +37,6 @@ class HistogramNode: public Node{
     
         virtual ~HistogramNode(){
             stop();
-        }
-        
-        //This node should be run even if nothing is connected to its output
-        virtual bool isOutputNode(){
-            return true;
         }
 
     protected:

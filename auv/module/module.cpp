@@ -1,6 +1,5 @@
 #include "module.h"
 
-#include <ftdi.h>
 #include <iostream>
 #include <iomanip>
 #include <string.h>
@@ -11,6 +10,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -25,10 +25,11 @@
 
 
 FTDIException::FTDIException(const std::string& msg) : m_errCode(-1), m_message(msg) {}
-FTDIException::FTDIException(const std::string& msg, int errCode, ftdi_context* ftdic) : m_errCode(errCode)
+FTDIException::FTDIException(const std::string& msg, int errCode, PICK_FTDI(Ftdi::Context,ftdi_context)* ftdic) : m_errCode(errCode)
 {
-    m_message = MakeString() << msg << ": " << errCode << " (" << ftdi_get_error_string(ftdic) << ")";
+    m_message = MakeString() << msg << ": " << errCode << " (" << PICK_FTDI(ftdic->error_string(),ftdi_get_error_string(ftdic))<< ")";
 }
+
 FTDIException::~FTDIException() throw() {}
 const char* FTDIException::what() const throw()
 {
@@ -39,7 +40,7 @@ int FTDIException::errCode() const
 	return m_errCode;
 }
 
-
+#ifdef CAUV_MCB_IS_FTDI
 FTDIContext::FTDIContext() : m_usb_open(false)
 {
     ftdi_init(&ftdic);
@@ -53,63 +54,69 @@ FTDIContext::~FTDIContext()
     }
     ftdi_deinit(&ftdic);
 }
+#endif
 
-std::vector<usb_device_ptr> FTDIContext::usbFindAll()
+void FTDIContext::open(int vendor, int product)
 {
-    struct ftdi_device_list* devices;
-    int ret;
-    if ((ret = ftdi_usb_find_all(&ftdic, &devices, 0x0403, 0x6001)) < 0)
-    {
-        throw FTDIException("ftdi_usb_find_all failed", ret, &ftdic);
-    }
-    std::vector<usb_device_ptr> v;
-    
-    struct ftdi_device_list* pdevices = devices;
-    while (ret--)
-    {
-        if (pdevices == 0)
-        {
-            throw FTDIException("Error loading devices");
-        }
-        v.push_back(usb_device_ptr(pdevices->dev));
-        pdevices = pdevices->next;
-    }
-    ftdi_list_free(&devices);
-
-    return v;
-}
-
-void FTDIContext::openDevice(usb_device_ptr dev)
-{
-    int ret;
-    if ((ret = ftdi_usb_open_dev(&ftdic, dev.get())) < 0)
+    int ret = PICK_FTDI(ftdic.open(vendor, product), ftdi_usb_open(&ftdic, vendor, product));
+    if (ret < 0)
     {
         throw FTDIException("Unable to open ftdi device", ret, &ftdic);
     }
+#ifdef CAUV_MCB_IS_FTDI
     m_usb_open = true;
+#endif
+    debug() << "USB opened...";
+}
+void FTDIContext::open(int vendor, int product, int index)
+{
+    open(vendor, product, std::string(), std::string(), index);
+}
+void FTDIContext::open(int vendor, int product, const std::string& description, const std::string& serial, int index)
+{
+#ifdef CAUV_USE_FTDIPP
+    int ret = ftdic.open(vendor, product, description, serial, index);
+#else
+    const char* c_description = NULL;
+    const char* c_serial = NULL;
+    if (!description.empty())
+        c_description = description.c_str();
+    if (!serial.empty())
+        c_serial = serial.c_str();
+
+    int ret = ftdi_usb_open_desc_index(&ftdic, vendor, product, c_description, c_serial, index);
+#endif
+    
+    if (ret < 0)
+    {
+        throw FTDIException("Unable to open ftdi device", ret, &ftdic);
+    }
+#ifdef CAUV_MCB_IS_FTDI
+    m_usb_open = true;
+#endif
     debug() << "USB opened...";
 }
 
 void FTDIContext::setBaudRate(int baudrate)
 {
-    int ret;
-    if ((ret = ftdi_set_baudrate(&ftdic, baudrate)) < 0)
+    int ret = PICK_FTDI(ftdic.set_baud_rate(baudrate),ftdi_set_baudrate(&ftdic, baudrate));
+    if (ret < 0)
     {
         throw FTDIException("Unable to set baudrate", ret, &ftdic);
     }
 }
 void FTDIContext::setLineProperty(ftdi_bits_type bits, ftdi_stopbits_type stopBits, ftdi_parity_type parity)
 {
-    int ret;
-    if ((ret = ftdi_set_line_property(&ftdic, bits, stopBits, parity)) < 0)
+    int ret = PICK_FTDI(ftdic.set_line_property(bits, stopBits, parity),ftdi_set_line_property(&ftdic, bits, stopBits, parity));
+    if (ret < 0)
     {
         throw FTDIException("Unable to set line property", ret, &ftdic);
     }
 }
 void FTDIContext::setFlowControl(int flowControl)
 {
-    int ret;
-    if ((ret = ftdi_setflowctrl(&ftdic, flowControl)) < 0)
+    int ret = PICK_FTDI(ftdic.set_flow_control(flowControl),ftdi_setflowctrl(&ftdic, flowControl));
+    if (ret < 0)
     {
         throw FTDIException("Unable to set flow control", ret, &ftdic);
     }
@@ -117,7 +124,7 @@ void FTDIContext::setFlowControl(int flowControl)
 
 std::streamsize FTDIContext::read(unsigned char* s, std::streamsize n)
 {
-    int ret = ftdi_read_data(&ftdic, s, n);
+    int ret = PICK_FTDI(ftdic.read(s, n),ftdi_read_data(&ftdic, s, n));
     if (ret < 0)
     {
         throw FTDIException("Unable to read from ftdi device", ret, &ftdic);
@@ -127,7 +134,7 @@ std::streamsize FTDIContext::read(unsigned char* s, std::streamsize n)
 
 std::streamsize FTDIContext::write(const unsigned char* s, std::streamsize n)
 {
-    int ret = ftdi_write_data(&ftdic, const_cast<unsigned char*>(s), n);
+    int ret = PICK_FTDI(ftdic.write(const_cast<unsigned char*>(s), n),ftdi_write_data(&ftdic, const_cast<unsigned char*>(s), n));
     if (ret < 0)
     {
         throw FTDIException("Unable to write to ftdi device", ret, &ftdic);
@@ -137,30 +144,18 @@ std::streamsize FTDIContext::write(const unsigned char* s, std::streamsize n)
 
 
 
-FTDIDevice::FTDIDevice(int baudrate,
+FTDIDevice::FTDIDevice(int vendor, int product, int index,
+                       int baudrate,
                        ftdi_bits_type const& bits,
                        ftdi_stopbits_type const& stopBits,
                        ftdi_parity_type const& parity,
-                       int flowControl,
-                       int deviceID)
+                       int flowControl)
     : boost::iostreams::device<boost::iostreams::bidirectional>(),
       baudrate(baudrate), bits(bits), stopBits(stopBits), parity(parity), flowControl(flowControl)
 {
     m_ftdic = boost::make_shared<FTDIContext>();
 
-    std::vector<usb_device_ptr> devices = m_ftdic->usbFindAll();
-
-    info() << "Number of devices found: " << devices.size();
-
-    if (devices.size() == 0)
-        throw FTDIException("Could not open device (No devices found)");
-    else if (devices.size() <= static_cast<size_t>(deviceID))
-        throw FTDIException("Could not open device (No matching device found)");
-
-    m_device = devices[deviceID];
-    info() << "Module's device (id:" << deviceID << ") found...";
-
-    m_ftdic->openDevice(m_device);
+    m_ftdic->open(vendor, product, index);
     m_ftdic->setBaudRate(baudrate);
     m_ftdic->setLineProperty(bits, stopBits, parity);
     m_ftdic->setFlowControl(flowControl);
@@ -200,16 +195,13 @@ std::streamsize FTDIDevice::write(const char* s, std::streamsize n)
 }
 
 
-Module::Module(int baudrate,
-               ftdi_bits_type const& bits,
-               ftdi_stopbits_type const& stopBits,
-               ftdi_parity_type const& parity,
-               int flowControl,
-               int deviceID)
-    : MessageSource(),
-      m_ftdiStreamBuffer(FTDIDevice(baudrate, bits, stopBits, parity, flowControl, deviceID)),
-      m_sendThread(),
-      m_sendQueue(),
+FTDIModule::FTDIModule(int vendor, int product, int index,
+                       int baudrate,
+                       ftdi_bits_type const& bits,
+                       ftdi_stopbits_type const& stopBits,
+                       ftdi_parity_type const& parity,
+                       int flowControl)
+    : Module<FTDIDevice>(FTDIDevice(vendor, product, index, baudrate, bits, stopBits, parity, flowControl)),
       baudrate(baudrate),
       bits(bits),
       stopBits(stopBits),
@@ -218,152 +210,8 @@ Module::Module(int baudrate,
 {
 }
 
-void Module::start()
+
+FileModule::FileModule(const std::string& filename)
+    : Module<boost::iostreams::file>(boost::iostreams::file(filename, std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::binary))
 {
-    if (m_ftdiStreamBuffer.is_open())
-    {
-        m_readThread = boost::thread(&Module::readLoop, this);
-        m_sendThread = boost::thread(&Module::sendLoop, this);
-    }
-    else
-    {
-        error() << "FTDI Stream could not be opened";
-    }
 }
-
-Module::~Module()
-{
-    if (m_readThread.get_id() != boost::thread::id()) {
-        m_readThread.interrupt();
-        m_readThread.join();
-    }
-    if (m_sendThread.get_id() != boost::thread::id()) {
-        m_sendThread.interrupt();
-        m_sendThread.join();
-    }
-}
-
-
-void Module::send(boost::shared_ptr<const Message> message)
-{
-    m_sendQueue.push(message);
-}
-
-void Module::sendLoop()
-{
-    debug() << "Started module send thread";
-    try {
-        while (true) {
-            boost::archive::binary_oarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
-            
-            boost::shared_ptr<const Message> message = m_sendQueue.popWait();
-            debug(3) << "Module sending popped a message off the send queue (" << m_sendQueue.size() << "remain)" << *message;
-            boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
-
-            uint32_t startWord = 0xdeadc01d;
-            uint32_t len = bytes->size();
-
-            uint32_t buf[2];
-            buf[0] = startWord;
-            buf[1] = len;
-            uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
-            std::vector<uint16_t> vheader(buf16, buf16+4);
-            uint16_t checksum = sumOnesComplement(vheader);
-            
-            ar << startWord;
-            ar << len;
-            ar << checksum;
-            foreach (char c, *bytes)
-                ar << c;
-        }
-    }
-    catch (boost::thread_interrupted&)
-    {
-        debug() << "Module send thread interrupted";
-    }
-
-    debug() << "Ending module send thread";
-}
-
-void Module::readLoop()
-{
-    debug() << "Started module read thread";
-   
-    try {
-
-        byte_vec_t curMsg;
-        boost::archive::binary_iarchive ar(m_ftdiStreamBuffer, boost::archive::no_header);
-
-        while (true)
-        {
-            boost::this_thread::interruption_point();
-            uint32_t startWord;
-            ar >> startWord;
-
-            if (startWord != 0xdeadc01d)
-            {
-                // Start word doesn't match, drop it
-                warning() << (std::string)(MakeString() << "Start word doesn't match (0x" << std::hex << startWord << " instead of 0xdeadc01d) -- starting to search for it"); 
-                while (startWord != 0xdeadc01d)
-                {
-                    char nextByte;
-                    ar >> nextByte;
-                    startWord = (nextByte << 24) | ((startWord >> 8) & 0xffffff);
-                }
-            }
-
-            uint32_t len;
-            uint16_t checksum;
-            ar >> len;
-            ar >> checksum;
-
-            uint32_t buf[2];
-            buf[0] = startWord;
-            buf[1] = len;
-
-            uint16_t* buf16 = reinterpret_cast<uint16_t*>(buf); 
-            std::vector<uint16_t> vheader(buf16, buf16+4);
-
-            if (sumOnesComplement(vheader) != checksum)
-            {
-                // Checksum doesn't match, drop it
-                warning() << (std::string)(MakeString() << "Checksum is incorrect (0x" << std::hex << checksum << " instead of 0x" << std::hex << sumOnesComplement(vheader) << ")"); 
-                continue;
-            }
-
-            curMsg.clear();
-            char c;
-            for (uint32_t i = 0; i < len; ++i)
-            {
-                ar >> c;
-                curMsg.push_back(c);
-            }
-
-#ifdef DEBUG_MCB_COMMS
-            std::stringstream ss;
-            ss << "Message from module  [ len: " << len << " | checksum: " << checksum << " ]" << std::endl;
-            foreach(char c, curMsg)
-            {
-                ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)c << " ";
-            }
-            debug() << ss.str();
-#endif
-
-            boost::shared_ptr<byte_vec_t> msg = boost::make_shared<byte_vec_t>(curMsg);
-            try {
-                this->notifyObservers(msg);
-            } catch (UnknownMessageIdException& e) {
-                error() << "Error when receiving message: " << e.what();
-            }
-        }
-   
-    }
-    catch (boost::thread_interrupted&)
-    {
-        debug() << "Module read thread interrupted";
-    }
-
-    debug() << "Ending module read thread";
-}
-
-

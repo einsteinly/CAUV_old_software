@@ -18,7 +18,7 @@ SonarControlMessageObserver::SonarControlMessageObserver(boost::shared_ptr<Seane
     m_sonar = sonar;
 }
 
-void SonarControlMessageObserver::onSonarControlMessage(boost::shared_ptr<SonarControlMessage> m)
+void SonarControlMessageObserver::onSonarControlMessage(SonarControlMessage_ptr m)
 {
     m_sonar->set_params(m->direction(), m->width(), m->gain(), m->range(), m->radialRes(), m->angularRes());
 }
@@ -150,6 +150,7 @@ void SeanetSonar::set_params (uint16_t direction,
                               uint32_t range_res,
                               unsigned char angular_res)
 {
+    debug() << "Setting params";
     m_current_params.direction = direction;
     m_current_params.width = width;
     m_current_params.gain = gain;

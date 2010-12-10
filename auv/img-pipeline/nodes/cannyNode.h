@@ -15,6 +15,9 @@ class CannyNode: public Node{
     public:
         CannyNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // slow node:
             m_speed = slow;
             

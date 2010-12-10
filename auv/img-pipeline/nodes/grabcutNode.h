@@ -18,18 +18,21 @@ class GrabCutNode: public Node{
     public:
         GrabCutNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : Node(sched, pl, t){
+        }
+
+        void init(){
             // slow node:
             m_speed = slow;
             
             // two input:
             registerInputID("image");
-	    registerInputID("mask");
-            
+            registerInputID("mask");
+        
             // one output
-            registerOutputID<image_ptr_t>("image_out (not copied)");
+            registerOutputID<image_ptr_t>("mask (not copied)");
             
             // parameters:
-	    //	iterations: the number of iterations
+	        //	iterations: the number of iterations
             registerParamID<int>("iterations", 8);
             registerParamID<int>("x", 0);
             registerParamID<int>("y", 0);
@@ -41,9 +44,6 @@ class GrabCutNode: public Node{
         virtual ~GrabCutNode(){
             stop();
         }
-        
-        // this node should be run even if nothing is connected to its output
-        virtual bool isOutputNode() throw() { return true; } 
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){
@@ -70,10 +70,10 @@ class GrabCutNode: public Node{
             }
 
             try{
-	    //perform grabcut iterations
+	                //perform grabcut iterations
                     cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
 		    		fgdModel, iterations, mode);
-                    r["image_out (not copied)"] = mask;
+                    r["mask (not copied)"] = mask;
                     
             }catch(cv::Exception& e){
                 error() << "GrabCutNode:\n\t"

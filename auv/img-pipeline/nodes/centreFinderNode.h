@@ -12,11 +12,15 @@
 #include <generated/messages.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
-class CentreFinderNode : public Node{
+class CentreFinderNode : public OutputNode{
     public:
         CentreFinderNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+            : OutputNode(sched, pl, t){
+        }
+
+        void init(){
             //Fast node
             m_speed = fast;
             
@@ -32,11 +36,6 @@ class CentreFinderNode : public Node{
     
         virtual ~CentreFinderNode(){
             stop();
-        }
-        
-        //This node should be run even if nothing is connected to its output
-        virtual bool isOutputNode(){
-            return true;
         }
 
     protected:
@@ -59,17 +58,26 @@ class CentreFinderNode : public Node{
             int totalY = 0;
             int sum = 0;
 
-            for(int i = 0; i < img->cvMat().cols; i++) {
-                for(int j = 0; j < img->cvMat().rows; j++) {
-                   if(img->cvMat().at<uint8_t>(i, j) > 127) {
-                       totalX += i;
-                       totalY += j;
-                       sum++;
-                   }
+            for(int i = 0; i < img->cvMat().cols; i++){
+                for(int j = 0; j < img->cvMat().rows; j++){
+                    if(img->cvMat().at<uint8_t>(i, j) > 127){
+                        totalX += i;
+                        totalY += j;
+                        sum++;
+                    }
                 }
             }
 
-            sendMessage(boost::make_shared<CentreMessage>(name, totalX / sum, totalY / sum));
+            float x = 0;
+            float y = 0;
+            if(sum == 0){
+                x = 0;
+                y = 0;
+            } else {
+                x = ((float) totalX) / ((float) sum);
+                y = ((float) totalY) / ((float) sum);
+            }
+            sendMessage(boost::make_shared<CentreMessage>(name, x / img->cvMat().cols, y / img->cvMat().rows));
             return r;
         }
 

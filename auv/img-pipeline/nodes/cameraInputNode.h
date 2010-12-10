@@ -17,7 +17,11 @@ class CameraInputNode: public AsynchronousNode{
 
     public:
         CameraInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_capture(), m_current_device(-1){
+            : AsynchronousNode(sched, pl, t), m_capture(),
+              m_current_device(-1){
+        }
+
+        void init(){
             // no inputs
             // registerInputID()
             
@@ -83,7 +87,7 @@ class CameraInputNode: public AsynchronousNode{
                     }catch(cv::Exception& e){
                         error() << "capture exception:" << e.what();
                     }
-                    
+                   
                     if(!m_capture.isOpened()){
                         error() << "could not open camera" << dev_id;
                         return;

@@ -12,19 +12,24 @@
 #include <generated/messages.h>
 
 #include "../node.h"
+#include "outputNode.h"
 
-class HistogramSegmentationNode: public Node{
+
+class HistogramSegmentationNode: public OutputNode{
     public:
         HistogramSegmentationNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
-            //Fast node
+            : OutputNode(sched, pl, t){
+        }
+
+        void init(){
+            // fast node:
             m_speed = fast;
             
             //One input
             registerInputID("image_in");
             
             //One output
-            registerOutputID<image_ptr_t>("Segments");
+            registerOutputID<image_ptr_t>("Pixels");
             
             //Parameters
             registerParamID<int>("Number of bins", 42);
@@ -34,11 +39,6 @@ class HistogramSegmentationNode: public Node{
     
         virtual ~HistogramSegmentationNode(){
             stop();
-        }
-        
-        //This node should be run even if nothing is connected to its output
-        virtual bool isOutputNode(){
-            return false;
         }
 
     protected:
@@ -61,17 +61,17 @@ class HistogramSegmentationNode: public Node{
             float binWidth = 256 / bins;
             float binMin = bin * binWidth;
             float binMax = (bin + 1) * binWidth;
-            cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC3);
+            cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC1);
 
             for(int i = 0; i < img->cvMat().rows; i++) {
                 for(int j = 0; j < img->cvMat().cols; j++) {
-                   if(img->cvMat().at<uint8_t>(i, j) > binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
+                   if(img->cvMat().at<uint8_t>(i, j) >= binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
                        out.at<uint8_t>(i, j) = 255;
                    }
                 }
             }
 
-            r["Segments"] = boost::make_shared<Image>(out);
+            r["Pixels"] = boost::make_shared<Image>(out);
             return r;
         }
 

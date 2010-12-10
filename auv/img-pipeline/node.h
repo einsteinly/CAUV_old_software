@@ -69,6 +69,13 @@ class Node: public boost::enable_shared_from_this<Node>{
     public:
         // TODO: shouldn't be necessary to pass `type' here!
         Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
+
+        /* non-trivial construction MUST be done in init(): non-trivial means
+         * anything that relies on calling any method of this base class
+         */
+        virtual void init() = 0;
+
+
         virtual ~Node();
 
         /* Destructors of derived types that have any member variables should
@@ -174,7 +181,7 @@ class Node: public boost::enable_shared_from_this<Node>{
          * parameter is linked to the output of a parent
          */
         template<typename T>
-        T param(param_id const& p) const throw(id_error){
+        T param(param_id const& p) const {
             unique_lock_t l(m_parameters_lock);
             const param_value_map_t::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
@@ -271,7 +278,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         /* Check to see if all inputs are new and output is demanded; if so, 
          * add this node to the scheduler queue
          */
-        void checkAddSched() throw();
+        void checkAddSched();
 
         void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS);
         
