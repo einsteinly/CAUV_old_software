@@ -17,13 +17,13 @@ def stringParam(str):
 def fromNPV(npv):
     if npv.type == messaging.ParamType.String:
         return npv.stringValue
-    elif npv.type == messaging.ParamType.Int32:
-        return npv.intValue
     elif npv.type == messaging.ParamType.Bool:
         if npv.intValue != 0:
             return True
         else:
             return False
+    elif npv.type == messaging.ParamType.Int32:
+        return npv.intValue
     elif npv.type == messaging.ParamType.Float:
         return npv.floatValue
 
