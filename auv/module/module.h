@@ -42,6 +42,11 @@ class FTDIException : public std::exception
 class FTDIContext : boost::noncopyable
 {
     public:
+#ifdef CAUV_MCB_IS_FTDI
+        FTDIContext();
+        ~FTDIContext();
+#endif
+
         void open(int vendor, int product);
         void open(int vendor, int product, int index);
         void open(int vendor, int product, const std::string& description, const std::string& serial = std::string(), int index = 0);
@@ -54,6 +59,9 @@ class FTDIContext : boost::noncopyable
 
     protected:
         PICK_FTDI(Ftdi::Context, ftdi_context) ftdic;
+#ifdef CAUV_MCB_IS_FTDI
+        bool m_usb_open;
+#endif
 };
 
 

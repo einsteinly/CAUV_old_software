@@ -40,7 +40,21 @@ int FTDIException::errCode() const
 	return m_errCode;
 }
 
-
+#ifdef CAUV_MCB_IS_FTDI
+FTDIContext::FTDIContext() : m_usb_open(false)
+{
+    ftdi_init(&ftdic);
+}
+FTDIContext::~FTDIContext()
+{
+    if (m_usb_open)
+    {
+        debug() << "Closing context USB...";
+        ftdi_usb_close(&ftdic);
+    }
+    ftdi_deinit(&ftdic);
+}
+#endif
 
 void FTDIContext::open(int vendor, int product)
 {
@@ -49,6 +63,9 @@ void FTDIContext::open(int vendor, int product)
     {
         throw FTDIException("Unable to open ftdi device", ret, &ftdic);
     }
+#ifdef CAUV_MCB_IS_FTDI
+    m_usb_open = true;
+#endif
     debug() << "USB opened...";
 }
 void FTDIContext::open(int vendor, int product, int index)
@@ -74,6 +91,9 @@ void FTDIContext::open(int vendor, int product, const std::string& description, 
     {
         throw FTDIException("Unable to open ftdi device", ret, &ftdic);
     }
+#ifdef CAUV_MCB_IS_FTDI
+    m_usb_open = true;
+#endif
     debug() << "USB opened...";
 }
 
