@@ -5,15 +5,18 @@ import cauv
 import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
-from colourfinder2 import ColourFinder as ColFinder
+from colourfinder2 import ColourFinder
+from pipe_follow import PipeFinder
 
 import time
 import traceback
+import threading
 
 def Search():
     node = cauv.node.Node('py-search')              #Create a node of the spread messaging service
     auv = control.AUV(node)                         #Create a python object for the control of the AUV
-    detect = ColFinder(node, 11)                 #Turn on the colour detection script
+    detect = ColourFinder(node, [11, 12])                 #Turn on the colour detection script
+    detectCV = threading.Condition()
             
     print 'setting calibration...'                  #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
     # set-up calibration factors
@@ -46,11 +49,11 @@ def Search():
 
     try:
         print 'setting bearing %d...' %bearing
-        auv.bearingAndWait(bearing)                         #Starting search at north direction
-
+        #auv.bearingAndWait(bearing)                         #Starting search at north direction
+        auv.bearing(bearing)
         print 'diving...'
-        auv.depthAndWait(depth)                                 #make sure it is at depth 2m
-
+        #auv.depthAndWait(depth)                                 #make sure it is at depth 2m
+        auv.depth(depth)
         print 'spiral...'
 
         for i in range(1, 2*square):                        #making individual half squares
@@ -61,16 +64,23 @@ def Search():
                 print 'Moving forward and searching for %d seconds' %(3*i)
                 startTime = time.time()
                 while (time.time()-startTime) < unit*i:     #The time for which the AUV goes forward depends on the radius of the square
-                    if detect.detect==1:                    #There might be a threading problem here
+                    #if detect.detect == None:                #There might be a threading problem here
+                    #    detectCV.acquire()
+                    #    detectCV.wait(0.01)
+                    #    detectCV.release()
+                    flag = detect.detect
+                    #print 'Detect flag is:',flag
+                    if flag==1:                   
                         auv.prop(-127)
-                        print 'found something, emergency stopping'
+                        print 'found something, qick stop'
                         time.sleep(2)
                         auv.prop(0)
+                        pf = PipeFinder(node, auv, 'pipe', 0.4, 0.1)
                         print 'surface...'    
-                        auv.depthAndWait(0)                        
+                        #auv.depthAndWait(0)   
+                        auv.depth(0)   
                         return 0                            #Insert object confirmation and reaction sequence here later
-                    else:    
-                        pass                                #Keep waiting
+
 
                 time.sleep(unit*i)        
                 auv.prop(0)                                 #shut off motor
@@ -80,11 +90,13 @@ def Search():
                 if bearing>=360:    
                     bearing-=360
                 print 'setting bearing %d' %bearing
-                auv.bearingAndWait(bearing)
-
+                #auv.bearingAndWait(bearing)
+                auv.bearing(bearing)
+                
         print 'surface...'    
-        auv.depthAndWait(0)
-
+        #auv.depthAndWait(0)
+        auv.depth(0)
+        
     except Exception:
         traceback.print_exc()
         auv.depth(0)
