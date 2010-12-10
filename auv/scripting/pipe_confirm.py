@@ -7,48 +7,71 @@ from math import degrees, cos, sin
 import time
 
 class PipeConfirmer(messaging.BufferedMessageObserver):
-    def __init__(self, node, auv, centre_name, target, error, strafe_p=30, depth_p=0.1):
+    def __init__(self, node, auv, centre_name, histogram_name, bin, strafe_p = 30):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         self.auv = auv
         node.join("processing")
         node.addObserver(self)
+        self.strafe_p = strafe_p
         self.centre_name = centre_name
-        self.strafe_p = strafe_p
-        self.depth_p = depth_p
-        self.target = target
-        self.error = error
-        self.strafe_p = strafe_p
-        self.enable = 0
-
-    def onHoughLinesMessage(self, m):
-        if self.enable == 1:
-            if len(m.lines):
-                angle = sum([x.angle for x in m.lines])/len(m.lines)
-                corrected_angle=degrees(angle)%180-90
-                current_bearing = self.auv.getBearing()
-                if current_bearing: #watch out for none bearings
-                    self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
-                if len(m.lines) == 2:
-                    width = abs(sin(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)-cos(angle)*(m.lines[0].centre.y-m.lines[1].centre.y)) #modulus of the cross product of the delta posistion of centres of 2 lines, and a unit vector of a line
-                    if abs(width-self.target)>self.error:
-                        dive=(self.depth_p)*(width-self.target)
-                        if self.auv.current_depth:
-                            self.auv.depth(self.auv.current_depth+dive)
-                    else:
-                        dive=0
-                    print 'Turn: %f, Change in depth: %f' %(corrected_angle, dive)
-                else:
-                    print 'Turn: %f, Not enough or too many lines for depth estimate.' %(corrected_angle)
+        self.histogram_name = histogram_name
+        self.binsStart = None
+        self.ms = 1
+        self.cv = threading.Condition()
+        self.failed = False
+        self.parallelsAppeared = False
+        self.noLines = 0
 
     def onCentreMessage(self, m):
-        if self.enable == 1:
-            if m.name == self.centre_name:
-                print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
-                self.auv.strafe(int((m.x-0.5)*self.strafe_p))
+        if m.name == self.centre_name:
+            print 'Set strafe (confirm): %i' % (int((m.x - 0.5) * self.strafe_p))
+            self.auv.strafe(int((m.x - 0.5) * self.strafe_p))
+
+    def onHistogramMessage(self, m):
+        if m.type == self.histogram_name:
+            if self.binsStart == None:
+                for j, indBin in enumerate(self.bin):
+                    self.binsStart[j] = m.bins[indBin]
+            if self.ms % 15 == 0:
+                for j, indBin in enumerate(self.bin):
+                   binsNow[j] = m.bins[indBin]
+                if sum([x for x in self.binsNow]) < sum([x for x in self.binsStart]) - 0.05:
+                    self.cv.acquire()
+                    self.cv.notify()
+                    self.failed = True
+                    self.cv.release()
+
+    def onHoughLinesMessage(self, m):
+        linesFound == False
+        for i, line1 in enumerate(m.lines):
+            for j, line2 in enumerate(m.lines):
+                if degrees(abs(line1.angle - line2.angle)) < 15:
+                    linesFound = True
+        if parallelsAppeared == False and linesFound == True:
+            parallelsAppeared = True
+        elif parallellsAppeared == True and linesFound == True:
+            self.noLines = 0
+        elif parallellsAppeared == True and linesFound == False:   
+            self.noLines += 1
+        if self.noLines == 15:
+            self.cv.acquire()
+            self.cv.notify()
+            self.failed = True
+            self.cv.release()            
+
+    def confirm(self):
+        self.cv.acquire()
+        self.cv.wait(12)
+        if self.failed == True:
+            self.cv.release()
+            return False
+        else:
+            self.cv.release()
+            return True
 
 def setup():
-    auv_node = cauv.node.Node('py-auv-pf')                #Create a node of the spread messaging service
+    auv_node = cauv.node.Node('py-auv-pc')                #Create a node of the spread messaging service
     auv = control.AUV(auv_node)                        #Create a python object for the control of the AUV
     
     print 'setting calibration...'                #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
@@ -67,11 +90,10 @@ def setup():
     auv.vsternMap(10, -10, 127, -127)
     auv.hsternMap(10, -10, 127, -127)
 
-
-    pf = PipeFinder(auv_node, auv, 'pipe', 0.4, 0.1)
+    pf = PipeConfirmer(auv_node, auv, 'pipe', 'Hue', [11, 12])
     return pf
     
 if __name__ == "__main__":
     setup()
-    while 1:
+    while True:
         time.sleep(5)
