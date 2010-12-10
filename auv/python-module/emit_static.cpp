@@ -226,6 +226,7 @@ void emitCauvNode(){
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))
+         .def("removeObserver", wrap(&CauvNode::removeMessageObserver))
          //.def("foo", wrap(&CauvNodeWrapper::foo))
          .add_property("mailbox", &CauvNodeWrapper::get_mailbox)
          //.add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
