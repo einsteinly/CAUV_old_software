@@ -19,30 +19,34 @@ class PipeFinder(messaging.BufferedMessageObserver):
         self.target = target
         self.error = error
         self.strafe_p = strafe_p
+        self.enable = 0
 
+        
     def onHoughLinesMessage(self, m):
-        if len(m.lines):
-            angle = sum([x.angle for x in m.lines])/len(m.lines)
-            corrected_angle=degrees(angle)%180-90
-            current_bearing = self.auv.getBearing()
-            if current_bearing: #watch out for none bearings
-                self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
-            if len(m.lines) == 2:
-                width = math.abs(sin(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)-cos(angle)*(m.lines[0].centre.y-m.lines[1].centre.y)) #modulus of the cross product of the delta posistion of centres of 2 lines, and a unit vector of a line
-                if math.abs(width-self.target)>self.error:
-                    dive=(self.depth_p)*(width-self.target)
-                    if self.auv.current_depth:
-                        self.auv.depth(self.auv.current_depth+dive)
+        if self.enable == 1:
+            if len(m.lines):
+                angle = sum([x.angle for x in m.lines])/len(m.lines)
+                corrected_angle=degrees(angle)%180-90
+                current_bearing = self.auv.getBearing()
+                if current_bearing: #watch out for none bearings
+                    self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
+                if len(m.lines) == 2:
+                    width = abs(sin(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)-cos(angle)*(m.lines[0].centre.y-m.lines[1].centre.y)) #modulus of the cross product of the delta posistion of centres of 2 lines, and a unit vector of a line
+                    if abs(width-self.target)>self.error:
+                        dive=(self.depth_p)*(width-self.target)
+                        if self.auv.current_depth:
+                            self.auv.depth(self.auv.current_depth+dive)
+                    else:
+                        dive=0
+                    print 'Turn: %f, Change in depth: %f' %(corrected_angle, dive)
                 else:
-                    dive=0
-                print 'Turn: %f, Change in depth: %f' %(corrected_angle, dive)
-            else:
-                print 'Turn: %f, Not enough or too many lines for depth estimate.' %(corrected_angle)
+                    print 'Turn: %f, Not enough or too many lines for depth estimate.' %(corrected_angle)
 
     def onCentreMessage(self, m):
-        if m.name == self.centre_name:
-            print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
-            self.auv.strafe(int((m.x-0.5)*self.strafe_p))
+        if self.enable == 1:
+            if m.name == self.centre_name:
+                print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
+                self.auv.strafe(int((m.x-0.5)*self.strafe_p))
 
 def setup():
     auv_node = cauv.node.Node('py-auv-pf')                #Create a node of the spread messaging service

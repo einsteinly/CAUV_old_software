@@ -42,23 +42,25 @@ class ColourFinder(messaging.BufferedMessageObserver):
                 self.binMovingmean[j].update(m.bins[uni_bin])
                 #print 'bin %d: %f' %(uni_bin, m.bins[uni_bin])            
                 
-                if self.binMovingmean[j].trigger > self.no_trigger:
+                if (self.binMovingmean[j].trigger > self.no_trigger) & self.detect==0:
                     self.detect = 1
+                    #print "Looks like we have found something!!!"     
                     break
-                else:
-                    self.detect = 0
+                #else:
+                    #self.detect = 0
                   
                 #print 'Count :', self.binMovingmean[j].count
                 #print 'Moving average of bin %d is: %f' %(uni_bin, self.binMovingmean[j].movingMean)
                 #print 'Standard error of bin %d is: %f' %(uni_bin, self.binMovingmean[j].movingError)
+                
 
-        #if self.detect==1:
-            #print "Looks like we have found something!!!"            
+      
 
 
 if __name__ == '__main__':
     node = cauv.node.Node('ColFind')
     auv = control.AUV(node)
-    detect = ColourFinder(node, [11, 12])
+    yellowFinder = ColourFinder(node, [11, 12])
     while True:
         time.sleep(5)
+

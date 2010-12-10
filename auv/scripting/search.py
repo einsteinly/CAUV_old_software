@@ -11,13 +11,17 @@ from pipe_follow import PipeFinder
 import time
 import traceback
 import threading
+import math
 
 def Search():
+
     node = cauv.node.Node('py-search')              #Create a node of the spread messaging service
     auv = control.AUV(node)                         #Create a python object for the control of the AUV
-    detect = ColourFinder(node, [11, 12])                 #Turn on the colour detection script
-    detectCV = threading.Condition()
-            
+    yellowFinder = ColourFinder(node, [11, 12])     #Turn on the colour detection script
+    yellowFinderCV = threading.Lock()               #Locking thing???
+    follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
+    
+    
     print 'setting calibration...'                  #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
     # set-up calibration factors
     node.send(msg.DepthCalibrationMessage(
@@ -41,11 +45,12 @@ def Search():
     #    time.sleep(5)
     #    bearing = 90
 
-    square = 2
-    bearing = 0
-    power = 64
-    unit = 3
-    depth = 0.5 
+    #Searc parameters
+    revolution = 2                                  #Number of revolutions of the spiral square search from center
+    bearing = 0                                     #Initial bearing of the search
+    power = 64                                      #The motor power during search
+    unit = 3                                        #The time length of the smallest half revolution, the time length of subsequence half revolution will be mulituple of this one
+    depth = 0.5                                     #The depth of the search
 
     try:
         print 'setting bearing %d...' %bearing
@@ -56,26 +61,28 @@ def Search():
         auv.depth(depth)
         print 'spiral...'
 
-        for i in range(1, 2*square):                        #making individual half squares
+        for i in range(1, 2*revolution):                        #making individual half revolutions
             print 'Performing %dth half circle' % i
 
-            for j in range(2):                              #perform 2 turns for each half squares
+            for j in range(2):                              #perform 2 turns for each half revolutions
                 auv.prop(power)
                 print 'Moving forward and searching for %d seconds' %(3*i)
                 startTime = time.time()
-                while (time.time()-startTime) < unit*i:     #The time for which the AUV goes forward depends on the radius of the square
-                    #if detect.detect == None:                #There might be a threading problem here
-                    #    detectCV.acquire()
-                    #    detectCV.wait(0.01)
-                    #    detectCV.release()
-                    flag = detect.detect
+                while (time.time()-startTime) < unit*i:     #The time for which the AUV goes forward depends on the radius of the revolution
+                    if yellowFinder.detect == None:                #There might be a threading problem here
+                        yellowFinderCV.acquire()
+                        flag = yellowFinder.detect
+                        yellowFinderCV.release()
+                    flag = yellowFinder.detect
+                    
                     #print 'Detect flag is:',flag
                     if flag==1:                   
                         auv.prop(-127)
                         print 'found something, qick stop'
                         time.sleep(2)
                         auv.prop(0)
-                        pf = PipeFinder(node, auv, 'pipe', 0.4, 0.1)
+                        follower.enable=1
+                        time.sleep(20)
                         print 'surface...'    
                         #auv.depthAndWait(0)   
                         auv.depth(0)   
@@ -105,5 +112,11 @@ def Search():
 
     return 0
 
+
+
+
+
+
 if __name__ == '__main__':
+
     Search()
