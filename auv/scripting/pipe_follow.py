@@ -4,6 +4,7 @@ import cauv.control as control
 import cauv.node
 import threading
 from math import degrees, cos, sin
+import time
 
 class PipeFinder(messaging.BufferedMessageObserver):
     def __init__(self, node, auv, centre_name, target, error, strafe_p=30, depth_p=0.1):
@@ -17,6 +18,7 @@ class PipeFinder(messaging.BufferedMessageObserver):
         self.depth_p = depth_p
         self.target = target
         self.error = error
+        self.strafe_p = strafe_p
 
     def onHoughLinesMessage(self, m):
         if len(m.lines):
@@ -26,22 +28,21 @@ class PipeFinder(messaging.BufferedMessageObserver):
             if current_bearing: #watch out for none bearings
                 self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
             if len(m.lines) == 2:
-                #
-                width = abs(sin(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)-cos(angle)*(m.lines[0].centre.y-m.lines[1].centre.y))
-                if abs(width-self.target)>self.error:
-                    dive=2*(width-self.target)
+                width = math.abs(sin(angle)*(m.lines[0].centre.x-m.lines[1].centre.x)-cos(angle)*(m.lines[0].centre.y-m.lines[1].centre.y)) #modulus of the cross product of the delta posistion of centres of 2 lines, and a unit vector of a line
+                if math.abs(width-self.target)>self.error:
+                    dive=(self.depth_p)*(width-self.target)
                     if self.auv.current_depth:
-                        self.auv.depth(self.auv.current_depth+(self.depth_p)*abs(width-self.target))
+                        self.auv.depth(self.auv.current_depth+dive)
                 else:
                     dive=0
                 print 'Turn: %f, Change in depth: %f' %(corrected_angle, dive)
             else:
-                print 'Turn: %f, Not enough lines for depth calculations.' %(corrected_angle)
+                print 'Turn: %f, Not enough or too many lines for depth estimate.' %(corrected_angle)
 
     def onCentreMessage(self, m):
         if m.name == self.centre_name:
-            print 'Set strafe: %i' %(int((m.x-0.5)*self.proportion))
-            self.auv.strafe(int((m.x-0.5)*self.proportion))
+            print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
+            self.auv.strafe(int((m.x-0.5)*self.strafe_p))
 
 def setup():
     auv_node = cauv.node.Node('py-auv-pf')                #Create a node of the spread messaging service
@@ -63,8 +64,11 @@ def setup():
     auv.vsternMap(10, -10, 127, -127)
     auv.hsternMap(10, -10, 127, -127)
 
-    node = cauv.node.Node('py-pf')
-    pf = PipeFinder(node, auv, '', 0.4, 0.1)
+
+    pf = PipeFinder(auv_node, auv, 'pipe', 0.4, 0.1)
     return pf
+    
 if __name__ == "__main__":
-    setup
+    setup()
+    while 1:
+        time.sleep(5)
