@@ -1,0 +1,16 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-08 21:18:59.926783
+description: "pscore changed to 1\nattached_files changed to \ndescription changed\
+  \ to Tasks for the mechanics guys\ncreated_by changed to James Crosby\ntitle changed\
+  \ to mechanics"
+entity: !!python/object:uuid.UUID
+  int: 27285391412953843479645851445225719889
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Tag 1486f9 mechanics>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 69312247774582400896456380146463629565
+who_did_it: *id002
+yaml_file_saved: 2010-12-08 21:18:59.926867

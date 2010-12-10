@@ -1,0 +1,16 @@
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-10 08:51:23.339181
+description: !!python/unicode "The solution:\r\n\r\nlibv4l must NOT be installed when\
+  \ compiling opencv. This causes opencv to use an older (but, it seems more reliable)\
+  \ v4l based on 2.2/2.4 kernel compatibility stuff... long story short, it's fixed."
+entity: !!python/object:uuid.UUID
+  int: 119933658598453256774713914507454624872
+modified_time: 2010-12-10 08:51:23.349252
+pscore: 5
+title: !!python/unicode 'Fixed'
+type: comment
+uuid: !!python/object:uuid.UUID
+  int: 140035478694366189010399564871358721624
+who_said_it: *id001
+yaml_file_saved: 2010-12-10 08:51:23.413866

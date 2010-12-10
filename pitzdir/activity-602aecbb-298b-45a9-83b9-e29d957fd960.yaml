@@ -1,0 +1,29 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-10 19:22:18.004383
+description: 'pscore changed to None
+
+  description changed to It should be possible to change the parameters controlling
+  the sonar without explicitly sending messages. Additionally it should be possible
+  to change parameters independently, without re-specifying them.
+
+  title changed to Implement Easier control of the Sonar from Python
+
+  tags changed to [<pitz.Tag f9c421 sonar>]
+
+  created_by changed to James Crosby
+
+  points changed to 0
+
+  estimate changed to trivial'
+entity: !!python/object:uuid.UUID
+  int: 339036703904872920709208991907976338346
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task ff1018 Implement Easier control of the Sonar
+  from Python>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 127828765540600493582695454768302643552
+who_did_it: *id002
+yaml_file_saved: 2010-12-10 19:22:18.004497

@@ -10,13 +10,13 @@ estimate: !!python/object:uuid.UUID
   int: 277284367523703929526958133625188989255
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-08 04:50:54.569867
+modified_time: 2010-12-09 19:37:00.194960
 owner: !!python/object:uuid.UUID
   int: 263484739648898995288495580675464106490
 points: null
-pscore: 0
+pscore: !!python/unicode '0'
 status: !!python/object:uuid.UUID
-  int: 154409908609622189382556686006061208230
+  int: 300208156334241880201290222579226582105
 tags:
 - !!python/object:uuid.UUID
   int: 197286768475377705411888986497368205084
@@ -24,4 +24,4 @@ title: Ensure Wifi works reliably from boot
 type: task
 uuid: !!python/object:uuid.UUID
   int: 320719603958395788857630835400750349506
-yaml_file_saved: 2010-12-08 04:50:54.577553
+yaml_file_saved: 2010-12-09 19:37:00.195162

@@ -1,0 +1,19 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-10 19:33:26.563228
+description: "pscore changed to 5\ndescription changed to \r\nOverkey should either\
+  \ detect losing/regaining application focus and clear itself, or, less desirable,\
+  \ some sort of timeout should be applied to modifier-only keystrokes.\r\n\r\n\n\
+  title changed to Fix OverKey when application loses focus whilst keys are held\n\
+  created_by changed to James Crosby\npoints changed to None"
+entity: !!python/object:uuid.UUID
+  int: 306428645749810866799027690425024390118
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task e68802 Fix OverKey when application loses focus
+  whilst keys are hel...>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 309975158997896618148456163382517422263
+who_did_it: *id002
+yaml_file_saved: 2010-12-10 19:33:26.563323
