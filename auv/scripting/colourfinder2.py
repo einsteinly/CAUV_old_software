@@ -10,8 +10,7 @@ import time
 import threading
 
 class ColourFinder(messaging.BufferedMessageObserver):
-    
-   
+
     def __init__(self, node, bin, channel = 'Hue', no_trigger = 3):
 
         messaging.BufferedMessageObserver.__init__(self)
@@ -62,10 +61,6 @@ class ColourFinder(messaging.BufferedMessageObserver):
                 #print 'Count :', self.binMovingmean[j].count
                 #print 'Moving average of bin %d is: %f' %(uni_bin, self.binMovingmean[j].movingMean)
                 #print 'Standard error of bin %d is: %f' %(uni_bin, self.binMovingmean[j].movingError)
-                
-
-      
-
 
 if __name__ == '__main__':
     node = cauv.node.Node('ColFind')
@@ -73,4 +68,3 @@ if __name__ == '__main__':
     yellowFinder = ColourFinder(node, [11, 12])
     while True:
         time.sleep(5)
-
