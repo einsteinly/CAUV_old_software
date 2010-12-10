@@ -6,7 +6,7 @@ import threading
 from math import degrees, cos, sin
 import time
 
-class PipeFinder(messaging.BufferedMessageObserver):
+class PipeConfirmer(messaging.BufferedMessageObserver):
     def __init__(self, node, auv, centre_name, target, error, strafe_p=30, depth_p=0.1):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node

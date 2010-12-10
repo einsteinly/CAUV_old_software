@@ -18,7 +18,6 @@ class PipeFinder(messaging.BufferedMessageObserver):
         self.depth_p = depth_p
         self.target = target
         self.error = error
-        self.strafe_p = strafe_p
         self.enable = 0
 
     def onHoughLinesMessage(self, m):
