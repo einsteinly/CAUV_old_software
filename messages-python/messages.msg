@@ -44,7 +44,8 @@ enum NodeType : int8 {
     Centre = 35,
     QuickSegment = 36,
     ThresholdMask = 37,
-    HistogramSegmentationArb = 38
+    HistogramSegmentationArb = 38,
+    RunningAverage = 39
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

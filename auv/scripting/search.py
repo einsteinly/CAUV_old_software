@@ -19,7 +19,7 @@ def Search():
     auv = control.AUV(node)                         #Create a python object for the control of the AUV
     yellowFinder = ColourFinder(node, [11, 12])     #Turn on the colour detection script
     yellowFinderCV = threading.Lock()               #Locking thing???
-    follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
+
     
     
     print 'setting calibration...'                  #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
@@ -75,7 +75,7 @@ def Search():
                     if yellowFinder.detected()==1:                   
                         #Quick stop
                         auv.prop(-127)
-                        print 'found something, quick stop'
+                        print 'found something, emergency stop'
                         time.sleep(2)
                         auv.prop(0)
                         
@@ -86,7 +86,7 @@ def Search():
                         
                         #if 
                         #enable follower when pipe is confirmed
-                        follower.enable=1
+                        follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
                         time.sleep(20)
                         print 'surface...'    
                         #auv.depthAndWait(0)   

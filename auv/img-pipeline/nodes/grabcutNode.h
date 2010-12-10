@@ -26,10 +26,10 @@ class GrabCutNode: public Node{
             
             // two input:
             registerInputID("image");
-	        registerInputID("mask");
-            
+            registerInputID("mask");
+        
             // one output
-            registerOutputID<image_ptr_t>("image_out (not copied)");
+            registerOutputID<image_ptr_t>("mask (not copied)");
             
             // parameters:
 	        //	iterations: the number of iterations
@@ -73,7 +73,7 @@ class GrabCutNode: public Node{
 	                //perform grabcut iterations
                     cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
 		    		fgdModel, iterations, mode);
-                    r["image_out (not copied)"] = mask;
+                    r["mask (not copied)"] = mask;
                     
             }catch(cv::Exception& e){
                 error() << "GrabCutNode:\n\t"
