@@ -37,6 +37,7 @@
 #include "centreFinderNode.h"
 #include "quickSegmentNode.h"
 #include "thresholdMaskNode.h"
+#include "histogramSegmentationNodeArb.h"
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -76,6 +77,7 @@ DEFINE_NFR(HistogramSegmentationNode, NodeType::HistogramSegmentation);
 DEFINE_NFR(CentreFinderNode, NodeType::Centre);
 DEFINE_NFR(QuickSegmentNode, NodeType::QuickSegment);
 DEFINE_NFR(ThresholdMaskNode, NodeType::ThresholdMask);
+DEFINE_NFR(HistogramSegmentationNodeArb, NodeType::HistogramSegmentationArb);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
 
