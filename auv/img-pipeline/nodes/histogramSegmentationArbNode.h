@@ -1,5 +1,5 @@
-#ifndef __HISTOGRAMSEGMENT_H__
-#define __HISTOGRAMSEGMENT_H__
+#ifndef __HISTOGRAMSEGMENTARB_H__
+#define __HISTOGRAMSEGMENTARB_H__
 
 #include <map>
 #include <vector>
@@ -15,9 +15,9 @@
 #include "outputNode.h"
 
 
-class HistogramSegmentationNodeArb: public OutputNode{
+class HistogramSegmentationArbNode: public OutputNode{
     public:
-        HistogramSegmentationNodeArb(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+        HistogramSegmentationArbNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
         }
 
@@ -37,7 +37,7 @@ class HistogramSegmentationNodeArb: public OutputNode{
             
         }
     
-        virtual ~HistogramSegmentationNode(){
+        virtual ~HistogramSegmentationArbNode(){
             stop();
         }
 
@@ -79,4 +79,4 @@ class HistogramSegmentationNodeArb: public OutputNode{
     DECLARE_NFR;
 };
 
-#endif //ndef __HISTOGRAMSEGMENT_H__
+#endif //ndef __HISTOGRAMSEGMENTARB_H__

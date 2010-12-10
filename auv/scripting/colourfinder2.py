@@ -24,7 +24,7 @@ class ColourFinder(messaging.BufferedMessageObserver):
         self.binMovingmean = []
         self.lock = threading.Lock()
         for uni_bin in self.bin:
-            self.binMovingmean.append(MovingAverage('upper', tolerance=0.15, maxcount=200, st_multiplier=2, st_on = 1))         #A class to calculate the moving average of last maxcount number of sample, mulitplier sets the tolerance range mulitplier and set trigger flag when sample is outside tolerance range
+            self.binMovingmean.append(MovingAverage('upper', tolerance=0.15, maxcount=30, st_multiplier=3, st_on = 1))         #A class to calculate the moving average of last maxcount number of sample, mulitplier sets the tolerance range mulitplier and set trigger flag when sample is outside tolerance range
 
     def print_bins(self, m):
         #Routine to display all the bin values
@@ -53,10 +53,10 @@ class ColourFinder(messaging.BufferedMessageObserver):
                     self.lock.acquire()
                     self.detect = 1
                     self.lock.release()
-                    #print "Looks like we have found something!!!"     
+                    print "Looks like we have found something!!!"     
                     break
-                #else:
-                    #self.detect = 0
+                else:
+                    self.detect = 0
                   
                 #print 'Count :', self.binMovingmean[j].count
                 #print 'Moving average of bin %d is: %f' %(uni_bin, self.binMovingmean[j].movingMean)
