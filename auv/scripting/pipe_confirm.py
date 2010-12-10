@@ -7,7 +7,7 @@ from math import degrees, cos, sin
 import time
 
 class PipeConfirmer(messaging.BufferedMessageObserver):
-    def __init__(self, node, auv, centre_name, histogram_name, bin, strafe_p = 30):
+    def __init__(self, node, auv, centre_name, histogram_name, bin, strafe_p = 30, lower_threshold=0.05):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         self.auv = auv
@@ -39,7 +39,7 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
             if self.ms % 15 == 0:
                 for j, indBin in enumerate(self.bin):
                    binsNow[j] = m.bins[indBin]
-                if sum([x for x in self.binsNow]) < sum([x for x in self.binsPrevious]) - 0.05:
+                if sum([x for x in self.binsNow]) < sum([x for x in self.binsPrevious]) - lower_threshold:
                     self.cv.acquire()
                     self.cv.notify()
                     self.failed = True
@@ -65,9 +65,7 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
                         linesFound = True
             if parallelsAppeared == False and linesFound == True:
                 parallelsAppeared = True
-            elif parallellsAppeared == True and linesFound == True:
-                self.noLines = 0
-            elif parallellsAppeared == True and linesFound == False:   
+            if linesFound == False:   
                 self.noLines += 1
             if self.noLines == 15:
                 self.cv.acquire()
@@ -82,12 +80,13 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
         if self.failed == True:
             self.cv.release()
             return False
-        else:
-            if sum([x for x in self.binsNow]) < sum([x for x in self.binsStart] + 0.2):
-                self.cv.release()
-                return False
+
+        if sum([x for x in self.binsNow]) < sum([x for x in self.binsStart] + 0.2):
             self.cv.release()
-            return True
+            return False
+
+        self.cv.release()
+        return True
 
 def setup():
     auv_node = cauv.node.Node('py-auv-pc')                #Create a node of the spread messaging service
