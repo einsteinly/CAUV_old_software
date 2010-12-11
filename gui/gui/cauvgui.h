@@ -23,6 +23,9 @@ class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
     public:
         CauvGui(QApplication& app, QWidget *parent = 0);
 
+    public Q_SLOTS:
+        int send(boost::shared_ptr<Message>message);
+
     protected:
         virtual void onRun();
 

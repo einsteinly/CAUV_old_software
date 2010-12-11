@@ -4,6 +4,7 @@
 #include <model/auv_controller.h>
 
 #include <pipelineWidget.h>
+#include <pipelineMessageObserver.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -11,11 +12,17 @@
 CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
     joinGroup("control");
+    joinGroup("pl_gui");
 }
 
 void CauvGui::closeEvent(QCloseEvent*){
     hide();
     CauvNode::stopNode();
+}
+
+int CauvGui::send(boost::shared_ptr<Message> message){
+    std::cout<<"sending message" << *message << std::endl;
+    return CauvNode::send(message);
 }
 
 void CauvGui::onRun()
@@ -33,7 +40,14 @@ void CauvGui::onRun()
     m_auv_controller = boost::make_shared<AUVController>(m_auv);
     addMessageObserver(m_auv_controller);
 
-    //pw::PipelineWidget pipelineWidget(this)
+
+    pw::PipelineWidget * pipelineWidget = new pw::PipelineWidget(this);
+    boost::shared_ptr<pw::PipelineGuiMsgObs> observer = boost::make_shared<pw::PipelineGuiMsgObs>(pipelineWidget);
+    this->addMessageObserver(observer);
+    this->connect(pipelineWidget, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
+
+
+    setCentralWidget(pipelineWidget);
 
     /*Plot* plot = new Plot();
 

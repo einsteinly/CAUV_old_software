@@ -73,7 +73,6 @@ class PipelineWidget: public QGLWidget,
                        renderable_ptr_t dst);
         void removeArc(renderable_ptr_t src, renderable_ptr_t dst);
         
-        //void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void send(boost::shared_ptr<Message>);
         
         node_ptr_t nodeAt(Point const& p) const;
@@ -141,12 +140,6 @@ class PipelineWidget: public QGLWidget,
         renderable_set_t m_receiving_move; // renderables currently receiving
                                            // move events
         
-        // removed fields below to decouple the PipelineWidget from the CauvNode for the widget
-        // this allows the Widget to be used in other places (i.e. the main GUI)
-        // Andy Pritchard - 11/12/2010
-        //boost::shared_ptr<PipelineGuiCauvNode> m_cauv_node;
-        //boost::thread m_cauv_node_thread;
-
         /* a great big mutex around everything since messages can cause all
          * sorts of havoc if they cause changes to the pipeline while drawing
          * is in progress, similarly for qt events:
