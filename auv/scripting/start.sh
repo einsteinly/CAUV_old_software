@@ -14,10 +14,12 @@ python -c "import cauv
 import cauv.messaging as msg
 import cauv.pipeline as pipeline
 import cauv.control as control
+import cauv.sonar
 import cauv.node
 
 node = cauv.node.Node('py-start')
 auv = control.AUV(node)
+sonar = cauv.sonar.Sonar(node)
 pl = pipeline.Model(node)
 
 from IPython.Shell import IPShellEmbed
