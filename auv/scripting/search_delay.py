@@ -55,9 +55,11 @@ def Search():
         print 'setting bearing %d...' %bearing
         #auv.bearingAndWait(bearing)                         #Starting search at north direction
         auv.bearing(bearing)
+        time.sleep(10)
         print 'diving...'
         #auv.depthAndWait(depth)                                 #make sure it is at depth 2m
         auv.depth(depth)
+        time.sleep(10)
         print 'spiral...'
 
         for i in range(1, 2*revolution):                        #making individual half revolutions
@@ -103,16 +105,17 @@ def Search():
                 print 'setting bearing %d' %bearing
                 #auv.bearingAndWait(bearing)
                 auv.bearing(bearing)
-                
+                time.sleep(10)
                 
         print 'surface...'    
         #auv.depthAndWait(0)
         auv.depth(0)
-        h
+        time.sleep(10)
         
     except Exception:
         traceback.print_exc()
         auv.depth(0)
+        time.sleep(10)
         auv.stop()
     print 'Complete'
 

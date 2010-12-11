@@ -44,10 +44,12 @@ def Spiral():
     
     try:
         print 'setting bearing %d...' %bearing
-        auv.bearingAndWait(bearing)            #Starting search at north direction
+        auv.bearing(bearing)            #Starting search at north direction
+        time.sleep(10)
 
         print 'diving...'
-        auv.depthAndWait(2)            #make sure it is at depth 2m
+        auv.depth(0.5)            #make sure it is at depth 0.5m
+        time.sleep(10)
         
         print 'spiral...'
               
@@ -69,10 +71,12 @@ def Spiral():
                 if bearing>=360:
                     bearing-=360
                 print 'setting bearing %d' %bearing
-                auv.bearingAndWait(bearing)
+                auv.bearing(bearing)
+                time.sleep(10)
             
         print 'surface...'    
-        auv.depthAndWait(0)
+        auv.depth(0)
+        time.sleep(10)
 
         
     except Exception:
