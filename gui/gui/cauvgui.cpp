@@ -3,6 +3,8 @@
 #include <math.h>
 #include <model/auv_controller.h>
 
+#include <pipelineWidget.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
@@ -30,6 +32,8 @@ void CauvGui::onRun()
     m_auv = boost::make_shared<AUV>();
     m_auv_controller = boost::make_shared<AUVController>(m_auv);
     addMessageObserver(m_auv_controller);
+
+    //pw::PipelineWidget pipelineWidget(this)
 
     /*Plot* plot = new Plot();
 

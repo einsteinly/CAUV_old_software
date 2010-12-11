@@ -4,7 +4,16 @@ project (standalone)
 set (
     standalone_srcs
     main.cpp
+    pipelineWidgetNode.cpp
 )
+
+set (
+    standalone_H
+    pipelineWidgetNode.h
+)
+
+qt4_wrap_cpp (standalone_MOC_H ${standalone_H})
+
 
 #set (
 #    standalone_UIS
@@ -20,7 +29,7 @@ link_directories (${pipeline-widget_BINARY_DIR})
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
 
-add_executable (standalone ${standalone_srcs} ${standalone_UIS_H})
+add_executable (standalone ${standalone_srcs} ${standalone_UIS_H} ${standalone_MOC_H})
 
 target_link_libraries (
     standalone
