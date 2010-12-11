@@ -58,11 +58,7 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
                 for j, line2 in enumerate(m.lines):
                     if degrees(abs(line1.angle - line2.angle)) < 15 and i != j:
                         self.foundparalle += 1
-            if self.noLines == 15:
-                self.cv.acquire()
-                self.cv.notify()
-                self.failed = True
-                self.cv.release()            
+     
 
     def confirm(self):
         print 'hi'
@@ -70,13 +66,17 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
         self.cv.acquire()
         self.cv.wait(12)
         self.enabled = False
+        
         if self.failed == True:
             self.cv.release()
             print 'Not confirmed'
             return False
 
+        if self.foundparalle < 10:
+            print 'Not confirmed'
+            return False
 
-        if sum(self.binsNow) < sum(self.binsStart) + 0.2:
+        if sum(self.binsNow) < sum(self.binsStart):
             self.cv.release()
             print 'Not confirmed'
             return False
