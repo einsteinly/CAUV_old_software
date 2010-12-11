@@ -44,7 +44,10 @@ enum NodeType : int8 {
     Centre = 35,
     QuickSegment = 36,
     ThresholdMask = 37,
-    CornerHarris = 38
+    CornerHarris = 38,
+    HistogramSegmentationArb = 39,
+    RunningAverage = 40,
+    CopyMask = 41
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -286,7 +289,7 @@ group sonarctl
         width : uint16;
         gain : uint8;
         range : uint32;
-        radialRes : uint32;
+        rangeRes : uint32;
         angularRes : uint8;
     }
 }

@@ -1,0 +1,20 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-09 03:25:58.485236
+description: "pscore changed to 3\nstatus changed to started\ndescription changed\
+  \ to The AUV needs to be able to search for things in it's environment, this\r\n\
+  requires some kind of search-pattern movement to cover an area, whilst avoiding\r\
+  \nobstacles (see separate task).\r\n\r\nThis should be implemented in python, the\
+  \ main difficulties will be\r\nintegrating with other scripts (don't want to search\
+  \ whilst doing something\r\nelse!) and the obstacle avoidance problem.\npoints changed\
+  \ to None\nowner changed to Tim Lui"
+entity: !!python/object:uuid.UUID
+  int: 266290652382279442329566583548531423635
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task c855b6 Design and Implement a Search Pattern>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 150723984869202574190106793217512145302
+who_did_it: *id002
+yaml_file_saved: 2010-12-09 03:25:58.485341

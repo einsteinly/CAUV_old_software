@@ -1,0 +1,22 @@
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-07 22:05:33.096078
+description: !!python/unicode "Status of this is that the issue is no longer reproducible\
+  \ --- rebuild of opencv in debug mode failed to produce the crashes for debugging,\
+  \ then a re-install of a release mode build still doesn't cause it.\r\n\r\nI made\
+  \ a small change to cap_v4l.lib to reduce the number of valgrind warnings about\
+  \ uninitialised values in syscalls, but all the memcheck warnings that occur there\
+  \ appear to be safe to ignore anyway.\r\n\r\nIt's most likely that other changes\
+  \ to the pipeline to re-instate immediate opening of captures on construction has\
+  \ fixed the issue (maybe something to do with the thread from which they are first\
+  \ opened?).\r\n"
+entity: !!python/object:uuid.UUID
+  int: 119933658598453256774713914507454624872
+modified_time: 2010-12-09 03:30:23.781050
+pscore: 1
+title: !!python/unicode 'Status'
+type: comment
+uuid: !!python/object:uuid.UUID
+  int: 180690009368619828208042858785924734132
+who_said_it: *id001
+yaml_file_saved: 2010-12-09 03:30:23.788250

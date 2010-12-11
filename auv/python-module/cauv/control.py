@@ -61,7 +61,25 @@ class AUV(messaging.BufferedMessageObserver):
                 self.bearingCV.release()
             else:
                 break
-                
+
+    def calibrateDepth(self, foreOffset, foreMultiplier, aftOffset=None, aftMultiplier=None):
+        if aftOffset is None:
+            aftOffset = foreOffset
+            if aftMultiplier is None:
+                aftMultiplier = foreMultiplier
+            else:
+                print "Warning: aftMultiplier set but aftOffset not set -- using aftOffset := foreOffset"
+        elif aftMultiplier is None:
+            print "Warning: aftOffset set but aftMultiplier not set -- using aftMultiplier := foreMultiplier"
+
+        self.send(messaging.DepthCalibrationMessage(foreOffset, foreMultiplier, aftOffset, aftMultiplier))
+
+    def calibrateForSaltWater(self):
+        calibrateDepth(-912.2/96.2, 1.0/96.2)
+
+    def calibrateForFreshWater(self):
+        calibrateDepth(-912.2/96.2, 1.0/96.2) # TODO: Find real values
+
     def depth(self, depth):
         if depth is not None:
             self.send(messaging.DepthAutopilotEnabledMessage(True, depth))

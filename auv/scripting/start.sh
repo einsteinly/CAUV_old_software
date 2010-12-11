@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPTING_DIR="$(pwd)"
+SCRIPTING_DIR=$(dirname $0)
 #echo "Scripting dir is: $SCRIPTING_DIR"
 
 export LD_LIBRARY_PATH="$SCRIPTING_DIR/cauv/:$LD_LIBRARY_PATH"
@@ -14,10 +14,12 @@ python -c "import cauv
 import cauv.messaging as msg
 import cauv.pipeline as pipeline
 import cauv.control as control
+import cauv.sonar
 import cauv.node
 
 node = cauv.node.Node('py-start')
 auv = control.AUV(node)
+sonar = cauv.sonar.Sonar(node)
 pl = pipeline.Model(node)
 
 from IPython.Shell import IPShellEmbed

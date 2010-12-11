@@ -120,7 +120,7 @@ void AUVController::onImageMessage(ImageMessage_ptr message) {
 void AUVController::onSonarControlMessage(SonarControlMessage_ptr message) {
     m_auv.cameras.sonar->params->set(sonar_params_t(
             message->direction(), message->width(), message->gain(),
-            message->radialRes(), message->angularRes()));
+            message->rangeRes(), message->angularRes()));
 }
 
 void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){

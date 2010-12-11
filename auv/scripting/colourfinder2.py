@@ -11,7 +11,7 @@ import threading
 
 class ColourFinder(messaging.BufferedMessageObserver):
 
-    def __init__(self, node, bin, channel = 'Hue', no_trigger = 3):
+    def __init__(self, node, bin, no_trigger = 3, tolerance = 0.15, maxcount=30, st_multiplier=3, st_on=1, channel = 'Hue'):
 
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
@@ -24,7 +24,7 @@ class ColourFinder(messaging.BufferedMessageObserver):
         self.binMovingmean = []
         self.lock = threading.Lock()
         for uni_bin in self.bin:
-            self.binMovingmean.append(MovingAverage('upper', tolerance=0.15, maxcount=200, st_multiplier=2, st_on = 1))         #A class to calculate the moving average of last maxcount number of sample, mulitplier sets the tolerance range mulitplier and set trigger flag when sample is outside tolerance range
+            self.binMovingmean.append(MovingAverage('upper', tolerance, maxcount, st_multiplier, st_on))         #A class to calculate the moving average of last maxcount number of sample, mulitplier sets the tolerance range mulitplier and set trigger flag when sample is outside tolerance range
 
     def print_bins(self, m):
         #Routine to display all the bin values
@@ -49,14 +49,16 @@ class ColourFinder(messaging.BufferedMessageObserver):
                 self.binMovingmean[j].update(m.bins[uni_bin])
                 #print 'bin %d: %f' %(uni_bin, m.bins[uni_bin])            
                 
-                if (self.binMovingmean[j].trigger > self.no_trigger) and self.detected()==0:
+                if (self.binMovingmean[j].trigger > self.no_trigger):
                     self.lock.acquire()
                     self.detect = 1
                     self.lock.release()
                     #print "Looks like we have found something!!!"     
                     break
-                #else:
-                    #self.detect = 0
+                else:
+                    self.lock.acquire()
+                    self.detect = 0
+                    self.lock.release()
                   
                 #print 'Count :', self.binMovingmean[j].count
                 #print 'Moving average of bin %d is: %f' %(uni_bin, self.binMovingmean[j].movingMean)
@@ -65,6 +67,6 @@ class ColourFinder(messaging.BufferedMessageObserver):
 if __name__ == '__main__':
     node = cauv.node.Node('ColFind')
     auv = control.AUV(node)
-    yellowFinder = ColourFinder(node, [11, 12])
+    yellowFinder = ColourFinder(node, [11, 12], 3, 0.15, 30, 3, 1)
     while True:
         time.sleep(5)

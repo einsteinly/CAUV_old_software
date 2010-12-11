@@ -1,0 +1,26 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: &id001 2010-12-09 16:29:29.610138
+description: 'pscore changed to 4
+
+  description changed to Fix loading boolean parameters into img-pipeline using messages
+
+  title changed to boolean parameters in img-pipeline
+
+  tags changed to [<pitz.Tag 8da7e1 image processing>]
+
+  created_by changed to Jason Wyatt
+
+  points changed to None
+
+  owner changed to James Crosby'
+entity: !!python/object:uuid.UUID
+  int: 167422883016718679821019920065516032521
+modified_time: *id001
+pscore: 0
+title: Jason Wyatt changed <pitz.Task 7df479 boolean parameters in img-pipeline>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 286247905548904800813701060760193168806
+who_did_it: *id002
+yaml_file_saved: 2010-12-09 16:29:29.610238

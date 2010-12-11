@@ -6,11 +6,11 @@ import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
 from colourfinder2 import ColourFinder
-from pipe_follow import PipeFinder
+#from pipe_follow import PipeFinder
+from pipe_confirm2 import PipeConfirmer
 
 import time
 import traceback
-import threading
 import math
 
 def Search():
@@ -18,8 +18,7 @@ def Search():
     node = cauv.node.Node('py-search')              #Create a node of the spread messaging service
     auv = control.AUV(node)                         #Create a python object for the control of the AUV
     yellowFinder = ColourFinder(node, [11, 12])     #Turn on the colour detection script
-    yellowFinderCV = threading.Lock()               #Locking thing???
-    follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
+    confirmer = PipeConfirmer(node, auv, [11, 12]) #Holds the pipe confirm sequence
     
     
     print 'setting calibration...'                  #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
@@ -75,24 +74,23 @@ def Search():
                     if yellowFinder.detected()==1:                   
                         #Quick stop
                         auv.prop(-127)
-                        print 'found something, quick stop'
+                        print 'found something, emergency stop'
                         time.sleep(2)
                         auv.prop(0)
                         
                         #Pipe confirmation
-                        
+                        if confirmer.confirm()==False:
                         #if pipe is not found, continue the search, and note the new startTime
-                        startTime = time.time()
-                        
-                        #if 
-                        #enable follower when pipe is confirmed
-                        follower.enable=1
-                        time.sleep(20)
-                        print 'surface...'    
-                        #auv.depthAndWait(0)   
-                        auv.depth(0)   
-                        return 0                            #Insert object confirmation and reaction sequence here later
-
+                            startTime = time.time()
+                       
+                        else:
+                            #enable follower when pipe is confirmed
+                            #follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
+                            #time.sleep(20)
+                            print 'surface...'    
+                            #auv.depthAndWait(0)   
+                            auv.depth(0)   
+                            return 0                            #Insert object confirmation and reaction sequence here later
 
 
                 time.sleep(unit*i)        
@@ -106,9 +104,11 @@ def Search():
                 #auv.bearingAndWait(bearing)
                 auv.bearing(bearing)
                 
+                
         print 'surface...'    
         #auv.depthAndWait(0)
         auv.depth(0)
+        h
         
     except Exception:
         traceback.print_exc()
