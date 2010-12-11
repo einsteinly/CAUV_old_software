@@ -62,7 +62,8 @@ class QuickSegmentNode: public OutputNode{
                         for(int i = 0; i < 3; i++)
                         {
                             cv::Scalar pix = *src_it;
-                            if(abs(pix[i] - mean[i]) < scale * stdev[i])
+                            if((pix[i] - mean[i]) * (pix[i] - mean[i]) <
+                                scale * stdev[i] * scale * stdev[i])
                             {
                                 *dest_it = 1;
                                 break;
