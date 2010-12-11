@@ -1,0 +1,17 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: &id001 2010-12-10 23:19:19.303252
+description: "pscore changed to 1\ndescription changed to general small webapp fixes\r\
+  \n-restore associated tasks to tasks\r\n-sort out default values\ntitle changed\
+  \ to webapp fixes\ntags changed to [<pitz.Tag accf92 pitz>]\ncreated_by changed\
+  \ to Jason Wyatt\npoints changed to None\nowner changed to Jason Wyatt"
+entity: !!python/object:uuid.UUID
+  int: 93751004644977580736293481611952237590
+modified_time: *id001
+pscore: 0
+title: Jason Wyatt changed <pitz.Task 4687c9 webapp fixes>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 289084563388529358622417356104868670025
+who_did_it: *id002
+yaml_file_saved: 2010-12-10 23:19:19.303346
