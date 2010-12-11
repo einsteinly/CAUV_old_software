@@ -1,0 +1,24 @@
+components: []
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-10 18:29:29.782777
+description: !!python/unicode 'The python bindings for the messaging have become unpredictably
+  crashy: confimed as a problem in .py somewhere.'
+estimate: !!python/object:uuid.UUID
+  int: 277284367523703929526958133625188989255
+milestone: !!python/object:uuid.UUID
+  int: 336087129598010674063812125499293341845
+modified_time: 2010-12-10 19:37:47.803657
+owner: *id001
+points: null
+pscore: !!python/unicode '4'
+status: !!python/object:uuid.UUID
+  int: 184930133307461754624757499539547831947
+tags:
+- !!python/object:uuid.UUID
+  int: 154609098728873674441152855601256671864
+title: !!python/unicode 'Fix python crashiness introduced (probably) in r815-816'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 161061990772579332022369510395879140569
+yaml_file_saved: 2010-12-10 19:37:47.803899

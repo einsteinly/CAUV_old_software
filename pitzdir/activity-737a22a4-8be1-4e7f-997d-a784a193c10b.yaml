@@ -1,0 +1,21 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-10 19:35:43.062019
+description: "pscore changed to 1\ndescription changed to \r\nThe pipeline GUI should\
+  \ at least show the status of the img-pipeline; the best way to do this is probably\
+  \ by listening to spread group messages --- or some sort of flag set when an expected\
+  \ response is not received, or some combination, or even something else entirely.\n\
+  title changed to Implement img-pipeline status display in pipeline-widget\ntags\
+  \ changed to [<pitz.Tag cf2b7e gui>, <pitz.Tag dc1893 messaging>]\ncreated_by changed\
+  \ to James Crosby\npoints changed to None\nestimate changed to small project"
+entity: !!python/object:uuid.UUID
+  int: 228164522136381942214056044811936163035
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task aba6e3 Implement img-pipeline status display
+  in pipeline-widget>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 153495382370642546223726909790629380363
+who_did_it: *id002
+yaml_file_saved: 2010-12-10 19:35:43.062120

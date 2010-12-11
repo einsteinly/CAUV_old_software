@@ -1,0 +1,27 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-10 07:24:24.970776
+description: !!python/unicode 'When a CAUV Node tries to join the spread network and
+  its name isn''t unique an incrementing number should be appended to the name until
+  it can connect.'
+estimate: !!python/object:uuid.UUID
+  int: 277284367523703929526958133625188989255
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2010-12-10 07:24:24.976766
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+points: 0
+pscore: !!python/unicode '2'
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 292557765731504791880568992605661195763
+title: !!python/unicode 'Retry spread connect with a new unique name when connection
+  denied.'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 285821071508816185993901303847109910454
+yaml_file_saved: 2010-12-10 07:24:24.983660

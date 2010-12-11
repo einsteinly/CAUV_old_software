@@ -53,11 +53,11 @@ def Search():
 
     try:
         print 'setting bearing %d...' %bearing
-        #auv.bearingAndWait(bearing)                         #Starting search at north direction
-        auv.bearing(bearing)
+        auv.bearingAndWait(bearing)                         #Starting search at north direction
+        #auv.bearing(bearing)
         print 'diving...'
-        #auv.depthAndWait(depth)                                 #make sure it is at depth 2m
-        auv.depth(depth)
+        auv.depthAndWait(depth)                                 #make sure it is at depth 2m
+        #auv.depth(depth)
         print 'spiral...'
 
         for i in range(1, 2*revolution):                        #making individual half revolutions
@@ -88,8 +88,8 @@ def Search():
                             #follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
                             #time.sleep(20)
                             print 'surface...'    
-                            #auv.depthAndWait(0)   
-                            auv.depth(0)   
+                            auv.depthAndWait(0)   
+                            #auv.depth(0)   
                             return 0                            #Insert object confirmation and reaction sequence here later
 
 
@@ -101,14 +101,12 @@ def Search():
                 if bearing>=360:    
                     bearing-=360
                 print 'setting bearing %d' %bearing
-                #auv.bearingAndWait(bearing)
-                auv.bearing(bearing)
-                
+                auv.bearingAndWait(bearing)
+                #auv.bearing(bearing)
                 
         print 'surface...'    
-        #auv.depthAndWait(0)
-        auv.depth(0)
-        h
+        auv.depthAndWait(0)
+        #auv.depth(0)
         
     except Exception:
         traceback.print_exc()

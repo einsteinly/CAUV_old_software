@@ -1,0 +1,12 @@
+attached_files: !!python/unicode ''
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-08 21:18:59.924690
+description: !!python/unicode 'Tasks for the mechanics guys'
+modified_time: 2010-12-08 21:18:59.926604
+pscore: 1
+title: !!python/unicode 'mechanics'
+type: tag
+uuid: !!python/object:uuid.UUID
+  int: 27285391412953843479645851445225719889
+yaml_file_saved: 2010-12-08 21:18:59.931421

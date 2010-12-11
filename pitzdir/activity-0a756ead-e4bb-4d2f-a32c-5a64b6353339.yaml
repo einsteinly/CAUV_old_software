@@ -1,0 +1,29 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-10 07:24:24.976998
+description: 'pscore changed to 2
+
+  description changed to When a CAUV Node tries to join the spread network and its
+  name isn''t unique an incrementing number should be appended to the name until it
+  can connect.
+
+  title changed to Retry spread connect with a new unique name when connection denied.
+
+  tags changed to [<pitz.Tag dc1893 messaging>]
+
+  created_by changed to James Crosby
+
+  points changed to 0
+
+  estimate changed to trivial'
+entity: !!python/object:uuid.UUID
+  int: 285821071508816185993901303847109910454
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task d70722 Retry spread connect with a new unique
+  name when connection ...>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 13902023532615266081561812421775274809
+who_did_it: *id002
+yaml_file_saved: 2010-12-10 07:24:24.977606
