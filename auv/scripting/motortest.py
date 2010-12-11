@@ -31,56 +31,57 @@ def motorTest():
     auv.hsternMap(10, -10, 127, -127)
     
     delay = 5
+    power = 20
 
     auv.stop()
     print 'prop forwards:'
-    auv.prop(127)
+    auv.prop(power)
     time.sleep(delay)
 
     auv.stop()
     print 'prop reverse:'
-    auv.prop(-127)
+    auv.prop(-power)
     time.sleep(delay)
 
     auv.stop()
     print 'hbow right:'
-    auv.hbow(127)
+    auv.hbow(power)
     time.sleep(delay)
     auv.stop()
     
     auv.stop()
     print 'hbow left:'
-    auv.hbow(-127)
+    auv.hbow(-power)
     time.sleep(delay)
 
     auv.stop()
     print 'vbow up:'
-    auv.vbow(127)
+    auv.vbow(power)
     time.sleep(delay)
     
     auv.stop()
     print 'vbow down:'
-    auv.vbow(-127)
+    auv.vbow(-power)
     time.sleep(delay)
 
     auv.stop()
     print 'hstern right:'
-    auv.hstern(127)
+    auv.hstern(power)
     time.sleep(delay)
     
     auv.stop()
     print 'hstern left:'
-    auv.hstern(-127)
+    auv.hstern(-power)
     time.sleep(delay)
 
     auv.stop()
     print 'vstern up:'
-    auv.vstern(127)
+    auv.vstern(power)
     time.sleep(delay)
     
     auv.stop()
     print 'vstern down:'
-    auv.vstern(-127)
+    auv.vstern(-power)
     time.sleep(delay)
 
     auv.stop()
