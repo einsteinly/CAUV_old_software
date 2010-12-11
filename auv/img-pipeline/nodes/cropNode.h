@@ -83,7 +83,7 @@ class CropNode: public Node{
                         cropRect.y = 0;
                         cropRect.height += top_left_y; 
                     }
-                    if(cropRect.y + cropRect.height > inp_img->cvMat().rows) { // The rectange falls to the bottom of the image, adjust accorindly
+                    if(cropRect.y + cropRect.height > inp_img->cvMat().rows) { // The rectange falls to the bottom of the image, adjust accoringly
                         cropRect.height = inp_img->cvMat().rows - cropRect.y;                    
                     }
 

@@ -105,7 +105,7 @@ public:
         DataStream<T>(name),
         params(boost::make_shared< DataStream<autopilot_params_t> >("Params", this)),
         enabled(boost::make_shared< DataStream<bool> >("Enabled", this)) {
-            set(initialTarget);
+            this->set(initialTarget);
         };
 
         boost::shared_ptr< DataStream<autopilot_params_t> > params;
