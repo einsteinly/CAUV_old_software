@@ -182,11 +182,11 @@ group control
         Kp : float;
         Ki : float;
         Kd : float;
-        Ap : float;
+        scale : float;
+		Ap : float;
         Ai : float;
         Ad : float;
-        thr : float;
-        scale : float;
+		thr : float;
     }
 
     message DepthAutopilotEnabled : 61
@@ -199,11 +199,11 @@ group control
         Kp : float;
         Ki : float;
         Kd : float;
-        Ap : float;
+        scale : float;
+		Ap : float;
         Ai : float;
         Ad : float;
-        thr : float;
-        scale : float;
+		thr : float;
     }
 
     message DepthCalibration : 80
@@ -224,11 +224,11 @@ group control
         Kp : float;
         Ki : float;
         Kd : float;
-        Ap : float;
+        scale : float;
+		Ap : float;
         Ai : float;
         Ad : float;
-        thr : float;
-        scale : float;
+		thr : float;
     }
 
     message StateRequest : 82

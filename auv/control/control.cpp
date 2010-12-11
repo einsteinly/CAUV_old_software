@@ -68,7 +68,7 @@ struct PIDControl
 
     PIDControl(Controller::e controlee=Controller::NumValues)
         : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
-          integral(0), is_angle(false), retain_samples_msecs(200)
+          integral(0), Ap(1), Ai(1), Ad(1), thr(1), is_angle(false), retain_samples_msecs(200)
     {
         previous_time.secs = 0;
     }
