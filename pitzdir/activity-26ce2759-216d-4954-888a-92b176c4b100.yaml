@@ -1,0 +1,19 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-08 21:21:13.302297
+description: "pscore changed to 1\ndescription changed to \r\nMeasuring the relative\
+  \ velocity of the vehicle using pitot tube(s) or other flow metering devices would\
+  \ give us a pretty good estimate of forward velocity, which would be useful.\r\n\
+  \ntitle changed to Velocity Estimate from Water movement\ntags changed to [<pitz.Tag\
+  \ 1486f9 mechanics>]\ncreated_by changed to James Crosby\npoints changed to 0\n\
+  owner changed to James Rickenbach\nestimate changed to significant project"
+entity: !!python/object:uuid.UUID
+  int: 50628632853077840774112869270762942808
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task 2616b8 Velocity Estimate from Water movement>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 51581075068311108377055501453191590144
+who_did_it: *id002
+yaml_file_saved: 2010-12-08 21:21:13.302407

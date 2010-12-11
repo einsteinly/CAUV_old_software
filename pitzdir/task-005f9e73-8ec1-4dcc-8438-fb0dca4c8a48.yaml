@@ -1,0 +1,27 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-10 19:29:31.105010
+description: !!python/unicode "\r\nApply filtering to thin sonar lines so that gaps\
+  \ are less of a problem: the edges of sonar lines should be smooth not abrupt."
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2010-12-10 19:29:31.110660
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+points: null
+pscore: !!python/unicode '3'
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 331996142187771955882707416418215780478
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+title: !!python/unicode 'Add filtering to sonar accumulator'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 496481977697436201735440311950019144
+yaml_file_saved: 2010-12-10 19:29:31.116847

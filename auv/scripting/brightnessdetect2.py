@@ -18,8 +18,8 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
         self.channel = channel
         self.no_trigger = no_trigger        
         self.detect = 0
-        self.skewMovingMean = MovingAverage('lower', tolerance = 1, maxcount=200, st_multiplier=2)         #A class to calculate the moving average of last maxcount number of sample, and set trigger flag when sample is outside tolerance range
-        self.meanMovingMean = MovingAverage('upper', tolerance = 5, maxcount=200, st_multiplier=2)
+        self.skewMovingMean = MovingAverage('lower', tolerance = 1, maxcount=30, st_multiplier=3)         #A class to calculate the moving average of last maxcount number of sample, and set trigger flag when sample is outside tolerance range
+        self.meanMovingMean = MovingAverage('upper', tolerance = 5, maxcount=30, st_multiplier=3)
     
     def print_bins(self, m):
         #Routine to display all the bin values
@@ -46,7 +46,7 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
             mean = total1
             stdev= (total2-mean**2)**0.5
             skewness = (total3-3*mean*stdev**2-mean**3)/stdev**3
-            print 'Mean: %f, Skewness: %f' %(mean, skewness)
+            #print 'Mean: %f, Skewness: %f' %(mean, skewness)
 
             #updating the statistics
             self.skewMovingMean.update(skewness) 
@@ -54,21 +54,29 @@ class BrightnessDetect(messaging.BufferedMessageObserver):
 
             if self.skewMovingMean.trigger > self.no_trigger:
                 self.detect = 1
-                print "Things just got brighter judging from changing skewness"
+                #print "Things just got brighter judging from changing skewness"
+                self.emergencyStop()    
                 return 0
             elif self.meanMovingMean.trigger > self.no_trigger:
                 self.detect = 1
-                print "Things just got brighter judging from changing mean"
+                #print "Things just got brighter judging from changing mean"
+                self.emergencyStop()    
                 return 0
             else:
                 self.detect = 0
                         
-            print 'count', self.skewMovingMean.count
-            print 'Moving average of skewness:', self.skewMovingMean.movingMean
-            print 'Moving average of mean:', self.meanMovingMean.movingMean
-            print 'Standard error of skewness:', self.skewMovingMean.movingError
-            print 'Standard error of mean:', self.meanMovingMean.movingError
+            #print 'count', self.skewMovingMean.count
+            #print 'Moving average of skewness:', self.skewMovingMean.movingMean
+            #print 'Moving average of mean:', self.meanMovingMean.movingMean
+            #print 'Standard error of skewness:', self.skewMovingMean.movingError
+            #print 'Standard error of mean:', self.meanMovingMean.movingError
           
+
+    def emergencyStop(self):
+            auv.prop(-127)
+            print 'Emergency stop'
+            time.sleep(2)
+            auv.prop(0)
 
 
 if __name__ == '__main__':

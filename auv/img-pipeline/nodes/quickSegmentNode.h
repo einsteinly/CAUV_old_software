@@ -1,3 +1,4 @@
+//Quick segment node takes an image
 #ifndef __QUICKSEGMENT_NODE_H__
 #define __QUICKSEGMENT_NODE_H__
 
@@ -24,10 +25,10 @@ class QuickSegmentNode: public OutputNode{
             m_speed = fast;
             
             // one input:
-            registerInputID("image_in");
+            registerInputID("image");
             
             // one output:
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID<image_ptr_t>("mask");
             
             // parameters:
             registerParamID<float>("scale", 1.0);
@@ -41,7 +42,7 @@ class QuickSegmentNode: public OutputNode{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image_in"];
+            image_ptr_t img = inputs["image"];
             
             float scale = param<float>("scale");
 
@@ -58,20 +59,17 @@ class QuickSegmentNode: public OutputNode{
                         src_it != img->cvMat().end<cv::Scalar>();
                         ++src_it, ++dest_it)
                     {
-                        bool test = true;
                         for(int i = 0; i < 3; i++)
                         {
                             cv::Scalar pix = *src_it;
                             if(fabs(pix[i] - mean[i]) < scale * stdev[i])
                             {
-                                test = false;
+                                *dest_it = 1;
                                 break;
                             }
                         }
-                            if(test)
-                                *dest_it = 1;
                     }
-                    r["image_out"] = out;
+                    r["mask"] = out;
                     
             }catch(cv::Exception& e){
                 error() << "QuickSegmentNode:\n\t"

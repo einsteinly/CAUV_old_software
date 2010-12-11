@@ -7,6 +7,10 @@
 \#include "../generated/messages.h"
 
 namespace bp = boost::python;
+    
+#for $g in $groups
+static const char* ${g.name.upper()}_NAME = "$g.name";
+#end for
 
 void emitMessages(){
     #for $g in $groups
@@ -36,7 +40,7 @@ void emitMessages(){
         // self_ns shouldn't be necessary here... gcc sux
         .def(bp::self_ns::str(bp::self_ns::self))
         // default group to send to
-        .def_readonly("group", "$g.name")
+        .def_readonly("group", &${g.name.upper()}_NAME)
         // return policies are all return-by-value, safest, but not the most efficient
         #for $f in $m.fields
         .add_property(

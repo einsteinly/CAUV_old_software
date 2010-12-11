@@ -44,9 +44,6 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
                     self.cv.notify()
                     self.failed = True
                     self.cv.release()
-
-
-
                 #if sum([x for x in self.binsNow]) < sum([x for x in self.binsPrevious]) - 0.05:
                     #self.score -= 1
                 #elif sum([x for x in self.binsNow]) > sum([x for x in self.binsPrevious]) + 0.05:

@@ -15,9 +15,9 @@
 #include "outputNode.h"
 
 
-class HistogramSegmentationNode: public OutputNode{
+class HistogramSegmentationNodeArb: public OutputNode{
     public:
-        HistogramSegmentationNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
+        HistogramSegmentationNodeArb(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : OutputNode(sched, pl, t){
         }
 

@@ -1,0 +1,32 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-10 18:29:29.789860
+description: 'pscore changed to 4
+
+  status changed to queued
+
+  description changed to The python bindings for the messaging have become unpredictably
+  crashy: confimed as a problem in .py somewhere.
+
+  title changed to Fix python crashiness introduced (probably) in r815-816
+
+  created_by changed to James Crosby
+
+  points changed to None
+
+  milestone changed to Michaelmas Blitz 2010
+
+  owner changed to James Crosby
+
+  estimate changed to trivial'
+entity: !!python/object:uuid.UUID
+  int: 161061990772579332022369510395879140569
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task 792b69 Fix python crashiness introduced (probably)
+  in r815-816>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 65473591827740514699788395597767861670
+who_did_it: *id002
+yaml_file_saved: 2010-12-10 18:29:29.789976

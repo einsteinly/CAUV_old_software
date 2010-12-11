@@ -1,0 +1,19 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-09 03:30:57.550238
+description: "pscore changed to 0\nstatus changed to started\ndescription changed\
+  \ to We currently have static, PID controllers for yaw, pitch and depth. We can\
+  \ do\r\nbetter!\r\n\r\nThe yaw/pitch/control data should be used to feedback and\
+  \ control the PID\r\nparameters, at the very least.\r\n\r\nOne requirement is that\
+  \ whatever happens the parameters will remain within sane\r\nvalues, though.\npoints\
+  \ changed to None"
+entity: !!python/object:uuid.UUID
+  int: 168542573981500185375940989407146100173
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task 7ecc1e Implement on-line Control Loop Tuning>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 200737342743857694427834023462260320375
+who_did_it: *id002
+yaml_file_saved: 2010-12-09 03:30:57.550337
