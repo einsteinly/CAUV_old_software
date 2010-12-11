@@ -288,7 +288,7 @@ group sonarctl
         width : uint16;
         gain : uint8;
         range : uint32;
-        radialRes : uint32;
+        rangeRes : uint32;
         angularRes : uint8;
     }
 }

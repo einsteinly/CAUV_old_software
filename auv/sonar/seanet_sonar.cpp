@@ -20,7 +20,7 @@ SonarControlMessageObserver::SonarControlMessageObserver(boost::shared_ptr<Seane
 
 void SonarControlMessageObserver::onSonarControlMessage(SonarControlMessage_ptr m)
 {
-    m_sonar->set_params(m->direction(), m->width(), m->gain(), m->range(), m->radialRes(), m->angularRes());
+    m_sonar->set_params(m->direction(), m->width(), m->gain(), m->range(), m->rangeRes(), m->angularRes());
 }
 
 
