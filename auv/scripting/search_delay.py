@@ -6,8 +6,8 @@ import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
 from colourfinder2 import ColourFinder
-from pipe_follow import PipeFinder
-from pipe_confirm import PipeConfirmer
+#from pipe_follow import PipeFinder
+from pipe_confirm2 import PipeConfirmer
 
 import time
 import traceback
@@ -87,8 +87,8 @@ def Search():
                        
                         else:
                             #enable follower when pipe is confirmed
-                            follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
-                            time.sleep(20)
+                            #follower = PipeFinder(node, auv, 'pipe', 0.4, 0.1)    #Script to position the AUV to the center of yellowness and the adjust bearing
+                            #time.sleep(20)
                             print 'surface...'    
                             #auv.depthAndWait(0)   
                             auv.depth(0)   

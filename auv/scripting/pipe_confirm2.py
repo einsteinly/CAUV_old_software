@@ -5,9 +5,10 @@ import cauv.node
 import threading
 from math import degrees, cos, sin
 import time
+from movingaverage import MovingAverage
 
 class PipeConfirmer(messaging.BufferedMessageObserver):
-    def __init__(self, node, auv, bin, centre_name='pipe', histogram_name='Hue', strafe_p = 30, lower_threshold=0.05):
+    def __init__(self, node, auv, bin, centre_name='pipe', histogram_name='Hue', strafe_p = 100, lower_threshold=0.05):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         self.auv = auv
@@ -28,6 +29,7 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
         self.noLines = 0
         self.enabled = False
         self.foundparalle=0
+        self.intensity = MovingAverage(side= 'lower', tolerance=lower_threshold, maxcount=5, st_multiplier=2.5, st_on = 1)
 
     def onCentreMessage(self, m):
         if m.name == self.centre_name and self.enabled == True:
@@ -36,20 +38,15 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
 
     def onHistogramMessage(self, m):
         if m.type == self.histogram_name and self.enabled == True:
-            if self.binsStart == []:
-                for indBin in self.bin:
-                    self.binsPrevious.append(m.bins[indBin])
-                    self.binsStart.append(m.bins[indBin])
-            if self.ms % 15 == 0:
-                for indBin in self.bin:
-                   self.binsNow.append(m.bins[indBin])
-                if sum(self.binsNow) < sum(self.binsPrevious) - self.lower_threshold:
-                    self.cv.acquire()
-                    self.cv.notify()
-                    self.failed = True
-                    self.cv.release()
-                self.binsPrevious = self.binsNow
-            self.ms += 1
+            for indBin in self.bin:
+                self.binsNow.append(m.bins[indBin])
+            self.intensity.update(sum(self.binsNow))
+            if self.intensity.trigger>10:
+                self.cv.acquire()
+                self.cv.notify()
+                self.failed = True
+                self.cv.release()
+
 
     def onHoughLinesMessage(self, m):
         if self.enabled == True:
@@ -58,11 +55,7 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
                 for j, line2 in enumerate(m.lines):
                     if degrees(abs(line1.angle - line2.angle)) < 15 and i != j:
                         self.foundparalle += 1
-            if self.noLines == 15:
-                self.cv.acquire()
-                self.cv.notify()
-                self.failed = True
-                self.cv.release()            
+     
 
     def confirm(self):
         print 'hi'
@@ -70,14 +63,13 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
         self.cv.acquire()
         self.cv.wait(12)
         self.enabled = False
+        
         if self.failed == True:
             self.cv.release()
             print 'Not confirmed'
             return False
 
-
-        if sum(self.binsNow) < sum(self.binsStart) + 0.2:
-            self.cv.release()
+        if self.foundparalle < 10:
             print 'Not confirmed'
             return False
             
