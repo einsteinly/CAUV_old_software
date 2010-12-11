@@ -20,9 +20,16 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
-    boost::shared_ptr<AUV> auv = boost::make_shared<AUV>();
-    boost::shared_ptr<AUVController> auvController = boost::make_shared<AUVController>(auv);
-    addMessageObserver(auvController);
+    // currently the gui can only connect to the auv when it starts up.
+    // this should really be made ocnfigurable via a shiny interface
+    // this would required some changes to cauv node classes to be possible
+
+
+    // set up the auv object along with a controller to update the state
+    // from the network messages
+    m_auv = boost::make_shared<AUV>();
+    m_auv_controller = boost::make_shared<AUVController>(m_auv);
+    addMessageObserver(m_auv_controller);
 
     /*Plot* plot = new Plot();
 
@@ -36,7 +43,7 @@ void CauvGui::onRun()
     ScalePicker *scalePicker = new ScalePicker(plot);
     plot->connect(scalePicker, SIGNAL(clicked(int, double)),
         plot, SLOT(insertCurve(int, double)));
-*/
+    */
     show();
     m_application.exec();
 }

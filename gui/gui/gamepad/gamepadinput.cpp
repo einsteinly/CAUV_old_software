@@ -2,12 +2,8 @@
 
 #include <sstream>
 #include <iostream>
-#include <QTimer>
 
 using namespace OIS;
-
-const char *g_DeviceType[6] = {"OISUnknown", "OISKeyboard", "OISMouse", "OISJoyStick",
-                                                         "OISTablet", "OISOther"};
 
 InputManager * GamepadInput::m_input_manager = 0;
 
@@ -144,7 +140,7 @@ std::string GamepadInput::listDevices(){
     DeviceList list = im->listFreeDevices();
     for( DeviceList::iterator i = list.begin(); i != list.end(); ++i ) {
             if(i->first == OISJoyStick){
-                str << "\n\tDevice: " << g_DeviceType[i->first] << " Vendor: " << i->second;
+                str << "\n\tDevice: " << "Gamepad" << " Vendor: " << i->second;
             }
         }
     str << "\n\n End of device list. \n\n";

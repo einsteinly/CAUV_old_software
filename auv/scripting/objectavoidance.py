@@ -5,7 +5,7 @@ import cauv
 import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
-from brightnessdetect import BrightnessDetect as
+from brightnessdetect2 import BrightnessDetect as
 
 import time
 import traceback

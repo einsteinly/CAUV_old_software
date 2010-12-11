@@ -17,13 +17,13 @@ def stringParam(str):
 def fromNPV(npv):
     if npv.type == messaging.ParamType.String:
         return npv.stringValue
-    elif npv.type == messaging.ParamType.Int32:
-        return npv.intValue
     elif npv.type == messaging.ParamType.Bool:
         if npv.intValue != 0:
             return True
         else:
             return False
+    elif npv.type == messaging.ParamType.Int32:
+        return npv.intValue
     elif npv.type == messaging.ParamType.Float:
         return npv.floatValue
 
@@ -110,6 +110,7 @@ class Model(messaging.BufferedMessageObserver):
         for id, pvps in graph.nodeParams.items():
             for param, value in pvps.items():
                 s.nodes[id].params[param] = fromNPV(value)
+                print (param, value)
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():
@@ -142,6 +143,7 @@ class Model(messaging.BufferedMessageObserver):
             for param in node.params.keys():
                 #print 'set parameter', id, param, '=', node.params[param]
                 self.setParameterSynchronous(id, param, toNPV(node.params[param]))
+                print (param, node.params[param])
         # finally add links
         for old_id, node in state.nodes.items():
             # strictly speaking only one of these should be necessary, since

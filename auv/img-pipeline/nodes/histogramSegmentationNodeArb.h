@@ -32,8 +32,8 @@ class HistogramSegmentationNode: public OutputNode{
             registerOutputID<image_ptr_t>("Pixels");
             
             //Parameters
-            registerParamID<int>("Number of bins", 42);
-            registerParamID<int>("Bin", 0);
+            registerParamID<int>("Bin min", 100);
+            registerParamID<int>("Bin max", 127);
             
         }
     
@@ -45,8 +45,8 @@ class HistogramSegmentationNode: public OutputNode{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            int bins = param<int>("Number of bins");
-            int bin = param<int>("Bin");
+            //int bins = param<int>("Number of bins");
+            //int bin = param<int>("Bin");
 
             image_ptr_t img = inputs["image_in"];
 
@@ -58,9 +58,9 @@ class HistogramSegmentationNode: public OutputNode{
                 throw(parameter_error("Image must have only one channel."));
                 //TODO: support vector parameters
 
-            float binWidth = 256 / bins;
-            float binMin = bin * binWidth;
-            float binMax = (bin + 1) * binWidth;
+            //float binWidth = 256 / bins;
+            float binMin = param<int>("Bin min");//bin * binWidth;
+            float binMax = param<int>("Bin max");//(bin + 1) * binWidth;
             cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC1);
 
             for(int i = 0; i < img->cvMat().rows; i++) {

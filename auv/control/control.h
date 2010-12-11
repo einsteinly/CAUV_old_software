@@ -18,7 +18,11 @@ class ControlNode : public CauvNode
         ControlNode();
         virtual ~ControlNode();
     
+#ifdef CAUV_MCB_IS_FTDI
         void setMCB(int id);
+#else 
+        void setMCB(const std::string& filename);
+#endif
         void setXsens(int id);
     
     protected:

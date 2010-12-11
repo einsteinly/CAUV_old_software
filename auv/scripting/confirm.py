@@ -8,6 +8,7 @@ from colourfinder import ColourFinder as ColFinder
 
 import time
 import traceback
+import threading
 
 class Confirmer(messaging.BufferedMessageObserver):
 
@@ -17,50 +18,48 @@ class Confirmer(messaging.BufferedMessageObserver):
         node.join("processing")
         node.addObserver(self)
         self.bin = bin
+        self.lock = threading.Lock()
 
     def confirm(): 
-        #node = cauv.node.Node('py-confirm')             #Create a node of the spread messaging service
-        #auv = control.AUV(node)                         #Create a python object for the control of the AUV
-        #detect = ColFinder(node, 14, 'Hue')             #Turn on the colour detection script
-
-        print 'Setting calibration.'
-        node.send(msg.DepthCalibrationMessage(
-        -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
-        ), "control")
-
-        auv.bearingParams(1, 0, -80, 1)
-        auv.depthParams(40, 0, 0, 1)
-        #auv.pitchParams(1, 0, 0, 1)
-
-        auv.propMap(10, -10, 127, -127)
-        auv.vbowMap(10, -10, 127, -127)
-        auv.hbowMap(10, -10, 127, -127)
-        auv.vsternMap(10, -10, 127, -127)
-        auv.hsternMap(10, -10, 127, -127)
-
         try:
-        print 'Emergency stop.'
-        auv.prop(-127)
-        time.sleep(0.5)
-        auv.prop(0)
-        #pipeline change
-
+            print 'Emergency stop.'
+            #calibrate
+            auv.prop(-127)
+            time.sleep(0.5)
+            auv.prop(0)
+            while
+            #pipeline change
         except Exception:
-        traceback.print_exc()
-        auv.depth(0)
-        auv.stop()
-        print 'Complete.'
+            traceback.print_exc()
+            auv.depth(0)
+            auv.stop()
 
+        print 'Complete.'
         return 0
 
     def onCentreMessage(self, m):
         if(m.name == self.name):
-            cv.acquire()
-            cv.notify()
-            cv.notify()
+            lock.acquire()
+            self.cX = m.x
+            self.cY = m.y
+            lock.release()
 
 if __name__ == '__main__':
     node = cauv.node.Node('Confirm')
+    print 'Setting calibration.'
+    node.send(msg.DepthCalibrationMessage(
+    -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
+    ), "control")
+
+    auv.bearingParams(1, 0, -80, 1)
+    auv.depthParams(40, 0, 0, 1)
+    #auv.pitchParams(1, 0, 0, 1)
+
+    auv.propMap(10, -10, 127, -127)
+    auv.vbowMap(10, -10, 127, -127)
+    auv.hbowMap(10, -10, 127, -127)
+    auv.vsternMap(10, -10, 127, -127)
+    auv.hsternMap(10, -10, 127, -127)
     Confimer(node, auv, 'Yellow').confirm()
     while True:
         time.sleep(5)

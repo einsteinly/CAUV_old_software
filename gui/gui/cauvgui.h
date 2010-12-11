@@ -10,6 +10,7 @@
 #include <debug/cauv_debug.h>
 
 #include <model/auv_model.h>
+#include <model/auv_controller.h>
 
 #include "ui_mainwindow.h"
 #include "pipelineWidget.h"
@@ -26,6 +27,9 @@ class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
         virtual void onRun();
 
         virtual void closeEvent(QCloseEvent *);
+
+        boost::shared_ptr<AUV> m_auv;
+        boost::shared_ptr<AUVController> m_auv_controller;
 
         QApplication &m_application;
 };

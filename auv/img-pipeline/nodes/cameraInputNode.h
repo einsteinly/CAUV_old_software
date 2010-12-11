@@ -87,7 +87,7 @@ class CameraInputNode: public AsynchronousNode{
                     }catch(cv::Exception& e){
                         error() << "capture exception:" << e.what();
                     }
-                    
+                   
                     if(!m_capture.isOpened()){
                         error() << "could not open camera" << dev_id;
                         return;
