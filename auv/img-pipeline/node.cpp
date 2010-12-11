@@ -556,7 +556,7 @@ void Node::registerInputID(input_id const& i){
 /* Check to see if all inputs are new and output is demanded; if so,
  * add this node to the scheduler queue
  */
-void Node::checkAddSched() throw(){
+void Node::checkAddSched(){
     unique_lock_t l(m_checking_sched_lock);
     if(!allowQueue()){
         debug(4) << __func__ << "Cannot enqueue node" << *this << ", allowQueue false";
@@ -566,8 +566,12 @@ void Node::checkAddSched() throw(){
         debug(4) << __func__ << "Cannot enqueue node" << *this << ", exec queued already";
         return;
     }
-    if(!newOutputDemanded() && !newParamValues()){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", no output demanded";
+
+    const bool out_demanded = newOutputDemanded();
+    const bool new_pvs = newParamValues();
+    if(out_demanded == false && new_pvs == false){
+        debug(4) << __func__ << "Cannot enqueue node" << *this << ", no demand:"
+                 << "new params=" << new_pvs << "output demand=" << out_demanded;
         return;
     }
 

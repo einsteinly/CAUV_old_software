@@ -7,7 +7,7 @@ bool AUVController::pushState(bool state) {
     return preChangeState;
 }
 
-const bool AUVController::popState() {
+bool AUVController::popState() {
     if (m_state.empty()) return true; // on by default
 
     bool value = m_state.back();
@@ -15,7 +15,7 @@ const bool AUVController::popState() {
     return value;
 }
 
-const bool AUVController::enabled() {
+bool AUVController::enabled() {
     if (m_state.empty()) return true; // on by default
 
     return m_state.back();

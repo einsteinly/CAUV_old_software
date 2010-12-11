@@ -3,14 +3,14 @@ project (AUV)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")
 
 # everything needs boost: 
-find_package (Boost 1.40 REQUIRED)
+find_package (Boost 1.43 REQUIRED)
 set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
 include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories (${Boost_LIBRARY_DIRS})
 
 # openCV paths:
 find_package (OpenCV REQUIRED)
-include_directories (SYSTEM ${OpenCV_INCLUDE_DIRS})
+include_directories (SYSTEM "/home/cauv/temp-install/include")
 
 # we expect the source root dir to be in the include path
 include_directories (${AUV_SOURCE_DIR})

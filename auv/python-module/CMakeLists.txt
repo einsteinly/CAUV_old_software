@@ -21,7 +21,7 @@ add_library (cauvinterface SHARED
 )
 set_target_properties(cauvinterface PROPERTIES PREFIX "")
 
-message ("Python Libs: ${PYTHON_LIBRARIES}")
+#message ("Python Libs: ${PYTHON_LIBRARIES}")
 target_link_libraries (cauvinterface
     common
     cauv_debug

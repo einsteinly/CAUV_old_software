@@ -15,6 +15,9 @@ class NetInputNode: public InputNode{
     public:
         NetInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
             : InputNode(sched, pl, t){
+        }
+
+        void init(){
             // InputNode stuff: subscribe to images
             m_subscriptions.insert(ImageData);
 

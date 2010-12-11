@@ -97,8 +97,8 @@ std::basic_ostream<charT, traits>& operator<<(
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
-    std::basic_ostream<charT, traits>& os, Image const& img){
-    os << "{Image mat=" << img.cvMat() << "}";
+    std::basic_ostream<charT, traits>& os, Image const&){
+    os << "{Image mat=redacted}";
     return os;
 }
 

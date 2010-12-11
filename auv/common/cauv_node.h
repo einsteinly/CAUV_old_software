@@ -57,7 +57,7 @@ class CauvNode
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
         boost::shared_ptr<MailboxEventMonitor> m_event_monitor;
         boost::shared_ptr<MsgSrcMBMonitor> m_mailbox_monitor;
-        volatile bool m_interupted;
+        volatile bool m_interrupted;
 };
 
 #endif//__CAUV_NODE_H__

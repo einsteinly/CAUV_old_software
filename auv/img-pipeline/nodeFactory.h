@@ -55,7 +55,11 @@ typedef boost::shared_ptr<CreatorBase> creator_ptr_t;
 template<typename T>
 struct Creator: public CreatorBase{
     virtual boost::shared_ptr<Node> create(Scheduler& s, ImageProcessor& pl, NodeType::e t) const{
-        return boost::make_shared<T>(boost::ref(s), boost::ref(pl), t);
+        boost::shared_ptr<T> r = boost::make_shared<T>(boost::ref(s), boost::ref(pl), t);
+        // hold a shared pointer during initialisation so that shared_from_this
+        // is available!
+        r->init();
+        return r;
     }
 };
 
