@@ -1,0 +1,27 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-12 09:58:49.811721
+description: !!python/unicode "Python debug printing needs to, and currently does\
+  \ not:\r\n\r\n - log output\r\n - be completely threadsafe with debug() << output\r\
+  \n - have adjustable verbosity\r\n\r\nEasiest way to do this would be to wrap debug()\
+  \ error() warning() and info() for python."
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2010-12-12 09:58:49.817306
+owner: !!python/object:uuid.UUID
+  int: 78002556280449588393479432476918080669
+points: null
+pscore: !!python/unicode 'None'
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 154609098728873674441152855601256671864
+title: !!python/unicode 'Implement a cauv_print() or similar python function'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 210939686333367318091642028395749001011
+yaml_file_saved: 2010-12-12 09:58:49.823891
