@@ -9,15 +9,15 @@ description: !!python/unicode 'The sonar takes several seconds to acquire a full
   probably belongs in the library that is currently used to compose sonar data into
   radial images.'
 estimate: !!python/object:uuid.UUID
-  int: 232728329951956224362343003393279330573
+  int: 277284367523703929526958133625188989255
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-08 10:57:40.484228
+modified_time: 2010-12-11 21:38:18.642119
 owner: *id001
 points: null
-pscore: 0
+pscore: !!python/unicode '3'
 status: !!python/object:uuid.UUID
-  int: 300208156334241880201290222579226582105
+  int: 154409908609622189382556686006061208230
 tags:
 - !!python/object:uuid.UUID
   int: 331996142187771955882707416418215780478
@@ -25,4 +25,4 @@ title: Sonar Movement Compensation
 type: task
 uuid: !!python/object:uuid.UUID
   int: 74632870439063453352218554463672053920
-yaml_file_saved: 2010-12-08 10:57:40.490373
+yaml_file_saved: 2010-12-11 21:38:18.642323

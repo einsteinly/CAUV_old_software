@@ -1,0 +1,22 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-12 09:55:16.691061
+description: "pscore changed to 1\ndescription changed to \r\nSubtract the background\
+  \ of an image with a confidence factor based on how close to the value of the background\
+  \ each pixel in the image is --- such that areas of definite background are turned\
+  \ black, and areas of less certain background end up very dar.\r\n\ntitle changed\
+  \ to Implement an image processing node for parametrised background subtraction\n\
+  tags changed to [<pitz.Tag 8da7e1 image processing>]\ncreated_by changed to James\
+  \ Crosby\npoints changed to None\nowner changed to Leszek Swirski\nestimate changed\
+  \ to small project"
+entity: !!python/object:uuid.UUID
+  int: 324244509574522121886565862978727289332
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task f3ef38 Implement an image processing node for
+  parametrised backgrou...>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 78858801301714018978208242215144102410
+who_did_it: *id002
+yaml_file_saved: 2010-12-12 09:55:16.691161

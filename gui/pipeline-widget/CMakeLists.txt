@@ -18,7 +18,7 @@ set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (
     pipeline-widget_srcs
     pipelineWidget.cpp
-    pipelineWidgetNode.cpp
+    pipelineMessageObserver.cpp
     pipelineWidgetPlugin.cpp
     renderable.cpp
     buildMenus.cpp

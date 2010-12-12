@@ -1,0 +1,16 @@
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-11 21:40:04.675247
+description: !!python/unicode 'Turns out it doesn''t actually do this -- the observer
+  is probably not subscribed to the telemetry group.'
+entity: !!python/object:uuid.UUID
+  int: 74632870439063453352218554463672053920
+modified_time: 2010-12-11 21:40:04.686174
+pscore: 2
+title: !!python/unicode 'Actually....'
+type: comment
+uuid: !!python/object:uuid.UUID
+  int: 5728803157450059065278349845325881265
+who_said_it: !!python/object:uuid.UUID
+  int: 263484739648898995288495580675464106490
+yaml_file_saved: 2010-12-11 21:40:04.691757

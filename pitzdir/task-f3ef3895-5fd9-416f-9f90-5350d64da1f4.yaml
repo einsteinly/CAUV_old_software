@@ -1,0 +1,28 @@
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-12 09:55:16.685011
+description: !!python/unicode "\r\nSubtract the background of an image with a confidence\
+  \ factor based on how close to the value of the background each pixel in the image\
+  \ is --- such that areas of definite background are turned black, and areas of less\
+  \ certain background end up very dar.\r\n"
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2010-12-12 09:55:16.690839
+owner: !!python/object:uuid.UUID
+  int: 263484739648898995288495580675464106490
+points: null
+pscore: !!python/unicode '1'
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+title: !!python/unicode 'Implement an image processing node for parametrised background
+  subtraction'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 324244509574522121886565862978727289332
+yaml_file_saved: 2010-12-12 09:55:16.707833
