@@ -52,6 +52,7 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void printIt(bool);
+    void printIt(int);
 
 public:
     PlaystationInput(const unsigned int id);

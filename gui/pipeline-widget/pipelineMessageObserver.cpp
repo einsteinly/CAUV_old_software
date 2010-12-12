@@ -1,4 +1,4 @@
-#include "pipelineWidgetNode.h"
+#include "pipelineMessageObserver.h"
 
 #include <boost/make_shared.hpp>
 
@@ -164,41 +164,5 @@ void PipelineGuiMsgObs::onGuiImageMessageBuffered(GuiImageMessage_ptr m){
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     if(imgnode_ptr_t np = m_widget->imgNode(m->nodeId()))
         np->display(m->image());
-}
-
-
-PipelineGuiCauvNode::PipelineGuiCauvNode(PipelineWidget *p)
-    : CauvNode("pipe-gui"), m_widget(p){
-    debug() << "PGCN constructed";
-}
-
-void PipelineGuiCauvNode::onRun(){
-    debug() << "PGCN::onRun()";
-    joinGroup("pl_gui");
-
-    addMessageObserver(
-        boost::make_shared<PipelineGuiMsgObs>(m_widget)
-    );
-    addMessageObserver(
-        boost::make_shared<DBGLevelObserver>()
-    );
-    #if defined(USE_DEBUG_MESSAGE_OBSERVERS)
-    addMessageObserver(
-        boost::make_shared<DebugMessageObserver>()
-    );
-    #endif
-
-    // get the initial pipeline state:
-    send(boost::make_shared<GraphRequestMessage>());
-}
-
-
-void pw::spawnPGCN(PipelineWidget *p, int argc, char** argv){
-    boost::shared_ptr<PipelineGuiCauvNode> pgcn =
-        boost::make_shared<PipelineGuiCauvNode>(p);
-    p->setCauvNode(pgcn);
-    pgcn->parseOptions(argc, argv);
-    pgcn->run();
-    warning() << __func__ << "run() finished";
 }
 
