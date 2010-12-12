@@ -65,7 +65,7 @@ class QuickSegmentNode: public OutputNode{
                             if((pix[i] - mean[i]) * (pix[i] - mean[i]) <
                                 scale * stdev[i] * scale * stdev[i])
                             {
-                                *dest_it = 1;
+                                *dest_it = 255;
                                 break;
                             }
                         }
