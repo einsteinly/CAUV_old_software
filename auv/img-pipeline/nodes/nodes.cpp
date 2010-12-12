@@ -80,7 +80,7 @@ DEFINE_NFR(HistogramSegmentationNode, NodeType::HistogramSegmentation);
 DEFINE_NFR(CentreFinderNode, NodeType::Centre);
 DEFINE_NFR(QuickSegmentNode, NodeType::QuickSegment);
 DEFINE_NFR(ThresholdMaskNode, NodeType::ThresholdMask);
-DEFINE_NFR(CornerHarrisNode, NodeType::CornerHarris);
+//DEFINE_NFR(CornerHarrisNode, NodeType::CornerHarris);
 DEFINE_NFR(HistogramSegmentationArbNode, NodeType::HistogramSegmentationArb);
 DEFINE_NFR(RunningAverageNode, NodeType::RunningAverage);
 DEFINE_NFR(CopyNodeMask, NodeType::CopyMask);
