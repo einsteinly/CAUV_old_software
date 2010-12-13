@@ -19,9 +19,10 @@ class MessageObserverWrapper:
         #set $className = $m.name + "Message"
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
+            ## lock must be held during get_override!
+            GILLock l;
             if(bp::override f = this->get_override("on${className}")){
                 debug(12) << "MessageObserver: calling override for on${className}";
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -50,9 +51,10 @@ class BufferedMessageObserverWrapper:
         #set $className = $m.name + "Message"
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
+            ## lock must be held during get_override!
+            GILLock l;
             if(bp::override f = this->get_override("on${className}")){
                 debug(12) << "BufferedMessageObserver: calling override for on${className}";
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -67,9 +69,10 @@ class BufferedMessageObserverWrapper:
             }
         }
         void on${className}Buffered($ptrName m){
+            ## lock must be held during get_override!
+            GILLock l;
             if(bp::override f = this->get_override("on${className}Buffered")){
                 debug(12) << "BufferedMessageObserver: calling override for on${className}Buffered";
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){

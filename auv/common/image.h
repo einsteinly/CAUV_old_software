@@ -35,12 +35,18 @@ class Image{
             switch(m_img.channels()){
                 case 1:
                     load_flags = 0;
-                    m_img.convertTo(converted, CV_8UC1);
+                    if (m_img.type() != CV_8UC1)
+                        m_img.convertTo(converted, CV_8UC1);
+                    else
+                        converted = m_img;
                     break;
                 case 3:
                 default:
                     load_flags = 1;
-                    m_img.convertTo(converted, CV_8UC3);
+                    if (m_img.type() != CV_8UC3)
+                        m_img.convertTo(converted, CV_8UC3);
+                    else
+                        converted = m_img;
                     break;
             }
             ar & load_flags;

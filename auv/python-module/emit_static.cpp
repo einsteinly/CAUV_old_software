@@ -45,8 +45,8 @@ struct ThingCaller{
 
 struct ThingWrapper: public Thing, bp::wrapper<Thing>{
     int foo(){
+        GILLock l; // GIL MUST be held during get_override!
         if(bp::override f = this->get_override("foo")){
-            GILLock l; // aquire GIL before calling back into python
             return f();
         }
         return Thing::foo();
@@ -66,8 +66,8 @@ class MessageWrapper:
 {
     public:
         boost::shared_ptr<const byte_vec_t> toBytes() const{
+            GILLock l; // GIL MUST be held during get_override!
             if(bp::override f = this->get_override("toBytes")){
-                GILLock l; 
                 f();
             }
             assert(0);
@@ -123,8 +123,8 @@ class AIMessageObserver:
     public:
         // only check for overrides of onAIMessage
         void onAIMessage(AIMessage_ptr m){
+            GILLock l;
             if(bp::override f = this->get_override("onAIMessage")){
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -145,10 +145,12 @@ class SpreadMessageWrapper:
 {
     public:
         virtual MessageFlavour getMessageFlavour() const{
+            GILLock l;
             if(bp::override f = this->get_override("getMessageFlavour")){
-                GILLock l; 
                 f();
             }
+            error() << "1. Spread Messages should not be exposed to Python";
+            error() << "2. You should DEFINITELY not be using them";
             assert(0);
         }
 };
