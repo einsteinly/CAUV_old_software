@@ -222,7 +222,7 @@ void emitCauvNode(){
                boost::noncopyable
               >("CauvNode", bp::init<std::string, std::string, unsigned>())
          .def("run", wrap(&CauvNodeWrapper::run))
-         .def("onRun", wrap(&CauvNodeWrapper::onRun))
+         .def("onRun", &CauvNodeWrapper::onRun) // not wrapped: called c++ -> python; uses GilLock instead
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))

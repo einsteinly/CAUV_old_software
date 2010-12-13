@@ -40,6 +40,7 @@ class TexImg{
         }
 
         ~TexImg(){
+            //TODO: does this need any locking??!
             if(m_tex_id)
                 Textures_For_Deleting.push_back(m_tex_id);
         }
@@ -107,13 +108,40 @@ class TexImg{
                 h = w * img_h / img_w;
             }
             cv::resize(img->cvMat(), m, cv::Size(w, h), 0, 0, cv::INTER_LANCZOS4);
-            
+
+            GLenum tex_type = GL_UNSIGNED_BYTE;
+            switch(m.type() & CV_MAT_DEPTH_MASK){
+                case CV_8S:
+                    warning() << "_genTexture(): signed byte image type not supported: using unsigned";
+                case CV_8U:
+                    tex_type = GL_UNSIGNED_BYTE;
+                    break;
+                case CV_16S:
+                    tex_type = GL_SHORT;
+                    break;
+                case CV_16U:
+                    tex_type = GL_UNSIGNED_SHORT;
+                    break;
+                case CV_32S:
+                    tex_type = GL_INT;
+                    break;
+                case CV_32F:
+                    tex_type = GL_FLOAT;
+                    break;
+                case CV_64F:
+                    warning() << "_genTexture(): double image type not supported: trying anyway...";
+                    tex_type = GL_DOUBLE;
+                    break;
+                default:
+                    error() << "unknown OpenCV image type depth:";
+            }
+
             if(m.channels() == 4)
-                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGRA, GL_UNSIGNED_BYTE, m.data);
+                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGRA, tex_type, m.data);
             else if(m.channels() == 3)
-                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGR, GL_UNSIGNED_BYTE, m.data);
+                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGR, tex_type, m.data);
             else if(m.channels() == 1)
-                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_LUMINANCE, GL_UNSIGNED_BYTE, m.data);
+                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_LUMINANCE, tex_type, m.data);
         }
 
         boost::shared_ptr<Image> m_img;
