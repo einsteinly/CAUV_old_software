@@ -52,7 +52,19 @@ class RunningAverageNode: public Node{
             out_map_t r;
 
             image_ptr_t img = inputs["image"];
-            
+            const cv::Mat& imgMat = img->cvMat();
+            int imgChannels = imgMat.channels();
+            if (imgChannels != 1 && imgChannels != 3)
+            {
+                error() << "image must have 1 or 3 channels";
+                return r;    
+            }
+            int imgDepth = imgMat.depth();
+            if (imgDepth != CV_8U && imgDepth != CV_8S && imgDepth != CV_32F) {
+                error() << "image must be 8-bit or 32-bit float";
+                return r;
+            }
+
             float alpha = param<float>("alpha");
 
             if(alpha < 0 || alpha > 1)
@@ -62,15 +74,13 @@ class RunningAverageNode: public Node{
             }
 
             if (avg.empty()
-                || avg.type() != img->cvMat().type()
-                || avg.size() != img->cvMat().size())
+                || avg.channels() == imgChannels
+                || avg.size() != imgMat.size())
             {
-                avg = img->cvMat().clone();
+                avg = cv::Mat::zeros(imgMat.size(), CV_32FC(imgChannels));
             }
-            else
-            {
-                cv::accumulateWeighted(img->cvMat(), avg, alpha);
-            }
+
+            cv::accumulateWeighted(imgMat, avg, alpha);
 
             r["image"] = boost::make_shared<Image>(avg.clone());
             

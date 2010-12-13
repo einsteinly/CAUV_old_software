@@ -43,9 +43,9 @@ class Node(messaging.CauvNode):
         t.daemon = True
         t.start()
     
-    def send(self, message, groups, service_level=ServiceLevel.Safe):
-        #if groups == None:
-        #    groups = message.group
+    def send(self, message, groups=None, service_level=ServiceLevel.Safe):
+        if groups == None:
+            groups = message.group
         self.mailbox.send(message, service_level, groups)
 
     #def send(self, message):
