@@ -36,7 +36,7 @@ class RunningAverageNode: public Node{
             // parameters:
             //   K: the number of clusters
             //   colorise: colour each pixel with its clusters centre (otherwise, colour with cluster id)
-            registerParamID<float>("alpha", 0.2);
+            registerParamID<float>("alpha", 0.01);
         }
     
         virtual ~RunningAverageNode()
@@ -74,13 +74,16 @@ class RunningAverageNode: public Node{
             }
 
             if (avg.empty()
-                || avg.channels() == imgChannels
+                || avg.channels() != imgChannels
                 || avg.size() != imgMat.size())
             {
-                avg = cv::Mat::zeros(imgMat.size(), CV_32FC(imgChannels));
+                debug() << "creating new image for running average";
+                imgMat.assignTo(avg, CV_32F);
             }
-
-            cv::accumulateWeighted(imgMat, avg, alpha);
+            else
+            {
+                cv::accumulateWeighted(imgMat, avg, alpha);
+            }
 
             r["image"] = boost::make_shared<Image>(avg.clone());
             
