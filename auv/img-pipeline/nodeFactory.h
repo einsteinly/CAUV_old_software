@@ -35,6 +35,8 @@
 #include <generated/messages_fwd.h>
 
 #include "pipelineTypes.h"
+#include "scheduler.h"
+#include "imageProcessor.h"
 
 
 /* These make registering your new node type a little easier */

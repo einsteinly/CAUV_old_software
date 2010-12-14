@@ -13,9 +13,9 @@
 
 class NodeAddedMessage;
 class NodeParametersMessage;
-class NodeOutput;
-class NodeInput;
-class NodeParamValue;
+struct NodeOutput;
+struct NodeInput;
+struct NodeParamValue;
 
 // namespace NodeType{ enum e; } // eww, can't forward declare enums, have to
 // drag in messages.h!

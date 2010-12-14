@@ -65,7 +65,7 @@ class EditText: public Menu{
             glPopMatrix();
 
             glPushMatrix();
-            glTranslatef(m_txt_prev->m_pos.x + m_txt_prev->bbox().w() + 1 + m_cur_w/2, 0, 0);
+            glTranslatef(m_txt_prev->m_pos.x + m_txt_prev->bbox().w() + 1 + m_cur_w/2.0, 0, 0);
             glColor(m_cursor_colour);
             glLineWidth(m_cur_w);
             glBegin(GL_LINES);
@@ -253,7 +253,7 @@ class EditText: public Menu{
 
         Colour m_cursor_colour;
 
-        static const double m_cur_w = 2;
+        static const int m_cur_w = 2;
 };
 
 } // namespace pw
