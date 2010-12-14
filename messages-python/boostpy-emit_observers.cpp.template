@@ -32,6 +32,7 @@ class MessageObserverWrapper:
                     }
                 }
             }else{
+                l.release();
                 debug(12) << "MessageObserver: no override for on${className}";
                 MessageObserver::on${className}(m);
             }
@@ -64,6 +65,7 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
+                l.release();
                 debug(12) << "BufferedMessageObserver: no override for on${className}";
                 BufferedMessageObserver::on${className}(m);
             }
@@ -82,7 +84,8 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
-                debug(12) << "BufferedMessageObserver: no override for on${className}Buffered";            
+                l.release();
+                debug(12) << "BufferedMessageObserver: no override for on${className}Buffered";
                 BufferedMessageObserver::on${className}Buffered(m);
             }
         }
@@ -126,7 +129,7 @@ void emitObservers(){
     ;
 
     bp::class_<DebugMessageObserver,
-               bp::bases<MessageObserver>,    
+               bp::bases<MessageObserver>,
                boost::noncopyable,
                boost::shared_ptr<DebugMessageObserver>
               >("DebugMessageObserver")
@@ -146,7 +149,7 @@ class MessageSource
         void removeObserver(boost::shared_ptr<MessageObserver> o);
         void clearObservers();
 
-    
+
     // Ideally protected, but boost.python pointer_holder requires puplic
     // default constructor to be available in order to allow pointers to this
     // type
