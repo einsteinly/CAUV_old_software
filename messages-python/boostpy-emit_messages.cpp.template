@@ -7,7 +7,7 @@
 \#include "../generated/messages.h"
 
 namespace bp = boost::python;
-    
+
 #for $g in $groups
 static const char* ${g.name.upper()}_NAME = "$g.name";
 #end for
@@ -24,7 +24,7 @@ void emitMessages(){
             $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
         #end if
     #end for
-        
+
     bp::class_<$className,
                bp::bases<Message>
               >("$className", bp::init<>())
@@ -57,7 +57,7 @@ void emitMessages(){
     register_shared_ptrs_to_python<$className>();
     #end for
     #end for
-    
+
     // hackery for boost::shared_ptr<T const> ... see workarounds.h
     register_shared_ptrs_to_python<Message>();
 }

@@ -4,6 +4,7 @@
 
 void emitThing(); // test stuff
 
+void emitDebug();
 void emitMailbox();
 void emitMessage();
 void emitCauvNode();
