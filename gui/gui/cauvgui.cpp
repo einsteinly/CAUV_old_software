@@ -15,6 +15,18 @@ CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_applicati
     joinGroup("pl_gui");
 }
 
+void CauvGui::addCauvWidget(CauvWidget *widget, Qt::DockWidgetArea area){
+    if(widget->parent()) throw "Widget already has a parent";
+    else {
+        this->addDockWidget(area, widget);
+        connect(widget, SIGNAL(centralViewRegistered(QWidget*, QString&)), this, SLOT(addCentralTab(QWidget*, QString&)));
+    }
+}
+
+void CauvGui::addCentralTab(QWidget* tab, QString& name){
+    tabWidget->addTab(tab, name);
+}
+
 void CauvGui::closeEvent(QCloseEvent*){
     hide();
     CauvNode::stopNode();
@@ -39,7 +51,9 @@ void CauvGui::onRun()
     m_auv = boost::make_shared<AUV>();
     m_auv_controller = boost::make_shared<AUVController>(m_auv);
     addMessageObserver(m_auv_controller);
+    m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
+    m_auv->motors.prop->set(15);
 
     pw::PipelineWidget * pipelineWidget = new pw::PipelineWidget(this);
     boost::shared_ptr<pw::PipelineGuiMsgObs> observer = boost::make_shared<pw::PipelineGuiMsgObs>(pipelineWidget);
@@ -47,9 +61,10 @@ void CauvGui::onRun()
     this->connect(pipelineWidget, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
 
 
-    setCentralWidget(pipelineWidget);
+    tabWidget->addTab(pipelineWidget, "Pipeline Editor");
 
-    /*Plot* plot = new Plot();
+    /*
+    Plot* plot = new Plot();
 
     setCentralWidget(plot);
 
@@ -62,6 +77,7 @@ void CauvGui::onRun()
     plot->connect(scalePicker, SIGNAL(clicked(int, double)),
         plot, SLOT(insertCurve(int, double)));
     */
+
     show();
     m_application.exec();
 }

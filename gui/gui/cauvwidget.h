@@ -2,6 +2,7 @@
 #define CAUVWIDGET_H
 
 #include <QDockWidget>
+#include <QString>
 #include <boost/shared_ptr.hpp>
 #include <model/auv_model.h>
 #include <model/auv_controller.h>
@@ -10,18 +11,22 @@ class CauvWidget : public QDockWidget
 {
 Q_OBJECT
 public:
-    explicit CauvWidget(boost::shared_ptr<AUV> &auv, boost::shared_ptr<AUVController> &controller, QWidget *parent = 0);
+    explicit CauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, boost::shared_ptr<AUVController> &controller, QWidget *parent = 0);
+    const QString &name() const;
 
 Q_SIGNALS:
     void centralViewRequested(QWidget *);
+    void centralViewRegistered(QWidget *);
 
 public Q_SLOTS:
     virtual void centralViewLost();
     virtual void requestCentralView(QWidget *central);
+    virtual void registerCentralView(QWidget *central);
     
 protected:
     boost::shared_ptr<AUV> m_auv;
     boost::shared_ptr<AUVController> m_auv_controller;
+    QString m_name;
 };
 
 #endif // CAUVWIDGET_H

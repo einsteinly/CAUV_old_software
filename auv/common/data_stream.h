@@ -37,15 +37,21 @@ template <class T>
 class DataStream : public DataSource {
 
     public:
-        boost::signal<void(const T)> onChange;
+        boost::signal<void(const T)> onSet;
+        boost::signal<void(const T)> onUpdate;
 
         T m_latest;
 
         DataStream(const std::string name, DataSource* parent = NULL):DataSource(name, parent) {};
 
         virtual void set(const T data) {
+            this->update(data);
+            this->onSet(data);
+        }
+
+        virtual void update(const T data) {
             this->m_latest = data;
-            this->onChange(data);
+            this->onUpdate(data);
         }
 
         virtual T get() {

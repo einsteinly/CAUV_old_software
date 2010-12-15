@@ -14,17 +14,19 @@
 
 #include "ui_mainwindow.h"
 #include "pipelineWidget.h"
+#include "cauvwidget.h"
 
-
-class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
+class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow {
 
     Q_OBJECT
 
     public:
         CauvGui(QApplication& app, QWidget *parent = 0);
+        void addCauvWidget(CauvWidget * widget, Qt::DockWidgetArea area = Qt::LeftDockWidgetArea);
 
     public Q_SLOTS:
         int send(boost::shared_ptr<Message>message);
+        void addCentralTab(QWidget* tab, QString& name);
 
     protected:
         virtual void onRun();

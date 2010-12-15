@@ -7,13 +7,15 @@
 #include <debug/cauv_debug.h>
 #include <boost/shared_ptr.hpp>
 
+#include <boost/signals.hpp>
+
 #include "auv_model.h"
 
 class AUVController : public MessageObserver {
 
 public:
 
-    AUVController(boost::shared_ptr< AUV > auv): m_auv(auv){}
+    AUVController(boost::shared_ptr< AUV > auv);
 
     void onDebugMessage(DebugMessage_ptr);
     void onDebugLevelMessage(DebugLevelMessage_ptr);
@@ -64,6 +66,10 @@ public:
     bool pushState(bool state);
     bool popState();
     bool enabled();
+
+    void sendMotorMessage(MotorID::e motor, int8_t speed);
+
+    boost::signal<void(const boost::shared_ptr<Message>)> onMessageGenerated;
 
 
 protected:
