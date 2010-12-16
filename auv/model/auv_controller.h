@@ -5,6 +5,7 @@
 
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
+#include <boost/shared_ptr.hpp>
 
 #include "auv_model.h"
 
@@ -12,7 +13,7 @@ class AUVController : public MessageObserver {
 
 public:
 
-    AUVController(const AUV &auv): m_auv(auv){}
+    AUVController(boost::shared_ptr< AUV > auv): m_auv(auv){}
 
     void onDebugMessage(DebugMessage_ptr);
     void onDebugLevelMessage(DebugLevelMessage_ptr);
@@ -66,7 +67,7 @@ public:
 
 
 protected:
-    const AUV &m_auv;
+    boost::shared_ptr< AUV > m_auv;
     std::vector<bool> m_state;
 
 };

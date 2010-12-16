@@ -1,8 +1,10 @@
-#ifndef __PIPELINE_WIDGET_NODE_H__
-#define __PIPELINE_WIDGET_NODE_H__
+#ifndef __PIPELINE_MESSAGE_OBSERVER_H__
+#define __PIPELINE_MESSAGE_OBSERVER_H__
 
 #include <common/cauv_node.h>
 #include <generated/messages.h>
+
+#include <QObject>
 
 #include "pwTypes.h"
 
@@ -32,18 +34,6 @@ class PipelineGuiMsgObs: public BufferedMessageObserver{
         PipelineWidget *m_widget;
 };
 
-class PipelineGuiCauvNode: public CauvNode{
-    public:
-        PipelineGuiCauvNode(PipelineWidget *p);
-        void onRun();
-    private:
-        PipelineWidget *m_widget;
-};
-
-// creating threads taking parameters (especially in a ctor-initializer) is a
-// little tricky, using an intermediate function smooths the ride a bit:
-void spawnPGCN(PipelineWidget *p, int argc, char** argv);
-
 } // namespace pw
 
-#endif // ndef __PIPELINE_WIDGET_NODE_H__
+#endif // ndef __PIPELINE_MESSAGE_OBSERVER_H__

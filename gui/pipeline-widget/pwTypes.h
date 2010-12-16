@@ -18,7 +18,6 @@ enum e{
 } // namespace drawtype_e
 
 class PipelineWidget;
-class PipelineGuiCauvNode;
 
 class Container;
 

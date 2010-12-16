@@ -16,7 +16,7 @@
 
 #include <utility/defer.h>
 
-#include "pipelineWidgetNode.h"
+#include "pipelineMessageObserver.h"
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
@@ -43,14 +43,12 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
 
 using namespace pw;
 
-PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
+PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10), m_scrolldelta(0),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_overkey(boost::make_shared<ok::OverKey>(this)),
-      m_cauv_node(),
-      m_cauv_node_thread(boost::thread(spawnPGCN, this, argc, argv)),
       m_lock(), m_redraw_posted_lock(), m_redraw_posted(false){
     // TODO: more appropriate QGLFormat?
 
@@ -336,17 +334,10 @@ void PipelineWidget::removeArc(renderable_ptr_t src, renderable_ptr_t dst){
     warning() << __func__ << "no such arc" << src <<  "->" << dst;
 }
 
-void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
-    if(m_cauv_node)
-        warning() << "PipelineWidget::setCauvNode already set";
-    m_cauv_node = c;
-}
-
 void PipelineWidget::send(boost::shared_ptr<Message> m){
-    if(m_cauv_node)
-        m_cauv_node->send(m);
-    else
-        error() << "PipelineWidget::send no associated cauv node";
+    // anyone interested in messages from the pipeline can subscribe to this signal
+    // allows the pipeline and message software to be decoupled
+    Q_EMIT messageGenerated(m);
 }
 
 node_ptr_t PipelineWidget::nodeAt(Point const& p) const{

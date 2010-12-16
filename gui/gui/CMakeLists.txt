@@ -24,6 +24,7 @@ else()
         guicpp_srcs
         main.cpp
         cauvgui.cpp
+        cauvwidget.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
     )
@@ -38,6 +39,7 @@ else()
         gamepad/playstationinput.h
         gamepad/gamepadinput.h
         cauvgui.h
+        cauvwidget.h
     )
 
     qt4_wrap_ui (guicpp_UIS_H ${guicpp_UIS})

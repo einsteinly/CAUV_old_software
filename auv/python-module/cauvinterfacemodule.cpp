@@ -13,6 +13,7 @@ BOOST_PYTHON_MODULE(cauvinterface)
 
     // static stuff:
     emitThing();
+    emitDebug();
     emitMessage();
     emitMailbox();
     emitCauvNode();

@@ -5,6 +5,7 @@ import cauv
 import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
+from cauv.debug import debug, info, warning, error
 
 import time
 import traceback
@@ -12,7 +13,7 @@ import optparse
 
 
 def setupParams(node, auv):
-    print 'Setting calibration parameters'
+    info('Setting calibration parameters')
     # set-up calibration factors
     node.send(msg.DepthCalibrationMessage(
         -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
@@ -30,63 +31,59 @@ def setupParams(node, auv):
 
 
 def motorTest(node, auv, power=30, delay=3, quiet = False):
-    def qprint(s):
-        if not quiet:
-            print s
-
     auv.stop()
-    qprint('prop forwards:')
+    info('prop forwards:')
     auv.prop(power)
     time.sleep(delay)
 
     auv.stop()
-    qprint('prop reverse:')
+    info('prop reverse:')
     auv.prop(-power)
     time.sleep(delay)
 
     auv.stop()
-    qprint('hbow right:')
+    info('hbow right:')
     auv.hbow(power)
     time.sleep(delay)
     auv.stop()
     
     auv.stop()
-    qprint('hbow left:')
+    info('hbow left:')
     auv.hbow(-power)
     time.sleep(delay)
 
     auv.stop()
-    qprint('vbow up:')
+    info('vbow up:')
     auv.vbow(power)
     time.sleep(delay)
     
     auv.stop()
-    qprint('vbow down:')
+    info('vbow down:')
     auv.vbow(-power)
     time.sleep(delay)
 
     auv.stop()
-    qprint('hstern right:')
+    info('hstern right:')
     auv.hstern(power)
     time.sleep(delay)
     
     auv.stop()
-    qprint('hstern left:')
+    info('hstern left:')
     auv.hstern(-power)
     time.sleep(delay)
 
     auv.stop()
-    qprint('vstern up:')
+    info('vstern up:')
     auv.vstern(power)
     time.sleep(delay)
     
     auv.stop()
-    qprint('vstern down:')
+    info('vstern down:')
     auv.vstern(-power)
     time.sleep(delay)
 
     auv.stop()
-    qprint('Complete')
+    info('Complete')
 
 if __name__ == '__main__':
     p = optparse.OptionParser()

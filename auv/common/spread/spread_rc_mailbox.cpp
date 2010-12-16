@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <cctype>
+#include <sstream>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -253,6 +255,19 @@ void ReconnectingSpreadMailbox::operator()(){
                 _disconnect();
                 throw e;
             }else{
+                if(e.err() == REJECT_NOT_UNIQUE){
+                    int i = 0;
+                    for(i = m_ci.privConnectionName.size(); i > 0; i--)
+                        if(!std::isdigit(m_ci.privConnectionName[i-1]))
+                            break;
+                    int num = 0;
+                    std::istringstream(std::string(m_ci.privConnectionName, i)) >> num;
+
+                    m_ci.privConnectionName = mkStr() << std::string(m_ci.privConnectionName, 0, i)
+                                                      << num + 1;
+
+                    warning() << "new name:" << m_ci.privConnectionName;
+                }
                 error() << e.what() << ", trying to reconnect...";
             }
         }

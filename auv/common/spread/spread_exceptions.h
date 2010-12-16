@@ -80,12 +80,12 @@ class ConnectionError : public std::runtime_error {
         explicit ConnectionError(const std::string& msg,
                                  bool critical = false,
                                  bool needs_reconnect = true)
-            : std::runtime_error(msg), m_critical(critical),
+            : std::runtime_error(msg), m_err(-1), m_critical(critical),
               m_needs_reconnect(needs_reconnect){
         }
 
         explicit ConnectionError(const int error)
-            : std::runtime_error(getErrorString(error)),
+            : std::runtime_error(getErrorString(error)), m_err(error),
               m_critical(isCritical(error)), m_needs_reconnect(false){
         }
         
@@ -97,7 +97,12 @@ class ConnectionError : public std::runtime_error {
             return m_needs_reconnect;
         }
 
+        int err() const{
+            return m_err;
+        }
+
     private:
+        int m_err;
         bool m_critical;
         bool m_needs_reconnect;
 };

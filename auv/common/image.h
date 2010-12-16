@@ -30,16 +30,30 @@ class Image{
             ar & m_compress_fmt;
             ar & m_compress_params;
             int load_flags = -1;
+
+            cv::Mat converted;
             switch(m_img.channels()){
-                case 1: load_flags = 0; break;
-                case 3: load_flags = 1; break;
-                case 4: default: load_flags = -1; break;
+                case 1:
+                    load_flags = 0;
+                    if (m_img.type() != CV_8UC1)
+                        m_img.convertTo(converted, CV_8UC1);
+                    else
+                        converted = m_img;
+                    break;
+                case 3:
+                default:
+                    load_flags = 1;
+                    if (m_img.type() != CV_8UC3)
+                        m_img.convertTo(converted, CV_8UC3);
+                    else
+                        converted = m_img;
+                    break;
             }
             ar & load_flags;
 
             std::vector<unsigned char> buf;
             try{
-                cv::imencode(m_compress_fmt, m_img, buf, m_compress_params);
+                cv::imencode(m_compress_fmt, converted, buf, m_compress_params);
             }catch(cv::Exception& e){
                 error() << "OpenCV couldn't encode image:"
                         << "format:" << m_compress_fmt 

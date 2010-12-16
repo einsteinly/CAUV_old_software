@@ -36,7 +36,7 @@ class PipelineWidget: public QGLWidget,
         friend class MouseEvent;
 
     public:
-        PipelineWidget(QWidget *parent = 0, int argc = 0, char** argv = NULL);
+        PipelineWidget(QWidget *parent = 0);
         void initKeyBindings();
     
         QSize minimumSizeHint() const;        
@@ -73,7 +73,6 @@ class PipelineWidget: public QGLWidget,
                        renderable_ptr_t dst);
         void removeArc(renderable_ptr_t src, renderable_ptr_t dst);
         
-        void setCauvNode(boost::shared_ptr<PipelineGuiCauvNode>);
         void send(boost::shared_ptr<Message>);
         
         node_ptr_t nodeAt(Point const& p) const;
@@ -88,6 +87,7 @@ class PipelineWidget: public QGLWidget,
 
     Q_SIGNALS:
         void redrawPosted();
+        void messageGenerated(boost::shared_ptr<Message>);
     
     protected:
         void initializeGL();
@@ -140,9 +140,6 @@ class PipelineWidget: public QGLWidget,
         renderable_set_t m_receiving_move; // renderables currently receiving
                                            // move events
         
-        boost::shared_ptr<PipelineGuiCauvNode> m_cauv_node;
-        boost::thread m_cauv_node_thread;
-
         /* a great big mutex around everything since messages can cause all
          * sorts of havoc if they cause changes to the pipeline while drawing
          * is in progress, similarly for qt events:
