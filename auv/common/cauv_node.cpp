@@ -157,6 +157,7 @@ CauvNode::CauvNode(const std::string& name)
       m_mailbox_monitor(boost::make_shared<MsgSrcMBMonitor>()),
       m_interrupted(false)
 {
+    debug::setProgramName(name);
     m_event_monitor->addObserver(m_mailbox_monitor);
     
     addMessageObserver(boost::make_shared<DBGLevelObserver>());

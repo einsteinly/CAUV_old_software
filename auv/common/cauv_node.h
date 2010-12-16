@@ -22,8 +22,8 @@ namespace program_options {
 class CauvNode
 {
 	public:
-		virtual ~CauvNode();
-                virtual void stopNode();
+        virtual ~CauvNode();
+        virtual void stopNode();
 		 
         void run(bool synchronous=false);
 
