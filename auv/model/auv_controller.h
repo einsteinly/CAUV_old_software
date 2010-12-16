@@ -68,6 +68,11 @@ public:
     bool enabled();
 
     void sendMotorMessage(MotorID::e motor, int8_t speed);
+    void sendDebugLevelMessage(int32_t level);
+    template<class T> void sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<float> > ap);
+    template<class T> void sendAutopilotParamsMessage(autopilot_params_t params);
+    void sendSonarParamsMessage(sonar_params_t params);
+    void sendDepthCalibrationMessage(depth_calibration_t params);
 
     boost::signal<void(const boost::shared_ptr<Message>)> onMessageGenerated;
 

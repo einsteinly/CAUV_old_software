@@ -11,7 +11,7 @@ class CauvWidget : public QDockWidget
 {
 Q_OBJECT
 public:
-    explicit CauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, boost::shared_ptr<AUVController> &controller, QWidget *parent = 0);
+    explicit CauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget *parent = 0);
     const QString &name() const;
 
 Q_SIGNALS:
@@ -25,7 +25,6 @@ public Q_SLOTS:
     
 protected:
     boost::shared_ptr<AUV> m_auv;
-    boost::shared_ptr<AUVController> m_auv_controller;
     QString m_name;
 };
 

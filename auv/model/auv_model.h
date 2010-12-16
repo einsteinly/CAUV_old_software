@@ -55,13 +55,12 @@ public:
      * @author Andy Pritchard
      */
 
-    class Motor : public DataStream<int8_t> {
+    class Motor : public MutableDataStream<int8_t> {
     public:
 
-        Motor(const MotorID::e &id, const std::string name) : DataStream<int8_t>(name), m_id(id) {
+        Motor(const MotorID::e &id, const std::string name) : MutableDataStream<int8_t>(name), m_id(id) {
         };
 
-        virtual void set(const int8_t data);
         virtual const MotorID::e &getID();
 
     protected:
@@ -98,18 +97,18 @@ public:
 
     template <class T>
 
-    class Autopilot : public DataStream<T> {
+    class Autopilot : public MutableDataStream<T> {
     public:
 
         Autopilot(const std::string name, const T initialTarget) :
-        DataStream<T>(name),
-        params(boost::make_shared< DataStream<autopilot_params_t> >("Params", this)),
-        enabled(boost::make_shared< DataStream<bool> >("Enabled", this)) {
+        MutableDataStream<T>(name),
+        params(boost::make_shared< MutableDataStream<autopilot_params_t> >("Params", this)),
+        enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)) {
             this->set(initialTarget);
         };
 
-        boost::shared_ptr< DataStream<autopilot_params_t> > params;
-        boost::shared_ptr< DataStream<bool> > enabled;
+        boost::shared_ptr< MutableDataStream<autopilot_params_t> > params;
+        boost::shared_ptr< MutableDataStream<bool> > enabled;
     };
 
     struct Autopilots {
@@ -135,13 +134,13 @@ public:
         boost::shared_ptr< DataStream<std::string> > debug;
         boost::shared_ptr< DataStream<std::string> > trace;
         boost::shared_ptr< DataStream<std::string> > error;
-        boost::shared_ptr< DataStream<uint32_t> > level;
+        boost::shared_ptr< MutableDataStream<int32_t> > level;
 
         Logs() :
         debug(boost::make_shared< DataStream<std::string> >("Debug")),
         trace(boost::make_shared< DataStream<std::string> >("Trace")),
         error(boost::make_shared< DataStream<std::string> >("Error")),
-        level(boost::make_shared< DataStream<uint32_t> >("Level")) {
+        level(boost::make_shared< MutableDataStream<int32_t> >("Level")) {
         }
     } logs;
 
@@ -160,10 +159,10 @@ public:
     class Sonar : public Camera {
     public:
 
-        Sonar(const std::string name) : Camera(name), params(boost::make_shared<DataStream< sonar_params_t > >("Params", this)) {
+        Sonar(const std::string name) : Camera(name), params(boost::make_shared<MutableDataStream< sonar_params_t > >("Params", this)) {
         }
 
-        boost::shared_ptr< DataStream< sonar_params_t > > params;
+        boost::shared_ptr< MutableDataStream< sonar_params_t > > params;
     };
 
     struct Cameras {
@@ -181,13 +180,13 @@ public:
     struct Sensors {
         boost::shared_ptr< DataStream<uint16_t> > pressure_fore;
         boost::shared_ptr< DataStream<uint16_t> > pressure_aft;
-        boost::shared_ptr<DataStream<depth_calibration_t> > depth_calibration;
+        boost::shared_ptr<MutableDataStream<depth_calibration_t> > depth_calibration;
         boost::shared_ptr<DataStream<float> > depth;
         boost::shared_ptr<DataStream<floatYPR> > orientation;
 
         Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
         pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
-        depth_calibration(boost::make_shared<DataStream<depth_calibration_t> >("Depth Calibration")),
+        depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
         depth(boost::make_shared<DataStream<float> >("Depth")),
         orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")) {
         }

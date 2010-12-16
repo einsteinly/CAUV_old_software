@@ -11,6 +11,8 @@ class DataSource {
         DataSource(const std::string name, DataSource* parent = NULL): m_parent(parent), m_name(name) {
         }
 
+        virtual ~DataSource(){}
+
         virtual const std::string getName() {
             std::stringstream stream;
 
@@ -37,27 +39,41 @@ template <class T>
 class DataStream : public DataSource {
 
     public:
-        boost::signal<void(const T)> onSet;
         boost::signal<void(const T)> onUpdate;
 
         T m_latest;
 
         DataStream(const std::string name, DataSource* parent = NULL):DataSource(name, parent) {};
 
-        virtual void set(const T data) {
-            this->update(data);
-            this->onSet(data);
-        }
-
         virtual void update(const T data) {
             this->m_latest = data;
             this->onUpdate(data);
         }
 
-        virtual T get() {
+        virtual T latest() {
             return this->m_latest;
         }
 
+};
+
+
+/** A data stream represents one type of data being sent from a data source that can be changed
+*
+* @author Andy Pritchard
+*/
+template <class T>
+
+class MutableDataStream : public DataStream<T> {
+
+    public:
+        boost::signal<void(const T)> onSet;
+
+        MutableDataStream(const std::string name, DataSource* parent = NULL):DataStream<T>(name, parent) {};
+
+        virtual void set(const T data) {
+            this->update(data);
+            this->onSet(data);
+        }
 };
 
 
