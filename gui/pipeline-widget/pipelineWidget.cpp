@@ -144,8 +144,8 @@ void PipelineWidget::remove(renderable_ptr_t p){
         if(*i == p)
             m_contents.erase(i);
     }
-    arc_ptr_t a;
-    if(a = boost::dynamic_pointer_cast<Arc>(p))
+    arc_ptr_t a = boost::dynamic_pointer_cast<Arc>(p);
+    if(a)
         m_arcs.erase(a);
 
     // NB: the item may persist in m_receiving_move or m_owning_mouse until the
@@ -795,11 +795,6 @@ void PipelineWidget::testEditBoxMenu(){
 }
 
 
-static float mass(node_ptr_t){
-    return 1.0f;
-}
-
-
 
 
 void PipelineWidget::iterateLayout(){
@@ -841,14 +836,10 @@ void PipelineWidget::iterateLayout(){
 
 
     gv::gvLayout(c.get(), g.get(), "dot");
-    gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
+    //gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
 
     foreach(const gv::Node& n, g.nodes)
     {
-        std::stringstream ss;
-        ss << n.name() << ": " << n.coord().x << "," << n.coord().y;
-        std::cout << ss.str() << std::endl;
-        
         node_map_t::iterator np = m_nodes.find(boost::lexical_cast<node_id>(n.name()));
         if (np != m_nodes.end()) {
             np->second->m_pos = Point(n.coord().x - np->second->bbox().w() / 2.0, n.coord().y + np->second->bbox().h() / 2.0);   
