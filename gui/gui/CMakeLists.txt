@@ -24,9 +24,10 @@ else()
         guicpp_srcs
         main.cpp
         cauvgui.cpp
-        cauvwidget.cpp
+        cauvinterfaceelement.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
+        widgets/pipelinecauvwidget.cpp
     )
 
     set (
@@ -39,7 +40,8 @@ else()
         gamepad/playstationinput.h
         gamepad/gamepadinput.h
         cauvgui.h
-        cauvwidget.h
+        cauvinterfaceelement.h
+        widgets/pipelinecauvwidget.h
     )
 
     qt4_wrap_ui (guicpp_UIS_H ${guicpp_UIS})

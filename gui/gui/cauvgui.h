@@ -13,8 +13,7 @@
 #include <model/auv_controller.h>
 
 #include "ui_mainwindow.h"
-#include "pipelineWidget.h"
-#include "cauvwidget.h"
+#include "cauvinterfaceelement.h"
 
 class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow {
 
@@ -22,11 +21,12 @@ class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow {
 
     public:
         CauvGui(QApplication& app, QWidget *parent = 0);
-        void addCauvWidget(CauvWidget * widget, Qt::DockWidgetArea area = Qt::LeftDockWidgetArea);
+        void addInterfaceElement(CauvInterfaceElement * widget);
 
     public Q_SLOTS:
         int send(boost::shared_ptr<Message>message);
         void addCentralTab(QWidget* tab, QString& name);
+        void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
 
     protected:
         virtual void onRun();

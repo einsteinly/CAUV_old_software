@@ -3,11 +3,10 @@
 #include <math.h>
 #include <model/auv_controller.h>
 
-#include <pipelineWidget.h>
-#include <pipelineMessageObserver.h>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+
+#include "widgets/pipelinecauvwidget.h"
 
 CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
@@ -15,16 +14,21 @@ CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_applicati
     joinGroup("pl_gui");
 }
 
-void CauvGui::addCauvWidget(CauvWidget *widget, Qt::DockWidgetArea area){
-    if(widget->parent()) throw "Widget already has a parent";
-    else {
-        this->addDockWidget(area, widget);
-        connect(widget, SIGNAL(centralViewRegistered(QWidget*, QString&)), this, SLOT(addCentralTab(QWidget*, QString&)));
-    }
+void CauvGui::addInterfaceElement(CauvInterfaceElement *widget){
+    connect(widget->actions().get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
+    connect(widget->actions().get(), SIGNAL(centralViewRegistered(QWidget*,QString&)), this, SLOT(addCentralTab(QWidget*,QString&)));
+    connect(widget->actions().get(), SIGNAL(dockViewRegistered(QDockWidget*,Qt::DockWidgetArea)), this, SLOT(addDock(QDockWidget*,Qt::DockWidgetArea)));
+    widget->initialise();
 }
 
 void CauvGui::addCentralTab(QWidget* tab, QString& name){
+    info() << "Registering central screen [" << name.toStdString() << "]";
     tabWidget->addTab(tab, name);
+}
+
+void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
+    info() << "Registering dock widget";
+    addDockWidget(area, dock);
 }
 
 void CauvGui::closeEvent(QCloseEvent*){
@@ -50,33 +54,12 @@ void CauvGui::onRun()
     // from the network messages
     m_auv = boost::make_shared<AUV>();
     m_auv_controller = boost::make_shared<AUVController>(m_auv);
+    // connect up message inputs and outputs
     addMessageObserver(m_auv_controller);
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
-    m_auv->motors.prop->set(15);
-
-    pw::PipelineWidget * pipelineWidget = new pw::PipelineWidget(this);
-    boost::shared_ptr<pw::PipelineGuiMsgObs> observer = boost::make_shared<pw::PipelineGuiMsgObs>(pipelineWidget);
-    this->addMessageObserver(observer);
-    this->connect(pipelineWidget, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
-
-
-    tabWidget->addTab(pipelineWidget, "Pipeline Editor");
-
-    /*
-    Plot* plot = new Plot();
-
-    setCentralWidget(plot);
-
-    (void) new CanvasPicker(plot);
-
-    // The scale picker translates mouse clicks
-    // in to clicked() signals
-
-    ScalePicker *scalePicker = new ScalePicker(plot);
-    plot->connect(scalePicker, SIGNAL(clicked(int, double)),
-        plot, SLOT(insertCurve(int, double)));
-    */
+    // populate the interface
+    addInterfaceElement(new PipelineCauvWidget("Pipeline Editor", m_auv, this));
 
     show();
     m_application.exec();
