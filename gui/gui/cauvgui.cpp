@@ -7,6 +7,7 @@
 #include <boost/make_shared.hpp>
 
 #include "widgets/pipelinecauvwidget.h"
+#include "widgets/graphwidget.h"
 
 CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
@@ -60,6 +61,7 @@ void CauvGui::onRun()
 
     // populate the interface
     addInterfaceElement(new PipelineCauvWidget("Pipeline Editor", m_auv, this));
+    addInterfaceElement(new GraphWidget("Graphs", m_auv, this));
 
     show();
     m_application.exec();
