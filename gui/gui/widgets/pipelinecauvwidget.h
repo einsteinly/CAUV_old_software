@@ -6,10 +6,9 @@
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>
 
-#include "ui_pipelinecauvwidget.h"
 #include "../cauvinterfaceelement.h"
 
-class PipelineCauvWidget : public Ui::PipelineCauvWidget, public pw::PipelineWidget, public CauvInterfaceElement
+class PipelineCauvWidget : public pw::PipelineWidget, public CauvInterfaceElement
 {
 public:
     PipelineCauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget *parent);

@@ -43,7 +43,6 @@ else()
         gamepad/gamepadinput.h
         cauvgui.h
         cauvinterfaceelement.h
-        widgets/pipelinecauvwidget.h
         widgets/graphwidget.h
     )
 
