@@ -35,7 +35,7 @@ class PipelineWidget: public QGLWidget,
         typedef boost::unique_lock<boost::recursive_mutex> lock_t;
 
         // friends:
-        friend class MouseEvent;
+        friend struct MouseEvent;
 
     public:
         PipelineWidget(QWidget *parent = 0);

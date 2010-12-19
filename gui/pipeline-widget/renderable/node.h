@@ -18,9 +18,9 @@ namespace cauv{
 
 class NodeAddedMessage;
 class NodeParametersMessage;
-class NodeOutput;
-class NodeInput;
-class NodeParamValue;
+struct NodeOutput;
+struct NodeInput;
+struct NodeParamValue;
 
 namespace pw{
 
