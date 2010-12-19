@@ -4,10 +4,11 @@
 \#include <boost/python/errors.hpp>
 
 \#include "emit_generated.h"
-\#include "../generated/messages.h"
-\#include "../debug/cauv_debug.h"
+\#include <generated/messages.h>
+\#include <debug/cauv_debug.h>
 
 namespace bp = boost::python;
+using namespace cauv;
 
 class MessageObserverWrapper:
     public MessageObserver,

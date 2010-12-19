@@ -8,6 +8,7 @@
 #include "auv_controller.h"
 
 using namespace std;
+using namespace cauv;
 
 int main()
 {

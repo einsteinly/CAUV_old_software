@@ -5,9 +5,10 @@
 #include "webcam.h"
 
 #include <common/cauv_utils.h>
-#include <common/bash_cout.h>
+#include <utility/bash_cout.h>
 #include <debug/cauv_debug.h>
 
+using namespace cauv;
 
 CameraException::CameraException(const std::string& _reason)
     : std::runtime_error(_reason)

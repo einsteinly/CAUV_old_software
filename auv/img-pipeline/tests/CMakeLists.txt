@@ -1,6 +1,6 @@
 # img-pipeline-tester
 add_executable(
-    img-pipeline-tester
+    img-pipeline-tester EXCLUDE_FROM_ALL
     img-pipeline-tester.cpp
 )
 
@@ -20,7 +20,7 @@ add_custom_command(
 
 # debug-test
 add_executable(
-    debug-test
+    debug-test EXCLUDE_FROM_ALL
     debug-test.cpp
 )
 

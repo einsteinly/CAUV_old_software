@@ -13,7 +13,7 @@
 #include <OIS/OISJoyStick.h>
 #include <OIS/OISEvents.h>
 
-
+namespace cauv{
 
 class GamepadInput : public QObject, public OIS::JoyStickListener
 {
@@ -41,5 +41,7 @@ protected:
 
     virtual void handleNonBuffered();
 };
+
+} // namespace cauv
 
 #endif // GAMEPADINPUT_H

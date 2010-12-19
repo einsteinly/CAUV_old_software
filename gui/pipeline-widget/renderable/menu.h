@@ -5,6 +5,7 @@
 
 #include "../renderable.h"
 
+namespace cauv{
 namespace pw{
 
 class Menu: public Renderable, public boost::enable_shared_from_this<Menu>{
@@ -18,6 +19,7 @@ class Menu: public Renderable, public boost::enable_shared_from_this<Menu>{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __MENU_RENDERABLE_H__
 

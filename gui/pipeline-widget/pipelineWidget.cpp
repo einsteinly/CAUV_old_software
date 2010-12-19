@@ -10,11 +10,12 @@
 
 #include <QtGui>
 
-#include <common/bash_cout.h>
 #include <common/cauv_utils.h>
+
 #include <debug/cauv_debug.h>
 
 #include <utility/defer.h>
+#include <utility/bash_cout.h>
 
 #include "pipelineMessageObserver.h"
 #include "util.h"
@@ -30,6 +31,7 @@
 #include "renderable/imgNode.h"
 
 
+namespace cauv{
 namespace pw{
 
 // CAVEAT VIATOR: compare actual *arcs* by pointer, reverse arc compares equal
@@ -40,8 +42,9 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
 }
 
 } // namespace pw
+} // namespace cauv;
 
-using namespace pw;
+using namespace cauv::pw;
 
 PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
@@ -793,14 +796,6 @@ void PipelineWidget::testEditBoxMenu(){
     ), lastMousePosition());
     postRedraw(0);
 }
-
-
-static float mass(node_ptr_t){
-    return 1.0f;
-}
-
-
-
 
 void PipelineWidget::iterateLayout(){
     namespace gv = graphviz;

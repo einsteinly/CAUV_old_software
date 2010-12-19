@@ -11,15 +11,16 @@
 #include "../pwTypes.h"
 #include "draggable.h"
 
+// eww, can't forward declare enums, have to drag in definitions
+#include <generated/messages_fwd.h>
+
+namespace cauv{
+
 class NodeAddedMessage;
 class NodeParametersMessage;
 class NodeOutput;
 class NodeInput;
 class NodeParamValue;
-
-// namespace NodeType{ enum e; } // eww, can't forward declare enums, have to
-// drag in messages.h!
-#include <debug/cauv_debug.h>
 
 namespace pw{
 
@@ -121,6 +122,7 @@ class Node: public Draggable,
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __NODE_RENDERABLE_H__
 

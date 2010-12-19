@@ -7,6 +7,7 @@
 
 #include "seanet_packet.h"
 
+using namespace cauv;
 
 /* Fill with some sensible defaults */
 SeanetHeadParams::SeanetHeadParams() :

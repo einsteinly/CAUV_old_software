@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include <debug/cauv_debug.h>
 #include <utility/serialisation.h>
 
 using namespace cauv;

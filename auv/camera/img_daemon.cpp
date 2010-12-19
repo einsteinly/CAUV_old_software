@@ -8,6 +8,8 @@
 #include "camera_observer.h"
 #include "webcam.h"
 
+using namespace cauv;
+
 class DotOnImageObserver : public CameraObserver {
     public:
         virtual void onReceiveImage(CameraID::e, const cv::Mat&) {

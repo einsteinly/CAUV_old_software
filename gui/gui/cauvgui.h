@@ -15,6 +15,7 @@
 #include "ui_mainwindow.h"
 #include "pipelineWidget.h"
 
+namespace cauv{
 
 class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
 
@@ -36,5 +37,7 @@ class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
 
         QApplication &m_application;
 };
+
+} // namespace cauv
 
 #endif // CAUVGUI_H

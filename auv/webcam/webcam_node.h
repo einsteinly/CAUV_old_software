@@ -1,11 +1,13 @@
-#ifndef __WEBCAM_NODE_H__
-#define __WEBCAM_NODE_H__
+#ifndef __CAUV_WEBCAM_NODE_H__
+#define __CAUV_WEBCAM_NODE_H__
 
 #include <boost/shared_ptr.hpp>
 
 #include <common/cauv_node.h>
 #include <generated/messages_fwd.h>
 #include <camera/camera.h>
+
+namespace cauv{
 
 class SpreadCameraObserver;
 
@@ -29,4 +31,6 @@ class WebcamNode : public CauvNode
         virtual void onRun();
 };
 
-#endif//__WEBCAM_NODE_H__
+} // namespace cauv
+
+#endif // ndef __CAUV_WEBCAM_NODE_H__

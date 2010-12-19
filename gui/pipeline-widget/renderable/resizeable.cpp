@@ -6,7 +6,7 @@
 
 #include "../container.h"
 
-using namespace pw;
+using namespace cauv::pw;
 
 const static BBox Handle_Size(-12, 0, 0, 12);
 

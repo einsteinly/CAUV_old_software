@@ -1,5 +1,5 @@
 #ifndef __EDIT_TEXT_RENDERABLE_H__
-#define __EDIT_TEXT_RENDEABLE_H__
+#define __EDIT_TEXT_RENDERABLE_H__
 
 #include "menu.h"
 #include "text.h"
@@ -14,6 +14,7 @@
 
 #include <debug/cauv_debug.h>
 
+namespace cauv{
 namespace pw{
 
 template<typename done_arg_T>
@@ -108,7 +109,8 @@ class EditText: public Menu{
 						{
 							QClipboard *cb = QApplication::clipboard();
 							QString text = cb->text();
-							if ( text != "" )
+                            debug() << "paste text:" << text.toStdString();
+							if ( text.size() )
 							{
 								// clipboard has something in it
 								*m_txt_prev += text.toStdString();	// add clipboard text
@@ -257,6 +259,7 @@ class EditText: public Menu{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __EDIT_TEXT_RENDERABLE_H__
 

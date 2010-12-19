@@ -2,6 +2,8 @@
 #define __CAUV_MSGSRC_MAILBOX_H__
 
 #include <generated/messages.h>
+
+#include "spread_messages.h"
 #include "mailbox_monitor.h"
 
 namespace cauv{

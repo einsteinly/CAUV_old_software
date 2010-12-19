@@ -23,6 +23,7 @@
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
+using namespace cauv;
 
 FTDIException::FTDIException(const std::string& msg) : m_errCode(-1), m_message(msg) {}
 FTDIException::FTDIException(const std::string& msg, int errCode, PICK_FTDI(Ftdi::Context,ftdi_context)* ftdic) : m_errCode(errCode)

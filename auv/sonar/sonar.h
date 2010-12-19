@@ -1,5 +1,5 @@
-#ifndef __SONAR_H__
-#define __SONAR_H__
+#ifndef __CAUV_SONAR_H__
+#define __CAUV_SONAR_H__
 
 #include <string>
 
@@ -8,6 +8,8 @@
 #include <common/cauv_node.h>
 
 #include "seanet_sonar.h"
+
+namespace cauv{
 
 class SonarNode : public CauvNode
 {
@@ -25,5 +27,7 @@ class SonarNode : public CauvNode
         
 };
 
-#endif
+} // namespace cauv
+
+#endif //ndef __CAUV_SONAR_H__
 

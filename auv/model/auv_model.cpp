@@ -1,5 +1,6 @@
 #include "auv_model.h"
 
+using namespace cauv;
 
 void AUV::Motor::set(int8_t data) {
     if (data >= 127)

@@ -1,8 +1,10 @@
-#ifndef __WEBCAM_H__
-#define __WEBCAM_H__
+#ifndef __CAUV_WEBCAM_H__
+#define __CAUV_WEBCAM_H__
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+
+namespace cauv{
 
 class Webcam : public Camera
 {
@@ -19,5 +21,7 @@ class Webcam : public Camera
     friend class CaptureThread;
 };
 
-#endif // __WEBCAM_H__
+} // namespace cauv
+
+#endif // ndef __CAUV_WEBCAM_H__
 

@@ -9,7 +9,7 @@
 #include "renderable/imgNode.h"
 #include "renderable/arc.h"
 
-using namespace pw;
+using namespace cauv::pw;
 
 
 void DBGLevelObserver::onDebugLevelMessage(DebugLevelMessage_ptr m)

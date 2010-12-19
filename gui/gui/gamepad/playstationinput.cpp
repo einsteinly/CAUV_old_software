@@ -3,6 +3,7 @@
 #include <iostream>
 
 using namespace OIS;
+using namespace cauv;
 
 PlaystationInput::PlaystationInput(const unsigned int id) : GamepadInput(id)
 {

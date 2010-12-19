@@ -7,6 +7,10 @@
 
 #include <debug/cauv_debug.h>
 
+#include <common/spread/spread_rc_mailbox.h>
+
+using namespace cauv;
+
 SonarNode::SonarNode() : CauvNode("Sonar")
 {
 }

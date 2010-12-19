@@ -17,8 +17,8 @@
 #include "../util.h"
 #include "text.h"
 
-using namespace pw;
-using namespace pw::ok;
+using namespace cauv::pw;
+using namespace cauv::pw::ok;
 
 // Behaviour Defining Constants:
 const static float Typing_Max_Delta = 0.3;

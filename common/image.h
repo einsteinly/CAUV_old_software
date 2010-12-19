@@ -5,7 +5,6 @@
 
 #include <utility/streamops.h>
 #include <utility/serialisation-types.h>
-#include <debug/cauv_debug.h>
 
 namespace cv{
 class Mat;

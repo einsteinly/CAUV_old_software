@@ -1,15 +1,17 @@
-#ifndef __CAMERA_OBSERVER_H__
-#define __CAMERA_OBSERVER_H__
+#ifndef __CAUV_CAMERA_OBSERVER_H__
+#define __CAUV_CAMERA_OBSERVER_H__
 
 #include <generated/messages_fwd.h>
-
-const int PROCESSING_OBJECTS = 0;
-const int PROCESSING_GATE = 1;
 
 // Forward declarations
 namespace cv{
 class Mat;
 } // namespace cv
+
+namespace cauv{
+
+const int PROCESSING_OBJECTS = 0;
+const int PROCESSING_GATE = 1;
 
 class Camera;
 
@@ -21,6 +23,6 @@ class CameraObserver
         virtual void onReceiveImage(CameraID::e cam_id, const cv::Mat& img) = 0;
 };
 
+} // namespace cauv
 
-
-#endif //__CAMERA_OBSERVER_H__
+#endif // ndef __CAUV_CAMERA_OBSERVER_H__

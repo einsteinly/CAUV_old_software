@@ -1,6 +1,8 @@
 
 #include "auv_controller.h"
 
+using namespace cauv;
+
 bool AUVController::pushState(bool state) {
     bool preChangeState = enabled();
     m_state.push_back(state);

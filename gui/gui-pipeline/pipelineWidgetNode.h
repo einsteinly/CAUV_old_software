@@ -8,6 +8,7 @@
 
 #include "pipelineWidget.h"
 
+namespace cauv {
 namespace pw {
 
 class PipelineGuiCauvNode: public QObject, public CauvNode {
@@ -27,6 +28,7 @@ class PipelineGuiCauvNode: public QObject, public CauvNode {
 // little tricky, using an intermediate function smooths the ride a bit:
 void spawnPGCN(PipelineWidget *p, int argc, char** argv);
 
-};
+} // namespace pw
+} // namespace cauv
 
 #endif // PIPELINEWIDGETNODE_H

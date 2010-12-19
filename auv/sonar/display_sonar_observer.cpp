@@ -10,6 +10,8 @@
 
 #include "seanet_sonar.h"
 
+using namespace cauv;
+
 static void setRange(int value, void* data)
 {
     boost::shared_ptr<SeanetSonar> sonar = *reinterpret_cast<boost::shared_ptr<SeanetSonar>*>(data);

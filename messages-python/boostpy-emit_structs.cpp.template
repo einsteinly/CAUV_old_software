@@ -3,9 +3,10 @@
 \#include <boost/python.hpp>
 
 \#include "emit_generated.h"
-\#include "../generated/messages.h"
+\#include <generated/messages.h>
 
 namespace bp = boost::python;
+using namespace cauv;
 
 void emitStructs(){
 #for $s in $structs

@@ -3,7 +3,7 @@
 
 #include <QtPlugin>
 
-using namespace pw;
+using namespace cauv::pw;
 
 Q_EXPORT_PLUGIN2(customwidgetplugin, PipelineWidgetPlugin)
 

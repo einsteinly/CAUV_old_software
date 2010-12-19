@@ -1,5 +1,5 @@
-#ifndef __MODULE_H
-#define __MODULE_H__
+#ifndef __CAUV_MODULE_H__
+#define __CAUV_MODULE_H__
 
 #include <string.h>
 #include <vector>
@@ -9,6 +9,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 #include <boost/utility.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
@@ -24,6 +26,9 @@
 #include <common/cauv_utils.h>
 #include <common/blocking_queue.h>
 #include <generated/messages.h>
+#include <debug/cauv_debug.h>
+
+namespace cauv{
 
 class FTDIException : public std::exception
 {
@@ -148,7 +153,7 @@ class Module : public MessageSource
                     
                     boost::shared_ptr<const Message> message = m_sendQueue.popWait();
                     debug(3) << "Module sending popped a message off the send queue (" << m_sendQueue.size() << "remain)" << *message;
-                    boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
+                    const_svec_ptr bytes = message->toBytes();
 
                     uint32_t startWord = 0xdeadc01d;
                     uint32_t len = bytes->size();
@@ -181,7 +186,7 @@ class Module : public MessageSource
            
             try {
 
-                byte_vec_t curMsg;
+                svec_t curMsg;
                 boost::archive::binary_iarchive ar(m_streamBuffer, boost::archive::no_header);
 
                 while (true)
@@ -239,7 +244,7 @@ class Module : public MessageSource
                     debug() << ss.str();
 #endif
 
-                    boost::shared_ptr<byte_vec_t> msg = boost::make_shared<byte_vec_t>(curMsg);
+                    svec_ptr msg = boost::make_shared<svec_t>(curMsg);
                     try {
                         this->notifyObservers(msg);
                     } catch (UnknownMessageIdException& e) {
@@ -306,4 +311,6 @@ class MCBModule : public FileModule
 };
 #endif
 
-#endif // __MODULE_H__
+} // namespace cauv
+
+#endif // __CAUV_MODULE_H__

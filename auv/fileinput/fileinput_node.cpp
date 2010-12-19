@@ -11,9 +11,11 @@
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
+#include <common/spread/spread_rc_mailbox.h>
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
+using namespace cauv;
 
 class FileinputObserver: public MessageObserver{
         typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
@@ -40,20 +42,20 @@ class FileinputObserver: public MessageObserver{
         Image m_img;
 };
 
-FileinputNode::FileinputNode(std::string const& fname)
+FileinputCauvNode::FileinputCauvNode(std::string const& fname)
     : CauvNode("Fileinput"), m_fname(fname)
 {
     cv::Mat cv_img = cv::imread(m_fname.c_str());
     m_img = Image(cv_img); // pretend to be a camera 
 }
 
-void FileinputNode::onRun()
+void FileinputCauvNode::onRun()
 {
     joinGroup("image"); 
     addMessageObserver(boost::make_shared<FileinputObserver>(m_img, mailbox()));
 }
 
-static FileinputNode* node;
+static FileinputCauvNode* node;
 
 void cleanup()
 {
@@ -85,7 +87,7 @@ int main(int argc, char **argv)
     std::string fname(argv[1]);
 
     signal(SIGINT, interrupt);
-    node = new FileinputNode(fname);
+    node = new FileinputCauvNode(fname);
     node->run();
     cleanup();
     return 0;

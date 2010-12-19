@@ -10,6 +10,7 @@
 #include "gamepad/playstationinput.h"
 
 using namespace std;
+using namespace cauv;
 
 static CauvGui* node;
 

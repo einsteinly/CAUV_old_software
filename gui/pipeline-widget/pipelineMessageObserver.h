@@ -8,6 +8,7 @@
 
 #include "pwTypes.h"
 
+namespace cauv{
 namespace pw{
 
 struct DBGLevelObserver: MessageObserver
@@ -35,5 +36,6 @@ class PipelineGuiMsgObs: public BufferedMessageObserver{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __PIPELINE_MESSAGE_OBSERVER_H__

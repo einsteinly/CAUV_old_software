@@ -9,6 +9,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+using namespace cauv;
+
 CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
     joinGroup("control");

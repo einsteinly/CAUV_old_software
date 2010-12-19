@@ -3,9 +3,10 @@
 \#include <boost/python.hpp>
 
 \#include "emit_generated.h"
-\#include "../generated/messages.h"
+\#include <generated/messages.h>
 
 namespace bp = boost::python;
+using namespace cauv;
 
 struct enum_pickler : bp::pickle_suite{
     static boost::python::tuple getinitargs(MessageType::e const& e){

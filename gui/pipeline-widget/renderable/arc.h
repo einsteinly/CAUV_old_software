@@ -6,6 +6,7 @@
 #include "../renderable.h"
 #include "../pwTypes.h"
 
+namespace cauv{
 namespace pw{
 
 // Arcs draw their stuff in top level coordinates, so they can't be used in
@@ -31,7 +32,7 @@ class Arc: public Renderable{
 };
 
 } // namespace pw
-
+} // namespace cauv
 
 #endif // ndef __ARC_RENDERABLE_H__
 

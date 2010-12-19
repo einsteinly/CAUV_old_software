@@ -6,6 +6,8 @@
 #include <model/auv_model.h>
 #include <model/auv_controller.h>
 
+namespace cauv{
+
 class CauvWidget : public QDockWidget
 {
 Q_OBJECT
@@ -23,5 +25,7 @@ protected:
     boost::shared_ptr<AUV> m_auv;
     boost::shared_ptr<AUVController> m_auv_controller;
 };
+
+} // namespace cauv
 
 #endif // CAUVWIDGET_H

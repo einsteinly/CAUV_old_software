@@ -16,6 +16,7 @@
 #include "nodeIO.h"
 #include "pvPair.h"
 
+namespace cauv{
 namespace pw{
 
 template<typename container_T>
@@ -108,8 +109,10 @@ std::basic_ostream<T, cT>& operator<<(
 }
 
 } // namespace pw
+} // namespace cauv
 
-using namespace pw;
+using namespace cauv;
+using namespace cauv::pw;
 
 const static Colour Mouseover_Colour_Hint(1, 1, 1, 0.2);
 const static Colour Normal_BG_Colour(0.7, 0.7, 0.7, 0.8);
@@ -494,6 +497,7 @@ void Node::remove(renderable_ptr_t){
     error() << __func__ << __LINE__ << "unimplemented";
 }
 
+namespace cauv{
 namespace pw{
 
 template<>
@@ -557,6 +561,7 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
 }
 
 } // namespace pw
+} // namespace cauv
 
 void Node::refreshLayout(){
     // yay, lots of random constants: layout is fun

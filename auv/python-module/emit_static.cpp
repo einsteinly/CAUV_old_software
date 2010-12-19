@@ -1,13 +1,15 @@
 #include "workarounds.h" // _must_ be first
-#include <boost/python.hpp> // oh yes :)
+#include <boost/python.hpp>
 
-#include "../../generated/messages.h"
-#include "../common/cauv_node.h"
+#include <generated/messages.h>
+#include <common/cauv_node.h>
+#include <common/spread/msgsrc_mb_observer.h>
+#include <common/spread/spread_rc_mailbox.h>>
 
 #include "emit_static.h"
 
 namespace bp = boost::python;
-
+using namespace cauv;
 
 void cauvDebug(const char* s, int l){
     // relying on order of local destruction: LIFO
@@ -92,7 +94,7 @@ class MessageWrapper:
     public bp::wrapper<Message>
 {
     public:
-        boost::shared_ptr<const byte_vec_t> toBytes() const{
+        const_svec_ptr toBytes() const{
             GILLock l; // GIL MUST be held during get_override!
             if(bp::override f = this->get_override("toBytes")){
                 f();

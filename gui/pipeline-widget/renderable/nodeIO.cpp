@@ -9,7 +9,7 @@
 #include "arc.h"
 #include "node.h"
 
-using namespace pw;
+using namespace cauv::pw;
 
 const static Colour IO_Normal_Colour(0.2, 0.4, 0.6, 0.5);
 const static Colour Param_Normal_Colour(0.4, 0.4, 0.4, 0.5);
