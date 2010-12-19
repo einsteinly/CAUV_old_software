@@ -101,7 +101,7 @@ const $toCPPType($f.type)& cauv::$className::${f.name}() const{
     checkDeserialised();
     #if $f.lazy
     // Lazy field: may not be deserialised yet
-    if(0 == m_lazy_fields_deserialised.count($i)){
+    if(m_bytes && 0 == m_lazy_fields_deserialised.count($i)){
         cauv::deserialise(m_bytes, m_lazy_field_${i}_offset, m_${f.name});
         m_lazy_fields_deserialised.insert($i);
         if($m.numLazyFields() == m_lazy_fields_deserialised.size())
