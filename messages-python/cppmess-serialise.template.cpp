@@ -66,7 +66,9 @@ void cauv::serialise(svec_ptr p, $className const& v){
     #end for
 }
 #else
-void cauv::serialise(svec_ptr, $className const&){ }
+void cauv::serialise(svec_ptr p, $className const&){
+    cauv::serialise(p, uint32_t($m.id)); 
+}
 #end if
 #end for
 #end for

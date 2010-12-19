@@ -102,10 +102,10 @@ class $className : public Message
 #if $len($m.fields) > 0
         void deserialise() const;
         inline void checkDeserialised() const{
-            if(!m_deserialised)
+            if(!m_deserialised){
                 deserialise();
-            else
                 m_deserialised = true;
+            }
         }
         mutable bool m_deserialised;
 

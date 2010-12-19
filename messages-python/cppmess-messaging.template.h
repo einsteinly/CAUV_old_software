@@ -188,16 +188,19 @@ std::basic_ostream<char_T, traits>& operator<<(
     }
 }
 
+} // namespace cauv
 
+namespace std{
+// don't ask
 #for $e in $enums
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, $e.name::e const& e)
+    std::basic_ostream<char_T, traits>& os, cauv::$e.name::e const& e)
 {
     switch(e)
     {
         #for $v in $e.values
-        case $e.name::$v.name:
+        case cauv::$e.name::$v.name:
             return os << "$e.name::$v.name";
         #end for
         default:
@@ -205,7 +208,9 @@ std::basic_ostream<char_T, traits>& operator<<(
     }
 }
 #end for
+} // namespace std
 
+namespace cauv{
 
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
