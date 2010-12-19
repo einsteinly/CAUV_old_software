@@ -112,6 +112,22 @@ int main(){
     if(vb != va)
         error() << "vec<int> failed:" << vb << "!=" << va;
     
+    sv->clear();
+    /* misaligned vector */
+    serialise(sv, uint8_t('a'));
+    serialise(sv, va);
+
+    uint8_t mv_a;
+    vb.clear();
+
+    deserialise(sv, 1, vb);
+    deserialise(sv, 0, mv_a);
+    
+    if(mv_a != 'a')
+        error() << "misaligned vec<int> overwrote data" << mv_a << "!=" << 'a';
+    if(vb != va)
+        error() << "misaligned vec<int> failed:" << vb << "!=" << va;
+
     sv->clear();    
     /* vector of vector */
     std::vector<std::vector<uint8_t> > vc;
@@ -154,7 +170,6 @@ int main(){
     if(mb != ma)
         error() << "map<int,vec<uint>> failed:" << mb << "!=" << ma;
     debug() << mb;
-
 
 }
 

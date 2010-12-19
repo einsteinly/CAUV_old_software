@@ -130,18 +130,15 @@ boost::shared_ptr<$className> cauv::$className::fromBytes(const_svec_ptr){
 }
 #end if
 const_svec_ptr cauv::$className::toBytes() const{
-    #if $len($m.fields) > 0
     svec_ptr r = boost::make_shared<svec_t>();
     serialise(r, *this);
     return r;
-    #else
-    return boost::make_shared<svec_t>();
-    #end if
 }
 
 #if $len($m.fields) > 0
 void cauv::$className::deserialise() const{
-    uint32_t offset = 0;
+    ## message ID comes first
+    uint32_t offset = 4;
     #if $m.numLazyFields() > 0
     uint32_t skip = 0;
     m_lazy_fields_deserialised.clear();

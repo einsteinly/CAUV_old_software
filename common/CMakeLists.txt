@@ -5,6 +5,11 @@ link_directories (${ssrcspread_LIBRARY_DIR})
 
 find_package (OpenCV REQUIRED)
 
+option(CAUV_DEBUG_MESSAGES "Emit code to allow message bytes to be printed at high debug levels" OFF)
+if (CAUV_DEBUG_MESSAGES)
+    add_definitions(-DCAUV_DEBUG_MESSAGES)
+endif()
+
 add_library (
     common STATIC
     
