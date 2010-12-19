@@ -12,7 +12,7 @@
 
 
 using namespace std;
-
+using namespace cauv;
 
 class ImageWindow : public MessageObserver
 {

@@ -1,12 +1,15 @@
-#ifndef _XSENS_IMU_H
-#define	_XSENS_IMU_H
+#ifndef __CAUV_XSENS_IMU_H__
+#define	__CAUV_XSENS_IMU_H__
 
 #include <boost/thread.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <xsens/cmt3.h>
 
 #include <generated/messages_fwd.h>
-#include <common/observable.h>
+#include <utility/observable.h>
+
+namespace cauv{
 
 class XsensObserver
 {
@@ -14,11 +17,10 @@ class XsensObserver
         virtual void onTelemetry(const floatYPR& attitude) = 0;
 };
 
-class XsensIMU : public Observable<XsensObserver>
+class XsensIMU : public Observable<XsensObserver>, boost::noncopyable
 {
     public:
         XsensIMU(int id);
-        XsensIMU(const XsensIMU& orig);
         virtual ~XsensIMU();
 
         floatYPR getAttitude();
@@ -46,5 +48,7 @@ class XsensException : public std::exception
         virtual const char* what() const throw();
 };
 
-#endif	/* _XSENS_IMU_H */
+} // namespace cauv
+
+#endif // ndef __CAUV_XSENS_IMU_H__
 

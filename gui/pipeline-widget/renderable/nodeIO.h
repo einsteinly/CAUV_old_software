@@ -7,6 +7,7 @@
 #include "../pwTypes.h"
 #include "menu.h"
 
+namespace cauv{
 namespace pw{
 
 class NodeIOBlob: public Renderable,
@@ -84,5 +85,6 @@ class FloatingArcHandle: public Menu{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __NODE_IO_H__

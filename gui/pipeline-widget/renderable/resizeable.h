@@ -3,6 +3,7 @@
 
 #include "../renderable.h"
 
+namespace cauv{
 namespace pw{
 
 class Resizeable: public Renderable{
@@ -37,6 +38,7 @@ class Resizeable: public Renderable{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __RESIZEABLE_RENDERABLE_H__
 

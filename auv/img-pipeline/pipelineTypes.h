@@ -9,6 +9,9 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/variant.hpp>
 
+namespace cauv{
+namespace imgproc{
+
 class Node;
 class InputNode;
 class AsynchronousNode;
@@ -72,5 +75,8 @@ typedef int32_t node_id;
 typedef std::string param_id;
 typedef std::string input_id;
 typedef std::string output_id;
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __PIPELINE_TYPES_H__

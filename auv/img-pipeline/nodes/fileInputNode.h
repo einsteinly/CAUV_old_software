@@ -13,6 +13,9 @@
 #include "asynchronousNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class FileInputNode: public AsynchronousNode{
         typedef boost::unique_lock<boost::recursive_mutex> lock_t;
     public:
@@ -151,6 +154,9 @@ class FileInputNode: public AsynchronousNode{
         // Register this node type
         DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __FILE_INPUT_NODE_H__
 

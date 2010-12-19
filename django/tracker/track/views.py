@@ -27,7 +27,7 @@ class disp_property():
     def __init__(self, name, value):
         self.name = name
         self.value = value
-	if self.name == 'pscore' and self.value:
+	if self.name == 'pscore' and value is not None and value != u"None":
 	    self.value = dict(appforms.pscore_choices)[int(value)]
 	else:
 	    self.value = value

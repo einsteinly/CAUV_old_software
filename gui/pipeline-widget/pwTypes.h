@@ -8,6 +8,7 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+namespace cauv{
 namespace pw{
 
 namespace drawtype_e{
@@ -18,7 +19,6 @@ enum e{
 } // namespace drawtype_e
 
 class PipelineWidget;
-class PipelineGuiCauvNode;
 
 class Container;
 
@@ -75,6 +75,7 @@ typedef boost::shared_ptr<OverKey> overlay_ptr_t;
 } // namespace ok
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __PW_TYPES_H__
 

@@ -24,6 +24,9 @@
 
 #include "pipelineTypes.h"
 
+namespace cauv{
+namespace imgproc{
+
 class Node: public boost::enable_shared_from_this<Node>{
     public:
         // Public typedefs: used as return types
@@ -181,7 +184,7 @@ class Node: public boost::enable_shared_from_this<Node>{
          * parameter is linked to the output of a parent
          */
         template<typename T>
-        T param(param_id const& p) const throw(id_error){
+        T param(param_id const& p) const {
             unique_lock_t l(m_parameters_lock);
             const param_value_map_t::const_iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
@@ -410,5 +413,8 @@ std::basic_ostream<char_T, traits>& operator<<(
        << "}";
     return os;
 }
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __NODE_H__

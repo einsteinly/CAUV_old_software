@@ -1,5 +1,5 @@
-#ifndef __CAMERA_H__
-#define __CAMERA_H__
+#ifndef __CAUV_CAMERA_H__
+#define __CAUV_CAMERA_H__
 
 #include <stdexcept>
 #include <string>
@@ -9,12 +9,14 @@
 #include <boost/thread.hpp>
 
 #include <generated/messages_fwd.h>
-#include <common/observable.h>
+#include <utility/observable.h>
 
 // Forward Declarations
 namespace cv{
 class Mat;
 } // namespace cv
+
+namespace cauv{
 
 class CameraObserver;
 class Webcam;
@@ -69,4 +71,6 @@ class CaptureThread
         bool m_alive;
 };
 
-#endif
+} // namespace cauv
+
+#endif // ndef __CAUV_CAMERA_H__

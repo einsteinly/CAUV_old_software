@@ -4,35 +4,45 @@
 \#include <boost/python/str.hpp>
 
 \#include "emit_generated.h"
-\#include "../generated/messages.h"
+\#include <generated/messages.h>
 
 namespace bp = boost::python;
+using namespace cauv;
+
+#for $g in $groups
+static const char* ${g.name.upper()}_NAME = "$g.name";
+#end for
 
 void emitMessages(){
     #for $g in $groups
     #for $m in $g.messages
     #set $className = $m.name + "Message"
 
-    ## Cheetah fun to generate the boost::python::init object:
-    #set $initString = "bp::init< "
     #for $i, $f in enumerate($m.fields)
         #if $isSTLVector($f.type)
             $requiredVectorTypes.add($f.type.valType)
         #else if $isSTLMap($f.type)
             $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
         #end if
-        #set $initString = $initString + $toCPPType($f.type)
-        #if $i != $len($m.fields) - 1
-            #set $initString = $initString + ", "
-        #end if
     #end for
-    #set $initString = $initString + " >()"
+
     bp::class_<$className,
                bp::bases<Message>
-              >("$className", $initString)
-        // self_ns shouldn't be necessary here... gcc sux
+              >("$className", bp::init<>())
+        #if $len($m.fields) != 0
+        ## Keyword constructor (still needs all the keys
+        .def( bp::init< #for $i, $f in enumerate($m.fields)#$toCPPType($f.type)#if $i != $len($m.fields) - 1#,#end if# #end for#>( (
+            #for $i, $f in enumerate($m.fields)
+                bp::arg("$f.name")#if $i != $len($m.fields) - 1#,#end if#
+            #end for
+            ) )
+        )
+        #end if
+        ## self_ns shouldn't be necessary here... gcc sux
         .def(bp::self_ns::str(bp::self_ns::self))
-        // return policies are all return-by-value, safest, but not the most efficient
+        ## default group to send to
+        .def_readonly("group", &${g.name.upper()}_NAME)
+        ## return policies are all return-by-value, safest, but not the most efficient
         #for $f in $m.fields
         .add_property(
             "${f.name}",
@@ -44,12 +54,12 @@ void emitMessages(){
         )
         #end for
     ;
-    // hackery for boost::shared_ptr<T const> ... see workarounds.h
+    ## hackery for boost::shared_ptr<T const> ... see workarounds.h
     register_shared_ptrs_to_python<$className>();
     #end for
     #end for
-    
-    // hackery for boost::shared_ptr<T const> ... see workarounds.h
+
+    ## hackery for boost::shared_ptr<T const> ... see workarounds.h
     register_shared_ptrs_to_python<Message>();
 }
 

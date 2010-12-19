@@ -43,7 +43,11 @@ enum NodeType : int8 {
     HistogramSegmentation = 34,
     Centre = 35,
     QuickSegment = 36,
-    ThresholdMask = 37
+    ThresholdMask = 37,
+    CornerHarris = 38,
+    HistogramSegmentationArb = 39,
+    RunningAverage = 40,
+    CopyMask = 41
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -278,7 +282,7 @@ group image
 	message Image : 4
 	{
 	    source : CameraID;
-	    image : Image;
+	    lazy image : Image;
         time : TimeStamp;
     }
 }
@@ -297,7 +301,7 @@ group sonarctl
         width : uint16;
         gain : uint8;
         range : uint32;
-        radialRes : uint32;
+        rangeRes : uint32;
         angularRes : uint8;
     }
 }
@@ -412,10 +416,10 @@ group pl_gui
 
     message GraphDescription : 118
     {
-        nodeTypes : map<int32, NodeType>;
-        nodeInputs : map<int32, map<string, NodeOutput> >;
-        nodeOutputs : map<int32, map<string, list<NodeInput> > >;
-        nodeParams : map<int32, map<string, NodeParamValue> >;
+        lazy nodeTypes : map<int32, NodeType>;
+        lazy nodeInputs : map<int32, map<string, NodeOutput> >;
+        lazy nodeOutputs : map<int32, map<string, list<NodeInput> > >;
+        lazy nodeParams : map<int32, map<string, NodeParamValue> >;
     }
 
     message ArcAdded : 119
@@ -453,7 +457,7 @@ group pl_gui
 	message GuiImage : 124
 	{
         nodeId : int32;
-	    image : Image;
+	    lazy image : Image;
     }
 }
 

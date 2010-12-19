@@ -3,6 +3,7 @@
 #include <iostream>
 
 using namespace OIS;
+using namespace cauv;
 
 PlaystationInput::PlaystationInput(const unsigned int id) : GamepadInput(id)
 {
@@ -20,22 +21,23 @@ bool PlaystationInput::buttonReleased( const JoyStickEvent&, int button ) {
 
 bool PlaystationInput::axisMoved( const JoyStickEvent &arg, int axis )
 {
-    if( arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 ) {
-        return true;
+    int value = 0;
+    if((arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )) {
+        value = arg.state.mAxes[axis].abs;
     }
 
     switch (axis) {
         case Playstation::Joy_L_X:
-            Q_EMIT Joy_L_X(arg.state.mAxes[axis].abs);
+            Q_EMIT Joy_L_X(value);
             break;
         case Playstation::Joy_L_Y:
-            Q_EMIT Joy_L_Y(arg.state.mAxes[axis].abs);
+            Q_EMIT Joy_L_Y(value);
             break;
         case Playstation::Joy_R_X:
-            Q_EMIT Joy_R_X(arg.state.mAxes[axis].abs);
+            Q_EMIT Joy_R_X(value);
             break;
         case Playstation::Joy_R_Y:
-            Q_EMIT Joy_R_Y(arg.state.mAxes[axis].abs);
+            Q_EMIT Joy_R_Y(value);
             break;
         default:
             throw "Axis does not exist";
@@ -71,6 +73,10 @@ bool PlaystationInput::vector3Moved( const JoyStickEvent &, int )
 
 void PlaystationInput::printIt(bool it){
     std::cout << "Button value: " << it << std::endl;
+}
+
+void PlaystationInput::printIt(int it){
+    std::cout << "Axis value: " << it << std::endl;
 }
 
 void PlaystationInput::emitButton( Playstation::Buttons button, bool state ) {

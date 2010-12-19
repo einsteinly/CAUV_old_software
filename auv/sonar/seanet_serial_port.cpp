@@ -16,6 +16,7 @@
 #include "seanet_packet.h"
 
 using namespace std;
+using namespace cauv;
 
 const char *SonarIsDeadException::what() const throw()
 {

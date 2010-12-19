@@ -14,7 +14,7 @@
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
-#include <generated/messages.h>
+#include <common/spread/spread_rc_mailbox.h>
 #include <generated/messages.h>
 #include <camera/camera.h>
 #include <camera/camera_observer.h>
@@ -23,7 +23,9 @@
 
 
 using namespace std;
+using namespace cauv;
 
+namespace cauv{
 
 class SpreadCameraObserver : public CameraObserver, public MessageObserver{
         typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
@@ -73,6 +75,8 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
         CameraID::e m_cam_id;
         imsg_ptr_t m_msg;
 };
+
+} // namespace cauv
 
 WebcamNode::WebcamNode()
     : CauvNode("Webcam"),

@@ -1,15 +1,18 @@
 #include <iostream>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <common/data_stream_tools.h>
 
 #include "auv_model.h"
 #include "auv_controller.h"
 
 using namespace std;
+using namespace cauv;
 
 int main()
 {
-    AUV auv;
+    boost::shared_ptr< AUV > auv = boost::make_shared<AUV>();
 
 
     AUVController controller(auv);
@@ -29,12 +32,12 @@ int main()
     cout << controller.enabled() << endl;  // []    =  1
 
 
-    DataStreamRecorder<int8_t> recorder(auv.motors.prop, 100);
-    DataStreamPrinter<int8_t> printer(auv.motors.prop);
-    DataStreamPrinter<bool> printer2(auv.autopilots.bearing->enabled);
-    auv.motors.prop->set(10);
+    DataStreamRecorder<int8_t> recorder(auv->motors.prop, 100);
+    DataStreamPrinter<int8_t> printer(auv->motors.prop);
+    DataStreamPrinter<bool> printer2(auv->autopilots.bearing->enabled);
+    auv->motors.prop->set(10);
 
-    auv.autopilots.bearing->enabled->set(false);
+    auv->autopilots.bearing->enabled->set(false);
 
     //cout << "Count: " << auv.m_allStreams.size() << endl;
 /*

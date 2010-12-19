@@ -6,7 +6,8 @@ reserved = {
     "message" : "MSG",
     "list" : "LIST",
     "map" : "MAP",
-    "enum" : "ENUM"
+    "enum" : "ENUM",
+    "lazy" : "LAZY"
 }
 tokens = [
     "STRING",

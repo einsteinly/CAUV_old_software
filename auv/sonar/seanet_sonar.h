@@ -1,5 +1,5 @@
-#ifndef __SEANET_SONAR_H__
-#define __SEANET_SONAR_H__
+#ifndef __CAUV_SEANET_SONAR_H__
+#define __CAUV_SEANET_SONAR_H__
 
 #include <stdint.h>
 #include <pthread.h>
@@ -13,13 +13,15 @@
 #include "seanet_packet.h"
 #include "seanet_serial_port.h"
 
+namespace cauv{
 
 class SeanetSonar;
+
 class SonarControlMessageObserver : public MessageObserver
 {
     public:
         SonarControlMessageObserver(boost::shared_ptr<SeanetSonar> sonar);
-        virtual void onSonarControlMessage(boost::shared_ptr<SonarControlMessage> m);
+        virtual void onSonarControlMessage(SonarControlMessage_ptr m);
 
     protected:
         boost::shared_ptr<SeanetSonar> m_sonar;
@@ -47,6 +49,9 @@ class MotorState {
 };
 
 
+void sonarReadThread(SeanetSonar& sonar);
+void sonarProcessThread(SeanetSonar& sonar);
+
 class SeanetSonar : public Observable<SonarObserver>
 {
 	public:
@@ -63,7 +68,13 @@ class SeanetSonar : public Observable<SonarObserver>
         void set_range (uint32_t range);
         void set_range_res (uint32_t range_res);
         void set_angular_res (unsigned char angular_res);
-        
+
+        // Direction : 1/6400 of a circle
+        // Width : 1/6400 of a circle
+        // Gain : [0,255]
+        // Range : mm
+        // Range res : mm
+        // Angular res : 1/6400 of a circle
         void set_params (uint16_t direction,
                          uint16_t width,
                          unsigned char gain,
@@ -72,8 +83,8 @@ class SeanetSonar : public Observable<SonarObserver>
                          unsigned char angular_res);
 
         
-        friend void sonarReadThread(SeanetSonar& sonar);
-        friend void sonarProcessThread(SeanetSonar& sonar);
+        friend void cauv::sonarReadThread(SeanetSonar& sonar);
+        friend void cauv::sonarProcessThread(SeanetSonar& sonar);
 	
     
     private:
@@ -130,5 +141,7 @@ class SeanetSonar : public Observable<SonarObserver>
 		void request_version();
 };
 
-#endif
+} // namespace cauv
+
+#endif // ndef __CAUV_SEANET_SONAR_H__
 

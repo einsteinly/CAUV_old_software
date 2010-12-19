@@ -9,6 +9,7 @@
 class FTFont;
 class FTBBox;
 
+namespace cauv{
 namespace pw{
 
 class Text: public Renderable, public std::string{
@@ -49,6 +50,7 @@ class Text: public Renderable, public std::string{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __TEXT_RENDERABLE_H__
 

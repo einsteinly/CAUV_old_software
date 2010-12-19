@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class SplitRGBNode: public Node{
     public:
         SplitRGBNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -68,6 +71,9 @@ class SplitRGBNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __SPLIT_RGB_NODE_H__
 

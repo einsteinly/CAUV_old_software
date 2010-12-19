@@ -1,3 +1,6 @@
+#ifndef __PV_PAIR_H__
+#define __PV_PAIR_H__
+
 #include <iostream>
 #include <sstream>
 
@@ -6,6 +9,7 @@
 
 #include "node.h"
 
+namespace cauv{
 namespace pw{
 
 class PVPairEditableBase: public Renderable{
@@ -130,4 +134,6 @@ class PVPair: public PVPairEditableBase{
 };
 
 } // namespace pw
+} // namespace cauv
 
+#endif // ndef __PV_PAIR_H__

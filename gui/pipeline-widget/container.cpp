@@ -6,7 +6,7 @@
 
 #include "renderable.h"
 
-using namespace pw;
+using namespace cauv::pw;
 
 renderable_ptr_t Container::pick(Point const& p){
     renderable_list_t::const_iterator i;

@@ -12,6 +12,9 @@
 
 #define MAX_DEVICES 5
 
+namespace cauv{
+namespace imgproc{
+
 class CameraInputNode: public AsynchronousNode{
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
@@ -87,7 +90,7 @@ class CameraInputNode: public AsynchronousNode{
                     }catch(cv::Exception& e){
                         error() << "capture exception:" << e.what();
                     }
-                    
+                   
                     if(!m_capture.isOpened()){
                         error() << "could not open camera" << dev_id;
                         return;
@@ -109,6 +112,9 @@ class CameraInputNode: public AsynchronousNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __CAMERA_INPUT_NODE_H__
 

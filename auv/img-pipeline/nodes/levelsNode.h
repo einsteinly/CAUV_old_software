@@ -13,6 +13,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class LevelsNode: public Node{
     public:
         LevelsNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -76,5 +79,8 @@ class LevelsNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __LEVELS_NODE_H__

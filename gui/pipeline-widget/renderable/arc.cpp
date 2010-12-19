@@ -6,7 +6,7 @@
 
 #include "nodeIO.h"
 
-using namespace pw;
+using namespace cauv::pw;
 
 Arc::Arc(container_ptr_t c, renderable_wkptr_t src, renderable_wkptr_t dst)
     : Renderable(c), m_src(src), m_dst(dst), m_hanging(false){
@@ -71,9 +71,9 @@ bool Arc::acceptsMouseEvents(){
     return false;
 }
 
-NodeOutput Arc::from(){
+cauv::NodeOutput Arc::from(){
     boost::shared_ptr<NodeOutputBlob> optr;
-    NodeOutput r (0, "", OutputType::Image);
+    cauv::NodeOutput r (0, "", OutputType::Image);
     if(optr = boost::dynamic_pointer_cast<NodeOutputBlob>(fromOutput())){
         r.node = optr->nodeId();
         r.output = optr->output();
@@ -81,9 +81,9 @@ NodeOutput Arc::from(){
     return r;
 }
 
-NodeInput Arc::to(){
+cauv::NodeInput Arc::to(){
     boost::shared_ptr<NodeInputBlob> iptr;
-    NodeInput r (0, "");
+    cauv::NodeInput r (0, "");
     if(iptr = boost::dynamic_pointer_cast<NodeInputBlob>(toInput())){
         r.node = iptr->nodeId();
         r.input = iptr->input();

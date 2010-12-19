@@ -12,6 +12,7 @@
 #include <utility/rounding.h>
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
+#include <common/spread/spread_rc_mailbox.h>
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
@@ -20,6 +21,7 @@
 #include "xsens_imu.h"
 
 using namespace std;
+using namespace cauv;
 
 void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {
@@ -743,6 +745,7 @@ ControlNode::~ControlNode()
     }
 }
 
+#ifdef CAUV_MCB_IS_FTDI
 void ControlNode::setMCB(int id)
 {
     m_mcb.reset();
@@ -760,6 +763,25 @@ void ControlNode::setMCB(int id)
         }
     }
 }
+#else
+void ControlNode::setMCB(const std::string& filename)
+{
+    m_mcb.reset();
+    // start up the MCB module
+    try {
+        m_mcb = boost::make_shared<MCBModule>(filename);
+        info() << "MCB Connected";
+    }
+    catch (FTDIException& e)
+    {
+        error() << "Cannot connect to MCB: " << e.what();
+        m_mcb.reset();
+        if (e.errCode() == -8) {
+            throw NotRootException();
+        }
+    }
+}
+#endif
 
 void ControlNode::setXsens(int id)
 {
@@ -793,7 +815,11 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
     
     desc.add_options()
         ("xsens,x", po::value<int>()->default_value(0), "USB device id of the Xsens")
+#ifdef CAUV_MCB_IS_FTDI
         ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB")
+#else 
+        ("mcb,m", po::value<std::string>(), "TTY file for MCB serial comms")
+#endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale");
 }
@@ -806,9 +832,15 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     if (vm.count("xsens")) {
         setXsens(vm["xsens"].as<int>());
     }
+#ifdef CAUV_MCB_IS_FTDI
     if (vm.count("mcb")) {
         setMCB(vm["mcb"].as<int>());
     }
+#else
+    if (vm.count("mcb")) {
+        setMCB(vm["mcb"].as<std::string>());
+    } 
+#endif
     if (vm.count("depth-offset") && vm.count("depth-scale")) {
         float offset = vm["depth-offset"].as<float>();
         float scale = vm["depth-scale"].as<float>();

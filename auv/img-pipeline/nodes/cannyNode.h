@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class CannyNode: public Node{
     public:
         CannyNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -72,6 +75,9 @@ class CannyNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __CANNY_NODE_H__
 

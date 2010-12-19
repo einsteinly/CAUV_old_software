@@ -12,6 +12,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class InvertNode: public Node{
     public:
         InvertNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -41,13 +44,13 @@ class InvertNode: public Node{
 
             image_ptr_t img = inputs["image"];
             
-	    if ((int)img->cvMat().elemSize() != img->cvMat().channels()){
-	        error() << "InvertNode:\n\t"
+        if ((int)img->cvMat().elemSize() != img->cvMat().channels()){
+            error() << "InvertNode:\n\t"
                         << "Invalid image input - must be 8-bit";
                 return r;
             }
-	    
-	    if(!img->cvMat().isContinuous())
+        
+        if(!img->cvMat().isContinuous())
                 throw(parameter_error("image must be continuous"));
 
             const int elem_size = img->cvMat().elemSize();
@@ -68,5 +71,8 @@ class InvertNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __INVERT_NODE_H__

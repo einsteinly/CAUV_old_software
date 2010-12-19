@@ -1,0 +1,19 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 263484739648898995288495580675464106490
+created_time: &id001 2010-12-11 13:54:56.951770
+description: 'status changed to finished
+
+  description changed to Create some sort of running average node for the image pipeline,
+  to be used for background subtraction
+
+  title changed to Create a running mean node'
+entity: !!python/object:uuid.UUID
+  int: 8607511916925971690933653927340850752
+modified_time: *id001
+pscore: 0
+title: Leszek Swirski changed <pitz.Task 0679bf Create a running mean node>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 48276826715977039090534527625680613559
+who_did_it: *id002
+yaml_file_saved: 2010-12-11 13:54:56.951857

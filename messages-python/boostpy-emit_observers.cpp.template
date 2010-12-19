@@ -4,10 +4,11 @@
 \#include <boost/python/errors.hpp>
 
 \#include "emit_generated.h"
-\#include "../generated/messages.h"
-\#include "../debug/cauv_debug.h"
+\#include <generated/messages.h>
+\#include <debug/cauv_debug.h>
 
 namespace bp = boost::python;
+using namespace cauv;
 
 class MessageObserverWrapper:
     public MessageObserver,
@@ -19,9 +20,10 @@ class MessageObserverWrapper:
         #set $className = $m.name + "Message"
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
+            ## lock must be held during get_override!
+            GILLock l;
             if(bp::override f = this->get_override("on${className}")){
                 debug(12) << "MessageObserver: calling override for on${className}";
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -31,6 +33,7 @@ class MessageObserverWrapper:
                     }
                 }
             }else{
+                l.release();
                 debug(12) << "MessageObserver: no override for on${className}";
                 MessageObserver::on${className}(m);
             }
@@ -50,9 +53,10 @@ class BufferedMessageObserverWrapper:
         #set $className = $m.name + "Message"
         #set $ptrName = $className + "_ptr"
         void on${className}($ptrName m){
+            ## lock must be held during get_override!
+            GILLock l;
             if(bp::override f = this->get_override("on${className}")){
                 debug(12) << "BufferedMessageObserver: calling override for on${className}";
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -62,14 +66,16 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
+                l.release();
                 debug(12) << "BufferedMessageObserver: no override for on${className}";
                 BufferedMessageObserver::on${className}(m);
             }
         }
         void on${className}Buffered($ptrName m){
+            ## lock must be held during get_override!
+            GILLock l;
             if(bp::override f = this->get_override("on${className}Buffered")){
                 debug(12) << "BufferedMessageObserver: calling override for on${className}Buffered";
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -79,7 +85,8 @@ class BufferedMessageObserverWrapper:
                     }
                 }
             }else{
-                debug(12) << "BufferedMessageObserver: no override for on${className}Buffered";            
+                l.release();
+                debug(12) << "BufferedMessageObserver: no override for on${className}Buffered";
                 BufferedMessageObserver::on${className}Buffered(m);
             }
         }
@@ -123,7 +130,7 @@ void emitObservers(){
     ;
 
     bp::class_<DebugMessageObserver,
-               bp::bases<MessageObserver>,    
+               bp::bases<MessageObserver>,
                boost::noncopyable,
                boost::shared_ptr<DebugMessageObserver>
               >("DebugMessageObserver")
@@ -143,7 +150,7 @@ class MessageSource
         void removeObserver(boost::shared_ptr<MessageObserver> o);
         void clearObservers();
 
-    
+
     // Ideally protected, but boost.python pointer_holder requires puplic
     // default constructor to be available in order to allow pointers to this
     // type

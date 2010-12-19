@@ -106,7 +106,7 @@ template <class R, class C, class T0, class T1, class T2> MemberWrap<R, C, T0, T
 #include <boost/thread/tss.hpp>
 
 #include <debug/cauv_debug.h>
-#include <common/bash_cout.h>
+#include <utility/bash_cout.h>
 
 /** ... but the definitions of the wrappers need boost python (since the whole
  ** point is to wrap with GIL release, so they must be placed after inclusion)
@@ -174,49 +174,30 @@ class ThreadSave: ThreadSaveRestoreBase{
         }
 };
 
-//typedef ThreadRestore GILLock;
 class GILLock: boost::noncopyable{
     public:
         GILLock()
-            : m_gs(PyGILState_Ensure()){
+            : m_released(false), m_gs(PyGILState_Ensure()){
             debug(9) << BashColour::Green << "PyGILState_Ensure=" << m_gs;
         }
-        ~GILLock(){
+        void release(){
+            if(m_released)
+                return;
             debug(9) << BashColour::Green << "PyGILState_Release(" << m_gs << ")";
             PyGILState_Release(m_gs);
+            m_released = true;
+        }
+        ~GILLock(){
+            release();
         }
     private:
+        bool m_released;
         PyGILState_STATE m_gs;
 };
 
-typedef ThreadSave GILRelease;
-/*class GILRelease: boost::noncopyable{
-    public:
-        GILRelease()
-            : m_save(PyEval_SaveThread()){
-        }
-        ~GILRelease(){
-            PyEval_RestoreThread(m_save);
-        }
-    private:
-        PyThreadState *m_save;
-};*/
-
-/*class GILRelease: boost::noncopyable{
-    public:
-        GILRelease(){
-            PyGILState_Release(NULL);
-        }
-        ~GILRelease(){
-            PyGILState_Ensure();
-        }
-    private:
-        //PyGILState_STATE m_gs;
-};*/
-
 template<class R, class C>
 R MemberWrap<R, C>::operator()(C* p){
-    GILRelease guard;
+    ThreadSave guard;
     if(m_wrapped){
         debug(4) << "wrap ()";
         return (p->*(this->m_wrapped))();
@@ -228,21 +209,21 @@ R MemberWrap<R, C>::operator()(C* p){
 
 template <class R, class C, class T0>
 R MemberWrap<R, C, T0>::operator()(C* p, T0_ p0){
-    GILRelease guard;
+    ThreadSave guard;
     debug(4) << "wrap(T0)";
     return (p->*(this->m_wrapped))(p0);
 }
 
 template <class R, class C, class T0, class T1>
 R MemberWrap<R, C, T0, T1>::operator()(C* p, T0_ p0, T1_ p1){
-    GILRelease guard;
+    ThreadSave guard;
     debug(4) << "wrap(T0, T1)";
     return (p->*(this->m_wrapped))(p0, p1);
 }
 
 template <class R, class C, class T0, class T1, class T2>
 R MemberWrap<R, C, T0, T1, T2>::operator()(C* p, T0_ p0, T1_ p1, T2_ p2){
-    GILRelease guard;
+    ThreadSave guard;
     debug(4) << "wrap(T0, T1, T2)";
     return (p->*(this->m_wrapped))(p0, p1, p2);
 }

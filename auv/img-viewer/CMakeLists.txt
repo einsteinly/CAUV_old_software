@@ -1,7 +1,7 @@
 
 # sources
 add_executable (
-    img-viewer
+    img-viewer EXCLUDE_FROM_ALL
     img-viewer.cpp
 )
 

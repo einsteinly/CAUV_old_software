@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class SplitYUVNode: public Node{
     public:
         SplitYUVNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -84,6 +87,9 @@ class SplitYUVNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __SPLIT_YUV_NODE_H__
 

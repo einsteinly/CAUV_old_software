@@ -1,13 +1,41 @@
 #include "workarounds.h" // _must_ be first
-#include <boost/python.hpp> // oh yes :)
+#include <boost/python.hpp>
 
-#include "../../generated/messages.h"
-#include "../common/cauv_node.h"
+#include <generated/messages.h>
+#include <common/cauv_node.h>
+#include <common/spread/msgsrc_mb_observer.h>
+#include <common/spread/spread_rc_mailbox.h>>
 
 #include "emit_static.h"
 
 namespace bp = boost::python;
+using namespace cauv;
 
+void cauvDebug(const char* s, int l){
+    // relying on order of local destruction: LIFO
+    ThreadSave guard;
+    debug(l) << s;
+}
+
+void cauvDebug1(const char* s){
+    ThreadSave guard;
+    debug() << s;
+}
+
+void cauvWarning(const char* s){
+    ThreadSave guard;
+    warning() << s;
+}
+
+void cauvError(const char* s){
+    ThreadSave guard;
+    error() << s;
+}
+
+void cauvInfo(const char* s){
+    ThreadSave guard;
+    info() << s;
+}
 
 struct Blah{
     int monkey;
@@ -38,17 +66,18 @@ struct ThingCaller{
             return m_thing->foo();
         return -1;
     }
-    
+
     private:
         boost::shared_ptr<Thing> m_thing;
 };
 
 struct ThingWrapper: public Thing, bp::wrapper<Thing>{
     int foo(){
+        GILLock l; // GIL MUST be held during get_override!
         if(bp::override f = this->get_override("foo")){
-            GILLock l; // aquire GIL before calling back into python
             return f();
         }
+        l.release();
         return Thing::foo();
     }
 
@@ -65,11 +94,12 @@ class MessageWrapper:
     public bp::wrapper<Message>
 {
     public:
-        boost::shared_ptr<const byte_vec_t> toBytes() const{
+        const_svec_ptr toBytes() const{
+            GILLock l; // GIL MUST be held during get_override!
             if(bp::override f = this->get_override("toBytes")){
-                GILLock l; 
                 f();
             }
+            l.release();
             assert(0);
         }
 };
@@ -86,13 +116,15 @@ class CauvNodeWrapper:
             m_server = server;
             m_port = port;
         }
-        
+
         void onRun(){
+            GILLock l;
             if(bp::override f = this->get_override("onRun")){
-                GILLock l; 
                 f();
-            }else
+            }else{
+                l.release();
                 CauvNode::onRun();
+            }
         }
 
         /*void default_onRun(){
@@ -109,7 +141,7 @@ class CauvNodeWrapper:
             std::cerr << "yes, foo was called" << std::endl;
             return 9;
         }*/
-        
+
         boost::shared_ptr<ReconnectingSpreadMailbox> get_mailbox() const{
             return CauvNode::mailbox();
         }
@@ -123,8 +155,8 @@ class AIMessageObserver:
     public:
         // only check for overrides of onAIMessage
         void onAIMessage(AIMessage_ptr m){
+            GILLock l;
             if(bp::override f = this->get_override("onAIMessage")){
-                GILLock l;
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -134,6 +166,8 @@ class AIMessageObserver:
                     }
                 }
             }
+            l.release();
+            BufferedMessageObserver::onAIMessage(m);
         }
 };
 */
@@ -145,10 +179,13 @@ class SpreadMessageWrapper:
 {
     public:
         virtual MessageFlavour getMessageFlavour() const{
+            GILLock l;
             if(bp::override f = this->get_override("getMessageFlavour")){
-                GILLock l; 
                 f();
             }
+            l.release();
+            error() << "1. Spread Messages should not be exposed to Python";
+            error() << "2. You should DEFINITELY not be using them";
             assert(0);
         }
 };
@@ -173,6 +210,13 @@ void emitThing(){
     ;
 }
 
+void emitDebug(){
+    bp::def("debug", cauvDebug);
+    bp::def("debug", cauvDebug1);
+    bp::def("warning", cauvWarning);
+    bp::def("error", cauvError);
+    bp::def("info", cauvInfo);
+}
 
 void emitMailbox(){
     /* need to explicitly resolve pointer to overloaded function: */
@@ -226,6 +270,7 @@ void emitCauvNode(){
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))
+         .def("removeObserver", wrap(&CauvNode::removeMessageObserver))
          //.def("foo", wrap(&CauvNodeWrapper::foo))
          .add_property("mailbox", &CauvNodeWrapper::get_mailbox)
          //.add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)

@@ -4,13 +4,15 @@
 #include <sstream>
 #include <stdint.h>
 
+#include <QTimer>
+
 #include "cauvgui.h"
 #include "gamepad/playstationinput.h"
 
 using namespace std;
+using namespace cauv;
 
 static CauvGui* node;
-
 
 void cleanup()
 {
@@ -33,12 +35,22 @@ void interrupt(int sig)
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
+
     node = new CauvGui(app);
 
     try {
         info() << GamepadInput::listDevices();
-        PlaystationInput gi(0);
-        gi.connect(&gi, SIGNAL(X(bool)), &gi, SLOT(printIt(bool)));
+        PlaystationInput* gi;
+        gi = new PlaystationInput(0);
+
+        gi->setParent(node);
+        gi->connect(gi, SIGNAL(X(bool)), gi, SLOT(printIt(bool)));
+        gi->connect(gi, SIGNAL(Joy_L_X(int)), gi, SLOT(printIt(int)));
+
+        // timer to read the game controller
+        QTimer *timer = new QTimer(node);
+        timer->connect(timer, SIGNAL(timeout()), gi, SLOT(processEvents()));
+        timer->start(200);
     } catch (char const* ex){
         error() << ex;
     }

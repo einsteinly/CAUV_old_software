@@ -11,16 +11,16 @@
 #include "seanet_packet.h"
 
 using namespace std;
-
+using namespace cauv;
 
 SonarControlMessageObserver::SonarControlMessageObserver(boost::shared_ptr<SeanetSonar> sonar)
 {
     m_sonar = sonar;
 }
 
-void SonarControlMessageObserver::onSonarControlMessage(boost::shared_ptr<SonarControlMessage> m)
+void SonarControlMessageObserver::onSonarControlMessage(SonarControlMessage_ptr m)
 {
-    m_sonar->set_params(m->direction(), m->width(), m->gain(), m->range(), m->radialRes(), m->angularRes());
+    m_sonar->set_params(m->direction(), m->width(), m->gain(), m->range(), m->rangeRes(), m->angularRes());
 }
 
 
@@ -55,8 +55,6 @@ SeanetSonar::SeanetSonar(std::string str) : m_cur_data_reqs(0)
     m_state = SENDREBOOT;
 }
 
-void sonarReadThread(SeanetSonar& sonar);
-void sonarProcessThread(SeanetSonar& sonar);
 void SeanetSonar::init()
 {
     debug() << "Initialising sonar";
@@ -150,6 +148,7 @@ void SeanetSonar::set_params (uint16_t direction,
                               uint32_t range_res,
                               unsigned char angular_res)
 {
+    debug() << "Setting params";
     m_current_params.direction = direction;
     m_current_params.width = width;
     m_current_params.gain = gain;
@@ -256,7 +255,7 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
 
 
 
-void sonarReadThread(SeanetSonar& sonar)
+void cauv::sonarReadThread(SeanetSonar& sonar)
 {
     try {
         debug() << "Starting read thread";
@@ -404,7 +403,7 @@ void sonarReadThread(SeanetSonar& sonar)
 }
 
 
-void sonarProcessThread(SeanetSonar& sonar)
+void cauv::sonarProcessThread(SeanetSonar& sonar)
 {
     try {
         debug() << "Starting processing thread";

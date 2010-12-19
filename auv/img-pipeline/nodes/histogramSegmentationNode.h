@@ -15,6 +15,9 @@
 #include "outputNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class HistogramSegmentationNode: public OutputNode{
     public:
         HistogramSegmentationNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -29,7 +32,7 @@ class HistogramSegmentationNode: public OutputNode{
             registerInputID("image_in");
             
             //One output
-            registerOutputID<image_ptr_t>("Segments");
+            registerOutputID<image_ptr_t>("Pixels");
             
             //Parameters
             registerParamID<int>("Number of bins", 42);
@@ -65,18 +68,21 @@ class HistogramSegmentationNode: public OutputNode{
 
             for(int i = 0; i < img->cvMat().rows; i++) {
                 for(int j = 0; j < img->cvMat().cols; j++) {
-                   if(img->cvMat().at<uint8_t>(i, j) > binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
+                   if(img->cvMat().at<uint8_t>(i, j) >= binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
                        out.at<uint8_t>(i, j) = 255;
                    }
                 }
             }
 
-            r["Segments"] = boost::make_shared<Image>(out);
+            r["Pixels"] = boost::make_shared<Image>(out);
             return r;
         }
 
     //Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif //ndef __HISTOGRAMSEGMENT_H__

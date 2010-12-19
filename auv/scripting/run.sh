@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCRIPTING_DIR="$(pwd)"
+SCRIPTING_DIR="$(dirname $0)"
 LD_EXT_PATH="$SCRIPTING_DIR/../python-module/cauv/:$SCRIPTING_DIR/../python-module/"
 
 export LD_LIBRARY_PATH="$LD_EXT_PATH:$LD_LIBRARY_PATH"

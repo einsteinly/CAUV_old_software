@@ -13,6 +13,9 @@
 #include "outputNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class FileOutputNode: public OutputNode{
     public:
         FileOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -83,5 +86,8 @@ class FileOutputNode: public OutputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __FILE_OUTPUT_NODE_H__

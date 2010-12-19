@@ -10,13 +10,14 @@
 
 #include <QtGui>
 
-#include <common/bash_cout.h>
 #include <common/cauv_utils.h>
+
 #include <debug/cauv_debug.h>
 
 #include <utility/defer.h>
+#include <utility/bash_cout.h>
 
-#include "pipelineWidgetNode.h"
+#include "pipelineMessageObserver.h"
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
@@ -30,6 +31,7 @@
 #include "renderable/imgNode.h"
 
 
+namespace cauv{
 namespace pw{
 
 // CAVEAT VIATOR: compare actual *arcs* by pointer, reverse arc compares equal
@@ -40,17 +42,16 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
 }
 
 } // namespace pw
+} // namespace cauv;
 
-using namespace pw;
+using namespace cauv::pw;
 
-PipelineWidget::PipelineWidget(QWidget *parent, int argc, char** argv)
+PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10), m_scrolldelta(0),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_overkey(boost::make_shared<ok::OverKey>(this)),
-      m_cauv_node(),
-      m_cauv_node_thread(boost::thread(spawnPGCN, this, argc, argv)),
       m_lock(), m_redraw_posted_lock(), m_redraw_posted(false){
     // TODO: more appropriate QGLFormat?
 
@@ -146,8 +147,8 @@ void PipelineWidget::remove(renderable_ptr_t p){
         if(*i == p)
             m_contents.erase(i);
     }
-    arc_ptr_t a;
-    if(a = boost::dynamic_pointer_cast<Arc>(p))
+    arc_ptr_t a = boost::dynamic_pointer_cast<Arc>(p);
+    if(a)
         m_arcs.erase(a);
 
     // NB: the item may persist in m_receiving_move or m_owning_mouse until the
@@ -336,17 +337,10 @@ void PipelineWidget::removeArc(renderable_ptr_t src, renderable_ptr_t dst){
     warning() << __func__ << "no such arc" << src <<  "->" << dst;
 }
 
-void PipelineWidget::setCauvNode(boost::shared_ptr<PipelineGuiCauvNode> c){
-    if(m_cauv_node)
-        warning() << "PipelineWidget::setCauvNode already set";
-    m_cauv_node = c;
-}
-
 void PipelineWidget::send(boost::shared_ptr<Message> m){
-    if(m_cauv_node)
-        m_cauv_node->send(m);
-    else
-        error() << "PipelineWidget::send no associated cauv node";
+    // anyone interested in messages from the pipeline can subscribe to this signal
+    // allows the pipeline and message software to be decoupled
+    Q_EMIT messageGenerated(m);
 }
 
 node_ptr_t PipelineWidget::nodeAt(Point const& p) const{
@@ -803,14 +797,6 @@ void PipelineWidget::testEditBoxMenu(){
     postRedraw(0);
 }
 
-
-static float mass(node_ptr_t){
-    return 1.0f;
-}
-
-
-
-
 void PipelineWidget::iterateLayout(){
     namespace gv = graphviz;
     
@@ -850,14 +836,10 @@ void PipelineWidget::iterateLayout(){
 
 
     gv::gvLayout(c.get(), g.get(), "dot");
-    gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
+    //gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
 
     foreach(const gv::Node& n, g.nodes)
     {
-        std::stringstream ss;
-        ss << n.name() << ": " << n.coord().x << "," << n.coord().y;
-        std::cout << ss.str() << std::endl;
-        
         node_map_t::iterator np = m_nodes.find(boost::lexical_cast<node_id>(n.name()));
         if (np != m_nodes.end()) {
             np->second->m_pos = Point(n.coord().x - np->second->bbox().w() / 2.0, n.coord().y + np->second->bbox().h() / 2.0);   

@@ -13,6 +13,7 @@
 #include "menu.h"
 #include "text.h"
 
+namespace cauv{
 namespace pw{
 
 template<typename callable>
@@ -204,6 +205,7 @@ class ListMenu: public Menu{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __LIST_MENU_RENDERABLE_H__
 

@@ -3,6 +3,8 @@
 
 #include "gamepadinput.h"
 
+namespace cauv{
+
 namespace Playstation {
     enum Buttons {
         X = 2, Triangle = 0, Square = 3, Circle = 1,
@@ -52,6 +54,7 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void printIt(bool);
+    void printIt(int);
 
 public:
     PlaystationInput(const unsigned int id);
@@ -65,5 +68,7 @@ public:
 protected:
     void emitButton( Playstation::Buttons button, bool state );
 };
+
+} // namespace cauv
 
 #endif // PLAYSTATIONINPUT_H

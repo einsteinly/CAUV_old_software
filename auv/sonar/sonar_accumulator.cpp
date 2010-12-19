@@ -12,6 +12,7 @@
 #include <debug/cauv_debug.h>
 
 using namespace std;
+using namespace cauv;
 
 static void set_pixel(cv::Mat& img, int x, int y, unsigned char val)
 {

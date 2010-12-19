@@ -9,7 +9,7 @@
 #include "arc.h"
 #include "node.h"
 
-using namespace pw;
+using namespace cauv::pw;
 
 const static Colour IO_Normal_Colour(0.2, 0.4, 0.6, 0.5);
 const static Colour Param_Normal_Colour(0.4, 0.4, 0.4, 0.5);
@@ -167,8 +167,8 @@ void FloatingArcHandle::mouseReleaseEvent(MouseEvent const&){
     debug() << BashColour::Green
             << "FloatingArcHandle released on" << hit;
 
-    boost::shared_ptr<NodeIOBlob> dropped_on_io;
-    if(dropped_on_io = boost::dynamic_pointer_cast<NodeIOBlob>(hit)){
+    boost::shared_ptr<NodeIOBlob> dropped_on_io = boost::dynamic_pointer_cast<NodeIOBlob>(hit);
+    if(dropped_on_io){
         debug() << "dropped on IO" << dropped_on_io;
         m_arc->m_dst = dropped_on_io;
         m_pw->send(

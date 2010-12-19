@@ -1,7 +1,7 @@
 #include <boost/thread.hpp>
 
 #include <debug/cauv_debug.h> 
-#include <common/bash_cout.h>
+#include <utility/bash_cout.h>
 
 static BashColour::e colours[] = {
     BashColour::Red,

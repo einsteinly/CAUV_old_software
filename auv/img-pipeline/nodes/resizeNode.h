@@ -13,6 +13,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class ResizeNode: public Node{
     public:
         ResizeNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -64,5 +67,8 @@ class ResizeNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __RESIZE_NODE_H__

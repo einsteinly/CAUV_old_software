@@ -14,6 +14,9 @@
 
 //Used for cropping (self-explanatory) and anti-cropping (ask James Crosby)
 
+namespace cauv{
+namespace imgproc{
+
 class CropNode: public Node{
     public:
         CropNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -50,7 +53,7 @@ class CropNode: public Node{
                 int width = param<int>("width");
                 int height = param<int>("height");
             
-	            if (width < 0 || height < 0) {
+                if (width < 0 || height < 0) {
                     error() << "CropNode:\n\t"
                             << "width and height must be greater than 0.";
                     return r;
@@ -63,7 +66,7 @@ class CropNode: public Node{
                     return r;
                 }   
 
-   	            cv::Rect cropRect(top_left_x,top_left_y, width, height); //Create the rectangle used to crop the picture
+                   cv::Rect cropRect(top_left_x,top_left_y, width, height); //Create the rectangle used to crop the picture
 
                 image_ptr_t dst;
                 // Check if we need to perform anti-cropping
@@ -83,7 +86,7 @@ class CropNode: public Node{
                         cropRect.y = 0;
                         cropRect.height += top_left_y; 
                     }
-                    if(cropRect.y + cropRect.height > inp_img->cvMat().rows) { // The rectange falls to the bottom of the image, adjust accorindly
+                    if(cropRect.y + cropRect.height > inp_img->cvMat().rows) { // The rectange falls to the bottom of the image, adjust accoringly
                         cropRect.height = inp_img->cvMat().rows - cropRect.y;                    
                     }
 
@@ -117,19 +120,19 @@ class CropNode: public Node{
          
 /*
         try{
-		    cv::Mat cropped_img = cv::Mat(img->cvMat(),cropRect); //Perform the cropping
-		    //See if we need anti-cropping
-		    if (top_left_x < 0 || top_left_y < 0 || top_left_x + width > img->cvMat().cols || top_left_y + height > img->cvMat().rows) {
+            cv::Mat cropped_img = cv::Mat(img->cvMat(),cropRect); //Perform the cropping
+            //See if we need anti-cropping
+            if (top_left_x < 0 || top_left_y < 0 || top_left_x + width > img->cvMat().cols || top_left_y + height > img->cvMat().rows) {
                 cv::Rect dst_rec(-top_left_x,-top_left_y, cropRect.width, cropRect.height); //create a rectangle where the cropped image should be placed in the new image
                 if(dst_rec.x < 0) { dst_rec.x = 0; }
                 if(dst_rec.y < 0) { dst_rec.y = 0; }
                 error() << "x: " << dst_rec.x << " y: " << dst_rec.y << " width: " << dst_rec.width << " height: " << dst_rec.height << " m cols: " << dst->cvMat().cols << " m rows: " << dst->cvMat().rows << " m width: " << width << " m height: " << height;
-			    cv::Mat roi(dst->cvMat(),dst_rec);
+                cv::Mat roi(dst->cvMat(),dst_rec);
                 cropped_img.copyTo(roi);    
                 
-		} else { cropped_img.copyTo(dst->cvMat()); }
+        } else { cropped_img.copyTo(dst->cvMat()); }
 
-		error() << "width: " << dst->cvMat().cols << "\n\t";
+        error() << "width: " << dst->cvMat().cols << "\n\t";
                 r["cropped image"] = dst; 
             }catch(cv::Exception& e){
                 error() << "CropNode:\n\t"
@@ -144,6 +147,9 @@ class CropNode: public Node{
         // Register this node type
         DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __CROP_NODE_H__
 

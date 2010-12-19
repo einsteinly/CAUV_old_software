@@ -1,0 +1,21 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 263484739648898995288495580675464106490
+created_time: &id001 2010-12-08 01:28:43.780400
+description: "status changed to finished\ndescription changed to There are significant\
+  \ library organiation changes in OpenCV 2.2, but also the\r\nintroduction of lots\
+  \ of new shiny things (like gpu-scceleration) that we're\r\ngoing to want to use.\r\
+  \n\r\nThis will require some changes to our CMake find-opencv script: this script\r\
+  \n(or, rather, a better replacement for it) may even be included in CMake now.\r\
+  \n\r\nSome source code changes are also likely to be necessary.\r\n\r\nSee http://opencv.willowgarage.com/wiki/OpenCV%20Change%20Logs\
+  \ for changelogs.\r\nIn particular we should be using CV_RGB2HSV_FULL for colour\
+  \ conversion.\npoints changed to None\nowner changed to Leszek Swirski"
+entity: !!python/object:uuid.UUID
+  int: 147378121427258628850633717783871382464
+modified_time: *id001
+pscore: 0
+title: Leszek Swirski changed <pitz.Task 6edffe Update to OpenCV 2.2>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 256871164152976303026307898865135005858
+who_did_it: *id002
+yaml_file_saved: 2010-12-08 01:28:43.780500

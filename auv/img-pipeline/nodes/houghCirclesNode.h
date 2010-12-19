@@ -13,6 +13,9 @@
 #include "outputNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class HoughCirclesNode: public OutputNode{
     public:
         HoughCirclesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -101,6 +104,9 @@ class HoughCirclesNode: public OutputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __HOUGH_CIRCLESNODE_H__
 

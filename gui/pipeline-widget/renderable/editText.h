@@ -1,5 +1,5 @@
 #ifndef __EDIT_TEXT_RENDERABLE_H__
-#define __EDIT_TEXT_RENDEABLE_H__
+#define __EDIT_TEXT_RENDERABLE_H__
 
 #include "menu.h"
 #include "text.h"
@@ -14,6 +14,7 @@
 
 #include <debug/cauv_debug.h>
 
+namespace cauv{
 namespace pw{
 
 template<typename done_arg_T>
@@ -65,7 +66,7 @@ class EditText: public Menu{
             glPopMatrix();
 
             glPushMatrix();
-            glTranslatef(m_txt_prev->m_pos.x + m_txt_prev->bbox().w() + 1 + m_cur_w/2, 0, 0);
+            glTranslatef(m_txt_prev->m_pos.x + m_txt_prev->bbox().w() + 1 + m_cur_w/2.0, 0, 0);
             glColor(m_cursor_colour);
             glLineWidth(m_cur_w);
             glBegin(GL_LINES);
@@ -108,7 +109,8 @@ class EditText: public Menu{
 						{
 							QClipboard *cb = QApplication::clipboard();
 							QString text = cb->text();
-							if ( text != "" )
+                            debug() << "paste text:" << text.toStdString();
+							if ( text.size() )
 							{
 								// clipboard has something in it
 								*m_txt_prev += text.toStdString();	// add clipboard text
@@ -253,10 +255,11 @@ class EditText: public Menu{
 
         Colour m_cursor_colour;
 
-        static const double m_cur_w = 2;
+        static const int m_cur_w = 2;
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __EDIT_TEXT_RENDERABLE_H__
 

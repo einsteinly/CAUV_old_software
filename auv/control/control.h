@@ -1,5 +1,5 @@
-#ifndef __CONTROL_H__
-#define __CONTROL_H__
+#ifndef __CAUV_CONTROL_H__
+#define __CAUV_CONTROL_H__
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -7,10 +7,13 @@
 #include <common/cauv_node.h>
 
 class ControlLoops;
-class MCBModule;
-class XsensIMU;
 class StateObserver;
 class TelemetryBroadcaster;
+
+namespace cauv{
+
+class MCBModule;
+class XsensIMU;
 
 class ControlNode : public CauvNode
 {
@@ -18,7 +21,11 @@ class ControlNode : public CauvNode
         ControlNode();
         virtual ~ControlNode();
     
+#ifdef CAUV_MCB_IS_FTDI
         void setMCB(int id);
+#else 
+        void setMCB(const std::string& filename);
+#endif
         void setXsens(int id);
     
     protected:
@@ -35,4 +42,6 @@ class ControlNode : public CauvNode
         virtual void onRun();
 };
 
-#endif//__CONTROL_H__
+} // namespace cauv
+
+#endif // ndef __CAUV_CONTROL_H__

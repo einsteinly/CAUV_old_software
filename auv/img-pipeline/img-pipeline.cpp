@@ -14,7 +14,7 @@
 #include "imageProcessor.h"
 
 using namespace std;
-
+using namespace cauv::imgproc;
 
 ImagePipelineNode::ImagePipelineNode()
     : CauvNode("img-pipe"), m_pipeline(new ImageProcessor(mailbox()))
@@ -37,7 +37,7 @@ static ImagePipelineNode* node;
 void cleanup()
 {
     info() << "Cleaning up...";
-    CauvNode* oldnode = node;
+    cauv::CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
     info() << "Clean up done.";
