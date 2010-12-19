@@ -1,13 +1,13 @@
 project (guicpp)
 
 # required libraries:
-find_package (Qwt5 REQUIRED)
+find_package (Qwt6 REQUIRED)
 find_package (OIS REQUIRED)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
 else()
-if (NOT QWT_FOUND)
+if (NOT Qwt6_FOUND)
     message(WARNING "QWT not found, not building gui")
 else()
 if (NOT OIS_FOUND)
@@ -16,17 +16,18 @@ else()
     # using both Qt slots and Boost signals so need no keywords
     ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
 
-    include_directories (SYSTEM ${QWT_INCLUDE_DIR} REQUIRED)
-    link_directories (${QWT_LIBRARY})
+    include_directories (SYSTEM ${Qwt6_INCLUDE_DIR} REQUIRED)
+    link_directories (${Qwt6_Qt4_LIBRARY})
     link_directories (${OIS_LIBRARIES})
 
     set (
         guicpp_srcs
         main.cpp
         cauvgui.cpp
-        cauvwidget.cpp
+        cauvinterfaceelement.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
+        widgets/pipelinecauvwidget.cpp
     )
 
     set (
@@ -39,7 +40,8 @@ else()
         gamepad/playstationinput.h
         gamepad/gamepadinput.h
         cauvgui.h
-        cauvwidget.h
+        cauvinterfaceelement.h
+        widgets/pipelinecauvwidget.h
     )
 
     qt4_wrap_ui (guicpp_UIS_H ${guicpp_UIS})
@@ -61,7 +63,7 @@ else()
         model
         pipeline-widget
         ${QT_LIBRARIES}
-        ${QWT_LIBRARY}
+        ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
     )
 

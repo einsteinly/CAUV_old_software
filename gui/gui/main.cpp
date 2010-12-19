@@ -60,8 +60,11 @@ int main(int argc, char** argv)
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;
 
-    node->run();
-
+    try {
+        node->run();
+    } catch (char const* ex){
+        error() << ex;
+    }
     cleanup();
     return 0;
 }

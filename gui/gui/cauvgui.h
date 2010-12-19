@@ -13,19 +13,21 @@
 #include <model/auv_controller.h>
 
 #include "ui_mainwindow.h"
-#include "pipelineWidget.h"
+#include "cauvinterfaceelement.h"
 
 namespace cauv{
 
-class CauvGui : public QMainWindow, public CauvNode, private Ui::MainWindow {
-
+class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow {
     Q_OBJECT
 
     public:
         CauvGui(QApplication& app, QWidget *parent = 0);
+        void addInterfaceElement(CauvInterfaceElement * widget);
 
     public Q_SLOTS:
         int send(boost::shared_ptr<Message>message);
+        void addCentralTab(QWidget* tab, QString& name);
+        void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
 
     protected:
         virtual void onRun();

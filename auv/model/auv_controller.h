@@ -7,6 +7,8 @@
 #include <debug/cauv_debug.h>
 #include <boost/shared_ptr.hpp>
 
+#include <boost/signals.hpp>
+
 #include "auv_model.h"
 
 namespace cauv{
@@ -15,7 +17,7 @@ class AUVController : public MessageObserver {
 
 public:
 
-    AUVController(boost::shared_ptr< AUV > auv): m_auv(auv){}
+    AUVController(boost::shared_ptr< AUV > auv);
 
     void onDebugMessage(DebugMessage_ptr);
     void onDebugLevelMessage(DebugLevelMessage_ptr);
@@ -66,6 +68,15 @@ public:
     bool pushState(bool state);
     bool popState();
     bool enabled();
+
+    void sendMotorMessage(MotorID::e motor, int8_t speed);
+    void sendDebugLevelMessage(int32_t level);
+    template<class T> void sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<float> > ap);
+    template<class T> void sendAutopilotParamsMessage(autopilot_params_t params);
+    void sendSonarParamsMessage(sonar_params_t params);
+    void sendDepthCalibrationMessage(depth_calibration_t params);
+
+    boost::signal<void(const boost::shared_ptr<Message>)> onMessageGenerated;
 
 
 protected:

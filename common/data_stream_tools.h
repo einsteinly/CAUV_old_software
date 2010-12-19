@@ -15,7 +15,7 @@ class DataStreamRecorder {
     public:
         DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int maximum = 1000):
                 m_maximum(maximum), m_stream(stream) {
-            stream->onChange.connect(boost::bind(&DataStreamRecorder<T>::change, this, _1));
+            stream->onUpdate.connect(boost::bind(&DataStreamRecorder<T>::change, this, _1));
         };
 
         const std::vector<T>& getHistory() const {
@@ -51,7 +51,7 @@ class DataStreamPrinter {
 
     public:
         DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream): m_stream(stream) {
-            stream->onChange.connect(boost::bind(&DataStreamPrinter<T>::change, this, _1));
+            stream->onUpdate.connect(boost::bind(&DataStreamPrinter<T>::change, this, _1));
         };
 
         void change(const T &data) {
