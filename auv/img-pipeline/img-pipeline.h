@@ -5,6 +5,9 @@
 
 #include <common/cauv_node.h>
 
+namespace cauv{
+namespace imgproc{
+
 class ImageProcessor;
 
 class ImagePipelineNode : public CauvNode
@@ -18,6 +21,9 @@ class ImagePipelineNode : public CauvNode
     private:
         boost::shared_ptr<ImageProcessor> m_pipeline;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif //__IMAGE_PIPELINE_H__
 

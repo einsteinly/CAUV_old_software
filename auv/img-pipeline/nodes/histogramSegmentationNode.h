@@ -15,6 +15,9 @@
 #include "outputNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class HistogramSegmentationNode: public OutputNode{
     public:
         HistogramSegmentationNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -78,5 +81,8 @@ class HistogramSegmentationNode: public OutputNode{
     //Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif //ndef __HISTOGRAMSEGMENT_H__

@@ -15,6 +15,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace cauv;
 using ssrc::spread::Mailbox;
 using ssrc::spread::Error;
 using ssrc::spread::GroupList;
@@ -99,9 +100,9 @@ StringVectorPtr groupListToVector(const GroupList &groups) {
 int SpreadMailbox::doSendMessage(const boost::shared_ptr<const Message> message,
                                  Spread::service serviceType,
                                  const shared_ptr<GroupList> groupNames) {
-    boost::shared_ptr<const byte_vec_t> bytes = message->toBytes();
+    const_svec_ptr bytes = message->toBytes();
 
-#ifndef CAUV_NO_DEBUG
+#ifdef CAUV_DEBUG_MESSAGES
     std::stringstream ss;
     for (unsigned i = 0; i < bytes->size(); i++)
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*bytes)[i] << " ";

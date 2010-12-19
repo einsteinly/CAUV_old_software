@@ -54,9 +54,11 @@ set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_RELEASE CAUV_NO_DEBUG)
 # include the root source dir in the search path for all subprojects
 include_directories (${CAUV_SOURCE_DIR})
 
+add_subdirectory (common)
 add_subdirectory (messages-python)
 add_subdirectory (generated)
 add_subdirectory (auv)
 add_subdirectory (gui)
 add_subdirectory (utility)
+add_subdirectory (debug)
 

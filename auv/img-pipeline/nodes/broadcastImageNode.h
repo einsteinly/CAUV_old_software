@@ -3,6 +3,9 @@
 
 #include "../node.h"
 
+namespace cauv{
+namespace imgproc{
+
 class BroadcastImageNode: public OutputNode{
     public:
         BroadcastImageNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -46,5 +49,8 @@ class BroadcastImageNode: public OutputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __BROADCAST_IMAGE_NODE_H__

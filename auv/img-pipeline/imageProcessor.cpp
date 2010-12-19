@@ -7,6 +7,8 @@
 #include <utility/string.h>
 #include <generated/messages.h>
 
+using namespace cauv::imgproc;
+
 // TODO: error() should send an error message of some sort on spread
 
 ImageProcessor::ImageProcessor(mb_ptr_t mb)

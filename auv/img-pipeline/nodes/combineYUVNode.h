@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class CombineYUVNode: public Node{
     public:
         CombineYUVNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -76,6 +79,9 @@ class CombineYUVNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __COMBINE_YUV_NODE_H__
 

@@ -14,6 +14,9 @@
 #include "outputNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class QuickSegmentNode: public OutputNode{
     public:
         QuickSegmentNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -84,6 +87,9 @@ class QuickSegmentNode: public OutputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __QUICKSEGMENT_NODE_H__
 

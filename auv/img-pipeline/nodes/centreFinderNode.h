@@ -14,6 +14,9 @@
 #include "../node.h"
 #include "outputNode.h"
 
+namespace cauv{
+namespace imgproc{
+
 class CentreFinderNode : public OutputNode{
     public:
         CentreFinderNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -84,5 +87,8 @@ class CentreFinderNode : public OutputNode{
     //Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif //ndef __CENTREFINDER_H__

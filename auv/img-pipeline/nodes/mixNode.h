@@ -12,6 +12,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class MixNode: public Node{
     public:
         MixNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -81,5 +84,8 @@ class MixNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __MIX_NODE_H__

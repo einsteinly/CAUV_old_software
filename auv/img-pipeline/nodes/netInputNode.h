@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class NetInputNode: public InputNode{
     public:
         NetInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -53,6 +56,9 @@ class NetInputNode: public InputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __NET_INPUT_NODE_H__
 

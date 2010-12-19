@@ -8,7 +8,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include <generated/messages_fwd.h>
-#include <common/observable.h>
+#include <utility/observable.h>
+
+namespace cauv{
 
 class ReconnectingSpreadMailbox;
 class SpreadMessage;
@@ -48,5 +50,8 @@ class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public
         boost::thread m_thread;
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
 };
+
+} // namespace cauv
+
 #endif//__CAUV_MAILBOX_MONITOR_H__
 

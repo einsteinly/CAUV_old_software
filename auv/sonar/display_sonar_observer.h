@@ -6,6 +6,8 @@
 
 class SeanetSonar;
 
+namespace cauv{
+
 class DisplaySonarObserver : public SonarAccumulator, public SonarObserver
 {
     public:
@@ -18,5 +20,6 @@ class DisplaySonarObserver : public SonarAccumulator, public SonarObserver
         boost::shared_ptr<SeanetSonar> m_sonar;
 };
 
+} // namespace cauv
 
 #endif //__DISPLAY_SONAR_OBSERVER_H__

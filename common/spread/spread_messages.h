@@ -8,6 +8,8 @@
 
 #include <generated/messages.h>
 
+namespace cauv{
+
 typedef boost::shared_ptr< std::vector<std::string> > StringVectorPtr;
 
 /**
@@ -46,11 +48,11 @@ protected:
     Spread::service m_serviceType;
     StringVectorPtr m_groups;
     int m_messageType;
-    boost::shared_ptr<byte_vec_t> m_messageContents;
+    svec_ptr m_messageContents;
 
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
-                    const byte_vec_t &bytes );
+                    const svec_t &bytes );
     RegularMessage( const std::string &senderName, const Spread::service serviceType,
                     const StringVectorPtr groups, const int messageType,
                     const char * const bytes, const int byteCount );
@@ -80,7 +82,7 @@ public:
     /**
      * @return The actual application message data.
      */
-    boost::shared_ptr<const byte_vec_t> getMessage() const;
+    const_svec_ptr getMessage() const;
 
     virtual MessageFlavour getMessageFlavour() const;
 };
@@ -194,6 +196,8 @@ public:
      */
     const std::string &getAffectedGroupName() const;
 };
+
+} // namespace cauv
 
 #endif // CAUV_SPREAD_MESSAGES_H_INCLUDED
 

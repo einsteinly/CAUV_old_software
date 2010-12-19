@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class SplitHSVNode: public Node{
     public:
         SplitHSVNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -84,6 +87,9 @@ class SplitHSVNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __SPLIT_HSV_NODE_H__
 

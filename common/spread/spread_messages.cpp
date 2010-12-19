@@ -1,5 +1,9 @@
 #include "spread_messages.h"
 
+#include <boost/make_shared.hpp>
+
+using namespace cauv;
+
 SpreadMessage::SpreadMessage( const std::string &sender ) : m_sender(sender) {}
 
 
@@ -8,12 +12,12 @@ RegularMessage::RegularMessage(
             const Spread::service serviceType,
             const StringVectorPtr groups,
             const int messageType,
-            const byte_vec_t &bytes ) :
+            const svec_t &bytes ) :
         SpreadMessage(senderName),
         m_serviceType(serviceType),
         m_groups(groups),
         m_messageType(messageType),
-        m_messageContents( new byte_vec_t(&bytes[0], &bytes[0] + bytes.size()) )
+        m_messageContents(boost::make_shared<svec_t>(&bytes[0], &bytes[0] + bytes.size()) )
 {
 }
 RegularMessage::RegularMessage( const std::string &senderName, const Spread::service serviceType,
@@ -23,7 +27,7 @@ RegularMessage::RegularMessage( const std::string &senderName, const Spread::ser
         m_serviceType(serviceType),
         m_groups(groups),
         m_messageType(messageType),
-        m_messageContents( new byte_vec_t(bytes, bytes+byteCount) )
+        m_messageContents(boost::make_shared<svec_t>(bytes, bytes+byteCount) )
 {
 }
 
@@ -47,7 +51,7 @@ const StringVectorPtr RegularMessage::getReceivingGroupNames() const
 {
     return m_groups;
 }
-boost::shared_ptr<const byte_vec_t> RegularMessage::getMessage() const
+const_svec_ptr RegularMessage::getMessage() const
 {
     return m_messageContents;
 }

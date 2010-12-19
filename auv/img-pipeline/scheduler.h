@@ -1,5 +1,5 @@
-#ifndef __SCHEDULER_H__
-#define __SCHEDULER_H__
+#ifndef __CAUV_IMGPROC_SCHEDULER_H__
+#define __CAUV_IMGPROC_SCHEDULER_H__
 
 #include <map>
 #include <list>
@@ -17,10 +17,13 @@ class thread_group;
 class thread;
 } // namespace boost
 
+namespace cauv{
+namespace imgproc{
+
 // NB: there must be at least one thread of each priority!
-const int SLOW_THREADS = 2; // Mimimum number of threads dedicated to slow processes
-const int FAST_THREADS = 2; // Mimimum number of threads dedicated to fast processes
-const int REALTIME_THREADS = 1; // Number of realtime threads is fixed
+const int Slow_Threads = 2; // Mimimum number of threads dedicated to slow processes
+const int Fast_Threads = 2; // Mimimum number of threads dedicated to fast processes
+const int RealTime_Threads = 1; // Number of realtime threads is fixed
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
@@ -89,12 +92,6 @@ class Scheduler
         void stopWait();
 
         /**
-         * This MUST be called if nodes are removed, otherwise hanging node
-         * pointers may remain in queues.
-         */
-        void clearQueues();
-        
-        /**
          * Spawn threads and go!
          * NB: not threadsafe
          */
@@ -111,6 +108,8 @@ class Scheduler
         priority_thread_group_map_t m_thread_groups;
 };
 
+} // namespace imgproc
+} // namespace cauv
 
-#endif // ndef __SCHEDULER_H__
+#endif // ndef __CAUV_IMGPROC_SCHEDULER_H__
 

@@ -15,6 +15,9 @@
 #include "outputNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class HoughLinesNode: public OutputNode{
     public:
         HoughLinesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -175,6 +178,9 @@ class HoughLinesNode: public OutputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __HOUGH_LINESNODE_H__
 

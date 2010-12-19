@@ -15,6 +15,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class RunningAverageNode: public Node{
     public:
         RunningAverageNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t) :
@@ -93,5 +96,8 @@ class RunningAverageNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __GAUSSIAN_BLUR_NODE_H__

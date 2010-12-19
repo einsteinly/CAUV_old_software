@@ -4,6 +4,9 @@
 #include "pipelineTypes.h"
 #include "nodeFactory.h"
 
+using namespace cauv;
+using namespace cauv::imgproc;
+
 Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
     : m_priority(priority_slow),
       m_speed(slow),

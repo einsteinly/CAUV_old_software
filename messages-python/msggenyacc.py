@@ -57,6 +57,12 @@ class Message(Expr):
         self.name = name
         self.id = id
         self.fields = fields
+    def numLazyFields(self):
+        r = 0
+        for f in self.fields:
+            if f.lazy:
+                r += 1
+        return r
     def __repr__(self):
         s = "message %s : %d\n" % (self.name, self.id)
         s = s + "{\n"
@@ -66,11 +72,12 @@ class Message(Expr):
         return s
 
 class Field(Expr):
-    def __init__(self, name, type):
+    def __init__(self, name, type, lazy=False):
         self.name = name
         self.type = type
+        self.lazy = lazy
     def __repr__(self):
-        return "%s : %s" % (self.name, self.type)
+        return "%s : %s %s" % (self.name, ("","lazy")[self.lazy], self.type)
 
 class BaseType(Expr):
     def __init__(self, name):
@@ -232,6 +239,10 @@ def p_field_list(p):
 def p_field(p):
     "field : STRING ':' type ';'"
     p[0] = Field(p[1], p[3])
+
+def p_lazy_field(p):
+    "field : LAZY STRING ':' type ';'"
+    p[0] = Field(p[2], p[4], True)
 
 
 def p_type_base(p):

@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class CombineRGBNode: public Node{
     public:
         CombineRGBNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -75,6 +78,9 @@ class CombineRGBNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __COMBINE_RGB_NODE_H__
 

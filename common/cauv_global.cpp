@@ -2,11 +2,12 @@
 #include <sstream>
 #include <fstream>
 
-#include <common/bash_cout.h>
+#include <utility/bash_cout.h>
 
 #include "cauv_global.h"
 
 using namespace std;
+using namespace cauv;
 
 cauv_global* cauv_global::m_current = 0;
 

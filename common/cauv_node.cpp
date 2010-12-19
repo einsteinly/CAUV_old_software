@@ -16,6 +16,7 @@
 #include "cauv_node.h"
 #include "cauv_utils.h"
 
+using namespace cauv;
 
 CauvNode::~CauvNode()
 {

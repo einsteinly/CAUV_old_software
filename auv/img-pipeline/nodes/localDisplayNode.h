@@ -11,6 +11,9 @@
 #include "outputNode.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class LocalDisplayNode: public OutputNode{
     public:
         LocalDisplayNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -51,5 +54,8 @@ class LocalDisplayNode: public OutputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __LOCAL_DISPLAY_NODE_H__

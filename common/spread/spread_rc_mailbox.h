@@ -11,6 +11,8 @@
 
 #include "spread_mailbox.h"
 
+namespace cauv{
+
 /**
  * A ReconnectingSpreadMailbox automatically handles disconnection problems by trying
  * to reconnect, retrying whatever operation failed due to disconnection.
@@ -152,5 +154,7 @@ private:
     typedef std::set<std::string> string_set_t;
     string_set_t m_groups;
 };
+
+} // namespace cauv
 
 #endif // ndef CAUV_SPREAD_RC_MAILBOX_H_INCLUDED

@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class ConvertColourNode: public Node{
     public:
         ConvertColourNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -88,6 +91,9 @@ class ConvertColourNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __CONVERTCOLOUR_NODE_H__
 

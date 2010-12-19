@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class SonarInputNode: public InputNode{
     public:
         SonarInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -58,6 +61,9 @@ class SonarInputNode: public InputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __SONAR_INPUT_NODE_H__
 

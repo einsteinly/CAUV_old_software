@@ -1,9 +1,11 @@
 /***  This is a generated file, do not edit ***/
-\#ifndef __MESSAGE_FWD_H__
-\#define __MESSAGE_FWD_H__
+\#ifndef __CAUV_CPPMESS_FWD_H__
+\#define __CAUV_CPPMESS_FWD_H__
 
 // standard integral types (int32_t etc)
 \#include <boost/cstdint.hpp>
+
+namespace cauv{
 
 // =========================
 // Forward Type Declarations
@@ -74,4 +76,6 @@ class DebugMessageObserver;
 class UnknownMessageIdException;
 class MessageSource;
 
-\#endif//__MESSAGE_FWD_H__
+} // namespace cauv
+
+\#endif // ndef __CAUV_CPPMESS_FWD_H__

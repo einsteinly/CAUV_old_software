@@ -16,6 +16,7 @@
 #define CAUV_DEBUG_LEVEL 1
 #endif
 
+// Forward Declarations
 #if defined(CAUV_DEBUG_MUTEXES) || defined(CAUV_DEBUG_PRINT_THREAD)
 namespace boost{
 class mutex;
@@ -24,7 +25,11 @@ class unique_lock;
 } // namespace boost
 #endif
 
-#include <common/bash_cout.h>
+namespace cauv{
+class CauvNode;
+} // namespace cauv
+
+#include <utility/bash_cout.h>
 
 
 /* usage:
@@ -66,9 +71,6 @@ class unique_lock;
  *
  */
 
-// Forward Declarations
-class CauvNode;
-
 class SmartStreamBase : public boost::noncopyable
 {
     public:
@@ -79,14 +81,14 @@ class SmartStreamBase : public boost::noncopyable
         virtual ~SmartStreamBase();
 
         static void setLevel(int debug_level);
-        static void setCauvNode(CauvNode*);
+        static void setCauvNode(cauv::CauvNode*);
         static void setProgramName(std::string const&);
         static void setLogfileName(std::string const&);
 
     protected:
         struct Settings{
             int debug_level;
-            CauvNode* cauv_node;
+            cauv::CauvNode* cauv_node;
             std::string program_name;
             std::string logfile_name;
         };
@@ -169,7 +171,7 @@ struct debug : boost::noncopyable
     virtual ~debug(){ }
 
     static void setLevel(int){ }
-    static void setCauvNode(CauvNode*){ }
+    static void setCauvNode(cauv::CauvNode*){ }
     static void setProgramName(std::string const&){ }
     static void setLogfileName(std::string const&){ }
 

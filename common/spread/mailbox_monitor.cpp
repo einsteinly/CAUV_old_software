@@ -3,6 +3,8 @@
 
 #include <debug/cauv_debug.h>
 
+using namespace cauv;
+
 TestMBObserver::TestMBObserver()
     : MailboxObserver(){
 }

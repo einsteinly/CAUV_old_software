@@ -12,6 +12,9 @@
 #include "../nodeFactory.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class CopyNodeMask: public Node{
     public:
         CopyNodeMask(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -61,6 +64,9 @@ class CopyNodeMask: public Node{
         // Register this node type
         DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __COPY_NODE_MASK_H__
 

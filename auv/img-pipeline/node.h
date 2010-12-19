@@ -24,6 +24,9 @@
 
 #include "pipelineTypes.h"
 
+namespace cauv{
+namespace imgproc{
+
 class Node: public boost::enable_shared_from_this<Node>{
     public:
         // Public typedefs: used as return types
@@ -410,5 +413,8 @@ std::basic_ostream<char_T, traits>& operator<<(
        << "}";
     return os;
 }
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __NODE_H__

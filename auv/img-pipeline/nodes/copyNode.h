@@ -12,6 +12,9 @@
 #include "../nodeFactory.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class CopyNode: public Node{
     public:
         CopyNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -56,6 +59,9 @@ class CopyNode: public Node{
         // Register this node type
         DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __COPY_NODE_H__
 

@@ -2,14 +2,13 @@
 #define __CAUV_NODE_H__
 
 #include <string>
-#include <signal.h>
+#include <csignal>
 #include <iostream>
 
 #include <boost/shared_ptr.hpp>
 
-#include <common/spread/spread_rc_mailbox.h>
-#include <common/spread/mailbox_monitor.h>
-#include <common/spread/msgsrc_mb_observer.h>
+#include <ssrc/spread.h>
+
 
 namespace boost {
 namespace program_options {
@@ -18,6 +17,15 @@ namespace program_options {
     class variables_map;
 };
 };
+
+namespace cauv{
+
+/* Forward Declarations */
+class ReconnectingSpreadMailbox;
+class MailboxEventMonitor;
+class MsgSrcMBMonitor;
+class MessageObserver;
+class Message;
 
 class CauvNode
 {
@@ -60,5 +68,7 @@ class CauvNode
         volatile bool m_interrupted;
 };
 
-#endif//__CAUV_NODE_H__
+} // namespace cauv
+
+#endif // ndef __CAUV_NODE_H__
 

@@ -1,29 +1,25 @@
 /***  This is a generated file, do not edit ***/
-\#ifndef __MESSAGE_MESSAGES_H__
-\#define __MESSAGE_MESSAGES_H__
+\#ifndef __CAUV_MESSAGE_MESSAGES_H__
+\#define __CAUV_MESSAGE_MESSAGES_H__
 
 \#include "messages_fwd.h"
 
 \#include <string>
-\#include <sstream>
-\#include <stdexcept>
 \#include <vector>
 \#include <list>
 \#include <map>
 \#include <boost/cstdint.hpp>
 \#include <boost/shared_ptr.hpp>
-\#include <boost/archive/binary_oarchive.hpp>
-\#include <boost/archive/binary_iarchive.hpp>
 \#ifndef foreach
 \#    include <boost/foreach.hpp>
 \#    define foreach BOOST_FOREACH
 \#endif
 
 \#include <common/image.h>
+\#include <utility/serialisation-types.h>
 
-// Message data type definitions
-typedef std::string byte_vec_t;
 
+namespace cauv{
 
 // ================
 // Type definitions
@@ -45,7 +41,6 @@ struct $s.name
 #*           *#);
     #end if 
 };
-BOOST_CLASS_IMPLEMENTATION($s.name, boost::serialization::object_serializable)
 
 #end for
 
@@ -62,7 +57,7 @@ class Message
         std::string const& group() const;
         uint32_t id() const;
 
-        virtual boost::shared_ptr<const byte_vec_t> toBytes() const = 0;
+        virtual const_svec_ptr toBytes() const = 0;
 
     protected:
         uint32_t m_id;
@@ -94,58 +89,52 @@ class $className : public Message
 
         #for $f in $m.fields
         const $toCPPType($f.type)& ${f.name}() const;
-        void ${f.name}($toCPPType($f.type) const& $f.name);
-
-        // interface for python export: no overloads:
         const $toCPPType($f.type)& get_${f.name}() const{ return ${f.name}(); }
+        void ${f.name}($toCPPType($f.type) const& $f.name);
         void set_${f.name}($toCPPType($f.type) const& ${f.name}_value){ ${f.name}(${f.name}_value); }
         
         #end for
 
-        static boost::shared_ptr<${className}> fromBytes(boost::shared_ptr<const byte_vec_t> bytes);
-        virtual boost::shared_ptr<const byte_vec_t> toBytes() const;
-        
-        template<class Archive>
-        void save(Archive & ar, const unsigned int /*version*/) const
-        {
-            ar << m_id;
-
-            #for $f in $m.fields
-            ar << m_$f.name;
-            #end for
-        }
-        template<class Archive>
-        void load(Archive & ar, const unsigned int /*version*/) const
-        {
-            uint32_t buf_id;
-            ar >> buf_id;
-            if (buf_id != m_id)
-            {
-                throw std::invalid_argument("Attempted to create $className with invalid id");
-            }
-            #for $f in $m.fields
-            ar >> m_$f.name;
-            #end for
-        }
-        BOOST_SERIALIZATION_SPLIT_MEMBER()
+        static boost::shared_ptr<${className}> fromBytes(const_svec_ptr bytes);
+        virtual const_svec_ptr toBytes() const;
 
     private:
-        #for i, f in $enumerate($m.fields)
+#if $len($m.fields) > 0
+        void deserialise() const;
+        inline void checkDeserialised() const{
+            if(!m_deserialised)
+                deserialise();
+            else
+                m_deserialised = true;
+        }
+        mutable bool m_deserialised;
+
+    #for i, f in $enumerate($m.fields)
         mutable $toCPPType($f.type) m_$f.name;
+    #end for
+
+    #if $m.numLazyFields() > 0
+        mutable std::set<int> m_lazy_fields_deserialised;
+        #for i, f in $enumerate($m.fields)
+            #if $f.lazy
+        mutable uint32_t m_lazy_field_${i}_offset;
+            #end if
         #end for
+    #end if
         
-        mutable boost::shared_ptr<const byte_vec_t> m_bytes;
-        void deserialize() const;
+        mutable const_svec_ptr m_bytes;
+#end if
 
     template<typename char_T, typename traits>
     friend std::basic_ostream<char_T, traits>& operator<<(
         std::basic_ostream<char_T, traits>& os, $className const& m);
+    friend void cauv::serialise(svec_ptr, $className const&);
 };
-BOOST_CLASS_IMPLEMENTATION($className, boost::serialization::object_serializable)
-BOOST_CLASS_IS_WRAPPER($className)
 
 #end for
 #end for
 
+} // namespace cauv
 
-\#endif//__MESSAGE_MESSAGES_H__
+\#endif // __CAUV_MESSAGE_MESSAGES_H__
+

@@ -5,6 +5,8 @@
 
 #include <debug/cauv_debug.h>
 
+using namespace cauv::imgproc;
+
 int pthreadPriority(SchedulerPriority const& s){
     switch(s){
         case priority_slow: return 15;
@@ -40,9 +42,9 @@ void ImgPipelineThread::operator()(){
 
 Scheduler::Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_thread_groups()
 {
-    m_num_threads[priority_slow] = SLOW_THREADS;
-    m_num_threads[priority_fast] = FAST_THREADS;
-    m_num_threads[priority_realtime] = REALTIME_THREADS;
+    m_num_threads[priority_slow] = Slow_Threads;
+    m_num_threads[priority_fast] = Fast_Threads;
+    m_num_threads[priority_realtime] = RealTime_Threads;
     
     m_thread_groups[priority_slow] = thread_group_ptr_t();
     m_thread_groups[priority_fast] = thread_group_ptr_t();
@@ -55,8 +57,6 @@ Scheduler::Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_thread_gro
 
 /**
  * Add a job of a particular priority to the corresponding queue
- * Can't use smart pointers because nodes have no way to convert 'this'
- * into a smart pointer.
  * NB: this IS threadsafe
  */
 void Scheduler::addJob(node_wkptr_t node, SchedulerPriority p) const
@@ -116,13 +116,6 @@ void Scheduler::stopWait()
 }
 
 /**
- * This MUST be called if nodes are removed, otherwise hanging node
- * pointers may remain in queues.
- */
-void Scheduler::clearQueues(){
-}
-
-/**
  * Spawn threads and go!
  * NB: not threadsafe
  */
@@ -135,7 +128,6 @@ void Scheduler::start()
     
     priority_thread_group_map_t::iterator i;
     
-    // NB: BOOST_FOREACH doesn't seem to work properly on std::map
     for(i = m_thread_groups.begin(); i != m_thread_groups.end(); i++)
     {
         i->second = boost::make_shared<boost::thread_group>();

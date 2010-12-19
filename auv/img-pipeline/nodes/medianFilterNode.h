@@ -10,6 +10,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class MedianFilterNode: public Node{
     public:
         MedianFilterNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -62,5 +65,8 @@ class MedianFilterNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif//__MEDIAN_FILTER_NODE_H__

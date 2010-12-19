@@ -3,6 +3,8 @@
 
 #include <string>
 
+namespace cauv{
+
 class cauv_global
 {
 	public:
@@ -23,5 +25,7 @@ class cauv_global
 	protected:
 		
 };
+
+} // namespace cauv
 
 #endif//__CAUV_GLOBAL_H__

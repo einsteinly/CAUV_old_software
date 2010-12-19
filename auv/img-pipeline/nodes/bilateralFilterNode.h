@@ -10,6 +10,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class BilateralFilterNode: public Node{
     public:
         BilateralFilterNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -68,5 +71,8 @@ class BilateralFilterNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __BILATERAL_FILTER_NODE_H__

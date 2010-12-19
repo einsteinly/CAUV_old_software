@@ -5,24 +5,6 @@ link_directories (${ssrcspread_LIBRARY_DIR})
 
 find_package (OpenCV REQUIRED)
 
-# abbreviate a little:
-set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
-
-# python-based message generation
-# how to generate messages.cpp (messages*.h are generated
-set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
-add_custom_command (
-   OUTPUT ${SRCD}/messages.cpp
-#   WORKING_DIRECTORY ${PYMSGD}
-   COMMAND ${PYMSGD}/msggen.py -l "c++-impl" -o ${SRCD}/messages ${PYMSGD}/messages.msg 
-   DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/message.template.cpp
-           ${PYMSGD}/msggenyacc.py
-           ${PYMSGD}/msggenlex.py
-           ${PYMSGD}/messages.msg
-   COMMENT "Generating messages.cpp with messages-python" 
-)
-
 add_library (
     common STATIC
     
@@ -30,7 +12,6 @@ add_library (
     cauv_node.cpp
     cauv_utils.cpp
     image.cpp
-    messages.cpp
     spread/mailbox_monitor.cpp
     spread/spread_mailbox.cpp
     spread/spread_rc_mailbox.cpp
@@ -40,6 +21,8 @@ target_link_libraries (
     common
 
     cauv_debug
+    messages
+    message-serialisation
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
@@ -59,7 +42,6 @@ add_library (
     cauv_node.cpp
     cauv_utils.cpp
     image.cpp
-    messages.cpp
     spread/mailbox_monitor.cpp
     spread/spread_mailbox.cpp
     spread/spread_rc_mailbox.cpp
@@ -68,9 +50,10 @@ add_library (
 target_link_libraries (
     common-shared
 
-    ${ssrcspread_LIBRARIES}
-    #"libssrcspread.so"
     cauv_debug
+    messages
+    message-serialisation
+    ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
     boost_serialization
@@ -80,6 +63,6 @@ target_link_libraries (
     boost_program_options
 )
 
-add_dependencies(common logo-shared messages-shared)
-add_dependencies(common-shared logo-shared messages-shared)
+add_dependencies(common logo-headers messages-headers)
+add_dependencies(common-shared logo-headers messages-headers)
 

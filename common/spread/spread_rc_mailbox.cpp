@@ -18,6 +18,8 @@
 
 #include "spread_mailbox.h"
 
+using namespace cauv;
+
 class ErrOnExit: boost::noncopyable{
     public:
         ErrOnExit(std::string const& msg)

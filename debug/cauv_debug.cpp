@@ -19,11 +19,12 @@
 #endif
 #include <boost/thread/tss.hpp>
 
+#include <utility/bash_cout.h>
+#include <generated/messages_fwd.h>
 #include <common/cauv_utils.h>
-#include <common/bash_cout.h>
 #include <common/cauv_node.h>
-#include <generated/messages_messages.h>
 
+using namespace cauv;
 
 // static data member definition:
 #if defined(CAUV_DEBUG_MUTEXES)

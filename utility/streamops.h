@@ -1,5 +1,5 @@
-#ifndef __STREAMOPS_H__
-#define __STREAMOPS_H__
+#ifndef __CAUV_STREAMOPS_H__
+#define __CAUV_STREAMOPS_H__
 
 #include <ostream>
 #include <vector>
@@ -7,6 +7,8 @@
 #include <list>
 #include <set>
 #include <utility>
+
+namespace std{
 
 template<typename T, typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
@@ -67,5 +69,7 @@ std::basic_ostream<char_T, traits>& operator<<(
     return os;
 }
 
-#endif // __STREAMOPS_H__
+} // namespace std
+
+#endif // __CAUV_STREAMOPS_H__
 

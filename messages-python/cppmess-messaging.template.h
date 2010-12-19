@@ -1,19 +1,20 @@
 /***  This is a generated file, do not edit ***/
-\#ifndef __MESSAGES_H__
-\#define __MESSAGES_H__
+\#ifndef __CAUV_MESSAGES_H__
+\#define __CAUV_MESSAGES_H__
 
 \#include "messages_messages.h"
 
-\#include <boost/archive/detail/oserializer.hpp>
-\#include <boost/archive/detail/iserializer.hpp>
-
-\#include <common/observable.h>
-\#include <common/streamops.h>
+\#include <utility/observable.h>
+\#include <utility/streamops.h>
 \#include <common/image.h>
 
-// Message data type definitions
-typedef std::ostringstream byte_ostream_t;
-typedef std::istringstream byte_istream_t;
+// Forward Declarations outside cauv namespace:
+namespace boost{
+class thread;
+class shared_mutex;
+} // namespace boost
+
+namespace cauv{
 
 // =======================
 // Message Source/Observer
@@ -45,11 +46,6 @@ class MessageObserver
     //protected:
         MessageObserver();
 };
-
-namespace boost{
-class thread;
-class shared_mutex;
-} // namespace boost
 
 struct BufferingThreadBase;
 class BufferedMessageObserver: public MessageObserver
@@ -148,7 +144,7 @@ class UnknownMessageIdException : public std::exception
 class MessageSource : public Observable<MessageObserver>
 {
     public:
-        void notifyObservers(boost::shared_ptr<const byte_vec_t> bytes);
+        void notifyObservers(const_svec_ptr bytes);
     
     // Ideally protected, but boost.python pointer_holder requires puplic
     // default constructor to be available in order to allow pointers to this
@@ -156,50 +152,6 @@ class MessageSource : public Observable<MessageObserver>
     // protected:
         MessageSource();
 };
-
-
-
-// ===========================
-// Struct & Enum Serialization
-// ===========================
-
-namespace boost {
-namespace serialization {
-
-#for s in $structs
-template<class Archive>
-void serialize(Archive & ar, $s.name& val, const unsigned int /*version*/)
-{
-    #for f in $s.fields
-    ar & val.$f.name;
-    #end for
-}
-#end for
-
-} // namespace serialization
-} // namespace boost
-
-
-// Enum serialization is pretty hacky for now, since boost::serialization
-// blindly converts all enums to ints for some reason
-
-namespace boost {
-namespace archive {
-namespace detail {
-
-#for e in $enums
-template<> template <>
-void save_enum_type<binary_oarchive>::invoke<$e.name::e>(binary_oarchive &ar, const $e.name::e &val);
-template<> template <>
-void load_enum_type<binary_iarchive>::invoke<$e.name::e>(binary_iarchive &ar, $e.name::e &val);
-
-#end for
-
-} // namespace detail
-} // namespace archive
-} // namespace boost
-
-
 
 // =============
 // Printing Code
@@ -265,9 +217,7 @@ std::basic_ostream<char_T, traits>& operator<<(
         #for $m in $g.messages
         #set $className = $m.name + "Message"
         case $m.id:
-        {
-            return os << *dynamic_cast<const $className*>(&m);
-        }
+            return os << dynamic_cast<$className const&>(m);
         #end for
         #end for
         default:
@@ -286,15 +236,14 @@ template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, $className const& #if $len($m.fields)#m#end if#)
 {
-    #if $len($m.fields)#m.deserialize();#end if#
     os << "$className {";
     #for i, f in $enumerate($m.fields)
     #if hasattr($f.type, "name") and ($f.type.name == "int8" or $f.type.name == "byte") 
-    os << " $f.name = " << (int)m.m_$f.name#if $i < $len($m.fields) - 1# << ","#end if#;
+    os << " $f.name = " << (int)m.${f.name}()#if $i < $len($m.fields) - 1# << ","#end if#;
     #elif hasattr($f.type, "name") and ($f.type.name == "string")
-    os << " $f.name = \"" << m.m_$f.name#if $i < $len($m.fields) - 1# << "\","#else# << "\""#end if#;
+    os << " $f.name = \"" << m.${f.name}()#if $i < $len($m.fields) - 1# << "\","#else# << "\""#end if#;
     #else
-    os << " $f.name = " << m.m_$f.name#if $i < $len($m.fields) - 1# << ","#end if#;
+    os << " $f.name = " << m.${f.name}()#if $i < $len($m.fields) - 1# << ","#end if#;
     #end if
     #end for
     os << " }";
@@ -304,4 +253,6 @@ std::basic_ostream<char_T, traits>& operator<<(
 #end for
 #end for
 
-\#endif//__MESSAGES_H__
+} // namespace cauv
+
+\#endif // ndef __CAUV_MESSAGES_H__
