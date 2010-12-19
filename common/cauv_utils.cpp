@@ -5,9 +5,7 @@
 #include <boost/date_time.hpp>
 #include <boost/thread/thread.hpp>
 
-using namespace cauv;
-
-uint16_t sumOnesComplement(std::vector<uint16_t> bytes)
+uint16_t cauv::sumOnesComplement(std::vector<uint16_t> bytes)
 {
     uint32_t sum = 0;
     foreach(uint16_t byte, bytes)
@@ -21,8 +19,8 @@ uint16_t sumOnesComplement(std::vector<uint16_t> bytes)
 }
 
 
-TimeStamp now(){
-    TimeStamp r;
+cauv::TimeStamp cauv::now(){
+    cauv::TimeStamp r;
     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
     boost::posix_time::ptime current_time = boost::posix_time::microsec_clock::local_time();
     boost::posix_time::time_duration diff = current_time - epoch;
@@ -31,7 +29,7 @@ TimeStamp now(){
     return r;
 }
 
-std::string now(std::string const& format){
+std::string cauv::now(std::string const& format){
     using namespace boost::posix_time;
     std::ostringstream oss;
     time_facet* facet = new time_facet(format.c_str());
@@ -40,7 +38,7 @@ std::string now(std::string const& format){
     return oss.str();
 }
 
-void msleep(unsigned msecs){
+void cauv::msleep(unsigned msecs){
     boost::this_thread::sleep(boost::posix_time::milliseconds(msecs));
 }
 

@@ -7,7 +7,7 @@
 
 using namespace cauv::imgproc;
 
-int pthreadPriority(SchedulerPriority const& s){
+int cauv::imgproc::pthreadPriority(SchedulerPriority const& s){
     switch(s){
         case priority_slow: return 15;
         case priority_fast: return 5;
