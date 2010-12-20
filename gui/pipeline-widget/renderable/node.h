@@ -69,6 +69,7 @@ class Node: public Draggable,
 
         // Node Stuff:
         void close();
+        void exec();
         int id() const;
         NodeType::e type() const;
         renderable_ptr_t outSocket(std::string const& output_id);
@@ -109,6 +110,7 @@ class Node: public Draggable,
 
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;
+        renderable_ptr_t m_execbutton;
         str_in_map_t m_inputs;
         str_inparam_map_t m_params;        
         str_out_map_t m_outputs;

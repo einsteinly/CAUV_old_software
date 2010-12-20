@@ -15,92 +15,10 @@
 #include "arc.h"
 #include "nodeIO.h"
 #include "pvPair.h"
+#include "buttons.h"
 
 namespace cauv{
 namespace pw{
-
-template<typename container_T>
-class CloseButton: public Renderable{
-    public:
-        CloseButton(container_T* c)
-            : Renderable(c), m_container(c), m_size(12), m_mouseover(false),
-              m_pressed(false){
-        }
-        virtual ~CloseButton(){ }
-
-        virtual void draw(drawtype_e::e){
-            if(m_pressed)
-                glColor(Colour(1, 1));
-            else if(m_mouseover)
-                glColor(Colour(1, 0.5));
-            else
-                glColor(Colour(1, 0.2));
-
-            glBox(bbox(), 3);
-
-            if(m_pressed)
-                glColor(Colour(0, 1));
-            else if(m_mouseover)
-                glColor(Colour(0.8, 0, 0, 0.8));
-            else
-                glColor(Colour(0, 0.5));
-            
-            // TODO: don't draw this with lines - it looks ugly...
-            glLineWidth(roundA(m_size/8));
-            glBegin(GL_LINES);
-            glVertex2f(2 - m_size/2, m_size/2 - 2);
-            glVertex2f(m_size/2 - 2, 2 - m_size/2);
-            glVertex2f(2 - m_size/2, 2 - m_size/2);
-            glVertex2f(m_size/2 - 2, m_size/2 - 2);
-            glEnd();
-        }
-
-        virtual void mouseMoveEvent(MouseEvent const& event){
-            if(bbox().contains(event.pos) && !m_mouseover){
-                m_mouseover = true;
-                m_context->postRedraw(0);
-            }
-        }
-
-        virtual bool mousePressEvent(MouseEvent const& event){
-            if(bbox().contains(event.pos)){
-                m_pressed = true;
-                m_context->postRedraw(0);
-                return true;
-            }
-            return false;
-        }
-
-        virtual void mouseReleaseEvent(MouseEvent const& event){
-            if(m_pressed && bbox().contains(event.pos)){
-                m_container->close();
-            }
-            m_pressed = false;
-            m_context->postRedraw(0);
-        }
-
-        virtual void mouseGoneEvent(){
-            if(m_pressed || m_mouseover){
-                m_pressed = false;
-                m_mouseover = false;
-                m_context->postRedraw(0);
-            }
-        }
-
-        virtual bool tracksMouse(){
-            return true;
-        }
-
-        virtual BBox bbox(){
-            return BBox(-m_size/2, -m_size/2, m_size/2, m_size/2);
-        }
-
-     private:
-        container_T* m_container;
-        double m_size;
-        bool m_mouseover;
-        bool m_pressed;
-};
 
 template<typename T, typename cT>
 std::basic_ostream<T, cT>& operator<<(
@@ -125,9 +43,11 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
       m_node_type(m->nodeType()),
       m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
+      m_execbutton(boost::make_shared<ExecButton>(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
+    m_contents.push_back(m_execbutton);
     m_contents.push_back(m_title);
 
     setOutputs(m->outputs());
@@ -145,9 +65,11 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const&
       m_node_type(nt),
       m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
+      m_execbutton(boost::make_shared<ExecButton>(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
+    m_contents.push_back(m_execbutton);
     m_contents.push_back(m_title);
     refreshLayout();
 }
@@ -409,6 +331,11 @@ void Node::close(){
     m_pw->send(boost::make_shared<RemoveNodeMessage>(m_node_id));
 }
 
+void Node::exec(){
+    debug() << "Node::exec" << id();
+    m_pw->send(boost::make_shared<ForceExecRequestMessage>(m_node_id));
+}
+
 renderable_ptr_t Node::outSocket(std::string const& id){
     str_out_map_t::const_iterator i = m_outputs.find(id);
     if(i != m_outputs.end()){
@@ -652,6 +579,12 @@ void Node::refreshLayout(){
         m_bbox.min.x -= param_indent;
     if(m_outputs.size())
         m_bbox.max.x += param_indent;
+
+    m_execbutton->m_pos.x = m_back.max.x - m_execbutton->bbox().max.x - border;
+    m_execbutton->m_pos.y = m_back.max.y - m_execbutton->bbox().max.y - border;
+
+    debug(2) << "execbutton layout:" << m_execbutton->m_pos << m_execbutton->bbox();
+
 
     // need to re-draw
     m_context->postRedraw(0);

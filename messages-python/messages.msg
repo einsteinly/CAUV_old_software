@@ -328,6 +328,11 @@ group pipeline
     message GraphRequest : 10
     {
     }
+
+    message ForceExecRequest : 11
+    {
+        nodeId : int32;
+    }
 }
 
 group processing
