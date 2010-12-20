@@ -108,8 +108,8 @@ class OverKey: public Renderable,
         virtual void remove(renderable_ptr_t); 
 
         // Handle key presses
-        virtual bool keyPressEvent(QKeyEvent *event);
-        virtual bool keyReleaseEvent(QKeyEvent *event);
+        virtual bool keyPressEvent(KeyEvent const& event);
+        virtual bool keyReleaseEvent(KeyEvent  const& event);
         
         // Interface for registering keys
         void registerKey(KeyBind const&, action_ptr_t);

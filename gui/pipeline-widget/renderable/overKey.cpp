@@ -486,8 +486,8 @@ void OverKey::remove(renderable_ptr_t){
     error() << __func__ << __LINE__ << "unimplemented";
 }
 
-bool OverKey::keyPressEvent(QKeyEvent *event){
-    KeyBind b(event->key(), event->modifiers());
+bool OverKey::keyPressEvent(KeyEvent const& event){
+    KeyBind b(event.key(), event.modifiers());
     m_current_modifiers = b.modifiers;
     layout_map_t::iterator i;
 
@@ -501,7 +501,7 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
     for(i = eq.first; i != eq.second; i++)
         i->second->state(keystate_e::pressed);
     
-    if(/*event->text().size() && */!event->isAutoRepeat()){
+    if(/*event.text().size() && */!event.isAutoRepeat()){
         m_prev_kp_time = m_last_kp_time;
         m_last_kp_time = _fnow();
     }/*else if(b.modifiers && !m_held_keys.size()){
@@ -527,8 +527,8 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
             }
     /*}*/
     
-    if(!event->isAutoRepeat())
-        debug() << "keyPressEvent:" << event->text().toStdString() << "k=" << b.keycode
+    if(!event.isAutoRepeat())
+        debug() << "keyPressEvent:" << event.text().toStdString() << "k=" << b.keycode
                 << "ms=" << b.modifiers << "lt=" << m_last_kp_time << "pt=" << m_prev_kp_time;
 
     if(m_actions.count(b)){
@@ -538,8 +538,8 @@ bool OverKey::keyPressEvent(QKeyEvent *event){
     return false;
 }
 
-bool OverKey::keyReleaseEvent(QKeyEvent *event){
-    KeyBind b(event->key(), event->modifiers());
+bool OverKey::keyReleaseEvent(KeyEvent const& event){
+    KeyBind b(event.key(), event.modifiers());
 
     m_current_modifiers = b.modifiers;
     layout_map_t::iterator i;
@@ -572,7 +572,7 @@ bool OverKey::keyReleaseEvent(QKeyEvent *event){
         }
     }
         
-    debug() << "keyReleaseEvent:" << event->text().toStdString() << b.keycode
+    debug() << "keyReleaseEvent:" << event.text().toStdString() << b.keycode
             << b.modifiers << m_last_kp_time << m_prev_kp_time
             << m_held_keys.size();
 

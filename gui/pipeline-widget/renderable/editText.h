@@ -6,7 +6,6 @@
 
 #include <boost/make_shared.hpp>
 
-#include <QKeyEvent>
 #include <QtOpenGL>
 #include <QClipboard>
 
@@ -98,11 +97,11 @@ class EditText: public Menu{
             }
         }
 
-        virtual bool keyPressEvent(QKeyEvent* event){
-            std::string new_text = event->text().toStdString();
-            if ( event->modifiers() == Qt::ControlModifier )
+        virtual bool keyPressEvent(KeyEvent const& event){
+            std::string new_text = event.text().toStdString();
+            if ( event.modifiers() == Qt::ControlModifier )
             {
-				switch(event->key())
+				switch(event.key())
 				{
 					case Qt::Key_V:
 						if(new_text.size())
@@ -153,7 +152,7 @@ class EditText: public Menu{
 			}            
             else
             {
-				switch(event->key()){
+				switch(event.key()){
 					case Qt::Key_Enter:
 					case Qt::Key_Return:
 						debug() << "EditText: key enter";

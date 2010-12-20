@@ -565,17 +565,17 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
     lock_t l(m_lock);
     if(m_menu)
-        m_menu->keyPressEvent(event);
+        m_menu->keyPressEvent(*event);
     else
-        m_overkey->keyPressEvent(event);
+        m_overkey->keyPressEvent(*event);
 }
 
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     lock_t l(m_lock);
     if(m_menu)
-        m_menu->keyReleaseEvent(event);
+        m_menu->keyReleaseEvent(*event);
     // always send key release events: otherwise keys can get stuck on
-    m_overkey->keyReleaseEvent(event);
+    m_overkey->keyReleaseEvent(*event);
 }
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
