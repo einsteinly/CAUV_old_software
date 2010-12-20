@@ -13,7 +13,7 @@ target_link_libraries (
 )
 
 add_executable (
-    model_test
+    model_test EXCLUDE_FROM_ALL
     model_test.cpp
 )
 

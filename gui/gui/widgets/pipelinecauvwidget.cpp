@@ -2,6 +2,7 @@
 
 #include <boost/make_shared.hpp>
 
+using namespace cauv;
 
 PipelineCauvWidget::PipelineCauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget *parent):
         pw::PipelineWidget(parent),
