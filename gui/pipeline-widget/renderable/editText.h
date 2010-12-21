@@ -9,7 +9,7 @@
 #include <QtOpenGL>
 #include <QClipboard>
 
-#include <vector>		// needed for the undo function
+#include <vector>        // needed for the undo function
 
 #include <debug/cauv_debug.h>
 
@@ -33,7 +33,7 @@ class EditText: public Menu{
                 error() << "only fixed size version is implemented";
             updateTextPositions();
             undo_position = 0;
-            undoPreStorage.push_back(*m_txt_prev);	// sets the first member to whatever is already there
+            undoPreStorage.push_back(*m_txt_prev);    // sets the first member to whatever is already there
             undoPstStorage.push_back(*m_txt_post);
         }
 
@@ -101,98 +101,101 @@ class EditText: public Menu{
             std::string new_text = event.text().toStdString();
             if ( event.modifiers() == Qt::ControlModifier )
             {
-				switch(event.key())
-				{
-					case Qt::Key_V:
-						if(new_text.size())
-						{
-							QClipboard *cb = QApplication::clipboard();
-							QString text = cb->text();
-                            debug() << "paste text:" << text.toStdString();
-							if ( text.size() )
-							{
-								// clipboard has something in it
-								*m_txt_prev += text.toStdString();	// add clipboard text
-								updateUndo();	// updates the undo buffer
-							}
-						}
-						else
-							return false;
-						break;
-					case Qt::Key_D:
-						// deletes the string
-						if (new_text.size() )
-						{
-							m_txt_prev->clear();
-							m_txt_post->clear();
-							updateUndo();	// updates the undo
-						}
-						else
-							return false;
-						break;
-					case Qt::Key_Z:
-						// undos
-						if ( undo_position )
-							--undo_position; // undo_position != 0
-						if ( undo_position > undoPreStorage.size() -1 )
-							undo_position = undoPreStorage.size() -1;
-						writeUndoRedo();						
-						break;
-					case Qt::Key_Y:
-						// redoes
-						++undo_position;
-						if ( undo_position > undoPreStorage.size() -1 )
-							undo_position = undoPreStorage.size() -1;
-						writeUndoRedo();
-						break;
-					default:
-						// do fuck all, go work out on your shake weight if you have one
-						break;
-				}
-			}            
+                switch(event.key())
+                {
+                    case Qt::Key_V:
+                        if(new_text.size())
+                        {
+                            QClipboard *cb = QApplication::clipboard();
+                            std::string text = cb->text().toStdString();
+                            if ( text.size() )
+                            {
+                                debug() << "paste text:" << text;
+                                // clipboard has something in it
+                                *m_txt_prev += text;    // add clipboard text
+                                updateUndo();    // updates the undo buffer
+                            }
+                            else
+                                warning() << "no text to paste";
+                        }
+                        else
+                            return false;
+                        break;
+                    case Qt::Key_D:
+                        // deletes the string
+                        if (new_text.size() )
+                        {
+                            m_txt_prev->clear();
+                            m_txt_post->clear();
+                            updateUndo();
+                        }
+                        else
+                            return false;
+                        break;
+                    case Qt::Key_Z:
+                        // undos
+                        if ( undo_position )
+                            --undo_position; // undo_position != 0
+                        if ( undo_position > undoPreStorage.size() -1 )
+                            undo_position = undoPreStorage.size() -1;
+                        writeUndoRedo();                        
+                        break;
+                    case Qt::Key_Y:
+                        // redoes
+                        ++undo_position;
+                        if ( undo_position > undoPreStorage.size() -1 )
+                            undo_position = undoPreStorage.size() -1;
+                        writeUndoRedo();
+                        break;
+                    default:
+                        debug() << "no action on" << event.key() << "(" << new_text << ")";
+                        // do fuck all, go work out on your shake weight if you have one
+                        break;
+                }
+            }            
             else
             {
-				switch(event.key()){
-					case Qt::Key_Enter:
-					case Qt::Key_Return:
-						debug() << "EditText: key enter";
-						m_context->removeMenu(shared_from_this());
-						// this has now probably been destroyed, must return pronto!
-						return true;
-					case Qt::Key_Left:
-						debug(2) << "EditText: key left";
-						if(m_txt_prev->size())
-							m_txt_post->insert(m_txt_post->begin(), *m_txt_prev->rbegin());
-						// fall through
-					case Qt::Key_Backspace:
-						if(m_txt_prev->size())
-						{
-							m_txt_prev->erase(m_txt_prev->end()-1);
-							updateUndo();	// undates the undo
-						}
-						break;
-					case Qt::Key_Right:
-						debug(2) << "EditText: key right";
-						if(m_txt_post->size())
-							*m_txt_prev += (*m_txt_post)[0];
-						// fall through
-					case Qt::Key_Delete:
-						if(m_txt_post->size())
-						{
-							m_txt_post->erase(m_txt_post->begin());
-							updateUndo();	// undates the undo
-						}
-						break;
-					default:
-						if(new_text.size())
-						{
-							*m_txt_prev += new_text;
-							updateUndo();	// undates the undo
-						}
-						else
-							return false;
-				}
-			}
+                switch(event.key()){
+                    case Qt::Key_Enter:
+                    case Qt::Key_Return:
+                        debug() << "EditText: key enter";
+                        m_context->removeMenu(shared_from_this());
+                        // this has now probably been destroyed, must return pronto!
+                        return true;
+                    case Qt::Key_Left:
+                        debug(2) << "EditText: key left";
+                        if(m_txt_prev->size())
+                            m_txt_post->insert(m_txt_post->begin(), *m_txt_prev->rbegin());
+                        // fall through
+                    case Qt::Key_Backspace:
+                        if(m_txt_prev->size())
+                        {
+                            m_txt_prev->erase(m_txt_prev->end()-1);
+                            updateUndo();    // undates the undo
+                        }
+                        break;
+                    case Qt::Key_Right:
+                        debug(2) << "EditText: key right";
+                        if(m_txt_post->size())
+                            *m_txt_prev += (*m_txt_post)[0];
+                        // fall through
+                    case Qt::Key_Delete:
+                        if(m_txt_post->size())
+                        {
+                            m_txt_post->erase(m_txt_post->begin());
+                            updateUndo();    // undates the undo
+                        }
+                        break;
+                    default:
+                        if(new_text.size())
+                        {
+                            *m_txt_prev += new_text;
+                            updateUndo();    // undates the undo
+                        }
+                        else
+                            return false;
+                }
+            }
             // TODO: be more conservative about m_edited
             m_edited = true;
             updateTextPositions();
@@ -222,28 +225,28 @@ class EditText: public Menu{
         
         void updateUndo(  )
         {
-			// this updates the undo storage
-			// needs to check what position is active and deletes above it
-			std::string pre = *m_txt_prev;
-			std::string post = *m_txt_post;
-			while ( undo_position + 1 != undoPreStorage.size() )
-			{
-				undoPreStorage.pop_back();	// deal with it James, it aint pretty, but it works
-				undoPstStorage.pop_back();
-			}
-			undoPreStorage.push_back(pre);	
-			undoPstStorage.push_back(post);
-			undo_position = undoPreStorage.size() -1;	// sets it at the end
-		}
-		
-		void writeUndoRedo()
-		{
-			// this is called when undo or redo has been pressed and the array number corrected
-			m_txt_prev->clear();
-			m_txt_post->clear();
-			*m_txt_prev += undoPreStorage[undo_position];
-			*m_txt_post += undoPstStorage[undo_position];
-		}
+            // this updates the undo storage
+            // needs to check what position is active and deletes above it
+            std::string pre = *m_txt_prev;
+            std::string post = *m_txt_post;
+            while ( undo_position + 1 != undoPreStorage.size() )
+            {
+                undoPreStorage.pop_back();    // deal with it James, it aint pretty, but it works
+                undoPstStorage.pop_back();
+            }
+            undoPreStorage.push_back(pre);    
+            undoPstStorage.push_back(post);
+            undo_position = undoPreStorage.size() -1;    // sets it at the end
+        }
+        
+        void writeUndoRedo()
+        {
+            // this is called when undo or redo has been pressed and the array number corrected
+            m_txt_prev->clear();
+            m_txt_post->clear();
+            *m_txt_prev += undoPreStorage[undo_position];
+            *m_txt_post += undoPstStorage[undo_position];
+        }
         
         std::vector<std::string> undoPreStorage;
         std::vector<std::string> undoPstStorage;

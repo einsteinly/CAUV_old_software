@@ -493,15 +493,15 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     lock_t l(m_lock);
 	GLuint hits = 0;
     GLuint n = 0;
-    GLuint pick_buffer[100] = {0};
-    GLuint *p;
-    GLuint *item;
+    std::vector<GLuint> pick_buffer(m_contents.size(), 0);
+    std::vector<GLuint>::const_iterator p;
+    std::vector<GLuint>::const_iterator item; 
     renderable_list_t::iterator i;
 
     typedef std::map<GLuint, renderable_ptr_t> name_map_t;
     name_map_t name_map;
 
-	glSelectBuffer(sizeof(pick_buffer)/sizeof(GLuint), pick_buffer);
+	glSelectBuffer(pick_buffer.size(), &pick_buffer[0]);
 	glRenderMode(GL_SELECT);
 
 	glInitNames();
@@ -526,6 +526,12 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     glPopName();
     glFlush();
     hits = glRenderMode(GL_RENDER);
+    GLuint e = 0;
+    if ((e = glGetError()) || hits == GLuint(-1)){
+        error() << "selection error:" << e << hits;
+        glPrintErr(e);
+        hits = 0;
+    }
     debug() << "rendered" << n << "items for pick," << hits << "hit";
 
     bool need_redraw = false;
@@ -535,8 +541,8 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
         need_redraw = true;
     }
 
-    p = pick_buffer;
-    for(unsigned i = 0; i < hits; i++, p += (*p) + 3){
+    p = pick_buffer.begin();
+    for(unsigned i = 0; i < hits && p < pick_buffer.end(); i++, p += (*p) + 3){
 		item = p+3;
 		for(unsigned j = 0; j < *p; j++, item++){
 			name_map_t::const_iterator k = name_map.find(*item);
@@ -549,6 +555,8 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
             }
 		}
 	}
+    if(p > pick_buffer.end())
+        error() << "Pick Buffer Corruption / Limits Exceeded: serious badness";
 
     if(event->buttons() & Qt::RightButton){
         MouseEvent proxy(event, *this);
