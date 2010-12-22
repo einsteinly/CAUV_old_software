@@ -1,16 +1,25 @@
 #ifndef GRAPHWIDGET_H
 #define GRAPHWIDGET_H
 
-#include <QDockWidget>
-#include "ui_graphwidget.h"
+#include <QMdiArea>
 
 #include "../cauvinterfaceelement.h"
+#include "../datastreamdragging.h"
 
-class GraphWidget : public QDockWidget, public Ui::GraphWidget, public CauvInterfaceElement {
+
+class GraphArea : public QMdiArea, public DataStreamDropListener, public CauvInterfaceElement {
     Q_OBJECT
+
 public:
-    GraphWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent);
+    GraphArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent);
     virtual void initialise();
+    void onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream);
+    void onStreamDropped(boost::shared_ptr<DataStream<int> > stream);
+    void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
+    void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > stream);
+    void dropEvent(QDropEvent * event);
+    void dragEnterEvent(QDragEnterEvent * event);
 };
+
 
 #endif // GRAPHWIDGET_H

@@ -17,6 +17,8 @@ struct autopilot_params_t {
 
     autopilot_params_t() {
     }
+
+    friend std::ostream& operator <<(std::ostream &os,const autopilot_params_t &obj);
 };
 
 struct depth_calibration_t {
@@ -29,6 +31,8 @@ struct depth_calibration_t {
 
     depth_calibration_t() {
     }
+
+    friend std::ostream& operator <<(std::ostream &os,const depth_calibration_t &obj);
 };
 
 struct sonar_params_t {
@@ -40,7 +44,12 @@ struct sonar_params_t {
 
     sonar_params_t() {
     }
+
+    friend std::ostream& operator <<(std::ostream &os,const sonar_params_t &obj);
 };
+
+std::ostream& operator <<(std::ostream &os,const int8_t &value);
+
 
 class AUV {
 public:
@@ -103,11 +112,19 @@ public:
         Autopilot(const std::string name, const T initialTarget) :
         MutableDataStream<T>(name),
         params(boost::make_shared< MutableDataStream<autopilot_params_t> >("Params", this)),
+        kP(boost::make_shared< DataStream<float> >("kP", this)),
+        kI(boost::make_shared< DataStream<float> >("kI", this)),
+        kD(boost::make_shared< DataStream<float> >("kD", this)),
+        scale(boost::make_shared< DataStream<float> >("scale", this)),
         enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)) {
             this->set(initialTarget);
         };
 
         boost::shared_ptr< MutableDataStream<autopilot_params_t> > params;
+        boost::shared_ptr< DataStream<float> > kP;
+        boost::shared_ptr< DataStream<float> > kI;
+        boost::shared_ptr< DataStream<float> > kD;
+        boost::shared_ptr< DataStream<float> > scale;
         boost::shared_ptr< MutableDataStream<bool> > enabled;
     };
 
@@ -182,12 +199,18 @@ public:
         boost::shared_ptr< DataStream<uint16_t> > pressure_aft;
         boost::shared_ptr<MutableDataStream<depth_calibration_t> > depth_calibration;
         boost::shared_ptr<DataStream<float> > depth;
+        boost::shared_ptr<DataStream<float> > yaw;
+        boost::shared_ptr<DataStream<float> > pitch;
+        boost::shared_ptr<DataStream<float> > roll;
         boost::shared_ptr<DataStream<floatYPR> > orientation;
 
         Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
         pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
         depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
         depth(boost::make_shared<DataStream<float> >("Depth")),
+        yaw(boost::make_shared<DataStream<float> >("Yaw")),
+        pitch(boost::make_shared<DataStream<float> >("Pitch")),
+        roll(boost::make_shared<DataStream<float> >("Roll")),
         orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")) {
         }
     } sensors;

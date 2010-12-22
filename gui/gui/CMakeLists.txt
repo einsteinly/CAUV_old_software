@@ -24,9 +24,11 @@ else()
         guicpp_srcs
         main.cpp
         cauvgui.cpp
+        datastreamdragging.cpp
         cauvinterfaceelement.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
+        widgets/datastreampicker.cpp
         widgets/pipelinecauvwidget.cpp
         widgets/graphwidget.cpp
     )
@@ -34,7 +36,7 @@ else()
     set (
         guicpp_UIS
         mainwindow.ui
-        widgets/graphwidget.ui
+        widgets/datastreampicker.ui
     )
 
     set (
@@ -43,6 +45,7 @@ else()
         gamepad/gamepadinput.h
         cauvgui.h
         cauvinterfaceelement.h
+        widgets/datastreampicker.h
         widgets/graphwidget.h
     )
 

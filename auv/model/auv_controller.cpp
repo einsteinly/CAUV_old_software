@@ -118,6 +118,11 @@ void AUVController::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_
 void AUVController::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
     m_auv->autopilots.depth->params->update(autopilot_params_t(
             message->Kp(), message->Ki(), message->Kd(), message->scale()));
+    m_auv->autopilots.depth->kP->update(message->Kp());
+    m_auv->autopilots.depth->kI->update(message->Ki());
+    m_auv->autopilots.depth->kD->update(message->Kd());
+    m_auv->autopilots.depth->scale->update(message->scale());
+
 }
 
 void AUVController::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
@@ -181,6 +186,10 @@ void AUVController::onSonarControlMessage(SonarControlMessage_ptr message) {
 void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
     m_auv->sensors.depth->update(message->depth());
     m_auv->sensors.orientation->update(message->orientation());
+    m_auv->sensors.yaw->update(message->orientation().yaw);
+    m_auv->sensors.pitch->update(message->orientation().pitch);
+    m_auv->sensors.roll->update(message->orientation().roll);
+
 }
 
 void AUVController::onPressureMessage(PressureMessage_ptr message){

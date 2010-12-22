@@ -53,7 +53,6 @@ class DataStream : public DataSource {
         virtual T latest() {
             return this->m_latest;
         }
-
 };
 
 

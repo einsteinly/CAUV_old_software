@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+#include "widgets/datastreampicker.h"
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/graphwidget.h"
 
@@ -60,8 +61,9 @@ void CauvGui::onRun()
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
     // populate the interface
+    addInterfaceElement(new GraphArea("Graphs", m_auv, this));
     addInterfaceElement(new PipelineCauvWidget("Pipeline Editor", m_auv, this));
-    addInterfaceElement(new GraphWidget("Graphs", m_auv, this));
+    addInterfaceElement(new DataStreamPicker("Data Streams", m_auv, this));
 
     show();
     m_application.exec();
