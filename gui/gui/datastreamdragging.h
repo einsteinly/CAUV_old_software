@@ -44,13 +44,12 @@ public:
 
 protected:
     virtual void routeStream(QTreeWidgetItem * s);
-    template<class T>
-    virtual void onStreamDropped(boost::shared_ptr<DataStream<T> > stream);
-
-    //virtual void onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream);
-    //virtual void onStreamDropped(boost::shared_ptr<DataStream<int> > stream);
-    //virtual void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
-    //virtual void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > stream);
+    virtual void onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream);
+    virtual void onStreamDropped(boost::shared_ptr<DataStream<int> > stream);
+    virtual void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
+    virtual void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > stream);
+    virtual void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream);
+    virtual void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream);
 };
 
 

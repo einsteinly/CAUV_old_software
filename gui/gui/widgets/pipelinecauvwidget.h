@@ -11,7 +11,7 @@
 class PipelineCauvWidget : public pw::PipelineWidget, public CauvInterfaceElement
 {
 public:
-    PipelineCauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget *parent);
+    PipelineCauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget *parent, boost::shared_ptr<CauvNode> node);
     void initialise();
 
 protected:

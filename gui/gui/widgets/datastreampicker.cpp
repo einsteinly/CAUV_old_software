@@ -1,9 +1,9 @@
 #include "datastreampicker.h"
 #include "../datastreamdragging.h"
 
-DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent) :
+DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
     QDockWidget(parent),
-    CauvInterfaceElement(name, auv)
+    CauvInterfaceElement(name, auv, node)
 {
     setupUi(this);
 

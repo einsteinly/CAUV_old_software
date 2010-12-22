@@ -29,7 +29,7 @@ public:
         this->setAcceptDrops(true);
     }
 
-    /*void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> >stream){
+    void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> >stream){
         addStream(stream);
     }
 
@@ -43,10 +43,13 @@ public:
 
     void onStreamDropped(boost::shared_ptr<DataStream<float> >stream){
         addStream(stream);
-    }*/
+    }
 
-    template<class T>
-    void onStreamDropped(boost::shared_ptr<DataStream<T> >stream){
+    void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> >stream){
+        addStream(stream);
+    }
+
+    void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> >stream){
         addStream(stream);
     }
 
@@ -87,15 +90,23 @@ public:
 
     }
 
+    virtual void add(std::string series, floatYPR data){
+
+    }
+
+    virtual void add(std::string series, uint16_t data){
+
+    }
+
 protected:
     std::set<std::string> series;
 
 };
 
 
-GraphArea::GraphArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent) :
+GraphArea::GraphArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
         QMdiArea(parent),
-        CauvInterfaceElement(name, auv) {
+        CauvInterfaceElement(name, auv, node) {
     this->setAcceptDrops(true);
 }
 

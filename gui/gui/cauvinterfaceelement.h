@@ -25,6 +25,7 @@ Q_SIGNALS:
     void centralViewRegistered(QWidget *, QString&);
     void dockViewRegistered(QDockWidget *, Qt::DockWidgetArea);
     void messageGenerated(boost::shared_ptr<Message>);
+    void addMessageObserver(boost::shared_ptr<MessageObserver>);
 
 public Q_SLOTS:
     virtual void registerCentralView(QWidget *central, QString &title);
@@ -37,7 +38,7 @@ public Q_SLOTS:
 class CauvInterfaceElement {
 
 public:
-    CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv);
+    CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv, boost::shared_ptr<CauvNode> node);
     virtual QString &name();
     virtual void initialise() = 0;
     boost::shared_ptr<CauvInterfaceActions> actions();
@@ -46,6 +47,7 @@ protected:
     QString m_name;
     boost::shared_ptr<AUV> m_auv;
     boost::shared_ptr<CauvInterfaceActions> m_actions;
+    boost::shared_ptr<CauvNode> m_node;
 
 };
 #endif // CAUVINTERFACEELEMENT_H
