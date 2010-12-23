@@ -35,8 +35,13 @@ endif()
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
 set(ftdi_PROCESS_INCLUDES
     ftdi_INCLUDE_DIR)
-set(ftdi_PROCESS_LIBS
-    ftdi_LIBRARY ftdipp_LIBRARY)
+if (CAUV_USE_FTDIPP)
+    set(ftdi_PROCESS_LIBS
+        ftdi_LIBRARY ftdipp_LIBRARY)
+else()
+    set(ftdi_PROCESS_LIBS
+        ftdi_LIBRARY)
+endif()
 libfind_process(ftdi)
 
 #message ("ftdi_INCLUDE_DIRS=${ftdi_INCLUDE_DIRS}")

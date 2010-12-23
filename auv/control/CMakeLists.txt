@@ -1,10 +1,11 @@
-find_package(ftdi)
+find_package(ftdi REQUIRED)
 include_directories (${ftdi_INCLUDE_DIRS})
 link_directories (${ftdi_LIBRARY_DIRS})
 
 # sources
 add_executable (
     control
+
     control.cpp
     xsens_imu.cpp
 )
@@ -12,11 +13,11 @@ add_executable (
 # libs
 target_link_libraries (
     control
-    cauv_debug
+
     common
     module
-    ${ftdi_LIBRARIES}
     cmt
+    ${ftdi_LIBRARIES}
 )
 
 if (CAUV_USE_FTDIPP)

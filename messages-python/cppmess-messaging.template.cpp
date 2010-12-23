@@ -21,7 +21,7 @@ using namespace cauv;
 #for $s in $structs
 cauv::${s.name}::${s.name}() { }
 #if $len($s.fields) > 0
-${s.name}::${s.name}(#slurp
+cauv::${s.name}::${s.name}(#slurp
                      #for i, f in $enumerate($s.fields)
 #*                  *#$toCPPType($f.type) $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
                      #end for

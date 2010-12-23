@@ -128,7 +128,7 @@ class $className : public Message
     template<typename char_T, typename traits>
     friend std::basic_ostream<char_T, traits>& operator<<(
         std::basic_ostream<char_T, traits>& os, $className const& m);
-    friend void cauv::serialise(svec_ptr, $className const&);
+    friend void serialise(svec_ptr, $className const&);
 };
 
 #end for

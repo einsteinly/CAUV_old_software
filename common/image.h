@@ -2,6 +2,7 @@
 #define __CAUV_IMAGE_H__
 
 #include <boost/cstdint.hpp>
+
 #include <boost/scoped_ptr.hpp>
 
 #include <utility/streamops.h>
@@ -14,8 +15,8 @@ class Mat;
 namespace cauv{
 
 class Image{
-        friend void cauv::serialise(svec_ptr, Image const&);
-        friend int32_t cauv::deserialise(const_svec_ptr, uint32_t i, Image&);
+        friend void serialise(svec_ptr, Image const&);
+        friend int32_t deserialise(const_svec_ptr, uint32_t i, Image&);
     public:
         Image();
         Image(cv::Mat const& cv_image);
