@@ -13,7 +13,8 @@ add_executable (
 # libs
 target_link_libraries (
     control
-
+    
+    messages
     common
     module
     cmt

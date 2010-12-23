@@ -8,9 +8,6 @@
 #include <debug/cauv_debug.h>
 #include <utility/serialisation.h>
 
-
-using cauv::Image;
-
 const static int Compress_JPEG_Quality = 95;
 
 cauv::Image::Image()
@@ -35,7 +32,7 @@ cauv::Image::Image(Image const& other)
 }
 
 // deep copy
-Image& cauv::Image::operator=(Image const& other){
+cauv::Image& cauv::Image::operator=(Image const& other){
     m_img.reset(new cv::Mat(other.m_img->clone()));
     m_compress_fmt = other.m_compress_fmt;
     m_compress_params = other.m_compress_params;

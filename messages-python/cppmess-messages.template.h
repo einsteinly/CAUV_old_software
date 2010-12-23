@@ -36,7 +36,7 @@ struct $s.name
     #if len($s.fields) > 0
     ${s.name}(#slurp
               #for i, f in $enumerate($s.fields)
-#*           *#$toCPPType($f.type) $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
+#*           *#$toCPPType($f.type) const& $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
               #end for
 #*           *#);
     #end if 
@@ -82,7 +82,7 @@ class $className : public Message
         #if $len($m.fields) > 0
         ${className}(#slurp
                      #for i, f in $enumerate($m.fields)
-#*                  *#$toCPPType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
+#*                  *#$toCPPType($f.type) const& $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                      #end for
 #*                  *#);
         #end if
