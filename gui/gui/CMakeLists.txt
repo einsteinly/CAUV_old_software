@@ -14,14 +14,15 @@ if (NOT OIS_FOUND)
     message(WARNING "OIS not found, not building gui")
 else()
     # using both Qt slots and Boost signals so need no keywords
-    ADD_DEFINITIONS(-DQT_NO_KEYWORDS)
+    add_definitions(-DQT_NO_KEYWORDS)
 
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIR} REQUIRED)
     link_directories (${Qwt6_Qt4_LIBRARY})
     link_directories (${OIS_LIBRARIES})
 
     set (
-        guicpp_srcs
+        GUICPP_SRCS
+
         main.cpp
         cauvgui.cpp
         cauvinterfaceelement.cpp
@@ -31,12 +32,14 @@ else()
     )
 
     set (
-        guicpp_UIS
+        GUICPP_UIS
+        
         mainwindow.ui
     )
 
     set (
-        guicpp_H
+        GUICPP_H
+        
         gamepad/playstationinput.h
         gamepad/gamepadinput.h
         cauvgui.h
@@ -44,8 +47,8 @@ else()
         widgets/pipelinecauvwidget.h
     )
 
-    qt4_wrap_ui (guicpp_UIS_H ${guicpp_UIS})
-    qt4_wrap_cpp (guicpp_MOC_H ${guicpp_H})
+    qt4_wrap_ui (GUICPP_UIS_H ${guicpp_UIS})
+    qt4_wrap_cpp (GUICPP_MOC_H ${guicpp_H})
 
     include_directories (${pipeline-widget_SOURCE_DIR})
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -54,10 +57,18 @@ else()
     # for <common/includesstuff> etc
     include_directories (${AUV_SOURCE_DIR})
 
-    add_executable (guicpp ${guicpp_srcs} ${guicpp_UIS_H} ${guicpp_MOC_H})
+    add_executable (
+        guicpp
+        EXCLUDE_FROM_ALL
+
+        ${GUICPP_SRCS}
+        ${GUICPP_UIS_H}
+        ${GUICPP_MOC_H}
+    )
 
     target_link_libraries (
         guicpp
+
         cauv_debug
         common
         model
@@ -69,6 +80,7 @@ else()
 
     add_custom_command(
         TARGET guicpp
+        
         POST_BUILD
         COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${guicpp_BINARY_DIR}/"
         COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${guicpp_BINARY_DIR}/"

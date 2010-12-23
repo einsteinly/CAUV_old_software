@@ -27,7 +27,6 @@ target_link_libraries (
 
     cauv_debug
     messages
-    message-serialisation
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
@@ -57,7 +56,6 @@ target_link_libraries (
 
     cauv_debug
     messages
-    message-serialisation
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
