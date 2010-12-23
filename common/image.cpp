@@ -1,9 +1,9 @@
 #include "image.h"
 
+#include <algorithm>
+
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-
-#include <algorithm>
 
 #include <debug/cauv_debug.h>
 #include <utility/serialisation.h>

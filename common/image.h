@@ -1,6 +1,7 @@
 #ifndef __CAUV_IMAGE_H__
 #define __CAUV_IMAGE_H__
 
+#include <boost/cstdint.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <utility/streamops.h>
