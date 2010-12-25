@@ -493,7 +493,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     lock_t l(m_lock);
 	GLuint hits = 0;
     GLuint n = 0;
-    std::vector<GLuint> pick_buffer(m_contents.size(), 0);
+    std::vector<GLuint> pick_buffer(m_contents.size()+12, 0);
     std::vector<GLuint>::const_iterator p;
     std::vector<GLuint>::const_iterator item; 
     renderable_list_t::iterator i;
