@@ -82,6 +82,39 @@ SonarAccumulator::SonarAccumulator()
 {   
     assert(m_img->cvMat().data);
 }
+
+
+std::vector<float> precalculate_sonar_sins()
+{
+    std::vector<float> ret;
+    ret.reserve(1600);
+    for (int b = 0; b < 1600; ++b)
+        ret.push_back(sin((M_PI / 3200) * b));
+    return ret;
+}
+static std::vector<float> sonar_sins = precalculate_sonar_sins();
+
+float sonar_sin(int bearing)
+{
+    bearing = bearing % 6400;
+    if (bearing < 0)
+        bearing += 6400;
+    
+    if (bearing < 1600)
+        return sonar_sins[bearing];
+    else if (bearing < 3200)
+        return sonar_sins[3200 - bearing];
+    else if (bearing < 4800)
+        return -sonar_sins[bearing - 3200];
+    else
+        return -sonar_sins[6400 - bearing];   
+}
+float sonar_cos(int bearing)
+{
+    return sonar_sin(bearing + 1600);
+}
+
+
 void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
 {
     if (line.bearingRange > 1600)
@@ -90,17 +123,8 @@ void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
         return;
     }
 
-    int bearing_from = line.bearing - line.bearingRange/2 - 200;
-    int bearing_to = bearing_from + line.bearingRange;
-
-    float a_from = (M_PI / 3200) * bearing_from;
-	float a_to = (M_PI / 3200) * bearing_to;
-
-    // Precalculate expensive trig
-    float cosfrom = cos(a_from);
-    float sinfrom = sin(a_from);
-    float costo = cos(a_to);    
-    float sinto = sin(a_to);    
+    int from = line.bearing - line.bearingRange/2;
+    int to = from + line.bearingRange;
 
     int radius = floor((min(m_img->cvMat().rows, m_img->cvMat().cols)-1)/2);
     int bincount = line.data.size();
@@ -114,10 +138,10 @@ void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
         float inner_radius = b * bscale;
         float outer_radius = (b+1) * bscale;
 
-        cv::Point2f pt_inner_from(inner_radius*cosfrom, inner_radius*sinfrom);
-        cv::Point2f pt_inner_to(inner_radius*costo, inner_radius*sinto);
-        cv::Point2f pt_outer_from(outer_radius*cosfrom, outer_radius*sinfrom);
-        cv::Point2f pt_outer_to(outer_radius*costo, outer_radius*sinto);
+        cv::Point2f pt_inner_from(inner_radius*sonar_cos(from), inner_radius*sonar_sin(from));
+        cv::Point2f pt_inner_to(inner_radius*sonar_cos(to), inner_radius*sonar_sin(to));
+        cv::Point2f pt_outer_from(outer_radius*sonar_cos(from), outer_radius*sonar_sin(from));
+        cv::Point2f pt_outer_to(outer_radius*sonar_cos(to), outer_radius*sonar_sin(to));
         
         cv::Rect innerbb = arcBound(inner_radius, pt_inner_from, pt_inner_to);
         cv::Rect outerbb = arcBound(outer_radius, pt_outer_from, pt_outer_to);
