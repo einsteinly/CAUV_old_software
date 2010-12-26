@@ -1,6 +1,6 @@
 # required libraries:
 find_package (ssrcspread REQUIRED)
-include_directories (${ssrcspread_INCLUDE_DIR} REQUIRED)
+include_directories (${ssrcspread_INCLUDE_DIR})
 link_directories (${ssrcspread_LIBRARY_DIR})
 
 find_package (OpenCV REQUIRED)
@@ -40,7 +40,6 @@ target_link_libraries (
 # dynamic lib:
 add_library (
     common-shared SHARED
-    EXCLUDE_FROM_ALL
     
     cauv_global.cpp
     cauv_node.cpp
@@ -65,6 +64,7 @@ target_link_libraries (
     boost_signals
     boost_program_options
 )
+cauv_install ( common-shared )
 
 add_dependencies(common logo-headers messages-headers)
 add_dependencies(common-shared logo-headers messages-headers)

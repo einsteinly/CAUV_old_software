@@ -37,6 +37,7 @@ add_executable (
     seanet_serial_port.cpp
     seanet_packet.cpp
 )
+cauv_install ( sonar )
 
 # libs
 target_link_libraries (

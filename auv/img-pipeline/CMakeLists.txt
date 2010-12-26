@@ -12,6 +12,7 @@ add_executable (
     scheduler.cpp
     nodes/nodes.cpp
 )
+cauv_install ( img-pipeline )
 
 # libs:
 target_link_libraries (

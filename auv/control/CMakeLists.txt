@@ -15,6 +15,7 @@ add_executable (
     control.cpp
     xsens_imu.cpp
 )
+cauv_install ( control )
 
 # libs
 target_link_libraries (

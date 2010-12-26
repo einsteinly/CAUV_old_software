@@ -16,7 +16,7 @@ else()
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
 
-    include_directories (SYSTEM ${Qwt6_INCLUDE_DIR} REQUIRED)
+    include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
     link_directories (${Qwt6_Qt4_LIBRARY})
     link_directories (${OIS_LIBRARIES})
 
@@ -77,6 +77,7 @@ else()
         ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
     )
+    #cauv_install ( guicpp )
 
     add_custom_command(
         TARGET guicpp
