@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <debug/cauv_debug.h>
 
@@ -267,7 +268,7 @@ class ListMenu: public Menu{
             y_pos -= 20;
 
             for(i = m_items.begin(); i != m_items.end(); i++){
-                if((*i)->text().find(*m_filter_string) != std::string::npos){
+                if(boost::icontains((*i)->text(), *m_filter_string)){
                     y_pos -= prev_height;
                     (*i)->m_pos.y = y_pos + roundZ((*i)->bbox().min.y);
                     prev_height = roundA((*i)->bbox().h());
