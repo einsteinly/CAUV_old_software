@@ -489,19 +489,26 @@ void PipelineWidget::resizeGL(int width, int height){
     updateProjection();
 }
 
+struct HitRecord
+{
+    GLuint nameCount;
+    GLuint minDepth;
+    GLuint maxDepth;
+    GLuint names[1];
+};
 void PipelineWidget::mousePressEvent(QMouseEvent *event){
     lock_t l(m_lock);
 	GLuint hits = 0;
     GLuint n = 0;
-    std::vector<GLuint> pick_buffer(m_contents.size()+12, 0);
-    std::vector<GLuint>::const_iterator p;
-    std::vector<GLuint>::const_iterator item; 
+    
+    std::vector<HitRecord> pick_buffer(m_contents.size());
+    std::vector<HitRecord>::const_iterator p;
     renderable_list_t::iterator i;
 
     typedef std::map<GLuint, renderable_ptr_t> name_map_t;
     name_map_t name_map;
 
-	glSelectBuffer(pick_buffer.size(), &pick_buffer[0]);
+	glSelectBuffer(sizeof(HitRecord)*pick_buffer.size(), reinterpret_cast<GLuint*>(&pick_buffer[0]));
 	glRenderMode(GL_SELECT);
 
 	glInitNames();
@@ -526,9 +533,9 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     glPopName();
     glFlush();
     hits = glRenderMode(GL_RENDER);
-    GLuint e = 0;
-    if ((e = glGetError()) || hits == GLuint(-1)){
-        error() << "selection error:" << e << hits;
+    GLuint e = glGetError();
+    if (e != GL_NO_ERROR || hits == GLuint(-1)){
+        error() << "selection error:" << e << (int)hits;
         glPrintErr(e);
         hits = 0;
     }
@@ -542,12 +549,12 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     }
 
     p = pick_buffer.begin();
-    for(unsigned i = 0; i < hits && p < pick_buffer.end(); i++, p += (*p) + 3){
-		item = p+3;
-		for(unsigned j = 0; j < *p; j++, item++){
-			name_map_t::const_iterator k = name_map.find(*item);
+    for(unsigned i = 0; i < hits && p < pick_buffer.end(); i++, p++){
+		for(unsigned j = 0; j < p->nameCount; j++){
+            GLuint name = p->names[j];
+			name_map_t::const_iterator k = name_map.find(name);
             if(k == name_map.end()){
-                error() << "gl name" << *item << "does not correspond to renderable";
+                error() << "gl name" << name << "does not correspond to renderable";
             }else{
                 debug(2) << "sending mouse press event to" << k->second;
                 k->second->mousePressEvent(MouseEvent(event, k->second, *this));
