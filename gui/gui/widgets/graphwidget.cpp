@@ -1,18 +1,69 @@
 #include "graphwidget.h"
-#include "ui_graphwidget.h"
 
+#include <common/cauv_utils.h>
+#include <common/data_stream_tools.h>
+#include <boost/unordered_map.hpp>
 #include <boost/bind.hpp>
 #include <QMdiSubWindow>
+#include <QPen>
+#include <QRectF>
 #include <qwt_plot.h>
+#include <qwt_legend.h>
+#include <qwt_plot_grid.h>
+#include <qwt_series_data.h>
 
+class DataStreamSeriesDataBase{};
+
+template<class T>
+class DataStreamSeriesData : public DataStreamSeriesDataBase, public QwtSeriesData<T>, public DataStreamRecorder<T> {
+
+public:
+
+    DataStreamSeriesData<T>(boost::shared_ptr<DataStream<T> >stream, unsigned int maximum) :
+            DataStreamRecorder<T>(stream, maximum)
+    {
+    }
+
+    virtual size_t size () const {
+        return 1000; //m_history.size();
+    }
+
+    virtual T sample (size_t i) const {
+        return sin(i/1000);//m_history[i];
+    }
+
+    virtual QRectF boundingRect () const {
+        return QRectF(0, sample(0), size(), sample(size()));
+    }
+};
 
 
 class GraphWidget : public QwtPlot, public DataStreamDropListener {
 
 public:
-    GraphWidget() {
-        this->setTitle("Blank Graph");
+    template<class T>
+    explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream) :
+            m_grid(boost::make_shared<QwtPlotGrid>())
+    {
+        addStream<T>(stream);
         this->setAcceptDrops(true);
+        setupPlot();
+    }
+
+    void setupPlot() {
+        // Insert grid
+        m_grid->attach(this);
+        QPen pen(Qt::gray, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin);
+        m_grid->setPen(pen);
+
+        this->setCanvasBackground(QColor(Qt::white));
+        this->setAutoReplot(true);
+        this->setMargin(5);
+
+        // legend
+        QwtLegend *legend = new QwtLegend;
+        legend->setFrameStyle(QFrame::Box|QFrame::NoFrame);
+        this->insertLegend(legend, QwtPlot::BottomLegend);
     }
 
     void dropEvent(QDropEvent * event){
@@ -21,12 +72,6 @@ public:
 
     void dragEnterEvent(QDragEnterEvent * event){
         DataStreamDropListener::dragEnterEvent(event);
-    }
-
-    template<class T>
-    explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream) {
-        addStream<T>(stream);
-        this->setAcceptDrops(true);
     }
 
     void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> >stream){
@@ -56,26 +101,22 @@ public:
     template<class T>
     void addStream(boost::shared_ptr<DataStream<T> > stream){
         stream->onUpdate.connect(boost::bind( static_cast<void (GraphWidget::*)(std::string, T)>(&GraphWidget::add), this, stream->getName(), _1));
-        if(series.end() == series.find(stream->getName()))
-            series.insert(stream->getName());
-
-        this->setTitle(QString::fromStdString(getName()));
+        // see if this series has already been registered
+        if(series.end() == series.find(stream->getName())) {
+            seriesNames.insert(stream->getName());
+            //series[stream->getName()] = boost::make_shared<DataStreamSeriesData<T> >(stream, 1000);
+            this->setTitle(QString::fromStdString(getName()));
+        }
     }
 
     virtual std::string getName(){
         std::stringstream title;
-        title << "[";
-        std::set<std::string>::iterator i;
-        for (i=series.begin(); i!=series.end(); i++){
-            title << *i << ", ";
-        }
-        title << "]";
-
+        title << "[" << implode(", ", seriesNames) << "]";
         return title.str();
     }
 
     virtual void add(std::string series, int8_t data){
-
+        new DataStreamSeriesData<int8_t> (stream, 1000);
     }
 
     virtual void add(std::string series, int data){
@@ -99,8 +140,9 @@ public:
     }
 
 protected:
-    std::set<std::string> series;
-
+    std::set<std::string> seriesNames;
+    boost::unordered_map<std::string, DataStreamSeriesDataBase> series;
+    boost::shared_ptr<QwtPlotGrid> m_grid;
 };
 
 
