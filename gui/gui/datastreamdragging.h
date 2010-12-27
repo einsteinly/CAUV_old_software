@@ -11,6 +11,8 @@
 #include <boost/shared_ptr.hpp>
 #include <common/data_stream.h>
 
+namespace cauv {
+
 template <class T>
 class DataStreamTreeItem : public QTreeWidgetItem {
 
@@ -28,10 +30,10 @@ public:
 protected:
     boost::shared_ptr<DataStream<T> > m_stream;
 
-    void onChange(T value){
-        std::stringstream stream;
-        stream << value;
-        this->setText(1, QString::fromStdString(stream.str()));
+    void onChange(const T value){
+        //std::stringstream stream;
+        //stream << value;
+        //this->setText(1, QString::fromStdString(stream.str()));
     }
 };
 
@@ -52,5 +54,6 @@ protected:
     virtual void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream);
 };
 
+}
 
 #endif // DATASTREAMTREEITEM_H

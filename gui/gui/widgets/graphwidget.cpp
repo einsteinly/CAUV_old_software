@@ -12,6 +12,8 @@
 #include <qwt_plot_grid.h>
 #include <qwt_series_data.h>
 
+using namespace cauv;
+
 class DataStreamSeriesDataBase{};
 
 template<class T>
@@ -116,7 +118,7 @@ public:
     }
 
     virtual void add(std::string series, int8_t data){
-        new DataStreamSeriesData<int8_t> (stream, 1000);
+        //new DataStreamSeriesData<int8_t> (series, 1000);
     }
 
     virtual void add(std::string series, int data){

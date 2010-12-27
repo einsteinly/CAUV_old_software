@@ -19,8 +19,6 @@ struct autopilot_params_t {
 
     autopilot_params_t() {
     }
-
-    friend std::ostream& operator <<(std::ostream &os,const autopilot_params_t &obj);
 };
 
 struct depth_calibration_t {
@@ -33,8 +31,6 @@ struct depth_calibration_t {
 
     depth_calibration_t() {
     }
-
-    friend std::ostream& operator <<(std::ostream &os,const depth_calibration_t &obj);
 };
 
 struct sonar_params_t {
@@ -46,11 +42,12 @@ struct sonar_params_t {
 
     sonar_params_t() {
     }
-
-    friend std::ostream& operator <<(std::ostream &os,const sonar_params_t &obj);
 };
 
-std::ostream& operator <<(std::ostream &os,const int8_t &value);
+std::ostream& operator<< (std::ostream &os,const int8_t &value);
+std::ostream& operator<< (std::ostream &os,const depth_calibration_t &obj);
+std::ostream& operator<< (std::ostream &os,const sonar_params_t &obj);
+std::ostream& operator<< (std::ostream &os,const autopilot_params_t &obj);
 
 
 class AUV {

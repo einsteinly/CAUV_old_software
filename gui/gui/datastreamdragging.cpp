@@ -1,6 +1,8 @@
 
 #include "datastreamdragging.h"
 
+using namespace cauv;
+
 void DataStreamDropListener::dragEnterEvent(QDragEnterEvent *event)
 {
     event->acceptProposedAction();

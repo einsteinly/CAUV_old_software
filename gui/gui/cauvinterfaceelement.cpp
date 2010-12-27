@@ -1,5 +1,6 @@
 #include "cauvinterfaceelement.h"
 
+using namespace cauv;
 
 CauvInterfaceActions::CauvInterfaceActions(QObject *parent): QObject(parent){
 }

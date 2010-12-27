@@ -1,6 +1,5 @@
 #include "cauvgui.h"
 
-#include <math.h>
 #include <model/auv_controller.h>
 
 #include <boost/shared_ptr.hpp>

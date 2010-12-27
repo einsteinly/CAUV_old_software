@@ -6,6 +6,7 @@
 #include "../cauvinterfaceelement.h"
 #include "../datastreamdragging.h"
 
+namespace cauv {
 
 class GraphArea : public QMdiArea, public DataStreamDropListener, public CauvInterfaceElement {
     Q_OBJECT
@@ -23,5 +24,6 @@ public:
     void dragEnterEvent(QDragEnterEvent * event);
 };
 
+}
 
 #endif // GRAPHWIDGET_H
