@@ -44,10 +44,51 @@ struct sonar_params_t {
     }
 };
 
-std::ostream& operator<< (std::ostream &os,const int8_t &value);
-std::ostream& operator<< (std::ostream &os,const depth_calibration_t &obj);
-std::ostream& operator<< (std::ostream &os,const sonar_params_t &obj);
-std::ostream& operator<< (std::ostream &os,const autopilot_params_t &obj);
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, depth_calibration_t const& s)
+{
+    os << "fore (" << s.foreOffset;
+    os << ", x" << s.foreMultiplier;
+    os << ")";
+    os << " aft (" << s.aftOffset;
+    os << ", x" << s.afteMultiplier;
+    os << ")";
+    return os;
+}
+
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, int8_t const& s)
+{
+    os << (int)s;
+    return os;
+}
+
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, sonar_params_t const& s)
+{
+    os << "( ar=" << s.angularRes;
+    os << ", rr=" << s.radialRes;
+    os << ", range=" << s.range;
+    os << ", dir=" << s.direction;
+    os << ", gain=" << s.gain;
+    os << ", width=" << s.width;
+    os << ")";
+    return os;
+}
+
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, autopilot_params_t const& s)
+{
+    os << "(" << s.kP << ", " << s.kI << ", " << s.kD << ", " << s.scale << ")";
+    return os;
+}
 
 
 class AUV {

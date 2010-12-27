@@ -7,6 +7,8 @@
 #include <QDropEvent>
 
 #include <model/auv_model.h>
+#include <sstream>
+
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <common/data_stream.h>
@@ -31,9 +33,9 @@ protected:
     boost::shared_ptr<DataStream<T> > m_stream;
 
     void onChange(const T value){
-        //std::stringstream stream;
-        //stream << value;
-        //this->setText(1, QString::fromStdString(stream.str()));
+        std::stringstream stream;
+        stream << value;
+        this->setText(1, QString::fromStdString(stream.str()));
     }
 };
 
