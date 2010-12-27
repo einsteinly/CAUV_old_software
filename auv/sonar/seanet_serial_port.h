@@ -1,5 +1,5 @@
-#ifndef __SEANET_SERIAL_PORT_H__
-#define __SEANET_SERIAL_PORT_H__
+#ifndef __CAUV_SEANET_SERIAL_PORT_H__
+#define __CAUV_SEANET_SERIAL_PORT_H__
 
 #include <string>
 #include <exception>
@@ -8,6 +8,8 @@
 #include <boost/thread.hpp>
 
 #include "seanet_packet.h"
+
+namespace cauv{
 
 class SeanetSerialPort
 {
@@ -29,5 +31,8 @@ class SonarIsDeadException : public std::exception
 	public:
 		virtual const char *what() const throw();
 };
-#endif
+
+} // namespace cauv
+
+#endif//__CAUV_SEANET_SERIAL_PORT_H__
 

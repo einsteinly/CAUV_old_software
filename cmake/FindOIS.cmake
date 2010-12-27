@@ -8,11 +8,11 @@
 include(LibFindMacros)
 
 # Use pkg-config to get hints about paths
-libfind_pkg_check_modules(OIS_PKGCONF ois) 
+libfind_pkg_check_modules(OIS_PKGCONF OIS) 
 
 # Include dir
 find_path(OIS_INCLUDE_DIR
-  NAMES OIS
+  NAMES OIS.h
   PATHS ${OIS_PKGCONF_INCLUDE_DIRS}
 )
 #message ("OIS_PKGCONF_INCLUDE_DIRS=${OIS_PKGCONF_INCLUDE_DIRS}")

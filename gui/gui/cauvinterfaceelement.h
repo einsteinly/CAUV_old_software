@@ -8,6 +8,7 @@
 #include <model/auv_model.h>
 #include <model/auv_controller.h>
 
+namespace cauv{
 
 // Q: Why has an separate class been used?
 // A: because QObject doesn't support virtual inheritance, so if an interface
@@ -50,4 +51,7 @@ protected:
     boost::shared_ptr<CauvNode> m_node;
 
 };
+
+} // namespace cauv
+
 #endif // CAUVINTERFACEELEMENT_H

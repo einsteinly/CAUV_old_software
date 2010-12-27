@@ -5,14 +5,17 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <algorithm>
 
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <debug/cauv_debug.h>
 
 #include "menu.h"
 #include "text.h"
 
+namespace cauv{
 namespace pw{
 
 template<typename callable>
@@ -42,7 +45,11 @@ class ListMenuItem: public Renderable{
             glBox(m_bbox);
             if(!(flags & drawtype_e::picking))
                 m_text->draw(flags);
-        } 
+        }
+
+        std::string text(){
+            return *m_text;
+        }
         
         virtual void mouseMoveEvent(MouseEvent const& m){
             if(bbox().contains(m.pos)){
@@ -71,7 +78,7 @@ class ListMenuItem: public Renderable{
 
         virtual void mouseReleaseEvent(MouseEvent const& m){
             if(m_pressed && bbox().contains(m.pos))
-                (*m_onclick)();
+                doAction();
             m_pressed = false;
             // TODO: only when necessary
             m_context->postRedraw(0);
@@ -82,6 +89,10 @@ class ListMenuItem: public Renderable{
             m_pressed = false;
             // TODO: only when necessary
             m_context->postRedraw(0);
+        }
+
+        virtual void doAction(){
+            (*m_onclick)();
         }
 
         virtual BBox bbox(){
@@ -114,20 +125,18 @@ class ListMenu: public Menu{
         typedef std::map<std::string,callable_ptr> item_map_t;
 
         ListMenu(container_ptr_t c, item_map_t const& items)
-            : Menu(c), m_items(), m_bbox(){
+            : Menu(c), m_items(), m_filtered_items(), m_bbox(),
+              m_filter_string(boost::make_shared<Text>(c, "")){
             typename item_map_t::const_iterator i;
-            int y_pos = 0;
-            int prev_height = 0;
-            for(i = items.begin(); i != items.end(); i++, y_pos -= prev_height){
+            for(i = items.begin(); i != items.end(); i++){
                 item_ptr ip = boost::make_shared<item_t>(c, *i);
-                m_items.push_back(ip);                
-                ip->m_pos.y = y_pos + roundZ(ip->bbox().min.y);
-                prev_height = roundA(ip->bbox().h());
+                m_items.push_back(ip);
                 m_bbox |= ip->bbox() + ip->m_pos;
             }
             typename std::list<item_ptr>::iterator j;
             for(j = m_items.begin(); j != m_items.end(); j++)
                 (*j)->setSpan(m_bbox.min.x, m_bbox.max.x);
+            _updateFilteredItems();
         }
 
         virtual ~ListMenu(){ }
@@ -138,7 +147,20 @@ class ListMenu: public Menu{
             glTranslatef(0, 0, 0.1);
             glColor(Colour(1.0, 0.8));
             glBox(m_bbox);
-            for(i = m_items.begin(); i != m_items.end(); i++){
+            glColor(Colour(1.0, 0.5));
+            if(m_filter_string->size()){
+                glPushMatrix();                
+                BBox f_bbox = m_filter_string->bbox();
+                
+                f_bbox.min.x = m_bbox.min.x;
+                f_bbox.max.x = m_bbox.max.x;
+
+                glTranslatef(m_filter_string->m_pos);            
+                glBox(f_bbox);
+                m_filter_string->draw(flags);
+                glPopMatrix();
+            }
+            for(i = m_filtered_items.begin(); i != m_filtered_items.end(); i++){
                 glPushMatrix();
                 glTranslatef((*i)->m_pos);
                 (*i)->draw(flags);
@@ -149,7 +171,7 @@ class ListMenu: public Menu{
         virtual void mouseMoveEvent(MouseEvent const& m){
             typename std::list<item_ptr>::iterator i;
             std::set<item_ptr> now_hovered_items;
-            for(i = m_items.begin(); i != m_items.end(); i++){
+            for(i = m_filtered_items.begin(); i != m_filtered_items.end(); i++){
                 MouseEvent referred(m, *i);
                 if((*i)->bbox().contains(referred.pos)){
                     (*i)->mouseMoveEvent(referred);
@@ -165,7 +187,7 @@ class ListMenu: public Menu{
 
         virtual bool mousePressEvent(MouseEvent const& m){
             typename std::list<item_ptr>::iterator i;
-            for(i = m_items.begin(); i != m_items.end(); i++){
+            for(i = m_filtered_items.begin(); i != m_filtered_items.end(); i++){
                 MouseEvent referred(m, *i);
                 if((*i)->bbox().contains(referred.pos)){
                     if((*i)->mousePressEvent(referred))
@@ -190,20 +212,88 @@ class ListMenu: public Menu{
         }
 
         virtual bool tracksMouse(){ return true; }
+        
+
+        virtual bool keyPressEvent(KeyEvent const& event){
+            std::string new_text = event.text().toStdString();        
+            debug() << BashColour::White << "ListMenu: key press:" << new_text;
+            switch(event.key()){
+                case Qt::Key_Enter:
+                case Qt::Key_Return:
+                    debug() << "ListMenu: key enter";
+                    if(m_filtered_items.size() == 1){
+                        m_filtered_items.front()->doAction();
+                        m_context->removeMenu(shared_from_this());
+                        return true;
+                    }
+                    break;
+                case Qt::Key_Delete:
+                case Qt::Key_Backspace:
+                    if(m_filter_string->size())
+                        m_filter_string->erase(m_filter_string->end()-1);
+                    break;
+                case Qt::Key_Escape:
+                    m_filter_string->clear();
+                    break;
+                default:
+                    if(new_text.size())
+                        *m_filter_string += new_text;
+                    else
+                        return false;
+            }
+            _updateFilteredItems();
+            return true;
+        }
+        //virtual bool keyReleaseEvent(KeyEvent const&){ return false; }
 
         BBox bbox(){
             return m_bbox;
         }
 
     private:
+        /* Update the displayed items and bounding box based on the filter
+         * string
+         */
+        void _updateFilteredItems(){
+            typename std::list<item_ptr>::iterator i;
+            int y_pos = 0;
+            int prev_height = 0;
+            m_bbox = BBox();
+            std::list<item_ptr> new_filtered_items;
+
+            m_filter_string->updateBbox();
+            m_filter_string->m_pos.y = -roundZ(m_filter_string->bbox().max.y);
+            m_bbox |= m_filter_string->bbox() + m_filter_string->m_pos;
+
+            y_pos -= 20;
+
+            for(i = m_items.begin(); i != m_items.end(); i++){
+                if(boost::icontains((*i)->text(), *m_filter_string)){
+                    y_pos -= prev_height;
+                    (*i)->m_pos.y = y_pos + roundZ((*i)->bbox().min.y);
+                    prev_height = roundA((*i)->bbox().h());
+                    m_bbox |= (*i)->bbox() + (*i)->m_pos;
+                    new_filtered_items.push_back(*i);
+                }
+            }
+            //if(new_filtered_items != m_filtered_items){
+                m_filtered_items = new_filtered_items;
+                m_context->postRedraw(0);
+            //}
+        }
+
         std::list<item_ptr> m_items;
+        std::list<item_ptr> m_filtered_items;
         BBox m_bbox;
+
+        boost::shared_ptr<Text> m_filter_string;
 
         std::set<item_ptr> m_hovered_items;
         std::set<item_ptr> m_pressed_items;
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __LIST_MENU_RENDERABLE_H__
 

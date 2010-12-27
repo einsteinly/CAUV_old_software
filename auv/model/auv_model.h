@@ -9,6 +9,8 @@
 
 #include <common/data_stream.h>
 
+namespace cauv{
+
 struct autopilot_params_t {
     float kP, kI, kD, scale;
 
@@ -220,5 +222,6 @@ public:
 
 };
 
+} // namespace cauv
 
 #endif // AUV_MODEL_H_INCLUDED

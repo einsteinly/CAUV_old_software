@@ -5,6 +5,7 @@
 
 #include "../renderable.h"
 
+namespace cauv{
 namespace pw{
 
 class Menu: public Renderable, public boost::enable_shared_from_this<Menu>{
@@ -12,12 +13,11 @@ class Menu: public Renderable, public boost::enable_shared_from_this<Menu>{
         Menu(container_ptr_t c) : Renderable(c){ }
         virtual ~Menu(){ }
 
-        virtual bool keyPressEvent(QKeyEvent*){ return false; }
-        virtual bool keyReleaseEvent(QKeyEvent*){ return false; }
         virtual Point topLevelPos() const{ return m_pos; }
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __MENU_RENDERABLE_H__
 

@@ -3,6 +3,8 @@
 
 #include <boost/bind.hpp>
 
+using namespace cauv;
+
 
 AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     // connect up the motor set commands with the message sending code

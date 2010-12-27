@@ -8,6 +8,7 @@
 #include "mouseEvent.h"
 #include "pwTypes.h"
 
+namespace cauv{
 namespace pw{
 
 class Renderable{
@@ -58,6 +59,7 @@ class Renderable{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __RENDERABLE_H__
 

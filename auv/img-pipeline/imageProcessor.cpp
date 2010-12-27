@@ -7,6 +7,8 @@
 #include <utility/string.h>
 #include <generated/messages.h>
 
+using namespace cauv::imgproc;
+
 // TODO: error() should send an error message of some sort on spread
 
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
@@ -199,6 +201,20 @@ void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr){
         ));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
+    }
+}
+
+
+void ImageProcessor::onForceExecRequestMessage(ForceExecRequestMessage_ptr m){
+    try{
+        node_ptr_t n = lookup(m->nodeId());
+        if(n){
+            n->checkAddSched(Node::Always);
+        }else{
+            error() << __func__ << "invalid node id:" << m->nodeId();
+        }
+    }catch(std::exception& e){
+        error() << __func__  << ":" << e.what();
     }
 }
 

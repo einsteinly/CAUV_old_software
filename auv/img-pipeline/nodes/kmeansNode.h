@@ -15,6 +15,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class KMeansNode: public Node{
     public:
         KMeansNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t) :
@@ -252,5 +255,8 @@ class KMeansNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __GAUSSIAN_BLUR_NODE_H__

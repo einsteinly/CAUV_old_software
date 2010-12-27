@@ -10,7 +10,6 @@ link_directories (${Boost_LIBRARY_DIRS})
 
 # openCV paths:
 find_package (OpenCV REQUIRED)
-include_directories (SYSTEM "/home/cauv/temp-install/include")
 
 # we expect the source root dir to be in the include path
 include_directories (${AUV_SOURCE_DIR})
@@ -19,9 +18,7 @@ include_directories (${AUV_SOURCE_DIR})
 include_directories (SYSTEM "${AUV_SOURCE_DIR}/lib")
 
 add_subdirectory (camera)
-add_subdirectory (common)
 add_subdirectory (control)
-add_subdirectory (debug)
 add_subdirectory (fileinput)
 add_subdirectory (img-pipeline)
 add_subdirectory (img-viewer)

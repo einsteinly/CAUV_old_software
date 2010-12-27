@@ -325,8 +325,8 @@ def addNestedTypes(list_types, map_types):
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
-                 choices=["c++-headers", "c++-impl", "c", "java", "python"],
-                 default="c++-headers",
+                 choices=["c++-serialisation", "c++", "c", "java", "python"],
+                 default="c++",
                  metavar="LANG",
                  help="output language (java, python, c++-headers, c++-impl or c) [default: %default]")
     p.add_option("-o", "--output",
@@ -356,22 +356,30 @@ def main():
     tree = parser.parse(data)
     
     msgdir = os.path.dirname(sys.argv[0])
-    if options.lang == "c++-headers":
+
+    if options.lang == "c++-serialisation":
+        with open(output + ".h", "w") as file:
+            t = Template(file=os.path.join(msgdir, "cppmess-serialise.template.h"), searchList=tree)
+            file.write(str(t))
+        with open(output + ".cpp", "w") as file:
+            t = Template(file=os.path.join(msgdir, "cppmess-serialise.template.cpp"), searchList=tree)
+            t.toCPPType = toCPPType            
+            file.write(str(t)) 
+
+    elif options.lang == "c++":
         with open(output + "_fwd.h", "w") as file:
-            t = Template(file=os.path.join(msgdir, "message_fwd.template.h"), searchList=tree)
+            t = Template(file=os.path.join(msgdir, "cppmess-forward.template.h"), searchList=tree)
             file.write(str(t))
         with open(output + "_messages.h", "w") as file:
-            t = Template(file = os.path.join(msgdir, "message_messages.template.h"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "cppmess-messages.template.h"), searchList=tree)
             t.toCPPType = toCPPType
             file.write(str(t))
         with open(output + ".h", "w") as file:
-            t = Template(file = os.path.join(msgdir, "message.template.h"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "cppmess-messaging.template.h"), searchList=tree)
             t.toCPPType = toCPPType
             file.write(str(t))
-
-    elif options.lang == "c++-impl":
         with open(output + ".cpp", "w") as file:
-            t = Template(file = os.path.join(msgdir, "message.template.cpp"), searchList=tree)
+            t = Template(file = os.path.join(msgdir, "cppmess-messaging.template.cpp"), searchList=tree)
             t.toCPPType = toCPPType
             file.write(str(t))
     

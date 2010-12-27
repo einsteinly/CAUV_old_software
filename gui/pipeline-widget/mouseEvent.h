@@ -11,6 +11,7 @@
 // forward declarations
 class QMouseEvent;
 
+namespace cauv{
 namespace pw{
 
 // FIXME: all the coordinate referring stuff should probably be in Container,
@@ -47,6 +48,7 @@ struct MouseEvent{
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __MOUSE_EVENT_H__
 

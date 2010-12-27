@@ -1,14 +1,17 @@
-#ifndef __FILEINPUT_NODE_H__
-#define __FILEINPUT_NODE_H__
+#ifndef __CAUV_FILEINPUT_CAUVNODE_H__
+#define __CAUV_FILEINPUT_CAUVNODE_H__
 
 #include <string>
 
 #include <common/cauv_node.h>
+#include <common/image.h>
 
-class FileinputNode : public CauvNode
+namespace cauv{
+
+class FileinputCauvNode : public CauvNode
 {
     public:
-        FileinputNode(std::string const& fname);
+        FileinputCauvNode(std::string const& fname);
 
     protected:
 		void onRun();
@@ -18,4 +21,6 @@ class FileinputNode : public CauvNode
         Image m_img;
 };
 
-#endif//__FILEINPUT_NODE_H__
+} // namsepace cauv
+
+#endif // __CAUV_FILEINPUT_CAUVNODE_H__

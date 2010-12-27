@@ -10,6 +10,8 @@
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/graphwidget.h"
 
+using namespace cauv;
+
 CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
     joinGroup("control");
@@ -73,4 +75,3 @@ void CauvGui::onRun()
     show();
     m_application.exec();
 }
-

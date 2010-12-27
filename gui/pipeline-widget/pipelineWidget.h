@@ -14,6 +14,8 @@
 #include "container.h"
 #include "pwTypes.h"
 
+namespace cauv{
+
 class Message;
 class NodeAddedMessage;
 class NodeParametersMessage;
@@ -33,7 +35,7 @@ class PipelineWidget: public QGLWidget,
         typedef boost::unique_lock<boost::recursive_mutex> lock_t;
 
         // friends:
-        friend class MouseEvent;
+        friend struct MouseEvent;
 
     public:
         PipelineWidget(QWidget *parent = 0);
@@ -154,5 +156,6 @@ class PipelineWidget: public QGLWidget,
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __PIPELINE_WIDGET_H__

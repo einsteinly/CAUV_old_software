@@ -106,7 +106,7 @@ template <class R, class C, class T0, class T1, class T2> MemberWrap<R, C, T0, T
 #include <boost/thread/tss.hpp>
 
 #include <debug/cauv_debug.h>
-#include <common/bash_cout.h>
+#include <utility/bash_cout.h>
 
 /** ... but the definitions of the wrappers need boost python (since the whole
  ** point is to wrap with GIL release, so they must be placed after inclusion)

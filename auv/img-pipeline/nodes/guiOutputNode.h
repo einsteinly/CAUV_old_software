@@ -3,6 +3,9 @@
 
 #include "../node.h"
 
+namespace cauv{
+namespace imgproc{
+
 class GuiOutputNode: public OutputNode{
     public:
         GuiOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -48,5 +51,8 @@ class GuiOutputNode: public OutputNode{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __GUI_OUTPUT_NODE_H__

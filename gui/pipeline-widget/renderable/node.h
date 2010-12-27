@@ -11,15 +11,16 @@
 #include "../pwTypes.h"
 #include "draggable.h"
 
+// eww, can't forward declare enums, have to drag in definitions
+#include <generated/messages_fwd.h>
+
+namespace cauv{
+
 class NodeAddedMessage;
 class NodeParametersMessage;
-class NodeOutput;
-class NodeInput;
-class NodeParamValue;
-
-// namespace NodeType{ enum e; } // eww, can't forward declare enums, have to
-// drag in messages.h!
-#include <debug/cauv_debug.h>
+struct NodeOutput;
+struct NodeInput;
+struct NodeParamValue;
 
 namespace pw{
 
@@ -68,6 +69,7 @@ class Node: public Draggable,
 
         // Node Stuff:
         void close();
+        void exec();
         int id() const;
         NodeType::e type() const;
         renderable_ptr_t outSocket(std::string const& output_id);
@@ -108,6 +110,7 @@ class Node: public Draggable,
 
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;
+        renderable_ptr_t m_execbutton;
         str_in_map_t m_inputs;
         str_inparam_map_t m_params;        
         str_out_map_t m_outputs;
@@ -121,6 +124,7 @@ class Node: public Draggable,
 };
 
 } // namespace pw
+} // namespace cauv
 
 #endif // ndef __NODE_RENDERABLE_H__
 

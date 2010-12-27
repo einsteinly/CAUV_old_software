@@ -16,6 +16,8 @@
 #include "ui_mainwindow.h"
 #include "cauvinterfaceelement.h"
 
+namespace cauv {
+
 class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow, public boost::enable_shared_from_this<CauvGui> {
 
     Q_OBJECT
@@ -39,5 +41,7 @@ class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow, publ
 
         const QApplication &m_application;
 };
+
+} // namespace cauv
 
 #endif // CAUVGUI_H

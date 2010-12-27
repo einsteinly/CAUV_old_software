@@ -11,6 +11,8 @@
 
 #include "auv_model.h"
 
+namespace cauv{
+
 class AUVController : public MessageObserver {
 
 public:
@@ -82,5 +84,7 @@ protected:
     std::vector<bool> m_state;
 
 };
+
+} // namespace cauv
 
 #endif // AUV_CONTROLLER_H_INCLUDED

@@ -36,6 +36,7 @@ target_link_libraries (
     pipeline-widget
     ${QT_LIBRARIES}
 )
+cauv_install ( standalone )
 
 
 add_custom_command(

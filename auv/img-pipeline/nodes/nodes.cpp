@@ -42,6 +42,8 @@
 #include "runningAverageNode.h"
 #include "copyNodeMask.h"
 
+using namespace cauv::imgproc;
+
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
 DEFINE_NFR(FileInputNode, NodeType::FileInput);

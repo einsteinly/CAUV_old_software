@@ -14,6 +14,9 @@
 #include "../node.h"
 #include "outputNode.h"
 
+namespace cauv{
+namespace imgproc{
+
 class HistogramNode: public OutputNode{
     public:
         HistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -90,5 +93,8 @@ class HistogramNode: public OutputNode{
     //Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif //ndef __HISTOGRAM_H__

@@ -22,8 +22,8 @@
  *
  **/
  
-#ifndef __NODE_FACTORY_H__
-#define __NODE_FACTORY_H__
+#ifndef __CAUV_IMGPROC_NODE_FACTORY_H__
+#define __CAUV_IMGPROC_NODE_FACTORY_H__
 
 #include <map>
 #include <list>
@@ -35,6 +35,8 @@
 #include <generated/messages_fwd.h>
 
 #include "pipelineTypes.h"
+#include "scheduler.h"
+#include "imageProcessor.h"
 
 
 /* These make registering your new node type a little easier */
@@ -44,7 +46,10 @@ const static NodeFactoryRegister s_nfr
 #define DEFINE_NFR(NodeName, nt_ident) \
 const NodeFactoryRegister NodeName::s_nfr = NodeFactoryRegister(nt_ident, creator_ptr_t(new Creator<NodeName>()))
 
-/* need to know that nodes exist, but want to #include this file in node.h */
+namespace cauv{
+namespace imgproc{
+
+// Forward Declaration
 class Node;
 
 struct CreatorBase{
@@ -109,5 +114,7 @@ class NodeFactoryRegister{
         }
 };
 
+} // namespace imgproc
+} // namespace cauv
 
-#endif // ndef __NODE_FACTORY_H__
+#endif // ndef __CAUV_IMGPROC_NODE_FACTORY_H__

@@ -14,6 +14,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class GrabCutNode: public Node{
     public:
         GrabCutNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -32,7 +35,7 @@ class GrabCutNode: public Node{
             registerOutputID<image_ptr_t>("mask (not copied)");
             
             // parameters:
-	        //	iterations: the number of iterations
+            //    iterations: the number of iterations
             registerParamID<int>("iterations", 8);
             registerParamID<int>("x", 0);
             registerParamID<int>("y", 0);
@@ -59,8 +62,8 @@ class GrabCutNode: public Node{
             int height = param<int>("height");
             bool use_mask = param<bool>("use_mask");
 
-	    cv::Mat bgdModel, fgdModel;
-	    cv::Rect rect(x, y, width, height);
+        cv::Mat bgdModel, fgdModel;
+        cv::Rect rect(x, y, width, height);
             int mode = cv::GC_EVAL;
             if(use_mask)
                 mode = cv::GC_INIT_WITH_MASK;
@@ -70,9 +73,9 @@ class GrabCutNode: public Node{
             }
 
             try{
-	                //perform grabcut iterations
+                    //perform grabcut iterations
                     cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
-		    		fgdModel, iterations, mode);
+                    fgdModel, iterations, mode);
                     r["mask (not copied)"] = mask;
                     
             }catch(cv::Exception& e){
@@ -87,6 +90,9 @@ class GrabCutNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __GRABCUT_NODE_H__
 

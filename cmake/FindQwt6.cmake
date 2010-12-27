@@ -29,9 +29,19 @@ ENDIF(NOT QT4_FOUND)
 IF( QT4_FOUND )
         # Is Qwt6 installed? Look for header files
         FIND_PATH( Qwt6_INCLUDE_DIR qwt.h
-               PATHS ${QT_INCLUDE_DIR} /usr/local/qwt/include /usr/include/qwt /usr/local/qwt-6.0.0-rc1/include /usr/local/qwt-6.0.0-rc3/include /usr/local/qwt-6.0.0-rc5/include
-               PATH_SUFFIXES qwt qwt6 qwt-qt4 qwt6-qt4 qwt-qt3 qwt6-qt3 include qwt/include qwt6/include qwt-qt4/include qwt6-qt4/include qwt-qt3/include qwt6-qt3/include ENV PATH)
-
+               PATHS ${QT_INCLUDE_DIR}
+                     /usr/local
+                     /usr
+                     /usr/local/qwt-6.0.0-rc1
+                     /usr/local/qwt-6.0.0-rc3
+                     /usr/local/qwt-6.0.0-rc5
+                     ENV PATH
+               PATH_SUFFIXES qwt qwt6 qwt-qt4 qwt6-qt4 qwt-qt3 qwt6-qt3 include
+                             qwt/include qwt6/include qwt-qt4/include
+                             qwt6-qt4/include qwt-qt3/include qwt6-qt3/include
+                             lib/qwt.framework/Headers
+        )
+        #message("Qwt6_INCLUDE_DIR = ${Qwt6_INCLUDE_DIR}")
         # Find Qwt version
         IF( Qwt6_INCLUDE_DIR )
                 FILE( READ ${Qwt6_INCLUDE_DIR}/qwt_global.h QWT_GLOBAL_H )
@@ -42,9 +52,22 @@ IF( QT4_FOUND )
 
                 # Find Qwt6 library linked to Qt4
                 FIND_LIBRARY( Qwt6_Qt4_TENTATIVE_LIBRARY NAMES qwt6-qt4 qwt-qt4 qwt6 qwt PATHS /usr/local/qwt/lib /usr/local/lib /usr/local/qwt-6.0.0-rc1/lib /usr/local/qwt-6.0.0-rc3/lib /usr/lib /usr/local/qwt-6.0.0-rc5/lib ${QT_LIBRARY_DIR})
-                IF( UNIX AND NOT CYGWIN)
+                IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                         IF( Qwt6_Qt4_TENTATIVE_LIBRARY )
-        #MESSAGE("Qwt6_Qt4_TENTATIVE_LIBRARY = ${Qwt6_Qt4_TENTATIVE_LIBRARY}")
+                                #MESSAGE("Qwt6_Qt4_TENTATIVE_LIBRARY = ${Qwt6_Qt4_TENTATIVE_LIBRARY}/qwt")
+                                EXECUTE_PROCESS( COMMAND "otool" "-L" "${Qwt6_Qt4_TENTATIVE_LIBRARY}/qwt" OUTPUT_VARIABLE Qwt_Qt4_LIBRARIES_LINKED_TO )
+                                #MESSAGE("Qwt linked to: ${Qwt_Qt4_LIBRARIES_LINKED_TO}")
+                                STRING( REGEX MATCH ".*QtCore.*" Qwt6_IS_LINKED_TO_Qt4 ${Qwt_Qt4_LIBRARIES_LINKED_TO})
+                                IF( Qwt6_IS_LINKED_TO_Qt4 )
+                                        SET( Qwt6_Qt4_LIBRARY ${Qwt6_Qt4_TENTATIVE_LIBRARY} )
+                                        SET( Qwt6_Qt4_FOUND TRUE )
+                                        IF (NOT Qwt6_FIND_QUIETLY)
+                                                MESSAGE( STATUS "Found Qwt: ${Qwt6_Qt4_LIBRARY}" )
+                                        ENDIF (NOT Qwt6_FIND_QUIETLY)
+                                ENDIF( Qwt6_IS_LINKED_TO_Qt4 )
+                        ENDIF( Qwt6_Qt4_TENTATIVE_LIBRARY )
+                ELSEIF( UNIX AND NOT CYGWIN)
+                        IF( Qwt6_Qt4_TENTATIVE_LIBRARY )
                                 EXECUTE_PROCESS( COMMAND "ldd" ${Qwt6_Qt4_TENTATIVE_LIBRARY} OUTPUT_VARIABLE Qwt_Qt4_LIBRARIES_LINKED_TO )
                                 STRING( REGEX MATCH ".*QtCore.*" Qwt6_IS_LINKED_TO_Qt4 ${Qwt_Qt4_LIBRARIES_LINKED_TO})
                                 IF( Qwt6_IS_LINKED_TO_Qt4 )
@@ -55,14 +78,14 @@ IF( QT4_FOUND )
                                         ENDIF (NOT Qwt6_FIND_QUIETLY)
                                 ENDIF( Qwt6_IS_LINKED_TO_Qt4 )
                         ENDIF( Qwt6_Qt4_TENTATIVE_LIBRARY )
-                ELSE( UNIX AND NOT CYGWIN)
+                ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                 # Assumes qwt.dll is in the Qt dir
                         SET( Qwt6_Qt4_LIBRARY ${Qwt6_Qt4_TENTATIVE_LIBRARY} )
                         SET( Qwt6_Qt4_FOUND TRUE )
                         IF (NOT Qwt6_FIND_QUIETLY)
                                 MESSAGE( STATUS "Found Qwt version ${Qwt_VERSION} linked to Qt4" )
                         ENDIF (NOT Qwt6_FIND_QUIETLY)
-                ENDIF( UNIX AND NOT CYGWIN)
+                ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
                 # Find Qwt6 library linked to Qt3

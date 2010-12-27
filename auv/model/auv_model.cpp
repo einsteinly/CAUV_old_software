@@ -1,5 +1,6 @@
 #include "auv_model.h"
 
+using namespace cauv;
 
 std::ostream& operator <<(std::ostream &os,const depth_calibration_t &value)
 {

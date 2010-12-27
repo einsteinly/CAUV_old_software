@@ -6,12 +6,16 @@
 #include <string>
 
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 #include "asynchronousNode.h"
 
+
+namespace cauv{
+namespace imgproc{
 
 class FileInputNode: public AsynchronousNode{
         typedef boost::unique_lock<boost::recursive_mutex> lock_t;
@@ -42,8 +46,17 @@ class FileInputNode: public AsynchronousNode{
                     closeVideo();
                 }else{
                     m_is_directory = false;
-                    // try to open as video.. only way to know if it is!
-                    openVideo(fname);
+                    // if the file might be a video, try to open it
+                    using boost::algorithm::iends_with;
+                    if(iends_with(fname, ".mpg") || iends_with(fname, ".mpeg") ||
+                       iends_with(fname, ".ogg") || iends_with(fname, ".mp4") ||
+                       iends_with(fname, ".avi") || iends_with(fname, ".mov") ||
+                       iends_with(fname, ".wmv") || iends_with(fname, ".3gp") ||
+                       iends_with(fname, ".3g2") || iends_with(fname, ".asf") ||
+                       iends_with(fname, ".vob") || iends_with(fname, ".asx") ||
+                       iends_with(fname, ".aiff")){
+                        openVideo(fname);
+                    }
                 }
                 m_iter = boost::filesystem::directory_iterator();
                 setAllowQueue();
@@ -151,6 +164,9 @@ class FileInputNode: public AsynchronousNode{
         // Register this node type
         DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __FILE_INPUT_NODE_H__
 

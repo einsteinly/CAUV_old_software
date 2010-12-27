@@ -12,12 +12,12 @@ add_executable (
     scheduler.cpp
     nodes/nodes.cpp
 )
+cauv_install ( img-pipeline )
 
 # libs:
 target_link_libraries (
     img-pipeline
 
-    cauv_debug
     common
     sonar_accumulator
     boost_date_time

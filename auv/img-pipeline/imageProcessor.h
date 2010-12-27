@@ -18,6 +18,9 @@
 #include "scheduler.h"
 #include "node.h"
 
+namespace cauv{
+namespace imgproc{
+
 /**
  * ImageProcessor class manages the sending and receiving of messages, and the
  * corresponding manipulation of the image pipeline graph & it's nodes.
@@ -55,6 +58,7 @@ class ImageProcessor: public MessageObserver
         virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
         virtual void onAddArcMessage(AddArcMessage_ptr m);
         virtual void onGraphRequestMessage(GraphRequestMessage_ptr m);
+        virtual void onForceExecRequestMessage(ForceExecRequestMessage_ptr m);
         virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
 
         /** end MessageObserver functions **/
@@ -93,6 +97,9 @@ class ImageProcessor: public MessageObserver
         mutable mutex_t m_mailbox_lock;
         mb_ptr_t m_mailbox;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __IMAGEPROCESSOR_H__
 

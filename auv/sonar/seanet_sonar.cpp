@@ -11,7 +11,7 @@
 #include "seanet_packet.h"
 
 using namespace std;
-
+using namespace cauv;
 
 SonarControlMessageObserver::SonarControlMessageObserver(boost::shared_ptr<SeanetSonar> sonar)
 {
@@ -55,8 +55,6 @@ SeanetSonar::SeanetSonar(std::string str) : m_cur_data_reqs(0)
     m_state = SENDREBOOT;
 }
 
-void sonarReadThread(SeanetSonar& sonar);
-void sonarProcessThread(SeanetSonar& sonar);
 void SeanetSonar::init()
 {
     debug() << "Initialising sonar";
@@ -257,7 +255,7 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
 
 
 
-void sonarReadThread(SeanetSonar& sonar)
+void cauv::sonarReadThread(SeanetSonar& sonar)
 {
     try {
         debug() << "Starting read thread";
@@ -405,7 +403,7 @@ void sonarReadThread(SeanetSonar& sonar)
 }
 
 
-void sonarProcessThread(SeanetSonar& sonar)
+void cauv::sonarProcessThread(SeanetSonar& sonar)
 {
     try {
         debug() << "Starting processing thread";

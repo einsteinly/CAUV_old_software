@@ -9,7 +9,7 @@
 #include "renderable/imgNode.h"
 #include "renderable/arc.h"
 
-using namespace pw;
+using namespace cauv::pw;
 
 
 void DBGLevelObserver::onDebugLevelMessage(DebugLevelMessage_ptr m)
@@ -44,7 +44,8 @@ void PipelineGuiMsgObs::onNodeRemovedMessage(NodeRemovedMessage_ptr m){
 
 void PipelineGuiMsgObs::onNodeParametersMessage(NodeParametersMessage_ptr m){
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-    if(node_ptr_t np = m_widget->node(m->nodeId()))
+    node_ptr_t np = m_widget->node(m->nodeId());
+    if(np)
         np->setParams(m);
 }
 
@@ -79,8 +80,8 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
     // make sure all nodes exist with the correct inputs and outputs
     node_type_map_t::const_iterator i;
     for(i = m->nodeTypes().begin(); i != m->nodeTypes().end(); i++){
-        node_ptr_t n;
-        if(n = m_widget->node(i->first)); else{
+        node_ptr_t n = m_widget->node(i->first);
+        if(n); else{
             switch(i->second){
                 case NodeType::Invalid:
                     break;
@@ -144,25 +145,29 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
 
 void PipelineGuiMsgObs::onStatusMessage(StatusMessage_ptr m){
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-    if(node_ptr_t np = m_widget->node(m->nodeId()))
+    node_ptr_t np = m_widget->node(m->nodeId());
+    if(np)
         np->status(m->status());
 }
 
 void PipelineGuiMsgObs::onInputStatusMessage(InputStatusMessage_ptr m){
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-    if(node_ptr_t np = m_widget->node(m->nodeId()))
+    node_ptr_t np = m_widget->node(m->nodeId());
+    if(np)
         np->inputStatus(m->inputId(), m->status());
 }
 
 void PipelineGuiMsgObs::onOutpuStatusMessage(OutputStatusMessage_ptr m){
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-    if(node_ptr_t np = m_widget->node(m->nodeId()))
+    node_ptr_t np = m_widget->node(m->nodeId());
+    if(np)
         np->outputStatus(m->outputId(), m->status());
 }
 
 void PipelineGuiMsgObs::onGuiImageMessageBuffered(GuiImageMessage_ptr m){
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
-    if(imgnode_ptr_t np = m_widget->imgNode(m->nodeId()))
+    imgnode_ptr_t np = m_widget->imgNode(m->nodeId());
+    if(np)
         np->display(m->image());
 }
 

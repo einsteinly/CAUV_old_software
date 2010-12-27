@@ -4,6 +4,7 @@
 #include <iostream>
 
 using namespace OIS;
+using namespace cauv;
 
 InputManager * GamepadInput::m_input_manager = 0;
 

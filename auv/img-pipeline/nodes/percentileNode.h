@@ -10,6 +10,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class PercentileNode: public Node{
     public:
         PercentileNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -110,5 +113,8 @@ class PercentileNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __PERCENTILE_NODE_H__

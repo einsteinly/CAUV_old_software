@@ -4,11 +4,14 @@
 #include <stdexcept>
 
 #include <boost/make_shared.hpp>
+#include <boost/thread.hpp>
 
 #include <common/cauv_node.h>
+#include <common/spread/spread_rc_mailbox.h>
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
+using namespace cauv;
 
 enum test_e{
     file_io_test = 1,

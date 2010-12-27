@@ -10,11 +10,12 @@
 
 #include <QtGui>
 
-#include <common/bash_cout.h>
 #include <common/cauv_utils.h>
+
 #include <debug/cauv_debug.h>
 
 #include <utility/defer.h>
+#include <utility/bash_cout.h>
 
 #include "pipelineMessageObserver.h"
 #include "util.h"
@@ -30,6 +31,7 @@
 #include "renderable/imgNode.h"
 
 
+namespace cauv{
 namespace pw{
 
 // CAVEAT VIATOR: compare actual *arcs* by pointer, reverse arc compares equal
@@ -40,8 +42,9 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
 }
 
 } // namespace pw
+} // namespace cauv;
 
-using namespace pw;
+using namespace cauv::pw;
 
 PipelineWidget::PipelineWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
@@ -144,8 +147,8 @@ void PipelineWidget::remove(renderable_ptr_t p){
         if(*i == p)
             m_contents.erase(i);
     }
-    arc_ptr_t a;
-    if(a = boost::dynamic_pointer_cast<Arc>(p))
+    arc_ptr_t a = boost::dynamic_pointer_cast<Arc>(p);
+    if(a)
         m_arcs.erase(a);
 
     // NB: the item may persist in m_receiving_move or m_owning_mouse until the
@@ -486,19 +489,26 @@ void PipelineWidget::resizeGL(int width, int height){
     updateProjection();
 }
 
+struct HitRecord
+{
+    GLuint nameCount;
+    GLuint minDepth;
+    GLuint maxDepth;
+    GLuint names[1];
+};
 void PipelineWidget::mousePressEvent(QMouseEvent *event){
     lock_t l(m_lock);
 	GLuint hits = 0;
     GLuint n = 0;
-    GLuint pick_buffer[100] = {0};
-    GLuint *p;
-    GLuint *item;
+    
+    std::vector<HitRecord> pick_buffer(m_contents.size());
+    std::vector<HitRecord>::const_iterator p;
     renderable_list_t::iterator i;
 
     typedef std::map<GLuint, renderable_ptr_t> name_map_t;
     name_map_t name_map;
 
-	glSelectBuffer(sizeof(pick_buffer)/sizeof(GLuint), pick_buffer);
+	glSelectBuffer(sizeof(HitRecord)*pick_buffer.size(), reinterpret_cast<GLuint*>(&pick_buffer[0]));
 	glRenderMode(GL_SELECT);
 
 	glInitNames();
@@ -523,6 +533,12 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     glPopName();
     glFlush();
     hits = glRenderMode(GL_RENDER);
+    GLuint e = glGetError();
+    if (e != GL_NO_ERROR || hits == GLuint(-1)){
+        error() << "selection error:" << e << (int)hits;
+        glPrintErr(e);
+        hits = 0;
+    }
     debug() << "rendered" << n << "items for pick," << hits << "hit";
 
     bool need_redraw = false;
@@ -532,13 +548,13 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
         need_redraw = true;
     }
 
-    p = pick_buffer;
-    for(unsigned i = 0; i < hits; i++, p += (*p) + 3){
-		item = p+3;
-		for(unsigned j = 0; j < *p; j++, item++){
-			name_map_t::const_iterator k = name_map.find(*item);
+    p = pick_buffer.begin();
+    for(unsigned i = 0; i < hits && p < pick_buffer.end(); i++, p++){
+		for(unsigned j = 0; j < p->nameCount; j++){
+            GLuint name = p->names[j];
+			name_map_t::const_iterator k = name_map.find(name);
             if(k == name_map.end()){
-                error() << "gl name" << *item << "does not correspond to renderable";
+                error() << "gl name" << name << "does not correspond to renderable";
             }else{
                 debug(2) << "sending mouse press event to" << k->second;
                 k->second->mousePressEvent(MouseEvent(event, k->second, *this));
@@ -546,6 +562,8 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
             }
 		}
 	}
+    if(p > pick_buffer.end())
+        error() << "Pick Buffer Corruption / Limits Exceeded: serious badness";
 
     if(event->buttons() & Qt::RightButton){
         MouseEvent proxy(event, *this);
@@ -562,17 +580,17 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 void PipelineWidget::keyPressEvent(QKeyEvent* event){
     lock_t l(m_lock);
     if(m_menu)
-        m_menu->keyPressEvent(event);
+        m_menu->keyPressEvent(*event);
     else
-        m_overkey->keyPressEvent(event);
+        m_overkey->keyPressEvent(*event);
 }
 
 void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     lock_t l(m_lock);
     if(m_menu)
-        m_menu->keyReleaseEvent(event);
+        m_menu->keyReleaseEvent(*event);
     // always send key release events: otherwise keys can get stuck on
-    m_overkey->keyReleaseEvent(event);
+    m_overkey->keyReleaseEvent(*event);
 }
 
 void PipelineWidget::wheelEvent(QWheelEvent *event){
@@ -580,8 +598,8 @@ void PipelineWidget::wheelEvent(QWheelEvent *event){
     debug(2) << __func__ << event->delta() << std::hex << event->buttons();
     if(!event->buttons()){
         m_scrolldelta += event->delta();
-        double scalef = pow(1.2, double(m_scrolldelta / 240));
-        m_pixels_per_unit = clamp(0.04, scalef, 4);
+        m_scrolldelta = clamp(-5000, m_scrolldelta, 2500);
+        m_pixels_per_unit = pow(1.2, double(m_scrolldelta / 240));
         postRedraw(0);
     }
 }
@@ -794,14 +812,6 @@ void PipelineWidget::testEditBoxMenu(){
     postRedraw(0);
 }
 
-
-static float mass(node_ptr_t){
-    return 1.0f;
-}
-
-
-
-
 void PipelineWidget::iterateLayout(){
     namespace gv = graphviz;
     
@@ -841,14 +851,10 @@ void PipelineWidget::iterateLayout(){
 
 
     gv::gvLayout(c.get(), g.get(), "dot");
-    gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
+    //gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
 
     foreach(const gv::Node& n, g.nodes)
     {
-        std::stringstream ss;
-        ss << n.name() << ": " << n.coord().x << "," << n.coord().y;
-        std::cout << ss.str() << std::endl;
-        
         node_map_t::iterator np = m_nodes.find(boost::lexical_cast<node_id>(n.name()));
         if (np != m_nodes.end()) {
             np->second->m_pos = Point(n.coord().x - np->second->bbox().w() / 2.0, n.coord().y + np->second->bbox().h() / 2.0);   

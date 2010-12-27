@@ -8,6 +8,8 @@
 
 #include "../cauvinterfaceelement.h"
 
+namespace cauv {
+
 class PipelineCauvWidget : public pw::PipelineWidget, public CauvInterfaceElement
 {
 public:
@@ -17,5 +19,7 @@ public:
 protected:
     boost::shared_ptr< pw::PipelineGuiMsgObs> m_observer;
 };
+
+} // namespace cauv
 
 #endif // PIPELINECAUVWIDGET_H

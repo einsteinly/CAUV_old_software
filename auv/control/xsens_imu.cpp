@@ -14,6 +14,7 @@
 #include "xsens_imu.h"
 
 using namespace std;
+using namespace cauv;
 
 XsensException::XsensException(const string& msg) : message(msg) { }
 
@@ -27,6 +28,7 @@ const char* XsensException::what() const throw ()
 
 
 XsensIMU::XsensIMU(int id)
+    : Observable<XsensObserver>()
 {
     xsens::List<CmtPortInfo> portInfo;
 
@@ -118,9 +120,6 @@ floatYPR XsensIMU::getAttitude()
         ret.yaw += 360;
     return ret;
 }
-
-XsensIMU::XsensIMU(const XsensIMU&) { }
-
 
 void XsensIMU::start()
 {

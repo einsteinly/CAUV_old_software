@@ -270,7 +270,7 @@ group image
 	message Image : 4
 	{
 	    source : CameraID;
-	    image : Image;
+	    lazy image : Image;
         time : TimeStamp;
     }
 }
@@ -327,6 +327,11 @@ group pipeline
 
     message GraphRequest : 10
     {
+    }
+
+    message ForceExecRequest : 11
+    {
+        nodeId : int32;
     }
 }
 
@@ -404,10 +409,10 @@ group pl_gui
 
     message GraphDescription : 118
     {
-        nodeTypes : map<int32, NodeType>;
-        nodeInputs : map<int32, map<string, NodeOutput> >;
-        nodeOutputs : map<int32, map<string, list<NodeInput> > >;
-        nodeParams : map<int32, map<string, NodeParamValue> >;
+        lazy nodeTypes : map<int32, NodeType>;
+        lazy nodeInputs : map<int32, map<string, NodeOutput> >;
+        lazy nodeOutputs : map<int32, map<string, list<NodeInput> > >;
+        lazy nodeParams : map<int32, map<string, NodeParamValue> >;
     }
 
     message ArcAdded : 119
@@ -445,7 +450,7 @@ group pl_gui
 	message GuiImage : 124
 	{
         nodeId : int32;
-	    image : Image;
+	    lazy image : Image;
     }
 }
 

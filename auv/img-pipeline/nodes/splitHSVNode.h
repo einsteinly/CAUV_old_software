@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class SplitHSVNode: public Node{
     public:
         SplitHSVNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -43,7 +46,11 @@ class SplitHSVNode: public Node{
             int channel_type = CV_MAKETYPE(CV_MAT_DEPTH_MASK & img->cvMat().type(), 1);
             
             if(img->cvMat().channels() == 3)
+            #ifdef CV_RGB2HSV_FULL
+                conversion_code = CV_RGB2HSV_FULL;
+            #else 
                 conversion_code = CV_RGB2HSV;
+            #endif
             else
                 // oops... cvtColor can't do anything else
                 throw(parameter_error("image must be 3-channel RGB"));
@@ -84,6 +91,9 @@ class SplitHSVNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __SPLIT_HSV_NODE_H__
 

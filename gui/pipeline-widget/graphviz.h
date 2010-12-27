@@ -95,13 +95,12 @@ class Graph
         }
 
 
-        struct NodeList
+        class NodeList
         {
             public:
                 NodeList(Graph* graph) : m_graph(graph)
                 {
                 }
-                
                 struct NodeListIterator : public boost::forward_iterator_helper<NodeListIterator, Node, std::ptrdiff_t, Node*, Node&>
                 {
                     public:
@@ -119,7 +118,6 @@ class Graph
                 };
                 typedef NodeListIterator iterator;
                 typedef NodeListIterator const_iterator;
-
 
                 iterator begin() const { return iterator(m_graph->m_G, agfstnode(m_graph->m_G.get())); }
                 iterator end() const { return iterator(m_graph->m_G, NULL); }

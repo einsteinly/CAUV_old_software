@@ -8,6 +8,8 @@
 #include <generated/messages.h>
 #include <common/spread/spread_mailbox.h>
 
+using namespace cauv;
+
 int main(int argc, char** argv)
 {
     if (argc < 2) {

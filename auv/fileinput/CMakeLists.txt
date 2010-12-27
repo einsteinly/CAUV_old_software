@@ -1,7 +1,7 @@
 
 # sources
 add_executable (
-    fileinput
+    fileinput EXCLUDE_FROM_ALL
     fileinput_node.cpp
 )
 

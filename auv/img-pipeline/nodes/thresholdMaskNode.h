@@ -12,6 +12,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class ThresholdMaskNode: public Node{
     public:
         ThresholdMaskNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -52,21 +55,21 @@ class ThresholdMaskNode: public Node{
             }
 
             if (img->cvMat().elemSize() != 1){
-	        error() << "ThresholdMaskNode:\n\t"
+            error() << "ThresholdMaskNode:\n\t"
                         << "Invalid image input - must be 8-bit";
                 return r;
             }
 
-	    if(!img->cvMat().isContinuous())
+        if(!img->cvMat().isContinuous())
                 throw(parameter_error("image must be continuous"));
-	    
+        
             const int max_value=255;
 
             //int max_value = ( 1 << (8*img->cvMat().elemSize()) ) - 1; left here in case we want this to work for more than 8 bits
             if (threshold < 1 || threshold > max_value ){  
                 error() << "ThresholdMaskNode:\n\t"
                         << "Invalid threshold";
-		return r;
+        return r;
             }
             
 
@@ -77,7 +80,7 @@ class ThresholdMaskNode: public Node{
                     
             for(row = 0, img_rp = img->cvMat().data; row < img->cvMat().rows; row++, img_rp += row_size){
                 for(col = 0, img_cp = img_rp; col < img->cvMat().cols; col++, img_cp += elem_size){
-		  if (int(*img_cp) >= threshold) { *img_cp = max_value; } else { *img_cp = 0;}
+          if (int(*img_cp) >= threshold) { *img_cp = max_value; } else { *img_cp = 0;}
                }
             }            
 
@@ -89,5 +92,8 @@ class ThresholdMaskNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __THRESHOLD_MASK_NODE_H__

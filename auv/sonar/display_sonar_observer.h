@@ -1,8 +1,10 @@
-#ifndef __DISPLAY_SONAR_OBSERVER_H__
-#define __DISPLAY_SONAR_OBSERVER_H__
+#ifndef __CAUV_DISPLAY_SONAR_OBSERVER_H__
+#define __CAUV_DISPLAY_SONAR_OBSERVER_H__
 
 #include "sonar_accumulator.h"
 #include "sonar_observer.h"
+
+namespace cauv{
 
 class SeanetSonar;
 
@@ -18,5 +20,6 @@ class DisplaySonarObserver : public SonarAccumulator, public SonarObserver
         boost::shared_ptr<SeanetSonar> m_sonar;
 };
 
+} // namespace cauv
 
-#endif //__DISPLAY_SONAR_OBSERVER_H__
+#endif // ndef __CAUV_DISPLAY_SONAR_OBSERVER_H__

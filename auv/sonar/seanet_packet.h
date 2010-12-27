@@ -1,8 +1,10 @@
-#ifndef __SEANET_PACKET_H__
-#define __SEANET_PACKET_H__
+#ifndef __CAUV_SEANET_PACKET_H__
+#define __CAUV_SEANET_PACKET_H__
 
 #include <string>
 #include <stdint.h>
+
+namespace cauv{
 
 namespace SeanetMessageType
 {
@@ -209,5 +211,7 @@ public:
 	SeanetSendVersionPacket();
 };
 
-#endif
+} // namespace cauv
+
+#endif // ndef __CAUV_SEANET_PACKET_H__
 

@@ -2,12 +2,15 @@
 
 #include <QtOpenGL>
 
+#include <opencv/cv.h>
+
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <common/image.h>
 #include <debug/cauv_debug.h>
 
+namespace cauv{
 namespace pw{
 
 // nasty solution, but TexImg objects might be destroyed in threads other than
@@ -149,8 +152,9 @@ class TexImg{
 };
 
 } // namespace pw
+} // namespace cauv
 
-using namespace pw;
+using namespace cauv::pw;
 
 Img::Img(container_ptr_t c)
     : Resizeable(c, BBox(0, 0, 300, 200), BBox(30, 20), BBox(1200, 800)){

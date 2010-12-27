@@ -3,6 +3,9 @@
 
 #include "../node.h"
 
+namespace cauv{
+namespace imgproc{
+
 class InputNode: public Node{ 
         typedef boost::lock_guard<boost::recursive_mutex> lock_t;
 
@@ -123,6 +126,9 @@ class InputNode: public Node{
         bool m_processed_latest;
         mutable boost::recursive_mutex m_latest_msg_lock;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef INPUT_NODE_H
 

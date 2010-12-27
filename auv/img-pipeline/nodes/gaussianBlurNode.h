@@ -10,6 +10,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class GaussianBlurNode: public Node{
     public:
         GaussianBlurNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -62,5 +65,8 @@ class GaussianBlurNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __GAUSSIAN_BLUR_NODE_H__

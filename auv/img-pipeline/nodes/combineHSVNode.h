@@ -11,6 +11,9 @@
 #include "../node.h"
 
 
+namespace cauv{
+namespace imgproc{
+
 class CombineHSVNode: public Node{
     public:
         CombineHSVNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
@@ -78,6 +81,9 @@ class CombineHSVNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __COMBINE_HSV_NODE_H__
 

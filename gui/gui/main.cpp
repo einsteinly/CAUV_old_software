@@ -11,6 +11,7 @@
 #include "gamepad/playstationinput.h"
 
 using namespace std;
+using namespace cauv;
 
 int main(int argc, char** argv)
 {

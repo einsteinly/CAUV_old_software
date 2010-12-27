@@ -4,9 +4,10 @@
 \#include <boost/python/str.hpp>
 
 \#include "emit_generated.h"
-\#include "../generated/messages.h"
+\#include <generated/messages.h>
 
 namespace bp = boost::python;
+using namespace cauv;
 
 #for $g in $groups
 static const char* ${g.name.upper()}_NAME = "$g.name";
@@ -29,7 +30,7 @@ void emitMessages(){
                bp::bases<Message>
               >("$className", bp::init<>())
         #if $len($m.fields) != 0
-        // Keyword constructor (still needs all the keys
+        ## Keyword constructor (still needs all the keys
         .def( bp::init< #for $i, $f in enumerate($m.fields)#$toCPPType($f.type)#if $i != $len($m.fields) - 1#,#end if# #end for#>( (
             #for $i, $f in enumerate($m.fields)
                 bp::arg("$f.name")#if $i != $len($m.fields) - 1#,#end if#
@@ -37,11 +38,11 @@ void emitMessages(){
             ) )
         )
         #end if
-        // self_ns shouldn't be necessary here... gcc sux
+        ## self_ns shouldn't be necessary here... gcc sux
         .def(bp::self_ns::str(bp::self_ns::self))
-        // default group to send to
+        ## default group to send to
         .def_readonly("group", &${g.name.upper()}_NAME)
-        // return policies are all return-by-value, safest, but not the most efficient
+        ## return policies are all return-by-value, safest, but not the most efficient
         #for $f in $m.fields
         .add_property(
             "${f.name}",
@@ -53,12 +54,12 @@ void emitMessages(){
         )
         #end for
     ;
-    // hackery for boost::shared_ptr<T const> ... see workarounds.h
+    ## hackery for boost::shared_ptr<T const> ... see workarounds.h
     register_shared_ptrs_to_python<$className>();
     #end for
     #end for
 
-    // hackery for boost::shared_ptr<T const> ... see workarounds.h
+    ## hackery for boost::shared_ptr<T const> ... see workarounds.h
     register_shared_ptrs_to_python<Message>();
 }
 

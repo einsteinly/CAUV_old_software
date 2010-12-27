@@ -1,16 +1,16 @@
-#ifndef __SONAR_ACCUMULATOR_H__
-#define __SONAR_ACCUMULATOR_H__
+#ifndef __CAUV_SONAR_ACCUMULATOR_H__
+#define __CAUV_SONAR_ACCUMULATOR_H__
 
 #include <boost/shared_ptr.hpp>
 
-struct SonarDataLine;
-class Image;
-
-namespace cv
-{
+namespace cv{
 class Mat;
 }
 
+namespace cauv{
+
+struct SonarDataLine;
+class Image;
 
 class SonarAccumulator
 {
@@ -26,5 +26,7 @@ class SonarAccumulator
         boost::shared_ptr<Image> m_img;
 };
 
+} // namespace cauv
 
-#endif //__SONAR_ACCUMULATOR_H__
+#endif //__CAUV_SONAR_ACCUMULATOR_H__
+
