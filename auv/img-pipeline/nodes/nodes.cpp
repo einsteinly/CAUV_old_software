@@ -41,6 +41,7 @@
 #include "histogramSegmentationArbNode.h"
 #include "runningAverageNode.h"
 #include "copyNodeMask.h"
+#include "fastMedianNode.h"
 
 using namespace cauv::imgproc;
 
@@ -86,6 +87,7 @@ DEFINE_NFR(ThresholdMaskNode, NodeType::ThresholdMask);
 DEFINE_NFR(HistogramSegmentationArbNode, NodeType::HistogramSegmentationArb);
 DEFINE_NFR(RunningAverageNode, NodeType::RunningAverage);
 DEFINE_NFR(CopyNodeMask, NodeType::CopyMask);
+DEFINE_NFR(FastMedianNode, NodeType::FastMedian);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
 
