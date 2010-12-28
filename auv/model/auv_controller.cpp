@@ -188,9 +188,6 @@ void AUVController::onSonarControlMessage(SonarControlMessage_ptr message) {
 void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
     m_auv->sensors.depth->update(message->depth());
     m_auv->sensors.orientation->update(message->orientation());
-    m_auv->sensors.yaw->update(message->orientation().yaw);
-    m_auv->sensors.pitch->update(message->orientation().pitch);
-    m_auv->sensors.roll->update(message->orientation().roll);
 
 }
 

@@ -8,6 +8,7 @@
 #include <generated/messages.h>
 
 #include <common/data_stream.h>
+#include <common/data_stream_tools.h>
 
 namespace cauv{
 
@@ -239,19 +240,15 @@ public:
         boost::shared_ptr< DataStream<uint16_t> > pressure_aft;
         boost::shared_ptr<MutableDataStream<depth_calibration_t> > depth_calibration;
         boost::shared_ptr<DataStream<float> > depth;
-        boost::shared_ptr<DataStream<float> > yaw;
-        boost::shared_ptr<DataStream<float> > pitch;
-        boost::shared_ptr<DataStream<float> > roll;
         boost::shared_ptr<DataStream<floatYPR> > orientation;
+        boost::shared_ptr<DataStreamSplitter<cauv::floatYPR> > orientation_split;
 
         Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
         pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
         depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
         depth(boost::make_shared<DataStream<float> >("Depth")),
-        yaw(boost::make_shared<DataStream<float> >("Yaw")),
-        pitch(boost::make_shared<DataStream<float> >("Pitch")),
-        roll(boost::make_shared<DataStream<float> >("Roll")),
-        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")) {
+        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")),
+        orientation_split(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(orientation)) {
         }
     } sensors;
 

@@ -86,9 +86,9 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     new DataStreamTreeItem<uint16_t>(sensors, auv->sensors.pressure_aft);
     new DataStreamTreeItem<float>(sensors, auv->sensors.depth);
     DataStreamTreeItem<floatYPR> * orientation = new DataStreamTreeItem<floatYPR>(sensors, auv->sensors.orientation);
-    new DataStreamTreeItem<float>(orientation, auv->sensors.yaw);
-    new DataStreamTreeItem<float>(orientation, auv->sensors.pitch);
-    new DataStreamTreeItem<float>(orientation, auv->sensors.roll);
+    new DataStreamTreeItem<float>(orientation, auv->sensors.orientation_split->yaw);
+    new DataStreamTreeItem<float>(orientation, auv->sensors.orientation_split->pitch);
+    new DataStreamTreeItem<float>(orientation, auv->sensors.orientation_split->roll);
 }
 
 void DataStreamPicker::initialise(){

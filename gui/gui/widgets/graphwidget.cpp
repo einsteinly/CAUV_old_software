@@ -2,8 +2,9 @@
 
 #include <common/cauv_utils.h>
 #include <common/data_stream_tools.h>
-#include <boost/unordered_map.hpp>
+
 #include <boost/bind.hpp>
+
 #include <QMdiSubWindow>
 #include <QPen>
 #include <QRectF>
@@ -47,7 +48,7 @@ public:
     explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream) :
             m_grid(boost::make_shared<QwtPlotGrid>())
     {
-        addStream<T>(stream);
+        onStreamDropped(stream);
         this->setAcceptDrops(true);
         setupPlot();
     }
@@ -77,7 +78,7 @@ public:
     }
 
     void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> >stream){
-        addStream(stream);
+        // TODO: implement a data stream splitter for this
     }
 
     void onStreamDropped(boost::shared_ptr<DataStream<int> >stream){
@@ -93,7 +94,10 @@ public:
     }
 
     void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> >stream){
-        addStream(stream);
+        boost::shared_ptr<DataStreamSplitter<floatYPR> > split = boost::make_shared<DataStreamSplitter<floatYPR> >(stream);
+        addStream(split->yaw);
+        addStream(split->pitch);
+        addStream(split->roll);
     }
 
     void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> >stream){
@@ -102,11 +106,10 @@ public:
 
     template<class T>
     void addStream(boost::shared_ptr<DataStream<T> > stream){
-        stream->onUpdate.connect(boost::bind( static_cast<void (GraphWidget::*)(std::string, T)>(&GraphWidget::add), this, stream->getName(), _1));
         // see if this series has already been registered
-        if(series.end() == series.find(stream->getName())) {
+        if(seriesNames.end() == seriesNames.find(stream->getName())) {
             seriesNames.insert(stream->getName());
-            //series[stream->getName()] = boost::make_shared<DataStreamSeriesData<T> >(stream, 1000);
+            series.insert(boost::make_shared<DataStreamSeriesData<T> >(stream, 1000));
             this->setTitle(QString::fromStdString(getName()));
         }
     }
@@ -117,33 +120,9 @@ public:
         return title.str();
     }
 
-    virtual void add(std::string series, int8_t data){
-        //new DataStreamSeriesData<int8_t> (series, 1000);
-    }
-
-    virtual void add(std::string series, int data){
-
-    }
-
-    virtual void add(std::string series, float data){
-
-    }
-
-    virtual void add(std::string series, autopilot_params_t data){
-
-    }
-
-    virtual void add(std::string series, floatYPR data){
-
-    }
-
-    virtual void add(std::string series, uint16_t data){
-
-    }
-
 protected:
     std::set<std::string> seriesNames;
-    boost::unordered_map<std::string, DataStreamSeriesDataBase> series;
+    std::set<boost::shared_ptr<DataStreamSeriesDataBase> > series;
     boost::shared_ptr<QwtPlotGrid> m_grid;
 };
 

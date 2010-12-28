@@ -3,6 +3,8 @@
 
 #include "data_stream.h"
 #include <generated/messages.h>
+#include <boost/bind.hpp>
+#include <iostream>
 
 
 /** A DataStreamSplitter can be used to separate streams of structured data
@@ -21,9 +23,9 @@ class DataStreamSplitter<cauv::floatYPR> {
 
 public:
     DataStreamSplitter<cauv::floatYPR>(boost::shared_ptr<DataStream<cauv::floatYPR> > stream) :
-            yaw(boost::make_shared<DataStream<float> >("Yaw", stream.get())),
-            pitch(boost::make_shared<DataStream<float> >("Pitch", stream.get())),
-            roll(boost::make_shared<DataStream<float> >("Roll", stream.get()))
+            yaw(boost::make_shared<DataStream<float> >("Yaw")),
+            pitch(boost::make_shared<DataStream<float> >("Pitch")),
+            roll(boost::make_shared<DataStream<float> >("Roll"))
     {
         // getter function binds
         boost::function<float(cauv::floatYPR)> yawGetter = boost::bind(&cauv::floatYPR::yaw, _1);

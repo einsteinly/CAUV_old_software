@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include <boost/signal.hpp>
+#include <boost/function.hpp>
 
 class DataSource {
 
