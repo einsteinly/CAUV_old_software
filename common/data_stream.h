@@ -50,6 +50,11 @@ class DataStream : public DataSource {
             this->onUpdate(data);
         }
 
+        template <class S>
+            void update(boost::function<T(S)> &getter, S input){
+                update(getter(input));
+        }
+
         virtual T latest() {
             return this->m_latest;
         }

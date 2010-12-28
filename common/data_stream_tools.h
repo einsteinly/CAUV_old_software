@@ -2,6 +2,46 @@
 #define DATA_STREAM_TOOLS_H_INCLUDED
 
 #include "data_stream.h"
+#include <generated/messages.h>
+
+
+/** A DataStreamSplitter can be used to separate streams of structured data
+*   must be extended to be used
+*
+* @author Andy Pritchard
+*/
+template<class T>
+
+class DataStreamSplitter {};
+
+/* floatYPR specialization */
+template<>
+
+class DataStreamSplitter<cauv::floatYPR> {
+
+public:
+    DataStreamSplitter<cauv::floatYPR>(boost::shared_ptr<DataStream<cauv::floatYPR> > stream) :
+            yaw(boost::make_shared<DataStream<float> >("Yaw", stream.get())),
+            pitch(boost::make_shared<DataStream<float> >("Pitch", stream.get())),
+            roll(boost::make_shared<DataStream<float> >("Roll", stream.get()))
+    {
+        // getter function binds
+        boost::function<float(cauv::floatYPR)> yawGetter = boost::bind(&cauv::floatYPR::yaw, _1);
+        boost::function<float(cauv::floatYPR)> pitchGetter = boost::bind(&cauv::floatYPR::pitch, _1);
+        boost::function<float(cauv::floatYPR)> rollGetter = boost::bind(&cauv::floatYPR::roll, _1);
+
+        // connect up the slots
+        // the getter functions are passed to the new data streams and evaluated there
+        stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::floatYPR>, yaw.get(), yawGetter, _1));
+        stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::floatYPR>, pitch.get(), pitchGetter, _1));
+        stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::floatYPR>, roll.get(), rollGetter, _1));
+    }
+
+    boost::shared_ptr<DataStream<float> > yaw;
+    boost::shared_ptr<DataStream<float> > pitch;
+    boost::shared_ptr<DataStream<float> > roll;
+};
+
 
 /** A DataStreamRecorder can be used to log a certain amount of input from a DataStream. Useful
 * for graphing the data

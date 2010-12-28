@@ -12,7 +12,15 @@ using namespace cauv;
 
 int main()
 {
-    boost::shared_ptr< AUV > auv = boost::make_shared<AUV>();
+    boost::shared_ptr<DataStream<floatYPR> > input = boost::make_shared<DataStream<floatYPR> >("Orientation");
+
+    DataStreamSplitter<floatYPR> splitter(input);
+    DataStreamPrinter<float> printer(splitter.yaw);
+
+    input->update(floatYPR(1.1, 2.2, 3.3));
+
+
+/*    boost::shared_ptr< AUV > auv = boost::make_shared<AUV>();
 
 
     AUVController controller(auv);
@@ -38,7 +46,7 @@ int main()
     auv->motors.prop->set(10);
 
     auv->autopilots.bearing->enabled->set(false);
-
+*/
     //cout << "Count: " << auv.m_allStreams.size() << endl;
 /*
     AUV::DataStream<int>* ds = dynamic_cast<AUV::DataStream<int>*>(auv.m_allStreams.back());
