@@ -73,7 +73,7 @@ class FastMedianNode: public Node{
          * need to be added/removed as the aperture is moved
          *
          *  . . . . . . . . .
-         *  . . - o o + . . .
+         *  . . - o o + . . .  (not actually the kernel shape for r=2)
          *  . - o o o o + . .
          *  . - o o o o + . .
          *  . - o o o o + . .
@@ -148,8 +148,6 @@ class FastMedianNode: public Node{
                     }
             col = 0;
             for(row = 0; row < rows; row++){
-                mkStr row_delta;
-                mkStr step_delta;
                 if(row & 1){
                     // <--------------
                     assert(col == cols-1);
@@ -158,35 +156,24 @@ class FastMedianNode: public Node{
                             *(output.ptr(row) + col*elem_size + ch) = accum[ch].median();
                             for(krow = clamp(0, row-radius, rows); krow < clamp(0, row+radius+1, rows); krow++){
                                 const int aprow = radius+krow-row;
-                                if(col + ad[aprow] < cols){
+                                if(col + ad[aprow] < cols)
                                     accum[ch].rem(*(imat.ptr(krow) + (col + ad[aprow])*elem_size + ch));
-                                    if(0 == ch)
-                                        row_delta << "-(" << col + ad[aprow] << "," << krow << ") ";
-                                }
-                                if(col - ad[aprow] - 1 >= 0){
+                                if(col - ad[aprow] - 1 >= 0)
                                     accum[ch].add(*(imat.ptr(krow) + (col - ad[aprow] - 1)*elem_size + ch));
-                                    if(0 == ch)
-                                        row_delta << "+(" << col - ad[aprow] - 1 << "," << krow << ") ";
-                                }
                             }
                         }
                     for(ch = channels-1; ch >= 0; ch--)
                         *(output.ptr(row) + col*elem_size + ch) = accum[ch].median();
-                    debug(radius) << std::string(row_delta);
                     assert(col == 0);
                     // move down one row
                     for(kcol = 0; kcol <= clamp(0, radius, cols); kcol++){
                         const int apcol = radius+kcol-col;
-                        if(row - ad[apcol] >=0){
+                        if(row - ad[apcol] >=0)
                             for(ch = 0; ch < channels; ch++)
                                 accum[ch].rem(*(imat.ptr(row - ad[apcol]) + kcol*elem_size + ch));
-                            step_delta << "-("<< kcol << "," << row - ad[apcol] << ") ";
-                        }
-                        if(row + ad[apcol] + 1 < rows){
+                        if(row + ad[apcol] + 1 < rows)
                             for(ch = 0; ch < channels; ch++)
                                 accum[ch].add(*(imat.ptr(row + ad[apcol] + 1) + kcol*elem_size + ch));
-                            step_delta << "+("<< kcol << "," << row + ad[apcol] + 1 << ") ";
-                        }
                     }
                 }else{
                     // --------------->
@@ -196,38 +183,26 @@ class FastMedianNode: public Node{
                             *(output.ptr(row) + col*elem_size + ch) = accum[ch].median();
                             for(krow = clamp(0, row-radius, rows); krow < clamp(0, row+radius+1, rows); krow++){
                                 const int aprow = radius+krow-row;
-                                if(col - ad[aprow] >= 0){
+                                if(col - ad[aprow] >= 0)
                                     accum[ch].rem(*(imat.ptr(krow) + (col - ad[aprow])*elem_size + ch));
-                                    if(0 == ch)
-                                        row_delta << "-(" << col - ad[aprow] << "," << krow << ") ";
-                                }
-                                if(col + ad[aprow] + 1 < cols){
+                                if(col + ad[aprow] + 1 < cols)
                                     accum[ch].add(*(imat.ptr(krow) + (col + ad[aprow] + 1)*elem_size + ch));
-                                    if(0 == ch)
-                                        row_delta << "+(" << col + ad[aprow]+1 << "," << krow << ") ";
-                                }
                             }
                         }
                     for(ch = 0; ch < channels; ch++)
                         *(output.ptr(row) + col*elem_size + ch) = accum[ch].median();
-                    debug(radius) << std::string(row_delta);
                     assert(col == cols-1);
                     // move down one row
                     for(kcol = col; kcol >= clamp(0, col-radius, cols); kcol--){
                         const int apcol = radius+kcol-col;
-                        if(row - ad[apcol] >=0){
+                        if(row - ad[apcol] >=0)
                             for(ch = 0; ch < channels; ch++)
                                 accum[ch].rem(*(imat.ptr(row - ad[apcol]) + kcol*elem_size + ch));
-                            step_delta << "-("<< kcol << "," << row - ad[apcol] << ") ";
-                        }
-                        if(row + ad[apcol] + 1 < rows){
+                        if(row + ad[apcol] + 1 < rows)
                             for(ch = 0; ch < channels; ch++)
                                 accum[ch].add(*(imat.ptr(row + ad[apcol] + 1) + kcol*elem_size + ch));
-                            step_delta << "+("<< kcol << "," << row + ad[apcol] + 1 << ") ";
-                        }
                     }
                 }
-                debug(radius) << BashColour::Red << std::string(step_delta);
             }
                                             
             r["image"] = boost::make_shared<Image>(output);
