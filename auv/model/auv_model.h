@@ -8,6 +8,7 @@
 #include <generated/messages.h>
 
 #include <common/data_stream.h>
+#include <common/data_stream_tools.h>
 
 namespace cauv{
 
@@ -43,6 +44,53 @@ struct sonar_params_t {
     sonar_params_t() {
     }
 };
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, depth_calibration_t const& s)
+{
+    os << "fore (" << s.foreOffset;
+    os << ", x" << s.foreMultiplier;
+    os << ")";
+    os << " aft (" << s.aftOffset;
+    os << ", x" << s.afteMultiplier;
+    os << ")";
+    return os;
+}
+
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, int8_t const& s)
+{
+    os << (int)s;
+    return os;
+}
+
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, sonar_params_t const& s)
+{
+    os << "( ar=" << s.angularRes;
+    os << ", rr=" << s.radialRes;
+    os << ", range=" << s.range;
+    os << ", dir=" << s.direction;
+    os << ", gain=" << s.gain;
+    os << ", width=" << s.width;
+    os << ")";
+    return os;
+}
+
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, autopilot_params_t const& s)
+{
+    os << "(" << s.kP << ", " << s.kI << ", " << s.kD << ", " << s.scale << ")";
+    return os;
+}
+
 
 class AUV {
 public:
@@ -105,11 +153,19 @@ public:
         Autopilot(const std::string name, const T initialTarget) :
         MutableDataStream<T>(name),
         params(boost::make_shared< MutableDataStream<autopilot_params_t> >("Params", this)),
+        kP(boost::make_shared< DataStream<float> >("kP", this)),
+        kI(boost::make_shared< DataStream<float> >("kI", this)),
+        kD(boost::make_shared< DataStream<float> >("kD", this)),
+        scale(boost::make_shared< DataStream<float> >("scale", this)),
         enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)) {
             this->set(initialTarget);
         };
 
         boost::shared_ptr< MutableDataStream<autopilot_params_t> > params;
+        boost::shared_ptr< DataStream<float> > kP;
+        boost::shared_ptr< DataStream<float> > kI;
+        boost::shared_ptr< DataStream<float> > kD;
+        boost::shared_ptr< DataStream<float> > scale;
         boost::shared_ptr< MutableDataStream<bool> > enabled;
     };
 
@@ -185,12 +241,14 @@ public:
         boost::shared_ptr<MutableDataStream<depth_calibration_t> > depth_calibration;
         boost::shared_ptr<DataStream<float> > depth;
         boost::shared_ptr<DataStream<floatYPR> > orientation;
+        boost::shared_ptr<DataStreamSplitter<cauv::floatYPR> > orientation_split;
 
         Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
         pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
         depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
         depth(boost::make_shared<DataStream<float> >("Depth")),
-        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")) {
+        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")),
+        orientation_split(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(orientation)) {
         }
     } sensors;
 

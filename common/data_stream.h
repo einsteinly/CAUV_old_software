@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include <boost/signal.hpp>
+#include <boost/function.hpp>
 
 class DataSource {
 
@@ -50,10 +51,14 @@ class DataStream : public DataSource {
             this->onUpdate(data);
         }
 
+        template <class S>
+            void update(boost::function<T(S)> &getter, S input){
+                update(getter(input));
+        }
+
         virtual T latest() {
             return this->m_latest;
         }
-
 };
 
 

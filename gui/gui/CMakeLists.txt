@@ -25,16 +25,20 @@ else()
 
         main.cpp
         cauvgui.cpp
+        datastreamdragging.cpp
         cauvinterfaceelement.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
+        widgets/datastreampicker.cpp
         widgets/pipelinecauvwidget.cpp
+        widgets/graphwidget.cpp
     )
 
     set (
         GUICPP_UIS
         
         mainwindow.ui
+        widgets/datastreampicker.ui
     )
 
     set (
@@ -44,11 +48,12 @@ else()
         gamepad/gamepadinput.h
         cauvgui.h
         cauvinterfaceelement.h
-        widgets/pipelinecauvwidget.h
+        widgets/datastreampicker.h
+        widgets/graphwidget.h
     )
 
-    qt4_wrap_ui (GUICPP_UIS_H ${guicpp_UIS})
-    qt4_wrap_cpp (GUICPP_MOC_H ${guicpp_H})
+    qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})
+    qt4_wrap_cpp (GUICPP_MOC_H ${GUICPP_H})
 
     include_directories (${pipeline-widget_SOURCE_DIR})
     include_directories(${CMAKE_CURRENT_BINARY_DIR})

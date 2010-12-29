@@ -6,15 +6,14 @@
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>
 
-#include "ui_pipelinecauvwidget.h"
 #include "../cauvinterfaceelement.h"
 
-namespace cauv{
+namespace cauv {
 
-class PipelineCauvWidget : public Ui::PipelineCauvWidget, public pw::PipelineWidget, public CauvInterfaceElement
+class PipelineCauvWidget : public pw::PipelineWidget, public CauvInterfaceElement
 {
 public:
-    PipelineCauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget *parent);
+    PipelineCauvWidget(const QString &name, boost::shared_ptr<AUV> &auv, QWidget *parent, boost::shared_ptr<CauvNode> node);
     void initialise();
 
 protected:

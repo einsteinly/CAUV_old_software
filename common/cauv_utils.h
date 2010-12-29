@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <vector>
+#include <set>
 
 #include <boost/cstdint.hpp>
 
@@ -29,6 +30,8 @@ std::string now(std::string const& format);
 uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 
 void msleep(unsigned msecs);
+
+std::string implode( const std::string &glue, const std::set<std::string> &pieces );
 
 } // namespace cauv
 

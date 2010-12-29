@@ -3,6 +3,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <common/cauv_node.h>
 #include <common/cauv_global.h>
@@ -15,14 +16,15 @@
 #include "ui_mainwindow.h"
 #include "cauvinterfaceelement.h"
 
-namespace cauv{
+namespace cauv {
 
-class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow {
+class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow, public boost::enable_shared_from_this<CauvGui> {
+
     Q_OBJECT
 
     public:
-        CauvGui(QApplication& app, QWidget *parent = 0);
-        void addInterfaceElement(CauvInterfaceElement * widget);
+        CauvGui(const QApplication& app);
+        void addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget);
 
     public Q_SLOTS:
         int send(boost::shared_ptr<Message>message);
@@ -37,7 +39,7 @@ class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow {
         boost::shared_ptr<AUV> m_auv;
         boost::shared_ptr<AUVController> m_auv_controller;
 
-        QApplication &m_application;
+        const QApplication &m_application;
 };
 
 } // namespace cauv

@@ -1,22 +1,23 @@
 #include "cauvgui.h"
 
-#include <math.h>
 #include <model/auv_controller.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+#include "widgets/datastreampicker.h"
 #include "widgets/pipelinecauvwidget.h"
+#include "widgets/graphwidget.h"
 
 using namespace cauv;
 
-CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_application(app){
+CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app){
     setupUi(this);
     joinGroup("control");
     joinGroup("pl_gui");
 }
 
-void CauvGui::addInterfaceElement(CauvInterfaceElement *widget){
+void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
     connect(widget->actions().get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
     connect(widget->actions().get(), SIGNAL(centralViewRegistered(QWidget*,QString&)), this, SLOT(addCentralTab(QWidget*,QString&)));
     connect(widget->actions().get(), SIGNAL(dockViewRegistered(QDockWidget*,Qt::DockWidgetArea)), this, SLOT(addDock(QDockWidget*,Qt::DockWidgetArea)));
@@ -61,9 +62,15 @@ void CauvGui::onRun()
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
     // populate the interface
-    addInterfaceElement(new PipelineCauvWidget("Pipeline Editor", m_auv, this));
+    boost::shared_ptr<GraphArea> graphArea(new GraphArea("Graphs", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(graphArea));
+
+    boost::shared_ptr<PipelineCauvWidget> pipelineArea(new PipelineCauvWidget("Pipeline Editor", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(pipelineArea));
+
+    boost::shared_ptr<DataStreamPicker> dataStreamPicker(new DataStreamPicker("Data Streams", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(dataStreamPicker));
 
     show();
     m_application.exec();
 }
-

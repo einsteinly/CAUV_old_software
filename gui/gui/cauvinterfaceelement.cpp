@@ -18,9 +18,8 @@ void CauvInterfaceActions::registerDockView(QDockWidget *dock, Qt::DockWidgetAre
 }
 
 
-
-CauvInterfaceElement::CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv) :
-         m_name(name), m_auv(auv), m_actions(boost::make_shared<CauvInterfaceActions>())
+CauvInterfaceElement::CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv, boost::shared_ptr<CauvNode> node) :
+        m_name(name), m_auv(auv), m_actions(boost::make_shared<CauvInterfaceActions>()), m_node(node)
 {
 }
 
