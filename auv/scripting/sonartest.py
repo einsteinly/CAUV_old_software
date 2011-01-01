@@ -11,12 +11,12 @@ n = node.Node("sonar-t")
 
 data_line = msg.SonarDataLine()
 data_line.bearing = 0
-data_line.bearingRange = 6400/100
+data_line.bearingRange = 6400/32
 data_line.range = 10
 
 while True:
     data_line.data = msg.byteVec()
-    for i in xrange(0, 100):
+    for i in xrange(0, 50):
         data_line.data.append(i + random.randrange(0, 50) % 0xff)
 
     data_line.bearing += data_line.bearingRange

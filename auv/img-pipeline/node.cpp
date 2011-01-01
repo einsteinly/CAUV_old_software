@@ -445,11 +445,14 @@ void Node::exec(){
             }
         }
     }
+    // warn if no outputs were filled
+    if(0 == outputs.size() && m_outputs.size())
+        warning() << *this << "exec() produced no output when some was expected";
     // warn about any outputs that weren't filled
-    foreach(out_link_map_t::value_type& v, m_child_links)
-        if(!outputs.count(v.first))
-            warning() << "exec() did not fill output:" << v.first << "\n\t"
-                      << v.second.size() << "children will not be prompted";
+    //foreach(out_link_map_t::value_type& v, m_child_links)
+    //    if(!outputs.count(v.first))
+    //        warning() << "exec() did not fill output:" << v.first << "\n\t"
+    //                  << v.second.size() << "children will not be prompted";
     cl.unlock();
     ol.unlock();
 }

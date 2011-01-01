@@ -9,9 +9,9 @@ using namespace cauv::imgproc;
 
 int cauv::imgproc::pthreadPriority(SchedulerPriority const& s){
     switch(s){
-        case priority_slow: return 15;
-        case priority_fast: return 5;
-        case priority_realtime: return -15;
+        case priority_slow: return 20;
+        case priority_fast: return 10;
+        case priority_fastest: return 0;
     }
     return 0;
 }
@@ -44,15 +44,15 @@ Scheduler::Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_thread_gro
 {
     m_num_threads[priority_slow] = Slow_Threads;
     m_num_threads[priority_fast] = Fast_Threads;
-    m_num_threads[priority_realtime] = RealTime_Threads;
+    m_num_threads[priority_fastest] = Fastest_Threads;
     
     m_thread_groups[priority_slow] = thread_group_ptr_t();
     m_thread_groups[priority_fast] = thread_group_ptr_t();
-    m_thread_groups[priority_realtime] = thread_group_ptr_t();
+    m_thread_groups[priority_fastest] = thread_group_ptr_t();
 
     m_queues[priority_slow] = boost::make_shared<node_queue_t>();
     m_queues[priority_fast] = boost::make_shared<node_queue_t>();
-    m_queues[priority_realtime] = boost::make_shared<node_queue_t>();
+    m_queues[priority_fastest] = boost::make_shared<node_queue_t>();
 }
 
 /**
@@ -143,7 +143,10 @@ boost::thread* Scheduler::_spawnThread(SchedulerPriority const& p)
     
     struct sched_param param;
     param.sched_priority = pthreadPriority(p);
-    pthread_setschedparam(t->native_handle(), SCHED_OTHER, &param); 
+    int e = pthread_setschedparam(t->native_handle(), SCHED_OTHER, &param); 
+    if(e)
+        error() << "failed to set thread priority: error=" << e;
+    
     return t;
 }
 

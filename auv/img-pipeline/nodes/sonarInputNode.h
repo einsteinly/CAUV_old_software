@@ -22,6 +22,9 @@ class SonarInputNode: public InputNode{
         }
 
         void init(){
+            // don't want to drop lines:
+            m_priority = priority_fastest;
+            
             // InputNode stuff: subscribe to sonar data // TODO: nicer interface for this
             InputNode::m_subscriptions.insert(SonarData);
 
