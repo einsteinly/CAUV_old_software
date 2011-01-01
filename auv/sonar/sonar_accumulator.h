@@ -17,12 +17,14 @@ class SonarAccumulator
     public: 
         SonarAccumulator();
         
-        void accumulateDataLine(const SonarDataLine& data);
+        float accumulateDataLine(const SonarDataLine& data);
 
         boost::shared_ptr<Image> img() const;
         cv::Mat const& mat() const;
 
     protected:
+        int m_last_line_bearing;    
+        double m_images_accumulated;
         boost::shared_ptr<Image> m_img;
 };
 
