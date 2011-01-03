@@ -61,15 +61,6 @@ std::basic_ostream<char_T, traits>& operator<<(
 
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, int8_t const& s)
-{
-    os << (int)s;
-    return os;
-}
-
-
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, sonar_params_t const& s)
 {
     os << "( ar=" << s.angularRes;

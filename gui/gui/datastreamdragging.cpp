@@ -46,26 +46,26 @@ void DataStreamDropListener::routeStream(QTreeWidgetItem * s){
 }
 
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int> > ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<float> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<float> > ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > ){
 
 }

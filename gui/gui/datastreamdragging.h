@@ -1,5 +1,5 @@
-#ifndef DATASTREAMTREEITEM_H
-#define DATASTREAMTREEITEM_H
+#ifndef DATASTREAMDRAGGING_H
+#define DATASTREAMDRAGGING_H
 
 #include <QTreeWidgetItem>
 #include <QEvent>
@@ -58,4 +58,4 @@ protected:
 
 }
 
-#endif // DATASTREAMTREEITEM_H
+#endif // DATASTREAMDRAGGING_H
