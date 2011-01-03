@@ -14,7 +14,7 @@ class DataSource {
 
         virtual ~DataSource(){}
 
-        virtual const std::string getName() {
+        virtual const std::string getName() const {
             std::stringstream stream;
 
             if (m_parent != NULL)
@@ -52,11 +52,11 @@ class DataStream : public DataSource {
         }
 
         template <class S>
-            void update(boost::function<T(S)> &getter, S input){
+            void update(boost::function<T(S)> &getter, S input) {
                 update(getter(input));
         }
 
-        virtual T latest() {
+        virtual T latest() const {
             return this->m_latest;
         }
 };

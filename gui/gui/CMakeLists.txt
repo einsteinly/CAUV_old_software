@@ -32,6 +32,7 @@ else()
         widgets/datastreampicker.cpp
         widgets/pipelinecauvwidget.cpp
         widgets/graphwidget.cpp
+        widgets/motorcontrols.cpp
     )
 
     set (
@@ -39,6 +40,7 @@ else()
         
         mainwindow.ui
         widgets/datastreampicker.ui
+        widgets/motorcontrols.ui
     )
 
     set (
@@ -49,6 +51,7 @@ else()
         cauvgui.h
         cauvinterfaceelement.h
         widgets/datastreampicker.h
+        widgets/motorcontrols.h
         widgets/graphwidget.h
     )
 

@@ -35,7 +35,7 @@ GamepadInput::GamepadInput(const unsigned int id)
     m_controller = joys[id];
 }
 
-InputManager * GamepadInput::getInputSystem(){
+InputManager * GamepadInput::getInputSystem() {
     if(m_input_manager) return m_input_manager;
 
     ParamList pl;
@@ -69,22 +69,22 @@ InputManager * GamepadInput::getInputSystem(){
     return InputManager::createInputSystem(pl);
 }
 
-bool GamepadInput::buttonPressed( const JoyStickEvent &arg, int button ) {
+bool GamepadInput::buttonPressed( const JoyStickEvent &arg, int button ) const {
         std::cout << std::endl << arg.device->vendor() << ". Button Pressed # " << button;
         return true;
 }
-bool GamepadInput::buttonReleased( const JoyStickEvent &arg, int button ) {
+bool GamepadInput::buttonReleased( const JoyStickEvent &arg, int button ) const {
         std::cout << std::endl << arg.device->vendor() << ". Button Released # " << button;
         return true;
 }
-bool GamepadInput::axisMoved( const JoyStickEvent &arg, int axis )
+bool GamepadInput::axisMoved( const JoyStickEvent &arg, int axis ) const
 {
         //Provide a little dead zone
         if( arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )
                 std::cout << std::endl << arg.device->vendor() << ". Axis # " << axis << " Value: " << arg.state.mAxes[axis].abs;
         return true;
 }
-bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov )
+bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov ) const
 {
         std::cout << std::endl << arg.device->vendor() << ". POV" << pov << " ";
 
@@ -105,7 +105,7 @@ bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov )
         return true;
 }
 
-bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index)
+bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index) const
 {
         std::cout.precision(2);
         std::cout.flags(std::ios::fixed | std::ios::right);
@@ -124,14 +124,14 @@ void GamepadInput::processEvents(){
         handleNonBuffered();
 }
 
-void GamepadInput::handleNonBuffered(){
+void GamepadInput::handleNonBuffered() const {
     const JoyStickState &joy = m_controller->getJoyStickState();
     for( unsigned int i = 0; i < joy.mAxes.size(); ++i ) {
         std::cout << "\nAxis " << i << " X: " << joy.mAxes[i].abs;
     }
 }
 
-std::string GamepadInput::listDevices(){
+std::string GamepadInput::listDevices() {
     std::stringstream str;
 
     InputManager *im = GamepadInput::getInputSystem();

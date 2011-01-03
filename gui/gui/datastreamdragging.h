@@ -11,6 +11,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 #include <common/data_stream.h>
 
 namespace cauv {
@@ -31,15 +32,16 @@ public:
 
 protected:
     boost::shared_ptr<DataStream<T> > m_stream;
-
-    void onChange(const T value){
+    void onChange(const T value) {
         std::stringstream stream;
         stream << value;
         this->setText(1, QString::fromStdString(stream.str()));
     }
 };
 
-
+// partial specialization for int8_t as it prints as a char not as an int
+// so we cast in to int in the implementation before printing
+template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value);
 
 class DataStreamDropListener {
 public:

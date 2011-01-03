@@ -53,17 +53,17 @@ Q_SIGNALS:
 
 
 public Q_SLOTS:
-    void printIt(bool);
-    void printIt(int);
+    void printIt(bool) const;
+    void printIt(int) const;
 
 public:
-    PlaystationInput(const unsigned int id);
+    explicit PlaystationInput(const unsigned int id);
 
-    bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
-    bool buttonReleased( const OIS::JoyStickEvent &arg, int button );
-    bool axisMoved( const OIS::JoyStickEvent &arg, int axis );
-    bool povMoved( const OIS::JoyStickEvent &arg, int pov );
-    bool vector3Moved( const OIS::JoyStickEvent &arg, int index);
+    bool buttonPressed( const OIS::JoyStickEvent &arg, int button ) ;
+    bool buttonReleased( const OIS::JoyStickEvent &arg, int button ) ;
+    bool axisMoved( const OIS::JoyStickEvent &arg, int axis ) ;
+    bool povMoved( const OIS::JoyStickEvent &arg, int pov ) ;
+    bool vector3Moved( const OIS::JoyStickEvent &arg, int index) ;
 
 protected:
     void emitButton( Playstation::Buttons button, bool state );

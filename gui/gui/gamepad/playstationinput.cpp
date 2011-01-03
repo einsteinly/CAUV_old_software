@@ -71,11 +71,11 @@ bool PlaystationInput::vector3Moved( const JoyStickEvent &, int )
 }
 
 
-void PlaystationInput::printIt(bool it){
+void PlaystationInput::printIt(bool it) const{
     std::cout << "Button value: " << it << std::endl;
 }
 
-void PlaystationInput::printIt(int it){
+void PlaystationInput::printIt(int it) const{
     std::cout << "Axis value: " << it << std::endl;
 }
 

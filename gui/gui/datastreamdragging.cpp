@@ -3,6 +3,14 @@
 
 using namespace cauv;
 
+
+template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
+    std::stringstream stream;
+    stream << (int)value;
+    this->setText(1, QString::fromStdString(stream.str()));
+}
+
+
 void DataStreamDropListener::dragEnterEvent(QDragEnterEvent *event)
 {
     event->acceptProposedAction();
