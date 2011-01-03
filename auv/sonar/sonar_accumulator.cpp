@@ -41,6 +41,8 @@ static inline cv::Rect arcBound(int radius, cv::Point2f from, cv::Point2f to)
     {
         switch (fromQuad)
         {
+            default:
+                error() << "fromQuad out of range:" << fromQuad;
             case 0:
 		        min_x = to.x;
                 min_y = floor(min(from.y, to.y));
@@ -78,7 +80,9 @@ bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
 
 
 SonarAccumulator::SonarAccumulator()
-    : m_img(boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1)))
+    : m_last_line_bearing(0),
+      m_images_accumulated(0),
+      m_img(boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1)))
 {   
     assert(m_img->cvMat().data);
 }
@@ -115,12 +119,12 @@ float sonar_cos(int bearing)
 }
 
 
-void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
+float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
 {
     if (line.bearingRange > 1600)
     {
         error() << "Cannot deal with arcs larger than a quarter circle. Do you really need the range to be this coarse?";
-        return;
+        return m_images_accumulated;
     }
 
     int from = line.bearing - line.bearingRange/2;
@@ -131,6 +135,12 @@ void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
 
     float bscale = (float)radius/bincount;
     float cx = radius, cy = radius;
+    
+    int accumulated_delta = line.bearing - m_last_line_bearing;
+    m_last_line_bearing = line.bearing;
+    if (accumulated_delta < 0)
+        m_images_accumulated += 1.0;
+     m_images_accumulated += double(accumulated_delta) / 6400.0;
 
     for (int b = 0; b < bincount; b++) {
         // All calculations assume centre is at (0,0)
@@ -170,6 +180,8 @@ void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
                 m_img->cvMat().at<unsigned char>(cy - y, cx + x) = line.data[b];
             }
     }
+
+    return m_images_accumulated;
 }
 
 

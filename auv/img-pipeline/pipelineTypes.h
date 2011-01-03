@@ -63,7 +63,7 @@ class parameter_error: public img_pipeline_error{
 enum SchedulerPriority {
     priority_slow,
     priority_fast,
-    priority_realtime
+    priority_fastest
 };
 
 typedef boost::variant<int32_t, float, std::string, bool> param_value_t;

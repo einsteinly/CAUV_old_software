@@ -304,7 +304,7 @@ class Node: public boost::enable_shared_from_this<Node>{
          * output. It may be called at the start or end of the child's exec()
          */
         void setNewOutputDemanded(output_id const&);
-        void clearNewOutputDemanded();
+        void clearNewOutputDemanded(output_id const&);
         bool newOutputDemanded() const;
 
         void setAllowQueue();
@@ -380,6 +380,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         /* Has output been demanded of this node?
          */
         bool m_output_demanded;
+        std::set<output_id> m_output_demanded_on;
         mutable mutex_t m_output_demanded_lock;
 
         /* generic stop: used by derived types

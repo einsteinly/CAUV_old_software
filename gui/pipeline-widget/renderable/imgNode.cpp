@@ -106,6 +106,8 @@ class TexImg{
             if(img_h > img_w){
                 h = max_size;
                 w = h * img_w / img_h;
+                // distort images slightly, if necessary, to ensure OpenCV doesn't pad them
+                w &= ~0x3;
             }else{
                 w = max_size;
                 h = w * img_h / img_w;

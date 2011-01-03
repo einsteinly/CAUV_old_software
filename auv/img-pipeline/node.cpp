@@ -37,6 +37,7 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
       m_new_paramvalues(),
       m_new_paramvalues_lock(),
       m_output_demanded(false),
+      m_output_demanded_on(),
       m_output_demanded_lock(),
       m_allow_queue(true),
       m_allow_queue_lock(),
@@ -413,8 +414,6 @@ void Node::exec(){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
     }
     _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
-    
-    clearNewOutputDemanded();
 
     unique_lock_t ol(m_outputs_lock);
     shared_lock_t cl(m_child_links_lock);
@@ -422,32 +421,38 @@ void Node::exec(){
         if(!m_outputs.count(v.first)){
             warning() << "exec() produced output at an unknown id:" << v.first
                       << "(ignored)";
-        }else if(m_outputs[v.first].which() == v.second.which()){
-            m_outputs[v.first] = v.second;
-            out_link_map_t::iterator kids = m_child_links.find(v.first);
-            if(kids != m_child_links.end()){
-                debug(5) << "Prompting" << kids->second.size() << "children of new output:";
-                // for each node connected to the output
-                foreach(output_link_t& link, kids->second){
-                    // link is a std::pair<node_ptr, input_id>
-                    debug(5) << "prompting new input to child on:" << v.first;
-                    // notify the node that it has new input
-                    if(link.first)
-                        link.first->setNewInput(link.second);
+        }else{            
+            if(m_outputs[v.first].which() == v.second.which()){
+                clearNewOutputDemanded(v.first);
+                m_outputs[v.first] = v.second;
+                out_link_map_t::iterator kids = m_child_links.find(v.first);
+                if(kids != m_child_links.end()){
+                    debug(5) << "Prompting" << kids->second.size() << "children of new output:";
+                    // for each node connected to the output
+                    foreach(output_link_t& link, kids->second){
+                        // link is a std::pair<node_ptr, input_id>
+                        debug(5) << "prompting new input to child on:" << v.first;
+                        // notify the node that it has new input
+                        if(link.first)
+                            link.first->setNewInput(link.second);
+                    }
+                }else{
+                    debug(5) << "no children to prompt";
                 }
             }else{
-                debug(5) << "no children to prompt";
+                warning() << "exec() produced output of the wrong type for id:"
+                          << v.first << "(ignored)";
             }
-        }else{
-            warning() << "exec() produced output of the wrong type for id:"
-                      << v.first << "(ignored)";
         }
     }
+    // warn if no outputs were filled
+    if(0 == outputs.size() && m_outputs.size())
+        warning() << *this << "exec() produced no output when some was expected";
     // warn about any outputs that weren't filled
-    foreach(out_link_map_t::value_type& v, m_child_links)
-        if(!outputs.count(v.first))
-            warning() << "exec() did not fill output:" << v.first << "\n\t"
-                      << v.second.size() << "children will not be prompted";
+    //foreach(out_link_map_t::value_type& v, m_child_links)
+    //    if(!outputs.count(v.first))
+    //        warning() << "exec() did not fill output:" << v.first << "\n\t"
+    //                  << v.second.size() << "children will not be prompted";
     cl.unlock();
     ol.unlock();
 }
@@ -734,6 +739,7 @@ bool Node::validInputAll() const{
  */
 void Node::setNewOutputDemanded(output_id const& o){
     unique_lock_t l(m_output_demanded_lock);
+    m_output_demanded_on.insert(o);
     if(!m_output_demanded){
         m_output_demanded = true;
 
@@ -756,14 +762,13 @@ void Node::setNewOutputDemanded(output_id const& o){
     checkAddSched();
 }
 
-void Node::clearNewOutputDemanded(){
+void Node::clearNewOutputDemanded(output_id const& o){
     unique_lock_t l(m_output_demanded_lock);
-    unique_lock_t m(m_outputs_lock);
-    m_output_demanded = false;
-    foreach(out_map_t::value_type const& i, m_outputs)
-        _statusMessage(boost::make_shared<OutputStatusMessage>(
-            m_id, i.first, NodeIOStatus::e(0)
-        ));
+    m_output_demanded_on.erase(o);
+    m_output_demanded = !!m_output_demanded_on.size();
+    _statusMessage(boost::make_shared<OutputStatusMessage>(
+            m_id, o, NodeIOStatus::e(0)
+    ));
 }
 
 bool Node::newOutputDemanded() const{

@@ -23,16 +23,16 @@ namespace imgproc{
 // NB: there must be at least one thread of each priority!
 const int Slow_Threads = 2; // Mimimum number of threads dedicated to slow processes
 const int Fast_Threads = 2; // Mimimum number of threads dedicated to fast processes
-const int RealTime_Threads = 1; // Number of realtime threads is fixed
+const int Fastest_Threads = 1; // Number of fastest threads is fixed
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(
     std::basic_ostream<charT, traits>& os,
     SchedulerPriority const& p){
     switch(p){
-        case priority_slow: os << "priority:slow"; break;
-        case priority_fast: os << "priority:fast"; break;
-        case priority_realtime: os << "priority:realtime"; break;
+        case priority_slow: os << "priority_slow"; break;
+        case priority_fast: os << "priority_fast"; break;
+        case priority_fastest: os << "priority_fastest"; break;
         default: os << "priority:UNKNOWN"; 
     }
     return os;
