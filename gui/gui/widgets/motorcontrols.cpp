@@ -24,9 +24,33 @@ MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, Q
     auv->autopilots.pitch->enabled->onUpdate.connect(boost::bind(&QCheckBox::setChecked, pitchEnabled, _1));
     auv->autopilots.depth->enabled->onUpdate.connect(boost::bind(&QCheckBox::setChecked, depthEnabled, _1));
 
+    connect(this->bearingTarget, SIGNAL(valueChanged(double)), this, SLOT(bearingAutopilotUpdated()));
+    connect(this->bearingEnabled, SIGNAL(clicked()), this, SLOT(bearingAutopilotUpdated()));
+
+    connect(this->pitchTarget, SIGNAL(valueChanged(double)), this, SLOT(pitchAutopilotUpdated()));
+    connect(this->pitchEnabled, SIGNAL(clicked()), this, SLOT(pitchAutopilotUpdated()));
+
+    connect(this->depthTarget, SIGNAL(valueChanged(double)), this, SLOT(depthAutopilotUpdated()));
+    connect(this->depthEnabled, SIGNAL(clicked()), this, SLOT(depthAutopilotUpdated()));
+
 }
 
 void MotorControls::initialise(){
     m_actions->registerDockView(this, Qt::LeftDockWidgetArea);
+}
+
+void MotorControls::bearingAutopilotUpdated(){
+    m_auv->autopilots.bearing->set(bearingTarget->value());
+    m_auv->autopilots.bearing->enabled->set(bearingEnabled->checkState());
+}
+
+void MotorControls::pitchAutopilotUpdated(){
+    m_auv->autopilots.pitch->set(pitchTarget->value());
+    m_auv->autopilots.pitch->enabled->set(pitchEnabled->checkState());
+}
+
+void MotorControls::depthAutopilotUpdated(){
+    m_auv->autopilots.depth->set(depthTarget->value());
+    m_auv->autopilots.depth->enabled->set(depthEnabled->checkState());
 }
 

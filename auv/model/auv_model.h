@@ -149,7 +149,8 @@ public:
         kD(boost::make_shared< DataStream<float> >("kD", this)),
         scale(boost::make_shared< DataStream<float> >("scale", this)),
         enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)) {
-            this->set(initialTarget);
+            this->update(initialTarget);
+            this->enabled->update(false);
         };
 
         boost::shared_ptr< MutableDataStream<autopilot_params_t> > params;

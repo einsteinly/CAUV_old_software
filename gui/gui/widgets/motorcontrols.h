@@ -13,9 +13,13 @@ namespace cauv {
     public:
         MotorControls(const QString &name, boost::shared_ptr<cauv::AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
         virtual void initialise();
-    };
 
-}
+    protected Q_SLOTS:
+        void bearingAutopilotUpdated();
+        void pitchAutopilotUpdated();
+        void depthAutopilotUpdated();
+    };        
+} // namespace cauv
 
 
 #endif // MOTORCONTROLS_H

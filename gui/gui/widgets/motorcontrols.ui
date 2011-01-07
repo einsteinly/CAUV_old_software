@@ -47,7 +47,17 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="bearingTarget"/>
+         <widget class="QDoubleSpinBox" name="bearingTarget">
+          <property name="wrapping">
+           <bool>true</bool>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+          <property name="maximum">
+           <double>360.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="0" column="2">
          <widget class="QCheckBox" name="bearingEnabled">
@@ -58,6 +68,18 @@
         </item>
         <item row="0" column="3">
          <widget class="QLabel" name="actualBearing">
+          <property name="minimumSize">
+           <size>
+            <width>60</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Actual</string>
           </property>
@@ -71,7 +93,20 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="pitchTarget"/>
+         <widget class="QDoubleSpinBox" name="pitchTarget">
+          <property name="wrapping">
+           <bool>true</bool>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+          <property name="minimum">
+           <double>-179.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>180.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="1" column="2">
          <widget class="QCheckBox" name="pitchEnabled">
@@ -82,6 +117,18 @@
         </item>
         <item row="1" column="3">
          <widget class="QLabel" name="actualPitch">
+          <property name="minimumSize">
+           <size>
+            <width>60</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Actual</string>
           </property>
@@ -95,7 +142,20 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="depthTarget"/>
+         <widget class="QDoubleSpinBox" name="depthTarget">
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+          <property name="suffix">
+           <string>m</string>
+          </property>
+          <property name="maximum">
+           <double>5.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="2" column="2">
          <widget class="QCheckBox" name="depthEnabled">
@@ -106,6 +166,18 @@
         </item>
         <item row="2" column="3">
          <widget class="QLabel" name="actualDepth">
+          <property name="minimumSize">
+           <size>
+            <width>60</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Actual</string>
           </property>
