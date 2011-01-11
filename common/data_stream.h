@@ -6,13 +6,13 @@
 #include <boost/signal.hpp>
 #include <boost/function.hpp>
 
-class DataSource {
+class DataStreamBase {
 
     public:
-        DataSource(const std::string name, DataSource* parent = NULL): m_parent(parent), m_name(name) {
+        DataStreamBase(const std::string name, DataStreamBase* parent = NULL): m_parent(parent), m_name(name) {
         }
 
-        virtual ~DataSource(){}
+        virtual ~DataStreamBase(){}
 
         virtual const std::string getName() const {
             std::stringstream stream;
@@ -26,7 +26,7 @@ class DataSource {
 
     protected:
 
-        DataSource* m_parent;
+        DataStreamBase* m_parent;
         std::string m_name;
 };
 
@@ -37,19 +37,21 @@ class DataSource {
 */
 template <class T>
 
-class DataStream : public DataSource {
+class DataStream : public DataStreamBase {
 
     public:
         boost::signal<void(const T)> onUpdate;
 
         T m_latest;
 
-        DataStream(const std::string name, DataSource* parent = NULL):DataSource(name, parent) {};
+        DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, parent) {};
 
         virtual void update(const T data) {
             this->m_latest = data;
             this->onUpdate(data);
         }
+
+        virtual bool isMutable(){return false;}
 
         template <class S>
             void update(boost::function<T(S)> &getter, S input) {
@@ -73,7 +75,9 @@ class MutableDataStream : public DataStream<T> {
     public:
         boost::signal<void(const T)> onSet;
 
-        MutableDataStream(const std::string name, DataSource* parent = NULL):DataStream<T>(name, parent) {};
+        MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, parent) {};
+
+        virtual bool isMutable(){return true;}
 
         virtual void set(const T data) {
             this->update(data);

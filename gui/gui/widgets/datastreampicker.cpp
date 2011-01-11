@@ -1,7 +1,21 @@
 #include "datastreampicker.h"
 #include "../datastreamdragging.h"
 
+#include <QModelIndexList>
+
 using namespace cauv;
+
+boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamList::getDataStreams() const {
+    boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<DataStreamBase> > >();
+
+    QModelIndexList items = this->selectedIndexes();
+    QModelIndexList::iterator i;
+    for (i = items.begin(); i != items.end(); ++i){
+        //(*i);
+    }
+    return streams;
+}
+
 
 DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
     QDockWidget(parent),

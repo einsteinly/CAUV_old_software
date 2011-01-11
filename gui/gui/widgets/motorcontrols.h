@@ -15,9 +15,14 @@ namespace cauv {
         virtual void initialise();
 
     protected Q_SLOTS:
-        void bearingAutopilotUpdated();
-        void pitchAutopilotUpdated();
-        void depthAutopilotUpdated();
+        void bearingAutopilotTargetUpdated();
+        void bearingAutopilotStateUpdated();
+
+        void pitchAutopilotTargetUpdated();
+        void pitchAutopilotStateUpdated();
+
+        void depthAutopilotTargetUpdated();
+        void depthAutopilotStateUpdated();
     };        
 } // namespace cauv
 
