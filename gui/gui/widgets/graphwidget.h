@@ -65,7 +65,6 @@ namespace cauv {
         void dropEvent(QDropEvent * event);
         void dragEnterEvent(QDragEnterEvent * event);
 
-        void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> >);
         void onStreamDropped(boost::shared_ptr<DataStream<int> >stream);
         void onStreamDropped(boost::shared_ptr<DataStream<int8_t> >stream);
         void onStreamDropped(boost::shared_ptr<DataStream<float> >stream);
@@ -96,7 +95,6 @@ namespace cauv {
         void onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream);
         void onStreamDropped(boost::shared_ptr<DataStream<int> > stream);
         void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
-        void onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > stream);
         void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream);
         void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream);
         void dropEvent(QDropEvent * event);

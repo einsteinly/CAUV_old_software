@@ -12,15 +12,6 @@
 
 namespace cauv{
 
-struct autopilot_params_t {
-    float kP, kI, kD, scale;
-
-    autopilot_params_t(float kP, float kI, float kD, float scale) : kP(kP), kI(kI), kD(kD), scale(scale) {
-    }
-
-    autopilot_params_t() {
-    }
-};
 
 struct depth_calibration_t {
     float foreMultiplier, afteMultiplier, foreOffset, aftOffset;
@@ -73,14 +64,6 @@ std::basic_ostream<char_T, traits>& operator<<(
     return os;
 }
 
-
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, autopilot_params_t const& s)
-{
-    os << "(" << s.kP << ", " << s.kI << ", " << s.kD << ", " << s.scale << ")";
-    return os;
-}
 
 
 class AUV {
@@ -143,21 +126,19 @@ public:
 
         Autopilot(const std::string name, const T initialTarget) :
         MutableDataStream<T>(name),
-        params(boost::make_shared< MutableDataStream<autopilot_params_t> >("Params", this)),
-        kP(boost::make_shared< DataStream<float> >("kP", this)),
-        kI(boost::make_shared< DataStream<float> >("kI", this)),
-        kD(boost::make_shared< DataStream<float> >("kD", this)),
-        scale(boost::make_shared< DataStream<float> >("scale", this)),
+        kP(boost::make_shared< MutableDataStream<float> >("kP", this)),
+        kI(boost::make_shared< MutableDataStream<float> >("kI", this)),
+        kD(boost::make_shared< MutableDataStream<float> >("kD", this)),
+        scale(boost::make_shared< MutableDataStream<float> >("scale", this)),
         enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)) {
             this->update(initialTarget);
             this->enabled->update(false);
         };
 
-        boost::shared_ptr< MutableDataStream<autopilot_params_t> > params;
-        boost::shared_ptr< DataStream<float> > kP;
-        boost::shared_ptr< DataStream<float> > kI;
-        boost::shared_ptr< DataStream<float> > kD;
-        boost::shared_ptr< DataStream<float> > scale;
+        boost::shared_ptr< MutableDataStream<float> > kP;
+        boost::shared_ptr< MutableDataStream<float> > kI;
+        boost::shared_ptr< MutableDataStream<float> > kD;
+        boost::shared_ptr< MutableDataStream<float> > scale;
         boost::shared_ptr< MutableDataStream<bool> > enabled;
     };
 

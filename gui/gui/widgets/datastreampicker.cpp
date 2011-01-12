@@ -67,11 +67,10 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     autopilots->appendData(QVariant(QString::fromStdString("Autopilots")));
 
     TreeItem *bearing = new DataStreamTreeItem<float>(auv->autopilots.bearing, autopilots);
-    DataStreamTreeItem<autopilot_params_t>* bearingParams = new DataStreamTreeItem<autopilot_params_t>(auv->autopilots.bearing->params, bearing);
-    new DataStreamTreeItem<float>(auv->autopilots.bearing->kP, bearingParams);
-    new DataStreamTreeItem<float>(auv->autopilots.bearing->kI, bearingParams);
-    new DataStreamTreeItem<float>(auv->autopilots.bearing->kD, bearingParams);
-    new DataStreamTreeItem<float>(auv->autopilots.bearing->scale, bearingParams);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->kP, "kP", bearing);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->kI, "kI", bearing);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->kD, "kD", bearing);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->scale, "scale", bearing);
 /*
     QTreeWidgetItem *depth = new QTreeWidgetItem(autopilots);
     depth->setText(0, "Depth");

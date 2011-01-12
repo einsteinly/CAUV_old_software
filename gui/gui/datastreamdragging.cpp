@@ -1,17 +1,12 @@
 
+#include <debug/cauv_debug.h>
+#include <QWidget>
+
 #include "datastreamdragging.h"
 
-#include <debug/cauv_debug.h>
 
 using namespace cauv;
 
-/*
-template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
-    std::stringstream stream;
-    stream << (int)value;
-    this->setText(1, QString::fromStdString(stream.str()));
-}
-*/
 
 void DataStreamDropListener::dragEnterEvent(QDragEnterEvent *event)
 {
@@ -52,10 +47,6 @@ bool DataStreamDropListener::routeStream(boost::shared_ptr<DataStreamBase> s){
         info() << s->getName() << " - uint16_t stream dropped";
         onStreamDropped(boost::static_pointer_cast<DataStream<uint16_t> >(s));
     }
-    else if(dynamic_cast<DataStream<autopilot_params_t> *>(s.get())){
-        info() << s->getName() << " - autopilot_params_t stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<autopilot_params_t> >(s));
-    }
     else if(dynamic_cast<DataStream<floatYPR> *>(s.get())){
         info() << s->getName() << " - floatYPR stream dropped";
         onStreamDropped(boost::static_pointer_cast<DataStream<floatYPR> >(s));
@@ -75,10 +66,6 @@ void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int> >
 }
 
 void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<float> > ){
-
-}
-
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > ){
 
 }
 

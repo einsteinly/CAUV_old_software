@@ -13,13 +13,14 @@ namespace Ui {
     class DataStreamPicker;
 }
 
-
+//outside the cauv namespace because its used a promoted widget in a ui file
+// TODO: find a way around this
 class DataStreamList : public QTreeView, public cauv::DataStreamDragSource {
 public:
     DataStreamList(QWidget * parent) : QTreeView(parent){
     }
 
-    boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > getDataStreams() const;
+    boost::shared_ptr<std::vector<boost::shared_ptr<cauv::DataStreamBase> > > getDataStreams() const;
 };
 
 namespace cauv {

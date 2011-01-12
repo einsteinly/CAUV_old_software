@@ -46,10 +46,6 @@ void GraphWidget::dragEnterEvent(QDragEnterEvent * event){
     DataStreamDropListener::dragEnterEvent(event);
 }
 
-void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> >){
-    // TODO: implement a data stream splitter for this
-}
-
 void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<int> >stream){
     addStream(stream);
 }
@@ -118,10 +114,6 @@ void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<int> > stream){
 }
 
 void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<float> > stream){
-    addGraph(new GraphWidget(stream));
-}
-
-void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > stream){
     addGraph(new GraphWidget(stream));
 }
 

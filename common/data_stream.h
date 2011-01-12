@@ -6,84 +6,87 @@
 #include <boost/signal.hpp>
 #include <boost/function.hpp>
 
-class DataStreamBase {
+namespace cauv {
 
-    public:
-        DataStreamBase(const std::string name, DataStreamBase* parent = NULL): m_parent(parent), m_name(name) {
-        }
+    class DataStreamBase {
 
-        virtual ~DataStreamBase(){}
+        public:
+            DataStreamBase(const std::string name, DataStreamBase* parent = NULL): m_parent(parent), m_name(name) {
+            }
 
-        virtual const std::string getName() const {
-            std::stringstream stream;
+            virtual ~DataStreamBase(){}
 
-            if (m_parent != NULL)
-                stream << m_parent->getName() << " " << m_name;
-            else stream << m_name;
+            virtual const std::string getName() const {
+                std::stringstream stream;
 
-            return stream.str();
-        }
+                if (m_parent != NULL)
+                    stream << m_parent->getName() << " " << m_name;
+                else stream << m_name;
 
-    protected:
+                return stream.str();
+            }
 
-        DataStreamBase* m_parent;
-        std::string m_name;
-};
+        protected:
 
-
-/** A data stream represents one type of data being sent from a data source
-*
-* @author Andy Pritchard
-*/
-template <class T>
-
-class DataStream : public DataStreamBase {
-
-    public:
-        boost::signal<void(const T)> onUpdate;
-
-        T m_latest;
-
-        DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, parent) {};
-
-        virtual void update(const T data) {
-            this->m_latest = data;
-            this->onUpdate(data);
-        }
-
-        virtual bool isMutable(){return false;}
-
-        template <class S>
-            void update(boost::function<T(S)> &getter, S input) {
-                update(getter(input));
-        }
-
-        virtual T latest() const {
-            return this->m_latest;
-        }
-};
+            DataStreamBase* m_parent;
+            std::string m_name;
+    };
 
 
-/** A data stream represents one type of data being sent from a data source that can be changed
-*
-* @author Andy Pritchard
-*/
-template <class T>
+    /** A data stream represents one type of data being sent from a data source
+    *
+    * @author Andy Pritchard
+    */
+    template <class T>
 
-class MutableDataStream : public DataStream<T> {
+    class DataStream : public DataStreamBase {
 
-    public:
-        boost::signal<void(const T)> onSet;
+        public:
+            boost::signal<void(const T)> onUpdate;
 
-        MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, parent) {};
+            T m_latest;
 
-        virtual bool isMutable(){return true;}
+            DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, parent) {};
 
-        virtual void set(const T data) {
-            this->update(data);
-            this->onSet(data);
-        }
-};
+            virtual void update(const T data) {
+                this->m_latest = data;
+                this->onUpdate(data);
+            }
 
+            virtual bool isMutable(){return false;}
+
+            template <class S>
+                void update(boost::function<T(S)> &getter, S input) {
+                    update(getter(input));
+            }
+
+            virtual T latest() const {
+                return this->m_latest;
+            }
+    };
+
+
+    /** A data stream represents one type of data being sent from a data source that can be changed
+    *
+    * @author Andy Pritchard
+    */
+    template <class T>
+
+    class MutableDataStream : public DataStream<T> {
+
+        public:
+            boost::signal<void(const T)> onSet;
+
+            MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, parent) {};
+
+            virtual bool isMutable(){return true;}
+
+            virtual void set(const T data) {
+                this->update(data);
+                this->onSet(data);
+            }
+    };
+
+}
 
 #endif // DATA_STREAMS_H_INCLUDED
