@@ -3,15 +3,19 @@
 
 #include <QDockWidget>
 
-#include "ui_motorcontrols.h"
 #include "../cauvinterfaceelement.h"
+
+namespace Ui {
+    class MotorControls;
+}
 
 namespace cauv {
 
-    class MotorControls : public QDockWidget, public Ui::MotorControls, public CauvInterfaceElement {
+    class MotorControls : public QDockWidget, public CauvInterfaceElement {
         Q_OBJECT
     public:
         MotorControls(const QString &name, boost::shared_ptr<cauv::AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
+        virtual ~MotorControls();
         virtual void initialise();
 
     protected Q_SLOTS:
@@ -23,7 +27,13 @@ namespace cauv {
 
         void depthAutopilotTargetUpdated();
         void depthAutopilotStateUpdated();
-    };        
+
+    private:
+        Ui::MotorControls * ui;
+
+    };
+
+
 } // namespace cauv
 
 

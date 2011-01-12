@@ -17,6 +17,7 @@ else()
     add_definitions(-DQT_NO_KEYWORDS)
 
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
+    include_directories (./)
     link_directories (${Qwt6_Qt4_LIBRARY})
     link_directories (${OIS_LIBRARIES})
 
@@ -33,6 +34,8 @@ else()
         widgets/pipelinecauvwidget.cpp
         widgets/graphwidget.cpp
         widgets/motorcontrols.cpp
+        utils/treemodel.cpp
+        utils/treeitem.cpp
     )
 
     set (
@@ -53,6 +56,7 @@ else()
         widgets/datastreampicker.h
         widgets/motorcontrols.h
         widgets/graphwidget.h
+        utils/treemodel.h
     )
 
     qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})

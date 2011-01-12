@@ -1,9 +1,19 @@
 #include "datastreampicker.h"
 #include "../datastreamdragging.h"
+#include "../utils/treemodel.h"
+
+#include "ui_datastreampicker.h"
 
 #include <QModelIndexList>
 
 using namespace cauv;
+
+
+template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
+    std::stringstream stream;
+    stream << (int)value;
+    setValue(stream.str());
+}
 
 boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamList::getDataStreams() const {
     boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<DataStreamBase> > >();
@@ -11,7 +21,13 @@ boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamLi
     QModelIndexList items = this->selectedIndexes();
     QModelIndexList::iterator i;
     for (i = items.begin(); i != items.end(); ++i){
-        //(*i);
+        QModelIndex index = (*i);
+        if(index.column() == 0) {
+            TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
+            DataStreamTreeItemBase * dsItem = dynamic_cast<DataStreamTreeItemBase*>(item);
+            if(dsItem)
+                streams->push_back(dsItem->getDataStreamBase());
+        }
     }
     return streams;
 }
@@ -19,45 +35,44 @@ boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamLi
 
 DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
     QDockWidget(parent),
-    CauvInterfaceElement(name, auv, node)
+    CauvInterfaceElement(name, auv, node),
+    ui(new Ui::DataStreamPicker())
 {
-    setupUi(this);
+    ui->setupUi(this);
 
-    dataStreams->setRootIsDecorated( true );
+    ui->dataStreamsView->setRootIsDecorated( true );
+    ui->dataStreamsView->setDragEnabled(true);
+    ui->dataStreamsView->setDropIndicatorShown(true);
+    ui->dataStreamsView->setAcceptDrops(false);
 
-    dataStreams->setDragEnabled(true);
-    dataStreams->setDropIndicatorShown(true);
-    dataStreams->setAcceptDrops(false);
-
+    TreeItem * root = new TreeItem();
+    root->appendData(QVariant(QString::fromStdString("Stream")));
+    root->appendData(QVariant(QString::fromStdString("Value")));
+    ui->dataStreamsView->setModel(new TreeModel(root));
 
     // set up the categories
-    QTreeWidgetItem *motors = new QTreeWidgetItem(dataStreams);
-    motors->setText(0, "Motors");
-    motors->setFlags(motors->flags() ^ Qt::ItemIsSelectable);
-    motors->setExpanded(true);
 
-    new DataStreamTreeItem<int8_t>(motors, auv->motors.prop);
-    new DataStreamTreeItem<int8_t>(motors, auv->motors.hbow);
-    new DataStreamTreeItem<int8_t>(motors, auv->motors.vbow);
-    new DataStreamTreeItem<int8_t>(motors, auv->motors.hstern);
-    new DataStreamTreeItem<int8_t>(motors, auv->motors.vstern);
+    TreeItem *motors = new TreeItem(root);
+    motors->appendData(QVariant(QString::fromStdString("Motors")));
 
-    QTreeWidgetItem *autopilots = new QTreeWidgetItem(dataStreams);
-    autopilots->setText(0, "Autopilots");
-    autopilots->setFlags(autopilots->flags() ^ Qt::ItemIsSelectable);
-    autopilots->setExpanded(true);
+    new DataStreamTreeItem<int8_t>(auv->motors.prop, motors);
+    new DataStreamTreeItem<int8_t>(auv->motors.hbow, motors);
+    new DataStreamTreeItem<int8_t>(auv->motors.vbow, motors);
+    new DataStreamTreeItem<int8_t>(auv->motors.hstern, motors);
+    new DataStreamTreeItem<int8_t>(auv->motors.vstern, motors);
 
-    QTreeWidgetItem *bearing = new QTreeWidgetItem(autopilots);
-    bearing->setText(0, "Bearing");
-    bearing->setFlags(bearing->flags() ^ Qt::ItemIsSelectable);
-    (new DataStreamTreeItem<float>(bearing, auv->autopilots.bearing))->setText(0, "Target");
-    DataStreamTreeItem<autopilot_params_t>* bearingParams = new DataStreamTreeItem<autopilot_params_t>(bearing, auv->autopilots.bearing->params);
-    bearingParams->setText(0, "Params");
-    (new DataStreamTreeItem<float>(bearingParams, auv->autopilots.bearing->kP))->setText(0, "kP");
-    (new DataStreamTreeItem<float>(bearingParams, auv->autopilots.bearing->kI))->setText(0, "kI");
-    (new DataStreamTreeItem<float>(bearingParams, auv->autopilots.bearing->kD))->setText(0, "kD");
-    (new DataStreamTreeItem<float>(bearingParams, auv->autopilots.bearing->scale))->setText(0, "Scale");
 
+
+    TreeItem *autopilots = new TreeItem(root);
+    autopilots->appendData(QVariant(QString::fromStdString("Autopilots")));
+
+    TreeItem *bearing = new DataStreamTreeItem<float>(auv->autopilots.bearing, autopilots);
+    DataStreamTreeItem<autopilot_params_t>* bearingParams = new DataStreamTreeItem<autopilot_params_t>(auv->autopilots.bearing->params, bearing);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->kP, bearingParams);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->kI, bearingParams);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->kD, bearingParams);
+    new DataStreamTreeItem<float>(auv->autopilots.bearing->scale, bearingParams);
+/*
     QTreeWidgetItem *depth = new QTreeWidgetItem(autopilots);
     depth->setText(0, "Depth");
     depth->setFlags(depth->flags() ^ Qt::ItemIsSelectable);
@@ -102,7 +117,11 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     DataStreamTreeItem<floatYPR> * orientation = new DataStreamTreeItem<floatYPR>(sensors, auv->sensors.orientation);
     new DataStreamTreeItem<float>(orientation, auv->sensors.orientation_split->yaw);
     new DataStreamTreeItem<float>(orientation, auv->sensors.orientation_split->pitch);
-    new DataStreamTreeItem<float>(orientation, auv->sensors.orientation_split->roll);
+    new DataStreamTreeItem<float>(orientation, auv->sensors.orientation_split->roll); */
+}
+
+DataStreamPicker::~DataStreamPicker(){
+    delete ui;
 }
 
 void DataStreamPicker::initialise(){
