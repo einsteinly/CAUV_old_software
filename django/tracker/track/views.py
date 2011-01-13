@@ -152,7 +152,7 @@ def view_entity(request, uuid):
     for plural_name in p.plural_names:
         fields = extras.get_all_variables(p.plural_names[plural_name])
         for field_name in fields:
-            if fields[field_name]==type(e):
+            if fields[field_name]==type(e) or (type(fields[field_name])==list and fields[field_name][0]==type(e)):
                 related.append((disp_bag(p.__getattribute__(plural_name).matches_dict(**{field_name:e}),plural_name),field_name))
     entity = disp_entity(e, related)
     return render_to_response('view_entity.html', locals(), context_instance=RequestContext(request))

@@ -46,17 +46,17 @@
 </div>
 {% endfor %}
 {% for bag, field in related %}
-<div class="bag">
-    <div class="bag_expanded">
-        <div class="bag_title"> {{ bag.ref }} - <a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}/?{{ field }}={{ entity.uuid }}">add new</a></div>
+<div class="bag bag_minimised">
+    <div id="bag_{{ forloop.counter }}">
+    	<div class="bag_title"> {{ bag.ref }} entities with {{ field }} containing {{entity.title }} - <a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}/?{{ field }}={{ entity.uuid }}">add new</a></div>
         <ul>
         {% for e in bag.elements %}
         <li>
-        <h4><a href="{{ ROOT_URL }}/view/entity/{{ e.uuid }}">{{ e.title }}</a></h4>
-        {{ e.description|force_escape|linebreaksbr|truncatewords:30 }}
+        <a href="{{ ROOT_URL }}/view/entity/{{ e.uuid }}">{{ e.title }}</a>
+        <div class="hidden_mouseover">{{ e.description|force_escape|linebreaksbr|truncatewords:30 }}</div>
         </li>
         {% endfor %}
-        </ul>
+	</ul>
     </div>
 </div>
 {% endfor %}
