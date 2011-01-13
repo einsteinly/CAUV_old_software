@@ -21,7 +21,8 @@ struct depth_calibration_t {
     foreOffset(foreOffset), aftOffset(aftOffset) {
     }
 
-    depth_calibration_t() {
+    depth_calibration_t() : foreMultiplier(0), afteMultiplier(0),
+            foreOffset(0), aftOffset(0) {
     }
 };
 
@@ -32,7 +33,8 @@ struct sonar_params_t {
     direction(direction), width(width), gain(gain), radialRes(radialRes), angularRes(angularRes) {
     }
 
-    sonar_params_t() {
+    sonar_params_t():
+        direction(0), width(0), gain(0), radialRes(0), angularRes(0) {
     }
 };
 

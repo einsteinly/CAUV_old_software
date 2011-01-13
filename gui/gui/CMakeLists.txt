@@ -3,6 +3,7 @@ project (guicpp)
 # required libraries:
 find_package (Qwt6 REQUIRED)
 find_package (OIS REQUIRED)
+find_package (OpenCV REQUIRED)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
@@ -88,6 +89,7 @@ else()
         ${QT_LIBRARIES}
         ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
+        ${OpenCV_LIBS}
     )
     #cauv_install ( guicpp )
 

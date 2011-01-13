@@ -48,7 +48,7 @@ namespace cauv {
 
             T m_latest;
 
-            DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, parent) {};
+            DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, parent), m_latest(T()) {};
 
             virtual void update(const T data) {
                 this->m_latest = data;

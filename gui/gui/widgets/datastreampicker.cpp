@@ -5,6 +5,7 @@
 #include "ui_datastreampicker.h"
 
 #include <QModelIndexList>
+#include <opencv/cv.h>
 
 using namespace cauv;
 
@@ -29,12 +30,27 @@ template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
     stream << (int)value;
     this->setText(1, QString::fromStdString(stream.str()));
 }
-// another for int8_t for much the same reason but with lexical cast this time
+
+template<> void DataStreamTreeItem<Image>::onChange(const Image value){
+
+    try {
+        cv::Mat mat_rgb;
+        cv::cvtColor(value.cvMat(), mat_rgb, CV_BGR2RGB);
+
+        QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
+                               mat_rgb.rows, QImage::Format_RGB888);
+
+        this->setIcon(1, QIcon(QPixmap::fromImage(qImage)));
+
+    } catch (cv::Exception ex){
+        error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
+    }
+}
+
 template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant &value){
     return boost::lexical_cast<int>(value.toString().toStdString());
 }
 
-// also need some for out types as lexical cast doesn't knwo what to do
 template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& ){
     // TODO: implement, should recognise something like (1.0, 2.0, 3.0)
     throw new boost::bad_lexical_cast;
@@ -46,6 +62,7 @@ template<> sonar_params_t DataStreamTreeItem<sonar_params_t>::qVariantToValue(QV
     throw new boost::bad_lexical_cast;
     return sonar_params_t();
 }
+
 template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& ){
     throw new boost::bad_lexical_cast;
     return Image();
@@ -155,3 +172,55 @@ DataStreamPicker::~DataStreamPicker(){
 void DataStreamPicker::initialise(){
     m_actions->registerDockView(this, Qt::LeftDockWidgetArea);
 }
+
+
+
+
+DataStreamList::DataStreamList(QWidget * parent) : QTreeWidget(parent){
+    // Because QTreeWidgetItem can't let only one cell in a row be editable we have to hack it
+    // around a bit. We set the item to be editable when it's double clicked in the editable
+    // cell. This is then removed once the focus is lost. It works but its not a very elegant solution
+    // TODO: Better would be to use a full QAbstractItemModel implementation but this is quite a
+    // big job as QAbstractItemModels are complicated.
+    connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(editStarted(QTreeWidgetItem*,int)));
+    connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(editEnded(QTreeWidgetItem*,QTreeWidgetItem*)));
+    connect(this, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemEdited(QTreeWidgetItem*,int)));
+}
+
+
+void DataStreamList::editStarted(QTreeWidgetItem* item, int column){
+    if(column == 1){
+        cauv::DataStreamTreeItemBase * dsItem = dynamic_cast<cauv::DataStreamTreeItemBase*>(item);
+        if(dsItem && dsItem->getDataStreamBase()->isMutable()){
+            item->setFlags(item->flags() | Qt::ItemIsEditable);
+        }
+    }
+}
+
+void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
+    cauv::DataStreamTreeItemBase * dsItem = dynamic_cast<cauv::DataStreamTreeItemBase*>(item);
+
+    // 1 is the editable cell that stores the value
+    if(column == 1 && dsItem && dsItem->getDataStreamBase()->isMutable()){
+        QVariant v = item->data(column, Qt::DisplayRole);
+        if(!v.toString().isEmpty()) {
+            // if the item is marked as editable then the change came from a user interaction
+            // not a stream update
+            // TODO: find a better way of doing this. it's a bit hacky.
+            if(item->flags() & Qt::ItemIsEditable) {
+                if(dsItem->updateStream(v)) item->setBackground(1, QBrush());
+                else  {
+                    QBrush b(Qt::DiagCrossPattern);
+                    b.setColor(QColor::fromRgb(224, 128, 128));
+                    item->setBackground(1, b);
+                }
+            }
+        }
+    }
+}
+
+void DataStreamList::editEnded(QTreeWidgetItem* , QTreeWidgetItem* previous){
+    if(previous) // this method resets the editable flag if the focus is lost
+        previous->setFlags(previous->flags() & (~Qt::ItemIsEditable));
+}
+

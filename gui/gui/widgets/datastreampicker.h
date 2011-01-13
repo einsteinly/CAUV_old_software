@@ -8,7 +8,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "../utils/treeitem.h"
 #include "../cauvinterfaceelement.h"
 #include "../datastreamdragging.h"
 
@@ -53,12 +52,14 @@ namespace cauv {
                 DataStreamTreeItemBase(stream, parent), m_stream(stream) {
             stream->onUpdate.connect(boost::bind(&DataStreamTreeItem<T>::onChange, this, _1));
             this->setText(0, QString::fromStdString(stream->getName()));
+            onChange(stream->latest());
         }
 
         DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, std::string name, QTreeWidgetItem * parent) :
                 DataStreamTreeItemBase(stream, parent), m_stream(stream) {
             stream->onUpdate.connect(boost::bind(&DataStreamTreeItem<T>::onChange, this, _1));
             this->setText(0, QString::fromStdString(name));
+            onChange(stream->latest());
         }
 
         T qVariantToValue(QVariant& value){
@@ -94,6 +95,7 @@ namespace cauv {
     // need one for int8_t as it prints as a char not as an int, so we cast it
     // to int in the implementation before printing
     template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value);
+    template<> void DataStreamTreeItem<Image>::onChange(const Image value);
     // another for int8_t for much the same reason but with lexical cast this time
     template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant& value);
     // also need some for out types as lexical cast doesn't knwo what to do
@@ -132,56 +134,14 @@ namespace cauv {
 class DataStreamList : public QTreeWidget, public cauv::DataStreamDragSource {
     Q_OBJECT
 public:
-    DataStreamList(QWidget * parent) : QTreeWidget(parent){
-
-        // Because QTreeWidgetItem can't let only one cell in a row be editable we have to hack it
-        // around a bit. We set the item to be editable when it's double clicked in the editable
-        // cell. This is then removed once the focus is lost. It works but its not a very elegant solution
-        // TODO: Better would be to use a full QAbstractItemModel implementation but this is quite a
-        // big job as QAbstractItemModels are complicated.
-        connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(editStarted(QTreeWidgetItem*,int)));
-        connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(editEnded(QTreeWidgetItem*,QTreeWidgetItem*)));
-        connect(this, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemEdited(QTreeWidgetItem*,int)));
-    }
+    DataStreamList(QWidget * parent);
 
     boost::shared_ptr<std::vector<boost::shared_ptr<cauv::DataStreamBase> > > getDataStreams() const;
 
     private Q_SLOTS:
-    void editStarted(QTreeWidgetItem* item, int column){
-        if(column == 1){
-            cauv::DataStreamTreeItemBase * dsItem = dynamic_cast<cauv::DataStreamTreeItemBase*>(item);
-            if(dsItem && dsItem->getDataStreamBase()->isMutable()){
-                item->setFlags(item->flags() | Qt::ItemIsEditable);
-            } item->setFlags(item->flags() | Qt::ItemIsEditable);
-        }
-    }
-
-    void itemEdited(QTreeWidgetItem* item, int column){
-        if(column == 1){ // 1 is the editable cell that stores the value
-            cauv::DataStreamTreeItemBase * dsItem = dynamic_cast<cauv::DataStreamTreeItemBase*>(item);
-            if(dsItem && dsItem->getDataStreamBase()->isMutable()){
-                QVariant v = item->data(column, Qt::DisplayRole);
-                if(!v.toString().isEmpty()) {
-                    // if the item is marked as editable then the change came from a user interaction
-                    // not a stream update
-                    // TODO: find a better way of doing this. it's a bit hacky.
-                    if(item->flags() & Qt::ItemIsEditable) {
-                        if(dsItem->updateStream(v)) item->setBackground(1, QBrush());
-                        else  {
-                            QBrush b(Qt::DiagCrossPattern);
-                            b.setColor(QColor::fromRgb(224, 128, 128));
-                            item->setBackground(1, b);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    void editEnded(QTreeWidgetItem* , QTreeWidgetItem* previous){
-        if(previous) // this method resets the editable flag if the focus is lost
-            previous->setFlags(previous->flags() & (~Qt::ItemIsEditable));
-    }
+    void editStarted(QTreeWidgetItem* item, int column);
+    void itemEdited(QTreeWidgetItem* item, int column);
+    void editEnded(QTreeWidgetItem* , QTreeWidgetItem* previous);
 };
 
 #endif // DATASTREAMPICKER_H
