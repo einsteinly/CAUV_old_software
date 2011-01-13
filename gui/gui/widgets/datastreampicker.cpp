@@ -1,6 +1,5 @@
 #include "datastreampicker.h"
 #include "../datastreamdragging.h"
-#include "../utils/treemodel.h"
 
 #include "ui_datastreampicker.h"
 

@@ -35,8 +35,6 @@ else()
         widgets/pipelinecauvwidget.cpp
         widgets/graphwidget.cpp
         widgets/motorcontrols.cpp
-        utils/treemodel.cpp
-        utils/treeitem.cpp
     )
 
     set (
@@ -57,7 +55,6 @@ else()
         widgets/datastreampicker.h
         widgets/motorcontrols.h
         widgets/graphwidget.h
-        utils/treemodel.h
     )
 
     qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})
