@@ -26,6 +26,8 @@ namespace cauv {
                 return stream.str();
             }
 
+            virtual bool isMutable(){return false;}
+
         protected:
 
             DataStreamBase* m_parent;
@@ -52,8 +54,6 @@ namespace cauv {
                 this->m_latest = data;
                 this->onUpdate(data);
             }
-
-            virtual bool isMutable(){return false;}
 
             template <class S>
                 void update(boost::function<T(S)> &getter, S input) {

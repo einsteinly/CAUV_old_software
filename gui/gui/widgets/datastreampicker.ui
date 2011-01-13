@@ -22,9 +22,12 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="DataStreamList" name="dataStreamsView">
+     <widget class="DataStreamList" name="dataStreams">
       <property name="editTriggers">
        <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+      </property>
+      <property name="dragEnabled">
+       <bool>true</bool>
       </property>
       <property name="alternatingRowColors">
        <bool>true</bool>
@@ -32,18 +35,25 @@
       <property name="selectionMode">
        <enum>QAbstractItemView::ExtendedSelection</enum>
       </property>
-      <property name="indentation">
-       <number>13</number>
-      </property>
       <property name="animated">
        <bool>true</bool>
       </property>
-      <attribute name="headerVisible">
+      <property name="allColumnsShowFocus">
        <bool>true</bool>
-      </attribute>
-      <attribute name="headerVisible">
-       <bool>true</bool>
-      </attribute>
+      </property>
+      <property name="columnCount">
+       <number>2</number>
+      </property>
+      <column>
+       <property name="text">
+        <string>Stream</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Value</string>
+       </property>
+      </column>
      </widget>
     </item>
    </layout>
@@ -52,7 +62,7 @@
  <customwidgets>
   <customwidget>
    <class>DataStreamList</class>
-   <extends>QTreeView</extends>
+   <extends>QTreeWidget</extends>
    <header>widgets/datastreampicker.h</header>
   </customwidget>
  </customwidgets>
