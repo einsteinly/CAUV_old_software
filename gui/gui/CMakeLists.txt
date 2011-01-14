@@ -36,6 +36,7 @@ else()
         widgets/graphs.cpp
         widgets/motorcontrols.cpp
         widgets/videoscreen.cpp
+        widgets/logview.cpp
     )
 
     set (
@@ -45,6 +46,7 @@ else()
         widgets/datastreamdisplays.ui
         widgets/motorcontrols.ui
         widgets/videoscreen.ui
+        widgets/logview.ui
     )
 
     set (
@@ -57,6 +59,7 @@ else()
         widgets/datastreamdisplays.h
         widgets/motorcontrols.h
         widgets/videoscreen.h
+        widgets/logview.h
     )
 
     set (

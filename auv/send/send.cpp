@@ -43,8 +43,16 @@ int main(int argc, char** argv)
         int8_t speed = boost::lexical_cast<int>(argv[3]);
 
         boost::shared_ptr<MotorMessage> m = boost::make_shared<MotorMessage>((MotorID::e)motorid, speed);
-    
+
         std::cout << "Sending motor message " << *m << std::endl;
+        m_mailbox.sendMessage(m, SAFE_MESS);
+    }
+    else if (boost::iequals(msgType, "trace")) {
+        std::string message = "Hiyoooooooooooo!";
+
+        boost::shared_ptr<DebugMessage> m = boost::make_shared<DebugMessage>(DebugType::Trace, message);
+
+        std::cout << "Sending trace message " << *m << std::endl;
         m_mailbox.sendMessage(m, SAFE_MESS);
     }
     else if (boost::iequals(msgType, "autopilot")) {

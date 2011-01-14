@@ -10,6 +10,7 @@
 #include "widgets/datastreamdisplays.h"
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/motorcontrols.h"
+#include "widgets/logview.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -24,6 +25,9 @@ CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(a
     ui->setupUi(this);
     joinGroup("control");
     joinGroup("pl_gui");
+    joinGroup("debug");
+
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 }
 
 void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
@@ -82,6 +86,9 @@ void CauvGui::onRun()
 
     boost::shared_ptr<MotorControls> motorControls(new MotorControls("Navigation", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(motorControls));
+
+    boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
 
     show();
     m_application.exec();

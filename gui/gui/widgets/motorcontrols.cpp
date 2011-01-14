@@ -58,7 +58,7 @@ MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, Q
     int count = 0;
     foreach(AUV::motor_map::value_type i, auv->motors){
         std::string forward = "Forward";
-        std::string backward = "Backward";
+        std::string backward = "Back";
 
         switch(i.first){
         case MotorID::HBow:
