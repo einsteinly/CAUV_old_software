@@ -3,6 +3,9 @@
 
 #include <QDockWidget>
 
+#include <common/data_stream.h>
+#include <model/auv_model.h>
+
 #include "cauvinterfaceelement.h"
 
 namespace Ui {
@@ -10,8 +13,25 @@ namespace Ui {
 }
 
 class QDoubleSpinBox;
+class QPushButton;
 
 namespace cauv {
+
+    class MotorBurstController : public QObject {
+        Q_OBJECT
+    public:
+
+        MotorBurstController(QPushButton *b, boost::shared_ptr<AUV::Motor> motor, int8_t speed);
+
+    public Q_SLOTS:
+        void burst();
+        void stop();
+
+    protected:
+        int8_t m_speed;
+        boost::shared_ptr<AUV::Motor> m_motor;
+    };
+
 
     class MotorControls : public QDockWidget, public CauvInterfaceElement {
         Q_OBJECT
@@ -35,10 +55,9 @@ namespace cauv {
 
     private:
         Ui::MotorControls * ui;
+        std::vector<boost::shared_ptr<MotorBurstController> > m_burst_controllers;
 
     };
-
-
 } // namespace cauv
 
 

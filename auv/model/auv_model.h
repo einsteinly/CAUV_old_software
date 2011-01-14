@@ -3,6 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/unordered_map.hpp>
 
 #include <generated/messages_fwd.h>
 #include <generated/messages.h>
@@ -93,21 +94,10 @@ public:
         const MotorID::e &m_id;
     };
 
-    struct Motors {
-        boost::shared_ptr< Motor > prop;
-        boost::shared_ptr< Motor > hbow;
-        boost::shared_ptr< Motor > vbow;
-        boost::shared_ptr< Motor > hstern;
-        boost::shared_ptr< Motor > vstern;
+    typedef boost::unordered_map<MotorID::e, boost::shared_ptr<Motor> > motor_map;
 
-        Motors() :
-        prop(boost::make_shared<Motor > (MotorID::Prop, "Prop")),
-        hbow(boost::make_shared<Motor > (MotorID::HBow, "H Bow")),
-        vbow(boost::make_shared<Motor > (MotorID::VBow, "V Bow")),
-        hstern(boost::make_shared<Motor > (MotorID::HStern, "H Stern")),
-        vstern(boost::make_shared<Motor > (MotorID::VStern, "V Stern")) {
-        }
-    } motors;
+    motor_map motors;
+
 
     /**
      * Represents an autopilot in the AUV. The type of target (e.g. a heading or
@@ -144,17 +134,10 @@ public:
         boost::shared_ptr< MutableDataStream<bool> > enabled;
     };
 
-    struct Autopilots {
-        boost::shared_ptr< Autopilot<float> > bearing;
-        boost::shared_ptr< Autopilot<float> > depth;
-        boost::shared_ptr< Autopilot<float> > pitch;
+    typedef boost::unordered_map<std::string, boost::shared_ptr<Autopilot<float> > > autopilot_map;
 
-        Autopilots() :
-        bearing(boost::make_shared< Autopilot<float> >("Bearing", 0)),
-        depth(boost::make_shared< Autopilot<float> >("Depth", 0)),
-        pitch(boost::make_shared< Autopilot<float> >("Pitch", 0)) {
-        }
-    } autopilots;
+    autopilot_map autopilots;
+
 
     /**
      * Log streams are availible here
@@ -163,19 +146,13 @@ public:
      *
      * @author Andy Pritchard
      */
-    struct Logs {
-        boost::shared_ptr< DataStream<std::string> > debug;
-        boost::shared_ptr< DataStream<std::string> > trace;
-        boost::shared_ptr< DataStream<std::string> > error;
-        boost::shared_ptr< MutableDataStream<int32_t> > level;
 
-        Logs() :
-        debug(boost::make_shared< DataStream<std::string> >("Debug")),
-        trace(boost::make_shared< DataStream<std::string> >("Trace")),
-        error(boost::make_shared< DataStream<std::string> >("Error")),
-        level(boost::make_shared< MutableDataStream<int32_t> >("Level")) {
-        }
-    } logs;
+    typedef boost::unordered_map<DebugType::e, boost::shared_ptr<DataStream<std::string> > > logs_map;
+
+    logs_map logs;
+
+    boost::shared_ptr< MutableDataStream<int32_t> > debug_level;
+
 
     /**
      * Camera streams
@@ -198,17 +175,17 @@ public:
         boost::shared_ptr< MutableDataStream< sonar_params_t > > params;
     };
 
-    struct Cameras {
-        boost::shared_ptr< Camera > forward;
-        boost::shared_ptr< Camera > down;
-        boost::shared_ptr< Sonar > sonar;
+    typedef boost::unordered_map<CameraID::e, boost::shared_ptr<Camera> > camera_map;
 
-        Cameras() :
-        forward(boost::make_shared< Camera > ("Forward Camera")),
-        down(boost::make_shared< Camera > ("Downward Camera")),
-        sonar(boost::make_shared< Sonar > ("Sonar")) {
-        }
-    } cameras;
+    camera_map cameras;
+
+
+    /**
+     * Sensor streams - other sensors that dont fit into the above
+     * categories
+     *
+     * @author Andy Pritchard
+     */
 
     struct Sensors {
         boost::shared_ptr< DataStream<uint16_t> > pressure_fore;
@@ -227,6 +204,7 @@ public:
         }
     } sensors;
 
+    AUV();
     virtual ~AUV() {
     }
 
