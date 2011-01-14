@@ -31,18 +31,20 @@ else()
         cauvinterfaceelement.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
-        widgets/datastreampicker.cpp
+        widgets/datastreamdisplays.cpp
         widgets/pipelinecauvwidget.cpp
-        widgets/graphwidget.cpp
+        widgets/graphs.cpp
         widgets/motorcontrols.cpp
+        widgets/videoscreen.cpp
     )
 
     set (
         GUICPP_UIS
         
         mainwindow.ui
-        widgets/datastreampicker.ui
+        widgets/datastreamdisplays.ui
         widgets/motorcontrols.ui
+        widgets/videoscreen.ui
     )
 
     set (
@@ -52,13 +54,20 @@ else()
         gamepad/gamepadinput.h
         cauvgui.h
         cauvinterfaceelement.h
-        widgets/datastreampicker.h
+        widgets/datastreamdisplays.h
         widgets/motorcontrols.h
-        widgets/graphwidget.h
+        widgets/videoscreen.h
+    )
+
+    set (
+        GUICPP_RCC
+
+        resources.qrc
     )
 
     qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})
     qt4_wrap_cpp (GUICPP_MOC_H ${GUICPP_H})
+    qt4_add_resources(GUICPP_RCC_H ${GUICPP_RCC})
 
     include_directories (${pipeline-widget_SOURCE_DIR})
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -74,6 +83,7 @@ else()
         ${GUICPP_SRCS}
         ${GUICPP_UIS_H}
         ${GUICPP_MOC_H}
+        ${GUICPP_RCC_H}
     )
 
     target_link_libraries (

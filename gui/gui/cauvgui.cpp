@@ -7,9 +7,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
-#include "widgets/datastreampicker.h"
+#include "widgets/datastreamdisplays.h"
 #include "widgets/pipelinecauvwidget.h"
-#include "widgets/graphwidget.h"
 #include "widgets/motorcontrols.h"
 
 #include <common/cauv_global.h>
@@ -72,7 +71,7 @@ void CauvGui::onRun()
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
     // populate the interface
-    boost::shared_ptr<GraphArea> graphArea(new GraphArea("Graphs", m_auv, this, shared_from_this()));
+    boost::shared_ptr<DataStreamDisplayArea> graphArea(new DataStreamDisplayArea("Stream Visualisation", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(graphArea));
 
     boost::shared_ptr<PipelineCauvWidget> pipelineArea(new PipelineCauvWidget("Pipeline Editor", m_auv, this, shared_from_this()));

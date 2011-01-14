@@ -1,0 +1,41 @@
+#ifndef VIDEOSCREEN_H
+#define VIDEOSCREEN_H
+
+#include <QWidget>
+
+class QPixmap;
+class QSize;
+class QString;
+
+namespace Ui {
+    class VideoScreen;
+}
+
+namespace cauv {
+    class Image;
+
+    class VideoScreen : public QWidget
+    {
+        Q_OBJECT
+    public:
+        explicit VideoScreen(const QString name, QWidget *parent = 0);
+        virtual ~VideoScreen();
+        QSize sizeHint() const;
+
+    private:
+        Ui::VideoScreen * ui;
+
+    protected:
+        QPixmap m_pixmap;
+        void paintEvent(QPaintEvent *);
+
+    public Q_SLOTS:
+        void setImage(QPixmap &pixmap);
+        void setImage(Image &image);
+        void setImage(QImage &image);
+
+        void setInfo(const QString text);
+        void setName(const QString name);
+    };
+} // namespace cauv
+#endif // VIDEOSCREEN_H

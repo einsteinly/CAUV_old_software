@@ -44,6 +44,12 @@
       <property name="columnCount">
        <number>2</number>
       </property>
+      <attribute name="headerDefaultSectionSize">
+       <number>150</number>
+      </attribute>
+      <attribute name="headerDefaultSectionSize">
+       <number>150</number>
+      </attribute>
       <column>
        <property name="text">
         <string>Stream</string>
@@ -63,7 +69,7 @@
   <customwidget>
    <class>DataStreamList</class>
    <extends>QTreeWidget</extends>
-   <header>widgets/datastreampicker.h</header>
+   <header>widgets/datastreamdisplays.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

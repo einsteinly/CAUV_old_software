@@ -51,6 +51,10 @@ bool DataStreamDropListener::routeStream(boost::shared_ptr<DataStreamBase> s){
         info() << s->getName() << " - floatYPR stream dropped";
         onStreamDropped(boost::static_pointer_cast<DataStream<floatYPR> >(s));
     }
+    else if(dynamic_cast<DataStream<Image> *>(s.get())){
+        info() << s->getName() << " - Image stream dropped";
+        onStreamDropped(boost::static_pointer_cast<DataStream<Image> >(s));
+    }
     else return false;
 
     return true;
@@ -74,5 +78,9 @@ void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<floatY
 }
 
 void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > ){
+
+}
+
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<Image> > ){
 
 }

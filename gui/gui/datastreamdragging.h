@@ -29,6 +29,7 @@ namespace cauv {
         virtual void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
         virtual void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream);
         virtual void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream);
+        virtual void onStreamDropped(boost::shared_ptr<DataStream<Image> > stream);
     };
     
 }

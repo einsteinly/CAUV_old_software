@@ -20,6 +20,8 @@ using namespace cauv;
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
+    Q_INIT_RESOURCE(resources);
+
 
     boost::shared_ptr<CauvGui> node = boost::make_shared<CauvGui>(app);
 

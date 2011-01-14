@@ -1,9 +1,12 @@
 
-#include "datastreampicker.h"
-#include "ui_datastreampicker.h"
+#include "datastreamdisplays.h"
+#include "ui_datastreamdisplays.h"
 
 #include "datastreamdragging.h"
+#include "videoscreen.h"
+#include "graphs.h"
 
+#include <QMdiSubWindow>
 #include <QModelIndexList>
 #include <opencv/cv.h>
 
@@ -146,8 +149,8 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     cameras->setFlags(cameras->flags() ^ Qt::ItemIsSelectable);
     cameras->setExpanded(true);
 
-    new DataStreamTreeItem<Image>(auv->cameras.forward, cameras);
-    new DataStreamTreeItem<Image>(auv->cameras.down, cameras);
+    new DataStreamTreeItem<Image>(auv->cameras.forward, "Forward", cameras);
+    new DataStreamTreeItem<Image>(auv->cameras.down, "Downward", cameras);
     DataStreamTreeItem<Image> * sonar = new DataStreamTreeItem<Image>(auv->cameras.sonar, cameras);
     new DataStreamTreeItem<sonar_params_t>(auv->cameras.sonar->params, "Params", sonar);
 
@@ -171,6 +174,60 @@ DataStreamPicker::~DataStreamPicker(){
 
 void DataStreamPicker::initialise(){
     m_actions->registerDockView(this, Qt::LeftDockWidgetArea);
+}
+
+
+
+
+DataStreamDisplayArea::DataStreamDisplayArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
+        QMdiArea(parent),
+        CauvInterfaceElement(name, auv, node) {
+    this->setAcceptDrops(true);
+}
+
+void DataStreamDisplayArea::initialise(){
+    m_actions->registerCentralView(this, name());
+}
+
+void DataStreamDisplayArea::addWindow(QWidget *content){
+    QMdiSubWindow * window = addSubWindow(content);
+    window->show();
+}
+
+void DataStreamDisplayArea::dropEvent(QDropEvent * event){
+    DataStreamDropListener::dropEvent(event);
+}
+
+void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
+    DataStreamDropListener::dragEnterEvent(event);
+}
+
+void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream){
+    addWindow(new GraphWidget(stream));
+}
+
+void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<int> > stream){
+    addWindow(new GraphWidget(stream));
+}
+
+void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<float> > stream){
+    addWindow(new GraphWidget(stream));
+}
+
+void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream){
+    addWindow(new GraphWidget(stream));
+}
+
+void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream){
+    addWindow(new GraphWidget(stream));
+}
+
+void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<Image> > stream){
+    VideoScreen * vs = new VideoScreen(QString::fromStdString(stream->getName()), this);
+    addWindow(vs);
+    QImage img(":/resources/icon.png");
+    vs->setImage(img);
+
 }
 
 
