@@ -1,7 +1,12 @@
 
+#include <debug/cauv_debug.h>
+#include <QWidget>
+
 #include "datastreamdragging.h"
 
+
 using namespace cauv;
+
 
 void DataStreamDropListener::dragEnterEvent(QDragEnterEvent *event)
 {
@@ -12,60 +17,62 @@ void DataStreamDropListener::dropEvent(QDropEvent *event)
 {
     event->acceptProposedAction();
 
-    QTreeWidget * tree = dynamic_cast<QTreeWidget*> (event->source());
-    if(!tree) // drop didn't come from the tree widget
-        return;
+    DataStreamDragSource * source = dynamic_cast<DataStreamDragSource*> (event->source());
+    if(source) {
+        info() << "Drag receieved from " << source;
 
-    // if we've recieved a drop event from a QTreeWidget
-    // we need to route the selected items, assuming they
-    // are DataStreamTreeItem's
-    QList<QTreeWidgetItem*> items = tree->selectedItems();
-    QList<QTreeWidgetItem*>::iterator i;
-    for (i = items.begin(); i != items.end(); ++i)
-        routeStream(*i);
+        boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > >  streams = source->getDataStreams();
+        std::vector<boost::shared_ptr<DataStreamBase> >::iterator it;
+        for (it = streams->begin(); it!=streams->end(); ++it) {
+            routeStream(*it);
+        }
+    }
 }
 
-void DataStreamDropListener::routeStream(QTreeWidgetItem * s){
-    if(dynamic_cast<DataStreamTreeItem<int8_t>*>(s))
-        onStreamDropped(((DataStreamTreeItem<int8_t>*)s)->getDataStream());
+bool DataStreamDropListener::routeStream(boost::shared_ptr<DataStreamBase> s){
 
-    if(dynamic_cast<DataStreamTreeItem<int>*>(s))
-        onStreamDropped(((DataStreamTreeItem<int>*)s)->getDataStream());
+    if(dynamic_cast<DataStream<int8_t> *>(s.get())) {
+        info() << s->getName() << " - int8_t stream dropped";
+        onStreamDropped(boost::static_pointer_cast<DataStream<int8_t> >(s));
+    }
+    else if(dynamic_cast<DataStream<int> *>(s.get())) {
+        info() << s->getName() << " - int stream dropped";
+        onStreamDropped(boost::static_pointer_cast<DataStream<int> >(s));
+    }
+    else if(dynamic_cast<DataStream<float> *>(s.get())) {
+        info() << s->getName() << " - float stream dropped";
+        onStreamDropped(boost::static_pointer_cast<DataStream<float> >(s));
+    }
+    else if(dynamic_cast<DataStream<uint16_t> *>(s.get())) {
+        info() << s->getName() << " - uint16_t stream dropped";
+        onStreamDropped(boost::static_pointer_cast<DataStream<uint16_t> >(s));
+    }
+    else if(dynamic_cast<DataStream<floatYPR> *>(s.get())){
+        info() << s->getName() << " - floatYPR stream dropped";
+        onStreamDropped(boost::static_pointer_cast<DataStream<floatYPR> >(s));
+    }
+    else return false;
 
-    if(dynamic_cast<DataStreamTreeItem<float>*>(s))
-        onStreamDropped(((DataStreamTreeItem<float>*)s)->getDataStream());
-
-    if(dynamic_cast<DataStreamTreeItem<uint16_t>*>(s))
-        onStreamDropped(((DataStreamTreeItem<uint16_t>*)s)->getDataStream());
-
-    if(dynamic_cast<DataStreamTreeItem<autopilot_params_t>*>(s))
-        onStreamDropped(((DataStreamTreeItem<autopilot_params_t>*)s)->getDataStream());
-
-    if(dynamic_cast<DataStreamTreeItem<floatYPR>*>(s))
-        onStreamDropped(((DataStreamTreeItem<floatYPR>*)s)->getDataStream());
+    return true;
 }
 
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream){
-
-}
-
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int> > stream){
-
-}
-
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<float> > stream){
-
-}
-
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<autopilot_params_t> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int> > ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<float> > ){
+
+}
+
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > ){
+
+}
+
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > ){
 
 }

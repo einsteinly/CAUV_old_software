@@ -3,6 +3,7 @@ project (guicpp)
 # required libraries:
 find_package (Qwt6 REQUIRED)
 find_package (OIS REQUIRED)
+find_package (OpenCV REQUIRED)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
@@ -17,6 +18,7 @@ else()
     add_definitions(-DQT_NO_KEYWORDS)
 
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
+    include_directories (./)
     link_directories (${Qwt6_Qt4_LIBRARY})
     link_directories (${OIS_LIBRARIES})
 
@@ -32,6 +34,7 @@ else()
         widgets/datastreampicker.cpp
         widgets/pipelinecauvwidget.cpp
         widgets/graphwidget.cpp
+        widgets/motorcontrols.cpp
     )
 
     set (
@@ -39,6 +42,7 @@ else()
         
         mainwindow.ui
         widgets/datastreampicker.ui
+        widgets/motorcontrols.ui
     )
 
     set (
@@ -49,6 +53,7 @@ else()
         cauvgui.h
         cauvinterfaceelement.h
         widgets/datastreampicker.h
+        widgets/motorcontrols.h
         widgets/graphwidget.h
     )
 
@@ -81,6 +86,7 @@ else()
         ${QT_LIBRARIES}
         ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
+        ${OpenCV_LIBS}
     )
     #cauv_install ( guicpp )
 

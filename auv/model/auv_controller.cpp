@@ -15,17 +15,31 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->motors.vstern->onSet.connect(boost::bind(&AUVController::sendMotorMessage, this, MotorID::VStern, _1));
     // and lots of other message types that need to be sent
     auv->logs.level->onSet.connect(boost::bind(&AUVController::sendDebugLevelMessage, this, _1));
+
     // autopilots
-    auv->autopilots.bearing->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<BearingAutopilotEnabledMessage>, this, auv->autopilots.bearing));
-    auv->autopilots.bearing->enabled->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<BearingAutopilotEnabledMessage>, this, auv->autopilots.bearing));
-    auv->autopilots.depth->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<DepthAutopilotEnabledMessage>, this, auv->autopilots.depth));
-    auv->autopilots.depth->enabled->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<DepthAutopilotEnabledMessage>, this, auv->autopilots.depth));
-    auv->autopilots.pitch->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<PitchAutopilotEnabledMessage>, this, auv->autopilots.pitch));
-    auv->autopilots.pitch->enabled->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<PitchAutopilotEnabledMessage>, this, auv->autopilots.pitch));
+    auv->autopilots.bearing->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<BearingAutopilotEnabledMessage, float>, this, auv->autopilots.bearing));
+    auv->autopilots.bearing->enabled->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<BearingAutopilotEnabledMessage, float>, this, auv->autopilots.bearing));
+    auv->autopilots.depth->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<DepthAutopilotEnabledMessage, float>, this, auv->autopilots.depth));
+    auv->autopilots.depth->enabled->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<DepthAutopilotEnabledMessage, float>, this, auv->autopilots.depth));
+    auv->autopilots.pitch->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<PitchAutopilotEnabledMessage, float>, this, auv->autopilots.pitch));
+    auv->autopilots.pitch->enabled->onSet.connect(boost::bind( &AUVController::sendAutopilotEnabledMessage<PitchAutopilotEnabledMessage, float>, this, auv->autopilots.pitch));
+
     // autopilot params
-    auv->autopilots.bearing->params->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage>, this, _1));
-    auv->autopilots.depth->params->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage>, this, _1));
-    auv->autopilots.pitch->params->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage>, this, _1));
+    auv->autopilots.bearing->kP->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots.bearing));
+    auv->autopilots.bearing->kI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots.bearing));
+    auv->autopilots.bearing->kD->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots.bearing));
+    auv->autopilots.bearing->scale->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots.bearing));
+
+    auv->autopilots.depth->kP->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots.depth));
+    auv->autopilots.depth->kI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots.depth));
+    auv->autopilots.depth->kD->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots.depth));
+    auv->autopilots.depth->scale->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots.depth));
+
+    auv->autopilots.pitch->kP->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots.pitch));
+    auv->autopilots.pitch->kI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots.pitch));
+    auv->autopilots.pitch->kD->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots.pitch));
+    auv->autopilots.pitch->scale->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots.pitch));
+
     // sonar params
     auv->cameras.sonar->params->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, _1));
     // depth calibration
@@ -40,14 +54,14 @@ void AUVController::sendDebugLevelMessage(int32_t level){
     onMessageGenerated(boost::make_shared<DebugLevelMessage>(level));
 }
 
-template <class T>
-void AUVController::sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<float> > ap){
+template <class T, class S>
+void AUVController::sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<S> > ap){
     onMessageGenerated(boost::make_shared<T>(ap->enabled->latest(), ap->latest()));
 }
 
-template <class T>
-void AUVController::sendAutopilotParamsMessage(autopilot_params_t params){
-    onMessageGenerated(boost::make_shared<T>(params.kP, params.kI, params.kD, params.scale));
+template <class T, class S>
+void AUVController::sendAutopilotParamsMessage(boost::shared_ptr<AUV::Autopilot<S> > ap){
+    onMessageGenerated(boost::make_shared<T>(ap->kP->latest(), ap->kI->latest(), ap->kD->latest(), ap->scale->latest()));
 }
 
 void AUVController::sendSonarParamsMessage(sonar_params_t params){
@@ -108,8 +122,10 @@ void AUVController::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMess
 }
 
 void AUVController::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
-    m_auv->autopilots.bearing->params->update(autopilot_params_t(
-            message->Kp(), message->Ki(), message->Kd(), message->scale()));
+    m_auv->autopilots.bearing->kP->update(message->Kp());
+    m_auv->autopilots.bearing->kI->update(message->Ki());
+    m_auv->autopilots.bearing->kD->update(message->Kd());
+    m_auv->autopilots.bearing->scale->update(message->scale());
 }
 
 void AUVController::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
@@ -118,8 +134,6 @@ void AUVController::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_
 }
 
 void AUVController::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
-    m_auv->autopilots.depth->params->update(autopilot_params_t(
-            message->Kp(), message->Ki(), message->Kd(), message->scale()));
     m_auv->autopilots.depth->kP->update(message->Kp());
     m_auv->autopilots.depth->kI->update(message->Ki());
     m_auv->autopilots.depth->kD->update(message->Kd());
@@ -139,8 +153,10 @@ void AUVController::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_
 }
 
 void AUVController::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
-    m_auv->autopilots.pitch->params->update(autopilot_params_t(
-            message->Kp(), message->Ki(), message->Kd(), message->scale()));
+    m_auv->autopilots.pitch->kP->update(message->Kp());
+    m_auv->autopilots.pitch->kI->update(message->Ki());
+    m_auv->autopilots.pitch->kD->update(message->Kd());
+    m_auv->autopilots.pitch->scale->update(message->scale());
 }
 
 void AUVController::onDebugMessage(DebugMessage_ptr message) {

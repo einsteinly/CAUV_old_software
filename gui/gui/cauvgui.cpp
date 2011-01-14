@@ -8,6 +8,7 @@
 #include "widgets/datastreampicker.h"
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/graphwidget.h"
+#include "widgets/motorcontrols.h"
 
 using namespace cauv;
 
@@ -40,7 +41,7 @@ void CauvGui::closeEvent(QCloseEvent*){
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
-    std::cout<<"sending message" << *message << std::endl;
+    debug(0) << "Sending message: " << *message;
     return CauvNode::send(message);
 }
 
@@ -70,6 +71,9 @@ void CauvGui::onRun()
 
     boost::shared_ptr<DataStreamPicker> dataStreamPicker(new DataStreamPicker("Data Streams", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(dataStreamPicker));
+
+    boost::shared_ptr<MotorControls> motorControls(new MotorControls("Navigation", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(motorControls));
 
     show();
     m_application.exec();

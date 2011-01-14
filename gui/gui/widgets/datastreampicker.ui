@@ -10,6 +10,9 @@
     <height>300</height>
    </rect>
   </property>
+  <property name="features">
+   <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+  </property>
   <property name="windowTitle">
    <string>AUV Data Streams</string>
   </property>
@@ -19,12 +22,9 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QTreeWidget" name="dataStreams">
-      <property name="acceptDrops">
-       <bool>true</bool>
-      </property>
+     <widget class="DataStreamList" name="dataStreams">
       <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
+       <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
       </property>
       <property name="dragEnabled">
        <bool>true</bool>
@@ -32,15 +32,18 @@
       <property name="alternatingRowColors">
        <bool>true</bool>
       </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::ExtendedSelection</enum>
+      </property>
       <property name="animated">
        <bool>true</bool>
       </property>
-      <attribute name="headerDefaultSectionSize">
-       <number>150</number>
-      </attribute>
-      <attribute name="headerDefaultSectionSize">
-       <number>150</number>
-      </attribute>
+      <property name="allColumnsShowFocus">
+       <bool>true</bool>
+      </property>
+      <property name="columnCount">
+       <number>2</number>
+      </property>
       <column>
        <property name="text">
         <string>Stream</string>
@@ -56,6 +59,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DataStreamList</class>
+   <extends>QTreeWidget</extends>
+   <header>widgets/datastreampicker.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
