@@ -3,6 +3,14 @@
 #include <sstream>
 #include <iostream>
 
+#include <OIS/OISInputManager.h>
+#include <OIS/OISException.h>
+#include <OIS/OISKeyboard.h>
+#include <OIS/OISMouse.h>
+#include <OIS/OISEvents.h>
+
+#include <X11/Xlib.h>
+
 using namespace OIS;
 using namespace cauv;
 

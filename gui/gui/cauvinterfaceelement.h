@@ -4,11 +4,16 @@
 #include <QObject>
 #include <QString>
 #include <QDockWidget>
+
 #include <boost/shared_ptr.hpp>
-#include <model/auv_model.h>
-#include <model/auv_controller.h>
 
 namespace cauv{
+
+    class AUV;
+    class AUVController;
+    class CauvNode;
+    class Message;
+    class MessageObserver;
 
 // Q: Why has an separate class been used?
 // A: because QObject doesn't support virtual inheritance, so if an interface

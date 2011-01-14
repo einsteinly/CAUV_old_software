@@ -1,17 +1,14 @@
 #ifndef GAMEPADINPUT_H
 #define GAMEPADINPUT_H
 
-
-#include <qobject.h>
-
-#include <X11/Xlib.h>
-
-#include <OIS/OISInputManager.h>
-#include <OIS/OISException.h>
-#include <OIS/OISKeyboard.h>
-#include <OIS/OISMouse.h>
+#include <QObject>
 #include <OIS/OISJoyStick.h>
-#include <OIS/OISEvents.h>
+
+namespace OIS {
+    class JoyStick;
+    class JoyStickEvent;
+    class InputManager;
+}
 
 namespace cauv{
 

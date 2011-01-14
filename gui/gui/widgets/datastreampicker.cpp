@@ -1,13 +1,14 @@
-#include "datastreampicker.h"
-#include "../datastreamdragging.h"
 
+#include "datastreampicker.h"
 #include "ui_datastreampicker.h"
+
+#include "datastreamdragging.h"
 
 #include <QModelIndexList>
 #include <opencv/cv.h>
 
-using namespace cauv;
 
+using namespace cauv;
 
 
 DataStreamTreeItemBase::DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase> stream, QTreeWidgetItem * parent):

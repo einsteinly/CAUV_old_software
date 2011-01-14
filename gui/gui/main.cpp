@@ -1,11 +1,15 @@
-#include <QApplication>
 
 #include <iostream>
 #include <sstream>
 #include <stdint.h>
+
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+
+#include <debug/cauv_debug.h>
 
 #include <QTimer>
+#include <QApplication>
 
 #include "cauvgui.h"
 #include "gamepad/playstationinput.h"

@@ -8,8 +8,10 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "../cauvinterfaceelement.h"
-#include "../datastreamdragging.h"
+#include <debug/cauv_debug.h>
+
+#include "cauvinterfaceelement.h"
+#include "datastreamdragging.h"
 
 namespace Ui {
     class DataStreamPicker;

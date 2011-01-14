@@ -1,26 +1,26 @@
 #ifndef CAUVGUI_H
 #define CAUVGUI_H
 
-#include <boost/make_shared.hpp>
-#include <boost/program_options.hpp>
+#include <QMainWindow>
+
 #include <boost/enable_shared_from_this.hpp>
 
 #include <common/cauv_node.h>
-#include <common/cauv_global.h>
-#include <common/cauv_utils.h>
-#include <debug/cauv_debug.h>
 
-#include <model/auv_model.h>
-#include <model/auv_controller.h>
 
-#include "ui_mainwindow.h"
-#include "cauvinterfaceelement.h"
+namespace Ui {
+    class MainWindow;
+}
 
 namespace cauv {
 
-class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow, public boost::enable_shared_from_this<CauvGui> {
+    class AUV;
+    class AUVController;
+    class CauvInterfaceElement;
 
-    Q_OBJECT
+    class CauvGui : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvGui> {
+
+        Q_OBJECT
 
     public:
         CauvGui(const QApplication& app);
@@ -40,7 +40,11 @@ class CauvGui : public QMainWindow, public CauvNode, public Ui::MainWindow, publ
         boost::shared_ptr<AUVController> m_auv_controller;
 
         const QApplication &m_application;
-};
+
+    private:
+        Ui::MainWindow * ui;
+
+    };
 
 } // namespace cauv
 

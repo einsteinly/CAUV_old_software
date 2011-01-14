@@ -5,6 +5,8 @@
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 
+#include <model/auv_model.h>
+
 using namespace cauv;
 
 MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
@@ -18,9 +20,9 @@ MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, Q
     auv->sensors.orientation_split->pitch->onUpdate.connect(boost::bind(static_cast<void (QLabel::*)(double)>(&QLabel::setNum), ui->actualPitch, _1));
     auv->sensors.depth->onUpdate.connect(boost::bind(static_cast<void (QLabel::*)(double)>(&QLabel::setNum), ui->actualDepth, _1));
 
-    auv->autopilots.bearing->onUpdate.connect(boost::bind(&QDoubleSpinBox::setValue, ui->bearingTarget, _1));
-    auv->autopilots.pitch->onUpdate.connect(boost::bind(&QDoubleSpinBox::setValue, ui->pitchTarget, _1));
-    auv->autopilots.depth->onUpdate.connect(boost::bind(&QDoubleSpinBox::setValue, ui->depthTarget, _1));
+    auv->autopilots.bearing->onUpdate.connect(boost::bind(&MotorControls::setValue, this, ui->bearingTarget, _1));
+    auv->autopilots.pitch->onUpdate.connect(boost::bind(&MotorControls::setValue, this, ui->pitchTarget, _1));
+    auv->autopilots.depth->onUpdate.connect(boost::bind(&MotorControls::setValue, this, ui->depthTarget, _1));
 
     auv->autopilots.bearing->enabled->onUpdate.connect(boost::bind(&QCheckBox::setChecked, ui->bearingEnabled, _1));
     auv->autopilots.pitch->enabled->onUpdate.connect(boost::bind(&QCheckBox::setChecked, ui->pitchEnabled, _1));
@@ -42,6 +44,12 @@ MotorControls::~MotorControls(){
 
 void MotorControls::initialise(){
     m_actions->registerDockView(this, Qt::LeftDockWidgetArea);
+}
+
+void MotorControls::setValue(QDoubleSpinBox * spin, double value){
+    spin->blockSignals(true);
+    spin->setValue(value);
+    spin->blockSignals(false);
 }
 
 void MotorControls::bearingAutopilotTargetUpdated(){

@@ -6,8 +6,8 @@
 #include <qwt_plot_grid.h>
 #include <qwt_series_data.h>
 
-#include "../cauvinterfaceelement.h"
-#include "../datastreamdragging.h"
+#include "cauvinterfaceelement.h"
+#include "datastreamdragging.h"
 
 namespace cauv {
 
@@ -17,6 +17,8 @@ namespace cauv {
     /**
       * A DataStreamSeriesData is used to bridge the interface between qwt and the cauv data stream classes
       * it uses a DataStreamRecorder to store samples
+      *
+      * TODO: implement stubs
       *
       * @author Andy Pritchard
       */
