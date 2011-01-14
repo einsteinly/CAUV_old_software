@@ -118,13 +118,30 @@ font: 16px/30px Helvetica, Arial, sans-serif;
 padding: 3pt 5pt;
 margin: 3pt 0;
 }
-.bag .bag_expanded ul li{
+.bag_minimised{
+position:relative;
+}
+.bag_minimised ul{
+height:150;
+width: 50%;
+overflow-y:auto;
+}
+.bag_minimised ul li{
 padding: 0;
-margin: 0 0 15pt 0;
 }
-.bag .bag_expanded ul li h4{
-font-weight: bold;
+.bag_minimised ul li .hidden_mouseover{
+position:absolute;
+right: 0;
+bottom:0;
+width:45%;
+height:150;
+background-color:#f0e0f0;
+padding: 3pt 5pt;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+display:none;
 }
-.bag .bag_expanded ul li h4 a{
-font-weight: bold;
+.bag_minimised ul li a:hover + .hidden_mouseover{
+display:block;
 }
