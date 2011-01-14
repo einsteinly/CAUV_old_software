@@ -1,0 +1,18 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2010-12-26 12:50:59.988116
+description: "pscore changed to 1\ndescription changed to Finished, suspected fixed.\r\
+  \n(at least until the problem is reproduced again)\ntitle changed to Finished, suspected\
+  \ fixed. \ncreated_by changed to James Crosby\nentity changed to <pitz.Task 792b69\
+  \ Fix python crashiness introduced (probably) in r815-816>\nwho_said_it changed\
+  \ to James Crosby"
+entity: !!python/object:uuid.UUID
+  int: 196268568050080621520241942787801609531
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Comment 93a7f3 Finished, suspected fixed. >
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 246385647547523968688766803186905876186
+who_did_it: *id002
+yaml_file_saved: 2010-12-26 12:50:59.988204
