@@ -1,21 +1,33 @@
 #include "cauvgui.h"
 
 #include <model/auv_controller.h>
+#include <model/auv_model.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
 
-#include "widgets/datastreampicker.h"
+#include "widgets/datastreamdisplays.h"
 #include "widgets/pipelinecauvwidget.h"
-#include "widgets/graphwidget.h"
 #include "widgets/motorcontrols.h"
+#include "widgets/logview.h"
+
+#include <common/cauv_global.h>
+#include <common/cauv_utils.h>
+#include <debug/cauv_debug.h>
+
+#include "ui_mainwindow.h"
+#include "cauvinterfaceelement.h"
 
 using namespace cauv;
 
-CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app){
-    setupUi(this);
+CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
+    ui->setupUi(this);
     joinGroup("control");
     joinGroup("pl_gui");
+    joinGroup("debug");
+
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 }
 
 void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
@@ -27,7 +39,7 @@ void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget
 
 void CauvGui::addCentralTab(QWidget* tab, QString& name){
     info() << "Registering central screen [" << name.toStdString() << "]";
-    tabWidget->addTab(tab, name);
+    ui->tabWidget->addTab(tab, name);
 }
 
 void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
@@ -63,7 +75,7 @@ void CauvGui::onRun()
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
     // populate the interface
-    boost::shared_ptr<GraphArea> graphArea(new GraphArea("Graphs", m_auv, this, shared_from_this()));
+    boost::shared_ptr<DataStreamDisplayArea> graphArea(new DataStreamDisplayArea("Stream Visualisation", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(graphArea));
 
     boost::shared_ptr<PipelineCauvWidget> pipelineArea(new PipelineCauvWidget("Pipeline Editor", m_auv, this, shared_from_this()));
@@ -74,6 +86,9 @@ void CauvGui::onRun()
 
     boost::shared_ptr<MotorControls> motorControls(new MotorControls("Navigation", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(motorControls));
+
+    boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
 
     show();
     m_application.exec();

@@ -1,7 +1,17 @@
+#ifdef GAMEPAD_SUPPORT
+
 #include "gamepadinput.h"
 
 #include <sstream>
 #include <iostream>
+
+#include <OIS/OISInputManager.h>
+#include <OIS/OISException.h>
+#include <OIS/OISKeyboard.h>
+#include <OIS/OISMouse.h>
+#include <OIS/OISEvents.h>
+
+#include <X11/Xlib.h>
 
 using namespace OIS;
 using namespace cauv;
@@ -147,3 +157,5 @@ std::string GamepadInput::listDevices() {
     str << "\n\n End of device list. \n\n";
     return str.str();
 }
+
+#endif //GAMEPAD_SUPPORT

@@ -14,8 +14,8 @@
    <string>Cambridge AUV</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>resources/icon.png</normaloff>resources/icon.png</iconset>
+   <iconset resource="resources.qrc">
+    <normaloff>:/resources/icon.png</normaloff>:/resources/icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -52,6 +52,8 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -1,13 +1,15 @@
 #ifndef DATASTREAMDRAGGING_H
 #define DATASTREAMDRAGGING_H
 
-#include <QDragEnterEvent>
-#include <QDropEvent>
-
-#include <model/auv_model.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <common/data_stream.h>
+
+ // for types
+#include <generated/messages.h>
+
+class QDropEvent;
+class QDragEnterEvent;
 
 namespace cauv {
 
@@ -29,6 +31,7 @@ namespace cauv {
         virtual void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
         virtual void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream);
         virtual void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream);
+        virtual void onStreamDropped(boost::shared_ptr<DataStream<Image> > stream);
     };
     
 }

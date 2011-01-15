@@ -1,11 +1,15 @@
-#include <QApplication>
 
 #include <iostream>
 #include <sstream>
 #include <stdint.h>
+
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+
+#include <debug/cauv_debug.h>
 
 #include <QTimer>
+#include <QApplication>
 
 #include "cauvgui.h"
 #include "gamepad/playstationinput.h"
@@ -16,12 +20,15 @@ using namespace cauv;
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
+    Q_INIT_RESOURCE(resources);
+
 
     boost::shared_ptr<CauvGui> node = boost::make_shared<CauvGui>(app);
 
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;
 
+    #ifdef GAMEPAD_SUPPORT
     try {
         info() << GamepadInput::listDevices();
         PlaystationInput* gi;
@@ -38,6 +45,7 @@ int main(int argc, char** argv)
     } catch (char const* ex){
         error() << ex;
     }
+    #endif
 
     try {
         node->run();

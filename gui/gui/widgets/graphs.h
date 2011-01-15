@@ -6,8 +6,11 @@
 #include <qwt_plot_grid.h>
 #include <qwt_series_data.h>
 
-#include "../cauvinterfaceelement.h"
-#include "../datastreamdragging.h"
+#include <common/data_stream.h>
+#include <common/data_stream_tools.h>
+
+#include "cauvinterfaceelement.h"
+#include "datastreamdragging.h"
 
 namespace cauv {
 
@@ -17,6 +20,8 @@ namespace cauv {
     /**
       * A DataStreamSeriesData is used to bridge the interface between qwt and the cauv data stream classes
       * it uses a DataStreamRecorder to store samples
+      *
+      * TODO: implement stubs
       *
       * @author Andy Pritchard
       */
@@ -61,6 +66,7 @@ namespace cauv {
             setupPlot();
         }
 
+        QSize sizeHint() const;
         void setupPlot();
         void dropEvent(QDropEvent * event);
         void dragEnterEvent(QDragEnterEvent * event);
@@ -78,29 +84,7 @@ namespace cauv {
         std::set<std::string> seriesNames;
         std::set<boost::shared_ptr<DataStreamSeriesDataBase> > series;
         boost::shared_ptr<QwtPlotGrid> m_grid;
-    };
-
-
-    /**
-      * GraphArea - accepts data stream drops, adding them to its mdi area as it gets them
-      *
-      * @author Andy Pritchard
-      */
-    class GraphArea : public QMdiArea, public DataStreamDropListener, public CauvInterfaceElement {
-        Q_OBJECT
-
-    public:
-        GraphArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
-        virtual void initialise();
-        void onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream);
-        void onStreamDropped(boost::shared_ptr<DataStream<int> > stream);
-        void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
-        void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream);
-        void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream);
-        void dropEvent(QDropEvent * event);
-        void dragEnterEvent(QDragEnterEvent * event);
-        void addGraph(cauv::GraphWidget * graph);
-    };   
+    }; 
 }
 
 #endif // GRAPHWIDGET_H

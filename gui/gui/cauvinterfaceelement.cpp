@@ -1,3 +1,10 @@
+
+#include <boost/make_shared.hpp>
+
+#include <common/cauv_node.h>
+#include <generated/messages.h>
+#include <debug/cauv_debug.h>
+
 #include "cauvinterfaceelement.h"
 
 using namespace cauv;

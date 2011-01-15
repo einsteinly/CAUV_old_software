@@ -1,13 +1,13 @@
-#include "graphwidget.h"
+#include "graphs.h"
 
 #include <common/cauv_utils.h>
 #include <common/data_stream_tools.h>
 
 #include <boost/bind.hpp>
 
-#include <QMdiSubWindow>
 #include <QPen>
 #include <QRectF>
+
 #include <qwt_legend.h>
 
 using namespace cauv;
@@ -19,7 +19,14 @@ void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
     if(seriesNames.end() == seriesNames.find(stream->getName())) {
         seriesNames.insert(stream->getName());
         series.insert(boost::make_shared<DataStreamSeriesData<T> >(stream, 1000));
+        std::stringstream str;
+        str << "Graph " << getName();
+        setWindowTitle(QString::fromStdString(str.str()));
     }
+}
+
+QSize GraphWidget::sizeHint() const{
+    return QSize(400, 250);
 }
 
 void GraphWidget::setupPlot() {
@@ -76,51 +83,3 @@ std::string GraphWidget::getName() const{
     return title.str();
 }
 
-
-
-
-
-
-GraphArea::GraphArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QMdiArea(parent),
-        CauvInterfaceElement(name, auv, node) {
-    this->setAcceptDrops(true);
-}
-
-void GraphArea::initialise(){
-    m_actions->registerCentralView(this, name());
-}
-
-void GraphArea::addGraph(GraphWidget *graph){
-    QMdiSubWindow * window = addSubWindow(graph);
-    window->resize(400, 250);
-    window->show();
-}
-
-void GraphArea::dropEvent(QDropEvent * event){
-    DataStreamDropListener::dropEvent(event);
-}
-
-void GraphArea::dragEnterEvent(QDragEnterEvent * event){
-    DataStreamDropListener::dragEnterEvent(event);
-}
-
-void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream){
-    addGraph(new GraphWidget(stream));
-}
-
-void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<int> > stream){
-    addGraph(new GraphWidget(stream));
-}
-
-void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<float> > stream){
-    addGraph(new GraphWidget(stream));
-}
-
-void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream){
-    addGraph(new GraphWidget(stream));
-}
-
-void GraphArea::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream){
-    addGraph(new GraphWidget(stream));
-}

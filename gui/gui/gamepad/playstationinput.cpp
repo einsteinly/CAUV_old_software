@@ -1,3 +1,5 @@
+#ifdef GAMEPAD_SUPPORT
+
 #include "playstationinput.h"
 
 #include <iostream>
@@ -121,3 +123,6 @@ void PlaystationInput::emitButton( Playstation::Buttons button, bool state ) {
         throw "Unknown button";
     }
 }
+
+
+#endif //GAMEPAD_SUPPORT
