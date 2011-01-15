@@ -28,6 +28,7 @@ int main(int argc, char** argv)
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;
 
+    #ifdef GAMEPAD_SUPPORT
     try {
         info() << GamepadInput::listDevices();
         PlaystationInput* gi;
@@ -44,6 +45,7 @@ int main(int argc, char** argv)
     } catch (char const* ex){
         error() << ex;
     }
+    #endif
 
     try {
         node->run();

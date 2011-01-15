@@ -1,3 +1,5 @@
+#ifdef GAMEPAD_SUPPORT
+
 #ifndef PLAYSTATIONINPUT_H
 #define PLAYSTATIONINPUT_H
 
@@ -72,3 +74,5 @@ protected:
 } // namespace cauv
 
 #endif // PLAYSTATIONINPUT_H
+
+#endif //GAMEPAD_SUPPORT

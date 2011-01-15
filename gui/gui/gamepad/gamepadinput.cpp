@@ -1,3 +1,5 @@
+#ifdef GAMEPAD_SUPPORT
+
 #include "gamepadinput.h"
 
 #include <sstream>
@@ -155,3 +157,5 @@ std::string GamepadInput::listDevices() {
     str << "\n\n End of device list. \n\n";
     return str.str();
 }
+
+#endif //GAMEPAD_SUPPORT

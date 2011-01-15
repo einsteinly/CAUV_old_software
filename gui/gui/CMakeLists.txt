@@ -1,18 +1,24 @@
 project (guicpp)
 
+option(GAMEPAD_SUPPORT "True if the GUI should support game controllers" ON)
+
 # required libraries:
 find_package (Qwt6 REQUIRED)
-find_package (OIS REQUIRED)
 find_package (OpenCV REQUIRED)
+
+# find gamepad library if its needed
+if (GAMEPAD_SUPPORT)
+    find_package (OIS REQUIRED)
+    if (OIS_FOUND)
+        add_definitions(-DGAMEPAD_SUPPORT=1)
+    endif()
+endif()
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
 else()
 if (NOT Qwt6_FOUND)
     message(WARNING "QWT not found, not building gui")
-else()
-if (NOT OIS_FOUND)
-    message(WARNING "OIS not found, not building gui")
 else()
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
@@ -112,6 +118,5 @@ else()
         COMMENT "Copying fonts for guicpp"
     )
 
-endif()
 endif()
 endif()
