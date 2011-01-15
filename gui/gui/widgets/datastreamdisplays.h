@@ -7,9 +7,12 @@
 #include <QTreeWidgetItem>
 #include <QMdiArea>
 
+#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 
 #include <debug/cauv_debug.h>
+#include <model/auv_model.h>
 
 #include "cauvinterfaceelement.h"
 #include "datastreamdragging.h"

@@ -2,9 +2,16 @@
 #define DATA_STREAM_TOOLS_H_INCLUDED
 
 #include "data_stream.h"
+
+ // don't like having htis here, but its needed for the types flaotXYZ and flaotYPR
+// the DataStreamSplitter specialisations could be moved somewhere more sensible...
 #include <generated/messages.h>
-#include <boost/bind.hpp>
+
+
 #include <iostream>
+
+#include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 
 namespace cauv {
 

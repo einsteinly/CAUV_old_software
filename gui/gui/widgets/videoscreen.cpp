@@ -51,9 +51,17 @@ void VideoScreen::setInfo(const QString info){
     ui->feedInfo->setText(info);
 }
 
+void VideoScreen::setInfo(const std::string info){
+    VideoScreen::setInfo(QString::fromStdString(info));
+}
+
 void VideoScreen::setName(const QString name){
     ui->feedName->setText(name);
     setWindowTitle(name);
+}
+
+void VideoScreen::setName(const std::string name){
+    VideoScreen::setName(QString::fromStdString(name));
 }
 
 QSize VideoScreen::sizeHint() const{

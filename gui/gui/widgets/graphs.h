@@ -6,6 +6,9 @@
 #include <qwt_plot_grid.h>
 #include <qwt_series_data.h>
 
+#include <common/data_stream.h>
+#include <common/data_stream_tools.h>
+
 #include "cauvinterfaceelement.h"
 #include "datastreamdragging.h"
 

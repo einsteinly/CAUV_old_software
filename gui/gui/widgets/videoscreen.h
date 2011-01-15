@@ -35,7 +35,10 @@ namespace cauv {
         void setImage(QImage &image);
 
         void setInfo(const QString text);
+        void setInfo(const std::string text);
+
         void setName(const QString name);
+        void setName(const std::string name);
     };
 } // namespace cauv
 #endif // VIDEOSCREEN_H

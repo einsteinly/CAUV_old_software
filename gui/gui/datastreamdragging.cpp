@@ -1,6 +1,12 @@
 
+#include <boost/bind.hpp>
+
+#include <model/auv_model.h>
 #include <debug/cauv_debug.h>
+
 #include <QWidget>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 
 #include "datastreamdragging.h"
 

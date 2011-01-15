@@ -14,7 +14,9 @@ LogView::LogView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * par
 {
     ui->setupUi(this);
 
-    QWidget* titleWidget = new QWidget(this); /* where this a QMainWindow object */
+    // replace the title bar as it takes up too much room.
+    // TODO: put something useful here instead?
+    QWidget* titleWidget = new QWidget(this);
     this->setTitleBarWidget( titleWidget );
 
     foreach(AUV::logs_map::value_type i, auv->logs){
