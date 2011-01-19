@@ -3,6 +3,7 @@
 
 #include <QWidget>
 
+#include <QMutex>
 class QPixmap;
 class QSize;
 class QString;
@@ -22,17 +23,23 @@ namespace cauv {
         virtual ~VideoScreen();
         QSize sizeHint() const;
 
+   Q_SIGNALS:
+        void imageUpdated(QImage image);
+
     private:
         Ui::VideoScreen * ui;
 
     protected:
-        QPixmap m_pixmap;
+        QImage m_image;
         void paintEvent(QPaintEvent *);
 
+
+    private Q_SLOTS:
+        void redraw(QImage image);
+
     public Q_SLOTS:
-        void setImage(QPixmap &pixmap);
         void setImage(Image &image);
-        void setImage(QImage &image);
+        void setImage(QImage image);
 
         void setInfo(const QString text);
         void setInfo(const std::string text);
