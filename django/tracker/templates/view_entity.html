@@ -45,10 +45,10 @@
     </div>
 </div>
 {% endfor %}
-{% for bag, field in related %}
+{% for bag in entity.related %}
 <div class="bag bag_minimised">
     <div id="bag_{{ forloop.counter }}">
-    	<div class="bag_title"> {{ bag.ref }} entities with {{ field }} containing {{entity.title }} - <a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}/?{{ field }}={{ entity.uuid }}">add new</a></div>
+    	<div class="bag_title"> <a href="{{ ROOT_URL }}/view/bag/{{bag.view_ref}}">{{ bag.title }}</a> - <a href="{{ ROOT_URL }}/add/entity/{{ bag.add_ref }}/?{{ field }}={{ entity.uuid }}">add new</a></div>
         <ul>
         {% for e in bag.elements %}
         <li>
