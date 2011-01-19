@@ -43,7 +43,7 @@ template<> void DataStreamTreeItem<Image>::onChange(const Image value){
         QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
                                mat_rgb.rows, QImage::Format_RGB888);
 
-        this->setIcon(1, QIcon(QPixmap::fromImage(qImage)));
+        //this->setIcon(1, QIcon(QPixmap::fromImage(qImage)));
 
     } catch (cv::Exception ex){
         error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;

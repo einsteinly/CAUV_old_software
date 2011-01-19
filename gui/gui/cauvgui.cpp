@@ -24,6 +24,7 @@ using namespace cauv;
 CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
     ui->setupUi(this);
     joinGroup("control");
+    joinGroup("image");
     joinGroup("pl_gui");
     joinGroup("debug");
 
