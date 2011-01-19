@@ -625,7 +625,6 @@ void OverKey::draw(drawtype_e::e flags){
             glPushMatrix();
             k->draw(m_current_modifiers, Colour(1, fac));
             glPopMatrix();
-            glCheckError();
             foreach(keycode_t kc, k->keyCodes()){
                 KeyBind potential_kb(kc, m_current_modifiers);
                 if(m_actions.count(potential_kb)){
@@ -638,6 +637,9 @@ void OverKey::draw(drawtype_e::e flags){
             }
             glPopMatrix();
         }
+        #ifndef CAUV_NO_DEBUG
+        glCheckError();
+        #endif
         
         if(_fnow() - m_last_kp_time < 3.0f)
             postRedraw(1.0/20);
