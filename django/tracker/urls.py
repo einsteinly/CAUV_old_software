@@ -11,7 +11,7 @@ urlpatterns = patterns('',
     # (r'^tracker/', include('tracker.foo.urls')),
     (r'^$', views.view_project),
     (r'^view/entity/(?P<uuid>[a-f0-9\-]+)/$', views.view_entity),
-    (r'^view/bag/(?P<ref>[a-zA-Z0-9\-]+)/$', views.view_bag),
+    (r'^view/bag/(?P<plural_name>[a-zA-Z0-9\-]+)/$', views.view_bag),
     (r'^edit/entity/(?P<uuid>[a-f0-9\-]+)/$', views.edit_entity),
     (r'^add/entity/(?P<plural_name>[a-zA-Z0-9\-]+)/$', views.add_entity),
 

@@ -53,9 +53,20 @@ background-color: #e9d0ff;
 -moz-border-radius: 3pt;
 -webkit-border-radius: 3pt;
 border-radius: 3pt;
+overflow: auto;
 }
 .bag_toolbox #submit {
 float: right;
+}
+.bag_toolbox .filter{
+float: left;
+border-color: #000000;
+border-width: 1pt;
+border-style: solid;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+padding: 2pt;
 }
 #entity_title{
 font: 16px/30px Helvetica, Arial, sans-serif;

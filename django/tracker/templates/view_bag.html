@@ -1,32 +1,26 @@
 {% extends 'base.html' %}
+{% block head %}
+<script language="javascript">
+{{ bag.js|safe }}
+</script>
+{% endblock %}
 {% block breadcrumbs %}<a href="{{ ROOT_URL }}/">Home</a> - {{ bag.title }}{% endblock %}
 {% block content %}
 <div class="bag">
     <div class="item_key"> {{ bag.title }} </div>
-    <div class="bag_toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}">Add</a></div>
+    <div class="bag_toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.add_ref }}">Add</a></div>
     <div class="bag_toolbox">
-    <form id="order_filter_form" name="order_filter_form" action="" method="get" >
-    {{ order_forms.management_form }}
-    {% for form in order_forms.forms  %}
-        {% for field in form %}
-            {{ field.label_tag }}: {{ field }}
-	{% endfor %}
-    {% endfor %} 
-    <a onclick=add_extra('order')>Add Ordering</a>
-    <br>
-    {{ filter_forms.management_form }}
-    {% for form in filter_forms.forms %}
-    	{% for field in form %}
-	    {% if not field.is_hidden %}{{ field.label_tag }}: {% endif %}{{ field }}
-	{% endfor %}
-    {% endfor %}
-    <a onclick=add_extra('filter')>Add Filter</a>
-    <input id="submit" type="submit" value="Order/Filter" /> 
-    </form></div>
+        <div id="filterSpace"></div>
+    <input id="submit" type="submit" value="Order/Filter" onClick="filter()" /> 
+    </div>
     <ul>
     {% for entity in bag.elements %}
     <li><a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
     {% endfor %}
     </ul>
 </div>
+<script language="javascript">
+//we need to run these at the end to make sure things have loaded first
+load()
+</script>
 {% endblock %}

@@ -2,14 +2,14 @@
 {% block breadcrumbs %}Home{% endblock %}
 {% block content %}
 {% if pitz_user %}
-<div id="toolbox">| <a href="{{ ROOT_URL }}/view/bag/tasks/?order-TOTAL_FORMS=2&order-INITIAL_FORMS=0&order-0-order_by=pscore&filter-TOTAL_FORMS=2&filter-INITIAL_FORMS=0&filter-0-a=owner&filter-0-b=eq&filter-0-c={{ pitz_user.title }}" >My Tasks</a> |
- <a href="{{ ROOT_URL }}/view/bag/tasks/?order-TOTAL_FORMS=2&order-INITIAL_FORMS=0&order-0-order_by=pscore&filter-TOTAL_FORMS=2&filter-INITIAL_FORMS=0&filter-0-a=owner&filter-0-b=eq&filter-0-c=no+owner&filter-1-a=status&filter-1-b=neq&filter-1-c=finished">Unassigned Tasks</a> |</div>{% comment %}if these break, then check the filter pattern hasn't changed{% endcomment %}
+<div id="toolbox">| <a href="{{ ROOT_URL }}/view/bag/tasks/?f=ep&v=owner.title&f=va&v={{ pitz_user.title }}&f=eq&v=0,1" >My Tasks</a> |
+ <a href="{{ ROOT_URL }}/view/bag/tasks/?f=ep&v=owner.title&f=va&v=no+owner&f=eq&v=0,1&f=ep&v=status&f=va&v=finished&f=ne&v=3,4&f=nd&v=2,5">Unassigned Tasks</a> |</div>{% comment %}if these break, then check the filter pattern hasn't changed{% endcomment %}
 {% endif %}
 <div id="project">
 {% for bag in bags %}
 <div class="bag">
-    <div class="bag_title"><a href="{{ ROOT_URL }}/view/bag/{{ bag.ref }}">{{ bag.title }}</a></div>
-    <div class="bag_toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}">Add</a></div>
+    <div class="bag_title"><a href="{{ ROOT_URL }}/view/bag/{{ bag.view_ref }}">{{ bag.title }}</a></div>
+    <div class="bag_toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.add_ref }}">Add</a></div>
     <ul>
     {% for entity in bag.elements %}
         <li><a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>

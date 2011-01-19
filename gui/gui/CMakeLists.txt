@@ -1,13 +1,13 @@
 project (guicpp)
 
-option(GAMEPAD_SUPPORT "True if the GUI should support game controllers" ON)
+option(CAUV_GAMEPAD_SUPPORT "True if the GUI should support game controllers" ON)
 
 # required libraries:
 find_package (Qwt6 REQUIRED)
 find_package (OpenCV REQUIRED)
 
 # find gamepad library if its needed
-if (GAMEPAD_SUPPORT)
+if (CAUV_GAMEPAD_SUPPORT)
     find_package (OIS REQUIRED)
     if (OIS_FOUND)
         add_definitions(-DGAMEPAD_SUPPORT=1)
@@ -25,8 +25,8 @@ else()
 
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
     include_directories (./)
-    link_directories (${Qwt6_Qt4_LIBRARY})
-    link_directories (${OIS_LIBRARIES})
+    #link_directories (${Qwt6_Qt4_LIBRARY})
+    #link_directories (${OIS_LIBRARIES})
 
     set (
         GUICPP_SRCS

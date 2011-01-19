@@ -9,6 +9,7 @@ from pitz.entity import Entity
 from uuid import UUID
 from tracker import settings
 from tracker.track import models, appforms, extras
+import json
 
 def get_entity_or_404(uuid, project=None):
     uuid_obj = UUID(uuid)
@@ -45,39 +46,65 @@ class disp_property():
             else:
                 self.type = 'value'
 
-class disp_bag_by_type():
-    def __init__(self, bag):
-        # split bag into dictionary by type
-        self.by_type = {}
-        for e in bag:
-            typeid = e['type']
-            if self.by_type.has_key(typeid):
-                self.by_type[typeid].append(e)
-            else:
-                self.by_type[typeid] = [e]
+#i dont think we need this anymore                
+#class disp_bag_by_type():
+#    def __init__(self, bag):
+#        # split bag into dictionary by type
+#        self.by_type = {}
+#        for e in bag:
+#            typeid = e['type']
+#            if self.by_type.has_key(typeid):
+#                self.by_type[typeid].append(e)
+#            else:
+#                self.by_type[typeid] = [e]
 
 class disp_entity():
-    def __init__(self, entity, related=[]):
+    def __init__(self, entity):
         self.properties = [disp_property(x, entity[x]) for x in entity]
         self.type = entity.plural_name
         self.title = entity['title']
         self.uuid = entity.uuid
-        # fingers crossed...
-        #for x in related:
-        #    print disp_entity(x)
-        #    print x['title']
-        #    print x.plural_name
-        #    print [disp_property(y, x[y]) for y in x]
-        #self.related = [disp_entity(x) for x in related]
-        self.related = related
+        self.related = []
+        #for each entity type
+        for plural_name in entity.project.plural_names:
+            #find all the fields of that entity
+            all_fields = extras.get_all_variables(entity.project.plural_names[plural_name])
+            #we only want fields that are allowed to contain this entity
+            fields={}
+            for k,v in all_fields.items():
+                if isinstance(v, list):
+                    if isinstance(entity, v[0]):
+                        fields[k]=v
+                elif isinstance(entity, v):
+                    fields[k]=v
+            #we want to append iff there were matching fields (not neccessarily mathcing entities)
+            if len(fields):
+                #define a filter
+                rf = extras.filter_atleast_one(*[extras.filter_matches_dict({field_name:entity}) for field_name in fields])
+                self.related.append((disp_bag(entity.project, entity.project.plural_names[plural_name], rf)))
     def is_person(self):
         return self.type=='people'
 
 class disp_bag():
-    def __init__(self, bag, ref):
-        self.title = bag.title
-        self.ref = ref
-        self.elements = bag._elements
+    def __init__(self, project, entity_class, bag_filter=extras.filter_null_obj()):
+        self.entity_class = entity_class
+        self.bag_filter = bag_filter
+        self.elements = filter(bag_filter, entity_class.all())
+    def title(self):
+        return self.entity_class.plural_name
+    def view_ref(self):
+        return self.entity_class.plural_name+'/?'+self.bag_filter.to_string()
+    def add_ref(self):
+        return self.entity_class.plural_name+'/?'
+    def js(self):
+        try:
+            filters=[]
+            values=[]
+            filters, values, counter = self.bag_filter.to_list(filters, values)
+            js_string = 'filters='+json.dumps(filters)+';values='+json.dumps(values)+';all_filters='+json.dumps(extras.js_filters)+';filter_names='+json.dumps(extras.js_filters.keys())
+            return js_string
+        except Exception as inst:
+            print inst
 
 def view_project(request):
     p = Project.from_pitzdir(settings.PITZ_DIR)
@@ -86,75 +113,46 @@ def view_project(request):
     	pitz_user = p.by_uuid(UUID(request.user.get_profile().uuid))
     except:
     	pass
-    for type in p.plural_names:
+    for plural_name in p.plural_names:
         try:
-            bags.append(disp_bag(p.__getattribute__(type),type))
+            bags.append(disp_bag(p,p.plural_names[plural_name]))
         except AttributeError:
             continue
     return render_to_response('view_project.html', locals(), context_instance=RequestContext(request))
     
-def view_bag(request, ref):
+def view_bag(request, plural_name):
     p = Project.from_pitzdir(settings.PITZ_DIR)
-    pitz_bag = p.__getattribute__(ref)
-    order_form, filter_form = appforms.make_order_filter_forms(p.plural_names[ref])
+    entity_class = p.plural_names[plural_name]
+    #order_form = appforms.make_order_form(p.plural_names[plural_name])
     if request.GET:
-        order_forms = formset_factory(order_form, extra=2)(request.GET, prefix='order')
-        filter_forms = formset_factory(filter_form, extra=2)(request.GET, prefix='filter')
-        equal_filter_dict = {}
-	not_equal_filter_dict = {}
-        for form in filter_forms.forms:
-            if form.is_valid() and len(form.cleaned_data):
-	        if form.cleaned_data['b']==u'eq':
-                    equal_filter_dict[str(form.cleaned_data['a'])] = form.cleaned_data['c']
-		elif form.cleaned_data['b']==u'neq':
-		    not_equal_filter_dict[str(form.cleaned_data['a'])] = form.cleaned_data['c']
-        if len(equal_filter_dict):
-            pitz_bag = pitz_bag.matches_dict(**equal_filter_dict)
-	if len(not_equal_filter_dict):
-	    pitz_bag = extras.filter_neq(pitz_bag, not_equal_filter_dict)
-        order_list = []
-        for form in order_forms.forms:
-            if form.is_valid() and len(form.cleaned_data):
-                order_list.append((form.cleaned_data['order_by'],form.cleaned_data['reverse']))
-        def special_cmp(e1,e2):
-            for o in order_list:
-                result = cmp(e1[str(o[0])],e2[str(o[0])])
-                if result != 0:
-                   if o[1]:
-                       result=-result
-                   return result
-            return 0
-        pitz_bag.order(order_method=special_cmp)
+        bag = disp_bag(p, entity_class, extras.filter_from_GET(request.GET))
+    #    order_forms = formset_factory(order_form, extra=2)(request.GET, prefix='order')
+    #    filter_form = appforms.make_filter_form(p.plural_names[plural_name], request.GET)
+    #    pitz_bag = filter_form.filter_bag(pitz_bag)
+    #    order_list = []
+    #    for form in order_forms.forms:
+    #        if form.is_valid() and len(form.cleaned_data):
+    #            order_list.append((form.cleaned_data['order_by'],form.cleaned_data['reverse']))
+    #    def special_cmp(e1,e2):
+    #        for o in order_list:
+    #            result = cmp(e1[str(o[0])],e2[str(o[0])])
+    #            if result != 0:
+    #               if o[1]:
+    #                   result=-result
+    #               return result
+    #        return 0
+    #    pitz_bag.order(order_method=special_cmp)
+    #else:
+    #    order_forms = formset_factory(order_form, extra=2)(prefix='order')
+    #    filter_form = appforms.make_filter_form(p.plural_names[plural_name])
     else:
-        order_forms = formset_factory(order_form, extra=2)(prefix='order')
-        filter_forms = formset_factory(filter_form, extra=2)(prefix='filter')
-    bag = disp_bag(pitz_bag,ref)
+        bag = disp_bag(p, entity_class)#filter_form.get_filter_link())
     return render_to_response('view_bag.html', locals(), context_instance=RequestContext(request))
     
 def view_entity(request, uuid):
     p = Project.from_pitzdir(settings.PITZ_DIR)
     e = get_entity_or_404(uuid, p)
-    # # find things which have this entity listed as their entity... like
-    # # comments :)
-    # related = p.matches_dict(entity=e)
-
-    # find anything with any field as this entity (eep!)
-    related = []
-    #related2 = []
-    #for k in [x[0] for x in p.attributes]:
-    #    # python magic: pass dictionary as explicit kwargs:
-    #    matches = p.matches_dict(**{k:e})
-    #    # TODO: faster intersection...
-    #    for m in matches:
-    #        if not m in related:
-    #            related2.append(m)
-    #related2 = disp_bag_by_type(related2)
-    for plural_name in p.plural_names:
-        fields = extras.get_all_variables(p.plural_names[plural_name])
-        for field_name in fields:
-            if fields[field_name]==type(e) or (type(fields[field_name])==list and fields[field_name][0]==type(e)):
-                related.append((disp_bag(p.__getattribute__(plural_name).matches_dict(**{field_name:e}),plural_name),field_name))
-    entity = disp_entity(e, related)
+    entity = disp_entity(e)
     return render_to_response('view_entity.html', locals(), context_instance=RequestContext(request))
     
 @login_required
