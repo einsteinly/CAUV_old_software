@@ -95,7 +95,7 @@ bool AUVController::enabled() {
 
 void AUVController::onMotorMessage(MotorMessage_ptr message) {
     try {
-        m_auv->motors[message->motorId()]->update(message->speed());
+        m_auv->motors.at(message->motorId())->update(message->speed());
     } catch (std::out_of_range){
         error() << "invalid MotorId passed to controller in " << __FUNCTION__;
     }
@@ -146,7 +146,7 @@ void AUVController::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_pt
 
 void AUVController::onDebugMessage(DebugMessage_ptr message) {
     try {
-        m_auv->logs[message->type()]->update(message->msg());
+        m_auv->logs.at(message->type())->update(message->msg());
     } catch (std::out_of_range){
         error() << "invalid DebugType passed to controller in " << __FUNCTION__;
     }
@@ -158,7 +158,7 @@ void AUVController::onDebugLevelMessage(DebugLevelMessage_ptr message) {
 
 void AUVController::onImageMessage(ImageMessage_ptr message) {
     try {
-        m_auv->cameras[message->get_source()]->update(message->image());
+        m_auv->cameras.at(message->get_source())->update(message->image());
     } catch (std::out_of_range){
         error() << "invalid CameraID passed to controller in " << __FUNCTION__;
     }
