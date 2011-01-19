@@ -68,19 +68,18 @@ void VideoScreen::setName(const std::string name){
 QSize VideoScreen::sizeHint() const{
     float aspect = 1;
 
-    if(m_image.height() > 0)
-        aspect = m_image.width() / m_image.height();
+    // can't lock mutex here as its const
+    //if(m_image.height() > 0)
+    //    aspect = m_image.width() / m_image.height();
 
     int height = 300 * aspect;
     return QSize(300, height);
 }
 
 void VideoScreen::paintEvent(QPaintEvent * arg) {
-    debug() << "Repaint started in VideoScreen";
-    QPainter p(this);
     m_updateMutex.lock();
+    QPainter p(this);
     p.drawImage(rect(), m_image);
-    m_updateMutex.unlock();
     p.end();
-    debug() << "Repaint finished in  VideoScreen";
+    m_updateMutex.unlock();
 }
