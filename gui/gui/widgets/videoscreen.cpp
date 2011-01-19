@@ -21,16 +21,17 @@ VideoScreen::VideoScreen(const QString name, QWidget *parent) :
 {
     ui->setupUi(this);
     setName(name);
-
-    connect(this, SIGNAL(imageUpdated(QImage)), this, SLOT(redraw(QImage)), Qt::BlockingQueuedConnection);
 }
 
 VideoScreen::~VideoScreen(){
     delete(ui);
 }
 
-void VideoScreen::setImage(QImage image){
-    Q_EMIT imageUpdated(image);
+void VideoScreen::setImage(QImage &image){
+    m_updateMutex.lock();
+    m_image = image.copy();
+    m_updateMutex.unlock();
+    update();
 }
 
 void VideoScreen::setImage(Image &img){
@@ -67,27 +68,19 @@ void VideoScreen::setName(const std::string name){
 QSize VideoScreen::sizeHint() const{
     float aspect = 1;
 
-
-    //m_updateMutex.lock();
-    //if(m_image.height() > 0)
-    //    aspect = m_image.width() / m_image.height();
-    //m_updateMutex.unlock();
+    if(m_image.height() > 0)
+        aspect = m_image.width() / m_image.height();
 
     int height = 300 * aspect;
     return QSize(300, height);
 }
 
-void VideoScreen::redraw(QImage image){
-    m_image = image;
-    repaint();
-}
-
-
 void VideoScreen::paintEvent(QPaintEvent * arg) {
     debug() << "Repaint started in VideoScreen";
-    QImage copy = QImage(m_image);
     QPainter p(this);
-    p.drawImage(rect(), copy);
+    m_updateMutex.lock();
+    p.drawImage(rect(), m_image);
+    m_updateMutex.unlock();
     p.end();
     debug() << "Repaint finished in  VideoScreen";
 }
