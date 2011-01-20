@@ -88,8 +88,9 @@ class disp_entity():
 class disp_bag():
     def __init__(self, project, entity_class, bag_filter=extras.filter_null_obj()):
         self.entity_class = entity_class
+        self.errors = {}
         self.bag_filter = bag_filter
-        self.elements = filter(bag_filter, entity_class.all())
+        self.elements = filter(extras.ErrorCatcher(bag_filter, self.errors), entity_class.all())
     def title(self):
         return self.entity_class.plural_name
     def view_ref(self):

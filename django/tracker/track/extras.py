@@ -38,36 +38,35 @@ def title_or_str(obj):
     """
     if isinstance(obj, Entity): return obj['title']
     return obj
+
+#custom filter exception
+class FilterError(Exception):
+    def __init__(self, filter_id, msg_id, message):
+        self.filter_id = filter_id
+        self.msg_id = msg_id
+        self.message = message
+    def __str__(self):
+        return str(self.messages)
+        
+class ErrorCatcher():
+    #intercepts errors and places them in a dictionary
+    def __init__(self, filter_object, error_dict):
+        self.filter_object = filter_object
+        self.error_dict = error_dict
+    def __call__(self, entity):
+        try:
+            return self.filter_object(entity)
+        except FilterError as error:
+            if error.filter_id in self.error_dict:
+                if error.msg_id in self.error_dict[error.filter_id]:
+                    self.error_dict[error.filter_id][error.msg_id][0] += 1
+                    return
+                self.error_dict[error.filter_id][error.msg_id] = [1, error.message]
+                return
+            self.error_dict[error.filter_id]={error.msg_id:[1, error.message]}
+            return
+            
 #since filters cant tell the difference between filters, entity properties and values, they just call them all
-class filter_entity_property():
-    """
-    an entity property
-    note that calling a.b is like entity[a][b]
-    """
-    def __init__(self, name, *args, **kwargs):
-        #regardless of the source, the second arg is always name
-        self.name=name
-    def __call__(self, entity):
-        cur_obj=entity
-        for x in self.name.split('.'):
-            cur_obj = cur_obj[x]
-        return cur_obj
-    def to_list(self, filters, values, counter=0):
-        filters.append('ep')
-        values.append(self.name)
-        counter+=1
-        return filters, values, counter
-class filter_value():
-    def __init__(self, value, *args, **kwargs):
-        #ditto
-        self.value = value
-    def __call__(self, entity):
-        return self.value
-    def to_list(self, filters, values, counter=0):
-        filters.append('va')
-        values.append(self.value)
-        counter+=1
-        return filters, values, counter
 class filter_obj():
     def __init__(self, *args, **kwargs):
         if 'from_str' in kwargs:
@@ -77,6 +76,15 @@ class filter_obj():
         self.values = args
         return
     def __call__(self, entity):
+        try:
+            return self.subcall(entity)
+        except (IndexError, FilterError, TypeError) as error:
+            if isinstance(error, FilterError):
+                raise error
+            elif isinstance(error, TypeError):
+                raise FilterError(self,0,'Type Error. Probably means the filters are misconfigured.')
+            raise FilterError(self,1,"Some value isn't set.")
+    def subcall(self, entity):
         return True
     def to_list(self, filters, values, counter=0):
         value_pos=[]
@@ -95,6 +103,42 @@ class filter_obj():
         return string
     def string_repr(self):
         return ''
+class filter_entity_property(filter_obj):
+    """
+    an entity property
+    note that calling a.b is like entity[a][b]
+    """
+    def __init__(self, name, *args, **kwargs):
+        #regardless of the source, the second arg is always name
+        self.name=name
+    def __call__(self, entity):
+        cur_obj=entity
+        try:
+            for x in self.name.split('.'):
+                cur_obj = cur_obj[x]
+        except (TypeError, KeyError):
+            raise FilterError(self,0,'Could not find entity property '+self.name)
+        return cur_obj
+    def to_list(self, filters, values, counter=0):
+        filters.append('ep')
+        values.append(self.name)
+        counter+=1
+        return filters, values, counter
+    def string_repr(self):
+        return 'ep'
+class filter_value(filter_obj):
+    def __init__(self, value, *args, **kwargs):
+        #ditto
+        self.value = value
+    def __call__(self, entity):
+        return self.value
+    def to_list(self, filters, values, counter=0):
+        filters.append('va')
+        values.append(self.value)
+        counter+=1
+        return filters, values, counter
+    def string_repr(self):
+        return 'va'
         
 class filter_null_obj(filter_obj):
     def to_list(self, filters, values, counter=0):
@@ -107,48 +151,48 @@ class filter_null_obj(filter_obj):
     
 #filters
 class filter_eq(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         return self.values[0](entity) == self.values[1](entity)
     def string_repr(self):
         return 'eq'
 class filter_neq(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         return self.values[0](entity) != self.values[1](entity)
     def string_repr(self):
         return 'ne'
 class filter_all(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         for value in self.values:
             if not value(entity): return False
         return True
     def string_repr(self):
         return 'ao'
 class filter_none(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         for value in self.values:
             if value(entity): return False
         return True
     def string_repr(self):
         return 'no'
 class filter_atleast_one(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         for value in self.values:
             if value(entity): return True
         return False
     def string_repr(self):
         return 'on'
 class filter_and(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         return self.values[0](entity) and self.values[1](entity)
     def string_repr(self):
         return 'nd'
 class filter_or(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         return self.values[0](entity) or self.values[1](entity)
     def string_repr(self):
         return 'or'
 class filter_xor(filter_obj):
-    def __call__(self, entity):
+    def subcall(self, entity):
         return self.values[0](entity) ^ self.values[1](entity)
     def string_repr(self):
         return 'xo'

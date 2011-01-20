@@ -13,6 +13,17 @@
         <div id="filterSpace"></div>
     <input id="submit" type="submit" value="Order/Filter" onClick="filter()" /> 
     </div>
+    {% if bag.errors %}
+    <div class="messages">
+        <ul>
+        {% for filter in bag.errors.items %}
+            {% for message in filter.1.items %}
+                <li>{{ message.1.0 }} entities were ommitted because of error "{{ message.1.1 }}" in filter {{ filter.0 }}</li>
+            {% endfor %}
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
     <ul>
     {% for entity in bag.elements %}
     <li><a href="{{ ROOT_URL }}/view/entity/{{ entity.uuid }}">{{ entity.title }}</a></li>
