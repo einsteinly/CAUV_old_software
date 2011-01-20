@@ -2,14 +2,14 @@ from pitz.bag import Bag
 from pitz.entity import Entity
 known_pitz_fields = ('modified_time','created_time', 'created_by','frag','type','yaml_file_saved','uuid' ) #created_by is defined in the save method of the form
 #here we can define extra fields..
-extra_fields = {
-                """
-                example
-                'entity type plural name': {
-                        field name: field type,
-                        }
-                """
-                }
+"""
+example
+'entity type plural name': {
+        field name: field type,
+        }
+"""
+extra_fields = { }
+
 def get_all_variables(entity_type):
     """
     returns a list of all known editable fields associated with this entity_type
@@ -156,7 +156,10 @@ class filter_xor(filter_obj):
 class filter_matches_dict(filter_obj):
     def __init__(self, dict, *args, **kwargs):
         if 'from_str' in kwargs:
-            self.value = {pair[0]:pair[1] for pair in [x.split(':') for x in dict.split(';')]}
+            #self.value = {pair[0]:pair[1] for pair in [x.split(':') for x in dict.split(';')]}
+            self.value = {}
+            for pair in [x.split(':') for x in dict.split(';')]:
+                self.value[pair[0]] = pair[1]
             return
         self.value = dict
         return

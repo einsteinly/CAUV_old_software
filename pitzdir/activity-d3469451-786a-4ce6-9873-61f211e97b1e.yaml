@@ -1,0 +1,18 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: &id001 2011-01-19 21:20:32.451994
+description: "description changed to Any issues that need to be fixed\r\n-check activities\
+  \ not being created bug\r\n-deal with misconfiguration or non existant field errors\
+  \ in new filter system rather than raising an exception\r\n-restore auto setting\
+  \ related fields when a new entity is added from a potentially related entity\r\n\
+  -change logged in as anonymous to not logged in\ntitle changed to Webapp Bugs"
+entity: !!python/object:uuid.UUID
+  int: 93751004644977580736293481611952237590
+modified_time: *id001
+pscore: 0
+title: Jason Wyatt changed <pitz.Task 4687c9 Webapp Bugs>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 280833576142083901688364139326571379486
+who_did_it: *id002
+yaml_file_saved: 2011-01-19 21:20:32.452097
