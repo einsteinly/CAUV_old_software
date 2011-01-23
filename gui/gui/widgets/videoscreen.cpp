@@ -36,13 +36,22 @@ void VideoScreen::setImage(QImage &image){
 
 void VideoScreen::setImage(Image &img){
     try {
-        debug() << "Image passed to VideoScreen";
-        cv::Mat mat_rgb;
-        cv::cvtColor(img.cvMat(), mat_rgb, CV_BGR2RGB);
-        QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols, mat_rgb.rows, QImage::Format_RGB888);
-        debug() << "QImage created in VideoScreen";
+        cv::Mat mat = img.cvMat();
+
+        int channels = mat.channels();
+
+        if(channels == 1) {
+            cv::Mat result;
+            cv::cvtColor(mat, result,CV_GRAY2RGB);
+            mat = result;
+        }
+        else if(channels == 3) {
+            cv::cvtColor(mat, mat, CV_BGR2RGB);
+        }
+
+        QImage qImage((const unsigned char*)(mat.data), mat.cols, mat.rows, QImage::Format_RGB888);
+
         setImage(qImage);
-        debug() << "QImage set";
     } catch (cv::Exception ex){
         error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
     }
@@ -76,7 +85,7 @@ QSize VideoScreen::sizeHint() const{
     return QSize(300, height);
 }
 
-void VideoScreen::paintEvent(QPaintEvent * arg) {
+void VideoScreen::paintEvent(QPaintEvent*) {
     m_updateMutex.lock();
     QPainter p(this);
     p.drawImage(rect(), m_image);
