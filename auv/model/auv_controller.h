@@ -8,12 +8,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include <boost/signals.hpp>
+#include <boost/signals/trackable.hpp>
 
 #include "auv_model.h"
 
 namespace cauv{
 
-class AUVController : public MessageObserver {
+    class AUVController : public MessageObserver, public boost::signals::trackable {
 
 public:
 

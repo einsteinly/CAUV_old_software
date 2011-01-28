@@ -66,6 +66,10 @@ namespace cauv {
             setupPlot();
         }
 
+        virtual ~GraphWidget(){
+            std::cout << "destroyed GraphWidget" << std::endl;
+        }
+
         QSize sizeHint() const;
         void setupPlot();
         void dropEvent(QDropEvent * event);
