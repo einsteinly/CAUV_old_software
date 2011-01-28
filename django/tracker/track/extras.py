@@ -1,6 +1,11 @@
 from pitz.bag import Bag
 from pitz.entity import Entity
-known_pitz_fields = ('modified_time','created_time', 'created_by','frag','type','yaml_file_saved','uuid' ) #created_by is defined in the save method of the form
+
+#PITZ FIELD ANALYSIS STUFF
+
+#these fields should not be modified by the user
+known_pitz_fields = ('modified_time','created_time', 'created_by','frag','type','yaml_file_saved','uuid' )
+ 
 #here we can define extra fields..
 """
 example
@@ -8,7 +13,10 @@ example
         field name: field type,
         }
 """
-extra_fields = { }
+extra_fields = {'comments':{
+                            'entity': Entity#otherwise get_all_variables will resort to the first entry, which will be a particular type of entity
+                            },
+                }
 
 def get_all_variables(entity_type):
     """
@@ -21,14 +29,15 @@ def get_all_variables(entity_type):
     """
     fields = {}
     try:
-        for variable in entity_type.all()[0]: # get the name/type of variables in the first member of the bag
-	    if not variable in known_pitz_fields:
+        for variable in entity_type.all()[0]: #get the name/type of variables in the first member of the bag
+            if not variable in known_pitz_fields:
                 fields[variable] = type(entity_type.all()[0][variable])
     except IndexError:
         pass
     fields.update(entity_type.allowed_types)
     if entity_type.plural_name in extra_fields:
-        fields.update(extra_fields[entity_type.plural_name])
+        for field in extra_fields[entity_type.plural_name]:
+            fields[field] = extra_fields[entity_type.plural_name][field]
     return fields
 
 #some random stuff (needed later)
@@ -47,9 +56,13 @@ class FilterError(Exception):
         self.message = message
     def __str__(self):
         return str(self.messages)
+
+#FILTERING SYSTEM STUFF
         
 class ErrorCatcher():
-    #intercepts errors and places them in a dictionary
+    """
+    intercepts filter errors and places them in a dictionary, counting filters of the same type from the same node
+    """
     def __init__(self, filter_object, error_dict):
         self.filter_object = filter_object
         self.error_dict = error_dict
@@ -66,9 +79,15 @@ class ErrorCatcher():
             self.error_dict[error.filter_id]={error.msg_id:[1, error.message]}
             return
             
-#since filters cant tell the difference between filters, entity properties and values, they just call them all
+#all the types of filter
 class filter_obj():
+    """
+    All filters inherit from this, but should override subcall, and str represent with the filter method and filter initials respectively
+    """
     def __init__(self, *args, **kwargs):
+        """
+        Set values. if from_str is specified then the first value is a string of indices seperated by, and the second is a list of values with values in indices corresponding to values for this function
+        """
         if 'from_str' in kwargs:
             value_indices = args[0].split(',')
             self.values = [args[1][int(x)] for x in value_indices]
@@ -76,6 +95,9 @@ class filter_obj():
         self.values = args
         return
     def __call__(self, entity):
+        """
+        encloses subcall in some try except statements to generate the right errors
+        """
         try:
             return self.subcall(entity)
         except (IndexError, FilterError, TypeError) as error:
@@ -87,6 +109,10 @@ class filter_obj():
     def subcall(self, entity):
         return True
     def to_list(self, filters, values, counter=0):
+        """
+        Converts the filter to a list of filter string representations and a list of values
+        counter keeps track of the index so filters depending on other filters can specify those filter positions
+        """
         value_pos=[]
         for value in self.values:
             filters, values, counter=value.to_list(filters, values, counter)
@@ -96,6 +122,9 @@ class filter_obj():
         counter+=1
         return filters, values, counter
     def to_string(self):
+        """
+        Calls to_list then converts to a string
+        """
         filters=[]
         values=[]
         filters, values, counter = self.to_list(filters, values)
@@ -103,10 +132,13 @@ class filter_obj():
         return string
     def string_repr(self):
         return ''
+        
+#special cases (that arent really filters, more ways of accessing values)
 class filter_entity_property(filter_obj):
     """
     an entity property
     note that calling a.b is like entity[a][b]
+    if the property is another entity, returns the entity title
     """
     def __init__(self, name, *args, **kwargs):
         #regardless of the source, the second arg is always name
@@ -118,7 +150,7 @@ class filter_entity_property(filter_obj):
                 cur_obj = cur_obj[x]
         except (TypeError, KeyError):
             raise FilterError(self,0,'Could not find entity property '+self.name)
-        return cur_obj
+        return title_or_str(cur_obj)
     def to_list(self, filters, values, counter=0):
         filters.append('ep')
         values.append(self.name)
@@ -143,12 +175,7 @@ class filter_value(filter_obj):
 class filter_null_obj(filter_obj):
     def to_list(self, filters, values, counter=0):
         return filters, values, counter
-    
-#since it gets used so much
-#class filter_obj_2(filter_obj):
-#    def __init__(self, value1, value2):
-#        self.values = (value1, value2)
-    
+        
 #filters
 class filter_eq(filter_obj):
     def subcall(self, entity):
@@ -196,7 +223,7 @@ class filter_xor(filter_obj):
         return self.values[0](entity) ^ self.values[1](entity)
     def string_repr(self):
         return 'xo'
-#uses pitz match dict on entities. not as flexible but quicker
+#uses pitz match dict on entities. not as flexible but quicker. Has to override some things.
 class filter_matches_dict(filter_obj):
     def __init__(self, dict, *args, **kwargs):
         if 'from_str' in kwargs:
@@ -214,7 +241,9 @@ class filter_matches_dict(filter_obj):
         values.append(';'.join([str(i)+':'+title_or_str(v) for i,v in self.value.items()]))
         counter+=1
         return filters, values, counter
-        
+
+#LISTS OF FILTERS
+#all_filters is used to convert back to filters given a string representation
 all_filters = {
             'ao':filter_all,
             'on':filter_atleast_one,
@@ -228,7 +257,8 @@ all_filters = {
             'ep':filter_entity_property,
             'va':filter_value,
             }
-            
+
+#specifies the list of filters javascript has to deal with, string_repr: (display name, number of values it accepts) -1 means unlimited no of values
 js_filters = {
             'ao':('All of',-1),
             'on':('Atleast one of',-1),
@@ -245,7 +275,10 @@ js_filters = {
             }
 
 def filter_from_GET(GET_data):
-    #not that in filters appear in order of calcuability in the lists
+    """
+    Given some GET data, extracts filter info and reconstructs the filter
+    """
+    #note that in filters appear in order of calcuability in the lists
     f=GET_data.getlist('f')
     v=GET_data.getlist('v')
     finished = []

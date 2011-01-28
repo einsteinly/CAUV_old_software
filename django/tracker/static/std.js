@@ -2,7 +2,7 @@
 Note on javascript annoyingness.....
 any function has access to, and will overwrite if another value of the same name is used by that function, variables in the parent scope...
 */
-    function add_extra(form_name){
+function add_extra(form_name){
     var total_forms_field = document.getElementById('id_'+form_name+'-TOTAL_FORMS');
     total_forms_field.value = parseInt(total_forms_field.value) + 1;
     document.order_filter_form.submit();
@@ -156,4 +156,48 @@ function load(){
     else{cur=generate('-','',[])}
     cur.parent = document.getElementById('filterSpace');
     document.getElementById('filterSpace').appendChild(cur);
+    }
+//display stuff
+function show(bag,counter){
+    var child = document.getElementById(bag+'_'+counter);
+    var parent_obj = document.getElementById(bag+'_dbox');
+    if(parent_obj.hasChildNodes()){
+        for(child2 in parent_obj.childNodes){
+                if(parent_obj.childNodes[child2].style){parent_obj.childNodes[child2].style.display='none';}
+            } 
+        }
+    if(child.style){child.style.display='block';}
+    }
+function scopepreserver(a,b) {
+  return function () {
+    show(a,b);
+  };
+}
+function load_display_handlers(){
+    var related_bags = document.getElementById('related_bags');
+    for(cont in related_bags.childNodes){
+        if(related_bags.childNodes[cont].tagName=='DIV'){
+            var bag = related_bags.childNodes[cont].children[0];
+            var id = bag.id;
+            var dbox = document.getElementById(id+'_dbox');
+            var ul;
+            for(var child in bag.childNodes){
+                if(bag.childNodes[child].tagName == 'UL'){
+                    ul = bag.childNodes[child];
+                    }
+                }
+            for(var li in ul.childNodes){
+                if(ul.childNodes[li].tagName=='LI'){
+                    var counter = ul.childNodes[li].id;
+                    var new_function = scopepreserver(id, counter);
+                    hidden_text = document.getElementById(id+'_'+counter);
+                    dbox.appendChild(hidden_text);
+                    if(hidden_text.style){hidden_text.style.display='none';}
+                    //Grrrr IE :(
+                    if(ul.childNodes[li].addEventListener){ul.childNodes[li].addEventListener('mouseover',new_function,false);}
+                    else{ul.childNodes[li].attachEvent('onmouseover',new_function);}
+                    }
+                }
+            }
+        }
     }

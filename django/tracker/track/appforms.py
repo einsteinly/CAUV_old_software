@@ -5,106 +5,139 @@ from pitz.entity import Entity, Activity
 from uuid import UUID
 from tracker import settings
 
+#USER UUID FORM
 class useruuid_form(forms.ModelForm):
     class Meta:
         model = models.UserProfile
         exclude = ('uuid')
 
-#textarea and pscore  fields (since when we call fields, we dont know what field we are calling, so cant pass required arguments)
+#ENTITY FORM
+#any pitz fields that require something special (like a widget) that is specified when the class is called
+
+#TEXTAREA FIELD: used anywhere were more space is needed (e.g. description field)
 class Textarea(forms.CharField):
     def __init__(self, **kwargs):
         super(Textarea, self).__init__(widget=forms.Textarea, **kwargs)
 
-#this defines the descriptions that math to pscores
+#PSCORE FIELD: since Pscore is a number, this maps it to a more useful description
+#this defines the descriptions that map to pscores. Note that changing these will mess up any already set
 pscore_choices = ((None, 'N/A'),
                   (0, 'Useless'),
                   (1, 'Would be nice'),
-		  (2, 'Long term goal'),
-		  (3, 'Short term goal'),
-		  (4, 'Urgent'),
-		  (5, 'Critical'))
+                  (2, 'Long term goal'),
+                  (3, 'Short term goal'),
+                  (4, 'Urgent'),
+                  (5, 'Critical'))
 
 class PscoreField(forms.ChoiceField):
     def __init__(self, **kwargs):
         super(PscoreField, self).__init__(choices = pscore_choices, **kwargs)
 
-#defs for first run fields
+#DEFINES DEFAULT BEHAVIOUR FOR FIELDS
 type_to_field = {
                 datetime: forms.DateField,
+                bool: forms.BooleanField,
                 int: forms.IntegerField,
                 str: Textarea,
-		unicode: Textarea
+                unicode: Textarea
                     }
 
 name_to_field = {
                 'title': forms.CharField,
-		'pscore': PscoreField
-		}
+                'pscore': PscoreField,
+                }
 
-def get_EntityChoiceField(entity_type):                    
+#ENTITY FIELDS
+def get_EntityChoiceField(entity_type, project):
+    """
+    Given an entity type and a project, returns the class of a django single choice field with the right choices and clean method
+    Note that although entity type has an all method, this doesn't work in all cases
+    """
     class EntityChoiceField(forms.ChoiceField):
         def __init__(self, initial=None, **kwargs):
             if initial:
-                super(EntityChoiceField, self).__init__(choices=[[e.uuid, e] for e in self.entity_type.all()], initial=initial.uuid, **kwargs)
+                super(EntityChoiceField, self).__init__(choices=[[e.uuid, e] for e in project if isinstance(e, entity_type)], initial=initial.uuid, **kwargs)
             else:
-                super(EntityChoiceField, self).__init__(choices=[[e.uuid, e] for e in self.entity_type.all()], **kwargs)
+                super(EntityChoiceField, self).__init__(choices=[[e.uuid, e] for e in project if isinstance(e, entity_type)], **kwargs)
         def clean(self, value):
             uuid = super(EntityChoiceField, self).clean(value)
             if uuid:
-                return self.entity_type.all().by_uuid(UUID(uuid))
+                return project.by_uuid(UUID(uuid))
             return None
+    #these fields are needed elsewhere to chec
     EntityChoiceField.entity_type = entity_type
+    EntityChoiceField.is_entitychoice = 1
     return EntityChoiceField
 
-def get_EntityMultipleChoiceField(entity_type):        
+def get_EntityMultipleChoiceField(entity_type, project): 
+    """
+    Given an entity type and a project, returns the class of a django multiple choice field with the right choices and clean method
+    Note that although entity type has an all method, this doesn't work in all cases
+    """       
     class EntityMultipleChoiceField(forms.MultipleChoiceField):
         def __init__(self, initial=None, **kwargs):
             if initial:
-                super(EntityMultipleChoiceField, self).__init__(choices=[[e.uuid, e] for e in self.entity_type.all()], initial=[e.uuid for e in initial], **kwargs)
+                super(EntityMultipleChoiceField, self).__init__(choices=[[e.uuid, e] for e in project if isinstance(e, entity_type)], initial=[e.uuid for e in initial], **kwargs)
             else:
-                super(EntityMultipleChoiceField, self).__init__(choices=[[e.uuid, e] for e in self.entity_type.all()], **kwargs)
+                super(EntityMultipleChoiceField, self).__init__(choices=[[e.uuid, e] for e in project if isinstance(e, entity_type)], **kwargs)
         def clean(self, value):
             uuids = super(EntityMultipleChoiceField, self).clean(value)
-            entities = self.entity_type.all()
-            return [entities.by_uuid(UUID(uuid)) for uuid in uuids]
+            return [project.by_uuid(UUID(uuid)) for uuid in uuids]
     EntityMultipleChoiceField.entity_type = entity_type
+    EntityMultipleChoiceField.is_entitychoice = 2
     return EntityMultipleChoiceField
 
-def analyse(entity_type):
+#ANALYSE FUNCTION
+def analyse(entity_type, project):
+    """
+    Given an entity type and a project, generates a list of django field classes
+    """
     variables = extras.get_all_variables(entity_type)
     fields={}
     for var_name in variables:
         if isinstance(variables[var_name], list):
             if issubclass(variables[var_name][0], Entity):
-                fields[var_name] = get_EntityMultipleChoiceField(variables[var_name][0])
+                fields[var_name] = get_EntityMultipleChoiceField(variables[var_name][0], project)
         elif issubclass(variables[var_name], Entity):
-            fields[var_name] = get_EntityChoiceField(variables[var_name])
+            fields[var_name] = get_EntityChoiceField(variables[var_name], project)
         else:
             try:
-	        fields[var_name] = name_to_field[var_name]
-	    except KeyError:
-	        try:
+                fields[var_name] = name_to_field[var_name]
+            except KeyError:
+                try:
                     fields[var_name] = type_to_field[variables[var_name]]
                 except KeyError: #fallback on text field
                     fields[var_name] = forms.CharField
     return fields
-        
+
+#ACTUAL FORM MAKING METHOD
 def make_entity_form(entity_type, project, initial=None):
-    field_classes = analyse(entity_type) # get field types +names
+    """
+    Given an entity_type and a project, generates a django form with approroate save method.
+    If initial is specified, tries to fill the form with initial data (initial must be an entity)
+    """
+    #get the field dictionary
+    field_classes = analyse(entity_type, project)
     fields = {}
-    
-    if initial: #if were given some data, try and generate from said data, otherwise fall back to default, then empty
+    #if were given an entity, try and generate from entity, otherwise fall back to default, then empty
+    if initial:
+        #specifies the entity an entity associated with this form
         entity = initial
+        #for each field try and generate it with the entity data, which throws a key error if the entity doesnt have it
         for field_class in field_classes:
             try:
                 fields[field_class] = field_classes[field_class](initial=initial[field_class], required=False)
             except KeyError:
                 fields[field_class] = field_classes[field_class](required=False)
+        #specifies whether a new entity is being created
         isnew = False
     else:
+        #generate the fields
         for field_class in field_classes:
             fields[field_class] = field_classes[field_class](required=False)
         i = {}
+        #for each field check whether its a required field, then fill in data accordingly
+        #pitz specifies default for some and not for others, these clauses work around that
         for x in entity_type.required_fields:
             if entity_type.required_fields[x] == None:
                 i[x] = ''
@@ -112,10 +145,15 @@ def make_entity_form(entity_type, project, initial=None):
                 i[x] = entity_type.required_fields[x](project)
             else:
                 i[x] = entity_type.required_fields[x]
-        entity = entity_type(**i)#need to set required fields
+        #create entity with these default values
+        entity = entity_type(**i)
         isnew = True
+    #specify the project the entity is associated with
     entity.project=project
     def save(self, user):
+        """
+        Save method for form. Takes the data, checks whether its changed, tries to save it and generate an activity entity
+        """
         changed = []
         for x in self.cleaned_data:
             try:
@@ -129,17 +167,8 @@ def make_entity_form(entity_type, project, initial=None):
             self.entity['created_by'] = user
         if len(changed):
             activity = Activity(title=str(user)+" changed "+str(self.entity),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=self.entity)
+            activity.project = project
             activity.to_yaml_file(settings.PITZ_DIR)
             self.entity.to_yaml_file(settings.PITZ_DIR)
         return
-    return type('entity_form', (forms.BaseForm,), { 'base_fields': fields, 'entity':entity, 'isnew': isnew, 'save': save })
-
-def make_order_form(entity_type):
-    analysis = analyse(entity_type)
-    choices = [(x, x) for x in analysis]
-    choices.append(('','None'))
-    class order_form(forms.Form):
-        order_by = forms.ChoiceField(choices=choices,label='Order by',initial='')
-        reverse = forms.BooleanField(label='Reverse', required=False)
-    return order_form
-        
+    return type('entity_form', (forms.BaseForm,), { 'base_fields': fields, 'entity':entity, 'isnew': isnew, 'save': save})
