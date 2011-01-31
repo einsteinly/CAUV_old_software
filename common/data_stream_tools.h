@@ -12,6 +12,9 @@
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/signals/trackable.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace cauv {
 
@@ -88,23 +91,27 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamRecorder {
+    class DataStreamRecorder : public boost::signals::trackable {
 
     public:
         DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int maximum = 1000):
-                m_maximum(maximum), m_stream(stream) {
+                m_maximum(maximum) {
             stream->onUpdate.connect(boost::bind(&DataStreamRecorder<T>::change, this, _1));
         };
 
-        const std::vector<T>& getHistory() const {
+        const std::vector<T> getHistory() const {
+            boost::mutex::scoped_lock lock(m_mutex);
             return m_history;
         }
 
         void clear() {
+            boost::mutex::scoped_lock lock(m_mutex);
             m_history.clear();
         }
 
-        void change(const T &data) {
+        void change(T &data) {
+            boost::mutex::scoped_lock lock(m_mutex);
+
             if (!m_history.empty() && m_history.size() > m_maximum)
                 m_history.erase(m_history.begin());
 
@@ -112,9 +119,9 @@ namespace cauv {
         };
 
     protected:
+        boost::mutex m_mutex;
         std::vector<T> m_history;
         unsigned int m_maximum;
-        boost::shared_ptr<DataStream<T> > m_stream;
     };
 
 
@@ -125,17 +132,17 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamPrinter {
+    class DataStreamPrinter : public boost::signals::trackable {
 
     public:
         DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream, const std::ostream &output):
-                m_stream(stream), m_ostream(output) {
-            stream->onUpdate.connect(boost::bind(&DataStreamPrinter<T>::change, this, _1));
+                m_ostream(output) {
+            m_connection = stream->onUpdate.connect(boost::bind(&DataStreamPrinter<T>::change, this, _1));
         };
 
         DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream):
-                m_stream(stream), m_ostream(std::cout) {
-            stream->onUpdate.connect(boost::bind(&DataStreamPrinter<T>::change, this, _1));
+                m_ostream(std::cout) {
+            m_connection = stream->onUpdate.connect(boost::bind(&DataStreamPrinter<T>::change, this, _1));
         };
 
         void change(const T &data) {
@@ -143,7 +150,7 @@ namespace cauv {
         };
 
     protected:
-        boost::shared_ptr<DataStream<T> > m_stream;
+        boost::signals::connection m_connection;
         std::ostream& m_ostream;
     };
 
