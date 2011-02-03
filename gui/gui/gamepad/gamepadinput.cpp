@@ -79,22 +79,22 @@ InputManager * GamepadInput::getInputSystem() {
     return InputManager::createInputSystem(pl);
 }
 
-bool GamepadInput::buttonPressed( const JoyStickEvent &arg, int button ) const {
+bool GamepadInput::buttonPressed( const JoyStickEvent &arg, int button ) {
         std::cout << std::endl << arg.device->vendor() << ". Button Pressed # " << button;
         return true;
 }
-bool GamepadInput::buttonReleased( const JoyStickEvent &arg, int button ) const {
+bool GamepadInput::buttonReleased( const JoyStickEvent &arg, int button ) {
         std::cout << std::endl << arg.device->vendor() << ". Button Released # " << button;
         return true;
 }
-bool GamepadInput::axisMoved( const JoyStickEvent &arg, int axis ) const
+bool GamepadInput::axisMoved( const JoyStickEvent &arg, int axis ) 
 {
         //Provide a little dead zone
         if( arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )
                 std::cout << std::endl << arg.device->vendor() << ". Axis # " << axis << " Value: " << arg.state.mAxes[axis].abs;
         return true;
 }
-bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov ) const
+bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov ) 
 {
         std::cout << std::endl << arg.device->vendor() << ". POV" << pov << " ";
 
@@ -115,7 +115,7 @@ bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov ) const
         return true;
 }
 
-bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index) const
+bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index) 
 {
         std::cout.precision(2);
         std::cout.flags(std::ios::fixed | std::ios::right);
