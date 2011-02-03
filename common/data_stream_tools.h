@@ -135,7 +135,7 @@ namespace cauv {
     class DataStreamPrinter : public boost::signals::trackable {
 
     public:
-        DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream, const std::ostream &output):
+        DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream, std::ostream &output):
                 m_ostream(output) {
             m_connection = stream->onUpdate.connect(boost::bind(&DataStreamPrinter<T>::change, this, _1));
         };
