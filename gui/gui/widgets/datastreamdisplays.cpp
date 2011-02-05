@@ -37,6 +37,9 @@ template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
 template<> void DataStreamTreeItem<Image>::onChange(const Image value){
 
     try {
+        if (value.cvMat().empty())
+            return;
+
         cv::Mat mat_rgb;
         cv::cvtColor(value.cvMat(), mat_rgb, CV_BGR2RGB);
 
