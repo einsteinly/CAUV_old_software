@@ -27,18 +27,6 @@ struct depth_calibration_t {
     }
 };
 
-struct sonar_params_t {
-    int direction, width, gain, range, radialRes, angularRes;
-
-    sonar_params_t(int direction, int width, int gain, int radialRes, int angularRes) :
-    direction(direction), width(width), gain(gain), radialRes(radialRes), angularRes(angularRes) {
-    }
-
-    sonar_params_t():
-        direction(0), width(0), gain(0), radialRes(0), angularRes(0) {
-    }
-};
-
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, depth_calibration_t const& s)
@@ -48,21 +36,6 @@ std::basic_ostream<char_T, traits>& operator<<(
     os << ")";
     os << " aft (" << s.aftOffset;
     os << ", x" << s.afteMultiplier;
-    os << ")";
-    return os;
-}
-
-
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, sonar_params_t const& s)
-{
-    os << "( ar=" << s.angularRes;
-    os << ", rr=" << s.radialRes;
-    os << ", range=" << s.range;
-    os << ", dir=" << s.direction;
-    os << ", gain=" << s.gain;
-    os << ", width=" << s.width;
     os << ")";
     return os;
 }
@@ -169,10 +142,21 @@ public:
     class Sonar : public Camera {
     public:
 
-        Sonar(const std::string name) : Camera(name), params(boost::make_shared<MutableDataStream< sonar_params_t > >("Params", this)) {
+        Sonar(const std::string name) : Camera(name),
+            angularRes(boost::make_shared<MutableDataStream< int > >("Angular Resolution", this)),
+            radialRes(boost::make_shared<MutableDataStream< int > >("Radial Resolution", this)),
+            range(boost::make_shared<MutableDataStream< int > >("Range", this)),
+            direction(boost::make_shared<MutableDataStream< int > >("Direction", this)),
+            gain(boost::make_shared<MutableDataStream< int > >("Gain", this)),
+            width(boost::make_shared<MutableDataStream< int > >("Width", this)) {
         }
 
-        boost::shared_ptr< MutableDataStream< sonar_params_t > > params;
+        boost::shared_ptr< MutableDataStream< int > > angularRes;
+        boost::shared_ptr< MutableDataStream< int > > radialRes;
+        boost::shared_ptr< MutableDataStream< int > > range;
+        boost::shared_ptr< MutableDataStream< int > > direction;
+        boost::shared_ptr< MutableDataStream< int > > gain;
+        boost::shared_ptr< MutableDataStream< int > > width;
     };
 
     typedef boost::unordered_map<CameraID::e, boost::shared_ptr<Camera> > camera_map;

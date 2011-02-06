@@ -19,13 +19,13 @@ DataStreamTreeItemBase::DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase>
     if(stream->isMutable()) {
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
+
+    connect(this, SIGNAL(iconUpdated(int, QImage)), this, SLOT(updateIcon(int, QImage)), Qt::BlockingQueuedConnection);
 }
 
 boost::shared_ptr<DataStreamBase> DataStreamTreeItemBase::getDataStreamBase(){
     return m_stream;
 }
-
-
 
 
 template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
@@ -43,7 +43,8 @@ template<> void DataStreamTreeItem<Image>::onChange(const Image value){
         QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
                                mat_rgb.rows, QImage::Format_RGB888);
 
-        //this->setIcon(1, QIcon(QPixmap::fromImage(qImage)));
+        // Add a fancy icon in the data stream list with the current view from the camera.
+        Q_EMIT this->iconUpdated(1, qImage);
 
     } catch (cv::Exception ex){
         error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
@@ -56,18 +57,11 @@ template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant &value){
 
 template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& ){
     // TODO: implement, should recognise something like (1.0, 2.0, 3.0)
-    throw new boost::bad_lexical_cast;
     return floatYPR();
 }
 
-template<> sonar_params_t DataStreamTreeItem<sonar_params_t>::qVariantToValue(QVariant& ){
-    // TODO: implement it
-    throw new boost::bad_lexical_cast;
-    return sonar_params_t();
-}
-
 template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& ){
-    throw new boost::bad_lexical_cast;
+    // this shouldn't ever be used
     return Image();
 }
 
@@ -110,7 +104,10 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
 
 
     // set up the categories
+
+    //
     // motors
+    //
     QTreeWidgetItem *motors = new QTreeWidgetItem(ui->dataStreams);
     motors->setText(0, "Motors");
     motors->setFlags(motors->flags() ^ Qt::ItemIsSelectable);
@@ -120,7 +117,9 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
         new DataStreamTreeItem<int8_t>(i.second, motors);
     }
 
+    //
     // autopilots
+    //
     QTreeWidgetItem *autopilots = new QTreeWidgetItem(ui->dataStreams);
     autopilots->setText(0, "Autopilots");
     autopilots->setFlags(autopilots->flags() ^ Qt::ItemIsSelectable);
@@ -134,7 +133,9 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
         new DataStreamTreeItem<float>(i.second->scale, "scale", autopilot);
     }
 
-    // cameras
+    //
+    // imaging devices
+    //
     QTreeWidgetItem *cameras = new QTreeWidgetItem(ui->dataStreams);
     cameras->setText(0, "Imaging");
     cameras->setFlags(cameras->flags() ^ Qt::ItemIsSelectable);
@@ -142,11 +143,23 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
 
     foreach(AUV::camera_map::value_type i, auv->cameras) {
         DataStreamTreeItem<Image> * camera = new DataStreamTreeItem<Image>(i.second, cameras);
-        if(i.first == CameraID::Sonar)
-            new DataStreamTreeItem<sonar_params_t>(boost::shared_static_cast<AUV::Sonar>(auv->cameras[CameraID::Sonar])->params, "Params", camera);
+
+        // special case for sonars as they have params
+        if(dynamic_cast<AUV::Sonar*>(i.second.get())) {
+            boost::shared_ptr<AUV::Sonar> sonar = boost::shared_static_cast<AUV::Sonar>(auv->cameras[CameraID::Sonar]);
+
+            new DataStreamTreeItem<int>(sonar->direction, "Direction", camera);
+            new DataStreamTreeItem<int>(sonar->angularRes, "Angular Resolution", camera);
+            new DataStreamTreeItem<int>(sonar->radialRes, "Radial Resolution", camera);
+            new DataStreamTreeItem<int>(sonar->gain, "Gain", camera);
+            new DataStreamTreeItem<int>(sonar->range, "Range", camera);
+            new DataStreamTreeItem<int>(sonar->width, "Width", camera);
+        }
     }
 
-    // misc sensors
+    //
+    // sensors
+    //
     QTreeWidgetItem *sensors = new QTreeWidgetItem(ui->dataStreams);
     sensors->setText(0, "Sensors");
     sensors->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);
@@ -160,7 +173,9 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     new DataStreamTreeItem<float>(auv->sensors.orientation_split->pitch, orientation);
     new DataStreamTreeItem<float>(auv->sensors.orientation_split->roll, orientation);
 
+    //
     // other
+    //
     QTreeWidgetItem *other = new QTreeWidgetItem(ui->dataStreams);
     other->setText(0, "Other");
     other->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);

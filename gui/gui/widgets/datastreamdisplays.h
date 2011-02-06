@@ -30,14 +30,22 @@ namespace cauv {
       *
       * @author Andy Pritchard
       */
-    class DataStreamTreeItemBase : public QTreeWidgetItem {
-        
+    class DataStreamTreeItemBase : public QObject, public QTreeWidgetItem {
+        Q_OBJECT
     public:
         DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase> stream, QTreeWidgetItem * parent);
         virtual ~DataStreamTreeItemBase(){}
         boost::shared_ptr<DataStreamBase> getDataStreamBase();
         virtual bool updateStream(QVariant& ) = 0;
         
+    protected Q_SLOTS:
+        void updateIcon(int cell, QImage image){
+            this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
+        }
+
+    Q_SIGNALS:
+        void iconUpdated(int cell, QImage image);
+
     private:
         boost::shared_ptr<DataStreamBase> m_stream;
     };
@@ -52,7 +60,7 @@ namespace cauv {
       */
     template<class T>
     class DataStreamTreeItem : public DataStreamTreeItemBase {
-        
+
     public:
         DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, QTreeWidgetItem * parent) :
                 DataStreamTreeItemBase(stream, parent), m_stream(stream) {
@@ -104,9 +112,8 @@ namespace cauv {
     template<> void DataStreamTreeItem<Image>::onChange(const Image value);
     // another for int8_t for much the same reason but with lexical cast this time
     template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant& value);
-    // also need some for out types as lexical cast doesn't knwo what to do
+    // also need some for out types as lexical cast doesn't know what to do
     template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& value);
-    template<> sonar_params_t DataStreamTreeItem<sonar_params_t>::qVariantToValue(QVariant& value);
     template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& value);
     
     

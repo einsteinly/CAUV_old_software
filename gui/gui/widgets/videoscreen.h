@@ -1,9 +1,11 @@
 #ifndef VIDEOSCREEN_H
 #define VIDEOSCREEN_H
 
-#include <QWidget>
+#include <boost/signals/trackable.hpp>
 
+#include <QWidget>
 #include <QMutex>
+
 class QPixmap;
 class QSize;
 class QString;
@@ -15,7 +17,7 @@ namespace Ui {
 namespace cauv {
     class Image;
 
-    class VideoScreen : public QWidget
+    class VideoScreen : public QWidget, public boost::signals::trackable
     {
         Q_OBJECT
     public:

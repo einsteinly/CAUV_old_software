@@ -74,7 +74,7 @@ public:
     void sendDebugLevelMessage(int32_t level);
     template<class T, class S> void sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);
     template<class T, class S> void sendAutopilotParamsMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);
-    void sendSonarParamsMessage(sonar_params_t params);
+    void sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar);
     void sendDepthCalibrationMessage(depth_calibration_t params);
 
     boost::signal<void(const boost::shared_ptr<Message>)> onMessageGenerated;
