@@ -9,7 +9,31 @@ from tracker import settings
 class useruuid_form(forms.ModelForm):
     class Meta:
         model = models.UserProfile
-        exclude = ('uuid')
+        fields = ('uuid')
+        
+class preferences_form(forms.Form):
+    class Meta:
+        model = models.UserProfile
+        exclude = ('uuid', 'user')
+        
+def make_pref_form(user_profile):
+    class preferences_form(forms.ModelForm):
+        class Meta:
+            model = models.UserProfile
+            exclude = ('uuid', 'user')
+        shortcuts = forms.ModelMultipleChoiceField(queryset=user_profile.usershortcut_set.all())
+        def __init__(self, *args, **kwargs):
+            if 'instance' in kwargs:
+                initial = kwargs.setdefault('initial', {})
+                initial['shortcuts'] = [shortcut.pk for shortcut in kwargs['instance'].usershortcut_set.all()]
+            forms.ModelForm.__init__(self, *args, **kwargs)
+        def save(self):
+            instance = forms.ModelForm.save(self)
+            for shortcut in instance.usershortcut_set.all():
+                shortcut.delete()
+            for shortcuts in self.cleaned_data['shortcuts']:
+                instance.usershortcut_set.add(shortcut)
+    return preferences_form
 
 #ENTITY FORM
 #any pitz fields that require something special (like a widget) that is specified when the class is called

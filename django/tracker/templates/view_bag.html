@@ -8,9 +8,17 @@
 {% block content %}
 <div class="bag">
     <div class="item_key"> {{ bag.title }} </div>
-    <div class="bag_toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.add_ref }}">Add</a></div>
+    <div class="toolbox"><a href="{{ ROOT_URL }}/add/entity/{{ bag.add_ref }}">Add</a>{% if request.user.get_profile.custom_bags %}<span id="add_bag1"> | <a onClick="show_bag_form()">Add this bag to the home screen</a></span></div>
+    <div class="toolbox" id="bag_form_div" style="display:none">
+        <form action="{{ ROOT_URL }}/accounts/bags/add/" method="POST" id="bag_form"><input type="hidden" name="bag_type" value="{{ bag.title }}"><input type="hidden" name="fltr_ref" value="{{ bag.filter_ref }}">Bag name: <input type="text" name="name"> <a onclick="submit_bag_form()">Add</a> | <a onclick="hide_bag_form()">Cancel</a></form>
+    </div>
+    {% else %}
+    </div>
+    {% endif %}
     <div class="bag_toolbox">
         <div id="filterSpace"></div>
+    </div><div class="bag_toolbox">
+        <div id="orderSpace"></div>
     <input id="submit" type="submit" value="Order/Filter" onClick="filter()" /> 
     </div>
     {% if bag.errors %}
@@ -30,8 +38,8 @@
     {% endfor %}
     </ul>
 </div>
-<script language="javascript">
+{% endblock %}
+{% block endscripts %}
 //we need to run these at the end to make sure things have loaded first
-load()
-</script>
+bag_load()
 {% endblock %}

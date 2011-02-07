@@ -1,5 +1,6 @@
 from pitz.bag import Bag
 from pitz.entity import Entity
+from django.http import QueryDict
 
 #PITZ FIELD ANALYSIS STUFF
 
@@ -58,6 +59,24 @@ class FilterError(Exception):
         return str(self.messages)
 
 #FILTERING SYSTEM STUFF
+
+class order_obj():
+    def __init__(self, values=[], reverse=[]):
+        self.values = values
+        self.reverse = reverse
+        if len(self.reverse) < len(self.values):
+            self.reverse.extend([''*(len(self.values)-len(self.reverse))])
+    def __call__(self, e1, e2):
+        for index, attr in enumerate(self.values):
+            try:
+                if not self.reverse[index]:
+                    return cmp(e1[attr], e2[attr])
+                return -cmp(e1[attr], e2[attr])
+            except KeyError:
+                continue
+        return 0
+    def to_string(self):
+        return 'o='+'&o='.join(self.values)+'&r='+'&r='.join(self.reverse)
         
 class ErrorCatcher():
     """
@@ -187,6 +206,16 @@ class filter_neq(filter_obj):
         return self.values[0](entity) != self.values[1](entity)
     def string_repr(self):
         return 'ne'
+class filter_lt(filter_obj):
+    def subcall(self, entity):
+        return self.values[0](entity) < self.values[1](entity)
+    def string_repr(self):
+        return 'lt'
+class filter_gt(filter_obj):
+    def subcall(self, entity):
+        return self.values[0](entity) > self.values[1](entity)
+    def string_repr(self):
+        return 'gt'
 class filter_all(filter_obj):
     def subcall(self, entity):
         for value in self.values:
@@ -250,6 +279,8 @@ all_filters = {
             'no':filter_none,
             'eq':filter_eq,
             'ne':filter_neq,
+            'lt':filter_lt,
+            'gt':filter_gt,
             'nd':filter_and,
             'or':filter_or,
             'xo':filter_xor,
@@ -265,6 +296,8 @@ js_filters = {
             'no':('None of',-1),
             'eq':('equals',2),
             'ne':('does not equal',2),
+            'lt':('is less than',2),
+            'gt':('is greater than',2),
             'nd':('and',2),
             'or':('or',2),
             'xo':('xor',2),
@@ -274,6 +307,11 @@ js_filters = {
             '-':('-',0),
             }
 
+def order_from_GET(GET_data):
+    o=GET_data.getlist('o')
+    r=GET_data.getlist('r')
+    return order_obj(o, r)
+    
 def filter_from_GET(GET_data):
     """
     Given some GET data, extracts filter info and reconstructs the filter
@@ -284,4 +322,10 @@ def filter_from_GET(GET_data):
     finished = []
     for index, filter in enumerate(f):
         finished.append(all_filters[filter](v[index], finished, from_str=True))
-    return finished[-1]
+    if finished:
+        return finished[-1]
+    return filter_null_obj()
+    
+def filter_order_from_str(string):
+    qdict = QueryDict(string)
+    return filter_from_GET(qdict),order_from_GET(qdict)

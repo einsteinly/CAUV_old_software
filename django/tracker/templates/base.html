@@ -10,14 +10,43 @@
     <div id="header">
         <div id="header_location">{% block breadcrumbs %}<a href="{{ ROOT_URL }}/">Home</a> {% endblock %}</div>
         <div id="header_user">
-            {% if request.user.is_authenticated %}You are logged in as <b>{{ request.user }}</b>. <a href="{{ ROOT_URL }}/accounts/logout/">Logout</a>
-            {% else %}You are not logged in. <a href="{{ ROOT_URL }}/accounts/login">Login</a>{% endif %}
+            {% if request.user.is_authenticated %}You are logged in as <b>{{ request.user }}</b>. <a href="{{ ROOT_URL }}/help/">Help</a> | <a href="{{ ROOT_URL }}/accounts/preferences/">User Preferences</a> | <a href="{{ ROOT_URL }}/accounts/logout/">Logout</a>
+            {% else %}You are not logged in. <a href="{{ ROOT_URL }}/accounts/login">Login</a> | <a href="{{ ROOT_URL }}/help/">Help</a>{% endif %}
         </div>
     </div>
     <div id="content">
+    {% block shortcuts %}
+    {% if request.user.is_authenticated %}
+        {% if request.user.get_profile.custom_shortcuts %}
+            <div class="toolbox">
+            | {% for shortcut in request.user.get_profile.usershortcut_set.all %}<a href="{{ ROOT_URL }}{{ shortcut.url }}">{{ shortcut.name }}</a> | {% endfor %}<span id="add_shortcut1"><a onclick="show_shortcut_form()">Add shorcut to this page</a> |</span>
+            </div>
+            <div class="toolbox" id="shortcut_form_div" style="display:none">
+                <form action="{{ ROOT_URL }}/accounts/shortcuts/add/" method="POST" id="shortcut_form"><input type="hidden" name="url" value="{{request.get_full_path}}">Shortcut name: <input type="text" name="name"> <a onclick="submit_shortcut_form()">Add</a> | <a onclick="hide_shortcut_form()">Cancel</a></form>
+            </div>
+        {% else %}
+            <div class="toolbox">
+            | <a href="{{ ROOT_URL }}/view/bag/tasks/?f=ep&v=owner.title&f=va&v={{ user.title }}&f=eq&v=0,1" >My Tasks</a>
+            | <a href="{{ ROOT_URL }}/view/bag/tasks/?f=ep&v=owner.title&f=va&v=no+owner&f=eq&v=0,1&f=ep&v=status&f=va&v=finished&f=ne&v=3,4&f=nd&v=2,5">Unassigned Tasks</a> |
+            </div>{% comment %}if these break, then check the filter pattern hasn't changed{% endcomment %} 
+            <div class="toolbox">
+            You don't have custom shortcuts enabled. Would you like to <a href="{{ ROOT_URL }}/help/#custom_shortcuts">learn more?</a>
+            </div>
+        {% endif %}
+    {% else %}
+    <div class="toolbox">
+    | <a href="{{ ROOT_URL }}/view/bag/tasks/?f=ep&v=owner.title&f=va&v=no+owner&f=eq&v=0,1&f=ep&v=status&f=va&v=finished&f=ne&v=3,4&f=nd&v=2,5">Unassigned Tasks</a> |
+    </div>
+    {% endif %}
+    {% endblock %}
     {% block content %}
     {% endblock %}
     </div>
 </div>
+<script language="javascript">
+//load()
+{% block endscripts %}
+{% endblock %}
+</script>
 </body>
 </html>
