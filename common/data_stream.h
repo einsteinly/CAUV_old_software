@@ -5,10 +5,12 @@
 
 #include <boost/signal.hpp>
 #include <boost/function.hpp>
+#include <boost/thread.hpp>
+
 
 namespace cauv {
 
-    class DataStreamBase {
+    class DataStreamBase : public boost::recursive_mutex {
 
         public:
         DataStreamBase(const std::string name, const std::string units, DataStreamBase* parent = NULL): m_parent(parent), m_name(name), m_units(units) {
@@ -57,6 +59,7 @@ namespace cauv {
             DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, "", parent), m_latest(T()) {};
 
             virtual void update(const T data) {
+                boost::recursive_mutex::scoped_lock lock(*((boost::recursive_mutex*) this));
                 this->m_latest = data;
                 this->onUpdate(data);
             }
@@ -67,6 +70,7 @@ namespace cauv {
             }
 
             virtual T latest() const {
+                boost::recursive_mutex::scoped_lock lock(*((boost::recursive_mutex*) this));
                 return this->m_latest;
             }
     };
@@ -89,6 +93,7 @@ namespace cauv {
             virtual bool isMutable(){return true;}
 
             virtual void set(const T data) {
+                boost::recursive_mutex::scoped_lock lock(*((boost::recursive_mutex*) this));
                 this->update(data);
                 this->onSet(data);
             }
