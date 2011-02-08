@@ -65,6 +65,7 @@ public:
 
     protected:
         const MotorID::e &m_id;
+        const std::string m_name;
     };
 
     typedef boost::unordered_map<MotorID::e, boost::shared_ptr<Motor> > motor_map;
@@ -89,13 +90,16 @@ public:
     class Autopilot : public MutableDataStream<T> {
     public:
 
-        Autopilot(const std::string name, const T initialTarget) :
-        MutableDataStream<T>(name),
+        Autopilot(const std::string name, boost::shared_ptr<DataStream<T> > actualValue, const T initialTarget, const T min, const T max, const std::string units="") :
+        MutableDataStream<T>(name, units),
         kP(boost::make_shared< MutableDataStream<float> >("kP", this)),
         kI(boost::make_shared< MutableDataStream<float> >("kI", this)),
         kD(boost::make_shared< MutableDataStream<float> >("kD", this)),
         scale(boost::make_shared< MutableDataStream<float> >("scale", this)),
-        enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)) {
+        enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)),
+        actual(actualValue),
+        m_max(max),
+        m_min(min) {
             this->update(initialTarget);
             this->enabled->update(false);
         };
@@ -105,6 +109,20 @@ public:
         boost::shared_ptr< MutableDataStream<float> > kD;
         boost::shared_ptr< MutableDataStream<float> > scale;
         boost::shared_ptr< MutableDataStream<bool> > enabled;
+        boost::shared_ptr< DataStream<T> > actual;
+
+
+        T getMax(){
+            return m_max;
+        }
+
+        T getMin(){
+            return m_min;
+        }
+
+    protected:
+        const T m_max;
+        const T m_min;
     };
 
     typedef boost::unordered_map<std::string, boost::shared_ptr<Autopilot<float> > > autopilot_map;
@@ -182,8 +200,8 @@ public:
         Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
         pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
         depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
-        depth(boost::make_shared<DataStream<float> >("Depth")),
-        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")),
+        depth(boost::make_shared<DataStream<float> >("Depth", "m")),
+        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation", "°")),
         orientation_split(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(orientation)) {
         }
     } sensors;

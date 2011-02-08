@@ -13,6 +13,7 @@ namespace Ui {
 }
 
 class QDoubleSpinBox;
+class QCheckBox;
 class QPushButton;
 
 namespace cauv {
@@ -33,8 +34,23 @@ namespace cauv {
     };
 
 
+    class AutopilotController : public QObject {
+    Q_OBJECT
+    public:
+
+        AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, boost::shared_ptr<AUV::Autopilot<float> > autopilot);
+
+    public Q_SLOTS:
+        void updateState(bool value);
+        void updateTarget(double value);
+
+    protected:
+        boost::shared_ptr<AUV::Autopilot<float> > m_autopilot;
+    };
+
+
     class MotorControls : public QDockWidget, public CauvInterfaceElement {
-        Q_OBJECT
+
     public:
         MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
         virtual ~MotorControls();
@@ -43,19 +59,10 @@ namespace cauv {
     protected:
         void setValue(QDoubleSpinBox *spin, double value);
 
-    protected Q_SLOTS:
-        void bearingAutopilotTargetUpdated();
-        void bearingAutopilotStateUpdated();
-
-        void pitchAutopilotTargetUpdated();
-        void pitchAutopilotStateUpdated();
-
-        void depthAutopilotTargetUpdated();
-        void depthAutopilotStateUpdated();
-
     private:
         Ui::MotorControls * ui;
         std::vector<boost::shared_ptr<MotorBurstController> > m_burst_controllers;
+        std::vector<boost::shared_ptr<AutopilotController> > m_autopilot_controllers;
 
     };
 } // namespace cauv

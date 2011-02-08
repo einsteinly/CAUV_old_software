@@ -3,11 +3,12 @@
 
 #include <boost/signals/trackable.hpp>
 
-#include <QWidget>
-#include <QMutex>
+#include <boost/thread.hpp>
 
-class QPixmap;
+#include <QWidget>
+
 class QSize;
+class QImage;
 class QString;
 
 namespace Ui {
@@ -15,6 +16,7 @@ namespace Ui {
 }
 
 namespace cauv {
+
     class Image;
 
     class VideoScreen : public QWidget, public boost::signals::trackable
@@ -23,25 +25,27 @@ namespace cauv {
     public:
         explicit VideoScreen(const QString name, QWidget *parent = 0);
         virtual ~VideoScreen();
-        QSize sizeHint() const;
+        int heightForWidth( int w ) const;
 
-    private:
-        Ui::VideoScreen * ui;
+    protected:      
+        boost::scoped_ptr<Image> m_new_image;
+        boost::scoped_ptr<Image> m_current_image;
 
-    protected:
-        QMutex m_updateMutex;
-        QImage m_image;
         void paintEvent(QPaintEvent *);
 
     public Q_SLOTS:
-        void setImage(Image &image);
-        void setImage(QImage &image);
+        void setImage(const Image &image);
 
         void setInfo(const QString text);
         void setInfo(const std::string text);
 
         void setName(const QString name);
         void setName(const std::string name);
+
+    private:
+        Ui::VideoScreen * ui;
+        boost::mutex m_updateMutex;
+        boost::scoped_ptr<QImage> m_qImage;
     };
 } // namespace cauv
 #endif // VIDEOSCREEN_H

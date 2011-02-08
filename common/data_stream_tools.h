@@ -34,9 +34,9 @@ namespace cauv {
 
     public:
         DataStreamSplitter<cauv::floatYPR>(boost::shared_ptr<DataStream<cauv::floatYPR> > stream) :
-                yaw(boost::make_shared<DataStream<float> >("Yaw")),
-                pitch(boost::make_shared<DataStream<float> >("Pitch")),
-                roll(boost::make_shared<DataStream<float> >("Roll"))
+                yaw(boost::make_shared<DataStream<float> >("Yaw", stream->getUnits())),
+                pitch(boost::make_shared<DataStream<float> >("Pitch", stream->getUnits())),
+                roll(boost::make_shared<DataStream<float> >("Roll", stream->getUnits()))
         {
             // getter function binds
             boost::function<float(cauv::floatYPR)> yawGetter = boost::bind(&cauv::floatYPR::yaw, _1);
@@ -62,9 +62,9 @@ namespace cauv {
 
     public:
         DataStreamSplitter<cauv::floatXYZ>(boost::shared_ptr<DataStream<cauv::floatXYZ> > stream) :
-                x(boost::make_shared<DataStream<float> >("X")),
-                y(boost::make_shared<DataStream<float> >("Y")),
-                z(boost::make_shared<DataStream<float> >("Z"))
+                x(boost::make_shared<DataStream<float> >("X", stream->getUnits())),
+                y(boost::make_shared<DataStream<float> >("Y", stream->getUnits())),
+                z(boost::make_shared<DataStream<float> >("Z", stream->getUnits()))
         {
             // getter function binds
             boost::function<float(cauv::floatXYZ)> xGetter = boost::bind(&cauv::floatXYZ::x, _1);

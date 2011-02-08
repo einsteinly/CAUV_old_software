@@ -17,6 +17,8 @@
 #include "cauvinterfaceelement.h"
 #include "datastreamdragging.h"
 
+#include <cstdio>
+
 namespace Ui {
     class DataStreamPicker;
 }
@@ -65,19 +67,23 @@ namespace cauv {
         DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, QTreeWidgetItem * parent) :
                 DataStreamTreeItemBase(stream, parent), m_stream(stream) {
             stream->onUpdate.connect(boost::bind(&DataStreamTreeItem<T>::onChange, this, _1));
-            this->setText(0, QString::fromStdString(stream->getName()));
+            this->setText(0, QString::fromStdString(stream->getName(false)));
             onChange(stream->latest());
         }
         
-        DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, std::string name, QTreeWidgetItem * parent) :
-                DataStreamTreeItemBase(stream, parent), m_stream(stream) {
-            stream->onUpdate.connect(boost::bind(&DataStreamTreeItem<T>::onChange, this, _1));
-            this->setText(0, QString::fromStdString(name));
-            onChange(stream->latest());
-        }
-        
-        T qVariantToValue(QVariant& value){
-            return boost::lexical_cast<T>(value.toString().toStdString());
+        T qVariantToValue(QVariant& v){
+            std::string value = v.toString().toStdString();
+
+            try {
+                int unitsLength = m_stream->getUnits().length();
+                // take out where the units should be
+                std::string units = value.substr(value.length()-unitsLength, unitsLength);
+                if(units == m_stream->getUnits()){
+                    value = value.substr(0, value.length()-unitsLength);
+                }
+            } catch (std::out_of_range){ }
+
+           return boost::lexical_cast<T>(value);
         }
         
         virtual bool updateStream(QVariant& value){
@@ -89,6 +95,8 @@ namespace cauv {
                 info() << m_stream->getName() << " value changed to: " << value.toString().toStdString();
                 return true;
             } catch (boost::bad_lexical_cast){
+                std::cout << "bad value = " << value.toString().toStdString().c_str() << std::endl;
+                printf("%s", value.toString().toStdString().c_str());
                 info() << m_stream->getName() << " given a bad value:" << value.toString().toStdString();
                 return false;
             }
@@ -99,8 +107,8 @@ namespace cauv {
         
         void onChange(const T value) {
             std::stringstream stream;
-            stream << value;
-            this->setText(1, QString::fromStdString(stream.str()));
+            stream << value << m_stream->getUnits();
+            this->setText(1, QString::fromUtf8(stream.str().c_str()));
         }
     };
     
@@ -179,7 +187,6 @@ public:
 private Q_SLOTS:
     void editStarted(QTreeWidgetItem* item, int column);
     void itemEdited(QTreeWidgetItem* item, int column);
-    void editEnded(QTreeWidgetItem* , QTreeWidgetItem* previous);
 };
 
 #endif // DATASTREAMDISPLAYS_H

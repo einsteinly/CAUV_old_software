@@ -42,7 +42,7 @@ template<> void DataStreamTreeItem<Image>::onChange(const Image value){
 
         QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
                                mat_rgb.rows, QImage::Format_RGB888);
-
+        
         // Add a fancy icon in the data stream list with the current view from the camera.
         Q_EMIT this->iconUpdated(1, qImage);
 
@@ -62,7 +62,7 @@ template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& ){
 
 template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& ){
     // this shouldn't ever be used
-    return Image();
+    throw new boost::bad_lexical_cast;
 }
 
 
@@ -127,10 +127,11 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
 
     foreach(AUV::autopilot_map::value_type i, auv->autopilots) {
         DataStreamTreeItem<float> *autopilot = new DataStreamTreeItem<float>(i.second, autopilots);
-        new DataStreamTreeItem<float>(i.second->kP, "kP", autopilot);
-        new DataStreamTreeItem<float>(i.second->kI, "kI", autopilot);
-        new DataStreamTreeItem<float>(i.second->kD, "kD", autopilot);
-        new DataStreamTreeItem<float>(i.second->scale, "scale", autopilot);
+        new DataStreamTreeItem<float>(i.second->kP, autopilot);
+        new DataStreamTreeItem<float>(i.second->kI, autopilot);
+        new DataStreamTreeItem<float>(i.second->kD, autopilot);
+        new DataStreamTreeItem<float>(i.second->scale, autopilot);
+        (new DataStreamTreeItem<float>(i.second->actual, autopilot))->setText(0, "actual");
     }
 
     //
@@ -148,12 +149,12 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
         if(dynamic_cast<AUV::Sonar*>(i.second.get())) {
             boost::shared_ptr<AUV::Sonar> sonar = boost::shared_static_cast<AUV::Sonar>(auv->cameras[CameraID::Sonar]);
 
-            new DataStreamTreeItem<int>(sonar->direction, "Direction", camera);
-            new DataStreamTreeItem<int>(sonar->angularRes, "Angular Resolution", camera);
-            new DataStreamTreeItem<int>(sonar->radialRes, "Radial Resolution", camera);
-            new DataStreamTreeItem<int>(sonar->gain, "Gain", camera);
-            new DataStreamTreeItem<int>(sonar->range, "Range", camera);
-            new DataStreamTreeItem<int>(sonar->width, "Width", camera);
+            new DataStreamTreeItem<int>(sonar->direction, camera);
+            new DataStreamTreeItem<int>(sonar->angularRes, camera);
+            new DataStreamTreeItem<int>(sonar->radialRes, camera);
+            new DataStreamTreeItem<int>(sonar->gain, camera);
+            new DataStreamTreeItem<int>(sonar->range, camera);
+            new DataStreamTreeItem<int>(sonar->width, camera);
         }
     }
 
@@ -194,11 +195,11 @@ void DataStreamPicker::initialise(){
 
 
 
-
 DataStreamDisplayArea::DataStreamDisplayArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
         QMdiArea(parent),
         CauvInterfaceElement(name, auv, node) {
     this->setAcceptDrops(true);
+
 }
 
 void DataStreamDisplayArea::initialise(){
@@ -241,7 +242,7 @@ void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<uint16_
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<Image> > stream){
     VideoScreen * vs = new VideoScreen(QString::fromStdString(stream->getName()), this);
     addWindow(vs);
-    stream->onUpdate.connect(boost::bind(static_cast<void (VideoScreen::*)(Image&)>(&VideoScreen::setImage), vs, _1));
+    stream->onUpdate.connect(boost::bind(static_cast<void (VideoScreen::*)(const Image&)>(&VideoScreen::setImage), vs, _1));
 }
 
 
@@ -254,7 +255,6 @@ DataStreamList::DataStreamList(QWidget * parent) : QTreeWidget(parent){
     // TODO: Better would be to use a full QAbstractItemModel implementation but this is quite a
     // big job as QAbstractItemModels are complicated.
     connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(editStarted(QTreeWidgetItem*,int)));
-    connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(editEnded(QTreeWidgetItem*,QTreeWidgetItem*)));
     connect(this, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemEdited(QTreeWidgetItem*,int)));
 }
 
@@ -279,8 +279,17 @@ void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
             // not a stream update
             // TODO: find a better way of doing this. it's a bit hacky.
             if(item->flags() & Qt::ItemIsEditable) {
-                if(dsItem->updateStream(v)) item->setBackground(1, QBrush());
-                else  {
+                // disable editing again
+                // do it before the item is actually updated, otherwise this method will get
+                // called again when stream->set(...) is called.
+                item->setFlags(item->flags() & (~Qt::ItemIsEditable));
+
+                // do the update and check the result
+                if(dsItem->updateStream(v)){
+                    // reset the background if all is ok
+                    item->setBackground(1, QBrush());
+                } else  {
+                    // set different colours to show somethings not right
                     QBrush b(Qt::DiagCrossPattern);
                     b.setColor(QColor::fromRgb(224, 128, 128));
                     item->setBackground(1, b);
@@ -289,9 +298,3 @@ void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
         }
     }
 }
-
-void DataStreamList::editEnded(QTreeWidgetItem* , QTreeWidgetItem* previous){
-    if(previous) // this method resets the editable flag if the focus is lost
-        previous->setFlags(previous->flags() & (~Qt::ItemIsEditable));
-}
-

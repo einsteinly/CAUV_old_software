@@ -11,19 +11,23 @@ namespace cauv {
     class DataStreamBase {
 
         public:
-            DataStreamBase(const std::string name, DataStreamBase* parent = NULL): m_parent(parent), m_name(name) {
+        DataStreamBase(const std::string name, const std::string units, DataStreamBase* parent = NULL): m_parent(parent), m_name(name), m_units(units) {
             }
 
             virtual ~DataStreamBase(){}
 
-            virtual const std::string getName() const {
+            virtual const std::string getName(bool full=true) const {
                 std::stringstream stream;
 
-                if (m_parent != NULL)
+                if (full && m_parent != NULL)
                     stream << m_parent->getName() << " " << m_name;
                 else stream << m_name;
 
                 return stream.str();
+            }
+
+            virtual const std::string getUnits() const {
+                return m_units;
             }
 
             virtual bool isMutable(){return false;}
@@ -32,6 +36,7 @@ namespace cauv {
 
             DataStreamBase* m_parent;
             std::string m_name;
+            const std::string m_units;
     };
 
 
@@ -48,7 +53,8 @@ namespace cauv {
 
             T m_latest;
 
-            DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, parent), m_latest(T()) {};
+            DataStream(const std::string name, const std::string units, DataStreamBase* parent = NULL):DataStreamBase(name, units, parent), m_latest(T()) {};
+            DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, "", parent), m_latest(T()) {};
 
             virtual void update(const T data) {
                 this->m_latest = data;
@@ -77,7 +83,8 @@ namespace cauv {
         public:
             boost::signal<void(const T)> onSet;
 
-            MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, parent) {};
+            MutableDataStream(const std::string name, const std::string units, DataStreamBase* parent = NULL):DataStream<T>(name, units, parent) {};
+            MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, "", parent) {};
 
             virtual bool isMutable(){return true;}
 
