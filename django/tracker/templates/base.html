@@ -19,7 +19,9 @@
     {% if request.user.is_authenticated %}
         {% if request.user.get_profile.custom_shortcuts %}
             <div class="toolbox">
-            | {% for shortcut in request.user.get_profile.usershortcut_set.all %}<a href="{{ ROOT_URL }}{{ shortcut.url }}">{{ shortcut.name }}</a> | {% endfor %}<span id="add_shortcut1"><a onclick="show_shortcut_form()">Add shorcut to this page</a> |</span>
+            | <a href="{{ ROOT_URL }}/view/bag/tasks/?f=ep&v=owner.title&f=va&v={{ user.title }}&f=eq&v=0,1" >My Tasks</a>
+            | <a href="{{ ROOT_URL }}/view/bag/tasks/?f=ep&v=owner.title&f=va&v=no+owner&f=eq&v=0,1&f=ep&v=status&f=va&v=finished&f=ne&v=3,4&f=nd&v=2,5">Unassigned Tasks</a> 
+            | {% for shortcut in request.user.get_profile.usershortcut_set.all %}<a href="{{ shortcut.url }}">{{ shortcut.name }}</a> | {% endfor %}<span id="add_shortcut1"><a onclick="show_shortcut_form()">Add shorcut to this page</a> |</span>
             </div>
             <div class="toolbox" id="shortcut_form_div" style="display:none">
                 <form action="{{ ROOT_URL }}/accounts/shortcuts/add/" method="POST" id="shortcut_form"><input type="hidden" name="url" value="{{request.get_full_path}}">Shortcut name: <input type="text" name="name"> <a onclick="submit_shortcut_form()">Add</a> | <a onclick="hide_shortcut_form()">Cancel</a></form>

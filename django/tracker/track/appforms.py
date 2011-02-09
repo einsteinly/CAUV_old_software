@@ -21,7 +21,7 @@ def make_pref_form(user_profile):
         class Meta:
             model = models.UserProfile
             exclude = ('uuid', 'user')
-        shortcuts = forms.ModelMultipleChoiceField(queryset=user_profile.usershortcut_set.all())
+        shortcuts = forms.ModelMultipleChoiceField(queryset=user_profile.usershortcut_set.all(),required=False)
         def __init__(self, *args, **kwargs):
             if 'instance' in kwargs:
                 initial = kwargs.setdefault('initial', {})

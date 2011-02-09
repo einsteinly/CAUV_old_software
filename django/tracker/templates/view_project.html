@@ -5,7 +5,7 @@
 {% if request.user.get_profile.custom_bags %}
 <div class="toolbox">Entity types: {% for bag_type in bag_types %} <a href="{{ ROOT_URL }}/view/bag/{{ bag_type }}/">{{ bag_type }}</a> |{% endfor %}</div>
 {% else %}
-<div class="toolbox">You don't have custom bags enabled. Would you like to <a href="{{ ROOT_URL }}/help/#custom_bags">learn more?</a></div>
+{% if request.user.is_authenticated %}<div class="toolbox">You don't have custom bags enabled. Would you like to <a href="{{ ROOT_URL }}/help/#custom_bags">learn more?</a></div>{% endif %}
 {% endif %}
 {% for bag in bags %}
 <div class="bag">
