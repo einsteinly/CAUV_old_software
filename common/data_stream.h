@@ -54,7 +54,7 @@ namespace cauv {
     class DataStream : public DataStreamBase {
 
         public:
-        typedef boost::signals2::signal<void (const T)> signal_type;
+        typedef boost::signals2::signal<void (const T&)> signal_type;
         signal_type onUpdate;
 
             T m_latest;
@@ -62,7 +62,7 @@ namespace cauv {
             DataStream(const std::string name, const std::string units, DataStreamBase* parent = NULL):DataStreamBase(name, units, parent), m_latest(T()) {};
             DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, "", parent), m_latest(T()) {};
 
-            virtual void update(const T data) {
+            virtual void update(const T &data) {
                 // only one thread can perform any kind of updating operation at once
                 // on a DataStream object, a global lock is used to enforce this
                 boost::unique_lock<boost::recursive_mutex> lock(this->m_lock);
@@ -102,14 +102,14 @@ namespace cauv {
     class MutableDataStream : public DataStream<T> {
 
         public:
-            boost::signals2::signal<void(const T)> onSet;
+            boost::signals2::signal<void(const T&)> onSet;
 
             MutableDataStream(const std::string name, const std::string units, DataStreamBase* parent = NULL):DataStream<T>(name, units, parent) {};
             MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, "", parent) {};
 
             virtual bool isMutable(){return true;}
 
-            virtual void set(const T data) {
+            virtual void set(const T &data) {
                 boost::unique_lock<boost::recursive_mutex> lock(this->m_lock);
                 // update before set as some set slots may use latest()
                 this->update(data);

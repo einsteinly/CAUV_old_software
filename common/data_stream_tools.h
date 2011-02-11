@@ -109,7 +109,7 @@ namespace cauv {
             m_history.clear();
         }
 
-        void change(T &data) {
+        void change(const T &data) {
             boost::mutex::scoped_lock lock(m_mutex);
 
             if (!m_history.empty() && m_history.size() > m_maximum)

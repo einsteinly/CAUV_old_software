@@ -23,6 +23,8 @@ DataStreamTreeItemBase::DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase>
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
 
+    qRegisterMetaType<Image>("Image");
+
     connect(this, SIGNAL(iconUpdated(int, Image)), this, SLOT(updateIcon(int, Image)));
     connect(this, SIGNAL(valueUpdated(QString)), this, SLOT(updateValue(QString)));
 }

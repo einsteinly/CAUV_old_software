@@ -31,6 +31,8 @@ CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(a
     joinGroup("debug");
     joinGroup("telemetry");
 
+    this->setAttribute(Qt::WA_DeleteOnClose);
+
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 }
 
