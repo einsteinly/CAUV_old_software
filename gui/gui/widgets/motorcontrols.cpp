@@ -29,27 +29,20 @@ AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *tar
         m_target(target),
         m_actual(actual) {
 
-    // this looks a bit comlicated but its actually doing something simple.
-    // it converts the boost::signals to Qt signals
-    // the Qt signals then handle moving the GUI updates to the GUI thread
-
-    boost::function<void(float)> onTargetUpdateBind = boost::bind(&AutopilotController::targetUpdated, this, _1);
-    boost::function<void(float)> onActualUpdateBind = boost::bind(&AutopilotController::actualUpdated, this, _1);
-    boost::function<void(bool)> onEnabledUpdateBind = boost::bind(&AutopilotController::enabledUpdated, this, _1);
-
     //incoming events
-    autopilot->onUpdate.connect(boost::bind(&AutopilotController::emitQtSignal<float>, this, onTargetUpdateBind, _1));
-    autopilot->actual->onUpdate.connect(boost::bind(&AutopilotController::emitQtSignal<float>, this, onActualUpdateBind, _1));
-    autopilot->enabled->onUpdate.connect(boost::bind(&AutopilotController::emitQtSignal<bool>, this, onEnabledUpdateBind, _1));
+    // forward the boost signals to Qt signals 
+    autopilot->onUpdate.connect(boost::bind(&AutopilotController::targetUpdated, this, _1));
+    autopilot->actual->onUpdate.connect(boost::bind(&AutopilotController::actualUpdated, this, _1));
+    autopilot->enabled->onUpdate.connect(boost::bind(&AutopilotController::enabledUpdated, this, _1));
+
+    // internal events, makes GUI updates happen in GUI thread
+    connect(this, SIGNAL(targetUpdated(float)), this, SLOT(onTargetUpdate(float)));
+    connect(this, SIGNAL(actualUpdated(float)), this, SLOT(onActualUpdate(float)));
+    connect(this, SIGNAL(enabledUpdated(bool)), this, SLOT(onEnabledUpdate(bool)));
 
     //outgoing events
     enabled->connect(enabled, SIGNAL(clicked(bool)), this, SLOT(updateState(bool)));
     target->connect(target, SIGNAL(valueChanged(double)), this, SLOT(updateTarget(double)));
-
-    // internal events
-    connect(this, SIGNAL(targetUpdated(float)), this, SLOT(onTargetUpdate(float)));
-    connect(this, SIGNAL(actualUpdated(float)), this, SLOT(onActualUpdate(float)));
-    connect(this, SIGNAL(enabledUpdated(bool)), this, SLOT(onEnabledUpdate(bool)));
 }
 
 void AutopilotController::onEnabledUpdate(bool enabled){
@@ -109,10 +102,7 @@ MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, Q
         actual->setMaximumSize(QSize(60, 16777215));
         ui->autopilotControlsLayout->addWidget(actual, count, 3, 1, 1, Qt::AlignCenter);
 
-        // set up signals
-        //i.second->onUpdate.connect(boost::bind(&MotorControls::setValue, this, target, _1));
-        //i.second->actual->onUpdate.connect(boost::bind(static_cast<void (QLabel::*)(double)>(&QLabel::setNum), actual, _1));
-        //i.second->enabled->onUpdate.connect(boost::bind(&QCheckBox::setChecked, enabled, _1));
+        // controller for the GUI view
         m_autopilot_controllers.push_back(boost::make_shared<AutopilotController>(enabled, target, actual, i.second));
 
         count++;
