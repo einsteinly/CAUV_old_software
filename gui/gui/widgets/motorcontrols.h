@@ -3,6 +3,8 @@
 
 #include <QDockWidget>
 
+#include <boost/function.hpp>
+
 #include <common/data_stream.h>
 #include <model/auv_model.h> 
 
@@ -15,8 +17,41 @@ namespace Ui {
 class QDoubleSpinBox;
 class QCheckBox;
 class QPushButton;
+class QLabel;
 
 namespace cauv {
+
+/*
+    class DataStreamQtFwdBase : public QObject {
+        Q_OBJECT
+
+    public:
+        DataStreamQtFwdBase(){}
+
+    Q_SIGNALS:
+        void onChange(const int value);
+        void onChange(const bool value);
+        void onChange(const int8_t value);
+        void onChange(const float value);
+        void onChange(const Image value);
+        void onChange(const floatYPR value);
+        void onChange(const floatXYZ value);
+    };
+
+
+    template<class T>
+    class DataStreamQtFwd : public DataStreamQtFwdBase {
+    public:
+
+        DataStreamQtFwd(boost::shared_ptr<DataStream<T> > stream){
+            stream->onUpdate.connect(boost::bind(&DataStreamQtFwd::change, this, _1));
+        }
+
+        void change(const T value){
+            Q_EMIT this->onChange(value);
+        }
+    };
+*/
 
     class MotorBurstController : public QObject {
         Q_OBJECT
@@ -34,19 +69,43 @@ namespace cauv {
     };
 
 
+
+
     class AutopilotController : public QObject {
-    Q_OBJECT
+        Q_OBJECT
     public:
 
-        AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, boost::shared_ptr<AUV::Autopilot<float> > autopilot);
+        AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<AUV::Autopilot<float> > autopilot);
 
     public Q_SLOTS:
         void updateState(bool value);
         void updateTarget(double value);
 
+        void onEnabledUpdate(bool enabled);
+        void onTargetUpdate(float target);
+        void onActualUpdate(float actual);
+
+    Q_SIGNALS:
+        void enabledUpdated(bool enabled);
+        void targetUpdated(float target);
+        void actualUpdated(float actual);
+
     protected:
+
+        template<class S>
+        void emitQtSignal(boost::function<void(S)> func, S arg){
+            Q_EMIT func(arg);
+        }
+
         boost::shared_ptr<AUV::Autopilot<float> > m_autopilot;
+
+        QCheckBox * m_enabled;
+        QDoubleSpinBox * m_target;
+        QLabel * m_actual;
+
     };
+
+
 
 
     class MotorControls : public QDockWidget, public CauvInterfaceElement {

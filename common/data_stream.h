@@ -3,14 +3,17 @@
 
 #include <sstream>
 
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/function.hpp>
+
 #include <boost/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 
 namespace cauv {
 
-    class DataStreamBase : public boost::recursive_mutex {
+    class DataStreamBase {
 
         public:
         DataStreamBase(const std::string name, const std::string units, DataStreamBase* parent = NULL): m_parent(parent), m_name(name), m_units(units) {
@@ -36,8 +39,8 @@ namespace cauv {
 
         protected:
 
-            DataStreamBase* m_parent;
-            std::string m_name;
+            const DataStreamBase* m_parent;
+            const std::string m_name;
             const std::string m_units;
     };
 
@@ -51,7 +54,8 @@ namespace cauv {
     class DataStream : public DataStreamBase {
 
         public:
-            boost::signal<void(const T)> onUpdate;
+        typedef boost::signals2::signal<void (const T)> signal_type;
+        signal_type onUpdate;
 
             T m_latest;
 
@@ -59,8 +63,15 @@ namespace cauv {
             DataStream(const std::string name, DataStreamBase* parent = NULL):DataStreamBase(name, "", parent), m_latest(T()) {};
 
             virtual void update(const T data) {
-                boost::recursive_mutex::scoped_lock lock(*((boost::recursive_mutex*) this));
-                this->m_latest = data;
+                // only one thread can perform any kind of updating operation at once
+                // on a DataStream object, a global lock is used to enforce this
+                boost::unique_lock<boost::recursive_mutex> lock(this->m_lock);
+                {
+                    // get a unique lock while the update takes place
+                    // go back to shared lock for the onUpdate signals
+                    boost::unique_lock<boost::shared_mutex> assignmentLock(m_assignmentLock);
+                    this->m_latest = data;
+                }
                 this->onUpdate(data);
             }
 
@@ -69,10 +80,16 @@ namespace cauv {
                     update(getter(input));
             }
 
-            virtual T latest() const {
-                boost::recursive_mutex::scoped_lock lock(*((boost::recursive_mutex*) this));
+            virtual T latest() {
+                // take out a shared lock so we don't get a copy that's half way through
+                // an assignment in update() in another thread
+                boost::shared_lock<boost::shared_mutex> assignmentLock(m_assignmentLock);
                 return this->m_latest;
             }
+
+        protected:
+            boost::recursive_mutex m_lock;
+            boost::shared_mutex m_assignmentLock;
     };
 
 
@@ -85,7 +102,7 @@ namespace cauv {
     class MutableDataStream : public DataStream<T> {
 
         public:
-            boost::signal<void(const T)> onSet;
+            boost::signals2::signal<void(const T)> onSet;
 
             MutableDataStream(const std::string name, const std::string units, DataStreamBase* parent = NULL):DataStream<T>(name, units, parent) {};
             MutableDataStream(const std::string name, DataStreamBase* parent = NULL):DataStream<T>(name, "", parent) {};
@@ -93,7 +110,8 @@ namespace cauv {
             virtual bool isMutable(){return true;}
 
             virtual void set(const T data) {
-                boost::recursive_mutex::scoped_lock lock(*((boost::recursive_mutex*) this));
+                boost::unique_lock<boost::recursive_mutex> lock(this->m_lock);
+                // update before set as some set slots may use latest()
                 this->update(data);
                 this->onSet(data);
             }

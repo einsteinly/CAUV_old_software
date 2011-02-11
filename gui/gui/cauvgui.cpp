@@ -27,6 +27,7 @@ CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(a
     joinGroup("image");
     joinGroup("pl_gui");
     joinGroup("debug");
+    joinGroup("telemetry");
 
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 }

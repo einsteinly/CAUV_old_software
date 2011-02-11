@@ -1,4 +1,6 @@
 
+#include <boost/signals2.hpp>
+
 #include "datastreamdisplays.h"
 #include "ui_datastreamdisplays.h"
 
@@ -20,7 +22,8 @@ DataStreamTreeItemBase::DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase>
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
 
-    connect(this, SIGNAL(iconUpdated(int, QImage)), this, SLOT(updateIcon(int, QImage)), Qt::BlockingQueuedConnection);
+    connect(this, SIGNAL(iconUpdated(int, QImage)), this, SLOT(updateIcon(int, QImage)));
+    connect(this, SIGNAL(valueUpdated(QString)), this, SLOT(updateValue(QString)));
 }
 
 boost::shared_ptr<DataStreamBase> DataStreamTreeItemBase::getDataStreamBase(){
@@ -31,7 +34,7 @@ boost::shared_ptr<DataStreamBase> DataStreamTreeItemBase::getDataStreamBase(){
 template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
     std::stringstream stream;
     stream << (int)value;
-    this->setText(1, QString::fromStdString(stream.str()));
+    Q_EMIT valueUpdated(QString::fromUtf8(stream.str().c_str()));
 }
 
 template<> void DataStreamTreeItem<Image>::onChange(const Image value){
@@ -195,19 +198,39 @@ void DataStreamPicker::initialise(){
 
 
 
+
+class AutoDeletingMdiSubWindow : public QMdiSubWindow {
+public:
+    AutoDeletingMdiSubWindow(boost::shared_ptr<QWidget> widget) : m_widget(widget) {
+        this->setWidget(widget.get());
+        this->setAttribute(Qt::WA_DeleteOnClose);
+    }
+
+    void closeEvent(QCloseEvent *){
+        // before the window closes we need to kill the widget
+        // this will in turn disconnect any signals that may still try
+        // to use the window once it's been closed, causing a segfault
+        m_widget.reset();
+    }
+
+    boost::shared_ptr<QWidget> m_widget;
+};
+
+
+
 DataStreamDisplayArea::DataStreamDisplayArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
         QMdiArea(parent),
         CauvInterfaceElement(name, auv, node) {
     this->setAcceptDrops(true);
-
 }
 
 void DataStreamDisplayArea::initialise(){
     m_actions->registerCentralView(this, name());
 }
 
-void DataStreamDisplayArea::addWindow(QWidget *content){
-    QMdiSubWindow * window = addSubWindow(content);
+void DataStreamDisplayArea::addWindow(boost::shared_ptr<QWidget> content){
+    AutoDeletingMdiSubWindow * window = new AutoDeletingMdiSubWindow(content);
+    this->addSubWindow(window);
     window->show();
 }
 
@@ -220,29 +243,29 @@ void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
 }
 
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream){
-    addWindow(new GraphWidget(stream));
+    addWindow(boost::make_shared<GraphWidget>(stream));
 }
 
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<int> > stream){
-    addWindow(new GraphWidget(stream));
+    addWindow(boost::make_shared<GraphWidget>(stream));
 }
 
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<float> > stream){
-    addWindow(new GraphWidget(stream));
+    addWindow(boost::make_shared<GraphWidget>(stream));
 }
 
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream){
-    addWindow(new GraphWidget(stream));
+    addWindow(boost::make_shared<GraphWidget>(stream));
 }
 
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream){
-    addWindow(new GraphWidget(stream));
+    addWindow(boost::make_shared<GraphWidget>(stream));
 }
 
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<Image> > stream){
-    VideoScreen * vs = new VideoScreen(QString::fromStdString(stream->getName()), this);
+    boost::shared_ptr<VideoScreen> vs = boost::make_shared<VideoScreen>(QString::fromStdString(stream->getName()));
     addWindow(vs);
-    stream->onUpdate.connect(boost::bind(static_cast<void (VideoScreen::*)(const Image&)>(&VideoScreen::setImage), vs, _1));
+    stream->onUpdate.connect(DataStream<Image>::signal_type::slot_type(&VideoScreen::setImage, vs.get(), _1).track(vs));
 }
 
 

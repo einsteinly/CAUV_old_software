@@ -14,7 +14,7 @@
 
 namespace cauv{
 
-    class AUVController : public MessageObserver, public boost::signals::trackable {
+    class AUVController : public MessageObserver, public boost::signals2::trackable {
 
 public:
 

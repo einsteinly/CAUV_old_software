@@ -1,9 +1,8 @@
 #ifndef VIDEOSCREEN_H
 #define VIDEOSCREEN_H
 
-#include <boost/signals/trackable.hpp>
-
 #include <boost/thread.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <QWidget>
 
@@ -19,13 +18,13 @@ namespace cauv {
 
     class Image;
 
-    class VideoScreen : public QWidget, public boost::signals::trackable
+    class VideoScreen : public QWidget
     {
         Q_OBJECT
     public:
         explicit VideoScreen(const QString name, QWidget *parent = 0);
         virtual ~VideoScreen();
-        int heightForWidth( int w ) const;
+        //int heightForWidth( int w ) const;
 
     protected:      
         boost::scoped_ptr<Image> m_new_image;

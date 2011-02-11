@@ -95,16 +95,20 @@ int main(int argc, char** argv)
             std::cerr << "Error: telemetry message requires exactly four parameters (orientation.ypr, depth)" << std::endl;
             return 3;
         }
-        floatYPR orientation;
-        orientation.yaw = boost::lexical_cast<float>(argv[2]);
-        orientation.pitch = boost::lexical_cast<float>(argv[3]);
-        orientation.roll = boost::lexical_cast<float>(argv[4]);
-        float depth = boost::lexical_cast<float>(argv[5]);
 
-        boost::shared_ptr<TelemetryMessage> m = boost::make_shared<TelemetryMessage>(orientation, depth);
+
         while(true)
         {
-            //std::cout << "Sending telemetry message " << *m << std::endl;
+            floatYPR orientation;
+            orientation.yaw = rand();//boost::lexical_cast<float>(argv[2]);
+            orientation.pitch = rand();//boost::lexical_cast<float>(argv[3]);
+            orientation.roll = rand();//boost::lexical_cast<float>(argv[4]);
+            float depth = rand();//boost::lexical_cast<float>(argv[5]);
+            boost::shared_ptr<TelemetryMessage> m = boost::make_shared<TelemetryMessage>(orientation, depth);
+
+            usleep(5);
+
+            std::cout << "Sending telemetry message " << *m << std::endl;
             m_mailbox.sendMessage(m, SAFE_MESS);
         }
     }

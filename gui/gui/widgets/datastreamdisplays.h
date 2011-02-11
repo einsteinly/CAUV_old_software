@@ -25,7 +25,8 @@ namespace Ui {
 
 
 namespace cauv {
-    
+
+
     /**
       * A DataStreamTreeItemBase is used as the base class for one row in the
       * table of data streams.
@@ -44,9 +45,13 @@ namespace cauv {
         void updateIcon(int cell, QImage image){
             this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
         }
+        void updateValue(const QString value) {
+            this->setText(1, value);
+        }
 
     Q_SIGNALS:
         void iconUpdated(int cell, QImage image);
+        void valueUpdated(const QString value);
 
     private:
         boost::shared_ptr<DataStreamBase> m_stream;
@@ -61,7 +66,7 @@ namespace cauv {
       * @author Andy Pritchard
       */
     template<class T>
-    class DataStreamTreeItem : public DataStreamTreeItemBase {
+    class DataStreamTreeItem : public DataStreamTreeItemBase, public boost::signals2::trackable {
 
     public:
         DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, QTreeWidgetItem * parent) :
@@ -108,7 +113,7 @@ namespace cauv {
         void onChange(const T value) {
             std::stringstream stream;
             stream << value << m_stream->getUnits();
-            this->setText(1, QString::fromUtf8(stream.str().c_str()));
+            Q_EMIT valueUpdated(QString::fromUtf8(stream.str().c_str()));
         }
     };
     
@@ -145,7 +150,7 @@ namespace cauv {
         void onStreamDropped(boost::shared_ptr<DataStream<Image> > stream);
         void dropEvent(QDropEvent * event);
         void dragEnterEvent(QDragEnterEvent * event);
-        void addWindow(QWidget * content);
+        void addWindow(boost::shared_ptr<QWidget> content);
     };
     
     

@@ -91,7 +91,7 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamRecorder : public boost::signals::trackable {
+    class DataStreamRecorder : public boost::signals2::trackable {
 
     public:
         DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int maximum = 1000):
@@ -132,7 +132,7 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamPrinter : public boost::signals::trackable {
+    class DataStreamPrinter : public boost::signals2::trackable {
 
     public:
         DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream, const std::ostream &output):

@@ -25,6 +25,7 @@ VideoScreen::VideoScreen(const QString name, QWidget *parent) :
 }
 
 VideoScreen::~VideoScreen(){
+    debug(5) << __FUNCTION__;
     delete(ui);
 }
 
@@ -61,6 +62,7 @@ void VideoScreen::setName(const std::string name){
     VideoScreen::setName(QString::fromStdString(name));
 }
 
+/*
 int VideoScreen::heightForWidth( int w ) const {
     float aspect = 1;
 
@@ -73,6 +75,7 @@ int VideoScreen::heightForWidth( int w ) const {
 
     return w * aspect;
 }
+*/
 
 void VideoScreen::paintEvent(QPaintEvent*) {
 
