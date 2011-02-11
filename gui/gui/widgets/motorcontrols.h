@@ -21,52 +21,6 @@ class QLabel;
 
 namespace cauv {
 
-    /*
-    class DataStreamQtFwdBase : public QObject {
-        Q_OBJECT
-
-    public:
-        DataStreamQtFwdBase(){}
-
-    Q_SIGNALS:
-        void onChange(const int value);
-        void onChange(const bool value);
-        void onChange(const int8_t value);
-        void onChange(const float value);
-        void onChange(const Image value);
-        void onChange(const floatYPR value);
-        void onChange(const floatXYZ value);
-    };
-
-
-    template<class T>
-    class DataStreamQtFwd : public DataStreamQtFwdBase {
-    public:
-
-        DataStreamQtFwd(boost::shared_ptr<DataStream<T> > stream){
-            stream->onUpdate.connect(boost::bind(&DataStreamQtFwd::change, this, _1));
-        }
-
-        void change(const T value){
-            Q_EMIT this->onChange(value);
-        }
-    };
-
-    template<class T>
-    class BoostToQtSignal {
-    public:
-        BoostToQtSignal(boost::function<void(T)> qtSignal, boost::shared_ptr<DataStream<T> > stream){
-            stream->onUpdate.connect(boost::bind(&BoostToQtSignal::emitQtSignal, this, qtSignal, _1));
-        }
-
-    protected:
-        void emitQtSignal(boost::function<void(T)> signal, T arg){
-            Q_EMIT signal(arg);
-        }
-    };
-
-*/
-
     class MotorBurstController : public QObject {
         Q_OBJECT
     public:

@@ -23,6 +23,8 @@ void MotorBurstController::stop() {
     m_motor->set(0);
 }
 
+
+
 AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<AUV::Autopilot<float> > autopilot):
         m_autopilot(autopilot),
         m_enabled(enabled),
@@ -72,6 +74,8 @@ void AutopilotController::updateState(bool value) {
 }
 
 
+
+
 MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
         QDockWidget(parent),
         CauvInterfaceElement(name, auv, node),
@@ -91,7 +95,7 @@ MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, Q
         target->setButtonSymbols(QAbstractSpinBox::PlusMinus);
         target->setMaximum(i.second->getMax());
         target->setMinimum(i.second->getMin());
-        target->setSuffix(QString::fromUtf8(i.second->getUnits().c_str()));
+        target->setSuffix(QString::fromStdString(i.second->getUnits()));
         ui->autopilotControlsLayout->addWidget(target, count, 1, 1, 1, Qt::AlignCenter);
 
         QCheckBox * enabled = new QCheckBox("State");

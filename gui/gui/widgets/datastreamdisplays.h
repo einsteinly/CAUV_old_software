@@ -42,15 +42,12 @@ namespace cauv {
         virtual bool updateStream(QVariant& ) = 0;
         
     protected Q_SLOTS:
-        void updateIcon(int cell, QImage image){
-            this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
-        }
-        void updateValue(const QString value) {
-            this->setText(1, value);
-        }
+        void updateIcon(int cell, QImage &image);
+        void updateIcon(int cell, const Image &image);
+        void updateValue(const QString value);
 
     Q_SIGNALS:
-        void iconUpdated(int cell, QImage image);
+        void iconUpdated(int cell, const Image &image);
         void valueUpdated(const QString value);
 
     private:
@@ -100,8 +97,6 @@ namespace cauv {
                 info() << m_stream->getName() << " value changed to: " << value.toString().toStdString();
                 return true;
             } catch (boost::bad_lexical_cast){
-                std::cout << "bad value = " << value.toString().toStdString().c_str() << std::endl;
-                printf("%s", value.toString().toStdString().c_str());
                 info() << m_stream->getName() << " given a bad value:" << value.toString().toStdString();
                 return false;
             }
@@ -113,7 +108,7 @@ namespace cauv {
         void onChange(const T value) {
             std::stringstream stream;
             stream << value << m_stream->getUnits();
-            Q_EMIT valueUpdated(QString::fromUtf8(stream.str().c_str()));
+            Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
         }
     };
     

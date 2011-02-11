@@ -16,14 +16,38 @@
 using namespace cauv;
 
 
+
 DataStreamTreeItemBase::DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase> stream, QTreeWidgetItem * parent):
         QTreeWidgetItem(parent), m_stream(stream){
     if(stream->isMutable()) {
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
 
-    connect(this, SIGNAL(iconUpdated(int, QImage)), this, SLOT(updateIcon(int, QImage)));
+    connect(this, SIGNAL(iconUpdated(int, Image)), this, SLOT(updateIcon(int, Image)));
     connect(this, SIGNAL(valueUpdated(QString)), this, SLOT(updateValue(QString)));
+}
+
+void DataStreamTreeItemBase::updateIcon(int cell, QImage &image){
+    this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
+}
+
+void DataStreamTreeItemBase::updateIcon(int cell, const Image &image){
+    try {
+        cv::Mat mat_rgb;
+        cv::cvtColor(image.cvMat(), mat_rgb, CV_BGR2RGB);
+
+        QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
+                               mat_rgb.rows, QImage::Format_RGB888);
+
+        this->updateIcon(cell, qImage);
+
+    } catch (...){
+        error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__;
+    }
+}
+
+void DataStreamTreeItemBase::updateValue(const QString value) {
+    this->setText(1, value);
 }
 
 boost::shared_ptr<DataStreamBase> DataStreamTreeItemBase::getDataStreamBase(){
@@ -31,27 +55,17 @@ boost::shared_ptr<DataStreamBase> DataStreamTreeItemBase::getDataStreamBase(){
 }
 
 
+
+
 template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
     std::stringstream stream;
     stream << (int)value;
-    Q_EMIT valueUpdated(QString::fromUtf8(stream.str().c_str()));
+    Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
 }
 
 template<> void DataStreamTreeItem<Image>::onChange(const Image value){
-
-    try {
-        cv::Mat mat_rgb;
-        cv::cvtColor(value.cvMat(), mat_rgb, CV_BGR2RGB);
-
-        QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
-                               mat_rgb.rows, QImage::Format_RGB888);
-        
-        // Add a fancy icon in the data stream list with the current view from the camera.
-        Q_EMIT this->iconUpdated(1, qImage);
-
-    } catch (cv::Exception ex){
-        error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
-    }
+    // Add a fancy icon in the data stream list with the current view from the camera.
+    Q_EMIT this->iconUpdated(1, value);
 }
 
 template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant &value){

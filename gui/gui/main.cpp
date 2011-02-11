@@ -10,6 +10,7 @@
 
 #include <QTimer>
 #include <QApplication>
+#include <QTextCodec>
 
 #include "cauvgui.h"
 #include "gamepad/playstationinput.h"
@@ -21,6 +22,7 @@ int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
     Q_INIT_RESOURCE(resources);
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
 
     boost::shared_ptr<CauvGui> node = boost::make_shared<CauvGui>(app);

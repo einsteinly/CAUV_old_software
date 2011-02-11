@@ -1,5 +1,7 @@
 #include "cauvgui.h"
 
+#include <signal.h>
+
 #include <model/auv_controller.h>
 #include <model/auv_model.h>
 
@@ -51,7 +53,8 @@ void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
 
 void CauvGui::closeEvent(QCloseEvent*){
     hide();
-    CauvNode::stopNode();
+    m_application.exit(0);
+    exit(0);
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
