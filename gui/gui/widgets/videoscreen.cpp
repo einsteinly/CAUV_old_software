@@ -79,12 +79,20 @@ int VideoScreen::heightForWidth( int w ) const {
 
 void VideoScreen::paintEvent(QPaintEvent*) {
 
+    // This conversion REALLY shouldn't be done here it slows down the GUI
+    // thread causing a laggy interface if there's a lot of imcoming images
+    //
+    // Possible Solution: Have a dedicated conversion thread that takes the
+    // latest image read by the messaging thread, converts it and queues a GUI
+    // update in the GUI thread.
+    //
     m_updateMutex.lock();
 
     if(m_new_image.get()) {
         // replace the old image
         m_current_image.swap(m_new_image);
         m_new_image.reset();
+        m_updateMutex.unlock();
 
         // convert the new one
         try {
@@ -105,9 +113,9 @@ void VideoScreen::paintEvent(QPaintEvent*) {
         } catch (cv::Exception ex){
             error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
         }
+    } else {
+        m_updateMutex.unlock();
     }
-    m_updateMutex.unlock();
-
 
     QPainter p(this);
     if(m_qImage.get())

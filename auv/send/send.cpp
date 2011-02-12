@@ -106,7 +106,7 @@ int main(int argc, char** argv)
             float depth = rand();//boost::lexical_cast<float>(argv[5]);
             boost::shared_ptr<TelemetryMessage> m = boost::make_shared<TelemetryMessage>(orientation, depth);
 
-            usleep(5);
+            usleep(10);
 
             std::cout << "Sending telemetry message " << *m << std::endl;
             m_mailbox.sendMessage(m, SAFE_MESS);
