@@ -4,14 +4,14 @@ link_directories (${ftdi_LIBRARY_DIRS})
 
 # sources
 add_executable (
-    control
+    controlv2
     control.cpp
     xsens_imu.cpp
 )
 
 # libs
 target_link_libraries (
-    control
+    controlv2
     cauv_debug
     common
     module

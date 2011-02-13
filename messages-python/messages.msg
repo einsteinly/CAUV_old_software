@@ -377,6 +377,9 @@ group gui
         error : float;
         derror : float;
         ierror : float;
+        kp : float;
+        ki : float;
+        kd : float;
         
         demand : MotorDemand;
     }

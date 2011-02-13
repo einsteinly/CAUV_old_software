@@ -61,7 +61,10 @@ struct PIDControl
 {
     Controller::e controlee;
     double target;
-    double Kp,Ki,Kd,scale, Ap, Ai, Ad, thr, KpMAX, KpMIN, KdMAX, KdMIN, KiMAX, KiMIN, Kp1,Ki1,Kd1;
+    double Kp,Ki,Kd,scale;
+    double Ap, Ai, Ad, thr;
+    double KpMAX, KpMIN, KdMAX, KdMIN, KiMAX, KiMIN;
+    double Kp1, Ki1, Kd1;
     double integral, previous_derror, previous_mv;
     std::deque< std::pair<TimeStamp, double> > previous_errors;
     TimeStamp previous_time;
@@ -69,8 +72,17 @@ struct PIDControl
     int retain_samples_msecs;
 
     PIDControl(Controller::e controlee=Controller::NumValues)
-        : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
-          integral(0), Ap(1), Ai(1), Ad(1), thr(1), is_angle(false), retain_samples_msecs(200)
+        : controlee(controlee),
+          target(0),
+          Kp(1), Ki(1), Kd(1), scale(1),
+          Ap(1), Ai(1), Ad(1), thr(1),
+          KpMAX(1), KpMIN(0), KdMAX(1), KdMIN(0), KiMAX(1), KiMIN(0),
+          Kp1(1), Ki1(1), Kd1(1),
+          integral(0), previous_derror(0), previous_mv(0),
+          previous_errors(),
+          previous_time(),
+          is_angle(false),
+          retain_samples_msecs(200)
     {
         previous_time.secs = 0;
     }
@@ -155,7 +167,7 @@ struct PIDControl
         double dt = tnow - previous_time; // dt is milliseconds
         previous_time = tnow;
 
-		// implement integral antiwindup ???? 
+		// TODO: implement integral antiwindup ???? 
         integral += error*dt;
         double de = smoothedDerivative();
         previous_derror = de;
@@ -195,11 +207,13 @@ struct PIDControl
     {
         if(previous_errors.size())
             return boost::make_shared<ControllerStateMessage>(
-                controlee, previous_mv, previous_errors.back().second, previous_derror, integral, MotorDemand()
+                controlee, previous_mv, previous_errors.back().second,
+                previous_derror, integral, Kp1, Ki1, Kd1, MotorDemand()
             );
         else
             return boost::make_shared<ControllerStateMessage>(
-                controlee, previous_mv, 0, previous_derror, integral, MotorDemand()
+                controlee, previous_mv, 0,
+                previous_derror, integral, Kp1, Ki1, Kd1, MotorDemand()
             ); 
     }
 };
