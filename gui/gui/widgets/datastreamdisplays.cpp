@@ -135,6 +135,10 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
         new DataStreamTreeItem<float>(i.second->kI, "kI", autopilot);
         new DataStreamTreeItem<float>(i.second->kD, "kD", autopilot);
         new DataStreamTreeItem<float>(i.second->scale, "scale", autopilot);
+        new DataStreamTreeItem<float>(i.second->aP, "aP", autopilot);
+        new DataStreamTreeItem<float>(i.second->aI, "aI", autopilot);
+        new DataStreamTreeItem<float>(i.second->aD, "aD", autopilot);
+        new DataStreamTreeItem<float>(i.second->thr, "thr", autopilot);
     }
 
     // cameras
