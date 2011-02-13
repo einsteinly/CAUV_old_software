@@ -11,9 +11,10 @@ urlpatterns = patterns('',
     # (r'^tracker/', include('tracker.foo.urls')),
     (r'^$', views.view_project),
     (r'^view/entity/(?P<uuid>[a-f0-9\-]+)/$', views.view_entity),
-    (r'^view/bag/(?P<ref>[a-zA-Z0-9\-]+)/$', views.view_bag),
+    (r'^view/bag/(?P<plural_name>[a-zA-Z0-9\-]+)/$', views.view_bag),
     (r'^edit/entity/(?P<uuid>[a-f0-9\-]+)/$', views.edit_entity),
     (r'^add/entity/(?P<plural_name>[a-zA-Z0-9\-]+)/$', views.add_entity),
+    (r'^help/$', views.help),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
@@ -22,6 +23,10 @@ urlpatterns = patterns('',
     #login/logout/some pitz account admin screens
     (r'^accounts/login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}),
     (r'^accounts/logout/$', 'django.contrib.auth.views.logout', {'template_name': 'logout.html'}),
+    (r'^accounts/preferences/$', views.preferences),
+    (r'^accounts/shortcuts/add/$', views.add_shortcut),
+    (r'^accounts/bags/add/$', views.add_bag),
+    (r'^accounts/bags/remove/(?P<pk>[0-9]+)/$', views.remove_bag),
     (r'^accounts/user/(?P<uuid>[a-f0-9\-]+)/$', views.useruuids),
 
     # Uncomment the next line to enable the admin:

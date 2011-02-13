@@ -8,13 +8,13 @@ estimate: !!python/object:uuid.UUID
   int: 232728329951956224362343003393279330573
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-09 03:25:24.815125
+modified_time: 2011-01-15 20:32:25.969679
 owner: !!python/object:uuid.UUID
   int: 331423399489594109103410846851841274888
 points: null
 pscore: !!python/unicode '0'
 status: !!python/object:uuid.UUID
-  int: 154409908609622189382556686006061208230
+  int: 300208156334241880201290222579226582105
 tags:
 - !!python/object:uuid.UUID
   int: 275376028904049931937057396630085839418
@@ -22,4 +22,4 @@ title: Integrate the Pipeline Widget in the GUI
 type: task
 uuid: !!python/object:uuid.UUID
   int: 181213822512908501735795060686691902425
-yaml_file_saved: 2010-12-09 03:25:24.820487
+yaml_file_saved: 2011-01-15 20:32:25.974300

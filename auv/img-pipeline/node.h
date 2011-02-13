@@ -225,6 +225,12 @@ class Node: public boost::enable_shared_from_this<Node>{
         * there is new input.
         */
         virtual bool isOutputNode() const { return false; }
+        
+        /* Check to see if all inputs are new and output is demanded; if so, 
+         * add this node to the scheduler queue
+         */
+        enum SchedMode{AllNew, AnyNew, Always};
+        void checkAddSched(SchedMode m = AllNew);
 
     protected:
         /* Derived classes override this to do whatever image processing it is
@@ -277,11 +283,6 @@ class Node: public boost::enable_shared_from_this<Node>{
             ));
         }
         void registerInputID(input_id const& i);
-        
-        /* Check to see if all inputs are new and output is demanded; if so, 
-         * add this node to the scheduler queue
-         */
-        void checkAddSched();
 
         void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS);
         
@@ -303,7 +304,7 @@ class Node: public boost::enable_shared_from_this<Node>{
          * output. It may be called at the start or end of the child's exec()
          */
         void setNewOutputDemanded(output_id const&);
-        void clearNewOutputDemanded();
+        void clearNewOutputDemanded(output_id const&);
         bool newOutputDemanded() const;
 
         void setAllowQueue();
@@ -379,6 +380,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         /* Has output been demanded of this node?
          */
         bool m_output_demanded;
+        std::set<output_id> m_output_demanded_on;
         mutable mutex_t m_output_demanded_lock;
 
         /* generic stop: used by derived types

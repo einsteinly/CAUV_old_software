@@ -121,7 +121,7 @@ class KMeansNode: public Node{
                 }
             }
 
-            int y, x, ch;
+            int y = 0, x = 0, ch = 0;
             int rows = img->cvMat().rows, cols = img->cvMat().cols;
             const int elem_size = img->cvMat().elemSize();
             const int row_size = cols * elem_size;

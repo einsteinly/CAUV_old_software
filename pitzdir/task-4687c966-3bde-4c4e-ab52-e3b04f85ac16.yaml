@@ -2,23 +2,28 @@ components: []
 created_by: &id001 !!python/object:uuid.UUID
   int: 329653966991278482580175629071994424733
 created_time: 2010-12-10 23:19:19.296905
-description: !!python/unicode "general small webapp fixes\r\n-restore associated tasks\
-  \ to tasks\r\n-sort out default values"
+description: !!python/unicode "Any issues that need to be fixed\r\n-check activities\
+  \ not being created bug\r\n-restore auto setting related fields when a new entity\
+  \ is added from a potentially related entity\r\n-change logged in as anonymous to\
+  \ not logged in\r\n-sort out str/entity confusion in filter system\r\n-sort of related:\
+  \ deal with unicode/string comparison issues (pitz needs strings not unicode)\r\n\
+  -mouseover effects are buggy. may have to use js\r\n-and some of the related entities\
+  \ have gone missing (again)"
 estimate: !!python/object:uuid.UUID
   int: 265108259705088528262102217610008550011
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-10 23:19:19.303032
+modified_time: 2011-01-20 21:54:09.777648
 owner: *id001
 points: null
 pscore: !!python/unicode '1'
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 154409908609622189382556686006061208230
 tags:
 - !!python/object:uuid.UUID
   int: 229704984629557593547353317988038779497
-title: !!python/unicode 'webapp fixes'
+title: !!python/unicode 'Webapp Bugs'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 93751004644977580736293481611952237590
-yaml_file_saved: 2010-12-10 23:19:19.308405
+yaml_file_saved: 2011-01-20 21:54:09.777893

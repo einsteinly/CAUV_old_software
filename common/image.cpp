@@ -1,25 +1,23 @@
 #include "image.h"
 
+#include <algorithm>
+
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-
-#include <algorithm>
 
 #include <debug/cauv_debug.h>
 #include <utility/serialisation.h>
 
-using namespace cauv;
-
 const static int Compress_JPEG_Quality = 95;
 
-Image::Image()
+cauv::Image::Image()
     : m_img(new cv::Mat()), m_compress_fmt(".jpg"), m_compress_params()
 {
     m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     m_compress_params.push_back(Compress_JPEG_Quality);
 }
 
-Image::Image(cv::Mat const& cv_image)
+cauv::Image::Image(cv::Mat const& cv_image)
     : m_img(new cv::Mat(cv_image)), m_compress_fmt(".jpg"), m_compress_params()
 {
     m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
@@ -27,36 +25,36 @@ Image::Image(cv::Mat const& cv_image)
 }
 
 // Copy constructor; take a deep copy of the image data
-Image::Image(Image const& other)
+cauv::Image::Image(Image const& other)
     : m_img(new cv::Mat(other.m_img->clone())),
       m_compress_fmt(other.m_compress_fmt),
       m_compress_params(other.m_compress_params){
 }
 
 // deep copy
-Image& Image::operator=(Image const& other){
+cauv::Image& cauv::Image::operator=(Image const& other){
     m_img.reset(new cv::Mat(other.m_img->clone()));
     m_compress_fmt = other.m_compress_fmt;
     m_compress_params = other.m_compress_params;
     return *this;
 }
 
-Image::~Image(){
+cauv::Image::~Image(){
 }
 
-cv::Mat const& Image::cvMat() const{
+cv::Mat const& cauv::Image::cvMat() const{
     return *m_img;
 }
 
-cv::Mat& Image::cvMat(){
+cv::Mat& cauv::Image::cvMat(){
     return *m_img;
 }
 
-void Image::serializeQuality(int q){
-    std::vector<int>::iterator i;
-    if((i = std::find(
-           m_compress_params.begin(), m_compress_params.end(), int(CV_IMWRITE_JPEG_QUALITY)
-       )) != m_compress_params.end()){
+void cauv::Image::serializeQuality(int q){
+    std::vector<int>::iterator i = std::find(m_compress_params.begin(),
+                                             m_compress_params.end(),
+                                             int(CV_IMWRITE_JPEG_QUALITY));
+    if(i != m_compress_params.end()){
         if(++i != m_compress_params.end())
             *i = q;
         else
@@ -137,4 +135,3 @@ int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, Image& v){
     //          << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
     return b - i;
 }
-

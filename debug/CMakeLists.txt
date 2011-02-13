@@ -1,3 +1,7 @@
+find_package (ssrcspread REQUIRED)
+include_directories (${ssrcspread_INCLUDE_DIR})
+link_directories (${ssrcspread_LIBRARY_DIR})
+
 add_library (
     cauv_debug STATIC
     

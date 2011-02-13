@@ -36,7 +36,7 @@ struct $s.name
     #if len($s.fields) > 0
     ${s.name}(#slurp
               #for i, f in $enumerate($s.fields)
-#*           *#$toCPPType($f.type) $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
+#*           *#$toCPPType($f.type) const& $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
               #end for
 #*           *#);
     #end if 
@@ -82,7 +82,7 @@ class $className : public Message
         #if $len($m.fields) > 0
         ${className}(#slurp
                      #for i, f in $enumerate($m.fields)
-#*                  *#$toCPPType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
+#*                  *#$toCPPType($f.type) const& $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                      #end for
 #*                  *#);
         #end if
@@ -128,7 +128,7 @@ class $className : public Message
     template<typename char_T, typename traits>
     friend std::basic_ostream<char_T, traits>& operator<<(
         std::basic_ostream<char_T, traits>& os, $className const& m);
-    friend void cauv::serialise(svec_ptr, $className const&);
+    friend void serialise(svec_ptr, $className const&);
 };
 
 #end for

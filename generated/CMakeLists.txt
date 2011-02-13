@@ -31,8 +31,16 @@ add_custom_target (
 
 add_library (
     messages STATIC
+
     messages.cpp
+    serialmess.cpp
 )
+target_link_libraries (
+    messages
+
+    common
+)
+
 
 add_dependencies(messages messages-headers message-serialisation-headers)
 
@@ -53,11 +61,6 @@ add_custom_target (
     message-serialisation-headers
     DEPENDS ${SRCD}/serialmess.h
     COMMENT "Depending on generated message serialisation header"
-)
-
-add_library (
-    message-serialisation STATIC
-    serialmess.cpp
 )
 
 add_custom_command (

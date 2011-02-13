@@ -21,9 +21,9 @@ using namespace cauv;
 #for $s in $structs
 cauv::${s.name}::${s.name}() { }
 #if $len($s.fields) > 0
-${s.name}::${s.name}(#slurp
+cauv::${s.name}::${s.name}(#slurp
                      #for i, f in $enumerate($s.fields)
-#*                  *#$toCPPType($f.type) $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
+#*                  *#$toCPPType($f.type) const& $f.name#if $i < $len($s.fields) - 1#, #end if##slurp
                      #end for
 #*                  *#) : #slurp
                           #for i, f in $enumerate($s.fields)
@@ -75,7 +75,7 @@ cauv::${className}::${className}()
 }
 cauv::${className}::${className}(#slurp
                            #for i, f in $enumerate($m.fields)
-#*                        *#$toCPPType($f.type) $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
+#*                        *#$toCPPType($f.type) const& $f.name#if $i < $len($m.fields) - 1#, #end if##slurp
                            #end for
 #*                        *#)
     : Message($m.id, "$g.name"), m_deserialised(true),

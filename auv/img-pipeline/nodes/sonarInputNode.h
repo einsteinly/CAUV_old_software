@@ -7,6 +7,7 @@
 #include <cstring>
 
 #include <sonar/sonar_accumulator.h>
+#include <utility/bash_cout.h>
 
 #include "../node.h"
 
@@ -17,17 +18,25 @@ namespace imgproc{
 class SonarInputNode: public InputNode{
     public:
         SonarInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : InputNode(sched, pl, t), m_accumulator(){
+            : InputNode(sched, pl, t), m_last_images_accumulated(0.9999), m_accumulator(){
         }
 
         void init(){
+            // don't want to drop lines:
+            m_priority = priority_fastest;
+            
             // InputNode stuff: subscribe to sonar data // TODO: nicer interface for this
             InputNode::m_subscriptions.insert(SonarData);
 
             // registerInputID()
             
-            // one output:
-            registerOutputID<image_ptr_t>("sonar image");
+            // three output:
+            registerOutputID<image_ptr_t>("image (buffer)");
+            registerOutputID<image_ptr_t>("image (synced)");
+            registerOutputID<image_ptr_t>("data line");
+            registerOutputID<param_value_t>("bearing");
+            registerOutputID<param_value_t>("bearing range");
+            registerOutputID<param_value_t>("range");
         }
     
         virtual ~SonarInputNode(){
@@ -44,11 +53,22 @@ class SonarInputNode: public InputNode{
             if(!m)
                 throw img_pipeline_error("SonarInputNode executed with no available data");
             
-            m_accumulator.accumulateDataLine(m->line());
+            r["data line"] = boost::make_shared<Image>(cv::Mat(m->line().data, true));
+            r["bearing"] = param_value_t(m->line().bearing);
+            r["bearing range"] = param_value_t(m->line().bearingRange);
+            r["range"] = param_value_t(m->line().range);
+            
+            float images_accumulated = m_accumulator.accumulateDataLine(m->line());
             
             // NB: output is not copied! use a CopyNode if you don't want to
             // stamp all over the buffer
-            r["sonar image"] = m_accumulator.img();
+            r["image (buffer)"] = m_accumulator.img();
+            
+            if(fmod(images_accumulated, 1.0f) < fmod(m_last_images_accumulated, 1.0f))
+                // deep copy:
+                r["image (synced)"] = boost::make_shared<Image>(*m_accumulator.img());
+            
+            m_last_images_accumulated = images_accumulated;
 
             clearAllowQueue();
 
@@ -56,6 +76,7 @@ class SonarInputNode: public InputNode{
         }
 
     private:
+        float m_last_images_accumulated;
         SonarAccumulator m_accumulator;
     
     // Register this node type

@@ -43,9 +43,52 @@ int main(int argc, char** argv)
         int8_t speed = boost::lexical_cast<int>(argv[3]);
 
         boost::shared_ptr<MotorMessage> m = boost::make_shared<MotorMessage>((MotorID::e)motorid, speed);
-    
+
         std::cout << "Sending motor message " << *m << std::endl;
         m_mailbox.sendMessage(m, SAFE_MESS);
+    }
+    else if (boost::iequals(msgType, "trace")) {
+        std::string message = "Hiyoooooooooooo!";
+
+        boost::shared_ptr<DebugMessage> m = boost::make_shared<DebugMessage>(DebugType::Trace, message);
+
+        std::cout << "Sending trace message " << *m << std::endl;
+        m_mailbox.sendMessage(m, SAFE_MESS);
+    }
+    else if (boost::iequals(msgType, "autopilot")) {
+        if (argc - 2 != 3) {
+            std::cerr << "Error: autopilot message requires exactly three parameters (autopilot, enabled, target)" << std::endl;
+            return 3;
+        }
+        int autopilot = boost::lexical_cast<unsigned int>(argv[2]);
+        bool enabled = boost::lexical_cast<bool>(argv[3]);
+        float target = boost::lexical_cast<float>(argv[4]);
+
+        switch(autopilot){
+        case 0: {
+            boost::shared_ptr<BearingAutopilotEnabledMessage> m = boost::make_shared<BearingAutopilotEnabledMessage>(enabled, target);
+            std::cout << "Sending autopilot message " << *m << std::endl;
+            m_mailbox.sendMessage(m, SAFE_MESS);
+        }
+        break;
+
+        case 1: {
+            boost::shared_ptr<PitchAutopilotEnabledMessage> m = boost::make_shared<PitchAutopilotEnabledMessage>(enabled, target);
+            std::cout << "Sending autopilot message " << *m << std::endl;
+            m_mailbox.sendMessage(m, SAFE_MESS);
+        }
+        break;
+
+        case 2: {
+            boost::shared_ptr<DepthAutopilotEnabledMessage> m = boost::make_shared<DepthAutopilotEnabledMessage>(enabled, target);
+            std::cout << "Sending autopilot message " << *m << std::endl;
+            m_mailbox.sendMessage(m, SAFE_MESS);
+        }
+        break;
+        default:
+            std::cerr << "Error: Unknown autopilot specified." << std::endl;
+            return 3;
+        }
     }
     else if (boost::iequals(msgType, "telemetryspam")) {
         if (argc - 2 != 4) {

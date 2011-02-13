@@ -38,7 +38,7 @@ float: left;
 #header_user{
 float: right;
 }
-#toolbox{
+.toolbox{
 padding: 3pt 5pt;
 margin: 6pt 0;
 background-color: #e9d0ff;
@@ -53,9 +53,35 @@ background-color: #e9d0ff;
 -moz-border-radius: 3pt;
 -webkit-border-radius: 3pt;
 border-radius: 3pt;
+overflow: auto;
 }
 .bag_toolbox #submit {
 float: right;
+}
+.bag_toolbox .filter{
+float: left;
+border-color: #000000;
+border-width: 1pt;
+border-style: solid;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+padding: 2pt;
+}
+.bag_toolbox .filter select{
+float: left;
+}
+.bag_toolbox .order_obj{
+float: left
+}
+.messages{
+padding: 3pt 5pt;
+margin: 6pt 0;
+background-color: #ffeec0;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+overflow: auto;
 }
 #entity_title{
 font: 16px/30px Helvetica, Arial, sans-serif;
@@ -118,13 +144,53 @@ font: 16px/30px Helvetica, Arial, sans-serif;
 padding: 3pt 5pt;
 margin: 3pt 0;
 }
-.bag .bag_expanded ul li{
+#related_bags .container{
+position:relative;
+height:150;
+}
+.bag_minimised{
+float: left;
+width: 50%;
+height:150;
+overflow-y:auto;
+}
+.bag_minimised ul{
+display: block;
+overflow-y:auto;
+}
+.bag_minimised ul li{
 padding: 0;
-margin: 0 0 15pt 0;
 }
-.bag .bag_expanded ul li h4{
-font-weight: bold;
 }
-.bag .bag_expanded ul li h4 a{
-font-weight: bold;
+#related_bags .hiddenmouseover{
+display:none;
+}
+#related_bags .dbox{
+float: right;
+height: 150;
+width: 40%;
+background-color:#f0e0f0;
+padding: 3pt 5pt;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+overflow-y:auto;
+}
+#help h1 {
+background-color: #e9f0ff;
+padding: 3pt 5pt;
+margin: 3pt 0;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+font-size: 150%
+}
+#help h2 {
+background-color: #e9d0ff;
+padding: 3pt 5pt;
+margin: 3pt 0;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+font-size: 120%
 }

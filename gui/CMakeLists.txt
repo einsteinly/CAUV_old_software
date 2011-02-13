@@ -19,6 +19,8 @@ else()
     include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
     link_directories (${Boost_LIBRARY_DIRS})
 
+    find_package (OpenCV REQUIRED)
+
     add_subdirectory (pipeline-widget)
     add_subdirectory (gui-pipeline)
     add_subdirectory (gui)

@@ -1,20 +1,51 @@
 #include "cauvgui.h"
 
-#include <math.h>
 #include <model/auv_controller.h>
-
-#include <pipelineWidget.h>
-#include <pipelineMessageObserver.h>
+#include <model/auv_model.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
+
+#include "widgets/datastreamdisplays.h"
+#include "widgets/pipelinecauvwidget.h"
+#include "widgets/motorcontrols.h"
+#include "widgets/logview.h"
+
+#include <common/cauv_global.h>
+#include <common/cauv_utils.h>
+#include <debug/cauv_debug.h>
+
+#include "ui_mainwindow.h"
+#include "cauvinterfaceelement.h"
 
 using namespace cauv;
 
-CauvGui::CauvGui(QApplication& app, QWidget*) : CauvNode("CauvGui"), m_application(app){
-    setupUi(this);
+CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
+    ui->setupUi(this);
     joinGroup("control");
+    joinGroup("image");
     joinGroup("pl_gui");
+    joinGroup("debug");
+
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+}
+
+void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
+    connect(widget->actions().get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
+    connect(widget->actions().get(), SIGNAL(centralViewRegistered(QWidget*,QString&)), this, SLOT(addCentralTab(QWidget*,QString&)));
+    connect(widget->actions().get(), SIGNAL(dockViewRegistered(QDockWidget*,Qt::DockWidgetArea)), this, SLOT(addDock(QDockWidget*,Qt::DockWidgetArea)));
+    widget->initialise();
+}
+
+void CauvGui::addCentralTab(QWidget* tab, QString& name){
+    info() << "Registering central screen [" << name.toStdString() << "]";
+    ui->tabWidget->addTab(tab, name);
+}
+
+void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
+    info() << "Registering dock widget";
+    addDockWidget(area, dock);
 }
 
 void CauvGui::closeEvent(QCloseEvent*){
@@ -23,7 +54,7 @@ void CauvGui::closeEvent(QCloseEvent*){
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
-    std::cout<<"sending message" << *message << std::endl;
+    debug(0) << "Sending message: " << *message;
     return CauvNode::send(message);
 }
 
@@ -40,31 +71,26 @@ void CauvGui::onRun()
     // from the network messages
     m_auv = boost::make_shared<AUV>();
     m_auv_controller = boost::make_shared<AUVController>(m_auv);
+    // connect up message inputs and outputs
     addMessageObserver(m_auv_controller);
+    m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
+    // populate the interface
+    boost::shared_ptr<DataStreamDisplayArea> graphArea(new DataStreamDisplayArea("Stream Visualisation", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(graphArea));
 
-    pw::PipelineWidget * pipelineWidget = new pw::PipelineWidget(this);
-    boost::shared_ptr<pw::PipelineGuiMsgObs> observer = boost::make_shared<pw::PipelineGuiMsgObs>(pipelineWidget);
-    this->addMessageObserver(observer);
-    this->connect(pipelineWidget, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
+    boost::shared_ptr<PipelineCauvWidget> pipelineArea(new PipelineCauvWidget("Pipeline Editor", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(pipelineArea));
 
+    boost::shared_ptr<DataStreamPicker> dataStreamPicker(new DataStreamPicker("Data Streams", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(dataStreamPicker));
 
-    setCentralWidget(pipelineWidget);
+    boost::shared_ptr<MotorControls> motorControls(new MotorControls("Navigation", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(motorControls));
 
-    /*Plot* plot = new Plot();
+    boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
 
-    setCentralWidget(plot);
-
-    (void) new CanvasPicker(plot);
-
-    // The scale picker translates mouse clicks
-    // in to clicked() signals
-
-    ScalePicker *scalePicker = new ScalePicker(plot);
-    plot->connect(scalePicker, SIGNAL(clicked(int, double)),
-        plot, SLOT(insertCurve(int, double)));
-    */
     show();
     m_application.exec();
 }
-

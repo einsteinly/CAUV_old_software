@@ -58,6 +58,7 @@ class ImageProcessor: public MessageObserver
         virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
         virtual void onAddArcMessage(AddArcMessage_ptr m);
         virtual void onGraphRequestMessage(GraphRequestMessage_ptr m);
+        virtual void onForceExecRequestMessage(ForceExecRequestMessage_ptr m);
         virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
 
         /** end MessageObserver functions **/

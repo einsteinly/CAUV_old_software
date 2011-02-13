@@ -5,11 +5,13 @@ from django.contrib.auth.decorators import permission_required, login_required #
 from django.forms.formsets import formset_factory
 from pitz.project import Project
 from pitz.bag import Bag
-from pitz.entity import Entity
+from pitz.entity import Entity, Person
 from uuid import UUID
 from tracker import settings
 from tracker.track import models, appforms, extras
+import json
 
+#equivalent of useful django shortcut
 def get_entity_or_404(uuid, project=None):
     uuid_obj = UUID(uuid)
     if not project:
@@ -22,150 +24,154 @@ def get_entity_or_404(uuid, project=None):
         raise Http404
     return e
     
-#custom representations: pitz own repesentation methods are orientated to the command line
+#CUSTOM_REPRESENTATIONS: pitz own repesentation methods are orientated to the command line, and djangos default lookup order doesnt always get to the right value first
 class disp_property():
     def __init__(self, name, value):
         self.name = name
         self.value = value
-	if self.name == 'pscore' and value is not None and value != u"None":
-	    self.value = dict(appforms.pscore_choices)[int(value)]
-	else:
-	    self.value = value
-        if isinstance(value, list):
-            try:   
-                if isinstance(value[0], Entity):
-                    self.type = 'entitylist'
-                else:
-                    self.type = 'valuelist'
-            except IndexError:
-                self.type='valuelist'
+        self.type = 'value'
+        #makes sure to display the pscore fields as there description
+        if self.name == 'pscore' and value is not None and value != u"None":
+            try:
+                self.value = dict(appforms.pscore_choices)[int(value)]
+            except KeyError:
+                #pscore needs to be set properly (out of range)
+                self.value = "THIS FIELD IS BROKEN. FIX IT. (Pscore out of range)"
         else:
-            if isinstance(value, Entity):
-                self.type = 'entity'
+            self.value = value
+            if isinstance(value, list):
+                try:   
+                    if isinstance(value[0], Entity):
+                        self.type = 'entitylist'
+                    else:
+                        self.type = 'valuelist'
+                except IndexError:
+                    self.type='valuelist'
             else:
-                self.type = 'value'
-
-class disp_bag_by_type():
-    def __init__(self, bag):
-        # split bag into dictionary by type
-        self.by_type = {}
-        for e in bag:
-            typeid = e['type']
-            if self.by_type.has_key(typeid):
-                self.by_type[typeid].append(e)
-            else:
-                self.by_type[typeid] = [e]
+                if isinstance(value, Entity):
+                    self.type = 'entity'
+                else:
+                    self.type = 'value'
 
 class disp_entity():
-    def __init__(self, entity, related=[]):
+    def __init__(self, entity):
         self.properties = [disp_property(x, entity[x]) for x in entity]
         self.type = entity.plural_name
         self.title = entity['title']
         self.uuid = entity.uuid
-        # fingers crossed...
-        #for x in related:
-        #    print disp_entity(x)
-        #    print x['title']
-        #    print x.plural_name
-        #    print [disp_property(y, x[y]) for y in x]
-        #self.related = [disp_entity(x) for x in related]
-        self.related = related
+        self.related = []
+        #for each entity type
+        for plural_name in entity.project.plural_names:
+            #find all the fields of that entity
+            all_fields = extras.get_all_variables(entity.project.plural_names[plural_name])
+            #we only want fields that are allowed to contain this entity
+            fields={}
+            for k,v in all_fields.items():
+                if isinstance(v, list):
+                    if isinstance(entity, v[0]):
+                        fields[k]=v
+                elif isinstance(entity, v):
+                    fields[k]=v
+            #we want to append iff there were matching fields (not neccessarily mathcing entities)
+            if len(fields):
+                #define a filter
+                rf = extras.filter_atleast_one(*[extras.filter_matches_dict({field_name:entity}) for field_name in fields])
+                self.related.append((disp_bag(entity.project, entity.project.plural_names[plural_name], rf)))
     def is_person(self):
         return self.type=='people'
 
 class disp_bag():
-    def __init__(self, bag, ref):
-        self.title = bag.title
-        self.ref = ref
-        self.elements = bag._elements
+    def __init__(self, project, entity_class, bag_filter=extras.filter_null_obj(), bag_order=extras.order_obj(), title=None, pk=None):
+        self.entity_class = entity_class
+        self.errors = {}
+        self.bag_filter = bag_filter
+        self.bag_order = bag_order
+        self.elements = filter(extras.ErrorCatcher(bag_filter, self.errors), entity_class.all())
+        self.elements.sort(cmp=self.bag_order)
+        self.pk = pk
+        if title: self.title = title
+        else: self.title = self.entity_class.plural_name
+    def view_ref(self):
+        return self.entity_class.plural_name+'/?'+self.bag_filter.to_string()+'&'+self.bag_order.to_string()
+    def filter_ref(self):
+        return self.bag_filter.to_string()+'&'+self.bag_order.to_string()
+    def add_ref(self):
+        return self.entity_class.plural_name
+    def js(self):
+        """
+        generates javascript relevant to this bag
+        """
+        try:
+            filters=[]
+            values=[]
+            filters, values, counter = self.bag_filter.to_list(filters, values)
+            js_string = ';'.join(['filters='+json.dumps(filters),
+                                  'values='+json.dumps(values),
+                                  'order='+json.dumps(self.bag_order.values),
+                                  'reverse='+json.dumps(self.bag_order.reverse),
+                                  'order_keys='+json.dumps(extras.get_all_variables(self.entity_class).keys()),
+                                  'all_filters='+json.dumps(extras.js_filters),
+                                  'filter_names='+json.dumps(extras.js_filters.keys())
+                                  ])
+            return js_string
+        except Exception as inst:
+            return 'alert("Some elements of the page have not loaded correctly. Error:'+str(inst)+'")'
 
+#VIEWS
 def view_project(request):
     p = Project.from_pitzdir(settings.PITZ_DIR)
     bags = []
     try:
-    	pitz_user = p.by_uuid(UUID(request.user.get_profile().uuid))
-    except:
-    	pass
-    for type in p.plural_names:
-        try:
-            bags.append(disp_bag(p.__getattribute__(type),type))
-        except AttributeError:
-            continue
+        user_profile = request.user.get_profile()
+        user = p.by_uuid(UUID(user_profile.uuid))
+        has_custom_bags = user_profile.custom_bags
+    except (models.UserProfile.DoesNotExist,AttributeError):
+        user = p.people.matches_dict(**{'title': 'no owner'})[0]
+        has_custom_bags = False
+    if has_custom_bags:
+        bag_types = p.plural_names.keys()
+        for custom_bag in user_profile.userbag_set.all():
+            filter,order = extras.filter_order_from_str(custom_bag.filter_repr)
+            bags.append(disp_bag(p,p.plural_names[custom_bag.bag_type],filter,order,title=custom_bag.name,pk=custom_bag.pk))
+    else:
+        for plural_name in p.plural_names:
+            try:
+                bags.append(disp_bag(p,p.plural_names[plural_name]))
+            except AttributeError:
+                continue
     return render_to_response('view_project.html', locals(), context_instance=RequestContext(request))
     
-def view_bag(request, ref):
+def view_bag(request, plural_name):
     p = Project.from_pitzdir(settings.PITZ_DIR)
-    pitz_bag = p.__getattribute__(ref)
-    order_form, filter_form = appforms.make_order_filter_forms(p.plural_names[ref])
+    entity_class = p.plural_names[plural_name]
     if request.GET:
-        order_forms = formset_factory(order_form, extra=2)(request.GET, prefix='order')
-        filter_forms = formset_factory(filter_form, extra=2)(request.GET, prefix='filter')
-        equal_filter_dict = {}
-	not_equal_filter_dict = {}
-        for form in filter_forms.forms:
-            if form.is_valid() and len(form.cleaned_data):
-	        if form.cleaned_data['b']==u'eq':
-                    equal_filter_dict[str(form.cleaned_data['a'])] = form.cleaned_data['c']
-		elif form.cleaned_data['b']==u'neq':
-		    not_equal_filter_dict[str(form.cleaned_data['a'])] = form.cleaned_data['c']
-        if len(equal_filter_dict):
-            pitz_bag = pitz_bag.matches_dict(**equal_filter_dict)
-	if len(not_equal_filter_dict):
-	    pitz_bag = extras.filter_neq(pitz_bag, not_equal_filter_dict)
-        order_list = []
-        for form in order_forms.forms:
-            if form.is_valid() and len(form.cleaned_data):
-                order_list.append((form.cleaned_data['order_by'],form.cleaned_data['reverse']))
-        def special_cmp(e1,e2):
-            for o in order_list:
-                result = cmp(e1[str(o[0])],e2[str(o[0])])
-                if result != 0:
-                   if o[1]:
-                       result=-result
-                   return result
-            return 0
-        pitz_bag.order(order_method=special_cmp)
+        bag = disp_bag(p, entity_class, extras.filter_from_GET(request.GET), extras.order_from_GET(request.GET))
     else:
-        order_forms = formset_factory(order_form, extra=2)(prefix='order')
-        filter_forms = formset_factory(filter_form, extra=2)(prefix='filter')
-    bag = disp_bag(pitz_bag,ref)
+        bag = disp_bag(p, entity_class)
     return render_to_response('view_bag.html', locals(), context_instance=RequestContext(request))
     
 def view_entity(request, uuid):
     p = Project.from_pitzdir(settings.PITZ_DIR)
+    try:
+        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+    except (models.UserProfile.DoesNotExist,AttributeError):
+        user = p.people.matches_dict(**{'title': 'no owner'})[0]
     e = get_entity_or_404(uuid, p)
-    # # find things which have this entity listed as their entity... like
-    # # comments :)
-    # related = p.matches_dict(entity=e)
-
-    # find anything with any field as this entity (eep!)
-    related = []
-    #related2 = []
-    #for k in [x[0] for x in p.attributes]:
-    #    # python magic: pass dictionary as explicit kwargs:
-    #    matches = p.matches_dict(**{k:e})
-    #    # TODO: faster intersection...
-    #    for m in matches:
-    #        if not m in related:
-    #            related2.append(m)
-    #related2 = disp_bag_by_type(related2)
-    for plural_name in p.plural_names:
-        fields = extras.get_all_variables(p.plural_names[plural_name])
-        for field_name in fields:
-            if fields[field_name]==type(e):
-                related.append((disp_bag(p.__getattribute__(plural_name).matches_dict(**{field_name:e}),plural_name),field_name))
-    entity = disp_entity(e, related)
+    entity = disp_entity(e)
     return render_to_response('view_entity.html', locals(), context_instance=RequestContext(request))
     
 @login_required
 def edit_entity(request, uuid):
+    #get project, entity, user etc
     p = Project.from_pitzdir(settings.PITZ_DIR)
     try:
         user = p.by_uuid(UUID(request.user.get_profile().uuid))
-    except models.UserProfile.DoesNotExist:
+    except (models.UserProfile.DoesNotExist,AttributeError):
         user = p.people.matches_dict(**{'title': 'no owner'})[0]
     entity = get_entity_or_404(uuid, p)
+    #make the entity_form class, with entity set as default
     entity_form = appforms.make_entity_form(p.classes[entity['type']], p, entity)
+    #standard django form handling stuff
     if request.method == 'POST':
         form = entity_form(request.POST)
         if form.is_valid():
@@ -173,34 +179,119 @@ def edit_entity(request, uuid):
             return redirect(to=settings.ROOT_URL+'/view/entity/'+str(uuid)+'/')
     else:
         form = entity_form()
+    #dont forget this so that enity info can be put outside the form (e.g. in the header)
     entity = disp_entity(entity)
     return render_to_response('form.html', locals(), context_instance=RequestContext(request))
 
 @login_required
 def add_entity(request, plural_name):
+    #get project, user, entity etc
     p = Project.from_pitzdir(settings.PITZ_DIR)
     try:
         user = p.by_uuid(UUID(request.user.get_profile().uuid))
-    except models.UserProfile.DoesNotExist:
+    except (models.UserProfile.DoesNotExist,AttributeError):
         user = p.people.matches_dict(**{'title': 'no owner'})[0]
     entity_form = appforms.make_entity_form(p.plural_names[plural_name], p)
+    #if post (ie this form was submitted), then try and save
     if request.method == 'POST':
         form = entity_form(request.POST)
         if form.is_valid():
             form.save(user)
             return redirect(to=settings.ROOT_URL+'/view/entity/'+str(form.entity.uuid)+'/')
-    elif request.method == 'GET':
-        i={}
-        for x in request.GET:
-            if isinstance(entity_form.base_fields[x], list):
-                i[x] = [request.GET[x],]
-            else:
-                i[x] = request.GET[x]
-        form = entity_form(i)
     else:
+        #else check the base fields of the form and set the default to the current user if its a person field
+        for field in entity_form.base_fields:
+            try:
+                if issubclass(entity_form.base_fields[field].entity_type, Person):
+                    if entity_form.base_fields[field].is_entitychoice == 1:
+                        entity_form.base_fields[field].initial = user.uuid
+                    if entity_form.base_fields[field].is_entitychoice == 2:
+                        entity_form.base_fields[field].initial = [user.uuid,]
+            except AttributeError:
+                continue
+        #if we have get data with a from field, then that says we should set all fields that can take that value to that value
+        if request.method == 'GET':
+            if request.GET.get('from'):
+                entity = p.by_uuid(UUID(request.GET['from']))
+                #we need to modify the defalt values of base fields of the class of the entity given to that entity
+                for field in entity_form.base_fields:
+                    try:
+                        if isinstance(entity, entity_form.base_fields[field].entity_type):
+                            if entity_form.base_fields[field].is_entitychoice == 1:
+                                entity_form.base_fields[field].initial = entity.uuid
+                            if entity_form.base_fields[field].is_entitychoice == 2:
+                                entity_form.base_fields[field].initial = [entity.uuid,]
+                    except AttributeError:
+                        continue
         form = entity_form()
     entity = disp_entity(form.entity)
     return render_to_response('form.html', locals(), context_instance=RequestContext(request))
+
+def help(request):
+    return render_to_response('help.html', locals(), context_instance=RequestContext(request))
+    
+@login_required
+def preferences(request):
+    preferences_form = appforms.make_pref_form(request.user.get_profile())
+    p = Project.from_pitzdir(settings.PITZ_DIR)
+    try:
+        profile = request.user.get_profile()
+        user = p.by_uuid(UUID(profile.uuid))
+        if request.method == 'POST':
+            form = preferences_form(request.POST, instance=profile)
+            if form.is_valid():
+                form.save()
+            return redirect(to=settings.ROOT_URL+'/')
+        else:
+            form = preferences_form(instance=profile)
+    except models.UserProfile.DoesNotExist:
+        user = p.people.matches_dict(**{'title': 'no owner'})[0]
+        if request.method == 'POST':
+            form = appforms.preferences_form(request.POST)
+            if form.is_valid():
+                profile = form.save(commit=False)
+                profile.user = request.user
+                profile.save()
+                return redirect(to=settings.ROOT_URL+'/')
+        else:
+            form = appforms.preferences_form()
+    return render_to_response('form.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+def add_shortcut(request):
+    if request.method=="POST":
+        url = request.POST.get('url','/')
+        shortcut = models.UserShortcut()
+        shortcut.name = request.POST.get('name','unnamed')
+        shortcut.url = url
+        shortcut.user_profile= request.user.get_profile()
+        shortcut.save()
+    else:
+        url='/'
+    return redirect(to=settings.ROOT_URL+url)
+
+@login_required    
+def add_bag(request):
+    if request.method=="POST":
+        bag_type = request.POST.get('bag_type')
+        filter_ref = request.POST.get('fltr_ref', '')
+        bag = models.UserBag()
+        bag.name = request.POST.get('name','unnamed')
+        bag.bag_type = bag_type
+        bag.filter_repr = filter_ref
+        bag.user_profile= request.user.get_profile()
+        bag.save()
+        return redirect(to=settings.ROOT_URL+'/view/bag/'+bag_type+'/?'+filter_ref)
+    else:
+        return redirect(to=settings.ROOT_URL+'/')
+
+@login_required
+def remove_bag(request, pk):
+    bag = models.UserBag.objects.get(pk=pk)
+    #just double check it belongs to the user
+    if bag.user_profile.user == request.user:
+        bag.delete()
+    return redirect(to=settings.ROOT_URL+'/')
 
 @permission_required('is_staff')
 def useruuids(request, uuid):
@@ -214,7 +305,7 @@ def useruuids(request, uuid):
             profile = form.save(commit=False)
             profile.uuid = uuid
             profile.save()
-            return redirect(to='/view/entity/'+uuid+'/')
+            return redirect(to=settings.ROOT_URL+'/view/entity/'+uuid+'/')
     else:
         try:
             form = appforms.useruuid_form(instance=models.UserProfile.objects.get(uuid=uuid))

@@ -47,7 +47,8 @@ enum NodeType : int8 {
     CornerHarris = 38,
     HistogramSegmentationArb = 39,
     RunningAverage = 40,
-    CopyMask = 41
+    CopyMask = 41,
+    FastMedian = 42
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -339,6 +340,11 @@ group pipeline
 
     message GraphRequest : 10
     {
+    }
+
+    message ForceExecRequest : 11
+    {
+        nodeId : int32;
     }
 }
 

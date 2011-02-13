@@ -46,7 +46,11 @@ class SplitHSVNode: public Node{
             int channel_type = CV_MAKETYPE(CV_MAT_DEPTH_MASK & img->cvMat().type(), 1);
             
             if(img->cvMat().channels() == 3)
+            #ifdef CV_RGB2HSV_FULL
+                conversion_code = CV_RGB2HSV_FULL;
+            #else 
                 conversion_code = CV_RGB2HSV;
+            #endif
             else
                 // oops... cvtColor can't do anything else
                 throw(parameter_error("image must be 3-channel RGB"));

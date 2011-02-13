@@ -2,22 +2,32 @@ components: []
 created_by: &id001 !!python/object:uuid.UUID
   int: 329653966991278482580175629071994424733
 created_time: 2010-12-08 11:36:56.870679
-description: !!python/unicode 'Create a more flexible filtering/ordering system'
+description: !!python/unicode "Large site improvements\r\nFiltering\r\n-new filter\
+  \ system. Done.\r\n-improve filter presentation (incl. order)\r\n-add gte and lte\
+  \ filters\r\n-add ordering system (same appearance as before, possibly use python\
+  \ sort instead of creating a new pitz bag to sort)\r\n-when choosing entity property,\
+  \ possibly limit to dropdown box. needs to be careful around properties that are\
+  \ entities.\r\n\r\nCustom home page\r\nneeds links to all types of entity\r\ncustomisable\
+  \ previews/shortcuts (possibly set these from filtered bags)\r\nneeds to be activatable\r\
+  \nsome db changes needed to store info\r\n\r\nDealing with documents\r\n-pitz and\
+  \ django both have doc upload features, so it should be possible to upload files\
+  \ and link them to entities\r\n-alternatively some sort of linking system\r\n  \
+  \ \r\nRSS feeds\r\n-Django has built in feeds, could be used "
 estimate: !!python/object:uuid.UUID
   int: 298257563599997189979885110366072744596
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-08 11:36:56.875622
+modified_time: 2011-01-19 21:38:20.665722
 owner: *id001
 points: null
-pscore: 1
+pscore: !!python/unicode '1'
 status: !!python/object:uuid.UUID
-  int: 49302717939597338662509329691997652165
+  int: 154409908609622189382556686006061208230
 tags:
 - !!python/object:uuid.UUID
   int: 229704984629557593547353317988038779497
-title: !!python/unicode 'Webapp filtering/ordering system'
+title: !!python/unicode 'Webapp Features'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 108372833577720640355864717342153774429
-yaml_file_saved: 2010-12-08 11:36:56.881954
+yaml_file_saved: 2011-01-19 21:38:20.673420

@@ -47,17 +47,16 @@ void Text::draw(drawtype_e::e){
 
 BBox Text::bbox(){
     if(bboxFont()){
-        if(!m_bbox)
-            updateBbox();
-        return BBox(m_bbox->Lower().X(), m_bbox->Lower().Y(),
-                    m_bbox->Upper().X(), m_bbox->Upper().Y());
+        updateBbox();
+        return m_bbox;
     }else{
         return BBox(0, 0, 10, 1); 
     }
 }
 
 void Text::updateBbox(){
-    m_bbox = boost::make_shared<FTBBox>(bboxFont()->BBox(c_str()));
+    const FTBBox b = bboxFont()->BBox(c_str());
+    m_bbox = BBox(b.Lower().X(), b.Lower().Y(), b.Upper().X(), b.Upper().Y());
 }
 
 void Text::colour(Colour const& c){

@@ -4,7 +4,7 @@
 #include <generated/messages.h>
 #include <common/cauv_node.h>
 #include <common/spread/msgsrc_mb_observer.h>
-#include <common/spread/spread_rc_mailbox.h>>
+#include <common/spread/spread_rc_mailbox.h>
 
 #include "emit_static.h"
 

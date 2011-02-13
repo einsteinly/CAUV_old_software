@@ -34,5 +34,5 @@ class SonarIsDeadException : public std::exception
 
 } // namespace cauv
 
-#endif __CAUV_SEANET_SERIAL_PORT_H__
+#endif//__CAUV_SEANET_SERIAL_PORT_H__
 

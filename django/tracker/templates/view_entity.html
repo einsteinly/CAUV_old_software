@@ -6,7 +6,7 @@
 <div id="entity_title">
     {{ entity.title }}
 </div>
-<div id="toolbox">
+<div class="toolbox">
     {% comment %}
     Admin options
     {% endcomment %}
@@ -45,19 +45,26 @@
     </div>
 </div>
 {% endfor %}
-{% for bag, field in related %}
-<div class="bag">
-    <div class="bag_expanded">
-        <div class="bag_title"> {{ bag.ref }} - <a href="{{ ROOT_URL }}/add/entity/{{ bag.ref }}/?{{ field }}={{ entity.uuid }}">add new</a></div>
+<div id="related_bags">
+{% for bag in entity.related %}
+<div class="container">
+    <div class="bag bag_minimised" id="{{ bag.title }}">
+        <div class="bag_title"> <a href="{{ ROOT_URL }}/view/bag/{{bag.view_ref}}">{{ bag.title }}</a> - <a href="{{ ROOT_URL }}/add/entity/{{ bag.add_ref }}/?from={{ entity.uuid }}">add new</a></div>
         <ul>
         {% for e in bag.elements %}
-        <li>
-        <h4><a href="{{ ROOT_URL }}/view/entity/{{ e.uuid }}">{{ e.title }}</a></h4>
-        {{ e.description|force_escape|linebreaksbr|truncatewords:30 }}
-        </li>
+            <li id="{{ forloop.counter }}">
+            <a href="{{ ROOT_URL }}/view/entity/{{ e.uuid }}">{{ e.title }}</a>
+            <div class="hiddenmouseover" id="{{ bag.title }}_{{ forloop.counter }}">{{ e.description|force_escape|linebreaksbr|truncatewords:30 }}</div>
+            </li>
         {% endfor %}
         </ul>
     </div>
+    <div id="{{ bag.title }}_dbox" class="dbox">
+    </div>
 </div>
 {% endfor %}
+</div>
+<script language="javascript">
+load_display_handlers();
+</script>
 {% endblock %}

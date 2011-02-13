@@ -1,0 +1,15 @@
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2010-12-26 12:53:10.991381
+description: !!python/unicode 'Actually implemented as overloaded serialise() deserialise()
+  functions for all supported types. Boost Archive is completely cut out now.'
+entity: !!python/object:uuid.UUID
+  int: 152269525812862065198261561734123737574
+modified_time: 2010-12-26 12:53:11.004685
+pscore: 0
+title: !!python/unicode 'Actually...'
+type: comment
+uuid: !!python/object:uuid.UUID
+  int: 255471741954392381671539317150371982299
+who_said_it: *id001
+yaml_file_saved: 2010-12-26 12:53:11.010930

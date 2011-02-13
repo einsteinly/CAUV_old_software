@@ -204,6 +204,20 @@ void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr){
     }
 }
 
+
+void ImageProcessor::onForceExecRequestMessage(ForceExecRequestMessage_ptr m){
+    try{
+        node_ptr_t n = lookup(m->nodeId());
+        if(n){
+            n->checkAddSched(Node::Always);
+        }else{
+            error() << __func__ << "invalid node id:" << m->nodeId();
+        }
+    }catch(std::exception& e){
+        error() << __func__  << ":" << e.what();
+    }
+}
+
 void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr){
     try{
         lock_t l(m_nodes_lock);    

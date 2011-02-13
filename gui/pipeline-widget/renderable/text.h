@@ -7,7 +7,6 @@
 #include <string>
 
 class FTFont;
-class FTBBox;
 
 namespace cauv{
 namespace pw{
@@ -44,7 +43,7 @@ class Text: public Renderable, public std::string{
         font_ptr bboxFont(){ return bboxFont(m_font); }
 
     private:
-        boost::shared_ptr<FTBBox> m_bbox;
+        BBox m_bbox;
         face_pt_pair_t m_font;
         Colour m_colour;
 };

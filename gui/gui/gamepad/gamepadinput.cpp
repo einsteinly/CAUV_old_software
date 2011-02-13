@@ -1,7 +1,17 @@
+#ifdef GAMEPAD_SUPPORT
+
 #include "gamepadinput.h"
 
 #include <sstream>
 #include <iostream>
+
+#include <OIS/OISInputManager.h>
+#include <OIS/OISException.h>
+#include <OIS/OISKeyboard.h>
+#include <OIS/OISMouse.h>
+#include <OIS/OISEvents.h>
+
+#include <X11/Xlib.h>
 
 using namespace OIS;
 using namespace cauv;
@@ -35,7 +45,7 @@ GamepadInput::GamepadInput(const unsigned int id)
     m_controller = joys[id];
 }
 
-InputManager * GamepadInput::getInputSystem(){
+InputManager * GamepadInput::getInputSystem() {
     if(m_input_manager) return m_input_manager;
 
     ParamList pl;
@@ -77,14 +87,14 @@ bool GamepadInput::buttonReleased( const JoyStickEvent &arg, int button ) {
         std::cout << std::endl << arg.device->vendor() << ". Button Released # " << button;
         return true;
 }
-bool GamepadInput::axisMoved( const JoyStickEvent &arg, int axis )
+bool GamepadInput::axisMoved( const JoyStickEvent &arg, int axis ) 
 {
         //Provide a little dead zone
         if( arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )
                 std::cout << std::endl << arg.device->vendor() << ". Axis # " << axis << " Value: " << arg.state.mAxes[axis].abs;
         return true;
 }
-bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov )
+bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov ) 
 {
         std::cout << std::endl << arg.device->vendor() << ". POV" << pov << " ";
 
@@ -105,7 +115,7 @@ bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov )
         return true;
 }
 
-bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index)
+bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index) 
 {
         std::cout.precision(2);
         std::cout.flags(std::ios::fixed | std::ios::right);
@@ -124,14 +134,14 @@ void GamepadInput::processEvents(){
         handleNonBuffered();
 }
 
-void GamepadInput::handleNonBuffered(){
+void GamepadInput::handleNonBuffered() const {
     const JoyStickState &joy = m_controller->getJoyStickState();
     for( unsigned int i = 0; i < joy.mAxes.size(); ++i ) {
         std::cout << "\nAxis " << i << " X: " << joy.mAxes[i].abs;
     }
 }
 
-std::string GamepadInput::listDevices(){
+std::string GamepadInput::listDevices() {
     std::stringstream str;
 
     InputManager *im = GamepadInput::getInputSystem();
@@ -147,3 +157,5 @@ std::string GamepadInput::listDevices(){
     str << "\n\n End of device list. \n\n";
     return str.str();
 }
+
+#endif //GAMEPAD_SUPPORT

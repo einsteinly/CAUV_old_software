@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% comment %} Please add to this as you feel neccessary {% endcomment %}
+{% block breadcrumbs %}<a href="{{ ROOT_URL }}/">Home</a> - Help{% endblock %}
+{% block content %}
+<div id="help">
+<h1>User customisation</h1>
+<a name="custom_shortcuts"><h2>Custom Shortcuts</h2></a>
+Custom shorcuts allow you to create a link to almost any page in the tracker. To create custom shortcuts, first enable them in your <a href="{{ ROOT_URL }}/accounts/preferences/">user preferences</a>.
+Then whenever you find a page you want to create a shortcut too, click on "Add shortcut to this page", choose a name for your shortcut, and click "Add".
+<br/>To delete shortcuts, go to user preferences. Unselect (by pressing Ctrl and clicking) the shortcuts to be deleted and click save. NOTE: Any shortcuts not highlighted when save is pressed will be permenantly deleted.
+<a name="custom_bags"><h2>Custom bags</h2></a>
+Custom bags enables you to replace the default website homepage with bags (aka list of things) of your choice, filtered and ordered as well. To add custom bags to your homepage, first enable them in your <a href="{{ ROOT_URL }}/accounts/preferences/">user preferences</a>.
+Then whenever you find a bag that you want to add to your hompage, click on "Add this bag to the home screen", choose a name, and click "Add". Don't forget that it'll remember what filters and ordering you have applied. Note: the original bags that appeared on the homepage can still be accessed by from the "Entity types" bar.
+<br/>To remove a bag, simply click "Remove this bag".
+</div>
+{% endblock %}

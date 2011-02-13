@@ -14,176 +14,174 @@
 using namespace std;
 using namespace cauv;
 
-static void set_pixel(cv::Mat& img, int x, int y, unsigned char val)
+static inline cv::Rect arcBound(int radius, cv::Point2f from, cv::Point2f to)
 {
-    if (x < 0 || y < 0 || x >= img.size().width || y >= img.size().height) {
-        return;
+    // Assuming maximum quarter arcs
+
+    // Check which half-axes arc crosses, by checking quadrants
+
+    // 10 | 00
+    // ___|___
+    //    |
+    // 11 | 01
+
+    int8_t fromQuad = ((from.x < 0) << 1) | (from.y < 0);
+    int8_t toQuad = ((to.x < 0) << 1) | (to.y < 0);
+    
+    int max_x, max_y, min_x, min_y;
+
+    if (fromQuad == toQuad) // Common case, same quadrant
+    {
+		min_x = floor(min(from.x, to.x));
+		min_y = floor(min(from.y, to.y));
+		max_x = ceil(max(from.x, to.x));
+		max_y = ceil(max(from.y, to.y));
     }
-    img.at<unsigned char>(y, x) = val;
-}
-
-struct rect { int min_y, max_y, min_x, max_x; };
-static rect get_union(const rect& a, const rect& b)
-{
-    rect ret;
-    ret.min_y = min(a.min_y, b.min_y);
-    ret.max_y = max(a.max_y, b.max_y);
-    ret.min_x = min(a.min_x, b.min_x);
-    ret.max_x = max(a.max_x, b.max_x);
-    return ret;
-}
-static rect get_intersection(const rect& a, const rect& b)
-{
-    rect ret;
-    ret.min_y = max(a.min_y, b.min_y);
-    ret.max_y = min(a.max_y, b.max_y);
-    ret.min_x = max(a.min_x, b.min_x);
-    ret.max_x = min(a.max_x, b.max_x);
-    return ret;
-}
-static rect get_arc_bb(int cx, int cy, int radius, float from, float to)
-{
-	while (to >= 2*M_PI)
-	{
-		from -= 2*M_PI;
-		to -= 2*M_PI;
-	}
-
-    rect ret;
-	float from_x = cx + radius*cos(from); //     | <-.
-	float from_y = cy + radius*sin(from); //  ___|___ 0
-	float to_x = cx + radius*cos(to);     //     |
-	float to_y = cy + radius*sin(to);     //     |
-	
-	if (from < 0 && 0 < to)
-		ret.max_x = cx + radius;
-	else
-		ret.max_x = ceil(max(from_x, to_x));
-
-	if (from < M_PI_2 && M_PI_2 < to)
-		ret.max_y = cy + radius;
-	else
-		ret.max_y = ceil(max(from_y, to_y));
-	
-	if (from < M_PI && M_PI < to)
-		ret.min_x = cx - radius;
-	else
-		ret.min_x = floor(min(from_x, to_x));
-
-	if (from < M_PI+M_PI_2 && M_PI+M_PI_2 < to)
-		ret.min_y = cy - radius;
-	else
-		ret.min_y = floor(min(from_y, to_y));
-
-    return ret; 
+    else
+    {
+        switch (fromQuad)
+        {
+            default:
+                error() << "fromQuad out of range:" << fromQuad;
+            case 0:
+		        min_x = to.x;
+                min_y = floor(min(from.y, to.y));
+		        max_x = from.x;
+		        max_y = radius;
+                break;
+            case 1:
+                min_x = floor(min(from.x, to.x));
+                min_y = from.y;
+                max_x = radius;
+                max_y = to.y;
+                break;
+            case 2:
+                min_x = -radius;
+                min_y = to.y;
+                max_x = ceil(max(from.x, to.x));
+                max_y = from.y;
+                break;
+            case 3:
+                min_x = from.x;
+                min_y = -radius;
+                max_x = to.x;
+                max_y = ceil(max(from.y, to.y));
+                break;
+        }
+    }
+    return cv::Rect(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1);
 }
 
 template<typename T>
-int ccw(T p0_x, T p0_y, T p1_x, T p1_y, T p2_x, T p2_y)
+bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
 {
-	T dx1, dx2, dy1, dy2;
-	
-	dx1 = p1_x - p0_x; dy1 = p1_y - p0_y;
-	dx2 = p2_x - p0_x; dy2 = p2_y - p0_y;
-
-	if (dx1*dy2 > dy1*dx2)
-		return +1;
-	if (dx1*dy2 < dy1*dx2)
-		return -1;
-	if ((dx1*dx2 < 0) || (dy1*dy2 < 0))
-		return -1;
-	if ((dx1*dx1 + dy1*dy1) < (dx2*dx2 + dy2*dy2))
-		return +1;
-	return 0;
+    return (p1_x * p2_y - p2_x * p1_y) > 0;
 }
-static void scan_thick_arc(cv::Mat& img, int cx, int cy, int radius, float from, float to, unsigned char value, int thickness)
-{
-    if (from > to)
-    {
-        scan_thick_arc(img, cx, cy, radius, to, from, value, thickness);
-        return; 
-    }
 
-	//cout << "Start drawing at " << from << endl;
-	//cout << "End drawing at " << to << endl;
-
-    rect innerbb = get_arc_bb(cx,cy,radius,from,to);
-    rect outerbb = get_arc_bb(cx,cy,radius+thickness,from,to);
-    rect bb = get_union(innerbb,outerbb);
-    rect safe = get_intersection(innerbb, outerbb);
-
-	float from_x = cx + radius*cos(from); //     | <-.
-	float from_y = cy + radius*sin(from); //  ___|___ 0
-	float to_x = cx + radius*cos(to);     //     |
-	float to_y = cy + radius*sin(to);     //     |
-
-    info() << bb.min_y << bb.max_y << bb.min_x << bb.max_x;
-	
-    for(int y=bb.min_y; y <= bb.max_y; y++)
-		for(int x=bb.min_x; x <= bb.max_x; x++) {
-            int r2 = (x-cx)*(x-cx)+ (y-cy)*(y-cy);
-            if (r2 < radius*radius || r2 > (radius+thickness)*(radius+thickness))
-                continue;
-            
-            // TODO: Make this work for to-from >= pi 
-            if (ccw((float)cx,(float)cy,from_x,from_y,(float)x,(float)y) * ccw((float)cx,(float)cy,to_x,to_y,(float)x,(float)y) == 1) // Same side
-                continue;
-
-            set_pixel(img, y, x, value);
-        }
-}
 
 SonarAccumulator::SonarAccumulator()
-    : m_img(boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1)))
+    : m_last_line_bearing(0),
+      m_images_accumulated(0),
+      m_img(boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1)))
 {   
     assert(m_img->cvMat().data);
 }
-void SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
+
+
+std::vector<float> precalculate_sonar_sins()
 {
-	float rads = (M_PI_2 / 1600) * line.bearing - M_PI_2;
-	float steprads = (M_PI_2 / 1600) * line.bearingRange;
-   
-    float from = rads;
-    float to = rads + steprads;
+    std::vector<float> ret;
+    ret.reserve(1600);
+    for (int b = 0; b < 1600; ++b)
+        ret.push_back(sin((M_PI / 3200) * b));
+    return ret;
+}
+static std::vector<float> sonar_sins = precalculate_sonar_sins();
 
-    float cosfrom = cos(from);
-    float sinfrom = sin(from);
-    float costo = cos(to);    
-    float sinto = sin(to);    
+float sonar_sin(int bearing)
+{
+    bearing = bearing % 6400;
+    if (bearing < 0)
+        bearing += 6400;
+    
+    if (bearing < 1600)
+        return sonar_sins[bearing];
+    else if (bearing < 3200)
+        return sonar_sins[3200 - bearing];
+    else if (bearing < 4800)
+        return -sonar_sins[bearing - 3200];
+    else
+        return -sonar_sins[6400 - bearing];   
+}
+float sonar_cos(int bearing)
+{
+    return sonar_sin(bearing + 1600);
+}
 
-    int radius = m_img->cvMat().size().width/2;
+
+float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
+{
+    if (line.bearingRange > 1600)
+    {
+        error() << "Cannot deal with arcs larger than a quarter circle. Do you really need the range to be this coarse?";
+        return m_images_accumulated;
+    }
+
+    int from = line.bearing - line.bearingRange/2;
+    int to = from + line.bearingRange;
+
+    int radius = floor((min(m_img->cvMat().rows, m_img->cvMat().cols)-1)/2);
     int bincount = line.data.size();
 
     float bscale = (float)radius/bincount;
     float cx = radius, cy = radius;
+    
+    int accumulated_delta = line.bearing - m_last_line_bearing;
+    m_last_line_bearing = line.bearing;
+    if (accumulated_delta < 0)
+        m_images_accumulated += 1.0;
+     m_images_accumulated += double(accumulated_delta) / 6400.0;
 
     for (int b = 0; b < bincount; b++) {
-        float from_radius = b * bscale;
-        float to_radius = (b+1) * bscale;
+        // All calculations assume centre is at (0,0)
         
-        rect innerbb = get_arc_bb(cx,cy,from_radius,from,to);
-        rect outerbb = get_arc_bb(cx,cy,to_radius,from,to);
-        rect bb = get_union(innerbb,outerbb);
-        //rect safe = get_intersection(innerbb, outerbb);
+        float inner_radius = b * bscale;
+        float outer_radius = (b+1) * bscale;
 
-        for(int y=bb.min_y; y <= bb.max_y; y++)
-            for(int x=bb.min_x; x <= bb.max_x; x++) {
-                float from_x = cx + from_radius*cosfrom; //     | <-.
-                float from_y = cy + from_radius*sinfrom; //  ___|___ 0
-                float to_x = cx + from_radius*costo;     //     |
-                float to_y = cy + from_radius*sinto;     //     |
-                
-                int r2 = (x-cx)*(x-cx)+ (y-cy)*(y-cy);
-                if (r2 < from_radius*from_radius || r2 > to_radius*to_radius)
+        cv::Point2f pt_inner_from(inner_radius*sonar_cos(from), inner_radius*sonar_sin(from));
+        cv::Point2f pt_inner_to(inner_radius*sonar_cos(to), inner_radius*sonar_sin(to));
+        cv::Point2f pt_outer_from(outer_radius*sonar_cos(from), outer_radius*sonar_sin(from));
+        cv::Point2f pt_outer_to(outer_radius*sonar_cos(to), outer_radius*sonar_sin(to));
+        
+        cv::Rect innerbb = arcBound(inner_radius, pt_inner_from, pt_inner_to);
+        cv::Rect outerbb = arcBound(outer_radius, pt_outer_from, pt_outer_to);
+        cv::Rect bb = innerbb | outerbb;
+        
+        for(int y = bb.y; y < bb.y + bb.height; y++)
+            for(int x = bb.x; x < bb.x + bb.width; x++)
+            {
+                int r2 = x*x + y*y;
+        
+                // Check if we're at least within the right radius
+                if (r2 < inner_radius * inner_radius || r2 > outer_radius * outer_radius)
                     continue;
                 
-                // TODO: Make this work for to-from >= pi 
-                if (ccw((float)cx,(float)cy,from_x,from_y,(float)x,(float)y) * ccw((float)cx,(float)cy,to_x,to_y,(float)x,(float)y) == 1) // Same side
+                //  | P /  For P is inside the segment if
+                //  |  /   it's ccw of from and cw of to.                 
+                //  | /
+                //  |/     
+                bool ccwFrom = ccw<float>(pt_outer_from.x, pt_outer_from.y, x, y);
+                bool ccwTo = ccw<float>(pt_outer_to.x, pt_outer_to.y, x, y);
+                
+                if (!ccwFrom || ccwTo)
                     continue;
 
-                set_pixel(m_img->cvMat(), y, x, line.data[b]);
+                // If we've got to here, then this must be valid. Shift to the centre and set the value.
+                m_img->cvMat().at<unsigned char>(cy - y, cx + x) = line.data[b];
             }
     }
+
+    return m_images_accumulated;
 }
 
 

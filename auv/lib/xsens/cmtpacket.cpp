@@ -136,7 +136,7 @@ void Packet::setXbus(bool xbus, bool convert)
 // Return the floating/fixed point value size
 uint16_t Packet::getFPValueSize(const uint16_t index) const
 {
-	uint16_t ds;
+	uint16_t ds = 0;
 	switch (m_formatList[index].m_outputSettings & CMT_OUTPUTSETTINGS_DATAFORMAT_MASK)
 	{
 		case CMT_OUTPUTSETTINGS_DATAFORMAT_FLOAT:
@@ -1289,7 +1289,7 @@ bool Packet::updateSampleCounter(const uint16_t counter, const uint16_t index)
 	m_msg.setDataShort(counter, m_infoList[index].m_sc);
 	return true;
 }
-TimeStamp Packet::getRtc(const uint16_t index) const
+TimeStamp Packet::getRtc(const uint16_t) const
 {
 	return m_rtc;
 }

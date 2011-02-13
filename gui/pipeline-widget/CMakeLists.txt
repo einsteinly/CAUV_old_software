@@ -2,7 +2,7 @@ project (pipeline-widget)
 
 # FTGL (for text rendering)
 find_package (FTGL)
-include_directories (${FTGL_INCLUDE_DIRS} REQUIRED)
+include_directories (${FTGL_INCLUDE_DIRS})
 
 find_package (GraphViz REQUIRED)
 include_directories (${graphviz_INCLUDE_DIRS})
@@ -55,6 +55,7 @@ add_library (
     ${SRCD}/LiberationSans-Regular.h
     ${SRCD}/LiberationMono-Regular.h
 )
+cauv_install ( pipeline-widget )
 
 target_link_libraries (
     pipeline-widget

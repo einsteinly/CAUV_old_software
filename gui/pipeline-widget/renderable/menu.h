@@ -13,8 +13,6 @@ class Menu: public Renderable, public boost::enable_shared_from_this<Menu>{
         Menu(container_ptr_t c) : Renderable(c){ }
         virtual ~Menu(){ }
 
-        virtual bool keyPressEvent(QKeyEvent*){ return false; }
-        virtual bool keyReleaseEvent(QKeyEvent*){ return false; }
         virtual Point topLevelPos() const{ return m_pos; }
 };
 

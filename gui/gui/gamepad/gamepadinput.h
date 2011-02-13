@@ -1,17 +1,16 @@
+#ifdef GAMEPAD_SUPPORT
+
 #ifndef GAMEPADINPUT_H
 #define GAMEPADINPUT_H
 
-
-#include <qobject.h>
-
-#include <X11/Xlib.h>
-
-#include <OIS/OISInputManager.h>
-#include <OIS/OISException.h>
-#include <OIS/OISKeyboard.h>
-#include <OIS/OISMouse.h>
+#include <QObject>
 #include <OIS/OISJoyStick.h>
-#include <OIS/OISEvents.h>
+
+namespace OIS {
+    class JoyStick;
+    class JoyStickEvent;
+    class InputManager;
+}
 
 namespace cauv{
 
@@ -23,7 +22,7 @@ public Q_SLOTS:
     void processEvents();
 
 public:
-    GamepadInput(const unsigned int id);
+    explicit GamepadInput(const unsigned int id);
 
     static std::string listDevices();
 
@@ -39,9 +38,11 @@ protected:
 
     static OIS::InputManager* getInputSystem();
 
-    virtual void handleNonBuffered();
+    virtual void handleNonBuffered() const;
 };
 
 } // namespace cauv
 
 #endif // GAMEPADINPUT_H
+
+#endif //GAMEPAD_SUPPORT

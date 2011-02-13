@@ -42,3 +42,17 @@ void cauv::msleep(unsigned msecs){
     boost::this_thread::sleep(boost::posix_time::milliseconds(msecs));
 }
 
+std::string cauv::implode( const std::string &glue, const std::set<std::string> &pieces )
+{
+    std::string a;
+    int leng=pieces.size();
+    
+    std::set<std::string>::iterator i;
+    for (i=pieces.begin(); i!=pieces.end(); i++){
+        a += *i;
+        if (--leng)
+            a += glue;
+    }
+    return a;
+}
+
