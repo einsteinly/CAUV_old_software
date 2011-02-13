@@ -16,44 +16,32 @@
 
 using namespace cauv;
 
+
 VideoScreen::VideoScreen(const QString name, QWidget *parent) :
-        QWidget(parent), ui(new Ui::VideoScreen())
+        QWidget(parent), m_new_image(0), m_current_image(0), ui(new Ui::VideoScreen())
 {
     ui->setupUi(this);
     setName(name);
 }
 
 VideoScreen::~VideoScreen(){
+    debug(5) << __FUNCTION__;
     delete(ui);
 }
 
-void VideoScreen::setImage(QImage &image){
-    m_updateMutex.lock();
-    m_image = image.copy();
-    m_updateMutex.unlock();
-    update();
-}
 
-void VideoScreen::setImage(Image &img){
-    try {
-        cv::Mat mat = img.cvMat();
+void VideoScreen::setImage(const Image &img){
 
-        int channels = mat.channels();
+    // take a deep copy of the image before it's deleted
+    // it will be used in a different thread so we can't
+    // just keep a pointer
+    if(m_updateMutex.try_lock()) {
+        boost::scoped_ptr<Image> newImage(new Image(img));
+        m_new_image.swap(newImage);
 
-        if(channels == 1) {
-            cv::Mat result;
-            cv::cvtColor(mat, result,CV_GRAY2RGB);
-            mat = result;
-        }
-        else if(channels == 3) {
-            cv::cvtColor(mat, mat, CV_BGR2RGB);
-        }
+        update();
 
-        QImage qImage((const unsigned char*)(mat.data), mat.cols, mat.rows, QImage::Format_RGB888);
-
-        setImage(qImage);
-    } catch (cv::Exception ex){
-        error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
+        m_updateMutex.unlock();
     }
 }
 
@@ -74,21 +62,63 @@ void VideoScreen::setName(const std::string name){
     VideoScreen::setName(QString::fromStdString(name));
 }
 
-QSize VideoScreen::sizeHint() const{
+/*
+int VideoScreen::heightForWidth( int w ) const {
     float aspect = 1;
 
-    // can't lock mutex here as its const
+    //m_updateMutex.lock();
     //if(m_image.height() > 0)
     //    aspect = m_image.width() / m_image.height();
+    //m_updateMutex.unlock();
 
-    int height = 300 * aspect;
-    return QSize(300, height);
+    std::cout <<"height for width " << w * aspect;
+
+    return w * aspect;
 }
+*/
 
 void VideoScreen::paintEvent(QPaintEvent*) {
+
+    // This conversion REALLY shouldn't be done here it slows down the GUI
+    // thread causing a laggy interface if there's a lot of imcoming images
+    //
+    // Possible Solution: Have a dedicated conversion thread that takes the
+    // latest image read by the messaging thread, converts it and queues a GUI
+    // update in the GUI thread.
+    //
     m_updateMutex.lock();
+
+    if(m_new_image.get()) {
+        // replace the old image
+        m_current_image.swap(m_new_image);
+        m_new_image.reset();
+        m_updateMutex.unlock();
+
+        // convert the new one
+        try {
+            cv::Mat mat = m_current_image->cvMat();
+            int channels = mat.channels();
+            if(channels == 1) {
+                cv::Mat result;
+                cv::cvtColor(mat, result,CV_GRAY2RGB);
+                mat = result;
+            }
+            else if(channels == 3) {
+                cv::cvtColor(mat, mat, CV_BGR2RGB);
+            }
+
+            boost::scoped_ptr<QImage> replacement(new QImage((const unsigned char*)(mat.data), mat.cols, mat.rows, QImage::Format_RGB888));
+            m_qImage.swap(replacement);
+
+        } catch (cv::Exception ex){
+            error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__ << " " << ex.msg;
+        }
+    } else {
+        m_updateMutex.unlock();
+    }
+
     QPainter p(this);
-    p.drawImage(rect(), m_image);
+    if(m_qImage.get())
+        p.drawImage(rect(), *m_qImage.get());
     p.end();
-    m_updateMutex.unlock();
 }

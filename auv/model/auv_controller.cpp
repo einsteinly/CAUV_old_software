@@ -52,7 +52,14 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->autopilots["pitch"]->thr->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots["pitch"]));
 
     // sonar params
-    boost::shared_static_cast<AUV::Sonar>(auv->cameras[CameraID::Sonar])->params->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, _1));
+    boost::shared_ptr<AUV::Sonar> sonar = boost::shared_static_cast<AUV::Sonar>(auv->cameras[CameraID::Sonar]);
+    sonar->direction->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, sonar));
+    sonar->angularRes->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, sonar));
+    sonar->gain->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, sonar));
+    sonar->radialRes->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, sonar));
+    sonar->range->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, sonar));
+    sonar->width->onSet.connect(boost::bind( &AUVController::sendSonarParamsMessage, this, sonar));
+
     // depth calibration
     auv->sensors.depth_calibration->onSet.connect(boost::bind( &AUVController::sendDepthCalibrationMessage, this, _1));
 }
@@ -75,8 +82,15 @@ template <class T, class S>
             onMessageGenerated(boost::make_shared<T>(ap->kP->latest(), ap->kI->latest(), ap->kD->latest(), ap->scale->latest(), ap->aP->latest(), ap->aI->latest(), ap->aD->latest(), ap->thr->latest()));
 }
 
-void AUVController::sendSonarParamsMessage(sonar_params_t params){
-    onMessageGenerated(boost::make_shared<SonarControlMessage>(params.direction, params.width, params.gain, params.range, params.radialRes, params.angularRes));
+void AUVController::sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar){
+    onMessageGenerated(boost::make_shared<SonarControlMessage>(
+            sonar->direction->latest(),
+            sonar->width->latest(),
+            sonar->gain->latest(),
+            sonar->range->latest(),
+            sonar->radialRes->latest(),
+            sonar->angularRes->latest()
+        ));
 }
 
 void AUVController::sendDepthCalibrationMessage(depth_calibration_t params){
@@ -189,9 +203,14 @@ void AUVController::onImageMessage(ImageMessage_ptr message) {
 }
 
 void AUVController::onSonarControlMessage(SonarControlMessage_ptr message) {
-    boost::shared_static_cast<AUV::Sonar>(m_auv->cameras[CameraID::Sonar])->params->update(sonar_params_t(
-            message->direction(), message->width(), message->gain(),
-            message->rangeRes(), message->angularRes()));
+    boost::shared_ptr<AUV::Sonar> sonar = boost::shared_static_cast<AUV::Sonar>(m_auv->cameras[CameraID::Sonar]);
+
+    sonar->direction->update(message->direction());
+    sonar->width->update(message->width());
+    sonar->gain->update(message->gain());
+    sonar->range->update(message->range());
+    sonar->radialRes->update(message->rangeRes());
+    sonar->angularRes->update(message->angularRes());
 }
 
 void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){

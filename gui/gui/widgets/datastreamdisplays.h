@@ -17,27 +17,39 @@
 #include "cauvinterfaceelement.h"
 #include "datastreamdragging.h"
 
+#include <cstdio>
+
 namespace Ui {
     class DataStreamPicker;
 }
 
 
 namespace cauv {
-    
+
+
     /**
       * A DataStreamTreeItemBase is used as the base class for one row in the
       * table of data streams.
       *
       * @author Andy Pritchard
       */
-    class DataStreamTreeItemBase : public QTreeWidgetItem {
-        
+    class DataStreamTreeItemBase : public QObject, public QTreeWidgetItem {
+        Q_OBJECT
     public:
         DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase> stream, QTreeWidgetItem * parent);
         virtual ~DataStreamTreeItemBase(){}
         boost::shared_ptr<DataStreamBase> getDataStreamBase();
         virtual bool updateStream(QVariant& ) = 0;
         
+    protected Q_SLOTS:
+        void updateIcon(int cell, QImage &image);
+        void updateIcon(int cell, const Image &image);
+        void updateValue(const QString value);
+
+    Q_SIGNALS:
+        void iconUpdated(int cell, const Image &image);
+        void valueUpdated(const QString value);
+
     private:
         boost::shared_ptr<DataStreamBase> m_stream;
     };
@@ -51,25 +63,29 @@ namespace cauv {
       * @author Andy Pritchard
       */
     template<class T>
-    class DataStreamTreeItem : public DataStreamTreeItemBase {
-        
+    class DataStreamTreeItem : public DataStreamTreeItemBase, public boost::signals2::trackable {
+
     public:
         DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, QTreeWidgetItem * parent) :
                 DataStreamTreeItemBase(stream, parent), m_stream(stream) {
             stream->onUpdate.connect(boost::bind(&DataStreamTreeItem<T>::onChange, this, _1));
-            this->setText(0, QString::fromStdString(stream->getName()));
+            this->setText(0, QString::fromStdString(stream->getName(false)));
             onChange(stream->latest());
         }
         
-        DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, std::string name, QTreeWidgetItem * parent) :
-                DataStreamTreeItemBase(stream, parent), m_stream(stream) {
-            stream->onUpdate.connect(boost::bind(&DataStreamTreeItem<T>::onChange, this, _1));
-            this->setText(0, QString::fromStdString(name));
-            onChange(stream->latest());
-        }
-        
-        T qVariantToValue(QVariant& value){
-            return boost::lexical_cast<T>(value.toString().toStdString());
+        T qVariantToValue(QVariant& v){
+            std::string value = v.toString().toStdString();
+
+            try {
+                int unitsLength = m_stream->getUnits().length();
+                // take out where the units should be
+                std::string units = value.substr(value.length()-unitsLength, unitsLength);
+                if(units == m_stream->getUnits()){
+                    value = value.substr(0, value.length()-unitsLength);
+                }
+            } catch (std::out_of_range){ }
+
+           return boost::lexical_cast<T>(value);
         }
         
         virtual bool updateStream(QVariant& value){
@@ -91,8 +107,8 @@ namespace cauv {
         
         void onChange(const T value) {
             std::stringstream stream;
-            stream << value;
-            this->setText(1, QString::fromStdString(stream.str()));
+            stream << value << m_stream->getUnits();
+            Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
         }
     };
     
@@ -104,9 +120,8 @@ namespace cauv {
     template<> void DataStreamTreeItem<Image>::onChange(const Image value);
     // another for int8_t for much the same reason but with lexical cast this time
     template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant& value);
-    // also need some for out types as lexical cast doesn't knwo what to do
+    // also need some for out types as lexical cast doesn't know what to do
     template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& value);
-    template<> sonar_params_t DataStreamTreeItem<sonar_params_t>::qVariantToValue(QVariant& value);
     template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& value);
     
     
@@ -130,7 +145,7 @@ namespace cauv {
         void onStreamDropped(boost::shared_ptr<DataStream<Image> > stream);
         void dropEvent(QDropEvent * event);
         void dragEnterEvent(QDragEnterEvent * event);
-        void addWindow(QWidget * content);
+        void addWindow(boost::shared_ptr<QWidget> content);
     };
     
     
@@ -172,7 +187,6 @@ public:
 private Q_SLOTS:
     void editStarted(QTreeWidgetItem* item, int column);
     void itemEdited(QTreeWidgetItem* item, int column);
-    void editEnded(QTreeWidgetItem* , QTreeWidgetItem* previous);
 };
 
 #endif // DATASTREAMDISPLAYS_H
