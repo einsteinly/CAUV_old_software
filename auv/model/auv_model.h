@@ -120,6 +120,14 @@ public:
             return m_min;
         }
 
+        void set(const T &data){
+            if(data > getMax())
+                MutableDataStream<T>::set(getMax());
+            else if(data < getMin())
+                MutableDataStream<T>::set(getMin());
+            else MutableDataStream<T>::set(data);
+        }
+
     protected:
         const T m_max;
         const T m_min;

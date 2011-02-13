@@ -10,6 +10,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace cauv {
 
@@ -54,7 +55,7 @@ namespace cauv {
     class DataStream : public DataStreamBase {
 
         public:
-        typedef boost::signals2::signal<void (const T&)> signal_type;
+        typedef boost::signals2::signal<void (const T&, const boost::posix_time::ptime)> signal_type;
         signal_type onUpdate;
 
             T m_latest;
@@ -72,7 +73,7 @@ namespace cauv {
                     boost::unique_lock<boost::shared_mutex> assignmentLock(m_assignmentLock);
                     this->m_latest = data;
                 }
-                this->onUpdate(data);
+                this->onUpdate(data, boost::posix_time::microsec_clock::local_time());
             }
 
             template <class S>

@@ -1,9 +1,12 @@
 #ifndef GRAPHWIDGET_H
 #define GRAPHWIDGET_H
 
-#include <QMdiArea>
+#include <QPointF>
+#include <QTimer>
+
 #include <qwt_plot.h>
 #include <qwt_plot_grid.h>
+#include <qwt_plot_curve.h>
 #include <qwt_series_data.h>
 
 #include <common/data_stream.h>
@@ -11,6 +14,8 @@
 
 #include "cauvinterfaceelement.h"
 #include "datastreamdragging.h"
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace cauv {
 
@@ -20,33 +25,56 @@ namespace cauv {
     /**
       * A DataStreamSeriesData is used to bridge the interface between qwt and the cauv data stream classes
       * it uses a DataStreamRecorder to store samples
-      *
-      * TODO: implement stubs
-      *
+      **
       * @author Andy Pritchard
       */
     template<class T>
-    class DataStreamSeriesData : public DataStreamSeriesDataBase, public QwtSeriesData<T>, public DataStreamRecorder<T> {
+    class DataStreamSeriesData : public DataStreamSeriesDataBase, public QwtSeriesData<QPointF>, public DataStreamRecorder<T> {
 
     public:
 
         DataStreamSeriesData<T>(boost::shared_ptr<DataStream<T> >stream, unsigned int maximum) :
-                DataStreamRecorder<T>(stream, maximum)
-        {
+                DataStreamRecorder<T>(stream, maximum), m_max(0), m_min(0) {
         }
 
-        virtual size_t size () const {
-            return 1000; //m_history.size();
+        void change(const T &data, const boost::posix_time::ptime timestamp){
+            if(m_max < data)
+                m_max = data;
+            if(m_min > data)
+                m_min = data;
+            DataStreamRecorder<T>::change(data, timestamp);
         }
 
-        virtual T sample (size_t i) const {
-            return sin(i/1000);//m_history[i];
+        size_t size () const {
+            return this->m_history.size();
         }
 
-        virtual QRectF boundingRect () const {
-            return QRectF(0, sample(0), size(), sample(size()));
+        QPointF sample (size_t i) const {
+            boost::posix_time::time_duration delta = boost::posix_time::microsec_clock::local_time() - this->m_timestamps[i];
+            float seconds = ((float)delta.ticks())/(float)delta.ticks_per_second();
+
+            if(i == this->m_history.size()-1){
+                seconds = 0.0;
+            }
+
+            return QPointF(-seconds, this->m_history[i]);
         }
+
+        QRectF boundingRect () const {
+            if(this->m_history.empty())
+                return QRectF(-60, 0, 60, 10);
+            else {
+                // show the last 60 seconds
+                return QRectF(-60, (float)m_min, 60, (float)(m_max-m_min));
+            }
+        }
+
+    protected:
+        T m_max;
+        T m_min;
     };
+
+
 
 
     /**
@@ -64,10 +92,11 @@ namespace cauv {
             onStreamDropped(stream);
             this->setAcceptDrops(true);
             setupPlot();
-        }
 
-        virtual ~GraphWidget(){
-            std::cout << "destroyed GraphWidget" << std::endl;
+            // update timer
+            m_timer.connect(&m_timer, SIGNAL(timeout()), this, SLOT(replot()));
+            m_timer.setSingleShot(false);
+            m_timer.start(100);
         }
 
         QSize sizeHint() const;
@@ -85,9 +114,9 @@ namespace cauv {
         virtual std::string getName() const;
 
     protected:
-        std::set<std::string> seriesNames;
-        std::set<boost::shared_ptr<DataStreamSeriesDataBase> > series;
+        std::set<std::string> m_seriesNames;
         boost::shared_ptr<QwtPlotGrid> m_grid;
+        QTimer m_timer;
     }; 
 }
 
