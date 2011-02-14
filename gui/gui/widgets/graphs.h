@@ -6,6 +6,7 @@
 
 #include "ui_graphs.h"
 #include "datastreamdragging.h"
+#include "widgets/datastreamrecorder.h"
 
 #include <qwt_series_data.h>
 #include <qwt_plot.h>
@@ -100,28 +101,13 @@ namespace cauv {
 
         template<class T>
         explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream):
-                m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
+                m_plot(new QwtPlot()), ui(new Ui::GraphWidget()), m_recorderView(new DataStreamRecorderView())
         {
             ui->setupUi(this);
             onStreamDropped(stream);
             this->setAcceptDrops(true);
             setupPlot();
-
-            // update timer
-            m_timer.connect(&m_timer, SIGNAL(timeout()), m_plot, SLOT(replot()));
-            m_timer.setSingleShot(false);
-            m_timer.start(100);
-
-            //zoomer
-            QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
-            zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::RightButton);
-            zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::MidButton);
-
-            // panner
-            QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
-            panner->setAxisEnabled(QwtPlot::yLeft, false);
-            panner->setMouseButton(Qt::LeftButton);
-
+            ui->widgets->addWidget(m_recorderView);
         }
 
         ~GraphWidget();
@@ -145,6 +131,7 @@ namespace cauv {
         QTimer m_timer;
         QwtPlot * m_plot;
         Ui::GraphWidget * ui;
+        DataStreamRecorderView * m_recorderView;
     }; 
 
 } // namespace cauv

@@ -5,28 +5,22 @@
 
 using namespace cauv;
 
-
-
-DataStreamRecorderController::DataStreamRecorderController(QSpinBox * samples){
-    samples->connect(samples, SIGNAL(valueChanged(int)), this, SLOT(setNumSamples(int)));
-}
-
-void DataStreamRecorderController::setNumSamples(int samples){
-
-}
-
-
-template<class T>
-DataStreamRecorderView<T>::DataStreamRecorderView(DataStreamRecorder<T> * recorder, QWidget *parent) :
+DataStreamRecorderView::DataStreamRecorderView(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::DataStreamRecorder)
 {
     ui->setupUi(this);
+    ui->samples->connect(ui->samples, SIGNAL(valueChanged(int)), this, SLOT(setNumSamples(int)));
+}
+
+void DataStreamRecorderView::setNumSamples(int samples){
+    foreach(boost::function<void(int)> update, m_updateFunctions){
+        update(samples);
+    }
 }
 
 
-template<class T>
-DataStreamRecorderView<T>::~DataStreamRecorderView()
+DataStreamRecorderView::~DataStreamRecorderView()
 {
     delete ui;
 }

@@ -35,6 +35,8 @@ void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
         DataStreamSeriesData<T> * series = new DataStreamSeriesData<T>(stream, 1000);
         m_seriesNames.insert(stream->getName());
 
+        m_recorderView->addRecorder(series);
+
         // series plotter
         std::stringstream str;
         str << stream->getName();
@@ -51,9 +53,7 @@ void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
         curve->setPen(QPen(GraphWidget::colours[(m_seriesNames.size()-1)%14]));
 
         // set window title
-        std::stringstream name;
-        name << "Graph " << getName();
-        setWindowTitle(QString::fromStdString(name.str()));
+        setWindowTitle(QString::fromStdString(getName()));
     }
 }
 
@@ -68,6 +68,7 @@ QSize GraphWidget::sizeHint() const{
 void GraphWidget::setupPlot() {
 
     ui->widgets->addWidget(m_plot);
+    QwtPainter::setPolylineSplitting(true);
 
     // Insert grid
     QwtPlotGrid * grid = new QwtPlotGrid();
@@ -75,8 +76,8 @@ void GraphWidget::setupPlot() {
     QPen pen(Qt::gray, 1, Qt::DotLine, Qt::RoundCap, Qt::RoundJoin);
     grid->setPen(pen);
 
-    m_plot->setCanvasBackground(QColor(Qt::white));
 
+    // canvas
     m_plot->canvas()->setFrameStyle(QFrame::Box | QFrame::Plain );
     m_plot->canvas()->setStyleSheet("QwtPlotCanvas {border: 1px dotted gray}");
     m_plot->canvas()->setLineWidth(1);
@@ -84,10 +85,11 @@ void GraphWidget::setupPlot() {
     m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, true);
     m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::PaintPacked, true);
 
-    QwtPainter::setPolylineSplitting(true);
-
+    // plot
+    m_plot->setCanvasBackground(QColor(Qt::white));
     m_plot->setContentsMargins(0, 5, 5, 0);
 
+    // axes
     m_plot->setAxisFont(QwtPlot::yLeft, QFont("Arial", 7, -1, false));
     m_plot->setAxisFont(QwtPlot::xBottom, QFont("Arial", 7, -1, false));
     m_plot->setAxisTitle(QwtPlot::xBottom, "Time (s)");
@@ -107,6 +109,22 @@ void GraphWidget::setupPlot() {
     QwtLegend *legend = new QwtLegend;
     legend->setFrameStyle(QFrame::NoFrame);
     m_plot->insertLegend(legend, QwtPlot::BottomLegend);
+
+    // update timer
+    m_timer.connect(&m_timer, SIGNAL(timeout()), m_plot, SLOT(replot()));
+    m_timer.setSingleShot(false);
+    m_timer.start(100);
+
+    //zoomer
+    QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
+    zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::RightButton);
+    zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::MidButton);
+
+    // panner
+    QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
+    panner->setAxisEnabled(QwtPlot::yLeft, false);
+    panner->setMouseButton(Qt::LeftButton);
+
 }
 
 void GraphWidget::dropEvent(QDropEvent * event){
@@ -143,7 +161,7 @@ void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> >stream
 
 std::string GraphWidget::getName() const{
     std::stringstream title;
-    title << "[" << implode(", ", m_seriesNames) << "]";
+    title << implode(", ", m_seriesNames);
     return title.str();
 }
 

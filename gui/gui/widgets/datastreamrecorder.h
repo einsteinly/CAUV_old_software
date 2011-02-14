@@ -13,24 +13,25 @@ namespace Ui {
 
 namespace cauv {
 
-    class DataStreamRecorderController : public QObject {
+    class DataStreamRecorderView : public QWidget {
         Q_OBJECT
 
     public:
-        DataStreamRecorderController(QSpinBox * samples);
-
-    public Q_SLOTS:
-        virtual void setNumSamples(int samples);
-    };
-
-
-    template <class T>
-            class DataStreamRecorderView : public QWidget {
-            public:
-        DataStreamRecorderView(DataStreamRecorder<T> * recorder, QWidget *parent = 0);
+        DataStreamRecorderView(QWidget *parent = 0);
         ~DataStreamRecorderView();
 
-            private:
+        template<class T>
+        void addRecorder(DataStreamRecorder<T> * recorder){
+            m_updateFunctions.push_back(boost::bind(&DataStreamRecorder<T>::setNumSamples, recorder, _1));
+        };
+
+    protected:
+        std::vector<boost::function<void(int)> > m_updateFunctions;
+
+    protected Q_SLOTS:
+        void setNumSamples(int samples);
+
+    private:
         Ui::DataStreamRecorder *ui;
     };
 
