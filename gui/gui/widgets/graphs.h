@@ -104,10 +104,11 @@ namespace cauv {
                 m_plot(new QwtPlot()), ui(new Ui::GraphWidget()), m_recorderView(new DataStreamRecorderView())
         {
             ui->setupUi(this);
+            ui->optionsWidget->hide();
             onStreamDropped(stream);
             this->setAcceptDrops(true);
             setupPlot();
-            ui->widgets->addWidget(m_recorderView);
+            ui->options->addWidget(m_recorderView);
         }
 
         ~GraphWidget();
