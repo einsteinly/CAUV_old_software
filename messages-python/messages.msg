@@ -188,6 +188,10 @@ group control
         Ki : float;
         Kd : float;
         scale : float;
+		Ap : float;
+        Ai : float;
+        Ad : float;
+		thr : float;
     }
 
     message DepthAutopilotEnabled : 61
@@ -201,6 +205,10 @@ group control
         Ki : float;
         Kd : float;
         scale : float;
+		Ap : float;
+        Ai : float;
+        Ad : float;
+		thr : float;
     }
 
     message DepthCalibration : 80
@@ -222,6 +230,10 @@ group control
         Ki : float;
         Kd : float;
         scale : float;
+		Ap : float;
+        Ai : float;
+        Ad : float;
+		thr : float;
     }
 
     message StateRequest : 82
@@ -371,6 +383,9 @@ group gui
         error : float;
         derror : float;
         ierror : float;
+        kp : float;
+        ki : float;
+        kd : float;
         
         demand : MotorDemand;
     }

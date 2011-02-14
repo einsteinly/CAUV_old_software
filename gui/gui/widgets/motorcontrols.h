@@ -3,6 +3,8 @@
 
 #include <QDockWidget>
 
+#include <boost/function.hpp>
+
 #include <common/data_stream.h>
 #include <model/auv_model.h> 
 
@@ -13,7 +15,9 @@ namespace Ui {
 }
 
 class QDoubleSpinBox;
+class QCheckBox;
 class QPushButton;
+class QLabel;
 
 namespace cauv {
 
@@ -33,8 +37,37 @@ namespace cauv {
     };
 
 
-    class MotorControls : public QDockWidget, public CauvInterfaceElement {
+    class AutopilotController : public QObject {
         Q_OBJECT
+    public:
+
+        AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<AUV::Autopilot<float> > autopilot);
+
+    public Q_SLOTS:
+        void updateState(bool value);
+        void updateTarget(double value);
+
+        void onEnabledUpdate(bool enabled);
+        void onTargetUpdate(float target);
+        void onActualUpdate(float actual);
+
+    Q_SIGNALS:
+        void enabledUpdated(bool enabled);
+        void targetUpdated(float target);
+        void actualUpdated(float actual);
+
+    protected:
+        boost::shared_ptr<AUV::Autopilot<float> > m_autopilot;
+
+        QCheckBox * m_enabled;
+        QDoubleSpinBox * m_target;
+        QLabel * m_actual;
+
+    };
+
+
+    class MotorControls : public QDockWidget, public CauvInterfaceElement {
+
     public:
         MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
         virtual ~MotorControls();
@@ -43,19 +76,10 @@ namespace cauv {
     protected:
         void setValue(QDoubleSpinBox *spin, double value);
 
-    protected Q_SLOTS:
-        void bearingAutopilotTargetUpdated();
-        void bearingAutopilotStateUpdated();
-
-        void pitchAutopilotTargetUpdated();
-        void pitchAutopilotStateUpdated();
-
-        void depthAutopilotTargetUpdated();
-        void depthAutopilotStateUpdated();
-
     private:
         Ui::MotorControls * ui;
         std::vector<boost::shared_ptr<MotorBurstController> > m_burst_controllers;
+        std::vector<boost::shared_ptr<AutopilotController> > m_autopilot_controllers;
 
     };
 } // namespace cauv

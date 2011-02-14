@@ -34,9 +34,9 @@ namespace cauv {
 
     public:
         DataStreamSplitter<cauv::floatYPR>(boost::shared_ptr<DataStream<cauv::floatYPR> > stream) :
-                yaw(boost::make_shared<DataStream<float> >("Yaw")),
-                pitch(boost::make_shared<DataStream<float> >("Pitch")),
-                roll(boost::make_shared<DataStream<float> >("Roll"))
+                yaw(boost::make_shared<DataStream<float> >("Yaw", stream->getUnits())),
+                pitch(boost::make_shared<DataStream<float> >("Pitch", stream->getUnits())),
+                roll(boost::make_shared<DataStream<float> >("Roll", stream->getUnits()))
         {
             // getter function binds
             boost::function<float(cauv::floatYPR)> yawGetter = boost::bind(&cauv::floatYPR::yaw, _1);
@@ -62,9 +62,9 @@ namespace cauv {
 
     public:
         DataStreamSplitter<cauv::floatXYZ>(boost::shared_ptr<DataStream<cauv::floatXYZ> > stream) :
-                x(boost::make_shared<DataStream<float> >("X")),
-                y(boost::make_shared<DataStream<float> >("Y")),
-                z(boost::make_shared<DataStream<float> >("Z"))
+                x(boost::make_shared<DataStream<float> >("X", stream->getUnits())),
+                y(boost::make_shared<DataStream<float> >("Y", stream->getUnits())),
+                z(boost::make_shared<DataStream<float> >("Z", stream->getUnits()))
         {
             // getter function binds
             boost::function<float(cauv::floatXYZ)> xGetter = boost::bind(&cauv::floatXYZ::x, _1);
@@ -91,12 +91,12 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamRecorder : public boost::signals::trackable {
+    class DataStreamRecorder : public boost::signals2::trackable {
 
     public:
         DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int maximum = 1000):
-                m_maximum(maximum) {
-            stream->onUpdate.connect(boost::bind(&DataStreamRecorder<T>::change, this, _1));
+                m_numSamples(maximum) {
+            stream->onUpdate.connect(boost::bind(&DataStreamRecorder<T>::change, this, _1, _2));
         };
 
         const std::vector<T> getHistory() const {
@@ -104,24 +104,35 @@ namespace cauv {
             return m_history;
         }
 
+        const std::vector<boost::posix_time::ptime> getTimestamps() const {
+            boost::mutex::scoped_lock lock(m_mutex);
+            return m_timestamps;
+        }
+
         void clear() {
             boost::mutex::scoped_lock lock(m_mutex);
             m_history.clear();
+            m_timestamps.clear();
         }
 
-        void change(T &data) {
+        virtual void change(const T &data, const boost::posix_time::ptime timestamp) {
             boost::mutex::scoped_lock lock(m_mutex);
 
-            if (!m_history.empty() && m_history.size() > m_maximum)
+            if (!m_history.empty() && m_history.size() > m_numSamples) {
                 m_history.erase(m_history.begin());
+                m_timestamps.erase(m_timestamps.begin());
+
+            }
 
             m_history.push_back(data);
+            m_timestamps.push_back(timestamp);
         };
 
     protected:
         boost::mutex m_mutex;
         std::vector<T> m_history;
-        unsigned int m_maximum;
+        std::vector<boost::posix_time::ptime> m_timestamps;
+        unsigned int m_numSamples;
     };
 
 
@@ -132,7 +143,7 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamPrinter : public boost::signals::trackable {
+    class DataStreamPrinter : public boost::signals2::trackable {
 
     public:
         DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream, std::ostream &output):

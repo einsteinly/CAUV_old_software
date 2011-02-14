@@ -17,6 +17,9 @@
    <iconset resource="resources.qrc">
     <normaloff>:/resources/icon.png</normaloff>:/resources/icon.png</iconset>
   </property>
+  <property name="dockNestingEnabled">
+   <bool>true</bool>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <property name="leftMargin">

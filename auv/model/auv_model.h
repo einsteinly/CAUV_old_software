@@ -27,18 +27,6 @@ struct depth_calibration_t {
     }
 };
 
-struct sonar_params_t {
-    int direction, width, gain, range, radialRes, angularRes;
-
-    sonar_params_t(int direction, int width, int gain, int radialRes, int angularRes) :
-    direction(direction), width(width), gain(gain), radialRes(radialRes), angularRes(angularRes) {
-    }
-
-    sonar_params_t():
-        direction(0), width(0), gain(0), radialRes(0), angularRes(0) {
-    }
-};
-
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, depth_calibration_t const& s)
@@ -48,21 +36,6 @@ std::basic_ostream<char_T, traits>& operator<<(
     os << ")";
     os << " aft (" << s.aftOffset;
     os << ", x" << s.afteMultiplier;
-    os << ")";
-    return os;
-}
-
-
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, sonar_params_t const& s)
-{
-    os << "( ar=" << s.angularRes;
-    os << ", rr=" << s.radialRes;
-    os << ", range=" << s.range;
-    os << ", dir=" << s.direction;
-    os << ", gain=" << s.gain;
-    os << ", width=" << s.width;
     os << ")";
     return os;
 }
@@ -92,6 +65,7 @@ public:
 
     protected:
         const MotorID::e &m_id;
+        const std::string m_name;
     };
 
     typedef boost::unordered_map<MotorID::e, boost::shared_ptr<Motor> > motor_map;
@@ -116,13 +90,20 @@ public:
     class Autopilot : public MutableDataStream<T> {
     public:
 
-        Autopilot(const std::string name, const T initialTarget) :
-        MutableDataStream<T>(name),
+        Autopilot(const std::string name, boost::shared_ptr<DataStream<T> > actualValue, const T initialTarget, const T min, const T max, const std::string units="") :
+        MutableDataStream<T>(name, units),
         kP(boost::make_shared< MutableDataStream<float> >("kP", this)),
         kI(boost::make_shared< MutableDataStream<float> >("kI", this)),
         kD(boost::make_shared< MutableDataStream<float> >("kD", this)),
         scale(boost::make_shared< MutableDataStream<float> >("scale", this)),
-        enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)) {
+        aP(boost::make_shared< MutableDataStream<float> >("aP", this)),
+        aI(boost::make_shared< MutableDataStream<float> >("aI", this)),
+        aD(boost::make_shared< MutableDataStream<float> >("aD", this)),
+        thr(boost::make_shared< MutableDataStream<float> >("thr", this)),
+        enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)),
+        actual(actualValue),
+        m_max(max),
+        m_min(min) {
             this->update(initialTarget);
             this->enabled->update(false);
         };
@@ -131,7 +112,33 @@ public:
         boost::shared_ptr< MutableDataStream<float> > kI;
         boost::shared_ptr< MutableDataStream<float> > kD;
         boost::shared_ptr< MutableDataStream<float> > scale;
+        boost::shared_ptr< MutableDataStream<float> > aP;
+        boost::shared_ptr< MutableDataStream<float> > aI;
+        boost::shared_ptr< MutableDataStream<float> > aD;
+        boost::shared_ptr< MutableDataStream<float> > thr;
         boost::shared_ptr< MutableDataStream<bool> > enabled;
+        boost::shared_ptr< DataStream<T> > actual;
+
+
+        T getMax(){
+            return m_max;
+        }
+
+        T getMin(){
+            return m_min;
+        }
+
+        void set(const T &data){
+            if(data > getMax())
+                MutableDataStream<T>::set(getMax());
+            else if(data < getMin())
+                MutableDataStream<T>::set(getMin());
+            else MutableDataStream<T>::set(data);
+        }
+
+    protected:
+        const T m_max;
+        const T m_min;
     };
 
     typedef boost::unordered_map<std::string, boost::shared_ptr<Autopilot<float> > > autopilot_map;
@@ -169,10 +176,21 @@ public:
     class Sonar : public Camera {
     public:
 
-        Sonar(const std::string name) : Camera(name), params(boost::make_shared<MutableDataStream< sonar_params_t > >("Params", this)) {
+        Sonar(const std::string name) : Camera(name),
+            angularRes(boost::make_shared<MutableDataStream< int > >("Angular Resolution", this)),
+            radialRes(boost::make_shared<MutableDataStream< int > >("Radial Resolution", this)),
+            range(boost::make_shared<MutableDataStream< int > >("Range", this)),
+            direction(boost::make_shared<MutableDataStream< int > >("Direction", this)),
+            gain(boost::make_shared<MutableDataStream< int > >("Gain", this)),
+            width(boost::make_shared<MutableDataStream< int > >("Width", this)) {
         }
 
-        boost::shared_ptr< MutableDataStream< sonar_params_t > > params;
+        boost::shared_ptr< MutableDataStream< int > > angularRes;
+        boost::shared_ptr< MutableDataStream< int > > radialRes;
+        boost::shared_ptr< MutableDataStream< int > > range;
+        boost::shared_ptr< MutableDataStream< int > > direction;
+        boost::shared_ptr< MutableDataStream< int > > gain;
+        boost::shared_ptr< MutableDataStream< int > > width;
     };
 
     typedef boost::unordered_map<CameraID::e, boost::shared_ptr<Camera> > camera_map;
@@ -198,8 +216,8 @@ public:
         Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
         pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
         depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
-        depth(boost::make_shared<DataStream<float> >("Depth")),
-        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation")),
+        depth(boost::make_shared<DataStream<float> >("Depth", "m")),
+        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation", "°")),
         orientation_split(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(orientation)) {
         }
     } sensors;
