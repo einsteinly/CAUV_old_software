@@ -146,10 +146,14 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
 
     foreach(AUV::autopilot_map::value_type i, auv->autopilots) {
         DataStreamTreeItem<float> *autopilot = new DataStreamTreeItem<float>(i.second, autopilots);
-        new DataStreamTreeItem<float>(i.second->kP, autopilot);
-        new DataStreamTreeItem<float>(i.second->kI, autopilot);
-        new DataStreamTreeItem<float>(i.second->kD, autopilot);
-        new DataStreamTreeItem<float>(i.second->scale, autopilot);
+        (new DataStreamTreeItem<float>(i.second->kP, autopilot))->setText(0, "kP");
+        (new DataStreamTreeItem<float>(i.second->kI, autopilot))->setText(0, "kI");
+        (new DataStreamTreeItem<float>(i.second->kD, autopilot))->setText(0, "kD");
+        (new DataStreamTreeItem<float>(i.second->aP, autopilot))->setText(0, "aP");
+        (new DataStreamTreeItem<float>(i.second->aI, autopilot))->setText(0, "aI");
+        (new DataStreamTreeItem<float>(i.second->aD, autopilot))->setText(0, "aI");
+        (new DataStreamTreeItem<float>(i.second->thr, autopilot))->setText(0, "thr");
+        (new DataStreamTreeItem<float>(i.second->scale, autopilot))->setText(0, "scale");
         (new DataStreamTreeItem<float>(i.second->actual, autopilot))->setText(0, "actual");
     }
 

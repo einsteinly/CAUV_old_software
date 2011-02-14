@@ -29,7 +29,6 @@ namespace cauv{
 
 class SpreadCameraObserver : public CameraObserver, public MessageObserver{
         typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
-        typedef boost::shared_ptr<ImageMessage> imsg_ptr_t;
     public:
 
         SpreadCameraObserver(mb_ptr_t mailbox)
@@ -45,7 +44,7 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
                 {
                     // only do stuff if last image has sent
                     Image i(img);
-                    imsg_ptr_t m = boost::make_shared<ImageMessage>(cam_id, i, now());
+                    ImageMessage_ptr m = boost::make_shared<ImageMessage>(cam_id, i, now());
                     m_msg = m;
                     m_cam_id = cam_id;
                     sendImage();
@@ -57,7 +56,7 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
             }
         }
 
-        virtual void onImageMessage(imsg_ptr_t m){
+        virtual void onImageMessage(ImageMessage_ptr m){
             if(m->source() == m_cam_id)
             {
                 m_msg.reset();
@@ -73,7 +72,7 @@ class SpreadCameraObserver : public CameraObserver, public MessageObserver{
     protected:
         mb_ptr_t m_mailbox;
         CameraID::e m_cam_id;
-        imsg_ptr_t m_msg;
+        ImageMessage_ptr m_msg;
 };
 
 } // namespace cauv

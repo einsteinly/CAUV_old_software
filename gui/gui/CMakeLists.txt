@@ -91,7 +91,6 @@ else()
 
     add_executable (
         guicpp
-        EXCLUDE_FROM_ALL
 
         ${GUICPP_SRCS}
         ${GUICPP_UIS_H}
@@ -111,7 +110,7 @@ else()
         ${OIS_LIBRARIES}
         ${OpenCV_LIBS}
     )
-    #cauv_install ( guicpp )
+    cauv_install ( guicpp )
 
     add_custom_command(
         TARGET guicpp

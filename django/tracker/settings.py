@@ -97,6 +97,9 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+#ONLY USE FOR DEBUGGING TEMPLATES (BREAKS SOME THINGS)
+#TEMPLATE_STRING_IF_INVALID = 'Oops, something went wrong here, ref %s'
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',

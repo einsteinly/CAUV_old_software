@@ -26,11 +26,11 @@ public:
 
     static std::string listDevices();
 
-    virtual bool buttonPressed( const OIS::JoyStickEvent &arg, int button ) const;
-    virtual bool buttonReleased( const OIS::JoyStickEvent &arg, int button ) const;
-    virtual bool axisMoved( const OIS::JoyStickEvent &arg, int axis ) const;
-    virtual bool povMoved( const OIS::JoyStickEvent &arg, int pov ) const;
-    virtual bool vector3Moved( const OIS::JoyStickEvent &arg, int index) const;
+    virtual bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
+    virtual bool buttonReleased( const OIS::JoyStickEvent &arg, int button );
+    virtual bool axisMoved( const OIS::JoyStickEvent &arg, int axis );
+    virtual bool povMoved( const OIS::JoyStickEvent &arg, int pov );
+    virtual bool vector3Moved( const OIS::JoyStickEvent &arg, int index);
 
 protected:
     static OIS::InputManager *m_input_manager;

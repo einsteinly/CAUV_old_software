@@ -38,7 +38,7 @@ float: left;
 #header_user{
 float: right;
 }
-#toolbox{
+.toolbox{
 padding: 3pt 5pt;
 margin: 6pt 0;
 background-color: #e9d0ff;
@@ -67,6 +67,12 @@ border-style: solid;
 -webkit-border-radius: 3pt;
 border-radius: 3pt;
 padding: 2pt;
+}
+.bag_toolbox .filter select{
+float: left;
+}
+.bag_toolbox .order_obj{
+float: left
 }
 .messages{
 padding: 3pt 5pt;
@@ -169,4 +175,22 @@ padding: 3pt 5pt;
 -webkit-border-radius: 3pt;
 border-radius: 3pt;
 overflow-y:auto;
+}
+#help h1 {
+background-color: #e9f0ff;
+padding: 3pt 5pt;
+margin: 3pt 0;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+font-size: 150%
+}
+#help h2 {
+background-color: #e9d0ff;
+padding: 3pt 5pt;
+margin: 3pt 0;
+-moz-border-radius: 3pt;
+-webkit-border-radius: 3pt;
+border-radius: 3pt;
+font-size: 120%
 }

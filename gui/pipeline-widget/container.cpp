@@ -14,7 +14,7 @@ renderable_ptr_t Container::pick(Point const& p){
         if((*i)->bbox().contains(p - (*i)->m_pos)){
             boost::shared_ptr<Container> cp;
             // eww, a bit nasty
-            if(cp = boost::dynamic_pointer_cast<Container>(*i)){
+            if((cp = boost::dynamic_pointer_cast<Container>(*i))){
                 debug() << __func__ << "hit container";
                 return cp->pick(p - (*i)->m_pos);
             }else{

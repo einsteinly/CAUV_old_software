@@ -62,6 +62,9 @@ struct PIDControl
     Controller::e controlee;
     double target;
     double Kp,Ki,Kd,scale;
+    double Ap, Ai, Ad, thr;
+    double KpMAX, KpMIN, KdMAX, KdMIN, KiMAX, KiMIN;
+    double Kp1, Ki1, Kd1;
     double integral, previous_derror, previous_mv;
     std::deque< std::pair<TimeStamp, double> > previous_errors;
     TimeStamp previous_time;
@@ -69,8 +72,17 @@ struct PIDControl
     int retain_samples_msecs;
 
     PIDControl(Controller::e controlee=Controller::NumValues)
-        : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
-          integral(0), is_angle(false), retain_samples_msecs(200)
+        : controlee(controlee),
+          target(0),
+          Kp(1), Ki(1), Kd(1), scale(1),
+          Ap(1), Ai(1), Ad(1), thr(1),
+          KpMAX(1), KpMIN(0), KdMAX(1), KdMIN(0), KiMAX(1), KiMIN(0),
+          Kp1(1), Ki1(1), Kd1(1),
+          integral(0), previous_derror(0), previous_mv(0),
+          previous_errors(),
+          previous_time(),
+          is_angle(false),
+          retain_samples_msecs(200)
     {
         previous_time.secs = 0;
     }
@@ -155,10 +167,38 @@ struct PIDControl
         double dt = tnow - previous_time; // dt is milliseconds
         previous_time = tnow;
 
+		// TODO: implement integral antiwindup ???? 
         integral += error*dt;
         double de = smoothedDerivative();
         previous_derror = de;
-        previous_mv =  scale * (Kp * error + Ki * integral + Kd * de);
+		
+		
+		// variable gains
+		KpMAX=Kp*Ap;
+		KpMIN=Kp/Ap;
+		KiMAX=Ki*Ai;
+		KiMIN=Ki/Ai;
+		KdMAX=Kd*Ad;
+		KdMIN=Kd/Ad;
+		
+		Kp1 = (KpMAX - KpMIN)*abs(error)/thr + KpMIN;
+		Ki1 = (KiMAX - KiMIN)*abs(error)/thr + KiMIN;
+		Kd1 = KdMAX;
+		
+		if (abs(error)>0.00001){
+			Kd1=( KdMIN - KdMAX )*abs(error)/thr + KdMAX;
+		}
+		
+		
+		if (abs(error)>thr){
+			Kp1=KpMAX;
+			Ki1=KiMAX;
+			Kd1=KdMIN;
+		}
+		
+		
+		//Control action
+        previous_mv =  scale * (Kp1 * error + Ki1 * integral + Kd1 * de);
 
         return previous_mv;
     }
@@ -168,12 +208,12 @@ struct PIDControl
         if(previous_errors.size())
             return boost::make_shared<ControllerStateMessage>(
                 controlee, previous_mv, previous_errors.back().second,
-                previous_derror, integral, Kp, Ki, Kd, MotorDemand()
+                previous_derror, integral, Kp1, Ki1, Kd1, MotorDemand()
             );
         else
             return boost::make_shared<ControllerStateMessage>(
                 controlee, previous_mv, 0,
-                previous_derror, integral, Kp, Ki, Kd, MotorDemand()
+                previous_derror, integral, Kp1, Ki1, Kd1, MotorDemand()
             ); 
     }
 };
@@ -359,6 +399,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Bearing].Kp = m->Kp();
             m_controllers[Bearing].Ki = m->Ki();
             m_controllers[Bearing].Kd = m->Kd();
+			m_controllers[Bearing].Ap = m->Ap();
+            m_controllers[Bearing].Ai = m->Ai();
+            m_controllers[Bearing].Ad = m->Ad();
+			m_controllers[Bearing].thr = m->thr();
             m_controllers[Bearing].scale = m->scale();
             m_controllers[Bearing].reset();
         }
@@ -379,6 +423,10 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Pitch].Kp = m->Kp();
             m_controllers[Pitch].Ki = m->Ki();
             m_controllers[Pitch].Kd = m->Kd();
+			m_controllers[Pitch].Ap = m->Ap();
+            m_controllers[Pitch].Ai = m->Ai();
+            m_controllers[Pitch].Ad = m->Ad();
+			m_controllers[Pitch].thr = m->thr();
             m_controllers[Pitch].scale = m->scale();
             m_controllers[Pitch].reset();
         }
@@ -402,7 +450,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Depth].Kp = m->Kp();
             m_controllers[Depth].Ki = m->Ki();
             m_controllers[Depth].Kd = m->Kd();
-            m_controllers[Depth].scale = m->scale();
+            m_controllers[Depth].Ap = m->Ap();
+            m_controllers[Depth].Ai = m->Ai();
+            m_controllers[Depth].Ad = m->Ad();
+			m_controllers[Depth].thr = m->thr();
+			m_controllers[Depth].scale = m->scale();
             m_controllers[Depth].reset();
         }
 

@@ -28,18 +28,17 @@ ENDIF(NOT QT4_FOUND)
 
 IF( QT4_FOUND )
         # Is Qwt6 installed? Look for header files
-        FIND_PATH( Qwt6_INCLUDE_DIR qwt.h
-               PATHS ${QT_INCLUDE_DIR}
-                     /usr/local
-                     /usr
-                     /usr/local/qwt-6.0.0-rc1
-                     /usr/local/qwt-6.0.0-rc3
-                     /usr/local/qwt-6.0.0-rc5
-                     ENV PATH
-               PATH_SUFFIXES qwt qwt6 qwt-qt4 qwt6-qt4 qwt-qt3 qwt6-qt3 include
-                             qwt/include qwt6/include qwt-qt4/include
-                             qwt6-qt4/include qwt-qt3/include qwt6-qt3/include
-                             lib/qwt.framework/Headers
+        FILE(GLOB POSSIBLE_QWT6_DIRS /usr/local/qwt*
+                                     /usr/qwt*
+        )
+        FIND_PATH( Qwt6_INCLUDE_DIR
+                qwt.h
+                PATHS ${QT_INCLUDE_DIR}
+                      ${POSSIBLE_QWT6_DIRS}
+                      /usr/local
+                      /usr
+                      ENV PATH
+                PATH_SUFFIXES include lib/qwt.framework/Headers
         )
         #message("Qwt6_INCLUDE_DIR = ${Qwt6_INCLUDE_DIR}")
         # Find Qwt version
@@ -48,17 +47,25 @@ IF( QT4_FOUND )
                 STRING( REGEX MATCH "#define *QWT_VERSION *(0x06*)" QWT_IS_VERSION_6 ${QWT_GLOBAL_H})
 
                 IF( QWT_IS_VERSION_6 )
-                STRING(REGEX REPLACE ".*#define[\\t\\ ]+QWT_VERSION_STR[\\t\\ ]+\"([0-9]+\\.[0-9]+\\.[0-9]+)\".*" "\\1" Qwt_VERSION "${QWT_GLOBAL_H}")
+                STRING(REGEX REPLACE ".*#define[\\t\\ ]+QWT_VERSION_STR[\\t\\ ]+\"([0-9]+\\.[0-9]+\\.[0-9]+[^\"]*)\".*" "\\1" Qwt_VERSION "${QWT_GLOBAL_H}")
 
                 # Find Qwt6 library linked to Qt4
-                FIND_LIBRARY( Qwt6_Qt4_TENTATIVE_LIBRARY NAMES qwt6-qt4 qwt-qt4 qwt6 qwt PATHS /usr/local/qwt/lib /usr/local/lib /usr/local/qwt-6.0.0-rc1/lib /usr/local/qwt-6.0.0-rc3/lib /usr/lib /usr/local/qwt-6.0.0-rc5/lib ${QT_LIBRARY_DIR})
+                FIND_LIBRARY( Qwt6_Qt4_TENTATIVE_LIBRARY
+                    NAMES qwt6-qt4 qwt-qt4 qwt6 qwt
+                    PATHS ${Qwt6_INCLUDE_DIR}/../lib
+                          ${QT_INCLUDE_DIR}
+                          ${POSSIBLE_QWT6_DIRS}
+                          /usr/local
+                          /usr
+                    PATH_SUFFIXES lib
+                )
                 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                         IF( Qwt6_Qt4_TENTATIVE_LIBRARY )
-                                EXECUTE_PROCESS( COMMAND "otool" "-L" "${Qwt6_Qt4_TENTATIVE_LIBRARY}/qwt.framework/qwt" OUTPUT_VARIABLE Qwt_Qt4_LIBRARIES_LINKED_TO )
+                                EXECUTE_PROCESS( COMMAND "otool" "-L" "${Qwt6_Qt4_TENTATIVE_LIBRARY}" OUTPUT_VARIABLE Qwt_Qt4_LIBRARIES_LINKED_TO )
                                 #MESSAGE("Qwt linked to: ${Qwt_Qt4_LIBRARIES_LINKED_TO}")
                                 STRING( REGEX MATCH ".*QtCore.*" Qwt6_IS_LINKED_TO_Qt4 ${Qwt_Qt4_LIBRARIES_LINKED_TO})
                                 IF( Qwt6_IS_LINKED_TO_Qt4 )
-                                        SET( Qwt6_Qt4_LIBRARY "${Qwt6_Qt4_TENTATIVE_LIBRARY}/qwt.framework/qwt")
+                                        SET( Qwt6_Qt4_LIBRARY "${Qwt6_Qt4_TENTATIVE_LIBRARY}")
                                         SET( Qwt6_Qt4_FOUND TRUE )
                                         IF (NOT Qwt6_FIND_QUIETLY)
                                                 MESSAGE( STATUS "Found Qwt: ${Qwt6_Qt4_LIBRARY}" )
@@ -78,7 +85,7 @@ IF( QT4_FOUND )
                                 ENDIF( Qwt6_IS_LINKED_TO_Qt4 )
                         ENDIF( Qwt6_Qt4_TENTATIVE_LIBRARY )
                 ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-                # Assumes qwt.dll is in the Qt dir
+                        # Assumes qwt.dll is in the Qt dir
                         SET( Qwt6_Qt4_LIBRARY ${Qwt6_Qt4_TENTATIVE_LIBRARY} )
                         SET( Qwt6_Qt4_FOUND TRUE )
                         IF (NOT Qwt6_FIND_QUIETLY)
