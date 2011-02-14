@@ -1,5 +1,6 @@
 #include "graphs.h"
 
+
 #include <common/cauv_utils.h>
 #include <common/data_stream_tools.h>
 
@@ -14,8 +15,16 @@
 #include <qwt_plot_canvas.h>
 #include <qwt_curve_fitter.h>
 #include <qwt_scale_widget.h>
+#include <qwt_plot_grid.h>
 
 using namespace cauv;
+
+
+const QColor GraphWidget::colours[] = {
+    Qt::darkBlue, Qt::red, Qt::darkGreen,  Qt::yellow,
+    Qt::darkCyan, Qt::darkGray, Qt::darkMagenta, Qt::darkRed, Qt::darkYellow,
+    Qt::blue, Qt::cyan, Qt::gray, Qt::green, Qt::magenta,
+};
 
 
 template<class T>
@@ -26,6 +35,8 @@ void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
         DataStreamSeriesData<T> * series = new DataStreamSeriesData<T>(stream, 1000);
         m_seriesNames.insert(stream->getName());
 
+        m_recorderView->addRecorder(series);
+
         // series plotter
         std::stringstream str;
         str << stream->getName();
@@ -34,18 +45,20 @@ void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
         QwtPlotCurve * curve = new QwtPlotCurve(QString::fromStdString(str.str()));
         curve->setCurveFitter(new QwtSplineCurveFitter());
         curve->setData(series);
-        curve->attach(this);
+        curve->attach(m_plot);
 
         curve->setPaintAttribute(QwtPlotCurve::ClipPolygons, true);
         curve->setRenderHint(QwtPlotCurve::RenderAntialiased,true);
 
-
+        curve->setPen(QPen(GraphWidget::colours[(m_seriesNames.size()-1)%14]));
 
         // set window title
-        std::stringstream name;
-        name << "Graph " << getName();
-        setWindowTitle(QString::fromStdString(name.str()));
+        setWindowTitle(QString::fromStdString(getName()));
     }
+}
+
+GraphWidget::~GraphWidget(){
+    delete ui;
 }
 
 QSize GraphWidget::sizeHint() const{
@@ -53,38 +66,65 @@ QSize GraphWidget::sizeHint() const{
 }
 
 void GraphWidget::setupPlot() {
-    // Insert grid
-    m_grid->attach(this);
-    QPen pen(Qt::gray, 1, Qt::DotLine, Qt::RoundCap, Qt::RoundJoin);
-    m_grid->setPen(pen);
 
-    this->setCanvasBackground(QColor(Qt::white));
-
-    canvas()->setFrameStyle(QFrame::Box | QFrame::Plain );
-    canvas()->setStyleSheet("QwtPlotCanvas {border: 1px dotted gray}");
-    canvas()->setLineWidth(1);
-    canvas()->setAttribute(Qt::WA_PaintOnScreen, true);
-    canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, true);
-    canvas()->setPaintAttribute(QwtPlotCanvas::PaintPacked, true);
-
+    ui->widgets->addWidget(m_plot);
     QwtPainter::setPolylineSplitting(true);
 
-    setContentsMargins(0, 5, 5, 0);
+    // Insert grid
+    QwtPlotGrid * grid = new QwtPlotGrid();
+    grid->attach(m_plot);
+    QPen pen(Qt::gray, 1, Qt::DotLine, Qt::RoundCap, Qt::RoundJoin);
+    grid->setPen(pen);
 
-    setAxisFont(yLeft, QFont("Arial", 7, -1, false));
-    setAxisFont(xBottom, QFont("Arial", 7, -1, false));
-    setAxisTitle(xBottom, "Time (s)");
+
+    // canvas
+    m_plot->canvas()->setFrameStyle(QFrame::Box | QFrame::Plain );
+    m_plot->canvas()->setStyleSheet("QwtPlotCanvas {border: 1px dotted gray}");
+    m_plot->canvas()->setLineWidth(1);
+    m_plot->canvas()->setAttribute(Qt::WA_PaintOnScreen, true);
+    m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, true);
+    m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::PaintPacked, true);
+
+    // plot
+    m_plot->setCanvasBackground(QColor(Qt::white));
+    m_plot->setContentsMargins(0, 5, 5, 0);
+
+    // axes
+    m_plot->setAxisFont(QwtPlot::yLeft, QFont("Arial", 7, -1, false));
+    m_plot->setAxisFont(QwtPlot::xBottom, QFont("Arial", 7, -1, false));
+    m_plot->setAxisTitle(QwtPlot::xBottom, "Time (s)");
 
     QPalette palette;
     palette.setColor(QPalette::WindowText, Qt::gray);
     palette.setColor(QPalette::Foreground, Qt::gray);
-    axisWidget(xBottom)->setPalette(palette);
-    axisWidget(yLeft)->setPalette(palette);
+    m_plot->axisWidget(QwtPlot::xBottom)->setPalette(palette);
+    m_plot->axisWidget(QwtPlot::yLeft)->setPalette(palette);
+
+    QwtText title = m_plot->axisWidget(QwtPlot::xBottom)->title();
+    title.setFont(QFont("Arial", 7, -1, false));
+    m_plot->axisWidget(QwtPlot::xBottom)->setTitle(title);
+
 
     // legend
     QwtLegend *legend = new QwtLegend;
-    legend->setFrameStyle(QFrame::Box|QFrame::NoFrame);
-    this->insertLegend(legend, QwtPlot::BottomLegend);
+    legend->setFrameStyle(QFrame::NoFrame);
+    m_plot->insertLegend(legend, QwtPlot::BottomLegend);
+
+    // update timer
+    m_timer.connect(&m_timer, SIGNAL(timeout()), m_plot, SLOT(replot()));
+    m_timer.setSingleShot(false);
+    m_timer.start(100);
+
+    //zoomer
+    QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
+    zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::RightButton);
+    zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::MidButton);
+
+    // panner
+    QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
+    panner->setAxisEnabled(QwtPlot::yLeft, false);
+    panner->setMouseButton(Qt::LeftButton);
+
 }
 
 void GraphWidget::dropEvent(QDropEvent * event){
@@ -121,7 +161,7 @@ void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> >stream
 
 std::string GraphWidget::getName() const{
     std::stringstream title;
-    title << "[" << implode(", ", m_seriesNames) << "]";
+    title << implode(", ", m_seriesNames);
     return title.str();
 }
 
