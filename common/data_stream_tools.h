@@ -94,10 +94,22 @@ namespace cauv {
     class DataStreamRecorder : public boost::signals2::trackable {
 
     public:
-        DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int maximum = 1000):
-                m_numSamples(maximum) {
+        DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int samples = 100000):
+                m_numSamples(samples) {
             stream->onUpdate.connect(boost::bind(&DataStreamRecorder<T>::change, this, _1, _2));
         };
+
+        void setNumSamples(const unsigned int samples){
+            boost::mutex::scoped_lock lock(m_mutex);
+            m_numSamples = samples;
+            if(m_numSamples < m_history.size())
+                m_history.resize(m_numSamples);
+        }
+
+        unsigned int getNumSamples(){
+            boost::mutex::scoped_lock lock(m_mutex);
+            return m_numSamples;
+        }
 
         const std::vector<T> getHistory() const {
             boost::mutex::scoped_lock lock(m_mutex);
