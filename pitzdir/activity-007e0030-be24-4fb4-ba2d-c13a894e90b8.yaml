@@ -1,0 +1,25 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-01-26 14:25:22.095467
+description: "pscore changed to 3\ndescription changed to We want to run more than\
+  \ one instance of the image processing program.\r\n\r\nThis is not possible, since\
+  \ messages to control the pipeline are not filtered per-program, so multiple instances\
+  \ cannot be individually controlled.\r\n\r\nA simple fix is to add an ID field to\
+  \ only those messages that require it, and have pipelines generate and broadcast\
+  \ a unique ID when they start (or when requested to), which the pipeline GUI can\
+  \ listen to, and then offer to the user as a choice of which pipeline to control.\n\
+  title changed to Extend messaging to discriminate between multiple instances of\
+  \ the same program\ntags changed to [<pitz.Tag cf2b7e gui>, <pitz.Tag dc1893 messaging>,\
+  \ <pitz.Tag 8da7e1 image processing>]\npoints changed to None\nestimate changed\
+  \ to significant project"
+entity: !!python/object:uuid.UUID
+  int: 28056906670805789475208069965486172191
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Task 151b90 Extend messaging to discriminate between
+  multiple instances ...>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 654233265973238562226408027442811064
+who_did_it: *id002
+yaml_file_saved: 2011-01-26 14:25:22.095559

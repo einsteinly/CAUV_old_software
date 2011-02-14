@@ -1,0 +1,16 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-02-13 11:32:28.968479
+description: "pscore changed to 1\nattached_files changed to \ndescription changed\
+  \ to Stuff to do with the control loops, or low-level control strategy.\ntitle changed\
+  \ to control"
+entity: !!python/object:uuid.UUID
+  int: 256447766323649714685032158667863646581
+modified_time: *id001
+pscore: 0
+title: James Crosby changed <pitz.Tag c0ee0b control>
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 339485730702501341268729015117843335851
+who_did_it: *id002
+yaml_file_saved: 2011-02-13 11:32:28.969931
