@@ -20,6 +20,12 @@
 using namespace cauv;
 
 
+const QColor GraphWidget::colours[] = {
+    Qt::darkBlue, Qt::red, Qt::darkGreen,  Qt::yellow,
+    Qt::darkCyan, Qt::darkGray, Qt::darkMagenta, Qt::darkRed, Qt::darkYellow,
+    Qt::blue, Qt::cyan, Qt::gray, Qt::green, Qt::magenta,
+};
+
 
 template<class T>
 void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
@@ -41,6 +47,8 @@ void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
 
         curve->setPaintAttribute(QwtPlotCurve::ClipPolygons, true);
         curve->setRenderHint(QwtPlotCurve::RenderAntialiased,true);
+
+        curve->setPen(QPen(GraphWidget::colours[(m_seriesNames.size()-1)%14]));
 
         // set window title
         std::stringstream name;

@@ -93,6 +93,11 @@ namespace cauv {
       */
     class GraphWidget : public QWidget, public DataStreamDropListener {
     public:
+
+
+        static const QColor colours[];
+
+
         template<class T>
         explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream):
                 m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
@@ -109,13 +114,13 @@ namespace cauv {
 
             //zoomer
             QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
-            zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::LeftButton);
+            zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::RightButton);
             zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::MidButton);
 
             // panner
             QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
             panner->setAxisEnabled(QwtPlot::yLeft, false);
-            panner->setMouseButton(Qt::RightButton);
+            panner->setMouseButton(Qt::LeftButton);
 
         }
 
