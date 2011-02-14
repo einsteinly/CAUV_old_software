@@ -151,7 +151,7 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
         (new DataStreamTreeItem<float>(i.second->kD, autopilot))->setText(0, "kD");
         (new DataStreamTreeItem<float>(i.second->aP, autopilot))->setText(0, "aP");
         (new DataStreamTreeItem<float>(i.second->aI, autopilot))->setText(0, "aI");
-        (new DataStreamTreeItem<float>(i.second->aD, autopilot))->setText(0, "aI");
+        (new DataStreamTreeItem<float>(i.second->aD, autopilot))->setText(0, "aD");
         (new DataStreamTreeItem<float>(i.second->thr, autopilot))->setText(0, "thr");
         (new DataStreamTreeItem<float>(i.second->scale, autopilot))->setText(0, "scale");
         (new DataStreamTreeItem<float>(i.second->actual, autopilot))->setText(0, "actual");

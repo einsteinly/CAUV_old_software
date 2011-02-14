@@ -22,13 +22,14 @@ void cauvDebug1(const char* s){
     debug() << s;
 }
 
+// don't yield the GIL whilst reporting warnings or errors
 void cauvWarning(const char* s){
-    ThreadSave guard;
+    //ThreadSave guard;
     warning() << s;
 }
 
 void cauvError(const char* s){
-    ThreadSave guard;
+    //ThreadSave guard;
     error() << s;
 }
 

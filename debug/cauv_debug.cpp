@@ -35,6 +35,10 @@ boost::scoped_ptr<boost::mutex> SmartStreamBase::m_mutex(new boost::mutex);
 SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool print)
     : m_stuffs(),
 #if defined(CAUV_DEBUG_MUTEXES)
+      // TODO: this seems to be redundant locking? we already hold a per-stream
+      // lock whilst printing, why do we need to stop multiple instances of
+      // SmartStreamBase existing at the same time? (which is effectively what
+      // this next line does)
       m_lock(new lock_t(*m_mutex)),
 #endif
       m_stream(stream),

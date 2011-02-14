@@ -3,9 +3,9 @@
 # This module provides an as-user-friendly-as-possible wrapper around the
 # 'messaging' module (which exports the c++ messaging interface directly)
 #
-
 import threading
 from cauv import messaging
+#from cauv.debug import debug
 
 class Observer(messaging.BufferedMessageObserver):
     pass
@@ -33,12 +33,12 @@ class ServiceLevel:
 
 class Node(messaging.CauvNode):
     def __init__(self, name, spreadserver="localhost", spreadport=16707):
-        #print 'CauvNode.__init__ ...'
+        #debug('CauvNode.__init__ ...')
         messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
-        #print '__run ...'
         self.__run()
 
     def __run(self):
+        #debug('__run()')        
         t = threading.Thread(target=self.run)
         t.daemon = True
         t.start()

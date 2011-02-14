@@ -119,6 +119,7 @@ class ThreadSaveRestoreBase: boost::noncopyable{
         };
         ThreadSaveRestoreBase(lock_release_e const& ar)
             : m_ar(ar){
+            assert(PyEval_ThreadsInitialized());
             if(ar == Acquire)
                 acquire();
             else
@@ -131,18 +132,21 @@ class ThreadSaveRestoreBase: boost::noncopyable{
                 acquire();
         }
     private:
-        void release(){
+        void release() const{
+            // if this is crashing, check that only one python version is
+            // linked: multiple linked python libraries can cause NULL tstate
+            // errors
             threadState().push(PyEval_SaveThread());
             debug(9) << BashColour::Purple << threadState().size()
-                    << "PyEval_SaveThread=" << threadState().top();
+                     << "PyEval_SaveThread=" << threadState().top();
         }
-        void acquire(){
+        void acquire() const{
             if(!threadState().size()){
-                //throw std::runtime_error("aquire() does not correspond to release() on this thread");
-                debug() << BashColour::Red << "aquire() does not correspond to release() on this thread";
-                //debug() << BashColour::Red << threadState().size()
-                //        << "PyEval_RestoreThread(" << NULL << ")";
-                //PyEval_RestoreThread(NULL);
+                // but don't throw an error, since that would probably cause
+                // indecipherable errors instead of something that might lead
+                // someone to the solution of whatever caused this
+                error() << BashColour::Red << "probably FATAL: "
+                        << "acquire() does not correspond to release() on this thread";
             }else{
                 debug(9) << BashColour::Purple << threadState().size()
                         << "PyEval_RestoreThread(" << threadState().top() << ")";
@@ -157,7 +161,7 @@ class ThreadSaveRestoreBase: boost::noncopyable{
             return *save.get();
         }
 
-        lock_release_e m_ar;
+        const lock_release_e m_ar;
 };
 
 class ThreadRestore: ThreadSaveRestoreBase{
