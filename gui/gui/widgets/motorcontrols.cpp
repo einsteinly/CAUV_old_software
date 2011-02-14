@@ -96,6 +96,9 @@ MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, Q
         target->setMaximum(i.second->getMax());
         target->setMinimum(i.second->getMin());
         target->setSuffix(QString::fromStdString(i.second->getUnits()));
+        target->setSingleStep((i.second->getMax() - i.second->getMin())/360.0); // 360 is a arbitary value
+                                                                             // just chosen to because its
+                                                                             // nice for degrees
         ui->autopilotControlsLayout->addWidget(target, count, 1, 1, 1, Qt::AlignCenter);
 
         QCheckBox * enabled = new QCheckBox("State");

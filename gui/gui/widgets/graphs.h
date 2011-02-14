@@ -4,18 +4,23 @@
 #include <QPointF>
 #include <QTimer>
 
-#include <qwt_plot.h>
-#include <qwt_plot_grid.h>
-#include <qwt_plot_curve.h>
+#include "ui_graphs.h"
+#include "datastreamdragging.h"
+
 #include <qwt_series_data.h>
+#include <qwt_plot.h>
+#include <qwt_plot_zoomer.h>
+#include <qwt_plot_panner.h>
 
 #include <common/data_stream.h>
 #include <common/data_stream_tools.h>
 
-#include "cauvinterfaceelement.h"
-#include "datastreamdragging.h"
-
 #include <boost/date_time/posix_time/posix_time.hpp>
+
+
+namespace Ui {
+    class GraphWidget;
+}
 
 namespace cauv {
 
@@ -49,9 +54,13 @@ namespace cauv {
             return this->m_history.size();
         }
 
+        float toTime(boost::posix_time::ptime epoch, boost::posix_time::ptime time) const{
+            boost::posix_time::time_duration delta = epoch - time;
+            return ((float)delta.ticks())/(float)delta.ticks_per_second();
+        }
+
         QPointF sample (size_t i) const {
-            boost::posix_time::time_duration delta = boost::posix_time::microsec_clock::local_time() - this->m_timestamps[i];
-            float seconds = ((float)delta.ticks())/(float)delta.ticks_per_second();
+            float seconds = toTime(boost::posix_time::microsec_clock::local_time(), this->m_timestamps[i]);
 
             if(i == this->m_history.size()-1){
                 seconds = 0.0;
@@ -82,22 +91,35 @@ namespace cauv {
       *
       * @author Andy Pritchard
       */
-    class GraphWidget : public QwtPlot, public DataStreamDropListener {
-
+    class GraphWidget : public QWidget, public DataStreamDropListener {
     public:
         template<class T>
-        explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream) :
-                m_grid(boost::make_shared<QwtPlotGrid>())
+        explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream):
+                m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
         {
+            ui->setupUi(this);
             onStreamDropped(stream);
             this->setAcceptDrops(true);
             setupPlot();
 
             // update timer
-            m_timer.connect(&m_timer, SIGNAL(timeout()), this, SLOT(replot()));
+            m_timer.connect(&m_timer, SIGNAL(timeout()), m_plot, SLOT(replot()));
             m_timer.setSingleShot(false);
             m_timer.start(100);
+
+            //zoomer
+            QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
+            zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::LeftButton);
+            zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::MidButton);
+
+            // panner
+            QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
+            panner->setAxisEnabled(QwtPlot::yLeft, false);
+            panner->setMouseButton(Qt::RightButton);
+
         }
+
+        ~GraphWidget();
 
         QSize sizeHint() const;
         void setupPlot();
@@ -115,9 +137,11 @@ namespace cauv {
 
     protected:
         std::set<std::string> m_seriesNames;
-        boost::shared_ptr<QwtPlotGrid> m_grid;
         QTimer m_timer;
+        QwtPlot * m_plot;
+        Ui::GraphWidget * ui;
     }; 
-}
+
+} // namespace cauv
 
 #endif // GRAPHWIDGET_H
