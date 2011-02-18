@@ -94,7 +94,7 @@ void SmartStreamBase::printPrefix(std::ostream&)
 }
 int SmartStreamBase::debugType() const
 {
-    return DebugType::Trace;
+    return DebugType::Info;
 }
 
 // initialise on first use
@@ -282,7 +282,7 @@ void debug::printPrefix(std::ostream&)
 }
 int debug::debugType() const
 {
-    return DebugType::Trace;
+    return DebugType::Debug;
 }
 
 #endif // !defined(CAUV_NO_DEBUG)
@@ -348,7 +348,7 @@ void warning::printPrefix(std::ostream& os)
 }
 int warning::debugType() const
 {
-    return DebugType::Error;
+    return DebugType::Warning;
 }
 
 
@@ -377,6 +377,6 @@ void info::printPrefix(std::ostream&)
 }
 int info::debugType() const
 {
-    return DebugType::Trace;
+    return DebugType::Info;
 }
 

@@ -1,7 +1,8 @@
 enum DebugType : int8 {
-    Trace = 0,
+    Info = 0,
     Debug = 1,
-    Error = 2
+    Warning = 2,
+    Error = 3
 }
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
@@ -244,6 +245,8 @@ group control
     {
         script : string;
         timeout : float;
+        id : string;
+        seq : uint32;
     }
 
     message MotorRampRate : 83
@@ -398,6 +401,9 @@ group gui
     message ScriptResponse : 103
     {
         response : string;
+        level : DebugType;
+        id : string;
+        seq : uint32;
     }
 }
 

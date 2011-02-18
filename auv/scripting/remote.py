@@ -6,11 +6,23 @@ import cauv.node as node
 import cauv.control
 import cauv.pipeline
 
+from cauv.debug import debug, warning, error, info
+
 import threading
 import copy
 import traceback
 import time
 import Queue
+
+class Script:
+    def __init__(self, script, timeout, id, seq):
+        self.script = script
+        self.timeout = timeout
+        self.id = id
+        self.seq = seq
+
+    def __repr__(self):
+        return "%s %s" % (self.id, self.seq)
 
 class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
     def __init__(self, node):
@@ -19,19 +31,20 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
         self.__node = node
         node.join("control")
         node.addObserver(self)
-        self.resetEnvironment()
         self.eval_queue = Queue.Queue(1000)
-        # TODO: check this line:
         self.daemon = True
         self.start()
 
-    def resetEnvironment(self):
+    def resetEnvironment(self, script):
         #node = cauv.node.Node("pymote")
         auv = cauv.control.AUV(self.__node)
         plmodel = cauv.pipeline.Model(self.__node)
+        def sendFunc(msg, level=msg.DebugType.Info):
+            print 'send:', msg, level
+            self.sendScriptResponse(script, level, msg)
         self.eval_context_locals = { }
         self.eval_context_globals = {
-            "response": self.sendScriptResponse,
+            "response": sendFunc,
             "node" : self.__node,
             "auv" : auv,
             "control" : cauv.control,
@@ -43,40 +56,45 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
         self.__node.send(m, "gui")
     
     def onScriptMessage(self, m):
-        print 'received script:\n%s\n#[end script]' % m.script
-        self.eval_queue.put((m.script, m.timeout))
+        script = Script(m.script, m.timeout, m.id, m.seq)
+        debug('received script: %s' % script)
+        self.eval_queue.put(script)
 
-    def sendScriptResponse(self, m):
-        print 'sending script response:', str(m)
-        self.send(msg.ScriptResponseMessage(str(m)))
+    def sendScriptResponse(self, script, level, m):
+        debug('sending script response to %s: %s' % (script, str(m)))
+        self.send(msg.ScriptResponseMessage(str(m), level, script.id, script.seq))
 
     def run(self):
-        print 'script queue thread started'
+        info('script queue thread started')
         while True:
-            (script, timeout) = self.eval_queue.get()
-            self.evaluate(script, timeout)
+            script = self.eval_queue.get()
+            self.evaluate(script)
 
-    def evaluate(self, script, timout):
+    def evaluate(self, script):
         # TODO: apply timeout... somehow
-        print 'evaluating script\n%s\n#[end script]' % script
+        warning('timeout is ignored')
+        debug('evaluating script %s:\n%s\n#[end script]' % (script, script.script))
+        self.resetEnvironment(script)
         with open('remote.py.script.tmp', 'w+') as tmpf:
-            tmpf.write(script)
+            tmpf.write(script.script)
         try:
             r = execfile('remote.py.script.tmp',
                          self.eval_context_globals,
                          self.eval_context_globals)
         except Exception:
-            print 'error:', traceback.format_exc()
-            self.sendScriptResponse('error:' + traceback.format_exc())
+            message = 'error in script:\n' + traceback.format_exc() 
+            error(message)
+            self.sendScriptResponse(script, msg.DebugType.Error, message)
         else:
-            print 'script returned:', str(r)
-            self.sendScriptResponse('script returned:' + str(r))            
+            message = 'script returned: ' + str(r)
+            info(message)
+            self.sendScriptResponse(script, msg.DebugType.Info, message)
 
 def main():
     n = node.Node("pyscript")
     so = ScriptObserver(n)
     while True:
-        time.sleep(1000)
+        time.sleep(1.0)
 
 if __name__ == '__main__':
     main()
