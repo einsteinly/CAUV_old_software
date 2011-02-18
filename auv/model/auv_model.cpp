@@ -3,7 +3,8 @@
 using namespace cauv;
 
 
-AUV::AUV(){
+AUV::AUV()
+{
     motors[MotorID::Prop] = boost::make_shared<Motor > (MotorID::Prop, "Prop");
     motors[MotorID::HBow] = boost::make_shared<Motor > (MotorID::HBow, "H Bow");
     motors[MotorID::VBow] = boost::make_shared<Motor > (MotorID::VBow, "V Bow");

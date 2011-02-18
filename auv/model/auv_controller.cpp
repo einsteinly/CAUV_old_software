@@ -62,6 +62,9 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
 
     // depth calibration
     auv->sensors.depth_calibration->onSet.connect(boost::bind( &AUVController::sendDepthCalibrationMessage, this, _1));
+
+    //scripts
+    auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
 }
 
 void AUVController::sendMotorMessage(MotorID::e motor, int8_t speed){
@@ -95,6 +98,11 @@ void AUVController::sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar)
 
 void AUVController::sendDepthCalibrationMessage(depth_calibration_t params){
     onMessageGenerated(boost::make_shared<DepthCalibrationMessage>(params.foreOffset, params.foreMultiplier, params.aftOffset, params.afteMultiplier));
+}
+
+void AUVController::sendScriptMessage(script_exec_request_t script){
+    info() << "TODO: actually send script message";
+    //onMessageGenerated(boost::make_shared<ScriptMessage>());
 }
 
 bool AUVController::pushState(bool state) {
@@ -222,4 +230,8 @@ void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
 void AUVController::onPressureMessage(PressureMessage_ptr message){
     m_auv->sensors.pressure_fore->update(message->fore());
     m_auv->sensors.pressure_aft->update(message->aft());
+}
+
+void AUVController::onScriptResponseMessage(ScriptResponseMessage_ptr message){
+    m_auv->scripts.scriptResponse->update(script_exec_response_t(message->response(), message->seq()));
 }

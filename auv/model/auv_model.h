@@ -41,6 +41,51 @@ std::basic_ostream<char_T, traits>& operator<<(
 }
 
 
+struct script_exec_request_t {
+    std::string script;
+    unsigned int seq;
+
+    script_exec_request_t(std::string script, int seq) :
+    script(script), seq(seq){
+    }
+
+    script_exec_request_t() : script(""), seq(0) {
+    }
+};
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, script_exec_request_t const& s)
+{
+    os << "script_exec_request  { \n";
+    os << "\tseq: " << s.seq << "\n";
+    os << "}\n";
+    return os;
+}
+
+
+struct script_exec_response_t {
+    std::string response;
+    unsigned int seq;
+
+    script_exec_response_t(std::string response, int seq) :
+    response(response), seq(seq){
+    }
+
+    script_exec_response_t() : response(""), seq(0) {
+    }
+};
+
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, script_exec_response_t const& s)
+{
+    os << "script_exec_response  { \n";
+    os << "\tseq: " << s.seq << "\n";
+    os << "}\n";
+    return os;
+}
+
 
 class AUV {
 public:
@@ -221,6 +266,23 @@ public:
         orientation_split(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(orientation)) {
         }
     } sensors;
+
+
+    /**
+     * Scripting
+     *
+     * @author Andy Pritchard
+     */
+
+    struct Scripts {
+        boost::shared_ptr<MutableDataStream<script_exec_request_t> > scriptExec;
+        boost::shared_ptr<DataStream<script_exec_response_t> > scriptResponse;
+
+        Scripts() : scriptExec(boost::make_shared<MutableDataStream<script_exec_request_t> >("Script Execution")),
+        scriptResponse(boost::make_shared<DataStream<script_exec_response_t> >("Script Response")) {
+        }
+
+    } scripts;
 
     AUV();
     virtual ~AUV() {
