@@ -47,10 +47,10 @@ int main(int argc, char** argv)
         std::cout << "Sending motor message " << *m << std::endl;
         m_mailbox.sendMessage(m, SAFE_MESS);
     }
-    else if (boost::iequals(msgType, "trace")) {
+    else if (boost::iequals(msgType, "debug")) {
         std::string message = "Hiyoooooooooooo!";
 
-        boost::shared_ptr<DebugMessage> m = boost::make_shared<DebugMessage>(DebugType::Trace, message);
+        boost::shared_ptr<DebugMessage> m = boost::make_shared<DebugMessage>(DebugType::Debug, message);
 
         std::cout << "Sending trace message " << *m << std::endl;
         m_mailbox.sendMessage(m, SAFE_MESS);

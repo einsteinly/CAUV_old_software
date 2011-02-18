@@ -14,8 +14,9 @@ AUV::AUV(){
     autopilots["depth"] = boost::make_shared< Autopilot<float> >("Depth", this->sensors.depth, 0, 0, 10, "m");
     autopilots["pitch"] = boost::make_shared< Autopilot<float> >("Pitch", this->sensors.orientation_split->pitch, 0, 0, 360, "°");
 
+    logs[DebugType::Info] = boost::make_shared< DataStream<std::string> >("Info");
     logs[DebugType::Debug] = boost::make_shared< DataStream<std::string> >("Debug");
-    logs[DebugType::Trace] = boost::make_shared< DataStream<std::string> >("Trace");
+    logs[DebugType::Warning] = boost::make_shared< DataStream<std::string> >("Warning");
     logs[DebugType::Error] = boost::make_shared< DataStream<std::string> >("Error");
 
     debug_level = boost::make_shared<MutableDataStream<int32_t> >("Debug Level");
