@@ -21,6 +21,8 @@
 #include "ui_mainwindow.h"
 #include "cauvinterfaceelement.h"
 
+#include <marble/MarbleWidget.h>
+
 using namespace cauv;
 
 CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
@@ -96,6 +98,12 @@ void CauvGui::onRun()
 
     boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
+
+    Marble::MarbleWidget *mapWidget = new Marble::MarbleWidget();
+    QString map("Map");
+    addCentralTab(mapWidget, map);
+    mapWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
+    mapWidget->show();
 
     show();
     m_application.exec();

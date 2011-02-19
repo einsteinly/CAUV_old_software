@@ -5,6 +5,7 @@ option(CAUV_GAMEPAD_SUPPORT "True if the GUI should support game controllers" ON
 # required libraries:
 find_package (Qwt6 REQUIRED)
 find_package (OpenCV REQUIRED)
+find_package (Marble REQUIRED)
 
 # find gamepad library if its needed
 if (CAUV_GAMEPAD_SUPPORT)
@@ -84,7 +85,10 @@ else()
 
     include_directories (${pipeline-widget_SOURCE_DIR})
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
+    include_directories(${MARBLE_INCLUDE_DIR})
     link_directories (${pipeline-widget_BINARY_DIR})
+
+    message (${MARBLE_INCLUDE_DIR})
 
     # for <common/includesstuff> etc
     include_directories (${AUV_SOURCE_DIR})
@@ -109,6 +113,7 @@ else()
         ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
         ${OpenCV_LIBS}
+        ${MARBLE_LIBRARIES}
     )
     cauv_install ( guicpp )
 
