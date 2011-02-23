@@ -1,3 +1,4 @@
+attached_files: []
 components: []
 created_by: !!python/object:uuid.UUID
   int: 236388421408798579890985238796729312670
@@ -10,23 +11,23 @@ description: !!python/unicode "By listening to motor state messages, monitoring 
   \ broadcasts the current power and charge levels.\r\n\r\nThe GUI should also be\
   \ updated to display the power/charge information."
 estimate: !!python/object:uuid.UUID
-  int: 277284367523703929526958133625188989255
+  int: 298257563599997189979885110366072744596
 milestone: !!python/object:uuid.UUID
   int: 231943652690746325723562379282290458799
-modified_time: 2011-01-26 14:21:30.727896
+modified_time: 2011-02-23 17:44:57.988384
 owner: !!python/object:uuid.UUID
   int: 78002556280449588393479432476918080669
 points: null
-pscore: !!python/unicode '3'
+pscore: !!python/unicode '4'
 status: !!python/object:uuid.UUID
   int: 169187340753552385114968941926541347595
 tags:
 - !!python/object:uuid.UUID
-  int: 320085086918514932043577864135319191374
-- !!python/object:uuid.UUID
   int: 292557765731504791880568992605661195763
+- !!python/object:uuid.UUID
+  int: 320085086918514932043577864135319191374
 title: !!python/unicode 'Implement software-based power/battery charge tracking'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 233921459116290621376537219084255578248
-yaml_file_saved: 2011-01-26 14:21:30.785107
+yaml_file_saved: 2011-02-23 17:44:58.001050
