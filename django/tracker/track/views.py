@@ -17,10 +17,8 @@ import os.path
 
 #decorators that deal with the project
 #define @project_viewer
-class project_viewer():
-    def __init__(self, f):
-        self.f = f
-    def __call__(self, *args, **kwargs):
+def project_viewer(f):
+    def _pf_decorator(*args, **kwargs):
         #try and get the cached version
         p=cache.get('project')
         if not p:
@@ -35,12 +33,14 @@ class project_viewer():
         for x in p:
             x.project=p
         kwargs['project']=p
-        return self.f(*args,**kwargs)
+        return f(*args,**kwargs)
+    _pf_decorator.__name__=f.__name__
+    _pf_decorator.__dict__=f.__dict__
+    _pf_decorator.__doc__=f.__doc__
+    return _pf_decorator
 #define @project_modifier
-class project_modifier():
-    def __init__(self, f):
-        self.f = f
-    def __call__(self, *args, **kwargs):
+def project_modifier(f):
+    def _pm_decorator(*args, **kwargs):
         #get a lock on the cached version of the project (since we're modifying it)
         while not cache.add('project_lock', 1):
             sleep(0.1)
@@ -54,12 +54,16 @@ class project_modifier():
                 x.project=p
         kwargs['project']=p
         #run view function
-        response = self.f(*args,**kwargs)
+        response = f(*args,**kwargs)
         #update cache
         cache.set('project',p)
         #release lock
         cache.delete('project_lock')
         return response
+    _pm_decorator.__name__=f.__name__
+    _pm_decorator.__dict__=f.__dict__
+    _pm_decorator.__doc__=f.__doc__
+    return _pm_decorator
 
 #equivalent of useful django shortcut
 def get_entity_or_404(uuid, project=None):
