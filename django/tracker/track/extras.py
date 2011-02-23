@@ -17,6 +17,9 @@ example
 extra_fields = {'comments':{
                             'entity': Entity#otherwise get_all_variables will resort to the first entry, which will be a particular type of entity
                             },
+                'tasks':{
+                         'attached_files': list#adds attached files field to tasks
+                         },
                 }
 
 def get_all_variables(entity_type):

@@ -1,8 +1,10 @@
 from django import forms
+from django.utils.safestring import mark_safe
 from tracker.track import models, extras
 from datetime import datetime
 from pitz.entity import Entity, Activity
 from uuid import UUID
+import os
 from tracker import settings
 
 #USER UUID FORM
@@ -11,7 +13,7 @@ class useruuid_form(forms.ModelForm):
         model = models.UserProfile
         fields = ('uuid')
         
-class preferences_form(forms.Form):
+class preferences_form(forms.ModelForm):
     class Meta:
         model = models.UserProfile
         exclude = ('uuid', 'user')
@@ -37,6 +39,36 @@ def make_pref_form(user_profile):
 
 #ENTITY FORM
 #any pitz fields that require something special (like a widget) that is specified when the class is called
+#FILE HANDLING FIELDS
+class UploadFileForm(forms.Form):
+    file = forms.FileField(required=True)
+
+class AttachedFilesWidget(forms.CheckboxSelectMultiple):
+    def render(self, name, value, attrs=None):
+        original = super(AttachedFilesWidget, self).render(name, value, attrs)
+        new_text = """
+        <div>  
+	    <a id="show1">Add a new file</a>  
+	    </div>  
+        <div id="overlay1" style="visibility:hidden">  
+        <div class="hd">Upload File</div>  
+        <div class="bd" id="file_upload_bd">
+            <div id="file_upload_form_div">
+            %(form)s
+            <a onclick="submit_file_form()">Upload</a>
+             | <a id="hide1">Cancel</a>  
+            </div>
+        </div>  
+        </div>
+        <script language="javascript">reassign_file_form()</script>
+        """ % {'form': UploadFileForm().as_p()}
+        return mark_safe(original+new_text)
+
+class AttachedFilesField(forms.MultipleChoiceField):
+    def __init__(self, **kwargs):
+        kwargs['widget']=AttachedFilesWidget
+        kwargs['choices']=[(x,x) for x in os.listdir(settings.PITZ_ATTACHED_FILES_DIR)]
+        super(AttachedFilesField, self).__init__(**kwargs)
 
 #TEXTAREA FIELD: used anywhere were more space is needed (e.g. description field)
 class Textarea(forms.CharField):
@@ -69,6 +101,7 @@ type_to_field = {
 name_to_field = {
                 'title': forms.CharField,
                 'pscore': PscoreField,
+                'attached_files': AttachedFilesField,
                 }
 
 #ENTITY FIELDS
@@ -190,8 +223,7 @@ def make_entity_form(entity_type, project, initial=None):
         if self.isnew:
             self.entity['created_by'] = user
         if len(changed):
-            activity = Activity(title=str(user)+" changed "+str(self.entity),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=self.entity)
-            activity.project = project
+            activity = Activity(project=project, title=str(datetime.now().strftime('%Y-%m-%d %H:%M'))+" - "+str(user)+" changed "+str(self.entity['type'])+" "+str(self.entity.title),description='\n'.join([str(x[0])+" changed to "+str(x[1]) for x in changed]), created_by=user, who_did_it=user, entity=self.entity)
             activity.to_yaml_file(settings.PITZ_DIR)
             self.entity.to_yaml_file(settings.PITZ_DIR)
         return

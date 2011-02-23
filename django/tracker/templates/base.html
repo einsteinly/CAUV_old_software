@@ -2,6 +2,12 @@
 <head>
     <title>Tracker</title>
     <link rel="stylesheet" href="{{ MEDIA_URL }}std.css">
+    <script language="javascript">base_url="{{ROOT_URL}}"</script>
+    <!-- YUI stuff-->
+    <!-- Combo-handled YUI CSS files: -->  
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/combo?2.8.2r1/build/container/assets/skins/sam/container.css">  
+    <!-- Combo-handled YUI JS files: -->  
+    <script type="text/javascript" src="http://yui.yahooapis.com/combo?2.8.2r1/build/yahoo-dom-event/yahoo-dom-event.js&2.8.2r1/build/connection/connection-min.js&2.8.2r1/build/container/container-min.js"></script>
     <script language="javascript" src="{{ MEDIA_URL }}std.js"> </script>
     {% block head %}{% endblock %}
 </head>

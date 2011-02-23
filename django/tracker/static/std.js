@@ -281,4 +281,56 @@ document.getElementById('add_bag1').style = 'display:inline';
 function submit_bag_form(){
 document.getElementById('bag_form').submit();
 }
-//generic load
+// file upload stuff
+function add_attached_file(filename){
+    field_div=document.getElementById('attached_files_field_div')
+    if(field_div.count==undefined){
+        count=0
+        while(document.getElementById('id_attached_files_'+count)!=undefined){count+=1}
+        field_div.count=count
+        }
+    li=document.createElement('li')
+    li.innerHTML='<label for="id_attached_files_'+field_div.count+
+    '"><input type="checkbox" name="attached_files" value="'+filename+
+    '" id="id_attached_files_'+field_div.count+
+    '" /> '+filename+
+    '</label>'
+    field_div.count+=1
+    field_div.children[0].appendChild(li)
+    }
+function reassign_file_form(){
+    form_div = document.getElementById('file_upload_form_div');
+    content_div = document.getElementById('content');
+    outer_div = document.getElementById('file_upload_bd');
+    form = document.createElement('form');
+    form.appendChild(form_div);
+    form.id='file_upload_form';
+    form.setAttribute('enctype','multipart/file-data');
+    outer_div.appendChild(form);
+    content_div.appendChild(document.getElementById('overlay1'))
+    overlay1 = new YAHOO.widget.Overlay("overlay1", { fixedcenter:true,  
+                                                      visible:false,  
+                                                      width:"300px" } );
+    overlay1.setBody(form);
+    YAHOO.util.Event.addListener("show1", "click", overlay1.show, overlay1, true);  
+    YAHOO.util.Event.addListener("hide1", "click", overlay1.hide, overlay1, true);
+    overlay1.render();
+    }
+function submit_file_form(){
+    var formObject = document.getElementById('file_upload_form');
+    var callback = {
+        upload: function(o) {response=o.responseXML.getElementById('response');
+                            if(response.getAttribute("response")=="SUCCESS"){
+                                add_attached_file(response.getAttribute("saved_to"));
+                                }
+                            else{
+                                alert("The upload failed. Error: "+response.getAttribute("error_type"));
+                                }
+                            overlay1.hide()
+                            },
+        argument: []
+        };
+    // the second argument is true to indicate file upload.
+    YAHOO.util.Connect.setForm(formObject, true);
+    var cObj = YAHOO.util.Connect.asyncRequest('POST', base_url+'/upload/', callback);
+    }
