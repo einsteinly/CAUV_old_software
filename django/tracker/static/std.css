@@ -14,6 +14,7 @@ ul{
 
 #content{
     margin: 0 3pt;
+    overflow: auto;
 }
 
 #login_wrapper{
@@ -37,6 +38,11 @@ float: left;
 }
 #header_user{
 float: right;
+}
+#footer{
+padding: 0.5em;
+background-color: #ccddff;
+width: 100%;
 }
 .toolbox{
 padding: 3pt 5pt;

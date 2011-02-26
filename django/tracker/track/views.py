@@ -21,7 +21,9 @@ def project_viewer(f):
     def _pf_decorator(*args, **kwargs):
         #try and get the cached version
         p=cache.get('project')
+        retrieval_method = u'Retrieved from cache'
         if not p:
+            retrieval_method = u'Retrieved from disk'
             while not cache.add('project_lock', 1):
                 sleep(0.1)
             p=cache.get('project')
@@ -33,7 +35,9 @@ def project_viewer(f):
         for x in p:
             x.project=p
         kwargs['project']=p
-        return f(*args,**kwargs)
+        response=f(*args,**kwargs)
+        response.content=response.content.replace(u'<div id="retrieval_method"></div>',u'<div id="retrieval_method">'+retrieval_method+u'</div>')
+        return response
     _pf_decorator.__name__=f.__name__
     _pf_decorator.__dict__=f.__dict__
     _pf_decorator.__doc__=f.__doc__
@@ -138,7 +142,7 @@ class disp_entity():
         return self.type=='people'
 
 class disp_bag():
-    def __init__(self, project, entity_class, bag_filter=extras.filter_null_obj(), bag_order=extras.order_obj(), title=None, pk=None):
+    def __init__(self, project, entity_class, bag_filter=extras.filter_null_obj(), bag_order=extras.order_obj(['modified_time',],['1',]), title=None, pk=None):
         self.entity_class = entity_class
         self.errors = {}
         self.bag_filter = bag_filter
@@ -166,7 +170,7 @@ class disp_bag():
                                   'values='+json.dumps(values),
                                   'order='+json.dumps(self.bag_order.values),
                                   'reverse='+json.dumps(self.bag_order.reverse),
-                                  'order_keys='+json.dumps(extras.get_all_variables(self.entity_class).keys()),
+                                  'order_keys='+json.dumps(extras.get_all_variables(self.entity_class, noneditable=True).keys()),
                                   'all_filters='+json.dumps(extras.js_filters),
                                   'filter_names='+json.dumps(extras.js_filters.keys())
                                   ])
