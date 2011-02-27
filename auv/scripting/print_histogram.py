@@ -3,16 +3,14 @@ import cauv.messaging as messaging
 import cauv
 import cauv.control as control
 import cauv.node
-
+from cauv.debug import debug, warning, error, info
 from movingaverage import MovingAverage
 
 import time
 import threading
 
 class ColourFinder(messaging.BufferedMessageObserver):
-
     def __init__(self, node, bin, channel = 'Hue', no_trigger = 3):
-
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
         node.join("processing")
@@ -24,15 +22,14 @@ class ColourFinder(messaging.BufferedMessageObserver):
     def print_bins(self, m):
         #Routine to display all the bin values
         accum = 0
+        message = ''
         for i, bin in enumerate(m.bins):
             accum += bin
-            print 'bin %d: %f, accum: %f' %(i, bin, accum)    
-
-
+            message += 'bin %d: %f, accum: %f\n' % (i, bin, accum))
+        debug(message)
 
     def onHistogramMessage(self, m):
-        if m.type == self.channel:
-
+        if m.name == self.channel:
             self.print_bins(m)
             
 if __name__ == '__main__':

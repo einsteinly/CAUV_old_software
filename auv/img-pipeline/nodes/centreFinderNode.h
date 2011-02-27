@@ -33,7 +33,8 @@ class CentreFinderNode : public OutputNode{
             //No output
             
             //Parameters
-            registerParamID<std::string>("Name", "Unnamed");
+            registerParamID<std::string>("name", "unnamed region centre"
+                                         "name for detected centre");
             
         }
     
@@ -45,7 +46,7 @@ class CentreFinderNode : public OutputNode{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            std::string name = param<std::string>("Name");
+            std::string name = param<std::string>("name");
 
             image_ptr_t img = inputs["image_in"];
 

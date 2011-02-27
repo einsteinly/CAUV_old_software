@@ -27,6 +27,10 @@
 namespace cauv{
 namespace imgproc{
 
+static const char* Image_In_Name = "image in";
+static const char* Image_Out_Name = "image out (not copied)";
+static const char* Image_Out_Copied_Name = "image out";
+
 class Node: public boost::enable_shared_from_this<Node>{
     public:
         // Public typedefs: used as return types
