@@ -102,7 +102,7 @@ TEMPLATE_DIRS = (
 #ONLY USE FOR DEBUGGING TEMPLATES (BREAKS SOME THINGS)
 #TEMPLATE_STRING_IF_INVALID = 'Oops, something went wrong here, ref %s'
 
-CACHE_BACKEND = 'locmem://'
+#CACHE_BACKEND = 'locmem://'
 
 INSTALLED_APPS = (
     'django.contrib.auth',

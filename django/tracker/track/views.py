@@ -3,7 +3,7 @@ from django.http import Http404, HttpResponse #404 error, generic response objec
 from django.template import RequestContext #used by django to prevent cross site request forgery for forms (django will through an error if form submitted without csrf token)
 from django.contrib.auth.decorators import permission_required, login_required #Use @login_required to require login for a view
 from django.forms.formsets import formset_factory
-from django.core.cache import cache
+#from django.core.cache import cache
 from pitz.project import Project
 from pitz.bag import Bag
 from pitz.entity import Entity, Person
@@ -19,6 +19,7 @@ import os.path
 #define @project_viewer
 def project_viewer(f):
     def _pf_decorator(*args, **kwargs):
+        """ caching doesnt really seem to work properly
         #try and get the cached version
         p=cache.get('project')
         retrieval_method = u'Retrieved from cache'
@@ -34,9 +35,11 @@ def project_viewer(f):
         #unfortunately the cache seems to 'forget' the project attribute
         for x in p:
             x.project=p
+        """
+        p=Project.from_pitzdir(settings.PITZ_DIR)
         kwargs['project']=p
         response=f(*args,**kwargs)
-        response.content=response.content.replace(u'<div id="retrieval_method"></div>',u'<div id="retrieval_method">'+retrieval_method+u'</div>')
+        #response.content=response.content.replace(u'<div id="retrieval_method"></div>',u'<div id="retrieval_method">'+retrieval_method+u'</div>')
         return response
     _pf_decorator.__name__=f.__name__
     _pf_decorator.__dict__=f.__dict__
@@ -45,6 +48,7 @@ def project_viewer(f):
 #define @project_modifier
 def project_modifier(f):
     def _pm_decorator(*args, **kwargs):
+        """
         #get a lock on the cached version of the project (since we're modifying it)
         while not cache.add('project_lock', 1):
             sleep(0.1)
@@ -56,13 +60,15 @@ def project_modifier(f):
             #unfortunately the cache seems to 'forget' the project attribute
             for x in p:
                 x.project=p
+        """
+        p=Project.from_pitzdir(settings.PITZ_DIR)
         kwargs['project']=p
         #run view function
         response = f(*args,**kwargs)
         #update cache
-        cache.set('project',p)
+        #cache.set('project',p)
         #release lock
-        cache.delete('project_lock')
+        #cache.delete('project_lock')
         return response
     _pm_decorator.__name__=f.__name__
     _pm_decorator.__dict__=f.__dict__
