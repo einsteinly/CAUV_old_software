@@ -41,6 +41,8 @@ class FASTCornersNode: public OutputNode{
                                  "brightness threshold for contiguous arc of pixels around corner"); 
             registerParamID<bool>("non-maximum suppression", true,
                                   "omit non-maximal corners within 3x3 pixels");
+            registerParamID<float>("draw scale", 0.004,
+                                   "drawn size is size * response * scale");
             registerParamID<std::string>("name", "unnamed FAST corners",
                                          "name for detected set of corners");
         }
@@ -55,8 +57,9 @@ class FASTCornersNode: public OutputNode{
 
             image_ptr_t img = inputs[Image_In_Name];
             
-            const int nonmaxsupp = param<bool>("non-maximum suppression");
+            const bool nonmaxsupp = param<bool>("non-maximum suppression");
             const int threshold = param<int>("threshold");
+            const float draw_scale = param<float>("draw scale");
             const std::string name = param<std::string>("name");
 
             cv::vector<cv::KeyPoint> corners;
@@ -69,10 +72,10 @@ class FASTCornersNode: public OutputNode{
                     
                     // make a colour copy to draw pretty corners on
                     cvtColor(img->cvMat(), out->cvMat(), CV_GRAY2BGR);
-
+                    
                     for(cv::vector<cv::KeyPoint>::const_iterator i = corners.begin(); i != corners.end() ; i++)
-                        cv::circle(out->cvMat(), i->pt, i->size * i->response, CV_RGB(50, 255, 50), 1, 4);
-                    r[Image_Out_Name] = out;
+                        cv::circle(out->cvMat(), i->pt, i->size * i->response * draw_scale, CV_RGB(50, 255, 50), 1, 4);
+                    r[Image_Out_Copied_Name] = out;
                 }
             }catch(cv::Exception& e){
                 error() << "FASTCornersNode:\n\t"
