@@ -478,15 +478,15 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id,
     return r;
 }
 
-param_value_t Node::getOutputParam(output_id const& o_id) const throw(id_error){
+NodeParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error){
     shared_lock_t l(m_outputs_lock);
     const out_map_t::const_iterator i = m_outputs.find(o_id);
-    param_value_t r;
+    NodeParamValue r;
     if(i != m_outputs.end()){
         try{
-            r = boost::get<param_value_t>(i->second);
+            r = boost::get<NodeParamValue>(i->second);
         }catch(boost::bad_get&){
-            throw id_error("requested output is not a param_value_t" + toStr(o_id));
+            throw id_error("requested output is not a NodeParamValue" + toStr(o_id));
         }
     }else{
         throw id_error("no such output" + toStr(o_id));
@@ -494,59 +494,18 @@ param_value_t Node::getOutputParam(output_id const& o_id) const throw(id_error){
     return r;
 }
 
-static NodeParamValue toNPV(param_value_t const& v){
-    NodeParamValue r (ParamType::Int32,0,0,"");
-    try{
-        r.intValue = boost::get<int>(v);
-        r.type = ParamType::Int32;
-        return r;
-    }catch(boost::bad_get&){}
-    try{
-        r.floatValue = boost::get<float>(v);
-        r.type = ParamType::Float;
-        return r;
-    }catch(boost::bad_get&){}
-    try{
-        r.stringValue = boost::get<std::string>(v);
-        r.type = ParamType::String;
-        return r;
-    }catch(boost::bad_get&){}
-    try{
-        r.intValue = boost::get<bool>(v);
-        r.type = ParamType::Bool;
-        return r;
-    }catch(boost::bad_get&){}
-    // TODO: throw?
-    error() << "bad parameter value (" << v
-            << "), is the NodeParamValue struct out of sync with param_value_t?";
-    return r;
-}
-
 /* return all parameter values
  */
 std::map<param_id, NodeParamValue> Node::parameters() const{
     shared_lock_t l(m_parameters_lock);
-    std::map<param_id, NodeParamValue> r;
-    foreach(param_value_map_t::value_type const& i, m_parameters)
-        r[i.first] = toNPV(i.second);
-    return r;
+    return m_parameters;
 }
 
 /* set a parameter based on a message
  */
 void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
-    param_value_t value;
-    using std::string;
-    switch((ParamType::e)m->value().type){
-        case ParamType::Int32:  value = (int)   m->value().intValue;    break;
-        case ParamType::Float:  value = (float) m->value().floatValue;  break;
-        case ParamType::String: value = (string)m->value().stringValue; break;
-        case ParamType::Bool:   value = (bool)  m->value().intValue;    break;
-        default:
-            // TODO: throw?
-            error() << "Unknown parameter type:" << m->value().type;
-    }
-    setParam(m->paramId(), value);
+    debug(1) << "Node::setParam" << m;
+    setParam(m->paramId(), m->value());
 }
 
 void Node::registerInputID(input_id const& i){

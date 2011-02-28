@@ -126,6 +126,24 @@ inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::string& v){
 
 /* Define overloads for supported template types:
  */
+/* prototypes:
+ */
+template<typename T>
+inline void serialise(svec_ptr p, std::vector<T> const& v);
+template<typename T>
+inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::vector<T>& v);
+
+template<typename S, typename T>
+inline void serialise(svec_ptr p, std::pair<S,T> const& v);
+template<typename S, typename T>
+inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::pair<S,T>& v);
+
+template<typename S, typename T>
+inline void serialise(svec_ptr p, std::map<S,T> const& v);
+template<typename S, typename T>
+inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::map<S,T>& v);
+
+
 template<typename T>
 inline void serialise(svec_ptr p, std::vector<T> const& v){
     assert(v.size() < 0x80000000);
@@ -166,6 +184,7 @@ inline int32_t deserialise(const_svec_ptr p, uint32_t i, std::pair<S,T>& v){
     b += deserialise(p, b, v.second);
     return b - i;
 }
+
 
 template<typename S, typename T>
 inline void serialise(svec_ptr p, std::map<S,T> const& v){

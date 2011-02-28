@@ -222,6 +222,8 @@ def toCPPType(t):
         return t.enum.name + "::e"
     elif isinstance(t, msggenyacc.StructType):
         return t.struct.name
+    elif isinstance(t, msggenyacc.VariantType):
+        return t.variant.name
     elif isinstance(t, msggenyacc.UnknownType):
         return t.name
     elif isinstance(t, msggenyacc.ListType):
@@ -242,6 +244,8 @@ def CPPContainerTypeName(t):
         return t.enum.name + "E"
     elif isinstance(t, msggenyacc.StructType):
         return t.struct.name
+    elif isinstance(t, msggenyacc.VariantType):
+        return t.variant.name
     elif isinstance(t, msggenyacc.UnknownType):
         return t.name
     elif isinstance(t, msggenyacc.ListType):
@@ -369,6 +373,7 @@ def main():
     elif options.lang == "c++":
         with open(output + "_fwd.h", "w") as file:
             t = Template(file=os.path.join(msgdir, "cppmess-forward.template.h"), searchList=tree)
+            t.toCPPType = toCPPType            
             file.write(str(t))
         with open(output + "_messages.h", "w") as file:
             t = Template(file = os.path.join(msgdir, "cppmess-messages.template.h"), searchList=tree)
@@ -466,7 +471,7 @@ def main():
             file.write(str(t))
 
     elif options.lang == "python":
-        compilation_units = ["enums", "structs", "messages", "observers"]
+        compilation_units = ["enums", "structs", "variants", "messages", "observers"]
         compilation_units.append("containers") # must be last in list
         requiredMapTypes = set()
         requiredVectorTypes = set()

@@ -1,0 +1,45 @@
+## This is the template for a generated file, do edit it
+/***  This is a generated file, do not edit ***/
+\#include "workarounds.h" // _must_ be first
+\#include <boost/python.hpp>
+
+\#include "emit_generated.h"
+\#include <generated/messages.h>
+
+namespace bp = boost::python;
+using namespace cauv;
+
+#for $v in $variants
+struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
+    ${v.name}Wrapper() : ${v.name}() { }
+    ${v.name}Wrapper(${v.name} const& v) : ${v.name}(v) { }
+  #for $t in $v.types
+    ${v.name}Wrapper($toCPPType($t) const& v) : ${v.name}(v){ }
+  #end for
+
+  #for $t in $v.types
+    #set $pytype = $CPPContainerTypeName($t)    
+    $toCPPType($t) as_${pytype}() const{
+        return boost::get<$toCPPType($t)>(*this);
+    }
+  #end for
+};
+#end for
+
+void emitVariants(){
+#for $v in $variants
+    #set $classname = $v.name + "Wrapper"
+    bp::class_<$classname>("${v.name}")
+      #for $t in $v.types
+        .def(bp::init<$toCPPType($t)>())
+      #end for
+      #for $t in $v.types
+        #set $pytype = $CPPContainerTypeName($t)
+        .def_readonly("$pytype", &${classname}::as_${pytype})
+      #end for
+        .def(bp::self_ns::str(bp::self_ns::self))
+    ;
+
+#end for
+}
+

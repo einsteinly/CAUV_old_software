@@ -26,10 +26,10 @@ class PercentileNode: public Node{
             // one input:
             registerInputID("image");
 
-            // one output parameter
-            registerOutputID<param_value_t>("ch1 value");
-            registerOutputID<param_value_t>("ch2 value");
-            registerOutputID<param_value_t>("ch3 value");
+            // output parameters:
+            registerOutputID<NodeParamValue>("ch1 value");
+            registerOutputID<NodeParamValue>("ch2 value");
+            registerOutputID<NodeParamValue>("ch3 value");
             
             // parameter: 
             registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
@@ -85,10 +85,10 @@ class PercentileNode: public Node{
                         value_histogram[ch][*bp]++;
             }
 
-            param_value_t channel_results[3] = {
-                param_value_t(int(0)),
-                param_value_t(int(0)),
-                param_value_t(int(0))
+            NodeParamValue channel_results[3] = {
+                NodeParamValue(int(0)),
+                NodeParamValue(int(0)),
+                NodeParamValue(int(0))
             };
             
             for(int ch = 0; ch < channels; ch++){
@@ -97,7 +97,7 @@ class PercentileNode: public Node{
                     debug(9) << "[" << BashColour::White << bar(running_total, num_pixels, 50) << "]"
                               << i << running_total;
                     if((running_total += value_histogram[ch][i]) >= pct_pixel){
-                        channel_results[ch] = param_value_t(i);
+                        channel_results[ch] = NodeParamValue(i);
                         break;
                     }
                 }
