@@ -82,8 +82,9 @@ void GraphWidget::setupPlot() {
     m_plot->canvas()->setStyleSheet("QwtPlotCanvas {border: 1px dotted gray}");
     m_plot->canvas()->setLineWidth(1);
     m_plot->canvas()->setAttribute(Qt::WA_PaintOnScreen, true);
-    m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, true);
-    m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::PaintPacked, true);
+    // TODO: This api was changed in between 6.0.0-rc5 and 6.0.0-svn-r922
+    //m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::BackingStore, true);
+    //m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::Opaque, true);
 
     // plot
     m_plot->setCanvasBackground(QColor(Qt::white));

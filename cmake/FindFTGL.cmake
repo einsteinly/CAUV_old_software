@@ -13,7 +13,7 @@ libfind_package (FTGL Freetype REQUIRED)
 #message ("FREETYPE_LIBRARIES=${FREETYPE_LIBRARIES}")
 
 # Use pkg-config to get hints about paths
-libfind_pkg_check_modules(FTGL_PKGCONF FTGL) 
+libfind_pkg_check_modules(FTGL_PKGCONF ftgl) 
 
 # Include dir
 find_path(FTGL_INCLUDE_DIR

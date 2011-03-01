@@ -1,26 +1,41 @@
 project (guicpp)
 
-option(CAUV_GAMEPAD_SUPPORT "True if the GUI should support game controllers" ON)
-
-# required libraries:
-find_package (Qwt6 REQUIRED)
-find_package (OpenCV REQUIRED)
-find_package (Marble REQUIRED)
-
-# find gamepad library if its needed
-if (CAUV_GAMEPAD_SUPPORT)
-    find_package (OIS REQUIRED)
-    if (OIS_FOUND)
-        add_definitions(-DGAMEPAD_SUPPORT=1)
-    endif()
-endif()
+option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
+option(CAUV_GUI_MAP "True if the GUI should have a map of the Earth. For some reason." ON)
+    
+find_package (Qt4)
+find_package (Qwt6)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
-else()
-if (NOT Qwt6_FOUND)
+elseif (NOT Qwt6_FOUND)
     message(WARNING "QWT not found, not building gui")
 else()
+
+    # required libraries:
+    find_package (OpenCV REQUIRED)
+
+    # find gamepad library if it's needed
+    if (CAUV_GUI_GAMEPAD)
+        find_package (OIS)
+        if (OIS_FOUND)
+            add_definitions(-DGAMEPAD_SUPPORT=1)
+        else()
+            message(WARNING "OIS not found, building without gamepad support")
+        endif()
+    endif()
+    
+    # find marble library if it's needed
+    if (CAUV_GUI_MAP)
+        find_package (Marble)
+        if (MARBLE_FOUND)
+            add_definitions(-DUSE_MARBLE=1)
+        else()
+            message(WARNING "Marble not found, building without map")
+        endif()
+    endif()
+
+    
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
 
@@ -88,8 +103,6 @@ else()
     include_directories(${MARBLE_INCLUDE_DIR})
     link_directories (${pipeline-widget_BINARY_DIR})
 
-    message (${MARBLE_INCLUDE_DIR})
-
     # for <common/includesstuff> etc
     include_directories (${AUV_SOURCE_DIR})
 
@@ -126,5 +139,4 @@ else()
         COMMENT "Copying fonts for guicpp"
     )
 
-endif()
 endif()
