@@ -15,6 +15,7 @@ urlpatterns = patterns('',
     (r'^edit/entity/(?P<uuid>[a-f0-9\-]+)/$', views.edit_entity),
     (r'^add/entity/(?P<plural_name>[a-zA-Z0-9\-]+)/$', views.add_entity),
     (r'^help/$', views.help),
+    (r'^upload/$', views.upload),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:

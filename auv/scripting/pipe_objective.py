@@ -97,7 +97,7 @@ class PipeFollowObjective(msg.BufferedMessageObserver):
     def onTelemetryMessage(self, m):
         self.bearing = m.orientation.yaw
 
-    def onHoughLinesMessage(self, m):
+    def onLinesMessage(self, m):
         if len(m.lines) == 0:
             print 'no lines!'
             return

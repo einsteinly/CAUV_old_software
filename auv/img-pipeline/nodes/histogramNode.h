@@ -34,7 +34,8 @@ class HistogramNode: public OutputNode{
             
             //Parameters
             registerParamID<int>("Number of bins", 42);
-            registerParamID<std::string>("Channel type", "Unnamed");
+            registerParamID<std::string>("name", "unnamed histogram"
+                                         "name for output histogram");
             
         }
     
@@ -46,8 +47,8 @@ class HistogramNode: public OutputNode{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            int bins = param<int>("Number of bins");
-            std::string type = param<std::string>("Channel type");
+            const int bins = param<int>("Number of bins");
+            const std::string name = param<std::string>("name");
 
             image_ptr_t img = inputs["image_in"];
 
@@ -86,7 +87,7 @@ class HistogramNode: public OutputNode{
             }
 
             //This is the messaging bit
-            sendMessage(boost::make_shared<HistogramMessage>(binVal, type));
+            sendMessage(boost::make_shared<HistogramMessage>(name, binVal));
             return r;
         }
 

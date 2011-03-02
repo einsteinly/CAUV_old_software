@@ -50,6 +50,7 @@ else()
         widgets/videoscreen.cpp
         widgets/logview.cpp
         widgets/datastreamrecorder.cpp
+        widgets/console.cpp
     )
 
     set (
@@ -62,6 +63,7 @@ else()
         widgets/logview.ui
         widgets/graphs.ui
         widgets/datastreamrecorder.ui
+        widgets/console.ui
     )
 
     set (
@@ -76,6 +78,7 @@ else()
         widgets/videoscreen.h
         widgets/logview.h
         widgets/datastreamrecorder.h
+        widgets/console.h
     )
 
     set (

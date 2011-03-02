@@ -6,6 +6,7 @@
 #include <QDockWidget>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 namespace cauv{
 
@@ -44,7 +45,8 @@ public Q_SLOTS:
 class CauvInterfaceElement {
 
 public:
-    CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv, boost::shared_ptr<CauvNode> node);
+    CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv, boost::weak_ptr<CauvNode> node);
+    virtual ~CauvInterfaceElement();
     virtual QString &name();
     virtual void initialise() = 0;
     boost::shared_ptr<CauvInterfaceActions> actions();
@@ -53,7 +55,7 @@ protected:
     QString m_name;
     boost::shared_ptr<AUV> m_auv;
     boost::shared_ptr<CauvInterfaceActions> m_actions;
-    boost::shared_ptr<CauvNode> m_node;
+    boost::weak_ptr<CauvNode> m_node;
 
 };
 

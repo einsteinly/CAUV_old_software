@@ -23,7 +23,8 @@ namespace cauv {
         Q_OBJECT
 
     public:
-        CauvGui(const QApplication& app);
+        CauvGui(QApplication * app);
+        virtual ~CauvGui();
         void addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget);
 
     public Q_SLOTS:
@@ -39,7 +40,7 @@ namespace cauv {
         boost::shared_ptr<AUV> m_auv;
         boost::shared_ptr<AUVController> m_auv_controller;
 
-        const QApplication &m_application;
+        QApplication * m_application;
 
     private:
         Ui::MainWindow * ui;

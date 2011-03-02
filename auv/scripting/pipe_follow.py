@@ -39,7 +39,7 @@ class PipePositioner(messaging.BufferedMessageObserver):
         self.bin = bin
         self.threshold = threshold
 
-    def onHoughLinesMessage(self, m):
+    def onLinesMessage(self, m):
         #get current bearing asap, before we turn to much
         current_bearing = self.auv.getBearing()
         #check whether this is enabled

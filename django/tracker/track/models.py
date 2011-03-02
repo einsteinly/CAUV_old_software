@@ -20,7 +20,7 @@ class UserShortcut(models.Model):
     user_profile = models.ForeignKey(UserProfile)
     url = models.CharField(max_length=500)
     def __unicode__(self):
-        return self.name
+        return self.user_profile.user.username + '-' + self.name
                 
 class UserBag(models.Model):
     name = models.CharField(max_length=50)
@@ -28,4 +28,4 @@ class UserBag(models.Model):
     bag_type = models.CharField(max_length=50)
     filter_repr = models.CharField(max_length=500)
     def __unicode__(self):
-        return self.shortcut_url
+        return self.user_profile.user.username + '-' + self.name

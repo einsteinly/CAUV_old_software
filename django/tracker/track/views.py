@@ -1,8 +1,9 @@
 from django.shortcuts import render_to_response, redirect#responses
-from django.http import Http404 #404 error
+from django.http import Http404, HttpResponse #404 error, generic response object
 from django.template import RequestContext #used by django to prevent cross site request forgery for forms (django will through an error if form submitted without csrf token)
 from django.contrib.auth.decorators import permission_required, login_required #Use @login_required to require login for a view
 from django.forms.formsets import formset_factory
+#from django.core.cache import cache
 from pitz.project import Project
 from pitz.bag import Bag
 from pitz.entity import Entity, Person
@@ -10,6 +11,69 @@ from uuid import UUID
 from tracker import settings
 from tracker.track import models, appforms, extras
 import json
+from time import sleep
+from datetime import datetime
+import os.path
+
+#decorators that deal with the project
+#define @project_viewer
+def project_viewer(f):
+    def _pf_decorator(*args, **kwargs):
+        """ caching doesnt really seem to work properly
+        #try and get the cached version
+        p=cache.get('project')
+        retrieval_method = u'Retrieved from cache'
+        if not p:
+            retrieval_method = u'Retrieved from disk'
+            while not cache.add('project_lock', 1):
+                sleep(0.1)
+            p=cache.get('project')
+            if not p:
+                p=Project.from_pitzdir(settings.PITZ_DIR)
+                cache.set('project', p)
+            cache.delete('project_lock')
+        #unfortunately the cache seems to 'forget' the project attribute
+        for x in p:
+            x.project=p
+        """
+        p=Project.from_pitzdir(settings.PITZ_DIR)
+        kwargs['project']=p
+        response=f(*args,**kwargs)
+        #response.content=response.content.replace(u'<div id="retrieval_method"></div>',u'<div id="retrieval_method">'+retrieval_method+u'</div>')
+        return response
+    _pf_decorator.__name__=f.__name__
+    _pf_decorator.__dict__=f.__dict__
+    _pf_decorator.__doc__=f.__doc__
+    return _pf_decorator
+#define @project_modifier
+def project_modifier(f):
+    def _pm_decorator(*args, **kwargs):
+        """
+        #get a lock on the cached version of the project (since we're modifying it)
+        while not cache.add('project_lock', 1):
+            sleep(0.1)
+        #get the project
+        p=cache.get('project')
+        if not p:
+            p=Project.from_pitzdir(settings.PITZ_DIR)
+        else:  
+            #unfortunately the cache seems to 'forget' the project attribute
+            for x in p:
+                x.project=p
+        """
+        p=Project.from_pitzdir(settings.PITZ_DIR)
+        kwargs['project']=p
+        #run view function
+        response = f(*args,**kwargs)
+        #update cache
+        #cache.set('project',p)
+        #release lock
+        #cache.delete('project_lock')
+        return response
+    _pm_decorator.__name__=f.__name__
+    _pm_decorator.__dict__=f.__dict__
+    _pm_decorator.__doc__=f.__doc__
+    return _pm_decorator
 
 #equivalent of useful django shortcut
 def get_entity_or_404(uuid, project=None):
@@ -37,6 +101,9 @@ class disp_property():
             except KeyError:
                 #pscore needs to be set properly (out of range)
                 self.value = "THIS FIELD IS BROKEN. FIX IT. (Pscore out of range)"
+        elif self.name == 'attached_files' and value is not None and value != u"None":
+            self.type = 'linklist'
+            self.value = [(settings.ATTACHED_FILES_URL+x,x) for x in value]
         else:
             self.value = value
             if isinstance(value, list):
@@ -81,7 +148,7 @@ class disp_entity():
         return self.type=='people'
 
 class disp_bag():
-    def __init__(self, project, entity_class, bag_filter=extras.filter_null_obj(), bag_order=extras.order_obj(), title=None, pk=None):
+    def __init__(self, project, entity_class, bag_filter=extras.filter_null_obj(), bag_order=extras.order_obj(['modified_time',],['1',]), title=None, pk=None):
         self.entity_class = entity_class
         self.errors = {}
         self.bag_filter = bag_filter
@@ -109,7 +176,7 @@ class disp_bag():
                                   'values='+json.dumps(values),
                                   'order='+json.dumps(self.bag_order.values),
                                   'reverse='+json.dumps(self.bag_order.reverse),
-                                  'order_keys='+json.dumps(extras.get_all_variables(self.entity_class).keys()),
+                                  'order_keys='+json.dumps(extras.get_all_variables(self.entity_class, noneditable=True).keys()),
                                   'all_filters='+json.dumps(extras.js_filters),
                                   'filter_names='+json.dumps(extras.js_filters.keys())
                                   ])
@@ -118,59 +185,60 @@ class disp_bag():
             return 'alert("Some elements of the page have not loaded correctly. Error:'+str(inst)+'")'
 
 #VIEWS
-def view_project(request):
-    p = Project.from_pitzdir(settings.PITZ_DIR)
+@project_viewer
+def view_project(request, project=None):
     bags = []
     try:
         user_profile = request.user.get_profile()
-        user = p.by_uuid(UUID(user_profile.uuid))
+        user = project.by_uuid(UUID(user_profile.uuid))
         has_custom_bags = user_profile.custom_bags
     except (models.UserProfile.DoesNotExist,AttributeError):
-        user = p.people.matches_dict(**{'title': 'no owner'})[0]
+        user = project.people.matches_dict(**{'title': 'no owner'})[0]
         has_custom_bags = False
     if has_custom_bags:
-        bag_types = p.plural_names.keys()
+        bag_types = project.plural_names.keys()
         for custom_bag in user_profile.userbag_set.all():
             filter,order = extras.filter_order_from_str(custom_bag.filter_repr)
-            bags.append(disp_bag(p,p.plural_names[custom_bag.bag_type],filter,order,title=custom_bag.name,pk=custom_bag.pk))
+            bags.append(disp_bag(project,project.plural_names[custom_bag.bag_type],filter,order,title=custom_bag.name,pk=custom_bag.pk))
     else:
-        for plural_name in p.plural_names:
+        for plural_name in project.plural_names:
             try:
-                bags.append(disp_bag(p,p.plural_names[plural_name]))
+                bags.append(disp_bag(project,project.plural_names[plural_name]))
             except AttributeError:
                 continue
     return render_to_response('view_project.html', locals(), context_instance=RequestContext(request))
-    
-def view_bag(request, plural_name):
-    p = Project.from_pitzdir(settings.PITZ_DIR)
-    entity_class = p.plural_names[plural_name]
+
+@project_viewer    
+def view_bag(request, plural_name, project=None):
+    entity_class = project.plural_names[plural_name]
     if request.GET:
-        bag = disp_bag(p, entity_class, extras.filter_from_GET(request.GET), extras.order_from_GET(request.GET))
+        bag = disp_bag(project, entity_class, extras.filter_from_GET(request.GET), extras.order_from_GET(request.GET))
     else:
-        bag = disp_bag(p, entity_class)
+        bag = disp_bag(project, entity_class)
     return render_to_response('view_bag.html', locals(), context_instance=RequestContext(request))
-    
-def view_entity(request, uuid):
-    p = Project.from_pitzdir(settings.PITZ_DIR)
+
+@project_viewer    
+def view_entity(request, uuid, project=None):
+    project = Project.from_pitzdir(settings.PITZ_DIR)
     try:
-        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+        user = project.by_uuid(UUID(request.user.get_profile().uuid))
     except (models.UserProfile.DoesNotExist,AttributeError):
-        user = p.people.matches_dict(**{'title': 'no owner'})[0]
-    e = get_entity_or_404(uuid, p)
+        user = project.people.matches_dict(**{'title': 'no owner'})[0]
+    e = get_entity_or_404(uuid, project)
     entity = disp_entity(e)
     return render_to_response('view_entity.html', locals(), context_instance=RequestContext(request))
     
 @login_required
-def edit_entity(request, uuid):
-    #get project, entity, user etc
-    p = Project.from_pitzdir(settings.PITZ_DIR)
+@project_modifier
+def edit_entity(request, uuid, project=None):
+    #get entity, user etc
     try:
-        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+        user = project.by_uuid(UUID(request.user.get_profile().uuid))
     except (models.UserProfile.DoesNotExist,AttributeError):
-        user = p.people.matches_dict(**{'title': 'no owner'})[0]
-    entity = get_entity_or_404(uuid, p)
+        user = project.people.matches_dict(**{'title': 'no owner'})[0]
+    entity = get_entity_or_404(uuid, project)
     #make the entity_form class, with entity set as default
-    entity_form = appforms.make_entity_form(p.classes[entity['type']], p, entity)
+    entity_form = appforms.make_entity_form(project.classes[entity['type']], project, entity)
     #standard django form handling stuff
     if request.method == 'POST':
         form = entity_form(request.POST)
@@ -184,14 +252,14 @@ def edit_entity(request, uuid):
     return render_to_response('form.html', locals(), context_instance=RequestContext(request))
 
 @login_required
-def add_entity(request, plural_name):
-    #get project, user, entity etc
-    p = Project.from_pitzdir(settings.PITZ_DIR)
+@project_modifier
+def add_entity(request, plural_name, project=None):
+    #get user, entity etc
     try:
-        user = p.by_uuid(UUID(request.user.get_profile().uuid))
+        user = project.by_uuid(UUID(request.user.get_profile().uuid))
     except (models.UserProfile.DoesNotExist,AttributeError):
-        user = p.people.matches_dict(**{'title': 'no owner'})[0]
-    entity_form = appforms.make_entity_form(p.plural_names[plural_name], p)
+        user = project.people.matches_dict(**{'title': 'no owner'})[0]
+    entity_form = appforms.make_entity_form(project.plural_names[plural_name], project)
     #if post (ie this form was submitted), then try and save
     if request.method == 'POST':
         form = entity_form(request.POST)
@@ -212,7 +280,7 @@ def add_entity(request, plural_name):
         #if we have get data with a from field, then that says we should set all fields that can take that value to that value
         if request.method == 'GET':
             if request.GET.get('from'):
-                entity = p.by_uuid(UUID(request.GET['from']))
+                entity = project.by_uuid(UUID(request.GET['from']))
                 #we need to modify the defalt values of base fields of the class of the entity given to that entity
                 for field in entity_form.base_fields:
                     try:
@@ -227,6 +295,22 @@ def add_entity(request, plural_name):
     entity = disp_entity(form.entity)
     return render_to_response('form.html', locals(), context_instance=RequestContext(request))
 
+def upload(request):
+    if request.user.is_authenticated():
+        if request.method == 'POST':
+            form = appforms.UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                f = request.FILES['file']
+                filename = datetime.now().strftime('%d-%m-%y-%H%M%S-')+('_from_'+request.user.username+'.').join(f.name.rsplit('.',1))
+                fd = open(os.path.join(settings.PITZ_ATTACHED_FILES_DIR, filename), 'wb')
+                for chunk in f.chunks():
+                    fd.write(chunk)
+                fd.close()
+                return HttpResponse('<body><response id="response" response="SUCCESS" saved_to="'+filename+'"/></body>')
+            return HttpResponse('<body><response id="response" response="FAILURE" error_type="invalid_data" /></body>')
+        return HttpResponse('<body><response id="response" response="FAILURE" error_type="no_data" /></body>')
+    return HttpResponse('<body><response id="response" response="FAILURE" error_type="not_authenticated" /></body>')
+    
 def help(request):
     return render_to_response('help.html', locals(), context_instance=RequestContext(request))
     
@@ -294,10 +378,10 @@ def remove_bag(request, pk):
     return redirect(to=settings.ROOT_URL+'/')
 
 @permission_required('is_staff')
-def useruuids(request, uuid):
-    p = Project.from_pitzdir(settings.PITZ_DIR)
-    user = get_entity_or_404(uuid, p)
-    if not isinstance(user, p.classes['person']):
+@project_modifier
+def useruuids(request, uuid, project=None):
+    user = get_entity_or_404(uuid, project)
+    if not isinstance(user, project.classes['person']):
         raise Http404 #if someone tries to set some non-person entity as that persons user
     if request.method == 'POST':
         form = appforms.useruuid_form(request.POST)

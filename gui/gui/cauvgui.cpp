@@ -13,6 +13,7 @@
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/motorcontrols.h"
 #include "widgets/logview.h"
+#include "widgets/console.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -24,12 +25,10 @@
 #include <marble/MarbleWidget.h>
 
 
-#include "qconsole2/include/qconsole.h"
-
 
 using namespace cauv;
 
-CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
+CauvGui::CauvGui(QApplication * app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
     ui->setupUi(this);
     joinGroup("control");
     joinGroup("image");
@@ -37,9 +36,11 @@ CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(a
     joinGroup("debug");
     joinGroup("telemetry");
 
-    this->setAttribute(Qt::WA_DeleteOnClose);
-
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+}
+
+CauvGui::~CauvGui(){
+    delete ui;
 }
 
 void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
@@ -61,8 +62,7 @@ void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
 
 void CauvGui::closeEvent(QCloseEvent*){
     hide();
-    m_application.exit(0);
-    exit(0);
+    m_application->quit();
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
@@ -103,16 +103,20 @@ void CauvGui::onRun()
     boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
 
+    boost::shared_ptr<Console> console(new Console("Console", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(console));
+
     Marble::MarbleWidget *mapWidget = new Marble::MarbleWidget(this);
     QString map("Map");
     addCentralTab(mapWidget, map);
     mapWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
     mapWidget->show();
 
-    QConsole * console = new QConsole(this, "console", false);
-    console->setPrompt(" > ", false);
-    addCentralTab(console, map);
-
     show();
-    m_application.exec();
+    m_application->exec();
+
+    info() << "Qt Thread exiting";
+    removeMessageObserver(m_auv_controller);
+    info() << "Stopping CauvNode";
+    CauvNode::stopNode();
 }

@@ -1,0 +1,38 @@
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2011-02-23 17:51:45.555251
+description: !!python/unicode "Needs:\r\n* Quick sending of small messages, always\r\
+  \n* Fairly quick sending of large messages (in particular, images)\r\n between processes\
+  \ on the same machine\r\n* Guaranteed reliability\r\n* Minimise copies (ideally\
+  \ zero copy for same processor)\r\n* Easy reconnection when things die\r\n* Order\
+  \ independent startup\r\n* Asynchronous sending\r\n\r\nWants:\r\n* Auto connection\r\
+  \n* Randomised ports for when tcp sockets die\r\n* Message filtering (can be done\
+  \ when sending or when receiving)\r\n* QoS (though is this necessary/useful?)\r\n\
+  \r\nPossible solutions:\r\n* 0MQ seems popular these days as a socket replacement,\
+  \ so can use that\r\n between computers.\r\n* Boost interprocess seems pretty good\
+  \ for shared memory, so maybe\r\n construct messages in shared memory. 0MQ could\
+  \ then be used to send\r\n shared memory pointers rather than messages.\r\n* Maybe\
+  \ hubs on computers that connect to each other, and star\r\n topologies on the computers.\
+  \ (let's call them mega-super-nodes :) )\r\n* The hub could therefore construct\
+  \ shared memory\r\n   * Then the hub can broadcast itself (and the location of its\
+  \ shared\r\n     memory?) and nodes/other hubs autoconnect to it.\r\n   * Possibly\
+  \ could have several independent hubs, to let several\r\n     people test different\
+  \ things without clashes\r\n\r\nCaveats:\r\n* Shared memory means no virtual inheritance,\
+  \ custom vectors/maps\r\n (boost provides these) and some difficulty in constructing\
+  \ messages\r\n (maybe have message wrappers for messages in shared memory)\r\n*\
+  \ For small messages, it may be quicker to just serialise/send them\r\n rather than\
+  \ construct them in shared memory.\r\n* Having hubs broadcast themselves means things\
+  \ might break if two\r\n nodes are trying to run on the same computers. Needs to\
+  \ check if a\r\n hub is already running, and if it is, if it would clash with the\
+  \ one\r\n we're trying to run."
+entity: !!python/object:uuid.UUID
+  int: 14648076433314010567804812502658339991
+modified_time: 2011-02-23 17:51:45.568762
+pscore: 0
+title: !!python/unicode 'General Comments (from mailing list)'
+type: comment
+uuid: !!python/object:uuid.UUID
+  int: 141150390499562652196111460834331014625
+who_said_it: !!python/object:uuid.UUID
+  int: 263484739648898995288495580675464106490
+yaml_file_saved: 2011-02-23 17:51:45.581576

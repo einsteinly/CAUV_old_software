@@ -89,7 +89,7 @@ class LoggingObserver(msg.BufferedMessageObserver):
         self.depth = m.depth
         self.writeLine()
     
-    def onHoughLinesMessage(self, m):
+    def onLinesMessage(self, m):
         if len(m.lines):
             anglemsg = ''
             if m.lines[0].angle < 0:
@@ -103,7 +103,7 @@ class LoggingObserver(msg.BufferedMessageObserver):
             self.writeLine()
             self.action = ''
     
-    def onHoughCirclesMesage(self, m):
+    def onCirclesMesage(self, m):
         if len(m.circles):
             if m.circles[0].centre > 0.5:
                 self.action = 'buoy detected right (%g,%g)' % (m.circles[0].centre.x, m.circles[0].centre.y)

@@ -14,6 +14,7 @@ ul{
 
 #content{
     margin: 0 3pt;
+    overflow: auto;
 }
 
 #login_wrapper{
@@ -37,6 +38,11 @@ float: left;
 }
 #header_user{
 float: right;
+}
+#footer{
+padding: 0.5em;
+background-color: #ccddff;
+width: 100%;
 }
 .toolbox{
 padding: 3pt 5pt;
@@ -119,6 +125,14 @@ border-radius: 3pt;
 color: #000;
 visibility:visible;
 }
+.property #attached_files_field_div ul{
+height: 100px;
+width: 60%;
+overflow: auto;
+}
+.yui-overlay { border:1px dotted black;padding:5px;margin:10px; }  
+.yui-overlay .hd { border:1px solid red;padding:5px; }  
+.yui-overlay .bd { border:1px solid green;padding:5px; }  
 .bag{
 background-color: #e9f0ff;
 padding: 3pt 5pt;

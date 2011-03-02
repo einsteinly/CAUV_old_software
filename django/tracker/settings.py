@@ -4,6 +4,7 @@ import os
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__)) 
 AUTH_PROFILE_MODULE = 'track.UserProfile' #tells django to link user profile to django auth users
 PITZ_DIR = os.sep.join([os.sep.join(SITE_ROOT.split(os.sep)[0:-2]), 'pitzdir']) #pitzdir
+PITZ_ATTACHED_FILES_DIR = os.sep.join([SITE_ROOT, 'static', 'attached_files'])
 
 if "SCRIPT_NAME" in os.environ:
     ROOT_URL = os.environ["SCRIPT_NAME"]
@@ -14,6 +15,7 @@ LOGIN_REDIRECT_URL = ROOT_URL+"/"
 LOGIN_URL = ROOT_URL+"/accounts/login"
 LOGOUT_URL = ROOT_URL+"/accounts/logout"
 SESSION_COOKIE_PATH = "/"
+ATTACHED_FILES_URL = ROOT_URL+"/static/attached_files/"
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -99,6 +101,8 @@ TEMPLATE_DIRS = (
 
 #ONLY USE FOR DEBUGGING TEMPLATES (BREAKS SOME THINGS)
 #TEMPLATE_STRING_IF_INVALID = 'Oops, something went wrong here, ref %s'
+
+#CACHE_BACKEND = 'locmem://'
 
 INSTALLED_APPS = (
     'django.contrib.auth',
