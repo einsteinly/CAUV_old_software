@@ -21,9 +21,14 @@ else()
 if (NOT Qwt6_FOUND)
     message(WARNING "QWT not found, not building gui")
 else()
+    add_subdirectory (qconsole2)
+
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
+    # QConsole2 required Qt3Suport
+    add_definitions(-DQT3_SUPPORT)
 
+    include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
     include_directories (./)
     #link_directories (${Qwt6_Qt4_LIBRARY})
@@ -88,8 +93,6 @@ else()
     include_directories(${MARBLE_INCLUDE_DIR})
     link_directories (${pipeline-widget_BINARY_DIR})
 
-    message (${MARBLE_INCLUDE_DIR})
-
     # for <common/includesstuff> etc
     include_directories (${AUV_SOURCE_DIR})
 
@@ -109,6 +112,7 @@ else()
         common
         model
         pipeline-widget
+	qconsole2
         ${QT_LIBRARIES}
         ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
@@ -128,3 +132,4 @@ else()
 
 endif()
 endif()
+

@@ -245,7 +245,7 @@ DataStreamDisplayArea::DataStreamDisplayArea(const QString &name, boost::shared_
 }
 
 void DataStreamDisplayArea::initialise(){
-    m_actions->registerCentralView(this, name());
+    m_actions->registerCentralView(this, CauvInterfaceElement::name());
 }
 
 void DataStreamDisplayArea::addWindow(boost::shared_ptr<QWidget> content){
