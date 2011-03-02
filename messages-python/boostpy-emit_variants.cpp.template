@@ -2,12 +2,28 @@
 /***  This is a generated file, do not edit ***/
 \#include "workarounds.h" // _must_ be first
 \#include <boost/python.hpp>
+\#include <boost/make_shared.hpp>
 
 \#include "emit_generated.h"
 \#include <generated/messages.h>
 
 namespace bp = boost::python;
 using namespace cauv;
+
+/*
+ * From c++-sig:
+ * http://mail.python.org/pipermail/cplusplus-sig/2009-December/015053.html
+ *
+ * ((
+ *    boost.python looks through the overloads for f, in the reverse order of
+ *    registration, and calls the first one that is callable...
+ *                                                             ))
+ *
+ * So, this means that we can't rely on overload resolution when we have, for
+ * example, boolean and integer in the same variant. Hence the static construction
+ * stuff below.
+ *
+ */
 
 #for $v in $variants
 struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
@@ -16,29 +32,40 @@ struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
   #for $t in $v.types
     ${v.name}Wrapper($toCPPType($t) const& v) : ${v.name}(v){ }
   #end for
-
-  #for $t in $v.types
+   
+  #for $t in $v.types 
     #set $pytype = $CPPContainerTypeName($t)    
-    $toCPPType($t) as_${pytype}() const{
+    $toCPPType($t) to_${pytype}() const{
         return boost::get<$toCPPType($t)>(*this);
     }
+    static boost::shared_ptr<${v.name}Wrapper> from_${pytype}($toCPPType($t) const& v){
+        return boost::make_shared<${v.name}Wrapper>(v);
+    }
+
   #end for
 };
 #end for
 
+
 void emitVariants(){
 #for $v in $variants
-    #set $classname = $v.name + "Wrapper"
-    bp::class_<$classname>("${v.name}")
+    #set $className = $v.name + "Wrapper"
+    bp::class_<$className>("${v.name}")
       #for $t in $v.types
-        .def(bp::init<$toCPPType($t)>())
+        #set $pytype = $CPPContainerTypeName($t)
+        ##.def(bp::init<$toCPPType($t)>()) see note above
+        .def("from_${pytype}", &${className}::from_${pytype})
+        .staticmethod("from_${pytype}")
       #end for
       #for $t in $v.types
         #set $pytype = $CPPContainerTypeName($t)
-        .def_readonly("$pytype", &${classname}::as_${pytype})
+        .def_readonly("$pytype", &${className}::to_${pytype})
       #end for
+        .def_readonly("which", &${className}::which)
         .def(bp::self_ns::str(bp::self_ns::self))
     ;
+    ## hackery for boost::shared_ptr<T const> ... see workarounds.h    
+    register_shared_ptrs_to_python<$className>();    
 
 #end for
 }

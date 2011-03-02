@@ -135,7 +135,8 @@ void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage_ptr m){
     try{
         node_ptr_t n = lookup(m->nodeId());
         n->setParam(m);
-        info() << "Node parameter set:" << m->nodeId() <<  m->paramId() << m->value();
+        info() << "Node parameter set:"
+               << m->nodeId() <<  m->paramId() << std::boolalpha << m->value();
         
         sendMessage(boost::make_shared<NodeParametersMessage>(m->nodeId(), n->parameters()));
     }catch(std::exception& e){

@@ -157,13 +157,13 @@ class Node: public boost::enable_shared_from_this<Node>{
             unique_lock_t l(m_parameters_lock);
             param_value_map_t::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
-                debug(1) << "param" << p << "set to" << v;
+                debug(1) << "param" << p << "set to" << std::boolalpha << v;
                 i->second = v;
             }else{
                 error e;
                 e << m_parameters.size() << "valid parameters are:";
                 for(i = m_parameters.begin(); i != m_parameters.end(); i++)
-                    e << i->first << "( =" << i->second << ")";
+                    e << i->first << "( =" << std::boolalpha << i->second << ")";
                 throw(id_error("setParam: Invalid parameter id: " + toStr(p)));
             }
             // provide notification that parameters have changed: principally
@@ -199,7 +199,7 @@ class Node: public boost::enable_shared_from_this<Node>{
                     assert(node->paramOutputs().count(outparam));
                     debug(4) << "returning linked parameter value for" << p
                             << "(linked to" << j->second.first
-                            << j->second.second << ")";
+                            << std::boolalpha << j->second.second << ")";
                     // TODO: this will throw boost::bad_get if there is a
                     // param_value type mismatch between the output and the
                     // requested parameter type:
@@ -209,7 +209,7 @@ class Node: public boost::enable_shared_from_this<Node>{
                         return boost::get<T>(node->getOutputParam(outparam));
                     }catch(boost::bad_get& e){
                         warning() << "parameter output not available / bad get:"
-                                  << j->second.first << j->second.second
+                                  << j->second.first << std::boolalpha << j->second.second
                                   << ", non-linked value will be returned";
 
                     }

@@ -1,46 +1,39 @@
 import messaging
+from debug import debug, warning, error, info
+
 import threading
 import pickle
 
-def intParam(i):
-    r = messaging.NodeParamValue()
-    r.type = messaging.ParamType.Int32
-    r.intValue = i
-    return r
-
-def stringParam(str):
-    r = messaging.NodeParamValue()
-    r.type = messaging.ParamType.String
-    r.stringValue = str
-    return r
+intParam = messaging.NodeParamValue.from_int32
+stringParam = messaging.NodeParamValue.from_string
+boolParam = messaging.NodeParamValue.from_bool
+floatParam = messaging.NodeParamValue.from_float
 
 def fromNPV(npv):
-    if npv.type == messaging.ParamType.String:
-        return npv.stringValue
-    elif npv.type == messaging.ParamType.Bool:
-        if npv.intValue != 0:
-            return True
-        else:
-            return False
-    elif npv.type == messaging.ParamType.Int32:
-        return npv.intValue
-    elif npv.type == messaging.ParamType.Float:
-        return npv.floatValue
+    if npv.which == messaging.ParamType.String:
+        return npv.string
+    elif npv.which == messaging.ParamType.Bool:
+        return npv.bool
+    elif npv.which == messaging.ParamType.Int32:
+        return npv.int32
+    elif npv.which == messaging.ParamType.Float:
+        return npv.float
+    else:
+        raise RuntimeError('Unknown type in NodeParamValue')
 
 def toNPV(value):
-    r = messaging.NodeParamValue()
-    if isinstance(value, int) or isinstance(value, long):
-        r.type = messaging.ParamType.Int32
-        r.intValue = value
+    r = None
+    # caveat viator: isinstance(bool(...), int) == True
+    if isinstance(value, bool):
+        r = messaging.NodeParamValue.from_bool(value)
+    elif isinstance(value, int) or isinstance(value, long):
+        r = messaging.NodeParamValue.from_int32(value)
     elif isinstance(value, float):
-        r.type = messaging.ParamType.Float
-        r.floatValue = value
+        r = messaging.NodeParamValue.from_float(value)
     elif isinstance(value, str):
-        r.type = messaging.ParamType.String
-        r.stringValue = value
-    elif isinstance(value, bool):
-        r.type = messaging.ParamType.Bool
-        r.intValue = int(value)
+        r = messaging.NodeParamValue.from_string(value)
+    else:
+        raise RuntimeError('Cannot pack "%s" as NodeParamValue' % type(value))
     return r
  
 class Node:
@@ -67,9 +60,8 @@ class State:
 class Model(messaging.BufferedMessageObserver):
     def __init__(self, node):
         messaging.BufferedMessageObserver.__init__(self)
-        #import time
-        #time.sleep(1)
         self.__node = node
+
         self.description_ready_condition = threading.Condition()
         self.graph_description = None
 
@@ -88,17 +80,17 @@ class Model(messaging.BufferedMessageObserver):
     def clear(self):
         self.send(messaging.ClearPipelineMessage())
 
-    def save(self, picklefname):
+    def save(self, picklefname, timeout=3.0):
         with open(picklefname, 'wb') as outf:
-            saved = self.get(5.0)
-            pickle.dump(saved, outf)
+            saved = self.get(timeout)
+            pickle.dump(saved, outf, timeout)
     
-    def load(self, picklefname):
+    def load(self, picklefname, timeout=3.0):
         with open(picklefname, 'rb') as inf:
             saved = pickle.load(inf)
-            self.set(saved)
+            self.set(saved, timeout)
 
-    def get(self, timeout=5):
+    def get(self, timeout=3.0):
         graph = self.__getSynchronousGraphDescription(timeout)
         if graph is None:
             raise RuntimeError(
@@ -110,7 +102,7 @@ class Model(messaging.BufferedMessageObserver):
         for id, pvps in graph.nodeParams.items():
             for param, value in pvps.items():
                 s.nodes[id].params[param] = fromNPV(value)
-                print (param, value)
+                debug('%s = %s (%d)' % (param, str(value), value.which))
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():
@@ -128,22 +120,21 @@ class Model(messaging.BufferedMessageObserver):
                 #print
         return s
     
-    def set(self, state):
+    def set(self, state, timeout=3.0):
         self.clear()
         id_map = {}
         node_map = {}
         # first ensure all nodes are present
         for old_id, node in state.nodes.items():
-            id_map[old_id] = self.addSynchronous(node.type)
+            id_map[old_id] = self.addSynchronous(node.type, timeout)
             node_map[old_id] = node
             #print id_map[old_id], 'is new id for', old_id, node.type, node.params
         # then set all parameter values
         for old_id, node in state.nodes.items():
             id = id_map[old_id]
             for param in node.params.keys():
-                #print 'set parameter', id, param, '=', node.params[param]
-                self.setParameterSynchronous(id, param, toNPV(node.params[param]))
-                print (param, node.params[param])
+                debug('%d.%s = %s' % (id, param, node.params[param]))
+                self.setParameterSynchronous(id, param, toNPV(node.params[param]), timeout)
         # finally add links
         for old_id, node in state.nodes.items():
             # strictly speaking only one of these should be necessary, since
@@ -152,7 +143,7 @@ class Model(messaging.BufferedMessageObserver):
             for input in node.inarcs.keys():
                 (other, output) = node.inarcs[input]
                 if other != 0:
-                    self.addArcSynchronous(id_map[other], output, id, input)
+                    self.addArcSynchronous(id_map[other], output, id, input, timeout)
             #for output in node.outarcs.keys():
             #    (other, input) = node.outarcs[output]
             #    if other != 0:
@@ -164,7 +155,7 @@ class Model(messaging.BufferedMessageObserver):
 
 
     def addSynchronous(self, type, timeout=3.0):
-        print 'addSynchronous', type, '=', messaging.NodeType(type), timeout
+        debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))))
         self.node_added_condition.acquire()
         self.node_added = None
         self.send(messaging.AddNodeMessage(
@@ -173,7 +164,7 @@ class Model(messaging.BufferedMessageObserver):
         self.node_added_condition.wait(timeout)
         if self.node_added is None:
             self.node_added_condition.release()
-            raise RuntimeError('No reponse from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline, is it running?')
         r = self.node_added.nodeId
         self.node_added_condition.release()
         return r
@@ -187,7 +178,7 @@ class Model(messaging.BufferedMessageObserver):
         self.parameter_set_condition.wait(timeout)
         if self.parameter_set is None:
             self.parameter_set_condition.release()
-            raise RuntimeError('No reponse from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline, is it running?')
         self.parameter_set_condition.release()
         return None
     
@@ -203,7 +194,7 @@ class Model(messaging.BufferedMessageObserver):
         to = messaging.NodeInput()
         to.node = dst
         to.input = inp
-        print 'add arc:', fr, '->', to
+        debug('add arc: %s --> %s' % (fr, to))
         self.send(messaging.AddArcMessage(fr, to))
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:

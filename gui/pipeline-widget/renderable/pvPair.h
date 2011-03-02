@@ -1,9 +1,6 @@
 #ifndef __PV_PAIR_H__
 #define __PV_PAIR_H__
 
-#include <iostream>
-#include <sstream>
-
 #include <utility/string.h>
 #include <debug/debug.h>
 
@@ -41,7 +38,7 @@ class PVPair: public PVPairEditableBase{
               m_min_value_bbox(0, -3, 13, 10),
               m_param(boost::make_shared<Text>(n, param)),
               m_equals(boost::make_shared<Text>(n, "=")),
-              m_value(boost::make_shared<Text>(n, toStr(value))){
+              m_value(boost::make_shared<Text>(n, mkStr() << std::boolalpha << value)){
             updateBbox();
             m_sort_key = param;
         }
@@ -106,8 +103,8 @@ class PVPair: public PVPairEditableBase{
         static void onValueChanged(PVPair const& pvp, std::string const& s){
             std::istringstream is(s);
             value_T v;
-            is >> std::noskipws >> v;
-            debug() << "PVPair: Edit done:" << s << "=" << v;
+            is >> std::noskipws >> std::boolalpha >> v;
+            debug() << "PVPair: Edit done:" << s << "=" << std::boolalpha << v;
             pvp.m_node->paramValueChanged(*pvp.m_param, v);
         }
 
