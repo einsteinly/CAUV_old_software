@@ -30,13 +30,13 @@ class SonarInputNode: public InputNode{
 
             // registerInputID()
             
-            // three output:
+            // three output images, three output parameters:
             registerOutputID<image_ptr_t>("image (buffer)");
             registerOutputID<image_ptr_t>("image (synced)");
             registerOutputID<image_ptr_t>("data line");
-            registerOutputID<param_value_t>("bearing");
-            registerOutputID<param_value_t>("bearing range");
-            registerOutputID<param_value_t>("range");
+            registerOutputID<NodeParamValue>("bearing");
+            registerOutputID<NodeParamValue>("bearing range");
+            registerOutputID<NodeParamValue>("range");
         }
     
         virtual ~SonarInputNode(){
@@ -54,9 +54,9 @@ class SonarInputNode: public InputNode{
                 throw img_pipeline_error("SonarInputNode executed with no available data");
             
             r["data line"] = boost::make_shared<Image>(cv::Mat(m->line().data, true));
-            r["bearing"] = param_value_t(m->line().bearing);
-            r["bearing range"] = param_value_t(m->line().bearingRange);
-            r["range"] = param_value_t(m->line().range);
+            r["bearing"] = NodeParamValue(m->line().bearing);
+            r["bearing range"] = NodeParamValue(m->line().bearingRange);
+            r["range"] = NodeParamValue(m->line().range);
             
             float images_accumulated = m_accumulator.accumulateDataLine(m->line());
             

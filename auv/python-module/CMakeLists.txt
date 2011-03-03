@@ -11,6 +11,7 @@ include_directories (${PYTHON_INCLUDE_DIRS})
 
 add_library (cauvinterface SHARED  
     cauvinterfacemodule.cpp
+    emit_variants.cpp
     emit_containers.cpp
     emit_enums.cpp
     emit_messages.cpp
@@ -72,6 +73,7 @@ add_custom_command (
           ${SRCD}/emit_messages.cpp
           ${SRCD}/emit_observers.cpp
           ${SRCD}/emit_structs.cpp
+          ${SRCD}/emit_variants.cpp
    WORKING_DIRECTORY ${PYMSGD}
    COMMAND ./msggen.py -l python -o "${SRCD}/" ${PYMSGD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
@@ -80,6 +82,7 @@ add_custom_command (
            ${PYMSGD}/boostpy-emit_messages.cpp.template
            ${PYMSGD}/boostpy-emit_observers.cpp.template
            ${PYMSGD}/boostpy-emit_structs.cpp.template
+           ${PYMSGD}/boostpy-emit_variants.cpp.template
            ${PYMSGD}/msggenyacc.py
            ${PYMSGD}/msggenlex.py
            ${PYMSGD}/messages.msg

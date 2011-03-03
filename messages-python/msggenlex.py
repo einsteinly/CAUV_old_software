@@ -2,6 +2,7 @@ import ply.lex as lex
 
 reserved = {
     "struct" : "STRUCT",
+    "variant" : "VARIANT",
     "group" : "GROUP",
     "message" : "MSG",
     "list" : "LIST",

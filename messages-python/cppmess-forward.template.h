@@ -4,6 +4,7 @@
 
 // standard integral types (int32_t etc)
 \#include <boost/cstdint.hpp>
+\#include <boost/variant/variant_fwd.hpp>
 
 namespace cauv{
 
@@ -32,6 +33,10 @@ namespace $e.name
 #for $s in $structs
 struct $s.name;
 #end for
+
+// sorry, can't forward declare boost variants :(
+// (would need forward declarations of all types that could occur in the
+// variant, including STL types, which is not possible
 
 // ===============
 // Message Classes

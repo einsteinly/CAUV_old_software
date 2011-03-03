@@ -66,8 +66,6 @@ enum SchedulerPriority {
     priority_fastest
 };
 
-typedef boost::variant<int32_t, float, std::string, bool> param_value_t;
-
 typedef boost::shared_ptr<Node> node_ptr_t;
 typedef boost::weak_ptr<Node> node_wkptr_t;
 

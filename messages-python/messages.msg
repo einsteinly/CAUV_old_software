@@ -118,12 +118,12 @@ struct TimeStamp
     secs : int32;
     musecs : int32;
 }
-struct NodeParamValue
+variant NodeParamValue
 {
-    type : ParamType;
-    intValue : int32;
-    floatValue : float;
-    stringValue : string;
+    int32
+    float
+    string
+    bool
 }
 struct SonarDataLine
 {

@@ -11,8 +11,9 @@
 #include "../pwTypes.h"
 #include "draggable.h"
 
-// eww, can't forward declare enums, have to drag in definitions
-#include <generated/messages_fwd.h>
+// eww, can't forward declare enums (or boost variants of standard library
+// types...), have to drag in definitions
+#include <generated/messages.h>
 
 namespace cauv{
 
@@ -20,7 +21,6 @@ class NodeAddedMessage;
 class NodeParametersMessage;
 struct NodeOutput;
 struct NodeInput;
-struct NodeParamValue;
 
 namespace pw{
 

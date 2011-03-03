@@ -154,26 +154,27 @@ void Node::setOutputLinks(std::map<std::string, std::vector<NodeInput> > const& 
     refreshLayout();
 }
 
+// TODO: fix this to reflect the new variant-ness of NodeParamValue
 static boost::shared_ptr<PVPairEditableBase> makePVPair(
     Node *n, std::pair<std::string, NodeParamValue> const& p, bool editable){
-    switch((ParamType::e) p.second.type){
+    switch((ParamType::e) p.second.which()){
         case ParamType::Int32:
             return boost::make_shared<PVPair<int> >(
-                    n, p.first, p.second.intValue, editable
+                    n, p.first, boost::get<int32_t>(p.second), editable
                 );
         case ParamType::Float:
             return boost::make_shared<PVPair<float> >(
-                    n, p.first, p.second.floatValue, editable
+                    n, p.first, boost::get<float>(p.second), editable
                 );
         case ParamType::String:
             return boost::make_shared<PVPair<std::string> >(
-                    n, p.first, p.second.stringValue, editable
+                    n, p.first, boost::get<std::string>(p.second), editable
                 );
         default:
             error() << "unknown ParamType";
         case ParamType::Bool:
             return boost::make_shared<PVPair<bool> >(
-                    n, p.first, p.second.intValue, editable
+                    n, p.first, boost::get<bool>(p.second), editable
                 );
     }
 }
@@ -427,17 +428,17 @@ void Node::remove(renderable_ptr_t){
 namespace cauv{
 namespace pw{
 
+// TODO: can probably get rid of these specialisations now, since
+// NodeParamValue is a proper variant and we can just assign to it
 template<>
 void Node::paramValueChanged<int>(std::string const& p, int const& v){
     debug() << "Node::paramValueChanged<int>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv (ParamType::e(0),0,0,"");
+    NodeParamValue pv = v;
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
-    pv.type = ParamType::Int32;
-    pv.intValue = v;
     sp->value(pv);
     m_pw->send(sp);
 }
@@ -447,12 +448,10 @@ void Node::paramValueChanged<float>(std::string const& p, float const& v){
     debug() << "Node::paramValueChanged<float>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv (ParamType::e(0),0,0,"");
+    NodeParamValue pv = v;
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
-    pv.type = ParamType::Float;
-    pv.floatValue = v;
     sp->value(pv);
     m_pw->send(sp);
 }
@@ -462,12 +461,10 @@ void Node::paramValueChanged<std::string>(std::string const& p, std::string cons
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv (ParamType::e(0),0,0,"");
+    NodeParamValue pv = v;
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
-    pv.type = ParamType::String;
-    pv.stringValue = v;
     sp->value(pv);
     m_pw->send(sp);
 }
@@ -477,12 +474,10 @@ void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
     debug() << "Node::paramValueChanged<string>" << p << v;
     boost::shared_ptr<SetNodeParameterMessage> sp =
         boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv (ParamType::e(0),0,0,"");
+    NodeParamValue pv = v;
 
     sp->nodeId(m_node_id);
     sp->paramId(p);
-    pv.type = ParamType::Bool;
-    pv.intValue = v;
     sp->value(pv);
     m_pw->send(sp);
 }

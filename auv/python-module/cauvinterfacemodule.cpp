@@ -26,5 +26,6 @@ BOOST_PYTHON_MODULE(cauvinterface)
     emitMessages();
     emitObservers();
     emitContainers();
+    emitVariants();
 }
 
