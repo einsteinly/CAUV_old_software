@@ -1,26 +1,40 @@
 project (guicpp)
 
-option(CAUV_GAMEPAD_SUPPORT "True if the GUI should support game controllers" ON)
+option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
+option(CAUV_GUI_MAP "True if the GUI should have a map of the Earth. For some reason." ON)
 
-# required libraries:
-find_package (Qwt6 REQUIRED)
-find_package (OpenCV REQUIRED)
-find_package (Marble REQUIRED)
-
-# find gamepad library if its needed
-if (CAUV_GAMEPAD_SUPPORT)
-    find_package (OIS REQUIRED)
-    if (OIS_FOUND)
-        add_definitions(-DGAMEPAD_SUPPORT=1)
-    endif()
-endif()
+find_package (Qt4)
+find_package (Qwt6)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
-else()
-if (NOT Qwt6_FOUND)
+elseif (NOT Qwt6_FOUND)
     message(WARNING "QWT not found, not building gui")
 else()
+
+    # required libraries:
+    find_package (OpenCV REQUIRED)
+
+    # find gamepad library if it's needed
+    if (CAUV_GUI_GAMEPAD)
+        find_package (OIS)
+        if (OIS_FOUND)
+            add_definitions(-DGAMEPAD_SUPPORT=1)
+        else()
+            message(WARNING "OIS not found, building without gamepad support")
+        endif()
+    endif()
+
+    # find marble library if it's needed
+    if (CAUV_GUI_MAP)
+        find_package (Marble)
+        if (MARBLE_FOUND)
+            add_definitions(-DUSE_MARBLE=1)
+        else()
+            message(WARNING "Marble not found, building without map")
+        endif()
+    endif()
+
     add_subdirectory (qconsole2)
 
     # using both Qt slots and Boost signals so need no keywords
@@ -31,8 +45,6 @@ else()
     include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
     include_directories (./)
-    #link_directories (${Qwt6_Qt4_LIBRARY})
-    #link_directories (${OIS_LIBRARIES})
 
     set (
         GUICPP_SRCS
@@ -55,7 +67,7 @@ else()
 
     set (
         GUICPP_UIS
-        
+
         mainwindow.ui
         widgets/datastreamdisplays.ui
         widgets/motorcontrols.ui
@@ -68,7 +80,7 @@ else()
 
     set (
         GUICPP_H
-        
+
         gamepad/playstationinput.h
         gamepad/gamepadinput.h
         cauvgui.h
@@ -115,7 +127,7 @@ else()
         common
         model
         pipeline-widget
-	qconsole2
+        qconsole2
         ${QT_LIBRARIES}
         ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
@@ -126,7 +138,7 @@ else()
 
     add_custom_command(
         TARGET guicpp
-        
+
         POST_BUILD
         COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${guicpp_BINARY_DIR}/"
         COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${guicpp_BINARY_DIR}/"
@@ -134,5 +146,3 @@ else()
     )
 
 endif()
-endif()
-
