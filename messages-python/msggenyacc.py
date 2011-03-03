@@ -280,12 +280,12 @@ def p_lazy_field(p):
 
 
 def p_variant_type_list(p):
-    """variant_type_list :
-                 | variant_type_list type"""
-    if len(p) == 1:
-        p[0] = [ ]
+    """variant_type_list : type
+                         | variant_type_list ',' type"""
+    if len(p) == 2:
+        p[0] = [ p[1] ]
     else:
-        p[1].append(p[2])
+        p[1].append(p[3])
         p[0] = p[1]
 
 

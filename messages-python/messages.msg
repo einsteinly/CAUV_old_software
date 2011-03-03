@@ -120,10 +120,7 @@ struct TimeStamp
 }
 variant NodeParamValue
 {
-    int32
-    float
-    string
-    bool
+    int32, float, string, bool
 }
 struct SonarDataLine
 {

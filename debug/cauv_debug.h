@@ -6,6 +6,7 @@
 #include <sstream>
 #include <list>
 
+#include <boost/foreach.hpp>
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -74,6 +75,9 @@ class CauvNode;
 class SmartStreamBase : public boost::noncopyable
 {
     public:
+        typedef std::ostream stream_t;
+        typedef stream_t& (*manip_t)(stream_t&);
+        
         SmartStreamBase(std::ostream& stream,
                         BashColour::e col = BashColour::None,
                         bool print=true);
@@ -102,9 +106,8 @@ class SmartStreamBase : public boost::noncopyable
             std::stringstream s;
 
             // apply any manipulators first
-            std::list< std::ios_base& (*)(std::ios_base&) >::const_iterator i;
-            for(i = m_manipulators.begin(); i != m_manipulators.end(); i++)
-                s << *i;
+            BOOST_FOREACH (manip_t m, m_manipulators)
+                s << *m;
             m_manipulators.clear();
 
             s << a;
@@ -113,14 +116,14 @@ class SmartStreamBase : public boost::noncopyable
             m_stuffs.push_back(s.str());
         }
 
-        inline void _appendToManips(std::ios_base& (*a)(std::ios_base&))
+        inline void _appendToManips(manip_t a)
         {
             m_manipulators.push_back(a);
         }
 
         // stuff to print
         std::list< std::string > m_stuffs;
-        std::list< std::ios_base& (*)(std::ios_base&) > m_manipulators;
+        std::list< manip_t > m_manipulators;
 
         virtual void printPrefix(std::ostream&);
         // can't forward declare enums...
@@ -177,7 +180,7 @@ struct debug : public SmartStreamBase
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    debug& operator<<(std::ios_base& (*manip)(std::ios_base&));
+    debug& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;
@@ -220,7 +223,7 @@ struct error : public SmartStreamBase
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    error& operator<<(std::ios_base& (*manip)(std::ios_base&));
+    error& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;
@@ -240,7 +243,7 @@ struct warning : public SmartStreamBase
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    warning& operator<<(std::ios_base& (*manip)(std::ios_base&));
+    warning& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;
@@ -260,7 +263,11 @@ struct info : public SmartStreamBase
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    info& operator<<(std::ios_base& (*manip)(std::ios_base&));
+    info& operator<< (manip_t manip)
+    {
+        _appendToManips(manip);
+        return *this;
+    }
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;

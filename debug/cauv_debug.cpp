@@ -267,7 +267,7 @@ debug::~debug()
 
 /* must handle manipulators (e.g. endl) separately:
  */
-debug& debug::operator<<(std::ios_base& (*manip)(std::ios_base&))
+debug& debug::operator<<(manip_t manip)
 {
     if(settings().debug_level >= m_level)
     {
@@ -299,7 +299,7 @@ error::~error()
 {
 }
 
-error& error::operator<<(std::ios_base& (*manip)(std::ios_base&))
+error& error::operator<<(manip_t manip)
 {
     _appendToManips(manip);
     return *this;
@@ -325,7 +325,7 @@ warning::~warning()
 {
 }
 
-warning& warning::operator<<(std::ios_base& (*manip)(std::ios_base&))
+warning& warning::operator<<(manip_t manip)
 {
     _appendToManips(manip);
     return *this;
@@ -348,12 +348,6 @@ info::info() : SmartStreamBase(std::cout)
 
 info::~info()
 {
-}
-
-info& info::operator<<(std::ios_base& (*manip)(std::ios_base&))
-{
-    _appendToManips(manip);
-    return *this;
 }
 
 void info::printPrefix(std::ostream&)
