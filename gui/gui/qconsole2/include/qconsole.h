@@ -61,7 +61,7 @@ public:
     void setCompletionColor(QColor c) {completionColor = c;};
     void setFont(QFont f) {setCurrentFont(f);};
 
-private:
+protected:
     // Redefined virtual methods
     void contentsMouseReleaseEvent(QMouseEvent *e);
     void contentsMousePressEvent(QMouseEvent *e);
@@ -81,8 +81,6 @@ private:
     //displays redirected stdout/stderr
     void stdReceived(QTextIStream *s);
 
-//protected attributes
-protected:
     //colors
     QColor cmdColor, errColor, outColor, completionColor;
     // Old cursor position
@@ -116,7 +114,7 @@ protected:
     virtual QStringList autocompleteCommand(QString cmd);
 
 // Redefined virtual slots
-private Q_SLOTS:
+protected Q_SLOTS:
     //Correctly handle the cursor when moved
     void moveCursor(CursorAction action, bool select);
     //Reimplemented method

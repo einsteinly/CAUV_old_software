@@ -1,19 +1,35 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include <boost/unordered_map.hpp>
+
 #include <QDockWidget>
 
+#include <model/auv_model.h>
+
 #include "cauvinterfaceelement.h"
+#include "qconsole2/include/qconsole.h"
 
 namespace Ui {
     class Console;
 }
 
-class QConsole;
-
 namespace cauv {
 
-    class AUV;
+    class CauvConsole : public QConsole {
+        Q_OBJECT
+    public:
+        CauvConsole(const char * name, QWidget * parent = NULL);
+
+        void execCommand(QString command, QString response, bool writeCommand, bool showPrompt);
+
+        bool isCommandComplete(QString command);
+
+    Q_SIGNALS:
+        void commandReady(QString);
+    };
+
+
 
     class Console : public QDockWidget, public CauvInterfaceElement {
         Q_OBJECT
@@ -23,7 +39,21 @@ namespace cauv {
 
     protected:
         virtual void initialise();
-        QConsole * m_console;
+        CauvConsole * m_console;
+
+        boost::unordered_map<int, QString > m_requests;
+
+        unsigned int m_counter;
+
+    protected Q_SLOTS:
+        void executeCommand(QString s);
+
+        void onResponse(int, QString response);
+        void onResponse(script_exec_response_t response);
+
+    Q_SIGNALS:
+        void responseReceived(int, QString);
+
 
     private:
         Ui::Console *ui;

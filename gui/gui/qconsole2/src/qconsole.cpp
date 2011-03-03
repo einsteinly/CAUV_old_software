@@ -47,8 +47,10 @@ void QConsole::reset()
 {
     clear();
     //set the style of the QTextEdit
-    setTextFormat(Qt::PlainText);
-    setCurrentFont(QFont("Courier"));
+    QFont font;
+    font.setFamily(QString::fromUtf8("Courier New"));
+    font.setPointSize(10);
+    setCurrentFont(font);
     //init attributes
     historyIndex = 0;
     history.clear();

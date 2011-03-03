@@ -33,6 +33,7 @@ CauvGui::CauvGui(QApplication * app) : CauvNode("CauvGui"), m_application(app), 
     joinGroup("control");
     joinGroup("image");
     joinGroup("pl_gui");
+    joinGroup("gui");
     joinGroup("debug");
     joinGroup("telemetry");
 

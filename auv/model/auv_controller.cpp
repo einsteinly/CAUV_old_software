@@ -101,8 +101,7 @@ void AUVController::sendDepthCalibrationMessage(depth_calibration_t params){
 }
 
 void AUVController::sendScriptMessage(script_exec_request_t script){
-    info() << "TODO: actually send script message";
-    //onMessageGenerated(boost::make_shared<ScriptMessage>());
+    onMessageGenerated(boost::make_shared<ScriptMessage>(script.script, 300, "GUI", script.seq));
 }
 
 bool AUVController::pushState(bool state) {
@@ -233,5 +232,6 @@ void AUVController::onPressureMessage(PressureMessage_ptr message){
 }
 
 void AUVController::onScriptResponseMessage(ScriptResponseMessage_ptr message){
+    std::cout << *message << std::endl;
     m_auv->scripts.scriptResponse->update(script_exec_response_t(message->response(), message->seq()));
 }
