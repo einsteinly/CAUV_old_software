@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
 
-    boost::shared_ptr<CauvGui> node = boost::make_shared<CauvGui>(app);
+    boost::shared_ptr<CauvGui> node = boost::make_shared<CauvGui>(&app);
 
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;
@@ -51,9 +51,14 @@ int main(int argc, char** argv)
 
     try {
         node->run();
+
+        info() << "Waiting for CauvNode to finish...";
+        while(node->isRunning()) sleep(10);
+        info() << "Finished. Bye";
     } catch (char const* ex){
         error() << ex;
     }
+
     return 0;
 }
 

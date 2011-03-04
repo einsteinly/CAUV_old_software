@@ -12,6 +12,10 @@ using namespace cauv;
 CauvInterfaceActions::CauvInterfaceActions(QObject *parent): QObject(parent){
 }
 
+CauvInterfaceElement::~CauvInterfaceElement(){
+    info() << "Screen Destroyed [" << name().toStdString() << "]";
+}
+
 void CauvInterfaceActions::send(boost::shared_ptr<Message> message){
     Q_EMIT messageGenerated(message);
 }
@@ -25,7 +29,7 @@ void CauvInterfaceActions::registerDockView(QDockWidget *dock, Qt::DockWidgetAre
 }
 
 
-CauvInterfaceElement::CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv, boost::shared_ptr<CauvNode> node) :
+CauvInterfaceElement::CauvInterfaceElement(const QString &name, boost::shared_ptr<AUV> &auv, boost::weak_ptr<CauvNode> node) :
         m_name(name), m_auv(auv), m_actions(boost::make_shared<CauvInterfaceActions>()), m_node(node)
 {
 }

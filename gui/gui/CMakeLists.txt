@@ -2,7 +2,7 @@ project (guicpp)
 
 option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
 option(CAUV_GUI_MAP "True if the GUI should have a map of the Earth. For some reason." ON)
-    
+
 find_package (Qt4)
 find_package (Qwt6)
 
@@ -24,7 +24,7 @@ else()
             message(WARNING "OIS not found, building without gamepad support")
         endif()
     endif()
-    
+
     # find marble library if it's needed
     if (CAUV_GUI_MAP)
         find_package (Marble)
@@ -35,14 +35,16 @@ else()
         endif()
     endif()
 
-    
+    add_subdirectory (qconsole2)
+
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
+    # QConsole2 required Qt3Suport
+    add_definitions(-DQT3_SUPPORT)
 
+    include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
     include_directories (./)
-    #link_directories (${Qwt6_Qt4_LIBRARY})
-    #link_directories (${OIS_LIBRARIES})
 
     set (
         GUICPP_SRCS
@@ -60,11 +62,12 @@ else()
         widgets/videoscreen.cpp
         widgets/logview.cpp
         widgets/datastreamrecorder.cpp
+        widgets/console.cpp
     )
 
     set (
         GUICPP_UIS
-        
+
         mainwindow.ui
         widgets/datastreamdisplays.ui
         widgets/motorcontrols.ui
@@ -72,11 +75,12 @@ else()
         widgets/logview.ui
         widgets/graphs.ui
         widgets/datastreamrecorder.ui
+        widgets/console.ui
     )
 
     set (
         GUICPP_H
-        
+
         gamepad/playstationinput.h
         gamepad/gamepadinput.h
         cauvgui.h
@@ -86,6 +90,7 @@ else()
         widgets/videoscreen.h
         widgets/logview.h
         widgets/datastreamrecorder.h
+        widgets/console.h
     )
 
     set (
@@ -122,6 +127,7 @@ else()
         common
         model
         pipeline-widget
+        qconsole2
         ${QT_LIBRARIES}
         ${Qwt6_Qt4_LIBRARY}
         ${OIS_LIBRARIES}
@@ -132,7 +138,7 @@ else()
 
     add_custom_command(
         TARGET guicpp
-        
+
         POST_BUILD
         COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${guicpp_BINARY_DIR}/"
         COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${guicpp_BINARY_DIR}/"

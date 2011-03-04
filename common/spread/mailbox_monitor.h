@@ -40,15 +40,20 @@ class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public
          * Whenever a new message is received, all observers are informed.
          */
         void startMonitoringAsync();
-        void stopMonitoringAsync();
 
         void startMonitoringSync();
+
+        void stopMonitoring();
+
+        bool isMonitoring();
 
     private:
         void doMonitoring();
 
         boost::thread m_thread;
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
+        volatile bool m_interupted;
+        volatile bool m_monitoring;
 };
 
 } // namespace cauv

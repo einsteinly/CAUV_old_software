@@ -20,14 +20,14 @@ using namespace cauv;
 
 CauvNode::~CauvNode()
 {
-	info() << "Shutting down node";
+    info() << "Shutting down node";
     debug::setCauvNode(NULL);
-    m_event_monitor->stopMonitoringAsync();
+    m_event_monitor->stopMonitoring();
 }
 
 void CauvNode::run(bool synchronous)
 {
-	cauv_global::print_module_header(m_name);
+    cauv_global::print_module_header(m_name);
 
     m_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
     if(!synchronous)
@@ -35,15 +35,21 @@ void CauvNode::run(bool synchronous)
 
     debug::setCauvNode(this);
 
+    m_running = true;
+
     onRun();
 
     if(synchronous)
         m_event_monitor->startMonitoringSync();
     else
-        while(!m_interrupted)
-        {
+        while(m_event_monitor->isMonitoring())
             msleep(500);
-        }
+
+    m_running = false;
+}
+
+bool CauvNode::isRunning(){
+    return m_running;
 }
 
 void CauvNode::onRun()
@@ -146,9 +152,9 @@ int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::pr
 
 
 void CauvNode::stopNode(){
-    m_interrupted = true;
-    if(m_event_monitor)
-        m_event_monitor->stopMonitoringAsync();
+    if(m_event_monitor) {
+        m_event_monitor->stopMonitoring();
+    }
 }
 
 CauvNode::CauvNode(const std::string& name)
@@ -156,7 +162,7 @@ CauvNode::CauvNode(const std::string& name)
       m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
       m_event_monitor(boost::make_shared<MailboxEventMonitor>(m_mailbox)),
       m_mailbox_monitor(boost::make_shared<MsgSrcMBMonitor>()),
-      m_interrupted(false)
+      m_running(false)
 {
     debug::setProgramName(name);
     m_event_monitor->addObserver(m_mailbox_monitor);

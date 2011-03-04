@@ -49,7 +49,8 @@ public:
     void sendDepthCalibrationMessage(depth_calibration_t params);
     void sendScriptMessage(script_exec_request_t script);
 
-    boost::signal<void(const boost::shared_ptr<Message>)> onMessageGenerated;
+    typedef boost::signal< void(const boost::shared_ptr<Message>) > message_signal_type;
+    message_signal_type onMessageGenerated;
 
 
 protected:
