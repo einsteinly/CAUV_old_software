@@ -24,6 +24,8 @@ MailboxEventMonitor::MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMai
 }
 
 void MailboxEventMonitor::startMonitoringAsync() {
+    m_monitoring = true;
+
     if(m_thread.get_id() == boost::thread::id()){
         m_thread = boost::thread( &MailboxEventMonitor::doMonitoring, this );
 
