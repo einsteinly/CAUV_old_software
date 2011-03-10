@@ -68,3 +68,5 @@ cauv_install ( common-shared )
 
 add_dependencies(common logo-headers messages-headers)
 add_dependencies(common-shared logo-headers messages-headers)
+
+add_subdirectory(supermess)
