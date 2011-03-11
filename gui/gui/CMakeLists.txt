@@ -43,7 +43,7 @@ else()
     add_definitions(-DQT3_SUPPORT)
 
     include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
-    include_directories (SYSTEM ${Qwt6_INCLUDE_DIR})
+    include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
     include_directories (./)
 
     set (
@@ -129,7 +129,7 @@ else()
         pipeline-widget
         qconsole2
         ${QT_LIBRARIES}
-        ${Qwt6_Qt4_LIBRARY}
+        ${Qwt6_LIBRARIES}
         ${OIS_LIBRARIES}
         ${OpenCV_LIBS}
         ${MARBLE_LIBRARIES}

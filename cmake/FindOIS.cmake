@@ -1,38 +1,30 @@
-# - Try to find OIS
-# Once done, this will define
+# - Try to find the OIS Library
+# Once done this will define
 #
 #  OIS_FOUND - system has OIS
-#  OIS_INCLUDE_DIRS - the OIS include directories
-#  OIS_LIBRARIES - link these to use OIS
+#  OIS_INCLUDE_DIR - the OIS include directory
+#  OIS_LIBRARIES 
+# Redistribution and use is allowed according to the terms of the BSD license.
+# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+#
 
-include(LibFindMacros)
+find_package(PkgConfig)
+if (PKG_CONFIG_FOUND)
+    pkg_check_modules(OIS_PKGCONF QUIET OIS) 
+endif()
 
-# Use pkg-config to get hints about paths
-libfind_pkg_check_modules(OIS_PKGCONF OIS) 
-
-# Include dir
 find_path(OIS_INCLUDE_DIR
   NAMES OIS.h
   PATHS ${OIS_PKGCONF_INCLUDE_DIRS}
 )
-#message ("OIS_PKGCONF_INCLUDE_DIRS=${OIS_PKGCONF_INCLUDE_DIRS}")
-#message ("OIS_INCLUDE_DIR=${OIS_INCLUDE_DIR}")
-
-# Finally the library itself
 find_library(OIS_LIBRARY
   NAMES OIS
   PATHS ${OIS_PKGCONF_LIBRARY_DIRS}
 )
 
-# Set the include dir variables and the libraries and let libfind_process do the rest.
-# NOTE: Singular variables for this library, plural for libraries this this lib depends on.
-set(OIS_PROCESS_INCLUDES
-    OIS_INCLUDE_DIR)
-set(OIS_PROCESS_LIBS
-    OIS_LIBRARY)
-libfind_process(OIS)
+include( FindPackageHandleStandardArgs )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( OIS DEFAULT_MSG OIS_INCLUDE_DIR OIS_LIBRARY )
+mark_as_advanced( OIS_INCLUDE_DIR OIS_LIBRARY )
 
-#message ("OIS_INCLUDE_DIRS=${OIS_INCLUDE_DIRS}")
-#message ("OIS_LIBRARIES=${OIS_LIBRARIES}")
-
-
+set(OIS_INCLUDE_DIRS ${OIS_INCLUDE_DIR})
+set(OIS_LIBRARIES ${OIS_LIBRARY})

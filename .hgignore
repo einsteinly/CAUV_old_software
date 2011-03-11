@@ -1,4 +1,5 @@
 syntax: glob
+tags
 *.swp
 *.o
 *.a
@@ -29,6 +30,7 @@ auv/python-module/emit_enums.cpp
 auv/python-module/emit_messages.cpp
 auv/python-module/emit_observers.cpp
 auv/python-module/emit_structs.cpp
+auv/python-module/emit_variants.cpp
 messages-python/parsetab.py
 auv/common/messages.cpp
 generated/*.h

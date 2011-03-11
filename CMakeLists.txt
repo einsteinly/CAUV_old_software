@@ -11,37 +11,13 @@ foreach(DIR "$ENV{HOME}/install"
     endif()
 endforeach(DIR)
 
+set (CMAKE_USER_MAKE_RULES_OVERRIDE_C ${CMAKE_SOURCE_DIR}/cmake/override_c.cmake)
+set (CMAKE_USER_MAKE_RULES_OVERRIDE_CXX ${CMAKE_SOURCE_DIR}/cmake/override_cxx.cmake)
 
 project (CAUV)
 
 # set paths for package search scripts
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CAUV_SOURCE_DIR}/cmake/")
-
-if (MSVC)
-    set (ALWAYS_FLAGS "/GX /Wall -D_USE_MATH_DEFINES")
-    set (OPTIMISATION_FLAGS "/O2")
-    set (CMAKE_CXX_FLAGS "${ALWAYS_FLAGS}")
-    #set (CMAKE_CXX_FLAGS_MINSIZEREL "-O1")
-elseif (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-    set (ALWAYS_FLAGS "-DPIC -fPIC -Wall -Wno-system-headers")
-    set (DEBUG_FLAGS "-g -Wextra -Wno-non-virtual-dtor")
-    set (OPTIMISATION_FLAGS "-O3 -ffast-math")
-    set (CMAKE_CXX_FLAGS "${ALWAYS_FLAGS} -fvisibility-inlines-hidden")
-    #set (CMAKE_CXX_FLAGS_MINSIZEREL "-Os -ffast-math")
-else ()
-    message (FATAL_ERROR "unknown compiler")
-endif ()
-
-set (CMAKE_C_FLAGS "${ALWAYS_FLAGS}")
-set (CMAKE_C_FLAGS_DEBUG "${DEBUG_FLAGS}")
-set (CMAKE_C_FLAGS_RELWITHDEBINFO "${DEBUG_FLAGS} ${OPTIMISATION_FLAGS}")
-set (CMAKE_C_FLAGS_RELEASE "${OPTIMISATION_FLAGS}")
-
-# CXX flags set per-compiler, above
-#set (CMAKE_CXX_FLAGS "${ALWAYS_FLAGS}")
-set (CMAKE_CXX_FLAGS_DEBUG "${DEBUG_FLAGS}")
-set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${DEBUG_FLAGS} ${OPTIMISATION_FLAGS}")
-set (CMAKE_CXX_FLAGS_RELEASE "${OPTIMISATION_FLAGS}")
 
 
 # Definitions (overridable) for Debug / Release
