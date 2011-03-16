@@ -33,7 +33,7 @@ public:
 };
 
 
-SceneModel::SceneModel( const osg::Vec2f& windDirection, float windSpeed, float depth, float reflectionDamping, float waveScale,
+OceanSceneModel::OceanSceneModel( const osg::Vec2f& windDirection, float windSpeed, float depth, float reflectionDamping, float waveScale,
                         bool  isChoppy, float choppyFactor, float crestFoamHeight, const std::string& textures):
 m_scene(new osg::Group)
 {
@@ -134,23 +134,23 @@ m_scene(new osg::Group)
 
 }
 
-osg::ref_ptr<osgOcean::OceanTechnique> SceneModel::getOceanSurface() {
+osg::ref_ptr<osgOcean::OceanTechnique> OceanSceneModel::getOceanSurface() {
     return m_oceanSurface;
 }
 
-osg::ref_ptr<osg::Group> SceneModel::getScene(){
+osg::ref_ptr<osg::Group> OceanSceneModel::getScene(){
     return m_scene;
 }
 
-osg::ref_ptr<osgOcean::OceanScene> SceneModel::getOceanScene() {
+osg::ref_ptr<osgOcean::OceanScene> OceanSceneModel::getOceanScene() {
     return m_oceanScene;
 }
 
-osg::ref_ptr<osg::LightSource> SceneModel::getSun(){
+osg::ref_ptr<osg::LightSource> OceanSceneModel::getSun(){
     return m_lightSource;
 }
 
-osg::ref_ptr<osg::TextureCubeMap> SceneModel::loadCubeMapTextures( const std::string& textures )
+osg::ref_ptr<osg::TextureCubeMap> OceanSceneModel::loadCubeMapTextures( const std::string& textures )
 {
     enum {POS_X, NEG_X, POS_Y, NEG_Y, POS_Z, NEG_Z};
 
@@ -181,13 +181,13 @@ osg::ref_ptr<osg::TextureCubeMap> SceneModel::loadCubeMapTextures( const std::st
     return cubeMap;
 }
 
-osg::Vec4f SceneModel::intColor(unsigned int r, unsigned int g, unsigned int b, unsigned int a )
+osg::Vec4f OceanSceneModel::intColor(unsigned int r, unsigned int g, unsigned int b, unsigned int a )
 {
     float div = 1.f/255.f;
     return osg::Vec4f( div*(float)r, div*(float)g, div*float(b), div*(float)a );
 }
 
-osgOcean::OceanScene::EventHandler* SceneModel::getOceanSceneEventHandler()
+osgOcean::OceanScene::EventHandler* OceanSceneModel::getOceanSceneEventHandler()
 {
     return m_oceanScene->getEventHandler();
 }

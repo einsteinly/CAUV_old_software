@@ -7,9 +7,11 @@
 #include <model/auv_model.h>
 #include <model/auv_controller.h>
 
+#include <osg/Node>
 #include <osgViewer/Viewer>
-
 #include <osgGA/TrackballManipulator>
+
+#include "validators.h"
 
 using namespace cauv;
 
@@ -43,6 +45,7 @@ void Simulator::addOptions(boost::program_options::options_description& desc,
             ("windDirection", po::value<osg::Vec2f>(), "Wind direction <X> <Y>.")
             ("windSpeed", po::value<float>()->default_value(12.f), "Wind speed.")
             ("depth", po::value<float>()->default_value(10000.f), "Depth.")
+            ("oceanSurfaceHeight", po::value<float>()->default_value(0), "The height of the ocean surface.")
             ("isChoppy", po::value<bool>()->default_value(true), "Are the waves choppy.")
             ("choppyFactor", po::value<float>()->default_value(2.5f), "How choppy the waves are.")
             ("crestFoamHeight", po::value<float>()->default_value(2.2f), "How high the waves need to be before foam forms on the crest.")
@@ -60,12 +63,16 @@ void Simulator::launchViewer(osg::ref_ptr<osg::Node> root){
     osgViewer::Viewer viewer;
 
     osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-    tb->setHomePosition( osg::Vec3f(0.f,0.f,20.f), osg::Vec3f(0.f,20.f,20.f), osg::Vec3f(0,0,1) );
+    tb->setHomePosition( osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0.f,20.f,0.f), osg::Vec3f(0,0,1) );
     viewer.setCameraManipulator( tb );
 
     viewer.setSceneData( root.get() );
     viewer.setUpViewInWindow( 150,150,1024,768, 0 );
     viewer.getCamera()->setName("MainCamera");
+    //viewer.getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+
+    //camera->setProjectionMatrixAsPerspective(45.0, 1.0, 0.5, 1000);
+    //camera->setViewMatrix(osg::Matrix::lookAt(Vec3(0, 0, 200), Vec3(0, 0, 0), Vec3(0, 1, 0)));
     viewer.run();
     info() << "Viewer closed";
 }
@@ -96,12 +103,14 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
     float depth = vm["depth"].as<float>();
     float crestFoamHeight = vm["crestFoamHeight"].as<float>();
     float reflectionDamping = vm["reflectionDamping"].as<float>();
+    float oceanHeight = vm["oceanSurfaceHeight"].as<float>();
 
 
     // we've got enough information to build the world model now
     m_world_model = new WorldModel(windDirection, windSpeed, depth, reflectionDamping, waveScale, choppy, choppyFactor, crestFoamHeight);
     m_world_model->setSunPosition(sunPosition);
     m_world_model->setSunDiffuse(sunDiffuse);
+    m_world_model->setOceanSurfaceHeight(oceanHeight);
 
     // see if the user wants a window into the world...
     if(vm.count("viewer"))

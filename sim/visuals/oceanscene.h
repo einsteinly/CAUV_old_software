@@ -25,11 +25,11 @@ namespace cauv {
 
     class SkyDome;
 
-    class SceneModel : public osg::Referenced
+    class OceanSceneModel : public osg::Referenced
     {
 
     public:
-        SceneModel( const osg::Vec2f& windDirection = osg::Vec2f(1.0f,1.0f), float windSpeed = 12.f,
+        OceanSceneModel( const osg::Vec2f& windDirection = osg::Vec2f(1.0f,1.0f), float windSpeed = 12.f,
                     float depth = 10000.f, float reflectionDamping = 0.35f, float waveScale = 1e-8,
                     bool  isChoppy = true, float choppyFactor = -2.5f, float crestFoamHeight = 2.2f,
                     const std::string& textures = "sky_dusk");

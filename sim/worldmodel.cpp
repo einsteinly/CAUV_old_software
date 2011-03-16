@@ -9,16 +9,18 @@
 
 #include <osgOcean/FFTOceanSurface>
 
-#include "visuals/oceanscene.h"
-
 using namespace cauv;
 
 
 WorldModel::WorldModel(osg::Vec2f windDirection, float windSpeed, float depth, float reflectionDamping,
                        float scale, bool isChoppy, float choppyFactor, float foamHeight):
-    m_scene(new SceneModel(windDirection, windSpeed, depth, reflectionDamping, scale, isChoppy, choppyFactor, foamHeight))
+    m_scene(new OceanSceneModel(windDirection, windSpeed, depth, reflectionDamping, scale, isChoppy, choppyFactor, foamHeight))
 {
-    this->addChild(m_scene->getScene());
+    //this->addChild(m_scene->getScene());
+}
+
+osg::ref_ptr<OceanSceneModel> WorldModel::getOceanSceneModel(){
+    return m_scene;
 }
 
 void WorldModel::setSunPosition(osg::Vec3f pos){
@@ -52,5 +54,9 @@ void WorldModel::setChoppyFactor(float cf){
 void WorldModel::setWaveScale(float scale){
     osgOcean::FFTOceanSurface * surface = static_cast<osgOcean::FFTOceanSurface*> (m_scene->getOceanScene()->getOceanTechnique());
     surface->setWaveScaleFactor(scale, true);
+}
+
+void WorldModel::setOceanSurfaceHeight(float height){
+    m_scene->getOceanScene()->setOceanSurfaceHeight(height);
 }
 

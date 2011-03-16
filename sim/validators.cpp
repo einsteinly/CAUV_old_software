@@ -1,4 +1,3 @@
-
 #include "validators.h"
 
 #include <osg/Vec3f>

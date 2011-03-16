@@ -8,7 +8,7 @@ common/         - library used by c++ programs to talk to the messaging system:
 messages-python/ - python code to automatically generate code for the messaging
                    system (automatically invoked by the build system)
 gui/             - GUI code: c++ (Qt) GUI for configuring the image processing
-                  pipeline and a java (Qt Jambi) Graphical User Interface for
+                  pipeline and c++ (Qt) Graphical User Interface for
                   remote-controlling the AUV, viewing telemetry, etc.
 generated/      - generated headers that are shared between multiple targets
                   (mostly messaging system headers). add messages-shared or
@@ -24,6 +24,10 @@ pitzdir/        - directory containing the files of the issue tracker (pitz):
 
 django/         - code for the web interface of the issue tracker (pitz)
 
+sim/            - Simulation node, the aim is to provide indistinguishable
+                  output from the real hardware in order to test the rest of the 
+                  software in a virtual environment.
+                  
 Less important things:
 cmake/            - files for the build system
 CMakeLists.txt    - top-level build file for the CMake build system
@@ -58,11 +62,16 @@ gui/gui-pipeline and gui/pipeline-widget:
     Qt 4.?, with OpenGL support
     libFTGL
 
+gui/gui:
+    Qt 4 (with Qt3 support library)
+    Qwt 6
+    OpenCV
+    Marble (optional) - for the map
+    OIS (optional) - for gamepad controls
+    
 gui/gui-java:
+    (This is somewhat obsolete now and should be deleted soon)
     Qt Jambi
-    ???
-
-
 
 ===========================================================
 == Getting Started on Windows (Still a work in progress) ==

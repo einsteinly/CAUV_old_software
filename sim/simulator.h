@@ -2,14 +2,10 @@
 #define SIMULATOR_H
 
 #include <boost/shared_ptr.hpp>
-
 #include <common/cauv_node.h>
-
 #include <osg/ref_ptr>
 
 #include "worldmodel.h"
-
-#include "validators.h"
 
 namespace boost {
     namespace program_options {
@@ -17,7 +13,12 @@ namespace boost {
         class positional_options_description;
         class variables_map;
     };
-};
+}
+
+
+namespace osg {
+    class Node;
+}
 
 
 namespace cauv {
@@ -40,7 +41,6 @@ namespace cauv {
 
         int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
         void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
-
 
         boost::shared_ptr<AUV> m_auv;
         boost::shared_ptr<AUVController> m_auv_controller;

@@ -92,7 +92,6 @@ endfunction()
 include_directories (${CAUV_SOURCE_DIR})
 
 
-option(CAUV_BUILD_SIM "True if the simulator should be configured and built" OFF)
 
 add_subdirectory (common)
 add_subdirectory (messages-python)
@@ -101,7 +100,5 @@ add_subdirectory (auv)
 add_subdirectory (gui)
 add_subdirectory (utility)
 add_subdirectory (debug)
-if (${CAUV_BUILD_SIM})
-    add_subdirectory (sim)
-endif()
+add_subdirectory (sim)
 
