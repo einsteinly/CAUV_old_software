@@ -1,45 +1,35 @@
-# - Try to find FTGL
-# Once done, this will define
+# - Try to find the FTGL Library
+# Once done this will define
 #
 #  FTGL_FOUND - system has FTGL
-#  FTGL_INCLUDE_DIRS - the FTGL include directories
-#  FTGL_LIBRARIES - link these to use FTGL
+#  FTGL_INCLUDE_DIR - the FTGL include directory
+#  FTGL_LIBRARIES 
+# Redistribution and use is allowed according to the terms of the BSD license.
+# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+#
 
-include(LibFindMacros)
+IF(NOT FREETYPE_FOUND)
+    find_package (Freetype REQUIRED)
+ENDIF()
 
-# Dependencies
-libfind_package (FTGL Freetype REQUIRED)
-#message ("FREETYPE_INCLUDE_DIRS=${FREETYPE_INCLUDE_DIRS}")
-#message ("FREETYPE_LIBRARIES=${FREETYPE_LIBRARIES}")
+find_package(PkgConfig)
+if (PKG_CONFIG_FOUND)
+    pkg_check_modules(FTGL_PKGCONF QUIET ftgl) 
+endif()
 
-# Use pkg-config to get hints about paths
-libfind_pkg_check_modules(FTGL_PKGCONF ftgl) 
-
-# Include dir
 find_path(FTGL_INCLUDE_DIR
   NAMES ftgl.h
   PATH_SUFFIXES FTGL
   PATHS ${FTGL_PKGCONF_INCLUDE_DIRS}
 )
-#message ("FTGL_PKGCONF_INCLUDE_DIRS=${FTGL_PKGCONF_INCLUDE_DIRS}")
-#message ("FTGL_INCLUDE_DIR=${FTGL_INCLUDE_DIR}")
-
-# Finally the library itself
 find_library(FTGL_LIBRARY
   NAMES ftgl
   PATHS ${FTGL_PKGCONF_LIBRARY_DIRS}
 )
-#message ("FTGL_PKGCONF_LIBRARY_DIRS=${FTGL_PKGCONF_LIBRARY_DIRS}")
-#message ("FTGL_LIBRARY=${FTGL_LIBRARY}")
 
-# Set the include dir variables and the libraries and let libfind_process do the rest.
-# NOTE: Singular variables for this library, plural for libraries this this lib depends on.
-set(FTGL_PROCESS_INCLUDES
-    FTGL_INCLUDE_DIR
-    FREETYPE_INCLUDE_DIRS)
-set(FTGL_PROCESS_LIBS
-    FTGL_LIBRARY
-    FREETYPE_LIBRARIES)
-libfind_process(FTGL)
+include( FindPackageHandleStandardArgs )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( FTGL DEFAULT_MSG FTGL_INCLUDE_DIR FTGL_LIBRARY )
+mark_as_advanced( FTGL_INCLUDE_DIR FTGL_LIBRARY )
 
-
+set(FTGL_INCLUDE_DIRS ${FTGL_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
+set(FTGL_LIBRARIES ${FTGL_LIBRARY} ${FREETYPE_LIBRARIES})

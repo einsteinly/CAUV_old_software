@@ -1,8 +1,8 @@
- # - Try to find the Marble Library
+# - Try to find the FTDI Library
 # Once done this will define
 #
-#  ftdi_FOUND - system has Marble
-#  ftdi_INCLUDE_DIR - the Marble include directory
+#  ftdi_FOUND - system has FTDI
+#  ftdi_INCLUDE_DIR - the FTDI include directory
 #  ftdi_LIBRARIES 
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
