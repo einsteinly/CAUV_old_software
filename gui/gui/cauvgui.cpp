@@ -1,5 +1,7 @@
 #include "cauvgui.h"
 
+#include <QTimer>
+
 #include <signal.h>
 
 #include <model/auv_controller.h>
@@ -26,6 +28,10 @@
 #   include <marble/MarbleWidget.h>
 #endif
 
+#ifdef GAMEPAD_SUPPORT
+#   include "gamepad.h"
+#endif
+
 
 using namespace cauv;
 
@@ -39,6 +45,8 @@ CauvGui::CauvGui(QApplication * app) : CauvNode("CauvGui"), m_application(app), 
     joinGroup("telemetry");
 
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+
+    this->setWindowState(Qt::WindowMaximized);
 }
 
 CauvGui::~CauvGui(){
@@ -114,6 +122,23 @@ void CauvGui::onRun()
     addCentralTab(mapWidget, map);
     mapWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
     mapWidget->show();
+#endif
+
+
+#ifdef GAMEPAD_SUPPORT
+    try {
+        info() << GamepadInput::listDevices();
+        CauvGamepad* gi;
+        gi = new CauvGamepad(0, m_auv);
+        gi->setParent(this);
+
+        // timer to read the game controller
+        QTimer *timer = new QTimer(this);
+        timer->connect(timer, SIGNAL(timeout()), gi, SLOT(processEvents()));
+        timer->start(200);
+    } catch (char const* ex){
+        error() << ex;
+    }
 #endif
 
     show();

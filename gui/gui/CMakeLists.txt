@@ -53,6 +53,7 @@ else()
         cauvgui.cpp
         datastreamdragging.cpp
         cauvinterfaceelement.cpp
+        gamepad.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
         widgets/datastreamdisplays.cpp
@@ -85,6 +86,7 @@ else()
         gamepad/gamepadinput.h
         cauvgui.h
         cauvinterfaceelement.h
+        gamepad.h
         widgets/datastreamdisplays.h
         widgets/motorcontrols.h
         widgets/videoscreen.h

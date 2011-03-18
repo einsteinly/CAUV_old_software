@@ -80,58 +80,58 @@ InputManager * GamepadInput::getInputSystem() {
 }
 
 bool GamepadInput::buttonPressed( const JoyStickEvent &arg, int button ) {
-        std::cout << std::endl << arg.device->vendor() << ". Button Pressed # " << button;
-        return true;
+    std::cout << std::endl << arg.device->vendor() << ". Button Pressed # " << button;
+    return true;
 }
 bool GamepadInput::buttonReleased( const JoyStickEvent &arg, int button ) {
-        std::cout << std::endl << arg.device->vendor() << ". Button Released # " << button;
-        return true;
+    std::cout << std::endl << arg.device->vendor() << ". Button Released # " << button;
+    return true;
 }
 bool GamepadInput::axisMoved( const JoyStickEvent &arg, int axis ) 
 {
-        //Provide a little dead zone
-        if( arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )
-                std::cout << std::endl << arg.device->vendor() << ". Axis # " << axis << " Value: " << arg.state.mAxes[axis].abs;
-        return true;
+    //Provide a little dead zone
+    if( arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )
+        std::cout << std::endl << arg.device->vendor() << ". Axis # " << axis << " Value: " << arg.state.mAxes[axis].abs;
+    return true;
 }
 bool GamepadInput::povMoved( const JoyStickEvent &arg, int pov ) 
 {
-        std::cout << std::endl << arg.device->vendor() << ". POV" << pov << " ";
+    std::cout << std::endl << arg.device->vendor() << ". POV" << pov << " ";
 
-        if( arg.state.mPOV[pov].direction & Pov::North ) //Going up
-                std::cout <<  arg.state.mPOV[pov].direction << "North";
+    if( arg.state.mPOV[pov].direction & Pov::North ) //Going up
+        std::cout <<  arg.state.mPOV[pov].direction << "North";
 
-        else if( arg.state.mPOV[pov].direction & Pov::South ) //Going down
-                std::cout << arg.state.mPOV[pov].direction << "South";
+    else if( arg.state.mPOV[pov].direction & Pov::South ) //Going down
+        std::cout << arg.state.mPOV[pov].direction << "South";
 
-        if( arg.state.mPOV[pov].direction & Pov::East ) //Going right
-                std::cout <<  arg.state.mPOV[pov].direction << "East";
+    if( arg.state.mPOV[pov].direction & Pov::East ) //Going right
+        std::cout <<  arg.state.mPOV[pov].direction << "East";
 
-        else if( arg.state.mPOV[pov].direction & Pov::West ) //Going left
-                std::cout <<  arg.state.mPOV[pov].direction << "West";
+    else if( arg.state.mPOV[pov].direction & Pov::West ) //Going left
+        std::cout <<  arg.state.mPOV[pov].direction << "West";
 
-        if( arg.state.mPOV[pov].direction == Pov::Centered ) //stopped/centered out
-                std::cout <<  arg.state.mPOV[pov].direction << "Centered";
-        return true;
+    if( arg.state.mPOV[pov].direction == Pov::Centered ) //stopped/centered out
+        std::cout <<  arg.state.mPOV[pov].direction << "Centered";
+    return true;
 }
 
 bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index) 
 {
-        std::cout.precision(2);
-        std::cout.flags(std::ios::fixed | std::ios::right);
-        std::cout << std::endl << arg.device->vendor() << ". Orientation # " << index
-                << " X Value: " << arg.state.mVectors[index].x
-                << " Y Value: " << arg.state.mVectors[index].y
-                << " Z Value: " << arg.state.mVectors[index].z;
-        std::cout.precision();
-        std::cout.flags();
-        return true;
+    std::cout.precision(2);
+    std::cout.flags(std::ios::fixed | std::ios::right);
+    std::cout << std::endl << arg.device->vendor() << ". Orientation # " << index
+            << " X Value: " << arg.state.mVectors[index].x
+            << " Y Value: " << arg.state.mVectors[index].y
+            << " Z Value: " << arg.state.mVectors[index].z;
+    std::cout.precision();
+    std::cout.flags();
+    return true;
 }
 
 void GamepadInput::processEvents(){
     m_controller->capture();
     if( !m_controller->buffered() )
-        handleNonBuffered();
+         handleNonBuffered();
 }
 
 void GamepadInput::handleNonBuffered() const {
@@ -150,10 +150,10 @@ std::string GamepadInput::listDevices() {
     str << "\n Available devices: \n";
     DeviceList list = im->listFreeDevices();
     for( DeviceList::iterator i = list.begin(); i != list.end(); ++i ) {
-            if(i->first == OISJoyStick){
-                str << "\n\tDevice: " << "Gamepad" << " Vendor: " << i->second;
-            }
+        if(i->first == OISJoyStick){
+            str << "\n\tDevice: " << "Gamepad" << " Vendor: " << i->second;
         }
+    }
     str << "\n\n End of device list. \n\n";
     return str.str();
 }

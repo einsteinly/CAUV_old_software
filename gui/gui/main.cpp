@@ -30,25 +30,6 @@ int main(int argc, char** argv)
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;
 
-    #ifdef GAMEPAD_SUPPORT
-    try {
-        info() << GamepadInput::listDevices();
-        PlaystationInput* gi;
-        gi = new PlaystationInput(0);
-
-        gi->setParent(node.get());
-        gi->connect(gi, SIGNAL(X(bool)), gi, SLOT(printIt(bool)));
-        gi->connect(gi, SIGNAL(Joy_L_X(int)), gi, SLOT(printIt(int)));
-
-        // timer to read the game controller
-        QTimer *timer = new QTimer(node.get());
-        timer->connect(timer, SIGNAL(timeout()), gi, SLOT(processEvents()));
-        timer->start(200);
-    } catch (char const* ex){
-        error() << ex;
-    }
-    #endif
-
     try {
         node->run();
 

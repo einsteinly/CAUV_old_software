@@ -23,7 +23,7 @@ bool PlaystationInput::buttonReleased( const JoyStickEvent&, int button ) {
 
 bool PlaystationInput::axisMoved( const JoyStickEvent &arg, int axis )
 {
-    int value = 0;
+    float value = 0;
     if((arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )) {
         value = arg.state.mAxes[axis].abs;
     }
@@ -73,11 +73,11 @@ bool PlaystationInput::vector3Moved( const JoyStickEvent &, int )
 }
 
 
-void PlaystationInput::printIt(bool it) const{
+void PlaystationInput::printIt(bool it) const {
     std::cout << "Button value: " << it << std::endl;
 }
 
-void PlaystationInput::printIt(int it) const{
+void PlaystationInput::printIt(int it) const {
     std::cout << "Axis value: " << it << std::endl;
 }
 
