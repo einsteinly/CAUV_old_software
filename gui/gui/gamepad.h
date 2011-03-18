@@ -1,4 +1,3 @@
-#define GAMEPAD_SUPPRT 1
 #ifdef GAMEPAD_SUPPORT
 
 #ifndef GAMEPAD_H
