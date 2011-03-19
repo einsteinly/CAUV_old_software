@@ -11,9 +11,9 @@ AUV::AUV()
     motors[MotorID::HStern] = boost::make_shared<Motor > (MotorID::HStern, "H Stern");
     motors[MotorID::VStern] = boost::make_shared<Motor > (MotorID::VStern, "V Stern");
 
-    autopilots["bearing"] = boost::make_shared< Autopilot<float> >("Bearing AP", this->sensors.orientation_split->yaw, 0, 0, 360, "°");
+    autopilots["bearing"] = boost::make_shared< Autopilot<float> >("Bearing AP", this->sensors.orientation->yaw, 0, 0, 360, "°");
     autopilots["depth"] = boost::make_shared< Autopilot<float> >("Depth AP", this->sensors.depth, 0, 0, 10, "m");
-    autopilots["pitch"] = boost::make_shared< Autopilot<float> >("Pitch AP", this->sensors.orientation_split->pitch, 0, 0, 360, "°");
+    autopilots["pitch"] = boost::make_shared< Autopilot<float> >("Pitch AP", this->sensors.orientation->pitch, 0, 0, 360, "°");
 
     logs[DebugType::Info] = boost::make_shared< DataStream<std::string> >("Info");
     logs[DebugType::Debug] = boost::make_shared< DataStream<std::string> >("Debug");

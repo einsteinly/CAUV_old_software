@@ -122,6 +122,7 @@ namespace cauv {
     template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant& value);
     // also need some for out types as lexical cast doesn't know what to do
     template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& value);
+    template<> MotorDemand DataStreamTreeItem<MotorDemand>::qVariantToValue(QVariant& value);
     template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& value);
     
     

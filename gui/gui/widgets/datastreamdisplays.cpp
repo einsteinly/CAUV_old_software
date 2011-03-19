@@ -79,6 +79,11 @@ template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& ){
     return floatYPR();
 }
 
+template<> MotorDemand DataStreamTreeItem<MotorDemand>::qVariantToValue(QVariant& ){
+    // this shouldn't ever be used
+    throw new boost::bad_lexical_cast;
+}
+
 template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& ){
     // this shouldn't ever be used
     throw new boost::bad_lexical_cast;
@@ -155,6 +160,21 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
         (new DataStreamTreeItem<float>(i.second->thr, autopilot))->setText(0, "thr");
         (new DataStreamTreeItem<float>(i.second->scale, autopilot))->setText(0, "scale");
         (new DataStreamTreeItem<float>(i.second->actual, autopilot))->setText(0, "actual");
+
+        QTreeWidgetItem *demands = new QTreeWidgetItem(autopilot);
+        demands->setText(0, "demands");
+        demands->setFlags(demands->flags() ^ Qt::ItemIsSelectable);
+        (new DataStreamTreeItem<float>(i.second->demand->prop, demands))->setText(0, "prop");
+        (new DataStreamTreeItem<float>(i.second->demand->hbow, demands))->setText(0, "hbow");
+        (new DataStreamTreeItem<float>(i.second->demand->vbow, demands))->setText(0, "vbow");
+        (new DataStreamTreeItem<float>(i.second->demand->hstern, demands))->setText(0, "hstern");
+        (new DataStreamTreeItem<float>(i.second->demand->vstern, demands))->setText(0, "vstern");
+
+        (new DataStreamTreeItem<float>(i.second->mv, autopilot))->setText(0, "mv");
+        (new DataStreamTreeItem<float>(i.second->error, autopilot))->setText(0, "error");
+        (new DataStreamTreeItem<float>(i.second->derror, autopilot))->setText(0, "derror");
+        (new DataStreamTreeItem<float>(i.second->ierror, autopilot))->setText(0, "ierror");
+
     }
 
     //
@@ -192,10 +212,10 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     new DataStreamTreeItem<uint16_t>(auv->sensors.pressure_fore, sensors);
     new DataStreamTreeItem<uint16_t>(auv->sensors.pressure_aft, sensors);
     new DataStreamTreeItem<float>(auv->sensors.depth, sensors);
-    DataStreamTreeItem<floatYPR> * orientation = new DataStreamTreeItem<floatYPR>(auv->sensors.orientation, sensors);
-    new DataStreamTreeItem<float>(auv->sensors.orientation_split->yaw, orientation);
-    new DataStreamTreeItem<float>(auv->sensors.orientation_split->pitch, orientation);
-    new DataStreamTreeItem<float>(auv->sensors.orientation_split->roll, orientation);
+    DataStreamTreeItem<floatYPR> * orientation = new DataStreamTreeItem<floatYPR>(auv->sensors.orientation->combined, sensors);
+    new DataStreamTreeItem<float>(auv->sensors.orientation->yaw, orientation);
+    new DataStreamTreeItem<float>(auv->sensors.orientation->pitch, orientation);
+    new DataStreamTreeItem<float>(auv->sensors.orientation->roll, orientation);
 
     //
     // other
