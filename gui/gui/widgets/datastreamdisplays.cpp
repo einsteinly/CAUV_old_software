@@ -49,7 +49,9 @@ void DataStreamTreeItemBase::updateIcon(int cell, const Image &image){
 }
 
 void DataStreamTreeItemBase::updateValue(const QString value) {
-    this->setText(1, value);
+    // no update if editing
+    if(!(this->flags() & Qt::ItemIsEditable))
+        this->setText(1, value);
 }
 
 boost::shared_ptr<DataStreamBase> DataStreamTreeItemBase::getDataStreamBase(){

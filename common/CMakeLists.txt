@@ -30,7 +30,6 @@ target_link_libraries (
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
-    boost_serialization
     boost_date_time
     boost_iostreams
     boost_signals
@@ -58,7 +57,6 @@ target_link_libraries (
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
-    boost_serialization
     boost_date_time
     boost_iostreams
     boost_signals
