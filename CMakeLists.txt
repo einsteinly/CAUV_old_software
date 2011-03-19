@@ -67,7 +67,8 @@ endfunction()
 # include the root source dir in the search path for all subprojects
 include_directories (${CAUV_SOURCE_DIR})
 
-
+message ("Warning: forcing use of boost filesystem version 2")
+add_definitions (-DBOOST_FILESYSTEM_VERSION=2)
 
 add_subdirectory (common)
 add_subdirectory (messages-python)
