@@ -47,11 +47,11 @@ Build System:
     python 2.6 with Cheetah, pylexyacc
 
 auv:
-    librt
+    librt (this is include in libc6 most of the time)
     libftdi
-    spread (?static and shared?)
-    libssrcspread (?static and shared?)
-    boost-??? (default build of boost will do), boost 1.43 works
+    spread (at ./configure add the extra options --with-pic CFLAGS="-enable-shared -fPIC")
+    libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
+    boost-??? (default build of boost will do), boost 1.43 works (note default on ubuntu is 1.42, may cause problems)
     OpenCV (2.2 works)
     bjam
     boost-python
@@ -63,8 +63,8 @@ gui/gui-pipeline and gui/pipeline-widget:
     libFTGL
 
 gui/gui:
-    Qt 4 (with Qt3 support library)
-    Qwt 6
+    Qt 4 (with Qt3 support library, but NOT qt3 dev packages, as this sets all of the defaults to qt3, meaning qwt6 won't build)
+    Qwt 6 (Having earlier versions installed may cause a conflict when trying to make Qwt)
     OpenCV
     Marble (optional) - for the map
     OIS (optional) - for gamepad controls
