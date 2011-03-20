@@ -8,9 +8,9 @@
 
 namespace cauv{
 
-class AvahiClient{
+class AvahiPublisher{
     public:
-        AvahiClient(std::string const& name="CAUVNode",
+        AvahiPublisher(std::string const& name="CAUVNode",
                     std::string const& type="_cauv._udp",
                     unsigned port=16707)
             : m_threaded_poll(NULL),
@@ -20,6 +20,10 @@ class AvahiClient{
               m_type(NULL),
               m_port(0){
             open(name, type, port);
+        }
+
+        ~AvahiPublisher(){
+            close();
         }
 
         void open(std::string const& name, std::string const& type, unsigned port){
@@ -62,10 +66,6 @@ class AvahiClient{
             avahi_threaded_poll_unlock(m_threaded_poll);
         }*/
 
-        ~AvahiClient(){
-            close();
-        }
-
         void close(){
             if(m_threaded_poll)
                 avahi_threaded_poll_stop(m_threaded_poll);
@@ -86,13 +86,13 @@ class AvahiClient{
         }
 
     private:
-        static void callClientCallBack(::AvahiClient* c,
+        static void callClientCallBack(AvahiClient* c,
                                        AvahiClientState s,
                                        void *user_data){
-            ((AvahiClient*)user_data)->clientCallBack(c, s);
+            ((AvahiPublisher*)user_data)->clientCallBack(c, s);
         }
 
-        void clientCallBack(::AvahiClient* c, AvahiClientState s){
+        void clientCallBack(AvahiClient* c, AvahiClientState s){
             // use c rather than m_client: this may be called during creation
             // of m_client
             m_client = c;
@@ -124,7 +124,7 @@ class AvahiClient{
         static void callEntryGroupCallback(AvahiEntryGroup* g,
                                            AvahiEntryGroupState s,
                                            void *user_data){
-            ((AvahiClient*)user_data)->entryGroupCallBack(g, s);
+            ((AvahiPublisher*)user_data)->entryGroupCallBack(g, s);
         }
 
         void entryGroupCallBack(AvahiEntryGroup* g, AvahiEntryGroupState s){
@@ -189,7 +189,7 @@ class AvahiClient{
         
         AvahiThreadedPoll* m_threaded_poll;
         AvahiEntryGroup* m_entry_group;
-        ::AvahiClient* m_client;
+        AvahiClient* m_client;
         char* m_name;
         char* m_type;
         unsigned m_port;
@@ -199,7 +199,7 @@ class AvahiClient{
 
 
 int main(int argc, char** argv){
-    cauv::AvahiClient client;
+    cauv::AvahiPublisher pub("CAUVNode", "_cauv._udp", 16707);
     debug() << "setup complete, sleeping...";
     sleep(30);
 }
