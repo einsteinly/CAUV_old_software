@@ -50,6 +50,7 @@ namespace cauv {
         void onEnabledUpdate(bool enabled);
         void onTargetUpdate(float target);
         void onActualUpdate(float actual);
+        void targetEditingFinished();
 
     Q_SIGNALS:
         void enabledUpdated(bool enabled);

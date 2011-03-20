@@ -21,6 +21,7 @@ cauv_install ( control )
 target_link_libraries (
     control
     
+    boost_serialization
     common
     module
     cmt

@@ -45,6 +45,7 @@ AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *tar
     //outgoing events
     enabled->connect(enabled, SIGNAL(clicked(bool)), this, SLOT(updateState(bool)));
     target->connect(target, SIGNAL(valueChanged(double)), this, SLOT(updateTarget(double)));
+    target->connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
 }
 
 void AutopilotController::onEnabledUpdate(bool enabled){
@@ -55,7 +56,8 @@ void AutopilotController::onEnabledUpdate(bool enabled){
 
 void AutopilotController::onTargetUpdate(float target){
     m_target->blockSignals(true);
-    m_target->setValue(target);
+    if(!m_target->hasFocus())
+        m_target->setValue(target);
     m_target->blockSignals(false);
 }
 
@@ -63,6 +65,10 @@ void AutopilotController::onActualUpdate(float actual){
     m_actual->blockSignals(true);
     m_actual->setNum(actual);
     m_actual->blockSignals(false);
+}
+
+void AutopilotController::targetEditingFinished(){
+    m_target->clearFocus();
 }
 
 void AutopilotController::updateTarget(double value) {

@@ -82,7 +82,7 @@ template <class T, class S>
 
 template <class T, class S>
         void AUVController::sendAutopilotParamsMessage(boost::shared_ptr<AUV::Autopilot<S> > ap){
-            onMessageGenerated(boost::make_shared<T>(ap->kP->latest(), ap->kI->latest(), ap->kD->latest(), ap->scale->latest(), ap->aP->latest(), ap->aI->latest(), ap->aD->latest(), ap->thr->latest()));
+    onMessageGenerated(boost::make_shared<T>(ap->kP->latest(), ap->kI->latest(), ap->kD->latest(), ap->scale->latest(), ap->aP->latest(), ap->aI->latest(), ap->aD->latest(), ap->thr->latest()));
 }
 
 void AUVController::sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar){
@@ -93,7 +93,7 @@ void AUVController::sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar)
             sonar->range->latest(),
             sonar->radialRes->latest(),
             sonar->angularRes->latest()
-        ));
+            ));
 }
 
 void AUVController::sendDepthCalibrationMessage(depth_calibration_t params){
@@ -225,7 +225,7 @@ void AUVController::onSonarControlMessage(SonarControlMessage_ptr message) {
 
 void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
     m_auv->sensors.depth->update(message->depth());
-    m_auv->sensors.orientation->update(message->orientation());
+    m_auv->sensors.orientation->combined->update(message->orientation());
 
 }
 
@@ -237,4 +237,30 @@ void AUVController::onPressureMessage(PressureMessage_ptr message){
 void AUVController::onScriptResponseMessage(ScriptResponseMessage_ptr message){
     std::cout << *message << std::endl;
     m_auv->scripts.scriptResponse->update(script_exec_response_t(message->response(), message->seq()));
+}
+
+void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){
+
+    std::string controller;
+    switch(message->contoller()){
+    case Controller::Depth:
+        controller = "depth";
+        break;
+    case Controller::Bearing:
+        controller = "bearing";
+        break;
+    case Controller::Pitch:
+        controller = "pitch";
+        break;
+    default: return;
+    }
+
+    m_auv->autopilots[controller]->kP->update(message->kp());
+    m_auv->autopilots[controller]->kI->update(message->ki());
+    m_auv->autopilots[controller]->kD->update(message->kd());
+    m_auv->autopilots[controller]->demand->combined->update(message->demand());
+    m_auv->autopilots[controller]->error->update(message->error());
+    m_auv->autopilots[controller]->derror->update(message->derror());
+    m_auv->autopilots[controller]->ierror->update(message->ierror());
+    m_auv->autopilots[controller]->mv->update(message->mv());
 }
