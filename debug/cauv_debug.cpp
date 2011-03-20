@@ -57,7 +57,7 @@ SmartStreamBase::~SmartStreamBase()
     // TODO: possible nastiness when setCauvNode is called from a different
     // thread while this is going on
     // if there's a cauv_node set, and this isn't a recursive call, send debug messages
-    /*if(settings().cauv_node && !recursive()){
+    if(debugType() != DebugType::Debug  && settings().cauv_node && !recursive()){
         recursive() = true;
         std::ostringstream oss;
         oss << settings().program_name << ":";
@@ -66,7 +66,7 @@ SmartStreamBase::~SmartStreamBase()
             boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str())
         );
         recursive() = false;
-    }*/
+    }
 }
 
 void SmartStreamBase::setLevel(int debug_level)

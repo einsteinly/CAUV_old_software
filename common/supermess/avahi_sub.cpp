@@ -1,5 +1,6 @@
 #include <string>
-#include <vector>
+#include <map>
+#include <set>
 
 #include <avahi-core/core.h>
 #include <avahi-core/lookup.h>
@@ -18,9 +19,11 @@ class AvahiSubscriber{
         typedef std::set<address_t> address_list_t;
         
         AvahiSubscriber(std::string const& type = "_cauv._udp")
-            : m_threaded_poll(NULL),
+            : m_known_services(),
+              m_threaded_poll(NULL),
               m_service_browser(NULL),
-              m_server(NULL){
+              m_server(NULL),
+              m_type(type){
 
             open();
         }
@@ -54,8 +57,8 @@ class AvahiSubscriber{
 
             avahi_server_config_free(&config);
             
-            if(!server){
-                error() << "failed to create server:" << avahi_strerror(error);
+            if(!m_server){
+                error() << "failed to create server:" << avahi_strerror(err);
                 close();
                 return;
             }
@@ -67,7 +70,7 @@ class AvahiSubscriber{
                 m_type.c_str(),
                 NULL, // domain
                 AvahiLookupFlags(0), //flags
-                callBrowseCallBack,
+                browseCallBack,
                 this // userdata (void*)
             );
                 
@@ -94,6 +97,23 @@ class AvahiSubscriber{
         }
 
     private:
+        void addService(std::string const& type,
+                        std::string const& name,
+                        std::string const& domain){
+            if(type != m_type)
+                return;
+            debug() << "add matching service:" << name << domain;
+            if(m_known_services.find(name) == m_known_services.end())
+                m_known_services[name] = address_list_t();
+            else
+                debug() << "service already known";
+        }
+        void removeService(std::string const& type,
+                           std::string const& name,
+                           std::string const& domain){
+            warning() << "remove matching service TODO:" << name << domain;
+        }
+        
         static void browseCallBack(
             AvahiSServiceBrowser *b,
             AvahiIfIndex interface,
@@ -105,7 +125,7 @@ class AvahiSubscriber{
             AvahiLookupResultFlags flags, // Lookup flags 
             void* userdata)
         {
-            this_p = (AvahiSubscriber*)userdata;
+            AvahiSubscriber* this_p = (AvahiSubscriber*)userdata;
             debug() << "browseCallback:" << name << type << domain;
             switch(event){
                 case AVAHI_BROWSER_FAILURE:
@@ -113,14 +133,16 @@ class AvahiSubscriber{
                     this_p->close();
                     return;
                 case AVAHI_BROWSER_NEW:
+                    this_p->addService(type, name, domain);
                     debug() << "AVAHI_BROWSER_NEW";
                     if(!(avahi_s_service_resolver_new(
                              this_p->m_server, interface, protocol, name, type, domain,
-                             AVAHI_PROTO_UNSPEC, 0, callResolveCallback, this))){
+                             AVAHI_PROTO_UNSPEC, AvahiLookupFlags(0), resolveCallBack, this_p))){
                         error() << "failed to resolve service" << name << type << domain;
                     }
                 case AVAHI_BROWSER_REMOVE:
                     debug() << "AVAHI_BROWSER_REMOVE";
+                    this_p->removeService(type, name, domain);
                     break;
                 case AVAHI_BROWSER_ALL_FOR_NOW:
                     debug() << "AVAHI_BROWSER_ALL_FOR_NOW";
@@ -146,31 +168,39 @@ class AvahiSubscriber{
             AvahiLookupResultFlags flags,
             void* userdata)
         {
+            char str_addr[AVAHI_ADDRESS_STR_MAX] = {0};
+            char* records;
             debug() << "resolveCallBack:" << name << type << domain;        
-            this_p = (AvahiSubscriber*)userdata;
+            AvahiSubscriber* this_p = (AvahiSubscriber*)userdata;
             switch(event){
                 case AVAHI_RESOLVER_FAILURE:
                     debug() << "AVAHI_RESOLVER_FAILURE";
                     info() << "failed to resolve service:"
                            << name << type << domain
                            << avahi_strerror(avahi_server_errno(this_p->m_server));
-                    return;
+                    break;
                 case AVAHI_RESOLVER_FOUND:
                     debug() << "AVAHI_RESOLVER_FOUND";
-                    info() "resolved service:" << name << type << domain;
-
+                    avahi_address_snprint(str_addr, sizeof(str_addr), address);
+                    records = avahi_string_list_to_string(txt);
+                    info() << "resolved service:" << name << type << domain 
+                           << "to:" << address << "records:" << records;
+                    avahi_free(records);
             }
+            avahi_s_service_resolver_free(r);
         }
         
         std::map<std::string, address_list_t> m_known_services;
         AvahiThreadedPoll* m_threaded_poll;
         AvahiSServiceBrowser* m_service_browser;
         AvahiServer* m_server;
+        std::string m_type;
 };
 
 } // namespace cauv
 
 int main(int argc, char** argv){
-    
+    cauv::AvahiSubscriber s;
+    sleep(300);
 }
 
