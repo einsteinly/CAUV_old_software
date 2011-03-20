@@ -17,7 +17,7 @@ namespace boost {
 
 
 namespace osg {
-    class Node;
+    class Group;
 }
 
 
@@ -26,26 +26,31 @@ namespace cauv {
     class AUV;
     class AUVController;
 
-    class Simulator : public CauvNode
-    {
+    namespace sim {
 
-    public:
-        Simulator();
+        class Simulator : public CauvNode
+        {
 
-        osg::ref_ptr<cauv::WorldModel> getWorldModel();
+        public:
+            Simulator();
 
-    protected:
-        virtual void onRun();
+            osg::ref_ptr<cauv::sim::WorldModel> getWorldModel();
 
-        virtual void launchViewer(osg::ref_ptr<osg::Node> root);
+        protected:
+            virtual void onRun();
 
-        int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
-        void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
+            virtual void launchViewer(osg::ref_ptr<osg::Node> root);
 
-        boost::shared_ptr<AUV> m_auv;
-        boost::shared_ptr<AUVController> m_auv_controller;
-        osg::ref_ptr<WorldModel> m_world_model;
-    };
+            int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
+            void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
+
+            boost::shared_ptr<AUV> m_auv;
+            boost::shared_ptr<AUVController> m_auv_controller;
+            osg::ref_ptr<WorldModel> m_world_model;
+            osg::ref_ptr<osg::Group> m_root;
+        };
+
+    } // namespace sim
 
 } //namespace cauv
 

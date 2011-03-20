@@ -13,6 +13,7 @@
 #include "skydome.h"
 
 using namespace cauv;
+using namespace cauv::sim;
 
 class CameraTrackCallback: public osg::NodeCallback
 {

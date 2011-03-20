@@ -8,16 +8,22 @@
 #include <model/auv_controller.h>
 
 #include <osg/Node>
-#include <osgViewer/Viewer>
+#include <osgViewer/CompositeViewer>
 #include <osgGA/TrackballManipulator>
 
 #include "validators.h"
 
+#include "sensors/camera.h"
+
+#include "visuals/pipscreen.h"
+
 using namespace cauv;
+using namespace cauv::sim;
 
 Simulator::Simulator() : CauvNode("CauvSim"),
 m_auv(boost::make_shared<AUV>()),
-m_auv_controller(boost::make_shared<AUVController>(m_auv))
+m_auv_controller(boost::make_shared<AUVController>(m_auv)),
+m_root(new osg::Group())
 {
     joinGroup("control");
     joinGroup("telemetry");
@@ -60,7 +66,25 @@ void Simulator::addOptions(boost::program_options::options_description& desc,
 
 void Simulator::launchViewer(osg::ref_ptr<osg::Node> root){
     info() << "Viewer opened";
-    osgViewer::Viewer viewer;
+
+    osgViewer::CompositeViewer viewer;
+
+    osgViewer::View* view = new osgViewer::View;
+    view->setName("Main Camera");
+
+    view->setSceneData(root);
+
+    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
+    tb->setHomePosition( osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0.f,20.f,0.f), osg::Vec3f(0,0,1) );
+    view->setCameraManipulator( tb );
+
+    view->setUpViewInWindow( 150,150,1024,768, 0 );
+    view->getCamera()->setName("MainCamera");
+    view->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+
+    viewer.addView(view);
+
+    /*osgViewer::Viewer viewer;
 
     osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
     tb->setHomePosition( osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0.f,20.f,0.f), osg::Vec3f(0,0,1) );
@@ -69,10 +93,11 @@ void Simulator::launchViewer(osg::ref_ptr<osg::Node> root){
     viewer.setSceneData( root.get() );
     viewer.setUpViewInWindow( 150,150,1024,768, 0 );
     viewer.getCamera()->setName("MainCamera");
-    //viewer.getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+    viewer.getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+
 
     //camera->setProjectionMatrixAsPerspective(45.0, 1.0, 0.5, 1000);
-    //camera->setViewMatrix(osg::Matrix::lookAt(Vec3(0, 0, 200), Vec3(0, 0, 0), Vec3(0, 1, 0)));
+    //camera->setViewMatrix(osg::Matrix::lookAt(Vec3(0, 0, 200), Vec3(0, 0, 0), Vec3(0, 1, 0))); */
     viewer.run();
     info() << "Viewer closed";
 }
@@ -112,9 +137,44 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
     m_world_model->setSunDiffuse(sunDiffuse);
     m_world_model->setOceanSurfaceHeight(oceanHeight);
 
+    Camera * cam = new Camera();
+    m_root->addChild(cam);
+    PipScreen * screen = new PipScreen(cam->getTexture(), 200, 200);
+    cam->addChild(screen);
+
+
+    osg::ref_ptr<osg::Camera> orthoCamera = new osg::Camera;
+
+
+
+    // We don't want to apply perspective, just overlay using orthographic
+    orthoCamera->setProjectionMatrix(osg::Matrix::ortho2D(0, 200, 0, 200));
+
+    orthoCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    orthoCamera->setViewMatrix(osg::Matrix::identity());
+
+    // Choose a good spot on the screen to overlay the quad
+    float xPos = 1000 * 0.635f;
+    float yPos = 1000 * 0.625f;
+
+    orthoCamera->setViewport(xPos, yPos, 200, 200);
+
+    // Make sure to render this after rendering the scene
+    // in order to overlay the quad on top
+    orthoCamera->setRenderOrder(osg::Camera::POST_RENDER);
+
+    // Render only the quad
+    orthoCamera->addChild(screen);
+
+
+
+    m_root->addChild(orthoCamera);
+
+    m_root->addChild(m_world_model);
+
     // see if the user wants a window into the world...
     if(vm.count("viewer"))
-        boost::thread(boost::bind(&Simulator::launchViewer, this, m_world_model));
+        boost::thread(boost::bind(&Simulator::launchViewer, this, m_root));
 
     return CauvNode::useOptionsMap(vm, desc);
 }

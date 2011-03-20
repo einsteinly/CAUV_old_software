@@ -18,6 +18,7 @@
 #include "spheresegment.h"
 
 using namespace cauv;
+using namespace cauv::sim;
 
 SphereSegment::SphereSegment(void)
 {}

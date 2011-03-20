@@ -190,9 +190,6 @@ void AUVController::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_pt
 }
 
 void AUVController::onDebugMessage(DebugMessage_ptr message) {
-
-    std::cout << *message << std::endl;
-
     try {
         m_auv->logs.at(message->type())->update(message->msg());
     } catch (std::out_of_range){

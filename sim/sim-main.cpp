@@ -16,23 +16,24 @@
 int main(int argc, char** argv)
 {
 
-    cauv::Simulator sim;
+    osgDB::Registry::instance()->getDataFilePathList().push_back("resources/island");
+    osgDB::Registry::instance()->getDataFilePathList().push_back("sim/resources");
+
+    cauv::sim::Simulator sim;
 
     int ret = sim.parseOptions(argc, argv);
     if(ret != 0) return ret;
 
-    osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/openscenegraph/OpenSceneGraph-Data");
-    osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/osgOcean/osgOcean");
-    osgDB::Registry::instance()->getDataFilePathList().push_back("resources/island");
-    osgDB::Registry::instance()->getDataFilePathList().push_back("sim/resources");
-    const std::string filename = "cessnafire.osg";
-    osg::ref_ptr<osg::Node> ces = osgDB::readNodeFile(filename);
+    //osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/openscenegraph/OpenSceneGraph-Data");
+    //osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/osgOcean/osgOcean");
+    //const std::string filename = "cessnafire.osg";
+    //osg::ref_ptr<osg::Node> ces = osgDB::readNodeFile(filename);
 
 
 
-    osg::StateSet* cesState = ces->getOrCreateStateSet();
+    //osg::StateSet* cesState = ces->getOrCreateStateSet();
 
-    osg::ref_ptr<osgOcean::OceanScene> scene = sim.getWorldModel()->getOceanSceneModel()->getOceanScene();
+    //osg::ref_ptr<osgOcean::OceanScene> scene = sim.getWorldModel()->getOceanSceneModel()->getOceanScene();
     //ces->setNodeMask( 0 );
 
 
@@ -48,12 +49,12 @@ int main(int argc, char** argv)
 
     //cesState->setAttributeAndModes(someProgram, osg::StateAttribute::ON);
 
-    osg::PositionAttitudeTransform * pat = new osg::PositionAttitudeTransform();
-    pat->setPosition(osg::Vec3f(0,1.f,0));
-    pat->addChild(ces);
+    //osg::PositionAttitudeTransform * pat = new osg::PositionAttitudeTransform();
+    //pat->setPosition(osg::Vec3f(0,1.f,0));
+    //pat->addChild(ces);
 
-    scene->addChild(pat);
-    sim.getWorldModel()->addChild(sim.getWorldModel()->getOceanSceneModel()->getScene());
+    //scene->addChild(pat);
+    //sim.getWorldModel()->addChild(sim.getWorldModel()->getOceanSceneModel()->getScene());
 
     sim.run();
 
