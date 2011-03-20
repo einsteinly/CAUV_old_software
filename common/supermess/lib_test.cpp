@@ -1,8 +1,10 @@
 #include "shared_mem_test_lib.h"
 
+#include <debug/cauv_debug.h>
+
 
 int main(int argc, char** argv){
-    std::cerr << "test started..." << std::endl;
+    debug() << "test started...";
     try{
         boost::shared_ptr<SMemTest> p = getHandle();
         boost::shared_ptr<SMemTest> p2 = getHandle();
@@ -10,7 +12,7 @@ int main(int argc, char** argv){
         boost::shared_ptr<SMemTest> p4 = getHandle();
         assert(p == p2 && p == p3 && p == p4);
 
-        std::cerr << "sending messages..." << std::endl;
+        debug() << "sending messages...";
         for(int i = 1; i < argc; i++){
             // construct unnamed managed shared memory object of msg_t type
             // initialised from argv[i]
@@ -23,17 +25,17 @@ int main(int argc, char** argv){
         }
         
         if(argc == 1){
-            std::cerr << "waiting for messages..." << std::endl;
+            debug() << "waiting for messages...";
             // block receiving other messages (forever)
             p->receiveMessages();
         }
 
     }catch(std::exception& e){
-        std::cerr << "lib_test badness:" << std::endl;
-        std::cerr << e.what() << std::endl;
+        error() << "lib_test badness:"
+                << e.what();
     }catch(...){
-        std::cerr << "lib_test unknown badness" << std::endl;
+        error() << "lib_test unknown badness";
     }
-    std::cerr << "test complete!" << std::endl;
+    debug() << "test complete!";
 }
 

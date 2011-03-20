@@ -14,16 +14,16 @@
 #include <boost/interprocess/smart_ptr/weak_ptr.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/sync/interprocess_upgradable_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
 #include <boost/interprocess/exceptions.hpp>
 
 
-const static std::size_t Alloc_Size = 0x100000;
-const static void* Alloc_Addr = (void*)0x167020000000;
-const static char* Alloc_Name = "SMemTest";
-const static char* Persistent_Thing_Name = "PersistentThingInstance";
-const static char* Persistent_Thing_Handle_Name = "PersistentThingWkPtr";
+const static std::size_t Alloc_Size = 0x10000000;
+const void* const Alloc_Addr = (void*)0x167020000000;
+const char* const Alloc_Name = "SMemTest";
+const char* const Persistent_Thing_Name = "PersistentThingInstance";
+const char* const Persistent_Thing_Handle_Name = "PersistentThingWkPtr";
 
 
 namespace bip = boost::interprocess;
@@ -47,17 +47,20 @@ typedef bip::managed_shared_ptr<
         >::type msg_ptr;
 
 
-const static std::size_t Max_Q_Size = 0x10;
+const static std::size_t Max_Q_Size = 0x100;
 class MsgQ: public boost::noncopyable{
     public:
         MsgQ();
         void pushDiscard(msg_ptr m);
+        void pushWait(msg_ptr m);
         msg_ptr popWait();
+        void clear();
 
     private:
         bip::interprocess_mutex m_mutex;
         bip::interprocess_condition m_cond_empty;
-        std::size_t m_empty_idx;
+        bip::interprocess_condition m_cond_full;
+        volatile std::size_t m_empty_idx;
         msg_ptr m_queue[Max_Q_Size];
 };
 
@@ -72,11 +75,14 @@ class PersistentThing: public boost::noncopyable{
         int startReceivingMessages();
         void stopReceivingMessages(int connection_id);
 
+        void clearQueues();
+
         // block until there is a message available
         msg_ptr receive(int connection_id);
 
 
     private:
+        typedef bip::interprocess_upgradable_mutex mutex_t;
         typedef MsgQ* msgq_ptr; // because we're using fixed address memory
         typedef std::pair<int, msgq_ptr> connection_value_t;
         typedef bip::allocator<
@@ -88,10 +94,10 @@ class PersistentThing: public boost::noncopyable{
                          std::less<int>,
                          connection_alloc_t
                 > connections_map_t;
-        bip::interprocess_mutex m_open_connections_lock;
+        mutex_t m_open_connections_lock;
         connections_map_t m_open_connections;
 
-        bip::interprocess_mutex m_next_connection_id_lock;
+        mutex_t m_next_connection_id_lock;
         int m_next_connection_id;
 };
 

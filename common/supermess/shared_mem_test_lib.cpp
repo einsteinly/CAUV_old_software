@@ -1,8 +1,12 @@
 #include "shared_mem_test_lib.h"
 
+#include <debug/cauv_debug.h>
+
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/sync/sharable_lock.hpp>
 
 boost::shared_ptr<SMemTest> getHandle(){
     static boost::weak_ptr<SMemTest> handle;
@@ -22,18 +26,44 @@ MsgQ::MsgQ()
 }
 void MsgQ::pushDiscard(msg_ptr m){
     bip::scoped_lock<bip::interprocess_mutex> l(m_mutex);
+    if(m_empty_idx % Max_Q_Size == Max_Q_Size-1)
+        warning() << "queue full, messages may be discarded";
+    m_queue[m_empty_idx++ % Max_Q_Size] = m;
+    m_cond_empty.notify_one();
+}
+
+void MsgQ::pushWait(msg_ptr m){
+    bip::scoped_lock<bip::interprocess_mutex> l(m_mutex);
+    while(m_empty_idx % Max_Q_Size == Max_Q_Size-1)
+        m_cond_full.wait(l);
     m_queue[m_empty_idx++ % Max_Q_Size] = m;
     m_cond_empty.notify_one();
 }
 
 msg_ptr MsgQ::popWait(){
     bip::scoped_lock<bip::interprocess_mutex> l(m_mutex);
-    if(0 == m_empty_idx % Max_Q_Size)
+    while(0 == m_empty_idx % Max_Q_Size)
         m_cond_empty.wait(l);
-    return m_queue[(--m_empty_idx) % Max_Q_Size];
+    static int dropped = 0;
+    int dropped_more = 0;
+    if((dropped_more = m_empty_idx - (m_empty_idx % Max_Q_Size) - dropped)){
+        dropped += dropped_more;
+        warning() << "dropped" << dropped_more << "messages:"
+                  << dropped << "dropped in total";
+    }
+    msg_ptr r = m_queue[(--m_empty_idx) % Max_Q_Size];
+    m_queue[m_empty_idx % Max_Q_Size].reset();
+    m_cond_full.notify_one();
+    return r;
 }
 
-
+void MsgQ::clear(){
+    bip::scoped_lock<bip::interprocess_mutex> l(m_mutex);
+    m_empty_idx = 0;
+    // make sure destructors get called on anything left in queue
+    for(std::size_t i = 0; i < Max_Q_Size; i++)
+        m_queue[i].reset();
+}
 
 PersistentThing::PersistentThing(bip::fixed_managed_shared_memory const& segment)
     : m_open_connections_lock(),
@@ -43,17 +73,17 @@ PersistentThing::PersistentThing(bip::fixed_managed_shared_memory const& segment
       ),
       m_next_connection_id_lock(),
       m_next_connection_id(1){
-    std::cerr << "PersistentThing()" << std::endl;
+    debug() << "PersistentThing()";
 }
 
 PersistentThing::~PersistentThing(){
-    std::cerr << "~PersistentThing" << std::endl;
+    debug() << "~PersistentThing";
 }
 
 void PersistentThing::send(msg_ptr m){
-    bip::scoped_lock<bip::interprocess_mutex> l(m_open_connections_lock);        
+    bip::sharable_lock<mutex_t> l(m_open_connections_lock);        
     connections_map_t::iterator i;
-    std::cerr << "sending: " << *m << std::endl;
+    debug() << "sending:" << *m;
     for(i = m_open_connections.begin(); i != m_open_connections.end(); i++)
         // all this error handling is largely pointless... if something
         // connected to the shared memory dies abruptly then the managed shared
@@ -70,8 +100,8 @@ void PersistentThing::send(msg_ptr m){
 }
 
 int PersistentThing::startReceivingMessages(){
-    bip::scoped_lock<bip::interprocess_mutex> l(m_next_connection_id_lock);
-    bip::scoped_lock<bip::interprocess_mutex> m(m_open_connections_lock);
+    bip::scoped_lock<mutex_t> l(m_next_connection_id_lock);
+    bip::scoped_lock<mutex_t> m(m_open_connections_lock);
 
     int connection_id = m_next_connection_id;
     m_next_connection_id++;
@@ -84,15 +114,22 @@ int PersistentThing::startReceivingMessages(){
 }
 
 void PersistentThing::stopReceivingMessages(int connection_id){
-    bip::scoped_lock<bip::interprocess_mutex> m(m_open_connections_lock);
+    bip::scoped_lock<mutex_t> m(m_open_connections_lock);
     connections_map_t::iterator i = m_open_connections.find(connection_id);
     getHandle()->theMemory().destroy_ptr(i->second);
     m_open_connections.erase(connection_id);
 }
 
+void PersistentThing::clearQueues(){
+    bip::scoped_lock<mutex_t> m(m_open_connections_lock);
+    connections_map_t::iterator i;
+    for(i = m_open_connections.begin(); i != m_open_connections.end(); i++)
+        i->second->clear();
+}
+
 msg_ptr PersistentThing::receive(int connection_id){
     msg_ptr r;
-    bip::scoped_lock<bip::interprocess_mutex> l(m_open_connections_lock);            
+    bip::sharable_lock<mutex_t> l(m_open_connections_lock);            
     connections_map_t::const_iterator i = m_open_connections.find(connection_id);
     l.unlock();
     assert(i != m_open_connections.end());
@@ -101,14 +138,16 @@ msg_ptr PersistentThing::receive(int connection_id){
 }
 
 SMemTest::~SMemTest(){
-    std::cerr << "~SMemTest(): " <<  m_persistent_thing.use_count()-1
-              << " other PersistentThing users remain" << std::endl;
+    debug() << "~SMemTest(): " <<  m_persistent_thing.use_count()-1
+            << " other PersistentThing users remain";
+    warning() << "clearing message queues on program exit: trying to avoid crashiness";
+    m_persistent_thing->clearQueues();
 }
 
 SMemTest::SMemTest()
     : m_smo(),
       m_persistent_thing(){
-    std::cerr << "SMemTest construction..." << std::endl;
+    debug() << "SMemTest construction...";
     try{
         m_smo = bip::fixed_managed_shared_memory(
             bip::open_or_create,
@@ -128,22 +167,22 @@ SMemTest::SMemTest()
         m_persistent_thing = getThePersistentThing();
 
     }catch(bip::interprocess_exception& e){
-        std::cerr << "could not attach shared memory: " <<  e.what() << std::endl;
-        std::cerr << "cleaning up..." << std::endl;
+        error() << "could not attach shared memory: " <<  e.what() << std::endl
+                << "cleaning up...";
         boost::interprocess::shared_memory_object::remove(Alloc_Name);
         throw;
     }catch(...){
-        std::cerr << "could not attach shared memory" << std::endl;
-        std::cerr << "cleaning up..." << std::endl;
+        error() << "could not attach shared memory" << std::endl
+                << "cleaning up...";
         try{
             boost::interprocess::shared_memory_object::remove(Alloc_Name);
         }catch(...){
-            std::cerr << "cleanup failed" << std::endl;
+            error() << "cleanup failed";
         }
-        std::cerr << "cleanup complete" << std::endl;
+        info() << "cleanup complete";
         throw;
     }
-    std::cerr << "SMemTest construction complete" << std::endl;
+    debug() << "SMemTest construction complete";
 }
 
 // receive and processes messages for the rest of time
@@ -152,16 +191,16 @@ void SMemTest::receiveMessages(){
     try{
         while(true){
             msg_ptr m = m_persistent_thing->receive(connection_id);
-            std::cerr << "id:" << connection_id << ":" << *m << std::endl;
+            debug() << "id:" << connection_id << ":" << *m;
             if(*m == "stop")
                 break;
         }
     }catch(...){
-        std::cerr << "receiveMessages() ended by exception" << std::endl;
+        error() << "receiveMessages() ended by exception";
         m_persistent_thing->stopReceivingMessages(connection_id);
         throw;
     }
-    std::cerr << "receiveMessages() ended gracefully" << std::endl;
+    debug() << "receiveMessages() ended gracefully";
     m_persistent_thing->stopReceivingMessages(connection_id);            
 }
 
@@ -193,11 +232,11 @@ SMemTest::persistent_thing_ptr SMemTest::getThePersistentThing(){
         // must already exist
         r = findThePersistentThing();
         if(!r){
-            std::cerr << "could not find the PersistentThing" << std::endl;
+            error() << "could not find the PersistentThing";
             throw;
         }
     }catch(...){
-        std::cerr << "PersistentThing: fatal?" << std::endl;
+        error() << "PersistentThing: fatal?";
         throw;
     }
     /*
