@@ -21,6 +21,7 @@
 
 #include <utility/bash_cout.h>
 #include <generated/messages_fwd.h>
+#include <generated/messages_messages.h>
 #include <common/cauv_utils.h>
 #include <common/cauv_node.h>
 
@@ -39,7 +40,7 @@ SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool p
       // lock whilst printing, why do we need to stop multiple instances of
       // SmartStreamBase existing at the same time? (which is effectively what
       // this next line does)
-      m_lock(new lock_t(*m_mutex)),
+      //m_lock(new lock_t(*m_mutex)),
 #endif
       m_stream(stream),
       m_col(col),
@@ -57,16 +58,18 @@ SmartStreamBase::~SmartStreamBase()
     // TODO: possible nastiness when setCauvNode is called from a different
     // thread while this is going on
     // if there's a cauv_node set, and this isn't a recursive call, send debug messages
-    if(debugType() != DebugType::Debug  && settings().cauv_node && !recursive()){
+    /*if(m_print && (debugType() != int(DebugType::Debug)) && settings().cauv_node && !recursive()){
         recursive() = true;
         std::ostringstream oss;
         oss << settings().program_name << ":";
         printToStream(oss);
+        std::cout << "debug() sending debug message:" << oss.str() << std::endl;
         settings().cauv_node->send(
-            boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str())
+            boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str()),
+            Spread::service(SAFE_MESS)
         );
         recursive() = false;
-    }
+    }*/
 }
 
 void SmartStreamBase::setLevel(int debug_level)
