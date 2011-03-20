@@ -6,6 +6,7 @@
 #include <sstream>
 #include <list>
 
+#include <boost/foreach.hpp>
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -74,6 +75,9 @@ class CauvNode;
 class SmartStreamBase : public boost::noncopyable
 {
     public:
+        typedef std::ostream stream_t;
+        typedef stream_t& (*manip_t)(stream_t&);
+        
         SmartStreamBase(std::ostream& stream,
                         BashColour::e col = BashColour::None,
                         bool print=true);
@@ -93,8 +97,33 @@ class SmartStreamBase : public boost::noncopyable
             std::string logfile_name;
         };
 
+        // helper functions for derived classes
+        
+        template<typename T>
+        inline void _appendToStuffs(T const& a)
+        {
+            // convert to a string
+            std::stringstream s;
+
+            // apply any manipulators first
+            BOOST_FOREACH (manip_t m, m_manipulators)
+                s << *m;
+            m_manipulators.clear();
+
+            s << a;
+
+            // push this onto the list of things to print
+            m_stuffs.push_back(s.str());
+        }
+
+        inline void _appendToManips(manip_t a)
+        {
+            m_manipulators.push_back(a);
+        }
+
         // stuff to print
         std::list< std::string > m_stuffs;
+        std::list< manip_t > m_manipulators;
 
         virtual void printPrefix(std::ostream&);
         // can't forward declare enums...
@@ -106,7 +135,7 @@ class SmartStreamBase : public boost::noncopyable
     private:
         void printToStream(std::ostream& os);
 
-        // space is added between srings s1 s2 if:
+        // space is added between strings s1 s2 if:
         //   mayAddSpaceNext(s1) == true && mayAddSpaceNow(s2) == true
         static bool mayAddSpaceNext(std::string const& s);
         static bool mayAddSpaceNow(std::string const& s);
@@ -144,19 +173,14 @@ struct debug : public SmartStreamBase
     {
         if(settings().debug_level >= m_level)
         {
-            // convert to a string
-            std::stringstream s;
-            s << a;
-
-            // push this onto the list of things to print
-            m_stuffs.push_back(s.str());
+            _appendToStuffs<T>(a);
         }
         return *this;
     }
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    debug& operator<<(std::ostream& (*manip)(std::ostream&));
+    debug& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;
@@ -181,11 +205,6 @@ struct debug : boost::noncopyable
         return *this;
     }
 
-    debug const& operator<<(std::ostream& (*manip)(std::ostream&)) const
-    {
-        return *this;
-    }
-
     static int parseOptions(int, char**){ return 0; }
 };
 #endif
@@ -198,18 +217,13 @@ struct error : public SmartStreamBase
     template<typename T>
     error& operator<<(T const& a)
     {
-        // convert to a string
-        std::stringstream s;
-        s << a;
-
-        // push this onto the list of things to print
-        m_stuffs.push_back(s.str());
+        _appendToStuffs<T>(a);
         return *this;
     }
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    error& operator<<(std::ostream& (*manip)(std::ostream&));
+    error& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;
@@ -223,18 +237,13 @@ struct warning : public SmartStreamBase
     template<typename T>
     warning& operator<<(T const& a)
     {
-        // convert to a string
-        std::stringstream s;
-        s << a;
-
-        // push this onto the list of things to print
-        m_stuffs.push_back(s.str());
+        _appendToStuffs<T>(a);
         return *this;
     }
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    warning& operator<<(std::ostream& (*manip)(std::ostream&));
+    warning& operator<<(manip_t manip);
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;
@@ -248,18 +257,17 @@ struct info : public SmartStreamBase
     template<typename T>
     info& operator<<(T const& a)
     {
-        // convert to a string
-        std::stringstream s;
-        s << a;
-
-        // push this onto the list of things to print
-        m_stuffs.push_back(s.str());
+        _appendToStuffs<T>(a);
         return *this;
     }
 
     /* must handle manipulators (e.g. endl) separately:
      */
-    info& operator<<(std::ostream& (*manip)(std::ostream&));
+    info& operator<< (manip_t manip)
+    {
+        _appendToManips(manip);
+        return *this;
+    }
     
     virtual void printPrefix(std::ostream&);
     virtual int debugType() const;

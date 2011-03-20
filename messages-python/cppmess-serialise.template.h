@@ -3,6 +3,7 @@
 \#define __CAUV_SERIALMESS_H__
 
 \#include <generated/messages_fwd.h>
+\#include <generated/messages.h>
 
 \#include <utility/serialisation-types.h>
 
@@ -19,6 +20,10 @@ int32_t deserialise(const_svec_ptr, int32_t, $e.name::e&);
 #for $s in $structs
 void serialise(svec_ptr, $s.name const&);
 int32_t deserialise(const_svec_ptr, int32_t, $s.name&);
+#end for
+#for $v in $variants
+void serialise(svec_ptr, $v.name const&);
+int32_t deserialise(const_svec_ptr, int32_t, $v.name&);
 #end for
 // Message serialisation (deserialisation handled lazily in messages.cpp)
 #for $g in $groups

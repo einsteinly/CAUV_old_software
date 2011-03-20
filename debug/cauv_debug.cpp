@@ -33,7 +33,7 @@ boost::scoped_ptr<boost::mutex> SmartStreamBase::m_mutex(new boost::mutex);
 
 
 SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool print)
-    : m_stuffs(),
+    : m_stuffs(), m_manipulators(),
 #if defined(CAUV_DEBUG_MUTEXES)
       // TODO: this seems to be redundant locking? we already hold a per-stream
       // lock whilst printing, why do we need to stop multiple instances of
@@ -234,12 +234,16 @@ boost::mutex& _getMutex(std::ostream& s){
     typedef boost::shared_ptr<boost::mutex> mutex_ptr;
     typedef std::map<void*, mutex_ptr> map_t;
     static map_t mutex_map;
+    static boost::mutex mutex_map_write_mutex;
     map_t::iterator i = mutex_map.find(&s);
     if(i != mutex_map.end())
         return *i->second;
-    else
+    else{
+        mutex_map_write_mutex.lock();
         mutex_map[&s] = boost::make_shared<boost::mutex>();
-    return *mutex_map[&s];
+        mutex_map_write_mutex.unlock();
+    }
+    return *mutex_map.find(&s)->second;
 }
 boost::mutex& SmartStreamBase::getMutex(std::ostream& s){
     if(s == std::cout || s == std::clog)
@@ -263,16 +267,11 @@ debug::~debug()
 
 /* must handle manipulators (e.g. endl) separately:
  */
-debug& debug::operator<<(std::ostream& (*manip)(std::ostream&))
+debug& debug::operator<<(manip_t manip)
 {
     if(settings().debug_level >= m_level)
     {
-        // apply to a string
-        std::stringstream s;
-        s << manip;
-
-        // and push it onto the list of things to print
-        m_stuffs.push_back(s.str());
+        _appendToManips(manip);
     }
     return *this;
 }
@@ -300,14 +299,9 @@ error::~error()
 {
 }
 
-error& error::operator<<(std::ostream& (*manip)(std::ostream&))
+error& error::operator<<(manip_t manip)
 {
-    // apply to a string
-    std::stringstream s;
-    s << manip;
-
-    // and push it onto the list of things to print
-    m_stuffs.push_back(s.str());
+    _appendToManips(manip);
     return *this;
 }
 
@@ -331,14 +325,9 @@ warning::~warning()
 {
 }
 
-warning& warning::operator<<(std::ostream& (*manip)(std::ostream&))
+warning& warning::operator<<(manip_t manip)
 {
-    // apply to a string
-    std::stringstream s;
-    s << manip;
-
-    // and push it onto the list of things to print
-    m_stuffs.push_back(s.str());
+    _appendToManips(manip);
     return *this;
 }
 
@@ -359,17 +348,6 @@ info::info() : SmartStreamBase(std::cout)
 
 info::~info()
 {
-}
-
-info& info::operator<<(std::ostream& (*manip)(std::ostream&))
-{
-    // apply to a string
-    std::stringstream s;
-    s << manip;
-
-    // and push it onto the list of things to print
-    m_stuffs.push_back(s.str());
-    return *this;
 }
 
 void info::printPrefix(std::ostream&)

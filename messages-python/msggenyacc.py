@@ -32,6 +32,18 @@ class Struct(Expr):
         s = s + "}"
         return s
 
+class Variant(Expr):
+    def __init__(self, name, types):
+        self.name = name
+        self.types = types
+    def __repr__(self):
+        s = "variant %s\n" % self.name
+        s += "{\n"
+        for t in self.types:
+            s += "\n".join(map(lambda x: "    %s" % x, ("%s" % c).split("\n"))) + "\n"
+        s += "}"
+        return s
+
 class Enum(Expr):
     def __init__(self, name, type, values):
         self.name = name
@@ -97,6 +109,12 @@ class StructType(Expr):
     def __repr__(self):
         return "struct %s" % (self.struct.name)
 
+class VariantType(Expr):
+    def __init__(self, variant):
+        self.variant = variant
+    def __repr__(self):
+        return "variant %s" % (self.variant.name)
+
 class ListType(Expr):
     def __init__(self, valType):
         self.valType = valType
@@ -136,6 +154,7 @@ unknown_types = set()
 
 groups = []
 structs = []
+variants = []
 enums = []
 
 def p_list_empty(p):
@@ -143,6 +162,7 @@ def p_list_empty(p):
     p[0] = {
         "groups" : groups,
         "structs" : structs,
+        "variants" : variants,
         "enums" : enums,
         "base_types" : base_types,
         "unknown_types" : unknown_types
@@ -155,6 +175,11 @@ def p_list_group(p):
 def p_list_struct(p):
     "list : list struct"
     p[1]["structs"].append(p[2])
+    p[0] = p[1]
+
+def p_list_variant(p):
+    "list : list variant"
+    p[1]["variants"].append(p[2])
     p[0] = p[1]
 
 def p_list_enum(p):
@@ -178,6 +203,15 @@ def p_struct(p):
 
 def p_struct_contents(p):
     "struct_contents : '{' field_list '}'"
+    p[0] = p[2]
+
+
+def p_variant(p):
+    "variant : VARIANT STRING variant_contents"
+    p[0] = Variant(p[2], p[3])
+
+def p_variant_contents(p):
+    "variant_contents : '{' variant_type_list '}'"
     p[0] = p[2]
 
 
@@ -245,6 +279,16 @@ def p_lazy_field(p):
     p[0] = Field(p[2], p[4], True)
 
 
+def p_variant_type_list(p):
+    """variant_type_list : type
+                         | variant_type_list ',' type"""
+    if len(p) == 2:
+        p[0] = [ p[1] ]
+    else:
+        p[1].append(p[3])
+        p[0] = p[1]
+
+
 def p_type_base(p):
     "type : STRING"
     if p[1] in base_types:
@@ -253,6 +297,8 @@ def p_type_base(p):
         p[0] = EnumType(filter(lambda e: e.name == p[1], enums)[0])
     elif p[1] in map(lambda s: s.name, structs):
         p[0] = StructType(filter(lambda s: s.name == p[1], structs)[0])
+    elif p[1] in map(lambda v: v.name, variants):
+        p[0] = VariantType(filter(lambda v: v.name == p[1], variants)[0])
     else:
         unknown_types.add(p[1])
         p[0] = UnknownType(p[1]);

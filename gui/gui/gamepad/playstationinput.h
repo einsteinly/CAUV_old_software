@@ -48,10 +48,10 @@ Q_SIGNALS:
     void Up();
     void Down();
     void Centered();
-    void Joy_L_X(int value);
-    void Joy_L_Y(int value);
-    void Joy_R_X(int value);
-    void Joy_R_Y(int value);
+    void Joy_L_X(float value);
+    void Joy_L_Y(float value);
+    void Joy_R_X(float value);
+    void Joy_R_Y(float value);
 
 
 public Q_SLOTS:

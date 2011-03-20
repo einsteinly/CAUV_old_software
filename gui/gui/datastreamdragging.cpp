@@ -61,6 +61,10 @@ bool DataStreamDropListener::routeStream(boost::shared_ptr<DataStreamBase> s){
         info() << s->getName() << " - Image stream dropped";
         onStreamDropped(boost::static_pointer_cast<DataStream<Image> >(s));
     }
+    else if(dynamic_cast<DataStream<MotorDemand> *>(s.get())){
+        info() << s->getName() << " - MotorDemand stream dropped";
+        onStreamDropped(boost::static_pointer_cast<DataStream<MotorDemand> >(s));
+    }
     else return false;
 
     return true;
@@ -88,5 +92,9 @@ void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<uint16
 }
 
 void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<Image> > ){
+
+}
+
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<MotorDemand> > ){
 
 }

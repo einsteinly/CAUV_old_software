@@ -10,6 +10,7 @@
 \#include <map>
 \#include <boost/cstdint.hpp>
 \#include <boost/shared_ptr.hpp>
+\#include <boost/variant.hpp>
 \#ifndef foreach
 \#    include <boost/foreach.hpp>
 \#    define foreach BOOST_FOREACH
@@ -41,6 +42,19 @@ struct $s.name
 #*           *#);
     #end if 
 };
+
+#end for
+
+#for $v in $variants
+typedef boost::variant<
+    #for $i, $t in $enumerate($v.types)
+    #if $i < $len($v.types) -1
+        $toCPPType($t),
+    #else
+        $toCPPType($t)
+    #end if
+    #end for
+> $v.name;
 
 #end for
 

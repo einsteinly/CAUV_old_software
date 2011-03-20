@@ -147,6 +147,11 @@ public:
         thr(boost::make_shared< MutableDataStream<float> >("thr", this)),
         enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)),
         actual(actualValue),
+        mv(boost::make_shared< DataStream<float> >("mv", this)),
+        error(boost::make_shared< DataStream<float> >("error", this)),
+        derror(boost::make_shared< DataStream<float> >("derror", this)),
+        ierror(boost::make_shared< DataStream<float> >("ierror", this)),
+        demand(boost::make_shared<DataStreamSplitter<cauv::MotorDemand> >(boost::make_shared< DataStream<MotorDemand> >("demand", this))),
         m_max(max),
         m_min(min) {
             this->update(initialTarget);
@@ -163,6 +168,12 @@ public:
         boost::shared_ptr< MutableDataStream<float> > thr;
         boost::shared_ptr< MutableDataStream<bool> > enabled;
         boost::shared_ptr< DataStream<T> > actual;
+
+        boost::shared_ptr< DataStream<float> > mv;
+        boost::shared_ptr< DataStream<float> > error;
+        boost::shared_ptr< DataStream<float> > derror;
+        boost::shared_ptr< DataStream<float> > ierror;
+        boost::shared_ptr< DataStreamSplitter<cauv::MotorDemand> > demand;
 
 
         T getMax(){
@@ -255,15 +266,13 @@ public:
         boost::shared_ptr< DataStream<uint16_t> > pressure_aft;
         boost::shared_ptr<MutableDataStream<depth_calibration_t> > depth_calibration;
         boost::shared_ptr<DataStream<float> > depth;
-        boost::shared_ptr<DataStream<floatYPR> > orientation;
-        boost::shared_ptr<DataStreamSplitter<cauv::floatYPR> > orientation_split;
+        boost::shared_ptr<DataStreamSplitter<cauv::floatYPR> > orientation;
 
         Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
         pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
         depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
         depth(boost::make_shared<DataStream<float> >("Depth", "m")),
-        orientation(boost::make_shared<DataStream<floatYPR> >("Orientation", "°")),
-        orientation_split(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(orientation)) {
+        orientation(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(boost::make_shared<DataStream<floatYPR> >("Orientation", "°"))) {
         }
     } sensors;
 

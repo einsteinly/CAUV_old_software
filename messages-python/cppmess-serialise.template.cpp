@@ -38,6 +38,39 @@ int32_t cauv::deserialise(const_svec_ptr p, int32_t i, $s.name& v){
 
 #end for
 
+#for $v in $variants
+void cauv::serialise(svec_ptr p, $v.name const& v){
+    serialise(p, uint32_t(v.which()));
+    switch(v.which()){
+        default:
+        #for $i, $t in $enumerate($v.types)
+        case $i:
+            serialise(p, boost::get<$toCPPType($t)>(v));
+            break;
+        #end for
+    }
+}
+
+int32_t cauv::deserialise(const_svec_ptr p, int32_t i, $v.name& v){
+    int32_t b = i;
+    uint32_t discriminant;
+    b += deserialise(p, b, discriminant);
+    switch(discriminant){
+        default:
+        #for $i, $t in $enumerate($v.types)
+        case $i:
+        {
+            $toCPPType($t) t;
+            b += deserialise(p, b, t);
+            v = t;
+            break;
+        }
+        #end for
+    }
+    return b - i;
+}
+#end for
+
 template<typename T>
 static void serialiseLazyField(cauv::svec_ptr p, T const& v){
     uint32_t initial_size = p->size();

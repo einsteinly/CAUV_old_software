@@ -5,65 +5,77 @@
 import cauv.node as node
 import cauv.messaging as messaging
 import cauv.pipeline as pipeline
+from cauv.debug import debug, warning, error, info
 
 import time
 import pickle
 import optparse
 
-def savepl(spread, port, fname):
+def savepl(spread, port, fname, timeout=3.0):
     with open(fname, 'wb') as outf:
-        print 'Connecting...'
+        info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
-        print 'Initializing pipeline model...'        
+        info('Initializing pipeline model...')
         model = pipeline.Model(n)
-        #print 'Setting debug level to -3'
-        #n.send(messaging.DebugLevelMessage(-3), "debug")
 
-        print 'Getting pipeline state...'
-        saved = model.get(3.0)
+        info('Getting pipeline state...')
+        saved = model.get(timeout)
         
-        print 'Pickling...'
+        info('Pickling...')
         pickle.dump(saved, outf)
 
-        print 'Done.'
+        info('Done.')
 
 
-def loadpl(spread, port, fname):
+def loadpl(spread, port, fname, timeout=3.0):
     with open(fname, 'rb') as inf:
-        print 'Connecting...'        
+        info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
-        print 'Initializing pipeline model...'
+        info('Initializing pipeline model...')
         model = pipeline.Model(n)
-        #print 'Setting debug level to -3'
-        #n.send(messaging.DebugLevelMessage(-3), "debug")
 
-        print 'UnPickling...'
+        info('UnPickling...')
         saved = pickle.load(inf)
         
-        print 'Setting pipeline state...'
-        model.set(saved)
+        info('Setting pipeline state...')
+        model.set(saved, timeout)
 
-        print 'Done.'
+        info('Done.')
+
+def clearpl(spread, port):
+        info('Connecting...')
+        n = node.Node("py-plsave", spread, port)
+
+        info('Initializing pipeline model...')
+        model = pipeline.Model(n)
+
+        info('Clearing...')
+        model.clear()
+
+        info('Done.')
 
 
 if __name__ == '__main__':
-    print 'test:'
-    e = messaging.NodeType(3)
-    print e
-    print 'test done.'
-
-    parser = optparse.OptionParser()
-    parser.add_option("-f", "--file", dest="fname", default="pipeline.pickle")
+    parser = optparse.OptionParser(usage='usage: %prog [-f filename] (load|save|clear)')
+    parser.add_option("-f", "--file", dest="fname", default="pipeline.pipe")
     parser.add_option("-s", "--spread", dest="spread", default="localhost")
     parser.add_option("-p", "--port", dest="port", type='int', default=16707)
+    parser.add_option("-t", "--timeout", dest="timeout", type='float', default=3.0)
+
     (opts, args) = parser.parse_args()
+    port = opts.port
+    fname = opts.fname
+    timeout = opts.timeout
+
     if len(args) == 0 or args[0].lower() == 'save':
-        savepl(opts.spread, opts.port, opts.fname)
+        savepl(opts.spread, port, fname, timeout)
     elif len(args) == 1 and args[0].lower() == 'load':
-        loadpl(opts.spread, opts.port, opts.fname)
+        loadpl(opts.spread, port, fname, timeout)
+    elif len(args) == 1 and args[0].lower() == 'clear':
+        clearpl(opts.spread, port)
     else:
-        print 'usage: savepl [-f filename] (load|save)'
+         parser.print_help()
 
 

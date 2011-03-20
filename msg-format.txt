@@ -51,24 +51,22 @@ double : IEEE (native), 64-bit
 pair< type1, type2> : type1 serialised followed by type2 serialised
 vector< type >      : int32 N (number of elements) followed by list of 'type'
 map< type1, type2 > : int32 N (number of pairs) followed by pairs 'type1,type2'
-
-Structures
-Concatenated serialisation of member fields, no padding.
-
-!!!! Variants are TODO, but this is how they should be TODONE...
+struct  : Concatenated serialisation of member fields, no padding.
 variant : int32 discriminant (0->first field), followed by field containing
           whichever sort of element is specified by the discriminant
-e.g.
+
+
+Example of variant:
 
 variant{ char; vector<int32>; }
 
 +------------------+------+
-| descriminant = 0 | char |
+| discriminant = 0 | char |
 +------------------+------+
 |======= 4B =======|= 1B =|
 
 +------------------+-------------+---------+-------------+---------+-----+
-| descriminant = 1 | vector size | element |   element   | element | ... | 
+| discriminant = 1 | vector size | element |   element   | element | ... | 
 +------------------+-------------+---------+-------------+---------+-----+
 |======= 4B =======|====  4B ====|...
 

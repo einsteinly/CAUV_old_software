@@ -40,6 +40,8 @@ class HoughCirclesNode: public OutputNode{
             registerParamID<float>("param2", 1000);
             registerParamID<int>("minRadius", 10);
             registerParamID<int>("maxRadius", 20);
+            registerParamID<std::string>("name", "unnamed hough circles",
+                                         "name for detected set of circle");
         }
     
         virtual ~HoughCirclesNode(){
@@ -59,6 +61,7 @@ class HoughCirclesNode: public OutputNode{
             const float p2 = param<float>("scale");
             const int min_rad = param<int>("minRadius");
             const int max_rad = param<int>("maxRadius");
+            const std::string name = param<std::string>("name");
 
             cv::vector<cv::Vec3f> circles;
             try{
@@ -96,7 +99,7 @@ class HoughCirclesNode: public OutputNode{
                 c.radius = circles[i][2];
                 msg_circles.push_back(c);
             }
-            sendMessage(boost::make_shared<HoughCirclesMessage>(msg_circles));
+            sendMessage(boost::make_shared<CirclesMessage>(name, msg_circles));
             
             return r;
         }

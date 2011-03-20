@@ -1,50 +1,52 @@
-# - Try to find ftdi
-# Once done, this will define
+# - Try to find the FTDI Library
+# Once done this will define
 #
-#  ftdi_FOUND - system has ftdi
-#  ftdi_INCLUDE_DIRS - the ftdi include directories
-#  ftdi_LIBRARIES - link these to use ftdi
+#  ftdi_FOUND - system has FTDI
+#  ftdi_INCLUDE_DIR - the FTDI include directory
+#  ftdi_LIBRARIES 
+# Redistribution and use is allowed according to the terms of the BSD license.
+# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+#
 
-include(LibFindMacros)
+find_package(PkgConfig)
+if (PKG_CONFIG_FOUND)
+    pkg_check_modules(ftdi_PKGCONF QUIET libftdi) 
+endif()
 
-# Use pkg-config to get hints about paths
-libfind_pkg_check_modules(ftdi_PKGCONF ftdi) 
-
-# Include dir
 find_path(ftdi_INCLUDE_DIR
   NAMES ftdi.h
   PATHS ${ftdi_PKGCONF_INCLUDE_DIRS}
 )
-#message ("ftdi_PKGCONF_INCLUDE_DIRS=${ftdi_PKGCONF_INCLUDE_DIRS}")
-#message ("ftdi_INCLUDE_DIR=${ftdi_INCLUDE_DIR}")
-
-# Finally the library itself
 find_library(ftdi_LIBRARY
   NAMES ftdi
   PATHS ${ftdi_PKGCONF_LIBRARY_DIRS}
 )
+
+include( FindPackageHandleStandardArgs )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( ftdi DEFAULT_MSG ftdi_INCLUDE_DIR ftdi_LIBRARY )
+mark_as_advanced( ftdi_INCLUDE_DIR ftdi_LIBRARY )
+
 if (CAUV_USE_FTDIPP)
-    message ("-- Using ftdipp")
+    if (PKG_CONFIG_FOUND)
+        pkg_check_modules(ftdipp_PKGCONF QUIET libftdipp) 
+    endif()
+    find_path(ftdipp_INCLUDE_DIR
+      NAMES ftdi.hpp
+      PATHS ${ftdipp_PKGCONF_INCLUDE_DIRS}
+    )
     find_library(ftdipp_LIBRARY
       NAMES ftdipp
-      PATHS ${ftdi_PKGCONF_LIBRARY_DIRS}
+      PATHS ${ftdipp_PKGCONF_LIBRARY_DIRS}
     )
-endif()
-
-# Set the include dir variables and the libraries and let libfind_process do the rest.
-# NOTE: Singular variables for this library, plural for libraries this this lib depends on.
-set(ftdi_PROCESS_INCLUDES
-    ftdi_INCLUDE_DIR)
-if (CAUV_USE_FTDIPP)
-    set(ftdi_PROCESS_LIBS
-        ftdi_LIBRARY ftdipp_LIBRARY)
+    
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS( ftdipp DEFAULT_MSG ftdipp_INCLUDE_DIR ftdipp_LIBRARY )
+    mark_as_advanced( ftdipp_INCLUDE_DIR ftdipp_LIBRARY )
 else()
-    set(ftdi_PROCESS_LIBS
-        ftdi_LIBRARY)
+    unset(ftdipp_INCLUDE_DIR)
+    unset(ftdipp_LIBRARY)
 endif()
-libfind_process(ftdi)
 
-#message ("ftdi_INCLUDE_DIRS=${ftdi_INCLUDE_DIRS}")
-#message ("ftdi_LIBRARIES=${ftdi_LIBRARIES}")
+set(ftdi_INCLUDE_DIRS ${ftdi_INCLUDE_DIR} ${ftdipp_INCLUDE_DIR})
+set(ftdi_LIBRARIES ${ftdi_LIBRARY} ${ftdipp_LIBRARY})
 
 

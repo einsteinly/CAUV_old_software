@@ -22,6 +22,7 @@ target_link_libraries (
     controlv2
     cauv_debug
 
+    boost_serialization
     common
     module
     cmt

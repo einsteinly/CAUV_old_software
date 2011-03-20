@@ -34,6 +34,7 @@ namespace cauv {
 
     public:
         DataStreamSplitter<cauv::floatYPR>(boost::shared_ptr<DataStream<cauv::floatYPR> > stream) :
+                combined(stream),
                 yaw(boost::make_shared<DataStream<float> >("Yaw", stream->getUnits())),
                 pitch(boost::make_shared<DataStream<float> >("Pitch", stream->getUnits())),
                 roll(boost::make_shared<DataStream<float> >("Roll", stream->getUnits()))
@@ -50,6 +51,7 @@ namespace cauv {
             stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::floatYPR>, roll.get(), rollGetter, _1));
         }
 
+        boost::shared_ptr<DataStream<floatYPR> > combined;
         boost::shared_ptr<DataStream<float> > yaw;
         boost::shared_ptr<DataStream<float> > pitch;
         boost::shared_ptr<DataStream<float> > roll;
@@ -62,6 +64,7 @@ namespace cauv {
 
     public:
         DataStreamSplitter<cauv::floatXYZ>(boost::shared_ptr<DataStream<cauv::floatXYZ> > stream) :
+                combined(stream),
                 x(boost::make_shared<DataStream<float> >("X", stream->getUnits())),
                 y(boost::make_shared<DataStream<float> >("Y", stream->getUnits())),
                 z(boost::make_shared<DataStream<float> >("Z", stream->getUnits()))
@@ -78,11 +81,49 @@ namespace cauv {
             stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::floatXYZ>, z.get(), zGetter, _1));
         }
 
+        boost::shared_ptr<DataStream<floatXYZ> > combined;
         boost::shared_ptr<DataStream<float> > x;
         boost::shared_ptr<DataStream<float> > y;
         boost::shared_ptr<DataStream<float> > z;
     };
 
+    /* MotorDemand specialization */
+    template<>
+
+    class DataStreamSplitter<cauv::MotorDemand> {
+
+    public:
+        DataStreamSplitter<cauv::MotorDemand>(boost::shared_ptr<DataStream<cauv::MotorDemand> > stream) :
+                combined(stream),
+                prop(boost::make_shared<DataStream<float> >("prop", stream->getUnits(), stream.get())),
+                hbow(boost::make_shared<DataStream<float> >("hbow", stream->getUnits(), stream.get())),
+                vbow(boost::make_shared<DataStream<float> >("vbow", stream->getUnits(), stream.get())),
+                hstern(boost::make_shared<DataStream<float> >("hstern", stream->getUnits(), stream.get())),
+                vstern(boost::make_shared<DataStream<float> >("vstern", stream->getUnits(), stream.get()))
+        {
+            // getter function binds
+            boost::function<float(cauv::MotorDemand)> propGetter = boost::bind(&cauv::MotorDemand::prop, _1);
+            boost::function<float(cauv::MotorDemand)> hbowGetter = boost::bind(&cauv::MotorDemand::hbow, _1);
+            boost::function<float(cauv::MotorDemand)> vbowGetter = boost::bind(&cauv::MotorDemand::vbow, _1);
+            boost::function<float(cauv::MotorDemand)> hsternGetter = boost::bind(&cauv::MotorDemand::hstern, _1);
+            boost::function<float(cauv::MotorDemand)> vsternGetter = boost::bind(&cauv::MotorDemand::vstern, _1);
+
+            // connect up the slots
+            // the getter functions are passed to the new data streams and evaluated there
+            stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::MotorDemand>, prop.get(), propGetter, _1));
+            stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::MotorDemand>, hbow.get(), hbowGetter, _1));
+            stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::MotorDemand>, vbow.get(), vbowGetter, _1));
+            stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::MotorDemand>, hstern.get(), hsternGetter, _1));
+            stream->onUpdate.connect(boost::bind(&DataStream<float>::update<cauv::MotorDemand>, vstern.get(), vsternGetter, _1));
+        }
+
+        boost::shared_ptr<DataStream<MotorDemand> > combined;
+        boost::shared_ptr<DataStream<float> > prop;
+        boost::shared_ptr<DataStream<float> > hbow;
+        boost::shared_ptr<DataStream<float> > vbow;
+        boost::shared_ptr<DataStream<float> > hstern;
+        boost::shared_ptr<DataStream<float> > vstern;
+    };
 
     /** A DataStreamRecorder can be used to log a certain amount of input from a DataStream. Useful
     * for graphing the data

@@ -9,6 +9,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 #include <boost/utility.hpp>
+#include <boost/asio.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/iostreams/concepts.hpp>
@@ -86,13 +87,23 @@ class FTDIDevice : public boost::iostreams::device<boost::iostreams::bidirection
     protected:
         boost::shared_ptr<FTDIContext> m_ftdic;
         boost::shared_ptr<struct usb_device> m_device;
+};
 
-    private:
-        const int baudrate;
-        const ftdi_bits_type bits;
-        const ftdi_stopbits_type stopBits;
-        const ftdi_parity_type parity;
-        const int flowControl;
+class SerialDevice : public boost::iostreams::device<boost::iostreams::bidirectional>
+{
+    public:
+        SerialDevice(const std::string& path,
+                     boost::asio::serial_port_base::baud_rate const& baudrate,
+                     boost::asio::serial_port_base::character_size const& bits,
+                     boost::asio::serial_port_base::stop_bits const& stopBits,
+                     boost::asio::serial_port_base::parity const& parity,
+                     boost::asio::serial_port_base::flow_control const& flowControl);
+        
+        std::streamsize read(char* s, std::streamsize n);
+        std::streamsize write(const char* s, std::streamsize n);
+        
+    protected:
+        boost::shared_ptr<boost::asio::serial_port> m_port;
 };
 
 
@@ -271,13 +282,17 @@ class FTDIModule : public Module<FTDIDevice>
                    ftdi_stopbits_type const& stopBits,
                    ftdi_parity_type const& parity,
                    int flowControl);
+};
 
-    private:
-        const int baudrate;
-        const ftdi_bits_type bits;
-        const ftdi_stopbits_type stopBits;
-        const ftdi_parity_type parity;
-        const int flowControl;
+class SerialModule : public Module<SerialDevice>
+{
+    public:
+        SerialModule(const std::string& path,
+                     boost::asio::serial_port_base::baud_rate const& baudrate,
+                     boost::asio::serial_port_base::character_size const& bits,
+                     boost::asio::serial_port_base::stop_bits const& stopBits,
+                     boost::asio::serial_port_base::parity const& parity,
+                     boost::asio::serial_port_base::flow_control const& flowControl);
 };
 
 class FileModule : public Module<boost::iostreams::file>
@@ -297,15 +312,16 @@ class MCBModule : public FTDIModule
         }
 };
 #else
-class MCBModule : public FileModule
+class MCBModule : public SerialModule
 {
     public:
-        //MCBModule(int index)
-        //    : FileModule("/dev/ttyUSB" + to_string(index))
-        //{
-        //}
-        MCBModule(const std::string& filename)
-            : FileModule(filename)
+        MCBModule(const std::string& path)
+            : SerialModule(path,
+                           boost::asio::serial_port_base::baud_rate(38400),
+                           boost::asio::serial_port_base::character_size(8),
+                           boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one),
+                           boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none),
+                           boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none))
         {
         }
 };

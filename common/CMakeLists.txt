@@ -30,7 +30,6 @@ target_link_libraries (
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
-    boost_serialization
     boost_date_time
     boost_iostreams
     boost_signals
@@ -58,7 +57,6 @@ target_link_libraries (
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
-    boost_serialization
     boost_date_time
     boost_iostreams
     boost_signals
@@ -68,4 +66,3 @@ cauv_install ( common-shared )
 
 add_dependencies(common logo-headers messages-headers)
 add_dependencies(common-shared logo-headers messages-headers)
-

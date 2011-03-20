@@ -49,7 +49,8 @@ enum NodeType : int8 {
     HistogramSegmentationArb = 39,
     RunningAverage = 40,
     CopyMask = 41,
-    FastMedian = 42
+    FastMedian = 42,
+    FASTCorners = 43
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -117,12 +118,9 @@ struct TimeStamp
     secs : int32;
     musecs : int32;
 }
-struct NodeParamValue
+variant NodeParamValue
 {
-    type : ParamType;
-    intValue : int32;
-    floatValue : float;
-    stringValue : string;
+    int32, float, string, bool
 }
 struct SonarDataLine
 {
@@ -148,6 +146,13 @@ struct Circle
 {
     centre : floatXYZ;
     radius : float;
+}
+struct Corner
+{
+    centre : floatXYZ;
+    size : float;
+    angle : float;
+    response : float;
 }
 struct MotorMap
 {
@@ -353,23 +358,31 @@ group pipeline
 
 group processing
 {
-    message HoughLines : 130
+    message Lines : 130
     {
-         lines : list<Line>;
+        name : string;
+        lines : list<Line>;
     }
 
-    message HoughCircles : 131
+    message Circles : 131
     {
+        name : string;
         circles : list<Circle>;
     }
-    
-    message Histogram : 132
+
+    message Corners : 132
     {
+        name : string;
+        corners : list<Corner>;
+    }
+    
+    message Histogram : 133
+    {
+        name : string;
         bins : list<float>;
-        type : string;
     }
 
-    message Centre : 133
+    message Centre : 134
     {
         name : string;
         x : float;

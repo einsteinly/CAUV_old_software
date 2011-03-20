@@ -27,6 +27,10 @@
 namespace cauv{
 namespace imgproc{
 
+static const char* Image_In_Name = "image in";
+static const char* Image_Out_Name = "image out (not copied)";
+static const char* Image_Out_Copied_Name = "image out";
+
 class Node: public boost::enable_shared_from_this<Node>{
     public:
         // Public typedefs: used as return types
@@ -44,7 +48,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         typedef boost::shared_ptr<Image> image_ptr_t;
         
         // NB: order here is important, don't change it!
-        typedef boost::variant<image_ptr_t, param_value_t> output_t;
+        typedef boost::variant<image_ptr_t, NodeParamValue> output_t;
 
         typedef std::map<output_id, output_t> out_map_t;
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
@@ -56,7 +60,7 @@ class Node: public boost::enable_shared_from_this<Node>{
 
         typedef std::list<output_link_t> output_link_list_t;
 
-        typedef std::map<param_id, param_value_t> param_value_map_t;
+        typedef std::map<param_id, NodeParamValue> param_value_map_t;
         typedef std::map<input_id, bool> in_bool_map_t;
         typedef std::map<param_id, bool> param_bool_map_t;
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
@@ -136,7 +140,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         
         /* Get the parameter associated with a parameter output
          */
-        param_value_t getOutputParam(output_id const& o_id) const throw(id_error);
+        NodeParamValue getOutputParam(output_id const& o_id) const throw(id_error);
         
         /* return all parameter values
          */
@@ -153,13 +157,13 @@ class Node: public boost::enable_shared_from_this<Node>{
             unique_lock_t l(m_parameters_lock);
             param_value_map_t::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
-                debug(2) << "param" << p << "set to" << v;
+                debug(1) << "param" << p << "set to" << std::boolalpha << v;
                 i->second = v;
             }else{
                 error e;
                 e << m_parameters.size() << "valid parameters are:";
                 for(i = m_parameters.begin(); i != m_parameters.end(); i++)
-                    e << i->first << "( =" << i->second << ")";
+                    e << i->first << "( =" << std::boolalpha << i->second << ")";
                 throw(id_error("setParam: Invalid parameter id: " + toStr(p)));
             }
             // provide notification that parameters have changed: principally
@@ -195,7 +199,7 @@ class Node: public boost::enable_shared_from_this<Node>{
                     assert(node->paramOutputs().count(outparam));
                     debug(4) << "returning linked parameter value for" << p
                             << "(linked to" << j->second.first
-                            << j->second.second << ")";
+                            << std::boolalpha << j->second.second << ")";
                     // TODO: this will throw boost::bad_get if there is a
                     // param_value type mismatch between the output and the
                     // requested parameter type:
@@ -205,7 +209,7 @@ class Node: public boost::enable_shared_from_this<Node>{
                         return boost::get<T>(node->getOutputParam(outparam));
                     }catch(boost::bad_get& e){
                         warning() << "parameter output not available / bad get:"
-                                  << j->second.first << j->second.second
+                                  << j->second.first << std::boolalpha << j->second.second
                                   << ", non-linked value will be returned";
 
                     }
@@ -257,7 +261,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         void registerParamID(param_id const& p, T const& default_value,
                              std::string const& tip=""){
             unique_lock_t l(m_parameters_lock);
-            m_parameters[p] = param_value_t(default_value);
+            m_parameters[p] = NodeParamValue(default_value);
             m_parameter_tips[p] = tip;
             m_new_paramvalues[p] = true;
             // parameters are also inputs...
@@ -266,7 +270,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         /* Template type is used to determine whether this is an image or a
          * parameter output: supported types
          *      - image_ptr_t
-         *      - param_value_t
+         *      - NodeParamValue
          */
         template<typename T>
         void registerOutputID(output_id const& o){

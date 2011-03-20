@@ -35,16 +35,19 @@ class HoughLinesNode: public OutputNode{
             registerOutputID<image_ptr_t>("image_out");
             
             // parameters:
-            registerParamID<bool>("probabalistic", true);
+            registerParamID<bool>("probabilistic", true);
             registerParamID<int>("rho", 1);
             registerParamID<float>("theta", CV_PI/180);
             registerParamID<int>("threshold", 80);
-            // probabalistic only:
+            // probabilistic only:
             registerParamID<int>("minLineLength", 20);
             registerParamID<int>("maxLineGap", 5);
-            // non-probabalistic only:
+            // non-probabilistic only:
             registerParamID<int>("srn", 0);
             registerParamID<int>("stn", 0);
+
+            registerParamID<std::string>("name", "unnamed hough lines",
+                                         "name for detected set of lines");
         }
     
         virtual ~HoughLinesNode(){
@@ -57,14 +60,15 @@ class HoughLinesNode: public OutputNode{
 
             image_ptr_t img = inputs["image_in"];
             
-            bool probabalistic = param<bool>("probabalistic");
-            int rho = param<int>("rho");
-            float theta = param<float>("theta");
-            int threshold = param<int>("threshold");
-            int min_ll = param<int>("minLineLength");
-            int max_lg = param<int>("maxLineGap");
-            int srn = param<int>("srn");
-            int stn = param<int>("stn");
+            const bool probabalistic = param<bool>("probabilistic");
+            const int rho = param<int>("rho");
+            const float theta = param<float>("theta");
+            const int threshold = param<int>("threshold");
+            const int min_ll = param<int>("minLineLength");
+            const int max_lg = param<int>("maxLineGap");
+            const int srn = param<int>("srn");
+            const int stn = param<int>("stn");
+            const std::string name = param<std::string>("name");
 
             cv::vector<cv::Vec4i> lines;
             try{
@@ -142,7 +146,7 @@ class HoughLinesNode: public OutputNode{
                 debug(3) << "line:" << l;
                 msg_lines.push_back(l);
             }
-            sendMessage(boost::make_shared<HoughLinesMessage>(msg_lines));
+            sendMessage(boost::make_shared<LinesMessage>(name, msg_lines));
 
             return r;
         }

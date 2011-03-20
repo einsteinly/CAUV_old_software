@@ -34,6 +34,7 @@ class CauvNode
         virtual void stopNode();
 		 
         void run(bool synchronous=false);
+        bool isRunning();
 
         int defaultOptions();
         int parseOptions(int argc, char** arg);
@@ -65,7 +66,7 @@ class CauvNode
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
         boost::shared_ptr<MailboxEventMonitor> m_event_monitor;
         boost::shared_ptr<MsgSrcMBMonitor> m_mailbox_monitor;
-        volatile bool m_interrupted;
+        volatile bool m_running;
 };
 
 } // namespace cauv

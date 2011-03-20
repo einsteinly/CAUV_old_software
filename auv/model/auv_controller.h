@@ -34,7 +34,8 @@ public:
     void onImageMessage(ImageMessage_ptr);
     void onSonarControlMessage(SonarControlMessage_ptr);
     void onScriptResponseMessage(ScriptResponseMessage_ptr);
-    void onPressureMessage(PressureMessage_ptr) ;
+    void onPressureMessage(PressureMessage_ptr);
+    void onControllerStateMessage(ControllerStateMessage_ptr m);
 
 
     bool pushState(bool state);
@@ -49,7 +50,8 @@ public:
     void sendDepthCalibrationMessage(depth_calibration_t params);
     void sendScriptMessage(script_exec_request_t script);
 
-    boost::signal<void(const boost::shared_ptr<Message>)> onMessageGenerated;
+    typedef boost::signal< void(const boost::shared_ptr<Message>) > message_signal_type;
+    message_signal_type onMessageGenerated;
 
 
 protected:

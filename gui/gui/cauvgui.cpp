@@ -1,5 +1,7 @@
 #include "cauvgui.h"
 
+#include <QTimer>
+
 #include <signal.h>
 
 #include <model/auv_controller.h>
@@ -13,6 +15,7 @@
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/motorcontrols.h"
 #include "widgets/logview.h"
+#include "widgets/console.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -21,21 +24,33 @@
 #include "ui_mainwindow.h"
 #include "cauvinterfaceelement.h"
 
-#include <marble/MarbleWidget.h>
+#ifdef USE_MARBLE
+#   include <marble/MarbleWidget.h>
+#endif
+
+#ifdef GAMEPAD_SUPPORT
+#   include "gamepad.h"
+#endif
+
 
 using namespace cauv;
 
-CauvGui::CauvGui(const QApplication& app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
+CauvGui::CauvGui(QApplication * app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
     ui->setupUi(this);
     joinGroup("control");
     joinGroup("image");
     joinGroup("pl_gui");
+    joinGroup("gui");
     joinGroup("debug");
     joinGroup("telemetry");
 
-    this->setAttribute(Qt::WA_DeleteOnClose);
-
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+
+    this->setWindowState(Qt::WindowMaximized);
+}
+
+CauvGui::~CauvGui(){
+    delete ui;
 }
 
 void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
@@ -57,8 +72,7 @@ void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
 
 void CauvGui::closeEvent(QCloseEvent*){
     hide();
-    m_application.exit(0);
-    exit(0);
+    m_application->quit();
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
@@ -99,12 +113,39 @@ void CauvGui::onRun()
     boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
 
+    boost::shared_ptr<Console> console(new Console("Console", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(console));
+
+#ifdef USE_MARBLE
     Marble::MarbleWidget *mapWidget = new Marble::MarbleWidget();
     QString map("Map");
     addCentralTab(mapWidget, map);
     mapWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
     mapWidget->show();
+#endif
+
+
+#ifdef GAMEPAD_SUPPORT
+    try {
+        info() << GamepadInput::listDevices();
+        CauvGamepad* gi;
+        gi = new CauvGamepad(0, m_auv);
+        gi->setParent(this);
+
+        // timer to read the game controller
+        QTimer *timer = new QTimer(this);
+        timer->connect(timer, SIGNAL(timeout()), gi, SLOT(processEvents()));
+        timer->start(200);
+    } catch (char const* ex){
+        error() << ex;
+    }
+#endif
 
     show();
-    m_application.exec();
+    m_application->exec();
+
+    info() << "Qt Thread exiting";
+    removeMessageObserver(m_auv_controller);
+    info() << "Stopping CauvNode";
+    CauvNode::stopNode();
 }
