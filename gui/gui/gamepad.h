@@ -41,6 +41,10 @@ namespace cauv {
 
         float m_bearingRate;
         float m_pitchRate;
+        float m_forwardSpeed;
+        float m_strafeSpeed;
+        float m_depthRate;
+        bool m_dirty;
 
     protected Q_SLOTS:
         void updateByRates();

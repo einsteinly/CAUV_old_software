@@ -135,7 +135,7 @@ void CauvGui::onRun()
         // timer to read the game controller
         QTimer *timer = new QTimer(this);
         timer->connect(timer, SIGNAL(timeout()), gi, SLOT(processEvents()));
-        timer->start(200);
+        timer->start(100);
     } catch (char const* ex){
         error() << ex;
     }

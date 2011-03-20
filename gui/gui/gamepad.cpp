@@ -8,7 +8,10 @@
 
 using namespace cauv;
 
-CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) : PlaystationInput(id), m_auv(auv), m_bearingRate(0.f), m_pitchRate(0.f)
+CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) :
+        PlaystationInput(id), m_auv(auv), m_bearingRate(0.f),
+        m_pitchRate(0.f), m_forwardSpeed(0.f), m_strafeSpeed(0.f),
+        m_depthRate(0.f), m_dirty(false)
 {
 
     // should read all this from a config file
@@ -31,7 +34,7 @@ CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) : Pl
 
     // left joy sticks
     this->connect(this, SIGNAL(Joy_L_X(float)), this, SLOT(strafeLeft(float)));
-    this->connect(this, SIGNAL(Joy_L_Y(float)), this, SLOT(forward(float)));
+    this->connect(this, SIGNAL(Joy_L_Y(float)), this, SLOT(backward(float)));
     // right joy sticks
     this->connect(this, SIGNAL(Joy_R_X(float)), this, SLOT(yawLeft(float)));
     this->connect(this, SIGNAL(Joy_R_Y(float)), this, SLOT(pitchUp(float)));
@@ -39,11 +42,12 @@ CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) : Pl
     QTimer * rateUpdateTimer = new QTimer(this);
     rateUpdateTimer->connect(rateUpdateTimer, SIGNAL(timeout()), this, SLOT(updateByRates()));
     rateUpdateTimer->setSingleShot(false);
-    rateUpdateTimer->start(200);
+    rateUpdateTimer->start(100);
 }
 
 void CauvGamepad::forward(float speed){
-    m_auv->motors[MotorID::Prop]->set(speed * 127);
+    m_forwardSpeed = speed;
+    m_dirty = true;
 }
 
 void CauvGamepad::backward(float speed){
@@ -51,8 +55,8 @@ void CauvGamepad::backward(float speed){
 }
 
 void CauvGamepad::strafeLeft(float speed){
-    m_auv->motors[MotorID::HStern]->set(speed * 127);
-    m_auv->motors[MotorID::HBow]->set(speed * 127);
+    m_strafeSpeed = speed;
+    m_dirty = true;
 }
 
 void CauvGamepad::strafeRight(float speed){
@@ -61,6 +65,7 @@ void CauvGamepad::strafeRight(float speed){
 
 void CauvGamepad::pitchUp(float rate){
     m_pitchRate = rate;
+    m_dirty = true;
 }
 
 void CauvGamepad::pitchDown(float rate){
@@ -69,6 +74,7 @@ void CauvGamepad::pitchDown(float rate){
 
 void CauvGamepad::yawLeft(float rate){
     m_bearingRate = rate;
+    m_dirty = true;
 }
 
 void CauvGamepad::yawRight(float rate){
@@ -96,11 +102,13 @@ void CauvGamepad::strafeRight(bool go){
 }
 
 void CauvGamepad::up(bool go){
-    m_auv->autopilots["depth"]->set(m_auv->autopilots["depth"]->latest()-0.2);
+    if(go) m_depthRate = -0.1f;
+    else m_depthRate = 0;
 }
 
-void CauvGamepad::down(bool go){
-    m_auv->autopilots["depth"]->set(m_auv->autopilots["depth"]->latest()+0.2);
+void CauvGamepad::down(bool go){    
+    if(go) m_depthRate = 0.1f;
+    else m_depthRate = 0;
 }
 
 
@@ -120,15 +128,35 @@ void CauvGamepad::stop(bool){
 
 void CauvGamepad::updateByRates(){
 
+    if(!m_depthRate && !m_dirty){
+        return;
+    }
+
     // update bearing
-    const float bearingRateScale = 5.f;
-    if(m_bearingRate > 0.2f)
+    const float bearingRateScale = 3.f;
+    if(!(m_bearingRate < 0.2f && m_bearingRate > -0.2f))
         m_auv->autopilots["bearing"]->set(m_auv->autopilots["bearing"]->latest() + (m_bearingRate * bearingRateScale));
 
     //update pitch
-    const float pitchRateScale = 5.f;
-    if(m_pitchRate > 0.2f)
+    const float pitchRateScale = 1.f;
+    if(!(m_pitchRate < 0.2f && m_pitchRate > -0.2f))
         m_auv->autopilots["pitch"]->set(m_auv->autopilots["pitch"]->latest() + (m_pitchRate * pitchRateScale));
+
+    //update depth
+    if(!(m_depthRate < 0.02f && m_depthRate > -0.02f))
+        m_auv->autopilots["depth"]->set(m_auv->autopilots["depth"]->latest() + m_depthRate);
+
+    // update prop
+    if(!(m_auv->motors[MotorID::Prop]->latest() == 0 && m_forwardSpeed == 0))
+        m_auv->motors[MotorID::Prop]->set(m_forwardSpeed * 127);
+
+    // update strafe speed
+    if(!(m_auv->motors[MotorID::HStern]->latest() == 0 && m_auv->motors[MotorID::HBow]->latest() == 0 && m_strafeSpeed == 0)) {
+        m_auv->motors[MotorID::HStern]->set(m_strafeSpeed * 127);
+        m_auv->motors[MotorID::HBow]->set(m_strafeSpeed * 127);
+    }
+
+    m_dirty = false;
 }
 
 #endif //GAMEPAD_SUPPORT
