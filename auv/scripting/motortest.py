@@ -30,7 +30,7 @@ def setupParams(node, auv):
     auv.vsternMap(10, -10, 127, -127)
     auv.hsternMap(10, -10, 127, -127)
 
-def randomMotorTest(node, auv, max_power=127*3, duration=60.0):
+def randomMotorTest(node, auv, max_power=127*3, duration=60.0, delay=1.0):
     auv.stop()
     debug('random motor test: %d, %d' % (max_power, duration))
     start = time.time()
@@ -63,7 +63,7 @@ def randomMotorTest(node, auv, max_power=127*3, duration=60.0):
         info('setting %s to %s, total power = %d' % (motor, speed, total_power))
         current_speeds[motor] = speed
         power_funcs[motor](speed)
-        time.sleep(1)
+        time.sleep(delay)
     auv.stop()
 
 def motorTest(node, auv, power=30, delay=3, quiet = False):
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         setupParams(node, auv)
     
     if opts.random:
-        randomMotorTest(node, auv, opts.rand_power_limit, opts.rand_duration)
+        randomMotorTest(node, auv, opts.rand_power_limit, opts.rand_duration, opts.delay)
     else:
         motorTest(node, auv, opts.power, opts.delay)
 
