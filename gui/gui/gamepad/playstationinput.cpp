@@ -24,8 +24,8 @@ bool PlaystationInput::buttonReleased( const JoyStickEvent&, int button ) {
 bool PlaystationInput::axisMoved( const JoyStickEvent &arg, int axis )
 {
     float value = 0;
-    if((arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )) {
-        value = arg.state.mAxes[axis].abs;
+    if((arg.state.mAxes[axis].abs > 6000 || arg.state.mAxes[axis].abs < -6000 )) {
+        value = ((float)arg.state.mAxes[axis].abs) / 32768.f; // 32768 is the maximum short value
     }
 
     switch (axis) {
