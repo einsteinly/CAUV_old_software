@@ -10,6 +10,7 @@ from cauv.debug import debug, info, warning, error
 import time
 import traceback
 import optparse
+import random
 
 
 def setupParams(node, auv):
@@ -29,6 +30,41 @@ def setupParams(node, auv):
     auv.vsternMap(10, -10, 127, -127)
     auv.hsternMap(10, -10, 127, -127)
 
+def randomMotorTest(node, auv, max_power=127*3, duration=60.0):
+    auv.stop()
+    debug('random motor test: %d, %d' % (max_power, duration))
+    start = time.time()
+    motors = ("prop", "hbow", "vbow", "hstern", "vstern")
+    power_funcs = {
+        "prop": auv.prop,
+        "hbow": auv.hbow, "vbow": auv.vbow,
+        "hstern": auv.hstern, "vstern": auv.vstern
+    }
+    current_speeds = {
+        "prop": 0,
+        "hbow": 0, "vbow": 0,
+        "hstern": 0, "vstern": 0 
+    }
+    speeds = (-127, 127, 0, 23, 57, 103, -57, -20, -80, 79)
+    def sumSpeeds():
+        r = 0
+        for i in current_speeds.values():
+            r += abs(i)
+        return r
+    while time.time() < start + duration:
+        limit = 100
+        while limit > 0:
+            limit -= 1
+            motor = random.choice(motors)
+            speed = random.choice(speeds)
+            total_power = sumSpeeds() - abs(current_speeds[motor]) + abs(speed)
+            if total_power <= max_power:
+                break
+        info('setting %s to %s, total power = %d' % (motor, speed, total_power))
+        current_speeds[motor] = speed
+        power_funcs[motor](speed)
+        time.sleep(1)
+    auv.stop()
 
 def motorTest(node, auv, power=30, delay=3, quiet = False):
     auv.stop()
@@ -96,6 +132,13 @@ if __name__ == '__main__':
     p.add_option("-N", "--no-params", dest="no_params", default=False,
             action="store_true",
             help="don't set motor maps and other parameters")
+    p.add_option('-R', "--random", dest="random", default=False,
+            action="store_true",
+            help="test random motors at random speeds with at most "+\
+            "RAND_POWER_LIMIT total power for RAND_DURATION seconds")
+    p.add_option('-l', "--random-limit", dest="rand_power_limit", type=int)
+    p.add_option('-D', "--random-duration", dest="rand_duration", type=int)
+
 
     p.add_option("-n", "--name", dest="name", default="py-my",
             help="CAUV Node name")
@@ -107,6 +150,10 @@ if __name__ == '__main__':
 
     if not opts.no_params:
         setupParams(node, auv)
+    
+    if opts.random:
+        randomMotorTest(node, auv, opts.rand_power_limit, opts.rand_duration)
+    else:
+        motorTest(node, auv, opts.power, opts.delay)
 
-    motorTest(node, auv, opts.power, opts.delay)
 
