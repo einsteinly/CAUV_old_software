@@ -83,7 +83,7 @@ class Model(messaging.BufferedMessageObserver):
     def save(self, picklefname, timeout=3.0):
         with open(picklefname, 'wb') as outf:
             saved = self.get(timeout)
-            pickle.dump(saved, outf, timeout)
+            pickle.dump(saved, outf)
     
     def load(self, picklefname, timeout=3.0):
         with open(picklefname, 'rb') as inf:

@@ -55,6 +55,14 @@ int main(int argc, char** argv)
         std::cout << "Sending trace message " << *m << std::endl;
         m_mailbox.sendMessage(m, SAFE_MESS);
     }
+    else if (boost::iequals(msgType, "info")) {
+        std::string message = "Hiyoooooooooooo!";
+
+        boost::shared_ptr<DebugMessage> m = boost::make_shared<DebugMessage>(DebugType::Info, message);
+
+        std::cout << "Sending trace message " << *m << std::endl;
+        m_mailbox.sendMessage(m, SAFE_MESS);
+    }
     else if (boost::iequals(msgType, "autopilot")) {
         if (argc - 2 != 3) {
             std::cerr << "Error: autopilot message requires exactly three parameters (autopilot, enabled, target)" << std::endl;
