@@ -19,7 +19,9 @@ target_link_libraries ( smem_send_random shared_mem_test_lib )
 find_package (Avahi REQUIRED)
 include_directories(AVAHI_INCLUDE_DIR)
 
-add_executable ( avahi_browse EXCLUDE_FROM_ALL avahi_example_browse.c )
-target_link_libraries ( avahi_browse ${AVAHI_LIBRARIES} )
+add_executable ( avahi_pub EXCLUDE_FROM_ALL avahi_pub.cpp )
+target_link_libraries ( avahi_pub ${AVAHI_LIBRARIES} cauv_debug )
 
+add_executable ( avahi_sub EXCLUDE_FROM_ALL avahi_sub.cpp )
+target_link_libraries ( avahi_sub ${AVAHI_LIBRARIES} cauv_debug )
 
