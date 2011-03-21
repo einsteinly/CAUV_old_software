@@ -283,12 +283,20 @@ namespace cauv{
             boost::shared_ptr<MutableDataStream<depth_calibration_t> > depth_calibration;
             boost::shared_ptr<DataStream<float> > depth;
             boost::shared_ptr<DataStreamSplitter<cauv::floatYPR> > orientation;
+            boost::shared_ptr<DataStream<float> > esitmate_current;
+            boost::shared_ptr<DataStream<float> > estimate_total;
+            boost::shared_ptr<DataStream<float> > fraction_remaining;
 
             Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
             pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
             depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
             depth(boost::make_shared<DataStream<float> >("Depth", "m")),
-            orientation(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(boost::make_shared<DataStream<floatYPR> >("Orientation", "°"))) {
+            orientation(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(boost::make_shared<DataStream<floatYPR> >("Orientation", "°"))),
+            esitmate_current(boost::make_shared<DataStream<float> >("Current Estimiation", "Wh")),
+            estimate_total(boost::make_shared<DataStream<float> >("Total Battery Consumed", "Wh")),
+            fraction_remaining(boost::make_shared<DataStream<float> >("Battery Remaining", "%"))
+            {
+
             }
         } sensors;
 

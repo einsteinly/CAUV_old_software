@@ -7,9 +7,28 @@ using namespace cauv::sim;
 #include <osg/Image>
 
 
-Camera::Camera(int width, int height) : m_renderTexture(new osg::Texture2D)
+Camera::Camera(int width, int height) //: m_renderTexture(new osg::Texture2D)
 {
-    setSize(width, height);
+
+    /*
+    // set the projection matrix
+    this->setProjectionMatrix(osg::Matrix::ortho2D(0,width,0,height));
+
+    // set the view matrix
+    this->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    this->setViewMatrix(osg::Matrix::identity());
+
+    // only clear the depth buffer
+    this->setClearMask(GL_DEPTH_BUFFER_BIT);
+
+    // draw subgraph after main camera view.
+    this->setRenderOrder(osg::Camera::POST_RENDER);
+
+    // we don't want the camera to grab event focus from the viewers main camera(s).
+    this->setAllowEventFocus(false);
+    */
+
+    /*setSize(width, height);
     m_renderTexture->setInternalFormat(GL_RGBA);
     m_renderTexture->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
     m_renderTexture->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
@@ -26,9 +45,9 @@ Camera::Camera(int width, int height) : m_renderTexture(new osg::Texture2D)
     // The camera will render into the texture that we created earlier
     attach(osg::Camera::COLOR_BUFFER, m_renderTexture);
 
-    setAllowEventFocus(false);
+    setAllowEventFocus(false);*/
 }
-
+/*
 void Camera::setSize(int width, int height){
     m_renderTexture->setTextureSize(width, height);
     setViewport(0, 0, width, height);
@@ -41,3 +60,4 @@ osg::ref_ptr<osg::Texture2D> Camera::getTexture(){
 osg::ref_ptr<osg::Image> Camera::getImage(){
     return m_renderTexture->getImage();
 }
+*/

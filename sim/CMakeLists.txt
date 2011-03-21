@@ -36,6 +36,8 @@ if (${CAUV_BUILD_SIM})
         visuals/oceanscene.cpp
         visuals/pipscreen.cpp
         sensors/camera.cpp
+        auvs/simulatedauv.cpp
+        auvs/redherring.cpp
     )
 
     # libs
