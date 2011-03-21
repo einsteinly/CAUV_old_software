@@ -24,10 +24,10 @@ class CAUVTask:
 
 processes_to_start = [
         #       short-name, command,                       restart?, candidate      names
-        CAUVTask('remote', '/bin/sh ./run.sh ./remote.py', True, ['remote.py']),
-        CAUVTask('logger', '/bin/sh ./run.sh ./logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe', './auv/bin/img-pipeline', True, ['img-pipeline']),
-        CAUVTask('spread', 'spread', True, ['spread'])
+        CAUVTask('remote', 'nohup /bin/sh ./run.sh ./remote.py', True, ['remote.py']),
+        CAUVTask('logger', 'nohup /bin/sh ./run.sh ./logger.py', True, ['logger.py']),
+        CAUVTask('img-pipe', 'nohup ./auv/bin/img-pipeline', True, ['img-pipeline']),
+        CAUVTask('spread', 'nohup spread', True, ['spread'])
 ]
 
 processes_by_command = {}
