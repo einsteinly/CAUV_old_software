@@ -3,6 +3,7 @@ import psutil
 import optparse
 import time
 import subprocess
+import os
 
 from cauv.debug import debug, info, warning, error
 
@@ -22,11 +23,18 @@ class CAUVTask:
     def start(self):
         subprocess.Popen(self.__command.split(' '))
 
+if os.uname()[1] == 'red-herring':
+    cmd_prefix = '/home/cauv/cmm/'
+else if os.uname()[1].find('James'):
+    cmd_prefix = '/Users/james/Development/cauv/cmm/'
+else:
+    cmd_prefix = ''
+
 processes_to_start = [
         #       short-name, command,                       restart?, candidate      names
         CAUVTask('remote', 'nohup /bin/sh ./run.sh ./remote.py', True, ['remote.py']),
         CAUVTask('logger', 'nohup /bin/sh ./run.sh ./logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe', 'nohup ./auv/bin/img-pipeline', True, ['img-pipeline']),
+        CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline' % cmd_prefix, True, ['img-pipeline']),
         CAUVTask('spread', 'nohup spread', True, ['spread'])
 ]
 
