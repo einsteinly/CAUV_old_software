@@ -285,6 +285,12 @@ group telemetry
 	    orientation : floatYPR;
         depth : float;
     }
+    message BatteryUse : 86
+    {
+        estimate_current : float;
+        estimate_total : float;
+        fraction_remaining : float;
+    }
 }
 group image
 {
