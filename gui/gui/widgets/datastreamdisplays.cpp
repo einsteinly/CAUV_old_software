@@ -219,6 +219,16 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     new DataStreamTreeItem<float>(auv->sensors.orientation->pitch, orientation);
     new DataStreamTreeItem<float>(auv->sensors.orientation->roll, orientation);
 
+
+    QTreeWidgetItem *battery = new QTreeWidgetItem(ui->dataStreams);
+    battery->setText(0, "Battery");
+    battery->setFlags(battery->flags() ^ Qt::ItemIsSelectable);
+    battery->setExpanded(true);
+
+    new DataStreamTreeItem<float>(auv->sensors.esitmate_current, battery);
+    new DataStreamTreeItem<float>(auv->sensors.estimate_total, battery);
+    new DataStreamTreeItem<float>(auv->sensors.fraction_remaining, battery);
+
     //
     // other
     //
