@@ -236,6 +236,12 @@ void AUVController::onScriptResponseMessage(ScriptResponseMessage_ptr message){
     m_auv->scripts.scriptResponse->update(script_exec_response_t(message->response(), message->seq()));
 }
 
+void AUVController::onBatteryUseMessage(BatteryUseMessage_ptr message) {
+    m_auv->sensors.esitmate_current->update(message->estimate_current());
+    m_auv->sensors.estimate_total->update(message->estimate_total());
+    m_auv->sensors.fraction_remaining->update(message->fraction_remaining()*100.f);
+}
+
 void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){
 
     std::string controller;

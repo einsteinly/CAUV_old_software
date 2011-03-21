@@ -28,6 +28,8 @@ namespace cauv {
 
     namespace sim {
 
+        class SimulatedAUV;
+
         class Simulator : public CauvNode
         {
 
@@ -35,6 +37,8 @@ namespace cauv {
             Simulator();
 
             osg::ref_ptr<cauv::sim::WorldModel> getWorldModel();
+
+            osg::Camera * createHUD();
 
         protected:
             virtual void onRun();
@@ -46,8 +50,10 @@ namespace cauv {
 
             boost::shared_ptr<AUV> m_auv;
             boost::shared_ptr<AUVController> m_auv_controller;
+            boost::shared_ptr<SimulatedAUV> m_simulated_auv;
             osg::ref_ptr<WorldModel> m_world_model;
             osg::ref_ptr<osg::Group> m_root;
+
         };
 
     } // namespace sim

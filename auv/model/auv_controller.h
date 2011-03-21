@@ -36,6 +36,7 @@ public:
     void onScriptResponseMessage(ScriptResponseMessage_ptr);
     void onPressureMessage(PressureMessage_ptr);
     void onControllerStateMessage(ControllerStateMessage_ptr m);
+    void onBatteryUseMessage(BatteryUseMessage_ptr m);
 
 
     bool pushState(bool state);
