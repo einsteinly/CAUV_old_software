@@ -23,18 +23,21 @@ class CAUVTask:
     def start(self):
         subprocess.Popen(self.__command.split(' '))
 
+#TODO we have some sort of cauv install target?
 if os.uname()[1] == 'red-herring':
     cmd_prefix = '/home/cauv/cmm/'
-else if os.uname()[1].find('James'):
+elif os.uname()[1].find('James'):
     cmd_prefix = '/Users/james/Development/cauv/cmm/'
 else:
     cmd_prefix = ''
 
 processes_to_start = [
         #       short-name, command,                       restart?, candidate      names
-        CAUVTask('remote', 'nohup /bin/sh ./run.sh ./remote.py', True, ['remote.py']),
-        CAUVTask('logger', 'nohup /bin/sh ./run.sh ./logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline' % cmd_prefix, True, ['img-pipeline']),
+        CAUVTask('remote', 'nohup /bin/sh ./run.sh ./remote.py > remote-stdout.log 2> remote-stderr.log < /dev/null', True, ['remote.py']),
+        CAUVTask('logger', 'nohup /bin/sh ./run.sh ./logger.py > logger-stdout.log 2> logger-stderr.log < /dev/null', True, ['logger.py']),
+        CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline  > img-pipe-stdout.log 2> img-pipe-stderr.log < /dev/null' % cmd_prefix, True, ['img-pipeline']),
+        CAUVTask('sonar', 'nohup %sauv/bin/sonar > sonar-stdout.log 2> sonar-stderr.log < /dev/null' % cmd_prefix, True, ['img-pipeline']),
+        #CAUVTask('control', 'nohup %sauv/bin/control' % cmd_prefix, True, ['img-pipeline']),
         CAUVTask('spread', 'nohup spread', True, ['spread'])
 ]
 
