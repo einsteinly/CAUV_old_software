@@ -414,7 +414,8 @@ group gui
    
     message MotorState : 101
     {
-        demand : MotorDemand;
+	    motorId : MotorID;
+	    speed : int8;
     }
 
     message ScriptResponse : 103

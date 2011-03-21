@@ -542,8 +542,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 sendWithMaxDelta(MotorID::HStern, hstern_value, new_hstern_value, m_max_motor_delta);
                 sendWithMaxDelta(MotorID::VStern, vstern_value, new_vstern_value, m_max_motor_delta);
             }
-            
-            m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
         }
 
         void sendWithMaxDelta(MotorID::e mid, int& oldvalue, int newvalue, unsigned maxDelta)
@@ -560,7 +558,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;
-                m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                if(mid == MotorID::VBow)
+                    m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
+                else
+                    m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), SAFE_MESS);
             }
         }
 
