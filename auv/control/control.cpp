@@ -558,7 +558,9 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;
-                if(mid == MotorID::VBow)
+                // VBow is the wrong way round, but we want all the motors to
+                // be inverted
+                if(mid != MotorID::VBow)
                     m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
                 else
                     m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
