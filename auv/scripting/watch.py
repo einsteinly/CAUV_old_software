@@ -36,8 +36,8 @@ processes_to_start = [
         CAUVTask('remote', 'nohup /bin/sh ./run.sh ./remote.py > remote-stdout.log 2> remote-stderr.log < /dev/null', True, ['remote.py']),
         CAUVTask('logger', 'nohup /bin/sh ./run.sh ./logger.py > logger-stdout.log 2> logger-stderr.log < /dev/null', True, ['logger.py']),
         CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline  > img-pipe-stdout.log 2> img-pipe-stderr.log < /dev/null' % cmd_prefix, True, ['img-pipeline']),
-        CAUVTask('sonar', 'nohup %sauv/bin/sonar > sonar-stdout.log 2> sonar-stderr.log < /dev/null' % cmd_prefix, True, ['img-pipeline']),
-        #CAUVTask('control', 'nohup %sauv/bin/control' % cmd_prefix, True, ['img-pipeline']),
+        CAUVTask('sonar', 'nohup %sauv/bin/sonar > sonar-stdout.log 2> sonar-stderr.log < /dev/null' % cmd_prefix, True, ['sonar']),
+        #CAUVTask('control', 'nohup %sauv/bin/control' % cmd_prefix, True, ['control']),
         CAUVTask('spread', 'nohup spread', True, ['spread'])
 ]
 
