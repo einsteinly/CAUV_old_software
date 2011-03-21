@@ -16,14 +16,14 @@ namespace cauv {
         {
         public:
             Camera(int width = 200, int height = 200);
-
+/*
             void setSize(int width, int height);
 
             osg::ref_ptr<osg::Texture2D> getTexture();
             osg::ref_ptr<osg::Image> getImage();
 
         protected:
-            osg::ref_ptr<osg::Texture2D> m_renderTexture;
+            osg::ref_ptr<osg::Texture2D> m_renderTexture;*/
         };
 
     } // namespace sim

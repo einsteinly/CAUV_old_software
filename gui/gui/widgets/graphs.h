@@ -52,7 +52,7 @@ namespace cauv {
         }
 
         size_t size () const {
-            return this->m_history.size();
+            return this->m_history.size() -1;
         }
 
         float toTime(boost::posix_time::ptime epoch, boost::posix_time::ptime time) const{
