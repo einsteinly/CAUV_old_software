@@ -126,7 +126,7 @@ bool AUVController::enabled() {
 
 /** message handling **/
 
-void AUVController::onMotorMessage(MotorMessage_ptr message) {
+void AUVController::onMotorStateMessage(MotorMessage_ptr message) {
     try {
         m_auv->motors.at(message->motorId())->update(message->speed());
     } catch (std::out_of_range){

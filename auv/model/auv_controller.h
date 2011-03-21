@@ -22,7 +22,6 @@ public:
 
     void onDebugMessage(DebugMessage_ptr);
     void onDebugLevelMessage(DebugLevelMessage_ptr);
-    void onMotorMessage(MotorMessage_ptr);
     void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr);
     void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr);
     void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr);
@@ -37,7 +36,7 @@ public:
     void onPressureMessage(PressureMessage_ptr);
     void onControllerStateMessage(ControllerStateMessage_ptr m);
     void onBatteryUseMessage(BatteryUseMessage_ptr m);
-
+    void onMotorStateMessage(MotorStateMessage_ptr m);
 
     bool pushState(bool state);
     bool popState();
