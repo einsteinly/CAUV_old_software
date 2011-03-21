@@ -153,6 +153,7 @@ void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> >stream
     addStream(split->yaw);
     addStream(split->pitch);
     addStream(split->roll);
+    m_tools.push_back(split);
 }
 
 void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> >stream){
