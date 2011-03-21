@@ -56,6 +56,7 @@ def shortName(command):
     return command
 
 def getProcesses():
+    # returns dict command_str : (Process object : actual command string)
     pids = psutil.get_pid_list()
     # find the pids we're interested in
     processes = {}
@@ -70,12 +71,12 @@ def getProcesses():
             #    parent.exe, parent.name, parent.cmdline))
             command_str = ' '.join(p.cmdline)
             if command_str in processes:
-                processes[command_str] = p
+                processes[command_str] = (p, command_str)
             else:
                 for p_to_start in processes_to_start:
                     for name in p_to_start.searchForNames():
                         if command_str.find(name) != -1:
-                            processes[p_to_start.command()] = p
+                            processes[p_to_start.command()] = (p, command_str)
             #debug(command_str)
         except Exception, e:
             #warning('%s\n%s' % (e, traceback.format_exc()))
@@ -89,7 +90,7 @@ def printDetails(processes, more_details=False):
     info(header)
     info('-' * len(header.expandtabs()))
     for pc in processes:
-        p = processes[pc]
+        p, actual_command = processes[pc]
         if p is None:
             status = 'unknown'
         else:
@@ -102,7 +103,7 @@ def printDetails(processes, more_details=False):
                 p.get_cpu_percent(),
                 p.get_memory_percent(),
                 p.get_num_threads(),
-                pc
+                actual_command
             )
         info(line)
  
