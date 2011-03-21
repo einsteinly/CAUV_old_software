@@ -8,14 +8,17 @@ from cauv.debug import debug, info, warning, error
 
 
 class CAUVTask:
-    def __init__(self, name, command, restart=True):
+    def __init__(self, name, command, restart=True, names=[]):
         self.__short_name = name
         self.__command = command
         self.__restart = restart
+        self.__names = names
     def command(self):
         return self.__command
     def shortName(self):
         return self.__short_name
+    def searchForNames(self):
+        return self.__names
     def start(self):
         subprocess.Popen(self.__command.split(' '))
 
@@ -23,7 +26,7 @@ processes_to_start = [
         #       short-name, command,                       restart?, candidate      names
         CAUVTask('remote', '/bin/sh ./run.sh ./remote.py', True, ['remote.py']),
         CAUVTask('logger', '/bin/sh ./run.sh ./logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe', './auv/bin/img-pipeline', True, ['img-pipeline'])
+        CAUVTask('img-pipe', './auv/bin/img-pipeline', True, ['img-pipeline']),
         CAUVTask('spread', 'spread', True, ['spread'])
 ]
 
@@ -57,6 +60,11 @@ def getProcesses():
             command_str = ' '.join(p.cmdline)
             if command_str in processes:
                 processes[command_str] = p
+            else:
+                for p_to_start in processes_to_start:
+                    for name in p_to_start.searchForNames():
+                        if command_str.find(name) != -1:
+                            processes[p_to_start.command()] = p
             #debug(command_str)
         except Exception, e:
             #warning('%s\n%s' % (e, traceback.format_exc()))
@@ -91,7 +99,7 @@ def startInactive(processes):
     updateProcessesByCommand()
     for pc in processes:
         if processes[pc] is None:
-            info('starting %s (%s)' % (shortname(pc), pc))
+            info('starting %s (%s)' % (shortName(pc), pc))
             cauv_task = processes_by_command[pc]
             cauv_task.start()
 
@@ -105,7 +113,7 @@ if __name__ == '__main__':
     p.add_option('-n', '--no-show-details', dest='details',
                  action='store_false', help='display additional details')
     p.add_option('-p', '--persistent', dest='persistent', default=False,
-                 action='store_true' help='keep going until stopped')
+                 action='store_true', help='keep going until stopped')
     
     opts, args = p.parse_args()
 
@@ -114,13 +122,17 @@ if __name__ == '__main__':
         exit(1)
     
     if opts.no_start:
-        while opts.persitent:
+        while True:
             printDetails(getProcesses(), opts.details)
             time.sleep(3.0)
+            if not opts.persistent:
+                break
     else:
-        while opts.persitent:
+        while True:
             processes = getProcesses()
             printDetails(processes, opts.details)
             startInactive(processes)
             time.sleep(3.0)
+            if not opts.persistent:
+                break
 
