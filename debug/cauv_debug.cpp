@@ -17,6 +17,7 @@
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
 #endif
+#include <boost/thread/locks.hpp>
 #include <boost/thread/tss.hpp>
 
 #include <utility/bash_cout.h>
@@ -237,14 +238,13 @@ boost::mutex& _getMutex(std::ostream& s){
     typedef boost::shared_ptr<boost::mutex> mutex_ptr;
     typedef std::map<void*, mutex_ptr> map_t;
     static map_t mutex_map;
-    static boost::mutex mutex_map_write_mutex;
+    static boost::mutex map_mutex;
+    boost::lock_guard<boost::mutex> l(map_mutex);
     map_t::iterator i = mutex_map.find(&s);
     if(i != mutex_map.end())
         return *i->second;
     else{
-        mutex_map_write_mutex.lock();
         mutex_map[&s] = boost::make_shared<boost::mutex>();
-        mutex_map_write_mutex.unlock();
     }
     return *mutex_map.find(&s)->second;
 }
