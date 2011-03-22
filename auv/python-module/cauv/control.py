@@ -75,10 +75,10 @@ class AUV(messaging.BufferedMessageObserver):
         self.send(messaging.DepthCalibrationMessage(foreOffset, foreMultiplier, aftOffset, aftMultiplier))
 
     def calibrateForSaltWater(self):
-        calibrateDepth(-912.2/96.2, 1.0/96.2)
+        self.calibrateDepth(-912.2/96.2, 1.0/96.2)
 
     def calibrateForFreshWater(self):
-        calibrateDepth(-912.2/96.2, 1.0/96.2) # TODO: Find real values
+        self.calibrateDepth(-928.0/86.5, 1.0/86.5)
 
     def depth(self, depth):
         if depth is not None:
