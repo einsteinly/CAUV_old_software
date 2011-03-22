@@ -133,6 +133,7 @@ namespace cauv {
         QwtPlot * m_plot;
         Ui::GraphWidget * ui;
         DataStreamRecorderView * m_recorderView;
+        std::vector<boost::shared_ptr<DataStreamTool> > m_tools;
     }; 
 
 } // namespace cauv

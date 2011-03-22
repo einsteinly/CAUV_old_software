@@ -39,6 +39,7 @@ CauvGui::CauvGui(QApplication * app) : CauvNode("CauvGui"), m_application(app), 
     ui->setupUi(this);
     joinGroup("control");
     joinGroup("image");
+    joinGroup("pressure");
     joinGroup("pl_gui");
     joinGroup("gui");
     joinGroup("debug");

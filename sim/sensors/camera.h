@@ -16,7 +16,10 @@ namespace cauv {
         {
         public:
             Camera(int width = 200, int height = 200);
-/*
+
+            void setUpAsHUD();
+
+            /*
             void setSize(int width, int height);
 
             osg::ref_ptr<osg::Texture2D> getTexture();
