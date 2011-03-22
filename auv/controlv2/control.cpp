@@ -587,13 +587,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
             int new_hstern_value = clamp(-127, motorMap(total_demand.hstern, MotorID::HStern), 127);
             int new_vstern_value = clamp(-127, motorMap(total_demand.vstern, MotorID::VStern), 127);
             
-            if(m_mcb) {
-                sendWithMaxDelta(MotorID::Prop, prop_value, new_prop_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::HBow, hbow_value, new_hbow_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::VBow, vbow_value, new_vbow_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::HStern, hstern_value, new_hstern_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::VStern, vstern_value, new_vstern_value, m_max_motor_delta);
-            }
+            sendWithMaxDelta(MotorID::Prop, prop_value, new_prop_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::HBow, hbow_value, new_hbow_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::VBow, vbow_value, new_vbow_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::HStern, hstern_value, new_hstern_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::VStern, vstern_value, new_vstern_value, m_max_motor_delta);
         }
 
         void sendWithMaxDelta(MotorID::e mid, int& oldvalue, int newvalue, unsigned maxDelta)
@@ -612,10 +610,12 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 oldvalue = newvalue;
                 // VBow is the wrong way round, but we want all the motors to
                 // be inverted
-                if(mid != MotorID::VBow)
-                    m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
-                else
-                    m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                if(m_mcb){
+                    if(mid != MotorID::VBow)
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
+                    else
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                }
                 m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), SAFE_MESS);
             }
         }
