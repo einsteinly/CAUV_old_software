@@ -61,8 +61,8 @@ processes_to_start = [
         CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline' % cmd_prefix, True,  ['img-pipeline']),
         CAUVTask('sonar',    'nohup %sauv/bin/sonar' % cmd_prefix,        True,  ['sonar']),
         CAUVTask('control',  'nohup %sauv/bin/control' % cmd_prefix,      False, ['control']),
-        CAUVTask('spread',   'nohup spread',                              True,  ['spread'])
-        CAUVTask('watch',   '',                                           False, ['watch.py'])
+        CAUVTask('spread',   'nohup spread',                              True,  ['spread']),
+        CAUVTask('watch',    '',                                          False, ['watch.py'])
 ]
 
 def getProcesses():
@@ -76,30 +76,34 @@ def getProcesses():
         short_names[p.command()] = p.shortName()
     for pid in pids:
         try:
+            task = None
             p = psutil.Process(pid)
             command_str = ' '.join(p.cmdline)
             if command_str in short_names:
                 task = processes[short_names[command_str]]
             else:
                 try:
-                    for p_to_start in processes:
+                    for p_to_start in processes.values():
                         for name in p_to_start.searchForNames():
                             if command_str.find(name) != -1:
                                 task = processes[p_to_start.shortName()]
                                 raise Exception('break')
                 except Exception, e:
+                    print e
                     if str(e) != 'break':
                         raise
             if task is not None:
+                #debug(task.shortName())
                 task.process = p
                 task.running_command = command_str
                 task.status = p.status
-                self.cpu = p.get_cpu_percent()
-                self.mem = p.get_memory_percent()
-                self.threads = p.get_num_threads()
-        except Exception, e:
-            #warning('%s\n%s' % (e, traceback.format_exc()))
+                task.cpu = p.get_cpu_percent()
+                task.mem = p.get_memory_percent()
+                task.threads = p.get_num_threads()
+        except psutil.AccessDenied:
             pass
+        except Exception, e:
+            warning('%s\n%s' % (e, traceback.format_exc()))
     return processes
 
 def printDetails(cauv_task_list, more_details=False):
@@ -108,20 +112,39 @@ def printDetails(cauv_task_list, more_details=False):
         header += '\tstatus   \tpid\tCPU%\tMem%\tthreads\tcommand'
     info(header)
     info('-' * len(header.expandtabs()))
-    for cp in processes:
+    for cp in cauv_task_list.values():
         line = '%s\t%s' % (cp.shortName() , cp.status)
-        if more_details and processes[pc] is not None:
-            line += '\t%s\t%.2f\t%.2f\t%s\t%s' % (
-                cp.process.pid,
-                cp.cpu,
-                cp.mem,
-                cp.threads,
-                cp.running_command
-            )
+        if more_details and cp.process is not None:
+            if cp.threads is None:
+                line += '\t(access denied)'
+            else:
+                line += '\t%s\t%.2f\t%.2f\t%s\t%s' % (
+                    cp.process.pid,
+                    cp.cpu,
+                    cp.mem,
+                    cp.threads,
+                    cp.running_command
+                )
         info(line)
 
 def broadcastDetails(processes, cauv_node):
-    pass
+    for cp in processes.values():
+        m = msg.ProcessStatusMessage()
+        m.process = cp.shortName()
+        m.status = str(cp.status)
+        if cp.cpu is None:
+            m.cpu = -1
+        else:
+            m.cpu = float(cp.cpu)
+        if cp.mem is None:
+            m.mem = -1
+        else:
+            m.mem = float(cp.mem)
+        if cp.threads is None:
+            m.threads = 0
+        else:
+            m.threads = cp.threads
+        cauv_node.send(m)
 
 def startInactive(processes):
     updateProcessesByCommand()
@@ -161,7 +184,7 @@ if __name__ == '__main__':
             processes = getProcesses()
             printDetails(processes, opts.details)
             if cauv_node:
-                broadcast(processes, node)
+                broadcastDetails(processes, cauv_node)
             time.sleep(3.0)
             if not opts.persistent:
                 break
@@ -170,7 +193,7 @@ if __name__ == '__main__':
             processes = getProcesses()
             printDetails(processes, opts.details)
             if cauv_node:
-                broadcast(processes, node)
+                broadcastDetails(processes, cauv_node)
             startInactive(processes)
             time.sleep(3.0)
             if not opts.persistent:
