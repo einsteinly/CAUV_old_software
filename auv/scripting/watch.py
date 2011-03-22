@@ -76,22 +76,24 @@ def getProcesses():
         short_names[p.command()] = p.shortName()
     for pid in pids:
         try:
+            task = None
             p = psutil.Process(pid)
             command_str = ' '.join(p.cmdline)
             if command_str in short_names:
                 task = processes[short_names[command_str]]
             else:
                 try:
-                    for p_to_start in processes:
+                    for p_to_start in processes.values():
                         for name in p_to_start.searchForNames():
                             if command_str.find(name) != -1:
                                 task = processes[p_to_start.shortName()]
                                 raise Exception('break')
                 except Exception, e:
+                    print e
                     if str(e) != 'break':
                         raise
             if task is not None:
-                debug(task.shortName())
+                #debug(task.shortName())
                 task.process = p
                 task.running_command = command_str
                 task.status = p.status
