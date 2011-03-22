@@ -14,15 +14,15 @@ import traceback
 import time
 import Queue
 
-class Script:
-    def __init__(self, script, timeout, id, seq):
-        self.script = script
-        self.timeout = timeout
-        self.id = id
-        self.seq = seq
-
-    def __repr__(self):
-        return "%s %s" % (self.id, self.seq)
+#class Script:
+#    def __init__(self, script, timeout, id, seq):
+#        self.script = script
+#        self.timeout = timeout
+#        self.id = id
+#        self.seq = seq
+#
+#    def __repr__(self):
+#        return "%s %s" % (self.id, self.seq)
 
 class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
     def __init__(self, node):
@@ -56,13 +56,18 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
         self.__node.send(m, "gui")
     
     def onScriptMessage(self, m):
-        script = Script(m.script, m.timeout, m.id, m.seq)
+        script = m.request;
         debug('received script: %s' % script)
         self.eval_queue.put(script)
 
     def sendScriptResponse(self, script, level, m):
         debug('sending script response to %s: %s' % (script, str(m)))
-        self.send(msg.ScriptResponseMessage(str(m), level, script.id, script.seq))
+        response = msg.ScriptResponse();
+        response.response = str(m)
+        response.level = level
+        response.id = script.id
+        response.seq = script.seq
+        self.send(msg.ScriptResponseMessage(response))
 
     def run(self):
         info('script queue thread started')
