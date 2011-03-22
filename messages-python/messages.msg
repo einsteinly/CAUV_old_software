@@ -291,6 +291,14 @@ group telemetry
         estimate_total : float;
         fraction_remaining : float;
     }
+    message ProcessStatus : 87
+    {
+        process : string;
+        status : string;
+        cpu : float;
+        mem : float;
+        threads : uint32;
+    }
 }
 group image
 {
