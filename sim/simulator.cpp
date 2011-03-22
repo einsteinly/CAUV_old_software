@@ -97,7 +97,7 @@ void Simulator::launchViewer(osg::ref_ptr<osg::Node> root){
 
     foreach(osg::ref_ptr<osg::Camera >  camera, m_simulated_auv->getCameras()){
         if(camera != m_simulated_auv->getPrimaryCamera()){
-            auvView->add
+            auvView->addSlave(camera);
             camera->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
         }
     }
