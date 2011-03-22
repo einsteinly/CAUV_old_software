@@ -39,13 +39,8 @@ class CAUVTask:
                              stdout=open('/dev/null', 'w'),
                              stderr=open('%s-stderr.log' % self.shortName(), 'a'))
 
-#TODO we have some sort of cauv install target?
-if os.uname()[1] == 'red-herring':
-    cmd_prefix = '/home/cauv/cmm/'
-elif os.uname()[1].find('James'):
-    cmd_prefix = '/Users/james/Development/cauv/cmm/'
-else:
-    cmd_prefix = ''
+# global variable, set using command line options
+cmd_prefix = '/usr/local/bin/'
 
 # ---------------------------------------------------------------
 # ---------- List of processes to start / monitor ---------------
@@ -107,18 +102,18 @@ def getProcesses():
     return processes
 
 def printDetails(cauv_task_list, more_details=False):
-    header = 'name\tstatus'
+    header = 'name    \tstatus  '
     if more_details:
-        header += '\tstatus   \tpid\tCPU%\tMem%\tthreads\tcommand'
+        header += '\tpid     \tCPU%\tMem%\tthreads \tcommand '
     info(header)
     info('-' * len(header.expandtabs()))
     for cp in cauv_task_list.values():
-        line = '%s\t%s' % (cp.shortName() , cp.status)
+        line = '%8s\t%8s' % (cp.shortName() , cp.status)
         if more_details and cp.process is not None:
             if cp.threads is None:
                 line += '\t(access denied)'
             else:
-                line += '\t%s\t%.2f\t%.2f\t%s\t%s' % (
+                line += '\t%8s\t%4.2f\t%4.2f\t%8s\t%8s' % (
                     cp.process.pid,
                     cp.cpu,
                     cp.mem,
@@ -126,6 +121,7 @@ def printDetails(cauv_task_list, more_details=False):
                     cp.running_command
                 )
         info(line)
+    info('-' * len(header.expandtabs()))
 
 def broadcastDetails(processes, cauv_node):
     for cp in processes.values():
@@ -169,12 +165,19 @@ if __name__ == '__main__':
     p.add_option('--no-broadcast', dest='broadcast', default=True,
                  action='store_false', help="don't broadcast messages "+\
                  'containing information on running processes')
+    p.add_option('-e', '--exec-prefix', dest='exec_prefix',
+                 default='/usr/local/bin/', type=str,
+                 action='store', help='exec prefix for cauv executables ' +\
+                 '(e.g., /usr/local/bin')
 
     opts, args = p.parse_args()
 
     if len(args) > 0:
         print 'this program takes no arguments'
         exit(1)
+
+    global exec_prefix
+    exec_prefix = opts.exec_prefix
 
     if opts.broadcast:
         cauv_node = node.Node("watch")
