@@ -10,24 +10,27 @@ using namespace cauv;
 
 void emitStructs(){
 #for $s in $structs
-    ## Cheetah fun to generate the boost::python::init object:
-    #set $initString = "bp::init< "
+    ## Add required vector/map types
     #for $i, $f in enumerate($s.fields)
         #if $isSTLVector($f.type)
             $requiredVectorTypes.add($f.type.valType)
         #else if $isSTLMap($f.type)
             $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
         #end if
-        #set $initString = $initString + $toCPPType($f.type)
-        #if $i != $len($s.fields) - 1
-            #set $initString = $initString + ", "
-        #end if
     #end for
-    #set $initString = $initString + " >()"
-    ## NB: init string not used: we don't emit c++ constructors for structs
+
     bp::class_<${s.name}/*,
                boost::shared_ptr<${s.name}>*/
               >("${s.name}")
+        #if $len($s.fields) != 0
+        ## Keyword constructor (still needs all the keys
+        .def( bp::init< #for $i, $f in enumerate($s.fields)#$toCPPType($f.type)#if $i != $len($s.fields) - 1#,#end if# #end for#>( (
+            #for $i, $f in enumerate($s.fields)
+                bp::arg("$f.name")#if $i != $len($s.fields) - 1#,#end if#
+            #end for
+            ) )
+        )
+        #end if
         .def(bp::self_ns::str(bp::self_ns::self)) 
         #for $f in $s.fields
         .def_readwrite("${f.name}", &$s.name::$f.name)
