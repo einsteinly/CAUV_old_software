@@ -16,6 +16,7 @@
 #include <qwt_curve_fitter.h>
 #include <qwt_scale_widget.h>
 #include <qwt_plot_grid.h>
+#include <qwt_plot_magnifier.h>
 
 using namespace cauv;
 
@@ -120,6 +121,11 @@ void GraphWidget::setupPlot() {
     QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
     zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::RightButton);
     zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::MidButton);
+
+    //magnifier
+    QwtPlotMagnifier* magnifier = new QwtPlotMagnifier(m_plot->canvas());
+    magnifier->setMouseButton(Qt::NoButton);
+    magnifier->setAxisEnabled(QwtPlot::yLeft, false);
 
     // panner
     QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
