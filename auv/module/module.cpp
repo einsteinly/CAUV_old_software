@@ -216,7 +216,7 @@ SerialDevice::SerialDevice(const std::string& path,
 
 std::streamsize SerialDevice::read(char* s, std::streamsize n)
 {
-    return boost::asio::read(*m_port, boost::asio::buffer(s, n)); ;
+    return boost::asio::read(*m_port, boost::asio::buffer(s, n), boost::asio::transfer_at_least(1)); ;
 }
 
 std::streamsize SerialDevice::write(const char* s, std::streamsize n)
