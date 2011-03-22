@@ -21,7 +21,7 @@ namespace cauv {
     public:
         CauvConsole(const char * name, QWidget * parent = NULL);
 
-        void execCommand(QString command, QString response, bool writeCommand, bool showPrompt);
+        void execCommand(QString command, QString response, DebugType::e type, bool writeCommand, bool showPrompt);
 
         bool isCommandComplete(QString command);
 
@@ -48,11 +48,11 @@ namespace cauv {
     protected Q_SLOTS:
         void executeCommand(QString s);
 
-        void onResponse(int, QString response);
-        void onResponse(script_exec_response_t response);
+        void onResponse(int, QString response, DebugType::e level);
+        void onResponse(ScriptResponse response);
 
     Q_SIGNALS:
-        void responseReceived(int, QString);
+        void responseReceived(int, QString, DebugType::e);
 
 
     private:

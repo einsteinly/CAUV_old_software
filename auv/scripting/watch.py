@@ -4,9 +4,12 @@ import optparse
 import time
 import subprocess
 import os
+import cauv.messaging as msg
+import cauv.node as node
 
 from cauv.debug import debug, info, warning, error
 
+pid_list = None
 
 class CAUVTask:
     def __init__(self, name, command, restart=True, names=[]):
@@ -14,14 +17,27 @@ class CAUVTask:
         self.__command = command
         self.__restart = restart
         self.__names = names
+        self.process = None
+        self.running_command = None
+        self.status = 'unknown'
+        self.cpu = None
+        self.mem = None
+        self.threads = None
     def command(self):
         return self.__command
     def shortName(self):
         return self.__short_name
     def searchForNames(self):
         return self.__names
+    def doStart(self):
+        return self.__restart
     def start(self):
-        subprocess.Popen(self.__command.split(' '))
+        if(self.__restart):
+            # stdout is logged, so dump it to /dev/null
+            subprocess.Popen(self.__command.split(' '),
+                             #stdout=subprocess.DEVNULL, only in python 3.3
+                             stdout=open('/dev/null', 'w'),
+                             stderr=open('%s-stderr.log' % self.shortName(), 'a'))
 
 #TODO we have some sort of cauv install target?
 if os.uname()[1] == 'red-herring':
@@ -31,89 +47,90 @@ elif os.uname()[1].find('James'):
 else:
     cmd_prefix = ''
 
+# ---------------------------------------------------------------
+# ---------- List of processes to start / monitor ---------------
+# ---------------------------------------------------------------
 processes_to_start = [
-        #       short-name, command,                       restart?, candidate      names
-        CAUVTask('remote', 'nohup /bin/sh ./run.sh ./remote.py > remote-stdout.log 2> remote-stderr.log < /dev/null', True, ['remote.py']),
-        CAUVTask('logger', 'nohup /bin/sh ./run.sh ./logger.py > logger-stdout.log 2> logger-stderr.log < /dev/null', True, ['logger.py']),
-        CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline  > img-pipe-stdout.log 2> img-pipe-stderr.log < /dev/null' % cmd_prefix, True, ['img-pipeline']),
-        CAUVTask('sonar', 'nohup %sauv/bin/sonar > sonar-stdout.log 2> sonar-stderr.log < /dev/null' % cmd_prefix, True, ['sonar']),
-        #CAUVTask('control', 'nohup %sauv/bin/control' % cmd_prefix, True, ['control']),
-        CAUVTask('spread', 'nohup spread', True, ['spread'])
+        CAUVTask(
+            'remote',     # short name
+            'nohup /bin/sh ./run.sh ./remote.py', # command
+            True,         # do start/restart this process
+            ['remote.py'] # list of names to search for in processes
+        ),
+        CAUVTask('logger',   'nohup /bin/sh ./run.sh ./logger.py',        True,  ['logger.py']),
+        CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline' % cmd_prefix, True,  ['img-pipeline']),
+        CAUVTask('sonar',    'nohup %sauv/bin/sonar' % cmd_prefix,        True,  ['sonar']),
+        CAUVTask('control',  'nohup %sauv/bin/control' % cmd_prefix,      False, ['control']),
+        CAUVTask('spread',   'nohup spread',                              True,  ['spread'])
+        CAUVTask('watch',   '',                                           False, ['watch.py'])
 ]
 
-processes_by_command = {}
-
-def updateProcessesByCommand():
-    global processes_by_command
-    processes_by_command = {}
-    for p in processes_to_start:
-        processes_by_command[p.command()] = p
-
-def shortName(command):
-    for p in processes_to_start:
-        if p.command() == command:
-            return p.shortName()
-    return command
-
 def getProcesses():
-    # returns dict command_str : (Process object : actual command string)
+    # returns dictionary of short name : CAUVTasks, all fields filled in
     pids = psutil.get_pid_list()
     # find the pids we're interested in
     processes = {}
+    short_names = {}
     for p in processes_to_start:
-        processes[p.command()] = None
+        processes[p.shortName()] = p
+        short_names[p.command()] = p.shortName()
     for pid in pids:
         try:
             p = psutil.Process(pid)
-            #parent = p.parent
-            #debug('%s %s %s, parent: %s %s %s' % (
-            #    p.exe, p.name, p.cmdline,
-            #    parent.exe, parent.name, parent.cmdline))
             command_str = ' '.join(p.cmdline)
-            if command_str in processes:
-                processes[command_str] = (p, command_str)
+            if command_str in short_names:
+                task = processes[short_names[command_str]]
             else:
-                for p_to_start in processes_to_start:
-                    for name in p_to_start.searchForNames():
-                        if command_str.find(name) != -1:
-                            processes[p_to_start.command()] = (p, command_str)
-            #debug(command_str)
+                try:
+                    for p_to_start in processes:
+                        for name in p_to_start.searchForNames():
+                            if command_str.find(name) != -1:
+                                task = processes[p_to_start.shortName()]
+                                raise Exception('break')
+                except Exception, e:
+                    if str(e) != 'break':
+                        raise
+            if task is not None:
+                task.process = p
+                task.running_command = command_str
+                task.status = p.status
+                self.cpu = p.get_cpu_percent()
+                self.mem = p.get_memory_percent()
+                self.threads = p.get_num_threads()
         except Exception, e:
             #warning('%s\n%s' % (e, traceback.format_exc()))
             pass
     return processes
 
-def printDetails(processes, more_details=False):
+def printDetails(cauv_task_list, more_details=False):
     header = 'name\tstatus'
     if more_details:
         header += '\tstatus   \tpid\tCPU%\tMem%\tthreads\tcommand'
     info(header)
     info('-' * len(header.expandtabs()))
-    for pc in processes:
-        p, actual_command = processes[pc]
-        if p is None:
-            status = 'unknown'
-        else:
-            status = 'active'
-        line = '%s\t%s' % (shortName(pc), status)
-        if more_details and p is not None:
-            line += '\t%s\t%s\t%.2f\t%.2f\t%s\t%s' % (
-                p.status,
-                p.pid,
-                p.get_cpu_percent(),
-                p.get_memory_percent(),
-                p.get_num_threads(),
-                actual_command
+    for cp in processes:
+        line = '%s\t%s' % (cp.shortName() , cp.status)
+        if more_details and processes[pc] is not None:
+            line += '\t%s\t%.2f\t%.2f\t%s\t%s' % (
+                cp.process.pid,
+                cp.cpu,
+                cp.mem,
+                cp.threads,
+                cp.running_command
             )
         info(line)
- 
+
+def broadcastDetails(processes, cauv_node):
+    pass
+
 def startInactive(processes):
     updateProcessesByCommand()
     for pc in processes:
         if processes[pc] is None:
-            info('starting %s (%s)' % (shortName(pc), pc))
-            cauv_task = processes_by_command[pc]
-            cauv_task.start()
+            cauv_task = processes_by_command[pc]            
+            if cauv_task.doStart():
+                info('starting %s (%s)' % (shortName(pc), pc))
+                cauv_task.start()
 
 if __name__ == '__main__':
     p = optparse.OptionParser()
@@ -123,19 +140,28 @@ if __name__ == '__main__':
     p.add_option('-d', '--show-details', dest='details', default=True,
                  action='store_true', help='display additional details')
     p.add_option('-n', '--no-show-details', dest='details',
-                 action='store_false', help='display additional details')
+                 action='store_false', help='hide additional details')
     p.add_option('-p', '--persistent', dest='persistent', default=False,
                  action='store_true', help='keep going until stopped')
-    
+    p.add_option('--no-broadcast', dest='broadcast', default=True,
+                 action='store_false', help="don't broadcast messages "+\
+                 'containing information on running processes')
+
     opts, args = p.parse_args()
 
     if len(args) > 0:
         print 'this program takes no arguments'
         exit(1)
+
+    if opts.broadcast:
+        cauv_node = node.Node("watch")
     
     if opts.no_start:
         while True:
-            printDetails(getProcesses(), opts.details)
+            processes = getProcesses()
+            printDetails(processes, opts.details)
+            if cauv_node:
+                broadcast(processes, node)
             time.sleep(3.0)
             if not opts.persistent:
                 break
@@ -143,6 +169,8 @@ if __name__ == '__main__':
         while True:
             processes = getProcesses()
             printDetails(processes, opts.details)
+            if cauv_node:
+                broadcast(processes, node)
             startInactive(processes)
             time.sleep(3.0)
             if not opts.persistent:

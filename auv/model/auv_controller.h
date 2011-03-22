@@ -48,7 +48,7 @@ public:
     template<class T, class S> void sendAutopilotParamsMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);
     void sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar);
     void sendDepthCalibrationMessage(depth_calibration_t params);
-    void sendScriptMessage(script_exec_request_t script);
+    void sendScriptMessage(ScriptExecRequest script);
 
     typedef boost::signal< void(const boost::shared_ptr<Message>) > message_signal_type;
     message_signal_type onMessageGenerated;

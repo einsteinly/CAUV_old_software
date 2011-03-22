@@ -163,13 +163,27 @@ variant NodeParamValue
 {
     int32, float, string, bool, list<Corner>
 }
+struct ScriptResponse
+{
+    response : string;
+    level : DebugType;
+    id : string;
+    seq : uint32;
+}
+struct ScriptExecRequest
+{
+    script : string;
+    timeout : float;
+    id : string;
+    seq : uint32;
+}
 
 group debug
 {
-	message Debug : 0
-	{
+    message Debug : 0
+    {
         type : DebugType;
-	    msg : string;
+        msg : string;
     }
     message DebugLevel : 1
     {
@@ -250,10 +264,7 @@ group control
 
     message Script : 102
     {
-        script : string;
-        timeout : float;
-        id : string;
-        seq : uint32;
+        request : ScriptExecRequest;
     }
 
     message MotorRampRate : 83
@@ -292,6 +303,14 @@ group telemetry
         estimate_current : float;
         estimate_total : float;
         fraction_remaining : float;
+    }
+    message ProcessStatus : 87
+    {
+        process : string;
+        status : string;
+        cpu : float;
+        mem : float;
+        threads : uint32;
     }
 }
 group image
@@ -422,10 +441,7 @@ group gui
 
     message ScriptResponse : 103
     {
-        response : string;
-        level : DebugType;
-        id : string;
-        seq : uint32;
+        response : ScriptResponse;
     }
 }
 
