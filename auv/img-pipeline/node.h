@@ -27,10 +27,6 @@
 namespace cauv{
 namespace imgproc{
 
-static const char* Image_In_Name = "image in";
-static const char* Image_Out_Name = "image out (not copied)";
-static const char* Image_Out_Copied_Name = "image out";
-
 class Node: public boost::enable_shared_from_this<Node>{
     public:
         // Public typedefs: used as return types
@@ -72,7 +68,12 @@ class Node: public boost::enable_shared_from_this<Node>{
         typedef boost::upgrade_lock<mutex_t> unique_lock_t;
         
         typedef Spread::service service_t;
-    
+   
+    protected:
+        static const char* Image_In_Name;
+        static const char* Image_Out_Name;
+        static const char* Image_Out_Copied_Name;
+
     public:
         // TODO: shouldn't be necessary to pass `type' here!
         Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);

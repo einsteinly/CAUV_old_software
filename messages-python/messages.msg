@@ -50,7 +50,9 @@ enum NodeType : int8 {
     RunningAverage = 40,
     CopyMask = 41,
     FastMedian = 42,
-    FASTCorners = 43
+    FASTCorners = 43,
+    DrawCorners = 44,
+    BroadcastCorners = 45
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -118,10 +120,6 @@ struct TimeStamp
     secs : int32;
     musecs : int32;
 }
-variant NodeParamValue
-{
-    int32, float, string, bool
-}
 struct SonarDataLine
 {
     data: list<byte>;
@@ -160,6 +158,10 @@ struct MotorMap
     zeroMinus : int32;
     maxPlus : int32;
     maxMinus : int32;
+}
+variant NodeParamValue
+{
+    int32, float, string, bool, list<Corner>
 }
 
 group debug

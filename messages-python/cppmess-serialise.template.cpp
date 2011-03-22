@@ -45,7 +45,7 @@ void cauv::serialise(svec_ptr p, $v.name const& v){
         default:
         #for $i, $t in $enumerate($v.types)
         case $i:
-            serialise(p, boost::get<$toCPPType($t)>(v));
+            serialise(p, boost::get< $toCPPType($t) >(v));
             break;
         #end for
     }
