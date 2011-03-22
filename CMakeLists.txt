@@ -67,8 +67,16 @@ endfunction()
 # include the root source dir in the search path for all subprojects
 include_directories (${CAUV_SOURCE_DIR})
 
-message ("Warning: forcing use of boost filesystem version 2")
-add_definitions (-DBOOST_FILESYSTEM_VERSION=2)
+# everything needs boost: 
+find_package (Boost 1.43 REQUIRED)
+set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
+include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
+link_directories (${Boost_LIBRARY_DIRS})
+
+if (Boost_VERSION GREATER 104500)
+    message (STATUS "Warning: forcing use of boost filesystem version 2")
+    add_definitions (-DBOOST_FILESYSTEM_VERSION=2)
+endif()
 
 add_subdirectory (common)
 add_subdirectory (messages-python)
