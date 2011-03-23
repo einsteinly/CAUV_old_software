@@ -32,6 +32,14 @@ cauv::${s.name}::${s.name}(#slurp
 { }
 #end if
 
+bool cauv::${s.name}::operator==(cauv::$s.name const& other) const
+{
+    return
+    #for i, f in $enumerate($s.fields)
+        $f.name == other.$f.name#if $i < $len($s.fields) - 1# &&#else#;#end if
+    #end for
+}
+
 #end for 
 
 

@@ -160,6 +160,8 @@ class Node: public boost::enable_shared_from_this<Node>{
             if(i != m_parameters.end()){
                 debug(1) << "param" << p << "set to" << std::boolalpha << v;
                 i->second = v;
+    
+                sendMessage(boost::make_shared<NodeParametersMessage>(id(), parameters()));
             }else{
                 error e;
                 e << m_parameters.size() << "valid parameters are:";
@@ -191,10 +193,14 @@ class Node: public boost::enable_shared_from_this<Node>{
         template<typename T>
         T param(param_id const& p) const {
             unique_lock_t l(m_parameters_lock);
-            const param_value_map_t::const_iterator i = m_parameters.find(p);
+            param_value_map_t::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 const in_link_map_t::const_iterator j = m_parent_links.find(p);
                 node_ptr_t node;
+                
+                T val = boost::get<T>(i->second);
+                
+                // If there is a parent link, update the current value
                 if(j != m_parent_links.end() && (node = j->second.first)){
                     output_id outparam = j->second.second;
                     assert(node->paramOutputs().count(outparam));
@@ -207,15 +213,22 @@ class Node: public boost::enable_shared_from_this<Node>{
                     //  prevent this happening (somehow...)
                     l.unlock();
                     try{
-                        return boost::get<T>(node->getOutputParam(outparam));
+                        T parentVal = boost::get<T>(node->getOutputParam(outparam));
+                        if (val != parentVal)
+                        {
+                            val = parentVal;
+                            i->second = val;
+                            sendMessage(boost::make_shared<NodeParametersMessage>(id(), parameters()));
+                        }
                     }catch(boost::bad_get& e){
                         warning() << "parameter output not available / bad get:"
                                   << j->second.first << std::boolalpha << j->second.second
                                   << ", non-linked value will be returned";
-
                     }
                 }
-                return boost::get<T>(i->second);
+                
+                // Return current parameter value
+                return val;
             }else{
                 throw(id_error("param: Invalid parameter id: " + toStr(p)));
             }
@@ -289,7 +302,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         }
         void registerInputID(input_id const& i);
 
-        void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS);
+        void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS) const;
         
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)
@@ -348,7 +361,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         mutable mutex_t m_outputs_lock;
         
         /* parameters of the filters */
-        param_value_map_t m_parameters;
+        mutable param_value_map_t m_parameters;
         param_tip_map_t m_parameter_tips;
         mutable mutex_t m_parameters_lock;
 

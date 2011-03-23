@@ -207,7 +207,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     foreach(pm_t::value_type const& j, params){
         str_inparam_map_t::iterator k = m_params.find(j.first);
         if(k == m_params.end()){
-            debug(-3) << BashColour::Blue << *this << "new param:" << j;
+            debug(3) << BashColour::Blue << *this << "new param:" << j;
             InParamPVPair t;
             t.pvpair = makePVPair(this, j, true);
             t.inblob = boost::make_shared<NodeInputParamBlob>(
@@ -217,7 +217,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
             m_contents.push_back(t.inblob);
             m_contents.push_back(t.pvpair);
         }else{
-            debug(-3) << BashColour::Blue << *this << "param updated:" << j;        
+            debug(3) << BashColour::Blue << *this << "param updated:" << j;        
             // leave the 'inblob' alone -- so that any input arc to it remains
             // valid -- but replace the parameter-value-pair:
             renderable_list_t::iterator i = std::find(

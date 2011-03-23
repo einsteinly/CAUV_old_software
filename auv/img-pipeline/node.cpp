@@ -574,7 +574,7 @@ void Node::checkAddSched(SchedMode m){
     m_sched.addJob(shared_from_this(), m_priority);
 }
 
-void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p){
+void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p) const {
     m_pl.sendMessage(m, p);
 }
 

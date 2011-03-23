@@ -92,7 +92,6 @@ class Node: public Draggable,
         virtual void remove(renderable_ptr_t);
         virtual void refreshLayout();
 
-        // specialized for known param types in node.cpp
         template<typename value_T>
         void paramValueChanged(std::string const& param, value_T const& v){
             debug() << "Node::paramValueChanged" << param << v;
