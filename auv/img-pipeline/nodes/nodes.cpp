@@ -43,6 +43,8 @@
 #include "copyNodeMask.h"
 #include "fastMedianNode.h"
 #include "fastCornersNode.h"
+#include "drawCornersNode.h"
+#include "broadcastCornersNode.h"
 
 using namespace cauv::imgproc;
 
@@ -90,6 +92,8 @@ DEFINE_NFR(RunningAverageNode, NodeType::RunningAverage);
 DEFINE_NFR(CopyNodeMask, NodeType::CopyMask);
 DEFINE_NFR(FastMedianNode, NodeType::FastMedian);
 DEFINE_NFR(FASTCornersNode, NodeType::FASTCorners);
+DEFINE_NFR(DrawCornersNode, NodeType::DrawCorners);
+DEFINE_NFR(BroadcastCornersNode, NodeType::BroadcastCorners);
 
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];

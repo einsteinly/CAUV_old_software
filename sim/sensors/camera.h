@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <osg/Camera>
+#include <osgViewer/View>
 
 namespace osg {
     class Texture2D;
@@ -12,7 +12,7 @@ namespace cauv {
 
     namespace sim {
 
-        class Camera : public osg::Camera
+        class Camera : public osgViewer::View
         {
         public:
             Camera(int width = 200, int height = 200);

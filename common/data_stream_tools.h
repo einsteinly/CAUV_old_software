@@ -145,8 +145,10 @@ namespace cauv {
         void setNumSamples(const unsigned int samples){
             boost::mutex::scoped_lock lock(m_mutex);
             m_numSamples = samples;
-            if(m_numSamples < m_history.size())
+            if(m_numSamples < m_history.size()) {
+                m_timestamps.resize(m_numSamples);
                 m_history.resize(m_numSamples);
+            }
         }
 
         unsigned int getNumSamples(){

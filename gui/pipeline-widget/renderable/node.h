@@ -4,11 +4,14 @@
 #include <vector>
 #include <set>
 
+#include <boost/make_shared.hpp>
+
 #include <generated/messages_fwd.h>
 #include <debug/cauv_debug.h>
 
 #include "../container.h"
 #include "../pwTypes.h"
+#include "../pipelineWidget.h"
 #include "draggable.h"
 
 // eww, can't forward declare enums (or boost variants of standard library
@@ -92,8 +95,15 @@ class Node: public Draggable,
         // specialized for known param types in node.cpp
         template<typename value_T>
         void paramValueChanged(std::string const& param, value_T const& v){
-            error() << "unimplemented param type for" << param << "=" << v
-                    <<", (n="<< id() <<")";
+            debug() << "Node::paramValueChanged" << param << v;
+            boost::shared_ptr<SetNodeParameterMessage> sp =
+                boost::make_shared<SetNodeParameterMessage>();
+            NodeParamValue pv = v;
+
+            sp->nodeId(m_node_id);
+            sp->paramId(param);
+            sp->value(pv);
+            m_pw->send(sp);
         }
     
     protected:

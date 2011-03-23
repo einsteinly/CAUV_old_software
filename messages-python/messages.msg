@@ -50,7 +50,9 @@ enum NodeType : int8 {
     RunningAverage = 40,
     CopyMask = 41,
     FastMedian = 42,
-    FASTCorners = 43
+    FASTCorners = 43,
+    DrawCorners = 44,
+    BroadcastCorners = 45
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -66,7 +68,8 @@ enum ParamType : int8 {
     Int32 = 0,
     Float = 1,
     String = 2,
-    Bool = 3
+    Bool = 3,
+    CornerList = 4
 }
 enum OutputType : int8 {
     Image = 0,
@@ -118,10 +121,6 @@ struct TimeStamp
     secs : int32;
     musecs : int32;
 }
-variant NodeParamValue
-{
-    int32, float, string, bool
-}
 struct SonarDataLine
 {
     data: list<byte>;
@@ -161,13 +160,31 @@ struct MotorMap
     maxPlus : int32;
     maxMinus : int32;
 }
+variant NodeParamValue
+{
+    int32, float, string, bool, list<Corner>
+}
+struct ScriptResponse
+{
+    response : string;
+    level : DebugType;
+    id : string;
+    seq : uint32;
+}
+struct ScriptExecRequest
+{
+    script : string;
+    timeout : float;
+    id : string;
+    seq : uint32;
+}
 
 group debug
 {
-	message Debug : 0
-	{
+    message Debug : 0
+    {
         type : DebugType;
-	    msg : string;
+        msg : string;
     }
     message DebugLevel : 1
     {
@@ -248,10 +265,7 @@ group control
 
     message Script : 102
     {
-        script : string;
-        timeout : float;
-        id : string;
-        seq : uint32;
+        request : ScriptExecRequest;
     }
 
     message MotorRampRate : 83
@@ -290,6 +304,14 @@ group telemetry
         estimate_current : float;
         estimate_total : float;
         fraction_remaining : float;
+    }
+    message ProcessStatus : 87
+    {
+        process : string;
+        status : string;
+        cpu : float;
+        mem : float;
+        threads : uint32;
     }
 }
 group image
@@ -420,10 +442,7 @@ group gui
 
     message ScriptResponse : 103
     {
-        response : string;
-        level : DebugType;
-        id : string;
-        seq : uint32;
+        response : ScriptResponse;
     }
 }
 
