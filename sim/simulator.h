@@ -43,7 +43,7 @@ namespace cauv {
         protected:
             virtual void onRun();
 
-            virtual void launchViewer(osg::ref_ptr<osg::Node> root);
+            virtual void launchViewer(osg::ref_ptr<osg::Group> root);
 
             int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
             void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);

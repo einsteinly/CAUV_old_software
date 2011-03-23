@@ -24,12 +24,13 @@ int main(int argc, char** argv)
     int ret = sim.parseOptions(argc, argv);
     if(ret != 0) return ret;
 
-    //osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/openscenegraph/OpenSceneGraph-Data");
-    //osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/osgOcean/osgOcean");
-    //const std::string filename = "cessnafire.osg";
-    //osg::ref_ptr<osg::Node> ces = osgDB::readNodeFile(filename);
+    osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/osg/OpenSceneGraph-Data");
+    osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/osgOcean/osgOcean");
+    const std::string filename = "cow.osg";
+    osg::ref_ptr<osg::Node> ces = osgDB::readNodeFile(filename);
 
-
+    if(!ces)
+        error() << "cessna could not be loaded";
 
     //osg::StateSet* cesState = ces->getOrCreateStateSet();
 
@@ -49,12 +50,14 @@ int main(int argc, char** argv)
 
     //cesState->setAttributeAndModes(someProgram, osg::StateAttribute::ON);
 
-    //osg::PositionAttitudeTransform * pat = new osg::PositionAttitudeTransform();
-    //pat->setPosition(osg::Vec3f(0,1.f,0));
-    //pat->addChild(ces);
+    osg::PositionAttitudeTransform * pat = new osg::PositionAttitudeTransform();
+    pat->setPosition(osg::Vec3f(0,0,0));
+    pat->addChild(ces);
 
     //scene->addChild(pat);
     //sim.getWorldModel()->addChild(sim.getWorldModel()->getOceanSceneModel()->getScene());
+
+    //sim.getWorldModel()->addChild(pat);
 
     sim.run();
 
