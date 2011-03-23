@@ -2,6 +2,8 @@
 
 #include <QtOpenGL>
 
+#include <debug/cauv_debug.h>
+
 const static double Small_Value_D = 1e-6;
 
 template<>
@@ -138,3 +140,30 @@ void glColor(Colour const& c){
     glColor4fv(c.rgba);
 }
 
+void _printGlErr(int err, const char* file, int line) {
+	switch(GLuint(err)) {
+		case 0:
+			break;
+		case GL_INVALID_ENUM:
+			error() << "GL_INVALID_ENUM: " << file << ":" << line;
+			break;
+		case GL_INVALID_VALUE:
+			error() << "GL_INVALID_VALUE: " << file << ":" << line;
+			break;
+		case GL_INVALID_OPERATION:
+			error() << "GL_INVALID_OPERATION: " << file << ":" << line;
+			break;
+		case GL_STACK_OVERFLOW:
+			error() << "GL_STACK_OVERFLOW: " << file << ":" << line;
+			break;
+		case GL_STACK_UNDERFLOW:
+			error() << "GL_STACK_UNDERFLOW: " << file << ":" << line;
+			break;
+		case GL_OUT_OF_MEMORY:
+			error() << "GL_OUT_OF_MEMORY: " << file << ":" << line;
+			break;
+		default:
+			error() << "unknown OpenGL error: " << file << ":" << line;
+			break;
+	}
+}

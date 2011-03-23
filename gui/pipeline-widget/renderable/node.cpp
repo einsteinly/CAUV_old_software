@@ -170,12 +170,13 @@ static boost::shared_ptr<PVPairEditableBase> makePVPair(
             return boost::make_shared<PVPair<std::string> >(
                     n, p.first, boost::get<std::string>(p.second), editable
                 );
-        default:
-            error() << "unknown ParamType";
         case ParamType::Bool:
             return boost::make_shared<PVPair<bool> >(
                     n, p.first, boost::get<bool>(p.second), editable
                 );
+        default:
+            error() << "unknown ParamType";
+            return boost::shared_ptr<PVPairEditableBase>();
     }
 }
 

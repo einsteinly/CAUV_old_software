@@ -68,7 +68,8 @@ enum ParamType : int8 {
     Int32 = 0,
     Float = 1,
     String = 2,
-    Bool = 3
+    Bool = 3,
+    CornerList = 4
 }
 enum OutputType : int8 {
     Image = 0,

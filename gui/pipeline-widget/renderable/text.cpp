@@ -39,7 +39,7 @@ void Text::draw(drawtype_e::e){
     glColor(m_colour);
     font()->Render(c_str());	// this bit is the bit that writes the text
     // instead of using font() ->render() use m_context->postText(text,font);
-    glPrintErr();
+    glCheckError();
     
     glPopMatrix();
     glPopAttrib();

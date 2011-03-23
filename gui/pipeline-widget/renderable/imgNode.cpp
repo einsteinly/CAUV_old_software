@@ -10,6 +10,8 @@
 #include <common/image.h>
 #include <debug/cauv_debug.h>
 
+#include "../util.h"
+
 namespace cauv{
 namespace pw{
 
@@ -22,6 +24,7 @@ static struct _TFD: public std::vector<GLuint>{
     void deleteAndClear(){
         if(int n = size()){
             glDeleteTextures(n, &operator[](0));
+            glCheckError();
             clear();
         }
     }
@@ -78,8 +81,12 @@ class TexImg{
             }
             m_img.reset();
             
+            debug(4) << "Generating teximg texture";
+
             glGenTextures(1, &m_tex_id);
             glBindTexture(GL_TEXTURE_2D, m_tex_id);
+
+            glCheckError();
 
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
@@ -92,8 +99,10 @@ class TexImg{
             cv::Mat m;
             GLint max_size = 0;
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
+            
+            glCheckError();
 
-            debug() << "max texture size:" << max_size;
+            debug(5) << "max texture size:" << max_size;
             if(!max_size){
                 error() << "cannot create texture";
                 return;
@@ -147,6 +156,8 @@ class TexImg{
                 gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGR, tex_type, m.data);
             else if(m.channels() == 1)
                 gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_LUMINANCE, tex_type, m.data);
+            
+            glCheckError();
         }
 
         boost::shared_ptr<Image> m_img;
@@ -163,20 +174,39 @@ Img::Img(container_ptr_t c)
 }
 
 void Img::draw(drawtype_e::e flags){
+
     // delete any textures waiting to be deleted
     Textures_For_Deleting.deleteAndClear();
-
+    
     glColor(Colour(0.2, 0.5));
     glBox(m_bbox);
+    
+    {
+        boost::lock_guard<boost::mutex> l(m_img_mutex);
+        if (m_next_img)
+        {
+            m_img.swap(m_next_img);
+            m_next_img.reset();
+        }
+    }
+
     if(!(flags & drawtype_e::picking) && m_img)
         m_img->draw(m_bbox);
     Resizeable::drawHandle();
 }
 
 void Img::display(Image const& img){
-    m_img = boost::make_shared<TexImg>(img);
+    debug(6) << __func__ << "enter";
+    boost::shared_ptr<TexImg> next_img = boost::make_shared<TexImg>(img);
+    
+    {
+        boost::lock_guard<boost::mutex> l(m_img_mutex);
+        m_next_img = next_img;
+    }
+
     aspect(double(img.cvMat().cols) / img.cvMat().rows);
     m_context->postRedraw(0);
+    debug(6) << __func__ << "exit";
 }
 
 
