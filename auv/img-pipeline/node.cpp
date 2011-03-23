@@ -7,6 +7,11 @@
 using namespace cauv;
 using namespace cauv::imgproc;
 
+const char* Node::Image_In_Name = "image in";
+const char* Node::Image_Out_Name = "image out (not copied)";
+const char* Node::Image_Out_Copied_Name = "image out";
+
+
 Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
     : m_priority(priority_slow),
       m_speed(slow),

@@ -13,12 +13,6 @@ else()
     # shiny OpenGL
     find_package(OpenGL REQUIRED)
 
-    # boost: 
-    find_package (Boost 1.40 REQUIRED)
-    set (LIBS ${LIBS} ${Boost_LIBRARIES}) 
-    include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
-    link_directories (${Boost_LIBRARY_DIRS})
-
     find_package (OpenCV REQUIRED)
 
     add_subdirectory (pipeline-widget)

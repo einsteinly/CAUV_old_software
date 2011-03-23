@@ -23,6 +23,8 @@
 using namespace std;
 using namespace cauv;
 
+const static float Integral_Max_Kp_Mult = 100;
+
 void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {
     debug() << "Starting alive message thread";
@@ -70,7 +72,7 @@ struct PIDControl
 
     PIDControl(Controller::e controlee=Controller::NumValues)
         : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
-          integral(0), is_angle(false), retain_samples_msecs(200)
+          integral(0), is_angle(false), retain_samples_msecs(500)
     {
         previous_time.secs = 0;
     }
@@ -156,6 +158,7 @@ struct PIDControl
         previous_time = tnow;
 
         integral += error*dt;
+        integral = clamp(-Integral_Max_Kp_Mult*Kp, integral, Integral_Max_Kp_Mult*Kp);
         double de = smoothedDerivative();
         previous_derror = de;
         previous_mv =  scale * (Kp * error + Ki * integral + Kd * de);
@@ -218,7 +221,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
     public:
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
             : prop_value(0), hbow_value(0), vbow_value(0),
-              hstern_value(0), vstern_value(0), m_max_motor_delta(255/*12*/),
+              hstern_value(0), vstern_value(0), m_max_motor_delta(255),
               m_motor_updates_per_second(5), m_mb(mb)
         {
             const MotorMap def(5, -5, 127, -127);

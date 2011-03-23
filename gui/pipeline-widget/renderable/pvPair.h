@@ -1,6 +1,8 @@
 #ifndef __PV_PAIR_H__
 #define __PV_PAIR_H__
 
+#include <boost/lexical_cast.hpp>
+
 #include <utility/string.h>
 #include <debug/debug.h>
 
@@ -101,9 +103,7 @@ class PVPair: public PVPairEditableBase{
 
     private:
         static void onValueChanged(PVPair const& pvp, std::string const& s){
-            std::istringstream is(s);
-            value_T v;
-            is >> std::noskipws >> std::boolalpha >> v;
+            value_T v = boost::lexical_cast<value_T>(s);
             debug() << "PVPair: Edit done:" << s << "=" << std::boolalpha << v;
             pvp.m_node->paramValueChanged(*pvp.m_param, v);
         }

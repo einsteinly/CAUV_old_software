@@ -36,7 +36,7 @@ struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
   #for $t in $v.types 
     #set $pytype = $CPPContainerTypeName($t)    
     $toCPPType($t) to_${pytype}() const{
-        return boost::get<$toCPPType($t)>(*this);
+        return boost::get< $toCPPType($t) >(*this);
     }
     static boost::shared_ptr<${v.name}Wrapper> from_${pytype}($toCPPType($t) const& v){
         return boost::make_shared<${v.name}Wrapper>(v);
@@ -53,7 +53,7 @@ void emitVariants(){
     bp::class_<$className>("${v.name}")
       #for $t in $v.types
         #set $pytype = $CPPContainerTypeName($t)
-        ##.def(bp::init<$toCPPType($t)>()) see note above
+        ##.def(bp::init< $toCPPType($t) >()) see note above
         .def("from_${pytype}", &${className}::from_${pytype})
         .staticmethod("from_${pytype}")
       #end for
