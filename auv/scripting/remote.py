@@ -8,6 +8,7 @@ import cauv.pipeline
 
 from cauv.debug import debug, warning, error, info
 
+import subprocess
 import threading
 import copy
 import traceback
@@ -49,7 +50,9 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
             "auv" : auv,
             "control" : cauv.control,
             "pipeline" : plmodel,
-            "msg" : cauv.messaging
+            "msg" : cauv.messaging,
+            "run" : self.runScript,
+            "help" : self.printHelp
         }
 
     def send(self, m):
@@ -94,6 +97,24 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
             message = 'script returned: ' + str(r)
             info(message)
             self.sendScriptResponse(script, msg.DebugType.Info, message)
+    
+    def runScript(self, sendFunc, script_name):
+        #subprocess.popen('/bin/sh ./run.sh ./script-library/%s' % script_name)
+        sendFunc('not implemented')
+    
+    def printHelp(self, sendFund):
+        sendFunc('''
+Available objects and functions:
+    response(message, level=msg.DebugType.Info) # sends response to GUI
+    node     # cauv.control.Node object
+    auv      # cauv.control.AUV
+    control  # cauv.control module
+    pipeline # cauv.cauv.pipeline.Model object: use to load and save pipelines
+    msg      # cauv.messaging module: C++ exposed types are msg.TypeName
+    run(script name) # NOT COMPLETE: run a script from the library
+    help()   # print this help message
+''')
+        
 
 def main():
     n = node.Node("pyscript")
