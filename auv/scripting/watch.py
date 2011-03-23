@@ -57,7 +57,7 @@ processes_to_start = [
         CAUVTask('sonar',    'nohup %sauv/bin/sonar' % cmd_prefix,        True,  ['sonar']),
         CAUVTask('control',  'nohup %sauv/bin/control' % cmd_prefix,      False, ['control']),
         CAUVTask('spread',   'nohup spread',                              True,  ['spread']),
-        CAUVTask('watch',    '',                                          False, ['watch.py'])
+        CAUVTask('watch',    '',                                          False, ['watch.py']),
         CAUVTask('watch',    'nohup /bin/sh ./run.sh ./battery_monitor.py', True,  ['battery_monitor.py']) ]
 
 def getProcesses():
