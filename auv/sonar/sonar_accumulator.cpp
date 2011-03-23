@@ -6,7 +6,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
 
-#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
 
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>

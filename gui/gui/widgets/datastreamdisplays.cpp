@@ -1,6 +1,9 @@
 
 #include <boost/signals2.hpp>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "datastreamdisplays.h"
 #include "ui_datastreamdisplays.h"
 
@@ -10,7 +13,6 @@
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>
-#include <opencv/cv.h>
 
 
 using namespace cauv;

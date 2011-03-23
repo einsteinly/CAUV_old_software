@@ -6,9 +6,7 @@
 #include <string>
 #include <cmath>
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#include <opencv/cvaux.h>
+#include <opencv2/core/core.hpp>
 
 #include <generated/messages.h>
 

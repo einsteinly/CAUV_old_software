@@ -9,7 +9,7 @@
 #include <boost/random/uniform_smallint.hpp>
 #include <boost/random/variate_generator.hpp>
 
-#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
 
 #include <common/cauv_utils.h>
 #include "../node.h"
