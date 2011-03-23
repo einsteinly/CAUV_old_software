@@ -527,7 +527,7 @@ bool OverKey::keyPressEvent(KeyEvent const& event){
             }
     /*}*/
 
-    m_current_modifiers &= ~(Qt::ControlModifier | AltModifier | MetaModifier);
+    m_current_modifiers &= ~(Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
     
     if(!event.isAutoRepeat())
         debug() << "keyPressEvent:" << event.text().toStdString() << "k=" << b.keycode
