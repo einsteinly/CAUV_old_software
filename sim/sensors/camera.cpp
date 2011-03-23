@@ -12,7 +12,7 @@ using namespace cauv::sim;
 Camera::Camera(int width, int height) //: m_renderTexture(new osg::Texture2D)
 {
 
-    setUpAsHUD();
+    //setUpAsHUD();
 
     /*
     // set the projection matrix
@@ -69,7 +69,7 @@ osg::ref_ptr<osg::Image> Camera::getImage(){
 
 
 void Camera::setUpAsHUD() {
-
+/*
     // set the projection matrix
     this->setProjectionMatrix(osg::Matrix::ortho2D(0,1280,0,1024));
 
@@ -210,4 +210,6 @@ void Camera::setUpAsHUD() {
     }
 
     this->addChild(geode);
+
+    */
 }

@@ -84,7 +84,7 @@ def getProcesses():
                                 task = processes[p_to_start.shortName()]
                                 raise Exception('break')
                 except Exception, e:
-                    print e
+                    #print e
                     if str(e) != 'break':
                         raise
             if task is not None:

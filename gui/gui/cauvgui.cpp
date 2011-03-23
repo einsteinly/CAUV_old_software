@@ -77,7 +77,7 @@ void CauvGui::closeEvent(QCloseEvent*){
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
-    debug(0) << "Sending message: " << *message;
+    debug(5) << "Sending message: " << *message;
     return CauvNode::send(message);
 }
 

@@ -131,7 +131,6 @@ m_scene(new osg::Group)
 
     m_scene->addChild( m_lightSource );
     m_scene->addChild( m_oceanScene.get() );
-    //m_scene->addChild( sunDebug(_sunPositions[CLOUDY]) );
 
 }
 

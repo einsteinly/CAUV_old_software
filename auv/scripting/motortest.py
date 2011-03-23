@@ -21,7 +21,7 @@ def setupParams(node, auv):
     ), "control")
 
     auv.bearingParams(1, 0, -80, 1)
-    auv.depthParams(-40, 0, 0, 1)
+    auv.depthParams(40, 0.01, 0, 1)
     auv.pitchParams(1, 0, 0, 1)
 
     auv.propMap(10, -10, 127, -127)
