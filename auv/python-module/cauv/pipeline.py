@@ -225,9 +225,9 @@ class Model(messaging.BufferedMessageObserver):
         self.node_added_condition.notify()
         self.node_added_condition.release()
 
-    def onNodeRemovedMessage(self, m):
-        #print m
-        pass
+    #def onNodeRemovedMessage(self, m):
+    #    #print m
+    #    pass
 
     def onNodeParametersMessage(self, m):
         # TODO: be discriminating about whether this parameter message actually
@@ -249,21 +249,21 @@ class Model(messaging.BufferedMessageObserver):
         self.arc_added_condition.notify()
         self.arc_added_condition.release()
 
-    def onArcRemovedMessage(self, m):
-        #print m
-        pass
+    #def onArcRemovedMessage(self, m):
+    #    #print m
+    #    pass
 
-    def onStatusMessage(self, m):
-        #print m
-        pass
+    #def onStatusMessage(self, m):
+    #    #print m
+    #    pass
 
-    def onInputStatusMessage(self, m):
-        #print m
-        pass
+    #def onInputStatusMessage(self, m):
+    #    #print m
+    #    pass
     
-    def onOutputStatusMessage(self, m):
-        #print m
-        pass
+    #def onOutputStatusMessage(self, m):
+    #    #print m
+    #    pass
     
     #def onGuiImageMessage(self, m):
     #    #print m
