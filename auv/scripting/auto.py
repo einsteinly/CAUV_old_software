@@ -30,7 +30,7 @@ class DummyAUV:
         if not Effects.pitch in self.effects:
             self.effects.append(Effects.pitch)
     def strafe(self, speed):
-        if not Effects.strage in self.effects:
+        if not Effects.strafe in self.effects:
             self.effects.append(Effects.strafe)
     def prop(self, speed):
         if not Effects.prop in self.effects:
@@ -60,8 +60,8 @@ class DemandWrap:
     def __init__(self, demand):
         self.demand = demand
         self.dummy = DummyAUV()
-        demand.execute(dummy)
-        demand.cleanup(dummy)
+        demand.execute(self.dummy)
+        demand.cleanup(self.dummy)
 
 class Controller(msg.AIMessageObserver):
     def __init__(self, auv):
