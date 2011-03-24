@@ -64,7 +64,7 @@ class CentreFinderNode : public OutputNode{
 
             for(int i = 0; i < img->cvMat().cols; i++){
                 for(int j = 0; j < img->cvMat().rows; j++){
-                    if(img->cvMat().at<uint8_t>(i, j) > 127){
+                    if(img->cvMat().at<uint8_t>(j, i) > 127){
                         totalX += i;
                         totalY += j;
                         sum++;
