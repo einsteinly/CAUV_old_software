@@ -150,7 +150,8 @@ def startInactive(cauv_task_list):
     for cauv_task in processes.values():
         if cauv_task.process is None:
             if cauv_task.doStart():
-                info('starting %s (%s)' % (cauv_task.shortName(), cauv_task.command))
+                info('starting %s (%s)' % (cauv_task.shortName(),
+                     cauv_task.commandi()))
                 cauv_task.start()
 
 if __name__ == '__main__':
@@ -185,14 +186,17 @@ if __name__ == '__main__':
     if opts.broadcast:
         cauv_node = node.Node("watch")
     
-    while True:
-        processes = getProcesses()
-        printDetails(processes, opts.details)
-        if cauv_node is not None:
-            broadcastDetails(processes, cauv_node)
-        if not opts.no_start:
-            startInactive(processes)
-        time.sleep(3.0)
-        if not opts.persistent:
-            break
+    try:
+        while True:
+            processes = getProcesses()
+            printDetails(processes, opts.details)
+            if cauv_node is not None:
+                broadcastDetails(processes, cauv_node)
+            if not opts.no_start:
+                startInactive(processes)
+            time.sleep(3.0)
+            if not opts.persistent:
+                break
+    except KeyboardInterrupt:
+        info('Interrupt caught, exiting...')
 
