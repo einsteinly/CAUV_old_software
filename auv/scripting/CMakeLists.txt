@@ -30,3 +30,16 @@ add_custom_target (pycamtest
 )
 add_dependencies(pycamtest python-module)
 
+
+set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
+set (RCFILE ${CAUV_SOURCE_DIR}/pylint.rc)
+file (GLOB PY_FILES "${SRCD}/*.py")
+add_custom_target(
+    run-pylint-scripting ALL
+    DEPENDS ${PY_FILES}
+    COMMAND pylint -E --rcfile=${RCFILE} ${PY_FILES} || true
+    WORKING_DIRECTORY ${SRCD}    
+    COMMENT "running pylint on scripting/*.py"
+    SOURCES ${PY_FILES}
+)
+

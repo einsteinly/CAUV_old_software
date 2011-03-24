@@ -4,6 +4,8 @@ from debug import debug, warning, error, info
 import threading
 import pickle
 
+#pylint: disable=E1101
+
 intParam = messaging.NodeParamValue.from_int32
 stringParam = messaging.NodeParamValue.from_string
 boolParam = messaging.NodeParamValue.from_bool
