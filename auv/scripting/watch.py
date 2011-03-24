@@ -60,7 +60,7 @@ processes_to_start = [
 
 def limitLength(string, length=40):
     string = string.replace('\n', '\\ ')
-    if length >= 3:
+    if length >= 3 and len(string) > length:
         string = string[:length-3] + '...'
     return string
 
