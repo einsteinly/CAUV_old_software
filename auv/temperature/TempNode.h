@@ -7,7 +7,7 @@
 #include <string>
 #include <cstdio>
 
-typedef std::vector<float> floatvec;
+typedef std::vector<double> doublevec;
 
 class TempNode : public CauvNode
 {
@@ -15,12 +15,13 @@ class TempNode : public CauvNode
     TempNode(std::string f);
     ~TempNode();
     int SetConfigFile(std::string f);
+    void GetChipNames();
+    void GetFeatureData(sensors_chip_name *chip_name);
   protected:
     virtual void onRun();
   private:
-    floatvec temps();
+    doublevec temps();
     std::string f__;
     FILE *file__;
-    std::vector<sensors_chip_name*> sensors;
-    std::vector<sensors_feature_data> features;
+    std::map<sensors_chip_name*, std::vector<sensors_feature_data*> > chips;
 };
