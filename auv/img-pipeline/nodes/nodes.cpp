@@ -46,6 +46,7 @@
 #include "drawCornersNode.h"
 #include "broadcastCornersNode.h"
 #include "shiTomasiCornersNode.h"
+#include "pyramidNode.h"
 
 #include "nullParamNode.h"
 

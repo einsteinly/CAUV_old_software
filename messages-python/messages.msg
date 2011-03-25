@@ -54,6 +54,7 @@ enum NodeType : int8 {
     DrawCorners = 44,
     BroadcastCorners = 45,
     ShiTomasiCorners = 46,
+    PyramidNode = 47,
     
     NullParam = 254,
     Null = 255
@@ -316,6 +317,13 @@ group telemetry
         cpu : float;
         mem : float;
         threads : uint32;
+    }
+    message Location : 88
+    {
+        latitude : double;
+        longitude : double;
+        altitude : float;
+        speed : floatXYZ;
     }
 }
 group image
