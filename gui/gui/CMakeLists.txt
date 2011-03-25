@@ -114,7 +114,7 @@ else()
     include_directories (${AUV_SOURCE_DIR})
 
     add_executable (
-        guicpp EXCLUDE_FROM_ALL
+        guicpp
 
         ${GUICPP_SRCS}
         ${GUICPP_UIS_H}
