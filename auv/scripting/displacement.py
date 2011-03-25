@@ -22,6 +22,7 @@ class Displacement(messaging.BufferedMessageObserver):
         self.speed = 0
         self.bearing = 0
         self.gotBearing = False
+	self.speedConstant = 1
 
     def getDisplacement(self):
         self.update.acquire()
@@ -31,7 +32,8 @@ class Displacement(messaging.BufferedMessageObserver):
 
     def integrate(self):
         while True:
-            self.update.acquire()
+            print("test")
+	    self.update.acquire()
             self.update.wait()
             if self.gotBearing == False:
                 continue
@@ -39,19 +41,21 @@ class Displacement(messaging.BufferedMessageObserver):
             self.displacementN += math.cos(self.bearing) * self.speed
             self.update.release()
 
-    def onMotorMessage(self, m):
+    def onMotorStateMessage(self, m):
+        #onMotorMessage(self, m):
         if m.motorId == messaging.MotorID.Prop:
-            print 'Speed: %d' % m.speed
+            print 'Speed: %d' % (im.speed * speedConstant)
             self.update.acquire()
-            self.speed = m.speed
+            self.speed = m.speed * speedConstant
             self.update.notify()
             self.update.release()
 
-    def onBearingAutopilotEnabledMessage(self, m):
-        if m.enabled == True:
-            print 'Bearing: %d' % m.target
+    def onTelemetryMessage(self, m):
+        #onBearingAutopilotEnabledMessage(self, m):
+        #if m.enabled == True:
+            print 'Bearing: %d' % m.orentation#target
             self.update.acquire()
-            self.bearing = m.target
+            self.bearing = m.orientation#target
             self.gotBearing == True
             self.update.notify()
             self.update.release()
@@ -59,7 +63,10 @@ class Displacement(messaging.BufferedMessageObserver):
 if __name__ == '__main__':
     node = cauv.node.Node('Disp')
     auv = control.AUV(node)
+    print "1"
     d = Displacement(node)
+    print "2"
     d.integrate()
+    print "3"
     while True:
         time.sleep(5)
