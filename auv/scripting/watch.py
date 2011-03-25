@@ -9,6 +9,9 @@ import cauv.node as node
 
 from cauv.debug import debug, info, warning, error
 
+CPU_Poll_Time = 0.05
+Poll_Delay = 2.0
+
 class CAUVTask:
     def __init__(self, name, command, restart=True, names=[]):
         self.__short_name = name
@@ -96,7 +99,7 @@ def getProcesses():
                 task.process = process
                 task.running_command = command_str
                 task.status = process.status
-                task.cpu = process.get_cpu_percent()
+                task.cpu = process.get_cpu_percent(CPU_Poll_Time)
                 task.mem = process.get_memory_percent()
                 task.threads = process.get_num_threads()
         except psutil.AccessDenied:
@@ -194,7 +197,7 @@ if __name__ == '__main__':
                 broadcastDetails(processes, cauv_node)
             if not opts.no_start:
                 startInactive(processes)
-            time.sleep(3.0)
+            time.sleep(Poll_Delay)
             if not opts.persistent:
                 break
     except KeyboardInterrupt:
