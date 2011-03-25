@@ -53,7 +53,10 @@ enum NodeType : int8 {
     FASTCorners = 43,
     DrawCorners = 44,
     BroadcastCorners = 45,
-    ShiTomasiCorners = 46
+    ShiTomasiCorners = 46,
+    
+    NullParam = 254,
+    Null = 255
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

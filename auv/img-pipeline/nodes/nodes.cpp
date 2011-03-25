@@ -47,6 +47,8 @@
 #include "broadcastCornersNode.h"
 #include "shiTomasiCornersNode.h"
 
+#include "nullParamNode.h"
+
 using namespace cauv::imgproc;
 
 // Register node types (actually definitions of static data members)
@@ -96,6 +98,8 @@ DEFINE_NFR(FASTCornersNode, NodeType::FASTCorners);
 DEFINE_NFR(DrawCornersNode, NodeType::DrawCorners);
 DEFINE_NFR(BroadcastCornersNode, NodeType::BroadcastCorners);
 DEFINE_NFR(ShiTomasiCornersNode, NodeType::ShiTomasiCorners);
+
+DEFINE_NFR(NullParamNode, NodeType::NullParam);
 
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
