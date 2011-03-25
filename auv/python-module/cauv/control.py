@@ -2,6 +2,8 @@ import messaging
 import threading
 import time
 
+#pylint: disable=E1101
+
 class AUV(messaging.BufferedMessageObserver):
     def __init__(self, node):
         messaging.BufferedMessageObserver.__init__(self)

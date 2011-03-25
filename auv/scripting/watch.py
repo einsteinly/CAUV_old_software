@@ -9,7 +9,8 @@ import cauv.node as node
 
 from cauv.debug import debug, info, warning, error
 
-pid_list = None
+CPU_Poll_Time = 0.05
+Poll_Delay = 2.0
 
 class CAUVTask:
     def __init__(self, name, command, restart=True, names=[]):
@@ -54,11 +55,17 @@ processes_to_start = [
         ),
         CAUVTask('logger',   'nohup /bin/sh ./run.sh ./logger.py',        True,  ['logger.py']),
         CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline' % cmd_prefix, True,  ['img-pipeline']),
-        CAUVTask('sonar',    'nohup %sauv/bin/sonar' % cmd_prefix,        True,  ['sonar']),
-        CAUVTask('control',  'nohup %sauv/bin/control' % cmd_prefix,      False, ['control']),
+        CAUVTask('sonar',    'nohup %sauv/bin/sonar /dev/ttyUSB1' % cmd_prefix,        True,  ['sonar']),
+        CAUVTask('control',  'nohup %sauv/bin/control -m/dev/ttyUSB0 -x0' % cmd_prefix,      False, ['control']),
         CAUVTask('spread',   'nohup spread',                              True,  ['spread']),
-        CAUVTask('watch',    '',                                          False, ['watch.py'])
-]
+        CAUVTask('watch',    '',                                          False, ['watch.py']),
+        CAUVTask('watch',    'nohup /bin/sh ./run.sh ./battery_monitor.py', True,  ['battery_monitor.py']) ]
+
+def limitLength(string, length=40):
+    string = string.replace('\n', '\\ ')
+    if length >= 3 and len(string) > length:
+        string = string[:length-3] + '...'
+    return string
 
 def getProcesses():
     # returns dictionary of short name : CAUVTasks, all fields filled in
@@ -72,8 +79,8 @@ def getProcesses():
     for pid in pids:
         try:
             task = None
-            p = psutil.Process(pid)
-            command_str = ' '.join(p.cmdline)
+            process = psutil.Process(pid)
+            command_str = ' '.join(process.cmdline)
             if command_str in short_names:
                 task = processes[short_names[command_str]]
             else:
@@ -89,12 +96,12 @@ def getProcesses():
                         raise
             if task is not None:
                 #debug(task.shortName())
-                task.process = p
+                task.process = process
                 task.running_command = command_str
-                task.status = p.status
-                task.cpu = p.get_cpu_percent()
-                task.mem = p.get_memory_percent()
-                task.threads = p.get_num_threads()
+                task.status = process.status
+                task.cpu = process.get_cpu_percent(CPU_Poll_Time)
+                task.mem = process.get_memory_percent()
+                task.threads = process.get_num_threads()
         except psutil.AccessDenied:
             pass
         except Exception, e:
@@ -118,10 +125,10 @@ def printDetails(cauv_task_list, more_details=False):
                     cp.cpu,
                     cp.mem,
                     cp.threads,
-                    cp.running_command
+                    limitLength(cp.running_command)
                 )
         info(line)
-    info('-' * len(header.expandtabs()))
+    info(' ' * len(header.expandtabs()))
 
 def broadcastDetails(processes, cauv_node):
     for cp in processes.values():
@@ -142,13 +149,12 @@ def broadcastDetails(processes, cauv_node):
             m.threads = cp.threads
         cauv_node.send(m)
 
-def startInactive(processes):
-    updateProcessesByCommand()
-    for pc in processes:
-        if processes[pc] is None:
-            cauv_task = processes_by_command[pc]            
+def startInactive(cauv_task_list):
+    for cauv_task in processes.values():
+        if cauv_task.process is None:
             if cauv_task.doStart():
-                info('starting %s (%s)' % (shortName(pc), pc))
+                info('starting %s (%s)' % (cauv_task.shortName(),
+                     cauv_task.commandi()))
                 cauv_task.start()
 
 if __name__ == '__main__':
@@ -162,7 +168,7 @@ if __name__ == '__main__':
                  action='store_false', help='hide additional details')
     p.add_option('-p', '--persistent', dest='persistent', default=False,
                  action='store_true', help='keep going until stopped')
-    p.add_option('--no-broadcast', dest='broadcast', default=True,
+    p.add_option('-q', '--no-broadcast', dest='broadcast', default=True,
                  action='store_false', help="don't broadcast messages "+\
                  'containing information on running processes')
     p.add_option('-e', '--exec-prefix', dest='exec_prefix',
@@ -179,26 +185,21 @@ if __name__ == '__main__':
     global exec_prefix
     exec_prefix = opts.exec_prefix
 
+    cauv_node = None
     if opts.broadcast:
         cauv_node = node.Node("watch")
     
-    if opts.no_start:
+    try:
         while True:
             processes = getProcesses()
             printDetails(processes, opts.details)
-            if cauv_node:
+            if cauv_node is not None:
                 broadcastDetails(processes, cauv_node)
-            time.sleep(3.0)
+            if not opts.no_start:
+                startInactive(processes)
+            time.sleep(Poll_Delay)
             if not opts.persistent:
                 break
-    else:
-        while True:
-            processes = getProcesses()
-            printDetails(processes, opts.details)
-            if cauv_node:
-                broadcastDetails(processes, cauv_node)
-            startInactive(processes)
-            time.sleep(3.0)
-            if not opts.persistent:
-                break
+    except KeyboardInterrupt:
+        info('Interrupt caught, exiting...')
 

@@ -524,6 +524,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     msg->demand(m_demand[i]);
                     m_mb->sendMessage(msg, SAFE_MESS);
                 }
+                m_controllers[Controller::Pitch].is_angle = true;
                 m_controllers[Controller::Bearing].is_angle = true;
                 m_controlenabled[Controller::ManualOverride] = true;
                 

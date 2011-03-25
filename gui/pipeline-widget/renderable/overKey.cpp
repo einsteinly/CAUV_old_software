@@ -526,6 +526,8 @@ bool OverKey::keyPressEvent(KeyEvent const& event){
                 debug(2) << BashColour::Red << "key pressed" << i->second;
             }
     /*}*/
+
+    m_current_modifiers &= ~(Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
     
     if(!event.isAutoRepeat())
         debug() << "keyPressEvent:" << event.text().toStdString() << "k=" << b.keycode

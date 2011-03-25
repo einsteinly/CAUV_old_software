@@ -61,9 +61,9 @@ class PipeFollowCompleteDemand(aiTypes.Demand):
 
 def mod(x,m):
     if x > 0:
-        return x - m*floor(x/m)
+        return x - m*math.floor(x/m)
     else:
-        return -x + m*floor(-x/m)
+        return -x + m*math.floor(-x/m)
 
 def angleDiff(a,b):
     d = mod(a-b, 360)

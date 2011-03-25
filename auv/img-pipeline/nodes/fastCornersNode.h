@@ -73,7 +73,7 @@ class FASTCornersNode: public Node{
             foreach(const cv::KeyPoint &kp, cv_corners) {
                 const floatXYZ centre(kp.pt.x / width, kp.pt.y / height, 0);
                 const Corner c(centre, kp.size, kp.angle, kp.response); 
-                debug(3) << c;
+                debug(6) << c;
                 corners.push_back(c);
             }
             r["corners"] = corners;
