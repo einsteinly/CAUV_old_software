@@ -324,9 +324,6 @@ sg14
 S'Number of bins'
 p144
 I42
-sS'Channel type'
-p145
-S'Hue'
 p146
 ssg18
 I33
