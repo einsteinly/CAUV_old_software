@@ -5,7 +5,7 @@
 #include <sensors/sensors.h>
 #include <vector>
 #include <string>
-#include <stdio.h>
+#include <cstdio>
 
 typedef std::vector<float> floatvec;
 
@@ -19,7 +19,7 @@ class TempNode : public CauvNode
     virtual void onRun();
   private:
     floatvec temps();
-    std::string f_;
+    std::string f__;
     FILE *file__;
     std::vector<sensors_chip_name*> sensors;
     std::vector<sensors_feature_data> features;
