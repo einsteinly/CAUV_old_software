@@ -16,6 +16,7 @@
 #include "widgets/motorcontrols.h"
 #include "widgets/logview.h"
 #include "widgets/console.h"
+#include "widgets/processstateview.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -116,6 +117,9 @@ void CauvGui::onRun()
 
     boost::shared_ptr<Console> console(new Console("Console", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(console));
+
+    boost::shared_ptr<ProcessStateView> processState(new ProcessStateView("Processes", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(processState));
 
 #ifdef USE_MARBLE
     Marble::MarbleWidget *mapWidget = new Marble::MarbleWidget();

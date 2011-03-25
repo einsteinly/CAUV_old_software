@@ -64,6 +64,7 @@ else()
         widgets/logview.cpp
         widgets/datastreamrecorder.cpp
         widgets/console.cpp
+        widgets/processstateview.cpp
     )
 
     set (
@@ -77,6 +78,7 @@ else()
         widgets/graphs.ui
         widgets/datastreamrecorder.ui
         widgets/console.ui
+        widgets/processstateview.ui
     )
 
     set (
@@ -93,6 +95,7 @@ else()
         widgets/logview.h
         widgets/datastreamrecorder.h
         widgets/console.h
+        widgets/processstateview.h
     )
 
     set (
