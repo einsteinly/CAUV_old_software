@@ -4,6 +4,8 @@ from debug import debug, warning, error, info
 import threading
 import pickle
 
+#pylint: disable=E1101
+
 intParam = messaging.NodeParamValue.from_int32
 stringParam = messaging.NodeParamValue.from_string
 boolParam = messaging.NodeParamValue.from_bool
@@ -126,7 +128,11 @@ class Model(messaging.BufferedMessageObserver):
         node_map = {}
         # first ensure all nodes are present
         for old_id, node in state.nodes.items():
-            id_map[old_id] = self.addSynchronous(node.type, timeout)
+            try:
+                id_map[old_id] = self.addSynchronous(node.type, timeout)
+            except RuntimeError, e:
+                error(str(e) + ": attempted to add node %s" % node.type)
+                debug('attempting to continue...')
             node_map[old_id] = node
             #print id_map[old_id], 'is new id for', old_id, node.type, node.params
         # then set all parameter values
@@ -134,7 +140,11 @@ class Model(messaging.BufferedMessageObserver):
             id = id_map[old_id]
             for param in node.params.keys():
                 debug('%d.%s = %s' % (id, param, node.params[param]))
-                self.setParameterSynchronous(id, param, toNPV(node.params[param]), timeout)
+                try:
+                    self.setParameterSynchronous(id, param, toNPV(node.params[param]), timeout)
+                except RuntimeError, e:
+                    error(str(e) + ": attempted to set parameter %s to %s" % ((id, param), node.params[param]))
+                    debug('attempting to continue...')
         # finally add links
         for old_id, node in state.nodes.items():
             # strictly speaking only one of these should be necessary, since
@@ -143,7 +153,11 @@ class Model(messaging.BufferedMessageObserver):
             for input in node.inarcs.keys():
                 (other, output) = node.inarcs[input]
                 if other != 0:
-                    self.addArcSynchronous(id_map[other], output, id, input, timeout)
+                    try:
+                        self.addArcSynchronous(id_map[other], output, id, input, timeout)
+                    except RuntimeError, e:
+                        error(str(e) + ': attempted to add arc %s --> %s' % ((id_map[other], output),(id, input)))
+                        debug('attempting to continue...')
             #for output in node.outarcs.keys():
             #    (other, input) = node.outarcs[output]
             #    if other != 0:
@@ -211,9 +225,9 @@ class Model(messaging.BufferedMessageObserver):
         self.node_added_condition.notify()
         self.node_added_condition.release()
 
-    def onNodeRemovedMessage(self, m):
-        #print m
-        pass
+    #def onNodeRemovedMessage(self, m):
+    #    #print m
+    #    pass
 
     def onNodeParametersMessage(self, m):
         # TODO: be discriminating about whether this parameter message actually
@@ -235,21 +249,21 @@ class Model(messaging.BufferedMessageObserver):
         self.arc_added_condition.notify()
         self.arc_added_condition.release()
 
-    def onArcRemovedMessage(self, m):
-        #print m
-        pass
+    #def onArcRemovedMessage(self, m):
+    #    #print m
+    #    pass
 
-    def onStatusMessage(self, m):
-        #print m
-        pass
+    #def onStatusMessage(self, m):
+    #    #print m
+    #    pass
 
-    def onInputStatusMessage(self, m):
-        #print m
-        pass
+    #def onInputStatusMessage(self, m):
+    #    #print m
+    #    pass
     
-    def onOutputStatusMessage(self, m):
-        #print m
-        pass
+    #def onOutputStatusMessage(self, m):
+    #    #print m
+    #    pass
     
     #def onGuiImageMessage(self, m):
     #    #print m

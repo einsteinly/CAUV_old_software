@@ -5,9 +5,10 @@ import cauv.node
 import threading
 from math import degrees, cos, sin
 import time
+from cauv.debug import debug
 
 class PipePositioner(messaging.BufferedMessageObserver):
-    def __init__(self, node, auv, centre_name='pipe', target_width=0.4, width_error=0.1, centre_error=0.1, align_error=5, bin=11, threshold=0.1, strafe_p=30, depth_p=0.1):
+    def __init__(self, node, auv, centre_name='pipe', target_width=0.2, width_error=0.1, centre_error=0.1, align_error=5, bin=11, threshold=0.1, strafe_p=255, depth_p=0.1):
         #basic setup
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
@@ -34,12 +35,13 @@ class PipePositioner(messaging.BufferedMessageObserver):
         self.centre_error_2 = centre_error**2 #saves squaring it later
         #enable allows centering and alignment of the sub
         self.enable_lock = threading.Condition(threading.Lock())
-        self.enable = False
+        self.enable = True
         #bin and min value of the bin from histogram node (used to decide whether to set enable=True)
         self.bin = bin
         self.threshold = threshold
 
     def onLinesMessage(self, m):
+        print "lines message"
         #get current bearing asap, before we turn to much
         current_bearing = self.auv.getBearing()
         #check whether this is enabled
@@ -49,7 +51,8 @@ class PipePositioner(messaging.BufferedMessageObserver):
             #calculate the average angle of the lines (assumes good line finding)
             angle = sum([x.angle for x in m.lines])/len(m.lines)
             #calculate the bearing of the pipe (relative to the sub), but mod 180 as we dont want to accidentally turn the sub around
-            corrected_angle=degrees(angle)%180-90
+            corrected_angle=90-degrees(angle)%180
+            print "angle %f corrected angle %f" %(angle, corrected_angle)
             if current_bearing: #watch out for none bearings
                 self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
             #we can only calculate width if we have 2 lines, and dont bother if the angle is too different
@@ -82,20 +85,20 @@ class PipePositioner(messaging.BufferedMessageObserver):
             self.enable_lock.release()
 
     def onCentreMessage(self, m):
+	    print "centre message"
         #check if enabled
         self.enable_lock.acquire()
         if self.enable:
-            if m.name == self.centre_name:
-                self.enable_lock.release()
-                print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
-                self.auv.strafe(int((m.x-0.5)*self.strafe_p))
-                self.alignment_lock.acquire()
-                self.centred = m.x**2 + m.y**2<self.centre_error_2 #ie within circle radius centre error
-                self.alignment_lock.release()
+	    self.enable_lock.release()
+    	    print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
+	    self.auv.strafe(int((m.x-0.5)*self.strafe_p))
+	    self.alignment_lock.acquire()
+	    self.centred = m.x**2 + m.y**2<self.centre_error_2 #ie within circle radius centre error
+	    self.alignment_lock.release()
         else: #dont forget to release lock, and make sure sub isnt still strafing when disabled
             self.auv.strafe(0)
             self.enable_lock.release()
-
+    """
     def onHistogramMessage(self, m):
         #enable/disable based on histogram messages
         self.enable_lock.acquire()
@@ -103,7 +106,7 @@ class PipePositioner(messaging.BufferedMessageObserver):
             self.enable = m.bins[self.bin] > self.threshold
             self.enable_lock.notify()
         self.enable_lock.release()
-
+    """
     def cleanup(self):
         self.__node.removeObserver(self)
 
@@ -142,21 +145,21 @@ def setup():
     
     print 'setting calibration...'                #setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
     # set-up calibration factors
-    auv_node.send(messaging.DepthCalibrationMessage(
-        -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
-    ), "control")
+    #auv_node.send(messaging.DepthCalibrationMessage(
+    #    -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
+    #), "control")
 
-    auv.bearingParams(1, 0, -80, 1)                #Setting kp kd ki and scale of the following parameters
-    auv.depthParams(40, 0, 0, 1)
+    #auv.bearingParams(1, 0, -80, 1)                #Setting kp kd ki and scale of the following parameters
+    #auv.depthParams(40, 0, 0, 1)
     #auv.pitchParams(1, 0, 0, 1)
 
-    auv.propMap(10, -10, 127, -127)
-    auv.vbowMap(10, -10, 127, -127)
-    auv.hbowMap(10, -10, 127, -127)
-    auv.vsternMap(10, -10, 127, -127)
-    auv.hsternMap(10, -10, 127, -127)
+    #auv.propMap(10, -10, 127, -127)
+    #auv.vbowMap(10, -10, 127, -127)
+    #auv.hbowMap(10, -10, 127, -127)
+    #auv.vsternMap(10, -10, 127, -127)
+    #auv.hsternMap(10, -10, 127, -127)
 
-    pipe_follow(auv_node, auv, 20)
+    pipe_follow(auv_node, auv, 200)
     
 if __name__ == "__main__":
     setup()

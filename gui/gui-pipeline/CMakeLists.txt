@@ -29,7 +29,7 @@ link_directories (${pipeline-widget_BINARY_DIR})
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
 
-add_executable (standalone ${standalone_srcs} ${standalone_UIS_H} ${standalone_MOC_H})
+add_executable (standalone EXCLUDE_FROM_ALL ${standalone_srcs} ${standalone_UIS_H} ${standalone_MOC_H})
 
 target_link_libraries (
     standalone
@@ -40,7 +40,7 @@ cauv_install ( standalone )
 
 
 add_custom_command(
-    TARGET standalone
+    TARGET standalone 
     POST_BUILD
     COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${standalone_BINARY_DIR}/"
     COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${standalone_BINARY_DIR}/"

@@ -25,7 +25,7 @@ class Displacement(messaging.BufferedMessageObserver):
 
     def getDisplacement(self):
         self.update.acquire()
-        r = math.sqrt(pow(displacementE, 2) + pow(displacementN, 2))
+        r = math.sqrt(pow(self.displacementE, 2) + pow(self.displacementN, 2))
         self.update.release()
         return r
 

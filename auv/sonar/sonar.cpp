@@ -51,6 +51,7 @@ void SonarNode::onRun()
     }
     
     joinGroup("sonarctl");
+    joinGroup("telemetry");
 
     boost::shared_ptr<SpreadSonarObserver> spreadSonarObserver = boost::make_shared<SpreadSonarObserver>(mailbox());
     m_sonar->addObserver(spreadSonarObserver);

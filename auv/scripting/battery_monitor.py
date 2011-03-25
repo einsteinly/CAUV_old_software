@@ -1,6 +1,7 @@
 import cauv
 import cauv.messaging as messaging
 import cauv.node
+from cauv.debug import debug, info
 
 import threading
 import time
@@ -31,7 +32,7 @@ def estimateMotorUse(logs, current_time, last_log_time):
             for x in range(len(motor_log[motor])-1):
                 power_used += abs(motor_log[motor][x+1][1]+motor_log[motor][x][1])*(motor_log[motor][x+1][0]-motor_log[motor][x][0])/7200 #average power * time in hours
         except IndexError:
-            print "Error, no data for "+motor
+            debug("Error, no data for "+motor)
     return power_used
         
 def estimateComputerUse(logs, current_time, last_log_time):
@@ -57,7 +58,6 @@ class motorStateLogger(messaging.BufferedMessageObserver):
         self.motor_demand_log_lock = dict([(x,threading.Lock()) for x in motor_ids])
         self.motor_demand_log = dict([(x,[]) for x in motor_ids])
     def onMotorStateMessage(self, m):
-        print 'received motor message'
         self.motor_demand_log_lock[str(m.motorId)].acquire()
         self.motor_demand_log[str(m.motorId)].append([time.time(),m.speed])
         self.motor_demand_log_lock[str(m.motorId)].release()
@@ -101,7 +101,7 @@ class slowLogger():
             fraction_remaining = 1-self.total_usage/battery_total
             self.log_file.write(str(current_time)+'-'+str(estimated_power_use)+'-'+str(self.total_usage)+'\n')
             self.log_file.flush() #force write to file
-            print "Total power use: "+str(self.total_usage)+" Watt Hours, estimated current use: "+str(estimated_power_use/interval*3600)+" Watts, estimated battery remaining: "+str(fraction_remaining*100)+'%'
+            info("Total power use: "+str(self.total_usage)+" Watt Hours, estimated current use: "+str(estimated_power_use/interval*3600)+" Watts, estimated battery remaining: "+str(fraction_remaining*100)+'%')
             self.node.send(messaging.BatteryUseMessage(estimated_power_use/interval*3600, self.total_usage, fraction_remaining), "telemetry")
             self.last_log_time = current_time
             #sleep
