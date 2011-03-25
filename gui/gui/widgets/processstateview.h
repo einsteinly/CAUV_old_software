@@ -1,7 +1,7 @@
 #ifndef PROCESSSTATEVIEW_H
 #define PROCESSSTATEVIEW_H
 
-#include <QDockWidget>
+#include <QWidget>
 #include <QTableWidgetItem>
 
 #include <boost/make_shared.hpp>
@@ -19,7 +19,7 @@ namespace Ui {
 
 namespace cauv {
 
-    class ProcessStateView : public QDockWidget, public CauvInterfaceElement {
+    class ProcessStateView : public QWidget, public CauvInterfaceElement {
         Q_OBJECT
     public:
         ProcessStateView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);

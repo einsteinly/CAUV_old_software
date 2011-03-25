@@ -3,7 +3,7 @@
 #ifndef GAMEPAD_H
 #define GAMEPAD_H
 
-#include <gamepad/playstationinput.h>
+#include <gamepad/xboxinput.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -11,7 +11,7 @@ namespace cauv {
 
     class AUV;
 
-    class CauvGamepad : public PlaystationInput
+    class CauvGamepad : public XBoxInput
     {
         Q_OBJECT
     public:

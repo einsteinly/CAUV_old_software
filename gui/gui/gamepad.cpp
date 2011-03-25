@@ -9,7 +9,7 @@
 using namespace cauv;
 
 CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) :
-        PlaystationInput(id), m_auv(auv), m_bearingRate(0.f),
+        XBoxInput(id), m_auv(auv), m_bearingRate(0.f),
         m_pitchRate(0.f), m_forwardSpeed(0.f), m_strafeSpeed(0.f),
         m_depthRate(0.f), m_dirty(false)
 {
@@ -17,8 +17,8 @@ CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) :
     // should read all this from a config file
 
     // right hand pad buttons
-    this->connect(this, SIGNAL(X(bool)), this, SLOT(forward(bool)));
-    this->connect(this, SIGNAL(Square(bool)), this, SLOT(stop(bool)));
+    this->connect(this, SIGNAL(A(bool)), this, SLOT(forward(bool)));
+    this->connect(this, SIGNAL(X(bool)), this, SLOT(stop(bool)));
     // unused this->connect(this, SIGNAL(Tri(bool)), this, SLOT(stop(bool)));
     // unused this->connect(this, SIGNAL(Circle(bool)), this, SLOT(stop(bool)));
 
@@ -29,8 +29,8 @@ CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) :
     //this->connect(this, SIGNAL(Right()), this, SLOT(strafeRight()));
 
     // top left buttons
-    this->connect(this, SIGNAL(L1(bool)), this, SLOT(up(bool)));
-    this->connect(this, SIGNAL(L2(bool)), this, SLOT(down(bool)));
+    this->connect(this, SIGNAL(RB(bool)), this, SLOT(up(bool)));
+    this->connect(this, SIGNAL(LB(bool)), this, SLOT(down(bool)));
 
     // left joy sticks
     this->connect(this, SIGNAL(Joy_L_X(float)), this, SLOT(strafeLeft(float)));

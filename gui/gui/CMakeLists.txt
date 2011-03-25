@@ -56,6 +56,7 @@ else()
         gamepad.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
+        gamepad/xboxinput.cpp
         widgets/datastreamdisplays.cpp
         widgets/pipelinecauvwidget.cpp
         widgets/graphs.cpp
@@ -84,8 +85,10 @@ else()
     set (
         GUICPP_H
 
-        gamepad/playstationinput.h
+
         gamepad/gamepadinput.h
+        gamepad/xboxinput.h
+        gamepad/playstationinput.h
         cauvgui.h
         cauvinterfaceelement.h
         gamepad.h

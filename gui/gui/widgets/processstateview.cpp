@@ -8,7 +8,7 @@
 using namespace cauv;
 
 ProcessStateView::ProcessStateView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QDockWidget(parent),
+        QWidget(parent),
         CauvInterfaceElement(name, auv, node),
         ui(new Ui::ProcessStateView)
 {
@@ -21,9 +21,6 @@ ProcessStateView::ProcessStateView(const QString &name, boost::shared_ptr<AUV> &
     QStringList list;
     list << "Process" << "CPU" << "Mem" << "Threads" << "Status";
     ui->tableWidget->setHorizontalHeaderLabels(list);
-    ui->tableWidget->setColumnWidth(0, 100);
-
-    onProcessStateUpdate("blah", 1.0, 2.0, 3.0, "moo");
 }
 
 ProcessStateView::~ProcessStateView()
@@ -33,7 +30,7 @@ ProcessStateView::~ProcessStateView()
 
 void ProcessStateView::initialise()
 {
-    m_actions->registerDockView(this, Qt::RightDockWidgetArea);
+    m_actions->registerCentralView(this, CauvInterfaceElement::name());
 }
 
 void ProcessStateView::onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status){
@@ -41,9 +38,7 @@ void ProcessStateView::onProcessStateUpdate(const std::string process, const flo
     int row = m_processes.size();
     try {
         row = m_processes.at(process);
-        info() << "found existing process in list";
     } catch (...) {
-        info() << "creating new items";
         ui->tableWidget->setRowCount(row+1);
         ui->tableWidget->setItem(row, 0, new QTableWidgetItem("Process"));
         ui->tableWidget->setItem(row, 1, new QTableWidgetItem("CPU"));
