@@ -8,7 +8,7 @@
 #include <string>
 #include <cstdio>
 
-typedef std::vector<double> doublevec;
+namespace cauv{
 struct chip_name_comp
 {
   bool operator()(sensors_chip_name n1, sensors_chip_name n2) const
@@ -22,7 +22,7 @@ typedef std::map<sensors_chip_name,
         chip_features;
 
 
-class TempNode: public CauvNode
+class TempNode : public CauvNode
 {
   public:
     TempNode(std::string f);
@@ -31,8 +31,8 @@ class TempNode: public CauvNode
     void GetChipNames();
     void GetFeatureData(sensors_chip_name chip_name);
   private:
-    doublevec temps();
     std::string f__;
     FILE *file__;
     chip_features chips;
 };
+} //end namespace cauv

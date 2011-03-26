@@ -1,6 +1,8 @@
 #include "TempNode.h"
 
-TempNode::TempNode(std::string f):CauvNode("temp")
+using namespace cauv;
+
+TempNode::TempNode(std::string f): CauvNode("temp")
 {
   SetConfigFile(f);
 }
@@ -33,7 +35,7 @@ void TempNode::GetChipNames()
   chips.clear();
   int nr = 0;
   const sensors_chip_name *chip_name;
-  while(chip_name = sensors_get_detected_chips(&nr))
+  while((chip_name = sensors_get_detected_chips(&nr)))
   {
     GetFeatureData(*chip_name);
   }
@@ -46,10 +48,14 @@ void TempNode::GetFeatureData(sensors_chip_name chip_name)
   n2 = 0;
   const sensors_feature_data *feature_data;
   std::vector<const sensors_feature_data*> features;
-  while(feature_data = sensors_get_all_features(chip_name, &n1, &n2))
+  while((feature_data = sensors_get_all_features(chip_name, &n1, &n2)))
   {
     features.push_back(feature_data);
   }
   chips[chip_name] = features;
 }
-   
+
+int main()
+{
+  return 0;
+}
