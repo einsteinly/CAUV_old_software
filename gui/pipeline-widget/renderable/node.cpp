@@ -182,6 +182,22 @@ static boost::shared_ptr<PVPairEditableBase> makePVPair(
                     n, p.first, ss.str(), false
                 );
         }
+        case ParamType::LineList:
+        {
+            std::stringstream ss;
+            ss << "Line[" << boost::get< std::vector<Line> >(p.second).size() << "]"; 
+            return boost::make_shared<PVPair<std::string> >(
+                    n, p.first, ss.str(), false
+                );
+        }
+        case ParamType::CircleList:
+        {
+            std::stringstream ss;
+            ss << "Circle[" << boost::get< std::vector<Circle> >(p.second).size() << "]"; 
+            return boost::make_shared<PVPair<std::string> >(
+                    n, p.first, ss.str(), false
+                );
+        }
         default:
             error() << "unknown ParamType";
             return boost::make_shared<PVPair<std::string> >(

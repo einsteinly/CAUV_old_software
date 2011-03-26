@@ -85,16 +85,16 @@ class PipePositioner(messaging.BufferedMessageObserver):
             self.enable_lock.release()
 
     def onCentreMessage(self, m):
-	    print "centre message"
+        print "centre message"
         #check if enabled
         self.enable_lock.acquire()
         if self.enable:
-	    self.enable_lock.release()
-    	    print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
-	    self.auv.strafe(int((m.x-0.5)*self.strafe_p))
-	    self.alignment_lock.acquire()
-	    self.centred = m.x**2 + m.y**2<self.centre_error_2 #ie within circle radius centre error
-	    self.alignment_lock.release()
+            self.enable_lock.release()
+            print 'Set strafe: %i' %(int((m.x-0.5)*self.strafe_p))
+            self.auv.strafe(int((m.x-0.5)*self.strafe_p))
+            self.alignment_lock.acquire()
+            self.centred = m.x**2 + m.y**2<self.centre_error_2 #ie within circle radius centre error
+            self.alignment_lock.release()
         else: #dont forget to release lock, and make sure sub isnt still strafing when disabled
             self.auv.strafe(0)
             self.enable_lock.release()

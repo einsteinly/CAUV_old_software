@@ -34,7 +34,7 @@ class BroadcastCornersNode: public OutputNode{
             // parameters:
             registerParamID< std::vector<Corner> >("corners", std::vector<Corner>(),
                                                    "the corners to draw"); 
-            registerParamID<std::string>("name", "unnamed BROADCAST corners",
+            registerParamID<std::string>("name", "unnamed corners",
                                          "name for detected set of corners");
         }
     

@@ -6,37 +6,11 @@ import pickle
 
 #pylint: disable=E1101
 
-intParam = messaging.NodeParamValue.from_int32
-stringParam = messaging.NodeParamValue.from_string
-boolParam = messaging.NodeParamValue.from_bool
-floatParam = messaging.NodeParamValue.from_float
-
 def fromNPV(npv):
-    if npv.which == messaging.ParamType.String:
-        return npv.string
-    elif npv.which == messaging.ParamType.Bool:
-        return npv.bool
-    elif npv.which == messaging.ParamType.Int32:
-        return npv.int32
-    elif npv.which == messaging.ParamType.Float:
-        return npv.float
-    else:
-        raise RuntimeError('Unknown type in NodeParamValue')
+    return npv.value
 
 def toNPV(value):
-    r = None
-    # caveat viator: isinstance(bool(...), int) == True
-    if isinstance(value, bool):
-        r = messaging.NodeParamValue.from_bool(value)
-    elif isinstance(value, int) or isinstance(value, long):
-        r = messaging.NodeParamValue.from_int32(value)
-    elif isinstance(value, float):
-        r = messaging.NodeParamValue.from_float(value)
-    elif isinstance(value, str):
-        r = messaging.NodeParamValue.from_string(value)
-    else:
-        raise RuntimeError('Cannot pack "%s" as NodeParamValue' % type(value))
-    return r
+    return messaging.NodeParamValue.create(value);
  
 class Node:
     def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):

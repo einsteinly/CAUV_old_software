@@ -45,7 +45,7 @@ class NullParamNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
+        out_map_t doWork(in_image_map_t&){
             out_map_t r;
             r["out"] = param<NodeParamValue>("in");
             return r;
