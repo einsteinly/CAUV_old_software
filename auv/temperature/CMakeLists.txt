@@ -14,7 +14,7 @@ add_executable (
 
     TempNode.cpp
 )
-cauv_install ( control )
+cauv_install ( temperature )
 
 # libs
 target_link_libraries (
