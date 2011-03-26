@@ -4,6 +4,7 @@
 #include <debug/cauv_debug.h>
 #include <sensors/sensors.h>
 #include <vector>
+#include <map>
 #include <string>
 #include <cstdio>
 
