@@ -70,7 +70,7 @@ class DrawCornersNode: public Node{
                 // then produce an output image overlay
                 boost::shared_ptr<Image> out = boost::make_shared<Image>();
 
-                cv::drawKeypoints(img->cvMat(), cv_corners, out->cvMat(), cv::Scalar(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+                cv::drawKeypoints(img->cvMat(), cv_corners, out->cvMat(), cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
                 
                 r[Image_Out_Copied_Name] = out;
             }catch(cv::Exception& e){

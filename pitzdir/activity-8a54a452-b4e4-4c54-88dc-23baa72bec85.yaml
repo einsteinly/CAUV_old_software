@@ -1,0 +1,15 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: &id001 2011-03-21 16:07:40.081882
+description: owner changed to Jason Wyatt
+entity: !!python/object:uuid.UUID
+  int: 233921459116290621376537219084255578248
+modified_time: *id001
+pscore: 0
+title: 2011-03-21 16:07 - Jason Wyatt changed task Implement software-based power/battery
+  charge tracking
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 183872949222302938339102390705699155077
+who_did_it: *id002
+yaml_file_saved: 2011-03-21 16:07:40.089809
