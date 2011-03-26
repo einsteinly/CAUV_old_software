@@ -1,48 +1,69 @@
 #ifdef GAMEPAD_SUPPORT
 
 #include "gamepad.h"
+
+#include <gamepad/playstationinput.h>
+#include <gamepad/xboxinput.h>
+
 #include <debug/cauv_debug.h>
 #include <model/auv_model.h>
 
-#include <QTimer>
 
 using namespace cauv;
 
-CauvGamepad::CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv) :
-        PlaystationInput(id), m_auv(auv), m_bearingRate(0.f),
-        m_pitchRate(0.f), m_forwardSpeed(0.f), m_strafeSpeed(0.f),
-        m_depthRate(0.f), m_dirty(false)
+CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_ptr<AUV> auv) :
+        m_auv(auv), m_gamepadInput(controller), m_timer(new QTimer()), m_bearingRate(0.f), m_pitchRate(0.f),
+        m_forwardSpeed(0.f), m_strafeSpeed(0.f), m_depthRate(0.f), m_dirty(false)
 {
-
-    // should read all this from a config file
-
     // right hand pad buttons
-    this->connect(this, SIGNAL(X(bool)), this, SLOT(forward(bool)));
-    this->connect(this, SIGNAL(Square(bool)), this, SLOT(stop(bool)));
-    // unused this->connect(this, SIGNAL(Tri(bool)), this, SLOT(stop(bool)));
-    // unused this->connect(this, SIGNAL(Circle(bool)), this, SLOT(stop(bool)));
-
-    // left hand pad buttons
-    //this->connect(this, SIGNAL(Up()), this, SLOT(forward()));
-    //this->connect(this, SIGNAL(Down()), this, SLOT(backward()));
-    //this->connect(this, SIGNAL(Left()), this, SLOT(strafeLeft()));
-    //this->connect(this, SIGNAL(Right()), this, SLOT(strafeRight()));
+    this->connect(controller.get(), SIGNAL(A(bool)), this, SLOT(forward(bool)));
+    this->connect(controller.get(), SIGNAL(X(bool)), this, SLOT(stop(bool)));
 
     // top left buttons
-    this->connect(this, SIGNAL(L1(bool)), this, SLOT(up(bool)));
-    this->connect(this, SIGNAL(L2(bool)), this, SLOT(down(bool)));
+    this->connect(controller.get(), SIGNAL(RB(bool)), this, SLOT(up(bool)));
+    this->connect(controller.get(), SIGNAL(LB(bool)), this, SLOT(down(bool)));
 
     // left joy sticks
-    this->connect(this, SIGNAL(Joy_L_X(float)), this, SLOT(strafeLeft(float)));
-    this->connect(this, SIGNAL(Joy_L_Y(float)), this, SLOT(backward(float)));
+    this->connect(controller.get(), SIGNAL(Joy_L_X(float)), this, SLOT(strafeLeft(float)));
+    this->connect(controller.get(), SIGNAL(Joy_L_Y(float)), this, SLOT(backward(float)));
     // right joy sticks
-    this->connect(this, SIGNAL(Joy_R_X(float)), this, SLOT(yawLeft(float)));
-    this->connect(this, SIGNAL(Joy_R_Y(float)), this, SLOT(pitchUp(float)));
+    this->connect(controller.get(), SIGNAL(Joy_R_X(float)), this, SLOT(yawLeft(float)));
+    this->connect(controller.get(), SIGNAL(Joy_R_Y(float)), this, SLOT(pitchUp(float)));
 
-    QTimer * rateUpdateTimer = new QTimer(this);
-    rateUpdateTimer->connect(rateUpdateTimer, SIGNAL(timeout()), this, SLOT(updateByRates()));
-    rateUpdateTimer->setSingleShot(false);
-    rateUpdateTimer->start(100);
+    startTimer();
+}
+
+
+CauvGamepad::CauvGamepad(boost::shared_ptr<PlaystationInput> controller, boost::shared_ptr<AUV> auv) :
+        m_auv(auv), m_gamepadInput(controller), m_timer(new QTimer()), m_bearingRate(0.f), m_pitchRate(0.f),
+        m_forwardSpeed(0.f), m_strafeSpeed(0.f), m_depthRate(0.f), m_dirty(false)
+{
+    // right hand pad buttons
+    this->connect(controller.get(), SIGNAL(Square(bool)), this, SLOT(stop(bool)));
+    this->connect(controller.get(), SIGNAL(X(bool)), this, SLOT(forward(bool)));
+
+    // top left buttons
+    this->connect(controller.get(), SIGNAL(L1(bool)), this, SLOT(up(bool)));
+    this->connect(controller.get(), SIGNAL(L2(bool)), this, SLOT(down(bool)));
+
+    // left joy sticks
+    this->connect(controller.get(), SIGNAL(Joy_L_X(float)), this, SLOT(strafeLeft(float)));
+    this->connect(controller.get(), SIGNAL(Joy_L_Y(float)), this, SLOT(backward(float)));
+    // right joy sticks
+    this->connect(controller.get(), SIGNAL(Joy_R_X(float)), this, SLOT(yawLeft(float)));
+    this->connect(controller.get(), SIGNAL(Joy_R_Y(float)), this, SLOT(pitchUp(float)));
+
+    startTimer();
+}
+
+
+void CauvGamepad::startTimer(){
+
+    m_timer->connect(m_timer.get(), SIGNAL(timeout()), m_gamepadInput.get(), SLOT(processEvents()));
+    m_timer->connect(m_timer.get(), SIGNAL(timeout()), this, SLOT(updateByRates()));
+
+    m_timer->setSingleShot(false);
+    m_timer->start(100);
 }
 
 void CauvGamepad::forward(float speed){

@@ -96,8 +96,8 @@ void AUVController::sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar)
             ));
 }
 
-void AUVController::sendDepthCalibrationMessage(depth_calibration_t params){
-    onMessageGenerated(boost::make_shared<DepthCalibrationMessage>(params.foreOffset, params.foreMultiplier, params.aftOffset, params.afteMultiplier));
+void AUVController::sendDepthCalibrationMessage(DepthCalibration params){
+    onMessageGenerated(boost::make_shared<DepthCalibrationMessage>(params.foreOffset(), params.foreMultiplier(), params.aftOffset(), params.aftMultiplier()));
 }
 
 void AUVController::sendScriptMessage(ScriptExecRequest script){
@@ -168,9 +168,7 @@ void AUVController::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_pt
 }
 
 void AUVController::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
-    m_auv->sensors.depth_calibration->update(depth_calibration_t(message->foreMultiplier(),
-                                                                 message->aftMultiplier(), message->foreOffset(),
-                                                                 message->aftOffset()));
+    m_auv->sensors.depth_calibration->update(*(message.get()));
 }
 
 void AUVController::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
@@ -239,6 +237,10 @@ void AUVController::onBatteryUseMessage(BatteryUseMessage_ptr message) {
     m_auv->sensors.esitmate_current->update(message->estimate_current());
     m_auv->sensors.estimate_total->update(message->estimate_total());
     m_auv->sensors.fraction_remaining->update(message->fraction_remaining()*100.f);
+}
+
+void AUVController::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
+    m_auv->computer_state.processes->update(*(message.get()));
 }
 
 void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){

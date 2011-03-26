@@ -13,32 +13,10 @@
 
 namespace cauv{
 
-
-    struct depth_calibration_t {
-        float foreMultiplier, afteMultiplier, foreOffset, aftOffset;
-
-        depth_calibration_t(float foreMultiplier, float afteMultiplier, float foreOffset, float aftOffset) :
-                foreMultiplier(foreMultiplier), afteMultiplier(afteMultiplier),
-                foreOffset(foreOffset), aftOffset(aftOffset) {
-        }
-
-        depth_calibration_t() : foreMultiplier(0), afteMultiplier(0),
-        foreOffset(0), aftOffset(0) {
-        }
-    };
-
-    template<typename char_T, typename traits>
-    std::basic_ostream<char_T, traits>& operator<<(
-            std::basic_ostream<char_T, traits>& os, depth_calibration_t const& s)
-    {
-        os << "fore (" << s.foreOffset;
-        os << ", x" << s.foreMultiplier;
-        os << ")";
-        os << " aft (" << s.aftOffset;
-        os << ", x" << s.afteMultiplier;
-        os << ")";
-        return os;
-    }
+    // some messages are used to group data in the gui but we typedef
+    // them for clarity as we're not really using them as messages
+    typedef ProcessStatusMessage ProcessState;
+    typedef DepthCalibrationMessage DepthCalibration;
 
     class AUV {
     public:
@@ -233,7 +211,7 @@ namespace cauv{
         struct Sensors {
             boost::shared_ptr< DataStream<uint16_t> > pressure_fore;
             boost::shared_ptr< DataStream<uint16_t> > pressure_aft;
-            boost::shared_ptr<MutableDataStream<depth_calibration_t> > depth_calibration;
+            boost::shared_ptr<MutableDataStream<DepthCalibration> > depth_calibration;
             boost::shared_ptr<DataStream<float> > depth;
             boost::shared_ptr<DataStreamSplitter<cauv::floatYPR> > orientation;
             boost::shared_ptr<DataStream<float> > esitmate_current;
@@ -242,7 +220,7 @@ namespace cauv{
 
             Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
             pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
-            depth_calibration(boost::make_shared<MutableDataStream<depth_calibration_t> >("Depth Calibration")),
+            depth_calibration(boost::make_shared<MutableDataStream<DepthCalibration> >("Depth Calibration")),
             depth(boost::make_shared<DataStream<float> >("Depth", "m")),
             orientation(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(boost::make_shared<DataStream<floatYPR> >("Orientation", "°"))),
             esitmate_current(boost::make_shared<DataStream<float> >("Current Estimiation", "Wh")),
@@ -252,6 +230,21 @@ namespace cauv{
 
             }
         } sensors;
+
+        /**
+     * Computer state streams - monitoring of the software and hardware state
+     * categories
+     *
+     * @author Andy Pritchard
+     */
+
+        struct ComputerState {
+            boost::shared_ptr< DataStream<ProcessState> > processes;
+
+            ComputerState() : processes(boost::make_shared<DataStream<ProcessState> >("Process State", ""))
+            {
+            }
+        } computer_state;
 
 
         /**

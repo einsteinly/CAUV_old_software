@@ -35,12 +35,12 @@ GamepadInput::GamepadInput(const unsigned int id)
         joys[i] = (JoyStick*)m_input_manager->createInputObject( OISJoyStick, true );
         joys[i]->setEventCallback( this );
         std::cout << "\n\nCreating Joystick " << (i + 1)
-            << "\n\tAxes: " << joys[i]->getNumberOfComponents(OIS_Axis)
-            << "\n\tSliders: " << joys[i]->getNumberOfComponents(OIS_Slider)
-            << "\n\tPOV/HATs: " << joys[i]->getNumberOfComponents(OIS_POV)
-            << "\n\tButtons: " << joys[i]->getNumberOfComponents(OIS_Button)
-            << "\n\tVector3: " << joys[i]->getNumberOfComponents(OIS_Vector3);
-   }
+                << "\n\tAxes: " << joys[i]->getNumberOfComponents(OIS_Axis)
+                << "\n\tSliders: " << joys[i]->getNumberOfComponents(OIS_Slider)
+                << "\n\tPOV/HATs: " << joys[i]->getNumberOfComponents(OIS_POV)
+                << "\n\tButtons: " << joys[i]->getNumberOfComponents(OIS_Button)
+                << "\n\tVector3: " << joys[i]->getNumberOfComponents(OIS_Vector3);
+    }
 
     m_controller = joys[id];
 }
@@ -129,9 +129,13 @@ bool GamepadInput::vector3Moved( const JoyStickEvent &arg, int index)
 }
 
 void GamepadInput::processEvents(){
-    m_controller->capture();
-    if( !m_controller->buffered() )
-         handleNonBuffered();
+    try {
+        m_controller->capture();
+        if( !m_controller->buffered() )
+            handleNonBuffered();
+    } catch (...){
+        std::cerr << "exception caught while capuring gamepad events"<< std::endl;
+    }
 }
 
 void GamepadInput::handleNonBuffered() const {

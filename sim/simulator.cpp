@@ -8,8 +8,8 @@
 #include <model/auv_controller.h>
 
 #include <osg/Node>
-#include <osgViewer/CompositeViewer>
 #include <osgViewer/Viewer>
+#include <osgViewer/ViewerEventHandlers>
 #include <osgGA/TrackballManipulator>
 
 #include "validators.h"
@@ -26,11 +26,43 @@ using namespace cauv::sim;
 Simulator::Simulator() : CauvNode("CauvSim"),
 m_auv(boost::make_shared<AUV>()),
 m_auv_controller(boost::make_shared<AUVController>(m_auv)),
-m_simulated_auv(boost::make_shared<RedHerring>()),
-m_root(new osg::Group())
+m_simulated_auv(boost::make_shared<RedHerring>(m_auv)),
+m_root(new osg::Group()),
+m_viewer(new osgViewer::CompositeViewer())
 {
     joinGroup("control");
     joinGroup("telemetry");
+
+    //
+    // the users camera
+    osgViewer::Viewer * userView = new osgViewer::Viewer();
+    userView->setSceneData(m_root.get());
+    userView->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
+    userView->getCamera()->setViewport(0, 0, 1024, 768);
+
+    // mouse handling
+    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
+    tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
+    userView->setCameraManipulator( tb );
+
+    m_viewer->addView(userView);
+
+    //
+    // the auv cameras
+    foreach(osg::ref_ptr<sim::Camera > camera, m_simulated_auv->getCameras()){
+
+        camera->setSceneData(m_root.get());
+
+        camera->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+
+        // mouse handling
+        osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
+        tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
+        camera->setCameraManipulator( tb );
+
+        // mouse handling
+        m_viewer->addView(camera);
+    }
 }
 
 
@@ -69,61 +101,22 @@ void Simulator::addOptions(boost::program_options::options_description& desc,
 
 
 
-void Simulator::launchViewer(osg::ref_ptr<osg::Group> root){
+void Simulator::launchViewer(){
     info() << "Viewer opened";
 
-    // construct the viewer.
-    osgViewer::CompositeViewer viewer;
-/*
-    osgViewer::View* view = new osgViewer::View;
-    view->setSceneData(root.get());
-    viewer.addView(view);
+    // TODO: can't get multiple cameras on the same window at the moment
+    //auvView->getCamera()->setGraphicsContext(userView->getCamera()->getGraphicsContext());
+    //auvView->getCamera()->setViewport(30, 30, 200, 200);
+    // so show it in it's own window, not really ideal, would be better as picture in picture
 
-    // mouse handling
-    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-    tb->setHomePosition( osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0.f,20.f,0.f), osg::Vec3f(0,0,1) );
-    view->setCameraManipulator( tb );
+    osgViewer::ViewerBase::Views views;
+    m_viewer->getViews(views, false);
 
-    view->setUpViewInWindow( 150,150,1024,768, 0 );
-    //view->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
-
-*/
-
-    osgViewer::Viewer * userView = new osgViewer::Viewer();
-    userView->setSceneData(root.get());
-    userView->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
-    userView->setUpViewInWindow( 150,150,1024,768, 0 );
-    userView->getCamera()->setViewport(0, 0, 1024, 768);
-
-    // mouse handling
-    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-    tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-    userView->setCameraManipulator( tb );
-
-    viewer.addView(userView);
-
-    foreach(osg::ref_ptr<sim::Camera > camera, m_simulated_auv->getCameras()){
-        
-        camera->setSceneData(root.get());
-
-        camera->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
-
-        // mouse handling
-        osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-        tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-        camera->setCameraManipulator( tb );
-
-        // TODO: can't get multiple cameras on the same window at the moment
-        //auvView->getCamera()->setGraphicsContext(userView->getCamera()->getGraphicsContext());
-        //auvView->getCamera()->setViewport(30, 30, 200, 200);
-        // so show it in it's own window, not really ideal, would be better as picture in picture
-        camera->setUpViewInWindow( 150,150,1024,768, 0 );
-
-        // mouse handling
-        viewer.addView(camera);
+    foreach (osgViewer::View * i, views){
+        i->setUpViewInWindow( 150,150,1024,768, 0 );
     }
 
-    viewer.run();
+    m_viewer->run();
 
     info() << "Viewer closed";
 }
@@ -165,9 +158,19 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
 
     m_root->addChild(m_world_model);
 
+
     // see if the user wants a window into the world...
-    if(vm.count("viewer"))
-        boost::thread(boost::bind(&Simulator::launchViewer, this, m_root));
+    if(vm.count("viewer")) {
+        boost::thread(boost::bind(&Simulator::launchViewer, this));
+    } else {
+        m_viewer->realize();
+        while(!m_viewer->done()){
+            m_viewer->advance();
+            m_viewer->eventTraversal();
+            m_viewer->updateTraversal();
+            m_viewer->renderingTraversals();
+        }
+    }
 
     return CauvNode::useOptionsMap(vm, desc);
 }

@@ -1,4 +1,0 @@
-<qt-jambi-custom-widget-list>
-<qt-jambi-custom-widget class="cauv.gui.components.VideoScreen" group="CAUV Elements" />
-<qt-jambi-custom-widget class="cauv.gui.components.ControlableVideoScreen" group="CAUV Elements" />
-</qt-jambi-custom-widget-list>
