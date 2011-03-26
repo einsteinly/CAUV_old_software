@@ -66,6 +66,7 @@ else()
         widgets/datastreamrecorder.cpp
         widgets/console.cpp
         widgets/processstateview.cpp
+        widgets/mapview.cpp
     )
 
     set (
@@ -80,6 +81,7 @@ else()
         widgets/datastreamrecorder.ui
         widgets/console.ui
         widgets/processstateview.ui
+        widgets/mapview.ui
     )
 
     set (
@@ -99,6 +101,7 @@ else()
         widgets/datastreamrecorder.h
         widgets/console.h
         widgets/processstateview.h
+        widgets/mapview.h
     )
 
     set (
