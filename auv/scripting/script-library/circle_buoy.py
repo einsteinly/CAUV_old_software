@@ -14,7 +14,7 @@ Do_Turn_Limit = 100
 Do_Prop_Limit = 50
 Circles_Position_Pixel_Width = 300
 
-class BouyCircleObserver(msg.MessageObserver):
+class BuoyCircleObserver(msg.MessageObserver):
     def __init__(self, cauv_node, auv, strafe_speed, buoy_size,
                  pos_kpid = (1,0,0), size_kpid=(1,0,0)):
         msg.MessageObserver.__init__(self)
@@ -50,12 +50,12 @@ class BouyCircleObserver(msg.MessageObserver):
                     mean_circle_radius += circle.radius
                 mean_circle_position /= num_circles
                 mean_circle_radius /= num_circles
-                debug('buoy at %s %s' % (mean_circle_position,
+                debug('Buoy at %s %s' % (mean_circle_position,
                                          mean_circle_radius))
                 self.actOnBuoy(mean_circle_position,
                                mean_circle_radius)
             else:
-                debug('no circles!')
+                debug('No circles!')
         else:
             debug('Ignoring circles message: %s' % str(m))
 
@@ -105,7 +105,7 @@ class BouyCircleObserver(msg.MessageObserver):
         self.__auv.stop()
         start_bearing = self.__auv.getBearing()
         entered_quarters = [False, False, False, False]
-        info('waiting for circles....')
+        info('Waiting for circles...')
         self.updateMotors()
         try:
             while False in entered_quarters:
@@ -123,12 +123,12 @@ class BouyCircleObserver(msg.MessageObserver):
                 if self.__auv.getBearing() > 270 and self.__auv.getBearing() < 360:
                     entered_quarters[3] = True
             while self.__auv.getBearing() < start_bearing:
-                info('waiting for final completion...')
+                info('Waiting for final completion...')
                 time.sleep(0.5)
         finally:
-            info('stopping...')
+            info('Stopping...')
             self.__auv.stop()
-        info('complete!')
+        info('Complete!')
             
 
 
@@ -140,7 +140,7 @@ def runWithNode(cauv_node, auv, opts=None):
     if auv is None:
         auv = control.AUV(cauv_node)
 
-    b = BouyCircleObserver(cauv_node, auv, opts.strafe_speed, opts.buoy_size)
+    b = BuoyCircleObserver(cauv_node, auv, opts.strafe_speed, opts.buoy_size)
     b.run()
 
     info('circle_buoy.py complete')
