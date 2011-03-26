@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="51">
+  <logicalFolder name="root" displayName="root" projectFiles="true">
+    <logicalFolder name="f1" displayName="common" projectFiles="true">
+      <logicalFolder name="f7" displayName="I2C" projectFiles="true">
+        <itemPath>../../src/common/I2C/I2C.c</itemPath>
+        <itemPath>../../src/common/I2C/I2C.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f1" displayName="LEDs" projectFiles="true">
+        <itemPath>../../src/common/LEDs/LEDs.c</itemPath>
+        <itemPath>../../src/common/LEDs/LEDs.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f2" displayName="math_extra" projectFiles="true">
+        <itemPath>../../src/common/math_extra/math_extra.c</itemPath>
+        <itemPath>../../src/common/math_extra/math_extra.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f3" displayName="messaging" projectFiles="true">
+        <itemPath>../../src/common/messaging/command_mapping.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f4" displayName="protocol" projectFiles="true">
+        <itemPath>../../src/common/protocol/messages.c</itemPath>
+        <itemPath>../../src/common/protocol/messages.h</itemPath>
+        <itemPath>../../src/common/protocol/packet_layer.c</itemPath>
+        <itemPath>../../src/common/protocol/packet_layer.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f5" displayName="uart" projectFiles="true">
+        <itemPath>../../src/common/uart/uart.c</itemPath>
+        <itemPath>../../src/common/uart/uart.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f6" displayName="util" projectFiles="true">
+        <itemPath>../../src/common/utils/bytes_to_float.c</itemPath>
+        <itemPath>../../src/common/utils/bytes_to_float.h</itemPath>
+        <itemPath>../../src/common/utils/bytes_to_long.c</itemPath>
+        <itemPath>../../src/common/utils/bytes_to_long.h</itemPath>
+        <itemPath>../../src/common/utils/debug.h</itemPath>
+        <itemPath>../../src/common/utils/queue.c</itemPath>
+        <itemPath>../../src/common/utils/queue.h</itemPath>
+        <itemPath>../../src/common/utils/sleep.c</itemPath>
+        <itemPath>../../src/common/utils/sleep.h</itemPath>
+        <itemPath>../../src/common/utils/utils.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f8" displayName="WDT" projectFiles="true">
+        <itemPath>../../src/common/WDT/WDT.c</itemPath>
+        <itemPath>../../src/common/WDT/WDT.h</itemPath>
+      </logicalFolder>
+    </logicalFolder>
+    <logicalFolder name="f3" displayName="nav" projectFiles="true">
+      <logicalFolder name="f1" displayName="comms" projectFiles="true">
+        <itemPath>../../src/motor/comms/command_handler.c</itemPath>
+        <itemPath>../../src/motor/comms/comms.c</itemPath>
+        <itemPath>../../src/motor/comms/comms.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f4" displayName="LeakSensors" projectFiles="true">
+        <itemPath>../../src/motor/leak_sensors/Leaks.c</itemPath>
+        <itemPath>../../src/motor/leak_sensors/Leaks.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f2" displayName="motor_ctrl" projectFiles="true">
+        <itemPath>../../src/motor/motor_ctrl/motor_ctrl.c</itemPath>
+        <itemPath>../../src/motor/motor_ctrl/motor_ctrl.h</itemPath>
+        <itemPath>../../src/motor/motor_ctrl/safety.c</itemPath>
+        <itemPath>../../src/motor/motor_ctrl/safety.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f3" displayName="timer" projectFiles="true">
+        <itemPath>../../src/motor/timer/timer.c</itemPath>
+        <itemPath>../../src/motor/timer/timer.h</itemPath>
+      </logicalFolder>
+      <itemPath>../../src/motor/init.c</itemPath>
+      <itemPath>../../src/motor/init.h</itemPath>
+      <itemPath>../../src/motor/main.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <compilerSet>Cygwin|Cygwin</compilerSet>
+        <platform>3</platform>
+      </toolsSet>
+      <compileType>
+        <linkerTool>
+          <linkerLibItems>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+      <item path="../../src/common/I2C/I2C.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/I2C/I2C.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/LEDs/LEDs.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/LEDs/LEDs.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/WDT/WDT.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/WDT/WDT.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/math_extra/math_extra.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/math_extra/math_extra.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/messaging/command_mapping.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/protocol/messages.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/protocol/messages.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/protocol/packet_layer.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/protocol/packet_layer.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/uart/uart.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/uart/uart.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_float.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_float.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_long.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_long.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/debug.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/queue.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/queue.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/sleep.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/sleep.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/utils.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/comms/command_handler.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/comms/comms.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/comms/comms.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/init.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/init.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/leak_sensors/Leaks.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/leak_sensors/Leaks.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/main.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/motor_ctrl.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/motor_ctrl.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/safety.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/safety.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/timer/timer.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/timer/timer.h">
+        <itemTool>3</itemTool>
+      </item>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <compilerSet>Cygwin|Cygwin</compilerSet>
+        <platform>3</platform>
+      </toolsSet>
+      <compileType>
+        <cCompilerTool>
+          <developmentMode>5</developmentMode>
+        </cCompilerTool>
+        <ccCompilerTool>
+          <developmentMode>5</developmentMode>
+        </ccCompilerTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <linkerTool>
+          <linkerLibItems>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+      <item path="../../src/common/I2C/I2C.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/I2C/I2C.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/LEDs/LEDs.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/LEDs/LEDs.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/WDT/WDT.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/WDT/WDT.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/math_extra/math_extra.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/math_extra/math_extra.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/messaging/command_mapping.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/protocol/messages.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/protocol/messages.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/protocol/packet_layer.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/protocol/packet_layer.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/uart/uart.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/uart/uart.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_float.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_float.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_long.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/bytes_to_long.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/debug.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/queue.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/queue.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/sleep.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/common/utils/sleep.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/common/utils/utils.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/comms/command_handler.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/comms/comms.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/comms/comms.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/init.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/init.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/leak_sensors/Leaks.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/leak_sensors/Leaks.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/main.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/motor_ctrl.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/motor_ctrl.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/safety.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/motor_ctrl/safety.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="../../src/motor/timer/timer.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="../../src/motor/timer/timer.h">
+        <itemTool>3</itemTool>
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>
