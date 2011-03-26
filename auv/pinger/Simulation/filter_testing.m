@@ -1,7 +1,16 @@
+% Pinger Output specs
+pinger_freq = 12e3; % 12 kHz
+det_filter_width = 50; % width of peak filter in Hz for detector
+
+% Sound card specs
+sample_freq = 96e3; % 96 kHz
+snr = 12; % signal-to-noise ratio in decibels
+
 % Filter Testing
 pinger_freq = 12e3;
 %[data, Fs] = wavread('/Users/hugo/hydrophones_signal_noise.wav');
 [data, Fs] = wavread('/Users/hugo/hydrophones_long_pings.wav');
+%[data, Fs] = wavread('/Users/hugo/Downloads/hydro3.wav');
 %soundsc(data, Fs);
 sample_freq = Fs;
 [peakfilt_num, peakfilt_den] = iirpeak(pinger_freq/(sample_freq/2), ...
