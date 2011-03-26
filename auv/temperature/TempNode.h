@@ -8,20 +8,30 @@
 #include <cstdio>
 
 typedef std::vector<double> doublevec;
+struct chip_name_comp
+{
+  bool operator()(sensors_chip_name n1, sensors_chip_name n2) const
+  {
+    return (n1.addr < n2.addr);
+  }
+};
 
-class TempNode : public CauvNode
+typedef std::map<sensors_chip_name, 
+        std::vector<const sensors_feature_data*>, chip_name_comp> 
+        chip_features;
+
+
+class TempNode: public CauvNode
 {
   public:
     TempNode(std::string f);
     ~TempNode();
     int SetConfigFile(std::string f);
     void GetChipNames();
-    void GetFeatureData(sensors_chip_name *chip_name);
-  protected:
-    virtual void onRun();
+    void GetFeatureData(sensors_chip_name chip_name);
   private:
     doublevec temps();
     std::string f__;
     FILE *file__;
-    std::map<sensors_chip_name*, std::vector<sensors_feature_data*> > chips;
+    chip_features chips;
 };

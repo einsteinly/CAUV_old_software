@@ -8,13 +8,13 @@ TempNode::TempNode(std::string f):CauvNode("temp")
 TempNode::~TempNode()
 {
   sensors_cleanup();
-  fclose(f__);
+  fclose(file__);
 }
 
 int TempNode::SetConfigFile(std::string f)
 {
   f__ = f;
-  file__ = fopen(f__,'r');
+  file__ = fopen(f__.c_str(),"r");
   if(file__ == NULL)
   {
     debug() << "lm_sensors config file not found!";
@@ -32,21 +32,21 @@ void TempNode::GetChipNames()
 {
   chips.clear();
   int nr = 0;
-  sensors_chip_name *chip_name;
+  const sensors_chip_name *chip_name;
   while(chip_name = sensors_get_detected_chips(&nr))
   {
-    GetFeatureData(chip_name);
+    GetFeatureData(*chip_name);
   }
 }
 
-void TempNode::GetFeatureData(sensors_chip_name *chip_name)
+void TempNode::GetFeatureData(sensors_chip_name chip_name)
 {
   int n1, n2;
   n1 = 0;
   n2 = 0;
-  sensors_feature_data *feature_data;
-  std::vector<sensors_feature_data*> features;
-  while(feature_data = sensors_get_all_features(chip_name, n1, n2))
+  const sensors_feature_data *feature_data;
+  std::vector<const sensors_feature_data*> features;
+  while(feature_data = sensors_get_all_features(chip_name, &n1, &n2))
   {
     features.push_back(feature_data);
   }
