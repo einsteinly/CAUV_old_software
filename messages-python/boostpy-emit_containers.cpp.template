@@ -2,6 +2,8 @@
 \#include "workarounds.h" // _must_ be first
 \#include <boost/python.hpp>
 \#include <boost/python/str.hpp>
+\#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+\#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 
 \#include "emit_generated.h"
 \#include <generated/messages.h>
@@ -20,49 +22,9 @@ inline void IndexError(){
     bp::throw_error_already_set();
 }
 
-template<class T>
-struct vec_item{
-    typedef typename T::value_type V;
-    static V& get(T& x, int i){
-        static V nothing;
-        if(i < 0) i += x.size();
-        if(i >= 0 && i < int(x.size())) return x[i];
-        IndexError();
-        return nothing;
-    }
-    static void set(T& x, int i, V const& v){
-        if(i < 0) i += x.size();
-        if(i >= 0 && i < int(x.size())) x[i] = v;
-        else IndexError();
-    }
-    static void del(T& x, int i){
-        if(i < 0) i += x.size();
-        if(i >= 0 && i < int(x.size())) x.erase(x.begin() + i);
-        else IndexError();
-    }
-    static void add(T& x, V const& v){
-        x.push_back(v);
-    }
-};
-
 template<class Key, class Val>
-struct map_item{
+struct MapHelper{
     typedef std::map<Key,Val> Map;
-
-    static Val& get(Map& self, const Key idx){
-        static Val nothing;
-        typename Map::iterator i = self.find(idx);
-        if(i != self.end()) return i->second;
-        PyErr_SetString(PyExc_KeyError,"Map key not found");
-        bp::throw_error_already_set();
-        return nothing;
-    }
-
-    static void set(Map& self, const Key idx, const Val val) { self[idx]=val; }
-
-    static void del(Map& self, const Key n) { self.erase(n); }
-
-    static bool in(Map const& self, const Key n) { return self.find(n) != self.end(); }
 
     static bp::list keys(Map const& self){
         bp::list t;
@@ -84,6 +46,7 @@ struct map_item{
     }
 };
 
+
 void emitContainers(){
     // STL Vectors:
     #for $t in $requiredVectorTypes 
@@ -91,38 +54,29 @@ void emitContainers(){
     #set $vecn = $CPPContainerTypeName(t) + "Vec"
     // $vecn
     bp::class_< $vect >("$vecn")
-        .def("__len__", &$vect::size)
-        .def("clear", &$vect::clear)
-        .def("append", &vec_item< $vect >::add, 
-              bp::with_custodian_and_ward<1, 2>()) // let container keep value
-        .def("__getitem__", &vec_item< $vect >::get,
-             bp::return_value_policy<bp::copy_non_const_reference>())
-        .def("__setitem__", &vec_item< $vect >::set,
-             bp::with_custodian_and_ward<1,2>()) // to let container keep value
-        .def("__delitem__", &vec_item< $vect >::del)
-        .def("__iter__", bp::iterator< $vect >())
+        .def(bp::vector_indexing_suite< $vect >())
+        .def(bp::self_ns::str(bp::self_ns::self))
+        .def(bp::self_ns::repr(bp::self_ns::self))
     ;
-    #end for
+    from_python_sequence<$vect, variable_capacity_policy>();
+
+#end for
 
     // STL Maps: TODO: unambiguous names!
     #for $kt, $vt in $requiredMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
     #set $mapt = "std::map< " + $toCPPType(kt) +", "+ $toCPPType(vt) +" >"
-    #set $itemt = "map_item< " + $toCPPType(kt) +", "+ $toCPPType(vt) +" >"
+    #set $helpert = "MapHelper< " + $toCPPType(kt) +", "+ $toCPPType(vt) +" >"
     // $mapn
     bp::class_< $mapt >("$mapn")
-        .def("__len__", &$mapt::size)
-        .def("__getitem__", &${itemt}().get,
-             bp::return_value_policy<bp::copy_non_const_reference>())
-        .def("__setitem__", &${itemt}().set)
-        .def("__delitem__", &${itemt}().del)
-        .def("clear", &$mapt::clear)
-        .def("__contains__", &${itemt}().in)
-        .def("has_key", &${itemt}().in)
-        .def("keys", &${itemt}().keys)
-        .def("values", &${itemt}().values)
-        .def("items", &${itemt}().items)
+        .def(bp::map_indexing_suite< $mapt >())
+        .def("keys", &${helpert}().keys)
+        .def("values", &${helpert}().values)
+        .def("items", &${helpert}().items)
+        .def(bp::self_ns::str(bp::self_ns::self))
+        .def(bp::self_ns::repr(bp::self_ns::self))
     ;
+    from_python_dict<$mapt, variable_capacity_map_policy>();
     
     #end for
 }

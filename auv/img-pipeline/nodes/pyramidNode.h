@@ -31,7 +31,7 @@ class PyramidNode: public Node{
             registerInputID(Image_In_Name);
             
             // output:
-            registerOutputID<image_ptr_t>(Image_Out_Name);
+            registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
             
             // multiple parameters
             registerParamID<int>("level",1,"positive level will call pyrdown, negative will call pyrup");
@@ -68,7 +68,7 @@ class PyramidNode: public Node{
                     }
                 }
                 
-                r[Image_Out_Name] = boost::make_shared<Image>(out_mat);
+                r[Image_Out_Copied_Name] = boost::make_shared<Image>(out_mat);
         
             } catch(cv::Exception& e) {
                 error() << "PyramidNode:\n\t"

@@ -26,10 +26,10 @@ class CannyNode: public Node{
             m_speed = slow;
             
             // one input:
-            registerInputID("image_in");
+            registerInputID(Image_In_Name);
             
             // one output
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
             
             // parameters:
             registerParamID<float>("threshold 1", 50);
@@ -46,7 +46,7 @@ class CannyNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image_in"];
+            image_ptr_t img = inputs[Image_In_Name];
             
             float t1 = param<float>("threshold 1");
             float t2 = param<float>("threshold 2");
@@ -56,7 +56,7 @@ class CannyNode: public Node{
             boost::shared_ptr<Image> dst = boost::make_shared<Image>();
             try{
                 cv::Canny(img->cvMat(), dst->cvMat(), t1, t2, ap, g);
-                r["image_out"] = dst;
+                r[Image_Out_Copied_Name] = dst;
             }catch(cv::Exception& e){
                 error() << "CannyNode:\n\t"
                         << e.err << "\n\t"

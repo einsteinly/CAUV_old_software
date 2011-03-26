@@ -60,7 +60,7 @@ processes_to_start = [
         CAUVTask('spread',   'nohup spread',                              True,  ['spread']),
         CAUVTask('watch',    '',                                          False, ['watch.py']),
         CAUVTask('persist',  'nohup /bin/sh ./run.sh ./persist.py',         True, ['persist.py']),
-        CAUVTask('watch',    'nohup /bin/sh ./run.sh ./battery_monitor.py', True,  ['battery_monitor.py']) ]
+        CAUVTask('battery',  'nohup /bin/sh ./run.sh ./battery_monitor.py', False,  ['battery_monitor.py']) ]
 
 def limitLength(string, length=40):
     string = string.replace('\n', '\\ ')

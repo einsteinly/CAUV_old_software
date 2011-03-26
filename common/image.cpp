@@ -50,6 +50,19 @@ cv::Mat& cauv::Image::cvMat(){
     return *m_img;
 }
 
+int cauv::Image::width() const
+{
+    return m_img->cols;
+}
+int cauv::Image::height() const
+{
+    return m_img->rows;
+}
+int cauv::Image::channels() const
+{
+    return m_img->channels();
+}
+
 void cauv::Image::serializeQuality(int q){
     std::vector<int>::iterator i = std::find(m_compress_params.begin(),
                                              m_compress_params.end(),
