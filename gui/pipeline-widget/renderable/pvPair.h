@@ -1,6 +1,8 @@
 #ifndef __PV_PAIR_H__
 #define __PV_PAIR_H__
 
+#include <boost/lexical_cast.hpp>
+
 #include <utility/string.h>
 #include <debug/debug.h>
 
@@ -16,11 +18,11 @@ class PVPairEditableBase: public Renderable{
         }
         virtual ~PVPairEditableBase(){ }
 
-        void editable(bool yn){
-            m_editable = yn;
+        bool editable(bool yn){
+            return m_editable = yn;
         }
 
-        bool editable(){
+        bool editable() const {
             return m_editable;
         }
 
@@ -101,10 +103,15 @@ class PVPair: public PVPairEditableBase{
 
     private:
         static void onValueChanged(PVPair const& pvp, std::string const& s){
-            std::istringstream is(s);
             value_T v;
-            is >> std::noskipws >> std::boolalpha >> v;
-            debug() << "PVPair: Edit done:" << s << "=" << std::boolalpha << v;
+            try {
+                v = boost::lexical_cast<value_T>(s);
+                debug() << "PVPair: Edit done:" << s << "=" << std::boolalpha << v;
+            }
+            catch (boost::bad_lexical_cast& e)
+            {
+                error() << "PVPair: Bad lexical cast reading " << s;
+            }
             pvp.m_node->paramValueChanged(*pvp.m_param, v);
         }
 

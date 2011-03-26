@@ -268,5 +268,424 @@ void register_shared_ptrs_to_python(){
 /** now really end all evil hackery
  **/
 
+
+
+
+
+/* Actually no, some evil hackery for bool friendly isinstance.
+ * ints can convert to bools, but we don't want that, so explicitly
+ * forbid it.
+ */
+template<typename T>
+inline bool isinstance(const boost::python::object& o)
+{
+    boost::python::extract<T> x(o);
+    return x.check();
+}
+
+// Lots of stuff is extractable to bool, so specialise it to actually
+// use isinstance
+template<>
+inline bool isinstance<bool>(const boost::python::object& o)
+{
+    using namespace boost::python;
+
+    try {
+        object main = import("__main__");
+        object main_namespace = main.attr("__dict__");
+        
+        dict globals;
+        globals["o"] = o;
+        object ret = eval(
+            "isinstance(o, bool)",
+            main_namespace, globals); 
+        return extract<bool>(ret);
+    }
+    catch (error_already_set const&) { 
+        PyErr_Print(); 
+        return false;
+    } 
+}
+
+// A specialisations for the float types
+inline bool isfloat(const boost::python::object& o)
+{
+    using namespace boost::python;
+
+    try {
+        object main = import("__main__");
+        object main_namespace = main.attr("__dict__");
+        
+        dict globals;
+        globals["o"] = o;
+        object ret = eval(
+            "isinstance(o, float)",
+            main_namespace, globals); 
+        return extract<bool>(ret);
+    }
+    catch (error_already_set const&) { 
+        PyErr_Print(); 
+        return false;
+    } 
+}
+template<>
+inline bool isinstance<float>(const boost::python::object& o) { return isfloat(o); }
+template<>
+inline bool isinstance<double>(const boost::python::object& o) { return isfloat(o); }
+
+// A bunch of specialisations for the bajillion int types
+inline bool isint(const boost::python::object& o)
+{
+    using namespace boost::python;
+
+    try {
+        object main = import("__main__");
+        object main_namespace = main.attr("__dict__");
+        
+        dict globals;
+        globals["o"] = o;
+        object ret = eval(
+            "(isinstance(o, int) or isinstance(o, long)) and not isinstance(o, bool)",
+            main_namespace, globals); 
+        return extract<bool>(ret);
+    }
+    catch (error_already_set const&) { 
+        PyErr_Print(); 
+        return false;
+    } 
+}
+template<>
+inline bool isinstance<char>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<unsigned char>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<short>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<unsigned short>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<int>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<unsigned int>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<long>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<unsigned long>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<long long>(const boost::python::object& o) { return isint(o); }
+template<>
+inline bool isinstance<unsigned long long>(const boost::python::object& o) { return isint(o); }
+
+
+/*
+ * Shamelessly stolen from cctbx
+ * cctbx.sourceforge.net
+ */
+struct default_policy
+{
+    static bool check_convertibility_per_element() { return true; }
+
+    template <typename ContainerType>
+    static bool check_size(boost::type<ContainerType>, std::size_t /*sz*/)
+    {
+        return true;
+    }
+
+    template <typename ContainerType>
+    static void assert_size(boost::type<ContainerType>, std::size_t /*sz*/) {}
+
+    template <typename ContainerType>
+    static void reserve(ContainerType& a, std::size_t sz) {}
+};
+struct variable_capacity_policy : default_policy
+{
+    template <typename ContainerType>
+    static void reserve(ContainerType& a, std::size_t sz)
+    {
+        a.reserve(sz);
+    }
+
+    template <typename ContainerType, typename ValueType>
+    static void set_value(
+            ContainerType& a,
+#if !defined(NDEBUG)
+            std::size_t i,
+#else
+            std::size_t,
+#endif
+            ValueType const& v)
+    {
+        assert(a.size() == i);
+        a.push_back(v);
+    }
+};
+struct variable_capacity_map_policy : default_policy
+{
+    template <typename ContainerType, typename ValueType>
+    static void set_value(
+            ContainerType& a,
+#if !defined(NDEBUG)
+            std::size_t i,
+#else
+            std::size_t,
+#endif
+            ValueType const& v)
+    {
+        assert(a.size() == i);
+        a.insert(v);
+    }
+};
+template <typename ContainerType, typename ConversionPolicy>
+struct from_python_sequence
+{
+    typedef typename ContainerType::value_type container_element_type;
+
+    from_python_sequence()
+    {
+        boost::python::converter::registry::push_back(
+                &convertible,
+                &construct,
+                boost::python::type_id<ContainerType>());
+    }
+
+    static void* convertible(PyObject* obj_ptr)
+    {
+        if (!(PyList_Check(obj_ptr)
+                    || PyTuple_Check(obj_ptr)
+                    || PyIter_Check(obj_ptr)
+                    || PyRange_Check(obj_ptr)
+                    || (   !PyString_Check(obj_ptr)
+                        && !PyUnicode_Check(obj_ptr)
+                        && (   obj_ptr->ob_type == 0
+                            || obj_ptr->ob_type->ob_type == 0
+                            || obj_ptr->ob_type->ob_type->tp_name == 0
+                            || std::strcmp(
+                                obj_ptr->ob_type->ob_type->tp_name,
+                                "Boost.Python.class") != 0)
+                        && PyObject_HasAttrString(obj_ptr, "__len__")
+                        && PyObject_HasAttrString(obj_ptr, "__getitem__")))) return 0;
+        boost::python::handle<> obj_iter(
+                boost::python::allow_null(PyObject_GetIter(obj_ptr)));
+        if (!obj_iter.get()) { // must be convertible to an iterator
+            PyErr_Clear();
+            return 0;
+        }
+        if (ConversionPolicy::check_convertibility_per_element()) {
+            int obj_size = PyObject_Length(obj_ptr);
+            if (obj_size < 0) { // must be a measurable sequence
+                PyErr_Clear();
+                return 0;
+            }
+            if (!ConversionPolicy::check_size(
+                        boost::type<ContainerType>(), obj_size)) return 0;
+            bool is_range = PyRange_Check(obj_ptr);
+            size_t i=0;
+            if (!all_elements_convertible(obj_iter, is_range, i)) return 0;
+            if (!is_range) assert(i == (size_t)obj_size);
+        }
+        return obj_ptr;
+    }
+
+    // This loop factored out by Achim Domma to avoid Visual C++
+    // Internal Compiler Error.
+    static bool all_elements_convertible(
+                    boost::python::handle<>& obj_iter,
+                    bool is_range,
+                    std::size_t& i)
+    {
+        for(;;i++) {
+            boost::python::handle<> py_elem_hdl(
+                    boost::python::allow_null(PyIter_Next(obj_iter.get())));
+            if (PyErr_Occurred()) {
+                PyErr_Clear();
+                return false;
+            }
+            if (!py_elem_hdl.get())
+                break; // end of iteration
+            boost::python::object py_elem_obj(py_elem_hdl);
+            boost::python::extract<container_element_type>
+                elem_proxy(py_elem_obj);
+            if (!elem_proxy.check())
+                return false;
+            if (is_range)
+                break; // in a range all elements are of the same type
+        }
+        return true;
+    }
+
+    static void construct(
+            PyObject* obj_ptr,
+            boost::python::converter::rvalue_from_python_stage1_data* data)
+    {
+        boost::python::handle<> obj_iter(PyObject_GetIter(obj_ptr));
+        void* storage = (
+                (boost::python::converter::rvalue_from_python_storage<ContainerType>*)
+                data)->storage.bytes;
+        new (storage) ContainerType();
+        data->convertible = storage;
+        ContainerType& result = *((ContainerType*)storage);
+        std::size_t i=0;
+        for(;;i++) {
+            boost::python::handle<> py_elem_hdl(
+                    boost::python::allow_null(PyIter_Next(obj_iter.get())));
+            if (PyErr_Occurred()) boost::python::throw_error_already_set();
+            if (!py_elem_hdl.get()) break; // end of iteration
+            boost::python::object py_elem_obj(py_elem_hdl);
+            boost::python::extract<container_element_type> elem_proxy(py_elem_obj);
+            ConversionPolicy::set_value(result, i, elem_proxy());
+        }
+        ConversionPolicy::assert_size(boost::type<ContainerType>(), i);
+    }
+};
+template <typename MapType, typename ConversionPolicy>
+struct from_python_dict
+{
+    typedef typename MapType::value_type v_t;
+    typedef typename MapType::key_type k_t;
+    typedef typename MapType::mapped_type m_t;
+
+    from_python_dict()
+    {
+        boost::python::converter::registry::push_back(
+                &convertible,
+                &construct,
+                boost::python::type_id<MapType>()
+#ifdef BOOST_PYTHON_SUPPORTS_PY_SIGNATURES
+                , &boost::python::converter::wrap_pytype<&PyDict_Type>::get_pytype
+#endif
+                );
+    }
+
+    static void* convertible(PyObject* obj_ptr)
+    {
+        debug() << "map convertible start";
+        if(!PyDict_Check(obj_ptr))
+            return 0;
+        debug() << "map convertible dict ok";
+        boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
+        boost::python::object obj_obj(obj_hdl);
+        boost::python::extract<boost::python::dict> obj_proxy(obj_obj);
+        if (!obj_proxy.check())
+            return 0;
+        boost::python::dict obj_dict = obj_proxy();
+       
+        debug() << "map convertible proxy ok";
+
+        if (ConversionPolicy::check_convertibility_per_element()) {
+            if (!ConversionPolicy::check_size(boost::type<MapType>(), boost::python::len(obj_dict)))
+                return 0;
+        debug() << "map convertible size ok";
+            if (!all_elements_convertible(obj_dict))
+                return 0;
+        debug() << "map convertible elms ok";
+        }
+
+        return obj_ptr;
+    }
+    
+    static bool all_elements_convertible(
+                    boost::python::dict& obj_dict)
+    {
+        boost::python::list keys = obj_dict.keys();
+        int len_keys = boost::python::len(keys);
+        debug() << "map convertible elms";
+        for(int i=0;i<len_keys;i++) {
+        debug() << "map convertible elm"<<i;
+            boost::python::object key_obj = keys[i];
+            boost::python::extract<k_t> key_proxy(key_obj);
+            if (!key_proxy.check()) {
+                return false;
+            }
+        debug() << "map convertible elm"<<i<<"key ok";
+            boost::python::object value_obj = obj_dict[key_obj];
+            boost::python::extract<m_t> value_proxy(value_obj);
+            if (!value_proxy.check()) {
+                return false;
+            }
+        debug() << "map convertible elm"<<i<<"val ok";
+        }
+        return true;
+    }
+
+
+    static void construct(
+            PyObject* obj_ptr,
+            boost::python::converter::rvalue_from_python_stage1_data* data)
+    {
+        boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
+        boost::python::object obj_obj(obj_hdl);
+        boost::python::extract<boost::python::dict> obj_proxy(obj_obj);
+        boost::python::dict other = obj_proxy();
+        void* storage = (
+                (boost::python::converter::rvalue_from_python_storage<MapType>*)
+                data)->storage.bytes;
+        new (storage) MapType();
+        data->convertible = storage;
+        MapType& self = *((MapType*)storage);
+        boost::python::list keys = other.keys();
+        int len_keys = boost::python::len(keys);
+        for(int i=0;i<len_keys;i++) {
+            boost::python::object key_obj = keys[i];
+            boost::python::extract<k_t> key_proxy(key_obj);
+            if (!key_proxy.check()) {
+                PyErr_SetString(PyExc_KeyError, "Unsuitable type.");
+                boost::python::throw_error_already_set();
+            }
+            boost::python::object value_obj = other[key_obj];
+            boost::python::extract<m_t> value_proxy(value_obj);
+            if (!value_proxy.check()) {
+                PyErr_SetString(PyExc_ValueError, "Unsuitable type.");
+                boost::python::throw_error_already_set();
+            }
+            k_t key = key_proxy();
+            m_t value = value_proxy();
+            
+            ConversionPolicy::set_value(self, i, v_t(key, value));
+        }
+    }
+};
+template <typename VariantType, typename WrapperType, typename ValueType>
+struct from_python_variant
+{
+    from_python_variant()
+    {
+        boost::python::converter::registry::push_back(
+                &convertible,
+                &construct,
+                boost::python::type_id<VariantType>()
+                );
+    }
+
+    static void* convertible(PyObject* obj_ptr)
+    {
+        debug() << "variant convertible";
+        boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
+        boost::python::object obj_obj(obj_hdl);
+        if(!isinstance<ValueType>(obj_obj))
+            return 0;
+        debug() << "variant convertible isinstance ok";
+        return obj_ptr;
+    }
+    
+    static void construct(
+            PyObject* obj_ptr,
+            boost::python::converter::rvalue_from_python_stage1_data* data)
+    {
+        boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
+        boost::python::object obj_obj(obj_hdl);
+        void* storage = (
+                (boost::python::converter::rvalue_from_python_storage<WrapperType>*)
+                data)->storage.bytes;
+        
+        boost::python::extract<ValueType> val_proxy(obj_obj);
+        new (storage) WrapperType(static_cast<ValueType>(val_proxy()));
+        
+        data->convertible = storage;
+    }
+};
+
+
+
+
+
 #endif // ndef HACKY_WORKAROUNDS_H
 

@@ -13,6 +13,7 @@
 #include "skydome.h"
 
 using namespace cauv;
+using namespace cauv::sim;
 
 class CameraTrackCallback: public osg::NodeCallback
 {
@@ -130,7 +131,6 @@ m_scene(new osg::Group)
 
     m_scene->addChild( m_lightSource );
     m_scene->addChild( m_oceanScene.get() );
-    //m_scene->addChild( sunDebug(_sunPositions[CLOUDY]) );
 
 }
 

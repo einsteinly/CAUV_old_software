@@ -18,6 +18,8 @@
 
 namespace cauv {
 
+    class DataStreamTool  : public boost::signals2::trackable {};
+
     /** A DataStreamSplitter can be used to separate streams of structured data
     *   must be extended to be used
     *
@@ -25,12 +27,12 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamSplitter {};
+    class DataStreamSplitter : public DataStreamTool {};
 
     /* floatYPR specialization */
     template<>
 
-    class DataStreamSplitter<cauv::floatYPR> {
+    class DataStreamSplitter<cauv::floatYPR> : public DataStreamTool {
 
     public:
         DataStreamSplitter<cauv::floatYPR>(boost::shared_ptr<DataStream<cauv::floatYPR> > stream) :
@@ -60,7 +62,7 @@ namespace cauv {
     /* floatXYZ specialization */
     template<>
 
-    class DataStreamSplitter<cauv::floatXYZ> {
+    class DataStreamSplitter<cauv::floatXYZ> : public DataStreamTool {
 
     public:
         DataStreamSplitter<cauv::floatXYZ>(boost::shared_ptr<DataStream<cauv::floatXYZ> > stream) :
@@ -90,7 +92,7 @@ namespace cauv {
     /* MotorDemand specialization */
     template<>
 
-    class DataStreamSplitter<cauv::MotorDemand> {
+    class DataStreamSplitter<cauv::MotorDemand> : public DataStreamTool {
 
     public:
         DataStreamSplitter<cauv::MotorDemand>(boost::shared_ptr<DataStream<cauv::MotorDemand> > stream) :
@@ -132,7 +134,7 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamRecorder : public boost::signals2::trackable {
+    class DataStreamRecorder : public DataStreamTool {
 
     public:
         DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int samples = 100000):
@@ -144,8 +146,8 @@ namespace cauv {
             boost::mutex::scoped_lock lock(m_mutex);
             m_numSamples = samples;
             if(m_numSamples < m_history.size()) {
-                m_history.resize(m_numSamples);
                 m_timestamps.resize(m_numSamples);
+                m_history.resize(m_numSamples);
             }
         }
 
@@ -198,7 +200,7 @@ namespace cauv {
     */
     template<class T>
 
-    class DataStreamPrinter : public boost::signals2::trackable {
+    class DataStreamPrinter : public DataStreamTool {
 
     public:
         DataStreamPrinter<T>(boost::shared_ptr<DataStream<T> > stream, std::ostream &output):

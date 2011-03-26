@@ -2,6 +2,8 @@ import messaging
 import threading
 import time
 
+#pylint: disable=E1101
+
 class AUV(messaging.BufferedMessageObserver):
     def __init__(self, node):
         messaging.BufferedMessageObserver.__init__(self)
@@ -75,10 +77,10 @@ class AUV(messaging.BufferedMessageObserver):
         self.send(messaging.DepthCalibrationMessage(foreOffset, foreMultiplier, aftOffset, aftMultiplier))
 
     def calibrateForSaltWater(self):
-        calibrateDepth(-912.2/96.2, 1.0/96.2)
+        self.calibrateDepth(-912.2/96.2, 1.0/96.2)
 
     def calibrateForFreshWater(self):
-        calibrateDepth(-912.2/96.2, 1.0/96.2) # TODO: Find real values
+        self.calibrateDepth(-928.0/86.5, 1.0/86.5)
 
     def depth(self, depth):
         if depth is not None:
@@ -114,13 +116,13 @@ class AUV(messaging.BufferedMessageObserver):
             else:
                 break
 
-    def bearingParams(self, kp, ki, kd, scale, Ap, Ai, Ad, thr):
+    def bearingParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1):
         self.send(messaging.BearingAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr))
 
-    def depthParams(self, kp, ki, kd, scale, Ap, Ai, Ad, thr):
+    def depthParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1):
         self.send(messaging.DepthAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr))
 
-    def pitchParams(self, kp, ki, kd, scale, Ap, Ai, Ad, thr):
+    def pitchParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1):
         self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr))
 
     def prop(self, value):

@@ -24,6 +24,9 @@ int main(int argc, char** argv)
     Q_INIT_RESOURCE(resources);
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
+    QIcon icon;
+    icon.addFile(QString::fromUtf8(":/resources/icon.png"), QSize(), QIcon::Normal, QIcon::Off);
+    app.setWindowIcon(icon);
 
     boost::shared_ptr<CauvGui> node = boost::make_shared<CauvGui>(&app);
 

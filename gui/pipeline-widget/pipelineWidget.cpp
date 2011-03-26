@@ -470,7 +470,7 @@ void PipelineWidget::paintGL(){
     glTranslatef(m_overkey->m_pos);
     m_overkey->draw(drawtype_e::no_flags);
 
-    glPrintErr();
+    glCheckError();
 
     l1.unlock();
     lock_t l2(m_redraw_posted_lock);
@@ -536,7 +536,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
     GLuint e = glGetError();
     if (e != GL_NO_ERROR || hits == GLuint(-1)){
         error() << "selection error:" << e << (int)hits;
-        glPrintErr(e);
+        glPrintError(e);
         hits = 0;
     }
     debug() << "rendered" << n << "items for pick," << hits << "hit";

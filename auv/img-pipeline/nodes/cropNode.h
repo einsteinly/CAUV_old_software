@@ -5,8 +5,8 @@
 #include <vector>
 #include <string>
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "../node.h"
 #include "../nodeFactory.h"
@@ -28,10 +28,10 @@ class CropNode: public Node{
             m_speed = fast;
 
             // one input:
-            registerInputID("image");
+            registerInputID(Image_In_Name);
             
             // output:
-            registerOutputID<image_ptr_t>("cropped image");
+            registerOutputID<image_ptr_t>(Image_Out_Name);
             
             // multiple parameters
             registerParamID<int>("top left (x)",0);
@@ -58,7 +58,7 @@ class CropNode: public Node{
                             << "width and height must be greater than 0.";
                     return r;
                 }
-                image_ptr_t inp_img = inputs["image"];
+                image_ptr_t inp_img = inputs[Image_In_Name];
                 if (top_left_x >= inp_img->cvMat().cols || top_left_y >= inp_img->cvMat().rows ||   // Whole of image is being cropped
                     width < -top_left_x || height < -top_left_y) {
                     error() << "CropNode:\n\t"
@@ -93,7 +93,7 @@ class CropNode: public Node{
                     
                     cv::Mat cropped_img = cv::Mat(inp_img->cvMat(),cropRect); //Perform the cropping
                     
-                    cv::Mat out_img(height,width,inp_img->cvMat().type(),cv::Scalar(0)); //Create a new blank image
+                    cv::Mat out_img = cv::Mat::zeros(height,width,inp_img->cvMat().type()); //Create a new blank image
                     // We need to placed the cropped-image into the output matrix. We can use cropRect for this, translated as required
                     if(top_left_x < 0) { cropRect.x = - top_left_x; } else { cropRect.x = 0; }
                     if(top_left_y < 0) { cropRect.y = - top_left_y; } else { cropRect.y = 0; }
@@ -106,7 +106,7 @@ class CropNode: public Node{
                     cv::Mat cropped_img = cv::Mat(inp_img->cvMat(),cropRect); //Perform the cropping
                     dst = boost::make_shared<Image>(cropped_img);
                 }
-                r["cropped image"] = dst;
+                r[Image_Out_Name] = dst;
                 
         
             } catch(cv::Exception& e) {

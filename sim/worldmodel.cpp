@@ -10,13 +10,13 @@
 #include <osgOcean/FFTOceanSurface>
 
 using namespace cauv;
-
+using namespace cauv::sim;
 
 WorldModel::WorldModel(osg::Vec2f windDirection, float windSpeed, float depth, float reflectionDamping,
                        float scale, bool isChoppy, float choppyFactor, float foamHeight):
     m_scene(new OceanSceneModel(windDirection, windSpeed, depth, reflectionDamping, scale, isChoppy, choppyFactor, foamHeight))
 {
-    //this->addChild(m_scene->getScene());
+    this->addChild(m_scene->getScene());
 }
 
 osg::ref_ptr<OceanSceneModel> WorldModel::getOceanSceneModel(){

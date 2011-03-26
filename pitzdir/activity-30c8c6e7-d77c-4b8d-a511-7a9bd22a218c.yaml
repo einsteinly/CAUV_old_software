@@ -1,0 +1,29 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 269969965611949595854670720413272395453
+created_time: &id001 2011-03-23 22:42:27.425679
+description: 'pscore changed to 1
+
+  attached_files changed to []
+
+  description changed to GrabCutNode used to segfault. Make sure it is tested with
+  recorded images before a test in the water.
+
+  title changed to Test GrabCutNode
+
+  tags changed to [<pitz.Tag 8da7e1 image processing>]
+
+  points changed to None
+
+  milestone changed to Lent Blitz 2011
+
+  estimate changed to trivial'
+entity: !!python/object:uuid.UUID
+  int: 56417116168566632420668048034010367743
+modified_time: *id001
+pscore: 0
+title: 2011-03-23 22:42 - Daniel Kalotay changed task Test GrabCutNode
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 64845437454879531954487720134163702156
+who_did_it: *id002
+yaml_file_saved: 2011-03-23 22:42:27.427350

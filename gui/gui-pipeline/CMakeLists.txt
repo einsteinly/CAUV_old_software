@@ -36,11 +36,11 @@ target_link_libraries (
     pipeline-widget
     ${QT_LIBRARIES}
 )
-cauv_install ( standalone )
+#cauv_install ( standalone )
 
 
 add_custom_command(
-    TARGET standalone
+    TARGET standalone 
     POST_BUILD
     COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${standalone_BINARY_DIR}/"
     COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${standalone_BINARY_DIR}/"

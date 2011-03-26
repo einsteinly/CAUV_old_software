@@ -9,18 +9,60 @@
 
 #include <osg/Node>
 #include <osgViewer/Viewer>
+#include <osgViewer/ViewerEventHandlers>
 #include <osgGA/TrackballManipulator>
 
 #include "validators.h"
 
+#include "sensors/camera.h"
+
+#include "visuals/pipscreen.h"
+
+#include "auvs/redherring.h"
+
 using namespace cauv;
+using namespace cauv::sim;
 
 Simulator::Simulator() : CauvNode("CauvSim"),
 m_auv(boost::make_shared<AUV>()),
-m_auv_controller(boost::make_shared<AUVController>(m_auv))
+m_auv_controller(boost::make_shared<AUVController>(m_auv)),
+m_simulated_auv(boost::make_shared<RedHerring>(m_auv)),
+m_root(new osg::Group()),
+m_viewer(new osgViewer::CompositeViewer())
 {
     joinGroup("control");
     joinGroup("telemetry");
+
+    //
+    // the users camera
+    osgViewer::Viewer * userView = new osgViewer::Viewer();
+    userView->setSceneData(m_root.get());
+    userView->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
+    userView->getCamera()->setViewport(0, 0, 1024, 768);
+
+    // mouse handling
+    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
+    tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
+    userView->setCameraManipulator( tb );
+
+    m_viewer->addView(userView);
+
+    //
+    // the auv cameras
+    foreach(osg::ref_ptr<sim::Camera > camera, m_simulated_auv->getCameras()){
+
+        camera->setSceneData(m_root.get());
+
+        camera->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+
+        // mouse handling
+        osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
+        tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
+        camera->setCameraManipulator( tb );
+
+        // mouse handling
+        m_viewer->addView(camera);
+    }
 }
 
 
@@ -58,22 +100,24 @@ void Simulator::addOptions(boost::program_options::options_description& desc,
 }
 
 
-void Simulator::launchViewer(osg::ref_ptr<osg::Node> root){
+
+void Simulator::launchViewer(){
     info() << "Viewer opened";
-    osgViewer::Viewer viewer;
 
-    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-    tb->setHomePosition( osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0.f,20.f,0.f), osg::Vec3f(0,0,1) );
-    viewer.setCameraManipulator( tb );
+    // TODO: can't get multiple cameras on the same window at the moment
+    //auvView->getCamera()->setGraphicsContext(userView->getCamera()->getGraphicsContext());
+    //auvView->getCamera()->setViewport(30, 30, 200, 200);
+    // so show it in it's own window, not really ideal, would be better as picture in picture
 
-    viewer.setSceneData( root.get() );
-    viewer.setUpViewInWindow( 150,150,1024,768, 0 );
-    viewer.getCamera()->setName("MainCamera");
-    //viewer.getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+    osgViewer::ViewerBase::Views views;
+    m_viewer->getViews(views, false);
 
-    //camera->setProjectionMatrixAsPerspective(45.0, 1.0, 0.5, 1000);
-    //camera->setViewMatrix(osg::Matrix::lookAt(Vec3(0, 0, 200), Vec3(0, 0, 0), Vec3(0, 1, 0)));
-    viewer.run();
+    foreach (osgViewer::View * i, views){
+        i->setUpViewInWindow( 150,150,1024,768, 0 );
+    }
+
+    m_viewer->run();
+
     info() << "Viewer closed";
 }
 
@@ -112,9 +156,21 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
     m_world_model->setSunDiffuse(sunDiffuse);
     m_world_model->setOceanSurfaceHeight(oceanHeight);
 
+    m_root->addChild(m_world_model);
+
+
     // see if the user wants a window into the world...
-    if(vm.count("viewer"))
-        boost::thread(boost::bind(&Simulator::launchViewer, this, m_world_model));
+    if(vm.count("viewer")) {
+        boost::thread(boost::bind(&Simulator::launchViewer, this));
+    } else {
+        m_viewer->realize();
+        while(!m_viewer->done()){
+            m_viewer->advance();
+            m_viewer->eventTraversal();
+            m_viewer->updateTraversal();
+            m_viewer->renderingTraversals();
+        }
+    }
 
     return CauvNode::useOptionsMap(vm, desc);
 }

@@ -41,6 +41,8 @@ struct $s.name
               #end for
 #*           *#);
     #end if 
+
+    bool operator==($s.name const& other) const;
 };
 
 #end for

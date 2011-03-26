@@ -23,6 +23,8 @@
 using namespace std;
 using namespace cauv;
 
+const static float Integral_Max_Kp_Mult = 100;
+
 void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {
     debug() << "Starting alive message thread";
@@ -70,7 +72,7 @@ struct PIDControl
 
     PIDControl(Controller::e controlee=Controller::NumValues)
         : controlee(controlee), target(0), Kp(1), Ki(1), Kd(1), scale(1),
-          integral(0), is_angle(false), retain_samples_msecs(200)
+          integral(0), is_angle(false), retain_samples_msecs(500)
     {
         previous_time.secs = 0;
     }
@@ -156,6 +158,7 @@ struct PIDControl
         previous_time = tnow;
 
         integral += error*dt;
+        integral = clamp(-Integral_Max_Kp_Mult*Kp, integral, Integral_Max_Kp_Mult*Kp);
         double de = smoothedDerivative();
         previous_derror = de;
         previous_mv =  scale * (Kp * error + Ki * integral + Kd * de);
@@ -218,7 +221,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
     public:
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
             : prop_value(0), hbow_value(0), vbow_value(0),
-              hstern_value(0), vstern_value(0), m_max_motor_delta(255/*12*/),
+              hstern_value(0), vstern_value(0), m_max_motor_delta(255),
               m_motor_updates_per_second(5), m_mb(mb)
         {
             const MotorMap def(5, -5, 127, -127);
@@ -471,6 +474,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     msg->demand(m_demand[i]);
                     m_mb->sendMessage(msg, SAFE_MESS);
                 }
+                m_controllers[Controller::Pitch].is_angle = true;
                 m_controllers[Controller::Bearing].is_angle = true;
                 m_controlenabled[Controller::ManualOverride] = true;
                 
@@ -535,15 +539,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
             int new_hstern_value = clamp(-127, motorMap(total_demand.hstern, MotorID::HStern), 127);
             int new_vstern_value = clamp(-127, motorMap(total_demand.vstern, MotorID::VStern), 127);
             
-            if(m_mcb) {
-                sendWithMaxDelta(MotorID::Prop, prop_value, new_prop_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::HBow, hbow_value, new_hbow_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::VBow, vbow_value, new_vbow_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::HStern, hstern_value, new_hstern_value, m_max_motor_delta);
-                sendWithMaxDelta(MotorID::VStern, vstern_value, new_vstern_value, m_max_motor_delta);
-            }
-            
-            m_mb->sendMessage(boost::make_shared<MotorStateMessage>(total_demand), SAFE_MESS);
+            sendWithMaxDelta(MotorID::Prop, prop_value, new_prop_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::HBow, hbow_value, new_hbow_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::VBow, vbow_value, new_vbow_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::HStern, hstern_value, new_hstern_value, m_max_motor_delta);
+            sendWithMaxDelta(MotorID::VStern, vstern_value, new_vstern_value, m_max_motor_delta);
         }
 
         void sendWithMaxDelta(MotorID::e mid, int& oldvalue, int newvalue, unsigned maxDelta)
@@ -560,12 +560,17 @@ class ControlLoops : public MessageObserver, public XsensObserver
         {
             if(newvalue != oldvalue) {
                 oldvalue = newvalue;
-                if (mid == MotorID::VBow)
-                    m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
-                else
-                    m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                // VBow is the wrong way round, but we want all the motors to
+                // be inverted
+                if(m_mcb){
+                    if(mid != MotorID::VBow)
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, -newvalue));
+                    else
+                        m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
+                }
+                    m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), SAFE_MESS);
+                }
             }
-        }
 
         int prop_value;
         int hbow_value;
@@ -732,15 +737,12 @@ void ControlNode::setMCB(const std::string& filename)
     // start up the MCB module
     try {
         m_mcb = boost::make_shared<MCBModule>(filename);
-        info() << "MCB Connected";
+        info() << m_mcb << " MCB Connected";
     }
-    catch (FTDIException& e)
+    catch (std::exception& e)
     {
         error() << "Cannot connect to MCB: " << e.what();
         m_mcb.reset();
-        if (e.errCode() == -8) {
-            throw NotRootException();
-        }
     }
 }
 #endif
@@ -780,7 +782,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
 #ifdef CAUV_MCB_IS_FTDI
         ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB")
 #else 
-        ("mcb,m", po::value<std::string>(), "TTY file for MCB serial comms")
+        ("mcb,m", po::value<std::string>()->default_value("/dev/ttyUSB0"), "TTY file for MCB serial comms")
 #endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale");
@@ -884,7 +886,7 @@ int main(int argc, char** argv)
         
         node->run();
     }
-    catch (NotRootException& e) {
+    catch (std::exception& e) {
         error() << e.what();
     }
     

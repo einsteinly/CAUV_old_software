@@ -4,6 +4,8 @@
 #include "node.h"
 #include "resizeable.h"
 
+#include <boost/thread/mutex.hpp>
+
 #include <common/image.h>
 
 namespace cauv{
@@ -18,7 +20,8 @@ class Img: public Resizeable{
         void display(Image const& img);
 
     private:
-        boost::shared_ptr<TexImg> m_img;
+        boost::shared_ptr<TexImg> m_img, m_next_img;
+        boost::mutex m_img_mutex;
 };
 
 class ImgNode: public Node{

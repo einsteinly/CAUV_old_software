@@ -11,7 +11,7 @@ namespace Playstation {
     enum Buttons {
         X = 2, Triangle = 0, Square = 3, Circle = 1,
         R1 = 7, R2 = 5, L1 = 6, L2 = 4,
-        JoyLClick = 10, JoyRClick = 11,
+        Joy_L_Click = 10, Joy_R_Click = 11,
         Select = 8, Start = 9
     };
     enum POV {
@@ -39,8 +39,8 @@ Q_SIGNALS:
     void R2(bool pressed);
     void L1(bool pressed);
     void L2(bool pressed);
-    void JoyLClick(bool pressed);
-    void JoyRClick(bool pressed);
+    void Joy_L_Click(bool pressed);
+    void Joy_R_Click(bool pressed);
     void Select(bool pressed);
     void Start(bool pressed);
     void Left();
@@ -53,22 +53,16 @@ Q_SIGNALS:
     void Joy_R_X(float value);
     void Joy_R_Y(float value);
 
-
-public Q_SLOTS:
-    void printIt(bool) const;
-    void printIt(int) const;
-
 public:
-    explicit PlaystationInput(const unsigned int id);
+    explicit PlaystationInput(const std::string vendor);
 
     bool buttonPressed( const OIS::JoyStickEvent &arg, int button ) ;
     bool buttonReleased( const OIS::JoyStickEvent &arg, int button ) ;
     bool axisMoved( const OIS::JoyStickEvent &arg, int axis ) ;
     bool povMoved( const OIS::JoyStickEvent &arg, int pov ) ;
-    bool vector3Moved( const OIS::JoyStickEvent &arg, int index) ;
 
 protected:
-    void emitButton( Playstation::Buttons button, bool state );
+    bool emitButton( Playstation::Buttons button, bool state );
 };
 
 } // namespace cauv

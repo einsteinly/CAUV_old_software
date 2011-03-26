@@ -27,9 +27,17 @@
 namespace cauv{
 namespace imgproc{
 
-static const char* Image_In_Name = "image in";
-static const char* Image_Out_Name = "image out (not copied)";
-static const char* Image_Out_Copied_Name = "image out";
+/* Getter for NodeParamValue. Specialised for the case where we want the
+ * actual variant
+ */
+template<typename T>
+inline T getValue(const NodeParamValue& v) {
+    return boost::get<T>(v);
+}
+template<>
+inline NodeParamValue getValue<NodeParamValue>(const NodeParamValue& v) {
+    return v;
+}
 
 class Node: public boost::enable_shared_from_this<Node>{
     public:
@@ -55,8 +63,30 @@ class Node: public boost::enable_shared_from_this<Node>{
 
     private:
         // Private typedefs: only used internally
-        typedef std::pair<node_ptr_t, input_id> output_link_t;
-        typedef std::pair<node_ptr_t, output_id> input_link_t;
+        
+        template<typename T_ID>
+        struct link_target {
+            typedef node_ptr_t node_t;
+            typedef T_ID id_t;
+            node_t node;
+            id_t id;
+            
+            link_target() {}
+            link_target(node_t n, id_t i) : node(n), id(i) {}
+            void clear() { node = node_t(); id = id_t(); }
+        
+            bool operator==(const link_target<T_ID>& other) const {
+                return node == other.node && id == other.id;
+            }
+        };
+        template<typename char_T, typename traits, typename T_ID>
+        friend std::basic_ostream<char_T, traits>& operator<<(
+            std::basic_ostream<char_T, traits>& os, Node::link_target<T_ID> const& l);
+       
+
+
+        typedef link_target<input_id> output_link_t;
+        typedef link_target<output_id> input_link_t;
 
         typedef std::list<output_link_t> output_link_list_t;
 
@@ -65,14 +95,19 @@ class Node: public boost::enable_shared_from_this<Node>{
         typedef std::map<param_id, bool> param_bool_map_t;
         typedef std::map<output_id, output_link_list_t> out_link_map_t;
         typedef std::map<input_id, input_link_t> in_link_map_t;
-        
+       
         /**** SHARED LOCKS ARE NOT RECURSIVE ****/
         typedef boost::shared_mutex mutex_t;
         typedef boost::shared_lock<mutex_t> shared_lock_t;
         typedef boost::upgrade_lock<mutex_t> unique_lock_t;
         
         typedef Spread::service service_t;
-    
+   
+    protected:
+        static const char* Image_In_Name;
+        static const char* Image_Out_Name;
+        static const char* Image_Out_Copied_Name;
+
     public:
         // TODO: shouldn't be necessary to pass `type' here!
         Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
@@ -159,6 +194,8 @@ class Node: public boost::enable_shared_from_this<Node>{
             if(i != m_parameters.end()){
                 debug(1) << "param" << p << "set to" << std::boolalpha << v;
                 i->second = v;
+    
+                sendMessage(boost::make_shared<NodeParametersMessage>(id(), parameters()));
             }else{
                 error e;
                 e << m_parameters.size() << "valid parameters are:";
@@ -183,38 +220,49 @@ class Node: public boost::enable_shared_from_this<Node>{
          * this notification is only useful for asynchronous nodes.
          */
         virtual void paramChanged(param_id const&){ }
-        
+
         /* return a single parameter value: retrieves value from parent if the
          * parameter is linked to the output of a parent
          */
         template<typename T>
         T param(param_id const& p) const {
             unique_lock_t l(m_parameters_lock);
-            const param_value_map_t::const_iterator i = m_parameters.find(p);
+            param_value_map_t::iterator i = m_parameters.find(p);
             if(i != m_parameters.end()){
                 const in_link_map_t::const_iterator j = m_parent_links.find(p);
                 node_ptr_t node;
-                if(j != m_parent_links.end() && (node = j->second.first)){
-                    output_id outparam = j->second.second;
+                
+                T val = getValue<T>(i->second);
+                
+                // If there is a parent link, update the current value
+                if(j != m_parent_links.end() && (node = j->second.node)){
+                    output_id outparam = j->second.id;
                     assert(node->paramOutputs().count(outparam));
                     debug(4) << "returning linked parameter value for" << p
-                            << "(linked to" << j->second.first
-                            << std::boolalpha << j->second.second << ")";
+                            << "(linked to" << j->second.node
+                            << std::boolalpha << j->second.id << ")";
                     // TODO: this will throw boost::bad_get if there is a
                     // param_value type mismatch between the output and the
                     // requested parameter type:
                     //  prevent this happening (somehow...)
                     l.unlock();
                     try{
-                        return boost::get<T>(node->getOutputParam(outparam));
+                        T parentVal = getValue<T>(node->getOutputParam(outparam));
+                        if (!(val == parentVal)) // Fucking boost::variant doesn't have "!="
+                        {
+                            val = parentVal;
+                            i->second = val;
+                            sendMessage(boost::make_shared<NodeParametersMessage>(id(), parameters()));
+                        }
                     }catch(boost::bad_get& e){
                         warning() << "parameter output not available / bad get:"
-                                  << j->second.first << std::boolalpha << j->second.second
+                                  << j->second.node << std::boolalpha << j->second.id
                                   << ", non-linked value will be returned";
-
                     }
                 }
-                return boost::get<T>(i->second);
+                
+                // Return current parameter value
+                return val;
             }else{
                 throw(id_error("param: Invalid parameter id: " + toStr(p)));
             }
@@ -288,7 +336,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         }
         void registerInputID(input_id const& i);
 
-        void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS);
+        void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS) const;
         
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)
@@ -347,7 +395,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         mutable mutex_t m_outputs_lock;
         
         /* parameters of the filters */
-        param_value_map_t m_parameters;
+        mutable param_value_map_t m_parameters;
         param_tip_map_t m_parameter_tips;
         mutable mutex_t m_parameters_lock;
 
@@ -416,6 +464,16 @@ std::basic_ostream<char_T, traits>& operator<<(
     os << "{Node " << &n
        << " type=" << n.type()
        << " id=" << n.id()
+       << "}";
+    return os;
+}
+
+template<typename char_T, typename traits, typename T_ID>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, Node::link_target<T_ID> const& l){
+    os << "{Link "
+       << " node=" << l.node
+       << " id=" << l.id
        << "}";
     return os;
 }

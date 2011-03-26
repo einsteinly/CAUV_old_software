@@ -13,25 +13,29 @@ namespace osg {
 
 namespace cauv {
 
-    class WorldModel : public osg::Group
-    {
-    public:
-        WorldModel(osg::Vec2f windDirection, float windSpeed, float depth, float reflectionDamping, float scale, bool isChoppy, float choppyFactor, float foamHeight);
+    namespace sim {
 
-        void setWindDirection(osg::Vec2f wx);
-        void setWindSpeed(float ws);
-        void setChoppy(bool choppy);
-        void setChoppyFactor(float cf);
-        void setWaveScale(float ref);
-        void setSunPosition(osg::Vec3f pos);
-        void setSunDiffuse(osg::Vec3f pos);
-        void setOceanSurfaceHeight(float height);
+        class WorldModel : public osg::Group
+        {
+        public:
+            WorldModel(osg::Vec2f windDirection, float windSpeed, float depth, float reflectionDamping, float scale, bool isChoppy, float choppyFactor, float foamHeight);
 
-        osg::ref_ptr<OceanSceneModel> getOceanSceneModel();
+            void setWindDirection(osg::Vec2f wx);
+            void setWindSpeed(float ws);
+            void setChoppy(bool choppy);
+            void setChoppyFactor(float cf);
+            void setWaveScale(float ref);
+            void setSunPosition(osg::Vec3f pos);
+            void setSunDiffuse(osg::Vec3f pos);
+            void setOceanSurfaceHeight(float height);
 
-    protected:
-        osg::ref_ptr<OceanSceneModel> m_scene;
-    };
+            osg::ref_ptr<OceanSceneModel> getOceanSceneModel();
+
+        protected:
+            osg::ref_ptr<OceanSceneModel> m_scene;
+        };
+
+    } // namespace sim
 
 } //namespace cauv
 

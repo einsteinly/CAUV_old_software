@@ -7,42 +7,44 @@
 using namespace OIS;
 using namespace cauv;
 
-PlaystationInput::PlaystationInput(const unsigned int id) : GamepadInput(id)
+PlaystationInput::PlaystationInput(const std::string vendor) : GamepadInput(vendor)
 {
 }
 
-bool PlaystationInput::buttonPressed( const JoyStickEvent&, int button ) {
-    emitButton((Playstation::Buttons) button, true);
-    return true;
+bool PlaystationInput::buttonPressed( const JoyStickEvent& event, int button ) {
+    if(emitButton((Playstation::Buttons) button, true))
+        return true;
+    else return GamepadInput::buttonPressed(event, button);
 }
 
-bool PlaystationInput::buttonReleased( const JoyStickEvent&, int button ) {
-    emitButton((Playstation::Buttons) button, false);
-    return true;
+bool PlaystationInput::buttonReleased( const JoyStickEvent& event, int button ) {
+    if(emitButton((Playstation::Buttons) button, false))
+        return true;
+    else return GamepadInput::buttonReleased(event, button);
 }
 
 bool PlaystationInput::axisMoved( const JoyStickEvent &arg, int axis )
 {
     float value = 0;
-    if((arg.state.mAxes[axis].abs > 4000 || arg.state.mAxes[axis].abs < -4000 )) {
-        value = arg.state.mAxes[axis].abs;
+    if((arg.state.mAxes[axis].abs > 6000 || arg.state.mAxes[axis].abs < -6000 )) {
+        value = ((float)arg.state.mAxes[axis].abs) / 32768.f; // 32768 is the maximum short value
     }
 
     switch (axis) {
-        case Playstation::Joy_L_X:
-            Q_EMIT Joy_L_X(value);
-            break;
-        case Playstation::Joy_L_Y:
-            Q_EMIT Joy_L_Y(value);
-            break;
-        case Playstation::Joy_R_X:
-            Q_EMIT Joy_R_X(value);
-            break;
-        case Playstation::Joy_R_Y:
-            Q_EMIT Joy_R_Y(value);
-            break;
-        default:
-            throw "Axis does not exist";
+    case Playstation::Joy_L_X:
+        Q_EMIT Joy_L_X(value);
+        break;
+    case Playstation::Joy_L_Y:
+        Q_EMIT Joy_L_Y(value);
+        break;
+    case Playstation::Joy_R_X:
+        Q_EMIT Joy_R_X(value);
+        break;
+    case Playstation::Joy_R_Y:
+        Q_EMIT Joy_R_Y(value);
+        break;
+    default:
+        return GamepadInput::axisMoved(arg, axis);
     }
 
     return true;
@@ -50,38 +52,24 @@ bool PlaystationInput::axisMoved( const JoyStickEvent &arg, int axis )
 
 bool PlaystationInput::povMoved( const JoyStickEvent &arg, int pov )
 {
-        if( arg.state.mPOV[pov].direction & Pov::North ) //Going up
-            Q_EMIT Up();
-        else if( arg.state.mPOV[pov].direction & Pov::South ) //Going down
-            Q_EMIT Down();
+    if( arg.state.mPOV[pov].direction & Pov::North ) //Going up
+        Q_EMIT Up();
+    else if( arg.state.mPOV[pov].direction & Pov::South ) //Going down
+        Q_EMIT Down();
 
-        if( arg.state.mPOV[pov].direction & Pov::East ) //Going right
-            Q_EMIT Right();
-        else if( arg.state.mPOV[pov].direction & Pov::West ) //Going left
-            Q_EMIT Left();
+    if( arg.state.mPOV[pov].direction & Pov::East ) //Going right
+        Q_EMIT Right();
+    else if( arg.state.mPOV[pov].direction & Pov::West ) //Going left
+        Q_EMIT Left();
 
-        if( arg.state.mPOV[pov].direction == Pov::Centered ) //stopped/centered out
-            Q_EMIT Centered();
+    if( arg.state.mPOV[pov].direction == Pov::Centered ) //stopped/centered out
+        Q_EMIT Centered();
 
-        return true;
-}
-
-bool PlaystationInput::vector3Moved( const JoyStickEvent &, int )
-{
-        //not used for playstation
-        return true;
+    return true;
 }
 
 
-void PlaystationInput::printIt(bool it) const {
-    std::cout << "Button value: " << it << std::endl;
-}
-
-void PlaystationInput::printIt(int it) const {
-    std::cout << "Axis value: " << it << std::endl;
-}
-
-void PlaystationInput::emitButton( Playstation::Buttons button, bool state ) {
+bool PlaystationInput::emitButton( Playstation::Buttons button, bool state ) {
     switch(button){
     case Playstation::Circle:
         Q_EMIT Circle(state);
@@ -113,15 +101,16 @@ void PlaystationInput::emitButton( Playstation::Buttons button, bool state ) {
     case Playstation::R2:
         Q_EMIT R2(state);
         break;
-    case Playstation::JoyLClick:
-        Q_EMIT JoyLClick(state);
+    case Playstation::Joy_L_Click:
+        Q_EMIT Joy_L_Click(state);
         break;
-    case Playstation::JoyRClick:
-        Q_EMIT JoyRClick(state);
+    case Playstation::Joy_R_Click:
+        Q_EMIT Joy_R_Click(state);
         break;
     default:
-        throw "Unknown button";
+        return false;
     }
+    return true;
 }
 
 

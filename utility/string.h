@@ -37,5 +37,13 @@ std::string toStr(T const& v){
     return mkStr() << v;
 }
 
+template<typename T>
+T fromStr(const char* v){
+    std::istringstream s(v);
+    T t;
+    s >> t;
+    return t;
+}
+
 #endif // ndef __CAUV_UTILITY_STRING_H__
 

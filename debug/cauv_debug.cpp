@@ -17,10 +17,12 @@
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
 #endif
+#include <boost/thread/locks.hpp>
 #include <boost/thread/tss.hpp>
 
 #include <utility/bash_cout.h>
 #include <generated/messages_fwd.h>
+#include <generated/messages_messages.h>
 #include <common/cauv_utils.h>
 #include <common/cauv_node.h>
 
@@ -39,7 +41,7 @@ SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool p
       // lock whilst printing, why do we need to stop multiple instances of
       // SmartStreamBase existing at the same time? (which is effectively what
       // this next line does)
-      m_lock(new lock_t(*m_mutex)),
+      //m_lock(new lock_t(*m_mutex)),
 #endif
       m_stream(stream),
       m_col(col),
@@ -57,13 +59,15 @@ SmartStreamBase::~SmartStreamBase()
     // TODO: possible nastiness when setCauvNode is called from a different
     // thread while this is going on
     // if there's a cauv_node set, and this isn't a recursive call, send debug messages
-    /*if(settings().cauv_node && !recursive()){
+    /*if(m_print && (debugType() != int(DebugType::Debug)) && settings().cauv_node && !recursive()){
         recursive() = true;
         std::ostringstream oss;
         oss << settings().program_name << ":";
         printToStream(oss);
+        std::cout << "debug() sending debug message:" << oss.str() << std::endl;
         settings().cauv_node->send(
-            boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str())
+            boost::make_shared<DebugMessage>((DebugType::e)debugType(), oss.str()),
+            Spread::service(SAFE_MESS)
         );
         recursive() = false;
     }*/
@@ -234,14 +238,13 @@ boost::mutex& _getMutex(std::ostream& s){
     typedef boost::shared_ptr<boost::mutex> mutex_ptr;
     typedef std::map<void*, mutex_ptr> map_t;
     static map_t mutex_map;
-    static boost::mutex mutex_map_write_mutex;
+    static boost::mutex map_mutex;
+    boost::lock_guard<boost::mutex> l(map_mutex);
     map_t::iterator i = mutex_map.find(&s);
     if(i != mutex_map.end())
         return *i->second;
     else{
-        mutex_map_write_mutex.lock();
         mutex_map[&s] = boost::make_shared<boost::mutex>();
-        mutex_map_write_mutex.unlock();
     }
     return *mutex_map.find(&s)->second;
 }

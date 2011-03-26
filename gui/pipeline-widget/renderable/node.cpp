@@ -170,11 +170,38 @@ static boost::shared_ptr<PVPairEditableBase> makePVPair(
             return boost::make_shared<PVPair<std::string> >(
                     n, p.first, boost::get<std::string>(p.second), editable
                 );
-        default:
-            error() << "unknown ParamType";
         case ParamType::Bool:
             return boost::make_shared<PVPair<bool> >(
                     n, p.first, boost::get<bool>(p.second), editable
+                );
+        case ParamType::CornerList:
+        {
+            std::stringstream ss;
+            ss << "Corner[" << boost::get< std::vector<Corner> >(p.second).size() << "]"; 
+            return boost::make_shared<PVPair<std::string> >(
+                    n, p.first, ss.str(), false
+                );
+        }
+        case ParamType::LineList:
+        {
+            std::stringstream ss;
+            ss << "Line[" << boost::get< std::vector<Line> >(p.second).size() << "]"; 
+            return boost::make_shared<PVPair<std::string> >(
+                    n, p.first, ss.str(), false
+                );
+        }
+        case ParamType::CircleList:
+        {
+            std::stringstream ss;
+            ss << "Circle[" << boost::get< std::vector<Circle> >(p.second).size() << "]"; 
+            return boost::make_shared<PVPair<std::string> >(
+                    n, p.first, ss.str(), false
+                );
+        }
+        default:
+            error() << "unknown ParamType";
+            return boost::make_shared<PVPair<std::string> >(
+                    n, p.first, "unknown", false
                 );
     }
 }
@@ -196,7 +223,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     foreach(pm_t::value_type const& j, params){
         str_inparam_map_t::iterator k = m_params.find(j.first);
         if(k == m_params.end()){
-            debug(-3) << BashColour::Blue << *this << "new param:" << j;
+            debug(3) << BashColour::Blue << *this << "new param:" << j;
             InParamPVPair t;
             t.pvpair = makePVPair(this, j, true);
             t.inblob = boost::make_shared<NodeInputParamBlob>(
@@ -206,7 +233,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
             m_contents.push_back(t.inblob);
             m_contents.push_back(t.pvpair);
         }else{
-            debug(-3) << BashColour::Blue << *this << "param updated:" << j;        
+            debug(3) << BashColour::Blue << *this << "param updated:" << j;        
             // leave the 'inblob' alone -- so that any input arc to it remains
             // valid -- but replace the parameter-value-pair:
             renderable_list_t::iterator i = std::find(
@@ -425,65 +452,6 @@ void Node::remove(renderable_ptr_t){
     error() << __func__ << __LINE__ << "unimplemented";
 }
 
-namespace cauv{
-namespace pw{
-
-// TODO: can probably get rid of these specialisations now, since
-// NodeParamValue is a proper variant and we can just assign to it
-template<>
-void Node::paramValueChanged<int>(std::string const& p, int const& v){
-    debug() << "Node::paramValueChanged<int>" << p << v;
-    boost::shared_ptr<SetNodeParameterMessage> sp =
-        boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = v;
-
-    sp->nodeId(m_node_id);
-    sp->paramId(p);
-    sp->value(pv);
-    m_pw->send(sp);
-}
-
-template<>
-void Node::paramValueChanged<float>(std::string const& p, float const& v){
-    debug() << "Node::paramValueChanged<float>" << p << v;
-    boost::shared_ptr<SetNodeParameterMessage> sp =
-        boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = v;
-
-    sp->nodeId(m_node_id);
-    sp->paramId(p);
-    sp->value(pv);
-    m_pw->send(sp);
-}
-
-template<>
-void Node::paramValueChanged<std::string>(std::string const& p, std::string const& v){
-    debug() << "Node::paramValueChanged<string>" << p << v;
-    boost::shared_ptr<SetNodeParameterMessage> sp =
-        boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = v;
-
-    sp->nodeId(m_node_id);
-    sp->paramId(p);
-    sp->value(pv);
-    m_pw->send(sp);
-}
-
-template<>
-void Node::paramValueChanged<bool>(std::string const& p, bool const& v){
-    debug() << "Node::paramValueChanged<string>" << p << v;
-    boost::shared_ptr<SetNodeParameterMessage> sp =
-        boost::make_shared<SetNodeParameterMessage>();
-    NodeParamValue pv = v;
-
-    sp->nodeId(m_node_id);
-    sp->paramId(p);
-    sp->value(pv);
-    m_pw->send(sp);
-}
-
-} // namespace pw
-} // namespace cauv
 
 void Node::refreshLayout(){
     // yay, lots of random constants: layout is fun

@@ -6,9 +6,9 @@
 #include <string>
 #include <cmath>
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#include <opencv/cvaux.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 #include <generated/messages.h>
 
@@ -19,10 +19,10 @@
 namespace cauv{
 namespace imgproc{
 
-class FASTCornersNode: public OutputNode{
+class FASTCornersNode: public Node{
     public:
         FASTCornersNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t){
+            : Node(sched, pl, t){
         }
 
         void init(){
@@ -33,18 +33,13 @@ class FASTCornersNode: public OutputNode{
             registerInputID(Image_In_Name);
             
             // one output:
-            registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
-            //registerOutputID<> TODO: KeyPoints output
+            registerOutputID< NodeParamValue >("corners");
             
             // parameters:
             registerParamID<int>("threshold", 20, // default value a complete guess
                                  "brightness threshold for contiguous arc of pixels around corner"); 
             registerParamID<bool>("non-maximum suppression", true,
                                   "omit non-maximal corners within 3x3 pixels");
-            registerParamID<float>("draw scale", 0.004,
-                                   "drawn size is size * response * scale");
-            registerParamID<std::string>("name", "unnamed FAST corners",
-                                         "name for detected set of corners");
         }
     
         virtual ~FASTCornersNode(){
@@ -59,24 +54,10 @@ class FASTCornersNode: public OutputNode{
             
             const bool nonmaxsupp = param<bool>("non-maximum suppression");
             const int threshold = param<int>("threshold");
-            const float draw_scale = param<float>("draw scale");
-            const std::string name = param<std::string>("name");
 
-            cv::vector<cv::KeyPoint> corners;
+            cv::vector<cv::KeyPoint> cv_corners;
             try{
-                cv::FAST(img->cvMat(), corners, threshold, nonmaxsupp);
-                
-                if(numChildren()){
-                    // then produce an output image overlay
-                    boost::shared_ptr<Image> out = boost::make_shared<Image>();
-                    
-                    // make a colour copy to draw pretty corners on
-                    cvtColor(img->cvMat(), out->cvMat(), CV_GRAY2BGR);
-                    
-                    for(cv::vector<cv::KeyPoint>::const_iterator i = corners.begin(); i != corners.end() ; i++)
-                        cv::circle(out->cvMat(), i->pt, i->size * i->response * draw_scale, CV_RGB(50, 255, 50), 1, 4);
-                    r[Image_Out_Copied_Name] = out;
-                }
+                cv::FAST(img->cvMat(), cv_corners, threshold, nonmaxsupp);
             }catch(cv::Exception& e){
                 error() << "FASTCornersNode:\n\t"
                         << e.err << "\n\t"
@@ -85,17 +66,17 @@ class FASTCornersNode: public OutputNode{
             
             // convert coordinates from pixels (top left origin) to 0-1 float,
             // top left origin // TODO: check this
-            std::vector<Corner> msg_corners;
+            std::vector<Corner> corners;
             const float width = img->cvMat().cols;
             const float height = img->cvMat().rows;
-            debug(2) << "FASTCorners: detected" << corners.size() << "corners:";
-            for(cv::vector<cv::KeyPoint>::const_iterator i = corners.begin(); i != corners.end() ; i++){
-                const floatXYZ centre(i->pt.x / width, i->pt.y / height, 0);
-                const Corner c(centre, i->size, i->angle, i->response); 
-                debug(3) << c;
-                msg_corners.push_back(c);
+            debug(2) << "FASTCorners: detected" << cv_corners.size() << "corners:";
+            foreach(const cv::KeyPoint &kp, cv_corners) {
+                const floatXYZ centre(kp.pt.x / width, kp.pt.y / height, 0);
+                const Corner c(centre, kp.size, kp.angle, kp.response); 
+                debug(6) << c;
+                corners.push_back(c);
             }
-            sendMessage(boost::make_shared<CornersMessage>(name, msg_corners));
+            r["corners"] = corners;
 
             return r;
         }

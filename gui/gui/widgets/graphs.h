@@ -52,7 +52,9 @@ namespace cauv {
         }
 
         size_t size () const {
-            return this->m_history.size();
+             // times 2 as we plot 2 points for each sample
+            // this creates the step effect
+            return (this->m_history.size())*2;
         }
 
         float toTime(boost::posix_time::ptime epoch, boost::posix_time::ptime time) const{
@@ -61,13 +63,23 @@ namespace cauv {
         }
 
         QPointF sample (size_t i) const {
-            float seconds = toTime(boost::posix_time::microsec_clock::local_time(), this->m_timestamps[i]);
 
-            if(i == this->m_history.size()-1){
+            // as each sample is represented by two points the actual sample we're plotting is
+            // at half of the total plot size
+            size_t sample = (i>>1);
+            
+            // for even samples we use the time at "sample" otherwise we use the
+            // time of the next sample (to show it as a step change instead of
+            // ramping to it)
+            float seconds = toTime(boost::posix_time::microsec_clock::local_time(), this->m_timestamps[sample + (i&0x01)]);
+
+            // the very last point should be pegged at zero seconds so that it's stretched
+            if(i == (this->m_history.size()*2)-1){
                 seconds = 0.0;
             }
 
-            return QPointF(-seconds, this->m_history[i]);
+            // times are shown as negative in seconds from the current time
+            return QPointF(-seconds, this->m_history[sample]);
         }
 
         QRectF boundingRect () const {
@@ -133,6 +145,7 @@ namespace cauv {
         QwtPlot * m_plot;
         Ui::GraphWidget * ui;
         DataStreamRecorderView * m_recorderView;
+        std::vector<boost::shared_ptr<DataStreamTool> > m_tools;
     }; 
 
 } // namespace cauv

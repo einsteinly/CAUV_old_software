@@ -96,12 +96,12 @@ void AUVController::sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar)
             ));
 }
 
-void AUVController::sendDepthCalibrationMessage(depth_calibration_t params){
-    onMessageGenerated(boost::make_shared<DepthCalibrationMessage>(params.foreOffset, params.foreMultiplier, params.aftOffset, params.afteMultiplier));
+void AUVController::sendDepthCalibrationMessage(DepthCalibration params){
+    onMessageGenerated(boost::make_shared<DepthCalibrationMessage>(params.foreOffset(), params.foreMultiplier(), params.aftOffset(), params.aftMultiplier()));
 }
 
-void AUVController::sendScriptMessage(script_exec_request_t script){
-    onMessageGenerated(boost::make_shared<ScriptMessage>(script.script, 300, "GUI", script.seq));
+void AUVController::sendScriptMessage(ScriptExecRequest script){
+    onMessageGenerated(boost::make_shared<ScriptMessage>(script));
 }
 
 bool AUVController::pushState(bool state) {
@@ -126,7 +126,7 @@ bool AUVController::enabled() {
 
 /** message handling **/
 
-void AUVController::onMotorMessage(MotorMessage_ptr message) {
+void AUVController::onMotorStateMessage(MotorStateMessage_ptr message) {
     try {
         m_auv->motors.at(message->motorId())->update(message->speed());
     } catch (std::out_of_range){
@@ -168,9 +168,7 @@ void AUVController::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_pt
 }
 
 void AUVController::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
-    m_auv->sensors.depth_calibration->update(depth_calibration_t(message->foreMultiplier(),
-                                                                 message->aftMultiplier(), message->foreOffset(),
-                                                                 message->aftOffset()));
+    m_auv->sensors.depth_calibration->update(*(message.get()));
 }
 
 void AUVController::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
@@ -190,9 +188,6 @@ void AUVController::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_pt
 }
 
 void AUVController::onDebugMessage(DebugMessage_ptr message) {
-
-    std::cout << *message << std::endl;
-
     try {
         m_auv->logs.at(message->type())->update(message->msg());
     } catch (std::out_of_range){
@@ -235,8 +230,17 @@ void AUVController::onPressureMessage(PressureMessage_ptr message){
 }
 
 void AUVController::onScriptResponseMessage(ScriptResponseMessage_ptr message){
-    std::cout << *message << std::endl;
-    m_auv->scripts.scriptResponse->update(script_exec_response_t(message->response(), message->seq()));
+    m_auv->scripts.scriptResponse->update(message->response());
+}
+
+void AUVController::onBatteryUseMessage(BatteryUseMessage_ptr message) {
+    m_auv->sensors.esitmate_current->update(message->estimate_current());
+    m_auv->sensors.estimate_total->update(message->estimate_total());
+    m_auv->sensors.fraction_remaining->update(message->fraction_remaining()*100.f);
+}
+
+void AUVController::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
+    m_auv->computer_state.processes->update(*(message.get()));
 }
 
 void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){

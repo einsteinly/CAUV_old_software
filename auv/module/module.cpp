@@ -9,6 +9,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/asio.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/concepts.hpp>
@@ -151,8 +152,7 @@ FTDIDevice::FTDIDevice(int vendor, int product, int index,
                        ftdi_stopbits_type const& stopBits,
                        ftdi_parity_type const& parity,
                        int flowControl)
-    : boost::iostreams::device<boost::iostreams::bidirectional>(),
-      baudrate(baudrate), bits(bits), stopBits(stopBits), parity(parity), flowControl(flowControl)
+    : boost::iostreams::device<boost::iostreams::bidirectional>()
 {
     m_ftdic = boost::make_shared<FTDIContext>();
 
@@ -195,6 +195,37 @@ std::streamsize FTDIDevice::write(const char* s, std::streamsize n)
     return m_ftdic->write(reinterpret_cast<const unsigned char*>(s), n);
 }
 
+static boost::asio::io_service module_io_service;
+
+SerialDevice::SerialDevice(const std::string& path,
+                           boost::asio::serial_port_base::baud_rate const& baudrate,
+                           boost::asio::serial_port_base::character_size const& bits,
+                           boost::asio::serial_port_base::stop_bits const& stopBits,
+                           boost::asio::serial_port_base::parity const& parity,
+                           boost::asio::serial_port_base::flow_control const& flowControl)
+    : boost::iostreams::device<boost::iostreams::bidirectional>()
+{
+    m_port = boost::make_shared<boost::asio::serial_port>(boost::ref(module_io_service), path);
+
+    m_port->set_option(baudrate);
+    m_port->set_option(bits);
+    m_port->set_option(stopBits);
+    m_port->set_option(parity);
+    m_port->set_option(flowControl);
+}
+
+std::streamsize SerialDevice::read(char* s, std::streamsize n)
+{
+    debug(5) << "SerialDevice: Reading " << n << " characters";
+    return boost::asio::read(*m_port, boost::asio::buffer(s, n), boost::asio::transfer_at_least(1));
+}
+
+std::streamsize SerialDevice::write(const char* s, std::streamsize n)
+{
+    debug(5) << "SerialDevice: Writing " << n << " characters";
+    return boost::asio::write(*m_port, boost::asio::buffer(s, n));
+}
+
 
 FTDIModule::FTDIModule(int vendor, int product, int index,
                        int baudrate,
@@ -202,15 +233,19 @@ FTDIModule::FTDIModule(int vendor, int product, int index,
                        ftdi_stopbits_type const& stopBits,
                        ftdi_parity_type const& parity,
                        int flowControl)
-    : Module<FTDIDevice>(FTDIDevice(vendor, product, index, baudrate, bits, stopBits, parity, flowControl)),
-      baudrate(baudrate),
-      bits(bits),
-      stopBits(stopBits),
-      parity(parity),
-      flowControl(flowControl)
+    : Module<FTDIDevice>(FTDIDevice(vendor, product, index, baudrate, bits, stopBits, parity, flowControl))
 {
 }
 
+SerialModule::SerialModule(const std::string& path,
+                           boost::asio::serial_port_base::baud_rate const& baudrate,
+                           boost::asio::serial_port_base::character_size const& bits,
+                           boost::asio::serial_port_base::stop_bits const& stopBits,
+                           boost::asio::serial_port_base::parity const& parity,
+                           boost::asio::serial_port_base::flow_control const& flowControl)
+    : Module<SerialDevice>(SerialDevice(path, baudrate, bits, stopBits, parity, flowControl))
+{
+}
 
 FileModule::FileModule(const std::string& filename)
     : Module<boost::iostreams::file>(boost::iostreams::file(filename, std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::binary))

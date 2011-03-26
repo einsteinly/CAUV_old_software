@@ -20,6 +20,7 @@
 #include <osgOcean/ShaderManager>
 
 using namespace cauv;
+using namespace cauv::sim;
 
 SkyDome::SkyDome( void )
 {

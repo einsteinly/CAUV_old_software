@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
 
 #include <generated/messages.h>
 

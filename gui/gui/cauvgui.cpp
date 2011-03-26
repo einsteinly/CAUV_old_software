@@ -10,12 +10,15 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "widgets/datastreamdisplays.h"
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/motorcontrols.h"
 #include "widgets/logview.h"
 #include "widgets/console.h"
+#include "widgets/processstateview.h"
+#include "widgets/mapview.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -24,12 +27,10 @@
 #include "ui_mainwindow.h"
 #include "cauvinterfaceelement.h"
 
-#ifdef USE_MARBLE
-#   include <marble/MarbleWidget.h>
-#endif
-
 #ifdef GAMEPAD_SUPPORT
 #   include "gamepad.h"
+#   include <gamepad/playstationinput.h>
+#   include <gamepad/xboxinput.h>
 #endif
 
 
@@ -39,6 +40,7 @@ CauvGui::CauvGui(QApplication * app) : CauvNode("CauvGui"), m_application(app), 
     ui->setupUi(this);
     joinGroup("control");
     joinGroup("image");
+    joinGroup("pressure");
     joinGroup("pl_gui");
     joinGroup("gui");
     joinGroup("debug");
@@ -76,7 +78,7 @@ void CauvGui::closeEvent(QCloseEvent*){
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
-    debug(0) << "Sending message: " << *message;
+    debug(5) << "Sending message: " << *message;
     return CauvNode::send(message);
 }
 
@@ -116,26 +118,48 @@ void CauvGui::onRun()
     boost::shared_ptr<Console> console(new Console("Console", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(console));
 
-#ifdef USE_MARBLE
-    Marble::MarbleWidget *mapWidget = new Marble::MarbleWidget();
-    QString map("Map");
-    addCentralTab(mapWidget, map);
-    mapWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
-    mapWidget->show();
-#endif
+    boost::shared_ptr<ProcessStateView> processState(new ProcessStateView("Processes", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(processState));
+
+    boost::shared_ptr<MapView> mapView(new MapView("Map", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(mapView));
 
 
 #ifdef GAMEPAD_SUPPORT
     try {
-        info() << GamepadInput::listDevices();
-        CauvGamepad* gi;
-        gi = new CauvGamepad(0, m_auv);
-        gi->setParent(this);
 
-        // timer to read the game controller
-        QTimer *timer = new QTimer(this);
-        timer->connect(timer, SIGNAL(timeout()), gi, SLOT(processEvents()));
-        timer->start(200);
+        info() << "found" << GamepadInput::getNumDevices() << "gamepads";
+
+        OIS::DeviceList list = GamepadInput::listDevices();
+        for( OIS::DeviceList::iterator i = list.begin(); i != list.end(); ++i ) {
+            if(i->first == OIS::OISJoyStick){
+                info() << "Device: " << "Gamepad" << " Vendor: " << i->second;
+                std::string vendor = i->second;
+                boost::to_lower(vendor);
+                info() << "Connecting to" << vendor <<  "gamepad";
+
+                CauvGamepad* gi;
+                if(vendor.find("xbox") != vendor.npos){
+                    info() << "detected as an xbox controller";
+                    gi = new CauvGamepad(boost::make_shared<XBoxInput>(i->second), m_auv);
+                } else {
+                    // assume its a playstation controller
+                    info() << "assuming playstation controller";
+                    gi = new CauvGamepad(boost::make_shared<PlaystationInput>(i->second), m_auv);
+                }
+
+                gi->setParent(this);
+            }
+        }
+
+
+        for(int i = 0; i < GamepadInput::getNumDevices(); i++){
+            try {
+
+            } catch (...) {
+                error() << "Failed to create gamepad" << i;
+            }
+        }
     } catch (char const* ex){
         error() << ex;
     }

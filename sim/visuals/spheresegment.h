@@ -21,41 +21,45 @@
 
 namespace cauv {
 
-    class SphereSegment : public osg::Geode
-    {
-    public:
-	SphereSegment( void );
-	
-	SphereSegment( float radius, 
-                       unsigned int longitudeSteps,
-                       unsigned int lattitudeSteps,
-                       float longStart,
-                       float longEnd,
-                       float latStart,
-                       float latEnd );
+    namespace sim {
 
-	SphereSegment(const SphereSegment& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+        class SphereSegment : public osg::Geode
+        {
+        public:
+            SphereSegment( void );
 
-    protected:
-	~SphereSegment(void);
+            SphereSegment( float radius,
+                           unsigned int longitudeSteps,
+                           unsigned int lattitudeSteps,
+                           float longStart,
+                           float longEnd,
+                           float latStart,
+                           float latEnd );
 
-    public:
-	// 0 >= longStart/longEnd <= 180
-	// 0 >= latStart/latEnd <= 360
-	void compute( float radius, 
-                      unsigned int longitudeSteps,
-                      unsigned int lattitudeSteps,
-                      float longStart,
-                      float longEnd,
-                      float latStart,
-                      float latEnd	);
-    private:
-	osg::Vec2 sphereMap( osg::Vec3& vertex, float radius);
+            SphereSegment(const SphereSegment& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
 
-	inline unsigned int idx(unsigned int r, unsigned int c, unsigned int row_len)
-	{
-            return c + r * row_len;
-	}
-    };
+        protected:
+            ~SphereSegment(void);
 
-}
+        public:
+            // 0 >= longStart/longEnd <= 180
+            // 0 >= latStart/latEnd <= 360
+            void compute( float radius,
+                          unsigned int longitudeSteps,
+                          unsigned int lattitudeSteps,
+                          float longStart,
+                          float longEnd,
+                          float latStart,
+                          float latEnd	);
+        private:
+            osg::Vec2 sphereMap( osg::Vec3& vertex, float radius);
+
+            inline unsigned int idx(unsigned int r, unsigned int c, unsigned int row_len)
+            {
+                return c + r * row_len;
+            }
+        };
+
+    } // namespace sim
+
+} // namespace cauv

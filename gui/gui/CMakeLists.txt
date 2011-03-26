@@ -56,6 +56,7 @@ else()
         gamepad.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
+        gamepad/xboxinput.cpp
         widgets/datastreamdisplays.cpp
         widgets/pipelinecauvwidget.cpp
         widgets/graphs.cpp
@@ -64,6 +65,8 @@ else()
         widgets/logview.cpp
         widgets/datastreamrecorder.cpp
         widgets/console.cpp
+        widgets/processstateview.cpp
+        widgets/mapview.cpp
     )
 
     set (
@@ -77,13 +80,17 @@ else()
         widgets/graphs.ui
         widgets/datastreamrecorder.ui
         widgets/console.ui
+        widgets/processstateview.ui
+        widgets/mapview.ui
     )
 
     set (
         GUICPP_H
 
-        gamepad/playstationinput.h
+
         gamepad/gamepadinput.h
+        gamepad/xboxinput.h
+        gamepad/playstationinput.h
         cauvgui.h
         cauvinterfaceelement.h
         gamepad.h
@@ -93,6 +100,8 @@ else()
         widgets/logview.h
         widgets/datastreamrecorder.h
         widgets/console.h
+        widgets/processstateview.h
+        widgets/mapview.h
     )
 
     set (
@@ -135,16 +144,6 @@ else()
         ${OIS_LIBRARIES}
         ${OpenCV_LIBS}
         ${MARBLE_LIBRARIES}
-    )
-    cauv_install ( guicpp )
-
-    add_custom_command(
-        TARGET guicpp
-
-        POST_BUILD
-        COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${guicpp_BINARY_DIR}/"
-        COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${guicpp_BINARY_DIR}/"
-        COMMENT "Copying fonts for guicpp"
     )
 
 endif()
