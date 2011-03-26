@@ -123,7 +123,7 @@ else()
     include_directories (${AUV_SOURCE_DIR})
 
     add_executable (
-        guicpp EXCLUDE_FROM_ALL
+        guicpp
 
         ${GUICPP_SRCS}
         ${GUICPP_UIS_H}
@@ -145,15 +145,5 @@ else()
         ${OpenCV_LIBS}
         ${MARBLE_LIBRARIES}
     )
-    cauv_install ( guicpp )
-
-    #add_custom_command(
-    #    TARGET guicpp
-    #
-    #    POST_BUILD
-    #    COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${guicpp_BINARY_DIR}/"
-    #    COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${guicpp_BINARY_DIR}/"
-    #    COMMENT "Copying fonts for guicpp"
-    #)
 
 endif()
