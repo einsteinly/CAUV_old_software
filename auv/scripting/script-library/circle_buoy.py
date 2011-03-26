@@ -107,23 +107,27 @@ class BouyCircleObserver(msg.MessageObserver):
         entered_quarters = [False, False, False, False]
         info('waiting for circles....')
         self.updateMotors()
-        while False in entered_quarters:
-            time.sleep(0.5)
-            if self.__auv.getBearing() > -180 and self.__auv.getBearing() < -90:
-                entered_quarters[3] = True
-            if self.__auv.getBearing() > -90 and self.__auv.getBearing() < 0:
-                entered_quarters[2] = True
-            if self.__auv.getBearing() > 0 and self.__auv.getBearing() < 90:
-                entered_quarters[0] = True
-            if self.__auv.getBearing() > 90 and self.__auv.getBearing() < 180:
-                entered_quarters[1] = True
-            if self.__auv.getBearing() > 180 and self.__auv.getBearing() < 270:
-                entered_quarters[2] = True
-            if self.__auv.getBearing() > 270 and self.__auv.getBearing() < 360:
-                entered_quarters[3] = True
-        while self.__auv.getBearing() < start_bearing:
-            info('waiting for final completion...')
-            time.sleep(0.5)
+        try:
+            while False in entered_quarters:
+                time.sleep(0.5)
+                if self.__auv.getBearing() > -180 and self.__auv.getBearing() < -90:
+                    entered_quarters[3] = True
+                if self.__auv.getBearing() > -90 and self.__auv.getBearing() < 0:
+                    entered_quarters[2] = True
+                if self.__auv.getBearing() > 0 and self.__auv.getBearing() < 90:
+                    entered_quarters[0] = True
+                if self.__auv.getBearing() > 90 and self.__auv.getBearing() < 180:
+                    entered_quarters[1] = True
+                if self.__auv.getBearing() > 180 and self.__auv.getBearing() < 270:
+                    entered_quarters[2] = True
+                if self.__auv.getBearing() > 270 and self.__auv.getBearing() < 360:
+                    entered_quarters[3] = True
+            while self.__auv.getBearing() < start_bearing:
+                info('waiting for final completion...')
+                time.sleep(0.5)
+        finally:
+            info('stopping...')
+            self.__auv.stop()
         info('complete!')
             
 

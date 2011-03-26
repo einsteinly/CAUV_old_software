@@ -9,7 +9,7 @@ import cauv.node as node
 
 from cauv.debug import debug, info, warning, error
 
-CPU_Poll_Time = 0.05
+CPU_Poll_Time = 0.025
 Poll_Delay = 2.0
 
 class CAUVTask:
@@ -41,7 +41,7 @@ class CAUVTask:
                              stderr=open('%s-stderr.log' % self.shortName(), 'a'))
 
 # global variable, set using command line options
-cmd_prefix = '/usr/local/bin/'
+cmd_prefix = '/usr/local/bin/cauv/'
 
 # ---------------------------------------------------------------
 # ---------- List of processes to start / monitor ---------------
@@ -54,11 +54,12 @@ processes_to_start = [
             ['remote.py'] # list of names to search for in processes
         ),
         CAUVTask('logger',   'nohup /bin/sh ./run.sh ./logger.py',        True,  ['logger.py']),
-        CAUVTask('img-pipe', 'nohup %sauv/bin/img-pipeline' % cmd_prefix, True,  ['img-pipeline']),
-        CAUVTask('sonar',    'nohup %sauv/bin/sonar /dev/ttyUSB1' % cmd_prefix,        True,  ['sonar']),
-        CAUVTask('control',  'nohup %sauv/bin/control -m/dev/ttyUSB0 -x0' % cmd_prefix,      False, ['control']),
+        CAUVTask('img-pipe', 'nohup %s/img-pipeline' % cmd_prefix, True,  ['img-pipeline']),
+        CAUVTask('sonar',    'nohup %s/sonar /dev/ttyUSB1' % cmd_prefix,        True,  ['sonar']),
+        CAUVTask('control',  'nohup %s/control -m/dev/ttyUSB0 -x0' % cmd_prefix,      True, ['control']),
         CAUVTask('spread',   'nohup spread',                              True,  ['spread']),
         CAUVTask('watch',    '',                                          False, ['watch.py']),
+        CAUVTask('persist',  'nohup /bin/sh ./run.sh ./persist.py',         True, ['persist.py']),
         CAUVTask('watch',    'nohup /bin/sh ./run.sh ./battery_monitor.py', True,  ['battery_monitor.py']) ]
 
 def limitLength(string, length=40):
@@ -154,7 +155,7 @@ def startInactive(cauv_task_list):
         if cauv_task.process is None:
             if cauv_task.doStart():
                 info('starting %s (%s)' % (cauv_task.shortName(),
-                     cauv_task.commandi()))
+                     cauv_task.command()))
                 cauv_task.start()
 
 if __name__ == '__main__':

@@ -1,0 +1,28 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 331423399489594109103410846851841274888
+created_time: &id001 2011-03-22 13:28:13.102449
+description: 'pscore changed to None
+
+  attached_files changed to []
+
+  description changed to Add constructors to auto-generated python structs
+
+  title changed to Python Constructors
+
+  tags changed to [<pitz.Tag dc1893 messaging>]
+
+  points changed to None
+
+  owner changed to Andy Pritchard
+
+  estimate changed to small project'
+entity: !!python/object:uuid.UUID
+  int: 113172580157904756862289529698178844969
+modified_time: *id001
+pscore: 0
+title: 2011-03-22 13:28 - Andy Pritchard changed task Python Constructors
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 69053571229500437208358135981739036738
+who_did_it: *id002
+yaml_file_saved: 2011-03-22 13:28:13.104146

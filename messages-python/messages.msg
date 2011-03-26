@@ -321,6 +321,13 @@ group telemetry
         mem : float;
         threads : uint32;
     }
+    message Location : 88
+    {
+        latitude : double;
+        longitude : double;
+        altitude : float;
+        speed : floatXYZ;
+    }
 }
 group image
 {
