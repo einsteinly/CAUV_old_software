@@ -3,19 +3,25 @@
 #ifndef GAMEPAD_H
 #define GAMEPAD_H
 
-#include <gamepad/playstationinput.h>
+#include <QObject>
+#include <QTimer>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace cauv {
 
     class AUV;
+    class GamepadInput;
+    class XBoxInput;
+    class PlaystationInput;
 
-    class CauvGamepad : public PlaystationInput
+    class CauvGamepad : public QObject
     {
         Q_OBJECT
     public:
-        CauvGamepad(const unsigned int id, boost::shared_ptr<AUV> auv);
+        CauvGamepad(boost::shared_ptr<XBoxInput> input, boost::shared_ptr<AUV> auv);
+        CauvGamepad(boost::shared_ptr<PlaystationInput> input, boost::shared_ptr<AUV> auv);
 
     public Q_SLOTS:
         void forward(bool go);
@@ -37,7 +43,11 @@ namespace cauv {
         void stop(bool);
 
     protected:
+        void startTimer();
+
         boost::shared_ptr<AUV> m_auv;
+        boost::shared_ptr<GamepadInput> m_gamepadInput;
+        boost::scoped_ptr<QTimer> m_timer;
 
         float m_bearingRate;
         float m_pitchRate;

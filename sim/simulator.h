@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <common/cauv_node.h>
 #include <osg/ref_ptr>
+#include <osgViewer/CompositeViewer>
 
 #include "worldmodel.h"
 
@@ -19,7 +20,6 @@ namespace boost {
 namespace osg {
     class Group;
 }
-
 
 namespace cauv {
 
@@ -43,7 +43,7 @@ namespace cauv {
         protected:
             virtual void onRun();
 
-            virtual void launchViewer(osg::ref_ptr<osg::Group> root);
+            virtual void launchViewer();
 
             int useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc);
             void addOptions(boost::program_options::options_description& desc, boost::program_options::positional_options_description& pos);
@@ -53,6 +53,7 @@ namespace cauv {
             boost::shared_ptr<SimulatedAUV> m_simulated_auv;
             osg::ref_ptr<WorldModel> m_world_model;
             osg::ref_ptr<osg::Group> m_root;
+            osg::ref_ptr<osgViewer::CompositeViewer> m_viewer;
 
         };
 

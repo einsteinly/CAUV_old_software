@@ -16,6 +16,8 @@
 #include "widgets/motorcontrols.h"
 #include "widgets/logview.h"
 #include "widgets/console.h"
+#include "widgets/processstateview.h"
+#include "widgets/mapview.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -24,12 +26,10 @@
 #include "ui_mainwindow.h"
 #include "cauvinterfaceelement.h"
 
-#ifdef USE_MARBLE
-#   include <marble/MarbleWidget.h>
-#endif
-
 #ifdef GAMEPAD_SUPPORT
 #   include "gamepad.h"
+#   include <gamepad/playstationinput.h>
+#   include <gamepad/xboxinput.h>
 #endif
 
 
@@ -117,26 +117,22 @@ void CauvGui::onRun()
     boost::shared_ptr<Console> console(new Console("Console", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(console));
 
-#ifdef USE_MARBLE
-    Marble::MarbleWidget *mapWidget = new Marble::MarbleWidget();
-    QString map("Map");
-    addCentralTab(mapWidget, map);
-    mapWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
-    mapWidget->show();
-#endif
+    boost::shared_ptr<ProcessStateView> processState(new ProcessStateView("Processes", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(processState));
+
+    boost::shared_ptr<MapView> mapView(new MapView("Map", m_auv, this, shared_from_this()));
+    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(mapView));
 
 
 #ifdef GAMEPAD_SUPPORT
     try {
         info() << GamepadInput::listDevices();
-        CauvGamepad* gi;
-        gi = new CauvGamepad(0, m_auv);
-        gi->setParent(this);
 
-        // timer to read the game controller
-        QTimer *timer = new QTimer(this);
-        timer->connect(timer, SIGNAL(timeout()), gi, SLOT(processEvents()));
-        timer->start(100);
+        //TODO: determine which type of controller is plugged in automatically
+        //boost::shared_ptr<XBoxInput> gamepad = boost::make_shared<XBoxInput>(0);
+        boost::shared_ptr<PlaystationInput> gamepad = boost::make_shared<PlaystationInput>(0);
+        CauvGamepad* gi = new CauvGamepad(gamepad, m_auv);
+        gi->setParent(this);
     } catch (char const* ex){
         error() << ex;
     }
