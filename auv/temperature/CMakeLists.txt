@@ -10,7 +10,7 @@ endif()
 
 # sources
 add_executable (
-    temperature
+    temperature EXCLUDE_FROM_ALL
 
     TempNode.cpp
 )

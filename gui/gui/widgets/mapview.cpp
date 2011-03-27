@@ -5,10 +5,10 @@
 
 #ifdef USE_MARBLE
 #   include <marble/MarbleWidget.h>
+#   include <marble/MarbleWidget.h>
+#   include <marble/MarbleModel.h>
 #endif
 
-#include <marble/MarbleWidget.h>
-#include <marble/MarbleModel.h>
 
 using namespace cauv;
 
@@ -42,7 +42,7 @@ MapView::MapView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * par
 {
     ui->setupUi(this);
 
-    //#ifdef USE_MARBLE
+    #ifdef USE_MARBLE
     m_marbleWidget = new Marble::MarbleWidget(this);
     m_marbleWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
     this->setLayout(new QHBoxLayout(this));
@@ -51,11 +51,11 @@ MapView::MapView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * par
 
     Marble::MarbleModel * model = m_marbleWidget->model();
 
-    Marble::PositionTracking * tracker = model->positionTracking();
+    //Marble::PositionTracking * tracker = model->positionTracking();
 //    tracker->setPositionProviderPlugin(new CauvPositionProvider());
     //tracker->setTrackVisible(true);
     
-    //#endif
+    #endif
 
 }
 
