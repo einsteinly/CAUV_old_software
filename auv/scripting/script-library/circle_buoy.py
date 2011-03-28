@@ -9,14 +9,23 @@ from cauv.debug import debug, info, warning, error
 
 import time
 import optparse
+import math
 
-Do_Turn_Limit = 100
-Do_Prop_Limit = 50
-Circles_Position_Pixel_Width = 300
+class CircleBuoyDefaults:
+    # default options
+    Do_Prop_Limit = 50  # max prop for forward/backward adjustment
+    Circles_Position_Pixel_Width = 120
+    Camera_FOV = 60     # degrees
+    Warn_Seconds_Between_Sights = 5
+    Node_Name = "py-CrcB"
+    Strafe_Speed = 20
+    Buoy_Size = 0.2     # as fraction of camera FOV at desired distance
+    Size_Control_kPD = (300, 0)
+
 
 class BuoyCircleObserver(msg.MessageObserver):
     def __init__(self, cauv_node, auv, strafe_speed, buoy_size,
-                 pos_kpid = (1,0,0), size_kpid=(1,0,0)):
+                 size_kpd=CircleBuoyDefaults.Size_Control_kPD):
         msg.MessageObserver.__init__(self)
         self.__node = cauv_node
         self.__node.join('processing')
@@ -24,14 +33,10 @@ class BuoyCircleObserver(msg.MessageObserver):
         self.__auv = auv
         self.__pl = pipeline.Model(self.__node)
         self.__strafe_speed = strafe_speed
-        self.__current_turn_speed = 0
         self.__buoy_size = buoy_size
-        self.last_pos_err = None
-        self.sum_pos_err = 0
         self.last_size_err = None
-        self.sum_size_err = 0
-        self.__poskpid = pos_kpid
-        self.__sizekpid = size_kpid
+        self.time_last_seen = None
+        self.__sizekpd = size_kpd
     
     def loadPipeline(self):
         self.__pl.load('pipelines/circle_buoy.pipe')
@@ -52,64 +57,85 @@ class BuoyCircleObserver(msg.MessageObserver):
                 mean_circle_radius /= num_circles
                 debug('Buoy at %s %s' % (mean_circle_position,
                                          mean_circle_radius))
+                # TODO: Circles Messages should be updated to contain relative positions already
+                mean_circle_position /= CircleBuoyDefaults.Circles_Position_Pixel_Width
+                mean_circle_radius /= CircleBuoyDefaults.Circles_Position_Pixel_Width
                 self.actOnBuoy(mean_circle_position,
                                mean_circle_radius)
             else:
                 debug('No circles!')
         else:
             debug('Ignoring circles message: %s' % str(m))
+    
+    def getBearingNotNone(self):
+        b = self.__auv.getBearing()
+        if b is None:
+            warning('no current bearing available')
+            b = 0
+        return b
 
     def actOnBuoy(self, centre, radius):
-        pos_err = centre - 0.5
-        pos_derr = 0
-        self.sum_pos_err += pos_err
-        pos_ierr = self.sum_pos_err
         now = time.time()
-        if self.last_pos_err is not None:
-            pos_derr = (pos_err - self.last_pos_err[1]) / (now - self.last_pos_err[0])
-        self.last_pos_err = (now, pos_err)
-        do_turn = self.__poskpid[0] * pos_err +\
-                  self.__poskpid[1] * pos_derr +\
-                  self.__poskpid[2] * pos_ierr
-        if do_turn > Do_Turn_Limit:
-            do_turn = Do_Turn_Limit
-        if do_turn < -Do_Turn_Limit:
-            do_turn = -Do_Turn_Limit
-        debug('turning: %s' % do_turn)
-        self.__current_turn_speed = do_turn
-        self.updateMotors()
+        if self.time_last_seen is not None and \
+           now - self.time_last_seen > CircleBuoyDefaults.Warn_Seconds_Between_Sights:
+            info('picked up buoy again')
+         
+        pos_err = centre - 0.5
+        if pos_err < -0.5 or pos_err > 0.5:
+            warning('buoy outside image: %g' % pos_err)
+        #
+        #          FOV /     - 0.5
+        #             /      |
+        #            /       |
+        #           /        |
+        #          /  buoy   |
+        #         /    o     - pos_err
+        #        /   /       |
+        #       /  /         |
+        #      / /           |
+        #     // ) angle_err |
+        # |->/- - - - -      -  0
+        #         
+        #    |<------------->|
+        #       = 0.5 / sin(FOV/2) = plane_dist
+        #
+        plane_dist = 0.5 / math.sin(math.radians(CircleBuoyDefaults.Camera_FOV)/2.0)
+        angle_err = math.degrees(math.asin(pos_err / plane_dist))
+        debug('angle error = %g' % angle_err)
+        turn_to = self.getBearingNotNone() + angle_err
+        debug('turning to %g' % turn_to)
+        self.__auv.bearing(turn_to)
 
         size_err = radius - self.__buoy_size
         size_derr = 0
-        self.sum_size_err += size_err
-        size_ierr = self.sum_size_err
         if self.last_size_err is not None:
             size_derr = (size_err - self.last_size_err[1]) / (now - self.last_size_err[0])
         self.last_size_err = (now, size_err)
-        do_prop = self.__sizekpid[0] * size_err +\
-                  self.__sizekpid[1] * size_derr +\
-                  self.__sizekpid[2] * size_ierr
-        if do_prop > Do_Prop_Limit:
-            do_prop = Do_Prop_Limit
-        if do_prop < -Do_Prop_Limit:
-            do_prop = -Do_Prop_Limit
+        do_prop = self.__sizekpd[0] * size_err +\
+                  self.__sizekpd[1] * size_derr
+        if do_prop > CircleBuoyDefaults.Do_Prop_Limit:
+            do_prop = CircleBuoyDefaults.Do_Prop_Limit
+        if do_prop < -CircleBuoyDefaults.Do_Prop_Limit:
+            do_prop = -CircleBuoyDefaults.Do_Prop_Limit
         debug('setting prop: %s' % do_prop)
         self.__auv.prop(int(round(do_prop)))
-    
-    def updateMotors(self):
-        self.__auv.hbow(int(round(self.__strafe_speed + self.__current_turn_speed)))
-        self.__auv.hbow(int(round(self.__strafe_speed - self.__current_turn_speed)))
+        self.time_last_seen = now
 
-    def run(self):
-        self.loadPipeline()
-        self.__auv.stop()
+    def run(self, load_pipeline=True):
+        if load_pipeline:
+            self.loadPipeline()
         start_bearing = self.__auv.getBearing()
         entered_quarters = [False, False, False, False]
         info('Waiting for circles...')
-        self.updateMotors()
         try:
             while False in entered_quarters:
                 time.sleep(0.5)
+                time_since_seen = 0
+                if self.time_last_seen is not None:
+                    time_since_seen = time.time() - self.time_last_seen
+                    if time_since_seen > CircleBuoyDefaults.Warn_Seconds_Between_Sights:
+                        warning('cannot see buoy: last seen %g seconds ago' %
+                                time_since_seen)
                 if self.__auv.getBearing() > -180 and self.__auv.getBearing() < -90:
                     entered_quarters[3] = True
                 if self.__auv.getBearing() > -90 and self.__auv.getBearing() < 0:
@@ -141,7 +167,7 @@ def runWithNode(cauv_node, auv, opts=None):
         auv = control.AUV(cauv_node)
 
     b = BuoyCircleObserver(cauv_node, auv, opts.strafe_speed, opts.buoy_size)
-    b.run()
+    b.run(opts.do_load_pipeline)
 
     info('circle_buoy.py complete')
 
@@ -153,12 +179,16 @@ def runStandalone(node_name = 'py-crcb', opts=None):
 
 if __name__ == '__main__':
     p = optparse.OptionParser()
-    p.add_option("-n", "--name", dest="name", default="py-crcb", help="CAUV Node name")
-    p.add_option('-s', "--strafe-speed", dest="strafe_speed", default=20, type=int)
-    p.add_option('-b', "--buoy-size", dest="buoy_size", default=20, type=int)
+    p.add_option("-n", "--name", dest="name",
+        default=CircleBuoyDefaults.Node_Name, help="CAUV Node name")
+    p.add_option('-s', "--strafe-speed", dest="strafe_speed",
+        default=CircleBuoyDefaults.Strafe_Speed, type=int)
+    p.add_option('-b', "--buoy-size", dest="buoy_size",
+        default=CircleBuoyDefaults.Buoy_Size, type=int)
+    p.add_option('-L', "--no-load-pipeline", dest="do_load_pipeline",
+        default=True, action='store_false')
     opts, args = p.parse_args()
 
-    cauv_node = cauv.node.Node(opts.name)
     runStandalone(opts.name, opts)
 
     
