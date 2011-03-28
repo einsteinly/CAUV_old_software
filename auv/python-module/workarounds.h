@@ -385,16 +385,13 @@ struct default_policy
     static bool check_convertibility_per_element() { return true; }
 
     template <typename ContainerType>
-    static bool check_size(boost::type<ContainerType>, std::size_t /*sz*/)
-    {
-        return true;
-    }
+    static bool check_size(boost::type<ContainerType>, std::size_t) { return true; }
 
     template <typename ContainerType>
-    static void assert_size(boost::type<ContainerType>, std::size_t /*sz*/) {}
+    static void assert_size(boost::type<ContainerType>, std::size_t) {}
 
     template <typename ContainerType>
-    static void reserve(ContainerType& a, std::size_t sz) {}
+    static void reserve(ContainerType&, std::size_t) {}
 };
 struct variable_capacity_policy : default_policy
 {
