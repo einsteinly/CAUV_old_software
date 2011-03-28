@@ -40,6 +40,8 @@ namespace cauv {
         void yawLeft(float rate);
         void yawRight(float rate);
 
+        void toggleAutopilotControl(bool pressed);
+
         void stop(bool);
 
     protected:
@@ -48,16 +50,17 @@ namespace cauv {
         boost::shared_ptr<AUV> m_auv;
         boost::shared_ptr<GamepadInput> m_gamepadInput;
         boost::scoped_ptr<QTimer> m_timer;
-
+        
         float m_bearingRate;
         float m_pitchRate;
         float m_forwardSpeed;
         float m_strafeSpeed;
         float m_depthRate;
         bool m_dirty;
+        bool m_autopilotControl;
 
     protected Q_SLOTS:
-        void updateByRates();
+        void update();
 
     };
 

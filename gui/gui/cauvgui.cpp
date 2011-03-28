@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "widgets/datastreamdisplays.h"
 #include "widgets/pipelinecauvwidget.h"
@@ -129,13 +130,39 @@ void CauvGui::onRun()
 
 #ifdef GAMEPAD_SUPPORT
     try {
-        info() << GamepadInput::listDevices();
 
-        //TODO: determine which type of controller is plugged in automatically
-        //boost::shared_ptr<XBoxInput> gamepad = boost::make_shared<XBoxInput>(0);
-        boost::shared_ptr<PlaystationInput> gamepad = boost::make_shared<PlaystationInput>(0);
-        CauvGamepad* gi = new CauvGamepad(gamepad, m_auv);
-        gi->setParent(this);
+        info() << "found" << GamepadInput::getNumDevices() << "gamepads";
+
+        OIS::DeviceList list = GamepadInput::listDevices();
+        for( OIS::DeviceList::iterator i = list.begin(); i != list.end(); ++i ) {
+            if(i->first == OIS::OISJoyStick){
+                info() << "Device: " << "Gamepad" << " Vendor: " << i->second;
+                std::string vendor = i->second;
+                boost::to_lower(vendor);
+                info() << "Connecting to" << vendor <<  "gamepad";
+
+                CauvGamepad* gi;
+                if(vendor.find("xbox") != vendor.npos){
+                    info() << "detected as an xbox controller";
+                    gi = new CauvGamepad(boost::make_shared<XBoxInput>(i->second), m_auv);
+                } else {
+                    // assume its a playstation controller
+                    info() << "assuming playstation controller";
+                    gi = new CauvGamepad(boost::make_shared<PlaystationInput>(i->second), m_auv);
+                }
+
+                gi->setParent(this);
+            }
+        }
+
+
+        for(int i = 0; i < GamepadInput::getNumDevices(); i++){
+            try {
+
+            } catch (...) {
+                error() << "Failed to create gamepad" << i;
+            }
+        }
     } catch (char const* ex){
         error() << ex;
     }

@@ -4,7 +4,7 @@ include_directories (SYSTEM "${sensors_INCLUDE_DIR}")
 
 # sources
 add_executable (
-    temperature
+    temperature EXCLUDE_FROM_ALL
 
     TempNode.cpp
 )

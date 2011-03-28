@@ -10,9 +10,9 @@ namespace cauv{
 namespace XBox {
     enum Buttons {
         X = 7, Y = 8, B = 6, A = 5,
-        RB = 10, RT = 2, LB = 9, LT = 1,
-        JoyLClick = 13, JoyRClick = 14,
-        Start = 11, Back = 4
+        RB = 10, LB = 9,
+        Joy_L_Click = 13, Joy_R_Click = 14,
+        Start = 11, Back = 4, XBox = 12
     };
     enum POV {
         Left = 2, Right = 3, Down = 1, Up = 0
@@ -22,6 +22,8 @@ namespace XBox {
         Joy_L_Y = 1,
         Joy_R_X = 3,
         Joy_R_Y = 4,
+        Trigger_L = 2,
+        Trigger_R = 5,
     };
 }
 
@@ -35,40 +37,33 @@ Q_SIGNALS:
     void Y(bool pressed);
     void A(bool pressed);
     void B(bool pressed);
-    void RT(bool pressed);
+    void XBox(bool pressed);
     void RB(bool pressed);
-    void LT(bool pressed);
     void LB(bool pressed);
-    void JoyLClick(bool pressed);
-    void JoyRClick(bool pressed);
+    void Joy_L_Click(bool pressed);
+    void Joy_R_Click(bool pressed);
     void Back(bool pressed);
     void Start(bool pressed);
-    void Left();
-    void Right();
-    void Up();
-    void Down();
-    void Centered();
+    void Left(bool pressed);
+    void Right(bool pressed);
+    void Up(bool pressed);
+    void Down(bool pressed);
     void Joy_L_X(float value);
     void Joy_L_Y(float value);
     void Joy_R_X(float value);
     void Joy_R_Y(float value);
-
-
-public Q_SLOTS:
-    void printIt(bool) const;
-    void printIt(int) const;
+    void Trigger_L(float value);
+    void Trigger_R(float value);
 
 public:
-    explicit XBoxInput(const unsigned int id);
+    explicit XBoxInput(const std::string vendor);
 
     bool buttonPressed( const OIS::JoyStickEvent &arg, int button ) ;
     bool buttonReleased( const OIS::JoyStickEvent &arg, int button ) ;
     bool axisMoved( const OIS::JoyStickEvent &arg, int axis ) ;
-    bool povMoved( const OIS::JoyStickEvent &arg, int pov ) ;
-    bool vector3Moved( const OIS::JoyStickEvent &arg, int index) ;
 
 protected:
-    void emitButton( XBox::Buttons button, bool state );
+    bool emitButton( XBox::Buttons button, bool state );
 };
 
 } // namespace cauv

@@ -4,6 +4,8 @@
 #define GAMEPADINPUT_H
 
 #include <QObject>
+
+#include <OIS/OISPrereqs.h>
 #include <OIS/OISJoyStick.h>
 
 namespace OIS {
@@ -22,9 +24,10 @@ namespace cauv{
         void processEvents();
 
     public:
-        explicit GamepadInput(const unsigned int id);
+        explicit GamepadInput(const std::string vendor = "");
 
-        static std::string listDevices();
+        static OIS::DeviceList listDevices();
+        static const int getNumDevices();
 
         virtual bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
         virtual bool buttonReleased( const OIS::JoyStickEvent &arg, int button );
