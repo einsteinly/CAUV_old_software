@@ -23,7 +23,9 @@
 #include "widgets/logview.h"
 #include "widgets/console.h"
 #include "widgets/processstateview.h"
-#include "widgets/mapview.h"
+#ifdef USE_MARBLE
+#   include "widgets/mapview.h"
+#endif
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>

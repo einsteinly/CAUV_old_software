@@ -73,12 +73,24 @@ class Model(messaging.BufferedMessageObserver):
                 'Could not get Description Message from the pipeline, is it running?'
             )
         s = State()
+        # don't save parameter values that are derived from links:
+        linked_inputs = []
+        for id in graph.nodeOutputs.keys():
+            outputlinks = graph.nodeOutputs[id]
+            for output in outputlinks.keys():
+                links = outputlinks[output]
+                for link in links:
+                    linked_inputs.append((link.node, link.input))
+
         for id in graph.nodeTypes.keys():
             s.nodes[id] = Node(id, int(graph.nodeTypes[id]))
         for id, pvps in graph.nodeParams.items():
             for param, value in pvps.items():
-                s.nodes[id].params[param] = fromNPV(value)
-                debug('%s = %s (%d)' % (param, str(value), value.which))
+                if (id, param) in linked_inputs:
+                    debug('not saving parameter %d:%s (linked)' % (id, param))
+                else:
+                    s.nodes[id].params[param] = fromNPV(value)
+                    debug('%s = %s (%d)' % (param, str(value), value.which))
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():

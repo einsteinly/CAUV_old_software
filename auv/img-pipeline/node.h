@@ -281,7 +281,7 @@ class Node: public boost::enable_shared_from_this<Node>{
         /* Check to see if all inputs are new and output is demanded; if so, 
          * add this node to the scheduler queue
          */
-        enum SchedMode{AllNew, AnyNew, Always};
+        enum SchedMode{AllNew, AnyNew, Always, Force};
         void checkAddSched(SchedMode m = AllNew);
 
     protected:

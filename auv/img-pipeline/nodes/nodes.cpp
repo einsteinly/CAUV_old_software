@@ -37,7 +37,7 @@
 #include "centreFinderNode.h"
 #include "quickSegmentNode.h"
 #include "thresholdMaskNode.h"
-//#include "cornerHarrisNode.h"
+#include "cornerHarrisNode.h"
 #include "histogramSegmentationArbNode.h"
 #include "runningAverageNode.h"
 #include "copyNodeMask.h"
@@ -50,6 +50,7 @@
 #include "drawLinesNode.h"
 #include "broadcastLinesNode.h"
 #include "nullParamNode.h"
+#include "drawHistogramNode.h"
 
 using namespace cauv::imgproc;
 
@@ -104,6 +105,7 @@ DEFINE_NFR(PyramidNode, NodeType::Pyramid);
 DEFINE_NFR(DrawLinesNode, NodeType::DrawLines);
 DEFINE_NFR(BroadcastLinesNode, NodeType::BroadcastLines);
 DEFINE_NFR(NullParamNode, NodeType::NullParam);
+DEFINE_NFR(DrawHistogramNode, NodeType::DrawHistogram);
 
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];

@@ -3,7 +3,7 @@ if (MSVC)
 
     set (CMAKE_C_FLAGS_INIT "${ALWAYS_FLAGS}")
 elseif (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-    set (ALWAYS_FLAGS "-DPIC -fPIC -Wall -Wno-system-headers -fvisibility-inlines-hidden")
+    set (ALWAYS_FLAGS "-DPIC -fPIC -Wall -Wno-system-headers")
     set (DEBUG_FLAGS "-g -Wextra -Wno-non-virtual-dtor")
     set (OPTIMISATION_FLAGS "-O3 -ffast-math")
 

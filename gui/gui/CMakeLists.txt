@@ -69,7 +69,6 @@ else()
         widgets/datastreamrecorder.cpp
         widgets/console.cpp
         widgets/processstateview.cpp
-        widgets/mapview.cpp
     )
 
     set (
@@ -84,12 +83,10 @@ else()
         widgets/datastreamrecorder.ui
         widgets/console.ui
         widgets/processstateview.ui
-        widgets/mapview.ui
     )
 
     set (
         GUICPP_H
-
 
         gamepad/gamepadinput.h
         gamepad/xboxinput.h
@@ -104,7 +101,6 @@ else()
         widgets/datastreamrecorder.h
         widgets/console.h
         widgets/processstateview.h
-        widgets/mapview.h
     )
 
     set (
@@ -112,6 +108,12 @@ else()
 
         resources.qrc
     )
+    
+    if (CAUV_GUI_MAP)
+        list(APPEND GUICPP_SRCS widgets/mapview.cpp)
+        list(APPEND GUICPP_UIS widgets/mapview.ui)
+        list(APPEND GUICPP_H widgets/mapview.h)
+    endif()
 
     qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})
     qt4_wrap_cpp (GUICPP_MOC_H ${GUICPP_H})

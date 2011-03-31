@@ -74,6 +74,7 @@ class PipelineWidget: public QGLWidget,
         void removeArc(node_id const& src, std::string const& output,
                        renderable_ptr_t dst);
         void removeArc(renderable_ptr_t src, renderable_ptr_t dst);
+        void sanitizeArcs();
         
         void send(boost::shared_ptr<Message>);
         

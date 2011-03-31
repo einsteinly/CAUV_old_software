@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace cauv{
+
 class PervertNode : public CauvNode
 {
     public: 
@@ -46,12 +48,14 @@ class PervertNode : public CauvNode
         }
 };
 
-static PervertNode* node;
+} // namespace cauv
+
+static cauv::PervertNode* node;
 
 void cleanup()
 {
     info() << "Cleaning up..." << endl;
-    CauvNode* oldnode = node;
+    cauv::CauvNode* oldnode = node;
     node = 0;
     delete oldnode;
     info() << "Clean up done." << endl;
@@ -70,7 +74,7 @@ int main(int argc, char** argv)
 {
     signal(SIGINT, interrupt);
     
-    node = new PervertNode();
+    node = new cauv::PervertNode();
 
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;

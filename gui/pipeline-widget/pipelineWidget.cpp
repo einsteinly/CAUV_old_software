@@ -337,6 +337,17 @@ void PipelineWidget::removeArc(renderable_ptr_t src, renderable_ptr_t dst){
     warning() << __func__ << "no such arc" << src <<  "->" << dst;
 }
 
+void PipelineWidget::sanitizeArcs(){
+    const arc_set_t old_arcs = m_arcs;
+    arc_set_t::const_iterator i;
+    for(i = old_arcs.begin(); i != old_arcs.end(); i++){
+        if((!(*i)->m_src.lock()) || !(*i)->m_dst.lock()){
+            m_arcs.erase(*i);
+            debug() << "removing defunct arc";
+        }
+    }
+}
+
 void PipelineWidget::send(boost::shared_ptr<Message> m){
     // anyone interested in messages from the pipeline can subscribe to this signal
     // allows the pipeline and message software to be decoupled

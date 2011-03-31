@@ -1,12 +1,6 @@
-find_package(ftdi REQUIRED)
-include_directories (${ftdi_INCLUDE_DIRS})
-link_directories (${ftdi_LIBRARY_DIRS})
-if (CAUV_USE_FTDIPP)
-    add_definitions(-DCAUV_USE_FTDIPP=1)
-endif()
-if (CAUV_MCB_IS_FTDI)
-    add_definitions(-DCAUV_MCB_IS_FTDI=1)
-endif()
+find_package(sensors REQUIRED)
+
+include_directories (SYSTEM "${sensors_INCLUDE_DIR}")
 
 # sources
 add_executable (
@@ -20,7 +14,7 @@ cauv_install ( temperature )
 target_link_libraries (
     temperature
     
-    sensors
+    ${sensors_LIBRARIES}
     common
 )
 

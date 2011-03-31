@@ -57,7 +57,8 @@ enum NodeType : int8 {
     Pyramid = 47,
     DrawLines = 48,
     BroadcastLines = 49,
-    NullParam = 50
+    NullParam = 50,
+    DrawHistogram = 51
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -76,7 +77,8 @@ enum ParamType : int8 {
     Bool = 3,
     CornerList = 4,
     LineList = 5,
-    CircleList = 6
+    CircleList = 6,
+    FloatList = 7
 }
 enum OutputType : int8 {
     Image = 0,
@@ -170,7 +172,7 @@ struct MotorMap
 }
 variant NodeParamValue
 {
-    int32, float, string, bool, list<Corner>, list<Line>, list<Circle>
+    int32, float, string, bool, list<Corner>, list<Line>, list<Circle>, list<float>
 }
 struct ScriptResponse
 {

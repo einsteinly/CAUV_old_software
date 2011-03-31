@@ -210,7 +210,7 @@ void ImageProcessor::onForceExecRequestMessage(ForceExecRequestMessage_ptr m){
     try{
         node_ptr_t n = lookup(m->nodeId());
         if(n){
-            n->checkAddSched(Node::Always);
+            n->checkAddSched(Node::Force);
         }else{
             error() << __func__ << "invalid node id:" << m->nodeId();
         }

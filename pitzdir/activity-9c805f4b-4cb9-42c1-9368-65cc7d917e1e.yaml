@@ -1,0 +1,18 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-03-31 01:13:15.871166
+description: "status changed to finished\ndescription changed to Write a settings\
+  \ persistence program that can listen to messages of any (specified) sort, record\
+  \ their values (in some sort of human-readable file), then broadcast them again\
+  \ when it is started --- this could be used for persisting control loop parameters,\
+  \ etc.\r\n\r\n(implemented as persist.py)\r\n\r\n\nowner changed to James Crosby"
+entity: !!python/object:uuid.UUID
+  int: 258006360128692926734077079227562930493
+modified_time: *id001
+pscore: 0
+title: 2011-03-31 01:13 - James Crosby changed task Settings persistence daemon
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 208026114135108696858043658331581677086
+who_did_it: *id002
+yaml_file_saved: 2011-03-31 01:13:15.879948
