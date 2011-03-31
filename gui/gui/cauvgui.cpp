@@ -1,6 +1,9 @@
 #include "cauvgui.h"
 
 #include <QTimer>
+#include <QDir>
+#include <QString>
+#include <QPluginLoader>
 
 #include <signal.h>
 
@@ -11,6 +14,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
+
+#include <cauvinterfaceplugin.h>
 
 #include "widgets/datastreamdisplays.h"
 #include "widgets/pipelinecauvwidget.h"
@@ -36,18 +41,17 @@
 
 using namespace cauv;
 
-CauvGui::CauvGui(QApplication * app) : CauvNode("CauvGui"), m_application(app), ui(new Ui::MainWindow){
+CauvGui::CauvGui(QApplication * app) :
+        CauvNode("CauvGui"),
+        m_application(app),
+        ui(new Ui::MainWindow),
+        m_auv( boost::make_shared<AUV>()),
+        m_auv_controller(boost::make_shared<AUVController>(m_auv)) {
+
     ui->setupUi(this);
-    joinGroup("control");
-    joinGroup("image");
-    joinGroup("pressure");
-    joinGroup("pl_gui");
-    joinGroup("gui");
-    joinGroup("debug");
-    joinGroup("telemetry");
 
+    // more misc ui setup
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
-
     this->setWindowState(Qt::WindowMaximized);
 }
 
@@ -86,15 +90,33 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
-    // currently the gui can only connect to the auv when it starts up.
-    // this should really be made ocnfigurable via a shiny interface
-    // this would required some changes to cauv node classes to be possible
+    // load plugins
+    // static plugins first
+    foreach (QObject *plugin, QPluginLoader::staticInstances())
+        loadPlugin(plugin);
+
+    // then any plugins in the plugins folder
+    QDir pluginsDir = QDir(QApplication::instance()->applicationDirPath());
+    pluginsDir.cd("plugins");
+
+    foreach (QString directoryName, pluginsDir.entryList(QDir::Dirs)) {
+        pluginsDir.cd(directoryName);
+
+        foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+            QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+            QObject *plugin = loader.instance();
+            if (plugin) {
+                if (loadPlugin(plugin)) {
+                    info() << "Loaded plugin:"<< fileName.toStdString();
+                }
+            }
+        }
+
+        pluginsDir.cdUp(); // back to plugins dir
+    }
 
 
-    // set up the auv object along with a controller to update the state
-    // from the network messages
-    m_auv = boost::make_shared<AUV>();
-    m_auv_controller = boost::make_shared<AUVController>(m_auv);
+
     // connect up message inputs and outputs
     addMessageObserver(m_auv_controller);
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
@@ -173,4 +195,20 @@ void CauvGui::onRun()
     removeMessageObserver(m_auv_controller);
     info() << "Stopping CauvNode";
     CauvNode::stopNode();
+}
+
+
+bool CauvGui::loadPlugin(QObject *plugin){
+    CauvInterfacePlugin *element = qobject_cast<CauvInterfacePlugin*>(plugin);
+
+    element->initialise(m_auv, shared_from_this());
+
+    // see which groups the plugin needs us to join
+    foreach (std::string group, element->getGroups()){
+        joinGroup(group);
+    }
+
+
+    if(element) return true;
+    else return false;
 }

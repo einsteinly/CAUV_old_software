@@ -12,6 +12,8 @@ elseif (NOT Qwt6_FOUND)
     message(WARNING "QWT not found, not building gui")
 else()
 
+    add_subdirectory(plugins)
+
     # required libraries:
     find_package (OpenCV REQUIRED)
 
@@ -44,7 +46,7 @@ else()
 
     include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
-    include_directories (./)
+    include_directories (${guicpp_SOURCE_DIR})
     include_directories (marble)
 
     set (

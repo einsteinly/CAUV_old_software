@@ -35,6 +35,8 @@ namespace cauv {
     protected:
         virtual void onRun();
 
+        virtual bool loadPlugin(QObject * plugin);
+
         virtual void closeEvent(QCloseEvent *);
 
         boost::shared_ptr<AUV> m_auv;

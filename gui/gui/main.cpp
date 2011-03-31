@@ -23,8 +23,6 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
     Q_INIT_RESOURCE(resources);
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-    QCoreApplication::addLibraryPath(QCoreApplication::applicationDirPath());
-
 
     QIcon icon;
     icon.addFile(QString::fromUtf8(":/resources/icon.png"), QSize(), QIcon::Normal, QIcon::Off);
