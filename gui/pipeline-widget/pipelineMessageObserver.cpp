@@ -69,13 +69,16 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
     typedef std::map<node_id, std::map<std::string, std::vector<NodeInput> > > node_output_map_t;
     typedef std::map<node_id, std::map<std::string, NodeParamValue> > node_param_map_t;
 
-    // remove nodes that shouldn't exist
+    // remove arcs and nodes that shouldn't exist
     const std::vector<node_ptr_t> current_nodes = m_widget->nodes();
     std::vector<node_ptr_t>::const_iterator j;
-    for(j = current_nodes.begin(); j != current_nodes.end(); j++)
-        if(!m->nodeTypes().count((*j)->id())){
+    for(j = current_nodes.begin(); j != current_nodes.end(); j++){
+        const node_type_map_t::const_iterator i = m->nodeTypes().find((*j)->id());
+        if(i == m->nodeTypes().end() || i->second != (*j)->type()){
             m_widget->remove(*j);
         }
+    }
+    m_widget->sanitizeArcs();
 
     // make sure all nodes exist with the correct inputs and outputs
     node_type_map_t::const_iterator i;
