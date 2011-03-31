@@ -11,6 +11,9 @@
 
 #include "../node.h"
 
+namespace cauv{
+namespace imgproc{
+
 // Detects corners based on the Harris corner detection algorithm
 // Note that the image produced is very faint. Threshold or scale!   
 class CornerHarrisNode: public Node{
@@ -45,13 +48,13 @@ class CornerHarrisNode: public Node{
 
             image_ptr_t img = inputs["image_in"];
             
-	    if (img->cvMat().channels() !=  1){
+            if (img->cvMat().channels() !=  1){
                 error() << "CornerHarrisNode:\n\t"
                         << "Input image must be single channeled";
             }
 
-	    if (img->cvMat().elemSize() != 1){
-	        error() << "ThresholdMaskNode:\n\t"
+            if (img->cvMat().elemSize() != 1){
+                error() << "ThresholdMaskNode:\n\t"
                         << "Invalid image input - must be 8-bit";
                 return r;
             }
@@ -63,12 +66,12 @@ class CornerHarrisNode: public Node{
             boost::shared_ptr<Image> dst = boost::make_shared<Image>(
                 cv::Mat(img->cvMat().cols,
                         img->cvMat().rows,
-			CV_32FC1));
+                        CV_32FC1));
             try{
-	      cv::cornerHarris(img->cvMat(), dst->cvMat(), bs, ap, (double)k);
-	      //boost::shared_ptr<Image> newi = boost::make_shared<Image>();
-              //dst->cvMat().convertTo(newi->cvMat(), CV_8UC1);
-	      r["image_out"] = dst;
+                cv::cornerHarris(img->cvMat(), dst->cvMat(), bs, ap, (double)k);
+                //boost::shared_ptr<Image> newi = boost::make_shared<Image>();
+                //dst->cvMat().convertTo(newi->cvMat(), CV_8UC1);
+                r["image_out"] = dst;
 
             }catch(cv::Exception& e){
                 error() << "CornerHarrisNode:\n\t"
@@ -82,6 +85,9 @@ class CornerHarrisNode: public Node{
     // Register this node type
     DECLARE_NFR;
 };
+
+} // namespace imgproc
+} // namespace cauv
 
 #endif // ndef __CORNER_HARRIS_NODE_H__
 

@@ -14,7 +14,6 @@ import math
 class CircleBuoyDefaults:
     # default options
     Do_Prop_Limit = 50  # max prop for forward/backward adjustment
-    Circles_Position_Pixel_Width = 120
     Camera_FOV = 60     # degrees
     Warn_Seconds_Between_Sights = 5
     Node_Name = "py-CrcB"
@@ -57,9 +56,6 @@ class BuoyCircleObserver(msg.MessageObserver):
                 mean_circle_radius /= num_circles
                 debug('Buoy at %s %s' % (mean_circle_position,
                                          mean_circle_radius))
-                # TODO: Circles Messages should be updated to contain relative positions already
-                mean_circle_position /= CircleBuoyDefaults.Circles_Position_Pixel_Width
-                mean_circle_radius /= CircleBuoyDefaults.Circles_Position_Pixel_Width
                 self.actOnBuoy(mean_circle_position,
                                mean_circle_radius)
             else:

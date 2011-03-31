@@ -55,7 +55,7 @@ struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
         #if i == 0#if#else#else if#end if#(isinstance< $toCPPType($t) >(val))
             return boost::make_shared<${v.name}Wrapper>(static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val)));
         #end for
-        return boost::make_shared<${v.name}Wrapper>(bp::extract<$v.name>(val));
+        return boost::make_shared<${v.name}Wrapper>(val);
     }
     static ${v.name} fromObject(const bp::object& val){
         #for i,t in enumerate($v.types)
