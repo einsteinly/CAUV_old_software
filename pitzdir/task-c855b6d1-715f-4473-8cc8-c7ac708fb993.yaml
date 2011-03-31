@@ -1,3 +1,4 @@
+attached_files: []
 components: []
 created_by: !!python/object:uuid.UUID
   int: 236388421408798579890985238796729312670
@@ -12,13 +13,13 @@ estimate: !!python/object:uuid.UUID
   int: 232728329951956224362343003393279330573
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-09 03:25:58.485033
+modified_time: 2011-03-31 01:17:06.795589
 owner: !!python/object:uuid.UUID
   int: 55576107349434758232075247564061712184
 points: null
 pscore: !!python/unicode '3'
 status: !!python/object:uuid.UUID
-  int: 154409908609622189382556686006061208230
+  int: 300208156334241880201290222579226582105
 tags:
 - !!python/object:uuid.UUID
   int: 154609098728873674441152855601256671864
@@ -26,4 +27,4 @@ title: Design and Implement a Search Pattern
 type: task
 uuid: !!python/object:uuid.UUID
   int: 266290652382279442329566583548531423635
-yaml_file_saved: 2010-12-09 03:25:58.491129
+yaml_file_saved: 2011-03-31 01:17:06.810096
