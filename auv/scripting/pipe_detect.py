@@ -13,9 +13,9 @@ class detector(messaging.BufferedMessageObserver):
         self.detect = 0
     def process(self):
         if self.detected():
-            print 'found yellow'
+            print 'Found yellow'
         else:
-            print 'no yello'
+            print 'No yellow'
     def onHistogramMessage(self, m):
         if m.bins[0]>0.1:
             self.lock.acquire()

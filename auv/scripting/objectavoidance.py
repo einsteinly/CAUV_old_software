@@ -5,7 +5,7 @@ import cauv
 import cauv.messaging as msg
 import cauv.control as control
 import cauv.node
-from brightnessdetect2 import BrightnessDetect as
+from brightnessdetect2 import BrightnessDetect
 
 import time
 import traceback
@@ -55,7 +55,7 @@ def ObjectAvoidance():
         print 'Moving forward'
         auv.prop(100)
         
-        while true:
+        while True:
             if detect.detect==1:
                 print 'About to hit something! reversing for 5 seconds'
                 auv.prop(-127)

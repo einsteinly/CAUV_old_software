@@ -30,7 +30,8 @@ class HistogramNode: public OutputNode{
             //One input
             registerInputID("image_in");
             
-            //No output
+            //Output histogram
+            registerOutputID<NodeParamValue>("histogram");
             
             //Parameters
             registerParamID<int>("Number of bins", 42);
@@ -60,8 +61,6 @@ class HistogramNode: public OutputNode{
                 throw(parameter_error("image must have only one channel"));
                 //TODO: support vector parameters
 
-            //Let's quantize the hue to 30 levels
-            //And the saturation to 32 levels
             int histSize[] = {bins};
             //Hue varies from 0 to 179, see cvtColor
             float hranges[] = {0, 256};
@@ -79,12 +78,12 @@ class HistogramNode: public OutputNode{
             minMaxLoc(hist, 0, &maxVal, 0, 0);
             int imgsize = img->cvMat().rows * img->cvMat().cols;
 
-            int scale = 10;
-            cv::Mat histImg = cv::Mat::zeros(bins * scale, bins * scale, CV_8UC3);
             std::vector<float> binVal;
             for(int h = 0; h < bins; h++){
                 binVal.push_back(hist.at<float>(h) / imgsize);
             }
+
+            r["histogram"] = NodeParamValue(binVal);
 
             //This is the messaging bit
             sendMessage(boost::make_shared<HistogramMessage>(name, binVal));

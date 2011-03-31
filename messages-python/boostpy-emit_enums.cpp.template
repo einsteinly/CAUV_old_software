@@ -24,7 +24,7 @@ void emitEnums(){
         #end for
         #end for
         .value("NumValues", MessageType::NumValues)
-        // boost python pickling of emails is b0rked, and this don't fix it
+        // boost python pickling of enums is b0rked, and this don't fix it
         //.def_pickle(enum_pickler())
     ;
     

@@ -40,6 +40,7 @@ void emitMessages(){
         #end if
         ## self_ns shouldn't be necessary here... gcc sux
         .def(bp::self_ns::str(bp::self_ns::self))
+        .def(bp::self_ns::repr(bp::self_ns::self))
         ## default group to send to
         .def_readonly("group", &${g.name.upper()}_NAME)
         ## return policies are all return-by-value, safest, but not the most efficient

@@ -5,7 +5,7 @@ using namespace cauv;
 using namespace cauv::sim;
 
 
-SimulatedAUV::SimulatedAUV()
+SimulatedAUV::SimulatedAUV(boost::shared_ptr<AUV> auv) : m_auv(auv)
 {
 }
 

@@ -4,17 +4,20 @@
 #include <vector>
 
 #include <osg/ref_ptr>
+#include <boost/shared_ptr.hpp>
 
 #include "sim/sensors/camera.h"
 
 namespace cauv {
+
+    class AUV;
 
     namespace sim {
 
         class SimulatedAUV
         {
         public:
-            SimulatedAUV();
+            SimulatedAUV(boost::shared_ptr<AUV> auv);
 
             virtual void addCamera(osg::ref_ptr<Camera> camera);
 
@@ -24,6 +27,7 @@ namespace cauv {
 
         protected:
             std::vector<osg::ref_ptr<Camera> > m_cameras;
+            boost::shared_ptr<AUV> m_auv;
         };
 
     } // namespace sim

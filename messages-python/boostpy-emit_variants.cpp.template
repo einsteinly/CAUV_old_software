@@ -25,14 +25,54 @@ using namespace cauv;
  *
  */
 
+//
+// visitor for converting contents of visitor to object
+//
+struct val_to_object_visitor : boost::static_visitor<bp::object>
+{
+   template <typename T>
+   bp::object operator()(const T& v) const
+   {
+      return bp::object(v);
+   }
+};
+
+
 #for $v in $variants
 struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
     ${v.name}Wrapper() : ${v.name}() { }
     ${v.name}Wrapper(${v.name} const& v) : ${v.name}(v) { }
+    ${v.name}Wrapper(const bp::object& o) : ${v.name}(fromObject(o)) { }
   #for $t in $v.types
     ${v.name}Wrapper($toCPPType($t) const& v) : ${v.name}(v){ }
   #end for
    
+    bp::object value() const{
+        return boost::apply_visitor(val_to_object_visitor(), *this);
+    }
+    static boost::shared_ptr<${v.name}Wrapper> from(const bp::object& val){
+        #for i,t in enumerate($v.types)
+        #if i == 0#if#else#else if#end if#(isinstance< $toCPPType($t) >(val))
+            return boost::make_shared<${v.name}Wrapper>(static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val)));
+        #end for
+        return boost::make_shared<${v.name}Wrapper>(val);
+    }
+    static ${v.name} fromObject(const bp::object& val){
+        #for i,t in enumerate($v.types)
+        #if i == 0#if#else#else if#end if#(isinstance< $toCPPType($t) >(val))
+            ##if $isSTLVector($t)
+            ##set $vecn = $CPPContainerTypeName(t.valType) + "Vec"
+            ##return static_cast< $toCPPType($t) >(bp::extract< $vecn >(val));
+            ##else if $isSTLMap($t)
+            ##set $mapn = $CPPContainerTypeName(t.keyType) + $CPPContainerTypeName(t.valType) + "Map"
+            ##return static_cast< $toCPPType($t) >(bp::extract< $mapn >(val));
+            ##else
+            return static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val));
+            ##end if
+        #end for
+        return bp::extract<$v.name>(val);
+    }
+
   #for $t in $v.types 
     #set $pytype = $CPPContainerTypeName($t)    
     $toCPPType($t) to_${pytype}() const{
@@ -44,26 +84,40 @@ struct ${v.name}Wrapper: public ${v.name}, bp::wrapper<${v.name}>{
 
   #end for
 };
+struct ${v.name}Helper{
+    static bp::object value(${v.name} const& var) {
+        return boost::apply_visitor(val_to_object_visitor(), var);
+    }
+    static ${v.name} create(const bp::object& val){
+        #for i,t in enumerate($v.types)
+        #if i == 0#if#else#else if#end if#(isinstance< $toCPPType($t) >(val))
+            return static_cast< $toCPPType($t) >(bp::extract< $toCPPType($t) >(val));
+        #end for
+        return bp::extract<$v.name>(val);
+    }
+};
+
+
 #end for
 
 
 void emitVariants(){
 #for $v in $variants
-    #set $className = $v.name + "Wrapper"
-    bp::class_<$className>("${v.name}")
-      #for $t in $v.types
-        #set $pytype = $CPPContainerTypeName($t)
-        ##.def(bp::init< $toCPPType($t) >()) see note above
-        .def("from_${pytype}", &${className}::from_${pytype})
-        .staticmethod("from_${pytype}")
-      #end for
-      #for $t in $v.types
-        #set $pytype = $CPPContainerTypeName($t)
-        .def_readonly("$pytype", &${className}::to_${pytype})
-      #end for
+    #set $helper = $v.name + "Helper"
+    #set $className = $v.name
+    bp::class_<${className}>("${v.name}")
+        .add_property("value", &${helper}::value)
+        .def("create", &${helper}::create)
+        .staticmethod("create")
         .def_readonly("which", &${className}::which)
         .def(bp::self_ns::str(bp::self_ns::self))
+        .def(bp::self_ns::repr(bp::self_ns::self))
     ;
+    #for $t in $v.types
+    from_python_variant<$v.name, $className, $toCPPType($t) >();
+    ##bp::implicitly_convertible<$toCPPType($t), $className>();
+    #end for
+
     ## hackery for boost::shared_ptr<T const> ... see workarounds.h    
     register_shared_ptrs_to_python<$className>();    
 

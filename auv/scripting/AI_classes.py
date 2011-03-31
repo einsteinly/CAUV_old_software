@@ -1,3 +1,5 @@
+import Queue
+
 import cauv.messaging as messaging
 import cauv.node
 from cauv.debug import debug, warning, error, info
@@ -10,8 +12,8 @@ class ai_process(messaging.BufferedMessageObserver):
     def __init__(self, name, process_initial):
         messaging.BufferedMessageObserver.__init__(self)
         self.node = cauv.node.Node(name)
-        node.join("ai")
-        node.addObserver(self)
+        self.node.join("ai")
+        self.node.addObserver(self)
         self.process_initial = process_initial
         self.messages = Queue.Queue()
     def onAIMessage(self, m):

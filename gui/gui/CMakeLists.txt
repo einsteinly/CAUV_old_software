@@ -56,6 +56,7 @@ else()
         gamepad.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
+        gamepad/xboxinput.cpp
         widgets/datastreamdisplays.cpp
         widgets/pipelinecauvwidget.cpp
         widgets/graphs.cpp
@@ -64,6 +65,7 @@ else()
         widgets/logview.cpp
         widgets/datastreamrecorder.cpp
         widgets/console.cpp
+        widgets/processstateview.cpp
     )
 
     set (
@@ -77,13 +79,15 @@ else()
         widgets/graphs.ui
         widgets/datastreamrecorder.ui
         widgets/console.ui
+        widgets/processstateview.ui
     )
 
     set (
         GUICPP_H
 
-        gamepad/playstationinput.h
         gamepad/gamepadinput.h
+        gamepad/xboxinput.h
+        gamepad/playstationinput.h
         cauvgui.h
         cauvinterfaceelement.h
         gamepad.h
@@ -93,6 +97,7 @@ else()
         widgets/logview.h
         widgets/datastreamrecorder.h
         widgets/console.h
+        widgets/processstateview.h
     )
 
     set (
@@ -100,6 +105,12 @@ else()
 
         resources.qrc
     )
+    
+    if (CAUV_GUI_MAP)
+        list(APPEND GUICPP_SRCS widgets/mapview.cpp)
+        list(APPEND GUICPP_UIS widgets/mapview.ui)
+        list(APPEND GUICPP_H widgets/mapview.h)
+    endif()
 
     qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})
     qt4_wrap_cpp (GUICPP_MOC_H ${GUICPP_H})
@@ -114,7 +125,7 @@ else()
     include_directories (${AUV_SOURCE_DIR})
 
     add_executable (
-        guicpp EXCLUDE_FROM_ALL
+        guicpp
 
         ${GUICPP_SRCS}
         ${GUICPP_UIS_H}
@@ -136,15 +147,5 @@ else()
         ${OpenCV_LIBS}
         ${MARBLE_LIBRARIES}
     )
-    cauv_install ( guicpp )
-
-    #add_custom_command(
-    #    TARGET guicpp
-    #
-    #    POST_BUILD
-    #    COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationSans-Regular.ttf" "${guicpp_BINARY_DIR}/"
-    #    COMMAND cp "${pipeline-widget_SOURCE_DIR}/LiberationMono-Regular.ttf" "${guicpp_BINARY_DIR}/"
-    #    COMMENT "Copying fonts for guicpp"
-    #)
 
 endif()

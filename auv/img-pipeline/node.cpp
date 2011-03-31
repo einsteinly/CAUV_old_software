@@ -536,7 +536,7 @@ void Node::registerInputID(input_id const& i){
  */
 void Node::checkAddSched(SchedMode m){
     unique_lock_t l(m_checking_sched_lock);
-    if(!allowQueue()){
+    if(m != Force && !allowQueue()){
         debug(4) << __func__ << "Cannot enqueue node" << *this << ", allowQueue false";
         return;
     }
@@ -547,7 +547,7 @@ void Node::checkAddSched(SchedMode m){
 
     const bool out_demanded = newOutputDemanded();
     const bool new_pvs = newParamValues();
-    if(m != Always && out_demanded == false && new_pvs == false){
+    if(m != Always && m != Force && out_demanded == false && new_pvs == false){
         debug(4) << __func__ << "Cannot enqueue node" << *this << ", no demand:"
                  << "new params=" << new_pvs << "output demand=" << out_demanded;
         return;
