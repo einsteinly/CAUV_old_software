@@ -121,9 +121,10 @@ void CauvGui::onRun()
     boost::shared_ptr<ProcessStateView> processState(new ProcessStateView("Processes", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(processState));
 
+#ifdef USE_MARBLE
     boost::shared_ptr<MapView> mapView(new MapView("Map", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(mapView));
-
+#endif
 
 #ifdef GAMEPAD_SUPPORT
     try {

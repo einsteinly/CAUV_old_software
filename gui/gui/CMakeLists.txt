@@ -45,6 +45,7 @@ else()
     include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
     include_directories (./)
+    include_directories (marble)
 
     set (
         GUICPP_SRCS
