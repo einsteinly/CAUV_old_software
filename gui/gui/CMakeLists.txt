@@ -1,40 +1,23 @@
 project (guicpp)
 
-option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
-
 find_package (Qt4)
-find_package (Qwt6)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building gui")
-elseif (NOT Qwt6_FOUND)
-    message(WARNING "QWT not found, not building gui")
 else()
 
-    # required libraries:
-    find_package (OpenCV REQUIRED)
-
-    # find gamepad library if it's needed
-    if (CAUV_GUI_GAMEPAD)
-        find_package (OIS)
-        if (OIS_FOUND)
-            add_definitions(-DGAMEPAD_SUPPORT=1)
-        else()
-            message(WARNING "OIS not found, building without gamepad support")
-        endif()
-    endif()
-
-
+    # the shared classes in the GUI, used by plugins
+    add_subdirectory(core)
 
     add_subdirectory (qconsole2)
 
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
+
     # QConsole2 required Qt3Suport
     add_definitions(-DQT3_SUPPORT)
-
     include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
-    include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
+
     include_directories (${guicpp_SOURCE_DIR})
     
     # build plugins
@@ -45,19 +28,10 @@ else()
 
         main.cpp
         cauvgui.cpp
-        datastreamdragging.cpp
         cauvinterfaceelement.cpp
-        cauvbasicplugin.cpp
-        gamepad.cpp
-        gamepad/gamepadinput.cpp
-        gamepad/playstationinput.cpp
-        gamepad/xboxinput.cpp
         widgets/pipelinecauvwidget.cpp
-        widgets/graphs.cpp
         widgets/motorcontrols.cpp
-        widgets/videoscreen.cpp
         widgets/logview.cpp
-        widgets/datastreamrecorder.cpp
         widgets/console.cpp
         widgets/processstateview.cpp
     )
@@ -67,10 +41,7 @@ else()
 
         mainwindow.ui
         widgets/motorcontrols.ui
-        widgets/videoscreen.ui
         widgets/logview.ui
-        widgets/graphs.ui
-        widgets/datastreamrecorder.ui
         widgets/console.ui
         widgets/processstateview.ui
     )
@@ -78,16 +49,10 @@ else()
     set (
         GUICPP_H
 
-        gamepad/gamepadinput.h
-        gamepad/xboxinput.h
-        gamepad/playstationinput.h
         cauvgui.h
         cauvinterfaceelement.h
-        gamepad.h
         widgets/motorcontrols.h
-        widgets/videoscreen.h
         widgets/logview.h
-        widgets/datastreamrecorder.h
         widgets/console.h
         widgets/processstateview.h
     )
@@ -121,15 +86,11 @@ else()
     target_link_libraries (
         guicpp
 
-        cauv_debug
-        common
-        model
+        guicpp-core
         pipeline-widget
         qconsole2
-        dsdplugin
         ${QT_LIBRARIES}
         ${Qwt6_LIBRARIES}
-        ${OIS_LIBRARIES}
         ${OpenCV_LIBS}
     )
 

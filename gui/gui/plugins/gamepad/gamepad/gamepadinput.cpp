@@ -1,5 +1,3 @@
-#ifdef GAMEPAD_SUPPORT
-
 #include "gamepadinput.h"
 
 #include <sstream>
@@ -137,5 +135,3 @@ DeviceList GamepadInput::listDevices() {
 const int GamepadInput::getNumDevices(){
     return GamepadInput::getInputSystem()->getNumberOfDevices( OISJoyStick );
 }
-
-#endif //GAMEPAD_SUPPORT

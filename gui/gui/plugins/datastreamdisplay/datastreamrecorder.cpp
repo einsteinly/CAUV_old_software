@@ -1,5 +1,4 @@
 #include "datastreamrecorder.h"
-#include "ui_datastreamrecorder.h"
 
 #include <QSpinBox>
 

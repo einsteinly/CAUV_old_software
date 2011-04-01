@@ -1,5 +1,5 @@
-#ifndef PLUGINEXAMPLE_H
-#define PLUGINEXAMPLE_H
+#ifndef GAMEPADPLUGIN_H
+#define GAMEPADPLUGIN_H
 
 #include <gui/core/cauvbasicplugin.h>
 
@@ -7,13 +7,13 @@
 
 namespace cauv {
 
-    class PluginExample : public QObject, public CauvBasicPlugin
+    class GamepadPlugin : public QObject, public CauvBasicPlugin
     {
         Q_OBJECT
         Q_INTERFACES(cauv::CauvInterfacePlugin)
 
     public:
-        PluginExample();
+        GamepadPlugin();
 
         virtual const QString name() const;
         virtual const QList<QString> getGroups() const;
@@ -23,4 +23,4 @@ namespace cauv {
 
 } // namespace cauv
 
-#endif // PLUGINEXAMPLE_H
+#endif // GAMEPADPLUGIN_H

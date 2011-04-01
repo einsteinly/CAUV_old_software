@@ -5,11 +5,9 @@
 
 #include <common/data_stream_tools.h>
 
-class QSpinBox;
+#include "datastreamdisplay/ui_datastreamrecorder.h"
 
-namespace Ui {
-    class DataStreamRecorder;
-}
+class QSpinBox;
 
 namespace cauv {
 

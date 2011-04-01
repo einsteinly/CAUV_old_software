@@ -6,7 +6,7 @@
 #include <common/data_stream.h>
 
  // for types
-#include <generated/messages.h>
+#include <generated/messages_fwd.h>
 
 class QDropEvent;
 class QDragEnterEvent;

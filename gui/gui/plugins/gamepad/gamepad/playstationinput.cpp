@@ -1,5 +1,3 @@
-#ifdef GAMEPAD_SUPPORT
-
 #include "playstationinput.h"
 
 #include <iostream>
@@ -112,6 +110,3 @@ bool PlaystationInput::emitButton( Playstation::Buttons button, bool state ) {
     }
     return true;
 }
-
-
-#endif //GAMEPAD_SUPPORT

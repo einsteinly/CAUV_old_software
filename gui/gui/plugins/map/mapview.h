@@ -7,7 +7,7 @@
 #include <boost/make_shared.hpp>
 #include <debug/cauv_debug.h>
 #include <model/auv_model.h>
-#include <cauvbasicplugin.h>
+#include <gui/core/cauvbasicplugin.h>
 
 #include <marble/PositionProviderPlugin.h>
 

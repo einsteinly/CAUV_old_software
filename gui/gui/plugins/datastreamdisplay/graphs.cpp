@@ -1,6 +1,5 @@
 #include "graphs.h"
-#include "ui_graphs.h"
-
+#include "datastreamdisplay/ui_graphs.h"
 
 #include <common/cauv_utils.h>
 #include <common/data_stream_tools.h>
@@ -27,18 +26,6 @@ const QColor GraphWidget::colours[] = {
     Qt::darkCyan, Qt::darkGray, Qt::darkMagenta, Qt::darkRed, Qt::darkYellow,
     Qt::blue, Qt::cyan, Qt::gray, Qt::green, Qt::magenta,
 };
-
-template<class T>
-GraphWidget::GraphWidget(boost::shared_ptr<DataStream<T> > stream):
-        m_plot(new QwtPlot()), ui(new Ui::GraphWidget()), m_recorderView(new DataStreamRecorderView())
-{
-    ui->setupUi(this);
-    ui->optionsWidget->hide();
-    onStreamDropped(stream);
-    this->setAcceptDrops(true);
-    setupPlot();
-    ui->options->addWidget(m_recorderView);
-}
 
 
 template<class T>

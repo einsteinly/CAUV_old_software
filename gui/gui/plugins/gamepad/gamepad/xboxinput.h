@@ -1,5 +1,3 @@
-#ifdef GAMEPAD_SUPPORT
-
 #ifndef XBOXINPUT_H
 #define XBOXINPUT_H
 
@@ -69,5 +67,3 @@ protected:
 } // namespace cauv
 
 #endif // XBOXINPUT_H
-
-#endif //GAMEPAD_SUPPORT

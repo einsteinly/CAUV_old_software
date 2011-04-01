@@ -4,26 +4,23 @@
 #include <QPointF>
 #include <QTimer>
 
-#include "datastreamdragging.h"
-#include "widgets/datastreamrecorder.h"
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <common/data_stream.h>
+#include <common/data_stream_tools.h>
+
+#include <gui/core/datastreamdragging.h>
 
 #include <qwt_series_data.h>
 #include <qwt_plot.h>
 #include <qwt_plot_zoomer.h>
 #include <qwt_plot_panner.h>
 
-#include <common/data_stream.h>
-#include <common/data_stream_tools.h>
+#include "datastreamrecorder.h"
+#include "datastreamdisplay/ui_graphs.h"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-
-namespace Ui {
-    class GraphWidget;
-}
 
 namespace cauv {
-
 
     class DataStreamSeriesDataBase{};
 
@@ -106,11 +103,21 @@ namespace cauv {
     class GraphWidget : public QWidget, public DataStreamDropListener {
     public:
 
-
         static const QColor colours[];
 
+        template<class T>
+        GraphWidget(boost::shared_ptr<DataStream<T> > stream):
+                m_plot(new QwtPlot()), ui(new Ui::GraphWidget()), m_recorderView(new DataStreamRecorderView())
+        {
+            ui->setupUi(this);
+            ui->optionsWidget->hide();
+            onStreamDropped(stream);
+            this->setAcceptDrops(true);
+            setupPlot();
+            ui->options->addWidget(m_recorderView);
+        }
 
-        template<class T> GraphWidget(boost::shared_ptr<DataStream<T> > stream);
+
         ~GraphWidget();
 
         QSize sizeHint() const;

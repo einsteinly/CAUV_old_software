@@ -11,17 +11,11 @@
 #include <QTimer>
 #include <QApplication>
 #include <QTextCodec>
-#include <QtPlugin>
-
 
 #include "cauvgui.h"
-#include "gamepad/playstationinput.h"
 
 using namespace std;
 using namespace cauv;
-
-Q_IMPORT_PLUGIN(cauv_dsdplugin)
-
 
 int main(int argc, char** argv)
 {

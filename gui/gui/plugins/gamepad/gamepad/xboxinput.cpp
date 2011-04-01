@@ -1,5 +1,3 @@
-#ifdef GAMEPAD_SUPPORT
-
 #include "xboxinput.h"
 
 #include <iostream>
@@ -110,6 +108,3 @@ bool XBoxInput::emitButton( XBox::Buttons button, bool state ) {
     }
     return true;
 }
-
-
-#endif //GAMEPAD_SUPPORT

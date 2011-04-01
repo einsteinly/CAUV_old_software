@@ -1,5 +1,3 @@
-#ifdef GAMEPAD_SUPPORT
-
 #ifndef GAMEPADINPUT_H
 #define GAMEPADINPUT_H
 
@@ -47,5 +45,3 @@ namespace cauv{
 } // namespace cauv
 
 #endif // GAMEPADINPUT_H
-
-#endif //GAMEPAD_SUPPORT
