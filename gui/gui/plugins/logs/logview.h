@@ -5,7 +5,7 @@
 
 #include <generated/messages_fwd.h>
 
-#include "gui/cauvinterfaceelement.h"
+#include <gui/core/cauvbasicplugin.h>
 
 namespace Ui {
     class LogView;
@@ -17,14 +17,19 @@ namespace cauv {
 
     class AUV;
 
-    class LogView : public QDockWidget, public CauvInterfaceElement {
+    class LogView : public QDockWidget, public CauvBasicPlugin {
         Q_OBJECT
+        Q_INTERFACES(cauv::CauvInterfacePlugin)
+
     public:
-        LogView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
+        LogView();
         ~LogView();
 
+        virtual const QString name() const;
+        virtual const QList<QString> getGroups() const;
+        virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
+
     protected:
-        virtual void initialise();
         virtual void appendLog(QTextEdit * edit, DebugType::e type, std::string message);
 
     private:

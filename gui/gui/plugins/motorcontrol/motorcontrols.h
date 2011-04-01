@@ -8,7 +8,7 @@
 #include <common/data_stream.h>
 #include <model/auv_model.h> 
 
-#include "gui/cauvinterfaceelement.h"
+#include <gui/core/cauvbasicplugin.h>
 
 namespace Ui {
     class MotorControls;
@@ -24,7 +24,6 @@ namespace cauv {
     class MotorBurstController : public QObject {
         Q_OBJECT
     public:
-
         MotorBurstController(QPushButton *b, boost::shared_ptr<AUV::Motor> motor, int8_t speed);
 
     public Q_SLOTS:
@@ -67,12 +66,16 @@ namespace cauv {
     };
 
 
-    class MotorControls : public QDockWidget, public CauvInterfaceElement {
-
+    class MotorControls : public QDockWidget, public CauvBasicPlugin {
+        Q_OBJECT
+        Q_INTERFACES(cauv::CauvInterfacePlugin)
     public:
-        MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
+        MotorControls();
         virtual ~MotorControls();
-        virtual void initialise();
+
+        virtual const QString name() const;
+        virtual const QList<QString> getGroups() const;
+        virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
 
     protected:
         void setValue(QDoubleSpinBox *spin, double value);

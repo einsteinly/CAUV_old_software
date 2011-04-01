@@ -13,18 +13,11 @@
 
 #include <gui/core/cauvplugins.h>
 
-#include "widgets/pipelinecauvwidget.h"
-#include "widgets/motorcontrols.h"
-#include "widgets/logview.h"
-#include "widgets/processstateview.h"
-
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include "ui_mainwindow.h"
-#include "gui/cauvinterfaceelement.h"
-
 
 using namespace cauv;
 
@@ -44,13 +37,6 @@ CauvGui::CauvGui(QApplication * app) :
 
 CauvGui::~CauvGui(){
     delete ui;
-}
-
-void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
-    connect(widget->actions().get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
-    connect(widget->actions().get(), SIGNAL(centralViewRegistered(QWidget*,QString&)), this, SLOT(addCentralTab(QWidget*, QString&)));
-    connect(widget->actions().get(), SIGNAL(dockViewRegistered(QDockWidget*,Qt::DockWidgetArea)), this, SLOT(addDock(QDockWidget*,Qt::DockWidgetArea)));
-    widget->initialise();
 }
 
 void CauvGui::addCentralTab(QWidget* const tab, QString& name){
@@ -116,19 +102,6 @@ void CauvGui::onRun()
     // connect up message inputs and outputs
     addMessageObserver(m_auv_controller);
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
-
-    // populate the interface
-    boost::shared_ptr<PipelineCauvWidget> pipelineArea(new PipelineCauvWidget("Pipeline Editor", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(pipelineArea));
-
-    boost::shared_ptr<MotorControls> motorControls(new MotorControls("Navigation", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(motorControls));
-
-    boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
-
-    boost::shared_ptr<ProcessStateView> processState(new ProcessStateView("Processes", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(processState));
 
     show();
     m_application->exec();

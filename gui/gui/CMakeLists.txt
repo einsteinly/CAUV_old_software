@@ -15,37 +15,34 @@ else()
     # build plugins
     add_subdirectory(plugins)
 
+    # for <gui/core/...>
     include_directories (${gui_SOURCE_DIR})
+
+    # for generated files
+    include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+    # for <common/includesstuff> etc
+    include_directories (${AUV_SOURCE_DIR})
+
+    link_directories (${pipeline-widget_BINARY_DIR})
 
     set (
         GUICPP_SRCS
 
         main.cpp
         cauvgui.cpp
-        cauvinterfaceelement.cpp
-        widgets/pipelinecauvwidget.cpp
-        widgets/motorcontrols.cpp
-        widgets/logview.cpp
-        widgets/processstateview.cpp
     )
 
     set (
         GUICPP_UIS
 
         mainwindow.ui
-        widgets/motorcontrols.ui
-        widgets/logview.ui
-        widgets/processstateview.ui
     )
 
     set (
         GUICPP_H
 
         cauvgui.h
-        cauvinterfaceelement.h
-        widgets/motorcontrols.h
-        widgets/logview.h
-        widgets/processstateview.h
     )
 
     set (
@@ -58,30 +55,15 @@ else()
     qt4_wrap_cpp (GUICPP_MOC_H ${GUICPP_H})
     qt4_add_resources(GUICPP_RCC_H ${GUICPP_RCC})
 
-    include_directories (${pipeline-widget_SOURCE_DIR})
-    include_directories(${CMAKE_CURRENT_BINARY_DIR})
-    link_directories (${pipeline-widget_BINARY_DIR})
-
-    # for <common/includesstuff> etc
-    include_directories (${AUV_SOURCE_DIR})
-
-    add_executable (
-        guicpp
-
+    add_executable ( guicpp
         ${GUICPP_SRCS}
         ${GUICPP_UIS_H}
         ${GUICPP_MOC_H}
         ${GUICPP_RCC_H}
     )
 
-    target_link_libraries (
-        guicpp
-
+    target_link_libraries ( guicpp
         guicpp-core
-        pipeline-widget
-        ${QT_LIBRARIES}
-        ${Qwt6_LIBRARIES}
-        ${OpenCV_LIBS}
     )
 
 endif()

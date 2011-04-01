@@ -1,26 +1,22 @@
 #include "processstateview.h"
-#include "ui_processstateview.h"
+#include "processes/ui_processstateview.h"
 
 #include <model/auv_model.h>
 
-#include <utility/string.h>
-
 using namespace cauv;
 
-ProcessStateView::ProcessStateView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QWidget(parent),
-        CauvInterfaceElement(name, auv, node),
+ProcessStateView::ProcessStateView() :
         ui(new Ui::ProcessStateView)
 {
     ui->setupUi(this);
 
     connect(this, SIGNAL(processStateUpdated(std::string,float,float,float, std::string)), this, SLOT(onProcessStateUpdate(std::string,float,float,float, std::string)));
 
-    auv->computer_state.processes->onUpdate.connect(boost::bind(&ProcessStateView::onProcessStateUpdate, this, _1));
-
     QStringList list;
     list << "Process" << "CPU" << "Mem" << "Threads" << "Status";
     ui->tableWidget->setHorizontalHeaderLabels(list);
+
+    m_tabs.append(this);
 }
 
 ProcessStateView::~ProcessStateView()
@@ -28,9 +24,9 @@ ProcessStateView::~ProcessStateView()
     delete ui;
 }
 
-void ProcessStateView::initialise()
-{
-    m_actions->registerCentralView(this, CauvInterfaceElement::name());
+void ProcessStateView::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
+    CauvBasicPlugin::initialise(auv, node);
+    auv->computer_state.processes->onUpdate.connect(boost::bind(&ProcessStateView::onProcessStateUpdate, this, _1));
 }
 
 void ProcessStateView::onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status){
@@ -74,3 +70,15 @@ void ProcessStateView::onProcessStateUpdate(const std::string process, const flo
 void ProcessStateView::onProcessStateUpdate(const ProcessState &state){
     onProcessStateUpdate(state.process(), state.cpu(), state.mem(), state.threads(), state.status());
 }
+
+const QString ProcessStateView::name() const{
+    return QString("Processes");
+}
+
+const QList<QString> ProcessStateView::getGroups() const{
+    QList<QString> groups;
+    groups.push_back(QString("telemetry"));
+    return groups;
+}
+
+Q_EXPORT_PLUGIN2(cauv_processesplugin, ProcessStateView)

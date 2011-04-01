@@ -1,5 +1,5 @@
 #include "motorcontrols.h"
-#include "ui_motorcontrols.h"
+#include "motorcontrol/ui_motorcontrols.h"
 
 #include <QLabel>
 #include <QDoubleSpinBox>
@@ -82,12 +82,16 @@ void AutopilotController::updateState(bool value) {
 
 
 
-MotorControls::MotorControls(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QDockWidget(parent),
-        CauvInterfaceElement(name, auv, node),
+MotorControls::MotorControls() :
         ui(new Ui::MotorControls())
 {
     ui->setupUi(this);
+
+    m_docks[this] = Qt::LeftDockWidgetArea;
+}
+
+void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
+    CauvBasicPlugin::initialise(auv, node);
 
     // autopilot controls screen
     int count = 0;
@@ -160,6 +164,14 @@ MotorControls::~MotorControls(){
     delete ui;
 }
 
-void MotorControls::initialise(){
-    m_actions->registerDockView(this, Qt::LeftDockWidgetArea);
+const QString MotorControls::name() const{
+    return QString("Navigation");
 }
+
+const QList<QString> MotorControls::getGroups() const{
+    QList<QString> groups;
+    groups.push_back(QString("motor"));
+    return groups;
+}
+
+Q_EXPORT_PLUGIN2(cauv_motorsplugin, MotorControls)

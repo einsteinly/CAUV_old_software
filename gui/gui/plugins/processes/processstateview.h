@@ -9,7 +9,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include "gui/cauvinterfaceelement.h"
+#include <gui/core/cauvbasicplugin.h>
 
 #include <model/auv_model.h>
 
@@ -19,16 +19,16 @@ namespace Ui {
 
 namespace cauv {
 
-    class ProcessStateView : public QWidget, public CauvInterfaceElement {
+    class ProcessStateView : public QWidget, public CauvBasicPlugin {
         Q_OBJECT
+        Q_INTERFACES(cauv::CauvInterfacePlugin)
     public:
-        ProcessStateView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
+        ProcessStateView();
         virtual ~ProcessStateView();
 
-        virtual void initialise();
-
-    protected:
-        void onProcessStateUpdate(const ProcessState &state);
+        virtual const QString name() const;
+        virtual const QList<QString> getGroups() const;
+        virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
 
     Q_SIGNALS:
         void processStateUpdated(const std::string process, const float cpu, const float mem, const float threads, std::string status);
@@ -36,7 +36,8 @@ namespace cauv {
     protected Q_SLOTS:
         void onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status);
 
-    protected:
+    protected:        
+        void onProcessStateUpdate(const ProcessState &state);
         boost::unordered_map<std::string, int> m_processes;
 
     private:
