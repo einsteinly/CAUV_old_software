@@ -1,9 +1,8 @@
-#ifdef GAMEPAD_SUPPORT
+#include "cauvgamepad.h"
 
-#include "gamepad.h"
-
-#include <gamepad/playstationinput.h>
-#include <gamepad/xboxinput.h>
+#include "gamepad/playstationinput.h"
+#include "gamepad/xboxinput.h"
+#include "gamepad/gamepadinput.h"
 
 #include <debug/cauv_debug.h>
 #include <model/auv_model.h>
@@ -200,5 +199,3 @@ void CauvGamepad::update(){
 
     m_dirty = false; // reset the flag to say we've made the changes
 }
-
-#endif //GAMEPAD_SUPPORT

@@ -64,6 +64,7 @@ else()
 
     target_link_libraries ( guicpp
         guicpp-core
+        ${QT_LIBRARIES}
     )
 
 endif()

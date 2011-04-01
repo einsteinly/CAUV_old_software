@@ -34,5 +34,6 @@ add_library( gamepadplugin MODULE
                                       
 target_link_libraries( gamepadplugin
     guicpp-core
+    ${QT_LIBRARIES}
     ${OIS_LIBRARIES}
 )

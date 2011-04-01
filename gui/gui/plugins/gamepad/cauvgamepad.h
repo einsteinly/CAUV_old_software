@@ -20,6 +20,7 @@ namespace cauv {
     public:
         CauvGamepad(boost::shared_ptr<XBoxInput> input, boost::shared_ptr<AUV> auv);
         CauvGamepad(boost::shared_ptr<PlaystationInput> input, boost::shared_ptr<AUV> auv);
+        ~CauvGamepad() {}
 
     public Q_SLOTS:
         void forward(bool go);
@@ -42,6 +43,9 @@ namespace cauv {
 
         void stop(bool);
 
+    protected Q_SLOTS:
+        void update();
+
     protected:
         void startTimer();
 
@@ -56,9 +60,6 @@ namespace cauv {
         float m_depthRate;
         bool m_dirty;
         bool m_autopilotControl;
-
-    protected Q_SLOTS:
-        void update();
 
     };
 

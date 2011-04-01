@@ -13,7 +13,6 @@ namespace cauv {
         Q_INTERFACES(cauv::CauvInterfacePlugin)
 
     public:
-        GamepadPlugin();
 
         virtual const QString name() const;
         virtual const QList<QString> getGroups() const;

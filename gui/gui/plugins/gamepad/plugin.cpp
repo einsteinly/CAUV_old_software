@@ -16,10 +16,6 @@
 
 using namespace cauv;
 
-GamepadPlugin::GamepadPlugin()
-{
-}
-
 const QString GamepadPlugin::name() const{
     return QString("Gamepad");
 }
@@ -47,11 +43,13 @@ void GamepadPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
                 CauvGamepad* gi;
                 if(vendor.find("xbox") != vendor.npos){
                     info() << "detected as an xbox controller";
-                    gi = new CauvGamepad(boost::make_shared<XBoxInput>(i->second), m_auv);
+                    boost::shared_ptr<XBoxInput> controller(new XBoxInput(i->second));
+                    gi = new CauvGamepad(controller, m_auv);
                 } else {
                     // assume its a playstation controller
                     info() << "assuming playstation controller";
-                    gi = new CauvGamepad(boost::make_shared<PlaystationInput>(i->second), m_auv);
+                    boost::shared_ptr<PlaystationInput> controller(new PlaystationInput(i->second));
+                    gi = new CauvGamepad(controller, m_auv);
                 }
 
                 gi->setParent(this);

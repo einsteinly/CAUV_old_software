@@ -12,7 +12,7 @@ include_directories (${AUV_SOURCE_DIR})
 
 
 # plugin directories
-add_subdirectory (example)
+#add_subdirectory (example)
 add_subdirectory (datastreamdisplay)
 add_subdirectory (console)
 add_subdirectory (pipeline)
