@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "cauvinterfaceelement.h"
+#include "gui/cauvinterfaceelement.h"
 
 namespace cauv {
 

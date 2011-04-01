@@ -9,19 +9,13 @@ else()
     # the shared classes in the GUI, used by plugins
     add_subdirectory(core)
 
-    add_subdirectory (qconsole2)
-
     # using both Qt slots and Boost signals so need no keywords
     add_definitions(-DQT_NO_KEYWORDS)
 
-    # QConsole2 required Qt3Suport
-    add_definitions(-DQT3_SUPPORT)
-    include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
-
-    include_directories (${guicpp_SOURCE_DIR})
-    
     # build plugins
     add_subdirectory(plugins)
+
+    include_directories (${gui_SOURCE_DIR})
 
     set (
         GUICPP_SRCS
@@ -32,7 +26,6 @@ else()
         widgets/pipelinecauvwidget.cpp
         widgets/motorcontrols.cpp
         widgets/logview.cpp
-        widgets/console.cpp
         widgets/processstateview.cpp
     )
 
@@ -42,7 +35,6 @@ else()
         mainwindow.ui
         widgets/motorcontrols.ui
         widgets/logview.ui
-        widgets/console.ui
         widgets/processstateview.ui
     )
 
@@ -53,7 +45,6 @@ else()
         cauvinterfaceelement.h
         widgets/motorcontrols.h
         widgets/logview.h
-        widgets/console.h
         widgets/processstateview.h
     )
 
@@ -88,7 +79,6 @@ else()
 
         guicpp-core
         pipeline-widget
-        qconsole2
         ${QT_LIBRARIES}
         ${Qwt6_LIBRARIES}
         ${OpenCV_LIBS}

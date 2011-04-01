@@ -13,7 +13,8 @@ include_directories(${MARBLE_INCLUDE_DIR})
 # marble doesn't install all its header files for some odd reason
 # so we include some that we needed
 # this should be taken out when the marble distro is fixed
-include_directories (${gui_SOURCE_DIR}/gui/marble)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/marble)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR})
 
 set ( MAP_PLUGIN_SRCS
     mapview.cpp

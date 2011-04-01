@@ -6,6 +6,7 @@ find_package (Qwt6 REQUIRED)
 include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
 find_package (OpenCV REQUIRED)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set ( DSD_PLUGIN_SRCS
     datastreamdisplays.cpp

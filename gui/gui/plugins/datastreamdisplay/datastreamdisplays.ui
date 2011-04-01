@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>304</height>
    </rect>
   </property>
   <property name="features">
@@ -75,7 +75,7 @@
   <customwidget>
    <class>DataStreamList</class>
    <extends>QTreeWidget</extends>
-   <header>plugins/datastreamdisplay/datastreamdisplays.h</header>
+   <header>datastreamdisplays.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

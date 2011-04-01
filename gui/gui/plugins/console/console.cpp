@@ -1,7 +1,5 @@
 #include "console.h"
-#include "ui_console.h"
-
-#include "qconsole2/include/qconsole.h"
+#include "console/ui_console.h"
 
 #include <debug/cauv_debug.h>
 
@@ -46,11 +44,8 @@ void CauvConsole::execCommand(QString command, QString response, DebugType::e ty
 }
 
 
-
-
-Console::Console(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QDockWidget(parent),
-        CauvInterfaceElement(name, auv, node),
+Console::Console() :
+        QDockWidget(),
         m_console(new CauvConsole("Console")),
         m_counter(rand()),
         ui(new Ui::Console)
@@ -60,19 +55,19 @@ Console::Console(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * par
     setWidget(m_console);
     m_console->connect(m_console, SIGNAL(commandReady(QString)), this, SLOT(executeCommand(QString)));
     connect(this, SIGNAL(responseReceived(int,QString, DebugType::e)), this, SLOT(onResponse(int,QString,DebugType::e)));
-
-    auv->scripts.scriptResponse->onUpdate.connect(boost::bind(&Console::onResponse, this, _1));
-
     qRegisterMetaType<DebugType::e>("DebugType::e");
+
+    m_docks[this] = Qt::BottomDockWidgetArea;
+}
+
+void Console::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
+    CauvBasicPlugin::initialise(auv, node);
+    auv->scripts.scriptResponse->onUpdate.connect(boost::bind(&Console::onResponse, this, _1));
 }
 
 Console::~Console()
 {
     delete ui;
-}
-
-void Console::initialise(){
-    m_actions->registerDockView(this, Qt::BottomDockWidgetArea);
 }
 
 void Console::onResponse(int id, QString response, DebugType::e level){
@@ -97,3 +92,15 @@ void Console::executeCommand(QString s){
     m_auv->scripts.scriptExec->set(ScriptExecRequest(s.toStdString(), 30, this->objectName().toStdString(), m_counter));
 }
 
+const QString Console::name() const{
+    return QString("Console");
+}
+
+const QList<QString> Console::getGroups() const{
+    QList<QString> groups;
+    groups.push_back(QString("script"));
+    return groups;
+}
+
+
+Q_EXPORT_PLUGIN2(cauv_consoleplugin, Console)

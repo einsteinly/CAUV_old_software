@@ -8,7 +8,7 @@
 #include <common/data_stream.h>
 #include <model/auv_model.h> 
 
-#include "cauvinterfaceelement.h"
+#include "gui/cauvinterfaceelement.h"
 
 namespace Ui {
     class MotorControls;

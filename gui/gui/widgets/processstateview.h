@@ -9,7 +9,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include "cauvinterfaceelement.h"
+#include "gui/cauvinterfaceelement.h"
 
 #include <model/auv_model.h>
 

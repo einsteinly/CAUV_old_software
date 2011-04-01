@@ -7,8 +7,9 @@
 
 #include <model/auv_model.h>
 
-#include "cauvinterfaceelement.h"
 #include "qconsole2/include/qconsole.h"
+
+#include <gui/core/cauvbasicplugin.h>
 
 namespace Ui {
     class Console;
@@ -31,29 +32,29 @@ namespace cauv {
 
 
 
-    class Console : public QDockWidget, public CauvInterfaceElement {
+    class Console : public QDockWidget, public CauvBasicPlugin {
         Q_OBJECT
+        Q_INTERFACES(cauv::CauvInterfacePlugin)
     public:
-        Console(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
+        Console();
         ~Console();
 
+        virtual const QString name() const;
+        virtual const QList<QString> getGroups() const;
+        virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
+
     protected:
-        virtual void initialise();
         CauvConsole * m_console;
-
         boost::unordered_map<int, QString > m_requests;
-
         unsigned int m_counter;
 
     protected Q_SLOTS:
         void executeCommand(QString s);
-
         void onResponse(int, QString response, DebugType::e level);
         void onResponse(ScriptResponse response);
 
     Q_SIGNALS:
         void responseReceived(int, QString, DebugType::e);
-
 
     private:
         Ui::Console *ui;

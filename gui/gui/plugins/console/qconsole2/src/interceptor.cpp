@@ -2,7 +2,7 @@
 // Author: Kuba Ober <kuba@mareimbrium.org>
 // Downloaded from: http://www.ibib.waw.pl/~winnie
 //
-// License:  Public domain
+// License:  Public domain
 //
 
 #include <unistd.h>
@@ -70,7 +70,7 @@ void Interceptor::initialize(int outFd)
 
 void Interceptor::received()
 {
-    emit received(m_stream);
+    received(m_stream);
 }
 
 void Interceptor::finish()

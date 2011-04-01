@@ -147,7 +147,7 @@ void QConsole::moveCursor(CursorAction action, bool select)
         && history.size() && (promptParagraph == para))
     {
         //update the historyIndex if up or down
-        if ( (action == QTEXTEDIT_CLASSNAME::MoveDown) && (historyIndex + 1 < history.size()) )
+        if ( (action == QTEXTEDIT_CLASSNAME::MoveDown) && (historyIndex + 1 < (unsigned)history.size()) )
             historyIndex ++;
         else if ((action == QTEXTEDIT_CLASSNAME::MoveUp) && historyIndex)
             historyIndex --;
@@ -344,7 +344,7 @@ QString QConsole::interpretCommand(QString command, int *res)
     history.append(command.replace("\n", "\\n"));
     historyIndex = history.size();
     //emit the commandExecuted signal
-    emit commandExecuted(command);
+    commandExecuted(command);
     return "";
 }
 

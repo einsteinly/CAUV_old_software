@@ -11,12 +11,11 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
-#include <core/cauvplugins.h>
+#include <gui/core/cauvplugins.h>
 
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/motorcontrols.h"
 #include "widgets/logview.h"
-#include "widgets/console.h"
 #include "widgets/processstateview.h"
 
 #include <common/cauv_global.h>
@@ -24,7 +23,7 @@
 #include <debug/cauv_debug.h>
 
 #include "ui_mainwindow.h"
-#include "cauvinterfaceelement.h"
+#include "gui/cauvinterfaceelement.h"
 
 
 using namespace cauv;
@@ -127,9 +126,6 @@ void CauvGui::onRun()
 
     boost::shared_ptr<LogView> logView(new LogView("Log View", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(logView));
-
-    boost::shared_ptr<Console> console(new Console("Console", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(console));
 
     boost::shared_ptr<ProcessStateView> processState(new ProcessStateView("Processes", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(processState));

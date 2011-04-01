@@ -5,7 +5,7 @@
 
 #include <generated/messages_fwd.h>
 
-#include "cauvinterfaceelement.h"
+#include "gui/cauvinterfaceelement.h"
 
 namespace Ui {
     class LogView;
