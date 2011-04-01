@@ -14,7 +14,7 @@
    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
   </property>
   <property name="windowTitle">
-   <string>AUV Data Streams</string>
+   <string>Data Streams</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -75,7 +75,7 @@
   <customwidget>
    <class>DataStreamList</class>
    <extends>QTreeWidget</extends>
-   <header>widgets/datastreamdisplays.h</header>
+   <header>plugins/datastreamdisplay/datastreamdisplays.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

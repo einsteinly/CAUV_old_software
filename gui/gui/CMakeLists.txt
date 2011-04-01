@@ -1,7 +1,6 @@
 project (guicpp)
 
 option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
-option(CAUV_GUI_MAP "True if the GUI should have a map of the Earth. For some reason." ON)
 
 find_package (Qt4)
 find_package (Qwt6)
@@ -11,8 +10,6 @@ if (NOT QT4_FOUND)
 elseif (NOT Qwt6_FOUND)
     message(WARNING "QWT not found, not building gui")
 else()
-
-    add_subdirectory(plugins)
 
     # required libraries:
     find_package (OpenCV REQUIRED)
@@ -27,15 +24,7 @@ else()
         endif()
     endif()
 
-    # find marble library if it's needed
-    if (CAUV_GUI_MAP)
-        find_package (Marble)
-        if (MARBLE_FOUND)
-            add_definitions(-DUSE_MARBLE=1)
-        else()
-            message(WARNING "Marble not found, building without map")
-        endif()
-    endif()
+
 
     add_subdirectory (qconsole2)
 
@@ -47,7 +36,9 @@ else()
     include_directories( ${QT_QT3SUPPORT_INCLUDE_DIR} )
     include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
     include_directories (${guicpp_SOURCE_DIR})
-    include_directories (marble)
+    
+    # build plugins
+    add_subdirectory(plugins)
 
     set (
         GUICPP_SRCS
@@ -56,11 +47,11 @@ else()
         cauvgui.cpp
         datastreamdragging.cpp
         cauvinterfaceelement.cpp
+        cauvbasicplugin.cpp
         gamepad.cpp
         gamepad/gamepadinput.cpp
         gamepad/playstationinput.cpp
         gamepad/xboxinput.cpp
-        widgets/datastreamdisplays.cpp
         widgets/pipelinecauvwidget.cpp
         widgets/graphs.cpp
         widgets/motorcontrols.cpp
@@ -75,7 +66,6 @@ else()
         GUICPP_UIS
 
         mainwindow.ui
-        widgets/datastreamdisplays.ui
         widgets/motorcontrols.ui
         widgets/videoscreen.ui
         widgets/logview.ui
@@ -94,7 +84,6 @@ else()
         cauvgui.h
         cauvinterfaceelement.h
         gamepad.h
-        widgets/datastreamdisplays.h
         widgets/motorcontrols.h
         widgets/videoscreen.h
         widgets/logview.h
@@ -108,12 +97,6 @@ else()
 
         resources.qrc
     )
-    
-    if (CAUV_GUI_MAP)
-        list(APPEND GUICPP_SRCS widgets/mapview.cpp)
-        list(APPEND GUICPP_UIS widgets/mapview.ui)
-        list(APPEND GUICPP_H widgets/mapview.h)
-    endif()
 
     qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})
     qt4_wrap_cpp (GUICPP_MOC_H ${GUICPP_H})
@@ -121,7 +104,6 @@ else()
 
     include_directories (${pipeline-widget_SOURCE_DIR})
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
-    include_directories(${MARBLE_INCLUDE_DIR})
     link_directories (${pipeline-widget_BINARY_DIR})
 
     # for <common/includesstuff> etc
@@ -144,11 +126,11 @@ else()
         model
         pipeline-widget
         qconsole2
+        dsdplugin
         ${QT_LIBRARIES}
         ${Qwt6_LIBRARIES}
         ${OIS_LIBRARIES}
         ${OpenCV_LIBS}
-        ${MARBLE_LIBRARIES}
     )
 
 endif()

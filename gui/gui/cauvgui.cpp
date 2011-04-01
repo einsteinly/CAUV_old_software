@@ -15,17 +15,13 @@
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <cauvinterfaceplugin.h>
+#include <cauvplugins.h>
 
-#include "widgets/datastreamdisplays.h"
 #include "widgets/pipelinecauvwidget.h"
 #include "widgets/motorcontrols.h"
 #include "widgets/logview.h"
 #include "widgets/console.h"
 #include "widgets/processstateview.h"
-#ifdef USE_MARBLE
-#   include "widgets/mapview.h"
-#endif
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -45,10 +41,10 @@ using namespace cauv;
 
 CauvGui::CauvGui(QApplication * app) :
         CauvNode("CauvGui"),
-        m_application(app),
-        ui(new Ui::MainWindow),
         m_auv( boost::make_shared<AUV>()),
-        m_auv_controller(boost::make_shared<AUVController>(m_auv)) {
+        m_auv_controller(boost::make_shared<AUVController>(m_auv)),
+        m_application(app),
+        ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
 
@@ -63,12 +59,16 @@ CauvGui::~CauvGui(){
 
 void CauvGui::addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget){
     connect(widget->actions().get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
-    connect(widget->actions().get(), SIGNAL(centralViewRegistered(QWidget*,QString&)), this, SLOT(addCentralTab(QWidget*,QString&)));
+    connect(widget->actions().get(), SIGNAL(centralViewRegistered(QWidget*,QString&)), this, SLOT(addCentralTab(QWidget*, QString&)));
     connect(widget->actions().get(), SIGNAL(dockViewRegistered(QDockWidget*,Qt::DockWidgetArea)), this, SLOT(addDock(QDockWidget*,Qt::DockWidgetArea)));
     widget->initialise();
 }
 
-void CauvGui::addCentralTab(QWidget* tab, QString& name){
+void CauvGui::addCentralTab(QWidget* const tab, QString& name){
+    addCentralTab(tab, (const QString&)name);
+}
+
+void CauvGui::addCentralTab(QWidget* const tab, const QString& name){
     info() << "Registering central screen [" << name.toStdString() << "]";
     ui->tabWidget->addTab(tab, name);
 }
@@ -101,20 +101,25 @@ void CauvGui::onRun()
     QDir pluginsDir = QDir(QApplication::instance()->applicationDirPath());
     pluginsDir.cd("plugins");
 
-    foreach (QString directoryName, pluginsDir.entryList(QDir::Dirs)) {
-        pluginsDir.cd(directoryName);
+    foreach (QString directoryName, pluginsDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
 
-        foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-            QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-            QObject *plugin = loader.instance();
-            if (plugin) {
-                if (loadPlugin(plugin)) {
-                    info() << "Loaded plugin:"<< fileName.toStdString();
+
+        if(pluginsDir.cd(directoryName)){
+
+            debug(3) << "Looking for plugins in:"<< pluginsDir.absolutePath().toStdString();
+
+            foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+                QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+                QObject *plugin = loader.instance();
+                if (plugin) {
+                    if (loadPlugin(plugin)) {
+                        info() << "Loaded plugin:"<< fileName.toStdString();
+                    }
                 }
             }
-        }
 
-        pluginsDir.cdUp(); // back to plugins dir
+            pluginsDir.cdUp(); // back to plugins dir
+        }
     }
 
 
@@ -124,14 +129,8 @@ void CauvGui::onRun()
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
     // populate the interface
-    boost::shared_ptr<DataStreamDisplayArea> graphArea(new DataStreamDisplayArea("Stream Visualisation", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(graphArea));
-
     boost::shared_ptr<PipelineCauvWidget> pipelineArea(new PipelineCauvWidget("Pipeline Editor", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(pipelineArea));
-
-    boost::shared_ptr<DataStreamPicker> dataStreamPicker(new DataStreamPicker("Data Streams", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(dataStreamPicker));
 
     boost::shared_ptr<MotorControls> motorControls(new MotorControls("Navigation", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(motorControls));
@@ -145,10 +144,6 @@ void CauvGui::onRun()
     boost::shared_ptr<ProcessStateView> processState(new ProcessStateView("Processes", m_auv, this, shared_from_this()));
     addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(processState));
 
-#ifdef USE_MARBLE
-    boost::shared_ptr<MapView> mapView(new MapView("Map", m_auv, this, shared_from_this()));
-    addInterfaceElement(boost::static_pointer_cast<CauvInterfaceElement>(mapView));
-#endif
 
 #ifdef GAMEPAD_SUPPORT
     try {
@@ -201,16 +196,27 @@ void CauvGui::onRun()
 
 
 bool CauvGui::loadPlugin(QObject *plugin){
-    CauvInterfacePlugin *element = qobject_cast<CauvInterfacePlugin*>(plugin);
 
-    element->initialise(m_auv, shared_from_this());
+    // all plugins must come from CauvInterfacePlugin
+    CauvInterfacePlugin *basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
+    if(basicPlugin) {
+        basicPlugin->initialise(m_auv, shared_from_this());
+        // see which groups the plugin needs us to join
+        foreach (QString group, basicPlugin->getGroups()){
+            joinGroup(group.toStdString());
+        }
 
-    // see which groups the plugin needs us to join
-    foreach (std::string group, element->getGroups()){
-        joinGroup(group);
+        // tabs
+        foreach (QWidget * const widget, basicPlugin->getCentralWidgets()){
+            addCentralTab(widget, basicPlugin->name());
+        }
+        // docks
+        QMapIterator<QDockWidget*, Qt::DockWidgetArea> i(basicPlugin->getDockWidgets());
+        while (i.hasNext()) {
+            i.next();
+            addDockWidget(i.value(), i.key());
+        }
     }
 
-
-    if(element) return true;
-    else return false;
+    return (basicPlugin ? true : false);
 }

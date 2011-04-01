@@ -4,7 +4,6 @@
 #include <QPointF>
 #include <QTimer>
 
-#include "ui_graphs.h"
 #include "datastreamdragging.h"
 #include "widgets/datastreamrecorder.h"
 
@@ -111,18 +110,7 @@ namespace cauv {
         static const QColor colours[];
 
 
-        template<class T>
-        explicit GraphWidget(boost::shared_ptr<DataStream<T> > stream):
-                m_plot(new QwtPlot()), ui(new Ui::GraphWidget()), m_recorderView(new DataStreamRecorderView())
-        {
-            ui->setupUi(this);
-            ui->optionsWidget->hide();
-            onStreamDropped(stream);
-            this->setAcceptDrops(true);
-            setupPlot();
-            ui->options->addWidget(m_recorderView);
-        }
-
+        template<class T> GraphWidget(boost::shared_ptr<DataStream<T> > stream);
         ~GraphWidget();
 
         QSize sizeHint() const;

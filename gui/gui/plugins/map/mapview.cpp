@@ -1,7 +1,5 @@
 #include "mapview.h"
-#include "ui_mapview.h"
-
-#ifdef USE_MARBLE
+#include "map/ui_mapview.h"
 
 #include <model/auv_model.h>
 #include <marble/MarbleWidget.h>
@@ -10,14 +8,11 @@
 
 using namespace cauv;
 
-MapView::MapView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QWidget(parent),
-        CauvInterfaceElement(name, auv, node),
+MapView::MapView() :
         ui(new Ui::MapView)
 {
     ui->setupUi(this);
 
-    //#ifdef USE_MARBLE
     m_marbleWidget = new Marble::MarbleWidget(this);
     m_marbleWidget->setMapThemeId("earth/openstreetmap/openstreetmap.dgml");
     layout()->addWidget(m_marbleWidget);
@@ -28,8 +23,8 @@ MapView::MapView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * par
     Marble::PositionTracking * tracker = model->positionTracking();
     tracker->setPositionProviderPlugin(new CauvPositionProvider());
     tracker->setTrackVisible(true);
-    
-    //#endif
+
+    m_tabs.append(m_marbleWidget);
 
 }
 
@@ -38,9 +33,15 @@ MapView::~MapView()
     delete ui;
 }
 
-void MapView::initialise()
-{
-    m_actions->registerCentralView(this, CauvInterfaceElement::name());
+const QString MapView::name() const {
+    return QString("Map");
 }
 
-#endif // USE_MARBLE
+const QList<QString> MapView::getGroups() const {
+    QList<QString> groups;
+    groups.push_back(QString("telemetry"));
+    return groups;
+}
+
+Q_EXPORT_PLUGIN2(cauv_mapplugin, MapView)
+

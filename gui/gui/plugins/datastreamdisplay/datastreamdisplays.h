@@ -14,10 +14,8 @@
 #include <debug/cauv_debug.h>
 #include <model/auv_model.h>
 
-#include "cauvinterfaceelement.h"
-#include "datastreamdragging.h"
-
-#include <cstdio>
+#include <gui/cauvbasicplugin.h>
+#include <gui/datastreamdragging.h>
 
 namespace Ui {
     class DataStreamPicker;
@@ -132,12 +130,11 @@ namespace cauv {
       *
       * @author Andy Pritchard
       */
-    class DataStreamDisplayArea : public QMdiArea, public DataStreamDropListener, public CauvInterfaceElement {
+    class DataStreamDisplayArea : public QMdiArea, public DataStreamDropListener {
         Q_OBJECT
         
     public:
-        DataStreamDisplayArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
-        virtual void initialise();
+        DataStreamDisplayArea(QWidget * parent = 0);
         void onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream);
         void onStreamDropped(boost::shared_ptr<DataStream<int> > stream);
         void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
@@ -156,12 +153,18 @@ namespace cauv {
       *
       * @author Andy Pritchard
       */
-    class DataStreamPicker : public QDockWidget, public CauvInterfaceElement {
+    class DataStreamPicker : public QDockWidget, public CauvBasicPlugin{
         Q_OBJECT
+        Q_INTERFACES(cauv::CauvInterfacePlugin)
+
+
     public:
-        DataStreamPicker(const QString &name, boost::shared_ptr<cauv::AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
+        DataStreamPicker();
         virtual ~DataStreamPicker();
-        virtual void initialise();
+
+        virtual const QString name() const;
+        virtual const QList<QString> getGroups() const;
+        virtual void initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node);
         
     private:
         Ui::DataStreamPicker *ui;

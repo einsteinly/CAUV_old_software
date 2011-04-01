@@ -1,19 +1,14 @@
-#ifdef USE_MARBLE
-
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
 #include <QWidget>
-
-#include <boost/make_shared.hpp>
-
-#include <debug/cauv_debug.h>
-
 #include <QTimer>
 
-#include "cauvinterfaceelement.h"
-
+#include <boost/make_shared.hpp>
+#include <debug/cauv_debug.h>
 #include <model/auv_model.h>
+#include <cauvbasicplugin.h>
+
 #include <marble/PositionProviderPlugin.h>
 
 namespace Ui {
@@ -27,13 +22,11 @@ namespace Marble {
 namespace cauv {
 
     class CauvPositionProvider : public Marble::PositionProviderPlugin {
-
         Q_OBJECT
 
     public:
 
         CauvPositionProvider() : Marble::PositionProviderPlugin(){
-
                 QTimer * timer = new QTimer();
                 timer->connect(timer, SIGNAL(timeout()), this, SLOT(test()));
                 timer->setSingleShot(false);
@@ -104,13 +97,16 @@ namespace cauv {
     };
 
 
-    class MapView : public QWidget, public CauvInterfaceElement {
+    class MapView : public QWidget, public CauvBasicPlugin {
         Q_OBJECT
+        Q_INTERFACES(cauv::CauvInterfacePlugin)
+
     public:
-        MapView(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node);
+        MapView();
         virtual ~MapView();
 
-        virtual void initialise();
+        virtual const QString name() const;
+        virtual const QList<QString> getGroups() const;
 
     protected:
         Marble::MarbleWidget *m_marbleWidget;
@@ -122,5 +118,3 @@ namespace cauv {
 } // namesapce cauv
 
 #endif // MAPVIEW_H
-
-#endif // USE_MARBLE

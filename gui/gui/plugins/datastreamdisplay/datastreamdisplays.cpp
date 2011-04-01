@@ -1,22 +1,18 @@
+#include "datastreamdisplays.h"
+#include "datastreamdisplay/ui_datastreamdisplays.h"
 
 #include <boost/signals2.hpp>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "datastreamdisplays.h"
-#include "ui_datastreamdisplays.h"
-
-#include "datastreamdragging.h"
-#include "videoscreen.h"
-#include "graphs.h"
+#include <gui/widgets/videoscreen.h>
+#include <gui/widgets/graphs.h>
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>
 
-
 using namespace cauv;
-
 
 
 DataStreamTreeItemBase::DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase> stream, QTreeWidgetItem * parent):
@@ -118,9 +114,7 @@ boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamLi
 
 
 
-DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QDockWidget(parent),
-        CauvInterfaceElement(name, auv, node),
+DataStreamPicker::DataStreamPicker() :
         ui(new Ui::DataStreamPicker())
 {
     ui->setupUi(this);
@@ -130,8 +124,17 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     ui->dataStreams->setDropIndicatorShown(true);
     ui->dataStreams->setAcceptDrops(false);
 
+    m_docks[this] = Qt::LeftDockWidgetArea;
+    m_tabs.append(new DataStreamDisplayArea());
+
+}
+
+void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node) {
+    CauvBasicPlugin::initialise(auv, node);
 
     // set up the categories
+
+    error() << "Initisaliing data strema plugin";
 
     //
     // motors
@@ -239,16 +242,25 @@ DataStreamPicker::DataStreamPicker(const QString &name, boost::shared_ptr<AUV> &
     other->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);
     new DataStreamTreeItem<int32_t>(auv->debug_level, other);
 
-
 }
 
 DataStreamPicker::~DataStreamPicker(){
     delete ui;
 }
 
-void DataStreamPicker::initialise(){
-    m_actions->registerDockView(this, Qt::LeftDockWidgetArea);
+const QString DataStreamPicker::name() const{
+    return QString("Data Streams");
 }
+
+const QList<QString> DataStreamPicker::getGroups() const{
+    QList<QString> groups;
+    groups.push_back(QString("gui"));
+    groups.push_back(QString("telemetry"));
+    groups.push_back(QString("control"));
+    // TODO add all groups...
+    return groups;
+}
+
 
 
 
@@ -272,14 +284,9 @@ public:
 
 
 
-DataStreamDisplayArea::DataStreamDisplayArea(const QString &name, boost::shared_ptr<AUV> &auv, QWidget * parent, boost::shared_ptr<CauvNode> node) :
-        QMdiArea(parent),
-        CauvInterfaceElement(name, auv, node) {
+DataStreamDisplayArea::DataStreamDisplayArea(QWidget * parent) :
+        QMdiArea(parent) {
     this->setAcceptDrops(true);
-}
-
-void DataStreamDisplayArea::initialise(){
-    m_actions->registerCentralView(this, CauvInterfaceElement::name());
 }
 
 void DataStreamDisplayArea::addWindow(boost::shared_ptr<QWidget> content){
@@ -375,3 +382,7 @@ void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
         }
     }
 }
+
+
+
+Q_EXPORT_PLUGIN2(cauv_dsdplugin, DataStreamPicker)

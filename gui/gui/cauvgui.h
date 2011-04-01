@@ -29,6 +29,7 @@ namespace cauv {
 
     public Q_SLOTS:
         int send(boost::shared_ptr<Message>message);
+        void addCentralTab(QWidget* tab, const QString& name);
         void addCentralTab(QWidget* tab, QString& name);
         void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
 

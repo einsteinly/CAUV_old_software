@@ -1,43 +1,57 @@
+project (guicpp)
+
 
 find_package (Qt4)
+find_package (Marble)
 
 if (NOT QT4_FOUND)
     message(WARNING "Qt4 not found, not building plugin")
+elseif (NOT MARBLE_FOUND)
+    message(WARNING "Marble not found, building without map")
 else ()
 
-    include_directories (${guicpp_SOURCE_DIR})
+    include_directories (${AUV_SOURCE_DIR})
+    include_directories(${MARBLE_INCLUDE_DIR})
+
+    # HACK:
+    # marble doesn't install all its header files for some odd reason
+    # so we include some that we needed
+    # this should be taken out when the marble distro is fixed
+    include_directories (${gui_SOURCE_DIR}/gui/marble)
 
     #sources
     set (
-            EXAMPLE_PLUGIN_SRCS
+            MAP_PLUGIN_SRCS
 
             mapview.cpp
         )
 
     # qt user interface files    
     set (
-            EXAMPLE_PLUGIN_UIS
+            MAP_PLUGIN_UIS
 
+            mapview.ui
         )
 
     # headers that need moc'ing
     set (
-            EXAMPLE_PLUGIN_H
+            MAP_PLUGIN_H
 
             mapview.h
         )
      
-    qt4_wrap_ui (EXAMPLE_PLUGIN_UIS_H ${EXAMPLE_PLUGIN_UIS})
-    qt4_wrap_cpp (EXAMPLE_PLUGIN_MOC_H ${EXAMPLE_PLUGIN_H})
+    qt4_wrap_ui (MAP_PLUGIN_UIS_H ${MAP_PLUGIN_UIS})
+    qt4_wrap_cpp (MAP_PLUGIN_MOC_H ${MAP_PLUGIN_H})
 
-    add_library( exampleguiplugin MODULE ${EXAMPLE_PLUGIN_SRCS}
-                                      ${EXAMPLE_PLUGIN_UIS_H}
-                                      ${EXAMPLE_PLUGIN_MOC_H} )
+    add_library( mapplugin MODULE ${MAP_PLUGIN_SRCS}
+                                      ${MAP_PLUGIN_UIS_H}
+                                      ${MAP_PLUGIN_MOC_H} )
                                       
-    target_link_libraries( exampleguiplugin 
+    target_link_libraries( mapplugin 
             cauv_debug
             common
             model
             ${QT_LIBRARIES}
+            ${MARBLE_LIBRARIES}
     )
 endif()
