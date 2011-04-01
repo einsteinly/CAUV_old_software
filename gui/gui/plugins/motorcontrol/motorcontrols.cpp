@@ -170,7 +170,8 @@ const QString MotorControls::name() const{
 
 const QList<QString> MotorControls::getGroups() const{
     QList<QString> groups;
-    groups.push_back(QString("motor"));
+    groups.push_back(QString("gui"));
+    groups.push_back(QString("control"));
     return groups;
 }
 

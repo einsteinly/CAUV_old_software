@@ -98,7 +98,7 @@ const QString Console::name() const{
 
 const QList<QString> Console::getGroups() const{
     QList<QString> groups;
-    groups.push_back(QString("script"));
+    groups.push_back(QString("gui"));
     return groups;
 }
 

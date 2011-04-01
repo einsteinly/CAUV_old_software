@@ -174,6 +174,11 @@ const QList<QString> DataStreamPicker::getGroups() const{
     groups.push_back(QString("gui"));
     groups.push_back(QString("telemetry"));
     groups.push_back(QString("control"));
+    groups.push_back(QString("state"));
+    groups.push_back(QString("image"));
+    groups.push_back(QString("sonarout"));
+    groups.push_back(QString("sonarctl"));
+    groups.push_back(QString("pressure"));
     // TODO add all groups...
     return groups;
 }
