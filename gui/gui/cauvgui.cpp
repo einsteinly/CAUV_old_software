@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QString>
 #include <QPluginLoader>
+#include <QSettings>
 
 #include <model/auv_controller.h>
 #include <model/auv_model.h>
@@ -53,9 +54,15 @@ void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
     addDockWidget(area, dock);
 }
 
-void CauvGui::closeEvent(QCloseEvent*){
+void CauvGui::closeEvent(QCloseEvent* e){
+    QSettings settings("CAUV", "Cambridge AUV");
+    settings.setValue("geometry", saveGeometry());
+    settings.setValue("windowState", saveState());
+
     hide();
     m_application->quit();
+
+    QMainWindow::closeEvent(e);
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
@@ -97,6 +104,10 @@ void CauvGui::onRun()
         }
     }
 
+
+    QSettings settings("CAUV", "Cambridge AUV");
+    restoreGeometry(settings.value("geometry").toByteArray());
+    restoreState(settings.value("windowState").toByteArray());
 
 
     // connect up message inputs and outputs
