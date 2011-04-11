@@ -113,7 +113,9 @@ void Simulator::launchViewer(){
     m_viewer->getViews(views, false);
 
     foreach (osgViewer::View * i, views){
-        i->setUpViewInWindow( 150,150,1024,768, 0 );
+        //i->setUpViewInWindow( 0,0,1920,1280, 0 );
+        i->setUpViewOnSingleScreen(0);
+        m_world_model->getOceanSceneModel()->getOceanScene()->setScreenDims(osg::Vec2s(1920, 1280));
     }
 
     m_viewer->run();

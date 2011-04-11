@@ -13,7 +13,6 @@
 #include <QTextCodec>
 
 #include "cauvgui.h"
-#include "gamepad/playstationinput.h"
 
 using namespace std;
 using namespace cauv;
