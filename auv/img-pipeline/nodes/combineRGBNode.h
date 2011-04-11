@@ -57,8 +57,9 @@ class CombineRGBNode: public Node{
             if(r_type != g_type || r_type != b_type)
                 throw(parameter_error("RGB source channels are not of the same type"));
             
-            boost::shared_ptr<Image> out = boost::make_shared<Image>();
-            out->cvMat() = cv::Mat(R->cvMat().size(), out_type);
+            boost::shared_ptr<Image> out = boost::make_shared<Image>(
+                cv::Mat(R->cvMat().size(), out_type)
+            );
             
             cv::Mat in[] = {R->cvMat(), G->cvMat(), B->cvMat()};
             int from_to[] = {0,0, 1,1, 2,2};

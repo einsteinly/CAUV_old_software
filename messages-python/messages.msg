@@ -58,7 +58,11 @@ enum NodeType : int8 {
     DrawLines = 48,
     BroadcastLines = 49,
     NullParam = 50,
-    DrawHistogram = 51
+    DrawHistogram = 51,
+    IntInput = 52,
+    FloatInput = 53,
+    StringInput = 54,
+    BoolInput = 55
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

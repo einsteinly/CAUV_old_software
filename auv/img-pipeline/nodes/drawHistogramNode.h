@@ -26,23 +26,30 @@ class DrawHistogramNode: public Node{
 
     protected:
         out_map_t doWork(in_image_map_t&){
-            const int Rows = 100;
+            const unsigned Min_Width = 256;
+            const unsigned rows = 100;
+            unsigned cols_per_bar = 1;
             out_map_t r;
             
-            std::vector<float> histogram = param< std::vector<float> >("histogram");
-
-            boost::shared_ptr<Image> out = boost::make_shared<Image>(
-                cv::Mat::zeros(Rows, histogram.size(), CV_8UC1)
-            );
-            
+            const std::vector<float> histogram = param< std::vector<float> >("histogram");
             if(!histogram.size())
                 throw parameter_error("no histogram to draw");
 
+            if(histogram.size() < Min_Width)
+                cols_per_bar = int(0.5 + Min_Width / histogram.size());
+
+            boost::shared_ptr<Image> out = boost::make_shared<Image>(
+                cv::Mat::zeros(rows, histogram.size() * cols_per_bar, CV_8UC1)
+            );
+
             float max = *std::max_element( histogram.begin(), histogram.end());
-            for(unsigned i = 0; i < histogram.size(); i++){
-                for(unsigned j = 0; j < unsigned(0.5+Rows * histogram[i]/max); j++)
-                    out->cvMat().at<uint8_t>(Rows-j, i) = 0xff;
-            }
+            for(unsigned i = 0; i < histogram.size(); i++)
+                for(unsigned k = 0; k < cols_per_bar; k++)
+                    for(unsigned j = 1; j <= unsigned(rows * histogram[i]/max); j++){
+                        assert(rows >= j);
+                        assert(i*cols_per_bar+k < histogram.size()*cols_per_bar);
+                        out->cvMat().at<uint8_t>(rows - j, i*cols_per_bar+k) = 0xff;
+                    }
 
             r[Image_Out_Copied_Name] = out;
 

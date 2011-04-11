@@ -119,11 +119,16 @@ class Model(messaging.BufferedMessageObserver):
             except RuntimeError, e:
                 error(str(e) + ": attempted to add node %s" % node.type)
                 debug('attempting to continue...')
+                id_map[old_id] = None
             node_map[old_id] = node
             #print id_map[old_id], 'is new id for', old_id, node.type, node.params
         # then set all parameter values
         for old_id, node in state.nodes.items():
             id = id_map[old_id]
+            if id is None:
+                warning('skipping parameters for node that was not added: %s' %
+                        str(node.params))
+                continue
             for param in node.params.keys():
                 debug('%d.%s = %s' % (id, param, node.params[param]))
                 try:
@@ -136,9 +141,13 @@ class Model(messaging.BufferedMessageObserver):
             # strictly speaking only one of these should be necessary, since
             # arcs have two ends...
             id = id_map[old_id]
+            if id is None:
+                warning('skipping arcs for node that was not added: %s' %
+                        str(node.inarcs))
+                continue
             for input in node.inarcs.keys():
                 (other, output) = node.inarcs[input]
-                if other != 0:
+                if other != 0 and id_map[other] is not None:
                     try:
                         self.addArcSynchronous(id_map[other], output, id, input, timeout)
                     except RuntimeError, e:

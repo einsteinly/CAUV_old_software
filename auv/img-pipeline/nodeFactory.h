@@ -44,7 +44,7 @@
 const static NodeFactoryRegister s_nfr
 
 #define DEFINE_NFR(NodeName, nt_ident) \
-const NodeFactoryRegister NodeName::s_nfr = NodeFactoryRegister(nt_ident, creator_ptr_t(new Creator<NodeName>()))
+const NodeFactoryRegister NodeName::s_nfr = NodeFactoryRegister(nt_ident, creator_ptr_t(new Creator< NodeName >()))
 
 namespace cauv{
 namespace imgproc{

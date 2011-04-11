@@ -171,7 +171,7 @@ class TexImg{
 using namespace cauv::pw;
 
 Img::Img(container_ptr_t c)
-    : Resizeable(c, BBox(0, 0, 300, 200), BBox(30, 20), BBox(1200, 800)){
+    : Resizeable(c, BBox(0, 0, 300, 200), BBox(10, 10), BBox(1200, 800)){
 }
 
 void Img::draw(drawtype_e::e flags){
