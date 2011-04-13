@@ -198,6 +198,14 @@ static boost::shared_ptr<PVPairEditableBase> makePVPair(
                     n, p.first, ss.str(), false
                 );
         }
+        case ParamType::FloatList:
+        {
+            std::stringstream ss;
+            ss << "float[" << boost::get< std::vector<float> >(p.second).size() << "]"; 
+            return boost::make_shared<PVPair<std::string> >(
+                    n, p.first, ss.str(), false
+                );
+        }
         default:
             error() << "unknown ParamType";
             return boost::make_shared<PVPair<std::string> >(

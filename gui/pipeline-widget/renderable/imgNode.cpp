@@ -109,8 +109,8 @@ class TexImg{
                 return;
             }
             
-            const int img_w = img->cvMat().cols;
-            const int img_h = img->cvMat().rows;
+            const int img_w = img->width();
+            const int img_h = img->height();
             int w, h;
             max_size = std::min(max_size, std::max(img_w, img_h));
             if(img_h > img_w){
@@ -122,12 +122,14 @@ class TexImg{
                 w = max_size;
                 h = w * img_h / img_w;
             }
+            debug(1) << "w = " << w << "h = " << h;
             cv::resize(img->cvMat(), m, cv::Size(w, h), 0, 0, cv::INTER_LANCZOS4);
 
             GLenum tex_type = GL_UNSIGNED_BYTE;
             switch(m.type() & CV_MAT_DEPTH_MASK){
                 case CV_8S:
                     warning() << "_genTexture(): signed byte image type not supported: using unsigned";
+                    // case fall through
                 case CV_8U:
                     tex_type = GL_UNSIGNED_BYTE;
                     break;
@@ -182,8 +184,7 @@ void Img::draw(drawtype_e::e flags){
     glColor(Colour(0.2, 0.5));
     glBox(m_bbox);
     
-    {
-        boost::lock_guard<boost::mutex> l(m_img_mutex);
+    CAUV_LOCK(m_img_mutex) {
         if (m_next_img)
         {
             m_img.swap(m_next_img);
@@ -200,8 +201,7 @@ void Img::display(Image const& img){
     debug(6) << __func__ << "enter";
     boost::shared_ptr<TexImg> next_img = boost::make_shared<TexImg>(img);
     
-    {
-        boost::lock_guard<boost::mutex> l(m_img_mutex);
+    CAUV_LOCK(m_img_mutex) {
         m_next_img = next_img;
     }
 
