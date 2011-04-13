@@ -110,7 +110,7 @@ class Node: public boost::enable_shared_from_this<Node>{
 
     public:
         // TODO: shouldn't be necessary to pass `type' here!
-        Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type);
+        Node(Scheduler& sched, ImageProcessor& pl, std::string const& pl_name, NodeType::e type);
 
         /* non-trivial construction MUST be done in init(): non-trivial means
          * anything that relies on calling any method of this base class
@@ -128,6 +128,7 @@ class Node: public boost::enable_shared_from_this<Node>{
 
         NodeType::e const& type() const;
         node_id const& id() const;
+        std::string const& plName() const;
         
         /* overload for the common case where we're connecting a node with one
          * output to a node with one input
@@ -195,7 +196,7 @@ class Node: public boost::enable_shared_from_this<Node>{
                 debug(1) << "param" << p << "set to" << std::boolalpha << v;
                 i->second = v;
     
-                sendMessage(boost::make_shared<NodeParametersMessage>(id(), parameters()));
+                sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
             }else{
                 error e;
                 e << m_parameters.size() << "valid parameters are:";
@@ -252,7 +253,7 @@ class Node: public boost::enable_shared_from_this<Node>{
                         {
                             val = parentVal;
                             i->second = val;
-                            sendMessage(boost::make_shared<NodeParametersMessage>(id(), parameters()));
+                            sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
                         }
                     }catch(boost::bad_get& e){
                         warning() << "parameter output not available / bad get:"
@@ -331,7 +332,7 @@ class Node: public boost::enable_shared_from_this<Node>{
             m.unlock();
             l.unlock();
             _statusMessage(boost::make_shared<OutputStatusMessage>(
-                m_id, o, NodeIOStatus::e(0)
+                m_pl_name, m_id, o, NodeIOStatus::e(0)
             ));
         }
         void registerInputID(input_id const& i);
@@ -456,6 +457,7 @@ class Node: public boost::enable_shared_from_this<Node>{
          * Used for sending messages, and node pointer -> node id lookups
          */
         ImageProcessor& m_pl;
+        const std::string m_pl_name;
 };
 
 template<typename char_T, typename traits>

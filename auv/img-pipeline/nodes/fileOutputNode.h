@@ -18,8 +18,8 @@ namespace imgproc{
 
 class FileOutputNode: public OutputNode{
     public:
-        FileOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t), m_counter(0){
+        FileOutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){

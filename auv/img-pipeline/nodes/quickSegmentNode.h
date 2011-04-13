@@ -19,8 +19,8 @@ namespace imgproc{
 
 class QuickSegmentNode: public OutputNode{
     public:
-        QuickSegmentNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t){
+        QuickSegmentNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){

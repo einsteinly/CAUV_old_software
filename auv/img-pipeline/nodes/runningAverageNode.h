@@ -20,8 +20,8 @@ namespace imgproc{
 
 class RunningAverageNode: public Node{
     public:
-        RunningAverageNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t) :
-                Node(sched, pl, t)
+        RunningAverageNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t) :
+                Node(sched, pl, n, t)
         {
         }
 

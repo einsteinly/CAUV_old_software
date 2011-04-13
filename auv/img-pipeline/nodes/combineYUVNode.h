@@ -17,8 +17,8 @@ namespace imgproc{
 
 class CombineYUVNode: public Node{
     public:
-        CombineYUVNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+        CombineYUVNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t){
         }
 
         void init(){

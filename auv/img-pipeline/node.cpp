@@ -12,7 +12,7 @@ const char* Node::Image_Out_Name = "image out (not copied)";
 const char* Node::Image_Out_Copied_Name = "image out";
 
 
-Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
+Node::Node(Scheduler& sched, ImageProcessor& pl, std::string const& pl_name, NodeType::e type)
     : m_priority(priority_slow),
       m_speed(slow),
 
@@ -48,7 +48,8 @@ Node::Node(Scheduler& sched, ImageProcessor& pl, NodeType::e type)
       m_allow_queue_lock(),
 
       m_sched(sched),
-      m_pl(pl){
+      m_pl(pl),
+      m_pl_name(pl_name){
 }
 
 Node::~Node(){
@@ -85,6 +86,10 @@ NodeType::e const& Node::type() const{
 
 node_id const& Node::id() const{
     return m_id;
+}
+
+std::string const& Node::plName() const{
+    return m_pl_name;
 }
 
 /* overload for the common case where we're connecting a node with one
@@ -410,7 +415,7 @@ void Node::exec(){
     
     NodeStatus::e status = NodeStatus::e(0);
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_id, status | NodeStatus::Executing));
+    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status | NodeStatus::Executing));
     try{
         if(this->m_speed < medium){
             // if this is a fast node: request new image from parents before executing
@@ -424,7 +429,7 @@ void Node::exec(){
     }catch(std::exception& e){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
     }
-    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
 
     unique_lock_t ol(m_outputs_lock);
     shared_lock_t cl(m_child_links_lock);
@@ -528,7 +533,7 @@ void Node::registerInputID(input_id const& i){
     m_valid_inputs[i] = false;
     m_parent_links[i] = input_link_t();
 
-    _statusMessage(boost::make_shared<InputStatusMessage>(m_id, i, NodeIOStatus::e(0)));
+    _statusMessage(boost::make_shared<InputStatusMessage>(m_pl_name, m_id, i, NodeIOStatus::e(0)));
 }
 
 /* Check to see if all inputs are new and output is demanded; if so,
@@ -606,7 +611,7 @@ void Node::setNewInput(input_id const& a){
         i->second = true;
         m_valid_inputs[a] = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
-            m_id, a, NodeIOStatus::New | NodeIOStatus::Valid
+            m_pl_name, m_id, a, NodeIOStatus::New | NodeIOStatus::Valid
         ));
     }
     m.unlock();
@@ -624,7 +629,7 @@ void Node::setNewInput(){
         i.second = true;
         m_valid_inputs[i.first] = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
-            m_id, i.first, NodeIOStatus::New | NodeIOStatus::Valid
+            m_pl_name, m_id, i.first, NodeIOStatus::New | NodeIOStatus::Valid
         ));
     }
     n.unlock();
@@ -639,7 +644,7 @@ void Node::clearNewInput(){
     foreach(in_bool_map_t::value_type& i, m_new_inputs){
         i.second = false;
         _statusMessage(boost::make_shared<InputStatusMessage>(
-            m_id, i.first,
+            m_pl_name, m_id, i.first,
             m_valid_inputs[i.first]? NodeIOStatus::Valid : NodeIOStatus::e(0)
         ));
     }
@@ -674,7 +679,7 @@ void Node::setValidInput(input_id const& i){
         unique_lock_t l(m_new_inputs_lock);
         m_valid_inputs[i] = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
-            m_id, i, m_new_inputs[i]? New | Valid : Valid
+            m_pl_name, m_id, i, m_new_inputs[i]? New | Valid : Valid
         ));
     }
     l.unlock();
@@ -687,7 +692,7 @@ void Node::clearValidInput(input_id const& i){
         unique_lock_t l(m_new_inputs_lock);
         m_valid_inputs[i] = false;
         _statusMessage(boost::make_shared<InputStatusMessage>(
-            m_id, i, m_new_inputs[i]? NodeIOStatus::New : NodeIOStatus::e(0)
+            m_pl_name, m_id, i, m_new_inputs[i]? NodeIOStatus::New : NodeIOStatus::e(0)
         ));
     }
 }
@@ -714,7 +719,7 @@ void Node::setNewOutputDemanded(output_id const& o){
         m_output_demanded = true;
 
         _statusMessage(boost::make_shared<OutputStatusMessage>(
-            m_id, o, NodeIOStatus::Demanded
+            m_pl_name, m_id, o, NodeIOStatus::Demanded
         ));
 
         unique_lock_t m(m_new_inputs_lock);
@@ -737,7 +742,7 @@ void Node::clearNewOutputDemanded(output_id const& o){
     m_output_demanded_on.erase(o);
     m_output_demanded = !!m_output_demanded_on.size();
     _statusMessage(boost::make_shared<OutputStatusMessage>(
-            m_id, o, NodeIOStatus::e(0)
+            m_pl_name, m_id, o, NodeIOStatus::e(0)
     ));
 }
 
@@ -753,7 +758,7 @@ void Node::setAllowQueue(){
     m_allow_queue = true;
     NodeStatus::e status = NodeStatus::AllowQueue;
     if(execQueued()) status |= NodeStatus::ExecQueued;
-    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
     l.unlock();
     checkAddSched();
 }
@@ -763,7 +768,7 @@ void Node::clearAllowQueue(){
     m_allow_queue = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(execQueued()) status |= NodeStatus::ExecQueued;
-    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
 }
 
 bool Node::allowQueue() const{
@@ -776,7 +781,7 @@ void Node::setExecQueued(){
     m_exec_queued = true;
     NodeStatus::e status = NodeStatus::ExecQueued;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
 }
 
 void Node::clearExecQueued(){
@@ -784,7 +789,7 @@ void Node::clearExecQueued(){
     m_exec_queued = false;
     NodeStatus::e status = NodeStatus::e(0);
     if(allowQueue()) status |= NodeStatus::AllowQueue;
-    _statusMessage(boost::make_shared<StatusMessage>(m_id, status));
+    _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
     l.unlock();
     checkAddSched();
 }
@@ -808,7 +813,7 @@ void Node::setNewParamValue(param_id const& a){
     }else{
         i->second = true;
         _statusMessage(boost::make_shared<InputStatusMessage>(
-            m_id, a, NodeIOStatus::New | NodeIOStatus::Valid
+            m_pl_name, m_id, a, NodeIOStatus::New | NodeIOStatus::Valid
         ));
     }
     l.unlock();
@@ -821,7 +826,7 @@ void Node::clearNewParamValues(){
     foreach(param_bool_map_t::value_type& i, m_new_paramvalues){
         i.second = false;
         _statusMessage(boost::make_shared<InputStatusMessage>(
-            m_id, i.first, NodeIOStatus::e(0)
+            m_pl_name, m_id, i.first, NodeIOStatus::e(0)
         ));
     }
 }

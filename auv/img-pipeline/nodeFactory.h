@@ -5,7 +5,7 @@
  * creating nodes of different types:
  *
  * the NodeType enum is defined in messages.msg, add new types there!
- *
+xz
  * How to register your shiny new node type
  *
  * class SomeNode{
@@ -53,14 +53,14 @@ namespace imgproc{
 class Node;
 
 struct CreatorBase{
-    virtual boost::shared_ptr<Node> create(Scheduler&, ImageProcessor&, NodeType::e) const = 0;
+    virtual boost::shared_ptr<Node> create(Scheduler&, ImageProcessor&, std::string const&, NodeType::e) const = 0;
 };
 typedef boost::shared_ptr<CreatorBase> creator_ptr_t;
 
 template<typename T>
 struct Creator: public CreatorBase{
-    virtual boost::shared_ptr<Node> create(Scheduler& s, ImageProcessor& pl, NodeType::e t) const{
-        boost::shared_ptr<T> r = boost::make_shared<T>(boost::ref(s), boost::ref(pl), t);
+    virtual boost::shared_ptr<Node> create(Scheduler& s, ImageProcessor& pl, std::string const& n, NodeType::e t) const{
+        boost::shared_ptr<T> r = boost::make_shared<T>(boost::ref(s), boost::ref(pl), n, t);
         // hold a shared pointer during initialisation so that shared_from_this
         // is available!
         r->init();
@@ -82,11 +82,11 @@ class NodeFactoryRegister{
             nodeRegister()[n] = f;
         }
         
-        static node_ptr_t create(NodeType::e const& n, Scheduler& s, ImageProcessor& pl){
+        static node_ptr_t create(Scheduler& s, ImageProcessor& pl, std::string const& n, NodeType::e const& t){
             lock_t l(registerLock());
-            nt_creator_map_t::const_iterator i = nodeRegister().find(n);
+            nt_creator_map_t::const_iterator i = nodeRegister().find(t);
             if(i != nodeRegister().end()){
-                return i->second->create(s, pl, n);
+                return i->second->create(s, pl, n, t);
             }else{
                 throw node_type_error("create: Invalid node type");
             }

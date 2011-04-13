@@ -18,8 +18,8 @@ namespace imgproc{
 
 class HoughCirclesNode: public OutputNode{
     public:
-        HoughCirclesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t){
+        HoughCirclesNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){

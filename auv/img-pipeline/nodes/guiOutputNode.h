@@ -8,8 +8,8 @@ namespace imgproc{
 
 class GuiOutputNode: public OutputNode{
     public:
-        GuiOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t), m_counter(0){
+        GuiOutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){
@@ -38,7 +38,7 @@ class GuiOutputNode: public OutputNode{
             if(img->cvMat().rows != 0 && img->cvMat().cols != 0){
                 debug(4) << "GuiOutputNode::doWork()" << id() << *img;
                 img->serializeQuality(qual);
-                sendMessage(boost::make_shared<GuiImageMessage>(id(), *img), UNRELIABLE_MESS);
+                sendMessage(boost::make_shared<GuiImageMessage>(plName(), id(), *img), UNRELIABLE_MESS);
             }else{
                 error() << "GuiOutputNode: no image to send";
             }

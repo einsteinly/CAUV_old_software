@@ -22,8 +22,8 @@ namespace imgproc{
 
 class HoughLinesNode: public Node{
     public:
-        HoughLinesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+        HoughLinesNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t){
         }
 
         void init(){

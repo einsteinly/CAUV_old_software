@@ -19,8 +19,8 @@ namespace imgproc{
 
 class HistogramNode: public OutputNode{
     public:
-        HistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t){
+        HistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){

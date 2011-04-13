@@ -20,8 +20,8 @@ namespace imgproc{
 
 class BroadcastLinesNode: public OutputNode{
     public:
-        BroadcastLinesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t){
+        BroadcastLinesNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){

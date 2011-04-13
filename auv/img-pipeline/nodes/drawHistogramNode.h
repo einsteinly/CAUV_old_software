@@ -10,8 +10,8 @@ namespace imgproc{
 
 class DrawHistogramNode: public Node{
     public:
-        DrawHistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t), m_counter(0){
+        DrawHistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t), m_counter(0){
         }
 
         void init(){

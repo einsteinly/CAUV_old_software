@@ -9,15 +9,14 @@
 
 using namespace cauv::imgproc;
 
-// TODO: error() should send an error message of some sort on spread
-
 ImageProcessor::ImageProcessor(mb_ptr_t mb)
     : m_nodes_lock(), m_nodes(), m_nodes_rev(), m_input_nodes(), m_scheduler(),
-      m_mailbox_lock(), m_mailbox(mb){
+      m_name("---"), m_mailbox_lock(), m_mailbox(mb){
 }
 
-void ImageProcessor::start()
-{
+void ImageProcessor::start(std::string const& name){
+    lock_t l(m_name_lock);
+    m_name = name;
     m_scheduler.start();
 }
 
@@ -43,7 +42,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     std::map<std::string, NodeOutput> inputs;
     std::map<std::string, std::vector<NodeInput> > outputs;
     try{
-        node_ptr_t node = NodeFactoryRegister::create(m->nodeType(), m_scheduler, *this);
+        node_ptr_t node = NodeFactoryRegister::create(m_scheduler, *this, m_name, m->nodeType());
 
         BOOST_FOREACH(NodeInputArc const& a, m->parents()){
             node->setInput(a.input, lookup(a.src.node), a.src.output);
@@ -73,7 +72,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
-    sendMessage(boost::make_shared<NodeAddedMessage>(new_id, m->nodeType(), inputs, outputs, params));
+    sendMessage(boost::make_shared<NodeAddedMessage>(m_name, new_id, m->nodeType(), inputs, outputs, params));
 }
 
 void ImageProcessor::removeNode(node_id const& id){
@@ -88,14 +87,14 @@ void ImageProcessor::removeNode(node_id const& id){
     in.node = id;
     for(Node::msg_node_input_map_t::const_iterator i = il.begin(); i != il.end(); i++){
         in.input = i->first;
-        arms.push_back(boost::make_shared<ArcRemovedMessage>(i->second, in));
+        arms.push_back(boost::make_shared<ArcRemovedMessage>(m_name, i->second, in));
     }
     NodeOutput out;
     out.node = id;
     for(Node::msg_node_output_map_t::const_iterator i = ol.begin(); i != ol.end(); i++){
         out.output = i->first;
         for(Node::msg_node_in_list_t::const_iterator j = i->second.begin(); j != i->second.end(); j++)
-            arms.push_back(boost::make_shared<ArcRemovedMessage>(out, *j));
+            arms.push_back(boost::make_shared<ArcRemovedMessage>(m_name, out, *j));
     }       
     
     _removeNode(id); 
@@ -120,10 +119,12 @@ void ImageProcessor::removeNode(node_id const& id){
     std::vector<ArcRemovedMessage_ptr>::const_iterator i;
     for(i = arms.begin(); i != arms.end(); i++)
         sendMessage(*i);
-    sendMessage(boost::make_shared<NodeRemovedMessage>(id));
+    sendMessage(boost::make_shared<NodeRemovedMessage>(m_name, id));
 }
 
 void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     try{
         removeNode(m->nodeId());
     }catch(std::exception& e){
@@ -132,19 +133,21 @@ void ImageProcessor::onRemoveNodeMessage(RemoveNodeMessage_ptr m){
 }
 
 void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     try{
         node_ptr_t n = lookup(m->nodeId());
         n->setParam(m);
         info() << "Node parameter set:"
                << m->nodeId() <<  m->paramId() << std::boolalpha << m->value();
-        
-        //sendMessage(boost::make_shared<NodeParametersMessage>(m->nodeId(), n->parameters()));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
 }
 
 void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     try{
         node_ptr_t from = lookup(m->from().node);
         node_ptr_t to = lookup(m->to().node);
@@ -174,14 +177,16 @@ void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
 
         info() << "Arc added:" << m->from() << "->" << m->to();
         
-        sendMessage(boost::make_shared<ArcRemovedMessage>(il[input], m->to()));
-        sendMessage(boost::make_shared<ArcAddedMessage>(m->from(), m->to()));
+        sendMessage(boost::make_shared<ArcRemovedMessage>(m_name, il[input], m->to()));
+        sendMessage(boost::make_shared<ArcAddedMessage>(m_name, m->from(), m->to()));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
 }
 
-void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr){
+void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     try{
         std::map<node_id, NodeType::e> node_types;
         std::map<node_id, std::map<input_id, NodeOutput> > node_inputs;
@@ -198,7 +203,7 @@ void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr){
         }
 
         sendMessage(boost::make_shared<GraphDescriptionMessage>(
-            node_types, node_inputs, node_outputs, node_parameters
+            m_name, node_types, node_inputs, node_outputs, node_parameters
         ));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
@@ -207,6 +212,8 @@ void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr){
 
 
 void ImageProcessor::onForceExecRequestMessage(ForceExecRequestMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     try{
         node_ptr_t n = lookup(m->nodeId());
         if(n){
@@ -219,7 +226,9 @@ void ImageProcessor::onForceExecRequestMessage(ForceExecRequestMessage_ptr m){
     }
 }
 
-void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr){
+void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     try{
         lock_t l(m_nodes_lock);    
         while(m_nodes.size())

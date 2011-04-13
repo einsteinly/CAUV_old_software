@@ -368,6 +368,7 @@ group pipeline
 {
     message AddNode : 5
     {
+        pipelineName : string; 
         nodeType : NodeType;
         parents : list<NodeInputArc>;
         children : list<NodeOutputArc>;
@@ -375,15 +376,18 @@ group pipeline
 
     message RemoveNode : 6
     {
+        pipelineName : string;
         nodeId : int32;
     }
 
     message ClearPipeline : 7
     {
+        pipelineName : string;
     }
 
     message SetNodeParameter : 8
     {
+        pipelineName : string;
         nodeId : int32;
         paramId : string;
         value : NodeParamValue;
@@ -391,16 +395,19 @@ group pipeline
 
     message AddArc : 9
     {
+        pipelineName : string;
         from : NodeOutput;
         to : NodeInput;
     }
 
     message GraphRequest : 10
     {
+        pipelineName : string;
     }
 
     message ForceExecRequest : 11
     {
+        pipelineName : string;
         nodeId : int32;
     }
 }
@@ -471,6 +478,7 @@ group pl_gui
 { 
     message NodeAdded : 115
     {
+        pipelineName : string;
         nodeId : int32;
         nodeType : NodeType;
         inputs : map<string, NodeOutput>;
@@ -480,17 +488,20 @@ group pl_gui
 
     message NodeRemoved : 116
     {
+        pipelineName : string;    
         nodeId : int32;
     }
 
     message NodeParameters : 117
     {
+        pipelineName : string;    
         nodeId : int32;
         params : map<string, NodeParamValue>;
     }
 
     message GraphDescription : 118
     {
+        pipelineName : string;    
         lazy nodeTypes : map<int32, NodeType>;
         lazy nodeInputs : map<int32, map<string, NodeOutput> >;
         lazy nodeOutputs : map<int32, map<string, list<NodeInput> > >;
@@ -499,24 +510,28 @@ group pl_gui
 
     message ArcAdded : 119
     {
+        pipelineName : string;    
         from : NodeOutput;
         to : NodeInput;
     }
 
     message ArcRemoved : 120
     {
+        pipelineName : string;    
         from : NodeOutput;
         to : NodeInput;
     }
 
     message Status : 121
     {
+        pipelineName : string;    
         nodeId : int32;
         status : NodeStatus;
     }
 
     message InputStatus : 122
     {
+        pipelineName : string;    
         nodeId : int32;
         inputId : string;
         status : NodeIOStatus;
@@ -524,6 +539,7 @@ group pl_gui
     
     message OutputStatus : 123
     {
+        pipelineName : string;    
         nodeId : int32;
         outputId : string;
         status : NodeIOStatus;
@@ -531,6 +547,7 @@ group pl_gui
     
 	message GuiImage : 124
 	{
+        pipelineName : string;    
         nodeId : int32;
 	    lazy image : Image;
     }
