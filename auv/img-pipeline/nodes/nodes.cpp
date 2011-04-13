@@ -53,7 +53,8 @@
 #include "drawHistogramNode.h"
 #include "valueInputNode.h"
 
-using namespace cauv::imgproc;
+namespace cauv{
+namespace imgproc{
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -113,5 +114,9 @@ template<> DEFINE_NFR(ValueInputNode<bool>, NodeType::BoolInput);
 template<> DEFINE_NFR(ValueInputNode<std::string>, NodeType::StringInput);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
+
+} // namespace imgproc
+} // namespace cauv
+
 
 
