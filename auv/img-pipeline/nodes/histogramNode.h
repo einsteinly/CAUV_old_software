@@ -17,10 +17,10 @@
 namespace cauv{
 namespace imgproc{
 
-class HistogramNode: public OutputNode{
+class HistogramNode: public Node{
     public:
         HistogramNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t){
+            : Node(sched, pl, t){
         }
 
         void init(){

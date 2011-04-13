@@ -97,7 +97,6 @@ class TexImg{
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
            
-            cv::Mat m;
             GLint max_size = 0;
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
             
@@ -109,21 +108,38 @@ class TexImg{
                 return;
             }
             
-            const int img_w = img->width();
-            const int img_h = img->height();
-            int w, h;
-            max_size = std::min(max_size, std::max(img_w, img_h));
-            if(img_h > img_w){
-                h = max_size;
-                w = h * img_w / img_h;
-                // distort images slightly, if necessary, to ensure OpenCV doesn't pad them
-                w &= ~0x3;
-            }else{
-                w = max_size;
-                h = w * img_h / img_w;
+            cv::Mat m;
+            int w = img->width();
+            int h = img->height();
+            if (h <= max_size && w <= max_size)
+            {
+                m = img->cvMat();
             }
-            debug(1) << "w = " << w << "h = " << h;
-            cv::resize(img->cvMat(), m, cv::Size(w, h), 0, 0, cv::INTER_LANCZOS4);
+            else
+            {
+                int w_resized, h_resized;
+                if(h > w){
+                    h_resized = max_size;
+                    w_resized = h_resized * w / h;
+                }else{
+                    w_resized = max_size;
+                    h_resized = w_resized * h / w;
+                }
+                w = w_resized;
+                h = h_resized;
+                cv::resize(img->cvMat(), m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
+            }
+
+            // pad images to be word aligned
+            if (w & 0x3)
+            {
+                int w_padded = (w + 0x3) & ~0x3;
+                cv::Mat m_padded = cv::Mat::zeros(h, w_padded, img->cvMat().type());
+                cv::Mat m_padded_sub(m_padded, cv::Rect(0,0,w,h));
+                m.copyTo(m_padded_sub);
+                m = m_padded;
+                w = w_padded;
+            }
 
             GLenum tex_type = GL_UNSIGNED_BYTE;
             switch(m.type() & CV_MAT_DEPTH_MASK){
