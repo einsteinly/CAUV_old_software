@@ -96,7 +96,9 @@ class TexImg{
 
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-           
+          
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
+            
             GLint max_size = 0;
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
             
@@ -128,17 +130,6 @@ class TexImg{
                 w = w_resized;
                 h = h_resized;
                 cv::resize(img->cvMat(), m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
-            }
-
-            // pad images to be word aligned
-            if (w & 0x3)
-            {
-                int w_padded = (w + 0x3) & ~0x3;
-                cv::Mat m_padded = cv::Mat::zeros(h, w_padded, img->cvMat().type());
-                cv::Mat m_padded_sub(m_padded, cv::Rect(0,0,w,h));
-                m.copyTo(m_padded_sub);
-                m = m_padded;
-                w = w_padded;
             }
 
             GLenum tex_type = GL_UNSIGNED_BYTE;
