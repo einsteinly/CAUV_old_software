@@ -62,7 +62,7 @@ class EnumVal(Expr):
         self.name = name
         self.value = value
     def __repr__(self):
-        return "%s = %d" % (self.name, self.value)
+        return "%s = %s" % (self.name, self.value)
 
 class Message(Expr):
     def __init__(self, name, id, fields):
@@ -231,10 +231,20 @@ def p_enumval_list(p):
     else:
         p[1].append(p[3])
         p[0] = p[1]
+    enumval = p[0][-1]
+    if enumval.value == None:
+        prevval = 0
+        if len(p[0]) > 1:
+            prevval = p[0][-2].value
+        enumval.value = prevval + 1
 
 def p_enumval(p):
-    "enumval : STRING '=' INT"
-    p[0] = EnumVal(p[1], p[3])
+    """enumval : STRING '=' INT 
+               | STRING"""
+    if len(p) == 4:
+        p[0] = EnumVal(p[1], p[3])
+    else:
+        p[0] = EnumVal(p[1], None)
 
 
 def p_message_list(p):
