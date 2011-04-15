@@ -52,7 +52,7 @@ auv:
     spread (at ./configure add the extra options --with-pic CFLAGS="-enable-shared -fPIC")
     libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
     boost-??? (default build of boost will do), boost 1.43 works (note default on ubuntu is 1.42, may cause problems)
-    OpenCV (2.2 works)
+    OpenCV (>= 2.2)
     bjam
     boost-python
     python 2.6
@@ -64,7 +64,7 @@ gui/gui-pipeline and gui/pipeline-widget:
 
 gui/gui:
     Qt 4 (with Qt3 support library, but NOT qt3 dev packages, as this sets all of the defaults to qt3, meaning qwt6 won't build)
-    Qwt 6 (Having earlier versions installed may cause a conflict when trying to make Qwt)
+    Qwt 6 (Having earlier versions installed may cause a conflict when trying to make Qwt, needs to be >=rc5)
     OpenCV
     Marble (optional) - for the map
     OIS (optional) - for gamepad controls
@@ -116,8 +116,8 @@ boost 1.43.0:
 http://www.boost.org/users/news/version_1_43_0
 (remember to set BOOST_ROOT)
 
-OpenCV: 2.1 Windows, full install, add to PATH
-http://sourceforge.net/projects/opencvlibrary/files/opencv-win/2.1/
+OpenCV: 2.2 Windows, full install, add to PATH
+http://sourceforge.net/projects/opencvlibrary/files/opencv-win/2.2/
 
 Spread: 4.1 (convert project file and build all libspread and the spread
 program using vs2010)

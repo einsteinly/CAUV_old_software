@@ -75,16 +75,6 @@ enum NodeIOStatus : int8 {
     Valid = 2,
     Demanded = 4
 }
-enum ParamType : int8 {
-    Int32 = 0,
-    Float = 1,
-    String = 2,
-    Bool = 3,
-    CornerList = 4,
-    LineList = 5,
-    CircleList = 6,
-    FloatList = 7
-}
 enum OutputType : int8 {
     Image = 0,
     Parameter = 1
