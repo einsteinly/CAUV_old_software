@@ -1,6 +1,8 @@
 #ifndef __CAUV_UTILITY_DEFER_H__
 #define __CAUV_UTILITY_DEFER_H__
 
+//TODO: think plain boost::bind can be used to achieve this...
+
 /**
  * Deferred evaluation of functions.
  *

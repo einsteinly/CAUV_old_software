@@ -32,6 +32,9 @@ class PipelineGuiMsgObs: public BufferedMessageObserver{
         virtual void onGuiImageMessageBuffered(GuiImageMessage_ptr m);
 
     private:
+        template<typename message_T>
+        bool _nameMatches(boost::shared_ptr<const message_T> msg);
+
         PipelineWidget *m_widget;
 };
 

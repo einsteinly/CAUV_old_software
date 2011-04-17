@@ -17,6 +17,12 @@ void DBGLevelObserver::onDebugLevelMessage(DebugLevelMessage_ptr m)
     debug::setLevel(m->level());
 }
 
+template<typename message_T>
+bool PipelineGuiMsgObs::_nameMatches(boost::shared_ptr<const message_T> msg){
+    if(msg->pipelineName() == m_widget->pipelineName())
+        return true;
+    return false;
+}
 
 PipelineGuiMsgObs::PipelineGuiMsgObs(PipelineWidget *p)
     : m_widget(p){
@@ -24,6 +30,8 @@ PipelineGuiMsgObs::PipelineGuiMsgObs(PipelineWidget *p)
 }
 
 void PipelineGuiMsgObs::onNodeAddedMessage(NodeAddedMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     switch(m->nodeType()){
         case NodeType::Invalid:
@@ -38,11 +46,15 @@ void PipelineGuiMsgObs::onNodeAddedMessage(NodeAddedMessage_ptr m){
 }
 
 void PipelineGuiMsgObs::onNodeRemovedMessage(NodeRemovedMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     m_widget->remove(m_widget->node(m->nodeId()));
 }
 
 void PipelineGuiMsgObs::onNodeParametersMessage(NodeParametersMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     node_ptr_t np = m_widget->node(m->nodeId());
     if(np)
@@ -50,18 +62,24 @@ void PipelineGuiMsgObs::onNodeParametersMessage(NodeParametersMessage_ptr m){
 }
 
 void PipelineGuiMsgObs::onArcAddedMessage(ArcAddedMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     m_widget->addArc(m->from().node, m->from().output,
                      m->to().node, m->to().input);
 }
 
 void PipelineGuiMsgObs::onArcRemovedMessage(ArcRemovedMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     m_widget->removeArc(m->from().node, m->from().output,
                         m->to().node, m->to().input);
 }
 
 void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
 
     typedef std::map<node_id, NodeType::e> node_type_map_t;
@@ -147,6 +165,8 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
 }
 
 void PipelineGuiMsgObs::onStatusMessage(StatusMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     node_ptr_t np = m_widget->node(m->nodeId());
     if(np)
@@ -154,6 +174,8 @@ void PipelineGuiMsgObs::onStatusMessage(StatusMessage_ptr m){
 }
 
 void PipelineGuiMsgObs::onInputStatusMessage(InputStatusMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     node_ptr_t np = m_widget->node(m->nodeId());
     if(np)
@@ -161,6 +183,8 @@ void PipelineGuiMsgObs::onInputStatusMessage(InputStatusMessage_ptr m){
 }
 
 void PipelineGuiMsgObs::onOutpuStatusMessage(OutputStatusMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     node_ptr_t np = m_widget->node(m->nodeId());
     if(np)
@@ -168,6 +192,8 @@ void PipelineGuiMsgObs::onOutpuStatusMessage(OutputStatusMessage_ptr m){
 }
 
 void PipelineGuiMsgObs::onGuiImageMessageBuffered(GuiImageMessage_ptr m){
+    if(!_nameMatches(m))
+        return;
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
     imgnode_ptr_t np = m_widget->imgNode(m->nodeId());
     if(np)

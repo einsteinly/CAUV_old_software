@@ -356,12 +356,12 @@ NodeType::e Node::type() const{
 
 void Node::close(){
     debug() << "Node::close" << id();
-    m_pw->send(boost::make_shared<RemoveNodeMessage>(m_node_id));
+    m_pw->send(boost::make_shared<RemoveNodeMessage>(m_pw->pipelineName(), m_node_id));
 }
 
 void Node::exec(){
     debug() << "Node::exec" << id();
-    m_pw->send(boost::make_shared<ForceExecRequestMessage>(m_node_id));
+    m_pw->send(boost::make_shared<ForceExecRequestMessage>(m_pw->pipelineName(), m_node_id));
 }
 
 renderable_ptr_t Node::outSocket(std::string const& id){
@@ -451,7 +451,6 @@ void Node::removeMenu(menu_ptr_t m){
 void Node::remove(renderable_ptr_t){
     error() << __func__ << __LINE__ << "unimplemented";
 }
-
 
 void Node::refreshLayout(){
     // yay, lots of random constants: layout is fun

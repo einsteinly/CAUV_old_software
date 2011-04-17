@@ -37,6 +37,8 @@ void ImageProcessor::onSonarDataMessage(SonarDataMessage_ptr m){
 }
 
 void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
     node_id new_id = 0;
     std::map<std::string, NodeParamValue> params;
     std::map<std::string, NodeOutput> inputs;

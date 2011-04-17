@@ -44,6 +44,10 @@ class PipelineWidget: public QGLWidget,
         QSize minimumSizeHint() const;        
         QSize sizeHint() const;
         
+        // Causes GUI to discard all current state
+        void setPipelineName(std::string const& name);
+        std::string pipelineName() const;        
+        
         void remove(menu_ptr_t);
         void remove(node_ptr_t);
         void add(renderable_ptr_t);
@@ -91,6 +95,7 @@ class PipelineWidget: public QGLWidget,
     Q_SIGNALS:
         void redrawPosted();
         void messageGenerated(boost::shared_ptr<Message>);
+        void nameChanged(std::string const&);
     
     protected:
         void initializeGL();
@@ -119,6 +124,7 @@ class PipelineWidget: public QGLWidget,
         void removeNodeAtMouse();
         void testEditBoxMenu();
         void iterateLayout();
+        void changeNameMenu();
 
         
         Point m_win_centre;       // projected coordinates of the window
@@ -154,6 +160,11 @@ class PipelineWidget: public QGLWidget,
          */
         mutable mutex_t m_redraw_posted_lock;
         bool m_redraw_posted;
+        
+        /* name of pipeline controlled by this widget: used to filter incoming
+         * and construct outgoing messages
+         */
+        std::string m_pipeline_name;
 };
 
 } // namespace pw

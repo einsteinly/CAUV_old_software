@@ -27,6 +27,7 @@ ImagePipelineNode::ImagePipelineNode()
 
 void ImagePipelineNode::onRun()
 {
+    info() << "starting pipeline, name: \"" << m_pipeline_name << "\"";
     m_pipeline->start(m_pipeline_name);
     
     joinGroup("image");
@@ -83,8 +84,15 @@ int main(int argc, char** argv)
     signal(SIGINT, interrupt);
     node = new ImagePipelineNode();
     
-    int ret = node->parseOptions(argc, argv);
-    if(ret != 0) return ret;
+    int ret = 0;
+    try{
+        ret = node->parseOptions(argc, argv);
+    }catch(std::exception& e){
+        std::cout << e.what() << std::endl;
+        return -1;
+    }
+    if(ret != 0)
+        return ret;
 
     node->run();
     cleanup();

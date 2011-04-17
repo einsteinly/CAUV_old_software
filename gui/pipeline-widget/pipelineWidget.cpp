@@ -52,7 +52,8 @@ PipelineWidget::PipelineWidget(QWidget *parent)
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_overkey(boost::make_shared<ok::OverKey>(this)),
-      m_lock(), m_redraw_posted_lock(), m_redraw_posted(false){
+      m_lock(), m_redraw_posted_lock(), m_redraw_posted(false),
+      m_pipeline_name("default"){
     // TODO: more appropriate QGLFormat?
 
     // QueuedConnection should ensure updateGL is called in the main thread
@@ -79,15 +80,26 @@ void PipelineWidget::initKeyBindings(){
         boost::make_shared<Text>(this, "add node", dec_font, dec_font_size)
     );
 
-    ok::action_ptr_t et_menu_act = boost::make_shared<ok::Action>(
+    /*ok::action_ptr_t et_menu_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::testEditBoxMenu, this),
-        ok::Action::f_t(),
+        ok::Action::null_f,
         "test"
-    );
+    );*/
 
+    ok::action_ptr_t set_name_menu_act = boost::make_shared<ok::Action>(
+        boost::bind(&PipelineWidget::changeNameMenu, this),
+        ok::Action::null_f,
+        "pick pipeline",
+        boost::make_shared<Text>(this, "pick pipeline", dec_font, dec_font_size)
+    );
+    
+    typedef boost::shared_ptr<GraphRequestMessage> mk_gr_msg_f_t(std::string const&);
     ok::action_ptr_t gm_msg_act = boost::make_shared<ok::Action>(
         boost::bind(&PipelineWidget::send, this,
-            boost::make_shared<GraphRequestMessage>()
+            Defer< boost::shared_ptr<Message> >(boost::bind(
+                (mk_gr_msg_f_t*)boost::make_shared<GraphRequestMessage, std::string>,
+                Defer<std::string const&>(boost::bind(&PipelineWidget::pipelineName, this))
+            ))
         ),
         ok::Action::null_f,
         "reload",
@@ -117,7 +129,8 @@ void PipelineWidget::initKeyBindings(){
 
     m_overkey->registerKey(Qt::Key_Space, Qt::NoModifier, an_menu_act);
     m_overkey->registerKey(Qt::Key_A, Qt::NoModifier, an_menu_act);
-    m_overkey->registerKey(Qt::Key_E, Qt::NoModifier, et_menu_act);
+    //m_overkey->registerKey(Qt::Key_E, Qt::NoModifier, et_menu_act);
+    m_overkey->registerKey(Qt::Key_N, Qt::NoModifier, set_name_menu_act);
     m_overkey->registerKey(Qt::Key_R, Qt::NoModifier, gm_msg_act);
     m_overkey->registerKey(Qt::Key_D, Qt::NoModifier, cp_node_act);
     m_overkey->registerKey(Qt::Key_D, Qt::ControlModifier, cp_node_act);
@@ -133,6 +146,27 @@ QSize PipelineWidget::minimumSizeHint() const{
 
 QSize PipelineWidget::sizeHint() const{
     return QSize(800, 800);
+}
+
+void PipelineWidget::setPipelineName(std::string const& name){
+    if(name == m_pipeline_name)
+        return;
+
+    lock_t l(m_lock);
+    m_pipeline_name = name;
+    
+    m_nodes.clear();
+    m_imgnodes.clear();
+    m_arcs.clear();
+    m_owning_mouse.clear();
+    m_receiving_move.clear();
+    m_contents.clear();
+
+    info() << "controlled pipeline name set to" << name;
+
+    // for anyone interested in the name, e.g. displaying it to identify this
+    // widget:
+    Q_EMIT nameChanged(name);
 }
 
 void PipelineWidget::remove(renderable_ptr_t p){
@@ -409,6 +443,10 @@ void PipelineWidget::removeMenu(menu_ptr_t r){
     remove(r);
 }
 
+
+std::string PipelineWidget::pipelineName() const{
+    return m_pipeline_name;
+}
 
 void PipelineWidget::initializeGL(){
     glEnable(GL_DEPTH_TEST);
@@ -800,6 +838,7 @@ void PipelineWidget::duplicateNodeAtMouse(){
     node_ptr_t current_node = nodeAt(lastMousePosition());
     if(current_node)
         send(boost::make_shared<AddNodeMessage>(
+            pipelineName(),
             current_node->type(),
             std::vector<NodeInputArc>(),
             std::vector<NodeOutputArc>()
@@ -811,6 +850,7 @@ void PipelineWidget::removeNodeAtMouse(){
     node_ptr_t current_node = nodeAt(lastMousePosition());
     if(current_node)
         send(boost::make_shared<RemoveNodeMessage>(
+            pipelineName(),
             current_node->id()
         ));
 }
@@ -819,6 +859,17 @@ void PipelineWidget::testEditBoxMenu(){
     debug() << __func__;
     addMenu(boost::make_shared< EditText<int> >(
         this, std::string("edit here"), BBox(0, -6, 80, 10), tdf, 0
+    ), lastMousePosition());
+    postRedraw(0);
+}
+
+void nameChangeDone(pw_ptr_t pw, const std::string& name){
+    pw->setPipelineName(name);
+}
+
+void PipelineWidget::changeNameMenu(){
+    addMenu(boost::make_shared< EditText<pw_ptr_t> >(
+        this, m_pipeline_name, BBox(0, -6, 100, 10), nameChangeDone, this
     ), lastMousePosition());
     postRedraw(0);
 }
