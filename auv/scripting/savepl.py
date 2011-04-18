@@ -11,13 +11,13 @@ import time
 import pickle
 import optparse
 
-def savepl(spread, port, fname, timeout=3.0):
+def savepl(spread, port, fname, timeout=3.0, name='default'):
     with open(fname, 'wb') as outf:
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
         info('Initializing pipeline model...')
-        model = pipeline.Model(n)
+        model = pipeline.Model(n, name)
 
         info('Getting pipeline state...')
         saved = model.get(timeout)
@@ -28,13 +28,13 @@ def savepl(spread, port, fname, timeout=3.0):
         info('Done.')
 
 
-def loadpl(spread, port, fname, timeout=3.0):
+def loadpl(spread, port, fname, timeout=3.0, name='default'):
     with open(fname, 'rb') as inf:
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
         info('Initializing pipeline model...')
-        model = pipeline.Model(n)
+        model = pipeline.Model(n, name)
 
         info('UnPickling...')
         saved = pickle.load(inf)
@@ -44,12 +44,12 @@ def loadpl(spread, port, fname, timeout=3.0):
 
         info('Done.')
 
-def clearpl(spread, port):
+def clearpl(spread, port, name='default'):
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
         info('Initializing pipeline model...')
-        model = pipeline.Model(n)
+        model = pipeline.Model(n, name)
 
         info('Clearing...')
         model.clear()
@@ -60,6 +60,7 @@ def clearpl(spread, port):
 if __name__ == '__main__':
     parser = optparse.OptionParser(usage='usage: %prog [-f filename] (load|save|clear)')
     parser.add_option("-f", "--file", dest="fname", default="pipeline.pipe")
+    parser.add_option("-n", "--pipeline-name", dest="name", default="default")
     parser.add_option("-s", "--spread", dest="spread", default="localhost")
     parser.add_option("-p", "--port", dest="port", type='int', default=16707)
     parser.add_option("-t", "--timeout", dest="timeout", type='float', default=3.0)
@@ -68,13 +69,14 @@ if __name__ == '__main__':
     port = opts.port
     fname = opts.fname
     timeout = opts.timeout
+    name = opts.name
 
     if len(args) == 0 or args[0].lower() == 'save':
-        savepl(opts.spread, port, fname, timeout)
+        savepl(opts.spread, port, fname, timeout, name)
     elif len(args) == 1 and args[0].lower() == 'load':
-        loadpl(opts.spread, port, fname, timeout)
+        loadpl(opts.spread, port, fname, timeout, name)
     elif len(args) == 1 and args[0].lower() == 'clear':
-        clearpl(opts.spread, port)
+        clearpl(opts.spread, port, name)
     else:
          parser.print_help()
 

@@ -121,7 +121,7 @@ void PipelineWidget::initKeyBindings(){
     );
 
     ok::action_ptr_t it_layout_act = boost::make_shared<ok::Action>(
-        boost::bind(&PipelineWidget::iterateLayout, this),
+        boost::bind(&PipelineWidget::calcLayout, this),
         ok::Action::null_f,
         "auto-layout",
         boost::make_shared<Text>(this, "auto-layout", dec_font, dec_font_size)
@@ -167,6 +167,8 @@ void PipelineWidget::setPipelineName(std::string const& name){
     // for anyone interested in the name, e.g. displaying it to identify this
     // widget:
     Q_EMIT nameChanged(name);
+    
+    send(boost::make_shared<GraphRequestMessage>(name));
 }
 
 void PipelineWidget::remove(renderable_ptr_t p){
@@ -201,6 +203,8 @@ void PipelineWidget::remove(node_ptr_t n){
         return;
     lock_t l(m_lock);
     m_nodes.erase(n->id());
+    // TODO: remove arcs more efficiently
+    sanitizeArcs();
     remove(renderable_ptr_t(n));
 }
 
@@ -874,7 +878,7 @@ void PipelineWidget::changeNameMenu(){
     postRedraw(0);
 }
 
-void PipelineWidget::iterateLayout(){
+void PipelineWidget::calcLayout(){
     namespace gv = graphviz;
     
     gv::Context c;

@@ -123,7 +123,7 @@ class PipelineWidget: public QGLWidget,
         void duplicateNodeAtMouse();
         void removeNodeAtMouse();
         void testEditBoxMenu();
-        void iterateLayout();
+        void calcLayout();
         void changeNameMenu();
 
         

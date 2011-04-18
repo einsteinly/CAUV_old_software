@@ -197,7 +197,7 @@ typedef _Colour<float> Colour;
 // useful overloads etc
 void glTranslatef(Point const& p, double const& z = 0.0);
 void glVertex(Point const& p);
-void glBox(BBox const& b, double const& corner_radius = 0.0f);
+void glBox(BBox const& b, double const& corner_radius = 0.0f, unsigned corner_segments = 8);
 void glArc(double const& radius, double const& start, double const& end, unsigned segments);
 void glSegment(double const& radius, double const& start, double const& end, unsigned segments);
 void glCircle(double const& radius, unsigned segments = 16);

@@ -34,9 +34,11 @@ class State:
         return str(self.nodes)
 
 class Model(messaging.BufferedMessageObserver):
-    def __init__(self, node):
+    def __init__(self, node, pipeline_name):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
+
+        self.pipeline_name = pipeline_name
 
         self.description_ready_condition = threading.Condition()
         self.graph_description = None
@@ -54,7 +56,7 @@ class Model(messaging.BufferedMessageObserver):
         node.addObserver(self)
 
     def clear(self):
-        self.send(messaging.ClearPipelineMessage())
+        self.send(messaging.ClearPipelineMessage(self.pipeline_name))
 
     def save(self, picklefname, timeout=3.0):
         with open(picklefname, 'wb') as outf:
@@ -168,7 +170,10 @@ class Model(messaging.BufferedMessageObserver):
         self.node_added_condition.acquire()
         self.node_added = None
         self.send(messaging.AddNodeMessage(
-            messaging.NodeType(type), messaging.NodeInputArcVec(), messaging.NodeOutputArcVec()
+            self.pipeline_name,
+            messaging.NodeType(type),
+            messaging.NodeInputArcVec(),
+            messaging.NodeOutputArcVec()
         ))
         self.node_added_condition.wait(timeout)
         if self.node_added is None:
@@ -182,7 +187,7 @@ class Model(messaging.BufferedMessageObserver):
         self.parameter_set_condition.acquire()
         self.parameter_set = None
         self.send(messaging.SetNodeParameterMessage(
-            node, param, value
+            self.pipeline_name, node, param, value
         ))
         self.parameter_set_condition.wait(timeout)
         if self.parameter_set is None:
@@ -204,7 +209,7 @@ class Model(messaging.BufferedMessageObserver):
         to.node = dst
         to.input = inp
         debug('add arc: %s --> %s' % (fr, to))
-        self.send(messaging.AddArcMessage(fr, to))
+        self.send(messaging.AddArcMessage(self.pipeline_name, fr, to))
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:
             self.arc_added_condition.release()
@@ -214,17 +219,28 @@ class Model(messaging.BufferedMessageObserver):
 
     # Overloads for observing pipeline-related messages:
 
+    def checkName(self, msg):
+        if msg.pipelineName != self.pipeline_name:
+            debug('ignoring NodeAddedMessage (name %s != %s)' % 
+                (msg.pipelineName, msg.__name__)
+            )
+            return False
+        return True
+
     def onNodeAddedMessage(self, m):
+        if not self.checkName(m): return
         self.node_added_condition.acquire()
         self.node_added = m
         self.node_added_condition.notify()
         self.node_added_condition.release()
 
     #def onNodeRemovedMessage(self, m):
+    #    if not self.checkName(m): return
     #    #print m
     #    pass
 
     def onNodeParametersMessage(self, m):
+        if not self.checkName(m): return
         # TODO: be discriminating about whether this parameter message actually
         # corresponds to the one set in setParameterSynchronous
         self.parameter_set_condition.acquire()
@@ -233,41 +249,48 @@ class Model(messaging.BufferedMessageObserver):
         self.parameter_set_condition.release()
 
     def onGraphDescriptionMessage(self, m):
+        if not self.checkName(m): return
         self.description_ready_condition.acquire()
         self.graph_description = m
         self.description_ready_condition.notify()
         self.description_ready_condition.release()
 
     def onArcAddedMessage(self, m):
+        if not self.checkName(m): return
         self.arc_added_condition.acquire()
         self.arc_added = m
         self.arc_added_condition.notify()
         self.arc_added_condition.release()
 
     #def onArcRemovedMessage(self, m):
+    #    if not self.checkName(m): return
     #    #print m
     #    pass
 
     #def onStatusMessage(self, m):
+    #    if not self.checkName(m): return
     #    #print m
     #    pass
 
     #def onInputStatusMessage(self, m):
+    #    if not self.checkName(m): return
     #    #print m
     #    pass
     
     #def onOutputStatusMessage(self, m):
+    #    if not self.checkName(m): return
     #    #print m
     #    pass
     
     #def onGuiImageMessage(self, m):
+    #    if not self.checkName(m): return
     #    #print m
     #    pass
 
     def __getSynchronousGraphDescription(self, timeout=3.0):
         self.description_ready_condition.acquire()
         self.graph_description = None
-        self.send(messaging.GraphRequestMessage());
+        self.send(messaging.GraphRequestMessage(self.pipeline_name));
         #print '!!\t\twaiting on condition...'
         self.description_ready_condition.wait(timeout)
         #print '!!\t\tnotified'

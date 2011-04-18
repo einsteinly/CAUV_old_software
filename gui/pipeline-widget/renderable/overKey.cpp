@@ -27,7 +27,7 @@ const static float Release_Delay = 0.5;
 // Layout Constants, etc:
 
 const static int Key_Font_Size = 12;
-const static int Corner_Segments = 8;
+const static int Corner_Segments = 4;
 const static float Key_W = 48;
 const static float Key_H = 48;
 const static float Key_P = 3;
@@ -125,7 +125,7 @@ void Key::draw(drawtype_e::e){
 
 void Key::draw(Qt::KeyboardModifiers const& mods, Colour const& mul){
     glColor(Key_BG_Colours[m_state] * mul);
-    glBox(m_box, m_box.h()/8);
+    glBox(m_box, m_box.h()/8, Corner_Segments);
 
     if(m_text.count(mods)){
         glTranslatef(m_text[mods]->m_pos);
@@ -649,7 +649,7 @@ void OverKey::draw(drawtype_e::e flags){
             }
             glPopMatrix();
         }
-        #ifndef CAUV_NO_DEBUG
+        #ifndef NDEBUG
         glCheckError();
         #endif
         
