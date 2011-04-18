@@ -132,6 +132,6 @@ DeviceList GamepadInput::listDevices() {
     return im->listFreeDevices();
 }
 
-const int GamepadInput::getNumDevices(){
+int GamepadInput::getNumDevices(){
     return GamepadInput::getInputSystem()->getNumberOfDevices( OISJoyStick );
 }

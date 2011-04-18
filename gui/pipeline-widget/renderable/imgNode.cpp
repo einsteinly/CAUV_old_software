@@ -96,8 +96,9 @@ class TexImg{
 
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-           
-            cv::Mat m;
+          
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
+            
             GLint max_size = 0;
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
             
@@ -109,25 +110,33 @@ class TexImg{
                 return;
             }
             
-            const int img_w = img->cvMat().cols;
-            const int img_h = img->cvMat().rows;
-            int w, h;
-            max_size = std::min(max_size, std::max(img_w, img_h));
-            if(img_h > img_w){
-                h = max_size;
-                w = h * img_w / img_h;
-                // distort images slightly, if necessary, to ensure OpenCV doesn't pad them
-                w &= ~0x3;
-            }else{
-                w = max_size;
-                h = w * img_h / img_w;
+            cv::Mat m;
+            int w = img->width();
+            int h = img->height();
+            if (h <= max_size && w <= max_size)
+            {
+                m = img->cvMat();
             }
-            cv::resize(img->cvMat(), m, cv::Size(w, h), 0, 0, cv::INTER_LANCZOS4);
+            else
+            {
+                int w_resized, h_resized;
+                if(h > w){
+                    h_resized = max_size;
+                    w_resized = h_resized * w / h;
+                }else{
+                    w_resized = max_size;
+                    h_resized = w_resized * h / w;
+                }
+                w = w_resized;
+                h = h_resized;
+                cv::resize(img->cvMat(), m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
+            }
 
             GLenum tex_type = GL_UNSIGNED_BYTE;
             switch(m.type() & CV_MAT_DEPTH_MASK){
                 case CV_8S:
                     warning() << "_genTexture(): signed byte image type not supported: using unsigned";
+                    // case fall through
                 case CV_8U:
                     tex_type = GL_UNSIGNED_BYTE;
                     break;
@@ -182,8 +191,7 @@ void Img::draw(drawtype_e::e flags){
     glColor(Colour(0.2, 0.5));
     glBox(m_bbox);
     
-    {
-        boost::lock_guard<boost::mutex> l(m_img_mutex);
+    CAUV_LOCK(m_img_mutex) {
         if (m_next_img)
         {
             m_img.swap(m_next_img);
@@ -200,8 +208,7 @@ void Img::display(Image const& img){
     debug(6) << __func__ << "enter";
     boost::shared_ptr<TexImg> next_img = boost::make_shared<TexImg>(img);
     
-    {
-        boost::lock_guard<boost::mutex> l(m_img_mutex);
+    CAUV_LOCK(m_img_mutex) {
         m_next_img = next_img;
     }
 

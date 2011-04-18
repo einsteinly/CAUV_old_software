@@ -4,6 +4,7 @@ from __future__ import with_statement
 
 import os
 import sys
+import hashlib
 from optparse import OptionParser
 
 import msggenyacc
@@ -326,6 +327,23 @@ def addNestedTypes(list_types, map_types):
     return (list_types | rl | recursed[0],
             map_types | rm | recursed[1])
 
+
+def writeIfChanged(filename, text):
+    if os.path.exists(filename):
+        texthash = hashlib.md5()
+        texthash.update(text)
+        with open(filename, "r") as file:
+            filehash = hashlib.md5()
+            filehash.update(file.read())
+        if filehash.digest() == texthash.digest():
+            print "File %s not changed, not writing" % filename
+            return
+    
+    print "Writing file %s" % filename
+    with open(filename, "w") as file:
+        file.write(text)
+    
+
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
@@ -362,46 +380,43 @@ def main():
     msgdir = os.path.dirname(sys.argv[0])
 
     if options.lang == "c++-serialisation":
-        with open(output + ".h", "w") as file:
-            t = Template(file=os.path.join(msgdir, "cppmess-serialise.template.h"), searchList=tree)
-            file.write(str(t))
-        with open(output + ".cpp", "w") as file:
-            t = Template(file=os.path.join(msgdir, "cppmess-serialise.template.cpp"), searchList=tree)
-            t.toCPPType = toCPPType            
-            file.write(str(t)) 
+        t = Template(file=os.path.join(msgdir, "cppmess-serialise.template.h"), searchList=tree)
+        writeIfChanged(output + ".h", str(t))
+            
+        t = Template(file=os.path.join(msgdir, "cppmess-serialise.template.cpp"), searchList=tree)
+        t.toCPPType = toCPPType            
+        writeIfChanged(output + ".cpp", str(t))
 
     elif options.lang == "c++":
-        with open(output + "_fwd.h", "w") as file:
-            t = Template(file=os.path.join(msgdir, "cppmess-forward.template.h"), searchList=tree)
-            t.toCPPType = toCPPType            
-            file.write(str(t))
-        with open(output + "_messages.h", "w") as file:
-            t = Template(file = os.path.join(msgdir, "cppmess-messages.template.h"), searchList=tree)
-            t.toCPPType = toCPPType
-            file.write(str(t))
-        with open(output + ".h", "w") as file:
-            t = Template(file = os.path.join(msgdir, "cppmess-messaging.template.h"), searchList=tree)
-            t.toCPPType = toCPPType
-            file.write(str(t))
-        with open(output + ".cpp", "w") as file:
-            t = Template(file = os.path.join(msgdir, "cppmess-messaging.template.cpp"), searchList=tree)
-            t.toCPPType = toCPPType
-            file.write(str(t))
+        t = Template(file=os.path.join(msgdir, "cppmess-forward.template.h"), searchList=tree)
+        t.toCPPType = toCPPType            
+        writeIfChanged(output + "_fwd.h", str(t))
+
+        t = Template(file = os.path.join(msgdir, "cppmess-messages.template.h"), searchList=tree)
+        t.toCPPType = toCPPType
+        writeIfChanged(output + "_messages.h", str(t))
+
+        t = Template(file = os.path.join(msgdir, "cppmess-messaging.template.h"), searchList=tree)
+        t.toCPPType = toCPPType
+        writeIfChanged(output + ".h", str(t))
+
+        t = Template(file = os.path.join(msgdir, "cppmess-messaging.template.cpp"), searchList=tree)
+        t.toCPPType = toCPPType
+        writeIfChanged(output + ".cpp", str(t))
     
     elif options.lang == "c":
-        with open(output + ".h", "w") as file:
-            t = Template(file = os.path.join(msgdir, "cmessage.template.h"), searchList=tree)
-            t.toCType = toCType
-            t.loadsavesuffix = cLoadSaveSuffix
-            t.mapToBaseType = mapToBaseType
-            file.write(str(t))
-        with open(output + ".c", "w") as file:
-            t = Template(file = os.path.join(msgdir, "cmessage.template.c"), searchList=tree)
-            t.toCType = toCType
-            t.loadsavesuffix = cLoadSaveSuffix
-            t.mapToBaseType = mapToBaseType
-            t.headerFile = os.path.basename(output + ".h") 
-            file.write(str(t))
+        t = Template(file = os.path.join(msgdir, "cmessage.template.h"), searchList=tree)
+        t.toCType = toCType
+        t.loadsavesuffix = cLoadSaveSuffix
+        t.mapToBaseType = mapToBaseType
+        writeIfChanged(output + ".h", str(t))
+
+        t = Template(file = os.path.join(msgdir, "cmessage.template.c"), searchList=tree)
+        t.toCType = toCType
+        t.loadsavesuffix = cLoadSaveSuffix
+        t.mapToBaseType = mapToBaseType
+        t.headerFile = os.path.basename(output + ".h") 
+        writeIfChanged(output + ".c", str(t))
 
     elif options.lang == "java":
         rootdir = os.path.join(output, reduce(os.path.join, options.package.split(".")))
@@ -414,61 +429,49 @@ def main():
         if not os.path.exists(messagingdir):
             os.makedirs(messagingdir)
 
-  #     with open(os.path.join(messagingdir, "Serialiser.java"), "w") as file:
-  #         t = Template(file = os.path.join(msgdir, "serialiser.template.java"), searchList=tree)
-  #         t.toJavaType = toJavaType
-  #         t.dataFuncs = javaDataFuncs
-  #         t.readwritesuffix = javaReadWriteSuffix
-  #         t.mapToBaseType = mapToBaseType
-  #         t.package = options.package + ".messaging"
-  #         file.write(str(t))
-
         for s in tree["structs"]:
-            with open(os.path.join(typedir, s.name + ".java"), "w") as file:
-                t = Template(file = os.path.join(msgdir, "struct.template.java"), searchList={"s":s})
-                t.toJavaType = toJavaType
-                t.serialiseJavaType = serialiseJavaType
-                t.deserialiseJavaType = deserialiseJavaType
-                t.rootpackage = options.package
-                t.package = options.package + ".types"
-                file.write(str(t))
+            t = Template(file = os.path.join(msgdir, "struct.template.java"), searchList={"s":s})
+            t.toJavaType = toJavaType
+            t.serialiseJavaType = serialiseJavaType
+            t.deserialiseJavaType = deserialiseJavaType
+            t.rootpackage = options.package
+            t.package = options.package + ".types"
+            writeIfChanged(os.path.join(typedir, s.name + ".java"), str(t))
+
         for e in tree["enums"]:
-            with open(os.path.join(typedir, e.name + ".java"), "w") as file:
-                t = Template(file = os.path.join(msgdir, "enum.template.java"), searchList={"e":e})
+            t = Template(file = os.path.join(msgdir, "enum.template.java"), searchList={"e":e})
+            t.toJavaType = toJavaType
+            t.serialiseJavaType = serialiseJavaType
+            t.deserialiseJavaType = deserialiseJavaType
+            t.rootpackage = options.package
+            t.package = options.package + ".types"
+            writeIfChanged(os.path.join(typedir, e.name + ".java"), str(t))
+
+        for g in tree["groups"]:
+            for m in g.messages:
+                t = Template(file = os.path.join(msgdir, "message.template.java"), searchList={"m":m})
                 t.toJavaType = toJavaType
                 t.serialiseJavaType = serialiseJavaType
                 t.deserialiseJavaType = deserialiseJavaType
                 t.rootpackage = options.package
-                t.package = options.package + ".types"
-                file.write(str(t))
-        for g in tree["groups"]:
-            #with open(os.path.join(messagingdir, "MessageSource.java"), "w") as file:
-            #    t = Template(file
-            for m in g.messages:
-                with open(os.path.join(messagingdir, m.name + "Message.java"), "w") as file:
-                    t = Template(file = os.path.join(msgdir, "message.template.java"), searchList={"m":m})
-                    t.toJavaType = toJavaType
-                    t.serialiseJavaType = serialiseJavaType
-                    t.deserialiseJavaType = deserialiseJavaType
-                    t.rootpackage = options.package
-                    t.package = options.package + ".messaging"
-                    t.group = g
-                    file.write(str(t))
-        with open (os.path.join(messagingdir, "Message.java"), "w") as file:
-            t= Template(file = os.path.join(msgdir, "basemessage.template.java"), searchList=[])
-            t.rootpackage = options.package
-            t.package = options.package + ".messaging"
-            file.write(str(t))
-        with open (os.path.join(messagingdir, "MessageObserver.java"), "w") as file:
-            t= Template(file = os.path.join(msgdir, "messageobserver.template.java"), searchList=tree)
-            t.rootpackage = options.package
-            t.package = options.package + ".messaging"
-            file.write(str(t))
-        with open (os.path.join(messagingdir, "MessageSource.java"), "w") as file:
-            t= Template(file = os.path.join(msgdir, "messagesource.template.java"), searchList=tree)
-            t.rootpackage = options.package
-            t.package = options.package + ".messaging"
-            file.write(str(t))
+                t.package = options.package + ".messaging"
+                t.group = g
+                writeIfChanged(os.path.join(messagingdir, m.name + "Message.java"), str(t))
+        
+        t= Template(file = os.path.join(msgdir, "basemessage.template.java"), searchList=[])
+        t.rootpackage = options.package
+        t.package = options.package + ".messaging"
+        writeIfChanged(os.path.join(messagingdir, "Message.java"), str(t))
+
+        t= Template(file = os.path.join(msgdir, "messageobserver.template.java"), searchList=tree)
+        t.rootpackage = options.package
+        t.package = options.package + ".messaging"
+        writeIfChanged(os.path.join(messagingdir, "MessageObserver.java"), str(t))
+
+        t= Template(file = os.path.join(msgdir, "messagesource.template.java"), searchList=tree)
+        t.rootpackage = options.package
+        t.package = options.package + ".messaging"
+        writeIfChanged(os.path.join(messagingdir, "MessageSource.java"), str(t))
 
     elif options.lang == "python":
         compilation_units = ["enums", "structs", "variants", "messages", "observers"]
@@ -478,16 +481,17 @@ def main():
         for cu in compilation_units:
             # NB: output treated as directory, because CMake seems to strip
             # trailing ////// from paths
-            with open(output + "/emit_" + cu + ".cpp", "w") as file:
-                t = Template(file = os.path.join(msgdir, "boostpy-emit_%s.cpp.template" % cu),
-                             searchList=tree)
-                t.toCPPType = toCPPType
-                t.isSTLVector = isSTLVector
-                t.isSTLMap = isSTLMap
-                t.CPPContainerTypeName = CPPContainerTypeName
-                t.requiredMapTypes = requiredMapTypes
-                t.requiredVectorTypes = requiredVectorTypes
-                file.write(str(t))
+            
+            t = Template(file = os.path.join(msgdir, "boostpy-emit_%s.cpp.template" % cu),
+                         searchList=tree)
+            t.toCPPType = toCPPType
+            t.isSTLVector = isSTLVector
+            t.isSTLMap = isSTLMap
+            t.CPPContainerTypeName = CPPContainerTypeName
+            t.requiredMapTypes = requiredMapTypes
+            t.requiredVectorTypes = requiredVectorTypes
+            writeIfChanged(output + "/emit_" + cu + ".cpp", str(t))
+
             requiredVectorTypes, requiredMapTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes)
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@
 #include <set>
 
 #include <boost/cstdint.hpp>
+#include <boost/typeof/typeof.hpp>
 
 #ifndef foreach
 #   include <boost/foreach.hpp>
@@ -34,5 +35,7 @@ void msleep(unsigned msecs);
 std::string implode( const std::string &glue, const std::set<std::string> &pieces );
 
 } // namespace cauv
+
+#define CAUV_LOCK(MUTEX) if (bool _lock_guard_bool = false) {} else for (boost::lock_guard<BOOST_TYPEOF(MUTEX)> _lock_guard(MUTEX); !_lock_guard_bool; _lock_guard_bool = true)
 
 #endif//__CAUV_UTILS_H__

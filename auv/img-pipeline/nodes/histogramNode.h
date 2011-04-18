@@ -12,15 +12,14 @@
 #include <generated/messages.h>
 
 #include "../node.h"
-#include "outputNode.h"
 
 namespace cauv{
 namespace imgproc{
 
-class HistogramNode: public OutputNode{
+class HistogramNode: public Node{
     public:
         HistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+            : Node(sched, pl, n, t){
         }
 
         void init(){
@@ -85,8 +84,6 @@ class HistogramNode: public OutputNode{
 
             r["histogram"] = NodeParamValue(binVal);
 
-            //This is the messaging bit
-            sendMessage(boost::make_shared<HistogramMessage>(name, binVal));
             return r;
         }
 

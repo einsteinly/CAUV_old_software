@@ -25,7 +25,7 @@ namespace cauv{
         explicit GamepadInput(const std::string vendor = "");
 
         static OIS::DeviceList listDevices();
-        static const int getNumDevices();
+        static int getNumDevices();
 
         virtual bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
         virtual bool buttonReleased( const OIS::JoyStickEvent &arg, int button );

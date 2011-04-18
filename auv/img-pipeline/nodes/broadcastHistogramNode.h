@@ -1,5 +1,5 @@
-#ifndef __BROADCAST_LINESNODE_H__
-#define __BROADCAST_LINESNODE_H__
+#ifndef __BROADCAST_HISTOGRAMNODE_H__
+#define __BROADCAST_HISTOGRAMNODE_H__
 
 #include <map>
 #include <vector>
@@ -18,9 +18,9 @@
 namespace cauv{
 namespace imgproc{
 
-class BroadcastLinesNode: public OutputNode{
+class BroadcastHistogramNode: public OutputNode{
     public:
-        BroadcastLinesNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+        BroadcastHistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n,  NodeType::e t)
             : OutputNode(sched, pl, n, t){
         }
 
@@ -33,12 +33,12 @@ class BroadcastLinesNode: public OutputNode{
             // no outputs
             
             // parameters:
-            registerParamID< std::vector<Line> >("lines", std::vector<Line>());
-            registerParamID<std::string>("name", "unnamed lines",
-                                         "name for detected set of lines");
+            registerParamID< std::vector<float> >("histogram", std::vector<float>());
+            registerParamID<std::string>("name", "unnamed histogram",
+                                         "name for histogram");
         }
     
-        virtual ~BroadcastLinesNode(){
+        virtual ~BroadcastHistogramNode(){
             stop();
         }
 
@@ -47,12 +47,13 @@ class BroadcastLinesNode: public OutputNode{
             out_map_t r;
 
             const std::string name = param<std::string>("name");
-            const std::vector<Line> lines = param< std::vector<Line> >("lines");
+            const std::vector<float> histogram = param< std::vector<float> >("histogram");
 
-            sendMessage(boost::make_shared<LinesMessage>(name, lines));
+            sendMessage(boost::make_shared<HistogramMessage>(name, histogram));
 
             return r;
         }
+
     // Register this node type
     DECLARE_NFR;
 };
@@ -60,5 +61,5 @@ class BroadcastLinesNode: public OutputNode{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __BROADCAST_LINESNODE_H__
+#endif // ndef __BROADCAST_HISTOGRAMNODE_H__
 
