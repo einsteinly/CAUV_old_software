@@ -1,19 +1,18 @@
+attached_files: []
 components: []
-created_time: &id001 2010-11-05 10:14:59.872857
-description: 'Names are important. We need a name for the high-level control system.
-  It
-
-  should either be a really good acronym, or an invented/appropriated word or two
-
-  with the right connotations.'
+created_time: 2010-11-05 10:14:59.872857
+description: !!python/unicode "Names are important. We need a name for the high-level\
+  \ control system. It\r\nshould either be a really good acronym, or an invented/appropriated\
+  \ word or two\r\nwith the right connotations."
 estimate: !!python/object:uuid.UUID
   int: 265108259705088528262102217610008550011
 milestone: !!python/object:uuid.UUID
-  int: 336087129598010674063812125499293341845
-modified_time: *id001
+  int: 143380974880746652587778828338970586177
+modified_time: 2011-04-19 00:12:54.600770
 owner: !!python/object:uuid.UUID
   int: 78002556280449588393479432476918080669
-pscore: 0
+points: null
+pscore: !!python/unicode '0'
 status: !!python/object:uuid.UUID
   int: 169187340753552385114968941926541347595
 tags:
@@ -23,4 +22,4 @@ title: Name for the AI Component
 type: task
 uuid: !!python/object:uuid.UUID
   int: 224810015053565018235550575287590971981
-yaml_file_saved: 2010-11-05 10:14:59.873584
+yaml_file_saved: 2011-04-19 00:12:54.616251

@@ -1,0 +1,15 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-04-19 00:06:58.568160
+description: title changed to Support multiple img-pipeline instances
+entity: !!python/object:uuid.UUID
+  int: 28056906670805789475208069965486172191
+modified_time: *id001
+pscore: 0
+title: 2011-04-19 00:06 - James Crosby changed task Support multiple img-pipeline
+  instances
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 6230287074645259659195603131829871961
+who_did_it: *id002
+yaml_file_saved: 2011-04-19 00:06:58.577849

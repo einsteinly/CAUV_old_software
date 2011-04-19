@@ -8,14 +8,14 @@ description: !!python/unicode 'First message sometimes doesn''t reach a Buffered
 estimate: !!python/object:uuid.UUID
   int: 265108259705088528262102217610008550011
 milestone: !!python/object:uuid.UUID
-  int: 231943652690746325723562379282290458799
-modified_time: 2011-03-24 13:32:45.081270
+  int: 143380974880746652587778828338970586177
+modified_time: 2011-04-19 00:13:51.212175
 owner: !!python/object:uuid.UUID
-  int: 78002556280449588393479432476918080669
+  int: 236388421408798579890985238796729312670
 points: null
 pscore: !!python/unicode '4'
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 184930133307461754624757499539547831947
 tags:
 - !!python/object:uuid.UUID
   int: 292557765731504791880568992605661195763
@@ -23,4 +23,4 @@ title: !!python/unicode 'BufferedMessageObserver bug'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 27863570133524811908956020326022584255
-yaml_file_saved: 2011-03-24 13:32:45.105922
+yaml_file_saved: 2011-04-19 00:13:51.227899
