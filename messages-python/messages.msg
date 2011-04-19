@@ -184,6 +184,14 @@ struct ScriptExecRequest
     seq : uint32;
 }
 
+group membership
+{
+    message MembershipChanged : 500
+    {
+        affectedGroup : string;
+    }
+}
+
 group debug
 {
     message Debug : 0
@@ -400,6 +408,15 @@ group pipeline
     {
         pipelineName : string;
         nodeId : int32;
+    }
+
+    message PipelineDiscoveryRequest : 12
+    {
+    }
+
+    message PipelineDiscoveryResponse : 13
+    {
+        pipelineName : string;
     }
 }
 

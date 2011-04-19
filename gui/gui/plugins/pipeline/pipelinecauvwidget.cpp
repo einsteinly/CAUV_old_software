@@ -2,12 +2,37 @@
 
 #include <boost/make_shared.hpp>
 
+#include <generated/messages.h>
+
 #include <debug/cauv_debug.h>
 
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>
 
 using namespace cauv;
+
+
+namespace cauv {
+    class PipelineRefreshMessageObserver : public MessageObserver {
+    public:
+        PipelineRefreshMessageObserver(boost::shared_ptr<CauvNode> node) : m_node(node){
+        }
+
+        virtual void onMembershipChangedMessage(MembershipChangedMessage_ptr){
+            info() << "Membership change detected, requesting pipeline listing.";
+            m_node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
+        }
+
+
+        virtual void onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m) {
+            info() << "Pipeline listing response:" << m->pipelineName();
+        }
+
+        protected:
+            boost::shared_ptr<CauvNode> m_node;
+    };
+} // namespace cauv
+
 
 PipelineCauvWidget::PipelineCauvWidget() :
         m_pipeline(new pw::PipelineWidget()),
@@ -35,6 +60,8 @@ const QString PipelineCauvWidget::name() const{
 const QList<QString> PipelineCauvWidget::getGroups() const{
     QList<QString> groups;
     groups.push_back(QString("pl_gui"));
+    groups.push_back(QString("pipeline"));
+    groups.push_back(QString("membership"));
     return groups;
 }
 
@@ -42,6 +69,7 @@ void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_pt
     CauvBasicPlugin::initialise(auv, node);
 
     node->addMessageObserver(m_observer);
+    node->addMessageObserver(boost::make_shared<PipelineRefreshMessageObserver>(node));
 }
 
 void PipelineCauvWidget::send(boost::shared_ptr<Message> message){
