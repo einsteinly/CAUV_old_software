@@ -20,7 +20,7 @@ if (CAUV_BUILD_GUI)
         find_package (OpenCV REQUIRED)
 
         add_subdirectory (pipeline-widget)
-        add_subdirectory (gui-pipeline)
+        #add_subdirectory (gui-pipeline)
         add_subdirectory (gui)
 
     endif ()

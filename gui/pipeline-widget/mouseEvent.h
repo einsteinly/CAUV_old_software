@@ -9,7 +9,7 @@
 #include "pwTypes.h"
 
 // forward declarations
-class QMouseEvent;
+class QGraphicsSceneMouseEvent;
 
 namespace cauv{
 namespace pw{
@@ -22,11 +22,11 @@ namespace pw{
  */
 struct MouseEvent{
     /* refer from qt coordinates to top-level */
-    MouseEvent(QMouseEvent* qm,
+    MouseEvent(QGraphicsSceneMouseEvent* qm,
                PipelineWidget const& p);
 
     /* refer from qt coordinates to top-level renderables: */
-    MouseEvent(QMouseEvent* qm,
+    MouseEvent(QGraphicsSceneMouseEvent* qm,
                boost::shared_ptr<Renderable> r,
                PipelineWidget const& p);
 

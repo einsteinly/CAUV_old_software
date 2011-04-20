@@ -19,7 +19,7 @@ set (
     pipeline-widget_srcs
     pipelineWidget.cpp
     pipelineMessageObserver.cpp
-    pipelineWidgetPlugin.cpp
+    #pipelineWidgetPlugin.cpp
     renderable.cpp
     buildMenus.cpp
     mouseEvent.cpp
@@ -38,7 +38,7 @@ set (
 set (
     pipeline-widget_MOC_HDRS
     pipelineWidget.h
-    pipelineWidgetPlugin.h
+    #pipelineWidgetPlugin.h
 )
 
 QT4_WRAP_CPP(pipeline-widget_MOC_SRCS ${pipeline-widget_MOC_HDRS})

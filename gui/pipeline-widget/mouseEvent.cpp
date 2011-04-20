@@ -1,6 +1,6 @@
 #include "mouseEvent.h"
 
-#include <QMouseEvent>
+#include <QGraphicsSceneMouseEvent>
 
 #include <debug/cauv_debug.h>
 
@@ -10,21 +10,21 @@
 
 using namespace cauv::pw;
 
-MouseEvent::MouseEvent(QMouseEvent* qm, PipelineWidget const& p)
-    : pos((qm->x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x,
-          (p.height()/2 - qm->y()) / p.m_pixels_per_unit - p.m_win_centre.y),
+MouseEvent::MouseEvent(QGraphicsSceneMouseEvent* qm, PipelineWidget const& p)
+    : pos((qm->pos().x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x,
+          (p.height()/2 - qm->pos().y()) / p.m_pixels_per_unit - p.m_win_centre.y),
       buttons(qm->buttons()){
 }
     
 
-MouseEvent::MouseEvent(QMouseEvent* qm,
+MouseEvent::MouseEvent(QGraphicsSceneMouseEvent* qm,
                        boost::shared_ptr<Renderable> r,
                        PipelineWidget const& p)
-    : pos((qm->x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x - r->m_pos.x,
-          (p.height()/2 - qm->y()) / p.m_pixels_per_unit - p.m_win_centre.y - r->m_pos.y),
+    : pos((qm->pos().x() - p.width()/2) / p.m_pixels_per_unit - p.m_win_centre.x - r->m_pos.x,
+          (p.height()/2 - qm->pos().y()) / p.m_pixels_per_unit - p.m_win_centre.y - r->m_pos.y),
       buttons(qm->buttons()){
       debug(2) << "MouseEvent constructed: p=" << pos
-                << "qm: x=" << qm->x() << "y=" << qm->y()
+                << "qm: x=" << qm->screenPos().x() << "y=" << qm->screenPos().y()
                 << "wc: x=" << p.m_win_centre.x << "y=" << p.m_win_centre.y;
 }
 

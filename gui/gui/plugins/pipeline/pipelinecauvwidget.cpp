@@ -9,6 +9,10 @@
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>
 
+#include <QPushButton>
+#include <QResizeEvent>
+#include <QGLWidget>
+
 using namespace cauv;
 
 
@@ -40,7 +44,13 @@ PipelineCauvWidget::PipelineCauvWidget() :
 {
     m_pipeline->connect(m_pipeline, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
 
-    m_tabs.append(m_pipeline);
+    this->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    this->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+
+    this->setScene(m_pipeline);
+    this->scene()->addWidget(new QPushButton("hello"));
+
+    m_tabs.append(this);
 }
 
 PipelineCauvWidget::~PipelineCauvWidget(){
@@ -75,6 +85,14 @@ void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_pt
 void PipelineCauvWidget::send(boost::shared_ptr<Message> message){
     if(m_node)
         m_node->send(message);
+}
+
+
+void PipelineCauvWidget::resizeEvent(QResizeEvent *event)
+{
+    if (scene())
+        scene()->setSceneRect(QRect(QPoint(0, 0), event->size()));
+    QGraphicsView::resizeEvent(event);
 }
 
 Q_EXPORT_PLUGIN2(cauv_pipelineplugin, PipelineCauvWidget)

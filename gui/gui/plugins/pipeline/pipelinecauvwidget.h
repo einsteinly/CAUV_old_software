@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <QObject>
+#include <QGraphicsView>
 
 #include <gui/core/cauvbasicplugin.h>
 
@@ -16,7 +16,7 @@ namespace cauv {
         class PipelineGuiMsgObs;
     }
 
-    class PipelineCauvWidget : public QObject, public CauvBasicPlugin
+    class PipelineCauvWidget : public QGraphicsView, public CauvBasicPlugin
     {
         Q_OBJECT
         Q_INTERFACES(cauv::CauvInterfacePlugin)
@@ -28,6 +28,7 @@ namespace cauv {
         virtual const QString name() const;
         virtual const QList<QString> getGroups() const;
         virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
+        void resizeEvent(QResizeEvent *event);
 
     protected Q_SLOTS:
         void send(boost::shared_ptr<Message> message);

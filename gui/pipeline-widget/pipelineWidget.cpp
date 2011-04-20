@@ -47,20 +47,21 @@ bool operator==(arc_ptr_t a, arc_ptr_t b){
 using namespace cauv::pw;
 
 PipelineWidget::PipelineWidget(QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+    : QGraphicsScene(parent),
       m_win_centre(), m_win_aspect(1), m_win_scale(10), m_scrolldelta(0),
       m_pixels_per_unit(1),
       m_last_mouse_pos(),
       m_overkey(boost::make_shared<ok::OverKey>(this)),
       m_lock(), m_redraw_posted_lock(), m_redraw_posted(false),
-      m_pipeline_name("default"){
+      m_pipeline_name("default"),
+      init(false) {
     // TODO: more appropriate QGLFormat?
 
     // QueuedConnection should ensure updateGL is called in the main thread
-    connect(this, SIGNAL(redrawPosted()), this, SLOT(updateGL()), Qt::QueuedConnection);
+    connect(this, SIGNAL(redrawPosted()), this, SLOT(update()), Qt::QueuedConnection);
 
-    setMouseTracking(true);
-    setFocusPolicy(Qt::StrongFocus);
+    //setMouseTracking(true);
+    //setFocusPolicy(Qt::StrongFocus);
 
     initKeyBindings();
 }
@@ -440,7 +441,7 @@ void PipelineWidget::postText(const std::string &text, const std::string &font)
 	// set tex
 	QString text_stuff = QString::fromStdString(text);
 	QString text_font = QString::fromStdString(font);
-	renderText(0.0,0.0,0.0,text_stuff,text_font);
+        //renderText(0.0,0.0,0.0,text_stuff,text_font);
 }
 
 void PipelineWidget::removeMenu(menu_ptr_t r){
@@ -451,6 +452,24 @@ void PipelineWidget::removeMenu(menu_ptr_t r){
 std::string PipelineWidget::pipelineName() const{
     return m_pipeline_name;
 }
+
+void PipelineWidget::drawBackground(QPainter *painter, const QRectF &)
+{
+    if (painter->paintEngine()->type() != QPaintEngine::OpenGL2) {
+        qWarning("PipelineWidget: drawBackground needs a "
+                 "QGLWidget to be set as viewport on the "
+                 "graphics view");
+        return;
+    }
+
+    if(!init) {
+        initializeGL();
+        init = true;
+    }
+    paintGL();
+
+}
+
 
 void PipelineWidget::initializeGL(){
     glEnable(GL_DEPTH_TEST);
@@ -549,7 +568,7 @@ struct HitRecord
     GLuint maxDepth;
     GLuint names[1];
 };
-void PipelineWidget::mousePressEvent(QMouseEvent *event){
+void PipelineWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
     lock_t l(m_lock);
 	GLuint hits = 0;
     GLuint n = 0;
@@ -567,7 +586,7 @@ void PipelineWidget::mousePressEvent(QMouseEvent *event){
 	glInitNames();
 	glPushName(GLuint(-1));
 
-    projectionForPicking(event->x(), event->y());
+    projectionForPicking(event->pos().x(), event->pos().y());
     glLoadIdentity();
     glScalef(m_pixels_per_unit / m_world_size,
              m_pixels_per_unit / m_world_size, 1.0f);
@@ -646,7 +665,7 @@ void PipelineWidget::keyReleaseEvent(QKeyEvent* event){
     m_overkey->keyReleaseEvent(*event);
 }
 
-void PipelineWidget::wheelEvent(QWheelEvent *event){
+void PipelineWidget::wheelEvent(QGraphicsSceneWheelEvent *event){
     lock_t l(m_lock);
     debug(2) << __func__ << event->delta() << std::hex << event->buttons();
     if(!event->buttons()){
@@ -657,7 +676,7 @@ void PipelineWidget::wheelEvent(QWheelEvent *event){
     }
 }
 
-void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
+void PipelineWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
     lock_t l(m_lock);
     renderable_set_t::iterator i;
     for(i = m_owning_mouse.begin(); i != m_owning_mouse.end(); i++){
@@ -669,13 +688,13 @@ void PipelineWidget::mouseReleaseEvent(QMouseEvent *event){
     }
 }
 
-void PipelineWidget::mouseMoveEvent(QMouseEvent *event){
+void PipelineWidget::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
     lock_t l(m_lock);
     renderable_set_t::iterator i;
     renderable_list_t::iterator j;
     if(!m_owning_mouse.size()){
-        int win_dx = event->x() - m_last_mouse_pos.x();
-        int win_dy = event->y() - m_last_mouse_pos.y();
+        int win_dx = event->pos().x() - m_last_mouse_pos.x();
+        int win_dy = event->pos().y() - m_last_mouse_pos.y();
         if(event->buttons() & Qt::LeftButton){
             Point d(win_dx / m_pixels_per_unit,
                     -win_dy / m_pixels_per_unit); // NB -

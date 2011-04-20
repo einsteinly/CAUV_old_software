@@ -3,6 +3,7 @@
 
 #include <QGLWidget>
 #include <QDesignerCustomWidgetInterface>
+#include <QGraphicsScene>
 
 #include <set>
 #include <map>
@@ -22,7 +23,7 @@ class NodeParametersMessage;
 
 namespace pw{
 
-class PipelineWidget: public QGLWidget,
+class PipelineWidget: public QGraphicsScene,
                       public Container{
     Q_OBJECT
         // private typedefs:
@@ -101,16 +102,20 @@ class PipelineWidget: public QGLWidget,
         void initializeGL();
         void paintGL();
         void resizeGL(int width, int height);
-        void mousePressEvent(QMouseEvent *event);
-        void mouseReleaseEvent(QMouseEvent *event);
-        void mouseMoveEvent(QMouseEvent *event);
+        void mousePressEvent(QGraphicsSceneMouseEvent *event);
+        void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+        void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
 
         void keyPressEvent(QKeyEvent *event);
         void keyReleaseEvent(QKeyEvent *event);
 
-        void wheelEvent(QWheelEvent *event);
+        void wheelEvent(QGraphicsSceneWheelEvent *event);
     
+        void drawBackground(QPainter *painter, const QRectF &);
+
     private:
+        bool init;
+
         void updateProjection();
         void projectionForPicking(int x, int y);
         void drawGrid();
@@ -136,7 +141,7 @@ class PipelineWidget: public QGLWidget,
         const static int m_world_size = 100; // scale everything down by this much,
                                              // since canonical view volume is 1x1x1
         
-        QPoint m_last_mouse_pos;
+        QPointF m_last_mouse_pos;
         
         ok::overlay_ptr_t m_overkey;
         menu_ptr_t m_menu;
