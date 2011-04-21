@@ -176,14 +176,12 @@ struct makePVPairHelper<const T>
 template<typename T>
 struct makePVPairHelper< const std::vector<T> >
 {
-    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const std::vector<T>& val, bool editable) {
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const std::vector<T>& val, bool) {
         std::stringstream ss;
         ss << Type2Name<T>::name << "[" << val.size() << "]"; 
         return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
     }
 };
-
-}// namespace Unnamed
 
 struct PVPairVisitor: public boost::static_visitor< boost::shared_ptr<PVPairEditableBase> >
 {
@@ -205,10 +203,12 @@ protected:
 
 };
 
-static boost::shared_ptr<PVPairEditableBase> makePVPair(
+boost::shared_ptr<PVPairEditableBase> makePVPair(
     Node *n, std::pair<std::string, NodeParamValue> const& p, bool editable){
     return boost::apply_visitor(PVPairVisitor(n, p.first, editable), p.second);
 }
+
+}// namespace Unnamed
 
 void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     // remove any parameters that no longer exist

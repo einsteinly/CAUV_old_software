@@ -1,20 +1,23 @@
-find_package(sensors REQUIRED)
+find_package(sensors)
 
-include_directories (SYSTEM "${sensors_INCLUDE_DIR}")
+if (sensors_FOUND)
 
-# sources
-add_executable (
-    temperature EXCLUDE_FROM_ALL
+    include_directories (SYSTEM "${sensors_INCLUDE_DIR}")
 
-    TempNode.cpp
-)
-cauv_install ( temperature )
+    # sources
+    add_executable (
+        temperature
 
-# libs
-target_link_libraries (
-    temperature
-    
-    ${sensors_LIBRARIES}
-    common
-)
+        TempNode.cpp
+    )
+    cauv_install ( temperature )
 
+    # libs
+    target_link_libraries (
+        temperature
+        
+        ${sensors_LIBRARIES}
+        common
+    )
+
+endif()

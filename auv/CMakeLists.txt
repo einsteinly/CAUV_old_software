@@ -11,8 +11,6 @@ include_directories (${AUV_SOURCE_DIR})
 # make lib a system path, so that we don't get warnings from it
 include_directories (SYSTEM "${AUV_SOURCE_DIR}/lib")
 
-option(CAUV_NO_TEMPERATURE "True if temperature node should not be built" OFF)
-
 add_subdirectory (camera)
 add_subdirectory (control)
 add_subdirectory (controlv2)
@@ -29,6 +27,4 @@ add_subdirectory (send)
 add_subdirectory (sonar)
 add_subdirectory (webcam)
 add_subdirectory (model)
-if (NOT CAUV_NO_TEMPERATURE)
-    add_subdirectory (temperature)
-endif()
+add_subdirectory (temperature)

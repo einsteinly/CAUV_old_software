@@ -15,7 +15,7 @@ LogView::LogView() :
     m_docks[this] = Qt::BottomDockWidgetArea;
 }
 
-void LogView::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
+void LogView::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode>){
     foreach(AUV::logs_map::value_type i, auv->logs){
         QTextEdit * edit = new QTextEdit();
         edit->setReadOnly(true);
