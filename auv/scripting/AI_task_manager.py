@@ -13,14 +13,17 @@ class taskManager():
     def __init__(self):
         self.node = cauv.node.Node('pytskcon')
         self.ai_node = AI_messages.ai_node(self.node, process_initial='t')
-        self.available_tasks
+        self.available_tasks = []
         for task in task_list:
             self.setup_task(task, *task_list[task])
-    def setup_task(task_name, task_detector, task_confirmer, task_action):
+
+    def setup_task(self, task_name, task_detector, task_confirmer, task_action):
         #start detectors
         self.ai_node.send('d','start',task_detector)
-        self.
+        #self.
+
     def run(self):
+        pass
         #check for messages
         #react to messages
         #sleep

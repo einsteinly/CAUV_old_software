@@ -130,13 +130,13 @@ def pipe_follow(auv_node, auv, ready_timeout, lost_timeout = 2, following_timeou
         auv.prop(0)
         #we are no longer aligned with the pipe, stop, and check whether we are still attempting to align (ie enable is still true)
         pf.enable_lock.acquire()
-        if not pf.enable: pf.enable.wait(lost_timeout) #if it isnt, give it lost_timeout to reenable
+        if not pf.enable: pf.enable_lock.wait(lost_timeout) #if it isnt, give it lost_timeout to reenable
         if not pf.enable:
             print "Lost the pipe, giving up"
-            pf.enable.release()
+            pf.enable_lock.release()
             pf.cleanup()
             return
-        pf.enable.release()
+        pf.enable_lock.release()
         #we found the pipe again, loop around
 
 def setup():

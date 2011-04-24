@@ -16,10 +16,10 @@ class detectionControl():
         self.modules = []
         self.running_detectors = {} 
     def start(self, detection_file):
-        if detection_file in self.running_detection:
+        if detection_file in self.running_detectors:
             debug("Detection class "+detection_file+" is already running.")
             return
-        elif not (detection_file in self.modules)
+        elif not (detection_file in self.modules):
             self.modules[detection_file] = __import__(detection_file)
         self.running_detectors[detection_file] = self.modules[detection_file].detector()
     def stop(self, detection_file):
@@ -35,7 +35,7 @@ class detectionControl():
                 message = self.ai_node.getMessage(block=False)
                 if message:
                     try:
-                        result = self.__getattr__(self.message_map[message[2]])(*message[3])
+                        result = getattr(self, self.message_map[message[2]])(*message[3])
                     except:
                         debug('Could not interpret message to detection process')
                         result = None
@@ -44,7 +44,7 @@ class detectionControl():
             #send status
             self.ai_node.send('t','update_detectors',self.running_detectors.keys())
             #run detection
-            for detector in self.detectors:
+            for detector in self.running_detectors:
                 detector.process()
 
 if __name__ == '__main__':

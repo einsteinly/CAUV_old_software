@@ -36,11 +36,11 @@ class DummyAUV:
         if not Effects.prop in self.effects:
             self.effects.append(Effects.prop)
     def stop(self):
-        self.bearing()
-        self.depth()
-        self.pitch()
-        self.strafe()
-        self.prop()
+        self.bearing(0)
+        self.depth(0)
+        self.pitch(0)
+        self.strafe(0)
+        self.prop(0)
 
 class TestAUV:
     def bearing(self, bearing):
