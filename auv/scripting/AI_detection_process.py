@@ -35,7 +35,7 @@ class detectionControl():
                 message = self.ai_node.getMessage(block=False)
                 if message:
                     try:
-                        result = getattr(self, self.message_map[message[2]])(*message[3])
+                        result = self.__getattr__(self.message_map[message[2]])(*message[3])
                     except:
                         debug('Could not interpret message to detection process')
                         result = None

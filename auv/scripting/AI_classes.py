@@ -20,6 +20,6 @@ class ai_process(messaging.BufferedMessageObserver):
         try:
             if m.string[7] == self.process_initial: #this is where the to string appears in the cpickle output
                 message = cPickle.loads(m.string)
-                getattr(self, message[2])(*message[3])
+                self.__getattr__(message[2])(*message[3])
         except:
             debug("Invalid AI message received")

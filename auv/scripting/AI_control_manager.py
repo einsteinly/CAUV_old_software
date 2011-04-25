@@ -13,10 +13,10 @@ class auvControl():
         while True:
             message = self.ai_node.getMessage(block=True)
             try:
-                getattr(self.auv, message[2])(*message[3])
+                self.auv.__getattr__(message[2])(*message[3])
             except AttributeError:
                 try:
-                    getattr(self, message[2])(*message[3])
+                    self.__getattr__(message[2])(*message[3])
                 except AttributeError:
                     debug("Failed to interpret message to auv control")
 
