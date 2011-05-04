@@ -26,8 +26,7 @@ static void _glBox(BBox const& b){
     glVertex2f(b.max.x, b.max.y);
 }
 
-void glBox(BBox const& b, double const& cr){
-    const int corner_segs = 8;
+void glBox(BBox const& b, double const& cr, unsigned corner_segs){
     if(cr < Small_Value_D){
         glBegin(GL_QUADS);
         _glBox(b);

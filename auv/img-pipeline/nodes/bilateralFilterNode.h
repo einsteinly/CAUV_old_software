@@ -15,8 +15,8 @@ namespace imgproc{
 
 class BilateralFilterNode: public Node{
     public:
-        BilateralFilterNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+        BilateralFilterNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t){
         }
 
         void init(){

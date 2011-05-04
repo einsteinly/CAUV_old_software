@@ -27,7 +27,7 @@ const static float Release_Delay = 0.5;
 // Layout Constants, etc:
 
 const static int Key_Font_Size = 12;
-const static int Corner_Segments = 8;
+const static int Corner_Segments = 4;
 const static float Key_W = 48;
 const static float Key_H = 48;
 const static float Key_P = 3;
@@ -125,7 +125,7 @@ void Key::draw(drawtype_e::e){
 
 void Key::draw(Qt::KeyboardModifiers const& mods, Colour const& mul){
     glColor(Key_BG_Colours[m_state] * mul);
-    glBox(m_box, m_box.h()/8);
+    glBox(m_box, m_box.h()/8, Corner_Segments);
 
     if(m_text.count(mods)){
         glTranslatef(m_text[mods]->m_pos);
@@ -489,6 +489,18 @@ void OverKey::remove(renderable_ptr_t){
 bool OverKey::keyPressEvent(KeyEvent const& event){
     KeyBind b(event.key(), event.modifiers());
     m_current_modifiers = b.modifiers;
+    // filter out modifiers that we don't use, and which are used to switch
+    // between windows (control tab, alt tab etc), since we don't always
+    // get notified that these have been released otherwise
+    m_current_modifiers &= ~(Qt::ControlModifier |
+                             Qt::AltModifier |
+                             Qt::MetaModifier);
+    // and ignore individual keypresses of the above keys:
+    if(event.key() == Qt::Key_Control ||
+       event.key() == Qt::Key_Meta || 
+       event.key() == Qt::Key_Alt)
+        return false;
+
     layout_map_t::iterator i;
 
     // remove any key-release callbacks for this key - don't want to update the
@@ -526,8 +538,6 @@ bool OverKey::keyPressEvent(KeyEvent const& event){
                 debug(2) << BashColour::Red << "key pressed" << i->second;
             }
     /*}*/
-
-    m_current_modifiers &= ~(Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
     
     if(!event.isAutoRepeat())
         debug() << "keyPressEvent:" << event.text().toStdString() << "k=" << b.keycode
@@ -639,7 +649,7 @@ void OverKey::draw(drawtype_e::e flags){
             }
             glPopMatrix();
         }
-        #ifndef CAUV_NO_DEBUG
+        #ifndef NDEBUG
         glCheckError();
         #endif
         

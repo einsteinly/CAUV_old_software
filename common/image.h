@@ -27,6 +27,10 @@ class Image{
         cv::Mat const& cvMat() const;
         cv::Mat& cvMat();
 
+        int width() const;
+        int height() const;
+        int channels() const;
+
         void serializeQuality(int32_t);
 
     private:

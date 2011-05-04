@@ -3,6 +3,7 @@
 
 #include "simulatedauv.h"
 
+
 namespace cauv {
 
     namespace sim {
@@ -10,7 +11,7 @@ namespace cauv {
         class RedHerring : public SimulatedAUV
         {
         public:
-            RedHerring();
+            RedHerring(boost::shared_ptr<AUV> auv);
 
             osg::ref_ptr<sim::Camera> getPrimaryCamera();
         };

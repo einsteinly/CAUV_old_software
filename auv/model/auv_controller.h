@@ -13,7 +13,7 @@
 #include "auv_model.h"
 
 namespace cauv{
-
+    
     class AUVController : public MessageObserver, public boost::signals2::trackable {
 
 public:
@@ -37,6 +37,7 @@ public:
     void onControllerStateMessage(ControllerStateMessage_ptr m);
     void onBatteryUseMessage(BatteryUseMessage_ptr m);
     void onMotorStateMessage(MotorStateMessage_ptr m);
+    void onProcessStatusMessage(ProcessStatusMessage_ptr m);
 
     bool pushState(bool state);
     bool popState();
@@ -47,7 +48,7 @@ public:
     template<class T, class S> void sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);
     template<class T, class S> void sendAutopilotParamsMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);
     void sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar);
-    void sendDepthCalibrationMessage(depth_calibration_t params);
+    void sendDepthCalibrationMessage(DepthCalibration params);
     void sendScriptMessage(ScriptExecRequest script);
 
     typedef boost::signal< void(const boost::shared_ptr<Message>) > message_signal_type;

@@ -17,8 +17,8 @@ namespace imgproc{
 
 class SonarInputNode: public InputNode{
     public:
-        SonarInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : InputNode(sched, pl, t), m_last_images_accumulated(0.9999), m_accumulator(){
+        SonarInputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : InputNode(sched, pl, n, t){
         }
 
         void init(){

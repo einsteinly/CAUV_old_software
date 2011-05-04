@@ -98,7 +98,7 @@ class Node: public Draggable,
             boost::shared_ptr<SetNodeParameterMessage> sp =
                 boost::make_shared<SetNodeParameterMessage>();
             NodeParamValue pv = v;
-
+            sp->pipelineName(m_pw->pipelineName());
             sp->nodeId(m_node_id);
             sp->paramId(param);
             sp->value(pv);

@@ -49,13 +49,12 @@ add_definitions(-DQT_PLUGIN)
 add_definitions(-DQT_NO_DEBUG)
 add_definitions(-DQT_SHARED)
 add_library (
-    pipeline-widget SHARED EXCLUDE_FROM_ALL
+    pipeline-widget SHARED
     ${pipeline-widget_srcs}
     ${pipeline-widget_MOC_SRCS}
     ${SRCD}/LiberationSans-Regular.h
     ${SRCD}/LiberationMono-Regular.h
 )
-cauv_install ( pipeline-widget )
 
 target_link_libraries (
     pipeline-widget

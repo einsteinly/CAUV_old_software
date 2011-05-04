@@ -18,10 +18,6 @@ tags
 *.pyc
 *.log
 *.dylib
-CMakeFiles/*
-CMakeCache.txt
-Makefile
-cmake_install.cmake
 .DS_Store
 auv/python-module/cauvinterface.so
 auv/scripting/unknown.log

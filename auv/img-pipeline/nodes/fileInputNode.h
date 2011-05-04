@@ -20,8 +20,8 @@ namespace imgproc{
 class FileInputNode: public AsynchronousNode{
         typedef boost::unique_lock<boost::recursive_mutex> lock_t;
     public:
-        FileInputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : AsynchronousNode(sched, pl, t), m_dir_mutex(),
+        FileInputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : AsynchronousNode(sched, pl, n, t),
               m_is_directory(false), m_iter(){
         }
 

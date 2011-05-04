@@ -21,8 +21,8 @@ namespace imgproc{
 
 class FASTCornersNode: public Node{
     public:
-        FASTCornersNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+        FASTCornersNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t){
         }
 
         void init(){

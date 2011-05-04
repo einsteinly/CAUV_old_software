@@ -18,8 +18,8 @@ namespace imgproc{
 
 class HoughCirclesNode: public OutputNode{
     public:
-        HoughCirclesNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t){
+        HoughCirclesNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){
@@ -90,13 +90,17 @@ class HoughCirclesNode: public OutputNode{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
+            // convert coordinates from pixels (top left origin) to 0-1 float,
+            // top left origin // TODO: check this
             std::vector<Circle> msg_circles;
+            const float width = img->cvMat().cols;
+            const float height = img->cvMat().rows;
             for(unsigned i = 0; i < circles.size(); i++){
                 Circle c;
-                c.centre.x = circles[i][0];
-                c.centre.y = circles[i][1];
+                c.centre.x = circles[i][0] / width;
+                c.centre.y = circles[i][1] / height;
                 c.centre.z = 0;
-                c.radius = circles[i][2];
+                c.radius = circles[i][2] * 2 / (width + height);
                 msg_circles.push_back(c);
             }
             sendMessage(boost::make_shared<CirclesMessage>(name, msg_circles));

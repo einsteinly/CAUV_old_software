@@ -7,56 +7,63 @@ enum DebugType : int8 {
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
 enum NodeType : int8 {
-    Invalid = 0,
-    Copy = 1,
-    Resize = 2,
-    FileInput = 3,
-    FileOutput = 4,
-    LocalDisplay = 5,
-    CameraInput = 6,
-    NetInput = 7,
-    HoughLines = 8,
-    Canny = 9,
-    ConvertColour = 10,
-    GuiOutput = 11,
-    HoughCircles = 12,
-    GaussianBlur = 13,
-    MedianFilter = 14,
-    BilateralFilter = 15,
-    SplitRGB = 16,
-    CombineRGB = 17,
-    SplitHSV = 18,
-    SplitYUV = 19,
-    CombineYUV = 20,
-    CombineHSV = 21,
-    Levels = 22,
-    Mix = 23,
-    Percentile = 24,
-    SonarInput = 25,
-    BroadcastImage = 26,
-    VideoFileOutput = 27,
-    Invert = 28,
-    KMeans = 29,
-    MixValue = 30,
-    Crop = 31,
-    GrabCut = 32,
-    Histogram = 33,
-    HistogramSegmentation = 34,
-    Centre = 35,
-    QuickSegment = 36,
-    ThresholdMask = 37,
-    CornerHarris = 38,
-    HistogramSegmentationArb = 39,
-    RunningAverage = 40,
-    CopyMask = 41,
-    FastMedian = 42,
-    FASTCorners = 43,
-    DrawCorners = 44,
-    BroadcastCorners = 45,
-    ShiTomasiCorners = 46,
-    
-    NullParam = 254,
-    Null = 255
+    Invalid,
+    Copy,
+    Resize,
+    FileInput,
+    FileOutput,
+    LocalDisplay,
+    CameraInput,
+    NetInput,
+    HoughLines,
+    Canny,
+    ConvertColour,
+    GuiOutput,
+    HoughCircles,
+    GaussianBlur,
+    MedianFilter,
+    BilateralFilter,
+    SplitRGB,
+    CombineRGB,
+    SplitHSV,
+    SplitYUV,
+    CombineYUV,
+    CombineHSV,
+    Levels,
+    Mix,
+    Percentile,
+    SonarInput,
+    BroadcastImage,
+    VideoFileOutput,
+    Invert,
+    KMeans,
+    MixValue,
+    Crop,
+    GrabCut,
+    Histogram,
+    HistogramSegmentation,
+    Centre,
+    QuickSegment,
+    ThresholdMask,
+    CornerHarris,
+    HistogramSegmentationArb,
+    RunningAverage,
+    CopyMask,
+    FastMedian,
+    FASTCorners,
+    DrawCorners,
+    BroadcastCorners,
+    ShiTomasiCorners,
+    Pyramid,
+    DrawLines,
+    BroadcastLines,
+    NullParam,
+    DrawHistogram,
+    IntInput,
+    FloatInput,
+    StringInput,
+    BoolInput,
+    BroadcastHistogram
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,
@@ -67,13 +74,6 @@ enum NodeIOStatus : int8 {
     New = 1,
     Valid = 2,
     Demanded = 4
-}
-enum ParamType : int8 {
-    Int32 = 0,
-    Float = 1,
-    String = 2,
-    Bool = 3,
-    CornerList = 4
 }
 enum OutputType : int8 {
     Image = 0,
@@ -144,6 +144,7 @@ struct Line
 {
     centre : floatXYZ;
     angle : float;
+    length : float;
 }
 struct Circle
 {
@@ -166,7 +167,7 @@ struct MotorMap
 }
 variant NodeParamValue
 {
-    int32, float, string, bool, list<Corner>
+    int32, float, string, bool, list<Corner>, list<Line>, list<Circle>, list<float>
 }
 struct ScriptResponse
 {
@@ -181,6 +182,14 @@ struct ScriptExecRequest
     timeout : float;
     id : string;
     seq : uint32;
+}
+
+group membership
+{
+    message MembershipChanged : 500
+    {
+        affectedGroup : string;
+    }
 }
 
 group debug
@@ -317,6 +326,13 @@ group telemetry
         mem : float;
         threads : uint32;
     }
+    message Location : 88
+    {
+        latitude : double;
+        longitude : double;
+        altitude : float;
+        speed : floatXYZ;
+    }
 }
 group image
 {
@@ -351,6 +367,7 @@ group pipeline
 {
     message AddNode : 5
     {
+        pipelineName : string; 
         nodeType : NodeType;
         parents : list<NodeInputArc>;
         children : list<NodeOutputArc>;
@@ -358,15 +375,18 @@ group pipeline
 
     message RemoveNode : 6
     {
+        pipelineName : string;
         nodeId : int32;
     }
 
     message ClearPipeline : 7
     {
+        pipelineName : string;
     }
 
     message SetNodeParameter : 8
     {
+        pipelineName : string;
         nodeId : int32;
         paramId : string;
         value : NodeParamValue;
@@ -374,17 +394,29 @@ group pipeline
 
     message AddArc : 9
     {
+        pipelineName : string;
         from : NodeOutput;
         to : NodeInput;
     }
 
     message GraphRequest : 10
     {
+        pipelineName : string;
     }
 
     message ForceExecRequest : 11
     {
+        pipelineName : string;
         nodeId : int32;
+    }
+
+    message PipelineDiscoveryRequest : 12
+    {
+    }
+
+    message PipelineDiscoveryResponse : 13
+    {
+        pipelineName : string;
     }
 }
 
@@ -454,6 +486,7 @@ group pl_gui
 { 
     message NodeAdded : 115
     {
+        pipelineName : string;
         nodeId : int32;
         nodeType : NodeType;
         inputs : map<string, NodeOutput>;
@@ -463,17 +496,20 @@ group pl_gui
 
     message NodeRemoved : 116
     {
+        pipelineName : string;    
         nodeId : int32;
     }
 
     message NodeParameters : 117
     {
+        pipelineName : string;    
         nodeId : int32;
         params : map<string, NodeParamValue>;
     }
 
     message GraphDescription : 118
     {
+        pipelineName : string;    
         lazy nodeTypes : map<int32, NodeType>;
         lazy nodeInputs : map<int32, map<string, NodeOutput> >;
         lazy nodeOutputs : map<int32, map<string, list<NodeInput> > >;
@@ -482,24 +518,28 @@ group pl_gui
 
     message ArcAdded : 119
     {
+        pipelineName : string;    
         from : NodeOutput;
         to : NodeInput;
     }
 
     message ArcRemoved : 120
     {
+        pipelineName : string;    
         from : NodeOutput;
         to : NodeInput;
     }
 
     message Status : 121
     {
+        pipelineName : string;    
         nodeId : int32;
         status : NodeStatus;
     }
 
     message InputStatus : 122
     {
+        pipelineName : string;    
         nodeId : int32;
         inputId : string;
         status : NodeIOStatus;
@@ -507,6 +547,7 @@ group pl_gui
     
     message OutputStatus : 123
     {
+        pipelineName : string;    
         nodeId : int32;
         outputId : string;
         status : NodeIOStatus;
@@ -514,6 +555,7 @@ group pl_gui
     
 	message GuiImage : 124
 	{
+        pipelineName : string;    
         nodeId : int32;
 	    lazy image : Image;
     }

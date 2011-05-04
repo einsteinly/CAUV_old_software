@@ -16,24 +16,24 @@ namespace cauv {
 
     class AUV;
     class AUVController;
-    class CauvInterfaceElement;
 
     class CauvGui : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvGui> {
-
         Q_OBJECT
 
     public:
         CauvGui(QApplication * app);
         virtual ~CauvGui();
-        void addInterfaceElement(boost::shared_ptr<CauvInterfaceElement> widget);
 
     public Q_SLOTS:
         int send(boost::shared_ptr<Message>message);
+        void addCentralTab(QWidget* tab, const QString& name);
         void addCentralTab(QWidget* tab, QString& name);
         void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
 
     protected:
         virtual void onRun();
+
+        virtual bool loadPlugin(QObject * plugin);
 
         virtual void closeEvent(QCloseEvent *);
 

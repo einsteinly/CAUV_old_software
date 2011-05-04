@@ -15,8 +15,8 @@ namespace imgproc{
 
 class MedianFilterNode: public Node{
     public:
-        MedianFilterNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+        MedianFilterNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t){
         }
 
         void init(){

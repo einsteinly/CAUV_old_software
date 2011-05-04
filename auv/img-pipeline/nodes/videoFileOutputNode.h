@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <cstdio>
 
 #include <boost/algorithm/string/replace.hpp>
 
@@ -18,8 +19,8 @@ namespace imgproc{
 
 class VideoFileOutputNode: public OutputNode{
     public:
-        VideoFileOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t), m_writer(), m_counter(0){
+        VideoFileOutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){
@@ -52,22 +53,25 @@ class VideoFileOutputNode: public OutputNode{
             out_map_t r;
 
             image_ptr_t img = inputs["image"];
-            
-            // replace %d %t and %c with the current date, time and a counter
-            std::string cs = MakeString() << std::setfill('0') << std::setw(5) << m_counter++;
-            std::string fname = replace_all_copy(
-                                    replace_all_copy(
-                                        replace_all_copy(
-                                            param<std::string>("filename"), "%c", cs
-                                        ), "%d", now("%Y-%m-%d")
-                                    ), "%t", now("%H-%M-%s")
-                                );
              
-            debug(4) << "VideoFileOutputNode::doWork()" << *img << "->" << fname;
+            debug(4) << "VideoFileOutputNode::doWork()" << *img;
             
             try{
                 if(!m_writer.isOpened())
-                    openVideo(fname, img->cvMat().size());
+                {
+                    // Open a new video file with the given file name
+                    // replace %d %t and %c with the current date, time and a counter
+                    std::string cs = MakeString() << std::setfill('0') << std::setw(5) << m_counter++;
+                    m_fname = replace_all_copy(
+                                            replace_all_copy(
+                                                replace_all_copy(
+                                                    param<std::string>("filename"), "%c", cs
+                                                ), "%d", now("%Y-%m-%d")
+                                            ), "%t", now("%H-%M-%s")
+                                        );
+                    openVideo(img->cvMat().size());
+                }
+                
                 accumulateFrame(img);
             }catch(cv::Exception& e){
                 error() << "VideoFileOutputNode:\n\t"
@@ -80,9 +84,11 @@ class VideoFileOutputNode: public OutputNode{
             return r;
         }
 
-        void openVideo(std::string const& fname, cv::Size const& size){
+        void openVideo(cv::Size const& size){
+            debug() << "VideoFileOutputNode::openVideo()" << m_fname;
             // TODO: automagical FPS detection 
-            bool r = m_writer.open(fname, CV_FOURCC('M','P','G','2'), 25 /*fps*/, size, true);
+            bool r = m_writer.open(m_fname, CV_FOURCC('M','P','G','2'), 25 /*fps*/, size, true);
+            m_videoEmpty = true;
             if(!r || !m_writer.isOpened()){
                 error() << "could not open video writier";
                 clearAllowQueue();
@@ -95,6 +101,7 @@ class VideoFileOutputNode: public OutputNode{
                 return;
             }
             m_writer << image->cvMat();
+            m_videoEmpty = false;
         }
 
         void closeVideo(){
@@ -106,10 +113,21 @@ class VideoFileOutputNode: public OutputNode{
                             << e.err << "\n\t"
                             << "in" << e.func << "," << e.file << ":" << e.line;
                 }
+                // Delete the file if nothing was written
+                if (m_videoEmpty)
+                {
+                    // Could use boost::filesystem here, but opencv most likely
+                    // uses cstdio, so may as well stick with it
+
+                    debug() << "VideoFileOutputNode::closeVideo() : No frames written, deleting file " << m_fname;
+                    remove(m_fname.c_str()); // Has a return code, but we ignore it
+                }
             }
         }
         
         cv::VideoWriter m_writer;
+        std::string m_fname;
+        bool m_videoEmpty;
         int m_counter;
     
     // Register this node type

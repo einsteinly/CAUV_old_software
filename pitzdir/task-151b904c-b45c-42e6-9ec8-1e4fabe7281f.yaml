@@ -1,5 +1,6 @@
+attached_files: []
 components: []
-created_by: !!python/object:uuid.UUID
+created_by: &id001 !!python/object:uuid.UUID
   int: 236388421408798579890985238796729312670
 created_time: 2011-01-26 14:25:22.084051
 description: !!python/unicode "We want to run more than one instance of the image\
@@ -12,24 +13,22 @@ description: !!python/unicode "We want to run more than one instance of the imag
 estimate: !!python/object:uuid.UUID
   int: 232728329951956224362343003393279330573
 milestone: !!python/object:uuid.UUID
-  int: 115709686465499050555006855212442791043
-modified_time: 2011-01-26 14:25:22.095246
-owner: !!python/object:uuid.UUID
-  int: 78002556280449588393479432476918080669
+  int: 231943652690746325723562379282290458799
+modified_time: 2011-04-19 00:06:58.567884
+owner: *id001
 points: null
 pscore: !!python/unicode '3'
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 300208156334241880201290222579226582105
 tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
 - !!python/object:uuid.UUID
   int: 275376028904049931937057396630085839418
 - !!python/object:uuid.UUID
   int: 292557765731504791880568992605661195763
-- !!python/object:uuid.UUID
-  int: 188292841895424093544817790897208843631
-title: !!python/unicode 'Extend messaging to discriminate between multiple instances
-  of the same program'
+title: !!python/unicode 'Support multiple img-pipeline instances'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 28056906670805789475208069965486172191
-yaml_file_saved: 2011-01-26 14:25:22.102659
+yaml_file_saved: 2011-04-19 00:06:58.582398

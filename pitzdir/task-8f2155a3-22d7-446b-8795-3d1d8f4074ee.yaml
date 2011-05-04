@@ -9,17 +9,17 @@ description: !!python/unicode "Temperature information should be accessible via 
 estimate: !!python/object:uuid.UUID
   int: 298257563599997189979885110366072744596
 milestone: !!python/object:uuid.UUID
-  int: 231943652690746325723562379282290458799
-modified_time: 2011-02-23 17:50:08.228534
+  int: 143380974880746652587778828338970586177
+modified_time: 2011-04-19 00:12:08.275004
 owner: !!python/object:uuid.UUID
-  int: 78002556280449588393479432476918080669
+  int: 269969965611949595854670720413272395453
 points: null
 pscore: !!python/unicode '3'
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 154409908609622189382556686006061208230
 tags: []
 title: !!python/unicode 'Broadcast temperature information from the PC'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 190252686123364151843694090058794562798
-yaml_file_saved: 2011-02-23 17:50:08.236875
+yaml_file_saved: 2011-04-19 00:12:08.291144

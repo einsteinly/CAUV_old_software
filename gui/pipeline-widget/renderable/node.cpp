@@ -154,41 +154,61 @@ void Node::setOutputLinks(std::map<std::string, std::vector<NodeInput> > const& 
     refreshLayout();
 }
 
-// TODO: fix this to reflect the new variant-ness of NodeParamValue
-static boost::shared_ptr<PVPairEditableBase> makePVPair(
-    Node *n, std::pair<std::string, NodeParamValue> const& p, bool editable){
-    switch((ParamType::e) p.second.which()){
-        case ParamType::Int32:
-            return boost::make_shared<PVPair<int> >(
-                    n, p.first, boost::get<int32_t>(p.second), editable
-                );
-        case ParamType::Float:
-            return boost::make_shared<PVPair<float> >(
-                    n, p.first, boost::get<float>(p.second), editable
-                );
-        case ParamType::String:
-            return boost::make_shared<PVPair<std::string> >(
-                    n, p.first, boost::get<std::string>(p.second), editable
-                );
-        case ParamType::Bool:
-            return boost::make_shared<PVPair<bool> >(
-                    n, p.first, boost::get<bool>(p.second), editable
-                );
-        case ParamType::CornerList:
-        {
-            std::stringstream ss;
-            ss << "Corner[" << boost::get< std::vector<Corner> >(p.second).size() << "]"; 
-            return boost::make_shared<PVPair<std::string> >(
-                    n, p.first, ss.str(), false
-                );
-        }
-        default:
-            error() << "unknown ParamType";
-            return boost::make_shared<PVPair<std::string> >(
-                    n, p.first, "unknown", false
-                );
+namespace{//Unnamed
+
+template<typename T> struct Type2Name { static const char* name; };
+template<typename T> const char* Type2Name<T>::name = "Unknown";
+template<> const char* Type2Name<Corner>::name = "Corner";
+template<> const char* Type2Name<Line>::name = "Line";
+template<> const char* Type2Name<float>::name = "float";
+
+template<typename T>
+struct makePVPairHelper
+{
+};
+template<typename T>
+struct makePVPairHelper<const T>
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const T& val, bool editable) {
+        return boost::make_shared< PVPair<T> >(n, name, val, editable);
     }
+};
+template<typename T>
+struct makePVPairHelper< const std::vector<T> >
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const std::vector<T>& val, bool) {
+        std::stringstream ss;
+        ss << Type2Name<T>::name << "[" << val.size() << "]"; 
+        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
+    }
+};
+
+struct PVPairVisitor: public boost::static_visitor< boost::shared_ptr<PVPairEditableBase> >
+{
+public:
+    PVPairVisitor(Node* n, const std::string& name, bool editable) : m_n(n), m_name(name), m_editable(editable)
+    {
+    }
+
+    template<typename T>
+    boost::shared_ptr<PVPairEditableBase> operator()(T & val) const
+    {
+        return makePVPairHelper<T>::exec(m_n, m_name, val, m_editable);
+    }
+    
+protected:
+    Node* m_n;
+    const std::string& m_name;
+    bool m_editable;
+
+};
+
+boost::shared_ptr<PVPairEditableBase> makePVPair(
+    Node *n, std::pair<std::string, NodeParamValue> const& p, bool editable){
+    return boost::apply_visitor(PVPairVisitor(n, p.first, editable), p.second);
 }
+
+}// namespace Unnamed
 
 void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     // remove any parameters that no longer exist
@@ -340,12 +360,12 @@ NodeType::e Node::type() const{
 
 void Node::close(){
     debug() << "Node::close" << id();
-    m_pw->send(boost::make_shared<RemoveNodeMessage>(m_node_id));
+    m_pw->send(boost::make_shared<RemoveNodeMessage>(m_pw->pipelineName(), m_node_id));
 }
 
 void Node::exec(){
     debug() << "Node::exec" << id();
-    m_pw->send(boost::make_shared<ForceExecRequestMessage>(m_node_id));
+    m_pw->send(boost::make_shared<ForceExecRequestMessage>(m_pw->pipelineName(), m_node_id));
 }
 
 renderable_ptr_t Node::outSocket(std::string const& id){
@@ -435,7 +455,6 @@ void Node::removeMenu(menu_ptr_t m){
 void Node::remove(renderable_ptr_t){
     error() << __func__ << __LINE__ << "unimplemented";
 }
-
 
 void Node::refreshLayout(){
     // yay, lots of random constants: layout is fun

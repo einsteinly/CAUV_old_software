@@ -37,7 +37,7 @@
 #include "centreFinderNode.h"
 #include "quickSegmentNode.h"
 #include "thresholdMaskNode.h"
-//#include "cornerHarrisNode.h"
+#include "cornerHarrisNode.h"
 #include "histogramSegmentationArbNode.h"
 #include "runningAverageNode.h"
 #include "copyNodeMask.h"
@@ -46,10 +46,16 @@
 #include "drawCornersNode.h"
 #include "broadcastCornersNode.h"
 #include "shiTomasiCornersNode.h"
-
+#include "pyramidNode.h"
+#include "drawLinesNode.h"
+#include "broadcastLinesNode.h"
 #include "nullParamNode.h"
+#include "drawHistogramNode.h"
+#include "valueInputNode.h"
+#include "broadcastHistogramNode.h"
 
-using namespace cauv::imgproc;
+namespace cauv{
+namespace imgproc{
 
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(CopyNode, NodeType::Copy);
@@ -89,7 +95,7 @@ DEFINE_NFR(HistogramSegmentationNode, NodeType::HistogramSegmentation);
 DEFINE_NFR(CentreFinderNode, NodeType::Centre);
 DEFINE_NFR(QuickSegmentNode, NodeType::QuickSegment);
 DEFINE_NFR(ThresholdMaskNode, NodeType::ThresholdMask);
-//DEFINE_NFR(CornerHarrisNode, NodeType::CornerHarris);
+DEFINE_NFR(CornerHarrisNode, NodeType::CornerHarris);
 DEFINE_NFR(HistogramSegmentationArbNode, NodeType::HistogramSegmentationArb);
 DEFINE_NFR(RunningAverageNode, NodeType::RunningAverage);
 DEFINE_NFR(CopyNodeMask, NodeType::CopyMask);
@@ -98,10 +104,21 @@ DEFINE_NFR(FASTCornersNode, NodeType::FASTCorners);
 DEFINE_NFR(DrawCornersNode, NodeType::DrawCorners);
 DEFINE_NFR(BroadcastCornersNode, NodeType::BroadcastCorners);
 DEFINE_NFR(ShiTomasiCornersNode, NodeType::ShiTomasiCorners);
-
+DEFINE_NFR(PyramidNode, NodeType::Pyramid);
+DEFINE_NFR(DrawLinesNode, NodeType::DrawLines);
+DEFINE_NFR(BroadcastLinesNode, NodeType::BroadcastLines);
 DEFINE_NFR(NullParamNode, NodeType::NullParam);
-
+DEFINE_NFR(DrawHistogramNode, NodeType::DrawHistogram);
+template<> DEFINE_NFR(ValueInputNode<int32_t>, NodeType::IntInput);
+template<> DEFINE_NFR(ValueInputNode<float>, NodeType::FloatInput);
+template<> DEFINE_NFR(ValueInputNode<bool>, NodeType::BoolInput);
+template<> DEFINE_NFR(ValueInputNode<std::string>, NodeType::StringInput);
+DEFINE_NFR(BroadcastHistogramNode, NodeType::BroadcastHistogram);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
+
+} // namespace imgproc
+} // namespace cauv
+
 
 

@@ -239,14 +239,19 @@ boost::mutex& _getMutex(std::ostream& s){
     typedef std::map<void*, mutex_ptr> map_t;
     static map_t mutex_map;
     static boost::mutex map_mutex;
-    boost::lock_guard<boost::mutex> l(map_mutex);
-    map_t::iterator i = mutex_map.find(&s);
-    if(i != mutex_map.end())
-        return *i->second;
-    else{
-        mutex_map[&s] = boost::make_shared<boost::mutex>();
+        
+    mutex_ptr pm;
+    CAUV_LOCK(map_mutex)
+    {
+        map_t::iterator i = mutex_map.find(&s);
+        if (i != mutex_map.end()) {
+            pm = i->second;
+        }
+        else {
+            pm = mutex_map[&s] = boost::make_shared<boost::mutex>();
+        }
     }
-    return *mutex_map.find(&s)->second;
+    return *pm;
 }
 boost::mutex& SmartStreamBase::getMutex(std::ostream& s){
     if(s == std::cout || s == std::clog)

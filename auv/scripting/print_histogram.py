@@ -25,7 +25,7 @@ class ColourFinder(messaging.BufferedMessageObserver):
         message = ''
         for i, bin in enumerate(m.bins):
             accum += bin
-            message += 'bin %d: %f, accum: %f\n' % (i, bin, accum))
+            message += 'bin %d: %f, accum: %f\n' % (i, bin, accum)
         debug(message)
 
     def onHistogramMessage(self, m):

@@ -1,22 +1,22 @@
+attached_files: []
 components: []
-created_by: !!python/object:uuid.UUID
+created_by: &id001 !!python/object:uuid.UUID
   int: 236388421408798579890985238796729312670
 created_time: 2010-12-26 12:47:03.145828
 description: !!python/unicode 'Install pylint, and run it as part of the build process.'
 estimate: !!python/object:uuid.UUID
   int: 277284367523703929526958133625188989255
 milestone: !!python/object:uuid.UUID
-  int: 115709686465499050555006855212442791043
-modified_time: 2010-12-26 12:47:03.151836
-owner: !!python/object:uuid.UUID
-  int: 78002556280449588393479432476918080669
+  int: 231943652690746325723562379282290458799
+modified_time: 2011-03-31 01:16:15.558688
+owner: *id001
 points: null
 pscore: !!python/unicode '3'
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 300208156334241880201290222579226582105
 tags: []
 title: !!python/unicode 'Install pylint, and run it as part of the build process.'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 284615980165292813720792465231657600720
-yaml_file_saved: 2010-12-26 12:47:03.157675
+yaml_file_saved: 2011-03-31 01:16:15.573247

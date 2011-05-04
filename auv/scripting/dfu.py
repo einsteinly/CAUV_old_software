@@ -39,6 +39,9 @@ def dfu():
     bearing = 325
 
     try:
+	#auv.prop(127)
+	#auv.prop(50)
+	#auv.prop(10)
         print 'setting bearing:'
         auv.bearing(bearing)
         time.sleep(2)

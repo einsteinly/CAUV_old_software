@@ -1,0 +1,14 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 263484739648898995288495580675464106490
+created_time: &id001 2011-04-14 16:04:17.820862
+description: ''
+entity: !!python/object:uuid.UUID
+  int: 254541436976911159997371505159551144095
+modified_time: *id001
+pscore: 0
+title: Leszek Swirski set owner from Leszek Swirski to Leszek Swirski on bf7ee5
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 159664950941023959205638317361615683113
+who_did_it: *id002
+yaml_file_saved: 2011-04-14 16:04:17.836622

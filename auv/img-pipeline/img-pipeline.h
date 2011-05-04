@@ -17,8 +17,13 @@ class ImagePipelineNode : public CauvNode
     
     protected:
         virtual void onRun();
+        virtual void addOptions(boost::program_options::options_description& desc,
+                                boost::program_options::positional_options_description& pos);
+        virtual int useOptionsMap(boost::program_options::variables_map& vm,
+                                  boost::program_options::options_description& desc);
 
     private:
+        std::string m_pipeline_name;
         boost::shared_ptr<ImageProcessor> m_pipeline;
 };
 

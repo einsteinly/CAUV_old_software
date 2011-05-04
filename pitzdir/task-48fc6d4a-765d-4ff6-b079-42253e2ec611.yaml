@@ -1,3 +1,4 @@
+attached_files: []
 components: []
 created_by: !!python/object:uuid.UUID
   int: 236388421408798579890985238796729312670
@@ -11,20 +12,20 @@ estimate: !!python/object:uuid.UUID
   int: 277284367523703929526958133625188989255
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2010-12-11 21:33:05.566011
+modified_time: 2011-04-19 00:12:33.657736
 owner: !!python/object:uuid.UUID
   int: 180722768784314306761894693646267792185
 points: null
 pscore: !!python/unicode '4'
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 300208156334241880201290222579226582105
 tags:
 - !!python/object:uuid.UUID
-  int: 331996142187771955882707416418215780478
-- !!python/object:uuid.UUID
   int: 27285391412953843479645851445225719889
+- !!python/object:uuid.UUID
+  int: 331996142187771955882707416418215780478
 title: !!python/unicode 'Mechanically Improve the sonar images'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 97015091187027582376811320795665974801
-yaml_file_saved: 2010-12-11 21:33:05.566236
+yaml_file_saved: 2011-04-19 00:12:33.673179

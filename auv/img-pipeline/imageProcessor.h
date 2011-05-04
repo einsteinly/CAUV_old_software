@@ -35,7 +35,7 @@ class ImageProcessor: public MessageObserver
     public:    
         ImageProcessor(mb_ptr_t mailbox);
        
-        void start();
+        void start(std::string const& name);
 
         /**
          * override MessageObserver functions to take actions on messages
@@ -61,6 +61,12 @@ class ImageProcessor: public MessageObserver
         virtual void onForceExecRequestMessage(ForceExecRequestMessage_ptr m);
         virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
 
+        /**
+         * Pipeline discovery messages - for nodes interested in listing all pipelines
+         */
+
+        virtual void onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr m);
+
         /** end MessageObserver functions **/
 
         void removeNode(node_id const& n);
@@ -83,6 +89,14 @@ class ImageProcessor: public MessageObserver
         node_id lookup(node_ptr_t const& p) const throw();
 
     private:
+        template<typename message_T>
+        bool _filterMatches(boost::shared_ptr<const message_T> msg){
+            lock_t l(m_name_lock);
+            if(msg->pipelineName() == m_name)
+                return true;
+            return false;
+        }
+
         void _addNode(node_ptr_t const& p, node_id const& id) throw();
         void _addNode(node_ptr_t const& p) throw();
         void _removeNode(node_id const& id) throw(id_error);
@@ -93,6 +107,9 @@ class ImageProcessor: public MessageObserver
         std::set<input_node_ptr_t> m_input_nodes;
 
         Scheduler m_scheduler;
+
+        mutable mutex_t m_name_lock;
+        std::string m_name;
 
         mutable mutex_t m_mailbox_lock;
         mb_ptr_t m_mailbox;

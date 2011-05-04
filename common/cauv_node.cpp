@@ -144,7 +144,7 @@ int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::pr
 {
     if(vm.count("help"))
     {
-        std::cout << desc;
+        std::cout << desc << std::flush;
         return 1;
     }
     return 0;

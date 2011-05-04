@@ -19,6 +19,7 @@ struct SendAddNodeMessage{
 
     void operator()(){
         boost::shared_ptr<AddNodeMessage> msg = boost::make_shared<AddNodeMessage>();
+        msg->pipelineName(m_widget->pipelineName());
         msg->nodeType(m_id);
         m_widget->send(msg);
     }

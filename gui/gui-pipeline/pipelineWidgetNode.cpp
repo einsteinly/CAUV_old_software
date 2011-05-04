@@ -29,7 +29,7 @@ void cauv::pw::PipelineGuiCauvNode::onRun(){
     #endif
 
     // get the initial pipeline state:
-    send(boost::make_shared<GraphRequestMessage>());
+    send(boost::make_shared<GraphRequestMessage>(m_widget->pipelineName()));
 }
 
 int cauv::pw::PipelineGuiCauvNode::send(boost::shared_ptr<Message> message){

@@ -18,8 +18,8 @@ namespace imgproc{
 
 class FileOutputNode: public OutputNode{
     public:
-        FileOutputNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : OutputNode(sched, pl, t), m_counter(0){
+        FileOutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : OutputNode(sched, pl, n, t){
         }
 
         void init(){
@@ -67,7 +67,7 @@ class FileOutputNode: public OutputNode{
             imwrite_params.push_back(png_comp);
             
             try{
-                if(img->cvMat().rows == 0 || img->cvMat().cols == 0)
+                if(img->cvMat().rows != 0 && img->cvMat().cols != 0)
                     cv::imwrite(fname.c_str(), img->cvMat(), imwrite_params);
                 else
                     error() << "FileoutputNode: no image!";

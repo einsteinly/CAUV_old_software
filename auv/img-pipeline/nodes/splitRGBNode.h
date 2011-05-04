@@ -16,8 +16,8 @@ namespace imgproc{
 
 class SplitRGBNode: public Node{
     public:
-        SplitRGBNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+        SplitRGBNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t){
         }
 
         void init(){

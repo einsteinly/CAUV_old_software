@@ -1,5 +1,9 @@
 cmake_minimum_required (VERSION 2.8)
 
+if (NOT CMAKE_IN_SOURCE AND CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR "In-source builds not supported")
+endif()
+
 # Initialise install directories
 foreach(DIR "$ENV{HOME}/install"
             "$ENV{HOME}"

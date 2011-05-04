@@ -1,0 +1,18 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-04-19 00:09:36.026826
+description: 'pscore changed to 3
+
+  description changed to Things to do before the end of summer term 2011.
+
+  title changed to Summer Term 2011'
+entity: !!python/object:uuid.UUID
+  int: 143380974880746652587778828338970586177
+modified_time: *id001
+pscore: 0
+title: 2011-04-19 00:09 - James Crosby changed milestone Summer Term 2011
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 22405356295214386221808495969389736543
+who_did_it: *id002
+yaml_file_saved: 2011-04-19 00:09:36.028419

@@ -21,8 +21,8 @@ namespace imgproc{
 
 class NullParamNode: public Node{
     public:
-        NullParamNode(Scheduler& sched, ImageProcessor& pl, NodeType::e t)
-            : Node(sched, pl, t){
+        NullParamNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
+            : Node(sched, pl, n, t){
         }
 
         void init(){
@@ -45,7 +45,7 @@ class NullParamNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
+        out_map_t doWork(in_image_map_t&){
             out_map_t r;
             r["out"] = param<NodeParamValue>("in");
             return r;

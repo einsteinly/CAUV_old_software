@@ -103,7 +103,7 @@ class PVPair: public PVPairEditableBase{
 
     private:
         static void onValueChanged(PVPair const& pvp, std::string const& s){
-            value_T v;
+            value_T v = value_T();
             try {
                 v = boost::lexical_cast<value_T>(s);
                 debug() << "PVPair: Edit done:" << s << "=" << std::boolalpha << v;

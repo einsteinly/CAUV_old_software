@@ -27,7 +27,7 @@ class Container{
                               bool pressed=false) = 0;
 		virtual void postText(const std::string &text, const std::string &font) = 0;
         virtual void removeMenu(menu_ptr_t) = 0;
-        virtual void remove(renderable_ptr_t) = 0; 
+        virtual void remove(renderable_ptr_t) = 0;
         virtual renderable_ptr_t pick(Point const& p);
         virtual void refreshLayout(){ };
         
