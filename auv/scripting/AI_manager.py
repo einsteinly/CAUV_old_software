@@ -28,10 +28,10 @@ class Process():
 process_data_list = (
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py'),
             ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py'),
-            #('task_control', '/bin/sh ./run.sh ./AI_task_manager.py'),
+            ('task_control', '/bin/sh ./run.sh ./AI_task_manager.py'),
             )
 
-class AImanager:
+class AImanager():
     def __init__(self):
         self.processes = {}
         for process_data in process_data_list:
