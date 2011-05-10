@@ -1,10 +1,10 @@
 from AI_classes import aiScript
 
-class test_script(aiScript):
+class script(aiScript):
     def run(self):
         while True:
             if raw_input('Something was detected, has it been confirmed?'):
-                self.exit(0)
+                self.notify_exit(0)
                 break
             
 

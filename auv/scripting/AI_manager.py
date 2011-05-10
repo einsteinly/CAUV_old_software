@@ -1,5 +1,7 @@
 import subprocess
 import time
+
+from cauv.debug import info
 """
 Processes
 detector process - runs detector classes, and loops through processing
@@ -16,7 +18,7 @@ class Process():
         self.command = command
         self.start()
     def start(self):
-        print self.command
+        info('Running command: '+' ' .join(self.command))
         self.process = subprocess.Popen(self.command)
     def status(self):
         if self.process.poll():
