@@ -14,7 +14,7 @@ class auvControl(aiProcess):
     def __getattr__(self, attr):
         #note python calls tries to get attributes of this function before __getattr__
         try:
-            return external_function(self.auv.__getattribute__(attr))
+            return external_function(getattr(self.auv, attr))
         except AttributeError:
             debug("Failed to interpret message to auv control")
     def run(self):

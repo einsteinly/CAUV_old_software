@@ -37,6 +37,9 @@ def external_function(f):
     f.ext_func = True
     return f
 
+def isExternalFunction(f):
+    return hasattr(f, 'ext_func') and f.ext_func == True
+
 class aiProcess(messaging.BufferedMessageObserver):
     def __init__(self, process_name):
         messaging.BufferedMessageObserver.__init__(self)
@@ -49,14 +52,18 @@ class aiProcess(messaging.BufferedMessageObserver):
         message = cPickle.loads(m.msg)
         if message[0] == self.process_name: #this is where the to string appears in the cpickle output
             message = cPickle.loads(m.msg)
-            if hasattr(self.__getattribute__(message[2]), 'ext_func'):
-                try:
-                    self.__getattribute__(message[2])(*message[3], **message[4])
-                except Exception as exc:
-                    error("Error occured because of message: %s" %(str(message)))
-                    raise exc
+            if hasattr(self, message[2])
+                func = getattr(self, message[2])
+                if isExternalFunction(func)
+                    try:
+                        func(*message[3], **message[4])
+                    except Exception as exc:
+                        error("Error occured because of message: %s" %(str(message)))
+                        raise exc
+                else:
+                    error("AI message %s called an internal function (make sure to declare the function as external" %(str(message)))
             else:
-                error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+                error("AI message %s did not call a valid function" %(str(message)))
             
 class aiScript(aiProcess):
     def __init__(self, script_name):
