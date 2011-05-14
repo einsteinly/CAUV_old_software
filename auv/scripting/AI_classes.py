@@ -55,9 +55,9 @@ class aiProcess(messaging.BufferedMessageObserver):
         message = cPickle.loads(m.msg)
         if message[0] == self.process_name: #this is where the to string appears in the cpickle output
             message = cPickle.loads(m.msg)
-            if hasattr(self, message[2])
+            if hasattr(self, message[2]):
                 func = getattr(self, message[2])
-                if is_external(func)
+                if is_external(func):
                     try:
                         func(*message[3], **message[4])
                     except Exception as exc:
