@@ -37,8 +37,11 @@ def external_function(f):
     f.ext_func = True
     return f
 
-def isExternalFunction(f):
-    return hasattr(f, 'ext_func') and f.ext_func == True
+def is_external(f):
+    try:
+        return f.ext_func
+    except AttributeError:
+        return False
 
 class aiProcess(messaging.BufferedMessageObserver):
     def __init__(self, process_name):
@@ -54,7 +57,7 @@ class aiProcess(messaging.BufferedMessageObserver):
             message = cPickle.loads(m.msg)
             if hasattr(self, message[2])
                 func = getattr(self, message[2])
-                if isExternalFunction(func)
+                if is_external(func)
                     try:
                         func(*message[3], **message[4])
                     except Exception as exc:
@@ -67,10 +70,10 @@ class aiProcess(messaging.BufferedMessageObserver):
             
 class aiScript(aiProcess):
     def __init__(self, script_name):
-        aiProcess.__init__(self, "auv_script")
-        self.script_name = script_name
+        aiProcess.__init__(self, script_name)
         self.exit_confirmed = threading.Event()
-    def exit(self, exit_status):
+        self.auv = fakeAUV(self)
+    def notify_exit(self, exit_status):
         for x in range(5):
             self.ai.task_manager.on_script_exit(exit_status)
             if self.exit_confirmed.wait(1.0):

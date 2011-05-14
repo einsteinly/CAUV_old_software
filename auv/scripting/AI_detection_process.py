@@ -5,10 +5,6 @@ import time
 
 from AI_classes import aiProcess, external_function
 
-"""
-Might it be better to seperate detectors from script library? And do we need seperate files for each detector?
-"""
-
 class detectionControl(aiProcess):
     def __init__(self):
         self.external_functions = ['start', 'stop']
@@ -36,13 +32,14 @@ class detectionControl(aiProcess):
                     else:
                         if not (detection_file in self.modules):
                             #interesting behaviour of __import__ here
-                            self.modules[detection_file] = __import__('script-library.'+detection_file, fromlist=['script-library'])
+                            self.modules[detection_file] = __import__('detector_library.'+detection_file, fromlist=['detector_library'])
                         self.running_detectors[detection_file] = self.modules[detection_file].detector(self.node)
-                        debug("Started detection class %s." %(detection_file))
+                        info("Started detection class %s." %(detection_file))
                 for detection_file in self.stop_requests:
                     try:
                         self.running_detectors[detection_file].die()
                         self.running_detectors.pop(detection_file)
+                        info("Stopped detection class %s." %(detection_file))
                     except KeyError:
                         debug(detection_file+" is not runnning, so cannot be stopped")
             #send status
@@ -51,7 +48,7 @@ class detectionControl(aiProcess):
             for detection_file in self.running_detectors:
                 self.running_detectors[detection_file].process()
                 if self.running_detectors[detection_file].detected:
-                    self.ai.task_manager.on_detection(detection_file)
+                    self.ai.task_manager.notify_detector(detection_file, True)
             time.sleep(1)
 
 if __name__ == '__main__':
