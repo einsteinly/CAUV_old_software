@@ -65,11 +65,21 @@ class aiProcess(messaging.BufferedMessageObserver):
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
 
+class fakeAUVfunction():
+    def __init__(self, script, attr):
+        self.script = script
+        self.attr = attr
+    def __call__(self, *args, **kwargs):
+        self.script.ai.auv_control.auv_command(self.script.process_name, self.attr, *args, **kwargs)
+
 class fakeAUV():
+    #TODO
+    #really, telemtry data needs to come in here, so that the script can access it and commands like bearing and wait can be implemented
+    #also needs to respong to control overriding commands
     def __init__(self, script):
         self.script = script
     def __getattr__(self, attr):
-        return self.script.ai.auv_control.__getattr__(attr)
+        return fakeAUVfunction(self.script, attr)
         
 class aiScript(aiProcess):
     def __init__(self, script_name):
@@ -87,7 +97,7 @@ class aiScript(aiProcess):
     def confirm_exit(self):
         self.exit_confirmed.set()
         
-class aiDetector():
+class aiDetector(messaging.BufferedMessageObserver):
     def __init__(self, node):
         self.node = node
         self.detected = False
@@ -97,10 +107,7 @@ class aiDetector():
         """
         pass
     def die(self):
-        """
-        aiDetectors MUST define a clearup method. since pretty much all detectors need to disengage from the messaging system, the default method will raise an exception, as a) that way its difficult to foret to define and b) this should stop any detectors as it will force a process restart
-        """
-        raise Exception("Die method MUST be defined")
+        self.node.removeObserver(self)
 
 class aiCondition():
     """

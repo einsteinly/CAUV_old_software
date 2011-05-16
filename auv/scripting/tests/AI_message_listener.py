@@ -11,7 +11,8 @@ class aiMessageListener(messaging.BufferedMessageObserver):
         self.node.join("ai")
         self.node.addObserver(self)
     def onAIMessage(self, m):
-        print cPickle.loads(m.msg)
+        message = cPickle.loads(m.msg)
+        print '%s: %s.%s(%s, %s)' %(message[1],message[0],message[2],', '.join(map(str,message[3])),', '.join(['='.join(map(str, x)) for x in message[4].items()]))
         
 if __name__ == '__main__':
     aml = aiMessageListener()

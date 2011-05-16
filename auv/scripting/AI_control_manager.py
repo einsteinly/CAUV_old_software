@@ -4,24 +4,24 @@ from cauv.debug import debug, warning, error, info
 
 import time
 
-from AI_classes import aiProcess
+from AI_classes import aiProcess, external_function
 
-class auvFunction():
-    def __init__(self, auv, func):
-        self.ext_func = True
-        self.func = func
-        self.auv = auv
-    def __call__(self, *args, **kwargs):
-        getattr(self.auv, self.func)(*args, **kwargs)
+#TODO basically the actual functionality of conrol, the ability to stop the sub, block script_ids etc
+#also see auv_command, control really needs to be slit between fake auv for telemetry and here for actual control
 
 class auvControl(aiProcess):
     def __init__(self):
         aiProcess.__init__(self, 'auv_control')
         self.auv = control.AUV(self.node)
         self.external_functions = []
-    def __getattr__(self, attr):
-        #note python calls tries to get attributes of this class before __getattr__
-        return auvFunction(self.auv, attr)
+    @external_function
+    def auv_command(self, script_id, command, *args, **kwargs):
+        #__getattr__ was more trouble than its worth. since this is abstracted by fakeAUV, doesn't matter to much
+        #TODO make it possible to filter by script id. script id should match task_managers record as well
+        #Might need to move parts of control here/take a smaller version of control that doesn't have waiting commands (eg depth and wait)
+        #note, we don't care about errors here, cos they'l be caught by the message handler.
+        #Also the message handler will tell us which message from who caused the error
+        getattr(self.auv, command)(*args, **kwargs)
     def run(self):
         while True:
             time.sleep(10)
