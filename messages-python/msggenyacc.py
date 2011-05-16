@@ -233,7 +233,7 @@ def p_enumval_list(p):
         p[0] = p[1]
     enumval = p[0][-1]
     if enumval.value == None:
-        prevval = 0
+        prevval = -1
         if len(p[0]) > 1:
             prevval = p[0][-2].value
         enumval.value = prevval + 1
