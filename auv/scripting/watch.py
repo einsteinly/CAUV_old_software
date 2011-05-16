@@ -60,7 +60,7 @@ processes_to_start = [
         CAUVTask('logger',   'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
         CAUVTask('img-pipe', 'nohup %EDIR/img-pipeline',                True,  ['img-pipeline']),
         CAUVTask('sonar',    'nohup %EDIR/sonar /dev/ttyUSB1',          True,  ['sonar']),
-        CAUVTask('control',  'nohup %EDIR/control -m/dev/ttyUSB0 -x0',  True,  ['control']),
+        CAUVTask('controlv2','nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0', True, ['control', 'controlv2']),
         CAUVTask('spread',   'nohup spread',                            True,  ['spread']),
         CAUVTask('watch',    '',                                        False, ['watch.py']),
         CAUVTask('persist',  'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py', True, ['persist.py']),
@@ -199,6 +199,7 @@ if __name__ == '__main__':
     
     try:
         while True:
+            warning('forcefully killing this process (e.g. with Ctrl-C) will kill the started child processes')
             processes = getProcesses()
             printDetails(processes, opts.details)
             if cauv_node is not None:

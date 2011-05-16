@@ -12,7 +12,6 @@ include_directories (${AUV_SOURCE_DIR})
 include_directories (SYSTEM "${AUV_SOURCE_DIR}/lib")
 
 add_subdirectory (camera)
-add_subdirectory (control)
 add_subdirectory (controlv2)
 add_subdirectory (fileinput)
 add_subdirectory (img-pipeline)
