@@ -77,8 +77,7 @@ void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_pt
     boost::shared_ptr<PipelineListingObserver> listingObserver = boost::make_shared<PipelineListingObserver>(node);
     node->addMessageObserver(listingObserver);
 
-    listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), ui->pipelines, SLOT(clear()));
-    listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), ui->pipelines, SLOT(hide()));
+    listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), this, SLOT(clearPipelines()));
     listingObserver->connect(listingObserver.get(), SIGNAL(pipelineDiscovered(std::string)), this, SLOT(addPipeline(std::string)));
 }
 
@@ -87,11 +86,25 @@ void PipelineCauvWidget::addPipeline(std::string name){
     // check if its an unknown pipeline to us
     if(ui->pipelines->findText(QString::fromStdString(name)) < 0) {
 
+        ui->pipelines->blockSignals(true);
+
         ui->pipelines->addItem(QString::fromStdString(name));
 
         if(ui->pipelines->count() > 1)
             ui->pipelines->show();
+
+        // try to sync with the currently displayed pipeline
+        ui->pipelines->setCurrentIndex(ui->pipelines->findText(QString::fromStdString(m_pipeline->pipelineName())));
+
+        ui->pipelines->blockSignals(false);
     }
+}
+
+void PipelineCauvWidget::clearPipelines(){
+    ui->pipelines->blockSignals(true);
+    ui->pipelines->clear();
+    ui->pipelines->hide();
+    ui->pipelines->blockSignals(false);
 }
 
 void PipelineCauvWidget::send(boost::shared_ptr<Message> message){

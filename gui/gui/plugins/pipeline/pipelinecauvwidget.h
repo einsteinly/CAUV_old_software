@@ -54,6 +54,7 @@ namespace cauv {
     protected Q_SLOTS:
         void send(boost::shared_ptr<Message> message);
         void addPipeline(std::string name);
+        void clearPipelines();
 
     protected:
         pw::PipelineWidget * m_pipeline;
