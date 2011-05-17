@@ -1,6 +1,10 @@
 #include "pipelinecauvwidget.h"
+#include "pipeline/ui_pipelinecauvwidget.h"
 
 #include <boost/make_shared.hpp>
+
+#include <QVBoxLayout>
+#include <QComboBox>
 
 #include <generated/messages.h>
 
@@ -12,35 +16,36 @@
 using namespace cauv;
 
 
-namespace cauv {
-    class PipelineRefreshMessageObserver : public MessageObserver {
-    public:
-        PipelineRefreshMessageObserver(boost::shared_ptr<CauvNode> node) : m_node(node){
-        }
+PipelineListingObserver::PipelineListingObserver(boost::shared_ptr<CauvNode> node) : m_node(node) {
+    qRegisterMetaType<std::string>("std::string");
+}
 
-        virtual void onMembershipChangedMessage(MembershipChangedMessage_ptr){
-            info() << "Membership change detected, requesting pipeline listing.";
-            m_node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
-        }
+void PipelineListingObserver::onMembershipChangedMessage(MembershipChangedMessage_ptr){
+    info() << "Membership change detected, requesting pipeline listing.";
+    m_node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
+    Q_EMIT searchStarted();
+}
 
-
-        virtual void onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m) {
-            info() << "Pipeline listing response:" << m->pipelineName();
-        }
-
-        protected:
-            boost::shared_ptr<CauvNode> m_node;
-    };
-} // namespace cauv
+void PipelineListingObserver::onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m) {
+    info() << "Pipeline listing response:" << m->pipelineName();
+    Q_EMIT pipelineDiscovered(m->pipelineName());
+}
 
 
 PipelineCauvWidget::PipelineCauvWidget() :
         m_pipeline(new pw::PipelineWidget()),
-        m_observer(boost::make_shared<pw::PipelineGuiMsgObs>(m_pipeline))
+        m_observer(boost::make_shared<pw::PipelineGuiMsgObs>(m_pipeline)),
+        ui(new Ui::PipelineCauvWidget())
 {
+    ui->setupUi(this);
     m_pipeline->connect(m_pipeline, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
 
-    m_tabs.append(m_pipeline);
+    ui->pipelines->hide(); // hide until its populated
+    ui->layout->addWidget(m_pipeline);
+
+    ui->pipelines->connect(ui->pipelines, SIGNAL(currentIndexChanged(const QString&)), m_pipeline, SLOT(setPipelineName(const QString&)));
+
+    m_tabs.append(this);
 }
 
 PipelineCauvWidget::~PipelineCauvWidget(){
@@ -69,7 +74,24 @@ void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_pt
     CauvBasicPlugin::initialise(auv, node);
 
     node->addMessageObserver(m_observer);
-    node->addMessageObserver(boost::make_shared<PipelineRefreshMessageObserver>(node));
+    boost::shared_ptr<PipelineListingObserver> listingObserver = boost::make_shared<PipelineListingObserver>(node);
+    node->addMessageObserver(listingObserver);
+
+    listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), ui->pipelines, SLOT(clear()));
+    listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), ui->pipelines, SLOT(hide()));
+    listingObserver->connect(listingObserver.get(), SIGNAL(pipelineDiscovered(std::string)), this, SLOT(addPipeline(std::string)));
+}
+
+void PipelineCauvWidget::addPipeline(std::string name){
+
+    // check if its an unknown pipeline to us
+    if(ui->pipelines->findText(QString::fromStdString(name)) < 0) {
+
+        ui->pipelines->addItem(QString::fromStdString(name));
+
+        if(ui->pipelines->count() > 1)
+            ui->pipelines->show();
+    }
 }
 
 void PipelineCauvWidget::send(boost::shared_ptr<Message> message){
