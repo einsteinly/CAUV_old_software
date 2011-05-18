@@ -44,8 +44,6 @@ class PipelineWidget: public QGLWidget,
         QSize minimumSizeHint() const;        
         QSize sizeHint() const;
         
-        // Causes GUI to discard all current state
-        void setPipelineName(std::string const& name);
         std::string pipelineName() const;        
         
         void remove(menu_ptr_t);
@@ -91,6 +89,11 @@ class PipelineWidget: public QGLWidget,
 		virtual void postText(const std::string &text, const std::string &font);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
+
+    public Q_SLOTS:
+        // Causes GUI to discard all current state
+        void setPipelineName(std::string const& name);
+        void setPipelineName(const QString& name);
 
     Q_SIGNALS:
         void redrawPosted();

@@ -154,7 +154,7 @@ void PipelineWidget::setPipelineName(std::string const& name){
 
     lock_t l(m_lock);
     m_pipeline_name = name;
-    
+
     m_nodes.clear();
     m_imgnodes.clear();
     m_arcs.clear();
@@ -167,8 +167,12 @@ void PipelineWidget::setPipelineName(std::string const& name){
     // for anyone interested in the name, e.g. displaying it to identify this
     // widget:
     Q_EMIT nameChanged(name);
-    
+
     send(boost::make_shared<GraphRequestMessage>(name));
+}
+
+void PipelineWidget::setPipelineName(const QString& name){
+    setPipelineName(name.toStdString());
 }
 
 void PipelineWidget::remove(renderable_ptr_t p){
