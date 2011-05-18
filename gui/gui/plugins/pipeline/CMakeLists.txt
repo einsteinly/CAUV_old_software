@@ -9,6 +9,7 @@ set ( PIPELINE_PLUGIN_SRCS
 )
 
 set ( PIPELINE_PLUGIN_UIS
+    pipelinecauvwidget.ui
 )
 
 set ( PIPELINE_PLUGIN_H
