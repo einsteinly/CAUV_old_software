@@ -72,12 +72,74 @@ class fakeAUVfunction():
     def __call__(self, *args, **kwargs):
         self.script.ai.auv_control.auv_command(self.script.process_name, self.attr, *args, **kwargs)
 
-class fakeAUV():
+class fakeAUV(messaging.BufferedMessageObserver):
     #TODO
-    #really, telemtry data needs to come in here, so that the script can access it and commands like bearing and wait can be implemented
-    #also needs to respong to control overriding commands
+    #needs to respond to control overriding commands
     def __init__(self, script):
-        self.script = script
+        self.script = script #passing the script saves on the number of AI_process, as fakeAUV can now call other processes through the script
+        messaging.BufferedMessageObserver.__init__(self)
+        self.script.node.join("telemetry")
+        self.script.node.addObserver(self)
+        self.current_bearing = None
+        self.current_depth = None
+        self.current_pitch = None
+        self.bearingCV = threading.Condition()
+        self.depthCV = threading.Condition()
+        self.pitchCV = threading.Condition()
+        
+    def onTelemetryMessage(self, m):
+        #self.bearing = m.orientation.yaw
+        #print "message"
+        self.current_bearing = m.orientation.yaw
+        self.current_depth = m.depth
+        self.current_pitch = m.orientation.pitch
+        self.bearingCV.acquire()
+        self.depthCV.acquire()
+        self.pitchCV.acquire()
+        self.bearingCV.notifyAll()
+        self.depthCV.notifyAll()
+        self.pitchCV.notifyAll()
+        self.bearingCV.release()
+        self.depthCV.release()
+        self.pitchCV.release()
+        
+    def bearingAndWait(self, bearing, epsilon = 5, timeout = 30):
+        startTime = time.time()
+        self.bearing(bearing)
+        while time.time() - startTime < timeout:
+            if self.current_bearing == None or min((bearing - self.current_bearing) % 360, (self.current_bearing - bearing) % 360) > epsilon:
+                #print 'bearing waiting'
+                self.bearingCV.acquire()
+                self.bearingCV.wait(timeout - time.time() + startTime)
+                self.bearingCV.release()
+            else:
+                return True
+        return False
+        
+    def depthAndWait(self, depth, epsilon = 5, timeout = 30):
+        startTime = time.time()
+        self.depth(depth)
+        while time.time() - startTime < timeout:
+            if self.current_depth == None or abs(depth - self.current_depth) > epsilon:
+                self.depthCV.acquire()
+                self.depthCV.wait(timeout - time.time() + startTime)
+                self.depthCV.release()
+            else:
+                return True
+        return False
+
+    def pitchAndWait(self, pitch, epsilon = 5, timeout = 30):
+        startTime = time.time()
+        self.pitch(pitch)
+        while time.time() - startTime < timeout:
+            if self.current_pitch == None or min((pitch - self.current_pitch) % 360, (self.current_pitch - pitch) % 360) > epsilon:
+                self.pitchCV.acquire()
+                self.pitchCV.wait(timeout - time.time() + startTime)
+                self.pitchCV.release()
+            else:
+                return True
+        return False
+        
     def __getattr__(self, attr):
         return fakeAUVfunction(self.script, attr)
         

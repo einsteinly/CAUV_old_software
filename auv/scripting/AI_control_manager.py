@@ -7,7 +7,6 @@ import time
 from AI_classes import aiProcess, external_function
 
 #TODO basically the actual functionality of conrol, the ability to stop the sub, block script_ids etc
-#also see auv_command, control really needs to be slit between fake auv for telemetry and here for actual control
 
 class auvControl(aiProcess):
     def __init__(self):
@@ -22,6 +21,9 @@ class auvControl(aiProcess):
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
         getattr(self.auv, command)(*args, **kwargs)
+    @external_function
+    def stop(self):
+        self.auv.stop()
     def run(self):
         while True:
             time.sleep(10)
