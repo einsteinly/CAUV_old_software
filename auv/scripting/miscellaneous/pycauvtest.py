@@ -59,8 +59,8 @@ def randomTest():
             print "node status:", msg.nodeId, msg.status
 
     m = MMO()
-    m.setDoubleBuffered(messaging.MessageType.Status, True)
-    m.setDoubleBuffered(messaging.MessageType.Image, True)
+    m.setDoubleBuffered(messaging.MessageType.Status, True) #pylint: disable=E1101
+    m.setDoubleBuffered(messaging.MessageType.Image, True) #pylint: disable=E1101
     print m, "created Observer with overload"
 
     n.addObserver(m)
@@ -84,11 +84,13 @@ def randomTest():
             print e
 
     time.sleep(3)
-    n.send(messaging.ClearPipelineMessage(), "pipeline")
-    n.send(messaging.AddNodeMessage(messaging.NodeType.FileInput,
+    n.send(messaging.ClearPipelineMessage("default"), "pipeline")
+    n.send(messaging.AddNodeMessage("default",
+                                    messaging.NodeType.FileInput,
                                     messaging.NodeInputArcVec(),
                                     messaging.NodeOutputArcVec()), "pipeline")
-    n.send(messaging.AddNodeMessage(messaging.NodeType.GuiOutput,
+    n.send(messaging.AddNodeMessage("default",
+                                    messaging.NodeType.GuiOutput,
                                     messaging.NodeInputArcVec(),
                                     messaging.NodeOutputArcVec()), "pipeline")
 

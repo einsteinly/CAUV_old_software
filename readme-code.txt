@@ -46,21 +46,24 @@ Build System:
     cmake > 2.8
     python 2.6 with Cheetah, pylexyacc
 
-auv:
-    librt (this is include in libc6 most of the time)
-    libftdi
-    spread (at ./configure add the extra options --with-pic CFLAGS="-enable-shared -fPIC")
-    libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
+common:
     boost-??? (default build of boost will do), boost 1.43 works (note default on ubuntu is 1.42, may cause problems)
-    OpenCV (>= 2.2)
     bjam
     boost-python
     python 2.6
+    OpenCV (>= 2.2)
+    spread (at ./configure add the extra options --with-pic CFLAGS="-enable-shared -fPIC")
+    libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
 
+auv:
+    librt (this is include in libc6 most of the time)
+    libftdi
+    libsensors
 
 gui/gui-pipeline and gui/pipeline-widget:
     Qt 4.?, with OpenGL support
     libFTGL
+    libgraphviz
 
 gui/gui:
     Qt 4 (with Qt3 support library, but NOT qt3 dev packages, as this sets all of the defaults to qt3, meaning qwt6 won't build)
@@ -68,7 +71,11 @@ gui/gui:
     OpenCV
     Marble (optional) - for the map
     OIS (optional) - for gamepad controls
-    
+   
+supermess:
+    (This is currently unnecesary, but will likely replace spread in the future)
+    libavahi-{core,client}
+
 gui/gui-java:
     (This is somewhat obsolete now and should be deleted soon)
     Qt Jambi

@@ -61,6 +61,12 @@ class ImageProcessor: public MessageObserver
         virtual void onForceExecRequestMessage(ForceExecRequestMessage_ptr m);
         virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
 
+        /**
+         * Pipeline discovery messages - for nodes interested in listing all pipelines
+         */
+
+        virtual void onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr m);
+
         /** end MessageObserver functions **/
 
         void removeNode(node_id const& n);

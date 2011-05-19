@@ -43,7 +43,7 @@ void ImagePipelineNode::addOptions(po::options_description& desc,
     CauvNode::addOptions(desc, pos);
    
     desc.add_options()
-        ("name,n", po::value<std::string>()->required(), "Pipeline name (e.g. sonar-processing)")
+        ("name,n", po::value<std::string>()->default_value("default"), "Pipeline name (e.g. sonar-processing)")
     ;
 
     pos.add("name", 1);

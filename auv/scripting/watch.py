@@ -6,11 +6,18 @@ import subprocess
 import os
 import cauv.messaging as msg
 import cauv.node as node
+import string
 
 from cauv.debug import debug, info, warning, error
 
 CPU_Poll_Time = 0.025
 Poll_Delay = 2.0
+Exe_Prefix = '' # set these using command line options
+Script_Dir = '' #
+
+def fillPathPlaceholders(s):
+    r = string.replace(s, '%EDIR', Exe_Prefix)
+    return string.replace(r, '%SDIR', Script_Dir)
 
 class CAUVTask:
     def __init__(self, name, command, restart=True, names=[]):
@@ -34,14 +41,11 @@ class CAUVTask:
         return self.__restart
     def start(self):
         if(self.__restart):
-            # stdout is logged, so dump it to /dev/null
-            subprocess.Popen(self.__command.split(' '),
+            # stdout is logged, so dump it to /dev/null         
+            subprocess.Popen(fillPathPlaceholders(self.__command).split(' '),
                              #stdout=subprocess.DEVNULL, only in python 3.3
                              stdout=open('/dev/null', 'w'),
                              stderr=open('%s-stderr.log' % self.shortName(), 'a'))
-
-# global variable, set using command line options
-cmd_prefix = '/usr/local/bin/cauv/'
 
 # ---------------------------------------------------------------
 # ---------- List of processes to start / monitor ---------------
@@ -49,18 +53,18 @@ cmd_prefix = '/usr/local/bin/cauv/'
 processes_to_start = [
         CAUVTask(
             'remote',     # short name
-            'nohup /bin/sh ./run.sh ./remote.py', # command
+            'nohup /bin/sh %SDIR/run.sh %SDIR/remote.py', # command: %SDIR expands to --script-dir, %EDIR to --exec-prefix
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',   'nohup /bin/sh ./run.sh ./logger.py',        True,  ['logger.py']),
-        CAUVTask('img-pipe', 'nohup %s/img-pipeline' % cmd_prefix, True,  ['img-pipeline']),
-        CAUVTask('sonar',    'nohup %s/sonar /dev/ttyUSB1' % cmd_prefix,        True,  ['sonar']),
-        CAUVTask('control',  'nohup %s/control -m/dev/ttyUSB0 -x0' % cmd_prefix,      True, ['control']),
-        CAUVTask('spread',   'nohup spread',                              True,  ['spread']),
-        CAUVTask('watch',    '',                                          False, ['watch.py']),
-        CAUVTask('persist',  'nohup /bin/sh ./run.sh ./persist.py',         True, ['persist.py']),
-        CAUVTask('battery',  'nohup /bin/sh ./run.sh ./battery_monitor.py', False,  ['battery_monitor.py']) ]
+        CAUVTask('logger',   'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
+        CAUVTask('img-pipe', 'nohup %EDIR/img-pipeline',                True,  ['img-pipeline']),
+        CAUVTask('sonar',    'nohup %EDIR/sonar /dev/ttyUSB1',          True,  ['sonar']),
+        CAUVTask('controlv2','nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0', True, ['control', 'controlv2']),
+        CAUVTask('spread',   'nohup spread',                            True,  ['spread']),
+        CAUVTask('watch',    '',                                        False, ['watch.py']),
+        CAUVTask('persist',  'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py', True, ['persist.py']),
+        CAUVTask('battery',  'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']) ]
 
 def limitLength(string, length=40):
     string = string.replace('\n', '\\ ')
@@ -155,7 +159,7 @@ def startInactive(cauv_task_list):
         if cauv_task.process is None:
             if cauv_task.doStart():
                 info('starting %s (%s)' % (cauv_task.shortName(),
-                     cauv_task.command()))
+                     fillPathPlaceholders(cauv_task.command())))
                 cauv_task.start()
 
 if __name__ == '__main__':
@@ -172,19 +176,22 @@ if __name__ == '__main__':
     p.add_option('-q', '--no-broadcast', dest='broadcast', default=True,
                  action='store_false', help="don't broadcast messages "+\
                  'containing information on running processes')
-    p.add_option('-e', '--exec-prefix', dest='exec_prefix',
-                 default='/usr/local/bin/', type=str,
+    p.add_option('-e', '--exec-prefix', dest='cmd_prefix',
+                 default='/usr/local/bin/cauv/', type=str,
                  action='store', help='exec prefix for cauv executables ' +\
                  '(e.g., /usr/local/bin')
+    p.add_option('-s', '--script-dir', dest='script_dir', default='./',
+                 type=str, action='store',
+                 help='script directory (where to find run.sh)')
 
     opts, args = p.parse_args()
 
     if len(args) > 0:
         print 'this program takes no arguments'
         exit(1)
-
-    global exec_prefix
-    exec_prefix = opts.exec_prefix
+    
+    Exe_Prefix = opts.cmd_prefix
+    Script_Dir = opts.script_dir    
 
     cauv_node = None
     if opts.broadcast:
@@ -192,6 +199,7 @@ if __name__ == '__main__':
     
     try:
         while True:
+            warning('forcefully killing this process (e.g. with Ctrl-C) will kill the started child processes')
             processes = getProcesses()
             printDetails(processes, opts.details)
             if cauv_node is not None:

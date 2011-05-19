@@ -240,6 +240,12 @@ void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr m){
     }
 }
 
+
+void ImageProcessor::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr){
+    info() << "Pipeline discovery request message recieved";
+    sendMessage(boost::make_shared<PipelineDiscoveryResponseMessage>(m_name));
+}
+
 void ImageProcessor::sendMessage(const boost::shared_ptr<const Message> msg, service_t service_type) const{
     m_mailbox->sendMessage(msg, service_type);
 }

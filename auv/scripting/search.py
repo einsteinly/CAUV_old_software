@@ -108,7 +108,6 @@ def Search():
         print 'surface...'    
         #auv.depthAndWait(0)
         auv.depth(0)
-        h
         
     except Exception:
         traceback.print_exc()

@@ -99,7 +99,7 @@ class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
             self.sendScriptResponse(script, msg.DebugType.Info, message)
     
     def runScript(self, sendFunc, script_name):
-        #subprocess.popen('/bin/sh ./run.sh ./script-library/%s' % script_name)
+        #subprocess.popen('/bin/sh ./run.sh ./script_library/%s' % script_name)
         sendFunc('not implemented')
     
     def printHelp(self, sendFunc):

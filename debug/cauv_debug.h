@@ -145,6 +145,9 @@ class SmartStreamBase : public boost::noncopyable
 
         // initialise on first use
         static std::ofstream& logFile();
+        
+        // return the locale to use for printing
+        static std::locale const& getTheLocale();
 
 #if defined(CAUV_DEBUG_MUTEXES)
         typedef boost::mutex mutex_t;

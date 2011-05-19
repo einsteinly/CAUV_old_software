@@ -153,6 +153,7 @@ void XsensIMU::readThread()
                 att.yaw = -att.yaw;
                 if (att.yaw < 0)
                     att.yaw += 360;
+                att.pitch = -att.pitch;
                 
                 foreach(observer_ptr_t o, m_observers)
                 {

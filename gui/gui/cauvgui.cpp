@@ -96,7 +96,7 @@ void CauvGui::onRun()
                 if (plugin) {
                     if (loadPlugin(plugin)) {
                         info() << "Loaded plugin:"<< fileName.toStdString();
-                    }
+                    } else warning() << "Rejected plugin:"<< fileName.toStdString();
                 }
             }
 

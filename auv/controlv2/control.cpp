@@ -170,7 +170,8 @@ struct PIDControl
         previous_time = tnow;
 
         integral += error*dt;
-        integral = clamp(-Integral_Max_Kp_Mult*Kp, integral, Integral_Max_Kp_Mult*Kp);              double de = smoothedDerivative();
+        integral = clamp(-Integral_Max_Kp_Mult*Kp, integral, Integral_Max_Kp_Mult*Kp);
+        double de = smoothedDerivative();
         previous_derror = de;
 		
 		
@@ -835,7 +836,7 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
 #ifdef CAUV_MCB_IS_FTDI
         ("mcb,m", po::value<int>()->default_value(0), "FTDI device id of the MCB")
 #else 
-        ("mcb,m", po::value<std::string>(), "TTY file for MCB serial comms")
+        ("mcb,m", po::value<std::string>()->default_value("/dev/ttyUSB0"), "TTY file for MCB serial comms")
 #endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
         ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale");

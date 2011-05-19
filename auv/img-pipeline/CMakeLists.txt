@@ -2,6 +2,12 @@
 # subdirs
 add_subdirectory (tests)
 
+option (CAUV_SEND_IO_STATUS_MESSAGES "Should the image processing pipeline should send node IO status messages (useful for debugging but can seriously stress spread)" OFF)
+
+if (NOT CAUV_SEND_IO_STATUS_MESSAGES)
+    add_definitions (-DNO_NODE_IO_STATUS)
+endif()
+
 # sources:
 add_executable (
     img-pipeline

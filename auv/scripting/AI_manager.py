@@ -1,5 +1,7 @@
 import subprocess
 import time
+
+from cauv.debug import info
 """
 Processes
 detector process - runs detector classes, and loops through processing
@@ -16,7 +18,7 @@ class Process():
         self.command = command
         self.start()
     def start(self):
-        print self.command
+        info('Running command: '+' ' .join(self.command))
         self.process = subprocess.Popen(self.command)
     def status(self):
         if self.process.poll():
@@ -28,10 +30,10 @@ class Process():
 process_data_list = (
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py'),
             ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py'),
-            #('task_control', '/bin/sh ./run.sh ./AI_task_manager.py'),
+            ('task_control', '/bin/sh ./run.sh ./AI_task_manager.py'),
             )
 
-class AImanager:
+class AImanager():
     def __init__(self):
         self.processes = {}
         for process_data in process_data_list:
