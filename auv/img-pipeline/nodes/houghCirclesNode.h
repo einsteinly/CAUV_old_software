@@ -37,7 +37,7 @@ class HoughCirclesNode: public OutputNode{
             registerParamID<float>("scale", 1);
             registerParamID<float>("minDist", 5);
             registerParamID<float>("param1", 100);
-            registerParamID<float>("param2", 1000);
+            registerParamID<float>("param2", 100);
             registerParamID<int>("minRadius", 10);
             registerParamID<int>("maxRadius", 20);
             registerParamID<std::string>("name", "unnamed hough circles",
@@ -57,8 +57,8 @@ class HoughCirclesNode: public OutputNode{
             const int method = param<int>("method");
             const float dp = param<float>("scale");
             const float min_dist = param<float>("minDist");
-            const float p1 = param<float>("scale");
-            const float p2 = param<float>("scale");
+            const float p1 = param<float>("param1");
+            const float p2 = param<float>("param2");
             const int min_rad = param<int>("minRadius");
             const int max_rad = param<int>("maxRadius");
             const std::string name = param<std::string>("name");
