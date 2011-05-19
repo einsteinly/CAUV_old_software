@@ -17,7 +17,7 @@ from mission import task_list, default_script
 task manager auto generates a list of what it should be running from these 'tasks', basically looking for these tasks and then running appropriate scripts
 TODO:
 -should also have a current status file, in case task manager crashes and has to be restarted
--record when a task is finished...
+-record when a task is finished... this could be done either using the on_script_exit return value or remove_task called directly from the script
 """          
 
 class taskManager(aiProcess):
@@ -107,7 +107,7 @@ class taskManager(aiProcess):
         pass
     @external_function
     def remove_task(self, task_ref):
-        #see add_task, note need to be able to remove task based on task ref. Again need to watch potential threading issues
+        #TODO see add_task, note need to be able to remove task based on task ref. Again need to watch potential threading issues
         pass
     @external_function
     def on_script_exit(self, status):
@@ -116,12 +116,14 @@ class taskManager(aiProcess):
         #Force immediate recheck
         self.conditions_changed.set()
     def stop_script(self):
-        #TODO make sure the sub actually stops...
         if self.running_script:
             try:
                 self.running_script.terminate()
             except OSError:
                 debug('Could not kill running script (probably already dead)')
+        #make sure the sub actually stops
+        self.ai.control_manager.stop()
+        #TODO tell control to stop listening to the script
     def start_script(self, script_name):
         self.stop_script()
         info('Starting script: '+script_name)
