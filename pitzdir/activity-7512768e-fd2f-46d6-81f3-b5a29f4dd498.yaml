@@ -1,0 +1,17 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: &id001 2011-05-11 11:57:50.605132
+description: "pscore changed to 0\ntitle changed to idea\nentity changed to <pitz.Task\
+  \ a920d5 Name for the AI Component>\ndescription changed to How about CRIMSON\r\n\
+  Cauv Recognition, Intelligent Mission Selection and Operation Network/Nodes\nwho_said_it\
+  \ changed to Jason Wyatt"
+entity: !!python/object:uuid.UUID
+  int: 34354901505023529356653701160048192652
+modified_time: *id001
+pscore: 0
+title: 2011-05-11 11:57 - Jason Wyatt changed comment idea
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 155615541503377953470648189413504177304
+who_did_it: *id002
+yaml_file_saved: 2011-05-11 11:57:50.608001
