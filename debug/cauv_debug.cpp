@@ -122,8 +122,7 @@ void SmartStreamBase::printToStream(std::ostream& os)
     // stream that nothing else is going to interfere with to get at
     // the time in the format that we want:
     std::ostringstream oss;
-    boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%H:%M:%s");
-    oss.imbue(std::locale(oss.getloc(), facet));
+    oss.imbue(getTheLocale());
 
     // add timestamp at start of each line:
     if(m_stuffs.size())
@@ -230,6 +229,14 @@ std::ofstream& SmartStreamBase::logFile()
         lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
     }
     return lf;
+}
+
+std::locale const& SmartStreamBase::getTheLocale(){
+    static std::locale the_locale = std::locale(
+        std::cout.getloc(),
+        new boost::posix_time::time_facet("%H:%M:%s")
+    );
+    return the_locale;
 }
 
 #if defined(CAUV_DEBUG_MUTEXES)

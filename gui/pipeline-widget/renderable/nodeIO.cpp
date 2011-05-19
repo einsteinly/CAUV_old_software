@@ -37,11 +37,11 @@ void NodeIOBlob::draw(drawtype_e::e flags){
         glColor(m_colour & Mouseover_Colour_Hint);
     else
         glColor(m_colour);
-    glCircle(m_radius);
+    glCircle(m_radius, 8);
 
     glColor(m_colour & Outline_Colour_Hint);
     glLineWidth(1);
-    glCircleOutline(m_radius);
+    glCircleOutline(m_radius, 8);
 
     if(!m_suppress_text){
         glTranslatef(m_text->m_pos);
