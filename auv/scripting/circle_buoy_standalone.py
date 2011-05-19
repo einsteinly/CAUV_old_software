@@ -7,33 +7,30 @@ import cauv.pipeline as pipeline
 import cauv.node
 from cauv.debug import debug, info, warning, error
 
-from AI_classes import aiScript
-
 import time
 import optparse
 import math
 
-class CircleBuoyOptions:
-    # TODO: need some mechanism of setting these from the AI framework?
+class CircleBuoyDefaults:
+    # default options
     Do_Prop_Limit = 50  # max prop for forward/backward adjustment
     Camera_FOV = 60     # degrees
     Warn_Seconds_Between_Sights = 5
     Node_Name = "py-CrcB"
-    Strafe_Speed = 20   # (int [-127,127]) controls strafe speed
-    Buoy_Size = 0.2     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
+    Strafe_Speed = 20
+    Buoy_Size = 0.2     # as fraction of camera FOV at desired distance
     Size_Control_kPD = (300, 0)
-    Pipeline_File = 'pipelines/circle_buoy.pipe'
-    Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
-class CircleBuoy(aiScript):
-    def __init__(self,
-                 strafe_speed = CircleBuoyOptions.Strafe_Speed,
-                 buoy_size    = CircleBuoyOptions.Buoy_Size,
-                 size_kpd     = CircleBuoyOptions.Size_Control_kPD):
-        aiScript.__init__(self, CircleBuoyOptions.Node_Name)
-        # self.node is set by aiProcess (base class of aiScript)
-        self.node.join('processing')
-        self.__pl = pipeline.Model(self.node, CircleBuoyOptions.Load_Pipeline)
+
+class BuoyCircleObserver(msg.MessageObserver):
+    def __init__(self, cauv_node, auv, strafe_speed, buoy_size,
+                 size_kpd=CircleBuoyDefaults.Size_Control_kPD):
+        msg.MessageObserver.__init__(self)
+        self.__node = cauv_node
+        self.__node.join('processing')
+        self.__node.addObserver(self)
+        self.__auv = auv
+        self.__pl = pipeline.Model(self.__node)
         self.__strafe_speed = strafe_speed
         self.__buoy_size = buoy_size
         self.last_size_err = None
@@ -41,7 +38,7 @@ class CircleBuoy(aiScript):
         self.__sizekpd = size_kpd
     
     def loadPipeline(self):
-        self.__pl.load(CircleBuoyOptions.Pipeline_File)
+        self.__pl.load('pipelines/circle_buoy.pipe')
 
     def onCirclesMessage(self, m):
         if str(m.name) == 'buoy':
@@ -67,7 +64,7 @@ class CircleBuoy(aiScript):
             debug('Ignoring circles message: %s' % str(m))
     
     def getBearingNotNone(self):
-        b = self.auv.getBearing()
+        b = self.__auv.getBearing()
         if b is None:
             warning('no current bearing available')
             b = 0
@@ -76,7 +73,7 @@ class CircleBuoy(aiScript):
     def actOnBuoy(self, centre, radius):
         now = time.time()
         if self.time_last_seen is not None and \
-           now - self.time_last_seen > CircleBuoyOptions.Warn_Seconds_Between_Sights:
+           now - self.time_last_seen > CircleBuoyDefaults.Warn_Seconds_Between_Sights:
             info('picked up buoy again')
          
         pos_err = centre - 0.5
@@ -98,12 +95,12 @@ class CircleBuoy(aiScript):
         #    |<------------->|
         #       = 0.5 / sin(FOV/2) = plane_dist
         #
-        plane_dist = 0.5 / math.sin(math.radians(CircleBuoyOptions.Camera_FOV)/2.0)
+        plane_dist = 0.5 / math.sin(math.radians(CircleBuoyDefaults.Camera_FOV)/2.0)
         angle_err = math.degrees(math.asin(pos_err / plane_dist))
         debug('angle error = %g' % angle_err)
         turn_to = self.getBearingNotNone() + angle_err
         debug('turning to %g' % turn_to)
-        self.auv.bearing(turn_to)
+        self.__auv.bearing(turn_to)
 
         size_err = radius - self.__buoy_size
         size_derr = 0
@@ -112,18 +109,18 @@ class CircleBuoy(aiScript):
         self.last_size_err = (now, size_err)
         do_prop = self.__sizekpd[0] * size_err +\
                   self.__sizekpd[1] * size_derr
-        if do_prop > CircleBuoyOptions.Do_Prop_Limit:
-            do_prop = CircleBuoyOptions.Do_Prop_Limit
-        if do_prop < -CircleBuoyOptions.Do_Prop_Limit:
-            do_prop = -CircleBuoyOptions.Do_Prop_Limit
+        if do_prop > CircleBuoyDefaults.Do_Prop_Limit:
+            do_prop = CircleBuoyDefaults.Do_Prop_Limit
+        if do_prop < -CircleBuoyDefaults.Do_Prop_Limit:
+            do_prop = -CircleBuoyDefaults.Do_Prop_Limit
         debug('setting prop: %s' % do_prop)
-        self.auv.prop(int(round(do_prop)))
+        self.__auv.prop(int(round(do_prop)))
         self.time_last_seen = now
 
-    def run(self):
-        if CircleBuoyOptions.Load_Pipeline is not None:
+    def run(self, load_pipeline=True):
+        if load_pipeline:
             self.loadPipeline()
-        start_bearing = self.auv.getBearing()
+        start_bearing = self.__auv.getBearing()
         entered_quarters = [False, False, False, False]
         info('Waiting for circles...')
         try:
@@ -132,49 +129,63 @@ class CircleBuoy(aiScript):
                 time_since_seen = 0
                 if self.time_last_seen is not None:
                     time_since_seen = time.time() - self.time_last_seen
-                    if time_since_seen > CircleBuoyOptions.Warn_Seconds_Between_Sights:
+                    if time_since_seen > CircleBuoyDefaults.Warn_Seconds_Between_Sights:
                         warning('cannot see buoy: last seen %g seconds ago' %
                                 time_since_seen)
-                if self.auv.getBearing() > -180 and self.auv.getBearing() < -90:
+                if self.__auv.getBearing() > -180 and self.__auv.getBearing() < -90:
                     entered_quarters[3] = True
-                if self.auv.getBearing() > -90 and self.auv.getBearing() < 0:
+                if self.__auv.getBearing() > -90 and self.__auv.getBearing() < 0:
                     entered_quarters[2] = True
-                if self.auv.getBearing() > 0 and self.auv.getBearing() < 90:
+                if self.__auv.getBearing() > 0 and self.__auv.getBearing() < 90:
                     entered_quarters[0] = True
-                if self.auv.getBearing() > 90 and self.auv.getBearing() < 180:
+                if self.__auv.getBearing() > 90 and self.__auv.getBearing() < 180:
                     entered_quarters[1] = True
-                if self.auv.getBearing() > 180 and self.auv.getBearing() < 270:
+                if self.__auv.getBearing() > 180 and self.__auv.getBearing() < 270:
                     entered_quarters[2] = True
-                if self.auv.getBearing() > 270 and self.auv.getBearing() < 360:
+                if self.__auv.getBearing() > 270 and self.__auv.getBearing() < 360:
                     entered_quarters[3] = True
-            while self.auv.getBearing() < start_bearing:
+            while self.__auv.getBearing() < start_bearing:
                 info('Waiting for final completion...')
                 time.sleep(0.5)
         finally:
             info('Stopping...')
-            self.auv.stop()
+            self.__auv.stop()
         info('Complete!')
             
 
-def runStandalone(opts):
-    info('circle_buoy.py runStandalone')    
-    b = CircleBuoy(opts.strafe_speed, opts.buoy_size)
-    b.auv = control.AUV(b.node)
-    b.run()
+
+def runWithNode(cauv_node, auv, opts=None):
+    # opts.strafe_speed (int [-127,127]) controls strafe speed
+    # opts.buoy_size (float [0.0, 1.0]) controls distance from buoy. Units are
+    # field of view that the buoy should fill
+    info('circle_buoy.py main program')
+    if auv is None:
+        auv = control.AUV(cauv_node)
+
+    b = BuoyCircleObserver(cauv_node, auv, opts.strafe_speed, opts.buoy_size)
+    b.run(opts.do_load_pipeline)
+
     info('circle_buoy.py complete')
 
+
+
+def runStandalone(node_name = 'py-crcb', opts=None):
+    node = cauv.node.Node('py-crcb')
+    runWithNode(node, None, opts)
+
 if __name__ == '__main__':
-    warning("this script is designed to run from the AI framework, this "+
-            "probably won't work. There is a standalone version of this "+
-            "script in the scripting/ dir")
     p = optparse.OptionParser()
+    p.add_option("-n", "--name", dest="name",
+        default=CircleBuoyDefaults.Node_Name, help="CAUV Node name")
     p.add_option('-s', "--strafe-speed", dest="strafe_speed",
-        default=CircleBuoyOptions.Strafe_Speed, type=int)
+        default=CircleBuoyDefaults.Strafe_Speed, type=int)
     p.add_option('-b', "--buoy-size", dest="buoy_size",
-        default=CircleBuoyOptions.Buoy_Size, type=int)
+        default=CircleBuoyDefaults.Buoy_Size, type=int)
+    p.add_option('-L', "--no-load-pipeline", dest="do_load_pipeline",
+        default=True, action='store_false')
     opts, args = p.parse_args()
 
-    runStandalone(opts)
+    runStandalone(opts.name, opts)
 
     
 
