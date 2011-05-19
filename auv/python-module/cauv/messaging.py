@@ -1,5 +1,5 @@
-# This module transparently wrapped the boost-python exported messaging
-# interafaace
+# This module transparently wraps the boost-python exported messaging
+# interface
 
 from cauvinterface import *
 
