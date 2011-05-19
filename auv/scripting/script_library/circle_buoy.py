@@ -125,6 +125,7 @@ class CircleBuoy(aiScript):
             self.loadPipeline()
         start_bearing = self.auv.getBearing()
         entered_quarters = [False, False, False, False]
+        exit_status = 0
         info('Waiting for circles...')
         try:
             while False in entered_quarters:
@@ -135,6 +136,10 @@ class CircleBuoy(aiScript):
                     if time_since_seen > CircleBuoyOptions.Warn_Seconds_Between_Sights:
                         warning('cannot see buoy: last seen %g seconds ago' %
                                 time_since_seen)
+                    if time_since_seen > CircleBuoyOptions.Give_Up_Seconds_Between_Sights:
+                        # TODO: arange for this sort of thing to be logged in
+                        # the competition log
+                        raise Exception('lost the buoy: giving up!')
                 if self.auv.getBearing() > -180 and self.auv.getBearing() < -90:
                     entered_quarters[3] = True
                 if self.auv.getBearing() > -90 and self.auv.getBearing() < 0:
@@ -150,10 +155,14 @@ class CircleBuoy(aiScript):
             while self.auv.getBearing() < start_bearing:
                 info('Waiting for final completion...')
                 time.sleep(0.5)
+        except:
+            exit_status = 1
+            error(traceback.format_exc())
         finally:
             info('Stopping...')
             self.auv.stop()
         info('Complete!')
+        self.notify_exit(exit_status)
             
 
 def runStandalone(opts):
