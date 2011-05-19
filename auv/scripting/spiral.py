@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# down, forwards, and up
+# spiral search pattern
 
 import cauv
 import cauv.messaging as msg
