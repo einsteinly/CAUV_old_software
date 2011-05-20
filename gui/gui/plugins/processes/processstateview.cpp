@@ -1,9 +1,35 @@
 #include "processstateview.h"
 #include "processes/ui_processstateview.h"
 
+#include <debug/cauv_debug.h>
 #include <model/auv_model.h>
 
+#include <QModelIndexList>
+#include <QTableWidgetItem>
+
 using namespace cauv;
+
+namespace cauv {
+
+    class DataStreamTableItem : public QTableWidgetItem {
+
+    public:
+        DataStreamTableItem(boost::shared_ptr<DataStreamBase> dataStream, const QString &text = "", int type = Type) :
+                QTableWidgetItem(text, type), m_stream(dataStream)
+        {
+        }
+
+        boost::shared_ptr<DataStreamBase> getDataStream() const {
+            return m_stream;
+        }
+
+    protected:
+        boost::shared_ptr<DataStreamBase> m_stream;
+
+    };
+
+} // namespace cauv
+
 
 ProcessStateView::ProcessStateView() :
         ui(new Ui::ProcessStateView)
@@ -16,7 +42,8 @@ ProcessStateView::ProcessStateView() :
     list << "Process" << "CPU" << "Mem" << "Threads" << "Status";
     ui->tableWidget->setHorizontalHeaderLabels(list);
 
-    m_tabs.append(this);
+    //m_tabs.append(this);
+    m_docks[this] = Qt::RightDockWidgetArea;
 }
 
 ProcessStateView::~ProcessStateView()
@@ -29,6 +56,23 @@ void ProcessStateView::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<
     auv->computer_state.processes->onUpdate.connect(boost::bind(&ProcessStateView::onProcessStateUpdate, this, _1));
 }
 
+
+boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > ProcessStateView::getDataStreams() const {
+    boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<DataStreamBase> > >();
+
+    QList<QTableWidgetItem *> items = ui->tableWidget->selectedItems();
+
+    foreach(QTableWidgetItem * item, items){
+        DataStreamTableItem * dsItem = dynamic_cast<DataStreamTableItem *>(item);
+        if(dsItem){
+            streams->push_back(dsItem->getDataStream());
+        }
+    }
+
+    return streams;
+}
+
+
 void ProcessStateView::onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status){
 
     int row = m_processes.size();
@@ -36,11 +80,11 @@ void ProcessStateView::onProcessStateUpdate(const std::string process, const flo
         row = m_processes.at(process);
     } catch (...) {
         ui->tableWidget->setRowCount(row+1);
-        ui->tableWidget->setItem(row, 0, new QTableWidgetItem("Process"));
-        ui->tableWidget->setItem(row, 1, new QTableWidgetItem("CPU"));
-        ui->tableWidget->setItem(row, 2, new QTableWidgetItem("Memory"));
-        ui->tableWidget->setItem(row, 3, new QTableWidgetItem("Threads"));
-        ui->tableWidget->setItem(row, 4, new QTableWidgetItem("Status"));
+        ui->tableWidget->setItem(row, 0, new DataStreamTableItem(m_auv->computer_state.processes));
+        ui->tableWidget->setItem(row, 1, new DataStreamTableItem(m_auv->computer_state.processes));
+        ui->tableWidget->setItem(row, 2, new DataStreamTableItem(m_auv->computer_state.processes));
+        ui->tableWidget->setItem(row, 3, new DataStreamTableItem(m_auv->computer_state.processes));
+        ui->tableWidget->setItem(row, 4, new DataStreamTableItem(m_auv->computer_state.processes));
         m_processes[process] = row;
     }
 
@@ -53,11 +97,17 @@ void ProcessStateView::onProcessStateUpdate(const std::string process, const flo
     if(nameWidget)
         nameWidget->setText(QString::fromStdString(process));
     else error() << "nameWidget not set somehow";
-    if(cpuWidget)
-        cpuWidget->setText(QString::number(cpu));
+    if(cpuWidget){
+        if(cpu != -1)
+            cpuWidget->setText(QString::number(cpu));
+        else cpuWidget->setText(QString("n/a"));
+    }
     else error() << "cpuWidget not set somehow";
-    if(memWidget)
-        memWidget->setText(QString::number(mem));
+    if(memWidget){
+        if(mem != -1)
+            memWidget->setText(QString::number(mem));
+        else memWidget->setText(QString("n/a"));
+    }
     else error() << "memWidget not set somehow";
     if(threadsWidget)
         threadsWidget->setText(QString::number(threads));
