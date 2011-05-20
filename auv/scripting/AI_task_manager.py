@@ -144,7 +144,8 @@ class taskManager(aiProcess):
         self.ai.detector_control.enable()
     def run(self):
         while True:
-            if self.conditions_changed.wait(5):
+            self.conditions_changed.wait(5)
+            if self.conditions_changed.is_set():
                 self.conditions_changed.clear()
                 with self.task_lock:
                     for task in self.active_tasks:
