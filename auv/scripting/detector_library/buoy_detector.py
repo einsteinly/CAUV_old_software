@@ -1,6 +1,8 @@
 from AI_classes import aiDetector
+from cauv.debug import debug, info, warning, error
 
 import time
+import sys
 
 class BuoyDetectorOptions:
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
@@ -26,8 +28,10 @@ class detector(aiDetector):
         else:
             confidence = 0
         if confidence > BuoyDetectorOptions.Required_Confidence:
+            info('buoy detected, confidence = %g' % confidence)
             self.detected = True
         else:
+            info('buoy not detected, detection confidence = %g' % confidence)
             self.detected = False
     
     def detectionConfidence(self, message):
@@ -45,8 +49,13 @@ class detector(aiDetector):
             del self.circles_messages[t]
 
     def onCirclesMessage(self, m):
-        # assuming time collisions are not going to happen very often!
-        t = time.time() - tzero
-        while t in self.circles_messages:
-            t += 1e-9
-        self.circles_messages[t] = m
+        if m.name == 'buoy':
+            # assuming time collisions are not going to happen very often!
+            t = time.time() - tzero
+            while t in self.circles_messages:
+                # twiddle twiddle
+                m, e = math.frexp(t)
+                t = (m + sys.float_info.epsilon) * 2**e
+            self.circles_messages[t] = m
+        else:
+            debug('ignoring circles message: %s' % m.name)
