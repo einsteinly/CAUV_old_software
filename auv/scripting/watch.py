@@ -3,17 +3,54 @@ import psutil
 import optparse
 import time
 import subprocess
+import threading
 import os
-import cauv.messaging as msg
-import cauv.node as node
+import sys
 import string
 
+import cauv.messaging as msg
+import cauv.node as node
 from cauv.debug import debug, info, warning, error
 
 CPU_Poll_Time = 0.025
 Poll_Delay = 2.0
 Exe_Prefix = '' # set these using command line options
 Script_Dir = '' #
+
+
+def spawnDaemon(func):
+    # see http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
+    # do the UNIX double-fork magic, see Stevens' "Advanced
+    # Programming in the UNIX Environment" for details (ISBN 0201563177)
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # parent process
+            return
+    except OSError, e:
+        print >>sys.stderr, "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
+        sys.exit(1)
+
+    # decouple from parent environment
+    # ... don't
+    #os.chdir("/")
+    os.setsid()
+    #os.umask(0)
+
+    # do second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit from second parent
+            sys.exit(0)
+    except OSError, e:
+        print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
+        sys.exit(1)
+    # do stuff
+    func()
+
+    # all done
+    os._exit(os.EX_OK)
 
 def fillPathPlaceholders(s):
     r = string.replace(s, '%EDIR', Exe_Prefix)
@@ -41,7 +78,9 @@ class CAUVTask:
         return self.__restart
     def start(self):
         if(self.__restart):
-            # stdout is logged, so dump it to /dev/null         
+            spawnDaemon(self.__start)
+    def __start(self):
+            # stdout is logged, so dump it to /dev/null
             subprocess.Popen(fillPathPlaceholders(self.__command).split(' '),
                              #stdout=subprocess.DEVNULL, only in python 3.3
                              stdout=open('/dev/null', 'w'),
@@ -189,17 +228,16 @@ if __name__ == '__main__':
     if len(args) > 0:
         print 'this program takes no arguments'
         exit(1)
-    
+
     Exe_Prefix = opts.cmd_prefix
-    Script_Dir = opts.script_dir    
+    Script_Dir = opts.script_dir
 
     cauv_node = None
     if opts.broadcast:
         cauv_node = node.Node("watch")
-    
+
     try:
         while True:
-            warning('forcefully killing this process (e.g. with Ctrl-C) will kill the started child processes')
             processes = getProcesses()
             printDetails(processes, opts.details)
             if cauv_node is not None:

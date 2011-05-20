@@ -147,6 +147,7 @@ class aiScript(aiProcess):
     def __init__(self, script_name):
         aiProcess.__init__(self, script_name)
         self.exit_confirmed = threading.Event()
+        self.script_name = script_name
         self.auv = fakeAUV(self)
     def notify_exit(self, exit_status):
         for x in range(5):

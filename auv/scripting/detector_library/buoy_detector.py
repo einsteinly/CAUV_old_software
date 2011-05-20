@@ -14,13 +14,17 @@ class detector(aiDetector):
         aiDetector.__init__(self, node)
         self.circles_messages = {} # map time received : message
         self.tzero = time.time()
+        self.node.join('processing')
         # TODO: load pipeline
     
+    def relativeTime(self):
+        return time.time() - self.tzero
+
     def process(self):
         # process recorded observations of circles, and set self.detected True
         # / False as necessary
-        tnow = time.time()
-        self.cullOldSightings(tnow-BuoyDetectorOptions.Sightings_Period)
+        tnow = self.relativeTime()
+        self.cullOldSightings(tnow - BuoyDetectorOptions.Sightings_Period)
         sightings = []
         for t, m in  self.circles_messages.items():
             sightings.append(self.detectionConfidence(m))
@@ -28,18 +32,19 @@ class detector(aiDetector):
             confidence = sum(sightings) / len(sightings)
         else:
             confidence = 0
+        info('buoy detector processing %d sightings' % len(sightings))
         if confidence > BuoyDetectorOptions.Required_Confidence:
-            info('buoy detected, confidence = %g' % confidence)
+            info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings))
             self.detected = True
         else:
-            info('buoy not detected, detection confidence = %g' % confidence)
+            info('buoy not detected, detection confidence = %g, %d sightings' % (confidence, len(sightings))
             self.detected = False
     
     def detectionConfidence(self, message):
         # TODO: something more sophisticated?
         if len(message.circles) >= 1:
-            return 1
-        return 0
+            return 1.0
+        return 0.0
 
     def cullOldSightings(self, cull_before_time):
         to_remove = []
@@ -52,7 +57,7 @@ class detector(aiDetector):
     def onCirclesMessage(self, m):
         if m.name == 'buoy':
             # assuming time collisions are not going to happen very often!
-            t = time.time() - self.tzero
+            t = self.relativeTime()
             while t in self.circles_messages:
                 # twiddle twiddle
                 m, e = math.frexp(t)
