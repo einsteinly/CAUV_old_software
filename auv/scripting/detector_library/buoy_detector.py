@@ -34,10 +34,10 @@ class detector(aiDetector):
             confidence = 0
         info('buoy detector processing %d sightings' % len(sightings))
         if confidence > BuoyDetectorOptions.Required_Confidence:
-            info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings))
+            info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = True
         else:
-            info('buoy not detected, detection confidence = %g, %d sightings' % (confidence, len(sightings))
+            info('buoy not detected, detection confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = False
     
     def detectionConfidence(self, message):
