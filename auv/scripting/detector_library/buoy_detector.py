@@ -3,6 +3,7 @@ from cauv.debug import debug, info, warning, error
 
 import time
 import sys
+import math
 
 class BuoyDetectorOptions:
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
@@ -51,7 +52,7 @@ class detector(aiDetector):
     def onCirclesMessage(self, m):
         if m.name == 'buoy':
             # assuming time collisions are not going to happen very often!
-            t = time.time() - tzero
+            t = time.time() - self.tzero
             while t in self.circles_messages:
                 # twiddle twiddle
                 m, e = math.frexp(t)

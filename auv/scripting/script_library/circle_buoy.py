@@ -12,12 +12,14 @@ from AI_classes import aiScript
 import time
 import optparse
 import math
+import traceback
 
 class CircleBuoyOptions:
     # TODO: need some mechanism of setting these from the AI framework?
     Do_Prop_Limit = 50  # max prop for forward/backward adjustment
     Camera_FOV = 60     # degrees
     Warn_Seconds_Between_Sights = 5
+    Give_Up_Seconds_Between_Sights = 30
     Node_Name = "py-CrcB"
     Strafe_Speed = 20   # (int [-127,127]) controls strafe speed
     Buoy_Size = 0.2     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
