@@ -27,7 +27,7 @@ class CircleBuoyOptions:
     Pipeline_File = 'pipelines/circle_buoy.pipe'
     Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
-class CircleBuoy(aiScript):
+class script(aiScript):
     def __init__(self,
                  strafe_speed = CircleBuoyOptions.Strafe_Speed,
                  buoy_size    = CircleBuoyOptions.Buoy_Size,
@@ -169,7 +169,7 @@ class CircleBuoy(aiScript):
 
 def runStandalone(opts):
     info('circle_buoy.py runStandalone')    
-    b = CircleBuoy(opts.strafe_speed, opts.buoy_size)
+    b = script(opts.strafe_speed, opts.buoy_size)
     b.auv = control.AUV(b.node)
     b.run()
     info('circle_buoy.py complete')
