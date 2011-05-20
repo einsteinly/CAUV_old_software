@@ -14,6 +14,8 @@ class detectionControl(aiProcess):
         self.request_lock = threading.Lock()
         self.start_requests = []
         self.stop_requests = []
+        self.enable_flag = threading.Event()
+        self.enable_flag.set()
     @external_function
     def start(self, detection_file):
         with self.request_lock:
@@ -22,8 +24,21 @@ class detectionControl(aiProcess):
     def stop(self, detection_file):
         with self.request_lock:
             self.stop_requests.append(detection_file)
+    @external_function
+    def disable(self):
+        self.enable_flag.clear()
+    @external_function
+    def enable(self):
+        info("Re enabling detectors")
+        self.enable_flag.set()
     def run(self):
         while True:
+            if not self.enable_flag.is_set():
+                for running_detector in self.running_detectors:
+                    self.running_detectors[detection_file].die()
+                self.running_detectors = {}
+                info('Detector process disabled')
+                self.enable_flag.wait()
             #update running detectors from requests (has to be done here as list of running detectors is constantly in use by this process)
             with self.request_lock:
                 for detection_file in self.start_requests:
@@ -42,14 +57,18 @@ class detectionControl(aiProcess):
                         info("Stopped detection class %s." %(detection_file))
                     except KeyError:
                         debug(detection_file+" is not runnning, so cannot be stopped")
+            #need to sleep  or else it goes crazy when not much processing to do
+            time.sleep(1)
             #send status
             self.ai.task_manager.update_detectors(self.running_detectors.keys())
             #run detection
             for detection_file in self.running_detectors:
+                #since each processing could take a while, and disabling needs to be pretty fast, check here
+                if not self.enable_flag.is_set():
+                    break
                 self.running_detectors[detection_file].process()
                 if self.running_detectors[detection_file].detected:
                     self.ai.task_manager.notify_detector(detection_file, True)
-            time.sleep(1)
 
 if __name__ == '__main__':
     dc = detectionControl()

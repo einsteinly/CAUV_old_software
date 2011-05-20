@@ -161,7 +161,9 @@ class aiScript(aiProcess):
         
 class aiDetector(messaging.BufferedMessageObserver):
     def __init__(self, node):
+        messaging.BufferedMessageObserver.__init__(self)
         self.node = node
+        self.node.addObserver(self)
         self.detected = False
     def process(self):
         """

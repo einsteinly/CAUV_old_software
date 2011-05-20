@@ -33,6 +33,7 @@ class taskManager(aiProcess):
         #Detectors - definative list of what SHOULD be running
         self.detector_lock = threading.Lock()
         self.active_detectors = {}
+        self.detectors_enabled = True
         #These should only be accessed by this thread - details on whats currently running
         self.running_script = None
         self.current_task = None
@@ -82,6 +83,10 @@ class taskManager(aiProcess):
     @external_function
     def update_detectors(self, detector_list):
         with self.detector_lock:
+            if not self.detectors_enabled:
+                #should have been disabled, try again
+                self.ai.detector_control.disable()
+                return
             #check against should be running
             missing = set(self.active_detectors.keys())-set(detector_list)
         for d in missing:
@@ -133,6 +138,10 @@ class taskManager(aiProcess):
         self.current_priority = 0
         self.current_task = None
         self.start_script(default_script)
+        #also make sure detectors are running
+        with self.detector_lock:
+            self.detectors_enabled = True
+        self.ai.detector_control.enable()
     def run(self):
         while True:
             if self.conditions_changed.wait(5):
@@ -141,6 +150,10 @@ class taskManager(aiProcess):
                     for task in self.active_tasks:
                         if task.script_name != self.current_task and task.priority > self.current_priority:
                             if task.is_available():
+                                #disable detectors
+                                with self.detector_lock:
+                                    self.detectors_enabled = False
+                                self.ai.detector_control.disable()
                                 self.start_script(task.script_name)
                                 self.current_priority = task.running_priority
                                 self.current_task = task.script_name
