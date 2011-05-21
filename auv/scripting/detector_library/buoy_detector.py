@@ -9,7 +9,8 @@ class BuoyDetectorOptions:
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.9 # required proportion of CirclesMessages with qualifying sightings
     Pipeline_File = 'pipelines/detect_buoy.pipe'
-    Load_Pipeline = 'default'
+    Load_Pipeline = 'buoy-detect'
+    Circles_Name = 'buoy'
 
 class detector(aiDetector):
     def __init__(self, node):
@@ -66,7 +67,7 @@ class detector(aiDetector):
             del self.circles_messages[t]
 
     def onCirclesMessage(self, m):
-        if m.name == 'buoy':
+        if m.name == BuoyDetectorOptions.Circles_Name:
             # assuming time collisions are not going to happen very often!
             t = self.relativeTime()
             while t in self.circles_messages:
