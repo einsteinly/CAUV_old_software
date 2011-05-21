@@ -8,6 +8,8 @@ import math
 class BuoyDetectorOptions:
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.9 # required proportion of CirclesMessages with qualifying sightings
+    Pipeline_File = 'pipelines/detect_buoy.pipe'
+    Load_Pipeline = 'default'
 
 class detector(aiDetector):
     def __init__(self, node):
@@ -15,7 +17,9 @@ class detector(aiDetector):
         self.circles_messages = {} # map time received : message
         self.tzero = time.time()
         self.node.join('processing')
-        # TODO: load pipeline
+        self.__pl = pipeline.Model(self.node, BuoyDetectorOptions.Load_Pipeline)
+        if BuoyDetectorOptions.Load_Pipeline is not None:        
+            self.__pl.load(BuoyDetectorOptions.Pipeline_File)
     
     def relativeTime(self):
         return time.time() - self.tzero
@@ -40,6 +44,13 @@ class detector(aiDetector):
             info('buoy not detected, detection confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = False
     
+    def die():
+        # save the running pipeline in case someone edited it!
+        if BuoyDetectorOptions.Load_Pipeline is not None:
+            info('saving the current %s pipeline to %s' % (BuoyDetectorOptions.Load_Pipeline,
+                                                           BuoyDetectorOptions.Pipeline_File))
+            self.__pl.load(BuoyDetectorOptions.Pipeline_File + '.autosaved')
+
     def detectionConfidence(self, message):
         # TODO: something more sophisticated?
         if len(message.circles) >= 1:

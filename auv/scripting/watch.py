@@ -99,11 +99,16 @@ processes_to_start = [
         CAUVTask('logger',   'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
         CAUVTask('img-pipe', 'nohup %EDIR/img-pipeline',                True,  ['img-pipeline']),
         CAUVTask('sonar',    'nohup %EDIR/sonar /dev/ttyUSB1',          True,  ['sonar']),
-        CAUVTask('controlv2','nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0', True, ['control', 'controlv2']),
+        CAUVTask('controlv2','nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0', True, ['controlv2']),
         CAUVTask('spread',   'nohup spread',                            True,  ['spread']),
         CAUVTask('watch',    '',                                        False, ['watch.py']),
         CAUVTask('persist',  'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py', True, ['persist.py']),
-        CAUVTask('battery',  'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']) ]
+        CAUVTask('battery',  'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('AI Manager',      '', False, ['AI_manager']),
+        CAUVTask('AI Ctrl Manager', '', False, ['AI_control_manager']),
+        CAUVTask('AI Detectors',    '', False, ['AI_detection_process']),
+        CAUVTask('AI Task Manager', '', False, ['AI_task_manager'])
+]
 
 def limitLength(string, length=40):
     string = string.replace('\n', '\\ ')

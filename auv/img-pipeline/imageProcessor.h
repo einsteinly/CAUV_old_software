@@ -94,6 +94,8 @@ class ImageProcessor: public MessageObserver
             lock_t l(m_name_lock);
             if(msg->pipelineName() == m_name)
                 return true;
+            debug(5) << "filter does not match:" << msg->pipelineName() << "!= "
+                     << m_name;
             return false;
         }
 

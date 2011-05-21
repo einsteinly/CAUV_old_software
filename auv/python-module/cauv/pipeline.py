@@ -221,7 +221,7 @@ class Model(messaging.BufferedMessageObserver):
 
     def checkName(self, msg):
         if msg.pipelineName != self.pipeline_name:
-            debug('ignoring NodeAddedMessage (name %s != %s)' % 
+            debug('ignoring message (name %s != %s)' % 
                 (msg.pipelineName, msg.__name__)
             )
             return False

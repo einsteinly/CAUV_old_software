@@ -16,7 +16,7 @@ def savepl(spread, port, fname, timeout=3.0, name='default'):
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
-        info('Initializing pipeline model...')
+        info('Initializing pipeline model (%s)...' % name)
         model = pipeline.Model(n, name)
 
         info('Getting pipeline state...')
@@ -33,7 +33,7 @@ def loadpl(spread, port, fname, timeout=3.0, name='default'):
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
-        info('Initializing pipeline model...')
+        info('Initializing pipeline model (%s)...' % name)
         model = pipeline.Model(n, name)
 
         info('UnPickling...')
@@ -48,7 +48,7 @@ def clearpl(spread, port, name='default'):
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
 
-        info('Initializing pipeline model...')
+        info('Initializing pipeline model (%s)...' % name)
         model = pipeline.Model(n, name)
 
         info('Clearing...')
