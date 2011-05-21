@@ -3,17 +3,54 @@ import psutil
 import optparse
 import time
 import subprocess
+import threading
 import os
-import cauv.messaging as msg
-import cauv.node as node
+import sys
 import string
 
+import cauv.messaging as msg
+import cauv.node as node
 from cauv.debug import debug, info, warning, error
 
 CPU_Poll_Time = 0.025
 Poll_Delay = 2.0
 Exe_Prefix = '' # set these using command line options
 Script_Dir = '' #
+
+
+def spawnDaemon(func):
+    # see http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
+    # do the UNIX double-fork magic, see Stevens' "Advanced
+    # Programming in the UNIX Environment" for details (ISBN 0201563177)
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # parent process
+            return
+    except OSError, e:
+        print >>sys.stderr, "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
+        sys.exit(1)
+
+    # decouple from parent environment
+    # ... don't
+    #os.chdir("/")
+    os.setsid()
+    #os.umask(0)
+
+    # do second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit from second parent
+            sys.exit(0)
+    except OSError, e:
+        print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
+        sys.exit(1)
+    # do stuff
+    func()
+
+    # all done
+    os._exit(os.EX_OK)
 
 def fillPathPlaceholders(s):
     r = string.replace(s, '%EDIR', Exe_Prefix)
@@ -41,7 +78,9 @@ class CAUVTask:
         return self.__restart
     def start(self):
         if(self.__restart):
-            # stdout is logged, so dump it to /dev/null         
+            spawnDaemon(self.__start)
+    def __start(self):
+            # stdout is logged, so dump it to /dev/null
             subprocess.Popen(fillPathPlaceholders(self.__command).split(' '),
                              #stdout=subprocess.DEVNULL, only in python 3.3
                              stdout=open('/dev/null', 'w'),
@@ -57,14 +96,22 @@ processes_to_start = [
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',   'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe', 'nohup %EDIR/img-pipeline',                True,  ['img-pipeline']),
-        CAUVTask('sonar',    'nohup %EDIR/sonar /dev/ttyUSB1',          True,  ['sonar']),
-        CAUVTask('controlv2','nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0', True, ['control', 'controlv2']),
-        CAUVTask('spread',   'nohup spread',                            True,  ['spread']),
-        CAUVTask('watch',    '',                                        False, ['watch.py']),
-        CAUVTask('persist',  'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py', True, ['persist.py']),
-        CAUVTask('battery',  'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']) ]
+        CAUVTask('logger',               'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
+        CAUVTask('img-pipe default',     'nohup %EDIR/img-pipeline',                    True, ['img-pipeline -n default']),
+        CAUVTask('img-pipe buoy-detect', 'nohup %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
+        CAUVTask('img-pipe pipe-detect', 'nohup %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
+        CAUVTask('img-pipe sonar',       'nohup %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
+        CAUVTask('sonar',                'nohup %EDIR/sonar /dev/ttyUSB1',              True, ['sonar']),
+        CAUVTask('controlv2',            'nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0',    True, ['controlv2']),
+        CAUVTask('spread',               'nohup spread',                                True, ['spread']),
+        CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
+        CAUVTask('battery',              'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('watch',           '', False, ['watch.py']),
+        CAUVTask('AI Manager',      '', False, ['AI_manager']),
+        CAUVTask('AI Ctrl Manager', '', False, ['AI_control_manager']),
+        CAUVTask('AI Detectors',    '', False, ['AI_detection_process']),
+        CAUVTask('AI Task Manager', '', False, ['AI_task_manager'])
+]
 
 def limitLength(string, length=40):
     string = string.replace('\n', '\\ ')
@@ -189,17 +236,16 @@ if __name__ == '__main__':
     if len(args) > 0:
         print 'this program takes no arguments'
         exit(1)
-    
+
     Exe_Prefix = opts.cmd_prefix
-    Script_Dir = opts.script_dir    
+    Script_Dir = opts.script_dir
 
     cauv_node = None
     if opts.broadcast:
         cauv_node = node.Node("watch")
-    
+
     try:
         while True:
-            warning('forcefully killing this process (e.g. with Ctrl-C) will kill the started child processes')
             processes = getProcesses()
             printDetails(processes, opts.details)
             if cauv_node is not None:

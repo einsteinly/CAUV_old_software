@@ -34,8 +34,8 @@ class PipePositioner(messaging.BufferedMessageObserver):
         self.depth_error = width_error
         self.centre_error_2 = centre_error**2 #saves squaring it later
         #enable allows centering and alignment of the sub
-        #self.enable_lock = threading.Condition(threading.Lock())
-        #self.enable = True
+        self.enable_lock = threading.Condition(threading.Lock())
+        self.enable = True
         #bin and min value of the bin from histogram node (used to decide whether to set enable=True)
         self.bin = bin
         self.threshold = threshold

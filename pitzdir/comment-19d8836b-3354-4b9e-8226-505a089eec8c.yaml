@@ -1,0 +1,15 @@
+created_by: &id001 !!python/object:uuid.UUID
+  int: 329653966991278482580175629071994424733
+created_time: 2011-05-11 11:57:50.555760
+description: !!python/unicode "How about CRIMSON\r\nCauv Recognition, Intelligent\
+  \ Mission Selection and Operation Network/Nodes"
+entity: !!python/object:uuid.UUID
+  int: 224810015053565018235550575287590971981
+modified_time: 2011-05-11 11:57:50.604421
+pscore: 0
+title: !!python/unicode 'idea'
+type: comment
+uuid: !!python/object:uuid.UUID
+  int: 34354901505023529356653701160048192652
+who_said_it: *id001
+yaml_file_saved: 2011-05-11 11:57:50.613395

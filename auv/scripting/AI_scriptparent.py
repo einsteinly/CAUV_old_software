@@ -20,7 +20,9 @@ if __name__ == '__main__':
         error('Could not import '+script_name+' from script library')
         raise e
     try:
-        script = script_module.script(script_name)
+        script_class = script_module.script
     except AttributeError:
         error('Script file '+script_name+' does not define a script class')
+        raise Exception
+    script = script_class(script_name)
     script.run()

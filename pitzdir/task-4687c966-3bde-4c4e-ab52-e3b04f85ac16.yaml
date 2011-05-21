@@ -3,13 +3,14 @@ components: []
 created_by: &id001 !!python/object:uuid.UUID
   int: 329653966991278482580175629071994424733
 created_time: 2010-12-10 23:19:19.296905
-description: !!python/unicode "Any issues that need to be fixed\r\n-fix odd broken\
-  \ my tasks links\r\n-check whether caching is working..."
+description: !!python/unicode "Any issues that need to be fixed\r\n-fix undefined\
+  \ pscore -> error\r\n-broken new user stuff?\r\n-fix odd broken my tasks links\r\
+  \n-check whether caching is working..."
 estimate: !!python/object:uuid.UUID
   int: 265108259705088528262102217610008550011
 milestone: !!python/object:uuid.UUID
   int: 115709686465499050555006855212442791043
-modified_time: 2011-02-23 17:18:45.142089
+modified_time: 2011-05-11 20:07:55.415447
 owner: *id001
 points: null
 pscore: !!python/unicode '1'
@@ -22,4 +23,4 @@ title: !!python/unicode 'Webapp Bugs'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 93751004644977580736293481611952237590
-yaml_file_saved: 2011-02-23 17:18:45.153403
+yaml_file_saved: 2011-05-11 20:07:55.455136

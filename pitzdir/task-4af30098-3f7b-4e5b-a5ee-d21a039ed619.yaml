@@ -1,0 +1,30 @@
+attached_files: []
+components: []
+created_by: &id001 !!python/object:uuid.UUID
+  int: 331423399489594109103410846851841274888
+created_time: 2011-05-17 16:02:40.766249
+description: !!python/unicode "Port the pipeline-gui widget to a subclass of QGraphicsScene\
+  \ (http://doc.qt.nokia.com/latest/qgraphicsscene.html) and its related classes.\
+  \ This would allow integration with existing Qt Widgets (e.g. text boxes, drop down\
+  \ lists etc). \r\nOverall it would lead to a more user friendly experience for the\
+  \ pipeline-gui and would probably reduce the codebase significantly\r\n"
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2011-05-17 16:02:40.784583
+owner: *id001
+points: null
+pscore: !!python/unicode '1'
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 188292841895424093544817790897208843631
+- !!python/object:uuid.UUID
+  int: 275376028904049931937057396630085839418
+title: !!python/unicode 'Port pipeline-gui to QGraphicsScene'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 99624611887035063406547385615359333913
+yaml_file_saved: 2011-05-17 16:02:40.794799
