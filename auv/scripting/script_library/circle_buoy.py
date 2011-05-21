@@ -124,6 +124,7 @@ class script(aiScript):
 
     def run(self):
         if CircleBuoyOptions.Load_Pipeline is not None:
+            saved_pipeline_state = self.__pl.get()
             self.loadPipeline()
         start_bearing = self.auv.getBearing()
         entered_quarters = [False, False, False, False]
@@ -139,7 +140,7 @@ class script(aiScript):
                         warning('cannot see buoy: last seen %g seconds ago' %
                                 time_since_seen)
                     if time_since_seen > CircleBuoyOptions.Give_Up_Seconds_Between_Sights:
-                        # TODO: arange for this sort of thing to be logged in
+                        # TODO: arrange for this sort of thing to be logged in
                         # the competition log
                         raise Exception('lost the buoy: giving up!')
                 if self.auv.getBearing() > -180 and self.auv.getBearing() < -90:
@@ -164,6 +165,9 @@ class script(aiScript):
             info('Stopping...')
             self.auv.stop()
         info('Complete!')
+        # restore pipeline that was running before
+        if CircleBuoyOptions.Load_Pipeline is not None:
+            self.__pl.set(saved_pipeline_state)
         self.notify_exit(exit_status)
             
 
