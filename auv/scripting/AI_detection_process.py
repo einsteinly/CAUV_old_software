@@ -35,7 +35,7 @@ class detectionControl(aiProcess):
         while True:
             if not self.enable_flag.is_set():
                 for running_detector in self.running_detectors:
-                    self.running_detectors[detection_file].die()
+                    running_detector.die()
                 self.running_detectors = {}
                 info('Detector process disabled')
                 self.enable_flag.wait()

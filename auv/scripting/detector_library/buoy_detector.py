@@ -1,6 +1,8 @@
 from AI_classes import aiDetector
 from cauv.debug import debug, info, warning, error
 
+import cauv.pipeline as pipeline
+
 import time
 import sys
 import math
@@ -45,7 +47,7 @@ class detector(aiDetector):
             info('buoy not detected, detection confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = False
     
-    def die():
+    def die(self):
         # save the running pipeline in case someone edited it!
         if BuoyDetectorOptions.Load_Pipeline is not None:
             info('saving the current %s pipeline to %s' % (BuoyDetectorOptions.Load_Pipeline,

@@ -13,39 +13,40 @@ class Options:
     Load_Pipeline = 'pipe-detect'
     Histogram_Name = 'pipe-detect'
 
-class detector(messaging.BufferedMessageObserver):
+class detector(aiDetector):
     def __init__(self, node):
         aiDetector.__init__(self, node)
         self.node.join("processing")
-        self.lock = threading.Lock()
-        self.detect = 0
+        #self.lock = threading.Lock()
+        self.detected = False
 
     def process(self):
-        if self.detected():
+        if self.detected:
             debug('yellow object visible')
         else:
             pass
 
-    def die():
+    def die(self):
         # if anything needs doing when detector is stopped, do it here
         pass
 
     def onHistogramMessage(self, m):
-        if name != Options.Histogram_Name:
+        if m.name != Options.Histogram_Name:
             return
-        if m.bins[Options.Bin_NUmber] > Options.Bin_Threshold:
-            self.lock.acquire()
-            self.detect = 1
-            self.lock.release()
+        if m.bins[Options.Bin_Number] > Options.Bin_Threshold:
+            #self.lock.acquire()
+            self.detected = True
+            #self.lock.release()
         else:
-            self.lock.acquire()
-            self.detect = 0
-            self.lock.release()
-    def detected(self):
-        self.lock.acquire()
-        d = self.detect
-        self.lock.release()
-        return d
+            #self.lock.acquire()
+            self.detected = False
+            #self.lock.release()
+
+    #def detected(self):
+    #    self.lock.acquire()
+    #    d = self.detect
+    #    self.lock.release()
+    #    return d
         
 if __name__ == '__main__':
     dt = detector()
