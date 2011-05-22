@@ -38,6 +38,7 @@ public:
     void onBatteryUseMessage(BatteryUseMessage_ptr m);
     void onMotorStateMessage(MotorStateMessage_ptr m);
     void onProcessStatusMessage(ProcessStatusMessage_ptr m);
+    void onLocationMessage(LocationMessage_ptr m);
 
     bool pushState(bool state);
     bool popState();

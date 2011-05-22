@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTimer>
 
+#include <math.h>
 #include <boost/make_shared.hpp>
 #include <debug/cauv_debug.h>
 #include <model/auv_model.h>
@@ -26,24 +27,23 @@ namespace cauv {
 
     public:
 
-        CauvPositionProvider() : Marble::PositionProviderPlugin(){
-                //QTimer * timer = new QTimer();
-                //timer->connect(timer, SIGNAL(timeout()), this, SLOT(test()));
-                //timer->setSingleShot(false);
-                //timer->start(100);
+        CauvPositionProvider(boost::shared_ptr<AUV> auv) : Marble::PositionProviderPlugin(), m_auv(auv) {
+            m_auv->sensors.location->onUpdate.connect(boost::bind(&CauvPositionProvider::onPositionUpdate, this, _1));
         }
 
 
         Marble::PositionProviderPlugin * newInstance() const {
-            return new CauvPositionProvider();
+            throw new std::exception();
         }
 
         qreal speed() const {
-            return 0;
+            float x = m_auv->sensors.speed->latest().x;
+            float y = m_auv->sensors.speed->latest().y;
+            return sqrt(x*x*y*y);
         }
 
         qreal direction() const {
-            return 0;
+            return m_auv->sensors.orientation->yaw->latest();
         }
 
         Marble::PositionProviderStatus status() const {
@@ -51,7 +51,11 @@ namespace cauv {
         }
 
         Marble::GeoDataCoordinates position() const {
-            return Marble::GeoDataCoordinates(0, 0, 0, Marble::GeoDataCoordinates::Degree);
+            qreal lng = m_auv->sensors.location->latest().longitude();
+            qreal lat = m_auv->sensors.location->latest().latitude();
+            qreal alt = m_auv->sensors.location->latest().altitude();
+
+            return Marble::GeoDataCoordinates(lng, lat, alt, Marble::GeoDataCoordinates::Degree);
         }
 
         Marble::GeoDataAccuracy accuracy() const {
@@ -90,9 +94,12 @@ namespace cauv {
         }
 
         public Q_SLOTS:
-            void test(){
-                Q_EMIT positionChanged(Marble::GeoDataCoordinates(rand(), rand(), 0), accuracy());
+            void onPositionUpdate(Location){
+                Q_EMIT positionChanged(position(), accuracy());
             }
+
+        protected:
+            boost::shared_ptr<AUV> m_auv;
 
     };
 
@@ -104,6 +111,10 @@ namespace cauv {
     public:
         MapView();
         virtual ~MapView();
+
+        void initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode>);
+
+        void updateHomePoint();
 
         virtual const QString name() const;
         virtual const QList<QString> getGroups() const;

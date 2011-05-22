@@ -224,6 +224,11 @@ void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
 
 }
 
+void AUVController::onLocationMessage(LocationMessage_ptr m){
+    m_auv->sensors.speed->update(m->speed());
+    m_auv->sensors.location->update(*(m.get()));
+}
+
 void AUVController::onPressureMessage(PressureMessage_ptr message){
     m_auv->sensors.pressure_fore->update(message->fore());
     m_auv->sensors.pressure_aft->update(message->aft());

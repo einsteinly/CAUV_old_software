@@ -17,6 +17,7 @@ namespace cauv{
     // them for clarity as we're not really using them as messages
     typedef ProcessStatusMessage ProcessState;
     typedef DepthCalibrationMessage DepthCalibration;
+    typedef LocationMessage Location;
 
     class AUV {
     public:
@@ -217,6 +218,8 @@ namespace cauv{
             boost::shared_ptr<DataStream<float> > esitmate_current;
             boost::shared_ptr<DataStream<float> > estimate_total;
             boost::shared_ptr<DataStream<float> > fraction_remaining;
+            boost::shared_ptr<DataStream<floatXYZ> > speed;
+            boost::shared_ptr<DataStream<Location> > location;
 
             Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
             pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
@@ -225,7 +228,9 @@ namespace cauv{
             orientation(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(boost::make_shared<DataStream<floatYPR> >("Orientation", "°"))),
             esitmate_current(boost::make_shared<DataStream<float> >("Current Estimiation", "Wh")),
             estimate_total(boost::make_shared<DataStream<float> >("Total Battery Consumed", "Wh")),
-            fraction_remaining(boost::make_shared<DataStream<float> >("Battery Remaining", "%"))
+            fraction_remaining(boost::make_shared<DataStream<float> >("Battery Remaining", "%")),
+            speed(boost::make_shared<DataStream<floatXYZ> >("Speed", "m/s")),
+            location(boost::make_shared<DataStream<Location> >("Location", "lng/lat"))
             {
 
             }
