@@ -234,7 +234,7 @@ std::ofstream& SmartStreamBase::logFile()
 std::locale const& SmartStreamBase::getTheLocale(){
     static std::locale the_locale = std::locale(
         std::cout.getloc(),
-        new boost::posix_time::time_facet("%H:%M:%s")
+        new boost::posix_time::time_facet("%Y/%m/%d-%H:%M:%s")
     );
     return the_locale;
 }
