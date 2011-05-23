@@ -5,4 +5,4 @@ task_list = [
             #aiTask('pipe', 1, conditions = [detectorCondition('pipe_detector', 'pipe'),]),
             aiTask('circle_buoy', 1, conditions = [detectorCondition('buoy_detector', 'buoy_detector'),]),
             ]
-default_script = 'spiral'
+default_script = 'test'

@@ -12,11 +12,11 @@ class script(aiScript):
         unit = 3
         # Starting search at north direction
         debug('setting bearing %d...' % bearing)
-        self.auv.bearingAndWait(bearing)
+        #self.auv.bearingAndWait(bearing)
 
         # 2m deep
         debug('diving...')
-        self.auv.depthAndWait(2)
+        #self.auv.depthAndWait(2)
 
         debug('spiral...')
         # Individual half squares
@@ -41,5 +41,5 @@ class script(aiScript):
                 self.auv.bearingAndWait(bearing)
 
         debug('surface...')
-        self.auv.depthAndWait(0)
+        #self.auv.depthAndWait(0)
 

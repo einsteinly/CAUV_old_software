@@ -45,7 +45,7 @@ class taskManager(aiProcess):
         except:
             info('No previous valid state file, loading from mission.py')
             #Open state file (must be done before changing the state)
-            self.state_file = open('status.tmp', 'r+')
+            #self.state_file = open('status.tmp', 'r+')
             with self.task_lock:
                 for task in task_list:
                     task.register(self)
