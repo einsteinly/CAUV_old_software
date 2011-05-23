@@ -71,7 +71,7 @@ if __name__ == '__main__':
     timeout = opts.timeout
     name = opts.name
 
-    if len(args) == 0 or args[0].lower() == 'save':
+    if len(args) == 1 and args[0].lower() == 'save':
         savepl(opts.spread, port, fname, timeout, name)
     elif len(args) == 1 and args[0].lower() == 'load':
         loadpl(opts.spread, port, fname, timeout, name)
