@@ -82,6 +82,7 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
         (new DataStreamTreeItem<float>(i.second->aI, autopilot))->setText(0, "aI");
         (new DataStreamTreeItem<float>(i.second->aD, autopilot))->setText(0, "aD");
         (new DataStreamTreeItem<float>(i.second->thr, autopilot))->setText(0, "thr");
+        (new DataStreamTreeItem<float>(i.second->maxError, autopilot))->setText(0, "maxError");
         (new DataStreamTreeItem<float>(i.second->scale, autopilot))->setText(0, "scale");
         (new DataStreamTreeItem<float>(i.second->actual, autopilot))->setText(0, "actual");
 

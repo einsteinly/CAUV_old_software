@@ -7,6 +7,7 @@ import contextlib
 import shelve
 import traceback
 import optparse
+import signal
 
 Default_Groups_To_Join = (
     'control',
@@ -19,6 +20,7 @@ Default_Messages_To_Watch = (
     'DepthCalibration',
     'PitchAutopilotParams',
     'SetMotorMap',
+    'MotorRampRate',
     'SonarControl'
 )
 
@@ -68,7 +70,7 @@ def sendSavedMessages(node, shelf):
     for msg_name in shelf:
         try:
             attrs = shelf[msg_name]
-            debug('restoring saved %s: %s' % (msg_name, attrs))
+            info('restoring saved %s: %s' % (msg_name, attrs))
             m = dictToMessage(msg_name, attrs)
             node.send(m)
         except Exception, e:
