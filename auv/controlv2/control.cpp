@@ -24,6 +24,7 @@ using namespace std;
 using namespace cauv;
 
 const static float Integral_Max_Kp_Mult = 100;
+const static float Integral_Max_Const = 100;
 
 void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {
@@ -170,7 +171,8 @@ struct PIDControl
         previous_time = tnow;
 
         integral += error*dt;
-        integral = clamp(-Integral_Max_Kp_Mult*Kp, integral, Integral_Max_Kp_Mult*Kp);
+        const double Integral_Max = std::fabs(Integral_Max_Kp_Mult*Kp) + std::fabs(Integral_Max_Const);
+        integral = clamp(-Integral_Max, integral, Integral_Max);
         double de = smoothedDerivative();
         previous_derror = de;
 		
