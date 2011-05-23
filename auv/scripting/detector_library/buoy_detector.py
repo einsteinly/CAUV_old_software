@@ -11,7 +11,7 @@ class BuoyDetectorOptions:
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.9 # required proportion of CirclesMessages with qualifying sightings
     Pipeline_File = 'pipelines/detect_buoy.pipe'
-    Load_Pipeline = 'buoy-detect'
+    Load_Pipeline = None #'buoy-detect'
     Circles_Name = 'buoy'
 
 class detector(aiDetector):
@@ -20,6 +20,7 @@ class detector(aiDetector):
         self.circles_messages = {} # map time received : message
         self.tzero = time.time()
         self.node.join('processing')
+        self.node.join('pl_gui')
         self.__pl = pipeline.Model(self.node, BuoyDetectorOptions.Load_Pipeline)
         if BuoyDetectorOptions.Load_Pipeline is not None:        
             self.__pl.load(BuoyDetectorOptions.Pipeline_File)
