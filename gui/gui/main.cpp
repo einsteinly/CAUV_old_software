@@ -14,6 +14,8 @@
 
 #include "cauvgui.h"
 
+#include <common/cauv_utils.h>
+
 using namespace std;
 using namespace cauv;
 

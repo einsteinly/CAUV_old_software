@@ -27,10 +27,10 @@ namespace cauv {
     public:
 
         CauvPositionProvider() : Marble::PositionProviderPlugin(){
-                QTimer * timer = new QTimer();
-                timer->connect(timer, SIGNAL(timeout()), this, SLOT(test()));
-                timer->setSingleShot(false);
-                timer->start(100);
+                //QTimer * timer = new QTimer();
+                //timer->connect(timer, SIGNAL(timeout()), this, SLOT(test()));
+                //timer->setSingleShot(false);
+                //timer->start(100);
         }
 
 
