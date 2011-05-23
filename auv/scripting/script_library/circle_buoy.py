@@ -23,7 +23,7 @@ class CircleBuoyOptions:
     Node_Name = "py-CrcB"
     Strafe_Speed = 20   # (int [-127,127]) controls strafe speed
     Buoy_Size = 0.2     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
-    Size_Control_kPD = (300, 0)
+    Size_Control_kPD = (-30, 0)
     Pipeline_File = 'pipelines/circle_buoy.pipe'
     Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
