@@ -221,9 +221,9 @@ class Model(messaging.BufferedMessageObserver):
 
     def checkName(self, msg):
         if msg.pipelineName != self.pipeline_name:
-            debug('ignoring message (name %s != %s)' % 
-                (msg.pipelineName, msg.__name__)
-            )
+            #debug('ignoring message (name %s != %s)' % 
+            #    (msg.pipelineName, self.pipeline_name)
+            #)
             return False
         return True
 

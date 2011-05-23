@@ -102,7 +102,10 @@ class fakeAUV(messaging.BufferedMessageObserver):
         self.bearingCV.release()
         self.depthCV.release()
         self.pitchCV.release()
-        
+    
+    def getBearing(self):
+        return self.current_bearing
+    
     def bearingAndWait(self, bearing, epsilon = 5, timeout = 30):
         startTime = time.time()
         self.bearing(bearing)
