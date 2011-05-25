@@ -375,7 +375,7 @@ static NodeIOStatus::e operator|(NodeIOStatus::e const& l, NodeIOStatus::e const
 struct _COD{_COD(Type& m):m(m){}~_COD(){m.member();}Type& m;}
 void Node::exec(){
     CallOnDestruct(Node, clearExecQueued) cod(*this);
-    // take copies of image_ptr s from parents before _demandNewParentInput()
+    // take copies of image_ptr s from parents before demandNewParentInput()
     in_image_map_t inputs;
     out_map_t outputs;
 
@@ -417,17 +417,23 @@ void Node::exec(){
     if(allowQueue()) status |= NodeStatus::AllowQueue;
     _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status | NodeStatus::Executing));
     try{
-        if(this->m_speed < medium){
+        if(m_speed == asynchronous){
+            // doWork will arrange for demandNewParentInput to be called when
+            // appropriate
+            outputs = this->doWork(inputs);
+        }else if(this->m_speed < medium){
             // if this is a fast node: request new image from parents before executing
-            _demandNewParentInput();
+            demandNewParentInput();
             outputs = this->doWork(inputs);
         }else{
             // if this is a slow node, request new images from parents after executing
             outputs = this->doWork(inputs);
-            _demandNewParentInput();
+            demandNewParentInput();
         }
     }catch(std::exception& e){
         error() << "Error executing node: " << *this << "\n\t" << e.what();
+    }catch(...){
+        error() << "Evil error executing node: " << *this << "\n\t";
     }
     _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
 
@@ -721,7 +727,15 @@ void Node::setNewOutputDemanded(output_id const& o){
         _statusMessage(boost::make_shared<OutputStatusMessage>(
             m_pl_name, m_id, o, NodeIOStatus::Demanded
         ));
-
+        
+        /* 2011-05-24 JC: Demand shouldn't propagate beyond immediate parents
+         *                I've tested the removal of this pretty thoroughly,
+         *                but it does completely change how things get
+         *                scheduled (for the better, since now scheduling isn't
+         *                quadratic in the number of parents!), so I'm leaving
+         *                it commented out for now
+         *                (the throttle node doesn't work with this code
+         *                enabled, for obvious reasons)
         unique_lock_t m(m_new_inputs_lock);
         unique_lock_t n(m_parent_links_lock);
         foreach(in_bool_map_t::value_type& v, m_new_inputs){
@@ -732,6 +746,7 @@ void Node::setNewOutputDemanded(output_id const& o){
         }
         m.unlock();
         n.unlock();
+         */
     }
     l.unlock();
     checkAddSched();
@@ -839,7 +854,7 @@ bool Node::newParamValues() const{
     return false;
 }
 
-void Node::_demandNewParentInput() throw(){
+void Node::demandNewParentInput() throw(){
     unique_lock_t l(m_parent_links_lock);
     debug(5) << "node" << *this << "demanding new output from all parents";
     foreach(in_link_map_t::value_type& i, m_parent_links)
@@ -847,11 +862,13 @@ void Node::_demandNewParentInput() throw(){
             i.second.node->setNewOutputDemanded(i.second.id);
 }
 
+#ifndef NO_NODE_IO_STATUS
 void Node::_statusMessage(boost::shared_ptr<Message const> m){
-    #ifndef NO_NODE_IO_STATUS
     m_pl.sendMessage(m);
-    #endif
 }
+#else
+void Node::_statusMessage(boost::shared_ptr<Message const>){ }
+#endif
 
 node_id Node::_newID() throw(){
     static node_id id = 1;

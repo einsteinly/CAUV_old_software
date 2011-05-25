@@ -39,7 +39,7 @@ inline NodeParamValue getValue<NodeParamValue>(const NodeParamValue& v) {
     return v;
 }
 
-class Node: public boost::enable_shared_from_this<Node>{
+class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
     public:
         // Public typedefs: used as return types
         typedef std::vector<NodeInput> msg_node_in_list_t;
@@ -298,8 +298,14 @@ class Node: public boost::enable_shared_from_this<Node>{
     
         /* How long does this node take to run?
          * used by exec() to decide when to request new input from parents.
+         *
+         * slow & medium : don't demand output before node execution is complete
+         *          fast : demand output from parents before doWork()
+         *  asynchronous : don't ever demand output from parents - the node
+         *                 will arrange for this to happen via some kind of
+         *                 callback magic
          */
-        enum Speed {slow=0, medium=5, fast=10};
+        enum Speed {slow=0, medium=5, fast=10, asynchronous=0xff};
         Speed m_speed;
         
         /* Derived node types should call these functions (probably from their
@@ -371,9 +377,15 @@ class Node: public boost::enable_shared_from_this<Node>{
         void setNewParamValue(param_id const&);
         void clearNewParamValues();
         bool newParamValues() const;
+    
+        // TODO: friends / whatever, and make this protected
+    public:
+        /* The only derived type that ever needs to call this is throttleNode.
+         */
+        void demandNewParentInput() throw();
 
     private:
-        void _demandNewParentInput() throw();
+
         void _statusMessage(boost::shared_ptr<Message const>);
         static node_id _newID() throw();
         
