@@ -52,8 +52,12 @@ class ThrottleNode: public Node{
         virtual ~ThrottleNode(){
             unique_lock_t l(m_mux);
             m_will_be_destroyed = true;
-            m_need_callback.notify_one();
+            m_timer_ptr->cancel();
             l.unlock();
+            while(m_will_be_destroyed){
+                unique_lock_t l(m_mux);
+                m_need_callback.notify_one();
+            }
 
             m_ioservice_thread.join();
             stop();
@@ -93,8 +97,11 @@ class ThrottleNode: public Node{
                 unique_lock_t l(m_mux);
                 if(executed)
                     m_need_callback.wait(l);
-                if(m_will_be_destroyed)
+                if(m_will_be_destroyed){
+                    m_will_be_destroyed = false;
                     break;
+                 }
+                l.unlock();
                 if(executed == 0 || ec)
                     m_ioservice.reset();
                 executed = m_ioservice.run(ec);
@@ -150,7 +157,7 @@ class ThrottleNode: public Node{
 
         mutex_t m_mux;
         boost::condition_variable m_need_callback;
-        bool m_will_be_destroyed;
+        volatile bool m_will_be_destroyed;
 
         boost::asio::io_service m_ioservice;
         float m_current_timer_rate;

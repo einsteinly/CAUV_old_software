@@ -23,7 +23,10 @@ class CircleBuoyOptions:
     Node_Name = "py-CrcB"
     Strafe_Speed = 50   # (int [-127,127]) controls strafe speed
     Buoy_Size = 0.2     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
-    Size_Control_kPD = (-30, 0)
+    Size_Control_kPD = (-30, 0)  # (Kp, Kd)
+    Size_DError_Smoothing = 0.9  # 1 == never changes, 0 == no smoothing
+    Angle_Control_kPD = (0.6, 0) # (Kp, Kd)
+    Angle_DError_Smoothing = 0.9 # 1 == never changes, 0 == no smoothing    
     Pipeline_File = 'pipelines/circle_buoy.pipe'
     Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
@@ -31,7 +34,9 @@ class script(aiScript):
     def __init__(self,
                  strafe_speed = CircleBuoyOptions.Strafe_Speed,
                  buoy_size    = CircleBuoyOptions.Buoy_Size,
-                 size_kpd     = CircleBuoyOptions.Size_Control_kPD):
+                 size_kpd     = CircleBuoyOptions.Size_Control_kPD,
+                 angle_kpd    = CircleBuoyOptions.Angle_Control_kPD,
+                 sd_smoothing = CircleBuoyOptions.Size_DError_Smoothing):
         aiScript.__init__(self, CircleBuoyOptions.Node_Name)
         # self.node is set by aiProcess (base class of aiScript)
         self.node.join('processing')
@@ -39,15 +44,21 @@ class script(aiScript):
         self.__strafe_speed = strafe_speed
         self.__buoy_size = buoy_size
         self.last_size_err = None
+        self.last_size_derr = 0
+        self.size_derr_smoothing = 0.5
+        self.last_angle_err = None
+        self.last_angle_derr = 0
+        self.angle_derr_smoothing = 0.5
         self.time_last_seen = None
         self.__sizekpd = size_kpd
+        self.__anglekpd = angle_kpd
     
     def loadPipeline(self):
         self.__pl.load(CircleBuoyOptions.Pipeline_File)
 
     def onCirclesMessage(self, m):
         if str(m.name) == 'buoy':
-            debug('Received circles message: %s' % str(m))
+            debug('Received circles message: %s' % str(m), 4)
             mean_circle_position = 0.5
             mean_circle_radius = 1
             num_circles = len(m.circles)
@@ -64,7 +75,7 @@ class script(aiScript):
                 self.actOnBuoy(mean_circle_position,
                                mean_circle_radius)
             else:
-                debug('No circles!')
+                debug('No circles!', 3)
         else:
             debug('Ignoring circles message: %s' % str(m))
     
@@ -101,17 +112,26 @@ class script(aiScript):
         #       = 0.5 / sin(FOV/2) = plane_dist
         #
         plane_dist = 0.5 / math.sin(math.radians(CircleBuoyOptions.Camera_FOV)/2.0)
-        angle_err = math.degrees(math.asin(pos_err / plane_dist))
-        debug('angle error = %g' % angle_err)
-        #TODO: PD controller for angle
-        turn_to = self.getBearingNotNone() + angle_err * 0.6
-        debug('turning to %g' % turn_to)
+        angle_err = math.degrees(math.asin(pos_err / plane_dist)) 
+        angle_derr = 0
+        if self.last_angle_err is not None:
+            new_angle_derr = (angle_err - self.last_angle_err[1]) / (now - self.last_angle_err[0])
+            angle_derr = self.angle_derr_smoothing * angle_derr +\
+                         (1 - self.angle_derr_smoothing) * new_angle_derr
+        self.last_angle_derr = angle_derr
+        self.last_angle_err = (now, angle_err)
+        turn_to = self.getBearingNotNone() +\
+                  angle_err * self.__anglekpd[0] +\
+                  angle_derr * self.__anglekpd[1]
         self.auv.bearing(turn_to)
 
         size_err = radius - self.__buoy_size
         size_derr = 0
         if self.last_size_err is not None:
-            size_derr = (size_err - self.last_size_err[1]) / (now - self.last_size_err[0])
+            new_size_derr = (size_err - self.last_size_err[1]) / (now - self.last_size_err[0])
+            size_derr = self.size_derr_smoothing * size_derr +\
+                        (1 - self.size_derr_smoothing) * new_size_derr
+        self.last_size_derr = size_derr
         self.last_size_err = (now, size_err)
         do_prop = self.__sizekpd[0] * size_err +\
                   self.__sizekpd[1] * size_derr
@@ -119,7 +139,8 @@ class script(aiScript):
             do_prop = CircleBuoyOptions.Do_Prop_Limit
         if do_prop < -CircleBuoyOptions.Do_Prop_Limit:
             do_prop = -CircleBuoyOptions.Do_Prop_Limit
-        debug('setting prop: %s' % do_prop)
+        debug('angle (e=%g, de=%g) size (e=%g, de=%g)' % (angle_err, angle_derr, size_err, size_derr))            
+        debug('turn to %g, prop to %s' % (turn_to, do_prop))
         self.auv.prop(int(round(do_prop)))
         self.time_last_seen = now
 
