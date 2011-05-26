@@ -65,7 +65,8 @@ enum NodeType : int8 {
     BoolInput,
     BroadcastHistogram,
     Throttle,
-    Nop
+    Nop,
+    Delay
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

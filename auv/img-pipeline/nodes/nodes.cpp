@@ -55,6 +55,7 @@
 #include "broadcastHistogramNode.h"
 #include "nopNode.h"
 #include "throttleNode.h"
+#include "delayNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -118,8 +119,10 @@ template<> DEFINE_NFR(ValueInputNode<std::string>, NodeType::StringInput);
 DEFINE_NFR(BroadcastHistogramNode, NodeType::BroadcastHistogram);
 DEFINE_NFR(NopNode, NodeType::Nop);
 DEFINE_NFR(ThrottleNode, NodeType::Throttle);
+DEFINE_NFR(DelayNode, NodeType::Delay);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
+const std::string DelayNode::Delay_Param_Name = "delay (frames)";
 
 } // namespace imgproc
 } // namespace cauv
