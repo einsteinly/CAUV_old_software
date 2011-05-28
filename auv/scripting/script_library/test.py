@@ -9,5 +9,5 @@ class script(aiScript):
             
 
 if __name__=='__main__':
-    script = test_script('test')
+    script = script('test')
     script.run()
