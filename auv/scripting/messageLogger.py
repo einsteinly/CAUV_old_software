@@ -21,6 +21,32 @@ Ignore_Message_Attrs = (
     'group'
 )
 
+class YPRWrapper:
+    def __init__(self, fypr = msg.floatYPR()):
+        self.yaw = fypr.yaw
+        self.pitch = fypr.pitch
+        self.roll = fypr.roll
+    def floatYPR(self):
+        return msg.floatYPR(self.yaw, self.pitch, self.roll)
+
+class SonarDataLIneWrapper:
+    def __init__(self, sdl = msg.SonarDataLine()):
+        self.data = tuple(sdl.data)
+        self.bearing = sdl.bearing
+        self.bearingRange = sdl.bearingRange
+        self.range = sdl.range
+    def SonarDataLine(self):
+        dl = msg.byteVec()
+        for b in self.data:
+            dl.append(b)
+        return msg.SonarDataLine(dl, self.bearing, self.bearingRange, self.range)
+ 
+class MotorIDWrapper:
+    def __init__(self, mid = msg.MotorID()):
+        self.value = int(mid)
+    def MotorID(self):
+        return msg.MotorID(self.value)
+
 def dictFromMessage(message):
     attrs = message.__class__.__dict__
     r = {}
@@ -30,10 +56,26 @@ def dictFromMessage(message):
             # I'm sure there is a simpler way of doing this, but m.__dict__ is
             # unhelpfully empty...
             r[k] = attrs[k].__get__(message)
-    r['__message_name__'] = message.__name__
+            if type(r[k]) == type(msg.floatYPR()):
+                r[k] = YPRWrapper(r[k])
+            elif type(r[k]) == type(msg.SonarDataLine()):
+                r[k] = SonarDataLineWrapper(r[k])
+            elif type(r[k]) == type(msg.MotorID()):
+                r[k] = MotorIDWrapper(r[k])
+    r['__message_name__'] = message.__class__.__name__
     return r
 
 def dictToMessage(attr_dict):
+    new_attrs = {}
+    for k in attr_dict:
+        if type(atrr_dict[k]) == type(SonarDataLineWrapper()):
+            new_attrs[k] = attrs[k].SonarDataLine()
+        elif type(attr_dict[k]) == type(YPRWrapper()):
+            new_attrs[k] = attrs[k].floatYPR()
+        elif type(attr_dict[k]) == type(MotorIDWrapper()):
+            new_attrs[k] = attrs[k].MotorID()
+        else:
+            new_attrs[k] = attrs[k]
     return getattr(msg, attr_dict['__message_name__'])(**attr_dict)
 
 def incFloat(f):
