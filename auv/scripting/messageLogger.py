@@ -169,7 +169,7 @@ class Logger(msg.MessageObserver):
             if len(self.__cached_keys) > 0:
                 # add our messages on at the end
                 debug('selected shelf already exists: appending at end')
-                self.__tzero = 1 + max(self.__cached_keys) - time.time()  
+                self.__tzero = time.time() - (max(self.__cached_keys) + 1)
             self.shelveObject(MessageLoggerSession(fname))
             self.onNewSession()
 
