@@ -125,7 +125,7 @@ class Logger(msg.MessageObserver):
     def shelveObject(self, d):
         t = self.relativeTime()
         while t in self.__cached_keys:
-            t = incfloat(t)
+            t = incFloat(t)
         self.__shelf[t.hex()] = d
         self.__cached_keys.add(t)
 

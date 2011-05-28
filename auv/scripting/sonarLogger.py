@@ -22,7 +22,7 @@ class SonarLogger(messageLogger.Logger):
         self.shelveMessage(m)
 
     def onSonarControlMessage(self, m):
-        self.shelfeMessage(m)
+        self.shelveMessage(m)
         mdict = messageLogger.dictFromMessage(m)
         debug('sonar control message: %s' % mdict)
         self.__sonar_params = mdict
