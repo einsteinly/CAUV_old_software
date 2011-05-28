@@ -34,7 +34,7 @@ class script(aiScript):
                  threshold = 0.1,
                  strafe_p  = 255,
                  depth_p   = 0.1,
-                 depth_enable = True):
+                 depth_enable = False):
         aiScript.__init__(self, Options.Node_Name) 
         self.node.join("processing")
         self.__pl = pipeline.Model(self.node, Options.Load_Pipeline)
