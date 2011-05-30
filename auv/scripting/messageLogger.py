@@ -10,7 +10,7 @@ import math
 import time
 import cmd
 import threading
-import copy
+import bisect
 
 #TODO: there's quite a lot of code duplication here, we should make a CAUV
 # python utility library with stuff like this in it
@@ -110,7 +110,7 @@ class MessageLoggerSession:
 
 
 class Logger(msg.MessageObserver):
-    def __init__(self, cauv_node, shelf_fname, do_record):
+    def __init__(self, cauv_node, shelf_fname, do_record, playback_rate = 1.0):
         msg.MessageObserver.__init__(self)
         self.node = cauv_node
         self.__recording = False
@@ -122,7 +122,8 @@ class Logger(msg.MessageObserver):
         self.__playback_active = False
         self.__playback_finished = threading.Condition()
         self.__playback_thread = None
-        self.__playback_rate = 1.0
+        self.__playback_rate = playback_rate
+        self.__playback_start_time = 0
         self.setShelf(shelf_fname)
         self.doRecord(do_record)
 
@@ -138,12 +139,17 @@ class Logger(msg.MessageObserver):
         self.__playback_lock.acquire()
         r =  self.__playback_active
         self.__playback_lock.release()
+    
+    def setPlaybackRate(self, rate):
+        # messages are played back at rate * real time (higher is faster)
+        self.__playback_rate = rate
 
-    def startPlayback(self):
+    def startPlayback(self, start_time):
         if self.__playback_active:
             error("can't start playback: playback is already active")
             return
         self.__playback_lock.acquire()
+        self.__playback_start_time = start_time
         self.__playback_active = True
         self.__playback_lock.release()
         self.__playback_thread = threading.Thread(target=self.playbackRunloop)
@@ -160,36 +166,52 @@ class Logger(msg.MessageObserver):
         self.__playback_finished.release()
         self.__playback_thead = None
 
+    def __playbackHasBeenStopped(self):
+        r = False
+        self.__playback_lock.acquire()
+        if not self.__playback_active:
+            r = True
+        self.__playback_lock.release()
+        return r
+
     def playbackRunloop(self):
         debug('playback started')
         sorted_keys = sorted(list(self.__cached_keys))
+        start_idx = bisect.bisect_left(sorted_keys, self.__playback_start_time)
+        sorted_keys = sorted_keys[start_idx:]
         if not len(sorted_keys):
             return
-        tstart = sorted_keys[0] - self.relativeTime()
+        tstart_recorded = sorted_keys[0]
+        tstart_playback = self.relativeTime()
         try:
             for i in xrange(0, len(sorted_keys)):
-                self.__playback_lock.acquire()
-                if not self.__playback_active:
-                    self.__playback_lock.release()
-                    debug('playback stopped')
+                if self.__playbackHasBeenStopped():
+                    info('playback stopped')
                     break
-                self.__playback_lock.release()
                 next_thing = self.__shelf[sorted_keys[i].hex()]
                 if type(next_thing) == type(dict()):
                     # this is a message
                     m = dictToMessage(next_thing)
-                    debug('t=%g, sending: %s' % (sorted_keys[i], m))
+                    debug('t=%g, sending: %s' % (sorted_keys[i], m), 5)
                     self.node.send(m)
                 else:
-                    print 'playback:', next_thing
+                    info('playback: %s' % next_thing)
                 if i != len(sorted_keys) - 1:
                     next_time = sorted_keys[i+1]
-                    time_to_sleep_for = (next_time - tstart) - self.__playback_rate * self.relativeTime()
-                    debug('sleeping for %gs' % time_to_sleep_for, 5)
-                    if time_to_sleep_for > 0:
-                        time.sleep(time_to_sleep_for / self.__playback_rate)
-            debug('playback ran out of messages')
-        except:
+                    time_to_sleep_for = (next_time - tstart_recorded) -\
+                                        self.__playback_rate * (self.relativeTime() - tstart_playback)
+                    #debug('sleeping for %gs' % time_to_sleep_for, 5)
+                    if time_to_sleep_for/self.__playback_rate > 10:
+                        warning('more than 10 seconds until next message will be sent (%gs)' %
+                              (time_to_sleep_for/self.__playback_rate))
+                    while time_to_sleep_for > 0 and not self.__playbackHasBeenStopped():
+                        sleep_step = min((time_to_sleep_for/self.__playback_rate, 0.2))
+                        time_to_sleep_for -= sleep_step*self.__playback_rate
+                        time.sleep(sleep_step)
+            if i == len(sorted_keys)-1:
+                info('playback complete')
+        except Exception, e:
+            error('error in playback: ' + str(e))
             raise
         finally:
             self.__playback_finished.acquire()
@@ -242,7 +264,7 @@ class Logger(msg.MessageObserver):
 
     def shelveObject(self, d):
         t = self.relativeTime()
-        debug('shelving object: t=%g' % t)
+        debug('shelving object: t=%g' % t, 6)
         while t in self.__cached_keys:
             t = incFloat(t)
         self.__shelf[t.hex()] = d
@@ -267,7 +289,10 @@ class CmdPrompt(cmd.Cmd):
     "filename FILENAME" - close the current shelf and use FILENAME as the shelf from now on
     "stop"              - stop recording or playback
     "record"            - stop playback and start recording data
-    "playback"          - stop recording and start playing back recorded data
+    "playback [RATE] [START_TIME]"
+                        - stop recording and start playing back recorded data
+                          at RATE * real time, starting at START_TIME into
+                          the recoded data
     "c COMMENT STRING"  - record COMMENT STRING in the shelf
 ''' % self.name
     def setPrompt(self):
@@ -301,11 +326,26 @@ class CmdPrompt(cmd.Cmd):
         self.ml.doRecord(True)
         self.setPrompt()
     def do_playback(self, l):
-        '"playback"          - stop recording and start playing back recorded data'
-        if len(l):
-            print '"playback" takes no arguments'
-            return
-        self.ml.startPlayback()
+        '''"playback [RATE] [START_TIME]"
+                        - stop recording and start playing back recorded data
+                          at RATE * real time, starting at START_TIME into
+                          the recoded data'''
+
+        rate, start = l.split()
+        start_time = 0.0
+        if len(rate):
+            try:
+                self.ml.setPlaybackRate(float(rate))
+            except ValueError, e:
+                print 'could not set playback rate: "%s" (value should be a number)' % rate
+                return
+        if len(start):
+            try:
+                start_time = float(start)
+            except ValueError, e:
+                print 'could not set start time: "%s" (value should be a number of seconds)' % start
+                return
+        self.ml.startPlayback(start_time)
         self.setPrompt()
     def do_c(self, line):
         '"c COMMENT STRING"  - record COMMENT STRING in the shelf'
