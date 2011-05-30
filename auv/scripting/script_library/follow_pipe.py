@@ -160,7 +160,7 @@ class script(aiScript):
                 # check if we are aligned, if not then wait until we are or timeout
                 self.ready_c.wait(Options.Ready_Timeout)
             if not self.ready:
-                error("Took to long to become ready, aborting")
+                error("Took too long to become ready, aborting")
                 self.ready_c.release()
                 self.cleanup()
                 break

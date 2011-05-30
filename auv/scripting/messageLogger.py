@@ -29,7 +29,7 @@ class YPRWrapper:
     def floatYPR(self):
         return msg.floatYPR(self.yaw, self.pitch, self.roll)
 
-class SonarDataLIneWrapper:
+class SonarDataLineWrapper:
     def __init__(self, sdl = msg.SonarDataLine()):
         self.data = tuple(sdl.data)
         self.bearing = sdl.bearing
