@@ -68,15 +68,17 @@ def dictFromMessage(message):
 def dictToMessage(attr_dict):
     new_attrs = {}
     for k in attr_dict:
-        if type(atrr_dict[k]) == type(SonarDataLineWrapper()):
-            new_attrs[k] = attrs[k].SonarDataLine()
-        elif type(attr_dict[k]) == type(YPRWrapper()):
-            new_attrs[k] = attrs[k].floatYPR()
-        elif type(attr_dict[k]) == type(MotorIDWrapper()):
-            new_attrs[k] = attrs[k].MotorID()
+        if k.startswith('__'):
+            continue
+        if attr_dict[k].__class__ == SonarDataLineWrapper:
+            new_attrs[k] = attr_dict[k].SonarDataLine()
+        elif attr_dict[k].__class__ == YPRWrapper:
+            new_attrs[k] = attr_dict[k].floatYPR()
+        elif attr_dict[k].__class__ == MotorIDWrapper:
+            new_attrs[k] = attr_dict[k].MotorID()
         else:
-            new_attrs[k] = attrs[k]
-    return getattr(msg, attr_dict['__message_name__'])(**attr_dict)
+            new_attrs[k] = attr_dict[k]
+    return getattr(msg, attr_dict['__message_name__'])(**new_attrs)
 
 def incFloat(f):
     if f == 0.0:
@@ -175,13 +177,15 @@ class Logger(msg.MessageObserver):
                 next_thing = self.__shelf[sorted_keys[i].hex()]
                 if type(next_thing) == type(dict()):
                     # this is a message
-                    self.node.send(dictToMessage(next_thing))
+                    m = dictToMessage(next_thing)
+                    debug('t=%g, sending: %s' % (sorted_keys[i], m))
+                    self.node.send(m)
                 else:
                     print 'playback:', next_thing
                 if i != len(sorted_keys) - 1:
                     next_time = sorted_keys[i+1]
                     time_to_sleep_for = (next_time - tstart) - self.__playback_rate * self.relativeTime()
-                    debug('sleeping for %gs' % time_to_sleep_for)
+                    debug('sleeping for %gs' % time_to_sleep_for, 5)
                     if time_to_sleep_for > 0:
                         time.sleep(time_to_sleep_for / self.__playback_rate)
             debug('playback ran out of messages')
