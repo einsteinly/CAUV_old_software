@@ -14,6 +14,13 @@ class BuoyDetectorOptions:
     Load_Pipeline = None #'buoy-detect'
     Circles_Name = 'buoy'
 
+def incFloat(f):
+    if f == 0.0:
+        return sys.float_info.min
+    m, e = math.frexp(f)
+    return math.ldexp(m + sys.float_info.epsilon / 2, e)
+
+
 class detector(aiDetector):
     def __init__(self, node):
         aiDetector.__init__(self, node)
@@ -75,8 +82,7 @@ class detector(aiDetector):
             t = self.relativeTime()
             while t in self.circles_messages:
                 # twiddle twiddle
-                m, e = math.frexp(t)
-                t = (m + sys.float_info.epsilon) * 2**e
+                t = incFloat(t)
             self.circles_messages[t] = m
         else:
             debug('ignoring circles message: %s' % m.name)

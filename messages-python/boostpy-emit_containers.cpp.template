@@ -11,17 +11,6 @@
 namespace bp = boost::python;
 using namespace cauv;
 
-/** Helper structures for exporting instances of STL containers:
- ** (borrowing from http://wiki.python.org/moin/boost.python/StlContainers, but
- **  that code was a long way from even compiling... so not completely
- **  confidence inspiring!)
- **/
-
-inline void IndexError(){
-    PyErr_SetString(PyExc_IndexError, "Index out of range");
-    bp::throw_error_already_set();
-}
-
 template<class Key, class Val>
 struct MapHelper{
     typedef std::map<Key,Val> Map;

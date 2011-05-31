@@ -35,6 +35,8 @@ class MixNode: public Node{
             // parameters:
             registerParamID<float>("image fac", 1);
             registerParamID<float>("mix fac", 1);
+            registerParamID<bool>("absolute value", true, "take absolute value "
+                "before clamping into pixel range");
         }
     
         virtual ~MixNode(){
@@ -42,6 +44,12 @@ class MixNode: public Node{
         }
 
     protected:
+        static unsigned absRound(const float& f){
+            if(f > 0)
+                return unsigned(f + 0.5);
+            else
+                return unsigned(0.5 - f);
+        }
 
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
@@ -51,6 +59,7 @@ class MixNode: public Node{
             
             float img_f = param<float>("image fac");
             float mix_f = param<float>("mix fac");
+            bool do_abs = param<bool>("absolute value");
             
             if(!img->cvMat().isContinuous() || !mix->cvMat().isContinuous())
                 throw(parameter_error("images must be continuous"));
@@ -73,8 +82,13 @@ class MixNode: public Node{
                 for(col = 0, img_cp = img_rp, mix_cp = mix_rp;
                     col < img->cvMat().cols; col++, img_cp += elem_size, mix_cp += elem_size)
                     for(ch = 0, img_bp = img_cp, mix_bp = mix_cp;
-                        ch < img->cvMat().channels(); ch++, img_bp++, mix_bp++)
-                        *img_bp = clamp_cast<unsigned char>(0, (*img_bp * img_f) + (*mix_bp * mix_f) + 0.5f, 255);
+                        ch < img->cvMat().channels(); ch++, img_bp++, mix_bp++){
+                        if(do_abs)
+                            *img_bp = clamp_cast<unsigned char>(0u, absRound((*img_bp * img_f) + (*mix_bp * mix_f)), 255u);
+                        else
+                            *img_bp = clamp_cast<unsigned char>(0u, (*img_bp * img_f) + (*mix_bp * mix_f) + 0.5f, 255u);
+                    }
+                            
             
             r["image (not copied)"] = img;
             

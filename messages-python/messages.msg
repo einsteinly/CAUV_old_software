@@ -63,7 +63,10 @@ enum NodeType : int8 {
     FloatInput,
     StringInput,
     BoolInput,
-    BroadcastHistogram
+    BroadcastHistogram,
+    Throttle,
+    Nop,
+    Delay
 }
 enum NodeStatus : int8 {
     AllowQueue = 1,

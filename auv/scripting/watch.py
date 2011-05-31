@@ -97,7 +97,7 @@ processes_to_start = [
             ['remote.py'] # list of names to search for in processes
         ),
         CAUVTask('logger',               'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
-        CAUVTask('img-pipe default',     'nohup %EDIR/img-pipeline',                    True, ['img-pipeline -n default']),
+        CAUVTask('img-pipe default',     'nohup %EDIR/img-pipeline -n default',         True, ['img-pipeline -n default']),
         CAUVTask('img-pipe buoy-detect', 'nohup %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
         CAUVTask('img-pipe pipe-detect', 'nohup %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
         CAUVTask('img-pipe sonar',       'nohup %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
@@ -106,6 +106,8 @@ processes_to_start = [
         CAUVTask('spread',               'nohup spread',                                True, ['spread']),
         CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
         CAUVTask('battery',              'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
+        CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
         CAUVTask('AI Manager',      '', False, ['AI_manager']),
         CAUVTask('AI Ctrl Manager', '', False, ['AI_control_manager']),

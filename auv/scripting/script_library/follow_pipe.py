@@ -34,7 +34,7 @@ class script(aiScript):
                  threshold = 0.1,
                  strafe_p  = 255,
                  depth_p   = 0.1,
-                 depth_enable = True):
+                 depth_enable = False):
         aiScript.__init__(self, Options.Node_Name) 
         self.node.join("processing")
         self.__pl = pipeline.Model(self.node, Options.Load_Pipeline)
@@ -160,7 +160,7 @@ class script(aiScript):
                 # check if we are aligned, if not then wait until we are or timeout
                 self.ready_c.wait(Options.Ready_Timeout)
             if not self.ready:
-                error("Took to long to become ready, aborting")
+                error("Took too long to become ready, aborting")
                 self.ready_c.release()
                 self.cleanup()
                 break
