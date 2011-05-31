@@ -24,6 +24,8 @@ add_library( exampleguiplugin MODULE
     ${EXAMPLE_PLUGIN_UIS_H}
     ${EXAMPLE_PLUGIN_MOC_H}
 )
+
+cauv_install_plugin( exampleguiplugin )
                                       
 target_link_libraries( exampleguiplugin
     guicpp-core

@@ -11,6 +11,7 @@
 namespace Ui {
     class MainWindow;
 }
+class QDir;
 
 namespace cauv {
 
@@ -44,6 +45,8 @@ namespace cauv {
 
     private:
         Ui::MainWindow * ui;
+
+        int findPlugins(const QDir& dir, int subdirs = 0);
 
     };
 
