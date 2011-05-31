@@ -9,6 +9,28 @@ find_package(PythonInterp)
 find_package(PythonLibs)
 include_directories (${PYTHON_INCLUDE_DIRS})
 
+
+# Python package path (code from opencv)
+execute_process(COMMAND ${PYTHON_EXECUTABLE} --version ERROR_VARIABLE PYTHON_VERSION_FULL OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+string(REGEX MATCH "[0-9].[0-9]" PYTHON_VERSION_MAJOR_MINOR "${PYTHON_VERSION_FULL}")
+if(UNIX)
+    set(PYTHON_PACKAGES_PATH lib/python${PYTHON_VERSION_MAJOR_MINOR}/site-packages)
+endif()
+if(WIN32)
+    get_filename_component(PYTHON_PATH "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\${PYTHON_VERSION_MAJOR_MINOR}\\InstallPath]" ABSOLUTE CACHE)
+    set(PYTHON_PACKAGES_PATH "${PYTHON_PATH}/Lib/site-packages")
+endif()
+
+set(VIRTUAL_ENV $ENV{VIRTUAL_ENV})
+if(VIRTUAL_ENV)
+    set(PYTHON_PREFIX ${VIRTUAL_ENV})
+else()
+    set(PYTHON_PREFIX ${CMAKE_INSTALL_PREFIX})
+endif()
+set(CAUV_PYTHON_INSTALL_PATH ${PYTHON_PREFIX}/${PYTHON_PACKAGES_PATH} CACHE STRING "Install path for the CAUV python_module. Recommended to use virtualenv for this.")
+
+
 add_library (cauvinterface SHARED  
     cauvinterfacemodule.cpp
     emit_variants.cpp
@@ -38,6 +60,11 @@ add_custom_target (python-module ALL
     COMMENT "Python module target: depending on .py files"
 )
 
+install(TARGETS cauvinterface LIBRARY DESTINATION ${CAUV_PYTHON_INSTALL_PATH})
+install(DIRECTORY ${SRCD}/cauv DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
+        FILES_MATCHING PATTERN "*.py")
+
+# Fake install by linking
 if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
     add_custom_command (
         TARGET python-module

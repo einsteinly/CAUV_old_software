@@ -7,11 +7,11 @@ namespace cauv{
     
     namespace XBox {
         enum Buttons {
-            Left = 2, Right = 3, Down = 1, Up = 0,
-            X = 7, Y = 8, B = 6, A = 5,
-            RB = 10, LB = 9,
-            Joy_L_Click = 13, Joy_R_Click = 14,
-            Start = 11, Back = 4, XBox = 12
+            X = 3, Y = 2, B = 1, A = 0,
+            LB = 4, RB = 5,
+            Back = 6, Start = 7, XBox = 8,
+            Joy_L_Click = 9, Joy_R_Click = 10,
+            Left = 11, Right = 12, Up = 13, Down = 14,
                                      };
         enum Axes {
             Joy_L_X = 0,
