@@ -39,13 +39,26 @@ _registerEnumPicklers()
 
 
 # test
-if False:
+if True:
     import pickle
-    f = open('enum-test.pickle', 'w')
-    pickle.dump(MotorStateMessage(MotorID.Prop, 127), f)
+    f = open('pickle-test.pickle', 'w')
+    to_pickle = []
+    to_pickle.append(MotorStateMessage(MotorID.Prop, 127))
+    vo = NodeOutputArcVec()
+    vo.append(NodeOutputArc(NodeInput(4, 'qwerty'), 'abcdef'))
+    vi = NodeInputArcVec()
+    vi.append(NodeInputArc('ABC\0DEF', NodeOutput(4, '123', OutputType.Image)))
+    to_pickle.append(vi)
+    to_pickle.append(vo)
+    to_pickle.append(AddNodeMessage("test1", NodeType.FileInput, vi, vo))
+    g = GraphDescriptionMessage()
+    to_pickle.append(g)
+    to_pickle.append(MotorStateMessage(MotorID.Prop, 127))
+    pickle.dump(to_pickle, f)
     f.close()
-    f = open('enum-test.pickle')
-    print pickle.load(f)
+    f = open('pickle-test.pickle')
+    for thing in  pickle.load(f):
+        print thing
     f.close()
 
 

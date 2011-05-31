@@ -16,53 +16,28 @@
 namespace bp = boost::python;
 using namespace cauv;
 
-template<typename T, typename aT = std::allocator<T> >
-struct VectorWrapper:
-    public std::vector<T,aT>,
-    public bp::wrapper< std::vector<T> >{
-    // Must re-implement std::vector<T> constructors that
-    // bp::vector_indexing_suite requires:
-    VectorWrapper()
-        : std::vector<T,aT>(){
-    }
-    template <typename itT>
-    VectorWrapper(itT first, itT last, const aT& a = aT())
-        : std::vector<T,aT>(first, last, a){
-    }
-    VectorWrapper(VectorWrapper const& other)
-        : std::vector<T,aT>(other), bp::wrapper< std::vector<T> >(other){
-    }
-    // Not entirely sure why this is needed...
-    VectorWrapper(std::vector<T,aT> const& other)
-        : std::vector<T,aT>(other), bp::wrapper< std::vector<T> >(){
-    }
-    // Add constructor for UnPickling:
-    VectorWrapper(std::string const& serialised_data)
-        : std::vector<T,aT>(){
-        const_svec_ptr v  = boost::make_shared<svec_t>(
-            serialised_data.data(), serialised_data.data() + serialised_data.size()
-        );
-        uint32_t used = deserialise(v, 0, *this);
-        if(used != serialised_data.size())
-            throw std::runtime_error("Bad Pickle");
-    }
-    std::string serialiseForPickle() const{
+template<typename T>
+boost::shared_ptr<T> makeContainer(std::string const& s){
+    const_svec_ptr v  = boost::make_shared<svec_t>(
+        s.data(), s.data() + s.size()
+    );
+    boost::shared_ptr<T> r = boost::make_shared<T>();
+    uint32_t used = deserialise(v, 0, *r);
+    if(used != s.size())
+        throw std::runtime_error("Bad Pickle");
+    return r;
+}
+
+template<typename T>
+struct Pickler: bp::pickle_suite{
+    static bp::tuple getinitargs(T const& a){
         svec_ptr v = boost::make_shared<svec_t>();
-        serialise(v, *this);
-        return std::string(v->begin(), v->end());
+        serialise(v, a);
+        return bp::make_tuple(
+            std::string(v->begin(), v->end())
+        );
     }
 };
-
-
-#for $t in $requiredVectorTypes 
-#set $vect = "VectorWrapper< " + $toCPPType(t) + " >"
-#set $vecn = $CPPContainerTypeName(t) + "Vec"
-struct ${vecn}Pickler: bp::pickle_suite{
-    static bp::tuple getinitargs(${vect} const& a){
-        return bp::make_tuple(a.serialiseForPickle());
-    }
-};
-#end for
 
 template<class Key, class Val>
 struct MapHelper{
@@ -91,14 +66,14 @@ struct MapHelper{
 
 void emitContainers(){
     // STL Vectors:
-    #for $t in $requiredVectorTypes 
-    #set $vect = "VectorWrapper< " + $toCPPType(t) + " >"
+    #for $t in $requiredVectorTypes
+    #set $vect = "std::vector<" + $toCPPType(t) + " >"
     #set $vecn = $CPPContainerTypeName(t) + "Vec"
     // $vecn
     bp::class_< $vect >("$vecn")
-        .def(bp::init<std::string>())
+        .def("__init__", bp::make_constructor(makeContainer< $vect >))
         .def(bp::vector_indexing_suite< $vect >())
-        .def_pickle(${vecn}Pickler())
+        .def_pickle(Pickler< ${vect} >())
         .def(bp::self_ns::str(bp::self_ns::self))
         .def(bp::self_ns::repr(bp::self_ns::self))
     ;
@@ -109,11 +84,13 @@ void emitContainers(){
     // STL Maps: TODO: unambiguous names!
     #for $kt, $vt in $requiredMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
-    #set $mapt = "std::map< " + $toCPPType(kt) +", "+ $toCPPType(vt) +" >"
+    #set $mapt = "std::map< " + $toCPPType(kt) +", "+ $toCPPType(vt) +" >"    
     #set $helpert = "MapHelper< " + $toCPPType(kt) +", "+ $toCPPType(vt) +" >"
     // $mapn
     bp::class_< $mapt >("$mapn")
+        .def("__init__", bp::make_constructor(makeContainer< $mapt >))
         .def(bp::map_indexing_suite< $mapt >())
+        .def_pickle(Pickler< ${mapt} >()) 
         .def("keys", &${helpert}().keys)
         .def("values", &${helpert}().values)
         .def("items", &${helpert}().items)
