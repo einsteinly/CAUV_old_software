@@ -11,9 +11,12 @@
 #include <osgOcean/ShaderManager>
 #include <osgOcean/OceanScene>
 
-#include <osgViewer/Viewer>
+#include <osgViewer/CompositeViewer>
+#include <osgViewer/View>
 
 #include <osgDB/WriteFile>
+
+#include <osg/FrameStamp>
 
 #include <osg/Image>
 
@@ -23,8 +26,7 @@
 
 int main(int argc, char** argv)
 {
-
-
+/*
     osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/openscenegraph/OpenSceneGraph-Data");
     const std::string filename = "cow.osg";
     osg::ref_ptr<osg::Node> cow = osgDB::readNodeFile(filename);
@@ -41,7 +43,7 @@ int main(int argc, char** argv)
     traits->sharedContext = NULL;
     traits->pbuffer = true;
 
-    osg::GraphicsContext *graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
+    osg::ref_ptr<osg::GraphicsContext> graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
 
     if(!graphicsContext) {
         osg::notify(osg::NOTICE) << __FILE__ << " - " << __FUNCTION__ << " - Failed to create pbuffer." << std::endl;
@@ -49,37 +51,58 @@ int main(int argc, char** argv)
     }
 
 
-    osgViewer::Viewer * viewer = new osgViewer::Viewer();
-    viewer->setSceneData(cow);
-    viewer->getCamera()->setGraphicsContext(graphicsContext);
-    viewer->getCamera()->setViewport(new osg::Viewport(0,0,1024,768));
+    osg::ref_ptr<osgViewer::CompositeViewer> viewer = new osgViewer::CompositeViewer();
 
-    viewer->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
-
-    int frames = 0;
+    osg::ref_ptr<osgViewer::View> view = new osgViewer::View();
+    view->setSceneData(cow);
+    view->setCamera(new osg::Camera());
+    view->getCamera()->setGraphicsContext(graphicsContext.get());
+    view->getCamera()->setViewport(new osg::Viewport(0,0,1024,768));
+    view->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
 
     osg::Image* shot = new osg::Image();
     shot->allocateImage(1024, 768, 24, GL_RGB, GL_UNSIGNED_BYTE);
-    viewer->getCamera()->attach(osg::Camera::COLOR_BUFFER, shot);
+    view->getCamera()->attach(osg::Camera::COLOR_BUFFER, shot);
 
+
+    osg::ref_ptr<osgViewer::View> view2 = new osgViewer::View();
+    view2->setSceneData(cow);
+    view2->getCamera()->setGraphicsContext(graphicsContext.get());
+    view2->getCamera()->setViewport(new osg::Viewport(0,0,1024,768));
+    view2->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-10,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
+
+    osg::Image* shot2 = new osg::Image();
+    shot2->allocateImage(1024, 768, 24, GL_RGB, GL_UNSIGNED_BYTE);
+    view2->getCamera()->attach(osg::Camera::COLOR_BUFFER, shot2);
+
+
+    viewer->addView(view.get());
+    viewer->addView(view2.get());
 
     viewer->realize();
     while(!viewer->done()){
-        viewer->frame();
-        info() << "scene redrawn";
+        double simTime = viewer->getFrameStamp()->getSimulationTime();
+        viewer->frame(simTime);
+        viewer->advance();
+        info() << "scene redrawn at " << simTime;
 
         std::stringstream str;
-        str << "frames/" << frames++ << ".png";
+        str << "frames/f" << simTime << ".png";
         osgDB::writeImageFile(*shot,str.str());
+
+        std::stringstream str2;
+        str2 << "frames/d" << simTime << ".png";
+        osgDB::writeImageFile(*shot2,str2.str());
     }
 
+*/
 
+cauv::sim::Simulator sim;
 
+int ret = sim.parseOptions(argc, argv);
+if(ret != 0) return ret;
 
-
-
-
-
+sim.run();
 
 
 /*

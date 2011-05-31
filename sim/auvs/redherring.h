@@ -12,8 +12,6 @@ namespace cauv {
         {
         public:
             RedHerring(boost::shared_ptr<AUV> auv);
-
-            osg::ref_ptr<sim::Camera> getPrimaryCamera();
         };
 
     } // namespace sim

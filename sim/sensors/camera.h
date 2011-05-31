@@ -3,30 +3,36 @@
 
 #include <osgViewer/View>
 
+#include <boost/shared_ptr.hpp>
+
+#include <osg/Image>
+
+#include <sim/simnode.h>
+
 namespace osg {
-    class Texture2D;
     class Image;
+    class GraphicsContext;
 }
 
 namespace cauv {
 
+    class RateLimiter;
+
     namespace sim {
 
-        class Camera : public osgViewer::View
+        class Camera : public SimNode, public osg::Image
         {
         public:
-            Camera(int width = 200, int height = 200);
+            Camera(int width, int height);
 
-            void setUpAsHUD();
-
-
+            void tick(double simTime);
             void setSize(int width, int height);
-
-            osg::ref_ptr<osg::Texture2D> getTexture();
-            osg::ref_ptr<osg::Image> getImage();
+            void setRateLimiter(boost::shared_ptr<RateLimiter> rateLimiter);
 
         protected:
-            osg::ref_ptr<osg::Texture2D> m_renderTexture;
+            int m_width;
+            int m_height;
+            boost::shared_ptr<RateLimiter> m_rateLimiter;
         };
 
     } // namespace sim

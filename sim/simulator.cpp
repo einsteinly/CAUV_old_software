@@ -27,16 +27,14 @@ using namespace cauv::sim;
 Simulator::Simulator() : CauvNode("CauvSim"),
 m_auv(boost::make_shared<AUV>()),
 m_auv_controller(boost::make_shared<AUVController>(m_auv)),
-m_simulated_auv(boost::make_shared<RedHerring>(m_auv)),
 m_root(new osg::Group()),
 m_viewer(new osgViewer::CompositeViewer())
 {
     joinGroup("control");
     joinGroup("telemetry");
 
-
     // graphics context for off screen rendering
-    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits();
+    /*osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits();
     traits->x = 0; // viewport of camera
     traits->y = 0;
     traits->width = 1024;
@@ -46,44 +44,32 @@ m_viewer(new osgViewer::CompositeViewer())
     traits->sharedContext = NULL;
     traits->pbuffer = true;
 
-    osg::GraphicsContext *graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
+    osg::ref_ptr<osg::GraphicsContext> graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
 
     if(!graphicsContext) {
-        osg::notify(osg::NOTICE) << __FILE__ << " - " << __FUNCTION__ << " - Failed to create pbuffer." << std::endl;
+        error() << __FILE__ << " - " << __FUNCTION__ << " - Failed to create pbuffer.";
         exit(1);
     }
 
+*/
+    m_simulated_auv = boost::make_shared<RedHerring>(m_auv);
+
     //
-    // the auv cameras
-    foreach(osg::ref_ptr<sim::Camera > camera, m_simulated_auv->getCameras()){
+    // sort out the AUVs cameras
+    foreach(boost::shared_ptr<sim::Camera> simulatedCam, m_simulated_auv->getCameras()){
 
-        camera->getCamera()->setGraphicsContext(graphicsContext);
-        camera->setSceneData(m_root.get());
-        camera->getCamera()->setViewport(0, 0, 1024, 768);
-        camera->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+        osg::ref_ptr<osgViewer::View> view = new osgViewer::View();
+        view->setSceneData(m_root);
+        view->getCamera()->setGraphicsContext(graphicsContext.get());
+        view->getCamera()->setViewport(new osg::Viewport(0,0,1024,768));
+        view->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,-1), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
+        view->getCamera()->attach(osg::Camera::COLOR_BUFFER, simulatedCam.get());
 
-        // mouse handling
-        //osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-        //tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-        //camera->setCameraManipulator( tb );
+        view->setUpViewInWindow( 0,0,1024,768, 0 );
 
-        m_viewer->addView(camera);
+        m_viewer->addView(view.get());
 
         info() <<"Added simulated camera";
-
-        /*
-        osgViewer::Viewer * userView = new osgViewer::Viewer();
-        userView->setSceneData(m_root.get());
-        userView->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
-        userView->getCamera()->setViewport(0, 0, 1024, 768);
-
-        // mouse handling
-        osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-        tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-        userView->setCameraManipulator( tb );
-
-        m_viewer->addView(userView);
-        */
     }
 }
 
@@ -96,6 +82,17 @@ osg::ref_ptr<WorldModel> Simulator::getWorldModel(){
 void Simulator::onRun()
 {
     CauvNode::onRun();
+
+    m_viewer->realize();
+    while(!m_viewer->done()){
+        double simTime = m_viewer->getFrameStamp()->getSimulationTime();
+        m_viewer->frame(simTime);
+        m_viewer->advance();
+        info() << "scene redrawn at " << simTime;
+
+        m_simulated_auv->propagateTicks(simTime);
+        info() << "Simulation tick completed";
+    }
 }
 
 
@@ -182,26 +179,11 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
 
     m_root->addChild(m_world_model);
 
+    osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/openscenegraph/OpenSceneGraph-Data");
+    const std::string filename = "cow.osg";
+    osg::ref_ptr<osg::Node> cow = osgDB::readNodeFile(filename);
 
-    // see if the user wants a window into the world...
-    if(vm.count("viewer")) {
-        boost::thread(boost::bind(&Simulator::launchViewer, this));
-    } else {
-        m_viewer->realize();
-        while(!m_viewer->done()){
-            m_viewer->advance();
-            m_viewer->eventTraversal();
-            m_viewer->updateTraversal();
-            m_viewer->renderingTraversals();
-            info() << "scene redrawn";
-            
-            osg::ref_ptr<sim::Camera> cam = m_simulated_auv->getPrimaryCamera();
-            osg::ref_ptr<osg::Image> shot = cam->getImage();
-            osgDB::writeImageFile(*shot.get(),"image_file.png");
-            
-            
-        }
-    }
+    m_world_model->addChild(cow);
 
     return CauvNode::useOptionsMap(vm, desc);
 }

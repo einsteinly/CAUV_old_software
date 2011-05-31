@@ -54,6 +54,7 @@ namespace cauv {
             osg::ref_ptr<WorldModel> m_world_model;
             osg::ref_ptr<osg::Group> m_root;
             osg::ref_ptr<osgViewer::CompositeViewer> m_viewer;
+            osg::Image * shot;
 
         };
 
