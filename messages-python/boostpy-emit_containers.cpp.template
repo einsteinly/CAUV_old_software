@@ -7,9 +7,62 @@
 
 \#include "emit_generated.h"
 \#include <generated/messages.h>
+\#include <generated/serialmess.h>
+
+\#include <boost/make_shared.hpp>
+\#include <utility/serialisation-types.h>
+\#include <utility/serialisation.h>
 
 namespace bp = boost::python;
 using namespace cauv;
+
+template<typename T, typename aT = std::allocator<T> >
+struct VectorWrapper:
+    public std::vector<T,aT>,
+    public bp::wrapper< std::vector<T> >{
+    // Must re-implement std::vector<T> constructors that
+    // bp::vector_indexing_suite requires:
+    VectorWrapper()
+        : std::vector<T,aT>(){
+    }
+    template <typename itT>
+    VectorWrapper(itT first, itT last, const aT& a = aT())
+        : std::vector<T,aT>(first, last, a){
+    }
+    VectorWrapper(VectorWrapper const& other)
+        : std::vector<T,aT>(other), bp::wrapper< std::vector<T> >(other){
+    }
+    // Not entirely sure why this is needed...
+    VectorWrapper(std::vector<T,aT> const& other)
+        : std::vector<T,aT>(other), bp::wrapper< std::vector<T> >(){
+    }
+    // Add constructor for UnPickling:
+    VectorWrapper(std::string const& serialised_data)
+        : std::vector<T,aT>(){
+        const_svec_ptr v  = boost::make_shared<svec_t>(
+            serialised_data.data(), serialised_data.data() + serialised_data.size()
+        );
+        uint32_t used = deserialise(v, 0, *this);
+        if(used != serialised_data.size())
+            throw std::runtime_error("Bad Pickle");
+    }
+    std::string serialiseForPickle() const{
+        svec_ptr v = boost::make_shared<svec_t>();
+        serialise(v, *this);
+        return std::string(v->begin(), v->end());
+    }
+};
+
+
+#for $t in $requiredVectorTypes 
+#set $vect = "VectorWrapper< " + $toCPPType(t) + " >"
+#set $vecn = $CPPContainerTypeName(t) + "Vec"
+struct ${vecn}Pickler: bp::pickle_suite{
+    static bp::tuple getinitargs(${vect} const& a){
+        return bp::make_tuple(a.serialiseForPickle());
+    }
+};
+#end for
 
 template<class Key, class Val>
 struct MapHelper{
@@ -39,11 +92,13 @@ struct MapHelper{
 void emitContainers(){
     // STL Vectors:
     #for $t in $requiredVectorTypes 
-    #set $vect = "std::vector< " + $toCPPType(t) + " >"
+    #set $vect = "VectorWrapper< " + $toCPPType(t) + " >"
     #set $vecn = $CPPContainerTypeName(t) + "Vec"
     // $vecn
     bp::class_< $vect >("$vecn")
+        .def(bp::init<std::string>())
         .def(bp::vector_indexing_suite< $vect >())
+        .def_pickle(${vecn}Pickler())
         .def(bp::self_ns::str(bp::self_ns::self))
         .def(bp::self_ns::repr(bp::self_ns::self))
     ;
