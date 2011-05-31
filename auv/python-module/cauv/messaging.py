@@ -39,7 +39,7 @@ _registerEnumPicklers()
 
 
 # test
-if True:
+if False:
     import pickle
     f = open('pickle-test.pickle', 'w')
     to_pickle = []

@@ -21,6 +21,8 @@ Ignore_Message_Attrs = (
     'group'
 )
 
+# These three classes need to be kept around so we can load the saved data from
+# 2011-05-28
 class YPRWrapper:
     def __init__(self, fypr = msg.floatYPR()):
         self.yaw = fypr.yaw
@@ -56,8 +58,6 @@ def dictFromMessage(message):
             # I'm sure there is a simpler way of doing this, but m.__dict__ is
             # unhelpfully empty...
             r[k] = attrs[k].__get__(message)
-            if type(r[k]) == type(msg.SonarDataLine()):
-                r[k] = SonarDataLineWrapper(r[k])
     r['__message_name__'] = message.__class__.__name__
     return r
 
@@ -185,8 +185,12 @@ class Logger(msg.MessageObserver):
                     info('playback stopped')
                     break
                 next_thing = self.__shelf[sorted_keys[i].hex()]
-                if type(next_thing) == type(dict()):
+                if msg.__class__ and msg.__class__.__name__.endswith('Message'):
                     # this is a message
+                    debug('t=%g, sending: %s' % (sorted_keys[i], next_thing), 5)
+                    self.node.send(next_thing)
+                if type(next_thing) == type(dict()):
+                    # this is a message saved in the deprecated format
                     m = dictToMessage(next_thing)
                     debug('t=%g, sending: %s' % (sorted_keys[i], m), 5)
                     self.node.send(m)
@@ -326,8 +330,11 @@ class CmdPrompt(cmd.Cmd):
                         - stop recording and start playing back recorded data
                           at RATE * real time, starting at START_TIME into
                           the recoded data'''
-
-        rate, start = l.split()
+        try:
+            rate, start = l.split()
+        except ValueError:
+            rate = ''
+            start = ''
         start_time = 0.0
         if len(rate):
             try:
