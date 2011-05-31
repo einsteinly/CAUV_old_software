@@ -77,6 +77,7 @@ namespace cauv{
                     aI(boost::make_shared< MutableDataStream<float> >("aI", this)),
                     aD(boost::make_shared< MutableDataStream<float> >("aD", this)),
                     thr(boost::make_shared< MutableDataStream<float> >("thr", this)),
+                    maxError(boost::make_shared< MutableDataStream<float> >("maxError", this)),
                     enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)),
                     actual(actualValue),
                     mv(boost::make_shared< DataStream<float> >("mv", this)),
@@ -99,6 +100,7 @@ namespace cauv{
             boost::shared_ptr< MutableDataStream<float> > aI;
             boost::shared_ptr< MutableDataStream<float> > aD;
             boost::shared_ptr< MutableDataStream<float> > thr;
+            boost::shared_ptr< MutableDataStream<float> > maxError;
             boost::shared_ptr< MutableDataStream<bool> > enabled;
             boost::shared_ptr< DataStream<T> > actual;
 
@@ -230,7 +232,7 @@ namespace cauv{
             estimate_total(boost::make_shared<DataStream<float> >("Total Battery Consumed", "Wh")),
             fraction_remaining(boost::make_shared<DataStream<float> >("Battery Remaining", "%")),
             speed(boost::make_shared<DataStream<floatXYZ> >("Speed", "m/s")),
-            location(boost::make_shared<DataStream<Location> >("Location", "lng/lat"))
+            location(boost::make_shared<DataStream<Location> >("Location", "lng/lat/alt"))
             {
 
             }

@@ -21,6 +21,7 @@
 #include <boost/thread/tss.hpp>
 
 #include <utility/bash_cout.h>
+#include <utility/string.h>
 #include <generated/messages_fwd.h>
 #include <generated/messages_messages.h>
 #include <common/cauv_utils.h>
@@ -206,27 +207,51 @@ bool& SmartStreamBase::recursive(){
     return *r.get();
 }
 
+std::string const& logFilePrefix(){
+    using boost::posix_time::microsec_clock;
+    // abuse thread-safety of static initialisation (compile with it enabled!)
+    static std::string the_prefix = MakeString(
+        std::locale(
+            std::cout.getloc(),
+            new boost::posix_time::time_facet("%Y-%m-%d-%H-%M-%s")
+        )
+    )   << microsec_clock::local_time()
+        << "-";
+    return the_prefix;
+}
+
 // initialise on first use
 std::ofstream& SmartStreamBase::logFile()
 {
     static std::ofstream lf;
     static std::string lfn = settings().logfile_name;
+    bool name_did_become_set = false;
 
     if(settings().logfile_name.size() == 0){
         if(settings().program_name.size())
-            settings().logfile_name = settings().program_name + ".log";
+            settings().logfile_name = logFilePrefix() + settings().program_name + ".log";
         else
-            settings().logfile_name = "unknown.log";
+            settings().logfile_name = logFilePrefix() + "unknown.log";
+    }else if(settings().logfile_name ==  logFilePrefix() + "unknown.log"){
+        // program name is now set, now we have a name to use (note that
+        // subsequent changes to the program name will not be picked up)
+        name_did_become_set = true;
+        settings().logfile_name = logFilePrefix() + settings().program_name + ".log";
     }
     if(lfn != settings().logfile_name)
     {
-        lf.close();
+        if(lf.is_open())
+            lf.close();
         lfn = settings().logfile_name;
     }
     if(!lf.is_open())
     {
         lf.open(lfn.c_str(), std::ios::out | std::ios::app);
-        lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
+        if(name_did_become_set)
+            lf << "\n\n----------\n" << settings().program_name
+               << " (continued from " << logFilePrefix() + "unknown.log)" << std::endl; 
+        else
+            lf << "\n\n----------\n" << settings().program_name << " Started" << std::endl;
     }
     return lf;
 }
@@ -234,7 +259,7 @@ std::ofstream& SmartStreamBase::logFile()
 std::locale const& SmartStreamBase::getTheLocale(){
     static std::locale the_locale = std::locale(
         std::cout.getloc(),
-        new boost::posix_time::time_facet("%Y/%m/%d-%H:%M:%s")
+        new boost::posix_time::time_facet("%H:%M:%s")
     );
     return the_locale;
 }

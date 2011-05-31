@@ -40,10 +40,6 @@ public:
     void onProcessStatusMessage(ProcessStatusMessage_ptr m);
     void onLocationMessage(LocationMessage_ptr m);
 
-    bool pushState(bool state);
-    bool popState();
-    bool enabled();
-
     void sendMotorMessage(MotorID::e motor, int8_t speed);
     void sendDebugLevelMessage(int32_t level);
     template<class T, class S> void sendAutopilotEnabledMessage(boost::shared_ptr<AUV::Autopilot<S> > ap);

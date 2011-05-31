@@ -228,6 +228,7 @@ group control
         Ai : float;
         Ad : float;
 		thr : float;
+        maxError : float;
     }
 
     message DepthAutopilotEnabled : 61
@@ -245,6 +246,7 @@ group control
         Ai : float;
         Ad : float;
 		thr : float;
+        maxError : float;        
     }
 
     message DepthCalibration : 80
@@ -270,6 +272,7 @@ group control
         Ai : float;
         Ad : float;
 		thr : float;
+        maxError : float;        
     }
 
     message StateRequest : 82

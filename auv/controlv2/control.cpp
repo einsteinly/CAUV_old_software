@@ -23,9 +23,6 @@
 using namespace std;
 using namespace cauv;
 
-const static float Integral_Max_Kp_Mult = 100;
-const static float Integral_Max_Const = 100;
-
 void sendAlive(boost::shared_ptr<MCBModule> mcb)
 {
     debug() << "Starting alive message thread";
@@ -69,6 +66,7 @@ struct PIDControl
     double KpMAX, KpMIN, KdMAX, KdMIN, KiMAX, KiMIN;
     double Kp1, Ki1, Kd1;
     double integral, previous_derror, previous_mv;
+    double errorMAX;
     std::deque< std::pair<TimeStamp, double> > previous_errors;
     TimeStamp previous_time;
     bool is_angle;
@@ -82,6 +80,7 @@ struct PIDControl
           KpMAX(1), KpMIN(0), KdMAX(1), KdMIN(0), KiMAX(1), KiMIN(0),
           Kp1(1), Ki1(1), Kd1(1),
           integral(0), previous_derror(0), previous_mv(0),
+          errorMAX(1000),
           previous_errors(),
           previous_time(),
           is_angle(false),
@@ -155,6 +154,7 @@ struct PIDControl
             error = getErrorAngle(target, current);
         else
             error = getError(target, current);
+        error = clamp(-errorMAX, error, errorMAX);
 
         if (previous_time.secs == 0) {
             previous_time = now();
@@ -171,9 +171,9 @@ struct PIDControl
         previous_time = tnow;
 
         integral += error*dt;
-        const double Integral_Max = std::fabs(Integral_Max_Kp_Mult*Kp) + std::fabs(Integral_Max_Const);
-        integral = clamp(-Integral_Max, integral, Integral_Max);
+        integral = clamp(-errorMAX, integral, errorMAX);
         double de = smoothedDerivative();
+        de = clamp(-errorMAX, de, errorMAX);
         previous_derror = de;
 		
 		
@@ -271,11 +271,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
             vbow_map = def;
             hstern_map = def;
             vstern_map = def;
-            //. tmp test stuff:
-            //MotorRampRateMessage_ptr mrrm = boost::make_shared<MotorRampRateMessage>(255, 5);
-            //onMotorRampRateMessage(mrrm);
-            //SetMotorMapMessage_ptr smmm = boost::make_shared<SetMotorMapMessage>(MotorID::Prop, def);
-            //onSetMotorMapMessage(smmm);
         }
         ~ControlLoops()
         {
@@ -408,6 +403,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Bearing].Ad = m->Ad();
 			m_controllers[Bearing].thr = m->thr();
             m_controllers[Bearing].scale = m->scale();
+            m_controllers[Bearing].errorMAX = m->maxError();
             m_controllers[Bearing].reset();
         }
 
@@ -432,6 +428,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Pitch].Ad = m->Ad();
 			m_controllers[Pitch].thr = m->thr();
             m_controllers[Pitch].scale = m->scale();
+            m_controllers[Pitch].errorMAX = m->maxError();
             m_controllers[Pitch].reset();
         }
 
@@ -459,6 +456,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_controllers[Depth].Ad = m->Ad();
 			m_controllers[Depth].thr = m->thr();
 			m_controllers[Depth].scale = m->scale();
+            m_controllers[Depth].errorMAX = m->maxError();
             m_controllers[Depth].reset();
         }
 

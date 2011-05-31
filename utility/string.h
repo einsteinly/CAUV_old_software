@@ -10,6 +10,11 @@ class MakeString{
             : m_stream(){
         }
         
+        MakeString(std::locale const& withLocale)
+            : m_stream(){
+            m_stream.imbue(withLocale);
+        }
+        
         template<typename T>
         MakeString(T const& v)
             : m_stream(){
