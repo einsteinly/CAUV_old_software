@@ -56,12 +56,8 @@ def dictFromMessage(message):
             # I'm sure there is a simpler way of doing this, but m.__dict__ is
             # unhelpfully empty...
             r[k] = attrs[k].__get__(message)
-            if type(r[k]) == type(msg.floatYPR()):
-                r[k] = YPRWrapper(r[k])
-            elif type(r[k]) == type(msg.SonarDataLine()):
+            if type(r[k]) == type(msg.SonarDataLine()):
                 r[k] = SonarDataLineWrapper(r[k])
-            elif type(r[k]) == type(msg.MotorID()):
-                r[k] = MotorIDWrapper(r[k])
     r['__message_name__'] = message.__class__.__name__
     return r
 
