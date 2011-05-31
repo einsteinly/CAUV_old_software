@@ -7,7 +7,7 @@ using namespace cauv::sim;
 
 RedHerring::RedHerring(boost::shared_ptr<AUV> auv) : SimulatedAUV(auv)
 {
-    //this->addCamera(new sim::Camera());
+    this->addCamera(new sim::Camera());
     //this->addCamera(new sim::Camera());
 }
 

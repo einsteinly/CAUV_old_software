@@ -11,6 +11,7 @@
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgGA/TrackballManipulator>
+#include <osgDB/WriteFile>
 
 #include "validators.h"
 
@@ -33,35 +34,56 @@ m_viewer(new osgViewer::CompositeViewer())
     joinGroup("control");
     joinGroup("telemetry");
 
-    //
-    // the users camera
-    osgViewer::Viewer * userView = new osgViewer::Viewer();
-    userView->setSceneData(m_root.get());
-    userView->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
-    userView->getCamera()->setViewport(0, 0, 1024, 768);
 
-    // mouse handling
-    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-    tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-    userView->setCameraManipulator( tb );
+    // graphics context for off screen rendering
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits();
+    traits->x = 0; // viewport of camera
+    traits->y = 0;
+    traits->width = 1024;
+    traits->height = 768;
+    traits->windowDecoration = false;
+    traits->doubleBuffer = false;
+    traits->sharedContext = NULL;
+    traits->pbuffer = true;
 
-    m_viewer->addView(userView);
+    osg::GraphicsContext *graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
+
+    if(!graphicsContext) {
+        osg::notify(osg::NOTICE) << __FILE__ << " - " << __FUNCTION__ << " - Failed to create pbuffer." << std::endl;
+        exit(1);
+    }
 
     //
     // the auv cameras
     foreach(osg::ref_ptr<sim::Camera > camera, m_simulated_auv->getCameras()){
 
+        camera->getCamera()->setGraphicsContext(graphicsContext);
         camera->setSceneData(m_root.get());
-
+        camera->getCamera()->setViewport(0, 0, 1024, 768);
         camera->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
+
+        // mouse handling
+        //osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
+        //tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
+        //camera->setCameraManipulator( tb );
+
+        m_viewer->addView(camera);
+
+        info() <<"Added simulated camera";
+
+        /*
+        osgViewer::Viewer * userView = new osgViewer::Viewer();
+        userView->setSceneData(m_root.get());
+        userView->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
+        userView->getCamera()->setViewport(0, 0, 1024, 768);
 
         // mouse handling
         osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
         tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-        camera->setCameraManipulator( tb );
+        userView->setCameraManipulator( tb );
 
-        // mouse handling
-        m_viewer->addView(camera);
+        m_viewer->addView(userView);
+        */
     }
 }
 
@@ -113,9 +135,9 @@ void Simulator::launchViewer(){
     m_viewer->getViews(views, false);
 
     foreach (osgViewer::View * i, views){
-        //i->setUpViewInWindow( 0,0,1920,1280, 0 );
-        i->setUpViewOnSingleScreen(0);
-        m_world_model->getOceanSceneModel()->getOceanScene()->setScreenDims(osg::Vec2s(1920, 1280));
+        i->setUpViewInWindow( 0,0,1024,768, 0 );
+        //i->setUpViewOnSingleScreen(0);
+        //m_world_model->getOceanSceneModel()->getOceanScene()->setScreenDims(osg::Vec2s(1920, 1280));
     }
 
     m_viewer->run();
@@ -171,6 +193,13 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
             m_viewer->eventTraversal();
             m_viewer->updateTraversal();
             m_viewer->renderingTraversals();
+            info() << "scene redrawn";
+            
+            osg::ref_ptr<sim::Camera> cam = m_simulated_auv->getPrimaryCamera();
+            osg::ref_ptr<osg::Image> shot = cam->getImage();
+            osgDB::writeImageFile(*shot.get(),"image_file.png");
+            
+            
         }
     }
 
