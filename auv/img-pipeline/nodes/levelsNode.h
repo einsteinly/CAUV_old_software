@@ -18,8 +18,8 @@ namespace imgproc{
 
 class LevelsNode: public Node{
     public:
-        LevelsNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        LevelsNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

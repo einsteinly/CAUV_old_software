@@ -21,8 +21,8 @@ namespace imgproc{
 
 class DrawCornersNode: public Node{
     public:
-        DrawCornersNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        DrawCornersNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

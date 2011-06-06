@@ -8,8 +8,8 @@ namespace imgproc{
 
 class RecogniserNode: public Node{
     public:
-        RecogniserNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        RecogniserNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

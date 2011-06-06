@@ -19,8 +19,8 @@ namespace imgproc{
 
 class VideoFileOutputNode: public OutputNode{
     public:
-        VideoFileOutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        VideoFileOutputNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){

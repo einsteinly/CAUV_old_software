@@ -20,8 +20,8 @@ namespace imgproc{
 
 class DrawLinesNode: public Node{
     public:
-        DrawLinesNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        DrawLinesNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

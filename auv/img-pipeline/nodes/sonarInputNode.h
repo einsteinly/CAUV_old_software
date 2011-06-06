@@ -17,8 +17,8 @@ namespace imgproc{
 
 class SonarInputNode: public InputNode{
     public:
-        SonarInputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : InputNode(sched, pl, n, t){
+        SonarInputNode(ConstructArgs const& args)
+            : InputNode(args){
         }
 
         void init(){

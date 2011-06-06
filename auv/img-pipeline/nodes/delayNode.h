@@ -11,8 +11,8 @@ namespace imgproc{
 class DelayNode: public Node{
         const static std::string Delay_Param_Name;
     public:
-        DelayNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t), m_queue_image_size(0,0), m_queue(){
+        DelayNode(ConstructArgs const& args)
+            : Node(args), m_queue_image_size(0,0), m_queue(){
         }
 
         void init(){

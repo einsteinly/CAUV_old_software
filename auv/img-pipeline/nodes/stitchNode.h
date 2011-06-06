@@ -8,8 +8,8 @@ namespace imgproc{
 
 class StitchNode: public Node{
     public:
-        StitchNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t),
+        StitchNode(ConstructArgs const& args)
+            : Node(args),
               m_buffer(){
         }
 

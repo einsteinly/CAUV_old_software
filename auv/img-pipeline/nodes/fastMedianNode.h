@@ -15,8 +15,8 @@ namespace imgproc{
 
 class FastMedianNode: public Node{
     public:
-        FastMedianNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        FastMedianNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

@@ -15,8 +15,8 @@ namespace imgproc{
 
 class GaussianBlurNode: public Node{
     public:
-        GaussianBlurNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        GaussianBlurNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

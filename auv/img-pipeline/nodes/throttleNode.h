@@ -21,8 +21,8 @@ class ThrottleNode: public Node{
         typedef boost::unique_lock<mutex_t> unique_lock_t;
 
     public:
-        ThrottleNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t),
+        ThrottleNode(ConstructArgs const& args)
+            : Node(args),
               m_mux(),
               m_need_callback(),
               m_will_be_destroyed(false),
@@ -61,6 +61,10 @@ class ThrottleNode: public Node{
 
             m_ioservice_thread.join();
             stop();
+
+            // if you get a deadlock here on the destruction of m_ioservice,
+            // then upgrade to boost 1.46.1
+            // problem is believed to only affect OS X
         }
 
         virtual void paramChanged(input_id const& p){
@@ -118,7 +122,7 @@ class ThrottleNode: public Node{
             if(err == boost::system::errc::success)
                 demandNewParentInput();
             else if(err == boost::asio::error::operation_aborted)
-                warning() << "ThrottleNode callback aborted";
+                debug() << "ThrottleNode callback aborted";
             else
                 error() << "ThrottleNode callback error:" << err;
         }

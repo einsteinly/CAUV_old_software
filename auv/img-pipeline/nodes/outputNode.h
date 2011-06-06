@@ -8,8 +8,8 @@ namespace imgproc{
 
 class OutputNode: public Node{
     public:
-        OutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        OutputNode(ConstructArgs const& args)
+            : Node(args){
         }
         
         virtual bool isOutputNode() const { return true; }
