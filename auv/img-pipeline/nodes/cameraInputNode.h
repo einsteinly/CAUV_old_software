@@ -44,7 +44,7 @@ class CameraInputNode: public AsynchronousNode{
                 m_capture_lock[m_current_device].unlock();
         }
 
-        virtual void paramChanged(param_id const& p){
+        virtual void paramChanged(input_id const& p){
             if(p == "device id")
             {
                 openCapture();

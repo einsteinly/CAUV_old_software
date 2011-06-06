@@ -14,6 +14,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <utility/string.h>
+#include <utility/testable.h>
 #include <common/cauv_utils.h>
 #include <generated/messages_messages.h>
 #include <common/image.h>
@@ -46,8 +47,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef std::map<output_id, msg_node_in_list_t> msg_node_output_map_t;
         typedef std::map<input_id, NodeOutput> msg_node_input_map_t;
 
-        typedef std::map<param_id, std::string> param_tip_map_t;
-
         typedef std::set<output_id> output_id_set_t;
         typedef std::set<input_id> input_id_set_t;
 
@@ -56,47 +55,156 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef boost::shared_ptr<Image> image_ptr_t;
         
         // NB: order here is important, don't change it!
+        enum OuputType {OutType_Image = 0, OutType_Parameter = 1};
         typedef boost::variant<image_ptr_t, NodeParamValue> output_t;
 
         typedef std::map<output_id, output_t> out_map_t;
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
 
     private:
-        // Private typedefs: only used internally
+        // Private types and typedefs: only used internally
+        enum InputSchedType {Must_Be_New, May_Be_Old};
+        template<typename cT, typename tT>
+        friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, InputSchedType const&);
+
+        enum InputType {InType_Parameter, InType_Image};
+        template<typename cT, typename tT>
+        friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, InputType const&);
         
         template<typename T_ID>
-        struct link_target {
+        struct link_target: TestableBase< link_target<T_ID> > {
             typedef node_ptr_t node_t;
             typedef T_ID id_t;
             node_t node;
             id_t id;
             
-            link_target() {}
-            link_target(node_t n, id_t i) : node(n), id(i) {}
+            link_target()
+                : TestableBase< link_target<T_ID> >(*this), node(), id(){
+            }
+
+            link_target(node_t n, id_t i)
+                : TestableBase< link_target<T_ID> >(*this), node(n), id(i){
+            }
+
             void clear() { node = node_t(); id = id_t(); }
+
+            bool valid() const{
+                debug() << "valid():" << node << id;
+                return !!node; 
+            }
         
             bool operator==(const link_target<T_ID>& other) const {
                 return node == other.node && id == other.id;
+            }
+            
+            bool operator!=(const link_target<T_ID>& other) const {
+                return node != other.node || id != other.id;
             }
         };
         template<typename char_T, typename traits, typename T_ID>
         friend std::basic_ostream<char_T, traits>& operator<<(
             std::basic_ostream<char_T, traits>& os, Node::link_target<T_ID> const& l);
-       
 
+        typedef link_target<output_id> input_link_t;
+        struct Input: TestableBase<Input>{
+            input_link_t target;
+            InputSchedType sched_type;
+            NodeInputStatus::e status;
+            InputType input_type;
+            mutable NodeParamValue param_value;
+            std::string tip;
+
+            Input(InputSchedType s)
+                : TestableBase<Input>(*this),
+                  target(),
+                  sched_type(s),
+                  status(NodeInputStatus::New),
+                  input_type(InType_Image),
+                  param_value(),
+                  tip(){
+            }
+            
+            Input(InputSchedType s, NodeParamValue const& default_value, std::string const& tip)
+                : TestableBase<Input>(*this),
+                  target(),
+                  sched_type(s),
+                  status(NodeInputStatus::New),
+                  input_type(InType_Parameter),
+                  param_value(default_value),
+                  tip(tip){
+            }
+            
+            static Input makeImageInput(InputSchedType const& st = Must_Be_New){
+                return Input(st);
+            }
+            
+            static Input makeParamInput(NodeParamValue const& default_value,
+                                        std::string const& tip,
+                                        InputSchedType const& st = May_Be_Old){
+                return Input(st, default_value, tip);
+            }
+
+            image_ptr_t getImage() const{
+                if(target)
+                    return target.node->getOutputImage(target.id);
+                return image_ptr_t(); // NULL
+            }
+
+            NodeParamValue getParam(bool& did_change) const{
+                did_change = false;
+                if(target){
+                    NodeParamValue parent_value = target.node->getOutputParam(target.id);
+                    if(param_value.which() == parent_value.which()){
+                        if(!(param_value == parent_value)){
+                            did_change = true;
+                            param_value = parent_value;
+                        }
+                    }else{
+                        error() << "Type mismatch on parameter link:" << *this;
+                    }
+                }
+                return param_value;
+            }
+            
+            bool valid() const{
+                // parameters have default values and thus are always valid
+                if(input_type == InType_Parameter)
+                    return true;
+                if(target && status != NodeInputStatus::Invalid)
+                    return true;
+                return false;
+            }
+
+            bool isParam() const{
+                return input_type == InType_Parameter;
+            }
+        };
+        template<typename cT, typename tT>
+        friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, Input const&);
 
         typedef link_target<input_id> output_link_t;
-        typedef link_target<output_id> input_link_t;
+        typedef std::list<output_link_t> output_link_list_t;        
+        struct Output{
+            output_link_list_t targets;
+            output_t value;
+            bool demanded;
 
-        typedef std::list<output_link_t> output_link_list_t;
+            Output(output_t const& value)
+                : targets(), value(value), demanded(false){
+            }
 
-        typedef std::map<param_id, NodeParamValue> param_value_map_t;
-        typedef std::map<input_id, bool> in_bool_map_t;
-        typedef std::map<param_id, bool> param_bool_map_t;
-        typedef std::map<output_id, output_link_list_t> out_link_map_t;
-        typedef std::map<input_id, input_link_t> in_link_map_t;
+            bool isParam() const{
+                return value.which() == OutType_Parameter;
+            }
+        };
+        template<typename cT, typename tT>
+        friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, Output const&);
+
+        typedef std::map<output_id, Output> private_out_map_t;
+        typedef std::map<input_id,  Input>  private_in_map_t;
        
         /**** SHARED LOCKS ARE NOT RECURSIVE ****/
+        #warning "shared mutexes are evil, and in any case we now need recursive mutexes (which are also evil, but that's another story)"
         typedef boost::shared_mutex mutex_t;
         typedef boost::shared_lock<mutex_t> shared_lock_t;
         typedef boost::upgrade_lock<mutex_t> unique_lock_t;
@@ -130,24 +238,19 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         node_id const& id() const;
         std::string const& plName() const;
         
-        /* overload for the common case where we're connecting a node with one
-         * output to a node with one input
-         */
-        void setInput(node_ptr_t n);
         void setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id); 
 
         void clearInput(input_id const& i_id);
         void clearInputs(node_ptr_t parent);
         void clearInputs();
-
+        
+        /* parameters DO NOT count */
         input_id_set_t inputs() const; 
+        /* parameters DO count */
         msg_node_input_map_t inputLinks() const;
+        /* parameters DO count */
         std::set<node_ptr_t> parents() const;
 
-        /*  overload for the common case where we're connecting a node with one
-         *  output to a node with one input
-         */ 
-        void setOutput(node_ptr_t n);
         void setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id); 
 
         void clearOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id); 
@@ -178,9 +281,10 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         NodeParamValue getOutputParam(output_id const& o_id) const throw(id_error);
         
-        /* return all parameter values
+
+        /* return all parameter values (without querying connected parents)
          */
-        std::map<param_id, NodeParamValue> parameters() const;
+        std::map<input_id, NodeParamValue> parameters() const;
         
         /* set a parameter based on a message
          */
@@ -189,83 +293,60 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         /* set a single parameter value
          */
         template<typename T>
-        void setParam(param_id const& p, T const& v) throw(id_error){
-            unique_lock_t l(m_parameters_lock);
-            param_value_map_t::iterator i = m_parameters.find(p);
-            if(i != m_parameters.end()){
-                debug(1) << "param" << p << "set to" << std::boolalpha << v;
-                i->second = v;
-    
-                sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
+        void setParam(input_id const& p, T const& v) throw(id_error){
+            unique_lock_t l(m_inputs_lock);
+            private_in_map_t::iterator i = m_inputs.find(p);
+            if(i != m_inputs.end()){
+                if(i->second.input_type == InType_Parameter){
+                    debug() << "param" << p << "set to" << std::boolalpha << v;
+                    i->second.param_value = v;
+                    sendMessage(boost::make_shared<NodeParametersMessage>(
+                        m_pl_name, id(), parameters()
+                    ));
+                    // provide notification that parameters have changed: principally
+                    // for asynchronous nodes
+                    // NB: release lock first to reduce potential for deadlocks:
+                    // this means that the parameter we call the function with may no
+                    // longer be present when its body is executed: node
+                    // implementations should not rely on it being valid!
+                    l.unlock();
+                    paramChanged(p);
+                    // check to see if the node should be re-scheduled
+                    setNewInput(p);
+                }else{
+                    error() << p << "is an input not a parameter";
+                }
             }else{
-                error e;
-                e << m_parameters.size() << "valid parameters are:";
-                for(i = m_parameters.begin(); i != m_parameters.end(); i++)
-                    e << i->first << "( =" << std::boolalpha << i->second << ")";
-                throw(id_error("setParam: Invalid parameter id: " + toStr(p)));
+                error() << p << "is not a parameter. Parameters:" << parameters();
             }
-            // provide notification that parameters have changed: principally
-            // for asynchronous nodes
-            // NB:
-            // release parameters lock first to reduce potential for deadlocks:
-            // this means that the parameter we call the function with may no
-            // longer be present when it's body is executed: node
-            // implementations should not rely on it being valid
-            l.unlock();
-            this->paramChanged(p);
-            // check to see if the node should be re-scheduled
-            setNewParamValue(p);
         }
         
         /* Derived types overload this for notification of changed parameters:
          * this notification is only useful for asynchronous nodes.
          */
-        virtual void paramChanged(param_id const&){ }
+        virtual void paramChanged(input_id const&){ }
 
         /* return a single parameter value: retrieves value from parent if the
          * parameter is linked to the output of a parent
          */
         template<typename T>
-        T param(param_id const& p) const {
-            unique_lock_t l(m_parameters_lock);
-            param_value_map_t::iterator i = m_parameters.find(p);
-            if(i != m_parameters.end()){
-                const in_link_map_t::const_iterator j = m_parent_links.find(p);
-                node_ptr_t node;
-                
-                T val = getValue<T>(i->second);
-                
-                // If there is a parent link, update the current value
-                if(j != m_parent_links.end() && (node = j->second.node)){
-                    output_id outparam = j->second.id;
-                    assert(node->paramOutputs().count(outparam));
-                    debug(4) << "returning linked parameter value for" << p
-                            << "(linked to" << j->second.node
-                            << std::boolalpha << j->second.id << ")";
-                    // TODO: this will throw boost::bad_get if there is a
-                    // param_value type mismatch between the output and the
-                    // requested parameter type:
-                    //  prevent this happening (somehow...)
+        T param(input_id const& p) const {
+            shared_lock_t l(m_inputs_lock);
+            private_in_map_t::const_iterator i = m_inputs.find(p);
+            if(i != m_inputs.end() && i->second && i->second.input_type == InType_Parameter){
+                bool did_change = false;
+                try{
+                    T val = getValue<T>(i->second.getParam(did_change));
                     l.unlock();
-                    try{
-                        T parentVal = getValue<T>(node->getOutputParam(outparam));
-                        if (!(val == parentVal)) // Fucking boost::variant doesn't have "!="
-                        {
-                            val = parentVal;
-                            i->second = val;
-                            sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
-                        }
-                    }catch(boost::bad_get& e){
-                        warning() << "parameter output not available / bad get:"
-                                  << j->second.node << std::boolalpha << j->second.id
-                                  << ", non-linked value will be returned";
-                    }
+                    if(did_change)
+                        sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
+                    return val;
+                }catch(boost::bad_get& e){
+                    error() << p << "is not of requested type:" << e.what();
+                    throw parameter_error(e.what());
                 }
-                
-                // Return current parameter value
-                return val;
             }else{
-                throw(id_error("param: Invalid parameter id: " + toStr(p)));
+                throw(id_error("Invalid parameter id: " + toStr(p)));            
             }
         }
         
@@ -279,8 +360,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         */
         virtual bool isOutputNode() const { return false; }
         
-        /* Check to see if all inputs are new and output is demanded; if so, 
-         * add this node to the scheduler queue
+
+        /* Check to see whether this node should be added to the scheduler queue
          */
         enum SchedMode{AllNew, AnyNew, Always, Force};
         void checkAddSched(SchedMode m = AllNew);
@@ -309,19 +390,26 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         Speed m_speed;
         
         /* Derived node types should call these functions (probably from their
-         * constructors) in order to register valid input output and parameter
-         * ids.
+         * init() method) in order to register valid input output and parameter
+         * IDs.
          */
         template<typename T>
-        void registerParamID(param_id const& p, T const& default_value,
-                             std::string const& tip=""){
-            unique_lock_t l(m_parameters_lock);
-            m_parameters[p] = NodeParamValue(default_value);
-            m_parameter_tips[p] = tip;
-            m_new_paramvalues[p] = true;
-            // parameters are also inputs...
-            registerInputID(p);
+        void registerParamID(input_id const& p, T const& default_value,
+                             std::string const& tip="",
+                             InputSchedType const& st = May_Be_Old){
+            unique_lock_t l(m_inputs_lock);
+            if(m_inputs.count(p)){
+                error() << "Duplicate parameter id:" << p;
+                return;
+            }
+            m_inputs.insert(private_in_map_t::value_type(
+                p, Input::makeParamInput(NodeParamValue(default_value), tip, st))
+            );
+            _statusMessage(boost::make_shared<InputStatusMessage>(
+                m_pl_name, m_id, p, NodeIOStatus::None
+            ));
         }
+
         /* Template type is used to determine whether this is an image or a
          * parameter output: supported types
          *      - image_ptr_t
@@ -329,19 +417,19 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         template<typename T>
         void registerOutputID(output_id const& o){
-            unique_lock_t l(m_child_links_lock);
-            unique_lock_t m(m_outputs_lock);
+            unique_lock_t l(m_outputs_lock);
+            if(m_outputs.count(o)){
+                error() << "Duplicate output id:" << o;
+                return;
+            }
             
-            m_child_links[o] = output_link_list_t();
-            m_outputs[o] = output_t(T());
-            
-            m.unlock();
-            l.unlock();
+            m_outputs.insert(private_out_map_t::value_type(o, Output(output_t(T()))));
+
             _statusMessage(boost::make_shared<OutputStatusMessage>(
-                m_pl_name, m_id, o, NodeIOStatus::e(0)
+                m_pl_name, m_id, o, NodeIOStatus::None
             ));
         }
-        void registerInputID(input_id const& i);
+        void registerInputID(input_id const& i, InputSchedType const& st = Must_Be_New);
 
         void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS) const;
         
@@ -352,8 +440,9 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         void setNewInput(input_id const&);
         void setNewInput(); 
         void clearNewInput();
-        bool newInputAll() const;
-        bool newInput() const;
+        bool allRequiredInputsAreNew() const; // all includes none
+        bool anyRequiredInputsAreNew() const;
+        bool anyInputsAreNew() const; // includes parameters
 
         void setValidInput(input_id const&);
         void clearValidInput(input_id const&);
@@ -373,14 +462,10 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         void setExecQueued();
         void clearExecQueued();
         bool execQueued() const;
-
-        void setNewParamValue(param_id const&);
-        void clearNewParamValues();
-        bool newParamValues() const;
     
         // TODO: friends / whatever, and make this protected
     public:
-        /* The only derived type that ever needs to call this is throttleNode.
+        /* The only derived type that ever needs to call this is ThrottleNode.
          */
         void demandNewParentInput() throw();
 
@@ -391,27 +476,17 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         
         const NodeType::e m_node_type;
         const node_id m_id;
-       
+        
         /* maps an input_id (including parameters) to an output of another node
          */
-        in_link_map_t   m_parent_links;
-        mutable mutex_t m_parent_links_lock;
+        private_in_map_t m_inputs;
+        mutable mutex_t  m_inputs_lock;
         
-        /* maps an output_id to a list of inputs (including parameters) on
-         * other nodes
-         */
-        out_link_map_t  m_child_links;
-        mutable mutex_t m_child_links_lock;
-        
-        /* maps an output_id to an image or parameter output */
-        out_map_t m_outputs;
-        mutable mutex_t m_outputs_lock;
-        
-        /* parameters of the filters */
-        mutable param_value_map_t m_parameters;
-        param_tip_map_t m_parameter_tips;
-        mutable mutex_t m_parameters_lock;
+        private_out_map_t m_outputs;
+        mutable mutex_t   m_outputs_lock;
 
+        std::set<output_id> m_output_demanded_on;
+        mutable mutex_t m_output_demanded_on_lock;
 
         /** Variables that control when the node is scheduled:
          **/
@@ -425,28 +500,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         bool m_exec_queued;
         mutable mutex_t m_exec_queued_lock;
-
-        /* Keep track of which of our inputs have been refreshed since this node
-         * was last exec()d
-         */
-        in_bool_map_t m_new_inputs;
-        mutable mutex_t m_new_inputs_lock;
-        
-        /* Which inputs have valid data associated with them:
-         */
-        in_bool_map_t m_valid_inputs;
-        mutable mutex_t m_valid_inputs_lock;
-
-        /* Which parameters have been changed since this node was last exec()d
-         */
-        param_bool_map_t m_new_paramvalues;
-        mutable mutex_t m_new_paramvalues_lock;
-        
-        /* Has output been demanded of this node?
-         */
-        bool m_output_demanded;
-        std::set<output_id> m_output_demanded_on;
-        mutable mutex_t m_output_demanded_lock;
 
         /* generic stop: used by derived types
          */
@@ -488,6 +541,41 @@ std::basic_ostream<char_T, traits>& operator<<(
     os << "{Link "
        << " node=" << l.node
        << " id=" << l.id
+       << "}";
+    return os;
+}
+
+template<typename cT, typename tT>
+std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::InputSchedType const& st){
+    switch(st){
+        case Node::Must_Be_New: return os << "{Must be new}";
+        case Node::May_Be_Old:  return os << "{May be old}";
+        default:                return os << "{Unknown InputSchedType}";
+    }
+    
+}
+
+template<typename cT, typename tT>
+std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::InputType const& it){
+    switch(it){
+        case Node::InType_Image:     return os << "{Image}";
+        case Node::InType_Parameter: return os << "{Parameter}";
+        default:                     return os << "{Unknown InputType}";        
+    }
+}
+
+template<typename cT, typename tT>
+std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::Input const& i){
+    os << "{Input"
+       << i.target << i.sched_type << "{" << i.status << "}" << i.input_type << i.tip
+       << "}";
+    return os;
+}
+
+template<typename cT, typename tT>
+std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::Output const& o){
+    os << "{Output "
+       << o.targets << o.value << "demanded=" << std::boolalpha << o.demanded
        << "}";
     return os;
 }

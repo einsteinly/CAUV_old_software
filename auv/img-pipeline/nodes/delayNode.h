@@ -35,7 +35,7 @@ class DelayNode: public Node{
             stop();
         }
 
-        virtual void paramChanged(param_id const& p){
+        virtual void paramChanged(input_id const& p){
             if(p == Delay_Param_Name && param<int>(Delay_Param_Name) < 0){
                 warning() << "Can't set delay less than 0: If I knew the"
                           << "future I'd ";

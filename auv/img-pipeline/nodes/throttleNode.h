@@ -63,7 +63,7 @@ class ThrottleNode: public Node{
             stop();
         }
 
-        virtual void paramChanged(param_id const& p){
+        virtual void paramChanged(input_id const& p){
             if(p != "target frequency")
                 return;
 

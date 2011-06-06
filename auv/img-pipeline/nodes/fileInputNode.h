@@ -36,9 +36,9 @@ class FileInputNode: public AsynchronousNode{
             registerParamID<std::string>("filename", "default.jpg");
         }
 
-        virtual void paramChanged(param_id const& p){
+        virtual void paramChanged(input_id const& p){
             debug(4) << "FileInputNode::paramChanged";
-            if(p == param_id("filename")){
+            if(p == input_id("filename")){
                 lock_t l(m_dir_mutex);
                 std::string fname = param<std::string>("filename");
                 if(boost::filesystem::is_directory(fname)){

@@ -66,14 +66,21 @@ enum NodeType : int8 {
     BroadcastHistogram,
     Throttle,
     Nop,
-    Delay
+    Delay,
+    Stitch,
+    Recogniser
 }
 enum NodeStatus : int8 {
+    None = 0,
     AllowQueue = 1,
     ExecQueued = 2,
     Executing = 4
 }
+enum NodeInputStatus : int8 {
+    Old = 0, New = 1, Invalid = 2
+}
 enum NodeIOStatus : int8 {
+    None = 0,
     New = 1,
     Valid = 2,
     Demanded = 4
