@@ -207,6 +207,7 @@ void PipelineWidget::remove(node_ptr_t n){
         return;
     lock_t l(m_lock);
     m_nodes.erase(n->id());
+    m_imgnodes.erase(n->id());
     // TODO: remove arcs more efficiently
     sanitizeArcs();
     remove(renderable_ptr_t(n));
@@ -384,7 +385,7 @@ void PipelineWidget::sanitizeArcs(){
     arc_set_t::const_iterator i;
     for(i = old_arcs.begin(); i != old_arcs.end(); i++){
         if((!(*i)->m_src.lock()) || !(*i)->m_dst.lock()){
-            m_arcs.erase(*i);
+            remove(*i);
             debug() << "removing defunct arc";
         }
     }

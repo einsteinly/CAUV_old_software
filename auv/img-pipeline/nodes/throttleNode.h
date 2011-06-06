@@ -11,6 +11,9 @@
 #include <boost/make_shared.hpp>
 
 #include <common/cauv_utils.h>
+#include <utility/rounding.h>
+
+#include <boost/version.hpp>
 
 namespace cauv{
 namespace imgproc{
@@ -25,6 +28,7 @@ class ThrottleNode: public Node{
             : Node(args),
               m_mux(),
               m_need_callback(),
+              m_already_notified_need_callback(false),
               m_will_be_destroyed(false),
               m_ioservice(),
               m_current_timer_rate(5),
@@ -47,6 +51,13 @@ class ThrottleNode: public Node{
             paramChanged("target frequency");
 
             m_last_exec = now();
+
+            #if BOOST_VERSION < 104610 && __APPLE__
+            // stop this ever being destroyed (which can deadlock the messaging
+            // thread due to boost::asio bug)
+            warning() << "Upgrade your version of boost: ThottleNodes will never be destroyed";
+            new boost::shared_ptr<Node>(shared_from_this());
+            #endif
         }
 
         virtual ~ThrottleNode(){
@@ -91,16 +102,24 @@ class ThrottleNode: public Node{
         void runIOService(){
             boost::system::error_code ec; // default-initialised to 0 (success)
             std::size_t executed = 1;
+            std::size_t total_executed = 0;
             unsigned no_exec_count = 0;
             /**
              * Simplifications to this loop are welcome but please test them
              * first. Writing this node didn't take a day longer than it should
              * have for no reason...
              */
-            while(no_exec_count < 2){
+            while(true){
+                if(no_exec_count > 5){
+                    // if we've been spinning waiting for doWork (probably
+                    // because this node was disconnected), then sleep a bit
+                    // before trying again
+                    msleep(clamp(100, unsigned(0.5f+1.0e3f/m_current_timer_rate), 1000));
+                }
                 unique_lock_t l(m_mux);
-                if(executed)
+                if(executed && !m_already_notified_need_callback)
                     m_need_callback.wait(l);
+                m_already_notified_need_callback = false;
                 if(m_will_be_destroyed){
                     m_will_be_destroyed = false;
                     break;
@@ -109,20 +128,24 @@ class ThrottleNode: public Node{
                 if(executed == 0 || ec)
                     m_ioservice.reset();
                 executed = m_ioservice.run(ec);
+                total_executed += executed;
                 if(!executed)
                     no_exec_count++;
                 else
                     no_exec_count = 0;
                 debug(4) << "ThrottleNode: executed" << executed << ", status" << ec;
             }
-            debug() << "ThrottleNode callback thread stopped";
+            info() << "ThrottleNode callback thread stopped after"
+                   << total_executed << "callbacks";
         }
 
         void timerCallback(const boost::system::error_code& err){
             if(err == boost::system::errc::success)
                 demandNewParentInput();
             else if(err == boost::asio::error::operation_aborted)
-                debug() << "ThrottleNode callback aborted";
+                // this happens ALL the time, and, frankly, isn't really an
+                // error
+                debug(5) << "ThrottleNode callback aborted";
             else
                 error() << "ThrottleNode callback error:" << err;
         }
@@ -156,11 +179,13 @@ class ThrottleNode: public Node{
             if(ec)
                 error() << "setting timer expiration:" << ec;
             m_timer_ptr->async_wait(boost::bind(&ThrottleNode::timerCallback, this, _1));
+            m_already_notified_need_callback = true;
             m_need_callback.notify_one();
         }
 
         mutex_t m_mux;
         boost::condition_variable m_need_callback;
+        volatile bool m_already_notified_need_callback;
         volatile bool m_will_be_destroyed;
 
         boost::asio::io_service m_ioservice;

@@ -563,9 +563,9 @@ std::basic_ostream<char_T, traits>& operator<<(
 template<typename cT, typename tT>
 std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::InputSchedType const& st){
     switch(st){
-        case Node::Must_Be_New: return os << "{Must be new}";
-        case Node::May_Be_Old:  return os << "{May be old}";
-        default:                return os << "{Unknown InputSchedType}";
+        case Node::Must_Be_New: return os << "{InputSchedType Must be new}";
+        case Node::May_Be_Old:  return os << "{InputSchedType May be old}";
+        default:                return os << "{InputSchedType ?}";
     }
 
 }
@@ -573,10 +573,22 @@ std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::Inp
 template<typename cT, typename tT>
 std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::InputType const& it){
     switch(it){
-        case Node::InType_Image:     return os << "{Image}";
-        case Node::InType_Parameter: return os << "{Parameter}";
-        default:                     return os << "{Unknown InputType}";
+        case Node::InType_Image:     return os << "{InputType Image}";
+        case Node::InType_Parameter: return os << "{InputType Parameter}";
+        default:                     return os << "{InputType ?}";
     }
+}
+
+template<typename cT, typename tT>
+std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::SchedMode const& m){
+    switch(m){
+        case Node::AllNew:  return os << "{SchedMode AllNew}";
+        case Node::AnyNew:  return os << "{SchedMode AnyNew}";
+        case Node::Always:  return os << "{SchedMode Always}";
+        case Node::Force:   return os << "{SchedMode Force}";
+        default:            return os << "{SchedMode ?}";
+    }
+    return os;
 }
 
 template<typename cT, typename tT>

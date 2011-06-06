@@ -367,7 +367,7 @@ void Node::exec(){
             op->value = v.second;
             if(op->targets.size()){
                 debug(5) << "Prompting" << op->targets.size()
-                         << "children of new output:";
+                         << "children of new output on:" << v.first;
                 // for each node connected to the output
                 foreach(output_link_t& link, op->targets){
                     // notify the node that it has new input
@@ -378,11 +378,11 @@ void Node::exec(){
                         // double check that this is okay (it probably is)
                         link.node->setNewInput(link.id);
                     }else{
-                        error() << "cannot prompt NULL link about output" << v.first;
+                        error() << "cannot prompt NULL link about output on:" << v.first;
                     }
                 }
             }else{
-                debug(5) << "no children to prompt for output" << v.first;
+                debug(5) << "no children to prompt for output on:" << v.first;
             }
         }else{
             error() << "exec() produced output of the wrong type for id:"
@@ -503,7 +503,7 @@ void Node::checkAddSched(SchedMode m){
         return;
     }
 
-    debug(4) << __func__ << "Queuing node (" << m << "):" << *this;
+    debug(4) << __func__ << "Queueing node (" << m << "):" << *this;
     setExecQueued();
     m_sched.addJob(shared_from_this(), m_priority);
 }
@@ -519,7 +519,7 @@ void Node::sendMessage(boost::shared_ptr<Message const> m, service_t p) const {
 void Node::setNewInput(input_id const& a){
     lock_t l(m_inputs_lock);
     const private_in_map_t::iterator i = m_inputs.find(a);
-    debug(5) << *this << "setting input new" << a;
+    debug(5) << *this << "setting input new on:" << a;
     if(i == m_inputs.end()){
         throw id_error("newInput: Invalid input id: " + toStr(a));
     }else{
