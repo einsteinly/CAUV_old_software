@@ -89,7 +89,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             void clear() { node = node_t(); id = id_t(); }
 
             bool valid() const{
-                debug() << "valid():" << node << id;
+                //debug() << "valid():" << node << id;
                 return !!node; 
             }
         
@@ -246,7 +246,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         
         /* parameters DO NOT count */
         input_id_set_t inputs() const; 
-        /* parameters DO count */
+        /* parameters DO count, return everything not just connected things */
         msg_node_input_map_t inputLinks() const;
         /* parameters DO count */
         std::set<node_ptr_t> parents() const;
@@ -262,6 +262,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         output_id_set_t paramOutputs() const;
 
         // TODO NPA: include param children
+        /* parameters DO count, return everything not just connected things */        
         msg_node_output_map_t outputLinks() const;
 
         // TODO NPA: include param children

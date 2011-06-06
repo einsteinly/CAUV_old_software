@@ -136,9 +136,6 @@ Node::msg_node_input_map_t Node::inputLinks() const{
     foreach(private_in_map_t::value_type const& v, m_inputs){
         const input_id& id = v.first;
         const input_link_t& link = v.second.target;
-        // only want connected things
-        if(!link)
-            continue;
         // parameters _do_ count
         NodeOutput t;
         t.node = m_pl.lookup(link.node);
