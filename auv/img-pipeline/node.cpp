@@ -352,6 +352,9 @@ void Node::exec(){
     }
     _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status));
 
+    
+    std::vector<output_link_t> children_to_notify;
+    children_to_notify.reserve(m_outputs.size());
 
     lock_t ol(m_outputs_lock);
     foreach(out_map_t::value_type& v, outputs){
@@ -372,11 +375,12 @@ void Node::exec(){
                 foreach(output_link_t& link, op->targets){
                     // notify the node that it has new input
                     if(link.node){
-                        debug(5) << "prompting new input to child on:" << v.first;
-                        // TODO: should not hold m_outputs_lock while calling
-                        // methods on another node (in general, anyway), so
-                        // double check that this is okay (it probably is)
-                        link.node->setNewInput(link.id);
+                        debug(5) << "will prompt new input to child on:" << v.first;
+                        // we can't call methods on other nodes while
+                        // m_outputs_lock is held, so collect a list of
+                        // everything we need to notify, and do it after
+                        // unlocking ....
+                        children_to_notify.push_back(link);
                     }else{
                         error() << "cannot prompt NULL link about output on:" << v.first;
                     }
@@ -389,18 +393,15 @@ void Node::exec(){
                     << v.first << "(ignored)";
         }
     }
+    ol.unlock();
+    // .... now actually do notification
+    foreach(output_link_t& link, children_to_notify){
+        link.node->setNewInput(link.id);
+    }
+
     // warn if no outputs were filled
     if(outputs.size() == 0 && m_outputs.size())
         warning() << *this << "exec() produced no output when some was expected";
-    /* this is commented out because it is perfectly valid for a node to not
-     * always produce output on all outputs (e.g. SonarInputNode)
-    // warn about any outputs that weren't filled
-    //foreach(out_link_map_t::value_type& v, m_child_links)
-    //    if(!outputs.count(v.first))
-    //        warning() << "exec() did not fill output:" << v.first << "\n\t"
-    //                  << v.second.size() << "children will not be prompted";
-     */
-    ol.unlock();
 }
 
 /* Get the actual image data associated with an output
@@ -686,10 +687,17 @@ bool Node::execQueued() const{
 void Node::demandNewParentInput() throw(){
     lock_t l(m_inputs_lock);
     debug(5) << "node" << *this << "demanding new output from all parents";
-    // TODO: should not hold m_inputs_lock while calling methods on another node
+    // We mustn't hold m_imputs_lock while calling methods on other nodes, so
+    // first collect a list of everything we need to do, then release the lock
+    // and do it:
+    std::vector<input_link_t> parents;
+    parents.reserve(m_inputs.size()); 
     foreach(private_in_map_t::value_type& i, m_inputs)
         if(i.second->target)
-            i.second->target.node->setNewOutputDemanded(i.second->target.id);
+            parents.push_back(i.second->target);
+    l.unlock();
+    foreach(input_link_t const& v, parents)
+        v.node->setNewOutputDemanded(v.id);
 }
 
 #ifndef NO_NODE_IO_STATUS
