@@ -5,6 +5,7 @@ from cauv.debug import debug, warning, error, info
 import threading
 import cPickle
 import time
+import traceback
 
 #------AI PROCESSES STUFF------
 #ai messages are of form message is (to, from, function_name, args, kwargs)
@@ -62,7 +63,7 @@ class aiProcess(messaging.BufferedMessageObserver):
                     getattr(self,message[2])(*message[3], **message[4])
                 except Exception as exc:
                     error("Error occured because of message: %s" %(str(message)))
-                    raise exc
+                    traceback.print_exc()
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
 
@@ -205,9 +206,9 @@ class aiCondition():
     def __getstate__(self):
         #since bits and pieces need to be setup for a condition we will call init instead of restoring __dict__
         return dict([(x,getattr(self, x)) for x in self.store])
-    def __setstate__(self, pickle_dict):
+    def __setstate__(self, state):
         #restore values
-        self.__init__(**pickle_dict)
+        self.__init__(**state)
     def register(self, task_manager):
         with task_manager.task_lock:
             while self.name in task_manager.conditions:
@@ -250,8 +251,8 @@ class detectorCondition(aiCondition):
     """
     This condition relies on the state of a detector
     """
-    def __init__(self, name, detector_name):
-        aiCondition.__init__(self, name)
+    def __init__(self, name, detector_name, state=False):
+        aiCondition.__init__(self, name, state)
         self.store.append('detector_name')
         self.detector_name = detector_name
     def register(self, task_manager):
@@ -283,6 +284,7 @@ class aiTask():
         self.detectors_enabled = detectors_enabled
         self.options = options
         self.options.update(kwargs)
+        self.registered = False
     def update_options(self, options={}, **kwargs):
         """
         Updates the options on the task, accepts dict or kwargs
@@ -290,9 +292,20 @@ class aiTask():
         self.options.update(options)
         self.options.update(kwargs)
     def register(self, task_manager):
+        if self.registered:
+            error('Task already setup')
+            return
         task_manager.active_tasks.append(self)
         for condition in self.conditions:
             condition.register(task_manager)
+        self.registered = True
+    def deregister(self, task_manager):
+        if not self.registered:
+            error('Task not setup, so can not be deregistered')
+        task_manager.active_tasks.remove(self)
+        for condition in self.conditions:
+            condition.deregister(task_manager)
+        self.registered = False
     def is_available(self):
         for condition in self.conditions:
             if not condition.get_state():

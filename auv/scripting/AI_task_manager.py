@@ -23,11 +23,13 @@ TODO:
 
 class taskManager(aiProcess):
     def __init__(self, mission, restore):
+        print mission, restore
         aiProcess.__init__(self, 'task_manager')
         #These variables maybe accessesed by more than one thread
         #Tasks - list of tasks that (in right conditions) should be called
         self.task_lock = threading.RLock()
         self.active_tasks = []
+        self.task_list = {}
         #Conditions - note although conditions may be changed externally, the list of conditions may not
         self.conditions = {}
         self.conditions_changed = threading.Event()
@@ -40,21 +42,19 @@ class taskManager(aiProcess):
         self.current_task = None
         self.current_priority = 0
         #state data file
-        self.state = shelve.open('state.shelf')
+        self.state = shelve.open(mission+'_state.shelf')
         #Setup intial values
         restored = False
         if restore:
-            try:
-                info('Looking for previous states...')
-                self.load_state()
-                restored = True
-            except:
-                info('No previous valid state file, loading from mission.py')
+	    info('Looking for previous states...')
+            if self.load_state(): restored = True
+            else: info('No previous valid state file, loading from mission.py')
         if not restored:    
             self.mission = __import__(mission)
             with self.task_lock:
-                for task in self.mission.task_list:
-                    task.register(self)
+                self.task_list = self.mission.task_list
+                for task in self.mission.initial_tasks:
+                    self.task_list[task].register(self)
             self.new_state(mission)
         #Force evaluation of tasks
         self.conditions_changed.set()
@@ -66,25 +66,36 @@ class taskManager(aiProcess):
             self.active_detectors[detector_name].append(listener)
         self.save_state()
     def remove_detector(self, detector_name, listener):
-        with self.detector_lock():
+        with self.detector_lock:
             self.active_detectors[detector_name].remove(listener)
             if not self.active_detectors[detector_name]:
                 self.active_detectors.pop(detector_name)
+                self.ai.detector_control.stop(detector_name)
         self.save_state()
     def load_state(self):
-        #TODO actually load a state (see save state)
-        #self.active_tasks=
-        #self.active_detectors=
-        #self.conditions=
-        #if getmtime('mission.py') != state.mtime:
-        #    error('Mission.py appears to have been modified. This may cause error when restoring the previous state.')
-        #Make sure to clear up any mess if this fails (ie reset all variables etc)
-        raise Exception #prevents taskmanager from thinking the load was succeful
+        if 'state_set' in self.state:
+            if getmtime(self.state['mission_name']+'.py') != self.state['mtime']:
+                warning('The mission script may have been modified. Continuing, but could cause errors')
+            self.mission = __import__(self.state['mission_name'])
+            with self.task_lock:
+                self.task_list = self.state['task_list']
+                for task in self.task_list.values():
+                    if task.registered:
+                        task.registered = False #oteherwise it will think its already setup -> error
+                        task.register(self)
+            return True
+        #TODO Make sure to clear up any mess if this fails (ie reset all variables etc)
+        return False
+    @external_function
     def save_state(self):
-        pass
+        with self.task_lock:
+            self.state['task_list'] = self.task_list
+        self.state.sync()
     def new_state(self, mission_name):
         #some extra stuff to recorded the 1st time a state is set
-        self.state.mtime = getmtime(mission_name+'.py')
+        self.state['mission_name'] = mission_name
+        self.state['mtime'] = getmtime(mission_name+'.py')
+        self.state['state_set'] = True
         self.save_state()
     @external_function
     def update_detectors(self, detector_list):
@@ -95,9 +106,13 @@ class taskManager(aiProcess):
                 return
             #check against should be running
             missing = set(self.active_detectors.keys())-set(detector_list)
+            additional  = set(detector_list)-set(self.active_detectors.keys())
         for d in missing:
             self.ai.detector_control.start(d)
             debug("restarting detector %s" %(d))
+        for d in additional:
+            self.ai.detector_control.stop(d)
+            debug("stopping detector %s" %(d))
     @external_function
     def notify_condition(self, condition_name, *args, **kwargs):
         self.conditions[condition_name].set_state(*args, **kwargs)
@@ -111,15 +126,25 @@ class taskManager(aiProcess):
         #Note, no saving state for detectors, as they are dynamic so there state shouldn't be saved
     @external_function
     def add_task(self, task_ref):
-        #TODO
-        #need to be able to match tasks in mission.py to actual tasks
-        #should then add to the lists and do basic setup (watch locked data)
-        #could call save_state, but check threading (save state not ext_func)
-        pass
+        try:
+            with self.task_lock:
+                self.task_list[task_ref].register(self)
+        except KeyError:
+            error('Tried to setup non-existant task.')
+        self.save_state()
     @external_function
     def remove_task(self, task_ref):
-        #TODO see add_task, note need to be able to remove task based on task ref. Again need to watch potential threading issues
-        pass
+        try:
+            with self.task_lock:
+                self.task_list[task_ref].deregister(self)
+        except KeyError:
+            error('Tried to setup non-existant task.')
+        self.save_state()
+    @external_function
+    def modify_task_options(self, task_ref, opt_dict):
+        with self.task_lock:
+            self.task_list[task_ref].options.update(opt_dict)
+        self.save_state()
     @external_function
     def on_script_exit(self, status):
         #TODO do something useful with return status

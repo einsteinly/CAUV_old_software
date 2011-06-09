@@ -20,9 +20,10 @@ class Process():
         self.opts = opts
         self.start()
     def start(self):
-        info('Running command: '+' ' .join(self.command)+' '+' '.join(['-%s=%s' %(x[0],str(x[1])) for x in self.opts.items()]))
+        c = ' '.join(self.command)+' '+' '.join(['--%s=%s' %(x[0],str(x[1])) if not isinstance(x[1], bool) else ('--'+x[0] if x[1] else '') for x in self.opts.items()])
+        info('Running command: '+c)
         if 'restore' in self.opts: self.opts['restore'] = True #if the process stops we want to try and restore it with its old data
-        self.process = subprocess.Popen(self.command)
+        self.process = subprocess.Popen(c.split(' '))
     def status(self):
         if self.process.poll():
             return 0
