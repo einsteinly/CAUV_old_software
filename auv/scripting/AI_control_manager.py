@@ -23,6 +23,7 @@ class auvControl(aiProcess):
         getattr(self.auv, command)(*args, **kwargs)
     @external_function
     def stop(self):
+        #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value
         self.auv.stop()
     def run(self):
         while True:

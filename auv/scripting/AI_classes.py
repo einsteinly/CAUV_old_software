@@ -6,6 +6,7 @@ import threading
 import cPickle
 import time
 
+#------AI PROCESSES STUFF------
 #ai messages are of form message is (to, from, function_name, args, kwargs)
 
 class aiForeignFunction():
@@ -64,6 +65,8 @@ class aiProcess(messaging.BufferedMessageObserver):
                     raise exc
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+
+#------AI SCRIPTS STUFF------
 
 class fakeAUVfunction():
     def __init__(self, script, attr):
@@ -145,12 +148,18 @@ class fakeAUV(messaging.BufferedMessageObserver):
         
     def __getattr__(self, attr):
         return fakeAUVfunction(self.script, attr)
+
+class aiScriptOptions():
+    def __init__(self, script_opts):
+        for opt in script_opts:
+            setattr(self, opt, script_opts[opt])
         
 class aiScript(aiProcess):
-    def __init__(self, script_name):
+    def __init__(self, script_name, script_opts):
         aiProcess.__init__(self, script_name)
         self.exit_confirmed = threading.Event()
         self.script_name = script_name
+        self.options = script_opts
         self.auv = fakeAUV(self)
     def notify_exit(self, exit_status):
         for x in range(5):
@@ -162,6 +171,8 @@ class aiScript(aiProcess):
     @external_function
     def confirm_exit(self):
         self.exit_confirmed.set()
+
+#------AI DETECTORS STUFF------
         
 class aiDetector(messaging.BufferedMessageObserver):
     def __init__(self, node):
@@ -177,15 +188,26 @@ class aiDetector(messaging.BufferedMessageObserver):
     def die(self):
         self.node.removeObserver(self)
 
+#------AI TASKS STUFF------
+
 class aiCondition():
     """
     Basic condition that can be used for tasks, ie they may be set via task_manager from any other process
     and then when they change task manager checks to see if the conditions for any task have been met
     """
-    def __init__(self, name):
+    def __init__(self, name, state=False):
+        #defines what values are needed to re-init the condition when unpickled
+        self.store = ['name', 'state']
         self.name = name
+        self.state = state
         self.state_lock = threading.Lock()
-        self.state = False
+    #pickling stuff
+    def __getstate__(self):
+        #since bits and pieces need to be setup for a condition we will call init instead of restoring __dict__
+        return dict([(x,getattr(self, x)) for x in self.store])
+    def __setstate__(self, pickle_dict):
+        #restore values
+        self.__init__(**pickle_dict)
     def register(self, task_manager):
         with task_manager.task_lock:
             while self.name in task_manager.conditions:
@@ -208,6 +230,7 @@ class timeCondition(aiCondition):
     This condition only remains true for a certain time
     """
     def __init__(self, name, default_time=0):
+        self.store = ['name', 'default_time']
         self.name = name
         self.default_time = default_time
         self.state_lock = threading.Lock()
@@ -229,6 +252,7 @@ class detectorCondition(aiCondition):
     """
     def __init__(self, name, detector_name):
         aiCondition.__init__(self, name)
+        self.store.append('detector_name')
         self.detector_name = detector_name
     def register(self, task_manager):
         aiCondition.register(self, task_manager)
@@ -239,11 +263,32 @@ class detectorCondition(aiCondition):
         aiCondition.deregister(self, task_manager)
 
 class aiTask():
-    def __init__(self, script_name, priority, running_priority=None, conditions=[]):
+    def __init__(self, script_name, priority, running_priority=None, detectors_enabled=False, conditions=[], options={}, **kwargs):
+        """
+        Defines a 'Task', a script to run and when to run it
+        Options:
+        -script_name, str, the filename of the script (minus '.py')
+        -priority, int, the priority of the script, larger numbers = higher priority
+        -running_priority, int, the priority of the script once it has started (default to priority)
+        -detectors_enabled, bool, whether to keep the detectors running while the script is running (default false)
+        -conditions, [aicondition,] a list of conditions for the script to be run
+        -options, a dictionary of arg, value pairs to be passed to the script
+        Note: any left over keyword arguments are appened to options
+        The default is_available method waits till all conditions are True, this can be changed by redefining is_available()
+        """
         self.script_name = script_name
         self.conditions = conditions
         self.priority = priority
         self.running_priority = running_priority if running_priority else priority
+        self.detectors_enabled = detectors_enabled
+        self.options = options
+        self.options.update(kwargs)
+    def update_options(self, options={}, **kwargs):
+        """
+        Updates the options on the task, accepts dict or kwargs
+        """
+        self.options.update(options)
+        self.options.update(kwargs)
     def register(self, task_manager):
         task_manager.active_tasks.append(self)
         for condition in self.conditions:

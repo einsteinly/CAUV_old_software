@@ -7,14 +7,14 @@ import cauv.pipeline as pipeline
 import cauv.node
 from cauv.debug import debug, info, warning, error
 
-from AI_classes import aiScript
+from AI_classes import aiScript, aiScriptOptions
 
 import time
 import optparse
 import math
 import traceback
 
-class CircleBuoyOptions:
+class scriptOptions(aiScriptOptions):
     # TODO: need some mechanism of setting these from the AI framework?
     Do_Prop_Limit = 50  # max prop for forward/backward adjustment
     Camera_FOV = 60     # degrees
@@ -31,27 +31,22 @@ class CircleBuoyOptions:
     Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
 class script(aiScript):
-    def __init__(self,
-                 strafe_speed = CircleBuoyOptions.Strafe_Speed,
-                 buoy_size    = CircleBuoyOptions.Buoy_Size,
-                 size_kpd     = CircleBuoyOptions.Size_Control_kPD,
-                 angle_kpd    = CircleBuoyOptions.Angle_Control_kPD,
-                 sd_smoothing = CircleBuoyOptions.Size_DError_Smoothing):
-        aiScript.__init__(self, CircleBuoyOptions.Node_Name)
+    def __init__(self, script_name, opts):
+        aiScript.__init__(self, script_name, opts)
         # self.node is set by aiProcess (base class of aiScript)
         self.node.join('processing')
         self.__pl = pipeline.Model(self.node, CircleBuoyOptions.Load_Pipeline)
-        self.__strafe_speed = strafe_speed
-        self.__buoy_size = buoy_size
+        self.__strafe_speed = self.options.Strafe_Speed
+        self.__buoy_size = self.options.Buoy_Size
         self.last_size_err = None
         self.last_size_derr = 0
-        self.size_derr_smoothing = 0.5
+        self.size_derr_smoothing = self.options.Size_DError_Smoothing
         self.last_angle_err = None
         self.last_angle_derr = 0
         self.angle_derr_smoothing = 0.5
         self.time_last_seen = None
-        self.__sizekpd = size_kpd
-        self.__anglekpd = angle_kpd
+        self.__sizekpd = self.options.Size_Control_kPD
+        self.__anglekpd = self.options.Angle_Control_kPD
     
     def loadPipeline(self):
         self.__pl.load(CircleBuoyOptions.Pipeline_File)

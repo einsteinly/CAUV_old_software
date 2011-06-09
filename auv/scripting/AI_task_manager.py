@@ -7,12 +7,13 @@ import time
 import threading
 import subprocess
 import cPickle
+import shelve
+import optparse
 
 from os.path import getmtime
 
 from AI_classes import aiProcess, external_function
 
-from mission import task_list, default_script
 """          
 task manager auto generates a list of what it should be running from these 'tasks', basically looking for these tasks and then running appropriate scripts
 TODO:
@@ -21,7 +22,7 @@ TODO:
 """          
 
 class taskManager(aiProcess):
-    def __init__(self):
+    def __init__(self, mission, restore):
         aiProcess.__init__(self, 'task_manager')
         #These variables maybe accessesed by more than one thread
         #Tasks - list of tasks that (in right conditions) should be called
@@ -38,17 +39,23 @@ class taskManager(aiProcess):
         self.running_script = None
         self.current_task = None
         self.current_priority = 0
+        #state data file
+        self.state = shelve.open('state.shelf')
         #Setup intial values
-        try:
-            info('Looking for previous states...')
-            self.load_state()
-        except:
-            info('No previous valid state file, loading from mission.py')
-            #Open state file (must be done before changing the state)
-            #self.state_file = open('status.tmp', 'r+')
+        restored = False
+        if restore:
+            try:
+                info('Looking for previous states...')
+                self.load_state()
+                restored = True
+            except:
+                info('No previous valid state file, loading from mission.py')
+        if not restored:    
+            self.mission = __import__(mission)
             with self.task_lock:
-                for task in task_list:
+                for task in self.mission.task_list:
                     task.register(self)
+            self.new_state(mission)
         #Force evaluation of tasks
         self.conditions_changed.set()
     def add_detector(self, detector_name, listener):
@@ -71,15 +78,14 @@ class taskManager(aiProcess):
         #self.conditions=
         #if getmtime('mission.py') != state.mtime:
         #    error('Mission.py appears to have been modified. This may cause error when restoring the previous state.')
-        raise Exception
+        #Make sure to clear up any mess if this fails (ie reset all variables etc)
+        raise Exception #prevents taskmanager from thinking the load was succeful
     def save_state(self):
-        #TODO work out way of storing state
         pass
-        #self.state_file.truncate()
-        #with self.task_lock, self.detector_lock:
-        #    state.mtime = getmtime('mission.py')
-        #    state.save()
-        #self.state_file.flush()
+    def new_state(self, mission_name):
+        #some extra stuff to recorded the 1st time a state is set
+        self.state.mtime = getmtime(mission_name+'.py')
+        self.save_state()
     @external_function
     def update_detectors(self, detector_list):
         with self.detector_lock:
@@ -129,19 +135,28 @@ class taskManager(aiProcess):
         #make sure the sub actually stops
         self.ai.control_manager.stop()
         #TODO tell control to stop listening to the script
-    def start_script(self, script_name):
+    def start_script(self, script_name, script_opts={}):
         self.stop_script()
         info('Starting script: '+script_name)
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', script_name, script_name])
+        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', script_name, script_name, cPickle.dumps(script_opts)])
     def start_default_script(self):
         self.current_priority = 0
         self.current_task = None
-        self.start_script(default_script)
+        self.start_script(self.mission.default_script)
         #also make sure detectors are running
         with self.detector_lock:
             self.detectors_enabled = True
         self.ai.detector_control.enable()
+    def start_task(self, task):
+        #disable/enable detectors according to task
+        with self.detector_lock:
+            self.detectors_enabled = task.detectors_enabled
+            if self.detectors_enabled: self.ai.detector_control.enable()
+            else: self.ai.detector_control.disable()
+        self.start_script(task.script_name, task.options)
+        self.current_priority = task.running_priority
+        self.current_task = task.script_name
     def run(self):
         while True:
             self.conditions_changed.wait(5)
@@ -149,15 +164,13 @@ class taskManager(aiProcess):
                 self.conditions_changed.clear()
                 with self.task_lock:
                     for task in self.active_tasks:
-                        if task.script_name != self.current_task and task.priority > self.current_priority:
+                        highest_priority = self.current_priority
+                        to_start = None
+                        if task.script_name != self.current_task and task.priority > highest_priority:
                             if task.is_available():
-                                #disable detectors
-                                with self.detector_lock:
-                                    self.detectors_enabled = False
-                                self.ai.detector_control.disable()
-                                self.start_script(task.script_name)
-                                self.current_priority = task.running_priority
-                                self.current_task = task.script_name
+                                to_start = task
+                    if to_start:
+                        self.start_task(to_start)
             if not self.running_script:
                 debug('No script was running, returning to default')
                 self.start_default_script()
@@ -168,5 +181,12 @@ class taskManager(aiProcess):
         #sleep
 
 if __name__ == '__main__':
-    tm = taskManager()
+    p = optparse.OptionParser()
+    p.add_option('-r', '--restore', dest='restore', default=False,
+                 action='store_true', help="try and resume from last saved state")
+    p.add_option('-m', '--mission', dest='mission', default='mission',
+                 type=str, action='store', help='which mission script to run (default = mission)')
+    opts, args = p.parse_args()
+    
+    tm = taskManager(**opts.__dict__)
     tm.run()

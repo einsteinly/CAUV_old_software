@@ -5,7 +5,10 @@ and SCRIPT_AI_REFERENCE is the name that it will respond to ie ai.SCRIPT_AI_REFE
 This basically runs AI_scripts, as they are implemented as classes, so this creates and instance and calls the run method.
 """
 import sys
-from cauv.debug import error
+import cPickle
+from cauv.debug import error, info
+
+from AI_classes import aiScriptOptions
 
 if __name__ == '__main__':
     try:
@@ -14,6 +17,11 @@ if __name__ == '__main__':
     except IndexError as e:
         error('Tried to run script with wrong command parameters: '+str(sys.argv))
         raise e
+    try:
+        script_opts = cPickle.loads(sys.argv[3])
+    except Exception as e:
+        info('No valid options set for script, using default')
+        script_opts = {}
     try:
         script_module = __import__('script_library.'+script_name,fromlist=['script_library'])
     except ImportError as e:
@@ -24,5 +32,10 @@ if __name__ == '__main__':
     except AttributeError:
         error('Script file '+script_name+' does not define a script class')
         raise Exception
-    script = script_class(script_name)
+    try:
+        options_class = script_module.scriptOptions
+    except AttributeError:
+        info('No default options found for script, assuming none')
+        options_class = aiScriptOptions
+    script = script_class(script_name, options_class(script_opts))
     script.run()
