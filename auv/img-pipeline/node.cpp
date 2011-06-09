@@ -444,7 +444,7 @@ NodeParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error)
 /* return all parameter values (without querying connected parents)
  */
 std::map<input_id, NodeParamValue> Node::parameters() const{
-    lock_t l(m_outputs_lock);
+    lock_t l(m_inputs_lock);
     std::map<input_id, NodeParamValue> r;
     foreach(private_in_map_t::value_type const& v, m_inputs)
         if(v.second->isParam())
@@ -579,6 +579,7 @@ bool Node::anyRequiredInputsAreNew() const{
 }
 
 bool Node::anyInputsAreNew() const{
+    lock_t m(m_inputs_lock);
     foreach(private_in_map_t::value_type const& i, m_inputs)
         if(i.second->status == NodeInputStatus::New)
             return true;

@@ -19,7 +19,7 @@ namespace imgproc{
 class FileOutputNode: public OutputNode{
     public:
         FileOutputNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : OutputNode(args), m_counter(0){
         }
 
         void init(){

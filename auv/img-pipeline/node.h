@@ -308,6 +308,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 if(ip->input_type == InType_Parameter){
                     debug() << "param" << p << "set to" << std::boolalpha << v;
                     ip->param_value = v;
+                    ip->status = NodeInputStatus::New;
                     sendMessage(boost::make_shared<NodeParametersMessage>(
                         m_pl_name, id(), parameters()
                     ));

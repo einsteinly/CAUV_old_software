@@ -12,11 +12,11 @@ template<typename Value_T>
 class ValueInputNode: public Node{
     public:
         ValueInputNode(ConstructArgs const& args)
-            : Node(args), m_counter(0){
+            : Node(args){
         }
 
         void init(){
-            registerParamID<Value_T>("value", 0, "input value");
+            registerParamID<Value_T>("value", Value_T(), "input value");
             registerOutputID<NodeParamValue>("value");
         }
     
@@ -31,8 +31,6 @@ class ValueInputNode: public Node{
             r["value"] = NodeParamValue(value);
             return r;
         }
-
-        int m_counter;
     
     // Register this node type
     DECLARE_NFR;
