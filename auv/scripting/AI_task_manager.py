@@ -23,7 +23,6 @@ TODO:
 
 class taskManager(aiProcess):
     def __init__(self, mission, restore):
-        print mission, restore
         aiProcess.__init__(self, 'task_manager')
         #These variables maybe accessesed by more than one thread
         #Tasks - list of tasks that (in right conditions) should be called
@@ -51,8 +50,12 @@ class taskManager(aiProcess):
             else: info('No previous valid state file, loading from mission.py')
         if not restored:    
             self.mission = __import__(mission)
+            self.task_list = {}
             with self.task_lock:
-                self.task_list = self.mission.task_list
+                for task in self.mission.task_list:
+                    if task.name in self.task_list:
+                        warning('More than one task has the same name, the last task in the list will overwrite earlier tasks')
+                    self.task_list[task.name] = task
                 for task in self.mission.initial_tasks:
                     self.task_list[task].register(self)
             self.new_state(mission)
@@ -83,6 +86,7 @@ class taskManager(aiProcess):
                     if task.registered:
                         task.registered = False #oteherwise it will think its already setup -> error
                         task.register(self)
+                    #TODO remove a task if it causes repeated crashes?
             return True
         #TODO Make sure to clear up any mess if this fails (ie reset all variables etc)
         return False
@@ -144,10 +148,14 @@ class taskManager(aiProcess):
     def modify_task_options(self, task_ref, opt_dict):
         with self.task_lock:
             self.task_list[task_ref].options.update(opt_dict)
+            #try and update options in the running script
+            if self.task_list[task_ref].active:
+                for x in opt_dict:
+                    getattr(self.ai, self.task_list[task_ref].script_name).set_option(x,opt_dict[x])
         self.save_state()
     @external_function
     def on_script_exit(self, status):
-        #TODO do something useful with return status
+        #TODO do something useful with return status, e.g. remove task if success
         getattr(self.ai,self.current_task).confirm_exit()
         #Force immediate recheck
         self.conditions_changed.set()
@@ -160,15 +168,15 @@ class taskManager(aiProcess):
         #make sure the sub actually stops
         self.ai.control_manager.stop()
         #TODO tell control to stop listening to the script
-    def start_script(self, script_name, script_opts={}):
+    def start_script(self, task_ref, script_name, script_opts={}):
         self.stop_script()
-        info('Starting script: '+script_name)
+        info('Starting script: %s  (Task %s)' %(script_name, task_ref))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', script_name, script_name, cPickle.dumps(script_opts)])
+        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', task_ref, script_name, cPickle.dumps(script_opts)])
     def start_default_script(self):
         self.current_priority = 0
         self.current_task = None
-        self.start_script(self.mission.default_script)
+        self.start_script('default', self.mission.default_script)
         #also make sure detectors are running
         with self.detector_lock:
             self.detectors_enabled = True
@@ -179,9 +187,15 @@ class taskManager(aiProcess):
             self.detectors_enabled = task.detectors_enabled
             if self.detectors_enabled: self.ai.detector_control.enable()
             else: self.ai.detector_control.disable()
-        self.start_script(task.script_name, task.options)
+        #start the new script
+        self.start_script(task.name, task.script_name, task.options)
+        #set priority
         self.current_priority = task.running_priority
-        self.current_task = task.script_name
+        #mark last task not active, current task active
+        if self.current_task:
+            self.task_list[self.current_task].active = False
+        self.current_task = task.name
+        task.active = True
     def run(self):
         while True:
             self.conditions_changed.wait(5)

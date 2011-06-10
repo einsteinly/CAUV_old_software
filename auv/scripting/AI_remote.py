@@ -26,8 +26,10 @@ def add_task(ainode, task_ref):
 def remove_task(ainode, task_ref):
     ainode.ai.task_manager.remove_task(task_ref)
     
-def modify_task_option(ainode, task_ref, option_name, option_type, option_value):
-    ainode.ai.task_manager.modify_task_options(task_ref, {option_name:option_type(option_value)})
+def modify_task_options(ainode, task_ref):
+    print 'Please be careful, this field executes python you write in it'
+    opt_dict = input('Please enter a dictionary of option_name: value pairs: ')
+    ainode.ai.task_manager.modify_task_options(task_ref, opt_dict)
     
 def force_save(ainode):
     ainode.ai.task_manager.save_state()
@@ -76,7 +78,7 @@ if __name__=='__main__':
     taskm = menu('Tasks', '')
     taskm.addFunction('Add task', add_task, 'Setup an (already existing) task', {'task_ref': str})
     taskm.addFunction('Remove task', remove_task, 'Unsetup an (already existing) task', {'task_ref': str})
-    taskm.addFunction('Modify task option', modify_task_option, 'Change an option on an (already existing) task', {'task_ref': str, 'option_name': str, 'option_type': type, 'option_value': str})
+    taskm.addFunction('Modify task options', modify_task_options, 'Change an options on an (already existing) task', {'task_ref': str})
     
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})

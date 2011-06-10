@@ -12,8 +12,8 @@ from AI_classes import aiScriptOptions
 
 if __name__ == '__main__':
     try:
-        script_name = sys.argv[1]
-        script_ref = sys.argv[2]
+        task_ref = sys.argv[1]
+        script_name = sys.argv[2]
     except IndexError as e:
         error('Tried to run script with wrong command parameters: '+str(sys.argv))
         raise e
@@ -37,5 +37,5 @@ if __name__ == '__main__':
     except AttributeError:
         info('No default options found for script, assuming none')
         options_class = aiScriptOptions
-    script = script_class(script_name, options_class(script_opts))
+    script = script_class(task_ref, options_class(script_opts))
     script.run()
