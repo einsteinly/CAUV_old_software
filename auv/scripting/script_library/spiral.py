@@ -4,6 +4,9 @@ from cauv.debug import debug, warning, error, info
 import time
 import traceback
 
+#TODO ?make the AUV turn slower so that detectors get a chance to fire
+#do a preliminary 360 degree sweep
+
 class script(aiScript):
     def run(self):
         square=2

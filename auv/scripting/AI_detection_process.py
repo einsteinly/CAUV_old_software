@@ -57,6 +57,8 @@ class detectionControl(aiProcess):
                         info("Stopped detection class %s." %(detection_file))
                     except KeyError:
                         debug(detection_file+" is not runnning, so cannot be stopped")
+                self.start_requests = []
+                self.stop_requests = []
             #need to sleep  or else it goes crazy when not much processing to do
             time.sleep(1)
             #send status
