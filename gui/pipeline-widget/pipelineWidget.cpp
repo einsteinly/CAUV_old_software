@@ -391,6 +391,13 @@ void PipelineWidget::sanitizeArcs(){
     }
 }
 
+arc_ptr_t PipelineWidget::arcWithDestination(renderable_ptr_t dst){
+    for(arc_set_t::const_iterator i = m_arcs.begin(); i != m_arcs.end(); i++)
+        if((*i)->m_dst.lock() == dst)
+            return *i;
+    return arc_ptr_t();
+} 
+
 void PipelineWidget::send(boost::shared_ptr<Message> m){
     // anyone interested in messages from the pipeline can subscribe to this signal
     // allows the pipeline and message software to be decoupled

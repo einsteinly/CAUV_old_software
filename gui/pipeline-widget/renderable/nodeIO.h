@@ -50,6 +50,7 @@ class NodeInputBlob: public NodeIOBlob{
         NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
                       bool suppress_text = false);
         virtual ~NodeInputBlob(){ }
+        virtual bool mousePressEvent(MouseEvent const& e);
         std::string input() const;
 };
 

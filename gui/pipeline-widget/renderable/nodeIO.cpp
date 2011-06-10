@@ -118,6 +118,30 @@ NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
     m_text->m_pos.x = -m_text->bbox().min.x + m_radius + 3;
 }
 
+bool NodeInputBlob::mousePressEvent(MouseEvent const& e){
+    if(e.pos.sxx() < m_radius_squared){
+        // circley bit hit
+        arc_ptr_t has_arc = m_pw->arcWithDestination(shared_from_this());
+        if(has_arc){
+            renderable_ptr_t arc_src = has_arc->m_src.lock();
+            renderable_ptr_t arc_dst = has_arc->m_dst.lock();
+            if(shared_from_this() == arc_dst){
+                debug() << BashColour::Green << "re-creating arc: dst ="
+                        << m_node->id() << "io=" << *m_text<< "this=" << this;
+                menu_ptr_t handle = boost::make_shared<FloatingArcHandle>(m_pw, has_arc);
+                m_pw->removeArc(arc_src, shared_from_this());
+                arc_ptr_t arc = m_node->newArc(arc_src, handle);
+                // (true = start out 'pressed', ie being dragged)
+                m_context->postMenu(handle, m_context->referUp(m_pos), true);
+                return true;
+            }
+        }
+    }
+    // If we didn't create a handle (and return already), call the base
+    // function to see if a handle should be created from scratch
+    return NodeIOBlob::mousePressEvent(e);
+}
+
 std::string NodeInputBlob::input() const{
     return *m_text;
 }
@@ -198,5 +222,4 @@ void FloatingArcHandle::mouseGoneEvent(){
 BBox FloatingArcHandle::bbox(){
     return BBox();
 }
-
 
