@@ -19,8 +19,8 @@ namespace imgproc{
 
 class CropNode: public Node{
     public:
-        CropNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        CropNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

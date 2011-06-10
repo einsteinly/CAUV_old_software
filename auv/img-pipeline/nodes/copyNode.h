@@ -17,8 +17,8 @@ namespace imgproc{
 
 class CopyNode: public Node{
     public:
-        CopyNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        CopyNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

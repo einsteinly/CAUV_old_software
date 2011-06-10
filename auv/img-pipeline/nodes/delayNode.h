@@ -11,8 +11,8 @@ namespace imgproc{
 class DelayNode: public Node{
         const static std::string Delay_Param_Name;
     public:
-        DelayNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t), m_queue_image_size(0,0), m_queue(){
+        DelayNode(ConstructArgs const& args)
+            : Node(args), m_queue_image_size(0,0), m_queue(){
         }
 
         void init(){
@@ -35,7 +35,7 @@ class DelayNode: public Node{
             stop();
         }
 
-        virtual void paramChanged(param_id const& p){
+        virtual void paramChanged(input_id const& p){
             if(p == Delay_Param_Name && param<int>(Delay_Param_Name) < 0){
                 warning() << "Can't set delay less than 0: If I knew the"
                           << "future I'd ";

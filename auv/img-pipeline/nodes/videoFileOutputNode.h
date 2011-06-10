@@ -19,8 +19,8 @@ namespace imgproc{
 
 class VideoFileOutputNode: public OutputNode{
     public:
-        VideoFileOutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        VideoFileOutputNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){
@@ -39,9 +39,9 @@ class VideoFileOutputNode: public OutputNode{
             closeVideo();
         }
 
-        virtual void paramChanged(param_id const& p){
+        virtual void paramChanged(input_id const& p){
             debug(4) << "VideoFileOutputNode::paramChanged";
-            if(p == param_id("filename")){
+            if(p == input_id("filename")){
                 closeVideo();
                 setAllowQueue();
             }

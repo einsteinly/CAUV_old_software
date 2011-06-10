@@ -21,8 +21,8 @@ namespace imgproc{
 
 class NullParamNode: public Node{
     public:
-        NullParamNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        NullParamNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

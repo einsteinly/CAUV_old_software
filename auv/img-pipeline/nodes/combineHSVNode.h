@@ -17,8 +17,8 @@ namespace imgproc{
 
 class CombineHSVNode: public Node{
     public:
-        CombineHSVNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        CombineHSVNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

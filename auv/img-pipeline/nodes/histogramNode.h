@@ -18,8 +18,8 @@ namespace imgproc{
 
 class HistogramNode: public Node{
     public:
-        HistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        HistogramNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

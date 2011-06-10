@@ -16,8 +16,8 @@ namespace imgproc{
 
 class SplitHSVNode: public Node{
     public:
-        SplitHSVNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        SplitHSVNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

@@ -1,14 +1,14 @@
-#ifndef __NOP_NODE_H__
-#define __NOP_NODE_H__
+#ifndef __RECOGNISER_NODE_H__
+#define __RECOGNISER_NODE_H__
 
 #include "../node.h"
 
 namespace cauv{
 namespace imgproc{
 
-class NopNode: public Node{
+class RecogniserNode: public Node{
     public:
-        NopNode(ConstructArgs const& args)
+        RecogniserNode(ConstructArgs const& args)
             : Node(args){
         }
 
@@ -17,12 +17,13 @@ class NopNode: public Node{
 
             // input:
             registerInputID(Image_In_Name);
+            registerInputID("Reference Image", May_Be_New);
 
             // outputs:
             registerOutputID<image_ptr_t>(Image_Out_Name);
         }
 
-        virtual ~NopNode(){
+        virtual ~RecogniserNode(){
             stop();
         }
 
@@ -42,6 +43,6 @@ class NopNode: public Node{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __NOP_NODE_H__
+#endif // ndef __RECOGNISER_NODE_H__
 
 

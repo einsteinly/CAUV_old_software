@@ -16,8 +16,8 @@ namespace imgproc{
 
 class LocalDisplayNode: public OutputNode{
     public:
-        LocalDisplayNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        LocalDisplayNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){
