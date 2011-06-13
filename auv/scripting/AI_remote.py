@@ -31,8 +31,20 @@ def modify_task_options(ainode, task_ref):
     opt_dict = input('Please enter a dictionary of option_name: value pairs: ')
     ainode.ai.task_manager.modify_task_options(task_ref, opt_dict)
     
+def export_task_data(ainode, file_name):
+    ainode.ai.task_manager.export_task_data(file_name)
+    
 def force_save(ainode):
     ainode.ai.task_manager.save_state()
+    
+def stop_script(ainode):
+    ainode.ai.task_manager.request_stop_script()
+    
+def enable_control(ainode):
+    ainode.ai.auv_control.enable()
+    
+def disable_control(ainode):
+    ainode.ai.auv_control.disable()
 
 class option():
     def __init__(self, name, func, desc, params):
@@ -79,10 +91,17 @@ if __name__=='__main__':
     taskm.addFunction('Add task', add_task, 'Setup an (already existing) task', {'task_ref': str})
     taskm.addFunction('Remove task', remove_task, 'Unsetup an (already existing) task', {'task_ref': str})
     taskm.addFunction('Modify task options', modify_task_options, 'Change an options on an (already existing) task', {'task_ref': str})
+    taskm.addFunction('Export task data', export_task_data, 'Save options etc to file.', {'file_name': str})
+    
+    scriptm = menu('Script', '')
+    scriptm.addFunction('Stop script', stop_script, 'Stop the current script (if conditions true may immediately restart)', {})
+    scriptm.addFunction('Enable script control', enable_control, 'Allow scripts to move the AUV', {})
+    scriptm.addFunction('Disable script control', disable_control, 'Stop scripts from moving the AUV', {})
     
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})
-    m.addFunction('Force Save', force_save, 'Force the task manager to save the sucurrent state', {})
+    m.addFunction('Force Save', force_save, 'Force the task manager to save the current state', {})
     m.addMenu(taskm)
+    m.addMenu(scriptm)
     
     m(ainode)

@@ -77,7 +77,10 @@ class fakeAUVfunction():
         self.script = script
         self.attr = attr
     def __call__(self, *args, **kwargs):
-        self.script.ai.auv_control.auv_command(self.script.process_name, self.attr, *args, **kwargs)
+        self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
+    def __getattr__(self, attr):
+        error('You can only call functions of AUV, one level deep')
+        raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
 
 class fakeAUV(messaging.BufferedMessageObserver):
     #TODO
@@ -114,6 +117,9 @@ class fakeAUV(messaging.BufferedMessageObserver):
         return self.current_bearing
     
     def bearingAndWait(self, bearing, epsilon = 5, timeout = 30):
+        if bearing == None:
+            self.bearing(None)
+            return True
         startTime = time.time()
         self.bearing(bearing)
         while time.time() - startTime < timeout:
@@ -127,6 +133,9 @@ class fakeAUV(messaging.BufferedMessageObserver):
         return False
         
     def depthAndWait(self, depth, epsilon = 5, timeout = 30):
+        if depth == None:
+            self.depth(None)
+            return True
         startTime = time.time()
         self.depth(depth)
         while time.time() - startTime < timeout:
@@ -139,6 +148,9 @@ class fakeAUV(messaging.BufferedMessageObserver):
         return False
 
     def pitchAndWait(self, pitch, epsilon = 5, timeout = 30):
+        if pitch == None:
+            self.pitch(None)
+            return True
         startTime = time.time()
         self.pitch(pitch)
         while time.time() - startTime < timeout:
@@ -190,10 +202,10 @@ class aiScriptOptions():
             setattr(self, opt, script_opts[opt])
         
 class aiScript(aiProcess):
-    def __init__(self, script_name, script_opts):
-        aiProcess.__init__(self, script_name)
+    def __init__(self, task_name, script_opts):
+        aiProcess.__init__(self, task_name)
         self.exit_confirmed = threading.Event()
-        self.script_name = script_name
+        self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
         self.pl_enabled = False
@@ -204,7 +216,7 @@ class aiScript(aiProcess):
             pl.enabled = True
         self.pl_ref = None
         for x in range(5):
-            self.ai.task_manager.request_pl('script', self.name, pl_name)
+            self.ai.task_manager.request_pl('script', self.task_name, pl_name)
             time.sleep(2)
             if self.pl_ref:
                 break
@@ -221,7 +233,7 @@ class aiScript(aiProcess):
             self.ai.task_manager.on_script_exit(exit_status)
             if self.exit_confirmed.wait(1.0):
                 return
-        error("Task manager failed to acknowledge script "+self.script_name+" exit")
+        error("Task manager failed to acknowledge script "+self.task_name+" exit")
         return
     @external_function
     def confirm_exit(self):

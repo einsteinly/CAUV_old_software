@@ -1,4 +1,4 @@
-from AI_classes import aiScript
+from AI_classes import aiScript, aiScriptOptions
 from cauv.debug import debug, warning, error, info
 
 import time
@@ -7,35 +7,44 @@ import traceback
 #TODO ?make the AUV turn slower so that detectors get a chance to fire
 #do a preliminary 360 degree sweep
 
+class scriptOptions(aiScriptOptions):
+    loops = 2 #number of times to go round
+    power = 64 #motor power
+    unit = 3
+    depth = None
+    stop_time = 2
+    class Meta:
+        dynamic = ['power', 'unit', 'stop_time']
+    
+
 class script(aiScript):
     def run(self):
-        square=2
-        bearing=0
-        power=64
-        unit = 3
         # Starting search at north direction
-        debug('setting bearing %d...' % bearing)
+        #debug('setting bearing %d...' % bearing)
         #self.auv.bearingAndWait(bearing)
+        bearing = self.auv.getBearing()
+        if not bearing:
+            self.auv.bearingAndWait(0)
+            bearing = 0
 
-        # 2m deep
         debug('diving...')
-        #self.auv.depthAndWait(2)
+        self.auv.depthAndWait(self.options.depth)
 
         debug('spiral...')
         # Individual half squares
-        for i in range(1, 2*square):
+        for i in range(1, 2*self.options.loops):
             debug('Performing %dth half circle' % i)
             # Individual half squares
             for j in range(2):
                 # The time for which the AUV goes forward depends on the radius of the revolution
-                debug('Moving forward for %d seconds' %(3*i))
-                self.auv.prop(power)
-                time.sleep(i)
+                debug('Moving forward for %d seconds' %(self.options.unit*i))
+                self.auv.prop(self.options.power)
+                time.sleep(self.options.unit*i)
 
                 # Stop motor & wait for stop
                 debug('stopping')
                 self.auv.prop(0)
-                time.sleep(5)
+                time.sleep(self.options.stop_time)
 
                 debug('setting bearing %d' % bearing)
                 bearing += 90
@@ -44,5 +53,5 @@ class script(aiScript):
                 self.auv.bearingAndWait(bearing)
 
         debug('surface...')
-        #self.auv.depthAndWait(0)
+        self.auv.depthAndWait(0)
 

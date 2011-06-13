@@ -14,3 +14,4 @@ initial_tasks = [
                 ]
 #script that runs otherwise
 default_script = 'spiral'
+default_script_options = {'power' : 100}

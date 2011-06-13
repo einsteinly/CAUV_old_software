@@ -1,7 +1,7 @@
 """
-run command: /bin/sh ./run.sh AI_scriptparent.py SCRIPT_NAME SCRIPT_AI_REFRENCE
+run command: /bin/sh ./run.sh AI_scriptparent.py TASK_NAME SCRIPT_NAME
 where SCRIPT_NAME is the name of the script in the script_library folder
-and SCRIPT_AI_REFERENCE is the name that it will respond to ie ai.SCRIPT_AI_REFERENCE.func()
+and TASK_NAME is the name of the task, will respond to ai.TASK_NAME.func()
 This basically runs AI_scripts, as they are implemented as classes, so this creates and instance and calls the run method.
 """
 import sys

@@ -29,6 +29,7 @@ class taskManager(aiProcess):
         self.task_lock = threading.RLock()
         self.active_tasks = []
         self.task_list = {}
+        self.request_stop = threading.Event()
         #Conditions - note although conditions may be changed externally, the list of conditions may not
         self.conditions = {}
         self.conditions_changed = threading.Event()
@@ -40,6 +41,9 @@ class taskManager(aiProcess):
         self.running_script = None
         self.current_task = None
         self.current_priority = 0
+        #pipeline management stuff
+        self.pipeline_lock = threading.Lock()
+        self.branches = {} #branch_name: usage_count
         #state data file
         self.state = shelve.open(mission+'_state.shelf')
         #Setup intial values
@@ -143,6 +147,8 @@ class taskManager(aiProcess):
                 self.task_list[task_ref].deregister(self)
         except KeyError:
             error('Tried to setup non-existant task.')
+        if self.task_list[task_ref].active:
+            self.request_stop_script()
         self.save_state()
     @external_function
     def modify_task_options(self, task_ref, opt_dict):
@@ -154,10 +160,22 @@ class taskManager(aiProcess):
                     getattr(self.ai, self.task_list[task_ref].script_name).set_option(x,opt_dict[x])
         self.save_state()
     @external_function
+    def export_task_data(self, file_name):
+        with self.task_lock:
+            f = open(file_name, 'w')
+            for task in self.task_list.values():
+                print task.options
+                f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) for x in task.options.items()])+'\n')
+            f.close()
+    @external_function
     def on_script_exit(self, status):
         #TODO do something useful with return status, e.g. remove task if success
         getattr(self.ai,self.current_task).confirm_exit()
         #Force immediate recheck
+        self.conditions_changed.set()
+    @external_function
+    def request_stop_script(self):
+        self.request_stop.set()
         self.conditions_changed.set()
     def stop_script(self):
         if self.running_script:
@@ -167,16 +185,17 @@ class taskManager(aiProcess):
                 debug('Could not kill running script (probably already dead)')
         #make sure the sub actually stops
         self.ai.control_manager.stop()
-        #TODO tell control to stop listening to the script
+        self.ai.auv_control.set_task_id(None)
     def start_script(self, task_ref, script_name, script_opts={}):
         self.stop_script()
+        self.ai.auv_control.set_task_id(task_ref)
         info('Starting script: %s  (Task %s)' %(script_name, task_ref))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
         self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', task_ref, script_name, cPickle.dumps(script_opts)])
     def start_default_script(self):
         self.current_priority = 0
         self.current_task = None
-        self.start_script('default', self.mission.default_script)
+        self.start_script('default', self.mission.default_script, self.mission.default_script_options)
         #also make sure detectors are running
         with self.detector_lock:
             self.detectors_enabled = True
@@ -196,15 +215,30 @@ class taskManager(aiProcess):
             self.task_list[self.current_task].active = False
         self.current_task = task.name
         task.active = True
+    @external_function
+    def request_pl(self, requestor_type, requestor_name, requested_pl, req_nodes):
+        with self.pipeline_lock:
+            #if r_type is script, we only want one pipeline at a time, so wipe old pipeline
+            #check to see whether optimised version exists
+            #if optimised version
+            #else if not optimised version
+            #find the input nodes and check whether they already exist
+            #create a copy node and attach pipeline
+            #set output names
+            #tell the requestor what nodes to listen to
+            getattr(self.ai, requestor_name).pl_response(node_names)
     def run(self):
         while True:
             self.conditions_changed.wait(5)
             if self.conditions_changed.is_set():
                 self.conditions_changed.clear()
+                if self.request_stop.is_set():
+                    self.request_stop.clear()
+                    self.stop_script()
                 with self.task_lock:
+                    highest_priority = self.current_priority
+                    to_start = None
                     for task in self.active_tasks:
-                        highest_priority = self.current_priority
-                        to_start = None
                         if task.script_name != self.current_task and task.priority > highest_priority:
                             if task.is_available():
                                 to_start = task
