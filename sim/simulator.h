@@ -4,7 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <common/cauv_node.h>
 #include <osg/ref_ptr>
-#include <osgViewer/CompositeViewer>
+#include <osgViewer/Viewer>
 
 #include "worldmodel.h"
 
@@ -53,7 +53,7 @@ namespace cauv {
             boost::shared_ptr<SimulatedAUV> m_simulated_auv;
             osg::ref_ptr<WorldModel> m_world_model;
             osg::ref_ptr<osg::Group> m_root;
-            osg::ref_ptr<osgViewer::CompositeViewer> m_viewer;
+            osg::ref_ptr<osgViewer::Viewer> m_viewer;
             osg::Image * shot;
 
         };

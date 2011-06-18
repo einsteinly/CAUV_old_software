@@ -24,51 +24,52 @@
 using namespace cauv;
 using namespace cauv::sim;
 
+
 Simulator::Simulator() : CauvNode("CauvSim"),
 m_auv(boost::make_shared<AUV>()),
 m_auv_controller(boost::make_shared<AUVController>(m_auv)),
+m_simulated_auv(boost::make_shared<RedHerring>(this, m_auv)),
 m_root(new osg::Group()),
-m_viewer(new osgViewer::CompositeViewer())
+m_viewer(new osgViewer::Viewer())
 {
     joinGroup("control");
     joinGroup("telemetry");
 
     // graphics context for off screen rendering
-    /*osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits();
-    traits->x = 0; // viewport of camera
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+    traits->x = 0;
     traits->y = 0;
-    traits->width = 1024;
-    traits->height = 768;
+    traits->width = 300;
+    traits->height = 200;
+    traits->red = 8;
+    traits->green = 8;
+    traits->blue = 8;
+    traits->alpha = 8;
     traits->windowDecoration = false;
-    traits->doubleBuffer = false;
-    traits->sharedContext = NULL;
     traits->pbuffer = true;
+    traits->doubleBuffer = true;
+    traits->sharedContext = 0;
 
-    osg::ref_ptr<osg::GraphicsContext> graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
+    osg::ref_ptr<osg::GraphicsContext> pbuffer = osg::GraphicsContext::createGraphicsContext(traits.get());
 
-    if(!graphicsContext) {
+
+    if(!pbuffer) {
         error() << __FILE__ << " - " << __FUNCTION__ << " - Failed to create pbuffer.";
         exit(1);
     }
 
-*/
-    m_simulated_auv = boost::make_shared<RedHerring>(m_auv);
+    m_viewer->setSceneData(m_root);
+
 
     //
     // sort out the AUVs cameras
     foreach(boost::shared_ptr<sim::Camera> simulatedCam, m_simulated_auv->getCameras()){
-
-        osg::ref_ptr<osgViewer::View> view = new osgViewer::View();
-        view->setSceneData(m_root);
-        view->getCamera()->setGraphicsContext(graphicsContext.get());
-        view->getCamera()->setViewport(new osg::Viewport(0,0,1024,768));
-        view->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,-1), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
-        view->getCamera()->attach(osg::Camera::COLOR_BUFFER, simulatedCam.get());
-
-        view->setUpViewInWindow( 0,0,1024,768, 0 );
-
-        m_viewer->addView(view.get());
-
+        osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+        m_viewer->addSlave(camera.get(), osg::Matrixd(), osg::Matrixd());
+        camera->setGraphicsContext(pbuffer.get());
+        camera->setViewport(new osg::Viewport(0,0,300,200));
+        camera->attach(osg::Camera::COLOR_BUFFER, simulatedCam.get());
+        camera->setViewMatrixAsLookAt(osg::Vec3f(0,-20,2), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
         info() <<"Added simulated camera";
     }
 }
@@ -82,6 +83,8 @@ osg::ref_ptr<WorldModel> Simulator::getWorldModel(){
 void Simulator::onRun()
 {
     CauvNode::onRun();
+
+    m_viewer->setUpViewInWindow( 0,0,1024,768, 0 );
 
     m_viewer->realize();
     while(!m_viewer->done()){

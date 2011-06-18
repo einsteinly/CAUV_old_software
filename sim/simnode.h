@@ -4,13 +4,15 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include <sim/simulator.h>
+
 namespace cauv {
     namespace sim {
 
         class SimNode
         {
         public:
-            SimNode();
+            SimNode(Simulator * s);
 
             virtual void addSimulationChild(boost::shared_ptr<SimNode> node);
 
@@ -20,6 +22,7 @@ namespace cauv {
 
         protected:
             std::vector<boost::shared_ptr<SimNode> > m_children;
+            Simulator * m_simulator;
         };
 
     } // namespace sim

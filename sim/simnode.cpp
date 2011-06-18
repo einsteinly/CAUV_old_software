@@ -6,7 +6,7 @@
 using namespace cauv;
 using namespace cauv::sim;
 
-SimNode::SimNode()
+SimNode::SimNode(Simulator * s) : m_simulator(s)
 {
 }
 

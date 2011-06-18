@@ -3,7 +3,6 @@
 
 #include "simulatedauv.h"
 
-
 namespace cauv {
 
     namespace sim {
@@ -11,7 +10,7 @@ namespace cauv {
         class RedHerring : public SimulatedAUV
         {
         public:
-            RedHerring(boost::shared_ptr<AUV> auv);
+            RedHerring(Simulator * s, boost::shared_ptr<AUV> auv);
         };
 
     } // namespace sim

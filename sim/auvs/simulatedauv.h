@@ -23,7 +23,7 @@ namespace cauv {
         class SimulatedAUV : public SimNode, public osg::Group
         {
         public:
-            SimulatedAUV(boost::shared_ptr<AUV> auv);
+            SimulatedAUV(Simulator * s, boost::shared_ptr<AUV> auv);
 
             void addCamera(boost::shared_ptr<sim::Camera> cam);
             std::vector<boost::shared_ptr<sim::Camera> > getCameras();

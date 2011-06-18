@@ -23,7 +23,7 @@ namespace cauv {
         class Camera : public SimNode, public osg::Image
         {
         public:
-            Camera(int width, int height);
+            Camera(Simulator * s, int width, int height);
 
             void tick(double simTime);
             void setSize(int width, int height);
