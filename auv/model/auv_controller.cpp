@@ -231,7 +231,17 @@ void AUVController::onBatteryUseMessage(BatteryUseMessage_ptr message) {
 }
 
 void AUVController::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
-    m_auv->computer_state.processes->update(*(message.get()));
+
+    boost::shared_ptr<DataStream<ProcessState> > processStateStream;
+
+    try {
+        processStateStream = m_auv->computer_state.processes.at(message->process());
+    } catch (std::out_of_range ex){
+        processStateStream = boost::make_shared<DataStream<ProcessState> >(message->process(), "");
+        m_auv->computer_state.new_process_stream->update(processStateStream);
+    }
+
+    processStateStream->update(*(message.get()));
 }
 
 void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){

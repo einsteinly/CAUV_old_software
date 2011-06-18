@@ -246,14 +246,21 @@ namespace cauv{
      */
 
         struct ComputerState {
-            boost::shared_ptr< DataStream<ProcessState> > processes;
+            
+            typedef boost::unordered_map<std::string, boost::shared_ptr<DataStream<ProcessState> > > process_map;
+            
+            boost::shared_ptr<DataStream<boost::shared_ptr< DataStream<ProcessState> > > > new_process_stream;
 
-            ComputerState() : processes(boost::make_shared<DataStream<ProcessState> >("Process State", ""))
+            process_map processes;
+
+            ComputerState() : new_process_stream(boost::make_shared<DataStream<boost::shared_ptr< DataStream<ProcessState> > > >("New Processes", ""))
             {
             }
         } computer_state;
 
-
+        
+        
+        
         /**
      * Scripting
      *
