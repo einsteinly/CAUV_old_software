@@ -17,8 +17,8 @@ namespace imgproc{
 
 class MixValueNode: public Node{
     public:
-        MixValueNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        MixValueNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

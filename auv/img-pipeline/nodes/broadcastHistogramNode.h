@@ -20,8 +20,8 @@ namespace imgproc{
 
 class BroadcastHistogramNode: public OutputNode{
     public:
-        BroadcastHistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n,  NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        BroadcastHistogramNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){

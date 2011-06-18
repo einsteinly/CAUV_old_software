@@ -5,8 +5,13 @@ from cauv.debug import debug, warning, error, info
 import threading
 import cPickle
 import time
+import traceback
 
+#------AI PROCESSES STUFF------
 #ai messages are of form message is (to, from, function_name, args, kwargs)
+
+class CommunicationError(Exception):
+    pass
 
 class aiForeignFunction():
     def __init__(self, node, calling_process, process, function):
@@ -56,21 +61,26 @@ class aiProcess(messaging.BufferedMessageObserver):
         message = cPickle.loads(m.msg)
         if message[0] == self.process_name: #this is where the to string appears in the cpickle output
             message = cPickle.loads(m.msg)
-            if is_external(getattr(self,message[2])):
+            if hasattr(self, message[2]) and is_external(getattr(self,message[2])):
                 try:
                     getattr(self,message[2])(*message[3], **message[4])
                 except Exception as exc:
                     error("Error occured because of message: %s" %(str(message)))
-                    raise exc
+                    traceback.print_exc()
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+
+#------AI SCRIPTS STUFF------
 
 class fakeAUVfunction():
     def __init__(self, script, attr):
         self.script = script
         self.attr = attr
     def __call__(self, *args, **kwargs):
-        self.script.ai.auv_control.auv_command(self.script.process_name, self.attr, *args, **kwargs)
+        self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
+    def __getattr__(self, attr):
+        error('You can only call functions of AUV, one level deep')
+        raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
 
 class fakeAUV(messaging.BufferedMessageObserver):
     #TODO
@@ -107,6 +117,9 @@ class fakeAUV(messaging.BufferedMessageObserver):
         return self.current_bearing
     
     def bearingAndWait(self, bearing, epsilon = 5, timeout = 30):
+        if bearing == None:
+            self.bearing(None)
+            return True
         startTime = time.time()
         self.bearing(bearing)
         while time.time() - startTime < timeout:
@@ -120,6 +133,9 @@ class fakeAUV(messaging.BufferedMessageObserver):
         return False
         
     def depthAndWait(self, depth, epsilon = 5, timeout = 30):
+        if depth == None:
+            self.depth(None)
+            return True
         startTime = time.time()
         self.depth(depth)
         while time.time() - startTime < timeout:
@@ -132,6 +148,9 @@ class fakeAUV(messaging.BufferedMessageObserver):
         return False
 
     def pitchAndWait(self, pitch, epsilon = 5, timeout = 30):
+        if pitch == None:
+            self.pitch(None)
+            return True
         startTime = time.time()
         self.pitch(pitch)
         while time.time() - startTime < timeout:
@@ -145,23 +164,82 @@ class fakeAUV(messaging.BufferedMessageObserver):
         
     def __getattr__(self, attr):
         return fakeAUVfunction(self.script, attr)
+
+class aiScriptOptionsBase(type):
+    def __new__(cls, name, bases, attrs):
+        def __getattr2__(self, attr):
+            if not (attr in object.__getattribute__(self, '_dynamic')):
+                return object.__getattribute__(self, attr)
+            else:
+                with object.__getattribute__(self, '_dynamiclock'):
+                    #note, although once the object has been returned the lock is released, do the option can be modified
+                    #since modifiying requires passing a new value, this doesn't affect the object that was passed
+                    return object.__getattribute__(self, attr)
+        def set_option(self, option_name, option_value):
+            if option_name in self._dynamic:
+                with self._dynamiclock:
+                    setattr(self, option_name, option_value)
+            else:
+                info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
+        attrs['_dynamic'] = []
+        if 'Meta' in attrs:
+            meta_data = attrs.pop('Meta')
+            if hasattr(meta_data, 'dynamic'):
+                attrs['_dynamic'] = meta_data.dynamic
+                for d in attrs['_dynamic']:
+                    if not d in attrs:
+                        raise AttributeError('The option %s is not defined, so cannot be dynamic' %(d,))
+                attrs['__getattribute__'] = __getattr2__ #no point doing this if there aren't any dynamic variables
+                attrs['_dynamiclock'] = threading.RLock()
+        attrs['set_option'] = set_option
+        new_cls = super(aiScriptOptionsBase, cls).__new__(cls, name, bases, attrs)
+        return new_cls
+            
+class aiScriptOptions():
+    __metaclass__ = aiScriptOptionsBase
+    def __init__(self, script_opts):
+        for opt in script_opts:
+            setattr(self, opt, script_opts[opt])
         
 class aiScript(aiProcess):
-    def __init__(self, script_name):
-        aiProcess.__init__(self, script_name)
+    def __init__(self, task_name, script_opts):
+        aiProcess.__init__(self, task_name)
         self.exit_confirmed = threading.Event()
-        self.script_name = script_name
+        self.task_name = task_name
+        self.options = script_opts
         self.auv = fakeAUV(self)
+        self.pl_enabled = False
+    def request_pl(self, pl_name):
+        #Not implemented yet
+        if not self.pl_enabled:
+            self.node.join('processing')
+            pl.enabled = True
+        self.pl_ref = None
+        for x in range(5):
+            self.ai.task_manager.request_pl('script', self.task_name, pl_name)
+            time.sleep(2)
+            if self.pl_ref:
+                break
+        else:
+            raise CommunicationError('No response from pipeline management.')
+    @external_function
+    def pl_reponse(self, pl_ref):
+        pl_name = pl_ref
+    @external_function
+    def set_option(self, option_name, option_value):
+        self.options.set_option(option_name, option_value)
     def notify_exit(self, exit_status):
         for x in range(5):
             self.ai.task_manager.on_script_exit(exit_status)
             if self.exit_confirmed.wait(1.0):
                 return
-        error("Task manager failed to acknowledge script "+self.script_name+" exit")
+        error("Task manager failed to acknowledge script "+self.task_name+" exit")
         return
     @external_function
     def confirm_exit(self):
         self.exit_confirmed.set()
+
+#------AI DETECTORS STUFF------
         
 class aiDetector(messaging.BufferedMessageObserver):
     def __init__(self, node):
@@ -177,15 +255,26 @@ class aiDetector(messaging.BufferedMessageObserver):
     def die(self):
         self.node.removeObserver(self)
 
+#------AI TASKS STUFF------
+
 class aiCondition():
     """
     Basic condition that can be used for tasks, ie they may be set via task_manager from any other process
     and then when they change task manager checks to see if the conditions for any task have been met
     """
-    def __init__(self, name):
+    def __init__(self, name, state=False):
+        #defines what values are needed to re-init the condition when unpickled
+        self.store = ['name', 'state']
         self.name = name
+        self.state = state
         self.state_lock = threading.Lock()
-        self.state = False
+    #pickling stuff
+    def __getstate__(self):
+        #since bits and pieces need to be setup for a condition we will call init instead of restoring __dict__
+        return dict([(x,getattr(self, x)) for x in self.store])
+    def __setstate__(self, state):
+        #restore values
+        self.__init__(**state)
     def register(self, task_manager):
         with task_manager.task_lock:
             while self.name in task_manager.conditions:
@@ -208,6 +297,7 @@ class timeCondition(aiCondition):
     This condition only remains true for a certain time
     """
     def __init__(self, name, default_time=0):
+        self.store = ['name', 'default_time']
         self.name = name
         self.default_time = default_time
         self.state_lock = threading.Lock()
@@ -227,8 +317,9 @@ class detectorCondition(aiCondition):
     """
     This condition relies on the state of a detector
     """
-    def __init__(self, name, detector_name):
-        aiCondition.__init__(self, name)
+    def __init__(self, name, detector_name, state=False):
+        aiCondition.__init__(self, name, state)
+        self.store.append('detector_name')
         self.detector_name = detector_name
     def register(self, task_manager):
         aiCondition.register(self, task_manager)
@@ -239,15 +330,51 @@ class detectorCondition(aiCondition):
         aiCondition.deregister(self, task_manager)
 
 class aiTask():
-    def __init__(self, script_name, priority, running_priority=None, conditions=[]):
+    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=[], options={}, **kwargs):
+        """
+        Defines a 'Task', a script to run and when to run it
+        Options:
+        -name, str, name of task
+        -script_name, str, the filename of the script (minus '.py')
+        -priority, int, the priority of the script, larger numbers = higher priority
+        -running_priority, int, the priority of the script once it has started (default to priority)
+        -detectors_enabled, bool, whether to keep the detectors running while the script is running (default false)
+        -conditions, [aicondition,] a list of conditions for the script to be run
+        -options, a dictionary of arg, value pairs to be passed to the script
+        Note: any left over keyword arguments are appened to options
+        The default is_available method waits till all conditions are True, this can be changed by redefining is_available()
+        """
+        self.name = name
         self.script_name = script_name
         self.conditions = conditions
         self.priority = priority
         self.running_priority = running_priority if running_priority else priority
+        self.detectors_enabled = detectors_enabled
+        self.options = options
+        self.options.update(kwargs)
+        self.registered = False
+        self.active = False
+    def update_options(self, options={}, **kwargs):
+        """
+        Updates the options on the task, accepts dict or kwargs
+        """
+        self.options.update(options)
+        self.options.update(kwargs)
     def register(self, task_manager):
+        if self.registered:
+            error('Task already setup')
+            return
         task_manager.active_tasks.append(self)
         for condition in self.conditions:
             condition.register(task_manager)
+        self.registered = True
+    def deregister(self, task_manager):
+        if not self.registered:
+            error('Task not setup, so can not be deregistered')
+        task_manager.active_tasks.remove(self)
+        for condition in self.conditions:
+            condition.deregister(task_manager)
+        self.registered = False
     def is_available(self):
         for condition in self.conditions:
             if not condition.get_state():

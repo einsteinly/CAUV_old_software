@@ -17,8 +17,8 @@ namespace imgproc{
 
 class CombineRGBNode: public Node{
     public:
-        CombineRGBNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        CombineRGBNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

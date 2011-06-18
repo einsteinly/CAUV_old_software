@@ -8,8 +8,8 @@ namespace imgproc{
 
 class GuiOutputNode: public OutputNode{
     public:
-        GuiOutputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        GuiOutputNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){

@@ -33,9 +33,9 @@ class State:
     def __repr__(self):
         return str(self.nodes)
 
-class Model(messaging.BufferedMessageObserver):
+class Model(messaging.MessageObserver):
     def __init__(self, node, pipeline_name = "default"):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.__node = node
 
         self.pipeline_name = pipeline_name

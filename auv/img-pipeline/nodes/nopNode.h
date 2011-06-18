@@ -8,8 +8,8 @@ namespace imgproc{
 
 class NopNode: public Node{
     public:
-        NopNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        NopNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

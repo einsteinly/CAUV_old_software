@@ -17,8 +17,8 @@ namespace imgproc{
 
 class InvertNode: public Node{
     public:
-        InvertNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        InvertNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

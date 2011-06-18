@@ -31,6 +31,7 @@ add_library( gamepadplugin MODULE
     ${GAMEPAD_PLUGIN_UIS_H}
     ${GAMEPAD_PLUGIN_MOC_H}
 )
+cauv_install_plugin( gamepadplugin )
                                       
 target_link_libraries( gamepadplugin
     guicpp-core

@@ -25,6 +25,7 @@ add_library( logsplugin MODULE
     ${LOGS_PLUGIN_UIS_H}
     ${LOGS_PLUGIN_MOC_H}
 )
+cauv_install_plugin( logsplugin )
                                       
 target_link_libraries( logsplugin
     guicpp-core

@@ -1,5 +1,4 @@
 import traceback
-import psutil
 import optparse
 import time
 import subprocess
@@ -7,50 +6,19 @@ import threading
 import os
 import sys
 import string
+import psi.process
+#import psutil
 
-import cauv.messaging as msg
-import cauv.node as node
 from cauv.debug import debug, info, warning, error
+
+from utils.multitasking import spawnDaemon
 
 CPU_Poll_Time = 0.025
 Poll_Delay = 2.0
 Exe_Prefix = '' # set these using command line options
 Script_Dir = '' #
-
-
-def spawnDaemon(func):
-    # see http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
-    # do the UNIX double-fork magic, see Stevens' "Advanced
-    # Programming in the UNIX Environment" for details (ISBN 0201563177)
-    try:
-        pid = os.fork()
-        if pid > 0:
-            # parent process
-            return
-    except OSError, e:
-        print >>sys.stderr, "fork #1 failed: %d (%s)" % (e.errno, e.strerror)
-        sys.exit(1)
-
-    # decouple from parent environment
-    # ... don't
-    #os.chdir("/")
-    os.setsid()
-    #os.umask(0)
-
-    # do second fork
-    try:
-        pid = os.fork()
-        if pid > 0:
-            # exit from second parent
-            sys.exit(0)
-    except OSError, e:
-        print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
-        sys.exit(1)
-    # do stuff
-    func()
-
-    # all done
-    os._exit(os.EX_OK)
+Mem_Divisor = 1024*1024 # MB
+Mem_Units = 'M'         # MB
 
 def fillPathPlaceholders(s):
     r = string.replace(s, '%EDIR', Exe_Prefix)
@@ -64,10 +32,12 @@ class CAUVTask:
         self.__names = names
         self.process = None
         self.running_command = None
-        self.status = 'unknown'
+        self.status = ''
+        self.priority = 0
         self.cpu = None
         self.mem = None
         self.threads = None
+        self.error = None
     def command(self):
         return self.__command
     def shortName(self):
@@ -115,76 +85,105 @@ processes_to_start = [
         CAUVTask('AI Task Manager', '', False, ['AI_task_manager'])
 ]
 
-def limitLength(string, length=40):
+def limitLength(string, length=48):
     string = string.replace('\n', '\\ ')
     if length >= 3 and len(string) > length:
         string = string[:length-3] + '...'
     return string
 
+def psiProcStatusToS(n):
+    'return string describing process status value'
+    if n == psi.process.PROC_STATUS_SIDL:
+        return 'idle'
+    elif n == psi.process.PROC_STATUS_SRUN:
+        return 'running'
+    elif psi.process.PROC_STATUS_SSLEEP:
+        return 'sleeping'
+    elif psi.process.PROC_STATUS_SSTOP:
+        return 'stopped'
+    elif psi.process.PROC_STATUS_SZOMB:
+        return 'zombie'
+    else:
+        return '?'
+
 def getProcesses():
     # returns dictionary of short name : CAUVTasks, all fields filled in
-    pids = psutil.get_pid_list()
+    all_processes = psi.process.ProcessTable()
     # find the pids we're interested in
     processes = {}
     short_names = {}
     for p in processes_to_start:
         processes[p.shortName()] = p
         short_names[p.command()] = p.shortName()
-    for pid in pids:
+    for pid, process in all_processes.iteritems():
         try:
+            tried_to_get_info = False
             task = None
-            process = psutil.Process(pid)
-            command_str = ' '.join(process.cmdline)
-            if command_str in short_names:
-                task = processes[short_names[command_str]]
+            if process.command in short_names:
+                debug('found a process of interest: %s is %s' %
+                    (short_names[process.command], process.command))
+                task = processes[short_names[process.command]]
             else:
                 try:
                     for p_to_start in processes.values():
                         for name in p_to_start.searchForNames():
-                            if command_str.find(name) != -1:
+                            if process.command.find(name) != -1:
                                 task = processes[p_to_start.shortName()]
                                 raise Exception('break')
                 except Exception, e:
-                    #print e
                     if str(e) != 'break':
                         raise
             if task is not None:
-                #debug(task.shortName())
+                process.refresh()
+                task.error = None
                 task.process = process
-                task.running_command = command_str
-                task.status = process.status
-                task.cpu = process.get_cpu_percent(CPU_Poll_Time)
-                task.mem = process.get_memory_percent()
-                task.threads = process.get_num_threads()
-        except psutil.AccessDenied:
-            pass
+                task.running_command = process.command
+                task.status = psiProcStatusToS(process.status)
+                # these might cause privileges exception
+                tried_to_get_info = True
+                task.priority = process.priority
+                task.cpu = process.pcpu
+                task.mem = process.rss # resident size: process.vsz is the virtual mem size
+                task.threads = process.nthreads
+        except psi.AttrInsufficientPrivsError:
+            if tried_to_get_info:
+                task.error = 'Insufficient Privileges'
         except Exception, e:
             warning('%s\n%s' % (e, traceback.format_exc()))
     return processes
 
 def printDetails(cauv_task_list, more_details=False):
-    header = 'name    \tstatus  '
+    Format_Short = '%23s %7s'
+    Format_Extra = '%7s %7s %7s %7s %s'
+    header = Format_Short % ('name', 'status')
     if more_details:
-        header += '\tpid     \tCPU%\tMem%\tthreads \tcommand '
+        header += Format_Extra % ('pid', 'CPU', 'Mem', 'Threads', 'Command')
     info(header)
     info('-' * len(header.expandtabs()))
     for cp in cauv_task_list.values():
-        line = '%8s\t%8s' % (cp.shortName() , cp.status)
+        line = Format_Short % (cp.shortName() , cp.status)
         if more_details and cp.process is not None:
-            if cp.threads is None:
-                line += '\t(access denied)'
-            else:
-                line += '\t%8s\t%4.2f\t%4.2f\t%8s\t%8s' % (
-                    cp.process.pid,
-                    cp.cpu,
-                    cp.mem,
-                    cp.threads,
-                    limitLength(cp.running_command)
-                )
+            cpus = 'None'
+            mems = 'None'
+            if cp.cpu is not None: cpus = '%4.2f' % cp.cpu
+            if cp.mem is not None: mems = '%4.1f%s' % (cp.mem / Mem_Divisor, Mem_Units)
+            line += Format_Extra % (
+                cp.process.pid, cpus, mems, cp.threads,
+                limitLength(cp.running_command)
+            )
+            if cp.error is not None:
+                line += '\t(Error: %s)' % cp.error
+                
         info(line)
     info(' ' * len(header.expandtabs()))
 
+def broadcastStatus(cauv_node):
+    debug('TODO: send this as a message')
+    info('load: %s (1min) %s (5min) %s (15min)' % psi.loadavg())
+    info('uptile: %s hours' % (psi.uptime() / 3600))
+
 def broadcastDetails(processes, cauv_node):
+    import cauv.messaging as msg
     for cp in processes.values():
         m = msg.ProcessStatusMessage()
         m.process = cp.shortName()
@@ -244,6 +243,7 @@ if __name__ == '__main__':
 
     cauv_node = None
     if opts.broadcast:
+        import cauv.node as node
         cauv_node = node.Node("watch")
 
     try:
@@ -252,6 +252,7 @@ if __name__ == '__main__':
             printDetails(processes, opts.details)
             if cauv_node is not None:
                 broadcastDetails(processes, cauv_node)
+                broadcastStatus(cauv_node)
             if not opts.no_start:
                 startInactive(processes)
             time.sleep(Poll_Delay)

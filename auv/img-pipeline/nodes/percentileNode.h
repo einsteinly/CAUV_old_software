@@ -15,8 +15,8 @@ namespace imgproc{
 
 class PercentileNode: public Node{
     public:
-        PercentileNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        PercentileNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){
