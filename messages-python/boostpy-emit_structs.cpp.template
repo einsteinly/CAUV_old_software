@@ -8,6 +8,16 @@
 namespace bp = boost::python;
 using namespace cauv;
 
+#for $s in $structs
+struct ${s.name}Pickler: bp::pickle_suite{
+    static bp::tuple getinitargs(${s.name} const& #if $len($s.fields)#a#end if#){
+        return bp::make_tuple(
+            #for $i, $f in enumerate($s.fields)#a.${f.name}#if $i != $len($s.fields) - 1#,#end if# #end for
+        );
+    }
+};
+#end for
+
 void emitStructs(){
 #for $s in $structs
     ## Add required vector/map types
@@ -33,6 +43,7 @@ void emitStructs(){
         #end if
         .def(bp::self_ns::str(bp::self_ns::self))
         .def(bp::self_ns::repr(bp::self_ns::self))
+        .def_pickle(${s.name}Pickler())
         #for $f in $s.fields
         .def_readwrite("${f.name}", &$s.name::$f.name)
         #end for

@@ -193,7 +193,7 @@ void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr m){
         std::map<node_id, NodeType::e> node_types;
         std::map<node_id, std::map<input_id, NodeOutput> > node_inputs;
         std::map<node_id, std::map<output_id, std::vector<NodeInput> > > node_outputs;
-        std::map<node_id, std::map<param_id, NodeParamValue> > node_parameters;
+        std::map<node_id, std::map<input_id, NodeParamValue> > node_parameters;
         
         lock_t l(m_nodes_lock);
         std::map<node_id, node_ptr_t>::const_iterator i;

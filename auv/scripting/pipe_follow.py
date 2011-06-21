@@ -8,7 +8,7 @@ import time
 from cauv.debug import debug, info
 
 class PipePositioner(messaging.BufferedMessageObserver):
-    def __init__(self, node, auv, centre_name='pipe', target_width=0.2, width_error=0.1, centre_error=0.1, align_error=5, bin=11, threshold=0.1, strafe_p=255, depth_p=0.1, depth_enable=True):
+    def __init__(self, node, auv, centre_name='pipe', target_width=0.2, width_error=0.1, centre_error=0.1, align_error=5, bin=11, threshold=0.1, strafe_p=255, depth_p=0.1, depth_enable=False):
         #basic setup
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node

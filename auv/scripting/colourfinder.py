@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import cauv.messaging as messaging
 
 import cauv

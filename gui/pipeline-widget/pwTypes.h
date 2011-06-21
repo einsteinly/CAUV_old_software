@@ -44,13 +44,13 @@ typedef boost::weak_ptr<Renderable> renderable_wkptr_t;
 typedef boost::shared_ptr<Renderable> renderable_ptr_t;
 typedef boost::weak_ptr<Node> node_wkptr_t;
 typedef boost::shared_ptr<Node> node_ptr_t;
+typedef boost::weak_ptr<Arc> arc_wkptr_t;
 typedef boost::shared_ptr<Arc> arc_ptr_t;
 typedef boost::shared_ptr<Menu> menu_ptr_t;
 typedef boost::shared_ptr<Text> text_ptr_t;
 typedef boost::shared_ptr<ImgNode> imgnode_ptr_t;
 
-// TODO: this should really be synchronised with pipelineTypes.h! (need
-// a pipeline namespace to do that without confusion about Nodes though)
+// TODO: this should really be synchronised with pipelineTypes.h!
 typedef int32_t node_id;
 
 // Types for OverKey:

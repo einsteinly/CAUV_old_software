@@ -20,8 +20,8 @@ namespace imgproc{
 
 class KMeansNode: public Node{
     public:
-        KMeansNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t) :
-                Node(sched, pl, n, t),
+        KMeansNode(ConstructArgs const& args) :
+                Node(args),
                 m_channels(-1),
                 bytedist(0, 255),
                 randbyte(gen, bytedist)

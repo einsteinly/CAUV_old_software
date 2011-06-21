@@ -11,8 +11,8 @@ class InputNode: public Node{
 
     public:
         enum Subscription {ImageData, SonarData};
-        InputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t),m_subscriptions(),
+        InputNode(ConstructArgs const& args)
+            : Node(args), m_subscriptions(),
               ignored(0), processed(0), dropped(0),
               dropped_since(0), m_counters_lock(), m_latest_image_msg(),
               m_latest_sonardata_msg(), m_processed_latest(true),

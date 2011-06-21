@@ -62,6 +62,8 @@ else()
         ${GUICPP_RCC_H}
     )
 
+    cauv_install( guicpp )
+
     target_link_libraries ( guicpp
         guicpp-core
         ${QT_LIBRARIES}

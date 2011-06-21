@@ -30,7 +30,11 @@ set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG CAUV_DEBUG_LEVEL=1
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_RELEASE CAUV_DEBUG_LEVEL=0)
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_RELEASE CAUV_NO_DEBUG)
 
+# rpath stuff
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
+# Custom install which adds a prefix to executables
 set (CAUV_BINARY_PREFIX "cauv-" CACHE STRING "string to prepend to all cauv executables")
 
 function (cauv_install TARGET)

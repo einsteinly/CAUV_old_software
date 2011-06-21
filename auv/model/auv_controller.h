@@ -38,10 +38,7 @@ public:
     void onBatteryUseMessage(BatteryUseMessage_ptr m);
     void onMotorStateMessage(MotorStateMessage_ptr m);
     void onProcessStatusMessage(ProcessStatusMessage_ptr m);
-
-    bool pushState(bool state);
-    bool popState();
-    bool enabled();
+    void onLocationMessage(LocationMessage_ptr m);
 
     void sendMotorMessage(MotorID::e motor, int8_t speed);
     void sendDebugLevelMessage(int32_t level);

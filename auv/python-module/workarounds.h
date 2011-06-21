@@ -378,7 +378,8 @@ inline bool isinstance<unsigned long long>(const boost::python::object& o) { ret
 
 /*
  * Shamelessly stolen from cctbx
- * cctbx.sourceforge.net
+ * cctbx.sourceforge.net (probably BSD Licensed.. some time we should make a
+ * proper list of all the license attributions we need)
  */
 struct default_policy
 {

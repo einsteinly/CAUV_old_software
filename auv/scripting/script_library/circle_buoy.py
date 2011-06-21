@@ -7,14 +7,14 @@ import cauv.pipeline as pipeline
 import cauv.node
 from cauv.debug import debug, info, warning, error
 
-from AI_classes import aiScript
+from AI_classes import aiScript, aiScriptOptions
 
 import time
 import optparse
 import math
 import traceback
 
-class CircleBuoyOptions:
+class scriptOptions(aiScriptOptions):
     # TODO: need some mechanism of setting these from the AI framework?
     Do_Prop_Limit = 50  # max prop for forward/backward adjustment
     Camera_FOV = 60     # degrees
@@ -31,30 +31,25 @@ class CircleBuoyOptions:
     Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
 class script(aiScript):
-    def __init__(self,
-                 strafe_speed = CircleBuoyOptions.Strafe_Speed,
-                 buoy_size    = CircleBuoyOptions.Buoy_Size,
-                 size_kpd     = CircleBuoyOptions.Size_Control_kPD,
-                 angle_kpd    = CircleBuoyOptions.Angle_Control_kPD,
-                 sd_smoothing = CircleBuoyOptions.Size_DError_Smoothing):
-        aiScript.__init__(self, CircleBuoyOptions.Node_Name)
+    def __init__(self, script_name, opts):
+        aiScript.__init__(self, script_name, opts)
         # self.node is set by aiProcess (base class of aiScript)
         self.node.join('processing')
-        self.__pl = pipeline.Model(self.node, CircleBuoyOptions.Load_Pipeline)
-        self.__strafe_speed = strafe_speed
-        self.__buoy_size = buoy_size
+        self.__pl = pipeline.Model(self.node, self.options.Load_Pipeline)
+        self.__strafe_speed = self.options.Strafe_Speed
+        self.__buoy_size = self.options.Buoy_Size
         self.last_size_err = None
         self.last_size_derr = 0
-        self.size_derr_smoothing = 0.5
+        self.size_derr_smoothing = self.options.Size_DError_Smoothing
         self.last_angle_err = None
         self.last_angle_derr = 0
         self.angle_derr_smoothing = 0.5
         self.time_last_seen = None
-        self.__sizekpd = size_kpd
-        self.__anglekpd = angle_kpd
+        self.__sizekpd = self.options.Size_Control_kPD
+        self.__anglekpd = self.options.Angle_Control_kPD
     
     def loadPipeline(self):
-        self.__pl.load(CircleBuoyOptions.Pipeline_File)
+        self.__pl.load(self.options.Pipeline_File)
 
     def onCirclesMessage(self, m):
         if str(m.name) == 'buoy':
@@ -89,7 +84,7 @@ class script(aiScript):
     def actOnBuoy(self, centre, radius):
         now = time.time()
         if self.time_last_seen is not None and \
-           now - self.time_last_seen > CircleBuoyOptions.Warn_Seconds_Between_Sights:
+           now - self.time_last_seen > self.options.Warn_Seconds_Between_Sights:
             info('picked up buoy again')
          
         pos_err = centre - 0.5
@@ -111,7 +106,7 @@ class script(aiScript):
         #    |<------------->|
         #       = 0.5 / sin(FOV/2) = plane_dist
         #
-        plane_dist = 0.5 / math.sin(math.radians(CircleBuoyOptions.Camera_FOV)/2.0)
+        plane_dist = 0.5 / math.sin(math.radians(self.options.Camera_FOV)/2.0)
         angle_err = math.degrees(math.asin(pos_err / plane_dist)) 
         angle_derr = 0
         if self.last_angle_err is not None:
@@ -135,17 +130,17 @@ class script(aiScript):
         self.last_size_err = (now, size_err)
         do_prop = self.__sizekpd[0] * size_err +\
                   self.__sizekpd[1] * size_derr
-        if do_prop > CircleBuoyOptions.Do_Prop_Limit:
-            do_prop = CircleBuoyOptions.Do_Prop_Limit
-        if do_prop < -CircleBuoyOptions.Do_Prop_Limit:
-            do_prop = -CircleBuoyOptions.Do_Prop_Limit
+        if do_prop > self.options.Do_Prop_Limit:
+            do_prop = self.options.Do_Prop_Limit
+        if do_prop < -self.options.Do_Prop_Limit:
+            do_prop = -self.options.Do_Prop_Limit
         debug('angle (e=%g, de=%g) size (e=%g, de=%g)' % (angle_err, angle_derr, size_err, size_derr))            
         debug('turn to %g, prop to %s' % (turn_to, do_prop))
         self.auv.prop(int(round(do_prop)))
         self.time_last_seen = now
 
     def run(self):
-        if CircleBuoyOptions.Load_Pipeline is not None:
+        if self.options.Load_Pipeline is not None:
             saved_pipeline_state = self.__pl.get()
             self.loadPipeline()
         start_bearing = self.auv.getBearing()
@@ -158,10 +153,10 @@ class script(aiScript):
                 time_since_seen = 0
                 if self.time_last_seen is not None:
                     time_since_seen = time.time() - self.time_last_seen
-                    if time_since_seen > CircleBuoyOptions.Warn_Seconds_Between_Sights:
+                    if time_since_seen > self.options.Warn_Seconds_Between_Sights:
                         warning('cannot see buoy: last seen %g seconds ago' %
                                 time_since_seen)
-                    if time_since_seen > CircleBuoyOptions.Give_Up_Seconds_Between_Sights:
+                    if time_since_seen > self.options.Give_Up_Seconds_Between_Sights:
                         # TODO: arrange for this sort of thing to be logged in
                         # the competition log
                         raise Exception('lost the buoy: giving up!')
@@ -188,7 +183,7 @@ class script(aiScript):
             self.auv.stop()
         info('Complete!')
         # restore pipeline that was running before
-        if CircleBuoyOptions.Load_Pipeline is not None:
+        if self.options.Load_Pipeline is not None:
             self.__pl.set(saved_pipeline_state)
         self.notify_exit(exit_status)
             
@@ -206,9 +201,9 @@ if __name__ == '__main__':
             "script in the scripting/ dir")
     p = optparse.OptionParser()
     p.add_option('-s', "--strafe-speed", dest="strafe_speed",
-        default=CircleBuoyOptions.Strafe_Speed, type=int)
+        default=self.options.Strafe_Speed, type=int)
     p.add_option('-b', "--buoy-size", dest="buoy_size",
-        default=CircleBuoyOptions.Buoy_Size, type=int)
+        default=self.options.Buoy_Size, type=int)
     opts, args = p.parse_args()
 
     runStandalone(opts)

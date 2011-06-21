@@ -790,13 +790,10 @@ void ControlNode::setMCB(const std::string& filename)
         m_mcb = boost::make_shared<MCBModule>(filename);
         info() << "MCB Connected";
     }
-    catch (FTDIException& e)
+    catch (std::exception& e)
     {
-        error() << "Cannot connect to MCB: " << e.what();
+        error() << "Cannot connect to MCB on " << filename << ":" << e.what();
         m_mcb.reset();
-        if (e.errCode() == -8) {
-            throw NotRootException();
-        }
     }
 }
 #endif

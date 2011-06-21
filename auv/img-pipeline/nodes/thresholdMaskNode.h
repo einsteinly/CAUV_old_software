@@ -17,8 +17,8 @@ namespace imgproc{
 
 class ThresholdMaskNode: public Node{
     public:
-        ThresholdMaskNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        ThresholdMaskNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

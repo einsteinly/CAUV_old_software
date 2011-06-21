@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# down, forwards, and up
+# Motor test
 
 import cauv
 import cauv.messaging as msg
@@ -16,9 +16,7 @@ import random
 def setupParams(node, auv):
     info('Setting calibration parameters')
     # set-up calibration factors
-    node.send(msg.DepthCalibrationMessage(
-        -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
-    ), "control")
+    auv.calibrateForSaltWater()
 
     auv.bearingParams(1, 0, -80, 1)
     auv.depthParams(40, 0.01, 0, 1)

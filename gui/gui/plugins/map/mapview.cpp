@@ -18,15 +18,20 @@ MapView::MapView() :
     layout()->addWidget(m_marbleWidget);
     m_marbleWidget->setShowGps(true);
 
-    Marble::MarbleModel * model = m_marbleWidget->model();
-
-    Marble::PositionTracking * tracker = model->positionTracking();
-    tracker->setPositionProviderPlugin(new CauvPositionProvider());
-    tracker->setTrackVisible(true);
-
     m_tabs.append(m_marbleWidget);
 
 }
+
+void MapView::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode>){
+    Marble::MarbleModel * model = m_marbleWidget->model();
+
+    Marble::PositionTracking * tracker = model->positionTracking();
+    tracker->setPositionProviderPlugin(new CauvPositionProvider(auv));
+    tracker->setTrackVisible(true);
+
+    updateHomePoint();
+}
+
 
 MapView::~MapView()
 {
@@ -35,6 +40,14 @@ MapView::~MapView()
 
 const QString MapView::name() const {
     return QString("Map");
+}
+
+void MapView::updateHomePoint() {
+    qreal lat, lng;
+    int zoom;
+    m_marbleWidget->model()->home(lat, lng, zoom);
+
+    info() << "should send home point in here" << lat << lng;
 }
 
 const QList<QString> MapView::getGroups() const {

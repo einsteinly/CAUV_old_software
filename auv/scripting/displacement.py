@@ -97,7 +97,9 @@ class Displacement(messaging.MessageObserver):
         if m.motorId == messaging.MotorID.Prop:
             self.updateIntegration()
             debug('Speed: %d' % m.speed)
-            self.speed = m.speed
+            # hacky approximate constant -- integrate displacement3 and tune
+            # constants for better version
+            self.speed = m.speed / 256
 
     def onTelemetryMessage(self, m):
         self.telemetry_bearing = m.orientation.yaw
@@ -114,4 +116,6 @@ if __name__ == '__main__':
     d = Displacement(node)
     while True:
         time.sleep(3)
-        info('%s : %s' % (d.displacement, d.getPositionLL()))
+        ll = d.getPositionLL()        
+        info('%s : %s' % (d.displacement, ll))
+        node.send(msg.LocationMessage(ll))

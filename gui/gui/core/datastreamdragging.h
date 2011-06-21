@@ -15,7 +15,7 @@ namespace cauv {
 
     class DataStreamDragSource{
     public:
-        virtual boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > getDataStreams() const = 0;
+        virtual boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > getDataStreams() = 0;
     };
     
 

@@ -18,8 +18,8 @@ namespace imgproc{
 // Note that the image produced is very faint. Threshold or scale!   
 class CornerHarrisNode: public Node{
     public:
-        CornerHarrisNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        CornerHarrisNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

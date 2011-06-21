@@ -43,6 +43,8 @@ add_library ( guicpp-core SHARED
         ${GUICPP_CORE_RCC_H}
     )
 
+cauv_install( guicpp-core )
+
 target_link_libraries ( guicpp-core
         cauv_debug
         common

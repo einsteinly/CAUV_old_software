@@ -19,8 +19,8 @@ namespace imgproc{
 
 class CentreFinderNode : public OutputNode{
     public:
-        CentreFinderNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        CentreFinderNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){
