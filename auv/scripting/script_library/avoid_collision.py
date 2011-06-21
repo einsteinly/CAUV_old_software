@@ -1,22 +1,17 @@
 #!/usr/bin/env python
 
-import cauv
-import cauv.messaging as msg
-import cauv.node
+from AI_classes import aiScript, aiScriptOptions
 from cauv.debug import debug, info, warning, error
 
-from AI_classes import aiScript
+import time
 
-class AvoidCollisionOptions:
-    Node_Name = "py-collision-avoid"
-    
-class script(aiScript):
-    def __init__(self):
-        aiScript.__init__(self, AvoidCollisionOptions.Node_Name)
-        # self.node is set by aiProcess (base class of aiScript)
-        self.node.join('processing')
-    
+class scriptOptions(aiScriptOptions):
+    class Meta:
+        dynamic = []
+
+class script(aiScript):    
     def run(self):
         print 'About to hit something! reversing for 5 seconds'
-        auv.prop(-127)
+        self.auv.stop()
+        self.auv.prop(-127)
         time.sleep(5)

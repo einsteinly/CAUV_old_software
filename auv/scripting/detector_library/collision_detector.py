@@ -4,27 +4,30 @@ from cauv.debug import debug, info, warning, error
 import cauv.pipeline as pipeline
 
 import math
+from movingaverage import MovingAverage
 
 class CollisionAvoidanceOptions:
     Pipeline_File = 'pipelines/histogram.pipe'
     Load_Pipeline = None #'buoy-detect'
+    Channel = 'Value'
+    No_Trigger = 3
 
 class detector(aiDetector):
-    def __init__(self, node, channel='Value', no_trigger = 3):
+    def __init__(self, node):
         aiDetector.__init__(self, node)
         self.__node = node
         self.node.join('processing')
         node.addObserver(self)
 
-        self.channel = channel
-        self.no_trigger = no_trigger
+        self.channel = CollisionAvoidanceOptions.Channel
+        self.no_trigger = CollisionAvoidanceOptions.No_Trigger
 
         # A class to calculate the moving average of last maxcount number of
         # sample, and set trigger flag when sample is outside tolerance range:
         self.skewMovingMean = MovingAverage('lower', tolerance = 1, maxcount=30, st_multiplier=3)
         self.meanMovingMean = MovingAverage('upper', tolerance = 5, maxcount=30, st_multiplier=3)
 
-        self.__pl = pipeline.Model(self.node, BuoyDetectorOptions.Load_Pipeline)
+        self.__pl = pipeline.Model(self.node, CollisionAvoidanceOptions.Load_Pipeline)
         if CollisionAvoidanceOptions.Load_Pipeline is not None:        
             self.__pl.load(CollisionAvoidanceOptions.Pipeline_File)
     
