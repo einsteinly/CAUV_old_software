@@ -3,6 +3,7 @@ import cauv.messaging as messaging
 from AI_classes import aiProcess
 
 import cPickle
+from IPython.Shell import IPShellEmbed
 
 class aiMessageListener(messaging.BufferedMessageObserver):
     def __init__(self, node):
@@ -45,6 +46,14 @@ def enable_control(ainode):
     
 def disable_control(ainode):
     ainode.ai.auv_control.disable()
+    
+def shell(ainode):
+    print """
+    To access AI use ainode, e.g.
+    -to change a condition, run ainode.ai.task_manager.notify_condition(condition_name, *args, **kwargs)
+    """
+    ipshell = IPShellEmbed()
+    ipshell()
 
 class option():
     def __init__(self, name, func, desc, params):
@@ -103,5 +112,6 @@ if __name__=='__main__':
     m.addFunction('Force Save', force_save, 'Force the task manager to save the current state', {})
     m.addMenu(taskm)
     m.addMenu(scriptm)
+    m.addFunction('Shell', shell, '', {})
     
     m(ainode)

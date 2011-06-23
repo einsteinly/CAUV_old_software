@@ -18,6 +18,8 @@ class auvControl(aiProcess):
         self.current_task_id = None
         self.enabled = threading.Event()
         self.enabled.set()
+        self.limit_lock = threading.Lock()
+        self.depth_limit = None
     @external_function
     def auv_command(self, task_id, command, *args, **kwargs):
         #__getattr__ was more trouble than its worth. since this is abstracted by fakeAUV, doesn't matter to much
@@ -43,6 +45,18 @@ class auvControl(aiProcess):
     def stop(self):
         #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value
         self.auv.stop()
+    @external_function
+    def depth(self, value):
+        with self.limit_lock:
+            if self.depth_limit and self.depth_limit<value:
+                self.auv.depth(self.depth_limit)
+                getattr(self.ai, self.current_task_id).depthOverridden()
+                return
+        self.auv.depth(value)
+    @external_function
+    def limit_depth(value):
+        with self.limit_lock:
+            self.depth_limit = value
     def run(self):
         while True:
             time.sleep(10)

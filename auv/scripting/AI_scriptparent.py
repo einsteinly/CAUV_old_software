@@ -8,34 +8,39 @@ import sys
 import cPickle
 from cauv.debug import error, info
 
-from AI_classes import aiScriptOptions
+from AI_classes import aiScriptOptions, aiProcess
 
 if __name__ == '__main__':
     try:
-        task_ref = sys.argv[1]
-        script_name = sys.argv[2]
-    except IndexError as e:
-        error('Tried to run script with wrong command parameters: '+str(sys.argv))
-        raise e
-    try:
-        script_opts = cPickle.loads(sys.argv[3])
+        try:
+            task_ref = sys.argv[1]
+            script_name = sys.argv[2]
+        except IndexError as e:
+            error('Tried to run script with wrong command parameters: '+str(sys.argv))
+            raise e
+        try:
+            script_opts = cPickle.loads(sys.argv[3])
+        except Exception as e:
+            info('No valid options set for script, using default')
+            script_opts = {}
+        try:
+            script_module = __import__('script_library.'+script_name,fromlist=['script_library'])
+        except ImportError as e:
+            error('Could not import '+script_name+' from script library')
+            raise e
+        try:
+            script_class = script_module.script
+        except AttributeError:
+            error('Script file '+script_name+' does not define a script class')
+            raise Exception
+        try:
+            options_class = script_module.scriptOptions
+        except AttributeError:
+            info('No default options found for script, assuming none')
+            options_class = aiScriptOptions
+        script = script_class(task_ref, options_class(script_opts))
+        script.run()
     except Exception as e:
-        info('No valid options set for script, using default')
-        script_opts = {}
-    try:
-        script_module = __import__('script_library.'+script_name,fromlist=['script_library'])
-    except ImportError as e:
-        error('Could not import '+script_name+' from script library')
+        ainode = aiProcess('script_error_reporter')
+        ainode.ai.task_manager.on_script_exit(task_ref, 'ERROR')
         raise e
-    try:
-        script_class = script_module.script
-    except AttributeError:
-        error('Script file '+script_name+' does not define a script class')
-        raise Exception
-    try:
-        options_class = script_module.scriptOptions
-    except AttributeError:
-        info('No default options found for script, assuming none')
-        options_class = aiScriptOptions
-    script = script_class(task_ref, options_class(script_opts))
-    script.run()
