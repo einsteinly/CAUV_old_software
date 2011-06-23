@@ -53,17 +53,17 @@ ProcessStateView::~ProcessStateView()
 
 void ProcessStateView::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
     CauvBasicPlugin::initialise(auv, node);
-    auv->computer_state.processes->onUpdate.connect(boost::bind(&ProcessStateView::onProcessStateUpdate, this, _1));
+    auv->computer_state.new_process_stream->onUpdate.connect(boost::bind(&ProcessStateView::onNewProcess, this, _1));
 }
 
 
-boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > ProcessStateView::getDataStreams() const {
+boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DraggableTableWidget::getDataStreams() {
     boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<DataStreamBase> > >();
 
-    QList<QTableWidgetItem *> items = ui->tableWidget->selectedItems();
+    QList<QTableWidgetItem *> items = selectedItems();
 
     foreach(QTableWidgetItem * item, items){
-        DataStreamTableItem * dsItem = dynamic_cast<DataStreamTableItem *>(item);
+        cauv::DataStreamTableItem * dsItem = dynamic_cast<cauv::DataStreamTableItem *>(item);
         if(dsItem){
             streams->push_back(dsItem->getDataStream());
         }
@@ -72,53 +72,67 @@ boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > ProcessState
     return streams;
 }
 
-
-void ProcessStateView::onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status){
-
+void ProcessStateView::onNewProcess(boost::shared_ptr<DataStream<ProcessState> > stream) {
     int row = m_processes.size();
     try {
-        row = m_processes.at(process);
+        row = m_processes.at(stream->getName());
+        return; // not acutally new
     } catch (...) {
+        // new splitter required
+
+        boost::shared_ptr<DataStreamSplitter<ProcessState> > splitter = boost::make_shared<DataStreamSplitter<ProcessState> >(stream);
+        stream->onUpdate.connect(boost::bind(&ProcessStateView::onProcessStateUpdate, this, _1));
+        m_splitters.push_back(splitter);
+
         ui->tableWidget->setRowCount(row+1);
-        ui->tableWidget->setItem(row, 0, new DataStreamTableItem(m_auv->computer_state.processes));
-        ui->tableWidget->setItem(row, 1, new DataStreamTableItem(m_auv->computer_state.processes));
-        ui->tableWidget->setItem(row, 2, new DataStreamTableItem(m_auv->computer_state.processes));
-        ui->tableWidget->setItem(row, 3, new DataStreamTableItem(m_auv->computer_state.processes));
-        ui->tableWidget->setItem(row, 4, new DataStreamTableItem(m_auv->computer_state.processes));
-        m_processes[process] = row;
+        ui->tableWidget->setItem(row, 0, new DataStreamTableItem(splitter->process));
+        ui->tableWidget->setItem(row, 1, new DataStreamTableItem(splitter->cpu));
+        ui->tableWidget->setItem(row, 2, new DataStreamTableItem(splitter->mem));
+        ui->tableWidget->setItem(row, 3, new DataStreamTableItem(splitter->threads));
+        ui->tableWidget->setItem(row, 4, new DataStreamTableItem(splitter->status));
+        m_processes[stream->getName()] = row;
     }
-
-    QTableWidgetItem * nameWidget = ui->tableWidget->item(row, 0);
-    QTableWidgetItem * cpuWidget = ui->tableWidget->item(row, 1);
-    QTableWidgetItem * memWidget = ui->tableWidget->item(row, 2);
-    QTableWidgetItem * threadsWidget = ui->tableWidget->item(row, 3);
-    QTableWidgetItem * statusWidget = ui->tableWidget->item(row, 4);
-
-    if(nameWidget)
-        nameWidget->setText(QString::fromStdString(process));
-    else error() << "nameWidget not set somehow";
-    if(cpuWidget){
-        if(cpu != -1)
-            cpuWidget->setText(QString::number(cpu));
-        else cpuWidget->setText(QString("n/a"));
-    }
-    else error() << "cpuWidget not set somehow";
-    if(memWidget){
-        if(mem != -1)
-            memWidget->setText(QString::number(mem));
-        else memWidget->setText(QString("n/a"));
-    }
-    else error() << "memWidget not set somehow";
-    if(threadsWidget)
-        threadsWidget->setText(QString::number(threads));
-    else error() << "threadsWidget not set somehow";
-    if(statusWidget)
-        statusWidget->setText(QString::fromStdString(status));
-    else error() << "statusWidget not set somehow";
 }
 
 void ProcessStateView::onProcessStateUpdate(const ProcessState &state){
     onProcessStateUpdate(state.process(), state.cpu(), state.mem(), state.threads(), state.status());
+}
+
+void ProcessStateView::onProcessStateUpdate(const std::string process, const float cpu, const float mem, const float threads, std::string status){
+
+    try {
+        int row = m_processes.at(process);
+
+        QTableWidgetItem * nameWidget = ui->tableWidget->item(row, 0);
+        QTableWidgetItem * cpuWidget = ui->tableWidget->item(row, 1);
+        QTableWidgetItem * memWidget = ui->tableWidget->item(row, 2);
+        QTableWidgetItem * threadsWidget = ui->tableWidget->item(row, 3);
+        QTableWidgetItem * statusWidget = ui->tableWidget->item(row, 4);
+
+        if(nameWidget)
+            nameWidget->setText(QString::fromStdString(process));
+        else error() << "nameWidget not set somehow";
+        if(cpuWidget){
+            if(cpu != -1)
+                cpuWidget->setText(QString::number(cpu));
+            else cpuWidget->setText(QString("n/a"));
+        }
+        else error() << "cpuWidget not set somehow";
+        if(memWidget){
+            if(mem != -1)
+                memWidget->setText(QString::number(mem));
+            else memWidget->setText(QString("n/a"));
+        }
+        else error() << "memWidget not set somehow";
+        if(threadsWidget)
+            threadsWidget->setText(QString::number(threads));
+        else error() << "threadsWidget not set somehow";
+        if(statusWidget)
+            statusWidget->setText(QString::fromStdString(status));
+        else error() << "statusWidget not set somehow";
+
+    } catch (...) {
+    }
 }
 
 const QString ProcessStateView::name() const{

@@ -107,25 +107,6 @@ void AUVController::sendScriptMessage(ScriptExecRequest script){
     onMessageGenerated(boost::make_shared<ScriptMessage>(script));
 }
 
-bool AUVController::pushState(bool state) {
-    bool preChangeState = enabled();
-    m_state.push_back(state);
-    return preChangeState;
-}
-
-bool AUVController::popState() {
-    if (m_state.empty()) return true; // on by default
-
-    bool value = m_state.back();
-    m_state.pop_back();
-    return value;
-}
-
-bool AUVController::enabled() {
-    if (m_state.empty()) return true; // on by default
-
-    return m_state.back();
-}
 
 /** message handling **/
 
@@ -229,6 +210,11 @@ void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
 
 }
 
+void AUVController::onLocationMessage(LocationMessage_ptr m){
+    m_auv->sensors.speed->update(m->speed());
+    m_auv->sensors.location->update(*(m.get()));
+}
+
 void AUVController::onPressureMessage(PressureMessage_ptr message){
     m_auv->sensors.pressure_fore->update(message->fore());
     m_auv->sensors.pressure_aft->update(message->aft());
@@ -245,7 +231,17 @@ void AUVController::onBatteryUseMessage(BatteryUseMessage_ptr message) {
 }
 
 void AUVController::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
-    m_auv->computer_state.processes->update(*(message.get()));
+
+    boost::shared_ptr<DataStream<ProcessState> > processStateStream;
+
+    try {
+        processStateStream = m_auv->computer_state.processes.at(message->process());
+    } catch (std::out_of_range ex){
+        processStateStream = boost::make_shared<DataStream<ProcessState> >(message->process(), "");
+        m_auv->computer_state.new_process_stream->update(processStateStream);
+    }
+
+    processStateStream->update(*(message.get()));
 }
 
 void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){

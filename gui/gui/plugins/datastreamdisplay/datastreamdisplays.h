@@ -86,7 +86,7 @@ class DataStreamList : public QTreeWidget, public cauv::DataStreamDragSource {
 public:
     DataStreamList(QWidget * parent);
     
-    boost::shared_ptr<std::vector<boost::shared_ptr<cauv::DataStreamBase> > > getDataStreams() const;
+    boost::shared_ptr<std::vector<boost::shared_ptr<cauv::DataStreamBase> > > getDataStreams();
     
 private Q_SLOTS:
     void editStarted(QTreeWidgetItem* item, int column);

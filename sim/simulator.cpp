@@ -11,6 +11,7 @@
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgGA/TrackballManipulator>
+#include <osgDB/WriteFile>
 
 #include "validators.h"
 
@@ -23,45 +24,53 @@
 using namespace cauv;
 using namespace cauv::sim;
 
+
 Simulator::Simulator() : CauvNode("CauvSim"),
 m_auv(boost::make_shared<AUV>()),
 m_auv_controller(boost::make_shared<AUVController>(m_auv)),
-m_simulated_auv(boost::make_shared<RedHerring>(m_auv)),
+m_simulated_auv(boost::make_shared<RedHerring>(this, m_auv)),
 m_root(new osg::Group()),
-m_viewer(new osgViewer::CompositeViewer())
+m_viewer(new osgViewer::Viewer())
 {
     joinGroup("control");
     joinGroup("telemetry");
 
+    // graphics context for off screen rendering
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+    traits->x = 0;
+    traits->y = 0;
+    traits->width = 300;
+    traits->height = 200;
+    traits->red = 8;
+    traits->green = 8;
+    traits->blue = 8;
+    traits->alpha = 8;
+    traits->windowDecoration = false;
+    traits->pbuffer = true;
+    traits->doubleBuffer = true;
+    traits->sharedContext = 0;
+
+    osg::ref_ptr<osg::GraphicsContext> pbuffer = osg::GraphicsContext::createGraphicsContext(traits.get());
+
+
+    if(!pbuffer) {
+        error() << __FILE__ << " - " << __FUNCTION__ << " - Failed to create pbuffer.";
+        exit(1);
+    }
+
+    m_viewer->setSceneData(m_root);
+
+
     //
-    // the users camera
-    osgViewer::Viewer * userView = new osgViewer::Viewer();
-    userView->setSceneData(m_root.get());
-    userView->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,-20,0), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
-    userView->getCamera()->setViewport(0, 0, 1024, 768);
-
-    // mouse handling
-    osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-    tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-    userView->setCameraManipulator( tb );
-
-    m_viewer->addView(userView);
-
-    //
-    // the auv cameras
-    foreach(osg::ref_ptr<sim::Camera > camera, m_simulated_auv->getCameras()){
-
-        camera->setSceneData(m_root.get());
-
-        camera->getCamera()->setViewMatrixAsLookAt(osg::Vec3f(0,0,0), osg::Vec3f(0, 20, 0), osg::Vec3f(0,0,1));
-
-        // mouse handling
-        osgGA::TrackballManipulator* tb = new osgGA::TrackballManipulator;
-        tb->setHomePosition( osg::Vec3f(0.f,-20.f,0.f), osg::Vec3f(0.f,0.f,0.f), osg::Vec3f(0,0,1) );
-        camera->setCameraManipulator( tb );
-
-        // mouse handling
-        m_viewer->addView(camera);
+    // sort out the AUVs cameras
+    foreach(boost::shared_ptr<sim::Camera> simulatedCam, m_simulated_auv->getCameras()){
+        osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+        m_viewer->addSlave(camera.get(), osg::Matrixd(), osg::Matrixd());
+        camera->setGraphicsContext(pbuffer.get());
+        camera->setViewport(new osg::Viewport(0,0,300,200));
+        camera->attach(osg::Camera::COLOR_BUFFER, simulatedCam.get());
+        camera->setViewMatrixAsLookAt(osg::Vec3f(0,-20,2), osg::Vec3f(0, 0, 0), osg::Vec3f(0,0,1));
+        info() <<"Added simulated camera";
     }
 }
 
@@ -74,6 +83,19 @@ osg::ref_ptr<WorldModel> Simulator::getWorldModel(){
 void Simulator::onRun()
 {
     CauvNode::onRun();
+
+    m_viewer->setUpViewInWindow( 0,0,1024,768, 0 );
+
+    m_viewer->realize();
+    while(!m_viewer->done()){
+        double simTime = m_viewer->getFrameStamp()->getSimulationTime();
+        m_viewer->frame(simTime);
+        m_viewer->advance();
+        info() << "scene redrawn at " << simTime;
+
+        m_simulated_auv->propagateTicks(simTime);
+        info() << "Simulation tick completed";
+    }
 }
 
 
@@ -113,9 +135,9 @@ void Simulator::launchViewer(){
     m_viewer->getViews(views, false);
 
     foreach (osgViewer::View * i, views){
-        //i->setUpViewInWindow( 0,0,1920,1280, 0 );
-        i->setUpViewOnSingleScreen(0);
-        m_world_model->getOceanSceneModel()->getOceanScene()->setScreenDims(osg::Vec2s(1920, 1280));
+        i->setUpViewInWindow( 0,0,1024,768, 0 );
+        //i->setUpViewOnSingleScreen(0);
+        //m_world_model->getOceanSceneModel()->getOceanScene()->setScreenDims(osg::Vec2s(1920, 1280));
     }
 
     m_viewer->run();
@@ -160,19 +182,11 @@ int Simulator::useOptionsMap(boost::program_options::variables_map& vm, boost::p
 
     m_root->addChild(m_world_model);
 
+    osgDB::Registry::instance()->getDataFilePathList().push_back("/home/andy/dev/libs/openscenegraph/OpenSceneGraph-Data");
+    const std::string filename = "cow.osg";
+    osg::ref_ptr<osg::Node> cow = osgDB::readNodeFile(filename);
 
-    // see if the user wants a window into the world...
-    if(vm.count("viewer")) {
-        boost::thread(boost::bind(&Simulator::launchViewer, this));
-    } else {
-        m_viewer->realize();
-        while(!m_viewer->done()){
-            m_viewer->advance();
-            m_viewer->eventTraversal();
-            m_viewer->updateTraversal();
-            m_viewer->renderingTraversals();
-        }
-    }
+    m_world_model->addChild(cow);
 
     return CauvNode::useOptionsMap(vm, desc);
 }

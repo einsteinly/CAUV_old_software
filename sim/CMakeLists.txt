@@ -28,6 +28,7 @@ if (${CAUV_BUILD_SIM})
     add_executable (
         sim EXCLUDE_FROM_ALL
         sim-main.cpp
+        simnode.cpp
         simulator.cpp
         worldmodel.cpp
         validators.cpp
