@@ -180,7 +180,7 @@ def printDetails(cauv_task_list, more_details=False):
 def broadcastStatus(cauv_node):
     debug('TODO: send this as a message')
     info('load: %s (1min) %s (5min) %s (15min)' % psi.loadavg())
-    info('uptile: %s hours' % (psi.uptime() / 3600))
+    info('uptime: %s hours' % (psi.uptime().tv_sec / 3600))
 
 def broadcastDetails(processes, cauv_node):
     import cauv.messaging as msg
