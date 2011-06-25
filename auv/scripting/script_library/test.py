@@ -10,14 +10,16 @@ class scriptOptions(aiScriptOptions):
 
 class script(aiScript):
     def run(self):
-        try:
-            while True:
-                print self.options.initial, self.options.variable
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
-        if raw_input('Something was detected, has it been confirmed?'):
-            self.notify_exit(0)
+        while raw_input('Continue? y/n: ') != 'n':
+            print self.options.initial, self.options.variable
+            time.sleep(1)
+        a = raw_input('Something was detected, has it been confirmed? y/n: ')
+        if a == 'y':
+            self.notify_exit('SUCCESS')
+        elif a == 'n':
+            self.notify_exit('FAILURE')
+        else:
+            raise Exception
             
 
 if __name__=='__main__':

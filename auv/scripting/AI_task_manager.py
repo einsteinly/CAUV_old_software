@@ -9,6 +9,7 @@ import subprocess
 import cPickle
 import shelve
 import optparse
+import traceback
 
 from os.path import getmtime
 
@@ -16,9 +17,6 @@ from AI_classes import aiProcess, external_function
 
 """          
 task manager auto generates a list of what it should be running from these 'tasks', basically looking for these tasks and then running appropriate scripts
-TODO:
--should also have a current status file, in case task manager crashes and has to be restarted
--record when a task is finished... this could be done either using the on_script_exit return value or remove_task called directly from the script
 """          
 
 class taskManager(aiProcess):
@@ -41,9 +39,6 @@ class taskManager(aiProcess):
         self.running_script = None
         self.current_task = None
         self.current_priority = 0
-        #pipeline management stuff
-        self.pipeline_lock = threading.Lock()
-        self.branches = {} #branch_name: usage_count
         #state data file
         self.state = shelve.open(mission+'_state.shelf')
         #Setup intial values
@@ -168,9 +163,16 @@ class taskManager(aiProcess):
                 f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) for x in task.options.items()])+'\n')
             f.close()
     @external_function
-    def on_script_exit(self, status):
-        #TODO do something useful with return status, e.g. remove task if success
-        getattr(self.ai,self.current_task).confirm_exit()
+    def on_script_exit(self, task, status):
+        if status == 'ERROR':
+            self.task_list[task].crash_count += 1
+            if self.task_list[task].crash_count >= self.task_list[task].crash_limit:
+                self.remove_task(task)
+                warning('%s had too many unhandled exceptions, so has being removed from the active tasks.' %(task,))
+        elif status == 'SUCCESS':
+            self.remove_task(task)
+            info('%s has finished succesfully, so is being removed from active tasks.' %(task,))
+        getattr(self.ai,task).confirm_exit()
         #Force immediate recheck
         self.conditions_changed.set()
     @external_function
@@ -215,18 +217,6 @@ class taskManager(aiProcess):
             self.task_list[self.current_task].active = False
         self.current_task = task.name
         task.active = True
-    @external_function
-    def request_pl(self, requestor_type, requestor_name, requested_pl, req_nodes):
-        with self.pipeline_lock:
-            #if r_type is script, we only want one pipeline at a time, so wipe old pipeline
-            #check to see whether optimised version exists
-            #if optimised version
-            #else if not optimised version
-            #find the input nodes and check whether they already exist
-            #create a copy node and attach pipeline
-            #set output names
-            #tell the requestor what nodes to listen to
-            getattr(self.ai, requestor_name).pl_response(node_names)
     def run(self):
         while True:
             self.conditions_changed.wait(5)

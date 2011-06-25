@@ -208,29 +208,36 @@ class aiScript(aiProcess):
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
-        self.pl_enabled = False
-    def request_pl(self, pl_name):
+        self._pl_enabled = False
+        self._pl_setup = threading.Event()
+        self._pl_response = None
+    def request_pl(self, pl_name, outnode_names):
         #Not implemented yet
-        if not self.pl_enabled:
+        if not self._pl_enabled:
             self.node.join('processing')
-            pl.enabled = True
-        self.pl_ref = None
+            self._pl.enabled = True
+        self._pl_response = None
         for x in range(5):
-            self.ai.task_manager.request_pl('script', self.task_name, pl_name)
+            self.ai.pipeline_manager.request_pl('script', self.task_name, pl_name, outnode_names)
             time.sleep(2)
-            if self.pl_ref:
-                break
+            if self._pl_setup.is_set():
+                self._pl_setup.clear()
+                return self._pl_response
         else:
             raise CommunicationError('No response from pipeline management.')
     @external_function
-    def pl_reponse(self, pl_ref):
-        pl_name = pl_ref
+    def pl_reponse(self, pl_response):
+        self._pl_response = pl_response
+        self._pl_setup.set()
     @external_function
     def set_option(self, option_name, option_value):
         self.options.set_option(option_name, option_value)
+    @external_function
+    def depthOverridden(self):
+        warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
     def notify_exit(self, exit_status):
         for x in range(5):
-            self.ai.task_manager.on_script_exit(exit_status)
+            self.ai.task_manager.on_script_exit(self.task_name, exit_status)
             if self.exit_confirmed.wait(1.0):
                 return
         error("Task manager failed to acknowledge script "+self.task_name+" exit")
@@ -330,7 +337,7 @@ class detectorCondition(aiCondition):
         aiCondition.deregister(self, task_manager)
 
 class aiTask():
-    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=[], options={}, **kwargs):
+    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=None, crash_limit=5, options=None, **kwargs):
         """
         Defines a 'Task', a script to run and when to run it
         Options:
@@ -346,14 +353,16 @@ class aiTask():
         """
         self.name = name
         self.script_name = script_name
-        self.conditions = conditions
+        self.conditions = conditions if conditions else []
         self.priority = priority
         self.running_priority = running_priority if running_priority else priority
         self.detectors_enabled = detectors_enabled
-        self.options = options
+        self.options = options if options else {}
         self.options.update(kwargs)
         self.registered = False
         self.active = False
+        self.crash_count = 0
+        self.crash_limit = crash_limit
     def update_options(self, options={}, **kwargs):
         """
         Updates the options on the task, accepts dict or kwargs
