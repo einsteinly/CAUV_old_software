@@ -114,7 +114,7 @@ class ThrottleNode: public Node{
                     // if we've been spinning waiting for doWork (probably
                     // because this node was disconnected), then sleep a bit
                     // before trying again
-                    msleep(clamp(100, unsigned(0.5f+1.0e3f/m_current_timer_rate), 1000));
+                    msleep(clamp(100, int(0.5f+1.0e3f/m_current_timer_rate), 1000));
                 }
                 unique_lock_t l(m_mux);
                 if(executed && !m_already_notified_need_callback)

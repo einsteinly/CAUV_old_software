@@ -18,6 +18,19 @@ class AsynchronousNode;
 class Scheduler;
 class ImageProcessor;
 
+enum SchedulerPriority {
+    priority_slow,
+    priority_fast,
+    priority_fastest
+};
+
+typedef boost::shared_ptr<Node> node_ptr_t;
+typedef boost::weak_ptr<Node> node_wkptr_t;
+
+typedef int32_t node_id;
+typedef std::string input_id;
+typedef std::string output_id;
+
 class img_pipeline_error: public std::runtime_error{
     public:
         img_pipeline_error(std::string const& str)
@@ -62,23 +75,17 @@ class parameter_error: public img_pipeline_error{
 
 class bad_input_error: public img_pipeline_error{
     public:
-        bad_input_error(std::string const& str = "")
-            : img_pipeline_error("parameter error: " + str){
+        bad_input_error(input_id const& iid, std::string const& str = "")
+            : img_pipeline_error("parameter error: " + str), m_iid(iid){
         }
+        virtual ~bad_input_error() throw(){
+        }
+        input_id const& inputId() const{
+            return m_iid;
+        }
+    private:
+        input_id m_iid;
 };
-
-enum SchedulerPriority {
-    priority_slow,
-    priority_fast,
-    priority_fastest
-};
-
-typedef boost::shared_ptr<Node> node_ptr_t;
-typedef boost::weak_ptr<Node> node_wkptr_t;
-
-typedef int32_t node_id;
-typedef std::string input_id;
-typedef std::string output_id;
 
 } // namespace imgproc
 } // namespace cauv

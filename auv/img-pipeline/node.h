@@ -455,7 +455,10 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         void clearNewInput();
         /* setNewInput also clears Invalid state */
         void clearValidInput(input_id const&);
-        bool validInputAll() const;
+        /* checks that image inputs are connected, and have non-NULL values,
+         * etc. Requests new input from parents for those that are invalid
+         */
+        bool ensureValidInput();
 
         /* All these functions now consider parameters as inputs (but
          * parameters are not Must_Be_New (required) inputs by default
@@ -484,8 +487,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         /* The only derived type that ever needs to call this is ThrottleNode.
          */
         void demandNewParentInput() throw();
-
     private:
+        void demandNewParentInput(input_id const& id) throw();
 
         void _statusMessage(boost::shared_ptr<Message const>);
         static node_id _newID() throw();

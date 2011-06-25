@@ -307,17 +307,18 @@ void Node::exec(){
                 if(!*ip){
                     warning() << "exec: no parent or valid input on: " << v.first;
                     clearValidInput(v.first);
-                    throw bad_input_error();
+                    throw bad_input_error(v.first);
                 }
                 inputs[v.first] = ip->getImage();
                 if(!inputs[v.first]){
                     warning() << "exec: no output from: " << ip->target << "->" << v.first;
-                    clearValidInput(v.first);
-                    throw bad_input_error();
+                    throw bad_input_error(v.first);
                 }
             }
         }
-    }catch(bad_input_error&){
+    }catch(bad_input_error& e){
+        clearValidInput(e.inputId());    
+        demandNewParentInput(e.inputId());
         return;
     }
 
@@ -472,38 +473,56 @@ void Node::registerInputID(input_id const& i, InputSchedType const& st){
  */
 void Node::checkAddSched(SchedMode m){
     lock_t l(m_checking_sched_lock);
-    if(m != Force && !allowQueue()){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", allowQueue false";
+
+    // return as soon as we know that the check has failed
+    if(execQueued()){
+        debug(4) << __func__ << "Cannot enqueue" << *this << ", exec queued already";
         return;
     }
-    if(execQueued()){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", exec queued already";
+    
+    // only SchedMode Force overrides allowQueue() being false
+    if(m != Force && !allowQueue()){
+        debug(4) << __func__ << "Cannot enqueue" << *this << ", allowQueue false";
         return;
     }
 
     const bool out_demanded = newOutputDemanded();
-    const bool any_new_in = anyInputsAreNew();
-    if(m != Always && m != Force && out_demanded == false && any_new_in == false){
-        debug(4) << __func__ << "Cannot enqueue node" << *this
-                 << "new input/params=" << any_new_in << "output demand=" << out_demanded;
-        return;
+    //const bool any_new_in = anyInputsAreNew();
+    const bool all_required_in = allRequiredInputsAreNew();
+    const bool any_required_in = anyRequiredInputsAreNew();
+
+    switch(m){
+        case AllNew:
+            if(!all_required_in){
+                debug(4) << __func__ << "Cannot enqueue" << *this << ", some input is old";
+                return;
+            }
+            // !!!!  fall through !!!!
+        case AnyNew:
+            if(!out_demanded){
+                debug(4) << __func__ << "Cannot enqueue" << *this << ", no output demanded";
+                return;
+            }
+            if(!any_required_in){
+                debug(4) << __func__ << "Cannot enqueue" << *this << ", all required input is old";
+                return;
+            }
+            if(!ensureValidInput()){
+                debug(4) << __func__ << "Cannot enqueue" << *this << ", invalid input";
+                return;
+            }
+            break;
+        case Always:
+            if(!out_demanded){
+                debug(4) << __func__ << "Cannot enqueue" << *this << ", no output demanded";
+                return;
+            }
+            break;
+        case Force:
+            break;
     }
 
-    if(!validInputAll()){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", input is invalid";
-        return;
-    }
-
-    if(m == AllNew && !allRequiredInputsAreNew()){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", some input is old";
-        return;
-    }
-
-    if(m == AnyNew && !anyRequiredInputsAreNew()){
-        debug(4) << __func__ << "Cannot enqueue node" << *this << ", all input is old";
-        return;
-    }
-
+    // still going? then everything is ok for scheduling:
     debug(4) << __func__ << "Queueing node (" << m << "):" << *this;
     setExecQueued();
     m_sched.addJob(shared_from_this(), m_priority);
@@ -572,10 +591,16 @@ bool Node::allRequiredInputsAreNew() const{
 
 bool Node::anyRequiredInputsAreNew() const{
     lock_t m(m_inputs_lock);
+    bool default_status = true;
     foreach(private_in_map_t::value_type const& i, m_inputs)
-        if(i.second->sched_type == Must_Be_New && i.second->status == NodeInputStatus::New)
-            return true;
-    return false;
+        // any Must_Be_New inputs imply that the node shouldn't execute if
+        // nothing is new
+        if(i.second->sched_type == Must_Be_New){
+            default_status = false;
+            if(i.second->status == NodeInputStatus::New)
+                return true;
+        }
+    return default_status;
 }
 
 bool Node::anyInputsAreNew() const{
@@ -599,11 +624,30 @@ void Node::clearValidInput(input_id const& id){
     }
 }
 
-bool Node::validInputAll() const{
+bool Node::ensureValidInput(){
+    // check all inputs are valid, if not, demand new input
     lock_t l(m_inputs_lock);
-    foreach(private_in_map_t::value_type const& i, m_inputs)
-        if(!*i.second)
-            return false;
+    // We mustn't hold m_inputs_lock while calling methods on other nodes, so
+    // first collect a list of everything we need to do, then release the lock
+    // and do it:
+    std::vector<input_link_t> parents;
+    bool invalid_input = false;
+    parents.reserve(m_inputs.size()); 
+    foreach(private_in_map_t::value_type& i, m_inputs)
+        if(!*i.second){
+            invalid_input = true;
+            if(i.second->target){
+                parents.push_back(i.second->target);
+            }
+        }
+    if(parents.size())
+        debug(5) << __func__ << "Invalid input from parents:" << parents;
+    l.unlock();
+    foreach(input_link_t const& v, parents)
+        v.node->setNewOutputDemanded(v.id);
+
+    if(invalid_input)
+        return false;
     return true;
 }
 
@@ -687,8 +731,8 @@ bool Node::execQueued() const{
 
 void Node::demandNewParentInput() throw(){
     lock_t l(m_inputs_lock);
-    debug(5) << "node" << *this << "demanding new output from all parents";
-    // We mustn't hold m_imputs_lock while calling methods on other nodes, so
+    debug(5) << *this << "demanding new output from all parents";
+    // We mustn't hold m_inputs_lock while calling methods on other nodes, so
     // first collect a list of everything we need to do, then release the lock
     // and do it:
     std::vector<input_link_t> parents;
@@ -699,6 +743,18 @@ void Node::demandNewParentInput() throw(){
     l.unlock();
     foreach(input_link_t const& v, parents)
         v.node->setNewOutputDemanded(v.id);
+}
+
+void Node::demandNewParentInput(input_id const& iid) throw(){
+    lock_t l(m_inputs_lock);
+    debug(5) << *this << "demanding new output from parent on" << iid;
+    // mustn't hold m_inputs_lock while calling methods on other nodes
+    input_link_t parent;
+    const private_in_map_t::iterator i = m_inputs.find(iid);
+    if(i->second->target)
+        parent = i->second->target;
+    l.unlock();
+    parent.node->setNewOutputDemanded(parent.id);
 }
 
 #ifndef NO_NODE_IO_STATUS
