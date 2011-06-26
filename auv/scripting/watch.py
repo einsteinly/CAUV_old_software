@@ -183,10 +183,10 @@ def getProcesses():
 
 def printDetails(cauv_task_list, more_details=False):
     Format_Short = '%23s %7s'
-    Format_Extra = '%7s %7s %7s %7s %s'
+    Format_Extra = '%7s %8s %7s %7s %8s %s'
     header = Format_Short % ('name', 'status')
     if more_details:
-        header += Format_Extra % ('pid', 'CPU', 'Mem', 'Threads', 'Command')
+        header += Format_Extra % ('pid', 'priority', 'CPU', 'Mem', 'Threads', 'Command')
     info(header)
     info('-' * len(header.expandtabs()))
     for cp in sorted(cauv_task_list.values()):
@@ -197,7 +197,7 @@ def printDetails(cauv_task_list, more_details=False):
             if cp.cpu is not None: cpus = '%4.2f' % cp.cpu
             if cp.mem is not None: mems = '%4.1f%s' % (cp.mem / Mem_Divisor, Mem_Units)
             line += Format_Extra % (
-                cp.process.pid, cpus, mems, cp.threads,
+                cp.process.pid, cp.priority, cpus, mems, cp.threads,
                 limitLength(cp.running_command)
             )
             if cp.error is not None:
