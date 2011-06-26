@@ -8,7 +8,7 @@ import sys
 import string
 import psi.process
 import psi.arch
-#import psutil
+import psutil
 
 from cauv.debug import debug, info, warning, error
 
@@ -20,6 +20,7 @@ Exe_Prefix = '' # set these using command line options
 Script_Dir = '' #
 Mem_Divisor = 1024*1024 # MB
 Mem_Units = 'M'         # MB
+Arch = psi.arch.arch_type()
 
 def fillPathPlaceholders(s):
     r = string.replace(s, '%EDIR', Exe_Prefix)
@@ -67,16 +68,16 @@ processes_to_start = [
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',               'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
-        CAUVTask('img-pipe default',     'nohup %EDIR/img-pipeline -n default',         True, ['img-pipeline -n default']),
-        CAUVTask('img-pipe buoy-detect', 'nohup %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
-        CAUVTask('img-pipe pipe-detect', 'nohup %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
-        CAUVTask('img-pipe sonar',       'nohup %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
-        CAUVTask('sonar',                'nohup %EDIR/sonar /dev/ttyUSB1',              True, ['sonar']),
+        CAUVTask('logger',               'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
+        CAUVTask('img-pipe default',     'nohup nice -n 15 %EDIR/img-pipeline -n default',         True, ['img-pipeline -n default']),
+        CAUVTask('img-pipe buoy-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
+        CAUVTask('img-pipe pipe-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
+        CAUVTask('img-pipe sonar',       'nohup nice -n 15 %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
+        CAUVTask('sonar',                'nohup nice -n 5 %EDIR/sonar /dev/ttyUSB1',              True, ['sonar']),
         CAUVTask('controlv2',            'nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0',    True, ['controlv2']),
         CAUVTask('spread',               'nohup spread',                                True, ['spread']),
         CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
-        CAUVTask('battery',              'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('battery',              'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
@@ -95,7 +96,7 @@ def limitLength(string, length=48):
 def psiProcStatusToS(n):
     'return string describing process status value'
     #pylint: disable=E1101
-    if isinstance(psi.arch.arch_type(), psi.arch.ArchLinux):
+    if isinstance(Arch, psi.arch.ArchLinux):
         if n == psi.process.PROC_STATUS_DEAD:
             return 'dead'
         elif n == psi.process.PROC_STATUS_DISKSLEEP:
@@ -159,7 +160,13 @@ def getProcesses():
                 # these might cause privileges exception
                 tried_to_get_info = True
                 task.priority = process.priority
-                task.cpu = process.pcpu
+                # pcpu is not available on linux...
+                if isinstance(Arch, psi.arch.ArchLinux):
+                    psutil_p = psutil.Process(int(process.pid))
+                    # sample for 0.05 seconds
+                    task.cpu = psutil_p.get_cpu_percent(0.05)
+                else:
+                    task.cpu = process.pcpu
                 task.mem = process.rss # resident size: process.vsz is the virtual mem size
                 task.threads = process.nthreads
         except psi.AttrInsufficientPrivsError:
