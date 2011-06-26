@@ -27,6 +27,7 @@ def fillPathPlaceholders(s):
     return string.replace(r, '%SDIR', Script_Dir)
 
 class CAUVTask:
+    __sort_order = 0
     def __init__(self, name, command, restart=True, names=[]):
         self.__short_name = name
         self.__command = command
@@ -40,6 +41,10 @@ class CAUVTask:
         self.mem = None
         self.threads = None
         self.error = None
+        CAUVTask.__sort_order = CAUVTask.__sort_order + 1
+        self.__sort_key = CAUVTask.__sort_order
+    def __cmp__(self, other):
+        return self.__sort_key.__cmp__(other.__sort_key)
     def command(self):
         return self.__command
     def shortName(self):
@@ -184,7 +189,7 @@ def printDetails(cauv_task_list, more_details=False):
         header += Format_Extra % ('pid', 'CPU', 'Mem', 'Threads', 'Command')
     info(header)
     info('-' * len(header.expandtabs()))
-    for cp in cauv_task_list.values():
+    for cp in sorted(cauv_task_list.values()):
         line = Format_Short % (cp.shortName() , cp.status)
         if more_details and cp.process is not None:
             cpus = 'None'
