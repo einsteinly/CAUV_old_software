@@ -155,8 +155,8 @@ int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::pr
     }
     if(vm.count("version"))
     {
-        std::cout << Version_Information << std::endl;
-        return 0;
+        std::cout << Version_Information << std::flush;
+        return 1;
     }
     return 0;
 }
