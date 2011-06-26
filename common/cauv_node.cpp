@@ -18,6 +18,11 @@
 
 using namespace cauv;
 
+const static char Version_Information[] = {
+    #include <generated/version.h>
+    , '\0'
+};
+
 CauvNode::~CauvNode()
 {
     info() << "Shutting down node";
@@ -138,6 +143,7 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
         ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Server address for messages")
         ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Server port for messages")
         ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
+        ("version,V", "show version information")
     ;
 }
 int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
@@ -146,6 +152,11 @@ int CauvNode::useOptionsMap(boost::program_options::variables_map& vm, boost::pr
     {
         std::cout << desc << std::flush;
         return 1;
+    }
+    if(vm.count("version"))
+    {
+        std::cout << Version_Information << std::endl;
+        return 0;
     }
     return 0;
 }
