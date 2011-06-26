@@ -208,6 +208,8 @@ struct debug : boost::noncopyable
         return *this;
     }
 
+    debug const& operator<<(manip_t manip) const { }
+
     static int parseOptions(int, char**){ return 0; }
 };
 #endif
