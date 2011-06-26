@@ -34,6 +34,7 @@ class FASTCornersNode: public Node{
             
             // one output:
             registerOutputID< NodeParamValue >("corners");
+            registerOutputID< NodeParamValue >("corners (KeyPoint)");
             
             // parameters:
             registerParamID<int>("threshold", 20, // default value a complete guess
@@ -67,20 +68,34 @@ class FASTCornersNode: public Node{
             // convert coordinates from pixels (top left origin) to 0-1 float,
             // top left origin // TODO: check this
             std::vector<Corner> corners;
+            corners.reserve(cv_corners.size());
             const float width = img->cvMat().cols;
             const float height = img->cvMat().rows;
             debug(2) << "FASTCorners: detected" << cv_corners.size() << "corners:";
-            foreach(const cv::KeyPoint &kp, cv_corners) {
-                const floatXYZ centre(kp.pt.x / width, kp.pt.y / height, 0);
-                const Corner c(centre, kp.size, kp.angle, kp.response); 
-                debug(6) << c;
-                corners.push_back(c);
-            }
+            foreach(const cv::KeyPoint &kp, cv_corners)
+                corners.push_back(_corner(kp, width, height));
             r["corners"] = corners;
+            
+            // thin wrapper... don't want to include cv types in serialisation
+            std::vector<cauv::KeyPoint> kps;
+            kps.reserve(cv_corners.size());
+            foreach(const cv::KeyPoint &kp, cv_corners)
+                kps.push_back(_cauvKeyPoint(kp));
+            r["corners (KeyPoint)"] = kps;
 
             return r;
         }
     private:
+        static cauv::KeyPoint _cauvKeyPoint(cv::KeyPoint const& kp){
+            return cauv::KeyPoint(
+                floatXY(kp.pt.x,kp.pt.y), kp.size, kp.angle, kp.response, kp.octave, kp.class_id
+            );
+        }
+
+        Corner _corner(cv::KeyPoint const& kp, const float w, const float h){
+            const floatXYZ centre(kp.pt.x / w, kp.pt.y / h, 0);
+            return Corner(centre, kp.size, kp.angle, kp.response);
+        }
 
     // Register this node type
     DECLARE_NFR;

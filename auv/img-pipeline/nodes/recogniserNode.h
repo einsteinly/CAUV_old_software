@@ -16,11 +16,12 @@ class RecogniserNode: public Node{
             m_speed = fast;
 
             // input:
-            registerInputID(Image_In_Name);
-            registerInputID("Reference Image", May_Be_New);
+            registerParamID< std::vector<KeyPoint> >("Reference KeyPoints", std::vector<KeyPoint>(), "");
+            registerParamID< std::vector<KeyPoint> >("Image KeyPoints", std::vector<KeyPoint>(), "", Must_Be_New);
 
             // outputs:
-            registerOutputID<image_ptr_t>(Image_Out_Name);
+            registerOutputID<NodeParamValue>("Confidence");
+            registerOutputID<NodeParamValue>("Position");
         }
 
         virtual ~RecogniserNode(){
@@ -31,10 +32,30 @@ class RecogniserNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            r[Image_Out_Name] = inputs[Image_In_Name];
+            std::vector<KeyPoint> ref_kps = param< std::vector<KeyPoint> >("Reference KeyPoints");
+            m_reference_keypoints = conv(ref_kps);
+            
+            std::vector<cv::KeyPoint> img_kps = _cvKeyPointVec(param< std::vector<KeyPoint> >("Image KeyPoints"));
 
             return r;
         }
+        
+        std::vector<cv::KeyPoint> _cvKeyPointVec(std::vector<KeyPoint> const& v){
+            std::vector<cv::KeyPoint> r;
+            r.reserve(v.size());
+            std::vector<KeyPoint>::const_iterator i;
+            for(i = v.begin(); i != v.end(); i++)
+                r.push_back(_cvKeyPoint(*i));
+            return r;
+        }
+    
+    private:
+        static cv::KeyPoint _cvKeyPoint(cauv::KeyPoint const& kp) const{ 
+            return cv::KeyPoint(kp.pt.x, kp.pt.y, kp.size, kp.angle,
+                                kp.response, kp.octave, kp.class_id);
+        }
+
+        std::vector<cv::KeyPoint> m_reference_keypoints;
 
     // Register this node type
     DECLARE_NFR;

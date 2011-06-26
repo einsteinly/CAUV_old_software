@@ -344,8 +344,11 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 bool did_change = false;
                 try{
                     T val = getValue<T>(ip->getParam(did_change));
-                    if(did_change)
+                    if(did_change){
+                        // TODO: is this desirable?
+                        //paramChanged(p);
                         sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
+                    }
                     return val;
                 }catch(boost::bad_get& e){
                     error() << p << "is not of requested type:" << e.what();
