@@ -7,6 +7,7 @@ import os
 import sys
 import string
 import psi.process
+import psi.arch
 #import psutil
 
 from cauv.debug import debug, info, warning, error
@@ -93,18 +94,34 @@ def limitLength(string, length=48):
 
 def psiProcStatusToS(n):
     'return string describing process status value'
-    if n == psi.process.PROC_STATUS_SIDL:
-        return 'idle'
-    elif n == psi.process.PROC_STATUS_SRUN:
-        return 'running'
-    elif psi.process.PROC_STATUS_SSLEEP:
-        return 'sleeping'
-    elif psi.process.PROC_STATUS_SSTOP:
-        return 'stopped'
-    elif psi.process.PROC_STATUS_SZOMB:
-        return 'zombie'
+    #pylint: disable=E1101
+    if isinstance(psi.arch.arch_type(), psi.arch.ArchLinux):
+        if n == psi.process.PROC_STATUS_DEAD:
+            return 'dead'
+        elif n == psi.process.PROC_STATUS_DISKSLEEP:
+            return 'sleepdsk'
+        elif n == psi.process.PROC_STATUS_PAGING:
+            return 'paging'
+        elif n == psi.process.PROC_STATUS_RUNNING:
+            return 'running'
+        elif n == psi.process.PROC_STATUS_SLEEPING:
+            return 'sleeping'
+        elif n == psi.process.PROC_STATUS_TRACINGSTOP:
+            return 'stopped'
+        elif n == psi.process.PROC_STATUS_ZOMBIE:
+            return 'zombie'
     else:
-        return '?'
+        if n == psi.process.PROC_STATUS_SIDL:
+            return 'idle'
+        elif n == psi.process.PROC_STATUS_SRUN:
+            return 'running'
+        elif psi.process.PROC_STATUS_SSLEEP:
+            return 'sleeping'
+        elif psi.process.PROC_STATUS_SSTOP:
+            return 'stopped'
+        elif psi.process.PROC_STATUS_SZOMB:
+            return 'zombie'
+    return '?'
 
 def getProcesses():
     # returns dictionary of short name : CAUVTasks, all fields filled in
