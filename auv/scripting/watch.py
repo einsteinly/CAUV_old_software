@@ -76,6 +76,7 @@ processes_to_start = [
         CAUVTask('spread',               'nohup spread',                                True, ['spread']),
         CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
         CAUVTask('battery',              'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('gps',                  'nohup /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),

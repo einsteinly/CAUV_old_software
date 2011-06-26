@@ -362,6 +362,15 @@ group telemetry
         altitude : float;
         speed : floatXYZ;
     }
+    message GPSLocation : 89
+    {
+        latitude : double;
+        longitude : double;
+        altitude : float;
+        track : float;
+        speed: float;
+        climb: float;    
+    }
 }
 group image
 {
