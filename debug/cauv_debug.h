@@ -208,6 +208,8 @@ struct debug : boost::noncopyable
         return *this;
     }
 
+    typedef std::ostream stream_t;
+    typedef stream_t& (*manip_t)(stream_t&);
     debug const& operator<<(manip_t manip) const { }
 
     static int parseOptions(int, char**){ return 0; }
