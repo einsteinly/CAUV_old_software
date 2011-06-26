@@ -7,7 +7,8 @@ import os
 import sys
 import string
 import psi.process
-#import psutil
+import psi.arch
+import psutil
 
 from cauv.debug import debug, info, warning, error
 
@@ -19,12 +20,14 @@ Exe_Prefix = '' # set these using command line options
 Script_Dir = '' #
 Mem_Divisor = 1024*1024 # MB
 Mem_Units = 'M'         # MB
+Arch = psi.arch.arch_type()
 
 def fillPathPlaceholders(s):
     r = string.replace(s, '%EDIR', Exe_Prefix)
     return string.replace(r, '%SDIR', Script_Dir)
 
 class CAUVTask:
+    __sort_order = 0
     def __init__(self, name, command, restart=True, names=[]):
         self.__short_name = name
         self.__command = command
@@ -33,11 +36,15 @@ class CAUVTask:
         self.process = None
         self.running_command = None
         self.status = ''
-        self.priority = 0
+        self.nice = 0
         self.cpu = None
         self.mem = None
         self.threads = None
         self.error = None
+        CAUVTask.__sort_order = CAUVTask.__sort_order + 1
+        self.__sort_key = CAUVTask.__sort_order
+    def __cmp__(self, other):
+        return self.__sort_key.__cmp__(other.__sort_key)
     def command(self):
         return self.__command
     def shortName(self):
@@ -66,17 +73,17 @@ processes_to_start = [
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',               'nohup /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
-        CAUVTask('img-pipe default',     'nohup %EDIR/img-pipeline -n default',         True, ['img-pipeline -n default']),
-        CAUVTask('img-pipe buoy-detect', 'nohup %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
-        CAUVTask('img-pipe pipe-detect', 'nohup %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
-        CAUVTask('img-pipe sonar',       'nohup %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
-        CAUVTask('sonar',                'nohup %EDIR/sonar /dev/ttyUSB1',              True, ['sonar']),
+        CAUVTask('logger',               'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
+        CAUVTask('img-pipe default',     'nohup nice -n 15 %EDIR/img-pipeline -n default',         True, ['img-pipeline -n default']),
+        CAUVTask('img-pipe buoy-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
+        CAUVTask('img-pipe pipe-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
+        CAUVTask('img-pipe sonar',       'nohup nice -n 15 %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
+        CAUVTask('sonar',                'nohup nice -n 5 %EDIR/sonar /dev/ttyUSB1',              True, ['sonar']),
         CAUVTask('controlv2',            'nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0',    True, ['controlv2']),
         CAUVTask('spread',               'nohup spread',                                True, ['spread']),
         CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
-        CAUVTask('battery',              'nohup /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
-        CAUVTask('gps',                  'nohup /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
+        CAUVTask('battery',              'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('gps',                  'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
@@ -94,18 +101,34 @@ def limitLength(string, length=48):
 
 def psiProcStatusToS(n):
     'return string describing process status value'
-    if n == psi.process.PROC_STATUS_SIDL:
-        return 'idle'
-    elif n == psi.process.PROC_STATUS_SRUN:
-        return 'running'
-    elif psi.process.PROC_STATUS_SSLEEP:
-        return 'sleeping'
-    elif psi.process.PROC_STATUS_SSTOP:
-        return 'stopped'
-    elif psi.process.PROC_STATUS_SZOMB:
-        return 'zombie'
+    #pylint: disable=E1101
+    if isinstance(Arch, psi.arch.ArchLinux):
+        if n == psi.process.PROC_STATUS_DEAD:
+            return 'dead'
+        elif n == psi.process.PROC_STATUS_DISKSLEEP:
+            return 'sleepdsk'
+        elif n == psi.process.PROC_STATUS_PAGING:
+            return 'paging'
+        elif n == psi.process.PROC_STATUS_RUNNING:
+            return 'running'
+        elif n == psi.process.PROC_STATUS_SLEEPING:
+            return 'sleeping'
+        elif n == psi.process.PROC_STATUS_TRACINGSTOP:
+            return 'stopped'
+        elif n == psi.process.PROC_STATUS_ZOMBIE:
+            return 'zombie'
     else:
-        return '?'
+        if n == psi.process.PROC_STATUS_SIDL:
+            return 'idle'
+        elif n == psi.process.PROC_STATUS_SRUN:
+            return 'running'
+        elif psi.process.PROC_STATUS_SSLEEP:
+            return 'sleeping'
+        elif psi.process.PROC_STATUS_SSTOP:
+            return 'stopped'
+        elif psi.process.PROC_STATUS_SZOMB:
+            return 'zombie'
+    return '?'
 
 def getProcesses():
     # returns dictionary of short name : CAUVTasks, all fields filled in
@@ -142,8 +165,14 @@ def getProcesses():
                 task.status = psiProcStatusToS(process.status)
                 # these might cause privileges exception
                 tried_to_get_info = True
-                task.priority = process.priority
-                task.cpu = process.pcpu
+                task.nice = process.nice
+                # pcpu is not available on linux...
+                if isinstance(Arch, psi.arch.ArchLinux):
+                    psutil_p = psutil.Process(int(process.pid))
+                    # sample for 0.05 seconds
+                    task.cpu = psutil_p.get_cpu_percent(0.05)
+                else:
+                    task.cpu = process.pcpu
                 task.mem = process.rss # resident size: process.vsz is the virtual mem size
                 task.threads = process.nthreads
         except psi.AttrInsufficientPrivsError:
@@ -155,13 +184,13 @@ def getProcesses():
 
 def printDetails(cauv_task_list, more_details=False):
     Format_Short = '%23s %7s'
-    Format_Extra = '%7s %7s %7s %7s %s'
+    Format_Extra = '%7s %8s %7s %7s %7s %s'
     header = Format_Short % ('name', 'status')
     if more_details:
-        header += Format_Extra % ('pid', 'CPU', 'Mem', 'Threads', 'Command')
+        header += Format_Extra % ('pid', 'nice', 'CPU', 'Mem', 'Threads', 'Command')
     info(header)
     info('-' * len(header.expandtabs()))
-    for cp in cauv_task_list.values():
+    for cp in sorted(cauv_task_list.values()):
         line = Format_Short % (cp.shortName() , cp.status)
         if more_details and cp.process is not None:
             cpus = 'None'
@@ -169,7 +198,7 @@ def printDetails(cauv_task_list, more_details=False):
             if cp.cpu is not None: cpus = '%4.2f' % cp.cpu
             if cp.mem is not None: mems = '%4.1f%s' % (cp.mem / Mem_Divisor, Mem_Units)
             line += Format_Extra % (
-                cp.process.pid, cpus, mems, cp.threads,
+                cp.process.pid, cp.nice, cpus, mems, cp.threads,
                 limitLength(cp.running_command)
             )
             if cp.error is not None:

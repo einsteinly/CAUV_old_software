@@ -88,7 +88,7 @@ class script(aiScript):
             if bool(dive): self.depthed.set()
             else: self.depthed.clear()
             if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set(): self.ready.set()
-            else self.ready.clear()
+            else: self.ready.clear()
 
     def onCentreMessage(self, m):
         if m.name != self.options.centre_name:
@@ -97,7 +97,7 @@ class script(aiScript):
         st = int((m.x-0.5)*self.strafe_p)
         self.auv.strafe(st)
         if m.x**2 + m.y**2<self.options.centre_error**2: self.centred.set() #ie within circle radius centre error
-        else self.centered.clear()
+        else: self.centered.clear()
         info('pipe follow: strafing %i' %(st))
 
     """

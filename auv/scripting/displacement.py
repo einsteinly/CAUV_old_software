@@ -118,4 +118,4 @@ if __name__ == '__main__':
         time.sleep(3)
         ll = d.getPositionLL()        
         info('%s : %s' % (d.displacement, ll))
-        node.send(msg.LocationMessage(ll))
+        node.send(messaging.LocationMessage(ll))
