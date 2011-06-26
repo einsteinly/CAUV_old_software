@@ -58,7 +58,9 @@ class SeanetSonar : public Observable<SonarObserver>
 	
 		SeanetSonar(std::string file);
 		~SeanetSonar();
-	
+	   
+        bool ok() const;
+
 		/* Initialize and start scanning */
 		void init();
 	

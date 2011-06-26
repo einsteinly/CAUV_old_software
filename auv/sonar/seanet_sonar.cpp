@@ -55,6 +55,11 @@ SeanetSonar::SeanetSonar(std::string str) : m_cur_data_reqs(0)
     m_state = SENDREBOOT;
 }
 
+bool SeanetSonar::ok() const
+{
+    return m_serial_port && m_serial_port->ok();
+}
+
 void SeanetSonar::init()
 {
     debug() << "Initialising sonar";

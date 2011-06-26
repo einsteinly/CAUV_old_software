@@ -215,7 +215,7 @@ class aiScript(aiProcess):
         #Not implemented yet
         if not self._pl_enabled:
             self.node.join('processing')
-            self._pl.enabled = True
+            self._pl_enabled = True
         self._pl_response = None
         for x in range(5):
             self.ai.pipeline_manager.request_pl('script', self.task_name, pl_name, outnode_names)

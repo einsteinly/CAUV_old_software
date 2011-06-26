@@ -186,27 +186,4 @@ class script(aiScript):
         if self.options.Load_Pipeline is not None:
             self.__pl.set(saved_pipeline_state)
         self.notify_exit(exit_status)
-            
-
-def runStandalone(opts):
-    info('circle_buoy.py runStandalone')    
-    b = script(opts.strafe_speed, opts.buoy_size)
-    b.auv = control.AUV(b.node)
-    b.run()
-    info('circle_buoy.py complete')
-
-if __name__ == '__main__':
-    warning("this script is designed to run from the AI framework, this "+
-            "probably won't work. There is a standalone version of this "+
-            "script in the scripting/ dir")
-    p = optparse.OptionParser()
-    p.add_option('-s', "--strafe-speed", dest="strafe_speed",
-        default=self.options.Strafe_Speed, type=int)
-    p.add_option('-b', "--buoy-size", dest="buoy_size",
-        default=self.options.Buoy_Size, type=int)
-    opts, args = p.parse_args()
-
-    runStandalone(opts)
-
-    
 

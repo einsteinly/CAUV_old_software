@@ -95,7 +95,7 @@ int SonarNode::useOptionsMap(boost::program_options::variables_map& vm,
     std::string device = vm["device"].as<std::string>();
     m_sonar = boost::make_shared<SeanetSonar>(device);
     
-    if(!m_sonar){
+    if(!m_sonar->ok()){
         error() << "could not open device" << device;
         return 2;
     }
@@ -127,8 +127,8 @@ int main(int argc, char** argv)
 {
     signal(SIGINT, interrupt);
     node = new SonarNode();
-    node->parseOptions(argc, argv);
-    node->run();
+    if(node->parseOptions(argc, argv) == 0)
+        node->run();
     cleanup();
     return 0;
 }
