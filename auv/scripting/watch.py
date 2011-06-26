@@ -36,7 +36,7 @@ class CAUVTask:
         self.process = None
         self.running_command = None
         self.status = ''
-        self.priority = 0
+        self.nice = 0
         self.cpu = None
         self.mem = None
         self.threads = None
@@ -164,7 +164,7 @@ def getProcesses():
                 task.status = psiProcStatusToS(process.status)
                 # these might cause privileges exception
                 tried_to_get_info = True
-                task.priority = process.priority
+                task.nice = process.nice
                 # pcpu is not available on linux...
                 if isinstance(Arch, psi.arch.ArchLinux):
                     psutil_p = psutil.Process(int(process.pid))
@@ -183,10 +183,10 @@ def getProcesses():
 
 def printDetails(cauv_task_list, more_details=False):
     Format_Short = '%23s %7s'
-    Format_Extra = '%7s %8s %7s %7s %8s %s'
+    Format_Extra = '%7s %8s %7s %7s %7s %s'
     header = Format_Short % ('name', 'status')
     if more_details:
-        header += Format_Extra % ('pid', 'priority', 'CPU', 'Mem', 'Threads', 'Command')
+        header += Format_Extra % ('pid', 'nice', 'CPU', 'Mem', 'Threads', 'Command')
     info(header)
     info('-' * len(header.expandtabs()))
     for cp in sorted(cauv_task_list.values()):
@@ -197,7 +197,7 @@ def printDetails(cauv_task_list, more_details=False):
             if cp.cpu is not None: cpus = '%4.2f' % cp.cpu
             if cp.mem is not None: mems = '%4.1f%s' % (cp.mem / Mem_Divisor, Mem_Units)
             line += Format_Extra % (
-                cp.process.pid, cp.priority, cpus, mems, cp.threads,
+                cp.process.pid, cp.nice, cpus, mems, cp.threads,
                 limitLength(cp.running_command)
             )
             if cp.error is not None:
