@@ -268,8 +268,10 @@ void ImageProcessor::onClearPipelineMessage(ClearPipelineMessage_ptr m){
         return;
     try{
         lock_t l(m_nodes_lock);    
-        while(m_nodes.size())
-            removeNode(m_nodes.rbegin()->first);
+        while(m_nodes.size()){
+            node_id n = m_nodes.rbegin()->first;
+            removeNode(n);
+        }
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
