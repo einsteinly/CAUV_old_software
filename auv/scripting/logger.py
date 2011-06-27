@@ -47,7 +47,7 @@ class LoggingObserver(msg.BufferedMessageObserver):
         self.y += -dt * self.speed_right * math.cos(math.radians(self.yaw))
         
         self.last_time = t
-        line = "'(%g,%g,%g,%g,'%s')'" % (t, self.x, self.y, self.depth, self.action)
+        line = "'(%g,%g,%g,%g,'%s')'\n" % (t, self.x, self.y, self.depth, self.action)
         print line
         self.log.write(line)
 
