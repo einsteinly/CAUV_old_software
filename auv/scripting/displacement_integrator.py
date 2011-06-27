@@ -1,24 +1,23 @@
 import cauv.messaging as messaging
-
-import cauv
-import cauv.control as control
-import cauv.node
+from cauv.debug import debug, error, warning, info
 
 import time
 import threading
 import math
 
-class Displacement(messaging.MessageObserver):
+# forward/reverse speed scale and exponential factors
+class settings:
+    fSpeedScale = 0.001
+    rSpeedScale = 0.001
+    fSpeedCurve = 0.5
+    rSpeedCurve = 0.5
+    
 
-    def __init__(self, node):
-        messaging.MessageObserver.__init__(self)
-        self.__node = node
-        #node.join("control")
-        node.join("telemetry")	
-        node.join("gui")
-        node.addObserver(self)
+class DisplacementIntegrator:
+    def __init__(self):
         self.displacementE = 0
         self.displacementN = 0
+        self.displacementZ = 0
         self.timeLast = time.time()
         self.update = threading.Condition()
         #self.fSpeed = 0
@@ -35,14 +34,13 @@ class Displacement(messaging.MessageObserver):
         self.rSTime = time.time()
         self.bearing = 0
         self.gotBearing = False
-        self.fSpeedScale = 1
-        self.rSpeedScale = 1
-        self.fSpeedCurve = 0.5
-        self.rSpeedCurve = 0.5
+        t = threading.Thread(target=self.integrate)
+        t.daemon = True
+        t.start()
 
     def getDisplacement(self):
         self.update.acquire()
-        r = math.sqrt(pow(self.displacementE, 2) + pow(self.displacementN, 2))
+        r = (self.displacementE, self.displacementN, self.displacementZ)
         self.update.release()
         return r
 
@@ -56,35 +54,32 @@ class Displacement(messaging.MessageObserver):
             if self.gotBearing == False:
                 self.update.release()
                 continue
-            self.displacementE += math.sin(self.bearing) * self.fSpeed() * self.fSpeedScale / (time.time() - oldTime)
-            self.displacementN += math.cos(self.bearing) * self.fSpeed() * self.fSpeedScale / (time.time() - oldTime)
-            self.displacementE += math.cos(self.bearing) * (self.rBSpeed() + self.rSSpeed()) * self.rSpeedScale / (time.time() - oldTime)
-            self.displacementN += math.sin(self.bearing) * (self.rBSpeed() + self.rSSpeed()) * self.rSpeedScale / (time.time() - oldTime)
+            self.displacementE += math.sin(self.bearing) * self.fSpeed() * settings.fSpeedScale / (time.time() - oldTime)
+            self.displacementN += math.cos(self.bearing) * self.fSpeed() * settings.fSpeedScale / (time.time() - oldTime)
+            self.displacementE += math.cos(self.bearing) * (self.rBSpeed() + self.rSSpeed()) * settings.rSpeedScale / (time.time() - oldTime)
+            self.displacementN += math.sin(self.bearing) * (self.rBSpeed() + self.rSSpeed()) * settings.rSpeedScale / (time.time() - oldTime)
             oldTime = time.time()
             self.update.release()
-            print(("Disp.: %d " % self.displacementN) + ("%d" % self.displacementE))
-            print(self.fSpeed())
+            info("Disp.: %gE %gN %gZ" % (self.displacementN, self.displacementE, self.displacementZ))
+            info("Speed: %g (%g, %g)" % (self.fSpeed(), self.rBSpeed(), self.rSSpeed()))
             #print(self.fKink)
             #print(time.time() - self.fTime)
-            #print((self.fSpeedReq - self.fKink) * (1 - math.exp(-self.fSpeedCurve * (time.time() - self.fTime))))
-            print(self.rBSpeed())
-            print(self.rSSpeed())
+            #print((self.fSpeedReq - self.fKink) * (1 - math.exp(-settings.fSpeedCurve * (time.time() - self.fTime))))
 
     def fSpeed(self):
-        return (self.fSpeedReq - self.fKink) * (1 - math.exp(-self.fSpeedCurve * (time.time() - self.fTime))) + self.fKink
+        return (self.fSpeedReq - self.fKink) * (1 - math.exp(-settings.fSpeedCurve * (time.time() - self.fTime))) + self.fKink
 
     def rBSpeed(self):
-        return (self.rBSpeedReq - self.rBKink) * (1 - math.exp(-self.rSpeedCurve * (time.time() - self.rBTime))) + self.rBKink
+        return (self.rBSpeedReq - self.rBKink) * (1 - math.exp(-settings.rSpeedCurve * (time.time() - self.rBTime))) + self.rBKink
 
     def rSSpeed(self):
-        return (self.rSSpeedReq - self.rSKink) * (1 - math.exp(-self.rSpeedCurve * (time.time() - self.rSTime))) + self.rSKink
+        return (self.rSSpeedReq - self.rSKink) * (1 - math.exp(-settings.rSpeedCurve * (time.time() - self.rSTime))) + self.rSKink
     
     def onMotorStateMessage(self, m):
         #onMotorMessage(self, m):
-        print("Motor")
         if m.motorId == messaging.MotorID.Prop:
             #print 'FSpeed: %d' % (m.speed * fSpeedConstant)
-            print 'FSpeedReq: %d' % (m.speed * self.fSpeedScale)
+            #print 'FSpeedReq: %d' % (m.speed * settings.fSpeedScale)
             self.update.acquire()
             #self.fSpeed = m.speed * fSpeedConstant
             #self.fSpeedReq = m.speed
@@ -95,7 +90,7 @@ class Displacement(messaging.MessageObserver):
             self.update.release()
         elif m.motorId == messaging.MotorID.HBow:
             #print 'RSpeed from bow: %d' % (m.speed * rSpeedConstant)
-            print 'RBSpeedReq: %d' % (m.speed * self.rSpeedScale)
+            #print 'RBSpeedReq: %d' % (m.speed * settings.rSpeedScale)
             self.update.acquire()
             #self.rSpeedB = m.speed * rSpeedConstant
             #self.rBSpeedReq = m.speed
@@ -106,7 +101,7 @@ class Displacement(messaging.MessageObserver):
             self.update.release()
         elif m.motorId == messaging.MotorID.HStern:
             #print 'RSpeed from stern: %d' % (m.speed * rSpeedConstant)
-            print 'RSSpeedReq: %d' % (m.speed * self.rSpeedScale)
+            #print 'RSSpeedReq: %d' % (m.speed * settings.rSpeedScale)
             self.update.acquire()
             #self.rSpeedS = m.speed * rSpeedConstant
             #self.rSSpeedReq = m.speed
@@ -122,15 +117,9 @@ class Displacement(messaging.MessageObserver):
             #print 'Bearing: %d' % m.orientation.yaw#target
             self.update.acquire()
             self.bearing = m.orientation.yaw#target
+            self.displacementZ = -m.depth            
             #self.gotBearing == True
             self.gotBearing = True
             #self.update.notify()
             self.update.release()
 
-if __name__ == '__main__':
-    node = cauv.node.Node('Disp')
-    auv = control.AUV(node)
-    d = Displacement(node)
-    d.integrate()
-    while True:
-        time.sleep(5)

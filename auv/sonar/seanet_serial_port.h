@@ -21,7 +21,8 @@ class SeanetSerialPort
 		void init();
 	public:
 		SeanetSerialPort(const std::string file);
-		
+		bool ok() const;
+
         boost::shared_ptr<SeanetPacket> readPacket();
 		void sendPacket(const SeanetPacket& pkt);
 };

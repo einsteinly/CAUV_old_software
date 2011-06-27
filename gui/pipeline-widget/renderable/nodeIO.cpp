@@ -129,7 +129,21 @@ bool NodeInputBlob::mousePressEvent(MouseEvent const& e){
                 debug() << BashColour::Green << "re-creating arc: dst ="
                         << m_node->id() << "io=" << *m_text<< "this=" << this;
                 menu_ptr_t handle = boost::make_shared<FloatingArcHandle>(m_pw, has_arc);
-                m_pw->removeArc(arc_src, shared_from_this());
+                boost::shared_ptr<NodeOutputBlob> bsrc = boost::dynamic_pointer_cast<NodeOutputBlob>(arc_src);
+                boost::shared_ptr<NodeInputBlob>  bdst = boost::dynamic_pointer_cast<NodeInputBlob>(arc_dst);
+                
+                if(!(bsrc && bdst)){
+                    error() << "unexpected NodeIO src/dst types!";
+                }else{
+                    m_pw->send(boost::make_shared<RemoveArcMessage>(
+                        m_pw->pipelineName(),
+                        // type is ignored in imageProcessor.cpp
+                        NodeOutput(bsrc->nodeId(), bsrc->output(), OutputType::Image),
+                        NodeInput(bdst->nodeId(), bdst->input())
+                    ));
+                }
+                // wait for ArcRemovedMessage
+                //m_pw->removeArc(arc_src, shared_from_this());
                 arc_ptr_t arc = m_node->newArc(arc_src, handle);
                 // (true = start out 'pressed', ie being dragged)
                 m_context->postMenu(handle, m_context->referUp(m_pos), true);
@@ -184,7 +198,7 @@ void FloatingArcHandle::draw(drawtype_e::e){
 void FloatingArcHandle::mouseReleaseEvent(MouseEvent const&){
     // remove first, so that this isn't returned by the pick
     m_context->removeMenu(shared_from_this());
-    //remove the arc: arc is re-added when we receive an ArcAddedMessage        
+    //remove the arc: arc is re-added when we receive an ArcAddedMessage
     m_context->remove(m_arc);
 
     renderable_ptr_t hit = m_pw->pick(m_pos);

@@ -7,6 +7,11 @@ from cauv.debug import debug, error, warning, info
 
 import time
 import math
+import optparse
+
+import displacement_integrator
+
+Metres_Per_Second_Per_Motor_Unit = 0.001
 
 Default_Datum_Latitude = 52.116692
 Default_Datum_Longitude = 0.117792
@@ -45,39 +50,51 @@ class LLACoord:
         return '(%s, %s, %s)' % (self.latitude, self.longitude, self.altitude)
 
 class Displacement(messaging.MessageObserver):
-    def __init__(self, node):
+    def __init__(self, node, mode='simple'):
         messaging.MessageObserver.__init__(self)
         self.__node = node
         node.join("control")
         node.join("gui")
         node.join("telemetry")
-        node.addObserver(self)
+
+        self.mode = mode
+
+        # exponential integration, runs its own thread
+        self.integrator = displacement_integrator.DisplacementIntegrator()
+
+        # simple integration
         self.displacement = XYZCoord(0, 0, 0)
         self.timeLast = time.time()
         self.speed = None
         self.depth = None
         self.control_bearing = None        
         self.telemetry_bearing = None
+
         self.datum = LLACoord(
             Default_Datum_Latitude,
             Default_Datum_Longitude,
             0
         )
+
+        node.addObserver(self)
     
-    # FIXME: if nothing is using this, remove it
     def getDisplacement(self):
         self.updateIntegration()
-        r = math.sqrt(self.displacement.x ** 2 +
-                      self.displacement.y ** 2 +
-                      self.displacement.z ** 2)
+        if self.mode == 'simple':
+            r = self.displacement
+        else:
+            t = self.integrator.getDisplacement()
+            r = XYZCoord(t[0], t[1], t[2])
         return r
 
     def getPositionLL(self):
-        if self.displacement is None:
+        d = self.getDisplacement()
+        if d is None:
             return None
+        info('getPositionLL: displacement=%s' % str(d))
         self.updateIntegration()
         r = messaging.LocationMessage()
-        position = self.datum + self.displacement
+        position = self.datum + d
         r.latitude = position.latitude
         r.longitude = position.longitude
         r.altitude = position.altitude
@@ -93,29 +110,35 @@ class Displacement(messaging.MessageObserver):
             self.time_last = now
 
     def onMotorStateMessage(self, m):
-        debug('Motor state: %s' % m)
+        #debug('Motor state: %s' % m)
         if m.motorId == messaging.MotorID.Prop:
             self.updateIntegration()
             debug('Speed: %d' % m.speed)
-            # hacky approximate constant -- integrate displacement3 and tune
-            # constants for better version
-            self.speed = m.speed / 256
+            self.speed = m.speed * Metres_Per_Second_Per_Motor_Unit
+        self.integrator.onMotorStateMessage(m)
 
     def onTelemetryMessage(self, m):
         self.telemetry_bearing = m.orientation.yaw
         self.displacement.z = -m.depth
+        self.integrator.onTelemetryMessage(m)
 
     def onBearingAutopilotEnabledMessage(self, m):
-        debug('Bearing: %d' % m.target)
+        #debug('Bearing: %d' % m.target)
         self.updateIntegration()
         self.control_bearing = m.target
 
 if __name__ == '__main__':
+    parser = optparse.OptionParser(usage='usage: %prog -m simple|exponential')
+    parser.add_option("-m", "--mode", dest="mode", default="exponential",
+            help="integration mode: 'simple' or 'exponential' see" +
+            "displacement_integrator.py for exponential integrator constants")
+    opts, args = parser.parse_args()
+
     node = cauv.node.Node('py-dspl')
     auv = control.AUV(node)
-    d = Displacement(node)
+    d = Displacement(node, opts.mode)
     while True:
         time.sleep(3)
-        ll = d.getPositionLL()        
+        ll = d.getPositionLL()
         info('%s : %s' % (d.displacement, ll))
-        node.send(msg.LocationMessage(ll))
+        node.send(messaging.LocationMessage(ll.latitude,ll.longitude,ll.altitude,messaging.floatXYZ(0, 0, 0)))

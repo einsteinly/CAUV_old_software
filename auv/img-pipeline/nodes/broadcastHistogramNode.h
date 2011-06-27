@@ -33,8 +33,12 @@ class BroadcastHistogramNode: public OutputNode{
             // no outputs
             
             // parameters:
-            registerParamID< std::vector<float> >("histogram", std::vector<float>());
-            registerParamID<std::string>("name", "unnamed histogram",
+            registerParamID< std::vector<float> >("histogram",
+                                                  std::vector<float>(),
+                                                  "histogram to broadcast",
+                                                  Must_Be_New);
+            registerParamID<std::string>("name",
+                                         "unnamed histogram",
                                          "name for histogram");
         }
     

@@ -109,6 +109,11 @@ struct floatXYZ
     y : float;
     z : float;
 }
+struct floatXY
+{
+    x : float;
+    y : float;
+}
 struct NodeInput
 {
     node : int32;
@@ -175,9 +180,20 @@ struct MotorMap
     maxPlus : int32;
     maxMinus : int32;
 }
+struct KeyPoint
+{
+    pt : floatXY;
+    size : float;
+    angle : float;
+    response : float;
+    octave : float;
+    class_id : float;
+}
 variant NodeParamValue
 {
-    int32, float, string, bool, list<Corner>, list<Line>, list<Circle>, list<float>
+    int32, float, string, bool,
+    list<Corner>, list<Line>, list<Circle>, list<float>,
+    list<KeyPoint>
 }
 struct ScriptResponse
 {
@@ -346,6 +362,15 @@ group telemetry
         altitude : float;
         speed : floatXYZ;
     }
+    message GPSLocation : 89
+    {
+        latitude : double;
+        longitude : double;
+        altitude : float;
+        track : float;
+        speed: float;
+        climb: float;    
+    }
 }
 group image
 {
@@ -406,6 +431,13 @@ group pipeline
     }
 
     message AddArc : 9
+    {
+        pipelineName : string;
+        from : NodeOutput;
+        to : NodeInput;
+    }
+
+    message RemoveArc : 14
     {
         pipelineName : string;
         from : NodeOutput;
