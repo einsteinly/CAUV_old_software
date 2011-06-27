@@ -107,6 +107,10 @@ static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
     }else{
         fonts[id] = new_f;
     }
+    // FIXME: hack: segfault on exit is caused by destruction of FTFont:
+    // prevent fonts from ever being freed
+    new font_ptr(new_f);
+
     return new_f;
 }
 
