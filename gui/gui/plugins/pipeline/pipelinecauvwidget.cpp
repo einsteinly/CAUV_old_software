@@ -31,7 +31,7 @@ void PipelineListingObserver::onMembershipChangedMessage(MembershipChangedMessag
     }
 }
 
-void PipelineListingObserver::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr m){
+void PipelineListingObserver::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr){
     // listen for discovery messages from others to include them in the
     // the rate limiting
     // doesn't matter if this fails as we're not actually adding to the rate here
@@ -121,6 +121,7 @@ void PipelineCauvWidget::clearPipelines(){
 }
 
 void PipelineCauvWidget::send(boost::shared_ptr<Message> message){
+    info() << message;
     if(m_node)
         m_node->send(message);
 }
