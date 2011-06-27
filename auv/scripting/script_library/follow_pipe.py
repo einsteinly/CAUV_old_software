@@ -15,31 +15,33 @@ import time
 
 class scriptOptions:
     #Pipeline details
-    Load_Pipeline = 'default'
-    Pipeline_File = 'pipelines/follow_pipe.pipe'    
-    Centre_Name = 'pipe',
-    Lines_Name = 'pipe',
+    load_pipeline = 'default'
+    pipeline_file = 'pipelines/follow_pipe.pipe'    
+    centre_name = 'pipe',
+    lines_name = 'pipe',
     #Timeouts
-    Ready_Timeout = 200
-    Lost_Timeout = 2
-    Following_Timeout = 2
-    #
-    Prop_Speed = 40
-    Target_Width = 0.2, #of image
-    Width_Error  = 0.1, #of image
-    Centre_Error = 0.1, #of image
-    Align_Error  = 5, #degrees
-    #bin = 11,
+    ready_timeout = 200
+    lost_timeout = 2
+    # Calibration
+    target_width = 0.2, #of image
+    width_error  = 0.1, #of image
+    centre_error = 0.1, #of image
+    align_error  = 5,   #degrees
+    # Control
+    prop_speed = 40
     threshold = 0.1,
     Strafe_p  = 255,
     depth_p   = 0.1,
     depth_enable = False,
 
+
+
+
 class script(aiScript):
     def __init__(self, script_name, opts):
         aiScript.__init__(self, script_name, opts) 
         self.node.join("processing")
-        self.__pl = pipeline.Model(self.node, self.options.Load_Pipeline)
+        self.__pl = pipeline.Model(self.node, self.options.load_pipeline)
         # parameters to say if the auv is above the pipe
         self.centred = threading.Event()
         self.aligned = threading.Event()
@@ -48,7 +50,7 @@ class script(aiScript):
         self.ready = threading.Event()
 
     def loadPipeline(self):
-        self.__pl.load(Options.Pipeline_File)
+        self.__pl.load(Options.pipeline_file)
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
@@ -121,11 +123,11 @@ class script(aiScript):
             # check we're still good to go, giving a little time to re-align the 
             # pipe if needed
             info("Re-aligning with pipe...")
-            if not self.ready.wait(self.options.Lost_Timeout)
+            if not self.ready.wait(self.options.lost_timeout)
                 return False
             
             info("Above pipe, heading forward...")
-            self.auv.prop(self.options.Prop_Speed)
+            self.auv.prop(self.options.prop_speed)
             
             # go forward for a bit while we're still above the pipe
             while self.ready.is_set():
@@ -145,7 +147,7 @@ class script(aiScript):
         
         # by this point we think we've found the pipe
         # next step is to setup the pipelines we'll need for pipe following
-        if self.options.Load_Pipeline is not None:
+        if self.options.load_pipeline is not None:
             saved_pipeline_state = self.__pl.get()
             self.loadPipeline()
             
@@ -153,7 +155,7 @@ class script(aiScript):
         # the pipe, but if this is taking too long then just give up as we've
         # probably drifted away from the pipe
         debug('Waiting for ready...')
-        if not self.ready.wait(self.options.Ready_Timeout):
+        if not self.ready.wait(self.options.ready_timeout):
             error("Took too long to become ready, aborting")
             return #timeout
         
@@ -171,7 +173,7 @@ class script(aiScript):
             self.auv.bearing((self.auv.getBearing()-180)%360)
         
         # save the pipeline in case it's been edited
-        if self.options.Load_Pipeline is not None:
+        if self.options.load_pipeline is not None:
             self.__pl.set(saved_pipeline_state)
         
         info('Finished pipe following')

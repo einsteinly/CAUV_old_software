@@ -9,7 +9,7 @@ import time
 from math import degrees, cos, sin
 from movingaverage import MovingAverage
 
-class PipeConfirmer(messaging.BufferedMessageObserver):
+class PipeConfirmer(messaging.MessageObserver):
     def __init__(self, node, auv, bin, centre_name='pipe', histogram_name='Hue', strafe_p = 100, lower_threshold=0.05):
         messaging.BufferedMessageObserver.__init__(self)
         self.__node = node
@@ -79,34 +79,6 @@ class PipeConfirmer(messaging.BufferedMessageObserver):
 
 
 def setup():
-    # Create a node of the messaging service
-    auv_node = cauv.node.Node('py-auv-pc')
-    # Create a python object for the control of the AUV
-    auv = control.AUV(auv_node)
-
-    debug('setting calibration...')
-    # setting the y intercept and gradient of the pressure/depth curve for front and back pressure sensor
-    # set-up calibration factors
-    auv_node.send(messaging.DepthCalibrationMessage(
-        -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
-    ), "control")
-
-    # Create a python object for the control of the AUV
-    auv.bearingParams(1, 0, -80, 1)
-    auv.depthParams(40, 0, 0, 1)
-    #auv.pitchParams(1, 0, 0, 1)
-
-    auv.propMap(10, -10, 127, -127)
-    auv.vbowMap(10, -10, 127, -127)
-    auv.hbowMap(10, -10, 127, -127)
-    auv.vsternMap(10, -10, 127, -127)
-    auv.hsternMap(10, -10, 127, -127)
-
     pf = PipeConfirmer(auv_node, auv, [11, 12])
-    info(pf.confirm())
-    return pf
 
-if __name__ == "__main__":
-    setup()
-    while True:
-        time.sleep(1.0)
+
