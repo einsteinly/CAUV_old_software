@@ -44,6 +44,13 @@ class DisplacementIntegrator:
         self.update.release()
         return r
 
+    def resetDisplacement(self):
+        self.update.acquire()
+        self.displacementE = 0
+        self.displacementN = 0
+        self.displacementZ = 0
+        self.update.release()
+
     def integrate(self):
         oldTime = time.time()
         while True:

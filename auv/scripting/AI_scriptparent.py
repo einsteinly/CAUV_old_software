@@ -6,6 +6,7 @@ This basically runs AI_scripts, as they are implemented as classes, so this crea
 """
 import sys
 import cPickle
+import traceback
 from cauv.debug import error, info
 
 from AI_classes import aiScriptOptions, aiProcess
@@ -43,4 +44,5 @@ if __name__ == '__main__':
     except Exception as e:
         ainode = aiProcess('script_error_reporter')
         ainode.ai.task_manager.on_script_exit(task_ref, 'ERROR')
+        error(traceback.format_exc())
         raise e

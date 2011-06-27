@@ -753,8 +753,11 @@ void Node::demandNewParentInput(input_id const& iid) throw(){
     const private_in_map_t::iterator i = m_inputs.find(iid);
     if(i->second->target)
         parent = i->second->target;
+    // careful!
+    node_ptr_t n = parent.node;
     l.unlock();
-    parent.node->setNewOutputDemanded(parent.id);
+    if(n)
+        n->setNewOutputDemanded(parent.id);
 }
 
 #ifndef NO_NODE_IO_STATUS

@@ -127,6 +127,16 @@ class Displacement(messaging.MessageObserver):
         self.updateIntegration()
         self.control_bearing = m.target
 
+    def onGPSLocationMessage(self, m):
+        info("Received GPS Update")
+        # change the fixed point
+        self.datum = LLACoord(m.latitude, m.longitude, m.altitude)
+        # reset the displacements to 0
+        self.displacement.x = 0;
+        self.displacement.y = 0;
+        self.displacement.z = 0;
+        self.integrator.resetDisplacement();
+
 if __name__ == '__main__':
     parser = optparse.OptionParser(usage='usage: %prog -m simple|exponential')
     parser.add_option("-m", "--mode", dest="mode", default="exponential",

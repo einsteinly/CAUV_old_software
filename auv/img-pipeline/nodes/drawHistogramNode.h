@@ -15,8 +15,9 @@ class DrawHistogramNode: public Node{
         }
 
         void init(){
-            registerParamID< std::vector<float> >("histogram",
-            std::vector<float>(), "values to plot");
+            registerParamID< std::vector<float> >(
+                "histogram", std::vector<float>(), "values to plot", Must_Be_New
+            );
             registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
         }
     
