@@ -210,24 +210,23 @@ class aiScript(aiProcess):
         self.auv = fakeAUV(self)
         self._pl_enabled = False
         self._pl_setup = threading.Event()
-        self._pl_response = None
-    def request_pl(self, pl_name, outnode_names):
-        #Not implemented yet
+    def request_pl(self, pl_name, timeout=10):
         if not self._pl_enabled:
             self.node.join('processing')
-            self._pl.enabled = True
-        self._pl_response = None
-        for x in range(5):
-            self.ai.pipeline_manager.request_pl('script', self.task_name, pl_name, outnode_names)
-            time.sleep(2)
-            if self._pl_setup.is_set():
-                self._pl_setup.clear()
-                return self._pl_response
+            self._pl_enabled = True
+        self.ai.pipeline_manager.request_pl('script', self.task_name, pl_name)
+        self._pl_setup.wait(timeout)
+        if self._pl_setup.is_set():
+            self._pl_setup.clear()
+            return
         else:
             raise CommunicationError('No response from pipeline management.')
+    def drop_pl(self, pl_name):
+        self.ai.pipeline_manager.drop_pl('script', self.task_name, pl_name)
+    def drop_all_pl(self):
+        self.ai.pipeline_manager.drop_all_pl('script', self.task_name)
     @external_function
-    def pl_reponse(self, pl_response):
-        self._pl_response = pl_response
+    def pl_response(self):
         self._pl_setup.set()
     @external_function
     def set_option(self, option_name, option_value):
@@ -236,6 +235,8 @@ class aiScript(aiProcess):
     def depthOverridden(self):
         warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
     def notify_exit(self, exit_status):
+        #make sure to drop pipelines
+        self.drop_all_pl()
         for x in range(5):
             self.ai.task_manager.on_script_exit(self.task_name, exit_status)
             if self.exit_confirmed.wait(1.0):
