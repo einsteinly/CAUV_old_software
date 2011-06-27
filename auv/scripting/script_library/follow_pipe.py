@@ -33,7 +33,7 @@ class scriptOptions:
     threshold = 0.1,
     Strafe_p  = 255,
     depth_p   = 0.1,
-    depth_enable = False
+    depth_enable = False,
 
 class script(aiScript):
     def __init__(self, script_name, opts):
@@ -44,6 +44,7 @@ class script(aiScript):
         self.centred = threading.Event()
         self.aligned = threading.Event()
         self.depthed = threading.Event()
+        self.corners = threading.Event()
         self.ready = threading.Event()
 
     def loadPipeline(self):
@@ -100,6 +101,10 @@ class script(aiScript):
         else: self.centered.clear()
         info('pipe follow: strafing %i' %(st))
 
+    def onCornersMessage(self, m):
+        #TODO: process message
+        info("Corners message")
+
     """
     def onHistogramMessage(self, m):
         #enable/disable based on histogram messages
@@ -110,47 +115,70 @@ class script(aiScript):
         self.enable_lock.release()
     """
 
-    #def pipe_follow(auv_node, au, **kwargs):
+
+    def followPipeUntil(self, condition):
+        while not condition.is_set():
+            # check we're still good to go, giving a little time to re-align the 
+            # pipe if needed
+            info("Re-aligning with pipe...")
+            if not self.ready.wait(self.options.Lost_Timeout)
+                return False
+            
+            info("Above pipe, heading forward...")
+            self.auv.prop(self.options.Prop_Speed)
+            
+            # go forward for a bit while we're still above the pipe
+            while self.ready.is_set():
+                time.sleep(1)
+        
+        return True
+  
+
     def run(self):
+        # first we need to check we've actually found the pipe
+        # the detector doesn't really look for the pipe it just looks
+        # for yellow things in the downward camera, so there will be
+        # a few false positives
+        
+        # TODO: pull in pipe_confirm
+        # if not PipeConfirmer.isPipe() return;
+        
+        # by this point we think we've found the pipe
+        # next step is to setup the pipelines we'll need for pipe following
         if self.options.Load_Pipeline is not None:
             saved_pipeline_state = self.__pl.get()
             self.loadPipeline()
+            
+        # now we wait for messages allowing us to work out how to align with
+        # the pipe, but if this is taking too long then just give up as we've
+        # probably drifted away from the pipe
         debug('Waiting for ready...')
-        self.ready.wait(self.options.Ready_Timeout)
-        while True:
-            if not self.ready.is_set():
-                error("Took too long to become ready, aborting")
+        if not self.ready.wait(self.options.Ready_Timeout):
+            error("Took too long to become ready, aborting")
+            return #timeout
+        
+        
+        for i in range(3):
+            # follow the pipe along until the end (when we can see the corners)
+            if not followPipeUntil(self.corners):
+                error("Pipeline lost on pass ", i);
                 self.cleanup()
-                break
-            info("Above pipe, heading forward...")
-            self.auv.prop(self.options.Prop_Speed)
-            while self.ready.is_set():
-                time.sleep(1)
-            info("Re-aligning with pipe...")
+                return
+            
+            # turn 180
+            info("Reached end of first pass. Doing 180")
             self.auv.prop(0)
-            self.ready.wait(self.options.Lost_Timeout)
-            #This seems to a mix of old and unused stuff
-            # we are no longer aligned with the pipe, stop, and check whether we
-            # are still attempting to align (ie enable is still true)
-            #self.enable_lock.acquire()
-            #if not self.enable:
-            #    error('The pipe seems to have gone, waiting...')
-            #    # if it isnt, give it lost_timeout to reenable
-            #    self.enable_lock.wait(Options.Lost_Timeout)
-            #if not self.enable:
-            #    error("Lost the pipe, giving up")
-            #    self.enable_lock.release()
-            #    self.cleanup()
-            #    break
-            #self.enable_lock.release()
-            #info('Repeating...')
-            # we found the pipe again, loop around
-        info('Finished')
+            self.auv.bearing((self.auv.getBearing()-180)%360)
+        
+        # save the pipeline in case it's been edited
         if self.options.Load_Pipeline is not None:
             self.__pl.set(saved_pipeline_state)
+        
+        info('Finished pipe following')
+        notify_exit('SUCCESS')
+        self.cleanup()
 
     def cleanup(self):
-        error('does this ever get called?')
         self.node.removeObserver(self)
 
 

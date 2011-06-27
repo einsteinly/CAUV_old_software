@@ -28,6 +28,7 @@ namespace cauv {
     public:
 
         CauvPositionProvider(boost::shared_ptr<AUV> auv) : Marble::PositionProviderPlugin(), m_auv(auv) {
+            qRegisterMetaType<Marble::GeoDataAccuracy>("GeoDataAccuracy");
             m_auv->sensors.location->onUpdate.connect(boost::bind(&CauvPositionProvider::onPositionUpdate, this, _1));
         }
 
@@ -53,7 +54,9 @@ namespace cauv {
         Marble::GeoDataCoordinates position() const {
             qreal lng = m_auv->sensors.location->latest().longitude();
             qreal lat = m_auv->sensors.location->latest().latitude();
-            qreal alt = m_auv->sensors.location->latest().altitude();
+            qreal alt = 100;//m_auv->sensors.location->latest().altitude();
+
+            info() << lat << lng << alt;
 
             return Marble::GeoDataCoordinates(lng, lat, alt, Marble::GeoDataCoordinates::Degree);
         }
@@ -95,6 +98,7 @@ namespace cauv {
 
         public Q_SLOTS:
             void onPositionUpdate(Location){
+                info() << "Position upadted";
                 Q_EMIT positionChanged(position(), accuracy());
             }
 
