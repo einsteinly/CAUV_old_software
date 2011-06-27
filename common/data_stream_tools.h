@@ -137,8 +137,8 @@ namespace cauv {
     class DataStreamRecorder : public DataStreamTool {
 
     public:
-        DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int samples = 100000):
-                m_numSamples(samples) {
+        DataStreamRecorder<T>(boost::shared_ptr<DataStream<T> > stream, const unsigned int samples = 100000, const unsigned int frequency = 1):
+                m_numSamples(samples), m_sampleFrequency(frequency) {
             stream->onUpdate.connect(boost::bind(&DataStreamRecorder<T>::change, this, _1, _2));
         };
 
@@ -154,6 +154,19 @@ namespace cauv {
         unsigned int getNumSamples(){
             boost::mutex::scoped_lock lock(m_mutex);
             return m_numSamples;
+        }
+
+        void setSampleFrequency(const unsigned int frequency){
+            {
+                boost::mutex::scoped_lock lock(m_mutex);
+                m_sampleFrequency = frequency;
+                m_frequencyCount = frequency; // set to frequency as ooposed to 0 so we include the next sample
+            }
+            this->clear();
+        }
+
+        unsigned int getSampleFrequency() {
+            return m_sampleFrequency;
         }
 
         const std::vector<T> getHistory() const {
@@ -181,8 +194,11 @@ namespace cauv {
 
             }
 
-            m_history.push_back(data);
-            m_timestamps.push_back(timestamp);
+            if(++m_frequencyCount >= m_sampleFrequency) {
+                m_history.push_back(data);
+                m_timestamps.push_back(timestamp);
+                m_frequencyCount = 0;
+            }
         };
 
     protected:
@@ -190,6 +206,8 @@ namespace cauv {
         std::vector<T> m_history;
         std::vector<boost::posix_time::ptime> m_timestamps;
         unsigned int m_numSamples;
+        unsigned int m_sampleFrequency;
+        unsigned int m_frequencyCount;
     };
 
 
