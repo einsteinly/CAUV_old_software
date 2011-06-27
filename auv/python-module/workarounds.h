@@ -655,12 +655,12 @@ struct from_python_variant
 
     static void* convertible(PyObject* obj_ptr)
     {
-        debug() << "variant convertible";
+        debug(3) << "variant convertible";
         boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
         boost::python::object obj_obj(obj_hdl);
         if(!isinstance<ValueType>(obj_obj))
             return 0;
-        debug() << "variant convertible isinstance ok";
+        debug(3) << "variant convertible isinstance ok";
         return obj_ptr;
     }
     
