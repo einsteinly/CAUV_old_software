@@ -7,8 +7,14 @@ import threading, os.path, md5, cPickle, time, traceback
 from glob import glob
 
 """
+NOTE - if broken: did someone change the node type numbers, or edit the copy node, since copy nodes are manually added, so type needs to be updated etc
+                  did outarcs get dropped/become important? this uses output arcs when importing pipelines, but ignores them afterwards (e.g. when setting up pipelines)
 TODO - more advanced optimisation
--save state (only once pieline succefully loaded) and restore on restart.
+     - actually save optimised pipelines... inc. ones to avoid?
+     - do copy nodes copy other data types? something to watch out for...
+     - strip of GUI outputs (and related processing)...
+     - save state (only once pieline succefully loaded) and restore on restart
+     - make branch.split actually work out branch.depends properly
 """
 
 class Branch():
@@ -24,57 +30,54 @@ class Branch():
         if set(self.depends) != set(other_branch.depends):
             return None
         #split into equivalent nodes
-        node_map = {} #ref_node: [node_ids],[other_node_ids]
+        node_map = {} #node_id:[other_node_ids]
         for node_id, node in self.nodes.items():
-            #check to see whether equivalent nodes have already been added
-            for ref_node in node_map:
-                if ref_node.type == node.type and ref_node.params == node.params:
-                    node_map[ref_node][0].append(node_id)
-                    break
-            #else add as new
-            else:
-                equiv_node_ids = []
-                for other_node_id, other_node in other_branch.nodes.items():
-                    if node.type == other_node.type and node.params == other_node.params:
-                        equiv_node_ids.append(other_node_id)
-                #if we didnt find any equivalents, there isnt a mapping
-                if not len(equiv_node_ids):
-                    return None
-                node_map[node] = ([node_id,],equiv_node_ids)
+            node_map[node_id] = []
+            for other_node_id, other_node in other_branch.nodes.items():
+                if node.type == other_node.type and node.params == other_node.params:
+                    node_map[node_id].append(other_node_id)
         #check there are the right no. of equivalent nodes, and relabel where possible
         relabel = {} #self_label: other_label
-        possible = {}
-        for self_node_ids, other_node_ids in node_map.values():
-            if len(self_node_ids)!=len(other_node_ids):
+        possible = {} #list of nodes that aren't in relabel as there are more than one possibility, node_id: possible_node_ids
+        for node_id, other_node_ids in node_map.items():
+            if len(other_node_ids) == 0:
+                #no possible matches, no relabeling
                 return None
-            elif len(self_node_ids) == 1:
-                relabel[self_node_ids[0]]=other_node_ids[0]
+            elif len(other_node_ids) == 1:
+                #check hasnt already been used
+                if other_node_ids[0] in relabel.values():
+                    return None
+                #if not already used, if relabeling exist must relabel to this
+                relabel[node_id] = other_node_ids[0]
             else:
+                #multiple possible nodes match
                 for self_node_id in self_node_ids:
                     possible[self_node_id] = other_node_ids
         #now generate possible relabellings
-        possibles = [relabel,] #list of possisible relabels
+        #basically known possibilities, and for a node that hasn't yet been relabeled, add all the possible things it could be relabeled to
+        possibles = [relabel,] #list of possisible relabels (starts of with those that have just one possibility)
         for self_node_id, other_node_ids in possible.items():
             new_possibles = []
             for relabeling in possibles:
                 for other_node_id in other_node_ids:
-                    #if the other_node_id has already been used, don't create a new relabelling
+                    #if the other_node_id has already been used, don't create a new relabelling since that would relabel 2 things to the same thing
                     if not other_node_id in relabeling.values():
                         #very inefficient copying...
                         new_relabeling = dict([(x,y) for x,y in relabeling.items()])
                         new_relabeling[self_node_id] = other_node_id
                         new_possibles.append(new_relabeling)
             possibles = new_possibles
+        #now check to see whether any relabelings give an equivalent branch
         for relabeling in possibles:
             if self.equiv(other_branch, relabeling):
-                print 'Found 2 matching branches: ', self.__dict__, other_branch.__dict__
                 return relabeling
         #no possibilities gave a matching
         return None
     def equiv(self, other_branch, relabel):
+        #basically, take advantage of pythons ability to compare dictionaries
         #compare dict of nodes, compring nodes would always fail as they are different instances
         other_branch_dict = dict([(node_id, node.__dict__) for node_id, node in other_branch.nodes.items()])
-        #careful not to actually relabel, create new copy instead
+        #careful not to actually relabel, create new copy instead (otherwise we'll relabel the original, and everything will be broken)
         relabeled_dict = {}
         for node_id, node in self.nodes.items():
             copied_node_dict = {'type':node.type,'params':node.params,'inarcs':{},'outarcs':{}}
@@ -84,8 +87,10 @@ class Branch():
             #for output, outarcs in node.outarcs.items():
             #    copied_node_dict['outarcs'][output] = [(relabel[outarc[0]], outarc[1]) for outarc in outarcs]
             relabeled_dict[relabel[node_id]] = copied_node_dict
+        #check all the nodes exist in both (otherwise we'll get an error later)
         if set(relabeled_dict.keys()) != set(other_branch_dict.keys()):
             return False
+        #more complicated since we are ignoring outarcs so cannot just compare __dict__
         return all([all([other_branch_dict[nodeid][prop] == relabeled_dict[nodeid][prop] for prop in ('type', 'inarcs', 'params')]) for nodeid in relabeled_dict])
     def split(self, node_groups):
         branches = {} #branch_id, branch
@@ -97,6 +102,7 @@ class Branch():
             for node_id in node_group:
                 if node_id in covered_nodes: raise Exception('Tried to split a branch into overlapping node groups')
                 else: covered_nodes.append(node_id)
+        #add the remaining nodes not in a group to the last group
         uncovered = [node_id for node_id in self.nodes if not node_id in covered_nodes]
         if len(uncovered): node_groups.append(uncovered)
         for node_group in node_groups:
@@ -127,12 +133,15 @@ class Branch():
                                 branch.depends.append(branchid)
         return branches
     def renumber(self, relabel):
+        #renumber inputs (e.g. if branches it happens to depend on are equivalent to existing branches, we want to renumber to depend on nodes in the already existing branches)
         for node in self.nodes.values():
             new_inarcs = {}
             for input, inarc in node.inarcs.items():
                 new_inarcs[input] = (relabel[inarc[0]], inarc[1]) if inarc[0] in relabel else inarc
             node.inarcs = new_inarcs
+            
 class oPipeline():
+    #basically represents the original pipelines
     def __init__(self, branches, md5):
         self.branches = branches
         self.md5 = md5
@@ -141,13 +150,13 @@ class OptimisedPipelines():
     def __init__(self):
         self.branches = {} #branch_id, branch
         self.pipelines = {}
-        self.old_pipelines = {}
-        self.relabel = {}
+        self.old_pipelines = {} #use to store, e.g. if branch is update
+        self.names = []
         self.nbid = 0
         self.nnid = 0
-        self.autoname = 0
     def add_pl(self, pl_name, branches, md5):
-        #renumber nodes
+        #renumber nodes so that they are above the highest node id already in optimised pipelines (this way we don't have to renumber them later)
+        #for simplicity sake, just add the nnid (next node id) to all the node ids
         max_n = self.nnid
         for branch in branches.values():
             new_nodes = {}
@@ -164,7 +173,7 @@ class OptimisedPipelines():
         #note, all dependant branches should be added simultaneously as they will be relabelled to avoid conflicts
         included_branches = []
         #check whther branch already exists, else add as new branch, and work out relabelling
-        #note we cant compare branches unless all the thing they dpend on have been relabeled
+        #note we cant compare branches unless all the thing they depend on have been relabeled (otherwise dependancies check will fail)
         branch_ids = branches.keys() #branches to process
         counter = -1
         while len(branch_ids) > 0:
@@ -174,14 +183,14 @@ class OptimisedPipelines():
             #check to see whether all the branches it depends
             if not all([(in_branch in self.branches) for in_branch in branch.depends]):
                 #not ready yet, skip for the moment
+                #we'd better hope there aren't any circular links...
                 continue
             for branch2_id, branch2 in self.branches.items():
                 relabel = branches[branch_ids[counter]].compare(branch2) #returns relabelling branch => branch2
                 #existing branch
                 if relabel:
-                    #need to relabel accordingly
+                    #need to relabel depends other branches not yet added accordingly
                     for branch3 in branches.values():
-                        #update branches dependant on this branch
                         for dep_branch_id in branch3.depends:
                             if dep_branch_id == branch_id:
                                 branch3.depends.remove(branch_id)
@@ -191,8 +200,8 @@ class OptimisedPipelines():
                     included_branches.append(branch2_id)
                     break
             else:
-                #new branch
-                #only need to relabel branch id
+                #there were no relabelings for any existing branch, so this is not the same as any existing branch, so add it
+                #only need to relabel branch id in the remaining unadded branches
                 for branch3 in branches.values():
                     for out_branch_id in branch3.depends:
                         if out_branch_id == branch_id:
@@ -200,13 +209,13 @@ class OptimisedPipelines():
                             branch3.depends.append(self.nbid)
                 included_branches.append(self.nbid)
                 self.branches[self.nbid] = branch
-                #sort out renaming to avoid name clashes
-                self.relabel[self.nbid] = {}
+                #check to see if names already used (print warning if so)
                 for node_id, node in branch.nodes.items():
                     if 'name' in node.params:
-                        self.relabel[self.nbid][node.params['name']] = str(self.autoname)
-                        node.params['name'] = str(self.autoname)
-                        self.autoname += 1
+                        if node.params['name'] in self.names:
+                            warning('Node name %s used more than once' %(node.params['name']))
+                        else:
+                            self.names.append(node.params['name'])
                 self.nbid += 1
             branch_ids.remove(branch_id)
         #finally add the pipeline
@@ -215,17 +224,18 @@ class OptimisedPipelines():
 class pipelineManager(aiProcess):
     def __init__(self):
         aiProcess.__init__(self, 'pipeline_manager')
-        self.request_lock = threading.Lock()
+        self.request_lock = threading.RLock()
         self.setup_requests = []
+        self.drop_requests = []
+        self.requests = {'script':{}, 'detector':{}} #detector_name: pl_names
         self.pipeline_lock = threading.RLock()
         with self.pipeline_lock:
             #this may take time, so lock since other threads may start requesting as soon as they start
             self.load_pl_data()
             #self.script_pl = pipeline.Model(self.node, 'default')
             self.detector_pl = pipeline.Model(self.node, 'default')
-            self.branches = {}
-            self.requests = {}
-            self.autoreq = 0
+            self.branches = {} #branch_id: no of time branch in use
+            #save any old data just in case
             self.detector_pl.save('%d_detector_pl.temp' %(time.time(),))
             self.detector_pl.clear()
     def load_pl_data(self):
@@ -236,7 +246,7 @@ class pipelineManager(aiProcess):
             except IOError:
                 self.pl_data = OptimisedPipelines()
             #scan the pipelines
-            pipeline_names = [x[10:] for x in glob(os.path.join('pipelines', '*.pipe'))]
+            pipeline_names = [x[10:] for x in glob(os.path.join('pipelines', '*.pipe'))] #we'll drop the 'pipelines/' prefix
             for pl_name in pipeline_names:
                 try:
                     info('Loading pipeline %s' %(pl_name,))
@@ -260,12 +270,11 @@ class pipelineManager(aiProcess):
             #load pipeline state
             pl_state = cPickle.load(open(os.path.join('pipelines', pl_name)))
             md5result = md5.md5(open(os.path.join('pipelines', pl_name)).read())
+            #find out which nodes are 'inputs', and what the next node id should be
             inputs = []
-            outputs = []
             next_id = 1
             for node_id, node in pl_state.nodes.items():
                 if all([x[0]==0 for x in node.inarcs.values()]): inputs.append(node_id)
-                if all([not len(x) for x in node.outarcs.values()]): outputs.append(node_id)
                 if next_id <= node_id: next_id = node_id + 1
                 #get rid of troublesome zeros
                 for input, inarc in node.inarcs.items():
@@ -274,76 +283,119 @@ class pipelineManager(aiProcess):
             input_node2branch = {}
             for node_id in inputs:
                 node = pl_state.nodes[node_id]
-                #split off inputs, add copy to avoid interference between branches
+                #add copy to avoid interference between branches
                 #may need multiple copies if input has multiple outputs
+                #check to see whether anything actually uses it
+                if not len(node.outarcs):
+                    continue
                 for output_name, outarcs in node.outarcs.items():
+                    #if copy node changes, need to change this bit
                     copy_node = pipeline.Node(next_id, 1, inputarcs={'image': (node_id, output_name)}, outputarcs={'image copy': outarcs})
                     for to_node_id, to_node_field in outarcs:
                         pl_state.nodes[to_node_id].inarcs[to_node_field] = (next_id, 'image copy')
                     node.outarcs[output_name] = [(next_id, 'image')]
                     pl_state.nodes[next_id] = copy_node
                     next_id += 1
+            #create all encompassing branch, then split off inputs (so camera etc do not get added to the pipeline tomany times)
             branches = Branch(pl_state.nodes, depends=[]).split([(x,) for x in inputs])
             self.pl_data.add_pl(pl_name, branches, md5result)
     @external_function
     def save_mods(self, pipelines=None, temporary=False):
+        #if we change the pipeline, we need to be able to save changes
         pass
     @external_function
     def clear_old(self):
         #get rid of old data (e.g.pipelines that have been deleted
         pass
     @external_function
-    def request_pl(self, requestor_type, requestor_name, requested_pl, req_nodes, req_all=False):
+    def request_pl(self, requestor_type, requestor_name, requested_pl):
+        #VERY IMPORTANT: make sure requestor_name is same as process_name
         #since the python thread cannot be interrupted multiple times it seems, and needs to be interrupted to set up the pipeline, request must be handled in the main process
         with self.request_lock:
-            self.setup_requests.append({'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl, 'req_nodes':req_nodes, 'req_all':req_all})
-    def setup_pl(self, requestor_type, requestor_name, requested_pl, req_nodes, req_all=False):
-            required_branches = []
-            node_names = {} #requested: new
-            #search pipeline for node with req_node name
-            for branch_id in self.pl_data.pipelines[requested_pl].branches:
-                for node_id, node in self.pl_data.branches[branch_id].nodes.items():
-                    if 'name' in node.params:
-                        if node.params['name'] in req_nodes:
-                            node_names[node.params['name']] = self.pl_data.rename[branch_id][node.params['name']]
-                            if not branch_id in required_branches:
-                                required_branches.append(branch_id)
-            #unless req_all, fill in only needed branches
-            if req_all:
-                required_branches = self.pl_data.pipelines[requested_pl].branches
-            request_id = str(self.autoreq)
-            self.autoreq += 1
-            self.requests[request_id] = required_branches
-            for branch_id in required_branches:
-                if branch_id in self.branches:
-                    self.branches[branch_id] += 1
+            self.setup_requests.append({'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl})
+    @external_function
+    def drop_pl(self, requestor_type, requestor_name, requested_pl):
+        with self.request_lock:
+            self.drop_requests.append({'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl})
+    @external_function
+    def drop_all_pl(self, requestor_type, requestor_name):
+        with self.request_lock:
+            for req_id in self.name2request[requestor_type][requestor_name]:
+                self.drop_pl(req_id)
+            self.name2request[requestor_type].pop(requestor_name)
+    def setup_pl(self, requestor_type, requestor_name, requested_pl):
+        if requestor_type == 'script':
+            #clear out other script requests on the basis that a) script won't request close together or b) the running script will be last to request
+            with self.request_lock:
+                for script_name in self.requests['script']:
+                    if script_name != requestor_name:
+                        for pl_name in self.requests['script'][script_name]:
+                            self.drop_pl(requestor_type, requestor_name, pl_name)
+        elif requestor_type == 'detector':
+            pass
+        else:
+            error('Invalid requestor type %s, named %s' %(requestor_type, requestor_name))
+            return
+        if not requested_pl in self.pl_data.pipelines:
+            error('Non-existant pipeline requested')
+            return
+        with self.request_lock:
+            #update request info
+            if requestor_name in self.requests[requestor_type]:
+                self.requests[requestor_type][requestor_name].append(requested_pl)
+            else:
+                self.requests[requestor_type][requestor_name] = [requested_pl]
+        for branch_id in self.pl_data.pipelines[requested_pl].branches:
+            if branch_id in self.branches:
+                self.branches[branch_id] += 1
+            else:
+                self.branches[branch_id] = 1
+        #confirm setup (atm only scripts)
+        if requestor_type == 'script':
+            getattr(self.ai, requestor_name).pl_response()
+    def unsetup_pl(self, requestor_type, requestor_name, requested_pl):
+        with self.request_lock:
+            if not requestor_type in self.requests:
+                error('Invalid type in requested drop pl')
+            elif not requestor_name in self.requests[requestor_type]:
+                error('Requestor does not have any pipelines to drop')
+            elif not requested_pl in self.requests[requestor_type][requestor_name]:
+                error('Requestor has not requested this pipeline %s' %(requested_pl,))
+            else:
+                if not requested_pl in self.pl_data.pipelines:
+                    warning('Could not drop request %s, may have left things in the pipeline.' %(pl_name, ))
                 else:
-                    self.branches[branch_id] = 1
-            #reevaluate
-            self.eval_branches()
-            #return new names
-            getattr(self.ai, requestor_name).pl_response(request_id, node_names)
+                    for branch_id in self.pl_data.pipelines[requested_pl].branches:
+                        self.branches[branch_id] -= 1
     def eval_branches(self):
         with self.pipeline_lock:
             new_state = pipeline.State()
             for branch_id, no_req in self.branches.items():
                 if no_req:
                     new_state.nodes.update(self.pl_data.branches[branch_id].nodes)
-            print new_state
             self.detector_pl.set(new_state)
-    @external_function
-    def drop_pl(self, request_id):
-        with self.pipeline_lock:
-            pass
     def run(self):
         while True:
             with self.request_lock:
+                changed = len(self.setup_requests)+len(self.drop_requests)
                 for setup_request in self.setup_requests:
-                    self.setup_pl(**setup_request)
+                    try:
+                        self.setup_pl(**setup_request)
+                    except Exception:
+                        error('Exception while trying to setup pipeline caused by '+str(setup_request))
+                        traceback.print_exc()
                 self.setup_requests = []
+                for drop_request in self.drop_requests:
+                    try:
+                        self.unsetup_pl(**drop_request)
+                    except Exception:
+                        error('Exception while trying to drop pipeline request caused by '+str(drop_request))
+                        traceback.print_exc()
+                self.drop_requests = []
+            #reevaluate if changed
+            if changed: self.eval_branches()
             time.sleep(1)
         
 if __name__ == '__main__':
-    #Note pipelineManager is improted into task_manager to run, if started directly assume wnot runnin g as part of AI framework
     pm = pipelineManager()
     pm.run()
