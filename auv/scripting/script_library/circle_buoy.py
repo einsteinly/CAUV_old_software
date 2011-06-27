@@ -14,14 +14,7 @@ import optparse
 import math
 import traceback
 
-import utils.control
-
-def expWindow(n, alpha):
-    t = 1
-    r = [t]
-    for i in xrange(0,n):
-        r.append(t * alpha)
-    return tuple(r)
+from utils.control import expWindow, PIDController
 
 class scriptOptions(aiScriptOptions):
     Do_Prop_Limit = 50  # max prop for forward/backward adjustment
@@ -49,68 +42,6 @@ class scriptOptions(aiScriptOptions):
         ]
 
 
-class Controller:
-    def __init__(self):
-        pass
-    def update(self, value):
-        return 0
-
-class PIDController(Controller):
-    def __init__(self, (Kp, Ki, Kd), d_window = (1), err_clamp = 1e9):
-        # the most recent end of the window is the start
-        self.err = 0
-        self.last_time = None
-        self.derrs = []
-        self.ierr = 0
-        self.derr = 0
-        self.derr_window = d_window
-        self.err_clamp = err_clamp
-        if abs(sum(d_window)) < 1e-30:
-            raise Exception('Bad Window')
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-    
-    def calcDErr(self):
-        # apply self.derr_window over self.derrs
-        renorm = sum(self.derr_window)
-        keep_derrs = max(10, len(self.derr_window))
-        self.derrs = self.derrs[-keep_derrs:]
-        denormed = 0
-        for i, derr in enumerate(self.derrs):
-            if i == len(self.derr_window):
-                break
-            denormed += derr * self.derr_window[-i]
-        return denormed / renorm
-    
-    def setKpid(self, (Kp, Ki, Kd)):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        
-    def update(self, err):
-        now = time.time()
-        last_err = self.err
-        self.err = err
-        if self.last_time is not None:
-            self.derrs.append((self.err - last_err) / (now - self.last_time))
-        else:
-            self.derrs.append(0)
-        self.derr = self.calcDErr()
-        
-        self.last_time = now
-        
-        self.ierr += self.err
-        
-        if self.ierr > self.err_clamp:
-            self.ierr = self.err_clamp
-        elif self.ierr < -self.err_clamp:
-            self.ierr = -self.err_clamp
-    
-        return self.Kp * self.err +\
-               self.Ki * self.ierr +\
-               self.Kd * self.derr
-
 class script(aiScript):
     def __init__(self, script_name, opts):
         aiScript.__init__(self, script_name, opts)
@@ -124,20 +55,12 @@ class script(aiScript):
                 self.options.Size_DError_Window,
                 self.options.Size_Error_Clamp
         )
-        #self.last_size_err = None
-        #self.last_size_derr = 0
-        #self.size_derr_smoothing = self.options.Size_DError_Smoothing
         self.angle_pid = PIDController(
                 self.options.Angle_Control_kPID,
                 self.options.Angle_DError_Window,
                 self.options.Angle_Error_Clamp
         )
-        #self.last_angle_err = None
-        #self.last_angle_derr = 0
-        #self.angle_derr_smoothing = 0.5
         self.time_last_seen = None
-        #self.__sizekpd = self.options.Size_Control_kPD
-        #self.__anglekpd = self.options.Angle_Control_kPD
     
     def reloadOptions(self):
         self.__strafe_speed = self.options.Strafe_Speed
@@ -190,7 +113,7 @@ class script(aiScript):
         if self.time_last_seen is not None and \
            now - self.time_last_seen > self.options.Warn_Seconds_Between_Sights:
             info('picked up buoy again')
-         
+             
         pos_err = centre - 0.5
         if pos_err < -0.5 or pos_err > 0.5:
             warning('buoy outside image: %g' % pos_err)
@@ -214,44 +137,23 @@ class script(aiScript):
         angle_err = math.degrees(math.asin(pos_err / plane_dist)) 
         
         turn_to = self.getBearingNotNone() + self.angle_pid.update(angle_err)
-        '''
-        angle_derr = 0
-        if self.last_angle_err is not None:
-            new_angle_derr = (angle_err - self.last_angle_err[1]) / (now - self.last_angle_err[0])
-            angle_derr = self.angle_derr_smoothing * angle_derr +\
-                         (1 - self.angle_derr_smoothing) * new_angle_derr
-        self.last_angle_derr = angle_derr
-        self.last_angle_err = (now, angle_err)
-        turn_to = self.getBearingNotNone() +\
-                  angle_err * self.__anglekpd[0] +\
-                  angle_derr * self.__anglekpd[1]
-        '''
+
         self.auv.bearing(turn_to)
 
         size_err = radius - self.__buoy_size
         do_prop = self.size_pid.update(size_err)
-        '''
-        size_derr = 0
-        if self.last_size_err is not None:
-            new_size_derr = (size_err - self.last_size_err[1]) / (now - self.last_size_err[0])
-            size_derr = self.size_derr_smoothing * size_derr +\
-                        (1 - self.size_derr_smoothing) * new_size_derr
-        self.last_size_derr = size_derr
-        self.last_size_err = (now, size_err)
-        do_prop = self.__sizekpd[0] * size_err +\
-                  self.__sizekpd[1] * size_derr
-        '''
+
         if do_prop > self.options.Do_Prop_Limit:
             do_prop = self.options.Do_Prop_Limit
         if do_prop < -self.options.Do_Prop_Limit:
             do_prop = -self.options.Do_Prop_Limit
-        debug('angle (e=%.3g, ie=%.3g de=%.3g) size (e=%.3g, ie=%.3g, de=%.3gg)' % (
+        debug('angle (e=%.3g, ie=%.3g de=%.3g) size (e=%.3g, ie=%.3g, de=%.3g)' % (
             self.angle_pid.err, self.angle_pid.ierr, self.angle_pid.derr,
             self.size_pid.err, self.size_pid.ierr, self.size_pid.derr
         ))
         debug('turn to %g, prop to %s' % (turn_to, do_prop))
         self.auv.prop(int(round(do_prop)))
-        #self.time_last_seen = now
+        self.time_last_seen = now
 
     def run(self):
         if self.options.Load_Pipeline is not None:
@@ -259,7 +161,7 @@ class script(aiScript):
             self.loadPipeline()
         start_bearing = self.auv.getBearing()
         entered_quarters = [False, False, False, False]
-        exit_status = 0
+        exit_status = 'SUCCESS'
         info('Waiting for circles...')
         try:
             while False in entered_quarters:
@@ -290,7 +192,7 @@ class script(aiScript):
                 info('Waiting for final completion...')
                 time.sleep(0.5)
         except:
-            exit_status = 1
+            exit_status = 'FAIL'
             error(traceback.format_exc())
         finally:
             info('Stopping...')
