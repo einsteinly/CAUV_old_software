@@ -186,6 +186,41 @@ void ImageProcessor::onAddArcMessage(AddArcMessage_ptr m){
     }
 }
 
+void ImageProcessor::onRemoveArcMessage(RemoveArcMessage_ptr m){
+    if(!_filterMatches(m))
+        return;
+    try{
+        node_ptr_t from = lookup(m->from().node);
+        node_ptr_t to = lookup(m->to().node);
+        output_id output = m->from().output;
+        input_id input = m->to().input;
+
+        if(!from) throw id_error(MakeString() << "invalid node:" << m->from().node);
+        if(!to) throw id_error(MakeString() << "invalid node:" << m->to().node);        
+        
+        Node::msg_node_input_map_t il = to->inputLinks();
+        
+        // remove any existing arc:
+        Node::msg_node_input_map_t old_il = to->inputLinks();
+        Node::msg_node_input_map_t::const_iterator old_il_in = old_il.find(input);
+        if(old_il_in != old_il.end() && old_il_in->second.node){
+            node_ptr_t old_from = lookup(old_il_in->second.node);
+            if(old_from && old_from == from)
+                old_from->clearOutput(old_il_in->second.output, to, input);
+        }else if(old_il_in == old_il.end()){
+            error() << "badness: node" << m->to().node
+                    << "has no input link record for input" << input;
+        }
+        to->clearInput(input);
+
+        info() << "Arc removed:" << m->from() << "->" << m->to();
+        
+        sendMessage(boost::make_shared<ArcRemovedMessage>(m_name, m->from(), m->to()));
+    }catch(std::exception& e){
+        error() << __func__ << ":" << e.what();
+    }
+}
+
 void ImageProcessor::onGraphRequestMessage(GraphRequestMessage_ptr m){
     if(!_filterMatches(m))
         return;

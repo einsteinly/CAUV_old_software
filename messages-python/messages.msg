@@ -437,6 +437,13 @@ group pipeline
         to : NodeInput;
     }
 
+    message RemoveArc : 14
+    {
+        pipelineName : string;
+        from : NodeOutput;
+        to : NodeInput;
+    }
+
     message GraphRequest : 10
     {
         pipelineName : string;
