@@ -169,7 +169,7 @@ class Branch():
             #create new branch based on nodes
             for node_id in node_group:
                 node_group_nodes[node_id] = self.nodes[node_id]
-            branches[branch_id] = Branch(node_group_nodes, [])
+            branches[branch_id] = Branch(node_group_nodes)
             branch_id += 1
         return branches
     def renumber(self, relabel):

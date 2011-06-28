@@ -7,12 +7,20 @@ import time
 import sys
 import math
 
+from utils import vecops
+
 class BuoyDetectorOptions:
     Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
-    Required_Confidence = 0.9 # required proportion of CirclesMessages with qualifying sightings
+    Required_Confidence = 0.8
     Pipeline_File = 'pipelines/detect_buoy.pipe'
     Load_Pipeline = None #'buoy-detect'
     Circles_Name = 'buoy'
+    Histogram_Name = 'buoy'
+    Histogram_Bin = 17
+    Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
+    Optimal_Colour_Frac = 0.2 # highest colour detection confidence when the specified bin contains this value
+    Colour_Weight  = 0.7 # respective weightings in confidence, arithmetic mean of these values should be 1
+    Circles_Weight = 1.3 #
 
 def incFloat(f):
     if f == 0.0:
@@ -24,7 +32,8 @@ def incFloat(f):
 class detector(aiDetector):
     def __init__(self, node):
         aiDetector.__init__(self, node)
-        self.circles_messages = {} # map time received : message
+        self.circles_messages = {}   # map time received : message
+        self.histogram_messages = {} # "
         self.tzero = time.time()
         self.node.join('processing')
         self.node.join('pl_gui')
@@ -42,7 +51,9 @@ class detector(aiDetector):
         self.cullOldSightings(tnow - BuoyDetectorOptions.Sightings_Period)
         sightings = []
         for t, m in  self.circles_messages.items():
-            sightings.append(self.detectionConfidence(m))
+            sightings.append(BuoyDetectorOptions.Circles_Weight * self.detectionConfidence(m))
+        for t, m in self.histogram_messages.items():
+            sightings.append(BuoyDetectorOptions.Colour_Weight * self.colorDetectionConfidence(m))
         if len(sightings):
             confidence = sum(sightings) / len(sightings)
         else:
@@ -61,20 +72,40 @@ class detector(aiDetector):
             info('saving the current %s pipeline to %s' % (BuoyDetectorOptions.Load_Pipeline,
                                                            BuoyDetectorOptions.Pipeline_File))
             self.__pl.load(BuoyDetectorOptions.Pipeline_File + '.autosaved')
+    
+    def colorDetectionConfidence(self, histogram_message):
+        frac = histogram_message.bins[BuoyDetectorOptions.Histogram_Bin]
+        confidence = min(
+            1, frac*BuoyDetectorOptions.Optimal_Colour_Frac / abs(BuoyDetectorOptions.Optimal_Colour_Frac - frac)
+        )
+        debug('color confidence=%g, frac=%g' % (confidence, frac))
+        return confidence
 
     def detectionConfidence(self, message):
-        # TODO: something more sophisticated?
-        if len(message.circles) >= 1:
-            return 1.0
-        return 0.0
+        if len(message.circles) == 0:
+            return 0
+        sx_radius = sum(map(lambda x: x.radius, message.circles))
+        mean_radius = sx_radius / len(message.circles)
+        sx  = vecops.sx(map(lambda x: x.centre, message.circles))
+        sxx = vecops.sxx(map(lambda x: x.centre, message.circles))
+        stddev = vecops.pow(vecops.absv(vecops.sub(sxx,vecops.sqr(sx))), 0.5)
+        s = (stddev.x + stddev.y) / 2
+        confidence = 1 / (1 + BuoyDetectorOptions.Stddev_Mult * s/mean_radius)
+        if len(message.circles) == 1:
+            confidence = 0.9
+        debug('circle centres s=%g, confidence=%g mean radius=%g' % (s, confidence, mean_radius))
+        return confidence
 
     def cullOldSightings(self, cull_before_time):
-        to_remove = []
-        for t in self.circles_messages:
-            if t < cull_before_time:
-                to_remove.append(t)
-        for t in to_remove:
-            del self.circles_messages[t]
+        def cull(d):
+            to_remove = []
+            for t in d:
+                if t < cull_before_time:
+                    to_remove.append(t)
+            for t in to_remove:
+                del d[t]
+        cull(self.circles_messages)
+        cull(self.histogram_messages)
 
     def onCirclesMessage(self, m):
         if m.name == BuoyDetectorOptions.Circles_Name:
@@ -85,4 +116,15 @@ class detector(aiDetector):
                 t = incFloat(t)
             self.circles_messages[t] = m
         else:
-            debug('ignoring circles message: %s' % m.name)
+            debug('ignoring circles message: %s' % m.name, 2)
+ 
+    def onHistogramMessage(self, m):
+        if m.name == BuoyDetectorOptions.Histogram_Name:
+            t = self.relativeTime()
+            while t in self.histogram_messages:
+                # twiddle twiddle
+                t = incFloat(t)
+            self.histogram_messages[t] = m
+        else:
+            debug('ignoring histogram message: %s' % m.name, 2)
+

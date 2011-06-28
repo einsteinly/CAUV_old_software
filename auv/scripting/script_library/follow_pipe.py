@@ -61,7 +61,7 @@ class PipeConfirmer(messaging.MessageObserver):
             # TODO: use the lines message to check if we need to correct
             # the alignment as well
             strafe = strafeControl.update(m.x - 0.5)
-            debug('PipelineConfirmer: Set strafe: %i' % (int(strafe))
+            debug('PipelineConfirmer: Set strafe: %i' % (int(strafe)))
             self.auv.strafe(int(strafe))
 
     def onHistogramMessage(self, m):
