@@ -10,17 +10,17 @@ import math
 from utils import vecops
 
 class BuoyDetectorOptions:
-    Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
-    Required_Confidence = 0.8
+    Sightings_Period   = 3.0 # seconds, period to consider sightings of the buoy for
+    Required_Confidence = 0.7
     Pipeline_File = 'pipelines/detect_buoy.pipe'
     Load_Pipeline = None #'buoy-detect'
     Circles_Name = 'buoy'
     Histogram_Name = 'buoy'
     Histogram_Bin = 17
     Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
-    Optimal_Colour_Frac = 0.2 # highest colour detection confidence when the specified bin contains this value
-    Colour_Weight  = 0.7 # respective weightings in confidence, arithmetic mean of these values should be 1
-    Circles_Weight = 1.3 #
+    Optimal_Colour_Frac = 0.04 # highest colour detection confidence when the specified bin contains this value
+    Colour_Weight  = 0.3 # respective weightings in confidence, arithmetic mean of these values should be 1
+    Circles_Weight = 1.7 #
 
 def incFloat(f):
     if f == 0.0:
@@ -50,20 +50,30 @@ class detector(aiDetector):
         tnow = self.relativeTime()
         self.cullOldSightings(tnow - BuoyDetectorOptions.Sightings_Period)
         sightings = []
+        numcircles = len(self.circles_messages.items())
+        numcolours = len(self.histogram_messages.items())
         for t, m in  self.circles_messages.items():
             sightings.append(BuoyDetectorOptions.Circles_Weight * self.detectionConfidence(m))
         for t, m in self.histogram_messages.items():
             sightings.append(BuoyDetectorOptions.Colour_Weight * self.colorDetectionConfidence(m))
+        if numcircles:
+            circles_confidence = sum(sightings[:numcircles]) / numcircles
+        else:
+            circles_confidence = 0
+        if numcolours:
+            colour_confidence = sum(sightings[numcolours:]) / numcolours
+        else:
+            colour_confidence = 0
         if len(sightings):
             confidence = sum(sightings) / len(sightings)
         else:
             confidence = 0
-        info('buoy detector processing %d sightings' % len(sightings))
+        info('buoy detector processing %d sightings, confidence=%g (circles=%g,colour=%g)' % (
+            len(sightings), confidence, circles_confidence, colour_confidence))
         if confidence > BuoyDetectorOptions.Required_Confidence:
             info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = True
         else:
-            info('buoy not detected, detection confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = False
     
     def die(self):
@@ -78,7 +88,7 @@ class detector(aiDetector):
         confidence = min(
             1, frac*BuoyDetectorOptions.Optimal_Colour_Frac / abs(BuoyDetectorOptions.Optimal_Colour_Frac - frac)
         )
-        debug('color confidence=%g, frac=%g' % (confidence, frac))
+        debug('color confidence=%g, frac=%g' % (confidence, frac), 5)
         return confidence
 
     def detectionConfidence(self, message):
@@ -93,7 +103,7 @@ class detector(aiDetector):
         confidence = 1 / (1 + BuoyDetectorOptions.Stddev_Mult * s/mean_radius)
         if len(message.circles) == 1:
             confidence = 0.9
-        debug('circle centres s=%g, confidence=%g mean radius=%g' % (s, confidence, mean_radius))
+        debug('circle centres s=%g, confidence=%g mean radius=%g' % (s, confidence, mean_radius), 5)
         return confidence
 
     def cullOldSightings(self, cull_before_time):
