@@ -49,9 +49,9 @@ def is_external(f):
     except AttributeError:
         return False
 
-class aiProcess(messaging.BufferedMessageObserver):
+class aiProcess(messaging.MessageObserver):
     def __init__(self, process_name):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node("pyai"+process_name[:4])
         self.node.join("ai")
         self.node.addObserver(self)
@@ -82,12 +82,12 @@ class fakeAUVfunction():
         error('You can only call functions of AUV, one level deep')
         raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
 
-class fakeAUV(messaging.BufferedMessageObserver):
+class fakeAUV(messaging.MessageObserver):
     #TODO
     #needs to respond to control overriding commands
     def __init__(self, script):
         self.script = script #passing the script saves on the number of AI_process, as fakeAUV can now call other processes through the script
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.script.node.join("telemetry")
         self.script.node.addObserver(self)
         self.current_bearing = None
@@ -231,6 +231,10 @@ class aiScript(aiProcess):
     @external_function
     def set_option(self, option_name, option_value):
         self.options.set_option(option_name, option_value)
+        if option_name in self.options._dynamic:
+            self.optionChanged(option_name)
+    def optionChanged(self, option_name):
+        pass
     @external_function
     def depthOverridden(self):
         warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
@@ -249,9 +253,9 @@ class aiScript(aiProcess):
 
 #------AI DETECTORS STUFF------
         
-class aiDetector(messaging.BufferedMessageObserver):
+class aiDetector(messaging.MessageObserver):
     def __init__(self, node):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.node = node
         self.node.addObserver(self)
         self.detected = False
@@ -338,7 +342,7 @@ class detectorCondition(aiCondition):
         aiCondition.deregister(self, task_manager)
 
 class aiTask():
-    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=None, crash_limit=5, options=None, **kwargs):
+    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=None, crash_limit=5, frequency_limit=30, options=None, **kwargs):
         """
         Defines a 'Task', a script to run and when to run it
         Options:
@@ -364,6 +368,8 @@ class aiTask():
         self.active = False
         self.crash_count = 0
         self.crash_limit = crash_limit
+        self.frequency_limit = frequency_limit# once every
+        self.last_called = 0
     def update_options(self, options={}, **kwargs):
         """
         Updates the options on the task, accepts dict or kwargs

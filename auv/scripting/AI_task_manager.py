@@ -172,6 +172,8 @@ class taskManager(aiProcess):
         elif status == 'SUCCESS':
             self.remove_task(task)
             info('%s has finished succesfully, so is being removed from active tasks.' %(task,))
+        else:
+            self.task_list[task].last_called = time.time()
         getattr(self.ai,task).confirm_exit()
         #Force immediate recheck
         self.conditions_changed.set()
@@ -229,7 +231,7 @@ class taskManager(aiProcess):
                     highest_priority = self.current_priority
                     to_start = None
                     for task in self.active_tasks:
-                        if task.script_name != self.current_task and task.priority > highest_priority:
+                        if task.script_name != self.current_task and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
                             if task.is_available():
                                 to_start = task
                     if to_start:

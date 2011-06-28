@@ -10,6 +10,8 @@ AIMessageObserver = BufferedMessageObserver
 
 import copy_reg
 
+info('registering picklers...')
+
 # enum picklers:
 # http://stackoverflow.com/questions/3214969/pickling-an-enum-exposed-by-boost-python
 # Modifications are to support the fact we load cauvinterface into the global
@@ -40,6 +42,7 @@ _registerEnumPicklers()
 
 # test
 if False:
+    warning('performing pickle test...')
     import pickle
     f = open('pickle-test.pickle', 'w')
     to_pickle = []
@@ -61,5 +64,5 @@ if False:
         print thing
     f.close()
 
-
+info('pickle registration complete')
 
