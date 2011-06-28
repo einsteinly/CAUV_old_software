@@ -11,30 +11,24 @@
 namespace bp = boost::python;
 using namespace cauv;
 
+// NB: don't yield the GIL (otherwise it's possible *s could become invalid)
 void cauvDebug(const char* s, int l){
-    // relying on order of local destruction: LIFO
-    ThreadSave guard;
     debug(l) << s;
 }
 
 void cauvDebug1(const char* s){
-    ThreadSave guard;
     debug() << s;
 }
 
-// don't yield the GIL whilst reporting warnings or errors
 void cauvWarning(const char* s){
-    //ThreadSave guard;
     warning() << s;
 }
 
 void cauvError(const char* s){
-    //ThreadSave guard;
     error() << s;
 }
 
 void cauvInfo(const char* s){
-    ThreadSave guard;
     info() << s;
 }
 
