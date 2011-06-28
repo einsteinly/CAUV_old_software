@@ -19,6 +19,8 @@ set ( GUICPP_CORE_SRCS
     datastreamdragging.cpp
     cauvbasicplugin.cpp
     widgets/videoscreen.cpp
+    streams/streams.cpp
+    model/model.cpp
     )
 
 set ( GUICPP_CORE_UIS
@@ -27,6 +29,8 @@ set ( GUICPP_CORE_UIS
 
 set ( GUICPP_CORE_H
     widgets/videoscreen.h
+    streams/streams.h
+    model/model.h
     )
 
 set ( GUICPP_CORE_RCC

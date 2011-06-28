@@ -14,36 +14,7 @@
 
 namespace cauv {
 
-    class DataStreamBase {
-
-        public:
-        DataStreamBase(const std::string name, const std::string units, DataStreamBase* parent = NULL): m_parent(parent), m_name(name), m_units(units) {
-            }
-
-            virtual ~DataStreamBase(){}
-
-            virtual const std::string getName(bool full=true) const {
-                std::stringstream stream;
-
-                if (full && m_parent != NULL)
-                    stream << m_parent->getName() << " " << m_name;
-                else stream << m_name;
-
-                return stream.str();
-            }
-
-            virtual const std::string getUnits() const {
-                return m_units;
-            }
-
-            virtual bool isMutable(){return false;}
-
-        protected:
-
-            const DataStreamBase* m_parent;
-            const std::string m_name;
-            const std::string m_units;
-    };
+  
 
 
     /** A data stream represents one type of data being sent from a data source

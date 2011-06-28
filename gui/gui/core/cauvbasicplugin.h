@@ -8,7 +8,6 @@
 #include <QString>
 
 namespace cauv {
-
     class CauvBasicPlugin : public CauvInterfacePlugin
     {
         Q_INTERFACES(cauv::CauvInterfacePlugin)
