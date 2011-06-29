@@ -238,6 +238,7 @@ void AUVController::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
         processStateStream = m_auv->computer_state.processes.at(message->process());
     } catch (std::out_of_range ex){
         processStateStream = boost::make_shared<DataStream<ProcessState> >(message->process(), "");
+        m_auv->computer_state.processes[message->process()] = processStateStream;
         m_auv->computer_state.new_process_stream->update(processStateStream);
     }
 

@@ -14,8 +14,7 @@ from utils.detectors import ColourDetector
 class BuoyDetectorOptions:
     Sightings_Period   = 3.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.7
-    Pipeline_File = 'pipelines/detect_buoy.pipe'
-    Load_Pipeline = None #'buoy-detect'
+    Required_Pipeline = 'detect_buoy.pipe'
     Circles_Name = 'buoy'
     Histogram_Name = 'buoy'
     Histogram_Bin = 10 #17
@@ -36,9 +35,11 @@ class detector(aiDetector):
         self.tzero = time.time()
         self.node.join('processing')
         self.node.join('pl_gui')
-        self.__pl = pipeline.Model(self.node, BuoyDetectorOptions.Load_Pipeline)
-        if BuoyDetectorOptions.Load_Pipeline is not None:        
-            self.__pl.load(BuoyDetectorOptions.Pipeline_File)
+        if BuoyDetectorOptions.Required_Pipeline:
+            try:
+                self.request_pl(BuoyDetectorOptions.Required_Pipeline)
+            except Exception, e:
+                warning('Buoy Detector pipeline request failed: %s' % e)
     
     def relativeTime(self):
         return time.time() - self.tzero
@@ -67,11 +68,10 @@ class detector(aiDetector):
             self.detected = False
     
     def die(self):
-        # save the running pipeline in case someone edited it!
-        if BuoyDetectorOptions.Load_Pipeline is not None:
-            info('saving the current %s pipeline to %s' % (BuoyDetectorOptions.Load_Pipeline,
-                                                           BuoyDetectorOptions.Pipeline_File))
-            self.__pl.load(BuoyDetectorOptions.Pipeline_File + '.autosaved')
+        try:
+            self.drop_all_pl()
+        except Exception, e:
+            warning('Buoy Detector pipeline drop request failed: %s' % e)
 
     def detectionConfidence(self, message):
         if len(message.circles) == 0:
