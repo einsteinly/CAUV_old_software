@@ -114,9 +114,9 @@ void CauvGui::onRun()
     findPlugins(pluginsDir, 1);
 
 
-    //QSettings settings("CAUV", "Cambridge AUV");
-    //restoreGeometry(settings.value("geometry").toByteArray());
-    //restoreState(settings.value("windowState").toByteArray());
+    QSettings settings("CAUV", "Cambridge AUV");
+    restoreGeometry(settings.value("geometry").toByteArray());
+    restoreState(settings.value("windowState").toByteArray());
 
 
     // connect up message inputs and outputs
