@@ -393,7 +393,6 @@ class pipelineManager(aiProcess):
         with self.request_lock:
             for pl_name in self.requests[requestor_type][requestor_name]:
                 self.drop_pl(requestor_type, requestor_name, pl_name)
-            self.requests[requestor_type].pop(requestor_name)
     def setup_pl(self, requestor_type, requestor_name, requested_pl):
         if requestor_type == 'script':
             #clear out other script requests on the basis that a) script won't request close together or b) the running script will be last to request
@@ -416,6 +415,8 @@ class pipelineManager(aiProcess):
                 self.requests[requestor_type][requestor_name].append(requested_pl)
             else:
                 self.requests[requestor_type][requestor_name] = [requested_pl]
+            if requestor_type == 'detector':
+                self.ai.detector_control.update_pl_requests(self.requests['detector']['detcon'])
         for branch_id in self.pl_data.pipelines[requested_pl].branches:
             if branch_id in self.branches:
                 self.branches[branch_id] += 1
@@ -438,6 +439,8 @@ class pipelineManager(aiProcess):
                 else:
                     for branch_id in self.pl_data.pipelines[requested_pl].branches:
                         self.branches[branch_id] -= 1
+                    if requestor_type == 'detector':
+                        self.ai.detector_control.update_pl_requests(self.requests['detector']['detcon'])
     def eval_branches(self):
         with self.pipeline_lock:
             state, new_nodes = self._pl.get()
