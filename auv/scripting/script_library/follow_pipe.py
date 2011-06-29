@@ -13,25 +13,30 @@ import threading
 from math import degrees, cos, sin
 import time
 
+from movingaverage import MovingAverage
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
     load_pipeline = 'default'
     pipeline_file = 'pipelines/follow_pipe.pipe'    
-    centre_name = 'pipe',
-    lines_name = 'pipe',
+    centre_name = 'pipe'
+    lines_name = 'pipe'
+    histogram_name = 'Hue'
+    colour_bins = (11,12)
+    lower_threshold = 0.05
     #Timeouts
+    confirm_timeout = 15
     ready_timeout = 200
     lost_timeout = 2
     # Calibration
-    target_width = 0.2, #of image
-    centre_error = 0.1, #of image
-    align_error  = 5,   #degrees
+    target_width = 0.2 #of image
+    centre_error = 0.1 #of image
+    align_error  = 5   #degrees
     # Control
     prop_speed = 40
-    strafe_kPID  = (1, 0, 0),
-    depth_kPID   = (1, 0, 0),
-    depth_enable = False,
+    strafe_kPID  = (1, 0, 0)
+    depth_kPID   = (1, 0, 0)
+    depth_enable = False
 
     class Meta:
         dynamic = [
@@ -51,8 +56,8 @@ class PipeConfirmer(messaging.MessageObserver):
         self.bins = bins
         self.intensity = MovingAverage(side= 'lower', tolerance=lower_threshold, maxcount=5, st_multiplier=2.5, st_on = 1)
         # required events
-        self.intensityTriggered = threading.Event()
-        self.linesTriggered = threading.Event()
+        self.intensityTrigger = threading.Event()
+        self.linesTrigger = threading.Event()
 
     def onCentreMessage(self, m):
         if m.name == self.centre_name:
@@ -60,7 +65,7 @@ class PipeConfirmer(messaging.MessageObserver):
             # this assumes we're roughly in line with the pipe already
             # TODO: use the lines message to check if we need to correct
             # the alignment as well
-            strafe = strafeControl.update(m.x - 0.5)
+            strafe = self.strafeControl.update(m.x - 0.5)
             debug('PipelineConfirmer: Set strafe: %i' % (int(strafe)))
             self.auv.strafe(int(strafe))
 
@@ -83,7 +88,7 @@ class PipeConfirmer(messaging.MessageObserver):
         for i, line1 in enumerate(m.lines):
             for j, line2 in enumerate(m.lines):
                 if degrees(abs(line1.angle - line2.angle)) < 15 and i != j:
-                    parallelLines++
+                    parallelLines += 1
                     
         if(parallelLines >= 2):
             self.linesTrigger.set()
@@ -117,7 +122,7 @@ class script(aiScript):
         self.strafeControl = PIDController(self.options.strafe_kPID)
 
     def loadPipeline(self):
-        self.__pl.load(Options.pipeline_file)
+        self.__pl.load(self.options.pipeline_file)
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
@@ -142,7 +147,7 @@ class script(aiScript):
             #
             # Adjust the depth of the AUV acording to the width of the pipe in the image 
             # we can only calculate width if we have 2 lines, and dont bother if the angle is too different
-            if len(m.lines) >= 2 and degrees(abs(m.lines[0].angle-m.lines[1].angle)) < 15 and self.depth_enable:
+            if len(m.lines) >= 2 and degrees(abs(m.lines[0].angle-m.lines[1].angle)) < 15 and self.options.depth_enable:
                 xpos = []
                 ypos = []
                 for r in m.lines:
@@ -173,7 +178,7 @@ class script(aiScript):
 
     def onCentreMessage(self, m):
         if m.name != self.options.centre_name:
-            debug('follow pipe: ignoring centre message %s != %s' % (m.name, self.centre_name))
+            debug('follow pipe: ignoring centre message %s != %s' % (m.name, self.options.centre_name))
             return
         
         strafe = self.strafeControl.update(m.x - 0.5)
@@ -184,7 +189,7 @@ class script(aiScript):
         if m.x**2 + m.y**2 < self.options.centre_error**2:
             self.centred.set() #ie within circle radius centre error
         else:
-            self.centered.clear()
+            self.centred.clear()
         
 
     def onCornersMessage(self, m):
@@ -197,7 +202,7 @@ class script(aiScript):
             # check we're still good to go, giving a little time to re-align the 
             # pipe if needed
             info("Re-aligning with pipe...")
-            if not self.ready.wait(self.options.lost_timeout)
+            if not self.ready.wait(self.options.lost_timeout):
                 return False
             
             info("Above pipe, heading forward...")
@@ -219,9 +224,15 @@ class script(aiScript):
         # confirm we're above the pipe
         # it does this by looking for parallel lines and checking their is
         # a peak of intensity and the correct color
-        confirmer = PipeConfirmer(self.auv, [11,12])
+        confirmer = PipeConfirmer(
+            self.auv,
+            self.options.colour_bins,
+            self.options.centre_name,
+            self.options.histogram_name,
+            self.options.lower_threshold
+        )
         self.node.addObserver(confirmer)
-        sighted = PipeConfirmer.confirm(15) # give it 15 seconds
+        sighted = PipeConfirmer.confirm(self.options.confirm_timeout)
         self.node.removeObserver(confirmer)
         del confirmer
         if not sighted: return
@@ -243,7 +254,7 @@ class script(aiScript):
         
         for i in range(3):
             # follow the pipe along until the end (when we can see the corners)
-            if not followPipeUntil(self.corners):
+            if not self.followPipeUntil(self.corners):
                 error("Pipeline lost on pass ", i);
                 self.cleanup()
                 return
@@ -258,7 +269,7 @@ class script(aiScript):
             self.__pl.set(saved_pipeline_state)
         
         info('Finished pipe following')
-        notify_exit('SUCCESS')
+        self.notify_exit('SUCCESS')
         self.cleanup()
 
     def cleanup(self):
