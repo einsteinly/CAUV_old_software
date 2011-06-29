@@ -3,6 +3,8 @@
 
 #include <gui/core/streams/streams.h>
 
+#include <boost/enable_shared_from_this.hpp>
+
 #include <debug/cauv_debug.h>
 
 namespace cauv {
@@ -16,25 +18,32 @@ namespace cauv {
 
         };
 
-/*
-        template<class contenttype, class streamtype>
-        class SetHandler : public DataStreamBase::DefaultChangeHandler<contenttype, streamtype> {
-        public:
-            SetHandler(Controller * controller, streamtype * stream) :
-                    DataStreamBase::DefaultChangeHandler<contenttype, streamtype>(stream),
+
+        template <class T, class controllertype, class streamtype>
+                class SetHandler : public AbstractChangeHandler<T> {
+                public:
+            SetHandler<T, controllertype, streamtype>(boost::shared_ptr<controllertype> controller, boost::shared_ptr<streamtype> stream) :
                     m_controller(controller), m_stream(stream) {
             }
 
-            void set(contenttype value){
-                m_controller->set<contenttype>(m_stream, value);
+            void set(T){
+                m_controller->sendUpdate(m_stream);
             }
 
-            Controller * m_controller;
-            streamtype * m_stream;
-        };*/
+            void update(T){
+                // do nothing
+            }
+
+            bool isMutable(){
+                return true;
+            }
+
+            boost::shared_ptr<controllertype> m_controller;
+            boost::shared_ptr<streamtype> m_stream;
+        };
 
 
-        class Controller : public std::vector<boost::shared_ptr<DataStreamBase> >, public MessageGenerator, public MessageObserver {
+        class Controller : public std::vector<boost::shared_ptr<DataStreamBase> >, public MessageGenerator, public MessageObserver, public boost::enable_shared_from_this<Controller> {
 
         public:
 
@@ -42,13 +51,13 @@ namespace cauv {
                 push_back(stream);
             }
 
-            void addWithHandler(boost::shared_ptr<DataStreamBase> stream){
+            template <class T, class controllertype, class streamtype>
+                    void addWithHandler(boost::shared_ptr<streamtype> stream){
                 add(stream);
-                //stream->setChangeHandler(boost::make_shared<SetHandler>(stream.get(), this));
+                stream->setChangeHandler(boost::make_shared<SetHandler<T, controllertype, streamtype> >(stream, shared_from_this()));
             }
 
-            template<class contenttype>
-            virtual void set(DataStreamBase, contenttype t) = 0;
+            virtual void sendUpdate(boost::shared_ptr<DataStreamBase> source);
         };
 
 
@@ -58,9 +67,10 @@ namespace cauv {
 
             boost::shared_ptr<IntStream> speed;
 
-            MotorsController(MotorID::e id):
-                    speed(boost::make_shared<IntStream>("speed")){
-                addWithHandler(speed);
+            MotorController(MotorID::e id):
+                    speed(boost::make_shared<IntStream>("speed")),
+                    m_id(id) {
+                addWithHandler<int, MotorController, IntStream>(speed);
             }
 
 
@@ -87,17 +97,12 @@ namespace cauv {
 
         public:
 
-            boost::shared_ptr<MotorController> motors;
+            boost::shared_ptr<MotorController> prop;
 
-            AUV() : motors(boost::make_shared<MotorController>())
+            AUV() : prop(boost::make_shared<MotorController>(MotorID::Prop))
             {
-                m_controllers.push_back(motors);
+                m_controllers.push_back(prop);
 
-                motors->addWithHandler(MotorID::Prop, "Prop");
-                motors->addWithHandler(MotorID::HBow, "H Bow");
-                motors->addWithHandler(MotorID::VBow, "V Bow");
-                motors->addWithHandler(MotorID::HStern, "H Stern");
-                motors->addWithHandler(MotorID::VStern, "V Stern");
             }
 
             std::vector<boost::shared_ptr<Controller> > getControllers() {

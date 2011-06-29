@@ -13,41 +13,18 @@ namespace cauv {
     namespace gui {
 
 
+        template <class T>
+                class AbstractChangeHandler {
+                public:
+            virtual void update(T value) = 0;
+            virtual void set(T value) = 0;
+            virtual bool isMutable() = 0;
+        };
+
+
         class DataStreamBase {
 
         public:
-
-            template <class T>
-                class AbstractChangeHandler {
-                public:
-                virtual void update(T value) = 0;
-                virtual void set(T value) = 0;
-                virtual bool isMutable() = 0;
-            };
-
-            template<class T, class streamtype>
-            class DefaultChangeHandler : public AbstractChangeHandler<T> {
-            public:
-                DefaultChangeHandler(streamtype * stream) : m_stream(stream) {
-                }
-
-                virtual void update(T value) {
-                    m_stream->notifyUpdate(value);
-                }
-
-                virtual void set(T){
-                    // do nothing by default
-                }
-
-                virtual bool isMutable(){
-                    return false;
-                }
-
-            protected:
-                streamtype * m_stream;
-            };
-
-
             DataStreamBase(const std::string name, const std::string units, DataStreamBase* parent = NULL):
                     m_parent(parent), m_name(name), m_units(units) {
             }
@@ -81,19 +58,22 @@ namespace cauv {
         public:
             typedef T type;
 
-            AbstractDataStream(boost::shared_ptr<AbstractChangeHandler<T> > handler, std::string name, std::string units="", DataStreamBase *parent=NULL):
-                DataStreamBase(name, units, parent),
-                m_change(handler)
+            AbstractDataStream(std::string name, std::string units="", DataStreamBase *parent=NULL):
+                    DataStreamBase(name, units, parent)
             {
             }
 
             void update(T value){
-                m_change->update(value);
+                if(m_change)
+                    m_change->update(value);
+                notifyUpdate(value);
                 m_latest = value;
             }
 
             void set(T value) {
-                m_change->set(value);
+                if(m_change)
+                    m_change->set(value);
+                notifySet(value);
                 update(value);
             }
 
@@ -102,16 +82,19 @@ namespace cauv {
             }
 
             bool isMutable() {
-                return m_change->isMutable();
+                if(m_change)
+                    return m_change->isMutable();
+                else return false;
             }
 
             virtual void notifyUpdate(T value) = 0;
+            virtual void notifySet(T value) = 0;
 
             void setChangeHandler(boost::shared_ptr<AbstractChangeHandler<T> > change){
                 m_change = change;
             }
 
-            protected:
+        protected:
             boost::shared_ptr<AbstractChangeHandler<T> > m_change;
             T m_latest;
 
@@ -124,15 +107,20 @@ namespace cauv {
 
         public:
             FloatStream(std::string name, std::string units="", DataStreamBase *parent=NULL) :
-                    AbstractDataStream<float>(boost::make_shared<DataStreamBase::DefaultChangeHandler<float, FloatStream> >(this), name, units, parent){
+                    AbstractDataStream<float>(name, units, parent){
             }
 
             void notifyUpdate(float f) {
                 Q_EMIT updated(f);
             }
 
+            void notifySet(float f) {
+                Q_EMIT updated(f);
+            }
+
         Q_SIGNALS:
             void updated(float f);
+            void set(float f);
         };
 
 
@@ -143,15 +131,20 @@ namespace cauv {
         public:
 
             IntStream(std::string name, std::string units="", DataStreamBase *parent=NULL) :
-                    AbstractDataStream<int>(boost::make_shared<DefaultChangeHandler<int, IntStream> >(this), name, units, parent){
+                    AbstractDataStream<int>(name, units, parent){
             }
 
             void notifyUpdate(int i) {
                 Q_EMIT updated(i);
             }
 
+            void notifySet(int i) {
+                Q_EMIT set(i);
+            }
+
         Q_SIGNALS:
             void updated(int i);
+            void set(int i);
         };
 
     } // namespace gui
