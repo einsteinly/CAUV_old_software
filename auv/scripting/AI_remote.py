@@ -47,6 +47,12 @@ def enable_control(ainode):
 def disable_control(ainode):
     ainode.ai.auv_control.disable()
     
+def add_request(ainode, pipeline_name):
+    ainode.ai.pipeline_manager.request_pl('detector', 'airemote', pipeline_name)
+    
+def drop_request(ainode, pipeline_name):
+    ainode.ai.pipeline_manager.drop_pl('detector', 'airemote', pipeline_name)
+    
 def shell(ainode):
     print """
     To access AI use ainode, e.g.
@@ -107,11 +113,16 @@ if __name__=='__main__':
     scriptm.addFunction('Enable script control', enable_control, 'Allow scripts to move the AUV', {})
     scriptm.addFunction('Disable script control', disable_control, 'Stop scripts from moving the AUV', {})
     
+    imgm = menu('Image Pipeline', '')
+    imgm.addFunction('Add request', add_request, '', {'pipeline_name': str})
+    imgm.addFunction('Drop request', drop_request, '', {'pipeline_name': str})
+    
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})
     m.addFunction('Force Save', force_save, 'Force the task manager to save the current state', {})
     m.addMenu(taskm)
     m.addMenu(scriptm)
+    m.addMenu(imgm)
     m.addFunction('Shell', shell, '', {})
     
     m(ainode)
