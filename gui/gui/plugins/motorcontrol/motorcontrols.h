@@ -5,8 +5,7 @@
 
 #include <boost/function.hpp>
 
-#include <common/data_stream.h>
-#include <model/auv_model.h> 
+#include <gui/core/model/model.h>
 
 #include <gui/core/cauvbasicplugin.h>
 
@@ -21,21 +20,23 @@ class QLabel;
 
 namespace cauv {
 
-    class MotorBurstController : public QObject {
-        Q_OBJECT
-    public:
-        MotorBurstController(QPushButton *b, boost::shared_ptr<AUV::Motor> motor, int8_t speed);
+    namespace gui {
 
-    public Q_SLOTS:
-        void burst();
-        void stop();
+        class MotorBurstController : public QObject {
+            Q_OBJECT
+        public:
+            MotorBurstController(QPushButton *b, boost::shared_ptr<IntStream> motor, int8_t speed);
 
-    protected:
-        int8_t m_speed;
-        boost::shared_ptr<AUV::Motor> m_motor;
-    };
+        public Q_SLOTS:
+            void burst();
+            void stop();
 
+        protected:
+            int8_t m_speed;
+            boost::shared_ptr<IntStream> m_motor;
+        };
 
+        /*
     class AutopilotController : public QObject {
         Q_OBJECT
     public:
@@ -65,27 +66,28 @@ namespace cauv {
 
     };
 
+*/
+        class MotorControls : public QDockWidget, public CauvBasicPlugin {
+            Q_OBJECT
+            Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
+        public:
+                    MotorControls();
+            virtual ~MotorControls();
 
-    class MotorControls : public QDockWidget, public CauvBasicPlugin {
-        Q_OBJECT
-        Q_INTERFACES(cauv::CauvInterfacePlugin)
-    public:
-        MotorControls();
-        virtual ~MotorControls();
+            virtual const QString name() const;
+            virtual const QList<QString> getGroups() const;
+            virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
 
-        virtual const QString name() const;
-        virtual const QList<QString> getGroups() const;
-        virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
+        protected:
+            void setValue(QDoubleSpinBox *spin, double value);
 
-    protected:
-        void setValue(QDoubleSpinBox *spin, double value);
+        private:
+            Ui::MotorControls * ui;
+            std::vector<boost::shared_ptr<MotorBurstController> > m_burst_controllers;
+            //std::vector<boost::shared_ptr<AutopilotController> > m_autopilot_controllers;
 
-    private:
-        Ui::MotorControls * ui;
-        std::vector<boost::shared_ptr<MotorBurstController> > m_burst_controllers;
-        std::vector<boost::shared_ptr<AutopilotController> > m_autopilot_controllers;
-
-    };
+        };
+    } // namespace gui
 } // namespace cauv
 
 

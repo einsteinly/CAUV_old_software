@@ -6,11 +6,13 @@
 #include <QCheckBox>
 #include <QPushButton>
 
-#include <model/auv_model.h>
+#include <gui/core/model/model.h>
 
 using namespace cauv;
+using namespace cauv::gui;
 
-MotorBurstController::MotorBurstController(QPushButton * b, boost::shared_ptr<AUV::Motor> motor, int8_t speed): m_speed(speed), m_motor(motor){
+MotorBurstController::MotorBurstController(QPushButton * b, boost::shared_ptr<IntStream> motor, int8_t speed):
+        m_speed(speed), m_motor(motor){
     b->connect(b, SIGNAL(pressed()), this, SLOT(burst()));
     b->connect(b, SIGNAL(released()), this, SLOT(stop()));
 }
@@ -23,7 +25,7 @@ void MotorBurstController::stop() {
     m_motor->set(0);
 }
 
-
+/*
 
 AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<AUV::Autopilot<float> > autopilot):
         m_autopilot(autopilot),
@@ -79,7 +81,7 @@ void AutopilotController::updateState(bool value) {
     m_autopilot->enabled->set(value);
 }
 
-
+*/
 
 
 MotorControls::MotorControls() :
@@ -95,7 +97,7 @@ void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
 
     // autopilot controls screen
     int count = 0;
-    foreach(AUV::autopilot_map::value_type i, auv->autopilots){
+    foreach(AUV->autopilots i, auv->autopilots){
         // set up ui
         QLabel * label = new QLabel(QString::fromStdString(i.second->getName()));
         ui->autopilotControlsLayout->addWidget(label, count, 0, 1, 1, Qt::AlignCenter);
@@ -128,7 +130,7 @@ void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
 
     // motor controls screen
     count = 0;
-    foreach(AUV::motor_map::value_type i, auv->motors){
+    foreach(MotorsController::map_type::value_type i, *(auv->motors)){
         std::string forward = "Forward";
         std::string backward = "Back";
 

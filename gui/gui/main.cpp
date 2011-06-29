@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     icon.addFile(QString::fromUtf8(":/resources/icon.png"), QSize(), QIcon::Normal, QIcon::Off);
     app.setWindowIcon(icon);
 
-    boost::shared_ptr<CauvGui> node = boost::make_shared<CauvGui>(&app);
+    boost::shared_ptr<gui::CauvGui> node = boost::make_shared<gui::CauvGui>(&app);
 
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;

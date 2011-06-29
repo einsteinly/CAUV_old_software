@@ -1,7 +1,6 @@
 
 #include <boost/bind.hpp>
 
-#include <model/auv_model.h>
 #include <debug/cauv_debug.h>
 
 #include <QWidget>
@@ -12,7 +11,7 @@
 
 
 using namespace cauv;
-
+using namespace cauv::gui;
 
 void DataStreamDropListener::dragEnterEvent(QDragEnterEvent *event)
 {
@@ -37,14 +36,14 @@ void DataStreamDropListener::dropEvent(QDropEvent *event)
 
 bool DataStreamDropListener::routeStream(boost::shared_ptr<DataStreamBase> s){
 
-    if(dynamic_cast<DataStream<int8_t> *>(s.get())) {
-        info() << s->getName() << " - int8_t stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<int8_t> >(s));
+    if(dynamic_cast<IntStream *>(s.get())) {
+        info() << s->getName() << " - IntStream dropped";
+        onStreamDropped(boost::static_pointer_cast<IntStream >(s));
     }
-    else if(dynamic_cast<DataStream<int> *>(s.get())) {
-        info() << s->getName() << " - int stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<int> >(s));
-    }
+    else if(dynamic_cast<FloatStream *>(s.get())) {
+        info() << s->getName() << " - FloatStream dropped";
+        onStreamDropped(boost::static_pointer_cast<FloatStream >(s));
+    }/*
     else if(dynamic_cast<DataStream<float> *>(s.get())) {
         info() << s->getName() << " - float stream dropped";
         onStreamDropped(boost::static_pointer_cast<DataStream<float> >(s));
@@ -64,21 +63,22 @@ bool DataStreamDropListener::routeStream(boost::shared_ptr<DataStreamBase> s){
     else if(dynamic_cast<DataStream<MotorDemand> *>(s.get())){
         info() << s->getName() << " - MotorDemand stream dropped";
         onStreamDropped(boost::static_pointer_cast<DataStream<MotorDemand> >(s));
-    }
+    }*/
     else return false;
 
     return true;
 }
 
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > ){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<IntStream> ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<int> > ){
+void DataStreamDropListener::onStreamDropped(boost::shared_ptr<FloatStream> ){
 
 }
 
+/*
 void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<float> > ){
 
 }
@@ -97,4 +97,4 @@ void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<Image>
 
 void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<MotorDemand> > ){
 
-}
+}*/

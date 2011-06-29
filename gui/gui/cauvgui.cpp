@@ -5,13 +5,11 @@
 #include <QPluginLoader>
 #include <QSettings>
 
-#include <model/auv_controller.h>
-#include <model/auv_model.h>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
+#include <gui/core/model/model.h>
 #include <gui/core/cauvplugins.h>
 
 #include <common/cauv_global.h>
@@ -21,11 +19,11 @@
 #include "ui_mainwindow.h"
 
 using namespace cauv;
+using namespace cauv::gui;
 
 CauvGui::CauvGui(QApplication * app) :
         CauvNode("CauvGui"),
         m_auv( boost::make_shared<AUV>()),
-        m_auv_controller(boost::make_shared<AUVController>(m_auv)),
         m_application(app),
         ui(new Ui::MainWindow) {
 
@@ -66,7 +64,7 @@ void CauvGui::closeEvent(QCloseEvent* e){
 }
 
 int CauvGui::send(boost::shared_ptr<Message> message){
-    debug(5) << "Sending message: " << *message;
+    debug(0) << "Sending message: " << *message;
     return CauvNode::send(message);
 }
 
@@ -119,17 +117,19 @@ void CauvGui::onRun()
     restoreState(settings.value("windowState").toByteArray());
 
 
-    // connect up message inputs and outputs
-    addMessageObserver(m_auv_controller);
-    m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
+    // message inputs and outputs
+    foreach(boost::shared_ptr<BaseController> controller, m_auv->getControllers())
+    {
+        addMessageObserver(controller);
+        connect(controller.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
+    }
 
-    m_auv_controller->onProcessStatusMessage(boost::make_shared<ProcessState>("blah", "running", 5, 6, 7));
+    m_auv->motors->get(MotorID::Prop)->set(1);
 
     show();
     m_application->exec();
 
     info() << "Qt Thread exiting";
-    removeMessageObserver(m_auv_controller);
     info() << "Stopping CauvNode";
     CauvNode::stopNode();
 }

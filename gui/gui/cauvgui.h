@@ -15,40 +15,42 @@ class QDir;
 
 namespace cauv {
 
-    class AUV;
-    class AUVController;
+    namespace gui {
 
-    class CauvGui : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvGui> {
-        Q_OBJECT
+        class AUV;
 
-    public:
-        CauvGui(QApplication * app);
-        virtual ~CauvGui();
+        class CauvGui : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvGui> {
+            Q_OBJECT
 
-    public Q_SLOTS:
-        int send(boost::shared_ptr<Message>message);
-        void addCentralTab(QWidget* tab, const QString& name);
-        void addCentralTab(QWidget* tab, QString& name);
-        void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
+        public:
+            CauvGui(QApplication * app);
+            virtual ~CauvGui();
 
-    protected:
-        virtual void onRun();
+        public Q_SLOTS:
+            int send(boost::shared_ptr<Message>message);
+            void addCentralTab(QWidget* tab, const QString& name);
+            void addCentralTab(QWidget* tab, QString& name);
+            void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
 
-        virtual bool loadPlugin(QObject * plugin);
+        protected:
+            virtual void onRun();
 
-        virtual void closeEvent(QCloseEvent *);
+            virtual bool loadPlugin(QObject * plugin);
 
-        boost::shared_ptr<AUV> m_auv;
-        boost::shared_ptr<AUVController> m_auv_controller;
+            virtual void closeEvent(QCloseEvent *);
 
-        QApplication * m_application;
+            boost::shared_ptr<AUV> m_auv;
 
-    private:
-        Ui::MainWindow * ui;
+            QApplication * m_application;
 
-        int findPlugins(const QDir& dir, int subdirs = 0);
+        private:
+            Ui::MainWindow * ui;
 
-    };
+            int findPlugins(const QDir& dir, int subdirs = 0);
+
+        };
+
+    } //namespace gui
 
 } // namespace cauv
 

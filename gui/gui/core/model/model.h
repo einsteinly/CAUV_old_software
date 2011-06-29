@@ -3,6 +3,8 @@
 
 #include <gui/core/streams/streams.h>
 
+#include <debug/cauv_debug.h>
+
 namespace cauv {
     namespace gui {
 
@@ -14,80 +16,94 @@ namespace cauv {
 
         };
 
-        template<class idtype, class streamtype, class contenttype>
-        class Controller : public MessageGenerator, public MessageObserver {
+/*
+        template<class contenttype, class streamtype>
+        class SetHandler : public DataStreamBase::DefaultChangeHandler<contenttype, streamtype> {
+        public:
+            SetHandler(Controller * controller, streamtype * stream) :
+                    DataStreamBase::DefaultChangeHandler<contenttype, streamtype>(stream),
+                    m_controller(controller), m_stream(stream) {
+            }
 
-            boost::unordered_map<idtype, boost::shared_ptr<streamtype> > m_map;
+            void set(contenttype value){
+                m_controller->set<contenttype>(m_stream, value);
+            }
+
+            Controller * m_controller;
+            streamtype * m_stream;
+        };*/
+
+
+        class Controller : public std::vector<boost::shared_ptr<DataStreamBase> >, public MessageGenerator, public MessageObserver {
+
         public:
 
-            class SetHandler : public DataStreamBase::DefaultChangeHandler<contenttype, streamtype> {
-            public:
-                SetHandler(streamtype * stream, Controller<idtype, streamtype, contenttype > * controller, idtype id) :
-                        DataStreamBase::DefaultChangeHandler<contenttype, streamtype>(stream),
-                        m_controller(controller), m_id(id) {
-                }
-
-                void set(contenttype value){
-                    m_controller->set(m_id, value);
-                }
-
-                Controller<idtype, streamtype, contenttype> * m_controller;
-                idtype m_id;
-            };
-
-        public:
-
-            boost::shared_ptr<streamtype> get(idtype id){
-                return m_map.at(id);
+            void add(boost::shared_ptr<DataStreamBase> stream){
+                push_back(stream);
             }
 
-            boost::unordered_map<idtype, boost::shared_ptr<streamtype> > getAll(){
-                return m_map;
+            void addWithHandler(boost::shared_ptr<DataStreamBase> stream){
+                add(stream);
+                //stream->setChangeHandler(boost::make_shared<SetHandler>(stream.get(), this));
             }
 
-            boost::shared_ptr<streamtype> add(idtype id, std::string name, std::string units = ""){
-                m_map[id] = boost::make_shared<streamtype>(name, units);
-                return m_map[id];
-            }
-
-            virtual void set(idtype id, contenttype t) = 0;
+            template<class contenttype>
+            virtual void set(DataStreamBase, contenttype t) = 0;
         };
 
 
-        class MotorController : public Controller<MotorID::e, IntStream, IntStream::type> {
+        class MotorController : public Controller {
 
         public:
-            MotorController(){}
+
+            boost::shared_ptr<IntStream> speed;
+
+            MotorsController(MotorID::e id):
+                    speed(boost::make_shared<IntStream>("speed")){
+                addWithHandler(speed);
+            }
+
 
             void onMotorStateMessage(MotorMessage_ptr m){
-                get(m->motorId())->update(m->speed());
+                if(m->motorId() == m_id)
+                    speed->update(m->speed());
             }
 
-            void set(MotorID::e id, int t){
-                Q_EMIT messageGenerated(boost::make_shared<MotorMessage>(id, t));
-                get(id)->update(t);
+            void set(IntStream, int t){
+                Q_EMIT messageGenerated(boost::make_shared<MotorMessage>(m_id, t));
             }
 
-            boost::shared_ptr<MotorController::SetHandler> makeChangeHandler(MotorID::e id){
-                return boost::make_shared<MotorController::SetHandler>(get(id).get(), this, id);
-            }
+        protected:
+            MotorID::e m_id;
 
         };
+
 
 
 
         class AUV
         {
-            MotorController motors;
+            std::vector<boost::shared_ptr<Controller> > m_controllers;
 
         public:
-            AUV(){
-                motors.add(MotorID::Prop, "Prop")->setChangeHandler(motors.makeChangeHandler(MotorID::Prop));
-                motors.add(MotorID::HBow, "H Bow")->setChangeHandler(motors.makeChangeHandler(MotorID::HBow));
-                motors.add(MotorID::VBow, "V Bow")->setChangeHandler(motors.makeChangeHandler(MotorID::VBow));
-                motors.add(MotorID::HStern, "H Stern")->setChangeHandler(motors.makeChangeHandler(MotorID::HStern));
-                motors.add(MotorID::VStern, "v Stern")->setChangeHandler(motors.makeChangeHandler(MotorID::VStern));
+
+            boost::shared_ptr<MotorController> motors;
+
+            AUV() : motors(boost::make_shared<MotorController>())
+            {
+                m_controllers.push_back(motors);
+
+                motors->addWithHandler(MotorID::Prop, "Prop");
+                motors->addWithHandler(MotorID::HBow, "H Bow");
+                motors->addWithHandler(MotorID::VBow, "V Bow");
+                motors->addWithHandler(MotorID::HStern, "H Stern");
+                motors->addWithHandler(MotorID::VStern, "V Stern");
             }
+
+            std::vector<boost::shared_ptr<Controller> > getControllers() {
+                return m_controllers;
+            }
+
         };
 
     } // namespace gui

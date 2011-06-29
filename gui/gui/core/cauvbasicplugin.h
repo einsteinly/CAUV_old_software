@@ -8,26 +8,27 @@
 #include <QString>
 
 namespace cauv {
-    class CauvBasicPlugin : public CauvInterfacePlugin
-    {
-        Q_INTERFACES(cauv::CauvInterfacePlugin)
+    namespace gui {
+        class CauvBasicPlugin : public CauvInterfacePlugin
+        {
+            Q_INTERFACES(cauv::CauvInterfacePlugin)
 
-    public:
-        CauvBasicPlugin(){}
-        virtual ~CauvBasicPlugin(){}
+        public:
+                    CauvBasicPlugin(){}
+            virtual ~CauvBasicPlugin(){}
 
-        virtual void initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node);
+            virtual void initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node);
 
-        virtual const QMap<QDockWidget* , Qt::DockWidgetArea> &getDockWidgets() const;
-        virtual const QList<QWidget* > &getCentralWidgets() const;
+            virtual const QMap<QDockWidget* , Qt::DockWidgetArea> &getDockWidgets() const;
+            virtual const QList<QWidget* > &getCentralWidgets() const;
 
-    protected:
-        boost::shared_ptr<AUV> m_auv;
-        boost::shared_ptr<CauvNode> m_node;
+        protected:
+            boost::shared_ptr<AUV> m_auv;
+            boost::shared_ptr<CauvNode> m_node;
 
-        QList<QWidget *> m_tabs;
-        QMap<QDockWidget *, Qt::DockWidgetArea> m_docks;
-    };
-}
-
+            QList<QWidget *> m_tabs;
+            QMap<QDockWidget *, Qt::DockWidgetArea> m_docks;
+        };
+    } //namespace gui
+}// namespace cauv
 #endif // CAUVBASICPLUGIN_H

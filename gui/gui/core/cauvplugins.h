@@ -14,26 +14,31 @@ class QString;
 
 namespace cauv {
 
-    class AUV;
     class CauvNode;
 
-    class CauvInterfacePlugin {
+    namespace gui {
 
-    public:
-        virtual ~CauvInterfacePlugin() {}
+        class AUV;
 
-        virtual const QString name() const = 0;
-        virtual const QList<QString> getGroups() const = 0;
+        class CauvInterfacePlugin {
 
-        virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node) = 0;
+        public:
+            virtual ~CauvInterfacePlugin() {}
 
-        virtual const QMap<QDockWidget* , Qt::DockWidgetArea> &getDockWidgets() const = 0;
-        virtual const QList<QWidget* > &getCentralWidgets() const = 0;
+            virtual const QString name() const = 0;
+            virtual const QList<QString> getGroups() const = 0;
 
-    };
+            virtual void initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node) = 0;
+
+            virtual const QMap<QDockWidget* , Qt::DockWidgetArea> &getDockWidgets() const = 0;
+            virtual const QList<QWidget* > &getCentralWidgets() const = 0;
+
+        };
+
+    } // namespace gui
 
 } // namespace cauv
 
-Q_DECLARE_INTERFACE(cauv::CauvInterfacePlugin, "CauvInterfacePlugin/1.0")
+Q_DECLARE_INTERFACE(cauv::gui::CauvInterfacePlugin, "CauvInterfacePlugin/1.0")
 
 #endif // CAUVINTERFACEPLUGIN_H

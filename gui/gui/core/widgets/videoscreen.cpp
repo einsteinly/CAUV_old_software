@@ -16,7 +16,7 @@
 #include <generated/messages.h>
 
 using namespace cauv;
-
+using namespace cauv::gui;
 
 VideoScreen::VideoScreen(const QString name, QWidget *parent) :
         QWidget(parent), m_new_image(0), m_current_image(0), ui(new Ui::VideoScreen())

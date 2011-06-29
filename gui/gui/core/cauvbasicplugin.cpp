@@ -1,6 +1,7 @@
 #include "cauvbasicplugin.h"
 
 using namespace cauv;
+using namespace cauv::gui;
 
 void CauvBasicPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node) {
     m_auv = auv;

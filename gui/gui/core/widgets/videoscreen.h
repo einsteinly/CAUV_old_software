@@ -18,33 +18,36 @@ namespace cauv {
 
     class Image;
 
-    class VideoScreen : public QWidget
-    {
-        Q_OBJECT
-    public:
-        explicit VideoScreen(const QString name, QWidget *parent = 0);
-        virtual ~VideoScreen();
-        //int heightForWidth( int w ) const;
+    namespace gui {
 
-    protected:      
-        boost::scoped_ptr<Image> m_new_image;
-        boost::scoped_ptr<Image> m_current_image;
+        class VideoScreen : public QWidget
+        {
+            Q_OBJECT
+        public:
+            explicit VideoScreen(const QString name, QWidget *parent = 0);
+            virtual ~VideoScreen();
+            //int heightForWidth( int w ) const;
 
-        void paintEvent(QPaintEvent *);
+        protected:
+            boost::scoped_ptr<Image> m_new_image;
+            boost::scoped_ptr<Image> m_current_image;
 
-    public Q_SLOTS:
-        void setImage(const Image &image);
+            void paintEvent(QPaintEvent *);
 
-        void setInfo(const QString text);
-        void setInfo(const std::string text);
+        public Q_SLOTS:
+            void setImage(const Image &image);
 
-        void setName(const QString name);
-        void setName(const std::string name);
+            void setInfo(const QString text);
+            void setInfo(const std::string text);
 
-    private:
-        Ui::VideoScreen * ui;
-        boost::mutex m_updateMutex;
-        boost::scoped_ptr<QImage> m_qImage;
-    };
+            void setName(const QString name);
+            void setName(const std::string name);
+
+        private:
+            Ui::VideoScreen * ui;
+            boost::mutex m_updateMutex;
+            boost::scoped_ptr<QImage> m_qImage;
+        };
+    } // namespace gui
 } // namespace cauv
 #endif // VIDEOSCREEN_H
