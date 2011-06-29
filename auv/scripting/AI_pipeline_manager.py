@@ -437,8 +437,12 @@ class pipelineManager(aiProcess):
                 if not requested_pl in self.pl_data.pipelines:
                     warning('Could not drop request %s, may have left things in the pipeline.' %(pl_name, ))
                 else:
+                    self.requests[requestor_type][requestor_name].remove(requested_pl)
                     for branch_id in self.pl_data.pipelines[requested_pl].branches:
-                        self.branches[branch_id] -= 1
+                        if branch_id in self.branches:
+                            self.branches[branch_id] -= 1
+                            if self.branches[branch_id] <= 0:
+                                self.branches.pop(branch_id)
                     if requestor_type == 'detector':
                         self.ai.detector_control.update_pl_requests(self.requests['detector']['detcon'])
     def eval_branches(self):
@@ -483,11 +487,12 @@ class pipelineManager(aiProcess):
                 to_check = branch_relabeling.values()
                 depends_on_branches = branch_relabeling.values()
                 while len(to_check):
-                    for node_id in self.pl_data.branches[to_check[0]].nodes:
-                        if node_id in self.pl_data.nodeid2branch:
-                            if not self.pl_data.nodeid2branch[node_id] in depends_on_branches:
-                                to_check.append(self.pl_data.nodeid2branch[node_id])
-                                depends_on_branches.append(self.pl_data.nodeid2branch[node_id])
+                    for node in self.pl_data.branches[to_check[0]].nodes.values():
+                        for node2_id, node2field in node.inarcs.values():
+                            if node2_id in self.pl_data.nodeid2branch:
+                                if not self.pl_data.nodeid2branch[node2_id] in depends_on_branches:
+                                    to_check.append(self.pl_data.nodeid2branch[node2_id])
+                                    depends_on_branches.append(self.pl_data.nodeid2branch[node2_id])
                     to_check.remove(to_check[0])
                 #find out which pipelines are dependant
                 dep_pls = []

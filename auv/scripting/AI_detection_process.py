@@ -70,7 +70,6 @@ class detectionControl(aiProcess):
                         if req:
                             pls.append(pl_name)
                 #sort out differences
-                print pls, self.pl_requests
                 for pl in pls:
                     if not (pl in self.pl_requests):
                         self.ai.pipeline_manager.request_pl('detector', 'detcon', pl)
