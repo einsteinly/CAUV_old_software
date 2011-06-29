@@ -31,7 +31,7 @@ class scriptOptions(aiScriptOptions):
     Angle_DError_Window = expWindow(5, 0.6)
     Angle_Error_Clamp = 1e30
     
-    Pipeline_File = 'pipelines/circle_buoy.pipe'
+    Pipeline_File = 'circle_buoy.pipe'
     Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
     class Meta:
@@ -156,9 +156,7 @@ class script(aiScript):
         self.time_last_seen = now
 
     def run(self):
-        if self.options.Load_Pipeline is not None:
-            saved_pipeline_state = self.__pl.get()
-            self.loadPipeline()
+        self.request_pl(self.options.Pipeline_File)
         start_bearing = self.auv.getBearing()
         entered_quarters = [False, False, False, False]
         exit_status = 'SUCCESS'
@@ -195,11 +193,10 @@ class script(aiScript):
             exit_status = 'FAIL'
             error(traceback.format_exc())
         finally:
+            info('Dropping Pipeline...')
+            self.drop_pl(self.options.Pipeline_File)
             info('Stopping...')
             self.auv.stop()
         info('Complete!')
-        # restore pipeline that was running before
-        if self.options.Load_Pipeline is not None:
-            self.__pl.set(saved_pipeline_state)
         self.notify_exit(exit_status)
 

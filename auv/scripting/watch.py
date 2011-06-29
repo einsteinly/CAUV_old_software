@@ -92,7 +92,9 @@ processes_to_start = [
         CAUVTask('AI Manager',      '', False, ['AI_manager']),
         CAUVTask('AI Ctrl Manager', '', False, ['AI_control_manager']),
         CAUVTask('AI Detectors',    '', False, ['AI_detection_process']),
-        CAUVTask('AI Task Manager', '', False, ['AI_task_manager'])
+        CAUVTask('AI Task Manager', '', False, ['AI_task_manager']),
+        CAUVTask('AI Pipeline Manager', '', False, ['AI_pipeline_manager']),
+        CAUVTask('AI default script', '', False, ['python ./AI_scriptparent.py default'])
 ]
 
 def limitLength(string, length=48):

@@ -17,8 +17,8 @@ from movingaverage import MovingAverage
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    load_pipeline = 'default'
-    pipeline_file = 'pipelines/follow_pipe.pipe'    
+    confirm_pipeline_file = 'confirm_pipe.pipe'
+    follow_pipeline_file  = 'follow_pipe.pipe'
     centre_name = 'pipe'
     lines_name = 'pipe'
     histogram_name = 'Hue'
@@ -108,7 +108,6 @@ class script(aiScript):
     def __init__(self, script_name, opts):
         aiScript.__init__(self, script_name, opts) 
         self.node.join("processing")
-        self.__pl = pipeline.Model(self.node, self.options.load_pipeline)
         
         # parameters to say if the auv is above the pipe
         self.centred = threading.Event()
@@ -120,9 +119,6 @@ class script(aiScript):
         # controllers for staying above the pipe
         self.depthControl = PIDController(self.options.depth_kPID)
         self.strafeControl = PIDController(self.options.strafe_kPID)
-
-    def loadPipeline(self):
-        self.__pl.load(self.options.pipeline_file)
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
@@ -194,7 +190,7 @@ class script(aiScript):
 
     def onCornersMessage(self, m):
         #TODO: process message
-        info("Corners message")
+        info("Corners message TODO: process this and set self.corners")
 
 
     def followPipeUntil(self, condition):
@@ -224,6 +220,8 @@ class script(aiScript):
         # confirm we're above the pipe
         # it does this by looking for parallel lines and checking their is
         # a peak of intensity and the correct color
+        conf_pipe_file = self.options.confirm_pipeline_file
+        self.request_pl(conf_pipe_file)
         confirmer = PipeConfirmer(
             self.auv,
             self.options.colour_bins,
@@ -235,13 +233,13 @@ class script(aiScript):
         sighted = PipeConfirmer.confirm(self.options.confirm_timeout)
         self.node.removeObserver(confirmer)
         del confirmer
-        if not sighted: return
+        self.drop_pl(conf_pipe_file)
+        if not sighted:
+            self.notify_exit('ABANDONED')
+            return
         
-        # by this point we think we've found the pipe
-        # next step is to setup the pipelines we'll need for pipe following
-        if self.options.load_pipeline is not None:
-            saved_pipeline_state = self.__pl.get()
-            self.loadPipeline()
+        follow_pipe_file = self.options.follow_pipeline_file
+        self.request_pl(follow_pipe_file)
             
         # now we wait for messages allowing us to work out how to align with
         # the pipe, but if this is taking too long then just give up as we've
@@ -249,6 +247,8 @@ class script(aiScript):
         debug('Waiting for ready...')
         if not self.ready.wait(self.options.ready_timeout):
             error("Took too long to become ready, aborting")
+            self.drop_pl(follow_pipe_file)
+            self.notify_exit('ABORT')            
             return #timeout
         
         
@@ -256,7 +256,8 @@ class script(aiScript):
             # follow the pipe along until the end (when we can see the corners)
             if not self.followPipeUntil(self.corners):
                 error("Pipeline lost on pass ", i);
-                self.cleanup()
+                self.drop_pl(follow_pipe_file)
+                self.notify_exit('LOST')
                 return
             
             # turn 180
@@ -264,15 +265,9 @@ class script(aiScript):
             self.auv.prop(0)
             self.auv.bearing((self.auv.getBearing()-180)%360)
         
-        # save the pipeline in case it's been edited
-        if self.options.load_pipeline is not None:
-            self.__pl.set(saved_pipeline_state)
-        
+        self.drop_pl(follow_pipe_file)
+
         info('Finished pipe following')
         self.notify_exit('SUCCESS')
-        self.cleanup()
-
-    def cleanup(self):
-        self.node.removeObserver(self)
 
 
