@@ -12,6 +12,7 @@ class detectionControl(aiProcess):
         self.modules = {}
         self.running_detectors = {}
         self.request_lock = threading.Lock()
+        self.pl_requests = []
         self.start_requests = []
         self.stop_requests = []
         self.enable_flag = threading.Event()
@@ -31,12 +32,17 @@ class detectionControl(aiProcess):
     def enable(self):
         info("Re enabling detectors")
         self.enable_flag.set()
+    @external_function
+    def update_pl_requests(self, requests):
+        with self.request_lock:
+            self.pl_requests = requests
     def run(self):
         while True:
             if not self.enable_flag.is_set():
                 for running_detector in self.running_detectors.values():
                     running_detector.die()
                 self.running_detectors = {}
+                self.ai.pipeline_manager.drop_all_pl('detector', 'detcon')
                 info('Detector process disabled')
                 self.enable_flag.wait()
             #update running detectors from requests (has to be done here as list of running detectors is constantly in use by this process)
@@ -57,6 +63,19 @@ class detectionControl(aiProcess):
                         info("Stopped detection class %s." %(detection_file))
                     except KeyError:
                         debug(detection_file+" is not runnning, so cannot be stopped")
+                #compile list of pls should be running
+                pls = []
+                for detector in self.running_detectors.values():
+                    for pl_name, req in detector._pl_requests.items():
+                        if req:
+                            pls.append(pl_name)
+                #sort out differences
+                for pl in pls:
+                    if not (pl in self.pl_requests):
+                        self.ai.pipeline_manager.request_pl('detector', 'detcon', pl)
+                for pl in self.pl_requests:
+                    if not pl in pls:
+                        self.ai.pipeline_manager.drop_pl('detector', 'detcon', pl)
                 self.start_requests = []
                 self.stop_requests = []
             #need to sleep  or else it goes crazy when not much processing to do

@@ -259,12 +259,27 @@ class aiDetector(messaging.MessageObserver):
         self.node = node
         self.node.addObserver(self)
         self.detected = False
+        self._pl_enabled = False
+        self._pl_requests = {}
     def process(self):
         """
         This should define a method to do any intensive (ie not on message) processing
         """
         pass
+    def request_pl(self, pl_name):
+        if pl_name in self._pl_requests:
+            self._pl_requests[pl_name] += 1
+        else: self._pl_requests[pl_name] = 1
+    def drop_pl(self, pl_name):
+        if pl_name in self._pl_requests:
+            if self._pl_requests[pl_name] > 0:
+                self._pl_requests[pl_name] -= 1
+                return
+        error("Can't drop pipeline that hasn't been requested")
+    def drop_all_pl(self):
+        self._pl_requests = {}
     def die(self):
+        self.drop_all_pl()
         self.node.removeObserver(self)
 
 #------AI TASKS STUFF------
