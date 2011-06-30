@@ -2,6 +2,7 @@ from cauv.debug import debug, warning, error, info
 
 import threading
 import time
+import traceback
 
 from AI_classes import aiProcess, external_function
 
@@ -42,7 +43,7 @@ class detectionControl(aiProcess):
                 for running_detector in self.running_detectors.values():
                     running_detector.die()
                 self.running_detectors = {}
-                self.ai.pipeline_manager.drop_all_pl('detector', 'detcon')
+                self.ai.pipeline_manager.set_detector_pl([])
                 info('Detector process disabled')
                 self.enable_flag.wait()
             #update running detectors from requests (has to be done here as list of running detectors is constantly in use by this process)
@@ -53,12 +54,26 @@ class detectionControl(aiProcess):
                     else:
                         if not (detection_file in self.modules):
                             #interesting behaviour of __import__ here
-                            self.modules[detection_file] = __import__('detector_library.'+detection_file, fromlist=['detector_library'])
-                        self.running_detectors[detection_file] = self.modules[detection_file].detector(self.node)
+                            try:
+                                self.modules[detection_file] = __import__('detector_library.'+detection_file, fromlist=['detector_library'])
+                            except Exception:
+                                error('Could not import detector %s.' %(detection_file,))
+                                traceback.print_exc()
+                        try:
+                            self.running_detectors[detection_file] = self.modules[detection_file].detector(self.node)
+                        except Exception:
+                            error('Could not initialise detector %s.' %(detection_file,))
+                            traceback.print_exc()
                         info("Started detection class %s." %(detection_file))
                 for detection_file in self.stop_requests:
                     try:
-                        self.running_detectors[detection_file].die()
+                        try:
+                            self.running_detectors[detection_file].die()
+                        except Exception as e:
+                            if isinstance(KeyError, e):
+                                raise e
+                            error('Could not kill detector %s.' %(detection_file,))
+                            traceback.print_exc()
                         self.running_detectors.pop(detection_file)
                         info("Stopped detection class %s." %(detection_file))
                     except KeyError:
@@ -70,12 +85,8 @@ class detectionControl(aiProcess):
                         if req:
                             pls.append(pl_name)
                 #sort out differences
-                for pl in pls:
-                    if not (pl in self.pl_requests):
-                        self.ai.pipeline_manager.request_pl('detector', 'detcon', pl)
-                for pl in self.pl_requests:
-                    if not pl in pls:
-                        self.ai.pipeline_manager.drop_pl('detector', 'detcon', pl)
+                if set(pls) != set(self.pl_requests):
+                    self.ai.pipeline_manager.set_detector_pl(pls)
                 self.start_requests = []
                 self.stop_requests = []
             #need to sleep  or else it goes crazy when not much processing to do
@@ -87,7 +98,11 @@ class detectionControl(aiProcess):
                 #since each processing could take a while, and disabling needs to be pretty fast, check here
                 if not self.enable_flag.is_set():
                     break
-                self.running_detectors[detection_file].process()
+                try:
+                    self.running_detectors[detection_file].process()
+                except Exception:
+                    error('Exception while running %s.' %(detection_file,))
+                    traceback.print_exc()
                 if self.running_detectors[detection_file].detected:
                     self.ai.task_manager.notify_detector(detection_file, True)
 
