@@ -203,23 +203,24 @@ class OptimisedPipelines():
         self.names = []
         self.nbid = 0
         self.nnid = 0
-    def add_branches(self, branches, prefix='temp'):
+    def add_branches(self, branches):
         #add branches that may already have dependancies. things with prefix are new nodes
         mapping = {} #old:new
         max_n = 0
         #relabel nodes
         for branch in branches.values():
-            new_nodes = {}
             for node_id, node in branch.nodes.items():
-                if node_id[:len(prefix)] == prefix:
-                    new_nodes[self.nnid+max_n] = node
-                    mapping[node_id] = self.nnid+max_n
-                    max_n+1
-            #relabel inarcs
+                branch.nodes[self.nnid+max_n] = node
+                branch.nodes.pop(node_id)
+                mapping[node_id] = self.nnid+max_n
+                max_n += 1
+            #relabel arcs
             for node in branch.nodes.values():
                 for input, inarc in node.inarcs.items():
                     if inarc[0] in mapping:
                         node.inarcs[input] = (mapping[inarc[0]], inarc[1])
+                for output, outarcs in node.outarcs.items():
+                    node.outarcs[output] = [((mapping[outarc[0]], outarc[1]) if outarc[0] in mapping else outarc) for outarc in outarcs]
         self.nnid += max_n
         branch_relabeling, node_relabeling = self.add(branches)
         node_relabeling2 = {}
@@ -303,7 +304,7 @@ class pipelineManager(aiProcess):
         self.request_lock = threading.RLock()
         self.setup_requests = []
         self.drop_requests = []
-        self.requests = {'script':{}, 'other':{}} #detector_name: pl_names
+        self.requests = {'script':{}, 'other':{}} #script_name: pl_names
         self.det_reqs = []
         self.cur_det_reqs = []
         self.pipeline_lock = threading.RLock()
@@ -450,8 +451,8 @@ class pipelineManager(aiProcess):
             """
             1) get the current state (also returns a list of new nodes)
             2) group new nodes into branches
-            2a) scan node for inputs and split off
-            2b) TODO add copy node
+                scan node for inputs and split off
+                TODO add copy node
             3) modify 'state' and model to reflect moving nodes from temp to proper - note outarcs invalid after this point
             4) scan existing nodes for:
                 lost nodes - remove all traces
@@ -463,29 +464,30 @@ class pipelineManager(aiProcess):
             #1
             state, new_nodes = self._pl.get()
             #2
-            traced = []
-            node_relabelings = {}
-            new_branch_ids = []
+            traced = [] #nodes that have been added to a group
+            node_relabelings = {} #summary of how node names in state -> node names in optimised pipelines
+            new_branch_ids = [] #list of newly created branches
             info('Found %d new nodes.' %(len(new_nodes),))
             for node_id in new_nodes:
-                if node_id in traced: continue
-                depends_on = []
-                dependents = []
-                nodes = {}
-                to_map = [node_id,]
+                if node_id in traced: continue #if the node is already part of a grouping, ignore it
+                depends_on = [] #list of nodes that this group depends on
+                nodes = {} #node_id (opt_pipe):node, list of nodes in this group
+                to_map = [node_id,] #nodes that need to be checked
                 #map outwards until you hit already existing things
                 while len(to_map)>0:
                     for inarc in state.nodes[to_map[0]].inarcs.values():
-                        if inarc[0] in new_nodes and (not inarc[0] in traced):
+                        #for all inputs, if the input is from a node inside this group
+                        #(and we haven't already mapped it, or put it in the list to map), then we need to 'map' it
+                        #else its outside the group, so the group depends on it
+                        if (inarc[0] in new_nodes) and (not inarc[0] in traced) and (not inarc[0] in to_map):
                             to_map.append(inarc[0])
                         else:
                             depends_on.append(to_map[0])
                     for outarcs in state.nodes[to_map[0]].outarcs.values():
+                        #for outarcs, just need to check if any new nodes need to be in the group
                         for outarc in outarcs:
-                            if outarc[0] in new_nodes and (not outarc[0] in traced):
+                            if (outarc[0] in new_nodes) and (not outarc[0] in traced) and (not outarc[0] in to_map):
                                 to_map.append(outarc[0])
-                            else:
-                                dependents.append(to_map[0])
                     traced.append(to_map[0])
                     nodes[to_map[0]] = state.nodes[to_map[0]]
                     to_map.remove(to_map[0])
@@ -501,7 +503,9 @@ class pipelineManager(aiProcess):
                 node_relabelings.update(node_relabeling)
                 new_branch_ids.extend(branch_relabeling.values())
             #3
+            #reassign the new nodes with optimised pipeline number from the temporary references originally given
             self._pl.reassign(node_relabelings)
+            #renumber node_ids in state so that future references give right number
             for node_id, node in state.nodes.items():
                 for input, inarc in node.inarcs.items():
                     if inarc[0] in node_relabelings:
@@ -569,8 +573,12 @@ class pipelineManager(aiProcess):
             #6
             #if for nodes which things aren't dependant on
             if len(new_branch_ids): info('Found %d new branches that no pipeline depends on, guessing...' %(len(new_branch_ids),))
+            #counter to check we are getting somewhere
+            added = []
             for branch_id in new_branch_ids:
-                #if its attached to just one pl, then add to that pl
+                if branch_id in added:
+                    continue
+                #find the dependancies of the branch
                 to_check = [branch_id]
                 depends_on_branches = []
                 while len(to_check):
@@ -581,22 +589,37 @@ class pipelineManager(aiProcess):
                                 depends_on_branches.append(self.pl_data.nodeid2branch[node2_id])
                     to_check.remove(to_check[0])
                 info('New branch dependant on '+str(depends_on_branches))
-                attached_to = {}
-                for pl_name, pl in self.pl_data.pipelines.items():
-                    for branch_id in depends_on_branches:
-                        if branch_id in pl.branches:
-                            continue
-                        break
-                    else:
-                        #this is attached to this pl
-                        attached_to[pl_name] = pl
-                        info('New branch could be attached to %s' %(pl_name, ))
-                if len(attached_to) == 1:
-                    info('Adding to pipeline %s.' %(attached_to.keys()[0],))
-                    attached_to[attached_to.keys()[0]].branches.extend(branch_relabeling.values())
+                #now find all the pipelines that have all the branches this branch is dependant on (except other new branches that haven't been used)
+                if len(depends_on_branches): #else will get attached to every pl
+                    attached_to = {}
+                    extras = {} #new branches to be added to the pl
+                    for pl_name, pl in self.pl_data.pipelines.items():
+                        extras[pl_name] = [branch_id]
+                        for branch2_id in depends_on_branches:
+                            if branch2_id in pl.branches:
+                                continue
+                            elif branch2_id in new_branch_ids:
+                                extras[pl_name].append(branch2_id)
+                                continue
+                            break
+                        else:
+                            #this is attached to this pl
+                            attached_to[pl_name] = pl
+                            info('New branch could be attached to %s' %(pl_name, ))
+                    for pl_name, pl in attached_to.items():
+                        info('Adding to pipeline %s.' %(pl_name,))
+                        pl.branches.extend(extras[pl_name])
+                        for bid in extras[pl_name]:
+                            added.append(bid)
+            for branch_id in new_branch_ids:
+                if not branch_id in added:
+                    warning('Could not attach some branches (nodes will be lost)')
+                    warning('TEMPORARY WARNING: unlinked nodes will probably cause a crash!!!')
+                    break
                 #TODO create pl. possibly add request
             #save modifications
             self.shelf['pl_data'] = self.pl_data
+            self.shelf.sync()
             #set current state to state from pipeline
             self.pl_state = state
             #generate 'clean' new state
