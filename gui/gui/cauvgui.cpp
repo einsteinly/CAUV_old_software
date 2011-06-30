@@ -72,17 +72,24 @@ int CauvGui::send(boost::shared_ptr<Message> message){
 
 int CauvGui::findPlugins(const QDir& dir, int subdirs)
 {
-    debug(3) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
+    debug(1) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
     
     int numFound = 0;
     foreach (QString fileName, dir.entryList(QDir::Files)) {
+        debug(1) << "Trying to load:"<< fileName.toStdString();
         QPluginLoader loader(dir.absoluteFilePath(fileName));
-        QObject *plugin = loader.instance();
-        if (plugin) {
-            if (loadPlugin(plugin)) {
-                info() << "Loaded plugin:"<< fileName.toStdString();
-                numFound++;
-            } else warning() << "Rejected plugin:"<< fileName.toStdString();
+        if (!loader.load()) {
+            debug(1) << "Could mot load plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
+        } else {
+            QObject *plugin = loader.instance();
+            if (!plugin) {
+                debug(1) << "Could mot instantiate plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
+            } else {
+                if (loadPlugin(plugin)) {
+                    info() << "Loaded plugin"<< fileName.toStdString();
+                    numFound++;
+                } else warning() << "Rejected plugin"<< fileName.toStdString();
+            }
         }
     }
     
