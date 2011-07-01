@@ -30,12 +30,11 @@ class scriptOptions(aiScriptOptions):
     Angle_Control_kPID = (0.6, 0, 0) # (Kp, Ki, Kd)
     Angle_DError_Window = expWindow(5, 0.6)
     Angle_Error_Clamp = 1e30
-    Depth_Control_kPID = (0.2, 0, 0)
+    Depth_Control_kPID = (0.05, 0, 0) # (Kp, Ki, Kd)
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 10
     
     Pipeline_File = 'circle_buoy.pipe'
-    Load_Pipeline = 'default' # None, or name of running pipeline to load the image processing setup into
 
     class Meta:
         dynamic = [
@@ -51,7 +50,6 @@ class script(aiScript):
         aiScript.__init__(self, script_name, opts)
         # self.node is set by aiProcess (base class of aiScript)
         self.node.join('processing')
-        self.__pl = pipeline.Model(self.node, self.options.Load_Pipeline)
         self.__strafe_speed = self.options.Strafe_Speed
         self.__buoy_size = self.options.Buoy_Size
         self.size_pid = PIDController(
@@ -87,9 +85,9 @@ class script(aiScript):
 
     def optionChanged(self, option_name):
         self.reloadOptions()
-
-    def loadPipeline(self):
-        self.__pl.load(self.options.Pipeline_File)
+    
+    def telemetry(self, name, value):
+        self.node.send(msg.GraphableMessage(name, value))
 
     def onCirclesMessage(self, m):
         if str(m.name) == 'buoy':
@@ -173,14 +171,26 @@ class script(aiScript):
             do_prop = self.options.Do_Prop_Limit
         if do_prop < -self.options.Do_Prop_Limit:
             do_prop = -self.options.Do_Prop_Limit
+        self.auv.prop(int(round(do_prop)))
+        self.time_last_seen = now
+
         debug('angle (e=%.3g, ie=%.3g de=%.3g) size (e=%.3g, ie=%.3g, de=%.3g), depth (e=%.3g, ie=%.3g de=%.3g)' % (
             self.angle_pid.err, self.angle_pid.ierr, self.angle_pid.derr,
             self.size_pid.err, self.size_pid.ierr, self.size_pid.derr,
             self.depth_pid.err, self.depth_pid.ierr, self.depth_pid.derr
         ))
         debug('turn to %g, prop to %s, dive to %g' % (turn_to, do_prop, depth_to))
-        self.auv.prop(int(round(do_prop)))
-        self.time_last_seen = now
+        
+        # Telemetry: TODO: probably move message generation to pid class, also
+        # would be nice if GraphableMessages accepted a list of things to plot,
+        # not just one
+        def pidTelem(pid,name):
+            self.telemetry('%s-err' % name, pid.err)
+            self.telemetry('%s-derr' % name, pid.derr)
+            self.telemetry('%s-ierr' % name, pid.ierr)
+        pidTelem(self.angle_pid,'BuoyAngle')
+        pidTelem(self.angle_pid,'BuoySize')
+        pidTelem(self.angle_pid,'BuoyDepth')
 
     def run(self):
         self.request_pl(self.options.Pipeline_File)
@@ -198,8 +208,7 @@ class script(aiScript):
                         warning('cannot see buoy: last seen %g seconds ago' %
                                 time_since_seen)
                     if time_since_seen > self.options.Give_Up_Seconds_Between_Sights:
-                        # TODO: arrange for this sort of thing to be logged in
-                        # the competition log
+                        self.log('Buoy Circling: lost sight of the buoy!')
                         raise Exception('lost the buoy: giving up!')
                 if self.auv.getBearing() > -180 and self.auv.getBearing() < -90:
                     entered_quarters[3] = True
@@ -216,6 +225,7 @@ class script(aiScript):
             while self.auv.getBearing() < start_bearing:
                 info('Waiting for final completion...')
                 time.sleep(0.5)
+            self.log('Buoy Circling: completed successfully')
         except:
             exit_status = 'FAIL'
             error(traceback.format_exc())
