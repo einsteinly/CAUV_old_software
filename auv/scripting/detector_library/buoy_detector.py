@@ -1,4 +1,4 @@
-from AI_classes import aiDetector
+from AI_classes import aiDetector, aiDetectorOptions
 from cauv.debug import debug, info, warning, error
 
 import cauv.pipeline as pipeline
@@ -11,7 +11,7 @@ from utils import vecops
 from utils.hacks import incFloat 
 from utils.detectors import ColourDetector
 
-class detectorOptions:
+class detectorOptions(aiDetectorOptions):
     Sightings_Period   = 3.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.7
     Required_Pipeline = 'detect_buoy.pipe'
@@ -24,20 +24,20 @@ class detectorOptions:
     Circles_Weight = 1.7 #
 
 class detector(aiDetector):
-    def __init__(self, node):
-        aiDetector.__init__(self, node)
+    def __init__(self, node, opts):
+        aiDetector.__init__(self, node, opts)
         self.circles_messages = {}   # map time received : message
         self.colour_detector = ColourDetector(
-            detectorOptions.Sightings_Period,
-            detectorOptions.Histogram_Bin,
-            detectorOptions.Optimal_Colour_Frac
+            self.options.Sightings_Period,
+            self.options.Histogram_Bin,
+            self.options.Optimal_Colour_Frac
         )
         self.tzero = time.time()
         self.node.join('processing')
         self.node.join('pl_gui')
-        if detectorOptions.Required_Pipeline:
+        if self.options.Required_Pipeline:
             try:
-                self.request_pl(detectorOptions.Required_Pipeline)
+                self.request_pl(self.options.Required_Pipeline)
             except Exception, e:
                 warning('Buoy Detector pipeline request failed: %s' % e)
     
@@ -48,20 +48,20 @@ class detector(aiDetector):
         # process recorded observations of circles, and set self.detected True
         # / False as necessary
         tnow = self.relativeTime()
-        self.cullOldSightings(tnow - detectorOptions.Sightings_Period)
+        self.cullOldSightings(tnow - self.options.Sightings_Period)
         sightings = []
         numcircles = len(self.circles_messages.items())
         for t, m in  self.circles_messages.items():
             sightings.append(self.detectionConfidence(m))
         if numcircles:
-            circles_confidence = detectorOptions.Circles_Weight * sum(sightings[:numcircles]) / numcircles
+            circles_confidence = self.options.Circles_Weight * sum(sightings[:numcircles]) / numcircles
         else:
             circles_confidence = 0
-        colour_confidence = detectorOptions.Colour_Weight * self.colour_detector.confidence()
+        colour_confidence = self.options.Colour_Weight * self.colour_detector.confidence()
         confidence = circles_confidence + colour_confidence
         info('buoy detector processing %d sightings, confidence=%g (circles=%g,colour=%g)' % (
             len(sightings), confidence, circles_confidence, colour_confidence))
-        if confidence > detectorOptions.Required_Confidence:
+        if confidence > self.options.Required_Confidence:
             info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = True
         else:
@@ -82,7 +82,7 @@ class detector(aiDetector):
         sxx = vecops.sxx(map(lambda x: x.centre, message.circles))
         stddev = vecops.pow(vecops.absv(vecops.sub(sxx,vecops.sqr(sx))), 0.5)
         s = (stddev.x + stddev.y) / 2
-        confidence = 1 / (1 + detectorOptions.Stddev_Mult * s/mean_radius)
+        confidence = 1 / (1 + self.options.Stddev_Mult * s/mean_radius)
         if len(message.circles) == 1:
             confidence = 0.9
         debug('circle centres s=%g, confidence=%g mean radius=%g' % (s, confidence, mean_radius), 5)
@@ -99,7 +99,7 @@ class detector(aiDetector):
         cull(self.circles_messages)
 
     def onCirclesMessage(self, m):
-        if m.name == detectorOptions.Circles_Name:
+        if m.name == self.options.Circles_Name:
             # assuming time collisions are not going to happen very often!
             t = self.relativeTime()
             while t in self.circles_messages:
@@ -110,7 +110,7 @@ class detector(aiDetector):
             debug('ignoring circles message: %s' % m.name, 2)
  
     def onHistogramMessage(self, m):
-        if m.name == detectorOptions.Histogram_Name:        
+        if m.name == self.options.Histogram_Name:        
             self.colour_detector.update(m)
         else:
             debug('ignoring histogram message: %s' % m.name, 2)

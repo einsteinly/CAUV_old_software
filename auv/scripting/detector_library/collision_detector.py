@@ -1,4 +1,4 @@
-from AI_classes import aiDetector
+from AI_classes import aiDetector, aiDetectorOptions
 from cauv.debug import debug, info, warning, error
 
 import cauv.pipeline as pipeline
@@ -6,37 +6,37 @@ import cauv.pipeline as pipeline
 import math
 from movingaverage import MovingAverage
 
-class detectorOptions:
+class detectorOptions(aiDetectorOptions):
     Pipeline_File = 'pipelines/histogram.pipe'
     Load_Pipeline = None #'buoy-detect'
     Channel = 'Value'
     No_Trigger = 3
 
 class detector(aiDetector):
-    def __init__(self, node):
-        aiDetector.__init__(self, node)
+    def __init__(self, node, opts):
+        aiDetector.__init__(self, node, opts)
         self.__node = node
         self.node.join('processing')
         node.addObserver(self)
 
-        self.channel = detectorOptions.Channel
-        self.no_trigger = detectorOptions.No_Trigger
+        self.channel = self.options.Channel
+        self.no_trigger = self.options.No_Trigger
 
         # A class to calculate the moving average of last maxcount number of
         # sample, and set trigger flag when sample is outside tolerance range:
         self.skewMovingMean = MovingAverage('lower', tolerance = 1, maxcount=30, st_multiplier=3)
         self.meanMovingMean = MovingAverage('upper', tolerance = 5, maxcount=30, st_multiplier=3)
 
-        self.__pl = pipeline.Model(self.node, detectorOptions.Load_Pipeline)
-        if detectorOptions.Load_Pipeline is not None:        
-            self.__pl.load(detectorOptions.Pipeline_File)
+        self.__pl = pipeline.Model(self.node, self.options.Load_Pipeline)
+        if self.options.Load_Pipeline is not None:        
+            self.__pl.load(self.options.Pipeline_File)
     
     def die(self):
         # save the running pipeline in case someone edited it!
-        if detectorOptions.Load_Pipeline is not None:
-            info('saving the current %s pipeline to %s' % (detectorOptions.Load_Pipeline,
-                                                           detectorOptions.Pipeline_File))
-            self.__pl.load(detectorOptions.Pipeline_File + '.autosaved')
+        if self.options.Load_Pipeline is not None:
+            info('saving the current %s pipeline to %s' % (self.options.Load_Pipeline,
+                                                           self.options.Pipeline_File))
+            self.__pl.load(self.options.Pipeline_File + '.autosaved')
 
     def onHistogramMessage(self, m):
         if m.name == self.channel:
