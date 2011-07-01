@@ -525,6 +525,13 @@ group gui
     {
         response : ScriptResponse;
     }
+
+    message Graphable : 104
+    {
+        name : string;
+        value : float;
+    }
+
 }
 
 group pl_gui
