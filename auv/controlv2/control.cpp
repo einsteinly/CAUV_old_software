@@ -137,8 +137,10 @@ struct PIDControl
                 derivative_sum += (previous_errors[i+1].second - previous_errors[i].second) / dt_msecs;
                 n_derivatives++;
             }else{
-                warning() << "controller update frequency < 1ms";
+                error() << "controller update frequency < 1ms (> 1KHz)";
             }
+            if(dt_msecs < 5)
+                warning() << "controller update frequency < 5ms (> 200Hz)";
         }
         if(!n_derivatives){
             warning() << "no derivative samples used";
