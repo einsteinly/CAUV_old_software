@@ -50,10 +50,10 @@ class DebugXsensObserver : public XsensObserver
         unsigned int m_level;
 };
 
-int operator-(TimeStamp const& l, TimeStamp const& r)
+float operator-(TimeStamp const& l, TimeStamp const& r)
 {
     int secs_delta = l.secs - r.secs;
-    int msecs_delta = (l.musecs - r.musecs) / 1000;
+    float msecs_delta = (l.musecs - r.musecs) / 1000.0f;
     return 1000 * secs_delta + msecs_delta;
 }
 
@@ -132,15 +132,15 @@ struct PIDControl
         }
 
         for(int i = 0;i < int(previous_errors.size())-1; i++){
-            int dt_msecs = (previous_errors[i+1].first - previous_errors[i].first);
+            float dt_msecs = (previous_errors[i+1].first - previous_errors[i].first);
             if(dt_msecs != 0){
                 derivative_sum += (previous_errors[i+1].second - previous_errors[i].second) / dt_msecs;
                 n_derivatives++;
             }else{
-                error() << "controller update frequency < 1ms (> 1KHz)";
+                error() << "controller update frequency too high";
             }
-            if(dt_msecs < 5)
-                warning() << "controller update frequency < 5ms (> 200Hz)";
+            if(dt_msecs < 2)
+                warning() << "controller update frequency < 2ms";
         }
         if(!n_derivatives){
             warning() << "no derivative samples used";
@@ -148,7 +148,7 @@ struct PIDControl
         }else{
             // FIXME: "temporary" debugging code
             unsigned s = previous_errors.size();
-            int dt_msecs = (previous_errors[s-1].first - previous_errors[s-2].first);
+            float dt_msecs = (previous_errors[s-1].first - previous_errors[s-2].first);
             if(dt_msecs != 0)
                 last_derr_unsmoothed = (previous_errors[s-1].second - previous_errors[s-2].second) / dt_msecs;
         }
@@ -240,9 +240,9 @@ struct PIDControl
         r.push_back(boost::make_shared<GraphableMessage>("errSampleMsecs", err_sample_time));
         r.push_back(boost::make_shared<GraphableMessage>("errSampleTarget", retain_samples_msecs));
         r.push_back(boost::make_shared<GraphableMessage>("derrRaw", last_derr_unsmoothed));
-        r.push_back(boost::make_shared<GraphableMessage>("Kp-variable", Kp1));
-        r.push_back(boost::make_shared<GraphableMessage>("Ki-variable", Ki1));
-        r.push_back(boost::make_shared<GraphableMessage>("Kd-variable", Kd1));
+        //r.push_back(boost::make_shared<GraphableMessage>("Kp-variable", Kp1));
+        //r.push_back(boost::make_shared<GraphableMessage>("Ki-variable", Ki1));
+        //r.push_back(boost::make_shared<GraphableMessage>("Kd-variable", Kd1));
         return r;
     }
 };
@@ -365,8 +365,16 @@ class ControlLoops : public MessageObserver, public XsensObserver
                                              m_depthCalibration->aftMultiplier() * m->aft();
                 float depth = 0.5 * (fore_depth_calibrated + aft_depth_calibrated);
 
-                float mv = m_controllers[Depth].getMV(depth);
+                //FIXME: MCB sends pairs of pressure messages very close
+                //together in time, this screws up derivative calculation
+                static TimeStamp last_pressure_message_time = now();
+                if(now() - last_pressure_message_time < 10)
+                    return;
+                else
+                    last_pressure_message_time = now();
                 
+                float mv = m_controllers[Depth].getMV(depth);
+
                 m_demand[Depth].vbow = mv;
                 m_demand[Depth].vstern = mv;
 
