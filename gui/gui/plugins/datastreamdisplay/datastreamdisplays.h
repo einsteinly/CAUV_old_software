@@ -66,8 +66,11 @@ namespace cauv {
         virtual const QList<QString> getGroups() const;
         virtual void initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node);
         
+        void onNewGraphableStream(boost::shared_ptr<DataStream<float> > stream);
+
     private:
         Ui::DataStreamPicker *ui;
+        QTreeWidgetItem * m_debug;
     };
     
 }

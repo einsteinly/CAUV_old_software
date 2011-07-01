@@ -35,6 +35,9 @@ class detector(aiDetector):
     def onHistogramMessage(self, m):
         if m.name != PipeDetectorOptions.Histogram_Name:
             return
+        
+        debug(str(m_bins))
+            
         if m.bins[PipeDetectorOptions.Bin_Number] > PipeDetectorOptions.Bin_Threshold:
             self.detected = True
         else:

@@ -152,14 +152,27 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     new DataStreamTreeItem<float>(auv->sensors.estimate_total, battery);
     new DataStreamTreeItem<float>(auv->sensors.fraction_remaining, battery);
 
+
+    //
+    // debug graphs
+    //
+    m_debug = new QTreeWidgetItem(ui->dataStreams);
+    m_debug->setText(0, "Debug");
+    m_debug->setFlags(m_debug->flags() ^ Qt::ItemIsSelectable);
+    m_auv->debug.new_graph_stream->onUpdate.connect(boost::bind(&DataStreamPicker::onNewGraphableStream, this, _1));
+
     //
     // other
     //
     QTreeWidgetItem *other = new QTreeWidgetItem(ui->dataStreams);
     other->setText(0, "Other");
-    other->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);
+    other->setFlags(other->flags() ^ Qt::ItemIsSelectable);
     new DataStreamTreeItem<int32_t>(auv->debug_level, other);
 
+}
+
+void DataStreamPicker::onNewGraphableStream(boost::shared_ptr<DataStream<float> > stream){
+    new DataStreamTreeItem<float>(stream, m_debug);
 }
 
 DataStreamPicker::~DataStreamPicker(){

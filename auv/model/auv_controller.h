@@ -31,6 +31,7 @@ public:
     void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr);
     void onTelemetryMessage(TelemetryMessage_ptr) ;
     void onImageMessage(ImageMessage_ptr);
+    void onGraphableMessage(GraphableMessage_ptr m);
     void onSonarControlMessage(SonarControlMessage_ptr);
     void onScriptResponseMessage(ScriptResponseMessage_ptr);
     void onPressureMessage(PressureMessage_ptr);
