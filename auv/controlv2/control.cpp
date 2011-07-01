@@ -85,7 +85,7 @@ struct PIDControl
           previous_errors(),
           previous_time(),
           is_angle(false),
-          retain_samples_msecs(200)
+          retain_samples_msecs(1000)
     {
         previous_time.secs = 0;
     }
