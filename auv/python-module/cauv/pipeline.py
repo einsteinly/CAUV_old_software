@@ -183,6 +183,7 @@ class Model(messaging.MessageObserver):
             self.node_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
         r = self.node_added.nodeId
+        debug('Node id = %d' %(r,))
         self.node_added_condition.release()
         return r
         
