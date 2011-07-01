@@ -31,6 +31,7 @@ public:
     void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr);
     void onTelemetryMessage(TelemetryMessage_ptr) ;
     void onImageMessage(ImageMessage_ptr);
+    void onGraphableMessage(GraphableMessage_ptr m);
     void onSonarControlMessage(SonarControlMessage_ptr);
     void onScriptResponseMessage(ScriptResponseMessage_ptr);
     void onPressureMessage(PressureMessage_ptr);
@@ -38,10 +39,7 @@ public:
     void onBatteryUseMessage(BatteryUseMessage_ptr m);
     void onMotorStateMessage(MotorStateMessage_ptr m);
     void onProcessStatusMessage(ProcessStatusMessage_ptr m);
-
-    bool pushState(bool state);
-    bool popState();
-    bool enabled();
+    void onLocationMessage(LocationMessage_ptr m);
 
     void sendMotorMessage(MotorID::e motor, int8_t speed);
     void sendDebugLevelMessage(int32_t level);

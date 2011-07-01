@@ -24,6 +24,7 @@ add_library( motorsplugin MODULE
     ${MOTORS_PLUGIN_UIS_H}
     ${MOTORS_PLUGIN_MOC_H}
 )
+cauv_install_plugin( motorsplugin )
                                       
 target_link_libraries( motorsplugin
     guicpp-core

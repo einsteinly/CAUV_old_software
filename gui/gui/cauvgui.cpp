@@ -70,6 +70,42 @@ int CauvGui::send(boost::shared_ptr<Message> message){
     return CauvNode::send(message);
 }
 
+int CauvGui::findPlugins(const QDir& dir, int subdirs)
+{
+    debug(1) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
+    
+    int numFound = 0;
+    foreach (QString fileName, dir.entryList(QDir::Files)) {
+        debug(1) << "Trying to load:"<< fileName.toStdString();
+        QPluginLoader loader(dir.absoluteFilePath(fileName));
+        if (!loader.load()) {
+            debug(1) << "Could mot load plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
+        } else {
+            QObject *plugin = loader.instance();
+            if (!plugin) {
+                debug(1) << "Could mot instantiate plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
+            } else {
+                if (loadPlugin(plugin)) {
+                    info() << "Loaded plugin"<< fileName.toStdString();
+                    numFound++;
+                } else warning() << "Rejected plugin"<< fileName.toStdString();
+            }
+        }
+    }
+    
+    if (subdirs > 0 || subdirs == -1) {
+        // Recurse down the directories
+        foreach (QString directoryName, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir subdir(dir);
+            if(subdir.cd(directoryName)) {
+                findPlugins(subdir, subdirs == -1 ? -1 : subdirs - 1);
+            }
+        }
+    }
+
+    return numFound;
+}
+
 void CauvGui::onRun()
 {
     CauvNode::onRun();
@@ -82,27 +118,7 @@ void CauvGui::onRun()
     // then any plugins in the plugins folder
     QDir pluginsDir = QDir(QApplication::instance()->applicationDirPath());
     pluginsDir.cd("plugins");
-
-    foreach (QString directoryName, pluginsDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-
-
-        if(pluginsDir.cd(directoryName)){
-
-            debug(3) << "Looking for plugins in:"<< pluginsDir.absolutePath().toStdString();
-
-            foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-                QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-                QObject *plugin = loader.instance();
-                if (plugin) {
-                    if (loadPlugin(plugin)) {
-                        info() << "Loaded plugin:"<< fileName.toStdString();
-                    } else warning() << "Rejected plugin:"<< fileName.toStdString();
-                }
-            }
-
-            pluginsDir.cdUp(); // back to plugins dir
-        }
-    }
+    findPlugins(pluginsDir, 1);
 
 
     QSettings settings("CAUV", "Cambridge AUV");
@@ -113,6 +129,8 @@ void CauvGui::onRun()
     // connect up message inputs and outputs
     addMessageObserver(m_auv_controller);
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
+
+    m_auv_controller->onProcessStatusMessage(boost::make_shared<ProcessState>("blah", "running", 5, 6, 7));
 
     show();
     m_application->exec();

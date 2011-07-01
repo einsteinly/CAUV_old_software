@@ -19,8 +19,8 @@ namespace imgproc{
 
 class BroadcastCornersNode: public OutputNode{
     public:
-        BroadcastCornersNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        BroadcastCornersNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){
@@ -33,7 +33,7 @@ class BroadcastCornersNode: public OutputNode{
             
             // parameters:
             registerParamID< std::vector<Corner> >("corners", std::vector<Corner>(),
-                                                   "the corners to draw"); 
+                                                   "the corners to draw", Must_Be_New); 
             registerParamID<std::string>("name", "unnamed corners",
                                          "name for detected set of corners");
         }

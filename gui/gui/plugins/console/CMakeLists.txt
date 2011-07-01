@@ -30,7 +30,9 @@ add_library( consoleplugin MODULE
     ${CONSOLE_PLUGIN_UIS_H}
     ${CONSOLE_PLUGIN_MOC_H}
 )
-                                      
+
+cauv_install_plugin( consoleplugin )
+
 target_link_libraries( consoleplugin
     qconsole2
     guicpp-core

@@ -57,6 +57,7 @@ class ImageProcessor: public MessageObserver
         virtual void onRemoveNodeMessage(RemoveNodeMessage_ptr m);
         virtual void onSetNodeParameterMessage(SetNodeParameterMessage_ptr m);
         virtual void onAddArcMessage(AddArcMessage_ptr m);
+        virtual void onRemoveArcMessage(RemoveArcMessage_ptr m);
         virtual void onGraphRequestMessage(GraphRequestMessage_ptr m);
         virtual void onForceExecRequestMessage(ForceExecRequestMessage_ptr m);
         virtual void onClearPipelineMessage(ClearPipelineMessage_ptr m);
@@ -94,6 +95,8 @@ class ImageProcessor: public MessageObserver
             lock_t l(m_name_lock);
             if(msg->pipelineName() == m_name)
                 return true;
+            debug(5) << "filter does not match:" << msg->pipelineName() << "!= "
+                     << m_name;
             return false;
         }
 

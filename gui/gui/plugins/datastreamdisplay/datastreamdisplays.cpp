@@ -12,7 +12,7 @@
 using namespace cauv;
 
 
-boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamList::getDataStreams() const {
+boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamList::getDataStreams() {
     boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<DataStreamBase> > >();
 
     QModelIndexList items = this->selectedIndexes();
@@ -82,6 +82,7 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
         (new DataStreamTreeItem<float>(i.second->aI, autopilot))->setText(0, "aI");
         (new DataStreamTreeItem<float>(i.second->aD, autopilot))->setText(0, "aD");
         (new DataStreamTreeItem<float>(i.second->thr, autopilot))->setText(0, "thr");
+        (new DataStreamTreeItem<float>(i.second->maxError, autopilot))->setText(0, "maxError");
         (new DataStreamTreeItem<float>(i.second->scale, autopilot))->setText(0, "scale");
         (new DataStreamTreeItem<float>(i.second->actual, autopilot))->setText(0, "actual");
 
@@ -151,14 +152,27 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     new DataStreamTreeItem<float>(auv->sensors.estimate_total, battery);
     new DataStreamTreeItem<float>(auv->sensors.fraction_remaining, battery);
 
+
+    //
+    // debug graphs
+    //
+    m_debug = new QTreeWidgetItem(ui->dataStreams);
+    m_debug->setText(0, "Debug");
+    m_debug->setFlags(m_debug->flags() ^ Qt::ItemIsSelectable);
+    m_auv->debug.new_graph_stream->onUpdate.connect(boost::bind(&DataStreamPicker::onNewGraphableStream, this, _1));
+
     //
     // other
     //
     QTreeWidgetItem *other = new QTreeWidgetItem(ui->dataStreams);
     other->setText(0, "Other");
-    other->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);
+    other->setFlags(other->flags() ^ Qt::ItemIsSelectable);
     new DataStreamTreeItem<int32_t>(auv->debug_level, other);
 
+}
+
+void DataStreamPicker::onNewGraphableStream(boost::shared_ptr<DataStream<float> > stream){
+    new DataStreamTreeItem<float>(stream, m_debug);
 }
 
 DataStreamPicker::~DataStreamPicker(){

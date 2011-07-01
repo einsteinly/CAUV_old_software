@@ -378,7 +378,8 @@ inline bool isinstance<unsigned long long>(const boost::python::object& o) { ret
 
 /*
  * Shamelessly stolen from cctbx
- * cctbx.sourceforge.net
+ * cctbx.sourceforge.net (probably BSD Licensed.. some time we should make a
+ * proper list of all the license attributions we need)
  */
 struct default_policy
 {
@@ -654,12 +655,12 @@ struct from_python_variant
 
     static void* convertible(PyObject* obj_ptr)
     {
-        debug() << "variant convertible";
+        debug(3) << "variant convertible";
         boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
         boost::python::object obj_obj(obj_hdl);
         if(!isinstance<ValueType>(obj_obj))
             return 0;
-        debug() << "variant convertible isinstance ok";
+        debug(3) << "variant convertible isinstance ok";
         return obj_ptr;
     }
     

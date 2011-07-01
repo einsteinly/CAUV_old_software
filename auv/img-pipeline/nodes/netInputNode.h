@@ -16,8 +16,8 @@ namespace imgproc{
 
 class NetInputNode: public InputNode{
     public:
-        NetInputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : InputNode(sched, pl, n, t){
+        NetInputNode(ConstructArgs const& args)
+            : InputNode(args){
         }
 
         void init(){

@@ -20,14 +20,17 @@ namespace cauv {
 
         template<class T>
         void addRecorder(DataStreamRecorder<T> * recorder){
-            m_updateFunctions.push_back(boost::bind(&DataStreamRecorder<T>::setNumSamples, recorder, _1));
+            m_sampleUpdateFunctions.push_back(boost::bind(&DataStreamRecorder<T>::setNumSamples, recorder, _1));
+            m_frequencyUpdateFunctions.push_back(boost::bind(&DataStreamRecorder<T>::setSampleFrequency, recorder, _1));
         };
 
     protected:
-        std::vector<boost::function<void(int)> > m_updateFunctions;
+        std::vector<boost::function<void(int)> > m_sampleUpdateFunctions;
+        std::vector<boost::function<void(int)> > m_frequencyUpdateFunctions;
 
     protected Q_SLOTS:
         void setNumSamples(int samples);
+        void setSampleFrequency(int samples);
 
     private:
         Ui::DataStreamRecorder *ui;

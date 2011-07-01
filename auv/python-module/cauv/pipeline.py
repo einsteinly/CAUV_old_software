@@ -33,9 +33,9 @@ class State:
     def __repr__(self):
         return str(self.nodes)
 
-class Model(messaging.BufferedMessageObserver):
+class Model(messaging.MessageObserver):
     def __init__(self, node, pipeline_name = "default"):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.__node = node
 
         self.pipeline_name = pipeline_name
@@ -45,6 +45,9 @@ class Model(messaging.BufferedMessageObserver):
 
         self.node_added_condition = threading.Condition()
         self.node_added = None
+
+        self.node_removed_condition = threading.Condition()
+        self.node_removed = None
 
         self.parameter_set_condition = threading.Condition()
         self.parameter_set = None
@@ -110,8 +113,8 @@ class Model(messaging.BufferedMessageObserver):
                 #print
         return s
     
-    def set(self, state, timeout=3.0):
-        self.clear()
+    def set(self, state, timeout=3.0, clear=True):
+        if clear: self.clear()
         id_map = {}
         node_map = {}
         # first ensure all nodes are present
@@ -180,8 +183,25 @@ class Model(messaging.BufferedMessageObserver):
             self.node_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
         r = self.node_added.nodeId
+        debug('Node id = %d' %(r,))
         self.node_added_condition.release()
         return r
+        
+    def removeSynchronous(self, node, timeout=3.0):
+        debug('removeSynchronous %d' % (node,))
+        self.node_removed_condition.acquire()
+        self.node_removed = None
+        self.send(messaging.RemoveNodeMessage(
+            self.pipeline_name,
+            messaging.NodeType(node)
+        ))
+        self.node_removed_condition.wait(timeout)
+        if self.node_removed is None:
+            self.node_removed_condition.release()
+            raise RuntimeError('No response from pipeline, is it running?')
+        r = self.node_removed.nodeId
+        self.node_removed_condition.release()
+        return None
     
     def setParameterSynchronous(self, node, param, value, timeout=3.0):
         self.parameter_set_condition.acquire()
@@ -213,7 +233,7 @@ class Model(messaging.BufferedMessageObserver):
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:
             self.arc_added_condition.release()
-            raise RuntimeError('No reponse from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline, is it running?')
         self.arc_added_condition.release()
         return None
 
@@ -221,9 +241,9 @@ class Model(messaging.BufferedMessageObserver):
 
     def checkName(self, msg):
         if msg.pipelineName != self.pipeline_name:
-            debug('ignoring NodeAddedMessage (name %s != %s)' % 
-                (msg.pipelineName, msg.__name__)
-            )
+            #debug('ignoring message (name %s != %s)' % 
+            #    (msg.pipelineName, self.pipeline_name)
+            #)
             return False
         return True
 
@@ -234,10 +254,12 @@ class Model(messaging.BufferedMessageObserver):
         self.node_added_condition.notify()
         self.node_added_condition.release()
 
-    #def onNodeRemovedMessage(self, m):
-    #    if not self.checkName(m): return
-    #    #print m
-    #    pass
+    def onNodeRemovedMessage(self, m):
+        if not self.checkName(m): return
+        self.node_removed_condition.acquire()
+        self.node_removed = m
+        self.node_removed_condition.notify()
+        self.node_removed_condition.release()
 
     def onNodeParametersMessage(self, m):
         if not self.checkName(m): return

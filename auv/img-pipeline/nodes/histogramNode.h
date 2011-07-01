@@ -18,8 +18,8 @@ namespace imgproc{
 
 class HistogramNode: public Node{
     public:
-        HistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        HistogramNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){
@@ -34,8 +34,7 @@ class HistogramNode: public Node{
             
             //Parameters
             registerParamID<int>("Number of bins", 42);
-            registerParamID<std::string>("name", "unnamed histogram"
-                                         "name for output histogram");
+            registerParamID<std::string>("name", "unused" "");
             
         }
     
@@ -48,7 +47,6 @@ class HistogramNode: public Node{
             out_map_t r;
 
             const int bins = param<int>("Number of bins");
-            const std::string name = param<std::string>("name");
 
             image_ptr_t img = inputs["image_in"];
 

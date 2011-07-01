@@ -99,38 +99,32 @@ class EditText: public Menu{
 
         virtual bool keyPressEvent(KeyEvent const& event){
             std::string new_text = event.text().toStdString();
+            debug() << BashColour::Green << "editText::keyPressEvent"
+                    << std::hex << event.key() << event.modifiers();
             if ( event.modifiers() == Qt::ControlModifier )
             {
                 switch(event.key())
                 {
                     case Qt::Key_V:
-                        if(new_text.size())
+                    {
+                        QClipboard *cb = QApplication::clipboard();
+                        std::string text = cb->text().toStdString();
+                        if ( text.size() )
                         {
-                            QClipboard *cb = QApplication::clipboard();
-                            std::string text = cb->text().toStdString();
-                            if ( text.size() )
-                            {
-                                debug() << "paste text:" << text;
-                                // clipboard has something in it
-                                *m_txt_prev += text;    // add clipboard text
-                                updateUndo();    // updates the undo buffer
-                            }
-                            else
-                                warning() << "no text to paste";
+                            debug() << "paste text:" << text;
+                            // clipboard has something in it
+                            *m_txt_prev += text;    // add clipboard text
+                            updateUndo();    // updates the undo buffer
                         }
                         else
-                            return false;
+                            warning() << "no text to paste";
                         break;
+                    }
                     case Qt::Key_D:
                         // deletes the string
-                        if (new_text.size() )
-                        {
-                            m_txt_prev->clear();
-                            m_txt_post->clear();
-                            updateUndo();
-                        }
-                        else
-                            return false;
+                        m_txt_prev->clear();
+                        m_txt_post->clear();
+                        updateUndo();
                         break;
                     case Qt::Key_Z:
                         // undos

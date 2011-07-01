@@ -1,13 +1,30 @@
-from AI_classes import aiScript
+from AI_classes import aiScript, aiScriptOptions
+
+import time
+
+class scriptOptions(aiScriptOptions):
+    initial = 'hello'
+    variable = 0
+    class Meta:
+        dynamic = ['variable',]
 
 class script(aiScript):
     def run(self):
-        while True:
-            if raw_input('Something was detected, has it been confirmed?'):
-                self.notify_exit(0)
-                break
+        self.request_pl('circle_buoy.pipe')
+        while raw_input('Continue? y/n: ') != 'n':
+            print self.options.initial, self.options.variable
+            time.sleep(1)
+        print 'Dropping pipe'
+        self.drop_pl('circle_buoy.pipe')
+        a = raw_input('Something was detected, has it been confirmed? y/n: ')
+        if a == 'y':
+            self.notify_exit('SUCCESS')
+        elif a == 'n':
+            self.notify_exit('FAILURE')
+        else:
+            raise Exception
             
 
 if __name__=='__main__':
-    script = test_script('test')
+    script = script('test')
     script.run()

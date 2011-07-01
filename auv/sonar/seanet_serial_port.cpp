@@ -255,3 +255,8 @@ SeanetSerialPort::SeanetSerialPort(const std::string file)
 	init();
 }
 
+bool SeanetSerialPort::ok() const
+{
+    return m_fd != -1;
+}
+

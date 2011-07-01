@@ -19,8 +19,8 @@ namespace imgproc{
 
 class GrabCutNode: public Node{
     public:
-        GrabCutNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        GrabCutNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

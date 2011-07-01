@@ -16,20 +16,33 @@
 using namespace cauv;
 
 
-PipelineListingObserver::PipelineListingObserver(boost::shared_ptr<CauvNode> node) : m_node(node) {
+PipelineListingObserver::PipelineListingObserver(boost::shared_ptr<CauvNode> node) : m_node(node), m_rate_limiter(1, 1000) {
+    // rate limited to 1 per second
     qRegisterMetaType<std::string>("std::string");
 }
 
 void PipelineListingObserver::onMembershipChangedMessage(MembershipChangedMessage_ptr){
-    info() << "Membership change detected, requesting pipeline listing.";
-    m_node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
-    Q_EMIT searchStarted();
+    if(m_rate_limiter.click()) {
+        info() << "Membership change detected, requesting pipeline listing.";
+        m_node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
+        Q_EMIT searchStarted();
+    } else {
+        info() << "Membership change detected but not requesting discovery due to rate limiting";
+    }
+}
+
+void PipelineListingObserver::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr){
+    // listen for discovery messages from others to include them in the
+    // the rate limiting
+    // doesn't matter if this fails as we're not actually adding to the rate here
+    m_rate_limiter.click();
 }
 
 void PipelineListingObserver::onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m) {
     info() << "Pipeline listing response:" << m->pipelineName();
     Q_EMIT pipelineDiscovered(m->pipelineName());
 }
+
 
 
 PipelineCauvWidget::PipelineCauvWidget() :
@@ -108,6 +121,7 @@ void PipelineCauvWidget::clearPipelines(){
 }
 
 void PipelineCauvWidget::send(boost::shared_ptr<Message> message){
+    info() << message;
     if(m_node)
         m_node->send(message);
 }

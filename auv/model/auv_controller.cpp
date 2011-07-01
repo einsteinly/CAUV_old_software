@@ -32,6 +32,7 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->autopilots["bearing"]->aI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots["bearing"]));
     auv->autopilots["bearing"]->aD->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots["bearing"]));
     auv->autopilots["bearing"]->thr->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots["bearing"]));
+    auv->autopilots["bearing"]->maxError->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<BearingAutopilotParamsMessage, float>, this, auv->autopilots["bearing"]));
 
     auv->autopilots["depth"]->kP->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots["depth"]));
     auv->autopilots["depth"]->kI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots["depth"]));
@@ -41,6 +42,7 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->autopilots["depth"]->aI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots["depth"]));
     auv->autopilots["depth"]->aD->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots["depth"]));
     auv->autopilots["depth"]->thr->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots["depth"]));
+    auv->autopilots["depth"]->maxError->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<DepthAutopilotParamsMessage, float>, this, auv->autopilots["depth"]));
 
     auv->autopilots["pitch"]->kP->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots["pitch"]));
     auv->autopilots["pitch"]->kI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots["pitch"]));
@@ -50,6 +52,7 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->autopilots["pitch"]->aI->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots["pitch"]));
     auv->autopilots["pitch"]->aD->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots["pitch"]));
     auv->autopilots["pitch"]->thr->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots["pitch"]));
+    auv->autopilots["pitch"]->maxError->onSet.connect(boost::bind( &AUVController::sendAutopilotParamsMessage<PitchAutopilotParamsMessage, float>, this, auv->autopilots["pitch"]));
 
     // sonar params
     boost::shared_ptr<AUV::Sonar> sonar = boost::shared_static_cast<AUV::Sonar>(auv->cameras[CameraID::Sonar]);
@@ -64,7 +67,7 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->sensors.depth_calibration->onSet.connect(boost::bind( &AUVController::sendDepthCalibrationMessage, this, _1));
 
     //scripts
-    auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
+    //auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
 }
 
 void AUVController::sendMotorMessage(MotorID::e motor, int8_t speed){
@@ -82,7 +85,7 @@ template <class T, class S>
 
 template <class T, class S>
         void AUVController::sendAutopilotParamsMessage(boost::shared_ptr<AUV::Autopilot<S> > ap){
-    onMessageGenerated(boost::make_shared<T>(ap->kP->latest(), ap->kI->latest(), ap->kD->latest(), ap->scale->latest(), ap->aP->latest(), ap->aI->latest(), ap->aD->latest(), ap->thr->latest()));
+    onMessageGenerated(boost::make_shared<T>(ap->kP->latest(), ap->kI->latest(), ap->kD->latest(), ap->scale->latest(), ap->aP->latest(), ap->aI->latest(), ap->aD->latest(), ap->thr->latest(), ap->maxError->latest()));
 }
 
 void AUVController::sendSonarParamsMessage(boost::shared_ptr<AUV::Sonar > sonar){
@@ -104,25 +107,6 @@ void AUVController::sendScriptMessage(ScriptExecRequest script){
     onMessageGenerated(boost::make_shared<ScriptMessage>(script));
 }
 
-bool AUVController::pushState(bool state) {
-    bool preChangeState = enabled();
-    m_state.push_back(state);
-    return preChangeState;
-}
-
-bool AUVController::popState() {
-    if (m_state.empty()) return true; // on by default
-
-    bool value = m_state.back();
-    m_state.pop_back();
-    return value;
-}
-
-bool AUVController::enabled() {
-    if (m_state.empty()) return true; // on by default
-
-    return m_state.back();
-}
 
 /** message handling **/
 
@@ -148,6 +132,7 @@ void AUVController::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessag
     m_auv->autopilots["bearing"]->aI->update(message->Ai());
     m_auv->autopilots["bearing"]->aD->update(message->Ad());
     m_auv->autopilots["bearing"]->thr->update(message->thr());
+    m_auv->autopilots["bearing"]->maxError->update(message->maxError());
 }
 
 void AUVController::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
@@ -164,7 +149,7 @@ void AUVController::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_pt
     m_auv->autopilots["depth"]->aI->update(message->Ai());
     m_auv->autopilots["depth"]->aD->update(message->Ad());
     m_auv->autopilots["depth"]->thr->update(message->thr());
-
+    m_auv->autopilots["depth"]->maxError->update(message->maxError());
 }
 
 void AUVController::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
@@ -185,6 +170,7 @@ void AUVController::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_pt
     m_auv->autopilots["pitch"]->aI->update(message->Ai());
     m_auv->autopilots["pitch"]->aD->update(message->Ad());
     m_auv->autopilots["pitch"]->thr->update(message->thr());
+    m_auv->autopilots["pitch"]->maxError->update(message->maxError());
 }
 
 void AUVController::onDebugMessage(DebugMessage_ptr message) {
@@ -224,6 +210,11 @@ void AUVController::onTelemetryMessage(TelemetryMessage_ptr message){
 
 }
 
+void AUVController::onLocationMessage(LocationMessage_ptr m){
+    m_auv->sensors.speed->update(m->speed());
+    m_auv->sensors.location->update(*(m.get()));
+}
+
 void AUVController::onPressureMessage(PressureMessage_ptr message){
     m_auv->sensors.pressure_fore->update(message->fore());
     m_auv->sensors.pressure_aft->update(message->aft());
@@ -240,7 +231,34 @@ void AUVController::onBatteryUseMessage(BatteryUseMessage_ptr message) {
 }
 
 void AUVController::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
-    m_auv->computer_state.processes->update(*(message.get()));
+
+    boost::shared_ptr<DataStream<ProcessState> > processStateStream;
+
+    try {
+        processStateStream = m_auv->computer_state.processes.at(message->process());
+    } catch (std::out_of_range ex){
+        processStateStream = boost::make_shared<DataStream<ProcessState> >(message->process(), "");
+        m_auv->computer_state.processes[message->process()] = processStateStream;
+        m_auv->computer_state.new_process_stream->update(processStateStream);
+    }
+
+    processStateStream->update(*(message.get()));
+}
+
+
+void AUVController::onGraphableMessage(GraphableMessage_ptr message) {
+
+    boost::shared_ptr<DataStream<float> > graphableStream;
+
+    try {
+        graphableStream = m_auv->debug.graphs.at(message->get_name());
+    } catch (std::out_of_range ex){
+        graphableStream = boost::make_shared<DataStream<float> >(message->get_name(), "");
+        m_auv->debug.graphs[message->get_name()] = graphableStream;
+        m_auv->debug.new_graph_stream->update(graphableStream);
+    }
+
+    graphableStream->update(message->get_value());
 }
 
 void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){

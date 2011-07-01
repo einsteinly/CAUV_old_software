@@ -25,6 +25,7 @@ add_library( processesplugin MODULE
     ${PROCESSES_PLUGIN_UIS_H}
     ${PROCESSES_PLUGIN_MOC_H}
 )
+cauv_install_plugin( processesplugin )
                                       
 target_link_libraries( processesplugin
     guicpp-core

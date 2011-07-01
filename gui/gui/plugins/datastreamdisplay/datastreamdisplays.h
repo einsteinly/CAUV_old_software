@@ -66,8 +66,11 @@ namespace cauv {
         virtual const QList<QString> getGroups() const;
         virtual void initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node);
         
+        void onNewGraphableStream(boost::shared_ptr<DataStream<float> > stream);
+
     private:
         Ui::DataStreamPicker *ui;
+        QTreeWidgetItem * m_debug;
     };
     
 }
@@ -86,7 +89,7 @@ class DataStreamList : public QTreeWidget, public cauv::DataStreamDragSource {
 public:
     DataStreamList(QWidget * parent);
     
-    boost::shared_ptr<std::vector<boost::shared_ptr<cauv::DataStreamBase> > > getDataStreams() const;
+    boost::shared_ptr<std::vector<boost::shared_ptr<cauv::DataStreamBase> > > getDataStreams();
     
 private Q_SLOTS:
     void editStarted(QTreeWidgetItem* item, int column);

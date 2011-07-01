@@ -118,6 +118,44 @@ NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
     m_text->m_pos.x = -m_text->bbox().min.x + m_radius + 3;
 }
 
+bool NodeInputBlob::mousePressEvent(MouseEvent const& e){
+    if(e.pos.sxx() < m_radius_squared){
+        // circley bit hit
+        arc_ptr_t has_arc = m_pw->arcWithDestination(shared_from_this());
+        if(has_arc){
+            renderable_ptr_t arc_src = has_arc->m_src.lock();
+            renderable_ptr_t arc_dst = has_arc->m_dst.lock();
+            if(shared_from_this() == arc_dst){
+                debug() << BashColour::Green << "re-creating arc: dst ="
+                        << m_node->id() << "io=" << *m_text<< "this=" << this;
+                menu_ptr_t handle = boost::make_shared<FloatingArcHandle>(m_pw, has_arc);
+                boost::shared_ptr<NodeOutputBlob> bsrc = boost::dynamic_pointer_cast<NodeOutputBlob>(arc_src);
+                boost::shared_ptr<NodeInputBlob>  bdst = boost::dynamic_pointer_cast<NodeInputBlob>(arc_dst);
+                
+                if(!(bsrc && bdst)){
+                    error() << "unexpected NodeIO src/dst types!";
+                }else{
+                    m_pw->send(boost::make_shared<RemoveArcMessage>(
+                        m_pw->pipelineName(),
+                        // type is ignored in imageProcessor.cpp
+                        NodeOutput(bsrc->nodeId(), bsrc->output(), OutputType::Image),
+                        NodeInput(bdst->nodeId(), bdst->input())
+                    ));
+                }
+                // wait for ArcRemovedMessage
+                //m_pw->removeArc(arc_src, shared_from_this());
+                arc_ptr_t arc = m_node->newArc(arc_src, handle);
+                // (true = start out 'pressed', ie being dragged)
+                m_context->postMenu(handle, m_context->referUp(m_pos), true);
+                return true;
+            }
+        }
+    }
+    // If we didn't create a handle (and return already), call the base
+    // function to see if a handle should be created from scratch
+    return NodeIOBlob::mousePressEvent(e);
+}
+
 std::string NodeInputBlob::input() const{
     return *m_text;
 }
@@ -160,7 +198,7 @@ void FloatingArcHandle::draw(drawtype_e::e){
 void FloatingArcHandle::mouseReleaseEvent(MouseEvent const&){
     // remove first, so that this isn't returned by the pick
     m_context->removeMenu(shared_from_this());
-    //remove the arc: arc is re-added when we receive an ArcAddedMessage        
+    //remove the arc: arc is re-added when we receive an ArcAddedMessage
     m_context->remove(m_arc);
 
     renderable_ptr_t hit = m_pw->pick(m_pos);
@@ -198,5 +236,4 @@ void FloatingArcHandle::mouseGoneEvent(){
 BBox FloatingArcHandle::bbox(){
     return BBox();
 }
-
 

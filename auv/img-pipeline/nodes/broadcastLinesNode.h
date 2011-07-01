@@ -20,8 +20,8 @@ namespace imgproc{
 
 class BroadcastLinesNode: public OutputNode{
     public:
-        BroadcastLinesNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        BroadcastLinesNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){
@@ -33,7 +33,10 @@ class BroadcastLinesNode: public OutputNode{
             // no outputs
             
             // parameters:
-            registerParamID< std::vector<Line> >("lines", std::vector<Line>());
+            registerParamID< std::vector<Line> >("lines",
+                                                 std::vector<Line>(),
+                                                 "lines to braodcast",
+                                                 Must_Be_New);
             registerParamID<std::string>("name", "unnamed lines",
                                          "name for detected set of lines");
         }

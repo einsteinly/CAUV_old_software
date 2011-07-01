@@ -10,6 +10,9 @@ include_directories(${guicpp_BINARY_DIR})
 include_directories (${gui_SOURCE_DIR})
 include_directories (${AUV_SOURCE_DIR})
 
+function (cauv_install_plugin TARGET)
+    install (TARGETS ${TARGET} LIBRARY DESTINATION bin/cauv/plugins )
+endfunction()
 
 # plugin directories
 #add_subdirectory (example)

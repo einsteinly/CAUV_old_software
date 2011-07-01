@@ -33,6 +33,11 @@ void Arc::draw(drawtype_e::e flags){
     renderable_ptr_t src = m_src.lock();
     renderable_ptr_t dst = m_dst.lock();
     
+    if(!(src && dst)){
+        m_hanging = true;
+        return;
+    }
+
     // TODO: what level should arcs be drawn at?
     glTranslatef(0, 0, 0.05);
 

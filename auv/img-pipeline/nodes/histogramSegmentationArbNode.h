@@ -20,8 +20,8 @@ namespace imgproc{
 
 class HistogramSegmentationArbNode: public OutputNode{
     public:
-        HistogramSegmentationArbNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : OutputNode(sched, pl, n, t){
+        HistogramSegmentationArbNode(ConstructArgs const& args)
+            : OutputNode(args){
         }
 
         void init(){

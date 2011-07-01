@@ -116,14 +116,14 @@ class AUV(messaging.BufferedMessageObserver):
             else:
                 break
 
-    def bearingParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1):
-        self.send(messaging.BearingAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr))
+    def bearingParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1, maxError=1000):
+        self.send(messaging.BearingAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
-    def depthParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1):
-        self.send(messaging.DepthAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr))
+    def depthParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1, maxError=1000):
+        self.send(messaging.DepthAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
-    def pitchParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1):
-        self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr))
+    def pitchParams(self, kp, ki, kd, scale, Ap=1, Ai=1, Ad=1, thr=1, maxError=1000):
+        self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
     def prop(self, value):
         self.checkRange(value)

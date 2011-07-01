@@ -63,14 +63,24 @@ enum NodeType : int8 {
     FloatInput,
     StringInput,
     BoolInput,
-    BroadcastHistogram
+    BroadcastHistogram,
+    Throttle,
+    Nop,
+    Delay,
+    Stitch,
+    Recogniser
 }
 enum NodeStatus : int8 {
+    None = 0,
     AllowQueue = 1,
     ExecQueued = 2,
     Executing = 4
 }
+enum NodeInputStatus : int8 {
+    Old = 0, New = 1, Invalid = 2
+}
 enum NodeIOStatus : int8 {
+    None = 0,
     New = 1,
     Valid = 2,
     Demanded = 4
@@ -98,6 +108,11 @@ struct floatXYZ
     x : float;
     y : float;
     z : float;
+}
+struct floatXY
+{
+    x : float;
+    y : float;
 }
 struct NodeInput
 {
@@ -165,9 +180,20 @@ struct MotorMap
     maxPlus : int32;
     maxMinus : int32;
 }
+struct KeyPoint
+{
+    pt : floatXY;
+    size : float;
+    angle : float;
+    response : float;
+    octave : float;
+    class_id : float;
+}
 variant NodeParamValue
 {
-    int32, float, string, bool, list<Corner>, list<Line>, list<Circle>, list<float>
+    int32, float, string, bool,
+    list<Corner>, list<Line>, list<Circle>, list<float>,
+    list<KeyPoint>
 }
 struct ScriptResponse
 {
@@ -228,6 +254,7 @@ group control
         Ai : float;
         Ad : float;
 		thr : float;
+        maxError : float;
     }
 
     message DepthAutopilotEnabled : 61
@@ -245,6 +272,7 @@ group control
         Ai : float;
         Ad : float;
 		thr : float;
+        maxError : float;        
     }
 
     message DepthCalibration : 80
@@ -270,6 +298,7 @@ group control
         Ai : float;
         Ad : float;
 		thr : float;
+        maxError : float;        
     }
 
     message StateRequest : 82
@@ -333,6 +362,15 @@ group telemetry
         altitude : float;
         speed : floatXYZ;
     }
+    message GPSLocation : 89
+    {
+        latitude : double;
+        longitude : double;
+        altitude : float;
+        track : float;
+        speed: float;
+        climb: float;    
+    }
 }
 group image
 {
@@ -393,6 +431,13 @@ group pipeline
     }
 
     message AddArc : 9
+    {
+        pipelineName : string;
+        from : NodeOutput;
+        to : NodeInput;
+    }
+
+    message RemoveArc : 14
     {
         pipelineName : string;
         from : NodeOutput;
@@ -479,6 +524,12 @@ group gui
     message ScriptResponse : 103
     {
         response : ScriptResponse;
+    }
+
+    message Graphable : 104
+    {
+        name : string;
+        value : float;
     }
 }
 
@@ -581,6 +632,10 @@ group pressure
 group ai
 {
     message AI : 200
+    {
+        msg : string;
+    }
+    message AIlog : 201
     {
         msg : string;
     }

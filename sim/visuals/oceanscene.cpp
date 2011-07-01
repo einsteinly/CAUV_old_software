@@ -12,6 +12,8 @@
 
 #include "skydome.h"
 
+#include <osg/Matrix>
+
 using namespace cauv;
 using namespace cauv::sim;
 

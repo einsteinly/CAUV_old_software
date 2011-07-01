@@ -19,6 +19,7 @@ Default_Messages_To_Watch = (
     'DepthCalibration',
     'PitchAutopilotParams',
     'SetMotorMap',
+    'MotorRampRate',
     'SonarControl'
 )
 
@@ -47,6 +48,8 @@ class OnAnyMessage:
     def onMessage(self, m):
         debug('onMessage expect %sMessage have %s' % (self.message_name, m))
         self.shelf[self.message_name] = dictFromMessage(m)
+        # don't take any chances
+        self.shelf.sync()
 
 class PersistObserver(msg.MessageObserver):
     def __init__(self, node, shelf, groups, watch_list):
@@ -68,7 +71,7 @@ def sendSavedMessages(node, shelf):
     for msg_name in shelf:
         try:
             attrs = shelf[msg_name]
-            debug('restoring saved %s: %s' % (msg_name, attrs))
+            info('restoring saved %s: %s' % (msg_name, attrs))
             m = dictToMessage(msg_name, attrs)
             node.send(m)
         except Exception, e:
@@ -96,6 +99,8 @@ def persistMainLoop(cauv_node, shelf):
     except KeyboardInterrupt:
         pass
     finally:
+        # this gets run even if we were killed (software-killed that is,
+        # nothing can save us from the kill-switch...)
         shelf.close()
         info('closed the shelf')
     info('exiting...')

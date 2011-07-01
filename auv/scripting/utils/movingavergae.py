@@ -1,5 +1,44 @@
 
 import math
+import time
+
+from utils.hacks import incFloat
+
+class RelativeTimeCapability():
+    def __init__(self):
+        self.tstart = time.time()
+    def relativeTime(self):
+        return time.time() - self.tstart
+
+class TimeAverage(RelativeTimeCapability):
+    # bow-window of all samples received during last 'duration' seconds
+    def __init__(self, duration):
+        RelativeTimeCapability.__init__(self)
+        self.duration = duration
+        self.samples = {}
+    def cull(self):
+        cull_before_time = self.relativeTime() - self.duration
+        to_remove = []
+        for t in self.samples:
+            if t < cull_before_time:
+                to_remove.append(t)
+        for t in to_remove:
+            del self.samples[t]
+    def update(self, value):
+        t = self.relativeTime()
+        while t in self.samples:
+            t = incFloat(t)
+        self.samples[t] = value
+        return self.get()
+    def get(self):
+        self.cull()
+        n = len(self.samples)
+        t = 0.0
+        for v in self.samples.values():
+            t += v
+        if n > 0:
+            t /= n
+        return t
 
 class MovingAverage():
        

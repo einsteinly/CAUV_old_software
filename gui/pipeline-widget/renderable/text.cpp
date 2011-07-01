@@ -39,7 +39,8 @@ void Text::draw(drawtype_e::e){
     glColor(m_colour);
     font()->Render(c_str());	// this bit is the bit that writes the text
     // instead of using font() ->render() use m_context->postText(text,font);
-    glCheckError();
+    // TODO: re-instate and fix errors
+    //glCheckError();
     
     glPopMatrix();
     glPopAttrib();
@@ -106,6 +107,10 @@ static boost::shared_ptr<FTFont> font(face_pt_pair_t const& id){
     }else{
         fonts[id] = new_f;
     }
+    // FIXME: hack: segfault on exit is caused by destruction of FTFont:
+    // prevent fonts from ever being freed
+    new font_ptr(new_f);
+
     return new_f;
 }
 

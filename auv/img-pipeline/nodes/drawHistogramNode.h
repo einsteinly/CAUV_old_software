@@ -10,13 +10,14 @@ namespace imgproc{
 
 class DrawHistogramNode: public Node{
     public:
-        DrawHistogramNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t), m_counter(0){
+        DrawHistogramNode(ConstructArgs const& args)
+            : Node(args), m_counter(0){
         }
 
         void init(){
-            registerParamID< std::vector<float> >("histogram",
-            std::vector<float>(), "values to plot");
+            registerParamID< std::vector<float> >(
+                "histogram", std::vector<float>(), "values to plot", Must_Be_New
+            );
             registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
         }
     

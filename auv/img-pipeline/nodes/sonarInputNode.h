@@ -17,8 +17,8 @@ namespace imgproc{
 
 class SonarInputNode: public InputNode{
     public:
-        SonarInputNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : InputNode(sched, pl, n, t){
+        SonarInputNode(ConstructArgs const& args)
+            : InputNode(args){
         }
 
         void init(){
@@ -53,7 +53,7 @@ class SonarInputNode: public InputNode{
             if(!m)
                 throw img_pipeline_error("SonarInputNode executed with no available data");
             
-            r["data line"] = boost::make_shared<Image>(cv::Mat(m->line().data, true));
+            r["data line"] = boost::make_shared<Image>(cv::Mat(m->line().data, true).t());
             r["bearing"] = NodeParamValue(m->line().bearing);
             r["bearing range"] = NodeParamValue(m->line().bearingRange);
             r["range"] = NodeParamValue(m->line().range);

@@ -21,8 +21,8 @@ namespace imgproc{
 
 class ShiTomasiCornersNode: public Node{
     public:
-        ShiTomasiCornersNode(Scheduler& sched, ImageProcessor& pl, std::string const& n, NodeType::e t)
-            : Node(sched, pl, n, t){
+        ShiTomasiCornersNode(ConstructArgs const& args)
+            : Node(args){
         }
 
         void init(){

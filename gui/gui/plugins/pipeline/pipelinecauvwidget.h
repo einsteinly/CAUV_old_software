@@ -9,6 +9,8 @@
 
 #include <generated/messages.h>
 
+#include <common/cauv_utils.h>
+
 namespace Ui {
     class PipelineCauvWidget;
 }
@@ -27,9 +29,11 @@ namespace cauv {
         PipelineListingObserver(boost::shared_ptr<CauvNode> node);
         virtual void onMembershipChangedMessage(MembershipChangedMessage_ptr m);
         virtual void onPipelineDiscoveryResponseMessage(PipelineDiscoveryResponseMessage_ptr m);
+        virtual void onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestMessage_ptr m);
 
     protected:
         boost::shared_ptr<CauvNode> m_node;
+        RateLimiter m_rate_limiter;
 
     Q_SIGNALS:
         void pipelineDiscovered(std::string name);

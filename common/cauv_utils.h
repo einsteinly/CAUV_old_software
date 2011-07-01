@@ -3,10 +3,12 @@
 
 #include <sstream>
 #include <vector>
+#include <list>
 #include <set>
 
 #include <boost/cstdint.hpp>
 #include <boost/typeof/typeof.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #ifndef foreach
 #   include <boost/foreach.hpp>
@@ -15,6 +17,7 @@
 
 #include <utility/string.h>
 #include <utility/rounding.h>
+
 
 namespace cauv{
 
@@ -33,6 +36,19 @@ uint16_t sumOnesComplement(std::vector<uint16_t> bytes);
 void msleep(unsigned msecs);
 
 std::string implode( const std::string &glue, const std::set<std::string> &pieces );
+
+class RateLimiter {
+public:
+    RateLimiter(const unsigned int max, const unsigned int period);
+    bool click(bool blocking = false);
+    unsigned int count();
+    bool isSaturated();
+
+protected:
+    std::list<boost::posix_time::ptime> m_timestamps;
+    const unsigned int m_maximum;
+    const unsigned int m_period;
+};
 
 } // namespace cauv
 

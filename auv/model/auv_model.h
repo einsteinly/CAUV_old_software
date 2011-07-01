@@ -17,6 +17,7 @@ namespace cauv{
     // them for clarity as we're not really using them as messages
     typedef ProcessStatusMessage ProcessState;
     typedef DepthCalibrationMessage DepthCalibration;
+    typedef LocationMessage Location;
 
     class AUV {
     public:
@@ -76,6 +77,7 @@ namespace cauv{
                     aI(boost::make_shared< MutableDataStream<float> >("aI", this)),
                     aD(boost::make_shared< MutableDataStream<float> >("aD", this)),
                     thr(boost::make_shared< MutableDataStream<float> >("thr", this)),
+                    maxError(boost::make_shared< MutableDataStream<float> >("maxError", this)),
                     enabled(boost::make_shared< MutableDataStream<bool> >("Enabled", this)),
                     actual(actualValue),
                     mv(boost::make_shared< DataStream<float> >("mv", this)),
@@ -98,6 +100,7 @@ namespace cauv{
             boost::shared_ptr< MutableDataStream<float> > aI;
             boost::shared_ptr< MutableDataStream<float> > aD;
             boost::shared_ptr< MutableDataStream<float> > thr;
+            boost::shared_ptr< MutableDataStream<float> > maxError;
             boost::shared_ptr< MutableDataStream<bool> > enabled;
             boost::shared_ptr< DataStream<T> > actual;
 
@@ -217,6 +220,8 @@ namespace cauv{
             boost::shared_ptr<DataStream<float> > esitmate_current;
             boost::shared_ptr<DataStream<float> > estimate_total;
             boost::shared_ptr<DataStream<float> > fraction_remaining;
+            boost::shared_ptr<DataStream<floatXYZ> > speed;
+            boost::shared_ptr<DataStream<Location> > location;
 
             Sensors() : pressure_fore(boost::make_shared< DataStream<uint16_t> >("Pressure Fore")),
             pressure_aft(boost::make_shared< DataStream<uint16_t> >("Pressure Aft")),
@@ -225,7 +230,9 @@ namespace cauv{
             orientation(boost::make_shared<DataStreamSplitter<cauv::floatYPR> >(boost::make_shared<DataStream<floatYPR> >("Orientation", "°"))),
             esitmate_current(boost::make_shared<DataStream<float> >("Current Estimiation", "Wh")),
             estimate_total(boost::make_shared<DataStream<float> >("Total Battery Consumed", "Wh")),
-            fraction_remaining(boost::make_shared<DataStream<float> >("Battery Remaining", "%"))
+            fraction_remaining(boost::make_shared<DataStream<float> >("Battery Remaining", "%")),
+            speed(boost::make_shared<DataStream<floatXYZ> >("Speed", "m/s")),
+            location(boost::make_shared<DataStream<Location> >("Location", "lng/lat/alt"))
             {
 
             }
@@ -239,14 +246,41 @@ namespace cauv{
      */
 
         struct ComputerState {
-            boost::shared_ptr< DataStream<ProcessState> > processes;
+            
+            typedef boost::unordered_map<std::string, boost::shared_ptr<DataStream<ProcessState> > > process_map;
+            
+            boost::shared_ptr<DataStream<boost::shared_ptr< DataStream<ProcessState> > > > new_process_stream;
 
-            ComputerState() : processes(boost::make_shared<DataStream<ProcessState> >("Process State", ""))
+            process_map processes;
+
+            ComputerState() : new_process_stream(boost::make_shared<DataStream<boost::shared_ptr< DataStream<ProcessState> > > >("New Processes", ""))
             {
             }
         } computer_state;
 
 
+
+        /**
+        * Debug Graphing - monitoring of the software and hardware state
+        * categories
+        *
+        * @author Andy Pritchard
+        */
+
+           struct Debug {
+
+               typedef boost::unordered_map<std::string, boost::shared_ptr<DataStream<float> > > graph_map;
+
+               boost::shared_ptr<DataStream<boost::shared_ptr< DataStream<float> > > > new_graph_stream;
+
+               graph_map graphs;
+
+               Debug() : new_graph_stream(boost::make_shared<DataStream<boost::shared_ptr< DataStream<float> > > >("New Graph Stream", ""))
+               {
+               }
+           } debug;
+
+        
         /**
      * Scripting
      *

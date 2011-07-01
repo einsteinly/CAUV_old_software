@@ -1,12 +1,18 @@
 #ifndef SIMULATEDAUV_H
 #define SIMULATEDAUV_H
 
+#include <boost/shared_ptr.hpp>
 #include <vector>
 
 #include <osg/ref_ptr>
-#include <boost/shared_ptr.hpp>
+#include <osg/Group>
 
-#include "sim/sensors/camera.h"
+#include <sim/simnode.h>
+#include <sim/sensors/camera.h>
+
+namespace osgViewer {
+    class View;
+}
 
 namespace cauv {
 
@@ -14,19 +20,16 @@ namespace cauv {
 
     namespace sim {
 
-        class SimulatedAUV
+        class SimulatedAUV : public SimNode, public osg::Group
         {
         public:
-            SimulatedAUV(boost::shared_ptr<AUV> auv);
+            SimulatedAUV(Simulator * s, boost::shared_ptr<AUV> auv);
 
-            virtual void addCamera(osg::ref_ptr<Camera> camera);
-
-            virtual osg::ref_ptr<sim::Camera> getPrimaryCamera() = 0;
-
-            virtual std::vector<osg::ref_ptr<Camera> > getCameras();
+            void addCamera(boost::shared_ptr<sim::Camera> cam);
+            std::vector<boost::shared_ptr<sim::Camera> > getCameras();
 
         protected:
-            std::vector<osg::ref_ptr<Camera> > m_cameras;
+            std::vector<boost::shared_ptr<sim::Camera> > m_cameras;
             boost::shared_ptr<AUV> m_auv;
         };
 
