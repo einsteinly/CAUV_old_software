@@ -48,10 +48,10 @@ def disable_control(ainode):
     ainode.ai.auv_control.disable()
     
 def add_request(ainode, pipeline_name):
-    ainode.ai.pipeline_manager.request_pl('detector', 'airemote', pipeline_name)
+    ainode.ai.pipeline_manager.request_pl('other', 'airemote', pipeline_name)
     
 def drop_request(ainode, pipeline_name):
-    ainode.ai.pipeline_manager.drop_pl('detector', 'airemote', pipeline_name)
+    ainode.ai.pipeline_manager.drop_pl('other', 'airemote', pipeline_name)
     
 def shell(ainode):
     print """

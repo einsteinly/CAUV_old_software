@@ -525,13 +525,6 @@ group gui
     {
         response : ScriptResponse;
     }
-
-    message Graphable : 104
-    {
-        name : string;
-        value : float;
-    }
-
 }
 
 group pl_gui
@@ -633,6 +626,10 @@ group pressure
 group ai
 {
     message AI : 200
+    {
+        msg : string;
+    }
+    message AIlog : 201
     {
         msg : string;
     }

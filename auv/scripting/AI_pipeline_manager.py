@@ -74,9 +74,12 @@ class NewModel(pipeline.Model):
         for node_id, node in nodes.items():
             for input, (from_node_id, from_node_field) in node.inarcs.items():
                 try:
-                    self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input)
+                    try:
+                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input)
+                    except KeyError:
+                        error('Could not add arc from %d to %d, a node does not exist.' %(from_node_id, node_id))
                 except RuntimeError:
-                    error("Couldn't add arc from %d (%s) to %d (%s) (%d to %d in pipeline)" %(from_node_id, from_node_field, node_id, input, self.manager2pl[from_node_id], self.manager2pl[node_id]))
+                    error("Couldn't add arc from %d (%s) to %d (%s) (%d to %d in pipeline), no response from pipeline" %(from_node_id, from_node_field, node_id, input, self.manager2pl[from_node_id], self.manager2pl[node_id]))
     def remove(self, nodes):
         for node_id in nodes:
             try:
@@ -630,13 +633,11 @@ class pipelineManager(aiProcess):
                         for branch_id in self.pl_data.pipelines[req].branches:
                             new_state.nodes.update(self.pl_data.branches[branch_id].nodes)
             for req in self.det_reqs:
-                if not req in self.cur_det_reqs:
-                    changed = True
-                    if not req in self.pl_data.pipelines:
-                        error('Requested non-existant pipeline %s' %(req, ))
-                        continue
-                    for branch_id in self.pl_data.pipelines[req].branches:
-                        new_state.nodes.update(self.pl_data.branches[branch_id].nodes)
+                if not req in self.pl_data.pipelines:
+                    error('Requested non-existant pipeline %s' %(req, ))
+                    continue
+                for branch_id in self.pl_data.pipelines[req].branches:
+                    new_state.nodes.update(self.pl_data.branches[branch_id].nodes)
             self.cur_det_reqs = self.det_reqs
             add_nodes = {}
             remove_nodes = {}

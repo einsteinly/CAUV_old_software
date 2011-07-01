@@ -69,6 +69,12 @@ class aiProcess(messaging.MessageObserver):
                     traceback.print_exc()
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+    def log(self, message):
+        try:
+            self.node.send(messaging.AIlogMessage(message), "ai")
+        except:
+            error('Error sending high-level log message')
+            traceback.print_exc()
 
 #------AI SCRIPTS STUFF------
 
