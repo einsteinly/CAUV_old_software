@@ -11,9 +11,9 @@ task_list = [
 
 #a list of tasks to look out for at the beggining
 initial_tasks = [
-                'circle_buoy',
+                #'circle_buoy',
                 #'test',
-                'pipe_follow',
+                #'pipe_follow',
                 'test',
                 #'avoid_collision'
                 ]
