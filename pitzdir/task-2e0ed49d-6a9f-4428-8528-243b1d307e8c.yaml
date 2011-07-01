@@ -1,0 +1,27 @@
+attached_files: []
+components: []
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2011-05-20 11:07:30.433867
+description: !!python/unicode 'It would be very useful if we compiled in a --version
+  option that gave the revsion number (in a way that didn''t mean everything needed
+  recompiling if it changed)'
+estimate: !!python/object:uuid.UUID
+  int: 277284367523703929526958133625188989255
+milestone: !!python/object:uuid.UUID
+  int: 143380974880746652587778828338970586177
+modified_time: 2011-06-26 23:26:24.705656
+owner: *id001
+points: null
+pscore: !!python/unicode '3'
+status: !!python/object:uuid.UUID
+  int: 300208156334241880201290222579226582105
+tags:
+- !!python/object:uuid.UUID
+  int: 117852345545008600859845094020367476046
+title: !!python/unicode 'Add --version number to show hg revision programs were built
+  from'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 61221492304781058748772290975463669388
+yaml_file_saved: 2011-06-26 23:26:24.722311
