@@ -189,8 +189,8 @@ class script(aiScript):
             self.telemetry('%s-derr' % name, pid.derr)
             self.telemetry('%s-ierr' % name, pid.ierr)
         pidTelem(self.angle_pid,'BuoyAngle')
-        pidTelem(self.angle_pid,'BuoySize')
-        pidTelem(self.angle_pid,'BuoyDepth')
+        pidTelem(self.size_pid,'BuoySize')
+        pidTelem(self.depth_pid,'BuoyDepth')
 
     def run(self):
         self.request_pl(self.options.Pipeline_File)
