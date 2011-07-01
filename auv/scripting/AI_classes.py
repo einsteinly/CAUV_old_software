@@ -258,10 +258,15 @@ class aiScript(aiProcess):
         self.exit_confirmed.set()
 
 #------AI DETECTORS STUFF------
+class aiDetectorOptions():
+    def __init__(self, **kwargs):
+        for key, value in kwargs:
+            setattr(self, key, value)
         
 class aiDetector(messaging.MessageObserver):
-    def __init__(self, node):
+    def __init__(self, node, opts):
         messaging.MessageObserver.__init__(self)
+        self.options = opts
         self.node = node
         self.node.addObserver(self)
         self.detected = False
@@ -287,6 +292,8 @@ class aiDetector(messaging.MessageObserver):
     def die(self):
         self.drop_all_pl()
         self.node.removeObserver(self)
+    def optionChanged(self, option_name):
+        pass
 
 #------AI TASKS STUFF------
 

@@ -4,7 +4,7 @@ import threading
 import time
 import traceback
 
-from AI_classes import aiProcess, external_function
+from AI_classes import aiProcess, external_function, aiDetectorOptions
 
 class detectionControl(aiProcess):
     def __init__(self):
@@ -59,18 +59,26 @@ class detectionControl(aiProcess):
                             except Exception:
                                 error('Could not import detector %s.' %(detection_file,))
                                 traceback.print_exc()
+                                continue
                         try:
-                            self.running_detectors[detection_file] = self.modules[detection_file].detector(self.node)
+                            opts = self.modules[detection_file].detectorOptions()
+                        except Exception:
+                            error('Could not initialise detector %s options.' %(detection_file,))
+                            traceback.print_exc()
+                            opts = aiDetectorOptions()
+                        try:
+                            self.running_detectors[detection_file] = self.modules[detection_file].detector(self.node, opts)
                         except Exception:
                             error('Could not initialise detector %s.' %(detection_file,))
                             traceback.print_exc()
+                            continue
                         info("Started detection class %s." %(detection_file))
                 for detection_file in self.stop_requests:
                     try:
                         try:
                             self.running_detectors[detection_file].die()
                         except Exception as e:
-                            if isinstance(KeyError, e):
+                            if isinstance(e, KeyError):
                                 raise e
                             error('Could not kill detector %s.' %(detection_file,))
                             traceback.print_exc()
