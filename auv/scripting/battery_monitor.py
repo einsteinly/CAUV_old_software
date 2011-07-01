@@ -13,7 +13,7 @@ log_file = 'bat_log.log'
 motor_conversion_factor = 80.0/127.0 #Watts 80 watts max power, 127 max motor demand
 light_consumption = 32#Watts
 computer_consumption = 30#Watts 1.5 amps at 19 volts
-battery_total = 89.1*2 #Watt hours
+battery_total = 89.1*4 #Watt hours
 
 #function to estimate power use
 def estimateMotorUse(logs, current_time, last_log_time):
