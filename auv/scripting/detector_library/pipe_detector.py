@@ -6,7 +6,7 @@ import cauv.messaging as messaging
 import time
 import threading
 
-class PipeDetectorOptions:
+class detectorOptions:
     Bin_Number = 8
     Bin_Threshold = 0.05
     Required_Pipeline = 'detect_pipe.pipe'
@@ -18,9 +18,9 @@ class detector(aiDetector):
         self.node.join("processing")
         
         info("Pipe detector loaded")
-        if PipeDetectorOptions.Required_Pipeline:
+        if detectorOptions.Required_Pipeline:
             try:
-                self.request_pl(PipeDetectorOptions.Required_Pipeline)
+                self.request_pl(detectorOptions.Required_Pipeline)
             except Exception, e:
                 warning('Pipe Detector pipeline request failed: %s' % e)
 
@@ -35,10 +35,7 @@ class detector(aiDetector):
     def onHistogramMessage(self, m):
         if m.name != PipeDetectorOptions.Histogram_Name:
             return
-        
-        debug(str(m_bins))
-            
-        if m.bins[PipeDetectorOptions.Bin_Number] > PipeDetectorOptions.Bin_Threshold:
+        if m.bins[detectorOptions.Bin_Number] > detectorOptions.Bin_Threshold:
             self.detected = True
         else:
             self.detected = False
