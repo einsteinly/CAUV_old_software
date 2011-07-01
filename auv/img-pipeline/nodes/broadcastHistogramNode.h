@@ -52,8 +52,9 @@ class BroadcastHistogramNode: public OutputNode{
 
             const std::string name = param<std::string>("name");
             const std::vector<float> histogram = param< std::vector<float> >("histogram");
-
-            sendMessage(boost::make_shared<HistogramMessage>(name, histogram));
+            
+            if(histogram.size())
+                sendMessage(boost::make_shared<HistogramMessage>(name, histogram));
 
             return r;
         }
