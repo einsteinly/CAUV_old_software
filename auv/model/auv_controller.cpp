@@ -67,7 +67,7 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->sensors.depth_calibration->onSet.connect(boost::bind( &AUVController::sendDepthCalibrationMessage, this, _1));
 
     //scripts
-    auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
+    //auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
 }
 
 void AUVController::sendMotorMessage(MotorID::e motor, int8_t speed){
@@ -243,6 +243,22 @@ void AUVController::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
     }
 
     processStateStream->update(*(message.get()));
+}
+
+
+void AUVController::onGraphableMessage(GraphableMessage_ptr message) {
+
+    boost::shared_ptr<DataStream<float> > graphableStream;
+
+    try {
+        graphableStream = m_auv->debug.graphs.at(message->get_name());
+    } catch (std::out_of_range ex){
+        graphableStream = boost::make_shared<DataStream<float> >(message->get_name(), "");
+        m_auv->debug.graphs[message->get_name()] = graphableStream;
+        m_auv->debug.new_graph_stream->update(graphableStream);
+    }
+
+    graphableStream->update(message->get_value());
 }
 
 void AUVController::onControllerStateMessage(ControllerStateMessage_ptr message){

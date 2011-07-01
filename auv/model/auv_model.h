@@ -258,8 +258,28 @@ namespace cauv{
             }
         } computer_state;
 
-        
-        
+
+
+        /**
+        * Debug Graphing - monitoring of the software and hardware state
+        * categories
+        *
+        * @author Andy Pritchard
+        */
+
+           struct Debug {
+
+               typedef boost::unordered_map<std::string, boost::shared_ptr<DataStream<float> > > graph_map;
+
+               boost::shared_ptr<DataStream<boost::shared_ptr< DataStream<float> > > > new_graph_stream;
+
+               graph_map graphs;
+
+               Debug() : new_graph_stream(boost::make_shared<DataStream<boost::shared_ptr< DataStream<float> > > >("New Graph Stream", ""))
+               {
+               }
+           } debug;
+
         
         /**
      * Scripting

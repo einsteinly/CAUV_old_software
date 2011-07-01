@@ -33,7 +33,7 @@ class detector(aiDetector):
             pass
 
     def onHistogramMessage(self, m):
-        if m.name != detectorOptions.Histogram_Name:
+        if m.name != PipeDetectorOptions.Histogram_Name:
             return
         if m.bins[detectorOptions.Bin_Number] > detectorOptions.Bin_Threshold:
             self.detected = True
