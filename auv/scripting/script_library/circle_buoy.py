@@ -17,13 +17,13 @@ import traceback
 from utils.control import expWindow, PIDController
 
 class scriptOptions(aiScriptOptions):
-    Do_Prop_Limit = 50  # max prop for forward/backward adjustment
+    Do_Prop_Limit = 10  # max prop for forward/backward adjustment
     Camera_FOV = 60     # degrees
     Warn_Seconds_Between_Sights = 5
     Give_Up_Seconds_Between_Sights = 30
     Node_Name = "py-CrcB" # unused
-    Strafe_Speed = 50   # (int [-127,127]) controls strafe speed
-    Buoy_Size = 0.2     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
+    Strafe_Speed = 5   # (int [-127,127]) controls strafe speed
+    Buoy_Size = 0.35     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
     Size_Control_kPID = (-30, 0, 0)  # (Kp, Ki, Kd)
     Size_DError_Window = expWindow(5, 0.6)
     Size_Error_Clamp = 1e30
@@ -32,7 +32,7 @@ class scriptOptions(aiScriptOptions):
     Angle_Error_Clamp = 1e30
     Depth_Control_kPID = (0.05, 0, 0) # (Kp, Ki, Kd)
     Depth_DError_Window = expWindow(5, 0.6)
-    Depth_Error_Clamp = 10
+    Depth_Error_Clamp = 100
     
     Pipeline_File = 'circle_buoy.pipe'
 
@@ -84,6 +84,7 @@ class script(aiScript):
         self.angle_pid.err_clamp   = self.options.Depth_Error_Clamp
 
     def optionChanged(self, option_name):
+        info('notified that %s changed' % str(option_name))
         self.reloadOptions()
     
     def telemetry(self, name, value):
@@ -200,6 +201,7 @@ class script(aiScript):
         info('Waiting for circles...')
         try:
             while False in entered_quarters:
+                self.auv.strafe(self.__strafe_speed)
                 time.sleep(0.5)
                 time_since_seen = 0
                 if self.time_last_seen is not None:
@@ -207,6 +209,9 @@ class script(aiScript):
                     if time_since_seen > self.options.Warn_Seconds_Between_Sights:
                         warning('cannot see buoy: last seen %g seconds ago' %
                                 time_since_seen)
+                        self.auv.strafe(0)
+                    else:
+                        self.auv.strafe(self.__strafe_speed)
                     if time_since_seen > self.options.Give_Up_Seconds_Between_Sights:
                         self.log('Buoy Circling: lost sight of the buoy!')
                         raise Exception('lost the buoy: giving up!')

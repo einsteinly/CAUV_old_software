@@ -15,9 +15,9 @@ initial_tasks = [
                 #'circle_buoy',
                 #'test',
                 #'pipe_follow',
-                'test',
+                #'test',
                 #'avoid_collision'
                 ]
 #script that runs otherwise
-default_script = 'spiral'
+default_script = 'test'
 default_script_options = {'power' : 100}

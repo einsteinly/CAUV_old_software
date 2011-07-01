@@ -405,8 +405,7 @@ class pipelineManager(aiProcess):
     @external_function
     def drop_all_pl(self, requestor_type, requestor_name):
         with self.request_lock:
-            for pl_name in self.requests[requestor_type][requestor_name]:
-                self.drop_pl(requestor_type, requestor_name, pl_name)
+            self.requests[requestor_type][requestor_name] = []
     @external_function
     def set_detector_pl(self, req_list):
         with self.request_lock:
