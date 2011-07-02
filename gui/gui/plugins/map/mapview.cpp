@@ -28,8 +28,6 @@ void MapView::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode>
     Marble::PositionTracking * tracker = model->positionTracking();
     tracker->setPositionProviderPlugin(new CauvPositionProvider(auv));
     tracker->setTrackVisible(true);
-
-    updateHomePoint();
 }
 
 
