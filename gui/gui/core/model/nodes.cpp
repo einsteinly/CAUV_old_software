@@ -3,6 +3,3 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-AUV::AUV()
-{
-}
