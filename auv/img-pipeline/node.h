@@ -52,6 +52,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
     protected:
         // Protected typedefs: useful for derived nodes
+        enum InputSchedType {Must_Be_New, May_Be_Old};
         typedef boost::shared_ptr<Image> image_ptr_t;
 
         // NB: order here is important, don't change it!
@@ -63,7 +64,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
     private:
         // Private types and typedefs: only used internally
-        enum InputSchedType {Must_Be_New, May_Be_Old};
         template<typename cT, typename tT>
         friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, InputSchedType const&);
 

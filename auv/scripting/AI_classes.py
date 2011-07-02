@@ -49,9 +49,9 @@ def is_external(f):
     except AttributeError:
         return False
 
-class aiProcess(messaging.BufferedMessageObserver):
+class aiProcess(messaging.MessageObserver):
     def __init__(self, process_name):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node("pyai"+process_name[:4])
         self.node.join("ai")
         self.node.addObserver(self)
@@ -69,6 +69,12 @@ class aiProcess(messaging.BufferedMessageObserver):
                     traceback.print_exc()
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+    def log(self, message):
+        try:
+            self.node.send(messaging.AIlogMessage(message), "ai")
+        except:
+            error('Error sending high-level log message')
+            traceback.print_exc()
 
 #------AI SCRIPTS STUFF------
 
@@ -82,12 +88,12 @@ class fakeAUVfunction():
         error('You can only call functions of AUV, one level deep')
         raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
 
-class fakeAUV(messaging.BufferedMessageObserver):
+class fakeAUV(messaging.MessageObserver):
     #TODO
     #needs to respond to control overriding commands
     def __init__(self, script):
         self.script = script #passing the script saves on the number of AI_process, as fakeAUV can now call other processes through the script
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.script.node.join("telemetry")
         self.script.node.addObserver(self)
         self.current_bearing = None
@@ -210,32 +216,37 @@ class aiScript(aiProcess):
         self.auv = fakeAUV(self)
         self._pl_enabled = False
         self._pl_setup = threading.Event()
-        self._pl_response = None
-    def request_pl(self, pl_name, outnode_names):
-        #Not implemented yet
+    def request_pl(self, pl_name, timeout=10):
         if not self._pl_enabled:
             self.node.join('processing')
             self._pl_enabled = True
-        self._pl_response = None
-        for x in range(5):
-            self.ai.pipeline_manager.request_pl('script', self.task_name, pl_name, outnode_names)
-            time.sleep(2)
-            if self._pl_setup.is_set():
-                self._pl_setup.clear()
-                return self._pl_response
+        self.ai.pipeline_manager.request_pl('script', self.task_name, pl_name)
+        self._pl_setup.wait(timeout)
+        if self._pl_setup.is_set():
+            self._pl_setup.clear()
+            return
         else:
             raise CommunicationError('No response from pipeline management.')
+    def drop_pl(self, pl_name):
+        self.ai.pipeline_manager.drop_pl('script', self.task_name, pl_name)
+    def drop_all_pl(self):
+        self.ai.pipeline_manager.drop_all_pl('script', self.task_name)
     @external_function
-    def pl_reponse(self, pl_response):
-        self._pl_response = pl_response
+    def pl_response(self):
         self._pl_setup.set()
     @external_function
     def set_option(self, option_name, option_value):
         self.options.set_option(option_name, option_value)
+        if option_name in self.options._dynamic:
+            self.optionChanged(option_name)
+    def optionChanged(self, option_name):
+        pass
     @external_function
     def depthOverridden(self):
         warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
     def notify_exit(self, exit_status):
+        #make sure to drop pipelines
+        self.drop_all_pl()
         for x in range(5):
             self.ai.task_manager.on_script_exit(self.task_name, exit_status)
             if self.exit_confirmed.wait(1.0):
@@ -247,20 +258,42 @@ class aiScript(aiProcess):
         self.exit_confirmed.set()
 
 #------AI DETECTORS STUFF------
+class aiDetectorOptions():
+    def __init__(self, **kwargs):
+        for key, value in kwargs:
+            setattr(self, key, value)
         
-class aiDetector(messaging.BufferedMessageObserver):
-    def __init__(self, node):
-        messaging.BufferedMessageObserver.__init__(self)
+class aiDetector(messaging.MessageObserver):
+    def __init__(self, node, opts):
+        messaging.MessageObserver.__init__(self)
+        self.options = opts
         self.node = node
         self.node.addObserver(self)
         self.detected = False
+        self._pl_enabled = False
+        self._pl_requests = {}
     def process(self):
         """
         This should define a method to do any intensive (ie not on message) processing
         """
         pass
+    def request_pl(self, pl_name):
+        if pl_name in self._pl_requests:
+            self._pl_requests[pl_name] += 1
+        else: self._pl_requests[pl_name] = 1
+    def drop_pl(self, pl_name):
+        if pl_name in self._pl_requests:
+            if self._pl_requests[pl_name] > 0:
+                self._pl_requests[pl_name] -= 1
+                return
+        error("Can't drop pipeline that hasn't been requested")
+    def drop_all_pl(self):
+        self._pl_requests = {}
     def die(self):
+        self.drop_all_pl()
         self.node.removeObserver(self)
+    def optionChanged(self, option_name):
+        pass
 
 #------AI TASKS STUFF------
 
@@ -337,7 +370,7 @@ class detectorCondition(aiCondition):
         aiCondition.deregister(self, task_manager)
 
 class aiTask():
-    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=None, crash_limit=5, options=None, **kwargs):
+    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=None, crash_limit=5, frequency_limit=30, options=None, **kwargs):
         """
         Defines a 'Task', a script to run and when to run it
         Options:
@@ -363,6 +396,8 @@ class aiTask():
         self.active = False
         self.crash_count = 0
         self.crash_limit = crash_limit
+        self.frequency_limit = frequency_limit# once every
+        self.last_called = 0
     def update_options(self, options={}, **kwargs):
         """
         Updates the options on the task, accepts dict or kwargs

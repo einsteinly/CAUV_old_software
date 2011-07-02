@@ -58,8 +58,19 @@ void Node::stop(){
     if(!m_exec_queued_lock.try_lock())  err |= 1 << 4;
     if(!m_allow_queue_lock.try_lock())  err |= 1 << 5;
 
-    if(err)
+    if(err) {
         error() << this << "SUPER BADNESS: destruct with locked mutexes:" << err;
+        return;
+    }
+
+    // release the locks before destruction, boost wants all mutex to be unlocked
+    // when they are destroyed
+    m_inputs_lock.unlock();
+    m_outputs_lock.unlock();
+    m_output_demanded_on_lock.unlock();
+    m_checking_sched_lock.unlock();
+    m_exec_queued_lock.unlock();
+    m_allow_queue_lock.unlock();
 
     debug(-3) << BashColour::Purple << "stop()" << *this << ", done";
 }
@@ -753,8 +764,11 @@ void Node::demandNewParentInput(input_id const& iid) throw(){
     const private_in_map_t::iterator i = m_inputs.find(iid);
     if(i->second->target)
         parent = i->second->target;
+    // careful!
+    node_ptr_t n = parent.node;
     l.unlock();
-    parent.node->setNewOutputDemanded(parent.id);
+    if(n)
+        n->setNewOutputDemanded(parent.id);
 }
 
 #ifndef NO_NODE_IO_STATUS

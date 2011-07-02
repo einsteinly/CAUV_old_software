@@ -11,33 +11,28 @@
 namespace bp = boost::python;
 using namespace cauv;
 
+// NB: don't yield the GIL (otherwise it's possible *s could become invalid)
 void cauvDebug(const char* s, int l){
-    // relying on order of local destruction: LIFO
-    ThreadSave guard;
     debug(l) << s;
 }
 
 void cauvDebug1(const char* s){
-    ThreadSave guard;
     debug() << s;
 }
 
-// don't yield the GIL whilst reporting warnings or errors
 void cauvWarning(const char* s){
-    //ThreadSave guard;
     warning() << s;
 }
 
 void cauvError(const char* s){
-    //ThreadSave guard;
     error() << s;
 }
 
 void cauvInfo(const char* s){
-    ThreadSave guard;
     info() << s;
 }
 
+#ifdef EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 struct Blah{
     int monkey;
 };
@@ -88,6 +83,7 @@ struct ThingWrapper: public Thing, bp::wrapper<Thing>{
         return this->Thing::foo();
     }*/
 };
+#endif // def EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 
 
 class MessageWrapper:
@@ -98,10 +94,10 @@ class MessageWrapper:
         const_svec_ptr toBytes() const{
             GILLock l; // GIL MUST be held during get_override!
             if(bp::override f = this->get_override("toBytes")){
-                f();
+                return f();
             }
             l.release();
-            assert(0);
+            return Message::toBytes();
         }
 };
 
@@ -182,7 +178,7 @@ class SpreadMessageWrapper:
         virtual MessageFlavour getMessageFlavour() const{
             GILLock l;
             if(bp::override f = this->get_override("getMessageFlavour")){
-                f();
+                return f();
             }
             l.release();
             error() << "1. Spread Messages should not be exposed to Python";
@@ -192,7 +188,7 @@ class SpreadMessageWrapper:
 };
 
 
-
+#if EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 /*** Actual Functions to Generate the Interface: ***/
 void emitThing(){
     bp::class_<Blah>("Blah")
@@ -210,6 +206,9 @@ void emitThing(){
         .def("callThing", &ThingCaller::callThing)
     ;
 }
+#else
+void emitThing(){}
+#endif // def EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 
 void emitDebug(){
     bp::def("debug", cauvDebug);

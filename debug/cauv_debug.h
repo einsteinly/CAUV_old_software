@@ -203,8 +203,13 @@ struct debug : boost::noncopyable
     static void setLogfileName(std::string const&){ }
 
     template<typename T>
-    debug const& operator<<(T const&) const
-    {
+    debug const& operator<<(T const&) const {
+        return *this;
+    }
+
+    typedef std::ostream stream_t;
+    typedef stream_t& (*manip_t)(stream_t&);
+    debug const& operator<<(manip_t manip) const {
         return *this;
     }
 

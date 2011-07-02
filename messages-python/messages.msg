@@ -437,6 +437,13 @@ group pipeline
         to : NodeInput;
     }
 
+    message RemoveArc : 14
+    {
+        pipelineName : string;
+        from : NodeOutput;
+        to : NodeInput;
+    }
+
     message GraphRequest : 10
     {
         pipelineName : string;
@@ -517,6 +524,12 @@ group gui
     message ScriptResponse : 103
     {
         response : ScriptResponse;
+    }
+
+    message Graphable : 104
+    {
+        name : string;
+        value : float;
     }
 }
 
@@ -619,6 +632,10 @@ group pressure
 group ai
 {
     message AI : 200
+    {
+        msg : string;
+    }
+    message AIlog : 201
     {
         msg : string;
     }

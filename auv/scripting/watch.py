@@ -33,14 +33,7 @@ class CAUVTask:
         self.__command = command
         self.__restart = restart
         self.__names = names
-        self.process = None
-        self.running_command = None
-        self.status = ''
-        self.nice = 0
-        self.cpu = None
-        self.mem = None
-        self.threads = None
-        self.error = None
+        self.resetFields()
         CAUVTask.__sort_order = CAUVTask.__sort_order + 1
         self.__sort_key = CAUVTask.__sort_order
     def __cmp__(self, other):
@@ -53,6 +46,15 @@ class CAUVTask:
         return self.__names
     def doStart(self):
         return self.__restart
+    def resetFields(self):
+        self.process = None
+        self.running_command = None
+        self.status = ''
+        self.nice = 0
+        self.cpu = None
+        self.mem = None
+        self.threads = None
+        self.error = None
     def start(self):
         if(self.__restart):
             spawnDaemon(self.__start)
@@ -90,7 +92,9 @@ processes_to_start = [
         CAUVTask('AI Manager',      '', False, ['AI_manager']),
         CAUVTask('AI Ctrl Manager', '', False, ['AI_control_manager']),
         CAUVTask('AI Detectors',    '', False, ['AI_detection_process']),
-        CAUVTask('AI Task Manager', '', False, ['AI_task_manager'])
+        CAUVTask('AI Task Manager', '', False, ['AI_task_manager']),
+        CAUVTask('AI Pipeline Manager', '', False, ['AI_pipeline_manager']),
+        CAUVTask('AI default script', '', False, ['python ./AI_scriptparent.py default'])
 ]
 
 def limitLength(string, length=48):
@@ -137,6 +141,7 @@ def getProcesses():
     processes = {}
     short_names = {}
     for p in processes_to_start:
+        p.resetFields()
         processes[p.shortName()] = p
         short_names[p.command()] = p.shortName()
     for pid, process in all_processes.iteritems():
@@ -203,7 +208,6 @@ def printDetails(cauv_task_list, more_details=False):
             )
             if cp.error is not None:
                 line += '\t(Error: %s)' % cp.error
-                
         info(line)
     info(' ' * len(header.expandtabs()))
 

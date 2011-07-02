@@ -64,7 +64,7 @@ target_link_libraries (
 )
 cauv_install ( common-shared )
 
-add_dependencies(common logo-headers messages-headers)
-add_dependencies(common-shared logo-headers messages-headers)
+add_dependencies(common logo-headers messages-headers version-header)
+add_dependencies(common-shared logo-headers messages-headers version-header)
 
 add_subdirectory(supermess)

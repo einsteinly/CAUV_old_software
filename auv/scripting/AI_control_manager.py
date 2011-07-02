@@ -40,11 +40,18 @@ class auvControl(aiProcess):
     @external_function
     def disable(self):
         self.enabled.clear()
-        self.stop()
+        self.auv.stop()
     @external_function
     def stop(self):
         #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value
-        self.auv.stop()
+        self.prop(0)
+        self.hbow(0)
+        self.vbow(0)
+        self.hstern(0)
+        self.vstern(0)
+        self.bearing(self.current_bearing)
+        self.pitch(0)
+        self.depth(self.current_depth)
     @external_function
     def depth(self, value):
         with self.limit_lock:
@@ -54,7 +61,7 @@ class auvControl(aiProcess):
                 return
         self.auv.depth(value)
     @external_function
-    def limit_depth(self, value):
+    def limit_depth(value):
         with self.limit_lock:
             self.depth_limit = value
     def run(self):

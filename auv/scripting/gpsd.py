@@ -19,7 +19,7 @@ class GPSNode():
     def run(self):
         for report in self.session:
             info("Report received -- " + report["class"])
-            if(report["class"] == "TPV"):
+            if(report["class"] == "TPV" and report["mode"] == 3): #3 signals we have 3d position
                 info("Location: [lat %f, lon %f, alt %f]" % (report.lat, report.lon, report.alt))
                 self.__node.send(msg.GPSLocationMessage(report.lat, report.lon, report.alt, report.track, report.speed, report.climb))
 
@@ -32,6 +32,8 @@ if __name__ == '__main__':
                 GPSNode(n).run()
             except StopIteration:
                 info("GPS stopped, trying to restart")
+            except KeyError:
+                warning("Invalid key lookup, restarting")
     except socket.error:
         error("GPSD not running") 
 

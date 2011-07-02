@@ -76,3 +76,16 @@ add_custom_target (
     COMMENT "Depending on generated logo header"
 )
 
+add_custom_command (
+    OUTPUT ${SRCD}/version.h
+    COMMAND hg -R ${SRCD}/../ summary | xxd -i - ${SRCD}/version.h
+    DEPENDS ${SRCD}/../.hg
+    COMMENT "Generating version header"
+)
+
+add_custom_target (
+    version-header
+    DEPENDS ${SRCD}/version.h
+    COMMENT "Depending on version header"
+)
+

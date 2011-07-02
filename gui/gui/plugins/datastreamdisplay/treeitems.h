@@ -104,6 +104,8 @@ namespace cauv {
     // to int in the implementation before printing
     template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value);
     template<> void DataStreamTreeItem<Image>::onChange(const Image value);
+    template<> void DataStreamTreeItem<floatYPR>::onChange(const floatYPR value);
+    template<> void DataStreamTreeItem<float>::onChange(const float value);
     // another for int8_t for much the same reason but with lexical cast this time
     template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant& value);
     // also need some for out types as lexical cast doesn't know what to do

@@ -98,7 +98,7 @@ void PipelineWidget::initKeyBindings(){
         boost::bind(&PipelineWidget::send, this,
             Defer< boost::shared_ptr<Message> >(boost::bind(
                 (mk_gr_msg_f_t*)boost::make_shared<GraphRequestMessage, std::string>,
-                Defer<std::string const&>(boost::bind(&PipelineWidget::pipelineName, this))
+                Defer<std::string>(boost::bind(&PipelineWidget::pipelineName, this))
             ))
         ),
         ok::Action::null_f,

@@ -5,7 +5,7 @@
 #
 import threading
 from cauv import messaging
-#from cauv.debug import debug
+from cauv.debug import debug
 
 #pylint: disable=E1101
 
@@ -35,12 +35,12 @@ class ServiceLevel:
 
 class Node(messaging.CauvNode):
     def __init__(self, name, spreadserver="localhost", spreadport=16707):
-        #debug('CauvNode.__init__ ...')
+        debug('CauvNode.__init__ ...')
         messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
         self.__run()
 
     def __run(self):
-        #debug('__run()')        
+        debug('CauvNode.__run()')   
         t = threading.Thread(target=self.run)
         t.daemon = True
         t.start()
