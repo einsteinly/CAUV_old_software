@@ -59,6 +59,7 @@
 #include "stitchNode.h"
 #include "recogniserNode.h"
 #include "surfCornersNode.h"
+#include "clampNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -125,6 +126,8 @@ DEFINE_NFR(ThrottleNode, NodeType::Throttle);
 DEFINE_NFR(DelayNode, NodeType::Delay);
 DEFINE_NFR(StitchNode, NodeType::Stitch);
 DEFINE_NFR(RecogniserNode, NodeType::Recogniser);
+template<> DEFINE_NFR(ClampNode<int>, NodeType::ClampInt);
+template<> DEFINE_NFR(ClampNode<float>, NodeType::ClampFloat);
 DEFINE_NFR(SURFCornersNode, NodeType::SURFCorners);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];

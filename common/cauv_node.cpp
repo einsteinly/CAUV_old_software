@@ -33,6 +33,8 @@ CauvNode::~CauvNode()
 void CauvNode::run(bool synchronous)
 {
     cauv_global::print_module_header(m_name);
+    info() << "Module: " << m_name;
+    info() << "Version:\n" << Version_Information;
 
     m_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
     if(!synchronous)

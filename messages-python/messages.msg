@@ -68,6 +68,8 @@ enum NodeType : int8 {
     Throttle,
     Nop,
     Delay,
+    ClampInt,
+    ClampFloat,
     Stitch,
     Recogniser,
     SURFCorners
