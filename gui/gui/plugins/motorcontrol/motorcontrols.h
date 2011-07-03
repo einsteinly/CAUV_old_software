@@ -25,7 +25,7 @@ namespace cauv {
         class MotorBurstController : public QObject {
             Q_OBJECT
         public:
-            MotorBurstController(QPushButton *b, boost::shared_ptr<IntStream> motor, int8_t speed);
+            MotorBurstController(QPushButton *b, boost::shared_ptr<NumericNode> motor, int8_t speed);
 
         public Q_SLOTS:
             void burst();
@@ -33,7 +33,7 @@ namespace cauv {
 
         protected:
             int8_t m_speed;
-            boost::shared_ptr<IntStream> m_motor;
+            boost::shared_ptr<NumericNode> m_motor;
         };
 
         /*

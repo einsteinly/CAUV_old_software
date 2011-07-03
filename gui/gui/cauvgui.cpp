@@ -101,6 +101,8 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
+    m_auv->populate();
+
     // load plugins
     // static plugins first
     foreach (QObject *plugin, QPluginLoader::staticInstances())
@@ -117,14 +119,16 @@ void CauvGui::onRun()
     restoreState(settings.value("windowState").toByteArray());
 
 
-    // message inputs and outputs
-    foreach(boost::shared_ptr<BaseController> controller, m_auv->getControllers())
-    {
-        addMessageObserver(controller);
-        connect(controller.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
-    }
 
-    m_auv->motors->get(MotorID::Prop)->set(1);
+
+    // message inputs and outputs
+    //foreach(boost::shared_ptr<BaseController> controller, m_auv->getControllers())
+    //{
+    //    addMessageObserver(controller);
+    //    connect(controller.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
+    //}
+
+    m_auv->motors->find<NumericNode>("prop")->set(1);
 
     show();
     m_application->exec();
