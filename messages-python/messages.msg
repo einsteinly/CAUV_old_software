@@ -73,7 +73,8 @@ enum NodeType : int8 {
     Stitch,
     Recogniser,
     SURFCorners,
-    BroadcastKeypoints
+    BroadcastKeyPoints,
+    DrawKeyPoints
 }
 enum NodeStatus : int8 {
     None = 0,

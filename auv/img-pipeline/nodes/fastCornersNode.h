@@ -69,8 +69,6 @@ class FASTCornersNode: public Node{
             // top left origin // TODO: check this
             std::vector<Corner> corners;
             corners.reserve(cv_corners.size());
-            const float width = img->cvMat().cols;
-            const float height = img->cvMat().rows;
             debug(2) << "FASTCorners: detected" << cv_corners.size() << "corners:";
             foreach(const cv::KeyPoint &kp, cv_corners)
                 corners.push_back(_corner(kp, width, height));
