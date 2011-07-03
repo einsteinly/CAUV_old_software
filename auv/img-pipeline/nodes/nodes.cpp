@@ -58,6 +58,7 @@
 #include "delayNode.h"
 #include "stitchNode.h"
 #include "recogniserNode.h"
+#include "surfCornersNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -124,6 +125,7 @@ DEFINE_NFR(ThrottleNode, NodeType::Throttle);
 DEFINE_NFR(DelayNode, NodeType::Delay);
 DEFINE_NFR(StitchNode, NodeType::Stitch);
 DEFINE_NFR(RecogniserNode, NodeType::Recogniser);
+DEFINE_NFR(SURFCornersNode, NodeType::SURFCorners);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
 const std::string DelayNode::Delay_Param_Name = "delay (frames)";
