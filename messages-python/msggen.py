@@ -277,6 +277,8 @@ def toCType(t):
         return toCType(t.enum.type)
     elif isinstance(t, msggenyacc.StructType):
         return "struct " + t.struct.name
+    elif isinstance(t, msggenyacc.VariantType):
+        raise NotImplementedError("Variants not implemented for C")
     elif isinstance(t, msggenyacc.UnknownType):
         return t.name
     elif isinstance(t, msggenyacc.ListType):
@@ -294,6 +296,8 @@ def cLoadSaveSuffix(t):
         return t.enum.name
     elif isinstance(t, msggenyacc.StructType):
         return t.struct.name
+    elif isinstance(t, msggenyacc.VariantType):
+        raise NotImplementedError("Variants not implemented for C")
     elif isinstance(t, msggenyacc.UnknownType):
         return t.name
     elif isinstance(t, msggenyacc.ListType):
@@ -305,8 +309,8 @@ def cLoadSaveSuffix(t):
         return "ERROR"
 
 
-def mapToBaseType(list):
-    return map(lambda x: msggenyacc.BaseType(x), list)
+def mapToBaseType(l):
+    return map(lambda x: msggenyacc.BaseType(x), l)
 
 def addNestedTypes(list_types, map_types):
     if len(list_types) == 0 and len(map_types) == 0:
