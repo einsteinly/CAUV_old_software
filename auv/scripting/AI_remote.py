@@ -53,6 +53,12 @@ def add_request(ainode, pipeline_name):
 def drop_request(ainode, pipeline_name):
     ainode.ai.pipeline_manager.drop_pl('other', 'airemote', pipeline_name)
     
+def export_pls(ainode):
+    ainode.ai.pipeline_manager.export_pipelines()
+    
+def list_pls(ainode):
+    ainode.ai.pipeline_manager.list_pls()
+    
 def shell(ainode):
     print """
     To access AI use ainode, e.g.
@@ -116,6 +122,8 @@ if __name__=='__main__':
     imgm = menu('Image Pipeline', '')
     imgm.addFunction('Add request', add_request, '', {'pipeline_name': str})
     imgm.addFunction('Drop request', drop_request, '', {'pipeline_name': str})
+    imgm.addFunction('Show Running Pipelines', list_pls, '', {})
+    imgm.addFunction('Export Pipelines', export_pls, '', {})
     
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})

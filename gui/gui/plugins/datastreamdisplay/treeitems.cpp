@@ -60,6 +60,22 @@ template<> void DataStreamTreeItem<Image>::onChange(const Image value){
     Q_EMIT this->iconUpdated(1, value);
 }
 
+template<> void DataStreamTreeItem<floatYPR>::onChange(const floatYPR value){
+    std::stringstream stream;
+    stream.flags(std::stringstream::fixed);
+    stream.precision(2);
+    stream << "[ y = " << value.yaw << ", p = "<< value.pitch << ", r = "<< value.roll << " ]";
+    Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
+}
+
+template<> void DataStreamTreeItem<float>::onChange(const float value){
+    std::stringstream stream;
+    stream.flags(std::stringstream::fixed);
+    stream.precision(2);
+    stream << value;
+    Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
+}
+
 template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant &value){
     return boost::lexical_cast<int>(value.toString().toStdString());
 }

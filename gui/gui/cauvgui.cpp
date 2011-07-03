@@ -130,8 +130,6 @@ void CauvGui::onRun()
     addMessageObserver(m_auv_controller);
     m_auv_controller->onMessageGenerated.connect(boost::bind(&CauvGui::send, this, _1));
 
-    m_auv_controller->onProcessStatusMessage(boost::make_shared<ProcessState>("blah", "running", 5, 6, 7));
-
     show();
     m_application->exec();
 

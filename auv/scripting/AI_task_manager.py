@@ -197,6 +197,7 @@ class taskManager(aiProcess):
             except OSError:
                 debug('Could not kill running script (probably already dead)')
         #make sure the sub actually stops
+        self.ai.pipeline_manager.drop_script_pls()
         self.ai.control_manager.stop()
         self.ai.auv_control.set_task_id(None)
     def start_script(self, task_ref, script_name, script_opts={}):
