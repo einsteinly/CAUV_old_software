@@ -72,7 +72,8 @@ enum NodeType : int8 {
     ClampFloat,
     Stitch,
     Recogniser,
-    SURFCorners
+    SURFCorners,
+    BroadcastKeypoints
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -487,6 +488,12 @@ group processing
     {
         name : string;
         corners : list<Corner>;
+    }
+    
+    message Keypoints : 135
+    {
+        name : string;
+        keypoints : list<KeyPoint>;
     }
     
     message Histogram : 133

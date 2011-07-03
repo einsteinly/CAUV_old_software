@@ -158,6 +158,7 @@ namespace{//Unnamed
 
 template<typename T> struct Type2Name { static const char* name; };
 template<typename T> const char* Type2Name<T>::name = "Unknown";
+template<> const char* Type2Name<cauv::KeyPoint>::name = "KeyPoint";
 template<> const char* Type2Name<Corner>::name = "Corner";
 template<> const char* Type2Name<Line>::name = "Line";
 template<> const char* Type2Name<float>::name = "float";

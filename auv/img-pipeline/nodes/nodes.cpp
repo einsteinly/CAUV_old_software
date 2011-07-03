@@ -60,6 +60,7 @@
 #include "recogniserNode.h"
 #include "surfCornersNode.h"
 #include "clampNode.h"
+#include "broadcastKeypointsNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -129,6 +130,7 @@ DEFINE_NFR(RecogniserNode, NodeType::Recogniser);
 template<> DEFINE_NFR(ClampNode<int>, NodeType::ClampInt);
 template<> DEFINE_NFR(ClampNode<float>, NodeType::ClampFloat);
 DEFINE_NFR(SURFCornersNode, NodeType::SURFCorners);
+DEFINE_NFR(BroadcastKeypointsNode, NodeType::BroadcastKeypoints);
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
 const std::string DelayNode::Delay_Param_Name = "delay (frames)";
