@@ -54,9 +54,6 @@ class DrawKeyPointsNode: public Node{
 
             cv::vector<cv::KeyPoint> cv_keypoints;
             cv_keypoints.reserve(keypoints.size());
-
-            const float width = img->cvMat().cols;
-            const float height = img->cvMat().rows;
             
             foreach(KeyPoint const& k, keypoints)
                 cv_keypoints.push_back(_cvKeyPoint(k));
