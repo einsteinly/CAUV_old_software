@@ -259,8 +259,8 @@ class aiScript(aiProcess):
 
 #------AI DETECTORS STUFF------
 class aiDetectorOptions():
-    def __init__(self, **kwargs):
-        for key, value in kwargs:
+    def __init__(self, opts):
+        for key, value in opts:
             setattr(self, key, value)
         
 class aiDetector(messaging.MessageObserver):

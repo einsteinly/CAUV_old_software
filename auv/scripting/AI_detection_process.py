@@ -61,11 +61,11 @@ class detectionControl(aiProcess):
                                 traceback.print_exc()
                                 continue
                         try:
-                            opts = self.modules[detection_file].detectorOptions()
+                            opts = self.modules[detection_file].detectorOptions({})
                         except Exception:
                             error('Could not initialise detector %s options.' %(detection_file,))
                             traceback.print_exc()
-                            opts = aiDetectorOptions()
+                            opts = aiDetectorOptions({})
                         try:
                             self.running_detectors[detection_file] = self.modules[detection_file].detector(self.node, opts)
                         except Exception:
