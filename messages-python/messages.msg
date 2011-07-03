@@ -649,7 +649,7 @@ group external
 {
     message Light : 150
     {
-        id = LightID;
+        id: LightID;
         intensity : uint8;
     }
     message CuttingDevice : 151
