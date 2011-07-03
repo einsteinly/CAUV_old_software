@@ -67,7 +67,7 @@ AUVController::AUVController(boost::shared_ptr<AUV>auv): m_auv(auv){
     auv->sensors.depth_calibration->onSet.connect(boost::bind( &AUVController::sendDepthCalibrationMessage, this, _1));
 
     //scripts
-    //auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
+    auv->scripts.scriptExec->onSet.connect(boost::bind( &AUVController::sendScriptMessage, this, _1));
 }
 
 void AUVController::sendMotorMessage(MotorID::e motor, int8_t speed){

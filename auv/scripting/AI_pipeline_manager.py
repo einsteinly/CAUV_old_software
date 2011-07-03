@@ -432,7 +432,7 @@ class pipelineManager(aiProcess):
             error('Invalid requestor type %s, named %s' %(requestor_type, requestor_name))
             return
         if not requested_pl in self.pl_data.pipelines:
-            error('Non-existant pipeline requested')
+            error('Non-existant pipeline %s requested' %(requested_pl,))
             return
         with self.request_lock:
             #update request info
@@ -705,5 +705,8 @@ class pipelineManager(aiProcess):
     
         
 if __name__ == '__main__':
-    pm = pipelineManager()
-    pm.run()
+    try:
+        pm = pipelineManager()
+        pm.run()
+    finally:
+        pm.die()

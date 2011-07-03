@@ -45,4 +45,7 @@ if __name__ == '__main__':
         ainode = aiProcess('script_error_reporter')
         ainode.ai.task_manager.on_script_exit(task_ref, 'ERROR')
         error(traceback.format_exc())
+        ainode.die()
         raise e
+    finally:
+        script.die()
