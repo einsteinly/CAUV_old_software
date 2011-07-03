@@ -75,6 +75,8 @@ class aiProcess(messaging.MessageObserver):
         except:
             error('Error sending high-level log message')
             traceback.print_exc()
+    def die(self):
+        self.node.removeObserver(self)
 
 #------AI SCRIPTS STUFF------
 

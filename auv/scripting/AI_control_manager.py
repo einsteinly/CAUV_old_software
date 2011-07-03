@@ -70,5 +70,8 @@ class auvControl(aiProcess):
             info("auv_control still alive")
 
 if __name__ == '__main__':
-    ac = auvControl()
-    ac.run()
+    try:
+        ac = auvControl()
+        ac.run()
+    finally:
+        ac.die()
