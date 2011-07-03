@@ -413,6 +413,11 @@ class pipelineManager(aiProcess):
     def set_detector_pl(self, req_list):
         with self.request_lock:
             self.det_reqs = req_list
+    @external_function
+    def list_pls(self):
+        with self.request_lock:
+            print self.det_reqs
+            print self.requests
     def setup_pl(self, requestor_type, requestor_name, requested_pl):
         if requestor_type == 'script':
             #clear out other script requests on the basis that a) script won't request close together or b) the running script will be last to request
