@@ -59,8 +59,8 @@ void QConsole::reset()
 
 //QConsole constructor (init the QTextEdit & the attributes)
 QConsole::QConsole(QWidget *parent, const char *name, bool initInterceptor) : QTEXTEDIT_CLASSNAME(parent,name),
-   cmdColor(Qt::black), errColor(Qt::red), outColor(Qt::blue), completionColor(Qt::green),
-   stdoutInterceptor(NULL), stderrInterceptor(NULL)
+   cmdColor(Qt::black), errColor(Qt::red), outColor(Qt::blue), completionColor(Qt::green), promptLength(0),
+   stdoutInterceptor(NULL), stderrInterceptor(NULL), promptParagraph(0)
 {
     //resets the console
     reset();
@@ -328,7 +328,7 @@ bool QConsole::isCommandComplete(QString )
 //or in the next lines (in case of multi-line mode)
 bool QConsole::isInEditionZone()
 {
-    int para, index;
+    int para = 0, index = 0;
     getCursorPosition(&para, &index );
     return (para > promptParagraph) || ( (para == promptParagraph) && (index >= promptLength) );
 }
