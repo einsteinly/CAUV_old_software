@@ -1,0 +1,16 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-05-28 22:22:30.074267
+description: 'status changed to finished
+
+  owner changed to James Crosby'
+entity: !!python/object:uuid.UUID
+  int: 189558163528000301790941683585961050783
+modified_time: *id001
+pscore: 0
+title: 2011-05-28 22:22 - James Crosby changed task SonarDataLine Logger
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 147928428261971625819851832779515407558
+who_did_it: *id002
+yaml_file_saved: 2011-05-28 22:22:30.085913
