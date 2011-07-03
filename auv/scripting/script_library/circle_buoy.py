@@ -2,15 +2,11 @@
 
 import cauv
 import cauv.messaging as msg
-import cauv.control as control
-import cauv.pipeline as pipeline
-import cauv.node
 from cauv.debug import debug, info, warning, error
 
 from AI_classes import aiScript, aiScriptOptions
 
 import time
-import optparse
 import math
 import traceback
 
