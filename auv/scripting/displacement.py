@@ -11,7 +11,7 @@ import optparse
 
 import displacement_integrator
 
-Metres_Per_Second_Per_Motor_Unit = 0.001
+Metres_Per_Second_Per_Motor_Unit = 0.4 / 127
 
 Default_Datum_Latitude = 52.116692
 Default_Datum_Longitude = 0.117792
