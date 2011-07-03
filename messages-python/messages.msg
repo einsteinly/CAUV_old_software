@@ -72,7 +72,9 @@ enum NodeType : int8 {
     ClampFloat,
     Stitch,
     Recogniser,
-    SURFCorners
+    SURFCorners,
+    BroadcastKeyPoints,
+    DrawKeyPoints
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -489,6 +491,12 @@ group processing
         corners : list<Corner>;
     }
     
+    message Keypoints : 135
+    {
+        name : string;
+        keypoints : list<KeyPoint>;
+    }
+    
     message Histogram : 133
     {
         name : string;
@@ -649,7 +657,7 @@ group external
 {
     message Light : 150
     {
-        id: LightID;
+        lightId: LightID;
         intensity : uint8;
     }
     message CuttingDevice : 151

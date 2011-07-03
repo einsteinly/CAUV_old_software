@@ -115,5 +115,8 @@ class detectionControl(aiProcess):
                     self.ai.task_manager.notify_detector(detection_file, True)
 
 if __name__ == '__main__':
-    dc = detectionControl()
-    dc.run()
+    try:
+        dc = detectionControl()
+        dc.run()
+    finally:
+        dc.die()
