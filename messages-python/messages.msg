@@ -5,7 +5,8 @@ enum DebugType : int8 {
     Error = 3
 }
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
-enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
+enum CameraID: int8 { Forward = 1, Down = 2, Up = 3, Sonar = 4, File = 5 }
+enum LightID: int8 { Forward = 1, Down = 2 }
 enum NodeType : int8 {
     Invalid,
     Copy,
@@ -68,7 +69,8 @@ enum NodeType : int8 {
     Nop,
     Delay,
     Stitch,
-    Recogniser
+    Recogniser,
+    SURFCorners
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -641,4 +643,15 @@ group ai
     }
 }
 
-
+group external
+{
+    message Light : 150
+    {
+        id = LightID;
+        intensity : uint8;
+    }
+    message CuttingDevice : 151
+    {
+        strength : uint8;
+    }
+}
