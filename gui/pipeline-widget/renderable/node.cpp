@@ -43,10 +43,12 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
       m_node_type(m->nodeType()),
       m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
+      m_idtext(boost::make_shared<Text>(c, mkStr() << "id:" << m->nodeId())),
       m_execbutton(boost::make_shared<ExecButton>(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
+    m_contents.push_back(m_idtext);
     m_contents.push_back(m_execbutton);
     m_contents.push_back(m_title);
 
@@ -65,10 +67,12 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const&
       m_node_type(nt),
       m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
+      m_idtext(boost::make_shared<Text>(c, mkStr() << "id:" << id)),
       m_execbutton(boost::make_shared<ExecButton>(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
+    m_contents.push_back(m_idtext);
     m_contents.push_back(m_execbutton);
     m_contents.push_back(m_title);
     refreshLayout();
@@ -472,6 +476,9 @@ void Node::refreshLayout(){
     m_closebutton->m_pos.y = -m_closebutton->bbox().min.y;
     m_back = m_closebutton->bbox() + m_closebutton->m_pos;
     debug(2) << "closebutton layout:" << m_closebutton->m_pos << m_closebutton->bbox();
+
+    m_idtext->m_pos.y = m_closebutton->m_pos.y - m_closebutton->bbox().h()/2 - m_idtext->bbox().min.y;
+    m_idtext->m_pos.x = m_closebutton->m_pos.x + m_closebutton->bbox().w() + m_idtext->bbox().min.x;
 
     m_title->m_pos.y = y_pos - roundA(m_title->bbox().max.y);
     m_title->m_pos.x = -m_title->bbox().min.x;
