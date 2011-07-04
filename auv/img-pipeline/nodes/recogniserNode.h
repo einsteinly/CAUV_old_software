@@ -77,6 +77,11 @@ class RecogniserNode: public Node{
 
             surf_extractor(img->cvMat(), mask, kp2);
             debug() << *this << kp2.size() <<  "keypoints from image";
+            
+            if(!kp1.size())
+                throw std::runtime_error("No keypoints detected in reference image");
+            if(!kp2.size())
+                throw std::runtime_error("No keypoints detected in image");
 
             // find NN for each of kp2 in kp1
             cv::vector<cv::DMatch> matches2to1;

@@ -2,15 +2,11 @@
 
 import cauv
 import cauv.messaging as msg
-import cauv.control as control
-import cauv.pipeline as pipeline
-import cauv.node
 from cauv.debug import debug, info, warning, error
 
 from AI_classes import aiScript, aiScriptOptions
 
 import time
-import optparse
 import math
 import traceback
 
@@ -23,7 +19,7 @@ class scriptOptions(aiScriptOptions):
     Give_Up_Seconds_Between_Sights = 30
     Node_Name = "py-CrcB" # unused
     Strafe_Speed = 5   # (int [-127,127]) controls strafe speed
-    Buoy_Size = 0.35     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
+    Buoy_Size = 0.15     # (float [0.0, 1.0]) controls distance from buoy. Units are field of view (fraction) that the buoy should fill
     Size_Control_kPID = (-30, 0, 0)  # (Kp, Ki, Kd)
     Size_DError_Window = expWindow(5, 0.6)
     Size_Error_Clamp = 1e30
@@ -175,10 +171,11 @@ class script(aiScript):
         self.auv.prop(int(round(do_prop)))
         self.time_last_seen = now
 
-        debug('angle (e=%.3g, ie=%.3g de=%.3g) size (e=%.3g, ie=%.3g, de=%.3g), depth (e=%.3g, ie=%.3g de=%.3g)' % (
+        debug('angle (e=%.3g, ie=%.3g de=%.3g) size (e=%.3g, ie=%.3g, de=%.3g), depth (e=%.3g, ie=%.3g de=%.3g) current_deppth=%g' % (
             self.angle_pid.err, self.angle_pid.ierr, self.angle_pid.derr,
             self.size_pid.err, self.size_pid.ierr, self.size_pid.derr,
-            self.depth_pid.err, self.depth_pid.ierr, self.depth_pid.derr
+            self.depth_pid.err, self.depth_pid.ierr, self.depth_pid.derr,
+            self.getDepthNotNone()
         ))
         debug('turn to %g, prop to %s, dive to %g' % (turn_to, do_prop, depth_to))
         
@@ -194,7 +191,7 @@ class script(aiScript):
         pidTelem(self.depth_pid,'BuoyDepth')
 
     def run(self):
-        self.request_pl(self.options.Pipeline_File)
+        #self.request_pl(self.options.Pipeline_File)
         start_bearing = self.auv.getBearing()
         entered_quarters = [False, False, False, False]
         exit_status = 'SUCCESS'

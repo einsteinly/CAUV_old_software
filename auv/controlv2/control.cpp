@@ -397,6 +397,17 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_depthCalibration = m;
         }
         
+        virtual void onLightMessage(LightMessage_ptr m)
+        {
+            debug(2) << "Forwarding Light Message:" << *m;
+            m_mcb->send(m);
+        }
+
+        virtual void onCuttingDeviceMessage(CuttingDeviceMessage_ptr m)
+        {
+            debug(2) << "Forwarding Cutting Device Control Message:" << *m;
+            m_mcb->send(m);
+        }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
@@ -792,6 +803,7 @@ class NotRootException : public std::exception
 ControlNode::ControlNode() : CauvNode("Control")
 {
     joinGroup("control");
+    joinGroup("external");
     addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());

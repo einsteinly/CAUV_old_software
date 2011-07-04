@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import cauv.messaging as msg
 import cauv.node as node
 
@@ -59,6 +61,7 @@ class PersistObserver(msg.MessageObserver):
         for group in groups:
             node.join(group)
         for message in watch_list:
+            debug('Listening for %s messages' % message)
             self.attachOnMessageFunc(message)
         node.addObserver(self)
     
