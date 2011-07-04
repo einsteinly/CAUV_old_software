@@ -16,7 +16,7 @@ initial_tasks = [
                 #'test',
                 #'follow_pipe',
                 #'test',
-                #'avoid_collision'
+                'avoid_collision'
                 ]
 #script that runs otherwise
 default_script = 'test'

@@ -20,8 +20,8 @@ class detectorOptions(aiDetectorOptions):
     Histogram_Bin = 10 #17
     Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
     Optimal_Colour_Frac = 0.04 # highest colour detection confidence when the specified bin contains this value
-    Colour_Weight  = 0.3 # respective weightings in confidence, arithmetic mean of these values should be 1
-    Circles_Weight = 1.7 #
+    Colour_Weight  = 0.0 # respective weightings in confidence, arithmetic mean of these values should be 1
+    Circles_Weight = 2.0 #
 
 class detector(aiDetector):
     def __init__(self, node, opts):

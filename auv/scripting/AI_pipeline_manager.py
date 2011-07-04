@@ -307,10 +307,17 @@ class pipelineManager(aiProcess):
     def __init__(self, *args, **kwargs):
         aiProcess.__init__(self, 'pipeline_manager')
         self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
+        self.state = shelve.open('pl_manager.state')
+        self.requests_changed = threading.Event()
         self.request_lock = threading.RLock()
+        try:
+            if kwargs['restore']:
+                self.requests = self.state['requests']
+                self.requests_changed.set()
+        except KeyError:
+            self.requests = {'script':{}, 'other':{}} #script_name: pl_names
         self.setup_requests = []
         self.drop_requests = []
-        self.requests = {'script':{}, 'other':{}} #script_name: pl_names
         self.det_reqs = []
         self.cur_det_reqs = []
         self.pipeline_lock = threading.RLock()
@@ -324,6 +331,8 @@ class pipelineManager(aiProcess):
             self._pl.clear()
             self.pl_state = pipeline.State()
             self.node_mapping = {}#node_ids here: node_ids in pipeline
+            #notify detector_process that this proces is running with no pls
+            self.ai.detector_control.update_pl_requests([])
     def load_pl_data(self):
         with self.pipeline_lock:
             #try and load optimised pipelines
@@ -347,7 +356,6 @@ class pipelineManager(aiProcess):
                     elif hashlib.md5(open(os.path.join('pipelines', pl_name)).read()).hexdigest() != self.pl_data.pipelines[pl_name].md5:
                         #move old version to old_pipelines
                         self.pl_data.old_pipelines[pl_name+str(time.time())] = self.pl_data.pipelines.pop(pl_name)
-                        self.pl_data.pop(pl_name)
                         #add new version
                         self.add_pl(pl_name)
                         warning('Pipeline %s was externally modified. The old version has been moved to old_pipelines.' %(pl_name,))
@@ -379,7 +387,7 @@ class pipelineManager(aiProcess):
                     continue
                 for output_name, outarcs in node.outarcs.items():
                     #if copy node changes, need to change this bit
-                    copy_node = pipeline.Node(next_id, 1, inputarcs={'image': (node_id, output_name)}, outputarcs={'image copy': outarcs})
+                    copy_node = pipeline.Node(next_id, int(messaging.NodeType.Copy), inputarcs={'image': (node_id, output_name)}, outputarcs={'image copy': outarcs})
                     for to_node_id, to_node_field in outarcs:
                         pl_state.nodes[to_node_id].inarcs[to_node_field] = (next_id, 'image copy')
                     node.outarcs[output_name] = [(next_id, 'image')]
@@ -389,33 +397,41 @@ class pipelineManager(aiProcess):
             branches = Branch(pl_state.nodes).split([(x,) for x in inputs])
             self.pl_data.add_pl(pl_name, branches, md5result)
     @external_function
-    def save_mods(self, pipelines=None, temporary=False):
-        #if we change the pipeline, we need to be able to save changes
-        pass
+    def force_save(self, pipelines=None, temporary=False):
+        with self.request_lock:
+            self.requests_changed.set()
     @external_function
     def clear_old(self):
-        #get rid of old data (e.g.pipelines that have been deleted
-        pass
+        with self.pipeline_lock:
+            self.pl_data.old_pipelines = {}
     @external_function
     def request_pl(self, requestor_type, requestor_name, requested_pl):
         #VERY IMPORTANT: make sure requestor_name is same as process_name
         #since the python thread cannot be interrupted multiple times it seems, and needs to be interrupted to set up the pipeline, request must be handled in the main process
         with self.request_lock:
             self.setup_requests.append({'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl})
+        self.requests_changed.set()
     @external_function
     def drop_pl(self, requestor_type, requestor_name, requested_pl):
         with self.request_lock:
             self.drop_requests.append({'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl})
+        self.requests_changed.set()
     @external_function
     def drop_all_pl(self, requestor_type, requestor_name):
-        self.requests[requestor_type][requestor_name] = []
+        with self.request_lock:
+            self.requests[requestor_type][requestor_name] = []
+        self.requests_changed.set()
     @external_function
     def drop_script_pls(self):
-        self.requests['script'] = {}
+        with self.request_lock:
+            self.requests['script'] = {}
+        self.requests_changed.set()
     @external_function
     def set_detector_pl(self, req_list):
         with self.request_lock:
-            self.det_reqs = req_list
+            if set(self.det_reqs) != set(req_list):
+                self.det_reqs = req_list
+                self.requests_changed.set()
     @external_function
     def list_pls(self):
         with self.request_lock:
@@ -462,7 +478,7 @@ class pipelineManager(aiProcess):
     def eval_branches(self):
         with self.pipeline_lock:
             """
-            TODO Note if gui nodes disabled, ignore gui-nodes
+            Note if gui nodes disabled, ignore gui-nodes
             1) get the current state (also returns a list of new nodes)
                 check that state isn't empty, if it is (andpl_state isn't) probably crashed, so don't do checking
             2) group new nodes into branches
@@ -674,28 +690,28 @@ class pipelineManager(aiProcess):
             self._pl.remove(remove_nodes)
     def run(self):
         while True:
-            with self.request_lock:
-                changed = len(self.setup_requests)+len(self.drop_requests)
-                for setup_request in self.setup_requests:
-                    try:
-                        self.setup_pl(**setup_request)
-                    except Exception:
-                        error('Exception while trying to setup pipeline caused by '+str(setup_request))
-                        traceback.print_exc()
-                self.setup_requests = []
-                for drop_request in self.drop_requests:
-                    try:
-                        self.unsetup_pl(**drop_request)
-                    except Exception:
-                        error('Exception while trying to drop pipeline request caused by '+str(drop_request))
-                        traceback.print_exc()
-                self.drop_requests = []
-                if set(self.det_reqs) != set(self.cur_det_reqs):
-                    changed = True
-            #reevaluate if changed
-            if changed:
-                self.eval_branches()
-                self.ai.detector_control.update_pl_requests(self.cur_det_reqs)
+            self.requests_changed.wait()
+            if self.requests_changed.is_set():
+                with self.request_lock:
+                    self.requests_changed.clear()
+                    for setup_request in self.setup_requests:
+                        try:
+                            self.setup_pl(**setup_request)
+                        except Exception:
+                            error('Exception while trying to setup pipeline caused by '+str(setup_request))
+                            traceback.print_exc()
+                    self.setup_requests = []
+                    for drop_request in self.drop_requests:
+                        try:
+                            self.unsetup_pl(**drop_request)
+                        except Exception:
+                            error('Exception while trying to drop pipeline request caused by '+str(drop_request))
+                            traceback.print_exc()
+                    self.drop_requests = []
+                    self.eval_branches()
+                    self.ai.detector_control.update_pl_requests(self.cur_det_reqs)
+                    self.state['requests'] = self.requests
+                    self.state.sync()
             time.sleep(1)
     #extra functions
     @external_function
@@ -710,6 +726,8 @@ class pipelineManager(aiProcess):
         
 if __name__ == '__main__':
     p = optparse.OptionParser()
+    p.add_option('-r', '--restore', dest='restore', default=False,
+                 action='store_true', help="try and resume from last saved state")
     p.add_option('-g', '--disable_gui', dest='disable_gui', default=False,
                  action='store_true', help="disable/ignore gui output nodes")
     opts, args = p.parse_args()
