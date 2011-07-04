@@ -387,7 +387,7 @@ class pipelineManager(aiProcess):
                     continue
                 for output_name, outarcs in node.outarcs.items():
                     #if copy node changes, need to change this bit
-                    copy_node = pipeline.Node(next_id, 1, inputarcs={'image': (node_id, output_name)}, outputarcs={'image copy': outarcs})
+                    copy_node = pipeline.Node(next_id, int(messaging.NodeType.Copy), inputarcs={'image': (node_id, output_name)}, outputarcs={'image copy': outarcs})
                     for to_node_id, to_node_field in outarcs:
                         pl_state.nodes[to_node_id].inarcs[to_node_field] = (next_id, 'image copy')
                     node.outarcs[output_name] = [(next_id, 'image')]
@@ -397,13 +397,13 @@ class pipelineManager(aiProcess):
             branches = Branch(pl_state.nodes).split([(x,) for x in inputs])
             self.pl_data.add_pl(pl_name, branches, md5result)
     @external_function
-    def save_mods(self, pipelines=None, temporary=False):
-        #if we change the pipeline, we need to be able to save changes
-        pass
+    def force_save(self, pipelines=None, temporary=False):
+        with self.request_lock:
+            self.requests_changed.set()
     @external_function
     def clear_old(self):
-        #get rid of old data (e.g.pipelines that have been deleted
-        pass
+        with self.pipeline_lock:
+            self.pl_data.old_pipelines = {}
     @external_function
     def request_pl(self, requestor_type, requestor_name, requested_pl):
         #VERY IMPORTANT: make sure requestor_name is same as process_name

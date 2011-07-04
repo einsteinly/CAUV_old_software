@@ -258,6 +258,9 @@ class aiScript(aiProcess):
     @external_function
     def confirm_exit(self):
         self.exit_confirmed.set()
+    def die(self):
+        self.ai.auv_control.stop()
+        aiProcess.die(self)
 
 #------AI DETECTORS STUFF------
 class aiDetectorOptions():
