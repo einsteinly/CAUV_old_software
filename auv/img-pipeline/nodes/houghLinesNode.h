@@ -57,7 +57,7 @@ class HoughLinesNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs[Image_In_Name];
+            cv::Mat img = inputs[Image_In_Name]->mat();
             
             const bool probabilistic = param<bool>("probabilistic");
             const int rho = param<int>("rho");
@@ -71,10 +71,10 @@ class HoughLinesNode: public Node{
             cv::vector<cv::Vec4i> hough_lines;
             try{
                 if(probabilistic){
-                    cv::HoughLinesP(img->mat(), hough_lines, rho, theta, threshold, min_ll, max_lg);
+                    cv::HoughLinesP(img, hough_lines, rho, theta, threshold, min_ll, max_lg);
                 }else{
                     cv::vector<cv::Vec2f> r_theta_lines;
-                    cv::HoughLines(img->mat(), r_theta_lines, rho, theta, threshold, srn, stn);
+                    cv::HoughLines(img, r_theta_lines, rho, theta, threshold, srn, stn);
                     
                     // convert lines to easy-to-draw form
                     for(unsigned i = 0; i < r_theta_lines.size(); i++)
@@ -89,8 +89,8 @@ class HoughLinesNode: public Node{
             
             // lines[] coordinates are in pixels, top left origin
             std::vector<Line> lines;
-            const float width = img->width();
-            const float height = img->height();
+            const float width = img.cols;
+            const float height = img.rows;
             debug(2) << "HoughLines: detected" << hough_lines.size() << "lines";
             for(unsigned i = 0; i < hough_lines.size(); i++){
                 floatXYZ centre(0, 0, 0);
