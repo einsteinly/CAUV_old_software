@@ -173,7 +173,7 @@ std::streamsize FTDIDevice::read(char* s, std::streamsize n)
         boost::this_thread::sleep(boost::posix_time::milliseconds(100));
     }
 
-#ifndef CAUV_NO_DEBUG
+#ifdef CAUV_DEBUG_MESSAGES
     std::stringstream ss;
     for (int i = 0; i < r; i++)
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
@@ -185,7 +185,7 @@ std::streamsize FTDIDevice::read(char* s, std::streamsize n)
 
 std::streamsize FTDIDevice::write(const char* s, std::streamsize n)
 {
-#ifndef CAUV_NO_DEBUG
+#ifdef CAUV_DEBUG_MESSAGES
     std::stringstream ss;
     for (int i = 0; i < n; i++)
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
@@ -217,13 +217,27 @@ SerialDevice::SerialDevice(const std::string& path,
 std::streamsize SerialDevice::read(char* s, std::streamsize n)
 {
     debug(5) << "SerialDevice: Reading " << n << " characters";
-    return boost::asio::read(*m_port, boost::asio::buffer(s, n), boost::asio::transfer_at_least(1));
+    std::streamsize ret = boost::asio::read(*m_port, boost::asio::buffer(s, n), boost::asio::transfer_at_least(1));
+#ifdef CAUV_DEBUG_MESSAGES
+    std::stringstream ss;
+    for (int i = 0; i < ret; i++)
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
+    debug(10) << "Received" << ss.str();
+#endif
+    return ret;
 }
 
 std::streamsize SerialDevice::write(const char* s, std::streamsize n)
 {
     debug(5) << "SerialDevice: Writing " << n << " characters";
-    return boost::asio::write(*m_port, boost::asio::buffer(s, n));
+    std::streamsize ret = boost::asio::write(*m_port, boost::asio::buffer(s, n));
+#ifdef CAUV_DEBUG_MESSAGES
+    std::stringstream ss;
+    for (int i = 0; i < ret; i++)
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)s[i] << " ";
+    debug(10) << "Sent" << ss.str();
+#endif
+    return ret;
 }
 
 
