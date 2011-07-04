@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import traceback
 import optparse
 import time
