@@ -1,9 +1,9 @@
 from AI_classes import aiProcess, external_function
 
 from cauv.debug import info, warning, error, debug
-from cauv import pipeline
+from cauv import pipeline, messaging
 
-import threading, os.path, hashlib, cPickle, time, traceback, shelve, pickle
+import threading, os.path, hashlib, cPickle, time, traceback, shelve, pickle, optparse
 from glob import glob
 from datetime import datetime
 
@@ -154,7 +154,7 @@ class Branch():
         for node_id, node in self.nodes.items():
             copied_node_dict = {'type':node.type,'params':node.params,'inarcs':{},'outarcs':{}}
             for input, inarc in node.inarcs.items():
-                copied_node_dict['inarcs'][input] = (relabel[inarc[0]], inarc[1])
+                copied_node_dict['inarcs'][input] = (relabel[inarc[0]], inarc[1]) if inarc[0] in relabel else inarc
             #ignore outarcs, not used anyway
             #for output, outarcs in node.outarcs.items():
             #    copied_node_dict['outarcs'][output] = [(relabel[outarc[0]], outarc[1]) for outarc in outarcs]
@@ -249,6 +249,7 @@ class OptimisedPipelines():
             branch.nodes = new_nodes
         self.nnid = max_n + 1
         branch_relabeling, node_relabeling = self.add(branches)
+        info('New pipeline contains %d new branches and %d existing branches' %(len([k for k, v in branch_relabeling.items() if k==v]),len(branch_relabeling)))
         #finally add the pipeline
         self.pipelines[pl_name] = oPipeline(branch_relabeling.values(), md5)
     def add(self, branches):
@@ -303,8 +304,9 @@ class OptimisedPipelines():
         return branch_relabeling, node_relabeling
 
 class pipelineManager(aiProcess):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         aiProcess.__init__(self, 'pipeline_manager')
+        self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
         self.request_lock = threading.RLock()
         self.setup_requests = []
         self.drop_requests = []
@@ -345,6 +347,7 @@ class pipelineManager(aiProcess):
                     elif hashlib.md5(open(os.path.join('pipelines', pl_name)).read()).hexdigest() != self.pl_data.pipelines[pl_name].md5:
                         #move old version to old_pipelines
                         self.pl_data.old_pipelines[pl_name+str(time.time())] = self.pl_data.pipelines.pop(pl_name)
+                        self.pl_data.pop(pl_name)
                         #add new version
                         self.add_pl(pl_name)
                         warning('Pipeline %s was externally modified. The old version has been moved to old_pipelines.' %(pl_name,))
@@ -459,6 +462,7 @@ class pipelineManager(aiProcess):
     def eval_branches(self):
         with self.pipeline_lock:
             """
+            TODO Note if gui nodes disabled, ignore gui-nodes
             1) get the current state (also returns a list of new nodes)
                 check that state isn't empty, if it is (andpl_state isn't) probably crashed, so don't do checking
             2) group new nodes into branches
@@ -530,7 +534,7 @@ class pipelineManager(aiProcess):
                 #4
                 for node_id, node in self.pl_state.nodes.items():
                     #check for nodes lost
-                    if not node_id in state.nodes:
+                    if (not node_id in state.nodes) and (not self.disable_gui or node.type != int(messaging.NodeType.GuiOutput)):
                         info('Detected node %d removed.' %(node_id,))
                         #node lost, remove all traces
                         for branch in self.pl_data.branches.values():
@@ -660,7 +664,7 @@ class pipelineManager(aiProcess):
                     remove_nodes[node_id] = node
             #calculate nodes to add
             for node_id, node in new_state.nodes.items():
-                if not node_id in self.pl_state.nodes:
+                if not node_id in self.pl_state.nodes and (not self.disable_gui or node.type != int(messaging.NodeType.GuiOutput)):
                     add_nodes[node_id] = node
             #update pl_state
             self.pl_state.nodes.update(add_nodes)
@@ -705,8 +709,12 @@ class pipelineManager(aiProcess):
     
         
 if __name__ == '__main__':
+    p = optparse.OptionParser()
+    p.add_option('-g', '--disable_gui', dest='disable_gui', default=False,
+                 action='store_true', help="disable/ignore gui output nodes")
+    opts, args = p.parse_args()
+    pm = pipelineManager(**opts.__dict__)
     try:
-        pm = pipelineManager()
         pm.run()
     finally:
         pm.die()
