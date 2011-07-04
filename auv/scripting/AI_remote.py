@@ -92,7 +92,7 @@ class menu():
                 print i,')',option.name,':',option.desc
             try:
                 choice = self.options[int(raw_input('Choose an option: '))]
-            except IndexError:
+            except (IndexError, ValueError):
                 print 'Invalid input'
                 continue
             if choice.name=='Return':

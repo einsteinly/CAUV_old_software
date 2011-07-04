@@ -347,7 +347,6 @@ class pipelineManager(aiProcess):
                     elif hashlib.md5(open(os.path.join('pipelines', pl_name)).read()).hexdigest() != self.pl_data.pipelines[pl_name].md5:
                         #move old version to old_pipelines
                         self.pl_data.old_pipelines[pl_name+str(time.time())] = self.pl_data.pipelines.pop(pl_name)
-                        self.pl_data.pop(pl_name)
                         #add new version
                         self.add_pl(pl_name)
                         warning('Pipeline %s was externally modified. The old version has been moved to old_pipelines.' %(pl_name,))
