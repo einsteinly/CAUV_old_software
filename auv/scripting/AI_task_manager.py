@@ -264,8 +264,8 @@ if __name__ == '__main__':
                  type=str, action='store', help='which mission script to run (default = mission)')
     opts, args = p.parse_args()
     
+    tm = taskManager(**opts.__dict__)
     try:
-        tm = taskManager(**opts.__dict__)
         tm.run()
     finally:
         tm.die()

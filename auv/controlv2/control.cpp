@@ -803,6 +803,7 @@ class NotRootException : public std::exception
 ControlNode::ControlNode() : CauvNode("Control")
 {
     joinGroup("control");
+    joinGroup("external");
     addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
