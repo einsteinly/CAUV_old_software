@@ -12,15 +12,18 @@ import traceback
 
 
 class scriptOptions(aiScriptOptions):
-    optionName = 4 # for example
-    wallDistance = 2 #distance from wall
-    strafeSpeed = 5 #controls strafe speed
-    strafekPID = (1, 0, 0)
-    depthkPID = (1, 0, 0)
+    wallDistance = 2 #distance from wall in metres TODO: check units
+    strafeSpeed = 5 #controls strafe speed, int [-127, 127]
+    wallDistancekPID = (1, 0, 0)
+    depth = 0 #depth
+    runTime = 30 #run time in seconds
     
     class Meta:
         # list of options that can be changed while the script is running
-        dynamic = ['optionName']
+        dynamic = [
+                'wallDistancekPID',
+                'depth'
+                ]
 
 
 class script(aiScript):
@@ -30,9 +33,19 @@ class script(aiScript):
         # self.auv is also available, and can be used to control the vehicle
         # self.options is a copy of the option structure declared above
         self.node.join('processing')
+        self.__wallDistance = self.options.wallDistance
+        self.__strafeSpeed = self.options.strafeSpeed
+        self.wallPID = PIDController(self.options.wallDistancekPID)
+        self.__runtTime = self.options.runTime
+
+    def reloadOptions(self):
+        self.__wallDistance = self.options.wallDistance
+        self.__strafeSpeed = self.options.strafeSpeed
+        self.wallPID = self.wallPID.setKpid(self.options.wallDistancekPID)
     
     def optionChanged(self, option_name):
         info('notified that %s changed to %s' % (option_name[0], option_name[1]))
+        self.reloadOptions()
    
     def onSonarDataMessage(self, m):
         debug('received sonar data: %s' % str(m))
