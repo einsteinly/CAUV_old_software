@@ -17,9 +17,9 @@ class scriptOptions(aiScriptOptions):
     depth = 0 #depth in metres
     runTime = 30 #run time in seconds
     sonarDirection = 180 #in degrees
-    sonarWidth = 1 #in 1/6400 of a circle
-    sonarGain = 50
-    sonarRange = 50000 #in mm
+    sonarWidth = 0 #in 1/6400 of a circle
+    sonarGain = 200 #gain is an unsigned byte
+    sonarRange = 10000 #in mm
     sonarRangeRes = 100 #in mm
     sonarAngularRes = 1
     doPropLimit = 20 #controls prop limit for dist adjustment, int [-127, 127]
@@ -89,6 +89,12 @@ class script(aiScript):
             min([self.options.doPropLimit,
                 self.wallPID.update(distanceError)])])
         self.auv.prop(int(round(doProp)))
+        debug('distance (e=%.3g, ie=%.3g, dg=%.3g)' % (
+            self.wallPID.err,
+            self.wallPID.ierr,
+            self.wallPID.derr
+            ))
+        debug('prop to %s' % doProp)
 
     def run(self):
         info('Wall tracking starting...')
