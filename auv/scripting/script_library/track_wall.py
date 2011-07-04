@@ -11,17 +11,18 @@ import math
 import traceback
 
 class scriptOptions(aiScriptOptions):
-    wallDistance = 2 #distance from wall in metres TODO: check units
-    strafeSpeed = 5 #controls strafe speed, int [-127, 127]
-    wallDistancekPID = (1, 0, 0)
-    depth = 0 #depth
+    wallDistance = 2000 #distance from wall in mm 
+    strafeSpeed = 10 #controls strafe speed, int [-127, 127]
+    wallDistancekPID = (0.05, 0, 0)
+    depth = 0 #depth in metres
     runTime = 30 #run time in seconds
     sonarDirection = 180 #in degrees
     sonarWidth = 1 #in 1/6400 of a circle
     sonarGain = 50
-    sonarRange = 50000
-    sonarRangeRes = 100
+    sonarRange = 50000 #in mm
+    sonarRangeRes = 100 #in mm
     sonarAngularRes = 1
+    doPropLimit = 20 #controls prop limit for dist adjustment, int [-127, 127]
     
     class Meta:
         # list of options that can be changed while the script is running
@@ -32,7 +33,8 @@ class scriptOptions(aiScriptOptions):
                 'sonarDirection',
                 'sonarGain',
                 'sonarRange',
-                'sonarRangeRes'
+                'sonarRangeRes',
+                'doPropLimit'
                 ]
 
 
@@ -70,6 +72,23 @@ class script(aiScript):
     def onSonarDataMessage(self, m):
         #TODO message received?
         debug('received sonar data: %s' % str(m))
+        maxIndex = 0
+        if m.SonarDataLine.range != 0:
+            maxData = 0
+            for index, intensity in enumerate(m.SonarDataLine.data):
+                if maxData < intensity:
+                    maxData = intensity
+                    maxIndex = index
+        distanceToWall = maxIndex * self.auv.sonar._rangeRes
+        debug('Wall at %s mm' % distanceToWall)
+        self.actOnDistance(distanceToWall)
+
+    def actOnDistance(self, distance):
+        distanceError = self.__wallDistance - distance
+        doProp = max([-self.options.doPropLimit, 
+            min([self.options.doPropLimit,
+                self.wallPID.update(distanceError)])])
+        self.auv.prop(int(round(doProp)))
 
     def run(self):
         info('Wall tracking starting...')
