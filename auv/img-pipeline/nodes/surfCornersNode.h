@@ -52,7 +52,7 @@ class SURFCornersNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs[Image_In_Name];
+            cv::Mat img = inputs[Image_In_Name]->mat();
             
             const float threshold = param<float>("hessian threshold");
             const int octaves = param<int>("octaves");
@@ -60,7 +60,7 @@ class SURFCornersNode: public Node{
 
             cv::vector<cv::KeyPoint> cv_corners;
             try{
-                cv::SURF(threshold,octaves,octaveLayers)(img->cvMat(), cv::Mat(), cv_corners);
+                cv::SURF(threshold,octaves,octaveLayers)(img, cv::Mat(), cv_corners);
             }catch(cv::Exception& e){
                 error() << "SURFCornersNode:\n\t"
                         << e.err << "\n\t"

@@ -76,7 +76,7 @@ class FileInputNode: public AsynchronousNode{
             debug(4) << "fileInputNode::doWork";
         
             std::string fname = param<std::string>("filename");
-            image_ptr_t image;
+            cv::Mat image;
 
             if(!m_is_directory){
                 lock_t cl(m_capture_lock);
@@ -84,14 +84,11 @@ class FileInputNode: public AsynchronousNode{
                     image = readImage(fname);
                     clearAllowQueue();
                 }else{
-                    image = boost::make_shared<Image>();
-                    m_capture >> image->cvMat();
-                    if(!image->cvMat().rows || !image->cvMat().cols){
+                    m_capture >> image;
+                    if(image.empty()){
                         debug() << "video stream seems to have finished";
                         closeVideo();
-                        image.reset();
                     }
-                    r["image"] = image;
                 }
             }else{
                 lock_t l(m_dir_mutex);
@@ -102,23 +99,25 @@ class FileInputNode: public AsynchronousNode{
                 // successfully loaded
                 for(; m_iter != end; m_iter++){
                     debug(4)  << "considering path:" << m_iter->string();
-                    if(!boost::filesystem::is_directory(m_iter->status()) &&
-                       (image = readImage(m_iter->string(), false))){
-                        m_iter++;
-                        break;
+                    if(!boost::filesystem::is_directory(m_iter->status())) {
+                        image = readImage(m_iter->string(), false);
+                        if (!image.empty())
+                        {
+                            m_iter++;
+                            break;
+                        }
                     }
                 }
-                if(!image)
+                if(image.empty())
                     warning() << "no images in directory" << fname;
                 // NB: allowQueue not cleared
             }
-            r["image"] = image;
+            r["image"] = boost::make_shared<Image>(image);
 
             return r;
         }
 
-        image_ptr_t readImage(std::string const& fname, bool warn=true) const{
-            image_ptr_t r;
+        cv::Mat readImage(std::string const& fname, bool warn=true) const{
             cv::Mat img;
 
             try{
@@ -129,14 +128,13 @@ class FileInputNode: public AsynchronousNode{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
 
-            if(img.size().width > 0 && img.size().height > 0){
-                r = boost::make_shared<Image>(img);
-                debug(4) << "fileInputNode::readImage:" << fname << "->" << *r;
+            if(!img.empty()){
+                debug(4) << "fileInputNode::readImage:" << fname << "-> (" << img.cols << "," << img.rows << ")";
             }else if(warn){
                 warning() << "fileInputNode::readImage:" << fname << "-> (no image)";
             }
 
-            return r;
+            return img;
         }
 
         bool openVideo(std::string const& fname){

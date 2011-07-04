@@ -39,9 +39,7 @@ class DrawHistogramNode: public Node{
             if(histogram.size() < Min_Width)
                 cols_per_bar = int(0.5 + Min_Width / histogram.size());
 
-            boost::shared_ptr<Image> out = boost::make_shared<Image>(
-                cv::Mat::zeros(rows, histogram.size() * cols_per_bar, CV_8UC1)
-            );
+            cv::Mat out = cv::Mat::zeros(rows, histogram.size() * cols_per_bar, CV_8UC1);
 
             float max = *std::max_element( histogram.begin(), histogram.end());
             for(unsigned i = 0; i < histogram.size(); i++)
@@ -49,10 +47,10 @@ class DrawHistogramNode: public Node{
                     for(unsigned j = 1; j <= unsigned(rows * histogram[i]/max); j++){
                         assert(rows >= j);
                         assert(i*cols_per_bar+k < histogram.size()*cols_per_bar);
-                        out->cvMat().at<uint8_t>(rows - j, i*cols_per_bar+k) = 0xff;
+                        out.at<uint8_t>(rows - j, i*cols_per_bar+k) = 0xff;
                     }
 
-            r[Image_Out_Copied_Name] = out;
+            r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
 
             return r;
         }

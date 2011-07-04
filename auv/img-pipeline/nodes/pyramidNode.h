@@ -47,9 +47,9 @@ class PyramidNode: public Node{
             try{
                 int level = param<int>("level");
             
-                image_ptr_t img = inputs[Image_In_Name];
+                cv::Mat img = inputs[Image_In_Name]->mat();
 
-                cv::Mat out_mat = img->cvMat();
+                cv::Mat out_mat = img;
                 cv::Mat tmp;
                 if (level < 0)
                 {

@@ -47,44 +47,18 @@ class ThresholdMaskNode: public Node{
 
             int threshold = param<int>("threshold (>= is masked)");         
 
-            image_ptr_t img = inputs["channel (not copied)"];
-             
-            if (img->cvMat().channels() !=  1){
-                error() << "ThresholdMaskNode:\n\t"
-                        << "Input image must be single channeled";
-            }
-
-            if (img->cvMat().elemSize() != 1){
-            error() << "ThresholdMaskNode:\n\t"
-                        << "Invalid image input - must be 8-bit";
-                return r;
-            }
-
-        if(!img->cvMat().isContinuous())
-                throw(parameter_error("image must be continuous"));
-        
-            const int max_value=255;
-
-            //int max_value = ( 1 << (8*img->cvMat().elemSize()) ) - 1; left here in case we want this to work for more than 8 bits
-            if (threshold < 1 || threshold > max_value ){  
-                error() << "ThresholdMaskNode:\n\t"
-                        << "Invalid threshold";
-        return r;
-            }
+            cv::Mat img = inputs["channel (not copied)"]->mat();
             
+            const int max_value=255;
+            try {
+                cv::threshold(img, img, threshold, max_value, cv::THRESH_BINARY);
+            }catch(cv::Exception& e){
+                error() << "ThresholdMaskNode:\n\t"
+                        << e.err << "\n\t"
+                        << "in" << e.func << "," << e.file << ":" << e.line;
+            }
 
-            const int elem_size = 1; //img->cvMat().elemSize();
-            const int row_size = img->cvMat().cols; // * elem_size;
-            unsigned char *img_rp, *img_cp;
-            int row, col;
-                    
-            for(row = 0, img_rp = img->cvMat().data; row < img->cvMat().rows; row++, img_rp += row_size){
-                for(col = 0, img_cp = img_rp; col < img->cvMat().cols; col++, img_cp += elem_size){
-          if (int(*img_cp) >= threshold) { *img_cp = max_value; } else { *img_cp = 0;}
-               }
-            }            
-
-            r["output mask"] = img;
+            r["output mask"] = boost::make_shared<Image>(img);
             
             return r;
         }

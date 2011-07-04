@@ -53,10 +53,10 @@ class CannyNode: public Node{
             float ap = param<int>("aperture size");
             float g = param<int>("L2 gradient");
 
-            boost::shared_ptr<Image> dst = boost::make_shared<Image>();
+            cv::Mat dst;
             try{
-                cv::Canny(img->cvMat(), dst->cvMat(), t1, t2, ap, g);
-                r[Image_Out_Copied_Name] = dst;
+                cv::Canny(img->mat(), dst, t1, t2, ap, g);
+                r[Image_Out_Copied_Name] = boost::make_shared<Image>(dst);
             }catch(cv::Exception& e){
                 error() << "CannyNode:\n\t"
                         << e.err << "\n\t"

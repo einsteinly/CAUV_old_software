@@ -99,24 +99,24 @@ class FastMedianNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             
-            if(!img->cvMat().isContinuous())
+            if(!img.isContinuous())
                 throw(parameter_error("image must be continuous"));
-            if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if((img.type() & CV_MAT_DEPTH_MASK) != CV_8U)
                 throw(parameter_error("image must be unsigned bytes"));
-            if(img->cvMat().channels() > 3)
+            if(img.channels() > 3)
                 throw(parameter_error("image must be <= 3-channel"));
                 // TODO: support vector parameters
             
             int radius = param<int>("radius");
             
-            const int channels = img->cvMat().channels();
-            const int rows = img->cvMat().rows;
-            const int cols = img->cvMat().cols;
-            const int elem_size = img->cvMat().elemSize();
+            const int channels = img.channels();
+            const int rows = img.rows;
+            const int cols = img.cols;
+            const int elem_size = img.elemSize();
             const std::vector<int> ad = calcApertureDiff(radius);
-            const cv::Mat& imat = img->cvMat();
+            const cv::Mat& imat = img;
             
             std::vector< HistAccumulator > accum(3, HistAccumulator());
             cv::Mat output(imat.size(), imat.type());

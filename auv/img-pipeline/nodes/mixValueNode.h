@@ -48,7 +48,7 @@ class MixValueNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             
             float img_f = param<float>("image fac");
             float mix_f = param<float>("mix fac");
@@ -58,24 +58,24 @@ class MixValueNode: public Node{
                 param<int>("ch3")
             };
             
-            if(!img->cvMat().isContinuous())
+            if(!img.isContinuous())
                 throw(parameter_error("image must be continuous"));
-            if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if(img.depth() != CV_8U)
                 throw(parameter_error("image must be unsigned bytes"));
-            if(img->cvMat().channels() > 3)
+            if(img.channels() > 3)
                 throw(parameter_error("image must be <= 3-channel"));            
 
-            const int elem_size = img->cvMat().elemSize();
-            const int row_size = img->cvMat().cols * elem_size;
+            const int elem_size = img.elemSize();
+            const int row_size = img.step;
             unsigned char *img_rp, *img_cp, *img_bp;
             int row, col, ch;
 
-            for(row = 0, img_rp = img->cvMat().data; row < img->cvMat().rows; row++, img_rp += row_size)
-                for(col = 0, img_cp = img_rp; col < img->cvMat().cols; col++, img_cp += elem_size)
-                    for(ch = 0, img_bp = img_cp; ch < img->cvMat().channels(); ch++, img_bp++)
+            for(row = 0, img_rp = img.data; row < img.rows; row++, img_rp += row_size)
+                for(col = 0, img_cp = img_rp; col < img.cols; col++, img_cp += elem_size)
+                    for(ch = 0, img_bp = img_cp; ch < img.channels(); ch++, img_bp++)
                         *img_bp = clamp_cast<unsigned char>(0, (*img_bp * img_f) + (mix[ch] * mix_f) + 0.5f, 255);
             
-            r["image (not copied)"] = img;
+            r["image (not copied)"] = boost::make_shared<Image>(img);
             
             return r;
         }

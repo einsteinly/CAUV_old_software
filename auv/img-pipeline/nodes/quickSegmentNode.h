@@ -45,35 +45,34 @@ class QuickSegmentNode: public OutputNode{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             
             float scale = param<float>("scale");
 
             cv::Scalar mean, stdev;
 
             try{
-                    cv::meanStdDev(img->cvMat(), mean, stdev);
-                    boost::shared_ptr<Image> out = boost::make_shared<Image>();
-                    out->cvMat().zeros(img->cvMat().size(), CV_8UC1);
+                cv::meanStdDev(img, mean, stdev);
+                cv::Mat out = cv::Mat::zeros(img.size(), CV_8UC1);
 
-                    cv::MatConstIterator_<cv::Scalar> src_it, dest_it;
-                    for(src_it = img->cvMat().begin<cv::Scalar>(),
-                        dest_it = out->cvMat().begin<cv::Scalar>();
-                        src_it != img->cvMat().end<cv::Scalar>();
-                        ++src_it, ++dest_it)
+                cv::MatConstIterator_<cv::Scalar> src_it, dest_it;
+                for(src_it = img.begin<cv::Scalar>(),
+                    dest_it = out.begin<cv::Scalar>();
+                    src_it != img.end<cv::Scalar>();
+                    ++src_it, ++dest_it)
+                {
+                    for(int i = 0; i < 3; i++)
                     {
-                        for(int i = 0; i < 3; i++)
+                        cv::Scalar pix = *src_it;
+                        if((pix[i] - mean[i]) * (pix[i] - mean[i]) <
+                            scale * stdev[i] * scale * stdev[i])
                         {
-                            cv::Scalar pix = *src_it;
-                            if((pix[i] - mean[i]) * (pix[i] - mean[i]) <
-                                scale * stdev[i] * scale * stdev[i])
-                            {
-                                *dest_it = 255;
-                                break;
-                            }
+                            *dest_it = 255;
+                            break;
                         }
                     }
-                    r["mask"] = out;
+                }
+                r["mask"] = boost::make_shared<Image>(out);
                     
             }catch(cv::Exception& e){
                 error() << "QuickSegmentNode:\n\t"
