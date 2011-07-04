@@ -13,6 +13,10 @@ import traceback
 
 class scriptOptions(aiScriptOptions):
     optionName = 4 # for example
+    wallDistance = 2 #distance from wall
+    strafeSpeed = 5 #controls strafe speed
+    strafekPID = (1, 0, 0)
+    depthkPID = (1, 0, 0)
     
     class Meta:
         # list of options that can be changed while the script is running

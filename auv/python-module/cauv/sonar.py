@@ -1,5 +1,7 @@
 import messaging
 
+from math import pi
+
 #pylint: disable=E1101
 
 class Sonar:
@@ -12,28 +14,52 @@ class Sonar:
         self._rangeRes = 10
         self._angularRes = 16
 
-    def direction(self, val):
-        self._direction = val
+    _exact_degree_ratio = 17 # 6400 / 360
+    _exact_radian_ratio = 3200 / pi # 6400 / 2pi
+
+    def set_direction_degrees(self, val):
+        # updates direction to val degrees
+        self._direction = self._exact_degree_ratio * val
         self.update()
 
-    def width(self, val):
-        self._width = val
+    def set_direction_radians(self, val):
+        # updates direction to val radians
+        self._direction = self._exact_radian_ratio * val
         self.update()
 
-    def gain(self, val):
+    def set_width_degrees(self, val):
+        # updates width to val degrees
+        self._width = self._exact_degree_ratio * val
+        self.update()
+
+    def set_width_radians(self, val):
+        # updates width to val radians
+        self._width = self._exact_radian_ratio * val
+        self.update()
+
+    def set_gain(self, val):
+        # val is an unsigned byte, [0, 255]
         self._gain = val
         self.update()
 
-    def range(self, val):
+    def set_range(self, val):
+        # val is in mm and non-negative
         self._range = val
         self.update()
 
-    def rangeRes(self, val):
+    def set_rangeRes(self, val):
+        # val is in mm and non-negative
         self._rangeRes = val
         self.update()
 
-    def angularRes(self, val):
-        self._angularRes = val
+    def set_angularRes_degrees(self, val):
+        # updates angularRes to val degrees
+        self._angularRes = self._exact_degree_ratio * val
+        self.update()
+
+    def set_angularRes_radians(self, val):
+        # updates angularRes to val radians
+        self._angularRes = self._exact_radian_ratio * val
         self.update()
 
     def update(self):
