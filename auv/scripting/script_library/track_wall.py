@@ -16,21 +16,28 @@ class scriptOptions(aiScriptOptions):
     wallDistancekPID = (1, 0, 0)
     depth = 0 #depth
     runTime = 30 #run time in seconds
-    sonarAngle = 180 #in degrees
+    sonarDirection = 180 #in degrees
+    sonarWidth = 1 #in 1/6400 of a circle
+    sonarGain = 50
+    sonarRange = 50000
+    sonarRangeRes = 100
+    sonarAngularRes = 1
     
     class Meta:
         # list of options that can be changed while the script is running
         dynamic = [
-                'wallDistancekPID',
                 'strafeSpeed',
+                'wallDistancekPID',
                 'depth',
-                'sonarAngle'
+                'sonarDirection',
+                'sonarGain',
+                'sonarRange',
+                'sonarRangeRes'
                 ]
 
 
 class script(aiScript):
     def __init__(self, script_name, opts):
-        #TODO point sonar back
         aiScript.__init__(self, script_name, opts)
         # self.node is set by aiProcess (base class of aiScript)
         # self.auv is also available, and can be used to control the vehicle
@@ -39,19 +46,29 @@ class script(aiScript):
         self.__wallDistance = self.options.wallDistance
         self.__strafeSpeed = self.options.strafeSpeed
         self.wallPID = PIDController(self.options.wallDistancekPID)
+        self.__depth = self.options.depth
         self.__runtTime = self.options.runTime
+        self.auv.sonar.directionDegrees(self.options.sonarDirection)
+        self.auv.sonar.width(self.options.sonarWidth)
+        self.auv.sonar.gain(self.options.sonarGain)
+        self.auv.sonar.range(self.options.sonarRange)
+        self.auv.sonar.rangeRes(self.options.sonarRangeRes)
 
     def reloadOptions(self):
-        self.__wallDistance = self.options.wallDistance
         self.__strafeSpeed = self.options.strafeSpeed
         self.wallPID = self.wallPID.setKpid(self.options.wallDistancekPID)
+        self.__depth = self.options.depth
+        self.auv.sonar.directionDegrees(self.options.sonarDirection)
+        self.auv.sonar.gain(self.options.sonarGain)
+        self.auv.sonar.range(self.options.sonarRange)
+        self.auv.sonar.rangeRes(self.options.sonarRangeRes)
     
     def optionChanged(self, option_name):
         info('notified that %s changed to %s' % (option_name[0], option_name[1]))
         self.reloadOptions()
    
     def onSonarDataMessage(self, m):
-        #TODO 
+        #TODO message received?
         debug('received sonar data: %s' % str(m))
 
     def run(self):
