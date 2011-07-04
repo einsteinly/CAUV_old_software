@@ -57,21 +57,15 @@ class QuickSegmentNode: public OutputNode{
                     out->cvMat().zeros(img->cvMat().size(), CV_8UC1);
 
                     cv::MatConstIterator_<cv::Scalar> src_it, dest_it;
+                    cv::MatConstIterator_<cv::Scalar> end_it =
+                        img->cvMat().end<cv::Scalar>();
                     for(src_it = img->cvMat().begin<cv::Scalar>(),
                         dest_it = out->cvMat().begin<cv::Scalar>();
-                        src_it != img->cvMat().end<cv::Scalar>();
+                        src_it != end_it;
                         ++src_it, ++dest_it)
                     {
-                        for(int i = 0; i < 3; i++)
-                        {
-                            cv::Scalar pix = *src_it;
-                            if((pix[i] - mean[i]) * (pix[i] - mean[i]) <
-                                scale * stdev[i] * scale * stdev[i])
-                            {
-                                *dest_it = 255;
-                                break;
-                            }
-                        }
+                        if(cv::norm(*src_it - mean) < scale * cv::norm(stdev))
+                            *dest_it = 255;
                     }
                     r["mask"] = out;
                     
