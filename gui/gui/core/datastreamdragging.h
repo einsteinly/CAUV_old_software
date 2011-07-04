@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <gui/core/streams/streams.h>
+#include <gui/core/model/nodes.h>
 
 // for types
 #include <generated/messages_fwd.h>
@@ -14,27 +14,26 @@ class QDragEnterEvent;
 namespace cauv {
     namespace gui {
 
-        class DataStreamDragSource{
+        class NodeDragSource{
         public:
-            virtual boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > getDataStreams() = 0;
+            virtual boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > getDroppedNodes() = 0;
         };
 
 
-        class DataStreamDropListener {
+        class NodeDropListener {
         public:
             virtual void dragEnterEvent(QDragEnterEvent *event);
             virtual void dropEvent(QDropEvent *event);
 
         protected:
-            virtual bool routeStream(boost::shared_ptr<DataStreamBase> s);
-            virtual void onStreamDropped(boost::shared_ptr<IntStream> stream);
-            virtual void onStreamDropped(boost::shared_ptr<FloatStream> stream);
 
-            //virtual void onStreamDropped(boost::shared_ptr<DataStream<float> > stream);
-            //virtual void onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream);
-            //virtual void onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream);
-            //virtual void onStreamDropped(boost::shared_ptr<DataStream<Image> > stream);
-            //virtual void onStreamDropped(boost::shared_ptr<DataStream<MotorDemand> > stream);
+            bool routeStream(boost::shared_ptr<NodeBase> s);
+
+            void onNodeDropped(boost::shared_ptr<NumericNode> );
+            void onNodeDropped(boost::shared_ptr<ImageNode> );
+            void onNodeDropped(boost::shared_ptr<FloatYPRNode> );
+            void onNodeDropped(boost::shared_ptr<FloatXYZNode> );
+            void onNodeDropped(boost::shared_ptr<GroupingNode> );
         };
 
     } // namespace gui

@@ -103,6 +103,8 @@ void CauvGui::onRun()
 
     m_auv->populate();
 
+    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode>("prop")->set(1);
+
     // load plugins
     // static plugins first
     foreach (QObject *plugin, QPluginLoader::staticInstances())
@@ -117,18 +119,6 @@ void CauvGui::onRun()
     QSettings settings("CAUV", "Cambridge AUV");
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
-
-
-
-
-    // message inputs and outputs
-    //foreach(boost::shared_ptr<BaseController> controller, m_auv->getControllers())
-    //{
-    //    addMessageObserver(controller);
-    //    connect(controller.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)));
-    //}
-
-    m_auv->motors->find<NumericNode>("prop")->set(1);
 
     show();
     m_application->exec();

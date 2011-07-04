@@ -16,11 +16,11 @@ endfunction()
 
 # plugin directories
 #add_subdirectory (example)
-#add_subdirectory (datastreamdisplay)
+add_subdirectory (datastreamdisplay)
 #add_subdirectory (console)
 #add_subdirectory (pipeline)
 #add_subdirectory (processes)
-add_subdirectory (motorcontrol)
+#add_subdirectory (motorcontrol)
 #add_subdirectory (logs)
 
 #if (CAUV_GUI_MAP)

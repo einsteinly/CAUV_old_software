@@ -24,6 +24,7 @@ namespace cauv {
         namespace GuiNodeType {
             enum e {
                 NumericNode,
+                StringNode,
                 ImageNode,
                 FloatYPRNode,
                 FloatXYZNode,
@@ -101,7 +102,19 @@ namespace cauv {
                 }
                 std::stringstream str;
                 str << "Node not found: " << name;
-                throw new std::out_of_range(str.str());
+                throw std::out_of_range(str.str());
+            }
+
+            template <class T>
+            boost::shared_ptr<T> findOrCreate(std::string name){
+                try {
+                    return find<T>(name);
+                } catch (std::out_of_range){
+                    info() << "New node added" << name;
+                    boost::shared_ptr<T> newNode = boost::make_shared<T>(name);
+                    this->addChild(newNode);
+                    return newNode;
+                }
             }
 
             virtual bool isMutable(){
@@ -186,13 +199,21 @@ namespace cauv {
 
 
 
-        typedef boost::variant<int, float, int8_t, floatYPR, floatXYZ> numeric_variant_t;
+        typedef boost::variant<bool, unsigned int, int, float, int8_t> numeric_variant_t;
 
         class NumericNode : public Node<numeric_variant_t> {
             Q_OBJECT
 
         public:
             NumericNode(std::string name) : Node<numeric_variant_t>(GuiNodeType::NumericNode, name){
+            }
+
+            virtual std::string getUnits(){
+                return m_units;
+            }
+
+            virtual void setUnits(std::string units) {
+                m_units = units;
             }
 
         public Q_SLOTS:
@@ -210,13 +231,42 @@ namespace cauv {
         Q_SIGNALS:
             void onUpdate(numeric_variant_t value);
             void onSet(numeric_variant_t value);
+
+        protected:
+            std::string m_units;
         };
 
 
 
 
+        class StringNode : public Node<std::string> {
+            Q_OBJECT
 
-        typedef const Image * image_variant_t;
+        public:
+            StringNode(std::string name) : Node<std::string>(GuiNodeType::StringNode, name){
+            }
+
+        public Q_SLOTS:
+
+            virtual void update(std::string value){
+                Node<std::string>::update(value);
+                Q_EMIT onUpdate(value);
+            }
+
+            virtual void set(std::string value){
+                Node<std::string>::set(value);
+                Q_EMIT onSet(value);
+            }
+
+        Q_SIGNALS:
+            void onUpdate(std::string value);
+            void onSet(std::string value);
+        };
+
+
+
+
+        typedef boost::shared_ptr<const Image> image_variant_t;
 
         class ImageNode : public Node<image_variant_t> {
             Q_OBJECT
@@ -361,113 +411,6 @@ namespace cauv {
 
         };
 
-
-
-
-/*
-
-
-
-        class MessageGenerator : public QObject {
-            Q_OBJECT
-
-        Q_SIGNALS:
-            void messageGenerated(boost::shared_ptr<Message>);
-
-        };
-
-
-        template <class T, class controllertype, class streamtype>
-                class SetHandler : public AbstractChangeHandler<T> {
-                public:
-            SetHandler<T, controllertype, streamtype>(boost::shared_ptr<controllertype> controller, boost::shared_ptr<streamtype> stream) :
-                    m_controller(controller), m_stream(stream) {
-            }
-
-            void set(T){
-                m_controller->sendUpdate(m_stream);
-            }
-
-            void update(T){
-                // do nothing
-            }
-
-            bool isMutable(){
-                return true;
-            }
-
-            boost::shared_ptr<controllertype> m_controller;
-            boost::shared_ptr<streamtype> m_stream;
-        };
-
-
-        class Controller : public std::vector<boost::shared_ptr<DataStreamBase> >, public MessageGenerator, public MessageObserver, public boost::enable_shared_from_this<Controller> {
-
-        public:
-
-            void add(boost::shared_ptr<DataStreamBase> stream){
-                push_back(stream);
-            }
-
-            template <class T, class controllertype, class streamtype>
-                    void addWithHandler(boost::shared_ptr<streamtype> stream){
-                add(stream);
-                stream->setChangeHandler(boost::make_shared<SetHandler<T, controllertype, streamtype> >(stream, shared_from_this()));
-            }
-
-            virtual void sendUpdate(boost::shared_ptr<DataStreamBase> source);
-        };
-
-
-        class MotorController : public Controller {
-
-        public:
-
-            boost::shared_ptr<IntStream> speed;
-
-            MotorController(MotorID::e id):
-                    speed(boost::make_shared<IntStream>("speed")),
-                    m_id(id) {
-                addWithHandler<int, MotorController, IntStream>(speed);
-            }
-
-
-            void onMotorStateMessage(MotorMessage_ptr m){
-                if(m->motorId() == m_id)
-                    speed->update(m->speed());
-            }
-
-            void set(IntStream, int t){
-                Q_EMIT messageGenerated(boost::make_shared<MotorMessage>(m_id, t));
-            }
-
-        protected:
-            MotorID::e m_id;
-
-        };
-
-
-
-
-        class AUV
-        {
-            std::vector<boost::shared_ptr<Controller> > m_controllers;
-
-        public:
-
-            boost::shared_ptr<MotorController> prop;
-
-            AUV() : prop(boost::make_shared<MotorController>(MotorID::Prop))
-            {
-                m_controllers.push_back(prop);
-
-            }
-
-            std::vector<boost::shared_ptr<Controller> > getControllers() {
-                return m_controllers;
-            }
-
-        };*/
 
     } // namespace gui
 } // namespace cauv

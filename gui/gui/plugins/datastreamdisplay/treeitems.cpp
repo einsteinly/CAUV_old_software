@@ -4,24 +4,21 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 using namespace cauv;
+using namespace cauv::gui;
 
-DataStreamTreeItemBase::DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase> stream, QTreeWidgetItem * parent):
-        QTreeWidgetItem(parent), m_stream(stream){
-    if(stream->isMutable()) {
+NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidgetItem * parent):
+        QTreeWidgetItem(parent), m_node(node){
+    this->setText(0, QString::fromStdString(node->nodeName(false)));
+    if(node->isMutable()) {
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
-
-    qRegisterMetaType<Image>("Image");
-
-    connect(this, SIGNAL(iconUpdated(int, Image)), this, SLOT(updateIcon(int, Image)));
-    connect(this, SIGNAL(valueUpdated(QString)), this, SLOT(updateValue(QString)));
 }
 
-void DataStreamTreeItemBase::updateIcon(int cell, QImage &image){
+void NodeTreeItemBase::updateIcon(int cell, QImage &image){
     this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
 }
 
-void DataStreamTreeItemBase::updateIcon(int cell, const Image &image){
+void NodeTreeItemBase::updateIcon(int cell, const Image &image){
     try {
         cv::Mat mat_rgb;
         cv::cvtColor(image.cvMat(), mat_rgb, CV_BGR2RGB);
@@ -36,20 +33,21 @@ void DataStreamTreeItemBase::updateIcon(int cell, const Image &image){
     }
 }
 
-void DataStreamTreeItemBase::updateValue(const QString value) {
+void NodeTreeItemBase::updateValue(const QString value) {
     // no update if editing
     if(!(this->flags() & Qt::ItemIsEditable))
         this->setText(1, value);
 }
 
-boost::shared_ptr<DataStreamBase> DataStreamTreeItemBase::getDataStreamBase(){
-    return m_stream;
+boost::shared_ptr<NodeBase> NodeTreeItemBase::getNode(){
+    return m_node;
 }
 
 
 
 
-template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value){
+/*
+template<> void NodeTreeItem<int8_t>::onChange(const int8_t value){
     std::stringstream stream;
     stream << (int)value;
     Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
@@ -79,3 +77,4 @@ template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& ){
     throw new boost::bad_lexical_cast;
 }
 
+*/

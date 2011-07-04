@@ -4,16 +4,16 @@
 #include "treeitems.h"
 
 #include <gui/core/widgets/videoscreen.h>
-#include "graphs.h"
+//#include "graphs.h"
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>
 
 using namespace cauv;
+using namespace cauv::gui;
 
-
-boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamList::getDataStreams() {
-    boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<DataStreamBase> > >();
+boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > DataStreamList::getDroppedNodes() {
+    boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<NodeBase> > >();
 
     QModelIndexList items = this->selectedIndexes();
     QModelIndexList::iterator i;
@@ -21,9 +21,9 @@ boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > > DataStreamLi
         QModelIndex index = (*i);
         if(index.column() == 0) {
             QTreeWidgetItem *item = static_cast<QTreeWidgetItem*>(index.internalPointer());
-            DataStreamTreeItemBase * dsItem = dynamic_cast<DataStreamTreeItemBase*>(item);
+            NodeTreeItemBase * dsItem = dynamic_cast<NodeTreeItemBase*>(item);
             if(dsItem)
-                streams->push_back(dsItem->getDataStreamBase());
+                streams->push_back(dsItem->getNode());
         }
     }
     return streams;
@@ -53,6 +53,13 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
 
     error() << "Initisaliing data strema plugin";
 
+
+    QTreeWidgetItem *motors = new QTreeWidgetItem(ui->dataStreams);
+
+    new NumericNodeTreeItem(auv->find<GroupingNode>("motors")->find<NumericNode>("prop"), motors);
+
+
+    /*
     //
     // motors
     //
@@ -159,7 +166,7 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     other->setText(0, "Other");
     other->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);
     new DataStreamTreeItem<int32_t>(auv->debug_level, other);
-
+*/
 }
 
 DataStreamPicker::~DataStreamPicker(){
@@ -219,13 +226,40 @@ void DataStreamDisplayArea::addWindow(boost::shared_ptr<QWidget> content){
 }
 
 void DataStreamDisplayArea::dropEvent(QDropEvent * event){
-    DataStreamDropListener::dropEvent(event);
+    NodeDropListener::dropEvent(event);
 }
 
 void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
-    DataStreamDropListener::dragEnterEvent(event);
+    NodeDropListener::dragEnterEvent(event);
 }
 
+
+void NodeDropListener::onNodeDropped(boost::shared_ptr<NumericNode> node){
+    info() << "drop" << node->nodeName();
+}
+
+void NodeDropListener::onNodeDropped(boost::shared_ptr<ImageNode> node){
+    info() << "drop" << node->nodeName();
+
+}
+
+void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
+    info() << "drop" << node->nodeName();
+
+}
+
+void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
+    info() << "drop" << node->nodeName();
+
+}
+
+void NodeDropListener::onNodeDropped(boost::shared_ptr<GroupingNode> node){
+    info() << "drop" << node->nodeName();
+
+}
+
+
+/*
 void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream){
     addWindow(boost::make_shared<GraphWidget>(stream));
 }
@@ -251,7 +285,7 @@ void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<Image> 
     addWindow(vs);
     stream->onUpdate.connect(DataStream<Image>::signal_type::slot_type(&VideoScreen::setImage, vs.get(), _1).track(vs));
 }
-
+*/
 
 
 
@@ -268,18 +302,18 @@ DataStreamList::DataStreamList(QWidget * parent) : QTreeWidget(parent){
 
 void DataStreamList::editStarted(QTreeWidgetItem* item, int column){
     if(column == 1){
-        cauv::DataStreamTreeItemBase * dsItem = dynamic_cast<cauv::DataStreamTreeItemBase*>(item);
-        if(dsItem && dsItem->getDataStreamBase()->isMutable()){
+        cauv::gui::NodeTreeItemBase * dsItem = dynamic_cast<cauv::gui::NodeTreeItemBase*>(item);
+        if(dsItem && dsItem->getNode()->isMutable()){
             item->setFlags(item->flags() | Qt::ItemIsEditable);
         }
     }
 }
 
 void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
-    cauv::DataStreamTreeItemBase * dsItem = dynamic_cast<cauv::DataStreamTreeItemBase*>(item);
+    cauv::gui::NodeTreeItemBase * dsItem = dynamic_cast<cauv::gui::NodeTreeItemBase*>(item);
 
     // 1 is the editable cell that stores the value
-    if(column == 1 && dsItem && dsItem->getDataStreamBase()->isMutable()){
+    if(column == 1 && dsItem && dsItem->getNode()->isMutable()){
         QVariant v = item->data(column, Qt::DisplayRole);
         if(!v.toString().isEmpty()) {
             // if the item is marked as editable then the change came from a user interaction
@@ -292,7 +326,7 @@ void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
                 item->setFlags(item->flags() & (~Qt::ItemIsEditable));
 
                 // do the update and check the result
-                if(dsItem->updateStream(v)){
+                if(dsItem->updateNode(v)){
                     // reset the background if all is ok
                     item->setBackground(1, QBrush());
                 } else  {

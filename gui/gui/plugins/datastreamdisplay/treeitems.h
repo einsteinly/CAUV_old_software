@@ -4,113 +4,132 @@
 #include <QVariant>
 #include <QTreeWidgetItem>
 
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 
 #include <debug/cauv_debug.h>
-#include <model/auv_model.h>
+#include <gui/core/model/nodes.h>
+#include <gui/core/model/model.h>
 
 namespace cauv {
+    namespace gui {
 
-    /**
-  * A DataStreamTreeItemBase is used as the base class for one row in the
+        /**
+  * A NodeTreeItemBase is used as the base class for one row in the
   * table of data streams.
   *
   * @author Andy Pritchard
   */
-    class DataStreamTreeItemBase : public QObject, public QTreeWidgetItem {
-        Q_OBJECT
-    public:
-        DataStreamTreeItemBase(boost::shared_ptr<DataStreamBase> stream, QTreeWidgetItem * parent);
-        virtual ~DataStreamTreeItemBase(){}
-        boost::shared_ptr<DataStreamBase> getDataStreamBase();
-        virtual bool updateStream(QVariant& ) = 0;
+        class NodeTreeItemBase : public QObject, public QTreeWidgetItem {
+            Q_OBJECT
+        public:
+            NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidgetItem * parent);
+            virtual ~NodeTreeItemBase(){}
+            boost::shared_ptr<NodeBase> getNode();
+            virtual bool updateNode(QVariant& value) = 0;
 
-    protected Q_SLOTS:
-        void updateIcon(int cell, QImage &image);
-        void updateIcon(int cell, const Image &image);
-        void updateValue(const QString value);
+        protected Q_SLOTS:
+            void updateIcon(int cell, QImage &image);
+            void updateIcon(int cell, const Image &image);
+            void updateValue(const QString value);
 
-    Q_SIGNALS:
-        void iconUpdated(int cell, const Image &image);
-        void valueUpdated(const QString value);
-
-    private:
-        boost::shared_ptr<DataStreamBase> m_stream;
-    };
+        private:
+            boost::shared_ptr<NodeBase> m_node;
+        };
 
 
-    /**
-  * A DataStreamTreeItem is responsible for updating the DataStream (if its
-  * mutable) and updating the table when the DataStream's value changes.
+        /**
+  * A NodeTreeItem is responsible for updating the node (if its
+  * mutable) and updating the table when the nodes value changes.
   * It is also where the name cell is filled in.
   *
   * @author Andy Pritchard
   */
-    template<class T>
-    class DataStreamTreeItem : public DataStreamTreeItemBase, public boost::signals2::trackable {
 
-    public:
-        DataStreamTreeItem(boost::shared_ptr< DataStream<T> > stream, QTreeWidgetItem * parent) :
-                DataStreamTreeItemBase(stream, parent), m_stream(stream) {
-            stream->onUpdate.connect(boost::bind(&DataStreamTreeItem<T>::onChange, this, _1));
-            this->setText(0, QString::fromStdString(stream->getName(false)));
-            onChange(stream->latest());
-        }
+        template<class T>
+        class NodeTreeItem : public NodeTreeItemBase {
 
-        T qVariantToValue(QVariant& v){
-            std::string value = v.toString().toStdString();
-
-            try {
-                int unitsLength = m_stream->getUnits().length();
-                // take out where the units should be
-                std::string units = value.substr(value.length()-unitsLength, unitsLength);
-                if(units == m_stream->getUnits()){
-                    value = value.substr(0, value.length()-unitsLength);
-                }
-            } catch (std::out_of_range){ }
-
-            return boost::lexical_cast<T>(value);
-        }
-
-        virtual bool updateStream(QVariant& value){
-            if(!m_stream->isMutable()) return false;
-
-            try {
-                boost::shared_ptr<MutableDataStream<T> > stream = boost::shared_static_cast<MutableDataStream<T> >(m_stream);
-                stream->set(qVariantToValue(value));
-                info() << m_stream->getName() << " value changed to: " << value.toString().toStdString();
-                return true;
-            } catch (boost::bad_lexical_cast){
-                info() << m_stream->getName() << " given a bad value:" << value.toString().toStdString();
-                return false;
+        public:
+            NodeTreeItem(boost::shared_ptr<Node<T> > node, QTreeWidgetItem * parent) :
+                    NodeTreeItemBase(node, parent), m_node(node) {
             }
-        }
 
-    protected:
-        boost::shared_ptr< DataStream<T> > m_stream;
+            virtual T qVariantToValue(QVariant& v) = 0;
 
-        void onChange(const T value) {
-            std::stringstream stream;
-            stream << value << m_stream->getUnits();
-            Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
-        }
-    };
+            virtual bool updateNode(QVariant& value){
+                if(!m_node->isMutable()) return false;
+
+                try {
+                    m_node->set(qVariantToValue(value));
+                    info() << m_node->nodeName() << " value changed to: " << value.toString().toStdString();
+                    return true;
+                } catch (boost::bad_lexical_cast){
+                    info() << m_node->nodeName() << " given a bad value:" << value.toString().toStdString();
+                    return false;
+                }
+            }
+
+            virtual void onChange(T value){
+                std::stringstream str;
+                str << value;
+                updateValue(QString::fromStdString(str.str()));
+            }
+
+        protected:
+            boost::shared_ptr<Node<T> > m_node;
+        };
 
 
-    // partial specializations
-    // need one for int8_t as it prints as a char not as an int, so we cast it
-    // to int in the implementation before printing
-    template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value);
+
+
+        class NumericNodeTreeItem : public NodeTreeItem<numeric_variant_t> {
+            Q_OBJECT
+        public:
+            NumericNodeTreeItem(boost::shared_ptr<NumericNode> node, QTreeWidgetItem * parent) :
+                    NodeTreeItem<numeric_variant_t>(node, parent), m_node(node) {
+                node->connect(node.get(), SIGNAL(onUpdate(numeric_variant_t)), this, SLOT(onChange(numeric_variant_t)));
+                onChange(node->get());
+            }
+            
+            virtual numeric_variant_t qVariantToValue(QVariant& v){
+                std::string value = v.toString().toStdString();
+
+                try {
+                    int unitsLength = m_node->getUnits().length();
+                    // take out where the units should be
+                    std::string units = value.substr(value.length()-unitsLength, unitsLength);
+                    if(units == m_node->getUnits()){
+                        value = value.substr(0, value.length()-unitsLength);
+                    }
+                } catch (std::out_of_range){ }
+
+                // TODO: correct parsing of type, either int or float should so
+                return numeric_variant_t(boost::lexical_cast<float>(value));
+            }
+
+        protected Q_SLOTS:
+            void onChange(numeric_variant_t value){
+                std::stringstream str;
+                str << value << " " << m_node->getUnits();
+                updateValue(QString::fromStdString(str.str()));
+            }
+
+        protected:
+            boost::shared_ptr<NumericNode> m_node;
+        };
+
+        // partial specializations
+        // need one for int8_t as it prints as a char not as an int, so we cast it
+        // to int in the implementation before printing
+        /*template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value);
     template<> void DataStreamTreeItem<Image>::onChange(const Image value);
     // another for int8_t for much the same reason but with lexical cast this time
-    template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant& value);
-    // also need some for out types as lexical cast doesn't know what to do
-    template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& value);
-    template<> MotorDemand DataStreamTreeItem<MotorDemand>::qVariantToValue(QVariant& value);
-    template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& value);
-
+        template<> int8_t NodeTreeItem<int8_t>::qVariantToValue(QVariant& value);
+        // also need some for out types as lexical cast doesn't know what to do
+        template<> MotorDemand NodeTreeItem<MotorDemand>::qVariantToValue(QVariant& value);
+        template<> Image NodeTreeItem<Image>::qVariantToValue(QVariant& value);
+*/
+    } // namespace gui
 } // namespace cauv
 
 #endif // TREEITEMS_H

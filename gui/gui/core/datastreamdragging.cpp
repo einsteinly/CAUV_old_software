@@ -13,88 +13,70 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-void DataStreamDropListener::dragEnterEvent(QDragEnterEvent *event)
+void NodeDropListener::dragEnterEvent(QDragEnterEvent *event)
 {
     event->acceptProposedAction();
 }
 
-void DataStreamDropListener::dropEvent(QDropEvent *event)
+void NodeDropListener::dropEvent(QDropEvent *event)
 {
     event->acceptProposedAction();
 
-    DataStreamDragSource * source = dynamic_cast<DataStreamDragSource*> (event->source());
+    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
     if(source) {
         info() << "Drag receieved from " << source;
 
-        boost::shared_ptr<std::vector<boost::shared_ptr<DataStreamBase> > >  streams = source->getDataStreams();
-        std::vector<boost::shared_ptr<DataStreamBase> >::iterator it;
+        boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > >  streams = source->getDroppedNodes();
+        std::vector<boost::shared_ptr<NodeBase> >::iterator it;
         for (it = streams->begin(); it!=streams->end(); ++it) {
             routeStream(*it);
         }
     }
 }
 
-bool DataStreamDropListener::routeStream(boost::shared_ptr<DataStreamBase> s){
+bool NodeDropListener::routeStream(boost::shared_ptr<NodeBase> s){
 
-    if(dynamic_cast<IntStream *>(s.get())) {
-        info() << s->getName() << " - IntStream dropped";
-        onStreamDropped(boost::static_pointer_cast<IntStream >(s));
+    switch (s->type){
+    case GuiNodeType::NumericNode:
+        onNodeDropped(boost::static_pointer_cast<NumericNode>(s));
+        break;
+    case GuiNodeType::ImageNode:
+        onNodeDropped(boost::static_pointer_cast<ImageNode>(s));
+        break;
+    case GuiNodeType::FloatYPRNode:
+        onNodeDropped(boost::static_pointer_cast<FloatYPRNode>(s));
+        break;
+    case GuiNodeType::FloatXYZNode:
+        onNodeDropped(boost::static_pointer_cast<FloatXYZNode>(s));
+        break;
+    case GuiNodeType::GroupingNode:
+        onNodeDropped(boost::static_pointer_cast<GroupingNode>(s));
+        break;
+    default:
+        error() << "Unknown node type dropped";
+        return false;
     }
-    else if(dynamic_cast<FloatStream *>(s.get())) {
-        info() << s->getName() << " - FloatStream dropped";
-        onStreamDropped(boost::static_pointer_cast<FloatStream >(s));
-    }/*
-    else if(dynamic_cast<DataStream<float> *>(s.get())) {
-        info() << s->getName() << " - float stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<float> >(s));
-    }
-    else if(dynamic_cast<DataStream<uint16_t> *>(s.get())) {
-        info() << s->getName() << " - uint16_t stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<uint16_t> >(s));
-    }
-    else if(dynamic_cast<DataStream<floatYPR> *>(s.get())){
-        info() << s->getName() << " - floatYPR stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<floatYPR> >(s));
-    }
-    else if(dynamic_cast<DataStream<Image> *>(s.get())){
-        info() << s->getName() << " - Image stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<Image> >(s));
-    }
-    else if(dynamic_cast<DataStream<MotorDemand> *>(s.get())){
-        info() << s->getName() << " - MotorDemand stream dropped";
-        onStreamDropped(boost::static_pointer_cast<DataStream<MotorDemand> >(s));
-    }*/
-    else return false;
 
     return true;
 }
 
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<IntStream> ){
+void NodeDropListener::onNodeDropped(boost::shared_ptr<NumericNode> ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<FloatStream> ){
+void NodeDropListener::onNodeDropped(boost::shared_ptr<ImageNode> ){
 
 }
 
-/*
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<float> > ){
+void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatYPRNode> ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > ){
+void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatXYZNode> ){
 
 }
 
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > ){
+void NodeDropListener::onNodeDropped(boost::shared_ptr<GroupingNode> ){
 
 }
-
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<Image> > ){
-
-}
-
-void DataStreamDropListener::onStreamDropped(boost::shared_ptr<DataStream<MotorDemand> > ){
-
-}*/
