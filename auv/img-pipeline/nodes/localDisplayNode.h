@@ -45,7 +45,7 @@ class LocalDisplayNode: public OutputNode{
             
             debug(4) << "LocalDisplayNode::doWork";
            
-            cv::imshow("LocalDisplayNode", img->cvMat());
+            cv::imshow("LocalDisplayNode", img->mat());
             cv::waitKey(10);
 
             return r;

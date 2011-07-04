@@ -73,7 +73,7 @@ static inline cv::Rect arcBound(int radius, cv::Point2f from, cv::Point2f to)
 }
 
 template<typename T>
-bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
+inline bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
 {
     return (p1_x * p2_y - p2_x * p1_y) > 0;
 }
@@ -84,7 +84,7 @@ SonarAccumulator::SonarAccumulator()
       m_images_accumulated(0),
       m_img(boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1)))
 {   
-    assert(m_img->cvMat().data);
+    assert(m_img->mat().data);
 }
 
 
@@ -130,7 +130,7 @@ float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
     int from = line.bearing - line.bearingRange/2;
     int to = from + line.bearingRange;
 
-    int radius = floor((min(m_img->cvMat().rows, m_img->cvMat().cols)-1)/2);
+    int radius = floor((min(m_img->height(), m_img->width())-1)/2);
     int bincount = line.data.size();
 
     float bscale = (float)radius/bincount;
@@ -140,7 +140,9 @@ float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
     m_last_line_bearing = line.bearing;
     if (accumulated_delta < 0)
         m_images_accumulated += 1.0;
-     m_images_accumulated += double(accumulated_delta) / 6400.0;
+    m_images_accumulated += double(accumulated_delta) / 6400.0;
+
+    cv::Mat m = m_img->mat();
 
     for (int b = 0; b < bincount; b++) {
         // All calculations assume centre is at (0,0)
@@ -158,7 +160,9 @@ float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
         cv::Rect bb = innerbb | outerbb;
         
         for(int y = bb.y; y < bb.y + bb.height; y++)
-            for(int x = bb.x; x < bb.x + bb.width; x++)
+        {
+            unsigned char* pm = &m.at<unsigned char>(cy - y, cx + bb.x);
+            for(int x = bb.x; x < bb.x + bb.width; x++, pm++)
             {
                 int r2 = x*x + y*y;
         
@@ -177,9 +181,11 @@ float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
                     continue;
 
                 // If we've got to here, then this must be valid. Shift to the centre and set the value.
-                m_img->cvMat().at<unsigned char>(cy - y, cx + x) = line.data[b];
+                *pm = line.data[b];
             }
+        }
     }
+    m_img->mat(m);
 
     return m_images_accumulated;
 }
@@ -191,9 +197,9 @@ boost::shared_ptr<Image> SonarAccumulator::img() const
     return m_img;
 }
 
-cv::Mat const& SonarAccumulator::mat() const
+cv::Mat SonarAccumulator::mat() const
 {
-    return m_img->cvMat();
+    return m_img->mat();
 }
 
 

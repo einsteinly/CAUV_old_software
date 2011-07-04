@@ -44,14 +44,13 @@ class CopyNodeMask: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
             
-            image_ptr_t img = inputs["image"];
-            image_ptr_t mask = inputs["mask"];
-            
-            boost::shared_ptr<Image> out = boost::make_shared<Image>();
+            cv::Mat img = inputs["image"]->mat();
+            cv::Mat mask = inputs["mask"]->mat();
             
             try{
-                img->cvMat().copyTo(out->cvMat(), mask->cvMat());
-                r["image copy"] = out;
+                cv::Mat out;
+                img.copyTo(out, mask);
+                r["image copy"] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "CopyNodeMask:\n\t"
                         << e.err << "\n\t"

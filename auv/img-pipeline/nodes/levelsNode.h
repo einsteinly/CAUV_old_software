@@ -45,7 +45,7 @@ class LevelsNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             
             int white_level = param<int>("white level");
             int black_level = param<int>("black level");
@@ -53,25 +53,12 @@ class LevelsNode: public Node{
             if(black_level != white_level)
                 scale = 255.0f / (white_level - black_level);
             
-            if(!img->cvMat().isContinuous())
-                throw(parameter_error("image must be continuous"));
-            if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if(img.depth() != CV_8U)
                 throw(parameter_error("image must be unsigned bytes"));
 
-            // FIXME: should do this with an OpenCV filter with 1-pixel kernel
-            const int elem_size = img->cvMat().elemSize();
-            unsigned char *rp, *cp, *bp;
-            int row, col, ch;
-
-            for(row = 0; row < img->cvMat().rows; row++){
-                rp = img->cvMat().ptr(row);
-                for(col = 0, cp = rp; col < img->cvMat().cols; col++, cp += elem_size)
-                    for(ch = 0, bp = cp; ch < img->cvMat().channels(); ch++, bp++)
-                        *bp = clamp_cast<unsigned char>(0, (*bp - black_level) * scale + 0.5, 255);
-            }
-
+            img = (img - black_level) * scale;
             
-            r["image (not copied)"] = img;
+            r["image (not copied)"] = boost::make_shared<Image>(img);
             
             return r;
         }

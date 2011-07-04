@@ -23,6 +23,10 @@ project (CAUV)
 # set paths for package search scripts
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CAUV_SOURCE_DIR}/cmake/")
 
+option(CAUV_DEBUG_MESSAGES "Emit code to allow message bytes to be printed at high debug levels" OFF)
+if (CAUV_DEBUG_MESSAGES)
+    add_definitions(-DCAUV_DEBUG_MESSAGES)
+endif()
 
 # Definitions (overridable) for Debug / Release
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG CAUV_DEBUG_LEVEL=1)

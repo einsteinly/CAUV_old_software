@@ -57,8 +57,6 @@ void SonarNode::onRun()
     m_sonar->addObserver(spreadSonarObserver);
     addMessageObserver(spreadSonarObserver);
     
-    addMessageObserver(boost::make_shared<DebugMessageObserver>());
-
 #ifdef DISPLAY_SONAR
     m_sonar->addObserver(boost::make_shared<DisplaySonarObserver>(m_sonar));
 #endif

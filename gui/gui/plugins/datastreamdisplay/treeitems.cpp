@@ -24,7 +24,7 @@ void DataStreamTreeItemBase::updateIcon(int cell, QImage &image){
 void DataStreamTreeItemBase::updateIcon(int cell, const Image &image){
     try {
         cv::Mat mat_rgb;
-        cv::cvtColor(image.cvMat(), mat_rgb, CV_BGR2RGB);
+        cv::cvtColor(image.mat(), mat_rgb, CV_BGR2RGB);
 
         QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
                                mat_rgb.rows, QImage::Format_RGB888);

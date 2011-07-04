@@ -42,28 +42,17 @@ class InvertNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             
-        if ((int)img->cvMat().elemSize() != img->cvMat().channels()){
-            error() << "InvertNode:\n\t"
-                        << "Invalid image input - must be 8-bit";
+            if (img.depth() != CV_8U){
+                error() << "InvertNode:\n\t"
+                            << "Invalid image input - must be 8-bit";
                 return r;
             }
-        
-        if(!img->cvMat().isContinuous())
-                throw(parameter_error("image must be continuous"));
 
-            const int elem_size = img->cvMat().elemSize();
-            const int row_size = img->cvMat().cols*img->cvMat().elemSize(); // elem_size;
-            unsigned char *img_rp, *img_cp, *img_bp;
-            int row, col, ch;
-
-            for(row = 0, img_rp = img->cvMat().data; row < img->cvMat().rows; row++, img_rp += row_size)
-                for(col = 0, img_cp = img_rp; col < img->cvMat().cols; col++, img_cp += elem_size)
-                    for(ch = 0, img_bp = img_cp; ch < img->cvMat().channels(); ch++, img_bp++)
-                        *img_bp = 255 - *img_bp;
+            img = 255 - img;
             
-            r["image (not copied)"] = img;
+            r["image (not copied)"] = boost::make_shared<Image>(img);
             
             return r;
         }

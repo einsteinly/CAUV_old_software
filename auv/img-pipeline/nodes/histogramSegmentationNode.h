@@ -51,24 +51,24 @@ class HistogramSegmentationNode: public OutputNode{
             int bins = param<int>("Number of bins");
             int bin = param<int>("Bin");
 
-            image_ptr_t img = inputs["image_in"];
+            cv::Mat img = inputs["image_in"]->mat();
 
-            if(!img->cvMat().isContinuous())
+            if(!img.isContinuous())
                 throw(parameter_error("Image must be continuous."));
-            if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if(img.depth() != CV_8U)
                 throw(parameter_error("Image must have unsigned bytes."));
-            if(img->cvMat().channels() > 1)
+            if(img.channels() > 1)
                 throw(parameter_error("Image must have only one channel."));
                 //TODO: support vector parameters
 
             float binWidth = 256 / bins;
             float binMin = bin * binWidth;
             float binMax = (bin + 1) * binWidth;
-            cv::Mat out = cv::Mat::zeros(img->cvMat().rows, img->cvMat().cols, CV_8UC1);
+            cv::Mat out = cv::Mat::zeros(img.rows, img.cols, CV_8UC1);
 
-            for(int i = 0; i < img->cvMat().rows; i++) {
-                for(int j = 0; j < img->cvMat().cols; j++) {
-                   if(img->cvMat().at<uint8_t>(i, j) >= binMin && img->cvMat().at<uint8_t>(i, j) < binMax) {
+            for(int i = 0; i < img.rows; i++) {
+                for(int j = 0; j < img.cols; j++) {
+                   if(img.at<uint8_t>(i, j) >= binMin && img.at<uint8_t>(i, j) < binMax) {
                        out.at<uint8_t>(i, j) = 255;
                    }
                 }

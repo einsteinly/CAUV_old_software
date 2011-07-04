@@ -46,30 +46,30 @@ class DrawLinesNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs[Image_In_Name];
+            cv::Mat img = inputs[Image_In_Name]->mat();
             
             const std::vector<Line> lines = param< std::vector<Line> >("lines");
 
             try{
                 cv::Mat out_mat;
                 
-                if (img->channels() == 1)
+                if (img.channels() == 1)
                 {
                     // make a colour copy to draw pretty lines on
-                    cvtColor(img->cvMat(), out_mat, CV_GRAY2BGR);
+                    cvtColor(img, out_mat, CV_GRAY2BGR);
                 }
-                else if (img->channels() == 3)
+                else if (img.channels() == 3)
                 {
-                    img->cvMat().copyTo(out_mat);
+                    img.copyTo(out_mat);
                 }
                 else
                 {
-                    error() << "WTF kind of image has" << img->channels() << "channels?";
+                    error() << "WTF kind of image has" << img.channels() << "channels?";
                     return r;
                 }
 
-                const float width = img->width();
-                const float height = img->height();
+                const float width = img.cols;
+                const float height = img.rows;
                 float maxlen = width*width + height*height;
                 foreach(const Line& line, lines)
                 {

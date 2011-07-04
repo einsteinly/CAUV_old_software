@@ -45,28 +45,29 @@ class QuickSegmentNode: public OutputNode{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             
             float scale = param<float>("scale");
 
             cv::Scalar mean, stdev;
 
             try{
-                    cv::meanStdDev(img->cvMat(), mean, stdev);
-                    boost::shared_ptr<Image> out = boost::make_shared<Image>();
-                    out->cvMat() = cv::Mat::zeros(img->cvMat().size(), CV_8UC1);
-                    cv::MatConstIterator_<cv::Scalar> src_it, dest_it;
-                    cv::MatConstIterator_<cv::Scalar> end_it =
-                        img->cvMat().end<cv::Scalar>();
-                    for(src_it = img->cvMat().begin<cv::Scalar>(),
-                        dest_it = out->cvMat().begin<cv::Scalar>();
-                        src_it != end_it;
-                        ++src_it, ++dest_it)
+                cv::meanStdDev(img, mean, stdev);
+                cv::Mat out = cv::Mat::zeros(img.size(), CV_8UC1);
+
+                cv::MatConstIterator_<cv::Scalar> src_it, dest_it;
+                for(src_it = img.begin<cv::Scalar>(),
+                    dest_it = out.begin<cv::Scalar>();
+                    src_it != img.end<cv::Scalar>();
+                    ++src_it, ++dest_it)
+                {
+                    for(int i = 0; i < 3; i++)
                     {
                         if(cv::norm(*src_it - mean) < scale * cv::norm(stdev - mean))
                             *dest_it = 255;
                     }
-                    r["mask"] = out;
+                }
+                r["mask"] = boost::make_shared<Image>(out);
                     
             }catch(cv::Exception& e){
                 error() << "QuickSegmentNode:\n\t"
