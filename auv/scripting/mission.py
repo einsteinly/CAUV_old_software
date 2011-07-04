@@ -14,7 +14,7 @@ task_list = [
 initial_tasks = [
                 #'circle_buoy',
                 #'test',
-                'follow_pipe',
+                #'follow_pipe',
                 #'test',
                 #'avoid_collision'
                 ]
