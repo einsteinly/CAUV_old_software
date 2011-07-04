@@ -63,13 +63,8 @@ class QuickSegmentNode: public OutputNode{
                 {
                     for(int i = 0; i < 3; i++)
                     {
-                        cv::Scalar pix = *src_it;
-                        if((pix[i] - mean[i]) * (pix[i] - mean[i]) <
-                            scale * stdev[i] * scale * stdev[i])
-                        {
+                        if(cv::norm(*src_it - mean) < scale * cv::norm(stdev - mean))
                             *dest_it = 255;
-                            break;
-                        }
                     }
                 }
                 r["mask"] = boost::make_shared<Image>(out);

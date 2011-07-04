@@ -14,9 +14,9 @@ task_list = [
 initial_tasks = [
                 #'circle_buoy',
                 #'test',
-                'follow_pipe',
+                #'follow_pipe',
                 #'test',
-                #'avoid_collision'
+                'avoid_collision'
                 ]
 #script that runs otherwise
 default_script = 'test'

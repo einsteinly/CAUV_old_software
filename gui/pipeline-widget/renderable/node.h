@@ -119,6 +119,7 @@ class Node: public Draggable,
 
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;
+        renderable_ptr_t m_idtext;
         renderable_ptr_t m_execbutton;
         str_in_map_t m_inputs;
         str_inparam_map_t m_params;        

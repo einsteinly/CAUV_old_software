@@ -12,7 +12,7 @@ class detectorOptions(aiDetectorOptions):
     Bin_Threshold = 0.05
     Required_Pipeline = 'detect_pipe.pipe'
     Histogram_Name = 'pipe-detect'
-    Average_Time = 1
+    Average_Time = 2
 
 
 class detector(aiDetector):

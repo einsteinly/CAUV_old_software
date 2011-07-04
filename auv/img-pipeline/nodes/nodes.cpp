@@ -62,6 +62,7 @@
 #include "clampNode.h"
 #include "broadcastKeypointsNode.h"
 #include "drawKeyPointsNode.h"
+#include "mathAddMultNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -133,6 +134,9 @@ template<> DEFINE_NFR(ClampNode<float>, NodeType::ClampFloat);
 DEFINE_NFR(SURFCornersNode, NodeType::SURFCorners);
 DEFINE_NFR(BroadcastKeypointsNode, NodeType::BroadcastKeyPoints);
 DEFINE_NFR(DrawKeyPointsNode, NodeType::DrawKeyPoints);
+template<> DEFINE_NFR(MathAddMultNode<int>, NodeType::MathAddMultInt);
+template<> DEFINE_NFR(MathAddMultNode<float>, NodeType::MathAddMultFloat);
+
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
 const std::string DelayNode::Delay_Param_Name = "delay (frames)";
