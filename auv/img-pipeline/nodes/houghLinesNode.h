@@ -78,8 +78,7 @@ class HoughLinesNode: public Node{
                     
                     // convert lines to easy-to-draw form
                     for(unsigned i = 0; i < r_theta_lines.size(); i++)
-                        hough_lines.push_back(rThetaLineToSegment(r_theta_lines[i],
-                                                                    img->size()));
+                        hough_lines.push_back(rThetaLineToSegment(r_theta_lines[i], img.size()));
                 }
             }catch(cv::Exception& e){
                 error() << "HoughLinesNode:\n\t"
