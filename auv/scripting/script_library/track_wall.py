@@ -10,17 +10,30 @@ import time
 import math
 import traceback
 
-
 class scriptOptions(aiScriptOptions):
-    optionName = 4 # for example
-    wallDistance = 2 #distance from wall
-    strafeSpeed = 5 #controls strafe speed
-    strafekPID = (1, 0, 0)
-    depthkPID = (1, 0, 0)
+    wallDistance = 2 #distance from wall in metres TODO: check units
+    strafeSpeed = 5 #controls strafe speed, int [-127, 127]
+    wallDistancekPID = (1, 0, 0)
+    depth = 0 #depth
+    runTime = 30 #run time in seconds
+    sonarDirection = 180 #in degrees
+    sonarWidth = 1 #in 1/6400 of a circle
+    sonarGain = 50
+    sonarRange = 50000
+    sonarRangeRes = 100
+    sonarAngularRes = 1
     
     class Meta:
         # list of options that can be changed while the script is running
-        dynamic = ['optionName']
+        dynamic = [
+                'strafeSpeed',
+                'wallDistancekPID',
+                'depth',
+                'sonarDirection',
+                'sonarGain',
+                'sonarRange',
+                'sonarRangeRes'
+                ]
 
 
 class script(aiScript):
@@ -30,26 +43,53 @@ class script(aiScript):
         # self.auv is also available, and can be used to control the vehicle
         # self.options is a copy of the option structure declared above
         self.node.join('processing')
+        self.__wallDistance = self.options.wallDistance
+        self.__strafeSpeed = self.options.strafeSpeed
+        self.wallPID = PIDController(self.options.wallDistancekPID)
+        self.__depth = self.options.depth
+        self.__runtTime = self.options.runTime
+        self.auv.sonar.directionDegrees(self.options.sonarDirection)
+        self.auv.sonar.width(self.options.sonarWidth)
+        self.auv.sonar.gain(self.options.sonarGain)
+        self.auv.sonar.range(self.options.sonarRange)
+        self.auv.sonar.rangeRes(self.options.sonarRangeRes)
+
+    def reloadOptions(self):
+        self.__strafeSpeed = self.options.strafeSpeed
+        self.wallPID = self.wallPID.setKpid(self.options.wallDistancekPID)
+        self.__depth = self.options.depth
+        self.auv.sonar.directionDegrees(self.options.sonarDirection)
+        self.auv.sonar.gain(self.options.sonarGain)
+        self.auv.sonar.range(self.options.sonarRange)
+        self.auv.sonar.rangeRes(self.options.sonarRangeRes)
     
     def optionChanged(self, option_name):
         info('notified that %s changed to %s' % (option_name[0], option_name[1]))
+        self.reloadOptions()
    
     def onSonarDataMessage(self, m):
+        #TODO message received?
         debug('received sonar data: %s' % str(m))
 
     def run(self):
         info('Wall tracking starting...')
         exit_status = 'SUCCESS'
+        time_left = self.__runtTime
         try:
+            while time_left > 0:
+                self.auv.strafe(self.__strafeSpeed)
+                time.sleep(0.5)
+                time_left -= 0.5
+
             # main loop:
             # ...
             # do stuff!
 
-            time.sleep(0.5) # wait for 0.5 seconds, let other things run
         except Exception, e:
             error(traceback.format_exc())
         finally:
             self.auv.stop()
+            info('Stopping')
         info('Complete!')
         # tell the AI framwork that everything went ok (or didn't)
         self.notify_exit(exit_status)

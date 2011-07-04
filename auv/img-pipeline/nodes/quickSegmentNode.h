@@ -54,8 +54,7 @@ class QuickSegmentNode: public OutputNode{
             try{
                     cv::meanStdDev(img->cvMat(), mean, stdev);
                     boost::shared_ptr<Image> out = boost::make_shared<Image>();
-                    out->cvMat().zeros(img->cvMat().size(), CV_8UC1);
-
+                    out->cvMat() = cv::Mat::zeros(img->cvMat().size(), CV_8UC1);
                     cv::MatConstIterator_<cv::Scalar> src_it, dest_it;
                     cv::MatConstIterator_<cv::Scalar> end_it =
                         img->cvMat().end<cv::Scalar>();
@@ -64,7 +63,7 @@ class QuickSegmentNode: public OutputNode{
                         src_it != end_it;
                         ++src_it, ++dest_it)
                     {
-                        if(cv::norm(*src_it - mean) < scale * cv::norm(stdev))
+                        if(cv::norm(*src_it - mean) < scale * cv::norm(stdev - mean))
                             *dest_it = 255;
                     }
                     r["mask"] = out;
