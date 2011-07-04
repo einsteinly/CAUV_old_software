@@ -4,20 +4,23 @@ from cauv.debug import debug, warning, error, info
 
 import time
 import threading
+import optparse
 
 from AI_classes import aiProcess, external_function
 
 #TODO basically the actual functionality of conrol, the ability to stop the sub, block script_ids etc
 
 class auvControl(aiProcess):
-    def __init__(self):
+    def __init__(self, **kwargs):
         aiProcess.__init__(self, 'auv_control')
         self.auv = control.AUV(self.node)
         self.external_functions = []
         self.script_lock = threading.Lock()
         self.current_task_id = None
         self.enabled = threading.Event()
-        self.enabled.set()
+        if 'disable_control' in kwargs:
+            if not kwargs['disable_control']:
+                self.enabled.set()
         self.limit_lock = threading.Lock()
         self.depth_limit = None
     @external_function
@@ -44,14 +47,27 @@ class auvControl(aiProcess):
     @external_function
     def stop(self):
         #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value
-        self.prop(0)
-        self.hbow(0)
-        self.vbow(0)
-        self.hstern(0)
-        self.vstern(0)
-        self.bearing(self.current_bearing)
-        self.pitch(0)
-        self.depth(self.current_depth)
+        self.auv.prop(0)
+        self.auv.hbow(0)
+        self.auv.vbow(0)
+        self.auv.hstern(0)
+        self.auv.vstern(0)
+        self.auv.bearing(self.auv.current_bearing)
+        self.auv.pitch(0)
+        self.auv.depth(self.auv.current_depth)
+    @external_function
+    def signal(self, value):
+        info('signalling %d' %(value,))
+        self.auv.forwardlights(0)
+        time.sleep(2)
+        for b in bin(value)[2:]:
+            self.auv.forwardlights(255)
+            if b == '1':
+                time.sleep(1)
+            else:
+                time.sleep(0.5)
+            self.auv.forwardlights(0)
+            time.sleep(0.5)
     @external_function
     def depth(self, value):
         with self.limit_lock:
@@ -70,6 +86,10 @@ class auvControl(aiProcess):
             info("auv_control still alive")
 
 if __name__ == '__main__':
+    p = optparse.OptionParser()
+    p.add_option('-d', '--disable_control', dest='disable_control', default=False,
+                 action='store_true', help="stop AI script from controlling the sub")
+    opts, args = p.parse_args()
     try:
         ac = auvControl()
         ac.run()

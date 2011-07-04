@@ -10,6 +10,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.__node = node
         node.join("control")
         node.join("telemetry")
+        node.join("external")
         node.addObserver(self)
         self.current_bearing = None
         self.current_depth = None
@@ -144,6 +145,18 @@ class AUV(messaging.BufferedMessageObserver):
     def vstern(self, value):
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
+        
+    def forwardlights(self, value):
+        self.checkLightValue(value)
+        self.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        
+    def downlights(self, value):
+        self.checkLightValue(value)
+        self.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        
+    def checkLightValue(self, value):
+        if not (value>=0 and value<256):
+            raise ValueError("invalid light value: %d" % value)
     
     def motorMap(self, motor_id, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
         #
