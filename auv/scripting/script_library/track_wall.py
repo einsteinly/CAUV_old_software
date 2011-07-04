@@ -10,24 +10,27 @@ import time
 import math
 import traceback
 
-
 class scriptOptions(aiScriptOptions):
     wallDistance = 2 #distance from wall in metres TODO: check units
     strafeSpeed = 5 #controls strafe speed, int [-127, 127]
     wallDistancekPID = (1, 0, 0)
     depth = 0 #depth
     runTime = 30 #run time in seconds
+    sonarAngle = 180 #in degrees
     
     class Meta:
         # list of options that can be changed while the script is running
         dynamic = [
                 'wallDistancekPID',
-                'depth'
+                'strafeSpeed',
+                'depth',
+                'sonarAngle'
                 ]
 
 
 class script(aiScript):
     def __init__(self, script_name, opts):
+        #TODO point sonar back
         aiScript.__init__(self, script_name, opts)
         # self.node is set by aiProcess (base class of aiScript)
         # self.auv is also available, and can be used to control the vehicle
@@ -48,21 +51,28 @@ class script(aiScript):
         self.reloadOptions()
    
     def onSonarDataMessage(self, m):
+        #TODO 
         debug('received sonar data: %s' % str(m))
 
     def run(self):
         info('Wall tracking starting...')
         exit_status = 'SUCCESS'
+        time_left = self.__runtTime
         try:
+            while time_left > 0:
+                self.auv.strafe(self.__strafeSpeed)
+                time.sleep(0.5)
+                time_left -= 0.5
+
             # main loop:
             # ...
             # do stuff!
 
-            time.sleep(0.5) # wait for 0.5 seconds, let other things run
         except Exception, e:
             error(traceback.format_exc())
         finally:
             self.auv.stop()
+            info('Stopping')
         info('Complete!')
         # tell the AI framwork that everything went ok (or didn't)
         self.notify_exit(exit_status)
