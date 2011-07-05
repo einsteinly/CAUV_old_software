@@ -37,11 +37,12 @@ class SonarDataLineWrapper:
         self.bearing = sdl.bearing
         self.bearingRange = sdl.bearingRange
         self.range = sdl.range
+        self.scanWidth = sdl.scanWidth
     def SonarDataLine(self):
         dl = msg.byteVec()
         for b in self.data:
             dl.append(b)
-        return msg.SonarDataLine(dl, self.bearing, self.bearingRange, self.range)
+        return msg.SonarDataLine(dl, self.bearing, self.bearingRange, self.range, self.scanWidth)
  
 class MotorIDWrapper:
     def __init__(self, mid = msg.MotorID()):
