@@ -35,7 +35,7 @@ process_data_list = (
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
             ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
             ('task_control', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
-            #('pipeline_control', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'restore']),
+            ('pipeline_control', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'restore']),
             )
 
 class AImanager():

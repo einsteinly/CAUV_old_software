@@ -314,6 +314,8 @@ class pipelineManager(aiProcess):
             if kwargs['restore']:
                 self.requests = self.state['requests']
                 self.requests_changed.set()
+            else:
+                self.requests = {'script':{}, 'other':{}}
         except KeyError:
             self.requests = {'script':{}, 'other':{}} #script_name: pl_names
         self.setup_requests = []

@@ -11,8 +11,8 @@ log_file = 'bat_log.log'
 
 #useful constants
 motor_conversion_factor = 80.0/127.0 #Watts 80 watts max power, 127 max motor demand
-light_consumption = 32#Watts
-computer_consumption = 30#Watts 1.5 amps at 19 volts
+light_conversion_factor = 32.0/255 #Watts 32 watts max power, 255 max demand
+computer_consumption = 30.0#Watts 1.5 amps at 19 volts
 battery_total = 89.1*4 #Watt hours
 
 #function to estimate power use
@@ -21,16 +21,15 @@ def estimateMotorUse(logs, current_time, last_log_time):
     motor_log = {}
     for motor in motor_ids:
         #get the last messages for each motor
-        logs[0].motor_demand_log_lock[motor].acquire()
-        motor_log[motor] = logs[0].motor_demand_log[motor]
-        #add a point at the current time
-        if len(motor_log[motor]):
-            motor_log[motor].append((current_time, motor_log[motor][-1][1]))
-            logs[0].motor_demand_log[motor] = [motor_log[motor][-1]] #reset the log, leaving the last value to start the next one
-        logs[0].motor_demand_log_lock[motor].release()
+        with logs[0].motor_demand_log_lock[motor]:
+            motor_log[motor] = logs[0].motor_demand_log[motor]
+            #add a point at the current time
+            if len(motor_log[motor]):
+                motor_log[motor].append((current_time, motor_log[motor][-1][1]))
+                logs[0].motor_demand_log[motor] = [motor_log[motor][-1]] #reset the log, leaving the last value to start the next one
         try:
             for x in range(len(motor_log[motor])-1):
-                power_used += abs(motor_log[motor][x+1][1]+motor_log[motor][x][1])*(motor_log[motor][x+1][0]-motor_log[motor][x][0])/7200 #average power * time in hours
+                power_used += motor_conversion_factor*abs(motor_log[motor][x+1][1]+motor_log[motor][x][1])*(motor_log[motor][x+1][0]-motor_log[motor][x][0])/7200.0 #average power * time in hours
         except IndexError:
             debug("Error, no data for "+motor)
     return power_used
@@ -39,7 +38,21 @@ def estimateComputerUse(logs, current_time, last_log_time):
     return computer_consumption*(current_time-last_log_time)/3600
         
 def estimateLightUse(logs, current_time, last_log_time):
-    return light_consumption*(current_time-last_log_time)/3600
+    power_used = 0
+    light_log = {}
+    for light in light_ids:
+        with logs[0].light_log_lock[light]:
+            light_log[light] = logs[0].light_log[light]
+            #add a point at the current time
+            if len(light_log[light]):
+                light_log[light].append((current_time, light_log[light][-1][1]))
+                logs[0].light_log[light] = [light_log[light][-1]] #reset the log, leaving the last value to start the next one
+        try:
+            for x in range(len(light_log[light])-1):
+                power_used += light_conversion_factor*light_log[light][x][1]*(light_log[light][x+1][0]-light_log[light][x][0])/3600 #power * time
+        except IndexError:
+            debug("Error, no data for "+light)
+    return power_used
 
 modules_dict = {
                 'm': estimateMotorUse,
@@ -49,22 +62,29 @@ modules_dict = {
 
 #message logger
 motor_ids=['Prop','VBow','HBow','VStern','HStern']
-class motorStateLogger(messaging.BufferedMessageObserver):
+light_ids=['Forward', 'Down']
+class messageLogger(messaging.BufferedMessageObserver):
     def __init__(self, node):
         messaging.BufferedMessageObserver.__init__(self)
         node.join("gui")
+        node.join("external")
         node.addObserver(self)
         self.node = node
         self.motor_demand_log_lock = dict([(x,threading.Lock()) for x in motor_ids])
         self.motor_demand_log = dict([(x,[]) for x in motor_ids])
+        self.light_log_lock = dict([(x,threading.Lock()) for x in light_ids])
+        self.light_log = dict([(x,[(time.time(),0)]) for x in light_ids])
     def onMotorStateMessage(self, m):
-        self.motor_demand_log_lock[str(m.motorId)].acquire()
-        self.motor_demand_log[str(m.motorId)].append([time.time(),m.speed])
-        self.motor_demand_log_lock[str(m.motorId)].release()
+        with self.motor_demand_log_lock[str(m.motorId)]:
+            self.motor_demand_log[str(m.motorId)].append((time.time(),m.speed))
+    def onLightMessage(self, m):
+        print m.lightId, m.intensity
+        with self.light_log_lock[str(m.lightId)]:
+            self.light_log[str(m.lightId)].append((time.time(),m.intensity))
         
 loggers_dict = {
-                'm' : (motorStateLogger,),
-                'l' : tuple(),
+                'm' : (messageLogger,),
+                'l' : (messageLogger,),
                 'c' : tuple(),
                 }
 
