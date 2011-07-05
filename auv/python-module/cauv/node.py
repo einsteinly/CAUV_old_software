@@ -10,7 +10,7 @@ from cauv.debug import debug, error
 
 #pylint: disable=E1101
 
-class Observer(messaging.BufferedMessageObserver):
+class Observer(messaging.MessageObserver):
     pass
 
 class ServiceLevel:

@@ -5,9 +5,9 @@ from AI_classes import aiProcess
 import cPickle
 from IPython.Shell import IPShellEmbed
 
-class aiMessageListener(messaging.BufferedMessageObserver):
+class aiMessageListener(messaging.MessageObserver):
     def __init__(self, node):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.node = node
         self.node.addObserver(self)
     def onAIMessage(self, m):
