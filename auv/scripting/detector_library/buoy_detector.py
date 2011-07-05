@@ -23,7 +23,7 @@ class detectorOptions(aiDetectorOptions):
     Histogram_Bins_B = xrange(50,75) # of 0--180 range
     Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
     Optimal_Colour_Frac_A = 0.003 # highest colour detection confidence when the specified bin contains this value
-    Optimal_Colour_Frac_B = 0.04 # highest colour detection confidence when the specified bin contains this value
+    Optimal_Colour_Frac_B = 0.008 # highest colour detection confidence when the specified bin contains this value
     Colour_Weight_A  = -20.0 # respective weightings in confidence
     Colour_Weight_B  =  0.4 #
     Circles_Weight   =  1.6 #
