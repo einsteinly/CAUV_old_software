@@ -36,6 +36,8 @@ void NodeDropListener::dropEvent(QDropEvent *event)
 
 bool NodeDropListener::routeStream(boost::shared_ptr<NodeBase> s){
 
+    info() << "Routing stream" << s->nodeName();
+
     switch (s->type){
     case GuiNodeType::NumericNode:
         onNodeDropped(boost::static_pointer_cast<NumericNode>(s));
@@ -58,25 +60,4 @@ bool NodeDropListener::routeStream(boost::shared_ptr<NodeBase> s){
     }
 
     return true;
-}
-
-
-void NodeDropListener::onNodeDropped(boost::shared_ptr<NumericNode> ){
-
-}
-
-void NodeDropListener::onNodeDropped(boost::shared_ptr<ImageNode> ){
-
-}
-
-void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatYPRNode> ){
-
-}
-
-void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatXYZNode> ){
-
-}
-
-void NodeDropListener::onNodeDropped(boost::shared_ptr<GroupingNode> ){
-
 }

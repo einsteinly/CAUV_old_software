@@ -22,6 +22,7 @@ set ( GUICPP_CORE_SRCS
     model/nodes.cpp
     model/model.cpp
     model/messageObserver.cpp
+    model/noderecorder.cpp
     )
 
 set ( GUICPP_CORE_UIS

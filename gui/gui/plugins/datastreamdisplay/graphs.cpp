@@ -2,7 +2,6 @@
 #include "datastreamdisplay/ui_graphs.h"
 
 #include <common/cauv_utils.h>
-#include <common/data_stream_tools.h>
 
 #include <boost/bind.hpp>
 
@@ -19,6 +18,7 @@
 #include <qwt_plot_magnifier.h>
 
 using namespace cauv;
+using namespace cauv::gui;
 
 
 const QColor GraphWidget::colours[] = {
@@ -28,21 +28,18 @@ const QColor GraphWidget::colours[] = {
 };
 
 
-template<class T>
-void GraphWidget::addStream(boost::shared_ptr<DataStream<T> > stream){
+void GraphWidget::addNode(boost::shared_ptr<NumericNode> node){
     // see if this series has already been registered
-    if(m_seriesNames.end() == m_seriesNames.find(stream->getName())) {
+    if(m_seriesNames.end() == m_seriesNames.find(node->nodeName())) {
         // series data
-        DataStreamSeriesData<T> * series = new DataStreamSeriesData<T>(stream, 1000);
-        m_seriesNames.insert(stream->getName());
-
-        m_recorderView->addRecorder(series);
+        DataStreamSeriesData * series = new DataStreamSeriesData(node, 1000);
+        m_seriesNames.insert(node->nodeName());
 
         // series plotter
         std::stringstream str;
-        str << stream->getName();
-        if(stream->getUnits().length() > 0)
-            str << " (" <<  stream->getUnits() << ")";
+        str << node->nodeName(false);
+        if(node->getUnits().length() > 0)
+            str << " (" <<  node->getUnits() << ")";
         QwtPlotCurve * curve = new QwtPlotCurve(QString::fromStdString(str.str()));
         curve->setCurveFitter(new QwtSplineCurveFitter());
         curve->setData(series);
@@ -135,37 +132,16 @@ void GraphWidget::setupPlot() {
 }
 
 void GraphWidget::dropEvent(QDropEvent * event){
-    DataStreamDropListener::dropEvent(event);
+    NodeDropListener::dropEvent(event);
 }
 
 void GraphWidget::dragEnterEvent(QDragEnterEvent * event){
-    DataStreamDropListener::dragEnterEvent(event);
+    NodeDropListener::dragEnterEvent(event);
 }
 
-void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<int> >stream){
-    addStream(stream);
+void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNode> node){
+    addNode(node);
 }
-
-void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<int8_t> >stream){
-    addStream(stream);
-}
-
-void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<float> >stream) {
-    addStream(stream);
-}
-
-void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> >stream) {
-    boost::shared_ptr<DataStreamSplitter<floatYPR> > split = boost::make_shared<DataStreamSplitter<floatYPR> >(stream);
-    addStream(split->yaw);
-    addStream(split->pitch);
-    addStream(split->roll);
-    m_tools.push_back(split);
-}
-
-void GraphWidget::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> >stream){
-    addStream(stream);
-}
-
 
 std::string GraphWidget::getName() const{
     std::stringstream title;

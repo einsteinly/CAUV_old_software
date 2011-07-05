@@ -25,6 +25,7 @@ set ( DSD_PLUGIN_H
     datastreamdisplays.h
     #datastreamrecorder.h
     treeitems.h
+    graphs.h
 )
      
 qt4_wrap_ui (DSD_PLUGIN_UIS_H ${DSD_PLUGIN_UIS})

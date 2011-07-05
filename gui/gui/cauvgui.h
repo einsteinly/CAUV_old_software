@@ -7,6 +7,8 @@
 
 #include <common/cauv_node.h>
 
+#include <gui/core/model/messageObserver.h>
+
 
 namespace Ui {
     class MainWindow;
@@ -45,7 +47,7 @@ namespace cauv {
 
         private:
             Ui::MainWindow * ui;
-
+            boost::shared_ptr<GuiMessageObserver> m_messageObserver;
             int findPlugins(const QDir& dir, int subdirs = 0);
 
         };

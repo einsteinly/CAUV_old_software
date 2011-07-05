@@ -4,7 +4,7 @@
 #include "treeitems.h"
 
 #include <gui/core/widgets/videoscreen.h>
-//#include "graphs.h"
+#include "graphs.h"
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>
@@ -138,26 +138,27 @@ void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
 }
 
 
-void NodeDropListener::onNodeDropped(boost::shared_ptr<NumericNode> node){
+void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
     info() << "drop" << node->nodeName();
+    addWindow(boost::make_shared<GraphWidget>(node));
 }
 
-void NodeDropListener::onNodeDropped(boost::shared_ptr<ImageNode> node){
-    info() << "drop" << node->nodeName();
-
-}
-
-void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
+void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<ImageNode> node){
     info() << "drop" << node->nodeName();
 
 }
 
-void NodeDropListener::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
+void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
     info() << "drop" << node->nodeName();
 
 }
 
-void NodeDropListener::onNodeDropped(boost::shared_ptr<GroupingNode> node){
+void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
+    info() << "drop" << node->nodeName();
+
+}
+
+void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<GroupingNode> node){
     info() << "drop" << node->nodeName();
 
 }

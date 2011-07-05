@@ -10,7 +10,6 @@
 #include <boost/program_options.hpp>
 
 #include <gui/core/model/model.h>
-#include <gui/core/model/messageObserver.h>
 #include <gui/core/cauvplugins.h>
 
 #include <common/cauv_global.h>
@@ -102,8 +101,8 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
-    boost::shared_ptr<GuiMessageObserver> messageObserver = boost::make_shared<GuiMessageObserver>(m_auv);
-    this->addMessageObserver(messageObserver);
+    m_messageObserver = boost::make_shared<GuiMessageObserver>(m_auv);
+    this->addMessageObserver(m_messageObserver);
 
     // load plugins
     // static plugins first
@@ -123,7 +122,7 @@ void CauvGui::onRun()
     show();
     m_application->exec();
 
-    this->removeMessageObserver(messageObserver);
+    this->removeMessageObserver(m_messageObserver);
 
     info() << "Qt Thread exiting";
     info() << "Stopping CauvNode";

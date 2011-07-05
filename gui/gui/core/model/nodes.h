@@ -1,4 +1,3 @@
-
 #ifndef GUI_NODES_H
 #define GUI_NODES_H
 
@@ -12,6 +11,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/visit_each.hpp>
 
 #include <vector>
 
@@ -42,50 +42,15 @@ namespace cauv {
 
             GuiNodeType::e type;
 
-            NodeBase(GuiNodeType::e t, const std::string name) :
-                    type(t), m_parent(), m_name(name), m_mutable(false) {
+            NodeBase(GuiNodeType::e t, const std::string name);
 
-                qRegisterMetaType<boost::shared_ptr<NodeBase> >("boost::shared_ptr<NodeBase>");
+            virtual ~NodeBase();
 
+            virtual const std::string nodeName(const bool full=true) const;
+            virtual void addChild(boost::shared_ptr<NodeBase> child);
+            const std::vector<boost::shared_ptr<NodeBase> > getChildren() const;
 
-            }
-
-            virtual ~NodeBase(){
-                debug(0) << "~NodeBase" << nodeName();
-            }
-
-            virtual const std::string nodeName(const bool full=true) const {
-                std::stringstream stream;
-
-                if(full && !m_parent.expired()) {
-                    boost::shared_ptr<NodeBase> parent = m_parent.lock();
-                    if(parent)
-                        stream << parent->nodeName() << "/" << m_name;
-                }
-                else stream << m_name;
-
-                return stream.str();
-            }
-
-            virtual void addChild(boost::shared_ptr<NodeBase> child){
-                if(boost::shared_ptr<NodeBase> parent = child->m_parent.lock())
-                {
-                    std::stringstream str;
-                    str << "Node already has a parent: " << parent->nodeName();
-                    throw std::runtime_error(str.str());
-                }
-
-                child->m_parent = boost::weak_ptr<NodeBase>(shared_from_this());
-                m_children.push_back(child);
-
-                Q_EMIT nodeAdded(shared_from_this(), child);
-            }
-
-            const std::vector<boost::shared_ptr<NodeBase> > getChildren() const {
-                return m_children;
-            }
-
-            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const {
+            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const{
 
                 std::vector<boost::shared_ptr<T> > output;
                 foreach (boost::shared_ptr<NodeBase> child, getChildren()) {
@@ -99,14 +64,16 @@ namespace cauv {
             }
 
             template <class T> boost::shared_ptr<T> find(std::string name){
-                debug(0) << "Looking for" << name << "in" << nodeName();
+                debug() << "Looking for" << name << "in" << nodeName();
                 foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
+                    debug() << "looking at " << child->nodeName();
                     std::string childName = child->nodeName(false);
+                    debug() << "converting to lower";
                     boost::to_lower(childName);
                     boost::to_lower(name);
 
                     if(childName == name) {
-                        debug(0) << "Node matched" << child->nodeName();
+                        debug() << "Node matched" << child->nodeName();
                         return child;
                     }
                 }
@@ -118,15 +85,17 @@ namespace cauv {
 
             template <class T> boost::shared_ptr<T> findOrCreate(std::string name){
                 try {
-                    return find<T>(name);
+                    debug() << "looking";
+                    boost::shared_ptr<T> found = find<T>(name);
+                    debug() << "found";
+                    return found;
                 } catch (std::out_of_range){
                     boost::shared_ptr<T> newNode = boost::make_shared<T>(name);
                     this->addChild(newNode);
-                    info() << "New node added" << newNode->nodeName();
+                    //info() << "New node added" << newNode->nodeName();
                     return newNode;
                 }
             }
-
 
             template <class T> boost::shared_ptr<T> findOrCreateMutable(std::string name){
                 boost::shared_ptr<T> node = findOrCreate<T>(name);
@@ -134,13 +103,8 @@ namespace cauv {
                 return node;
             }
 
-            virtual bool isMutable(){
-                return m_mutable;
-            }
-
-            virtual void setMutable(bool mut){
-                m_mutable = mut;
-            }
+            virtual bool isMutable();
+            virtual void setMutable(bool mut);
 
         Q_SIGNALS:
             void nodeAdded(boost::shared_ptr<NodeBase> parent, boost::shared_ptr<NodeBase> node);
@@ -444,6 +408,20 @@ namespace cauv {
         protected:
             boost::shared_ptr<NumericNode> m_x, m_y, m_z;
 
+        };
+
+
+
+        // variant utils
+        class to_float : public boost::static_visitor<>
+        {
+        public:
+
+            template <typename T>
+                    float operator()( T & operand ) const
+            {
+                return (float) operand;
+            }
         };
 
 

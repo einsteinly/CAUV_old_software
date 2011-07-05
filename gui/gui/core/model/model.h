@@ -1,5 +1,5 @@
-#ifndef MODEL_H
-#define MODEL_H
+#ifndef GUI_MODEL_H
+#define GUI_MODEL_H
 
 #include "nodes.h"
 
@@ -17,4 +17,4 @@ namespace cauv {
     } // namespace gui
 } // namespace cauv
 
-#endif // MODEL_H
+#endif // GUI_MODEL_H

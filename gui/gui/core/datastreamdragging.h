@@ -29,11 +29,11 @@ namespace cauv {
 
             bool routeStream(boost::shared_ptr<NodeBase> s);
 
-            void onNodeDropped(boost::shared_ptr<NumericNode> );
-            void onNodeDropped(boost::shared_ptr<ImageNode> );
-            void onNodeDropped(boost::shared_ptr<FloatYPRNode> );
-            void onNodeDropped(boost::shared_ptr<FloatXYZNode> );
-            void onNodeDropped(boost::shared_ptr<GroupingNode> );
+            virtual void onNodeDropped(boost::shared_ptr<NumericNode> ) {}
+            virtual void onNodeDropped(boost::shared_ptr<ImageNode> ) {}
+            virtual void onNodeDropped(boost::shared_ptr<FloatYPRNode> ) {}
+            virtual void onNodeDropped(boost::shared_ptr<FloatXYZNode> ) {}
+            virtual void onNodeDropped(boost::shared_ptr<GroupingNode> ) {}
         };
 
     } // namespace gui

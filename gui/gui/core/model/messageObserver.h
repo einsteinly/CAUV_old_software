@@ -1,71 +1,26 @@
-#ifndef AUV_CONTROLLER_H_INCLUDED
-#define AUV_CONTROLLER_H_INCLUDED
+#ifndef GUI_MESSAGE_OBSERVER_INCLUDED
+#define GUI_MESSAGE_OBSERVER_INCLUDED
 
-#include <vector>
+#include <generated/messages_fwd.h>
 
-#include <generated/messages.h>
-#include <debug/cauv_debug.h>
 #include <boost/shared_ptr.hpp>
 
-#include "model.h"
+#include <gui/core/model/model.h>
 
 namespace cauv{
     namespace gui {
 
 
-        template<class T>
-        std::string toName(T in){
-            return std::string(in);
-        }
+        class NameConversion {
+        public:
+            template<class T> static std::string toName(T in){
+                return std::string(in);
+            };
+        };
 
-        template<>
-        std::string toName<MotorID::e>(MotorID::e id){
-            switch (id){
-            case MotorID::Prop:
-                return "Prop";
-            case MotorID::HBow:
-                return "H Bow";
-            case MotorID::VBow:
-                return "V Bow";
-            case MotorID::HStern:
-                return "H Stern";
-            case MotorID::VStern:
-                return "V Stern";
-            default:
-                return "unknown";
-            }
-        }
-
-        template<>
-        std::string toName<CameraID::e>(CameraID::e id){
-            switch (id){
-            case CameraID::Forward:
-                return "Forward";
-            case CameraID::Down:
-                return "Down";
-            case CameraID::Sonar:
-                return "Sonar";
-            case CameraID::File:
-                return "File";
-            default:
-                return "unknown";
-            }
-        }
-
-        template<>
-        std::string toName<Controller::e>(Controller::e id){
-            switch (id){
-            case Controller::Depth:
-                return "Depth";
-            case Controller::Bearing:
-                return "Bearing";
-            case Controller::Pitch:
-                return "Pitch";
-            default:
-                return "unknown";
-            }
-        }
-
+        template<> std::string NameConversion::toName<MotorID::e>(MotorID::e id);
+        template<> std::string NameConversion::toName<CameraID::e>(CameraID::e id);
+        template<> std::string NameConversion::toName<Controller::e>(Controller::e id);
 
 
         class GuiMessageObserver : public MessageObserver {
@@ -74,7 +29,7 @@ namespace cauv{
 
             GuiMessageObserver(boost::shared_ptr< AUV > auv);
 
-            virtual ~GuiMessageObserver() {}
+            virtual ~GuiMessageObserver();
 
             void onDebugLevelMessage(DebugLevelMessage_ptr);
             void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr);
@@ -102,4 +57,4 @@ namespace cauv{
     } // namespace gui
 } // namespace cauv
 
-#endif // AUV_CONTROLLER_H_INCLUDED
+#endif // GUI_MESSAGE_OBSERVER_H_INCLUDED

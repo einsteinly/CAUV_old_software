@@ -1,15 +1,74 @@
-
 #include "messageObserver.h"
+
+#include <vector>
+
+#include <debug/cauv_debug.h>
+
+#include <generated/messages.h>
 
 using namespace cauv;
 using namespace cauv::gui;
+
+template<>
+std::string NameConversion::toName<MotorID::e>(MotorID::e id){
+    switch (id){
+    case MotorID::Prop:
+        return "Prop";
+    case MotorID::HBow:
+        return "H Bow";
+    case MotorID::VBow:
+        return "V Bow";
+    case MotorID::HStern:
+        return "H Stern";
+    case MotorID::VStern:
+        return "V Stern";
+    default:
+        return "unknown";
+    }
+}
+
+template<>
+std::string NameConversion::toName<CameraID::e>(CameraID::e id){
+    switch (id){
+    case CameraID::Forward:
+        return "Forward";
+    case CameraID::Down:
+        return "Down";
+    case CameraID::Sonar:
+        return "Sonar";
+    case CameraID::File:
+        return "File";
+    default:
+        return "unknown";
+    }
+}
+
+template<>
+std::string NameConversion::toName<Controller::e>(Controller::e id){
+    switch (id){
+    case Controller::Depth:
+        return "Depth";
+    case Controller::Bearing:
+        return "Bearing";
+    case Controller::Pitch:
+        return "Pitch";
+    default:
+        return "unknown";
+    }
+}
+
 
 
 GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv): m_auv(auv){
 }
 
+
+GuiMessageObserver::~GuiMessageObserver() {
+    debug() << "~GuiMessageObserver()";
+}
+
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
-    std::string name = toName(message->motorId());
+    std::string name = NameConversion::toName(message->motorId());
     m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->update(message->speed());
 }
 
@@ -93,7 +152,7 @@ void GuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr message) {
 void GuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("image");
     boost::shared_ptr<Image> shared_image= boost::make_shared<Image>(message->image());
-    group->findOrCreate<ImageNode>(toName(message->source()))->update(shared_image);
+    group->findOrCreate<ImageNode>(NameConversion::toName(message->source()))->update(shared_image);
 }
 
 void GuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) {
@@ -109,8 +168,8 @@ void GuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) 
 
 void GuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
     boost::shared_ptr<GroupingNode> group = group->findOrCreate<GroupingNode>("telemtry");
-    group->findOrCreate<NumericNode>("depth")->update(message->depth());
-    group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
+    //group->findOrCreate<NumericNode>("depth")->update(message->depth());
+    //group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
 }
 
 void GuiMessageObserver::onLocationMessage(LocationMessage_ptr m){
@@ -152,7 +211,7 @@ void GuiMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr message
 
 void GuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr message){
 
-    std::string controller = toName(message->contoller());
+    std::string controller = NameConversion::toName(message->contoller());
 
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(controller);
@@ -162,11 +221,11 @@ void GuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr mes
     state->findOrCreate<NumericNode>("Ki")->update(message->ki());
     state->findOrCreate<NumericNode>("Kd")->update(message->kd());
     boost::shared_ptr<GroupingNode> demands = state->findOrCreate<GroupingNode>("demands");
-    demands->findOrCreate<NumericNode>(toName(MotorID::Prop))->update(message->demand().prop);
-    demands->findOrCreate<NumericNode>(toName(MotorID::HBow))->update(message->demand().hbow);
-    demands->findOrCreate<NumericNode>(toName(MotorID::HStern))->update(message->demand().hstern);
-    demands->findOrCreate<NumericNode>(toName(MotorID::VBow))->update(message->demand().vbow);
-    demands->findOrCreate<NumericNode>(toName(MotorID::VStern))->update(message->demand().vstern);
+    demands->findOrCreate<NumericNode>(NameConversion::toName(MotorID::Prop))->update(message->demand().prop);
+    demands->findOrCreate<NumericNode>(NameConversion::toName(MotorID::HBow))->update(message->demand().hbow);
+    demands->findOrCreate<NumericNode>(NameConversion::toName(MotorID::HStern))->update(message->demand().hstern);
+    demands->findOrCreate<NumericNode>(NameConversion::toName(MotorID::VBow))->update(message->demand().vbow);
+    demands->findOrCreate<NumericNode>(NameConversion::toName(MotorID::VStern))->update(message->demand().vstern);
     state->findOrCreate<NumericNode>("error")->update(message->error());
     state->findOrCreate<NumericNode>("derror")->update(message->derror());
     state->findOrCreate<NumericNode>("ierror")->update(message->ierror());
