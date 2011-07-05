@@ -14,23 +14,35 @@ from utils.detectors import ColourDetector
 class detectorOptions(aiDetectorOptions):
     Sightings_Period   = 3.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.7
+    Required_Sightings = 2
     Required_Pipeline = 'detect_buoy.pipe'
     Circles_Name = 'buoy'
-    Histogram_Name = 'buoy'
-    Histogram_Bin = 10 #17
+    Histogram_Name_A = 'buoy_hue'
+    Histogram_Name_B = 'buoy_hue'
+    Histogram_Bins_A = xrange(75,120) # of 0--180 range
+    Histogram_Bins_B = xrange(50,75) # of 0--180 range
     Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
-    Optimal_Colour_Frac = 0.04 # highest colour detection confidence when the specified bin contains this value
-    Colour_Weight  = 0.0 # respective weightings in confidence, arithmetic mean of these values should be 1
-    Circles_Weight = 2.0 #
+    Optimal_Colour_A_Frac = 0.04 # highest colour detection confidence when the specified bin contains this value
+    Optimal_Colour_B_Frac = 0.04 # highest colour detection confidence when the specified bin contains this value
+    Colour_A_Weight  = -2.0 # respective weightings in confidence
+    Colour_B_Weight  =  0.4 #
+    Circles_Weight   =  1.6 #
 
 class detector(aiDetector):
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
         self.circles_messages = {}   # map time received : message
-        self.colour_detector = ColourDetector(
+        self.colour_detector_A = ColourDetector(
             self.options.Sightings_Period,
-            self.options.Histogram_Bin,
-            self.options.Optimal_Colour_Frac
+            bin_num = None,
+            optimal_colour_frac = self.options.Optimal_Colour_Frac_A,
+            bins = self.options.Histogram_Bins_A
+        )
+        self.colour_detector_B = ColourDetector(
+            self.options.Sightings_Period,
+            bin_num = None,
+            optimal_colour_frac = self.options.Optimal_Colour_Frac_B,
+            bins = self.options.Histogram_Bins_B
         )
         self.tzero = time.time()
         self.node.join('processing')
@@ -57,11 +69,15 @@ class detector(aiDetector):
             circles_confidence = self.options.Circles_Weight * sum(sightings[:numcircles]) / numcircles
         else:
             circles_confidence = 0
-        colour_confidence = self.options.Colour_Weight * self.colour_detector.confidence()
-        confidence = circles_confidence + colour_confidence
-        info('buoy detector processing %d sightings, confidence=%g (circles=%g,colour=%g)' % (
-            len(sightings), confidence, circles_confidence, colour_confidence))
-        if confidence > self.options.Required_Confidence:
+        colour_confidence_A = self.options.Colour_Weight_A * self.colour_detector_A.confidence()
+        colour_confidence_B = self.options.Colour_Weight_B * self.colour_detector_B.confidence()
+        confidence = circles_confidence + colour_confidence_A + colour_confidence_B
+        info('buoy detector processing %d sightings, confidence=%g (circles=%g,colour_A=%g,colour_B=%g)' % (
+            len(sightings), confidence, circles_confidence, colour_confidence_A, colour_confidence_B
+        ))
+        debug('mean frac: A=%g B=%g' % (self.colour_detector_A.frac(), self.colour_detector_B.frac()))
+        if confidence >= self.options.Required_Confidence and \
+           len(sightings) >= self.options.Required_Sightings:
             info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings)))
             self.detected = True
         else:
@@ -110,7 +126,12 @@ class detector(aiDetector):
             debug('ignoring circles message: %s' % m.name, 2)
  
     def onHistogramMessage(self, m):
-        if m.name == self.options.Histogram_Name:        
-            self.colour_detector.update(m)
-        else:
+        good = False
+        if m.name == self.options.Histogram_Name_A:
+            self.colour_detector_A.update(m)
+            good = True
+        if m.name == self.options.Histogram_Name_B:
+            self.colour_detector_B.update(m)
+            good = True
+        if not good:
             debug('ignoring histogram message: %s' % m.name, 2)

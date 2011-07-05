@@ -96,7 +96,7 @@ class PercentileNode: public Node{
                 }
             }
 
-            bool removed = true;
+            //bool removed = true;
             int ch;
             for (ch = 0; ch < channels; ++ch) {
                 output_id id = MakeString() << "ch" << (ch+1) << " value";
