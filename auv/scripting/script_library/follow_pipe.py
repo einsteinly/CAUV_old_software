@@ -35,7 +35,7 @@ class scriptOptions(aiScriptOptions):
     intensity_trigger = 0.10
     # Control
     prop_speed = 40
-    strafe_kPID  = (100, 0, 0)
+    strafe_kPID  = (-300, 0, 0)
     depth_kPID   = (1, 0, 0)
 
     class Meta:
@@ -64,11 +64,15 @@ class PipeConfirmer(messaging.MessageObserver):
             # this assumes we're roughly in line with the pipe already
             # TODO: use the lines message to check if we need to correct
             # the alignment as well
-            if m.x == 0:
+            if abs(m.x) == 0.01:
                 warning("ignoring centre message with centre=0")
                 return
             strafe = self.strafeControl.update(m.x - 0.5)
             debug('PipelineConfirmer: Set strafe: %i' % (int(strafe)))
+            if strafe < -127:
+                strafe = -127
+            if strafe > 127:
+                strafe = 127
             self.auv.strafe(int(strafe))
 
     def onHistogramMessage(self, m):
@@ -189,7 +193,14 @@ class script(aiScript):
         
         
         info('Centre error: %f' %(m.x - 0.5))
+        if abs(m.x) < 0.01:
+            warning('ignoring centre at 0')
+            return
         strafe = int(self.strafeControl.update(m.x - 0.5))
+        if strafe < -127:
+            strafe = -127
+        elif strafe > 127:
+            strafe = 127
         self.auv.strafe(strafe)
         info('pipe follow: strafing %i' %(strafe))
         
@@ -234,7 +245,7 @@ class script(aiScript):
         # confirm we're above the pipe
         # it does this by looking for parallel lines and checking their is
         # a peak of intensity in the correct color
-        conf_pipe_file = self.options.confirm_pipeline_file
+        """conf_pipe_file = self.options.confirm_pipeline_file
         self.request_pl(conf_pipe_file)
         confirmer = PipeConfirmer(
             self.auv,
@@ -252,10 +263,12 @@ class script(aiScript):
             self.notify_exit('ABANDONED')
             return
         info("Pipeline sighting was confirmed.")
-
+"""
+        self.confirmed.set()
+   
         
         follow_pipe_file = self.options.follow_pipeline_file
-        self.request_pl(follow_pipe_file)
+        #self.request_pl(follow_pipe_file)
             
         # now we wait for messages allowing us to work out how to align with
         # the pipe, but if this is taking too long then just give up as we've
@@ -282,7 +295,7 @@ class script(aiScript):
             self.auv.prop(0)
             self.auv.bearing((self.auv.getBearing()-180)%360)
         
-        self.drop_pl(follow_pipe_file)
+        #self.drop_pl(follow_pipe_file)
 
         info('Finished pipe following')
         self.notify_exit('SUCCESS')

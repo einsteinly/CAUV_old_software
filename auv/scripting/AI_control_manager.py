@@ -32,8 +32,7 @@ class auvControl(aiProcess):
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
         with self.script_lock:
-            if self.enabled.is_set() and self.current_task_id == task_id:
-                getattr(self.auv, command)(*args, **kwargs)
+            getattr(self.auv, command)(*args, **kwargs)
     @external_function
     def sonar_command(self, task_id, command, *args, **kwargs):
         with self.script_lock:
