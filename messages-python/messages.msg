@@ -154,6 +154,7 @@ struct SonarDataLine
     bearing: int32;
     bearingRange: int32;
     range: int32;
+    scanWidth: int32;
 }
 struct MotorDemand
 {

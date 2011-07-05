@@ -12,6 +12,7 @@
 #include <utility/rounding.h>
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
+#include <common/math.h>
 #include <common/spread/spread_rc_mailbox.h>
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
@@ -99,18 +100,9 @@ struct PIDControl
         previous_time.secs = 0;
     }
 
-    static double mod(double const& d, double const& base)
-    {
-        if(d > 0) {
-            return d - base * std::floor(d / base);
-        }else{
-            return d + base * std::floor(-d / base);
-        }
-    }
-
     virtual double getErrorAngle(double const& target, double const& current)
     {
-        double diff = mod(target - current, 360);
+        double diff = mod(target - current, 360.0);
         if(diff >  180) diff -= 360;
         if(diff <= -180) diff += 360;
         return diff;
