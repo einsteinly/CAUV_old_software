@@ -47,6 +47,18 @@ def enable_control(ainode):
 def disable_control(ainode):
     ainode.ai.auv_control.disable()
     
+def add_request(ainode, pipeline_name):
+    ainode.ai.pipeline_manager.request_pl('other', 'airemote', pipeline_name)
+    
+def drop_request(ainode, pipeline_name):
+    ainode.ai.pipeline_manager.drop_pl('other', 'airemote', pipeline_name)
+    
+def export_pls(ainode):
+    ainode.ai.pipeline_manager.export_pipelines()
+    
+def list_pls(ainode):
+    ainode.ai.pipeline_manager.list_pls()
+    
 def shell(ainode):
     print """
     To access AI use ainode, e.g.
@@ -80,7 +92,7 @@ class menu():
                 print i,')',option.name,':',option.desc
             try:
                 choice = self.options[int(raw_input('Choose an option: '))]
-            except IndexError:
+            except (IndexError, ValueError):
                 print 'Invalid input'
                 continue
             if choice.name=='Return':
@@ -107,11 +119,18 @@ if __name__=='__main__':
     scriptm.addFunction('Enable script control', enable_control, 'Allow scripts to move the AUV', {})
     scriptm.addFunction('Disable script control', disable_control, 'Stop scripts from moving the AUV', {})
     
+    imgm = menu('Image Pipeline', '')
+    imgm.addFunction('Add request', add_request, '', {'pipeline_name': str})
+    imgm.addFunction('Drop request', drop_request, '', {'pipeline_name': str})
+    imgm.addFunction('Show Running Pipelines', list_pls, '', {})
+    imgm.addFunction('Export Pipelines', export_pls, '', {})
+    
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})
     m.addFunction('Force Save', force_save, 'Force the task manager to save the current state', {})
     m.addMenu(taskm)
     m.addMenu(scriptm)
+    m.addMenu(imgm)
     m.addFunction('Shell', shell, '', {})
     
     m(ainode)

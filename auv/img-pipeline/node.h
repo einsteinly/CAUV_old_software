@@ -430,10 +430,11 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          *      - NodeParamValue
          */
         template<typename T>
-        void registerOutputID(output_id const& o){
+        void registerOutputID(output_id const& o, bool warnDuplicate = true){
             lock_t l(m_outputs_lock);
             if(m_outputs.count(o)){
-                error() << "Duplicate output id:" << o;
+                if (warnDuplicate)
+                    warning() << "Duplicate output id:" << o;
                 return;
             }
 
@@ -446,6 +447,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             ));
         }
         void registerInputID(input_id const& i, InputSchedType const& st = Must_Be_New);
+
+        bool unregisterOutputID(output_id const& o, bool warnNonexistent = true);
 
         void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS) const;
 

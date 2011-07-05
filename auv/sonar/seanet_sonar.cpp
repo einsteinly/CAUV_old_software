@@ -242,6 +242,7 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
     dataline->range = range_from_nbins_adinterval(head_data->dBytes, head_data->adInterval);
     dataline->bearing = head_data->bearing;
     dataline->bearingRange = head_data->stepSize;
+    dataline->scanWidth = head_data->rightLim - head_data->leftLim;
     
     //debug() << "Sending data line with range" << dataline->range << "mm, bearing" << dataline->bearing << ", and bearing range " << dataline->bearingRange;
     //{
@@ -293,6 +294,7 @@ void cauv::sonarReadThread(SeanetSonar& sonar)
                     sonar.m_cur_data_reqs = 0;
                     isalive = false;
                 }
+	            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
                 goto retry;
             }
 

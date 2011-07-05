@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import traceback
 import optparse
 import time
@@ -75,14 +77,14 @@ processes_to_start = [
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',               'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
-        CAUVTask('img-pipe default',     'nohup nice -n 15 %EDIR/img-pipeline -n default',         True, ['img-pipeline -n default']),
-        CAUVTask('img-pipe buoy-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
-        CAUVTask('img-pipe pipe-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
-        CAUVTask('img-pipe sonar',       'nohup nice -n 15 %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
-        CAUVTask('sonar',                'nohup nice -n 5 %EDIR/sonar /dev/ttyUSB1',              True, ['sonar']),
-        CAUVTask('controlv2',            'nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0',    True, ['controlv2']),
-        CAUVTask('spread',               'nohup spread',                                True, ['spread']),
+        CAUVTask('logger',               'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
+        CAUVTask('img-pipe default',     'nohup nice -n 15 %EDIR/img-pipeline -n default',       True, ['img-pipeline -n default']),
+        CAUVTask('img-pipe ai',          'nohup nice -n 15 %EDIR/img-pipeline -n ai',   True, ['img-pipeline -n ai']),
+       #CAUVTask('img-pipe pipe-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n pipe-detect',   True, ['img-pipeline -n pipe-detect']),
+        CAUVTask('img-pipe sonar',       'nohup nice -n 4 %EDIR/img-pipeline -n sonar',          True, ['img-pipeline -n sonar']),
+        CAUVTask('sonar',                'nohup nice -n 4 %EDIR/sonar /dev/sonar0',              True, ['sonar']),
+        CAUVTask('control',              'nohup nice -n 2 %EDIR/control -m/dev/ttyUSB0 -x0',     True, ['control']),
+        CAUVTask('spread',               'nohup nice -n 2 spread',                               True, ['spread']),
         CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
         CAUVTask('battery',              'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
         CAUVTask('gps',                  'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
@@ -92,7 +94,9 @@ processes_to_start = [
         CAUVTask('AI Manager',      '', False, ['AI_manager']),
         CAUVTask('AI Ctrl Manager', '', False, ['AI_control_manager']),
         CAUVTask('AI Detectors',    '', False, ['AI_detection_process']),
-        CAUVTask('AI Task Manager', '', False, ['AI_task_manager'])
+        CAUVTask('AI Task Manager', '', False, ['AI_task_manager']),
+        CAUVTask('AI Pipeline Manager', '', False, ['AI_pipeline_manager']),
+        CAUVTask('AI default script', '', False, ['python ./AI_scriptparent.py default'])
 ]
 
 def limitLength(string, length=48):

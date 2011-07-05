@@ -50,7 +50,7 @@ def is_external(f):
         return False
 
 class aiProcess(messaging.MessageObserver):
-    def __init__(self, process_name):
+    def __init__(self, process_name, location_enabled = False):
         messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node("pyai"+process_name[:4])
         self.node.join("ai")
@@ -69,8 +69,32 @@ class aiProcess(messaging.MessageObserver):
                     traceback.print_exc()
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+    def log(self, message):
+        try:
+            self.node.send(messaging.AIlogMessage(message), "ai")
+        except:
+            error('Error sending high-level log message')
+            traceback.print_exc()
+    def die(self):
+        self.node.removeObserver(self)
 
 #------AI SCRIPTS STUFF------
+
+class fakeSonarfunction():
+    def __init__(self, script, attr):
+        self.script = script
+        self.attr = attr
+    def __call__(self, *args, **kwargs):
+        self.script.ai.auv_control.sonar_command(self.script.task_name, self.attr, *args, **kwargs)
+    def __getattr__(self, attr):
+        error('You can only call functions of sonar, one level deep')
+        raise AttributeError('fakeSonarfunction has no attribute %s' %(attr,))
+
+class fakeSonar():
+    def __init__(self, script):
+        self.script = script
+    def __getattr__(self, func):
+        return fakeSonarfunction(self.script, func)
 
 class fakeAUVfunction():
     def __init__(self, script, attr):
@@ -79,7 +103,7 @@ class fakeAUVfunction():
     def __call__(self, *args, **kwargs):
         self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
     def __getattr__(self, attr):
-        error('You can only call functions of AUV, one level deep')
+        error('You can only call functions of AUV, one level deep (except sonar)')
         raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
 
 class fakeAUV(messaging.MessageObserver):
@@ -87,12 +111,17 @@ class fakeAUV(messaging.MessageObserver):
     #needs to respond to control overriding commands
     def __init__(self, script):
         self.script = script #passing the script saves on the number of AI_process, as fakeAUV can now call other processes through the script
+        self.sonar = fakeSonar(script)
         messaging.MessageObserver.__init__(self)
         self.script.node.join("telemetry")
         self.script.node.addObserver(self)
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
+        self.latitude = None
+        self.longitude = None
+        self.altitude = None
+        self.speed = None
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
@@ -112,6 +141,12 @@ class fakeAUV(messaging.MessageObserver):
         self.bearingCV.release()
         self.depthCV.release()
         self.pitchCV.release()
+        
+    def onLocationMessage(self, m):
+        self.latitude = m.latitude
+        self.longitude = m.longitude
+        self.altitude = m.altitude
+        self.speed = m.speed
     
     def getBearing(self):
         return self.current_bearing
@@ -250,22 +285,48 @@ class aiScript(aiProcess):
     @external_function
     def confirm_exit(self):
         self.exit_confirmed.set()
+    def die(self):
+        self.ai.auv_control.stop()
+        self.ai.auv_control.lights_off()
+        aiProcess.die(self)
 
 #------AI DETECTORS STUFF------
+class aiDetectorOptions():
+    def __init__(self, opts):
+        for key, value in opts:
+            setattr(self, key, value)
         
 class aiDetector(messaging.MessageObserver):
-    def __init__(self, node):
+    def __init__(self, node, opts):
         messaging.MessageObserver.__init__(self)
+        self.options = opts
         self.node = node
         self.node.addObserver(self)
         self.detected = False
+        self._pl_enabled = False
+        self._pl_requests = {}
     def process(self):
         """
         This should define a method to do any intensive (ie not on message) processing
         """
         pass
+    def request_pl(self, pl_name):
+        if pl_name in self._pl_requests:
+            self._pl_requests[pl_name] += 1
+        else: self._pl_requests[pl_name] = 1
+    def drop_pl(self, pl_name):
+        if pl_name in self._pl_requests:
+            if self._pl_requests[pl_name] > 0:
+                self._pl_requests[pl_name] -= 1
+                return
+        error("Can't drop pipeline that hasn't been requested")
+    def drop_all_pl(self):
+        self._pl_requests = {}
     def die(self):
+        self.drop_all_pl()
         self.node.removeObserver(self)
+    def optionChanged(self, option_name):
+        pass
 
 #------AI TASKS STUFF------
 

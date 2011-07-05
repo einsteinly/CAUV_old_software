@@ -4,8 +4,9 @@
 # 'messaging' module (which exports the c++ messaging interface directly)
 #
 import threading
+import traceback
 from cauv import messaging
-from cauv.debug import debug
+from cauv.debug import debug, error
 
 #pylint: disable=E1101
 
@@ -21,29 +22,37 @@ class ServiceLevel:
     Safe       = 0x20
     Regular    = 0X3f
 
-#'''
-#def addSynchronousPair(node, sendf, recvf, send_name = None, recv_name = None):
-#    import new
-#    if not send_name:
-#        send_name = sendf.__name__
-#    if not recv_name:
-#        recv_name = recvf.__name__
-#    send_method = new.instancemethod(sendf, node, node)
-#    node.__dict__[send_name] = send_method
-#    ...
-#'''
-
 class Node(messaging.CauvNode):
     def __init__(self, name, spreadserver="localhost", spreadport=16707):
-        debug('CauvNode.__init__ ...')
+        debug('CauvNode.__init__...')
         messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
         self.__run()
 
+    def __del__(self):
+        debug('CAUV Node __del__...')
+        debug('CAUV Node Stopping...')
+        self.stop()
+        if self.__t.isAlive():
+            debug('CAUV Node Joining run thread...')
+            self.__t.join()
+        debug('CAUV Node __del__ complete')
+    
+    def __callRunWithTryFinally(self):
+        try:
+            self.run()
+        except Exception, e:
+            error(traceback.format_exc())
+        finally:
+            debug('CAUV Node run thread cleanup...')
+            self.stop()
+        debug('CAUV Node run thread exiting...')
+
     def __run(self):
-        debug('CauvNode.__run()')   
-        t = threading.Thread(target=self.run)
-        t.daemon = True
-        t.start()
+        debug('CauvNode.__run...')   
+        self.__t = threading.Thread(target=self.__callRunWithTryFinally)
+        # TODO: False?
+        self.__t.daemon = True
+        self.__t.start()
     
     def send(self, message, groups=None, service_level=ServiceLevel.Safe):
         if groups == None:

@@ -57,9 +57,9 @@ class DelayNode: public Node{
             image_ptr_t in = inputs[Image_In_Name];
             
             // make sure output size is always the same as input size
-            if(in->cvMat().size() != m_queue_image_size){
+            if(in->size() != m_queue_image_size){
                 m_queue = std::queue<image_ptr_t>();
-                m_queue_image_size = in->cvMat().size();
+                m_queue_image_size = in->size();
             }
 
             while(m_queue.size() > unsigned(delay_by))

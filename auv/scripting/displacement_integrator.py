@@ -7,11 +7,10 @@ import math
 
 # forward/reverse speed scale and exponential factors
 class settings:
-    fSpeedScale = 0.001
-    rSpeedScale = 0.001
-    fSpeedCurve = 0.5
-    rSpeedCurve = 0.5
-    
+    propSpeedScale   = 0.4 / 127 # metres per second per unit motor power
+    propSpeedCurve   =   1 / 2.0 # 1 / time to get to 63% speed going forwards
+    strafeSpeedScale = 0.3 / 127 # metres per second per unit motor power
+    strafeSpeedCurve =   1 / 1.0 # 1 / time to get to 63% speed strafing
 
 class DisplacementIntegrator:
     def __init__(self):
@@ -20,18 +19,15 @@ class DisplacementIntegrator:
         self.displacementZ = 0
         self.timeLast = time.time()
         self.update = threading.Condition()
-        #self.fSpeed = 0
-        #self.rSpeedB = 0
-        #self.rSpeedS = 0
-        self.fSpeedReq = 0
-        self.rBSpeedReq = 0
-        self.rSSpeedReq = 0
+        self.propSpeedReq = 0
+        self.hbowSpeedReq = 0
+        self.hsternSpeedReq = 0
         self.fKink = 0
-        self.rBKink = 0
-        self.rSKink = 0
+        self.hbowKink = 0
+        self.hsternKink = 0
         self.fTime = time.time() 
-        self.rBTime = time.time()
-        self.rSTime = time.time()
+        self.hbowTime = time.time()
+        self.hsternTime = time.time()
         self.bearing = 0
         self.gotBearing = False
         t = threading.Thread(target=self.integrate)
@@ -54,67 +50,65 @@ class DisplacementIntegrator:
     def integrate(self):
         oldTime = time.time()
         while True:
-            time.sleep(1)
+            time.sleep(0.25)
             self.update.acquire()
             #self.update.wait()
             #time.sleep(1)
             if self.gotBearing == False:
                 self.update.release()
                 continue
-            self.displacementE += math.sin(self.bearing) * self.fSpeed() * settings.fSpeedScale / (time.time() - oldTime)
-            self.displacementN += math.cos(self.bearing) * self.fSpeed() * settings.fSpeedScale / (time.time() - oldTime)
-            self.displacementE += math.cos(self.bearing) * (self.rBSpeed() + self.rSSpeed()) * settings.rSpeedScale / (time.time() - oldTime)
-            self.displacementN += math.sin(self.bearing) * (self.rBSpeed() + self.rSSpeed()) * settings.rSpeedScale / (time.time() - oldTime)
+            sb = math.sin(self.bearing)
+            cb = math.cos(self.bearing)
+            forwardSpeed = self.propSpeed() * settings.propSpeedScale * (time.time() - oldTime)
+            strafeSpeed = ((self.hbowSpeed() + self.hsternSpeed()) / 2) * settings.strafeSpeedScale * (time.time() - oldTime)
+            self.displacementE += sb * forwardSpeed
+            self.displacementN += cb * forwardSpeed
+            self.displacementE += cb * strafeSpeed
+            self.displacementN += sb * strafeSpeed
             oldTime = time.time()
             self.update.release()
             info("Disp.: %gE %gN %gZ" % (self.displacementN, self.displacementE, self.displacementZ))
-            info("Speed: %g (%g, %g)" % (self.fSpeed(), self.rBSpeed(), self.rSSpeed()))
+            info("Speed: %g (%g, %g)" % (self.propSpeed(), self.hbowSpeed(), self.hsternSpeed()))
             #print(self.fKink)
             #print(time.time() - self.fTime)
-            #print((self.fSpeedReq - self.fKink) * (1 - math.exp(-settings.fSpeedCurve * (time.time() - self.fTime))))
+            #print((self.propSpeedReq - self.fKink) * (1 - math.exp(-settings.propSpeedCurve * (time.time() - self.fTime))))
 
-    def fSpeed(self):
-        return (self.fSpeedReq - self.fKink) * (1 - math.exp(-settings.fSpeedCurve * (time.time() - self.fTime))) + self.fKink
+    def propSpeed(self):
+        return (self.propSpeedReq - self.fKink) * (1 - math.exp(-settings.propSpeedCurve * (time.time() - self.fTime))) + self.fKink
 
-    def rBSpeed(self):
-        return (self.rBSpeedReq - self.rBKink) * (1 - math.exp(-settings.rSpeedCurve * (time.time() - self.rBTime))) + self.rBKink
+    def hbowSpeed(self):
+        return (self.hbowSpeedReq - self.hbowKink) * (1 - math.exp(-settings.strafeSpeedCurve * (time.time() - self.hbowTime))) + self.hbowKink
 
-    def rSSpeed(self):
-        return (self.rSSpeedReq - self.rSKink) * (1 - math.exp(-settings.rSpeedCurve * (time.time() - self.rSTime))) + self.rSKink
+    def hsternSpeed(self):
+        return (self.hsternSpeedReq - self.hsternKink) * (1 - math.exp(-settings.strafeSpeedCurve * (time.time() - self.hsternTime))) + self.hsternKink
     
     def onMotorStateMessage(self, m):
         #onMotorMessage(self, m):
         if m.motorId == messaging.MotorID.Prop:
-            #print 'FSpeed: %d' % (m.speed * fSpeedConstant)
-            #print 'FSpeedReq: %d' % (m.speed * settings.fSpeedScale)
+            #print 'FSpeed: %d' % (m.speed * propSpeedConstant)
+            #print 'FSpeedReq: %d' % (m.speed * settings.propSpeedScale)
             self.update.acquire()
-            #self.fSpeed = m.speed * fSpeedConstant
-            #self.fSpeedReq = m.speed
-            self.fKink = self.fSpeed()
-            self.fSpeedReq = m.speed
+            self.fKink = self.propSpeed()
+            self.propSpeedReq = m.speed
             self.fTime = time.time()
             #self.update.notify()
             self.update.release()
         elif m.motorId == messaging.MotorID.HBow:
-            #print 'RSpeed from bow: %d' % (m.speed * rSpeedConstant)
-            #print 'RBSpeedReq: %d' % (m.speed * settings.rSpeedScale)
+            #print 'RSpeed from bow: %d' % (m.speed * strafeSpeedConstant)
+            #print 'RBSpeedReq: %d' % (m.speed * settings.strafeSpeedScale)
             self.update.acquire()
-            #self.rSpeedB = m.speed * rSpeedConstant
-            #self.rBSpeedReq = m.speed
-            self.rBKink = self.rBSpeed()
-            self.rBSpeedReq = m.speed
-            self.rBTime = time.time()
+            self.hbowKink = self.hbowSpeed()
+            self.hbowSpeedReq = m.speed
+            self.hbowTime = time.time()
             #self.update.notify()
             self.update.release()
         elif m.motorId == messaging.MotorID.HStern:
-            #print 'RSpeed from stern: %d' % (m.speed * rSpeedConstant)
-            #print 'RSSpeedReq: %d' % (m.speed * settings.rSpeedScale)
+            #print 'RSpeed from stern: %d' % (m.speed * strafeSpeedConstant)
+            #print 'RSSpeedReq: %d' % (m.speed * settings.strafeSpeedScale)
             self.update.acquire()
-            #self.rSpeedS = m.speed * rSpeedConstant
-            #self.rSSpeedReq = m.speed
-            self.rSKink = self.rSSpeed()
-            self.rSSpeedReq = m.speed
-            self.rSTime = time.time()
+            self.hsternKink = self.hsternSpeed()
+            self.hsternSpeedReq = m.speed
+            self.hsternTime = time.time()
             #self.update.notify()
             self.update.release()
 

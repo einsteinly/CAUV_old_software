@@ -12,6 +12,7 @@
 #include <utility/rounding.h>
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
+#include <common/math.h>
 #include <common/spread/spread_rc_mailbox.h>
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
@@ -50,10 +51,10 @@ class DebugXsensObserver : public XsensObserver
         unsigned int m_level;
 };
 
-int operator-(TimeStamp const& l, TimeStamp const& r)
+float operator-(TimeStamp const& l, TimeStamp const& r)
 {
     int secs_delta = l.secs - r.secs;
-    int msecs_delta = (l.musecs - r.musecs) / 1000;
+    float msecs_delta = (l.musecs - r.musecs) / 1000.0f;
     return 1000 * secs_delta + msecs_delta;
 }
 
@@ -71,6 +72,7 @@ struct PIDControl
     TimeStamp previous_time;
     bool is_angle;
     int retain_samples_msecs;
+    double last_derr_unsmoothed;
 
     PIDControl(Controller::e controlee=Controller::NumValues)
         : controlee(controlee),
@@ -84,7 +86,7 @@ struct PIDControl
           previous_errors(),
           previous_time(),
           is_angle(false),
-          retain_samples_msecs(500)
+          retain_samples_msecs(1000)
     {
         previous_time.secs = 0;
     }
@@ -98,18 +100,9 @@ struct PIDControl
         previous_time.secs = 0;
     }
 
-    static double mod(double const& d, double const& base)
-    {
-        if(d > 0) {
-            return d - base * std::floor(d / base);
-        }else{
-            return d + base * std::floor(-d / base);
-        }
-    }
-
     virtual double getErrorAngle(double const& target, double const& current)
     {
-        double diff = mod(target - current, 360);
+        double diff = mod(target - current, 360.0);
         if(diff >  180) diff -= 360;
         if(diff <= -180) diff += 360;
         return diff;
@@ -131,19 +124,27 @@ struct PIDControl
         }
 
         for(int i = 0;i < int(previous_errors.size())-1; i++){
-            int dt_msecs = (previous_errors[i+1].first - previous_errors[i].first);
+            float dt_msecs = (previous_errors[i+1].first - previous_errors[i].first);
             if(dt_msecs != 0){
-                // TODO: multiply this by 
                 derivative_sum += (previous_errors[i+1].second - previous_errors[i].second) / dt_msecs;
                 n_derivatives++;
             }else{
-                warning() << "controller update frequency < 1ms";
+                error() << "controller update frequency too high";
             }
+            if(dt_msecs < 2)
+                warning() << "controller update frequency < 2ms";
         }
         if(!n_derivatives){
             warning() << "no derivative samples used";
             return 0.0;
+        }else{
+            // FIXME: "temporary" debugging code
+            unsigned s = previous_errors.size();
+            float dt_msecs = (previous_errors[s-1].first - previous_errors[s-2].first);
+            if(dt_msecs != 0)
+                last_derr_unsmoothed = (previous_errors[s-1].second - previous_errors[s-2].second) / dt_msecs;
         }
+
         return derivative_sum / n_derivatives;
     }
 
@@ -164,7 +165,7 @@ struct PIDControl
 
         TimeStamp tnow = now();
         previous_errors.push_back(std::make_pair(tnow, error));
-        if(tnow - previous_errors.front().first > retain_samples_msecs)
+        while((tnow - previous_errors.front().first) > retain_samples_msecs)
             previous_errors.pop_front(); 
 
         double dt = tnow - previous_time; // dt is milliseconds
@@ -207,18 +208,34 @@ struct PIDControl
         return previous_mv;
     }
 
-    boost::shared_ptr<ControllerStateMessage> stateMsg()
+    boost::shared_ptr<ControllerStateMessage> stateMsg() const
     {
         if(previous_errors.size())
             return boost::make_shared<ControllerStateMessage>(
                 controlee, previous_mv, previous_errors.back().second,
-                previous_derror, integral, Kp1, Ki1, Kd1, MotorDemand()
+                previous_derror, integral, Kp, Ki, Kd, MotorDemand()
             );
         else
             return boost::make_shared<ControllerStateMessage>(
                 controlee, previous_mv, 0,
-                previous_derror, integral, Kp1, Ki1, Kd1, MotorDemand()
+                previous_derror, integral, Kp, Ki, Kd, MotorDemand()
             ); 
+    }
+
+    std::vector< boost::shared_ptr<GraphableMessage> > extraStateMessages() const
+    {
+        std::vector< boost::shared_ptr<GraphableMessage> > r;
+        r.push_back(boost::make_shared<GraphableMessage>("errSampleNum", float(previous_errors.size())));
+        float err_sample_time = 0;
+        if(previous_errors.size())
+            err_sample_time = previous_errors.back().first - previous_errors.front().first;
+        r.push_back(boost::make_shared<GraphableMessage>("errSampleMsecs", err_sample_time));
+        r.push_back(boost::make_shared<GraphableMessage>("errSampleTarget", retain_samples_msecs));
+        r.push_back(boost::make_shared<GraphableMessage>("derrRaw", last_derr_unsmoothed));
+        //r.push_back(boost::make_shared<GraphableMessage>("Kp-variable", Kp1));
+        //r.push_back(boost::make_shared<GraphableMessage>("Ki-variable", Ki1));
+        //r.push_back(boost::make_shared<GraphableMessage>("Kd-variable", Kd1));
+        return r;
     }
 };
 
@@ -306,6 +323,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Bearing].stateMsg();
                 msg->demand(m_demand[Bearing]);
                 m_mb->sendMessage(msg, SAFE_MESS);
+
+                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
+                    m->name("Bearing-" + m->name());
+                    m_mb->sendMessage(m, SAFE_MESS);
+                }
             }
             
             if (m_controlenabled[Pitch]) {
@@ -317,6 +339,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Pitch].stateMsg();
                 msg->demand(m_demand[Pitch]);
                 m_mb->sendMessage(msg, SAFE_MESS);
+                
+                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
+                    m->name("Pitch-" + m->name());
+                    m_mb->sendMessage(m, SAFE_MESS);
+                }
             }
         }
 
@@ -330,8 +357,16 @@ class ControlLoops : public MessageObserver, public XsensObserver
                                              m_depthCalibration->aftMultiplier() * m->aft();
                 float depth = 0.5 * (fore_depth_calibrated + aft_depth_calibrated);
 
-                float mv = m_controllers[Depth].getMV(depth);
+                //FIXME: MCB sends pairs of pressure messages very close
+                //together in time, this screws up derivative calculation
+                static TimeStamp last_pressure_message_time = now();
+                if(now() - last_pressure_message_time < 10)
+                    return;
+                else
+                    last_pressure_message_time = now();
                 
+                float mv = m_controllers[Depth].getMV(depth);
+
                 m_demand[Depth].vbow = mv;
                 m_demand[Depth].vstern = mv;
 
@@ -342,6 +377,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
                 m_mb->sendMessage(msg, SAFE_MESS);
+                
+                foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
+                    m->name("Depth-" + m->name());
+                    m_mb->sendMessage(m, SAFE_MESS);
+                }
             }
         }
         virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m)
@@ -349,6 +389,17 @@ class ControlLoops : public MessageObserver, public XsensObserver
             m_depthCalibration = m;
         }
         
+        virtual void onLightMessage(LightMessage_ptr m)
+        {
+            debug(2) << "Forwarding Light Message:" << *m;
+            m_mcb->send(m);
+        }
+
+        virtual void onCuttingDeviceMessage(CuttingDeviceMessage_ptr m)
+        {
+            debug(2) << "Forwarding Cutting Device Control Message:" << *m;
+            m_mcb->send(m);
+        }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
@@ -744,6 +795,7 @@ class NotRootException : public std::exception
 ControlNode::ControlNode() : CauvNode("Control")
 {
     joinGroup("control");
+    joinGroup("external");
     addMessageObserver(boost::make_shared<DebugMessageObserver>(1));
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());

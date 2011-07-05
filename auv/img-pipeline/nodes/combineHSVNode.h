@@ -45,36 +45,29 @@ class CombineHSVNode: public Node{
             image_ptr_t S = inputs["S"];
             image_ptr_t V = inputs["V"];
 
-            int r_type = CV_MAT_DEPTH_MASK & H->cvMat().type();
-            int g_type = CV_MAT_DEPTH_MASK & S->cvMat().type();
-            int b_type = CV_MAT_DEPTH_MASK & V->cvMat().type();
-            int out_type = CV_MAKETYPE(r_type, 3);
+            int r_depth = H->depth();
+            int g_depth = S->depth();
+            int b_depth = V->depth();
             
-            if(H->cvMat().size() != S->cvMat().size() ||
-               H->cvMat().size() != V->cvMat().size()){
+            if(H->size() != S->size() || H->size() != V->size())
                throw(parameter_error("HSV source channels are not of the same size"));
-            }
 
-            if(r_type != g_type || r_type != b_type){
-                throw(parameter_error("HSV source channels are not of the same type"));
-            }
+            if(r_depth != g_depth || r_depth != b_depth)
+                throw(parameter_error("HSV source channels are not of the same depth"));
             
-            cv::Mat HSV(H->cvMat().size(), out_type);
-            boost::shared_ptr<Image> out = boost::make_shared<Image>();
-            
-            cv::Mat in[] = {H->cvMat(), S->cvMat(), V->cvMat()};
-            int from_to[] = {0,0, 1,1, 2,2};
+            cv::Mat HSV, out;
+            cv::Mat in[] = {H->mat(), S->mat(), V->mat()};
 
             try{
-                cv::mixChannels(in, 3, &HSV, 1, from_to, 3);
-                cv::cvtColor(HSV, out->cvMat(), CV_HSV2RGB, 0);
+                cv::merge(in, 3, HSV);
+                cv::cvtColor(HSV, out, CV_HSV2RGB, 0);
             }catch(cv::Exception& e){
                 error() << "CombineHSVNode:\n\t"
                         << e.err << "\n\t"
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
 
-            r["image"] = out;
+            r["image"] = boost::make_shared<Image>(out);
             
             return r;
         }

@@ -1,0 +1,38 @@
+attached_files: []
+components: []
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2011-05-24 01:46:38.024990
+description: !!python/unicode "Implement a python script that listens for sonar data\
+  \ line messages, records them in pickle shelf, and can play them back.\r\n\r\nThe\
+  \ program should be along the lines of persist.py, but should support interactive\
+  \ changing of the pickle shelf, so that different sections of sonar data can easily\
+  \ be saved to different files without restarting the program.\r\n\r\nThe playback\
+  \ rate should either be determined from the rate the data was received (by timestamping\
+  \ on receive), or maybe set by hand.\r\n\r\nEven better if the program can switch\
+  \ between recording and playing back without a restart.\r\n\r\nThis would allow\
+  \ us to collect data to test wall-tracking.\r\n\r\n"
+estimate: !!python/object:uuid.UUID
+  int: 298257563599997189979885110366072744596
+milestone: !!python/object:uuid.UUID
+  int: 143380974880746652587778828338970586177
+modified_time: 2011-05-28 22:22:30.073977
+owner: *id001
+points: null
+pscore: !!python/unicode '4'
+status: !!python/object:uuid.UUID
+  int: 300208156334241880201290222579226582105
+tags:
+- !!python/object:uuid.UUID
+  int: 197286768475377705411888986497368205084
+- !!python/object:uuid.UUID
+  int: 292557765731504791880568992605661195763
+- !!python/object:uuid.UUID
+  int: 320085086918514932043577864135319191374
+- !!python/object:uuid.UUID
+  int: 331996142187771955882707416418215780478
+title: !!python/unicode 'SonarDataLine Logger'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 189558163528000301790941683585961050783
+yaml_file_saved: 2011-05-28 22:22:30.090354

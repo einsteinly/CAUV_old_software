@@ -5,7 +5,8 @@ enum DebugType : int8 {
     Error = 3
 }
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
-enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
+enum CameraID: int8 { Forward = 1, Down = 2, Up = 3, Sonar = 4, File = 5 }
+enum LightID: int8 { Forward = 1, Down = 2, TO_FIX_NUMVALUES = 5 }
 enum NodeType : int8 {
     Invalid,
     Copy,
@@ -67,8 +68,15 @@ enum NodeType : int8 {
     Throttle,
     Nop,
     Delay,
+    ClampInt,
+    ClampFloat,
     Stitch,
-    Recogniser
+    Recogniser,
+    SURFCorners,
+    BroadcastKeyPoints,
+    DrawKeyPoints,
+    MathAddMultInt,
+    MathAddMultFloat
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -146,6 +154,7 @@ struct SonarDataLine
     bearing: int32;
     bearingRange: int32;
     range: int32;
+    scanWidth: int32;
 }
 struct MotorDemand
 {
@@ -485,6 +494,12 @@ group processing
         corners : list<Corner>;
     }
     
+    message Keypoints : 135
+    {
+        name : string;
+        keypoints : list<KeyPoint>;
+    }
+    
     message Histogram : 133
     {
         name : string;
@@ -524,6 +539,12 @@ group gui
     message ScriptResponse : 103
     {
         response : ScriptResponse;
+    }
+
+    message Graphable : 104
+    {
+        name : string;
+        value : float;
     }
 }
 
@@ -629,6 +650,21 @@ group ai
     {
         msg : string;
     }
+    message AIlog : 201
+    {
+        msg : string;
+    }
 }
 
-
+group external
+{
+    message Light : 150
+    {
+        lightId: LightID;
+        intensity : uint8;
+    }
+    message CuttingDevice : 151
+    {
+        strength : uint8;
+    }
+}

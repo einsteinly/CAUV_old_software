@@ -9,6 +9,7 @@
 #include <opencv2/core/core.hpp>
 
 #include <generated/messages.h>
+#include <common/math.h>
 #include <debug/cauv_debug.h>
 
 using namespace std;
@@ -73,18 +74,16 @@ static inline cv::Rect arcBound(int radius, cv::Point2f from, cv::Point2f to)
 }
 
 template<typename T>
-bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
+inline bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
 {
     return (p1_x * p2_y - p2_x * p1_y) > 0;
 }
 
 
 SonarAccumulator::SonarAccumulator()
-    : m_last_line_bearing(0),
-      m_images_accumulated(0),
-      m_img(boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1)))
 {   
-    assert(m_img->cvMat().data);
+    reset();
+    assert(m_img->mat().data);
 }
 
 
@@ -118,29 +117,53 @@ float sonar_cos(int bearing)
     return sonar_sin(bearing + 1600);
 }
 
+void SonarAccumulator::reset() {
+    m_last_line_bearing = 0;
+    m_image_completed = 0;
+    m_img = boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1));
+}
 
-float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
+bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
 {
+    if (line.bearingRange != m_bearingRange ||
+        line.range != m_range ||
+        line.scanWidth != m_scanWidth ||
+        line.data.size() != m_nbins)
+    {
+        // New sonar params, reset
+        debug(3) << "Sonar params updates, resetting accumulator" << m_range << m_bearingRange << m_scanWidth << m_nbins;
+        reset();
+        m_last_line_bearing = line.bearing - line.bearingRange;
+        m_range = line.range;
+        m_bearingRange = line.bearingRange;
+        m_scanWidth = line.scanWidth;
+        m_nbins = line.data.size();
+    }
+    
     if (line.bearingRange > 1600)
     {
         error() << "Cannot deal with arcs larger than a quarter circle. Do you really need the range to be this coarse?";
-        return m_images_accumulated;
+        return false;
     }
 
     int from = line.bearing - line.bearingRange/2;
     int to = from + line.bearingRange;
 
-    int radius = floor((min(m_img->cvMat().rows, m_img->cvMat().cols)-1)/2);
+    int radius = floor((min(m_img->height(), m_img->width())-1)/2);
     int bincount = line.data.size();
 
     float bscale = (float)radius/bincount;
     float cx = radius, cy = radius;
     
-    int accumulated_delta = line.bearing - m_last_line_bearing;
+    int accumulated_delta = mod(line.bearing - m_last_line_bearing, 6400);
     m_last_line_bearing = line.bearing;
-    if (accumulated_delta < 0)
-        m_images_accumulated += 1.0;
-     m_images_accumulated += double(accumulated_delta) / 6400.0;
+    m_image_completed += (float)accumulated_delta / line.scanWidth;
+
+    bool isFullImage = m_image_completed >= 1.0;
+    if (isFullImage)
+        m_image_completed = 0;
+
+    cv::Mat m = m_img->mat();
 
     for (int b = 0; b < bincount; b++) {
         // All calculations assume centre is at (0,0)
@@ -158,7 +181,9 @@ float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
         cv::Rect bb = innerbb | outerbb;
         
         for(int y = bb.y; y < bb.y + bb.height; y++)
-            for(int x = bb.x; x < bb.x + bb.width; x++)
+        {
+            unsigned char* pm = &m.at<unsigned char>(cy - y, cx + bb.x);
+            for(int x = bb.x; x < bb.x + bb.width; x++, pm++)
             {
                 int r2 = x*x + y*y;
         
@@ -177,11 +202,13 @@ float SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
                     continue;
 
                 // If we've got to here, then this must be valid. Shift to the centre and set the value.
-                m_img->cvMat().at<unsigned char>(cy - y, cx + x) = line.data[b];
+                *pm = line.data[b];
             }
+        }
     }
+    m_img->mat(m);
 
-    return m_images_accumulated;
+    return isFullImage;
 }
 
 
@@ -191,9 +218,7 @@ boost::shared_ptr<Image> SonarAccumulator::img() const
     return m_img;
 }
 
-cv::Mat const& SonarAccumulator::mat() const
+cv::Mat SonarAccumulator::mat() const
 {
-    return m_img->cvMat();
+    return m_img->mat();
 }
-
-

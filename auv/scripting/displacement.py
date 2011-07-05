@@ -11,13 +11,17 @@ import optparse
 
 import displacement_integrator
 
-Metres_Per_Second_Per_Motor_Unit = 0.001
+Metres_Per_Second_Per_Motor_Unit = 0.4 / 127 #empirical estimate
 
+#coordinates of a bit of river Cam in Cambridge
 Default_Datum_Latitude = 52.116692
 Default_Datum_Longitude = 0.117792
 
+#principal component of Earth along polar and equatorial axis
 Earth_b = 6356752.3142 # polar
 Earth_a = 6378137.00 # equatorial 
+
+radiansPerDegree = math.pi / 180
 
 class XYZCoord:
     def __init__(self, x, y, z):
@@ -29,12 +33,14 @@ class XYZCoord:
 
 def metresPerDegreeLongitude(lat):
     # dimensions of earth:
-    tan_lat = math.tan(lat)
+    # TODO check for negative numbers
+    tan_lat = math.tan(radiansPerDegree * lat)
     beta = math.atan((Earth_b/Earth_a)*tan_lat)
-    return math.pi * Earth_a * math.cos(beta) / 180
+    return Earth_a * math.cos(beta) * radiansPerDegree 
 
 def metresPerDegreeLatitude(lng):
-    return math.pi * Earth_b ** 2 / 360
+    # TODO maybe improve approx; atm 1st degree
+    return Earth_b * radiansPerDegree
 
 class LLACoord:
     def __init__(self, lat, lng, alt):
@@ -105,8 +111,8 @@ class Displacement(messaging.MessageObserver):
         bearing = self.telemetry_bearing        
         if bearing is not None and self.speed is not None:
             now = time.time()
-            self.displacement.x += math.sin(bearing) * self.speed
-            self.displacement.y += math.cos(bearing) * self.speed
+            self.displacement.x += math.sin(radiansPerDegree * bearing) * self.speed
+            self.displacement.y += math.cos(radiansPerDegree * bearing) * self.speed
             self.time_last = now
 
     def onMotorStateMessage(self, m):

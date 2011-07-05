@@ -35,7 +35,7 @@ class GuiOutputNode: public OutputNode{
             image_ptr_t img = inputs["image_in"];
             int qual = param<int>("jpeg quality");
             
-            if(img->cvMat().rows != 0 && img->cvMat().cols != 0){
+            if(!img->empty()) {
                 debug(4) << "GuiOutputNode::doWork()" << id() << *img;
                 img->serializeQuality(qual);
                 sendMessage(boost::make_shared<GuiImageMessage>(plName(), id(), *img), UNRELIABLE_MESS);

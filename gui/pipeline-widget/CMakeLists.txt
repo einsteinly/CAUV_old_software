@@ -55,6 +55,7 @@ add_library (
     ${SRCD}/LiberationSans-Regular.h
     ${SRCD}/LiberationMono-Regular.h
 )
+cauv_install(pipeline-widget)
 
 target_link_libraries (
     pipeline-widget

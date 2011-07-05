@@ -38,9 +38,9 @@ class TexImg{
     public:
         TexImg(Image const& img)
             : m_img(boost::make_shared<Image>(img)), m_tex_id(0){
-            int chs = img.cvMat().channels();
-            if(img.cvMat().depth() != CV_8U || (chs!=3 && chs!=4 && chs!=1) ||
-               !img.cvMat().isContinuous() || !img.cvMat().rows || !img.cvMat().cols){
+            int chs = img.mat().channels();
+            if(img.mat().depth() != CV_8U || (chs!=3 && chs!=4 && chs!=1) ||
+               !img.mat().isContinuous() || !img.mat().rows || !img.mat().cols){
                 error() << "incompatible image type" << img;
                 m_img.reset();
             }
@@ -115,7 +115,7 @@ class TexImg{
             int h = img->height();
             if (h <= max_size && w <= max_size)
             {
-                m = img->cvMat();
+                m = img->mat();
             }
             else
             {
@@ -129,7 +129,7 @@ class TexImg{
                 }
                 w = w_resized;
                 h = h_resized;
-                cv::resize(img->cvMat(), m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
+                cv::resize(img->mat(), m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
             }
 
             GLenum tex_type = GL_UNSIGNED_BYTE;
@@ -212,7 +212,7 @@ void Img::display(Image const& img){
         m_next_img = next_img;
     }
 
-    aspect(double(img.cvMat().cols) / img.cvMat().rows);
+    aspect(double(img.mat().cols) / img.mat().rows);
     m_context->postRedraw(0);
     debug(6) << __func__ << "exit";
 }

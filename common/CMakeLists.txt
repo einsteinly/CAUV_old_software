@@ -5,11 +5,6 @@ link_directories (${ssrcspread_LIBRARY_DIR})
 
 find_package (OpenCV REQUIRED)
 
-option(CAUV_DEBUG_MESSAGES "Emit code to allow message bytes to be printed at high debug levels" OFF)
-if (CAUV_DEBUG_MESSAGES)
-    add_definitions(-DCAUV_DEBUG_MESSAGES)
-endif()
-
 add_library (
     common STATIC
     
@@ -17,6 +12,7 @@ add_library (
     cauv_node.cpp
     cauv_utils.cpp
     image.cpp
+    math.cpp
     spread/mailbox_monitor.cpp
     spread/spread_mailbox.cpp
     spread/spread_rc_mailbox.cpp
@@ -44,6 +40,7 @@ add_library (
     cauv_node.cpp
     cauv_utils.cpp
     image.cpp
+    math.cpp
     spread/mailbox_monitor.cpp
     spread/spread_mailbox.cpp
     spread/spread_rc_mailbox.cpp

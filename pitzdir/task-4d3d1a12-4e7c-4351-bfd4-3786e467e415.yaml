@@ -10,13 +10,13 @@ estimate: !!python/object:uuid.UUID
   int: 298257563599997189979885110366072744596
 milestone: !!python/object:uuid.UUID
   int: 143380974880746652587778828338970586177
-modified_time: 2011-05-16 17:07:07.476139
+modified_time: 2011-05-22 16:14:05.455657
 owner: !!python/object:uuid.UUID
   int: 78002556280449588393479432476918080669
 points: null
-pscore: !!python/unicode '4'
+pscore: !!python/unicode '1'
 status: !!python/object:uuid.UUID
-  int: 169187340753552385114968941926541347595
+  int: 49302717939597338662509329691997652165
 tags:
 - !!python/object:uuid.UUID
   int: 292557765731504791880568992605661195763
@@ -24,4 +24,4 @@ title: !!python/unicode 'More efficient python message observing.'
 type: task
 uuid: !!python/object:uuid.UUID
   int: 102667814576855822373383089053697041429
-yaml_file_saved: 2011-05-16 17:07:07.498106
+yaml_file_saved: 2011-05-22 16:14:05.472164

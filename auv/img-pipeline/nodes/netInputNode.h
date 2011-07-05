@@ -17,13 +17,12 @@ namespace imgproc{
 class NetInputNode: public InputNode{
     public:
         NetInputNode(ConstructArgs const& args)
-            : InputNode(args){
+            : InputNode(args),
+              ignored(0), processed(0), dropped(0), dropped_since(0), m_counters_lock(),
+              m_latest_image_msg(), m_processed_latest(true), m_latest_msg_lock() {
         }
 
         void init(){
-            // InputNode stuff: subscribe to images
-            m_subscriptions.insert(ImageData);
-
             // registerInputID()
             
             // one output:
@@ -35,6 +34,28 @@ class NetInputNode: public InputNode{
     
         virtual ~NetInputNode(){
             stop();
+            info() << "~NetInputNode statistics"
+                   << "\n\tignored" << ignored
+                   << "\n\tprocessed" <<  processed
+                   << "\n\tdropped" <<  dropped; 
+        }
+
+        /**
+         * if this image is from the right source:
+         *   take a copy of the image message pointer: store it, and
+         *   if m_output_demanded, queue this node for execution
+         */
+        void onImageMessage(boost::shared_ptr<const ImageMessage> m) throw() {
+            lock_t l(m_counters_lock);
+            debug(4) << "Input node received an image";
+            
+            { lock_t l(m_latest_msg_lock);
+                if(!m_processed_latest)
+                    dropped_since++;
+                m_processed_latest = false;
+                m_latest_image_msg = m;
+            }
+            setAllowQueue();
         }
 
     protected:
@@ -43,16 +64,44 @@ class NetInputNode: public InputNode{
             
             debug(4) << "NetInputNode::doWork";
         
-            r["image_out"] = boost::shared_ptr<Image>(
-                new Image(latestImageMsg()->image())
-            );
+            r["image_out"] = boost::make_shared<Image>(latestImageMsg()->image());
             
             // setAllowQueue() is called by InputNode when a new latestImageMsg
             // is available
             clearAllowQueue();
             return r;
         }
-    
+        
+        boost::shared_ptr<const ImageMessage> latestImageMsg(){
+            lock_t l(m_counters_lock);
+            debug(4) << "Grabbing image";
+            if(dropped_since > 0){
+                debug() << "Dropped" << dropped_since << "frames since last frame processed";
+                dropped += dropped_since;
+                dropped_since = 0;
+            }
+            processed++;
+            debug(4) << "Processed" << processed << "images";
+            
+            { lock_t l(m_latest_msg_lock);
+                m_processed_latest = true;
+                return m_latest_image_msg;
+            }
+        }
+
+
+    private:
+        int ignored;
+        int processed;
+        int dropped;
+        int dropped_since;
+        mutable boost::recursive_mutex m_counters_lock;
+        
+        boost::shared_ptr<const ImageMessage> m_latest_image_msg;
+        bool m_processed_latest;
+        mutable boost::recursive_mutex m_latest_msg_lock;
+        
+
     // Register this node type
     DECLARE_NFR;
 };

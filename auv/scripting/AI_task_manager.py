@@ -45,7 +45,9 @@ class taskManager(aiProcess):
         restored = False
         if restore:
 	    info('Looking for previous states...')
-            if self.load_state(): restored = True
+            if self.load_state():
+                restored = True
+                self.log('Task manager restored.')
             else: info('No previous valid state file, loading from mission.py')
         if not restored:    
             self.mission = __import__(mission)
@@ -119,10 +121,12 @@ class taskManager(aiProcess):
     @external_function
     def notify_condition(self, condition_name, *args, **kwargs):
         self.conditions[condition_name].set_state(*args, **kwargs)
+        self.log('Condition '+condition_name+' sent parameters: '+', '.join([', '.join(map(str, args)),', '.join(['='.join(map(str,kwarg)) for kwarg in kwargs])]))
         self.conditions_changed.set()
         self.save_state()
     @external_function
     def notify_detector(self, detector_name, *args, **kwargs):
+        self.log('Detector '+detector_name+' sent parameters: '+', '.join([', '.join(map(str,args)),', '.join(['='.join(map(str,kwarg)) for kwarg in kwargs])]))
         for listener in self.active_detectors[detector_name]:
             listener.set_state(*args, **kwargs)
         self.conditions_changed.set()
@@ -169,13 +173,18 @@ class taskManager(aiProcess):
             if self.task_list[task].crash_count >= self.task_list[task].crash_limit:
                 self.remove_task(task)
                 warning('%s had too many unhandled exceptions, so has being removed from the active tasks.' %(task,))
+            self.log('Task %s failed after an exception in the script.' %(task, ))
         elif status == 'SUCCESS':
+            self.log('Task %s suceeded, no longer trying to complete this task.' %(task, ))
             self.remove_task(task)
             info('%s has finished succesfully, so is being removed from active tasks.' %(task,))
         else:
+            info('%s sent exit message %s' %(task, status))
+            self.log('Task %s failed, waiting atleast %ds before trying again.' %(task, self.task_list[task].frequency_limit))
             self.task_list[task].last_called = time.time()
         getattr(self.ai,task).confirm_exit()
         #Force immediate recheck
+        time.sleep(0.5) # otherwise script won't have a chance to stop
         self.conditions_changed.set()
     @external_function
     def request_stop_script(self):
@@ -188,9 +197,12 @@ class taskManager(aiProcess):
             except OSError:
                 debug('Could not kill running script (probably already dead)')
         #make sure the sub actually stops
-        self.ai.control_manager.stop()
+        self.ai.pipeline_manager.drop_script_pls()
+        self.ai.auv_control.stop()
+        self.ai.auv_control.lights_off()
         self.ai.auv_control.set_task_id(None)
     def start_script(self, task_ref, script_name, script_opts={}):
+        self.ai.auv_control.signal(task_ref)
         self.stop_script()
         self.ai.auv_control.set_task_id(task_ref)
         info('Starting script: %s  (Task %s)' %(script_name, task_ref))
@@ -200,6 +212,7 @@ class taskManager(aiProcess):
         self.current_priority = 0
         self.current_task = None
         self.start_script('default', self.mission.default_script, self.mission.default_script_options)
+        self.log('Starting the default script, since no tasks are currently available to complete.')
         #also make sure detectors are running
         with self.detector_lock:
             self.detectors_enabled = True
@@ -254,4 +267,7 @@ if __name__ == '__main__':
     opts, args = p.parse_args()
     
     tm = taskManager(**opts.__dict__)
-    tm.run()
+    try:
+        tm.run()
+    finally:
+        tm.die()

@@ -51,7 +51,9 @@ class MedianFilterNode: public Node{
             debug(4) << "MedianFilterNode:" << ksize;
             
             try{
-                cv::medianBlur(img->cvMat(), img->cvMat(), ksize);
+                cv::Mat m = img->mat();
+                cv::medianBlur(m, m, ksize);
+                img->mat(m);
                 r["image (not copied)"] = img;
             }catch(cv::Exception& e){
                 error() << "MedianFilterNode:\n\t"

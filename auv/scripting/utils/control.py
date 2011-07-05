@@ -15,7 +15,7 @@ class Controller:
         return 0
 
 class PIDController(Controller):
-    def __init__(self, (Kp, Ki, Kd), d_window = (1), err_clamp = 1e9):
+    def __init__(self, (Kp, Ki, Kd), d_window = [1], err_clamp = 1e9):
         # the most recent end of the window is the start
         self.err = 0
         self.last_time = None

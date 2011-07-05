@@ -43,6 +43,14 @@ if __name__ == '__main__':
         script.run()
     except Exception as e:
         ainode = aiProcess('script_error_reporter')
+        ainode.ai.auv_control.stop()
+        ainode.ai.auv_control.lights_off()
         ainode.ai.task_manager.on_script_exit(task_ref, 'ERROR')
         error(traceback.format_exc())
+        ainode.die()
         raise e
+    finally:
+        try:
+            script.die()
+        except NameError:
+            error("Could not clear up after the script since it wasn't created properly")

@@ -32,6 +32,7 @@ void cauvInfo(const char* s){
     info() << s;
 }
 
+#ifdef EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 struct Blah{
     int monkey;
 };
@@ -82,6 +83,7 @@ struct ThingWrapper: public Thing, bp::wrapper<Thing>{
         return this->Thing::foo();
     }*/
 };
+#endif // def EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 
 
 class MessageWrapper:
@@ -92,10 +94,10 @@ class MessageWrapper:
         const_svec_ptr toBytes() const{
             GILLock l; // GIL MUST be held during get_override!
             if(bp::override f = this->get_override("toBytes")){
-                f();
+                return f();
             }
             l.release();
-            assert(0);
+            return Message::toBytes();
         }
 };
 
@@ -176,7 +178,7 @@ class SpreadMessageWrapper:
         virtual MessageFlavour getMessageFlavour() const{
             GILLock l;
             if(bp::override f = this->get_override("getMessageFlavour")){
-                f();
+                return f();
             }
             l.release();
             error() << "1. Spread Messages should not be exposed to Python";
@@ -186,7 +188,7 @@ class SpreadMessageWrapper:
 };
 
 
-
+#if EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 /*** Actual Functions to Generate the Interface: ***/
 void emitThing(){
     bp::class_<Blah>("Blah")
@@ -204,6 +206,9 @@ void emitThing(){
         .def("callThing", &ThingCaller::callThing)
     ;
 }
+#else
+void emitThing(){}
+#endif // def EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 
 void emitDebug(){
     bp::def("debug", cauvDebug);
@@ -261,6 +266,7 @@ void emitCauvNode(){
                boost::noncopyable
               >("CauvNode", bp::init<std::string, std::string, unsigned>())
          .def("run", wrap(&CauvNodeWrapper::run))
+         .def("stop", wrap(&CauvNode::stopNode))
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))

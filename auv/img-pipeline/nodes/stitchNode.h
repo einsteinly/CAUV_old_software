@@ -14,7 +14,7 @@ class StitchNode: public Node{
         }
 
         void init(){
-            m_speed = fast;
+            m_speed = slow;
             registerInputID(Image_In_Name);
 
             registerParamID<float>("rejection threshold", 0.5, "0 = never reject anything, 1.0 = reject everything");

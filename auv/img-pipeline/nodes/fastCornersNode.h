@@ -51,14 +51,14 @@ class FASTCornersNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs[Image_In_Name];
+            cv::Mat img = inputs[Image_In_Name]->mat();
             
             const bool nonmaxsupp = param<bool>("non-maximum suppression");
             const int threshold = param<int>("threshold");
 
             cv::vector<cv::KeyPoint> cv_corners;
             try{
-                cv::FAST(img->cvMat(), cv_corners, threshold, nonmaxsupp);
+                cv::FAST(img, cv_corners, threshold, nonmaxsupp);
             }catch(cv::Exception& e){
                 error() << "FASTCornersNode:\n\t"
                         << e.err << "\n\t"
@@ -69,8 +69,8 @@ class FASTCornersNode: public Node{
             // top left origin // TODO: check this
             std::vector<Corner> corners;
             corners.reserve(cv_corners.size());
-            const float width = img->cvMat().cols;
-            const float height = img->cvMat().rows;
+            const float width = img.cols;
+            const float height = img.rows;
             debug(2) << "FASTCorners: detected" << cv_corners.size() << "corners:";
             foreach(const cv::KeyPoint &kp, cv_corners)
                 corners.push_back(_corner(kp, width, height));

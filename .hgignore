@@ -19,6 +19,7 @@ tags
 *.log
 *.dylib
 *.temp
+*-out.*.jpg
 .DS_Store
 auv/python-module/cauvinterface.so
 auv/scripting/unknown.log

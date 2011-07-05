@@ -183,6 +183,7 @@ class Model(messaging.MessageObserver):
             self.node_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
         r = self.node_added.nodeId
+        debug('Node id = %d' %(r,))
         self.node_added_condition.release()
         return r
         
@@ -232,7 +233,7 @@ class Model(messaging.MessageObserver):
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:
             self.arc_added_condition.release()
-            raise RuntimeError('No reponse from pipeline, is it running?')
+            raise RuntimeError('No response from pipeline, is it running?')
         self.arc_added_condition.release()
         return None
 
