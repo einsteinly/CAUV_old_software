@@ -12,13 +12,13 @@ set ( DSD_PLUGIN_SRCS
     datastreamdisplays.cpp
     #datastreamrecorder.cpp
     treeitems.cpp
-    #graphs.cpp
+    graphs.cpp
 )
 
 set ( DSD_PLUGIN_UIS
     datastreamdisplays.ui
     #datastreamrecorder.ui
-    #graphs.ui
+    graphs.ui
 )
 
 set ( DSD_PLUGIN_H

@@ -10,7 +10,7 @@ GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv): m_auv(auv){
 
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
     std::string name = toName(message->motorId());
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode>(name)->update(message->speed());
+    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->update(message->speed());
 }
 
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {

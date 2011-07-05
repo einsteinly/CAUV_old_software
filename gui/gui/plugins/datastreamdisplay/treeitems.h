@@ -4,12 +4,13 @@
 #include <QVariant>
 #include <QTreeWidgetItem>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 
 #include <debug/cauv_debug.h>
 #include <gui/core/model/nodes.h>
 #include <gui/core/model/model.h>
+
+#include <cv.h>
 
 namespace cauv {
     namespace gui {
@@ -20,6 +21,7 @@ namespace cauv {
   *
   * @author Andy Pritchard
   */
+
         class NodeTreeItemBase : public QObject, public QTreeWidgetItem {
             Q_OBJECT
         public:
@@ -28,7 +30,8 @@ namespace cauv {
             boost::shared_ptr<NodeBase> getNode();
             virtual bool updateNode(QVariant& value) = 0;
 
-        protected Q_SLOTS:
+        public Q_SLOTS:
+            NodeTreeItemBase * addNode(boost::shared_ptr<NodeBase> node);
             void updateIcon(int cell, QImage &image);
             void updateIcon(int cell, const Image &image);
             void updateValue(const QString value);
@@ -54,7 +57,10 @@ namespace cauv {
                     NodeTreeItemBase(node, parent), m_node(node) {
             }
 
-            virtual T qVariantToValue(QVariant& v) = 0;
+            virtual T qVariantToValue(QVariant& ) {
+                // should overide this method
+                throw boost::bad_lexical_cast();
+            }
 
             virtual bool updateNode(QVariant& value){
                 if(!m_node->isMutable()) return false;
@@ -90,7 +96,7 @@ namespace cauv {
                 node->connect(node.get(), SIGNAL(onUpdate(numeric_variant_t)), this, SLOT(onChange(numeric_variant_t)));
                 onChange(node->get());
             }
-            
+
             virtual numeric_variant_t qVariantToValue(QVariant& v){
                 std::string value = v.toString().toStdString();
 
@@ -103,8 +109,7 @@ namespace cauv {
                     }
                 } catch (std::out_of_range){ }
 
-                // TODO: correct parsing of type, either int or float should so
-                return numeric_variant_t(boost::lexical_cast<float>(value));
+                return m_node->numericVariantFromString(value);
             }
 
         protected Q_SLOTS:
@@ -118,17 +123,73 @@ namespace cauv {
             boost::shared_ptr<NumericNode> m_node;
         };
 
-        // partial specializations
-        // need one for int8_t as it prints as a char not as an int, so we cast it
-        // to int in the implementation before printing
-        /*template<> void DataStreamTreeItem<int8_t>::onChange(const int8_t value);
-    template<> void DataStreamTreeItem<Image>::onChange(const Image value);
-    // another for int8_t for much the same reason but with lexical cast this time
-        template<> int8_t NodeTreeItem<int8_t>::qVariantToValue(QVariant& value);
-        // also need some for out types as lexical cast doesn't know what to do
-        template<> MotorDemand NodeTreeItem<MotorDemand>::qVariantToValue(QVariant& value);
-        template<> Image NodeTreeItem<Image>::qVariantToValue(QVariant& value);
-*/
+
+
+
+
+        class GroupingNodeTreeItem : public NodeTreeItem<std::string> {
+            Q_OBJECT
+        public:
+            GroupingNodeTreeItem(boost::shared_ptr<GroupingNode> node, QTreeWidgetItem * parent) :
+                    NodeTreeItem<std::string>(node, parent) {
+                node->connect(node.get(), SIGNAL(onUpdate(std::string)), this, SLOT(onChange(std::string)));
+            }
+
+        protected Q_SLOTS:
+            void onChange(std::string value){
+                setText(0, QString::fromStdString(value));
+            }
+        };
+
+
+
+
+        class ImageNodeTreeItem : public NodeTreeItem<image_variant_t> {
+            Q_OBJECT
+        public:
+            ImageNodeTreeItem(boost::shared_ptr<ImageNode> node, QTreeWidgetItem * parent) :
+                    NodeTreeItem<image_variant_t>(node, parent) {
+                node->connect(node.get(), SIGNAL(onUpdate(image_variant_t)), this, SLOT(updateIcon(image_variant_t)));
+                onChange(node->get());
+            }
+
+
+        protected Q_SLOTS:
+
+            void updateIcon(int cell, QImage &image){
+                this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
+            }
+
+            void updateIcon(image_variant_t image){
+                try {
+                    cv::Mat mat_rgb;
+                    cv::cvtColor(image->cvMat(), mat_rgb, CV_BGR2RGB);
+
+                    QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
+                                           mat_rgb.rows, QImage::Format_RGB888);
+
+                    this->updateIcon(1, qImage);
+
+                } catch (...){
+                    error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__;
+                }
+            }
+
+        };
+
+
+
+
+        class StringNodeTreeItem : public NodeTreeItem<std::string> {
+            Q_OBJECT
+        public:
+            StringNodeTreeItem(boost::shared_ptr<StringNode> node, QTreeWidgetItem * parent) :
+                    NodeTreeItem<std::string>(node, parent) {
+                node->connect(node.get(), SIGNAL(onUpdate(std::string)), this, SLOT(onChange(std::string)));
+                onChange(node->get());
+            }
+        };
+
     } // namespace gui
 } // namespace cauv
 

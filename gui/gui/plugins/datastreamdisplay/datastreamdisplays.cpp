@@ -49,126 +49,30 @@ DataStreamPicker::DataStreamPicker() :
 void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node) {
     CauvBasicPlugin::initialise(auv, node);
 
-    // set up the categories
+    debug() << "Initialising data stream list";
 
-    error() << "Initisaliing data strema plugin";
-
-
-    QTreeWidgetItem *motors = new QTreeWidgetItem(ui->dataStreams);
-
-    new NumericNodeTreeItem(auv->find<GroupingNode>("motors")->find<NumericNode>("prop"), motors);
-
-
-    /*
-    //
-    // motors
-    //
-    QTreeWidgetItem *motors = new QTreeWidgetItem(ui->dataStreams);
-    motors->setText(0, "Motors");
-    motors->setFlags(motors->flags() ^ Qt::ItemIsSelectable);
-    motors->setExpanded(true);
-
-    foreach(AUV::motor_map::value_type i, auv->motors) {
-        new DataStreamTreeItem<int8_t>(i.second, motors);
+    GroupingNodeTreeItem *auvItem = new GroupingNodeTreeItem(auv, NULL);
+    ui->dataStreams->addTopLevelItem(auvItem);
+    auvItem->setText(0, "Red Herring");
+    auvItem->setExpanded(true);
+    foreach(boost::shared_ptr<NodeBase> child, auv->getChildren()){
+        auvItem->addNode(child);
     }
-
-    //
-    // autopilots
-    //
-    QTreeWidgetItem *autopilots = new QTreeWidgetItem(ui->dataStreams);
-    autopilots->setText(0, "Autopilots");
-    autopilots->setFlags(autopilots->flags() ^ Qt::ItemIsSelectable);
-    autopilots->setExpanded(true);
-
-    foreach(AUV::autopilot_map::value_type i, auv->autopilots) {
-        DataStreamTreeItem<float> *autopilot = new DataStreamTreeItem<float>(i.second, autopilots);
-        (new DataStreamTreeItem<float>(i.second->kP, autopilot))->setText(0, "kP");
-        (new DataStreamTreeItem<float>(i.second->kI, autopilot))->setText(0, "kI");
-        (new DataStreamTreeItem<float>(i.second->kD, autopilot))->setText(0, "kD");
-        (new DataStreamTreeItem<float>(i.second->aP, autopilot))->setText(0, "aP");
-        (new DataStreamTreeItem<float>(i.second->aI, autopilot))->setText(0, "aI");
-        (new DataStreamTreeItem<float>(i.second->aD, autopilot))->setText(0, "aD");
-        (new DataStreamTreeItem<float>(i.second->thr, autopilot))->setText(0, "thr");
-        (new DataStreamTreeItem<float>(i.second->maxError, autopilot))->setText(0, "maxError");
-        (new DataStreamTreeItem<float>(i.second->scale, autopilot))->setText(0, "scale");
-        (new DataStreamTreeItem<float>(i.second->actual, autopilot))->setText(0, "actual");
-
-        QTreeWidgetItem *demands = new QTreeWidgetItem(autopilot);
-        demands->setText(0, "demands");
-        demands->setFlags(demands->flags() ^ Qt::ItemIsSelectable);
-        (new DataStreamTreeItem<float>(i.second->demand->prop, demands))->setText(0, "prop");
-        (new DataStreamTreeItem<float>(i.second->demand->hbow, demands))->setText(0, "hbow");
-        (new DataStreamTreeItem<float>(i.second->demand->vbow, demands))->setText(0, "vbow");
-        (new DataStreamTreeItem<float>(i.second->demand->hstern, demands))->setText(0, "hstern");
-        (new DataStreamTreeItem<float>(i.second->demand->vstern, demands))->setText(0, "vstern");
-
-        (new DataStreamTreeItem<float>(i.second->mv, autopilot))->setText(0, "mv");
-        (new DataStreamTreeItem<float>(i.second->error, autopilot))->setText(0, "error");
-        (new DataStreamTreeItem<float>(i.second->derror, autopilot))->setText(0, "derror");
-        (new DataStreamTreeItem<float>(i.second->ierror, autopilot))->setText(0, "ierror");
-
-    }
-
-    //
-    // imaging devices
-    //
-    QTreeWidgetItem *cameras = new QTreeWidgetItem(ui->dataStreams);
-    cameras->setText(0, "Imaging");
-    cameras->setFlags(cameras->flags() ^ Qt::ItemIsSelectable);
-    cameras->setExpanded(true);
-
-    foreach(AUV::camera_map::value_type i, auv->cameras) {
-        DataStreamTreeItem<Image> * camera = new DataStreamTreeItem<Image>(i.second, cameras);
-
-        // special case for sonars as they have params
-        if(dynamic_cast<AUV::Sonar*>(i.second.get())) {
-            boost::shared_ptr<AUV::Sonar> sonar = boost::shared_static_cast<AUV::Sonar>(auv->cameras[CameraID::Sonar]);
-
-            new DataStreamTreeItem<int>(sonar->direction, camera);
-            new DataStreamTreeItem<int>(sonar->angularRes, camera);
-            new DataStreamTreeItem<int>(sonar->radialRes, camera);
-            new DataStreamTreeItem<int>(sonar->gain, camera);
-            new DataStreamTreeItem<int>(sonar->range, camera);
-            new DataStreamTreeItem<int>(sonar->width, camera);
-        }
-    }
-
-    //
-    // sensors
-    //
-    QTreeWidgetItem *sensors = new QTreeWidgetItem(ui->dataStreams);
-    sensors->setText(0, "Sensors");
-    sensors->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);
-    sensors->setExpanded(true);
-
-    new DataStreamTreeItem<uint16_t>(auv->sensors.pressure_fore, sensors);
-    new DataStreamTreeItem<uint16_t>(auv->sensors.pressure_aft, sensors);
-    new DataStreamTreeItem<float>(auv->sensors.depth, sensors);
-    DataStreamTreeItem<floatYPR> * orientation = new DataStreamTreeItem<floatYPR>(auv->sensors.orientation->combined, sensors);
-    new DataStreamTreeItem<float>(auv->sensors.orientation->yaw, orientation);
-    new DataStreamTreeItem<float>(auv->sensors.orientation->pitch, orientation);
-    new DataStreamTreeItem<float>(auv->sensors.orientation->roll, orientation);
-
-
-    QTreeWidgetItem *battery = new QTreeWidgetItem(ui->dataStreams);
-    battery->setText(0, "Battery");
-    battery->setFlags(battery->flags() ^ Qt::ItemIsSelectable);
-    battery->setExpanded(true);
-
-    new DataStreamTreeItem<float>(auv->sensors.esitmate_current, battery);
-    new DataStreamTreeItem<float>(auv->sensors.estimate_total, battery);
-    new DataStreamTreeItem<float>(auv->sensors.fraction_remaining, battery);
-
-    //
-    // other
-    //
-    QTreeWidgetItem *other = new QTreeWidgetItem(ui->dataStreams);
-    other->setText(0, "Other");
-    other->setFlags(sensors->flags() ^ Qt::ItemIsSelectable);
-    new DataStreamTreeItem<int32_t>(auv->debug_level, other);
-*/
 }
 
+/*
+void DataStreamPicker::addNode(boost::shared_ptr<NodeBase> newNode, NodeTreeItemBase * parent){
+    debug() << "Adding " << newNode->nodeName() << "to tree item" << parent->text(0).toStdString();
+    NodeTreeItemBase * newItem = parent->addNode(newNode);
+
+    newNode->connect(newNode.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>,boost::shared_ptr<NodeBase>)),
+                  newItem, SLOT(addNode(boost::shared_ptr<NodeBase>)));
+
+    foreach(boost::shared_ptr<NodeBase> child, newNode->getChildren()){
+        addNode(child, newItem);
+    }
+}
+*/
 DataStreamPicker::~DataStreamPicker(){
     delete ui;
 }

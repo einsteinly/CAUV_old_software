@@ -10,6 +10,7 @@
 #include <boost/program_options.hpp>
 
 #include <gui/core/model/model.h>
+#include <gui/core/model/messageObserver.h>
 #include <gui/core/cauvplugins.h>
 
 #include <common/cauv_global.h>
@@ -101,9 +102,8 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
-    m_auv->populate();
-
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode>("prop")->set(1);
+    boost::shared_ptr<GuiMessageObserver> messageObserver = boost::make_shared<GuiMessageObserver>(m_auv);
+    this->addMessageObserver(messageObserver);
 
     // load plugins
     // static plugins first
@@ -122,6 +122,8 @@ void CauvGui::onRun()
 
     show();
     m_application->exec();
+
+    this->removeMessageObserver(messageObserver);
 
     info() << "Qt Thread exiting";
     info() << "Stopping CauvNode";

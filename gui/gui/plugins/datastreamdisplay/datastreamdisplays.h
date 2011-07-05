@@ -16,6 +16,8 @@
 #include <gui/core/datastreamdragging.h>
 #include <gui/core/model/model.h>
 
+#include "treeitems.h"
+
 namespace Ui {
     class DataStreamPicker;
 }
@@ -64,7 +66,6 @@ namespace cauv {
             virtual const QString name() const;
             virtual const QList<QString> getGroups() const;
             virtual void initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node);
-
         private:
             Ui::DataStreamPicker *ui;
         };

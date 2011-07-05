@@ -12,25 +12,10 @@ NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidget
     if(node->isMutable()) {
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
-}
 
-void NodeTreeItemBase::updateIcon(int cell, QImage &image){
-    this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
-}
-
-void NodeTreeItemBase::updateIcon(int cell, const Image &image){
-    try {
-        cv::Mat mat_rgb;
-        cv::cvtColor(image.cvMat(), mat_rgb, CV_BGR2RGB);
-
-        QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
-                               mat_rgb.rows, QImage::Format_RGB888);
-
-        this->updateIcon(cell, qImage);
-
-    } catch (...){
-        error() << "cv::Exception thrown in " << __FILE__ << "on line" << __LINE__;
-    }
+    // items might be added later
+    node->connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>,boost::shared_ptr<NodeBase>)),
+                  this, SLOT(addNode(boost::shared_ptr<NodeBase>)));
 }
 
 void NodeTreeItemBase::updateValue(const QString value) {
@@ -43,38 +28,43 @@ boost::shared_ptr<NodeBase> NodeTreeItemBase::getNode(){
     return m_node;
 }
 
+NodeTreeItemBase * NodeTreeItemBase::addNode(boost::shared_ptr<NodeBase> node) {
 
+    debug() << "Adding NodeTreeItem for " << node->nodeName();
 
+    NodeTreeItemBase * item;
 
-/*
-template<> void NodeTreeItem<int8_t>::onChange(const int8_t value){
-    std::stringstream stream;
-    stream << (int)value;
-    Q_EMIT valueUpdated(QString::fromStdString(stream.str()));
+    switch (node->type){
+    case GuiNodeType::GroupingNode:
+            item = new GroupingNodeTreeItem(boost::shared_static_cast<GroupingNode>(node), this);
+            break;
+
+    case GuiNodeType::NumericNode:
+            item = new NumericNodeTreeItem(boost::shared_static_cast<NumericNode>(node), this);
+            break;
+
+    case GuiNodeType::ImageNode:
+            item = new ImageNodeTreeItem(boost::shared_static_cast<ImageNode>(node), this);
+            break;
+
+    case GuiNodeType::StringNode:
+            item = new StringNodeTreeItem(boost::shared_static_cast<StringNode>(node), this);
+            break;
+
+    default:
+        debug() << "Unsupported node:" << node->nodeName();
+        throw std::exception();
+        //NodeTreeItem<NodeBase> * item = new NodeTreeItem<NodeBase>(node, this);
+        //item->setText(0, item->text(0).append(" [unsupported]"));
+        //return item;
+    }
+
+    item->setExpanded(true);
+
+    // add items for all the nodes children
+    foreach(boost::shared_ptr<NodeBase> child, node->getChildren()){
+        item->addNode(child);
+    }
+
+    return item;
 }
-
-template<> void DataStreamTreeItem<Image>::onChange(const Image value){
-    // Add a fancy icon in the data stream list with the current view from the camera.
-    Q_EMIT this->iconUpdated(1, value);
-}
-
-template<> int8_t DataStreamTreeItem<int8_t>::qVariantToValue(QVariant &value){
-    return boost::lexical_cast<int>(value.toString().toStdString());
-}
-
-template<> floatYPR DataStreamTreeItem<floatYPR>::qVariantToValue(QVariant& ){
-    // TODO: implement, should recognise something like (1.0, 2.0, 3.0)
-    return floatYPR();
-}
-
-template<> MotorDemand DataStreamTreeItem<MotorDemand>::qVariantToValue(QVariant& ){
-    // this shouldn't ever be used
-    throw new boost::bad_lexical_cast;
-}
-
-template<> Image DataStreamTreeItem<Image>::qVariantToValue(QVariant& ){
-    // this shouldn't ever be used
-    throw new boost::bad_lexical_cast;
-}
-
-*/
