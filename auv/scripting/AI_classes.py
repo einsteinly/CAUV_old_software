@@ -50,7 +50,7 @@ def is_external(f):
         return False
 
 class aiProcess(messaging.MessageObserver):
-    def __init__(self, process_name):
+    def __init__(self, process_name, location_enabled = False):
         messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node("pyai"+process_name[:4])
         self.node.join("ai")
@@ -118,6 +118,10 @@ class fakeAUV(messaging.MessageObserver):
         self.current_bearing = None
         self.current_depth = None
         self.current_pitch = None
+        self.latitude = None
+        self.longitude = None
+        self.altitude = None
+        self.speed = None
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
@@ -137,6 +141,12 @@ class fakeAUV(messaging.MessageObserver):
         self.bearingCV.release()
         self.depthCV.release()
         self.pitchCV.release()
+        
+    def onLocationMessage(self, m):
+        self.latitude = m.latitude
+        self.longitude = m.longitude
+        self.altitude = m.altitude
+        self.speed = m.speed
     
     def getBearing(self):
         return self.current_bearing

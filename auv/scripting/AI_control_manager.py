@@ -93,7 +93,7 @@ class auvControl(aiProcess):
                 return
         self.auv.depth(value)
     @external_function
-    def limit_depth(value):
+    def limit_depth(self, value):
         with self.limit_lock:
             self.depth_limit = value
     def run(self):
