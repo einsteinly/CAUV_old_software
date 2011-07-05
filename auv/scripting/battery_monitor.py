@@ -76,8 +76,6 @@ class messageLogger(messaging.BufferedMessageObserver):
         self.light_log_lock = dict([(x,threading.Lock()) for x in light_ids])
         self.light_log = dict([(x,[(time.time(),0)]) for x in light_ids])
     def onMotorStateMessage(self, m):
-        traceback.print_stack()
-        print m.motorId, m.speed
         with self.motor_demand_log_lock[str(m.motorId)]:
             self.motor_demand_log[str(m.motorId)].append((time.time(),m.speed))
     def onLightMessage(self, m):
@@ -100,10 +98,13 @@ class slowLogger():
         self.total_usage = 0
         self.modules = modules
         self.loggers = {}
+        logger_lookup = {}
         for m in modules:
             logger_list = []
             for logger in loggers_dict[m]:
-                logger_list.append(logger(node))
+                if not logger in logger_lookup:
+                    logger_lookup[logger] = (logger(node))
+                logger_list.append(logger_lookup[logger])
             self.loggers[m] = logger_list
         #open log file
         self.log_file = open(filename,'r+')
