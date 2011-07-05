@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/visit_each.hpp>
+#include <boost/thread.hpp>
 
 #include <vector>
 
@@ -84,6 +85,8 @@ namespace cauv {
             }
 
             template <class T> boost::shared_ptr<T> findOrCreate(std::string name){
+                lock_t l(m_updateLock);
+
                 try {
                     debug() << "looking";
                     boost::shared_ptr<T> found = find<T>(name);
@@ -106,14 +109,44 @@ namespace cauv {
             virtual bool isMutable();
             virtual void setMutable(bool mut);
 
+
+            void printFromTop() {
+                info() << "Current model:\n\n";
+
+                boost::shared_ptr<NodeBase> node = shared_from_this();
+
+                while(node->m_parent.lock())
+                {
+                    node = node->m_parent.lock();
+                }
+
+                node->print();
+            }
+
+            void print() {
+                print(shared_from_this());
+            }
+
+            void print(boost::shared_ptr<NodeBase> node) {
+                info() << node->nodeName();
+
+                foreach(boost::shared_ptr<NodeBase> child, node->getChildren()){
+                    print(child);
+                }
+            }
+
         Q_SIGNALS:
-            void nodeAdded(boost::shared_ptr<NodeBase> parent, boost::shared_ptr<NodeBase> node);
+            void nodeAdded(boost::shared_ptr<NodeBase> node);
 
         protected:
             boost::weak_ptr<NodeBase> m_parent;
             std::vector<boost::shared_ptr<NodeBase> > m_children;
             const std::string m_name;
             bool m_mutable;
+
+            typedef boost::recursive_mutex mutex_t;
+            typedef boost::unique_lock<mutex_t> lock_t;
+            mutex_t m_updateLock;
         };
 
 
@@ -301,10 +334,22 @@ namespace cauv {
             } type;
 
             NumericCompoundNode(GuiNodeType::e GuiNodeType, compound_type t, std::string name) :
-                    Node<T>(GuiNodeType, name), type(t) {
+                    Node<T>(GuiNodeType, name), type(t), m_chidrenAdded(false) {
             }
 
             virtual void forceSet() = 0;
+
+            virtual void addChildren() = 0;
+
+            void update(T value){
+                Node<T>::update(value);
+                if(!m_chidrenAdded)
+                    addChildren();
+                m_chidrenAdded = true;
+            }
+
+        protected:
+            bool m_chidrenAdded;
         };
 
 
@@ -314,20 +359,24 @@ namespace cauv {
 
         public:
             FloatYPRNode(std::string name) : NumericCompoundNode<floatYPR>(GuiNodeType::FloatYPRNode, FLOAT_YPR, name),
-            m_y(boost::make_shared<NumericNode>("y")),
-            m_p(boost::make_shared<NumericNode>("p")),
-            m_r(boost::make_shared<NumericNode>("r"))
+            m_y(boost::make_shared<NumericNode>("yaw")),
+            m_p(boost::make_shared<NumericNode>("pitch")),
+            m_r(boost::make_shared<NumericNode>("roll"))
             {
-                this->addChild(m_y);
-                this->addChild(m_p);
-                this->addChild(m_r);
-
                 this->connect(m_y.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
                 this->connect(m_p.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
                 this->connect(m_r.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
             }
 
+
+
         public Q_SLOTS:
+
+            void addChildren(){
+                this->addChild(m_y);
+                this->addChild(m_p);
+                this->addChild(m_r);
+            }
 
             virtual void update(floatYPR value){
                 NumericCompoundNode<floatYPR>::update(value);
@@ -370,16 +419,18 @@ namespace cauv {
             m_y(boost::make_shared<NumericNode>("y")),
             m_z(boost::make_shared<NumericNode>("z"))
             {
-                this->addChild(m_x);
-                this->addChild(m_y);
-                this->addChild(m_z);
-
                 this->connect(m_x.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
                 this->connect(m_y.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
                 this->connect(m_z.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
             }
 
         public Q_SLOTS:
+
+            void addChildren(){
+                this->addChild(m_x);
+                this->addChild(m_y);
+                this->addChild(m_z);
+             }
 
             virtual void update(floatXYZ value){
                 NumericCompoundNode<floatXYZ>::update(value);

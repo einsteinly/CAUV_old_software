@@ -28,14 +28,13 @@ namespace cauv {
             NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidgetItem * parent);
             virtual ~NodeTreeItemBase(){}
             boost::shared_ptr<NodeBase> getNode();
-            virtual bool updateNode(QVariant& value) = 0;
+            virtual bool updateNode(QVariant&) { return false; };
 
         public Q_SLOTS:
             NodeTreeItemBase * addNode(boost::shared_ptr<NodeBase> node);
             void updateIcon(int cell, QImage &image);
             void updateIcon(int cell, const Image &image);
-            void updateValue(const QString value);
-
+            void updateValue(const QString value);            
         private:
             boost::shared_ptr<NodeBase> m_node;
         };
@@ -163,7 +162,7 @@ namespace cauv {
             void updateIcon(image_variant_t image){
                 try {
                     cv::Mat mat_rgb;
-                    cv::cvtColor(image->cvMat(), mat_rgb, CV_BGR2RGB);
+                    cv::cvtColor(image->mat(), mat_rgb, CV_BGR2RGB);
 
                     QImage qImage = QImage((const unsigned char*)(mat_rgb.data), mat_rgb.cols,
                                            mat_rgb.rows, QImage::Format_RGB888);
@@ -187,6 +186,15 @@ namespace cauv {
                     NodeTreeItem<std::string>(node, parent) {
                 node->connect(node.get(), SIGNAL(onUpdate(std::string)), this, SLOT(onChange(std::string)));
                 onChange(node->get());
+            }
+        };
+
+
+        class FloatYPRNodeTreeItem : public NodeTreeItem<floatYPR> {
+            Q_OBJECT
+        public:
+            FloatYPRNodeTreeItem(boost::shared_ptr<FloatYPRNode> node, QTreeWidgetItem * parent) :
+                    NodeTreeItem<floatYPR>(node, parent) {
             }
         };
 

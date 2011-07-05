@@ -14,7 +14,7 @@ NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidget
     }
 
     // items might be added later
-    node->connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>,boost::shared_ptr<NodeBase>)),
+    node->connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)),
                   this, SLOT(addNode(boost::shared_ptr<NodeBase>)));
 }
 
@@ -51,12 +51,15 @@ NodeTreeItemBase * NodeTreeItemBase::addNode(boost::shared_ptr<NodeBase> node) {
             item = new StringNodeTreeItem(boost::shared_static_cast<StringNode>(node), this);
             break;
 
+    case GuiNodeType::FloatYPRNode:
+            item = new FloatYPRNodeTreeItem(boost::shared_static_cast<FloatYPRNode>(node), this);
+            break;
+
     default:
         debug() << "Unsupported node:" << node->nodeName();
-        throw std::exception();
-        //NodeTreeItem<NodeBase> * item = new NodeTreeItem<NodeBase>(node, this);
-        //item->setText(0, item->text(0).append(" [unsupported]"));
-        //return item;
+        NodeTreeItemBase * item = new NodeTreeItemBase(node, this);
+        item->setText(0, item->text(0).append(" [unsupported]"));
+        return item;
     }
 
     item->setExpanded(true);

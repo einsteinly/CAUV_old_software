@@ -30,10 +30,10 @@ const QColor GraphWidget::colours[] = {
 
 void GraphWidget::addNode(boost::shared_ptr<NumericNode> node){
     // see if this series has already been registered
-    if(m_seriesNames.end() == m_seriesNames.find(node->nodeName())) {
+    if(m_seriesNames.end() == m_seriesNames.find(node->nodeName(false))) {
         // series data
         DataStreamSeriesData * series = new DataStreamSeriesData(node, 1000);
-        m_seriesNames.insert(node->nodeName());
+        m_seriesNames.insert(node->nodeName(false));
 
         // series plotter
         std::stringstream str;

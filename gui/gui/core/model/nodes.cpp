@@ -37,7 +37,7 @@ void NodeBase::addChild(boost::shared_ptr<NodeBase> child){
     child->m_parent = boost::weak_ptr<NodeBase>(shared_from_this());
     m_children.push_back(child);
 
-    Q_EMIT nodeAdded(shared_from_this(), child);
+    Q_EMIT nodeAdded(child);
 }
 
 const std::vector<boost::shared_ptr<NodeBase> > NodeBase::getChildren() const {

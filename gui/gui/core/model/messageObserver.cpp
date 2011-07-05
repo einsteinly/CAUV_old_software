@@ -167,9 +167,11 @@ void GuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) 
 }
 
 void GuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
-    boost::shared_ptr<GroupingNode> group = group->findOrCreate<GroupingNode>("telemtry");
-    //group->findOrCreate<NumericNode>("depth")->update(message->depth());
-    //group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
+    boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemtry");
+    group->findOrCreate<NumericNode>("depth")->update(message->depth());
+    group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
+
+    m_auv->print();
 }
 
 void GuiMessageObserver::onLocationMessage(LocationMessage_ptr m){
