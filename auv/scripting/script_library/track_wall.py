@@ -13,9 +13,9 @@ import traceback
 class scriptOptions(aiScriptOptions):
     wallDistance = 2000 #distance from wall in mm 
     strafeSpeed = 10 #controls strafe speed, int [-127, 127]
-    wallDistancekPID = (0.05, 0, 0)
+    wallDistancekPID = (-0.05, 0, 0)
     depth = 0 #depth in metres
-    runTime = 30 #run time in seconds
+    runTime = 300 #run time in seconds
     sonarDirection = 180 #in degrees
     sonarWidth = 0 #in 1/6400 of a circle
     sonarGain = 200 #gain is an unsigned byte
@@ -44,9 +44,8 @@ class script(aiScript):
         # self.node is set by aiProcess (base class of aiScript)
         # self.auv is also available, and can be used to control the vehicle
         # self.options is a copy of the option structure declared above
-        self.node.join('processing')
+        self.node.join('sonarout')
         self.wallPID = PIDController(self.options.wallDistancekPID)
-        self.auv.sonar.directionDegrees(self.options.sonarDirection)
         self.updateSonarOptions()
 
     def reloadOptions(self):
@@ -64,16 +63,15 @@ class script(aiScript):
         self.reloadOptions()
    
     def onSonarDataMessage(self, m):
-        debug('received sonar data: %s' % str(m))
         maxIndex = 0
-        if m.SonarDataLine.range != 0:
+        if m.line.range != 0:
             #loop to find index of maximum
             maxData = 0
-            for index, intensity in enumerate(m.SonarDataLine.data):
+            for index, intensity in enumerate(m.line.data):
                 if maxData < intensity:
                     maxData = intensity
                     maxIndex = index
-        distanceToWall = maxIndex * self.auv.sonar._rangeRes
+        distanceToWall = maxIndex * self.options.sonarRangeRes
         debug('Wall at %s mm' % distanceToWall)
         self.actOnDistance(distanceToWall)
 

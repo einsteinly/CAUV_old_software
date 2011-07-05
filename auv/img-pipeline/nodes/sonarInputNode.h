@@ -18,16 +18,16 @@ namespace imgproc{
 class SonarInputNode: public InputNode{
     public:
         SonarInputNode(ConstructArgs const& args)
-            : InputNode(args){
+            : InputNode(args),
+              m_images_displayed(0),
+              processed(0), m_counters_lock(),
+              m_sonardata_msgs(), m_sonardata_lock() {
         }
 
         void init(){
             // don't want to drop lines:
             m_priority = priority_fastest;
             
-            // InputNode stuff: subscribe to sonar data // TODO: nicer interface for this
-            InputNode::m_subscriptions.insert(SonarData);
-
             // registerInputID()
             
             // three output images, three output parameters:
@@ -41,6 +41,23 @@ class SonarInputNode: public InputNode{
     
         virtual ~SonarInputNode(){
             stop();
+            info() << "~SonarInputNode statistics"
+                   << "\n\tprocessed" <<  processed
+                   << "\n\twaiting" << m_sonardata_msgs.size();
+        }
+        
+        /**
+         * ...
+         */
+        void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
+            lock_t l(m_sonardata_lock);
+            debug(4) << "Input node received sonar data";
+            
+            if (numChildren() > 0)
+            {
+                m_sonardata_msgs.push_back(m);
+                setAllowQueue();
+            }
         }
 
     protected:
@@ -49,36 +66,57 @@ class SonarInputNode: public InputNode{
             
             debug(4) << "SonarInputNode::doWork";
             
-            boost::shared_ptr<SonarDataMessage const> m = latestSonarDataMessage();
-            if(!m)
-                throw img_pipeline_error("SonarInputNode executed with no available data");
+            std::vector< boost::shared_ptr<SonarDataMessage const> > msgs = latestSonarDataMessages();
+
+            cv::Mat fullImage;
+            foreach( boost::shared_ptr<SonarDataMessage const> m, msgs) {
+                if (m_accumulator.accumulateDataLine(m->line()))
+                    fullImage = m_accumulator.mat().clone();
+            }
             
-            r["data line"] = boost::make_shared<Image>(cv::Mat(m->line().data, true).t());
-            r["bearing"] = NodeParamValue(m->line().bearing);
-            r["bearing range"] = NodeParamValue(m->line().bearingRange);
-            r["range"] = NodeParamValue(m->line().range);
-            
-            float images_accumulated = m_accumulator.accumulateDataLine(m->line());
+            boost::shared_ptr<SonarDataMessage const> m_back = msgs.back();
+
+            r["data line"] = boost::make_shared<Image>(cv::Mat(m_back->line().data, true).t());
+            r["bearing"] = NodeParamValue(m_back->line().bearing);
+            r["bearing range"] = NodeParamValue(m_back->line().bearingRange);
+            r["range"] = NodeParamValue(m_back->line().range);
             
             // NB: output is not copied! use a CopyNode if you don't want to
             // stamp all over the buffer
             r["image (buffer)"] = m_accumulator.img();
             
-            if(fmod(images_accumulated, 1.0f) < fmod(m_last_images_accumulated, 1.0f))
+            if (!fullImage.empty())
+            {
                 // deep copy:
-                r["image (synced)"] = boost::make_shared<Image>(*m_accumulator.img());
-            
-            m_last_images_accumulated = images_accumulated;
+                r["image (synced)"] = boost::make_shared<Image>(fullImage);
+            }
 
             clearAllowQueue();
 
             return r;
         }
 
+        std::vector< boost::shared_ptr<const SonarDataMessage> > latestSonarDataMessages(){
+            lock_t l(m_sonardata_lock);
+            debug(4) << "Grabbing sonar (" << m_sonardata_msgs.size() << " images)";
+            
+            std::vector< boost::shared_ptr<const SonarDataMessage> > ret;
+            ret.swap(m_sonardata_msgs);
+            processed++;
+            debug(4) << "Processed" << processed << "images";
+            return ret;
+        }
+
     private:
-        float m_last_images_accumulated;
+        int m_images_displayed;
         SonarAccumulator m_accumulator;
     
+        int processed;
+        mutable boost::recursive_mutex m_counters_lock;
+        
+        std::vector < boost::shared_ptr<const SonarDataMessage> > m_sonardata_msgs;
+        mutable boost::recursive_mutex m_sonardata_lock;
+
     // Register this node type
     DECLARE_NFR;
 };
