@@ -11,6 +11,7 @@ class scriptOptions(aiScriptOptions):
 class script(aiScript):
     def run(self):
         #self.request_pl('circle_buoy.pipe')
+        self.auv.downlights(0)
         while raw_input('Continue? y/n: ') != 'n':
             print self.options.initial, self.options.variable
             time.sleep(1)
