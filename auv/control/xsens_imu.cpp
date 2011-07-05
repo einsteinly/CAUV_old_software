@@ -108,6 +108,7 @@ void XsensIMU::configure(CmtOutputMode &mode, CmtOutputSettings &settings)
 void XsensIMU::calibrateNoRotation(uint16_t duration)
 {
     boost::lock_guard<boost::mutex> lock(m_cmt3_lock);
+    info() << "No rotation procedure started";
 
     m_running_norotation = true;
     m_cmt3.setNoRotation(duration);
