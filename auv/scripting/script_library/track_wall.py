@@ -94,7 +94,7 @@ class script(aiScript):
     def run(self):
         info('Wall tracking starting...')
         exit_status = 'SUCCESS'
-        time_left = self.options.runtTime
+        time_left = self.options.runTime
         try:
             while time_left > 0:
                 self.auv.strafe(self.options.strafeSpeed)

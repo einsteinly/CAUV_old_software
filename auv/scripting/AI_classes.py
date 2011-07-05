@@ -94,7 +94,7 @@ class fakeSonar():
     def __init__(self, script):
         self.script = script
     def __getattr__(self, func):
-        return fakeSonarfunction(self, script, func)
+        return fakeSonarfunction(self.script, func)
 
 class fakeAUVfunction():
     def __init__(self, script, attr):

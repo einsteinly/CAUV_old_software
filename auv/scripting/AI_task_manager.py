@@ -202,6 +202,7 @@ class taskManager(aiProcess):
         self.ai.auv_control.lights_off()
         self.ai.auv_control.set_task_id(None)
     def start_script(self, task_ref, script_name, script_opts={}):
+        self.ai.auv_control.signal(task_ref)
         self.stop_script()
         self.ai.auv_control.set_task_id(task_ref)
         info('Starting script: %s  (Task %s)' %(script_name, task_ref))
