@@ -74,7 +74,9 @@ enum NodeType : int8 {
     Recogniser,
     SURFCorners,
     BroadcastKeyPoints,
-    DrawKeyPoints
+    DrawKeyPoints,
+    MathAddMultInt,
+    MathAddMultFloat
 }
 enum NodeStatus : int8 {
     None = 0,
