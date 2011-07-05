@@ -44,6 +44,7 @@ if __name__ == '__main__':
     except Exception as e:
         ainode = aiProcess('script_error_reporter')
         ainode.ai.auv_control.stop()
+        self.ai.auv_control.lights_off()
         ainode.ai.task_manager.on_script_exit(task_ref, 'ERROR')
         error(traceback.format_exc())
         ainode.die()

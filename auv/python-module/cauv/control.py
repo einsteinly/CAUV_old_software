@@ -10,7 +10,6 @@ class AUV(messaging.BufferedMessageObserver):
         self.__node = node
         node.join("control")
         node.join("telemetry")
-        node.join("external")
         node.addObserver(self)
         self.current_bearing = None
         self.current_depth = None
@@ -137,11 +136,11 @@ class AUV(messaging.BufferedMessageObserver):
         
     def forwardlights(self, value):
         self.checkLightValue(value)
-        self.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        self.__node.send(messaging.LightMessage(messaging.LightID.Forward, value))
         
     def downlights(self, value):
         self.checkLightValue(value)
-        self.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        self.__node.send(messaging.LightMessage(messaging.LightID.Down, value))
         
     def checkLightValue(self, value):
         if not (value>=0 and value<256):
