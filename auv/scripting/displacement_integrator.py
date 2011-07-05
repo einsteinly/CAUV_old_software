@@ -59,8 +59,8 @@ class DisplacementIntegrator:
                 continue
             sb = math.sin(self.bearing)
             cb = math.cos(self.bearing)
-            forwardSpeed = self.propSpeed() * settings.propSpeedScale / (time.time() - oldTime)
-            strafeSpeed = ((self.hbowSpeed() + self.hsternSpeed()) / 2) * settings.strafeSpeedScale / (time.time() - oldTime)
+            forwardSpeed = self.propSpeed() * settings.propSpeedScale * (time.time() - oldTime)
+            strafeSpeed = ((self.hbowSpeed() + self.hsternSpeed()) / 2) * settings.strafeSpeedScale * (time.time() - oldTime)
             self.displacementE += sb * forwardSpeed
             self.displacementN += cb * forwardSpeed
             self.displacementE += cb * strafeSpeed
