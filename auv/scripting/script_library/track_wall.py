@@ -45,21 +45,15 @@ class script(aiScript):
         # self.auv is also available, and can be used to control the vehicle
         # self.options is a copy of the option structure declared above
         self.node.join('processing')
-        self.__wallDistance = self.options.wallDistance
-        self.__strafeSpeed = self.options.strafeSpeed
         self.wallPID = PIDController(self.options.wallDistancekPID)
-        self.__depth = self.options.depth
-        self.__runtTime = self.options.runTime
         self.auv.sonar.directionDegrees(self.options.sonarDirection)
-        self.auv.sonar.width(self.options.sonarWidth)
-        self.auv.sonar.gain(self.options.sonarGain)
-        self.auv.sonar.range(self.options.sonarRange)
-        self.auv.sonar.rangeRes(self.options.sonarRangeRes)
+        self.updateSonarOptions()
 
     def reloadOptions(self):
-        self.__strafeSpeed = self.options.strafeSpeed
         self.wallPID = self.wallPID.setKpid(self.options.wallDistancekPID)
-        self.__depth = self.options.depth
+        self.updateSonarOptions()
+
+    def updateSonarOptions(self):
         self.auv.sonar.directionDegrees(self.options.sonarDirection)
         self.auv.sonar.gain(self.options.sonarGain)
         self.auv.sonar.range(self.options.sonarRange)
@@ -70,10 +64,10 @@ class script(aiScript):
         self.reloadOptions()
    
     def onSonarDataMessage(self, m):
-        #TODO message received?
         debug('received sonar data: %s' % str(m))
         maxIndex = 0
         if m.SonarDataLine.range != 0:
+            #loop to find index of maximum
             maxData = 0
             for index, intensity in enumerate(m.SonarDataLine.data):
                 if maxData < intensity:
@@ -84,7 +78,8 @@ class script(aiScript):
         self.actOnDistance(distanceToWall)
 
     def actOnDistance(self, distance):
-        distanceError = self.__wallDistance - distance
+        distanceError = self.options.wallDistance - distance
+        #clamp doProp
         doProp = max([-self.options.doPropLimit, 
             min([self.options.doPropLimit,
                 self.wallPID.update(distanceError)])])
@@ -99,17 +94,12 @@ class script(aiScript):
     def run(self):
         info('Wall tracking starting...')
         exit_status = 'SUCCESS'
-        time_left = self.__runtTime
+        time_left = self.options.runtTime
         try:
             while time_left > 0:
-                self.auv.strafe(self.__strafeSpeed)
+                self.auv.strafe(self.options.strafeSpeed)
                 time.sleep(0.5)
                 time_left -= 0.5
-
-            # main loop:
-            # ...
-            # do stuff!
-
         except Exception, e:
             error(traceback.format_exc())
         finally:
