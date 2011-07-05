@@ -327,10 +327,13 @@ class pipelineManager(aiProcess):
             #this may take time, so lock since other threads may start requesting as soon as they start
             self.load_pl_data()
             #self.script_pl = pipeline.Model(self.node, 'default')
-            self._pl = NewModel(self.node, 'default')
+            self._pl = NewModel(self.node, 'ai')
             #save any old data just in case
-            self._pl.save('%d_pl.temp' %(time.time(),))
-            self._pl.clear()
+            try:
+                self._pl.save('%d_pl.temp' %(time.time(),))
+                self._pl.clear()
+            except RuntimeError:
+                error("Couldn't communicate with pipeline, major problems with img-pipeline dependant stuff ahead")
             self.pl_state = pipeline.State()
             self.node_mapping = {}#node_ids here: node_ids in pipeline
             #notify detector_process that this proces is running with no pls
@@ -497,7 +500,11 @@ class pipelineManager(aiProcess):
             8) calculate nodes that needed to be added removed to manage this
             """
             #1
-            state, new_nodes = self._pl.get()
+            try:
+                state, new_nodes = self._pl.get()
+            except RuntimeError:
+                error("Couldn't communicate with pipeline, not updating")
+                return
             if len(state.nodes):
                 #2
                 traced = [] #nodes that have been added to a group

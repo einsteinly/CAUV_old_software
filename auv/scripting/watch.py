@@ -79,7 +79,7 @@ processes_to_start = [
         ),
         CAUVTask('logger',               'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
         CAUVTask('img-pipe default',     'nohup nice -n 15 %EDIR/img-pipeline -n default',       True, ['img-pipeline -n default']),
-       #CAUVTask('img-pipe buoy-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n buoy-detect',   True, ['img-pipeline -n buoy-detect']),
+        CAUVTask('img-pipe ai',          'nohup nice -n 15 %EDIR/img-pipeline -n ai',   True, ['img-pipeline -n ai']),
        #CAUVTask('img-pipe pipe-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n pipe-detect',   True, ['img-pipeline -n pipe-detect']),
         CAUVTask('img-pipe sonar',       'nohup nice -n 4 %EDIR/img-pipeline -n sonar',          True, ['img-pipeline -n sonar']),
         CAUVTask('sonar',                'nohup nice -n 4 %EDIR/sonar /dev/sonar0',              True, ['sonar']),

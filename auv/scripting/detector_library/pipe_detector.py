@@ -47,7 +47,7 @@ class detector(aiDetector):
             debug ("Detected pipe!")
         else:
             self.detected = False
-            debug ("No pipe...")
+            #debug ("No pipe...")
 
 if __name__ == '__main__':
     dt = detector()

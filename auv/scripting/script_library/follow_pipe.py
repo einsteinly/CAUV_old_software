@@ -269,7 +269,7 @@ class script(aiScript):
         for i in range(3):
             # follow the pipe along until the end (when we can see the corners)
             if not self.followPipeUntil(self.corners):
-                error("Pipeline lost on pass ", i);
+                error("Pipeline lost on pass %d" %(i,));
                 self.drop_pl(follow_pipe_file)
                 self.notify_exit('LOST')
                 return
