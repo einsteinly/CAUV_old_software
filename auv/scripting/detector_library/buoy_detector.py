@@ -13,19 +13,19 @@ from utils.detectors import ColourDetector
 
 class detectorOptions(aiDetectorOptions):
     Sightings_Period   = 3.0 # seconds, period to consider sightings of the buoy for
-    Required_Confidence = 0.7
+    Required_Confidence = 0.9
     Required_Sightings = 2
     Required_Pipeline = 'detect_buoy.pipe'
     Circles_Name = 'buoy'
     Histogram_Name_A = 'buoy_hue'
     Histogram_Name_B = 'buoy_hue'
-    Histogram_Bins_A = xrange(75,120) # of 0--180 range
+    Histogram_Bins_A = xrange(60,120) # of 0--180 range
     Histogram_Bins_B = xrange(50,75) # of 0--180 range
     Stddev_Mult = 0.2 # lower --> higher confidence when multiple circles with different centres are visible
-    Optimal_Colour_A_Frac = 0.04 # highest colour detection confidence when the specified bin contains this value
-    Optimal_Colour_B_Frac = 0.04 # highest colour detection confidence when the specified bin contains this value
-    Colour_A_Weight  = -2.0 # respective weightings in confidence
-    Colour_B_Weight  =  0.4 #
+    Optimal_Colour_Frac_A = 0.003 # highest colour detection confidence when the specified bin contains this value
+    Optimal_Colour_Frac_B = 0.04 # highest colour detection confidence when the specified bin contains this value
+    Colour_Weight_A  = -20.0 # respective weightings in confidence
+    Colour_Weight_B  =  0.4 #
     Circles_Weight   =  1.6 #
 
 class detector(aiDetector):
@@ -79,7 +79,8 @@ class detector(aiDetector):
         if confidence >= self.options.Required_Confidence and \
            len(sightings) >= self.options.Required_Sightings:
             info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings)))
-            self.detected = True
+            #self.detected = True
+            warning('self.detected = True is commented out')
         else:
             self.detected = False
     
