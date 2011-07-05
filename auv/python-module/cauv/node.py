@@ -6,7 +6,7 @@
 import threading
 import traceback
 from cauv import messaging
-from cauv.debug import debug
+from cauv.debug import debug, error
 
 #pylint: disable=E1101
 
