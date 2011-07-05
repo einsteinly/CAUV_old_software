@@ -64,6 +64,9 @@ class PipeConfirmer(messaging.MessageObserver):
             # this assumes we're roughly in line with the pipe already
             # TODO: use the lines message to check if we need to correct
             # the alignment as well
+            if m.x == 0:
+                warning("ignoring centre message with centre=0")
+                return
             strafe = self.strafeControl.update(m.x - 0.5)
             debug('PipelineConfirmer: Set strafe: %i' % (int(strafe)))
             self.auv.strafe(int(strafe))
