@@ -190,6 +190,12 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() {
     ssrc::spread::BaseMessage::service_type sType = ssrcMsg.service();
 
     if( Is_regular_mess(sType) ) {
+#ifdef CAUV_DEBUG_MESSAGES
+        std::stringstream ss;
+        for (unsigned i = 0; i < ssrcMsg.size(); i++)
+            ss << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(ssrcMsg[i]) << " ";
+        debug(10) << "->Spread: Receive regular message->Data: \n\t" << ss.str();
+#endif
         return shared_ptr<RegularMessage>( new RegularMessage( ssrcMsg.sender(), sType,
                                            groupVector, ssrcMsg.type(), &ssrcMsg[0],
                                            ssrcMsg.size() ) );   // [] operator returns ref to underlying array

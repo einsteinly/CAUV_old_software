@@ -7,6 +7,7 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/condition.hpp>
 
+namespace cauv {
 
 template <typename T> 
 class BlockingQueue : boost::noncopyable
@@ -78,5 +79,7 @@ class BlockingQueue : boost::noncopyable
         mutable boost::mutex m_queuemutex; // The single lock for the whole queue
         boost::condition m_itemAvailable; // The condition idicating a new item has been pushed onto an empty queue
 };
+
+}
 
 #endif

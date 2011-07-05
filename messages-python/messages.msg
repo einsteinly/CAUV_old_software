@@ -6,7 +6,7 @@ enum DebugType : int8 {
 }
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Up = 3, Sonar = 4, File = 5 }
-enum LightID: int8 { Forward = 1, Down = 2 }
+enum LightID: int8 { Forward = 1, Down = 2, TO_FIX_NUMVALUES = 5 }
 enum NodeType : int8 {
     Invalid,
     Copy,
@@ -154,6 +154,7 @@ struct SonarDataLine
     bearing: int32;
     bearingRange: int32;
     range: int32;
+    scanWidth: int32;
 }
 struct MotorDemand
 {

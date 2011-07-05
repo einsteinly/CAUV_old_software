@@ -17,15 +17,19 @@ class SonarAccumulator
     public: 
         SonarAccumulator();
         
-        float accumulateDataLine(const SonarDataLine& data);
+        bool accumulateDataLine(const SonarDataLine& data);
 
         boost::shared_ptr<Image> img() const;
         cv::Mat mat() const;
 
     protected:
         int m_last_line_bearing;    
-        double m_images_accumulated;
+        float m_image_completed;
         boost::shared_ptr<Image> m_img;
+        int m_bearingRange, m_range, m_scanWidth;
+        size_t m_nbins;
+        
+        void reset();
 };
 
 } // namespace cauv

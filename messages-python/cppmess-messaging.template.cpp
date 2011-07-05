@@ -422,6 +422,9 @@ void cauv::MessageSource::notifyObservers(const_svec_ptr bytes)
         case $m.id:
         {
             boost::shared_ptr<$className> m = $className::fromBytes(bytes);
+            \#ifdef CAUV_DEBUG_MESSAGES
+            debug(12) << "MessageSource::notifyObservers: " << m;
+            \#endif
             foreach(observer_ptr_t o, m_observers)
                 o->on${className}(m);
             break;
