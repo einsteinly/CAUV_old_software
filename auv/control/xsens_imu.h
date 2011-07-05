@@ -23,8 +23,8 @@ class XsensIMU : public Observable<XsensObserver>, boost::noncopyable
         XsensIMU(int id);
         virtual ~XsensIMU();
 
-        floatYPR getAttitude();
         void configure(CmtOutputMode &mode, CmtOutputSettings &settings);
+        void calibrateNoRotation(uint16_t duration);
         void setObjectAlignmentMatrix(CmtMatrix m);
 
         void start();
@@ -33,6 +33,8 @@ class XsensIMU : public Observable<XsensObserver>, boost::noncopyable
         xsens::Cmt3 m_cmt3;
         CmtPortInfo m_port;
         boost::thread m_readThread;
+        boost::mutex m_cmt3_lock;
+        bool m_running_norotation;
 
         void readThread();
 };

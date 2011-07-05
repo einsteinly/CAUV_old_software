@@ -384,22 +384,6 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 }
             }
         }
-        virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m)
-        {
-            m_depthCalibration = m;
-        }
-        
-        virtual void onLightMessage(LightMessage_ptr m)
-        {
-            debug(2) << "Forwarding Light Message:" << *m;
-            m_mcb->send(m);
-        }
-
-        virtual void onCuttingDeviceMessage(CuttingDeviceMessage_ptr m)
-        {
-            debug(2) << "Forwarding Cutting Device Control Message:" << *m;
-            m_mcb->send(m);
-        }
     
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
@@ -692,6 +676,52 @@ class ControlLoops : public MessageObserver, public XsensObserver
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
 
+class DeviceControlObserver : public MessageObserver
+{
+    public:
+        void set_mcb(boost::shared_ptr<MCBModule> mcb)
+        {
+            m_mcb = mcb;
+        }
+        void set_xsens(boost::shared_ptr<XsensIMU> xsens)
+        {
+            m_xsens = xsens;
+        }
+        
+        virtual void onLightMessage(LightMessage_ptr m)
+        {
+            if (m_mcb) {
+                debug(2) << "Forwarding Light Message:" << *m;
+                m_mcb->send(m);
+            }
+            else
+                warning() << "Tried to set lights, but there's no MCB";
+        }
+
+        virtual void onCuttingDeviceMessage(CuttingDeviceMessage_ptr m)
+        {
+            if (m_mcb) {
+                debug(2) << "Forwarding Cutting Device Control Message:" << *m;
+                m_mcb->send(m);
+            }
+            else
+                warning() << "Tried to cut some shit up, but there's no MCB";
+        }
+
+        virtual void onCalibrateNoRotationMessage(CalibrateNoRotationMessage_ptr m)
+        {
+            if (m_xsens) {
+                m_xsens->calibrateNoRotation(m->duration());
+            }
+            else
+                warning() << "Tried to perform no rotation calibration, but there's no XSens";
+        }
+    
+    protected:
+        boost::shared_ptr<MCBModule> m_mcb;
+        boost::shared_ptr<XsensIMU> m_xsens;
+};
+
 class TelemetryBroadcaster : public MessageObserver, public XsensObserver
 {
     public:
@@ -800,6 +830,9 @@ ControlNode::ControlNode() : CauvNode("Control")
 
     m_controlLoops = boost::make_shared<ControlLoops>(mailbox());
     addMessageObserver(m_controlLoops);
+    
+    m_deviceControl = boost::make_shared<DeviceControlObserver>();
+    addMessageObserver(m_deviceControl);
     
     m_stateObserver = boost::make_shared<StateObserver>(mailbox());
     addMessageObserver(m_stateObserver);
@@ -927,6 +960,7 @@ void ControlNode::onRun()
    
     if (m_mcb) {
         m_controlLoops->set_mcb(m_mcb);
+        m_deviceControl->set_mcb(m_mcb);
         
         m_aliveThread = boost::thread(sendAlive, m_mcb);
         
@@ -942,6 +976,8 @@ void ControlNode::onRun()
     }
 
     if (m_xsens) {
+        m_deviceControl->set_xsens(m_xsens);
+        
         m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
         m_xsens->addObserver(m_telemetryBroadcaster);
         m_xsens->addObserver(m_controlLoops);
