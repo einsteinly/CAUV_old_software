@@ -51,7 +51,9 @@ class GaussianBlurNode: public Node{
             debug(4) << "GaussianBlurNode:" << sigma;
             
             try{
-                cv::GaussianBlur(img->cvMat(), img->cvMat(), cv::Size(1+6*sigma, 1+6*sigma), sigma);
+                cv::Mat m = img->mat();
+                cv::GaussianBlur(m, m, cv::Size(1+6*sigma, 1+6*sigma), sigma);
+                img->mat(m);
                 r["image (not copied)"] = img;
             }catch(cv::Exception& e){
                 error() << "GaussianBlurNode:\n\t"

@@ -48,7 +48,7 @@ class DrawKeyPointsNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs[Image_In_Name];
+            cv::Mat img = inputs[Image_In_Name]->mat();
             
             const std::vector<KeyPoint> keypoints = param< std::vector<KeyPoint> >("KeyPoints");
 
@@ -59,11 +59,11 @@ class DrawKeyPointsNode: public Node{
                 cv_keypoints.push_back(_cvKeyPoint(k));
             
             try{
-                boost::shared_ptr<Image> out = boost::make_shared<Image>();
+                cv::Mat out;
 
-                cv::drawKeypoints(img->cvMat(), cv_keypoints, out->cvMat(), cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+                cv::drawKeypoints(img, cv_keypoints, out, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
                 
-                r[Image_Out_Copied_Name] = out;
+                r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "DrawKeyPointsNode:\n\t"
                         << e.err << "\n\t"

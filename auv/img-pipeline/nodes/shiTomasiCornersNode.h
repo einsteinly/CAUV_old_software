@@ -58,7 +58,7 @@ class ShiTomasiCornersNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs[Image_In_Name];
+            cv::Mat img = inputs[Image_In_Name]->mat();
             
             const int maxCorners = param<int>("maxCorners");
             const float qualityLevel = param<float>("qualityLevel");
@@ -69,7 +69,7 @@ class ShiTomasiCornersNode: public Node{
 
             cv::vector<cv::Point2f> cv_corners;
             try{
-                cv::goodFeaturesToTrack(img->cvMat(),
+                cv::goodFeaturesToTrack(img,
                                         cv_corners,
                                         maxCorners,
                                         qualityLevel,
@@ -87,8 +87,8 @@ class ShiTomasiCornersNode: public Node{
             // convert coordinates from pixels (top left origin) to 0-1 float,
             // top left origin // TODO: check this
             std::vector<Corner> corners;
-            const float width = img->cvMat().cols;
-            const float height = img->cvMat().rows;
+            const float width = img.cols;
+            const float height = img.rows;
             debug(2) << "ShiTomasiCorners: detected" << cv_corners.size() << "corners:";
             foreach(const cv::Point2f &p, cv_corners) {
                 const floatXYZ centre(p.x / width, p.y / height, 0);

@@ -65,24 +65,24 @@ class HoughCirclesNode: public OutputNode{
 
             cv::vector<cv::Vec3f> circles;
             try{
-                cv::HoughCircles(img->cvMat(), circles, method, dp, min_dist, p1, p2, min_rad, max_rad);
+                cv::HoughCircles(img->mat(), circles, method, dp, min_dist, p1, p2, min_rad, max_rad);
                 
                 if(numChildren()){
                     // then produce an output image overlay
-                    boost::shared_ptr<Image> out = boost::make_shared<Image>();
+                    cv::Mat out;
                     
                     // make a colour copy to draw pretty circles on
-                    cvtColor(img->cvMat(), out->cvMat(), CV_GRAY2BGR);
+                    cvtColor(img->mat(), out, CV_GRAY2BGR);
 
                     for(unsigned i = 0; i < circles.size(); i++){
                         cv::Point centre(cvRound(circles[i][0]), cvRound(circles[i][1]));
                         int radius = cvRound(circles[i][2]);
                         // dot at centre:
-                        cv::circle(out->cvMat(), centre, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
+                        cv::circle(out, centre, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
                         // circle outline:
-                        cv::circle(out->cvMat(), centre, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
+                        cv::circle(out, centre, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
                     }
-                    r["image_out"] = out;
+                    r["image_out"] = boost::make_shared<Image>(out);
                 }
             }catch(cv::Exception& e){
                 error() << "HoughCirclesNode:\n\t"
@@ -93,8 +93,8 @@ class HoughCirclesNode: public OutputNode{
             // convert coordinates from pixels (top left origin) to 0-1 float,
             // top left origin // TODO: check this
             std::vector<Circle> msg_circles;
-            const float width = img->cvMat().cols;
-            const float height = img->cvMat().rows;
+            const float width = img->width();
+            const float height = img->height();
             for(unsigned i = 0; i < circles.size(); i++){
                 Circle c;
                 c.centre.x = circles[i][0] / width;

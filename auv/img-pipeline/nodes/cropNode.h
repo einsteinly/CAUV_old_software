@@ -58,8 +58,8 @@ class CropNode: public Node{
                             << "width and height must be greater than 0.";
                     return r;
                 }
-                image_ptr_t inp_img = inputs[Image_In_Name];
-                if (top_left_x >= inp_img->cvMat().cols || top_left_y >= inp_img->cvMat().rows ||   // Whole of image is being cropped
+                cv::Mat inp_img = inputs[Image_In_Name]->mat();
+                if (top_left_x >= inp_img.cols || top_left_y >= inp_img.rows ||   // Whole of image is being cropped
                     width < -top_left_x || height < -top_left_y) {
                     error() << "CropNode:\n\t"
                              << "whole of image is being cropped."; 
@@ -71,29 +71,29 @@ class CropNode: public Node{
                 image_ptr_t dst;
                 // Check if we need to perform anti-cropping
                 if (top_left_x < 0 || top_left_y < 0 ||
-                    top_left_x + width > inp_img->cvMat().cols || top_left_y + height > inp_img->cvMat().rows) 
+                    top_left_x + width > inp_img.cols || top_left_y + height > inp_img.rows) 
                 { // We need to perform anti-cropping
                     // The cropping rectangle must fit on the image                   
                     if(cropRect.x < 0) {  // The left hand side of the rectangle falls to the left of the image, adjust accordingly 
                         cropRect.x = 0;
                         cropRect.width += top_left_x; 
                     }
-                    if(cropRect.x + cropRect.width > inp_img->cvMat().cols) { // The right hand side of the rectange falls to the right of the image, adjust accordindly
-                        cropRect.width = inp_img->cvMat().cols - cropRect.x;                    
+                    if(cropRect.x + cropRect.width > inp_img.cols) { // The right hand side of the rectange falls to the right of the image, adjust accordindly
+                        cropRect.width = inp_img.cols - cropRect.x;                    
                     }
                      
                     if(cropRect.y < 0) {  // The rectangle falls to the top of the image, adjust accordingly 
                         cropRect.y = 0;
                         cropRect.height += top_left_y; 
                     }
-                    if(cropRect.y + cropRect.height > inp_img->cvMat().rows) { // The rectange falls to the bottom of the image, adjust accoringly
-                        cropRect.height = inp_img->cvMat().rows - cropRect.y;                    
+                    if(cropRect.y + cropRect.height > inp_img.rows) { // The rectange falls to the bottom of the image, adjust accoringly
+                        cropRect.height = inp_img.rows - cropRect.y;                    
                     }
 
                     
-                    cv::Mat cropped_img = cv::Mat(inp_img->cvMat(),cropRect); //Perform the cropping
+                    cv::Mat cropped_img = cv::Mat(inp_img,cropRect); //Perform the cropping
                     
-                    cv::Mat out_img = cv::Mat::zeros(height,width,inp_img->cvMat().type()); //Create a new blank image
+                    cv::Mat out_img = cv::Mat::zeros(height,width,inp_img.type()); //Create a new blank image
                     // We need to placed the cropped-image into the output matrix. We can use cropRect for this, translated as required
                     if(top_left_x < 0) { cropRect.x = - top_left_x; } else { cropRect.x = 0; }
                     if(top_left_y < 0) { cropRect.y = - top_left_y; } else { cropRect.y = 0; }
@@ -103,7 +103,7 @@ class CropNode: public Node{
                     cropped_img.copyTo(out_img_sub);
                     dst = boost::make_shared<Image>(out_img);
                 } else { // Simply crop
-                    cv::Mat cropped_img = cv::Mat(inp_img->cvMat(),cropRect); //Perform the cropping
+                    cv::Mat cropped_img = cv::Mat(inp_img,cropRect); //Perform the cropping
                     dst = boost::make_shared<Image>(cropped_img);
                 }
                 r[Image_Out_Name] = dst;

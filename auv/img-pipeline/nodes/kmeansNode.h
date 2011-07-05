@@ -71,7 +71,7 @@ class KMeansNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             
             int K = param<int>("K");
             bool colorise = !!param<int>("colorise");
@@ -85,9 +85,9 @@ class KMeansNode: public Node{
                 error() << "too many clusters";
             }
 
-            if (m_channels != img->cvMat().channels()) {
+            if (m_channels != img.channels()) {
                 m_clusters.clear();
-                m_channels = img->cvMat().channels();
+                m_channels = img.channels();
             }
 
             // Make sure our number of clusters == K, adding or removing as appropriate
@@ -122,13 +122,12 @@ class KMeansNode: public Node{
             }
 
             int y = 0, x = 0, ch = 0;
-            int rows = img->cvMat().rows, cols = img->cvMat().cols;
-            const int elem_size = img->cvMat().elemSize();
+            int rows = img.rows, cols = img.cols;
+            const int elem_size = img.elemSize();
             const int row_size = cols * elem_size;
             unsigned char *img_rp, *img_cp, *img_bp;
 
-            boost::shared_ptr<Image> clusterids = boost::make_shared<Image>(cv::Mat(rows, cols, CV_8UC1));
-            cv::Mat clusteridsMat = clusterids->cvMat();
+            cv::Mat clusteridsMat(rows, cols, CV_8UC1);
 
             // Clear val sums and sizes (val sum for single pass mean calculation)
             for (size_t i = 0; i < m_clusters.size(); i++) {
@@ -141,7 +140,7 @@ class KMeansNode: public Node{
             }
 
             // Assign each pixel to the nearest cluster
-            for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
+            for(y = 0, img_rp = img.data; y < rows; y++, img_rp += row_size)
                 for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                 {
                     size_t best_cl_i = K;
@@ -179,7 +178,7 @@ class KMeansNode: public Node{
                     int farthest_point_y = -1;
                     unsigned int farthest_point_sqdist = 0;
 
-                    for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
+                    for(y = 0, img_rp = img.data; y < rows; y++, img_rp += row_size)
                         for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                         {
                             cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
@@ -209,7 +208,7 @@ class KMeansNode: public Node{
                     
                     farthest_point_cl.size--;
                     cl.size++;
-                    for(ch = 0, img_bp = img->cvMat().data + y * row_size + x * elem_size; ch < m_channels; ch++, img_bp++)
+                    for(ch = 0, img_bp = img.data + y * row_size + x * elem_size; ch < m_channels; ch++, img_bp++)
                     {
                         farthest_point_cl.valsum[ch] -= *img_bp;
                         cl.valsum[ch] += *img_bp;
@@ -234,7 +233,7 @@ class KMeansNode: public Node{
             if (colorise) {
                 // Colorise if necessary
 
-                for(y = 0, img_rp = img->cvMat().data; y < rows; y++, img_rp += row_size)
+                for(y = 0, img_rp = img.data; y < rows; y++, img_rp += row_size)
                     for(x = 0, img_cp = img_rp; x < cols; x++, img_cp += elem_size)
                     {
                         cluster& cl = m_clusters[clusteridsMat.at<unsigned char>(y,x)];
@@ -246,8 +245,8 @@ class KMeansNode: public Node{
                     }
             }
             
-            r["cluster ids"] = clusterids;
-            r["image (not copied)"] = img;
+            r["cluster ids"] = boost::make_shared<Image>(clusteridsMat);
+            r["image (not copied)"] = boost::make_shared<Image>(img);
             
             return r;
         }

@@ -480,6 +480,16 @@ void Node::registerInputID(input_id const& i, InputSchedType const& st){
     _statusMessage(boost::make_shared<InputStatusMessage>(m_pl_name, m_id, i, NodeIOStatus::None));
 }
 
+bool Node::unregisterOutputID(output_id const& o, bool warnNonExistent) {
+    lock_t l(m_outputs_lock);
+    
+    int removed = m_outputs.erase(o);
+    if (removed == 0 && warnNonExistent)
+        warning() << "Tried to remove non-existent output " << o;
+
+    return (removed > 0);
+}
+
 /* Check to see whether this node should be added to the scheduler queue
  */
 void Node::checkAddSched(SchedMode m){

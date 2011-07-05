@@ -57,21 +57,21 @@ class ConvertColourNode: public Node{
             // way.
 
             int conversion_code = 0;
-            if(out_fmt == "rgb" && img->cvMat().channels() == 1){
+            if(out_fmt == "rgb" && img->channels() == 1){
                 conversion_code = CV_GRAY2RGB;
             }else if(out_fmt == "grey" || out_fmt == "gray"){
-                if(img->cvMat().channels() == 3)
+                if(img->channels() == 3)
                     conversion_code = CV_RGB2GRAY;
-                else if(img->cvMat().channels() == 4)
+                else if(img->channels() == 4)
                     conversion_code = CV_RGBA2GRAY;
             }else{
                 throw parameter_error("Invalid output format: " + out_fmt);
             }
             
-            boost::shared_ptr<Image> out = boost::make_shared<Image>();
+            cv::Mat out;
             if(conversion_code != 0){
                 try{
-                    cv::cvtColor(img->cvMat(), out->cvMat(), conversion_code, 0);
+                    cv::cvtColor(img->mat(), out, conversion_code, 0);
                 }catch(cv::Exception& e){
                     error() << "ConvertColourNode:\n\t"
                             << e.err << "\n\t"
@@ -84,7 +84,7 @@ class ConvertColourNode: public Node{
                 }
             }
             
-            r["image out"] = out;
+            r["image out"] = boost::make_shared<Image>(out);
             
             return r;
         }

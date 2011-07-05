@@ -293,6 +293,7 @@ void cauv::sonarReadThread(SeanetSonar& sonar)
                     sonar.m_cur_data_reqs = 0;
                     isalive = false;
                 }
+	            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
                 goto retry;
             }
 

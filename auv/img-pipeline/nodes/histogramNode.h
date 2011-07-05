@@ -48,13 +48,13 @@ class HistogramNode: public Node{
 
             const int bins = param<int>("Number of bins");
 
-            image_ptr_t img = inputs["image_in"];
+            cv::Mat img = inputs["image_in"]->mat();
 
-            if(!img->cvMat().isContinuous())
+            if(!img.isContinuous())
                 throw(parameter_error("image must be continuous"));
-            if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if((img.type() & CV_MAT_DEPTH_MASK) != CV_8U)
                 throw(parameter_error("image must have unsigned bytes"));
-            if(img->cvMat().channels() > 1)
+            if(img.channels() > 1)
                 throw(parameter_error("image must have only one channel"));
                 //TODO: support vector parameters
 
@@ -67,13 +67,13 @@ class HistogramNode: public Node{
             //We compute the histogram from the 0-th and 1-st channels
             int channels[] = {0};
 
-            cv::calcHist( &img->cvMat(), 1, channels , cv::Mat(), //Do not use mask
+            cv::calcHist( &img, 1, channels , cv::Mat(), //Do not use mask
                 hist, 1, histSize, ranges,
                 true, //The histogram is uniform
                 false );
             double maxVal = 0;
             minMaxLoc(hist, 0, &maxVal, 0, 0);
-            int imgsize = img->cvMat().rows * img->cvMat().cols;
+            int imgsize = img.rows * img.cols;
 
             std::vector<float> binVal;
             for(int h = 0; h < bins; h++){

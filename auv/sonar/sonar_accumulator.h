@@ -20,7 +20,7 @@ class SonarAccumulator
         float accumulateDataLine(const SonarDataLine& data);
 
         boost::shared_ptr<Image> img() const;
-        cv::Mat const& mat() const;
+        cv::Mat mat() const;
 
     protected:
         int m_last_line_bearing;    

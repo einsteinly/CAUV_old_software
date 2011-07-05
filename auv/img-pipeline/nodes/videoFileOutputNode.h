@@ -52,9 +52,9 @@ class VideoFileOutputNode: public OutputNode{
             using boost::algorithm::replace_all_copy;
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
              
-            debug(4) << "VideoFileOutputNode::doWork()" << *img;
+            debug(4) << "VideoFileOutputNode::doWork()" << inputs["image"];
             
             try{
                 if(!m_writer.isOpened())
@@ -69,7 +69,7 @@ class VideoFileOutputNode: public OutputNode{
                                                 ), "%d", now("%Y-%m-%d")
                                             ), "%t", now("%H-%M-%s")
                                         );
-                    openVideo(img->cvMat().size());
+                    openVideo(img.size());
                 }
                 
                 accumulateFrame(img);
@@ -95,12 +95,12 @@ class VideoFileOutputNode: public OutputNode{
             }
         }
 
-        void accumulateFrame(image_ptr_t image){
+        void accumulateFrame(cv::Mat image){
             if(!m_writer.isOpened()){
                 error() << "video writer is not open";
                 return;
             }
-            m_writer << image->cvMat();
+            m_writer << image;
             m_videoEmpty = false;
         }
 
