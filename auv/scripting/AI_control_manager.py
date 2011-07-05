@@ -69,17 +69,21 @@ class auvControl(aiProcess):
         self.auv.forwardlights(0)
     @external_function
     def signal(self, value):
-        info('signalling %d' %(value,))
+        info('signalling %s' %(str(value),))
         self.auv.forwardlights(0)
         time.sleep(2)
-        for b in bin(value)[2:]:
-            self.auv.forwardlights(255)
-            if b == '1':
-                time.sleep(1)
-            else:
+        for c in str(value):
+            if not c in morsetab:
+                continue
+            for c2 in morsetab[c]:
+                self.auv.forwardlights(255)
+                if c2 == '-':
+                    time.sleep(1)
+                else:
+                    time.sleep(0.5)
+                self.auv.forwardlights(0)
                 time.sleep(0.5)
-            self.auv.forwardlights(0)
-            time.sleep(0.5)
+            time.sleep(1)
     @external_function
     def depth(self, value):
         with self.limit_lock:
@@ -96,6 +100,47 @@ class auvControl(aiProcess):
         while True:
             time.sleep(10)
             info("auv_control still alive")
+
+#from Demos/scripts/morse.py
+morsetab = {
+        'A': '.-',              'a': '.-',
+        'B': '-...',            'b': '-...',
+        'C': '-.-.',            'c': '-.-.',
+        'D': '-..',             'd': '-..',
+        'E': '.',               'e': '.',
+        'F': '..-.',            'f': '..-.',
+        'G': '--.',             'g': '--.',
+        'H': '....',            'h': '....',
+        'I': '..',              'i': '..',
+        'J': '.---',            'j': '.---',
+        'K': '-.-',             'k': '-.-',
+        'L': '.-..',            'l': '.-..',
+        'M': '--',              'm': '--',
+        'N': '-.',              'n': '-.',
+        'O': '---',             'o': '---',
+        'P': '.--.',            'p': '.--.',
+        'Q': '--.-',            'q': '--.-',
+        'R': '.-.',             'r': '.-.',
+        'S': '...',             's': '...',
+        'T': '-',               't': '-',
+        'U': '..-',             'u': '..-',
+        'V': '...-',            'v': '...-',
+        'W': '.--',             'w': '.--',
+        'X': '-..-',            'x': '-..-',
+        'Y': '-.--',            'y': '-.--',
+        'Z': '--..',            'z': '--..',
+        '0': '-----',           ',': '--..--',
+        '1': '.----',           '.': '.-.-.-',
+        '2': '..---',           '?': '..--..',
+        '3': '...--',           ';': '-.-.-.',
+        '4': '....-',           ':': '---...',
+        '5': '.....',           "'": '.----.',
+        '6': '-....',           '-': '-....-',
+        '7': '--...',           '/': '-..-.',
+        '8': '---..',           '(': '-.--.-',
+        '9': '----.',           ')': '-.--.-',
+        ' ': ' ',               '_': '..--.-',
+}
 
 if __name__ == '__main__':
     p = optparse.OptionParser()
