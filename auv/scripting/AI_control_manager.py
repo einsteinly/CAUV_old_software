@@ -1,5 +1,5 @@
 import cauv.node
-import cauv.control as control
+from cauv import control, sonar
 from cauv.debug import debug, warning, error, info
 
 import time
@@ -14,6 +14,7 @@ class auvControl(aiProcess):
     def __init__(self, **kwargs):
         aiProcess.__init__(self, 'auv_control')
         self.auv = control.AUV(self.node)
+        self.sonar = sonar.Sonar(self.node)
         self.external_functions = []
         self.script_lock = threading.Lock()
         self.current_task_id = None
@@ -34,6 +35,11 @@ class auvControl(aiProcess):
             if self.enabled.is_set() and self.current_task_id == task_id:
                 getattr(self.auv, command)(*args, **kwargs)
     @external_function
+    def sonar_command(self, task_id, command, *args, **kwargs):
+        with self.script_lock:
+            if self.enabled.is_set() and self.current_task_id == task_id:
+                getattr(self.sonar, command)(*args, **kwargs)
+    @external_function
     def set_task_id(self, task_id):
         with self.script_lock:
             self.current_task_id = task_id
@@ -52,22 +58,32 @@ class auvControl(aiProcess):
         self.auv.vbow(0)
         self.auv.hstern(0)
         self.auv.vstern(0)
-        self.auv.bearing(self.auv.current_bearing)
+        if self.auv.bearing != None:
+            self.auv.bearing(self.auv.current_bearing)
         self.auv.pitch(0)
-        self.auv.depth(self.auv.current_depth)
+        if self.auv.depth != None:
+            self.auv.depth(self.auv.current_depth)
+    @external_function
+    def lights_off(self):
+        self.auv.downlights(0)
+        self.auv.forwardlights(0)
     @external_function
     def signal(self, value):
-        info('signalling %d' %(value,))
+        info('signalling %s' %(str(value),))
         self.auv.forwardlights(0)
         time.sleep(2)
-        for b in bin(value)[2:]:
-            self.auv.forwardlights(255)
-            if b == '1':
-                time.sleep(1)
-            else:
+        for c in str(value):
+            if not c in morsetab:
+                continue
+            for c2 in morsetab[c]:
+                self.auv.forwardlights(255)
+                if c2 == '-':
+                    time.sleep(1)
+                else:
+                    time.sleep(0.5)
+                self.auv.forwardlights(0)
                 time.sleep(0.5)
-            self.auv.forwardlights(0)
-            time.sleep(0.5)
+            time.sleep(1)
     @external_function
     def depth(self, value):
         with self.limit_lock:
@@ -85,13 +101,54 @@ class auvControl(aiProcess):
             time.sleep(10)
             info("auv_control still alive")
 
+#from Demos/scripts/morse.py
+morsetab = {
+        'A': '.-',              'a': '.-',
+        'B': '-...',            'b': '-...',
+        'C': '-.-.',            'c': '-.-.',
+        'D': '-..',             'd': '-..',
+        'E': '.',               'e': '.',
+        'F': '..-.',            'f': '..-.',
+        'G': '--.',             'g': '--.',
+        'H': '....',            'h': '....',
+        'I': '..',              'i': '..',
+        'J': '.---',            'j': '.---',
+        'K': '-.-',             'k': '-.-',
+        'L': '.-..',            'l': '.-..',
+        'M': '--',              'm': '--',
+        'N': '-.',              'n': '-.',
+        'O': '---',             'o': '---',
+        'P': '.--.',            'p': '.--.',
+        'Q': '--.-',            'q': '--.-',
+        'R': '.-.',             'r': '.-.',
+        'S': '...',             's': '...',
+        'T': '-',               't': '-',
+        'U': '..-',             'u': '..-',
+        'V': '...-',            'v': '...-',
+        'W': '.--',             'w': '.--',
+        'X': '-..-',            'x': '-..-',
+        'Y': '-.--',            'y': '-.--',
+        'Z': '--..',            'z': '--..',
+        '0': '-----',           ',': '--..--',
+        '1': '.----',           '.': '.-.-.-',
+        '2': '..---',           '?': '..--..',
+        '3': '...--',           ';': '-.-.-.',
+        '4': '....-',           ':': '---...',
+        '5': '.....',           "'": '.----.',
+        '6': '-....',           '-': '-....-',
+        '7': '--...',           '/': '-..-.',
+        '8': '---..',           '(': '-.--.-',
+        '9': '----.',           ')': '-.--.-',
+        ' ': ' ',               '_': '..--.-',
+}
+
 if __name__ == '__main__':
     p = optparse.OptionParser()
     p.add_option('-d', '--disable_control', dest='disable_control', default=False,
                  action='store_true', help="stop AI script from controlling the sub")
     opts, args = p.parse_args()
+    ac = auvControl()
     try:
-        ac = auvControl()
         ac.run()
     finally:
         ac.die()

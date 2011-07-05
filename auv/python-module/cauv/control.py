@@ -10,7 +10,6 @@ class AUV(messaging.BufferedMessageObserver):
         self.__node = node
         node.join("control")
         node.join("telemetry")
-        node.join("external")
         node.addObserver(self)
         self.current_bearing = None
         self.current_depth = None
@@ -18,10 +17,6 @@ class AUV(messaging.BufferedMessageObserver):
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
-        
-        ## synchronising stuff
-        #self.received_state_condition = threading.Condition()
-        #self.received_state = None
 
     def send(self, msg):
         # send to control via self.__node
@@ -39,13 +34,6 @@ class AUV(messaging.BufferedMessageObserver):
     
     def getBearing(self):
         return self.current_bearing
-    #def getBearing(self, timeout=3):
-    #    self.received_state_condition.acquire()
-    #    self.received_state = None
-    #    self.send(messaging.StateRequestMessage())
-    #    self.received_state_condition.wait(timeout)
-    #    self.received_state_condition.release()
-    #    return self.received_state.orientation
 
     def bearing(self, bearing):
         if bearing is not None:
@@ -148,15 +136,19 @@ class AUV(messaging.BufferedMessageObserver):
         
     def forwardlights(self, value):
         self.checkLightValue(value)
-        self.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        self.__node.send(messaging.LightMessage(messaging.LightID.Forward, value))
         
     def downlights(self, value):
         self.checkLightValue(value)
-        self.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        self.__node.send(messaging.LightMessage(messaging.LightID.Down, value))
         
     def checkLightValue(self, value):
         if not (value>=0 and value<256):
             raise ValueError("invalid light value: %d" % value)
+
+    def cut(self, strength):
+        # strength is 0 = off, 1 = on
+        self.send(messaging.CuttingDevice(strength))
     
     def motorMap(self, motor_id, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
         #
@@ -210,8 +202,6 @@ class AUV(messaging.BufferedMessageObserver):
             raise ValueError("invalid motor value: %d" % value)
     
     def onTelemetryMessage(self, m):
-        #self.bearing = m.orientation.yaw
-        #print "message"
         self.current_bearing = m.orientation.yaw
         self.current_depth = m.depth
         self.current_pitch = m.orientation.pitch
@@ -225,9 +215,3 @@ class AUV(messaging.BufferedMessageObserver):
         self.depthCV.release()
         self.pitchCV.release()
 
-    ## synchronous-ifying stuff
-    #def onStateMessage(self, m):
-    #    self.received_state_condition.acquire()
-    #    self.received_state = m
-    #    self.received_state_condition.notify()
-    #    self.received_state_condition.release()

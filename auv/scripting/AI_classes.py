@@ -80,6 +80,22 @@ class aiProcess(messaging.MessageObserver):
 
 #------AI SCRIPTS STUFF------
 
+class fakeSonarfunction():
+    def __init__(self, script, attr):
+        self.script = script
+        self.attr = attr
+    def __call__(self, *args, **kwargs):
+        self.script.ai.auv_control.sonar_command(self.script.task_name, self.attr, *args, **kwargs)
+    def __getattr__(self, attr):
+        error('You can only call functions of sonar, one level deep')
+        raise AttributeError('fakeSonarfunction has no attribute %s' %(attr,))
+
+class fakeSonar():
+    def __init__(self, script):
+        self.script = script
+    def __getattr__(self, func):
+        return fakeSonarfunction(self.script, func)
+
 class fakeAUVfunction():
     def __init__(self, script, attr):
         self.script = script
@@ -87,7 +103,7 @@ class fakeAUVfunction():
     def __call__(self, *args, **kwargs):
         self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
     def __getattr__(self, attr):
-        error('You can only call functions of AUV, one level deep')
+        error('You can only call functions of AUV, one level deep (except sonar)')
         raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
 
 class fakeAUV(messaging.MessageObserver):
@@ -95,6 +111,7 @@ class fakeAUV(messaging.MessageObserver):
     #needs to respond to control overriding commands
     def __init__(self, script):
         self.script = script #passing the script saves on the number of AI_process, as fakeAUV can now call other processes through the script
+        self.sonar = fakeSonar(script)
         messaging.MessageObserver.__init__(self)
         self.script.node.join("telemetry")
         self.script.node.addObserver(self)
@@ -260,6 +277,7 @@ class aiScript(aiProcess):
         self.exit_confirmed.set()
     def die(self):
         self.ai.auv_control.stop()
+        self.ai.auv_control.lights_off()
         aiProcess.die(self)
 
 #------AI DETECTORS STUFF------
