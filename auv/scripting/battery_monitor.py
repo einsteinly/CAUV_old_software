@@ -6,6 +6,7 @@ from cauv.debug import debug, info
 import threading
 import time
 import optparse
+import traceback
 
 log_file = 'bat_log.log'
 
@@ -75,10 +76,11 @@ class messageLogger(messaging.BufferedMessageObserver):
         self.light_log_lock = dict([(x,threading.Lock()) for x in light_ids])
         self.light_log = dict([(x,[(time.time(),0)]) for x in light_ids])
     def onMotorStateMessage(self, m):
+        traceback.print_stack()
+        print m.motorId, m.speed
         with self.motor_demand_log_lock[str(m.motorId)]:
             self.motor_demand_log[str(m.motorId)].append((time.time(),m.speed))
     def onLightMessage(self, m):
-        print m.lightId, m.intensity
         with self.light_log_lock[str(m.lightId)]:
             self.light_log[str(m.lightId)].append((time.time(),m.intensity))
         
