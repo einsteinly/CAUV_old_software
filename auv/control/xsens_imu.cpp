@@ -81,6 +81,8 @@ void XsensIMU::setObjectAlignmentMatrix(CmtMatrix m)
 
 void XsensIMU::configure(CmtOutputMode &mode, CmtOutputSettings &settings)
 {
+    boost::lock_guard<boost::mutex> lock(m_cmt3_lock);
+    
     XsensResultValue res = m_cmt3.gotoConfig();
     if (res != XRV_OK)
         throw XsensException("Failed while entering config mode");
@@ -103,22 +105,12 @@ void XsensIMU::configure(CmtOutputMode &mode, CmtOutputSettings &settings)
         throw XsensException("Failed while entering measurement mode");
 }
 
-floatYPR XsensIMU::getAttitude()
+void XsensIMU::calibrateNoRotation(uint16_t duration)
 {
-    // Initialize packet for data
-    xsens::Packet packet(1, m_cmt3.isXm());
+    boost::lock_guard<boost::mutex> lock(m_cmt3_lock);
 
-    do
-    {
-        m_cmt3.waitForDataMessage(&packet);
-    } while (!packet.containsOriEuler());
-
-    CmtEuler e = packet.getOriEuler();
-    floatYPR ret(e.m_yaw, e.m_pitch, e.m_roll);
-    ret.yaw = -ret.yaw;
-    if (ret.yaw < 0)
-        ret.yaw += 360;
-    return ret;
+    m_running_norotation = true;
+    m_cmt3.setNoRotation(duration);
 }
 
 void XsensIMU::start()
@@ -142,25 +134,44 @@ void XsensIMU::readThread()
         debug() << "Xsens read thread started";
         while(true)
         {
-            // Initialize packet for data
-            xsens::Packet packet(1, m_cmt3.isXm());
-            
-            m_cmt3.waitForDataMessage(&packet);
-            if(packet.containsOriEuler())
-            {
-                CmtEuler e = packet.getOriEuler();
-                floatYPR att(e.m_yaw, e.m_pitch, e.m_roll);
-                att.yaw = -att.yaw;
-                if (att.yaw < 0)
-                    att.yaw += 360;
-                att.pitch = -att.pitch;
+            { boost::lock_guard<boost::mutex> lock(m_cmt3_lock);
+                // Initialize packet for data
+                xsens::Packet packet(1, m_cmt3.isXm());
                 
-                foreach(observer_ptr_t o, m_observers)
+                m_cmt3.waitForDataMessage(&packet);
+
+                if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION) != CMT_STATUSFLAG_NOROTATION)
                 {
-                    o->onTelemetry(att);
+                    if (m_running_norotation)
+                    {
+                        if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION_ABORTED) != CMT_STATUSFLAG_NOROTATION_ABORTED)
+                            error() << "No rotation procedure aborted (rotation detected)";
+                        else
+                        {
+                            info() << "No rotation procedure finished";
+                            if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION_SAMPLES_REJECTED) != CMT_STATUSFLAG_NOROTATION_SAMPLES_REJECTED)
+                                warning() << "No rotation procedure: some samples rejected";
+                        }
+                        
+                        m_running_norotation = false;
+                    }
+
+                    if(packet.containsOriEuler())
+                    {
+                        CmtEuler e = packet.getOriEuler();
+                        floatYPR att(e.m_yaw, e.m_pitch, e.m_roll);
+                        att.yaw = -att.yaw;
+                        if (att.yaw < 0)
+                            att.yaw += 360;
+                        att.pitch = -att.pitch;
+                        
+                        foreach(observer_ptr_t o, m_observers)
+                        {
+                            o->onTelemetry(att);
+                        }
+                    }
                 }
             }
-        
             boost::this_thread::sleep(boost::posix_time::milliseconds(10));
         }
     }

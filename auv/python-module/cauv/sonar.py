@@ -9,9 +9,9 @@ class Sonar:
         self.__node = node
         self._direction = 0
         self._width = 6400
-        self._gain = 50
-        self._range = 5000
-        self._rangeRes = 10
+        self._gain = 255
+        self._range = 50000
+        self._rangeRes = 100
         self._angularRes = 16
 
     _exact_degree_ratio = 17 # 6400 / 360
@@ -24,12 +24,12 @@ class Sonar:
 
     def directionDegrees(self, val):
         # updates direction to val degrees
-        self._direction = self._exact_degree_ratio * val
+        self._direction = val * 6400 // 360 # force integer division
         self.update()
 
     def directionRadians(self, val):
         # updates direction to val radians
-        self._direction = self._exact_radian_ratio * val
+        self._direction = int(round(val * 6400 / pi))
         self.update()
 
     def width(self, val):
@@ -39,12 +39,12 @@ class Sonar:
 
     def widthDegrees(self, val):
         # updates width to val degrees
-        self._width = self._exact_degree_ratio * val
+        self._width = val * 6400 // 360 # force integer division
         self.update()
 
     def widthRadians(self, val):
         # updates width to val radians
-        self._width = self._exact_radian_ratio * val
+        self._width = int(round(val * 6400 / pi))
         self.update()
 
     def gain(self, val):
@@ -69,12 +69,12 @@ class Sonar:
 
     def angularResDegrees(self, val):
         # updates angularRes to val degrees
-        self._angularRes = self._exact_degree_ratio * val
+        self._angluarRes = val * 6400 // 360 # force integer division
         self.update()
 
     def angularResRadians(self, val):
         # updates angularRes to val radians
-        self._angularRes = self._exact_radian_ratio * val
+        self._angularRes = int(round(val * 6400 / pi))
         self.update()
 
     def update(self):

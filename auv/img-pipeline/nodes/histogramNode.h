@@ -79,6 +79,8 @@ class HistogramNode: public Node{
             for(int h = 0; h < bins; h++){
                 binVal.push_back(hist.at<float>(h) / imgsize);
             }
+            if (binVal.size() == 0)
+                warning() << "Oh shit, empty histogram. How the fuck did this happen?";
 
             r["histogram"] = NodeParamValue(binVal);
 

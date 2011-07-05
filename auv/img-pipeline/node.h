@@ -165,7 +165,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                             param_value = parent_value;
                         }
                     }else{
-                        error() << "Type mismatch on parameter link:" << *this;
+                        error() << "Type mismatch on parameter link:" << *this << " (" << param_value.which() << "vs" << parent_value.which() << ")";
                     }
                 }
                 return param_value;

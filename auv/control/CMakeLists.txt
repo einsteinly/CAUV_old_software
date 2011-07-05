@@ -10,16 +10,16 @@ endif()
 
 # sources
 add_executable (
-    controlv2
+    control
 
     control.cpp
     xsens_imu.cpp
 )
-cauv_install ( controlv2 )
+cauv_install ( control )
 
 # libs
 target_link_libraries (
-    controlv2
+    control
     cauv_debug
 
     boost_serialization

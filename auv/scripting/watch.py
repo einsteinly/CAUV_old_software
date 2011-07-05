@@ -83,7 +83,7 @@ processes_to_start = [
        #CAUVTask('img-pipe pipe-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n pipe-detect',   True, ['img-pipeline -n pipe-detect']),
         CAUVTask('img-pipe sonar',       'nohup nice -n 4 %EDIR/img-pipeline -n sonar',          True, ['img-pipeline -n sonar']),
         CAUVTask('sonar',                'nohup nice -n 4 %EDIR/sonar /dev/sonar0',              True, ['sonar']),
-        CAUVTask('controlv2',            'nohup nice -n 2 %EDIR/controlv2 -m/dev/ttyUSB0 -x0',   True, ['controlv2']),
+        CAUVTask('control',              'nohup nice -n 2 %EDIR/control -m/dev/ttyUSB0 -x0',     True, ['control']),
         CAUVTask('spread',               'nohup nice -n 2 spread',                               True, ['spread']),
         CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
         CAUVTask('battery',              'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
