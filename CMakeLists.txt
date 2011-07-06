@@ -41,6 +41,8 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # Custom install which adds a prefix to executables
 set (CAUV_BINARY_PREFIX "cauv-" CACHE STRING "string to prepend to all cauv executables")
 
+set (CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
+
 function (cauv_install TARGET)
     get_target_property(TARGET_TYPE ${TARGET} TYPE)
     if (${TARGET_TYPE} STREQUAL "EXECUTABLE")
