@@ -76,7 +76,8 @@ class aiProcess(messaging.MessageObserver):
             error('Error sending high-level log message')
             traceback.print_exc()
     def die(self):
-        self.node.removeObserver(self)
+        info('Clearing up process %s' %(self.process_name,))
+        self.node.stop()
 
 #------AI SCRIPTS STUFF------
 

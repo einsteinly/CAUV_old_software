@@ -699,7 +699,7 @@ class pipelineManager(aiProcess):
             self._pl.remove(remove_nodes)
     def run(self):
         while True:
-            self.requests_changed.wait()
+            self.requests_changed.wait(5)
             if self.requests_changed.is_set():
                 with self.request_lock:
                     self.requests_changed.clear()
@@ -721,7 +721,6 @@ class pipelineManager(aiProcess):
                     self.ai.detector_control.update_pl_requests(self.cur_det_reqs)
                     self.state['requests'] = self.requests
                     self.state.sync()
-            time.sleep(1)
     #extra functions
     @external_function
     def export_pipelines(self):
@@ -779,7 +778,7 @@ if __name__ == '__main__':
     import signal
     for i in xrange(0, signal.NSIG):
         try: 
-            signal.signal(i, sigHandler);
+            #signal.signal(i, sigHandler);
             debug('installed signal handler for %d' % i)
         except ValueError:
             pass
