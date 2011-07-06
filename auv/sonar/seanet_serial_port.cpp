@@ -117,10 +117,6 @@ boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
     return pkt;
 }
 
-	
-    return pkt;
-}
-
 void SeanetSerialPort::sendPacket(const SeanetPacket &pkt)
 {
     boost::lock_guard<boost::mutex> l(m_send_lock);
@@ -137,11 +133,8 @@ void SeanetSerialPort::sendPacket(const SeanetPacket &pkt)
 }
 
 static boost::asio::io_service module_io_service;
-void SeanetSerialPort::reset()
+void SeanetSerialPort::init()
 {
-    if (m_port->is_open()) {
-        m_port->close();
-    }
     while (!m_port->is_open()) {   
         try {
             m_port->open(m_file);
@@ -163,6 +156,9 @@ void SeanetSerialPort::reset()
 void SeanetSerialPort::reset()
 {
     info() << "Resetting sonar serial port on "<<m_file;
+    if (m_port->is_open()) {
+        m_port->close();
+    }
     init();
 }
 
