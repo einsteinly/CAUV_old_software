@@ -241,26 +241,25 @@ class taskManager(aiProcess):
     def run(self):
         while True:
             self.conditions_changed.wait(5)
-            if self.conditions_changed.is_set():
-                self.conditions_changed.clear()
-                if self.request_stop.is_set():
-                    self.request_stop.clear()
-                    self.stop_script()
-                with self.task_lock:
-                    highest_priority = self.current_priority
-                    to_start = None
-                    for task in self.active_tasks:
-                        if task.script_name != self.current_task and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
-                            if task.is_available():
-                                to_start = task
-                    if self.req_start_task:
-                        try:
-                            to_start = self.task_list[self.req_start_task]
-                        except KeyError:
-                            error("cannot start %s, not an active task." %(self.req_start_task,))
-                        self.req_start_task = None
-                    if to_start:
-                        self.start_task(to_start)
+            self.conditions_changed.clear()
+            if self.request_stop.is_set():
+                self.request_stop.clear()
+                self.stop_script()
+            with self.task_lock:
+                highest_priority = self.current_priority
+                to_start = None
+                for task in self.active_tasks:
+                    if task.script_name != self.current_task and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
+                        if task.is_available():
+                            to_start = task
+                if self.req_start_task:
+                    try:
+                        to_start = self.task_list[self.req_start_task]
+                    except KeyError:
+                        error("cannot start %s, not an active task." %(self.req_start_task,))
+                    self.req_start_task = None
+                if to_start:
+                    self.start_task(to_start)
             if not self.running_script:
                 debug('No script was running, returning to default')
                 self.start_default_script()

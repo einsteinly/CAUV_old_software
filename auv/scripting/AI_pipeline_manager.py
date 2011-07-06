@@ -453,7 +453,7 @@ class pipelineManager(aiProcess):
             error('Requestor has not requested this pipeline %s' %(requested_pl,))
         else:
             if not requested_pl in self.pl_data.pipelines:
-                warning('Could not drop request %s, may have left things in the pipeline.' %(pl_name, ))
+                warning('Could not drop request %s, may have left things in the pipeline.' %(requested_pl, ))
             else:
                 self.requests[requestor_type][requestor_name].remove(requested_pl)
         self.reeval = True
