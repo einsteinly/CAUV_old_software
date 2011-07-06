@@ -101,8 +101,8 @@ class detectionControl(aiProcess):
                         pls.append(pl_name)
             #sort out differences
             if set(pls) != set(self.pl_requests):
-                self.ai.pipeline_manager.set_detector_pl(pls)
                 self.pl_requests = pls
+            self.ai.pipeline_manager.set_detector_pl(pls)
             #send status
             self.ai.task_manager.update_detectors(self.running_detectors.keys())
             #run detection
