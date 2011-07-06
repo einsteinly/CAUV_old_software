@@ -334,6 +334,11 @@ group control
 	message ResetMCB : 85
 	{
     }
+
+    message CalibrateNoRotation : 90
+    {
+        duration : uint16;
+    }
 }
 group state
 {
@@ -666,5 +671,9 @@ group external
     message CuttingDevice : 151
     {
         strength : uint8;
+    }
+    message BatteryStatus : 152
+    {
+        voltage : uint16;
     }
 }

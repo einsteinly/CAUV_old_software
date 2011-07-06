@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import cauv
 import cauv.messaging as messaging
 import cauv.node

@@ -10,7 +10,7 @@ from cauv.debug import debug, error
 
 #pylint: disable=E1101
 
-class Observer(messaging.BufferedMessageObserver):
+class Observer(messaging.MessageObserver):
     pass
 
 class ServiceLevel:
@@ -43,8 +43,8 @@ class Node(messaging.CauvNode):
         except Exception, e:
             error(traceback.format_exc())
         finally:
-            debug('CAUV Node run thread cleanup...')
             self.stop()
+            debug('CAUV Node clearing up...')
         debug('CAUV Node run thread exiting...')
 
     def __run(self):

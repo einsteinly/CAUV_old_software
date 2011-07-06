@@ -699,7 +699,7 @@ class pipelineManager(aiProcess):
             self._pl.remove(remove_nodes)
     def run(self):
         while True:
-            self.requests_changed.wait()
+            self.requests_changed.wait(5)
             if self.requests_changed.is_set():
                 with self.request_lock:
                     self.requests_changed.clear()
@@ -721,7 +721,6 @@ class pipelineManager(aiProcess):
                     self.ai.detector_control.update_pl_requests(self.cur_det_reqs)
                     self.state['requests'] = self.requests
                     self.state.sync()
-            time.sleep(1)
     #extra functions
     @external_function
     def export_pipelines(self):
@@ -732,8 +731,60 @@ class pipelineManager(aiProcess):
             with open('dev-pipelines/'+pl_name[:-5]+datetime.now().isoformat()+pl_name[-5:], 'wb') as outf:
                 pickle.dump(new_state, outf)
     
+
+# These are the BSD ones
+Signal_Names = {
+    1  : "SIGHUP",
+    2  : "SIGINT",
+    3  : "SIGQUIT",
+    4  : "SIGILL",
+    5  : "SIGTRAP",
+    6  : "SIGABRT",
+    7  : "SIGEMT",
+    8  : "SIGFPE",
+    9  : "SIGKILL",
+    10 : "SIGBUS",
+    11 : "SIGSEGV",
+    12 : "SIGSYS",
+    13 : "SIGPIPE",
+    14 : "SIGALRM",
+    15 : "SIGTERM",
+    16 : "SIGURG",
+    17 : "SIGSTOP",
+    18 : "SIGTSTP",
+    19 : "SIGCONT",
+    20 : "SIGCHLD",
+    21 : "SIGTTIN",
+    22 : "SIGTTOU",
+    23 : "SIGIO",
+    24 : "SIGXCPU",
+    25 : "SIGXFSZ",
+    26 : "SIGVTALRM",
+    27 : "SIGPROF",
+    28 : "SIGWINCH",
+    29 : "SIGINFO",
+    30 : "SIGUSR1",
+    31 : "SIGUSR2"
+}
+
+import traceback
+def sigHandler(signum, frame):
+    error('Signal %s (%d) in %s' % (Signal_Names[signum], signum, ''.join(traceback.format_stack(frame))))
+    raise Exception('caught signal')
         
 if __name__ == '__main__':
+    # temp debug code, try to work out where the KeyboardInterrupt is coming
+    # from:
+    import signal
+    for i in xrange(0, signal.NSIG):
+        try: 
+            #signal.signal(i, sigHandler);
+            debug('installed signal handler for %d' % i)
+        except ValueError:
+            pass
+        except RuntimeError:
+            pass
+
     p = optparse.OptionParser()
     p.add_option('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")
