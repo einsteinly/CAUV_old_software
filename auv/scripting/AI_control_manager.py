@@ -16,13 +16,11 @@ class auvControl(aiProcess):
         self.auv = control.AUV(self.node)
         self.sonar = sonar.Sonar(self.node)
         self.external_functions = []
-        self.script_lock = threading.Lock()
         self.current_task_id = None
         self.enabled = threading.Event()
         if 'disable_control' in kwargs:
             if not kwargs['disable_control']:
                 self.enabled.set()
-        self.limit_lock = threading.Lock()
         self.depth_limit = None
     @external_function
     def auv_command(self, task_id, command, *args, **kwargs):
@@ -31,17 +29,18 @@ class auvControl(aiProcess):
         #Might need to move parts of control here/take a smaller version of control that doesn't have waiting commands (eg depth and wait)
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
-        with self.script_lock:
+        debug('auvControl::auv_command(self, task_id=%s, cmd=%s, args=%s, kwargs=%s)' % (task_id, command, args, kwargs), 5)
+        if self.enabled.is_set() and self.current_task_id == task_id:
+            debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
             getattr(self.auv, command)(*args, **kwargs)
+        print command
     @external_function
     def sonar_command(self, task_id, command, *args, **kwargs):
-        with self.script_lock:
-            if self.enabled.is_set() and self.current_task_id == task_id:
-                getattr(self.sonar, command)(*args, **kwargs)
+        if self.enabled.is_set() and self.current_task_id == task_id:
+            getattr(self.sonar, command)(*args, **kwargs)
     @external_function
     def set_task_id(self, task_id):
-        with self.script_lock:
-            self.current_task_id = task_id
+        self.current_task_id = task_id
     @external_function
     def enable(self):
         self.enabled.set()
@@ -85,16 +84,14 @@ class auvControl(aiProcess):
             time.sleep(1)
     @external_function
     def depth(self, value):
-        with self.limit_lock:
-            if self.depth_limit and self.depth_limit<value:
-                self.auv.depth(self.depth_limit)
-                getattr(self.ai, self.current_task_id).depthOverridden()
-                return
-        self.auv.depth(value)
+        if self.depth_limit and self.depth_limit<value:
+            self.auv.depth(self.depth_limit)
+            getattr(self.ai, self.current_task_id).depthOverridden()
+        else:
+            self.auv.depth(value)
     @external_function
     def limit_depth(self, value):
-        with self.limit_lock:
-            self.depth_limit = value
+        self.depth_limit = value
     def run(self):
         while True:
             time.sleep(10)

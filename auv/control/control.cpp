@@ -805,6 +805,11 @@ class MCBForwardingObserver : public MessageObserver
             debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
             m_mb->sendMessage(m, UNRELIABLE_MESS);
         }
+        virtual void onBatteryStatusMessage(BatteryStatusMessage_ptr m)
+        {
+            debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
+            m_mb->sendMessage(m, UNRELIABLE_MESS);
+        }
         virtual void onDebugMessage(DebugMessage_ptr m)
         {
             debug(5) << "MCBForwardingObserver: Forwarding debug message:" << *m;

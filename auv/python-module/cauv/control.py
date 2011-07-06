@@ -2,11 +2,13 @@ import messaging
 import threading
 import time
 
+from cauv.debug import info, warning, error, debug
+
 #pylint: disable=E1101
 
-class AUV(messaging.BufferedMessageObserver):
+class AUV(messaging.MessageObserver):
     def __init__(self, node):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.__node = node
         node.join("control")
         node.join("telemetry")
@@ -115,6 +117,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
     def prop(self, value):
+        debug("cauv.control.Node.prop(%s)" % value, 5)
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.Prop, value))
 
@@ -186,14 +189,18 @@ class AUV(messaging.BufferedMessageObserver):
         self.motorMap(messaging.MotorID.HStern, zero_plus, zero_minus, max_plus, max_minus)
 
     def v(self, value):
+        self.checkRange(value)
         self.vbow(value)
         self.vstern(value)
 
     def strafe(self, value):
+        debug("cauv.control.Node.strafe(%s)" % value, 5)
+        self.checkRange(value)
         self.hbow(value)
         self.hstern(value)
 
     def r(self, value):
+        self.checkRange(value)
         self.hbow(value)
         self.hstern(-value)
 

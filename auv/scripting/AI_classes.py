@@ -76,7 +76,8 @@ class aiProcess(messaging.MessageObserver):
             error('Error sending high-level log message')
             traceback.print_exc()
     def die(self):
-        self.node.removeObserver(self)
+        info('Clearing up process %s' %(self.process_name,))
+        self.node.stop()
 
 #------AI SCRIPTS STUFF------
 
@@ -101,6 +102,7 @@ class fakeAUVfunction():
         self.script = script
         self.attr = attr
     def __call__(self, *args, **kwargs):
+        debug('fakeAUVfunction: __call__ args=%s kwargs=%s' % (str(args), str(kwargs)), 5)
         self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
     def __getattr__(self, attr):
         error('You can only call functions of AUV, one level deep (except sonar)')
@@ -198,6 +200,7 @@ class fakeAUV(messaging.MessageObserver):
         return False
         
     def __getattr__(self, attr):
+        debug('FakeAUV: returning dynamic override for attr=%s' % str(attr), 3)
         return fakeAUVfunction(self.script, attr)
 
 class aiScriptOptionsBase(type):
