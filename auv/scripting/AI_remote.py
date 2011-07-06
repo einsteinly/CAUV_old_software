@@ -35,6 +35,9 @@ def modify_task_options(ainode, task_ref):
 def export_task_data(ainode, file_name):
     ainode.ai.task_manager.export_task_data(file_name)
     
+def force_start(ainode, task_ref):
+    ainode.ai.task_manager.request_start_task(task_ref)
+    
 def force_save(ainode):
     ainode.ai.task_manager.save_state()
     
@@ -113,6 +116,7 @@ if __name__=='__main__':
     taskm.addFunction('Remove task', remove_task, 'Unsetup an (already existing) task', {'task_ref': str})
     taskm.addFunction('Modify task options', modify_task_options, 'Change an options on an (already existing) task', {'task_ref': str})
     taskm.addFunction('Export task data', export_task_data, 'Save options etc to file.', {'file_name': str})
+    taskm.addFunction('Force task start', force_start, 'Force an active task to start its script (may not be entirely thread safe)', {'task_ref': str})
     
     scriptm = menu('Script', '')
     scriptm.addFunction('Stop script', stop_script, 'Stop the current script (if conditions true may immediately restart)', {})

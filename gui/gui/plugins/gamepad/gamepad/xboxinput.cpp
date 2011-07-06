@@ -12,8 +12,10 @@ XBoxInput::XBoxInput(const std::string vendor) : GamepadInput(vendor)
 
 bool XBoxInput::buttonPressed( const JoyStickEvent& event, int button ) {
     if(emitButton((XBox::Buttons) button, true))
-        return true;
-    else return GamepadInput::buttonPressed(event, button);
+    {}
+        //    return true;
+    //else
+    return GamepadInput::buttonPressed(event, button);
 }
 
 bool XBoxInput::buttonReleased( const JoyStickEvent& event, int button ) {
@@ -25,13 +27,13 @@ bool XBoxInput::buttonReleased( const JoyStickEvent& event, int button ) {
 bool XBoxInput::axisMoved( const JoyStickEvent &arg, int axis )
 {
     float value = 0;
-    if((arg.state.mAxes[axis].abs > 6000 || arg.state.mAxes[axis].abs < -6000 )) {
+    if((arg.state.mAxes[axis].abs > 8000 || arg.state.mAxes[axis].abs < -8000 )) {
         value = ((float)arg.state.mAxes[axis].abs) / 32768.f; // 32768 is the maximum short value
     }
 
     switch (axis) {
     case XBox::Joy_L_X:
-        Q_EMIT Joy_L_X(value);
+        Q_EMIT Joy_L_X(-value);
         break;
     case XBox::Joy_L_Y:
         Q_EMIT Joy_L_Y(value);

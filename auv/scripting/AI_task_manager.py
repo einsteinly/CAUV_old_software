@@ -28,6 +28,7 @@ class taskManager(aiProcess):
         self.active_tasks = []
         self.task_list = {}
         self.request_stop = threading.Event()
+        self.req_start_task = None
         #Conditions - note although conditions may be changed externally, the list of conditions may not
         self.conditions = {}
         self.conditions_changed = threading.Event()
@@ -190,6 +191,10 @@ class taskManager(aiProcess):
     def request_stop_script(self):
         self.request_stop.set()
         self.conditions_changed.set()
+    @external_function
+    def request_start_task(self, task_ref):
+        self.req_start_task = task_ref
+        self.conditions_changed.set()
     def stop_script(self):
         if self.running_script:
             try:
@@ -247,6 +252,12 @@ class taskManager(aiProcess):
                         if task.script_name != self.current_task and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
                             if task.is_available():
                                 to_start = task
+                    if self.req_start_task:
+                        try:
+                            to_start = aelf.task_list[self.req_start_task]
+                        except KeyError:
+                            error("cannot start %s, not an active task." %(self.req_start_task,))
+                        self.req_start_task = None
                     if to_start:
                         self.start_task(to_start)
             if not self.running_script:

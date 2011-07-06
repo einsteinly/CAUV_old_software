@@ -33,12 +33,11 @@ class XYZCoord:
 
 def metresPerDegreeLongitude(lat):
     # dimensions of earth:
-    # TODO check for negative numbers
     tan_lat = math.tan(radiansPerDegree * lat)
     beta = math.atan((Earth_b/Earth_a)*tan_lat)
-    return Earth_a * math.cos(beta) * radiansPerDegree 
+    return abs(Earth_a * math.cos(beta) * radiansPerDegree)
 
-def metresPerDegreeLatitude(lng):
+def metresPerDegreeLatitude():
     # TODO maybe improve approx; atm 1st degree
     return Earth_b * radiansPerDegree
 
@@ -48,7 +47,7 @@ class LLACoord:
         self.longitude = lng
         self.altitude = alt
     def __add__(self, other):
-        new_lat = self.latitude  + other.x / metresPerDegreeLatitude(self.longitude)
+        new_lat = self.latitude  + other.x / metresPerDegreeLatitude()
         new_lng = self.longitude + other.y / metresPerDegreeLongitude(self.latitude)
         new_alt = self.altitude + other.z
         return LLACoord(new_lat, new_lng, new_alt)

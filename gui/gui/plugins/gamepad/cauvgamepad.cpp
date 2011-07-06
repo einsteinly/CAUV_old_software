@@ -148,6 +148,7 @@ void CauvGamepad::stop(bool){
     // disable all the autopilots
     foreach(AUV::autopilot_map::value_type i, m_auv->autopilots){
         i.second->enabled->set(false);
+        i.second->set(0);
     }
 
     // stop all the motors

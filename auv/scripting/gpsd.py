@@ -20,8 +20,21 @@ class GPSNode():
         for report in self.session:
             info("Report received -- " + report["class"])
             if(report["class"] == "TPV" and report["mode"] == 3): #3 signals we have 3d position
+                
+                if hasattr(report, "track"):
+                    track = report.track
+                else: track = 0;
+                
+                if hasattr(report, "speed"):
+                    speed = report.speed
+                else: speed = 0;
+            
+                if hasattr(report, "climb"):
+                    climb = report.climb
+                else: climb = 0;
+            
                 info("Location: [lat %f, lon %f, alt %f]" % (report.lat, report.lon, report.alt))
-                self.__node.send(msg.GPSLocationMessage(report.lat, report.lon, report.alt, report.track, report.speed, report.climb))
+                self.__node.send(msg.GPSLocationMessage(report.lat, report.lon, report.alt, track, speed, climb))
 
     
 if __name__ == '__main__':

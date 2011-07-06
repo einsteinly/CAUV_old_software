@@ -158,7 +158,7 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     m_debug->setText(0, "Debug");
     m_debug->setFlags(m_debug->flags() ^ Qt::ItemIsSelectable);
     m_debug->setExpanded(true);
-    m_auv->debug.new_graph_stream->onUpdate.connect(boost::bind(&DataStreamPicker::onNewGraphableStream, this, _1));
+    //m_auv->debug.new_graph_stream->onUpdate.connect(boost::bind(&DataStreamPicker::onNewGraphableStream, this, _1));
 
     //
     // other
