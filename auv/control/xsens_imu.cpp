@@ -108,9 +108,8 @@ void XsensIMU::configure(CmtOutputMode &mode, CmtOutputSettings &settings)
 void XsensIMU::calibrateNoRotation(uint16_t duration)
 {
     boost::lock_guard<boost::mutex> lock(m_cmt3_lock);
-    info() << "No rotation procedure started";
+    info() << "Trying to start no rotation procedure";
 
-    m_running_norotation = true;
     m_cmt3.setNoRotation(duration);
 }
 
@@ -141,7 +140,14 @@ void XsensIMU::readThread()
                 
                 m_cmt3.waitForDataMessage(&packet);
 
-                if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION) != CMT_STATUSFLAG_NOROTATION)
+                if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION) == CMT_STATUSFLAG_NOROTATION)
+                {
+                    if (!m_running_norotation) {
+                        info() << "No rotation procedure started";
+                        m_running_norotation = true;
+                    }
+                }
+                else
                 {
                     if (m_running_norotation)
                     {
