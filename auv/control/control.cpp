@@ -384,7 +384,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 }
             }
         }
-    
+        virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr m)
+        {
+            m_depthCalibration = m;
+        }
+ 
     protected:
         boost::shared_ptr<MCBModule> m_mcb;
         DepthCalibrationMessage_ptr m_depthCalibration;
