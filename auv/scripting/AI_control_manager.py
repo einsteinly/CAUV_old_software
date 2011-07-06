@@ -32,9 +32,9 @@ class auvControl(aiProcess):
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
         debug('auvControl::auv_command(self, task_id=%s, cmd=%s, args=%s, kwargs=%s)' % (task_id, command, args, kwargs), 5)
-        #if self.enabled.is_set() and self.current_task_id == task_id:
-        debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
-        getattr(self.auv, command)(*args, **kwargs)
+        if self.enabled.is_set(): #and self.current_task_id == task_id:
+            debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
+            getattr(self.auv, command)(*args, **kwargs)
     @external_function
     def sonar_command(self, task_id, command, *args, **kwargs):
         if self.enabled.is_set() and self.current_task_id == task_id:

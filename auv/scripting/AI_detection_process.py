@@ -6,6 +6,15 @@ import traceback
 
 from AI_classes import aiProcess, external_function, aiDetectorOptions
 
+class q(Queue.Queue):
+    def put(self, value):
+        print 'put ', value
+        Queue.Queue.put(self, value)
+    def get(self, *args, **kwargs):
+        value = Queue.Queue.get(self, *args, **kwargs)
+        print 'get ', value
+        return value
+
 class detectionControl(aiProcess):
     def __init__(self):
         self.external_functions = ['start', 'stop']
@@ -13,8 +22,8 @@ class detectionControl(aiProcess):
         self.modules = {}
         self.running_detectors = {}
         self.pl_requests = []
-        self.start_requests = Queue.Queue()
-        self.stop_requests = Queue.Queue()
+        self.start_requests = q()
+        self.stop_requests = q()
         self.enable_flag = threading.Event()
         self.enable_flag.set()
         self._register()
@@ -39,7 +48,8 @@ class detectionControl(aiProcess):
                 self.running_detectors = {}
                 self.ai.pipeline_manager.set_detector_pl([])
                 info('Detector process disabled')
-                self.enable_flag.wait()
+                self.enable_flag.wait(2)
+                continue
             #update running detectors from requests (has to be done here as list of running detectors is constantly in use by this process)
             for x in range(5):
                 try:
