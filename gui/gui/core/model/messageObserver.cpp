@@ -74,79 +74,79 @@ void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
 
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreate<NumericNode>("target")->update(message->target());
-    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreate<NumericNode>("enabled")->update(message->enabled());
+    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("target")->update(message->target());
+    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("enabled")->update(message->enabled());
 }
 
 void GuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>("bearing");
 
-    ap->findOrCreate<NumericNode>("Kp")->update(message->Kp());
-    ap->findOrCreate<NumericNode>("Ki")->update(message->Ki());
-    ap->findOrCreate<NumericNode>("Kd")->update(message->Kd());
-    ap->findOrCreate<NumericNode>("scale")->update(message->scale());
-    ap->findOrCreate<NumericNode>("aP")->update(message->Ad());
-    ap->findOrCreate<NumericNode>("aI")->update(message->Ai());
-    ap->findOrCreate<NumericNode>("aD")->update(message->Ad());
-    ap->findOrCreate<NumericNode>("thr")->update(message->thr());
-    ap->findOrCreate<NumericNode>("maxError")->update(message->maxError());
+    ap->findOrCreateMutable<NumericNode>("Kp")->update(message->Kp());
+    ap->findOrCreateMutable<NumericNode>("Ki")->update(message->Ki());
+    ap->findOrCreateMutable<NumericNode>("Kd")->update(message->Kd());
+    ap->findOrCreateMutable<NumericNode>("scale")->update(message->scale());
+    ap->findOrCreateMutable<NumericNode>("aP")->update(message->Ad());
+    ap->findOrCreateMutable<NumericNode>("aI")->update(message->Ai());
+    ap->findOrCreateMutable<NumericNode>("aD")->update(message->Ad());
+    ap->findOrCreateMutable<NumericNode>("thr")->update(message->thr());
+    ap->findOrCreateMutable<NumericNode>("maxError")->update(message->maxError());
 }
 
 void GuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->findOrCreate<GroupingNode>("depth")->findOrCreate<NumericNode>("target")->update(message->target());
-    autopilots->findOrCreate<GroupingNode>("depth")->findOrCreate<NumericNode>("enabled")->update(message->enabled());
+    autopilots->findOrCreateMutable<GroupingNode>("depth")->findOrCreate<NumericNode>("target")->update(message->target());
+    autopilots->findOrCreateMutable<GroupingNode>("depth")->findOrCreate<NumericNode>("enabled")->update(message->enabled());
 }
 
 void GuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>("depth");
 
-    ap->findOrCreate<NumericNode>("Kp")->update(message->Kp());
-    ap->findOrCreate<NumericNode>("Ki")->update(message->Ki());
-    ap->findOrCreate<NumericNode>("Kd")->update(message->Kd());
-    ap->findOrCreate<NumericNode>("scale")->update(message->scale());
-    ap->findOrCreate<NumericNode>("aP")->update(message->Ad());
-    ap->findOrCreate<NumericNode>("aI")->update(message->Ai());
-    ap->findOrCreate<NumericNode>("aD")->update(message->Ad());
-    ap->findOrCreate<NumericNode>("thr")->update(message->thr());
-    ap->findOrCreate<NumericNode>("maxError")->update(message->maxError());
+    ap->findOrCreateMutable<NumericNode>("Kp")->update(message->Kp());
+    ap->findOrCreateMutable<NumericNode>("Ki")->update(message->Ki());
+    ap->findOrCreateMutable<NumericNode>("Kd")->update(message->Kd());
+    ap->findOrCreateMutable<NumericNode>("scale")->update(message->scale());
+    ap->findOrCreateMutable<NumericNode>("aP")->update(message->Ad());
+    ap->findOrCreateMutable<NumericNode>("aI")->update(message->Ai());
+    ap->findOrCreateMutable<NumericNode>("aD")->update(message->Ad());
+    ap->findOrCreateMutable<NumericNode>("thr")->update(message->thr());
+    ap->findOrCreateMutable<NumericNode>("maxError")->update(message->maxError());
 }
 
 void GuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->findOrCreate<GroupingNode>("pitch")->findOrCreate<NumericNode>("target")->update(message->target());
-    autopilots->findOrCreate<GroupingNode>("pitch")->findOrCreate<NumericNode>("enabled")->update(message->enabled());
+    autopilots->findOrCreateMutable<GroupingNode>("pitch")->findOrCreate<NumericNode>("target")->update(message->target());
+    autopilots->findOrCreateMutable<GroupingNode>("pitch")->findOrCreate<NumericNode>("enabled")->update(message->enabled());
 }
 
 void GuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>("pitch");
 
-    ap->findOrCreate<NumericNode>("Kp")->update(message->Kp());
-    ap->findOrCreate<NumericNode>("Ki")->update(message->Ki());
-    ap->findOrCreate<NumericNode>("Kd")->update(message->Kd());
-    ap->findOrCreate<NumericNode>("scale")->update(message->scale());
-    ap->findOrCreate<NumericNode>("aP")->update(message->Ad());
-    ap->findOrCreate<NumericNode>("aI")->update(message->Ai());
-    ap->findOrCreate<NumericNode>("aD")->update(message->Ad());
-    ap->findOrCreate<NumericNode>("thr")->update(message->thr());
-    ap->findOrCreate<NumericNode>("maxError")->update(message->maxError());
+    ap->findOrCreateMutable<NumericNode>("Kp")->update(message->Kp());
+    ap->findOrCreateMutable<NumericNode>("Ki")->update(message->Ki());
+    ap->findOrCreateMutable<NumericNode>("Kd")->update(message->Kd());
+    ap->findOrCreateMutable<NumericNode>("scale")->update(message->scale());
+    ap->findOrCreateMutable<NumericNode>("aP")->update(message->Ad());
+    ap->findOrCreateMutable<NumericNode>("aI")->update(message->Ai());
+    ap->findOrCreateMutable<NumericNode>("aD")->update(message->Ad());
+    ap->findOrCreateMutable<NumericNode>("thr")->update(message->thr());
+    ap->findOrCreateMutable<NumericNode>("maxError")->update(message->maxError());
 }
 
 
 void GuiMessageObserver::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("calibration");
-    group->findOrCreate<NumericNode>("aftMultiplier")->update(message->aftMultiplier());
-    group->findOrCreate<NumericNode>("aftOffset")->update(message->aftOffset());
-    group->findOrCreate<NumericNode>("foreMultiplier")->update(message->foreMultiplier());
-    group->findOrCreate<NumericNode>("foreOffset")->update(message->foreOffset());
+    group->findOrCreateMutable<NumericNode>("aftMultiplier")->update(message->aftMultiplier());
+    group->findOrCreateMutable<NumericNode>("aftOffset")->update(message->aftOffset());
+    group->findOrCreateMutable<NumericNode>("foreMultiplier")->update(message->foreMultiplier());
+    group->findOrCreateMutable<NumericNode>("foreOffset")->update(message->foreOffset());
 }
 
 void GuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("debug");
-    group->findOrCreate<NumericNode>("level")->update(message->level());
+    group->findOrCreateMutable<NumericNode>("level")->update(message->level());
 }
 
 void GuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
@@ -158,20 +158,18 @@ void GuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
 void GuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("image");
     boost::shared_ptr<ImageNode> sonar = group->findOrCreate<ImageNode>("sonar");
-    sonar->findOrCreate<NumericNode>("direction")->update(message->direction());
-    sonar->findOrCreate<NumericNode>("width")->update(message->width());
-    sonar->findOrCreate<NumericNode>("gain")->update(message->gain());
-    sonar->findOrCreate<NumericNode>("range")->update(message->range());
-    sonar->findOrCreate<NumericNode>("rangeRes")->update(message->rangeRes());
-    sonar->findOrCreate<NumericNode>("angularRes")->update(message->angularRes());
+    sonar->findOrCreateMutable<NumericNode>("direction")->update(message->direction());
+    sonar->findOrCreateMutable<NumericNode>("width")->update(message->width());
+    sonar->findOrCreateMutable<NumericNode>("gain")->update(message->gain());
+    sonar->findOrCreateMutable<NumericNode>("range")->update(message->range());
+    sonar->findOrCreateMutable<NumericNode>("rangeRes")->update(message->rangeRes());
+    sonar->findOrCreateMutable<NumericNode>("angularRes")->update(message->angularRes());
 }
 
 void GuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemtry");
     group->findOrCreate<NumericNode>("depth")->update(message->depth());
     group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
-
-    m_auv->print();
 }
 
 void GuiMessageObserver::onLocationMessage(LocationMessage_ptr m){

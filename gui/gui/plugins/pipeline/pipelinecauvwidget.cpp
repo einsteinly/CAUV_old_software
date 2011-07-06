@@ -14,7 +14,7 @@
 #include <pipelineMessageObserver.h>
 
 using namespace cauv;
-
+using namespace cauv::gui;
 
 PipelineListingObserver::PipelineListingObserver(boost::shared_ptr<CauvNode> node) : m_node(node), m_rate_limiter(1, 1000) {
     // rate limited to 1 per second

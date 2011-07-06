@@ -21,15 +21,13 @@
 namespace cauv {
     namespace gui {
 
-        class DataStreamSeriesDataBase : public QObject {};
-
         /**
       * A DataStreamSeriesData is used to bridge the interface between qwt and the cauv data stream classes
       * it uses a DataStreamRecorder to store samples
       **
       * @author Andy Pritchard
       */
-        class DataStreamSeriesData : public DataStreamSeriesDataBase, public QwtSeriesData<QPointF>, public DataRecorder<numeric_variant_t> {
+        class DataStreamSeriesData : public QObject, public QwtSeriesData<QPointF>, public DataRecorder<numeric_variant_t> {
         Q_OBJECT
 
         public:
@@ -67,7 +65,12 @@ namespace cauv {
                 }
 
                 // times are shown as negative in seconds from the current time
-                return QPointF(-seconds, boost::get<float>(this->m_history[sample]));
+
+                float value = 0;
+
+                boost::apply_visitor(to_float(&value), this->m_history[sample]);
+
+                return QPointF(-seconds, value);
             }
 
             QRectF boundingRect () const {
@@ -75,7 +78,11 @@ namespace cauv {
                     return QRectF(-60, 0, 60, 10);
                 else {
                     // show the last 60 seconds
-                    return QRectF(-60, boost::get<float>(m_min), 60, boost::get<float>(m_max) - boost::get<float>(m_min));
+                    float min;
+                    float max;
+                    boost::apply_visitor(to_float(&min), m_min);
+                    boost::apply_visitor(to_float(&max), m_max);
+                    return QRectF(-60, min, 60, max - min);
                 }
             }
 

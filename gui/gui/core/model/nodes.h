@@ -67,9 +67,7 @@ namespace cauv {
             template <class T> boost::shared_ptr<T> find(std::string name){
                 debug() << "Looking for" << name << "in" << nodeName();
                 foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
-                    debug() << "looking at " << child->nodeName();
                     std::string childName = child->nodeName(false);
-                    debug() << "converting to lower";
                     boost::to_lower(childName);
                     boost::to_lower(name);
 
@@ -78,7 +76,6 @@ namespace cauv {
                         return child;
                     }
                 }
-                debug() << name << "is not a child of" << nodeName();
                 std::stringstream str;
                 str << "Node not found: " << name;
                 throw std::out_of_range(str.str());
@@ -88,14 +85,11 @@ namespace cauv {
                 lock_t l(m_updateLock);
 
                 try {
-                    debug() << "looking";
-                    boost::shared_ptr<T> found = find<T>(name);
-                    debug() << "found";
-                    return found;
+                    return find<T>(name);
                 } catch (std::out_of_range){
                     boost::shared_ptr<T> newNode = boost::make_shared<T>(name);
                     this->addChild(newNode);
-                    //info() << "New node added" << newNode->nodeName();
+                    info() << "New node added" << newNode->nodeName();
                     return newNode;
                 }
             }
@@ -430,7 +424,7 @@ namespace cauv {
                 this->addChild(m_x);
                 this->addChild(m_y);
                 this->addChild(m_z);
-             }
+            }
 
             virtual void update(floatXYZ value){
                 NumericCompoundNode<floatXYZ>::update(value);
@@ -468,10 +462,15 @@ namespace cauv {
         {
         public:
 
+            float * m_target;
+
+            to_float(float * target) : m_target(target){
+            }
+
             template <typename T>
-                    float operator()( T & operand ) const
+                    void operator()( T & operand ) const
             {
-                return (float) operand;
+                (*m_target) = (float) operand;
             }
         };
 
