@@ -178,9 +178,7 @@ class SeanetPacket {
         unsigned short length() const;
 
         friend class SeanetSerialPort;
-        friend std::ostream& operator<<(std::ostream& o, const SeanetPacket&);
 };
-std::ostream& operator<<(std::ostream& o, const SeanetPacket&);
 
 class SeanetHeadParamsPacket : public SeanetPacket {
 public:
@@ -208,6 +206,8 @@ public:
 };
 
 } // namespace cauv
+
+std::ostream& operator<<(std::ostream& o, const cauv::SeanetPacket&);
 
 #endif // ndef __CAUV_SEANET_PACKET_H__
 

@@ -30,7 +30,8 @@ InvalidPacketException::InvalidPacketException(const boost::shared_ptr<SeanetPac
 }
 const char* InvalidPacketException::what() const throw()
 {
-	return "Sonar IO operation timed out";
+    std::string msg = MakeString() << "Received invalid packet:" << *m_packet;
+    return msg.c_str();
 }
 
 
@@ -81,13 +82,13 @@ boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
         {
             // Search until a LF is consumed
             while (data[0] != 0x0A) {
-                debug() << std::hex << std::setw(2) << std::setfill('0') << (int)data[0];
                 read_with_timeout(*m_port, boost::asio::buffer(&data[0], 1));
             }
             
             // Now check if the data[0] is correct this time
             read_with_timeout(*m_port, boost::asio::buffer(&data[0], 1));
         } while (data[0] != 0x40);
+        info() << "Resynced, reading message";
     }
 	// Packet:
     //    0: 0x40 (already consumed)
@@ -104,14 +105,18 @@ boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
     // Read remaining data ( -2 bytes already reat as bytes 5-6, +1 byte for LF)
     read_with_timeout(*m_port, boost::asio::buffer(&data[7], length - 2 + 1));
 	
-    if (data[data.size()])
-    {
-        throw InvalidPacketException(pkt);
-    }
-
 #ifdef CAUV_DEBUG_MESSAGES
     debug(10) << "Received " << *pkt << std::endl;
 #endif
+
+    if (data[data.size() - 1] != 0x0A)
+    {
+        throw InvalidPacketException(pkt);
+    }
+	
+    return pkt;
+}
+
 	
     return pkt;
 }
@@ -134,8 +139,18 @@ void SeanetSerialPort::sendPacket(const SeanetPacket &pkt)
 static boost::asio::io_service module_io_service;
 void SeanetSerialPort::reset()
 {
-    m_port = boost::make_shared<boost::asio::serial_port>(boost::ref(module_io_service), m_file);
-    
+    if (m_port->is_open()) {
+        m_port->close();
+    }
+    while (!m_port->is_open()) {   
+        try {
+            m_port->open(m_file);
+        } catch (boost::system::system_error& e) {
+	        warning() << "Could not open " << m_file << ":" << e.what();
+            info() << "Retrying in 1 second";
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+        }
+    }
     typedef boost::asio::serial_port_base spb;
 
     m_port->set_option(spb::baud_rate(115200));
@@ -145,9 +160,16 @@ void SeanetSerialPort::reset()
     m_port->set_option(spb::flow_control(spb::flow_control::none));
 }
 
+void SeanetSerialPort::reset()
+{
+    info() << "Resetting sonar serial port on "<<m_file;
+    init();
+}
+
 SeanetSerialPort::SeanetSerialPort(const std::string& file) : m_file(file)
 {
-	reset();
+    m_port = boost::make_shared<boost::asio::serial_port>(boost::ref(module_io_service));
+	init();
 }
 
 bool SeanetSerialPort::ok() const
