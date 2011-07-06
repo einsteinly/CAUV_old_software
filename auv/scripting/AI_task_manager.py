@@ -255,7 +255,7 @@ class taskManager(aiProcess):
                                 to_start = task
                     if self.req_start_task:
                         try:
-                            to_start = aelf.task_list[self.req_start_task]
+                            to_start = self.task_list[self.req_start_task]
                         except KeyError:
                             error("cannot start %s, not an active task." %(self.req_start_task,))
                         self.req_start_task = None
