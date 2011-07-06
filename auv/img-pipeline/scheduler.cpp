@@ -142,8 +142,14 @@ boost::thread* Scheduler::_spawnThread(SchedulerPriority const& p)
     boost::thread* t = new boost::thread(ImgPipelineThread(this, p));
     
     struct sched_param param;
+    memset(&param, 0, sizeof(struct sched_param));
+    int policy = 0;
+    int e = 0;
+    e = pthread_getschedparam(t->native_handle(), &policy, &param);
+    if(e)
+        error() << "failed to get thread schedparam: error=" << e;
     param.sched_priority = pthreadPriority(p);
-    int e = pthread_setschedparam(t->native_handle(), SCHED_OTHER, &param); 
+    e = pthread_setschedparam(t->native_handle(), policy, &param); 
     if(e)
         error() << "failed to set thread priority: error=" << e;
     
