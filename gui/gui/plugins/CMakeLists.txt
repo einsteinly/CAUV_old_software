@@ -11,7 +11,7 @@ include_directories (${gui_SOURCE_DIR})
 include_directories (${AUV_SOURCE_DIR})
 
 function (cauv_install_plugin TARGET)
-    install (TARGETS ${TARGET} LIBRARY DESTINATION bin/cauv/plugins )
+    install (TARGETS ${TARGET} LIBRARY DESTINATION bin/cauv/${CMAKE_BUILD_TYPE}/plugins )
 endfunction()
 
 # plugin directories

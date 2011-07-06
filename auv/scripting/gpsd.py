@@ -29,7 +29,7 @@ class GPSNode():
                     speed = report.speed
                 else: speed = 0;
             
-                if hasattr(climb, "climb")
+                if hasattr(report, "climb"):
                     climb = report.climb
                 else: climb = 0;
             
