@@ -5,6 +5,7 @@ import time
 import traceback
 
 from AI_classes import aiProcess, external_function, aiDetectorOptions
+
 class detectionControl(aiProcess):
     def __init__(self):
         self.external_functions = ['start', 'stop']
