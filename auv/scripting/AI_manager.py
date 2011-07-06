@@ -41,9 +41,12 @@ process_data_list = (
 class AImanager():
     def __init__(self, **kwargs):
         self.kwargs = kwargs
+        if 'disable' in self.kwargs:
+            disable = self.kwargs.pop('disable')
         self.processes = {}
         for process_data in process_data_list:
-            self.processes[process_data[0]] = Process(process_data[1].split(' '),opts=dict([(x,self.kwargs[x]) for x in process_data[2]]))
+            if not process_data[0] in disable:
+                self.processes[process_data[0]] = Process(process_data[1].split(' '),opts=dict([(x,self.kwargs[x]) for x in process_data[2]]))
     def run(self):
         while True:
             for process_name in self.processes:
@@ -61,6 +64,8 @@ if __name__ == '__main__':
                  action='store_true', help="disable/ignore gui output nodes")
     p.add_option('--disable-control', dest='disable_control', default=False,
                  action='store_true', help="stop AI script from controlling the sub")
+    p.add_option('--disable', dest='disable', default=[],
+                 type=str, action='append', help="disable process by name")
     opts, args = p.parse_args()
     #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.
     ai = AImanager(**opts.__dict__)

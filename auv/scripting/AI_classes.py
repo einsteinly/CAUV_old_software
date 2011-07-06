@@ -375,12 +375,12 @@ class timeCondition(aiCondition):
     """
     This condition only remains true for a certain time
     """
-    def __init__(self, name, default_time=0):
+    def __init__(self, name, default_time=0, state=False):
         self.store = ['name', 'default_time']
         self.name = name
         self.default_time = default_time
         self.state_lock = threading.Lock()
-        self.timeout = None
+        self.timeout = time.time()+default_time if state else None
     def set_state(self, state, time=None):
         with self.state_lock:
             if state:
@@ -391,6 +391,12 @@ class timeCondition(aiCondition):
         with self.state_lock:
             state = self.timeout>time.time()
         return state
+        
+class timeoutCondition(timeCondition):
+    def __init__(self, name, default_time=30, state=False):
+        timeCondition.__init__(self, name, default_time, not state)
+    def get_state(self):
+        return not timeCondition.get_state(self)
     
 class detectorCondition(aiCondition):
     """
