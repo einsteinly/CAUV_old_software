@@ -60,6 +60,8 @@ class CameraInputNode: public AsynchronousNode{
             if(!m_capture.isOpened()){
                 error() << "camera is not opened";
             }else{
+                msleep(10);
+                
                 cv::Mat img;
                 m_capture >> img;
                 r["image_out"] = boost::make_shared<Image>(img);
