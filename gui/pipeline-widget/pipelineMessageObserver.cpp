@@ -36,12 +36,18 @@ void PipelineGuiMsgObs::onNodeAddedMessage(NodeAddedMessage_ptr m){
     switch(m->nodeType()){
         case NodeType::Invalid:
             break;
-        case NodeType::GuiOutput:
-            m_widget->addImgNode(boost::make_shared<ImgNode>(m_widget, m_widget, m));
+        case NodeType::GuiOutput:{
+            node_ptr_t tmp_ptr = boost::make_shared<ImgNode>(m_widget, m_widget, m);
+            tmp_ptr->initFromMessage(m);
+            m_widget->addNode(tmp_ptr);
             break;
-        default:
-            m_widget->addNode(boost::make_shared<Node>(m_widget, m_widget, m));
+        }
+        default:{
+            node_ptr_t tmp_ptr = boost::make_shared<Node>(m_widget, m_widget, m);
+            tmp_ptr->initFromMessage(m);
+            m_widget->addNode(tmp_ptr);
             break;
+        }
     }
 }
 

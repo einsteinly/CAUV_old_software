@@ -18,6 +18,7 @@ class detectionControl(aiProcess):
         self.stop_requests = []
         self.enable_flag = threading.Event()
         self.enable_flag.set()
+        self._register()
     @external_function
     def start(self, detection_file):
         with self.request_lock:
@@ -33,10 +34,6 @@ class detectionControl(aiProcess):
     def enable(self):
         info("Re enabling detectors")
         self.enable_flag.set()
-    @external_function
-    def update_pl_requests(self, requests):
-        with self.request_lock:
-            self.pl_requests = requests
     def run(self):
         while True:
             if not self.enable_flag.is_set():

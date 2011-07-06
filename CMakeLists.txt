@@ -42,19 +42,21 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set (CAUV_BINARY_PREFIX "cauv-" CACHE STRING "string to prepend to all cauv executables")
 
 set (CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
+set (CMAKE_DEBUG_POSTFIX "d")
 
 function (cauv_install TARGET)
     get_target_property(TARGET_TYPE ${TARGET} TYPE)
     if (${TARGET_TYPE} STREQUAL "EXECUTABLE")
+        string(TOUPPER "${CMAKE_BUILD_TYPE}" CONFIG)
+
         get_target_property(TARGET_OUTPUT ${TARGET} OUTPUT_NAME)
         if (${TARGET_OUTPUT} STREQUAL "TARGET_OUTPUT-NOTFOUND")
             set(TARGET_OUTPUT "${TARGET}")
         endif()
-        set (TARGET_OLD "${CMAKE_INSTALL_PREFIX}/bin/cauv/${TARGET_OUTPUT}")
-        set (TARGET_NEW "${CMAKE_INSTALL_PREFIX}/bin/${CAUV_BINARY_PREFIX}${TARGET_OUTPUT}")
-       
+        set (TARGET_OLD "${CMAKE_INSTALL_PREFIX}/bin/cauv/${CMAKE_BUILD_TYPE}/${TARGET_OUTPUT}")
+        set (TARGET_NEW "${CMAKE_INSTALL_PREFIX}/bin/${CAUV_BINARY_PREFIX}${TARGET_OUTPUT}${CMAKE_${CONFIG}_POSTFIX}")
 
-        install (TARGETS ${TARGET} DESTINATION bin/cauv )
+        install (TARGETS ${TARGET} DESTINATION bin/cauv/${CMAKE_BUILD_TYPE} )
         install (CODE "
             get_filename_component (TARGET_OLD_REAL \"${TARGET_OLD}\" REALPATH)
             get_filename_component (TARGET_NEW_REAL \"${TARGET_NEW}\" REALPATH)

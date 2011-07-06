@@ -13,7 +13,7 @@ namespace pw{
 class NodeIOBlob: public Renderable,
                   public boost::enable_shared_from_this<NodeIOBlob>{
     public:
-        typedef Node* node_ptr_t;
+        //typedef Node* node_ptr_t;
         NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
                    bool suppress_text = false);
         virtual ~NodeIOBlob(){ }
@@ -32,7 +32,7 @@ class NodeIOBlob: public Renderable,
     protected:
         bool contains(Point const& x) const;
 
-        node_ptr_t m_node;
+        node_wkptr_t m_node;
         pw_ptr_t m_pw;
         bool m_suppress_text;
         boost::shared_ptr<Text> m_text;
