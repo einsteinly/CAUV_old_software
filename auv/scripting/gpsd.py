@@ -25,11 +25,11 @@ class GPSNode():
                     track = report.track
                 else: track = 0;
                 
-                if hasattr(report, "speed")
+                if hasattr(report, "speed"):
                     speed = report.speed
                 else: speed = 0;
             
-                if hasattr(climb, "climb")
+                if hasattr(climb, "climb"):
                     climb = report.climb
                 else: climb = 0;
             
