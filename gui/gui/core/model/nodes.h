@@ -22,6 +22,8 @@
 
 #include <debug/cauv_debug.h>
 
+using namespace std::rel_ops;
+
 namespace cauv {
     namespace gui {
 
@@ -38,17 +40,17 @@ namespace cauv {
         };
 
 
-        typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
+        typedef boost::variant<bool, unsigned int, int, float, double> numeric_variant_t;
         typedef boost::shared_ptr<const Image> image_variant_t;
 
         // variant utils
-        class to_float : public boost::static_visitor<float>
+        class to_double : public boost::static_visitor<double>
         {
         public:
             template <typename T>
-                    float operator()( T & operand ) const
+                    double operator()( T & operand ) const
             {
-                return (float) operand;
+                return (double) operand;
             }
         };
 
@@ -62,7 +64,20 @@ namespace cauv {
             template <typename T>
                     numeric_variant_t operator()( T & operand ) const
             {
-                return boost::get<T>(m_from) - operand;
+                int type = m_from.which();
+
+                switch(type){
+                case 1:
+                    return boost::get<unsigned int>(m_from) - operand;
+                case 2:
+                    return boost::get<int>(m_from) - operand;
+                case 3:
+                    return boost::get<float>(m_from) - operand;
+                case 4:
+                    return boost::get<double>(m_from) - operand;
+                default:
+                    return boost::get<T>(m_from) - operand;
+                }
             }
 
         protected:
@@ -72,35 +87,27 @@ namespace cauv {
         class add : public boost::static_visitor<numeric_variant_t>
         {
         public:
-
             add(numeric_variant_t from) : m_from(from){
             }
-
             template <typename T>
                     numeric_variant_t operator()( T & operand ) const
-            {
-                return boost::get<T>(m_from) + operand;
-            }
+            {                int type = m_from.which();
 
+                switch(type){
+                case 1:
+                    return boost::get<unsigned int>(m_from) + operand;
+                case 2:
+                    return boost::get<int>(m_from) + operand;
+                case 3:
+                    return boost::get<float>(m_from) + operand;
+                case 4:
+                    return boost::get<double>(m_from) + operand;
+                default:
+                    return boost::get<T>(m_from) + operand;
+                }
+            }
         protected:
-            numeric_variant_t m_left;
-        };
-
-        class less_than : public boost::static_visitor<bool>
-        {
-        public:
-
-            less_than(numeric_variant_t left) : m_left(left){
-            }
-
-            template <typename T>
-                    bool operator()( T & operand ) const
-            {
-                return boost::get<T>(m_from) < operand;
-            }
-
-        protected:
-            numeric_variant_t m_left;
+            numeric_variant_t m_from;
         };
 
 
@@ -285,7 +292,7 @@ namespace cauv {
 
         public:
             NumericNode(std::string name) : Node<numeric_variant_t>(GuiNodeType::NumericNode, name),
-                m_maxSet(false), m_minSet(false), m_wraps(false)
+            m_maxSet(false), m_minSet(false), m_wraps(false)
             {
                 qRegisterMetaType<numeric_variant_t>("numeric_variant_t");
             }
@@ -310,6 +317,8 @@ namespace cauv {
                     return numeric_variant_t(boost::lexical_cast<int>(value));
                 case 3:
                     return numeric_variant_t(boost::lexical_cast<float>(value));
+                case 4:
+                    return numeric_variant_t(boost::lexical_cast<double>(value));
                 default:
                     throw std::exception();
                 }
@@ -323,17 +332,37 @@ namespace cauv {
 
                 numeric_variant_t range = boost::apply_visitor(subtract(m_max), m_min);
 
-                if(boost::apply_visitor(less_than(value), m_min)) {
+                if(value < m_min) {
                     return wrap(boost::apply_visitor(add(value), range));
                 }
-                else if(m_max < value)
+                else if(value > m_max)
                     return wrap(boost::apply_visitor(subtract(value), range));
                 else return value;
+            }
+
+            virtual numeric_variant_t getMax() {
+                return m_max;
+            }
+
+            virtual numeric_variant_t getMin() {
+                return m_min;
+            }
+
+            virtual bool getWraps() {
+                return m_wraps;
             }
 
             virtual void setMax(numeric_variant_t max){
                 m_max = max;
                 m_maxSet = true;
+            }
+
+            virtual bool isMaxSet(){
+                return m_maxSet;
+            }
+
+            virtual bool isMinSet(){
+                return m_minSet;
             }
 
             virtual void setMin(numeric_variant_t min){
@@ -351,25 +380,71 @@ namespace cauv {
                 debug() << nodeName() << " value set to " << value;
                 Node<numeric_variant_t>::update(value);
                 Q_EMIT onUpdate(value);
+
+                switch(value.which()){
+                case 0:
+                    Q_EMIT onUpdate(boost::get<bool>(value));
+                    break;
+                case 1:
+                    Q_EMIT onUpdate(boost::get<unsigned int>(value));
+                    break;
+                case 2:
+                    Q_EMIT onUpdate(boost::get<int>(value));
+                    break;
+                case 3:
+                    Q_EMIT onUpdate(boost::get<float>(value));
+                    break;
+                case 4:
+                    Q_EMIT onUpdate(boost::get<double>(value));
+                    break;
+                default:
+                    throw std::exception();
+                }
+            }
+
+            virtual void set(bool value){
+                set(numeric_variant_t(value));
+            }
+
+            virtual void set(int value){
+                set(numeric_variant_t(value));
+            }
+
+            virtual void set(unsigned int value){
+                set(numeric_variant_t(value));
+            }
+
+            virtual void set(float value){
+                set(numeric_variant_t(value));
+            }
+
+            virtual void set(double value){
+                set(numeric_variant_t(value));
             }
 
             virtual void set(numeric_variant_t value){
-                if(m_maxSet && (m_max < value)) {
-                    info() << "Value too high ("<< value <<")";
+                /*if(m_maxSet && (value > m_max)) {
+                    info() << "Value too high ("<< value << " > " << m_max << ")";
                     if(m_wraps) value = wrap(value);
                     else value = m_max;
                 } else if(m_minSet && (value < m_min)) {
-                    info() << "Value too low ("<< value <<")";
+                    info() << "Value too low ("<< value <<" < " << m_min <<")";
                     if(m_wraps) value = wrap(value);
                     else value = m_min;
-                }
+                } */
 
                 Node<numeric_variant_t>::set(value);
                 Q_EMIT onSet(value);
             }
 
         Q_SIGNALS:
-            void onUpdate(numeric_variant_t value);
+            void onUpdate(numeric_variant_t value);            
+            void onUpdate(bool value);
+            void onUpdate(int value);
+            void onUpdate(unsigned int value);
+            void onUpdate(float value);
+            void onUpdate(double value);
+
             void onSet(numeric_variant_t value);
 
         protected:

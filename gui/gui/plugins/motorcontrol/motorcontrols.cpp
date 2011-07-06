@@ -92,70 +92,13 @@ MotorControls::MotorControls() :
 void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
     CauvBasicPlugin::initialise(auv, node);
 
-    boost::shared_ptr<GroupingNode> group = auv->findOrCreate<GroupingNode>("motors");
+    // for new motors    
+    boost::shared_ptr<GroupingNode> motors = auv->findOrCreate<GroupingNode>("motors");
+    motors->connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addMotor(boost::shared_ptr<NodeBase>)));
 
-    // for new motors
-    group->connect(group.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addMotor(boost::shared_ptr<NodeBase>)));
-
-
-    /*
-    // autopilot controls screen
-    int count = 0;
-    foreach(AUV->autopilots i, auv->autopilots){
-        // set up ui
-        QLabel * label = new QLabel(QString::fromStdString(i.second->getName()));
-        ui->autopilotControlsLayout->addWidget(label, count, 0, 1, 1, Qt::AlignCenter);
-
-        QDoubleSpinBox * target = new QDoubleSpinBox();
-        target->setWrapping(true);
-        target->setButtonSymbols(QAbstractSpinBox::PlusMinus);
-        target->setMaximum(i.second->getMax());
-        target->setMinimum(i.second->getMin());
-        target->setSuffix(QString::fromStdString(i.second->getUnits()));
-        target->setSingleStep((i.second->getMax() - i.second->getMin())/360.0); // 360 is a arbitary value
-                                                                             // just chosen to because its
-                                                                             // nice for degrees
-        ui->autopilotControlsLayout->addWidget(target, count, 1, 1, 1, Qt::AlignCenter);
-
-        QCheckBox * enabled = new QCheckBox("State");
-        ui->autopilotControlsLayout->addWidget(enabled, count, 2, 1, 1, Qt::AlignCenter);
-
-        QLabel * actual = new QLabel("Actual");
-        actual->setMinimumSize(QSize(60, 0));
-        actual->setMaximumSize(QSize(60, 16777215));
-        ui->autopilotControlsLayout->addWidget(actual, count, 3, 1, 1, Qt::AlignCenter);
-
-        // controller for the GUI view
-        m_autopilot_controllers.push_back(boost::make_shared<AutopilotController>(enabled, target, actual, i.second));
-
-        count++;
-    }
-*/
-
-    // motor controls screen
-    int count = 0;
-    foreach(boost::shared_ptr<NumericNode> motor, auv->findOrCreate<GroupingNode>("motors")->getChildrenOfType<NumericNode>()){
-        std::string forward = "Forward";
-        std::string backward = "Back";
-
-/*
-        switch(i.first){
-        case MotorID::HBow:
-        case MotorID::HStern:
-            forward = "Right";
-            backward = "Left";
-            break;
-        case MotorID::VBow:
-        case MotorID::VStern:
-            forward = "Up";
-            backward = "Down";
-            break;
-        default: break;
-        }
-*/
-
-
-    }
+    // new autopilots
+    boost::shared_ptr<GroupingNode> autopilots = auv->findOrCreate<GroupingNode>("autopilots");
+    autopilots->connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addAutopilot(boost::shared_ptr<NodeBase>)));
 }
 
 MotorControls::~MotorControls(){
@@ -189,35 +132,55 @@ void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
 }
 
 void MotorControls::addAutopilot(boost::shared_ptr<NodeBase> node){
-    boost::shared_ptr<NumericNode> ap = node->to<NumericNode>();
+    boost::shared_ptr<NumericNode> targetNode = node->findOrCreate<NumericNode>("target");
+    boost::shared_ptr<NumericNode> enabledNode = node->findOrCreate<NumericNode>("enabled");
+    //boost::shared_ptr<NumericNode> actualNode = node->findOrCreate<NumericNode>("actual");
 
     // set up ui
-    QLabel * label = new QLabel(QString::fromStdString(ap->nodeName(false)));
+    QLabel * label = new QLabel(QString::fromStdString(node->nodeName(false)));
     ui->autopilotControlsLayout->addWidget(label, m_autopilotsCount, 0, 1, 1, Qt::AlignCenter);
 
     QDoubleSpinBox * target = new QDoubleSpinBox();
-    target->setWrapping(true);
+    target->setWrapping(targetNode->getWraps());
     target->setButtonSymbols(QAbstractSpinBox::PlusMinus);
-    target->setMaximum(ap->getMax());
-    target->setMinimum(i.second->getMin());
-    target->setSuffix(QString::fromStdString(i.second->getUnits()));
-    target->setSingleStep((i.second->getMax() - i.second->getMin())/360.0); // 360 is a arbitary value
+    //if(targetNode->isMaxSet())
+    //    target->setMaximum(boost::apply_visitor(to_float(), targetNode->getMax()));
+    //if(targetNode->isMinSet())
+    //    target->setMinimum(boost::apply_visitor(to_float(), targetNode->getMin()));
+    target->setSuffix(QString::fromStdString(targetNode->getUnits()));
+
+    /*if(targetNode->isMaxSet() && targetNode->isMinSet())
+        target->setSingleStep((boost::apply_visitor(to_float(), targetNode->getMax()) - boost::apply_visitor(to_float(), targetNode->getMin()))/360.0); // 360 is a arbitary value
                                                                          // just chosen to because its
                                                                          // nice for degrees
-    ui->autopilotControlsLayout->addWidget(target, count, 1, 1, 1, Qt::AlignCenter);
+    */
+    ui->autopilotControlsLayout->addWidget(target, m_autopilotsCount, 1, 1, 1, Qt::AlignCenter);
 
     QCheckBox * enabled = new QCheckBox("State");
-    ui->autopilotControlsLayout->addWidget(enabled, count, 2, 1, 1, Qt::AlignCenter);
+    ui->autopilotControlsLayout->addWidget(enabled, m_autopilotsCount, 2, 1, 1, Qt::AlignCenter);
 
-    QLabel * actual = new QLabel("Actual");
-    actual->setMinimumSize(QSize(60, 0));
-    actual->setMaximumSize(QSize(60, 16777215));
-    ui->autopilotControlsLayout->addWidget(actual, count, 3, 1, 1, Qt::AlignCenter);
+    //QLabel * actual = new QLabel("Actual");
+    //actual->setMinimumSize(QSize(60, 0));
+    //actual->setMaximumSize(QSize(60, 16777215));
+    //ui->autopilotControlsLayout->addWidget(actual, m_autopilotsCount, 3, 1, 1, Qt::AlignCenter);
 
     // controller for the GUI view
-    m_autopilot_controllers.push_back(boost::make_shared<AutopilotController>(enabled, target, actual, i.second));
+    //m_autopilot_controllers.push_back(boost::make_shared<AutopilotController>(enabled, target, actual, i.second));
 
-    count++;
+    // sets
+    // these have to be Qt::DirectConnections but I'm not sure why...
+    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(setBool(bool)), Qt::DirectConnection);
+    connect(target, SIGNAL(valueChanged(double)), this, SLOT(updateTarget(double)), Qt::DirectConnection);
+    connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()), Qt::DirectConnection);
+
+    // updates
+    connect(enabledNode.get(), SIGNAL(onUpdate(bool)), enabled, SLOT(setChecked(bool)));
+    connect(targetNode.get(), SIGNAL(onUpdate(double)), target, SLOT(setValue(double)));
+    //connect(actualNode.get(), SIGNAL(onUpdate(double)), actual, SLOT(setNum(double)));
+
+    enabledNode->set(false);
+
+    m_autopilotsCount++;
 }
 
 const QString MotorControls::name() const{

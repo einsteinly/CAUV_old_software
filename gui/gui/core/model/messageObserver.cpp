@@ -13,15 +13,15 @@ template<>
 std::string NameConversion::toName<MotorID::e>(MotorID::e id){
     switch (id){
     case MotorID::Prop:
-        return "Prop";
+        return "prop";
     case MotorID::HBow:
-        return "H Bow";
+        return "hbow";
     case MotorID::VBow:
-        return "V Bow";
+        return "vbow";
     case MotorID::HStern:
-        return "H Stern";
+        return "hstern";
     case MotorID::VStern:
-        return "V Stern";
+        return "vstern";
     default:
         return "unknown";
     }
@@ -31,13 +31,13 @@ template<>
 std::string NameConversion::toName<CameraID::e>(CameraID::e id){
     switch (id){
     case CameraID::Forward:
-        return "Forward";
+        return "forward";
     case CameraID::Down:
-        return "Down";
+        return "down";
     case CameraID::Sonar:
-        return "Sonar";
+        return "sonar";
     case CameraID::File:
-        return "File";
+        return "file";
     default:
         return "unknown";
     }
@@ -47,11 +47,11 @@ template<>
 std::string NameConversion::toName<Controller::e>(Controller::e id){
     switch (id){
     case Controller::Depth:
-        return "Depth";
+        return "depth";
     case Controller::Bearing:
-        return "Bearing";
+        return "bearing";
     case Controller::Pitch:
-        return "Pitch";
+        return "pitch";
     default:
         return "unknown";
     }
@@ -69,14 +69,20 @@ GuiMessageObserver::~GuiMessageObserver() {
 
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
     std::string name = NameConversion::toName(message->motorId());
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->update(message->speed());
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->setMax(127);
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->setMax(-127);
+    boost::shared_ptr<NumericNode> motor = m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name);
+    motor->update(message->speed());
+    motor->setMax(127);
+    motor->setMin(-127);
 }
 
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("target")->update(message->target());
+    boost::shared_ptr<NumericNode> target = autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("target");
+    target->setMin(0);
+    target->setMax(360);
+    target->setWraps(true);
+    target->setUnits("°");
+    target->update(message->target());
     autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("enabled")->update(message->enabled());
 }
 
@@ -97,7 +103,11 @@ void GuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsM
 
 void GuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->findOrCreateMutable<GroupingNode>("depth")->findOrCreate<NumericNode>("target")->update(message->target());
+    boost::shared_ptr<NumericNode> target = autopilots->findOrCreateMutable<GroupingNode>("depth")->findOrCreate<NumericNode>("target");
+    target->setMin(0);
+    target->setMax(5);
+    target->setUnits("m");
+    target->update(message->target());
     autopilots->findOrCreateMutable<GroupingNode>("depth")->findOrCreate<NumericNode>("enabled")->update(message->enabled());
 }
 
@@ -118,7 +128,11 @@ void GuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessa
 
 void GuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->findOrCreateMutable<GroupingNode>("pitch")->findOrCreate<NumericNode>("target")->update(message->target());
+    boost::shared_ptr<NumericNode> target = autopilots->findOrCreateMutable<GroupingNode>("pitch")->findOrCreate<NumericNode>("target");
+    target->setMin(-180);
+    target->setMax(180);
+    target->setUnits("°");
+    target->update(message->target());
     autopilots->findOrCreateMutable<GroupingNode>("pitch")->findOrCreate<NumericNode>("enabled")->update(message->enabled());
 }
 
