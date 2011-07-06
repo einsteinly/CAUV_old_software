@@ -309,6 +309,11 @@ class pipelineManager(aiProcess):
         self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
         self.state = shelve.open('pl_manager.state')
         self.request_queue = Queue.Queue()
+        self.shelf = shelve.open('optimised.pipes')
+        if 'reset_pls' in kwargs:
+            if kwargs['reset_pls']:
+                self.shelf.pop('pl_data')
+                self.shelf.sync()
         try:
             if kwargs['restore']:
                 self.requests = self.state['requests']
@@ -334,7 +339,6 @@ class pipelineManager(aiProcess):
         self._register()
     def load_pl_data(self):
         #try and load optimised pipelines
-        self.shelf = shelve.open('optimised.pipes')
         try:
             self.pl_data = self.shelf['pl_data']
             info('Found optimised pipelines data')
@@ -776,6 +780,8 @@ if __name__ == '__main__':
                  action='store_true', help="try and resume from last saved state")
     p.add_option('-g', '--disable_gui', dest='disable_gui', default=False,
                  action='store_true', help="disable/ignore gui output nodes")
+    p.add_option('--reset_pls', dest='reset_pls', default=False,
+                 action='store_true', help="reset pipelines to those stored in /pipelines")
     opts, args = p.parse_args()
     pm = pipelineManager(**opts.__dict__)
     try:

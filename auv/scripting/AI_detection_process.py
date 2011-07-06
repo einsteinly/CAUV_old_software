@@ -5,16 +5,6 @@ import time
 import traceback
 
 from AI_classes import aiProcess, external_function, aiDetectorOptions
-
-class q(Queue.Queue):
-    def put(self, value):
-        print 'put ', value
-        Queue.Queue.put(self, value)
-    def get(self, *args, **kwargs):
-        value = Queue.Queue.get(self, *args, **kwargs)
-        print 'get ', value
-        return value
-
 class detectionControl(aiProcess):
     def __init__(self):
         self.external_functions = ['start', 'stop']
@@ -22,8 +12,8 @@ class detectionControl(aiProcess):
         self.modules = {}
         self.running_detectors = {}
         self.pl_requests = []
-        self.start_requests = q()
-        self.stop_requests = q()
+        self.start_requests = Queue.Queue()
+        self.stop_requests = Queue.Queue()
         self.enable_flag = threading.Event()
         self.enable_flag.set()
         self._register()

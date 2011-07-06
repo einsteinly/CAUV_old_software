@@ -32,7 +32,7 @@ class Process():
         pass
 
 process_data_list = (
-            ('pipeline_manager', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'restore']),
+            ('pipeline_manager', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'reset_pls', 'restore']),
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
             ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
             ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
@@ -66,6 +66,8 @@ if __name__ == '__main__':
                  action='store_true', help="stop AI script from controlling the sub")
     p.add_option('--disable', dest='disable', default=[],
                  type=str, action='append', help="disable process by name")
+    p.add_option('--reset-pls', dest='reset_pls', default=False,
+                 action='store_true', help="reset pipelines to those stored in /pipelines")
     opts, args = p.parse_args()
     #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.
     ai = AImanager(**opts.__dict__)
