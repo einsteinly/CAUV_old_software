@@ -34,10 +34,6 @@ class detectionControl(aiProcess):
     def enable(self):
         info("Re enabling detectors")
         self.enable_flag.set()
-    @external_function
-    def update_pl_requests(self, requests):
-        with self.request_lock:
-            self.pl_requests = requests
     def run(self):
         while True:
             if not self.enable_flag.is_set():
