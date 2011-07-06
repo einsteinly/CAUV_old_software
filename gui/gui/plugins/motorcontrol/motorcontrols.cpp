@@ -11,11 +11,8 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-MotorBurstController::MotorBurstController(QPushButton * b, boost::shared_ptr<NumericNode> motor, int8_t speed):
-        m_speed(speed), m_motor(motor){
-    b->connect(b, SIGNAL(pressed()), this, SLOT(burst()));
-    b->connect(b, SIGNAL(released()), this, SLOT(stop()));
-}
+MotorBurstController::MotorBurstController(boost::shared_ptr<NumericNode> motor, int8_t speed):
+        m_speed(speed), m_motor(motor){}
 
 void MotorBurstController::burst(){
     m_motor->set(m_speed);
@@ -85,7 +82,7 @@ void AutopilotController::updateState(bool value) {
 
 
 MotorControls::MotorControls() :
-        ui(new Ui::MotorControls())
+        m_motorsCount(0), ui(new Ui::MotorControls())
 {
     ui->setupUi(this);
 
@@ -94,7 +91,14 @@ MotorControls::MotorControls() :
 
 void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
     CauvBasicPlugin::initialise(auv, node);
-/*
+
+    boost::shared_ptr<GroupingNode> group = auv->findOrCreate<GroupingNode>("motors");
+
+    // for new motors
+    group->connect(group.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addMotor(boost::shared_ptr<NodeBase>)));
+
+
+    /*
     // autopilot controls screen
     int count = 0;
     foreach(AUV->autopilots i, auv->autopilots){
@@ -130,11 +134,11 @@ void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
 
     // motor controls screen
     int count = 0;
-    foreach(AUV::motor_map::value_type i, auv->motors){
+    foreach(boost::shared_ptr<NumericNode> motor, auv->findOrCreate<GroupingNode>("motors")->getChildrenOfType<NumericNode>()){
         std::string forward = "Forward";
         std::string backward = "Back";
 
-
+/*
         switch(i.first){
         case MotorID::HBow:
         case MotorID::HStern:
@@ -148,24 +152,72 @@ void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
             break;
         default: break;
         }
+*/
 
 
-        QPushButton * backButton = new QPushButton(QString::fromStdString(backward));
-        m_burst_controllers.push_back(boost::make_shared<MotorBurstController>(backButton, i.second, -127));
-        ui->motorControlsLayout->addWidget(backButton, ++count, 0, 1, 1, Qt::AlignCenter);
-
-        QLabel * label = new QLabel(QString::fromStdString(i.second->nodeName(false)));
-        label->setAlignment(Qt::AlignHCenter);
-        ui->motorControlsLayout->addWidget(label, count, 1, 1, 1, Qt::AlignCenter);
-
-        QPushButton * forwardButton = new QPushButton(QString::fromStdString(forward));
-        m_burst_controllers.push_back(boost::make_shared<MotorBurstController>(forwardButton, i.second, 127));
-        ui->motorControlsLayout->addWidget(forwardButton, count, 2, 1, 1, Qt::AlignCenter);
     }
 }
 
 MotorControls::~MotorControls(){
     delete ui;
+}
+
+
+void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
+    boost::shared_ptr<NumericNode> motor = node->to<NumericNode>();
+
+    std::string forward = "Forward";
+    std::string backward = "Back";
+
+    QPushButton * backButton = new QPushButton(QString::fromStdString(backward));
+    boost::shared_ptr<MotorBurstController> back = boost::make_shared<MotorBurstController>(motor, -127);
+    m_burst_controllers.push_back(back);
+    backButton->connect(backButton, SIGNAL(pressed()), back.get(), SLOT(burst()));
+    backButton->connect(backButton, SIGNAL(released()), back.get(), SLOT(stop()));
+    ui->motorControlsLayout->addWidget(backButton, ++m_motorsCount, 0, 1, 1, Qt::AlignCenter);
+
+    QLabel * label = new QLabel(QString::fromStdString(motor->nodeName(false)));
+    label->setAlignment(Qt::AlignHCenter);
+    ui->motorControlsLayout->addWidget(label, m_motorsCount, 1, 1, 1, Qt::AlignCenter);
+
+    QPushButton * forwardButton = new QPushButton(QString::fromStdString(forward));
+    boost::shared_ptr<MotorBurstController> fwd = boost::make_shared<MotorBurstController>(motor, 127);
+    m_burst_controllers.push_back(fwd);
+    forwardButton->connect(forwardButton, SIGNAL(pressed()), fwd.get(), SLOT(burst()));
+    forwardButton->connect(forwardButton, SIGNAL(released()), fwd.get(), SLOT(stop()));
+    ui->motorControlsLayout->addWidget(forwardButton, m_motorsCount, 2, 1, 1, Qt::AlignCenter);
+}
+
+void MotorControls::addAutopilot(boost::shared_ptr<NodeBase> node){
+    boost::shared_ptr<NumericNode> ap = node->to<NumericNode>();
+
+    // set up ui
+    QLabel * label = new QLabel(QString::fromStdString(ap->nodeName(false)));
+    ui->autopilotControlsLayout->addWidget(label, m_autopilotsCount, 0, 1, 1, Qt::AlignCenter);
+
+    QDoubleSpinBox * target = new QDoubleSpinBox();
+    target->setWrapping(true);
+    target->setButtonSymbols(QAbstractSpinBox::PlusMinus);
+    target->setMaximum(ap->getMax());
+    target->setMinimum(i.second->getMin());
+    target->setSuffix(QString::fromStdString(i.second->getUnits()));
+    target->setSingleStep((i.second->getMax() - i.second->getMin())/360.0); // 360 is a arbitary value
+                                                                         // just chosen to because its
+                                                                         // nice for degrees
+    ui->autopilotControlsLayout->addWidget(target, count, 1, 1, 1, Qt::AlignCenter);
+
+    QCheckBox * enabled = new QCheckBox("State");
+    ui->autopilotControlsLayout->addWidget(enabled, count, 2, 1, 1, Qt::AlignCenter);
+
+    QLabel * actual = new QLabel("Actual");
+    actual->setMinimumSize(QSize(60, 0));
+    actual->setMaximumSize(QSize(60, 16777215));
+    ui->autopilotControlsLayout->addWidget(actual, count, 3, 1, 1, Qt::AlignCenter);
+
+    // controller for the GUI view
+    m_autopilot_controllers.push_back(boost::make_shared<AutopilotController>(enabled, target, actual, i.second));
+
+    count++;
 }
 
 const QString MotorControls::name() const{

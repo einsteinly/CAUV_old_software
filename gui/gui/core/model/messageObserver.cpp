@@ -70,6 +70,8 @@ GuiMessageObserver::~GuiMessageObserver() {
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
     std::string name = NameConversion::toName(message->motorId());
     m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->update(message->speed());
+    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->setMax(127);
+    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name)->setMax(-127);
 }
 
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {

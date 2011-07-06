@@ -53,6 +53,5 @@ cauv_install( guicpp-core )
 target_link_libraries ( guicpp-core
         cauv_debug
         common
-        model
         ${QT_LIBRARIES}
     )

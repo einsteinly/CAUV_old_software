@@ -37,6 +37,73 @@ namespace cauv {
             };
         };
 
+
+        typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
+        typedef boost::shared_ptr<const Image> image_variant_t;
+
+        // variant utils
+        class to_float : public boost::static_visitor<float>
+        {
+        public:
+            template <typename T>
+                    float operator()( T & operand ) const
+            {
+                return (float) operand;
+            }
+        };
+
+        class subtract : public boost::static_visitor<numeric_variant_t>
+        {
+        public:
+
+            subtract(numeric_variant_t from) : m_from(from){
+            }
+
+            template <typename T>
+                    numeric_variant_t operator()( T & operand ) const
+            {
+                return boost::get<T>(m_from) - operand;
+            }
+
+        protected:
+            numeric_variant_t m_from;
+        };
+
+        class add : public boost::static_visitor<numeric_variant_t>
+        {
+        public:
+
+            add(numeric_variant_t from) : m_from(from){
+            }
+
+            template <typename T>
+                    numeric_variant_t operator()( T & operand ) const
+            {
+                return boost::get<T>(m_from) + operand;
+            }
+
+        protected:
+            numeric_variant_t m_left;
+        };
+
+        class less_than : public boost::static_visitor<bool>
+        {
+        public:
+
+            less_than(numeric_variant_t left) : m_left(left){
+            }
+
+            template <typename T>
+                    bool operator()( T & operand ) const
+            {
+                return boost::get<T>(m_from) < operand;
+            }
+
+        protected:
+            numeric_variant_t m_left;
+        };
+
+
         class NodeBase : virtual public QObject, public boost::enable_shared_from_this<NodeBase> {
             Q_OBJECT
         public:
@@ -50,6 +117,15 @@ namespace cauv {
             virtual const std::string nodeName(const bool full=true) const;
             virtual void addChild(boost::shared_ptr<NodeBase> child);
             const std::vector<boost::shared_ptr<NodeBase> > getChildren() const;
+
+            template <class T> boost::shared_ptr<T> to() {
+                if (dynamic_cast<T *>(this)) {
+                    return boost::static_pointer_cast<T>(shared_from_this());
+                } else {
+                    throw std::runtime_error("Invalid node conversion");
+                }
+            }
+
 
             template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const{
 
@@ -204,14 +280,13 @@ namespace cauv {
         };
 
 
-
-        typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
-
         class NumericNode : public Node<numeric_variant_t> {
             Q_OBJECT
 
         public:
-            NumericNode(std::string name) : Node<numeric_variant_t>(GuiNodeType::NumericNode, name){
+            NumericNode(std::string name) : Node<numeric_variant_t>(GuiNodeType::NumericNode, name),
+                m_maxSet(false), m_minSet(false), m_wraps(false)
+            {
                 qRegisterMetaType<numeric_variant_t>("numeric_variant_t");
             }
 
@@ -240,6 +315,35 @@ namespace cauv {
                 }
             }
 
+            numeric_variant_t wrap(numeric_variant_t value){
+                if(!m_maxSet || !m_minSet)
+                    return value;
+
+                info() << "Wrapping value " << value;
+
+                numeric_variant_t range = boost::apply_visitor(subtract(m_max), m_min);
+
+                if(boost::apply_visitor(less_than(value), m_min)) {
+                    return wrap(boost::apply_visitor(add(value), range));
+                }
+                else if(m_max < value)
+                    return wrap(boost::apply_visitor(subtract(value), range));
+                else return value;
+            }
+
+            virtual void setMax(numeric_variant_t max){
+                m_max = max;
+                m_maxSet = true;
+            }
+
+            virtual void setMin(numeric_variant_t min){
+                m_min = min;
+                m_minSet = true;
+            }
+
+            virtual void setWraps(bool wraps){
+                m_wraps = wraps;
+            }
 
         public Q_SLOTS:
 
@@ -250,6 +354,16 @@ namespace cauv {
             }
 
             virtual void set(numeric_variant_t value){
+                if(m_maxSet && (m_max < value)) {
+                    info() << "Value too high ("<< value <<")";
+                    if(m_wraps) value = wrap(value);
+                    else value = m_max;
+                } else if(m_minSet && (value < m_min)) {
+                    info() << "Value too low ("<< value <<")";
+                    if(m_wraps) value = wrap(value);
+                    else value = m_min;
+                }
+
                 Node<numeric_variant_t>::set(value);
                 Q_EMIT onSet(value);
             }
@@ -260,6 +374,10 @@ namespace cauv {
 
         protected:
             std::string m_units;
+
+            numeric_variant_t m_max;
+            numeric_variant_t m_min;
+            bool m_maxSet, m_minSet, m_wraps;
         };
 
 
@@ -290,9 +408,6 @@ namespace cauv {
         };
 
 
-
-
-        typedef boost::shared_ptr<const Image> image_variant_t;
 
         class ImageNode : public Node<image_variant_t> {
             Q_OBJECT
@@ -454,26 +569,6 @@ namespace cauv {
             boost::shared_ptr<NumericNode> m_x, m_y, m_z;
 
         };
-
-
-
-        // variant utils
-        class to_float : public boost::static_visitor<>
-        {
-        public:
-
-            float * m_target;
-
-            to_float(float * target) : m_target(target){
-            }
-
-            template <typename T>
-                    void operator()( T & operand ) const
-            {
-                (*m_target) = (float) operand;
-            }
-        };
-
 
     } // namespace gui
 } // namespace cauv

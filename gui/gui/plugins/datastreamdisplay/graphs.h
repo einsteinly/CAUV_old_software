@@ -65,24 +65,17 @@ namespace cauv {
                 }
 
                 // times are shown as negative in seconds from the current time
-
-                float value = 0;
-
-                boost::apply_visitor(to_float(&value), this->m_history[sample]);
-
-                return QPointF(-seconds, value);
+                return QPointF(-seconds, boost::apply_visitor(to_float(), this->m_history[sample]));
             }
 
             QRectF boundingRect () const {
                 if(this->m_history.empty())
                     return QRectF(-60, 0, 60, 10);
                 else {
-                    // show the last 60 seconds
-                    float min;
-                    float max;
-                    boost::apply_visitor(to_float(&min), m_min);
-                    boost::apply_visitor(to_float(&max), m_max);
-                    return QRectF(-60, min, 60, max - min);
+                    // show the last 60 seconds;
+                    return QRectF(-60, boost::apply_visitor(to_float(), m_min), 60,
+                                       boost::apply_visitor(to_float(), m_max) -
+                                       boost::apply_visitor(to_float(), m_min));
                 }
             }
 
