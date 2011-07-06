@@ -8,6 +8,9 @@
 #include <iostream>
 
 #include <boost/make_shared.hpp>
+#include <boost/asio.hpp>
+#include <boost/array.hpp>
+#include <boost/optional.hpp>
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -18,28 +21,48 @@
 using namespace std;
 using namespace cauv;
 
-const char *SonarIsDeadException::what() const throw()
+const char* SonarTimeoutException::what() const throw()
 {
-	return "Sonar is dead";
+	return "Sonar IO operation timed out";
+}
+InvalidPacketException::InvalidPacketException(const boost::shared_ptr<SeanetPacket> packet) : m_packet(packet)
+{
+}
+const char* InvalidPacketException::what() const throw()
+{
+	return "Sonar IO operation timed out";
 }
 
-/*
- * If data hasn't been received recently this resets the current packet, as the
- * sonar is probably dead.
- */
-static void check_is_sonar_dead() 
-{
-	static time_t last_read = 0;
-    
-    boost::this_thread::interruption_point();
 
-	if (last_read && time(NULL) - last_read >= 2) {
-		last_read = 0;
-		throw SonarIsDeadException();
-	}
-	
-	last_read = time(NULL);
-}
+static void set_result(boost::optional<boost::system::error_code>* a, boost::system::error_code b) 
+{ 
+    a->reset(b); 
+} 
+template <typename AsyncReadStream, typename MutableBufferSequence> 
+static void read_with_timeout(AsyncReadStream& sock, const MutableBufferSequence& buffers, int timeoutms = 3000)
+{
+    using namespace boost::asio;
+    using namespace boost::system;
+
+    boost::optional<error_code> timer_result; 
+    deadline_timer timer(sock.io_service()); 
+    timer.expires_from_now(boost::posix_time::milliseconds(timeoutms));
+    timer.async_wait(boost::bind(set_result, &timer_result, _1)); 
+    boost::optional<error_code> read_result; 
+    async_read(sock, buffers, boost::bind(set_result, &read_result, _1)); 
+
+    sock.io_service().reset(); 
+    while (sock.io_service().run_one()) 
+    { 
+        if (read_result) 
+            timer.cancel(); 
+        else if (timer_result) 
+            sock.cancel(); 
+    } 
+    if (*read_result) 
+        throw SonarTimeoutException();
+        //throw system_error(*read_result); 
+} 
 
 /*
  * Blocks until a complete packet has been received.
@@ -47,216 +70,88 @@ static void check_is_sonar_dead()
  */
 boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
 {
-	boost::shared_ptr<SeanetPacket> pkt = boost::make_shared<SeanetPacket>();
+    boost::shared_ptr<SeanetPacket> pkt = boost::make_shared<SeanetPacket>(std::string(13, '\0'));
+    std::string& data = pkt->data();
 
-	int rec = 0;
-	int headerReceived = 0;
-	int bodyReceived = 0;
-
-	unsigned char buffer[13];
-        
-    fd_set set;
-    FD_ZERO (&set);
-
-    struct timeval timeout;
-
-again:
-
-	rec = 0;
-	headerReceived = 0;
-	bodyReceived = 0;
-
-	/* Read up to and inc the 'nde' field */
-
-	while (headerReceived < 13)
-	{
-        rec = 0;
-        while (rec == 0) {
-            FD_SET (m_fd, &set);
-            timeout.tv_sec = 2;
-            timeout.tv_usec = 0;
-            rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
-            if (rec == 0) {
-                debug(4) << "Timeout when receiving header";
+    read_with_timeout(*m_port, boost::asio::buffer(&data[0], 1));
+    if (data[0] != 0x40)
+    {
+        warning() << "Error: Out of sync.  Resyncing...";
+        do
+        {
+            // Search until a LF is consumed
+            while (data[0] != 0x0A) {
+                debug() << std::hex << std::setw(2) << std::setfill('0') << (int)data[0];
+                read_with_timeout(*m_port, boost::asio::buffer(&data[0], 1));
             }
-		    check_is_sonar_dead();
-        }
-        if (rec > 0) {
-            rec = read(m_fd, &buffer[headerReceived], 13 - headerReceived);
-		    check_is_sonar_dead();
-            if (rec < 0) {
-                throw SonarIsDeadException();
-            }
-            if (rec == 0) {
-                debug() << "Cannot read from serial - waiting for sonar to connect..";
-                boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            }
-            headerReceived += rec;
-        }
-        else {
-			throw SonarIsDeadException();
-        }
-	}
+            
+            // Now check if the data[0] is correct this time
+            read_with_timeout(*m_port, boost::asio::buffer(&data[0], 1));
+        } while (data[0] != 0x40);
+    }
+	// Packet:
+    //    0: 0x40 (already consumed)
+    //  1-4: ASCII representation of packet length (!)
+    //  5-6: packet length from byte 5 onwards (not including LF) 
+    //  7-n: stuff (of length described above)
+    //  n+1: 0x0A (LF, end of message)
 
-    //{
-    //    std::stringstream data;
-    //    for (unsigned int i = 0; i < 13; i++) {
-    //        data << hex << setw(2) << setfill('0') << (int)(unsigned char)buffer[i] << " ";
-    //    }
-    //    debug() << data.str();
-    //}
+    // Read packet length, and resize data array
+    read_with_timeout(*m_port, boost::asio::buffer(&data[1], 6));
+    unsigned short length = pkt->length();
+    data.resize(length + 5 + 1); // length + 5 byte head + 1 byte tail
 
-	if (buffer[0] != 0x40) {
-		warning() << "Error: Out of sync.  Resyncing...";
-		/* Search until a LF is consumed */
-		while (buffer[0] != 0x0A) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)buffer[0] << " " << std::flush;
-            rec = 0;
-            while (rec == 0) {
-                FD_SET (m_fd, &set);
-                timeout.tv_sec = 2;
-                timeout.tv_usec = 0;
-                rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
-                if (rec == 0) {
-                    debug(4) << "Timeout when resyncing";
-                }
-                check_is_sonar_dead();
-            }
-            if (rec > 0) {
-                rec = read(m_fd, &buffer[0], 1);
-                std::cout << rec << ":" << std::flush;
-                check_is_sonar_dead();
-                if (rec < 0) {
-                    throw SonarIsDeadException();
-                }
-            }
-            else {
-                throw SonarIsDeadException();
-            }
-		}
-		goto again;
-	}
-
-	pkt->m_length = *reinterpret_cast<unsigned short*>(&buffer[5]);
-	pkt->m_sid = buffer[7];
-	pkt->m_did = buffer[8];
-	pkt->m_count = buffer[9];
-	pkt->m_type = buffer[10];
-	pkt->m_data = std::string(pkt->m_length + 6, '\0');
-	pkt->fillHeader();
-
-	headerReceived = 0;
-
-	/* Must read another (length - 7) bytes to end */
-
-	while (bodyReceived < pkt->m_length - 7)
-	{
-        rec = 0;
-        while (rec == 0) {
-            FD_SET (m_fd, &set);
-            timeout.tv_sec = 2;
-            timeout.tv_usec = 0;
-            rec = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
-            if (rec == 0) {
-                debug(4) << "Timeout when receving body";
-            }
-            check_is_sonar_dead();
-        }
-        if (rec > 0) {
-            rec = read(m_fd, &pkt->m_data[13 + bodyReceived], pkt->m_length - 7 - bodyReceived);
-            check_is_sonar_dead();
-            if (rec < 0) {
-                throw SonarIsDeadException();
-            }
-		    bodyReceived += rec;
-        }
-        else {
-            throw SonarIsDeadException();
-        }
-	}
-    
-    //{
-    //    std::stringstream data;
-    //    for (unsigned int i = 0; i < pkt->m_length + 6; i++) {
-    //        data << hex << setw(2) << setfill('0') << (int)(unsigned char)pkt->m_data[i] << " ";
-    //    }
-    //    debug() << data.str();
-    //}
+    // Read remaining data ( -2 bytes already reat as bytes 5-6, +1 byte for LF)
+    read_with_timeout(*m_port, boost::asio::buffer(&data[7], length - 2 + 1));
 	
-    if (pkt->m_data[pkt->m_length + 5] != 0x0A) {
-		error() << "Message doesn't end in 0x0A\n";
-	}
+    if (data[data.size()])
+    {
+        throw InvalidPacketException(pkt);
+    }
 
-	return pkt;
+#ifdef CAUV_DEBUG_MESSAGES
+    debug(10) << "Received " << pkt << std::endl;
+#endif
+	
+    return pkt;
 }
 
 void SeanetSerialPort::sendPacket(const SeanetPacket &pkt)
 {
-	unsigned int total_length = pkt.getLength() + 6;
-
     boost::lock_guard<boost::mutex> l(m_send_lock);
     
-    //{
-    //    debug() << "Sending " << total_length << " bytes";
-    //    std::stringstream data;
-    //    for (unsigned int i = 0; i < pkt->m_length + 6; i++) {
-    //        data << hex << setw(2) << setfill('0') << (int)(unsigned char)pkt->getData()[i] << " ";
-    //    }
-    //    debug() << data.str();
-    //}
+#ifdef CAUV_DEBUG_MESSAGES
+    debug(10) << "Sending " << pkt << std::endl;
+#endif
 	
-    if (pkt.getData()[total_length - 1] != 0x0A) {
+    if (pkt.data()[pkt.data().size() - 1] != 0x0A) {
 		warning() << "Sending data that doesn't end with a 0x0A";
 	}
 
-    unsigned int sent = 0;
-    while (sent < total_length)
-    {
-        int ret = write(m_fd, pkt.getData().data() + sent, total_length - sent);
-        sent += ret;
-    }
+    boost::asio::write(*m_port, boost::asio::buffer(pkt.data()));
 }
 
-void SeanetSerialPort::init()
+static boost::asio::io_service module_io_service;
+void SeanetSerialPort::reset()
 {
-	struct termios options;
+    m_port = boost::make_shared<boost::asio::serial_port>(boost::ref(module_io_service), m_file);
+    
+    typedef boost::asio::serial_port_base spb;
 
-	tcgetattr(m_fd, &options);
-	cfsetispeed(&options, B115200);
-	cfsetospeed(&options, B115200);
-
-	options.c_cflag |= CLOCAL | CREAD | CS8 | B115200;
-	options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG) | IXON | IXOFF;
-	options.c_iflag = 0;
-	options.c_oflag = 0;
-
-	// Read at least one byte at a time
-    options.c_cc[VMIN] = 1;
-    options.c_cc[VTIME] = 0;
-/*
-	options.c_cflag |= (CLOCAL | CREAD);
-	options.c_cflag &= ~PARENB;
-	options.c_cflag &= ~CSTOPB;
-	options.c_cflag &= ~CSIZE;
-	options.c_cflag |= CS8;
-*/ 
-	tcsetattr(m_fd, TCSANOW, &options);
+    m_port->set_option(spb::baud_rate(115200));
+    m_port->set_option(spb::character_size(8));
+    m_port->set_option(spb::stop_bits(spb::stop_bits::one));
+    m_port->set_option(spb::parity(spb::parity::none));
+    m_port->set_option(spb::flow_control(spb::flow_control::none));
 }
 
-/* Opens a serial port, sets m_fd  */
-SeanetSerialPort::SeanetSerialPort(const std::string file)
+SeanetSerialPort::SeanetSerialPort(const std::string& file) : m_file(file)
 {
-	m_fd = open(file.c_str(), O_RDWR | O_NOCTTY);
-	if (m_fd == -1) {
-		error() << "Cannot open " << file << ": " << strerror(errno);
-        return;
-    }
-    fcntl(m_fd, F_SETFL, 0);
-	init();
+	reset();
 }
 
 bool SeanetSerialPort::ok() const
 {
-    return m_fd != -1;
+    return m_port && m_port->is_open();
 }
 

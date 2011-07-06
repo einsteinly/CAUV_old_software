@@ -163,28 +163,24 @@ struct SeanetHeadParams {
 
 class SeanetPacket {
     protected:
-        /* Length of payload not inc LF */
-        unsigned short m_length;
-        /* Source identifier */
-        unsigned char m_sid;
-        /* Desination identifier */
-        unsigned char m_did;
-
-        unsigned char m_count;
-        
-        unsigned char m_type;
-
         /* The full data of the packet */
         std::string m_data;
-
-        void fillHeader();
+        void setNodeId(char sid, char did);
     public:
-        const std::string& getData() const;
-        unsigned char getType() const;
-        unsigned short getLength() const;
+        SeanetPacket(unsigned char type, unsigned short length);
+        SeanetPacket(const std::string& data);
+        
+        const std::string& data() const;
+        std::string& data();
+        const char* payload() const;
+        char* payload();
+        unsigned char type() const;
+        unsigned short length() const;
 
         friend class SeanetSerialPort;
+        friend std::ostream& operator<<(std::ostream& o, const SeanetPacket&);
 };
+std::ostream& operator<<(std::ostream& o, const SeanetPacket&);
 
 class SeanetHeadParamsPacket : public SeanetPacket {
 public:
