@@ -83,7 +83,7 @@ class SonarInputNode: public InputNode{
                 
 
                 // Cut off bins before min range
-                size_t minRangeBin = bins.size() * minRange / m->bins();
+                size_t minRangeBin = bins.size() * minRange / m->range();
                 for (size_t i = 0; i < minRangeBin; ++i)
                     bins[i] = 0;
 
