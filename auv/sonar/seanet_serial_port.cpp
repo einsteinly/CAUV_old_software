@@ -110,7 +110,7 @@ boost::shared_ptr<SeanetPacket> SeanetSerialPort::readPacket()
     }
 
 #ifdef CAUV_DEBUG_MESSAGES
-    debug(10) << "Received " << pkt << std::endl;
+    debug(10) << "Received " << *pkt << std::endl;
 #endif
 	
     return pkt;
