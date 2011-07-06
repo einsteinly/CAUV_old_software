@@ -37,6 +37,8 @@ class SeanetSerialPort
 		void reset();
 
     private:
+		void init();
+        
         std::string m_file;
         boost::shared_ptr<boost::asio::serial_port> m_port;
         boost::mutex m_send_lock;
