@@ -37,6 +37,7 @@ class scriptOptions(aiScriptOptions):
     prop_speed = 40
     strafe_kPID  = (-300, 0, 0)
     depth_kPID   = (1, 0, 0)
+    #bearing_kPID = (1, 0, 0)
 
     class Meta:
         dynamic = [
@@ -268,7 +269,7 @@ class script(aiScript):
    
         
         follow_pipe_file = self.options.follow_pipeline_file
-        #self.request_pl(follow_pipe_file)
+        self.request_pl(follow_pipe_file)
             
         # now we wait for messages allowing us to work out how to align with
         # the pipe, but if this is taking too long then just give up as we've
@@ -295,7 +296,7 @@ class script(aiScript):
             self.auv.prop(0)
             self.auv.bearing((self.auv.getBearing()-180)%360)
         
-        #self.drop_pl(follow_pipe_file)
+        self.drop_pl(follow_pipe_file)
 
         info('Finished pipe following')
         self.notify_exit('SUCCESS')
