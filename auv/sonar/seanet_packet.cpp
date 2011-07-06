@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include "seanet_packet.h"
@@ -56,109 +57,77 @@ SeanetHeadParams::SeanetHeadParams() :
 }
 
 /* Fills in the header section of the data field for the packet */
-void SeanetPacket::fillHeader()
+SeanetPacket::SeanetPacket(unsigned char type, unsigned short length)
+	: m_data(length+6, '\0')
 {
 	/* init byte */
 	m_data[0] = 0x40;
 	/* hex length */
-	sprintf(reinterpret_cast<char*>(&m_data[1]), "%04X", m_length);
+	sprintf(reinterpret_cast<char*>(&m_data[1]), "%04X", length);
 	/* bin length */
-	*reinterpret_cast<unsigned short*>(&m_data[5]) = m_length;
+	*reinterpret_cast<unsigned short*>(&m_data[5]) = length;
 	/* tx node */
-	m_data[7] = m_sid;
+	m_data[7] = 0xff; // Sender (computer)
 	/* rx node */
-	m_data[8] = m_did;
+	m_data[8] = 0x02; // Destination (0x02 is an imaging sonar)
 	/* num bytes */
-	m_data[9] = m_count;
+	m_data[9] = length - 5;
 	/* msg type */
-	m_data[10] = m_type;
+	m_data[10] = type;
 	/* seq = end */
-	m_data[11] = 0x80;
+	m_data[11] = 0x80; // Always 0x80 for devices without multi-packet mode
 	/* Nde */
-	m_data[12] = 0x02;
+	m_data[12] = 0x02; // Copy of bit 8, for some reason
 
 	/* LF */
-	m_data[m_length + 5] = 0x0A;
+	m_data[length + 5] = 0x0A;
+}
+SeanetPacket::SeanetPacket(const std::string& data)
+    : m_data(data)
+{
 }
 
-const std::string& SeanetPacket::getData() const
+const std::string& SeanetPacket::data() const { return m_data; }
+std::string& SeanetPacket::data() { return m_data; }
+const char* SeanetPacket::payload() const { return &m_data[13]; }
+char* SeanetPacket::payload() { return &m_data[13]; }
+unsigned char SeanetPacket::type() const { return m_data[10]; }
+unsigned short SeanetPacket::length() const
 {
-	return m_data;
+	return *reinterpret_cast<const unsigned short*>(&m_data[5]);
+}
+std::ostream& operator<<(std::ostream& o, const SeanetPacket& p)
+{
+    o << "Seanet packet (type = " << (int)p.type() << ", length = " << p.length() << ")" << std::endl;
+    o << "    data = [ ";
+    o << std::hex << std::setw(2) << std::setfill('0');
+    foreach (const char& c, p.data())
+        o << (int)(unsigned char)c << " ";
+    o << "]";
+    return o;
 }
 
-unsigned char SeanetPacket::getType() const
+SeanetHeadParamsPacket::SeanetHeadParamsPacket(SeanetHeadParams &params) : SeanetPacket(SeanetMessageType::HeadCommand, 60)
 {
-	return m_type;
-}
-
-unsigned short SeanetPacket::getLength() const
-{
-	return m_length;
-}
-
-SeanetHeadParamsPacket::SeanetHeadParamsPacket(SeanetHeadParams &params)
-{
-	m_type = SeanetMessageType::HeadCommand;
-	m_sid = 0xFF;
-	m_did = 0x02;
-	m_length = 60;
-    m_count = m_length - 5;
-
-	m_data = std::string(m_length+6, '\0');
-	fillHeader();
-
 	debug() << "Head params are " << sizeof(SeanetHeadParams) << " bytes";
 
-	memcpy(&m_data[13], &params, sizeof(SeanetHeadParams));
+	memcpy(&payload()[0], &params, sizeof(SeanetHeadParams));
 }
 
-SeanetRebootPacket::SeanetRebootPacket()
+SeanetRebootPacket::SeanetRebootPacket() : SeanetPacket(SeanetMessageType::ReBoot, 8)
 {
-	m_type = SeanetMessageType::ReBoot;
-	m_sid = 0xFF;
-	m_did = 0x02;
-	m_length = 8;
-    m_count = m_length - 5;
-
-	m_data = std::string(m_length+6, '\0');
-	fillHeader();
 }
 
-SeanetSendBBUserPacket::SeanetSendBBUserPacket()
+SeanetSendBBUserPacket::SeanetSendBBUserPacket() : SeanetPacket(SeanetMessageType::SendBBuser, 8)
 {
-	m_type =SeanetMessageType::SendBBuser;
-	m_sid = 0xFF;
-	m_did = 0x02;
-	m_length = 8;
-    m_count = m_length - 5;
-
-	m_data = std::string(m_length+6, '\0');
-	fillHeader();
 }
 
-SeanetSendDataPacket::SeanetSendDataPacket()
+SeanetSendDataPacket::SeanetSendDataPacket() : SeanetPacket(SeanetMessageType::SendData, 12)
 {	
-	m_type = SeanetMessageType::SendData;
-	m_sid = 0xFF;
-	m_did = 0x02;
-	m_length = 12;
-    m_count = m_length - 5;
-
-	m_data = std::string(m_length+6, '\0');
-	fillHeader();
-
-	*reinterpret_cast<uint32_t*>(&m_data[13]) = 0;  // Current time
+	*reinterpret_cast<uint32_t*>(&payload()[0]) = 0;  // Current time (can be 0 for imaging sonar)
 }
 
-SeanetSendVersionPacket::SeanetSendVersionPacket()
+SeanetSendVersionPacket::SeanetSendVersionPacket() : SeanetPacket(SeanetMessageType::SendVersion, 8)
 {
-	m_type = SeanetMessageType::SendVersion;
-	m_sid = 0xFF;
-	m_did = 0x02;
-	m_length = 8;
-    m_count = m_length - 5;
-
-	m_data = std::string(m_length+6, '\0');
-	fillHeader();
 }
 
