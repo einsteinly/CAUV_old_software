@@ -145,12 +145,12 @@ void XsensIMU::readThread()
                 {
                     if (m_running_norotation)
                     {
-                        if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION_ABORTED) != CMT_STATUSFLAG_NOROTATION_ABORTED)
+                        if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION_ABORTED) == CMT_STATUSFLAG_NOROTATION_ABORTED)
                             error() << "No rotation procedure aborted (rotation detected)";
                         else
                         {
                             info() << "No rotation procedure finished";
-                            if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION_SAMPLES_REJECTED) != CMT_STATUSFLAG_NOROTATION_SAMPLES_REJECTED)
+                            if((packet.getStatus() & CMT_STATUSFLAG_NOROTATION_SAMPLES_REJECTED) == CMT_STATUSFLAG_NOROTATION_SAMPLES_REJECTED)
                                 warning() << "No rotation procedure: some samples rejected";
                         }
                         
