@@ -21,6 +21,7 @@ class auvControl(aiProcess):
         if 'disable_control' in kwargs:
             if not kwargs['disable_control']:
                 self.enabled.set()
+        else: self.enabled.set()
         self.depth_limit = None
         self.signal_msgs = Queue.Queue(5)
         self._register()
@@ -32,9 +33,11 @@ class auvControl(aiProcess):
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
         debug('auvControl::auv_command(self, task_id=%s, cmd=%s, args=%s, kwargs=%s)' % (task_id, command, args, kwargs), 5)
-        if self.enabled.is_set(): #and self.current_task_id == task_id:
+        if self.enabled.is_set() and self.current_task_id == task_id:
             debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
             getattr(self.auv, command)(*args, **kwargs)
+        else:
+            debug('Function not called, auv disabled or called from non-current script.', 5)
     @external_function
     def sonar_command(self, task_id, command, *args, **kwargs):
         if self.enabled.is_set() and self.current_task_id == task_id:
