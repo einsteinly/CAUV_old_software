@@ -54,15 +54,18 @@ class aiProcess(messaging.MessageObserver):
         messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node("pyai"+process_name[:4])
         self.node.join("ai")
-        self.node.addObserver(self)
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
+    def _register(self):
+        self.node.addObserver(self)
     def onAIMessage(self, m):
+        debug("onAIMessage in %s: %s" %(self.process_name, m.msg), 6)
         message = cPickle.loads(m.msg)
         if message[0] == self.process_name: #this is where the to string appears in the cpickle output
             message = cPickle.loads(m.msg)
             if hasattr(self, message[2]) and is_external(getattr(self,message[2])):
                 try:
+                    debug("onAIMessage in %s, calling function." %(self.process_name, ), 6)
                     getattr(self,message[2])(*message[3], **message[4])
                 except Exception as exc:
                     error("Error occured because of message: %s" %(str(message)))

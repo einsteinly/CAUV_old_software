@@ -338,6 +338,7 @@ class pipelineManager(aiProcess):
             self.node_mapping = {}#node_ids here: node_ids in pipeline
             #notify detector_process that this proces is running with no pls
             self.ai.detector_control.update_pl_requests([])
+        self._register()
     def load_pl_data(self):
         with self.pipeline_lock:
             #try and load optimised pipelines
@@ -775,16 +776,17 @@ def sigHandler(signum, frame):
 if __name__ == '__main__':
     # temp debug code, try to work out where the KeyboardInterrupt is coming
     # from:
-    import signal
+    #import signal
+    """
     for i in xrange(0, signal.NSIG):
         try: 
-            #signal.signal(i, sigHandler);
+            signal.signal(i, sigHandler);
             debug('installed signal handler for %d' % i)
         except ValueError:
             pass
         except RuntimeError:
             pass
-
+    """
     p = optparse.OptionParser()
     p.add_option('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")

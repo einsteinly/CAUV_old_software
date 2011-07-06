@@ -18,6 +18,7 @@ class detectionControl(aiProcess):
         self.stop_requests = []
         self.enable_flag = threading.Event()
         self.enable_flag.set()
+        self._register()
     @external_function
     def start(self, detection_file):
         with self.request_lock:

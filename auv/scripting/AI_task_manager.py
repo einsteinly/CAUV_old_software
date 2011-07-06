@@ -63,6 +63,7 @@ class taskManager(aiProcess):
             self.new_state(mission)
         #Force evaluation of tasks
         self.conditions_changed.set()
+        self._register()
     def add_detector(self, detector_name, listener):
         with self.detector_lock:
             if not (detector_name in self.active_detectors):
