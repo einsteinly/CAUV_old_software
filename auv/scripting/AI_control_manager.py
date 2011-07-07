@@ -64,6 +64,7 @@ class auvControl(aiProcess):
     @external_function
     def pause(self, calling_process, timeout=None):
         with self.pause_lock:
+            print self.pause_requests
             if len(self.pause_requests):
                 warning('Multiple pause requests, probably will mean processes are conflicting')
             else:
@@ -71,11 +72,12 @@ class auvControl(aiProcess):
                 self.ai.task_manager.notify_begin_pause('paused')
                 #get sonar state (since is convieniently save
                 self._sonar_state = self.sonar.__dict__.copy()
-            self.paused.add(calling_process)
-        if timeout and self._timeout>time.time()+timeout:
+                self.pause_requests.add(calling_process)
+        if timeout and self._timeout<time.time()+timeout:
             t = threading.Timer(timeout, timeout_resume, [self, calling_process])
             self._timeout = time.time()+timeout
         self.paused.set()
+        self.stop()
     def timeout_resume(self, calling_process):
         result = self.resume(calling_process)
         if result:
@@ -85,13 +87,14 @@ class auvControl(aiProcess):
         #restore control values
         with self.pause_lock:
             try:
-                self.pause_requests.remove('calling_process')
+                print self.pause_requests
+                self.pause_requests.remove(calling_process)
             except KeyError:
                 warning('Script control already resumed.')
                 return False
             if not len(self.pause_requests):
-                for command, (args, kwargs) in self._control_state:
-                    self.__getattr__(command)(*args, **kwargs)
+                for command, (args, kwargs) in self._control_state.items():
+                    getattr(self.auv, command)(*args, **kwargs)
                 #restore sonar state
                 self.sonar.__dict__ = self._sonar_state
                 self.sonar.update()
