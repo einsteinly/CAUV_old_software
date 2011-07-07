@@ -36,8 +36,8 @@ class DrawKeyPointsNode: public Node{
             registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
             
             // parameters:
-            registerParamID< std::vector<Corner> >("KeyPoints", std::vector<Corner>(),
-                                                   "the KeyPoints to draw"); 
+            registerParamID< std::vector<KeyPoint> >("KeyPoints", std::vector<KeyPoint>(),
+                                                     "the KeyPoints to draw"); 
         }
     
         virtual ~DrawKeyPointsNode(){
