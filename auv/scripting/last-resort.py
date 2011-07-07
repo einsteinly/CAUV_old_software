@@ -31,17 +31,19 @@ def lastResort(kill_after_seconds):
                 did_warn_10 = True
                 plog(s, logf)
             time.sleep(0.5)
-        s = 'DIE control, DIE!\n'
-        
-        os.system('killall -s 9 control')
-        os.system('killall -s 9 cauv-control')
-        os.system('killall -s 9 cauv-controld')
-        os.system('killall -s 9 cauv-controlv2')
+       while Tr
+            s = 'DIE control, DIE!\n'
+            plogf(s) 
+            os.system('killall -s 9 control')
+            os.system('killall -s 9 cauv-control')
+            os.system('killall -s 9 cauv-controld')
+            os.system('killall -s 9 cauv-controlv2')
+            time.sleep(0.8)
     except KeyboardInterrupt:
         s = 'WARNING: Last resort stopped by keyboard interrupt\n'
         plog(s, logf)
     finally:
-        s = 'lastresort.py finished at %s\n' % str(time.time)
+        s = 'lastresort.py finished at %s\n' % str(time.time())
         plog(s, logf)
         logf.close()
 

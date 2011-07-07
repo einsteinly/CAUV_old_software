@@ -54,13 +54,13 @@ class NewModel(pipeline.Model):
             self.manager2pl.pop(old_id)
     def set(self, state):
         raise NotImplementedError
-    def add(self, nodes):
+    def add(self, nodes, timeout=5.0):
         for node_id, node in nodes.items():
             if node_id in self.manager2pl:
                 warning('Node already added, skipping')
                 continue
             try:
-                new_node_id = self.addSynchronous(node.type)
+                new_node_id = self.addSynchronous(node.type, timeout)
             except RuntimeError:
                 error("Couldn't add node %d, skipping" %(new_node_id))
                 continue
@@ -68,7 +68,7 @@ class NewModel(pipeline.Model):
             self.pl2manager[new_node_id] = node_id
             for param, value in node.params.items():
                 try:
-                    self.setParameterSynchronous(new_node_id, param, value)
+                    self.setParameterSynchronous(new_node_id, param, value, timeout)
                 except RuntimeError:
                     error("Couldn't set parameter: "+str((param,value)))
         #now all added, add arcs
@@ -76,16 +76,16 @@ class NewModel(pipeline.Model):
             for input, (from_node_id, from_node_field) in node.inarcs.items():
                 try:
                     try:
-                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input)
+                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input, timeout)
                     except KeyError:
                         error('Could not add arc from %d to %d, a node does not exist.' %(from_node_id, node_id))
                 except RuntimeError:
                     error("Couldn't add arc from %d (%s) to %d (%s) (%d to %d in pipeline), no response from pipeline" %(from_node_id, from_node_field, node_id, input, self.manager2pl[from_node_id], self.manager2pl[node_id]))
-    def remove(self, nodes):
+    def remove(self, nodes, timeout=5.0):
         for node_id in nodes:
             try:
                 try:
-                    self.removeSynchronous(self.manager2pl[node_id])
+                    self.removeSynchronous(self.manager2pl[node_id], timeout)
                 except RuntimeError:
                     error("Couldn't remove node: pipeline did not respond")
                 #want to remove nodes regardless otherwise wont be able to add them again
