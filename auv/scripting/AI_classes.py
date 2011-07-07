@@ -460,6 +460,7 @@ class aiTask():
     def deregister(self, task_manager):
         if not self.registered:
             error('Task not setup, so can not be deregistered')
+            return
         task_manager.active_tasks.remove(self)
         for condition in self.conditions:
             condition.deregister(task_manager)
