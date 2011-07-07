@@ -52,7 +52,8 @@ def is_external(f):
 class aiProcess(messaging.MessageObserver):
     def __init__(self, process_name, location_enabled = False):
         messaging.MessageObserver.__init__(self)
-        self.node = cauv.node.Node("pyai"+process_name[:4])
+        id = process_name[:6] if len(process_name)>6 else process_name
+        self.node = cauv.node.Node("ai"+id)
         self.node.join("ai")
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
