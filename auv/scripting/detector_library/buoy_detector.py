@@ -79,8 +79,8 @@ class detector(aiDetector):
         if confidence >= self.options.Required_Confidence and \
            len(sightings) >= self.options.Required_Sightings:
             info('buoy detected, confidence = %g, %d sightings' % (confidence, len(sightings)))
-            #self.detected = True
-            warning('self.detected = True is commented out')
+            self.detected = True
+            #warning('self.detected = True is commented out')
         else:
             self.detected = False
     
