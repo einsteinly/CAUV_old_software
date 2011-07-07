@@ -151,7 +151,7 @@ class AUV(messaging.MessageObserver):
 
     def cut(self, strength):
         # strength is 0 = off, 1 = on
-        self.send(messaging.CuttingDevice(strength))
+        self.send(messaging.CuttingDeviceMessage(strength))
     
     def motorMap(self, motor_id, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
         #
