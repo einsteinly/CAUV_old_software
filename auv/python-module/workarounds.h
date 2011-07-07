@@ -203,10 +203,10 @@ template<class R, class C>
 R MemberWrap<R, C>::operator()(C* p){
     ThreadSave guard;
     if(m_wrapped){
-        debug(4) << "wrap ()";
+        debug(11) << "wrap ()";
         return (p->*(this->m_wrapped))();
     }
-    debug(4) << "wrap () const";
+    debug(11) << "wrap () const";
     assert(this->m_wrapped_const);
     return (p->*(this->m_wrapped_const))();
 }
@@ -214,21 +214,21 @@ R MemberWrap<R, C>::operator()(C* p){
 template <class R, class C, class T0>
 R MemberWrap<R, C, T0>::operator()(C* p, T0_ p0){
     ThreadSave guard;
-    debug(4) << "wrap(T0)";
+    debug(11) << "wrap(T0)";
     return (p->*(this->m_wrapped))(p0);
 }
 
 template <class R, class C, class T0, class T1>
 R MemberWrap<R, C, T0, T1>::operator()(C* p, T0_ p0, T1_ p1){
     ThreadSave guard;
-    debug(4) << "wrap(T0, T1)";
+    debug(11) << "wrap(T0, T1)";
     return (p->*(this->m_wrapped))(p0, p1);
 }
 
 template <class R, class C, class T0, class T1, class T2>
 R MemberWrap<R, C, T0, T1, T2>::operator()(C* p, T0_ p0, T1_ p1, T2_ p2){
     ThreadSave guard;
-    debug(4) << "wrap(T0, T1, T2)";
+    debug(11) << "wrap(T0, T1, T2)";
     return (p->*(this->m_wrapped))(p0, p1, p2);
 }
 
