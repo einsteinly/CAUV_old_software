@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import cauv.messaging as messaging
 
 import cauv
@@ -14,8 +16,12 @@ import displacement_integrator
 Metres_Per_Second_Per_Motor_Unit = 0.4 / 127 #empirical estimate
 
 #coordinates of a bit of river Cam in Cambridge
-Default_Datum_Latitude = 52.116692
-Default_Datum_Longitude = 0.117792
+#Default_Datum_Latitude = 52.116692
+#Default_Datum_Longitude = 0.117792
+
+#coordinates of start position in NURC harbour
+Default_Datum_Latitude = 44.095788 
+Default_Datum_Longitude = 9.865017
 
 #principal component of Earth along polar and equatorial axis
 Earth_b = 6356752.3142 # polar
