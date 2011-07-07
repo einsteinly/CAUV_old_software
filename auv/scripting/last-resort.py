@@ -31,9 +31,9 @@ def lastResort(kill_after_seconds):
                 did_warn_10 = True
                 plog(s, logf)
             time.sleep(0.5)
-       while Tr
+        while True:
             s = 'DIE control, DIE!\n'
-            plogf(s) 
+            plog(s, logf) 
             os.system('killall -s 9 control')
             os.system('killall -s 9 cauv-control')
             os.system('killall -s 9 cauv-controld')
