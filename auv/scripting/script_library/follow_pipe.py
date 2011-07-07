@@ -16,17 +16,15 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    confirm_pipeline_file = 'confirm_pipe.pipe'
     follow_pipeline_file  = 'follow_pipe.pipe'
     centre_name = 'pipe'
     lines_name = 'pipe'
     histogram_name = 'pipe'
-    colour_bins = (3,4,5)
     #Timeouts
-    confirm_timeout = 15
     ready_timeout = 200
-    lost_timeout = 2
+    lost_timeout = 3
     # Calibration
+    pipe_end     = 0.2 # of image (range +0.5 to -0.5)
     target_width = 0.2 # of image
     width_error   = 0.1 # of image
     centre_error = 0.1 # of image
@@ -36,8 +34,10 @@ class scriptOptions(aiScriptOptions):
     # Control
     prop_speed = 40
     strafe_kPID  = (-300, 0, 0)
-    depth_kPID   = (1, 0, 0)
-    #bearing_kPID = (1, 0, 0)
+    
+    #TODO: this doesn't actually do anythign at the moment
+    # its not tuned
+    depth_kPID   = (0, 0, 0)
 
     class Meta:
         dynamic = [
@@ -46,74 +46,6 @@ class scriptOptions(aiScriptOptions):
             'prop_speed', 'average_time'
         ]
 
-
-class PipeConfirmer(messaging.MessageObserver):
-    def __init__(self, auv, options):
-        messaging.MessageObserver.__init__(self)
-        self.auv = auv
-        self.options = options
-        self.strafeControl = PIDController(self.options.strafe_kPID)
-        self.intensity = TimeAverage(self.options.average_time)
-        # required events
-        self.intensityTrigger = threading.Event()
-        self.linesTrigger = threading.Event()
-        self.sighted = threading.Event()
-
-    def onCentreMessage(self, m):
-        if m.name == self.options.centre_name:
-            # to get a good view we might need to move over the pipe
-            # this assumes we're roughly in line with the pipe already
-            # TODO: use the lines message to check if we need to correct
-            # the alignment as well
-            if abs(m.x) == 0.01:
-                warning("ignoring centre message with centre=0")
-                return
-            strafe = self.strafeControl.update(m.x - 0.5)
-            debug('PipelineConfirmer: Set strafe: %i' % (int(strafe)))
-            if strafe < -127:
-                strafe = -127
-            if strafe > 127:
-                strafe = 127
-            self.auv.strafe(int(strafe))
-
-    def onHistogramMessage(self, m):
-        if m.name == self.options.histogram_name:
-            # collate all the bins of interest to measure their
-            # combined intensity
-            collectedBins = []
-            for bin in self.options.colour_bins:
-                collectedBins.append(m.bins[bin])
-            # average out the intensity over time
-            averageIntensity = self.intensity.update(sum(collectedBins))
-            debug("Intensity trigger %f percent" % ((averageIntensity / self.options.intensity_trigger) * 100))
-            if averageIntensity > self.options.intensity_trigger:
-                self.intensityTrigger.set()
-                if self.linesTrigger.is_set():
-                    self.sighted.set()
-                    info("Pipeline sighting confirmed")
-            else:
-                self.intensityTrigger.clear()
-                
-
-    def onLinesMessage(self, m):
-        if m.name == self.options.lines_name:
-            parallelLines = 0;
-            for i, line1 in enumerate(m.lines):
-                for j, line2 in enumerate(m.lines):
-                    if degrees(abs(line1.angle - line2.angle)) < 15 and i != j:
-                        parallelLines += 1
-                
-            debug("Parallel Lines: %d" % (parallelLines))
-            if(parallelLines >= 2):
-                self.linesTrigger.set()
-            else:
-                self.linesTrigger.clear()
-
-
-    def confirm(self, time = 10):
-        # give it some time to confirm a sighting
-        self.sighted.wait(time)
-        return self.sighted.is_set()
 
 class script(aiScript):
     def __init__(self, script_name, opts):
@@ -124,16 +56,16 @@ class script(aiScript):
         self.centred = threading.Event()
         self.aligned = threading.Event()
         self.depthed = threading.Event()
-        self.corners = threading.Event()
-        self.confirmed = threading.Event()
+        self.pipeEnded = threading.Event()
         self.ready = threading.Event()
         
         # controllers for staying above the pipe
         self.depthControl = PIDController(self.options.depth_kPID)
         self.strafeControl = PIDController(self.options.strafe_kPID)
 
+        self.yAverage = TimeAverage(1)
+
     def onLinesMessage(self, m):
-        if not self.confirmed.is_set(): return
         if m.name != self.options.lines_name:
             debug('follow pipe: ignoring lines message %s != %s' % (m.name, self.options.lines_name))
             return
@@ -187,7 +119,6 @@ class script(aiScript):
 
 
     def onCentreMessage(self, m):
-        if not self.confirmed.is_set(): return
         if m.name != self.options.centre_name:
             debug('follow pipe: ignoring centre message %s != %s' % (m.name, self.options.centre_name))
             return
@@ -205,18 +136,21 @@ class script(aiScript):
         self.auv.strafe(strafe)
         info('pipe follow: strafing %i' %(strafe))
         
+               
+        # y average is used to find the end of the pipe
+        yCoord = self.yAverage.update(m.y - 0.5)
+        info("pipe y coord = %f" % (yCoord,))
+        if(yCoord < self.options.pipe_end):
+            self.pipeEnded.set()
+        else: self.pipeEnded.clear()
+        
+        
         # set the flag used for determining if we're above the pipe
         if m.x**2 + m.y**2 < self.options.centre_error**2:
             self.centred.set() #ie within circle radius centre error
         else:
             self.centred.clear()
         
-
-    def onCornersMessage(self, m):
-        if not self.confirmed.is_set(): return
-        #TODO: process message
-        info("Corners message TODO: process this and set self.corners")
-
 
     def followPipeUntil(self, condition):
         while not condition.is_set():
@@ -243,31 +177,6 @@ class script(aiScript):
         # for yellow things in the downward camera, so there will be
         # a few false positives
         
-        # confirm we're above the pipe
-        # it does this by looking for parallel lines and checking their is
-        # a peak of intensity in the correct color
-        """conf_pipe_file = self.options.confirm_pipeline_file
-        self.request_pl(conf_pipe_file)
-        confirmer = PipeConfirmer(
-            self.auv,
-            self.options
-        )
-        self.node.addObserver(confirmer)
-        if(confirmer.confirm(self.options.confirm_timeout)):
-            info("Pipeline confirmed")
-            self.confirmed.set()
-        self.node.removeObserver(confirmer)
-        del confirmer
-        self.drop_pl(conf_pipe_file)
-        if not self.confirmed.is_set():
-            error("Pipeline sighting could not be confirmed. Abandoning")
-            self.notify_exit('ABANDONED')
-            return
-        info("Pipeline sighting was confirmed.")
-"""
-        self.confirmed.set()
-   
-        
         follow_pipe_file = self.options.follow_pipeline_file
         self.request_pl(follow_pipe_file)
             
@@ -284,8 +193,8 @@ class script(aiScript):
         
         
         for i in range(3):
-            # follow the pipe along until the end (when we can see the corners)
-            if not self.followPipeUntil(self.corners):
+            # follow the pipe along until the end
+            if not self.followPipeUntil(self.pipeEnded):
                 error("Pipeline lost on pass %d" %(i,));
                 self.drop_pl(follow_pipe_file)
                 self.notify_exit('LOST')
