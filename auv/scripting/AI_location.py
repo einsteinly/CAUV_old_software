@@ -69,7 +69,7 @@ class aiLocation(aiProcess):
                 
 
     @external_function
-    def pauseTimeout():
+    def onPauseTimeout():
         self.timedout = True
         
     

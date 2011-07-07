@@ -20,7 +20,7 @@ class script(aiScript):
         self.log('Diving to %d to start mission' %(self.options.depth))
         self.auv.depthAndWait(self.options.depth)
         self.log('Heading forwards through validation gate')
-        self.auv.prop(forward_speed)
+        self.auv.prop(self.options.forward_speed)
         time.sleep(self.options.forward_time)
         self.auv.prop(0)
         self.notify_exit('SUCCESS')

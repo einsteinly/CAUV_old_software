@@ -22,6 +22,7 @@ class auvControl(aiProcess):
         self.enabled = threading.Event()
         self.pause_lock = threading.Lock()
         self.pause_requests = set()
+        self.paused = threading.Event()
         if 'disable_control' in kwargs:
             if not kwargs['disable_control']:
                 self.enabled.set()
@@ -70,14 +71,15 @@ class auvControl(aiProcess):
                 self.ai.task_manager.notify_begin_pause('paused')
                 #get sonar state (since is convieniently save
                 self._sonar_state = self.sonar.__dict__.copy()
-                    self.paused.add(calling_process)
+            self.paused.add(calling_process)
         if timeout and self._timeout>time.time()+timeout:
             t = threading.Timer(timeout, timeout_resume, [self, calling_process])
             self._timeout = time.time()+timeout
+        self.paused.set()
     def timeout_resume(self, calling_process):
         result = self.resume(calling_process)
         if result:
-            getattr(self.ai, calling_process).
+            getattr(self.ai, calling_process).onPauseTimeout()
     @external_function
     def resume(self, calling_process):
         #restore control values
