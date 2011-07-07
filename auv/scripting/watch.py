@@ -17,7 +17,7 @@ from cauv.debug import debug, info, warning, error
 from utils.multitasking import spawnDaemon
 
 CPU_Poll_Time = 0.025
-Poll_Delay = 2.0
+Poll_Delay = 5.0
 Exe_Prefix = '' # set these using command line options
 Script_Dir = '' #
 Mem_Divisor = 1024*1024 # MB
