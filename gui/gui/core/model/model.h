@@ -10,7 +10,7 @@ namespace cauv {
         class AUV : public GroupingNode
         {
         public:
-            AUV() : GroupingNode("AUV") {
+            AUV() : GroupingNode("redherring") {
             }
         };
 

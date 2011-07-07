@@ -53,26 +53,12 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
 
     GroupingNodeTreeItem *auvItem = new GroupingNodeTreeItem(auv, NULL);
     ui->dataStreams->addTopLevelItem(auvItem);
-    auvItem->setText(0, "Red Herring");
     auvItem->setExpanded(true);
     foreach(boost::shared_ptr<NodeBase> child, auv->getChildren()){
         auvItem->addNode(child);
     }
 }
 
-/*
-void DataStreamPicker::addNode(boost::shared_ptr<NodeBase> newNode, NodeTreeItemBase * parent){
-    debug() << "Adding " << newNode->nodeName() << "to tree item" << parent->text(0).toStdString();
-    NodeTreeItemBase * newItem = parent->addNode(newNode);
-
-    newNode->connect(newNode.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>,boost::shared_ptr<NodeBase>)),
-                  newItem, SLOT(addNode(boost::shared_ptr<NodeBase>)));
-
-    foreach(boost::shared_ptr<NodeBase> child, newNode->getChildren()){
-        addNode(child, newItem);
-    }
-}
-*/
 DataStreamPicker::~DataStreamPicker(){
     delete ui;
 }
@@ -162,35 +148,6 @@ void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<GroupingNode> node){
     info() << "drop" << node->nodeName();
 
 }
-
-
-/*
-void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<int8_t> > stream){
-    addWindow(boost::make_shared<GraphWidget>(stream));
-}
-
-void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<int> > stream){
-    addWindow(boost::make_shared<GraphWidget>(stream));
-}
-
-void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<float> > stream){
-    addWindow(boost::make_shared<GraphWidget>(stream));
-}
-
-void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<floatYPR> > stream){
-    addWindow(boost::make_shared<GraphWidget>(stream));
-}
-
-void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<uint16_t> > stream){
-    addWindow(boost::make_shared<GraphWidget>(stream));
-}
-
-void DataStreamDisplayArea::onStreamDropped(boost::shared_ptr<DataStream<Image> > stream){
-    boost::shared_ptr<VideoScreen> vs = boost::make_shared<VideoScreen>(QString::fromStdString(stream->getName()));
-    addWindow(vs);
-    stream->onUpdate.connect(DataStream<Image>::signal_type::slot_type(&VideoScreen::setImage, vs.get(), _1).track(vs));
-}
-*/
 
 
 

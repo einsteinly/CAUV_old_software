@@ -53,7 +53,26 @@ namespace cauv {
                 return (float) operand;
             }
         };
+/*
+        class limt_max : public boost::static_visitor<numeric_variant_t>
+        {
+        public:
+            clamp(double min, double max): m_min(min), m_max(max) {
+            }
 
+            template <typename T>
+                    numeric_variant_t operator()( T & operand ) const
+            {
+                if(operand > m_max) return numeric_variant_t(m_max);
+                else if(operand < m_min) return numeric_variant_t(m_min);
+                else return numeric_variant_t(operand);
+            }
+
+        protected:
+            double m_min;
+            double m_max;
+        };
+*/
         class NodeBase : virtual public QObject, public boost::enable_shared_from_this<NodeBase> {
             Q_OBJECT
         public:
@@ -235,7 +254,7 @@ namespace cauv {
 
         public:
             NumericNode(std::string name) : Node<numeric_variant_t>(GuiNodeType::NumericNode, name),
-            m_maxSet(false), m_minSet(false), m_wraps(false)
+            m_maxSet(false), m_minSet(false), m_wraps(false), m_precision(3)
             {
                 qRegisterMetaType<numeric_variant_t>("numeric_variant_t");
             }
@@ -321,6 +340,16 @@ namespace cauv {
                 Q_EMIT paramsUpdated();
             }
 
+            virtual void setPrecision(unsigned int precision){
+                m_precision = precision;
+
+                Q_EMIT paramsUpdated();
+            }
+
+            virtual unsigned int getPrecision(){
+                return m_precision;
+            }
+
         public Q_SLOTS:
 
             virtual void update(numeric_variant_t value){
@@ -400,6 +429,7 @@ namespace cauv {
             numeric_variant_t m_max;
             numeric_variant_t m_min;
             bool m_maxSet, m_minSet, m_wraps;
+            unsigned int m_precision;
         };
 
 
