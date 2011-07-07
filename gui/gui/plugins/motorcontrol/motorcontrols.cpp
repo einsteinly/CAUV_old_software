@@ -22,67 +22,83 @@ void MotorBurstController::stop() {
     m_motor->set(0);
 }
 
-/*
 
-AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<AUV::Autopilot<float> > autopilot):
-        m_autopilot(autopilot),
+
+
+AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<NodeBase> node):
+        m_autopilot(node),
         m_enabled(enabled),
         m_target(target),
         m_actual(actual) {
 
-    //incoming events
-    // forward the boost signals to Qt signals 
-    autopilot->onUpdate.connect(boost::bind(&AutopilotController::targetUpdated, this, _1));
-    autopilot->actual->onUpdate.connect(boost::bind(&AutopilotController::actualUpdated, this, _1));
-    autopilot->enabled->onUpdate.connect(boost::bind(&AutopilotController::enabledUpdated, this, _1));
 
-    // internal events, makes GUI updates happen in GUI thread
-    connect(this, SIGNAL(targetUpdated(float)), this, SLOT(onTargetUpdate(float)));
-    connect(this, SIGNAL(actualUpdated(float)), this, SLOT(onActualUpdate(float)));
-    connect(this, SIGNAL(enabledUpdated(bool)), this, SLOT(onEnabledUpdate(bool)));
+    boost::shared_ptr<NumericNode> targetNode = node->findOrCreate<NumericNode>("target");
+    boost::shared_ptr<NumericNode> enabledNode = node->findOrCreate<NumericNode>("enabled");
+    boost::shared_ptr<NumericNode> actualNode = node->findOrCreate<NumericNode>("actual");
 
-    //outgoing events
-    enabled->connect(enabled, SIGNAL(clicked(bool)), this, SLOT(updateState(bool)));
-    target->connect(target, SIGNAL(valueChanged(double)), this, SLOT(updateTarget(double)));
-    target->connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
+    // sets
+    connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
+    // these have to be Qt::DirectConnections but I'm not sure why...
+    connect(target, SIGNAL(valueChanged(double)), targetNode.get(), SLOT(set(double)), Qt::DirectConnection);
+    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(set(bool)), Qt::DirectConnection);
+
+    // updates
+    connect(enabledNode.get(), SIGNAL(onUpdate(bool)), enabled, SLOT(setChecked(bool)));
+    connect(targetNode.get(), SIGNAL(onUpdate(double)), this, SLOT(updateTarget(double)));
+    connect(actualNode.get(), SIGNAL(onUpdate(double)), actual, SLOT(setNum(double)));
+
+    // target params (max/ min / units etc...)
+    targetNode->connect(targetNode.get(), SIGNAL(paramsUpdated()), this, SLOT(configureTarget()));
+
+    configureTarget();
 }
 
-void AutopilotController::onEnabledUpdate(bool enabled){
-    m_enabled->blockSignals(true);
-    m_enabled->setChecked(enabled);
-    m_enabled->blockSignals(false);
-}
-
-void AutopilotController::onTargetUpdate(float target){
+void AutopilotController::updateTarget(double target){
     m_target->blockSignals(true);
     if(!m_target->hasFocus())
         m_target->setValue(target);
     m_target->blockSignals(false);
 }
 
-void AutopilotController::onActualUpdate(float actual){
-    m_actual->blockSignals(true);
-    m_actual->setNum(actual);
-    m_actual->blockSignals(false);
-}
-
 void AutopilotController::targetEditingFinished(){
     m_target->clearFocus();
 }
 
-void AutopilotController::updateTarget(double value) {
-    m_autopilot->set(value);
+
+void AutopilotController::configureTarget(){
+    boost::shared_ptr<NumericNode> targetNode = m_autopilot->findOrCreate<NumericNode>("target");
+
+    // set wrapping
+    m_target->setWrapping(targetNode->getWraps());
+
+    // max / min values
+    if(targetNode->isMaxSet()){
+        numeric_variant_t max = targetNode->getMax();
+        m_target->setMaximum(boost::apply_visitor(to_float(), max));
+    }
+    if(targetNode->isMinSet()) {
+        numeric_variant_t min = targetNode->getMin();
+        m_target->setMinimum(boost::apply_visitor(to_float(), min));
+    }
+
+    // units
+    m_target->setSuffix(QString::fromStdString(targetNode->getUnits()));
+
+    // and a sensible step size
+    if(targetNode->isMaxSet() && targetNode->isMinSet()){
+        numeric_variant_t min = targetNode->getMin();
+        numeric_variant_t max = targetNode->getMax();
+        m_target->setSingleStep((boost::apply_visitor(to_float(), max) - boost::apply_visitor(to_float(), min))/360.0); // 360 is a arbitary value
+                                                                         // just chosen to because its
+                                                                         // nice for degrees
+    }
 }
 
-void AutopilotController::updateState(bool value) {
-    m_autopilot->enabled->set(value);
-}
 
-*/
 
 
 MotorControls::MotorControls() :
-        m_motorsCount(0), ui(new Ui::MotorControls())
+        m_motorsCount(0), m_autopilotsCount(0), ui(new Ui::MotorControls()), m_burst_controllers()
 {
     ui->setupUi(this);
 
@@ -132,56 +148,30 @@ void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
 }
 
 void MotorControls::addAutopilot(boost::shared_ptr<NodeBase> node){
-    boost::shared_ptr<NumericNode> targetNode = node->findOrCreate<NumericNode>("target");
-    boost::shared_ptr<NumericNode> enabledNode = node->findOrCreate<NumericNode>("enabled");
-    //boost::shared_ptr<NumericNode> actualNode = node->findOrCreate<NumericNode>("actual");
 
     // set up ui
     QLabel * label = new QLabel(QString::fromStdString(node->nodeName(false)));
     ui->autopilotControlsLayout->addWidget(label, m_autopilotsCount, 0, 1, 1, Qt::AlignCenter);
 
     QDoubleSpinBox * target = new QDoubleSpinBox();
-    target->setWrapping(targetNode->getWraps());
-    target->setButtonSymbols(QAbstractSpinBox::PlusMinus);
-    //if(targetNode->isMaxSet())
-    //    target->setMaximum(boost::apply_visitor(to_float(), targetNode->getMax()));
-    //if(targetNode->isMinSet())
-    //    target->setMinimum(boost::apply_visitor(to_float(), targetNode->getMin()));
-    target->setSuffix(QString::fromStdString(targetNode->getUnits()));
 
-    /*if(targetNode->isMaxSet() && targetNode->isMinSet())
-        target->setSingleStep((boost::apply_visitor(to_float(), targetNode->getMax()) - boost::apply_visitor(to_float(), targetNode->getMin()))/360.0); // 360 is a arbitary value
-                                                                         // just chosen to because its
-                                                                         // nice for degrees
-    */
     ui->autopilotControlsLayout->addWidget(target, m_autopilotsCount, 1, 1, 1, Qt::AlignCenter);
 
     QCheckBox * enabled = new QCheckBox("State");
     ui->autopilotControlsLayout->addWidget(enabled, m_autopilotsCount, 2, 1, 1, Qt::AlignCenter);
 
-    //QLabel * actual = new QLabel("Actual");
-    //actual->setMinimumSize(QSize(60, 0));
-    //actual->setMaximumSize(QSize(60, 16777215));
-    //ui->autopilotControlsLayout->addWidget(actual, m_autopilotsCount, 3, 1, 1, Qt::AlignCenter);
+    QLabel * actual = new QLabel("Actual");
+    actual->setMinimumSize(QSize(60, 0));
+    actual->setMaximumSize(QSize(60, 16777215));
+    ui->autopilotControlsLayout->addWidget(actual, m_autopilotsCount, 3, 1, 1, Qt::AlignCenter);
 
-    // controller for the GUI view
-    //m_autopilot_controllers.push_back(boost::make_shared<AutopilotController>(enabled, target, actual, i.second));
-
-    // sets
-    // these have to be Qt::DirectConnections but I'm not sure why...
-    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(setBool(bool)), Qt::DirectConnection);
-    connect(target, SIGNAL(valueChanged(double)), this, SLOT(updateTarget(double)), Qt::DirectConnection);
-    connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()), Qt::DirectConnection);
-
-    // updates
-    connect(enabledNode.get(), SIGNAL(onUpdate(bool)), enabled, SLOT(setChecked(bool)));
-    connect(targetNode.get(), SIGNAL(onUpdate(double)), target, SLOT(setValue(double)));
-    //connect(actualNode.get(), SIGNAL(onUpdate(double)), actual, SLOT(setNum(double)));
-
-    enabledNode->set(false);
+    boost::shared_ptr<AutopilotController> controller = boost::make_shared<AutopilotController>(enabled, target, actual, node);
+    m_autopilot_controllers.push_back(controller);
 
     m_autopilotsCount++;
 }
+
+
 
 const QString MotorControls::name() const{
     return QString("Navigation");

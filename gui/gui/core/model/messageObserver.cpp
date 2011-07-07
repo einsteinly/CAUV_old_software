@@ -186,6 +186,11 @@ void GuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemtry");
     group->findOrCreate<NumericNode>("depth")->update(message->depth());
     group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
+
+    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
+    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreate<NumericNode>("actual")->update(message->orientation().yaw);
+    autopilots->findOrCreate<GroupingNode>("pitch")->findOrCreate<NumericNode>("actual")->update(message->orientation().pitch);
+    autopilots->findOrCreate<GroupingNode>("depth")->findOrCreate<NumericNode>("actual")->update(message->depth());
 }
 
 void GuiMessageObserver::onLocationMessage(LocationMessage_ptr m){

@@ -40,76 +40,19 @@ namespace cauv {
         };
 
 
-        typedef boost::variant<bool, unsigned int, int, float, double> numeric_variant_t;
+        typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
         typedef boost::shared_ptr<const Image> image_variant_t;
 
         // variant utils
-        class to_double : public boost::static_visitor<double>
+        class to_float : public boost::static_visitor<float>
         {
         public:
             template <typename T>
-                    double operator()( T & operand ) const
+                    float operator()( T & operand ) const
             {
-                return (double) operand;
+                return (float) operand;
             }
         };
-
-        class subtract : public boost::static_visitor<numeric_variant_t>
-        {
-        public:
-
-            subtract(numeric_variant_t from) : m_from(from){
-            }
-
-            template <typename T>
-                    numeric_variant_t operator()( T & operand ) const
-            {
-                int type = m_from.which();
-
-                switch(type){
-                case 1:
-                    return boost::get<unsigned int>(m_from) - operand;
-                case 2:
-                    return boost::get<int>(m_from) - operand;
-                case 3:
-                    return boost::get<float>(m_from) - operand;
-                case 4:
-                    return boost::get<double>(m_from) - operand;
-                default:
-                    return boost::get<T>(m_from) - operand;
-                }
-            }
-
-        protected:
-            numeric_variant_t m_from;
-        };
-
-        class add : public boost::static_visitor<numeric_variant_t>
-        {
-        public:
-            add(numeric_variant_t from) : m_from(from){
-            }
-            template <typename T>
-                    numeric_variant_t operator()( T & operand ) const
-            {                int type = m_from.which();
-
-                switch(type){
-                case 1:
-                    return boost::get<unsigned int>(m_from) + operand;
-                case 2:
-                    return boost::get<int>(m_from) + operand;
-                case 3:
-                    return boost::get<float>(m_from) + operand;
-                case 4:
-                    return boost::get<double>(m_from) + operand;
-                default:
-                    return boost::get<T>(m_from) + operand;
-                }
-            }
-        protected:
-            numeric_variant_t m_from;
-        };
-
 
         class NodeBase : virtual public QObject, public boost::enable_shared_from_this<NodeBase> {
             Q_OBJECT
@@ -317,13 +260,11 @@ namespace cauv {
                     return numeric_variant_t(boost::lexical_cast<int>(value));
                 case 3:
                     return numeric_variant_t(boost::lexical_cast<float>(value));
-                case 4:
-                    return numeric_variant_t(boost::lexical_cast<double>(value));
                 default:
                     throw std::exception();
                 }
             }
-
+/*
             numeric_variant_t wrap(numeric_variant_t value){
                 if(!m_maxSet || !m_minSet)
                     return value;
@@ -339,7 +280,7 @@ namespace cauv {
                     return wrap(boost::apply_visitor(subtract(value), range));
                 else return value;
             }
-
+*/
             virtual numeric_variant_t getMax() {
                 return m_max;
             }
@@ -355,6 +296,8 @@ namespace cauv {
             virtual void setMax(numeric_variant_t max){
                 m_max = max;
                 m_maxSet = true;
+
+                Q_EMIT paramsUpdated();
             }
 
             virtual bool isMaxSet(){
@@ -368,10 +311,14 @@ namespace cauv {
             virtual void setMin(numeric_variant_t min){
                 m_min = min;
                 m_minSet = true;
+
+                Q_EMIT paramsUpdated();
             }
 
             virtual void setWraps(bool wraps){
                 m_wraps = wraps;
+
+                Q_EMIT paramsUpdated();
             }
 
         public Q_SLOTS:
@@ -393,9 +340,7 @@ namespace cauv {
                     break;
                 case 3:
                     Q_EMIT onUpdate(boost::get<float>(value));
-                    break;
-                case 4:
-                    Q_EMIT onUpdate(boost::get<double>(value));
+                    Q_EMIT onUpdate((double) boost::get<float>(value));
                     break;
                 default:
                     throw std::exception();
@@ -419,7 +364,7 @@ namespace cauv {
             }
 
             virtual void set(double value){
-                set(numeric_variant_t(value));
+                set(numeric_variant_t((float)value));
             }
 
             virtual void set(numeric_variant_t value){
@@ -438,12 +383,14 @@ namespace cauv {
             }
 
         Q_SIGNALS:
-            void onUpdate(numeric_variant_t value);            
-            void onUpdate(bool value);
+            void onUpdate(numeric_variant_t value);
             void onUpdate(int value);
             void onUpdate(unsigned int value);
             void onUpdate(float value);
             void onUpdate(double value);
+            void onUpdate(bool value);
+
+            void paramsUpdated();
 
             void onSet(numeric_variant_t value);
 

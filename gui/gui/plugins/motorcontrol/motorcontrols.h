@@ -36,29 +36,20 @@ namespace cauv {
             boost::shared_ptr<NumericNode> m_motor;
         };
 
-        /*
+
     class AutopilotController : public QObject {
         Q_OBJECT
     public:
 
-        AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<AUV::Autopilot<float> > autopilot);
+        AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<NodeBase> autopilot);
 
     public Q_SLOTS:
-        void updateState(bool value);
-        void updateTarget(double value);
-
-        void onEnabledUpdate(bool enabled);
-        void onTargetUpdate(float target);
-        void onActualUpdate(float actual);
+        void updateTarget(double target);
         void targetEditingFinished();
-
-    Q_SIGNALS:
-        void enabledUpdated(bool enabled);
-        void targetUpdated(float target);
-        void actualUpdated(float actual);
+        void configureTarget();
 
     protected:
-        boost::shared_ptr<AUV::Autopilot<float> > m_autopilot;
+        boost::shared_ptr<NodeBase> m_autopilot;
 
         QCheckBox * m_enabled;
         QDoubleSpinBox * m_target;
@@ -66,7 +57,7 @@ namespace cauv {
 
     };
 
-*/
+
         class MotorControls : public QDockWidget, public CauvBasicPlugin {
             Q_OBJECT
             Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
@@ -90,7 +81,7 @@ namespace cauv {
         private:
             Ui::MotorControls * ui;
             std::vector<boost::shared_ptr<MotorBurstController> > m_burst_controllers;
-            //std::vector<boost::shared_ptr<AutopilotController> > m_autopilot_controllers;
+            std::vector<boost::shared_ptr<AutopilotController> > m_autopilot_controllers;
 
         };
     } // namespace gui

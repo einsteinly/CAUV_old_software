@@ -37,7 +37,7 @@ void GraphWidget::addNode(boost::shared_ptr<NumericNode> node){
 
         // series plotter
         std::stringstream str;
-        str << node->nodeName(false);
+        str << node->nodeName();
         if(node->getUnits().length() > 0)
             str << " (" <<  node->getUnits() << ")";
         QwtPlotCurve * curve = new QwtPlotCurve(QString::fromStdString(str.str()));
