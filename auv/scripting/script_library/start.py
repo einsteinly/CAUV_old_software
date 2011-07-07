@@ -24,4 +24,3 @@ class script(aiScript):
         time.sleep(self.options.forward_time)
         self.auv.prop(0)
         self.notify_exit('SUCCESS')
-        

@@ -169,6 +169,12 @@ class taskManager(aiProcess):
                 f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) for x in task.options.items()])+'\n')
             f.close()
     @external_function
+    def notify_begin_pause(self, message):
+        getattr(self.ai, self.current_task).begin_override_pause()
+    @external_function
+    def notify_end_pause(self, message):
+        getattr(self.ai, self.current_task).end_override_pause()
+    @external_function
     def on_script_exit(self, task, status):
         if status == 'ERROR':
             self.task_list[task].crash_count += 1
