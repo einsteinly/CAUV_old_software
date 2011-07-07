@@ -14,12 +14,10 @@ def dfu():
     node = cauv.node.Node('py-dfu')
     auv = control.AUV(node)
     bearing = getBearing()
-
+    auv.bearing(bearing)
     try:
         print 'setting bearing:'
-        auv.bearing(bearing)
-        time.sleep(2)
-
+        time.sleep(4)
         print 'diving...'
         auv.depth(2)
         time.sleep(5)
@@ -30,20 +28,15 @@ def dfu():
         auv.prop(0)
         time.sleep(4)
         print 'turning...'
-        auv.bearing((bearing + 180) % 360)
-        time.sleep(10)
-        print 'forwards...'
-        auv.prop(127)
-        time.sleep(40)
-        print 'surface...'
-        auv.depth(0)
-        auv.prop(0)
-        time.sleep(20)
     except Exception:
         traceback.print_exc()
         auv.depth(0)
+        auv.stop() 
+    finally:
+        auv.depth(0)
         auv.stop()
     print 'Complete'
+    auv.depth(0)
 
 if __name__ == '__main__':
     dfu()

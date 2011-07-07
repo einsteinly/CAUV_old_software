@@ -26,7 +26,7 @@ class scriptOptions(aiScriptOptions):
     Angle_Control_kPID = (0.6, 0, 0) # (Kp, Ki, Kd)
     Angle_DError_Window = expWindow(5, 0.6)
     Angle_Error_Clamp = 1e30
-    Depth_Control_kPID = (0.05, 0.01, 0) # (Kp, Ki, Kd)
+    Depth_Control_kPID = (-0.05, -0.01, 0) # (Kp, Ki, Kd)
     Depth_DError_Window = expWindow(5, 0.6)
     Depth_Error_Clamp = 100
     
