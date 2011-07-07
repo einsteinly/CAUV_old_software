@@ -3,6 +3,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+
 NodeBase::NodeBase(GuiNodeType::e t, const std::string name) :
         type(t), m_parent(), m_name(name), m_mutable(false) {
 

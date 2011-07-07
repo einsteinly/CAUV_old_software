@@ -53,26 +53,41 @@ namespace cauv {
                 return (float) operand;
             }
         };
-/*
-        class limt_max : public boost::static_visitor<numeric_variant_t>
+
+        class limit_max : public boost::static_visitor<numeric_variant_t>
         {
         public:
-            clamp(double min, double max): m_min(min), m_max(max) {
+            limit_max(numeric_variant_t max): m_max(boost::apply_visitor(to_float(), max)) {
+            }
+
+            template <typename T> numeric_variant_t operator()( T & operand ) const{
+                if(operand > m_max) {
+                    return numeric_variant_t((T) m_max);
+                } else return numeric_variant_t(operand);
+            }
+        protected:
+            float m_max;
+        };
+
+        class limit_min : public boost::static_visitor<numeric_variant_t>
+        {
+        public:
+            limit_min(numeric_variant_t min): m_min(boost::apply_visitor(to_float(), min)) {
             }
 
             template <typename T>
                     numeric_variant_t operator()( T & operand ) const
             {
-                if(operand > m_max) return numeric_variant_t(m_max);
-                else if(operand < m_min) return numeric_variant_t(m_min);
-                else return numeric_variant_t(operand);
+                if(operand < m_min) {
+                    return numeric_variant_t((T) m_min);
+                } else return numeric_variant_t(operand);
             }
 
         protected:
-            double m_min;
-            double m_max;
+            float m_min;
         };
-*/
+
+
         class NodeBase : virtual public QObject, public boost::enable_shared_from_this<NodeBase> {
             Q_OBJECT
         public:
@@ -283,23 +298,7 @@ namespace cauv {
                     throw std::exception();
                 }
             }
-/*
-            numeric_variant_t wrap(numeric_variant_t value){
-                if(!m_maxSet || !m_minSet)
-                    return value;
 
-                info() << "Wrapping value " << value;
-
-                numeric_variant_t range = boost::apply_visitor(subtract(m_max), m_min);
-
-                if(value < m_min) {
-                    return wrap(boost::apply_visitor(add(value), range));
-                }
-                else if(value > m_max)
-                    return wrap(boost::apply_visitor(subtract(value), range));
-                else return value;
-            }
-*/
             virtual numeric_variant_t getMax() {
                 return m_max;
             }
@@ -397,15 +396,12 @@ namespace cauv {
             }
 
             virtual void set(numeric_variant_t value){
-                /*if(m_maxSet && (value > m_max)) {
-                    info() << "Value too high ("<< value << " > " << m_max << ")";
-                    if(m_wraps) value = wrap(value);
-                    else value = m_max;
-                } else if(m_minSet && (value < m_min)) {
-                    info() << "Value too low ("<< value <<" < " << m_min <<")";
-                    if(m_wraps) value = wrap(value);
-                    else value = m_min;
-                } */
+                if(m_maxSet) {
+                    value = boost::apply_visitor(limit_max(m_max), value);
+                }
+                if(m_minSet) {
+                    value = boost::apply_visitor(limit_min(m_min), value);
+                }
 
                 Node<numeric_variant_t>::set(value);
                 Q_EMIT onSet(value);
