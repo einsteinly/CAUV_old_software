@@ -5,7 +5,7 @@ p0
 S'nodes'
 p2
 (dp3
-I32
+I35
 (icauv.pipeline
 Node
 p4
@@ -16,7 +16,7 @@ p6
 S'image_out'
 p8
 (lp9
-(I43
+(I45
 S'image in'
 p10
 tp11
@@ -38,7 +38,7 @@ p18
 S''
 p19
 tp20
-ssbsI33
+ssbsI36
 (icauv.pipeline
 Node
 p21
@@ -48,7 +48,7 @@ g6
 S'image (not copied)'
 p24
 (lp25
-(I39
+(I42
 S'image'
 p26
 tp27
@@ -60,23 +60,23 @@ sg16
 (dp29
 S'black level'
 p30
-(I34
+(I37
 S'ch1 value'
 p31
 tp32
 sS'image'
 p33
-(I26
+(I47
 S'image copy'
 p34
 tp35
 sS'white level'
 p36
-(I35
+(I38
 S'ch1 value'
 p37
 tp38
-ssbsI34
+ssbsI37
 (icauv.pipeline
 Node
 p39
@@ -86,7 +86,7 @@ g6
 S'ch1 value'
 p42
 (lp43
-(I33
+(I36
 S'black level'
 p44
 tp45
@@ -107,7 +107,7 @@ sg16
 (dp52
 S'image'
 p53
-(I36
+(I39
 S'image (not copied)'
 p54
 tp55
@@ -116,7 +116,7 @@ p56
 (I0
 g19
 tp57
-ssbsI35
+ssbsI38
 (icauv.pipeline
 Node
 p58
@@ -126,7 +126,7 @@ g6
 S'ch1 value'
 p61
 (lp62
-(I33
+(I36
 S'white level'
 p63
 tp64
@@ -147,7 +147,7 @@ sg16
 (dp71
 S'image'
 p72
-(I36
+(I39
 S'image (not copied)'
 p73
 tp74
@@ -156,7 +156,7 @@ p75
 (I0
 g19
 tp76
-ssbsI36
+ssbsI39
 (icauv.pipeline
 Node
 p77
@@ -166,15 +166,15 @@ g6
 S'image (not copied)'
 p80
 (lp81
-(I26
+(I37
 S'image'
 p82
 tp83
-a(I34
+a(I38
 S'image'
 p84
 tp85
-a(I35
+a(I47
 S'image'
 p86
 tp87
@@ -189,7 +189,7 @@ sg16
 (dp90
 S'image'
 p91
-(I31
+(I52
 S'image_out'
 p92
 tp93
@@ -198,7 +198,7 @@ p94
 (I0
 g19
 tp95
-ssbsI37
+ssbsI40
 (icauv.pipeline
 Node
 p96
@@ -208,7 +208,7 @@ g6
 S'image_out'
 p99
 (lp100
-(I38
+(I41
 S'image_in'
 p101
 tp102
@@ -231,7 +231,7 @@ g19
 tp108
 sS'image_in'
 p109
-(I25
+(I46
 S'image out'
 p110
 tp111
@@ -240,7 +240,7 @@ p112
 (I0
 g19
 tp113
-ssbsI38
+ssbsI41
 (icauv.pipeline
 Node
 p114
@@ -263,11 +263,11 @@ g19
 tp121
 sS'image_in'
 p122
-(I37
+(I40
 S'image_out'
 p123
 tp124
-ssbsI39
+ssbsI42
 (icauv.pipeline
 Node
 p125
@@ -277,12 +277,12 @@ g6
 S'image (not copied)'
 p128
 (lp129
-(I25
-S'image in'
+(I43
+S'image_in'
 p130
 tp131
-a(I40
-S'image_in'
+a(I46
+S'image in'
 p132
 tp133
 assg12
@@ -301,11 +301,11 @@ g19
 tp138
 sS'image'
 p139
-(I33
+(I36
 S'image (not copied)'
 p140
 tp141
-ssbsI40
+ssbsI43
 (icauv.pipeline
 Node
 p142
@@ -315,7 +315,7 @@ g6
 S'image_out'
 p145
 (lp146
-(I41
+(I44
 S'image_in'
 p147
 tp148
@@ -338,7 +338,7 @@ g19
 tp154
 sS'image_in'
 p155
-(I39
+(I42
 S'image (not copied)'
 p156
 tp157
@@ -347,7 +347,7 @@ p158
 (I0
 g19
 tp159
-ssbsI41
+ssbsI44
 (icauv.pipeline
 Node
 p160
@@ -370,11 +370,11 @@ g19
 tp167
 sS'image_in'
 p168
-(I40
+(I43
 S'image_out'
 p169
 tp170
-ssbsI43
+ssbsI45
 (icauv.pipeline
 Node
 p171
@@ -384,7 +384,7 @@ g6
 S'image out (not copied)'
 p174
 (lp175
-(I28
+(I49
 S'image'
 p176
 tp177
@@ -407,11 +407,11 @@ g19
 tp184
 sS'image in'
 p185
-(I32
+(I35
 S'image_out'
 p186
 tp187
-ssbsI25
+ssbsI46
 (icauv.pipeline
 Node
 p188
@@ -421,11 +421,11 @@ g6
 S'image out'
 p191
 (lp192
-(I30
+(I40
 S'image_in'
 p193
 tp194
-a(I37
+a(I51
 S'image_in'
 p195
 tp196
@@ -459,7 +459,7 @@ g19
 tp206
 sS'image in'
 p207
-(I39
+(I42
 S'image (not copied)'
 p208
 tp209
@@ -473,7 +473,7 @@ p212
 (I0
 g19
 tp213
-ssbsI26
+ssbsI47
 (icauv.pipeline
 Node
 p214
@@ -483,7 +483,7 @@ g6
 S'image copy'
 p217
 (lp218
-(I33
+(I36
 S'image'
 p219
 tp220
@@ -495,11 +495,11 @@ sg16
 (dp222
 S'image'
 p223
-(I36
+(I39
 S'image (not copied)'
 p224
 tp225
-ssbsI27
+ssbsI48
 (icauv.pipeline
 Node
 p226
@@ -509,7 +509,7 @@ g6
 S'image_out'
 p229
 (lp230
-(I29
+(I50
 S'image_in'
 p231
 tp232
@@ -532,7 +532,7 @@ g19
 tp238
 sS'image_in'
 p239
-(I30
+(I51
 S'image_out'
 p240
 tp241
@@ -541,7 +541,7 @@ p242
 (I0
 g19
 tp243
-ssbsI28
+ssbsI49
 (icauv.pipeline
 Node
 p244
@@ -557,7 +557,7 @@ p249
 sS'G'
 p251
 (lp252
-(I31
+(I52
 S'image_in'
 p253
 tp254
@@ -569,11 +569,11 @@ sg16
 (dp256
 S'image'
 p257
-(I43
+(I45
 S'image out (not copied)'
 p258
 tp259
-ssbsI29
+ssbsI50
 (icauv.pipeline
 Node
 p260
@@ -596,11 +596,11 @@ g19
 tp267
 sS'image_in'
 p268
-(I27
+(I48
 S'image_out'
 p269
 tp270
-ssbsI30
+ssbsI51
 (icauv.pipeline
 Node
 p271
@@ -610,7 +610,7 @@ g6
 S'image_out'
 p274
 (lp275
-(I27
+(I48
 S'image_in'
 p276
 tp277
@@ -631,13 +631,13 @@ p283
 F15.0
 sS'param2'
 p284
-F20.0
+F15.0
 sS'param1'
 p285
 F1.0
 sS'maxRadius'
 p286
-I50
+I70
 sS'minRadius'
 p287
 I2
@@ -677,7 +677,7 @@ g19
 tp300
 sS'image_in'
 p301
-(I25
+(I46
 S'image out'
 p302
 tp303
@@ -691,7 +691,7 @@ p306
 (I0
 g19
 tp307
-ssbsI31
+ssbsI52
 (icauv.pipeline
 Node
 p308
@@ -701,7 +701,7 @@ g6
 S'image_out'
 p311
 (lp312
-(I36
+(I39
 S'image'
 p313
 tp314
@@ -712,7 +712,7 @@ p316
 I1
 sS'scale factor'
 p317
-F0.20000000298023224
+F0.4000000059604645
 ssg15
 I2
 sg16
@@ -724,7 +724,7 @@ g19
 tp320
 sS'image_in'
 p321
-(I28
+(I49
 g251
 tp322
 sS'scale factor'

@@ -40,6 +40,7 @@ if __name__ == '__main__':
             info('No default options found for script, assuming none')
             options_class = aiScriptOptions
         script = script_class(task_ref, options_class(script_opts))
+        script._register()
         script.run()
     except Exception as e:
         ainode = aiProcess('script_error_reporter')

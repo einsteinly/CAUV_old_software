@@ -51,15 +51,6 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
     m_contents.push_back(m_idtext);
     m_contents.push_back(m_execbutton);
     m_contents.push_back(m_title);
-
-    setOutputs(m->outputs());
-    setOutputLinks(m->outputs());
-
-    setParams(m->params());
-    setParamLinks(m->inputs()); // param links are inputs
-
-    setInputs(m->inputs());
-    setInputLinks(m->inputs());
 }
 
 Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt)
@@ -76,6 +67,17 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const&
     m_contents.push_back(m_execbutton);
     m_contents.push_back(m_title);
     refreshLayout();
+}
+
+void Node::initFromMessage(boost::shared_ptr<NodeAddedMessage const>m){
+    setOutputs(m->outputs());
+    setOutputLinks(m->outputs());
+
+    setParams(m->params());
+    setParamLinks(m->inputs()); // param links are inputs
+
+    setInputs(m->inputs());
+    setInputLinks(m->inputs());
 }
 
 void Node::setType(NodeType::e const& n){
@@ -100,7 +102,7 @@ void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
         if(!m_params.count(j->first)){
             debug() << BashColour::Blue << "Node::" << __func__ << *j;
             in_ptr_t t = boost::make_shared<NodeInputBlob>(
-                this, m_pw, j->first
+                    shared_from_this(), m_pw, j->first
             );
             m_inputs[j->first] = t;
             m_contents.push_back(t);
@@ -132,7 +134,7 @@ void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outp
     for(i = outputs.begin(); i != outputs.end(); i++){
         debug() << BashColour::Blue << "Node::" << __func__ << *i;
         out_ptr_t t = boost::make_shared<NodeOutputBlob>(
-            this, m_pw, i->first
+                shared_from_this(), m_pw, i->first
         );
         m_outputs[i->first] = t;
         m_contents.push_back(t);
@@ -236,7 +238,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
             InParamPVPair t;
             t.pvpair = makePVPair(this, j, true);
             t.inblob = boost::make_shared<NodeInputParamBlob>(
-                this, m_pw, j.first
+                    shared_from_this(), m_pw, j.first
             );
             m_params[j.first] = t;
             m_contents.push_back(t.inblob);

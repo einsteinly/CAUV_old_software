@@ -110,6 +110,7 @@ class menu():
 
 if __name__=='__main__':
     ainode = aiProcess('remote')
+    ainode._register()
     
     taskm = menu('Tasks', '')
     taskm.addFunction('Add task', add_task, 'Setup an (already existing) task', {'task_ref': str})

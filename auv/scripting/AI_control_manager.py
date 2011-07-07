@@ -3,7 +3,7 @@ from cauv import control, sonar
 from cauv.debug import debug, warning, error, info
 
 import time
-import threading
+import threading, Queue
 import optparse
 
 from AI_classes import aiProcess, external_function
@@ -21,7 +21,10 @@ class auvControl(aiProcess):
         if 'disable_control' in kwargs:
             if not kwargs['disable_control']:
                 self.enabled.set()
+        else: self.enabled.set()
         self.depth_limit = None
+        self.signal_msgs = Queue.Queue(5)
+        self._register()
     @external_function
     def auv_command(self, task_id, command, *args, **kwargs):
         #__getattr__ was more trouble than its worth. since this is abstracted by fakeAUV, doesn't matter to much
@@ -33,7 +36,8 @@ class auvControl(aiProcess):
         if self.enabled.is_set() and self.current_task_id == task_id:
             debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
             getattr(self.auv, command)(*args, **kwargs)
-        print command
+        else:
+            debug('Function not called, auv disabled or called from non-current script.', 5)
     @external_function
     def sonar_command(self, task_id, command, *args, **kwargs):
         if self.enabled.is_set() and self.current_task_id == task_id:
@@ -67,21 +71,10 @@ class auvControl(aiProcess):
         self.auv.forwardlights(0)
     @external_function
     def signal(self, value):
-        info('signalling %s' %(str(value),))
-        self.auv.forwardlights(0)
-        time.sleep(2)
-        for c in str(value):
-            if not c in morsetab:
-                continue
-            for c2 in morsetab[c]:
-                self.auv.forwardlights(255)
-                if c2 == '-':
-                    time.sleep(1)
-                else:
-                    time.sleep(0.5)
-                self.auv.forwardlights(0)
-                time.sleep(0.5)
-            time.sleep(1)
+        try:
+            self.signal_msgs.put(value)
+        except Queue.Full:
+            error('Signalling queue is full, dropping request for signal')
     @external_function
     def depth(self, value):
         if self.depth_limit and self.depth_limit<value:
@@ -93,9 +86,26 @@ class auvControl(aiProcess):
     def limit_depth(self, value):
         self.depth_limit = value
     def run(self):
+        self.auv.forwardlights(0)
         while True:
-            time.sleep(10)
-            info("auv_control still alive")
+            try:
+                msg = self.signal_msgs.get(block = True, timeout = 5)
+            except Queue.Empty:
+                continue
+            self.auv.forwardlights(0)
+            time.sleep(2)
+            for c in str(msg):
+                if not c in morsetab:
+                    continue
+                for c2 in morsetab[c]:
+                    self.auv.forwardlights(255)
+                    if c2 == '-':
+                        time.sleep(1)
+                    else:
+                        time.sleep(0.5)
+                    self.auv.forwardlights(0)
+                    time.sleep(0.5)
+                time.sleep(1)
 
 #from Demos/scripts/morse.py
 morsetab = {
