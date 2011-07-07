@@ -6,7 +6,7 @@
 import threading
 import traceback
 from cauv import messaging
-from cauv.debug import debug, error
+from cauv.debug import debug, error, warning, info
 
 #pylint: disable=E1101
 
@@ -22,9 +22,27 @@ class ServiceLevel:
     Safe       = 0x20
     Regular    = 0X3f
 
+def getVersionInfo():
+    import os
+    repo_root = '/'.join(
+        (os.path.join(os.getcwd(), __file__)).split('/')[:-5]
+    )
+    (si, so) = os.popen2('hg -R %s summary --color=yes' % repo_root)
+    summary = so.read()
+    (si, so) = os.popen2('hg -R %s diff --color=yes' % repo_root)
+    diff = so.read()
+    return (summary, diff)
+
 class Node(messaging.CauvNode):
     def __init__(self, name, spreadserver="localhost", spreadport=16707):
-        debug('CauvNode.__init__...')
+        info('CAUV Python Node Initialisation...') 
+        try:
+            lc = getVersionInfo()[1]
+            if lc:
+                warning('Running with uncommitted local changes:\n%s' % lc)
+        except IOError:
+            # stupid OS X... apparently my os module was compiled wrong
+            pass
         messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
         self.__run()
 

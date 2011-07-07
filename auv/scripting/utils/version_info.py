@@ -4,9 +4,10 @@ def getVersionInfo():
     repo_root = '/'.join(
         (os.path.join(os.getcwd(), __file__)).split('/')[:-5]
     )
-    summary = os.system('hg -R %s summary --color=yes' % repo_root)
-    diff = os.system('hg -R %s diff --color=yes' % repo_root)
-    return 'summary:\n%s\ndiff:%s' % ()
+    (si, so) = os.popen2('hg -R %s summary --color=yes' % repo_root)
+    summary = so.read()
+    (si, so) = os.popen2('hg -R %s diff --color=yes' % repo_root)
+    diff = so.read()
+    return (summary, diff)
 
-print getVersionInfo()
 
