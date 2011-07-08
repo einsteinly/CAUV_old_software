@@ -4,12 +4,30 @@ from cauv import control
 import cauv.messaging as msg
 
 import time
+import math
 import optparse
 import traceback
 import threading
 
 
 from AI_classes import aiProcess, external_function
+
+
+class vec:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+    def __add__(self, other):
+        return vec(self.x+other.x, self.y+other.y)
+    def __sub__(self, other):
+        return vec(self.x-other.x, self.y-other.y)
+    def __abs__(self):
+        return math.sqrt(dotProd(self,self))
+    def __repr__(self):
+        return "(%f,%f)"%(self.x,self.y)
+    
+def dotProd(p1,p2):
+    return p1.x*p2.x + p1.y*p2.y
 
 class aiLocationProvider(msg.MessageObserver):
     def __init__(self, node):
@@ -112,9 +130,11 @@ class aiLocation(aiProcess):
            
             if self.locator.isFinished():
                 # we now should have a fix ready for us
-                (x, y) = self.locator.getPosition()
-                info("TODO: send location %f %f" % (x, y))
-                #self.auv.send(msg.LocationMessage(x, y))
+                position = self.locator.getPosition()
+                if position is None:
+                    info("Positioner returned None")
+                else: info("Positioner returned: %f, %f" % (position.x, position.y))
+                self.auv.send(msg.SonarLocationMessage(msg.floatXY(position.x, position.y)))
             
             time.sleep(self.options.wait)                
 

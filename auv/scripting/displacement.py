@@ -103,7 +103,6 @@ class Displacement(messaging.MessageObserver):
         if d is None:
             return None
         info('getPositionLL: displacement=%s' % str(d))
-        self.updateIntegration()
         r = messaging.LocationMessage()
         position = self.datum + d
         r.latitude = position.latitude

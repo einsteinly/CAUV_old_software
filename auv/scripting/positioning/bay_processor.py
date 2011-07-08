@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from cauv.debug import debug, warning, error, info
+
+from AI_location import aiLocationProvider, vec, dotProd
 import cauv
 import cauv.messaging as msg
 from math import cos,sin,atan2,pi,sqrt
@@ -8,27 +11,10 @@ import cauv.node
 import time
 
 
-class vec:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-    def __add__(self, other):
-        return vec(self.x+other.x, self.y+other.y)
-    def __sub__(self, other):
-        return vec(self.x-other.x, self.y-other.y)
-    def __abs__(self):
-        return sqrt(dotProd(self,self))
-    def __repr__(self):
-        return "(%f,%f)"%(self.x,self.y)
-    
-
 class lineSeg:
     def __init__(self,p1,p2):
         self.centre = p1
         self.angle = atan2(p2.y-p1.y, p2.x-p1.x)
-
-def dotProd(p1,p2):
-    return p1.x*p2.x + p1.y*p2.y
 
 def crossProd(p1,p2):
     return p1.x*p2.y - p1.y*p2.x
@@ -64,7 +50,7 @@ def mergeLines(line1, line2):
     a1 = normAngle(line1.angle)
     a2 = normAngle(line2.angle)
     
-    l = msg.Line(msg.floatXYZ(c.x,c.y,0), (a1*line1.length+a2*line2.length)/(line1.length + line2.length), (line1.length+line2.length)/2)
+    l = msg.Line(msg.floatXYZ(c.x,c.y,0), (a1*line1.length+a2*line2.length)/(line1.length + line2.length), (line1.length*line1.length+line2.length*line2.length)/(line1.length+line2.length))
     c2 = lineIntersection(l, lineSeg(line1.centre, line2.centre))
     l.centre.x = c2.x
     l.centre.y = c2.y
@@ -78,10 +64,10 @@ def normAngle(a):
     return a
 
 def angleDiff(a1,a2):
-    a1 = normAngle(a1)
-    a2 = normAngle(a2)
     diff = (a1 - a2) % pi;
-    return normAngle(diff);
+    if diff > pi/2:
+        diff = pi - diff
+    return diff
     
 
 def lineDistance(line1, line2):
@@ -91,26 +77,11 @@ def lineDistance(line1, line2):
 
 
 def positionInBay(lines, angleEpsilon=0.3, distanceEpsilon=0.1):
-    if len(lines) < 3:
-        print "Not enough lines"
-        return None
-    
-    mergedLines = []
-    for l1 in lines:
-        merged = False
-        for l2 in mergedLines:
-            if abs(angleDiff(l1.angle, l2.angle)) < angleEpsilon and lineDistance(l1,l2) < distanceEpsilon:
-                idx = mergedLines.index(l2)
-                mergedLines[idx] = mergeLines(l1,l2)
-                merged = True
-                break
-        if not merged:
-            mergedLines.append(l1)
-    if len(mergedLines) != 3:
+    if len(lines) != 3:
         return None
     
     centre = vec(0.5,0.5)
-    for p in itertools.permutations(mergedLines,3):
+    for p in itertools.permutations(lines,3):
         side1 = p[0]
         side2 = p[1]
         backWall = p[2]
@@ -129,10 +100,43 @@ def positionInBay(lines, angleEpsilon=0.3, distanceEpsilon=0.1):
             BxS2 = crossProd(vBack, vSide2)
             
             if BxS1 < 0 and BxS2 > 0:
-                return vec(abs(vSide1), abs(vBack))
+                return vec(abs(vSide2), abs(vBack))
 
     
     return None
+
+
+
+
+class locationProvider(aiLocationProvider):
+    
+    def __init__(self, node, args):
+        aiLocationProvider.__init__(self, node)
+        self.sonarRange = 60000
+        self.lastPos = vec(0,0)
+        self.alpha = 0.1
+    
+    def fixPosition(self):
+        #TODO
+        # stop the auv
+        # set up the sonar params
+        pass
+        
+    def getPosition(self):
+        return self.lastPos
+
+    def onLinesMessage(self, m):
+        if m.name == "bay lines":
+            rawpos = positionInBay(m.lines)                
+            if rawpos != None:
+                a = vec(self.lastPos.x * (1-self.alpha), self.lastPos.y * (1-self.alpha))
+                b = vec(rawpos.x * (self.alpha), rawpos.y * (self.alpha))
+                pos = a + b
+                self.lastPos = vec(self.sonarRange*2 * pos.x / 1000.0, self.sonarRange*2 * pos.y / 1000.0)
+                info("Latest position: " + self.lastPos)
+                
+    def onSonarControlMessage(self, m):
+        self.sonarRange = m.range
 
 
 if __name__ == "__main__":

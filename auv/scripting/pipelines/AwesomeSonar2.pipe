@@ -1,0 +1,829 @@
+(icauv.pipeline
+State
+p0
+(dp1
+S'nodes'
+p2
+(dp3
+I1
+(icauv.pipeline
+Node
+p4
+(dp5
+S'outarcs'
+p6
+(dp7
+S'bearing'
+p8
+(lp9
+sS'range'
+p10
+(lp11
+sS'image (synced)'
+p12
+(lp13
+sS'image (buffer)'
+p14
+(lp15
+(I2
+S'image'
+p16
+tp17
+a(I5
+S'image_in'
+p18
+tp19
+a(I13
+S'image in'
+p20
+tp21
+asS'bearing range'
+p22
+(lp23
+sS'data line'
+p24
+(lp25
+ssS'params'
+p26
+(dp27
+S'derivative'
+p28
+I0
+sS'low-pass width'
+p29
+I0
+sS'min range'
+p30
+I5000
+sS'non-maximum suppression'
+p31
+I0
+sS'non-maximum epsilon'
+p32
+I1
+ssS'type'
+p33
+I25
+sS'inarcs'
+p34
+(dp35
+S'derivative'
+p36
+(I0
+S''
+p37
+tp38
+sS'low-pass width'
+p39
+(I0
+g37
+tp40
+sS'min range'
+p41
+(I0
+g37
+tp42
+sS'non-maximum suppression'
+p43
+(I0
+g37
+tp44
+sS'non-maximum epsilon'
+p45
+(I0
+g37
+tp46
+ssbsI2
+(icauv.pipeline
+Node
+p47
+(dp48
+g6
+(dp49
+S'image copy'
+p50
+(lp51
+(I3
+S'image in'
+p52
+tp53
+assg26
+(dp54
+sg33
+I1
+sg34
+(dp55
+S'image'
+p56
+(I1
+S'image (buffer)'
+p57
+tp58
+ssbsI3
+(icauv.pipeline
+Node
+p59
+(dp60
+g6
+(dp61
+S'image out'
+p62
+(lp63
+(I4
+S'image'
+p64
+tp65
+assg26
+(dp66
+S'level'
+p67
+I1
+ssg33
+I47
+sg34
+(dp68
+S'image in'
+p69
+(I2
+S'image copy'
+p70
+tp71
+sS'level'
+p72
+(I0
+g37
+tp73
+ssbsI4
+(icauv.pipeline
+Node
+p74
+(dp75
+g6
+(dp76
+S'image (not copied)'
+p77
+(lp78
+(I7
+S'image'
+p79
+tp80
+assg26
+(dp81
+S'sigma'
+p82
+F2.0
+ssg33
+I13
+sg34
+(dp83
+S'image'
+p84
+(I3
+S'image out'
+p85
+tp86
+sS'sigma'
+p87
+(I0
+g37
+tp88
+ssbsI5
+(icauv.pipeline
+Node
+p89
+(dp90
+g6
+(dp91
+sg26
+(dp92
+S'jpeg quality'
+p93
+I85
+ssg33
+I11
+sg34
+(dp94
+S'jpeg quality'
+p95
+(I0
+g37
+tp96
+sS'image_in'
+p97
+(I1
+S'image (buffer)'
+p98
+tp99
+ssbsI6
+(icauv.pipeline
+Node
+p100
+(dp101
+g6
+(dp102
+sg26
+(dp103
+S'jpeg quality'
+p104
+I85
+ssg33
+I11
+sg34
+(dp105
+S'jpeg quality'
+p106
+(I0
+g37
+tp107
+sS'image_in'
+p108
+(I7
+S'image (not copied)'
+p109
+tp110
+ssbsI7
+(icauv.pipeline
+Node
+p111
+(dp112
+g6
+(dp113
+S'image (not copied)'
+p114
+(lp115
+(I6
+S'image_in'
+p116
+tp117
+a(I8
+S'image in'
+p118
+tp119
+assg26
+(dp120
+S'black level'
+p121
+I2
+sS'white level'
+p122
+I160
+ssg33
+I22
+sg34
+(dp123
+S'black level'
+p124
+(I0
+g37
+tp125
+sS'image'
+p126
+(I4
+S'image (not copied)'
+p127
+tp128
+sS'white level'
+p129
+(I0
+g37
+tp130
+ssbsI8
+(icauv.pipeline
+Node
+p131
+(dp132
+g6
+(dp133
+S'image out'
+p134
+(lp135
+(I20
+S'image_in'
+p136
+tp137
+a(I9
+S'image in'
+p138
+tp139
+a(I10
+S'image in'
+p140
+tp141
+assg26
+(dp142
+S'threshold 2'
+p143
+F60.0
+sS'threshold 1'
+p144
+F70.0
+sS'L2 gradient'
+p145
+I1
+sS'aperture size'
+p146
+I3
+ssg33
+I9
+sg34
+(dp147
+S'threshold 2'
+p148
+(I0
+g37
+tp149
+sS'threshold 1'
+p150
+(I0
+g37
+tp151
+sS'image in'
+p152
+(I7
+S'image (not copied)'
+p153
+tp154
+sS'L2 gradient'
+p155
+(I0
+g37
+tp156
+sS'aperture size'
+p157
+(I0
+g37
+tp158
+ssbsI9
+(icauv.pipeline
+Node
+p159
+(dp160
+g6
+(dp161
+S'lines'
+p162
+(lp163
+(I10
+S'lines'
+p164
+tp165
+a(I12
+S'lines'
+p166
+tp167
+assg26
+(dp168
+S'minLineLength'
+p169
+I15
+sS'stn'
+p170
+I0
+sS'srn'
+p171
+I0
+sS'maxLineGap'
+p172
+I4
+sS'rho'
+p173
+I1
+sS'threshold'
+p174
+I20
+sS'theta'
+p175
+F0.009999999776482582
+sS'probabilistic'
+p176
+I01
+ssg33
+I8
+sg34
+(dp177
+S'minLineLength'
+p178
+(I0
+g37
+tp179
+sS'srn'
+p180
+(I0
+g37
+tp181
+sS'stn'
+p182
+(I0
+g37
+tp183
+sS'image in'
+p184
+(I8
+S'image out'
+p185
+tp186
+sS'maxLineGap'
+p187
+(I0
+g37
+tp188
+sS'rho'
+p189
+(I0
+g37
+tp190
+sS'threshold'
+p191
+(I0
+g37
+tp192
+sS'theta'
+p193
+(I0
+g37
+tp194
+sS'probabilistic'
+p195
+(I0
+g37
+tp196
+ssbsI10
+(icauv.pipeline
+Node
+p197
+(dp198
+g6
+(dp199
+S'image out'
+p200
+(lp201
+(I11
+S'image_in'
+p202
+tp203
+assg26
+(dp204
+sg33
+I48
+sg34
+(dp205
+S'lines'
+p206
+(I9
+S'lines'
+p207
+tp208
+sS'image in'
+p209
+(I8
+S'image out'
+p210
+tp211
+ssbsI11
+(icauv.pipeline
+Node
+p212
+(dp213
+g6
+(dp214
+sg26
+(dp215
+S'jpeg quality'
+p216
+I85
+ssg33
+I11
+sg34
+(dp217
+S'jpeg quality'
+p218
+(I0
+g37
+tp219
+sS'image_in'
+p220
+(I10
+S'image out'
+p221
+tp222
+ssbsI12
+(icauv.pipeline
+Node
+p223
+(dp224
+g6
+(dp225
+S'lines'
+p226
+(lp227
+(I13
+S'lines'
+p228
+tp229
+a(I15
+S'lines'
+p230
+tp231
+assg26
+(dp232
+S'distance epsilon'
+p233
+F0.10000000149011612
+sS'angle epsilon'
+p234
+F0.30000001192092896
+ssg33
+I69
+sg34
+(dp235
+S'distance epsilon'
+p236
+(I0
+g37
+tp237
+sS'lines'
+p238
+(I9
+S'lines'
+p239
+tp240
+sS'angle epsilon'
+p241
+(I0
+g37
+tp242
+ssbsI13
+(icauv.pipeline
+Node
+p243
+(dp244
+g6
+(dp245
+S'image out'
+p246
+(lp247
+(I14
+S'image_in'
+p248
+tp249
+assg26
+(dp250
+sg33
+I48
+sg34
+(dp251
+S'lines'
+p252
+(I12
+S'lines'
+p253
+tp254
+sS'image in'
+p255
+(I1
+S'image (buffer)'
+p256
+tp257
+ssbsI14
+(icauv.pipeline
+Node
+p258
+(dp259
+g6
+(dp260
+sg26
+(dp261
+S'jpeg quality'
+p262
+I85
+ssg33
+I11
+sg34
+(dp263
+S'jpeg quality'
+p264
+(I0
+g37
+tp265
+sS'image_in'
+p266
+(I13
+S'image out'
+p267
+tp268
+ssbsI15
+(icauv.pipeline
+Node
+p269
+(dp270
+g6
+(dp271
+sg26
+(dp272
+S'name'
+p273
+S'bay lines'
+p274
+ssg33
+I49
+sg34
+(dp275
+S'lines'
+p276
+(I12
+S'lines'
+p277
+tp278
+sS'name'
+p279
+(I0
+g37
+tp280
+ssbsI20
+(icauv.pipeline
+Node
+p281
+(dp282
+g6
+(dp283
+sg26
+(dp284
+S'jpeg quality'
+p285
+I85
+ssg33
+I11
+sg34
+(dp286
+S'jpeg quality'
+p287
+(I0
+g37
+tp288
+sS'image_in'
+p289
+(I8
+S'image out'
+p290
+tp291
+ssbsI22
+(icauv.pipeline
+Node
+p292
+(dp293
+g6
+(dp294
+S'bearing'
+p295
+(lp296
+sS'range'
+p297
+(lp298
+sS'image (synced)'
+p299
+(lp300
+sS'image (buffer)'
+p301
+(lp302
+(I23
+S'image_in'
+p303
+tp304
+asS'bearing range'
+p305
+(lp306
+sS'data line'
+p307
+(lp308
+ssg26
+(dp309
+S'derivative'
+p310
+I1
+sS'low-pass width'
+p311
+I0
+sS'min range'
+p312
+I0
+sS'non-maximum suppression'
+p313
+I0
+sS'non-maximum epsilon'
+p314
+I1
+ssg33
+I25
+sg34
+(dp315
+S'derivative'
+p316
+(I0
+g37
+tp317
+sS'low-pass width'
+p318
+(I0
+g37
+tp319
+sS'min range'
+p320
+(I0
+g37
+tp321
+sS'non-maximum suppression'
+p322
+(I0
+g37
+tp323
+sS'non-maximum epsilon'
+p324
+(I0
+g37
+tp325
+ssbsI23
+(icauv.pipeline
+Node
+p326
+(dp327
+g6
+(dp328
+sg26
+(dp329
+S'jpeg quality'
+p330
+I85
+ssg33
+I11
+sg34
+(dp331
+S'jpeg quality'
+p332
+(I0
+g37
+tp333
+sS'image_in'
+p334
+(I22
+S'image (buffer)'
+p335
+tp336
+ssbsI24
+(icauv.pipeline
+Node
+p337
+(dp338
+g6
+(dp339
+S'image (not copied)'
+p340
+(lp341
+ssg26
+(dp342
+S'black level'
+p343
+I0
+sS'white level'
+p344
+I255
+ssg33
+I22
+sg34
+(dp345
+S'black level'
+p346
+(I0
+g37
+tp347
+sS'image'
+p348
+(I0
+g37
+tp349
+sS'white level'
+p350
+(I0
+g37
+tp351
+ssbsI25
+(icauv.pipeline
+Node
+p352
+(dp353
+g6
+(dp354
+S'image copy'
+p355
+(lp356
+ssg26
+(dp357
+sg33
+I1
+sg34
+(dp358
+S'image'
+p359
+(I0
+g37
+tp360
+ssbssb.
