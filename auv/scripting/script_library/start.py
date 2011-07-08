@@ -8,8 +8,6 @@ class scriptOptions(aiScriptOptions):
     forward_time = 30
     forward_speed = 120
     already_run = False
-    class Meta:
-        dynamic = ['already_run']
 
 class script(aiScript):
     def run(self):
@@ -29,3 +27,4 @@ class script(aiScript):
         self.log('Passed through the validation gate')
         self.auv.prop(0)
         self.notify_exit('SUCCESS')
+
