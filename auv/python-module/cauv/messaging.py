@@ -1,7 +1,11 @@
 # This module transparently wraps the boost-python exported messaging
 # interface
 
-from cauvinterface import *
+try:
+    from cauvinterfaced import *
+except ImportError:
+    print "No debug interface, trying release"
+    from cauvinterface import *
 
 #pylint: disable=E0602
 
