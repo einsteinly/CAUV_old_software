@@ -13,7 +13,7 @@ import traceback
 def dfu(): 
     node = cauv.node.Node('py-dfu')
     auv = control.AUV(node)
-    bearing = getBearing()
+    bearing = auv.getBearing()
     auv.bearing(bearing)
     try:
         print 'setting bearing:'
