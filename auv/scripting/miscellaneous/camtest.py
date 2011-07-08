@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+#pylint: disable=E1101
+
 import cauv
 import cauv.node as node
 import cauv.messaging as msg
