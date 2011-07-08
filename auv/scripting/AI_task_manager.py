@@ -246,7 +246,7 @@ class taskManager(aiProcess):
         task.active = True
     def run(self):
         while True:
-            self.conditions_changed.wait(5)
+            self.conditions_changed.wait(1)
             self.conditions_changed.clear()
             if self.request_stop.is_set():
                 self.request_stop.clear()

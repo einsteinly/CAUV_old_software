@@ -4,12 +4,10 @@ from cauv.debug import debug, warning, error, info
 import time
 
 class scriptOptions(aiScriptOptions):
-    depth = 1.2
+    depth = 1.0
     forward_time = 30
     forward_speed = 120
     already_run = False
-    class Meta:
-        dynamic = ['already_run']
 
 class script(aiScript):
     def run(self):
@@ -29,3 +27,4 @@ class script(aiScript):
         self.log('Passed through the validation gate')
         self.auv.prop(0)
         self.notify_exit('SUCCESS')
+
