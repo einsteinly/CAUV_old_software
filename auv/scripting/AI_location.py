@@ -62,9 +62,10 @@ class aiLocation(aiProcess):
         self.args = args
         self.timeout = threading.Event()
         self.auv = control.AUV(self.node)
-    
+        self._register()
         
     def run(self):
+        self.ai.auv_control.pause(self.process_name, self.options.timeout)
     
         scriptName = self.options.script
     
@@ -108,7 +109,6 @@ class aiLocation(aiProcess):
                     break;
                 else:
                     time.sleep(1) # check if its finished once per second
-                    info("Position provider not finished yet")
            
             if self.locator.isFinished():
                 # we now should have a fix ready for us
@@ -116,8 +116,7 @@ class aiLocation(aiProcess):
                 info("TODO: send location %f %f" % (x, y))
                 #self.auv.send(msg.LocationMessage(x, y))
             
-            time.sleep(self.options.wait)
-                    
+            time.sleep(self.options.wait)                
 
     @external_function
     def onPauseTimeout(self):
