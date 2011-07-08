@@ -1,8 +1,15 @@
 import subprocess
 import time
 import optparse
+import cPickle
+import threading
 
-from cauv.debug import info
+from cauv.debug import info, debug, warning, error
+from cauv import messaging
+from cauv.node import Node
+
+from utils.ordereddict import OrderedDict
+
 """
 Processes
 detector process - runs detector classes, and loops through processing
@@ -18,12 +25,15 @@ class Process():
     def __init__(self, command, opts):
         self.command = command
         self.opts = opts
-        self.start()
+        self.started = threading.Event()
     def start(self):
         c = ' '.join(self.command)+' '+' '.join(['--%s=%s' %(x[0],str(x[1])) if not isinstance(x[1], bool) else ('--'+x[0] if x[1] else '') for x in self.opts.items()])
         info('Running command: '+c)
         if 'restore' in self.opts: self.opts['restore'] = True #if the process stops we want to try and restore it with its old data
         self.process = subprocess.Popen(c.split(' '))
+        self.started.wait(5)
+        if not self.started.is_set():
+            warning('Process %s did not respond in time after it was started, may be dead or still starting.' %(self.command,))
     def status(self):
         if self.process.poll():
             return 0
@@ -34,26 +44,42 @@ class Process():
 process_data_list = (
             ('pipeline_manager', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'reset_pls', 'freeze_pls', 'restore']),
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
-            ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
             ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
+            ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
             )
 
-class AImanager():
+class AImanager(messaging.MessageObserver):
     def __init__(self, **kwargs):
+        messaging.MessageObserver.__init__(self)
+        self.node = Node("aimanage")
+        self.node.join("ai")
         self.kwargs = kwargs
         if 'disable' in self.kwargs:
             disable = self.kwargs.pop('disable')
-        self.processes = {}
+        self.processes = OrderedDict()
         for process_data in process_data_list:
             if not process_data[0] in disable:
                 self.processes[process_data[0]] = Process(process_data[1].split(' '),opts=dict([(x,self.kwargs[x]) for x in process_data[2]]))
+        self.node.addObserver(self)
     def run(self):
+        for process_name in self.processes:
+            self.processes[process_name].start()
         while True:
             for process_name in self.processes:
                 process = self.processes[process_name]
                 if process.status() == 0:
+                    process.started.clear()
                     process.start()
+                time.sleep(0.5)
             time.sleep(2)
+    def onAIMessage(self, m):
+        message = cPickle.loads(m.msg)
+        if message[0] == 'STATE':
+            if message[2] == 'REGISTER':
+                try:
+                    self.processes[message[1]].started.set()
+                except KeyError:
+                    pass
 if __name__ == '__main__':
     p = optparse.OptionParser()
     p.add_option('-r', '--restore', dest='restore', default=False,

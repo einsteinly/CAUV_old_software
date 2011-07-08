@@ -17,22 +17,6 @@ def Spiral():
     # Create a python object for the control of the AUV
     auv = control.AUV(node)
 
-    debug('setting calibration...')
-    # Set the y intercept and gradient of the pressure/depth conversion for
-    # Pressure sensors
-    auv.calibrateDepth(-912.2/96.2, 1.0/96.2)
-
-    # Set kp kd ki and scale for control loops
-    auv.bearingParams(1, 0, -80, 1)
-    auv.depthParams(40, 0, 0, 1)
-    auv.pitchParams(1, 0, 0, 1)
-
-    auv.propMap(10, -10, 127, -127)
-    auv.vbowMap(10, -10, 127, -127)
-    auv.hbowMap(10, -10, 127, -127)
-    auv.vsternMap(10, -10, 127, -127)
-    auv.hsternMap(10, -10, 127, -127)
-
     time.sleep(2)
     #bearing = auv.getBearing()
     #if bearing is None:

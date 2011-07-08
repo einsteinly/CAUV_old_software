@@ -314,6 +314,10 @@ class pipelineManager(aiProcess):
             if kwargs['reset_pls']:
                 self.shelf.pop('pl_data')
                 self.shelf.sync()
+        self.freeze = False
+        if 'freeze_pls' in kwargs:
+            if kwargs['freeze_pls']:
+                self.freeze = True
         try:
             if kwargs['restore']:
                 self.requests = self.state['requests']
@@ -498,7 +502,7 @@ class pipelineManager(aiProcess):
         except RuntimeError:
             error("Couldn't communicate with pipeline, not updating")
             return
-        if len(state.nodes):
+        if len(state.nodes) and not self.freeze:
             #2
             traced = [] #nodes that have been added to a group
             node_relabelings = {} #summary of how node names in state -> node names in optimised pipelines
