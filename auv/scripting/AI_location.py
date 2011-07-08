@@ -4,6 +4,7 @@ from cauv import control
 import cauv.messaging as msg
 
 import time
+import math
 import optparse
 import traceback
 import threading
@@ -21,7 +22,7 @@ class vec:
     def __sub__(self, other):
         return vec(self.x-other.x, self.y-other.y)
     def __abs__(self):
-        return sqrt(dotProd(self,self))
+        return math.sqrt(dotProd(self,self))
     def __repr__(self):
         return "(%f,%f)"%(self.x,self.y)
     

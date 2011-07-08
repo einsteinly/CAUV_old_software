@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-from AI_location import aiLocationProvider, vec
+from cauv.debug import debug, warning, error, info
+
+from AI_location import aiLocationProvider, vec, dotProd
 import cauv
 import cauv.messaging as msg
 from math import cos,sin,atan2,pi,sqrt
@@ -131,7 +133,7 @@ class locationProvider(aiLocationProvider):
                 b = vec(rawpos.x * (self.alpha), rawpos.y * (self.alpha))
                 pos = a + b
                 self.lastPos = vec(self.sonarRange*2 * pos.x / 1000.0, self.sonarRange*2 * pos.y / 1000.0)
-                info("Latest position: " + lastPos)
+                info("Latest position: " + self.lastPos)
                 
     def onSonarControlMessage(self, m):
         self.sonarRange = m.range
