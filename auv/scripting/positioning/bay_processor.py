@@ -2,6 +2,8 @@
 
 from cauv.debug import debug, warning, error, info
 
+import cauv.sonar
+
 from AI_location import aiLocationProvider, vec, dotProd
 import cauv
 import cauv.messaging as msg
@@ -9,7 +11,9 @@ from math import cos,sin,atan2,pi,sqrt
 import itertools
 import cauv.node
 import time
+import threading
 
+import cauv.pipeline as pipeline
 
 class lineSeg:
     def __init__(self,p1,p2):
@@ -112,27 +116,74 @@ class locationProvider(aiLocationProvider):
     
     def __init__(self, node, args):
         aiLocationProvider.__init__(self, node)
+        
+        self.pipeline = pipeline.Model(node, "sonar")
+        self.sonar = cauv.sonar.Sonar(node)
+    
         self.sonarRange = 60000
+        self.sonarRangeRes = 100
+        self.sonarAnglularRes = 60
+        self.sonarGain = 255
+        self.sonarWidth = 6400
+        
         self.lastPos = vec(0,0)
         self.alpha = 0.1
-    
+        
+        self.linesMessageCount = 0
+        
+        self.positioningFinished = threading.Event()
+        
     def fixPosition(self):
-        #TODO
-        # stop the auv
+        # the AUV gets stopped in AI_location before this
+        # method is called so we don't need to do it here
+    
         # set up the sonar params
-        pass
+        self.sonar.range(self.sonarRange)
+        self.sonar.rangeRes(self.sonarRangeRes)
+        self.sonar.angularRes(self.sonarAnglularRes)
+        self.sonar.gain(self.sonarGain)
+        self.sonar.width(self.sonarWidth)
+        
+        # set up the pipeline
+        self.pipeline.load("pipelines/sonar_walls.pipe")
+        
+        # wait for a full scan, but also check if we've run over
+        # the time we're allowed for a capture
+        while not self.positioningFinished.is_set():
+            # self.stopped is set by AI_location if the 
+            # auv pause we requested times out
+            if self.stopped.is_set():
+                error("Bay processing stopped by timeout")    
+                return
+            else: 
+                debug("Still waiting for position fix")
+                self.positioningFinished.wait(1)           
         
     def getPosition(self):
-        return self.lastPos
+        # convert to sonar range scale
+        return vec(self.sonarRange*2 * pos.x / 1000.0, self.sonarRange*2 * pos.y / 1000.0)
 
     def onLinesMessage(self, m):
         if m.name == "bay lines":
+        
+            # we need some way to know when the positioning has been completed
+            # as there's going to be noise in the reading we need to wait for
+            # a few before returning a position
+            self.linesMessageCount += 1
+            if (self.linesMessageCount > 20): # wait for 20 messages
+                self.linesMessageCount = 0
+                self.positioningFinished.set()
+            else: self.positioningFinished.clear()
+                        
+            # work out where we are from the lines...    
             rawpos = positionInBay(m.lines)                
             if rawpos != None:
                 a = vec(self.lastPos.x * (1-self.alpha), self.lastPos.y * (1-self.alpha))
                 b = vec(rawpos.x * (self.alpha), rawpos.y * (self.alpha))
                 pos = a + b
-                self.lastPos = vec(self.sonarRange*2 * pos.x / 1000.0, self.sonarRange*2 * pos.y / 1000.0)
+                if self.lastPos == None:
+                    self.lastPos = rawPos
+                else: self.lastPos = pos
                 info("Latest position: " + self.lastPos)
                 
     def onSonarControlMessage(self, m):

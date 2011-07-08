@@ -5,11 +5,11 @@
 #include "emit_generated.h"
 
 // omgboostpythonmagic...
-#ifdef CAUV_NO_DEBUG
+//#ifdef CAUV_NO_DEBUG
 BOOST_PYTHON_MODULE(cauvinterface)
-#else
-BOOST_PYTHON_MODULE(cauvinterfaced)
-#endif
+//#else
+//BOOST_PYTHON_MODULE(cauvinterfaced)
+//#endif
 {
     PyEval_InitThreads(); 
 
