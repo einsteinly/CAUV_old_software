@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <cstring>
+#include <cstdio>
 
 #include <xsens/cmtdef.h>
 #include <xsens/xsens_time.h>
