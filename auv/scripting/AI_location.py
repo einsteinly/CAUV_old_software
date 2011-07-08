@@ -134,7 +134,7 @@ class aiLocation(aiProcess):
                 if position is None:
                     info("Positioner returned None")
                 else: info("Positioner returned: %f, %f" % (position.x, position.y))
-                self.auv.send(msg.SonarLocationMessage(msg.floatXY(position.x, position.y)))
+                self.auv.send(msg.SonarLocationMessage(msg.floatXY(position.x, position.y))) #pylint: disable=E1101
             
             time.sleep(self.options.wait)                
 

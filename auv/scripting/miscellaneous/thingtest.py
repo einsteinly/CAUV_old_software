@@ -1,4 +1,8 @@
 #! /usr/bin/env python
+#pylint: disable=E0611
+
+# to use this file you need to uncomment the Thing and ThingCaller exports in
+# emit-static.cpp
 
 import sys
 from cauv.messaging import Thing
