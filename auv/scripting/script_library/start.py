@@ -5,8 +5,8 @@ import time
 
 class scriptOptions(aiScriptOptions):
     depth = 1.0
-    forward_time = 30
-    forward_speed = 120
+    forward_time = 40
+    forward_speed = 100
     already_run = False
 
 class script(aiScript):

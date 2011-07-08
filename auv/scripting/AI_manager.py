@@ -34,8 +34,8 @@ class Process():
 process_data_list = (
             ('pipeline_manager', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'reset_pls', 'freeze_pls', 'restore']),
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
-            ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
             ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
+            ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
             )
 
 class AImanager():
@@ -53,6 +53,7 @@ class AImanager():
                 process = self.processes[process_name]
                 if process.status() == 0:
                     process.start()
+                time.sleep(0.5)
             time.sleep(2)
 if __name__ == '__main__':
     p = optparse.OptionParser()
