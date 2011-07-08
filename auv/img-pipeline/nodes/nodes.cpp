@@ -63,6 +63,7 @@
 #include "broadcastKeypointsNode.h"
 #include "drawKeyPointsNode.h"
 #include "mathAddMultNode.h"
+#include "mergeSimilarLinesNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -136,6 +137,7 @@ DEFINE_NFR(BroadcastKeypointsNode, NodeType::BroadcastKeyPoints);
 DEFINE_NFR(DrawKeyPointsNode, NodeType::DrawKeyPoints);
 template<> DEFINE_NFR(MathAddMultNode<int>, NodeType::MathAddMultInt);
 template<> DEFINE_NFR(MathAddMultNode<float>, NodeType::MathAddMultFloat);
+DEFINE_NFR(MergeSimilarLinesNode, NodeType::MergeSimilarLines);
 
 
 boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];

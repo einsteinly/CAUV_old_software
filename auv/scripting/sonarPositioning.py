@@ -64,7 +64,7 @@ def mergeLines(line1, line2):
     a1 = normAngle(line1.angle)
     a2 = normAngle(line2.angle)
     
-    l = msg.Line(msg.floatXYZ(c.x,c.y,0), (a1*line1.length+a2*line2.length)/(line1.length + line2.length), (line1.length+line2.length)/2)
+    l = msg.Line(msg.floatXYZ(c.x,c.y,0), (a1*line1.length+a2*line2.length)/(line1.length + line2.length), (line1.length*line1.length+line2.length*line2.length)/(line1.length+line2.length))
     c2 = lineIntersection(l, lineSeg(line1.centre, line2.centre))
     l.centre.x = c2.x
     l.centre.y = c2.y
@@ -78,10 +78,10 @@ def normAngle(a):
     return a
 
 def angleDiff(a1,a2):
-    a1 = normAngle(a1)
-    a2 = normAngle(a2)
     diff = (a1 - a2) % pi;
-    return normAngle(diff);
+    if diff > pi/2:
+        diff = pi - diff
+    return diff
     
 
 def lineDistance(line1, line2):
@@ -129,7 +129,7 @@ def positionInBay(lines, angleEpsilon=0.3, distanceEpsilon=0.1):
             BxS2 = crossProd(vBack, vSide2)
             
             if BxS1 < 0 and BxS2 > 0:
-                return vec(abs(vSide1), abs(vBack))
+                return vec(abs(vSide2), abs(vBack))
 
     
     return None
