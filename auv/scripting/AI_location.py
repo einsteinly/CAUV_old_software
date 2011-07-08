@@ -59,7 +59,9 @@ class aiLocationProvider(msg.MessageObserver):
     def run(self):
         while True:
             # wait until we're told to run
+            self.performFix.clear()
             self.performFix.wait()
+            
             # run the fix
             self.stopped.clear()
             self.finished.clear()
@@ -113,16 +115,14 @@ class aiLocation(aiProcess):
         
             # stop the auv from being moved by other threads
             self.ai.auv_control.pause(self.process_name, self.options.timeout)
-            
-            print self.options.timeout
-            
-            info("Running fix")
+                        
+            info("AI_location: Running fix")
             self.locator.startFix()
             
             
             while not self.locator.isFinished():
                 if self.timeout.is_set():
-                    error("Position provider is taking too long to give a result. Killing it")
+                    error("AI_location: Position provider is taking too long to give a result. Killing it")
                     self.locator.stop()
                     break;
                 else:
@@ -132,23 +132,24 @@ class aiLocation(aiProcess):
                 # we now should have a fix ready for us
                 position = self.locator.getPosition()
                 if position is None:
-                    info("Positioner returned None")
-                else: info("Positioner returned: %f, %f" % (position.x, position.y))
+                    info("AI_location: Positioner returned None")
+                else: info("AI_location: Positioner returned: %f, %f" % (position.x, position.y))
                 self.auv.send(msg.SonarLocationMessage(msg.floatXY(position.x, position.y))) #pylint: disable=E1101
             
+            info("AI_location: Waiting for %i seconds before next fix attemp" % self.options.wait)
             time.sleep(self.options.wait)                
 
     @external_function
     def onPauseTimeout(self):
-        error("Timeout: Pause time has run out")
+        error("AI_location: Pause time has run out")
         self.timeout.set()
         
     
 if __name__ == '__main__':
     p = optparse.OptionParser()
     
-    p.add_option('-w', '--wait', dest='wait', type="int", default=10, help="time to wait inbetween captures")
-    p.add_option('-t', '--timeout', dest='timeout', type="int", default=20, help='maximum time to wait for a position fix')
+    p.add_option('-w', '--wait', dest='wait', type="int", default=30, help="time to wait inbetween captures")
+    p.add_option('-t', '--timeout', dest='timeout', type="int", default=15, help='maximum time to wait for a position fix')
     p.add_option('-s', '--script', dest='script', default="bay_processor", help='script to process sonar data')
     
     (opts, args) = p.parse_args()
