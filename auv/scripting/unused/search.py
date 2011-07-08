@@ -27,16 +27,6 @@ def Search():
         -912.2/96.2, 1.0/96.2, -912.2/96.2, 1.0/96.2
     ), "control")
 
-    auv.bearingParams(1, 0, -80, 1)                 #Setting kp kd ki and scale of the following parameters
-    auv.depthParams(40, 0, 0, 1)
-    #auv.pitchParams(1, 0, 0, 1)
-
-    auv.propMap(10, -10, 127, -127)
-    auv.vbowMap(10, -10, 127, -127)
-    auv.hbowMap(10, -10, 127, -127)
-    auv.vsternMap(10, -10, 127, -127)
-    auv.hsternMap(10, -10, 127, -127)
-
     time.sleep(2)
     #bearing = auv.getBearing()
     #if bearing is None:

@@ -21,7 +21,7 @@ class scriptOptions(aiScriptOptions):
     lines_name = 'pipe'
     histogram_name = 'pipe'
     #Timeouts
-    ready_timeout = 200
+    ready_timeout = 10
     lost_timeout = 3
     # Calibration
     pipe_end     = 0.2 # of image (range +0.5 to -0.5)
@@ -32,7 +32,7 @@ class scriptOptions(aiScriptOptions):
     average_time = 1   # seconds
     intensity_trigger = 0.10
     # Control
-    prop_speed = 40
+    prop_speed = 80
     strafe_kPID  = (-300, 0, 0)
     
     #TODO: this doesn't actually do anythign at the moment
@@ -114,8 +114,13 @@ class script(aiScript):
             
                 
             # set the flags that show if we're above the pipe
-            if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set(): self.ready.set()
-            else: self.ready.clear()
+            if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set():
+                self.ready.set()
+            else:
+                debug('centered:%s aligned:%s depthed:%s' %
+                        (self.centered.is_set(), self.aligned.is_set(), self.depthed.is_set())
+                )
+                self.ready.clear()
 
 
     def onCentreMessage(self, m):
@@ -153,6 +158,7 @@ class script(aiScript):
         
 
     def followPipeUntil(self, condition):
+        debug('followPipeUntil: %s', condition.is_set())
         while not condition.is_set():
             # check we're still good to go, giving a little time to re-align the 
             # pipe if needed
@@ -166,7 +172,7 @@ class script(aiScript):
             
             # go forward for a bit while we're still above the pipe
             while self.ready.is_set():
-                time.sleep(1)
+                time.sleep(0.2)
         
         return True
   
@@ -179,21 +185,20 @@ class script(aiScript):
         
         follow_pipe_file = self.options.follow_pipeline_file
         self.request_pl(follow_pipe_file)
-            
+        
         # now we wait for messages allowing us to work out how to align with
         # the pipe, but if this is taking too long then just give up as we've
         # probably drifted away from the pipe
         debug('Waiting for ready...')
         self.ready.wait(self.options.ready_timeout)
-        if self.ready.is_set():
+        if not self.ready.is_set():
             error("Took too long to become ready, aborting")
             self.drop_pl(follow_pipe_file)
             self.notify_exit('ABORT')            
             return #timeout
         
-        
         for i in range(3):
-            self.auv.prop(50)
+            self.auv.prop(self.options.prop_speed)
             # follow the pipe along until the end
             if not self.followPipeUntil(self.pipeEnded):
                 error("Pipeline lost on pass %d" %(i,));
