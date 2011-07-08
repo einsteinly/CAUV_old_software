@@ -797,22 +797,35 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
         }
 };
 
-class MCBForwardingObserver : public MessageObserver
+class MCBForwardingObserver : public BufferedMessageObserver
 {
     public:
-        MCBForwardingObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
+        MCBForwardingObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+            : m_pressure_min_msecs(50),
+              m_battery_min_msecs(5000),
+              m_last_pressure_sent(now()),
+              m_last_battery_sent(now()),
+              m_mb(mb)
         {
+            setDoubleBuffered(MessageType::Pressure, true);
+            setDoubleBuffered(MessageType::BatteryStatus, true);
         }
 
         virtual void onPressureMessage(PressureMessage_ptr m)
         {
-            debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
-            m_mb->sendMessage(m, UNRELIABLE_MESS);
+            if(now() - m_last_pressure_sent > m_pressure_min_msecs){        
+                debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
+                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_last_pressure_sent = now();
+            }
         }
         virtual void onBatteryStatusMessage(BatteryStatusMessage_ptr m)
         {
-            debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
-            m_mb->sendMessage(m, UNRELIABLE_MESS);
+            if(now() - m_last_battery_sent > m_battery_min_msecs){
+                debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
+                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_last_battery_sent = now();
+            }
         }
         virtual void onDebugMessage(DebugMessage_ptr m)
         {
@@ -820,6 +833,10 @@ class MCBForwardingObserver : public MessageObserver
             m_mb->sendMessage(m, SAFE_MESS);
         }
     protected:
+        float m_pressure_min_msecs;
+        float m_battery_min_msecs;
+        TimeStamp m_last_pressure_sent;
+        TimeStamp m_last_battery_sent;
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
 };
 
