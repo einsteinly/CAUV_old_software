@@ -11,6 +11,23 @@ import threading
 
 from AI_classes import aiProcess, external_function
 
+
+class vec:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+    def __add__(self, other):
+        return vec(self.x+other.x, self.y+other.y)
+    def __sub__(self, other):
+        return vec(self.x-other.x, self.y-other.y)
+    def __abs__(self):
+        return sqrt(dotProd(self,self))
+    def __repr__(self):
+        return "(%f,%f)"%(self.x,self.y)
+    
+def dotProd(p1,p2):
+    return p1.x*p2.x + p1.y*p2.y
+
 class aiLocationProvider(msg.MessageObserver):
     def __init__(self, node):
         msg.MessageObserver.__init__(self)
@@ -112,9 +129,11 @@ class aiLocation(aiProcess):
            
             if self.locator.isFinished():
                 # we now should have a fix ready for us
-                (x, y) = self.locator.getPosition()
-                info("Positioner returned: %f, %f" % (x, y))
-                self.auv.send(msg.LocationMessage(x, y))
+                position = self.locator.getPosition()
+                if position is None:
+                    info("Positioner returned None")
+                else: info("Positioner returned: %f, %f" % (position.x, position.y))
+                self.auv.send(msg.SonarLocationMessage(msg.floatXY(position.x, position.y)))
             
             time.sleep(self.options.wait)                
 

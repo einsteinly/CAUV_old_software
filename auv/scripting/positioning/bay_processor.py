@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from AI_location import aiLocationProvider, vec
 import cauv
 import cauv.messaging as msg
 from math import cos,sin,atan2,pi,sqrt
@@ -8,27 +9,10 @@ import cauv.node
 import time
 
 
-class vec:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-    def __add__(self, other):
-        return vec(self.x+other.x, self.y+other.y)
-    def __sub__(self, other):
-        return vec(self.x-other.x, self.y-other.y)
-    def __abs__(self):
-        return sqrt(dotProd(self,self))
-    def __repr__(self):
-        return "(%f,%f)"%(self.x,self.y)
-    
-
 class lineSeg:
     def __init__(self,p1,p2):
         self.centre = p1
         self.angle = atan2(p2.y-p1.y, p2.x-p1.x)
-
-def dotProd(p1,p2):
-    return p1.x*p2.x + p1.y*p2.y
 
 def crossProd(p1,p2):
     return p1.x*p2.y - p1.y*p2.x
@@ -118,6 +102,39 @@ def positionInBay(lines, angleEpsilon=0.3, distanceEpsilon=0.1):
 
     
     return None
+
+
+
+
+class locationProvider(aiLocationProvider):
+    
+    def __init__(self, node, args):
+        aiLocationProvider.__init__(self, node)
+        self.sonarRange = 60000
+        self.lastPos = vec(0,0)
+        self.alpha = 0.1
+    
+    def fixPosition(self):
+        #TODO
+        # stop the auv
+        # set up the sonar params
+        pass
+        
+    def getPosition(self):
+        return self.lastPos
+
+    def onLinesMessage(self, m):
+        if m.name == "bay lines":
+            rawpos = positionInBay(m.lines)                
+            if rawpos != None:
+                a = vec(self.lastPos.x * (1-self.alpha), self.lastPos.y * (1-self.alpha))
+                b = vec(rawpos.x * (self.alpha), rawpos.y * (self.alpha))
+                pos = a + b
+                self.lastPos = vec(self.sonarRange*2 * pos.x / 1000.0, self.sonarRange*2 * pos.y / 1000.0)
+                info("Latest position: " + lastPos)
+                
+    def onSonarControlMessage(self, m):
+        self.sonarRange = m.range
 
 
 if __name__ == "__main__":

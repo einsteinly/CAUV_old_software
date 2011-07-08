@@ -386,10 +386,9 @@ group telemetry
         speed: float;
         climb: float;    
     }
-    
     message SonarLocation : 91
     {
-        floatXY position;
+        position: floatXY;
     }
 }
 group image
