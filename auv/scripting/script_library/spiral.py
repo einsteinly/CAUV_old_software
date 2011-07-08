@@ -9,8 +9,8 @@ import traceback
 
 class scriptOptions(aiScriptOptions):
     loops = 2 #number of times to go round
-    power = 64 #motor power
-    unit = 3
+    power = 127 #motor power
+    unit = 15
     depth = None
     stop_time = 2
     class Meta:
