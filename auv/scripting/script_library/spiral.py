@@ -27,8 +27,9 @@ class script(aiScript):
             self.auv.bearingAndWait(bearing)
         else:
             self.auv.bearingAndWait(0)
-        debug('diving...')
-        self.auv.depthAndWait(self.options.depth)
+        if self.options.depth:
+            debug('diving...')
+            self.auv.depthAndWait(self.options.depth, 5)
 
         debug('spiral...')
         # Individual half squares
