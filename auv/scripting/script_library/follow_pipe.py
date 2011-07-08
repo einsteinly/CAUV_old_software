@@ -193,6 +193,7 @@ class script(aiScript):
         
         
         for i in range(3):
+            self.auv.prop(50)
             # follow the pipe along until the end
             if not self.followPipeUntil(self.pipeEnded):
                 error("Pipeline lost on pass %d" %(i,));

@@ -782,6 +782,8 @@ if __name__ == '__main__':
                  action='store_true', help="disable/ignore gui output nodes")
     p.add_option('--reset_pls', dest='reset_pls', default=False,
                  action='store_true', help="reset pipelines to those stored in /pipelines")
+    p.add_option('--freeze_pls', dest='freeze_pls', default=False,
+                 action='store_true', help="ignore changes to the pipeline")
     opts, args = p.parse_args()
     pm = pipelineManager(**opts.__dict__)
     try:

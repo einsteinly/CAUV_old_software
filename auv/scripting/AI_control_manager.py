@@ -10,6 +10,8 @@ from AI_classes import aiProcess, external_function
 
 #TODO basically the actual functionality of conrol, the ability to stop the sub, block script_ids etc
 
+control_listen_to = ['prop', 'strafe', ]
+
 class auvControl(aiProcess):
     def __init__(self, **kwargs):
         aiProcess.__init__(self, 'auv_control')
@@ -18,12 +20,18 @@ class auvControl(aiProcess):
         self.external_functions = []
         self.current_task_id = None
         self.enabled = threading.Event()
+        self.pause_lock = threading.Lock()
+        self.pause_requests = set()
+        self.paused = threading.Event()
         if 'disable_control' in kwargs:
             if not kwargs['disable_control']:
                 self.enabled.set()
         else: self.enabled.set()
         self.depth_limit = None
         self.signal_msgs = Queue.Queue(5)
+        self._control_state = {}
+        self._sonar_state = {}
+        self._timeout = 0
         self._register()
     @external_function
     def auv_command(self, task_id, command, *args, **kwargs):
@@ -33,14 +41,15 @@ class auvControl(aiProcess):
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
         debug('auvControl::auv_command(self, task_id=%s, cmd=%s, args=%s, kwargs=%s)' % (task_id, command, args, kwargs), 5)
-        if self.enabled.is_set() and self.current_task_id == task_id:
+        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_task_id == task_id:
             debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
             getattr(self.auv, command)(*args, **kwargs)
+            self._control_state[command] = (args, kwargs)
         else:
             debug('Function not called, auv disabled or called from non-current script.', 5)
     @external_function
     def sonar_command(self, task_id, command, *args, **kwargs):
-        if self.enabled.is_set() and self.current_task_id == task_id:
+        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_task_id == task_id:
             getattr(self.sonar, command)(*args, **kwargs)
     @external_function
     def set_task_id(self, task_id):
@@ -52,6 +61,45 @@ class auvControl(aiProcess):
     def disable(self):
         self.enabled.clear()
         self.auv.stop()
+    @external_function
+    def pause(self, calling_process, timeout=None):
+        with self.pause_lock:
+            print self.pause_requests
+            if len(self.pause_requests):
+                warning('Multiple pause requests, probably will mean processes are conflicting')
+            else:
+                #notify scripts
+                self.ai.task_manager.notify_begin_pause('paused')
+                #get sonar state (since is convieniently save
+                self._sonar_state = self.sonar.__dict__.copy()
+                self.pause_requests.add(calling_process)
+        if timeout and self._timeout<time.time()+timeout:
+            t = threading.Timer(timeout, timeout_resume, [self, calling_process])
+            self._timeout = time.time()+timeout
+        self.paused.set()
+        self.stop()
+    def timeout_resume(self, calling_process):
+        result = self.resume(calling_process)
+        if result:
+            getattr(self.ai, calling_process).onPauseTimeout()
+    @external_function
+    def resume(self, calling_process):
+        #restore control values
+        with self.pause_lock:
+            try:
+                print self.pause_requests
+                self.pause_requests.remove(calling_process)
+            except KeyError:
+                warning('Script control already resumed.')
+                return False
+            if not len(self.pause_requests):
+                for command, (args, kwargs) in self._control_state.items():
+                    getattr(self.auv, command)(*args, **kwargs)
+                #restore sonar state
+                self.sonar.__dict__ = self._sonar_state
+                self.sonar.update()
+                self.paused.clear()
+        return True
     @external_function
     def stop(self):
         #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value

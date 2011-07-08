@@ -280,6 +280,12 @@ class aiScript(aiProcess):
     @external_function
     def depthOverridden(self):
         warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
+    @external_function
+    def begin_override_pause(self):
+        warning('AUV control by %s was paused, but this script has no methd to deal with this event' %(self.task_name,))
+    @external_function
+    def end_override_pause(self):
+        pass
     def notify_exit(self, exit_status):
         #make sure to drop pipelines
         self.drop_all_pl()
