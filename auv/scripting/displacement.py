@@ -52,6 +52,7 @@ class LLACoord:
         self.latitude = lat
         self.longitude = lng
         self.altitude = alt
+    # __add__ adds XYZ to LLA
     def __add__(self, other):
         new_lat = self.latitude  + other.x / metresPerDegreeLatitude()
         new_lng = self.longitude + other.y / metresPerDegreeLongitude(self.latitude)
@@ -115,8 +116,11 @@ class Displacement(messaging.MessageObserver):
         bearing = self.telemetry_bearing        
         if bearing is not None and self.speed is not None:
             now = time.time()
-            self.displacement.x += math.sin(radiansPerDegree * bearing) * self.speed
-            self.displacement.y += math.cos(radiansPerDegree * bearing) * self.speed
+            time_diff = now - self.time_last
+            self.displacement.x += math.sin(radiansPerDegree * bearing) *
+            self.speed * time_diff
+            self.displacement.y += math.cos(radiansPerDegree * bearing) *
+            self.speed * time_diff
             self.time_last = now
 
     def onMotorStateMessage(self, m):
