@@ -92,7 +92,7 @@ class MergeSimilarLinesNode: public Node{
             Eigen::Vector2f d = p2 + v2*l2/2;
 
             // Centroid weighted by line length
-            Eigen::Vector2f G = (l1(a+b) + l2(c+d))/(2*(l1+l2));
+            Eigen::Vector2f G = (l1*(a+b) + l2*(c+d))/(2*(l1+l2));
             float newAngle;
             if (abs(t1- t2) <= M_PI_2)
                 newAngle = (l1*t1 + l2*t2)/(l1+l2);
@@ -101,7 +101,7 @@ class MergeSimilarLinesNode: public Node{
             newAngle = angle(newAngle);
             Eigen::Vector2f v(std::cos(newAngle), std::sin(newAngle));
             
-            Eigen::Vector2f endPoints[] = {a,b,c,d}
+            Eigen::Vector2f endPoints[] = {a,b,c,d};
             float newLength = 0;
             Eigen::Vector2f newCentre = G;
             for (int i = 0; i < 4; ++i)
@@ -110,7 +110,11 @@ class MergeSimilarLinesNode: public Node{
                     float length = (endPoints[i] - endPoints[j]).dot(v);
                     if (length > newLength) {
                         newLength = length;
-                        newCentre = (endPoints[i] + endPoints[j])/2;
+                        
+                        Eigen::Vector2f proj1 ((endPoints[j] - G).dot(v.unitOrthogonal()), (endPoints[i] - G).dot(v));
+                        Eigen::Vector2f proj2 ((endPoints[j] - G).dot(v.unitOrthogonal()), (endPoints[j] - G).dot(v));
+
+                        newCentre = G + v*(proj1[0] + proj2[0])/2;
                     }
                 }
 
