@@ -65,13 +65,13 @@ class MixNode: public Node{
                 img = img*img_f + mix*mix_f;
                 if (do_abs)
                     img = cv::abs(img);
+                r["image (not copied)"] = boost::make_shared<Image>(img);
             } catch (cv::Exception& e) {
                 error() << "MixNode:\n\t"
                         << e.err << "\n\t"
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
             
-            r["image (not copied)"] = boost::make_shared<Image>(img);
             
             return r;
         }

@@ -23,12 +23,13 @@ class script(aiScript):
         #debug('setting bearing %d...' % bearing)
         #self.auv.bearingAndWait(bearing)
         bearing = self.auv.getBearing()
-        if not bearing:
+        if bearing:
+            self.auv.bearingAndWait(bearing)
+        else:
             self.auv.bearingAndWait(0)
-            bearing = 0
-
-        debug('diving...')
-        self.auv.depthAndWait(self.options.depth)
+        if self.options.depth:
+            debug('diving...')
+            self.auv.depthAndWait(self.options.depth, 5)
 
         debug('spiral...')
         # Individual half squares

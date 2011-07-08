@@ -119,7 +119,6 @@ class DisplacementIntegrator:
             self.update.acquire()
             self.bearing = m.orientation.yaw#target
             self.displacementZ = -m.depth            
-            #self.gotBearing == True
             self.gotBearing = True
             #self.update.notify()
             self.update.release()
