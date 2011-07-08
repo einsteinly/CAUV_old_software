@@ -64,7 +64,7 @@ def mergeLines(line1, line2):
     a1 = normAngle(line1.angle)
     a2 = normAngle(line2.angle)
     
-    l = msg.Line(msg.floatXYZ(c.x,c.y,0), (a1*line1.length+a2*line2.length)/(line1.length + line2.length), (line1.length+line2.length)/2)
+    l = msg.Line(msg.floatXYZ(c.x,c.y,0), (a1*line1.length+a2*line2.length)/(line1.length + line2.length), (line1.length*line1.length+line2.length*line2.length)/(line1.length+line2.length))
     c2 = lineIntersection(l, lineSeg(line1.centre, line2.centre))
     l.centre.x = c2.x
     l.centre.y = c2.y
@@ -78,10 +78,10 @@ def normAngle(a):
     return a
 
 def angleDiff(a1,a2):
-    a1 = normAngle(a1)
-    a2 = normAngle(a2)
     diff = (a1 - a2) % pi;
-    return normAngle(diff);
+    if diff > pi/2:
+        diff = pi - diff
+    return diff
     
 
 def lineDistance(line1, line2):
@@ -91,26 +91,11 @@ def lineDistance(line1, line2):
 
 
 def positionInBay(lines, angleEpsilon=0.3, distanceEpsilon=0.1):
-    if len(lines) < 3:
-        print "Not enough lines"
-        return None
-    
-    mergedLines = []
-    for l1 in lines:
-        merged = False
-        for l2 in mergedLines:
-            if abs(angleDiff(l1.angle, l2.angle)) < angleEpsilon and lineDistance(l1,l2) < distanceEpsilon:
-                idx = mergedLines.index(l2)
-                mergedLines[idx] = mergeLines(l1,l2)
-                merged = True
-                break
-        if not merged:
-            mergedLines.append(l1)
-    if len(mergedLines) != 3:
+    if len(lines) != 3:
         return None
     
     centre = vec(0.5,0.5)
-    for p in itertools.permutations(mergedLines,3):
+    for p in itertools.permutations(lines,3):
         side1 = p[0]
         side2 = p[1]
         backWall = p[2]
@@ -129,7 +114,7 @@ def positionInBay(lines, angleEpsilon=0.3, distanceEpsilon=0.1):
             BxS2 = crossProd(vBack, vSide2)
             
             if BxS1 < 0 and BxS2 > 0:
-                return vec(abs(vSide1), abs(vBack))
+                return vec(abs(vSide2), abs(vBack))
 
     
     return None

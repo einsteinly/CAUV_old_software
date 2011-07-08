@@ -19,7 +19,7 @@ if(UNIX)
         # Fuck you Debian.
         set(PYTHON_PACKAGES_PATH lib/python${PYTHON_VERSION_MAJOR_MINOR}/dist-packages)
     else()
-        set(PYTHON_PACKAGES_PATH lib/python${PYTHON_VERSION_MAJOR_MINOR}/dist-packages)
+        set(PYTHON_PACKAGES_PATH lib/python${PYTHON_VERSION_MAJOR_MINOR}/site-packages)
     endif()
 endif()
 if(WIN32)
@@ -70,23 +70,10 @@ install(DIRECTORY ${SRCD}/cauv DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
         FILES_MATCHING PATTERN "*.py")
 
 # Fake install by linking
-if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
-    add_custom_command (
-        TARGET python-module
-        POST_BUILD
-        COMMAND ln -sf ${BINDIR}/cauvinterface.so ${SRCD}/cauvinterface.so
-        COMMENT "Linking module back to source tree"
-    )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES Darwin)
-    add_custom_command (
-        TARGET python-module
-        POST_BUILD
-        COMMAND ln -sf ${BINDIR}/cauvinterface.dylib ${SRCD}/cauvinterface.so
-        COMMENT "Linking module back to source tree"
-    )
-else ()
-    message(FATAL "Unknown platform: can't create python module link")
-endif ()
+get_target_property(CAUV_INTERFACE_LOCATION cauvinterface ${CONFIG}_LOCATION)
+get_filename_component(CAUV_INTERFACE_BASENAME "${CAUV_INTERFACE_LOCATION}" NAME_WE)
+
+cauv_install_link("${SRCD}/${CAUV_INTERFACE_BASENAME}.so" ${CAUV_INTERFACE_LOCATION})
 
 #add_custom_command (
 #    TARGET python-module

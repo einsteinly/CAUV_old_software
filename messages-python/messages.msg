@@ -76,7 +76,8 @@ enum NodeType : int8 {
     BroadcastKeyPoints,
     DrawKeyPoints,
     MathAddMultInt,
-    MathAddMultFloat
+    MathAddMultFloat,
+    MergeSimilarLines
 }
 enum NodeStatus : int8 {
     None = 0,
