@@ -113,8 +113,8 @@ class aiLocation(aiProcess):
             if self.locator.isFinished():
                 # we now should have a fix ready for us
                 (x, y) = self.locator.getPosition()
-                info("TODO: send location %f %f" % (x, y))
-                #self.auv.send(msg.LocationMessage(x, y))
+                info("Positioner returned: %f, %f" % (x, y))
+                self.auv.send(msg.LocationMessage(x, y))
             
             time.sleep(self.options.wait)                
 
