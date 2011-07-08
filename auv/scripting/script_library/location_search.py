@@ -2,6 +2,7 @@ from AI_classes import aiScript, aiScriptOptions
 from cauv.debug import debug, warning, error, info
 
 from math import ceil, sqrt, atan, degrees
+import time
 
 class scriptOptions(aiScriptOptions):
     locations = []
@@ -38,11 +39,11 @@ class Vector():
     def magnitude(self):
         return sqrt(self.x**2 + self.y**2)
     def bearing(self):
-        if x>0:
-            return 90 - degrees(atan(y/x))
-        elif x<0:
-            return 270 - degrees(atan(y/x))
-        return 0 if y>0 else 180
+        if self.x>0:
+            return 90 - degrees(atan(self.y/self.x))
+        elif self.x<0:
+            return 270 - degrees(atan(self.y/self.x))
+        return 0 if self.y>0 else 180
 """    
 class Area():
     def __init__(self, v1, v2):
@@ -93,17 +94,20 @@ class script(aiScript):
             self.log('Heading to %d, %d' %(location.x, location.y))
             timeout = time.time() + self.options.timeout
             while True:
-                err = Vector(self.auv.latitude, self.auv.longitude) - location
+                self.err = err = Vector(self.auv.latitude, self.auv.longitude) - location
                 if err.magnitude()<self.options.pos_e or (err.magnitude()<self.options.pos_max_e and timeout<time.time()):
                     break
-                self.auv.bearing(direction.angle)
-                derr = err-self.err #ignore time, since relatively const
+                self.auv.bearing(err.bearing())
+                if hasattr(self, 'err'):
+                    derr = err-self.err #ignore time, since relatively const
+                else:
+                    derr = Vector(0, 0)
                 self.err = err
                 speed = self.options.speed_p*(err.magnitude()-self.options.speed_d*derr.magnitude())
                 speed = -127 if int(speed) <= -127 else (int(speed) if speed<=127 else 127)
-                self.prop(speed)
+                self.auv.prop(speed)
                 self.sleep(0.5)
-            self.prop(0)
+            self.auv.prop(0)
             #note when nearby, so don't try this location first next time
             self.ai.task_manager.modify_options(self.task_name, {'partially_checked': location})
             #spiral
@@ -116,7 +120,7 @@ class script(aiScript):
                 # Individual half squares
                 for j in range(2):
                     # The time for which the AUV goes forward depends on the radius of the revolution
-                    debug('Moving forward for %d seconds' %(self.options.spiral_unit*i, 2))
+                    debug('Moving forward for %d seconds' %(self.options.spiral_unit*i,), 2)
                     self.auv.prop(self.options.spiral_power)
                     time.sleep(self.options.spiral_unit*i)
 
