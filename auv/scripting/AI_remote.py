@@ -1,4 +1,5 @@
 import cauv.messaging as messaging
+from cauv.debug import info, error, debug, warning
 
 from AI_classes import aiProcess
 
@@ -12,7 +13,7 @@ class aiMessageListener(messaging.MessageObserver):
         self.node.addObserver(self)
     def onAIMessage(self, m):
         message = cPickle.loads(m.msg)
-        print '%s: %s.%s(%s, %s)' %(message[1],message[0],message[2],', '.join(map(str,message[3])),', '.join(['='.join(map(str, x)) for x in message[4].items()]))
+        debug('AI message: %s: %s.%s(%s, %s)' %(message[1],message[0],message[2],', '.join(map(str,message[3])),', '.join(['='.join(map(str, x)) for x in message[4].items()])))
     def die(self):
         self.node.removeObserver(self)
         

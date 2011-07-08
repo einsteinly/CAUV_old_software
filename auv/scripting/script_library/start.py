@@ -8,8 +8,6 @@ class scriptOptions(aiScriptOptions):
     forward_time = 30
     forward_speed = 64
     already_run = False
-    class Meta:
-        dynamic = ['already_run']
 
 class script(aiScript):
     def run(self):
@@ -24,3 +22,4 @@ class script(aiScript):
         time.sleep(self.options.forward_time)
         self.auv.prop(0)
         self.notify_exit('SUCCESS')
+        
