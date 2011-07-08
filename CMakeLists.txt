@@ -67,7 +67,7 @@ function (cauv_install TARGET)
     if (${TARGET_TYPE} STREQUAL "EXECUTABLE")
 
         get_target_property(TARGET_OUTPUT ${TARGET} OUTPUT_NAME)
-        if (${TARGET_OUTPUT} STREQUAL "TARGET_OUTPUT-NOTFOUND")
+        if (NOT TARGET_OUTPUT)
             set(TARGET_OUTPUT "${TARGET}")
         endif()
         set (TARGET_OLD "${CMAKE_INSTALL_PREFIX}/bin/cauv/${CMAKE_BUILD_TYPE}/${TARGET_OUTPUT}")
