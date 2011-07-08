@@ -74,7 +74,8 @@ class auvControl(aiProcess):
                 self._sonar_state = self.sonar.__dict__.copy()
                 self.pause_requests.add(calling_process)
         if timeout and self._timeout<time.time()+timeout:
-            t = threading.Timer(timeout, timeout_resume, [self, calling_process])
+            t = threading.Timer(timeout, self.timeout_resume, [calling_process])
+            t.start()
             self._timeout = time.time()+timeout
         self.paused.set()
         self.stop()

@@ -1,25 +1,25 @@
-from AI_location import aiPositionProvider
+from cauv.debug import debug, warning, error, info
+
+from AI_location import aiLocationProvider
 
 import time
 
-class positionProvider(aiPositionProvider):
+class locationProvider(aiLocationProvider):
     
-    def __init__(self, opts, args):
+    def __init__(self, node, args):
+        aiLocationProvider.__init__(self, node)
         # do something with options if you want
         error("This is just a test positioner")
-        
-    def timeout():
-        # gracefully handle timeout
-        pass
 
-    def fixPosition():
+    def fixPosition(self):
         # the main function for generating a position fix
-        time.sleep(10)
-
-    def isFinished():
-        # return True when we're done, False otherwise
-        return True
+        for i in range(10):
+            time.sleep(1)
+            if self.stopped.is_set():
+                error("stop set, returning early")
+                return
+        info("Position fix finished")
         
-    def getPosition():
+    def getPosition(self):
         # return the current (or latest) position
         return (1, 2)    
