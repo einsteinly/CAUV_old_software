@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <cstring>
 
 #include <xsens/cmtdef.h>
 #include <xsens/xsens_time.h>
@@ -30,16 +31,9 @@ const char* XsensException::what() const throw ()
 XsensIMU::XsensIMU(int id)
     : Observable<XsensObserver>()
 {
-    xsens::List<CmtPortInfo> portInfo;
-
-    debug() << "Scanning for connected Xsens devices...";
-    xsens::cmtScanPorts(portInfo);
-
-    if (portInfo.length() == 0) {
-        throw XsensException("No MotionTrackers found");
-    }
-
-    m_port = portInfo[id];
+    memset(&m_port, 0, sizeof(CmtPortInfo));
+    std::snprintf(m_port.m_portName, sizeof(m_port.m_portName), "/dev/ttyUSB%d", id);
+    xsens::cmtScanPort(m_port, 0);
 
     std::stringstream ss;
     ss << "Using COM port " << m_port.m_portName << " at ";
@@ -61,7 +55,7 @@ XsensIMU::XsensIMU(int id)
         case B921600: ss << "921k6";
             break;
         default:
-            ss << "0x%lx" << portInfo[id].m_baudrate;
+            ss << "0x%lx" << m_port.m_baudrate;
             break;
     }
     ss << " baud";
