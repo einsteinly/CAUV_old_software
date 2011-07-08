@@ -8,6 +8,8 @@ from cauv.debug import info, debug, warning, error
 from cauv import messaging
 from cauv.node import Node
 
+from utils.ordereddict import OrderedDict
+
 """
 Processes
 detector process - runs detector classes, and loops through processing
@@ -54,7 +56,7 @@ class AImanager(messaging.MessageObserver):
         self.kwargs = kwargs
         if 'disable' in self.kwargs:
             disable = self.kwargs.pop('disable')
-        self.processes = {}
+        self.processes = OrderedDict()
         for process_data in process_data_list:
             if not process_data[0] in disable:
                 self.processes[process_data[0]] = Process(process_data[1].split(' '),opts=dict([(x,self.kwargs[x]) for x in process_data[2]]))
