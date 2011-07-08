@@ -117,8 +117,8 @@ class script(aiScript):
             if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set():
                 self.ready.set()
             else:
-                debug('centered:%s aligned:%s depthed:%s' %
-                        (self.centered.is_set(), self.aligned.is_set(), self.depthed.is_set())
+                debug('centred:%s aligned:%s depthed:%s' %
+                        (self.centred.is_set(), self.aligned.is_set(), self.depthed.is_set())
                 )
                 self.ready.clear()
 
