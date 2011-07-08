@@ -50,7 +50,7 @@ def is_external(f):
         return False
 
 class aiProcess(messaging.MessageObserver):
-    def __init__(self, process_name, location_enabled = False):
+    def __init__(self, process_name):
         messaging.MessageObserver.__init__(self)
         id = process_name[:6] if len(process_name)>6 else process_name
         self.node = cauv.node.Node("ai"+id)
@@ -59,6 +59,7 @@ class aiProcess(messaging.MessageObserver):
         self.ai = aiAccess(self.node, self.process_name)
     def _register(self):
         self.node.addObserver(self)
+        self.ai.STATE.REGISTER()
     def onAIMessage(self, m):
         debug("onAIMessage in %s: %s" %(self.process_name, m.msg), 6)
         message = cPickle.loads(m.msg)

@@ -64,7 +64,6 @@ class auvControl(aiProcess):
     @external_function
     def pause(self, calling_process, timeout=None):
         with self.pause_lock:
-            print self.pause_requests
             if len(self.pause_requests):
                 warning('Multiple pause requests, probably will mean processes are conflicting')
             else:
@@ -155,6 +154,11 @@ class auvControl(aiProcess):
                     self.auv.forwardlights(0)
                     time.sleep(0.5)
                 time.sleep(1)
+    def die(self):
+        self.auv.stop()
+        self.disable()
+        self.auv.stop()
+        aiProcess.die(self)
 
 #from Demos/scripts/morse.py
 morsetab = {
