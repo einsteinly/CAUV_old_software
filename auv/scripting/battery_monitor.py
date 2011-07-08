@@ -15,6 +15,7 @@ log_file = 'bat_log.log'
 #useful constants
 motor_conversion_factor = 80.0/127.0 #Watts 80 watts max power, 127 max motor demand
 light_conversion_factor = 32.0/255 #Watts 32 watts max power, 255 max demand
+voltage_conversion = 5.69E-3 #number->volts
 computer_consumption = 30.0#Watts 1.5 amps at 19 volts
 battery_total = 89.1*4 #Watt hours
 
@@ -39,6 +40,9 @@ def estimateMotorUse(logs, current_time, last_log_time):
         
 def estimateComputerUse(logs, current_time, last_log_time):
     return computer_consumption*(current_time-last_log_time)/3600
+
+def estimateCharge(logs, current_time, last_log_time):
+    return 0
         
 def estimateLightUse(logs, current_time, last_log_time):
     power_used = 0
@@ -61,11 +65,13 @@ modules_dict = {
                 'm': estimateMotorUse,
                 'l': estimateLightUse,
                 'c': estimateComputerUse,
+                'v': estimateCharge
                 }
 
 #message logger
 motor_ids=['Prop','VBow','HBow','VStern','HStern']
 light_ids=['Forward', 'Down']
+battery_ids=['Main']
 class messageLogger(messaging.BufferedMessageObserver):
     def __init__(self, node):
         messaging.BufferedMessageObserver.__init__(self)
@@ -77,6 +83,12 @@ class messageLogger(messaging.BufferedMessageObserver):
         self.motor_demand_log = dict([(x,[]) for x in motor_ids])
         self.light_log_lock = dict([(x,threading.Lock()) for x in light_ids])
         self.light_log = dict([(x,[(time.time(),0)]) for x in light_ids])
+        self.battery_log_lock = dict([(x,threading.Lock()) for x in battery_ids])
+        self.battery_log = dict([(x,[(time.time(),0)]) for x in battery_ids])
+    def onBatteryStatusMessage(self, m):
+        info('Battery Voltage: %gV' % (m.voltage * voltage_conversion))
+        with self.battery_log_lock['Main']:
+            self.battery_log['Main'].append((time.time(),m.voltage * voltage_conversion))
     def onMotorStateMessage(self, m):
         with self.motor_demand_log_lock[str(m.motorId)]:
             self.motor_demand_log[str(m.motorId)].append((time.time(),m.speed))
@@ -88,6 +100,7 @@ loggers_dict = {
                 'm' : (messageLogger,),
                 'l' : (messageLogger,),
                 'c' : tuple(),
+                'v' : (messageLogger,),
                 }
 
 #actual logger that calculates power use, saves to file and sends messages
@@ -160,8 +173,9 @@ if __name__ == '__main__':
     m  -  motors
     l  -  lights
     c  -  computer
+    v  -  voltage
     """
-    modules = set(['m','l','c']) #default
+    modules = set(['m','l','c','v']) #default
     opts, args = p.parse_args()
     enable = opts.enable.split(',') if len(opts.enable) else []
     disable = opts.disable.split(',') if len(opts.disable) else []
