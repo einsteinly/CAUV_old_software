@@ -25,7 +25,7 @@ class ServiceLevel:
 def getVersionInfo():
     import os, shlex, subprocess
     repo_root = '/'.join(
-        (os.path.join(os.getcwd(), __file__)).split('/')[:-5]
+        (os.path.join(os.getcwd(), __file__)).split('/')[:-4]
     )
     hg_cmdstr = 'hg -R %s %%s' % repo_root
     diff_cmdstr = hg_cmdstr % 'diff'
