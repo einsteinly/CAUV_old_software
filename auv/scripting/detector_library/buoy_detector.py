@@ -12,9 +12,9 @@ from utils.hacks import incFloat
 from utils.detectors import ColourDetector
 
 class detectorOptions(aiDetectorOptions):
-    Sightings_Period   = 3.0 # seconds, period to consider sightings of the buoy for
+    Sightings_Period   = 5.0 # seconds, period to consider sightings of the buoy for
     Required_Confidence = 0.9
-    Required_Sightings = 2
+    Required_Sightings = 5
     Required_Pipeline = 'detect_buoy.pipe'
     Circles_Name = 'buoy'
     Histogram_Name_A = 'buoy_hue'
