@@ -44,8 +44,8 @@ class Process():
 process_data_list = (
             ('pipeline_manager', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'reset_pls', 'freeze_pls', 'restore']),
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
-            ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
             ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
+            ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
             )
 
 class AImanager(messaging.MessageObserver):
@@ -99,4 +99,7 @@ if __name__ == '__main__':
     opts, args = p.parse_args()
     #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.
     ai = AImanager(**opts.__dict__)
-    ai.run()
+    try:
+        ai.run()
+    finally:
+        ai.node.stop()

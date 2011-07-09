@@ -23,16 +23,17 @@ class ServiceLevel:
     Regular    = 0X3f
 
 def getVersionInfo():
-    import os
-    #repo_root = '/'.join(
-    #    (os.path.join(os.getcwd(), __file__)).split('/')[:-5]
-    #)
-    diff = ''
-    summary = ''
-    #(si, so) = os.popen2('hg -R %s summary --color=yes' % repo_root)
-    #summary = so.read()
-    #(si, so) = os.popen2('hg -R %s diff --color=yes' % repo_root)
-    #diff = so.read()
+    import os, shlex, subprocess
+    repo_root = '/'.join(
+        (os.path.join(os.getcwd(), __file__)).split('/')[:-4]
+    )
+    hg_cmdstr = 'hg -R %s %%s' % repo_root
+    diff_cmdstr = hg_cmdstr % 'diff'
+    summ_cmdstr = hg_cmdstr % 'summary'
+    dp = subprocess.Popen(shlex.split(diff_cmdstr), stdout = subprocess.PIPE)
+    sp = subprocess.Popen(shlex.split(summ_cmdstr), stdout = subprocess.PIPE)
+    diff = dp.communicate()[0]
+    summary = sp.communicate()[0]
     return (summary, diff)
 
 class Node(messaging.CauvNode):
@@ -47,15 +48,6 @@ class Node(messaging.CauvNode):
             pass
         messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
         self.__run()
-
-    def __del__(self):
-        debug('CAUV Node __del__...')
-        debug('CAUV Node Stopping...')
-        self.stop()
-        if self.__t.isAlive():
-            debug('CAUV Node Joining run thread...')
-            self.__t.join()
-        debug('CAUV Node __del__ complete')
     
     def __callRunWithTryFinally(self):
         try:
@@ -71,7 +63,7 @@ class Node(messaging.CauvNode):
         debug('CauvNode.__run...')   
         self.__t = threading.Thread(target=self.__callRunWithTryFinally)
         # TODO: False?
-        self.__t.daemon = True
+        self.__t.daemon = False
         self.__t.start()
     
     def send(self, message, groups=None, service_level=ServiceLevel.Safe):
