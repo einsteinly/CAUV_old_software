@@ -159,7 +159,7 @@ class locationProvider(aiLocationProvider):
                 debug("Still waiting for position fix")
                 self.positioningFinished.wait(1)           
         
-    def getPosition(self):
+    def getPosition(self, pos):
         # convert to sonar range scale
         return vec(self.sonarRange*2 * pos.x / 1000.0, self.sonarRange*2 * pos.y / 1000.0)
 
@@ -182,7 +182,7 @@ class locationProvider(aiLocationProvider):
                 b = vec(rawpos.x * (self.alpha), rawpos.y * (self.alpha))
                 pos = a + b
                 if self.lastPos == None:
-                    self.lastPos = rawPos
+                    self.lastPos = rawpos
                 else: self.lastPos = pos
                 info("Latest position: " + self.lastPos)
                 
