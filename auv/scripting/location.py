@@ -131,10 +131,13 @@ if __name__ == '__main__':
     opts, args = parser.parse_args()
 
     node = cauv.node.Node('py-dspl')
-    auv = control.AUV(node)
-    d = Location(node, opts.mode)
-    while True:
-        time.sleep(3)
-        ll = d.getLocation()
-        info('%s : %s' % (d.location, ll))
-        node.send(messaging.LocationMessage(ll.latitude,ll.longitude,ll.altitude,messaging.floatXYZ(0, 0, 0)))
+    try:
+        auv = control.AUV(node)
+        d = Location(node, opts.mode)
+        while True:
+            time.sleep(3)
+            ll = d.getLocation()
+            info('%s : %s' % (d.location, ll))
+            node.send(messaging.LocationMessage(ll.latitude,ll.longitude,ll.altitude,messaging.floatXYZ(0, 0, 0)))
+    finally:
+        node.stop()

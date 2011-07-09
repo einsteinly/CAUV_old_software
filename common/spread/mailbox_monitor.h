@@ -45,7 +45,7 @@ class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public
 
         void stopMonitoring();
 
-        bool isMonitoring();
+        volatile bool isMonitoring();
 
     private:
         void doMonitoring();
