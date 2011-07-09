@@ -104,6 +104,9 @@ void CauvGui::onRun()
     m_messageObserver = boost::make_shared<GuiMessageObserver>(m_auv);
     this->addMessageObserver(m_messageObserver);
 
+    connect(m_messageObserver.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)),
+            this, SLOT(send(boost::shared_ptr<Message>)));
+
     // load plugins
     // static plugins first
     foreach (QObject *plugin, QPluginLoader::staticInstances())

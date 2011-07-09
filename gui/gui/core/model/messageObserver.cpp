@@ -6,6 +6,8 @@
 
 #include <generated/messages.h>
 
+#include <gui/core/model/messagegenerators.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -59,7 +61,8 @@ std::string NameConversion::toName<Controller::e>(Controller::e id){
 
 
 
-GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv): m_auv(auv){
+GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv):
+        m_auv(auv){
 }
 
 
@@ -73,6 +76,8 @@ void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
     motor->update(message->speed());
     motor->setMax(127);
     motor->setMin(-127);
+
+    m_generators.push_back(boost::make_shared<MotorMessageGenerator>(m_auv, motor, message->motorId()));
 }
 
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {

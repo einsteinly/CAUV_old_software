@@ -352,7 +352,6 @@ namespace cauv {
         public Q_SLOTS:
 
             virtual void update(numeric_variant_t value){
-                debug() << nodeName() << " value set to " << value;
                 Node<numeric_variant_t>::update(value);
                 Q_EMIT onUpdate(value);
 
@@ -404,7 +403,26 @@ namespace cauv {
                 }
 
                 Node<numeric_variant_t>::set(value);
+
                 Q_EMIT onSet(value);
+
+                switch(value.which()){
+                case 0:
+                    Q_EMIT onSet(boost::get<bool>(value));
+                    break;
+                case 1:
+                    Q_EMIT onSet(boost::get<unsigned int>(value));
+                    break;
+                case 2:
+                    Q_EMIT onSet(boost::get<int>(value));
+                    break;
+                case 3:
+                    Q_EMIT onSet(boost::get<float>(value));
+                    Q_EMIT onSet((double) boost::get<float>(value));
+                    break;
+                default:
+                    throw std::exception();
+                }
             }
 
         Q_SIGNALS:
@@ -418,6 +436,11 @@ namespace cauv {
             void paramsUpdated();
 
             void onSet(numeric_variant_t value);
+            void onSet(int value);
+            void onSet(unsigned int value);
+            void onSet(float value);
+            void onSet(double value);
+            void onSet(bool value);
 
         protected:
             std::string m_units;
