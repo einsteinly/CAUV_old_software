@@ -8,11 +8,11 @@ import traceback
 #do a preliminary 360 degree sweep
 
 class scriptOptions(aiScriptOptions):
-    loops = 2 #number of times to go round
+    loops = 5 #number of times to go round
     power = 127 #motor power
-    unit = 15
-    depth = 1.5
-    stop_time = 2
+    unit = 7
+    depth = 2
+    stop_time = 1.5
     class Meta:
         dynamic = ['power', 'unit', 'stop_time']
     
