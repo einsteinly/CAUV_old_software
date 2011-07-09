@@ -46,14 +46,16 @@ void MailboxEventMonitor::stopMonitoring() {
     // async
     if (m_thread.get_id() != boost::thread::id())
     {
-        debug() << "Interrupting monitor thread";
-        m_thread.interrupt();
-        m_thread.join();
+        do{
+            debug() << "Interrupting monitor thread";
+            m_thread.interrupt();
+            m_thread.timed_join(boost::posix_time::seconds(1));
+        }while(m_thread.joinable());
     } else {
         // sync
         debug() << "No internal monitor thread to interrupt"
                 << "(m_thread=" << m_thread.native_handle() << ")"
-                << "External thread:" << *(int*)&m_sync_thread_id;
+                << "External thread:" << *(int*)&m_sync_thread_id << "instead";
         m_interupted = true;
     }
 }
@@ -70,17 +72,20 @@ void MailboxEventMonitor::doMonitoring() {
         m_monitoring = true;
 
         while(!m_interupted) {
+            boost::this_thread::interruption_point();
             boost::shared_ptr<SpreadMessage> m( m_mailbox->receiveMessage() );
 
             boost::lock_guard<boost::recursive_mutex> l(m_observers_lock);
 
             if (m->getMessageFlavour() == SpreadMessage::REGULAR_MESSAGE)
             {
+                debug(13) << "forwarding regular message";
                 foreach (observer_ptr_t o, m_observers)
                     o->regularMessageReceived(boost::dynamic_pointer_cast<RegularMessage, SpreadMessage>(m));
             }
             else if(m->getMessageFlavour() == SpreadMessage::MEMBERSHIP_MESSAGE)
             {
+                debug(13) << "forwarding membership message";
                 foreach (observer_ptr_t o, m_observers)
                     o->membershipMessageReceived(boost::dynamic_pointer_cast<MembershipMessage, SpreadMessage>(m));
             }
@@ -99,6 +104,6 @@ void MailboxEventMonitor::doMonitoring() {
     m_monitoring = false;
 }
 
-bool MailboxEventMonitor::isMonitoring(){
+volatile bool MailboxEventMonitor::isMonitoring(){
     return m_monitoring;
 }
