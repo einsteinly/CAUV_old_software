@@ -88,7 +88,7 @@ namespace cauv {
         };
 
 
-        class NodeBase : virtual public QObject, public boost::enable_shared_from_this<NodeBase> {
+        class NodeBase : public QObject, public boost::enable_shared_from_this<NodeBase> {
             Q_OBJECT
         public:
 
@@ -98,7 +98,7 @@ namespace cauv {
 
             virtual ~NodeBase();
 
-            virtual const std::string nodeName(const bool full=true) const;
+            virtual std::string nodeName(const bool full=true);
             virtual void addChild(boost::shared_ptr<NodeBase> child);
             const std::vector<boost::shared_ptr<NodeBase> > getChildren() const;
 
@@ -191,6 +191,8 @@ namespace cauv {
 
         Q_SIGNALS:
             void nodeAdded(boost::shared_ptr<NodeBase> node);
+            void changed();
+
 
         protected:
             boost::weak_ptr<NodeBase> m_parent;
@@ -225,6 +227,9 @@ namespace cauv {
             virtual void set(T value){
                 debug(0) << nodeName() << "set to" << value;
                 update(value);
+                info() << "change being emitted";
+                //Q_EMIT changed();
+                info() << "change finished being emitted";
             }
 
             virtual T get(){
@@ -547,12 +552,8 @@ namespace cauv {
             m_p(boost::make_shared<NumericNode>("pitch")),
             m_r(boost::make_shared<NumericNode>("roll"))
             {
-                this->connect(m_y.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
-                this->connect(m_p.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
-                this->connect(m_r.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
+                this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
-
-
 
         public Q_SLOTS:
 
@@ -588,7 +589,6 @@ namespace cauv {
 
         protected:
             boost::shared_ptr<NumericNode> m_y, m_p, m_r;
-
         };
 
 
@@ -603,9 +603,7 @@ namespace cauv {
             m_y(boost::make_shared<NumericNode>("y")),
             m_z(boost::make_shared<NumericNode>("z"))
             {
-                this->connect(m_x.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
-                this->connect(m_y.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
-                this->connect(m_z.get(), SIGNAL(onSet(numeric_variant_t)), this, SLOT(forceSet()));
+                this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
 
         public Q_SLOTS:

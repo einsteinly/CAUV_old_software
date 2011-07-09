@@ -59,10 +59,9 @@ std::string NameConversion::toName<Controller::e>(Controller::e id){
     }
 }
 
-
-
 GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv):
         m_auv(auv){
+    qRegisterMetaType<boost::shared_ptr<Message> >("boost::shared_ptr<Message>");
 }
 
 
@@ -70,25 +69,41 @@ GuiMessageObserver::~GuiMessageObserver() {
     debug() << "~GuiMessageObserver()";
 }
 
+
+void GuiMessageObserver::addGenerator(boost::shared_ptr<NodeBase> node, boost::shared_ptr<MessageGenerator> generator){
+    if (m_generators[node]) return; // already has a generator
+
+    info() << "Adding generator for " << node->nodeName();
+    m_generators[node] = generator;
+    if(!connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)),
+            this, SIGNAL(messageGenerated(boost::shared_ptr<Message>))))
+        error() << "Failed when connecting message forwarding signals";
+}
+
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
+    info() << message;
+
     std::string name = NameConversion::toName(message->motorId());
     boost::shared_ptr<NumericNode> motor = m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name);
     motor->update(message->speed());
     motor->setMax(127);
     motor->setMin(-127);
 
-    m_generators.push_back(boost::make_shared<MotorMessageGenerator>(m_auv, motor, message->motorId()));
+    addGenerator(motor, boost::make_shared<MotorMessageGenerator>(m_auv, motor, message->motorId()));
 }
 
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<NumericNode> target = autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("target");
+    boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>("bearing");
+    boost::shared_ptr<NumericNode> target = autopilot->findOrCreateMutable<NumericNode>("target");
     target->setMin(0);
     target->setMax(360);
     target->setWraps(true);
     target->setUnits("°");
     target->update(message->target());
     autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("enabled")->update(message->enabled());
+
+    addGenerator(autopilot, boost::make_shared<AutopilotMessageGenerator>(m_auv, autopilot));
 }
 
 void GuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {

@@ -13,9 +13,9 @@ NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidget
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
 
-    // items might be added later
+    // items might be added later, blocking connection so items don't get added more than once
     node->connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)),
-                  this, SLOT(addNode(boost::shared_ptr<NodeBase>)));
+                  this, SLOT(addNode(boost::shared_ptr<NodeBase>)), Qt::BlockingQueuedConnection);
 }
 
 void NodeTreeItemBase::updateValue(const QString value) {

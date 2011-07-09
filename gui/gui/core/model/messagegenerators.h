@@ -33,21 +33,26 @@ namespace cauv {
         class MotorMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NumericNode> motor, MotorID::e id):
-                MessageGenerator(auv), m_id(id)
-            {
-                connect(motor.get(), SIGNAL(onSet(unsigned int)), this, SLOT(send(unsigned int)), Qt::DirectConnection);
-                motor->set(10);
-            }
+            MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NumericNode> motor, MotorID::e id);
 
         protected Q_SLOTS:
-            void send(unsigned int value){
-                Q_EMIT messageGenerated(boost::make_shared<MotorMessage>(m_id, (int8_t) value));
-            }
+            void send(int value);
 
         protected:
             MotorID::e m_id;
+        };
 
+
+        class AutopilotMessageGenerator : public MessageGenerator {
+            Q_OBJECT
+        public:
+            AutopilotMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<GroupingNode> autopilot);
+
+        protected Q_SLOTS:
+            void send();
+
+        protected:
+            boost::shared_ptr<GroupingNode> m_autopilot;
         };
     } // namespace gui
 } // namesapce cauv

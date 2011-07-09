@@ -14,7 +14,7 @@ NodeBase::~NodeBase(){
     debug(0) << "~NodeBase" << nodeName();
 }
 
-const std::string NodeBase::nodeName(const bool full) const {
+std::string NodeBase::nodeName(const bool full) {
     std::stringstream stream;
 
     if(full && !m_parent.expired()) {
@@ -37,6 +37,9 @@ void NodeBase::addChild(boost::shared_ptr<NodeBase> child){
 
     child->m_parent = boost::weak_ptr<NodeBase>(shared_from_this());
     m_children.push_back(child);
+
+    // propagate changes upwards
+    connect(child.get(), SIGNAL(changed()), this, SIGNAL(changed()));
 
     Q_EMIT nodeAdded(child);
 }
