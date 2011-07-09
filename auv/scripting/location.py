@@ -14,7 +14,6 @@ import math
 import optparse
 
 import displacement
-import displacement_integrator
 
 #coordinates of a bit of river Cam in Cambridge
 #Default_Datum_Latitude = 52.116692
@@ -64,10 +63,7 @@ class Location(messaging.MessageObserver):
         self.mode = mode
 
         # displacement estimators running in their own threads
-        if mode == 'simple':
-            self.displacementEstimator = displacement.Displacement()
-        else:
-            self.displacementEstimator = displacement_integrator.DisplacementIntegrator()
+        self.displacementEstimator = displacement.Displacement(mode = self.mode)
 
         self.location = NorthEastDepthCoord(0, 0, 0)
         self.timeLast = time.time()
