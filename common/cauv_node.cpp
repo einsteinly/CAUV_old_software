@@ -50,7 +50,7 @@ void CauvNode::run(bool synchronous)
         m_event_monitor->startMonitoringSync();
     else
         while(m_event_monitor->isMonitoring())
-            msleep(500);
+            msleep(200);
 
     m_running = false;
 }

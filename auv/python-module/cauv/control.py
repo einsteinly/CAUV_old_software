@@ -36,6 +36,12 @@ class AUV(messaging.MessageObserver):
     
     def getBearing(self):
         return self.current_bearing
+    
+    def getDepth(self):
+        return self.current_depth
+
+    def getPitch(self):
+        return self.current_pitch
 
     def bearing(self, bearing):
         if bearing is not None:

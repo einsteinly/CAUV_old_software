@@ -33,6 +33,7 @@ class LoggingObserver(msg.MessageObserver):
     
     def close(self):
         self.log.close()
+        self.__node.stop()
 
     def writeLine(self):
         now = time.time() - self.start_time
