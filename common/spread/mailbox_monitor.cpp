@@ -46,11 +46,13 @@ void MailboxEventMonitor::stopMonitoring() {
     // async
     if (m_thread.get_id() != boost::thread::id())
     {
+        int c = 0;
         do{
             debug() << "Interrupting monitor thread";
             m_thread.interrupt();
             m_thread.timed_join(boost::posix_time::seconds(1));
-        }while(m_thread.joinable());
+            m_interupted = true;
+        }while(m_thread.joinable() && c++ < 30);
     } else {
         // sync
         debug() << "No internal monitor thread to interrupt"

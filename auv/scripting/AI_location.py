@@ -155,4 +155,8 @@ if __name__ == '__main__':
     (opts, args) = p.parse_args()
     
     sc = aiLocation(opts, args)
-    sc.run()
+    try:
+        sc.run()
+    finally:
+        sc.locator.node.stop()
+        sc.die()

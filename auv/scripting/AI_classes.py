@@ -336,6 +336,12 @@ class aiDetector(messaging.MessageObserver):
         error("Can't drop pipeline that hasn't been requested")
     def drop_all_pl(self):
         self._pl_requests = {}
+    def log(self, message):
+        try:
+            self.node.send(messaging.AIlogMessage(message), "ai")
+        except:
+            error('Error sending high-level log message')
+            traceback.print_exc()
     def die(self):
         self.drop_all_pl()
         self.node.removeObserver(self)

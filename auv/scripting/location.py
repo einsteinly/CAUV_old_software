@@ -14,7 +14,6 @@ import math
 import optparse
 
 import displacement
-import displacement_integrator
 
 #coordinates of a bit of river Cam in Cambridge
 #Default_Datum_Latitude = 52.116692
@@ -64,10 +63,7 @@ class Location(messaging.MessageObserver):
         self.mode = mode
 
         # displacement estimators running in their own threads
-        if mode == 'simple':
-            self.displacementEstimator = displacement.Displacement()
-        else:
-            self.displacementEstimator = displacement_integrator.DisplacementIntegrator()
+        self.displacementEstimator = displacement.Displacement(mode = self.mode)
 
         self.location = NorthEastDepthCoord(0, 0, 0)
         self.timeLast = time.time()
@@ -125,7 +121,7 @@ class Location(messaging.MessageObserver):
 
 if __name__ == '__main__':
     parser = optparse.OptionParser(usage='usage: %prog -m simple|exponential')
-    parser.add_option("-m", "--mode", dest="mode", default="exponential",
+    parser.add_option("-m", "--mode", dest="mode", default="simple",
             help="integration mode: 'simple' or 'exponential' see" +
             "displacement_integrator.py for exponential integrator constants")
     opts, args = parser.parse_args()

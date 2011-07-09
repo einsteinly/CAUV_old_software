@@ -6,22 +6,39 @@ import time
 import threading
 import math
 
+# forward/reverse speed scale and exponential factors
+defaultMotorSpeedCurves = {
+        messaging.MotorID.Prop: 0.5,
+        messaging.MotorID.HBow: 1.0,
+        messaging.MotorID.HStern: 1.0
+        }
+
 defaultMotorSpeedScales = {
         messaging.MotorID.Prop: 0.4 / 127,
         messaging.MotorID.HBow: 0.3 / 127,
-        messaging.MotorID.HStern: 0.3 / 125
+        messaging.MotorID.HStern: 0.3 / 127
         }
 
 class Motors:
-    def __init__(self, speed, speedScale):
-        self.speedRequest = speed
+    def __init__(self, speedScale, speedCurve):
+        self.speedRequest = 0
+        self.timeLast = time.time()
         self.speedScale = speedScale
-        self.speedInMperS = self.speedRequest * self.speedScale
-    def updateSpeedInMperS(self):
-        self.speedInMperS = self.speedRequest * self.speedScale
+        self.speedCurve = speedCurve
+        self.speedInMperS = 0
+    def updateSpeedInMperS(self, mode='simple'):
+        if mode == 'simple':
+            self.speedInMperS = self.speedRequest * self.speedScale
+        else:
+            oldTime = self.timeLast
+            self.timeLast = time.time()
+            timeDiff = self.timeLast - oldTime
+            self.speedInMperS += (self.speedRequest * self.speedScale -
+                    self.speedInMperS) * (1 - math.exp(-self.speedCurve * timeDiff))
 
 class Displacement:
-    def __init__(self, motorsSpeedScales = defaultMotorSpeedScales):
+    def __init__(self, speedScales = defaultMotorSpeedScales, speedCurves =
+            defaultMotorSpeedCurves, mode = 'simple'):
         self.displacementNorth = 0
         self.displacementEast = 0
         self.timeLast = time.time()
@@ -30,8 +47,9 @@ class Displacement:
         self.bearing = 0
         self.gotBearing = False
         self.motorsRunning = False
-        for motor, speedScale in motorsSpeedScales.iteritems():
-            self.motors[motor] = Motors(0, speedScale) 
+        self.mode = mode
+        for motor in speedScales.iterkeys():
+            self.motors[motor] = Motors(speedScales[motor], speedCurves[motor])
         t = threading.Thread(target=self.updateDisplacement)
         t.daemon = True
         t.start()
@@ -79,7 +97,7 @@ class Displacement:
         if motor in self.motors:
             with self.update:
                 self.motors[motor].speedRequest = m.speed
-                self.motors[motor].updateSpeedInMperS()
+                self.motors[motor].updateSpeedInMperS(self.mode)
         else:
             warning('Motor %s unknown to displacement.py used' % motor)
 
