@@ -28,6 +28,7 @@ class taskManager(aiProcess):
         self.active_tasks = []
         self.task_list = {}
         self.request_stop = threading.Event()
+        self.req_start_task = None
         #Conditions - note although conditions may be changed externally, the list of conditions may not
         self.conditions = {}
         self.conditions_changed = threading.Event()
@@ -62,6 +63,7 @@ class taskManager(aiProcess):
             self.new_state(mission)
         #Force evaluation of tasks
         self.conditions_changed.set()
+        self._register()
     def add_detector(self, detector_name, listener):
         with self.detector_lock:
             if not (detector_name in self.active_detectors):
@@ -167,6 +169,12 @@ class taskManager(aiProcess):
                 f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) for x in task.options.items()])+'\n')
             f.close()
     @external_function
+    def notify_begin_pause(self, message):
+        getattr(self.ai, self.current_task).begin_override_pause()
+    @external_function
+    def notify_end_pause(self, message):
+        getattr(self.ai, self.current_task).end_override_pause()
+    @external_function
     def on_script_exit(self, task, status):
         if status == 'ERROR':
             self.task_list[task].crash_count += 1
@@ -189,6 +197,10 @@ class taskManager(aiProcess):
     @external_function
     def request_stop_script(self):
         self.request_stop.set()
+        self.conditions_changed.set()
+    @external_function
+    def request_start_task(self, task_ref):
+        self.req_start_task = task_ref
         self.conditions_changed.set()
     def stop_script(self):
         if self.running_script:
@@ -234,21 +246,26 @@ class taskManager(aiProcess):
         task.active = True
     def run(self):
         while True:
-            self.conditions_changed.wait(5)
-            if self.conditions_changed.is_set():
-                self.conditions_changed.clear()
-                if self.request_stop.is_set():
-                    self.request_stop.clear()
-                    self.stop_script()
-                with self.task_lock:
-                    highest_priority = self.current_priority
-                    to_start = None
-                    for task in self.active_tasks:
-                        if task.script_name != self.current_task and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
-                            if task.is_available():
-                                to_start = task
-                    if to_start:
-                        self.start_task(to_start)
+            self.conditions_changed.wait(1)
+            self.conditions_changed.clear()
+            if self.request_stop.is_set():
+                self.request_stop.clear()
+                self.stop_script()
+            with self.task_lock:
+                highest_priority = self.current_priority
+                to_start = None
+                for task in self.active_tasks:
+                    if task.script_name != self.current_task and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
+                        if task.is_available():
+                            to_start = task
+                if self.req_start_task:
+                    try:
+                        to_start = self.task_list[self.req_start_task]
+                    except KeyError:
+                        error("cannot start %s, not an active task." %(self.req_start_task,))
+                    self.req_start_task = None
+                if to_start:
+                    self.start_task(to_start)
             if not self.running_script:
                 debug('No script was running, returning to default')
                 self.start_default_script()

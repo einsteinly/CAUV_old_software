@@ -7,19 +7,6 @@ enum DebugType : int8 {
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum LightID: int8 { Forward = 1, Down = 2 }
 
-group debug
-{
-    message Debug : 0
-    {
-        type : DebugType;
-        msg : string;
-    }
-    message DebugLevel : 1
-    {
-        level : int32;
-    }
-}
-
 group control
 {
 	message Motor : 2
@@ -61,5 +48,9 @@ group external
     message CuttingDevice : 151
     {
         strength : uint8;
+    }
+    message BatteryStatus : 152
+    {
+        voltage : uint16;
     }
 }

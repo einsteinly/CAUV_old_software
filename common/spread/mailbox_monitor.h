@@ -54,6 +54,7 @@ class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
         volatile bool m_interupted;
         volatile bool m_monitoring;
+        boost::thread::id m_sync_thread_id;
 };
 
 } // namespace cauv

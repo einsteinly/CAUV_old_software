@@ -33,12 +33,14 @@ class LoggingObserver(msg.MessageObserver):
     
     def close(self):
         self.log.close()
+        self.__node.stop()
 
     def writeLine(self):
         now = time.time() - self.start_time
         line = "'(%g,%g,%g,%g,'%s')'\n" % (now, self.latitude, self.longitude, self.depth, self.comment)
         debug(line)
         self.log.write(line)
+        self.comment = ''
 
     #def onScriptMessage(self, m):
     #    self.comment = 'executing new mission: %d bytes' % len(m.msg)
@@ -46,16 +48,19 @@ class LoggingObserver(msg.MessageObserver):
 
     def onAIlogMessage(self, m):
         self.comment = str(m.msg)
+        self.writeLine()
     
     def onTelemetryMessage(self, m):
         self.bearing = m.orientation.yaw
         self.depth = m.depth
+        self.writeLine()
 
     def onLocationMessage(self, m):
         self.latitude = m.latitude
         self.longitude = m.longitude
         self.altitude = m.altitude
         self.speed = m.speed
+        self.writeLine()
 
 if __name__ == '__main__':
     n = node.Node("py-log")

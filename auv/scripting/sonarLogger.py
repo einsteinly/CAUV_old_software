@@ -63,5 +63,8 @@ if __name__ == '__main__':
         exit(1)
    
     cauv_node = node.Node("py-slog") 
-    sonarLoggerMainLoop(cauv_node, opts)
+    try:
+        sonarLoggerMainLoop(cauv_node, opts)
+    finally:
+        cauv_node.stop()
 

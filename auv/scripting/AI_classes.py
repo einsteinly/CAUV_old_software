@@ -50,19 +50,24 @@ def is_external(f):
         return False
 
 class aiProcess(messaging.MessageObserver):
-    def __init__(self, process_name, location_enabled = False):
+    def __init__(self, process_name):
         messaging.MessageObserver.__init__(self)
-        self.node = cauv.node.Node("pyai"+process_name[:4])
+        id = process_name[:6] if len(process_name)>6 else process_name
+        self.node = cauv.node.Node("ai"+id)
         self.node.join("ai")
-        self.node.addObserver(self)
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
+    def _register(self):
+        self.node.addObserver(self)
+        self.ai.STATE.REGISTER()
     def onAIMessage(self, m):
+        debug("onAIMessage in %s: %s" %(self.process_name, m.msg), 6)
         message = cPickle.loads(m.msg)
         if message[0] == self.process_name: #this is where the to string appears in the cpickle output
             message = cPickle.loads(m.msg)
             if hasattr(self, message[2]) and is_external(getattr(self,message[2])):
                 try:
+                    debug("onAIMessage in %s, calling function." %(self.process_name, ), 6)
                     getattr(self,message[2])(*message[3], **message[4])
                 except Exception as exc:
                     error("Error occured because of message: %s" %(str(message)))
@@ -76,7 +81,8 @@ class aiProcess(messaging.MessageObserver):
             error('Error sending high-level log message')
             traceback.print_exc()
     def die(self):
-        self.node.removeObserver(self)
+        info('Clearing up process %s' %(self.process_name,))
+        self.node.stop()
 
 #------AI SCRIPTS STUFF------
 
@@ -101,6 +107,7 @@ class fakeAUVfunction():
         self.script = script
         self.attr = attr
     def __call__(self, *args, **kwargs):
+        debug('fakeAUVfunction: __call__ args=%s kwargs=%s' % (str(args), str(kwargs)), 5)
         self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
     def __getattr__(self, attr):
         error('You can only call functions of AUV, one level deep (except sonar)')
@@ -198,6 +205,7 @@ class fakeAUV(messaging.MessageObserver):
         return False
         
     def __getattr__(self, attr):
+        debug('FakeAUV: returning dynamic override for attr=%s' % str(attr), 3)
         return fakeAUVfunction(self.script, attr)
 
 class aiScriptOptionsBase(type):
@@ -273,6 +281,12 @@ class aiScript(aiProcess):
     @external_function
     def depthOverridden(self):
         warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
+    @external_function
+    def begin_override_pause(self):
+        warning('AUV control by %s was paused, but this script has no methd to deal with this event' %(self.task_name,))
+    @external_function
+    def end_override_pause(self):
+        pass
     def notify_exit(self, exit_status):
         #make sure to drop pipelines
         self.drop_all_pl()
@@ -369,12 +383,12 @@ class timeCondition(aiCondition):
     """
     This condition only remains true for a certain time
     """
-    def __init__(self, name, default_time=0):
+    def __init__(self, name, default_time=0, state=False):
         self.store = ['name', 'default_time']
         self.name = name
         self.default_time = default_time
         self.state_lock = threading.Lock()
-        self.timeout = None
+        self.timeout = time.time()+default_time if state else None
     def set_state(self, state, time=None):
         with self.state_lock:
             if state:
@@ -385,6 +399,12 @@ class timeCondition(aiCondition):
         with self.state_lock:
             state = self.timeout>time.time()
         return state
+        
+class timeoutCondition(timeCondition):
+    def __init__(self, name, default_time=30, state=False):
+        timeCondition.__init__(self, name, default_time, not state)
+    def get_state(self):
+        return not timeCondition.get_state(self)
     
 class detectorCondition(aiCondition):
     """
@@ -448,6 +468,7 @@ class aiTask():
     def deregister(self, task_manager):
         if not self.registered:
             error('Task not setup, so can not be deregistered')
+            return
         task_manager.active_tasks.remove(self)
         for condition in self.conditions:
             condition.deregister(task_manager)

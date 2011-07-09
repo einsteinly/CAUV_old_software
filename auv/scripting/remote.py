@@ -25,9 +25,9 @@ import Queue
 #    def __repr__(self):
 #        return "%s %s" % (self.id, self.seq)
 
-class ScriptObserver(msg.BufferedMessageObserver, threading.Thread):
+class ScriptObserver(msg.MessageObserver, threading.Thread):
     def __init__(self, node):
-        msg.BufferedMessageObserver.__init__(self)
+        msg.MessageObserver.__init__(self)
         threading.Thread.__init__(self)
         self.__node = node
         node.join("control")
@@ -118,9 +118,12 @@ Available objects and functions:
 
 def main():
     n = node.Node("pyscript")
-    so = ScriptObserver(n)
-    while True:
-        time.sleep(1.0)
+    try:
+        so = ScriptObserver(n)
+        while True:
+            time.sleep(0.2)
+    finally:
+        n.stop()
 
 if __name__ == '__main__':
     main()

@@ -15,8 +15,8 @@ CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_
         m_forwardSpeed(0.f), m_strafeSpeed(0.f), m_depthRate(0.f), m_dirty(false), m_autopilotControl(true)
 {
     // right hand pad buttons
-    this->connect(controller.get(), SIGNAL(A(bool)), this, SLOT(forward(bool)));
-    this->connect(controller.get(), SIGNAL(X(bool)), this, SLOT(stop(bool)));
+    //this->connect(controller.get(), SIGNAL(A(bool)), this, SLOT(forward(bool)));
+    //this->connect(controller.get(), SIGNAL(X(bool)), this, SLOT(stop(bool)));
 
     // top left buttons
     this->connect(controller.get(), SIGNAL(RB(bool)), this, SLOT(up(bool)));
@@ -148,6 +148,7 @@ void CauvGamepad::stop(bool){
     // disable all the autopilots
     foreach(AUV::autopilot_map::value_type i, m_auv->autopilots){
         i.second->enabled->set(false);
+        i.second->set(0);
     }
 
     // stop all the motors

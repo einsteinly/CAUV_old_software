@@ -445,7 +445,7 @@ NodeParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error)
         try{
             r = boost::get<NodeParamValue>(i->second->value);
         }catch(boost::bad_get&){
-            throw id_error("requested output is not an NodeParamValue" + toStr(o_id));
+            throw id_error("requested output is not a NodeParamValue" + toStr(o_id));
         }
     }else{
         throw id_error("no such output" + toStr(o_id));

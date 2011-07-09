@@ -15,46 +15,52 @@ def savepl(spread, port, fname, timeout=3.0, name='default'):
     with open(fname, 'wb') as outf:
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
+        try:
+            info('Initializing pipeline model (%s)...' % name)
+            model = pipeline.Model(n, name)
 
-        info('Initializing pipeline model (%s)...' % name)
-        model = pipeline.Model(n, name)
-
-        info('Getting pipeline state...')
-        saved = model.get(timeout)
+            info('Getting pipeline state...')
+            saved = model.get(timeout)
+            
+            info('Pickling...')
+            pickle.dump(saved, outf)
         
-        info('Pickling...')
-        pickle.dump(saved, outf)
-
-        info('Done.')
+            info('Done.')
+        finally:
+            n.stop()
 
 
 def loadpl(spread, port, fname, timeout=3.0, name='default'):
     with open(fname, 'rb') as inf:
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
+        try:
+            info('Initializing pipeline model (%s)...' % name)
+            model = pipeline.Model(n, name)
 
-        info('Initializing pipeline model (%s)...' % name)
-        model = pipeline.Model(n, name)
+            info('UnPickling...')
+            saved = pickle.load(inf)
+            
+            info('Setting pipeline state...')
+            model.set(saved, timeout)
 
-        info('UnPickling...')
-        saved = pickle.load(inf)
-        
-        info('Setting pipeline state...')
-        model.set(saved, timeout)
-
-        info('Done.')
+            info('Done.')
+        finally:
+            n.stop()
 
 def clearpl(spread, port, name='default'):
         info('Connecting...')
         n = node.Node("py-plsave", spread, port)
+        try:
+            info('Initializing pipeline model (%s)...' % name)
+            model = pipeline.Model(n, name)
 
-        info('Initializing pipeline model (%s)...' % name)
-        model = pipeline.Model(n, name)
+            info('Clearing...')
+            model.clear()
 
-        info('Clearing...')
-        model.clear()
-
-        info('Done.')
+            info('Done.')
+        finally:
+            n.stop()
 
 
 if __name__ == '__main__':

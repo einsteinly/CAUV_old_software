@@ -9,8 +9,8 @@ import traceback
 
 class scriptOptions(aiScriptOptions):
     loops = 2 #number of times to go round
-    power = 64 #motor power
-    unit = 3
+    power = 127 #motor power
+    unit = 15
     depth = None
     stop_time = 2
     class Meta:
@@ -23,12 +23,13 @@ class script(aiScript):
         #debug('setting bearing %d...' % bearing)
         #self.auv.bearingAndWait(bearing)
         bearing = self.auv.getBearing()
-        if not bearing:
+        if bearing:
+            self.auv.bearingAndWait(bearing)
+        else:
             self.auv.bearingAndWait(0)
-            bearing = 0
-
-        debug('diving...')
-        self.auv.depthAndWait(self.options.depth)
+        if self.options.depth:
+            debug('diving...')
+            self.auv.depthAndWait(self.options.depth, 5)
 
         debug('spiral...')
         # Individual half squares

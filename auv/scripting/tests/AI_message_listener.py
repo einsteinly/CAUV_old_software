@@ -4,9 +4,9 @@ import cauv.node
 import time
 import cPickle
 
-class aiMessageListener(messaging.BufferedMessageObserver):
+class aiMessageListener(messaging.MessageObserver):
     def __init__(self):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.node = cauv.node.Node("pymsglst")
         self.node.join("ai")
         self.node.addObserver(self)

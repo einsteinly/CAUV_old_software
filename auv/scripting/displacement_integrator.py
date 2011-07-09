@@ -4,6 +4,7 @@ from cauv.debug import debug, error, warning, info
 import time
 import threading
 import math
+import displacement
 
 # forward/reverse speed scale and exponential factors
 class settings:
@@ -119,7 +120,6 @@ class DisplacementIntegrator:
             self.update.acquire()
             self.bearing = m.orientation.yaw#target
             self.displacementZ = -m.depth            
-            #self.gotBearing == True
             self.gotBearing = True
             #self.update.notify()
             self.update.release()

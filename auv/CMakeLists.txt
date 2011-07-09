@@ -2,8 +2,9 @@ project (AUV)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${AUV_BINARY_DIR}/bin")
 
-# openCV paths:
 find_package (OpenCV REQUIRED)
+find_package (Eigen REQUIRED)
+include_directories (${Eigen_INCLUDE_DIRS})
 
 # we expect the source root dir to be in the include path
 include_directories (${AUV_SOURCE_DIR})

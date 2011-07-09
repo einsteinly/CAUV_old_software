@@ -1,18 +1,19 @@
 import cauv.messaging as messaging
+from cauv.debug import info, error, debug, warning
 
 from AI_classes import aiProcess
 
 import cPickle
 from IPython.Shell import IPShellEmbed
 
-class aiMessageListener(messaging.BufferedMessageObserver):
+class aiMessageListener(messaging.MessageObserver):
     def __init__(self, node):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.node = node
         self.node.addObserver(self)
     def onAIMessage(self, m):
         message = cPickle.loads(m.msg)
-        print '%s: %s.%s(%s, %s)' %(message[1],message[0],message[2],', '.join(map(str,message[3])),', '.join(['='.join(map(str, x)) for x in message[4].items()]))
+        debug('AI message: %s: %s.%s(%s, %s)' %(message[1],message[0],message[2],', '.join(map(str,message[3])),', '.join(['='.join(map(str, x)) for x in message[4].items()])))
     def die(self):
         self.node.removeObserver(self)
         
@@ -34,6 +35,9 @@ def modify_task_options(ainode, task_ref):
     
 def export_task_data(ainode, file_name):
     ainode.ai.task_manager.export_task_data(file_name)
+    
+def force_start(ainode, task_ref):
+    ainode.ai.task_manager.request_start_task(task_ref)
     
 def force_save(ainode):
     ainode.ai.task_manager.save_state()
@@ -107,12 +111,14 @@ class menu():
 
 if __name__=='__main__':
     ainode = aiProcess('remote')
+    ainode._register()
     
     taskm = menu('Tasks', '')
     taskm.addFunction('Add task', add_task, 'Setup an (already existing) task', {'task_ref': str})
     taskm.addFunction('Remove task', remove_task, 'Unsetup an (already existing) task', {'task_ref': str})
     taskm.addFunction('Modify task options', modify_task_options, 'Change an options on an (already existing) task', {'task_ref': str})
     taskm.addFunction('Export task data', export_task_data, 'Save options etc to file.', {'file_name': str})
+    taskm.addFunction('Force task start', force_start, 'Force an active task to start its script (may not be entirely thread safe)', {'task_ref': str})
     
     scriptm = menu('Script', '')
     scriptm.addFunction('Stop script', stop_script, 'Stop the current script (if conditions true may immediately restart)', {})

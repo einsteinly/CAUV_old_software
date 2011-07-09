@@ -1,6 +1,8 @@
 #include "mailbox_monitor.h"
 #include "spread_rc_mailbox.h"
 
+#include <boost/thread/thread.hpp>
+
 #include <debug/cauv_debug.h>
 
 using namespace cauv;
@@ -20,7 +22,8 @@ void TestMBObserver::membershipMessageReceived(boost::shared_ptr<const Membershi
 
 
 MailboxEventMonitor::MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox)
-        : m_thread(), m_mailbox(mailbox), m_interupted(false), m_monitoring(false) {
+        : m_thread(), m_mailbox(mailbox), m_interupted(false),
+          m_monitoring(false), m_sync_thread_id(){
 }
 
 void MailboxEventMonitor::startMonitoringAsync() {
@@ -28,11 +31,12 @@ void MailboxEventMonitor::startMonitoringAsync() {
 
     if(m_thread.get_id() == boost::thread::id()){
         m_thread = boost::thread( &MailboxEventMonitor::doMonitoring, this );
-
+        /* TODO: we can't nice down without sudoing, so nice up other things
+         * instead
         struct sched_param param;
         param.sched_priority = -10;
         pthread_setschedparam( m_thread.native_handle(), SCHED_OTHER, &param);
-
+        */
     }else{
         error() << __func__ << ": already monitoring";
     }
@@ -47,11 +51,15 @@ void MailboxEventMonitor::stopMonitoring() {
         m_thread.join();
     } else {
         // sync
+        debug() << "No internal monitor thread to interrupt"
+                << "(m_thread=" << m_thread.native_handle() << ")"
+                << "External thread:" << *(int*)&m_sync_thread_id;
         m_interupted = true;
     }
 }
 
 void MailboxEventMonitor::startMonitoringSync() {
+    m_sync_thread_id = boost::this_thread::get_id();
     doMonitoring();
 }
 

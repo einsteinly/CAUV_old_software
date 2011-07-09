@@ -21,9 +21,9 @@ const static Colour Invalid_Hint(0.6, 0, 0, 0.6);
 
 NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
                        bool suppress_text)
-    : Renderable(node), m_node(node), m_pw(pw),
+    : Renderable(node.get()), m_node(node), m_pw(pw),
       m_suppress_text(suppress_text),
-      m_text(boost::make_shared<Text>(node, name)),
+      m_text(boost::make_shared<Text>(node.get(), name)),
       m_radius(6), m_radius_squared(m_radius*m_radius),
       m_normal_colour(IO_Normal_Colour),
       m_colour(m_normal_colour),
@@ -62,9 +62,12 @@ void NodeIOBlob::mouseMoveEvent(MouseEvent const& m){
 bool NodeIOBlob::mousePressEvent(MouseEvent const& e){
     if(e.pos.sxx() < m_radius_squared){
         // circley bit hit
+        node_ptr_t tmp_node = m_node.lock();
+        if (!tmp_node)
+            return false;
         debug() << BashColour::Green << "creating new arc handle n="
-                << m_node->id() << "io=" << *m_text<< "this=" << this;
-        arc_ptr_t arc = m_node->newArc(shared_from_this(), renderable_ptr_t());
+                << tmp_node->id() << "io=" << *m_text<< "this=" << this;
+        arc_ptr_t arc = tmp_node->newArc(shared_from_this(), renderable_ptr_t());
         menu_ptr_t handle = boost::make_shared<FloatingArcHandle>(m_pw, arc);
         arc->m_dst = handle;
         // (true = start out 'pressed', ie being dragged)
@@ -109,7 +112,11 @@ void NodeIOBlob::status(int s){
 }
 
 node_id NodeIOBlob::nodeId() const{
-    return m_node->id();
+    node_ptr_t tmp_node = m_node.lock();
+    if (!tmp_node)
+        //FIXME get error id
+        return 0;
+    return tmp_node->id();
 }
 
 NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
@@ -121,13 +128,16 @@ NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
 bool NodeInputBlob::mousePressEvent(MouseEvent const& e){
     if(e.pos.sxx() < m_radius_squared){
         // circley bit hit
+        node_ptr_t tmp_node = m_node.lock();
+        if (!tmp_node)
+            return false;
         arc_ptr_t has_arc = m_pw->arcWithDestination(shared_from_this());
         if(has_arc){
             renderable_ptr_t arc_src = has_arc->m_src.lock();
             renderable_ptr_t arc_dst = has_arc->m_dst.lock();
             if(shared_from_this() == arc_dst){
                 debug() << BashColour::Green << "re-creating arc: dst ="
-                        << m_node->id() << "io=" << *m_text<< "this=" << this;
+                        << tmp_node->id() << "io=" << *m_text<< "this=" << this;
                 menu_ptr_t handle = boost::make_shared<FloatingArcHandle>(m_pw, has_arc);
                 boost::shared_ptr<NodeOutputBlob> bsrc = boost::dynamic_pointer_cast<NodeOutputBlob>(arc_src);
                 boost::shared_ptr<NodeInputBlob>  bdst = boost::dynamic_pointer_cast<NodeInputBlob>(arc_dst);
@@ -144,7 +154,7 @@ bool NodeInputBlob::mousePressEvent(MouseEvent const& e){
                 }
                 // wait for ArcRemovedMessage
                 //m_pw->removeArc(arc_src, shared_from_this());
-                arc_ptr_t arc = m_node->newArc(arc_src, handle);
+                arc_ptr_t arc = tmp_node->newArc(arc_src, handle);
                 // (true = start out 'pressed', ie being dragged)
                 m_context->postMenu(handle, m_context->referUp(m_pos), true);
                 return true;

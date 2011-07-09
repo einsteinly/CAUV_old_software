@@ -20,8 +20,11 @@ tags
 *.dylib
 *.temp
 *-out.*.jpg
+*.tmp
+*out.*.avi
 .DS_Store
 auv/python-module/cauvinterface.so
+auv/python-module/cauvinterfaced.so
 auv/scripting/unknown.log
 auv/python-module/emit_containers.cpp
 auv/python-module/emit_enums.cpp
@@ -33,6 +36,8 @@ messages-python/parsetab.py
 auv/common/messages.cpp
 generated/*.h
 generated/*.cpp
+mcb-msg/messages.h
+mcb-msg/messages.c
 pitzdir/project.pickle
 pitzdir/pitz.pid
 pitzdir/me.yaml

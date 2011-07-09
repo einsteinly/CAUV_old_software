@@ -7,6 +7,7 @@
 #include <common/cauv_node.h>
 
 class ControlLoops;
+class DeviceControlObserver;
 class StateObserver;
 class TelemetryBroadcaster;
 
@@ -32,6 +33,7 @@ class ControlNode : public CauvNode
         boost::shared_ptr<MCBModule> m_mcb;
         boost::shared_ptr<XsensIMU> m_xsens;
         boost::shared_ptr<ControlLoops> m_controlLoops;
+        boost::shared_ptr<DeviceControlObserver> m_deviceControl;
         boost::shared_ptr<StateObserver> m_stateObserver;
         boost::shared_ptr<TelemetryBroadcaster> m_telemetryBroadcaster;
     
