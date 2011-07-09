@@ -5,7 +5,7 @@ p0
 S'nodes'
 p2
 (dp3
-I55
+I25
 (icauv.pipeline
 Node
 p4
@@ -16,21 +16,21 @@ p6
 S'ch1 value'
 p8
 (lp9
-(I57
+(I27
 S'ch1'
 p10
 tp11
 asS'ch3 value'
 p12
 (lp13
-(I57
+(I27
 S'ch3'
 p14
 tp15
 asS'ch2 value'
 p16
 (lp17
-(I57
+(I27
 S'ch2'
 p18
 tp19
@@ -48,7 +48,7 @@ p24
 (dp25
 S'image'
 p26
-(I79
+(I48
 S'image out (not copied)'
 p27
 tp28
@@ -58,7 +58,7 @@ p29
 S''
 p30
 tp31
-ssbsI56
+ssbsI26
 (icauv.pipeline
 Node
 p32
@@ -68,7 +68,7 @@ g6
 S'image copy'
 p35
 (lp36
-(I57
+(I27
 S'image'
 p37
 tp38
@@ -80,11 +80,11 @@ sg24
 (dp40
 S'image'
 p41
-(I79
+(I48
 S'image out (not copied)'
 p42
 tp43
-ssbsI57
+ssbsI27
 (icauv.pipeline
 Node
 p44
@@ -94,11 +94,11 @@ g6
 S'image (not copied)'
 p47
 (lp48
-(I62
+(I31
 S'image in'
 p49
 tp50
-a(I70
+a(I39
 S'image'
 p51
 tp52
@@ -121,7 +121,7 @@ g30
 tp58
 sS'image'
 p59
-(I56
+(I26
 S'image copy'
 p60
 tp61
@@ -132,23 +132,23 @@ g30
 tp63
 sS'ch1'
 p64
-(I55
+(I25
 S'ch1 value'
 p65
 tp66
 sS'ch2'
 p67
-(I55
+(I25
 S'ch2 value'
 p68
 tp69
 sS'ch3'
 p70
-(I55
+(I25
 S'ch3 value'
 p71
 tp72
-ssbsI58
+ssbsI28
 (icauv.pipeline
 Node
 p73
@@ -171,11 +171,11 @@ g30
 tp80
 sS'image_in'
 p81
-(I73
+(I42
 S'image (not copied)'
 p82
 tp83
-ssbsI59
+ssbsI29
 (icauv.pipeline
 Node
 p84
@@ -185,7 +185,7 @@ g6
 S'image_out'
 p87
 (lp88
-(I78
+(I47
 S'image_in'
 p89
 tp90
@@ -203,7 +203,7 @@ p94
 (I0
 g30
 tp95
-ssbsI60
+ssbsI30
 (icauv.pipeline
 Node
 p96
@@ -213,7 +213,7 @@ g6
 S'Value'
 p99
 (lp100
-(I73
+(I42
 S'white level'
 p101
 tp102
@@ -236,7 +236,7 @@ g30
 tp108
 sS'Value'
 p109
-(I75
+(I44
 S'ch1 value'
 p110
 tp111
@@ -245,7 +245,7 @@ p112
 (I0
 g30
 tp113
-ssbsI62
+ssbsI31
 (icauv.pipeline
 Node
 p114
@@ -267,7 +267,7 @@ sg24
 (dp122
 S'image in'
 p123
-(I57
+(I27
 S'image (not copied)'
 p124
 tp125
@@ -276,7 +276,7 @@ p126
 (I0
 g30
 tp127
-ssbsI63
+ssbsI32
 (icauv.pipeline
 Node
 p128
@@ -286,11 +286,11 @@ g6
 S'histogram'
 p131
 (lp132
-(I64
+(I33
 S'histogram'
 p133
 tp134
-a(I65
+a(I34
 S'histogram'
 p135
 tp136
@@ -314,7 +314,7 @@ g30
 tp143
 sS'image_in'
 p144
-(I80
+(I49
 S'H'
 p145
 tp146
@@ -323,7 +323,7 @@ p147
 (I0
 g30
 tp148
-ssbsI64
+ssbsI33
 (icauv.pipeline
 Node
 p149
@@ -341,11 +341,11 @@ sg24
 (dp155
 S'histogram'
 p156
-(I63
+(I32
 S'histogram'
 p157
 tp158
-ssbsI65
+ssbsI34
 (icauv.pipeline
 Node
 p159
@@ -369,11 +369,11 @@ g30
 tp167
 sS'histogram'
 p168
-(I63
+(I32
 S'histogram'
 p169
 tp170
-ssbsI66
+ssbsI35
 (icauv.pipeline
 Node
 p171
@@ -383,7 +383,7 @@ g6
 S'image_out'
 p174
 (lp175
-(I80
+(I49
 S'image'
 p176
 tp177
@@ -406,7 +406,7 @@ g30
 tp183
 sS'image_in'
 p184
-(I79
+(I48
 S'image out (not copied)'
 p185
 tp186
@@ -415,7 +415,7 @@ p187
 (I0
 g30
 tp188
-ssbsI67
+ssbsI36
 (icauv.pipeline
 Node
 p189
@@ -425,7 +425,7 @@ g6
 S'image out'
 p192
 (lp193
-(I72
+(I41
 S'image_in'
 p194
 tp195
@@ -459,7 +459,7 @@ g30
 tp205
 sS'image in'
 p206
-(I77
+(I46
 S'image (not copied)'
 p207
 tp208
@@ -473,7 +473,7 @@ p211
 (I0
 g30
 tp212
-ssbsI68
+ssbsI37
 (icauv.pipeline
 Node
 p213
@@ -483,7 +483,7 @@ g6
 S'image copy'
 p216
 (lp217
-(I73
+(I42
 S'image'
 p218
 tp219
@@ -495,11 +495,11 @@ sg24
 (dp221
 S'image'
 p222
-(I76
+(I45
 S'image (not copied)'
 p223
 tp224
-ssbsI69
+ssbsI38
 (icauv.pipeline
 Node
 p225
@@ -509,7 +509,7 @@ g6
 S'image_out'
 p228
 (lp229
-(I71
+(I40
 S'image_in'
 p230
 tp231
@@ -532,7 +532,7 @@ g30
 tp237
 sS'image_in'
 p238
-(I72
+(I41
 S'image_out'
 p239
 tp240
@@ -541,7 +541,7 @@ p241
 (I0
 g30
 tp242
-ssbsI70
+ssbsI39
 (icauv.pipeline
 Node
 p243
@@ -557,7 +557,7 @@ p248
 sS'G'
 p250
 (lp251
-(I76
+(I45
 S'image'
 p252
 tp253
@@ -569,11 +569,11 @@ sg24
 (dp255
 S'image'
 p256
-(I57
+(I27
 S'image (not copied)'
 p257
 tp258
-ssbsI71
+ssbsI40
 (icauv.pipeline
 Node
 p259
@@ -596,11 +596,11 @@ g30
 tp266
 sS'image_in'
 p267
-(I69
+(I38
 S'image_out'
 p268
 tp269
-ssbsI72
+ssbsI41
 (icauv.pipeline
 Node
 p270
@@ -610,7 +610,7 @@ g6
 S'image_out'
 p273
 (lp274
-(I69
+(I38
 S'image_in'
 p275
 tp276
@@ -677,7 +677,7 @@ g30
 tp299
 sS'image_in'
 p300
-(I67
+(I36
 S'image out'
 p301
 tp302
@@ -691,7 +691,7 @@ p305
 (I0
 g30
 tp306
-ssbsI73
+ssbsI42
 (icauv.pipeline
 Node
 p307
@@ -701,11 +701,11 @@ g6
 S'image (not copied)'
 p310
 (lp311
-(I58
+(I28
 S'image_in'
 p312
 tp313
-a(I77
+a(I46
 S'image'
 p314
 tp315
@@ -717,23 +717,23 @@ sg24
 (dp317
 S'black level'
 p318
-(I74
+(I43
 S'ch1 value'
 p319
 tp320
 sS'image'
 p321
-(I68
+(I37
 S'image copy'
 p322
 tp323
 sS'white level'
 p324
-(I60
+(I30
 S'Value'
 p325
 tp326
-ssbsI74
+ssbsI43
 (icauv.pipeline
 Node
 p327
@@ -743,7 +743,7 @@ g6
 S'ch1 value'
 p330
 (lp331
-(I73
+(I42
 S'black level'
 p332
 tp333
@@ -764,7 +764,7 @@ sg24
 (dp340
 S'image'
 p341
-(I76
+(I45
 S'image (not copied)'
 p342
 tp343
@@ -773,7 +773,7 @@ p344
 (I0
 g30
 tp345
-ssbsI75
+ssbsI44
 (icauv.pipeline
 Node
 p346
@@ -783,7 +783,7 @@ g6
 S'ch1 value'
 p349
 (lp350
-(I60
+(I30
 S'Value'
 p351
 tp352
@@ -804,7 +804,7 @@ sg24
 (dp359
 S'image'
 p360
-(I76
+(I45
 S'image (not copied)'
 p361
 tp362
@@ -813,7 +813,7 @@ p363
 (I0
 g30
 tp364
-ssbsI76
+ssbsI45
 (icauv.pipeline
 Node
 p365
@@ -823,15 +823,15 @@ g6
 S'image (not copied)'
 p368
 (lp369
-(I68
+(I37
 S'image'
 p370
 tp371
-a(I74
+a(I43
 S'image'
 p372
 tp373
-a(I75
+a(I44
 S'image'
 p374
 tp375
@@ -846,7 +846,7 @@ sg24
 (dp378
 S'image'
 p379
-(I70
+(I39
 g250
 tp380
 sS'sigma'
@@ -854,7 +854,7 @@ p381
 (I0
 g30
 tp382
-ssbsI77
+ssbsI46
 (icauv.pipeline
 Node
 p383
@@ -864,7 +864,7 @@ g6
 S'image (not copied)'
 p386
 (lp387
-(I67
+(I36
 S'image in'
 p388
 tp389
@@ -884,11 +884,11 @@ g30
 tp394
 sS'image'
 p395
-(I73
+(I42
 S'image (not copied)'
 p396
 tp397
-ssbsI78
+ssbsI47
 (icauv.pipeline
 Node
 p398
@@ -898,356 +898,388 @@ g6
 S'image_out'
 p401
 (lp402
-(I79
+(I48
 S'image in'
 p403
 tp404
+a(I58
+S'image'
+p405
+tp406
 assg20
-(dp405
+(dp407
 S'interpolation mode'
-p406
+p408
 I1
 sS'scale factor'
-p407
+p409
 F0.4000000059604645
 ssg23
 I2
 sg24
-(dp408
+(dp410
 S'interpolation mode'
-p409
-(I0
-g30
-tp410
-sS'image_in'
 p411
-(I59
-S'image_out'
-p412
-tp413
-sS'scale factor'
-p414
 (I0
 g30
+tp412
+sS'image_in'
+p413
+(I29
+S'image_out'
+p414
 tp415
-ssbsI79
+sS'scale factor'
+p416
+(I0
+g30
+tp417
+ssbsI48
 (icauv.pipeline
 Node
-p416
-(dp417
+p418
+(dp419
 g6
-(dp418
+(dp420
 S'image out (not copied)'
-p419
-(lp420
-(I55
-S'image'
 p421
-tp422
-a(I56
+(lp422
+(I25
 S'image'
 p423
 tp424
-a(I66
-S'image_in'
+a(I26
+S'image'
 p425
 tp426
-a(I81
+a(I35
 S'image_in'
 p427
 tp428
-asS'actual frequency'
+a(I50
+S'image_in'
 p429
-(lp430
+tp430
+asS'actual frequency'
+p431
+(lp432
 ssg20
-(dp431
+(dp433
 S'target frequency'
-p432
+p434
 F10.0
 ssg23
 I57
 sg24
-(dp433
+(dp435
 S'target frequency'
-p434
+p436
 (I0
 g30
-tp435
+tp437
 sS'image in'
-p436
-(I78
+p438
+(I47
 S'image_out'
-p437
-tp438
-ssbsI80
+p439
+tp440
+ssbsI49
 (icauv.pipeline
 Node
-p439
-(dp440
+p441
+(dp442
 g6
-(dp441
+(dp443
 g145
-(lp442
-(I63
-S'image_in'
-p443
-tp444
-a(I82
+(lp444
+(I32
 S'image_in'
 p445
 tp446
-a(I86
+a(I51
 S'image_in'
 p447
 tp448
-asS'S'
+a(I55
+S'image_in'
 p449
-(lp450
-sS'V'
+tp450
+asS'S'
 p451
 (lp452
-(I83
-S'image_in'
+sS'V'
 p453
-tp454
+(lp454
+(I52
+S'image_in'
+p455
+tp456
 assg20
-(dp455
+(dp457
 sg23
 I18
 sg24
-(dp456
+(dp458
 S'image'
-p457
-(I66
+p459
+(I35
 S'image_out'
-p458
-tp459
-ssbsI81
+p460
+tp461
+ssbsI50
 (icauv.pipeline
 Node
-p460
-(dp461
-g6
-(dp462
-sg20
+p462
 (dp463
+g6
+(dp464
+sg20
+(dp465
 S'jpeg quality'
-p464
+p466
 I85
 ssg23
 I11
 sg24
-(dp465
+(dp467
 S'jpeg quality'
-p466
+p468
 (I0
 g30
-tp467
+tp469
 sS'image_in'
-p468
-(I79
+p470
+(I48
 S'image out (not copied)'
-p469
-tp470
-ssbsI82
+p471
+tp472
+ssbsI51
 (icauv.pipeline
 Node
-p471
-(dp472
+p473
+(dp474
 g6
-(dp473
+(dp475
 S'Pixels'
-p474
-(lp475
-(I87
-S'image_in'
 p476
-tp477
+(lp477
+(I56
+S'image_in'
+p478
+tp479
 assg20
-(dp478
+(dp480
 S'Bin min'
-p479
+p481
 I80
 sS'Bin max'
-p480
+p482
 I120
 ssg23
 I39
 sg24
-(dp481
+(dp483
 S'Bin min'
-p482
-(I0
-g30
-tp483
-sS'image_in'
 p484
-(I80
-g145
-tp485
-sS'Bin max'
-p486
 (I0
 g30
+tp485
+sS'image_in'
+p486
+(I49
+g145
 tp487
-ssbsI83
+sS'Bin max'
+p488
+(I0
+g30
+tp489
+ssbsI52
 (icauv.pipeline
 Node
-p488
-(dp489
+p490
+(dp491
 g6
-(dp490
-S'histogram'
-p491
-(lp492
-(I84
+(dp492
 S'histogram'
 p493
-tp494
-a(I85
+(lp494
+(I53
 S'histogram'
 p495
 tp496
+a(I54
+S'histogram'
+p497
+tp498
 assg20
-(dp497
+(dp499
 S'Number of bins'
-p498
+p500
 I256
 sS'name'
-p499
+p501
 S'unused'
-p500
+p502
 ssg23
 I33
 sg24
-(dp501
+(dp503
 S'Number of bins'
-p502
-(I0
-g30
-tp503
-sS'image_in'
 p504
-(I80
-g451
-tp505
-sS'name'
-p506
 (I0
 g30
+tp505
+sS'image_in'
+p506
+(I49
+g453
 tp507
-ssbsI84
+sS'name'
+p508
+(I0
+g30
+tp509
+ssbsI53
 (icauv.pipeline
 Node
-p508
-(dp509
-g6
-(dp510
-sg20
+p510
 (dp511
+g6
+(dp512
+sg20
+(dp513
 S'name'
-p512
+p514
 S'buoy_value'
-p513
+p515
 ssg23
 I56
 sg24
-(dp514
+(dp516
 S'name'
-p515
+p517
 (I0
 g30
-tp516
+tp518
 sS'histogram'
-p517
-(I83
+p519
+(I52
 S'histogram'
-p518
-tp519
-ssbsI85
+p520
+tp521
+ssbsI54
 (icauv.pipeline
 Node
-p520
-(dp521
+p522
+(dp523
 g6
-(dp522
+(dp524
 S'image out'
-p523
-(lp524
+p525
+(lp526
 ssg20
-(dp525
+(dp527
 sg23
 I51
 sg24
-(dp526
+(dp528
 S'histogram'
-p527
-(I83
+p529
+(I52
 S'histogram'
-p528
-tp529
-ssbsI86
+p530
+tp531
+ssbsI55
 (icauv.pipeline
 Node
-p530
-(dp531
+p532
+(dp533
 g6
-(dp532
+(dp534
 S'Pixels'
-p533
-(lp534
+p535
+(lp536
 ssg20
-(dp535
+(dp537
 S'Bin min'
-p536
+p538
 I110
 sS'Bin max'
-p537
+p539
 I150
 ssg23
 I39
 sg24
-(dp538
+(dp540
 S'Bin min'
-p539
-(I0
-g30
-tp540
-sS'image_in'
 p541
-(I80
-g145
-tp542
-sS'Bin max'
-p543
 (I0
 g30
+tp542
+sS'image_in'
+p543
+(I49
+g145
 tp544
-ssbsI87
+sS'Bin max'
+p545
+(I0
+g30
+tp546
+ssbsI56
 (icauv.pipeline
 Node
-p545
-(dp546
-g6
-(dp547
-sg20
+p547
 (dp548
+g6
+(dp549
+sg20
+(dp550
 S'jpeg quality'
-p549
+p551
 I85
 ssg23
 I11
 sg24
-(dp550
+(dp552
 S'jpeg quality'
-p551
+p553
 (I0
 g30
-tp552
+tp554
 sS'image_in'
-p553
-(I82
+p555
+(I51
 S'Pixels'
-p554
-tp555
+p556
+tp557
+ssbsI58
+(icauv.pipeline
+Node
+p558
+(dp559
+g6
+(dp560
+sg20
+(dp561
+S'filename'
+p562
+S'detect-buoy-out.%d.%t.%c.avi'
+p563
+ssg23
+I27
+sg24
+(dp564
+S'image'
+p565
+(I47
+S'image_out'
+p566
+tp567
+sS'filename'
+p568
+(I0
+g30
+tp569
 ssbssb.
