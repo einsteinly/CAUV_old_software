@@ -4,6 +4,7 @@ from cauv.debug import debug, error, warning, info
 import time
 import threading
 import math
+import displacement
 
 # forward/reverse speed scale and exponential factors
 class settings:
