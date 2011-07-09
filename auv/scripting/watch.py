@@ -87,7 +87,7 @@ processes_to_start = [
         CAUVTask('persist',         'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',          False, ['persist.py']),
         CAUVTask('battery',         'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
         CAUVTask('gps',             'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
-        CAUVTask('displacement',    'nohup nice -n 4 /bin/sh %SDIR/run.sh %SDIR/displacement.py --mode=exponential', True, ['displacement.py']),
+        CAUVTask('location',        'nohup nice -n 4 /bin/sh %SDIR/run.sh %SDIR/location.py --mode=exponential', True, ['location.py']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
@@ -295,4 +295,7 @@ if __name__ == '__main__':
                 break
     except KeyboardInterrupt:
         info('Interrupt caught, exiting...')
+    finally:
+        if cauv_node is not None:
+            cauv_node.stop()
 
