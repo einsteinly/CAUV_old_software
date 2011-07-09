@@ -51,6 +51,7 @@ void MailboxEventMonitor::stopMonitoring() {
             debug() << "Interrupting monitor thread";
             m_thread.interrupt();
             m_thread.timed_join(boost::posix_time::seconds(1));
+            m_interupted = true;
         }while(m_thread.joinable() && c++ < 30);
     } else {
         // sync
