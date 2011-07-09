@@ -48,15 +48,6 @@ class Node(messaging.CauvNode):
             pass
         messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
         self.__run()
-
-    def __del__(self):
-        debug('CAUV Node __del__...')
-        debug('CAUV Node Stopping...')
-        self.stop()
-        if self.__t.isAlive():
-            debug('CAUV Node Joining run thread...')
-            self.__t.join()
-        debug('CAUV Node __del__ complete')
     
     def __callRunWithTryFinally(self):
         try:
@@ -72,7 +63,7 @@ class Node(messaging.CauvNode):
         debug('CauvNode.__run...')   
         self.__t = threading.Thread(target=self.__callRunWithTryFinally)
         # TODO: False?
-        self.__t.daemon = True
+        self.__t.daemon = False
         self.__t.start()
     
     def send(self, message, groups=None, service_level=ServiceLevel.Safe):

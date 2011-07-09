@@ -304,8 +304,7 @@ class OptimisedPipelines():
         return branch_relabeling, node_relabeling
 
 class pipelineManager(aiProcess):
-    def __init__(self, *args, **kwargs):
-        aiProcess.__init__(self, 'pipeline_manager')
+    def _setup(self, *args, **kwargs):
         self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
         self.state = shelve.open('pl_manager.state')
         self.request_queue = Queue.Queue()
@@ -789,8 +788,9 @@ if __name__ == '__main__':
     p.add_option('--freeze_pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
     opts, args = p.parse_args()
-    pm = pipelineManager(**opts.__dict__)
+    pm = pipelineManager('pipeline_manager')
     try:
+        pm._setup(**opts.__dict__)
         pm.run()
     finally:
         pm.die()

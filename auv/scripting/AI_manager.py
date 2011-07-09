@@ -99,4 +99,7 @@ if __name__ == '__main__':
     opts, args = p.parse_args()
     #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.
     ai = AImanager(**opts.__dict__)
-    ai.run()
+    try:
+        ai.run()
+    finally:
+        ai.node.stop()
