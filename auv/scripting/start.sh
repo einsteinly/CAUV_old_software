@@ -18,13 +18,16 @@ import cauv.sonar
 import cauv.node
 
 node = cauv.node.Node('py-start')
-auv = control.AUV(node)
-sonar = cauv.sonar.Sonar(node)
-pl = pipeline.Model(node)
+try:
+    auv = control.AUV(node)
+    sonar = cauv.sonar.Sonar(node)
+    pl = pipeline.Model(node)
 
-from IPython.Shell import IPShellEmbed
-ipshell = IPShellEmbed()
-ipshell()
+    from IPython.Shell import IPShellEmbed
+    ipshell = IPShellEmbed()
+    ipshell()
+finally:
+    node.stop()
 "
 
 

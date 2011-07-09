@@ -21,13 +21,13 @@ class scriptOptions(aiScriptOptions):
     lines_name = 'pipe'
     histogram_name = 'pipe'
     #Timeouts
-    ready_timeout = 10
-    lost_timeout = 3
+    ready_timeout = 30
+    lost_timeout = 10
     # Calibration
     pipe_end     = 0.2 # of image (range +0.5 to -0.5)
     target_width = 0.2 # of image
     width_error   = 0.1 # of image
-    centre_error = 0.1 # of image
+    centre_error = 0.2 # of image
     align_error  = 5   # degrees 
     average_time = 1   # seconds
     intensity_trigger = 0.10
@@ -105,20 +105,23 @@ class script(aiScript):
                 # update the PID controller to get the required change in target depth
                 width_error = width - self.options.target_width
                 debug("Width error = %f" % (width_error))
-                dive = self.depthControl.update(width_error)
-                if self.auv.current_depth: #again, none depths
-                    self.auv.depth(self.auv.current_depth + dive)
+                # TODO: fix this bit
+                #dive = self.depthControl.update(width_error)
+                #if self.auv.current_depth: #again, none depths
+                #    self.auv.depth(self.auv.current_depth + dive)
                 
                 if width_error < self.options.width_error: self.depthed.set()
                 else: self.depthed.clear()
             
                 
             # set the flags that show if we're above the pipe
-            if self.centred.is_set() and self.aligned.is_set() and self.depthed.is_set():
+            if self.centred.is_set() and self.aligned.is_set():# and self.depthed.is_set(): #TODO: fix this bit
                 self.ready.set()
+                debug('ready over pipeline')
+                self.log('Pipeline follower managed to align itself over the pipe.')
             else:
-                debug('centered:%s aligned:%s depthed:%s' %
-                        (self.centered.is_set(), self.aligned.is_set(), self.depthed.is_set())
+                debug('centred:%s aligned:%s depthed:%s' %
+                        (self.centred.is_set(), self.aligned.is_set(), self.depthed.is_set())
                 )
                 self.ready.clear()
 
@@ -145,13 +148,14 @@ class script(aiScript):
         # y average is used to find the end of the pipe
         yCoord = self.yAverage.update(m.y - 0.5)
         info("pipe y coord = %f" % (yCoord,))
-        if(yCoord < self.options.pipe_end):
-            self.pipeEnded.set()
-        else: self.pipeEnded.clear()
+        #if(yCoord < self.options.pipe_end):
+        #    self.pipeEnded.set()
+        #else: self.pipeEnded.clear()
         
         
         # set the flag used for determining if we're above the pipe
-        if m.x**2 + m.y**2 < self.options.centre_error**2:
+        debug('mx =  %g, self.options./centre_error = %g' % (float(m.x), self.options.centre_error))
+        if m.x**2 < self.options.centre_error**2:
             self.centred.set() #ie within circle radius centre error
         else:
             self.centred.clear()
@@ -182,7 +186,7 @@ class script(aiScript):
         # the detector doesn't really look for the pipe it just looks
         # for yellow things in the downward camera, so there will be
         # a few false positives
-        
+        self.log('Attempting to align ove the pipe.')
         follow_pipe_file = self.options.follow_pipeline_file
         self.request_pl(follow_pipe_file)
         
@@ -192,27 +196,31 @@ class script(aiScript):
         debug('Waiting for ready...')
         self.ready.wait(self.options.ready_timeout)
         if not self.ready.is_set():
+            self.log('Pipeline follower could not position itself over the pipe (timed out).')
             error("Took too long to become ready, aborting")
             self.drop_pl(follow_pipe_file)
             self.notify_exit('ABORT')            
             return #timeout
         
         for i in range(3):
+            self.log('Attempting to follow pipe.')
             self.auv.prop(self.options.prop_speed)
             # follow the pipe along until the end
             if not self.followPipeUntil(self.pipeEnded):
-                error("Pipeline lost on pass %d" %(i,));
+                self.log('Lost the pipeline...')
+                error("Pipeline lost on pass %d" %(i,))
                 self.drop_pl(follow_pipe_file)
                 self.notify_exit('LOST')
                 return
             
             # turn 180
+            self.log('Detected the end of the pipeline, turning and heading back.')
             info("Reached end of pass. Doing 180")
             self.auv.prop(0)
             self.auv.bearing((self.auv.getBearing()-180)%360)
         
         self.drop_pl(follow_pipe_file)
-
+        self.log('Finished follwoing the pipe.')
         info('Finished pipe following')
         self.notify_exit('SUCCESS')
 

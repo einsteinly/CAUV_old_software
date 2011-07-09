@@ -52,6 +52,8 @@ class detector(aiDetector):
                 self.request_pl(self.options.Required_Pipeline)
             except Exception, e:
                 warning('Buoy Detector pipeline request failed: %s' % e)
+        self.log('Looking for the buoy')
+        self.process_c = 0
     
     def relativeTime(self):
         return time.time() - self.tzero
@@ -59,6 +61,7 @@ class detector(aiDetector):
     def process(self):
         # process recorded observations of circles, and set self.detected True
         # / False as necessary
+        self.process_c += 1
         tnow = self.relativeTime()
         self.cullOldSightings(tnow - self.options.Sightings_Period)
         sightings = []
@@ -83,6 +86,18 @@ class detector(aiDetector):
             #warning('self.detected = True is commented out')
         else:
             self.detected = False
+        if self.process_c in (1, 76, 287):
+            self.log("I wonder if anyone knows I'm in here")
+        elif self.process_c in (58,):
+            self.log("So, is it possible to specify any item in an uncountably infinite set with a strictly finite set of operators.")
+        elif self.process_c in (190,):
+            self.log("Is there even a buoy down here?! I've been looking for it for aaaggeeessss")
+        elif self.process_c in (95, 198, 476, 689):
+            self.log("dum di dum di dum di dummmmm")
+        elif self.process_c in (39, 287, 5871):
+            self.log("If we stayyyy here, we'll dieee here, there's nothing else to sayyyyyyyyyyy....")
+        elif self.process_c in (127, 498, 271):
+            self.log("I walk a lonely road, The only one that I have ever known.... da dum, da da, du dum, di da, dum dum")
     
     def die(self):
         try:

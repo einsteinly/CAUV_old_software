@@ -18,11 +18,9 @@ class detectorOptions(aiDetectorOptions):
 class detector(aiDetector):
     def __init__(self, node, opts):
         aiDetector.__init__(self, node, opts)
-        self.node.join("processing")
-
+        self.start_time = time.time()
         self.intensity = TimeAverage(self.options.Average_Time)
-        
-        info("Pipe detector loaded")
+
         if self.options.Required_Pipeline:
             try:
                 self.request_pl(self.options.Required_Pipeline)
@@ -30,7 +28,10 @@ class detector(aiDetector):
                 warning('Pipe Detector pipeline request failed: %s' % e)
 
         self.detected = False
-        
+
+        self.node.join("processing")
+        info("Pipe detector loaded")
+
     def process(self):
         if self.detected:
             debug('yellow object visible')
@@ -40,17 +41,22 @@ class detector(aiDetector):
     def onHistogramMessage(self, m):
         if m.name != self.options.Histogram_Name:
             return
-        debug("Trigger at %f percent" % ((m.bins[self.options.Bin_Number] / self.options.Bin_Threshold) * 100))
+        tdiff = time.time() - self.start_time
         averageIntensity = self.intensity.update(m.bins[self.options.Bin_Number])
-        if averageIntensity > self.options.Bin_Threshold:
+        debug("Trigger at %g%% (%g%% smoothed), %gs since start" % (
+            (m.bins[self.options.Bin_Number] / self.options.Bin_Threshold) * 100,
+            averageIntensity * 100,
+            tdiff
+        ))
+        if averageIntensity > self.options.Bin_Threshold and tdiff >= self.options.Average_Time:
             self.detected = True
             debug ("Detected pipe!")
         else:
             self.detected = False
-            #debug ("No pipe...")
 
 if __name__ == '__main__':
     dt = detector()
     while True:
         dt.process()
         time.sleep(1)
+

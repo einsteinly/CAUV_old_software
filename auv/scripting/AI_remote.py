@@ -139,4 +139,7 @@ if __name__=='__main__':
     m.addMenu(imgm)
     m.addFunction('Shell', shell, '', {})
     
-    m(ainode)
+    try:
+        m(ainode)
+    finally:
+        ainode.die()

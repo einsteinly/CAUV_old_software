@@ -7,14 +7,14 @@ import cauv.node as node
 from cauv.debug import debug, info, warning, error
 
 import time
-
-from gps import *
+import socket
+import gps
 
 class GPSNode():
     def __init__(self, node):
         self.__node = node
-        self.session = gps() 
-        self.session.stream(WATCH_ENABLE|WATCH_NEWSTYLE)
+        self.session = gps.gps() #pylint: disable=E1101
+        self.session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE) #pylint: disable=E1101
 
     def run(self):
         for report in self.session:

@@ -128,7 +128,7 @@ def persistMainLoop(cauv_node, shelf, auto):
 if __name__ == '__main__':
     p = optparse.OptionParser()
     p.add_option('-f', '--persistence-file', dest='fname',
-                 default='/home/cauv/settings-persistence.shelf',
+                 default='./settings-persistence.shelf',
                  action='store', help='file name to save/load from (python shelf)')
     p.add_option('-r', '--restore', dest='restore', default=False,
                  action='store_true', help='immediately broadcast messages for saved settings')
@@ -147,5 +147,9 @@ if __name__ == '__main__':
     
     if opts.restore:
         sendSavedMessages(cauv_node, shelf)
-    persistMainLoop(cauv_node, shelf, opts.auto)
+    try:
+        persistMainLoop(cauv_node, shelf, opts.auto)
+    finally:
+        print 'finally...'
+        cauv_node.stop()
 

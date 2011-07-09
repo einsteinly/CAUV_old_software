@@ -59,7 +59,7 @@ add_custom_target (
 
 add_custom_command (
     OUTPUT ${SRCD}/version.h
-    COMMAND hg -R ${SRCD}/../ summary --color always | sed "s/^/    /" | xxd -i - ${SRCD}/version.h
+    COMMAND hg -R ${SRCD}/../ summary | sed "s/^/    /" | xxd -i - ${SRCD}/version.h
     DEPENDS ${SRCD}/../.hg
     COMMENT "Generating version header"
 )

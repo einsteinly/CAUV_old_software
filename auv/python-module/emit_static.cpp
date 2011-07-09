@@ -129,8 +129,8 @@ class CauvNodeWrapper:
             this->onRun();
         }*/
 
-        void run(){
-            CauvNode::run(true);
+        void run(bool synchronous){
+            CauvNode::run(synchronous);
         }
 
         /*int foo(boost::shared_ptr<Message const> m){

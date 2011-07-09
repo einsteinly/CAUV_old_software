@@ -154,10 +154,13 @@ def reset():
 def run(modules):
     #set up nodes
     node = cauv.node.Node('pybatmon')
-    #set up loggers
-    slow_logger = slowLogger(filename=log_file, frequency=2, node=node, modules=modules)
-    slow_logger.load_from_file()
-    slow_logger.run()
+    try:
+        #set up loggers
+        slow_logger = slowLogger(filename=log_file, frequency=2, node=node, modules=modules)
+        slow_logger.load_from_file()
+        slow_logger.run()
+    finally:
+        node.stop()
     
 if __name__ == '__main__':
     p = optparse.OptionParser()

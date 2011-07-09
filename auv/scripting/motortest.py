@@ -126,11 +126,14 @@ if __name__ == '__main__':
     opts, args = p.parse_args()
     
     node = cauv.node.Node('py-mt')
-    auv = control.AUV(node)
-    
-    if opts.random:
-        randomMotorTest(node, auv, opts.rand_power_limit, opts.rand_duration, opts.delay)
-    else:
-        motorTest(node, auv, opts.power, opts.delay)
+    try:
+        auv = control.AUV(node)
+        
+        if opts.random:
+            randomMotorTest(node, auv, opts.rand_power_limit, opts.rand_duration, opts.delay)
+        else:
+            motorTest(node, auv, opts.power, opts.delay)
+    finally:
+        node.stop()
 
 

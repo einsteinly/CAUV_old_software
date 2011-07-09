@@ -118,9 +118,12 @@ Available objects and functions:
 
 def main():
     n = node.Node("pyscript")
-    so = ScriptObserver(n)
-    while True:
-        time.sleep(1.0)
+    try:
+        so = ScriptObserver(n)
+        while True:
+            time.sleep(0.2)
+    finally:
+        n.stop()
 
 if __name__ == '__main__':
     main()

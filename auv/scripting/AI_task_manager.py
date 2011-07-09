@@ -170,18 +170,23 @@ class taskManager(aiProcess):
             f.close()
     @external_function
     def notify_begin_pause(self, message):
-        getattr(self.ai, self.current_task).begin_override_pause()
+        if self.current_task:
+            getattr(self.ai, self.current_task).begin_override_pause()
     @external_function
     def notify_end_pause(self, message):
-        getattr(self.ai, self.current_task).end_override_pause()
+        if self.current_task:
+            getattr(self.ai, self.current_task).end_override_pause()
     @external_function
     def on_script_exit(self, task, status):
         if status == 'ERROR':
-            self.task_list[task].crash_count += 1
-            if self.task_list[task].crash_count >= self.task_list[task].crash_limit:
-                self.remove_task(task)
-                warning('%s had too many unhandled exceptions, so has being removed from the active tasks.' %(task,))
-            self.log('Task %s failed after an exception in the script.' %(task, ))
+            try:
+                self.task_list[task].crash_count += 1
+                if self.task_list[task].crash_count >= self.task_list[task].crash_limit:
+                    self.remove_task(task)
+                    warning('%s had too many unhandled exceptions, so has being removed from the active tasks.' %(task,))
+                self.log('Task %s failed after an exception in the script.' %(task, ))
+            except KeyError:
+                warning('Unrecognised task %s crashed (or default script crashed)' %(task,))
         elif status == 'SUCCESS':
             self.log('Task %s suceeded, no longer trying to complete this task.' %(task, ))
             self.remove_task(task)

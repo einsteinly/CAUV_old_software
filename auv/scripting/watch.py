@@ -78,16 +78,16 @@ processes_to_start = [
             ['remote.py'] # list of names to search for in processes
         ),
         CAUVTask('logger',          'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe default','nohup nice -n 15 %EDIRimg-pipeline -n default',        True, ['img-pipeline -n default']),
-        CAUVTask('img-pipe ai',     'nohup nice -n 15 %EDIRimg-pipeline -n ai',             True, ['img-pipeline -n ai']),
-        CAUVTask('img-pipe sonar',  'nohup nice -n 4 %EDIRimg-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
+        CAUVTask('img-pipe default','nohup nice -n 15 %EDIRimg-pipelined -n default',        True, ['img-pipelined -n default']),
+        CAUVTask('img-pipe ai',     'nohup nice -n 15 %EDIRimg-pipelined -n ai',             True, ['img-pipelined -n ai']),
+        CAUVTask('img-pipe sonar',  'nohup nice -n 4 %EDIRimg-pipelined -n sonar',           True, ['img-pipelined -n sonar']),
         CAUVTask('sonar',           'nohup nice -n 4 %EDIRsonard /dev/sonar0',              True, ['sonar']),
         CAUVTask('control',         'nohup nice -n 2 %EDIRcontrold -m/dev/ttyUSB0 -x0',     True, ['control']),
         CAUVTask('spread',          'nohup nice -n 2 spread',                               True, ['spread']),
         CAUVTask('persist',         'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',          False, ['persist.py']),
         CAUVTask('battery',         'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
         CAUVTask('gps',             'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
-        CAUVTask('displacement',    'nohup nice -n 4 /bin/sh %SDIR/run.sh %SDIR/displacement.py --mode=exponential', True, ['displacement.py']),
+        CAUVTask('location',        'nohup nice -n 4 /bin/sh %SDIR/run.sh %SDIR/location.py --mode=exponential', True, ['location.py']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
@@ -295,4 +295,7 @@ if __name__ == '__main__':
                 break
     except KeyboardInterrupt:
         info('Interrupt caught, exiting...')
+    finally:
+        if cauv_node is not None:
+            cauv_node.stop()
 
