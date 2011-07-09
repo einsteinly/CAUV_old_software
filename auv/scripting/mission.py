@@ -4,7 +4,7 @@ from AI_classes import detectorCondition, aiTask, aiCondition, timeoutCondition,
 task_list = [
             aiTask('start', 'start', 1, detectors_enabled=True),
             aiTask('test', 'test', 2, detectors_enabled=False, conditions = [detectorCondition('test_detector', 'test'),]),
-            aiTask('follow_pipe', 'follow_pipe', 3, conditions = [timeoutCondition('folow_timeout', 5),]),
+            aiTask('follow_pipe', 'follow_pipe', 3, conditions = [detectorCondition('pipe_detector', 'pipe_detector'),]),
             aiTask('circle_buoy', 'circle_buoy', 3, conditions = [detectorCondition('buoy_detector', 'buoy_detector'),]),
             aiTask('avoid_collision', 'avoid_collision', 10, conditions = [detectorCondition('collision_detector', 'collision_detector'),]),
             aiTask('head_to_poi', 'head_to_poi', 2, detectors_enabled=True, conditions = [detectorCondition('poi_detector', 'poi_detector'),]),
@@ -24,5 +24,5 @@ initial_tasks = [
                 'surface',
                 ]
 #script that runs otherwise
-default_script = 'test'
+default_script = 'location_search'
 default_script_options = {'power' : 100}

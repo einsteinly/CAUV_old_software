@@ -155,9 +155,7 @@ class auvControl(aiProcess):
                     time.sleep(0.5)
                 time.sleep(1)
     def die(self):
-        self.auv.stop()
         self.disable()
-        self.auv.stop()
         aiProcess.die(self)
 
 #from Demos/scripts/morse.py

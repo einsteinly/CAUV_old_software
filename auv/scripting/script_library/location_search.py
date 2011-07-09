@@ -3,23 +3,11 @@ from cauv.debug import debug, warning, error, info
 
 from math import ceil, sqrt, atan, degrees
 import time
-
-class scriptOptions(aiScriptOptions):
-    locations = []
-    #search_area = None
-    speed_p = 1000
-    speed_d = 0.125
-    checked = []
-    partially_checked = []
-    spiral_loops = 2 #number of times to go round
-    spiral_power = 127 #motor power
-    spiral_unit = 15
-    spiral_stop_time = 2
-    class Meta:
-        dynamic = ['checked', 'partially_checked']
     
 class Vector():
     def __init__(self, x, y):
+        if not isinstance(x, (float, int)) or not isinstance(y, (float, int)):
+            raise TypeError('Vector expected float or int input, got (%s, %s)' %(str(type(x)), str(type(y))))
         self.x = x
         self.y = y
     def __add__(self, other):
@@ -75,10 +63,25 @@ class searchArea(Area):
                 self.grid[x][y] = True
         info('%d percent of area searched.')
 """
+
+class scriptOptions(aiScriptOptions):
+    locations = [Vector(0,0)]
+    #search_area = None
+    speed_p = 1000
+    speed_d = 0.125
+    checked = []
+    partially_checked = []
+    timeout = 20
+    pos_e = 0.5
+    max_pos_e = 2
+    spiral_loops = 2 #number of times to go round
+    spiral_power = 127 #motor power
+    spiral_unit = 15
+    spiral_stop_time = 2
+    class Meta:
+        dynamic = ['checked', 'partially_checked']
     
 class script(aiScript):
-    def __init__(self, script_name, opts):
-        aiScript.__init__(self, script_name, opts)
     def run(self):
         #choose a location from locations
         while True:
@@ -98,6 +101,10 @@ class script(aiScript):
             self.log('Heading to %d, %d' %(location.x, location.y))
             timeout = time.time() + self.options.timeout
             while True:
+                if self.auv.latitude == None or self.auv.longitude == None:
+                    debug("No location information, can't head to a location")
+                    time.sleep(0.5)
+                    continue
                 self.err = err = Vector(self.auv.latitude, self.auv.longitude) - location
                 if err.magnitude()<self.options.pos_e or (err.magnitude()<self.options.pos_max_e and timeout<time.time()):
                     break
@@ -110,10 +117,11 @@ class script(aiScript):
                 speed = self.options.speed_p*(err.magnitude()-self.options.speed_d*derr.magnitude())
                 speed = -127 if int(speed) <= -127 else (int(speed) if speed<=127 else 127)
                 self.auv.prop(speed)
-                self.sleep(0.5)
+                time.sleep(0.5)
             self.auv.prop(0)
             #note when nearby, so don't try this location first next time
-            self.ai.task_manager.modify_task_options(self.task_name, {'partially_checked': location})
+            self.options.partially_checked.append(location)
+            self.ai.task_manager.modify_task_options(self.task_name, {'partially_checked': self.options.partially_checked})
             #spiral
             bearing = self.auv.current_bearing
             info('Spiraling to search')
@@ -139,9 +147,11 @@ class script(aiScript):
                         bearing-=360
                     self.auv.bearingAndWait(bearing, 10)
             #record location searched
-            self.ai.task_manager.modify_task_options(self.task_name, {'checked': location})
+            self.options.checked.append(location)
+            self.ai.task_manager.modify_task_options(self.task_name, {'checked': self.options.checked})
             #TODO mark area as searched
         #TODO determine areas not searched
         #give up
+        info('Ran out of locations to search, now surfacing')
         self.log('Ran out of locations to search, now surfacing')
         self.auv.depth(0)
