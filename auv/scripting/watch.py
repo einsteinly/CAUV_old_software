@@ -295,4 +295,7 @@ if __name__ == '__main__':
                 break
     except KeyboardInterrupt:
         info('Interrupt caught, exiting...')
+    finally:
+        if cauv_node is not None:
+            cauv_node.stop()
 

@@ -62,6 +62,9 @@ if __name__ == '__main__':
         exit(1)
    
     cauv_node = node.Node("py-tlog") 
-    telemetryLoggerMainLoop(cauv_node, opts)
+    try:
+        telemetryLoggerMainLoop(cauv_node, opts)
+    finally:
+        cauv_node.stop()
 
 

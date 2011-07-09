@@ -147,5 +147,9 @@ if __name__ == '__main__':
     
     if opts.restore:
         sendSavedMessages(cauv_node, shelf)
-    persistMainLoop(cauv_node, shelf, opts.auto)
+    try:
+        persistMainLoop(cauv_node, shelf, opts.auto)
+    finally:
+        print 'finally...'
+        cauv_node.stop()
 
