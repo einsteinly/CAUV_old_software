@@ -11,6 +11,10 @@ class scriptOptions(aiScriptOptions):
     speed_d = 0.125
     checked = []
     partially_checked = []
+    spiral_loops = 2 #number of times to go round
+    spiral_power = 127 #motor power
+    spiral_unit = 15
+    spiral_stop_time = 2
     class Meta:
         dynamic = ['checked', 'partially_checked']
     
@@ -109,7 +113,7 @@ class script(aiScript):
                 self.sleep(0.5)
             self.auv.prop(0)
             #note when nearby, so don't try this location first next time
-            self.ai.task_manager.modify_options(self.task_name, {'partially_checked': location})
+            self.ai.task_manager.modify_task_options(self.task_name, {'partially_checked': location})
             #spiral
             bearing = self.auv.current_bearing
             info('Spiraling to search')
@@ -127,7 +131,7 @@ class script(aiScript):
                     # Stop motor & wait for stop
                     debug('stopping', 2)
                     self.auv.prop(0)
-                    time.sleep(self.options.stop_time)
+                    time.sleep(self.options.spiral_stop_time)
 
                     debug('setting bearing %d' % bearing, 2)
                     bearing += 90
@@ -135,7 +139,7 @@ class script(aiScript):
                         bearing-=360
                     self.auv.bearingAndWait(bearing, 10)
             #record location searched
-            self.checked.add(location)
+            self.ai.task_manager.modify_task_options(self.task_name, {'checked': location})
             #TODO mark area as searched
         #TODO determine areas not searched
         #give up
