@@ -46,6 +46,7 @@ process_data_list = (
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
             ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
             ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
+            ('location', '/bin/sh ./run.sh ./AI_location.py', ['wait', 'timeout', 'script']),
             )
 
 class AImanager(messaging.MessageObserver):
@@ -96,6 +97,9 @@ if __name__ == '__main__':
                  action='store_true', help="reset pipelines to those stored in /pipelines")
     p.add_option('--freeze-pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
+    p.add_option('-w', '--loc-wait', dest='wait', type="int", default=30, help="time to wait inbetween captures")
+    p.add_option('-t', '--loc-timeout', dest='timeout', type="int", default=15, help='maximum time to wait for a position fix')
+    p.add_option('-s', '--loc-script', dest='script', default="bay_processor", help='script to process sonar data')
     opts, args = p.parse_args()
     #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.
     ai = AImanager(**opts.__dict__)

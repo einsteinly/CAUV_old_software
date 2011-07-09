@@ -19,6 +19,7 @@ class scriptOptions(aiScriptOptions):
 
 class script(aiScript):
     def run(self):
+        self.log('Spiral searching...')
         # Starting search at north direction
         #debug('setting bearing %d...' % bearing)
         #self.auv.bearingAndWait(bearing)

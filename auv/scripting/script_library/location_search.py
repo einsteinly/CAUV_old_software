@@ -65,7 +65,7 @@ class searchArea(Area):
 """
 
 class scriptOptions(aiScriptOptions):
-    locations = [Vector(0,0)]
+    locations = [Vector(0,0),Vector(1,1),Vector(3,4)]
     #search_area = None
     speed_p = 1000
     speed_d = 0.125
@@ -121,11 +121,11 @@ class script(aiScript):
             self.auv.prop(0)
             #note when nearby, so don't try this location first next time
             self.options.partially_checked.append(location)
-            self.ai.task_manager.modify_task_options(self.task_name, {'partially_checked': self.options.partially_checked})
+            #self.ai.task_manager.modify_task_options(self.task_name, {'partially_checked': self.options.partially_checked})
             #spiral
             bearing = self.auv.current_bearing
-            info('Spiraling to search')
-            self.log('Attempting a spiral search of location')
+            info('Spiraling to search.')
+            self.log('Attempting a spiral search of location.')
             # Individual half squares
             for i in range(1, 2*self.options.spiral_loops):
                 debug('Performing %dth half of spiral' % i)
@@ -148,7 +148,8 @@ class script(aiScript):
                     self.auv.bearingAndWait(bearing, 10)
             #record location searched
             self.options.checked.append(location)
-            self.ai.task_manager.modify_task_options(self.task_name, {'checked': self.options.checked})
+            self.log('Finished searching %d, %d' %(location.x, location.y))
+            #self.ai.task_manager.modify_task_options(self.task_name, {'checked': self.options.checked})
             #TODO mark area as searched
         #TODO determine areas not searched
         #give up

@@ -117,6 +117,8 @@ class script(aiScript):
             # set the flags that show if we're above the pipe
             if self.centred.is_set() and self.aligned.is_set():# and self.depthed.is_set(): #TODO: fix this bit
                 self.ready.set()
+                debug('ready over pipeline')
+                self.log('Pipeline follower managed to align itself over the pipe.')
             else:
                 debug('centred:%s aligned:%s depthed:%s' %
                         (self.centred.is_set(), self.aligned.is_set(), self.depthed.is_set())
@@ -184,7 +186,7 @@ class script(aiScript):
         # the detector doesn't really look for the pipe it just looks
         # for yellow things in the downward camera, so there will be
         # a few false positives
-        
+        self.log('Attempting to align ove the pipe.')
         follow_pipe_file = self.options.follow_pipeline_file
         self.request_pl(follow_pipe_file)
         
@@ -194,27 +196,31 @@ class script(aiScript):
         debug('Waiting for ready...')
         self.ready.wait(self.options.ready_timeout)
         if not self.ready.is_set():
+            self.log('Pipeline follower could not position itself over the pipe (timed out).')
             error("Took too long to become ready, aborting")
             self.drop_pl(follow_pipe_file)
             self.notify_exit('ABORT')            
             return #timeout
         
         for i in range(3):
+            self.log('Attempting to follow pipe.')
             self.auv.prop(self.options.prop_speed)
             # follow the pipe along until the end
             if not self.followPipeUntil(self.pipeEnded):
-                error("Pipeline lost on pass %d" %(i,));
+                self.log('Lost the pipeline...')
+                error("Pipeline lost on pass %d" %(i,))
                 self.drop_pl(follow_pipe_file)
                 self.notify_exit('LOST')
                 return
             
             # turn 180
+            self.log('Detected the end of the pipeline, turning and heading back.')
             info("Reached end of pass. Doing 180")
             self.auv.prop(0)
             self.auv.bearing((self.auv.getBearing()-180)%360)
         
         self.drop_pl(follow_pipe_file)
-
+        self.log('Finished follwoing the pipe.')
         info('Finished pipe following')
         self.notify_exit('SUCCESS')
 

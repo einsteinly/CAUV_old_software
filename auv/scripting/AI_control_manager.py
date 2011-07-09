@@ -87,7 +87,6 @@ class auvControl(aiProcess):
         #restore control values
         with self.pause_lock:
             try:
-                print self.pause_requests
                 self.pause_requests.remove(calling_process)
             except KeyError:
                 warning('Script control already resumed.')

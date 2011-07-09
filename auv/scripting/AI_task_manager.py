@@ -170,10 +170,12 @@ class taskManager(aiProcess):
             f.close()
     @external_function
     def notify_begin_pause(self, message):
-        getattr(self.ai, self.current_task).begin_override_pause()
+        if self.current_task:
+            getattr(self.ai, self.current_task).begin_override_pause()
     @external_function
     def notify_end_pause(self, message):
-        getattr(self.ai, self.current_task).end_override_pause()
+        if self.current_task:
+            getattr(self.ai, self.current_task).end_override_pause()
     @external_function
     def on_script_exit(self, task, status):
         if status == 'ERROR':
