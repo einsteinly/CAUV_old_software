@@ -28,12 +28,13 @@ def getVersionInfo():
         (os.path.join(os.getcwd(), __file__)).split('/')[:-4]
     )
     hg_cmdstr = 'hg -R %s %%s' % repo_root
-    diff_cmdstr = hg_cmdstr % 'diff'
-    summ_cmdstr = hg_cmdstr % 'summary'
+    diff_cmdstr = hg_cmdstr % ('diff %s/auv/scripting/' % repo_root)
+    #summ_cmdstr = hg_cmdstr % 'summary'
     dp = subprocess.Popen(shlex.split(diff_cmdstr), stdout = subprocess.PIPE)
-    sp = subprocess.Popen(shlex.split(summ_cmdstr), stdout = subprocess.PIPE)
+    #sp = subprocess.Popen(shlex.split(summ_cmdstr), stdout = subprocess.PIPE)
     diff = dp.communicate()[0]
-    summary = sp.communicate()[0]
+    #summary = sp.communicate()[0]
+    summary = ''
     return (summary, diff)
 
 class Node(messaging.CauvNode):

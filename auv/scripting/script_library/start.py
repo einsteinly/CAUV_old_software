@@ -4,7 +4,7 @@ from cauv.debug import debug, warning, error, info
 import time
 
 class scriptOptions(aiScriptOptions):
-    depth = 1.5
+    depth = 1.0
     forward_time = 60
     forward_speed = 100
     already_run = False

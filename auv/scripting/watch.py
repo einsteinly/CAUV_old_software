@@ -78,9 +78,9 @@ processes_to_start = [
             ['remote.py'] # list of names to search for in processes
         ),
         CAUVTask('logger',          'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe default','nohup nice -n 15 %EDIRimg-pipeline -n default',        True, ['img-pipeline -n default']),
-        CAUVTask('img-pipe ai',     'nohup nice -n 15 %EDIRimg-pipeline -n ai',             True, ['img-pipeline -n ai']),
-        CAUVTask('img-pipe sonar',  'nohup nice -n 4 %EDIRimg-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
+        CAUVTask('img-pipe default','nohup nice -n 15 %EDIRimg-pipelined -n default',        True, ['img-pipelined -n default']),
+        CAUVTask('img-pipe ai',     'nohup nice -n 15 %EDIRimg-pipelined -n ai',             True, ['img-pipelined -n ai']),
+        CAUVTask('img-pipe sonar',  'nohup nice -n 4 %EDIRimg-pipelined -n sonar',           True, ['img-pipelined -n sonar']),
         CAUVTask('sonar',           'nohup nice -n 4 %EDIRsonard /dev/sonar0',              True, ['sonar']),
         CAUVTask('control',         'nohup nice -n 2 %EDIRcontrold -m/dev/ttyUSB0 -x0',     True, ['control']),
         CAUVTask('spread',          'nohup nice -n 2 spread',                               True, ['spread']),

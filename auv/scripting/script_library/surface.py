@@ -6,6 +6,7 @@ from AI_classes import aiScript
 
 class script(aiScript):
     def run(self):
+        self.log('Mission time limit reached, surfacing.')
         self.auv.depthAndWait(0, timeout=10)
         self.ai.auv_control.disable()
         while True:
