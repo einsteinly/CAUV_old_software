@@ -1,7 +1,18 @@
-
 #include "auv_controller.h"
 
 #include <boost/bind.hpp>
+
+#include <common/cauv_utils.h>
+#include <generated/types/ControlGroup.h>
+#include <generated/types/DebugGroup.h>
+#include <generated/types/TelemetryGroup.h>
+#include <generated/types/SonarctlGroup.h>
+#include <generated/types/PressureMessage.h>
+#include <generated/types/GraphableMessage.h>
+#include <generated/types/ImageMessage.h>
+#include <generated/types/MotorStateMessage.h>
+#include <generated/types/ControllerStateMessage.h>
+#include <generated/types/ScriptResponseMessage.h>
 
 using namespace cauv;
 

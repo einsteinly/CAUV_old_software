@@ -8,7 +8,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <generated/messages.h>
+#include <common/image.h>
 #include <common/math.h>
 #include <debug/cauv_debug.h>
 

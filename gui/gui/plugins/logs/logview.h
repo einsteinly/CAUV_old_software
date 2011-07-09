@@ -3,7 +3,7 @@
 
 #include <QDockWidget>
 
-#include <generated/messages_fwd.h>
+#include <generated/types/DebugType.h>
 
 #include <gui/core/cauvbasicplugin.h>
 

@@ -20,6 +20,15 @@ class Group(Expr):
         s = s + "}"
         return s
 
+class Included(Expr):
+    def __init__(self, type, name, location):
+        self.type = type
+        self.name = name
+        self.location = location
+    def __repr__(self):
+        s = "%s %s : %s\n" % (self.type, self.name, self.location)
+        return s
+
 class Struct(Expr):
     def __init__(self, name, fields):
         self.name = name
@@ -40,7 +49,7 @@ class Variant(Expr):
         s = "variant %s\n" % self.name
         s += "{\n"
         for t in self.types:
-            s += "\n".join(map(lambda x: "    %s" % x, ("%s" % c).split("\n"))) + "\n"
+            s += "\n".join(map(lambda x: "    %s" % x, ("%s" % t).split("\n"))) + "\n"
         s += "}"
         return s
 
@@ -128,11 +137,11 @@ class MapType(Expr):
     def __repr__(self):
         return "map< %s, %s >" % (self.keyType, self.valType)
 
-class UnknownType(Expr):
-    def __init__(self, name):
-        self.name = name
+class IncludedType(Expr):
+    def __init__(self, included):
+        self.included = included
     def __repr__(self):
-        return "%s" % (self.name)
+        return "%s" % (self.included.name)
     
 
 msg_ids = {}
@@ -150,8 +159,7 @@ base_types = set([
     "float",
     "double"
 ])
-unknown_types = set()
-
+included_types = []
 groups = []
 structs = []
 variants = []
@@ -165,7 +173,7 @@ def p_list_empty(p):
         "variants" : variants,
         "enums" : enums,
         "base_types" : base_types,
-        "unknown_types" : unknown_types
+        "included_types" : included_types
     }
 def p_list_group(p):
     "list : list group"
@@ -175,6 +183,11 @@ def p_list_group(p):
 def p_list_struct(p):
     "list : list struct"
     p[1]["structs"].append(p[2])
+    p[0] = p[1]
+
+def p_list_included(p):
+    "list : list included"
+    p[1]["included_types"].append(p[2])
     p[0] = p[1]
 
 def p_list_variant(p):
@@ -206,6 +219,26 @@ def p_struct_contents(p):
     p[0] = p[2]
 
 
+def p_included(p):
+    """included : STRUCT STRING ':' includepath
+               | CLASS STRING ':' includepath"""
+    p[0] = Included(p[1], p[2], p[4])
+
+def p_includepath(p):
+    """includepath : '<' path '>'
+                   | '"' path '"'"""
+    p[0] = "".join(p[1:])
+
+def p_path(p):
+    """path : STRING
+            | path '.' STRING
+            | path '/' STRING"""
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = "".join(p[1:])
+
+
 def p_variant(p):
     "variant : VARIANT STRING variant_contents"
     p[0] = Variant(p[2], p[3])
@@ -220,13 +253,14 @@ def p_enum(p):
     p[0] = Enum(p[2], p[4], p[5])
 
 def p_enum_contents(p):
-    "enum_contents : '{' enumval_list '}'"
+    """enum_contents : '{' enumval_list '}'
+                     | '{' enumval_list ',' '}'"""
     p[0] = p[2]
 
 def p_enumval_list(p):
     """enumval_list : enumval
                     | enumval_list ',' enumval"""
-    if len(p) == 2:
+    if len(p) == 2 or len(p) == 3:
         p[0] = [ p[1] ]
     else:
         p[1].append(p[3])
@@ -251,7 +285,7 @@ def p_message_list(p):
     """message_list : 
                     | message_list message"""
     if len(p) == 1:
-        p[0] = [ ]
+        p[0] = []
     else:
         p[1].append(p[2])
         p[0] = p[1]
@@ -275,7 +309,7 @@ def p_field_list(p):
     """field_list :
                   | field_list field"""
     if len(p) == 1:
-        p[0] = [ ]
+        p[0] = []
     else:
         p[1].append(p[2])
         p[0] = p[1]
@@ -309,9 +343,8 @@ def p_type_base(p):
         p[0] = StructType(filter(lambda s: s.name == p[1], structs)[0])
     elif p[1] in map(lambda v: v.name, variants):
         p[0] = VariantType(filter(lambda v: v.name == p[1], variants)[0])
-    else:
-        unknown_types.add(p[1])
-        p[0] = UnknownType(p[1]);
+    elif p[1] in map(lambda u: u.name, included_types):
+        p[0] = IncludedType(filter(lambda u: u.name == p[1], included_types)[0])
 
 def p_type_list(p):
     "type : LIST '<' type '>'"

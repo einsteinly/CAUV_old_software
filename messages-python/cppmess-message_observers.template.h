@@ -1,12 +1,13 @@
 /***  This is a generated file, do not edit ***/
-\#ifndef __CAUV_MESSAGES_H__
-\#define __CAUV_MESSAGES_H__
+\#ifndef __CAUV_MESSAGE_OBSERVERS_H__
+\#define __CAUV_MESSAGE_OBSERVERS_H__
 
-\#include "messages_messages.h"
+\#include <boost/shared_ptr.hpp>
 
 \#include <utility/observable.h>
-\#include <utility/streamops.h>
 \#include <common/image.h>
+
+\#include "types/message_type.h"
 
 // Forward Declarations outside cauv namespace:
 namespace boost{
@@ -15,6 +16,13 @@ class shared_mutex;
 } // namespace boost
 
 namespace cauv{
+
+class Message;
+#for $g in $groups
+#for $m in $g.messages
+class ${m.name}Message;
+#end for
+#end for
 
 // =======================
 // Message Source/Observer
@@ -146,118 +154,13 @@ class MessageSource : public Observable<MessageObserver>
     public:
         void notifyObservers(const_svec_ptr bytes);
     
-    // Ideally protected, but boost.python pointer_holder requires puplic
+    // Ideally protected, but boost.python pointer_holder requires public
     // default constructor to be available in order to allow pointers to this
     // type
     // protected:
         MessageSource();
 };
 
-// =============
-// Printing Code
-// =============
-
-#for $s in $structs
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, $s.name const& s)
-{
-    os << "$s.name {";
-    #for i, f in $enumerate($s.fields)
-    os << " $f.name = " << s.$f.name#if $i < $len($s.fields) - 1#<< ","#end if#;
-    #end for
-    os << " }";
-    return os;
-}
-#end for
-
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, MessageType::e const& e)
-{
-    switch(e)
-    {
-        #for $g in $groups
-        #for $m in $g.messages
-        case MessageType::$m.name:
-            return os << "MessageType::$m.name";
-        #end for
-        #end for
-        default:
-            return os << "MessageType::Unknown (" << int(e) << ")";
-    }
 }
 
-} // namespace cauv
-
-namespace std{
-// don't ask
-#for $e in $enums
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, cauv::$e.name::e const& e)
-{
-    switch(e)
-    {
-        #for $v in $e.values
-        case cauv::$e.name::$v.name:
-            return os << "$e.name::$v.name";
-        #end for
-        default:
-            return os << "$e.name::Unknown (" << int(e) << ")";
-    }
-}
-#end for
-} // namespace std
-
-namespace cauv{
-
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, Message const& m)
-{
-    switch (m.m_id)
-    {
-        #for $g in $groups
-        #for $m in $g.messages
-        #set $className = $m.name + "Message"
-        case $m.id:
-            return os << dynamic_cast<$className const&>(m);
-        #end for
-        #end for
-        default:
-            os << "Unknown message {";
-            os << " id = " << std::dec << m.m_id << ",";
-            os << " group = " << m.m_group;
-            os << " }";
-            return os;
-    }
-}
-
-#for $g in $groups
-#for $m in $g.messages
-#set $className = $m.name + "Message"
-template<typename char_T, typename traits>
-std::basic_ostream<char_T, traits>& operator<<(
-    std::basic_ostream<char_T, traits>& os, $className const& #if $len($m.fields)#m#end if#)
-{
-    os << "$className {";
-    #for i, f in $enumerate($m.fields)
-    #if hasattr($f.type, "name") and ($f.type.name == "int8" or $f.type.name == "byte") 
-    os << " $f.name = " << (int)m.${f.name}()#if $i < $len($m.fields) - 1# << ","#end if#;
-    #elif hasattr($f.type, "name") and ($f.type.name == "string")
-    os << " $f.name = \"" << m.${f.name}()#if $i < $len($m.fields) - 1# << "\","#else# << "\""#end if#;
-    #else
-    os << " $f.name = " << m.${f.name}()#if $i < $len($m.fields) - 1# << ","#end if#;
-    #end if
-    #end for
-    os << " }";
-    return os;
-}
-
-#end for
-#end for
-
-} // namespace cauv
-
-\#endif // ndef __CAUV_MESSAGES_H__
+\#endif // ndef __CAUV_MESSAGE_OBSERVERS_H__

@@ -9,8 +9,6 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <generated/messages.h>
-
 #include "../node.h"
 
 

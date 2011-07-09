@@ -6,7 +6,9 @@
 
 #include <boost/make_shared.hpp>
 
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/SonarControlMessage.h>
 
 #include "seanet_packet.h"
 

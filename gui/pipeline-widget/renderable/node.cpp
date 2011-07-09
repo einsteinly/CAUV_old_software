@@ -6,8 +6,12 @@
 #include <QtOpenGL>
 
 #include <utility/string.h>
-#include <generated/messages.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/NodeType.h>
+#include <generated/types/NodeStatus.h>
+#include <generated/types/NodeAddedMessage.h>
+#include <generated/types/NodeParametersMessage.h>
+#include <generated/types/ForceExecRequestMessage.h>
 
 #include "../pipelineWidget.h"
 #include "text.h"

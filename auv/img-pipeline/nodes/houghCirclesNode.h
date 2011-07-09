@@ -9,6 +9,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <generated/types/CirclesMessage.h>
+
 #include "../node.h"
 #include "outputNode.h"
 

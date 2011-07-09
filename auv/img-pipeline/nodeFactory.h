@@ -32,8 +32,6 @@ xz
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 
-#include <generated/messages_fwd.h>
-
 #include "pipelineTypes.h"
 #include "scheduler.h"
 #include "imageProcessor.h"

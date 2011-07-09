@@ -5,11 +5,18 @@
 #include <boost/make_shared.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <generated/messages_fwd.h>
-#include <generated/messages.h>
-
 #include <common/data_stream.h>
 #include <common/data_stream_tools.h>
+#include <common/image.h>
+
+#include <generated/types/CameraID.h>
+#include <generated/types/MotorID.h>
+#include <generated/types/DebugType.h>
+#include <generated/types/ScriptExecRequest.h>
+#include <generated/types/ScriptResponse.h>
+#include <generated/types/ProcessStatusMessage.h>
+#include <generated/types/DepthCalibrationMessage.h>
+#include <generated/types/LocationMessage.h>
 
 namespace cauv{
 

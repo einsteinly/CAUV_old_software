@@ -2,7 +2,7 @@
 #define PIPELINEWIDGETNODE_H
 
 #include <common/cauv_node.h>
-#include <generated/messages.h>
+#include <generated/types/message.h>
 
 #include <QObject>
 

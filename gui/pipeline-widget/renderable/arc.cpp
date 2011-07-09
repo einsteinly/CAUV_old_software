@@ -3,7 +3,6 @@
 #include <QtOpenGL>
 
 #include <debug/cauv_debug.h>
-
 #include "nodeIO.h"
 
 using namespace cauv::pw;

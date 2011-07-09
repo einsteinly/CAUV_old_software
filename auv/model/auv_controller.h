@@ -3,12 +3,12 @@
 
 #include <vector>
 
-#include <generated/messages.h>
-#include <debug/cauv_debug.h>
 #include <boost/shared_ptr.hpp>
-
 #include <boost/signals.hpp>
 #include <boost/signals/trackable.hpp>
+
+#include <debug/cauv_debug.h>
+#include <generated/message_observers.h>
 
 #include "auv_model.h"
 

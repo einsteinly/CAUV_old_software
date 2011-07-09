@@ -9,7 +9,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <generated/messages.h>
+#include <generated/types/CentreMessage.h>
 
 #include "../node.h"
 #include "outputNode.h"

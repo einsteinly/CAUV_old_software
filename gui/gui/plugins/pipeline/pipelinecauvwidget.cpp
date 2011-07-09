@@ -6,9 +6,9 @@
 #include <QVBoxLayout>
 #include <QComboBox>
 
-#include <generated/messages.h>
-
 #include <debug/cauv_debug.h>
+#include <generated/types/Pl_GuiGroup.h>
+#include <generated/types/PipelineGroup.h>
 
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>

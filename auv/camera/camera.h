@@ -8,7 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include <generated/messages_fwd.h>
+#include <generated/types/CameraID.h>
 #include <utility/observable.h>
 
 // Forward Declarations

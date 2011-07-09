@@ -1,10 +1,11 @@
 #include "workarounds.h" // _must_ be first
 #include <boost/python.hpp>
 
-#include <generated/messages.h>
 #include <common/cauv_node.h>
 #include <common/spread/msgsrc_mb_observer.h>
 #include <common/spread/spread_rc_mailbox.h>
+#include <generated/types/message.h>
+#include <generated/types/MembershipChangedMessage.h>
 
 #include "emit_static.h"
 

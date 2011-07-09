@@ -9,6 +9,8 @@
 #include <sonar/sonar_accumulator.h>
 #include <utility/bash_cout.h>
 
+#include <generated/types/SonarDataMessage.h>
+
 #include "../node.h"
 
 

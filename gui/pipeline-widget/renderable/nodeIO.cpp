@@ -3,6 +3,9 @@
 #include <boost/make_shared.hpp>
 
 #include <debug/cauv_debug.h>
+#include <generated/types/NodeIOStatus.h>
+#include <generated/types/AddArcMessage.h>
+#include <generated/types/RemoveArcMessage.h>
 
 #include "../pipelineWidget.h"
 #include "text.h"

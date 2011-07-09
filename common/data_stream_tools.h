@@ -3,10 +3,9 @@
 
 #include "data_stream.h"
 
- // don't like having htis here, but its needed for the types flaotXYZ and flaotYPR
-// the DataStreamSplitter specialisations could be moved somewhere more sensible...
-#include <generated/messages.h>
-
+#include <generated/types/floatYPR.h>
+#include <generated/types/floatXYZ.h>
+#include <generated/types/MotorDemand.h>
 
 #include <iostream>
 

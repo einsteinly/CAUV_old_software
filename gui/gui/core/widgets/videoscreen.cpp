@@ -12,8 +12,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <debug/cauv_debug.h>
-
-#include <generated/messages.h>
+#include <common/image.h>
 
 using namespace cauv;
 

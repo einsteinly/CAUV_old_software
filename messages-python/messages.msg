@@ -77,7 +77,7 @@ enum NodeType : int8 {
     DrawKeyPoints,
     MathAddMultInt,
     MathAddMultFloat,
-    MergeSimilarLines
+    MergeSimilarLines,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -219,6 +219,7 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
+class Image : <common/image.h>
 
 group membership
 {
@@ -504,7 +505,7 @@ group processing
         corners : list<Corner>;
     }
     
-    message Keypoints : 135
+    message KeyPoints : 135
     {
         name : string;
         keypoints : list<KeyPoint>;

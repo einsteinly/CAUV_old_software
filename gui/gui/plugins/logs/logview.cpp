@@ -3,6 +3,7 @@
 
 #include <QTextEdit>
 
+#include <common/cauv_utils.h>
 #include <model/auv_model.h>
 
 using namespace cauv;

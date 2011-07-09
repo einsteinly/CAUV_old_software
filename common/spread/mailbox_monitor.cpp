@@ -1,6 +1,7 @@
 #include "mailbox_monitor.h"
 #include "spread_rc_mailbox.h"
 
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 using namespace cauv;

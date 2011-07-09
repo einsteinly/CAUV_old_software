@@ -2,6 +2,7 @@ import ply.lex as lex
 
 reserved = {
     "struct" : "STRUCT",
+    "class" : "CLASS",
     "variant" : "VARIANT",
     "group" : "GROUP",
     "message" : "MSG",
@@ -14,16 +15,16 @@ tokens = [
     "STRING",
     "INT"
 ] + list(reserved.values())
-literals = [ "{", "}", "(", ")", "<", ">", ",", ":", ";", "=" ]
-
-def t_STRING(t):
-    r'[a-zA-Z_][a-zA-Z0-9_]*'
-    t.type = reserved.get(t.value,'STRING')    # Check for reserved words
-    return t
+literals = [ "{", "}", "(", ")", "<", ">", ",", ":", ";", "=", ".", "/" ]
 
 def t_INT(t):
     r'\d+'
     t.value = int(t.value)    
+    return t
+
+def t_STRING(t):
+    r'[a-zA-Z_][a-zA-Z0-9_]*'
+    t.type = reserved.get(t.value,'STRING')    # Check for reserved words
     return t
 
 t_ignore  = ' \t\n'# Error handling rule

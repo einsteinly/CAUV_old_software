@@ -7,7 +7,7 @@
 
 #include <gui/core/cauvbasicplugin.h>
 
-#include <generated/messages.h>
+#include <generated/message_observers.h>
 
 #include <common/cauv_utils.h>
 

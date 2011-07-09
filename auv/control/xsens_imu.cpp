@@ -9,7 +9,8 @@
 #include <xsens/cmt3.h>
 #include <xsens/cmtpacket.h>
 
-#include <generated/messages.h>
+#include <generated/types/floatYPR.h>
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 
 #include "xsens_imu.h"

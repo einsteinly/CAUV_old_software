@@ -3,7 +3,8 @@
 
 #include <boost/make_shared.hpp>
 
-#include <generated/messages.h>
+#include <common/cauv_utils.h>
+#include <generated/message_observers.h>
 
 #include "spread_messages.h"
 #include "mailbox_monitor.h"

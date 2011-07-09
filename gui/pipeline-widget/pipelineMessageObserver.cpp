@@ -3,6 +3,9 @@
 #include <boost/make_shared.hpp>
 
 #include <debug/cauv_debug.h>
+#include <generated/types/DebugLevelMessage.h>
+#include <generated/types/PipelineGroup.h>
+#include <generated/types/Pl_GuiGroup.h>
 
 #include "pipelineWidget.h"
 #include "renderable/node.h"
