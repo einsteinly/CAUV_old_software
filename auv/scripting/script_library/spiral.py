@@ -19,7 +19,7 @@ class scriptOptions(aiScriptOptions):
 
 class script(aiScript):
     def run(self):
-        self.log('Spiral searching...')
+        self.log('Attempting spiral search...')
         # Starting search at north direction
         #debug('setting bearing %d...' % bearing)
         #self.auv.bearingAndWait(bearing)
@@ -30,6 +30,7 @@ class script(aiScript):
         else:
             self.auv.bearingAndWait(0)
         if self.options.depth:
+            self.log('Setting depth to %d' %(self.options.depth,))
             debug('diving...')
             self.auv.depthAndWait(self.options.depth, 5)
 
@@ -57,7 +58,5 @@ class script(aiScript):
                 if bearing>=360:
                     bearing-=360
                 self.auv.bearingAndWait(bearing)
-
-        debug('surface...')
-        self.auv.depthAndWait(0)
+            self.log('Completed %d loops.' %(i*0.5,))
 

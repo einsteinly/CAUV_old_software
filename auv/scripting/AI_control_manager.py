@@ -63,6 +63,7 @@ class auvControl(aiProcess):
         self.auv.stop()
     @external_function
     def pause(self, calling_process, timeout=None):
+        self.log('')
         with self.pause_lock:
             if len(self.pause_requests):
                 warning('Multiple pause requests, probably will mean processes are conflicting')
