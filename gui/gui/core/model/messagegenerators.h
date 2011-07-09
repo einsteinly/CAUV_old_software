@@ -37,6 +37,7 @@ namespace cauv {
                 MessageGenerator(auv), m_id(id)
             {
                 connect(motor.get(), SIGNAL(onSet(unsigned int)), this, SLOT(send(unsigned int)), Qt::DirectConnection);
+                motor->set(10);
             }
 
         protected Q_SLOTS:

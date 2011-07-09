@@ -408,15 +408,19 @@ namespace cauv {
 
                 switch(value.which()){
                 case 0:
+                    info() << "bool";
                     Q_EMIT onSet(boost::get<bool>(value));
                     break;
                 case 1:
+                    info() << "unsigned int";
                     Q_EMIT onSet(boost::get<unsigned int>(value));
                     break;
                 case 2:
+                    info() << "int";
                     Q_EMIT onSet(boost::get<int>(value));
                     break;
                 case 3:
+                    info() << "float";
                     Q_EMIT onSet(boost::get<float>(value));
                     Q_EMIT onSet((double) boost::get<float>(value));
                     break;
