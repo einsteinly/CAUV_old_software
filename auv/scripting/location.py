@@ -125,7 +125,7 @@ class Location(messaging.MessageObserver):
 
 if __name__ == '__main__':
     parser = optparse.OptionParser(usage='usage: %prog -m simple|exponential')
-    parser.add_option("-m", "--mode", dest="mode", default="exponential",
+    parser.add_option("-m", "--mode", dest="mode", default="simple",
             help="integration mode: 'simple' or 'exponential' see" +
             "displacement_integrator.py for exponential integrator constants")
     opts, args = parser.parse_args()
