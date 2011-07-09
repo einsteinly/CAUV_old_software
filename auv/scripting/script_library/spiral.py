@@ -11,7 +11,7 @@ class scriptOptions(aiScriptOptions):
     loops = 2 #number of times to go round
     power = 127 #motor power
     unit = 15
-    depth = None
+    depth = 1.5
     stop_time = 2
     class Meta:
         dynamic = ['power', 'unit', 'stop_time']
@@ -23,6 +23,7 @@ class script(aiScript):
         # Starting search at north direction
         #debug('setting bearing %d...' % bearing)
         #self.auv.bearingAndWait(bearing)
+        time.sleep(0.3)
         bearing = self.auv.getBearing()
         if bearing:
             self.auv.bearingAndWait(bearing)
@@ -47,6 +48,9 @@ class script(aiScript):
                 debug('stopping')
                 self.auv.prop(0)
                 time.sleep(self.options.stop_time)
+                if bearing is None:
+                    warning('no bearing available!')
+                    bearing = 0
 
                 debug('setting bearing %d' % bearing)
                 bearing += 90

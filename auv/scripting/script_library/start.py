@@ -5,7 +5,7 @@ import time
 
 class scriptOptions(aiScriptOptions):
     depth = 1.5
-    forward_time = 60
+    forward_time = 5
     forward_speed = 100
     already_run = False
     class Meta:
