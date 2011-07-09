@@ -14,7 +14,7 @@ NodeBase::~NodeBase(){
     debug(0) << "~NodeBase" << nodeName();
 }
 
-std::string NodeBase::nodeName(const bool full) {
+std::string NodeBase::nodeName(const bool full) const {
     std::stringstream stream;
 
     if(full && !m_parent.expired()) {

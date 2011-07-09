@@ -4,23 +4,21 @@
 #include <QObject>
 #include <QMetaType>
 
+#include <boost/foreach.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/variant/variant.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/visit_each.hpp>
 #include <boost/thread.hpp>
 
 #include <vector>
-
 #include <stdexcept>
 
-#include <generated/messages.h>
-
 #include <debug/cauv_debug.h>
+
+#include "variants.h"
 
 using namespace std::rel_ops;
 
@@ -40,54 +38,6 @@ namespace cauv {
         };
 
 
-        typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
-        typedef boost::shared_ptr<const Image> image_variant_t;
-
-        // variant utils
-        class to_float : public boost::static_visitor<float>
-        {
-        public:
-            template <typename T>
-                    float operator()( T & operand ) const
-            {
-                return (float) operand;
-            }
-        };
-
-        class limit_max : public boost::static_visitor<numeric_variant_t>
-        {
-        public:
-            limit_max(numeric_variant_t max): m_max(boost::apply_visitor(to_float(), max)) {
-            }
-
-            template <typename T> numeric_variant_t operator()( T & operand ) const{
-                if(operand > m_max) {
-                    return numeric_variant_t((T) m_max);
-                } else return numeric_variant_t(operand);
-            }
-        protected:
-            float m_max;
-        };
-
-        class limit_min : public boost::static_visitor<numeric_variant_t>
-        {
-        public:
-            limit_min(numeric_variant_t min): m_min(boost::apply_visitor(to_float(), min)) {
-            }
-
-            template <typename T>
-                    numeric_variant_t operator()( T & operand ) const
-            {
-                if(operand < m_min) {
-                    return numeric_variant_t((T) m_min);
-                } else return numeric_variant_t(operand);
-            }
-
-        protected:
-            float m_min;
-        };
-
-
         class NodeBase : public QObject, public boost::enable_shared_from_this<NodeBase> {
             Q_OBJECT
         public:
@@ -98,7 +48,7 @@ namespace cauv {
 
             virtual ~NodeBase();
 
-            virtual std::string nodeName(const bool full=true);
+            virtual std::string nodeName(const bool full=true) const;
             virtual void addChild(boost::shared_ptr<NodeBase> child);
             const std::vector<boost::shared_ptr<NodeBase> > getChildren() const;
 
@@ -110,9 +60,7 @@ namespace cauv {
                 }
             }
 
-
             template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const{
-
                 std::vector<boost::shared_ptr<T> > output;
                 foreach (boost::shared_ptr<NodeBase> child, getChildren()) {
                     if (dynamic_cast<T *>(child.get())) {
@@ -120,19 +68,18 @@ namespace cauv {
                         output.push_back(ptr);
                     }
                 }
-
                 return output;
             }
 
             template <class T> boost::shared_ptr<T> find(std::string name){
-                debug() << "Looking for" << name << "in" << nodeName();
+                debug(2) << "Looking for" << name << "in" << nodeName();
                 foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
                     std::string childName = child->nodeName(false);
                     boost::to_lower(childName);
                     boost::to_lower(name);
 
                     if(childName == name) {
-                        debug() << "Node matched" << child->nodeName();
+                        debug(2) << "Node matched" << child->nodeName();
                         return child;
                     }
                 }
@@ -164,31 +111,6 @@ namespace cauv {
             virtual void setMutable(bool mut);
 
 
-            void printFromTop() {
-                info() << "Current model:\n\n";
-
-                boost::shared_ptr<NodeBase> node = shared_from_this();
-
-                while(node->m_parent.lock())
-                {
-                    node = node->m_parent.lock();
-                }
-
-                node->print();
-            }
-
-            void print() {
-                print(shared_from_this());
-            }
-
-            void print(boost::shared_ptr<NodeBase> node) {
-                info() << node->nodeName();
-
-                foreach(boost::shared_ptr<NodeBase> child, node->getChildren()){
-                    print(child);
-                }
-            }
-
         Q_SIGNALS:
             void nodeAdded(boost::shared_ptr<NodeBase> node);
             void changed();
@@ -200,7 +122,7 @@ namespace cauv {
             const std::string m_name;
             bool m_mutable;
 
-            typedef boost::recursive_mutex mutex_t;
+            typedef boost::mutex mutex_t;
             typedef boost::unique_lock<mutex_t> lock_t;
             mutex_t m_updateLock;
         };
@@ -228,7 +150,7 @@ namespace cauv {
                 debug(0) << nodeName() << "set to" << value;
                 update(value);
                 info() << "change being emitted";
-                //Q_EMIT changed();
+                Q_EMIT changed();
                 info() << "change finished being emitted";
             }
 
@@ -643,6 +565,19 @@ namespace cauv {
 
         };
 
+        template<typename char_T, typename traits>
+        std::basic_ostream<char_T, traits>& operator<<(
+            std::basic_ostream<char_T, traits>& os, NodeBase const& node)
+        {
+            os << node->nodeName() << "\n";
+
+            foreach(boost::shared_ptr<NodeBase> child, node->getChildren()){
+                os << child;
+            }
+            return os;
+        }
+        
+        
     } // namespace gui
 } // namespace cauv
 #endif // GUI_NODES_H
