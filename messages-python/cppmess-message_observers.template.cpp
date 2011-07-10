@@ -38,8 +38,8 @@ struct BufferingThreadBase
 { 
     BufferingThreadBase(BufferedMessageObserver& obs)
         : m_die(false), m_buffer(),
-          //m_condition(boost::make_shared<boost::condition_variable>()),
-          //m_mutex(boost::make_shared<boost::mutex>()),
+          m_condition(boost::make_shared<boost::condition_variable>()),
+          m_mutex(boost::make_shared<boost::mutex>()),
           m_obs(obs)
     {
     }
@@ -94,7 +94,7 @@ struct BufferingThread: public BufferingThreadBase, boost::noncopyable
 } // namespace cauv
 
 cauv::BufferedMessageObserver::BufferedMessageObserver()
-    //: m_maps_mtx(boost::make_shared<boost::shared_mutex>())
+    : m_maps_mtx(boost::make_shared<boost::shared_mutex>())
 {
 }
 
@@ -148,7 +148,7 @@ void cauv::BufferedMessageObserver::on${className}Buffered($classPtr) { }
 void cauv::BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
 {
     using boost::thread;
-    //using boost::make_shared;
+    using boost::make_shared;
     using boost::ref;
     using boost::shared_ptr;
 
@@ -168,10 +168,10 @@ void cauv::BufferedMessageObserver::setDoubleBuffered(MessageType::e mt, bool v)
             case MessageType::$m.name:
             {
                 typedef cauv::BufferingThread<$classPtr> thread_t;
-                shared_ptr<thread_t> t;/* = make_shared<thread_t>(
+                shared_ptr<thread_t> t = make_shared<thread_t>(
                     ref<this_t>(*this), &this_t::on${className}Buffered
-                );*/
-                //m_boost_threads[mt] = make_shared<thread>(ref<thread_t>(*t));
+                );
+                m_boost_threads[mt] = make_shared<thread>(ref<thread_t>(*t));
                 m_threads[mt] = t;
                 break;
             }
