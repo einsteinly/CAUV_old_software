@@ -20,6 +20,8 @@
 
 #include "variants.h"
 
+#include<boost/visit_each.hpp>
+
 using namespace std::rel_ops;
 
 namespace cauv {
@@ -60,29 +62,29 @@ namespace cauv {
                 }
             }
 
-            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const{
+            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const {
                 std::vector<boost::shared_ptr<T> > output;
-                foreach (boost::shared_ptr<NodeBase> child, getChildren()) {
-                    if (dynamic_cast<T *>(child.get())) {
-                        boost::shared_ptr<T> ptr = boost::static_pointer_cast<T>(child);
-                        output.push_back(ptr);
-                    }
-                }
+                //foreach (boost::shared_ptr<NodeBase> child, getChildren()) {
+                //    if (dynamic_cast<T *>(child.get())) {
+                //        boost::shared_ptr<T> ptr = boost::static_pointer_cast<T>(child);
+                //        output.push_back(ptr);
+                //    }
+                //}
                 return output;
             }
 
             template <class T> boost::shared_ptr<T> find(std::string name){
                 debug(2) << "Looking for" << name << "in" << nodeName();
-                foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
-                    std::string childName = child->nodeName(false);
-                    boost::to_lower(childName);
-                    boost::to_lower(name);
+                //foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
+                //    std::string childName = child->nodeName(false);
+                //    boost::to_lower(childName);
+                //    boost::to_lower(name);
 
-                    if(childName == name) {
-                        debug(2) << "Node matched" << child->nodeName();
-                        return child;
-                    }
-                }
+                //    if(childName == name) {
+                //        debug(2) << "Node matched" << child->nodeName();
+                //        return child;
+                //    }
+                //}
                 std::stringstream str;
                 str << "Node not found: " << name;
                 throw std::out_of_range(str.str());
