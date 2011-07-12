@@ -61,6 +61,7 @@ void emit${m.name}Message(){
         )
         #end for
     ;
+    register_shared_ptrs_to_python<${className}>();
 }
 
 
