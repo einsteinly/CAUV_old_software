@@ -50,35 +50,6 @@ void cauv::Image::mat(cv::Mat const& mat) {
     m_img = mat;
 }
 
-int cauv::Image::width() const
-{
-    return m_img.cols;
-}
-int cauv::Image::height() const
-{
-    return m_img.rows;
-}
-int cauv::Image::channels() const
-{
-    return m_img.channels();
-}
-int cauv::Image::type() const
-{
-    return m_img.type();
-}
-int cauv::Image::depth() const
-{
-    return m_img.depth();
-}
-cv::Size cauv::Image::size() const
-{
-    return m_img.size();
-}
-bool cauv::Image::empty() const
-{
-    return m_img.empty();
-}
-
 void cauv::Image::serializeQuality(int q){
     std::vector<int>::iterator i = std::find(m_compress_params.begin(),
                                              m_compress_params.end(),

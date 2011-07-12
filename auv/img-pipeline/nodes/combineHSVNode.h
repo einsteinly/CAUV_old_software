@@ -41,22 +41,22 @@ class CombineHSVNode: public Node{
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
-            image_ptr_t H = inputs["H"];
-            image_ptr_t S = inputs["S"];
-            image_ptr_t V = inputs["V"];
+            cv::Mat H = inputs["H"]->mat();
+            cv::Mat S = inputs["S"]->mat();
+            cv::Mat V = inputs["V"]->mat();
 
-            int r_depth = H->depth();
-            int g_depth = S->depth();
-            int b_depth = V->depth();
+            int r_depth = H.depth();
+            int g_depth = S.depth();
+            int b_depth = V.depth();
             
-            if(H->size() != S->size() || H->size() != V->size())
+            if(H.size() != S.size() || H.size() != V.size())
                throw(parameter_error("HSV source channels are not of the same size"));
 
             if(r_depth != g_depth || r_depth != b_depth)
                 throw(parameter_error("HSV source channels are not of the same depth"));
             
             cv::Mat HSV, out;
-            cv::Mat in[] = {H->mat(), S->mat(), V->mat()};
+            cv::Mat in[] = {H, S, V};
 
             try{
                 cv::merge(in, 3, HSV);

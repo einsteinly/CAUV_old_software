@@ -41,22 +41,22 @@ class CombineRGBNode: public Node{
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
-            image_ptr_t R = inputs["R"];
-            image_ptr_t G = inputs["G"];
-            image_ptr_t B = inputs["B"];
+            cv::Mat R = inputs["R"]->mat();
+            cv::Mat G = inputs["G"]->mat();
+            cv::Mat B = inputs["B"]->mat();
 
-            int r_depth = R->depth();
-            int g_depth = G->depth();
-            int b_depth = B->depth();
+            int r_depth = R.depth();
+            int g_depth = G.depth();
+            int b_depth = B.depth();
             
-            if(R->size() != G->size() || R->size() != B->size())
+            if(R.size() != G.size() || R.size() != B.size())
                throw(parameter_error("RGB source channels are not of the same size"));
 
             if(r_depth != g_depth || r_depth != b_depth)
                 throw(parameter_error("RGB source channels are not of the same depth"));
             
             cv::Mat out;
-            cv::Mat in[] = {R->mat(), G->mat(), B->mat()};
+            cv::Mat in[] = {R, G, B};
 
             try{
                 cv::merge(in, 3, out);
