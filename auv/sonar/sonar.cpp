@@ -3,11 +3,13 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
-#include "display_sonar_observer.h"
-
 #include <debug/cauv_debug.h>
-
 #include <common/spread/spread_rc_mailbox.h>
+#include <generated/types/SonaroutGroup.h>
+#include <generated/types/SonarctlGroup.h>
+#include <generated/types/TelemetryMessage.h>
+
+#include "display_sonar_observer.h"
 
 using namespace cauv;
 

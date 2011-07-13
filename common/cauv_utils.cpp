@@ -1,6 +1,6 @@
 #include "cauv_utils.h"
 
-#include <generated/messages.h>
+#include <generated/types/TimeStamp.h>
 
 #include <boost/date_time.hpp>
 #include <boost/thread/thread.hpp>

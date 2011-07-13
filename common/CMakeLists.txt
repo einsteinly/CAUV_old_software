@@ -21,8 +21,8 @@ add_library (
 target_link_libraries (
     common
 
-    cauv_debug
     messages
+    cauv_debug
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
@@ -49,8 +49,8 @@ add_library (
 target_link_libraries (
     common-shared
 
-    cauv_debug
     messages
+    cauv_debug
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
     boost_thread
@@ -61,7 +61,7 @@ target_link_libraries (
 )
 cauv_install ( common-shared )
 
-add_dependencies(common logo-headers messages-headers version-header)
-add_dependencies(common-shared logo-headers messages-headers version-header)
+add_dependencies(common logo-headers version-header)
+add_dependencies(common-shared logo-headers version-header)
 
 add_subdirectory(supermess)

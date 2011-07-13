@@ -1,10 +1,10 @@
-#include "messageObserver.h"
+#include "messageobserver.h"
 
 #include <vector>
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/model/messagegenerators.h>
+//#include <gui/core/model/messagegenerators.h>
 #include <gui/core/model/model.h>
 
 using namespace cauv;
@@ -60,37 +60,40 @@ std::string NameConversion::toName<Controller::e>(Controller::e id){
 
 GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv):
         m_auv(auv){
-    qRegisterMetaType<boost::shared_ptr<Message> >("boost::shared_ptr<Message>");
+    qRegisterMetaType<boost::shared_ptr<const Message> >("boost::shared_ptr<const Message>");
+    debug() << "GuiMessageObserver created";
 }
 
 
 GuiMessageObserver::~GuiMessageObserver() {
     debug() << "~GuiMessageObserver()";
 }
-
+/*
 
 void GuiMessageObserver::addGenerator(boost::shared_ptr<NodeBase> node, boost::shared_ptr<MessageGenerator> generator){
     if (m_generators[node]) return; // already has a generator
 
     info() << "Adding generator for " << node->nodeName();
     m_generators[node] = generator;
-    if(!connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)),
-            this, SIGNAL(messageGenerated(boost::shared_ptr<Message>))))
-        error() << "Failed when connecting message forwarding signals";
+    //if(!connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+    //        this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>))))
+    //    error() << "Failed when connecting message forwarding signals";
 }
-
+*/
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
-    info() << message;
 
+    debug(0) << "message output";
+    info() << message;
+/*
     std::string name = NameConversion::toName(message->motorId());
     boost::shared_ptr<NumericNode> motor = m_auv->findOrCreate<GroupingNode>("motors")->findOrCreateMutable<NumericNode>(name);
     motor->update(message->speed());
     motor->setMax(127);
     motor->setMin(-127);
 
-    addGenerator(motor, boost::make_shared<MotorMessageGenerator>(m_auv, motor, message->motorId()));
+    addGenerator(motor, boost::make_shared<MotorMessageGenerator>(m_auv, motor, message->motorId()));*/
 }
-
+/*
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>("bearing");
@@ -102,7 +105,7 @@ void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnable
     target->update(message->target());
     autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreateMutable<NumericNode>("enabled")->update(message->enabled());
 
-    addGenerator(autopilot, boost::make_shared<AutopilotMessageGenerator>(m_auv, autopilot));
+    //addGenerator(autopilot, boost::make_shared<AutopilotMessageGenerator>(m_auv, autopilot));
 }
 
 void GuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
@@ -271,3 +274,4 @@ void GuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr mes
     state->findOrCreate<NumericNode>("ierror")->update(message->ierror());
     state->findOrCreate<NumericNode>("mv")->update(message->mv());
 }
+*/

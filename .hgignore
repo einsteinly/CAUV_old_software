@@ -26,16 +26,12 @@ tags
 auv/python-module/cauvinterface.so
 auv/python-module/cauvinterfaced.so
 auv/scripting/unknown.log
-auv/python-module/emit_containers.cpp
-auv/python-module/emit_enums.cpp
-auv/python-module/emit_messages.cpp
-auv/python-module/emit_observers.cpp
-auv/python-module/emit_structs.cpp
-auv/python-module/emit_variants.cpp
+auv/python-module/emit_*.cpp
 messages-python/parsetab.py
 auv/common/messages.cpp
 generated/*.h
 generated/*.cpp
+generated/types/*
 mcb-msg/messages.h
 mcb-msg/messages.c
 pitzdir/project.pickle
@@ -240,8 +236,3 @@ auv/lib/spread-src-4.1.0/stdutil/src/stdutil/private/stdarch_autoconf.h
 relre:metadata/*
 auv/pinger/PingerListenD
 auv/pinger/Makefile.dep
-auv/scripting/emit_containers.cpp
-auv/scripting/emit_enums.cpp
-auv/scripting/emit_messages.cpp
-auv/scripting/emit_observers.cpp
-auv/scripting/emit_structs.cpp

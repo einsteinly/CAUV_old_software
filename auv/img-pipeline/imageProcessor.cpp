@@ -5,7 +5,6 @@
 #include <boost/make_shared.hpp>
 
 #include <utility/string.h>
-#include <generated/messages.h>
 
 using namespace cauv::imgproc;
 

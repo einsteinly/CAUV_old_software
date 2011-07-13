@@ -2,13 +2,8 @@
 #define CAUVGUI_H
 
 #include <QMainWindow>
-
 #include <boost/enable_shared_from_this.hpp>
-
 #include <common/cauv_node.h>
-
-#include <gui/core/model/messageObserver.h>
-
 
 namespace Ui {
     class MainWindow;
@@ -29,7 +24,7 @@ namespace cauv {
             virtual ~CauvGui();
 
         public Q_SLOTS:
-            int send(boost::shared_ptr<Message>message);
+            int send(boost::shared_ptr<const Message>message);
             void addCentralTab(QWidget* tab, const QString& name);
             void addCentralTab(QWidget* tab, QString& name);
             void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
@@ -47,13 +42,11 @@ namespace cauv {
 
         private:
             Ui::MainWindow * ui;
-            boost::shared_ptr<GuiMessageObserver> m_messageObserver;
             int findPlugins(const QDir& dir, int subdirs = 0);
 
         };
 
     } //namespace gui
-
 } // namespace cauv
 
 #endif // CAUVGUI_H

@@ -16,7 +16,7 @@ endfunction()
 
 # plugin directories
 #add_subdirectory (example)
-add_subdirectory (datastreamdisplay)
+#add_subdirectory (datastreamdisplay)
 #add_subdirectory (console)
 #add_subdirectory (pipeline)
 #add_subdirectory (processes)

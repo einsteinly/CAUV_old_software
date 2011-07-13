@@ -6,12 +6,14 @@
 #include <boost/filesystem.hpp>
 
 #include <utility/string.h>
-#include <generated/messages_fwd.h>
 #include <common/cauv_global.h> 
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
 #include <common/spread/msgsrc_mb_observer.h>
 #include <debug/cauv_debug.h>
+#include <generated/message_observers.h>
+#include <generated/types/DebugLevelMessage.h>
+#include <generated/types/MembershipChangedMessage.h>
 
 #include "cauv_node.h"
 #include "cauv_utils.h"

@@ -41,22 +41,22 @@ class CombineYUVNode: public Node{
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
-            image_ptr_t Y = inputs["Y"];
-            image_ptr_t U = inputs["U"];
-            image_ptr_t V = inputs["V"];
+            cv::Mat Y = inputs["Y"]->mat();
+            cv::Mat U = inputs["U"]->mat();
+            cv::Mat V = inputs["V"]->mat();
 
-            int r_depth = Y->depth();
-            int g_depth = U->depth();
-            int b_depth = V->depth();
+            int r_depth = Y.depth();
+            int g_depth = U.depth();
+            int b_depth = V.depth();
             
-            if(Y->size() != U->size() || Y->size() != V->size())
+            if(Y.size() != U.size() || Y.size() != V.size())
                throw(parameter_error("YUV source channels are not of the same size"));
 
             if(r_depth != g_depth || r_depth != b_depth)
                 throw(parameter_error("YUV source channels are not of the same depth"));
             
             cv::Mat YUV, out;
-            cv::Mat in[] = {Y->mat(), U->mat(), V->mat()};
+            cv::Mat in[] = {Y, U, V};
 
             try{
                 cv::merge(in, 3, YUV);

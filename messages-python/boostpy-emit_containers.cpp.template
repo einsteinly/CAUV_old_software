@@ -4,13 +4,14 @@
 \#include <boost/python/str.hpp>
 \#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 \#include <boost/python/suite/indexing/map_indexing_suite.hpp>
+\#include <boost/make_shared.hpp>
 
 \#include "emit_generated.h"
-\#include <generated/messages.h>
-\#include <generated/serialmess.h>
 
-\#include <boost/make_shared.hpp>
-\#include <utility/serialisation-types.h>
+\#include <generated/types/serialise.h>
+#for $i in $includes
+\#include $i
+#end for
 \#include <utility/serialisation.h>
 
 namespace bp = boost::python;

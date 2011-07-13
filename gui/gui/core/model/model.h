@@ -4,7 +4,6 @@
 #include "nodes.h"
 
 namespace cauv {
-
     namespace gui {
 
         class AUV : public GroupingNode

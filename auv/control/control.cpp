@@ -14,8 +14,19 @@
 #include <common/cauv_utils.h>
 #include <common/math.h>
 #include <common/spread/spread_rc_mailbox.h>
-#include <generated/messages.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/TimeStamp.h>
+#include <generated/types/MotorDemand.h>
+#include <generated/types/ControlGroup.h>
+#include <generated/types/McbGroup.h>
+#include <generated/types/ExternalGroup.h>
+#include <generated/types/PressureGroup.h>
+#include <generated/types/StateMessage.h>
+#include <generated/types/ControllerStateMessage.h>
+#include <generated/types/MotorStateMessage.h>
+#include <generated/types/GraphableMessage.h>
+#include <generated/types/TelemetryMessage.h>
+#include <generated/types/DebugMessage.h>
 
 #include <module/module.h>
 

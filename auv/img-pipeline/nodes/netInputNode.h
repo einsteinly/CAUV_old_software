@@ -8,6 +8,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <generated/types/CameraID.h>
+#include <generated/types/ImageMessage.h>
+
 #include "../node.h"
 
 

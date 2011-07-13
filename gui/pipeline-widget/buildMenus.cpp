@@ -6,7 +6,7 @@
 #include <boost/ref.hpp>
 
 #include <utility/string.h>
-#include <generated/messages.h>
+#include <generated/types/AddNodeMessage.h>
 #include <img-pipeline/nodeFactory.h>
 
 namespace cauv{

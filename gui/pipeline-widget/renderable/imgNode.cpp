@@ -110,12 +110,12 @@ class TexImg{
                 return;
             }
             
-            cv::Mat m;
-            int w = img->width();
-            int h = img->height();
-            if (h <= max_size && w <= max_size)
+            cv::Mat t = img->mat(), m;
+            int w = t.cols;
+            int h = t.rows;
+            if (h > max_size && w > max_size)
             {
-                m = img->mat();
+                m = t;
             }
             else
             {
@@ -129,7 +129,7 @@ class TexImg{
                 }
                 w = w_resized;
                 h = h_resized;
-                cv::resize(img->mat(), m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
+                cv::resize(t, m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
             }
 
             GLenum tex_type = GL_UNSIGNED_BYTE;

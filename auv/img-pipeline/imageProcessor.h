@@ -10,9 +10,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include <generated/messages_fwd.h>
+#include <common/image.h>
 #include <common/cauv_utils.h>
 #include <common/spread/spread_rc_mailbox.h>
+#include <generated/message_observers.h>
 
 #include "pipelineTypes.h"
 #include "scheduler.h"

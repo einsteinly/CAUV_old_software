@@ -23,19 +23,10 @@ class Image{
         cv::Mat mat() const;
         void mat(cv::Mat const& mat);
 
-        int width() const;
-        int height() const;
-        int channels() const;
-        int type() const;
-        int depth() const;
-        cv::Size size() const;
-        bool empty() const;
-
         void serializeQuality(int32_t);
 
     private:
         cv::Mat m_img;
-
         std::string m_compress_fmt;
         std::vector<int32_t> m_compress_params;
 };

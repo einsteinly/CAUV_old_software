@@ -7,17 +7,17 @@
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include <generated/messages_fwd.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/NodeType.h>
+#include <generated/types/NodeParamValue.h>
+#include <generated/types/SetNodeParameterMessage.h>
+#include <generated/types/GraphRequestMessage.h>
+#include <generated/types/RemoveNodeMessage.h>
 
 #include "../container.h"
 #include "../pwTypes.h"
 #include "../pipelineWidget.h"
 #include "draggable.h"
-
-// eww, can't forward declare enums (or boost variants of standard library
-// types...), have to drag in definitions
-#include <generated/messages.h>
 
 namespace cauv{
 

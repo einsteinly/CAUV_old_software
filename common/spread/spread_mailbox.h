@@ -6,7 +6,7 @@
 #include <ssrc/spread/Mailbox.h>
 #include <boost/shared_ptr.hpp>
 
-#include <generated/messages.h>
+#include <generated/types/message.h>
 
 #include "spread_exceptions.h"
 #include "spread_messages.h"

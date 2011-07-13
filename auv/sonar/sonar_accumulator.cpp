@@ -8,7 +8,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <generated/messages.h>
+#include <common/image.h>
 #include <common/math.h>
 #include <debug/cauv_debug.h>
 
@@ -127,8 +127,7 @@ bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
 {
     if (line.bearingRange != m_bearingRange ||
         line.range != m_range ||
-        line.scanWidth != m_scanWidth ||
-        line.data.size() != m_nbins)
+        line.scanWidth != m_scanWidth)
     {
         // New sonar params, reset
         debug(3) << "Sonar params updates, resetting accumulator" << m_range << m_bearingRange << m_scanWidth << m_nbins;
@@ -149,7 +148,9 @@ bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
     int from = line.bearing - line.bearingRange/2;
     int to = from + line.bearingRange;
 
-    int radius = floor((min(m_img->height(), m_img->width())-1)/2);
+    cv::Mat m = m_img->mat();
+
+    int radius = floor((min(m.rows, m.cols)-1)/2);
     int bincount = line.data.size();
 
     float bscale = (float)radius/bincount;
@@ -163,7 +164,6 @@ bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
     if (isFullImage)
         m_image_completed = 0;
 
-    cv::Mat m = m_img->mat();
 
     for (int b = 0; b < bincount; b++) {
         // All calculations assume centre is at (0,0)

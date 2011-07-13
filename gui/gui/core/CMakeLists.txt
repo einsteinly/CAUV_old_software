@@ -21,9 +21,9 @@ set ( GUICPP_CORE_SRCS
     widgets/videoscreen.cpp
     model/nodes.cpp
     model/model.cpp
-    model/messageObserver.cpp
+    model/messageobserver.cpp
     model/noderecorder.cpp
-    model/messagegenerators.cpp
+    #model/messagegenerators.cpp
     )
 
 set ( GUICPP_CORE_UIS
@@ -33,8 +33,8 @@ set ( GUICPP_CORE_UIS
 set ( GUICPP_CORE_H
     widgets/videoscreen.h
     model/nodes.h
-    model/messageObserver.h
-    model/messagegenerators.h
+    #model/messageobserver.h
+    #model/messagegenerators.h
     )
 
 set ( GUICPP_CORE_RCC

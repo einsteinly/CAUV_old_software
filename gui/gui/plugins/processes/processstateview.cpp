@@ -1,6 +1,7 @@
 #include "processstateview.h"
 #include "processes/ui_processstateview.h"
 
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <model/auv_model.h>
 

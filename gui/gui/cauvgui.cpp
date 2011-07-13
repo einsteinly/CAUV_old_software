@@ -11,6 +11,7 @@
 
 #include <gui/core/model/model.h>
 #include <gui/core/cauvplugins.h>
+#include <gui/core/model/messageobserver.h>
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -63,8 +64,8 @@ void CauvGui::closeEvent(QCloseEvent* e){
     QMainWindow::closeEvent(e);
 }
 
-int CauvGui::send(boost::shared_ptr<Message> message){
-    debug(0) << "Sending message: " << *message;
+int CauvGui::send(boost::shared_ptr<const Message> message){
+    debug(5) << "Sending message: " << *message;
     return CauvNode::send(message);
 }
 
@@ -101,11 +102,13 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
-    m_messageObserver = boost::make_shared<GuiMessageObserver>(m_auv);
-    this->addMessageObserver(m_messageObserver);
+    this->joinGroup("gui");
 
-    connect(m_messageObserver.get(), SIGNAL(messageGenerated(boost::shared_ptr<Message>)),
-            this, SLOT(send(boost::shared_ptr<Message>)));
+    this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_auv));
+    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(6));
+
+    //connect(m_messageObserver.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+    //        this, SLOT(send(boost::shared_ptr<const Message>)));
 
     // load plugins
     // static plugins first
@@ -125,8 +128,6 @@ void CauvGui::onRun()
     show();
     m_application->exec();
 
-    this->removeMessageObserver(m_messageObserver);
-
     info() << "Qt Thread exiting";
     info() << "Stopping CauvNode";
     CauvNode::stopNode();
@@ -142,6 +143,7 @@ bool CauvGui::loadPlugin(QObject *plugin){
         // see which groups the plugin needs us to join
         foreach (QString group, basicPlugin->getGroups()){
             joinGroup(group.toStdString());
+            debug(3) << plugin->objectName().toStdString() << "requested to join" << group.toStdString();
         }
 
         // tabs

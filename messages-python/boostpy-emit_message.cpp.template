@@ -1,0 +1,68 @@
+/***  This is a generated file, do not edit ***/
+\#include "workarounds.h" // _must_ be first
+\#include <boost/python.hpp>
+\#include <boost/python/str.hpp>
+
+\#include <generated/types/${m.name}Message.h>
+
+#set $className = $m.name + "Message"
+
+namespace bp = boost::python;
+using namespace cauv;
+
+namespace {
+    static const char* ${g.name.upper()}_NAME = "$g.name";
+
+    struct ${className}Pickler: boost::python::pickle_suite{
+        static boost::python::tuple getinitargs(${className} const& #if $len($m.fields)#a#end if#){
+            return boost::python::make_tuple(
+                #for $i, $f in enumerate($m.fields)#a.${f.name}()#if $i != $len($m.fields) - 1#,#end if# #end for
+            );
+        }
+    };
+}
+
+void emit${m.name}Message(){
+    #for $i, $f in enumerate($m.fields)
+        #if $isSTLVector($f.type)
+            $requiredVectorTypes.add($f.type.valType)
+        #else if $isSTLMap($f.type)
+            $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
+        #end if
+    #end for
+
+    bp::class_<$className,
+               bp::bases<Message>
+              >("$className", bp::init<>())
+        #if $len($m.fields) != 0
+        ## Keyword constructor (still needs all the keys
+        .def( bp::init< #for $i, $f in enumerate($m.fields)#$toCPPType($f.type)#if $i != $len($m.fields) - 1#,#end if# #end for#>( (
+            #for $i, $f in enumerate($m.fields)
+                bp::arg("$f.name")#if $i != $len($m.fields) - 1#,#end if#
+            #end for
+            ) )
+        )
+        #end if
+        ## self_ns shouldn't be necessary here... gcc sux
+        .def(bp::self_ns::str(bp::self_ns::self))
+        .def(bp::self_ns::repr(bp::self_ns::self))
+        .def_pickle(${className}Pickler())
+        ## default group to send to
+        .def_readonly("group", &${g.name.upper()}_NAME)
+        ## return policies are all return-by-value, safest, but not the most efficient
+        #for $f in $m.fields
+        .add_property(
+            "${f.name}",
+            bp::make_function(
+                wrap(&${className}::get_${f.name}),
+                bp::return_value_policy<bp::copy_const_reference>()
+            ),
+            wrap(&${className}::set_${f.name})
+        )
+        #end for
+    ;
+    register_shared_ptrs_to_python<${className}>();
+}
+
+
+

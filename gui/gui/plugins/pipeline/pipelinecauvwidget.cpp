@@ -6,9 +6,9 @@
 #include <QVBoxLayout>
 #include <QComboBox>
 
-#include <generated/messages.h>
-
 #include <debug/cauv_debug.h>
+#include <generated/types/Pl_GuiGroup.h>
+#include <generated/types/PipelineGroup.h>
 
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>
@@ -27,7 +27,7 @@ void PipelineListingObserver::onMembershipChangedMessage(MembershipChangedMessag
         m_node->send(boost::make_shared<PipelineDiscoveryRequestMessage>());
         Q_EMIT searchStarted();
     } else {
-        info() << "Membership change detected but not requesting discovery due to rate limiting";
+        debug(3) << "Membership change detected but not requesting discovery due to rate limiting";
     }
 }
 
@@ -51,7 +51,7 @@ PipelineCauvWidget::PipelineCauvWidget() :
         ui(new Ui::PipelineCauvWidget())
 {
     ui->setupUi(this);
-    m_pipeline->connect(m_pipeline, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
+    m_pipeline->connect(m_pipeline, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)), this, SLOT(send(boost::shared_ptr<const Message>)));
 
     ui->pipelines->hide(); // hide until its populated
     ui->layout->addWidget(m_pipeline);
@@ -62,13 +62,6 @@ PipelineCauvWidget::PipelineCauvWidget() :
 }
 
 PipelineCauvWidget::~PipelineCauvWidget(){
-    m_node->removeMessageObserver(m_observer);
-    info() << "Removed pipline message observer";
-
-    // TODO: we need to delete the pipeline here
-    // but it crashes at the moment as its used by
-    // multiple threads (I think this is whats happening)
-    //delete m_pipeline;
 }
 
 const QString PipelineCauvWidget::name() const{
@@ -90,7 +83,7 @@ void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_pt
     boost::shared_ptr<PipelineListingObserver> listingObserver = boost::make_shared<PipelineListingObserver>(node);
     node->addMessageObserver(listingObserver);
 
-    listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), this, SLOT(clearPipelines()));
+    //listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), this, SLOT(clearPipelines()));
     listingObserver->connect(listingObserver.get(), SIGNAL(pipelineDiscovered(std::string)), this, SLOT(addPipeline(std::string)));
 }
 
@@ -120,7 +113,7 @@ void PipelineCauvWidget::clearPipelines(){
     ui->pipelines->blockSignals(false);
 }
 
-void PipelineCauvWidget::send(boost::shared_ptr<Message> message){
+void PipelineCauvWidget::send(boost::shared_ptr<const Message> message){
     info() << message;
     if(m_node)
         m_node->send(message);

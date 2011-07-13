@@ -99,7 +99,7 @@ class PipelineWidget: public QGLWidget,
 
     Q_SIGNALS:
         void redrawPosted();
-        void messageGenerated(boost::shared_ptr<Message>);
+        void messageGenerated(boost::shared_ptr<const Message>);
         void nameChanged(std::string const&);
     
     protected:

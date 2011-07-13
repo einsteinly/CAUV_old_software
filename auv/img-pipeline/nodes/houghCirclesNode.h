@@ -9,6 +9,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <generated/types/CirclesMessage.h>
+
 #include "../node.h"
 #include "outputNode.h"
 
@@ -64,15 +66,16 @@ class HoughCirclesNode: public OutputNode{
             const std::string name = param<std::string>("name");
 
             cv::vector<cv::Vec3f> circles;
+            cv::Mat in = img->mat();            
             try{
-                cv::HoughCircles(img->mat(), circles, method, dp, min_dist, p1, p2, min_rad, max_rad);
+                cv::HoughCircles(in, circles, method, dp, min_dist, p1, p2, min_rad, max_rad);
                 
                 if(numChildren()){
                     // then produce an output image overlay
                     cv::Mat out;
                     
                     // make a colour copy to draw pretty circles on
-                    cvtColor(img->mat(), out, CV_GRAY2BGR);
+                    cvtColor(in, out, CV_GRAY2BGR);
 
                     for(unsigned i = 0; i < circles.size(); i++){
                         cv::Point centre(cvRound(circles[i][0]), cvRound(circles[i][1]));
@@ -93,8 +96,8 @@ class HoughCirclesNode: public OutputNode{
             // convert coordinates from pixels (top left origin) to 0-1 float,
             // top left origin // TODO: check this
             std::vector<Circle> msg_circles;
-            const float width = img->width();
-            const float height = img->height();
+            const float width = in.cols;
+            const float height = in.rows;
             for(unsigned i = 0; i < circles.size(); i++){
                 Circle c;
                 c.centre.x = circles[i][0] / width;

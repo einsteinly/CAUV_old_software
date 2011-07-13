@@ -6,7 +6,7 @@
 
 #include <xsens/cmt3.h>
 
-#include <generated/messages_fwd.h>
+#include <generated/types/floatYPR.h>
 #include <utility/observable.h>
 
 namespace cauv{

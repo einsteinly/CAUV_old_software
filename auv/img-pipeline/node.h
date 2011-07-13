@@ -16,9 +16,11 @@
 #include <utility/string.h>
 #include <utility/testable.h>
 #include <common/cauv_utils.h>
-#include <generated/messages_messages.h>
 #include <common/image.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/PipelineGroup.h>
+#include <generated/types/Pl_GuiGroup.h>
+#include <generated/types/NodeInputStatus.h>
 
 // TODO: remove this dependency
 #include <ssrc/spread.h>

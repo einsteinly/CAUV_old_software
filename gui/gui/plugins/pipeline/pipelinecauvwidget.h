@@ -7,7 +7,7 @@
 
 #include <gui/core/cauvbasicplugin.h>
 
-#include <generated/messages.h>
+#include <generated/message_observers.h>
 
 #include <common/cauv_utils.h>
 
@@ -57,7 +57,7 @@ namespace cauv {
             virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
             
         protected Q_SLOTS:
-            void send(boost::shared_ptr<Message> message);
+            void send(boost::shared_ptr<const Message> message);
             void addPipeline(std::string name);
             void clearPipelines();
             

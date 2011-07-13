@@ -40,11 +40,11 @@ class SplitHSVNode: public Node{
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
-            image_ptr_t img = inputs["image"];
+            cv::Mat img = inputs["image"]->mat();
             cv::Mat HSV;
             int conversion_code = 0;
             
-            if(img->channels() == 3)
+            if(img.channels() == 3)
             //CV_RGB2HSV_FULL doesnt seem to be documented or exist in new versions...
             //#ifdef CV_RGB2HSV_FULL
             //    conversion_code = CV_RGB2HSV_FULL;
@@ -57,7 +57,7 @@ class SplitHSVNode: public Node{
                 throw(parameter_error("image must be 3-channel RGB"));
 
             try{
-                cv::cvtColor(img->mat(), HSV, conversion_code, 0);
+                cv::cvtColor(img, HSV, conversion_code, 0);
             }catch(cv::Exception& e){
                 error() << "SplitHSVNode (HSV conversion):\n\t"
                         << e.err << "\n\t"

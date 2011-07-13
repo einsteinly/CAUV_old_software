@@ -8,7 +8,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <generated/messages.h>
+#include <generated/types/KeyPointsMessage.h>
 
 #include "../node.h"
 #include "outputNode.h"
@@ -49,7 +49,7 @@ class BroadcastKeypointsNode: public OutputNode{
             const std::string name = param<std::string>("name");
             const std::vector<cauv::KeyPoint> keypoints = param< std::vector<cauv::KeyPoint> >("keypoints");
 
-            sendMessage(boost::make_shared<KeypointsMessage>(name, keypoints));
+            sendMessage(boost::make_shared<KeyPointsMessage>(name, keypoints));
 
             return r;
         }

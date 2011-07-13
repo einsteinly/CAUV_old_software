@@ -38,9 +38,9 @@ AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *tar
 
     // sets
     connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
-    // these have to be Qt::DirectConnections but I'm not sure why...
-    connect(target, SIGNAL(valueChanged(double)), targetNode.get(), SLOT(set(double)), Qt::DirectConnection);
-    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(set(bool)), Qt::DirectConnection);
+
+    connect(target, SIGNAL(valueChanged(double)), targetNode.get(), SLOT(set(double)));
+    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(set(bool)));
 
     // updates
     connect(enabledNode.get(), SIGNAL(onUpdate(bool)), enabled, SLOT(setChecked(bool)));
@@ -135,7 +135,7 @@ void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
     backButton->connect(backButton, SIGNAL(released()), back.get(), SLOT(stop()));
     ui->motorControlsLayout->addWidget(backButton, ++m_motorsCount, 0, 1, 1, Qt::AlignCenter);
 
-    QLabel * label = new QLabel(QString::fromStdString(motor->nodeName(false)));
+    QLabel * label = new QLabel(QString::fromStdString(motor->nodeName()));
     label->setAlignment(Qt::AlignHCenter);
     ui->motorControlsLayout->addWidget(label, m_motorsCount, 1, 1, 1, Qt::AlignCenter);
 
@@ -150,7 +150,7 @@ void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
 void MotorControls::addAutopilot(boost::shared_ptr<NodeBase> node){
 
     // set up ui
-    QLabel * label = new QLabel(QString::fromStdString(node->nodeName(false)));
+    QLabel * label = new QLabel(QString::fromStdString(node->nodeName()));
     ui->autopilotControlsLayout->addWidget(label, m_autopilotsCount, 0, 1, 1, Qt::AlignCenter);
 
     QDoubleSpinBox * target = new QDoubleSpinBox();

@@ -2,6 +2,7 @@
 #include "spread_rc_mailbox.h"
 
 #include <boost/thread/thread.hpp>
+#include <common/cauv_utils.h>
 
 #include <debug/cauv_debug.h>
 

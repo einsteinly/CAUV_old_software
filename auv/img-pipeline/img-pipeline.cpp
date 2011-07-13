@@ -3,15 +3,16 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/program_options.hpp>
+
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
-#include <generated/messages.h>
 
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
 #include <common/spread/msgsrc_mb_observer.h>
 
-#include <boost/program_options.hpp>
+#include <generated/types/MembershipChangedMessage.h>
 
 #include "imageProcessor.h"
 

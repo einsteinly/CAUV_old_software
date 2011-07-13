@@ -8,7 +8,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <generated/messages.h>
+#include <generated/types/CornersMessage.h>
 
 #include "../node.h"
 #include "outputNode.h"

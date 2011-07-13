@@ -14,7 +14,7 @@
 
 #include <common/math.h>
 
-#include <generated/messages.h>
+#include <generated/types/Line.h>
 
 #include "../node.h"
 #include "outputNode.h"
@@ -150,7 +150,7 @@ class MergeSimilarLinesNode: public Node{
             return mod<float>(a, M_PI);
         }
 
-        out_map_t doWork(in_image_map_t& inputs){
+        out_map_t doWork(in_image_map_t&){
             out_map_t r;
 
             const float angleEpsilon = param< float >("angle epsilon");

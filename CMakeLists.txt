@@ -98,9 +98,24 @@ if (Boost_VERSION GREATER 104500)
     add_definitions (-DBOOST_FILESYSTEM_VERSION=2)
 endif()
 
+
+set (GEND "${CAUV_SOURCE_DIR}/generated")
+set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
+execute_process(
+    COMMAND python ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg 
+    OUTPUT_VARIABLE CAUV_MESSAGE_FILES
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+foreach(F IN LISTS CAUV_MESSAGE_FILES)
+    file(RELATIVE_PATH FREL "${CAUV_SOURCE_DIR}" "${F}")
+    set_source_files_properties("${FREL}"
+                                PROPERTIES GENERATED TRUE)
+endforeach()
+
+
+add_subdirectory (generated)
 add_subdirectory (common)
 add_subdirectory (messages-python)
-add_subdirectory (generated)
 add_subdirectory (auv)
 add_subdirectory (gui)
 add_subdirectory (utility)

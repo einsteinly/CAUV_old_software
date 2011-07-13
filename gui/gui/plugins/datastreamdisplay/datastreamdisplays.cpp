@@ -6,6 +6,7 @@
 #include <gui/core/model/model.h>
 #include <gui/core/widgets/videoscreen.h>
 #include "graphs.h"
+#include <common/cauv_utils.h>
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>

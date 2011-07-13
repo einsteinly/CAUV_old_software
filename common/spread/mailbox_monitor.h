@@ -7,7 +7,6 @@
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <generated/messages_fwd.h>
 #include <utility/threadsafe-observable.h>
 
 namespace cauv{

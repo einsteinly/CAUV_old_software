@@ -1,7 +1,7 @@
 #ifndef __CAUV_CAMERA_OBSERVER_H__
 #define __CAUV_CAMERA_OBSERVER_H__
 
-#include <generated/messages_fwd.h>
+#include <generated/types/CameraID.h>
 
 // Forward declarations
 namespace cv{
