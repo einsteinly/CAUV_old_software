@@ -3,16 +3,19 @@
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <gui/core/model/nodes.h>
-
-// for types
-#include <generated/messages_fwd.h>
 
 class QDropEvent;
 class QDragEnterEvent;
 
 namespace cauv {
     namespace gui {
+
+        class NodeBase;
+        class NumericNode;
+        class ImageNode;
+        class FloatYPRNode;
+        class FloatXYZNode;
+        class GroupingNode;
 
         class NodeDragSource{
         public:

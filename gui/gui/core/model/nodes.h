@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QMetaType>
 
-#include <boost/foreach.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -16,13 +15,10 @@
 #include <vector>
 #include <stdexcept>
 
+#include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
 #include "variants.h"
-
-#include<boost/visit_each.hpp>
-
-using namespace std::rel_ops;
 
 namespace cauv {
     namespace gui {
@@ -40,6 +36,7 @@ namespace cauv {
         };
 
 
+
         class NodeBase : public QObject, public boost::enable_shared_from_this<NodeBase> {
             Q_OBJECT
         public:
@@ -50,9 +47,13 @@ namespace cauv {
 
             virtual ~NodeBase();
 
-            virtual std::string nodeName(const bool full=true) const;
+            virtual std::string nodeName() const;
+            virtual std::string nodePath() const;
             virtual void addChild(boost::shared_ptr<NodeBase> child);
             const std::vector<boost::shared_ptr<NodeBase> > getChildren() const;
+            virtual bool isMutable() const;
+            virtual void setMutable(bool mut);
+            boost::shared_ptr<NodeBase> getRoot();
 
             template <class T> boost::shared_ptr<T> to() {
                 if (dynamic_cast<T *>(this)) {
@@ -62,29 +63,32 @@ namespace cauv {
                 }
             }
 
-            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const {
+
+            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const{
+
                 std::vector<boost::shared_ptr<T> > output;
-                //foreach (boost::shared_ptr<NodeBase> child, getChildren()) {
-                //    if (dynamic_cast<T *>(child.get())) {
-                //        boost::shared_ptr<T> ptr = boost::static_pointer_cast<T>(child);
-                //        output.push_back(ptr);
-                //    }
-                //}
+                foreach (boost::shared_ptr<NodeBase> child, getChildren()) {
+                    if (dynamic_cast<T *>(child.get())) {
+                        boost::shared_ptr<T> ptr = boost::static_pointer_cast<T>(child);
+                        output.push_back(ptr);
+                    }
+                }
+
                 return output;
             }
 
-            template <class T> boost::shared_ptr<T> find(std::string name){
-                debug(2) << "Looking for" << name << "in" << nodeName();
-                //foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
-                //    std::string childName = child->nodeName(false);
-                //    boost::to_lower(childName);
-                //    boost::to_lower(name);
+            template <class T> boost::shared_ptr<T> find(std::string name) const {
+                debug() << "Looking for" << name << "in" << nodePath();
+                foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
+                    std::string childName = child->nodePath();
+                    boost::to_lower(childName);
+                    boost::to_lower(name);
 
-                //    if(childName == name) {
-                //        debug(2) << "Node matched" << child->nodeName();
-                //        return child;
-                //    }
-                //}
+                    if(childName == name) {
+                        debug() << "Node matched" << child->nodePath();
+                        return child;
+                    }
+                }
                 std::stringstream str;
                 str << "Node not found: " << name;
                 throw std::out_of_range(str.str());
@@ -98,7 +102,7 @@ namespace cauv {
                 } catch (std::out_of_range){
                     boost::shared_ptr<T> newNode = boost::make_shared<T>(name);
                     this->addChild(newNode);
-                    info() << "New node added" << newNode->nodeName();
+                    info() << "New node added" << newNode->nodePath();
                     return newNode;
                 }
             }
@@ -108,10 +112,6 @@ namespace cauv {
                 node->setMutable(true);
                 return node;
             }
-
-            virtual bool isMutable();
-            virtual void setMutable(bool mut);
-
 
         Q_SIGNALS:
             void nodeAdded(boost::shared_ptr<NodeBase> node);
@@ -131,32 +131,42 @@ namespace cauv {
 
 
 
+        template<typename char_T, typename traits>
+        std::basic_ostream<char_T, traits>& operator<<(
+            std::basic_ostream<char_T, traits>& os, NodeBase const& node)
+        {
+            os << node.nodePath() << "\n";
+
+            foreach(boost::shared_ptr<NodeBase> child, node.getChildren()){
+                os << child;
+            }
+
+            return os;
+        }
 
 
 
-        template <class T>
+        template <class T> class Node : public NodeBase {
 
-                class Node : public NodeBase {
-
-                public:
+        public:
 
             Node<T>(GuiNodeType::e type, const std::string name) :
                     NodeBase(type, name), m_value() {
             }
 
-            virtual void update(T value){
+            virtual void update(const T & value){
                 m_value = value;
             }
 
-            virtual void set(T value){
-                debug(0) << nodeName() << "set to" << value;
+            virtual void set(const T & value){
+                debug(0) << nodePath() << "set to" << value;
                 update(value);
                 info() << "change being emitted";
                 Q_EMIT changed();
                 info() << "change finished being emitted";
             }
 
-            virtual T get(){
+            virtual const T get() const{
                 return m_value;
             }
 
@@ -177,19 +187,19 @@ namespace cauv {
 
         public Q_SLOTS:
 
-            virtual void update(std::string value){
+            virtual void update(const std::string & value){
                 Node<std::string>::update(value);
                 Q_EMIT onUpdate(value);
             }
 
-            virtual void set(std::string value){
+            virtual void set(const std::string & value){
                 Node<std::string>::set(value);
                 Q_EMIT onSet(value);
             }
 
         Q_SIGNALS:
-            void onUpdate(std::string value);
-            void onSet(std::string value);
+            void onUpdate(const std::string value);
+            void onSet(const std::string value);
         };
 
 
@@ -280,7 +290,7 @@ namespace cauv {
 
         public Q_SLOTS:
 
-            virtual void update(numeric_variant_t value){
+            virtual void update(const numeric_variant_t & value){
                 Node<numeric_variant_t>::update(value);
                 Q_EMIT onUpdate(value);
 
@@ -323,35 +333,36 @@ namespace cauv {
                 set(numeric_variant_t((float)value));
             }
 
-            virtual void set(numeric_variant_t value){
+            virtual void set(const numeric_variant_t & value){
+                numeric_variant_t output;
                 if(m_maxSet) {
-                    value = boost::apply_visitor(limit_max(m_max), value);
+                    output = boost::apply_visitor(limit_max(m_max), value);
                 }
                 if(m_minSet) {
-                    value = boost::apply_visitor(limit_min(m_min), value);
+                    output = boost::apply_visitor(limit_min(m_min), value);
                 }
 
-                Node<numeric_variant_t>::set(value);
+                Node<numeric_variant_t>::set(output);
 
-                Q_EMIT onSet(value);
+                Q_EMIT onSet(output);
 
                 switch(value.which()){
                 case 0:
                     info() << "bool";
-                    Q_EMIT onSet(boost::get<bool>(value));
+                    Q_EMIT onSet(boost::get<bool>(output));
                     break;
                 case 1:
                     info() << "unsigned int";
-                    Q_EMIT onSet(boost::get<unsigned int>(value));
+                    Q_EMIT onSet(boost::get<unsigned int>(output));
                     break;
                 case 2:
                     info() << "int";
-                    Q_EMIT onSet(boost::get<int>(value));
+                    Q_EMIT onSet(boost::get<int>(output));
                     break;
                 case 3:
                     info() << "float";
-                    Q_EMIT onSet(boost::get<float>(value));
-                    Q_EMIT onSet((double) boost::get<float>(value));
+                    Q_EMIT onSet(boost::get<float>(output));
+                    Q_EMIT onSet((double) boost::get<float>(output));
                     break;
                 default:
                     throw std::exception();
@@ -359,7 +370,7 @@ namespace cauv {
             }
 
         Q_SIGNALS:
-            void onUpdate(numeric_variant_t value);
+            void onUpdate(const numeric_variant_t value);
             void onUpdate(int value);
             void onUpdate(unsigned int value);
             void onUpdate(float value);
@@ -368,7 +379,7 @@ namespace cauv {
 
             void paramsUpdated();
 
-            void onSet(numeric_variant_t value);
+            void onSet(const numeric_variant_t value);
             void onSet(int value);
             void onSet(unsigned int value);
             void onSet(float value);
@@ -396,19 +407,19 @@ namespace cauv {
 
         public Q_SLOTS:
 
-            virtual void update(std::string value){
+            virtual void update(const std::string & value){
                 Node<std::string>::update(value);
                 Q_EMIT onUpdate(value);
             }
 
-            virtual void set(std::string value){
+            virtual void set(const std::string & value){
                 Node<std::string>::set(value);
                 Q_EMIT onSet(value);
             }
 
         Q_SIGNALS:
-            void onUpdate(std::string value);
-            void onSet(std::string value);
+            void onUpdate(const std::string value);
+            void onSet(const std::string value);
         };
 
 
@@ -422,13 +433,13 @@ namespace cauv {
 
         public Q_SLOTS:
 
-            virtual void update(image_variant_t value){
+            virtual void update(const image_variant_t & value){
                 Node<image_variant_t>::update(value);
                 Q_EMIT onUpdate(value);
             }
 
         Q_SIGNALS:
-            void onUpdate(image_variant_t value);
+            void onUpdate(const image_variant_t value);
         };
 
 
@@ -454,7 +465,7 @@ namespace cauv {
 
             virtual void addChildren() = 0;
 
-            void update(T value){
+            void update(const T & value){
                 Node<T>::update(value);
                 if(!m_chidrenAdded)
                     addChildren();
@@ -487,7 +498,7 @@ namespace cauv {
                 this->addChild(m_r);
             }
 
-            virtual void update(floatYPR value){
+            virtual void update(const floatYPR & value){
                 NumericCompoundNode<floatYPR>::update(value);
                 Q_EMIT onUpdate(value);
                 m_y->update(value.yaw);
@@ -495,7 +506,7 @@ namespace cauv {
                 m_r->update(value.roll);
             }
 
-            virtual void set(floatYPR value){
+            virtual void set(const floatYPR & value){
                 NumericCompoundNode<floatYPR>::set(value);
                 Q_EMIT onSet(value);
             }
@@ -508,8 +519,8 @@ namespace cauv {
             }
 
         Q_SIGNALS:
-            void onUpdate(floatYPR value);
-            void onSet(floatYPR value);
+            void onUpdate(const floatYPR value);
+            void onSet(const floatYPR value);
 
         protected:
             boost::shared_ptr<NumericNode> m_y, m_p, m_r;
@@ -538,7 +549,7 @@ namespace cauv {
                 this->addChild(m_z);
             }
 
-            virtual void update(floatXYZ value){
+            virtual void update(const floatXYZ & value){
                 NumericCompoundNode<floatXYZ>::update(value);
                 Q_EMIT onUpdate(value);
                 m_x->update(value.x);
@@ -546,7 +557,7 @@ namespace cauv {
                 m_z->update(value.z);
             }
 
-            virtual void set(floatXYZ value){
+            virtual void set(const floatXYZ & value){
                 NumericCompoundNode<floatXYZ>::set(value);
                 Q_EMIT onSet(value);
             }
@@ -559,27 +570,14 @@ namespace cauv {
             }
 
         Q_SIGNALS:
-            void onUpdate(floatXYZ value);
-            void onSet(floatXYZ value);
+            void onUpdate(const floatXYZ value);
+            void onSet(const floatXYZ value);
 
         protected:
             boost::shared_ptr<NumericNode> m_x, m_y, m_z;
 
         };
 
-        template<typename char_T, typename traits>
-        std::basic_ostream<char_T, traits>& operator<<(
-            std::basic_ostream<char_T, traits>& os, NodeBase const& node)
-        {
-            os << node->nodeName() << "\n";
-
-            foreach(boost::shared_ptr<NodeBase> child, node->getChildren()){
-                os << child;
-            }
-            return os;
-        }
-        
-        
     } // namespace gui
 } // namespace cauv
 #endif // GUI_NODES_H

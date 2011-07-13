@@ -6,17 +6,11 @@
 #include <QTreeWidget>
 #include <QMdiArea>
 
-#include <boost/bind.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/make_shared.hpp>
-
 #include <debug/cauv_debug.h>
 
 #include <gui/core/cauvbasicplugin.h>
 #include <gui/core/datastreamdragging.h>
-#include <gui/core/model/model.h>
 
-#include "treeitems.h"
 
 namespace Ui {
     class DataStreamPicker;
@@ -27,11 +21,6 @@ namespace cauv {
     namespace gui {
 
 
-        /**
-      * DataStreamDisplayArea - accepts data stream drops, adding them to its mdi area as it gets them
-      *
-      * @author Andy Pritchard
-      */
         class DataStreamDisplayArea : public QMdiArea, public NodeDropListener {
             Q_OBJECT
 
@@ -49,18 +38,13 @@ namespace cauv {
 
 
 
-        /**
-      * Interface integration class.
-      *
-      * @author Andy Pritchard
-      */
+
         class DataStreamPicker : public QDockWidget, public CauvBasicPlugin{
             Q_OBJECT
             Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
 
-
         public:
-                    DataStreamPicker();
+            DataStreamPicker();
             virtual ~DataStreamPicker();
 
             virtual const QString name() const;
@@ -78,7 +62,7 @@ namespace cauv {
   * The QWidget subclass where the model data is displayed.
   *
   * It's outside the cauv namespace because its used as promoted widget in a ui file
-  * TODO: find a way around this
+  * @todo: find a way around this
   *
   * @author Andy Pritchard
   */

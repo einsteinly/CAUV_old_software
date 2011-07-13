@@ -2,6 +2,8 @@
 
 #include <gui/core/model/model.h>
 
+#include <generated/messages.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -35,15 +37,15 @@ void AutopilotMessageGenerator::send(){
 
     bool enabled = boost::get<bool>(m_autopilot->findOrCreate<NumericNode>("enabled")->get());
     float target = boost::get<float>(m_autopilot->findOrCreate<NumericNode>("target")->get());
-    if (m_autopilot->nodeName(false) == "bearing") {
+    if (m_autopilot->nodeName() == "bearing") {
         Q_EMIT messageGenerated(boost::make_shared<BearingAutopilotEnabledMessage>(enabled, target));
     }
-    else if (m_autopilot->nodeName(false) == "depth") {
+    else if (m_autopilot->nodeName() == "depth") {
         Q_EMIT messageGenerated(boost::make_shared<DepthAutopilotEnabledMessage>(enabled, target));
     }
-    else if (m_autopilot->nodeName(false) == "pitch") {
+    else if (m_autopilot->nodeName() == "pitch") {
         Q_EMIT messageGenerated(boost::make_shared<PitchAutopilotEnabledMessage>(enabled, target));
     } else {
-        error() << "Can't send message to unknown autopilot " << m_autopilot->nodeName(false);
+        error() << "Can't send message to unknown autopilot " << m_autopilot->nodeName();
     }
 }

@@ -13,7 +13,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include <generated/messages.h>
+#include <common/image.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -31,13 +31,13 @@ VideoScreen::~VideoScreen(){
 }
 
 
-void VideoScreen::setImage(const Image &img){
+void VideoScreen::setImage(const image_variant_t &img){
 
     // take a deep copy of the image before it's deleted
     // it will be used in a different thread so we can't
     // just keep a pointer
     if(m_updateMutex.try_lock()) {
-        boost::scoped_ptr<Image> newImage(new Image(img));
+        boost::scoped_ptr<Image> newImage(new Image(*(img.get())));
         m_new_image.swap(newImage);
 
         update();

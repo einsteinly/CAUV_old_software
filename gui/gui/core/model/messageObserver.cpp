@@ -4,9 +4,8 @@
 
 #include <debug/cauv_debug.h>
 
-#include <generated/messages.h>
-
 #include <gui/core/model/messagegenerators.h>
+#include <gui/core/model/model.h>
 
 using namespace cauv;
 using namespace cauv::gui;

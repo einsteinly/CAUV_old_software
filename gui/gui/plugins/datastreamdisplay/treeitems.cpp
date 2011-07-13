@@ -8,7 +8,7 @@ using namespace cauv::gui;
 
 NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidgetItem * parent):
         QTreeWidgetItem(parent), m_node(node){
-    this->setText(0, QString::fromStdString(node->nodeName(false)));
+    this->setText(0, QString::fromStdString(node->nodeName()));
     if(node->isMutable()) {
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
@@ -22,6 +22,10 @@ void NodeTreeItemBase::updateValue(const QString value) {
     // no update if editing
     if(!(this->flags() & Qt::ItemIsEditable))
         this->setText(1, value);
+}
+
+bool NodeTreeItemBase::updateNode(QVariant&) {
+    return false;
 }
 
 boost::shared_ptr<NodeBase> NodeTreeItemBase::getNode(){

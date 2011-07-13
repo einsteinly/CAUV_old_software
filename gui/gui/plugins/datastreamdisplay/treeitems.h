@@ -3,14 +3,12 @@
 
 #include <QVariant>
 #include <QTreeWidgetItem>
-
+#include <cv.h>
 #include <boost/make_shared.hpp>
 
 #include <debug/cauv_debug.h>
-#include <gui/core/model/nodes.h>
 #include <gui/core/model/model.h>
 
-#include <cv.h>
 
 namespace cauv {
     namespace gui {
@@ -28,7 +26,7 @@ namespace cauv {
             NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidgetItem * parent);
             virtual ~NodeTreeItemBase(){}
             boost::shared_ptr<NodeBase> getNode();
-            virtual bool updateNode(QVariant&) { return false; };
+            virtual bool updateNode(QVariant&);
 
         public Q_SLOTS:
             NodeTreeItemBase * addNode(boost::shared_ptr<NodeBase> node);
@@ -66,10 +64,10 @@ namespace cauv {
 
                 try {
                     m_node->set(qVariantToValue(value));
-                    info() << m_node->nodeName() << " value changed to: " << value.toString().toStdString();
+                    info() << m_node->nodePath() << " value changed to: " << value.toString().toStdString();
                     return true;
                 } catch (boost::bad_lexical_cast){
-                    info() << m_node->nodeName() << " given a bad value:" << value.toString().toStdString();
+                    info() << m_node->nodePath() << " given a bad value:" << value.toString().toStdString();
                     return false;
                 }
             }

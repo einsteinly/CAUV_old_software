@@ -14,13 +14,17 @@ NodeBase::~NodeBase(){
     debug(0) << "~NodeBase" << nodeName();
 }
 
-std::string NodeBase::nodeName(const bool full) const {
+std::string NodeBase::nodeName() const {
+    return m_name;
+}
+
+std::string NodeBase::nodePath() const {
     std::stringstream stream;
 
-    if(full && !m_parent.expired()) {
+    if(!m_parent.expired()) {
         boost::shared_ptr<NodeBase> parent = m_parent.lock();
         if(parent)
-            stream << parent->nodeName() << "/" << m_name;
+            stream << parent->nodePath() << "/" << m_name;
     }
     else stream << m_name;
 
@@ -48,10 +52,19 @@ const std::vector<boost::shared_ptr<NodeBase> > NodeBase::getChildren() const {
     return m_children;
 }
 
-bool NodeBase::isMutable(){
+bool NodeBase::isMutable() const{
     return m_mutable;
 }
 
 void NodeBase::setMutable(bool mut){
     m_mutable = mut;
+}
+
+boost::shared_ptr<NodeBase> NodeBase::getRoot() {
+    boost::shared_ptr<NodeBase> node = shared_from_this();
+
+    while(node->m_parent.lock())
+        node = node->m_parent.lock();
+
+    return node;
 }

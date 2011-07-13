@@ -10,7 +10,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set ( DSD_PLUGIN_SRCS
     datastreamdisplays.cpp
-    #datastreamrecorder.cpp
     treeitems.cpp
     graphs.cpp
 )
@@ -23,7 +22,6 @@ set ( DSD_PLUGIN_UIS
 
 set ( DSD_PLUGIN_H
     datastreamdisplays.h
-    #datastreamrecorder.h
     treeitems.h
     graphs.h
 )

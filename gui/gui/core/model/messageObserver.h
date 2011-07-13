@@ -1,18 +1,19 @@
 #ifndef GUI_MESSAGE_OBSERVER_INCLUDED
 #define GUI_MESSAGE_OBSERVER_INCLUDED
 
-#include <generated/messages_fwd.h>
-
+#include <QObject>
 #include <map>
 
+#include <generated/messages.h>
 #include <boost/shared_ptr.hpp>
 
-#include <gui/core/model/model.h>
-
-#include <gui/core/model/messagegenerators.h>
 
 namespace cauv{
     namespace gui {
+
+        class AUV;
+        class MessageGenerator;
+        class NodeBase;
 
         class NameConversion {
         public:
@@ -57,7 +58,7 @@ namespace cauv{
             void addGenerator(boost::shared_ptr<NodeBase> node, boost::shared_ptr<MessageGenerator> generator);
 
         Q_SIGNALS:
-            void messageGenerated(boost::shared_ptr<Message> message);
+            void messageGenerated(boost::shared_ptr<const Message> message);
 
         protected:
             boost::shared_ptr< AUV > m_auv;

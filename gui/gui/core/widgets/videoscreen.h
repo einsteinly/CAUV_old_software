@@ -6,6 +6,8 @@
 
 #include <QWidget>
 
+#include <gui/core/model/variants.h>
+
 class QSize;
 class QImage;
 class QString;
@@ -15,8 +17,6 @@ namespace Ui {
 }
 
 namespace cauv {
-
-    class Image;
 
     namespace gui {
 
@@ -35,7 +35,7 @@ namespace cauv {
             void paintEvent(QPaintEvent *);
 
         public Q_SLOTS:
-            void setImage(const Image &image);
+            void setImage(const image_variant_t &image);
 
             void setInfo(const QString text);
             void setInfo(const std::string text);

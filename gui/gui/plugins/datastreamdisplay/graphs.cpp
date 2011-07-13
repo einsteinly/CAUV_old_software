@@ -3,7 +3,7 @@
 
 #include <common/cauv_utils.h>
 
-#include <boost/bind.hpp>
+#include <gui/core/model/nodes.h>
 
 #include <QPen>
 #include <QRectF>
@@ -16,6 +16,8 @@
 #include <qwt_scale_widget.h>
 #include <qwt_plot_grid.h>
 #include <qwt_plot_magnifier.h>
+#include <qwt_plot_zoomer.h>
+#include <qwt_plot_panner.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -28,12 +30,89 @@ const QColor GraphWidget::colours[] = {
 };
 
 
+DataStreamSeriesData::DataStreamSeriesData(boost::shared_ptr<NumericNode> node, unsigned int maximum) :
+        DataRecorder<numeric_variant_t>(maximum), m_max(0), m_min(0) {
+    node->connect(node.get(), SIGNAL(onUpdate(numeric_variant_t)), this, SLOT(change(numeric_variant_t)));
+}
+
+size_t DataStreamSeriesData::size () const {
+    // times 2 as we plot 2 points for each sample
+    // this creates the step effect
+    return (this->m_history.size())*2;
+}
+
+float DataStreamSeriesData::toTime(boost::posix_time::ptime epoch, boost::posix_time::ptime time) const{
+    boost::posix_time::time_duration delta = epoch - time;
+    return ((float)delta.ticks())/(float)delta.ticks_per_second();
+}
+
+QPointF DataStreamSeriesData::sample (size_t i) const {
+
+    // as each sample is represented by two points the actual sample we're plotting is
+    // at half of the total plot size
+    size_t sample = (i>>1);
+
+    // for even samples we use the time at "sample" otherwise we use the
+    // time of the next sample (to show it as a step change instead of
+    // ramping to it)
+    float seconds = toTime(boost::posix_time::microsec_clock::local_time(), this->m_timestamps[sample + (i&0x01)]);
+
+    // the very last point should be pegged at zero seconds so that it's stretched
+    if(i == (this->m_history.size()*2)-1){
+        seconds = 0.0;
+    }
+
+    // times are shown as negative in seconds from the current time
+    return QPointF(-seconds, boost::apply_visitor(to_float(), this->m_history[sample]));
+}
+
+QRectF DataStreamSeriesData::boundingRect () const {
+    if(this->m_history.empty())
+        return QRectF(-60, 0, 60, 10);
+    else {
+        // show the last 60 seconds;
+        return QRectF(-60, boost::apply_visitor(to_float(), m_min), 60,
+                      boost::apply_visitor(to_float(), m_max) -
+                      boost::apply_visitor(to_float(), m_min));
+    }
+}
+
+void DataStreamSeriesData::change(numeric_variant_t value){
+    if(m_max < value)
+        m_max = value;
+    if(value < m_min)
+        m_min = value;
+    DataRecorder<numeric_variant_t>::update(value);
+}
+
+
+
+
+GraphWidget::GraphWidget():
+        m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
+{
+    ui->setupUi(this);
+    ui->optionsWidget->hide();
+    this->setAcceptDrops(true);
+    setupPlot();
+}
+
+GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> node):
+        m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
+{
+    ui->setupUi(this);
+    ui->optionsWidget->hide();
+    onNodeDropped(node);
+    this->setAcceptDrops(true);
+    setupPlot();
+}
+
 void GraphWidget::addNode(boost::shared_ptr<NumericNode> node){
     // see if this series has already been registered
-    if(m_seriesNames.end() == m_seriesNames.find(node->nodeName(false))) {
+    if(m_seriesNames.end() == m_seriesNames.find(node->nodeName())) {
         // series data
         DataStreamSeriesData * series = new DataStreamSeriesData(node, 1000);
-        m_seriesNames.insert(node->nodeName(false));
+        m_seriesNames.insert(node->nodeName());
 
         // series plotter
         std::stringstream str;

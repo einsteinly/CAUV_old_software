@@ -3,11 +3,13 @@
 
 #include "treeitems.h"
 
+#include <gui/core/model/model.h>
 #include <gui/core/widgets/videoscreen.h>
 #include "graphs.h"
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>
+
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -130,23 +132,33 @@ void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<ImageNode> node){
+    boost::shared_ptr<VideoScreen> video = boost::make_shared<VideoScreen>(QString::fromStdString(node->nodeName()));
+    video->connect(node.get(), SIGNAL(onUpdate(image_variant_t)), video.get(), SLOT(setImage(image_variant_t)));
     info() << "drop" << node->nodeName();
 
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
+    boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<NumericNode>("yaw"));
+    widget->addNode(node->findOrCreate<NumericNode>("pitch"));
+    widget->addNode(node->findOrCreate<NumericNode>("roll"));
+    addWindow(widget);
     info() << "drop" << node->nodeName();
-
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
+    boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<NumericNode>("x"));
+    widget->addNode(node->findOrCreate<NumericNode>("y"));
+    widget->addNode(node->findOrCreate<NumericNode>("z"));
+    addWindow(widget);
     info() << "drop" << node->nodeName();
-
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<GroupingNode> node){
+    boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>();
+    foreach(boost::shared_ptr<NumericNode> child, node->getChildrenOfType<NumericNode>())
+        widget->addNode(child);
     info() << "drop" << node->nodeName();
-
 }
 
 

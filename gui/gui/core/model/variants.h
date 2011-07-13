@@ -7,10 +7,10 @@
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/apply_visitor.hpp>
 
+using namespace std::rel_ops;
 
 namespace cauv {
     namespace gui {
-
 
         typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
         typedef boost::shared_ptr<const Image> image_variant_t;
@@ -29,10 +29,10 @@ namespace cauv {
         class limit_max : public boost::static_visitor<numeric_variant_t>
         {
         public:
-            limit_max(numeric_variant_t max): m_max(boost::apply_visitor(to_float(), max)) {
+            limit_max(const numeric_variant_t & max): m_max(boost::apply_visitor(to_float(), max)) {
             }
 
-            template <typename T> numeric_variant_t operator()( T & operand ) const{
+            template <typename T> numeric_variant_t operator()( T & operand ) const {
                 if(operand > m_max) {
                     return numeric_variant_t((T) m_max);
                 } else return numeric_variant_t(operand);
@@ -44,17 +44,14 @@ namespace cauv {
         class limit_min : public boost::static_visitor<numeric_variant_t>
         {
         public:
-            limit_min(numeric_variant_t min): m_min(boost::apply_visitor(to_float(), min)) {
+            limit_min(const numeric_variant_t & min): m_min(boost::apply_visitor(to_float(), min)) {
             }
 
-            template <typename T>
-                    numeric_variant_t operator()( T & operand ) const
-            {
+            template <typename T> numeric_variant_t operator()( T & operand ) const {
                 if(operand < m_min) {
                     return numeric_variant_t((T) m_min);
                 } else return numeric_variant_t(operand);
             }
-
         protected:
             float m_min;
         };

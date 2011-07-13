@@ -11,7 +11,6 @@
 #include <gui/core/model/nodes.h>
 
 namespace cauv {
-
     namespace gui {
 
         template<class T>

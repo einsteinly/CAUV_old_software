@@ -5,8 +5,6 @@
 
 #include <generated/messages_fwd.h>
 
-#include <gui/core/model/nodes.h>
-
 #include <boost/shared_ptr.hpp>
 
 
@@ -14,6 +12,8 @@ namespace cauv {
     namespace gui {
 
         class AUV;
+        class NumericNode;
+        class GroupingNode;
 
         class MessageGenerator : public QObject
         {
@@ -25,7 +25,7 @@ namespace cauv {
             boost::shared_ptr<AUV> m_auv;
 
         Q_SIGNALS:
-            void messageGenerated(boost::shared_ptr<Message> message);
+            void messageGenerated(boost::shared_ptr<const Message> message);
 
         };
 

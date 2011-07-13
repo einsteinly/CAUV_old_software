@@ -1,5 +1,5 @@
 
-#include <boost/bind.hpp>
+#include <gui/core/model/nodes.h>
 
 #include <debug/cauv_debug.h>
 
