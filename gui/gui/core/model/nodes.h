@@ -11,11 +11,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
+#include <boost/variant/get.hpp>
 
 #include <vector>
 #include <stdexcept>
 
-#include <generated/messages.h>
+#include <generated/types/floatXYZ.h>
+#include <generated/types/floatYPR.h>
+
 #include <debug/cauv_debug.h>
 
 #include "variants.h"
@@ -41,6 +44,8 @@ namespace cauv {
             Q_OBJECT
         public:
 
+            typedef const std::vector<boost::shared_ptr<NodeBase> > children_list_t;
+
             GuiNodeType::e type;
 
             NodeBase(GuiNodeType::e t, const std::string name);
@@ -50,7 +55,7 @@ namespace cauv {
             virtual std::string nodeName() const;
             virtual std::string nodePath() const;
             virtual void addChild(boost::shared_ptr<NodeBase> child);
-            const std::vector<boost::shared_ptr<NodeBase> > getChildren() const;
+            children_list_t getChildren() const;
             virtual bool isMutable() const;
             virtual void setMutable(bool mut);
             boost::shared_ptr<NodeBase> getRoot();
@@ -64,10 +69,10 @@ namespace cauv {
             }
 
 
-            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const{
-
+            template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const {
                 std::vector<boost::shared_ptr<T> > output;
-                foreach (boost::shared_ptr<NodeBase> child, getChildren()) {
+
+                BOOST_FOREACH (boost::shared_ptr<T> &child, getChildren()) {
                     if (dynamic_cast<T *>(child.get())) {
                         boost::shared_ptr<T> ptr = boost::static_pointer_cast<T>(child);
                         output.push_back(ptr);
@@ -79,7 +84,8 @@ namespace cauv {
 
             template <class T> boost::shared_ptr<T> find(std::string name) const {
                 debug() << "Looking for" << name << "in" << nodePath();
-                foreach (boost::shared_ptr<T> child, getChildrenOfType<T>()) {
+
+                BOOST_FOREACH (boost::shared_ptr<T> &child, getChildrenOfType<T>()) {
                     std::string childName = child->nodePath();
                     boost::to_lower(childName);
                     boost::to_lower(name);
@@ -95,7 +101,7 @@ namespace cauv {
             }
 
             template <class T> boost::shared_ptr<T> findOrCreate(std::string name){
-                lock_t l(m_updateLock);
+                lock_t l(m_creationLock);
 
                 try {
                     return find<T>(name);
@@ -126,7 +132,7 @@ namespace cauv {
 
             typedef boost::mutex mutex_t;
             typedef boost::unique_lock<mutex_t> lock_t;
-            mutex_t m_updateLock;
+            mutex_t m_creationLock;
         };
 
 
@@ -137,7 +143,7 @@ namespace cauv {
         {
             os << node.nodePath() << "\n";
 
-            foreach(boost::shared_ptr<NodeBase> child, node.getChildren()){
+            BOOST_FOREACH(boost::shared_ptr<NodeBase> child, node.getChildren()){
                 os << child;
             }
 

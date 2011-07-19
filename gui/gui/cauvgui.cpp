@@ -65,7 +65,7 @@ void CauvGui::closeEvent(QCloseEvent* e){
 }
 
 int CauvGui::send(boost::shared_ptr<const Message> message){
-    debug(5) << "Sending message: " << *message;
+    debug(5) << "Sending message: " << message.get();
     return CauvNode::send(message);
 }
 
@@ -102,10 +102,12 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
-    this->joinGroup("gui");
-
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_auv));
-    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(6));
+    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(0));
+
+    // always need at least the gui group
+    this->joinGroup("gui");
+    this->joinGroup("control");
 
     //connect(m_messageObserver.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
     //        this, SLOT(send(boost::shared_ptr<const Message>)));

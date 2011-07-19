@@ -9,9 +9,6 @@ else()
     # the shared classes in the GUI, used by plugins
     add_subdirectory(core)
 
-    # using both Qt slots and Boost signals so need no keywords
-    add_definitions(-DQT_NO_KEYWORDS)
-
     # build plugins
     add_subdirectory(plugins)
 

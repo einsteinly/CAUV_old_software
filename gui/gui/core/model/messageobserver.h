@@ -3,7 +3,12 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <generated/messages.h>
+#include <generated/types/MotorID.h>
+#include <generated/types/CameraID.h>
+#include <generated/types/Controller.h>
+
+#include <generated/message_observers.h>
+
 
 namespace cauv{
     namespace gui {
@@ -30,7 +35,7 @@ namespace cauv{
 
             virtual ~GuiMessageObserver();
 
-            virtual void onMotorStateMessage(MotorStateMessage_ptr m);
+            void onMotorStateMessage(MotorStateMessage_ptr m);
 
             /*
             virtual void onDebugLevelMessage(DebugLevelMessage_ptr);
