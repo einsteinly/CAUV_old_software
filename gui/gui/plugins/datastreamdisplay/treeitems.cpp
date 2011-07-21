@@ -27,6 +27,32 @@ bool NodeTreeItemBase::updateNode(QVariant&) {
     return false;
 }
 
+bool NodeTreeItemBase::filter(QString value){
+
+    bool childMatched = false;
+
+    for (int i = 0; i < childCount(); i++){
+        QTreeWidgetItem *c = child(i);
+        if(NodeTreeItemBase* nodeItem = dynamic_cast<NodeTreeItemBase*>(c)){
+            if(nodeItem->filter(value)) {
+                childMatched = true;
+            }
+        }
+    }
+
+    if(childMatched || value.isEmpty() ||
+       QString::fromStdString(m_node->nodePath()).contains(value, Qt::CaseInsensitive)) {
+        info() << m_node->nodePath() << "matched";
+        setExpanded(true);
+        setHidden(false);
+        return true;
+    } else {
+        setExpanded(false);
+        setHidden(true);
+        return false;
+    }
+}
+
 boost::shared_ptr<NodeBase> NodeTreeItemBase::getNode(){
     return m_node;
 }
@@ -39,24 +65,24 @@ NodeTreeItemBase * NodeTreeItemBase::addNode(boost::shared_ptr<NodeBase> node) {
 
     switch (node->type){
     case GuiNodeType::GroupingNode:
-            item = new GroupingNodeTreeItem(boost::shared_static_cast<GroupingNode>(node), this);
-            break;
+        item = new GroupingNodeTreeItem(boost::shared_static_cast<GroupingNode>(node), this);
+        break;
 
     case GuiNodeType::NumericNode:
-            item = new NumericNodeTreeItem(boost::shared_static_cast<NumericNode>(node), this);
-            break;
+        item = new NumericNodeTreeItem(boost::shared_static_cast<NumericNode>(node), this);
+        break;
 
     case GuiNodeType::ImageNode:
-            item = new ImageNodeTreeItem(boost::shared_static_cast<ImageNode>(node), this);
-            break;
+        item = new ImageNodeTreeItem(boost::shared_static_cast<ImageNode>(node), this);
+        break;
 
     case GuiNodeType::StringNode:
-            item = new StringNodeTreeItem(boost::shared_static_cast<StringNode>(node), this);
-            break;
+        item = new StringNodeTreeItem(boost::shared_static_cast<StringNode>(node), this);
+        break;
 
     case GuiNodeType::FloatYPRNode:
-            item = new FloatYPRNodeTreeItem(boost::shared_static_cast<FloatYPRNode>(node), this);
-            break;
+        item = new FloatYPRNodeTreeItem(boost::shared_static_cast<FloatYPRNode>(node), this);
+        break;
 
     default:
         debug() << "Unsupported node:" << node->nodeName();

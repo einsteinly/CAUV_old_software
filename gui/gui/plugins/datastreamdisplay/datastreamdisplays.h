@@ -5,6 +5,7 @@
 #include <QVariant>
 #include <QTreeWidget>
 #include <QMdiArea>
+#include <QKeyEvent>
 
 #include <debug/cauv_debug.h>
 
@@ -50,6 +51,11 @@ namespace cauv {
             virtual const QString name() const;
             virtual const QList<QString> getGroups() const;
             virtual void initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node);
+
+        protected Q_SLOTS:
+            void filterItems(QString);
+            void redirectKeyboardFocus(QKeyEvent* key);
+
         private:
             Ui::DataStreamPicker *ui;
         };
@@ -73,9 +79,14 @@ public:
     
     boost::shared_ptr<std::vector<boost::shared_ptr<cauv::gui::NodeBase> > > getDroppedNodes();
     
+    void keyPressEvent(QKeyEvent *event);
+
 private Q_SLOTS:
     void editStarted(QTreeWidgetItem* item, int column);
     void itemEdited(QTreeWidgetItem* item, int column);
+
+Q_SIGNALS:
+    void onKeyPressed(QKeyEvent *event);
 };
 
 #endif // DATASTREAMDISPLAYS_H

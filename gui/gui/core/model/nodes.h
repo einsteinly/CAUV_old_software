@@ -9,7 +9,6 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
 #include <boost/variant/get.hpp>
 
@@ -34,7 +33,6 @@ namespace cauv {
                 FloatYPRNode,
                 FloatXYZNode,
                 GroupingNode
-
             };
         };
 
@@ -48,10 +46,11 @@ namespace cauv {
 
             GuiNodeType::e type;
 
-            NodeBase(GuiNodeType::e t, const std::string name);
+            NodeBase(GuiNodeType::e t, const id_variant_t name);
 
             virtual ~NodeBase();
 
+            virtual id_variant_t nodeId() const;
             virtual std::string nodeName() const;
             virtual std::string nodePath() const;
             virtual void addChild(boost::shared_ptr<NodeBase> child);
@@ -72,7 +71,7 @@ namespace cauv {
             template <class T> const std::vector<boost::shared_ptr<T> > getChildrenOfType() const {
                 std::vector<boost::shared_ptr<T> > output;
 
-                BOOST_FOREACH (boost::shared_ptr<T> &child, getChildren()) {
+                BOOST_FOREACH (boost::shared_ptr<NodeBase> const& child, getChildren()) {
                     if (dynamic_cast<T *>(child.get())) {
                         boost::shared_ptr<T> ptr = boost::static_pointer_cast<T>(child);
                         output.push_back(ptr);
@@ -82,11 +81,13 @@ namespace cauv {
                 return output;
             }
 
-            template <class T> boost::shared_ptr<T> find(std::string name) const {
+            template <class T> boost::shared_ptr<T> find(id_variant_t id) const {
+                std::string name = boost::apply_visitor(id_to_name(), id);
+
                 debug() << "Looking for" << name << "in" << nodePath();
 
-                BOOST_FOREACH (boost::shared_ptr<T> &child, getChildrenOfType<T>()) {
-                    std::string childName = child->nodePath();
+                BOOST_FOREACH (boost::shared_ptr<T> const& child, getChildrenOfType<T>()) {
+                    std::string childName = child->nodeName();
                     boost::to_lower(childName);
                     boost::to_lower(name);
 
@@ -100,23 +101,17 @@ namespace cauv {
                 throw std::out_of_range(str.str());
             }
 
-            template <class T> boost::shared_ptr<T> findOrCreate(std::string name){
+            template <class T> boost::shared_ptr<T> findOrCreate(id_variant_t id){
                 lock_t l(m_creationLock);
 
                 try {
-                    return find<T>(name);
+                    return find<T>(id);
                 } catch (std::out_of_range){
-                    boost::shared_ptr<T> newNode = boost::make_shared<T>(name);
+                    boost::shared_ptr<T> newNode = boost::make_shared<T>(id);
                     this->addChild(newNode);
                     info() << "New node added" << newNode->nodePath();
                     return newNode;
                 }
-            }
-
-            template <class T> boost::shared_ptr<T> findOrCreateMutable(std::string name){
-                boost::shared_ptr<T> node = findOrCreate<T>(name);
-                node->setMutable(true);
-                return node;
             }
 
         Q_SIGNALS:
@@ -127,7 +122,7 @@ namespace cauv {
         protected:
             boost::weak_ptr<NodeBase> m_parent;
             std::vector<boost::shared_ptr<NodeBase> > m_children;
-            const std::string m_name;
+            const id_variant_t m_id;
             bool m_mutable;
 
             typedef boost::mutex mutex_t;
@@ -156,8 +151,8 @@ namespace cauv {
 
         public:
 
-            Node<T>(GuiNodeType::e type, const std::string name) :
-                    NodeBase(type, name), m_value() {
+            Node<T>(GuiNodeType::e type, const id_variant_t id) :
+                    NodeBase(type, id), m_value() {
             }
 
             virtual void update(const T & value){
@@ -176,6 +171,11 @@ namespace cauv {
                 return m_value;
             }
 
+            boost::shared_ptr<T> makeMutable(){
+                this->setMutable(true);
+                return shared_from_this();
+            }
+
         protected:
             T m_value;
 
@@ -188,7 +188,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            GroupingNode(std::string name) : Node<std::string>(GuiNodeType::GroupingNode, name){
+            GroupingNode(const id_variant_t id) : Node<std::string>(GuiNodeType::GroupingNode, id){
             }
 
         public Q_SLOTS:
@@ -209,11 +209,12 @@ namespace cauv {
         };
 
 
+
         class NumericNode : public Node<numeric_variant_t> {
             Q_OBJECT
 
         public:
-            NumericNode(std::string name) : Node<numeric_variant_t>(GuiNodeType::NumericNode, name),
+            NumericNode(id_variant_t id) : Node<numeric_variant_t>(GuiNodeType::NumericNode, id),
             m_maxSet(false), m_minSet(false), m_wraps(false), m_precision(3)
             {
                 qRegisterMetaType<numeric_variant_t>("numeric_variant_t");
@@ -228,20 +229,8 @@ namespace cauv {
             }
 
             numeric_variant_t numericVariantFromString(std::string value){
-                int type = get().which();
-
-                switch(type){
-                case 0:
-                    return numeric_variant_t(boost::lexical_cast<bool>(value));
-                case 1:
-                    return numeric_variant_t(boost::lexical_cast<unsigned int>(value));
-                case 2:
-                    return numeric_variant_t(boost::lexical_cast<int>(value));
-                case 3:
-                    return numeric_variant_t(boost::lexical_cast<float>(value));
-                default:
-                    throw std::exception();
-                }
+                numeric_variant_t current = get();
+                return boost::apply_visitor(from_string<numeric_variant_t>(value), current);
             }
 
             virtual numeric_variant_t getMax() {
@@ -408,7 +397,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            StringNode(std::string name) : Node<std::string>(GuiNodeType::StringNode, name){
+            StringNode(const id_variant_t id) : Node<std::string>(GuiNodeType::StringNode, id){
             }
 
         public Q_SLOTS:
@@ -434,7 +423,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            ImageNode(std::string name) : Node<image_variant_t>(GuiNodeType::ImageNode, name){
+            ImageNode(const id_variant_t id) : Node<image_variant_t>(GuiNodeType::ImageNode, id){
             }
 
         public Q_SLOTS:
@@ -458,28 +447,13 @@ namespace cauv {
 
         public:
 
-            enum compound_type {
-                FLOAT_YPR,
-                FLOAT_XYZ
-            } type;
+            typedef T type;
 
-            NumericCompoundNode(GuiNodeType::e GuiNodeType, compound_type t, std::string name) :
-                    Node<T>(GuiNodeType, name), type(t), m_chidrenAdded(false) {
+            NumericCompoundNode(GuiNodeType::e GuiNodeType, const id_variant_t id) :
+                    Node<T>(GuiNodeType, id) {
             }
 
             virtual void forceSet() = 0;
-
-            virtual void addChildren() = 0;
-
-            void update(const T & value){
-                Node<T>::update(value);
-                if(!m_chidrenAdded)
-                    addChildren();
-                m_chidrenAdded = true;
-            }
-
-        protected:
-            bool m_chidrenAdded;
         };
 
 
@@ -488,28 +462,19 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            FloatYPRNode(std::string name) : NumericCompoundNode<floatYPR>(GuiNodeType::FloatYPRNode, FLOAT_YPR, name),
-            m_y(boost::make_shared<NumericNode>("yaw")),
-            m_p(boost::make_shared<NumericNode>("pitch")),
-            m_r(boost::make_shared<NumericNode>("roll"))
+            FloatYPRNode(const id_variant_t id) : NumericCompoundNode<floatYPR>(GuiNodeType::FloatYPRNode, id)
             {
                 this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
 
         public Q_SLOTS:
 
-            void addChildren(){
-                this->addChild(m_y);
-                this->addChild(m_p);
-                this->addChild(m_r);
-            }
-
             virtual void update(const floatYPR & value){
                 NumericCompoundNode<floatYPR>::update(value);
                 Q_EMIT onUpdate(value);
-                m_y->update(value.yaw);
-                m_p->update(value.pitch);
-                m_r->update(value.roll);
+                this->findOrCreate<NumericNode>("yaw")->update(value.yaw);
+                this->findOrCreate<NumericNode>("pitch")->update(value.pitch);
+                this->findOrCreate<NumericNode>("roll")->update(value.roll);
             }
 
             virtual void set(const floatYPR & value){
@@ -518,49 +483,35 @@ namespace cauv {
             }
 
             virtual void forceSet() {
-                float y = boost::get<float>(m_y->get());
-                float p = boost::get<float>(m_p->get());
-                float r = boost::get<float>(m_r->get());
+                float y = boost::get<float>(this->findOrCreate<NumericNode>("yaw")->get());
+                float p = boost::get<float>(this->findOrCreate<NumericNode>("pitch")->get());
+                float r = boost::get<float>(this->findOrCreate<NumericNode>("roll")->get());
                 set(floatYPR(y, p, r));
             }
 
         Q_SIGNALS:
             void onUpdate(const floatYPR value);
             void onSet(const floatYPR value);
-
-        protected:
-            boost::shared_ptr<NumericNode> m_y, m_p, m_r;
         };
-
-
 
 
         class FloatXYZNode : public NumericCompoundNode <floatXYZ> {
             Q_OBJECT
 
         public:
-            FloatXYZNode(std::string name) : NumericCompoundNode<floatXYZ>(GuiNodeType::FloatXYZNode, FLOAT_XYZ, name),
-            m_x(boost::make_shared<NumericNode>("x")),
-            m_y(boost::make_shared<NumericNode>("y")),
-            m_z(boost::make_shared<NumericNode>("z"))
+            FloatXYZNode(const id_variant_t id) : NumericCompoundNode<floatXYZ>(GuiNodeType::FloatXYZNode, id)
             {
                 this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
 
         public Q_SLOTS:
 
-            void addChildren(){
-                this->addChild(m_x);
-                this->addChild(m_y);
-                this->addChild(m_z);
-            }
-
             virtual void update(const floatXYZ & value){
                 NumericCompoundNode<floatXYZ>::update(value);
                 Q_EMIT onUpdate(value);
-                m_x->update(value.x);
-                m_y->update(value.y);
-                m_z->update(value.z);
+                this->findOrCreate<NumericNode>("x")->update(value.x);
+                this->findOrCreate<NumericNode>("y")->update(value.y);
+                this->findOrCreate<NumericNode>("z")->update(value.z);
             }
 
             virtual void set(const floatXYZ & value){
@@ -568,21 +519,19 @@ namespace cauv {
                 Q_EMIT onSet(value);
             }
 
-            virtual void forceSet(){
-                float x = boost::get<float>(m_x->get());
-                float y = boost::get<float>(m_y->get());
-                float z = boost::get<float>(m_z->get());
-                set(floatXYZ(x, y, z));
+            virtual void forceSet() {
+                float x = boost::get<float>(this->findOrCreate<NumericNode>("x")->get());
+                float y = boost::get<float>(this->findOrCreate<NumericNode>("y")->get());
+                float z = boost::get<float>(this->findOrCreate<NumericNode>("z")->get());
+                set(type(x, y, z));
             }
 
         Q_SIGNALS:
             void onUpdate(const floatXYZ value);
             void onSet(const floatXYZ value);
-
-        protected:
-            boost::shared_ptr<NumericNode> m_x, m_y, m_z;
-
         };
+
+
 
     } // namespace gui
 } // namespace cauv

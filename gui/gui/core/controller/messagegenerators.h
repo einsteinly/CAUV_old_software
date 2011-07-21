@@ -3,7 +3,10 @@
 
 #include <QObject>
 
-#include <generated/messages_fwd.h>
+#include <gui/core/model/model.h>
+
+#include <generated/types/message.h>
+#include <generated/types/MotorID.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -11,9 +14,8 @@
 namespace cauv {
     namespace gui {
 
-        class AUV;
         class NumericNode;
-        class GroupingNode;
+        class NodeBase;
 
         class MessageGenerator : public QObject
         {
@@ -33,7 +35,7 @@ namespace cauv {
         class MotorMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NumericNode> motor, MotorID::e id);
+            MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NumericNode> motor);
 
         protected Q_SLOTS:
             void send(int value);
@@ -46,13 +48,14 @@ namespace cauv {
         class AutopilotMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            AutopilotMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<GroupingNode> autopilot);
+            AutopilotMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NodeBase> autopilot);
 
         protected Q_SLOTS:
             void send();
 
         protected:
-            boost::shared_ptr<GroupingNode> m_autopilot;
+            boost::shared_ptr<NodeBase> m_autopilot;
+            AutopilotID::e m_id;
         };
     } // namespace gui
 } // namesapce cauv

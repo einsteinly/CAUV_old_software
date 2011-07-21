@@ -18,9 +18,15 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
     <property name="margin">
      <number>0</number>
     </property>
+    <item>
+     <widget class="QLineEdit" name="filter"/>
+    </item>
     <item>
      <widget class="DataStreamList" name="dataStreams">
       <property name="editTriggers">

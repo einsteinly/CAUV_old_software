@@ -3,14 +3,42 @@
 
 #include "nodes.h"
 
+#include <generated/types/message.h>
+
 namespace cauv {
     namespace gui {
 
+        class MessageGenerator;
+
         class AUV : public GroupingNode
         {
+            Q_OBJECT
         public:
-            AUV() : GroupingNode("redherring") {
+            AUV(std::string name) : GroupingNode(name) {
             }
+
+            virtual void initialise() = 0;
+
+        Q_SIGNALS:
+            void messageGenerated(boost::shared_ptr<const Message>);
+
+        protected:
+            void addGenerator(boost::shared_ptr<MessageGenerator> generator);
+
+            std::vector<boost::shared_ptr<MessageGenerator> > m_generators;
+        };
+
+
+        class RedHerring : public AUV
+        {
+            Q_OBJECT
+        public:
+            RedHerring();
+            virtual void initialise();
+
+        protected Q_SLOTS:
+            void setupMotor(boost::shared_ptr<NodeBase>);
+            void setupAutopilot(boost::shared_ptr<NodeBase> node);
         };
 
     } // namespace gui

@@ -11,7 +11,7 @@
 
 #include <gui/core/model/model.h>
 #include <gui/core/cauvplugins.h>
-#include <gui/core/model/messageobserver.h>
+#include <gui/core/controller/messageobserver.h>
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -24,7 +24,7 @@ using namespace cauv::gui;
 
 CauvGui::CauvGui(QApplication * app) :
         CauvNode("CauvGui"),
-        m_auv( boost::make_shared<AUV>()),
+        m_auv( boost::make_shared<RedHerring>()),
         m_application(app),
         ui(new Ui::MainWindow) {
 
@@ -65,7 +65,7 @@ void CauvGui::closeEvent(QCloseEvent* e){
 }
 
 int CauvGui::send(boost::shared_ptr<const Message> message){
-    debug(5) << "Sending message: " << message.get();
+    debug(0) << "Sending message: " << *(message.get());
     return CauvNode::send(message);
 }
 
@@ -102,15 +102,20 @@ void CauvGui::onRun()
 {
     CauvNode::onRun();
 
+    m_auv->initialise();
+
+    // message input
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_auv));
-    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(0));
+    this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
+
 
     // always need at least the gui group
     this->joinGroup("gui");
     this->joinGroup("control");
 
-    //connect(m_messageObserver.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
-    //        this, SLOT(send(boost::shared_ptr<const Message>)));
+    // forward messages from "set" events
+    connect(m_auv.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+            this, SLOT(send(boost::shared_ptr<const Message>)));
 
     // load plugins
     // static plugins first

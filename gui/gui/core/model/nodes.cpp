@@ -4,8 +4,8 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-NodeBase::NodeBase(GuiNodeType::e t, const std::string name) :
-        type(t), m_parent(), m_name(name), m_mutable(false) {
+NodeBase::NodeBase(GuiNodeType::e t, const id_variant_t id) :
+        type(t), m_parent(), m_id(id), m_mutable(false) {
 
     qRegisterMetaType<boost::shared_ptr<NodeBase> >("boost::shared_ptr<NodeBase>");
 }
@@ -15,7 +15,11 @@ NodeBase::~NodeBase(){
 }
 
 std::string NodeBase::nodeName() const {
-    return m_name;
+    return boost::apply_visitor(id_to_name(), m_id);
+}
+
+id_variant_t NodeBase::nodeId() const {
+    return m_id;
 }
 
 std::string NodeBase::nodePath() const {
@@ -24,9 +28,9 @@ std::string NodeBase::nodePath() const {
     if(!m_parent.expired()) {
         boost::shared_ptr<NodeBase> parent = m_parent.lock();
         if(parent)
-            stream << parent->nodePath() << "/" << m_name;
+            stream << parent->nodePath() << "/" << nodeName();
     }
-    else stream << m_name;
+    else stream << nodeName();
 
     return stream.str();
 }

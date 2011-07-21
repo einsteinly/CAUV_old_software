@@ -10,6 +10,7 @@
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>
+#include <QKeyEvent>
 
 
 using namespace cauv;
@@ -46,7 +47,6 @@ DataStreamPicker::DataStreamPicker() :
 
     m_docks[this] = Qt::LeftDockWidgetArea;
     m_tabs.append(new DataStreamDisplayArea());
-
 }
 
 void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node) {
@@ -60,11 +60,22 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     foreach(boost::shared_ptr<NodeBase> child, auv->getChildren()){
         auvItem->addNode(child);
     }
+
+    ui->filter->connect(ui->filter, SIGNAL(textEdited(QString)), auvItem, SLOT(filter(QString)));
+
+    ui->dataStreams->connect(ui->dataStreams, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 }
+
+void DataStreamPicker::redirectKeyboardFocus(QKeyEvent* event){
+    ui->filter->setFocus();
+    ui->filter->setText(event->text());
+}
+
 
 DataStreamPicker::~DataStreamPicker(){
     delete ui;
 }
+
 
 const QString DataStreamPicker::name() const{
     return QString("Data Streams");
@@ -126,7 +137,6 @@ void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
     NodeDropListener::dragEnterEvent(event);
 }
 
-
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
     info() << "drop" << node->nodeName();
     addWindow(boost::make_shared<GraphWidget>(node));
@@ -174,6 +184,9 @@ DataStreamList::DataStreamList(QWidget * parent) : QTreeWidget(parent){
     connect(this, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemEdited(QTreeWidgetItem*,int)));
 }
 
+void DataStreamList::keyPressEvent(QKeyEvent *event){
+    Q_EMIT onKeyPressed(event);
+}
 
 void DataStreamList::editStarted(QTreeWidgetItem* item, int column){
     if(column == 1){

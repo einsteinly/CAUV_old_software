@@ -1,7 +1,6 @@
 #include "mapview.h"
 #include "map/ui_mapview.h"
 
-#include <model/auv_model.h>
 #include <marble/MarbleWidget.h>
 #include <marble/MarbleModel.h>
 #include <marble/PositionTracking.h>

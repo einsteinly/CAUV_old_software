@@ -3,29 +3,12 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <generated/types/MotorID.h>
-#include <generated/types/CameraID.h>
-#include <generated/types/Controller.h>
-
 #include <generated/message_observers.h>
-
 
 namespace cauv{
     namespace gui {
 
         class AUV;
-
-        class NameConversion {
-        public:
-            template<class T> static std::string toName(T in){
-                return std::string(in);
-            };
-        };
-
-        template<> std::string NameConversion::toName<MotorID::e>(MotorID::e id);
-        template<> std::string NameConversion::toName<CameraID::e>(CameraID::e id);
-        template<> std::string NameConversion::toName<Controller::e>(Controller::e id);
-
 
         class GuiMessageObserver : public MessageObserver {
 
@@ -35,9 +18,6 @@ namespace cauv{
 
             virtual ~GuiMessageObserver();
 
-            void onMotorStateMessage(MotorStateMessage_ptr m);
-
-            /*
             virtual void onDebugLevelMessage(DebugLevelMessage_ptr);
             virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr);
             virtual void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr);
@@ -55,16 +35,10 @@ namespace cauv{
             virtual void onBatteryUseMessage(BatteryUseMessage_ptr m);
             virtual void onMotorStateMessage(MotorStateMessage_ptr m);
             virtual void onProcessStatusMessage(ProcessStatusMessage_ptr m);
-            virtual void onLocationMessage(LocationMessage_ptr m);*/
-
-            //void addGenerator(boost::shared_ptr<NodeBase> node, boost::shared_ptr<MessageGenerator> generator);
-
-        //Q_SIGNALS:
-        //    void messageGenerated(boost::shared_ptr<const Message> message);
+            virtual void onLocationMessage(LocationMessage_ptr m);
 
         protected:
             boost::shared_ptr< AUV > m_auv;
-            //std::map<boost::shared_ptr<NodeBase>, boost::shared_ptr<MessageGenerator> > m_generators;
         };
 
     } // namespace gui

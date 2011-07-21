@@ -8,7 +8,7 @@
 
 #include <gui/core/model/variants.h>
 #include <gui/core/datastreamdragging.h>
-#include <gui/core/model/noderecorder.h>
+#include <gui/core/utils/noderecorder.h>
 
 #include <qwt_series_data.h>
 #include <qwt_plot.h>

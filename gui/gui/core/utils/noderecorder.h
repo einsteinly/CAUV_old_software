@@ -1,8 +1,7 @@
-#ifndef NODERECORDER_H
-#define NODERECORDER_H
+#ifndef DATARECORDER_H
+#define DATARECORDER_H
 
 #include <boost/make_shared.hpp>
-#include <boost/signals/trackable.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -97,4 +96,4 @@ namespace cauv {
     } // namesapce gui
 } // namespace cauv
 
-#endif // NODERECORDER_H
+#endif // DATARECORDER_H

@@ -6,16 +6,46 @@
 #include <boost/variant/variant.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/apply_visitor.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <generated/types/MotorID.h>
+#include <generated/types/Controller.h>
+#include <generated/types/CameraID.h>
 
 using namespace std::rel_ops;
 
 namespace cauv {
     namespace gui {
 
+        /// HACK: autopilots aren't ID's in the messages, so we do it ourself here
+        namespace AutopilotID {
+            enum e {
+                Bearing, Pitch, Depth
+                    };
+        }// namespace AutopilotID
+
+
         typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
+        typedef boost::variant<std::string, MotorID::e, Controller::e, AutopilotID::e, CameraID::e> id_variant_t;
         typedef boost::shared_ptr<const Image> image_variant_t;
 
         // variant utils
+
+        class id_to_name : public boost::static_visitor<std::string>
+        {
+        public:
+            template <typename T>
+                    std::string operator()( T & operand ) const
+            {
+                std::stringstream str;
+                str << operand;
+                return str.str();
+            }
+        };
+
+        // @TODO: put some more specialisations here to make the names a bit prettier
+        template <> std::string id_to_name::operator()( AutopilotID::e & operand ) const;
+
         class to_float : public boost::static_visitor<float>
         {
         public:
@@ -24,6 +54,22 @@ namespace cauv {
             {
                 return (float) operand;
             }
+        };
+
+        template <class R>
+        class from_string: public boost::static_visitor<R>
+        {
+        public:
+            from_string(const std::string & input): m_string(input) {
+            }
+
+            template <typename T>
+                    R operator()( T & ) const
+            {
+                return R(boost::lexical_cast<T>(m_string));
+            }
+        protected:
+            const std::string m_string;
         };
 
         class limit_max : public boost::static_visitor<numeric_variant_t>

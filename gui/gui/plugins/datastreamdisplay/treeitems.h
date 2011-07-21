@@ -32,7 +32,8 @@ namespace cauv {
             NodeTreeItemBase * addNode(boost::shared_ptr<NodeBase> node);
             void updateIcon(int cell, QImage &image);
             void updateIcon(int cell, const Image &image);
-            void updateValue(const QString value);            
+            void updateValue(const QString value);
+            bool filter(QString value);
         private:
             boost::shared_ptr<NodeBase> m_node;
         };
