@@ -108,15 +108,17 @@ GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> node):
 }
 
 void GraphWidget::addNode(boost::shared_ptr<NumericNode> node){
-    // see if this series has already been registered
-    if(m_seriesNames.end() == m_seriesNames.find(node->nodeName())) {
+    try {
+        // see if this series has already been registered
+        m_nodes.at(node->nodePath());
+    } catch (std::out_of_range){
         // series data
         DataStreamSeriesData * series = new DataStreamSeriesData(node, 1000);
-        m_seriesNames.insert(node->nodeName());
+        m_nodes[node->nodePath()] = node;
 
         // series plotter
         std::stringstream str;
-        str << node->nodeName();
+        str << node->nodePath();
         if(node->getUnits().length() > 0)
             str << " (" <<  node->getUnits() << ")";
         QwtPlotCurve * curve = new QwtPlotCurve(QString::fromStdString(str.str()));
@@ -127,7 +129,7 @@ void GraphWidget::addNode(boost::shared_ptr<NumericNode> node){
         curve->setPaintAttribute(QwtPlotCurve::ClipPolygons, true);
         curve->setRenderHint(QwtPlotCurve::RenderAntialiased,true);
 
-        curve->setPen(QPen(GraphWidget::colours[(m_seriesNames.size()-1)%14]));
+        curve->setPen(QPen(GraphWidget::colours[(m_nodes.size()-1)%14]));
 
         // set window title
         setWindowTitle(QString::fromStdString(getName()));
@@ -223,8 +225,12 @@ void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNode> node){
 }
 
 std::string GraphWidget::getName() const{
-    std::stringstream title;
-    title << implode(", ", m_seriesNames);
-    return title.str();
+    std::set<std::string> names;
+
+    BOOST_FOREACH(series_map_t::value_type i, m_nodes){
+        names.insert(i.second->nodeName());
+    }
+
+    return implode(", ", names);
 }
 

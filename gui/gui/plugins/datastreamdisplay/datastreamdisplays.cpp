@@ -90,8 +90,11 @@ void DataStreamPicker::redirectKeyboardFocus(QKeyEvent* event){
         ui->filter->setText("");
         return;
     }
-    ui->filter->setFocus();
-    ui->filter->setText(event->text().simplified());
+    if(!event->text().isEmpty() && event->text().at(0).isLetterOrNumber()) {
+        ui->filter->setText("");
+        ui->filter->setFocus();
+        ui->filter->setText(event->text().simplified());
+    }
 }
 
 
@@ -161,15 +164,13 @@ void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
-    info() << "drop" << node->nodeName();
     addWindow(boost::make_shared<GraphWidget>(node));
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<ImageNode> node){
     boost::shared_ptr<VideoScreen> video = boost::make_shared<VideoScreen>(QString::fromStdString(node->nodeName()));
     video->connect(node.get(), SIGNAL(onUpdate(image_variant_t)), video.get(), SLOT(setImage(image_variant_t)));
-    info() << "drop" << node->nodeName();
-
+    addWindow(video);
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
@@ -177,7 +178,6 @@ void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("pitch"));
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("roll"));
     addWindow(widget);
-    info() << "drop" << node->nodeName();
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
@@ -185,14 +185,15 @@ void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("y"));
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("z"));
     addWindow(widget);
-    info() << "drop" << node->nodeName();
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<GroupingNode> node){
     boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>();
-    foreach(boost::shared_ptr<NumericNode> child, node->getChildrenOfType<NumericNode>())
+    std::vector<boost::shared_ptr<NumericNode> > children = node->getChildrenOfType<NumericNode>();
+    if(children.empty()) return;
+    foreach(boost::shared_ptr<NumericNode> child, children)
         widget->addNode(child);
-    info() << "drop" << node->nodeName();
+    addWindow(widget);
 }
 
 

@@ -64,7 +64,8 @@ namespace cauv {
             virtual std::string getName() const;
 
         protected:
-            std::set<std::string> m_seriesNames;
+            typedef std::map<std::string, boost::shared_ptr<NumericNode> > series_map_t;
+            series_map_t m_nodes;
             QTimer m_timer;
             QwtPlot * m_plot;
             Ui::GraphWidget * ui;

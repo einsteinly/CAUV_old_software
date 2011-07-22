@@ -195,6 +195,11 @@ namespace cauv {
                 node->connect(node.get(), SIGNAL(onUpdate(std::string)), this, SLOT(onChange(std::string)));
                 onChange(node->get());
             }
+
+        public Q_SLOTS:
+            void onChange(std::string str){
+                updateValue(QString::fromStdString(str));
+            }
         };
 
 
