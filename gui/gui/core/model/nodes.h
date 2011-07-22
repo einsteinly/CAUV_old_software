@@ -46,7 +46,7 @@ namespace cauv {
 
             GuiNodeType::e type;
 
-            NodeBase(GuiNodeType::e t, const id_variant_t name);
+            NodeBase(GuiNodeType::e t, const id_variant_t id);
 
             virtual ~NodeBase();
 
@@ -81,7 +81,7 @@ namespace cauv {
                 return output;
             }
 
-            template <class T> boost::shared_ptr<T> find(id_variant_t id) const {
+            template <class T> boost::shared_ptr<T> find(id_variant_t const& id) const {
                 std::string name = boost::apply_visitor(id_to_name(), id);
 
                 debug() << "Looking for" << name << "in" << nodePath();
@@ -101,12 +101,13 @@ namespace cauv {
                 throw std::out_of_range(str.str());
             }
 
-            template <class T> boost::shared_ptr<T> findOrCreate(id_variant_t id){
+            template <class T> boost::shared_ptr<T> findOrCreate(id_variant_t const& id){
                 lock_t l(m_creationLock);
 
                 try {
                     return find<T>(id);
                 } catch (std::out_of_range){
+                    debug() << "Creating new node for " << id.which() << boost::apply_visitor(id_to_name(), id);
                     boost::shared_ptr<T> newNode = boost::make_shared<T>(id);
                     this->addChild(newNode);
                     info() << "New node added" << newNode->nodePath();
@@ -331,11 +332,15 @@ namespace cauv {
             virtual void set(const numeric_variant_t & value){
                 numeric_variant_t output;
                 if(m_maxSet) {
+                    debug() << "checking max";
                     output = boost::apply_visitor(limit_max(m_max), value);
                 }
                 if(m_minSet) {
-                    output = boost::apply_visitor(limit_min(m_min), value);
+                    debug() << "checking min";
+                    output = boost::apply_visitor(limit_min(m_min), output);
                 }
+
+                info() << "value after clamping" << output;
 
                 Node<numeric_variant_t>::set(output);
 

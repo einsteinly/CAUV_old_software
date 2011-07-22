@@ -3,7 +3,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-template <> std::string id_to_name::operator()( AutopilotID::e & operand ) const
+template <> std::string id_to_name::operator()( AutopilotID::e const& operand ) const
 {
     switch (operand){
     case AutopilotID::Bearing: return "bearing";
@@ -12,3 +12,4 @@ template <> std::string id_to_name::operator()( AutopilotID::e & operand ) const
     }
     return "unknown";
 }
+

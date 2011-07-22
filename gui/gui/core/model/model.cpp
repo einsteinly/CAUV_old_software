@@ -44,7 +44,7 @@ void RedHerring::setupMotor(boost::shared_ptr<NodeBase> node){
 void RedHerring::setupAutopilot(boost::shared_ptr<NodeBase> node){
 
     // targte params
-    numeric_variant_t min, max; bool wraps; std::string units;
+    float min, max; bool wraps; std::string units;
 
     AutopilotID::e id = boost::get<AutopilotID::e>(node->nodeId());
 

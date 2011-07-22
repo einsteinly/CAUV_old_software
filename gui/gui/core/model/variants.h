@@ -7,10 +7,13 @@
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/variant/get.hpp>
 
 #include <generated/types/MotorID.h>
 #include <generated/types/Controller.h>
 #include <generated/types/CameraID.h>
+
+#include <debug/cauv_debug.h>
 
 using namespace std::rel_ops;
 
@@ -44,7 +47,7 @@ namespace cauv {
         };
 
         // @TODO: put some more specialisations here to make the names a bit prettier
-        template <> std::string id_to_name::operator()( AutopilotID::e & operand ) const;
+        template <> std::string id_to_name::operator()( AutopilotID::e const& operand ) const;
 
         class to_float : public boost::static_visitor<float>
         {
@@ -75,16 +78,18 @@ namespace cauv {
         class limit_max : public boost::static_visitor<numeric_variant_t>
         {
         public:
-            limit_max(const numeric_variant_t & max): m_max(boost::apply_visitor(to_float(), max)) {
+            limit_max(const numeric_variant_t & max): m_max(max) {
             }
 
             template <typename T> numeric_variant_t operator()( T & operand ) const {
-                if(operand > m_max) {
-                    return numeric_variant_t((T) m_max);
+                info() << "comparing " << boost::get<T>(m_max) << operand;
+                if(boost::get<T>(m_max) < operand) {
+                    info() << "too big, returning" << m_max;
+                    return m_max;
                 } else return numeric_variant_t(operand);
             }
         protected:
-            float m_max;
+            numeric_variant_t m_max;
         };
 
         class limit_min : public boost::static_visitor<numeric_variant_t>

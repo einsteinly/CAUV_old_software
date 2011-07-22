@@ -16,6 +16,23 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+class EscapeFilter : public QObject {
+public:
+    bool eventFilter(QObject *object, QEvent *event){
+        if (dynamic_cast<QLineEdit*>(object) && event->type() == QEvent::KeyPress) {
+            QLineEdit * edit = (QLineEdit*)object;
+            QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+            if (keyEvent->key() == Qt::Key_Escape) {
+                edit->clear();
+                return true;
+            } else
+                return false;
+        }
+        return false;
+    }
+};
+
+
 boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > DataStreamList::getDroppedNodes() {
     boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<NodeBase> > >();
 
@@ -54,6 +71,8 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
 
     debug() << "Initialising data stream list";
 
+    ui->filter->installEventFilter(new EscapeFilter());
+
     GroupingNodeTreeItem *auvItem = new GroupingNodeTreeItem(auv, NULL);
     ui->dataStreams->addTopLevelItem(auvItem);
     auvItem->setExpanded(true);
@@ -61,14 +80,18 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
         auvItem->addNode(child);
     }
 
-    ui->filter->connect(ui->filter, SIGNAL(textEdited(QString)), auvItem, SLOT(filter(QString)));
+    ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), auvItem, SLOT(filter(QString)));
 
     ui->dataStreams->connect(ui->dataStreams, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 }
 
 void DataStreamPicker::redirectKeyboardFocus(QKeyEvent* event){
+    if(event->key() == Qt::Key_Escape) {
+        ui->filter->setText("");
+        return;
+    }
     ui->filter->setFocus();
-    ui->filter->setText(event->text());
+    ui->filter->setText(event->text().simplified());
 }
 
 
