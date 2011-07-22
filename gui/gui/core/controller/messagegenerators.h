@@ -35,7 +35,7 @@ namespace cauv {
         class MotorMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NumericNode> motor);
+            MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor);
 
         protected Q_SLOTS:
             void send(int value);
@@ -55,7 +55,7 @@ namespace cauv {
 
         protected:
             boost::shared_ptr<NodeBase> m_autopilot;
-            AutopilotID::e m_id;
+            Controller::e m_id;
         };
     } // namespace gui
 } // namesapce cauv

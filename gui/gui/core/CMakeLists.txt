@@ -19,7 +19,7 @@ set ( GUICPP_CORE_SRCS
     datastreamdragging.cpp
     cauvbasicplugin.cpp
     widgets/videoscreen.cpp
-    model/nodes.cpp
+    model/node.cpp
     model/variants.cpp
     model/model.cpp
     controller/messageobserver.cpp
@@ -33,8 +33,9 @@ set ( GUICPP_CORE_UIS
 
 set ( GUICPP_CORE_H
     widgets/videoscreen.h
-    model/nodes.h
+    model/node.h
     model/model.h
+    model/nodes/numericnode.h
     controller/messagegenerators.h
     )
 

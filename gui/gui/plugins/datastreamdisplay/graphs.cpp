@@ -63,7 +63,7 @@ QPointF DataStreamSeriesData::sample (size_t i) const {
     }
 
     // times are shown as negative in seconds from the current time
-    return QPointF(-seconds, boost::apply_visitor(to_float(), this->m_history[sample]));
+    return QPointF(-seconds, boost::apply_visitor(cast_to<float>(), this->m_history[sample]));
 }
 
 QRectF DataStreamSeriesData::boundingRect () const {
@@ -71,9 +71,9 @@ QRectF DataStreamSeriesData::boundingRect () const {
         return QRectF(-60, 0, 60, 10);
     else {
         // show the last 60 seconds;
-        return QRectF(-60, boost::apply_visitor(to_float(), m_min), 60,
-                      boost::apply_visitor(to_float(), m_max) -
-                      boost::apply_visitor(to_float(), m_min));
+        return QRectF(-60, boost::apply_visitor(cast_to<float>(), m_min), 60,
+                      boost::apply_visitor(cast_to<float>(), m_max) -
+                      boost::apply_visitor(cast_to<float>(), m_min));
     }
 }
 

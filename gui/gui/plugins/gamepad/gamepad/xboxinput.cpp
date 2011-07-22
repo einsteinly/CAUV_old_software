@@ -5,6 +5,7 @@
 
 using namespace OIS;
 using namespace cauv;
+using namespace cauv::gui;
 
 XBoxInput::XBoxInput(const std::string vendor) : GamepadInput(vendor)
 {

@@ -11,6 +11,7 @@
 
 using namespace OIS;
 using namespace cauv;
+using namespace cauv::gui;
 
 InputManager * GamepadInput::m_input_manager = 0;
 

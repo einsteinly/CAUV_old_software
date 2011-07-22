@@ -8,6 +8,7 @@
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant/get.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <generated/types/MotorID.h>
 #include <generated/types/Controller.h>
@@ -20,20 +21,22 @@ using namespace std::rel_ops;
 namespace cauv {
     namespace gui {
 
-        /// HACK: autopilots aren't ID's in the messages, so we do it ourself here
-        namespace AutopilotID {
-            enum e {
-                Bearing, Pitch, Depth
-                    };
-        }// namespace AutopilotID
 
+        /**
+          * Variant definitions
+          */
 
         typedef boost::variant<bool, unsigned int, int, float> numeric_variant_t;
-        typedef boost::variant<std::string, MotorID::e, Controller::e, AutopilotID::e, CameraID::e> id_variant_t;
+        typedef boost::variant<std::string, MotorID::e, Controller::e, CameraID::e> id_variant_t;
         typedef boost::shared_ptr<const Image> image_variant_t;
 
-        // variant utils
 
+
+        /**
+          * Useful variant visitors
+          */
+
+        // takes a id_variant_t and converts it to a prettier name than just by using stream operators
         class id_to_name : public boost::static_visitor<std::string>
         {
         public:
@@ -45,24 +48,38 @@ namespace cauv {
                 return str.str();
             }
         };
-
         // @TODO: put some more specialisations here to make the names a bit prettier
-        template <> std::string id_to_name::operator()( AutopilotID::e const& operand ) const;
 
-        class to_float : public boost::static_visitor<float>
+
+        // gets the value of a variant cast to R
+        // useful for mixing variants with various Qt classes
+        template<class R>
+        struct cast_to : public boost::static_visitor<R>
         {
-        public:
-            template <typename T>
-                    float operator()( T & operand ) const
+            template <typename T> R operator()( T & operand ) const
             {
-                return (float) operand;
+                return (R) operand;
             }
         };
 
-        template <class R>
-        class from_string: public boost::static_visitor<R>
+
+        // hashes variants so they can be used as Keys in maps etc...
+        struct hash_value : public boost::static_visitor<std::size_t>
         {
-        public:
+            template <typename T> std::size_t operator()( T & operand ) const
+            {
+                std::size_t seed = 0;
+                boost::hash_combine(seed, typeid(T).name());
+                boost::hash_combine(seed, operand);
+                return seed;
+            }
+        };
+
+        // makes a numeric_variant_t from a string and an example
+        // of the type of variant we want to read from the string
+        template <class R>
+                struct from_string: public boost::static_visitor<R>
+        {
             from_string(const std::string & input): m_string(input) {
             }
 
@@ -75,39 +92,45 @@ namespace cauv {
             const std::string m_string;
         };
 
-        class limit_max : public boost::static_visitor<numeric_variant_t>
+
+        // two clamping visitors, one for max one for min
+        struct limit_max : public boost::static_visitor<numeric_variant_t>
         {
-        public:
-            limit_max(const numeric_variant_t & max): m_max(max) {
-            }
+            limit_max(const numeric_variant_t & max): m_max(max) {}
 
             template <typename T> numeric_variant_t operator()( T & operand ) const {
-                info() << "comparing " << boost::get<T>(m_max) << operand;
-                if(boost::get<T>(m_max) < operand) {
-                    info() << "too big, returning" << m_max;
-                    return m_max;
+                if(boost::apply_visitor(cast_to<T>(), m_max) < operand) {
+                    return boost::apply_visitor(cast_to<T>(), m_max);
                 } else return numeric_variant_t(operand);
+
             }
         protected:
-            numeric_variant_t m_max;
+            const numeric_variant_t m_max;
         };
 
-        class limit_min : public boost::static_visitor<numeric_variant_t>
+        struct limit_min : public boost::static_visitor<numeric_variant_t>
         {
-        public:
-            limit_min(const numeric_variant_t & min): m_min(boost::apply_visitor(to_float(), min)) {
-            }
+            limit_min(const numeric_variant_t & min): m_min(min) {}
 
             template <typename T> numeric_variant_t operator()( T & operand ) const {
-                if(operand < m_min) {
-                    return numeric_variant_t((T) m_min);
+                if(boost::apply_visitor(cast_to<T>(), m_min) > operand) {
+                    return boost::apply_visitor(cast_to<T>(), m_min);
                 } else return numeric_variant_t(operand);
             }
         protected:
-            float m_min;
+            const numeric_variant_t m_min;
         };
 
     } // namespace gui
 } // namespace cauv
+
+
+// extend boost with info about how to hash id_variant_t's
+namespace boost {
+    inline std::size_t hash_value(const cauv::gui::id_variant_t &variant)
+    {
+        return boost::apply_visitor(cauv::gui::hash_value(), variant);
+    }
+}
 
 #endif // GUI_VARIANTS_H

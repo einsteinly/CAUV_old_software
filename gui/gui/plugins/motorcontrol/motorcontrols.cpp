@@ -11,7 +11,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-MotorBurstController::MotorBurstController(boost::shared_ptr<NumericNode> motor, int8_t speed):
+MotorBurstController::MotorBurstController(boost::shared_ptr<TypedNumericNode<int8_t> > motor, int8_t speed):
         m_speed(speed), m_motor(motor){}
 
 void MotorBurstController::burst(){
@@ -32,15 +32,15 @@ AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *tar
         m_actual(actual) {
 
 
-    boost::shared_ptr<NumericNode> targetNode = node->findOrCreate<NumericNode>("target");
-    boost::shared_ptr<NumericNode> enabledNode = node->findOrCreate<NumericNode>("enabled");
-    boost::shared_ptr<NumericNode> actualNode = node->findOrCreate<NumericNode>("actual");
+    boost::shared_ptr<TypedNumericNode<float> > targetNode = node->findOrCreate<TypedNumericNode<float> >("target");
+    boost::shared_ptr<TypedNumericNode<bool> > enabledNode = node->findOrCreate<TypedNumericNode<bool> >("enabled");
+    boost::shared_ptr<TypedNumericNode<float> > actualNode = node->findOrCreate<TypedNumericNode<float> >("actual");
 
     // sets
     connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
 
-    connect(target, SIGNAL(valueChanged(double)), targetNode.get(), SLOT(set(double)));
-    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(set(bool)));
+    connect(target, SIGNAL(valueChanged(double)), targetNode.get(), SLOT(set_slot(double)));
+    connect(enabled, SIGNAL(toggled(bool)), enabledNode.get(), SLOT(set_slot(bool)));
 
     // updates
     connect(enabledNode.get(), SIGNAL(onUpdate(bool)), enabled, SLOT(setChecked(bool)));
@@ -66,19 +66,17 @@ void AutopilotController::targetEditingFinished(){
 
 
 void AutopilotController::configureTarget(){
-    boost::shared_ptr<NumericNode> targetNode = m_autopilot->findOrCreate<NumericNode>("target");
+    boost::shared_ptr<TypedNumericNode<float> > targetNode = m_autopilot->findOrCreate<TypedNumericNode<float> >("target");
 
     // set wrapping
     m_target->setWrapping(targetNode->getWraps());
 
     // max / min values
     if(targetNode->isMaxSet()){
-        numeric_variant_t max = targetNode->getMax();
-        m_target->setMaximum(boost::apply_visitor(to_float(), max));
+        m_target->setMaximum(targetNode->getMax());
     }
     if(targetNode->isMinSet()) {
-        numeric_variant_t min = targetNode->getMin();
-        m_target->setMinimum(boost::apply_visitor(to_float(), min));
+        m_target->setMinimum(targetNode->getMin());
     }
 
     // units
@@ -86,11 +84,11 @@ void AutopilotController::configureTarget(){
 
     // and a sensible step size
     if(targetNode->isMaxSet() && targetNode->isMinSet()){
-        numeric_variant_t min = targetNode->getMin();
-        numeric_variant_t max = targetNode->getMax();
-        m_target->setSingleStep((boost::apply_visitor(to_float(), max) - boost::apply_visitor(to_float(), min))/360.0); // 360 is a arbitary value
-                                                                         // just chosen to because its
-                                                                         // nice for degrees
+        float min = targetNode->getMin();
+        float max = targetNode->getMax();
+        m_target->setSingleStep((max-min)/360.0); // 360 is a arbitary value
+                                                    // just chosen to because its
+                                                    // nice for degrees
     }
 }
 
@@ -123,7 +121,7 @@ MotorControls::~MotorControls(){
 
 
 void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
-    boost::shared_ptr<NumericNode> motor = node->to<NumericNode>();
+    boost::shared_ptr<TypedNumericNode<int8_t> > motor = node->to<TypedNumericNode<int8_t> >();
 
     std::string forward = "Forward";
     std::string backward = "Back";

@@ -17,7 +17,7 @@ MessageGenerator::MessageGenerator(boost::shared_ptr<AUV> auv) :
 
 
 
-MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NumericNode> motor):
+MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor):
         MessageGenerator(auv), m_id(boost::get<MotorID::e>(motor->nodeId()))
 {
     connect(motor.get(), SIGNAL(onSet(int)), this, SLOT(send(int)));
@@ -36,20 +36,19 @@ AutopilotMessageGenerator::AutopilotMessageGenerator(boost::shared_ptr<AUV> auv,
 }
 
 void AutopilotMessageGenerator::send(){
-    info() << "change detected";
+    bool enabled = m_autopilot->findOrCreate<TypedNumericNode<bool> >("enabled")->get();
+    float target = m_autopilot->findOrCreate<TypedNumericNode<float> >("target")->get();
 
-    bool enabled = boost::get<bool>(m_autopilot->findOrCreate<NumericNode>("enabled")->get());
-    float target = boost::get<float>(m_autopilot->findOrCreate<NumericNode>("target")->get());
-
-    switch(boost::get<AutopilotID::e>(m_autopilot->nodeId())) {
-    case AutopilotID::Bearing:
+    switch(boost::get<Controller::e>(m_autopilot->nodeId())) {
+    case Controller::Bearing:
         Q_EMIT messageGenerated(boost::make_shared<BearingAutopilotEnabledMessage>(enabled, target));
         break;
-    case AutopilotID::Pitch:
+    case Controller::Pitch:
         Q_EMIT messageGenerated(boost::make_shared<PitchAutopilotEnabledMessage>(enabled, target));
         break;
-    case AutopilotID::Depth:
+    case Controller::Depth:
         Q_EMIT messageGenerated(boost::make_shared<DepthAutopilotEnabledMessage>(enabled, target));
         break;
+    default: error() << "Unknown ControllerID passed to AutopilotMessageGenerator";
     }
 }

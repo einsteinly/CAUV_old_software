@@ -15,6 +15,7 @@
 #include "cauvgamepad.h"
 
 using namespace cauv;
+using namespace cauv::gui;
 
 const QString GamepadPlugin::name() const{
     return QString("Gamepad");

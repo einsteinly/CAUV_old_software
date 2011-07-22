@@ -173,17 +173,17 @@ void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<ImageNode> node){
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
-    boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<NumericNode>("yaw"));
-    widget->addNode(node->findOrCreate<NumericNode>("pitch"));
-    widget->addNode(node->findOrCreate<NumericNode>("roll"));
+    boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<TypedNumericNode<float> >("yaw"));
+    widget->addNode(node->findOrCreate<TypedNumericNode<float> >("pitch"));
+    widget->addNode(node->findOrCreate<TypedNumericNode<float> >("roll"));
     addWindow(widget);
     info() << "drop" << node->nodeName();
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
-    boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<NumericNode>("x"));
-    widget->addNode(node->findOrCreate<NumericNode>("y"));
-    widget->addNode(node->findOrCreate<NumericNode>("z"));
+    boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<TypedNumericNode<float> >("x"));
+    widget->addNode(node->findOrCreate<TypedNumericNode<float> >("y"));
+    widget->addNode(node->findOrCreate<TypedNumericNode<float> >("z"));
     addWindow(widget);
     info() << "drop" << node->nodeName();
 }
