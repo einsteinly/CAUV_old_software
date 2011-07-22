@@ -1,9 +1,11 @@
 #ifndef GUI_MODEL_H
 #define GUI_MODEL_H
 
-#include "nodes.h"
+#include "node.h"
 
 #include <generated/types/message.h>
+
+#include <gui/core/model/nodes/groupingnode.h>
 
 namespace cauv {
     namespace gui {

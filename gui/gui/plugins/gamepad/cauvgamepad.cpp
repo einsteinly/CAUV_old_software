@@ -8,6 +8,7 @@
 #include <debug/cauv_debug.h>
 #include <gui/core/model/model.h>
 
+#include <gui/core/model/nodes/numericnode.h>
 
 using namespace cauv;
 using namespace cauv::gui;

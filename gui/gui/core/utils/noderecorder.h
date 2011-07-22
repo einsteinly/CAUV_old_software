@@ -7,7 +7,6 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <gui/core/model/nodes.h>
 
 namespace cauv {
     namespace gui {

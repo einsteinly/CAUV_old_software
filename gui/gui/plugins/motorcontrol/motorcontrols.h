@@ -19,8 +19,10 @@ class QPushButton;
 class QLabel;
 
 namespace cauv {
-
     namespace gui {
+
+        template<class T> class TypedNumericNode;
+        class NodeBase;
 
         class MotorBurstController : public QObject {
             Q_OBJECT

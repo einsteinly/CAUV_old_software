@@ -121,6 +121,30 @@ namespace cauv {
             const numeric_variant_t m_min;
         };
 
+        struct wrap : public boost::static_visitor<numeric_variant_t>
+        {
+            wrap(const numeric_variant_t & min, const numeric_variant_t & max): m_min(min), m_max(max) {}
+
+            template <typename T> numeric_variant_t operator()( T & operand ) const {
+                // work out the range
+                T min = boost::apply_visitor(cast_to<T>(), m_min);
+                T max = boost::apply_visitor(cast_to<T>(), m_max);
+                T range = max-min;
+
+                if(operand < min){
+                    numeric_variant_t var = numeric_variant_t(operand + range);
+                    return boost::apply_visitor(wrap(m_min, m_max), var);
+                } else if (operand > max){
+                    numeric_variant_t var = numeric_variant_t(operand - range);
+                    return boost::apply_visitor(wrap(m_min, m_max), var);
+                } else return operand;
+            }
+        protected:
+            const numeric_variant_t m_min;
+            const numeric_variant_t m_max;
+        };
+
+
     } // namespace gui
 } // namespace cauv
 

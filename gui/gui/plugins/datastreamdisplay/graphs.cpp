@@ -3,7 +3,7 @@
 
 #include <common/cauv_utils.h>
 
-#include <gui/core/model/nodes.h>
+#include <gui/core/model/nodes/numericnode.h>
 
 #include <QPen>
 #include <QRectF>

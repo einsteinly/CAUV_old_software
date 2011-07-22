@@ -1,6 +1,7 @@
 #include "model.h"
 
 #include <gui/core/controller/messagegenerators.h>
+#include <gui/core/model/nodes/numericnode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -71,5 +72,5 @@ void RedHerring::setupAutopilot(boost::shared_ptr<NodeBase> node){
     target->setMax(max);
     target->setWraps(wraps);
     target->setUnits(units);
-    target->setPrecision(2);
+    target->setPrecision(3);
 }

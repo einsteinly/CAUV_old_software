@@ -7,6 +7,7 @@
 
 #include <generated/types/message.h>
 #include <generated/types/MotorID.h>
+#include <generated/types/Controller.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -14,7 +15,7 @@
 namespace cauv {
     namespace gui {
 
-        class NumericNode;
+        template<class T> class TypedNumericNode;
         class NodeBase;
 
         class MessageGenerator : public QObject

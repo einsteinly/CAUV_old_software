@@ -14,6 +14,11 @@
 #include <generated/types/PressureGroup.h>
 
 #include <gui/core/model/model.h>
+#include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/compoundnodes.h>
+#include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/stringnode.h>
+#include <gui/core/model/nodes/imagenode.h>
 
 using namespace cauv;
 using namespace cauv::gui;

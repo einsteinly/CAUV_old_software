@@ -1,5 +1,6 @@
 
-#include <gui/core/model/nodes.h>
+#include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/compoundnodes.h>
 
 #include <debug/cauv_debug.h>
 

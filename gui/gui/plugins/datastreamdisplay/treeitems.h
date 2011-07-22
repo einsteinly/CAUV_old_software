@@ -7,7 +7,14 @@
 #include <boost/make_shared.hpp>
 
 #include <debug/cauv_debug.h>
-#include <gui/core/model/model.h>
+
+#include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/compoundnodes.h>
+#include <gui/core/model/nodes/stringnode.h>
+#include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/nodes/imagenode.h>
+
+
 
 
 namespace cauv {
@@ -113,6 +120,8 @@ namespace cauv {
         protected Q_SLOTS:
             void onChange(numeric_variant_t value){
                 std::stringstream str;
+                str.flags(str.flags() | std::stringstream::fixed);
+                str.precision(m_node->getPrecision());
                 str << value << " " << m_node->getUnits();
                 updateValue(QString::fromStdString(str.str()));
             }

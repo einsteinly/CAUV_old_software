@@ -36,6 +36,10 @@ set ( GUICPP_CORE_H
     model/node.h
     model/model.h
     model/nodes/numericnode.h
+    model/nodes/compoundnodes.h
+    model/nodes/stringnode.h
+    model/nodes/imagenode.h
+    model/nodes/groupingnode.h
     controller/messagegenerators.h
     )
 
