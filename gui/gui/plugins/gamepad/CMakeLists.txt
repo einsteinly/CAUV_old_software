@@ -1,7 +1,7 @@
 project (guicpp)
 
 find_package (OIS REQUIRED)
-
+find_package (X11 REQUIRED)
 
 set ( GAMEPAD_PLUGIN_SRCS
     plugin.cpp
@@ -35,6 +35,7 @@ cauv_install_plugin( gamepadplugin )
                                       
 target_link_libraries( gamepadplugin
     guicpp-core
+    ${X11_X11_LIB}
     ${QT_LIBRARIES}
     ${OIS_LIBRARIES}
 )
