@@ -34,15 +34,15 @@ enable=E1102,E1103,E1124,E1122,E1123,E9906,E9904,E9905,E9902,E9903,E9900,E9901,E
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once).
 
-# this doesn't seem to work....
-disable=E1101
+# this doesn't seem to work anyway....
+#disable=E1101
 
 
 [REPORTS]
 
 # Set the output format. Available formats are text, parseable, colorized, msvs
 # (visual studio) and html
-output-format=text
+output-format=colorized
 
 # Include message's id in output
 include-ids=yes

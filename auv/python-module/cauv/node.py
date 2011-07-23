@@ -8,8 +8,6 @@ import traceback
 from cauv import messaging
 from cauv.debug import debug, error, warning, info
 
-#pylint: disable=E1101
-
 class Observer(messaging.MessageObserver):
     pass
 

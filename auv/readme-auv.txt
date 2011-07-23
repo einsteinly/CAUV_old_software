@@ -22,9 +22,4 @@ lib/         - various 3rd-party libraries (xsens stuff and messaging stuff)
 fileinput/   - tool for sending images from files over the messaging system:
                this is not used as img-pipeline can read directly from files
                (including video files)
-webcam/      - tool for sending images from webcams over the messaging system:
-               this is not used as the img-pipeline program talks directly to
-               webcams in order to speed things up
-img-viewer/  - tool to view images being sent over the messaging system, useful
-               for development
 embedded/    - some embedded code for battery management (not currently used)

@@ -4,8 +4,6 @@ import time
 
 from cauv.debug import info, warning, error, debug
 
-#pylint: disable=E1101
-
 class AUV(messaging.MessageObserver):
     def __init__(self, node):
         messaging.MessageObserver.__init__(self)
