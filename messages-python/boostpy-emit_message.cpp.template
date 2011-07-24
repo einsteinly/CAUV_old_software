@@ -49,6 +49,7 @@ void emit${m.name}Message(){
         .def_pickle(${className}Pickler())
         ## default group to send to
         .def_readonly("group", &${g.name.upper()}_NAME)
+        .def_readonly("msgId", ${m.id})
         ## return policies are all return-by-value, safest, but not the most efficient
         #for $f in $m.fields
         .add_property(

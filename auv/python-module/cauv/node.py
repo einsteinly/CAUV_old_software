@@ -7,6 +7,7 @@ import threading
 import traceback
 from cauv import messaging
 from cauv.debug import debug, error, warning, info
+from utils import fileCached
 
 class Observer(messaging.MessageObserver):
     pass
@@ -20,6 +21,7 @@ class ServiceLevel:
     Safe       = 0x20
     Regular    = 0X3f
 
+@fileCached(30)
 def getVersionInfo():
     import os, shlex, subprocess
     repo_root = '/'.join(
