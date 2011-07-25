@@ -1,3 +1,6 @@
+# Okay, so some of these aren't really hacks, just things that don't belong
+# anywhere else yet.
+
 from sys import float_info
 from math import frexp, ldexp
 
@@ -8,4 +11,33 @@ def incFloat(f):
         return float_info.min
     m, e = frexp(f)
     return ldexp(m + float_info.epsilon / 2, e)
+
+
+import functools
+
+# aka memoization
+def once(f):
+    @functools.wraps(f)
+    def f_once(cache=[]):
+        if not len(cache):
+            cache.append(f())
+        return cache[0]
+    return f_once
+
+def hgCmd(cmd):
+    import os, shlex, subprocess
+    repo_root = '/'.join(
+        (os.path.join(os.getcwd(), __file__)).split('/')[:-4]
+    )
+    hg_cmdstr = 'hg -R %s %s' % (repo_root, cmd)
+    dp = subprocess.Popen(shlex.split(hg_cmdstr), stdout = subprocess.PIPE)
+    r = dp.communicate()
+    return r
+
+@once
+def sourceRevision():
+    return hgCmd("hg log -l 1 --template '{node}'")
+
+
+
 

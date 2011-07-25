@@ -45,7 +45,7 @@ class taskManager(aiProcess):
         #Setup intial values
         restored = False
         if restore:
-	    info('Looking for previous states...')
+            info('Looking for previous states...')
             if self.load_state():
                 restored = True
                 self.log('Task manager restored.')

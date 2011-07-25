@@ -46,14 +46,15 @@ static void read_with_timeout(AsyncReadStream& sock, const MutableBufferSequence
     using namespace boost::system;
 
     boost::optional<error_code> timer_result; 
-    deadline_timer timer(sock.io_service()); 
+    deadline_timer timer(sock.get_io_service()); 
     timer.expires_from_now(boost::posix_time::milliseconds(timeoutms));
     timer.async_wait(boost::bind(set_result, &timer_result, _1)); 
     boost::optional<error_code> read_result; 
     async_read(sock, buffers, boost::bind(set_result, &read_result, _1)); 
-
-    sock.io_service().reset(); 
-    while (sock.io_service().run_one()) 
+    
+    boost::asio::io_service& iosrv = sock.get_io_service();
+    iosrv.reset();
+    while (iosrv.run_one()) 
     { 
         if (read_result) 
             timer.cancel(); 

@@ -2,8 +2,6 @@ import messaging
 
 from math import pi
 
-#pylint: disable=E1101
-
 class Sonar:
     def __init__(self, node):
         self.__node = node

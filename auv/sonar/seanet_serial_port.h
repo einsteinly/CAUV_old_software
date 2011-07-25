@@ -16,12 +16,14 @@ class SonarTimeoutException : public std::exception
 {
 	public:
 		virtual const char *what() const throw();
+        virtual ~SonarTimeoutException() throw() {};
 };
 class InvalidPacketException : public std::exception
 {
 	public:
         InvalidPacketException(const boost::shared_ptr<SeanetPacket> packet);
 		virtual const char *what() const throw();
+        virtual ~InvalidPacketException() throw() {};
     protected:
         boost::shared_ptr<SeanetPacket> m_packet;
 };

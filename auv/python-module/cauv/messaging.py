@@ -1,13 +1,7 @@
 # This module transparently wraps the boost-python exported messaging
 # interface
 
-try:
-    from cauvinterfaced import *
-except ImportError:
-    print "No debug interface, trying release"
-    from cauvinterface import *
-
-#pylint: disable=E0602
+from cauvinterface import *
 
 # until it works...
 AIMessageObserver = BufferedMessageObserver
