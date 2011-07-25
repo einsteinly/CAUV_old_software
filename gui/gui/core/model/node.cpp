@@ -1,4 +1,6 @@
-#include "model.h"
+#include "node.h"
+
+#include <QMetaType>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -45,6 +47,12 @@ void NodeBase::addChild(boost::shared_ptr<NodeBase> child){
 
     child->m_parent = boost::weak_ptr<NodeBase>(shared_from_this());
     m_children.push_back(child);
+    m_id_map[child->nodeId()] = child;
+
+    // make sure all the objects belong to the thread of the root item
+    // children get created in many threads (e.g. the messaging thread)
+    // and these threads don't have event loops so signals won't work
+    child->moveToThread(this->thread());
 
     // propagate changes upwards
     child->connect(child.get(), SIGNAL(changed()), this, SIGNAL(changed()));
@@ -52,7 +60,7 @@ void NodeBase::addChild(boost::shared_ptr<NodeBase> child){
     Q_EMIT nodeAdded(child);
 }
 
-const std::vector<boost::shared_ptr<NodeBase> > NodeBase::getChildren() const {
+const NodeBase::children_list_t NodeBase::getChildren() const {
     return m_children;
 }
 
