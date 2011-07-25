@@ -19,7 +19,7 @@ namespace cauv {
 
         class NodeDragSource{
         public:
-            virtual boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > getDroppedNodes() = 0;
+            virtual std::vector<boost::shared_ptr<NodeBase> > getDroppedNodes() = 0;
         };
 
 

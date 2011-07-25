@@ -1,6 +1,8 @@
 
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/model/nodes/compoundnodes.h>
+#include <gui/core/model/nodes/imagenode.h>
+#include <gui/core/model/nodes/groupingnode.h>
 
 #include <debug/cauv_debug.h>
 
@@ -27,10 +29,9 @@ void NodeDropListener::dropEvent(QDropEvent *event)
     if(source) {
         info() << "Drag receieved from " << source;
 
-        boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > >  streams = source->getDroppedNodes();
-        std::vector<boost::shared_ptr<NodeBase> >::iterator it;
-        for (it = streams->begin(); it!=streams->end(); ++it) {
-            routeStream(*it);
+        std::vector<boost::shared_ptr<NodeBase> >  streams = source->getDroppedNodes();
+        BOOST_FOREACH(boost::shared_ptr<NodeBase> node, streams) {
+            routeStream(node);
         }
     }
 }

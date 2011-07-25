@@ -77,7 +77,7 @@ class DataStreamList : public QTreeWidget, public cauv::gui::NodeDragSource {
 public:
     DataStreamList(QWidget * parent);
     
-    boost::shared_ptr<std::vector<boost::shared_ptr<cauv::gui::NodeBase> > > getDroppedNodes();
+    std::vector<boost::shared_ptr<cauv::gui::NodeBase> > getDroppedNodes();
     
     void keyPressEvent(QKeyEvent *event);
 

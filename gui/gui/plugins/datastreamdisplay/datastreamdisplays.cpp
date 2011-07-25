@@ -33,8 +33,8 @@ public:
 };
 
 
-boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > DataStreamList::getDroppedNodes() {
-    boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > streams = boost::make_shared<std::vector<boost::shared_ptr<NodeBase> > >();
+std::vector<boost::shared_ptr<NodeBase> > DataStreamList::getDroppedNodes() {
+    std::vector<boost::shared_ptr<NodeBase> > streams;
 
     QModelIndexList items = this->selectedIndexes();
     QModelIndexList::iterator i;
@@ -44,7 +44,7 @@ boost::shared_ptr<std::vector<boost::shared_ptr<NodeBase> > > DataStreamList::ge
             QTreeWidgetItem *item = static_cast<QTreeWidgetItem*>(index.internalPointer());
             NodeTreeItemBase * dsItem = dynamic_cast<NodeTreeItemBase*>(item);
             if(dsItem)
-                streams->push_back(dsItem->getNode());
+                streams.push_back(dsItem->getNode());
         }
     }
     return streams;
