@@ -15,7 +15,7 @@ def incFloat(f):
 
 import functools
 
-# aka memoization
+# aka memoization, see python-module/cauv/utils.py for file-cached memoization
 def once(f):
     @functools.wraps(f)
     def f_once(cache=[]):
@@ -32,11 +32,11 @@ def hgCmd(cmd):
     hg_cmdstr = 'hg -R %s %s' % (repo_root, cmd)
     dp = subprocess.Popen(shlex.split(hg_cmdstr), stdout = subprocess.PIPE)
     r = dp.communicate()
-    return r
+    return r[0]
 
 @once
 def sourceRevision():
-    return hgCmd("hg log -l 1 --template '{node}'")
+    return hgCmd("log -l 1 --template '{node}'")
 
 
 

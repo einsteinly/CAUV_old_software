@@ -6,7 +6,6 @@ Directory Structure:
 somelog.chil/
     a.log
     a.superlog
-    a.lock # lock file prevents more than one process writing to a.log and a.superlog at the same time
     b.log
     b.superlog
     megasuperlog
@@ -38,6 +37,7 @@ import os
 import datetime
 import time
 import fcntl
+import base64
 
 import blist
 
@@ -47,6 +47,28 @@ from hacks import sourceRevision
 class ShelfConverter:
     pass
 
+def interestingAttrs(msg):
+    # doesn't just work with messages
+    def shouldSave(attr):
+        if not attr.startswith('__') and not attr in ('group', 'msgId'):
+            return True
+        return False
+    attrs = msg.__class__.__dict__
+    r = []
+    for k in filter(shouldSave, attrs):
+        r.append(attrs[k].__get__(msg))
+    return r
+
+def isSimpleString(s):
+    # yes if s contains no newlines or non-printable characters (tabs and
+    # spaces are okay) or ()brackets or commas (to make parsing simple)
+    for c in s:
+        if c not in ' \t1234567890-=!@$%^&*_+' +\
+                    'abcdefghijklmnopqrstuvwxyz' +\
+                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +\
+                    '{}[]:"|;\'\\<>?./`~':
+            return False
+    return True
 
 class CHILer:
     class Const:
@@ -66,6 +88,7 @@ class CHILer:
         self.dirname = dirname
         self.source_revision = sourceRevision()
         self.__ensureDirectory(self.dirname)
+        print 'CHILer:%s:%s' % (self.dirname, self.source_revision)
     def __ensureDirectory(self, f):
         if not os.path.exists(f):
             os.makedirs(f)
@@ -95,17 +118,37 @@ class CHILer:
         r += timedelta.microseconds
         return r
     def serialiseField(self, f):
-        ???
-    def serialiseMsgFields(self, msg):
-        def shouldSave(attr):
-            if not k.startswith('__') and not k in ('group', 'msgId'):
-                return True
-            return False
-            attrs = msg.__class__.__dict__
-            r = []
-            for k in filter(shouldSave, attrs):
-                r.append(attrs[k].__get__(msg))
-            return map(self.serialiseField, r)
+        print 'F:%s,%s:%s,%s' % (
+            f.__class__.__name__,
+            f.__class__.__module__,
+            f.__class__.__base__.__name__,
+            f.__class__.__base__.__module__
+        )
+        if f.__class__.__base__.__module__ == 'Boost.Python':
+            if f.__class__.__name__.endswith('Vec'):
+                # eww, better way to detect vector-like types?
+                r = '(%s)' % ','.join(map(str, tuple(f)))
+                return r
+            elif f.__class__.__name__.endswith('Map'):
+                raise NotImplementedError()
+            else:
+                return self.serialiseStructFields(f)
+        elif type(f) == str: # for python 2.7 this includes byte vectors
+            if not isSimpleString(f):
+                return base64.b16encode(f)
+            else:
+                return str(f)
+        elif f.__class__.__module__ == '__builtin__':
+            return str(f)
+        else:
+            raise NotImplementedError(
+                '%s cannot be serialised yet' % type(f)
+            )
+    def serialiseStructFields(self, msg):
+        r = interestingAttrs(msg)
+        tmp =  map(self.serialiseField, r)
+        print 'S:%s:=\n%s' % (msg, tmp)
+        return '(%s)' % ','.join(tmp)
 
 class Logger(CHILer):
     def __init__(self, dirname, subname=None):
@@ -116,15 +159,18 @@ class Logger(CHILer):
             basename = subname[:-len(self.Const.Dat_Extn)]
         self.idxname = basename + self.Const.Idx_Extn
         self.datname = basename + self.Const.Dat_Extn
-        print '%s\n\t%s\n\t%s' % (self.dirname, datname, idxname)
+        print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
         self.datfile = self.lockAndOpenForA(self.datname)
-        self.idxfile = self.lockAndOPenForA(self.idxname)
+        self.idxfile = self.lockAndOpenForA(self.idxname)
         self.last_keyframe_time = None
         self.last_absolute_time = None
         self.writeFormatLines()
 
     def writeKeyframe(self, t=None):
+        if t is None:
+            t = datetime.datetime.now()
         l = '%s %s\n' % (self.timeFormat(t), self.datfile.tell())
+        self.last_keyframe_time = t
         self.idxfile.write(l)
 
     def writeFormatLines(self):
@@ -142,15 +188,18 @@ class Logger(CHILer):
     def log(self, msg, record_time=None):
         if record_time is None:
             record_time = datetime.datetime.now()
-        if self.last_absolute_time is None or
-           record_time < self.last_absolute_time or
+        if self.last_absolute_time is None or\
+           record_time < self.last_absolute_time or\
            record_time - self.last_absolute_time > self.Const.Dat_Time_Line_Freq:
             self.writeTimeLine(record_time)
-        if record_time - self.last_keyframe_time > self.Const.Idx_Keyframe_Freq:
+        if self.last_keyframe_time is None or\
+           record_time - self.last_keyframe_time > self.Const.Idx_Keyframe_Freq:
             self.writeKeyframe()
         musec_delta = self.tdToMusec(record_time - self.last_absolute_time)
-        msg_fields = self.serialiseMsgFields(msg)
-        l = '%s %d(%s)\n' % (musec_delta, msg.msgId, ','.join(msg_fields))
+        msg_fields = self.serialiseStructFields(msg)
+        l = '%s %d%s\n' % (musec_delta, msg.msgId, msg_fields)
+        print 'L:%s:=\n%s' % (msg.__class__.__name__, l),
+        self.datfile.write(l)
 
     def close(self):
         # TODO:
@@ -194,6 +243,9 @@ if __name__ == '__main__':
     l.log(m.GraphableMessage('thingy', 4.78),
           record_time=datetime.datetime.now() - datetime.timedelta(milliseconds=50)
     )
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
     l.close()
     r = Player('test')
 
