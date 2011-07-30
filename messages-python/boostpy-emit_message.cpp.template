@@ -11,7 +11,8 @@ namespace bp = boost::python;
 using namespace cauv;
 
 namespace {
-    static const char* ${g.name.upper()}_NAME = "$g.name";
+    static const char* ${g.name}_Name = "$g.name";
+    static const int ${m.name}_Id = ${m.id};
 
     struct ${className}Pickler: boost::python::pickle_suite{
         static boost::python::tuple getinitargs(${className} const& #if $len($m.fields)#a#end if#){
@@ -48,8 +49,8 @@ void emit${m.name}Message(){
         .def(bp::self_ns::repr(bp::self_ns::self))
         .def_pickle(${className}Pickler())
         ## default group to send to
-        .def_readonly("group", &${g.name.upper()}_NAME)
-        .def_readonly("msgId", ${m.id})
+        .def_readonly("group", &${g.name}_Name)
+        .def_readonly("msgId", &${m.name}_Id)
         ## return policies are all return-by-value, safest, but not the most efficient
         #for $f in $m.fields
         .add_property(

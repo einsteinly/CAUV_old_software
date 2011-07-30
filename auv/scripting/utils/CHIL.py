@@ -29,6 +29,7 @@ YYYYMMDD-HHMMSS.SSSSSS LONG_INTEGER # integer value is seek position in correspo
 megasuperlog file:
 
 CHILSUPERIDX
+Format HG_FULL_REVISION_UID
 FILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...) # any number of message id and time period sections
 
 '''
@@ -88,6 +89,7 @@ class CHILer:
         self.dirname = dirname
         self.source_revision = sourceRevision()
         self.__ensureDirectory(self.dirname)
+        self.__megasuperlog = None
         print 'CHILer:%s:%s' % (self.dirname, self.source_revision)
     def __ensureDirectory(self, f):
         if not os.path.exists(f):
@@ -104,6 +106,22 @@ class CHILer:
         fobj.close()
     def openForR(self, fname):
         f = open(self.fileName(fname), 'r')
+    def getAndLockMegaSuperLog(self):
+        if self.__megasuperlog is None:
+            fn = self.Const.Super_Index
+            f = self.lockAndOpenForA(fn)
+            if self.isEmpty(fn):
+                f.write('CHILSUPERIDX')
+            self.__megasuperlog = f
+            return f
+        else:
+            raise RuntimeError('log already open')
+    def releaseAndCloseMegaSuperLog(self):
+        if self.__megasuperlog is not None:
+            self.releaseAndClose(self.__megasuperlog)
+            self.__megasuperlog = None
+        else:
+            raise RuntimeError('no log to close')
     def fileName(self, fname):
         return os.path.join(self.dirname, fname)
     def isEmpty(self, fname):
@@ -165,6 +183,7 @@ class Logger(CHILer):
         self.last_keyframe_time = None
         self.last_absolute_time = None
         self.writeFormatLines()
+        self.recorded_msg_types = {}
 
     def writeKeyframe(self, t=None):
         if t is None:
@@ -200,6 +219,13 @@ class Logger(CHILer):
         l = '%s %d%s\n' % (musec_delta, msg.msgId, msg_fields)
         print 'L:%s:=\n%s' % (msg.__class__.__name__, l),
         self.datfile.write(l)
+        # update time range for which these messages are recorded
+        t_range = self.recorded_msg_types.get(msg.msgId, (record_time, record_time))
+        if record_time < t_range[0]:
+            t_range = (record_time, t_range[1])
+        elif record_time > t_range[1]:
+            t_range = (t_range[0], record_time)
+        self.recorded_msg_types[msg.msgId] = t_range
 
     def close(self):
         # TODO:
@@ -211,6 +237,19 @@ class Logger(CHILer):
         self.datfile = None
         self.idxfile = None
         pass
+
+    def updateMegaSuperLog(self):
+        # lines of the form: FILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...)
+        msl = self.getAndLockMegaSuperLog()
+        l = 'Format %s\n' % self.source_revision
+        msl.write(l)
+        # TODO: should record distinct time ranges for each message, rather
+        # than just one range
+        for k, v in self.recorded_msg_types.iteritems():
+            msl.write('%s ([%d %s--%s],)\n' % (
+                self.datname, k, self.timeFormat(v[0]), self.timeFormat(v[1])
+            ))
+        self.releaseAndCloseMegaSuperLog()
 
 class ComponentPlayer(CHILer):
     def __init__(self, dirname):
