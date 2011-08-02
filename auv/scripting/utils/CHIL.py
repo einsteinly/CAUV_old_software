@@ -39,6 +39,7 @@ import datetime
 import time
 import fcntl
 import base64
+import bisect
 
 import blist
 
@@ -60,9 +61,11 @@ def interestingAttrs(msg):
         r.append(attrs[k].__get__(msg))
     return r
 
+''' unused
 def isSimpleString(s):
     # yes if s contains no newlines or non-printable characters (tabs and
     # spaces are okay) or ()brackets or commas (to make parsing simple)
+    # TODO: better: 1) use standard library, 2) 
     for c in s:
         if c not in ' \t1234567890-=!@$%^&*_+' +\
                     'abcdefghijklmnopqrstuvwxyz' +\
@@ -70,6 +73,66 @@ def isSimpleString(s):
                     '{}[]:"|;\'\\<>?./`~':
             return False
     return True
+'''
+
+def tddiv(l, r):
+    l_musec = long(l.microseconds) + l.seconds*1000000L + l.days*1000000L*24L*3600L
+    r_musec = long(r.microseconds) + r.seconds*1000000L + r.days*1000000L*24L*3600L
+    ret = l_musec / float(r_musec)
+    #print 'tddiv: %s / %s = %s / %s = %s' % (l, r, l_musec, r_musec, ret)
+    return ret
+
+def linearInterp(xlow, ylow, xhi, yhi, x):
+    # TODO: handle xhi = xlo gracefully
+    if x == xlow:
+        r = ylow
+    elif x == xhi:
+        r = yhi
+    else:
+        n = ((yhi - ylow) * (x - xlow)) 
+        d = (xhi - xlow)
+        if type(n) == datetime.timedelta and type(d) == datetime.timedelta:
+            # silly datetime.timedelta doesn't support division
+            r = ylow + tddiv(n, d)
+        else:
+            r = ylow + n / d 
+    #print 'low: %s %s\n  x: %s\n hi::%s %s\n  -> %s' % (xlow, ylow, x, xhi, yhi, r)
+    return r
+
+class LinearpiecewiseApprox(blist.sorteddict):
+    def __init__(self, rfunc=round, interp=linearInterp):
+        blist.sorteddict.__init__(self)
+        self.interpolate = interp
+        self.rfunc = rfunc
+    def __getitem__(self, k):
+        # interpolates if a value is not present for the specified key
+        sorted_keys = self.keys()
+        ilow = bisect.bisect(sorted_keys, k) - 1
+        if ilow < 0 or (ilow == -1 and sorted_keys[0] != k):
+            raise RuntimeError('out of range: lt')
+        ihi = ilow + 1
+        if ihi >= len(sorted_keys):
+            if sorted_keys[ilow] != k:
+                raise RuntimeError('out of range: gt')
+            else:
+                return sorted_keys[ilow]
+        '''#dbg
+        for i, y in enumerate(sorted_keys):
+            if i == ilow:
+                print i, y, '<-- low'
+                print '=', k
+            elif i == ihi:
+                print i, y, '<-- hi'
+            else:
+                print i, y'''
+        klow = sorted_keys[ilow]
+        khi = sorted_keys[ihi]
+        r = self.interpolate(
+            klow, blist.sorteddict.__getitem__(self, klow),
+            khi, blist.sorteddict.__getitem__(self, khi),
+            k
+        )
+        return self.rfunc(r)
 
 class CHILer:
     class Const:
@@ -96,8 +159,7 @@ class CHILer:
             os.makedirs(f)
     def lockAndOpenForA(self, fname):
         f = open(self.fileName(fname), 'a+')
-        # lock the whole file, raises IOError errno=EACCES or EAGAIN on failure
-        # (or it's supposed to, on OS X it seems to block....)
+        # on OS X, this blocks until lock is available
         fcntl.lockf(f, fcntl.LOCK_EX)
         return f
     def releaseAndClose(self, fobj):
@@ -152,10 +214,11 @@ class CHILer:
             else:
                 return self.serialiseStructFields(f)
         elif type(f) == str: # for python 2.7 this includes byte vectors
-            if not isSimpleString(f):
-                return base64.b16encode(f)
-            else:
-                return str(f)
+            return base64.b16encode(f)
+            #if not isSimpleString(f):
+            #    return base64.b16encode(f)
+            #else:
+            #    return str(f)
         elif f.__class__.__module__ == '__builtin__':
             return str(f)
         else:
@@ -167,14 +230,19 @@ class CHILer:
         tmp =  map(self.serialiseField, r)
         print 'S:%s:=\n%s' % (msg, tmp)
         return '(%s)' % ','.join(tmp)
-
-class Logger(CHILer):
-    def __init__(self, dirname, subname=None):
-        CHILer.__init__(self, dirname)
+    def baseNameFromSubName(self, subname):
         if subname is None:
             subname = datetime.datetime.now().strftime(self.Const.Dat_Fname_Strftime_Fmt) + self.Const.Dat_Extn
         if subname.endswith(self.Const.Dat_Extn):
             basename = subname[:-len(self.Const.Dat_Extn)]
+        else:
+            basename = subname
+        return basename
+
+class Logger(CHILer):
+    def __init__(self, dirname, subname=None):
+        CHILer.__init__(self, dirname)
+        basename = self.baseNameFromSubName(subname)
         self.idxname = basename + self.Const.Idx_Extn
         self.datname = basename + self.Const.Dat_Extn
         print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
@@ -251,9 +319,25 @@ class Logger(CHILer):
             ))
         self.releaseAndCloseMegaSuperLog()
 
+
 class ComponentPlayer(CHILer):
-    def __init__(self, dirname):
+    def __init__(self, dirname, subname):
         CHILer.__init__(self, dirname)
+        basename = self.baseNameFromSubName(subname)
+        self.idxname = basename + self.Const.Idx_Extn
+        self.datname = basename + self.Const.Dat_Extn
+        print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
+        self.datfile = self.lockAndOpenForR(self.datname)
+        self.idxfile = self.lockAndOpenForR(self.idxname)
+        self.recorded_msg_types = {}
+        # map of datetime -> seek value, linearly interpolates for values not
+        # present
+        self.seek_position = LinearpiecewiseApprox(round)
+
+    def updateCachedIdx(self, megasuperlog_line):
+        # interpret a line of the megasuperlog, update self.recorded_msg_types
+        print megasuperlog_line
+        pass
 
     def timepct(self, percent, start_clip=None, end_clip=None):
         # Return the latest time at which 'percent' of the messages logged
@@ -266,6 +350,7 @@ class Player(CHILer):
     def __init__(self, dirname):
         CHILer.__init__(self, dirname)
         self.components = blist.sortedlist()
+
         
     def timepct(self, percent, start_clip=None, end_clip=None):
         # Return the latest time at which 'percent' of the messages logged
@@ -286,5 +371,19 @@ if __name__ == '__main__':
     l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
     l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
     l.close()
+
+    p = LinearpiecewiseApprox(round)
+    s = datetime.datetime.now()
+    p[s] = 3
+    time.sleep(0.1)
+    p[datetime.datetime.now()] = 4
+    p[datetime.datetime.now()] = 5 
+    time.sleep(0.1)
+    e = datetime.datetime.now()
+    p[e] = 6
+    while s <= e:
+        print '%s = %s' % (s, p[s])
+        s += datetime.timedelta(milliseconds=25)
+    print '%s = %s' % (s, p[e])
     r = Player('test')
 
