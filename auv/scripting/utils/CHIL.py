@@ -34,18 +34,23 @@ FILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...) # any nu
 
 '''
 
+# Standard Library
 import os
 import datetime
 import time
 import fcntl
-import base64
 import bisect
+from base64 import b16encode, b16decode
 
-import blist
+# 3rd Party
+import blist           # BSD license
+import pyparsing as pp # MIT license
 
+# CAUV
 from hacks import sourceRevision
+import cauv.messaging as messaging
 
-
+# TODO next...
 class ShelfConverter:
     pass
 
@@ -89,13 +94,13 @@ def linearInterp(xlow, ylow, xhi, yhi, x):
     elif x == xhi:
         r = yhi
     else:
-        n = ((yhi - ylow) * (x - xlow)) 
+        n = ((yhi - ylow) * (x - xlow))
         d = (xhi - xlow)
         if type(n) == datetime.timedelta and type(d) == datetime.timedelta:
             # silly datetime.timedelta doesn't support division
             r = ylow + tddiv(n, d)
         else:
-            r = ylow + n / d 
+            r = ylow + n / d
     #print 'low: %s %s\n  x: %s\n hi::%s %s\n  -> %s' % (xlow, ylow, x, xhi, yhi, r)
     return r
 
@@ -207,29 +212,42 @@ class CHILer:
         if f.__class__.__base__.__module__ == 'Boost.Python':
             if f.__class__.__name__.endswith('Vec'):
                 # eww, better way to detect vector-like types?
+                #r = '%s(%s)' % (f.__class__.__name__, ','.join(map(str, tuple(f))))
                 r = '(%s)' % ','.join(map(str, tuple(f)))
                 return r
             elif f.__class__.__name__.endswith('Map'):
                 raise NotImplementedError()
             else:
-                return self.serialiseStructFields(f)
+                return self.serialiseStruct(f)
         elif type(f) == str: # for python 2.7 this includes byte vectors
-            return base64.b16encode(f)
+            return b16encode(f)
             #if not isSimpleString(f):
             #    return base64.b16encode(f)
             #else:
             #    return str(f)
+        elif type(f) == float:
+            # hex floats aren't readable enough
+            #return f.hex()
+            return str(f)
         elif f.__class__.__module__ == '__builtin__':
             return str(f)
         else:
             raise NotImplementedError(
                 '%s cannot be serialised yet' % type(f)
             )
-    def serialiseStructFields(self, msg):
-        r = interestingAttrs(msg)
-        tmp =  map(self.serialiseField, r)
-        print 'S:%s:=\n%s' % (msg, tmp)
-        return '(%s)' % ','.join(tmp)
+    def serialiseStruct(self, s):
+        r = interestingAttrs(s)
+        tmp = map(self.serialiseField, r)
+        print 'S:%s:=\n%s' % (s, tmp)
+        #return '%s(%s)' % (s.__class__.__name__, ','.join(tmp))
+        return '(%s)' % (','.join(tmp))
+    def serialiseMessage(self, s):
+        r = interestingAttrs(s)
+        tmp = map(self.serialiseField, r)
+        print 'M:%s:=\n%s' % (s, tmp)
+        ret = '%d(%s)' % (s.msgId, ','.join(tmp))
+        print 'D:%s' % self.deserialiseMessage(ret)
+        return ret
     def baseNameFromSubName(self, subname):
         if subname is None:
             subname = datetime.datetime.now().strftime(self.Const.Dat_Fname_Strftime_Fmt) + self.Const.Dat_Extn
@@ -238,6 +256,17 @@ class CHILer:
         else:
             basename = subname
         return basename
+    # parsing grammar:
+    comma_o = pp.Optional(',')
+    lbrac_s = pp.Suppress(pp.Literal('('))
+    rbrac_s = pp.Suppress(pp.Literal(')'))
+    value   = pp.Word(pp.alphanums + '_.')
+    number  = pp.Word(pp.nums)
+    struct  = pp.Forward()
+    struct << pp.Group(lbrac_s + pp.delimitedList(struct | value) + comma_o + rbrac_s)
+    msg     = number + struct
+    def deserialiseMessage(self, s):
+        print self.msg.parseString(s)
 
 class Logger(CHILer):
     def __init__(self, dirname, subname=None):
@@ -283,8 +312,8 @@ class Logger(CHILer):
            record_time - self.last_keyframe_time > self.Const.Idx_Keyframe_Freq:
             self.writeKeyframe()
         musec_delta = self.tdToMusec(record_time - self.last_absolute_time)
-        msg_fields = self.serialiseStructFields(msg)
-        l = '%s %d%s\n' % (musec_delta, msg.msgId, msg_fields)
+        serialised_msg = self.serialiseMessage(msg)
+        l = '%s %s\n' % (musec_delta, serialised_msg)
         print 'L:%s:=\n%s' % (msg.__class__.__name__, l),
         self.datfile.write(l)
         # update time range for which these messages are recorded
@@ -297,8 +326,7 @@ class Logger(CHILer):
 
     def close(self):
         # TODO:
-        # update superlog
-        # update the shared megasuperlog
+        # update superlog on close?
         self.updateMegaSuperLog()
         self.releaseAndClose(self.datfile)
         self.releaseAndClose(self.idxfile)
@@ -350,7 +378,7 @@ class Player(CHILer):
     def __init__(self, dirname):
         CHILer.__init__(self, dirname)
         self.components = blist.sortedlist()
-
+        #megasuperlogf = self. EDITING HERE
         
     def timepct(self, percent, start_clip=None, end_clip=None):
         # Return the latest time at which 'percent' of the messages logged
