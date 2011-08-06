@@ -1,0 +1,21 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-08-06 17:27:09.677367
+description: "pscore changed to 3\nattached_files changed to []\ndescription changed\
+  \ to * use qgraphicsscene (probably)\r\n* while dragging pipeline widget should\
+  \ fade things that can't be connected to\r\n* collapsible nodes\r\n* manipulation\
+  \ of node groups\r\n* custom grouped nodes\r\n* automatic node insertion for drag\
+  \ and drop\r\n* automatic node connection\r\n* zoom-level based performance optimisation\r\
+  \n\r\nmore?\r\n\ntitle changed to Pipeline GUi improvements\ntags changed to [<pitz.Tag\
+  \ cf2b7e gui>]\npoints changed to None\nowner changed to James Crosby\nestimate\
+  \ changed to highly non-trivial"
+entity: !!python/object:uuid.UUID
+  int: 300960675764807054661591721188571441401
+modified_time: *id001
+pscore: 0
+title: 2011-08-06 17:27 - James Crosby changed task Pipeline GUi improvements
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 282721734384046878720567802204400456686
+who_did_it: *id002
+yaml_file_saved: 2011-08-06 17:27:09.679742

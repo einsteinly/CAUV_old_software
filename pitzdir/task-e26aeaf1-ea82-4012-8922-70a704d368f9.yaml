@@ -1,0 +1,28 @@
+attached_files: []
+components: []
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2011-08-06 17:27:09.657795
+description: !!python/unicode "* use qgraphicsscene (probably)\r\n* while dragging\
+  \ pipeline widget should fade things that can't be connected to\r\n* collapsible\
+  \ nodes\r\n* manipulation of node groups\r\n* custom grouped nodes\r\n* automatic\
+  \ node insertion for drag and drop\r\n* automatic node connection\r\n* zoom-level\
+  \ based performance optimisation\r\n\r\nmore?\r\n"
+estimate: !!python/object:uuid.UUID
+  int: 221360562648380518769412743827279781563
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2011-08-06 17:27:09.677025
+owner: *id001
+points: null
+pscore: !!python/unicode '3'
+status: !!python/object:uuid.UUID
+  int: 169187340753552385114968941926541347595
+tags:
+- !!python/object:uuid.UUID
+  int: 275376028904049931937057396630085839418
+title: !!python/unicode 'Pipeline GUi improvements'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 300960675764807054661591721188571441401
+yaml_file_saved: 2011-08-06 17:27:09.686370

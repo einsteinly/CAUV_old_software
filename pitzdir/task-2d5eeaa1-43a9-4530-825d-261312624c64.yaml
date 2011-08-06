@@ -1,0 +1,29 @@
+attached_files: []
+components: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2011-08-06 17:32:19.335953
+description: !!python/unicode "A simulator:\r\n* we really really really need one\
+  \ of these\r\n* make sure control doesn't know where it's data is coming from (esp.\
+  \ for simulation)\r\n* simulation\r\n* simulation again"
+estimate: !!python/object:uuid.UUID
+  int: 221360562648380518769412743827279781563
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2011-08-06 17:32:19.356280
+owner: !!python/object:uuid.UUID
+  int: 331423399489594109103410846851841274888
+points: null
+pscore: !!python/unicode '3'
+status: !!python/object:uuid.UUID
+  int: 154409908609622189382556686006061208230
+tags:
+- !!python/object:uuid.UUID
+  int: 197286768475377705411888986497368205084
+- !!python/object:uuid.UUID
+  int: 292557765731504791880568992605661195763
+title: !!python/unicode 'We really really need a good simulator, really.'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 60308094575545038224860472324722412644
+yaml_file_saved: 2011-08-06 17:32:19.365938
