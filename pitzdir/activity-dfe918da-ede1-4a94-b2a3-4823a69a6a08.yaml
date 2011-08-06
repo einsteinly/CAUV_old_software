@@ -1,0 +1,28 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-08-06 17:23:41.518141
+description: 'pscore changed to 3
+
+  attached_files changed to []
+
+  description changed to Move the gui and gui build products to a saner directory
+  structure.
+
+  title changed to Move the gui and gui build products to a saner directory structure.
+
+  tags changed to [<pitz.Tag cf2b7e gui>]
+
+  points changed to None
+
+  estimate changed to trivial'
+entity: !!python/object:uuid.UUID
+  int: 267557384259154560208207609359183081869
+modified_time: *id001
+pscore: 0
+title: 2011-08-06 17:23 - James Crosby changed task Move the gui and gui build products
+  to a saner directory structure.
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 297628152351265078079894489806589815304
+who_did_it: *id002
+yaml_file_saved: 2011-08-06 17:23:41.520105
