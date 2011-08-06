@@ -2,35 +2,41 @@
 \#ifndef __CAUV_SERIALMESS_H__
 \#define __CAUV_SERIALMESS_H__
 
-\#include <generated/messages_fwd.h>
-\#include <generated/messages.h>
-
 \#include <utility/serialisation-types.h>
+#for $e in $enums
+\#include "${e.name}.h"
+#end for
+#for $v in $variants
+\#include "${v.name}.h"
+#end for
 
 namespace cauv{
 
-#for $t in $unknown_types
-void serialise(svec_ptr, $t const&);
-int32_t deserialise(const_svec_ptr, int32_t, $t&);
+#for $s in $structs
+struct $s.name;
 #end for
-#for $e in $enums
-void serialise(svec_ptr, $e.name::e const&);
-int32_t deserialise(const_svec_ptr, int32_t, $e.name::e&);
+#for $t in $included_types
+$t.type $t.name;
 #end for
+
 #for $s in $structs
 void serialise(svec_ptr, $s.name const&);
-int32_t deserialise(const_svec_ptr, int32_t, $s.name&);
+int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);
 #end for
+
+#for $e in $enums
+void serialise(svec_ptr, $e.name::e const&);
+int32_t deserialise(const_svec_ptr, uint32_t, $e.name::e&);
+#end for
+
 #for $v in $variants
 void serialise(svec_ptr, $v.name const&);
-int32_t deserialise(const_svec_ptr, int32_t, $v.name&);
+int32_t deserialise(const_svec_ptr, uint32_t, $v.name&);
 #end for
-// Message serialisation (deserialisation handled lazily in messages.cpp)
-#for $g in $groups
-#for $m in $g.messages
-#set $className = $m.name + "Message"
-void serialise(svec_ptr p, $className const& v);
-#end for
+
+#for $t in $included_types
+void serialise(svec_ptr, $t.name const&);
+int32_t deserialise(const_svec_ptr, uint32_t, $t.name&);
 #end for
 
 } // namespace cauv

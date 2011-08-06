@@ -12,8 +12,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <debug/cauv_debug.h>
-
-#include <generated/messages.h>
+#include <common/image.h>
 
 using namespace cauv;
 
@@ -97,7 +96,7 @@ void VideoScreen::paintEvent(QPaintEvent*) {
 
         // convert the new one
         try {
-            cv::Mat mat = m_current_image->cvMat();
+            cv::Mat mat = m_current_image->mat();
             int channels = mat.channels();
             if(channels == 1) {
                 cv::Mat result;

@@ -16,9 +16,11 @@
 #include <utility/string.h>
 #include <utility/testable.h>
 #include <common/cauv_utils.h>
-#include <generated/messages_messages.h>
 #include <common/image.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/PipelineGroup.h>
+#include <generated/types/Pl_GuiGroup.h>
+#include <generated/types/NodeInputStatus.h>
 
 // TODO: remove this dependency
 #include <ssrc/spread.h>
@@ -165,7 +167,10 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                             param_value = parent_value;
                         }
                     }else{
-                        error() << "Type mismatch on parameter link:" << *this;
+                        debug() << "Type mismatch on parameter link:" << *this
+                                << " (param=" << param_value.which() << "vs link="
+                                << parent_value.which()
+                                << ") the default parameter value will be returned";
                     }
                 }
                 return param_value;
@@ -430,10 +435,11 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          *      - NodeParamValue
          */
         template<typename T>
-        void registerOutputID(output_id const& o){
+        void registerOutputID(output_id const& o, bool warnDuplicate = true){
             lock_t l(m_outputs_lock);
             if(m_outputs.count(o)){
-                error() << "Duplicate output id:" << o;
+                if (warnDuplicate)
+                    warning() << "Duplicate output id:" << o;
                 return;
             }
 
@@ -446,6 +452,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             ));
         }
         void registerInputID(input_id const& i, InputSchedType const& st = Must_Be_New);
+
+        bool unregisterOutputID(output_id const& o, bool warnNonexistent = true);
 
         void sendMessage(boost::shared_ptr<Message const>, service_t p = SAFE_MESS) const;
 

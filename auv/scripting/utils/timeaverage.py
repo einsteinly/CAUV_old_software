@@ -32,7 +32,7 @@ class TimeAverage:
         return total / len(self.entries)
     
     def reset(self):
-        self.entires.clear()
+        self.entries.clear()
 
 
 

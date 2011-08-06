@@ -41,38 +41,32 @@ class CombineRGBNode: public Node{
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
-            image_ptr_t R = inputs["R"];
-            image_ptr_t G = inputs["G"];
-            image_ptr_t B = inputs["B"];
+            cv::Mat R = inputs["R"]->mat();
+            cv::Mat G = inputs["G"]->mat();
+            cv::Mat B = inputs["B"]->mat();
 
-            int r_type = CV_MAT_DEPTH_MASK & R->cvMat().type();
-            int g_type = CV_MAT_DEPTH_MASK & G->cvMat().type();
-            int b_type = CV_MAT_DEPTH_MASK & B->cvMat().type();
-            int out_type = CV_MAKETYPE(r_type, 3);
+            int r_depth = R.depth();
+            int g_depth = G.depth();
+            int b_depth = B.depth();
             
-            if(R->cvMat().size() != G->cvMat().size() ||
-               R->cvMat().size() != B->cvMat().size())
+            if(R.size() != G.size() || R.size() != B.size())
                throw(parameter_error("RGB source channels are not of the same size"));
 
-            if(r_type != g_type || r_type != b_type)
-                throw(parameter_error("RGB source channels are not of the same type"));
+            if(r_depth != g_depth || r_depth != b_depth)
+                throw(parameter_error("RGB source channels are not of the same depth"));
             
-            boost::shared_ptr<Image> out = boost::make_shared<Image>(
-                cv::Mat(R->cvMat().size(), out_type)
-            );
-            
-            cv::Mat in[] = {R->cvMat(), G->cvMat(), B->cvMat()};
-            int from_to[] = {0,0, 1,1, 2,2};
+            cv::Mat out;
+            cv::Mat in[] = {R, G, B};
 
             try{
-                cv::mixChannels(in, 3, &out->cvMat(), 1, from_to, 3);
+                cv::merge(in, 3, out);
             }catch(cv::Exception& e){
                 error() << "CombineRGBNode:\n\t"
                         << e.err << "\n\t"
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
 
-            r["image"] = out;
+            r["image"] = boost::make_shared<Image>(out);
             
             return r;
         }

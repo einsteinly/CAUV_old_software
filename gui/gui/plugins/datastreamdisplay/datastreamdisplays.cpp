@@ -5,6 +5,7 @@
 
 #include <gui/core/widgets/videoscreen.h>
 #include "graphs.h"
+#include <common/cauv_utils.h>
 
 #include <QMdiSubWindow>
 #include <QModelIndexList>
@@ -50,8 +51,6 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     CauvBasicPlugin::initialise(auv, node);
 
     // set up the categories
-
-    error() << "Initisaliing data strema plugin";
 
     //
     // motors
@@ -159,7 +158,8 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     m_debug = new QTreeWidgetItem(ui->dataStreams);
     m_debug->setText(0, "Debug");
     m_debug->setFlags(m_debug->flags() ^ Qt::ItemIsSelectable);
-    m_auv->debug.new_graph_stream->onUpdate.connect(boost::bind(&DataStreamPicker::onNewGraphableStream, this, _1));
+    m_debug->setExpanded(true);
+    //m_auv->debug.new_graph_stream->onUpdate.connect(boost::bind(&DataStreamPicker::onNewGraphableStream, this, _1));
 
     //
     // other

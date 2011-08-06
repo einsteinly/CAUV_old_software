@@ -1,7 +1,8 @@
 #ifndef __ARC_RENDERABLE_H__
 #define __ARC_RENDERABLE_H__
 
-#include <generated/messages.h>
+#include <generated/types/NodeInput.h>
+#include <generated/types/NodeOutput.h>
 
 #include "../renderable.h"
 #include "../pwTypes.h"
@@ -19,7 +20,6 @@ class Arc: public Renderable{
         virtual void draw(drawtype_e::e flags); 
         virtual bool acceptsMouseEvents();
         
-        // TODO: eww, introduces dependency on messages.h
         NodeOutput from(); 
         NodeInput to();
 

@@ -6,8 +6,8 @@
 #include <list>
 
 #include <common/cauv_node.h>
-#include <generated/messages.h>
 #include <common/blocking_queue.h>
+#include <generated/message_observers.h>
 
 #include "sonar_observer.h"
 #include "seanet_packet.h"

@@ -445,7 +445,7 @@ NodeParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error)
         try{
             r = boost::get<NodeParamValue>(i->second->value);
         }catch(boost::bad_get&){
-            throw id_error("requested output is not an NodeParamValue" + toStr(o_id));
+            throw id_error("requested output is not a NodeParamValue" + toStr(o_id));
         }
     }else{
         throw id_error("no such output" + toStr(o_id));
@@ -478,6 +478,16 @@ void Node::registerInputID(input_id const& i, InputSchedType const& st){
         private_in_map_t::value_type(i, Input::makeImageInputShared(st))
     );
     _statusMessage(boost::make_shared<InputStatusMessage>(m_pl_name, m_id, i, NodeIOStatus::None));
+}
+
+bool Node::unregisterOutputID(output_id const& o, bool warnNonExistent) {
+    lock_t l(m_outputs_lock);
+    
+    int removed = m_outputs.erase(o);
+    if (removed == 0 && warnNonExistent)
+        warning() << "Tried to remove non-existent output " << o;
+
+    return (removed > 0);
 }
 
 /* Check to see whether this node should be added to the scheduler queue

@@ -56,10 +56,12 @@ class DelayNode: public Node{
             
             image_ptr_t in = inputs[Image_In_Name];
             
-            // make sure output size is always the same as input size
-            if(in->cvMat().size() != m_queue_image_size){
+            // make sure output size is (almost) always the same as input size
+            // there is a race condition here, but it doesn't have any
+            // disastrous effects (simultaneous of in->mat())
+            if(in->mat().size() != m_queue_image_size){
                 m_queue = std::queue<image_ptr_t>();
-                m_queue_image_size = in->cvMat().size();
+                m_queue_image_size = in->mat().size();
             }
 
             while(m_queue.size() > unsigned(delay_by))

@@ -6,7 +6,9 @@
 
 #include <boost/make_shared.hpp>
 
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/SonarControlMessage.h>
 
 #include "seanet_packet.h"
 
@@ -233,7 +235,7 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
     const SeanetHeadData* head_data;
 
     // Get the received data from the packet
-    head_data = reinterpret_cast<const SeanetHeadData*>(&pkt->getData()[11]);
+    head_data = reinterpret_cast<const SeanetHeadData*>(&pkt->data()[11]);
 
     // FIXME:  Assuming 8-bit mode again
    
@@ -242,6 +244,7 @@ void SeanetSonar::process_data(boost::shared_ptr<SeanetPacket> pkt)
     dataline->range = range_from_nbins_adinterval(head_data->dBytes, head_data->adInterval);
     dataline->bearing = head_data->bearing;
     dataline->bearingRange = head_data->stepSize;
+    dataline->scanWidth = head_data->rightLim - head_data->leftLim;
     
     //debug() << "Sending data line with range" << dataline->range << "mm, bearing" << dataline->bearing << ", and bearing range " << dataline->bearingRange;
     //{
@@ -280,20 +283,25 @@ void cauv::sonarReadThread(SeanetSonar& sonar)
 
         while (true)
         {
-            retry:
             boost::this_thread::interruption_point();
 
             try {
                 pkt = sonar.m_serial_port->readPacket();
             }
-            catch (SonarIsDeadException &e) {
+            catch (SonarTimeoutException &e) {
                 if (isalive) {
-                    warning() << "Sonar hasn't sent an alive message in 3 secs.  Missing, presumed dead.";
+                    warning() << e.what();
+                    sonar.m_serial_port->reset();
                     sonar.m_state = SeanetSonar::SENDREBOOT;
                     sonar.m_cur_data_reqs = 0;
                     isalive = false;
                 }
-                goto retry;
+	            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+                continue;
+            }
+            catch (InvalidPacketException &e) {
+                error() << "Sonar serial port received invalid packet: " << e.what();
+                continue; 
             }
 
             /*cout << "Received packet: ";
@@ -305,16 +313,16 @@ void cauv::sonarReadThread(SeanetSonar& sonar)
             /* We want to update our interpretation of the state of the sonar
              * regardless of what state our state machine is currently in */
             
-            switch  (pkt->getType()) {
+            switch  (pkt->type()) {
                 case SeanetMessageType::Alive:
                     debug() << "Alive message received";
                     isalive = true;
-                    sonar.m_motor_state.centered = pkt->getData()[20] & HdInf::Centred;
-                    sonar.m_motor_state.motoron = pkt->getData()[20]  & HdInf::MotorOn;
-                    sonar.m_motor_state.motoring = pkt->getData()[20] & HdInf::Motoring;
-                    sonar.m_motor_state.noparams = pkt->getData()[20] & HdInf::NoParams;
-                    sonar.m_motor_state.sentcfg = pkt->getData()[20]  & HdInf::SentCfg;
-                    sonar.m_motor_state.time = *(uint32_t*)&pkt->getData()[14];
+                    sonar.m_motor_state.centered = pkt->data()[20] & HdInf::Centred;
+                    sonar.m_motor_state.motoron = pkt->data()[20]  & HdInf::MotorOn;
+                    sonar.m_motor_state.motoring = pkt->data()[20] & HdInf::Motoring;
+                    sonar.m_motor_state.noparams = pkt->data()[20] & HdInf::NoParams;
+                    sonar.m_motor_state.sentcfg = pkt->data()[20]  & HdInf::SentCfg;
+                    sonar.m_motor_state.time = *(uint32_t*)&pkt->data()[14];
 
                     if (sonar.m_motor_state != last_state) {
                         info() << "Transducer centred: " << (sonar.m_motor_state.centered ? "yes" : "no");
@@ -327,9 +335,9 @@ void cauv::sonarReadThread(SeanetSonar& sonar)
                     break;
                 case SeanetMessageType::VersionData:
                     debug() << "Version data received";
-                    sonar.m_motor_state.cpuid = *(uint32_t*)&pkt->getData()[14];
-                    sonar.m_motor_state.proglength = *(uint32_t*)&pkt->getData()[17];
-                    sonar.m_motor_state.checksum = *(uint16_t*)&pkt->getData()[21];
+                    sonar.m_motor_state.cpuid = *(uint32_t*)&pkt->data()[14];
+                    sonar.m_motor_state.proglength = *(uint32_t*)&pkt->data()[17];
+                    sonar.m_motor_state.checksum = *(uint16_t*)&pkt->data()[21];
                     break;
                 default:
                     break;
@@ -354,7 +362,7 @@ void cauv::sonarReadThread(SeanetSonar& sonar)
                     }
                     break;
                 case SeanetSonar::WAITFORVERSION:
-                    if (pkt->getType() == SeanetMessageType::VersionData) {
+                    if (pkt->type() == SeanetMessageType::VersionData) {
                         debug() << "Moving to state WAITFORPARAMS";
                         sonar.m_state = SeanetSonar::WAITFORPARAMS;
                         sonar.upload_current_params();
@@ -378,7 +386,7 @@ void cauv::sonarReadThread(SeanetSonar& sonar)
                 case SeanetSonar::SCANNING:
                     /* FIXME:  Maybe do this asynchronously, to ensure we can
                      * always pull data off the sonar fast enough */
-                     if (pkt->getType() == SeanetMessageType::HeadData) {
+                     if (pkt->type() == SeanetMessageType::HeadData) {
                         debug(3) << "Data received";
                         sonar.m_cur_data_reqs--;
                         if (sonar.m_queue.size() > 200) {

@@ -2,11 +2,11 @@ import messaging
 import threading
 import time
 
-#pylint: disable=E1101
+from cauv.debug import info, warning, error, debug
 
-class AUV(messaging.BufferedMessageObserver):
+class AUV(messaging.MessageObserver):
     def __init__(self, node):
-        messaging.BufferedMessageObserver.__init__(self)
+        messaging.MessageObserver.__init__(self)
         self.__node = node
         node.join("control")
         node.join("telemetry")
@@ -17,10 +17,6 @@ class AUV(messaging.BufferedMessageObserver):
         self.bearingCV = threading.Condition()
         self.depthCV = threading.Condition()
         self.pitchCV = threading.Condition()
-        
-        ## synchronising stuff
-        #self.received_state_condition = threading.Condition()
-        #self.received_state = None
 
     def send(self, msg):
         # send to control via self.__node
@@ -38,13 +34,12 @@ class AUV(messaging.BufferedMessageObserver):
     
     def getBearing(self):
         return self.current_bearing
-    #def getBearing(self, timeout=3):
-    #    self.received_state_condition.acquire()
-    #    self.received_state = None
-    #    self.send(messaging.StateRequestMessage())
-    #    self.received_state_condition.wait(timeout)
-    #    self.received_state_condition.release()
-    #    return self.received_state.orientation
+    
+    def getDepth(self):
+        return self.current_depth
+
+    def getPitch(self):
+        return self.current_pitch
 
     def bearing(self, bearing):
         if bearing is not None:
@@ -126,6 +121,7 @@ class AUV(messaging.BufferedMessageObserver):
         self.send(messaging.PitchAutopilotParamsMessage(kp, ki, kd, scale, Ap, Ai, Ad, thr, maxError))
 
     def prop(self, value):
+        debug("cauv.control.Node.prop(%s)" % value, 5)
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.Prop, value))
 
@@ -144,6 +140,22 @@ class AUV(messaging.BufferedMessageObserver):
     def vstern(self, value):
         self.checkRange(value)
         self.send(messaging.MotorMessage(messaging.MotorID.VStern, value))
+        
+    def forwardlights(self, value):
+        self.checkLightValue(value)
+        self.__node.send(messaging.LightMessage(messaging.LightID.Forward, value))
+        
+    def downlights(self, value):
+        self.checkLightValue(value)
+        self.__node.send(messaging.LightMessage(messaging.LightID.Down, value))
+        
+    def checkLightValue(self, value):
+        if not (value>=0 and value<256):
+            raise ValueError("invalid light value: %d" % value)
+
+    def cut(self, strength):
+        # strength is 0 = off, 1 = on
+        self.send(messaging.CuttingDeviceMessage(strength))
     
     def motorMap(self, motor_id, zero_plus, zero_minus, max_plus = 127, max_minus = -127):
         #
@@ -181,14 +193,18 @@ class AUV(messaging.BufferedMessageObserver):
         self.motorMap(messaging.MotorID.HStern, zero_plus, zero_minus, max_plus, max_minus)
 
     def v(self, value):
+        self.checkRange(value)
         self.vbow(value)
         self.vstern(value)
 
     def strafe(self, value):
+        debug("cauv.control.Node.strafe(%s)" % value, 5)
+        self.checkRange(value)
         self.hbow(value)
         self.hstern(value)
 
     def r(self, value):
+        self.checkRange(value)
         self.hbow(value)
         self.hstern(-value)
 
@@ -197,8 +213,6 @@ class AUV(messaging.BufferedMessageObserver):
             raise ValueError("invalid motor value: %d" % value)
     
     def onTelemetryMessage(self, m):
-        #self.bearing = m.orientation.yaw
-        #print "message"
         self.current_bearing = m.orientation.yaw
         self.current_depth = m.depth
         self.current_pitch = m.orientation.pitch
@@ -212,9 +226,3 @@ class AUV(messaging.BufferedMessageObserver):
         self.depthCV.release()
         self.pitchCV.release()
 
-    ## synchronous-ifying stuff
-    #def onStateMessage(self, m):
-    #    self.received_state_condition.acquire()
-    #    self.received_state = m
-    #    self.received_state_condition.notify()
-    #    self.received_state_condition.release()

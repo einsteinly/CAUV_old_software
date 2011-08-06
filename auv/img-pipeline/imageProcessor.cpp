@@ -5,7 +5,6 @@
 #include <boost/make_shared.hpp>
 
 #include <utility/string.h>
-#include <generated/messages.h>
 
 using namespace cauv::imgproc;
 
@@ -68,7 +67,8 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
         inputs = node->inputLinks();
         outputs = node->outputLinks();
 
-        info() << "Node added: (type=" << m->nodeType() << " "
+        info() << "Node added: (id="
+               << new_id << " type=" << m->nodeType() << " "
                << m->parents().size() << " parents, "
                << m->children().size() << " children)";
     }catch(std::exception& e){

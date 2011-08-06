@@ -54,8 +54,8 @@ class RecogniserNode: public Node{
             //std::vector<cv::KeyPoint> img_kps = _cvKeyPointVec(param< std::vector<KeyPoint> >("Image KeyPoints"));
             //m_reference_keypoints = conv(ref_kps);
 
-            image_ptr_t ref_img = inputs["Reference Image"];
-            image_ptr_t img = inputs["Image"];
+            cv::Mat ref_img = inputs["Reference Image"]->mat();
+            cv::Mat img = inputs["Image"]->mat();
             float surf_hess_thr = param<float>("SURF Hessian threshold");
                 
             cv::FernDescriptorMatcher::Params dm_params(
@@ -72,16 +72,21 @@ class RecogniserNode: public Node{
             cv::SURF surf_extractor(surf_hess_thr);
             
             const cv::Mat mask;
-            surf_extractor(ref_img->cvMat(), mask, kp1); 
+            surf_extractor(ref_img, mask, kp1); 
             debug() << *this << kp1.size() <<  "keypoints from reference image";
 
-            surf_extractor(img->cvMat(), mask, kp2);
+            surf_extractor(img, mask, kp2);
             debug() << *this << kp2.size() <<  "keypoints from image";
+            
+            if(!kp1.size())
+                throw std::runtime_error("No keypoints detected in reference image");
+            if(!kp2.size())
+                throw std::runtime_error("No keypoints detected in image");
 
             // find NN for each of kp2 in kp1
             cv::vector<cv::DMatch> matches2to1;
             debug() << *this << "Fern Descriptor Matcher Working...";
-            dm.match(img->cvMat(), kp2, ref_img->cvMat(), kp1, matches2to1);
+            dm.match(img, kp2, ref_img, kp1, matches2to1);
             debug() << *this << matches2to1.size() << "Descriptor Matches";
             printf("Done\n");
             
@@ -99,12 +104,12 @@ class RecogniserNode: public Node{
         }
     
     private:
-        image_ptr_t _drawCorresp(image_ptr_t im1, std::vector<cv::KeyPoint> im1_kp,
-                                 image_ptr_t im2, std::vector<cv::KeyPoint> im2_kp,
+        image_ptr_t _drawCorresp(cv::Mat im1, std::vector<cv::KeyPoint> im1_kp,
+                                 cv::Mat im2, std::vector<cv::KeyPoint> im2_kp,
                                  std::vector<cv::DMatch> const& desc_idx){
-            IplImage  img1_d = IplImage(im1->cvMat());
+            IplImage  img1_d = IplImage(im1);
             IplImage* img1   = &img1_d;
-            IplImage  img2_d = IplImage(im2->cvMat());
+            IplImage  img2_d = IplImage(im2);
             IplImage* img2   = &img2_d;
 
             IplImage* img_corr = cvCreateImage(cvSize(img1->width + img2->width, MAX(img1->height, img2->height)),

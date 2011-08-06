@@ -6,8 +6,12 @@
 #include <QtOpenGL>
 
 #include <utility/string.h>
-#include <generated/messages.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/NodeType.h>
+#include <generated/types/NodeStatus.h>
+#include <generated/types/NodeAddedMessage.h>
+#include <generated/types/NodeParametersMessage.h>
+#include <generated/types/ForceExecRequestMessage.h>
 
 #include "../pipelineWidget.h"
 #include "text.h"
@@ -43,13 +47,33 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
       m_node_type(m->nodeType()),
       m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
       m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
+      m_idtext(boost::make_shared<Text>(c, mkStr() << "id:" << m->nodeId())),
       m_execbutton(boost::make_shared<ExecButton>(this)),
       m_suppress_draggable(false),
       m_bg_col(Normal_BG_Colour){
     m_contents.push_back(m_closebutton);
+    m_contents.push_back(m_idtext);
     m_contents.push_back(m_execbutton);
     m_contents.push_back(m_title);
+}
 
+Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt)
+    : Draggable(c), m_pw(pw), m_bbox(), m_node_id(id),
+      m_node_type(nt),
+      m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
+      m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
+      m_idtext(boost::make_shared<Text>(c, mkStr() << "id:" << id)),
+      m_execbutton(boost::make_shared<ExecButton>(this)),
+      m_suppress_draggable(false),
+      m_bg_col(Normal_BG_Colour){
+    m_contents.push_back(m_closebutton);
+    m_contents.push_back(m_idtext);
+    m_contents.push_back(m_execbutton);
+    m_contents.push_back(m_title);
+    refreshLayout();
+}
+
+void Node::initFromMessage(boost::shared_ptr<NodeAddedMessage const>m){
     setOutputs(m->outputs());
     setOutputLinks(m->outputs());
 
@@ -58,20 +82,6 @@ Node::Node(container_ptr_t c, pw_ptr_t pw, boost::shared_ptr<NodeAddedMessage co
 
     setInputs(m->inputs());
     setInputLinks(m->inputs());
-}
-
-Node::Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt)
-    : Draggable(c), m_pw(pw), m_bbox(), m_node_id(id),
-      m_node_type(nt),
-      m_title(boost::make_shared<Text>(c, toStr(m_node_type))),
-      m_closebutton(boost::make_shared<CloseButton<Node> >(this)),
-      m_execbutton(boost::make_shared<ExecButton>(this)),
-      m_suppress_draggable(false),
-      m_bg_col(Normal_BG_Colour){
-    m_contents.push_back(m_closebutton);
-    m_contents.push_back(m_execbutton);
-    m_contents.push_back(m_title);
-    refreshLayout();
 }
 
 void Node::setType(NodeType::e const& n){
@@ -96,7 +106,7 @@ void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
         if(!m_params.count(j->first)){
             debug() << BashColour::Blue << "Node::" << __func__ << *j;
             in_ptr_t t = boost::make_shared<NodeInputBlob>(
-                this, m_pw, j->first
+                    shared_from_this(), m_pw, j->first
             );
             m_inputs[j->first] = t;
             m_contents.push_back(t);
@@ -128,7 +138,7 @@ void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outp
     for(i = outputs.begin(); i != outputs.end(); i++){
         debug() << BashColour::Blue << "Node::" << __func__ << *i;
         out_ptr_t t = boost::make_shared<NodeOutputBlob>(
-            this, m_pw, i->first
+                shared_from_this(), m_pw, i->first
         );
         m_outputs[i->first] = t;
         m_contents.push_back(t);
@@ -158,6 +168,7 @@ namespace{//Unnamed
 
 template<typename T> struct Type2Name { static const char* name; };
 template<typename T> const char* Type2Name<T>::name = "Unknown";
+template<> const char* Type2Name<cauv::KeyPoint>::name = "KeyPoint";
 template<> const char* Type2Name<Corner>::name = "Corner";
 template<> const char* Type2Name<Line>::name = "Line";
 template<> const char* Type2Name<float>::name = "float";
@@ -231,7 +242,7 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
             InParamPVPair t;
             t.pvpair = makePVPair(this, j, true);
             t.inblob = boost::make_shared<NodeInputParamBlob>(
-                this, m_pw, j.first
+                    shared_from_this(), m_pw, j.first
             );
             m_params[j.first] = t;
             m_contents.push_back(t.inblob);
@@ -471,6 +482,9 @@ void Node::refreshLayout(){
     m_closebutton->m_pos.y = -m_closebutton->bbox().min.y;
     m_back = m_closebutton->bbox() + m_closebutton->m_pos;
     debug(2) << "closebutton layout:" << m_closebutton->m_pos << m_closebutton->bbox();
+
+    m_idtext->m_pos.y = m_closebutton->m_pos.y - m_closebutton->bbox().h()/2 - m_idtext->bbox().min.y;
+    m_idtext->m_pos.x = m_closebutton->m_pos.x + m_closebutton->bbox().w() + m_idtext->bbox().min.x;
 
     m_title->m_pos.y = y_pos - roundA(m_title->bbox().max.y);
     m_title->m_pos.x = -m_title->bbox().min.x;

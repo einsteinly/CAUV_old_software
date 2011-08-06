@@ -15,7 +15,12 @@ execute_process(COMMAND ${PYTHON_EXECUTABLE} --version ERROR_VARIABLE PYTHON_VER
 
 string(REGEX MATCH "[0-9].[0-9]" PYTHON_VERSION_MAJOR_MINOR "${PYTHON_VERSION_FULL}")
 if(UNIX)
-    set(PYTHON_PACKAGES_PATH lib/python${PYTHON_VERSION_MAJOR_MINOR}/site-packages)
+    if(NOT EXISTS lib/python${PYTHON_VERSION_MAJOR_MINOR}/site-packages AND EXISTS lib/python${PYTHON_VERSION_MAJOR_MINOR}/dist-packages)
+        # Fuck you Debian.
+        set(PYTHON_PACKAGES_PATH lib/python${PYTHON_VERSION_MAJOR_MINOR}/dist-packages)
+    else()
+        set(PYTHON_PACKAGES_PATH lib/python${PYTHON_VERSION_MAJOR_MINOR}/site-packages)
+    endif()
 endif()
 if(WIN32)
     get_filename_component(PYTHON_PATH "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\${PYTHON_VERSION_MAJOR_MINOR}\\InstallPath]" ABSOLUTE CACHE)
@@ -30,19 +35,50 @@ else()
 endif()
 set(CAUV_PYTHON_INSTALL_PATH ${PYTHON_PREFIX}/${PYTHON_PACKAGES_PATH} CACHE STRING "Install path for the CAUV python_module. Recommended to use virtualenv for this.")
 
+execute_process(
+    COMMAND python ${PYMSGD}/msggen.py -l "python" -an -o ${SRCD} ${PYMSGD}/messages.msg 
+    OUTPUT_VARIABLE CAUV_MESSAGE_PYTHON_FILES
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 add_library (cauvinterface SHARED  
     cauvinterfacemodule.cpp
-    emit_variants.cpp
-    emit_containers.cpp
-    emit_enums.cpp
-    emit_messages.cpp
-    emit_observers.cpp
     emit_static.cpp
-    emit_structs.cpp
+    ${CAUV_MESSAGE_PYTHON_FILES}
     workarounds.h
 )
-set_target_properties(cauvinterface PROPERTIES PREFIX "")
+set_target_properties(cauvinterface PROPERTIES PREFIX            "" 
+                                               ${CONFIG}_POSTFIX "")
+
+foreach(F IN LISTS CAUV_MESSAGE_PYTHON_FILES)
+    file(RELATIVE_PATH FREL "${SRCD}" "${F}")
+    set_source_files_properties("${FREL}"
+                                PROPERTIES GENERATED TRUE)
+endforeach()
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+# python-based message generation
+# how to generate messages.py
+add_custom_target (python-messages-gen
+   ALL
+   WORKING_DIRECTORY ${PYMSGD}
+   COMMAND ./msggen.py -l python -o "${SRCD}/" ${PYMSGD}/messages.msg && cmake ${CMAKE_CACHEFILE_DIR} || exit 0
+   DEPENDS ${PYMSGD}/msggen.py
+           ${PYMSGD}/boostpy-emit_containers.cpp.template
+           ${PYMSGD}/boostpy-emit_enums.cpp.template
+           ${PYMSGD}/boostpy-emit_messages.cpp.template
+           ${PYMSGD}/boostpy-emit_message.cpp.template
+           ${PYMSGD}/boostpy-emit_observers.cpp.template
+           ${PYMSGD}/boostpy-emit_structs.cpp.template
+           ${PYMSGD}/boostpy-emit_variants.cpp.template
+           ${PYMSGD}/msggenyacc.py
+           ${PYMSGD}/msggenlex.py
+           ${PYMSGD}/messages.msg
+   COMMENT "Generating emit_*.cpp with messages-python" 
+)
+add_dependencies(cauvinterface python-messages-gen)
+
+
 
 #message ("Python Libs: ${PYTHON_LIBRARIES}")
 target_link_libraries (cauvinterface
@@ -60,28 +96,16 @@ add_custom_target (python-module ALL
     COMMENT "Python module target: depending on .py files"
 )
 
-install(TARGETS cauvinterface LIBRARY DESTINATION ${CAUV_PYTHON_INSTALL_PATH})
+string(TOLOWER "${CMAKE_BUILD_TYPE}" CAUV_INTERFACE_DEST_FOLDER )
+install(TARGETS cauvinterface LIBRARY DESTINATION ${CAUV_PYTHON_INSTALL_PATH}/${CAUV_INTERFACE_DEST_FOLDER})
 install(DIRECTORY ${SRCD}/cauv DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
         FILES_MATCHING PATTERN "*.py")
 
 # Fake install by linking
-if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
-    add_custom_command (
-        TARGET python-module
-        POST_BUILD
-        COMMAND ln -sf ${BINDIR}/cauvinterface.so ${SRCD}/cauvinterface.so
-        COMMENT "Linking module back to source tree"
-    )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES Darwin)
-    add_custom_command (
-        TARGET python-module
-        POST_BUILD
-        COMMAND ln -sf ${BINDIR}/cauvinterface.dylib ${SRCD}/cauvinterface.so
-        COMMENT "Linking module back to source tree"
-    )
-else ()
-    message(FATAL "Unknown platform: can't create python module link")
-endif ()
+get_target_property(CAUV_INTERFACE_LOCATION cauvinterface ${CONFIG}_LOCATION)
+get_filename_component(CAUV_INTERFACE_BASENAME "${CAUV_INTERFACE_LOCATION}" NAME_WE)
+
+cauv_install_link("${SRCD}/cauvinterface.so" ${CAUV_INTERFACE_LOCATION})
 
 #add_custom_command (
 #    TARGET python-module
@@ -92,29 +116,6 @@ endif ()
 #    COMMENT "CAUV python module test"
 #)
 
-# python-based message generation
-# how to generate messages.py
-add_custom_command (
-   OUTPUT ${SRCD}/emit_containers.cpp
-          ${SRCD}/emit_enums.cpp
-          ${SRCD}/emit_messages.cpp
-          ${SRCD}/emit_observers.cpp
-          ${SRCD}/emit_structs.cpp
-          ${SRCD}/emit_variants.cpp
-   WORKING_DIRECTORY ${PYMSGD}
-   COMMAND ./msggen.py -l python -o "${SRCD}/" ${PYMSGD}/messages.msg 
-   DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/boostpy-emit_containers.cpp.template
-           ${PYMSGD}/boostpy-emit_enums.cpp.template
-           ${PYMSGD}/boostpy-emit_messages.cpp.template
-           ${PYMSGD}/boostpy-emit_observers.cpp.template
-           ${PYMSGD}/boostpy-emit_structs.cpp.template
-           ${PYMSGD}/boostpy-emit_variants.cpp.template
-           ${PYMSGD}/msggenyacc.py
-           ${PYMSGD}/msggenlex.py
-           ${PYMSGD}/messages.msg
-   COMMENT "Generating emit_*.cpp with messages-python" 
-)
 
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (RCFILE ${CAUV_SOURCE_DIR}/pylint.rc)

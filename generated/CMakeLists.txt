@@ -1,67 +1,48 @@
-
 # abbreviate a little:
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
-set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
-
-# python-based message generation
-add_custom_command (
-   OUTPUT ${SRCD}/messages.h
-          ${SRCD}/messages.cpp
-          ${SRCD}/messages_fwd.h
-          ${SRCD}/messages_messages.h
-   COMMAND python ${PYMSGD}/msggen.py -l "c++" -o ${SRCD}/messages ${PYMSGD}/messages.msg 
-   DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/cppmess-messages.template.h
-           ${PYMSGD}/cppmess-messaging.template.h
-           ${PYMSGD}/cppmess-messaging.template.cpp
-           ${PYMSGD}/cppmess-forward.template.h
-           ${PYMSGD}/msggenyacc.py
-           ${PYMSGD}/msggenlex.py
-           ${PYMSGD}/messages.msg
-   COMMENT "Generating messages API with messages-python" 
-)
-
-add_custom_target (
-    messages-headers
-    DEPENDS ${SRCD}/messages.h
-            ${SRCD}/messages_fwd.h
-            ${SRCD}/messages_messages.h
-    COMMENT "Depending on generated message headers"
-)
 
 add_library (
     messages STATIC
 
-    messages.cpp
-    serialmess.cpp
+    ${CAUV_MESSAGE_FILES}
 )
+
 target_link_libraries (
     messages
 
     common
 )
 
-
-add_dependencies(messages messages-headers message-serialisation-headers)
-
-add_custom_command (
-   OUTPUT ${SRCD}/serialmess.h
-          ${SRCD}/serialmess.cpp
-   COMMAND python ${PYMSGD}/msggen.py -l "c++-serialisation" -o ${SRCD}/serialmess ${PYMSGD}/messages.msg 
-   DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/cppmess-serialise.template.h
-           ${PYMSGD}/cppmess-serialise.template.cpp
-           ${PYMSGD}/msggenyacc.py
-           ${PYMSGD}/msggenlex.py
-           ${PYMSGD}/messages.msg
-   COMMENT "Generating message serialisation with messages-python" 
+foreach(F IN LISTS CAUV_MESSAGE_FILES)
+    file(RELATIVE_PATH FREL "${SRCD}" "${F}")
+    set_source_files_properties("${FREL}"
+                                PROPERTIES GENERATED TRUE)
+endforeach()
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_target (messages-gen
+    ALL
+    COMMAND python ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg && cmake ${CMAKE_CACHEFILE_DIR} || exit 0
+    DEPENDS ${PYMSGD}/msggen.py
+            ${PYMSGD}/cppmess-serialise.template.h
+            ${PYMSGD}/cppmess-serialise.template.cpp
+            ${PYMSGD}/cppmess-message.template.h
+            ${PYMSGD}/cppmess-message.template.cpp
+            ${PYMSGD}/cppmess-messagetype.template.h
+            ${PYMSGD}/cppmess-xgroup.template.h
+            ${PYMSGD}/cppmess-xmessage.template.h
+            ${PYMSGD}/cppmess-xmessage.template.cpp
+            ${PYMSGD}/cppmess-xstruct.template.h
+            ${PYMSGD}/cppmess-structs.template.cpp
+            ${PYMSGD}/cppmess-xenum.template.h
+            ${PYMSGD}/cppmess-xvariant.template.h
+            ${PYMSGD}/cppmess-message_observers.template.h
+            ${PYMSGD}/cppmess-message_observers.template.cpp
+            ${PYMSGD}/msggenyacc.py
+            ${PYMSGD}/msggenlex.py
+            ${PYMSGD}/messages.msg
+    COMMENT "Generating messages"
 )
-
-add_custom_target (
-    message-serialisation-headers
-    DEPENDS ${SRCD}/serialmess.h
-    COMMENT "Depending on generated message serialisation header"
-)
+add_dependencies(messages messages-gen)
 
 add_custom_command (
     OUTPUT ${SRCD}/cauv_logo_large.h
@@ -78,7 +59,7 @@ add_custom_target (
 
 add_custom_command (
     OUTPUT ${SRCD}/version.h
-    COMMAND hg -R ${SRCD}/../ summary | xxd -i - ${SRCD}/version.h
+    COMMAND hg -R ${SRCD}/../ summary | sed "s/^/    /" | xxd -i - ${SRCD}/version.h
     DEPENDS ${SRCD}/../.hg
     COMMENT "Generating version header"
 )

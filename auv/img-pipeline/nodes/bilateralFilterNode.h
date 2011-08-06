@@ -47,8 +47,7 @@ class BilateralFilterNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image in"];
-            boost::shared_ptr<Image> out = boost::make_shared<Image>();
+            cv::Mat img = inputs["image in"]->mat();
             
             int diameter = param<int>("diameter");
             float sigmaColour = param<float>("sigmaColour");
@@ -56,9 +55,10 @@ class BilateralFilterNode: public Node{
 
             debug(5) << "BilateralFilterNode:" << diameter << sigmaColour << sigmaSpace;
             try{
-                cv::bilateralFilter(img->cvMat(), out->cvMat(),
+                cv::Mat out;
+                cv::bilateralFilter(img, out,
                                     diameter, sigmaColour, sigmaSpace); 
-                r["image out"] = out;
+                r["image out"] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "BilateralFilterNode:\n\t"
                         << e.err << "\n\t"

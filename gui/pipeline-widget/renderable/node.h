@@ -5,18 +5,19 @@
 #include <set>
 
 #include <boost/make_shared.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
-#include <generated/messages_fwd.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/NodeType.h>
+#include <generated/types/NodeParamValue.h>
+#include <generated/types/SetNodeParameterMessage.h>
+#include <generated/types/GraphRequestMessage.h>
+#include <generated/types/RemoveNodeMessage.h>
 
 #include "../container.h"
 #include "../pwTypes.h"
 #include "../pipelineWidget.h"
 #include "draggable.h"
-
-// eww, can't forward declare enums (or boost variants of standard library
-// types...), have to drag in definitions
-#include <generated/messages.h>
 
 namespace cauv{
 
@@ -28,7 +29,8 @@ struct NodeInput;
 namespace pw{
 
 class Node: public Draggable,
-            public Container{
+            public Container,
+            public boost::enable_shared_from_this<Node>{
         typedef std::set<renderable_ptr_t> renderable_set_t;
         typedef std::map<std::string, renderable_ptr_t> str_renderable_map_t;
         typedef boost::shared_ptr<NodeInputBlob> in_ptr_t;
@@ -53,6 +55,7 @@ class Node: public Draggable,
         Node(container_ptr_t c, pw_ptr_t pw, node_id const& id, NodeType::e const& nt);
         virtual ~Node(){ }
 
+        void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
         void setType(NodeType::e const&);
         void setInputs(std::map<std::string, NodeOutput> const&);
         void setInputLinks(std::map<std::string, NodeOutput> const&);
@@ -119,6 +122,7 @@ class Node: public Draggable,
 
         text_ptr_t m_title;
         renderable_ptr_t m_closebutton;
+        renderable_ptr_t m_idtext;
         renderable_ptr_t m_execbutton;
         str_in_map_t m_inputs;
         str_inparam_map_t m_params;        

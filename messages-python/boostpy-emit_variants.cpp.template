@@ -5,7 +5,9 @@
 \#include <boost/make_shared.hpp>
 
 \#include "emit_generated.h"
-\#include <generated/messages.h>
+#for $v in $variants
+\#include <generated/types/${v.name}.h>
+#end for
 
 namespace bp = boost::python;
 using namespace cauv;

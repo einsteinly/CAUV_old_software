@@ -3,6 +3,7 @@ from debug import debug, warning, error, info
 
 import threading
 import pickle
+import copy
 
 #pylint: disable=E1101
 
@@ -250,14 +251,14 @@ class Model(messaging.MessageObserver):
     def onNodeAddedMessage(self, m):
         if not self.checkName(m): return
         self.node_added_condition.acquire()
-        self.node_added = m
+        self.node_added = copy.deepcopy(m)
         self.node_added_condition.notify()
         self.node_added_condition.release()
 
     def onNodeRemovedMessage(self, m):
         if not self.checkName(m): return
         self.node_removed_condition.acquire()
-        self.node_removed = m
+        self.node_removed = copy.deepcopy(m)
         self.node_removed_condition.notify()
         self.node_removed_condition.release()
 
@@ -266,21 +267,21 @@ class Model(messaging.MessageObserver):
         # TODO: be discriminating about whether this parameter message actually
         # corresponds to the one set in setParameterSynchronous
         self.parameter_set_condition.acquire()
-        self.parameter_set = m
+        self.parameter_set = copy.deepcopy(m)
         self.parameter_set_condition.notify()
         self.parameter_set_condition.release()
 
     def onGraphDescriptionMessage(self, m):
         if not self.checkName(m): return
         self.description_ready_condition.acquire()
-        self.graph_description = m
+        self.graph_description = copy.deepcopy(m)
         self.description_ready_condition.notify()
         self.description_ready_condition.release()
 
     def onArcAddedMessage(self, m):
         if not self.checkName(m): return
         self.arc_added_condition.acquire()
-        self.arc_added = m
+        self.arc_added = copy.deepcopy(m)
         self.arc_added_condition.notify()
         self.arc_added_condition.release()
 

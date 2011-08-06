@@ -1,9 +1,12 @@
 #include "pipelineWidgetNode.h"
 #include "pipelineMessageObserver.h"
 
-#include <debug/cauv_debug.h>
-
 #include <boost/make_shared.hpp>
+
+#include <debug/cauv_debug.h>
+#include <generated/types/DebugGroup.h>
+#include <generated/types/Pl_GuiGroup.h>
+#include <generated/types/PipelineGroup.h>
 
 cauv::pw::PipelineGuiCauvNode::PipelineGuiCauvNode(PipelineWidget *p)
     : CauvNode("pipe-gui"), m_widget(p){

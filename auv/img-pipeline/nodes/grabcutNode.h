@@ -9,8 +9,6 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <generated/messages.h>
-
 #include "../node.h"
 
 
@@ -52,8 +50,8 @@ class GrabCutNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs["image"];
-            image_ptr_t mask = inputs["mask"];
+            cv::Mat img = inputs["image"]->mat();
+            cv::Mat mask = inputs["mask"]->mat();
             
             int iterations = param<int>("iterations");
             int x = param<int>("x");
@@ -62,8 +60,8 @@ class GrabCutNode: public Node{
             int height = param<int>("height");
             bool use_mask = param<bool>("use_mask");
 
-        cv::Mat bgdModel, fgdModel;
-        cv::Rect rect(x, y, width, height);
+            cv::Mat bgdModel, fgdModel;
+            cv::Rect rect(x, y, width, height);
             int mode = cv::GC_EVAL;
             if(use_mask)
                 mode = cv::GC_INIT_WITH_MASK;
@@ -74,9 +72,8 @@ class GrabCutNode: public Node{
 
             try{
                     //perform grabcut iterations
-                    cv::grabCut(img->cvMat(), mask->cvMat(), rect, bgdModel,
-                    fgdModel, iterations, mode);
-                    r["mask (not copied)"] = mask;
+                    cv::grabCut(img, mask, rect, bgdModel, fgdModel, iterations, mode);
+                    r["mask (not copied)"] = boost::make_shared<Image>(mask);
                     
             }catch(cv::Exception& e){
                 error() << "GrabCutNode:\n\t"

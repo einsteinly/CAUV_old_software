@@ -22,8 +22,7 @@
 
 #include <utility/bash_cout.h>
 #include <utility/string.h>
-#include <generated/messages_fwd.h>
-#include <generated/messages_messages.h>
+#include <generated/types/DebugType.h>
 #include <common/cauv_utils.h>
 #include <common/cauv_node.h>
 

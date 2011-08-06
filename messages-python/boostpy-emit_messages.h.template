@@ -1,0 +1,13 @@
+/***  This is a generated file, do not edit ***/
+\#ifndef __EMIT_MESSAGES_H__
+\#define __EMIT_MESSAGES_H__
+
+\#include "workarounds.h" // _must_ be first
+
+#for $g in $groups
+#for $m in $g.messages
+void emit${m.name}Message();
+#end for
+#end for
+
+\#endif//__EMIT_MESSAGES_H__

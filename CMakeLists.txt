@@ -23,6 +23,10 @@ project (CAUV)
 # set paths for package search scripts
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CAUV_SOURCE_DIR}/cmake/")
 
+option(CAUV_DEBUG_MESSAGES "Emit code to allow message bytes to be printed at high debug levels" OFF)
+if (CAUV_DEBUG_MESSAGES)
+    add_definitions(-DCAUV_DEBUG_MESSAGES)
+endif()
 
 # Definitions (overridable) for Debug / Release
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG CAUV_DEBUG_LEVEL=1)
@@ -37,32 +41,40 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # Custom install which adds a prefix to executables
 set (CAUV_BINARY_PREFIX "cauv-" CACHE STRING "string to prepend to all cauv executables")
 
+set (CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
+set (CMAKE_DEBUG_POSTFIX "d")
+string(TOUPPER "${CMAKE_BUILD_TYPE}" CONFIG)
+
+function (cauv_install_link FROM TO)
+    install (CODE "
+        get_filename_component (TO_REAL \"${TO}\" REALPATH)
+        get_filename_component (FROM_REAL \"${FROM}\" REALPATH)
+        if (IS_SYMLINK ${FROM} AND \"\${TO_REAL}\" STREQUAL \"\${FROM_REAL}\")
+            message(STATUS \"Link valid: ${FROM}\")
+        else() 
+            if (IS_SYMLINK ${FROM} OR EXISTS ${FROM})
+                message(STATUS \"Removing ${FROM}\")
+                file(REMOVE ${FROM})
+            endif()
+            message(STATUS \"Linking ${FROM} -> ${TO}\")
+            execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${TO} ${FROM})
+        endif()
+    ")
+endfunction()
+
 function (cauv_install TARGET)
     get_target_property(TARGET_TYPE ${TARGET} TYPE)
     if (${TARGET_TYPE} STREQUAL "EXECUTABLE")
+
         get_target_property(TARGET_OUTPUT ${TARGET} OUTPUT_NAME)
-        if (${TARGET_OUTPUT} STREQUAL "TARGET_OUTPUT-NOTFOUND")
+        if (NOT TARGET_OUTPUT)
             set(TARGET_OUTPUT "${TARGET}")
         endif()
-        set (TARGET_OLD "${CMAKE_INSTALL_PREFIX}/bin/cauv/${TARGET_OUTPUT}")
-        set (TARGET_NEW "${CMAKE_INSTALL_PREFIX}/bin/${CAUV_BINARY_PREFIX}${TARGET_OUTPUT}")
-       
+        set (TARGET_OLD "${CMAKE_INSTALL_PREFIX}/bin/cauv/${CMAKE_BUILD_TYPE}/${TARGET_OUTPUT}")
+        set (TARGET_NEW "${CMAKE_INSTALL_PREFIX}/bin/${CAUV_BINARY_PREFIX}${TARGET_OUTPUT}${CMAKE_${CONFIG}_POSTFIX}")
 
-        install (TARGETS ${TARGET} DESTINATION bin/cauv )
-        install (CODE "
-            get_filename_component (TARGET_OLD_REAL \"${TARGET_OLD}\" REALPATH)
-            get_filename_component (TARGET_NEW_REAL \"${TARGET_NEW}\" REALPATH)
-            if (IS_SYMLINK ${TARGET_NEW} AND \"\${TARGET_OLD_REAL}\" STREQUAL \"\${TARGET_NEW_REAL}\")
-                message(STATUS \"Link valid: ${TARGET_NEW}\")
-            else() 
-                if (IS_SYMLINK ${TARGET_NEW} OR EXISTS ${TARGET_NEW})
-                    message(STATUS \"Removing ${TARGET_NEW}\")
-                    file(REMOVE ${TARGET_NEW})
-                endif()
-                message(STATUS \"Linking ${TARGET_NEW} -> ${TARGET_OLD}\")
-                execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${TARGET_OLD} ${TARGET_NEW})
-            endif()
-        ")
+        install (TARGETS ${TARGET} DESTINATION bin/cauv/${CMAKE_BUILD_TYPE} )
+        cauv_install_link(${TARGET_NEW} ${TARGET_OLD})
     else()
         install (
             TARGETS ${TARGET}
@@ -86,9 +98,24 @@ if (Boost_VERSION GREATER 104500)
     add_definitions (-DBOOST_FILESYSTEM_VERSION=2)
 endif()
 
+
+set (GEND "${CAUV_SOURCE_DIR}/generated")
+set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
+execute_process(
+    COMMAND python ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg 
+    OUTPUT_VARIABLE CAUV_MESSAGE_FILES
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+foreach(F IN LISTS CAUV_MESSAGE_FILES)
+    file(RELATIVE_PATH FREL "${CAUV_SOURCE_DIR}" "${F}")
+    set_source_files_properties("${FREL}"
+                                PROPERTIES GENERATED TRUE)
+endforeach()
+
+
+add_subdirectory (generated)
 add_subdirectory (common)
 add_subdirectory (messages-python)
-add_subdirectory (generated)
 add_subdirectory (auv)
 add_subdirectory (gui)
 add_subdirectory (utility)

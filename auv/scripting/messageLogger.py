@@ -37,11 +37,12 @@ class SonarDataLineWrapper:
         self.bearing = sdl.bearing
         self.bearingRange = sdl.bearingRange
         self.range = sdl.range
+        self.scanWidth = sdl.scanWidth
     def SonarDataLine(self):
         dl = msg.byteVec()
         for b in self.data:
             dl.append(b)
-        return msg.SonarDataLine(dl, self.bearing, self.bearingRange, self.range)
+        return msg.SonarDataLine(dl, self.bearing, self.bearingRange, self.range, self.scanWidth)
  
 class MotorIDWrapper:
     def __init__(self, mid = msg.MotorID()):
@@ -185,7 +186,7 @@ class Logger(msg.MessageObserver):
                     info('playback stopped')
                     break
                 next_thing = self.__shelf[sorted_keys[i].hex()]
-                if msg.__class__ and msg.__class__.__name__.endswith('Message'):
+                if msg.__class__ and msg.__class__.__name__.endswith('Message'): #pylint: disable=E1101
                     # this is a message
                     debug('t=%g, sending: %s' % (sorted_keys[i], next_thing), 5)
                     self.node.send(next_thing)

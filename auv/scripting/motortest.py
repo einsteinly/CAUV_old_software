@@ -13,21 +13,6 @@ import optparse
 import random
 
 
-def setupParams(node, auv):
-    info('Setting calibration parameters')
-    # set-up calibration factors
-    auv.calibrateForSaltWater()
-
-    auv.bearingParams(1, 0, -80, 1)
-    auv.depthParams(40, 0.01, 0, 1)
-    auv.pitchParams(1, 0, 0, 1)
-
-    auv.propMap(10, -10, 127, -127)
-    auv.vbowMap(10, -10, 127, -127)
-    auv.hbowMap(10, -10, 127, -127)
-    auv.vsternMap(10, -10, 127, -127)
-    auv.hsternMap(10, -10, 127, -127)
-
 def randomMotorTest(node, auv, max_power=127*3, duration=60.0, delay=1.0):
     auv.stop()
     debug('random motor test: %d, %d' % (max_power, duration))
@@ -127,9 +112,6 @@ if __name__ == '__main__':
             help="pause after each motor command")
     p.add_option("-p", "--power", dest="power", help=" motor power", type=int,
             default=30)
-    p.add_option("-N", "--no-params", dest="no_params", default=False,
-            action="store_true",
-            help="don't set motor maps and other parameters")
     p.add_option('-R', "--random", dest="random", default=False,
             action="store_true",
             help="test random motors at random speeds with at most "+\
@@ -144,14 +126,14 @@ if __name__ == '__main__':
     opts, args = p.parse_args()
     
     node = cauv.node.Node('py-mt')
-    auv = control.AUV(node)
-
-    if not opts.no_params:
-        setupParams(node, auv)
-    
-    if opts.random:
-        randomMotorTest(node, auv, opts.rand_power_limit, opts.rand_duration, opts.delay)
-    else:
-        motorTest(node, auv, opts.power, opts.delay)
+    try:
+        auv = control.AUV(node)
+        
+        if opts.random:
+            randomMotorTest(node, auv, opts.rand_power_limit, opts.rand_duration, opts.delay)
+        else:
+            motorTest(node, auv, opts.power, opts.delay)
+    finally:
+        node.stop()
 
 

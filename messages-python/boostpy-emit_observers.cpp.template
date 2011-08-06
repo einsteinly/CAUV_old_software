@@ -4,8 +4,9 @@
 \#include <boost/python/errors.hpp>
 
 \#include "emit_generated.h"
-\#include <generated/messages.h>
+\#include <generated/message_observers.h>
 \#include <debug/cauv_debug.h>
+\#include <utility/performance.h>
 
 namespace bp = boost::python;
 using namespace cauv;
@@ -24,6 +25,7 @@ class MessageObserverWrapper:
             GILLock l;
             if(bp::override f = this->get_override("on${className}")){
                 debug(12) << "MessageObserver: calling override for on${className}";
+                Timer t; t.start();
                 try{
                     f(m);
                 }catch(bp::error_already_set const &){
@@ -32,6 +34,11 @@ class MessageObserverWrapper:
                         PyErr_Print();
                     }
                 }
+                unsigned long long mu_sec = t.stop();
+                if(mu_sec > 1000000)
+                    error() << "on${className} took" << mu_sec / 1000000.0 << "s";
+                else if(mu_sec > 100000)
+                    warning() << "on${className} took" << mu_sec / 1000000.0 << "s"; 
             }else{
                 l.release();
                 debug(12) << "MessageObserver: no override for on${className}";

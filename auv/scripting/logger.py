@@ -4,120 +4,72 @@
 import cauv
 import cauv.node as node
 import cauv.messaging as msg
+from cauv.debug import debug, error, warning, info
 
 import math
 import time
 import traceback
 
-prop_speed_conversion = 0.4 / 127
-strafe_speed_conversion = 0.6 / 127
-
-class LoggingObserver(msg.BufferedMessageObserver):
+class LoggingObserver(msg.MessageObserver):
     def __init__(self, node):
-        msg.BufferedMessageObserver.__init__(self)
+        msg.MessageObserver.__init__(self)
         self.__node = node
         self.__node.addObserver(self)
-        self.log = open(time.strftime('cauv-%H-%M-%S.log'), 'w')
+        self.log = open(time.strftime('cauv-mission-%H-%M-%S.log'), 'w')
         self.__node.join("telemetry")
         self.__node.join("ai")
-        self.__node.join("processing")
-        self.__node.join("gui")
-
-        self.yaw = None
-        self.pitch = None
-        self.roll = None
+        # Properties:
         self.start_time = time.time()
-        self.last_time = 0
-        self.speed_forwards = 0
-        self.speed_right = 0
-        self.x = 0
-        self.y = 0
+        # From LocationMessage:
+        self.latitude  = 0
+        self.longitude = 0
+        self.altitude  = 0
+        self.speed = msg.floatXYZ()
+        # From TelemetryMessage:
         self.depth = 0
-        self.action = ""
+        self.bearing = 0
+        # From AILogMessage:
+        self.comment = ""
     
     def close(self):
         self.log.close()
+        self.__node.stop()
 
     def writeLine(self):
-        t = time.time() - self.start_time
-        dt = t - self.last_time
-        self.x += dt * self.speed_forwards * math.cos(math.radians(self.yaw))
-        self.y += dt * self.speed_forwards * math.sin(math.radians(self.yaw))
-        self.x += dt * self.speed_right * math.sin(math.radians(self.yaw))
-        self.y += -dt * self.speed_right * math.cos(math.radians(self.yaw))
-        
-        self.last_time = t
-        line = "'(%g,%g,%g,%g,'%s')'\n" % (t, self.x, self.y, self.depth, self.action)
-        print line
+        now = time.time() - self.start_time
+        line = "'(%g,%g,%g,%g,'%s')'\n" % (now, self.latitude, self.longitude, self.depth, self.comment)
+        debug(line)
         self.log.write(line)
+        self.comment = ''
 
-    def onScriptMessage(self, m):
-        self.action = 'executing new mission: %d bytes' % len(m.msg)
+    #def onScriptMessage(self, m):
+    #    self.comment = 'executing new mission: %d bytes' % len(m.msg)
+    #    self.writeLine()
+
+    def onAIlogMessage(self, m):
+        self.comment = str(m.msg)
         self.writeLine()
-
-    def onBearingAutopilotParamsMessage(self, m):
-        if m.enabled:
-            self.action = 'new bearing set: %g' % m.target
-        else:
-            self.action = 'bearing control disabled'
-        self.writeLine() 
-
-    def onDepthAutopilotParamsMessage(self, m):
-        if m.enabled:
-            self.action = 'new depth set: %g' % m.target
-        else:
-            self.action = 'depth control disabled'
-        self.writeLine()
-
-    def onPitchAutopilotParamsMessage(self, m):
-        if m.enabled:
-            self.action = 'new pitch set: %g' % m.target
-        else:
-            self.action = 'pitch control disabled'
-        self.writeLine()
-
-    def onMotorStateMessage(self, m):
-        self.speed_forwards = m.demand.prop * prop_speed_conversion
-        net_h_power = m.demand.hbow + m.demand.hstern
-        self.speed_right = net_h_power * strafe_speed_conversion
-        self.writeLine()
-
+    
     def onTelemetryMessage(self, m):
-        self.yaw = m.orientation.yaw
-        self.pitch = m.orientation.pitch
-        self.roll = m.orientation.roll
+        self.bearing = m.orientation.yaw
         self.depth = m.depth
         self.writeLine()
-    
-    def onLinesMessage(self, m):
-        if len(m.lines):
-            anglemsg = ''
-            if m.lines[0].angle < 0:
-                anglemsg = 'angled left at apparent %d degrees' % (-m.lines[0].angle)
-            else:
-                anglemsg = 'angled right at apparent %d degrees' % (m.lines[0].angle)
-            if m.lines[0].centre > 0.5:
-                self.action = 'pipeline detected right (%g,%g), %s' % (m.lines[0].centre.x, m.lines[0].centre.y, anglemsg)
-            else:
-                self.action = 'pipeline detected left (%g,%g), %s' % (m.lines[0].centre.x, m.lines[0].centre.y, anglemsg)
-            self.writeLine()
-            self.action = ''
-    
-    def onCirclesMesage(self, m):
-        if len(m.circles):
-            if m.circles[0].centre > 0.5:
-                self.action = 'buoy detected right (%g,%g)' % (m.circles[0].centre.x, m.circles[0].centre.y)
-            else:
-                self.action = 'buoy detected left (%g,%g)' % (m.circles[0].centre.x, m.circles[0].centre.y)
+
+    def onLocationMessage(self, m):
+        self.latitude = m.latitude
+        self.longitude = m.longitude
+        self.altitude = m.altitude
+        self.speed = m.speed
+        self.writeLine()
 
 if __name__ == '__main__':
     n = node.Node("py-log")
     logger = LoggingObserver(n)
-    
     try:
         while True:
-            time.sleep(500)
+            time.sleep(1.0)
     except Exception, e:
-        traceback.print_exc()
+        error(str(traceback.format_exc()))
+    finally:
         logger.close()
 

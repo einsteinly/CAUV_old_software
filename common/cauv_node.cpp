@@ -6,12 +6,14 @@
 #include <boost/filesystem.hpp>
 
 #include <utility/string.h>
-#include <generated/messages_fwd.h>
 #include <common/cauv_global.h> 
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
 #include <common/spread/msgsrc_mb_observer.h>
 #include <debug/cauv_debug.h>
+#include <generated/message_observers.h>
+#include <generated/types/DebugLevelMessage.h>
+#include <generated/types/MembershipChangedMessage.h>
 
 #include "cauv_node.h"
 #include "cauv_utils.h"
@@ -33,6 +35,8 @@ CauvNode::~CauvNode()
 void CauvNode::run(bool synchronous)
 {
     cauv_global::print_module_header(m_name);
+    info() << "Module: " << m_name;
+    info() << "Version:\n" << Version_Information;
 
     m_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
     if(!synchronous)
@@ -48,7 +52,7 @@ void CauvNode::run(bool synchronous)
         m_event_monitor->startMonitoringSync();
     else
         while(m_event_monitor->isMonitoring())
-            msleep(500);
+            msleep(200);
 
     m_running = false;
 }

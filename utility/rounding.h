@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+#include <limits>
+
 template<typename T>
 inline static T roundZ(T const& v){
     if(v >= 0) return std::floor(v);
@@ -33,6 +35,11 @@ inline static T max(T const& a, T const& b){
 template<typename TRet, typename TLow, typename TVal, typename THigh>
 inline static TRet clamp_cast(TLow const& low, TVal const& value, THigh const& high){
     return value >= high? high : value <= low? low : TRet(value); 
+}
+
+template<typename TRet, typename TVal>
+inline static TRet clamp_cast(TVal const& value){
+    return clamp_cast<TRet, TRet, TVal, TRet>(std::numeric_limits<TRet>::min(), value, std::numeric_limits<TRet>::max());
 }
 
 template<typename TLow, typename TVal, typename THigh>

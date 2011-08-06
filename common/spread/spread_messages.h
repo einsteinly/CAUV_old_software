@@ -5,8 +5,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <ssrc/spread/Mailbox.h>
-
-#include <generated/messages.h>
+#include <utility/serialisation-types.h>
 
 namespace cauv{
 

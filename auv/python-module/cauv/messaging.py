@@ -3,8 +3,6 @@
 
 from cauvinterface import *
 
-#pylint: disable=E0602
-
 # until it works...
 AIMessageObserver = BufferedMessageObserver
 

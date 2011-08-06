@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <generated/messages.h>
+#include <generated/types/SonarDataLine.h>
 
 namespace cauv{
 

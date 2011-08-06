@@ -54,7 +54,7 @@ class ResizeNode: public Node{
             cv::Mat new_mat;
 
             try{
-                cv::resize(img->cvMat(), new_mat, cv::Size(), scale_fac, scale_fac, interp);
+                cv::resize(img->mat(), new_mat, cv::Size(), scale_fac, scale_fac, interp);
                 r["image_out"] = boost::make_shared<Image>(new_mat);
             }catch(cv::Exception& e){
                 error() << "ResizeNode:\n\t"

@@ -3,7 +3,6 @@
 #include <QtOpenGL>
 
 #include <debug/cauv_debug.h>
-
 #include "nodeIO.h"
 
 using namespace cauv::pw;
@@ -64,12 +63,12 @@ void Arc::draw(drawtype_e::e flags){
     glEnd();
 
     glTranslatef(sp);
-    glCircle(4.0);
-    glCircleOutline(3.0);
+    glCircle(4.0, 6);
+    glCircleOutline(3.0, 6);
 
     glTranslatef(dp - sp);
-    glCircle(4.0);
-    glCircleOutline(3.0);
+    glCircle(4.0, 6);
+    glCircleOutline(3.0, 6);
 }
 
 bool Arc::acceptsMouseEvents(){

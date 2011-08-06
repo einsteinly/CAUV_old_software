@@ -3,14 +3,10 @@
 
 #include <boost/cstdint.hpp>
 
-#include <boost/scoped_ptr.hpp>
+#include <opencv2/core/core.hpp>
 
 #include <utility/streamops.h>
 #include <utility/serialisation-types.h>
-
-namespace cv{
-class Mat;
-}
 
 namespace cauv{
 
@@ -24,18 +20,13 @@ class Image{
         Image& operator=(Image const& other);
         ~Image();
 
-        cv::Mat const& cvMat() const;
-        cv::Mat& cvMat();
-
-        int width() const;
-        int height() const;
-        int channels() const;
+        cv::Mat mat() const;
+        void mat(cv::Mat const& mat);
 
         void serializeQuality(int32_t);
 
     private:
-        boost::scoped_ptr<cv::Mat> m_img;
-
+        cv::Mat m_img;
         std::string m_compress_fmt;
         std::vector<int32_t> m_compress_params;
 };

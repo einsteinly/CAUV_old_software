@@ -26,7 +26,8 @@
 
 #include <common/cauv_utils.h>
 #include <common/blocking_queue.h>
-#include <generated/messages.h>
+#include <generated/message_observers.h>
+#include <generated/types/message.h>
 #include <debug/cauv_debug.h>
 
 namespace cauv{

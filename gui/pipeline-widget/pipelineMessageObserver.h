@@ -2,7 +2,7 @@
 #define __PIPELINE_MESSAGE_OBSERVER_H__
 
 #include <common/cauv_node.h>
-#include <generated/messages.h>
+#include <generated/message_observers.h>
 
 #include <QObject>
 

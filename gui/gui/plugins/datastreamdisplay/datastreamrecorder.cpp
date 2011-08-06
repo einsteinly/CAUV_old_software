@@ -1,6 +1,7 @@
 #include "datastreamrecorder.h"
 
 #include <QSpinBox>
+#include <common/cauv_utils.h>
 
 using namespace cauv;
 

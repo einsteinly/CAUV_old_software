@@ -9,7 +9,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <generated/messages.h>
+#include <generated/types/CentreMessage.h>
 
 #include "../node.h"
 #include "outputNode.h"
@@ -48,13 +48,13 @@ class CentreFinderNode : public OutputNode{
 
             std::string name = param<std::string>("name");
 
-            image_ptr_t img = inputs["image_in"];
+            cv::Mat img = inputs["image_in"]->mat();
 
-            if(!img->cvMat().isContinuous())
+            if(!img.isContinuous())
                 throw(parameter_error("Image must be continuous."));
-            if((img->cvMat().type() & CV_MAT_DEPTH_MASK) != CV_8U)
+            if((img.type() & CV_MAT_DEPTH_MASK) != CV_8U)
                 throw(parameter_error("Image must have unsigned bytes."));
-            if(img->cvMat().channels() > 1)
+            if(img.channels() > 1)
                 throw(parameter_error("Image must have only one channel."));
                 //TODO: support vector parameters
 
@@ -62,9 +62,9 @@ class CentreFinderNode : public OutputNode{
             int totalY = 0;
             int sum = 0;
 
-            for(int i = 0; i < img->cvMat().cols; i++){
-                for(int j = 0; j < img->cvMat().rows; j++){
-                    if(img->cvMat().at<uint8_t>(j, i) > 127){
+            for(int i = 0; i < img.cols; i++){
+                for(int j = 0; j < img.rows; j++){
+                    if(img.at<uint8_t>(j, i) > 127){
                         totalX += i;
                         totalY += j;
                         sum++;
@@ -81,7 +81,7 @@ class CentreFinderNode : public OutputNode{
                 x = ((float) totalX) / ((float) sum);
                 y = ((float) totalY) / ((float) sum);
             }
-            sendMessage(boost::make_shared<CentreMessage>(name, x / img->cvMat().cols, y / img->cvMat().rows));
+            sendMessage(boost::make_shared<CentreMessage>(name, x / img.cols, y / img.rows));
             return r;
         }
 

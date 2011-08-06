@@ -6,31 +6,44 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+#include <boost/asio/serial_port.hpp>
 
 #include "seanet_packet.h"
 
 namespace cauv{
 
+class SonarTimeoutException : public std::exception
+{
+	public:
+		virtual const char *what() const throw();
+        virtual ~SonarTimeoutException() throw() {};
+};
+class InvalidPacketException : public std::exception
+{
+	public:
+        InvalidPacketException(const boost::shared_ptr<SeanetPacket> packet);
+		virtual const char *what() const throw();
+        virtual ~InvalidPacketException() throw() {};
+    protected:
+        boost::shared_ptr<SeanetPacket> m_packet;
+};
 class SeanetSerialPort
 {
-	private:
-        std::string m_file;
-		int m_fd;
-        boost::mutex m_send_lock;
-
-		void init();
 	public:
-		SeanetSerialPort(const std::string file);
+		SeanetSerialPort(const std::string& file);
 		bool ok() const;
 
         boost::shared_ptr<SeanetPacket> readPacket();
 		void sendPacket(const SeanetPacket& pkt);
-};
+	
+		void reset();
 
-class SonarIsDeadException : public std::exception
-{
-	public:
-		virtual const char *what() const throw();
+    private:
+		void init();
+        
+        std::string m_file;
+        boost::shared_ptr<boost::asio::serial_port> m_port;
+        boost::mutex m_send_lock;
 };
 
 } // namespace cauv

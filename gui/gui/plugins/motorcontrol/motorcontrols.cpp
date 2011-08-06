@@ -6,6 +6,7 @@
 #include <QCheckBox>
 #include <QPushButton>
 
+#include <common/cauv_utils.h>
 #include <model/auv_model.h>
 
 using namespace cauv;

@@ -1,10 +1,11 @@
 #include "workarounds.h" // _must_ be first
 #include <boost/python.hpp>
 
-#include <generated/messages.h>
 #include <common/cauv_node.h>
 #include <common/spread/msgsrc_mb_observer.h>
 #include <common/spread/spread_rc_mailbox.h>
+#include <generated/types/message.h>
+#include <generated/types/MembershipChangedMessage.h>
 
 #include "emit_static.h"
 
@@ -128,8 +129,8 @@ class CauvNodeWrapper:
             this->onRun();
         }*/
 
-        void run(){
-            CauvNode::run(true);
+        void run(bool synchronous){
+            CauvNode::run(synchronous);
         }
 
         /*int foo(boost::shared_ptr<Message const> m){
@@ -266,6 +267,7 @@ void emitCauvNode(){
                boost::noncopyable
               >("CauvNode", bp::init<std::string, std::string, unsigned>())
          .def("run", wrap(&CauvNodeWrapper::run))
+         .def("stop", wrap(&CauvNode::stopNode))
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
          .def("send", wrap(&CauvNode::send))
          .def("join", wrap(&CauvNode::joinGroup))

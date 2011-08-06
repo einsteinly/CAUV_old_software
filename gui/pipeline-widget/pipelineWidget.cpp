@@ -11,11 +11,17 @@
 #include <QtGui>
 
 #include <common/cauv_utils.h>
-
 #include <debug/cauv_debug.h>
 
 #include <utility/defer.h>
 #include <utility/bash_cout.h>
+
+#include <generated/types/NodeInput.h>
+#include <generated/types/NodeOutput.h>
+#include <generated/types/NodeInputArc.h>
+#include <generated/types/NodeOutputArc.h>
+#include <generated/types/Pl_GuiGroup.h>
+#include <generated/types/PipelineGroup.h>
 
 #include "pipelineMessageObserver.h"
 #include "util.h"

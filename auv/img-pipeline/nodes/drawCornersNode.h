@@ -10,7 +10,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
-#include <generated/messages.h>
+#include <generated/types/Corner.h>
 
 #include "../node.h"
 #include "outputNode.h"
@@ -48,13 +48,13 @@ class DrawCornersNode: public Node{
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            image_ptr_t img = inputs[Image_In_Name];
+            cv::Mat img = inputs[Image_In_Name]->mat();
             
             const std::vector<Corner> corners = param< std::vector<Corner> >("corners");
 
             cv::vector<cv::KeyPoint> cv_corners;
-            const float width = img->cvMat().cols;
-            const float height = img->cvMat().rows;
+            const float width = img.cols;
+            const float height = img.rows;
             
             foreach (const Corner& c, corners)
             {
@@ -68,11 +68,10 @@ class DrawCornersNode: public Node{
             
             try{
                 // then produce an output image overlay
-                boost::shared_ptr<Image> out = boost::make_shared<Image>();
-
-                cv::drawKeypoints(img->cvMat(), cv_corners, out->cvMat(), cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+                cv::Mat out;
+                cv::drawKeypoints(img, cv_corners, out, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
                 
-                r[Image_Out_Copied_Name] = out;
+                r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "DrawCornersNode:\n\t"
                         << e.err << "\n\t"

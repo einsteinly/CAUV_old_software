@@ -3,7 +3,9 @@
 \#include <boost/python.hpp>
 
 \#include "emit_generated.h"
-\#include <generated/messages.h>
+#for $s in $structs
+\#include <generated/types/${s.name}.h>
+#end for
 
 namespace bp = boost::python;
 using namespace cauv;

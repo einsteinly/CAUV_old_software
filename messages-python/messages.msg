@@ -5,7 +5,8 @@ enum DebugType : int8 {
     Error = 3
 }
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
-enum CameraID: int8 { Forward = 1, Down = 2, Sonar = 4, File = 5 }
+enum CameraID: int8 { Forward = 1, Down = 2, Up = 3, Sonar = 4, File = 5 }
+enum LightID: int8 { Forward = 1, Down = 2, TO_FIX_NUMVALUES = 5 }
 enum NodeType : int8 {
     Invalid,
     Copy,
@@ -67,8 +68,16 @@ enum NodeType : int8 {
     Throttle,
     Nop,
     Delay,
+    ClampInt,
+    ClampFloat,
     Stitch,
-    Recogniser
+    Recogniser,
+    SURFCorners,
+    BroadcastKeyPoints,
+    DrawKeyPoints,
+    MathAddMultInt,
+    MathAddMultFloat,
+    MergeSimilarLines,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -146,6 +155,7 @@ struct SonarDataLine
     bearing: int32;
     bearingRange: int32;
     range: int32;
+    scanWidth: int32;
 }
 struct MotorDemand
 {
@@ -209,6 +219,7 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
+class Image : <common/image.h>
 
 group membership
 {
@@ -325,6 +336,11 @@ group control
 	message ResetMCB : 85
 	{
     }
+
+    message CalibrateNoRotation : 90
+    {
+        duration : uint16;
+    }
 }
 group state
 {
@@ -370,6 +386,10 @@ group telemetry
         track : float;
         speed: float;
         climb: float;    
+    }
+    message SonarLocation : 91
+    {
+        position: floatXY;
     }
 }
 group image
@@ -483,6 +503,12 @@ group processing
     {
         name : string;
         corners : list<Corner>;
+    }
+    
+    message KeyPoints : 135
+    {
+        name : string;
+        keypoints : list<KeyPoint>;
     }
     
     message Histogram : 133
@@ -641,4 +667,19 @@ group ai
     }
 }
 
-
+group external
+{
+    message Light : 150
+    {
+        lightId: LightID;
+        intensity : uint8;
+    }
+    message CuttingDevice : 151
+    {
+        strength : uint8;
+    }
+    message BatteryStatus : 152
+    {
+        voltage : uint16;
+    }
+}

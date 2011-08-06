@@ -8,27 +8,31 @@ import traceback
 #do a preliminary 360 degree sweep
 
 class scriptOptions(aiScriptOptions):
-    loops = 2 #number of times to go round
-    power = 64 #motor power
-    unit = 3
-    depth = None
-    stop_time = 2
+    loops = 5 #number of times to go round
+    power = 127 #motor power
+    unit = 7
+    depth = 2
+    stop_time = 1.5
     class Meta:
         dynamic = ['power', 'unit', 'stop_time']
     
 
 class script(aiScript):
     def run(self):
+        self.log('Attempting spiral search...')
         # Starting search at north direction
         #debug('setting bearing %d...' % bearing)
         #self.auv.bearingAndWait(bearing)
+        time.sleep(0.3)
         bearing = self.auv.getBearing()
-        if not bearing:
+        if bearing:
+            self.auv.bearingAndWait(bearing)
+        else:
             self.auv.bearingAndWait(0)
-            bearing = 0
-
-        debug('diving...')
-        self.auv.depthAndWait(self.options.depth)
+        if self.options.depth:
+            self.log('Setting depth to %d' %(self.options.depth,))
+            debug('diving...')
+            self.auv.depthAndWait(self.options.depth, 5)
 
         debug('spiral...')
         # Individual half squares
@@ -45,13 +49,14 @@ class script(aiScript):
                 debug('stopping')
                 self.auv.prop(0)
                 time.sleep(self.options.stop_time)
+                if bearing is None:
+                    warning('no bearing available!')
+                    bearing = 0
 
                 debug('setting bearing %d' % bearing)
                 bearing += 90
                 if bearing>=360:
                     bearing-=360
                 self.auv.bearingAndWait(bearing)
-
-        debug('surface...')
-        self.auv.depthAndWait(0)
+            self.log('Completed %d loops.' %(i*0.5,))
 

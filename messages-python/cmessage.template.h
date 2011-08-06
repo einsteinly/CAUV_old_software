@@ -91,9 +91,9 @@ int len_$loadsavesuffix($t)($toCType($t)* val);
 
 
 #for $s in $structs
-int load_${s.name}(struct packet p, int pos, $toCType($s)* s);
-int save_${s.name}(struct packet p, int pos, $toCType($s)* s);
-int len_${s.name}($toCType($s)* s);
+int load_${s.name}(struct packet p, int pos, $s* s);
+int save_${s.name}(struct packet p, int pos, $s* s);
+int len_${s.name}($s* s);
 #end for
 
 #for $e in $enums

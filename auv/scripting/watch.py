@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import traceback
 import optparse
 import time
@@ -15,7 +17,7 @@ from cauv.debug import debug, info, warning, error
 from utils.multitasking import spawnDaemon
 
 CPU_Poll_Time = 0.025
-Poll_Delay = 2.0
+Poll_Delay = 5.0
 Exe_Prefix = '' # set these using command line options
 Script_Dir = '' #
 Mem_Divisor = 1024*1024 # MB
@@ -75,17 +77,17 @@ processes_to_start = [
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',               'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py',  True, ['logger.py']),
-        CAUVTask('img-pipe default',     'nohup nice -n 15 %EDIR/img-pipeline -n default',         True, ['img-pipeline -n default']),
-        CAUVTask('img-pipe buoy-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n buoy-detect',     True, ['img-pipeline -n buoy-detect']),
-        CAUVTask('img-pipe pipe-detect', 'nohup nice -n 15 %EDIR/img-pipeline -n pipe-detect',     True, ['img-pipeline -n pipe-detect']),
-        CAUVTask('img-pipe sonar',       'nohup nice -n 15 %EDIR/img-pipeline -n sonar',           True, ['img-pipeline -n sonar']),
-        CAUVTask('sonar',                'nohup nice -n 5 %EDIR/sonar /dev/ttyUSB1',              True, ['sonar']),
-        CAUVTask('controlv2',            'nohup %EDIR/controlv2 -m/dev/ttyUSB0 -x0',    True, ['controlv2']),
-        CAUVTask('spread',               'nohup spread',                                True, ['spread']),
-        CAUVTask('persist',              'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',         False, ['persist.py']),
-        CAUVTask('battery',              'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
-        CAUVTask('gps',                  'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
+        CAUVTask('logger',          'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
+        CAUVTask('img-pipe default','nohup nice -n 15 %EDIRimg-pipelined -n default',        True, ['img-pipelined -n default']),
+        CAUVTask('img-pipe ai',     'nohup nice -n 15 %EDIRimg-pipelined -n ai',             True, ['img-pipelined -n ai']),
+        CAUVTask('img-pipe sonar',  'nohup nice -n 4 %EDIRimg-pipelined -n sonar',           True, ['img-pipelined -n sonar']),
+        CAUVTask('sonar',           'nohup nice -n 4 %EDIRsonard /dev/sonar0',              True, ['sonar']),
+        CAUVTask('control',         'nohup nice -n 2 %EDIRcontrold -m/dev/ttyUSB0 -x0',     True, ['control']),
+        CAUVTask('spread',          'nohup nice -n 2 spread',                               True, ['spread']),
+        CAUVTask('persist',         'nohup /bin/sh %SDIR/run.sh %SDIR/persist.py',          False, ['persist.py']),
+        CAUVTask('battery',         'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('gps',             'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py', True, ['gpsd.py']),
+        CAUVTask('location',        'nohup nice -n 4 /bin/sh %SDIR/run.sh %SDIR/location.py --mode=exponential', True, ['location.py']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
@@ -259,9 +261,8 @@ if __name__ == '__main__':
                  action='store_false', help="don't broadcast messages "+\
                  'containing information on running processes')
     p.add_option('-e', '--exec-prefix', dest='cmd_prefix',
-                 default='/usr/local/bin/cauv/', type=str,
-                 action='store', help='exec prefix for cauv executables ' +\
-                 '(e.g., /usr/local/bin')
+                 default='cauv-', type=str,
+                 action='store', help='exec prefix for cauv executables')
     p.add_option('-s', '--script-dir', dest='script_dir', default='./',
                  type=str, action='store',
                  help='script directory (where to find run.sh)')
@@ -294,4 +295,7 @@ if __name__ == '__main__':
                 break
     except KeyboardInterrupt:
         info('Interrupt caught, exiting...')
+    finally:
+        if cauv_node is not None:
+            cauv_node.stop()
 
