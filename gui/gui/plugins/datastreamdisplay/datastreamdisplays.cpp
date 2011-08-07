@@ -39,7 +39,6 @@ class DataStreamCompleter : public QCompleter {
 public:
 
     DataStreamCompleter(QAbstractItemModel * model, QWidget * parent = NULL) : QCompleter(model, parent){
-
     }
 
     QStringList splitPath(const QString &path) const {
@@ -53,21 +52,6 @@ public:
             return QString::fromStdString(dsItem->getNode()->nodePath());
         else return "";
     }
-
-/*    QVariant data(const QModelIndex &index, int role) const
-    {
-        if (role == Qt::DisplayRole && index.column() == 0) {
-            QVariant v = model()->data(index, role);
-            error() << v.toString().toStdString();
-            return v;
-            //QString path  = QDir::toNativeSeparators(filePath(index));
-            //if (path.endsWith(QDir::separator()))
-            //    path.chop(1);
-            //return path;
-        }
-
-        return data(index, role);
-    } */
 };
 
 std::vector<boost::shared_ptr<NodeBase> > DataStreamList::getDroppedNodes() {
