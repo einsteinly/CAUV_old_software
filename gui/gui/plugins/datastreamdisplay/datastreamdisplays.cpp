@@ -11,6 +11,7 @@
 #include <QMdiSubWindow>
 #include <QModelIndexList>
 #include <QKeyEvent>
+#include <QCompleter>
 
 
 using namespace cauv;
@@ -32,6 +33,42 @@ public:
     }
 };
 
+
+class DataStreamCompleter : public QCompleter {
+
+public:
+
+    DataStreamCompleter(QAbstractItemModel * model, QWidget * parent = NULL) : QCompleter(model, parent){
+
+    }
+
+    QStringList splitPath(const QString &path) const {
+        return path.split("/");
+    }
+
+    QString pathFromIndex(const QModelIndex &index) const {
+        QTreeWidgetItem *item = static_cast<QTreeWidgetItem*>(index.internalPointer());
+        NodeTreeItemBase * dsItem = dynamic_cast<NodeTreeItemBase*>(item);
+        if(dsItem)
+            return QString::fromStdString(dsItem->getNode()->nodePath());
+        else return "";
+    }
+
+/*    QVariant data(const QModelIndex &index, int role) const
+    {
+        if (role == Qt::DisplayRole && index.column() == 0) {
+            QVariant v = model()->data(index, role);
+            error() << v.toString().toStdString();
+            return v;
+            //QString path  = QDir::toNativeSeparators(filePath(index));
+            //if (path.endsWith(QDir::separator()))
+            //    path.chop(1);
+            //return path;
+        }
+
+        return data(index, role);
+    } */
+};
 
 std::vector<boost::shared_ptr<NodeBase> > DataStreamList::getDroppedNodes() {
     std::vector<boost::shared_ptr<NodeBase> > streams;
@@ -81,6 +118,9 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
     }
 
     ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), auvItem, SLOT(filter(QString)));
+    QCompleter * completer = new DataStreamCompleter(ui->dataStreams->model());
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    ui->filter->setCompleter(completer);
 
     ui->dataStreams->connect(ui->dataStreams, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 }
