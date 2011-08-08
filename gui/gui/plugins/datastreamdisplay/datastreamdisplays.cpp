@@ -12,6 +12,7 @@
 #include <QModelIndexList>
 #include <QKeyEvent>
 #include <QCompleter>
+#include <QLabel>
 
 
 using namespace cauv;

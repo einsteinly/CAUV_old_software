@@ -9,6 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/variant/get.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <generated/types/MotorID.h>
 #include <generated/types/Controller.h>
@@ -45,7 +46,14 @@ namespace cauv {
             {
                 std::stringstream str;
                 str << operand;
-                return str.str();
+                std::string name = str.str();
+                try {
+                    boost::to_lower(name);
+                    int index = name.find_last_of(':')+1;
+                    return name.substr(index, name.length()-index);
+                } catch (std::out_of_range){
+                    return name;
+                }
             }
         };
         // @TODO: put some more specialisations here to make the names a bit prettier
