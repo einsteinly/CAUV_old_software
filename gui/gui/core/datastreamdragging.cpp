@@ -1,21 +1,17 @@
 
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/nodes/compoundnodes.h>
-#include <gui/core/model/nodes/imagenode.h>
-#include <gui/core/model/nodes/groupingnode.h>
+#include "model/nodes/numericnode.h"
+#include "model/nodes/compoundnodes.h"
+#include "model/nodes/imagenode.h"
+#include "model/nodes/groupingnode.h"
 
 #include <debug/cauv_debug.h>
 
-#include <QWidget>
-#include <QDragEnterEvent>
-#include <QDropEvent>
-
 #include "datastreamdragging.h"
-
 
 using namespace cauv;
 using namespace cauv::gui;
 
+/*
 void NodeDropListener::dragEnterEvent(QDragEnterEvent *event)
 {
     event->acceptProposedAction();
@@ -27,18 +23,25 @@ void NodeDropListener::dropEvent(QDropEvent *event)
 
     NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
     if(source) {
-        info() << "Drag receieved from " << source;
+        onDrop(source);
+    }
+}*/
 
-        std::vector<boost::shared_ptr<NodeBase> >  streams = source->getDroppedNodes();
-        BOOST_FOREACH(boost::shared_ptr<NodeBase> node, streams) {
-            routeStream(node);
-        }
+void NodeDropListener::onDrop(NodeDragSource * source)
+{
+    info() << "Drag receieved from " << source;
+
+    std::vector<boost::shared_ptr<NodeBase> >  streams = source->getDroppedNodes();
+    BOOST_FOREACH(boost::shared_ptr<NodeBase> node, streams) {
+        routeNode(node);
     }
 }
 
-bool NodeDropListener::routeStream(boost::shared_ptr<NodeBase> s){
+bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> s){
 
     info() << "Routing stream" << s->nodeName();
+
+    onNodeDropped(s);
 
     switch (s->type){
     case GuiNodeType::NumericNode:

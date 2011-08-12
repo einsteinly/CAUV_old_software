@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include <gui/core/model/model.h>
+#include "../model/model.h"
 
 #include <generated/types/message.h>
 #include <generated/types/MotorID.h>

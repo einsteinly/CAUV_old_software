@@ -1,4 +1,4 @@
-project (guicpp)
+project (gui)
 
 find_package (OIS REQUIRED)
 find_package (X11 REQUIRED)
@@ -34,7 +34,7 @@ add_library( gamepadplugin MODULE
 cauv_install_plugin( gamepadplugin )
                                       
 target_link_libraries( gamepadplugin
-    guicpp-core
+    gui-core
     ${X11_X11_LIB}
     ${QT_LIBRARIES}
     ${OIS_LIBRARIES}

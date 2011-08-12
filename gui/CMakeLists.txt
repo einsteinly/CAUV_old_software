@@ -1,4 +1,4 @@
-project (gui)
+project (guis)
 
 option(CAUV_BUILD_GUI "Whether or not to use the GUI" ON)
 

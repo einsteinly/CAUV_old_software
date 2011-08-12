@@ -13,12 +13,12 @@
 #include <generated/types/ImageGroup.h>
 #include <generated/types/PressureGroup.h>
 
-#include <gui/core/model/model.h>
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/nodes/compoundnodes.h>
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/nodes/stringnode.h>
-#include <gui/core/model/nodes/imagenode.h>
+#include "../model/model.h"
+#include "../model/nodes/numericnode.h"
+#include "../model/nodes/compoundnodes.h"
+#include "../model/nodes/groupingnode.h"
+#include "../model/nodes/stringnode.h"
+#include "../model/nodes/imagenode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

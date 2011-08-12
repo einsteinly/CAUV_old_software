@@ -1,7 +1,7 @@
 #ifndef CAUVBASICPLUGIN_H
 #define CAUVBASICPLUGIN_H
 
-#include <gui/core/cauvplugins.h>
+#include "cauvplugins.h"
 
 #include <QList>
 #include <QMap>

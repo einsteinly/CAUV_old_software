@@ -1,11 +1,12 @@
 #include "datastreamdisplays.h"
-#include "datastreamdisplay/ui_datastreamdisplays.h"
+#include "ui_datastreamdisplays.h"
 
 #include "treeitems.h"
-
-#include <gui/core/model/model.h>
-#include <gui/core/widgets/videoscreen.h>
 #include "graphs.h"
+
+#include "../model/model.h"
+#include "../widgets/videoscreen.h"
+
 #include <common/cauv_utils.h>
 
 #include <QMdiSubWindow>
@@ -74,7 +75,7 @@ std::vector<boost::shared_ptr<NodeBase> > DataStreamList::getDroppedNodes() {
 
 
 
-DataStreamPicker::DataStreamPicker() :
+DataStreamPicker::DataStreamPicker(boost::shared_ptr<AUV>auv) :
         ui(new Ui::DataStreamPicker())
 {
     ui->setupUi(this);
@@ -83,17 +84,12 @@ DataStreamPicker::DataStreamPicker() :
     ui->dataStreams->setDragEnabled(true);
     ui->dataStreams->setDropIndicatorShown(true);
     ui->dataStreams->setAcceptDrops(false);
+    ui->filter->installEventFilter(new EscapeFilter());
 
-    m_docks[this] = Qt::LeftDockWidgetArea;
-    m_tabs.append(new DataStreamDisplayArea());
-}
 
-void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node) {
-    CauvBasicPlugin::initialise(auv, node);
+    // setup model data
 
     debug() << "Initialising data stream list";
-
-    ui->filter->installEventFilter(new EscapeFilter());
 
     GroupingNodeTreeItem *auvItem = new GroupingNodeTreeItem(auv, NULL);
     ui->dataStreams->addTopLevelItem(auvItem);
@@ -102,6 +98,7 @@ void DataStreamPicker::initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<C
         auvItem->addNode(child);
     }
 
+    // dynamic adding of new nodes
     ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), auvItem, SLOT(filter(QString)));
     QCompleter * completer = new DataStreamCompleter(ui->dataStreams->model());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
@@ -181,11 +178,18 @@ void DataStreamDisplayArea::addWindow(boost::shared_ptr<QWidget> content){
 }
 
 void DataStreamDisplayArea::dropEvent(QDropEvent * event){
-    NodeDropListener::dropEvent(event);
+    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
+    if(source) {
+        event->acceptProposedAction();
+        onDrop(source);
+    }
 }
 
 void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
-    NodeDropListener::dragEnterEvent(event);
+    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
+    if(source) {
+        event->acceptProposedAction();
+    }
 }
 
 void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
@@ -277,6 +281,3 @@ void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
     }
 }
 
-
-
-Q_EXPORT_PLUGIN2(cauv_dsdplugin, DataStreamPicker)

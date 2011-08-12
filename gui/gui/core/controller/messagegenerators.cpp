@@ -1,7 +1,6 @@
 #include "messagegenerators.h"
 
-#include <gui/core/model/model.h>
-#include <gui/core/model/nodes/numericnode.h>
+#include "../model/nodes/numericnode.h"
 
 #include <generated/types/MotorMessage.h>
 #include <generated/types/BearingAutopilotEnabledMessage.h>

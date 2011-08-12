@@ -4,18 +4,10 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
-class QDropEvent;
-class QDragEnterEvent;
+#include "model/nodes_fwd.h"
 
 namespace cauv {
     namespace gui {
-
-        class NodeBase;
-        class NumericNode;
-        class ImageNode;
-        class FloatYPRNode;
-        class FloatXYZNode;
-        class GroupingNode;
 
         class NodeDragSource{
         public:
@@ -25,13 +17,16 @@ namespace cauv {
 
         class NodeDropListener {
         public:
-            virtual void dragEnterEvent(QDragEnterEvent *event);
-            virtual void dropEvent(QDropEvent *event);
+            void onDrop(NodeDragSource * source);
 
         protected:
 
-            bool routeStream(boost::shared_ptr<NodeBase> s);
+            bool routeNode(boost::shared_ptr<NodeBase> s);
 
+            // all nodes get passed into this
+            virtual void onNodeDropped(boost::shared_ptr<NodeBase> ) {}
+
+            // then they also get passed into one of these
             virtual void onNodeDropped(boost::shared_ptr<NumericNode> ) {}
             virtual void onNodeDropped(boost::shared_ptr<ImageNode> ) {}
             virtual void onNodeDropped(boost::shared_ptr<FloatYPRNode> ) {}

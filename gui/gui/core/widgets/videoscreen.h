@@ -6,7 +6,7 @@
 
 #include <QWidget>
 
-#include <gui/core/model/variants.h>
+#include "../model/variants.h"
 
 class QSize;
 class QImage;

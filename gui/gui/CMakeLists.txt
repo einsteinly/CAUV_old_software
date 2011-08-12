@@ -1,4 +1,4 @@
-project (guicpp)
+project (gui)
 
 find_package (Qt4)
 
@@ -9,60 +9,58 @@ else()
     # the shared classes in the GUI, used by plugins
     add_subdirectory(core)
 
-    # build plugins
+    # and the plugins to extend the frameworks capabilities
     add_subdirectory(plugins)
 
     # for <gui/core/...>
-    include_directories (${gui_SOURCE_DIR})
+    include_directories (${guis_SOURCE_DIR})
 
-    # for generated files
+    # for generated files (mainly moc'd stuff)
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
     # for <common/includesstuff> etc
     include_directories (${AUV_SOURCE_DIR})
 
-    link_directories (${pipeline-widget_BINARY_DIR})
-
     set (
-        GUICPP_SRCS
+        GUI_SRCS
 
         main.cpp
         cauvgui.cpp
     )
 
     set (
-        GUICPP_UIS
+        GUI_UIS
 
         mainwindow.ui
     )
 
     set (
-        GUICPP_H
+        GUI_H
 
         cauvgui.h
     )
 
     set (
-        GUICPP_RCC
+        GUI_RCC
 
         resources.qrc
     )
 
-    qt4_wrap_ui (GUICPP_UIS_H ${GUICPP_UIS})
-    qt4_wrap_cpp (GUICPP_MOC_H ${GUICPP_H})
-    qt4_add_resources(GUICPP_RCC_H ${GUICPP_RCC})
+    qt4_wrap_ui (GUI_UIS_H ${GUI_UIS})
+    qt4_wrap_cpp (GUI_MOC_H ${GUI_H})
+    qt4_add_resources(GUI_RCC_H ${GUI_RCC})
 
-    add_executable ( guicpp
-        ${GUICPP_SRCS}
-        ${GUICPP_UIS_H}
-        ${GUICPP_MOC_H}
-        ${GUICPP_RCC_H}
+    add_executable ( gui
+        ${GUI_SRCS}
+        ${GUI_UIS_H}
+        ${GUI_MOC_H}
+        ${GUI_RCC_H}
     )
 
-    cauv_install( guicpp )
+    cauv_install( gui )
 
-    target_link_libraries ( guicpp
-        guicpp-core
+    target_link_libraries ( gui
+        gui-core
         ${QT_LIBRARIES}
     )
 

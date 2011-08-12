@@ -5,7 +5,7 @@
 
 #include <generated/types/message.h>
 
-#include <gui/core/model/nodes/groupingnode.h>
+#include "../model/nodes/groupingnode.h"
 
 namespace cauv {
     namespace gui {

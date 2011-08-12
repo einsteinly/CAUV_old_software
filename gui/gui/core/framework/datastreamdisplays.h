@@ -6,11 +6,15 @@
 #include <QTreeWidget>
 #include <QMdiArea>
 #include <QKeyEvent>
+#include <QDropEvent>
+#include <QDragEnterEvent>
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/cauvbasicplugin.h>
-#include <gui/core/datastreamdragging.h>
+#include "../datastreamdragging.h"
+#include "../model/model.h"
+
+#include "drophandler.h"
 
 
 namespace Ui {
@@ -35,25 +39,24 @@ namespace cauv {
             void dropEvent(QDropEvent * event);
             void dragEnterEvent(QDragEnterEvent * event);
             void addWindow(boost::shared_ptr<QWidget> content);
+
+            //void registerDropHandler(boost::shared_ptr<DropHandler> handler);
         };
 
 
 
 
-        class DataStreamPicker : public QDockWidget, public CauvBasicPlugin{
+        class DataStreamPicker : public QDockWidget{
             Q_OBJECT
-            Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
 
         public:
-            DataStreamPicker();
+            DataStreamPicker(boost::shared_ptr<AUV>auv);
             virtual ~DataStreamPicker();
 
             virtual const QString name() const;
             virtual const QList<QString> getGroups() const;
-            virtual void initialise(boost::shared_ptr<AUV>auv, boost::shared_ptr<CauvNode>node);
 
         protected Q_SLOTS:
-            void filterItems(QString);
             void redirectKeyboardFocus(QKeyEvent* key);
 
         private:

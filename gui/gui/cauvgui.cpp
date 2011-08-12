@@ -12,6 +12,7 @@
 #include <gui/core/model/model.h>
 #include <gui/core/cauvplugins.h>
 #include <gui/core/controller/messageobserver.h>
+#include <gui/core/framework/datastreamdisplays.h>
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -126,6 +127,9 @@ void CauvGui::onRun()
     QDir pluginsDir = QDir(QApplication::instance()->applicationDirPath());
     pluginsDir.cd("plugins");
     findPlugins(pluginsDir, 1);
+
+    boost::shared_ptr<DataStreamPicker> nodeList = boost::make_shared<DataStreamPicker>(m_auv);
+    addDock(nodeList.get(), Qt::LeftDockWidgetArea);
 
 
     QSettings settings("CAUV", "Cambridge AUV");

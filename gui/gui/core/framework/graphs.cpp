@@ -1,9 +1,9 @@
 #include "graphs.h"
-#include "datastreamdisplay/ui_graphs.h"
+#include "ui_graphs.h"
 
 #include <common/cauv_utils.h>
 
-#include <gui/core/model/nodes/numericnode.h>
+#include "../model/nodes/numericnode.h"
 
 #include <QPen>
 #include <QRectF>
@@ -213,11 +213,18 @@ void GraphWidget::setupPlot() {
 }
 
 void GraphWidget::dropEvent(QDropEvent * event){
-    NodeDropListener::dropEvent(event);
+    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
+    if(source) {
+        event->acceptProposedAction();
+        onDrop(source);
+    }
 }
 
 void GraphWidget::dragEnterEvent(QDragEnterEvent * event){
-    NodeDropListener::dragEnterEvent(event);
+    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
+    if(source) {
+        event->acceptProposedAction();
+    }
 }
 
 void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNode> node){

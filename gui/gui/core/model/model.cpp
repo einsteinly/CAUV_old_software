@@ -1,7 +1,7 @@
 #include "model.h"
 
-#include <gui/core/controller/messagegenerators.h>
-#include <gui/core/model/nodes/numericnode.h>
+#include "../controller/messagegenerators.h"
+#include "../model/nodes/numericnode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

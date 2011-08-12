@@ -1,4 +1,4 @@
-project (guicpp)
+project (gui)
 
 find_package (Qt4 REQUIRED)
 
@@ -27,5 +27,5 @@ add_library( motorsplugin MODULE
 cauv_install_plugin( motorsplugin )
                                       
 target_link_libraries( motorsplugin
-    guicpp-core
+    gui-core
 )

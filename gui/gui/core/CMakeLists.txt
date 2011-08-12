@@ -1,21 +1,40 @@
-project (guicpp-core)
+project (gui-core)
 
+# required packages
 find_package (Qt4 REQUIRED)
+find_package (Qwt6 REQUIRED)
+include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
+find_package (OpenCV REQUIRED)
 
-# using both Qt slots and Boost signals so need no keywords
-add_definitions(-DQT_NO_KEYWORDS)
+
+set ( GUI_CORE_AUX_DIRS
+    framework
+    controller
+    model
+    utils
+    widgets
+)
+
+# include files
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/controller)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/framework)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/model)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/widgets)
 
 # generated files includes
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/framework)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/widgets)
 
 # for <common/includesstuff> etc
 include_directories (${AUV_SOURCE_DIR})
 
-# for <gui/core/stuff>
-include_directories(${gui_SOURCE_DIR})
+# for <gui/core/...>
+include_directories (${guis_SOURCE_DIR})
 
-
-set ( GUICPP_CORE_SRCS
+set ( GUI_CORE_SRCS
     datastreamdragging.cpp
     cauvbasicplugin.cpp
     widgets/videoscreen.cpp
@@ -24,14 +43,21 @@ set ( GUICPP_CORE_SRCS
     model/model.cpp
     controller/messageobserver.cpp
     controller/messagegenerators.cpp
+    framework/datastreamdisplays.cpp
+    framework/treeitems.cpp
+    framework/graphs.cpp
+    framework/drophandler.cpp
     utils/noderecorder.cpp
     )
 
-set ( GUICPP_CORE_UIS
+set ( GUI_CORE_UIS
     widgets/videoscreen.ui
+    framework/datastreamdisplays.ui
+    #framework/datastreamrecorder.ui
+    framework/graphs.ui
     )
 
-set ( GUICPP_CORE_H
+set ( GUI_CORE_H
     widgets/videoscreen.h
     model/node.h
     model/model.h
@@ -41,26 +67,31 @@ set ( GUICPP_CORE_H
     model/nodes/imagenode.h
     model/nodes/groupingnode.h
     controller/messagegenerators.h
+    framework/datastreamdisplays.h
+    framework/treeitems.h
+    framework/graphs.h
     )
 
-set ( GUICPP_CORE_RCC
+set ( GUI_CORE_RCC
     )
 
-qt4_wrap_ui (GUICPP_CORE_UIS_H ${GUICPP_CORE_UIS})
-qt4_wrap_cpp (GUICPP_CORE_MOC_H ${GUICPP_CORE_H})
-qt4_add_resources(GUICPP_CORE_RCC_H ${GUICPP_CORE_RCC})
+qt4_wrap_ui (GUI_CORE_UIS_H ${GUI_CORE_UIS})
+qt4_wrap_cpp (GUI_CORE_MOC_H ${GUI_CORE_H})
+qt4_add_resources(GUI_CORE_RCC_H ${GUI_CORE_RCC})
 
-add_library ( guicpp-core SHARED
-        ${GUICPP_CORE_SRCS}
-        ${GUICPP_CORE_UIS_H}
-        ${GUICPP_CORE_MOC_H}
-        ${GUICPP_CORE_RCC_H}
+add_library ( gui-core SHARED
+        ${GUI_CORE_SRCS}
+        ${GUI_CORE_UIS_H}
+        ${GUI_CORE_MOC_H}
+        ${GUI_CORE_RCC_H}
     )
 
-cauv_install( guicpp-core )
+cauv_install( gui-core )
 
-target_link_libraries ( guicpp-core
+target_link_libraries ( gui-core
         cauv_debug
         common
+        ${Qwt6_LIBRARIES}
+        ${OpenCV_LIBS}
         ${QT_LIBRARIES}
     )

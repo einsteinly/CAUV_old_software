@@ -6,6 +6,7 @@
 #include <QWidget>
 
 #include <gui/core/cauvbasicplugin.h>
+#include <gui/core/cauvplugins.h>
 
 #include <generated/message_observers.h>
 

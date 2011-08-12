@@ -8,13 +8,11 @@
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/model/nodes/numericnode.h>
-#include <gui/core/model/nodes/compoundnodes.h>
-#include <gui/core/model/nodes/stringnode.h>
-#include <gui/core/model/nodes/groupingnode.h>
-#include <gui/core/model/nodes/imagenode.h>
-
-
+#include "../model/nodes/numericnode.h"
+#include "../model/nodes/compoundnodes.h"
+#include "../model/nodes/stringnode.h"
+#include "../model/nodes/groupingnode.h"
+#include "../core/model/nodes/imagenode.h"
 
 
 namespace cauv {
@@ -37,8 +35,6 @@ namespace cauv {
 
         public Q_SLOTS:
             NodeTreeItemBase * addNode(boost::shared_ptr<NodeBase> node);
-            void updateIcon(int cell, QImage &image);
-            void updateIcon(int cell, const Image &image);
             void updateValue(const QString value);
             bool filter(QString value);
         private:

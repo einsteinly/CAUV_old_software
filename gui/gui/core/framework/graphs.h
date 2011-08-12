@@ -3,17 +3,19 @@
 
 #include <QPointF>
 #include <QTimer>
+#include <QDropEvent>
+#include <QDragEnterEvent>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <gui/core/model/variants.h>
-#include <gui/core/datastreamdragging.h>
-#include <gui/core/utils/noderecorder.h>
+#include "../model/variants.h"
+#include "../datastreamdragging.h"
+#include "../utils/noderecorder.h"
 
 #include <qwt_series_data.h>
 #include <qwt_plot.h>
 
-#include "datastreamdisplay/ui_graphs.h"
+#include "ui_graphs.h"
 
 
 namespace Ui {
