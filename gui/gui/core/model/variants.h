@@ -56,7 +56,6 @@ namespace cauv {
                 }
             }
         };
-        // @TODO: put some more specialisations here to make the names a bit prettier
 
 
         // gets the value of a variant cast to R
