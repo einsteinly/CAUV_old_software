@@ -2,6 +2,7 @@ project (gui)
 
 find_package (Qt4 REQUIRED)
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set ( MOTORS_PLUGIN_SRCS
     motorcontrols.cpp

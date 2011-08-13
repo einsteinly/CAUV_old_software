@@ -3,13 +3,11 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <QMap>
-#include <QList>
 #include <Qt>
 #include <QtPlugin>
 
-class QWidget;
-class QDockWidget;
+#include "framework/guiactions.h"
+
 class QString;
 
 namespace cauv {
@@ -25,20 +23,17 @@ namespace cauv {
         public:
             virtual ~CauvInterfacePlugin() {}
 
+            virtual void initialise(boost::shared_ptr<GuiActions>){};
+
             virtual const QString name() const = 0;
-            virtual const QList<QString> getGroups() const = 0;
 
-            virtual void initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node) = 0;
-
-            virtual const QMap<QDockWidget* , Qt::DockWidgetArea> &getDockWidgets() const = 0;
-            virtual const QList<QWidget* > &getCentralWidgets() const = 0;
+            virtual void initialise(){}
 
         };
 
     } // namespace gui
-
 } // namespace cauv
 
-Q_DECLARE_INTERFACE(cauv::gui::CauvInterfacePlugin, "CauvInterfacePlugin/1.0")
+Q_DECLARE_INTERFACE(cauv::gui::CauvInterfacePlugin, "CauvInterfacePlugin/1.1")
 
 #endif // CAUVINTERFACEPLUGIN_H

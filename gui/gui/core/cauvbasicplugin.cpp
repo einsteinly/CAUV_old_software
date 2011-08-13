@@ -3,15 +3,10 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-void CauvBasicPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node) {
-    m_auv = auv;
-    m_node = node;
-}
+void CauvBasicPlugin::initialise(boost::shared_ptr<GuiActions> actions) {
+    m_auv = actions->auv;
+    m_node = actions->node;
+    m_actions = actions;
 
-const QMap<QDockWidget*, Qt::DockWidgetArea> &CauvBasicPlugin::getDockWidgets() const {
-    return m_docks;
-}
-
-const QList<QWidget* > &CauvBasicPlugin::getCentralWidgets() const {
-    return m_tabs;
+    initialise();
 }

@@ -28,7 +28,7 @@
      <widget class="QLineEdit" name="filter"/>
     </item>
     <item>
-     <widget class="DataStreamList" name="dataStreams">
+     <widget class="cauv::gui::NodeListView" name="dataStreams">
       <property name="editTriggers">
        <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
       </property>
@@ -88,7 +88,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>DataStreamList</class>
+   <class>cauv::gui::NodeListView</class>
    <extends>QTreeWidget</extends>
    <header>datastreamdisplays.h</header>
   </customwidget>

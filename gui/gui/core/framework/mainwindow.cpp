@@ -1,4 +1,4 @@
-#include "cauvgui.h"
+#include "mainwindow.h"
 
 #include <QDir>
 #include <QString>
@@ -9,10 +9,10 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
-#include <gui/core/model/model.h>
-#include <gui/core/cauvplugins.h>
-#include <gui/core/controller/messageobserver.h>
-#include <gui/core/framework/datastreamdisplays.h>
+#include "../model/model.h"
+#include "../cauvplugins.h"
+#include "../controller/messageobserver.h"
+#include "../framework/datastreamdisplays.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -23,10 +23,10 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-CauvGui::CauvGui(QApplication * app) :
+CauvMainWindow::CauvMainWindow(QApplication * app) :
         CauvNode("CauvGui"),
-        m_auv( boost::make_shared<RedHerring>()),
         m_application(app),
+        m_actions(boost::make_shared<GuiActions>()),
         ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
@@ -36,25 +36,12 @@ CauvGui::CauvGui(QApplication * app) :
     this->setWindowState(Qt::WindowMaximized);
 }
 
-CauvGui::~CauvGui(){
+CauvMainWindow::~CauvMainWindow(){
     delete ui;
 }
 
-void CauvGui::addCentralTab(QWidget* const tab, QString& name){
-    addCentralTab(tab, (const QString&)name);
-}
 
-void CauvGui::addCentralTab(QWidget* const tab, const QString& name){
-    info() << "Registering central screen [" << name.toStdString() << "]";
-    ui->tabWidget->addTab(tab, name);
-}
-
-void CauvGui::addDock(QDockWidget* dock, Qt::DockWidgetArea area){
-    info() << "Registering dock widget";
-    addDockWidget(area, dock);
-}
-
-void CauvGui::closeEvent(QCloseEvent* e){
+void CauvMainWindow::closeEvent(QCloseEvent* e){
     QSettings settings("CAUV", "Cambridge AUV");
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());
@@ -65,12 +52,12 @@ void CauvGui::closeEvent(QCloseEvent* e){
     QMainWindow::closeEvent(e);
 }
 
-int CauvGui::send(boost::shared_ptr<const Message> message){
+int CauvMainWindow::send(boost::shared_ptr<const Message> message){
     debug(0) << "Sending message: " << *(message.get());
     return CauvNode::send(message);
 }
 
-int CauvGui::findPlugins(const QDir& dir, int subdirs)
+int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
 {
     debug(3) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
     
@@ -99,14 +86,20 @@ int CauvGui::findPlugins(const QDir& dir, int subdirs)
     return numFound;
 }
 
-void CauvGui::onRun()
+void CauvMainWindow::onRun()
 {
     CauvNode::onRun();
 
-    m_auv->initialise();
+    m_actions->auv = boost::make_shared<RedHerring>();
+    m_actions->auv->initialise();
+    m_actions->node = shared_from_this();
+    m_actions->nodes = boost::make_shared<NodePicker>(m_actions->auv);
+    addDockWidget(Qt::LeftDockWidgetArea, m_actions->nodes.get());
+    m_actions->window = boost::static_pointer_cast<QMainWindow>(shared_from_this());
+
 
     // message input
-    this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_auv));
+    this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
 
 
@@ -115,7 +108,7 @@ void CauvGui::onRun()
     this->joinGroup("control");
 
     // forward messages from "set" events
-    connect(m_auv.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
+    connect(m_actions->auv.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
             this, SLOT(send(boost::shared_ptr<const Message>)));
 
     // load plugins
@@ -128,8 +121,7 @@ void CauvGui::onRun()
     pluginsDir.cd("plugins");
     findPlugins(pluginsDir, 1);
 
-    boost::shared_ptr<DataStreamPicker> nodeList = boost::make_shared<DataStreamPicker>(m_auv);
-    addDock(nodeList.get(), Qt::LeftDockWidgetArea);
+
 
 
     QSettings settings("CAUV", "Cambridge AUV");
@@ -145,28 +137,12 @@ void CauvGui::onRun()
 }
 
 
-bool CauvGui::loadPlugin(QObject *plugin){
+bool CauvMainWindow::loadPlugin(QObject *plugin){
 
     // all plugins must come from CauvInterfacePlugin
     CauvInterfacePlugin *basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
     if(basicPlugin) {
-        basicPlugin->initialise(m_auv, shared_from_this());
-        // see which groups the plugin needs us to join
-        foreach (QString group, basicPlugin->getGroups()){
-            joinGroup(group.toStdString());
-            debug(3) << plugin->objectName().toStdString() << "requested to join" << group.toStdString();
-        }
-
-        // tabs
-        foreach (QWidget * const widget, basicPlugin->getCentralWidgets()){
-            addCentralTab(widget, basicPlugin->name());
-        }
-        // docks
-        QMapIterator<QDockWidget*, Qt::DockWidgetArea> i(basicPlugin->getDockWidgets());
-        while (i.hasNext()) {
-            i.next();
-            addDockWidget(i.value(), i.key());
-        }
+        basicPlugin->initialise(m_actions);
     }
 
     return (basicPlugin ? true : false);

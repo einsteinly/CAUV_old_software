@@ -35,9 +35,10 @@ include_directories (${AUV_SOURCE_DIR})
 include_directories (${guis_SOURCE_DIR})
 
 set ( GUI_CORE_SRCS
-    datastreamdragging.cpp
+    nodedragging.cpp
     cauvbasicplugin.cpp
     widgets/videoscreen.cpp
+    widgets/graph.cpp
     model/node.cpp
     model/variants.cpp
     model/model.cpp
@@ -45,8 +46,8 @@ set ( GUI_CORE_SRCS
     controller/messagegenerators.cpp
     framework/datastreamdisplays.cpp
     framework/treeitems.cpp
-    framework/graphs.cpp
     framework/drophandler.cpp
+    framework/mainwindow.cpp
     utils/noderecorder.cpp
     )
 
@@ -54,11 +55,13 @@ set ( GUI_CORE_UIS
     widgets/videoscreen.ui
     framework/datastreamdisplays.ui
     #framework/datastreamrecorder.ui
-    framework/graphs.ui
+    framework/mainwindow.ui
+    widgets/graph.ui
     )
 
 set ( GUI_CORE_H
     widgets/videoscreen.h
+    widgets/graph.h
     model/node.h
     model/model.h
     model/nodes/numericnode.h
@@ -69,7 +72,7 @@ set ( GUI_CORE_H
     controller/messagegenerators.h
     framework/datastreamdisplays.h
     framework/treeitems.h
-    framework/graphs.h
+    framework/mainwindow.h
     )
 
 set ( GUI_CORE_RCC

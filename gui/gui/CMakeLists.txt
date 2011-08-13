@@ -23,21 +23,15 @@ else()
 
     set (
         GUI_SRCS
-
         main.cpp
-        cauvgui.cpp
     )
 
     set (
         GUI_UIS
-
-        mainwindow.ui
     )
 
     set (
         GUI_H
-
-        cauvgui.h
     )
 
     set (

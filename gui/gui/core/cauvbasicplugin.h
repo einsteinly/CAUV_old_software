@@ -3,31 +3,23 @@
 
 #include "cauvplugins.h"
 
-#include <QList>
-#include <QMap>
-#include <QString>
-
 namespace cauv {
     namespace gui {
         class CauvBasicPlugin : public CauvInterfacePlugin
         {
-            Q_INTERFACES(cauv::CauvInterfacePlugin)
+            Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
 
         public:
-                    CauvBasicPlugin(){}
             virtual ~CauvBasicPlugin(){}
 
-            virtual void initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node);
+            virtual void initialise(boost::shared_ptr<GuiActions> actions);
 
-            virtual const QMap<QDockWidget* , Qt::DockWidgetArea> &getDockWidgets() const;
-            virtual const QList<QWidget* > &getCentralWidgets() const;
+            virtual void initialise() = 0;
 
         protected:
             boost::shared_ptr<AUV> m_auv;
             boost::shared_ptr<CauvNode> m_node;
-
-            QList<QWidget *> m_tabs;
-            QMap<QDockWidget *, Qt::DockWidgetArea> m_docks;
+            boost::shared_ptr<GuiActions> m_actions;
         };
     } //namespace gui
 }// namespace cauv

@@ -8,11 +8,10 @@
 
 #include <debug/cauv_debug.h>
 
-#include <QTimer>
 #include <QApplication>
 #include <QTextCodec>
 
-#include "cauvgui.h"
+#include <gui/core/framework/mainwindow.h>
 
 #include <common/cauv_utils.h>
 
@@ -29,7 +28,7 @@ int main(int argc, char** argv)
     icon.addFile(QString::fromUtf8(":/resources/icon.png"), QSize(), QIcon::Normal, QIcon::Off);
     app.setWindowIcon(icon);
 
-    boost::shared_ptr<gui::CauvGui> node = boost::make_shared<gui::CauvGui>(&app);
+    boost::shared_ptr<gui::CauvMainWindow> node = boost::make_shared<gui::CauvMainWindow>(&app);
 
     int ret = node->parseOptions(argc, argv);
     if(ret != 0) return ret;

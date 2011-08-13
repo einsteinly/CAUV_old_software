@@ -6,8 +6,7 @@ option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
 
 
 # includes for shared and generated files
-include_directories(${guis_BINARY_DIR})
-include_directories (${gui_SOURCE_DIR})
+include_directories (${guis_SOURCE_DIR})
 include_directories (${AUV_SOURCE_DIR})
 
 function (cauv_install_plugin TARGET)
@@ -19,7 +18,7 @@ endfunction()
 #add_subdirectory (console)
 #add_subdirectory (pipeline)
 #add_subdirectory (processes)
-#add_subdirectory (motorcontrol)
+add_subdirectory (motorcontrol)
 #add_subdirectory (logs)
 
 #if (CAUV_GUI_MAP)

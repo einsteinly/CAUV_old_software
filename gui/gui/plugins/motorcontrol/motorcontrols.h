@@ -67,9 +67,9 @@ namespace cauv {
                     MotorControls();
             virtual ~MotorControls();
 
-            virtual const QString name() const;
-            virtual const QList<QString> getGroups() const;
-            virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
+            virtual void initialise();
+
+            const QString name() const;
 
         protected:
             void setValue(QDoubleSpinBox *spin, double value);

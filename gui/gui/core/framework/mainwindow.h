@@ -2,8 +2,12 @@
 #define CAUVGUI_H
 
 #include <QMainWindow>
+#include <QGraphicsScene>
+#include <QGraphicsView>
 #include <boost/enable_shared_from_this.hpp>
 #include <common/cauv_node.h>
+
+#include "guiactions.h"
 
 namespace Ui {
     class MainWindow;
@@ -14,31 +18,23 @@ namespace cauv {
 
     namespace gui {
 
-        class AUV;
-
-        class CauvGui : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvGui> {
+        class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvMainWindow> {
             Q_OBJECT
 
         public:
-            CauvGui(QApplication * app);
-            virtual ~CauvGui();
+            CauvMainWindow(QApplication * app);
+            virtual ~CauvMainWindow();
 
         public Q_SLOTS:
             int send(boost::shared_ptr<const Message>message);
-            void addCentralTab(QWidget* tab, const QString& name);
-            void addCentralTab(QWidget* tab, QString& name);
-            void addDock(QDockWidget* dock, Qt::DockWidgetArea area);
 
         protected:
             virtual void onRun();
-
             virtual bool loadPlugin(QObject * plugin);
-
             virtual void closeEvent(QCloseEvent *);
 
-            boost::shared_ptr<AUV> m_auv;
-
             QApplication * m_application;
+            boost::shared_ptr<GuiActions> m_actions;
 
         private:
             Ui::MainWindow * ui;

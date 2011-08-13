@@ -2,10 +2,10 @@
 #include "ui_datastreamdisplays.h"
 
 #include "treeitems.h"
-#include "graphs.h"
 
 #include "../model/model.h"
 #include "../widgets/videoscreen.h"
+#include "../widgets/graph.h"
 
 #include <common/cauv_utils.h>
 
@@ -36,11 +36,11 @@ public:
 };
 
 
-class DataStreamCompleter : public QCompleter {
+class NodePathCompleter : public QCompleter {
 
 public:
 
-    DataStreamCompleter(QAbstractItemModel * model, QWidget * parent = NULL) : QCompleter(model, parent){
+    NodePathCompleter(QAbstractItemModel * model, QWidget * parent = NULL) : QCompleter(model, parent){
     }
 
     QStringList splitPath(const QString &path) const {
@@ -56,7 +56,7 @@ public:
     }
 };
 
-std::vector<boost::shared_ptr<NodeBase> > DataStreamList::getDroppedNodes() {
+std::vector<boost::shared_ptr<NodeBase> > NodeListView::getDroppedNodes() {
     std::vector<boost::shared_ptr<NodeBase> > streams;
 
     QModelIndexList items = this->selectedIndexes();
@@ -75,7 +75,7 @@ std::vector<boost::shared_ptr<NodeBase> > DataStreamList::getDroppedNodes() {
 
 
 
-DataStreamPicker::DataStreamPicker(boost::shared_ptr<AUV>auv) :
+NodePicker::NodePicker(boost::shared_ptr<AUV>auv) :
         ui(new Ui::DataStreamPicker())
 {
     ui->setupUi(this);
@@ -100,14 +100,14 @@ DataStreamPicker::DataStreamPicker(boost::shared_ptr<AUV>auv) :
 
     // dynamic adding of new nodes
     ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), auvItem, SLOT(filter(QString)));
-    QCompleter * completer = new DataStreamCompleter(ui->dataStreams->model());
+    QCompleter * completer = new NodePathCompleter(ui->dataStreams->model());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     ui->filter->setCompleter(completer);
 
     ui->dataStreams->connect(ui->dataStreams, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 }
 
-void DataStreamPicker::redirectKeyboardFocus(QKeyEvent* event){
+void NodePicker::redirectKeyboardFocus(QKeyEvent* event){
     if(event->key() == Qt::Key_Escape) {
         ui->filter->setText("");
         return;
@@ -119,31 +119,9 @@ void DataStreamPicker::redirectKeyboardFocus(QKeyEvent* event){
     }
 }
 
-
-DataStreamPicker::~DataStreamPicker(){
+NodePicker::~NodePicker(){
     delete ui;
 }
-
-
-const QString DataStreamPicker::name() const{
-    return QString("Data Streams");
-}
-
-const QList<QString> DataStreamPicker::getGroups() const{
-    QList<QString> groups;
-    groups.push_back(QString("gui"));
-    groups.push_back(QString("telemetry"));
-    groups.push_back(QString("control"));
-    groups.push_back(QString("state"));
-    groups.push_back(QString("image"));
-    groups.push_back(QString("sonarout"));
-    groups.push_back(QString("sonarctl"));
-    groups.push_back(QString("pressure"));
-    // TODO add all groups...
-    return groups;
-}
-
-
 
 
 
@@ -166,18 +144,22 @@ public:
 
 
 
-DataStreamDisplayArea::DataStreamDisplayArea(QWidget * parent) :
+NodeVisualisationArea::NodeVisualisationArea(QWidget * parent) :
         QMdiArea(parent) {
     this->setAcceptDrops(true);
 }
 
-void DataStreamDisplayArea::addWindow(boost::shared_ptr<QWidget> content){
+void NodeVisualisationArea::addWindow(boost::shared_ptr<QWidget> content){
     AutoDeletingMdiSubWindow * window = new AutoDeletingMdiSubWindow(content);
     this->addSubWindow(window);
     window->show();
 }
 
-void DataStreamDisplayArea::dropEvent(QDropEvent * event){
+void NodeVisualisationArea::registerDropHandler(boost::shared_ptr<DropHandler> handler){
+    m_handlers.push_back(handler);
+}
+
+void NodeVisualisationArea::dropEvent(QDropEvent * event){
     NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
     if(source) {
         event->acceptProposedAction();
@@ -185,38 +167,39 @@ void DataStreamDisplayArea::dropEvent(QDropEvent * event){
     }
 }
 
-void DataStreamDisplayArea::dragEnterEvent(QDragEnterEvent * event){
+void NodeVisualisationArea::dragEnterEvent(QDragEnterEvent * event){
     NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
     if(source) {
         event->acceptProposedAction();
     }
 }
 
-void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
-    addWindow(boost::make_shared<GraphWidget>(node));
+void NodeVisualisationArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
+    applyHandlers(node);
+    //addWindow(boost::make_shared<GraphWidget>(node));
 }
 
-void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<ImageNode> node){
+void NodeVisualisationArea::onNodeDropped(boost::shared_ptr<ImageNode> node){
     boost::shared_ptr<VideoScreen> video = boost::make_shared<VideoScreen>(QString::fromStdString(node->nodeName()));
     video->connect(node.get(), SIGNAL(onUpdate(image_variant_t)), video.get(), SLOT(setImage(image_variant_t)));
     addWindow(video);
 }
 
-void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
+void NodeVisualisationArea::onNodeDropped(boost::shared_ptr<FloatYPRNode> node){
     boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<TypedNumericNode<float> >("yaw"));
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("pitch"));
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("roll"));
     addWindow(widget);
 }
 
-void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
+void NodeVisualisationArea::onNodeDropped(boost::shared_ptr<FloatXYZNode> node){
     boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>(node->findOrCreate<TypedNumericNode<float> >("x"));
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("y"));
     widget->addNode(node->findOrCreate<TypedNumericNode<float> >("z"));
     addWindow(widget);
 }
 
-void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<GroupingNode> node){
+void NodeVisualisationArea::onNodeDropped(boost::shared_ptr<GroupingNode> node){
     boost::shared_ptr<GraphWidget> widget = boost::make_shared<GraphWidget>();
     std::vector<boost::shared_ptr<NumericNode> > children = node->getChildrenOfType<NumericNode>();
     if(children.empty()) return;
@@ -227,7 +210,7 @@ void DataStreamDisplayArea::onNodeDropped(boost::shared_ptr<GroupingNode> node){
 
 
 
-DataStreamList::DataStreamList(QWidget * parent) : QTreeWidget(parent){
+NodeListView::NodeListView(QWidget * parent) : QTreeWidget(parent){
     // Because QTreeWidgetItem can't let only one cell in a row be editable we have to hack it
     // around a bit. We set the item to be editable when it's double clicked in the editable
     // cell. This is then removed once the focus is lost. It works but its not a very elegant solution
@@ -237,11 +220,11 @@ DataStreamList::DataStreamList(QWidget * parent) : QTreeWidget(parent){
     connect(this, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemEdited(QTreeWidgetItem*,int)));
 }
 
-void DataStreamList::keyPressEvent(QKeyEvent *event){
+void NodeListView::keyPressEvent(QKeyEvent *event){
     Q_EMIT onKeyPressed(event);
 }
 
-void DataStreamList::editStarted(QTreeWidgetItem* item, int column){
+void NodeListView::editStarted(QTreeWidgetItem* item, int column){
     if(column == 1){
         cauv::gui::NodeTreeItemBase * dsItem = dynamic_cast<cauv::gui::NodeTreeItemBase*>(item);
         if(dsItem && dsItem->getNode()->isMutable()){
@@ -250,7 +233,7 @@ void DataStreamList::editStarted(QTreeWidgetItem* item, int column){
     }
 }
 
-void DataStreamList::itemEdited(QTreeWidgetItem* item, int column){
+void NodeListView::itemEdited(QTreeWidgetItem* item, int column){
     cauv::gui::NodeTreeItemBase * dsItem = dynamic_cast<cauv::gui::NodeTreeItemBase*>(item);
 
     // 1 is the editable cell that stores the value

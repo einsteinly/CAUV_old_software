@@ -1,5 +1,5 @@
-#include "graphs.h"
-#include "ui_graphs.h"
+#include "graph.h"
+#include "ui_graph.h"
 
 #include <common/cauv_utils.h>
 

@@ -11,7 +11,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include "../datastreamdragging.h"
+#include "../nodedragging.h"
 #include "../model/model.h"
 
 #include "drophandler.h"
@@ -26,11 +26,10 @@ namespace cauv {
     namespace gui {
 
 
-        class DataStreamDisplayArea : public QMdiArea, public NodeDropListener {
-            Q_OBJECT
+        class NodeVisualisationArea : public QMdiArea, public NodeDropListener {
 
         public:
-            DataStreamDisplayArea(QWidget * parent = 0);
+            NodeVisualisationArea(QWidget * parent = 0);
             void onNodeDropped(boost::shared_ptr<NumericNode> );
             void onNodeDropped(boost::shared_ptr<ImageNode> );
             void onNodeDropped(boost::shared_ptr<FloatYPRNode> );
@@ -40,21 +39,51 @@ namespace cauv {
             void dragEnterEvent(QDragEnterEvent * event);
             void addWindow(boost::shared_ptr<QWidget> content);
 
-            //void registerDropHandler(boost::shared_ptr<DropHandler> handler);
+            void registerDropHandler(boost::shared_ptr<DropHandler> handler);
+
+        protected:
+            std::vector<boost::shared_ptr<DropHandler> > m_handlers;
+
+            template<class T>
+            void applyHandlers(boost::shared_ptr<T> node){
+                BOOST_FOREACH(boost::shared_ptr<DropHandler> const& handler, m_handlers){
+                    try {
+                        handler->handle(node);
+                        break; // only accept the first handler that matches
+                    } catch (drop_not_handled){
+                        debug(5) << "Handler not appropriate";
+                    }
+                }
+            }
         };
 
 
 
+        class NodeListView : public QTreeWidget, public cauv::gui::NodeDragSource {
+            Q_OBJECT
+        public:
+            NodeListView(QWidget * parent);
 
-        class DataStreamPicker : public QDockWidget{
+            std::vector<boost::shared_ptr<cauv::gui::NodeBase> > getDroppedNodes();
+
+            void keyPressEvent(QKeyEvent *event);
+
+        private Q_SLOTS:
+            void editStarted(QTreeWidgetItem* item, int column);
+            void itemEdited(QTreeWidgetItem* item, int column);
+
+        Q_SIGNALS:
+            void onKeyPressed(QKeyEvent *event);
+        };
+
+
+
+        class NodePicker : public QDockWidget{
             Q_OBJECT
 
         public:
-            DataStreamPicker(boost::shared_ptr<AUV>auv);
-            virtual ~DataStreamPicker();
-
-            virtual const QString name() const;
-            virtual const QList<QString> getGroups() const;
+            NodePicker(boost::shared_ptr<AUV>auv);
+            virtual ~NodePicker();
 
         protected Q_SLOTS:
             void redirectKeyboardFocus(QKeyEvent* key);
@@ -66,30 +95,5 @@ namespace cauv {
     } // namespace gui
 } // namespace cauv
 
-
-/**
-  * The QWidget subclass where the model data is displayed.
-  *
-  * It's outside the cauv namespace because its used as promoted widget in a ui file
-  * @todo: find a way around this
-  *
-  * @author Andy Pritchard
-  */
-class DataStreamList : public QTreeWidget, public cauv::gui::NodeDragSource {
-    Q_OBJECT
-public:
-    DataStreamList(QWidget * parent);
-    
-    std::vector<boost::shared_ptr<cauv::gui::NodeBase> > getDroppedNodes();
-    
-    void keyPressEvent(QKeyEvent *event);
-
-private Q_SLOTS:
-    void editStarted(QTreeWidgetItem* item, int column);
-    void itemEdited(QTreeWidgetItem* item, int column);
-
-Q_SIGNALS:
-    void onKeyPressed(QKeyEvent *event);
-};
 
 #endif // DATASTREAMDISPLAYS_H

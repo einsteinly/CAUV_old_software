@@ -1,10 +1,13 @@
 #include "motorcontrols.h"
-#include "motorcontrol/ui_motorcontrols.h"
+#include "ui_motorcontrols.h"
 
 #include <QLabel>
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QMainWindow>
+
+#include <common/cauv_node.h>
 
 #include <gui/core/model/model.h>
 #include <gui/core/model/nodes/numericnode.h>
@@ -100,19 +103,21 @@ MotorControls::MotorControls() :
         m_motorsCount(0), m_autopilotsCount(0), ui(new Ui::MotorControls()), m_burst_controllers()
 {
     ui->setupUi(this);
-
-    m_docks[this] = Qt::LeftDockWidgetArea;
 }
 
-void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
-    CauvBasicPlugin::initialise(auv, node);
+void MotorControls::initialise(){
+
+    m_node->joinGroup("gui");
+    m_node->joinGroup("control");
+
+    m_actions->window->addDockWidget(Qt::LeftDockWidgetArea, this);
 
     // for new motors    
-    boost::shared_ptr<GroupingNode> motors = auv->findOrCreate<GroupingNode>("motors");
+    boost::shared_ptr<GroupingNode> motors = m_auv->findOrCreate<GroupingNode>("motors");
     motors->connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addMotor(boost::shared_ptr<NodeBase>)));
 
     // new autopilots
-    boost::shared_ptr<GroupingNode> autopilots = auv->findOrCreate<GroupingNode>("autopilots");
+    boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     autopilots->connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addAutopilot(boost::shared_ptr<NodeBase>)));
 }
 
@@ -171,16 +176,8 @@ void MotorControls::addAutopilot(boost::shared_ptr<NodeBase> node){
 }
 
 
-
 const QString MotorControls::name() const{
     return QString("Navigation");
-}
-
-const QList<QString> MotorControls::getGroups() const{
-    QList<QString> groups;
-    groups.push_back(QString("gui"));
-    groups.push_back(QString("control"));
-    return groups;
 }
 
 Q_EXPORT_PLUGIN2(cauv_motorsplugin, MotorControls)
