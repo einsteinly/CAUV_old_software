@@ -5,6 +5,9 @@
 #include <QPluginLoader>
 #include <QSettings>
 
+#include <QPushButton>
+#include <QGraphicsProxyWidget>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
@@ -12,6 +15,8 @@
 #include "../model/model.h"
 #include "../cauvplugins.h"
 #include "../controller/messageobserver.h"
+#include "../framework/nodescene.h"
+#include "../framework/nodevisualiser.h"
 #include "../framework/datastreamdisplays.h"
 
 #include <common/cauv_global.h>
@@ -30,6 +35,8 @@ CauvMainWindow::CauvMainWindow(QApplication * app) :
         ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
+
+    ui->streamsDock->setTitleBarWidget(new QWidget());
 
     // more misc ui setup
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
@@ -90,18 +97,40 @@ void CauvMainWindow::onRun()
 {
     CauvNode::onRun();
 
+    // auv
     m_actions->auv = boost::make_shared<RedHerring>();
     m_actions->auv->initialise();
+    // cauv node
     m_actions->node = shared_from_this();
+    // node picker
     m_actions->nodes = boost::make_shared<NodePicker>(m_actions->auv);
-    addDockWidget(Qt::LeftDockWidgetArea, m_actions->nodes.get());
-    m_actions->window = boost::static_pointer_cast<QMainWindow>(shared_from_this());
+    ui->streamsDock->setWidget(m_actions->nodes.get());
+    // mian window
+    m_actions->window = shared_from_this();
+    // view
+    m_actions->view = boost::make_shared<NodeVisualiser>();
+    m_actions->view->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_actions->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_actions->window->setCentralWidget(m_actions->view.get());
+    //scene
+    m_actions->scene = boost::make_shared<NodeScene>();
+    m_actions->scene->addWidget(new QPushButton("button"));
+    m_actions->view->setScene(m_actions->scene.get());
 
+    // test data
+    NodeVisualiser * v = new NodeVisualiser();
+    v->setScene(new NodeScene());
+    v->scene()->addWidget(new QPushButton());
+    v->setObjectName("testingView");
+    v->scene()->setObjectName("testing scene");
+    //QMainWindow * window = new QMainWindow();
+    //window->setCentralWidget(v);
+    QGraphicsProxyWidget * proxy = m_actions->scene->addWidget(v);
+    proxy->setObjectName("proxy object");
 
     // message input
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
-
 
     // always need at least the gui group
     this->joinGroup("gui");

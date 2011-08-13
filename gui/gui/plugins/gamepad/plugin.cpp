@@ -21,14 +21,7 @@ const QString GamepadPlugin::name() const{
     return QString("Gamepad");
 }
 
-const QList<QString> GamepadPlugin::getGroups() const{
-    QList<QString> groups;
-    groups.push_back(QString("gui"));
-    return groups;
-}
-
-void GamepadPlugin::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
-    CauvBasicPlugin::initialise(auv, node);
+void GamepadPlugin::initialise(){
 
     try {
         info() << "found" << GamepadInput::getNumDevices() << "gamepads";

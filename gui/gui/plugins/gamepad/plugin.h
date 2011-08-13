@@ -15,8 +15,7 @@ namespace cauv {
 
         public:
             virtual const QString name() const;
-            virtual const QList<QString> getGroups() const;
-            virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
+            virtual void initialise();
 
         };
     } // namespace gui

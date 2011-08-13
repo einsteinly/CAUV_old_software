@@ -5,10 +5,10 @@
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QPushButton>
-#include <QMainWindow>
 
 #include <common/cauv_node.h>
 
+#include <gui/core/framework/mainwindow.h>
 #include <gui/core/model/model.h>
 #include <gui/core/model/nodes/numericnode.h>
 

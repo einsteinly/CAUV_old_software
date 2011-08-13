@@ -155,10 +155,6 @@ void NodeVisualisationArea::addWindow(boost::shared_ptr<QWidget> content){
     window->show();
 }
 
-void NodeVisualisationArea::registerDropHandler(boost::shared_ptr<DropHandler> handler){
-    m_handlers.push_back(handler);
-}
-
 void NodeVisualisationArea::dropEvent(QDropEvent * event){
     NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
     if(source) {
@@ -175,8 +171,7 @@ void NodeVisualisationArea::dragEnterEvent(QDragEnterEvent * event){
 }
 
 void NodeVisualisationArea::onNodeDropped(boost::shared_ptr<NumericNode> node){
-    applyHandlers(node);
-    //addWindow(boost::make_shared<GraphWidget>(node));
+    addWindow(boost::make_shared<GraphWidget>(node));
 }
 
 void NodeVisualisationArea::onNodeDropped(boost::shared_ptr<ImageNode> node){

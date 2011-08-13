@@ -48,6 +48,8 @@ set ( GUI_CORE_SRCS
     framework/treeitems.cpp
     framework/drophandler.cpp
     framework/mainwindow.cpp
+    framework/nodevisualiser.cpp
+    framework/nodescene.cpp
     utils/noderecorder.cpp
     )
 
@@ -73,6 +75,8 @@ set ( GUI_CORE_H
     framework/datastreamdisplays.h
     framework/treeitems.h
     framework/mainwindow.h
+    framework/nodevisualiser.h
+    framework/nodescene.h
     )
 
 set ( GUI_CORE_RCC

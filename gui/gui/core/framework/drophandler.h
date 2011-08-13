@@ -11,25 +11,17 @@ namespace cauv {
 
         struct drop_not_handled : public std::exception {};
 
-        class DropHandler
-        {
+        template <class T>
+        class DropHandlerInterface {
         public:
-            DropHandler();
+            // return true if the object will handle the node, but
+            // don't actually handle it yet
+            virtual bool willHandle(boost::shared_ptr<NodeBase> node) = 0;
 
-            template <class T> bool handles(boost::shared_ptr<T> node){
-                try {
-                    QGraphicsItem * item = handle(node);
-                    delete item;
-                    return true;
-                } catch (drop_not_handled){}
-                return false;
-            }
-
-            virtual QGraphicsItem * handle(boost::shared_ptr<NumericNode> );
-            virtual QGraphicsItem * handle(boost::shared_ptr<ImageNode> );
-            virtual QGraphicsItem * handle(boost::shared_ptr<FloatYPRNode> );
-            virtual QGraphicsItem * handle(boost::shared_ptr<FloatXYZNode> );
-            virtual QGraphicsItem * handle(boost::shared_ptr<GroupingNode> );
+            // return some object that the caller is interested in
+            // if passed an obejct you're not interested in throw a
+            // drop_not_handled exception
+            virtual T handle(boost::shared_ptr<NodeBase> node) = 0;
         };
 
     } // namespace gui
