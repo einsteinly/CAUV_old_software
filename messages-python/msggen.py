@@ -138,6 +138,22 @@ def cLoadSaveSuffix(t):
         print "ERROR: " + repr(t) + " is not a type"
         return "ERROR"
 
+def toCHILType(t):
+    if isinstance(t, msggenyacc.BaseType):
+        return t.name
+    elif isinstance(t, msggenyacc.EnumType):
+        return t.enum.name
+    elif isinstance(t, msggenyacc.StructType):
+        return t.struct.name
+    elif isinstance(t, msggenyacc.VariantType):
+        return t.variant.name
+    elif isinstance(t, msggenyacc.IncludedType):
+        return t.included.name
+    elif isinstance(t, msggenyacc.ListType) or isinstance(t, msggenyacc.MapType):
+        return CPPContainerTypeName(t)
+    else:
+        print "ERROR: " + repr(t) + " is not a type"
+        return "ERROR"
 
 def mapToBaseType(l):
     return map(lambda x: msggenyacc.BaseType(x), l)
@@ -179,11 +195,22 @@ def writeIfChanged(filename, text, options):
             file.write(text)
     return [filename]
 
+def hgCmd(cmd, repo_root=os.path.join(os.path.dirname(sys.argv[0]), '../')):
+    # !!! duplicated from hacks.py
+    import os, shlex, subprocess
+    hg_cmdstr = 'hg -R %s %s' % (repo_root, cmd)
+    dp = subprocess.Popen(shlex.split(hg_cmdstr), stdout = subprocess.PIPE)
+    r = dp.communicate()
+    return r[0]
+
+def sourceRevision():
+    # !!! duplicated from hacks.py
+    return hgCmd("log -l 1 --template '{node}'")
 
 def main():
     p = OptionParser(usage="usage: %prog [options] INPUT")
     p.add_option("-l", "--lang",
-                 choices=["c++-cpp-files", "c++-files", "c++", "c", "java", "python"],
+                 choices=["c++-cpp-files", "c++-files", "c++", "c", "java", "python", "chil"],
                  default="c++",
                  metavar="LANG",
                  help="output language (java, python, c++, or c) [default: %default]")
@@ -201,6 +228,9 @@ def main():
                  type="string",
                  metavar="FILE",
                  help="output filename(s) prefix (file extension will be added depending on language) [default: INPUT]")
+    p.add_option("-t", "--template-dir", default=os.path.dirname(sys.argv[0]),
+                 dest='template_dir', metavar="TEMPLATE_DIR",
+                 help="look for template files here [default: %default]")
     p.add_option("-p", "--package",
                  type="string",
                  default="cauv",
@@ -223,7 +253,7 @@ def main():
 
     tree = parser.parse(data)
     
-    msgdir = os.path.dirname(sys.argv[0])
+    msgdir = options.template_dir
 
 
     filesWritten = []
@@ -320,7 +350,7 @@ def main():
         t.toCType = toCType
         t.loadsavesuffix = cLoadSaveSuffix
         t.mapToBaseType = mapToBaseType
-        t.headerFile = os.path.basename(output + ".h") 
+        t.headerFile = os.path.basename(output + ".h")
         filesWritten += writeIfChanged(output + ".c", str(t), options)
 
     elif options.lang == "python":
@@ -364,6 +394,26 @@ def main():
                         filesWritten += writeIfChanged(os.path.join(output, "emit_" + m.name.lower() + "_message.cpp"), str(t), options)
 
             requiredVectorTypes, requiredMapTypes = addNestedTypes(requiredVectorTypes, requiredMapTypes)
+    
+    elif options.lang == 'chil':
+        # -----------------
+        #  CHIL Decode
+        # -----------------
+        requiredMapTypes = set()
+        requiredVectorTypes = set()
+
+        t = Template(file = os.path.join(msgdir, "decode.py.template"), searchList=tree)
+
+        t.source_revision = sourceRevision()
+        t.toCPPType = toCPPType
+        t.isSTLVector = isSTLVector
+        t.isSTLMap = isSTLMap
+        t.CPPContainerTypeName = CPPContainerTypeName
+        t.requiredMapTypes = requiredMapTypes
+        t.requiredVectorTypes = requiredVectorTypes
+        t.addNestedTypes = addNestedTypes
+        t.toCHILType = toCHILType
+        filesWritten += writeIfChanged(os.path.join(output, "decode.py"), str(t), options)
 
     if options.nowrite:
         print ";".join(map(lambda f: os.path.abspath(f), filesWritten))

@@ -1,0 +1,126 @@
+## Template for CHIL decoder
+## The API defined here should not be changed without some thought
+\#
+\# This is a generated file, do not edit!
+\# Generated for $source_revision
+\#
+
+\# Standard Library
+import base64
+
+\# 3rd Party
+import pyparsing as pp # MIT license
+
+\# CAUV
+import cauv.messaging as messaging
+
+\# Definitions
+lp = pp.Suppress(pp.Literal('('))
+rp = pp.Suppress(pp.Literal(')'))
+
+\# Basic Types
+p_int32 = pp.Optional(pp.Literal('+') ^ p.Literal('-')) + pp.Word(pp.nums)
+p_int32.setParseAction(int)
+
+p_bool = pp.Literal('0') ^ pp.Literal('1')
+p_bool.setParseAction(bool)
+
+p_uint32 = pp.Optional(pp.Literal('+')) + pp.Word(pp.nums)
+p_uint32.setParseAction(int)
+
+p_float = pp.Word(pp.nums + '.eE+-')## TODO: more strict parsing
+p_float.setParseAction(float)
+
+##p_string = pp.suppress('"') + pp.Word('0123456789abcdefABCDEF') + pp.suppress('"')
+p_string = pp.Word('0123456789abcdefABCDEF')
+p_string.setParseAction(base64.b16decode)
+
+\# Forward declarations
+#for $s in $structs
+p_${s.name} = pp.Forward()
+    #for $f in $s.fields
+        #if $isSTLVector($f.type)
+            $requiredVectorTypes.add($f.type.valType)
+        #else if $isSTLMap($f.type)
+            $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
+        #end if
+    #end for
+#end for
+
+#for $g in $groups
+#for $m in $g.messages
+    #for $f in $m.fields
+        #if $isSTLVector($f.type)
+            #silent $requiredVectorTypes.add($f.type.valType)
+        #else if $isSTLMap($f.type)
+            #silent $requiredMapTypes.add(($f.type.keyType, $f.type.valType))
+        #end if
+    #end for
+#end for
+#end for
+#set global $requiredVectorTypes, $requiredMapTypes = $addNestedTypes($requiredVectorTypes, $requiredMapTypes)
+#for $t in $requiredVectorTypes
+    #set $vecn = $CPPContainerTypeName(t) + "Vec"
+p_${vecn} = pp.Forward()
+#end for
+
+#for $kt, $vt  in $requiredMapTypes
+    #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
+p_${mapn} = pp.Forward()
+#end for
+
+#for $e in $enums
+p_${e.name} = pp.Forward()
+#end for
+
+\# Parse Structs
+#for $s in $structs
+p_${s.name} << lp \
+    #for $f in $s.fields
+    + p_$toCHILType($f.type) \
+    #end for
+    + rp
+#end for
+
+\# Parse Vector Types
+#for $t in $requiredVectorTypes
+    #set $vecn = $CPPContainerTypeName(t) + "Vec"
+p_${vecn} << lp + pp.delimitedList(p_${toCHILType($t)}) + pp.Optional(',') + rp
+#end for
+
+\# Parse Map Types
+#for $kt, $vt  in $requiredMapTypes
+    #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
+p_${mapn} << lp + pp.delimitedList(lp + p_${toCHILType($kt)} + ',' p_${toCHILType($vt)} + rp) + pp.Optional(',') + rp
+#end for
+
+\# Parse Enums
+#for $e in $enums
+p_${e.name} = << p_int32
+p_${e.name}.setParseAction(messaging.${e.name})
+#end for
+
+\# Parse Messages
+#for $g in $groups
+#for $m in $g.messages
+p_${m.name}Message << pp.Literal('${m.id}') + lp \
+    #for $f in $m.fields
+    + p_$toCHILType($f.type) \
+    #end for
+    + rp
+#end for
+#end for
+
+
+\# Parse any Message
+p_Message = \
+#for $i, $g in $enumerate($groups)
+#for $j, $m in $enumerate($g.messages)
+    #if $i + 1 == len($groups) and $j + 1 == len($g.messages)
+    p_${m.name}Message
+    #else
+    p_${m.name}Message ^ \
+    #end if
+#end for
+#end for
+

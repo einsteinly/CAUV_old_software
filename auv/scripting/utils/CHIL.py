@@ -66,20 +66,6 @@ def interestingAttrs(msg):
         r.append(attrs[k].__get__(msg))
     return r
 
-''' unused
-def isSimpleString(s):
-    # yes if s contains no newlines or non-printable characters (tabs and
-    # spaces are okay) or ()brackets or commas (to make parsing simple)
-    # TODO: better: 1) use standard library, 2) 
-    for c in s:
-        if c not in ' \t1234567890-=!@$%^&*_+' +\
-                    'abcdefghijklmnopqrstuvwxyz' +\
-                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +\
-                    '{}[]:"|;\'\\<>?./`~':
-            return False
-    return True
-'''
-
 def tddiv(l, r):
     l_musec = long(l.microseconds) + l.seconds*1000000L + l.days*1000000L*24L*3600L
     r_musec = long(r.microseconds) + r.seconds*1000000L + r.days*1000000L*24L*3600L
@@ -265,6 +251,9 @@ class CHILer:
     struct  = pp.Forward()
     struct << pp.Group(lbrac_s + pp.delimitedList(struct | value) + comma_o + rbrac_s)
     msg     = number + struct
+    # omgpyparsingissomucheasierthanlexandyacandfriends
+    def derserialiseStruct(self, field_list, T):
+        pass
     def deserialiseMessage(self, s):
         print self.msg.parseString(s)
 
