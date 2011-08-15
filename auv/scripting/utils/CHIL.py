@@ -188,6 +188,7 @@ class CHILer:
         r += 60*1000000L*timedelta.seconds
         r += timedelta.microseconds
         return r
+    '''
     def serialiseField(self, f):
         print 'F:%s,%s:%s,%s' % (
             f.__class__.__name__,
@@ -227,13 +228,15 @@ class CHILer:
         print 'S:%s:=\n%s' % (s, tmp)
         #return '%s(%s)' % (s.__class__.__name__, ','.join(tmp))
         return '(%s)' % (','.join(tmp))
+    '''
     def serialiseMessage(self, s):
-        r = interestingAttrs(s)
-        tmp = map(self.serialiseField, r)
-        print 'M:%s:=\n%s' % (s, tmp)
-        ret = '%d(%s)' % (s.msgId, ','.join(tmp))
-        print 'D:%s' % self.deserialiseMessage(ret)
-        return ret
+        #r = interestingAttrs(s)
+        #tmp = map(self.serialiseField, r)
+        #print 'M:%s:=\n%s' % (s, tmp)
+        #ret = '%d(%s)' % (s.msgId, ','.join(tmp))
+        #print 'D:%s' % self.deserialiseMessage(ret)
+        #return ret
+        return s.chil()
     def baseNameFromSubName(self, subname):
         if subname is None:
             subname = datetime.datetime.now().strftime(self.Const.Dat_Fname_Strftime_Fmt) + self.Const.Dat_Extn
@@ -242,20 +245,9 @@ class CHILer:
         else:
             basename = subname
         return basename
-    # parsing grammar:
-    comma_o = pp.Optional(',')
-    lbrac_s = pp.Suppress(pp.Literal('('))
-    rbrac_s = pp.Suppress(pp.Literal(')'))
-    value   = pp.Word(pp.alphanums + '_.')
-    number  = pp.Word(pp.nums)
-    struct  = pp.Forward()
-    struct << pp.Group(lbrac_s + pp.delimitedList(struct | value) + comma_o + rbrac_s)
-    msg     = number + struct
-    # omgpyparsingissomucheasierthanlexandyacandfriends
-    def derserialiseStruct(self, field_list, T):
-        pass
     def deserialiseMessage(self, s):
-        print self.msg.parseString(s)
+        import utils.c20b8b630ed8f56298a1749430cb50be9b5c458a as decode
+        print decode.p_Message.parseString(s)
 
 class Logger(CHILer):
     def __init__(self, dirname, subname=None):

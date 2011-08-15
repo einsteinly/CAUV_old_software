@@ -41,6 +41,7 @@ class $className : public Message
 
         static boost::shared_ptr<${className}> fromBytes(const_svec_ptr bytes);
         virtual const_svec_ptr toBytes() const;
+        virtual std::string chil() const;
 
     protected:
         virtual std::string _str() const; 
@@ -73,9 +74,11 @@ class $className : public Message
 #end if
 
     friend void serialise(svec_ptr, $className const&);
+    friend std::string chil($className const&);
 };
 
 void serialise(svec_ptr p, $className const&);
+std::string chil($className const&);
 
 } // namespace cauv
 

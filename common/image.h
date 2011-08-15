@@ -34,6 +34,7 @@ class Image{
 /* image serialisation */
 void serialise(svec_ptr p, Image const& v);
 int32_t deserialise(const_svec_ptr p, uint32_t i, Image& v);
+std::string chil(Image const&);
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(

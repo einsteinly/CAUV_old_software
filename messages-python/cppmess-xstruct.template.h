@@ -36,6 +36,7 @@ struct $s.name
 };
 void serialise(svec_ptr, $s.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);
+std::string chil($s.name const&);
 
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(

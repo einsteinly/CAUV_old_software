@@ -51,6 +51,7 @@ void emit${m.name}Message(){
         ## default group to send to
         .def_readonly("group", &${g.name}_Name)
         .def_readonly("msgId", &${m.name}_Id)
+        .def("chil", bp::make_function(wrap(&${className}::chil)))
         ## return policies are all return-by-value, safest, but not the most efficient
         #for $f in $m.fields
         .add_property(
