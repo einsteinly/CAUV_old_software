@@ -6,6 +6,7 @@
 #include <QSettings>
 
 #include <QPushButton>
+#include <QSpinBox>
 #include <QGraphicsProxyWidget>
 
 #include <boost/shared_ptr.hpp>
@@ -17,7 +18,7 @@
 #include "../controller/messageobserver.h"
 #include "../framework/nodescene.h"
 #include "../framework/nodevisualiser.h"
-#include "../framework/datastreamdisplays.h"
+#include "../framework/nodepicker.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -109,18 +110,26 @@ void CauvMainWindow::onRun()
     m_actions->window = shared_from_this();
     // view
     m_actions->view = boost::make_shared<NodeVisualiser>();
-    m_actions->view->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_actions->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_actions->window->setCentralWidget(m_actions->view.get());
     //scene
     m_actions->scene = boost::make_shared<NodeScene>();
-    m_actions->scene->addWidget(new QPushButton("button"));
     m_actions->view->setScene(m_actions->scene.get());
+    m_actions->view->centerOn(0,0);
+
+    m_actions->scene->onNodeDroppedAt(m_actions->auv->findOrCreate<TypedNumericNode<float> >("blah"), QPointF(0,0));
+
+
+    QGraphicsRectItem * rect = m_actions->scene->addRect(10, 10, 100, 100, QPen(Qt::red), QBrush(Qt::blue));
+    rect->setFlag(QGraphicsItem::ItemIsMovable);
+    QGraphicsRectItem * rect2 = m_actions->scene->addRect(10, 10, 100, 100, QPen(Qt::red), QBrush(Qt::blue));
+    rect2->setFlag(QGraphicsItem::ItemIsMovable);
 
     // test data
     NodeVisualiser * v = new NodeVisualiser();
     v->setScene(new NodeScene());
-    v->scene()->addWidget(new QPushButton());
+    //QPushButton * pb = new QPushButton("button");
+    v->scene()->addWidget(new QSpinBox());
+    //v->scene()
     v->setObjectName("testingView");
     v->scene()->setObjectName("testing scene");
     //QMainWindow * window = new QMainWindow();

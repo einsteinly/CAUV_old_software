@@ -56,8 +56,10 @@ void NodeBase::addChild(boost::shared_ptr<NodeBase> child){
 
     // propagate changes upwards
     child->connect(child.get(), SIGNAL(changed()), this, SIGNAL(changed()));
+    child->connect(child.get(), SIGNAL(treeChanged()), this, SIGNAL(treeChanged()));
 
     Q_EMIT nodeAdded(child);
+    Q_EMIT treeChanged();
 }
 
 const NodeBase::children_list_t NodeBase::getChildren() const {

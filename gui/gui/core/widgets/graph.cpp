@@ -95,6 +95,8 @@ GraphWidget::GraphWidget():
     ui->optionsWidget->hide();
     this->setAcceptDrops(true);
     setupPlot();
+
+    installEventFilter(new NodeDropFilter(this));
 }
 
 GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> node):
@@ -140,9 +142,6 @@ GraphWidget::~GraphWidget(){
     delete ui;
 }
 
-QSize GraphWidget::sizeHint() const{
-    return QSize(400, 250);
-}
 
 void GraphWidget::setupPlot() {
 
@@ -160,7 +159,6 @@ void GraphWidget::setupPlot() {
     m_plot->canvas()->setFrameStyle(QFrame::Box | QFrame::Plain );
     m_plot->canvas()->setStyleSheet("QwtPlotCanvas {border: 1px dotted gray}");
     m_plot->canvas()->setLineWidth(1);
-    m_plot->canvas()->setAttribute(Qt::WA_PaintOnScreen, true);
     // TODO: This api was changed in between 6.0.0-rc5 and 6.0.0-svn-r922
     //m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::BackingStore, true);
     //m_plot->canvas()->setPaintAttribute(QwtPlotCanvas::Opaque, true);
@@ -192,9 +190,11 @@ void GraphWidget::setupPlot() {
 
     // update timer
     m_timer.connect(&m_timer, SIGNAL(timeout()), m_plot, SLOT(replot()));
+    m_timer.connect(&m_timer, SIGNAL(timeout()), this, SLOT(repaint()));
     m_timer.setSingleShot(false);
     m_timer.start(100);
 
+    /*
     //zoomer
     QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
     zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::RightButton);
@@ -209,22 +209,12 @@ void GraphWidget::setupPlot() {
     QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
     panner->setAxisEnabled(QwtPlot::yLeft, false);
     panner->setMouseButton(Qt::LeftButton);
-
+*/
 }
 
-void GraphWidget::dropEvent(QDropEvent * event){
-    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
-    if(source) {
-        event->acceptProposedAction();
-        onDrop(source);
-    }
-}
 
-void GraphWidget::dragEnterEvent(QDragEnterEvent * event){
-    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
-    if(source) {
-        event->acceptProposedAction();
-    }
+bool GraphWidget::accepts(boost::shared_ptr<NodeBase>node){
+    return (node->type == GuiNodeType::NumericNode);
 }
 
 void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNode> node){

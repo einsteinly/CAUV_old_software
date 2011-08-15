@@ -3,12 +3,16 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsSceneDragDropEvent>
+#include <QGraphicsItem>
 #include <QWidget>
+#include <QGraphicsProxyWidget>
 
-#include "drophandler.h"
 #include "../nodedragging.h"
 
 #include <gui/core/model/node.h>
+#include <gui/core/model/nodes/numericnode.h>
+
+#include "../widgets/graph.h"
 
 namespace cauv {
     namespace gui {
@@ -18,31 +22,52 @@ namespace cauv {
         public:
             NodeScene(QObject * parent = NULL);
 
-            // handlers
+            // drop handlers
             virtual void registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem *> > handler);
             QGraphicsItem * applyHandlers(boost::shared_ptr<NodeBase> node);
-            bool hasHandlerFor(boost::shared_ptr<NodeBase> node);
-            bool hasHandlerFor(std::vector<boost::shared_ptr<NodeBase> > nodes);
-
-            // node dropping
-            virtual void onNodeDropped(boost::shared_ptr<NodeBase> );
-            void dropEvent(QGraphicsSceneDragDropEvent *event);
-            void dragEnterEvent(QGraphicsSceneDragDropEvent *event);
-            void dragMoveEvent(QGraphicsSceneDragDropEvent *event);
+            // drop listener methods
+            bool accepts(boost::shared_ptr<NodeBase>node);
+            virtual void onNodeDroppedAt(boost::shared_ptr<NodeBase>, QPointF );
 
         protected:
             std::vector<boost::shared_ptr<DropHandlerInterface<QGraphicsItem *> > > m_handlers;
+
         };
 
 
         class ExampleDropHandler : public DropHandlerInterface<QGraphicsItem *> {
 
-            virtual bool willHandle(boost::shared_ptr<NodeBase> node){
+            virtual bool accepts(boost::shared_ptr<NodeBase> node){
+                return node->type == GuiNodeType::NumericNode;
+            }
+
+            virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase>) {
+                QGraphicsRectItem * rect = new QGraphicsRectItem();
+                rect->setRect(rect->x(), rect->y(), 100, 100);
+                rect->setPen(QPen(Qt::red));
+                rect->setBrush(QBrush(Qt::blue));
+                rect->setFlag(QGraphicsItem::ItemIsMovable);
+                rect->setFlag(QGraphicsItem::ItemIsSelectable);
+                return rect;
+            }
+        };
+
+
+        class GraphDropHandler : public DropHandlerInterface<QGraphicsItem *> {
+
+            virtual bool accepts(boost::shared_ptr<NodeBase> node){
                 return node->type == GuiNodeType::NumericNode;
             }
 
             virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase> node) {
-                throw drop_not_handled();
+                GraphWidget * graph = new GraphWidget(boost::static_pointer_cast<NumericNode>(node));
+
+                QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+                proxy->setWidget(graph);
+                proxy->setFlag(QGraphicsItem::ItemIsMovable);
+                proxy->setFlag(QGraphicsItem::ItemIsSelectable);
+                proxy->installEventFilter(new NodeDropFilter(graph));
+                return proxy;
             }
         };
 

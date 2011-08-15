@@ -53,10 +53,8 @@ namespace cauv {
             GraphWidget(boost::shared_ptr<NumericNode> node);
             ~GraphWidget();
 
-            QSize sizeHint() const;
             void setupPlot();
-            void dropEvent(QDropEvent * event);
-            void dragEnterEvent(QDragEnterEvent * event);
+            bool accepts(boost::shared_ptr<NodeBase>node);
 
             void onNodeDropped(boost::shared_ptr<NumericNode>);
 

@@ -26,6 +26,7 @@ void NodeTreeItemBase::updateValue(const QString value) {
 bool NodeTreeItemBase::updateNode(QVariant&) {
     return false;
 }
+/*
 
 bool NodeTreeItemBase::filter(QString value){
 
@@ -52,7 +53,7 @@ bool NodeTreeItemBase::filter(QString value){
         return false;
     }
 }
-
+*/
 boost::shared_ptr<NodeBase> NodeTreeItemBase::getNode(){
     return m_node;
 }

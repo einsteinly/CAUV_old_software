@@ -6,9 +6,40 @@
 
 #include <QApplication>
 #include <QGraphicsProxyWidget>
+#include <QGLWidget>
 
 using namespace cauv;
 using namespace cauv::gui;
+
+/*
+class DragFilter : public QObject {
+    bool eventFilter(QObject *object, QEvent *event)
+    {
+        if (event->type() == QEvent::KeyRelease) {
+            QKeyEvent *keyEvent = dynamic_cast<QKeyEvent *>(event);
+            if (keyEvent->key() == Qt::Key_Control) {
+                if(NodeVisualiser * vis = dynamic_cast<NodeVisualiser *>(object)){
+                    vis->setDragMode(QGraphicsView::RubberBandDrag);
+                }
+                return true;
+            }
+        }
+
+        if (event->type() == QEvent::KeyPress) {
+            QKeyEvent *keyEvent = dynamic_cast<QKeyEvent *>(event);
+            if (keyEvent->key() == Qt::Key_Control) {
+                if(NodeVisualiser * vis = dynamic_cast<NodeVisualiser *>(object)){
+                    vis->setDragMode(QGraphicsView::ScrollHandDrag);
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+};
+*/
+
 
 class ZoomFilter : public QObject {
     bool eventFilter(QObject *object, QEvent *event)
@@ -21,32 +52,17 @@ class ZoomFilter : public QObject {
                     vis->resetMatrix();
                 }
                 // let the event propage
+                return false;
             }
         }
 
-        /*
-        if (event->type() == QEvent::Wheel) {
-            if(NodeVisualiser * vis = dynamic_cast<NodeVisualiser *>(object)){
-                QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
-                vis->centerOn(vis->mapToScene(wheelEvent->x(), wheelEvent->y()));
-
-                if(wheelEvent->delta() > 0) {
-                    vis->scale(vis->scaleFactor(), vis->scaleFactor());
-                } else {
-                    vis->scale(1.0 / vis->scaleFactor(), 1.0 / vis->scaleFactor());
-                }
-                event->accept();
-            }
-            return true;
-        }*/
         return false;
     }
 };
 
 
-
 NodeVisualiser::NodeVisualiser(QWidget * parent) : QGraphicsView(parent),
-m_scaleFactor(1.3)
+m_scaleFactor(1.25)
 {
     this->setAcceptDrops(true);
 
@@ -57,12 +73,19 @@ m_scaleFactor(1.3)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    setFocusPolicy(Qt::WheelFocus);
+    setTransformationAnchor(NodeVisualiser::AnchorViewCenter);
+    
+    centerOn(0,0);
+
+    setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+
+    this->setViewport(new QGLWidget());
 
 }
 
+
 void NodeVisualiser::wheelEvent(QWheelEvent *event){
-    debug(6) << "wheelEvent" << this;
+    debug(6) << "wheelEvent" << this << this->objectName().toStdString();
 
     event->ignore();
 
@@ -80,17 +103,40 @@ void NodeVisualiser::wheelEvent(QWheelEvent *event){
     }
     
     if(!event->isAccepted()) {
-        centerOn(mapToScene(event->x(), event->y()));
-    
+
+        QPoint viewportCenter = QPoint(rect().width()>>1, rect().height()>>1);
+        //qDebug() << "viewportCenter" << viewportCenter;
+        QPointF screenCenter = mapToScene(viewportCenter);
+        //qDebug() << "screenCenter" << screenCenter;
+
+
+        //Get the position of the mouse before scaling, in scene coords
+        QPointF pointBeforeScale(mapToScene(event->pos()));
+        //qDebug() << "pointBeforeScale" << pointBeforeScale;
+
         if(event->delta() > 0) {
             scale(scaleFactor(), scaleFactor());
         } else {
             scale(1.0 / scaleFactor(), 1.0 / scaleFactor());
         }
+
+        //Get the position after scaling, in scene coords
+        QPointF pointAfterScale(mapToScene(event->pos()));
+        //qDebug() << "pointAfterScale" << pointAfterScale;
+
+
+        //Get the offset of how the screen moved
+        QPointF offset = pointAfterScale - pointBeforeScale;
+        //qDebug() << "offset" << offset;
+
+        QPointF newCenter = screenCenter - offset;
+        //qDebug() << "newCenter" << newCenter;
+        centerOn(newCenter);
+
         event->accept();
     }
 
-    QGraphicsView::wheelEvent(event);
+    //QGraphicsView::wheelEvent(event);
 }
 
 float NodeVisualiser::scaleFactor(){

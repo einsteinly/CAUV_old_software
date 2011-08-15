@@ -6,41 +6,22 @@
 
 #include <debug/cauv_debug.h>
 
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QGraphicsSceneDragDropEvent>
+#include <QWidget>
+
 #include "nodedragging.h"
 
 using namespace cauv;
 using namespace cauv::gui;
 
-/*
-void NodeDropListener::dragEnterEvent(QDragEnterEvent *event)
-{
-    event->acceptProposedAction();
-}
 
-void NodeDropListener::dropEvent(QDropEvent *event)
-{
-    event->acceptProposedAction();
-
-    NodeDragSource * source = dynamic_cast<NodeDragSource*> (event->source());
-    if(source) {
-        onDrop(source);
-    }
-}*/
-
-void NodeDropListener::onDrop(NodeDragSource * source)
-{
-    info() << "Drag receieved from " << source;
-
-    std::vector<boost::shared_ptr<NodeBase> >  streams = source->getDroppedNodes();
-    BOOST_FOREACH(boost::shared_ptr<NodeBase> node, streams) {
-        routeNode(node);
-    }
-}
-
-bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> s){
+bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> s, QPointF pos){
 
     info() << "Routing stream" << s->nodeName();
 
+    onNodeDroppedAt(s, pos);
     onNodeDropped(s);
 
     switch (s->type){
@@ -60,9 +41,83 @@ bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> s){
         onNodeDropped(boost::static_pointer_cast<GroupingNode>(s));
         break;
     default:
-        error() << "Unknown node type dropped";
+        warning() << "Unknown node type dropped";
         return false;
     }
 
     return true;
 }
+
+
+
+
+NodeDropFilter::NodeDropFilter(NodeDropListener * listener) : m_listener(listener) {
+}
+
+bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
+{
+    if ((event->type() == QEvent::DragEnter)) {
+        QDragEnterEvent *dragEvent = dynamic_cast<QDragEnterEvent *>(event);
+        NodeDragSource * source = dynamic_cast<NodeDragSource*> (dragEvent->source());
+        if(source) {
+            BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, source->getDroppedNodes()){
+                if(m_listener->accepts(node)){
+                    dragEvent->acceptProposedAction();
+                    dragEvent->accept();
+                    return true;
+                }
+            }
+        }
+    }
+
+    else if ((event->type() == QEvent::Drop)) {
+        QDropEvent *dropEvent = dynamic_cast<QDropEvent *>(event);
+        NodeDragSource * source = dynamic_cast<NodeDragSource*> (dropEvent->source());
+        if(source) {
+            BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, source->getDroppedNodes()){
+                if(m_listener->accepts(node)){
+                    dropEvent->acceptProposedAction();
+                    dropEvent->accept();
+                    m_listener->routeNode(node, QPointF(dropEvent->pos()));
+                }
+            }
+            return true;
+        }
+    }
+
+    else if (event->type() == QEvent::GraphicsSceneDragEnter  ||
+             event->type() == QEvent::GraphicsSceneDragMove ||
+             event->type() == QEvent::GraphicsSceneDrop) {
+        QGraphicsSceneDragDropEvent *dndEvent = dynamic_cast<QGraphicsSceneDragDropEvent *>(event);
+        NodeDragSource * source = dynamic_cast<NodeDragSource*> (dndEvent->source());
+        if(source) {
+            BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, source->getDroppedNodes()){
+                if(m_listener->accepts(node)){
+                    dndEvent->acceptProposedAction();
+                    dndEvent->accept();
+                    if(event->type() == QEvent::GraphicsSceneDrop) {
+                        m_listener->routeNode(node, dndEvent->scenePos());
+                    }
+                    else return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+
+NodeSceneDropArea::NodeSceneDropArea(NodeDropListener * listener) : NodeDropFilter(listener) {
+    this->setAcceptDrops(true);
+}
+
+bool NodeSceneDropArea::sceneEvent(QEvent *event) {
+    return eventFilter(this, event);
+}
+
+void NodeSceneDropArea::updateGeometry(QRectF rect){
+    this->setRect(rect);
+}
+
+

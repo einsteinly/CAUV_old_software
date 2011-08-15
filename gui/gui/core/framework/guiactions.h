@@ -15,13 +15,14 @@ namespace cauv {
         class NodePicker;
         class NodeVisualiser;
         class CauvMainWindow;
+        class NodeScene;
 
         struct GuiActions {
             boost::shared_ptr<CauvMainWindow> window;
             boost::shared_ptr<CauvNode> node;
             boost::shared_ptr<AUV> auv;
 
-            boost::shared_ptr<QGraphicsScene> scene;
+            boost::shared_ptr<NodeScene> scene;
             boost::shared_ptr<NodeVisualiser> view;
 
             boost::shared_ptr<NodePicker> nodes;

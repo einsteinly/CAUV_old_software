@@ -44,9 +44,8 @@ set ( GUI_CORE_SRCS
     model/model.cpp
     controller/messageobserver.cpp
     controller/messagegenerators.cpp
-    framework/datastreamdisplays.cpp
+    framework/nodepicker.cpp
     framework/treeitems.cpp
-    framework/drophandler.cpp
     framework/mainwindow.cpp
     framework/nodevisualiser.cpp
     framework/nodescene.cpp
@@ -55,13 +54,14 @@ set ( GUI_CORE_SRCS
 
 set ( GUI_CORE_UIS
     widgets/videoscreen.ui
-    framework/datastreamdisplays.ui
+    framework/nodepicker.ui
     #framework/datastreamrecorder.ui
     framework/mainwindow.ui
     widgets/graph.ui
     )
 
 set ( GUI_CORE_H
+    nodedragging.h
     widgets/videoscreen.h
     widgets/graph.h
     model/node.h
@@ -72,7 +72,7 @@ set ( GUI_CORE_H
     model/nodes/imagenode.h
     model/nodes/groupingnode.h
     controller/messagegenerators.h
-    framework/datastreamdisplays.h
+    framework/nodepicker.h
     framework/treeitems.h
     framework/mainwindow.h
     framework/nodevisualiser.h

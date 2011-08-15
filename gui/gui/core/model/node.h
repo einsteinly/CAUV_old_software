@@ -105,6 +105,7 @@ namespace cauv {
 
         Q_SIGNALS:
             void nodeAdded(boost::shared_ptr<NodeBase> node);
+            void treeChanged();
             void changed();
 
 

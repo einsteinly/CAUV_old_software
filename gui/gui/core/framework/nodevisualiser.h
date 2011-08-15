@@ -19,6 +19,7 @@ namespace cauv {
 
         protected:
             float m_scaleFactor;
+            float m_scale;
         };
 
     } // namespace gui
