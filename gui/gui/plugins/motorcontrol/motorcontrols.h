@@ -39,25 +39,25 @@ namespace cauv {
         };
 
 
-    class AutopilotController : public QObject {
-        Q_OBJECT
-    public:
+        class AutopilotController : public QObject {
+            Q_OBJECT
+        public:
 
-        AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<NodeBase> autopilot);
+            AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<NodeBase> autopilot);
 
-    public Q_SLOTS:
-        void updateTarget(double target);
-        void targetEditingFinished();
-        void configureTarget();
+        public Q_SLOTS:
+            void updateTarget(double target);
+            void targetEditingFinished();
+            void configureTarget();
 
-    protected:
-        boost::shared_ptr<NodeBase> m_autopilot;
+        protected:
+            boost::shared_ptr<NodeBase> m_autopilot;
 
-        QCheckBox * m_enabled;
-        QDoubleSpinBox * m_target;
-        QLabel * m_actual;
+            QCheckBox * m_enabled;
+            QDoubleSpinBox * m_target;
+            QLabel * m_actual;
 
-    };
+        };
 
 
         class MotorControls : public QDockWidget, public CauvBasicPlugin {
@@ -68,6 +68,7 @@ namespace cauv {
             virtual ~MotorControls();
 
             virtual void initialise();
+            virtual void shutdown();
 
             const QString name() const;
 

@@ -3,6 +3,7 @@
 #include <debug/cauv_debug.h>
 
 #include <QTextStream>
+#include <QGraphicsView>
 #include <QDebug>
 
 #include "../model/node.h"
@@ -17,12 +18,13 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
     int sceneSize = 30000;
 
-    registerDropHandler(boost::make_shared<GraphDropHandler>());
+    registerDropHandler(boost::make_shared<ExampleDropHandler>());
 
     // a special background element that recieves drops and other events that aren't
     // accepted by items futher up the tree
     NodeSceneDropArea * dropArea = new NodeSceneDropArea(this);
     connect(this, SIGNAL(sceneRectChanged(QRectF)), dropArea, SLOT(updateGeometry(QRectF)));
+    dropArea->setAcceptedMouseButtons(0);
     addItem(dropArea);
 
     // background lines
@@ -55,12 +57,16 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     }
 }
 
-void NodeScene::registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem *> > handler){
+NodeScene::~NodeScene(){
+    debug(2) << "~NodeScene()";
+}
+
+void NodeScene::registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > handler){
     m_handlers.push_back(handler);
 }
 
 bool NodeScene::accepts(boost::shared_ptr<NodeBase>node){
-    BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem*> > const& handler, m_handlers) {
+    BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         if(handler->accepts(node)) return true;
     }
     return false;
@@ -68,17 +74,23 @@ bool NodeScene::accepts(boost::shared_ptr<NodeBase>node){
 
 void NodeScene::onNodeDroppedAt(boost::shared_ptr<NodeBase> node, QPointF pos){
     try {
-        QGraphicsItem * item = applyHandlers(node);
-        item->setPos(pos - (item->boundingRect().center().toPoint()));
-        addItem(item);
+        QGraphicsItem *  item = applyHandlers(node);
+        if(item->scene() == this){
+            foreach(QGraphicsView * view , this->views()){
+                view->centerOn(item);
+            }
+        } else {
+            item->setPos(pos - (item->boundingRect().center().toPoint()));
+            addItem(item);
+        }
     } catch (drop_not_handled){
         error() << node->nodeName() << "not supported in this drop area (" << this << ")";
     }
 }
 
-QGraphicsItem * NodeScene::applyHandlers(boost::shared_ptr<NodeBase> node)
+QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<NodeBase> node)
 {
-    BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem*> > const& handler, m_handlers) {
+    BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         try {
             // accept the first handler that matches
             if(handler->accepts(node))
@@ -90,4 +102,3 @@ QGraphicsItem * NodeScene::applyHandlers(boost::shared_ptr<NodeBase> node)
     // no registered handler matched. oh dear.
     throw drop_not_handled();
 }
-

@@ -47,15 +47,15 @@ set ( GUI_CORE_SRCS
     framework/nodepicker.cpp
     framework/treeitems.cpp
     framework/mainwindow.cpp
-    framework/nodevisualiser.cpp
+    framework/visualiserview.cpp
     framework/nodescene.cpp
+    framework/graphicswindow.cpp
     utils/noderecorder.cpp
     )
 
 set ( GUI_CORE_UIS
     widgets/videoscreen.ui
     framework/nodepicker.ui
-    #framework/datastreamrecorder.ui
     framework/mainwindow.ui
     widgets/graph.ui
     )
@@ -75,8 +75,7 @@ set ( GUI_CORE_H
     framework/nodepicker.h
     framework/treeitems.h
     framework/mainwindow.h
-    framework/nodevisualiser.h
-    framework/nodescene.h
+    framework/graphicswindow.h
     )
 
 set ( GUI_CORE_RCC

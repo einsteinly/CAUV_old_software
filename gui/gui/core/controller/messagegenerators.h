@@ -25,7 +25,8 @@ namespace cauv {
             MessageGenerator(boost::shared_ptr<AUV> auv);
 
         protected:
-            boost::shared_ptr<AUV> m_auv;
+            // weak_ptr breaks the auv -> generator list -> auv cycle
+            boost::weak_ptr<AUV> m_auv;
 
         Q_SIGNALS:
             void messageGenerated(boost::shared_ptr<const Message> message);

@@ -1,5 +1,5 @@
-#ifndef NODEVISUALISER_H
-#define NODEVISUALISER_H
+#ifndef VISUALISERVIEW_H
+#define VISUALISERVIEW_H
 
 #include <QGraphicsView>
 #include <QWheelEvent>
@@ -7,10 +7,11 @@
 namespace cauv {
     namespace gui {
 
-        class NodeVisualiser : public QGraphicsView
+        class VisualiserView : public QGraphicsView
         {
         public:
-            NodeVisualiser(QWidget * parent = NULL);
+            VisualiserView(QWidget * parent = NULL);
+            virtual ~VisualiserView();
 
             virtual float scaleFactor();
             virtual void setScaleFactor(float scaleFactor);            
@@ -26,4 +27,4 @@ namespace cauv {
 } // namespace gui
 
 
-#endif // NODEVISUALISER_H
+#endif // VISUALISERVIEW_H

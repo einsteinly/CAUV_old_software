@@ -1,4 +1,4 @@
-#include "nodevisualiser.h"
+#include "visualiserview.h"
 
 #include <debug/cauv_debug.h>
 
@@ -11,15 +11,15 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-/*
-class DragFilter : public QObject {
+
+class DragModeFilter : public QObject {
     bool eventFilter(QObject *object, QEvent *event)
     {
         if (event->type() == QEvent::KeyRelease) {
             QKeyEvent *keyEvent = dynamic_cast<QKeyEvent *>(event);
             if (keyEvent->key() == Qt::Key_Control) {
-                if(NodeVisualiser * vis = dynamic_cast<NodeVisualiser *>(object)){
-                    vis->setDragMode(QGraphicsView::RubberBandDrag);
+                if(VisualiserView * vis = dynamic_cast<VisualiserView *>(object)){
+                    vis->setDragMode(QGraphicsView::ScrollHandDrag);
                 }
                 return true;
             }
@@ -28,8 +28,8 @@ class DragFilter : public QObject {
         if (event->type() == QEvent::KeyPress) {
             QKeyEvent *keyEvent = dynamic_cast<QKeyEvent *>(event);
             if (keyEvent->key() == Qt::Key_Control) {
-                if(NodeVisualiser * vis = dynamic_cast<NodeVisualiser *>(object)){
-                    vis->setDragMode(QGraphicsView::ScrollHandDrag);
+                if(VisualiserView * vis = dynamic_cast<VisualiserView *>(object)){
+                    vis->setDragMode(QGraphicsView::RubberBandDrag);
                 }
                 return true;
             }
@@ -38,7 +38,7 @@ class DragFilter : public QObject {
         return false;
     }
 };
-*/
+
 
 
 class ZoomFilter : public QObject {
@@ -48,8 +48,9 @@ class ZoomFilter : public QObject {
         if (event->type() == QEvent::KeyRelease) {
             QKeyEvent *keyEvent = dynamic_cast<QKeyEvent *>(event);
             if (keyEvent->key() == Qt::Key_Escape) {
-                if(NodeVisualiser * vis = dynamic_cast<NodeVisualiser *>(object)){
+                if(VisualiserView * vis = dynamic_cast<VisualiserView *>(object)){
                     vis->resetMatrix();
+                    vis->centerOn(0,0);
                 }
                 // let the event propage
                 return false;
@@ -61,19 +62,20 @@ class ZoomFilter : public QObject {
 };
 
 
-NodeVisualiser::NodeVisualiser(QWidget * parent) : QGraphicsView(parent),
+VisualiserView::VisualiserView(QWidget * parent) : QGraphicsView(parent),
 m_scaleFactor(1.25)
 {
     this->setAcceptDrops(true);
 
     installEventFilter(new ZoomFilter());
+    installEventFilter(new DragModeFilter());
 
     setDragMode(QGraphicsView::ScrollHandDrag);
 
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    setTransformationAnchor(NodeVisualiser::AnchorViewCenter);
+    setTransformationAnchor(VisualiserView::AnchorViewCenter);
     
     centerOn(0,0);
 
@@ -83,8 +85,12 @@ m_scaleFactor(1.25)
 
 }
 
+VisualiserView::~VisualiserView(){
+    debug(2) << "~VisualiserView()";
+}
 
-void NodeVisualiser::wheelEvent(QWheelEvent *event){
+
+void VisualiserView::wheelEvent(QWheelEvent *event){
     debug(6) << "wheelEvent" << this << this->objectName().toStdString();
 
     event->ignore();
@@ -97,7 +103,7 @@ void NodeVisualiser::wheelEvent(QWheelEvent *event){
     // and pass the event on directly
     QGraphicsItem * item = itemAt(event->x(), event->y());
     if(QGraphicsProxyWidget * proxy = dynamic_cast<QGraphicsProxyWidget *>(item)){
-        if(NodeVisualiser * vis = dynamic_cast<NodeVisualiser *>(proxy->widget())){
+        if(VisualiserView * vis = dynamic_cast<VisualiserView *>(proxy->widget())){
             vis->wheelEvent(event);
         }
     }
@@ -139,10 +145,10 @@ void NodeVisualiser::wheelEvent(QWheelEvent *event){
     //QGraphicsView::wheelEvent(event);
 }
 
-float NodeVisualiser::scaleFactor(){
+float VisualiserView::scaleFactor(){
     return m_scaleFactor;
 }
 
-void NodeVisualiser::setScaleFactor(float scaleFactor){
+void VisualiserView::setScaleFactor(float scaleFactor){
     m_scaleFactor = scaleFactor;
 }

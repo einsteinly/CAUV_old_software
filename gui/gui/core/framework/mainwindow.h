@@ -18,6 +18,8 @@ namespace cauv {
 
     namespace gui {
 
+        class CauvInterfacePlugin;
+
         class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvMainWindow> {
             Q_OBJECT
 
@@ -30,11 +32,12 @@ namespace cauv {
 
         protected:
             virtual void onRun();
-            virtual bool loadPlugin(QObject * plugin);
+            virtual CauvInterfacePlugin * loadPlugin(QObject * plugin);
             virtual void closeEvent(QCloseEvent *);
 
             QApplication * m_application;
             boost::shared_ptr<GuiActions> m_actions;
+            std::vector<CauvInterfacePlugin *> m_plugins;
 
         private:
             Ui::MainWindow * ui;

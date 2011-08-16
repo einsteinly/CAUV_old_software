@@ -17,7 +17,7 @@
 #include "../cauvplugins.h"
 #include "../controller/messageobserver.h"
 #include "../framework/nodescene.h"
-#include "../framework/nodevisualiser.h"
+#include "../framework/visualiserview.h"
 #include "../framework/nodepicker.h"
 
 #include <common/cauv_global.h>
@@ -65,78 +65,54 @@ int CauvMainWindow::send(boost::shared_ptr<const Message> message){
     return CauvNode::send(message);
 }
 
-int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
-{
-    debug(3) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
-    
-    int numFound = 0;
-    foreach (QString fileName, dir.entryList(QDir::Files)) {
-        QPluginLoader loader(dir.absoluteFilePath(fileName));
-        QObject *plugin = loader.instance();
-        if (plugin) {
-            if (loadPlugin(plugin)) {
-                info() << "Loaded plugin:"<< fileName.toStdString();
-                numFound++;
-            } else warning() << "Rejected plugin:"<< fileName.toStdString();
-        }
-    }
-    
-    if (subdirs > 0 || subdirs == -1) {
-        // Recurse down the directories
-        foreach (QString directoryName, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-            QDir subdir(dir);
-            if(subdir.cd(directoryName)) {
-                findPlugins(subdir, subdirs == -1 ? -1 : subdirs - 1);
-            }
-        }
-    }
-
-    return numFound;
-}
-
 void CauvMainWindow::onRun()
 {
     CauvNode::onRun();
 
+    // data model and network access
     // auv
     m_actions->auv = boost::make_shared<RedHerring>();
     m_actions->auv->initialise();
     // cauv node
     m_actions->node = shared_from_this();
+    
+    // exposed interface elements
     // node picker
-    m_actions->nodes = boost::make_shared<NodePicker>(m_actions->auv);
-    ui->streamsDock->setWidget(m_actions->nodes.get());
-    // mian window
+    m_actions->nodes = new NodePicker(m_actions->auv);
+    ui->streamsDock->setWidget(m_actions->nodes);
+    // main window
     m_actions->window = shared_from_this();
     // view
-    m_actions->view = boost::make_shared<NodeVisualiser>();
-    m_actions->window->setCentralWidget(m_actions->view.get());
+     this->setCentralWidget(m_actions->view = new VisualiserView());
     //scene
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
 
-    m_actions->scene->onNodeDroppedAt(m_actions->auv->findOrCreate<TypedNumericNode<float> >("blah"), QPointF(0,0));
+
+    /*m_actions->scene->onNodeDroppedAt(m_actions->auv->findOrCreate<TypedNumericNode<float> >("blah"), QPointF(0,0));
 
 
     QGraphicsRectItem * rect = m_actions->scene->addRect(10, 10, 100, 100, QPen(Qt::red), QBrush(Qt::blue));
     rect->setFlag(QGraphicsItem::ItemIsMovable);
+    rect->setFlag(QGraphicsItem::ItemIsSelectable);
     QGraphicsRectItem * rect2 = m_actions->scene->addRect(10, 10, 100, 100, QPen(Qt::red), QBrush(Qt::blue));
     rect2->setFlag(QGraphicsItem::ItemIsMovable);
-
+    rect2->setFlag(QGraphicsItem::ItemIsSelectable);
+*/
     // test data
+   /*
     NodeVisualiser * v = new NodeVisualiser();
     v->setScene(new NodeScene());
     //QPushButton * pb = new QPushButton("button");
     v->scene()->addWidget(new QSpinBox());
-    //v->scene()
     v->setObjectName("testingView");
     v->scene()->setObjectName("testing scene");
     //QMainWindow * window = new QMainWindow();
     //window->setCentralWidget(v);
     QGraphicsProxyWidget * proxy = m_actions->scene->addWidget(v);
     proxy->setObjectName("proxy object");
-
+*/
     // message input
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
@@ -160,8 +136,6 @@ void CauvMainWindow::onRun()
     findPlugins(pluginsDir, 1);
 
 
-
-
     QSettings settings("CAUV", "Cambridge AUV");
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
@@ -169,19 +143,57 @@ void CauvMainWindow::onRun()
     show();
     m_application->exec();
 
+    foreach(CauvInterfacePlugin * plugin, m_plugins){
+        plugin->shutdown();
+        delete plugin;
+    }
+
+    info() << "references to actions" << shared_from_this().use_count();
+
     info() << "Qt Thread exiting";
     info() << "Stopping CauvNode";
     CauvNode::stopNode();
 }
 
+int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
+{
+    debug(3) << "Looking for plugins in:"<< dir.absolutePath().toStdString();
 
-bool CauvMainWindow::loadPlugin(QObject *plugin){
-
-    // all plugins must come from CauvInterfacePlugin
-    CauvInterfacePlugin *basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
-    if(basicPlugin) {
-        basicPlugin->initialise(m_actions);
+    int numFound = 0;
+    foreach (QString fileName, dir.entryList(QDir::Files)) {
+        QPluginLoader loader(dir.absoluteFilePath(fileName));
+        QObject *plugin = loader.instance();
+        if (plugin) {
+            if (CauvInterfacePlugin * cauvPlugin= loadPlugin(plugin)) {
+                m_plugins.push_back(cauvPlugin);
+                info() << "Loaded plugin:"<< fileName.toStdString();
+                numFound++;
+            } else warning() << "Rejected plugin:"<< fileName.toStdString();
+        }
     }
 
-    return (basicPlugin ? true : false);
+    if (subdirs > 0 || subdirs == -1) {
+        // Recurse down the directories
+        foreach (QString directoryName, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir subdir(dir);
+            if(subdir.cd(directoryName)) {
+                findPlugins(subdir, subdirs == -1 ? -1 : subdirs - 1);
+            }
+        }
+    }
+
+    return numFound;
+}
+
+
+CauvInterfacePlugin * CauvMainWindow::loadPlugin(QObject *plugin){
+
+    // all plugins must come from CauvInterfacePlugin
+    CauvInterfacePlugin * basicPlugin = qobject_cast<CauvInterfacePlugin*>(plugin);
+    if(basicPlugin) {
+        basicPlugin->initialise(m_actions);
+        return basicPlugin;
+    }
+
+    return NULL;
 }

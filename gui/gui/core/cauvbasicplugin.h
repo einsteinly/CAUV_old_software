@@ -10,15 +10,16 @@ namespace cauv {
             Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
 
         public:
-            virtual ~CauvBasicPlugin(){}
+            virtual ~CauvBasicPlugin();
 
             virtual void initialise(boost::shared_ptr<GuiActions> actions);
 
             virtual void initialise() = 0;
 
+            virtual void shutdown();
+
         protected:
             boost::shared_ptr<AUV> m_auv;
-            boost::shared_ptr<CauvNode> m_node;
             boost::shared_ptr<GuiActions> m_actions;
         };
     } //namespace gui

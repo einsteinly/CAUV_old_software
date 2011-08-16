@@ -107,10 +107,10 @@ MotorControls::MotorControls() :
 
 void MotorControls::initialise(){
 
-    m_node->joinGroup("gui");
-    m_node->joinGroup("control");
+    m_actions->node.lock()->joinGroup("gui");
+    m_actions->node.lock()->joinGroup("control");
 
-    m_actions->window->addDockWidget(Qt::LeftDockWidgetArea, this);
+    m_actions->window.lock()->addDockWidget(Qt::LeftDockWidgetArea, this);
 
     // for new motors    
     boost::shared_ptr<GroupingNode> motors = m_auv->findOrCreate<GroupingNode>("motors");
@@ -175,6 +175,9 @@ void MotorControls::addAutopilot(boost::shared_ptr<NodeBase> node){
     m_autopilotsCount++;
 }
 
+void MotorControls::shutdown(){
+    m_actions->window.lock()->removeDockWidget(this);
+}
 
 const QString MotorControls::name() const{
     return QString("Navigation");

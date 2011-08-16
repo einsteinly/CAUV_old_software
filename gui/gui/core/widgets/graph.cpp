@@ -204,12 +204,12 @@ void GraphWidget::setupPlot() {
     QwtPlotMagnifier* magnifier = new QwtPlotMagnifier(m_plot->canvas());
     magnifier->setMouseButton(Qt::NoButton);
     magnifier->setAxisEnabled(QwtPlot::yLeft, false);
-
+*/
     // panner
     QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
     panner->setAxisEnabled(QwtPlot::yLeft, false);
     panner->setMouseButton(Qt::LeftButton);
-*/
+
 }
 
 

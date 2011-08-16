@@ -38,6 +38,7 @@ int main(int argc, char** argv)
 
         info() << "Waiting for CauvNode to finish...";
         while(node->isRunning()) sleep(10);
+        node.reset();
         info() << "Finished. Bye";
     } catch (char const* ex){
         error() << ex;

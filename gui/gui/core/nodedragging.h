@@ -4,6 +4,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include <debug/cauv_debug.h>
+
 #include <QEvent>
 #include <QGraphicsRectItem>
 
@@ -31,6 +33,10 @@ namespace cauv {
             // if passed an obejct you're not interested in throw a
             // drop_not_handled exception
             virtual T handle(boost::shared_ptr<NodeBase> node) = 0;
+
+            virtual ~DropHandlerInterface(){
+                debug(2) << "~DropHandlerInterface()";
+            }
         };
 
         

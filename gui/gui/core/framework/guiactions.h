@@ -2,6 +2,9 @@
 #define GUIACTIONS_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+
+#include <debug/cauv_debug.h>
 
 class QGraphicsScene;
 
@@ -13,19 +16,27 @@ namespace cauv {
 
         class AUV;
         class NodePicker;
-        class NodeVisualiser;
+        class VisualiserView;
         class CauvMainWindow;
         class NodeScene;
 
         struct GuiActions {
-            boost::shared_ptr<CauvMainWindow> window;
-            boost::shared_ptr<CauvNode> node;
+            // weak ptrs to window (which is actually the same as node)
+            // breaks the cycle of window -> actions -> window
+            boost::weak_ptr<CauvMainWindow> window;
+            boost::weak_ptr<CauvNode> node;
+
+            // models
             boost::shared_ptr<AUV> auv;
-
             boost::shared_ptr<NodeScene> scene;
-            boost::shared_ptr<NodeVisualiser> view;
 
-            boost::shared_ptr<NodePicker> nodes;
+            // gui elements
+            VisualiserView * view;
+            NodePicker * nodes;
+
+            ~GuiActions() {
+                debug(2) << "~GuiActions()";
+            }
         };
     } //namespace gui
 } // namespace cauv
