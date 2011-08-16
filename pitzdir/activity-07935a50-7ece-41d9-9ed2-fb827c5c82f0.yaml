@@ -1,0 +1,21 @@
+created_by: &id002 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: &id001 2011-08-06 17:32:19.356649
+description: "pscore changed to 3\nstatus changed to started\nattached_files changed\
+  \ to []\ndescription changed to A simulator:\r\n* we really really really need one\
+  \ of these\r\n* make sure control doesn't know where it's data is coming from (esp.\
+  \ for simulation)\r\n* simulation\r\n* simulation again\ntitle changed to We really\
+  \ really need a good simulator, really.\ntags changed to [<pitz.Tag 946c0c testing>,\
+  \ <pitz.Tag dc1893 messaging>]\npoints changed to None\nowner changed to Andy Pritchard\n\
+  estimate changed to highly non-trivial"
+entity: !!python/object:uuid.UUID
+  int: 60308094575545038224860472324722412644
+modified_time: *id001
+pscore: 0
+title: 2011-08-06 17:32 - James Crosby changed task We really really need a good simulator,
+  really.
+type: activity
+uuid: !!python/object:uuid.UUID
+  int: 10069695403060821487745224050665620208
+who_did_it: *id002
+yaml_file_saved: 2011-08-06 17:32:19.359111

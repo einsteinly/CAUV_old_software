@@ -13,6 +13,7 @@
 \#include $t.location
 #end for
 \#include <utility/serialisation.h>
+\#include <utility/string.h>
 
 #for $e in $enums
 void cauv::serialise(svec_ptr p, $e.name::e const& e){
@@ -77,6 +78,44 @@ int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, $v.name& v){
         #end for
     }
     return b - i;
+}
+#end for
+
+
+#for $e in $enums
+std::string cauv::chil($e.name::e const& e){
+    return mkStr() << int32_t(e);
+}
+#end for
+
+
+#for $s in $structs
+std::string cauv::chil($s.name const& v){
+    std::string r = "(";
+    #for i,f in $enumerate($s.fields)
+    #if i+1 != len($s.fields)
+    r += chil(v.${f.name}) + ",";
+    #else
+    r += chil(v.${f.name});
+    #end if
+    #end for
+    return r + ")";
+}
+#end for
+
+#for $v in $variants
+std::string cauv::chil($v.name const& v){
+    std::string r = "(";
+    r += mkStr() << v.which();
+    switch(v.which()){
+        default:
+        #for $i, $t in $enumerate($v.types)
+        case $i:
+            r += chil(boost::get< $toCPPType($t) >(v));
+            break;
+        #end for
+    }
+    return r + ")";
 }
 #end for
 

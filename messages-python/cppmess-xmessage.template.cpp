@@ -88,6 +88,9 @@ const_svec_ptr cauv::$className::toBytes() const{
     serialise(r, *this);
     return r;
 }
+std::string cauv::$className::chil() const{
+    return cauv::chil(*this);
+}
 
 std::string cauv::${className}::_str() const
 {
@@ -146,8 +149,31 @@ void cauv::$className::deserialise() const{
     m_bytes.reset();
     #end if
 }
+std::string cauv::chil($className const& v){
+    std::string r = "${m.id}(";
+    #for i,f in $enumerate($m.fields)
+        #if $f.lazy
+            ## make sure lazy fields are deserialised!
+            #if i+1 != len($m.fields)
+    r += cauv::chil(v.get_${f.name}()) + ",";
+            #else
+    r += cauv::chil(v.get_${f.name}());
+            #end if
+        #else
+            #if i+1 != len($m.fields)
+    r += cauv::chil(v.m_${f.name}) + ",";
+            #else
+    r += cauv::chil(v.m_${f.name});
+            #end if
+        #end if
+    #end for
+    return r + ")";
+}
 #else
 void cauv::serialise(svec_ptr p, $className const&){
     cauv::serialise(p, uint32_t($m.id)); 
 }
+std::string cauv::chil($className const&){
+    return "${m.id}()";
+} 
 #end if

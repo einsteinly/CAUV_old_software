@@ -1,0 +1,12 @@
+attached_files: []
+created_by: !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2011-08-06 17:40:34.802980
+description: ''
+modified_time: 2011-08-06 17:40:34.820215
+pscore: 4
+title: !!python/unicode 'Dan Weatherill'
+type: person
+uuid: !!python/object:uuid.UUID
+  int: 97246260868447916123129153576002745494
+yaml_file_saved: 2011-08-06 17:40:34.826926

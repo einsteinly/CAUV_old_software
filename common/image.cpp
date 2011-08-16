@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include <boost/make_shared.hpp> 
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -108,6 +110,11 @@ void cauv::serialise(svec_ptr p, Image const& v){
     //          << __func__ << m_compress_fmt << m_compress_params << load_flags
     //          << "(" << pre << "->" << post << "bytes = " << post / pre << ")";
 }
+std::string cauv::chil(Image const& v){
+    svec_ptr p = boost::make_shared<svec_t>();
+    serialise(p, v);
+    return cauv::chil(*p);
+} 
 
 int32_t cauv::deserialise(const_svec_ptr p, uint32_t i, Image& v){
     uint32_t b = i;

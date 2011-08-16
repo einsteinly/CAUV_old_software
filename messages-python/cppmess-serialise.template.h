@@ -19,6 +19,7 @@ struct $s.name;
 $t.type $t.name;
 #end for
 
+// Binary Serialisation
 #for $s in $structs
 void serialise(svec_ptr, $s.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);
@@ -37,6 +38,23 @@ int32_t deserialise(const_svec_ptr, uint32_t, $v.name&);
 #for $t in $included_types
 void serialise(svec_ptr, $t.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $t.name&);
+#end for
+
+// CHIL serialisation
+#for $s in $structs
+std::string chil($s.name const&);
+#end for
+
+#for $e in $enums
+std::string chil($e.name::e const&);
+#end for
+
+#for $v in $variants
+std::string chil($v.name const&);
+#end for
+
+#for $t in $included_types
+std::string chil($t.name const&);
 #end for
 
 } // namespace cauv

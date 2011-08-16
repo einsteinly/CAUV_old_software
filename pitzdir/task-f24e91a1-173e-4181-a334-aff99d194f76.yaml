@@ -1,0 +1,38 @@
+attached_files: []
+components: []
+created_by: &id001 !!python/object:uuid.UUID
+  int: 236388421408798579890985238796729312670
+created_time: 2011-08-06 17:33:49.213862
+description: !!python/unicode "CAUV High-Performance Information Log\r\n\r\n* fast\
+  \ on-disk serialisation format that can cope with huge files (NOT SHELF!): CAUV\
+  \ High-Performance Imnformation Log \r\n\r\nCurrent plan of log format:\r\n\r\n\
+  CAUV High-performance Information Log:\r\nDirectory Structure:\r\n\r\nsomelog.chil/\r\
+  \n    a.log\r\n    a.superlog\r\n    b.log\r\n    b.superlog\r\n    megasuperlog\r\
+  \n\r\n\r\nlog files:\r\n\r\nCHIL\r\nFormat HG_FULL_REVISION_UID # applies until\
+  \ next Format line is encountered\r\nTime YYYYMMDD-HHMMSS.SSSSSS  # Marks an absolute\
+  \ time\r\nTIMESTAMP MSG_ID(VALUE,VALUE,VALUE....,)  # time is integer (or long integer)\
+  \ musec since last recorded absolute time (Time line)\r\n\r\n\r\nsuperlog (index)\
+  \ files: seek positions are to nearest position *after* specified time\r\n\r\nCHILIDX\r\
+  \nFormat HG_FULL_REVISION_UID # applies until next Format line is encountered\r\n\
+  YYYYMMDD-HHMMSS.SSSSSS LONG_INTEGER # integer value is seek position in corresponding\
+  \ log file\r\n \r\n\r\nmegasuperlog file:\r\n\r\nCHILSUPERIDX\r\nFormat HG_FULL_REVISION_UID\r\
+  \nFILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...) # any\
+  \ number of message id and time period sections"
+estimate: !!python/object:uuid.UUID
+  int: 232728329951956224362343003393279330573
+milestone: !!python/object:uuid.UUID
+  int: 115709686465499050555006855212442791043
+modified_time: 2011-08-06 17:33:49.233507
+owner: *id001
+points: null
+pscore: !!python/unicode '4'
+status: !!python/object:uuid.UUID
+  int: 154409908609622189382556686006061208230
+tags:
+- !!python/object:uuid.UUID
+  int: 320085086918514932043577864135319191374
+title: !!python/unicode 'CHIL: fast storage and play-back orientated data logging'
+type: task
+uuid: !!python/object:uuid.UUID
+  int: 322081127847235470058435145852096434038
+yaml_file_saved: 2011-08-06 17:33:49.268688

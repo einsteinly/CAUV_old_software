@@ -24,6 +24,7 @@ typedef boost::variant<
 
 void serialise(svec_ptr, $v.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $v.name&);
+std::string chil($v.name const&);
 
 } // namespace cauv
 
