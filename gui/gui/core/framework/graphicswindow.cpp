@@ -89,8 +89,8 @@ void GraphicsWindowButton::mouseReleaseEvent(QGraphicsSceneMouseEvent *){
 
 GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
         QGraphicsObject(parent), m_cornerRadius(10),
-        m_backgroundPen(QPen(QColor(222, 222, 222))),
-        m_backgroundBrush(QColor(248, 248, 248)),
+        m_backgroundPen(QPen(QColor(212, 212, 212))),
+        m_backgroundBrush(QColor(238, 238, 238)),
         m_buttonsWidget(new QGraphicsWidget(this)),
         m_layout(new QGraphicsLinearLayout(Qt::Horizontal))
 {
@@ -98,8 +98,8 @@ GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
     m_layout->addStretch(100);
 
     // close button
-    Cross * cross = new Cross(10); // will be deleted by it's parent
-    cross->setPos(7.5, 7.5);
+    Cross * cross = new Cross(8); // will be deleted by it's parent
+    cross->setPos(6, 6);
     QPen pen (m_backgroundPen.color().darker(105));
     pen.setCapStyle(Qt::RoundCap);
     pen.setWidthF(2.2);
@@ -170,8 +170,6 @@ QRectF GraphicsWindow::boundingRect() const{
 
 void GraphicsWindow::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget *){
 
-    const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
-
     QBrush brush = backgroundBrush();
     if(isSelected()){
         brush.setColor(brush.color().darker(102));
@@ -179,7 +177,7 @@ void GraphicsWindow::paint(QPainter *painter, const QStyleOptionGraphicsItem * o
     
     painter->setPen(backgroundPen());
     painter->setBrush(brush);
-    painter->drawRoundedRect(QRectF(QPointF(0,18), size()),
+    painter->drawRoundedRect(QRectF(QPointF(0,16), QSizeF(size().width(), size().height()-16)),
                              m_cornerRadius, m_cornerRadius, Qt::AbsoluteSize);
 
 }

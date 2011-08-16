@@ -21,7 +21,7 @@ namespace cauv {
 
         public:
 
-            GraphicsWindowButton(QGraphicsItem * item, qreal width = 25, qreal height = 25);
+            GraphicsWindowButton(QGraphicsItem * item, qreal width = 20, qreal height = 20);
             virtual ~GraphicsWindowButton();
 
             virtual QSizeF sizeHint(Qt::SizeHint which, const QSizeF &constraint = QSizeF()) const;

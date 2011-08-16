@@ -18,6 +18,16 @@
 namespace cauv {
     namespace gui {
 
+        class VanishingTextItem : public QGraphicsTextItem {
+
+        public:
+            VanishingTextItem(QString &text, float lod);
+            void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+
+        protected:
+            float m_lod;
+        };
+
         class NodeScene : public QGraphicsScene, public NodeDropListener {
 
         public:

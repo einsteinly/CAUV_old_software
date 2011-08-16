@@ -4,6 +4,7 @@
 
 #include <QTextStream>
 #include <QGraphicsView>
+#include <QStyleOptionGraphicsItem>
 #include <QDebug>
 
 #include "../model/node.h"
@@ -11,7 +12,19 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-#define GUI_DEBUG_POSITION false
+#define GUI_DEBUG_POSITION true
+
+
+
+VanishingTextItem::VanishingTextItem(QString &text, float lod) : QGraphicsTextItem(text), m_lod(lod){
+}
+
+void VanishingTextItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
+
+    const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
+    if(lod > m_lod)
+        QGraphicsTextItem::paint(painter, option, widget);
+}
 
 
 NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
@@ -28,30 +41,31 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     addItem(dropArea);
 
     // background lines
-    for(int x = -sceneSize; x < 2*sceneSize; x = x + 20) {
-        int colour = 247;
-        if(x % 100 == 0) colour = 245;
-        addLine(-sceneSize, x, 2*sceneSize, x, QPen(QColor(colour, colour, colour)));
+    for(int x = -sceneSize; x < sceneSize; x = x + 20) {
+        int colour = 241;
+        if(x % 100 == 0) colour = 238;
+        addLine(-sceneSize, x, sceneSize, x, QPen(QColor(colour, colour, colour)));
     }
-    for(int y = -sceneSize; y < 2*sceneSize; y = y + 20) {
-        int colour = 247;
-        if(y % 100 == 0) colour = 245;
-        addLine(y, -sceneSize, y, 2*sceneSize, QPen(QColor(colour, colour, colour)));
+    for(int y = -sceneSize; y < sceneSize; y = y + 20) {
+        int colour = 241;
+        if(y % 100 == 0) colour = 238;
+        addLine(y, -sceneSize, y, sceneSize, QPen(QColor(colour, colour, colour)));
     }
 
     // write on positions for debugging.
     // don't use in production as it's really slow
     if(GUI_DEBUG_POSITION) {
-        for(int x = -sceneSize; x < 2*sceneSize; x = x + 100) {
-            for(int y = -sceneSize; y < 2*sceneSize; y = y + 100) {
+        for(int x = -sceneSize; x < sceneSize; x = x + 250) {
+            for(int y = -sceneSize; y < sceneSize; y = y + 250) {
                 //addEllipse(x-1, y-1, 2, 2, QPen(Qt::blue), QBrush(Qt::blue));
 
                 QString pointString;
                 QTextStream stream(&pointString);
                 stream << "(" << x << "," << y << ")";
-                QGraphicsTextItem* item = addText(pointString);
+                QGraphicsTextItem* item = new VanishingTextItem(pointString, 0.2);
                 item->setDefaultTextColor(QColor(210, 210, 210));
                 item->setPos(x, y);
+                addItem(item);
             }
         }
     }
