@@ -20,11 +20,12 @@ c = pp.Suppress(',')
 hexchars = '0123456789abcdefABCDEF'
 
 \# Basic Types
-p_int32 = pp.Optional(pp.Literal('+') ^ pp.Literal('-')) + pp.Word(pp.nums)
-p_int32.setParseAction(lambda x: int(x[0]))
+p_int = pp.Optional(pp.Literal('+') ^ pp.Literal('-')) + pp.Word(pp.nums)
+p_int.setParseAction(lambda x: int(''.join(x)))
 
-p_uint32 = pp.Optional(pp.Literal('+')) + pp.Word(pp.nums) 
-p_uint32.setParseAction(lambda x: int(x[0]))
+## Currently no concept of unsigned integers in CHIL types...
+##p_uint = pp.Optional(pp.Literal('+')) + pp.Word(pp.nums) 
+##p_uint.setParseAction(lambda x: int(''.join(x)))
 
 p_byte = pp.Word(hexchars, exact=2) \# byte is actually only used in byteVec, which is overriden with a special case
 p_byte.setParseAction(int)
@@ -32,22 +33,12 @@ p_byte.setParseAction(int)
 p_bool = pp.Literal('0') ^ pp.Literal('1')
 p_bool.setParseAction(lambda x: bool(x[0]))
 
-p_int8 = p_int32
-
-p_uint8 = p_uint32
-
-p_int16 = p_int32
-
-p_uint16 = p_uint32
-
-p_float = pp.Word(pp.nums + '.eE+-')## TODO: more strict parsing
+p_float = pp.Word(pp.nums + '.eE+-naninfNANINF')## TODO: more strict parsing
 p_float.setParseAction(lambda x: float(x[0]))
 
-p_double = p_float
-
-##p_string = pp.suppress('"') + pp.Word('0123456789abcdefABCDEF') + pp.suppress('"')
-p_string = pp.Word(hexchars)
-p_string.setParseAction(lambda x: base64.b16decode(x[0]))
+##p_str = pp.suppress('"') + pp.Word('0123456789abcdefABCDEF') + pp.suppress('"')
+p_str = pp.Optional(pp.Word(hexchars))
+p_str.setParseAction(lambda x: base64.b16decode(x[0]) if len(x) else '')
 
 p_Image = pp.Forward()
 
@@ -108,58 +99,68 @@ p_${s.name}.setParseAction(lambda x: messaging.${s.name}(*x[0]))
 #end for
 
 \# Parse Variants
-## TODO: think about variant serialisation format: probably need the parser to interpret
-## second field depending on discriminant in first field
 #for $v in $variants
-p_${v.name} << l + (\
+    #for i,t in enumerate($v.types)
+p_${v.name}_${i} = l + pp.Literal('${i}') + c + p_${toCHILType($t)}  + r
+p_${v.name}_${i}.setParseAction(lambda x: messaging.${v.name}.create(x[1]))
+    #end for
+p_${v.name} << (
     #for i,t in enumerate($v.types)
         #if $i + 1 != len($v.types)
-    p_$toCHILType($t) ^ \
+    p_${v.name}_${i} ^
         #else
-    p_$toCHILType($t)) + \
+    p_${v.name}_${i})
         #end if
     #end for
-    r
+##p_${v.name}.setParseAction(lambda x: x[0])
+print p_${v.name}
 #end for
+
+#Parse action generator for vector types
+def a__vec_gen(T):
+    def a__vec(arg):
+        t = T()
+        if len(arg):
+            for n in arg[0]:
+                t.append(n)
+        return t
+    return a__vec
 
 \# Parse Vector Types
 #for $t in $allVecTypes
     #set $vecn = $CPPContainerTypeName(t) + "Vec"
     #if $vecn != "byteVec"
-p_${vecn} << pp.Group(l + pp.delimitedList(p_${toCHILType($t)}) + pp.Optional(c) + r)
+p_${vecn} << pp.Group(l + pp.Optional(pp.delimitedList(p_${toCHILType($t)}) + pp.Optional(c)) + r)
     #end if
-def a_${vecn}(arg):
-    t = messaging.${vecn}()
-    for n in arg[0]:
-        t.append(n)
-    return t
-p_${vecn}.setParseAction(a_${vecn})
+p_${vecn}.setParseAction(a__vec_gen(messaging.${vecn}))
 #end for
 
 # Special Case! Override byteVec definition
-p_byteVec << pp.Word(hexchars)
+p_byteVec << pp.Optional(pp.Word(hexchars))
 def a_byteVec(arg):
     t = messaging.byteVec()
-    for n in base64.b16decode(arg[0]):
-        t.append(int(ord(n)))
+    if len(arg):
+        for n in base64.b16decode(arg[0]):
+            t.append(int(ord(n)))
     return t
 p_byteVec.setParseAction(a_byteVec)
 
 \# Parse Map Types
 #for $kt, $vt  in $allMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
-p_${mapn} << pp.Group(l + pp.delimitedList(l + p_${toCHILType($kt)} + c + p_${toCHILType($vt)} + r) + pp.Optional(c) + r)
+p_${mapn} << pp.Group(l + pp.Optional(pp.delimitedList(l + p_${toCHILType($kt)} + c + p_${toCHILType($vt)} + r) + pp.Optional(c)) + r)
 def a_${mapn}(arg):
     t = messaging.${mapn}()
-    for k,v in arg[0]:
-        t[k] = v
+    if len(arg):
+        for k,v in arg[0]:
+            t[k] = v
     return t
 p_${mapn}.setParseAction(a_${mapn})
 #end for
 
 \# Parse Enums
 #for $e in $enums
-p_${e.name} << p_int32
+p_${e.name} << p_int
 p_${e.name}.setParseAction(lambda x: messaging.${e.name}(x[0]))
 #end for
 

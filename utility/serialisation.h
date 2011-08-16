@@ -68,7 +68,7 @@ inline int32_t deserialise(const_svec_ptr p, uint32_t i , int8_t& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(int8_t const& v){
-    return mkStr() << v;
+    return mkStr() << int32_t(v);
 }
 
 inline void serialise(svec_ptr p, int16_t const& v){
@@ -98,7 +98,7 @@ inline int32_t deserialise(const_svec_ptr p, uint32_t i, uint8_t& v){
     return impl::unCopyBytes(p, i, v);
 }
 inline std::string chil(uint8_t const& v){
-    return mkStr() << v;
+    return mkStr() << uint32_t(v);
 }
 
 inline void serialise(svec_ptr p, uint16_t const& v){

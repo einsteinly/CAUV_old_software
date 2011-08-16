@@ -140,6 +140,12 @@ def cLoadSaveSuffix(t):
 
 def toCHILType(t):
     if isinstance(t, msggenyacc.BaseType):
+        if t.name.startswith('int') or t.name.startswith('uint'):
+            return 'int'
+        if t.name == 'string':
+            return 'str'
+        if t.name in ('float', 'double'):
+            return 'float'
         return t.name
     elif isinstance(t, msggenyacc.EnumType):
         return t.enum.name
@@ -413,6 +419,7 @@ def main():
         t.requiredVectorTypes = requiredVectorTypes
         t.addNestedTypes = addNestedTypes
         t.toCHILType = toCHILType
+        t.isBaseType = lambda t: isinstance(t, msggenyacc.BaseType)
         filesWritten += writeIfChanged(os.path.join(output, "decode_%s.py" % t.source_revision), str(t), options)
 
     if options.nowrite:

@@ -188,57 +188,8 @@ class CHILer:
         r += 60*1000000L*timedelta.seconds
         r += timedelta.microseconds
         return r
-    '''
-    def serialiseField(self, f):
-        print 'F:%s,%s:%s,%s' % (
-            f.__class__.__name__,
-            f.__class__.__module__,
-            f.__class__.__base__.__name__,
-            f.__class__.__base__.__module__
-        )
-        if f.__class__.__base__.__module__ == 'Boost.Python':
-            if f.__class__.__name__.endswith('Vec'):
-                # eww, better way to detect vector-like types?
-                #r = '%s(%s)' % (f.__class__.__name__, ','.join(map(str, tuple(f))))
-                r = '(%s)' % ','.join(map(str, tuple(f)))
-                return r
-            elif f.__class__.__name__.endswith('Map'):
-                raise NotImplementedError()
-            else:
-                return self.serialiseStruct(f)
-        elif type(f) == str: # for python 2.7 this includes byte vectors
-            return b16encode(f)
-            #if not isSimpleString(f):
-            #    return base64.b16encode(f)
-            #else:
-            #    return str(f)
-        elif type(f) == float:
-            # hex floats aren't readable enough
-            #return f.hex()
-            return str(f)
-        elif f.__class__.__module__ == '__builtin__':
-            return str(f)
-        else:
-            raise NotImplementedError(
-                '%s cannot be serialised yet' % type(f)
-            )
-    def serialiseStruct(self, s):
-        r = interestingAttrs(s)
-        tmp = map(self.serialiseField, r)
-        print 'S:%s:=\n%s' % (s, tmp)
-        #return '%s(%s)' % (s.__class__.__name__, ','.join(tmp))
-        return '(%s)' % (','.join(tmp))
-    '''
     def serialiseMessage(self, s):
-        #r = interestingAttrs(s)
-        #tmp = map(self.serialiseField, r)
-        #print 'M:%s:=\n%s' % (s, tmp)
-        #ret = '%d(%s)' % (s.msgId, ','.join(tmp))
-        #print 'D:%s' % self.deserialiseMessage(ret)
-        #return ret
         serialised =  s.chil()
-        print 'S:%s' % serialised
-        print 'D:%s' % self.deserialiseMessage(serialised)
         return serialised
     def baseNameFromSubName(self, subname):
         if subname is None:
@@ -249,7 +200,7 @@ class CHILer:
             basename = subname
         return basename
     def deserialiseMessage(self, s):
-        import utils.childecode.decode_5db151214003fc1e155486ed627caeb8f46cb35e as decode
+        import utils.childecode.decode_61a58d327d9f229ef265be85c9bf2de03235814e as decode
         r = decode.p_Message.parseString(s)
         return r
 
@@ -299,7 +250,8 @@ class Logger(CHILer):
         musec_delta = self.tdToMusec(record_time - self.last_absolute_time)
         serialised_msg = self.serialiseMessage(msg)
         l = '%s %s\n' % (musec_delta, serialised_msg)
-        print 'L:%s:=\n%s' % (msg.__class__.__name__, l),
+        print l,
+        print 'L:%s:=%s:=%s' % (msg.__class__.__name__, l[:-1], self.deserialiseMessage(serialised_msg))
         self.datfile.write(l)
         # update time range for which these messages are recorded
         t_range = self.recorded_msg_types.get(msg.msgId, (record_time, record_time))
@@ -340,8 +292,8 @@ class ComponentPlayer(CHILer):
         self.idxname = basename + self.Const.Idx_Extn
         self.datname = basename + self.Const.Dat_Extn
         print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
-        self.datfile = self.lockAndOpenForR(self.datname)
-        self.idxfile = self.lockAndOpenForR(self.idxname)
+        self.datfile = self.openForR(self.datname)
+        self.idxfile = self.openForR(self.idxname)
         self.recorded_msg_types = {}
         # map of datetime -> seek value, linearly interpolates for values not
         # present
@@ -381,8 +333,72 @@ if __name__ == '__main__':
           record_time=datetime.datetime.now() - datetime.timedelta(milliseconds=50)
     )
     l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
-    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
-    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5,6,7,8,9],1,6400,50000,6400)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5,4,3,2,1],2,6400,50000,6400)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5,5,5],3,6400,50000,6400)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5,0,2,4],4,6400,50000,6400)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([],5,6400,50000,6400)))
+
+    # every message:
+    l.log(m.MembershipChangedMessage('some group'))
+    l.log(m.DebugMessage(m.DebugType.Error, 'an error message'))
+    l.log(m.DebugMessage(m.DebugType.Error, '')) # zero-length string!
+    l.log(m.DebugLevelMessage(5));
+    l.log(m.MotorMessage(m.MotorID.Prop, 127));
+    l.log(m.BearingAutopilotEnabledMessage(True, 0.123456789))
+    l.log(m.BearingAutopilotParamsMessage(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9))
+    l.log(m.DepthAutopilotEnabledMessage(True, 0.9876543210))
+    l.log(m.DepthAutopilotParamsMessage(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9))
+    l.log(m.DepthCalibrationMessage(0.11111111111111,0.222222222222222,0.33333333333333,0.444444444444444))
+    l.log(m.PitchAutopilotEnabledMessage(True, 8.7654321098))
+    l.log(m.PitchAutopilotParamsMessage(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9))
+    l.log(m.StateRequestMessage())
+    l.log(m.ScriptMessage(m.ScriptExecRequest('some script', 0.987654321, 'some id', 0x89012345)))
+    l.log(m.MotorRampRateMessage(-123456, -234567))
+    l.log(m.SetMotorMapMessage(m.MotorID.VBow, m.MotorMap(-1,-2,3,4)))
+    l.log(m.ResetMCBMessage())
+    l.log(m.CalibrateNoRotationMessage(0x8001))
+    l.log(m.StateMessage(m.floatYPR(0.2,-4.542e5,+23e-23)))
+    l.log(m.TelemetryMessage(m.floatYPR(-23.5e6, -21,-0), -123.456))
+    l.log(m.BatteryUseMessage(12.34,56.78,-0.000001))
+    l.log(m.ProcessStatusMessage('\0some process', 'status\r', 100.0, 1.0e2, 0xffffffff))
+    l.log(m.LocationMessage(1.234567890123456789, 2.345678901234567890, 3.456789012345678901, m.floatXYZ(0,0,0)))
+    l.log(m.GPSLocationMessage(0.1,0.2,0.3,0.4,0.5,0.6))
+    l.log(m.SonarLocationMessage(m.floatXY(-1,2)))
+    # !!! TODO: images?
+    #l.log(m.ImageMessage(m.CameraID.Forward,None,m.TimeStamp(0x7fffffff,-0x8000000)))
+    l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5,5,5],3,6400,50000,6400)))
+    l.log(m.SonarControlMessage(0x7fff, 0x8000,0xff,0xffffffff,0xfffabcd,0xbc))
+    parents = m.NodeInputArcVec()
+    parents.append(m.NodeInputArc('some input', m.NodeOutput(12,'some output',m.OutputType.Image)))
+    parents.append(m.NodeInputArc('some other', m.NodeOutput(12,'some other output',m.OutputType.Parameter)))
+    children = m.NodeOutputArcVec();
+    children.append(m.NodeOutputArc(m.NodeInput(13, 'some input'),'some output'))
+    children.append(m.NodeOutputArc(m.NodeInput(13, 'some other input'),'some other output'))
+    children.append(m.NodeOutputArc(m.NodeInput(13, 'some third input'),'some third output'))
+    l.log(m.AddNodeMessage('pipeline name', m.NodeType.FileInput, parents, children))
+    l.log(m.RemoveNodeMessage('nnnnn', 12345))
+    l.log(m.ClearPipelineMessage('mm'))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'int param', m.NodeParamValue.create(123)))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'float param', m.NodeParamValue.create(1.23)))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'string param', m.NodeParamValue.create('test')))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'bool param', m.NodeParamValue.create(False)))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Corner> param', m.NodeParamValue.create(m.CornerVec())))
+    corners = m.CornerVec(); corners.append(m.Corner())
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Corner> param', m.NodeParamValue.create(corners)))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Line> param', m.NodeParamValue.create(m.LineVec())))
+    lines = m.LineVec(); lines.append(m.Line()); lines.append(m.Line())
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Line> param', m.NodeParamValue.create(lines)))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Circle> param', m.NodeParamValue.create(m.CircleVec())))
+    circles = m.CircleVec(); circles.append(m.Circle())
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Circle> param', m.NodeParamValue.create(circles)))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(m.floatVec())))
+    floats = m.floatVec(); floats.append(1); floats.append(2)
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(floats)))
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(m.KeyPointVec())))
+    kps = m.KeyPointVec(); kps.append(m.KeyPoint())
+    l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(kps)))
+    l.log(m.AddArcMessage())
     l.close()
 
     p = LinearpiecewiseApprox(round)
