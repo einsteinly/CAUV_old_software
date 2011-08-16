@@ -236,7 +236,10 @@ class CHILer:
         #ret = '%d(%s)' % (s.msgId, ','.join(tmp))
         #print 'D:%s' % self.deserialiseMessage(ret)
         #return ret
-        return s.chil()
+        serialised =  s.chil()
+        print 'S:%s' % serialised
+        print 'D:%s' % self.deserialiseMessage(serialised)
+        return serialised
     def baseNameFromSubName(self, subname):
         if subname is None:
             subname = datetime.datetime.now().strftime(self.Const.Dat_Fname_Strftime_Fmt) + self.Const.Dat_Extn
@@ -246,8 +249,9 @@ class CHILer:
             basename = subname
         return basename
     def deserialiseMessage(self, s):
-        import utils.c20b8b630ed8f56298a1749430cb50be9b5c458a as decode
-        print decode.p_Message.parseString(s)
+        import utils.childecode.decode_5db151214003fc1e155486ed627caeb8f46cb35e as decode
+        r = decode.p_Message.parseString(s)
+        return r
 
 class Logger(CHILer):
     def __init__(self, dirname, subname=None):

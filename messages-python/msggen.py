@@ -413,7 +413,7 @@ def main():
         t.requiredVectorTypes = requiredVectorTypes
         t.addNestedTypes = addNestedTypes
         t.toCHILType = toCHILType
-        filesWritten += writeIfChanged(os.path.join(output, "%s.py" % t.source_revision), str(t), options)
+        filesWritten += writeIfChanged(os.path.join(output, "decode_%s.py" % t.source_revision), str(t), options)
 
     if options.nowrite:
         print ";".join(map(lambda f: os.path.abspath(f), filesWritten))
