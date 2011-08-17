@@ -116,7 +116,7 @@ p_${v.name} << (
 print p_${v.name}
 #end for
 
-#Parse action generator for vector types
+# Parse action generator for vector types
 def a__vec_gen(T):
     def a__vec(arg):
         t = T()
@@ -145,17 +145,21 @@ def a_byteVec(arg):
     return t
 p_byteVec.setParseAction(a_byteVec)
 
+# Parse action generator for map types
+def a__map_gen(T):
+    def a__map(arg):
+        t = T()
+        if len(arg):
+            for k,v in arg[0]:
+                t[k] = v
+        return t
+    return a__map
+
 \# Parse Map Types
 #for $kt, $vt  in $allMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
 p_${mapn} << pp.Group(l + pp.Optional(pp.delimitedList(l + p_${toCHILType($kt)} + c + p_${toCHILType($vt)} + r) + pp.Optional(c)) + r)
-def a_${mapn}(arg):
-    t = messaging.${mapn}()
-    if len(arg):
-        for k,v in arg[0]:
-            t[k] = v
-    return t
-p_${mapn}.setParseAction(a_${mapn})
+p_${mapn}.setParseAction(a__map_gen(messaging.${mapn}))
 #end for
 
 \# Parse Enums
