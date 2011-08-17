@@ -91,31 +91,32 @@ std::string cauv::chil($e.name::e const& e){
 
 #for $s in $structs
 std::string cauv::chil($s.name const& v){
-    std::string r = "(";
+    mkStr r;
+    r << "(";
     #for i,f in $enumerate($s.fields)
     #if i+1 != len($s.fields)
-    r += chil(v.${f.name}) + ",";
+    r << chil(v.${f.name}) << ",";
     #else
-    r += chil(v.${f.name});
+    r << chil(v.${f.name});
     #end if
     #end for
-    return r + ")";
+    return r << ")";
 }
 #end for
 
 #for $v in $variants
 std::string cauv::chil($v.name const& v){
-    std::string r = "(";
-    r += mkStr() << v.which();
+    mkStr r;
+    r << "(" << v.which() << ",";
     switch(v.which()){
         default:
         #for $i, $t in $enumerate($v.types)
         case $i:
-            r += chil(boost::get< $toCPPType($t) >(v));
+            r << chil(boost::get< $toCPPType($t) >(v));
             break;
         #end for
     }
-    return r + ")";
+    return r << ")";
 }
 #end for
 

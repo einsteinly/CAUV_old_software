@@ -12,8 +12,6 @@ uint32_t:
 float :
 double: as python floating point number
 
-byte: base16 encoded: two hex digets
-
 string: base16 encoded (upper or lower case hex characters are legal), no quotes
 
 
@@ -29,6 +27,10 @@ the value field; order is as specified in messages.msg
 Vectors:
 Comma separated list of items enclosed in parentheses, e.g.: 
 (item0,item2,item3,...)
+
+As a special case, a vector of uint8_t is encoded as base16, e.g:
+1e5fed6587df3e7645adbaa6bcc8
+
 
 Maps:
 Comma separated list of pairs (colon separated) of items enclosed in parentheses, e.g.:
