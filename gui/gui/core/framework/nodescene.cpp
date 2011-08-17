@@ -12,8 +12,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-#define GUI_DEBUG_POSITION true
-
+#define GUI_DEBUG_POSITION false
 
 
 VanishingTextItem::VanishingTextItem(QString &text, float lod) : QGraphicsTextItem(text), m_lod(lod){
@@ -69,6 +68,7 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
             }
         }
     }
+
 }
 
 NodeScene::~NodeScene(){

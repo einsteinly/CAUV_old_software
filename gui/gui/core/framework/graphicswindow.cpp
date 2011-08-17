@@ -4,11 +4,10 @@
 #include <QStyleOptionGraphicsItem>
 #include <QRectF>
 #include <QGraphicsLinearLayout>
-#include <QGraphicsProxyWidget>
-#include <QPushButton>
 #include <QGraphicsLayoutItem>
 #include <QGraphicsSceneMouseEvent>
-#include <QGraphicsScene>
+#include <QGraphicsItemGroup>
+#include <QDebug>
 
 #include <debug/cauv_debug.h>
 
@@ -86,7 +85,6 @@ void GraphicsWindowButton::mouseReleaseEvent(QGraphicsSceneMouseEvent *){
 }
 
 
-
 GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
         QGraphicsObject(parent), m_cornerRadius(10),
         m_backgroundPen(QPen(QColor(212, 212, 212))),
@@ -98,7 +96,7 @@ GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
     m_layout->addStretch(100);
 
     // close button
-    Cross * cross = new Cross(8); // will be deleted by it's parent
+    Cross * cross = new Cross(8);
     cross->setPos(6, 6);
     QPen pen (m_backgroundPen.color().darker(105));
     pen.setCapStyle(Qt::RoundCap);
@@ -164,6 +162,15 @@ void GraphicsWindow::setBackgroundBrush(QBrush brush){
     update(boundingRect());
 }
 
+/*
+void GraphicsWindow::mousePressEvent(QGraphicsSceneMouseEvent *event){
+    QGraphicsItem::mousePressEvent(event);
+}
+
+void GraphicsWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
+    QGraphicsItem::mouseReleaseEvent(event);
+}*/
+
 QRectF GraphicsWindow::boundingRect() const{
     return QRectF(QPointF(0,0), size());
 }
@@ -184,4 +191,5 @@ void GraphicsWindow::paint(QPainter *painter, const QStyleOptionGraphicsItem * o
 
 void GraphicsWindow::close(){
     Q_EMIT closed(this);
+    this->deleteLater();
 }

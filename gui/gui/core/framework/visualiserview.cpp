@@ -81,7 +81,7 @@ m_scaleFactor(1.25)
 
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
-    this->setViewport(new QGLWidget());
+    setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
 }
 

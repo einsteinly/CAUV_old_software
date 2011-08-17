@@ -64,6 +64,9 @@ namespace cauv {
 
             virtual void addButton(GraphicsWindowButton * button);
 
+            //void mousePressEvent(QGraphicsSceneMouseEvent *event);
+            //void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+
         protected:
             QSizeF m_size;
             qreal m_cornerRadius;

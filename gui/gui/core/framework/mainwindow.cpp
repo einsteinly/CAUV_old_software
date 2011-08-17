@@ -90,6 +90,17 @@ void CauvMainWindow::onRun()
     m_actions->view->centerOn(0,0);
 
 
+    GraphicsWindow * w1 = new GraphicsWindow();
+    GraphicsWindow * w2 = new GraphicsWindow();
+    JoiningArc * arc = new JoiningArc(w1, w2);
+
+    m_actions->scene->addItem(w1);
+    m_actions->scene->addItem(w2);
+
+    w2->setParentItem(w1);
+
+    w2->setPos(-250, 0);
+
     /*m_actions->scene->onNodeDroppedAt(m_actions->auv->findOrCreate<TypedNumericNode<float> >("blah"), QPointF(0,0));
 
 
@@ -147,8 +158,6 @@ void CauvMainWindow::onRun()
         plugin->shutdown();
         delete plugin;
     }
-
-    info() << "references to actions" << shared_from_this().use_count();
 
     info() << "Qt Thread exiting";
     info() << "Stopping CauvNode";
