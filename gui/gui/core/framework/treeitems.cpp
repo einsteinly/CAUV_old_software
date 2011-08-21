@@ -6,7 +6,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidgetItem * parent):
+NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> const& node, QTreeWidgetItem * parent):
         QTreeWidgetItem(parent), m_node(node){
     this->setText(0, QString::fromStdString(node->nodeName()));
     if(node->isMutable()) {
@@ -26,34 +26,7 @@ void NodeTreeItemBase::updateValue(const QString value) {
 bool NodeTreeItemBase::updateNode(QVariant&) {
     return false;
 }
-/*
 
-bool NodeTreeItemBase::filter(QString value){
-
-    bool childMatched = false;
-
-    for (int i = 0; i < childCount(); i++){
-        QTreeWidgetItem *c = child(i);
-        if(NodeTreeItemBase* nodeItem = dynamic_cast<NodeTreeItemBase*>(c)){
-            if(nodeItem->filter(value)) {
-                childMatched = true;
-            }
-        }
-    }
-
-    if(childMatched || value.isEmpty() ||
-       QString::fromStdString(m_node->nodePath()).contains(value, Qt::CaseInsensitive)) {
-        info() << m_node->nodePath() << "matched";
-        setExpanded(true);
-        setHidden(false);
-        return true;
-    } else {
-        setExpanded(false);
-        setHidden(true);
-        return false;
-    }
-}
-*/
 boost::shared_ptr<NodeBase> NodeTreeItemBase::getNode(){
     return m_node;
 }
@@ -93,7 +66,7 @@ NodeTreeItemBase * NodeTreeItemBase::addNode(boost::shared_ptr<NodeBase> node) {
     }
 
     // add items for all the nodes children
-    foreach(boost::shared_ptr<NodeBase> child, node->getChildren()){
+    foreach(boost::shared_ptr<NodeBase> const& child, node->getChildren()){
         item->addNode(child);
     }
 

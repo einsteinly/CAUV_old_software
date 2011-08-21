@@ -11,20 +11,19 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            ImageNode(const id_variant_t id) : Node<image_variant_t>(GuiNodeType::ImageNode, id){
+            ImageNode(id_variant_t const& id) : Node<image_variant_t>(GuiNodeType::ImageNode, id){
             }
 
         public Q_SLOTS:
 
-            virtual void update(const image_variant_t & value){
+            virtual void update(image_variant_t const& value){
                 Node<image_variant_t>::update(value);
-                Q_EMIT onUpdate(value);
             }
 
         Q_SIGNALS:
-            void onUpdate(const image_variant_t value);
+            void onUpdate(image_variant_t const& value);
+            void onSet(image_variant_t const& value);
         };
-
 
 
     } //namespace gui

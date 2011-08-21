@@ -1,26 +1,28 @@
 #include "arc.h"
 
-#include <QGraphicsObject>
 #include <QPainterPath>
 #include <QPointF>
 #include <QPen>
 
 #include <utility/rounding.h>
 
+#include <assert.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
-JoiningArc::JoiningArc(QGraphicsObject * from, QGraphicsObject * to) : m_to(to), m_from(from) {
+ConnectingArc::ConnectingArc(ConnectableInterface * from, ConnectableInterface * to) :
+        m_to(to->asQGraphicsObject()), m_from(from->asQGraphicsObject()) {
     setParentItem(m_from);
     setPen(QPen(QColor(220, 220, 220)));
-    connect(from, SIGNAL(xChanged()), this, SLOT(updatePosition()));
-    connect(from, SIGNAL(yChanged()), this, SLOT(updatePosition()));
-    connect(to, SIGNAL(xChanged()), this, SLOT(updatePosition()));
-    connect(to, SIGNAL(yChanged()), this, SLOT(updatePosition()));
-    connect(to, SIGNAL(destroyed()), this, SLOT(deleteLater()));
+    assert(m_from);
+    assert(m_to);
+    connect(m_from, SIGNAL(boundriesChanged()), this, SLOT(updatePosition()));
+    connect(m_to, SIGNAL(boundriesChanged()), this, SLOT(updatePosition()));
+    connect(m_to, SIGNAL(disconnected()), this, SLOT(deleteLater()));
 }
 
-void JoiningArc::updatePosition() {
+void ConnectingArc::updatePosition() {
     bool toOnLeft = m_to->pos().x() + m_to->boundingRect().width() < 0;
     bool toOnRight = m_to->pos().x() > m_from->boundingRect().width();
 

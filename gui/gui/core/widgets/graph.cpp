@@ -30,7 +30,7 @@ const QColor GraphWidget::colours[] = {
 };
 
 
-DataStreamSeriesData::DataStreamSeriesData(boost::shared_ptr<NumericNode> node, unsigned int maximum) :
+DataStreamSeriesData::DataStreamSeriesData(boost::shared_ptr<NumericNode> const& node, unsigned int maximum) :
         DataRecorder<numeric_variant_t>(maximum), m_max(0), m_min(0) {
     node->connect(node.get(), SIGNAL(onUpdate(numeric_variant_t)), this, SLOT(change(numeric_variant_t)));
 }
@@ -99,7 +99,7 @@ GraphWidget::GraphWidget():
     installEventFilter(new NodeDropFilter(this));
 }
 
-GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> node):
+GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> const& node):
         m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
 {
     ui->setupUi(this);
@@ -109,7 +109,7 @@ GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> node):
     setupPlot();
 }
 
-void GraphWidget::addNode(boost::shared_ptr<NumericNode> node){
+void GraphWidget::addNode(boost::shared_ptr<NumericNode> const& node){
     try {
         // see if this series has already been registered
         m_nodes.at(node->nodePath());
@@ -213,11 +213,11 @@ void GraphWidget::setupPlot() {
 }
 
 
-bool GraphWidget::accepts(boost::shared_ptr<NodeBase>node){
+bool GraphWidget::accepts(boost::shared_ptr<NodeBase> const& node){
     return (node->type == GuiNodeType::NumericNode);
 }
 
-void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNode> node){
+void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNode> const& node){
     addNode(node);
 }
 

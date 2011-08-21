@@ -6,7 +6,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-NodeBase::NodeBase(GuiNodeType::e t, const id_variant_t id) :
+NodeBase::NodeBase(GuiNodeType::e t, id_variant_t const& id) :
         type(t), m_parent(), m_id(id), m_mutable(false) {
 
     qRegisterMetaType<boost::shared_ptr<NodeBase> >("boost::shared_ptr<NodeBase>");
@@ -37,7 +37,7 @@ std::string NodeBase::nodePath() const {
     return stream.str();
 }
 
-void NodeBase::addChild(boost::shared_ptr<NodeBase> child){
+void NodeBase::addChild(boost::shared_ptr<NodeBase> const& child){
     if(boost::shared_ptr<NodeBase> parent = child->m_parent.lock())
     {
         std::stringstream str;

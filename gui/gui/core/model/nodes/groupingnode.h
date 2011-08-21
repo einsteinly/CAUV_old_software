@@ -15,19 +15,17 @@ namespace cauv {
 
         public Q_SLOTS:
 
-            virtual void update(const std::string & value){
+            virtual void update(std::string const& value){
                 Node<std::string>::update(value);
-                Q_EMIT onUpdate(value);
             }
 
-            virtual void set(const std::string & value){
+            virtual void set(std::string const& value){
                 Node<std::string>::set(value);
-                Q_EMIT onSet(value);
             }
 
         Q_SIGNALS:
-            void onUpdate(const std::string value);
-            void onSet(const std::string value);
+            void onUpdate(std::string const& value);
+            void onSet(std::string const& value);
         };
 
 

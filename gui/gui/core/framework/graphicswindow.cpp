@@ -11,6 +11,8 @@
 
 #include <debug/cauv_debug.h>
 
+#include "resize.h"
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -95,6 +97,13 @@ GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
     m_buttonsWidget->setLayout(m_layout);
     m_layout->addStretch(100);
 
+    setSize(QSizeF(200, 200));
+    setCursor(Qt::ArrowCursor);
+    this->setFlag((QGraphicsItem::ItemIsMovable));
+    this->setFlag((QGraphicsItem::ItemIsSelectable));
+    this->connect(this, SIGNAL(xChanged()), this, SIGNAL(boundriesChanged()));
+    this->connect(this, SIGNAL(yChanged()), this, SIGNAL(boundriesChanged()));
+
     // close button
     Cross * cross = new Cross(8);
     cross->setPos(6, 6);
@@ -106,11 +115,19 @@ GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
     addButton(m_closeButton);
     connect(m_closeButton, SIGNAL(pressed()), this, SLOT(close()));
 
-    this->setFlag((QGraphicsItem::ItemIsMovable));
-    this->setFlag((QGraphicsItem::ItemIsSelectable));
+    // resize handle
+    m_resizeHandle = new ResizeHandle(this);
+    m_resizeHandle->connect(m_resizeHandle, SIGNAL(xChanged()), this, SLOT(resized()));
+    m_resizeHandle->connect(m_resizeHandle, SIGNAL(yChanged()), this, SLOT(resized()));
+    m_resizeHandle->setX(size().width());
+    m_resizeHandle->setY(size().height());
+    m_resizeHandle->setVisible(false);
+    m_resizeHandle->setZValue(100);
+    QPen resizePen(m_backgroundPen);
+    resizePen.setWidth(2);
+    resizePen.setCapStyle(Qt::RoundCap);
+    m_resizeHandle->setPen(resizePen);
 
-    setSize(QSizeF(200, 200));
-    setCursor(Qt::ArrowCursor);
 }
 
 GraphicsWindow::~GraphicsWindow(){
@@ -126,14 +143,24 @@ QSizeF GraphicsWindow::size() const{
     return m_size;
 }
 
-void GraphicsWindow::setSize(QSizeF size){
-    if(size.width()<150)
-        size.setWidth(150);
+void GraphicsWindow::setSize(QSizeF const& size){
     prepareGeometryChange();
     m_size = size;
     m_buttonsWidget->setGeometry((cornerRadius()/2), -17,
                                  size.width()-(cornerRadius()/2), 30);
     update(boundingRect());
+    Q_EMIT boundriesChanged();
+}
+
+void GraphicsWindow::resized(){
+    QSizeF newSize(150, 150);
+    if(m_resizeHandle->newSize().width() >= 150){
+        newSize.setWidth(m_resizeHandle->newSize().width());
+    } else m_resizeHandle->setX(150 - m_resizeHandle->size().width());
+    if(m_resizeHandle->newSize().height() >= 150){
+        newSize.setHeight(m_resizeHandle->newSize().height());
+    } else m_resizeHandle->setY(150 - m_resizeHandle->size().height());
+    setSize(newSize);
 }
 
 qreal GraphicsWindow::cornerRadius() const{
@@ -149,7 +176,7 @@ QPen GraphicsWindow::backgroundPen() const{
     return m_backgroundPen;
 }
 
-void GraphicsWindow::setBackgroundPen(QPen pen){
+void GraphicsWindow::setBackgroundPen(QPen const& pen){
     m_backgroundPen = pen;
     update(boundingRect());
 }
@@ -158,7 +185,7 @@ QBrush GraphicsWindow::backgroundBrush() const{
     return m_backgroundBrush;
 }
 
-void GraphicsWindow::setBackgroundBrush(QBrush brush){
+void GraphicsWindow::setBackgroundBrush(QBrush const& brush){
     m_backgroundBrush = brush;
     update(boundingRect());
 }
@@ -167,6 +194,13 @@ void GraphicsWindow::setClosable(bool close){
     m_closeButton->setVisible(close);
 }
 
+void GraphicsWindow::setResizable(bool sizeable){
+    m_resizeHandle->setVisible(sizeable);
+}
+
+QGraphicsObject * GraphicsWindow::asQGraphicsObject(){
+    return this;
+}
 /*
 void GraphicsWindow::mousePressEvent(QGraphicsSceneMouseEvent *event){
     QGraphicsItem::mousePressEvent(event);
@@ -194,6 +228,7 @@ void GraphicsWindow::paint(QPainter *painter, const QStyleOptionGraphicsItem * o
 }
 
 void GraphicsWindow::close(){
+    Q_EMIT disconnected();
     Q_EMIT closed(this);
     this->deleteLater();
 }

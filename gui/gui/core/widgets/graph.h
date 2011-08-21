@@ -29,7 +29,7 @@ namespace cauv {
         Q_OBJECT
 
         public:
-            DataStreamSeriesData(boost::shared_ptr<NumericNode> node, unsigned int maximum);
+            DataStreamSeriesData(boost::shared_ptr<NumericNode> const& node, unsigned int maximum);
             size_t size () const;
             float toTime(boost::posix_time::ptime epoch, boost::posix_time::ptime time) const;
             QPointF sample (size_t i) const;
@@ -50,15 +50,15 @@ namespace cauv {
             static const QColor colours[];
 
             GraphWidget();
-            GraphWidget(boost::shared_ptr<NumericNode> node);
+            GraphWidget(boost::shared_ptr<NumericNode> const&);
             ~GraphWidget();
 
             void setupPlot();
-            bool accepts(boost::shared_ptr<NodeBase>node);
+            bool accepts(boost::shared_ptr<NodeBase> const&);
 
-            void onNodeDropped(boost::shared_ptr<NumericNode>);
+            void onNodeDropped(boost::shared_ptr<NumericNode> const&);
 
-            void addNode(boost::shared_ptr<NumericNode > node);
+            void addNode(boost::shared_ptr<NumericNode >  const&);
             virtual std::string getName() const;
 
         protected:

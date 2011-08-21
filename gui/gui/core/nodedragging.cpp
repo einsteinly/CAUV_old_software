@@ -17,7 +17,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> s, QPointF pos){
+bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> const& s, QPointF pos){
 
     info() << "Routing stream" << s->nodeName();
 
@@ -116,7 +116,7 @@ bool NodeSceneDropArea::sceneEvent(QEvent *event) {
     return eventFilter(this, event);
 }
 
-void NodeSceneDropArea::updateGeometry(QRectF rect){
+void NodeSceneDropArea::updateGeometry(QRectF const& rect){
     this->setRect(rect);
 }
 

@@ -11,10 +11,12 @@
 #include <QGraphicsLinearLayout>
 #include <QGraphicsItem>
 
+#include "arc.h"
 
 namespace cauv {
     namespace gui {
 
+        class ResizeHandle;
 
         class GraphicsWindowButton : public QGraphicsWidget {
             Q_OBJECT
@@ -41,7 +43,7 @@ namespace cauv {
         };
 
 
-        class GraphicsWindow : public QGraphicsObject
+        class GraphicsWindow : public QGraphicsObject, public ConnectableInterface
         {
             Q_OBJECT
         public:
@@ -51,20 +53,23 @@ namespace cauv {
             virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
 
             virtual QSizeF size() const;
-            virtual void setSize(QSizeF);
+            virtual void setSize(QSizeF const&);
 
             virtual qreal cornerRadius() const;
             virtual void setCornerRadius(qreal);
 
             virtual QPen backgroundPen() const;
-            virtual void setBackgroundPen(QPen);
+            virtual void setBackgroundPen(QPen const&);
 
             virtual QBrush backgroundBrush() const;
-            virtual void setBackgroundBrush(QBrush);
+            virtual void setBackgroundBrush(QBrush const&);
 
             virtual void addButton(GraphicsWindowButton * button);
 
             virtual void setClosable(bool);
+            virtual void setResizable(bool);
+
+            virtual QGraphicsObject * asQGraphicsObject();
 
         protected:
             QSizeF m_size;
@@ -75,14 +80,17 @@ namespace cauv {
             QGraphicsWidget * m_buttonsWidget;
             QGraphicsLinearLayout * m_layout;
             GraphicsWindowButton * m_closeButton;
+            ResizeHandle * m_resizeHandle;
 
         signals:
 
             void closed(GraphicsWindow *);
-            void moved(QPointF);
+            void boundriesChanged();
+            void disconnected();
 
         public slots:
             void close();
+            void resized();
 
         };
 

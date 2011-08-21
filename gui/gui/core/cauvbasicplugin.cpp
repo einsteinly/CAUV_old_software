@@ -9,7 +9,7 @@ CauvBasicPlugin::~CauvBasicPlugin(){
     debug(2) << "~CauvBasicPlugin()";
 }
 
-void CauvBasicPlugin::initialise(boost::shared_ptr<GuiActions> actions) {
+void CauvBasicPlugin::initialise(boost::shared_ptr<GuiActions> const& actions) {
     m_auv = actions->auv;
     m_actions = actions;
 

@@ -42,14 +42,14 @@ namespace cauv {
 
             GuiNodeType::e type;
 
-            NodeBase(GuiNodeType::e t, const id_variant_t id);
+            NodeBase(GuiNodeType::e t, id_variant_t const& id);
 
             virtual ~NodeBase();
 
             virtual id_variant_t nodeId() const;
             virtual std::string nodeName() const;
             virtual std::string nodePath() const;
-            virtual void addChild(boost::shared_ptr<NodeBase> child);
+            virtual void addChild(boost::shared_ptr<NodeBase> const& child);
             virtual const children_list_t getChildren() const;
             virtual bool isMutable() const;
             virtual void setMutable(bool mut);
@@ -143,18 +143,20 @@ namespace cauv {
 
         public:
 
-            Node<T>(GuiNodeType::e type, const id_variant_t id) :
+            Node<T>(GuiNodeType::e type, id_variant_t const& id) :
                     NodeBase(type, id), m_value() {
             }
 
-            virtual void update(const T & value){
+            virtual void update(T const& value){
                 m_value = value;
+                Q_EMIT onUpdate(value);
             }
 
-            virtual void set(const T & value){
+            virtual void set(T const& value){
                 debug(0) << nodePath() << "set to" << value;
                 update(value);
                 Q_EMIT changed();
+                Q_EMIT onSet(value);
             }
 
             virtual const T get() const{
@@ -166,12 +168,13 @@ namespace cauv {
                 return shared_from_this();
             }
 
+            // to be implemeted as signals by subclasses
+            virtual void onUpdate(T const& value) = 0;
+            virtual void onSet(T const& value) = 0;
+
         protected:
             T m_value;
-
         };
-
-
 
     } // namespace gui
 } // namespace cauv

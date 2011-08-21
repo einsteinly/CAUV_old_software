@@ -23,7 +23,7 @@ namespace cauv {
         public:
             virtual ~CauvInterfacePlugin() {}
 
-            virtual void initialise(boost::shared_ptr<GuiActions>) = 0;
+            virtual void initialise(boost::shared_ptr<GuiActions> const&) = 0;
 
             virtual const QString name() const = 0;
 

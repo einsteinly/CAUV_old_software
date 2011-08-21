@@ -15,7 +15,7 @@ using namespace cauv::gui;
 #define GUI_DEBUG_POSITION false
 
 
-VanishingTextItem::VanishingTextItem(QString &text, float lod) : QGraphicsTextItem(text), m_lod(lod){
+VanishingTextItem::VanishingTextItem(QString const& text, float lod) : QGraphicsTextItem(text), m_lod(lod){
 }
 
 void VanishingTextItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
@@ -75,18 +75,18 @@ NodeScene::~NodeScene(){
     debug(2) << "~NodeScene()";
 }
 
-void NodeScene::registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > handler){
+void NodeScene::registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler){
     m_handlers.push_back(handler);
 }
 
-bool NodeScene::accepts(boost::shared_ptr<NodeBase>node){
+bool NodeScene::accepts(boost::shared_ptr<NodeBase> const& node){
     BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         if(handler->accepts(node)) return true;
     }
     return false;
 }
 
-void NodeScene::onNodeDroppedAt(boost::shared_ptr<NodeBase> node, QPointF pos){
+void NodeScene::onNodeDroppedAt(boost::shared_ptr<NodeBase> const& node, QPointF pos){
     try {
         QGraphicsItem *  item = applyHandlers(node);
         if(item->scene() == this){
@@ -102,7 +102,7 @@ void NodeScene::onNodeDroppedAt(boost::shared_ptr<NodeBase> node, QPointF pos){
     }
 }
 
-QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<NodeBase> node)
+QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<NodeBase> const& node)
 {
     BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         try {

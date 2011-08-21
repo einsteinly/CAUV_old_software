@@ -7,17 +7,27 @@
 namespace cauv {
     namespace gui {
 
-        class JoiningArc : public QObject, public QGraphicsPathItem {
+        struct ConnectableInterface {
+            // return the item this arc is pointing to
+            virtual QGraphicsObject * asQGraphicsObject() = 0;
+
+            // Q_SIGNALS:
+            // must be implemented as signals
+            virtual void boundriesChanged() = 0;
+            virtual void disconnected() = 0;
+        };
+
+        class ConnectingArc : public QObject, public QGraphicsPathItem {
             Q_OBJECT
         public:
-            JoiningArc(QGraphicsObject * from, QGraphicsObject * to);
+            ConnectingArc(ConnectableInterface * from, ConnectableInterface * to);
 
         protected Q_SLOTS:
             void updatePosition();
 
         protected:
-            QGraphicsItem * m_to;
-            QGraphicsItem * m_from;
+            QGraphicsObject * m_to;
+            QGraphicsObject * m_from;
         };
 
     } // namespace gui

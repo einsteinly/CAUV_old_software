@@ -28,7 +28,7 @@ namespace cauv {
         class NodeTreeItemBase : public QObject, public QTreeWidgetItem {
             Q_OBJECT
         public:
-            NodeTreeItemBase(boost::shared_ptr<NodeBase> node, QTreeWidgetItem * parent);
+            NodeTreeItemBase(boost::shared_ptr<NodeBase> const& node, QTreeWidgetItem * parent);
             virtual ~NodeTreeItemBase(){}
             boost::shared_ptr<NodeBase> getNode();
             virtual bool updateNode(QVariant&);
@@ -54,16 +54,16 @@ namespace cauv {
         class NodeTreeItem : public NodeTreeItemBase {
 
         public:
-            NodeTreeItem(boost::shared_ptr<Node<T> > node, QTreeWidgetItem * parent) :
+            NodeTreeItem(boost::shared_ptr<Node<T> > const& node, QTreeWidgetItem * parent) :
                     NodeTreeItemBase(node, parent), m_node(node) {
             }
 
-            virtual T qVariantToValue(QVariant& ) {
+            virtual T qVariantToValue(QVariant const& ) {
                 // should overide this method
                 throw boost::bad_lexical_cast();
             }
 
-            virtual bool updateNode(QVariant& value){
+            virtual bool updateNode(QVariant const& value){
                 if(!m_node->isMutable()) return false;
 
                 try {
@@ -76,7 +76,7 @@ namespace cauv {
                 }
             }
 
-            virtual void onChange(T value){
+            virtual void onChange(T const& value){
                 std::stringstream str;
                 str << value;
                 updateValue(QString::fromStdString(str.str()));
@@ -92,13 +92,13 @@ namespace cauv {
         class NumericNodeTreeItem : public NodeTreeItem<numeric_variant_t> {
             Q_OBJECT
         public:
-            NumericNodeTreeItem(boost::shared_ptr<NumericNode> node, QTreeWidgetItem * parent) :
+            NumericNodeTreeItem(boost::shared_ptr<NumericNode> const& node, QTreeWidgetItem * parent) :
                     NodeTreeItem<numeric_variant_t>(node, parent), m_node(node) {
                 node->connect(node.get(), SIGNAL(onUpdate(numeric_variant_t)), this, SLOT(onChange(numeric_variant_t)));
                 onChange(node->get());
             }
 
-            virtual numeric_variant_t qVariantToValue(QVariant& v){
+            virtual numeric_variant_t qVariantToValue(QVariant const& v){
                 std::string value = v.toString().toStdString();
 
                 try {
@@ -133,7 +133,7 @@ namespace cauv {
         class GroupingNodeTreeItem : public NodeTreeItem<std::string> {
             Q_OBJECT
         public:
-            GroupingNodeTreeItem(boost::shared_ptr<GroupingNode> node, QTreeWidgetItem * parent = NULL) :
+            GroupingNodeTreeItem(boost::shared_ptr<GroupingNode> const& node, QTreeWidgetItem * parent = 0) :
                     NodeTreeItem<std::string>(node, parent) {
                 node->connect(node.get(), SIGNAL(onUpdate(std::string)), this, SLOT(onChange(std::string)));
             }
@@ -150,7 +150,7 @@ namespace cauv {
         class ImageNodeTreeItem : public NodeTreeItem<image_variant_t> {
             Q_OBJECT
         public:
-            ImageNodeTreeItem(boost::shared_ptr<ImageNode> node, QTreeWidgetItem * parent) :
+            ImageNodeTreeItem(boost::shared_ptr<ImageNode> const& node, QTreeWidgetItem * parent) :
                     NodeTreeItem<image_variant_t>(node, parent) {
                 node->connect(node.get(), SIGNAL(onUpdate(image_variant_t)), this, SLOT(updateIcon(image_variant_t)));
                 onChange(node->get());
@@ -159,7 +159,7 @@ namespace cauv {
 
         protected Q_SLOTS:
 
-            void updateIcon(int cell, QImage &image){
+            void updateIcon(int cell, QImage image){
                 this->setIcon(cell, QIcon(QPixmap::fromImage(image)));
             }
 
@@ -186,7 +186,7 @@ namespace cauv {
         class StringNodeTreeItem : public NodeTreeItem<std::string> {
             Q_OBJECT
         public:
-            StringNodeTreeItem(boost::shared_ptr<StringNode> node, QTreeWidgetItem * parent) :
+            StringNodeTreeItem(boost::shared_ptr<StringNode> const& node, QTreeWidgetItem * parent) :
                     NodeTreeItem<std::string>(node, parent) {
                 node->connect(node.get(), SIGNAL(onUpdate(std::string)), this, SLOT(onChange(std::string)));
                 onChange(node->get());
@@ -202,7 +202,7 @@ namespace cauv {
         class FloatYPRNodeTreeItem : public NodeTreeItem<floatYPR> {
             Q_OBJECT
         public:
-            FloatYPRNodeTreeItem(boost::shared_ptr<FloatYPRNode> node, QTreeWidgetItem * parent) :
+            FloatYPRNodeTreeItem(boost::shared_ptr<FloatYPRNode> const& node, QTreeWidgetItem * parent) :
                     NodeTreeItem<floatYPR>(node, parent) {
             }
         };

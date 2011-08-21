@@ -57,7 +57,7 @@ public:
 };
 
 
-void NodePathFilter::setText(QString string){
+void NodePathFilter::setText(QString const& string){
     m_text = string;
     Q_EMIT filterChanged();
 }
@@ -66,7 +66,7 @@ QString NodePathFilter::getText(){
     return m_text;
 }
 
-bool NodePathFilter::containsText(boost::shared_ptr<NodeBase>node){
+bool NodePathFilter::containsText(boost::shared_ptr<NodeBase> const& node){
     if(QString::fromStdString(node->nodePath()).contains(getText(), Qt::CaseInsensitive))
         return true;
     BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, node->getChildren()){
@@ -75,7 +75,7 @@ bool NodePathFilter::containsText(boost::shared_ptr<NodeBase>node){
     return false;
 }
 
-bool NodePathFilter::filter(boost::shared_ptr<NodeBase>node){
+bool NodePathFilter::filter(boost::shared_ptr<NodeBase> const& node){
     return getText().isEmpty() || containsText(node);
 }
 
@@ -99,7 +99,7 @@ std::vector<boost::shared_ptr<NodeBase> > NodeListView::getDroppedNodes() {
 
 
 
-NodePicker::NodePicker(boost::shared_ptr<AUV>auv) :
+NodePicker::NodePicker(boost::shared_ptr<AUV>  const& auv) :
         ui(new Ui::DataStreamPicker())
 {
     ui->setupUi(this);
@@ -240,7 +240,7 @@ void NodeListView::applyFilters(NodeTreeItemBase * item){
     }
 }
 
-bool NodeListView::applyFilters(boost::shared_ptr<NodeBase> node){
+bool NodeListView::applyFilters(boost::shared_ptr<NodeBase> const& node){
     debug(2) << "applyFilters(boost::shared_ptr<NodeBase> node)";
     BOOST_FOREACH(boost::shared_ptr<NodeListFilterInterface> const& filter, m_filters){
         // filtering is exclusive, so if any filter says no then the
@@ -250,7 +250,7 @@ bool NodeListView::applyFilters(boost::shared_ptr<NodeBase> node){
     return true;
 }
 
-void NodeListView::registerListFilter(boost::shared_ptr<NodeListFilterInterface> filter){
+void NodeListView::registerListFilter(boost::shared_ptr<NodeListFilterInterface>  const& filter){
     m_filters.push_back(filter);
     // all filters should have a filterChanged signal, but it's not actually enforced
     // by the interface as Qt doesn't handle multiple inhertiance for QObject

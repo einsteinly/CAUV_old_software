@@ -34,7 +34,7 @@ namespace cauv {
 
         protected:
             // to construct use a TypedNumericNode or subclass as it gives some type safety back
-            NumericNode(id_variant_t id) : Node<numeric_variant_t>(GuiNodeType::NumericNode, id),
+            NumericNode(id_variant_t const& id) : Node<numeric_variant_t>(GuiNodeType::NumericNode, id),
             m_maxSet(false), m_minSet(false), m_wraps(false), m_precision(3)
             {
                 qRegisterMetaType<numeric_variant_t>("numeric_variant_t");
@@ -46,11 +46,11 @@ namespace cauv {
                 return m_units;
             }
 
-            virtual void setUnits(std::string units) {
+            virtual void setUnits(std::string const& units) {
                 m_units = units;
             }
 
-            numeric_variant_t numericVariantFromString(std::string value){
+            numeric_variant_t numericVariantFromString(std::string const& value){
                 numeric_variant_t current = get();
                 return boost::apply_visitor(from_string<numeric_variant_t>(value), current);
             }
@@ -86,14 +86,14 @@ namespace cauv {
 
         protected:
 
-            virtual void setMin(numeric_variant_t min){
+            virtual void setMin(numeric_variant_t const& min){
                 m_min = min;
                 m_minSet = true;
 
                 Q_EMIT paramsUpdated();
             }
 
-            virtual void setMax(numeric_variant_t max){
+            virtual void setMax(numeric_variant_t const& max){
                 m_max = max;
                 m_maxSet = true;
 
@@ -110,9 +110,8 @@ namespace cauv {
 
         public Q_SLOTS:
 
-            virtual void update(const numeric_variant_t & value){
+            virtual void update(numeric_variant_t const& value){
                 Node<numeric_variant_t>::update(value);
-                Q_EMIT onUpdate(value);
 
                 switch(value.which()){
                 case 0:
@@ -154,7 +153,7 @@ namespace cauv {
             }
 
         protected Q_SLOTS:
-            virtual void set(const numeric_variant_t & value){
+            virtual void set(numeric_variant_t const& value){
                 numeric_variant_t output = value;
                 if(m_wraps){
                     output = boost::apply_visitor(wrap(getMinAsVariant(), getMaxAsVariant()), value);
@@ -168,8 +167,6 @@ namespace cauv {
 
 
                 Node<numeric_variant_t>::set(output);
-
-                Q_EMIT onSet(output);
 
                 switch(value.which()){
                 case 0:
@@ -191,7 +188,7 @@ namespace cauv {
             }
 
         Q_SIGNALS:
-            void onUpdate(const numeric_variant_t value);
+            void onUpdate(numeric_variant_t const& value);
             void onUpdate(int value);
             void onUpdate(unsigned int value);
             void onUpdate(float value);
@@ -200,7 +197,7 @@ namespace cauv {
 
             void paramsUpdated();
 
-            void onSet(const numeric_variant_t value);
+            void onSet(numeric_variant_t const& value);
             void onSet(int value);
             void onSet(unsigned int value);
             void onSet(float value);
@@ -209,7 +206,6 @@ namespace cauv {
 
         protected:
             std::string m_units;
-
             numeric_variant_t m_max;
             numeric_variant_t m_min;
             bool m_maxSet, m_minSet, m_wraps;
@@ -224,7 +220,7 @@ namespace cauv {
         template<class T>
         class TypedNumericNode : public NumericNode {
         public:
-            TypedNumericNode(id_variant_t id) : NumericNode(id)
+            TypedNumericNode(id_variant_t const& id) : NumericNode(id)
             {
                 m_value = T();
             }
@@ -238,7 +234,7 @@ namespace cauv {
                 }
             }
 
-            virtual void set(const T & value){
+            virtual void set(T const& value){
                 NumericNode::set(value);
             }
 

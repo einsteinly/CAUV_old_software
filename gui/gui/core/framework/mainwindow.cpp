@@ -91,9 +91,9 @@ void CauvMainWindow::onRun()
     GraphicsWindow * w2 = new GraphicsWindow();
     GraphicsWindow * w3 = new GraphicsWindow();
     GraphicsWindow * w4 = new GraphicsWindow();
-    JoiningArc * arc1 = new JoiningArc(w1, w2);
-    JoiningArc * arc2 = new JoiningArc(w1, w3);
-    JoiningArc * arc3 = new JoiningArc(w3, w4);
+    ConnectingArc * arc1 = new ConnectingArc(w1, w2);
+    ConnectingArc * arc2 = new ConnectingArc(w1, w3);
+    ConnectingArc * arc3 = new ConnectingArc(w3, w4);
     arc1->setPen(QPen(QColor(255, 158, 57)));
     arc2->setPen(QPen(QColor(255, 158, 57)));
     arc3->setPen(QPen(QColor(255, 158, 57)));
@@ -107,6 +107,7 @@ void CauvMainWindow::onRun()
     w3->setParentItem(w1);
     w4->setParentItem(w3);
     w2->setClosable(false);
+    w4->setResizable(true);
 
     w2->setPos(-250, 0);
     w3->setPos(-250, 250);

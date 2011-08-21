@@ -21,7 +21,7 @@ namespace cauv {
         class VanishingTextItem : public QGraphicsTextItem {
 
         public:
-            VanishingTextItem(QString &text, float lod);
+            VanishingTextItem(QString const& text, float lod);
             void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
         protected:
@@ -35,11 +35,11 @@ namespace cauv {
             virtual ~NodeScene();
 
             // drop handlers
-            virtual void registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > handler);
-            QGraphicsItem * applyHandlers(boost::shared_ptr<NodeBase> node);
+            virtual void registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > >  const& handler);
+            QGraphicsItem * applyHandlers(boost::shared_ptr<NodeBase> const& node);
             // drop listener methods
-            bool accepts(boost::shared_ptr<NodeBase>node);
-            virtual void onNodeDroppedAt(boost::shared_ptr<NodeBase>, QPointF );
+            bool accepts(boost::shared_ptr<NodeBase> const& node);
+            virtual void onNodeDroppedAt(boost::shared_ptr<NodeBase> const&, QPointF );
 
         protected:
             std::vector<boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > > m_handlers;
@@ -48,11 +48,11 @@ namespace cauv {
 
         class ExampleDropHandler : public DropHandlerInterface<QGraphicsItem * > {
 
-            virtual bool accepts(boost::shared_ptr<NodeBase> node){
+            virtual bool accepts(boost::shared_ptr<NodeBase> const& node){
                 return node->type == GuiNodeType::NumericNode;
             }
 
-            virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase>) {
+            virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase> const&) {
 
                 info() << "added GraphicsWindow";
 
@@ -71,11 +71,11 @@ namespace cauv {
 
         class GraphDropHandler : public DropHandlerInterface<QGraphicsItem * > {
 
-            virtual bool accepts(boost::shared_ptr<NodeBase> node){
+            virtual bool accepts(boost::shared_ptr<NodeBase> const& node){
                 return node->type == GuiNodeType::NumericNode;
             }
 
-            virtual QGraphicsItem *  handle(boost::shared_ptr<NodeBase> node) {
+            virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase> const& node) {
 
                 //if(m_graphs[node->nodePath()]){
                 //    return m_graphs[node->nodePath()];

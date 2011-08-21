@@ -16,7 +16,7 @@ namespace cauv {
         public:
             typedef T type;
 
-            CompoundNode(GuiNodeType::e GuiNodeType, const id_variant_t id) :
+            CompoundNode(GuiNodeType::e GuiNodeType, id_variant_t const& id) :
                     Node<T>(GuiNodeType, id) {
             }
 
@@ -29,36 +29,34 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            FloatYPRNode(const id_variant_t id) : CompoundNode<floatYPR>(GuiNodeType::FloatYPRNode, id)
+            FloatYPRNode(id_variant_t const& id) : CompoundNode<floatYPR>(GuiNodeType::FloatYPRNode, id)
             {
                 this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
 
         public Q_SLOTS:
 
-            virtual void update(const floatYPR & value){
+            virtual void update(floatYPR const& value){
                 CompoundNode<floatYPR>::update(value);
-                Q_EMIT onUpdate(value);
                 this->findOrCreate<TypedNumericNode<float> >("yaw")->update(value.yaw);
                 this->findOrCreate<TypedNumericNode<float> >("pitch")->update(value.pitch);
                 this->findOrCreate<TypedNumericNode<float> >("roll")->update(value.roll);
             }
 
-            virtual void set(const floatYPR & value){
+            virtual void set(type const& value){
                 CompoundNode<floatYPR>::set(value);
-                Q_EMIT onSet(value);
             }
 
             virtual void forceSet() {
                 float y = this->findOrCreate<TypedNumericNode<float> >("yaw")->get();
                 float p = this->findOrCreate<TypedNumericNode<float> >("pitch")->get();
                 float r = this->findOrCreate<TypedNumericNode<float> >("roll")->get();
-                set(floatYPR(y, p, r));
+                set(type(y, p, r));
             }
 
         Q_SIGNALS:
-            void onUpdate(const floatYPR value);
-            void onSet(const floatYPR value);
+            void onUpdate(floatYPR const& value);
+            void onSet(floatYPR const& value);
         };
 
 
@@ -67,24 +65,22 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            FloatXYZNode(const id_variant_t id) : CompoundNode<floatXYZ>(GuiNodeType::FloatXYZNode, id)
+            FloatXYZNode(id_variant_t const& id) : CompoundNode<floatXYZ>(GuiNodeType::FloatXYZNode, id)
             {
                 this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
 
         public Q_SLOTS:
 
-            virtual void update(const floatXYZ & value){
+            virtual void update(floatXYZ const& value){
                 CompoundNode<floatXYZ>::update(value);
-                Q_EMIT onUpdate(value);
                 this->findOrCreate<TypedNumericNode<float> >("x")->update(value.x);
                 this->findOrCreate<TypedNumericNode<float> >("y")->update(value.y);
                 this->findOrCreate<TypedNumericNode<float> >("z")->update(value.z);
             }
 
-            virtual void set(const floatXYZ & value){
+            virtual void set(type const& value){
                 CompoundNode<floatXYZ>::set(value);
-                Q_EMIT onSet(value);
             }
 
             virtual void forceSet() {
@@ -95,8 +91,8 @@ namespace cauv {
             }
 
         Q_SIGNALS:
-            void onUpdate(const floatXYZ value);
-            void onSet(const floatXYZ value);
+            void onUpdate(floatXYZ const& value);
+            void onSet(floatXYZ const& value);
         };
 
 

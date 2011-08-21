@@ -23,7 +23,7 @@ namespace cauv {
         struct NodeListFilterInterface {
 
             // return false to filter out an item (and its children) from the list
-            virtual bool filter(boost::shared_ptr<NodeBase> node) = 0;
+            virtual bool filter(boost::shared_ptr<NodeBase> const& node) = 0;
 
             // should be implmented as a signal by subclasses
             virtual void filterChanged() = 0;
@@ -34,13 +34,13 @@ namespace cauv {
 
         public Q_SLOTS:
 
-            void setText(QString string);
+            void setText(QString const& string);
             QString getText();
-            bool filter(boost::shared_ptr<NodeBase>node);
+            bool filter(boost::shared_ptr<NodeBase> const& node);
 
         protected:
             QString m_text;
-            bool containsText(boost::shared_ptr<NodeBase>node);
+            bool containsText(boost::shared_ptr<NodeBase> const& node);
 
         Q_SIGNALS:
             void filterChanged();
@@ -53,7 +53,7 @@ namespace cauv {
             NodeListView(QWidget * parent);
 
             std::vector<boost::shared_ptr<cauv::gui::NodeBase> > getDroppedNodes();
-            virtual void registerListFilter(boost::shared_ptr<NodeListFilterInterface> filter);
+            virtual void registerListFilter(boost::shared_ptr<NodeListFilterInterface> const& filter);
 
 
         private Q_SLOTS:
@@ -61,7 +61,7 @@ namespace cauv {
             void itemEdited(QTreeWidgetItem* item, int column);
             void applyFilters();
             void applyFilters(NodeTreeItemBase *);
-            bool applyFilters(boost::shared_ptr<NodeBase>);
+            bool applyFilters(boost::shared_ptr<NodeBase> const&);
 
         Q_SIGNALS:
             void onKeyPressed(QKeyEvent *event);
@@ -78,7 +78,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            NodePicker(boost::shared_ptr<AUV>auv);
+            NodePicker(boost::shared_ptr<AUV>  const& auv);
             virtual ~NodePicker();
 
         protected Q_SLOTS:
