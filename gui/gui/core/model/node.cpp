@@ -13,7 +13,7 @@ NodeBase::NodeBase(GuiNodeType::e t, const id_variant_t id) :
 }
 
 NodeBase::~NodeBase(){
-    debug(0) << "~NodeBase" << nodeName();
+    debug(2) << "~NodeBase" << nodeName();
 }
 
 std::string NodeBase::nodeName() const {

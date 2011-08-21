@@ -64,8 +64,7 @@ namespace cauv {
 
             virtual void addButton(GraphicsWindowButton * button);
 
-            //void mousePressEvent(QGraphicsSceneMouseEvent *event);
-            //void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+            virtual void setClosable(bool);
 
         protected:
             QSizeF m_size;
@@ -75,6 +74,7 @@ namespace cauv {
 
             QGraphicsWidget * m_buttonsWidget;
             QGraphicsLinearLayout * m_layout;
+            GraphicsWindowButton * m_closeButton;
 
         signals:
 

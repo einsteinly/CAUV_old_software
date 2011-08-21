@@ -29,7 +29,7 @@ GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv):
 }
 
 GuiMessageObserver::~GuiMessageObserver() {
-    debug() << "~GuiMessageObserver()";
+    debug(2) << "~GuiMessageObserver()";
 }
 
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {

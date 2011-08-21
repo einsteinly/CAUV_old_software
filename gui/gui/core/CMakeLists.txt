@@ -50,6 +50,7 @@ set ( GUI_CORE_SRCS
     framework/visualiserview.cpp
     framework/nodescene.cpp
     framework/graphicswindow.cpp
+    framework/arc.cpp
     utils/noderecorder.cpp
     )
 
@@ -76,6 +77,7 @@ set ( GUI_CORE_H
     framework/treeitems.h
     framework/mainwindow.h
     framework/graphicswindow.h
+    framework/arc.h
     )
 
 set ( GUI_CORE_RCC

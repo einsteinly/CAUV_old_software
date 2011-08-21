@@ -5,10 +5,6 @@
 #include <QPluginLoader>
 #include <QSettings>
 
-#include <QPushButton>
-#include <QSpinBox>
-#include <QGraphicsProxyWidget>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
@@ -19,6 +15,7 @@
 #include "../framework/nodescene.h"
 #include "../framework/visualiserview.h"
 #include "../framework/nodepicker.h"
+#include "../framework/arc.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
@@ -92,14 +89,28 @@ void CauvMainWindow::onRun()
 
     GraphicsWindow * w1 = new GraphicsWindow();
     GraphicsWindow * w2 = new GraphicsWindow();
-    JoiningArc * arc = new JoiningArc(w1, w2);
+    GraphicsWindow * w3 = new GraphicsWindow();
+    GraphicsWindow * w4 = new GraphicsWindow();
+    JoiningArc * arc1 = new JoiningArc(w1, w2);
+    JoiningArc * arc2 = new JoiningArc(w1, w3);
+    JoiningArc * arc3 = new JoiningArc(w3, w4);
+    arc1->setPen(QPen(QColor(255, 158, 57)));
+    arc2->setPen(QPen(QColor(255, 158, 57)));
+    arc3->setPen(QPen(QColor(255, 158, 57)));
 
     m_actions->scene->addItem(w1);
     m_actions->scene->addItem(w2);
+    m_actions->scene->addItem(w3);
+    m_actions->scene->addItem(w4);
 
     w2->setParentItem(w1);
+    w3->setParentItem(w1);
+    w4->setParentItem(w3);
+    w2->setClosable(false);
 
     w2->setPos(-250, 0);
+    w3->setPos(-250, 250);
+    w4->setPos(-500, 250);
 
     /*m_actions->scene->onNodeDroppedAt(m_actions->auv->findOrCreate<TypedNumericNode<float> >("blah"), QPointF(0,0));
 
@@ -177,7 +188,10 @@ int CauvMainWindow::findPlugins(const QDir& dir, int subdirs)
                 m_plugins.push_back(cauvPlugin);
                 info() << "Loaded plugin:"<< fileName.toStdString();
                 numFound++;
-            } else warning() << "Rejected plugin:"<< fileName.toStdString();
+            } else {
+                plugin->deleteLater();
+                warning() << "Rejected plugin:"<< fileName.toStdString();
+            }
         }
     }
 

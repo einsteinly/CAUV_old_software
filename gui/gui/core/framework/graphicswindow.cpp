@@ -87,7 +87,7 @@ void GraphicsWindowButton::mouseReleaseEvent(QGraphicsSceneMouseEvent *){
 
 GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
         QGraphicsObject(parent), m_cornerRadius(10),
-        m_backgroundPen(QPen(QColor(212, 212, 212))),
+        m_backgroundPen(QPen(QColor(190, 190, 190))),
         m_backgroundBrush(QColor(238, 238, 238)),
         m_buttonsWidget(new QGraphicsWidget(this)),
         m_layout(new QGraphicsLinearLayout(Qt::Horizontal))
@@ -102,9 +102,9 @@ GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
     pen.setCapStyle(Qt::RoundCap);
     pen.setWidthF(2.2);
     cross->setPen(pen);
-    GraphicsWindowButton * closeButton = new GraphicsWindowButton(cross);
-    addButton(closeButton);
-    connect(closeButton, SIGNAL(pressed()), this, SLOT(close()));
+    m_closeButton = new GraphicsWindowButton(cross);
+    addButton(m_closeButton);
+    connect(m_closeButton, SIGNAL(pressed()), this, SLOT(close()));
 
     this->setFlag((QGraphicsItem::ItemIsMovable));
     this->setFlag((QGraphicsItem::ItemIsSelectable));
@@ -131,7 +131,8 @@ void GraphicsWindow::setSize(QSizeF size){
         size.setWidth(150);
     prepareGeometryChange();
     m_size = size;
-    m_buttonsWidget->setGeometry((cornerRadius()/2), 0, size.width()-(cornerRadius()/2), 30);
+    m_buttonsWidget->setGeometry((cornerRadius()/2), -17,
+                                 size.width()-(cornerRadius()/2), 30);
     update(boundingRect());
 }
 
@@ -162,6 +163,10 @@ void GraphicsWindow::setBackgroundBrush(QBrush brush){
     update(boundingRect());
 }
 
+void GraphicsWindow::setClosable(bool close){
+    m_closeButton->setVisible(close);
+}
+
 /*
 void GraphicsWindow::mousePressEvent(QGraphicsSceneMouseEvent *event){
     QGraphicsItem::mousePressEvent(event);
@@ -184,8 +189,7 @@ void GraphicsWindow::paint(QPainter *painter, const QStyleOptionGraphicsItem * o
     
     painter->setPen(backgroundPen());
     painter->setBrush(brush);
-    painter->drawRoundedRect(QRectF(QPointF(0,16), QSizeF(size().width(), size().height()-16)),
-                             m_cornerRadius, m_cornerRadius, Qt::AbsoluteSize);
+    painter->drawRoundedRect(boundingRect(), m_cornerRadius, m_cornerRadius, Qt::AbsoluteSize);
 
 }
 
