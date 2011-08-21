@@ -3,6 +3,7 @@
 
 from sys import float_info
 from math import frexp, ldexp
+from datetime import timedelta
 
 def incFloat(f):
     # increment a floating point number by the smallest possible amount
@@ -37,6 +38,34 @@ def hgCmd(cmd):
 @once
 def sourceRevision():
     return hgCmd("log -l 1 --template '{node}'")
+
+
+# Functions for dealing with datetime.timedelta objects:
+
+# So here's a reason to use python 3.2: timedelta objects can finally be
+# multiplied / divided and we could get rid of these:
+def tdToLongMuSec(td):
+    return long(td.microseconds) + td.seconds*1000000L + td.days*86400000000L
+
+def tddiv(l, r):
+    l_musec = tdToLongMuSec(l)
+    r_musec = tdToLongMuSec(r)
+    ret = l_musec / float(r_musec)
+    #print 'tddiv: %s / %s = %s / %s = %s' % (l, r, l_musec, r_musec, ret)
+    return ret
+
+def tdmul(a, b):
+    td = None
+    scalar = None
+    if isinstance(a, timedelta):
+        td = a
+        scalar = b
+    if isinstance(b, timedelta):
+        if td is not None:
+            raise RuntimeError("you can't multiply two timedeltas")
+        td = b
+        scalar = a
+    return timedelta(microseconds = tdToLongMuSec(td) * scalar)
 
 
 

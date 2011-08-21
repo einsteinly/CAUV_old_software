@@ -21,16 +21,20 @@
                                               # the index file
     TIMESTAMP MSG_ID(VALUE,VALUE,VALUE....,)  # time is integer (or long
                                               # integer) musec since last
-                                              # recorded absolute time ('Time' line)
-
+                                              # recorded absolute time ('Time'
+                                              # line)
 
     # !!! The format of the index files is still subject to change !!!  
 
-    # superlog (index) files: seek positions are to nearest position *after* specified time
+    # superlog (index) files: seek positions are to nearest position *after*
+    # specified time
     
     CHILIDX
-    Format HG_FULL_REVISION_UID             # applies until next Format line
-                                            # is encountered
+    Format HG_FULL_REVISION_UID LONG_INT    # applies until next Format line
+                                            # is encountered, LONG_INT
+                                            # specifies the point in the log
+                                            # file from which this format
+                                            # should be used
 
     LONG_INTEGER YYYYMMDD-HHMMSS.SSSSSS     # integer is seek position in
                                             # corresponding log file. This form
@@ -42,13 +46,13 @@
                                             # line does not necessarily
                                             # correspond to a Time line in the
                                             # log file
-    
 
     # megasuperlog file:
+    # (any number of message id and time period sections are permitted)    
 
     CHILSUPERIDX
     Format HG_FULL_REVISION_UID
-    FILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...) # any number of message id and time period sections
+    FILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...)
 
 '''
 
@@ -57,7 +61,6 @@ import os
 import datetime
 import time
 import fcntl
-import bisect
 import functools
 import sys
 import copy
@@ -70,7 +73,8 @@ import blist           # BSD license
 import pyparsing as pp # MIT license
 
 # CAUV
-from hacks import sourceRevision
+from hacks import sourceRevision, tddiv, tdmul, tdToLongMuSec
+from interpolation import LinearpiecewiseApprox, OutOfRange_Low, OutOfRange_High, zeroOrderInterp
 import cauv.messaging as messaging
 
 class Const:
@@ -78,156 +82,48 @@ class Const:
     Keyframe_Strftime_Fmt = '%Y%m%d-%H%M%S.%f'
 
 
-# output structures for index grammars:
-class MsgPeriod():
-    def __init__(self, msgid, fr, to):
-        self.msgid = msgid
-        self.fr = fr
-        self.to = to
-    def __repr__(self):
-        return '%s: %s to %s' % (self.msgid, self.fr, self.to)
+# Index and super-index grammars
+class IdxGrammar:
+    class MsgPeriod():
+        def __init__(self, msgid, fr, to):
+            self.msgid = msgid
+            self.fr = fr
+            self.to = to
+        def __repr__(self):
+            return '%s: %s to %s' % (self.msgid, self.fr, self.to)
+    p_hg_uuid   = pp.Word('0123456789abcdef')
+    p_timestamp = pp.Combine(pp.Word(pp.nums,exact=8) +
+                  pp.Literal('-') + pp.Word(pp.nums,exact=6) +
+                  pp.Literal('.') + pp.Word(pp.nums))
+    p_timestamp.setParseAction(lambda x: datetime.datetime.strptime(x[0], Const.Keyframe_Strftime_Fmt))
+    p_filename = pp.Word(pp.alphanums + '-_.')
 
-# index and super index grammars:
-p_hg_uuid   = pp.Word('0123456789abcdef')
-p_timestamp = pp.Combine(pp.Word(pp.nums,exact=8) +
-              pp.Literal('-') + pp.Word(pp.nums,exact=6) +
-              pp.Literal('.') + pp.Word(pp.nums))
-p_timestamp.setParseAction(lambda x: datetime.datetime.strptime(x[0], Const.Keyframe_Strftime_Fmt))
-p_filename = pp.Word(pp.alphanums + '-_.')
+    p_idx_header_line = pp.Literal('CHILIDX') + pp.Suppress(pp.LineEnd())
+    p_seekpos         = pp.Combine(pp.Word(pp.nums) + pp.Optional(pp.Literal('L')))
+    p_seekpos.setParseAction(lambda x: long(x[0]))
+    p_format_line     = pp.Suppress(pp.Literal('Format')) + p_hg_uuid + pp.Suppress(pp.LineEnd())
+    p_idxformat_line  = pp.Suppress(pp.Literal('Format')) + p_hg_uuid + p_seekpos + pp.Suppress(pp.LineEnd())
+    p_time_line       = pp.Suppress(pp.Literal('Time')) + p_timestamp + pp.Suppress(pp.LineEnd())
+    p_timepos_line    = p_seekpos + p_timestamp + pp.Suppress(pp.LineEnd())
+    p_seekpos_line    = p_timestamp + p_seekpos + pp.Suppress(pp.LineEnd())
+    p_idx_line        = p_idx_header_line ^\
+                        p_format_line ^\
+                        p_seekpos_line
 
-p_idx_header_line = pp.Literal('CHILIDX') + pp.Suppress(pp.LineEnd())
-p_format_line     = pp.Literal('Format') + p_hg_uuid  + pp.Suppress(pp.LineEnd())
-p_format_line.setParseAction(lambda x: x[1])
-p_seekpos         = pp.Combine(pp.Word(pp.nums) + pp.Optional(pp.Literal('L')))
-p_seekpos.setParseAction(lambda x: long(x[0]))
-p_time_line       = pp.Suppress(pp.Literal('Time')) + p_timestamp + pp.Suppress(pp.LineEnd())
-p_timepos_line    = p_seekpos + p_timestamp + pp.Suppress(pp.LineEnd())
-p_seekpos_line    = p_timestamp + p_seekpos + pp.Suppress(pp.LineEnd())
-p_idx_line        = p_idx_header_line ^\
-                    p_format_line ^\
-                    p_seekpos_line
-
-p_superidx_header_line = pp.Literal('CHILSUPERIDX') + pp.Suppress(pp.LineEnd())
-p_msgid         = pp.Word(pp.nums)
-p_msgid.setParseAction(lambda x: int(x[0]))
-p_msgid_period  = pp.Group(
-                  pp.Suppress(pp.Literal('[')) +
-                  p_msgid + p_timestamp + pp.Suppress(pp.Literal('--')) + p_timestamp +
-                  pp.Suppress(pp.Literal(']')))
-p_msgid_period.setParseAction(lambda x: MsgPeriod(*x[0]))
-p_msgloc_line   = p_filename + pp.Suppress('(') + \
-                  pp.delimitedList(p_msgid_period) + pp.Suppress(pp.Optional(',')) + \
-                  pp.Suppress(')') + pp.Suppress(pp.LineEnd())
-p_superidx_line = p_superidx_header_line ^\
-                  p_format_line ^\
-                  p_msgloc_line
-
-def testMetaGrammars():
-    print p_hg_uuid.parseString('6e01240480ec08eab327ad6a14b0179908b98dbb')
-    print p_timestamp.parseString('20110817-200746.725440')
-    print p_filename.parseString('some_stupid-filename.something')
-    print p_format_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb')
-    print p_seekpos.parseString(str(12356789123123756176234L))
-    print p_seekpos_line.parseString('20110817-200746.725440 1235142364123')
-    print p_timepos_line.parseString('1235142364123 20110817-200746.725440')
-    print p_idx_line.parseString('20110817-200746.725440 1235142364123')
-    print p_idx_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb')
-    print p_idx_line.parseString('CHILIDX')
-    print p_msgid_period.parseString('[1234 19890203-123456.789012--20110817-201900.000000]')
-    print p_msgloc_line.parseString('filename ([1234 19890203-123456.789012--20110817-201900.000000], [1234 19890203-123456.789012--20110817-201900.000000])')
-    print p_superidx_line.parseString('filename ([1234 19890203-123456.789012--20110817-201900.000000], [1234 19890203-123456.789012--20110817-201900.000000],)')
-    print p_superidx_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb')
-
-def tdToLongMuSec(td):
-    return long(td.microseconds) + td.seconds*1000000L + td.days*1000000L*24L*3600L
-
-def tddiv(l, r):
-    l_musec = tdToLongMuSec(l)
-    r_musec = tdToLongMuSec(r)
-    ret = l_musec / float(r_musec)
-    #print 'tddiv: %s / %s = %s / %s = %s' % (l, r, l_musec, r_musec, ret)
-    return ret
-
-def tdmul(a, b):
-    td = None
-    scalar = None
-    if isinstance(a, datetime.timedelta):
-        td = a
-        scalar = b
-    if isinstance(b, datetime.timedelta):
-        if td is not None:
-            raise RuntimeError("you can't multiply two timedeltas")
-        td = b
-        scalar = a
-    return datetime.timedelta(microseconds = tdToLongMuSec(td) * scalar)
-
-def linearInterp(xlow, ylow, xhi, yhi, x):
-    # TODO: handle xhi = xlo gracefully
-    if x == xlow:
-        r = ylow
-    elif x == xhi:
-        r = yhi
-    else:
-        n = ((yhi - ylow) * (x - xlow))
-        d = (xhi - xlow)
-        if type(n) == datetime.timedelta and type(d) == datetime.timedelta:
-            # silly datetime.timedelta doesn't support division
-            r = ylow + tddiv(n, d)
-        else:
-            r = ylow + n / d
-    #print 'low: %s %s\n  x: %s\n hi: %s %s\n  -> %s' % (xlow, ylow, x, xhi, yhi, r)
-    return r
-
-def zeroOrderInterp(xlo, ylo, xhi, yhi, x):
-    return ylo
-
-# TODO next...
-class ShelfConverter:
-    pass
-
-class OutOfRange_Low(KeyError):
-    def __init__(self, s):
-        KeyError.__init__(self, s)
-
-class OutOfRange_High(KeyError):
-    def __init__(self, s):
-        KeyError.__init__(self, s)
-
-class LinearpiecewiseApprox(blist.sorteddict):
-    def __init__(self, rfunc=round, interp=linearInterp):
-        blist.sorteddict.__init__(self)
-        self.interpolate = interp
-        self.rfunc = rfunc
-    def __getitem__(self, k):
-        # interpolates if a value is not present for the specified key
-        sorted_keys = self.keys()
-        # print '__getitem__:\n', '\n'.join(map(str,sorted_keys)), 'k=', k
-        ilow = bisect.bisect(sorted_keys, k) - 1
-        if ilow < 0 or (ilow == -1 and sorted_keys[0] != k):
-            raise OutOfRange_Low('out of range: lt')
-        ihi = ilow + 1
-        if ihi >= len(sorted_keys):
-            if sorted_keys[ilow] != k:
-                raise OutOfRange_High('out of range: gt')
-            else:
-                return blist.sorteddict.__getitem__(self,sorted_keys[ilow])
-        '''#dbg
-        for i, y in enumerate(sorted_keys):
-            if i == ilow:
-                print i, y, '<-- low'
-                print '=', k
-            elif i == ihi:
-                print i, y, '<-- hi'
-            else:
-                print i, y#'''
-        klow = sorted_keys[ilow]
-        khi = sorted_keys[ihi]
-        r = self.interpolate(
-            klow, blist.sorteddict.__getitem__(self, klow),
-            khi, blist.sorteddict.__getitem__(self, khi),
-            k
-        )
-        return self.rfunc(r)
+    p_superidx_header_line = pp.Literal('CHILSUPERIDX') + pp.Suppress(pp.LineEnd())
+    p_msgid         = pp.Word(pp.nums)
+    p_msgid.setParseAction(lambda x: int(x[0]))
+    p_msgid_period  = pp.Group(
+                      pp.Suppress(pp.Literal('[')) +
+                      p_msgid + p_timestamp + pp.Suppress(pp.Literal('--')) + p_timestamp +
+                      pp.Suppress(pp.Literal(']')))
+    p_msgid_period.setParseAction(lambda x: IdxGrammar.MsgPeriod(*x[0]))
+    p_msgloc_line   = p_filename + pp.Suppress('(') + \
+                      pp.delimitedList(p_msgid_period) + pp.Suppress(pp.Optional(',')) + \
+                      pp.Suppress(')') + pp.Suppress(pp.LineEnd())
+    p_superidx_line = p_superidx_header_line ^\
+                      p_format_line ^\
+                      p_msgloc_line
 
 ''' TODO: this...
 # deriving from the builtin file object is sort of not really possible...
@@ -318,10 +214,6 @@ class CHILer:
         else:
             basename = subname
         return basename
-    def deserialiseMessage(self, s):
-        import utils.childecode.decode_61a58d327d9f229ef265be85c9bf2de03235814e as decode
-        r = decode.p_Message.parseString(s)
-        return r
 
 class Logger(CHILer):
     def __init__(self, dirname, subname=None):
@@ -345,9 +237,10 @@ class Logger(CHILer):
         self.last_keyframe_time = t
         self.idxfile.write(l)
     def writeFormatLines(self):
-        l = 'Format %s\n' % self.source_revision
-        self.datfile.write(l)
-        self.idxfile.write(l)
+        l_dat = 'Format %s\n' % self.source_revision
+        self.datfile.write(l_dat)        
+        l_idx = 'Format %s %s\n' % (self.source_revision, self.datfile.tell())
+        self.idxfile.write(l_idx)
     def writeTimeLine(self, t=None):
         if t is None:
              t = datetime.datetime.now()
@@ -472,22 +365,46 @@ class ComponentPlayer(CHILer):
         # at each indexed seek position the absolute time (used for relative
         # timestamps) must be recorded
         self.seek_time_map = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
+        self.decoders = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
+        self.default_decoder = None
+        try:
+            self.default_decoder = self.importDecoder(sourceRevision())
+        except ImportError:
+            print 'WARNING: no default decoder (current revision) available.'
         with self.openForR(self.idxname) as idxfile:
-            # !!! TODO: should at least warn about the Format lines
             for idxline in idxfile:
                 try:
-                    parsed = p_seekpos_line.parseString(idxline)
+                    parsed = IdxGrammar.p_seekpos_line.parseString(idxline)
                     #print 'seekpos line:', parsed[0], parsed[1]
                     self.seek_map[parsed[0]] = parsed[1]
                     continue
-                except:
+                except pp.ParseException:
                     pass
                 try:
-                    parsed = p_timepos_line.parseString(idxline)
+                    parsed = IdxGrammar.p_timepos_line.parseString(idxline)
                     self.seek_time_map[parsed[0]] = parsed[1]
-                except:
+                    continue
+                except pp.ParseException:
                     pass
+                try:
+                    parsed = IdxGrammar.p_idxformat_line.parseString(idxline)
+                    try:
+                        decoder = self.importDecoder(parsed[0])
+                        self.decoders[parsed[1]] = decoder
+                    except ImportError:
+                        print 'No decoder for hg revision %s!' % parsed[0]
+                        self.decoders[parsed[1]] = None
+                except pp.ParseException:
+                    pass
+        print self.decoders
         print 'Scanned %s successfully.' % self.datname
+    def importDecoder(self, name):
+        return getattr(__import__('childecode.decode_%s' % name), 'decode_%s' % name)
+    def deserialise(self, msgstring, seekpos):
+        decoder = self.decoders[seekpos]
+        if decoder is None:
+            decoder = self.default_decoder
+        return decoder.p_Message.parseString(msgstring)[0]
     def swap(self, other):
         # dum di dum di dum
         t = other.__dict__
@@ -612,12 +529,12 @@ class ComponentPlayer(CHILer):
             return joint
     def nextMessageTime(self):
         return self.nextMessageAndTime()[1]
-    def nextMessageAndDelta(self):
-        msg, time = self.nextMessageAndTime()
-        if msg:
+    def nextMessageAndDelta(self, deserialise=True):
+        msg, time = self.nextMessageAndTime(deserialise)
+        if time:
             return (msg, time - self.__cursor[0])
         return None, None
-    def nextMessageAndTime(self):
+    def nextMessageAndTime(self, deserialise=True):
         t = self.cursor()
         try:
             seekpos = self.seek_map[t]
@@ -664,10 +581,15 @@ class ComponentPlayer(CHILer):
             # then it's the first line with positive time delta
             tdiff = self.timeOffsetOfMsgLine(line)
             abstime = self.absoluteTimeAtSeekPos()
+            msg_time = abstime + tdiff
             assert(tdToLongMuSec(tdiff) >= 0)
-            assert(abstime+tdiff > t)
+            assert(msg_time > t)
             #print 'Got:', abstime + tdiff - t, line
-            return line, abstime + tdiff
+            msgstring = line[line.find(' '):]
+            if deserialise:
+                return self.deserialise(msgstring, self.datfile.tell()), msg_time
+            else:
+                return msgstring, msg_time
         else:
             return None, None
 
@@ -710,8 +632,8 @@ class Player(CHILer):
         with self.openForR(self.Const.Super_Index) as megasuperlog:
             for line in megasuperlog:
                 try:
-                    parsed = p_msgloc_line.parseString(line)
-                except:
+                    parsed = IdxGrammar.p_msgloc_line.parseString(line)
+                except pp.ParseException:
                     continue
                 fname = parsed[0]
                 if not fname in components_by_fname:
@@ -750,8 +672,8 @@ class Player(CHILer):
         self.wrapCursorMutatingOp(setCur)
     def cursor(self):
         return self.__cursor[0]
-    def nextMessage(self):
-        r, tdelta = self.components[0].nextMessageAndDelta()
+    def nextMessage(self, deserialise=True):
+        r, tdelta = self.components[0].nextMessageAndDelta(deserialise=deserialise)
         #print 'nextMessage:', r, tdelta
         # ---------------------------------------------------------------------
         # !!! TODO: scope for significant optimisation here:
@@ -798,7 +720,11 @@ class Player(CHILer):
         with self.PushCursor(self, start, no_check=True):
             for i in xrange(0, N):
                 ttn = self.timeToNextMessage()
-                if ttn is not None:
+                if ttn is None: 
+                    continue
+                if ttn > step:
+                    samples.append(0)
+                else:
                     assert(tdToLongMuSec(ttn) >= 0)
                     if tdToLongMuSec(ttn) < 100:
                         # hack hack
@@ -828,7 +754,7 @@ def drawVHistogram(densities,
     # ::::::: :::::::::::::::::::::::::::::::::::::::::::::::::::: :::::::::. ::   ::
     # :::::::.::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: ::   ::.
     # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::.:: . :::
-    # |                                       '                                      |
+    # |---------------------------------------'--------------------------------------|
     # 00:00:29.928703                  00:00:36.773747                        00:00:43.618790
     
     # 2011-08-20 23:20:37.022175    2011-08-20 23:20:38.584136   2011-08-20 23:20:40.146096
@@ -885,7 +811,25 @@ def drawVHistogram(densities,
 
 # ---------------------------- Tests etc. ----------------------------
 
-def testLogCoverage(loops=20000):
+def testMetaGrammars():
+    print IdxGrammar.p_hg_uuid.parseString('6e01240480ec08eab327ad6a14b0179908b98dbb')
+    print IdxGrammar.p_timestamp.parseString('20110817-200746.725440')
+    print IdxGrammar.p_filename.parseString('some_stupid-filename.something')
+    print IdxGrammar.p_format_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb')
+    print IdxGrammar.p_idxformat_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb 123456')
+    print IdxGrammar.p_seekpos.parseString(str(12356789123123756176234L))
+    print IdxGrammar.p_seekpos_line.parseString('20110817-200746.725440 1235142364123')
+    print IdxGrammar.p_timepos_line.parseString('1235142364123 20110817-200746.725440')
+    print IdxGrammar.p_idx_line.parseString('20110817-200746.725440 1235142364123')
+    print IdxGrammar.p_idx_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb')
+    print IdxGrammar.p_idx_line.parseString('CHILIDX')
+    print IdxGrammar.p_msgid_period.parseString('[1234 19890203-123456.789012--20110817-201900.000000]')
+    print IdxGrammar.p_msgloc_line.parseString('filename ([1234 19890203-123456.789012--20110817-201900.000000], [1234 19890203-123456.789012--20110817-201900.000000])')
+    print IdxGrammar.p_superidx_line.parseString('filename ([1234 19890203-123456.789012--20110817-201900.000000], [1234 19890203-123456.789012--20110817-201900.000000],)')
+    print IdxGrammar.p_superidx_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb')
+
+
+def testLogCoverage(loops=200):
     import cauv.messaging as m
     l = Logger('test')
     for x in xrange(0, loops):
@@ -1045,9 +989,9 @@ def testPlayback(r, start_t, end_t):
         m, td = r.nextMessage()
         if m is None:
             break
-        s += len(m)
+        s += len(str(m))
         n += 1
-        if n & 0x3ff == 0:
+        if n & 0xff == 0:
             print '%d messages, %d kB, %s' % (n, s/1000.0, r.cursor())
     print '%d messages, %d kB' % (n, s/1000.0)
 
@@ -1061,7 +1005,7 @@ if __name__ == '__main__':
     cProfile.run('testLogCoverage()', 'chil_log.profile')
     t_end = datetime.datetime.now()
     
-    t_start = datetime.datetime.strptime('20110821-001409.192335', Const.Keyframe_Strftime_Fmt)
+    #t_start = datetime.datetime.strptime('20110821-001409.192335', Const.Keyframe_Strftime_Fmt)
     #t_start = datetime.datetime.strptime('20110820-231100.959836', Const.Keyframe_Strftime_Fmt)
     #t_end = datetime.datetime.strptime('20110820-230628.833937', Const.Keyframe_Strftime_Fmt)
 
