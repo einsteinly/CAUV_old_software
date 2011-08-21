@@ -243,7 +243,7 @@ template<>
 inline std::string chil(std::vector<byte> const& V){
     std::string r;
     r.reserve(V.size()*2);
-    typename std::vector<byte>::const_iterator i;
+    std::vector<byte>::const_iterator i;
     for(i = V.begin(); i != V.end(); i++)
         r += impl::B16_LUT[unsigned(*i)];
     return r;
