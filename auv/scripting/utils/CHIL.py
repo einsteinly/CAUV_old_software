@@ -69,8 +69,8 @@ import warnings
 from base64 import b16encode, b16decode
 
 # 3rd Party
-import blist           # BSD license
-import pyparsing as pp # MIT license
+import blist # BSD license
+import thirdparty.pyparsing as pp # MIT license
 
 # CAUV
 from hacks import sourceRevision, tddiv, tdmul, tdToLongMuSec
@@ -396,7 +396,7 @@ class ComponentPlayer(CHILer):
                         self.decoders[parsed[1]] = None
                 except pp.ParseException:
                     pass
-        print self.decoders
+        #print self.decoders
         print 'Scanned %s successfully.' % self.datname
     def importDecoder(self, name):
         return getattr(__import__('childecode.decode_%s' % name), 'decode_%s' % name)
@@ -404,7 +404,7 @@ class ComponentPlayer(CHILer):
         decoder = self.decoders[seekpos]
         if decoder is None:
             decoder = self.default_decoder
-        return decoder.p_Message.parseString(msgstring)[0]
+        return decoder.parseMessage(msgstring)
     def swap(self, other):
         # dum di dum di dum
         t = other.__dict__
@@ -541,11 +541,6 @@ class ComponentPlayer(CHILer):
         except OutOfRange_Low:
             self.datfile.seek(0)
             line = self.readMsgLine(at_start_of_line=True)
-            #tdiff = self.timeOffsetOfMsgLine(line)
-            #abstime = self.absoluteTimeAtSeekPos()
-            #assert(tdToLongMuSec(tdiff) >= 0)
-            #assert(abstime+tdiff > t)
-            #return line, abstime + tdiff
             at_start = True
         except OutOfRange_High, e:
             return None, None
@@ -556,11 +551,11 @@ class ComponentPlayer(CHILer):
         # Move backwards until we reach a line that's too early, or exactly
         # now, and then forwards until a line that's in the *future* (greater
         # than now)
-        #  <--------S
-        #  >|
-        # or
-        # <
-        # ---------->|
+        #        <--------S
+        #        >|
+        # or:
+        #  <
+        #  ------>|
         #print 'Gt:'
         #print '"%s"' % line,
         while (not at_start) and (not line or self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() > t):
@@ -1016,12 +1011,13 @@ if __name__ == '__main__':
     r.close()
 
     import pstats
-    logstats = pstats.Stats('chil_log.profile').strip_dirs()
-    logstats.sort_stats('time').print_stats(20)
-    logstats.print_callers(0.3)
+    #logstats = pstats.Stats('chil_log.profile').strip_dirs()
+    #logstats.sort_stats('time').print_stats(20)
+    #logstats.print_callers(0.3)
 
-    densitystats = pstats.Stats('chil_msgDensity.profile').strip_dirs()
-    densitystats.sort_stats('time').print_stats(20)
+    #densitystats = pstats.Stats('chil_msgDensity.profile').strip_dirs()
+    #densitystats.sort_stats('time').print_stats(20)
 
-    densitystats = pstats.Stats('chil_playMessages.profile').strip_dirs()
-    densitystats.sort_stats('time').print_stats(20)
+    playstats = pstats.Stats('chil_playMessages.profile').strip_dirs()
+    playstats.sort_stats('time').print_stats(50)
+    playstats.print_callers(0.2)
