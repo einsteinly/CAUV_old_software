@@ -185,6 +185,14 @@ def zeroOrderInterp(xlo, ylo, xhi, yhi, x):
 class ShelfConverter:
     pass
 
+class OutOfRange_Low(KeyError):
+    def __init__(self, s):
+        KeyError.__init__(self, s)
+
+class OutOfRange_High(KeyError):
+    def __init__(self, s):
+        KeyError.__init__(self, s)
+
 class LinearpiecewiseApprox(blist.sorteddict):
     def __init__(self, rfunc=round, interp=linearInterp):
         blist.sorteddict.__init__(self)
@@ -196,11 +204,11 @@ class LinearpiecewiseApprox(blist.sorteddict):
         # print '__getitem__:\n', '\n'.join(map(str,sorted_keys)), 'k=', k
         ilow = bisect.bisect(sorted_keys, k) - 1
         if ilow < 0 or (ilow == -1 and sorted_keys[0] != k):
-            raise KeyError('out of range: lt')
+            raise OutOfRange_Low('out of range: lt')
         ihi = ilow + 1
         if ihi >= len(sorted_keys):
             if sorted_keys[ilow] != k:
-                raise KeyError('out of range: gt')
+                raise OutOfRange_High('out of range: gt')
             else:
                 return sorted_keys[ilow]
         '''#dbg
@@ -249,6 +257,8 @@ class CHILer:
         Super_Index = 'megasuperlog'
         # Frequency to write keyframes to index files:
         Idx_Keyframe_Freq = datetime.timedelta(seconds=60)
+        # Maximum number of recorded messages between keyframes:
+        Idx_Keyframe_nFreq = 1000
         # Frequency of absolute time lines:
         Dat_Time_Line_Freq = datetime.timedelta(minutes=5)
     def __init__(self, dirname):
@@ -299,8 +309,7 @@ class CHILer:
             t = datetime.datetime.now()
         return t.strftime(Const.Keyframe_Strftime_Fmt)
     def serialiseMessage(self, s):
-        serialised =  s.chil()
-        return serialised
+        return s.chil()
     def baseNameFromSubName(self, subname):
         if subname is None:
             subname = datetime.datetime.now().strftime(Const.Dat_Fname_Strftime_Fmt) + self.Const.Dat_Extn
@@ -326,6 +335,7 @@ class Logger(CHILer):
         self.last_keyframe_time = None
         self.last_absolute_time = None
         self.last_log_time = None
+        self.num_since_last_keyframe = 0
         self.writeFormatLines()
         self.recorded_msg_types = {}
 
@@ -347,21 +357,27 @@ class Logger(CHILer):
         self.last_absolute_time = t
         l = self.timeFormat(t)
         #print 'Time', l
+        self.idxfile.write('%s %s\n' % (self.datfile.tell()+1, l))        
         self.datfile.write('Time %s\n' % l)
-        self.idxfile.write('%s %s\n' % (self.datfile.tell(), l))
 
     def log(self, msg, record_time=None):
         if record_time is None:
             record_time = datetime.datetime.now()
         if self.last_log_time is not None and record_time < self.last_log_time:
             warnings.warn('Non-monotonically increasing record times are not supported!')
+            self.writeTimeLine(record_time)
+            self.writeKeyframe()
         if self.last_absolute_time is None or\
            record_time < self.last_absolute_time or\
-           record_time - self.last_absolute_time > self.Const.Dat_Time_Line_Freq:
+           record_time - self.last_absolute_time > self.Const.Dat_Time_Line_Freq :
             self.writeTimeLine(record_time)
         if self.last_keyframe_time is None or\
-           record_time - self.last_keyframe_time > self.Const.Idx_Keyframe_Freq:
+           record_time - self.last_keyframe_time > self.Const.Idx_Keyframe_Freq or\
+           self.num_since_last_keyframe > self.Const.Idx_Keyframe_nFreq:
             self.writeKeyframe()
+            self.num_since_last_keyframe = 0
+        else:
+            self.num_since_last_keyframe += 1
         self.last_log_time = record_time
         musec_delta = tdToLongMuSec(record_time - self.last_absolute_time)
         serialised_msg = self.serialiseMessage(msg)
@@ -452,7 +468,8 @@ class ComponentPlayer(CHILer):
         basename = self.baseNameFromSubName(subname)
         self.idxname = basename + self.Const.Idx_Extn
         self.datname = basename + self.Const.Dat_Extn
-        print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
+        print 'Scanning Component %s...' % basename
+        #print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
         self.datfile = self.openForR(self.datname)
         self.__cursor = cursor
         # recorded_msg_types
@@ -477,7 +494,12 @@ class ComponentPlayer(CHILer):
                     self.seek_time_map[parsed[0]] = parsed[1]
                 except:
                     pass
-
+        print 'Scanned %s successfully.' % self.datname
+    def swap(self, other):
+        # dum di dum di dum
+        t = other.__dict__
+        other.__dict__ = self.__dict__
+        self.__dict__ = t
     def close(self):
         self.datfile.close()
     def cursor(self):
@@ -555,7 +577,7 @@ class ComponentPlayer(CHILer):
             #print 'at EOL: previous line=', lbegin
             return lbegin
         else:
-            print 'not at EOL, cur=', lbegin
+            #print 'not at EOL, cur=', lbegin
             return self.readMsgLineBackwards(at_end_of_line=True)
     def msgLineAtSeekPos(self, seekpos):
         # reads back to the start of the line in which seekpos occurs, returns
@@ -563,7 +585,7 @@ class ComponentPlayer(CHILer):
         self.datfile.seek(seekpos)
         lend = self.datfile.readline()
         #print 'seekpos:', seekpos
-        #print '   lend:', lend
+        #print '   lend:', lend,
         #print '   tell:', self.datfile.tell()
         self.datfile.seek(-len(lend), os.SEEK_CUR)
         lbegin = ''
@@ -579,20 +601,36 @@ class ComponentPlayer(CHILer):
                 break
             lbegin = ch + lbegin
         #print 'lbegin:', lbegin
-        #print '  lend:', lend
-        #print ' joint:', lbegin+lend
+        #print '  lend:', lend,
+        #print ' joint:', lbegin+lend,
         joint = lbegin + lend
         if not self.isMsgLine(joint):
-            self.datfile.seek(len(joint), os.SEEK_CUR)
+            # +1 for -1 after ch read above
+            self.datfile.seek(len(joint)+1, os.SEEK_CUR)
             return self.readMsgLine(at_start_of_line=True)
         else:
+            #print 'r (isMsg):', joint,
             return joint
     def nextMessageTime(self):
+        return self.nextMessageAndTime()[1]
+    def nextMessageAndDelta(self):
+        msg, time = self.nextMessageAndTime()
+        if msg:
+            return (msg, time - self.__cursor[0])
+        return None, None
+    def nextMessageAndTime(self):
         t = self.cursor()
         try:
             seekpos = self.seek_map[t]
-        except KeyError:
-            return None
+        except OutOfRange_Low:
+            self.datfile.seek(0)
+            line = self.readMsgLine(at_start_of_line=True)
+            tdiff = self.timeOffsetOfMsgLine(line)
+            abstime = self.absoluteTimeAtSeekPos()
+            assert(tdToLongMuSec(tdiff) >= 0)
+            return line, abstime + tdiff
+        except OutOfRange_High, e:
+            return None, None
         line = self.msgLineAtSeekPos(seekpos)
         # Move backwards until we reach a line that's too early, and then
         # fowards until a line that's in the future:
@@ -602,6 +640,7 @@ class ComponentPlayer(CHILer):
         # <
         # ---------->|
         #print 'Gt:'
+        #print '"%s"' % line,
         while not line or self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() > t:
             #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t
             line = self.readMsgLineBackwards(at_end_of_line=True)
@@ -622,9 +661,10 @@ class ComponentPlayer(CHILer):
             abstime = self.absoluteTimeAtSeekPos()
             assert(tdToLongMuSec(tdiff) >= 0)
             #print 'Got:', abstime + tdiff - t, line
-            return abstime + tdiff
+            return line, abstime + tdiff
         else:
-            return None
+            return None, None
+        
     def timeToNextMessage(self):
         msgtime = self.nextMessageTime()
         if msgtime is None:
@@ -660,6 +700,7 @@ class Player(CHILer):
         # !!! TODO: should at least scan the directory and warn about files
         # that aren't in the index?
         # !!! TODO: should at least warn about the Format lines
+        print 'Scanning %s...' % dirname
         with self.openForR(self.Const.Super_Index) as megasuperlog:
             for line in megasuperlog:
                 try:
@@ -676,7 +717,9 @@ class Player(CHILer):
         #    print component.datname
         #    for k, v in component.recorded_msg_types.iteritems():
         #        print k, v
+        print 'Ordering components...'
         self.components = blist.sortedlist(components_by_fname.itervalues())
+        print 'Scanned %s indices successfully.' % dirname
     def close(self):
         for c in self.components:
             c.close()
@@ -699,15 +742,41 @@ class Player(CHILer):
         def setCur():
             self.__cursor[0] = new_cursor
         self.wrapCursorMutatingOp(setCur)
+    def cursor(self):
+        return self.__cursor[0]
+    def nextMessage(self):
+        r, tdelta = self.components[0].nextMessageAndDelta()
+        print 'nextMessage:', r, tdelta
+        if r is not None:
+            assert(tdelta is not None)
+            # TODO !!!! think about this less than or equal to problem....
+            # also, if messages are recorded in separate components during the
+            # same microsecond (quite possible) then need to do something about
+            # that...
+            self.__cursor[0] += tdelta
+            # NOW ORDERING OF self.components MAY BE BROKEN
+            x = 0
+            # could do this in log(n) instead of linearly, not sure if it'd
+            # work out faster for practical cases...
+            while x < len(self.components)-1:
+                if self.components[x+1].timeToNextMessage() < self.components[x].timeToNextMessage():
+                    # sneaky
+                    print 'swap %d %d' % (x, x+1)
+                    self.components[x].swap(self.components[x+1])
+                    x += 1
+                else:
+                    break
+            # now all is well
+        return r
     def timeToNextMessage(self):
         nextt = self.components[0].timeToNextMessage()
         # debug stuff:
-        for c in self.components[1:]:
-            if nextt is None:
-                assert(c.timeToNextMessage() is None)
-            else:
-                c_ttnm = c.timeToNextMessage()
-                assert(c_ttnm is None or x_ttnm >= nextt)
+        #for c in self.components[1:]:
+        #    if nextt is None:
+        #        assert(c.timeToNextMessage() is None)
+        #    else:
+        #        c_ttnm = c.timeToNextMessage()
+        #        assert(c_ttnm is None or x_ttnm >= nextt)
         return nextt
     def msgDensity(self, start, stop, N=10):
         # density = mean(1 / (time from sample time to next message in microsec))
@@ -729,31 +798,46 @@ class Player(CHILer):
     
 
 
-def drawVHistogram(densities, xaxis=None, width=60, height=10, tick_bins=30, ch=':', halfch='.'):
+def drawVHistogram(densities,
+                   width=60, height=10,
+                   ch=':', halfch='.',
+                   xaxis=None,
+                   xaxis_print=str,
+                   tick_bins=30):
+    # This function draws things like this:
+    #
+    #     :              : :  :  :  . : ::::: : :  : :  :::  .       :   :
+    #     :           .  :.:  : .::.::: ::::: : :  : :  :::  :       :   :
+    #     :           : .:::: : ::::::: :::::::::::: :  :::.::  .    : : :
+    #     : . .  .   :: ::::: ::::::::::::::::::::::::: ::::::. :  .:: : :.
+    #     : : : ::  .:: ::::: ::::::::::::::::::::::::: ::::::: :  ::::: ::
+    #     : : : ::: ::: ::::: :::::::::::::::::::::::::::::::::::  ::::: :::        :
+    # ....::: :::::.:::::::::::::::::::::::::::::::::::::::::::::  :::::.:::  ..   .:
+    # ::::::: :::::::::::::::::::::::::::::::::::::::::::::::::::: :::::::::. ::   ::
+    # :::::::.::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: ::   ::.
+    # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::.:: . :::
+    # |                                       '                                      |
+    # 00:00:29.928703                  00:00:36.773747                        00:00:43.618790
+    
+    # 2011-08-20 23:20:37.022175    2011-08-20 23:20:38.584136   2011-08-20 23:20:40.146096
+    
     if xaxis is None:
         xaxis = (0, len(densities))
     plot = []
     l = [' '] * width
-    #for x in xrange(0, width):
-    #    l.append(' ')
     for x in xrange(0, height):
         plot.append(copy.copy(l))
-    #print plot
     bins = [0] * width
-    #print bins
     for i, d in enumerate(densities):
         # TODO: anti aliasing...
         idx = int(round(width*float(i)/len(densities)))
         bins[idx] += d
-    #print bins
     heights = []
     bmax = 1 if max(bins) == 0 else max(bins)
     for b in bins:
         heights.append(int(round(2*height*b/bmax)))
-    #print heights
     for x, h in enumerate(heights):
         for y in xrange(0, int(h/2)):
-            #print x, y
             plot[y][x] = ch
         if h&1:
             assert(' ' == plot[h/2][x])
@@ -762,22 +846,23 @@ def drawVHistogram(densities, xaxis=None, width=60, height=10, tick_bins=30, ch=
         sys.stdout.write(''.join(l).rstrip() + '\n')
     l = ''
     r = ''
+    label_length = len(xaxis_print(xaxis[0])+xaxis_print(xaxis[1]))/2
     for x in xrange(0, width):
         if x == 0:
             l += '|'
-            r += str(xaxis[0])
+            r += xaxis_print(xaxis[0])
         elif x == width-1:
             l += '|'
             if len(r) < len(l):
-                r += str(xaxis[1])
+                r += xaxis_print(xaxis[1])
         elif x % tick_bins == 0:
             l += "'"
-            if len(r) < len(l):
+            if len(r) < len(l) - label_length / 2:
                 # eww special case:
-                r += str(xaxis[0] + tdmul((float(x)/width),(xaxis[1]-xaxis[0])))
+                r += xaxis_print(xaxis[0] + tdmul((float(x)/width),(xaxis[1]-xaxis[0])))
         else:
             l += ' '
-            if len(r) < len(l):
+            if len(r) < len(l) - label_length / 2:
                 r += ' '
     sys.stdout.write(l + '\n')
     sys.stdout.write(r + '\n')
@@ -789,7 +874,7 @@ def drawVHistogram(densities, xaxis=None, width=60, height=10, tick_bins=30, ch=
 def testLogCoverage():
     import cauv.messaging as m
     l = Logger('test')
-    for x in xrange(0, 100):
+    for x in xrange(0, 200):
         l.log(m.SonarDataMessage(m.SonarDataLine([1,2,3,4,5],0,6400,50000,6400)))
         l.log(m.GraphableMessage('thingy', 4.78),
               record_time=datetime.datetime.now() - datetime.timedelta(milliseconds=50)
@@ -904,10 +989,16 @@ def testLogCoverage():
     l.close()
 
 if __name__ == '__main__': 
+    import cProfile
+
     testLogCoverage_start = datetime.datetime.now()
-    testLogCoverage()
+    cProfile.run('testLogCoverage()', 'chil_log.profile')
     testLogCoverage_end = datetime.datetime.now()
     testMetaGrammars()
+    
+    testLogCoverage_start = datetime.datetime.strptime('20110821-001409.192335', Const.Keyframe_Strftime_Fmt)
+    #testLogCoverage_start = datetime.datetime.strptime('20110820-231100.959836', Const.Keyframe_Strftime_Fmt)
+    #testLogCoverage_end = datetime.datetime.strptime('20110820-230628.833937', Const.Keyframe_Strftime_Fmt)
 
     p = LinearpiecewiseApprox(round)
     s = datetime.datetime.now()
@@ -924,17 +1015,48 @@ if __name__ == '__main__':
     print '%s = %s' % (s, p[e])
     r = Player('test')
     
+    cProfile.run('r.msgDensity(testLogCoverage_start, testLogCoverage_end, 65)', 'chil_msgDensity.profile')
+
     N = 80
     densities = []
     for x in xrange(0,N):
         density = r.msgDensity(
             testLogCoverage_start + tdmul(x*(1.0/N),(testLogCoverage_end-testLogCoverage_start)),
             testLogCoverage_start + tdmul((x+1)*(1.0/N),(testLogCoverage_end-testLogCoverage_start)),
-            N=5
+            N=3
         )
         densities.append(density)
         #print 'density:', density
-    drawVHistogram(densities, xaxis=(testLogCoverage_start, testLogCoverage_end), width=80)
+
+    def pdtshort(dt):
+        return dt.strftime('%H:%H:%S.%f')
+    drawVHistogram(
+        densities, xaxis=(testLogCoverage_start, testLogCoverage_end),
+        tick_bins=40, width=N, xaxis_print=pdtshort
+    )
+
+    def playMessages():
+        r.setCursor(testLogCoverage_start) 
+        s = 0
+        n = 0
+        while r.cursor() < testLogCoverage_end:
+            m = r.nextMessage()
+            if m is None:
+                break
+            s += len(m)
+            n += 1
+        print '%d messages, %d MB' % (n, s/1000000.0)
+    cProfile.run('playMessages()', 'chil_playMessages.profile')
 
     r.close()
 
+    import pstats
+    logstats = pstats.Stats('chil_log.profile').strip_dirs()
+    logstats.sort_stats('time').print_stats(20)
+    logstats.print_callers(0.3)
+
+    densitystats = pstats.Stats('chil_msgDensity.profile').strip_dirs()
+    densitystats.sort_stats('time').print_stats(20)
+
+    densitystats = pstats.Stats('chil_playMessages.profile').strip_dirs()
+    densitystats.sort_stats('time').print_stats(20)
