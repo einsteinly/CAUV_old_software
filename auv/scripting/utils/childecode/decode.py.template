@@ -180,29 +180,13 @@ p_${m.name}Message = pp.Group(l \
     + p_$toCHILType($f.type) \
         #end if
     #end for
-    + r)
+    + r).streamline()
 p_${m.name}Message.setParseAction(lambda x: messaging.${m.name}Message(*x[0]))
 #end for
 #end for
 
 
 \# Parse any Message
-## TODO:
-## !!! this is reallllly bad for pyparsing performance (^ (or) is expensive),
-## what would be a million times better would be to generate character driven
-## state machine that ends in p_somemessagenumber depending on the number at
-## #the start of the message
-## p_Message = \
-## #for $i, $g in $enumerate($groups)
-## #for $j, $m in $enumerate($g.messages)
-##     #if $i + 1 == len($groups) and $j + 1 == len($g.messages)
-##     p_${m.name}Message
-##     #else
-##     p_${m.name}Message ^ \
-##     #end if
-## #end for
-## #end for
-
 ## TODO: this is better than using pyparsing.Optional, but really we want a
 ## decode-tree based thingy (not trivial to generate that from our
 ## very-much-not-huffcoded msgids

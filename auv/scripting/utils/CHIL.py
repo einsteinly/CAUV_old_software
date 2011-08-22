@@ -371,6 +371,8 @@ class ComponentPlayer(CHILer):
             self.default_decoder = self.importDecoder(sourceRevision())
         except ImportError:
             print 'WARNING: no default decoder (current revision) available.'
+        else:
+            print 'loaded default decoder (%s)' % sourceRevision() 
         with self.openForR(self.idxname) as idxfile:
             for idxline in idxfile:
                 try:
@@ -394,6 +396,8 @@ class ComponentPlayer(CHILer):
                     except ImportError:
                         print 'No decoder for hg revision %s!' % parsed[0]
                         self.decoders[parsed[1]] = None
+                    else:
+                        print 'loaded decoder for %s' % parsed[0]
                 except pp.ParseException:
                     pass
         #print self.decoders
@@ -438,11 +442,9 @@ class ComponentPlayer(CHILer):
         if self.__cursor is not other.__cursor:
             raise RuntimeError('other does not share cursor')
         return self.nextMessageTime() == other.nextMessageTime()
-    def absoluteTimeAtSeekPos(self, seekpos=None):
+    def absoluteTimeAtSeekPos(self):
         #print 'absoluteTimeAtSeekPos %d = %s' % (seekpos, self.seek_time_map[seekpos])
-        if seekpos is None:
-            seekpos = self.datfile.tell()
-        return self.seek_time_map[seekpos]
+        return self.seek_time_map[self.datfile.tell()]
     def isMsgLine(self, line):
         if line.startswith('CHIL') or \
            line.startswith('Format') or \
@@ -531,9 +533,12 @@ class ComponentPlayer(CHILer):
         return self.nextMessageAndTime()[1]
     def nextMessageAndDelta(self, deserialise=True):
         msg, time = self.nextMessageAndTime(deserialise)
-        if time:
+        # optimisation: try the most common thing first, if it turns out that
+        # time is None then we'll get a TypeError
+        try:
             return (msg, time - self.__cursor[0])
-        return None, None
+        except TypeError:
+            return None, None
     def nextMessageAndTime(self, deserialise=True):
         t = self.cursor()
         try:
@@ -597,7 +602,7 @@ class ComponentPlayer(CHILer):
             print 'msgtime:', msgtime
             print ' cursor:', self.cursor()
             print '   seek:', self.seek_map[self.cursor()]
-            print 'abstime:', self.absoluteTimeAtSeekPos(self.seek_map[self.cursor()])
+            print 'abstime:', self.absoluteTimeAtSeekPos()
             print '   line:', self.msgLineAtSeekPos(self.seek_map[self.cursor()]),
             print '  tdiff:', datetime.timedelta(microseconds=long(self.msgLineAtSeekPos(self.seek_map[self.cursor()]).split()[0]))
         return msgtime - self.cursor()
@@ -1019,5 +1024,6 @@ if __name__ == '__main__':
     #densitystats.sort_stats('time').print_stats(20)
 
     playstats = pstats.Stats('chil_playMessages.profile').strip_dirs()
-    playstats.sort_stats('time').print_stats(50)
+    playstats.sort_stats('time').print_stats()
+    playstats.sort_stats('cumulative').print_stats()
     playstats.print_callers(0.2)

@@ -84,10 +84,10 @@ __all__ = [
 'dblSlashComment', 'delimitedList', 'dictOf', 'downcaseTokens', 'empty', 'getTokensEndLoc', 'hexnums',
 'htmlComment', 'javaStyleComment', 'keepOriginalText', 'line', 'lineEnd', 'lineStart', 'lineno',
 'makeHTMLTags', 'makeXMLTags', 'matchOnlyAtCol', 'matchPreviousExpr', 'matchPreviousLiteral',
-'nestedExpr', 'nullDebugAction', 'nums', 'oneOf', 'opAssoc', 'operatorPrecedence', 'printables',
+'nestedExpr', 'nums', 'oneOf', 'opAssoc', 'operatorPrecedence', 'printables',
 'punc8bit', 'pythonStyleComment', 'quotedString', 'removeQuotes', 'replaceHTMLEntity', 
 'replaceWith', 'restOfLine', 'sglQuotedString', 'srange', 'stringEnd',
-'stringStart', 'traceParseAction', 'unicodeString', 'upcaseTokens', 'withAttribute',
+'stringStart', 'unicodeString', 'upcaseTokens', 'withAttribute',
 'indentedBlock', 'originalTextFor',
 ]
 
@@ -652,19 +652,6 @@ def line( loc, strg ):
     else:
         return strg[lastCR+1:]
 
-def _defaultStartDebugAction( instring, loc, expr ):
-    print ("Match " + _ustr(expr) + " at loc " + _ustr(loc) + "(%d,%d)" % ( lineno(loc,instring), col(loc,instring) ))
-
-def _defaultSuccessDebugAction( instring, startloc, endloc, expr, toks ):
-    print ("Matched " + _ustr(expr) + " -> " + str(toks.asList()))
-
-def _defaultExceptionDebugAction( instring, loc, expr, exc ):
-    print ("Exception raised:" + _ustr(exc))
-
-def nullDebugAction(*args):
-    """'Do-nothing' debug action, to suppress debugging output during parsing."""
-    pass
-
 'decorator to trim function calls to match the arity of the target'
 if not _PY3K:
     def _trim_arity(func, maxargs=2):
@@ -695,6 +682,8 @@ else:
         return wrapper
     
 class ParserElement(object):
+    # CAUV: removed debug stuff and actions, and removed fail actions (which we
+    # don't use)
     """Abstract base level parser element class."""
     DEFAULT_WHITE_CHARS = " \n\t\r"
     verbose_stacktrace = False
@@ -707,7 +696,6 @@ class ParserElement(object):
 
     def __init__( self, savelist=False ):
         self.parseAction = list()
-        self.failAction = None
         #~ self.name = "<unknown>"  # don't define self.name, let subclasses try/except upcall
         self.strRepr = None
         self.resultsName = None
@@ -718,12 +706,10 @@ class ParserElement(object):
         self.mayReturnEmpty = False # used when checking for left-recursion
         self.keepTabs = False
         self.ignoreExprs = list()
-        self.debug = False
         self.streamlined = False
         self.mayIndexError = True # used to optimize exception handling for subclasses that don't advance parse index
         self.errmsg = ""
         self.modalResults = True # used to mark results names as modal (report only last) or cumulative (list all)
-        self.debugActions = ( None, None, None ) #custom debug actions
         self.re = None
         self.callPreparse = True # used to avoid redundant calls to preParse
         self.callDuringTry = False
@@ -810,19 +796,6 @@ class ParserElement(object):
         self.callDuringTry = self.callDuringTry or ("callDuringTry" in kwargs and kwargs["callDuringTry"])
         return self
 
-    def setFailAction( self, fn ):
-        """Define action to perform if parsing fails at this expression.
-           Fail acton fn is a callable function that takes the arguments
-           C{fn(s,loc,expr,err)} where:
-            - s = string being parsed
-            - loc = location where expression match was attempted and failed
-            - expr = the parse expression that failed
-            - err = the exception thrown
-           The function returns no value.  It may throw C{ParseFatalException}
-           if it is desired to stop parsing immediately."""
-        self.failAction = fn
-        return self
-
     def _skipIgnorables( self, instring, loc ):
         exprsFound = True
         while exprsFound:
@@ -856,79 +829,30 @@ class ParserElement(object):
 
     #~ @profile
     def _parseNoCache( self, instring, loc, doActions=True, callPreParse=True ):
-        debugging = ( self.debug ) #and doActions )
-
-        if debugging or self.failAction:
-            #~ print ("Match",self,"at loc",loc,"(%d,%d)" % ( lineno(loc,instring), col(loc,instring) ))
-            if (self.debugActions[0] ):
-                self.debugActions[0]( instring, loc, self )
-            if callPreParse and self.callPreparse:
-                preloc = self.preParse( instring, loc )
-            else:
-                preloc = loc
-            tokensStart = preloc
-            try:
-                try:
-                    loc,tokens = self.parseImpl( instring, preloc, doActions )
-                except IndexError:
-                    raise ParseException( instring, len(instring), self.errmsg, self )
-            except ParseBaseException:
-                #~ print ("Exception raised:", err)
-                err = None
-                if self.debugActions[2]:
-                    err = sys.exc_info()[1]
-                    self.debugActions[2]( instring, tokensStart, self, err )
-                if self.failAction:
-                    if err is None:
-                        err = sys.exc_info()[1]
-                    self.failAction( instring, tokensStart, self, err )
-                raise
+        if callPreParse and self.callPreparse:
+            preloc = self.preParse( instring, loc )
         else:
-            if callPreParse and self.callPreparse:
-                preloc = self.preParse( instring, loc )
-            else:
-                preloc = loc
-            tokensStart = preloc
-            if self.mayIndexError or loc >= len(instring):
-                try:
-                    loc,tokens = self.parseImpl( instring, preloc, doActions )
-                except IndexError:
-                    raise ParseException( instring, len(instring), self.errmsg, self )
-            else:
+            preloc = loc
+        tokensStart = preloc
+        if self.mayIndexError or loc >= len(instring):
+            try:
                 loc,tokens = self.parseImpl( instring, preloc, doActions )
+            except IndexError:
+                raise ParseException( instring, len(instring), self.errmsg, self )
+        else:
+            loc,tokens = self.parseImpl( instring, preloc, doActions )
 
         tokens = self.postParse( instring, loc, tokens )
 
         retTokens = ParseResults( tokens, self.resultsName, asList=self.saveAsList, modal=self.modalResults )
         if self.parseAction and (doActions or self.callDuringTry):
-            if debugging:
-                try:
-                    for fn in self.parseAction:
-                        tokens = fn( instring, tokensStart, retTokens )
-                        if tokens is not None:
-                            retTokens = ParseResults( tokens,
-                                                      self.resultsName,
-                                                      asList=self.saveAsList and isinstance(tokens,(ParseResults,list)),
-                                                      modal=self.modalResults )
-                except ParseBaseException:
-                    #~ print "Exception raised in user parse action:", err
-                    if (self.debugActions[2] ):
-                        err = sys.exc_info()[1]
-                        self.debugActions[2]( instring, tokensStart, self, err )
-                    raise
-            else:
-                for fn in self.parseAction:
-                    tokens = fn( instring, tokensStart, retTokens )
-                    if tokens is not None:
-                        retTokens = ParseResults( tokens,
-                                                  self.resultsName,
-                                                  asList=self.saveAsList and isinstance(tokens,(ParseResults,list)),
-                                                  modal=self.modalResults )
-
-        if debugging:
-            #~ print ("Matched",self,"->",retTokens.asList())
-            if (self.debugActions[1] ):
-                self.debugActions[1]( instring, tokensStart, loc, self, retTokens )
+            for fn in self.parseAction:
+                tokens = fn( instring, tokensStart, retTokens )
+                if tokens is not None:
+                    retTokens = ParseResults( tokens,
+                                              self.resultsName,
+                                              asList=self.saveAsList and isinstance(tokens,(ParseResults,list)),
+                                              modal=self.modalResults )
 
         return loc, retTokens
 
@@ -1358,23 +1282,6 @@ class ParserElement(object):
                 self.ignoreExprs.append( other.copy() )
         else:
             self.ignoreExprs.append( Suppress( other.copy() ) )
-        return self
-
-    def setDebugActions( self, startAction, successAction, exceptionAction ):
-        """Enable display of debugging messages while doing pattern matching."""
-        self.debugActions = (startAction or _defaultStartDebugAction,
-                             successAction or _defaultSuccessDebugAction,
-                             exceptionAction or _defaultExceptionDebugAction)
-        self.debug = True
-        return self
-
-    def setDebug( self, flag=True ):
-        """Enable display of debugging messages while doing pattern matching.
-           Set C{flag} to True to enable, False to disable."""
-        if flag:
-            self.setDebugActions( _defaultStartDebugAction, _defaultSuccessDebugAction, _defaultExceptionDebugAction )
-        else:
-            self.debug = False
         return self
 
     def __str__( self ):
@@ -2289,8 +2196,7 @@ class ParseExpression(ParserElement):
             other = self.exprs[0]
             if ( isinstance( other, self.__class__ ) and
                   not(other.parseAction) and
-                  other.resultsName is None and
-                  not other.debug ):
+                  other.resultsName is None):
                 self.exprs = other.exprs[:] + [ self.exprs[1] ]
                 self.strRepr = None
                 self.mayReturnEmpty |= other.mayReturnEmpty
@@ -2299,8 +2205,7 @@ class ParseExpression(ParserElement):
             other = self.exprs[-1]
             if ( isinstance( other, self.__class__ ) and
                   not(other.parseAction) and
-                  other.resultsName is None and
-                  not other.debug ):
+                  other.resultsName is None):
                 self.exprs = self.exprs[:-1] + other.exprs[:]
                 self.strRepr = None
                 self.mayReturnEmpty |= other.mayReturnEmpty
@@ -2353,7 +2258,7 @@ class And(ParseExpression):
         for e in self.exprs[1:]:
             if isinstance(e, And._ErrorStop):
                 errorStop = True
-                continue
+                return
             if errorStop:
                 try:
                     loc, exprtokens = e._parse( instring, loc, doActions )
@@ -3093,29 +2998,6 @@ class OnlyOnce(object):
         raise ParseException(s,l,"")
     def reset(self):
         self.called = False
-
-def traceParseAction(f):
-    """Decorator for debugging parse actions."""
-    f = _trim_arity(f)
-    def z(*paArgs):
-        thisFunc = f.func_name
-        s,l,t = paArgs[-3:]
-        if len(paArgs)>3:
-            thisFunc = paArgs[0].__class__.__name__ + '.' + thisFunc
-        sys.stderr.write( ">>entering %s(line: '%s', %d, %s)\n" % (thisFunc,line(l,s),l,t) )
-        try:
-            ret = f(*paArgs)
-        except Exception:
-            exc = sys.exc_info()[1]
-            sys.stderr.write( "<<leaving %s (exception: %s)\n" % (thisFunc,exc) )
-            raise
-        sys.stderr.write( "<<leaving %s (ret: %s)\n" % (thisFunc,ret) )
-        return ret
-    try:
-        z.__name__ = f.__name__
-    except AttributeError:
-        pass
-    return z
 
 #
 # global helpers

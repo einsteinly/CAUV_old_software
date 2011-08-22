@@ -47,19 +47,39 @@ class LinearpiecewiseApprox(blist.sorteddict):
         blist.sorteddict.__init__(self)
         self.interpolate = interp
         self.rfunc = rfunc
+        if self.interpolate is zeroOrderInterp:
+            self.__getitem__ = self.__getitem__lo
+
+    def __getitem__lo(self, k):
+        # optimisation: if interpolate is zeroOrderInterp, we don't need to do
+        # as much work.
+        sorted_keys = self._sortedkeys 
+        ilow = bisect.bisect(sorted_keys, k) - 1
+        if ilow < 0:
+            raise OutOfRange_Low('out of range: lt')
+        klow = sorted_keys[ilow]
+        return self.rfunc(blist.sorteddict.__getitem__(self, klow))
+
     def __getitem__(self, k):
         # interpolates if a value is not present for the specified key
-        sorted_keys = self.keys()
+        # NB: self._sortedkeys not copied! (faster than using self.keys())
+        sorted_keys = self._sortedkeys
+        
         # print '__getitem__:\n', '\n'.join(map(str,sorted_keys)), 'k=', k
         ilow = bisect.bisect(sorted_keys, k) - 1
-        if ilow < 0 or (ilow == -1 and sorted_keys[0] != k):
+        if ilow < 0:
             raise OutOfRange_Low('out of range: lt')
-        ihi = ilow + 1
-        if ihi >= len(sorted_keys):
+        klow = sorted_keys[ilow]
+        ihi = ilow + 1 
+        # optimisation: try the most common thing first
+        try:
+            khi = sorted_keys[ihi]
+        except IndexError:
             if sorted_keys[ilow] != k and self.interpolate is not zeroOrderInterp:
                 raise OutOfRange_High('out of range: gt')
             else:
                 return blist.sorteddict.__getitem__(self,sorted_keys[ilow])
+
         '''#dbg
         for i, y in enumerate(sorted_keys):
             if i == ilow:
@@ -69,8 +89,6 @@ class LinearpiecewiseApprox(blist.sorteddict):
                 print i, y, '<-- hi'
             else:
                 print i, y#'''
-        klow = sorted_keys[ilow]
-        khi = sorted_keys[ihi]
         r = self.interpolate(
             klow, blist.sorteddict.__getitem__(self, klow),
             khi, blist.sorteddict.__getitem__(self, khi),
