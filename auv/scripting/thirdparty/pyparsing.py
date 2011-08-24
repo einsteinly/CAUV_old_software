@@ -761,7 +761,7 @@ class ParserElement(object):
             def breaker(instring, loc, doActions=True, callPreParse=True):
                 import pdb
                 pdb.set_trace()
-                return _parseMethod( instring, loc, doActions, callPreParse )
+                return _parseMethod( instring, len(instring),loc, doActions, callPreParse )
             breaker._originalParseMethod = _parseMethod
             self._parse = breaker
         else:
@@ -798,12 +798,13 @@ class ParserElement(object):
 
     def _skipIgnorables( self, instring, loc ):
         exprsFound = True
+        inlen = len(instring)
         while exprsFound:
             exprsFound = False
             for e in self.ignoreExprs:
                 try:
                     while 1:
-                        loc,dummy = e._parse( instring, loc )
+                        loc,dummy = e._parse( instring, inlen, loc )
                         exprsFound = True
                 except ParseException:
                     pass
@@ -828,22 +829,23 @@ class ParserElement(object):
         return tokenlist
 
     #~ @profile
-    def _parseNoCache( self, instring, loc, doActions=True, callPreParse=True ):
+    def _parseNoCache( self, instring, inlen, loc, doActions=True, callPreParse=True ):
         if callPreParse and self.callPreparse:
             preloc = self.preParse( instring, loc )
         else:
             preloc = loc
         tokensStart = preloc
-        if self.mayIndexError or loc >= len(instring):
+        if self.mayIndexError or loc >= inlen:
             try:
                 loc,tokens = self.parseImpl( instring, preloc, doActions )
             except IndexError:
-                raise ParseException( instring, len(instring), self.errmsg, self )
+                raise ParseException( instring, inlen, self.errmsg, self )
         else:
             loc,tokens = self.parseImpl( instring, preloc, doActions )
 
         tokens = self.postParse( instring, loc, tokens )
 
+        '''
         retTokens = ParseResults( tokens, self.resultsName, asList=self.saveAsList, modal=self.modalResults )
         if self.parseAction and (doActions or self.callDuringTry):
             for fn in self.parseAction:
@@ -853,18 +855,30 @@ class ParserElement(object):
                                               self.resultsName,
                                               asList=self.saveAsList and isinstance(tokens,(ParseResults,list)),
                                               modal=self.modalResults )
-
-        return loc, retTokens
+        '''
+        # Faster:
+        retTokens = [ParseResults( tokens, self.resultsName, asList=self.saveAsList, modal=self.modalResults )]
+        def loopBody(fn):
+            tokens = fn(instring, tokensStart, retTokens[0])
+            if tokens is not None:
+                retTokens[0] = ParseResults( tokens,
+                                          self.resultsName,
+                                          asList=self.saveAsList and isinstance(tokens,(ParseResults,list)),
+                                          modal=self.modalResults )
+        if self.parseAction and (doActions or self.callDuringTry):
+            fn_tokens = map(loopBody, self.parseAction)
+        return loc, retTokens[0]
+        #return loc, retTokens
 
     def tryParse( self, instring, loc ):
         try:
-            return self._parse( instring, loc, doActions=False )[0]
+            return self._parse( instring, len(instring), loc, doActions=False )[0]
         except ParseFatalException:
             raise ParseException( instring, loc, self.errmsg, self)
 
     # this method gets repeatedly called during backtracking with the same arguments -
     # we can cache these arguments and save ourselves the trouble of re-parsing the contained expression
-    def _parseCache( self, instring, loc, doActions=True, callPreParse=True ):
+    def _parseCache( self, instring, inlen, loc, doActions=True, callPreParse=True ):
         lookup = (self,instring,loc,callPreParse,doActions)
         if lookup in ParserElement._exprArgCache:
             value = ParserElement._exprArgCache[ lookup ]
@@ -873,7 +887,7 @@ class ParserElement(object):
             return (value[0],value[1].copy())
         else:
             try:
-                value = self._parseNoCache( instring, loc, doActions, callPreParse )
+                value = self._parseNoCache( instring, inlen, loc, doActions, callPreParse )
                 ParserElement._exprArgCache[ lookup ] = (value[0],value[1].copy())
                 return value
             except ParseBaseException:
@@ -942,11 +956,11 @@ class ParserElement(object):
         if not self.keepTabs:
             instring = instring.expandtabs()
         try:
-            loc, tokens = self._parse( instring, 0 )
+            loc, tokens = self._parse( instring, len(instring), 0 )
             if parseAll:
                 loc = self.preParse( instring, loc )
                 se = Empty() + StringEnd()
-                se._parse( instring, loc )
+                se._parse( instring, len(instring), loc )
         except ParseBaseException:
             if ParserElement.verbose_stacktrace:
                 raise
@@ -2253,7 +2267,8 @@ class And(ParseExpression):
     def parseImpl( self, instring, loc, doActions=True ):
         # pass False as last arg to _parse for first element, since we already
         # pre-parsed the string as part of our And pre-parsing
-        loc, resultlist = self.exprs[0]._parse( instring, loc, doActions, callPreParse=False )
+        inlen = len(instring)
+        loc, resultlist = self.exprs[0]._parse( instring, inlen, loc, doActions, callPreParse=False )
         errorStop = False
         for e in self.exprs[1:]:
             if isinstance(e, And._ErrorStop):
@@ -2261,16 +2276,16 @@ class And(ParseExpression):
                 return
             if errorStop:
                 try:
-                    loc, exprtokens = e._parse( instring, loc, doActions )
+                    loc, exprtokens = e._parse( instring, inlen, loc, doActions )
                 except ParseSyntaxException:
                     raise
                 except ParseBaseException:
                     pe = sys.exc_info()[1]
                     raise ParseSyntaxException(pe)
                 except IndexError:
-                    raise ParseSyntaxException( ParseException(instring, len(instring), self.errmsg, self) )
+                    raise ParseSyntaxException( ParseException(instring, inlen, self.errmsg, self) )
             else:
-                loc, exprtokens = e._parse( instring, loc, doActions )
+                loc, exprtokens = e._parse( instring, inlen, loc, doActions )
             if exprtokens or exprtokens.keys():
                 resultlist += exprtokens
         return loc, resultlist
@@ -2337,7 +2352,7 @@ class Or(ParseExpression):
             else:
                 raise ParseException(instring, loc, "no defined alternatives to match", self)
 
-        return maxMatchExp._parse( instring, loc, doActions )
+        return maxMatchExp._parse( instring, len(instring), loc, doActions )
 
     def __ixor__(self, other ):
         if isinstance( other, basestring ):
@@ -2380,7 +2395,7 @@ class MatchFirst(ParseExpression):
         maxException = None
         for e in self.exprs:
             try:
-                ret = e._parse( instring, loc, doActions )
+                ret = e._parse( instring, len(instring), loc, doActions )
                 return ret
             except ParseException, err:
                 if err.loc > maxExcLoc:
@@ -2474,8 +2489,9 @@ class Each(ParseExpression):
         matchOrder += [e for e in self.exprs if isinstance(e,Optional) and e.expr in tmpOpt]
 
         resultlist = []
+        inlen = len(instring)
         for e in matchOrder:
-            loc,results = e._parse(instring,loc,doActions)
+            loc,results = e._parse(instring,inlen,loc,doActions)
             resultlist.append(results)
 
         finalResults = ParseResults([])
@@ -2525,7 +2541,7 @@ class ParseElementEnhance(ParserElement):
 
     def parseImpl( self, instring, loc, doActions=True ):
         if self.expr is not None:
-            return self.expr._parse( instring, loc, doActions, callPreParse=False )
+            return self.expr._parse( instring,len(instring), loc, doActions, callPreParse=False )
         else:
             raise ParseException("",loc,self.errmsg,self)
 
@@ -2636,15 +2652,16 @@ class ZeroOrMore(ParseElementEnhance):
 
     def parseImpl( self, instring, loc, doActions=True ):
         tokens = []
+        inlen = len(instring)
         try:
-            loc, tokens = self.expr._parse( instring, loc, doActions, callPreParse=False )
+            loc, tokens = self.expr._parse( instring, inlen, loc, doActions, callPreParse=False )
             hasIgnoreExprs = ( len(self.ignoreExprs) > 0 )
             while 1:
                 if hasIgnoreExprs:
                     preloc = self._skipIgnorables( instring, loc )
                 else:
                     preloc = loc
-                loc, tmptokens = self.expr._parse( instring, preloc, doActions )
+                loc, tmptokens = self.expr._parse( instring, inlen, preloc, doActions )
                 if tmptokens or tmptokens.keys():
                     tokens += tmptokens
         except (ParseException,IndexError):
@@ -2671,7 +2688,8 @@ class OneOrMore(ParseElementEnhance):
     """Repetition of one or more of the given expression."""
     def parseImpl( self, instring, loc, doActions=True ):
         # must be at least one
-        loc, tokens = self.expr._parse( instring, loc, doActions, callPreParse=False )
+        inlen = len(instring)
+        loc, tokens = self.expr._parse( instring, inlen, loc, doActions, callPreParse=False )
         try:
             hasIgnoreExprs = ( len(self.ignoreExprs) > 0 )
             while 1:
@@ -2679,7 +2697,7 @@ class OneOrMore(ParseElementEnhance):
                     preloc = self._skipIgnorables( instring, loc )
                 else:
                     preloc = loc
-                loc, tmptokens = self.expr._parse( instring, preloc, doActions )
+                loc, tmptokens = self.expr._parse( instring, inlen, preloc, doActions )
                 if tmptokens or tmptokens.keys():
                     tokens += tmptokens
         except (ParseException,IndexError):
@@ -2721,7 +2739,7 @@ class Optional(ParseElementEnhance):
 
     def parseImpl( self, instring, loc, doActions=True ):
         try:
-            loc, tokens = self.expr._parse( instring, loc, doActions, callPreParse=False )
+            loc, tokens = self.expr._parse( instring, len(instring), loc, doActions, callPreParse=False )
         except (ParseException,IndexError):
             if self.defaultValue is not _optionalNotMatched:
                 if self.expr.resultsName:
@@ -2786,10 +2804,10 @@ class SkipTo(ParseElementEnhance):
                             # print "found ignoreExpr, advance to", loc
                         except ParseBaseException:
                             break
-                expr._parse( instring, loc, doActions=False, callPreParse=False )
+                expr._parse( instring, instrlen, loc, doActions=False, callPreParse=False )
                 skipText = instring[startLoc:loc]
                 if self.includeMatch:
-                    loc,mat = expr._parse(instring,loc,doActions,callPreParse=False)
+                    loc,mat = expr._parse(instring,instrlen,loc,doActions,callPreParse=False)
                     if mat:
                         skipRes = ParseResults( skipText )
                         skipRes += mat
