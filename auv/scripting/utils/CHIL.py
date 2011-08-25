@@ -74,7 +74,7 @@ import thirdparty.pyparsing as pp # MIT license
 
 # CAUV
 from hacks import sourceRevision, tddiv, tdmul, tdToLongMuSec
-from interpolation import LinearpiecewiseApprox, OutOfRange_Low, OutOfRange_High, zeroOrderInterp
+from interpolation import LinearpiecewiseApprox, OutOfRange_Low, OutOfRange_High, zeroOrderInterp, linearInterp_timedeltas
 import cauv.messaging as messaging
 
 
@@ -234,20 +234,23 @@ class Logger(CHILer):
         self.last_absolute_time = None
         self.last_log_time = None
         self.num_since_last_keyframe = 0
-        self.writeFormatLines()
+        self.__writeFormatLines()
         self.recorded_msg_types = {}
-    def writeKeyframe(self, t=None):
+    def __writeKeyframe(self, t=None):
+        # not public        
         if t is None:
             t = datetime.datetime.now()
         l = '%s %s\n' % (self.timeFormat(t), self.datfile.tell())
         self.last_keyframe_time = t
         self.idxfile.write(l)
-    def writeFormatLines(self):
+    def __writeFormatLines(self):
+        # not public        
         l_dat = 'Format %s\n' % self.source_revision
         self.datfile.write(l_dat)
         l_idx = 'Format %s %s\n' % (self.source_revision, self.datfile.tell())
         self.idxfile.write(l_idx)
-    def writeTimeLine(self, t=None):
+    def __writeTimeLine(self, t=None):
+        # not public
         if t is None:
              t = datetime.datetime.now()
         self.last_absolute_time = t
@@ -256,20 +259,22 @@ class Logger(CHILer):
         self.idxfile.write('%s %s\n' % (self.datfile.tell()+1, l))
         self.datfile.write('Time %s\n' % l)
     def log(self, msg, record_time=None):
+        # Log message msg at time record_time if record_time is omitted the
+        # current time is used.
         if record_time is None:
             record_time = datetime.datetime.now()
         if self.last_log_time is not None and record_time < self.last_log_time:
             warnings.warn('Non-monotonically increasing record times are not supported!')
-            self.writeTimeLine(record_time)
-            self.writeKeyframe()
+            self.__writeTimeLine(record_time)
+            self.__writeKeyframe(record_time)
         if self.last_absolute_time is None or\
            record_time < self.last_absolute_time or\
            record_time - self.last_absolute_time > self.Const.Dat_Time_Line_Freq :
-            self.writeTimeLine(record_time)
+            self.__writeTimeLine(record_time)
         if self.last_keyframe_time is None or\
            record_time - self.last_keyframe_time > self.Const.Idx_Keyframe_Freq or\
            self.num_since_last_keyframe > self.Const.Idx_Keyframe_nFreq:
-            self.writeKeyframe()
+            self.__writeKeyframe(record_time)
             self.num_since_last_keyframe = 0
         else:
             self.num_since_last_keyframe += 1
@@ -288,14 +293,16 @@ class Logger(CHILer):
             t_range = (t_range[0], record_time)
         self.recorded_msg_types[msg.msgId] = t_range
     def close(self):
-        self.writeKeyframe(self.last_log_time)
-        self.writeTimeLine()
-        self.updateMegaSuperLog()
+        # this MUST be called when this Logger object will no longer be used
+        # TODO: support contextlib
+        self.__writeKeyframe(self.last_log_time)
+        self.__writeTimeLine()
+        self.__updateMegaSuperLog()
         self.releaseAndClose(self.datfile)
         self.releaseAndClose(self.idxfile)
         self.datfile = None
         self.idxfile = None
-    def updateMegaSuperLog(self):
+    def __updateMegaSuperLog(self):
         # lines of the form: FILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...)
         msl = self.getAndLockMegaSuperLog()
         l = 'Format %s\n' % self.source_revision
@@ -367,7 +374,7 @@ class ComponentPlayer(CHILer):
         self.recorded_msg_types = {}
         # map of datetime -> seek value, linearly interpolates for values not
         # present
-        self.seek_map = LinearpiecewiseApprox(round)
+        self.seek_map = LinearpiecewiseApprox(round,interp=linearInterp_timedeltas)
         # at each indexed seek position the absolute time (used for relative
         # timestamps) must be recorded
         self.seek_time_map = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
@@ -377,6 +384,8 @@ class ComponentPlayer(CHILer):
             self.default_decoder = self.importDecoder(sourceRevision())
         except ImportError:
             print 'WARNING: no default decoder (current revision) available.'
+            import traceback
+            traceback.print_exc()
         else:
             print 'loaded default decoder (%s)' % sourceRevision()
         with self.openForR(self.idxname) as idxfile:
@@ -402,14 +411,29 @@ class ComponentPlayer(CHILer):
                     except ImportError:
                         print 'No decoder for hg revision %s!' % parsed[0]
                         self.decoders[parsed[1]] = None
+                        import traceback
+                        traceback.print_exc()
                     else:
                         print 'loaded decoder for %s' % parsed[0]
                 except pp.ParseException:
                     pass
-        #print self.decoders
+        #print 'seek-time map: %s' % '\n\t'.join(map(str, sorted(self.seek_time_map.items())))
+        #print '     seek map: %s' % '\n\t'.join(map(str, sorted(self.seek_map.items())))
+        #print '     decoders: %s' % self.decoders
         print 'Scanned %s successfully.' % self.datname
     def importDecoder(self, name):
-        return getattr(__import__('childecode.decode_%s' % name), 'decode_%s' % name)
+        import importlib
+        for package  in ('utils.childecode', 'childecode'):
+            modname = '%s.decode_%s' % (package,name)
+            try:
+                importlib.import_module(package)
+                return importlib.import_module(modname, package)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+        raise
+        
     def deserialise(self, msgstring, seekpos):
         decoder = self.decoders[seekpos]
         if decoder is None:
@@ -489,26 +513,12 @@ class ComponentPlayer(CHILer):
                 lbegin = buf + lbegin
                 continue
             else:
-                #self.datfile.seek(last_newline - bufsize, os.SEEK_CUR)
-                
-
-                # check postcondition: leave tell() at start of line we return
-                #self.datfile.seek(-1, os.SEEK_CUR); assert(self.datfile.read(1) == '\n')
                 lbegin = buf[last_newline+1:] + lbegin
                 break
         line = lbegin + self.datfile.readline()
         while line and not self.isMsgLine(line):
             line = self.datfile.readline()
         #print 'currentMsgLine_LeaveTellAtStart %d:' % len(line), line
-
-        # debug stuff
-        try:
-            self.datfile.seek(-1, os.SEEK_CUR)
-            nl = self.datfile.read(1)
-            debugAssert(nl == '\n')
-        except IOError:
-            pass
-
         return line
     def previousMsgLine_LeaveTellAtStart(self):
         # precondition: tell() at start of following line
@@ -543,31 +553,13 @@ class ComponentPlayer(CHILer):
                 continue
             else:
                 self.datfile.seek(1+last_newline - bufsize, os.SEEK_CUR)
-
-                # debug stuff:                
-                # check postcondition: leave tell() at start of line we return
-                #l= self.datfile.readline()
-                #print 'l=', l
-                #self.datfile.seek(-(len(l)-1), os.SEEK_CUR)
-
-                self.datfile.seek(-1, os.SEEK_CUR);
-                nl = self.datfile.read(1)
-                debugAssert(nl == '\n')
-                debugAssert(buf[last_newline] == '\n')
                 line = buf[last_newline+1:] + line
-                debugAssert(line[0] != '\n')
                 break
-        #print 'previousMsgLine_LeaveTellAtStart %d:' % len(line), line
-        
-        # debug stuff
-        #try:
-        self.datfile.seek(-1, os.SEEK_CUR)
-        nl = self.datfile.read(1)
-        debugAssert(nl == '\n')
-        #except IOError:
-        #    pass
-
-        return line
+        if not self.isMsgLine(line):
+            return self.previousMsgLine_LeaveTellAtStart()
+        else:
+            #print 'previousMsgLine_LeaveTellAtStart %d:' % len(line), line
+            return line
     def firstMsgLine_LeaveTellAtStart(self):
         # return first msg line of file
         self.datfile.seek(0)
@@ -589,11 +581,15 @@ class ComponentPlayer(CHILer):
         t = self.cursor()
         prev_line = None
         try:
+            #print self.datname, 'cursor:', t
             seekpos = self.seek_map[t]
+            #print self.datname, '->seek:', seekpos
         except OutOfRange_Low:
+            #print self.datname, 'seek OutOfRange_Low', t
             line = self.firstMsgLine_LeaveTellAtStart()
             at_start = True
         except OutOfRange_High, e:
+            #print self.datname, 'seek OutOfRange_High', t
             return None, None
         else:
             at_start = False
@@ -610,29 +606,30 @@ class ComponentPlayer(CHILer):
         # now tell() is at the start of a line
         #print 'Gt:'
         while line and not at_start:
-            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t
+            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t,\
+            #      self.timeOffsetOfMsgLine(line), self.absoluteTimeAtSeekPos(), self.datfile.tell()
             line = self.previousMsgLine_LeaveTellAtStart()
             try:
                 if self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() <= t:
+                    #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t,\
+                    #      self.timeOffsetOfMsgLine(line), self.absoluteTimeAtSeekPos() , self.datfile.tell
                     at_start = True
                     # move to end of line this line
                     # !!!! I swear this +1 shouldn't be necessary!
                     self.datfile.seek(len(line)+1, os.SEEK_CUR)
-            except:
+            except IOError:
+                import traceback
+                traceback.print_exc()
+                print 'line:', line
+                print 'hit start of file!'
                 at_start = True
                 line = self.firstMsgLine_LeaveTellAtStart()
                 break
-        #''' debug stuff
-        if line:
-            self.datfile.seek(-1, os.SEEK_CUR)
-            nl =  self.datfile.read(1)
-            if nl != '\n':
-                import pdb; pdb.set_trace()
-        #'''
         # now at tell() is at the start of the next line:
         #print 'Lt:'
         while line and self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() <= t:
-            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t
+            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t,\
+            #      self.timeOffsetOfMsgLine(line), self.absoluteTimeAtSeekPos(), self.datfile.tell()
             line = self.datfile.readline()
             while line and not self.isMsgLine(line):
                 line = self.datfile.readline()
@@ -774,9 +771,12 @@ class Player(CHILer):
         # density = mean(1 / (time from sample time to next message in microsec))
         samples = []
         step = (stop - start) / N
+        #print 'msgDensity: push', start, 'step', step
         with self.PushCursor(self, start, no_check=True):
             for i in xrange(0, N):
+                #print 'msgDensity: cursor is', self.cursor()
                 ttn = self.timeToNextMessage()
+                #print 'msgDensity: ttn', ttn
                 if ttn is None:
                     continue
                 if ttn > step:
@@ -1061,8 +1061,8 @@ if __name__ == '__main__':
     #cProfile.run('testLogCoverage()', 'chil_log.profile')
     t_end = datetime.datetime.now()
 
-    t_start = datetime.datetime.strptime('20110824-190925.903657', Const.Keyframe_Strftime_Fmt)
-    t_end = datetime.datetime.strptime('20110824-190927.724977', Const.Keyframe_Strftime_Fmt)
+    t_start = datetime.datetime.strptime('20110824-190925.903656', Const.Keyframe_Strftime_Fmt)
+    t_end = datetime.datetime.strptime('20110824-190927.724978', Const.Keyframe_Strftime_Fmt)
 
     r = Player('test')
     #cProfile.run('r.msgDensity(t_start, t_end, 65)', 'chil_msgDensity.profile')

@@ -23,11 +23,25 @@ def linearInterp(xlow, ylow, xhi, yhi, x):
     else:
         n = ((yhi - ylow) * (x - xlow))
         d = (xhi - xlow)
-        if type(n) == timedelta and type(d) == timedelta:
+        if type(n) == timedelta:
             # silly datetime.timedelta doesn't support division
             r = ylow + tddiv(n, d)
         else:
             r = ylow + n / d
+    #print 'low: %s %s\n  x: %s\n hi: %s %s\n  -> %s' % (xlow, ylow, x, xhi, yhi, r)
+    return r
+
+def linearInterp_timedeltas(xlow, ylow, xhi, yhi, x):
+    # TODO: handle xhi = xlo gracefully
+    if x == xlow:
+        r = ylow
+    elif x == xhi:
+        r = yhi
+    else:
+        n = ((yhi - ylow) * (x - xlow))
+        d = (xhi - xlow)
+        # silly datetime.timedelta doesn't support division
+        r = ylow + tddiv(n, d)
     #print 'low: %s %s\n  x: %s\n hi: %s %s\n  -> %s' % (xlow, ylow, x, xhi, yhi, r)
     return r
 
