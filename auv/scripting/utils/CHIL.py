@@ -296,7 +296,7 @@ class Logger(CHILer):
         # this MUST be called when this Logger object will no longer be used
         # TODO: support contextlib
         self.__writeKeyframe(self.last_log_time)
-        self.__writeTimeLine()
+        self.__writeTimeLine(self.last_log_time)
         self.__updateMegaSuperLog()
         self.releaseAndClose(self.datfile)
         self.releaseAndClose(self.idxfile)
@@ -384,8 +384,8 @@ class ComponentPlayer(CHILer):
             self.default_decoder = self.importDecoder(sourceRevision())
         except ImportError:
             print 'WARNING: no default decoder (current revision) available.'
-            import traceback
-            traceback.print_exc()
+            #import traceback
+            #traceback.print_exc()
         else:
             print 'loaded default decoder (%s)' % sourceRevision()
         with self.openForR(self.idxname) as idxfile:
@@ -568,7 +568,7 @@ class ComponentPlayer(CHILer):
             line = self.datfile.readline()
         return line
     def nextMessageTime(self):
-        return self.nextMessageAndTime()[1]
+        return self.nextMessageAndTime(deserialise=False)[1]
     def nextMessageAndDelta(self, deserialise=True):
         msg, time = self.nextMessageAndTime(deserialise)
         # optimisation: try the most common thing first, if it turns out that
@@ -648,7 +648,6 @@ class ComponentPlayer(CHILer):
                 return msgstring, msg_time
         else:
             return None, None
-
     def timeToNextMessage(self):
         msgtime = self.nextMessageTime()
         if msgtime is None:
@@ -825,7 +824,7 @@ def drawVHistogram(densities,
     bins = [0] * width
     for i, d in enumerate(densities):
         # TODO: anti aliasing...
-        idx = int(round(width*float(i)/len(densities)))
+        idx = int(width*float(i)/len(densities))
         bins[idx] += d
     heights = []
     bmax = 1 if max(bins) == 0 else max(bins)
