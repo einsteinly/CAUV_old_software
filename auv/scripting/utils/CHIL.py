@@ -24,11 +24,11 @@
                                               # recorded absolute time ('Time'
                                               # line)
 
-    # !!! The format of the index files is still subject to change !!!  
+    # !!! The format of the index files is still subject to change !!!
 
     # superlog (index) files: seek positions are to nearest position *after*
     # specified time
-    
+
     CHILIDX
     Format HG_FULL_REVISION_UID LONG_INT    # applies until next Format line
                                             # is encountered, LONG_INT
@@ -48,7 +48,7 @@
                                             # log file
 
     # megasuperlog file:
-    # (any number of message id and time period sections are permitted)    
+    # (any number of message id and time period sections are permitted)
 
     CHILSUPERIDX
     Format HG_FULL_REVISION_UID
@@ -69,13 +69,19 @@ import warnings
 from base64 import b16encode, b16decode
 
 # 3rd Party
-import blist           # BSD license
-import pyparsing as pp # MIT license
+import blist # BSD license
+import thirdparty.pyparsing as pp # MIT license
 
 # CAUV
 from hacks import sourceRevision, tddiv, tdmul, tdToLongMuSec
-from interpolation import LinearpiecewiseApprox, OutOfRange_Low, OutOfRange_High, zeroOrderInterp
+from interpolation import LinearpiecewiseApprox, OutOfRange_Low, OutOfRange_High, zeroOrderInterp, linearInterp_timedeltas
 import cauv.messaging as messaging
+
+
+def debugAssert(cond):
+    if not cond:
+        import pdb
+        pdb.set_trace()
 
 class Const:
     Dat_Fname_Strftime_Fmt = '%Y%m%d-%H%M%S'
@@ -134,7 +140,7 @@ class BetterFile:
     def __getattribute__(self, n):
         return self.__f.__getattribute__(n)
     def readPreviousLine(self):
-        
+
     def readCurrentLine(self):
         # postcondition: tell() is at start of next line
         if self.linepos == 'start':
@@ -169,7 +175,7 @@ class CHILer:
         if not os.path.exists(f):
             os.makedirs(f)
     def lockAndOpenForA(self, fname):
-        f = open(self.fileName(fname), 'a+')
+        f = open(self.fileName(fname), 'a+b')
         # on OS X, this blocks until lock is available
         fcntl.lockf(f, fcntl.LOCK_EX)
         return f
@@ -178,7 +184,7 @@ class CHILer:
         fcntl.lockf(fobj, fcntl.LOCK_UN)
         fobj.close()
     def openForR(self, fname):
-        f = open(self.fileName(fname), 'r')
+        f = open(self.fileName(fname), 'rb')
         return f
     def getAndLockMegaSuperLog(self):
         if self.__megasuperlog is None:
@@ -228,20 +234,23 @@ class Logger(CHILer):
         self.last_absolute_time = None
         self.last_log_time = None
         self.num_since_last_keyframe = 0
-        self.writeFormatLines()
+        self.__writeFormatLines()
         self.recorded_msg_types = {}
-    def writeKeyframe(self, t=None):
+    def __writeKeyframe(self, t=None):
+        # not public        
         if t is None:
             t = datetime.datetime.now()
         l = '%s %s\n' % (self.timeFormat(t), self.datfile.tell())
         self.last_keyframe_time = t
         self.idxfile.write(l)
-    def writeFormatLines(self):
+    def __writeFormatLines(self):
+        # not public        
         l_dat = 'Format %s\n' % self.source_revision
-        self.datfile.write(l_dat)        
+        self.datfile.write(l_dat)
         l_idx = 'Format %s %s\n' % (self.source_revision, self.datfile.tell())
         self.idxfile.write(l_idx)
-    def writeTimeLine(self, t=None):
+    def __writeTimeLine(self, t=None):
+        # not public
         if t is None:
              t = datetime.datetime.now()
         self.last_absolute_time = t
@@ -250,20 +259,22 @@ class Logger(CHILer):
         self.idxfile.write('%s %s\n' % (self.datfile.tell()+1, l))
         self.datfile.write('Time %s\n' % l)
     def log(self, msg, record_time=None):
+        # Log message msg at time record_time if record_time is omitted the
+        # current time is used.
         if record_time is None:
             record_time = datetime.datetime.now()
         if self.last_log_time is not None and record_time < self.last_log_time:
             warnings.warn('Non-monotonically increasing record times are not supported!')
-            self.writeTimeLine(record_time)
-            self.writeKeyframe()
+            self.__writeTimeLine(record_time)
+            self.__writeKeyframe(record_time)
         if self.last_absolute_time is None or\
            record_time < self.last_absolute_time or\
            record_time - self.last_absolute_time > self.Const.Dat_Time_Line_Freq :
-            self.writeTimeLine(record_time)
+            self.__writeTimeLine(record_time)
         if self.last_keyframe_time is None or\
            record_time - self.last_keyframe_time > self.Const.Idx_Keyframe_Freq or\
            self.num_since_last_keyframe > self.Const.Idx_Keyframe_nFreq:
-            self.writeKeyframe()
+            self.__writeKeyframe(record_time)
             self.num_since_last_keyframe = 0
         else:
             self.num_since_last_keyframe += 1
@@ -282,14 +293,16 @@ class Logger(CHILer):
             t_range = (t_range[0], record_time)
         self.recorded_msg_types[msg.msgId] = t_range
     def close(self):
-        self.writeKeyframe(self.last_log_time)
-        self.writeTimeLine()
-        self.updateMegaSuperLog()
+        # this MUST be called when this Logger object will no longer be used
+        # TODO: support contextlib
+        self.__writeKeyframe(self.last_log_time)
+        self.__writeTimeLine(self.last_log_time)
+        self.__updateMegaSuperLog()
         self.releaseAndClose(self.datfile)
         self.releaseAndClose(self.idxfile)
         self.datfile = None
         self.idxfile = None
-    def updateMegaSuperLog(self):
+    def __updateMegaSuperLog(self):
         # lines of the form: FILENAME ([MSG_ID YYYYMMDD-HHMMSS.SSSSSS--YYYYMMDD-HHMMSS.SSSSSS], ...)
         msl = self.getAndLockMegaSuperLog()
         l = 'Format %s\n' % self.source_revision
@@ -344,7 +357,7 @@ class ContinuousInterval:
 @functools.total_ordering
 class ComponentPlayer(CHILer):
     def __init__(self, dirname, subname, cursor):
-        # cursor should be a one-element list so that its value is shared 
+        # cursor should be a one-element list so that its value is shared
         # between different players
         # (actually, the list can have more than one element, those with
         #  indices higher than 0 being used to store a stack of previous
@@ -361,7 +374,7 @@ class ComponentPlayer(CHILer):
         self.recorded_msg_types = {}
         # map of datetime -> seek value, linearly interpolates for values not
         # present
-        self.seek_map = LinearpiecewiseApprox(round)
+        self.seek_map = LinearpiecewiseApprox(round,interp=linearInterp_timedeltas)
         # at each indexed seek position the absolute time (used for relative
         # timestamps) must be recorded
         self.seek_time_map = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
@@ -371,6 +384,10 @@ class ComponentPlayer(CHILer):
             self.default_decoder = self.importDecoder(sourceRevision())
         except ImportError:
             print 'WARNING: no default decoder (current revision) available.'
+            #import traceback
+            #traceback.print_exc()
+        else:
+            print 'loaded default decoder (%s)' % sourceRevision()
         with self.openForR(self.idxname) as idxfile:
             for idxline in idxfile:
                 try:
@@ -394,17 +411,34 @@ class ComponentPlayer(CHILer):
                     except ImportError:
                         print 'No decoder for hg revision %s!' % parsed[0]
                         self.decoders[parsed[1]] = None
+                        import traceback
+                        traceback.print_exc()
+                    else:
+                        print 'loaded decoder for %s' % parsed[0]
                 except pp.ParseException:
                     pass
-        print self.decoders
+        #print 'seek-time map: %s' % '\n\t'.join(map(str, sorted(self.seek_time_map.items())))
+        #print '     seek map: %s' % '\n\t'.join(map(str, sorted(self.seek_map.items())))
+        #print '     decoders: %s' % self.decoders
         print 'Scanned %s successfully.' % self.datname
     def importDecoder(self, name):
-        return getattr(__import__('childecode.decode_%s' % name), 'decode_%s' % name)
+        import importlib
+        for package  in ('utils.childecode', 'childecode'):
+            modname = '%s.decode_%s' % (package,name)
+            try:
+                importlib.import_module(package)
+                return importlib.import_module(modname, package)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+        raise
+        
     def deserialise(self, msgstring, seekpos):
         decoder = self.decoders[seekpos]
         if decoder is None:
             decoder = self.default_decoder
-        return decoder.p_Message.parseString(msgstring)[0]
+        return decoder.parseMessage(msgstring)
     def swap(self, other):
         # dum di dum di dum
         t = other.__dict__
@@ -438,11 +472,9 @@ class ComponentPlayer(CHILer):
         if self.__cursor is not other.__cursor:
             raise RuntimeError('other does not share cursor')
         return self.nextMessageTime() == other.nextMessageTime()
-    def absoluteTimeAtSeekPos(self, seekpos=None):
+    def absoluteTimeAtSeekPos(self):
         #print 'absoluteTimeAtSeekPos %d = %s' % (seekpos, self.seek_time_map[seekpos])
-        if seekpos is None:
-            seekpos = self.datfile.tell()
-        return self.seek_time_map[seekpos]
+        return self.seek_time_map[self.datfile.tell()]
     def isMsgLine(self, line):
         if line.startswith('CHIL') or \
            line.startswith('Format') or \
@@ -453,130 +485,154 @@ class ComponentPlayer(CHILer):
         if not self.isMsgLine(line):
             raise RuntimeError('not a message line')
         return datetime.timedelta(microseconds=long(line.split()[0]))
-    def readMsgLine(self, at_start_of_line=False):
-        # skips over non message lines, returns the NEXT line after seekpos
-        # that is a message line
-        # leaves seekpos at end of returned line
-        lend = self.datfile.readline()
-        if at_start_of_line:
-            #print 'at start of line, lend=', lend,
-            line = lend
-        else:
-            #print 'not at start of line, lend=', lend,
+    def currentMsgLine_LeaveTellAtStart(self):
+        # tell() can be anywhere, the line on which tell() currently is will be
+        # returned
+        # postcondition: tell() is at the start of the line following the 
+        # returned line
+        bufsize = 512
+        lbegin = ''
+        while True:
+            try:
+                self.datfile.seek(-bufsize, os.SEEK_CUR)
+            except IOError:
+                # at start of file
+                bufsize = self.datfile.tell()
+                self.datfile.seek(-bufsize, os.SEEK_CUR)
+                buf = self.datfile.read(bufsize)
+            else:
+                buf = self.datfile.read(bufsize)
+                # TODO: remove this check if it can never happen
+                if len(buf) != bufsize:
+                    print '?!', len(buf), bufsize, buf
+                    break
+            try:
+                last_newline = buf.rindex('\n')
+            except ValueError:
+                self.datfile.seek(-bufsize, os.SEEK_CUR)
+                lbegin = buf + lbegin
+                continue
+            else:
+                lbegin = buf[last_newline+1:] + lbegin
+                break
+        line = lbegin + self.datfile.readline()
+        while line and not self.isMsgLine(line):
             line = self.datfile.readline()
+        #print 'currentMsgLine_LeaveTellAtStart %d:' % len(line), line
+        return line
+    def previousMsgLine_LeaveTellAtStart(self):
+        # precondition: tell() at start of following line
+        # postcondition: tell() at start of returned line
+        bufsize = 512
+        line = ''
+        # move past previous newline
+        try:
+            self.datfile.seek(-1, os.SEEK_CUR)
+        except IOError:
+            # at start of file:
+            return None
+        while True:
+            try:
+                self.datfile.seek(-bufsize, os.SEEK_CUR)
+            except IOError:
+                # at start of file
+                bufsize = self.datfile.tell()
+                self.datfile.seek(-bufsize, os.SEEK_CUR)
+                buf = self.datfile.read(bufsize)
+            else:
+                buf = self.datfile.read(bufsize)
+                # TODO: remove this check if it can never happen
+                if len(buf) != bufsize:
+                    print '?!', len(buf), bufsize, buf
+                    break
+            try:
+                last_newline = buf.rindex('\n')
+            except ValueError:
+                self.datfile.seek(-bufsize, os.SEEK_CUR)
+                line = buf + line
+                continue
+            else:
+                self.datfile.seek(1+last_newline - bufsize, os.SEEK_CUR)
+                line = buf[last_newline+1:] + line
+                break
+        if not self.isMsgLine(line):
+            return self.previousMsgLine_LeaveTellAtStart()
+        else:
+            #print 'previousMsgLine_LeaveTellAtStart %d:' % len(line), line
+            return line
+    def firstMsgLine_LeaveTellAtStart(self):
+        # return first msg line of file
+        self.datfile.seek(0)
+        line = self.datfile.readline()
         while line and not self.isMsgLine(line):
             line = self.datfile.readline()
         return line
-    def readMsgLineBackwards(self, at_end_of_line=False):
-        # seeks backwards finding the first message line before the line in
-        # which seekpos occurs
-        # leaves seekpos at end of returned line
-        #
-        # --------------------------------------------------------------------
-        # TODO: this is a serious bottleneck, and could be made much more
-        # efficient by reading in blocks and using library functions to search
-        # for newlines
-        # --------------------------------------------------------------------
-        lbegin = ''
-        while True:
-            try:
-                self.datfile.seek(-1, os.SEEK_CUR)
-                ch = self.datfile.read(1)
-                self.datfile.seek(-1, os.SEEK_CUR)
-            except Exception, e:
-                print e
-                ch = None
-            if ch in (None, '\n', ''):
-                break
-            lbegin = ch + lbegin
-        if at_end_of_line:
-            #print 'at EOL: previous line=', lbegin
-            return lbegin
-        else:
-            #print 'not at EOL, cur=', lbegin
-            return self.readMsgLineBackwards(at_end_of_line=True)
-    def msgLineAtSeekPos(self, seekpos):
-        # reads back to the start of the line in which seekpos occurs, returns
-        # the first line that is a message line
-        self.datfile.seek(seekpos)
-        lend = self.datfile.readline()
-        #print 'seekpos:', seekpos
-        #print '   lend:', lend,
-        #print '   tell:', self.datfile.tell()
-        self.datfile.seek(-len(lend), os.SEEK_CUR)
-        lbegin = ''
-        while True:
-            try:
-                self.datfile.seek(-1, os.SEEK_CUR)
-                ch = self.datfile.read(1)
-                self.datfile.seek(-1, os.SEEK_CUR)
-            except Exception, e:
-                print e
-                ch = None
-            if ch in (None, '\n', ''):
-                break
-            lbegin = ch + lbegin
-        #print 'lbegin:', lbegin
-        #print '  lend:', lend,
-        #print ' joint:', lbegin+lend,
-        joint = lbegin + lend
-        if not self.isMsgLine(joint):
-            # +1 for -1 after ch read above
-            self.datfile.seek(len(joint)+1, os.SEEK_CUR)
-            return self.readMsgLine(at_start_of_line=True)
-        else:
-            #print 'r (isMsg):', joint,
-            return joint
     def nextMessageTime(self):
-        return self.nextMessageAndTime()[1]
+        return self.nextMessageAndTime(deserialise=False)[1]
     def nextMessageAndDelta(self, deserialise=True):
         msg, time = self.nextMessageAndTime(deserialise)
-        if time:
+        # optimisation: try the most common thing first, if it turns out that
+        # time is None then we'll get a TypeError
+        try:
             return (msg, time - self.__cursor[0])
-        return None, None
+        except TypeError:
+            return None, None
     def nextMessageAndTime(self, deserialise=True):
         t = self.cursor()
+        prev_line = None
         try:
+            #print self.datname, 'cursor:', t
             seekpos = self.seek_map[t]
+            #print self.datname, '->seek:', seekpos
         except OutOfRange_Low:
-            self.datfile.seek(0)
-            line = self.readMsgLine(at_start_of_line=True)
-            #tdiff = self.timeOffsetOfMsgLine(line)
-            #abstime = self.absoluteTimeAtSeekPos()
-            #assert(tdToLongMuSec(tdiff) >= 0)
-            #assert(abstime+tdiff > t)
-            #return line, abstime + tdiff
+            #print self.datname, 'seek OutOfRange_Low', t
+            line = self.firstMsgLine_LeaveTellAtStart()
             at_start = True
         except OutOfRange_High, e:
+            #print self.datname, 'seek OutOfRange_High', t
             return None, None
         else:
             at_start = False
-            #print seekpos
-            line = self.msgLineAtSeekPos(seekpos)
+            self.datfile.seek(seekpos)
+            line = self.currentMsgLine_LeaveTellAtStart()
         # Move backwards until we reach a line that's too early, or exactly
         # now, and then forwards until a line that's in the *future* (greater
         # than now)
-        #  <--------S
-        #  >|
-        # or
-        # <
-        # ---------->|
+        #        <--------S
+        #        >|
+        # or:
+        #  <
+        #  ------>|
+        # now tell() is at the start of a line
         #print 'Gt:'
-        #print '"%s"' % line,
-        while (not at_start) and (not line or self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() > t):
-            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t
-            line = self.readMsgLineBackwards(at_end_of_line=True)
-            if not line:
+        while line and not at_start:
+            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t,\
+            #      self.timeOffsetOfMsgLine(line), self.absoluteTimeAtSeekPos(), self.datfile.tell()
+            line = self.previousMsgLine_LeaveTellAtStart()
+            try:
+                if self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() <= t:
+                    #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t,\
+                    #      self.timeOffsetOfMsgLine(line), self.absoluteTimeAtSeekPos() , self.datfile.tell
+                    at_start = True
+                    # move to end of line this line
+                    # !!!! I swear this +1 shouldn't be necessary!
+                    self.datfile.seek(len(line)+1, os.SEEK_CUR)
+            except IOError:
+                import traceback
+                traceback.print_exc()
+                print 'line:', line
+                print 'hit start of file!'
+                at_start = True
+                line = self.firstMsgLine_LeaveTellAtStart()
                 break
-        #print 'Lt:' 
-        first = True
+        # now at tell() is at the start of the next line:
+        #print 'Lt:'
         while line and self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() <= t:
-            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t
-            if first:
-                line = self.readMsgLine(at_start_of_line=False)
-                first = False
-            else:
-                line = self.readMsgLine(at_start_of_line=True)
+            #print self.timeOffsetOfMsgLine(line) + self.absoluteTimeAtSeekPos() - t,\
+            #      self.timeOffsetOfMsgLine(line), self.absoluteTimeAtSeekPos(), self.datfile.tell()
+            line = self.datfile.readline()
+            while line and not self.isMsgLine(line):
+                line = self.datfile.readline()
         if line:
             # then it's the first line with positive time delta
             tdiff = self.timeOffsetOfMsgLine(line)
@@ -592,7 +648,6 @@ class ComponentPlayer(CHILer):
                 return msgstring, msg_time
         else:
             return None, None
-
     def timeToNextMessage(self):
         msgtime = self.nextMessageTime()
         if msgtime is None:
@@ -602,9 +657,7 @@ class ComponentPlayer(CHILer):
             print 'msgtime:', msgtime
             print ' cursor:', self.cursor()
             print '   seek:', self.seek_map[self.cursor()]
-            print 'abstime:', self.absoluteTimeAtSeekPos(self.seek_map[self.cursor()])
-            print '   line:', self.msgLineAtSeekPos(self.seek_map[self.cursor()]),
-            print '  tdiff:', datetime.timedelta(microseconds=long(self.msgLineAtSeekPos(self.seek_map[self.cursor()]).split()[0]))
+            print 'abstime:', self.absoluteTimeAtSeekPos()
         return msgtime - self.cursor()
 
 
@@ -683,7 +736,7 @@ class Player(CHILer):
         # (known) time of next component order swap.
         # Should also introduce an iterator interface for playing back messages
         # at any specified speed.
-        # --------------------------------------------------------------------- 
+        # ---------------------------------------------------------------------
         if r is not None:
             assert(tdelta is not None)
             self.__cursor[0] += tdelta
@@ -717,10 +770,13 @@ class Player(CHILer):
         # density = mean(1 / (time from sample time to next message in microsec))
         samples = []
         step = (stop - start) / N
+        #print 'msgDensity: push', start, 'step', step
         with self.PushCursor(self, start, no_check=True):
             for i in xrange(0, N):
+                #print 'msgDensity: cursor is', self.cursor()
                 ttn = self.timeToNextMessage()
-                if ttn is None: 
+                #print 'msgDensity: ttn', ttn
+                if ttn is None:
                     continue
                 if ttn > step:
                     samples.append(0)
@@ -734,7 +790,7 @@ class Player(CHILer):
                 self.advanceCursor(step)
         #print samples
         return sum(samples) / N
-    
+
 
 def drawVHistogram(densities,
                    width=60, height=10,
@@ -756,9 +812,9 @@ def drawVHistogram(densities,
     # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::.:: . :::
     # |---------------------------------------'--------------------------------------|
     # 00:00:29.928703                  00:00:36.773747                        00:00:43.618790
-    
+
     # 2011-08-20 23:20:37.022175    2011-08-20 23:20:38.584136   2011-08-20 23:20:40.146096
-    
+
     if xaxis is None:
         xaxis = (0, len(densities))
     plot = []
@@ -768,7 +824,7 @@ def drawVHistogram(densities,
     bins = [0] * width
     for i, d in enumerate(densities):
         # TODO: anti aliasing...
-        idx = int(round(width*float(i)/len(densities)))
+        idx = int(width*float(i)/len(densities))
         bins[idx] += d
     heights = []
     bmax = 1 if max(bins) == 0 else max(bins)
@@ -827,7 +883,6 @@ def testMetaGrammars():
     print IdxGrammar.p_msgloc_line.parseString('filename ([1234 19890203-123456.789012--20110817-201900.000000], [1234 19890203-123456.789012--20110817-201900.000000])')
     print IdxGrammar.p_superidx_line.parseString('filename ([1234 19890203-123456.789012--20110817-201900.000000], [1234 19890203-123456.789012--20110817-201900.000000],)')
     print IdxGrammar.p_superidx_line.parseString('Format 6e01240480ec08eab327ad6a14b0179908b98dbb')
-
 
 def testLogCoverage(loops=200):
     import cauv.messaging as m
@@ -953,7 +1008,7 @@ def testLinearPWA():
     p[s] = 3
     time.sleep(0.1)
     p[datetime.datetime.now()] = 4
-    p[datetime.datetime.now()] = 5 
+    p[datetime.datetime.now()] = 5
     time.sleep(0.1)
     e = datetime.datetime.now()
     p[e] = 6
@@ -982,7 +1037,7 @@ def testDensityMap(r, start_t, end_t):
     )
 
 def testPlayback(r, start_t, end_t):
-    r.setCursor(start_t) 
+    r.setCursor(start_t)
     s = 0
     n = 0
     while r.cursor() < end_t:
@@ -991,23 +1046,22 @@ def testPlayback(r, start_t, end_t):
             break
         s += len(str(m))
         n += 1
-        if n & 0xff == 0:
+        if n & 0x3ff == 0:
             print '%d messages, %d kB, %s' % (n, s/1000.0, r.cursor())
     print '%d messages, %d kB' % (n, s/1000.0)
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     import cProfile
     testMetaGrammars()
     testLinearPWA()
 
     t_start = datetime.datetime.now()
-    cProfile.run('testLogCoverage()', 'chil_log.profile')
+    #cProfile.run('testLogCoverage()', 'chil_log.profile')
     t_end = datetime.datetime.now()
-    
-    #t_start = datetime.datetime.strptime('20110821-001409.192335', Const.Keyframe_Strftime_Fmt)
-    #t_start = datetime.datetime.strptime('20110820-231100.959836', Const.Keyframe_Strftime_Fmt)
-    #t_end = datetime.datetime.strptime('20110820-230628.833937', Const.Keyframe_Strftime_Fmt)
+
+    t_start = datetime.datetime.strptime('20110824-190925.903656', Const.Keyframe_Strftime_Fmt)
+    t_end = datetime.datetime.strptime('20110824-190927.724978', Const.Keyframe_Strftime_Fmt)
 
     r = Player('test')
     #cProfile.run('r.msgDensity(t_start, t_end, 65)', 'chil_msgDensity.profile')
@@ -1016,12 +1070,14 @@ if __name__ == '__main__':
     r.close()
 
     import pstats
-    logstats = pstats.Stats('chil_log.profile').strip_dirs()
-    logstats.sort_stats('time').print_stats(20)
-    logstats.print_callers(0.3)
+    #logstats = pstats.Stats('chil_log.profile').strip_dirs()
+    #logstats.sort_stats('time').print_stats(20)
+    #logstats.print_callers(0.3)
 
-    densitystats = pstats.Stats('chil_msgDensity.profile').strip_dirs()
-    densitystats.sort_stats('time').print_stats(20)
+    #densitystats = pstats.Stats('chil_msgDensity.profile').strip_dirs()
+    #densitystats.sort_stats('time').print_stats(20)
 
-    densitystats = pstats.Stats('chil_playMessages.profile').strip_dirs()
-    densitystats.sort_stats('time').print_stats(20)
+    playstats = pstats.Stats('chil_playMessages.profile').strip_dirs()
+    playstats.sort_stats('time').print_stats()
+    #playstats.sort_stats('cumulative').print_stats()
+    #playstats.print_callers(0.2)

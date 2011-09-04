@@ -22,6 +22,8 @@ tags
 *-out.*.jpg
 *.tmp
 *out.*.avi
+*.profile
+*.chil
 .DS_Store
 auv/python-module/cauvinterface.so
 auv/python-module/cauvinterfaced.so

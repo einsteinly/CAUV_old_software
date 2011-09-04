@@ -8,7 +8,7 @@
 import base64
 
 \# 3rd Party
-import pyparsing as pp # MIT license
+import thirdparty.pyparsing as pp # MIT license
 
 \# CAUV
 import cauv.messaging as messaging
@@ -20,7 +20,8 @@ c = pp.Suppress(',')
 hexchars = '0123456789abcdefABCDEF'
 
 \# Basic Types
-p_int = pp.Optional(pp.Literal('+') ^ pp.Literal('-')) + pp.Word(pp.nums)
+\# being less strict in parsing here leads to much simpler (=faster) parsing!
+p_int = pp.Word(pp.nums + '+-')
 p_int.setParseAction(lambda x: int(''.join(x)))
 
 ## Currently no concept of unsigned integers in CHIL types...
@@ -130,7 +131,7 @@ def a__vec_gen(T):
 #for $t in $allVecTypes
     #set $vecn = $CPPContainerTypeName(t) + "Vec"
     #if $vecn != "byteVec"
-p_${vecn} << pp.Group(l + pp.Optional(pp.delimitedList(p_${toCHILType($t)}) + pp.Optional(c)) + r)
+p_${vecn} << pp.Group(l + pp.Optional(pp.delimitedList(p_${toCHILType($t)})) + r)
     #end if
 p_${vecn}.setParseAction(a__vec_gen(messaging.${vecn}))
 #end for
@@ -158,7 +159,7 @@ def a__map_gen(T):
 \# Parse Map Types
 #for $kt, $vt  in $allMapTypes
     #set $mapn = $CPPContainerTypeName(kt) + $CPPContainerTypeName(vt) + "Map"
-p_${mapn} << pp.Group(l + pp.Optional(pp.delimitedList(l + p_${toCHILType($kt)} + c + p_${toCHILType($vt)} + r) + pp.Optional(c)) + r)
+p_${mapn} << pp.Group(l + pp.Optional(pp.delimitedList(l + p_${toCHILType($kt)} + c + p_${toCHILType($vt)} + r)) + r)
 p_${mapn}.setParseAction(a__map_gen(messaging.${mapn}))
 #end for
 
@@ -171,7 +172,7 @@ p_${e.name}.setParseAction(lambda x: messaging.${e.name}(x[0]))
 \# Parse Messages
 #for $g in $groups
 #for $m in $g.messages
-p_${m.name}Message = pp.Literal('${m.id}') + pp.Group(l \
+p_${m.name}Message = pp.Group(l \
     #for i,f in $enumerate($m.fields)
         #if i + 1 != len($m.fields)
     + p_$toCHILType($f.type) + c \
@@ -179,21 +180,30 @@ p_${m.name}Message = pp.Literal('${m.id}') + pp.Group(l \
     + p_$toCHILType($f.type) \
         #end if
     #end for
-    + r)
-p_${m.name}Message.setParseAction(lambda x: messaging.${m.name}Message(*x[1]))
+    + r).streamline()
+p_${m.name}Message.setParseAction(lambda x: messaging.${m.name}Message(*x[0]))
 #end for
 #end for
 
 
 \# Parse any Message
-p_Message = \
+## TODO: this is better than using pyparsing.Optional, but really we want a
+## decode-tree based thingy (not trivial to generate that from our
+## very-much-not-huffcoded msgids
+def parseMessage(s):
+    msgstart = s.find('(')
+    msgid = int(s[:msgstart])
 #for $i, $g in $enumerate($groups)
 #for $j, $m in $enumerate($g.messages)
-    #if $i + 1 == len($groups) and $j + 1 == len($g.messages)
-    p_${m.name}Message
+    #if $i == 0 and $j == 0
+    if msgid == $m.id:
+        return p_${m.name}Message.parseString(s[msgstart:])[0]
     #else
-    p_${m.name}Message ^ \
+    elif msgid == $m.id:
+        return p_${m.name}Message.parseString(s[msgstart:])[0]
     #end if
 #end for
 #end for
+    else:
+        raise pp.ParseException('Unknown Message ID: %s' % msgid)
 

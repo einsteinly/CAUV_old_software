@@ -1,8 +1,9 @@
-import cauv.messaging as msg
-import cauv.node as node
+#
+# Base class for shelf message loggers
+# The shelf format is deprecated, use CHIL instead (utils/CHIL.py).
+#
 
-from cauv.debug import debug, info, warning, error
-
+# Standard Library
 import shelve
 import datetime
 import sys
@@ -11,9 +12,19 @@ import time
 import cmd
 import threading
 import bisect
+import traceback
 
-#TODO: there's quite a lot of code duplication here, we should make a CAUV
-# python utility library with stuff like this in it
+# CAUV
+import cauv.messaging as msg
+import cauv.node as node
+from cauv.debug import debug, info, warning, error
+
+
+#TODO: there's quite a lot of code duplication here, we should add some of this
+# to utils/
+
+def floatToDatetime(ftime):
+    return datetime.datetime(1970,1,1,0,0,0,0) + datetime.timedelta(seconds=ftime)
 
 Datetime_Format = '%a %d %b %Y %H:%M:%S'
 
@@ -42,6 +53,9 @@ class SonarDataLineWrapper:
         dl = msg.byteVec()
         for b in self.data:
             dl.append(b)
+        # default value for new field!
+        if not hasattr(self, 'scanWidth'):
+            self.scanWidth = 6400
         return msg.SonarDataLine(dl, self.bearing, self.bearingRange, self.range, self.scanWidth)
  
 class MotorIDWrapper:
@@ -170,7 +184,40 @@ class Logger(msg.MessageObserver):
             r = True
         self.__playback_lock.release()
         return r
-
+    
+    def convertToCHIL(self, dname, subname=None):
+        from utils import CHIL
+        logger = CHIL.Logger(dname, subname)
+        if self.__playback_active:
+            info('you must stop playback before converting to chil format')
+            return
+        info('converting to CHIL: %s/%s' % (dname, subname if subname else ''))
+        sorted_keys = sorted(list(self.__cached_keys))
+        base_time = datetime.datetime(1970,1,1,0,0,0,0)
+        try:
+            for i in xrange(0, len(sorted_keys)):
+                k = sorted_keys[i]
+                next_thing = self.__shelf[k.hex()]
+                if msg.__class__ and msg.__class__.__name__.endswith('Message'): #pylint: disable=E1101
+                    # this is a message
+                    debug('t=%g, converting: %s' % (k, next_thing), 5)
+                    logger.log(next_thing, base_time + datetime.timedelta(seconds=k))
+                elif type(next_thing) == type(dict()):
+                    # this is a message saved in the deprecated format
+                    m = dictToMessage(next_thing)
+                    debug('t=%g, converting: %s' % (k, m), 5)
+                    logger.log(m, base_time + datetime.timedelta(seconds=k))
+                elif hasattr(next_thing, 'datetime') and hasattr(next_thing, 'info'):
+                    # type info of these isn't saved properly??
+                    warning('CHIL conversion: session comment "%s" will not be saved' % next_thing.info)
+                    base_time = next_thing.datetime
+                else:
+                    warning('CHIL conversion: %s "%s" will not be saved' % (type(next_thing), next_thing))
+        except Exception, e:
+            print 'error in conversion!'
+            traceback.print_exc()
+        finally:
+            logger.close()
     def playbackRunloop(self):
         debug('playback started')
         sorted_keys = sorted(list(self.__cached_keys))
@@ -294,6 +341,7 @@ class CmdPrompt(cmd.Cmd):
                         - stop recording and start playing back recorded data
                           at RATE * real time, starting at START_TIME into
                           the recoded data
+    "chil" BASENAME SUBNAME - convert the current shelf to CHIL format
     "c COMMENT STRING"  - record COMMENT STRING in the shelf
 ''' % self.name
     def setPrompt(self):
@@ -326,6 +374,9 @@ class CmdPrompt(cmd.Cmd):
             return
         self.ml.doRecord(True)
         self.setPrompt()
+    def do_chil(self, l):
+        basename, subname = l.split()
+        self.ml.convertToCHIL(basename, subname)
     def do_playback(self, l):
         '''"playback [RATE] [START_TIME]"
                         - stop recording and start playing back recorded data
