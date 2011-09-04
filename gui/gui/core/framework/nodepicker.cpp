@@ -179,7 +179,13 @@ void NodeListView::editStarted(QTreeWidgetItem* item, int column){
 }
 
 void NodeListView::itemEdited(QTreeWidgetItem* item, int column){
+
     cauv::gui::NodeTreeItemBase * dsItem = dynamic_cast<cauv::gui::NodeTreeItemBase*>(item);
+
+    if(!dsItem){
+        error() << "QTreeWidgetItem was not an instance of NodeTreeItemBase";
+        return;
+    }
 
     // 1 is the editable cell that stores the value
     if(column == 1 && dsItem && dsItem->getNode()->isMutable()){
@@ -195,6 +201,7 @@ void NodeListView::itemEdited(QTreeWidgetItem* item, int column){
                 item->setFlags(item->flags() & (~Qt::ItemIsEditable));
 
                 // do the update and check the result
+                debug(3) << "NodeListView passing change to TreeItem to handle";
                 if(dsItem->updateNode(v)){
                     // reset the background if all is ok
                     item->setBackground(1, QBrush());

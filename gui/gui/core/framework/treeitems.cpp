@@ -23,7 +23,8 @@ void NodeTreeItemBase::updateValue(const QString value) {
         this->setText(1, value);
 }
 
-bool NodeTreeItemBase::updateNode(QVariant&) {
+bool NodeTreeItemBase::updateNode(QVariant const&) {
+    warning() << "NodeTreeItemBase::updateNode called. Shouldbe overridden";
     return false;
 }
 
