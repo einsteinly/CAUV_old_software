@@ -107,6 +107,6 @@ void MailboxEventMonitor::doMonitoring() {
     m_monitoring = false;
 }
 
-volatile bool MailboxEventMonitor::isMonitoring(){
+bool MailboxEventMonitor::isMonitoring(){
     return m_monitoring;
 }

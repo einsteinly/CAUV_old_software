@@ -10,7 +10,6 @@
 
 cauv::pw::PipelineGuiCauvNode::PipelineGuiCauvNode(PipelineWidget *p)
     : CauvNode("pipe-gui"), m_widget(p){
-
     p->connect(p, SIGNAL(messageGenerated(boost::shared_ptr<Message>)), this, SLOT(send(boost::shared_ptr<Message>)), Qt::DirectConnection);
     debug() << "PGCN constructed";
 }
@@ -36,7 +35,7 @@ void cauv::pw::PipelineGuiCauvNode::onRun(){
 }
 
 int cauv::pw::PipelineGuiCauvNode::send(boost::shared_ptr<Message> message){
-    std::cout << "Sending message" << *message << std::endl;
+    debug() << "Sending message" << *message << std::endl;
     return CauvNode::send(message);
 }
 
