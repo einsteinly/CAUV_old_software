@@ -31,7 +31,7 @@ namespace cauv {
             NodeTreeItemBase(boost::shared_ptr<NodeBase> const& node, QTreeWidgetItem * parent);
             virtual ~NodeTreeItemBase(){}
             boost::shared_ptr<NodeBase> getNode();
-            virtual bool updateNode(QVariant&);
+            virtual bool updateNode(QVariant const&);
 
         public Q_SLOTS:
             NodeTreeItemBase * addNode(boost::shared_ptr<NodeBase> node);
