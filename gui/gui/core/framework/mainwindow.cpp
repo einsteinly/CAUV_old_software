@@ -15,7 +15,7 @@
 #include "../framework/nodescene.h"
 #include "../framework/visualiserview.h"
 #include "../framework/nodepicker.h"
-#include "../framework/arc.h"
+#include "../framework/elements/arc.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>

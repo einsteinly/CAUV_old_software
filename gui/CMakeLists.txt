@@ -22,6 +22,7 @@ if (CAUV_BUILD_GUI)
         add_subdirectory (pipeline-widget)
         add_subdirectory (gui-pipeline)
         add_subdirectory (gui)
+        add_subdirectory (scratch)
 
     endif ()
 

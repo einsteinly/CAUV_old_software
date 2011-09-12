@@ -1,5 +1,5 @@
-#ifndef ARC_H
-#define ARC_H
+#ifndef __CAUV_ELEMENT_ARC_H__
+#define __CAUV_ELEMENT_ARC_H__
 
 #include <QObject>
 #include <QGraphicsPathItem>
@@ -34,4 +34,4 @@ namespace cauv {
 } // namespace gui
 
 
-#endif // ARC_H
+#endif // __CAUV_ELEMENT_ARC_H__

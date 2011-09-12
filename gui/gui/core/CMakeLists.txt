@@ -49,9 +49,9 @@ set ( GUI_CORE_SRCS
     framework/mainwindow.cpp
     framework/visualiserview.cpp
     framework/nodescene.cpp
-    framework/graphicswindow.cpp
-    framework/resize.cpp
-    framework/arc.cpp
+    framework/elements/graphicswindow.cpp
+    framework/elements/resize.cpp
+    framework/elements/arc.cpp
     utils/noderecorder.cpp
     )
 
@@ -77,9 +77,9 @@ set ( GUI_CORE_H
     framework/nodepicker.h
     framework/treeitems.h
     framework/mainwindow.h
-    framework/graphicswindow.h
-    framework/resize.h
-    framework/arc.h
+    framework/elements/graphicswindow.h
+    framework/elements/resize.h
+    framework/elements/arc.h
     )
 
 set ( GUI_CORE_RCC

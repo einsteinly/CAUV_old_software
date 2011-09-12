@@ -8,7 +8,7 @@
 #include <QGraphicsProxyWidget>
 
 #include "../nodedragging.h"
-#include "graphicswindow.h"
+#include "elements/graphicswindow.h"
 
 #include <gui/core/model/node.h>
 #include <gui/core/model/nodes/numericnode.h>

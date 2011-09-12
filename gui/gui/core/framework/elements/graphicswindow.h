@@ -11,7 +11,7 @@
 #include <QGraphicsLinearLayout>
 #include <QGraphicsItem>
 
-#include "arc.h"
+#include "elements/arc.h"
 
 namespace cauv {
     namespace gui {
