@@ -53,9 +53,10 @@ namespace cauv {
                     PipelineCauvWidget();
             virtual ~PipelineCauvWidget();
             
+            virtual void initialise();
+            virtual void shutdown();
+
             virtual const QString name() const;
-            virtual const QList<QString> getGroups() const;
-            virtual void initialise(boost::shared_ptr<AUV>, boost::shared_ptr<CauvNode> node);
             
         protected Q_SLOTS:
             void send(boost::shared_ptr<const Message> message);

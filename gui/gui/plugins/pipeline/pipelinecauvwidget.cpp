@@ -1,5 +1,5 @@
 #include "pipelinecauvwidget.h"
-#include "pipeline/ui_pipelinecauvwidget.h"
+#include "ui_pipelinecauvwidget.h"
 
 #include <boost/make_shared.hpp>
 
@@ -12,6 +12,8 @@
 
 #include <pipelineWidget.h>
 #include <pipelineMessageObserver.h>
+
+#include <gui/core/framework/mainwindow.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -57,8 +59,6 @@ PipelineCauvWidget::PipelineCauvWidget() :
     ui->layout->addWidget(m_pipeline);
 
     ui->pipelines->connect(ui->pipelines, SIGNAL(currentIndexChanged(const QString&)), m_pipeline, SLOT(setPipelineName(const QString&)));
-
-    m_tabs.append(this);
 }
 
 PipelineCauvWidget::~PipelineCauvWidget(){
@@ -68,16 +68,14 @@ const QString PipelineCauvWidget::name() const{
     return QString("Pipeline");
 }
 
-const QList<QString> PipelineCauvWidget::getGroups() const{
-    QList<QString> groups;
-    groups.push_back(QString("pl_gui"));
-    groups.push_back(QString("pipeline"));
-    groups.push_back(QString("membership"));
-    return groups;
-}
-
-void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<CauvNode> node){
-    CauvBasicPlugin::initialise(auv, node);
+void PipelineCauvWidget::initialise(){
+    boost::shared_ptr<CauvNode> node = m_actions->node.lock();
+    node->joinGroup("pl_gui");
+    node->joinGroup("pipeline");
+    node->joinGroup("membership");
+    
+    //uncomment to inject the pipelinewidget as the central widget again
+    //m_actions->window.lock()->setCentralWidget(this);
 
     node->addMessageObserver(m_observer);
     boost::shared_ptr<PipelineListingObserver> listingObserver = boost::make_shared<PipelineListingObserver>(node);
@@ -85,6 +83,9 @@ void PipelineCauvWidget::initialise(boost::shared_ptr<AUV> auv, boost::shared_pt
 
     //listingObserver->connect(listingObserver.get(), SIGNAL(searchStarted()), this, SLOT(clearPipelines()));
     listingObserver->connect(listingObserver.get(), SIGNAL(pipelineDiscovered(std::string)), this, SLOT(addPipeline(std::string)));
+}
+
+void PipelineCauvWidget::shutdown(){
 }
 
 void PipelineCauvWidget::addPipeline(std::string name){
@@ -115,8 +116,11 @@ void PipelineCauvWidget::clearPipelines(){
 
 void PipelineCauvWidget::send(boost::shared_ptr<const Message> message){
     info() << message;
-    if(m_node)
-        m_node->send(message);
+    boost::shared_ptr<CauvNode> node = m_actions->node.lock(); 
+    if(node)
+        node->send(message);
+    else
+        warning() << "no node available to send message:" << message;
 }
 
 Q_EXPORT_PLUGIN2(cauv_pipelineplugin, PipelineCauvWidget)

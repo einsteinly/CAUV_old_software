@@ -16,7 +16,7 @@ endfunction()
 # plugin directories
 #add_subdirectory (example)
 #add_subdirectory (console)
-#add_subdirectory (pipeline)
+add_subdirectory (pipeline)
 #add_subdirectory (processes)
 add_subdirectory (motorcontrol)
 #add_subdirectory (logs)

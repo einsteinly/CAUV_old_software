@@ -155,6 +155,7 @@ void CauvMainWindow::onRun()
 
     // then any plugins in the plugins folder
     QDir pluginsDir = QDir(QApplication::instance()->applicationDirPath());
+    debug() << "Loading dynamic plugins from" << pluginsDir.absolutePath().toLatin1().constData();
     pluginsDir.cd("plugins");
     findPlugins(pluginsDir, 1);
 
