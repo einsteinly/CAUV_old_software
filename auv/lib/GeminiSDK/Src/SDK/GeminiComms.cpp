@@ -1226,7 +1226,7 @@ void GEM_SetNetworkEnableRAMonitoring(unsigned short enableRAMonitoring)
 }
 
 //----------------------------------------------------------------------------
-void GEM_SetNetworkRS232BaudRate(unsigned short baudRate)
+void GEM_SetNetworkRS232BaudRate(unsigned int baudRate)
 {
   switch (baudRate)
   {

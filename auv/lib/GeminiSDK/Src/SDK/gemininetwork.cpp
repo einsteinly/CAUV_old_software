@@ -3487,7 +3487,11 @@ void CGeminiNetwork::ProgramVelocimeterCoeffs(unsigned int CCoeff, unsigned int 
 		int nResult = 0;
 		
 		pthread_mutexattr_init(&hAttr);
+        #ifndef __APPLE__
 		pthread_mutexattr_settype(&hAttr, PTHREAD_MUTEX_RECURSIVE_NP);
+        #else
+		pthread_mutexattr_settype(&hAttr, PTHREAD_MUTEX_RECURSIVE);
+        #endif
 		nResult = pthread_mutex_init((pthread_mutex_t*)hMutex, &hAttr);
 		pthread_mutexattr_destroy(&hAttr);
 		if(nResult!=0)
@@ -3514,7 +3518,7 @@ void CGeminiNetwork::ProgramVelocimeterCoeffs(unsigned int CCoeff, unsigned int 
 		DWORD nTimeout = 0;
 		int nStatus = 0;
 		
-		if(dwMilliseconds == INFINITE) // blocking calling
+		if(dwMilliseconds == (DWORD)INFINITE) // blocking calling
 		{
 			return pthread_mutex_lock((pthread_mutex_t*)hHandle);
 		}

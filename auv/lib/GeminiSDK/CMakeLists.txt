@@ -9,13 +9,13 @@ set (${PROJECT_NAME}_PATCH_VERSION 1)
 set (${PROJECT_NAME}_VERSION "${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION}")
 
 # set the directory that has tools for finding packages etc...
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/Tools/cmake/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Tools/cmake/Modules/")
 
 # build static library
 set (BUILD_SHARED_LIBS ON)
 
 # include source directory
-#include_directories (${CMAKE_SOURCE_DIR}/Src/SDK)
+#include_directories (${CMAKE_CURRENT_SOURCE_DIR}/Src/SDK)
 
 # output directories
 set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin CACHE PATH "Single directory for all libraries")
@@ -25,18 +25,18 @@ mark_as_advanced (LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 ############################### FOLDERS TO BUILD ###############################
 
 # SDK
-include (${CMAKE_SOURCE_DIR}/Src/SDK/CMakeLists.txt)
+include (${CMAKE_CURRENT_SOURCE_DIR}/Src/SDK/CMakeLists.txt)
 
 # Source files to build.
 foreach(SRC_FILE ${FILES})
-	list(APPEND GEMINI_SDK_SRC ${CMAKE_SOURCE_DIR}/Src/SDK/${SRC_FILE}.cpp)
+	list(APPEND GEMINI_SDK_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Src/SDK/${SRC_FILE}.cpp)
 endforeach(SRC_FILE)
 
 # Headers to include when installing.
-list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_SOURCE_DIR}/Src/SDK/GeminiStructuresPublic.h)
-list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_SOURCE_DIR}/Src/SDK/GeminiStructures.h)
-list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_SOURCE_DIR}/Src/SDK/GeminiCommsPublic.h)
-list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_SOURCE_DIR}/Src/SDK/DataTypes.h)
+list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/Src/SDK/GeminiStructuresPublic.h)
+list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/Src/SDK/GeminiStructures.h)
+list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/Src/SDK/GeminiCommsPublic.h)
+list(APPEND GEMINI_SDK_INSTALL_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/Src/SDK/DataTypes.h)
 install(FILES ${GEMINI_SDK_INSTALL_HDRS} DESTINATION include/${PROJECT_NAME})
 		  
 

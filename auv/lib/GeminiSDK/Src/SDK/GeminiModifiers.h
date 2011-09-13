@@ -4,7 +4,9 @@
 #include "GeminiStructures.h"
 #include "GeminiModifierConstants.h"
 #include "MComplex.h"
+#ifndef __APPLE__
 #include "malloc.h"
+#endif
 #include "GemSonar.h"
 
 struct COMPLEX_SHORT

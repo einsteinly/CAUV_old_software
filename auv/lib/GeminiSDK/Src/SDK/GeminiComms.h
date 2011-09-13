@@ -84,7 +84,7 @@ EXT_GEMINI_COMMS void GEM_SetNetworkRetriggerVDSLRateAdaption(unsigned short ret
 EXT_GEMINI_COMMS void GEM_SetNetworkInhibitRecommendedRateAdaption(unsigned short inhibitRecommendedRA);
 EXT_GEMINI_COMMS void GEM_SetNetworkEnableAllRateAdaption(unsigned short enableAllRA);
 EXT_GEMINI_COMMS void GEM_SetNetworkEnableRAMonitoring(unsigned short enableRAMonitoring);
-EXT_GEMINI_COMMS void GEM_SetNetworkRS232BaudRate(unsigned short baudRate);
+EXT_GEMINI_COMMS void GEM_SetNetworkRS232BaudRate(unsigned int baudRate);
 EXT_GEMINI_COMMS void GEM_SetNetworkConfigToDefaults(void);
 EXT_GEMINI_COMMS void GEM_SetNetworkInterPacketGap(unsigned short interPacketGap);
 EXT_GEMINI_COMMS void GEM_SetNetworkRS232Routing(unsigned short RS232Routing);
