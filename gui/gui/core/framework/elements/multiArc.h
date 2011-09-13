@@ -21,7 +21,10 @@ class MultiArc : public QObject, public QGraphicsPathItem {
         QColor endColour();
 
         void addTo(ConnectableInterface *to);
-        //void removeTo(ConnectableInterface *to);
+        void removeTo(ConnectableInterface *to);
+        
+        void mousePressEvent(QGraphicsSceneMouseEvent *event);
+        //void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
 
     protected Q_SLOTS:
         void updateLayout();

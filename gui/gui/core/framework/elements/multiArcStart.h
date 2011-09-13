@@ -31,54 +31,21 @@ class MultiArcStart: public QGraphicsObject,
         const static QColor Lead_In_Colour;
 
     public:
-        MultiArcStart()
-            : m_arc(), m_line(){
-            m_arc = new MultiArc(this, NULL);
-            m_line = new QGraphicsLineItem(0, Thickness/2, Length, Thickness/2, this);
-            
-            QLinearGradient line_gradient(QPointF(0,Thickness/2), connectionPoint());
-            line_gradient.setColorAt(0, Lead_In_Colour);
-            line_gradient.setColorAt(1, m_arc->startColour());
-            QBrush brush(line_gradient);
-            
-            m_line->setPen(QPen(brush, Thickness));
-            
-            setFlag(ItemIsMovable);
-            connect(this, SIGNAL(xChanged()), this, SIGNAL(boundriesChanged()));
-            connect(this, SIGNAL(yChanged()), this, SIGNAL(boundriesChanged()));
-        }
+        MultiArcStart();
+        //~MultiArcStart(); // children deleted by ~QGraphicsItem
 
-        ~MultiArcStart(){
-            // children deleted by ~QGraphicsItem
-        }
-
-        MultiArc* arc(){
-            // !!! do not delete 'this' while m_arc (a child of this) is being
-            // used
-            return m_arc;
-        }
+        MultiArc* arc();
 
    // QGraphicsItem required:
-        QRectF boundingRect() const{
-            return QRectF(0, 0, Length, Thickness);
-        }
+        QRectF boundingRect() const;
         void paint(QPainter *painter,
                    const QStyleOptionGraphicsItem *opt,
-                   QWidget *widget){
-            Q_UNUSED(opt);
-            Q_UNUSED(widget);
-            Q_UNUSED(painter);
-            // drawing is all done by children
-        }
+                   QWidget *widget);
         
 
     // ConnectableInterface:
-        virtual QGraphicsObject *asQGraphicsObject(){
-            return this;
-        }
-        virtual QPointF connectionPoint(){
-            return QPointF(Length, Thickness/2);
-        }
+        virtual QGraphicsObject* asQGraphicsObject();
+        virtual QPointF connectionPoint();
 
     Q_SIGNALS:
         void boundriesChanged();

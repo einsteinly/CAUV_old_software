@@ -3,6 +3,7 @@
 #include <QPainterPath>
 #include <QPointF>
 #include <QPen>
+#include <QGraphicsSceneMouseEvent>
 
 #include <utility/rounding.h>
 #include <utility/qt_streamops.h>
@@ -11,13 +12,15 @@
 
 #include <debug/cauv_debug.h>
 
+#include "multiArcEnd.h"
+
 using namespace cauv;
 using namespace cauv::gui;
 
-const static QColor Line_Colour = QColor(100, 128, 180);
+const static QColor Line_Colour = QColor(134, 217, 241);
 const static qreal Thickness = 4.0;
-
 const static qreal Lead_In_Length = 8.0;
+
 
 MultiArc::MultiArc(ConnectableInterface *from, ConnectableInterface *to)
     : m_to(),
@@ -51,6 +54,27 @@ void MultiArc::addTo(ConnectableInterface* to){
     updateLayout();
 }
 
+void MultiArc::removeTo(ConnectableInterface* to){
+    m_to.removeOne(to);
+    assert(m_to.indexOf(to) == -1);
+    QGraphicsObject *to_as_go = to->asQGraphicsObject();    
+    disconnect(to_as_go, 0, this, 0);
+    updateLayout();
+}
+
+void MultiArc::mousePressEvent(QGraphicsSceneMouseEvent *event){
+    MultiArcEnd* ephemeral_arc_end = new MultiArcEnd(this, true);
+    // in item (this) coordinates (this is now parent of new end):
+    ephemeral_arc_end->setPos(event->pos() - ephemeral_arc_end->boundingRect().center()); 
+    event->ignore();
+    //QGraphicsObject::mousePressEvent(event);    
+}
+
+//void MultiArc::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
+//    Q_UNUSED(event);
+//    QGraphicsObject::mouseReleaseEvent(event);    
+//}
+
 void MultiArc::updateLayout(){
     // we draw in m_from's coordinate system (it is this's parent)
     QPointF start_point = m_from->connectionPoint();
@@ -63,13 +87,14 @@ void MultiArc::updateLayout(){
     path.lineTo(split_point);
 
     if(m_to.size()){
-        foreach(ConnectableInterface* o, m_to){
+        foreach(ConnectableInterface* ci, m_to){
+            QGraphicsObject* o = ci->asQGraphicsObject();
             path.moveTo(split_point);
-            // mapToItem maps point 0,0 in 'to' object into m_from's
-            // coordinates
-            QPointF end_point(o->asQGraphicsObject()->mapToItem(m_from->asQGraphicsObject(), 0,0));
-            QPointF c1(split_point + QPointF(std::fabs(end_point.x() - split_point.x())/2, 0));
-            QPointF c2(end_point   - QPointF(std::fabs(end_point.x() - split_point.x())/2, 0));
+            // mapToItem maps connection point in 'to' object into m_from's
+            // coordinates 
+            QPointF end_point(o->mapToItem(m_from->asQGraphicsObject(), ci->connectionPoint()));
+            QPointF c1(split_point + QPointF(5+std::fabs(end_point.x() - split_point.x())/2, 0));
+            QPointF c2(end_point   - QPointF(5+std::fabs(end_point.x() - split_point.x())/2, 0));
             path.cubicTo(c1, c2, end_point);
             //debug() << "f=" << start_point << "s=" << split_point << "t=" << end_point;
             //path.lineTo(end_point);

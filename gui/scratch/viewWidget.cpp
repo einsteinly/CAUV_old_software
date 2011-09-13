@@ -3,6 +3,7 @@
 #include "elements/multiArc.h"
 //#include "elements/arcSocket.h"
 #include "elements/multiArcStart.h"
+#include "elements/multiArcEnd.h"
 
 #include "cross.h"
 
@@ -34,38 +35,24 @@ ViewWidget::ViewWidget(QWidget* parent)
     MultiArcStart *from_2 = new MultiArcStart;
     from_2->setPos(-50, 30); 
     s->addItem(from_2);
-    Cross *to_2_1 = new Cross(12);
-    to_2_1->setPos(20, 30);
-    from_2->arc()->addTo(to_2_1);    
-    s->addItem(to_2_1);
+    MultiArcEnd *to_2_1 = new MultiArcEnd(from_2->arc());
+    to_2_1->setPos(70, 0); // parent coords
 
     MultiArcStart *from_3 = new MultiArcStart;
     from_3->setPos(-50, -30);
     s->addItem(from_3);
-    Cross *to_3_1 = new Cross(12);
-    to_3_1->setPos(20, -35);
-    from_3->arc()->addTo(to_3_1);
-    s->addItem(to_3_1);
+    MultiArcEnd *to_3_1 = new MultiArcEnd(from_3->arc());
+    to_3_1->setPos(70, -5);
 
-    Cross *from_4 = new Cross(12);
+    MultiArcStart *from_4 = new MultiArcStart;
     from_4->setPos(-50, 50);
     s->addItem(from_4);
-    Cross *to_4_1 = new Cross(12);
-    to_4_1->setPos(20, 55);
-    s->addItem(to_4_1);
-    Cross *to_4_2 = new Cross(12);
-    to_4_2->setPos(20, 75);
-    s->addItem(to_4_2);
-    
-    //MultiArc *a1 = new MultiArc(from_1);
-    //MultiArc *a2 = new MultiArc(from_2, to_2_1);
-    //MultiArc *a3 = new MultiArc(from_3, to_3_1);
-    MultiArc *a4 = new MultiArc(from_4, to_4_1);
-    a4->addTo(to_4_2);
+    MultiArcEnd *to_4_1 = new MultiArcEnd(from_4->arc());
+    to_4_1->setPos(70, 5);
+    MultiArcEnd *to_4_2 = new MultiArcEnd(from_4->arc());
+    to_4_2->setPos(70, 25);
 
-    //s->addItem(a1);
-    //s->addItem(a2);
-    //s->addItem(a3);
-    //s->addItem(a4);
+    connect(s, SIGNAL(changed(const QList<QRectF>&)),
+            this, SLOT(updateScene(const QList<QRectF>&)));
 }
 
