@@ -339,7 +339,6 @@ class pipelineManager(aiProcess):
         self.node_mapping = {}#node_ids here: node_ids in pipeline
         #notify detector_process that this proces is running with no pls
         self.reeval = False
-        self._register()
     def load_pl_data(self):
         #try and load optimised pipelines
         try:

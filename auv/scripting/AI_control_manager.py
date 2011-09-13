@@ -32,7 +32,6 @@ class auvControl(aiProcess):
         self._control_state = {}
         self._sonar_state = {}
         self._timeout = 0
-        self._register()
     @external_function
     def auv_command(self, task_id, command, *args, **kwargs):
         #__getattr__ was more trouble than its worth. since this is abstracted by fakeAUV, doesn't matter to much

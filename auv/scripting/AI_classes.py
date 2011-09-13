@@ -39,41 +39,88 @@ class aiAccess():
         return aiForeignProcess(self.node, self.process_name, process)
         
 #this is actually a decorator, used to declare functions accessible to other processes
-def external_function(f):
-    f.ext_func = True
-    return f
-    
-def is_external(f):
-    try:
-        return f.ext_func
-    except AttributeError:
-        return False
+#note that it doesn't behave like a normal decorator, the function is extracted from it in the initialisation stages
+class external_function:
+    def __init__(self, f):
+        self.func = f
+        
+#The process class is no longer also the message observer
+#since it appears that if the metaclass is subclassed, boost
+#does not recognise the observer
+#(basically, it checks to see that the metaclass of the observer
+#class is boost.python.class rather than a subclass of it,
+#see http://boost.2283326.n4.nabble.com/Boost-Python-Metaclass-td3308127.html
+#it may be fixed in newer versions??)
 
-class aiProcess(messaging.MessageObserver):
-    def __init__(self, process_name):
+class aiMessageObserver(messaging.MessageObserver):
+    key_index = {'to': 0, 'from': 1, 'function': 2, 'args': 3, 'kwargs': 4}
+    def __init__(self, parent_process, function_names):
         messaging.MessageObserver.__init__(self)
+        self.parent_process = parent_process
+        self.function_names = function_names
+        self.__message_lock = threading.Lock()
+        self.message = None
+    def onAIMessage(self, m):
+        debug("onAIMessage in %s: %s" %(self.parent_process.process_name, m.msg), 6)
+        message = cPickle.loads(m.msg)
+        if message[0] == self.parent_process.process_name: #this is where the to string appears in the cpickle output
+            message = cPickle.loads(m.msg)
+            if message[2] in self.function_names:
+                try:
+                    debug("onAIMessage in %s, calling function." %(self.parent_process.process_name, ), 6)
+                    with self.__message_lock:
+                        #set message
+                        self.message = message
+                        #remember to call .func to avoid internal call warning
+                        getattr(self.parent_process, message[2])(*message[3], **message[4])
+                        self.message = None
+                except Exception as exc:
+                    error("Error occured because of message: %s" %(str(message)))
+                    traceback.print_exc()
+            else:
+                error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+    def __getattr__(self, attr):
+        try:
+            return self.message[key_index[attr]]
+        except TypeError:
+            raise AttributeError("No message being processed %s at present time" %(self.parent_process.process_name))
+        except KeyError:
+            raise AttributeError
+    def __getitem__(self, item):
+        try:
+            return self.message[item]
+        except TypeError:
+            raise AttributeError("No message being processed %s at present time" %(self.parent_process.process_name))
+
+class aiProcessBase(type):
+    def __init__(cls, name, bases, attrs):
+        super(aiProcessBase, cls).__init__(name, bases, attrs)
+        #list ext funcs in class, and extract function (don't accidentally wipe parent class functions)
+        if not hasattr(cls, '_ext_funcs'):
+            cls._ext_funcs = []
+        for key, attr in attrs.iteritems():
+            if isinstance(attr, external_function):
+                cls._ext_funcs.append(key)
+                setattr(cls, key, attr.func)
+    def __call__(cls, *args, **kwargs):
+        inst = cls.__new__(cls, *args, **kwargs)
+        inst.__init__(*args, **kwargs)
+        inst._register()
+        return inst
+
+class aiProcess():
+    __metaclass__ = aiProcessBase
+    def __init__(self, process_name):
+        self._msg_observer = aiMessageObserver(self, self._ext_funcs)
+        #set node name
         id = process_name[:6] if len(process_name)>6 else process_name
         self.node = cauv.node.Node("ai"+id)
         self.node.join("ai")
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
     def _register(self):
-        self.node.addObserver(self)
-        self.ai.STATE.REGISTER()
-    def onAIMessage(self, m):
-        debug("onAIMessage in %s: %s" %(self.process_name, m.msg), 6)
-        message = cPickle.loads(m.msg)
-        if message[0] == self.process_name: #this is where the to string appears in the cpickle output
-            message = cPickle.loads(m.msg)
-            if hasattr(self, message[2]) and is_external(getattr(self,message[2])):
-                try:
-                    debug("onAIMessage in %s, calling function." %(self.process_name, ), 6)
-                    getattr(self,message[2])(*message[3], **message[4])
-                except Exception as exc:
-                    error("Error occured because of message: %s" %(str(message)))
-                    traceback.print_exc()
-            else:
-                error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+        self.node.addObserver(self._msg_observer)
+        self.ai.manager.register()
     def log(self, message):
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")
@@ -253,6 +300,8 @@ class aiScript(aiProcess):
         self.auv = fakeAUV(self)
         self._pl_enabled = False
         self._pl_setup = threading.Event()
+    def _register(self):
+        self.node.addObserver(self._msg_observer)
     def request_pl(self, pl_name, timeout=10):
         if not self._pl_enabled:
             self.node.join('processing')
