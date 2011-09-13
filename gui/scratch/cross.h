@@ -8,8 +8,8 @@
 namespace cauv{
 namespace gui{
 
-class Cross : public QGraphicsObject,
-              public ConnectableInterface{
+class Cross: public QGraphicsObject,
+             public ConnectableInterface{
     Q_OBJECT
 
     public:
@@ -17,26 +17,24 @@ class Cross : public QGraphicsObject,
          : QGraphicsObject(),
            ConnectableInterface(),
            m_size(size),
-           m_line_a(new QGraphicsLineItem(-size/2, size/2, size/2, -size/2, this)),
-           m_line_b(new QGraphicsLineItem(-size/2, -size/2, size/2, size/2, this)){
+           m_line_a(new QGraphicsLineItem(2-size/2, size/2-2, size/2-2, 2-size/2, this)),
+           m_line_b(new QGraphicsLineItem(2-size/2, 2-size/2, size/2-2, size/2-2, this)){
             QPen p(QColor(0,0,0,255));
             setPen(p);
+            setFlag(ItemIsMovable);
+            connect(this, SIGNAL(xChanged()), this, SIGNAL(boundriesChanged()));
+            connect(this, SIGNAL(yChanged()), this, SIGNAL(boundriesChanged()));
         }
 
         void setPen(const QPen &pen){
             m_line_a->setPen(pen);
             m_line_b->setPen(pen);
         }
-        
-        virtual QGraphicsObject * asQGraphicsObject(){
-            return this;
-        }
     
     // QGraphicsItem required:
         QRectF boundingRect() const{
-            return QRectF(0, 0, m_size+1, m_size+1);
-        }
-    
+            return QRectF(-m_size/2, -m_size/2, m_size, m_size);
+        } 
         void paint(QPainter *painter,
                    const QStyleOptionGraphicsItem *opt,
                    QWidget *widget){
@@ -44,14 +42,18 @@ class Cross : public QGraphicsObject,
             Q_UNUSED(widget);
             painter->setBrush(QBrush(QColor(0,0,0,32)));
             painter->setPen(QPen(QColor(0,0,0,64)));
-            painter->drawRoundedRect(-m_size/2, -m_size/2, m_size, m_size, 2, 2);
+            painter->drawRoundedRect(1-m_size/2, 1-m_size/2, m_size-2, m_size-2, 2, 2);
         }
        
 
+    // ConnectableInterface:
+        virtual QGraphicsObject * asQGraphicsObject(){
+            return this;
+        }
     Q_SIGNALS:
         void boundriesChanged();
         void disconnected();
-
+    
     protected:
         qreal m_size;
         QGraphicsLineItem *m_line_a;

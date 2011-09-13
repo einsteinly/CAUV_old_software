@@ -15,54 +15,61 @@ using namespace cauv;
 using namespace cauv::gui;
 
 const static QColor Line_Colour = QColor(100, 128, 180);
-const static QColor Lead_In_Colour = QColor(100, 128, 180, 0);
-const static qreal Line_Width = 4.0;
+const static qreal Thickness = 4.0;
 
 const static qreal Lead_In_Length = 8.0;
 
-MultiArc::MultiArc(ConnectableInterface * from, ConnectableInterface * to)
+MultiArc::MultiArc(ConnectableInterface *from, ConnectableInterface *to)
     : m_to(),
-      m_from(from->asQGraphicsObject()){
-    assert(m_from);
+      m_from(from){
+    assert(from);
+    QGraphicsObject *from_as_go = from->asQGraphicsObject();
+    assert(from_as_go);
+    setParentItem(from_as_go);
 
-    connect(m_from, SIGNAL(boundriesChanged()), this, SLOT(updateLayout()));
+    connect(from_as_go, SIGNAL(boundriesChanged()), this, SLOT(updateLayout()));
     if(to){
         addTo(to);
     }
     updateLayout();
 }
 
+QColor MultiArc::startColour(){
+    return Line_Colour;
+}
+
+QColor MultiArc::endColour(){
+    return Line_Colour;
+}
+
 void MultiArc::addTo(ConnectableInterface* to){
     assert(to);
-    m_to.push_back(to->asQGraphicsObject());
-    connect(m_to.back(), SIGNAL(boundriesChanged()), this, SLOT(updateLayout()));
-    connect(m_to.back(), SIGNAL(disconnected()), this, SLOT(updateLayout()));
+    m_to.push_back(to);
+    QGraphicsObject *to_as_go = to->asQGraphicsObject();
+    connect(to_as_go, SIGNAL(boundriesChanged()), this, SLOT(updateLayout()));
+    connect(to_as_go, SIGNAL(disconnected()), this, SLOT(updateLayout()));
     updateLayout();
 }
 
 void MultiArc::updateLayout(){
-    QPointF start_point = m_from->pos();
-    QPointF lead_in_start = start_point - QPointF(Lead_In_Length, 0); // before start
+    // we draw in m_from's coordinate system (it is this's parent)
+    QPointF start_point = m_from->connectionPoint();
     QPointF split_point = start_point + QPointF(8,0);
     
-    QLinearGradient line_gradient(lead_in_start, start_point);
-    line_gradient.setColorAt(0, Lead_In_Colour);
-    line_gradient.setColorAt(1, Line_Colour);
-    QBrush brush(line_gradient);
-    setPen(QPen(brush, Line_Width));
+    QBrush brush(Line_Colour);
+    setPen(QPen(brush, Thickness));
 
-    // from connection stub (even if not connected to anything)
-    // !!! this should be part of from item, would also clean up the gradient
-    // thing
-    QPainterPath path(lead_in_start);
+    QPainterPath path(start_point);
     path.lineTo(split_point);
 
     if(m_to.size()){
-        foreach(QGraphicsObject* o, m_to){
+        foreach(ConnectableInterface* o, m_to){
             path.moveTo(split_point);
-            QPointF end_point(o->pos());
-            QPointF c1(split_point + QPointF((end_point.x() - split_point.x())/2, 0));
-            QPointF c2(end_point   - QPointF((end_point.x() - split_point.x())/2, 0));
+            // mapToItem maps point 0,0 in 'to' object into m_from's
+            // coordinates
+            QPointF end_point(o->asQGraphicsObject()->mapToItem(m_from->asQGraphicsObject(), 0,0));
+            QPointF c1(split_point + QPointF(std::fabs(end_point.x() - split_point.x())/2, 0));
+            QPointF c2(end_point   - QPointF(std::fabs(end_point.x() - split_point.x())/2, 0));
             path.cubicTo(c1, c2, end_point);
             //debug() << "f=" << start_point << "s=" << split_point << "t=" << end_point;
             //path.lineTo(end_point);

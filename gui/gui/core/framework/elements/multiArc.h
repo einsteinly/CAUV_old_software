@@ -12,9 +12,13 @@ namespace gui{
 class MultiArc : public QObject, public QGraphicsPathItem {
         Q_OBJECT
     public: 
-        // from and to must be in the same coordinate system as this (ie, same
-        // parent, or scene parent)
+        // From is used as parent. Magics are done so that coordinates are all
+        // relative to parent for drawing.
         MultiArc(ConnectableInterface *from, ConnectableInterface *to=NULL);
+        
+        // so that start/end connectors can blend into the arc
+        QColor startColour();
+        QColor endColour();
 
         void addTo(ConnectableInterface *to);
         //void removeTo(ConnectableInterface *to);
@@ -23,8 +27,8 @@ class MultiArc : public QObject, public QGraphicsPathItem {
         void updateLayout();
 
     protected:
-        QList<QGraphicsObject*> m_to;
-        QGraphicsObject * m_from;
+        QList<ConnectableInterface*> m_to;
+        ConnectableInterface *m_from;
 };
 
 } // namespace gui

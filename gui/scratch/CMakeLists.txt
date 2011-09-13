@@ -6,6 +6,7 @@ set (
     main.cpp
     viewWidget.cpp
     ../gui/core/framework/elements/multiArc.cpp
+    ../gui/core/framework/elements/multiArcStart.cpp
 )
 
 set (
@@ -13,6 +14,7 @@ set (
     viewWidget.h
     cross.h
     ../gui/core/framework/elements/multiArc.h
+    ../gui/core/framework/elements/multiArcStart.h
 )
 
 qt4_wrap_cpp (scratch_MOC_H ${scratch_H})

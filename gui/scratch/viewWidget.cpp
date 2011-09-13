@@ -2,7 +2,7 @@
 
 #include "elements/multiArc.h"
 //#include "elements/arcSocket.h"
-//#include "elements/arcEnd.h"
+#include "elements/multiArcStart.h"
 
 #include "cross.h"
 
@@ -27,44 +27,45 @@ ViewWidget::ViewWidget(QWidget* parent)
     setMinimumSize(400, 400);
     setWindowTitle("QGraphicsScene Element Test");
     
-    Cross *from_1 = new Cross(10);
+    MultiArcStart *from_1 = new MultiArcStart;
     from_1->setPos(-50, 0);
     s->addItem(from_1);
 
-    Cross *from_2 = new Cross(10);
+    MultiArcStart *from_2 = new MultiArcStart;
     from_2->setPos(-50, 30); 
     s->addItem(from_2);
-    
-    Cross *to_2_1 = new Cross(10);
+    Cross *to_2_1 = new Cross(12);
     to_2_1->setPos(20, 30);
+    from_2->arc()->addTo(to_2_1);    
     s->addItem(to_2_1);
 
-    Cross *from_3 = new Cross(10);
+    MultiArcStart *from_3 = new MultiArcStart;
     from_3->setPos(-50, -30);
     s->addItem(from_3);
-    Cross *to_3_1 = new Cross(10);
+    Cross *to_3_1 = new Cross(12);
     to_3_1->setPos(20, -35);
+    from_3->arc()->addTo(to_3_1);
     s->addItem(to_3_1);
 
-    Cross *from_4 = new Cross(10);
+    Cross *from_4 = new Cross(12);
     from_4->setPos(-50, 50);
     s->addItem(from_4);
-    Cross *to_4_1 = new Cross(10);
+    Cross *to_4_1 = new Cross(12);
     to_4_1->setPos(20, 55);
     s->addItem(to_4_1);
-    Cross *to_4_2 = new Cross(10);
+    Cross *to_4_2 = new Cross(12);
     to_4_2->setPos(20, 75);
     s->addItem(to_4_2);
     
-    MultiArc *a1 = new MultiArc(from_1);
-    MultiArc *a2 = new MultiArc(from_2, to_2_1);
-    MultiArc *a3 = new MultiArc(from_3, to_3_1);
+    //MultiArc *a1 = new MultiArc(from_1);
+    //MultiArc *a2 = new MultiArc(from_2, to_2_1);
+    //MultiArc *a3 = new MultiArc(from_3, to_3_1);
     MultiArc *a4 = new MultiArc(from_4, to_4_1);
     a4->addTo(to_4_2);
 
-    s->addItem(a1);
-    s->addItem(a2);
-    s->addItem(a3);
-    s->addItem(a4);
+    //s->addItem(a1);
+    //s->addItem(a2);
+    //s->addItem(a3);
+    //s->addItem(a4);
 }
 

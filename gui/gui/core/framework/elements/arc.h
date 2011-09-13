@@ -11,6 +11,11 @@ namespace cauv {
             // return the item this arc is pointing to
             virtual QGraphicsObject * asQGraphicsObject() = 0;
 
+            // point (in this's coordinates) that arcs should connect to
+            virtual QPointF connectionPoint(){
+                return QPointF(0,0);
+            }
+
             // Q_SIGNALS:
             // must be implemented as signals
             virtual void boundriesChanged() = 0;
