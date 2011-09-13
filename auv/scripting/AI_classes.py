@@ -257,20 +257,6 @@ class fakeAUV(messaging.MessageObserver):
 
 class aiScriptOptionsBase(type):
     def __new__(cls, name, bases, attrs):
-        def __getattr2__(self, attr):
-            if not (attr in object.__getattribute__(self, '_dynamic')):
-                return object.__getattribute__(self, attr)
-            else:
-                with object.__getattribute__(self, '_dynamiclock'):
-                    #note, although once the object has been returned the lock is released, do the option can be modified
-                    #since modifiying requires passing a new value, this doesn't affect the object that was passed
-                    return object.__getattribute__(self, attr)
-        def set_option(self, option_name, option_value):
-            if option_name in self._dynamic:
-                with self._dynamiclock:
-                    setattr(self, option_name, option_value)
-            else:
-                info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
         attrs['_dynamic'] = []
         if 'Meta' in attrs:
             meta_data = attrs.pop('Meta')
@@ -279,9 +265,6 @@ class aiScriptOptionsBase(type):
                 for d in attrs['_dynamic']:
                     if not d in attrs:
                         raise AttributeError('The option %s is not defined, so cannot be dynamic' %(d,))
-                attrs['__getattribute__'] = __getattr2__ #no point doing this if there aren't any dynamic variables
-                attrs['_dynamiclock'] = threading.RLock()
-        attrs['set_option'] = set_option
         new_cls = super(aiScriptOptionsBase, cls).__new__(cls, name, bases, attrs)
         return new_cls
             
@@ -322,9 +305,11 @@ class aiScript(aiProcess):
         self._pl_setup.set()
     @external_function
     def set_option(self, option_name, option_value):
-        self.options.set_option(option_name, option_value)
         if option_name in self.options._dynamic:
+            setattr(self, option_name, option_value)
             self.optionChanged(option_name)
+        else:
+            info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
     def optionChanged(self, option_name):
         pass
     @external_function

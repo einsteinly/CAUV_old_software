@@ -8,7 +8,7 @@ import optparse
 
 from AI_classes import aiProcess, external_function
 
-#TODO basically the actual functionality of conrol, the ability to stop the sub, block script_ids etc
+#TODO basically the actual functionality of control, the ability to stop the sub, block script_ids etc
 
 control_listen_to = ['prop', 'strafe', ]
 
@@ -17,11 +17,8 @@ class auvControl(aiProcess):
         aiProcess.__init__(self, 'auv_control')
         self.auv = control.AUV(self.node)
         self.sonar = sonar.Sonar(self.node)
-        self.external_functions = []
         self.current_task_id = None
         self.enabled = threading.Event()
-        self.pause_lock = threading.Lock()
-        self.pause_requests = set()
         self.paused = threading.Event()
         if 'disable_control' in kwargs:
             if not kwargs['disable_control']:
@@ -31,7 +28,6 @@ class auvControl(aiProcess):
         self.signal_msgs = Queue.Queue(5)
         self._control_state = {}
         self._sonar_state = {}
-        self._timeout = 0
     @external_function
     def auv_command(self, task_id, command, *args, **kwargs):
         #__getattr__ was more trouble than its worth. since this is abstracted by fakeAUV, doesn't matter to much
@@ -62,20 +58,20 @@ class auvControl(aiProcess):
         self.auv.stop()
     @external_function
     def pause(self, calling_process, timeout=None):
-        self.log('')
-        with self.pause_lock:
-            if len(self.pause_requests):
-                warning('Multiple pause requests, probably will mean processes are conflicting')
-            else:
-                #notify scripts
-                self.ai.task_manager.notify_begin_pause('paused')
-                #get sonar state (since is convieniently save
-                self._sonar_state = self.sonar.__dict__.copy()
-                self.pause_requests.add(calling_process)
-        if timeout and self._timeout<time.time()+timeout:
+        self.log('Pausing for thought...')
+        if self.paused.is_set():
+            warning('Multiple pause requests, probably will mean processes are conflicting, pause request rejected')
+        else:
+            #notify scripts
+            self.ai.task_manager.notify_begin_pause('paused')
+            #get sonar state (since is convieniently saved)
+            self._sonar_state = self.sonar.__dict__.copy()
+        if timeout:
             t = threading.Timer(timeout, self.timeout_resume, [calling_process])
             t.start()
-            self._timeout = time.time()+timeout
+        else:
+            #pause indefinately
+            warning('Indefinate pause started, a timeout would be a good idea!!!')
         self.paused.set()
         self.stop()
     def timeout_resume(self, calling_process):
@@ -84,21 +80,16 @@ class auvControl(aiProcess):
             getattr(self.ai, calling_process).onPauseTimeout()
     @external_function
     def resume(self, calling_process):
-        #restore control values
-        with self.pause_lock:
-            try:
-                self.pause_requests.remove(calling_process)
-            except KeyError:
-                warning('Script control already resumed.')
-                return False
-            if not len(self.pause_requests):
-                for command, (args, kwargs) in self._control_state.items():
-                    getattr(self.auv, command)(*args, **kwargs)
-                #restore sonar state
-                self.sonar.__dict__ = self._sonar_state
-                self.sonar.update()
-                self.paused.clear()
-        return True
+        #restore control values, hopefully won't timeout at same time as manual resume
+        if self.paused.is_set():
+            for command, (args, kwargs) in self._control_state.items():
+                getattr(self.auv, command)(*args, **kwargs)
+            #restore sonar state
+            self.sonar.__dict__ = self._sonar_state
+            self.sonar.update()
+            self.paused.clear()
+            return True
+        return False
     @external_function
     def stop(self):
         #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value
