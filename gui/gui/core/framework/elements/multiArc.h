@@ -9,6 +9,8 @@
 namespace cauv{
 namespace gui{
 
+class MultiArcEnd;
+
 class MultiArc : public QObject, public QGraphicsPathItem {
         Q_OBJECT
     public: 
@@ -24,7 +26,8 @@ class MultiArc : public QObject, public QGraphicsPathItem {
         void removeTo(ConnectableInterface *to);
         
         void mousePressEvent(QGraphicsSceneMouseEvent *event);
-        //void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+        void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
+        void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
 
     protected Q_SLOTS:
         void updateLayout();
@@ -32,6 +35,7 @@ class MultiArc : public QObject, public QGraphicsPathItem {
     protected:
         QList<ConnectableInterface*> m_to;
         ConnectableInterface *m_from;
+        MultiArcEnd* m_ephemeral_arc_end;
 };
 
 } // namespace gui

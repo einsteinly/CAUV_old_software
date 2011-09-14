@@ -44,13 +44,15 @@ MultiArcEnd::MultiArcEnd(MultiArc* arc, bool ephemeral)
 
 
 void MultiArcEnd::mousePressEvent(QGraphicsSceneMouseEvent *event){
-    Q_UNUSED(event);
     setPolyGradient(Pressed_Colour);
     QGraphicsObject::mousePressEvent(event);
 }
 
+void MultiArcEnd::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
+    QGraphicsObject::mouseMoveEvent(event);
+}
+
 void MultiArcEnd::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
-    Q_UNUSED(event);
     if(m_ephemeral){
         QPropertyAnimation *fadeOut = new QPropertyAnimation(this, "opacity");
         fadeOut->setEndValue(0);

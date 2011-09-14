@@ -24,7 +24,8 @@ const static qreal Lead_In_Length = 8.0;
 
 MultiArc::MultiArc(ConnectableInterface *from, ConnectableInterface *to)
     : m_to(),
-      m_from(from){
+      m_from(from),
+      m_ephemeral_arc_end(NULL){
     assert(from);
     QGraphicsObject *from_as_go = from->asQGraphicsObject();
     assert(from_as_go);
@@ -63,17 +64,38 @@ void MultiArc::removeTo(ConnectableInterface* to){
 }
 
 void MultiArc::mousePressEvent(QGraphicsSceneMouseEvent *event){
-    MultiArcEnd* ephemeral_arc_end = new MultiArcEnd(this, true);
-    // in item (this) coordinates (this is now parent of new end):
-    ephemeral_arc_end->setPos(event->pos() - ephemeral_arc_end->boundingRect().center()); 
-    event->ignore();
-    //QGraphicsObject::mousePressEvent(event);    
+    if(event->button() & Qt::LeftButton){
+        assert(!m_ephemeral_arc_end);
+        m_ephemeral_arc_end = new MultiArcEnd(this, true);
+        // in item (this) coordinates (this is now parent of new end):
+        m_ephemeral_arc_end->setPos(event->pos() - m_ephemeral_arc_end->boundingRect().center()); 
+        // accepted -> forward to base explicitly
+        //QGraphicsObject::mousePressEvent(event); 
+    }else{
+        event->ignore();
+    }
 }
 
-//void MultiArc::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
-//    Q_UNUSED(event);
-//    QGraphicsObject::mouseReleaseEvent(event);    
-//}
+void MultiArc::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
+    if(m_ephemeral_arc_end){
+        m_ephemeral_arc_end->mouseMoveEvent(event);
+    }else{
+        event->ignore();
+    }
+}
+
+void MultiArc::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
+    if(event->button() & Qt::LeftButton){
+        if(m_ephemeral_arc_end)
+            m_ephemeral_arc_end->mouseReleaseEvent(event);
+        // deletion arranged by mouseReleaseEvent
+        m_ephemeral_arc_end = NULL;
+        // accepted -> forward to base explicitly
+        QGraphicsObject::mouseReleaseEvent(event);    
+    }else{
+        event->ignore();
+    }
+}
 
 void MultiArc::updateLayout(){
     // we draw in m_from's coordinate system (it is this's parent)

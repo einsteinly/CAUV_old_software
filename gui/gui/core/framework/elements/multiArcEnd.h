@@ -24,8 +24,11 @@ class MultiArcEnd: public QGraphicsObject,
         // arc is used as parent
         // if ephemeral, only live as long as dragged
         MultiArcEnd(MultiArc* arc, bool ephemeral = false); 
-   
+    
+   // reimplement protected members to handle events forwarded from m_arc when
+   // this is an ephemeral end point:
         void mousePressEvent(QGraphicsSceneMouseEvent *event);
+        void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
         void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
 
    // QGraphicsItem required:
