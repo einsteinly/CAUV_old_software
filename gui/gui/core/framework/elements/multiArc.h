@@ -28,6 +28,8 @@ class MultiArc : public QObject, public QGraphicsPathItem {
         void mousePressEvent(QGraphicsSceneMouseEvent *event);
         void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
         void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+    
+        QRectF boundingRect() const;
 
     protected Q_SLOTS:
         void updateLayout();

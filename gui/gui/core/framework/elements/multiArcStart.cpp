@@ -33,7 +33,7 @@ MultiArc* MultiArcStart::arc(){
 
 // QGraphicsItem required:
 QRectF MultiArcStart::boundingRect() const{
-    return QRectF(0, 0, Length, Thickness);
+    return QRectF(0, 0, Length, Thickness) | childrenBoundingRect();
 }
 void MultiArcStart::paint(QPainter *painter,
                           const QStyleOptionGraphicsItem *opt,

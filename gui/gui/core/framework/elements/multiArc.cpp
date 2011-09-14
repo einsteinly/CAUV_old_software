@@ -97,6 +97,10 @@ void MultiArc::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
     }
 }
 
+QRectF MultiArc::boundingRect() const{
+    return QGraphicsPathItem::boundingRect() | childrenBoundingRect();
+}
+
 void MultiArc::updateLayout(){
     // we draw in m_from's coordinate system (it is this's parent)
     QPointF start_point = m_from->connectionPoint();
