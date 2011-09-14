@@ -77,9 +77,10 @@ class AImanager(aiProcess):
                 time.sleep(0.5)
             time.sleep(2)
     @external_function
-    def register(self):
+    def register(self, calling_process):
+        info('Registering %s' %calling_process)
         try:
-            self.processes[self._msg_observer[1]].started.set()
+            self.processes[calling_process].started.set()
         except KeyError:
             warning("Unknown process tried to register as started.")
             
