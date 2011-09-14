@@ -6,7 +6,7 @@ import time
 import threading, Queue
 import optparse
 
-from AI_classes import aiProcess, external_function
+from AI_classes import aiProcess, external_function, force_calling_process
 
 #TODO basically the actual functionality of control, the ability to stop the sub, block script_ids etc
 
@@ -17,7 +17,7 @@ class auvControl(aiProcess):
         aiProcess.__init__(self, 'auv_control')
         self.auv = control.AUV(self.node)
         self.sonar = sonar.Sonar(self.node)
-        self.current_task_id = None
+        self.current_calling_process = None
         self.enabled = threading.Event()
         self.paused = threading.Event()
         if 'disable_control' in kwargs:
@@ -29,26 +29,31 @@ class auvControl(aiProcess):
         self._control_state = {}
         self._sonar_state = {}
     @external_function
-    def auv_command(self, task_id, command, *args, **kwargs):
+    @force_calling_process
+    def auv_command(self, command, *args, **kwargs):
+        calling_process = kwargs.pop('calling_process')
         #__getattr__ was more trouble than its worth. since this is abstracted by fakeAUV, doesn't matter to much
         #TODO make it possible to filter by script id. script id should match task_managers record as well
         #Might need to move parts of control here/take a smaller version of control that doesn't have waiting commands (eg depth and wait)
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
-        debug('auvControl::auv_command(self, task_id=%s, cmd=%s, args=%s, kwargs=%s)' % (task_id, command, args, kwargs), 5)
-        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_task_id == task_id:
+        debug('auvControl::auv_command(self, calling_process=%s, cmd=%s, args=%s, kwargs=%s)' % (calling_process, command, args, kwargs), 5)
+        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_calling_process == calling_process:
             debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
             getattr(self.auv, command)(*args, **kwargs)
             self._control_state[command] = (args, kwargs)
         else:
             debug('Function not called, auv disabled or called from non-current script.', 5)
     @external_function
-    def sonar_command(self, task_id, command, *args, **kwargs):
-        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_task_id == task_id:
+    @force_calling_process
+    def sonar_command(self, command, *args, **kwargs):
+        calling_process = kwargs.pop('calling_process')
+        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_calling_process == calling_process:
             getattr(self.sonar, command)(*args, **kwargs)
     @external_function
     def set_task_id(self, task_id):
-        self.current_task_id = task_id
+        #different name to avoid auto replace
+        self.current_calling_process = task_id
     @external_function
     def enable(self):
         self.enabled.set()

@@ -40,10 +40,20 @@ class aiAccess():
         
 #this is actually a decorator, used to declare functions accessible to other processes
 #note that it doesn't behave like a normal decorator, the function is extracted from it in the initialisation stages
+#be careful, only one external function can run at a time, and the process cannot receive other messages during this
 class external_function:
     def __init__(self, f):
+        #mark if needs calling_process as well
+        if hasattr(f, 'func_code') and (not hasattr(f, 'caller')):
+            if 'calling_process' in f.func_code.co_varnames:
+                f.caller = True
+            else:
+                f.caller = False
         self.func = f
-        
+
+def force_calling_process(f):
+    f.caller = True
+    return f
 #The process class is no longer also the message observer
 #since it appears that if the metaclass is subclassed, boost
 #does not recognise the observer
@@ -58,8 +68,6 @@ class aiMessageObserver(messaging.MessageObserver):
         messaging.MessageObserver.__init__(self)
         self.parent_process = parent_process
         self.function_names = function_names
-        self.__message_lock = threading.Lock()
-        self.message = None
     def onAIMessage(self, m):
         debug("onAIMessage in %s: %s" %(self.parent_process.process_name, m.msg), 6)
         message = cPickle.loads(m.msg)
@@ -68,29 +76,14 @@ class aiMessageObserver(messaging.MessageObserver):
             if message[2] in self.function_names:
                 try:
                     debug("onAIMessage in %s, calling function." %(self.parent_process.process_name, ), 6)
-                    with self.__message_lock:
-                        #set message
-                        self.message = message
-                        #remember to call .func to avoid internal call warning
-                        getattr(self.parent_process, message[2])(*message[3], **message[4])
-                        self.message = None
+                    if getattr(self.parent_process, message[2]).caller:
+                        message[4]['calling_process'] = message[1]
+                    getattr(self.parent_process, message[2])(*message[3], **message[4])
                 except Exception as exc:
                     error("Error occured because of message: %s" %(str(message)))
                     traceback.print_exc()
             else:
                 error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
-    def __getattr__(self, attr):
-        try:
-            return self.message[key_index[attr]]
-        except TypeError:
-            raise AttributeError("No message being processed %s at present time" %(self.parent_process.process_name))
-        except KeyError:
-            raise AttributeError
-    def __getitem__(self, item):
-        try:
-            return self.message[item]
-        except TypeError:
-            raise AttributeError("No message being processed %s at present time" %(self.parent_process.process_name))
 
 class aiProcessBase(type):
     def __init__(cls, name, bases, attrs):
@@ -98,14 +91,19 @@ class aiProcessBase(type):
         #list ext funcs in class, and extract function (don't accidentally wipe parent class functions)
         if not hasattr(cls, '_ext_funcs'):
             cls._ext_funcs = []
+        if not hasattr(cls, '_objects'):
+            cls._objects = []
         for key, attr in attrs.iteritems():
             if isinstance(attr, external_function):
                 cls._ext_funcs.append(key)
                 setattr(cls, key, attr.func)
+            else:
+                cls._objects.append(key)
     def __call__(cls, *args, **kwargs):
         inst = cls.__new__(cls, *args, **kwargs)
         inst.__init__(*args, **kwargs)
         inst._register()
+        inst._objects.extend(inst.__dict__.keys())
         return inst
 
 class aiProcess():
@@ -138,7 +136,7 @@ class fakeSonarfunction():
         self.script = script
         self.attr = attr
     def __call__(self, *args, **kwargs):
-        self.script.ai.auv_control.sonar_command(self.script.task_name, self.attr, *args, **kwargs)
+        self.script.ai.auv_control.sonar_command(self.attr, *args, **kwargs)
     def __getattr__(self, attr):
         error('You can only call functions of sonar, one level deep')
         raise AttributeError('fakeSonarfunction has no attribute %s' %(attr,))
@@ -155,7 +153,7 @@ class fakeAUVfunction():
         self.attr = attr
     def __call__(self, *args, **kwargs):
         debug('fakeAUVfunction: __call__ args=%s kwargs=%s' % (str(args), str(kwargs)), 5)
-        self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
+        self.script.ai.auv_control.auv_command(self.attr, *args, **kwargs)
     def __getattr__(self, attr):
         error('You can only call functions of AUV, one level deep (except sonar)')
         raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
