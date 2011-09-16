@@ -4,21 +4,23 @@
 #include <QPen>
 
 #include "arc.h"
+#include "style.h"
 
 namespace cauv{
 namespace gui{
 
 class MultiArc;
+struct ArcStyle;
 
 class MultiArcEnd: public QGraphicsObject,
                      public ConnectableInterface{
     Q_OBJECT
-    private:
+    /*private:
         const static qreal Length;
         const static qreal Base_Thickness;
         const static qreal Tip_Thickness;
         const static QColor Tip_Colour;
-        const static QColor Pressed_Colour;
+        const static QColor Pressed_Colour;*/
 
     public:
         // arc is used as parent
@@ -49,12 +51,14 @@ class MultiArcEnd: public QGraphicsObject,
         void removeFromScene();
     
     protected:
-        void setPolyGradient(QColor tip_colour);
+        void setFill(bool pressed);
 
         MultiArc *m_arc;
-        QGraphicsPolygonItem *m_poly;
+        QGraphicsPolygonItem *m_back_poly;
+        QGraphicsPolygonItem *m_front_poly;
         bool m_ephemeral;
         
+        ArcStyle const& m_style;
 };
 
 } // namespace gui

@@ -8,6 +8,7 @@ set (
     ../gui/core/framework/elements/multiArc.cpp
     ../gui/core/framework/elements/multiArcStart.cpp
     ../gui/core/framework/elements/multiArcEnd.cpp
+    #../gui/core/framework/elements/style.cpp
 )
 
 set (

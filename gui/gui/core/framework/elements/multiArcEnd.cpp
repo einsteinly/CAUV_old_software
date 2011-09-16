@@ -7,36 +7,41 @@
 #include <QGraphicsScene>
 
 #include "multiArc.h"
+#include "style.h"
 
 using namespace cauv;
 using namespace gui;
 
-const qreal MultiArcEnd::Length = 14;
-const qreal MultiArcEnd::Base_Thickness = 11;
-const qreal MultiArcEnd::Tip_Thickness = 3;
-const QColor MultiArcEnd::Tip_Colour = QColor(80, 235, 200, 255);
-const QColor MultiArcEnd::Pressed_Colour = QColor(255, 255, 255, 200);
-
+static QGraphicsPolygonItem* endArrow(ArcStyle::_SingleArcStyle const& s, QGraphicsItem* parent){
+    QPolygonF shape;
+    shape << QPointF(0, -s.thickness/2);
+    shape << QPointF(s.end_base_offset, -s.thickness/2);
+    shape << QPointF(s.end_base_offset, -s.end_base_thickness/2);    
+    shape << QPointF(s.end_length,      -s.end_tip_thickness /2);
+    shape << QPointF(s.end_length,       s.end_tip_thickness /2);
+    shape << QPointF(s.end_base_offset,  s.end_base_thickness/2);
+    shape << QPointF(s.end_base_offset,  s.thickness/2);
+    shape << QPointF(0, s.thickness/2);
+    return new QGraphicsPolygonItem(shape, parent);
+}
 
 MultiArcEnd::MultiArcEnd(MultiArc* arc, bool ephemeral)
-    : m_arc(arc), m_poly(), m_ephemeral(ephemeral){
-    assert(arc);
+    : m_arc(arc),
+      m_back_poly(),
+      m_front_poly(),
+      m_ephemeral(ephemeral),
+      m_style(arc->style()){
+    
+    m_back_poly = endArrow(m_style.back, this);
+    m_front_poly = endArrow(m_style.front, this);
+    
+    setFill(ephemeral);
+    setFlag(ItemIsMovable);
+    
+    // set parent and add only after setting up geometry
     setParentItem(arc);
     arc->addTo(this);
 
-    QPolygonF shape;
-    shape << QPointF(0, 0);
-    shape << QPointF(Length, (Base_Thickness - Tip_Thickness) / 2);
-    shape << QPointF(Length, (Base_Thickness + Tip_Thickness) / 2);
-    shape << QPointF(0, Base_Thickness);
-    m_poly = new QGraphicsPolygonItem(shape, this);
-    
-    if(ephemeral)
-        setPolyGradient(Pressed_Colour);
-    else
-        setPolyGradient(Tip_Colour);
-    
-    setFlag(ItemIsMovable);
     connect(this, SIGNAL(xChanged()), this, SIGNAL(boundriesChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(boundriesChanged()));
     Q_EMIT boundriesChanged();
@@ -44,7 +49,7 @@ MultiArcEnd::MultiArcEnd(MultiArc* arc, bool ephemeral)
 
 
 void MultiArcEnd::mousePressEvent(QGraphicsSceneMouseEvent *event){
-    setPolyGradient(Pressed_Colour);
+    setFill(true);
     QGraphicsObject::mousePressEvent(event);
 }
 
@@ -55,19 +60,23 @@ void MultiArcEnd::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
 void MultiArcEnd::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
     if(m_ephemeral){
         QPropertyAnimation *fadeOut = new QPropertyAnimation(this, "opacity");
+        m_back_poly->setOpacity(0.5);
         fadeOut->setEndValue(0);
-        fadeOut->setDuration(150);
+        fadeOut->setDuration(100);
         connect(fadeOut, SIGNAL(finished()), this, SLOT(removeFromScene()));
         fadeOut->start();
     }else{
-        setPolyGradient(Tip_Colour);
+        setFill(false);
     }
     QGraphicsObject::mouseReleaseEvent(event);
 }
 
 // QGraphicsItem required:
 QRectF MultiArcEnd::boundingRect() const{
-    return QRectF(0,0,Length,std::max(Base_Thickness, Tip_Thickness));
+    return QRectF(
+        0, -m_style.back.end_base_thickness/2,
+        m_style.back.end_length, m_style.back.end_base_thickness
+    );
 }
 
 void MultiArcEnd::paint(QPainter *painter,
@@ -85,7 +94,7 @@ QGraphicsObject* MultiArcEnd::asQGraphicsObject(){
 }
 
 QPointF MultiArcEnd::connectionPoint(){
-    return QPointF(0, Base_Thickness/2);
+    return QPointF(0, 0);
 }
 
 void MultiArcEnd::removeFromScene(){
@@ -96,19 +105,23 @@ void MultiArcEnd::removeFromScene(){
     deleteLater();
 }
 
-void MultiArcEnd::setPolyGradient(QColor tip_colour){
-    QLinearGradient gradient(
-        connectionPoint(),
-        QPointF(Length,std::max(Base_Thickness, Tip_Thickness)/2)
-    );
+void MultiArcEnd::setFill(bool pressed){
+    // !!! back doesn't change
+    m_back_poly->setBrush(m_style.back.col);
 
-    gradient.setColorAt(0, m_arc->endColour());
-    gradient.setColorAt(1, tip_colour);
-    gradient.setColorAt(1, tip_colour);
+    // front does:
+    if(pressed){
+        QLinearGradient gradient(
+            connectionPoint(), QPointF(m_style.front.end_length, 0)
+        );
+        gradient.setColorAt(0, m_style.front.col);
+        gradient.setColorAt(1, m_style.front.tip_hl_col);
+        m_front_poly->setBrush(QBrush(gradient));
+    }else{
+        m_front_poly->setBrush(m_style.front.col);
+    }
 
-    QBrush brush(gradient);
-
-    m_poly->setBrush(brush);
-    m_poly->setPen(QPen(Qt::NoPen));
+    m_back_poly->setPen(QPen(Qt::NoPen));
+    m_front_poly->setPen(QPen(Qt::NoPen));
 }
 

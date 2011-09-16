@@ -28,6 +28,9 @@ tags
 auv/python-module/cauvinterface.so
 auv/python-module/cauvinterfaced.so
 auv/scripting/unknown.log
+auv/scripting/pl_manager.state
+auv/scripting/optimised.pipes
+auv/scripting/mission_state.shelf
 auv/python-module/emit_*.cpp
 messages-python/parsetab.py
 auv/common/messages.cpp

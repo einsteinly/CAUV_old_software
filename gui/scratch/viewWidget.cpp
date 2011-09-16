@@ -4,6 +4,7 @@
 //#include "elements/arcSocket.h"
 #include "elements/multiArcStart.h"
 #include "elements/multiArcEnd.h"
+#include "elements/style.h"
 
 #include "cross.h"
 
@@ -28,23 +29,23 @@ ViewWidget::ViewWidget(QWidget* parent)
     setMinimumSize(400, 400);
     setWindowTitle("QGraphicsScene Element Test");
     
-    MultiArcStart *from_1 = new MultiArcStart;
+    MultiArcStart *from_1 = new MultiArcStart(Image_Arc_Style);
     from_1->setPos(-50, 0);
     s->addItem(from_1);
 
-    MultiArcStart *from_2 = new MultiArcStart;
+    MultiArcStart *from_2 = new MultiArcStart(Image_Arc_Style);
     from_2->setPos(-50, 30); 
     s->addItem(from_2);
     MultiArcEnd *to_2_1 = new MultiArcEnd(from_2->arc());
     to_2_1->setPos(70, 0); // parent coords
 
-    MultiArcStart *from_3 = new MultiArcStart;
+    MultiArcStart *from_3 = new MultiArcStart(Param_Arc_Style);
     from_3->setPos(-50, -30);
     s->addItem(from_3);
     MultiArcEnd *to_3_1 = new MultiArcEnd(from_3->arc());
     to_3_1->setPos(70, -5);
 
-    MultiArcStart *from_4 = new MultiArcStart;
+    MultiArcStart *from_4 = new MultiArcStart(Image_Arc_Style);
     from_4->setPos(-50, 50);
     s->addItem(from_4);
     MultiArcEnd *to_4_1 = new MultiArcEnd(from_4->arc());

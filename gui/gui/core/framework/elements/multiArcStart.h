@@ -8,40 +8,21 @@
 namespace cauv{
 namespace gui{
 
-/*
- *  o = origin (0,0)
- *  + = connection point
- *  L = Length
- *  T = Thickness
- *
- *      <----L---->
- *   -  o---------| -  -  -  -> x
- *  T|  | | || |||+ arc connects here
- *   -  |---------| - - - -
- *      |
- *      y
- *
- */
 class MultiArcStart: public QGraphicsObject,
                      public ConnectableInterface{
     Q_OBJECT
-    private:
-        const static qreal Length;
-        const static qreal Thickness;
-        const static QColor Lead_In_Colour;
-
     public:
-        MultiArcStart();
+        MultiArcStart(ArcStyle const&);
         //~MultiArcStart(); // children deleted by ~QGraphicsItem
 
-        MultiArc* arc();
+        MultiArc* arc() const;
+        ArcStyle const& style() const;
 
    // QGraphicsItem required:
-        QRectF boundingRect() const;
-        void paint(QPainter *painter,
-                   const QStyleOptionGraphicsItem *opt,
-                   QWidget *widget);
-        
+        virtual QRectF boundingRect() const;
+        virtual void paint(QPainter *painter,
+                           const QStyleOptionGraphicsItem *opt,
+                           QWidget *widget);
 
     // ConnectableInterface:
         virtual QGraphicsObject* asQGraphicsObject();
@@ -53,7 +34,10 @@ class MultiArcStart: public QGraphicsObject,
     
     protected:
         MultiArc *m_arc;
-        QGraphicsLineItem *m_line;
+        QGraphicsLineItem *m_front_line;
+        QGraphicsLineItem *m_back_line;
+
+        ArcStyle const& m_style;
 };
 
 } // namespace gui

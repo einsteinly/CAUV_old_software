@@ -10,26 +10,28 @@ namespace cauv{
 namespace gui{
 
 class MultiArcEnd;
+struct ArcStyle;
 
 class MultiArc : public QObject, public QGraphicsPathItem {
         Q_OBJECT
-    public: 
+    public:
         // From is used as parent. Magics are done so that coordinates are all
         // relative to parent for drawing.
-        MultiArc(ConnectableInterface *from, ConnectableInterface *to=NULL);
+        MultiArc(ArcStyle const& style,
+                 ConnectableInterface *from,
+                 ConnectableInterface *to=NULL);
         
-        // so that start/end connectors can blend into the arc
-        QColor startColour();
-        QColor endColour();
+        ArcStyle const& style() const;
 
         void addTo(ConnectableInterface *to);
         void removeTo(ConnectableInterface *to);
         
-        void mousePressEvent(QGraphicsSceneMouseEvent *event);
-        void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
-        void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
-    
-        QRectF boundingRect() const;
+    // QGraphicsItem:
+        virtual void mousePressEvent(QGraphicsSceneMouseEvent *event);
+        virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
+        virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+
+        virtual QRectF boundingRect() const;
 
     protected Q_SLOTS:
         void updateLayout();
@@ -37,7 +39,12 @@ class MultiArc : public QObject, public QGraphicsPathItem {
     protected:
         QList<ConnectableInterface*> m_to;
         ConnectableInterface *m_from;
-        MultiArcEnd* m_ephemeral_arc_end;
+
+        QGraphicsPathItem *m_front;
+
+        MultiArcEnd *m_ephemeral_arc_end;
+
+        ArcStyle const& m_style;
 };
 
 } // namespace gui

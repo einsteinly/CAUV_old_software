@@ -13,38 +13,39 @@
 #include <debug/cauv_debug.h>
 
 #include "multiArcEnd.h"
+#include "style.h"
 
 using namespace cauv;
 using namespace cauv::gui;
 
-const static QColor Line_Colour = QColor(134, 217, 241);
-const static qreal Thickness = 4.0;
-const static qreal Lead_In_Length = 8.0;
-
-
-MultiArc::MultiArc(ConnectableInterface *from, ConnectableInterface *to)
-    : m_to(),
+MultiArc::MultiArc(ArcStyle const& style,
+                   ConnectableInterface *from,
+                   ConnectableInterface *to)
+    : QObject(),
+      QGraphicsPathItem(),
+      m_to(),
       m_from(from),
-      m_ephemeral_arc_end(NULL){
+      m_front(new QGraphicsPathItem(this)),
+      m_ephemeral_arc_end(NULL),
+      m_style(style){
     assert(from);
     QGraphicsObject *from_as_go = from->asQGraphicsObject();
     assert(from_as_go);
     setParentItem(from_as_go);
 
+    setFlag(ItemIsMovable, false);
+
     connect(from_as_go, SIGNAL(boundriesChanged()), this, SLOT(updateLayout()));
-    if(to){
+    if(to)
         addTo(to);
-    }
+
     updateLayout();
 }
 
-QColor MultiArc::startColour(){
-    return Line_Colour;
+ArcStyle const& MultiArc::style() const{
+    return m_style;
 }
 
-QColor MultiArc::endColour(){
-    return Line_Colour;
-}
 
 void MultiArc::addTo(ConnectableInterface* to){
     assert(to);
@@ -68,7 +69,10 @@ void MultiArc::mousePressEvent(QGraphicsSceneMouseEvent *event){
         assert(!m_ephemeral_arc_end);
         m_ephemeral_arc_end = new MultiArcEnd(this, true);
         // in item (this) coordinates (this is now parent of new end):
-        m_ephemeral_arc_end->setPos(event->pos() - m_ephemeral_arc_end->boundingRect().center()); 
+        // whole pixels matters!
+        QPointF centre = m_ephemeral_arc_end->boundingRect().center();
+        centre.rx() = std::floor(centre.rx());
+        m_ephemeral_arc_end->setPos(event->pos() - centre);
         // accepted -> forward to base explicitly
         //QGraphicsObject::mousePressEvent(event); 
     }else{
@@ -97,17 +101,26 @@ void MultiArc::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
     }
 }
 
+
 QRectF MultiArc::boundingRect() const{
-    return QGraphicsPathItem::boundingRect() | childrenBoundingRect();
+    return QGraphicsPathItem::boundingRect();
 }
 
 void MultiArc::updateLayout(){
+    prepareGeometryChange();
     // we draw in m_from's coordinate system (it is this's parent)
     QPointF start_point = m_from->connectionPoint();
     QPointF split_point = start_point + QPointF(8,0);
     
-    QBrush brush(Line_Colour);
-    setPen(QPen(brush, Thickness));
+    // own style (back)
+    setPen(QPen(
+        QBrush(m_style.back.col), m_style.back.thickness, Qt::SolidLine, Qt::FlatCap
+    ));
+
+    // front style:
+    m_front->setPen(QPen(
+        QBrush(m_style.front.col), m_style.front.thickness, Qt::SolidLine, Qt::FlatCap
+    ));
 
     QPainterPath path(start_point);
     path.lineTo(split_point);
@@ -130,4 +143,5 @@ void MultiArc::updateLayout(){
     }
 
     setPath(path);
+    m_front->setPath(path);
 }
