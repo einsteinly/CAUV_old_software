@@ -12,7 +12,8 @@ namespace gui{
 class MultiArcEnd;
 struct ArcStyle;
 
-class MultiArc : public QObject, public QGraphicsPathItem {
+class MultiArc : public QObject,
+                 public QGraphicsPathItem {
         Q_OBJECT
     public:
         // From is used as parent. Magics are done so that coordinates are all

@@ -8,7 +8,7 @@ set (
     ../gui/core/framework/elements/multiArc.cpp
     ../gui/core/framework/elements/multiArcStart.cpp
     ../gui/core/framework/elements/multiArcEnd.cpp
-    #../gui/core/framework/elements/style.cpp
+    ../gui/core/framework/elements/node.cpp
 )
 
 set (
@@ -18,6 +18,7 @@ set (
     ../gui/core/framework/elements/multiArc.h
     ../gui/core/framework/elements/multiArcStart.h
     ../gui/core/framework/elements/multiArcEnd.h
+    ../gui/core/framework/elements/node.h
 )
 
 qt4_wrap_cpp (scratch_MOC_H ${scratch_H})

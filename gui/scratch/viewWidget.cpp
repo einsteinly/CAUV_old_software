@@ -4,6 +4,7 @@
 //#include "elements/arcSocket.h"
 #include "elements/multiArcStart.h"
 #include "elements/multiArcEnd.h"
+#include "elements/node.h"
 #include "elements/style.h"
 
 #include "cross.h"
@@ -53,6 +54,15 @@ ViewWidget::ViewWidget(QWidget* parent)
     MultiArcEnd *to_4_2 = new MultiArcEnd(from_4->arc());
     to_4_2->setPos(70, 25);
 
+    Node *n1 = new Node(Node_Style);
+    n1->setPos(20.5, 100.5);
+    s->addItem(n1);
+
+    Node *n2 = new Node(Node_Style);
+    n1->setPos(-50, -100);
+    s->addItem(n2);
+
+    
     connect(s, SIGNAL(changed(const QList<QRectF>&)),
             this, SLOT(updateScene(const QList<QRectF>&)));
 }

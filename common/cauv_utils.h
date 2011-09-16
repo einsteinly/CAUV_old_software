@@ -15,6 +15,11 @@
 #   define foreach BOOST_FOREACH
 #endif
 
+#ifndef reverse_foreach
+#   include <boost/foreach.hpp>
+#   define reverse_foreach BOOST_REVERSE_FOREACH
+#endif
+
 #include <utility/string.h>
 #include <utility/rounding.h>
 
