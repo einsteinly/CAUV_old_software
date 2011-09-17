@@ -2,10 +2,13 @@
 
 #include <set>
 
+#include <QGraphicsPathItem>
+
 #include <common/cauv_utils.h>
 
 #include "style.h"
 #include "nodeInput.h"
+#include "button.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -23,6 +26,13 @@ Node::Node(NodeStyle const& style)
     (new NodeInput(m_style, NodeIOType::Image, false, this))->setPos(0,54);
     (new NodeInput(m_style, NodeIOType::Parameter, true, this))->setPos(0,68);
     (new NodeInput(m_style, NodeIOType::Parameter, false, this))->setPos(0,82);
+
+    Button *b = new Button(
+        QRectF(0,0,24,24),
+        QString(":/resources/icons/dup_button"),
+        this
+    );
+    b->setPos(20, 2);
 
     updateLayout();
 }
