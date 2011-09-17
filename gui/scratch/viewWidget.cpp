@@ -6,6 +6,7 @@
 #include "elements/multiArcEnd.h"
 #include "elements/node.h"
 #include "elements/style.h"
+#include "elements/button.h"
 
 #include "cross.h"
 
@@ -87,7 +88,24 @@ ViewWidget::ViewWidget(QWidget* parent)
 
     s->addItem(from_1);
     s->addItem(from_2);
-    s->addItem(from_3);    
+    s->addItem(from_3);
+    
+    Button *b;
+    b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/dup_button"));
+    b->setPos(170,176);
+    s->addItem(b);
+    
+    b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/x_button"));
+    b->setPos(146,176);
+    s->addItem(b);
+    
+    b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"));
+    b->setPos(122,176);
+    s->addItem(b);
+    
+    b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"));
+    b->setPos(98,176);
+    s->addItem(b);
     
     connect(s, SIGNAL(changed(const QList<QRectF>&)),
             this, SLOT(updateScene(const QList<QRectF>&)));

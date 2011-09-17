@@ -34,6 +34,8 @@ struct NodeStyle{
     qreal tl_radius;
     qreal bl_radius;
 
+    qreal header_height;
+
     QPen item_separator_pen;
 
     qreal in_socket_cutout_base;
@@ -91,6 +93,7 @@ const static NodeStyle Node_Style = {
     QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
     QBrush(QColor(243,243,243)),
     24, 24,
+    30,
     QPen(QColor(255,255,255)),
     14*Cut_S, 4*Cut_S, 16*Cut_S,
 

@@ -2,7 +2,6 @@
 #define __CAUV_ELEMENT_NODE_H__
 
 #include <QGraphicsObject>
-#include <QGraphicsPathItem>
 
 namespace cauv{
 namespace gui{
@@ -28,6 +27,9 @@ class Node: public QGraphicsObject{
         //QVector<QGraphicsLineItem*> m_separators;
         
         QGraphicsPathItem* m_back;
+
+        // Header stuff:
+        //NodeHeader* m_header;
 
         NodeStyle const& m_style;
 };
