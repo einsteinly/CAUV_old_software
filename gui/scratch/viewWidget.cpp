@@ -44,12 +44,21 @@ ViewWidget::ViewWidget(QWidget* parent)
     from_1->setPos(-50, 0);
 
     MultiArcStart *from_2 = new MultiArcStart(Image_Arc_Style);
-    from_2->setPos(-50, 30); 
+    from_2->setParentItem(n2);
+    from_2->setPos(104.5, 105);
+    connect(n2, SIGNAL(xChanged()), from_2, SIGNAL(xChanged()));
+    connect(n2, SIGNAL(yChanged()), from_2, SIGNAL(yChanged()));
+
     MultiArcEnd *to_2_1 = new MultiArcEnd(from_2->arc());
     to_2_1->setPos(70, 0); // parent coords
 
+
     MultiArcStart *from_3 = new MultiArcStart(Param_Arc_Style);
-    from_3->setPos(-50, -30);
+    from_3->setParentItem(n3);
+    from_3->setPos(104.5, 105);
+    connect(n3, SIGNAL(xChanged()), from_3, SIGNAL(xChanged()));
+    connect(n3, SIGNAL(yChanged()), from_3, SIGNAL(yChanged()));
+
     MultiArcEnd *to_3_1 = new MultiArcEnd(from_3->arc());
     to_3_1->setPos(70, -5);
 
@@ -60,7 +69,7 @@ ViewWidget::ViewWidget(QWidget* parent)
 
     MultiArcStart *from_4 = new MultiArcStart(Image_Arc_Style);
     from_4->setParentItem(n3);
-    from_4->setPos(80.5, 90);
+    from_4->setPos(104.5, 90);
     connect(n3, SIGNAL(xChanged()), from_4, SIGNAL(xChanged()));
     connect(n3, SIGNAL(yChanged()), from_4, SIGNAL(yChanged()));
     
@@ -86,9 +95,9 @@ ViewWidget::ViewWidget(QWidget* parent)
     connect(n1, SIGNAL(xChanged()), to_4_3, SIGNAL(xChanged()));
     connect(n1, SIGNAL(yChanged()), to_4_3, SIGNAL(yChanged()));
 
-    s->addItem(from_1);
-    s->addItem(from_2);
-    s->addItem(from_3);
+    //s->addItem(from_1);
+    //s->addItem(from_2);
+    //s->addItem(from_3);
     
     Button *b;
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/dup_button"));

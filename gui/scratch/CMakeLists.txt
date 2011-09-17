@@ -11,6 +11,7 @@ set (
     ../gui/core/framework/elements/node.cpp
     ../gui/core/framework/elements/nodeInput.cpp
     ../gui/core/framework/elements/button.cpp
+    ../gui/core/framework/elements/nodeHeader.cpp
 )
 
 set (
@@ -22,6 +23,7 @@ set (
     ../gui/core/framework/elements/multiArcEnd.h
     ../gui/core/framework/elements/node.h
     ../gui/core/framework/elements/button.h
+    ../gui/core/framework/elements/nodeHeader.h
 )
 
 

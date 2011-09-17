@@ -7,6 +7,7 @@ namespace cauv{
 namespace gui{
 
 struct NodeStyle;
+class NodeHeader;
 
 class Node: public QGraphicsObject{
     Q_OBJECT
@@ -29,7 +30,7 @@ class Node: public QGraphicsObject{
         QGraphicsPathItem* m_back;
 
         // Header stuff:
-        //NodeHeader* m_header;
+        NodeHeader* m_header;
 
         NodeStyle const& m_style;
 };

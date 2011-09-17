@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QPen>
 #include <QBrush>
+#include <QFont>
 
 namespace cauv{
 namespace gui{
@@ -27,14 +28,26 @@ struct ArcStyle{
     SingleArcStyle back;
 };
 
+struct TextStyle{
+    QPen   pen;
+    QBrush brush;
+    QFont  font;
+};
+
 struct NodeStyle{
     QPen pen;
     QBrush brush;
 
     qreal tl_radius;
     qreal bl_radius;
-
-    qreal header_height;
+    
+    struct Header_Style{
+        qreal height;
+        QPen pen;
+        QBrush brush; 
+        TextStyle title;
+        TextStyle info;
+    } header;
 
     QPen item_separator_pen;
 
@@ -92,8 +105,21 @@ const static qreal Cut_S = (14/16.0);
 const static NodeStyle Node_Style = {
     QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
     QBrush(QColor(243,243,243)),
-    24, 24,
-    30,
+    24, 24, {
+        30,
+        QPen(Qt::NoPen),
+        QBrush(QColor(0,0,0,160)), {
+            //QPen(QBrush(QColor(0,0,0,64)), 1, Qt::SolidLine, Qt::FlatCap),
+            QPen(Qt::NoPen),
+            QBrush(QColor(255,255,255)),
+            QFont("Verdana", 12, 1)
+        },{
+            QPen(Qt::NoPen),
+            //QPen(QBrush(QColor(0,0,0,64)), 1, Qt::SolidLine, Qt::FlatCap),
+            QBrush(QColor(255,255,255)),
+            QFont("Verdana", 8, 1)
+        }
+    },
     QPen(QColor(255,255,255)),
     14*Cut_S, 4*Cut_S, 16*Cut_S,
 

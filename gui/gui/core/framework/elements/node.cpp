@@ -9,30 +9,28 @@
 #include "style.h"
 #include "nodeInput.h"
 #include "button.h"
+#include "nodeHeader.h"
 
 using namespace cauv;
 using namespace cauv::gui;
 
 Node::Node(NodeStyle const& style)
     : QGraphicsObject(),
-      m_back(new QGraphicsPathItem(this)),
+      m_back(),
+      m_header(),
       m_style(style){
     
     setFlag(ItemIsMovable);
     setFlag(ItemHasNoContents);
+    
+    m_back = new QGraphicsPathItem(this);
+    m_header = new NodeHeader(m_style, this);
 
     //!!!
     (new NodeInput(m_style, NodeIOType::Image, true, this))->setPos(0,40);
     (new NodeInput(m_style, NodeIOType::Image, false, this))->setPos(0,54);
     (new NodeInput(m_style, NodeIOType::Parameter, true, this))->setPos(0,68);
     (new NodeInput(m_style, NodeIOType::Parameter, false, this))->setPos(0,82);
-
-    Button *b = new Button(
-        QRectF(0,0,24,24),
-        QString(":/resources/icons/dup_button"),
-        this
-    );
-    b->setPos(20, 2);
 
     updateLayout();
 }
@@ -59,8 +57,8 @@ void Node::updateLayout(){
 
     QPainterPath p(QPointF(m_style.tl_radius, 0));
     
-    const qreal fake_width = 80;
-    const qreal fake_height = 110;
+    const qreal fake_width = 104;
+    const qreal fake_height = 130;
     
     // !!!
     std::set<qreal> inputs_at;
@@ -71,7 +69,7 @@ void Node::updateLayout(){
 
     p.lineTo(fake_width, 0);
     p.lineTo(fake_width, fake_height);
-    p.lineTo(m_style.tl_radius, fake_height);
+    p.lineTo(m_style.bl_radius, fake_height);
     p.arcTo(
         QRectF(0, fake_height - m_style.bl_radius,
                m_style.bl_radius, m_style.bl_radius),
@@ -91,6 +89,7 @@ void Node::updateLayout(){
     p.lineTo(m_style.tl_radius, 0);
     
     m_back->setPath(p);
+    m_header->setWidth(fake_width);
 }
 
 
