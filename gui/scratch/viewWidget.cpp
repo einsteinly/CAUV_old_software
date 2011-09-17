@@ -22,6 +22,15 @@ ViewWidget::ViewWidget(QWidget* parent)
 
     setScene(s);
 
+    Node *n1 = new Node(Node_Style);
+    n1->setPos(20.5, 100.5);
+
+    Node *n2 = new Node(Node_Style);
+    n2->setPos(-50.5, -100.5);
+    
+    Node *n3 = new Node(Node_Style);
+    n3->setPos(-70.5, -120.5);
+
     setCacheMode(CacheBackground);
     setViewportUpdateMode(MinimalViewportUpdate);
     setRenderHint(QPainter::Antialiasing);
@@ -32,36 +41,53 @@ ViewWidget::ViewWidget(QWidget* parent)
     
     MultiArcStart *from_1 = new MultiArcStart(Image_Arc_Style);
     from_1->setPos(-50, 0);
-    s->addItem(from_1);
 
     MultiArcStart *from_2 = new MultiArcStart(Image_Arc_Style);
     from_2->setPos(-50, 30); 
-    s->addItem(from_2);
     MultiArcEnd *to_2_1 = new MultiArcEnd(from_2->arc());
     to_2_1->setPos(70, 0); // parent coords
 
     MultiArcStart *from_3 = new MultiArcStart(Param_Arc_Style);
     from_3->setPos(-50, -30);
-    s->addItem(from_3);
     MultiArcEnd *to_3_1 = new MultiArcEnd(from_3->arc());
     to_3_1->setPos(70, -5);
 
-    MultiArcStart *from_4 = new MultiArcStart(Image_Arc_Style);
-    from_4->setPos(-50, 50);
-    s->addItem(from_4);
-    MultiArcEnd *to_4_1 = new MultiArcEnd(from_4->arc());
-    to_4_1->setPos(70, 5);
-    MultiArcEnd *to_4_2 = new MultiArcEnd(from_4->arc());
-    to_4_2->setPos(70, 25);
 
-    Node *n1 = new Node(Node_Style);
-    n1->setPos(20.5, 100.5);
     s->addItem(n1);
-
-    Node *n2 = new Node(Node_Style);
-    n1->setPos(-50, -100);
     s->addItem(n2);
+    s->addItem(n3);
 
+    MultiArcStart *from_4 = new MultiArcStart(Image_Arc_Style);
+    from_4->setParentItem(n3);
+    from_4->setPos(80.5, 90);
+    connect(n3, SIGNAL(xChanged()), from_4, SIGNAL(xChanged()));
+    connect(n3, SIGNAL(yChanged()), from_4, SIGNAL(yChanged()));
+    
+
+    MultiArcEnd *to_4_1 = new MultiArcEnd(from_4->arc());
+    to_4_1->setParentItem(n2);
+    to_4_1->setFlag(QGraphicsItem::ItemStacksBehindParent);    
+    to_4_1->setPos(-0.5,68); 
+    connect(n2, SIGNAL(xChanged()), to_4_1, SIGNAL(xChanged()));
+    connect(n2, SIGNAL(yChanged()), to_4_1, SIGNAL(yChanged()));
+
+    MultiArcEnd *to_4_2 = new MultiArcEnd(from_4->arc());
+    to_4_2->setParentItem(n1);
+    to_4_2->setFlag(QGraphicsItem::ItemStacksBehindParent);
+    to_4_2->setPos(-0.5,54);
+    connect(n1, SIGNAL(xChanged()), to_4_2, SIGNAL(xChanged()));
+    connect(n1, SIGNAL(yChanged()), to_4_2, SIGNAL(yChanged()));
+    
+    MultiArcEnd *to_4_3 = new MultiArcEnd(from_4->arc());
+    to_4_3->setParentItem(n1);
+    to_4_3->setFlag(QGraphicsItem::ItemStacksBehindParent);    
+    to_4_3->setPos(-0.5,68);
+    connect(n1, SIGNAL(xChanged()), to_4_3, SIGNAL(xChanged()));
+    connect(n1, SIGNAL(yChanged()), to_4_3, SIGNAL(yChanged()));
+
+    s->addItem(from_1);
+    s->addItem(from_2);
+    s->addItem(from_3);    
     
     connect(s, SIGNAL(changed(const QList<QRectF>&)),
             this, SLOT(updateScene(const QList<QRectF>&)));

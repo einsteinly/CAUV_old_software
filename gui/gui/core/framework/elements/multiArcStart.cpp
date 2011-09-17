@@ -45,7 +45,8 @@ ArcStyle const& MultiArcStart::style() const{
 
 // QGraphicsItem required:
 QRectF MultiArcStart::boundingRect() const{
-    return QRectF();
+    // otherwise we can't receive mouse events and be movable
+    return m_back_line->boundingRect();
 }
 void MultiArcStart::paint(QPainter *painter,
                           const QStyleOptionGraphicsItem *opt,

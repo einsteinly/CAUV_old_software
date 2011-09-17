@@ -9,6 +9,7 @@ set (
     ../gui/core/framework/elements/multiArcStart.cpp
     ../gui/core/framework/elements/multiArcEnd.cpp
     ../gui/core/framework/elements/node.cpp
+    ../gui/core/framework/elements/nodeInput.cpp
 )
 
 set (

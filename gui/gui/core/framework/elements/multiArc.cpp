@@ -107,7 +107,7 @@ QRectF MultiArc::boundingRect() const{
 }
 
 void MultiArc::updateLayout(){
-    prepareGeometryChange();
+
     // we draw in m_from's coordinate system (it is this's parent)
     QPointF start_point = m_from->connectionPoint();
     QPointF split_point = start_point + QPointF(8,0);

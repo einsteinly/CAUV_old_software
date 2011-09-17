@@ -5,36 +5,59 @@
 #include <common/cauv_utils.h>
 
 #include "style.h"
+#include "nodeInput.h"
 
 using namespace cauv;
 using namespace cauv::gui;
 
 Node::Node(NodeStyle const& style)
-    : QObject(),
-      QGraphicsPathItem(),
+    : QGraphicsObject(),
+      m_back(new QGraphicsPathItem(this)),
       m_style(style){
     
     setFlag(ItemIsMovable);
+    setFlag(ItemHasNoContents);
+
+    //!!!
+    (new NodeInput(m_style, NodeIOType::Image, true, this))->setPos(0,40);
+    (new NodeInput(m_style, NodeIOType::Image, false, this))->setPos(0,54);
+    (new NodeInput(m_style, NodeIOType::Parameter, true, this))->setPos(0,68);
+    (new NodeInput(m_style, NodeIOType::Parameter, false, this))->setPos(0,82);
 
     updateLayout();
 }
 
+QRectF Node::boundingRect() const{
+    // otherwise this's would never receive mouse events, and it needs to in
+    // order to be movable
+    return m_back->boundingRect();
+}
+
+void Node::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidget *w){
+    // don't draw anything, ItemHasNoContents flag is set
+    Q_UNUSED(p);
+    Q_UNUSED(o);
+    Q_UNUSED(w);
+}
 
 void Node::updateLayout(){
-    prepareGeometryChange();
+    // since this's geometry hangs off m_back:
+    this->prepareGeometryChange();
     
-    setPen(m_style.pen);
-    setBrush(m_style.brush);
+    m_back->setPen(m_style.pen);
+    m_back->setBrush(m_style.brush);
 
     QPainterPath p(QPointF(m_style.tl_radius, 0));
     
     const qreal fake_width = 80;
     const qreal fake_height = 110;
-
+    
+    // !!!
     std::set<qreal> inputs_at;
     inputs_at.insert(40);
-    inputs_at.insert(60);
-    inputs_at.insert(80);
+    inputs_at.insert(54);
+    inputs_at.insert(68);
+    inputs_at.insert(82);
 
     p.lineTo(fake_width, 0);
     p.lineTo(fake_width, fake_height);
@@ -57,7 +80,7 @@ void Node::updateLayout(){
 
     p.lineTo(m_style.tl_radius, 0);
     
-    setPath(p);
+    m_back->setPath(p);
 }
 
 
