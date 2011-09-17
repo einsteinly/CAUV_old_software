@@ -5,6 +5,8 @@
 #include <QPluginLoader>
 #include <QSettings>
 
+#include <QPushButton>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
@@ -97,6 +99,14 @@ void CauvMainWindow::onRun()
     arc1->setPen(QPen(QColor(255, 158, 57)));
     arc2->setPen(QPen(QColor(255, 158, 57)));
     arc3->setPen(QPen(QColor(255, 158, 57)));
+
+    QGraphicsProxyWidget * pw = new QGraphicsProxyWidget();
+    pw->setWidget(new QPushButton("hello"));
+    w2->addItem(pw);
+
+    QGraphicsProxyWidget * pw2 = new QGraphicsProxyWidget();
+    pw2->setWidget(new QPushButton("hello"));
+    w4->addItem(pw2);
 
     m_actions->scene->addItem(w1);
     m_actions->scene->addItem(w2);

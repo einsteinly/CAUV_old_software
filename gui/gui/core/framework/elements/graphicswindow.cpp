@@ -92,10 +92,13 @@ GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
         m_backgroundPen(QPen(QColor(190, 190, 190))),
         m_backgroundBrush(QColor(238, 238, 238)),
         m_buttonsWidget(new QGraphicsWidget(this)),
-        m_layout(new QGraphicsLinearLayout(Qt::Horizontal))
+        m_layout(new QGraphicsLinearLayout(Qt::Horizontal)),
+        m_contentWidget(new QGraphicsWidget(this)),
+        m_contentLayout(new QGraphicsLinearLayout(Qt::Vertical))
 {
     m_buttonsWidget->setLayout(m_layout);
     m_layout->addStretch(100);
+    m_contentWidget->setLayout(m_contentLayout);
 
     setSize(QSizeF(200, 200));
     setCursor(Qt::ArrowCursor);
@@ -139,6 +142,10 @@ void GraphicsWindow::addButton(GraphicsWindowButton * button){
     m_layout->addItem(button);
 }
 
+void GraphicsWindow::addItem(QGraphicsLayoutItem * item){
+    m_contentLayout->addItem(item);
+}
+
 QSizeF GraphicsWindow::size() const{
     return m_size;
 }
@@ -148,6 +155,7 @@ void GraphicsWindow::setSize(QSizeF const& size){
     m_size = size;
     m_buttonsWidget->setGeometry((cornerRadius()/2), -17,
                                  size.width()-(cornerRadius()/2), 30);
+    m_contentWidget->setGeometry(0, 5, size.width(), size.height()-(cornerRadius()/2));
     update(boundingRect());
     Q_EMIT boundriesChanged();
 }
@@ -215,6 +223,8 @@ QRectF GraphicsWindow::boundingRect() const{
 }
 
 void GraphicsWindow::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget *){
+
+    Q_UNUSED(option);
 
     QBrush brush = backgroundBrush();
     if(isSelected()){

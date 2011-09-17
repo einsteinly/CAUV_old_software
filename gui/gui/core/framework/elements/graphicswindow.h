@@ -65,6 +65,7 @@ namespace cauv {
             virtual void setBackgroundBrush(QBrush const&);
 
             virtual void addButton(GraphicsWindowButton * button);
+            virtual void addItem(QGraphicsLayoutItem* item);
 
             virtual void setClosable(bool);
             virtual void setResizable(bool);
@@ -81,6 +82,10 @@ namespace cauv {
             QGraphicsLinearLayout * m_layout;
             GraphicsWindowButton * m_closeButton;
             ResizeHandle * m_resizeHandle;
+
+            QGraphicsWidget * m_contentWidget;
+            QGraphicsLinearLayout * m_contentLayout;
+
 
         signals:
 
