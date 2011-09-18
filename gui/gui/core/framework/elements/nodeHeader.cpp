@@ -29,16 +29,16 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     setFlag(ItemHasNoContents);
 
     m_closebutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/x_button"), this
+       QRectF(0,0,24,24), QString(":/resources/icons/x_button"), NULL, this
     );
     m_collapsebutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), this
+       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
     );
     m_execbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), this
+       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
     );
     m_dupbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), this
+       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
     );
     m_closebutton->setFlag(ItemIgnoresParentOpacity);
     m_collapsebutton->setFlag(ItemIgnoresParentOpacity);

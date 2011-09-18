@@ -4,13 +4,19 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QTimer>
+#include <QAbstractGraphicsShapeItem>
 
 using namespace cauv;
 using namespace cauv::gui;
 
-Button::Button(QRectF clip, QString base_fname, QGraphicsItem *parent)
-    : QGraphicsObject(parent), m_clip(clip), m_default(), m_hover(), m_pressed(){
+Button::Button(QRectF clip,
+               QString base_fname,
+               QAbstractGraphicsShapeItem *back_item,
+               QGraphicsItem *parent)
+    : QGraphicsWidget(parent), m_clip(clip), m_default(), m_hover(),
+      m_pressed(), m_background(back_item){
     setAcceptHoverEvents(true);
+    setHandlesChildEvents(true);
     setFlag(ItemClipsChildrenToShape);
 
     m_default = loadPix(base_fname + ".png");
@@ -21,14 +27,55 @@ Button::Button(QRectF clip, QString base_fname, QGraphicsItem *parent)
     m_pressed->hide();
 }
 
-QRectF Button::boundingRect() const{
-    return m_clip;
+Button::Button(QRectF clip,
+               QGraphicsItem *default_item,
+               QGraphicsItem *hover_item,
+               QGraphicsItem *pressed_item,
+               QAbstractGraphicsShapeItem *back_item,
+               QGraphicsItem *parent)
+    : QGraphicsWidget(parent),
+      m_clip(clip),
+      m_default(default_item),
+      m_hover(hover_item),
+      m_pressed(pressed_item),
+      m_background(back_item){
+
+    setAcceptHoverEvents(true);
+    setHandlesChildEvents(true);
+
+    default_item->setParentItem(this);
+    
+    if(m_hover)
+        m_hover->hide();
+    if(m_pressed)
+        m_pressed->hide();
+
+    if(!m_background){
+        m_background = new QGraphicsEllipseItem(0, 0, clip.width(), clip.height(), this);
+        m_background->setFlag(ItemStacksBehindParent);
+        m_background->setBrush(QBrush(Qt::white));
+    }
+    
 }
 
-void Button::paint(QPainter *p, const QStyleOptionGraphicsItem *o, QWidget *w){
-    Q_UNUSED(p);
-    Q_UNUSED(o);
-    Q_UNUSED(w);
+void Button::setPen(QPen pen){
+    if(m_background)
+        m_background->setPen(pen);
+}
+
+void Button::setBrush(QBrush brush){
+    if(m_background)
+        m_background->setBrush(brush);
+}
+
+QSizeF Button::sizeHint(Qt::SizeHint which, const QSizeF &constraint) const{
+    Q_UNUSED(which);
+    Q_UNUSED(constraint);
+    return m_clip.size();
+}
+
+QRectF Button::boundingRect() const{
+    return m_clip;
 }
 
 QPainterPath Button::shape() const{
@@ -40,25 +87,37 @@ QPainterPath Button::shape() const{
 
 void Button::hoverEnterEvent(QGraphicsSceneHoverEvent *event){
     Q_UNUSED(event);
-    if(!m_pressed->isVisible()){
-        m_hover->show();
-        m_default->hide();
+    if(!m_pressed || !m_pressed->isVisible()){
+        if(m_hover){
+            m_hover->show();
+            m_default->hide();
+        }
+        if(m_background){
+            m_background->setBrush(QBrush(m_background->brush().color().darker(103)));
+        }
     }
 }
 
 void Button::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
     Q_UNUSED(event);
-    if(m_hover->isVisible()){
-        m_default->show();
-        m_hover->hide();        
-    }
+    if(m_hover && m_hover->isVisible())
+        m_hover->hide();
+    m_default->show();
+    if(m_background)
+        m_background->setBrush(QBrush(m_background->brush().color().lighter(103)));
 }
 
 void Button::mousePressEvent(QGraphicsSceneMouseEvent *event){
     Q_UNUSED(event);
-    m_hover->hide();
-    m_default->hide();
-    m_pressed->show();
+    if(m_hover)
+        m_hover->hide();
+    if(m_pressed){
+        m_default->hide();
+        m_pressed->show();
+    }
+    if(m_background){
+        m_background->setBrush(QBrush(m_background->brush().color().darker(105)));
+    }
 }
 
 void Button::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
@@ -71,15 +130,23 @@ void Button::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
         Q_EMIT(pressed());
         QTimer::singleShot(120, this, SLOT(delayedRaise()));
     }else{
-        m_pressed->hide();
-        m_hover->hide();
+        if(m_pressed)
+            m_pressed->hide();
+        if(m_hover && m_hover->isVisible())
+            m_hover->hide();
         m_default->show();
     }
 }
 
 void Button::delayedRaise(){
-    m_pressed->hide();
-    m_hover->show();
+    if(m_pressed)
+        m_pressed->hide();
+    if(m_hover)
+        m_hover->show();
+    else
+        m_default->show();
+    if(m_background)
+        m_background->setBrush(QBrush(m_background->brush().color().lighter(105)));
 }
 
 QGraphicsPixmapItem* Button::loadPix(QString n){

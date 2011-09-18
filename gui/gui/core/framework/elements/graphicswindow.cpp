@@ -12,6 +12,7 @@
 #include <debug/cauv_debug.h>
 
 #include "resize.h"
+#include "elements/button.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -41,50 +42,6 @@ protected:
 };
 
 
-GraphicsWindowButton::GraphicsWindowButton(QGraphicsItem * item, qreal width, qreal height) :
-        m_item(item), m_background(new QGraphicsEllipseItem(0, 0, width, height, this)) {
-
-    m_background->setBrush(QBrush(Qt::white));
-    item->setParentItem(m_background);
-
-    this->setHandlesChildEvents(true);
-    this->setAcceptHoverEvents(true);
-}
-
-GraphicsWindowButton::~GraphicsWindowButton() {
-    debug(2) << "~GraphicsWindowButton()";
-}
-
-QSizeF GraphicsWindowButton::sizeHint(Qt::SizeHint, const QSizeF &) const {
-    return m_background->rect().size();
-}
-
-void GraphicsWindowButton::setPen(QPen const& pen){
-    m_background->setPen(pen);
-}
-
-void GraphicsWindowButton::hoverEnterEvent(QGraphicsSceneHoverEvent *){
-    setCursor(Qt::PointingHandCursor);
-    m_background->setBrush(QBrush(m_background->brush().color().darker(103)));
-    update(boundingRect());
-}
-
-void GraphicsWindowButton::hoverLeaveEvent(QGraphicsSceneHoverEvent *){
-    setCursor(Qt::PointingHandCursor);
-    m_background->setBrush(QBrush(m_background->brush().color().lighter(103)));
-    update(boundingRect());
-}
-
-void GraphicsWindowButton::mousePressEvent(QGraphicsSceneMouseEvent *){
-    m_background->setBrush(QBrush(m_background->brush().color().darker(105)));
-    update(boundingRect());
-}
-
-void GraphicsWindowButton::mouseReleaseEvent(QGraphicsSceneMouseEvent *){
-    m_background->setBrush(QBrush(m_background->brush().color().lighter(105)));
-
-    Q_EMIT pressed();
-}
 
 
 GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
@@ -114,7 +71,7 @@ GraphicsWindow::GraphicsWindow(QGraphicsItem *parent) :
     pen.setCapStyle(Qt::RoundCap);
     pen.setWidthF(2.2);
     cross->setPen(pen);
-    m_closeButton = new GraphicsWindowButton(cross);
+    m_closeButton = new Button(QRectF(0,0,20,20), cross);
     addButton(m_closeButton);
     connect(m_closeButton, SIGNAL(pressed()), this, SLOT(close()));
 
@@ -137,7 +94,7 @@ GraphicsWindow::~GraphicsWindow(){
     debug(2) << "~GraphicsWindow()";
 }
 
-void GraphicsWindow::addButton(GraphicsWindowButton * button){
+void GraphicsWindow::addButton(Button * button){
     button->setPen(m_backgroundPen);
     m_layout->addItem(button);
 }

@@ -17,31 +17,7 @@ namespace cauv {
     namespace gui {
 
         class ResizeHandle;
-
-        class GraphicsWindowButton : public QGraphicsWidget {
-            Q_OBJECT
-
-        public:
-
-            GraphicsWindowButton(QGraphicsItem * item, qreal width = 20, qreal height = 20);
-            virtual ~GraphicsWindowButton();
-
-            virtual QSizeF sizeHint(Qt::SizeHint which, const QSizeF &constraint = QSizeF()) const;
-            void setPen(QPen const& pen);
-
-            void hoverEnterEvent(QGraphicsSceneHoverEvent *);
-            void hoverLeaveEvent(QGraphicsSceneHoverEvent *);
-            void mousePressEvent(QGraphicsSceneMouseEvent *);
-            void mouseReleaseEvent(QGraphicsSceneMouseEvent *);
-
-        Q_SIGNALS:
-            void pressed();
-
-        protected:
-            QGraphicsItem * m_item;
-            QGraphicsEllipseItem * m_background;
-        };
-
+        class Button;
 
         class GraphicsWindow : public QGraphicsObject, public ConnectableInterface
         {
@@ -64,7 +40,7 @@ namespace cauv {
             virtual QBrush backgroundBrush() const;
             virtual void setBackgroundBrush(QBrush const&);
 
-            virtual void addButton(GraphicsWindowButton * button);
+            virtual void addButton(Button * button);
             virtual void addItem(QGraphicsLayoutItem* item);
 
             virtual void setClosable(bool);
@@ -80,7 +56,7 @@ namespace cauv {
 
             QGraphicsWidget * m_buttonsWidget;
             QGraphicsLinearLayout * m_layout;
-            GraphicsWindowButton * m_closeButton;
+            Button * m_closeButton;
             ResizeHandle * m_resizeHandle;
 
             QGraphicsWidget * m_contentWidget;
