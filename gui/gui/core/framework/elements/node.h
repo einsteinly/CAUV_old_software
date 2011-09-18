@@ -3,16 +3,19 @@
 
 #include <QGraphicsObject>
 
+#include "fluidité/managedElement.h"
+
 namespace cauv{
 namespace gui{
 
 struct NodeStyle;
 class NodeHeader;
 
-class Node: public QGraphicsObject{
+class Node: public QGraphicsObject,
+            public ManagedElement{
     Q_OBJECT
     public:
-        Node(NodeStyle const& style);
+        Node(Manager& m, NodeStyle const& style);
         
         //void populate(...);
 

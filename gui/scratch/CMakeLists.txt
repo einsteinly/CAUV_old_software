@@ -12,6 +12,9 @@ set (
     ../gui/core/framework/elements/nodeInput.cpp
     ../gui/core/framework/elements/button.cpp
     ../gui/core/framework/elements/nodeHeader.cpp
+
+    ../gui/core/framework/fluidité/managedElement.cpp
+    ../gui/core/framework/fluidité/manager.cpp
 )
 
 set (
@@ -24,6 +27,8 @@ set (
     ../gui/core/framework/elements/node.h
     ../gui/core/framework/elements/button.h
     ../gui/core/framework/elements/nodeHeader.h
+
+    ../gui/core/framework/fluidité/manager.h
 )
 
 

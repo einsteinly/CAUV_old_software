@@ -26,7 +26,10 @@ static QGraphicsPolygonItem* endArrow(ArcStyle::SingleArcStyle const& s, QGraphi
 }
 
 MultiArcEnd::MultiArcEnd(MultiArc* arc, bool ephemeral)
-    : m_arc(arc),
+    : QGraphicsObject(),
+      ConnectableInterface(),
+      ManagedElement(*arc),
+      m_arc(arc),
       m_back_poly(),
       m_front_poly(),
       m_ephemeral(ephemeral),

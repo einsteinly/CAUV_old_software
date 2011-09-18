@@ -3,6 +3,8 @@
 
 #include <QPen>
 
+#include "fluidité/managedElement.h"
+
 #include "arc.h"
 #include "style.h"
 
@@ -13,7 +15,8 @@ class MultiArc;
 struct ArcStyle;
 
 class MultiArcEnd: public QGraphicsObject,
-                     public ConnectableInterface{
+                   public ConnectableInterface,
+                   public ManagedElement{
     Q_OBJECT
     /*private:
         const static qreal Length;

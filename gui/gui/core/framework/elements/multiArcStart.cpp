@@ -4,13 +4,16 @@
 using namespace cauv;
 using namespace gui;
 
-MultiArcStart::MultiArcStart(ArcStyle const& style)
-    : m_arc(), m_front_line(), m_back_line(), m_style(style){
+MultiArcStart::MultiArcStart(ManagedElement const& m, ArcStyle const& style)
+    : QGraphicsObject(),
+      ConnectableInterface(),
+      ManagedElement(m),
+      m_arc(), m_front_line(), m_back_line(), m_style(style){
 
     setFlag(ItemHasNoContents);
     setFlag(ItemIsMovable);    
 
-    m_arc = new MultiArc(style, this, NULL);
+    m_arc = new MultiArc(*this, style, this, NULL);
     m_back_line = new QGraphicsLineItem(-m_style.back.start_length,0,0,0,this);
     m_front_line = new QGraphicsLineItem(-m_style.front.start_length,0,0,0,this);
     

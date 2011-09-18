@@ -61,7 +61,9 @@ set ( GUI_CORE_SRCS
     framework/elements/nodeHeader.cpp
     utils/noderecorder.cpp
     
-    framework/fluidité/view.cpp
+    framework/fluidité/view.cpp 
+    framework/fluidité/managedElement.cpp
+    framework/fluidité/manager.cpp
     )
 
 set ( GUI_CORE_UIS
@@ -98,6 +100,7 @@ set ( GUI_CORE_H
     framework/elements/nodeHeader.h
 
     framework/fluidité/view.h
+    framework/fluidité/manager.h
     )
 
 set ( GUI_CORE_RCC

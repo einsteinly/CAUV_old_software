@@ -18,11 +18,13 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-MultiArc::MultiArc(ArcStyle const& style,
+MultiArc::MultiArc(ManagedElement const& m,
+                   ArcStyle const& style,
                    ConnectableInterface *from,
                    ConnectableInterface *to)
     : QObject(),
       QGraphicsPathItem(),
+      ManagedElement(m),
       m_to(),
       m_from(from),
       m_front(new QGraphicsPathItem(this)),

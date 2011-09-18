@@ -8,7 +8,8 @@
 #include "elements/style.h"
 #include "elements/button.h"
 
-//#include "cross.h"
+#include "fluidité/managedElement.h"
+#include "fluidité/manager.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -23,13 +24,15 @@ FView::FView(QWidget* parent)
 
     setScene(s);
 
-    Node *n1 = new Node(Node_Style);
+    Manager m(s, NULL);
+
+    Node *n1 = new Node(m, Node_Style);
     n1->setPos(20.5, 100.5);
 
-    Node *n2 = new Node(Node_Style);
+    Node *n2 = new Node(m, Node_Style);
     n2->setPos(-50.5, -100.5);
     
-    Node *n3 = new Node(Node_Style);
+    Node *n3 = new Node(m, Node_Style);
     n3->setPos(-70.5, -120.5);
 
     setCacheMode(CacheBackground);
@@ -40,10 +43,10 @@ FView::FView(QWidget* parent)
     setMinimumSize(400, 400);
     setWindowTitle("QGraphicsScene Element Test");
     
-    MultiArcStart *from_1 = new MultiArcStart(Image_Arc_Style);
+    MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
     from_1->setPos(-50, 0);
 
-    MultiArcStart *from_2 = new MultiArcStart(Image_Arc_Style);
+    MultiArcStart *from_2 = new MultiArcStart(*n2, Image_Arc_Style);
     from_2->setParentItem(n2);
     from_2->setPos(104.5, 105);
     connect(n2, SIGNAL(xChanged()), from_2, SIGNAL(xChanged()));
@@ -53,7 +56,7 @@ FView::FView(QWidget* parent)
     to_2_1->setPos(70, 0); // parent coords
 
 
-    MultiArcStart *from_3 = new MultiArcStart(Param_Arc_Style);
+    MultiArcStart *from_3 = new MultiArcStart(*n3, Param_Arc_Style);
     from_3->setParentItem(n3);
     from_3->setPos(104.5, 105);
     connect(n3, SIGNAL(xChanged()), from_3, SIGNAL(xChanged()));
@@ -67,7 +70,7 @@ FView::FView(QWidget* parent)
     s->addItem(n2);
     s->addItem(n3);
 
-    MultiArcStart *from_4 = new MultiArcStart(Image_Arc_Style);
+    MultiArcStart *from_4 = new MultiArcStart(*n3, Image_Arc_Style);
     from_4->setParentItem(n3);
     from_4->setPos(104.5, 90);
     connect(n3, SIGNAL(xChanged()), from_4, SIGNAL(xChanged()));

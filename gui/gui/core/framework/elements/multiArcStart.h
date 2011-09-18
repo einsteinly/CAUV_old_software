@@ -3,16 +3,19 @@
 
 #include <QPen>
 
+#include "fluidité/managedElement.h"
+
 #include "multiArc.h"
 
 namespace cauv{
 namespace gui{
 
 class MultiArcStart: public QGraphicsObject,
-                     public ConnectableInterface{
+                     public ConnectableInterface,
+                     public ManagedElement{
     Q_OBJECT
     public:
-        MultiArcStart(ArcStyle const&);
+        MultiArcStart(ManagedElement const& m, ArcStyle const&);
         //~MultiArcStart(); // children deleted by ~QGraphicsItem
 
         MultiArc* arc() const;

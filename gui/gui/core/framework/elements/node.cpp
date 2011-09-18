@@ -14,8 +14,9 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-Node::Node(NodeStyle const& style)
+Node::Node(Manager& m, NodeStyle const& style)
     : QGraphicsObject(),
+      ManagedElement(m),
       m_back(),
       m_header(),
       m_style(style){

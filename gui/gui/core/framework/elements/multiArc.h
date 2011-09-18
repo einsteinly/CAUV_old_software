@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QGraphicsPathItem>
 
+#include "fluidité/managedElement.h"
+
 #include "arc.h"
 
 namespace cauv{
@@ -13,12 +15,14 @@ class MultiArcEnd;
 struct ArcStyle;
 
 class MultiArc : public QObject,
-                 public QGraphicsPathItem {
+                 public QGraphicsPathItem,
+                 public ManagedElement{
         Q_OBJECT
     public:
         // From is used as parent. Magics are done so that coordinates are all
         // relative to parent for drawing.
-        MultiArc(ArcStyle const& style,
+        MultiArc(ManagedElement const& m,
+                 ArcStyle const& style,
                  ConnectableInterface *from,
                  ConnectableInterface *to=NULL);
         
