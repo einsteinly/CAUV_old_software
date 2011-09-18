@@ -16,7 +16,7 @@ Button::Button(QRectF clip,
     : QGraphicsWidget(parent), m_clip(clip), m_default(), m_hover(),
       m_pressed(), m_background(back_item){
     setAcceptHoverEvents(true);
-    setHandlesChildEvents(true);
+    //setHandlesChildEvents(true);
     setFlag(ItemClipsChildrenToShape);
 
     m_default = loadPix(base_fname + ".png");
@@ -41,7 +41,7 @@ Button::Button(QRectF clip,
       m_background(back_item){
 
     setAcceptHoverEvents(true);
-    setHandlesChildEvents(true);
+    //setHandlesChildEvents(true);
 
     default_item->setParentItem(this);
     
@@ -87,7 +87,7 @@ QPainterPath Button::shape() const{
 
 void Button::hoverEnterEvent(QGraphicsSceneHoverEvent *event){
     Q_UNUSED(event);
-    if(!m_pressed || !m_pressed->isVisible()){
+    if((!m_pressed) || (!m_pressed->isVisible())){
         if(m_hover){
             m_hover->show();
             m_default->hide();
@@ -100,7 +100,7 @@ void Button::hoverEnterEvent(QGraphicsSceneHoverEvent *event){
 
 void Button::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
     Q_UNUSED(event);
-    if(m_hover && m_hover->isVisible())
+    if(m_hover)
         m_hover->hide();
     m_default->show();
     if(m_background)
@@ -114,6 +114,8 @@ void Button::mousePressEvent(QGraphicsSceneMouseEvent *event){
     if(m_pressed){
         m_default->hide();
         m_pressed->show();
+    }else{
+        m_default->show();
     }
     if(m_background){
         m_background->setBrush(QBrush(m_background->brush().color().darker(105)));
@@ -132,7 +134,7 @@ void Button::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
     }else{
         if(m_pressed)
             m_pressed->hide();
-        if(m_hover && m_hover->isVisible())
+        if(m_hover)
             m_hover->hide();
         m_default->show();
     }
@@ -141,9 +143,10 @@ void Button::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
 void Button::delayedRaise(){
     if(m_pressed)
         m_pressed->hide();
-    if(m_hover)
+    if(m_hover){
         m_hover->show();
-    else
+        m_default->hide();
+    }else
         m_default->show();
     if(m_background)
         m_background->setBrush(QBrush(m_background->brush().color().lighter(105)));
