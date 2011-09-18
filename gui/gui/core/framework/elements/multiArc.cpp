@@ -66,7 +66,9 @@ void MultiArc::removeTo(ConnectableInterface* to){
 
 void MultiArc::mousePressEvent(QGraphicsSceneMouseEvent *event){
     if(event->button() & Qt::LeftButton){
-        assert(!m_ephemeral_arc_end);
+        if(m_ephemeral_arc_end)
+            error() << "unmatched mousePressEvent";
+        //assert(!m_ephemeral_arc_end);
         m_ephemeral_arc_end = new MultiArcEnd(this, true);
         // in item (this) coordinates (this is now parent of new end):
         // whole pixels matters!

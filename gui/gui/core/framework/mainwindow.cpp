@@ -19,6 +19,8 @@
 #include "../framework/nodepicker.h"
 #include "../framework/elements/arc.h"
 
+#include "fluidité/view.h"
+
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
@@ -102,11 +104,13 @@ void CauvMainWindow::onRun()
 
     QGraphicsProxyWidget * pw = new QGraphicsProxyWidget();
     pw->setWidget(new QPushButton("hello"));
-    w2->addItem(pw);
+    w4->addItem(pw);
 
     QGraphicsProxyWidget * pw2 = new QGraphicsProxyWidget();
-    pw2->setWidget(new QPushButton("hello"));
-    w4->addItem(pw2);
+    FView *pipeline_test_view = new FView();
+    pw2->setWidget(pipeline_test_view);
+    w2->addItem(pw2);
+    w2->setSize(pw2->boundingRect().size() * 1.05);
 
     m_actions->scene->addItem(w1);
     m_actions->scene->addItem(w2);
@@ -117,6 +121,7 @@ void CauvMainWindow::onRun()
     w3->setParentItem(w1);
     w4->setParentItem(w3);
     w2->setClosable(false);
+    w2->setResizable(true);
     w4->setResizable(true);
 
     w2->setPos(-250, 0);
@@ -146,6 +151,7 @@ void CauvMainWindow::onRun()
     QGraphicsProxyWidget * proxy = m_actions->scene->addWidget(v);
     proxy->setObjectName("proxy object");
 */
+
     // message input
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));

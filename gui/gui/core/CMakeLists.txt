@@ -52,7 +52,16 @@ set ( GUI_CORE_SRCS
     framework/elements/graphicswindow.cpp
     framework/elements/resize.cpp
     framework/elements/arc.cpp
+    framework/elements/multiArc.cpp
+    framework/elements/multiArcStart.cpp
+    framework/elements/multiArcEnd.cpp
+    framework/elements/node.cpp
+    framework/elements/nodeInput.cpp
+    framework/elements/button.cpp
+    framework/elements/nodeHeader.cpp
     utils/noderecorder.cpp
+    
+    framework/fluidité/view.cpp
     )
 
 set ( GUI_CORE_UIS
@@ -80,9 +89,19 @@ set ( GUI_CORE_H
     framework/elements/graphicswindow.h
     framework/elements/resize.h
     framework/elements/arc.h
+    framework/elements/multiArc.h
+    framework/elements/multiArcStart.h
+    framework/elements/multiArcEnd.h
+    framework/elements/node.h
+    #framework/elements/nodeInput.h
+    framework/elements/button.h
+    framework/elements/nodeHeader.h
+
+    framework/fluidité/view.h
     )
 
 set ( GUI_CORE_RCC
+    ../resources.qrc
     )
 
 qt4_wrap_ui (GUI_CORE_UIS_H ${GUI_CORE_UIS})
