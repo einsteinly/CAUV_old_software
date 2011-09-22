@@ -62,6 +62,51 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         void onStatusPacket(boost::shared_ptr<CGemStatusPacket const> status_packet){
             // state transitions to manage the connection:
             // uninitialised
+            debug() << "onStatusPacket:"
+                    << "m_firmwareVer =" << status_packet->m_firmwareVer
+                    << "m_sonarId =" << status_packet->m_sonarId
+                    << "m_sonarFixIp =" << status_packet->m_sonarFixIp
+                    << "m_sonarAltIp =" << status_packet->m_sonarAltIp
+                    << "m_surfaceIp =" << status_packet->m_surfaceIp
+                    << "m_flags =" << status_packet->m_flags
+                    << "m_vccInt =" << status_packet->m_vccInt
+                    << "m_vccAux =" << status_packet->m_vccAux
+                    << "m_dcVolt =" << status_packet->m_dcVolt
+                    << "m_dieTemp =" << status_packet->m_dieTemp
+                    << "m_tempX =" << status_packet->m_tempX
+                    << "m_vga1aTemp =" << status_packet->m_vga1aTemp
+                    << "m_vga1bTemp =" << status_packet->m_vga1bTemp
+                    << "m_vga2aTemp =" << status_packet->m_vga2aTemp
+                    << "m_vga2bTemp =" << status_packet->m_vga2bTemp
+                    << "m_psu1Temp =" << status_packet->m_psu1Temp
+                    << "m_psu2Temp =" << status_packet->m_psu2Temp
+                    << "m_currentTimestampL =" << status_packet->m_currentTimestampL
+                    << "m_currentTimestampH =" << status_packet->m_currentTimestampH
+                    << "m_transducerFrequency =" << status_packet->m_transducerFrequency
+                    << "m_subnetMask =" << status_packet->m_subnetMask
+                    << "m_TX1Temp =" << status_packet->m_TX1Temp
+                    << "m_TX2Temp =" << status_packet->m_TX2Temp
+                    << "m_TX3Temp =" << status_packet->m_TX3Temp
+                    << "m_BOOTSTSRegister =" << status_packet->m_BOOTSTSRegister
+                    << "m_shutdownStatus =" << status_packet->m_shutdownStatus
+                    << "m_dieOverTemp =" << status_packet->m_dieOverTemp
+                    << "m_vga1aShutdownTemp =" << status_packet->m_vga1aShutdownTemp
+                    << "m_vga1bShutdownTemp =" << status_packet->m_vga1bShutdownTemp
+                    << "m_vga2aShutdownTemp =" << status_packet->m_vga2aShutdownTemp
+                    << "m_vga2bShutdownTemp =" << status_packet->m_vga2bShutdownTemp
+                    << "m_psu1ShutdownTemp =" << status_packet->m_psu1ShutdownTemp
+                    << "m_psu2ShutdownTemp =" << status_packet->m_psu2ShutdownTemp
+                    << "m_TX1ShutdownTemp =" << status_packet->m_TX1ShutdownTemp
+                    << "m_TX2ShutdownTemp =" << status_packet->m_TX2ShutdownTemp
+                    << "m_TX3ShutdownTemp =" << status_packet->m_TX3ShutdownTemp
+                    << "m_linkType =" << status_packet->m_linkType
+                    << "m_VDSLDownstreamSpeed1 =" << status_packet->m_VDSLDownstreamSpeed1
+                    << "m_VDSLDownstreamSpeed2 =" << status_packet->m_VDSLDownstreamSpeed2
+                    << "m_macAddress1 =" << status_packet->m_macAddress1
+                    << "m_macAddress2 =" << status_packet->m_macAddress2
+                    << "m_macAddress3 =" << status_packet->m_macAddress3
+                    << "m_VDSLUpstreamSpeed1 =" << status_packet->m_VDSLUpstreamSpeed1
+                    << "m_VDSLUpstreamSpeed2 =" << status_packet->m_VDSLUpstreamSpeed2;
             if(m_conn_state.sonarId == 0){
                 if(status_packet){
                     m_conn_state.sonarId = status_packet->m_sonarId;

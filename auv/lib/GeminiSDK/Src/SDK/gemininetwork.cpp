@@ -508,7 +508,8 @@ bool CGeminiNetwork::CreateSocketRX()
   int     err;
   int     socketResult;
   DWORD   off         = 0;
-	DWORD   receiveSize = 0xffffff; // 16M  receive buffer
+  DWORD   receiveSize = 0x10000; // 64K receive buffer
+	//DWORD   receiveSize = 0xffffff; // 16M  receive buffer
 
   sockaddr_in socketAddress;
 
@@ -644,7 +645,8 @@ bool CGeminiNetwork::CreateSocketTX(bool InitWSA)
   int     err;
   int     socketResult;
   DWORD   off         = 0;
-	DWORD   receiveSize = 0xffffff; // 16M  receive buffer
+  DWORD   receiveSize = 0x10000; // 64K receive buffer 
+	//DWORD   receiveSize = 0xffffff; // 16M  receive buffer
 
   sockaddr_in socketAddress;
 
@@ -731,7 +733,8 @@ bool CGeminiNetwork::CreateSocketTX(bool InitWSA)
         if (socketResult != SOCKET_ERROR)
         {
           // Increase the size of the receive buffer
-
+              m_socketTX, SOL_SOCKET, SO_RCVBUF, &receiveSize, sizeof(receiveSize)
+          );
           socketResult = setsockopt(m_socketTX, SOL_SOCKET, SO_RCVBUF, (const char *)&receiveSize, sizeof(receiveSize));
           
           if (socketResult != SOCKET_ERROR)
