@@ -1,8 +1,6 @@
-#include "node.h"
+#include "fnode.h"
 
 #include <set>
-
-#include <QGraphicsPathItem>
 
 #include <common/cauv_utils.h>
 
@@ -11,55 +9,45 @@
 #include "button.h"
 #include "nodeHeader.h"
 
-using namespace cauv;
-using namespace cauv::gui;
+using cauv::gui::FNode;
 
-Node::Node(Manager& m, NodeStyle const& style)
-    : QGraphicsObject(),
-      ManagedElement(m),
-      m_back(),
-      m_header(),
-      m_style(style){
+FNode::FNode(Manager& m, QGraphicsItem *parent)
+    : GraphicsWindow(F_Node_Style, parent),
+      ManagedElement(m){
+
+    Button *collapsebutton = new Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
+    );
+    m_header->addButton("collapse", collapsebutton);
+
+    Button *execbutton = new Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
+    );
+    m_header->addButton("exec", execbutton);
     
-    setFlag(ItemIsMovable);
-    setFlag(ItemHasNoContents);
+    Button *dupbutton = new Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
+    );
+    m_header->addButton("duplicate", dupbutton);
     
-    m_back = new QGraphicsPathItem(this);
-    m_header = new NodeHeader(m_style, this);
+
+    setSize(QSizeF(104,130));
 
     //!!!
     (new NodeInput(m_style, NodeIOType::Image, true, this))->setPos(0,40);
     (new NodeInput(m_style, NodeIOType::Image, false, this))->setPos(0,54);
     (new NodeInput(m_style, NodeIOType::Parameter, true, this))->setPos(0,68);
     (new NodeInput(m_style, NodeIOType::Parameter, false, this))->setPos(0,82);
-
-    updateLayout();
 }
 
-QRectF Node::boundingRect() const{
-    // otherwise this's would never receive mouse events, and it needs to in
-    // order to be movable
-    return m_back->boundingRect();
-}
-
-void Node::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidget *w){
-    // don't draw anything, ItemHasNoContents flag is set
-    Q_UNUSED(p);
-    Q_UNUSED(o);
-    Q_UNUSED(w);
-}
-
-void Node::updateLayout(){
+void FNode::layoutChanged(){
     // since this's geometry hangs off m_back:
     this->prepareGeometryChange();
-    
-    m_back->setPen(m_style.pen);
-    m_back->setBrush(m_style.brush);
 
     QPainterPath p(QPointF(m_style.tl_radius, 0));
     
-    const qreal fake_width = 104;
-    const qreal fake_height = 130;
+    const qreal width = size().width();
+    const qreal height = size().height();
     
     // !!!
     std::set<qreal> inputs_at;
@@ -68,11 +56,11 @@ void Node::updateLayout(){
     inputs_at.insert(68);
     inputs_at.insert(82);
 
-    p.lineTo(fake_width, 0);
-    p.lineTo(fake_width, fake_height);
-    p.lineTo(m_style.bl_radius, fake_height);
+    p.lineTo(width, 0);
+    p.lineTo(width, height);
+    p.lineTo(m_style.bl_radius, height);
     p.arcTo(
-        QRectF(0, fake_height - m_style.bl_radius,
+        QRectF(0, height - m_style.bl_radius,
                m_style.bl_radius, m_style.bl_radius),
         -90, -90
     );
@@ -88,9 +76,10 @@ void Node::updateLayout(){
     p.arcTo(QRectF(0, 0, m_style.tl_radius, m_style.tl_radius), -180, -90);
 
     p.lineTo(m_style.tl_radius, 0);
+
+    m_back->setPen(m_style.pen);
+    m_back->setBrush(m_style.brush);
     
     m_back->setPath(p);
-    m_header->setWidth(fake_width);
 }
-
 

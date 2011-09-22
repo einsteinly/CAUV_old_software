@@ -11,7 +11,7 @@ ResizeHandle::ResizeHandle(QGraphicsObject *parent) : QGraphicsObject(parent),
 m_size(25, 25), m_pen(QColor(Qt::white), 2){
     this->setHandlesChildEvents(true);
     this->setFlag(QGraphicsItem::ItemIsMovable);
-    this->setFlag(QGraphicsItem::ItemIsSelectable);
+    //this->setFlag(QGraphicsItem::ItemIsSelectable);
     this->setCursor(QCursor(Qt::SizeFDiagCursor));
 }
 
@@ -58,7 +58,8 @@ QSizeF ResizeHandle::size() const{
 void ResizeHandle::setSize(QSizeF const& s){
     prepareGeometryChange();
     m_size = s;
-    update(boundingRect());
+    //prepareGeometryChange ensures update is called?
+    //update(boundingRect());
 }
 
 

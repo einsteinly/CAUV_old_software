@@ -91,10 +91,10 @@ void CauvMainWindow::onRun()
     m_actions->view->centerOn(0,0);
 
 
-    GraphicsWindow * w1 = new GraphicsWindow();
-    GraphicsWindow * w2 = new GraphicsWindow();
-    GraphicsWindow * w3 = new GraphicsWindow();
-    GraphicsWindow * w4 = new GraphicsWindow();
+    AINode * w1 = new AINode();
+    AINode * w2 = new AINode();
+    AINode * w3 = new AINode();
+    AINode * w4 = new AINode();
     ConnectingArc * arc1 = new ConnectingArc(w1, w2);
     ConnectingArc * arc2 = new ConnectingArc(w1, w3);
     ConnectingArc * arc3 = new ConnectingArc(w3, w4);

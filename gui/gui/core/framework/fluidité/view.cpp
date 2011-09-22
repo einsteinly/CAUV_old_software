@@ -4,7 +4,7 @@
 //#include "elements/arcSocket.h"
 #include "elements/multiArcStart.h"
 #include "elements/multiArcEnd.h"
-#include "elements/node.h"
+#include "elements/fNode.h"
 #include "elements/style.h"
 #include "elements/button.h"
 
@@ -26,13 +26,13 @@ FView::FView(QWidget* parent)
 
     Manager m(s, NULL);
 
-    Node *n1 = new Node(m, Node_Style);
+    FNode *n1 = new FNode(m);
     n1->setPos(20.5, 100.5);
 
-    Node *n2 = new Node(m, Node_Style);
+    FNode *n2 = new FNode(m);
     n2->setPos(-50.5, -100.5);
     
-    Node *n3 = new Node(m, Node_Style);
+    FNode *n3 = new FNode(m);
     n3->setPos(-70.5, -120.5);
 
     setCacheMode(CacheBackground);

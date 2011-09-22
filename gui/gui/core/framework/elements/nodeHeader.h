@@ -2,6 +2,7 @@
 #define __CAUV_ELEMENT_NODE_HEADER_H__
 
 #include <QGraphicsObject>
+#include <QMap>
 
 class QGraphicsPathItem;
 class QGraphicsSimpleTextItem;
@@ -17,6 +18,7 @@ class NodeHeader: public QGraphicsObject{
     public:
         NodeHeader(NodeStyle const& style, QGraphicsObject *parent=0);
 
+
     protected:
         virtual QRectF boundingRect() const;
         virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget *w=0);
@@ -25,24 +27,21 @@ class NodeHeader: public QGraphicsObject{
         virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
 
     Q_SIGNALS:
-        void closePressed();
-        void collapsePressed();
-        void execPressed();
-        void duplicatePressed();
+        /* none */
 
     public Q_SLOTS:
-        // ...
+        void setTitle(QString title);
+        void setInfo(QString info);
+        void addButton(QString name, Button *button);
         void setWidth(qreal w);
 
     protected:
         NodeStyle const& m_style;
         qreal m_width;
-
-        Button *m_closebutton;
-        Button *m_collapsebutton;
-        Button *m_execbutton;
-        Button *m_dupbutton;
         
+        QMap<QString,Button*> m_button_lookup;
+        QList<Button*> m_buttons;
+
         QGraphicsPathItem* m_overlay_back;
         QGraphicsSimpleTextItem* m_title;
         QGraphicsSimpleTextItem* m_info_text;

@@ -18,32 +18,11 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     : QGraphicsObject(parent),
       m_style(style),
       m_width(0),
-      m_closebutton(),
-      m_collapsebutton(),
-      m_execbutton(),
-      m_dupbutton(),
       m_overlay_back(),
       m_title(),
       m_info_text(){
     setAcceptHoverEvents(true);
     setFlag(ItemHasNoContents);
-
-    m_closebutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/x_button"), NULL, this
-    );
-    m_collapsebutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
-    );
-    m_execbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
-    );
-    m_dupbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
-    );
-    m_closebutton->setFlag(ItemIgnoresParentOpacity);
-    m_collapsebutton->setFlag(ItemIgnoresParentOpacity);
-    m_execbutton->setFlag(ItemIgnoresParentOpacity);
-    m_dupbutton->setFlag(ItemIgnoresParentOpacity);
 
     m_overlay_back = new QGraphicsPathItem(this);
     m_overlay_back->setPen(m_style.header.pen);
@@ -61,11 +40,6 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
 
     m_title->setText("File Input");
     m_info_text->setText("12.6MB/s 17Hz");
-
-    connect(m_closebutton, SIGNAL(pressed()), this, SIGNAL(closePressed()));
-    connect(m_collapsebutton, SIGNAL(pressed()), this, SIGNAL(collapsePressed()));
-    connect(m_execbutton, SIGNAL(pressed()), this, SIGNAL(execPressed()));
-    connect(m_dupbutton, SIGNAL(pressed()), this, SIGNAL(duplicatePressed()));
 }
 
 QRectF NodeHeader::boundingRect() const{
@@ -94,22 +68,47 @@ void NodeHeader::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
     fadeIn->start();
 }
 
-void NodeHeader::setWidth(qreal w){
-    if(m_width == w)
-        return;
+void NodeHeader::setTitle(QString title){
+    m_title->setText(title);
+}
 
+void NodeHeader::setInfo(QString info){
+    m_info_text->setText(info);
+}
+
+void NodeHeader::addButton(QString name, Button *button){
+    button->setParentItem(this);
+    m_button_lookup[name] = button;
+    m_buttons << button;
+    button->setFlag(ItemIgnoresParentOpacity);
+    button->setFlag(ItemStacksBehindParent);
+    // force re-layout
+    setWidth(m_width);
+}
+
+void NodeHeader::setWidth(qreal w){
     prepareGeometryChange();
     m_width = w;
+    size_t num_buttons = m_buttons.size();
     
+    // !!! TODO: could use QGraphicsLinearLayout, etc
     // buttons:
     QPointF cursor(2,2);
-    QPointF delta((m_width-4)/4,0);
-    
-    m_closebutton->setPos(cursor);
-    m_collapsebutton->setPos(cursor += delta);
-    m_execbutton->setPos(cursor += delta);
-    m_dupbutton->setPos(cursor += delta);
-    
+
+    if(!m_buttons.isEmpty()){
+        for(size_t i = 0; i < (num_buttons+1)/2; i++){
+            m_buttons[i]->setPos(cursor);
+            cursor += QPointF(m_buttons[i]->size().width(),0);
+        }
+        
+        cursor = QPointF(m_width-m_buttons.last()->size().width(),2);
+        for(size_t i = 1; i < 1+num_buttons/2; i++){
+            size_t idx = num_buttons - i;
+            m_buttons[idx]->setPos(cursor);
+            cursor -= QPointF(m_buttons[idx]->size().width(),0);
+        }
+    }
+
     // overlay back:
     QPainterPath p(QPointF(m_style.tl_radius, 0));
 

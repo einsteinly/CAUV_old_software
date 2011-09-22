@@ -2,6 +2,7 @@
 #define __CAUV_QT_STREAMOPS_H__
 
 #include <QPointF>
+#include <QSizeF>
 
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
@@ -9,5 +10,10 @@ std::basic_ostream<char_T, traits>& operator<<(
     return os << "(" << p.x() << "," << p.y() << ")";
 }
 
+template<typename char_T, typename traits>
+std::basic_ostream<char_T, traits>& operator<<(
+    std::basic_ostream<char_T, traits>& os, QSizeF const& s){
+    return os << "(" << s.width() << "x" << s.height() << ")";
+}
 
 #endif //ndef __CAUV_QT_STREAMOPS_H__

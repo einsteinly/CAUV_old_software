@@ -49,13 +49,14 @@ set ( GUI_CORE_SRCS
     framework/mainwindow.cpp
     framework/visualiserview.cpp
     framework/nodescene.cpp
-    framework/elements/graphicswindow.cpp
+    framework/elements/graphicsWindow.cpp
     framework/elements/resize.cpp
     framework/elements/arc.cpp
     framework/elements/multiArc.cpp
     framework/elements/multiArcStart.cpp
     framework/elements/multiArcEnd.cpp
-    framework/elements/node.cpp
+    framework/elements/aiNode.cpp
+    framework/elements/fNode.cpp
     framework/elements/nodeInput.cpp
     framework/elements/button.cpp
     framework/elements/nodeHeader.cpp
@@ -88,13 +89,14 @@ set ( GUI_CORE_H
     framework/nodepicker.h
     framework/treeitems.h
     framework/mainwindow.h
-    framework/elements/graphicswindow.h
+    framework/elements/graphicsWindow.h
     framework/elements/resize.h
     framework/elements/arc.h
     framework/elements/multiArc.h
     framework/elements/multiArcStart.h
     framework/elements/multiArcEnd.h
-    framework/elements/node.h
+    framework/elements/aiNode.h
+    framework/elements/fNode.h
     #framework/elements/nodeInput.h
     framework/elements/button.h
     framework/elements/nodeHeader.h

@@ -8,7 +8,7 @@
 #include <QGraphicsProxyWidget>
 
 #include "../nodedragging.h"
-#include "elements/graphicswindow.h"
+#include "elements/aiNode.h"
 
 #include <gui/core/model/node.h>
 #include <gui/core/model/nodes/numericnode.h>
@@ -54,9 +54,9 @@ namespace cauv {
 
             virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase> const&) {
 
-                info() << "added GraphicsWindow";
+                info() << "added AINode";
 
-                return new GraphicsWindow();
+                return new AINode();
 
                 /*QGraphicsRectItem * rect = new QGraphicsRectItem();
                 rect->setRect(rect->x(), rect->y(), 100, 100);

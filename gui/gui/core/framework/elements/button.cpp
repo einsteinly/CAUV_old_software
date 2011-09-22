@@ -18,6 +18,7 @@ Button::Button(QRectF clip,
     setAcceptHoverEvents(true);
     //setHandlesChildEvents(true);
     setFlag(ItemClipsChildrenToShape);
+    resize(clip.size());
 
     m_default = loadPix(base_fname + ".png");
     m_hover   = loadPix(base_fname + ".hover.png");

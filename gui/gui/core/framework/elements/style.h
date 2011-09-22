@@ -50,6 +50,7 @@ struct NodeStyle{
     } header;
 
     QPen item_separator_pen;
+    QPen resize_handle_pen;
 
     qreal in_socket_cutout_base;
     qreal in_socket_cutout_tip;
@@ -102,7 +103,7 @@ const static ArcStyle Param_Arc_Style = {{
 };
 
 const static qreal Cut_S = (14/16.0);
-const static NodeStyle Node_Style = {
+const static NodeStyle F_Node_Style = {
     QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
     QBrush(QColor(243,243,243)),
     24, 24, {
@@ -121,6 +122,7 @@ const static NodeStyle Node_Style = {
         }
     },
     QPen(QColor(255,255,255)),
+    QPen(QBrush(QColor(190,190,190)), 2, Qt::SolidLine, Qt::RoundCap),
     14*Cut_S, 4*Cut_S, 16*Cut_S,
 
     /*InputStyle*/ {
@@ -136,6 +138,8 @@ const static NodeStyle Node_Style = {
          QBrush(QColor(208,181,225))}*/
     }
 };
+
+const static NodeStyle AI_Node_Style = F_Node_Style;
 
 
 } // namespace gui
