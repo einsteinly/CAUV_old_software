@@ -2660,7 +2660,8 @@ void CGeminiNetwork::RxPingTail(char* pData)
     
     for (i = 0; i < m_tgtImgBuf[m_tgtImgIpPtr].m_numRangesUsed; i++)
     {
-      if (m_tgtImgBuf[m_tgtImgIpPtr].m_retryQueuePtr[i] == 0)
+      if (m_tgtImgBuf[m_tgtImgIpPtr].m_retryQueuePtr != NULL &&
+          m_tgtImgBuf[m_tgtImgIpPtr].m_retryQueuePtr[i] == 0)
       {
         linesLostCount++; 
       }
