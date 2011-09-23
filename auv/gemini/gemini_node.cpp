@@ -26,7 +26,7 @@ class GeminiObserver{
         // the function returns
         virtual void onCGemPingHead(boost::shared_ptr<CGemPingHead const>){}
         virtual void onCGemPingLine(boost::shared_ptr<CGemPingLine const>){}
-        //virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){}
+        virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){}
         virtual void onCGemPingTailExtended(boost::shared_ptr<CGemPingTailExtended const>){}
         virtual void onCGemStatusPacket(boost::shared_ptr<CGemStatusPacket const>){}
         virtual void onCGemAcknowledge(boost::shared_ptr<CGemAcknowledge const>){}
@@ -59,7 +59,7 @@ class LineReBroadcaster: public GeminiObserver{
 
         virtual void onCGemPingLine(boost::shared_ptr<CGemPingLine const> l){
             // accumulate this line of equidistant data:
-            uint32_t line_id = l->m_lineID;
+            int32_t line_id = l->m_lineID;
             uint16_t ping_id = l->m_pingID;
             if((ping_id & 0xff) != (m_current_ping_id & 0xff)){
                 debug() << "bad pingID";
@@ -72,13 +72,20 @@ class LineReBroadcaster: public GeminiObserver{
                 img.row(line_id) = cv::Mat(1, img.cols, CV_8U, (void*)&(l->m_startOfData), img.cols);
         }
          
-        virtual void onCGemPingTailExtended(boost::shared_ptr<CGemPingTailExtended const> t){
-            // ping over, send what we've got:
-            debug () << "sending image...";
-            m_node.send(boost::make_shared<ImageMessage>(CameraID::GemSonar, *m_current_image, m_current_ping_time));
+        virtual void onCGemPingTailExtended(boost::shared_ptr<CGemPingTailExtended const>){
+            pingComplete();
+        }
+
+        virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){
+            pingComplete();
         }
             
     private:
+        void pingComplete(){
+            debug () << "sending image...";
+            m_node.send(boost::make_shared<ImageMessage>(CameraID::GemSonar, *m_current_image, m_current_ping_time));
+        }
+
         uint16_t m_current_ping_id;
         TimeStamp m_current_ping_time;
         boost::shared_ptr<Image> m_current_image;
@@ -281,7 +288,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         static void CallBackFn(int eType, int len, char *data){
             boost::shared_ptr<CGemPingHead const> ping_head;
             boost::shared_ptr<CGemPingLine> ping_data;
-            //boost::shared_ptr<CGemPingTail const> ping_tail;
+            boost::shared_ptr<CGemPingTail const> ping_tail;
             boost::shared_ptr<CGemPingTailExtended const> ping_tail_ex;
             boost::shared_ptr<CGemStatusPacket const> status_packet;
             boost::shared_ptr<CGemAcknowledge const> acknowledge;
@@ -309,12 +316,14 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     memcpy(&(*ping_data), data, sizeof(CGemPingLine) + len - 1);
                     break;
 
-                //case PING_TAIL:
-                //    // don't get these: the GeminiSDK adds data, and they come
-                //    // out as PING_TAIL_EX
-                //    ping_tail = boost::make_shared<CGemPingTail const>(*(CGemPingTail*)data);
-                //    debug() << "RX: ping tail: id=" << ping_tail->m_pingID;
-                //    break;
+                case PING_TAIL:
+                    // Normally we get PING_TAIL_EX, but this happens if the
+                    // retry data structures were never created by the library,
+                    // so there's no extra data for the library to add.
+                    // (not sure why this might be, but it does happen)
+                    ping_tail = boost::make_shared<CGemPingTail const>(*(CGemPingTail*)data);
+                    debug() << "RX: ping tail: id=" << ping_tail->m_pingID;
+                    break;
 
                 case PING_TAIL_EX:
                     ping_tail_ex = boost::make_shared<CGemPingTailExtended const>(*(CGemPingTailExtended*)data);
@@ -385,8 +394,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                         p->onCGemPingHead(ping_head);
                     else if(ping_data)
                         p->onCGemPingLine(ping_data);
-                    //else if(ping_tail)
-                    //    p->onCGemPingTail(ping_tail);
+                    else if(ping_tail)
+                        p->onCGemPingTail(ping_tail);
                     else if(ping_tail_ex)
                         p->onCGemPingTailExtended(ping_tail_ex);
                     else if(status_packet)
