@@ -7,7 +7,11 @@
 
 #include <debug/cauv_debug.h>
 #include <common/cauv_utils.h>
+#include <common/image.h>
 #include <utility/threadsafe-observable.h>
+#include <generated/types/TimeStamp.h>
+#include <generated/types/ImageMessage.h>
+
 
 #include "GeminiStructuresPublic.h"
 #include "GeminiCommsPublic.h"
@@ -16,6 +20,10 @@ namespace cauv{
 
 class GeminiObserver{
     public:
+        // !!! TODO: it would be reasonable to pass the raw structures (without
+        // copying & wrapping in shared pointers) from the library to
+        // observers, as long as it is clear that the data becomes invalid once
+        // the function returns
         virtual void onCGemPingHead(boost::shared_ptr<CGemPingHead const>){}
         virtual void onCGemPingLine(boost::shared_ptr<CGemPingLine const>){}
         //virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){}
@@ -31,8 +39,49 @@ class LineReBroadcaster: public GeminiObserver{
         LineReBroadcaster(CauvNode& node)
             : m_node(node){
         }
+        
+        virtual void onCGemPingHead(boost::shared_ptr<CGemPingHead const> h){
+            debug() << "PingHead:"
+                    << "start:" << h->m_startRange
+                    << "end:" << h->m_endRange
+                    << "numBeams:" << h->m_numBeams
+                    << "numChans:" << h->m_numChans
+                    << "sampChan:" << h->m_sampChan
+                    << "speedOfSound:" << h->m_spdSndVel;
+            // new ping:
+            uint32_t num_lines = h->m_endRange - h->m_startRange;
+            uint32_t num_beams = h->m_numBeams;
+            m_current_ping_id = h->m_pingID;
+            m_current_ping_time = now();
+            m_current_image = boost::make_shared<Image>(cv::Mat::zeros(num_lines, num_beams, CV_8U));
+            debug() << "New ping: ID=" << m_current_ping_id << "lines:" << num_lines << "beams:" << num_beams;
+        }
+
+        virtual void onCGemPingLine(boost::shared_ptr<CGemPingLine const> l){
+            // accumulate this line of equidistant data:
+            uint32_t line_id = l->m_lineID;
+            uint16_t ping_id = l->m_pingID;
+            if((ping_id & 0xff) != (m_current_ping_id & 0xff)){
+                debug() << "bad pingID";
+                return;
+            }
+            cv::Mat img = m_current_image->mat();
+            if(line_id  < img.rows)
+                // !!! TODO: erm, pass actual length of data to onCGemPingLine
+                // for safety
+                img.row(line_id) = cv::Mat(1, img.cols, CV_8U, (void*)&(l->m_startOfData), img.cols);
+        }
+         
+        virtual void onCGemPingTailExtended(boost::shared_ptr<CGemPingTailExtended const> t){
+            // ping over, send what we've got:
+            debug () << "sending image...";
+            m_node.send(boost::make_shared<ImageMessage>(CameraID::GemSonar, *m_current_image, m_current_ping_time));
+        }
             
     private:
+        uint16_t m_current_ping_id;
+        TimeStamp m_current_ping_time;
+        boost::shared_ptr<Image> m_current_image;
         CauvNode& m_node;
 };
 
@@ -90,6 +139,24 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                            << int(ipchrs[2]) << "."
                            << int(ipchrs[3]);
         }
+        static std::string fmtTemp(uint16_t temp){
+            int16_t signedtemp;
+            double  dtemp;
+            bool present = temp & 0x8000;
+            if(present){
+                // 10 bits of data:
+                signedtemp = temp & 0x3ff;
+                // sign extend
+                bool negative = temp & 0x200;
+                if(negative)
+                    signedtemp |= 0xfc00;
+                dtemp = signedtemp / 4.0;
+                return mkStr() << dtemp;
+            }else{
+                return "X";
+            }
+        }
+        
         void onStatusPacket(boost::shared_ptr<CGemStatusPacket const> status_packet){
             // state transitions to manage the connection:
             // uninitialised
@@ -105,31 +172,31 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     << "m_dcVolt =" << status_packet->m_dcVolt
                     << "m_dieTemp =" << status_packet->m_dieTemp
                     << "m_tempX =" << status_packet->m_tempX
-                    << "m_vga1aTemp =" << status_packet->m_vga1aTemp
-                    << "m_vga1bTemp =" << status_packet->m_vga1bTemp
-                    << "m_vga2aTemp =" << status_packet->m_vga2aTemp
-                    << "m_vga2bTemp =" << status_packet->m_vga2bTemp
-                    << "m_psu1Temp =" << status_packet->m_psu1Temp
-                    << "m_psu2Temp =" << status_packet->m_psu2Temp
+                    << "m_vga1aTemp =" << fmtTemp(status_packet->m_vga1aTemp)
+                    << "m_vga1bTemp =" << fmtTemp(status_packet->m_vga1bTemp)
+                    << "m_vga2aTemp =" << fmtTemp(status_packet->m_vga2aTemp)
+                    << "m_vga2bTemp =" << fmtTemp(status_packet->m_vga2bTemp)
+                    << "m_psu1Temp =" << fmtTemp(status_packet->m_psu1Temp)
+                    << "m_psu2Temp =" << fmtTemp(status_packet->m_psu2Temp)
                     << "m_currentTimestampL =" << status_packet->m_currentTimestampL
                     << "m_currentTimestampH =" << status_packet->m_currentTimestampH
                     << "m_transducerFrequency =" << status_packet->m_transducerFrequency
                     << "m_subnetMask =" << status_packet->m_subnetMask
-                    << "m_TX1Temp =" << status_packet->m_TX1Temp
-                    << "m_TX2Temp =" << status_packet->m_TX2Temp
-                    << "m_TX3Temp =" << status_packet->m_TX3Temp
+                    << "m_TX1Temp =" << fmtTemp(status_packet->m_TX1Temp)
+                    << "m_TX2Temp =" << fmtTemp(status_packet->m_TX2Temp)
+                    << "m_TX3Temp =" << fmtTemp(status_packet->m_TX3Temp)
                     << "m_BOOTSTSRegister =" << status_packet->m_BOOTSTSRegister
                     << "m_shutdownStatus =" << status_packet->m_shutdownStatus
                     << "m_dieOverTemp =" << status_packet->m_dieOverTemp
-                    << "m_vga1aShutdownTemp =" << status_packet->m_vga1aShutdownTemp
-                    << "m_vga1bShutdownTemp =" << status_packet->m_vga1bShutdownTemp
-                    << "m_vga2aShutdownTemp =" << status_packet->m_vga2aShutdownTemp
-                    << "m_vga2bShutdownTemp =" << status_packet->m_vga2bShutdownTemp
-                    << "m_psu1ShutdownTemp =" << status_packet->m_psu1ShutdownTemp
-                    << "m_psu2ShutdownTemp =" << status_packet->m_psu2ShutdownTemp
-                    << "m_TX1ShutdownTemp =" << status_packet->m_TX1ShutdownTemp
-                    << "m_TX2ShutdownTemp =" << status_packet->m_TX2ShutdownTemp
-                    << "m_TX3ShutdownTemp =" << status_packet->m_TX3ShutdownTemp
+                    << "m_vga1aShutdownTemp =" << fmtTemp(status_packet->m_vga1aShutdownTemp)
+                    << "m_vga1bShutdownTemp =" << fmtTemp(status_packet->m_vga1bShutdownTemp)
+                    << "m_vga2aShutdownTemp =" << fmtTemp(status_packet->m_vga2aShutdownTemp)
+                    << "m_vga2bShutdownTemp =" << fmtTemp(status_packet->m_vga2bShutdownTemp)
+                    << "m_psu1ShutdownTemp =" << fmtTemp(status_packet->m_psu1ShutdownTemp)
+                    << "m_psu2ShutdownTemp =" << fmtTemp(status_packet->m_psu2ShutdownTemp)
+                    << "m_TX1ShutdownTemp =" << fmtTemp(status_packet->m_TX1ShutdownTemp)
+                    << "m_TX2ShutdownTemp =" << fmtTemp(status_packet->m_TX2ShutdownTemp)
+                    << "m_TX3ShutdownTemp =" << fmtTemp(status_packet->m_TX3ShutdownTemp)
                     << "m_linkType =" << status_packet->m_linkType
                     << "m_VDSLDownstreamSpeed1 =" << status_packet->m_VDSLDownstreamSpeed1
                     << "m_VDSLDownstreamSpeed2 =" << status_packet->m_VDSLDownstreamSpeed2
@@ -393,6 +460,8 @@ void GeminiNode::onRun()
         debug() << "waiting for init...";
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
     }
+
+    m_sonar->addObserver(boost::make_shared<LineReBroadcaster>(boost::ref(*this)));
 
     debug() << "GEM_AutoPingConfig...";
     GEM_AutoPingConfig(5.0f, 50, 1499.2f);
