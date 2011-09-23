@@ -733,8 +733,6 @@ bool CGeminiNetwork::CreateSocketTX(bool InitWSA)
         if (socketResult != SOCKET_ERROR)
         {
           // Increase the size of the receive buffer
-              m_socketTX, SOL_SOCKET, SO_RCVBUF, &receiveSize, sizeof(receiveSize)
-          );
           socketResult = setsockopt(m_socketTX, SOL_SOCKET, SO_RCVBUF, (const char *)&receiveSize, sizeof(receiveSize));
           
           if (socketResult != SOCKET_ERROR)

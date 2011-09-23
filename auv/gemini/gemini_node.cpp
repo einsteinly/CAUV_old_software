@@ -18,12 +18,22 @@ class GeminiObserver{
     public:
         virtual void onCGemPingHead(boost::shared_ptr<CGemPingHead const>){}
         virtual void onCGemPingLine(boost::shared_ptr<CGemPingLine const>){}
-        virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){}
+        //virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){}
         virtual void onCGemPingTailExtended(boost::shared_ptr<CGemPingTailExtended const>){}
         virtual void onCGemStatusPacket(boost::shared_ptr<CGemStatusPacket const>){}
         virtual void onCGemAcknowledge(boost::shared_ptr<CGemAcknowledge const>){}
         virtual void onCGemBearingData(boost::shared_ptr<CGemBearingData const>){}
         virtual void onUnknownData(boost::shared_array<uint8_t>){}
+};
+
+class LineReBroadcaster: public GeminiObserver{
+    public:
+        LineReBroadcaster(CauvNode& node)
+            : m_node(node){
+        }
+            
+    private:
+        CauvNode& m_node;
 };
 
 class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
@@ -36,6 +46,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             assert(!the_sonar);
             the_sonar = this;
             m_conn_state.ok = true;
+            m_conn_state.initialised = false;
         }
 
         ~GeminiSonar(){
@@ -49,7 +60,11 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 error() << "Could not start network connection to sonar" << m_sonar_id;
                 m_conn_state.ok = false;
             }else{
-                GEM_SetGeminiSoftwareMode("SeaNetC");
+                // ('Evo' is the native mode for the sonar, John told us to use
+                // this mode, SeaNet is there for compatibility with Tritech's
+                // old software only. 'EvoC' means use range-line compression:
+                // lines further away are compres)
+                GEM_SetGeminiSoftwareMode("EvoC");
                 GEM_SetHandlerFunction(&CallBackFn);
             }
         }
@@ -58,11 +73,27 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             return m_conn_state.ok;
         }
 
+        bool initialised() const{
+            return m_conn_state.initialised;
+        }
+
     private:
+        static std::string fmtIp(uint32_t ip4_addr){
+            uint8_t ipchrs[4] = {
+                (ip4_addr >> 24) & 0xff,
+                (ip4_addr >> 16) & 0xff,
+                (ip4_addr >>  8) & 0xff,
+                (ip4_addr >>  0) & 0xff
+            };
+            return mkStr() << int(ipchrs[0]) << "."
+                           << int(ipchrs[1]) << "."
+                           << int(ipchrs[2]) << "."
+                           << int(ipchrs[3]);
+        }
         void onStatusPacket(boost::shared_ptr<CGemStatusPacket const> status_packet){
             // state transitions to manage the connection:
             // uninitialised
-            debug() << "onStatusPacket:"
+            debug(8) << "onStatusPacket:"
                     << "m_firmwareVer =" << status_packet->m_firmwareVer
                     << "m_sonarId =" << status_packet->m_sonarId
                     << "m_sonarFixIp =" << status_packet->m_sonarFixIp
@@ -107,6 +138,13 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     << "m_macAddress3 =" << status_packet->m_macAddress3
                     << "m_VDSLUpstreamSpeed1 =" << status_packet->m_VDSLUpstreamSpeed1
                     << "m_VDSLUpstreamSpeed2 =" << status_packet->m_VDSLUpstreamSpeed2;
+            debug() << "sonarId:"   << status_packet->m_sonarId
+                    << "FixIp:"     << fmtIp(status_packet->m_sonarFixIp)
+                    << "AltIp:"     << fmtIp(status_packet->m_sonarAltIp)
+                    << "SurfaceIp:" << fmtIp(status_packet->m_surfaceIp)
+                    << "NetMask:"   << fmtIp(status_packet->m_subnetMask)
+                    << "ShutdownStatus:" <<  status_packet->m_shutdownStatus
+                    << "LinkType:"  << status_packet->m_linkType;
             if(m_conn_state.sonarId == 0){
                 if(status_packet){
                     m_conn_state.sonarId = status_packet->m_sonarId;
@@ -147,16 +185,14 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     // 1 = ping continuously
                     GEM_SetPingMode(0);
                     GEM_SetInterPingPeriod(m_inter_ping_musec);
-                    // 
+                    //
                     GEM_SetVelocimeterMode(
                         0, // 0 = auto gain
                            // 1 = manual gain (actually, auto is always true anyway)
                         0  // 0 = use velocimeter calculated speed of sound,
                            // 1 = use speed set in config message
                     );
-                    
-                    // !!! TODO
-                    // GEM_AutoPingConfig(float range, unsigned short gain, float speedofsound)
+                    m_conn_state.initialised = true;
                 }
             }
         }
@@ -178,20 +214,22 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         static void CallBackFn(int eType, int len, char *data){
             boost::shared_ptr<CGemPingHead const> ping_head;
             boost::shared_ptr<CGemPingLine> ping_data;
-            boost::shared_ptr<CGemPingTail const> ping_tail;
+            //boost::shared_ptr<CGemPingTail const> ping_tail;
             boost::shared_ptr<CGemPingTailExtended const> ping_tail_ex;
             boost::shared_ptr<CGemStatusPacket const> status_packet;
             boost::shared_ptr<CGemAcknowledge const> acknowledge;
             boost::shared_ptr<CGemBearingData> bearing_data;
             boost::shared_array<uint8_t> unknown_data;
-            
+
+            debug(8) << "RX:" << eType;
             switch(eType){
                 case PING_HEAD:
+                    debug(6) << "RX: ping head";
                     ping_head = boost::make_shared<CGemPingHead const>(*(CGemPingHead*)data);
                     break;
 
                 case PING_DATA:
-                    debug() << "PING_DATA: len=" << len;
+                    debug(7) << "RX: ping line: len=" << len;
                     // here sizeof(X) + ... - 1 takes account that the first
                     // element of the ping data is stored *on* the last byte of
                     // the structure, then the ping data is continued in place.
@@ -204,23 +242,38 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     memcpy(&(*ping_data), data, sizeof(CGemPingLine) + len - 1);
                     break;
 
-                case PING_TAIL:
-                    ping_tail = boost::make_shared<CGemPingTail const>(*(CGemPingTail*)data);
-                    break;
+                //case PING_TAIL:
+                //    // don't get these: the GeminiSDK adds data, and they come
+                //    // out as PING_TAIL_EX
+                //    ping_tail = boost::make_shared<CGemPingTail const>(*(CGemPingTail*)data);
+                //    debug() << "RX: ping tail: id=" << ping_tail->m_pingID;
+                //    break;
 
                 case PING_TAIL_EX:
                     ping_tail_ex = boost::make_shared<CGemPingTailExtended const>(*(CGemPingTailExtended*)data);
+                    debug(6) << "RX: ping tail ex: id=" << int(ping_tail_ex->m_pingID);
+                    debug() << BashColour::Purple
+                            << "retry 1:"       << ping_tail_ex->m_firstPassRetries
+                            << "retry 2:"       << ping_tail_ex->m_secondPassRetries
+                            << "tail retries:"  << ping_tail_ex->m_tailRetries
+                            << "RX Error count:"<< ping_tail_ex->m_recvErrorCount
+                            << "RX Total:"      << ping_tail_ex->m_packetCount
+                            << "Lines lost:"    << ping_tail_ex->m_linesLostThisPing;
+                           
                     break;
 
                 case GEM_STATUS:
+                    debug(6) << "RX: status";
                     status_packet = boost::make_shared<CGemStatusPacket const>(*(CGemStatusPacket*)data);
-                    break; 
+                    break;
 
                 case GEM_ACKNOWLEDGE:
+                    debug(6) << "RX: ack";
                     acknowledge = boost::make_shared<CGemAcknowledge const>(*(CGemAcknowledge*)data);
                     break;
 
                 case GEM_BEARING_DATA:
+                    debug(6) << "RX: bearing data";
                     bearing_data = boost::shared_ptr<CGemBearingData>(
                         new CGemBearingData(*(CGemBearingData*)data),
                         CGemBearingData_deleter()
@@ -251,7 +304,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     debug() << "GEM: unknown type:" << eType;
                     break;
             }
-            
+
             // actually dispatch messages to anyone interested:
             if(the_sonar){
                 // first use status packet to drive state transitions (eg, for
@@ -265,8 +318,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                         p->onCGemPingHead(ping_head);
                     else if(ping_data)
                         p->onCGemPingLine(ping_data);
-                    else if(ping_tail)
-                        p->onCGemPingTail(ping_tail);
+                    //else if(ping_tail)
+                    //    p->onCGemPingTail(ping_tail);
                     else if(ping_tail_ex)
                         p->onCGemPingTailExtended(ping_tail_ex);
                     else if(status_packet)
@@ -282,17 +335,18 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 error() << "No GeminiSonar object to receive callback";
             }
         }
-        
+
 
         uint16_t m_sonar_id;
         uint32_t m_inter_ping_musec;
 
         volatile struct{
             bool ok;
+            bool initialised;
             uint16_t sonarId;
             uint32_t sonarAltIp;
         } m_conn_state;
-        
+
         // there should only be one instance of this at a time, keep track of
         // it so that callbacks can be dispatched
         static GeminiSonar* the_sonar;
@@ -312,12 +366,12 @@ GeminiNode::GeminiNode()
 
 void GeminiNode::onRun()
 {
-    
+
     if(!m_sonar){
         error() << "no sonar device";
         return;
     }
-    
+
     /*
     joinGroup("sonarctl");
     joinGroup("telemetry");
@@ -325,7 +379,7 @@ void GeminiNode::onRun()
     boost::shared_ptr<SpreadSonarObserver> spreadSonarObserver = boost::make_shared<SpreadSonarObserver>(mailbox());
     m_sonar->addObserver(spreadSonarObserver);
     addMessageObserver(spreadSonarObserver);
-    
+
 #ifdef DISPLAY_SONAR
     m_sonar->addObserver(boost::make_shared<DisplaySonarObserver>(m_sonar));
 #endif
@@ -335,8 +389,20 @@ void GeminiNode::onRun()
 
     m_sonar->init();
 
+    while(!m_sonar->initialised()){
+        debug() << "waiting for init...";
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+    }
+
+    debug() << "GEM_AutoPingConfig...";
+    GEM_AutoPingConfig(5.0f, 50, 1499.2f);
+
     while (true) {
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+        //GEM_AutoPingConfig(float range, unsigned short gain, float speedofsound)
+        //GEM_SendGeminiPingConfig();
+        debug() << "GEM_SendPingConfig...";
+        GEM_SendGeminiPingConfig();
     }
 }
 
@@ -347,25 +413,25 @@ void GeminiNode::addOptions(po::options_description& desc,
 {
     CauvNode::addOptions(desc, pos);
     debug() << "GeminiNode::addOptions";
-   
+
     desc.add_options()
         ("sonar_id,d", po::value<uint16_t>()->required(), "The sonar ID (eg 1)")
     ;
 
     pos.add("sonar_id", 1);
-    
+
 }
 
 int GeminiNode::useOptionsMap(po::variables_map& vm,
                               po::options_description& desc)
 {
     int ret = CauvNode::useOptionsMap(vm, desc);
-    debug() << "GeminiNode::useOptionsMap";    
+    debug() << "GeminiNode::useOptionsMap";
     if (ret != 0) return ret;
-    
+
     uint16_t sonar_id = vm["sonar_id"].as<uint16_t>();
     m_sonar = new GeminiSonar(sonar_id);
-    
+
     /*
     if(!m_sonar->ok()){
         error() << "could not open device" << device;
