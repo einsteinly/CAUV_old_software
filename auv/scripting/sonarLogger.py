@@ -42,6 +42,7 @@ def sonarLoggerMainLoop(cauv_node, opts):
     else:
         LoggerClass = injectBase(SonarLogger, messageLogger.CHILLogger)
     sl = LoggerClass(cauv_node, opts.fname, not opts.no_record)
+    sl.profile_playback = opts.do_profile
     cli = SonarLoggerCmdPrompt(sl)
     playback_is_active = False
     try:
@@ -62,7 +63,8 @@ if __name__ == '__main__':
                  action='store', help='file to load/save sonar data lines from')
     p.add_option('-n', '--no-record', dest='no_record', default=False,
                  action='store_true', help="Don't start in recording mode")
-
+    p.add_option('-p', '--profile', dest='do_profile', default=False,
+                 action='store_true', help='use cProfile to run everything')
     opts, args = p.parse_args()
 
     if len(args) > 0:
@@ -70,8 +72,12 @@ if __name__ == '__main__':
         exit(1)
    
     cauv_node = node.Node("py-slog") 
-    try:
-        sonarLoggerMainLoop(cauv_node, opts)
+    try: 
+        if opts.do_profile:
+            import cProfile
+            cProfile.run('sonarLoggerMainLoop(cauv_node, opts)', 'sonarLogger.profile')
+        else:
+            sonarLoggerMainLoop(cauv_node, opts)
     finally:
         cauv_node.stop()
 

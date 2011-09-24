@@ -126,7 +126,8 @@ class LoggerBase(msg.MessageObserver):
     def __init__(self, cauv_node, do_record, playback_rate = 1.0):
         msg.MessageObserver.__init__(self)
         self.node = cauv_node
-        self.tzero = time.time()        
+        self.tzero = time.time()
+        self.profile_playback = False
         self.__recording = False
         self.__playback_lock = threading.Lock()
         self.__playback_active = False
@@ -152,12 +153,18 @@ class LoggerBase(msg.MessageObserver):
         self.__playback_lock.acquire()
         self.__playback_start_time = start_time
         self.__playback_active = True
-        self.__playback_lock.release()
-        self.__playback_thread = threading.Thread(target=self.playbackRunloop)
+        self.__playback_lock.release() 
+        if self.profile_playback:
+            self.__playback_thread = threading.Thread(target=self.profilePlayback)
+        else:
+            self.__playback_thread = threading.Thread(target=self.playbackRunloop)
         self.__playback_thread.start()
     def playbackStartTime(self):
         # currently relative to the start of the particular message log
         return self.__playback_start_time
+    def profilePlayback(self):
+        import profilehooks
+        profilehooks.profile(self.playbackRunloop,filename='messageLogger-playback.profile', )()
     def playbackRunloop(self):
         raise NotImplementedError()
     def stopPlayback(self):
