@@ -99,7 +99,7 @@ void MultiArc::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
         // deletion arranged by mouseReleaseEvent
         m_ephemeral_arc_end = NULL;
         // accepted -> forward to base explicitly
-        QGraphicsObject::mouseReleaseEvent(event);    
+        QGraphicsPathItem::mouseReleaseEvent(event);
     }else{
         event->ignore();
     }
