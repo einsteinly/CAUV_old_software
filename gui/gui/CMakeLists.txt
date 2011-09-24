@@ -55,6 +55,7 @@ else()
 
     target_link_libraries ( gui
         gui-core
+        liquid
         ${QT_LIBRARIES}
     )
 

@@ -13,9 +13,10 @@
 
 using namespace cauv;
 using namespace cauv::gui;
+using namespace liquid;
 
 FView::FView(QWidget* parent)
-    : VisualiserView(parent){
+    : LiquidView(parent){
     
     QGraphicsScene *s = new QGraphicsScene(this);
 

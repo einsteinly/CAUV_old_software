@@ -68,14 +68,11 @@ m_scaleFactor(1.25)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    setTransformationAnchor(VisualiserView::AnchorViewCenter);
+    setTransformationAnchor(LiquidView::AnchorViewCenter);
     
     centerOn(0,0);
 
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-
-    setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
-
 }
 
 

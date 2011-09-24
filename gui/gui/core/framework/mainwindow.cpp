@@ -16,7 +16,6 @@
 #include "../cauvplugins.h"
 #include "../controller/messageobserver.h"
 #include "../framework/nodescene.h"
-#include "../framework/visualiserview.h"
 #include "../framework/nodepicker.h"
 #include "../framework/elements/arc.h"
 
@@ -86,7 +85,7 @@ void CauvMainWindow::onRun()
     // main window
     m_actions->window = shared_from_this();
     // view
-     this->setCentralWidget(m_actions->view = new VisualiserView());
+    this->setCentralWidget(m_actions->view = new liquid::LiquidView());
     //scene
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());

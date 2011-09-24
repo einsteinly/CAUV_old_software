@@ -8,6 +8,10 @@
 
 class QGraphicsScene;
 
+namespace liquid {
+    class LiquidView;
+}
+
 namespace cauv {
 
     class CauvNode;
@@ -16,7 +20,6 @@ namespace cauv {
 
         class AUV;
         class NodePicker;
-        class VisualiserView;
         class CauvMainWindow;
         class NodeScene;
 
@@ -31,7 +34,7 @@ namespace cauv {
             boost::shared_ptr<NodeScene> scene;
 
             // gui elements
-            VisualiserView * view;
+            liquid::LiquidView * view;
             NodePicker * nodes;
 
             ~GuiActions() {

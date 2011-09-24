@@ -47,7 +47,6 @@ set ( GUI_CORE_SRCS
     framework/nodepicker.cpp
     framework/treeitems.cpp
     framework/mainwindow.cpp
-    framework/visualiserview.cpp
     framework/nodescene.cpp
     framework/elements/graphicsWindow.cpp
     framework/elements/resize.cpp
