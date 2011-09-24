@@ -15,7 +15,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 FView::FView(QWidget* parent)
-    : QGraphicsView(parent){
+    : VisualiserView(parent){
     
     QGraphicsScene *s = new QGraphicsScene(this);
 
