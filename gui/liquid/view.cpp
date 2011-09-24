@@ -91,7 +91,9 @@ void LiquidView::wheelEvent(QWheelEvent *event){
     // and pass the event on directly
     QGraphicsItem * item = itemAt(event->x(), event->y());
     if(QGraphicsProxyWidget * proxy = dynamic_cast<QGraphicsProxyWidget *>(item)){
-        if(proxy->widget()->wheelEvent(event));
+        if(LiquidView * vis = dynamic_cast<LiquidView *>(proxy->widget())){
+            vis->wheelEvent(event);
+        }
     }
     
     if(!event->isAccepted()) {

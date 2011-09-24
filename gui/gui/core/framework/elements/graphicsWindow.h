@@ -3,7 +3,7 @@
 
 #include <QGraphicsObject>
 
-#include "fluidité/managedElement.h"
+#include "fluidity/managedElement.h"
 
 class QGraphicsLayoutItem;
 class QGraphicsLinearLayout;

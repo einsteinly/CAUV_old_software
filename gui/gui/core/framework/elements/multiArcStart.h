@@ -3,7 +3,7 @@
 
 #include <QPen>
 
-#include "fluidité/managedElement.h"
+#include "fluidity/managedElement.h"
 
 #include "multiArc.h"
 

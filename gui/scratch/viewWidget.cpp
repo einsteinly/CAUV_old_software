@@ -8,8 +8,8 @@
 #include "elements/style.h"
 #include "elements/button.h"
 
-#include "fluidité/managedElement.h"
-#include "fluidité/manager.h"
+#include "fluidity/managedElement.h"
+#include "fluidity/manager.h"
 
 #include "cross.h"
 

@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QGraphicsPathItem>
 
-#include "fluidité/managedElement.h"
+#include "fluidity/managedElement.h"
 
 #include "arc.h"
 

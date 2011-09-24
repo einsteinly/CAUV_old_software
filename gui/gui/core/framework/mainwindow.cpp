@@ -19,7 +19,7 @@
 #include "../framework/nodepicker.h"
 #include "../framework/elements/arc.h"
 
-#include "fluidité/view.h"
+#include "fluidity/view.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>

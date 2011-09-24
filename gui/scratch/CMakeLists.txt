@@ -15,8 +15,8 @@ set (
     ../gui/core/framework/elements/nodeHeader.cpp
     ../gui/core/framework/elements/resize.cpp    
 
-    ../gui/core/framework/fluidité/managedElement.cpp
-    ../gui/core/framework/fluidité/manager.cpp
+    ../gui/core/framework/fluidity/managedElement.cpp
+    ../gui/core/framework/fluidity/manager.cpp
 )
 
 set (
@@ -32,7 +32,7 @@ set (
     ../gui/core/framework/elements/nodeHeader.h
     ../gui/core/framework/elements/resize.h
 
-    ../gui/core/framework/fluidité/manager.h
+    ../gui/core/framework/fluidity/manager.h
 )
 
 
