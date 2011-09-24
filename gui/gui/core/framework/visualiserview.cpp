@@ -6,7 +6,6 @@
 
 #include <QApplication>
 #include <QGraphicsProxyWidget>
-#include <QGLWidget>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -81,7 +80,7 @@ m_scaleFactor(1.25)
 
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
-    setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    //setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
 }
 

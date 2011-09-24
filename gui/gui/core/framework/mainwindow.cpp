@@ -4,6 +4,7 @@
 #include <QString>
 #include <QPluginLoader>
 #include <QSettings>
+#include <QGLWidget>
 
 #include <QPushButton>
 
@@ -26,6 +27,7 @@
 #include <debug/cauv_debug.h>
 
 #include "ui_mainwindow.h"
+
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -89,6 +91,8 @@ void CauvMainWindow::onRun()
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
+
+    m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
 
     AINode * w1 = new AINode();
