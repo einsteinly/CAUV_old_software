@@ -32,6 +32,9 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     setSizePolicy(QSizePolicy::Fixed);
 
     setFlag(ItemHasNoContents);
+    
+    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }
 
 bool ArcSink::willAcceptConnection(void* from_source){

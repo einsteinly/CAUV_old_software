@@ -17,6 +17,7 @@ else()
         button.cpp
         resize.cpp
         arcSink.cpp
+        arcSource.cpp
     )
 
     set (
@@ -29,6 +30,7 @@ else()
         nodeHeader.h
         button.h
         resize.h
+        arcSource.h
     )
 
     set (

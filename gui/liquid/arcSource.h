@@ -9,11 +9,19 @@ namespace liquid {
 struct ArcStyle;
 class ConnectionSink;
 
-class ArcSource: public QGraphicsItem{
+class AbstractArcSource: public QGraphicsObject{
+    Q_OBJECT
     public:
-        ArcSource(ArcStyle const& of_style, 
-                  void* sourceDelegate);
+        AbstractArcSource(ArcStyle const& of_style, 
+                          void* sourceDelegate,
+                          Arc* arc);
         
+        Arc* arc() const;
+        ArcStyle const& style() const;
+    
+    public Q_SIGNALS:
+        void geometryChanged();
+
     protected:
         // !!! not implementing the GraphicsItem required functions: this is an
         // abstract base
@@ -26,13 +34,32 @@ class ArcSource: public QGraphicsItem{
         // used to create the temporary ConnectionSink* to which the arc is
         // connected during a drag operation: this may be overriden by derived
         // classes if they want to drastically change the style
-        virtual ConnectionSink* newArcEnd();
+        virtual QGraphicsItem* newArcEnd();
 
-     private:
+     protected:
         // ...style, currently highlighted scene item, connection source (which
         // may be this), ...
-        ArcStyle const& m_style;
-        void * m_sourceDelegate;
+        ArcStyle const& m_style;  
+        Arc *m_arc;
+        void *m_sourceDelegate;
+        ArcSink *m_ephemeral_sink;
+};
+
+class ArcSource: public AbstractArcSource,
+                 public QGraphicsLayoutItem{
+    public:
+        ArcSource(ArcStyle const& of_style,
+                  void* sourceDelegate);
+
+    protected:
+        virtual QRectF boundingRect() const;
+        virtual void paint(QPainter *painter,
+                           const QStyleOptionGraphicsItem *opt,
+                           QWidget *widget=0);
+
+    private:
+        QGraphicsLineItem *m_front_line;
+        QGraphicsLineItem *m_back_line;
 };
 
 } // namespace liquid

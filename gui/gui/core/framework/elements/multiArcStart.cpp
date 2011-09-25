@@ -11,7 +11,7 @@ MultiArcStart::MultiArcStart(ManagedElement const& m, liquid::ArcStyle const& st
       m_arc(), m_front_line(), m_back_line(), m_style(style){
 
     setFlag(ItemHasNoContents);
-    setFlag(ItemIsMovable);    
+    setFlag(ItemIsMovable);
 
     m_arc = new MultiArc(*this, style, this, NULL);
     m_back_line = new QGraphicsLineItem(-m_style.back.start_length,0,0,0,this);
@@ -31,8 +31,8 @@ MultiArcStart::MultiArcStart(ManagedElement const& m, liquid::ArcStyle const& st
         QBrush(front_gradient),m_style.front.thickness, Qt::SolidLine, Qt::FlatCap
     ));
     
-    connect(this, SIGNAL(xChanged()), this, SIGNAL(boundriesChanged()));
-    connect(this, SIGNAL(yChanged()), this, SIGNAL(boundriesChanged()));
+    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }
 
 

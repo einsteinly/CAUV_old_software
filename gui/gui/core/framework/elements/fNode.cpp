@@ -81,6 +81,8 @@ class TempConnectionSink: public liquid::ConnectionSink{
         }
 };
 
+
+
 FNode::FNode(Manager& m, QGraphicsItem *parent)
     : liquid::LiquidNode(F_Node_Style, parent),
       ManagedElement(m){

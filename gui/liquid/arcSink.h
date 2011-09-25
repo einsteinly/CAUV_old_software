@@ -46,6 +46,9 @@ class ArcSink: public QGraphicsObject,
         // QGraphicsLayoutItem:
         virtual void setGeometry(QRectF const& rect);
 
+    public Q_SIGNALS:
+        void geometryChanged();
+
     protected:
         virtual QSizeF sizeHint(Qt::SizeHint which,
                                 const QSizeF&
