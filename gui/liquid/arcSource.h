@@ -1,13 +1,15 @@
 #ifndef __LIQUID_ARC_SOURCE_H__
 #define __LIQUID_ARC_SOURCE_H__
 
-#include <QGraphicsItem>
+#include <QGraphicsObject>
+#include <QGraphicsLayoutItem>
 #include <QGraphicsSceneMouseEvent>
 
 namespace liquid {
 
 struct ArcStyle;
-class ConnectionSink;
+class AbstractArcSink;
+class Arc;
 
 class AbstractArcSource: public QGraphicsObject{
     Q_OBJECT
@@ -19,7 +21,7 @@ class AbstractArcSource: public QGraphicsObject{
         Arc* arc() const;
         ArcStyle const& style() const;
     
-    public Q_SIGNALS:
+    Q_SIGNALS:
         void geometryChanged();
 
     protected:
@@ -32,9 +34,9 @@ class AbstractArcSource: public QGraphicsObject{
         virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *e);
         
         // used to create the temporary ConnectionSink* to which the arc is
-        // connected during a drag operation: this may be overriden by derived
+        // connected during a drag operation: this may be overridden by derived
         // classes if they want to drastically change the style
-        virtual QGraphicsItem* newArcEnd();
+        virtual AbstractArcSink* newArcEnd();
 
      protected:
         // ...style, currently highlighted scene item, connection source (which
@@ -42,14 +44,15 @@ class AbstractArcSource: public QGraphicsObject{
         ArcStyle const& m_style;  
         Arc *m_arc;
         void *m_sourceDelegate;
-        ArcSink *m_ephemeral_sink;
+        AbstractArcSink *m_ephemeral_sink;
 };
 
 class ArcSource: public AbstractArcSource,
                  public QGraphicsLayoutItem{
     public:
         ArcSource(ArcStyle const& of_style,
-                  void* sourceDelegate);
+                  void* sourceDelegate,
+                  Arc* arc);
 
     protected:
         virtual QRectF boundingRect() const;

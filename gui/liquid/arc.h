@@ -3,28 +3,26 @@
 
 #include <set>
 
-#include <QGraphicsArcItem>
-
 #include "arcSource.h"
 
 namespace liquid {
 
 struct ArcStyle;
-struct ArcSink;
+class AbstractArcSink;
 
 class Arc: public AbstractArcSource{
         Q_OBJECT;
     public:
         Arc(ArcStyle const& of_style,
             AbstractArcSource *from,
-            ArcSink *to);
+            AbstractArcSink *to);
        
         ArcStyle const& style() const;
         void *source();
-        std::set<ArcSink *> sinks();        
+        std::set<AbstractArcSink *> sinks();        
 
-        void addTo(ArcSink *to);
-        void removeTo(ArcSink *to);
+        void addTo(AbstractArcSink *to);
+        void removeTo(AbstractArcSink *to);
 
     protected:
         virtual QRectF boundingRect() const;
@@ -35,9 +33,9 @@ class Arc: public AbstractArcSource{
     protected:
         ArcStyle const& m_style;
         AbstractArcSource *m_source;
-        std::set<ArcSink*> m_sinks;
-        QGraphicsPathItem *m_front;
+        std::set<AbstractArcSink*> m_sinks;
         QGraphicsPathItem *m_back;
+        QGraphicsPathItem *m_front;
 };
 
 } // namespace liquid

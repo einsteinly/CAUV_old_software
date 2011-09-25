@@ -12,13 +12,23 @@ namespace liquid {
 struct ArcStyle;
 struct CutoutStyle;
 
-// Note that you could subclass QGraphicsItem and ConnectionSink separately,
-// and do completely custom drawing of the connect-y bit; this provides a class
-// that does standard drawing
-class ArcSink: public QGraphicsObject,
+class AbstractArcSink: public QGraphicsObject,
+                       public ConnectionSink{
+    Q_OBJECT
+    public:
+        virtual bool willAcceptConnection(void* from_source) = 0;
+        virtual void doPresentHighlight(qreal intensity) = 0;
+        virtual ConnectionStatus doAcceptConnection(void* from_source) = 0;
+    Q_SIGNALS:
+        void geometryChanged();
+};
+
+class ArcSink: public AbstractArcSink,
                public QGraphicsLayoutItem,
-               public ConnectionSink,
                public RequiresCutout{
+    Q_OBJECT
+    // No idea why this is required....
+    //Q_INTERFACES(QGraphicsLayoutItem)
     public:
         // or style could be delegated to something else...
         ArcSink(ArcStyle const& of_style,
@@ -45,9 +55,6 @@ class ArcSink: public QGraphicsObject,
         
         // QGraphicsLayoutItem:
         virtual void setGeometry(QRectF const& rect);
-
-    public Q_SIGNALS:
-        void geometryChanged();
 
     protected:
         virtual QSizeF sizeHint(Qt::SizeHint which,

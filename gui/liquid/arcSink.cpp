@@ -8,9 +8,8 @@ using namespace liquid;
 ArcSink::ArcSink(ArcStyle const& of_style,
     CutoutStyle const& with_cutout,
     ConnectionSink *connectionDelegate)
-    : QGraphicsObject(),
+    : AbstractArcSink(),
       QGraphicsLayoutItem(),
-      ConnectionSink(),
       RequiresCutout(),
       m_arc_style(of_style),
       m_cutout_style(with_cutout),

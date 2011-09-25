@@ -1,10 +1,19 @@
 #include "arcSource.h"
 
+#include <cmath>
+
+#include <QGraphicsSceneMouseEvent>
+
+#include <debug/cauv_debug.h>
+
+#include "arc.h"
+#include "arcSink.h"
+
 using namespace liquid;
 
 /***************************** AbstractArcSource *****************************/
 AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
-                                     void* sourceDelegate
+                                     void* sourceDelegate,
                                      Arc* arc)
     : m_style(of_style),
       m_arc(arc),
@@ -21,56 +30,57 @@ ArcStyle const& AbstractArcSource::style() const{
 }
 
 void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
-    if(event->button() & Qt::LeftButton){
-        if(m_ephemeral_arc_end)
+    if(e->button() & Qt::LeftButton){
+        if(m_ephemeral_sink)
             error() << "unmatched mousePressEvent";
-        m_ephemeral_arc_end = newArcEnd();
-        m_arc->addTo(m_ephemeral_arc_end);
+        m_ephemeral_sink = newArcEnd();
+        m_arc->addTo(m_ephemeral_sink);
         // in item (this) coordinates (this is now parent of new end):
         // whole pixels matters!
-        QPointF centre = m_ephemeral_arc_end->boundingRect().center();
+        QPointF centre = m_ephemeral_sink->boundingRect().center();
         centre.rx() = std::floor(centre.rx());
-        m_ephemeral_arc_end->setPos(event->pos() - centre);
+        m_ephemeral_sink->setPos(e->pos() - centre);
         // !!! TODO: check this
-        QGraphicsObject::mousePressEvent(event); 
-        event->accept();
+        QGraphicsObject::mousePressEvent(e); 
+        e->accept();
     }else{
-        event->ignore();
+        e->ignore();
     }
 }
 
 void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
-    if(m_ephemeral_arc_end){
-        m_ephemeral_arc_end->mouseMoveEvent(event);
+    if(m_ephemeral_sink){
+        m_ephemeral_sink->mouseMoveEvent(e);
     }else{
-        event->ignore();
+        e->ignore();
     }
 }
 
 void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
-    if(event->button() & Qt::LeftButton){
-        if(m_ephemeral_arc_end){
-            m_ephemeral_arc_end->mouseReleaseEvent(event);
-            deleteLater(m_ephemeral_arc_end);
-            m_ephemeral_arc_end = NULL;
+    if(e->button() & Qt::LeftButton){
+        if(m_ephemeral_sink){
+            m_ephemeral_sink->mouseReleaseEvent(e);
+            m_ephemeral_sink->deleteLater();
+            m_ephemeral_sink = NULL;
         }
         // accepted -> forward to base explicitly
-        QGraphicsObject::mouseReleaseEvent(event);
+        QGraphicsObject::mouseReleaseEvent(e);
     }else{
-        event->ignore();
+        e->ignore();
     }
 }
 
 
 #include "ephemeralArcEnd.h"
-virtual QGraphicsItem* AbstractArcSource::newArcEnd(){
-    return new ephemeralArcEnd();
+AbstractArcSink* AbstractArcSource::newArcEnd(){
+    return new EphemeralArcEnd(m_style);
 }
 
 /********************************* ArcSource *********************************/
 ArcSource::ArcSource(ArcStyle const& of_style,
-                     void* sourceDelegate)
-    : AbstractArcSource(of_style, sourceDelegate),
+                     void* sourceDelegate,
+                     Arc* arc)
+    : AbstractArcSource(of_style, sourceDelegate, arc),
       m_front_line(NULL),
       m_back_line(NULL){
 
@@ -81,7 +91,7 @@ ArcSource::ArcSource(ArcStyle const& of_style,
 
     QLinearGradient back_gradient(
         QPointF(-m_style.back.start_length,0),
-        connectionPoint()
+        QPointF(0,0)
     );
     back_gradient.setColorAt(0, m_style.back.start_col);
     back_gradient.setColorAt(1, m_style.back.col);
@@ -91,7 +101,7 @@ ArcSource::ArcSource(ArcStyle const& of_style,
     
     QLinearGradient front_gradient(
         QPointF(-m_style.front.start_length,0),
-        connectionPoint()
+        QPointF(0,0)
     );
     front_gradient.setColorAt(0, m_style.front.start_col);
     front_gradient.setColorAt(1, m_style.front.col);
@@ -106,7 +116,7 @@ QRectF ArcSource::boundingRect() const{
 
 void ArcSource::paint(QPainter *painter,
                       const QStyleOptionGraphicsItem *opt,
-                      QWidget *widget=0){
+                      QWidget *widget){
     Q_UNUSED(opt);
     Q_UNUSED(widget);
     Q_UNUSED(painter);

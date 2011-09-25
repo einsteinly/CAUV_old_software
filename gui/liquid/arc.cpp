@@ -1,19 +1,19 @@
 #include "arc.h"
 
+#include <cmath>
+
 #include "arcSink.h"
-#include "stlye.h"
+#include "style.h"
 
 using namespace liquid;
 
 Arc::Arc(ArcStyle const& of_style,
          AbstractArcSource *from,
-         ArcSink *to)
+         AbstractArcSink *to)
     : AbstractArcSource(of_style, from, this),
-      QGraphicsPathItem(),
       m_style(of_style),
       m_source(from),
       m_sinks(),
-      m_ephemeral_sink(NULL),
       m_back(new QGraphicsPathItem(this)),
       m_front(new QGraphicsPathItem(this)){
     
@@ -36,18 +36,18 @@ void *Arc::source(){
     return m_source;
 }
 
-std::set<ArcSink *> Arc::sinks(){
+std::set<AbstractArcSink *> Arc::sinks(){
     return m_sinks;
 }
 
-void Arc::addTo(ArcSink *to){
+void Arc::addTo(AbstractArcSink *to){
     m_sinks.insert(to);
     // !!! TODO: also connect signal to act on disconnection
     connect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     updateLayout();
 }
 
-void Arc::removeTo(ArcSink *to){
+void Arc::removeTo(AbstractArcSink *to){
     // !!! TODO
     m_sinks.erase(to);
 }
@@ -77,7 +77,7 @@ void Arc::updateLayout(){
     path.lineTo(split_point);
 
     if(m_sinks.size()){
-        foreach(ArcSink* ci, m_sinks){
+        foreach(AbstractArcSink* ci, m_sinks){
             path.moveTo(split_point);
             // mapToItem maps connection point in 'to' object into m_source's
             // coordinates 

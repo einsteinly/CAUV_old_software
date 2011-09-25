@@ -16,8 +16,10 @@ else()
         nodeHeader.cpp
         button.cpp
         resize.cpp
+        arc.cpp
         arcSink.cpp
         arcSource.cpp
+        ephemeralArcEnd.cpp
     )
 
     set (
@@ -30,7 +32,10 @@ else()
         nodeHeader.h
         button.h
         resize.h
+        arc.h
+        arcSink.h
         arcSource.h
+        ephemeralArcEnd.h
     )
 
     set (
