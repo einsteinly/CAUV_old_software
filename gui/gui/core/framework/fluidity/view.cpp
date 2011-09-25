@@ -1,12 +1,13 @@
 #include "view.h"
 
+#include <liquid/button.h>
+
 #include "elements/multiArc.h"
 //#include "elements/arcSocket.h"
 #include "elements/multiArcStart.h"
 #include "elements/multiArcEnd.h"
 #include "elements/fNode.h"
 #include "elements/style.h"
-#include "elements/button.h"
 
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"

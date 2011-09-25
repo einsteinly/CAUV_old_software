@@ -1,5 +1,5 @@
-#ifndef __CAUV_ELEMENT_NODE_HEADER_H__
-#define __CAUV_ELEMENT_NODE_HEADER_H__
+#ifndef __LIQUID_NODE_HEADER_H__
+#define __LIQUID_NODE_HEADER_H__
 
 #include <QGraphicsObject>
 #include <QMap>
@@ -7,8 +7,7 @@
 class QGraphicsPathItem;
 class QGraphicsSimpleTextItem;
 
-namespace cauv{
-namespace gui{
+namespace liquid{
 
 struct NodeStyle;
 class Button;
@@ -48,8 +47,7 @@ class NodeHeader: public QGraphicsObject{
 
 };
 
-} // namespace gui
-} // namespace cauv
+} // namespace liquid
 
-#endif // ndef __CAUV_ELEMENT_NODE_HEADER_H__
+#endif // ndef __LIQUID_NODE_HEADER_H__
 

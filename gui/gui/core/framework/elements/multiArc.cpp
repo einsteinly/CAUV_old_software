@@ -17,9 +17,10 @@
 
 using namespace cauv;
 using namespace cauv::gui;
+using namespace liquid;
 
 MultiArc::MultiArc(ManagedElement const& m,
-                   ArcStyle const& style,
+                   liquid::ArcStyle const& style,
                    ConnectableInterface *from,
                    ConnectableInterface *to)
     : QObject(),
@@ -44,7 +45,7 @@ MultiArc::MultiArc(ManagedElement const& m,
     updateLayout();
 }
 
-ArcStyle const& MultiArc::style() const{
+liquid::ArcStyle const& MultiArc::style() const{
     return m_style;
 }
 

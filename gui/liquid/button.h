@@ -1,12 +1,11 @@
-#ifndef __CAUV_ELEMENT_BUTTON_HEADER_H__
-#define __CAUV_ELEMENT_BUTTON_HEADER_H__
+#ifndef __LIQUID_BUTTON_H__
+#define __LIQUID_BUTTON_H__
 
 #include <QGraphicsWidget>
 #include <QPen>
 #include <QBrush>
 
-namespace cauv{
-namespace gui{
+namespace liquid{
 
 struct NodeStyle;
 
@@ -57,9 +56,8 @@ class Button: public QGraphicsWidget{
         QAbstractGraphicsShapeItem* m_background;
 };
 
-} // namespace gui
-} // namespace cauv
+} // namespace liquid
 
-#endif // ndef __CAUV_ELEMENT_BUTTON_HEADER_H__
+#endif // ndef __LIQUID_BUTTON_H__
 
 

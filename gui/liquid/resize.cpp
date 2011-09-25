@@ -4,8 +4,7 @@
 #include <QCursor>
 #include <QStyleOptionGraphicsItem>
 
-using namespace cauv;
-using namespace cauv::gui;
+using namespace liquid;
 
 ResizeHandle::ResizeHandle(QGraphicsObject *parent) : QGraphicsObject(parent),
 m_size(25, 25), m_pen(QColor(Qt::white), 2){
@@ -58,8 +57,7 @@ QSizeF ResizeHandle::size() const{
 void ResizeHandle::setSize(QSizeF const& s){
     prepareGeometryChange();
     m_size = s;
-    //prepareGeometryChange ensures update is called?
-    //update(boundingRect());
+    update(boundingRect());
 }
 
 

@@ -3,6 +3,10 @@
 
 #include <QGraphicsPathItem>
 
+namespace liquid {
+    struct NodeStyle;
+}
+
 namespace cauv{
 namespace gui{
 
@@ -13,17 +17,15 @@ enum e{
 };
 }// namespace NodeIOType
 
-struct NodeStyle;
-
 class NodeInput: public QGraphicsPathItem{
     public:
-        NodeInput(NodeStyle const& style, NodeIOType::e const& type,
+        NodeInput(liquid::NodeStyle const& style, NodeIOType::e const& type,
                   bool required, QGraphicsItem *parent=NULL);
 
     protected:
         NodeIOType::e m_type;
         bool m_required;
-        NodeStyle const& m_style;
+        liquid::NodeStyle const& m_style;
 };
 
 } // namespace gui

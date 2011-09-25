@@ -12,6 +12,10 @@ else()
     set (
         LIQUID_SRCS
         view.cpp
+        node.cpp
+        nodeHeader.cpp
+        button.cpp
+        resize.cpp
     )
 
     set (
@@ -20,6 +24,10 @@ else()
 
     set (
         LIQUID_H
+        node.h
+        nodeHeader.h
+        button.h
+        resize.h
     )
 
     set (

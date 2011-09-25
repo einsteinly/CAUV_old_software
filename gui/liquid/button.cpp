@@ -6,8 +6,7 @@
 #include <QTimer>
 #include <QAbstractGraphicsShapeItem>
 
-using namespace cauv;
-using namespace cauv::gui;
+using namespace liquid;
 
 Button::Button(QRectF clip,
                QString base_fname,

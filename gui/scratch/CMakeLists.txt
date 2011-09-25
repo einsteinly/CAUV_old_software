@@ -1,5 +1,7 @@
 project (gui-scratch)
 
+# for <gui/core/...>
+include_directories (${guis_SOURCE_DIR})
 
 set (
     scratch_srcs
@@ -8,15 +10,17 @@ set (
     ../gui/core/framework/elements/multiArc.cpp
     ../gui/core/framework/elements/multiArcStart.cpp
     ../gui/core/framework/elements/multiArcEnd.cpp
-    ../gui/core/framework/elements/graphicsWindow.cpp
     ../gui/core/framework/elements/fNode.cpp
     ../gui/core/framework/elements/nodeInput.cpp
-    ../gui/core/framework/elements/button.cpp
-    ../gui/core/framework/elements/nodeHeader.cpp
-    ../gui/core/framework/elements/resize.cpp    
 
     ../gui/core/framework/fluidity/managedElement.cpp
     ../gui/core/framework/fluidity/manager.cpp
+
+    ../liquid/button.cpp
+    ../liquid/nodeHeader.cpp
+    ../liquid/node.cpp
+    ../liquid/resize.cpp
+
 )
 
 set (
@@ -26,13 +30,15 @@ set (
     ../gui/core/framework/elements/multiArc.h
     ../gui/core/framework/elements/multiArcStart.h
     ../gui/core/framework/elements/multiArcEnd.h
-    ../gui/core/framework/elements/graphicsWindow.h
     ../gui/core/framework/elements/fNode.h
-    ../gui/core/framework/elements/button.h
-    ../gui/core/framework/elements/nodeHeader.h
-    ../gui/core/framework/elements/resize.h
 
     ../gui/core/framework/fluidity/manager.h
+
+
+    ../liquid/button.h
+    ../liquid/nodeHeader.h
+    ../liquid/node.h
+    ../liquid/resize.h
 )
 
 

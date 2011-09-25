@@ -10,8 +10,7 @@
 #include "button.h"
 #include "style.h"
 
-using namespace cauv;
-using namespace cauv::gui;
+using namespace liquid;
 
 
 NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)

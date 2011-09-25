@@ -4,7 +4,7 @@
 using namespace cauv;
 using namespace gui;
 
-MultiArcStart::MultiArcStart(ManagedElement const& m, ArcStyle const& style)
+MultiArcStart::MultiArcStart(ManagedElement const& m, liquid::ArcStyle const& style)
     : QGraphicsObject(),
       ConnectableInterface(),
       ManagedElement(m),
@@ -42,7 +42,7 @@ MultiArc* MultiArcStart::arc() const{
     return m_arc;
 }
 
-ArcStyle const& MultiArcStart::style() const{
+liquid::ArcStyle const& MultiArcStart::style() const{
     return m_style;
 }
 

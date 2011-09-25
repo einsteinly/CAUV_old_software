@@ -1,4 +1,4 @@
-#include "graphicsWindow.h"
+#include "node.h"
 
 #include <set>
 
@@ -15,24 +15,23 @@
 #include "nodeHeader.h"
 #include "resize.h"
 
-using namespace cauv;
-using namespace cauv::gui;
+using namespace liquid;
 
-GraphicsWindow::GraphicsWindow(NodeStyle const& style, QGraphicsItem *parent)
+LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     : QGraphicsObject(parent),
       m_size(QSizeF(0,0)),
       m_header(new NodeHeader(style, this)),
       m_contentWidget(new QGraphicsWidget(this)),
       m_contentLayout(new QGraphicsLinearLayout(Qt::Vertical)),
-      m_style(style),
-      m_back(new QGraphicsPathItem(this)){
-    
+      m_back(new QGraphicsPathItem(this)),
+      m_style(style){
+
     setFlag(ItemIsMovable);
     setFlag(ItemHasNoContents);
 
     m_back->setFlag(ItemStacksBehindParent);
     m_back->setZValue(10);
-    
+
     m_contentLayout->setSpacing(0);
     m_contentWidget->setLayout(m_contentLayout);
     m_contentWidget->setPos(0, m_style.header.height);
@@ -54,22 +53,22 @@ GraphicsWindow::GraphicsWindow(NodeStyle const& style, QGraphicsItem *parent)
     m_header->addButton("close", close_button);
 
     connect(close_button, SIGNAL(pressed()), this, SLOT(close()));
-    
+
     updateLayout();
 }
 
-void GraphicsWindow::close(){
+void LiquidNode::close(){
     Q_EMIT closed(this);
     this->deleteLater();
 }
 
-QRectF GraphicsWindow::boundingRect() const{
+QRectF LiquidNode::boundingRect() const{
     // otherwise this's would never receive mouse events, and it needs to in
     // order to be movable
     return m_back->boundingRect();
 }
 
-void GraphicsWindow::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidget *w){
+void LiquidNode::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidget *w){
     // don't draw anything, ItemHasNoContents flag is set
     Q_UNUSED(p);
     Q_UNUSED(o);
@@ -77,20 +76,20 @@ void GraphicsWindow::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidg
 }
 
 
-void GraphicsWindow::addButton(Button *button){
+void LiquidNode::addButton(Button *button){
     // !!! TODO
     //m_layout->addItem(button);
 }
 
-void GraphicsWindow::addItem(QGraphicsLayoutItem *item){
+void LiquidNode::addItem(QGraphicsLayoutItem *item){
     m_contentLayout->addItem(item);
 }
 
-QSizeF GraphicsWindow::size() const{
+QSizeF LiquidNode::size() const{
     return m_size;
 }
 
-void GraphicsWindow::setSize(QSizeF const& size){
+void LiquidNode::setSize(QSizeF const& size){
     debug(5) << "GraphicsWind::setSize(" << size << ")";
     prepareGeometryChange();
     m_size = size;
@@ -108,7 +107,7 @@ void GraphicsWindow::setSize(QSizeF const& size){
     updateLayout();
 }
 
-void GraphicsWindow::resized(){
+void LiquidNode::resized(){
     debug(5) << "GraphicsWind::resized()" << m_resizeHandle->newSize();
     QSizeF newSize(100, 100);
     if(m_resizeHandle->newSize().width() >= newSize.width())
@@ -119,21 +118,21 @@ void GraphicsWindow::resized(){
 }
 
 
-void GraphicsWindow::setClosable(bool close){
+void LiquidNode::setClosable(bool close){
     // !! TODO
     //m_closeButton->setVisible(close);
 }
 
-void GraphicsWindow::setResizable(bool sizeable){
+void LiquidNode::setResizable(bool sizeable){
     m_resizeHandle->setVisible(sizeable);
 }
 
-void GraphicsWindow::layoutChanged(){
+void LiquidNode::layoutChanged(){
     // since this's geometry hangs off m_back:
     this->prepareGeometryChange();
 
     QPainterPath p(QPointF(m_style.tl_radius, 0));
-    
+
     const qreal width = size().width();
     const qreal height = size().height();
 
@@ -151,11 +150,11 @@ void GraphicsWindow::layoutChanged(){
 
     m_back->setPen(m_style.pen);
     m_back->setBrush(m_style.brush);
-    
+
     m_back->setPath(p);
 }
 
-void GraphicsWindow::updateLayout(){
+void LiquidNode::updateLayout(){
     layoutChanged();
 }
 

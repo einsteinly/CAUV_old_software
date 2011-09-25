@@ -4,15 +4,17 @@
 
 #include <common/cauv_utils.h>
 
+#include <liquid/button.h>
+#include <liquid/nodeHeader.h>
+
 #include "style.h"
 #include "nodeInput.h"
-#include "button.h"
-#include "nodeHeader.h"
 
 using cauv::gui::FNode;
+using namespace liquid;
 
 FNode::FNode(Manager& m, QGraphicsItem *parent)
-    : GraphicsWindow(F_Node_Style, parent),
+    : liquid::LiquidNode(F_Node_Style, parent),
       ManagedElement(m){
 
     Button *collapsebutton = new Button(

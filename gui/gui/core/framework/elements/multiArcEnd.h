@@ -8,11 +8,14 @@
 #include "arc.h"
 #include "style.h"
 
+namespace liquid {
+    struct ArcStyle;
+}
+
 namespace cauv{
 namespace gui{
 
 class MultiArc;
-struct ArcStyle;
 
 class MultiArcEnd: public QGraphicsObject,
                    public ConnectableInterface,
@@ -61,7 +64,7 @@ class MultiArcEnd: public QGraphicsObject,
         QGraphicsPolygonItem *m_front_poly;
         bool m_ephemeral;
         
-        ArcStyle const& m_style;
+        liquid::ArcStyle const& m_style;
 };
 
 } // namespace gui

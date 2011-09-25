@@ -1,82 +1,12 @@
 #ifndef __CAUV_GUI_ELEMENT_STYLE_H__
 #define __CAUV_GUI_ELEMENT_STYLE_H__
 
-#include <QColor>
-#include <QPen>
-#include <QBrush>
-#include <QFont>
+#include <liquid/style.h>
 
 namespace cauv{
 namespace gui{
 
-struct ArcStyle{
-    struct SingleArcStyle{
-        QColor start_col;
-        qreal start_length;
-        
-        QColor col;
-        qreal thickness;
-
-        QColor tip_hl_col;
-
-        qreal end_base_offset;
-        qreal end_base_thickness;
-        qreal end_tip_thickness;
-        qreal end_length;
-    };
-    SingleArcStyle front;
-    SingleArcStyle back;
-};
-
-struct TextStyle{
-    QPen   pen;
-    QBrush brush;
-    QFont  font;
-};
-
-struct NodeStyle{
-    QPen pen;
-    QBrush brush;
-
-    qreal tl_radius;
-    qreal bl_radius;
-    
-    struct Header_Style{
-        qreal height;
-        QPen pen;
-        QBrush brush; 
-        TextStyle title;
-        TextStyle info;
-    } header;
-
-    QPen item_separator_pen;
-    QPen resize_handle_pen;
-
-    qreal in_socket_cutout_base;
-    qreal in_socket_cutout_tip;
-    qreal in_socket_cutout_depth;
-
-    struct Input{
-        struct Geometry{
-            qreal cutout_base;
-            qreal cutout_tip;
-            qreal cutout_depth;
-        };
-        struct Style{
-            QPen pen;
-            QBrush brush;
-        };
-
-        Geometry Required;
-        Geometry Optional;
-
-        Style Param;
-        Style Image;
-
-    } InputStyle;
-};
-
-const static ArcStyle Image_Arc_Style = {{
+    const static liquid::ArcStyle Image_Arc_Style = {{
         QColor(255,255,255,235), 12,
         QColor(255,255,255), 6, 
         QColor(186,255,152),
@@ -89,7 +19,7 @@ const static ArcStyle Image_Arc_Style = {{
     }
 };
 
-const static ArcStyle Param_Arc_Style = {{
+const static liquid::ArcStyle Param_Arc_Style = {{
         QColor(235,235,235,235), 12,
         QColor(235,235,235), 6,
         QColor(186,255,152),        
@@ -103,7 +33,7 @@ const static ArcStyle Param_Arc_Style = {{
 };
 
 const static qreal Cut_S = (14/16.0);
-const static NodeStyle F_Node_Style = {
+const static liquid::NodeStyle F_Node_Style = {
     QPen(QBrush(QColor(0,0,0,128)), 1, Qt::SolidLine, Qt::FlatCap),
     QBrush(QColor(243,243,243)),
     24, 24, {
@@ -139,7 +69,7 @@ const static NodeStyle F_Node_Style = {
     }
 };
 
-const static NodeStyle AI_Node_Style = F_Node_Style;
+const static liquid::NodeStyle AI_Node_Style = F_Node_Style;
 
 
 } // namespace gui

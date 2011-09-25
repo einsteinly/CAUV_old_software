@@ -11,7 +11,8 @@
 #include <QGraphicsLinearLayout>
 #include <QGraphicsItem>
 
-#include "elements/graphicsWindow.h"
+#include <liquid/node.h>
+
 #include "elements/arc.h"
 
 namespace cauv {
@@ -20,10 +21,10 @@ namespace cauv {
         class ResizeHandle;
         class Button;
 
-        class AINode : public GraphicsWindow, public ConnectableInterface
+        class AINode : public liquid::LiquidNode, public ConnectableInterface
         {
             Q_OBJECT
-            typedef GraphicsWindow base_t;
+            typedef liquid::LiquidNode base_t;
         public:
             AINode(QGraphicsItem *parent = 0);
             virtual ~AINode();

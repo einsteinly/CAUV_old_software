@@ -15,11 +15,11 @@ class MultiArcStart: public QGraphicsObject,
                      public ManagedElement{
     Q_OBJECT
     public:
-        MultiArcStart(ManagedElement const& m, ArcStyle const&);
+        MultiArcStart(ManagedElement const& m, liquid::ArcStyle const&);
         //~MultiArcStart(); // children deleted by ~QGraphicsItem
 
         MultiArc* arc() const;
-        ArcStyle const& style() const;
+        liquid::ArcStyle const& style() const;
 
    // QGraphicsItem required:
         virtual QRectF boundingRect() const;
@@ -40,7 +40,7 @@ class MultiArcStart: public QGraphicsObject,
         QGraphicsLineItem *m_front_line;
         QGraphicsLineItem *m_back_line;
 
-        ArcStyle const& m_style;
+        liquid::ArcStyle const& m_style;
 };
 
 } // namespace gui

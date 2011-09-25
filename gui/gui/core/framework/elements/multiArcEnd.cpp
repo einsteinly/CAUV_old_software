@@ -12,7 +12,7 @@
 using namespace cauv;
 using namespace gui;
 
-static QGraphicsPolygonItem* endArrow(ArcStyle::SingleArcStyle const& s, QGraphicsItem* parent){
+static QGraphicsPolygonItem* endArrow(liquid::ArcStyle::SingleArcStyle const& s, QGraphicsItem* parent){
     QPolygonF shape;
     shape << QPointF(0, -s.thickness/2);
     shape << QPointF(s.end_base_offset, -s.thickness/2);

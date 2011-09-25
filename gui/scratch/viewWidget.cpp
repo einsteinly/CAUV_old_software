@@ -1,12 +1,13 @@
 #include "viewWidget.h"
 
+#include <liquid/button.h>
+
 #include "elements/multiArc.h"
 //#include "elements/arcSocket.h"
 #include "elements/multiArcStart.h"
 #include "elements/multiArcEnd.h"
 #include "elements/fNode.h"
 #include "elements/style.h"
-#include "elements/button.h"
 
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
@@ -15,6 +16,7 @@
 
 using namespace cauv;
 using namespace cauv::gui;
+using namespace liquid;
 
 ViewWidget::ViewWidget(QWidget* parent)
     : QGraphicsView(parent){

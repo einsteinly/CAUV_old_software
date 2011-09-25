@@ -9,8 +9,9 @@
 
 #include <debug/cauv_debug.h>
 
+#include <liquid/button.h>
+
 #include "elements/style.h"
-#include "elements/button.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -47,7 +48,7 @@ void AINode::setSize(QSizeF const& s){
 
 
 AINode::AINode(QGraphicsItem *parent) :
-        GraphicsWindow(AI_Node_Style, parent),
+        liquid::LiquidNode(AI_Node_Style, parent),
         ConnectableInterface()
 {
     setSize(QSizeF(200,200));

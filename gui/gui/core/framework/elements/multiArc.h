@@ -8,11 +8,14 @@
 
 #include "arc.h"
 
+namespace liquid {
+    struct ArcStyle;
+}
+
 namespace cauv{
 namespace gui{
 
 class MultiArcEnd;
-struct ArcStyle;
 
 class MultiArc : public QObject,
                  public QGraphicsPathItem,
@@ -22,11 +25,11 @@ class MultiArc : public QObject,
         // From is used as parent. Magics are done so that coordinates are all
         // relative to parent for drawing.
         MultiArc(ManagedElement const& m,
-                 ArcStyle const& style,
+                 liquid::ArcStyle const& style,
                  ConnectableInterface *from,
                  ConnectableInterface *to=NULL);
         
-        ArcStyle const& style() const;
+        liquid::ArcStyle const& style() const;
 
         void addTo(ConnectableInterface *to);
         void removeTo(ConnectableInterface *to);
@@ -49,7 +52,7 @@ class MultiArc : public QObject,
 
         MultiArcEnd *m_ephemeral_arc_end;
 
-        ArcStyle const& m_style;
+        liquid::ArcStyle const& m_style;
 };
 
 } // namespace gui
