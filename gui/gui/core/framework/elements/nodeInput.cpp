@@ -2,6 +2,9 @@
 
 #include "style.h"
 
+#include "debug/cauv_debug.h"
+#include "utility/qt_streamops.h"
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -33,6 +36,8 @@ NodeInput::NodeInput(liquid::NodeStyle const& style,
       m_required(required),
       m_style(style){
     
+    setSizePolicy(QSizePolicy::Fixed);
+
     /*
     setFlag(ItemStacksBehindParent);
     
@@ -47,6 +52,17 @@ NodeInput::NodeInput(liquid::NodeStyle const& style,
     liquid::NodeStyle::Input::Geometry geom = (required)? m_style.InputStyle.Required:
                                                   m_style.InputStyle.Optional;
     setPath(pathForGeometry(m_style, geom));*/
+
+    QPainterPath p;
+    m_rect = QRectF(
+        0,
+        -Required_Image_Input.main_cutout.cutout_base/2,
+        Required_Image_Input.main_cutout.cutout_depth,
+        Required_Image_Input.main_cutout.cutout_base
+    );
+    p.addRect(m_rect);
+    setPath(p);
+    setPen(QPen(QColor(20,160,20,64)));
 }
 
 QList<liquid::CutoutStyle> NodeInput::cutoutGeometry() const{
@@ -55,9 +71,13 @@ QList<liquid::CutoutStyle> NodeInput::cutoutGeometry() const{
     return r << Required_Image_Input;
 }
 
+void NodeInput::setGeometry(QRectF const& rect){
+    debug() << "nodeInput::setGeometry" << rect;
+    debug() << "current position:" << pos();
+    setPos(rect.topLeft() - m_rect.topLeft());
+}
 
 QSizeF NodeInput::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const{
-    // !!! TODO
-    return QSizeF(100, 16);
+    return m_rect.size();
 }
 

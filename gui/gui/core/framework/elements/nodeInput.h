@@ -30,6 +30,8 @@ class NodeInput: public QGraphicsPathItem,
 
         virtual QList<liquid::CutoutStyle> cutoutGeometry() const;
     
+        virtual void setGeometry(QRectF const& rect);
+
     protected:
         virtual QSizeF sizeHint(Qt::SizeHint which,
                                 const QSizeF&
@@ -39,6 +41,9 @@ class NodeInput: public QGraphicsPathItem,
         NodeIOType::e m_type;
         bool m_required;
         liquid::NodeStyle const& m_style;
+        
+        // temp debug thing
+        QRectF m_rect;
 };
 
 } // namespace gui

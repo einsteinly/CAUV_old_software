@@ -20,7 +20,7 @@ using namespace liquid;
 
 LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     : QGraphicsObject(parent),
-      m_size(QSizeF(0,0)),
+      m_size(QSizeF(100,100)),
       m_header(new NodeHeader(style, this)),
       m_contentWidget(new QGraphicsWidget(this)),
       m_contentLayout(new QGraphicsLinearLayout(Qt::Vertical)),
@@ -32,8 +32,9 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
 
     m_back->setFlag(ItemStacksBehindParent);
     m_back->setZValue(10);
-
+    
     m_contentLayout->setSpacing(0);
+    m_contentLayout->setContentsMargins(0,0,0,0);
     m_contentWidget->setLayout(m_contentLayout);
     m_contentWidget->setPos(0, m_style.header.height);
 
@@ -55,6 +56,9 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
 
     connect(close_button, SIGNAL(pressed()), this, SLOT(close()));
 
+    // !!!! need to connect some signal to call updateLayout when the layout
+    // changes
+    connect(m_contentWidget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     updateLayout();
 }
 
@@ -84,11 +88,17 @@ void LiquidNode::addButton(Button *button){
 
 void LiquidNode::addItem(QGraphicsLayoutItem *item){
     m_contentLayout->addItem(item);
+    // Documentation suggests that adding things to the layout should also mean
+    // they get reparented to the widget of the layout (m_contentWidget), but
+    // this doesn't seem to happen....
+    QGraphicsItem *as_qgi = dynamic_cast<QGraphicsItem*>(item);
+    if(as_qgi)
+        as_qgi->setParentItem(m_contentWidget);
+
     RequiresCutout *req_cutout = dynamic_cast<RequiresCutout*>(item);
     debug() << "addItem:: requires cutout = " << req_cutout;
     if(req_cutout)
         m_items_requiring_cutout << req_cutout;
-    layoutChanged();
 }
 
 QSizeF LiquidNode::size() const{
@@ -145,7 +155,10 @@ void LiquidNode::layoutChanged(){
     std::map<qreal,CutoutStyle> cutouts_at;
     foreach(RequiresCutout* r, m_items_requiring_cutout)
         foreach(CutoutStyle const& g, r->cutoutGeometry())
-            cutouts_at[r->asQGI()->pos().y() + g.main_cutout.y_offset] = g;
+            cutouts_at[m_contentWidget->pos().y() +
+                       r->asQGI()->pos().y() +
+                       g.main_cutout.y_offset] = g;
+    debug() << "layoutChanged:" << cutouts_at.size() << "cutouts";
 
     p.lineTo(width, 0);
     p.lineTo(width, height);
@@ -160,6 +173,7 @@ void LiquidNode::layoutChanged(){
     typedef std::pair<qreal, CutoutStyle> y_style_pair_t;
     reverse_foreach(y_style_pair_t yg, cutouts_at){
         CutoutStyle::CutoutGeometry co = yg.second.main_cutout;
+        debug() << "Cutout y position:" << yg.first;
         p.lineTo(0, yg.first + co.cutout_base/2);
         p.lineTo(co.cutout_depth, yg.first + co.cutout_tip/2);
         p.lineTo(co.cutout_depth, yg.first - co.cutout_tip/2);
