@@ -16,11 +16,6 @@ set (
     ../gui/core/framework/fluidity/managedElement.cpp
     ../gui/core/framework/fluidity/manager.cpp
 
-    ../liquid/button.cpp
-    ../liquid/nodeHeader.cpp
-    ../liquid/node.cpp
-    ../liquid/resize.cpp
-
 )
 
 set (
@@ -33,12 +28,6 @@ set (
     ../gui/core/framework/elements/fNode.h
 
     ../gui/core/framework/fluidity/manager.h
-
-
-    ../liquid/button.h
-    ../liquid/nodeHeader.h
-    ../liquid/node.h
-    ../liquid/resize.h
 )
 
 
@@ -78,6 +67,7 @@ add_executable (
 target_link_libraries (
     scratch
     cauv_debug
+    liquid
     ${QT_LIBRARIES}
 )
 #cauv_install ( scratch )

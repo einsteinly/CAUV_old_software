@@ -16,6 +16,7 @@ else()
         nodeHeader.cpp
         button.cpp
         resize.cpp
+        arcSink.cpp
     )
 
     set (

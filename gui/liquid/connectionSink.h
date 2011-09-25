@@ -4,12 +4,13 @@
 namespace liquid {
 
 class ConnectionSink{
-    // called whilst a drag operation is in progress to test & highlight things
-    virtual bool willAcceptConnection(void* from_source);
+    public:
+        // called whilst a drag operation is in progress to test & highlight things
+        virtual bool willAcceptConnection(void* from_source) = 0;
 
-    // called when the connection is dropped, may return:
-    enum ConnectionStatus{Rejected, Accepted, Pending};
-    virtual ConnectionStatus doAcceptConnection(void* from_source);
+        // called when the connection is dropped, may return:
+        enum ConnectionStatus{Rejected, Accepted, Pending};
+        virtual ConnectionStatus doAcceptConnection(void* from_source) = 0;
 };
 
 } // namespace liquid

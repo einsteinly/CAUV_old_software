@@ -55,11 +55,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     m_header->addButton("close", close_button);
 
     connect(close_button, SIGNAL(pressed()), this, SLOT(close()));
-
-    // !!!! need to connect some signal to call updateLayout when the layout
-    // changes
     connect(m_contentWidget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
-    updateLayout();
 }
 
 void LiquidNode::close(){

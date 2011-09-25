@@ -8,6 +8,8 @@
 
 #include <liquid/button.h>
 #include <liquid/nodeHeader.h>
+#include <liquid/connectionSink.h>
+#include <liquid/arcSink.h>
 
 #include "style.h"
 #include "nodeInput.h"
@@ -66,6 +68,19 @@ class TestLayoutItem: public QGraphicsLayoutItem,
         QRectF m_preferred_geom;
 };
 
+class TempConnectionSink: public liquid::ConnectionSink{
+    public:
+        virtual bool willAcceptConnection(void* from_source){
+            debug() << "willAcceptConnection" << from_source;
+            return true;
+        }
+
+        virtual ConnectionStatus doAcceptConnection(void* from_source){
+            debug() << "doAcceptConnection" << from_source;
+            return Rejected;
+        }
+};
+
 FNode::FNode(Manager& m, QGraphicsItem *parent)
     : liquid::LiquidNode(F_Node_Style, parent),
       ManagedElement(m){
@@ -92,15 +107,22 @@ FNode::FNode(Manager& m, QGraphicsItem *parent)
     addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
     addItem(new TestLayoutItem(QRectF(0,-5,20,10)));
     
-    addItem(new NodeInput(m_style, NodeIOType::Image, true, this));
+    //addItem(new NodeInput(m_style, NodeIOType::Image, true, this));
+    TempConnectionSink *s = new TempConnectionSink();
+    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
+
     addItem(new TestLayoutItem(QRectF(0,-5,90,10)));
     //addItem(new TestLayoutItem(QRectF(0,-5,120,10)));
     //addItem(new TestLayoutItem(QRectF(0,-5,100,10)));
     //addItem(new TestLayoutItem(QRectF(0,-5,80,10)));
     
-    addItem(new NodeInput(m_style, NodeIOType::Image, false, this));
-    addItem(new NodeInput(m_style, NodeIOType::Parameter, true, this));
-    addItem(new NodeInput(m_style, NodeIOType::Parameter, false, this));
+    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
+    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
+    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
+
+    //addItem(new NodeInput(m_style, NodeIOType::Image, false, this));
+    //addItem(new NodeInput(m_style, NodeIOType::Parameter, true, this));
+    //addItem(new NodeInput(m_style, NodeIOType::Parameter, false, this));
     
     addItem(new TestLayoutItem(QRectF(0,-5,80,10)));
 }
