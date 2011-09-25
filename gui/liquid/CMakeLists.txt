@@ -50,6 +50,7 @@ else()
 
     target_link_libraries ( liquid
         ${QT_LIBRARIES}
+        cauv_debug
     )
 
 endif()

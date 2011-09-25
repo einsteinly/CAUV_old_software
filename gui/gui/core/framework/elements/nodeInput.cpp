@@ -5,7 +5,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-
+/*
 static QPainterPath pathForGeometry(liquid::NodeStyle const& s,
                                     liquid::NodeStyle::Input::Geometry const& g){
     QPainterPath p;
@@ -22,6 +22,7 @@ static QPainterPath pathForGeometry(liquid::NodeStyle const& s,
 
     return p;
 }
+*/
 
 NodeInput::NodeInput(liquid::NodeStyle const& style,
                      NodeIOType::e const& type,
@@ -31,7 +32,8 @@ NodeInput::NodeInput(liquid::NodeStyle const& style,
       m_type(type),
       m_required(required),
       m_style(style){
-
+    
+    /*
     setFlag(ItemStacksBehindParent);
     
     if(type == NodeIOType::Image){
@@ -44,6 +46,18 @@ NodeInput::NodeInput(liquid::NodeStyle const& style,
 
     liquid::NodeStyle::Input::Geometry geom = (required)? m_style.InputStyle.Required:
                                                   m_style.InputStyle.Optional;
-    setPath(pathForGeometry(m_style, geom));
+    setPath(pathForGeometry(m_style, geom));*/
+}
+
+QList<liquid::CutoutStyle> NodeInput::cutoutGeometry() const{
+    QList<liquid::CutoutStyle> r;
+    // !!! TODO: depends on image/param/required/optional
+    return r << Required_Image_Input;
+}
+
+
+QSizeF NodeInput::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const{
+    // !!! TODO
+    return QSizeF(100, 16);
 }
 

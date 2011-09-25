@@ -9,9 +9,11 @@ class QGraphicsLinearLayout;
 namespace liquid {
 
 struct NodeStyle;
+
 class Button;
 class ResizeHandle;
 class NodeHeader;
+class RequiresCutout;
 
 class LiquidNode: public QGraphicsObject{
     Q_OBJECT
@@ -28,7 +30,7 @@ protected:
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget *w=0);
 
-public: // !!! TODO: protected!
+public:
     virtual QSizeF size() const;
     virtual void setSize(QSizeF const&);
 
@@ -38,7 +40,8 @@ public: // !!! TODO: protected!
     virtual void setClosable(bool);
     virtual void setResizable(bool);
 
-    virtual void layoutChanged();
+protected:
+    void layoutChanged();
 
 protected Q_SLOTS:
     void updateLayout();
@@ -55,6 +58,7 @@ protected:
     QGraphicsPathItem     *m_back;
     // ...
     //QVector<QGraphicsLineItem*> m_separators;
+    QList<RequiresCutout*> m_items_requiring_cutout;
 
     NodeStyle const& m_style;
 };

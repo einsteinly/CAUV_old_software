@@ -33,6 +33,26 @@ namespace liquid {
         QFont  font;
     };
 
+    // provided by RequiresCutout subclasses
+    struct CutoutStyle{
+        struct CutoutGeometry{
+            qreal cutout_base;
+            qreal cutout_tip;
+            qreal cutout_depth;
+            qreal y_offset;
+        };
+        
+        struct Style{
+            QPen pen;
+            QBrush brush;
+        };
+    
+        CutoutGeometry main_cutout;
+        CutoutGeometry second_cutout;
+        Style style;
+    };
+    
+    // provided by whatever constructs nodes
     struct NodeStyle{
         QPen pen;
         QBrush brush;
@@ -50,29 +70,6 @@ namespace liquid {
 
         QPen item_separator_pen;
         QPen resize_handle_pen;
-
-        qreal in_socket_cutout_base;
-        qreal in_socket_cutout_tip;
-        qreal in_socket_cutout_depth;
-
-        struct Input{
-            struct Geometry{
-                qreal cutout_base;
-                qreal cutout_tip;
-                qreal cutout_depth;
-            };
-            struct Style{
-                QPen pen;
-                QBrush brush;
-            };
-
-            Geometry Required;
-            Geometry Optional;
-
-            Style Param;
-            Style Image;
-
-        } InputStyle;
     };
 
 } // namespace liquid

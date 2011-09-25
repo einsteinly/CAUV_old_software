@@ -12,9 +12,6 @@ namespace gui{
              public ManagedElement{
     public:
         FNode(Manager& m, QGraphicsItem *parent=0);
-
-    protected:
-        virtual void layoutChanged();
 };
 
 } // namespace gui

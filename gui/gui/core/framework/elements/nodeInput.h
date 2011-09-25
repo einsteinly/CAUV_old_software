@@ -2,6 +2,10 @@
 #define __CAUV_ELEMENT_NODE_INPUT_H__
 
 #include <QGraphicsPathItem>
+#include <QGraphicsLayoutItem>
+
+#include "liquid/node.h"
+#include "liquid/requiresCutout.h"
 
 namespace liquid {
     struct NodeStyle;
@@ -17,10 +21,19 @@ enum e{
 };
 }// namespace NodeIOType
 
-class NodeInput: public QGraphicsPathItem{
+class NodeInput: public QGraphicsPathItem,
+                 public QGraphicsLayoutItem,
+                 public liquid::RequiresCutout{
     public:
         NodeInput(liquid::NodeStyle const& style, NodeIOType::e const& type,
                   bool required, QGraphicsItem *parent=NULL);
+
+        virtual QList<liquid::CutoutStyle> cutoutGeometry() const;
+    
+    protected:
+        virtual QSizeF sizeHint(Qt::SizeHint which,
+                                const QSizeF&
+                                constraint=QSizeF()) const;
 
     protected:
         NodeIOType::e m_type;

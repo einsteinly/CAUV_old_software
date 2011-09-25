@@ -10,6 +10,7 @@
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
 
+#include "requiresCutout.h"
 #include "style.h"
 #include "button.h"
 #include "nodeHeader.h"
@@ -83,6 +84,11 @@ void LiquidNode::addButton(Button *button){
 
 void LiquidNode::addItem(QGraphicsLayoutItem *item){
     m_contentLayout->addItem(item);
+    RequiresCutout *req_cutout = dynamic_cast<RequiresCutout*>(item);
+    debug() << "addItem:: requires cutout = " << req_cutout;
+    if(req_cutout)
+        m_items_requiring_cutout << req_cutout;
+    layoutChanged();
 }
 
 QSizeF LiquidNode::size() const{
@@ -135,6 +141,11 @@ void LiquidNode::layoutChanged(){
 
     const qreal width = size().width();
     const qreal height = size().height();
+    
+    std::map<qreal,CutoutStyle> cutouts_at;
+    foreach(RequiresCutout* r, m_items_requiring_cutout)
+        foreach(CutoutStyle const& g, r->cutoutGeometry())
+            cutouts_at[r->asQGI()->pos().y() + g.main_cutout.y_offset] = g;
 
     p.lineTo(width, 0);
     p.lineTo(width, height);
@@ -144,6 +155,17 @@ void LiquidNode::layoutChanged(){
                m_style.bl_radius, m_style.bl_radius),
         -90, -90
     );
+    
+    // relying on iteration order of map being the order of the keys
+    typedef std::pair<qreal, CutoutStyle> y_style_pair_t;
+    reverse_foreach(y_style_pair_t yg, cutouts_at){
+        CutoutStyle::CutoutGeometry co = yg.second.main_cutout;
+        p.lineTo(0, yg.first + co.cutout_base/2);
+        p.lineTo(co.cutout_depth, yg.first + co.cutout_tip/2);
+        p.lineTo(co.cutout_depth, yg.first - co.cutout_tip/2);
+        p.lineTo(0, yg.first - co.cutout_base/2);
+    }
+
     p.lineTo(0, m_style.tl_radius);
     p.arcTo(QRectF(0, 0, m_style.tl_radius, m_style.tl_radius), -180, -90);
     p.lineTo(m_style.tl_radius, 0);
