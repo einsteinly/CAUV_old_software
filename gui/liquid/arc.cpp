@@ -6,6 +6,7 @@
 
 #include "arcSink.h"
 #include "style.h"
+#include "ephemeralArcEnd.h"
 
 using namespace liquid;
 
@@ -17,11 +18,16 @@ Arc::Arc(ArcStyle const& of_style,
       m_source(from),
       m_sinks(),
       m_back(new QGraphicsPathItem(this)),
-      m_front(new QGraphicsPathItem(this)){
+      m_front(new QGraphicsPathItem(this)),
+      m_ephemeral_end(new EphemeralArcEnd(of_style)){
 
     debug() << "Arc()" << this;
 
     setFlag(ItemHasNoContents);
+    
+    // this is just cosmetic: should probably do drawing locally...
+    m_ephemeral_end->setParentItem(this);
+    m_ephemeral_end->setAcceptedMouseButtons(Qt::NoButton);
     
     if(from)
         setFrom(from);
@@ -53,6 +59,7 @@ void Arc::setFrom(AbstractArcSource *from){
     setParentItem(from);
     connect(from, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     // !!! TODO: disconnect signal?
+    updateLayout();
 }
 
 void Arc::addTo(AbstractArcSink *to){
@@ -71,7 +78,7 @@ void Arc::removeTo(AbstractArcSink *to){
 }
 
 QRectF Arc::boundingRect() const{
-    return m_back->boundingRect();
+    return m_back->boundingRect() | m_ephemeral_end->boundingRect();
 }
 
 void Arc::paint(QPainter *painter,
@@ -107,6 +114,7 @@ void Arc::updateLayout(){
     path.lineTo(split_point);
 
     if(m_sinks.size()){
+        m_ephemeral_end->hide();
         foreach(AbstractArcSink* ci, m_sinks){
             path.moveTo(split_point);
             QPointF end_point(mapFromScene(ci->scenePos()));
@@ -117,7 +125,8 @@ void Arc::updateLayout(){
             //path.lineTo(end_point);
         }
     }else{
-        path.lineTo(split_point + QPointF(4,0));
+        //path.lineTo(split_point + QPointF(4,0));
+        m_ephemeral_end->show();
     }
 
     m_back->setPath(path);

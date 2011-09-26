@@ -25,8 +25,8 @@ class EphemeralArcEnd: public AbstractArcSink{
                    QWidget *widget);
         
         virtual bool willAcceptConnection(void*){return false;}
-        virtual void doPresentHighlight(qreal intensity){}
-        virtual ConnectionStatus doAcceptConnection(void* from_source){return Rejected;}
+        virtual void doPresentHighlight(qreal){}
+        virtual ConnectionStatus doAcceptConnection(void*){return Rejected;}
 
     Q_SIGNALS:
         void geometryChanged();

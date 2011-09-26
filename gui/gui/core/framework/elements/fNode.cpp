@@ -121,11 +121,11 @@ FNode::FNode(Manager& m, QGraphicsItem *parent)
 
     addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, k));
     addItem(new liquid::ArcSink(Image_Arc_Style, Optional_Image_Input, k));
-    addItem(new liquid::ArcSink(Param_Arc_Style, Required_Param_Input, k));
+    //addItem(new liquid::ArcSink(Param_Arc_Style, Required_Param_Input, k));
     addItem(new liquid::ArcSink(Param_Arc_Style, Optional_Param_Input, k));
 
     addItem(new TestLayoutItem(QRectF(0,-5,90,10)));
-    addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
+    //addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
 
     //addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
     //addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));

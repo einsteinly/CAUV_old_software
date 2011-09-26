@@ -9,6 +9,7 @@ namespace liquid {
 
 struct ArcStyle;
 class AbstractArcSink;
+class EphemeralArcEnd;
 
 class Arc: public AbstractArcSource{
         Q_OBJECT;
@@ -41,6 +42,7 @@ class Arc: public AbstractArcSource{
         std::set<AbstractArcSink*> m_sinks;
         QGraphicsPathItem *m_back;
         QGraphicsPathItem *m_front;
+        EphemeralArcEnd *m_ephemeral_end;
 };
 
 } // namespace liquid

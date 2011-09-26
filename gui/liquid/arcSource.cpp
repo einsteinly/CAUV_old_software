@@ -160,7 +160,7 @@ ArcSource::ArcSource(void* sourceDelegate,
 }
 
 QSizeF ArcSource::sizeHint(Qt::SizeHint which, const QSizeF &constraint) const{
-    return boundingRect().size();
+    return boundingRect().size() + QSizeF(0,6);
 }
 
 void ArcSource::setGeometry(QRectF const& rect){

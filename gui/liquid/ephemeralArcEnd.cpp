@@ -39,6 +39,7 @@ EphemeralArcEnd::~EphemeralArcEnd(){
 }
 
 void EphemeralArcEnd::mousePressEvent(QGraphicsSceneMouseEvent *e){
+    Q_UNUSED(e);
     setFill(true);
 }
 
@@ -49,6 +50,7 @@ void EphemeralArcEnd::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
 }
 
 void EphemeralArcEnd::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
+    Q_UNUSED(e);    
     debug() << "EphemeralArcEnd::mouseReleaseEvent";
     QPropertyAnimation *fadeOut = new QPropertyAnimation(this, "opacity");
     m_back_poly->setOpacity(0.5);
