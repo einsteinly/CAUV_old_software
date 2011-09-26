@@ -16,7 +16,8 @@ class Arc: public AbstractArcSource{
         Arc(ArcStyle const& of_style,
             AbstractArcSource *from=NULL,
             AbstractArcSink *to=NULL);
-       
+        virtual ~Arc();
+
         ArcStyle const& style() const;
         void *source();
         std::set<AbstractArcSink *> sinks();        

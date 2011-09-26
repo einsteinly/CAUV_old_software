@@ -14,7 +14,8 @@ class Arc;
 class AbstractArcSource: public QGraphicsObject{
     Q_OBJECT
     public:
-        AbstractArcSource(void* sourceDelegate,
+        AbstractArcSource(ArcStyle const& of_style,
+                          void* sourceDelegate,
                           Arc* arc);
         virtual ~AbstractArcSource();
 

@@ -13,9 +13,10 @@
 using namespace liquid;
 
 /***************************** AbstractArcSource *****************************/
-AbstractArcSource::AbstractArcSource(void* sourceDelegate,
+AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
+                                     void* sourceDelegate,
                                      Arc* arc)
-    : m_style(arc->style()),
+    : m_style(of_style),
       m_arc(arc),
       m_sourceDelegate(sourceDelegate),
       m_ephemeral_sink(NULL){
@@ -91,7 +92,7 @@ AbstractArcSink* AbstractArcSource::newArcEnd(){
 /********************************* ArcSource *********************************/
 ArcSource::ArcSource(void* sourceDelegate,
                      Arc* arc)
-    : AbstractArcSource(sourceDelegate, arc),
+    : AbstractArcSource(arc->style(), sourceDelegate, arc),
       m_front_line(NULL),
       m_back_line(NULL){
     

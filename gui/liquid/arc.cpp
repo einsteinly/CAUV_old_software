@@ -12,22 +12,27 @@ using namespace liquid;
 Arc::Arc(ArcStyle const& of_style,
          AbstractArcSource *from,
          AbstractArcSink *to)
-    : AbstractArcSource(from, this),
+    : AbstractArcSource(of_style, from, this),
       m_style(of_style),
       m_source(from),
       m_sinks(),
       m_back(new QGraphicsPathItem(this)),
       m_front(new QGraphicsPathItem(this)){
-    
+
+    debug() << "Arc()" << this;
+
     setFlag(ItemHasNoContents);
     
     if(from)
         setFrom(from);
-
     if(to)
         addTo(to);
 
     updateLayout();
+}
+
+Arc::~Arc(){
+    debug() << "~Arc()" << this;
 }
 
 ArcStyle const& Arc::style() const{
@@ -85,7 +90,7 @@ void Arc::updateLayout(){
 
     prepareGeometryChange();
 
-    QPointF start_point = m_source->mapToItem(this, m_source->pos());
+    QPointF start_point = mapFromScene(m_source->scenePos());
     QPointF split_point = start_point + QPointF(8,0);
     
     // back style:
@@ -104,7 +109,7 @@ void Arc::updateLayout(){
     if(m_sinks.size()){
         foreach(AbstractArcSink* ci, m_sinks){
             path.moveTo(split_point);
-            QPointF end_point(ci->mapToItem(this, ci->pos()));
+            QPointF end_point(mapFromScene(ci->scenePos()));
             QPointF c1(split_point + QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             QPointF c2(end_point   - QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             path.cubicTo(c1, c2, end_point);
