@@ -38,6 +38,9 @@ class AbstractArcSource: public QGraphicsObject{
         // connected during a drag operation: this may be overridden by derived
         // classes if they want to drastically change the style
         virtual AbstractArcSink* newArcEnd();
+        
+        void removeHighlights();
+        void checkAndHighlightSinks(QPointF scene_pos);
 
      protected:
         // ...style, currently highlighted scene item, connection source (which
@@ -46,6 +49,7 @@ class AbstractArcSource: public QGraphicsObject{
         Arc *m_arc;
         void *m_sourceDelegate;
         AbstractArcSink *m_ephemeral_sink;
+        QSet<AbstractArcSink*> m_highlighted_items;
 };
 
 class ArcSource: public AbstractArcSource,

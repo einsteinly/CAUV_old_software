@@ -3,6 +3,8 @@
 #include <QPropertyAnimation>
 #include <QGraphicsBlurEffect>
 
+#include <debug/cauv_debug.h>
+
 using namespace liquid;
 
 ArcSink::ArcSink(ArcStyle const& of_style,
@@ -14,7 +16,7 @@ ArcSink::ArcSink(ArcStyle const& of_style,
       m_arc_style(of_style),
       m_cutout_style(with_cutout),
       m_connectionDelegate(connectionDelegate),
-      m_highlight(new QGraphicsEllipseItem()),
+      m_highlight(new QGraphicsEllipseItem(this)),
       m_rect(
         0,
         -(1+m_cutout_style.main_cutout.cutout_base/2),
@@ -22,17 +24,28 @@ ArcSink::ArcSink(ArcStyle const& of_style,
         2+m_cutout_style.main_cutout.cutout_base
       ){
     
-    m_highlight->setRect(m_rect);
+    m_highlight->setRect(m_rect.adjusted(2,2,-2,-2));
     m_highlight->setPen(Qt::NoPen);
-    m_highlight->setBrush(QBrush(QColor(50,255,50,128)));
+    m_highlight->setBrush(QBrush(QColor(50,255,50,160)));
     
     QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
-    blur->setBlurRadius(1.0);
+    blur->setBlurRadius(3.0);
     setGraphicsEffect(blur);
+
+    /*QGraphicsPathItem *test_item = new QGraphicsPathItem(this);
+    QPainterPath p;
+    p.addRect(m_rect);
+    test_item->setPath(p);
+    test_item->setBrush(Qt::NoBrush);
+    test_item->setPen(QPen(QColor(20,200,20,128)));
+    */
 
     setSizePolicy(QSizePolicy::Fixed);
 
     setFlag(ItemHasNoContents);
+    
+    // start out not presenting a highlight:
+    doPresentHighlight(0);
     
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
@@ -43,8 +56,11 @@ bool ArcSink::willAcceptConnection(void* from_source){
 }
 
 void ArcSink::doPresentHighlight(qreal intensity){
+    debug(8) << "doPresentHighlight:" << intensity;
     QPropertyAnimation *fadeHL = new QPropertyAnimation(this, "opacity");
-    fadeHL->setEndValue(intensity);
+    // !!! can't set zero opacity, because that renders this item invisible,
+    // and then it won't be picked up by the proximity test!
+    fadeHL->setEndValue(std::max(intensity, 0.01));
     fadeHL->setDuration(100);    
     fadeHL->start();
 }

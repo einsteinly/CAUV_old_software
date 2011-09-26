@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsScene>
 
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
@@ -44,10 +45,8 @@ void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
 
         m_arc->addTo(m_ephemeral_sink);
         // in item (this) coordinates (this is now parent of new end):
-        // whole pixels matters!
-        //QPointF centre = m_ephemeral_sink->boundingRect().size().center();
-        //centre.rx() = std::floor(centre.rx());
-        m_ephemeral_sink->setPos(e->pos());// - centre);
+        // !!! TODO: might be possible to use sendEvent to send the event
+        // properly...
         m_ephemeral_sink->mousePressEvent(e);
         // !!! TODO: check this
         QGraphicsObject::mousePressEvent(e); 
@@ -60,7 +59,7 @@ void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
 void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
     debug() << "AbstractArcSource::mouseMoveEvent";
     if(m_ephemeral_sink){
-        // !!! TODO: sourceDelegate stuff...
+        checkAndHighlightSinks(e->scenePos());
         m_ephemeral_sink->mouseMoveEvent(e);
     }else{
         e->ignore();
@@ -70,6 +69,8 @@ void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
 void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
     debug() << "AbstractArcSource::mouseReleaseEvent";
     if(e->button() & Qt::LeftButton){
+        removeHighlights();
+        // !!! TODO: call doAcceptConnection
         if(m_ephemeral_sink){
             // sink arranges its own deletion
             m_ephemeral_sink->mouseReleaseEvent(e);
@@ -88,6 +89,39 @@ AbstractArcSink* AbstractArcSource::newArcEnd(){
     debug() << "newArcEnd:: this:" << this << "&style:" << &m_style;
     return new EphemeralArcEnd(m_style);
 }
+
+void AbstractArcSource::removeHighlights(){
+    foreach(AbstractArcSink* k, m_highlighted_items)
+        k->doPresentHighlight(0);
+}
+
+void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
+    QPointF ds(40,40);
+    QRectF near_field(scene_pos - ds, scene_pos + ds);
+    QGraphicsScene *s = scene();
+    if(!s){
+        error() << "no scene!";
+        return;
+    }
+    AbstractArcSink *k;
+    QList<QGraphicsItem *> near_items = s->items(near_field);
+    QSet<AbstractArcSink*> near_set;
+    debug() << near_items.size() << "nearby items";    
+    foreach(QGraphicsItem* g, near_items)
+        if((k = dynamic_cast<AbstractArcSink*>(g)) &&
+           k->willAcceptConnection(m_sourceDelegate)){
+            near_set << k;
+            QPointF d = k->scenePos() - scene_pos;
+            qreal dl = d.x()*d.x() +d.y()*d.y();
+            k->doPresentHighlight(1.0/(1.0 + 0.002*dl));
+        }
+    debug() << "now highlighting" << near_set.size() << "items";
+    // for each of the no longer highlighted items:
+    foreach(AbstractArcSink* k, m_highlighted_items - near_set)
+        k->doPresentHighlight(0);
+    m_highlighted_items = near_set;
+}
+
 
 /********************************* ArcSource *********************************/
 ArcSource::ArcSource(void* sourceDelegate,
