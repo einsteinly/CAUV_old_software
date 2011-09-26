@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <debug/cauv_debug.h>
+
 #include "arcSink.h"
 #include "style.h"
 
@@ -10,17 +12,17 @@ using namespace liquid;
 Arc::Arc(ArcStyle const& of_style,
          AbstractArcSource *from,
          AbstractArcSink *to)
-    : AbstractArcSource(of_style, from, this),
+    : AbstractArcSource(from, this),
       m_style(of_style),
       m_source(from),
       m_sinks(),
       m_back(new QGraphicsPathItem(this)),
       m_front(new QGraphicsPathItem(this)){
     
-    setParentItem(from);
     setFlag(ItemHasNoContents);
-
-    connect(from, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
+    
+    if(from)
+        setFrom(from);
 
     if(to)
         addTo(to);
@@ -40,27 +42,50 @@ std::set<AbstractArcSink *> Arc::sinks(){
     return m_sinks;
 }
 
+void Arc::setFrom(AbstractArcSource *from){
+    debug() << "arc::setFrom:" << from;
+    m_source = from;
+    setParentItem(from);
+    connect(from, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
+    // !!! TODO: disconnect signal?
+}
+
 void Arc::addTo(AbstractArcSink *to){
+    debug() << "Arc::addTo:" << to;
     m_sinks.insert(to);
-    // !!! TODO: also connect signal to act on disconnection
     connect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
+    connect(to, SIGNAL(disconnected(AbstractArcSink*)),
+            this, SLOT(removeTo(AbstractArcSink*)));
     updateLayout();
 }
 
 void Arc::removeTo(AbstractArcSink *to){
-    // !!! TODO
+    debug() << "Arc::removeTo:" << to;
     m_sinks.erase(to);
+    updateLayout();
 }
 
 QRectF Arc::boundingRect() const{
     return m_back->boundingRect();
 }
 
+void Arc::paint(QPainter *painter,
+                const QStyleOptionGraphicsItem *option,
+                QWidget *widget){
+    Q_UNUSED(painter);
+    Q_UNUSED(option);
+    Q_UNUSED(widget);
+}
+
 void Arc::updateLayout(){
+    if(!m_source){
+        warning() << "no source!";
+        return;
+    }
+
     prepareGeometryChange();
-    
-    // we draw in m_source's coordinate system (it is this's parent)
-    QPointF start_point = m_source->pos();
+
+    QPointF start_point = m_source->mapToItem(this, m_source->pos());
     QPointF split_point = start_point + QPointF(8,0);
     
     // back style:
@@ -79,9 +104,7 @@ void Arc::updateLayout(){
     if(m_sinks.size()){
         foreach(AbstractArcSink* ci, m_sinks){
             path.moveTo(split_point);
-            // mapToItem maps connection point in 'to' object into m_source's
-            // coordinates 
-            QPointF end_point(ci->mapToItem(m_source, ci->pos()));
+            QPointF end_point(ci->mapToItem(this, ci->pos()));
             QPointF c1(split_point + QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             QPointF c2(end_point   - QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             path.cubicTo(c1, c2, end_point);

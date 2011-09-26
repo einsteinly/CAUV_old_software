@@ -10,6 +10,8 @@
 #include <liquid/nodeHeader.h>
 #include <liquid/connectionSink.h>
 #include <liquid/arcSink.h>
+#include <liquid/arcSource.h>
+#include <liquid/arc.h>
 
 #include "style.h"
 #include "nodeInput.h"
@@ -81,6 +83,12 @@ class TempConnectionSink: public liquid::ConnectionSink{
         }
 };
 
+class MyConnectionSource{
+    public:
+        void moo(){
+            debug() << "MyConnectionSource::moo";
+        }
+};
 
 
 FNode::FNode(Manager& m, QGraphicsItem *parent)
@@ -106,26 +114,20 @@ FNode::FNode(Manager& m, QGraphicsItem *parent)
     setSize(QSizeF(104,130));
     
     // !!!
-    addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
-    addItem(new TestLayoutItem(QRectF(0,-5,20,10)));
     
-    //addItem(new NodeInput(m_style, NodeIOType::Image, true, this));
-    TempConnectionSink *s = new TempConnectionSink();
-    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
+    TempConnectionSink *k = new TempConnectionSink();
+    MyConnectionSource *c = new MyConnectionSource();
+
+    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, k));
+    addItem(new liquid::ArcSink(Image_Arc_Style, Optional_Image_Input, k));
+    addItem(new liquid::ArcSink(Param_Arc_Style, Required_Param_Input, k));
+    addItem(new liquid::ArcSink(Param_Arc_Style, Optional_Param_Input, k));
 
     addItem(new TestLayoutItem(QRectF(0,-5,90,10)));
-    //addItem(new TestLayoutItem(QRectF(0,-5,120,10)));
-    //addItem(new TestLayoutItem(QRectF(0,-5,100,10)));
-    //addItem(new TestLayoutItem(QRectF(0,-5,80,10)));
-    
-    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
-    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
-    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, s));
+    addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
 
-    //addItem(new NodeInput(m_style, NodeIOType::Image, false, this));
-    //addItem(new NodeInput(m_style, NodeIOType::Parameter, true, this));
-    //addItem(new NodeInput(m_style, NodeIOType::Parameter, false, this));
-    
-    addItem(new TestLayoutItem(QRectF(0,-5,80,10)));
+    addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
+    addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
+    addItem(new liquid::ArcSource(c, new liquid::Arc(Param_Arc_Style)));
 }
 

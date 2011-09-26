@@ -2,6 +2,9 @@
 
 #include <QPropertyAnimation>
 #include <QGraphicsScene>
+#include <QGraphicsSceneMouseEvent>
+
+#include <debug/cauv_debug.h>
 
 #include "style.h"
 
@@ -22,28 +25,37 @@ static QGraphicsPolygonItem* endArrow(liquid::ArcStyle::SingleArcStyle const& s,
 
 EphemeralArcEnd::EphemeralArcEnd(ArcStyle const& of_style)
     : AbstractArcSink(),
-      m_back_poly(endArrow(m_style.back, this)),
-      m_front_poly(endArrow(m_style.front, this)),
+      m_back_poly(endArrow(of_style.back, this)),
+      m_front_poly(endArrow(of_style.front, this)),
       m_style(of_style){
     setFill(false);
     setFlag(ItemIsMovable);
-    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged));
-    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged));
+    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }
 
-void EphemeralArcEnd::mousePressEvent(QGraphicsSceneMouseEvent *event){
+EphemeralArcEnd::~EphemeralArcEnd(){
+    debug() << "~EphemeralArcEnd()";
+}
+
+void EphemeralArcEnd::mousePressEvent(QGraphicsSceneMouseEvent *e){
     setFill(true);
-    QGraphicsObject::mousePressEvent(event);
 }
 
-void EphemeralArcEnd::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
+void EphemeralArcEnd::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
+    // !!! relying that e is in parent coordinates (ie forwarded by
+    // AbstractArcSouce)
+    setPos(e->pos());
+}
+
+void EphemeralArcEnd::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
+    debug() << "EphemeralArcEnd::mouseReleaseEvent";
     QPropertyAnimation *fadeOut = new QPropertyAnimation(this, "opacity");
     m_back_poly->setOpacity(0.5);
     fadeOut->setEndValue(0);
     fadeOut->setDuration(100);
     connect(fadeOut, SIGNAL(finished()), this, SLOT(removeFromScene()));
     fadeOut->start();
-    QGraphicsObject::mouseReleaseEvent(event);
 }
 
 QRectF EphemeralArcEnd::boundingRect() const{
@@ -63,7 +75,8 @@ void EphemeralArcEnd::paint(QPainter *painter,
 
 void EphemeralArcEnd::removeFromScene(){
     hide();
-    Q_EMIT(disconnected());
+    debug() << "EphemeralArcEnd::removeFromScene:" << this;
+    Q_EMIT(disconnected(this));
     scene()->removeItem(this);
     deleteLater();
 }

@@ -14,10 +14,10 @@ class Arc;
 class AbstractArcSource: public QGraphicsObject{
     Q_OBJECT
     public:
-        AbstractArcSource(ArcStyle const& of_style, 
-                          void* sourceDelegate,
+        AbstractArcSource(void* sourceDelegate,
                           Arc* arc);
-        
+        virtual ~AbstractArcSource();
+
         Arc* arc() const;
         ArcStyle const& style() const;
     
@@ -50,16 +50,18 @@ class AbstractArcSource: public QGraphicsObject{
 class ArcSource: public AbstractArcSource,
                  public QGraphicsLayoutItem{
     public:
-        ArcSource(ArcStyle const& of_style,
-                  void* sourceDelegate,
+        ArcSource(void* sourceDelegate,
                   Arc* arc);
-
+        
+        virtual QSizeF sizeHint(Qt::SizeHint which,
+                                const QSizeF &constraint=QSizeF()) const;
+        virtual void setGeometry(QRectF const& rect);
     protected:
         virtual QRectF boundingRect() const;
         virtual void paint(QPainter *painter,
                            const QStyleOptionGraphicsItem *opt,
                            QWidget *widget=0);
-
+        
     private:
         QGraphicsLineItem *m_front_line;
         QGraphicsLineItem *m_back_line;

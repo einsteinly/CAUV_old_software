@@ -14,21 +14,25 @@ class Arc: public AbstractArcSource{
         Q_OBJECT;
     public:
         Arc(ArcStyle const& of_style,
-            AbstractArcSource *from,
-            AbstractArcSink *to);
+            AbstractArcSource *from=NULL,
+            AbstractArcSink *to=NULL);
        
         ArcStyle const& style() const;
         void *source();
         std::set<AbstractArcSink *> sinks();        
-
+        
+        void setFrom(AbstractArcSource *from);
         void addTo(AbstractArcSink *to);
-        void removeTo(AbstractArcSink *to);
 
     protected:
         virtual QRectF boundingRect() const;
+        virtual void paint(QPainter *painter,
+                           const QStyleOptionGraphicsItem *option,
+                           QWidget *widget = 0);
 
     protected Q_SLOTS:
         void updateLayout();
+        void removeTo(AbstractArcSink *to);
 
     protected:
         ArcStyle const& m_style;

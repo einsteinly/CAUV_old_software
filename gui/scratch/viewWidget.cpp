@@ -1,13 +1,16 @@
 #include "viewWidget.h"
 
 #include <liquid/button.h>
+//#include <liquid/arc.h>
+//#include <liquid/arcSource.h>
+//#include <liquid/arcSink.h>
 
-#include "elements/multiArc.h"
+//#include "elements/multiArc.h"
 //#include "elements/arcSocket.h"
-#include "elements/multiArcStart.h"
-#include "elements/multiArcEnd.h"
+//#include "elements/multiArcStart.h"
+//#include "elements/multiArcEnd.h"
 #include "elements/fNode.h"
-#include "elements/style.h"
+//#include "elements/style.h"
 
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
@@ -38,6 +41,10 @@ ViewWidget::ViewWidget(QWidget* parent)
     
     FNode *n3 = new FNode(m);
     n3->setPos(-70.5, -120.5);
+    
+    s->addItem(n1);
+    s->addItem(n2);
+    s->addItem(n3);
 
     setCacheMode(CacheBackground);
     setViewportUpdateMode(MinimalViewportUpdate);
@@ -47,7 +54,7 @@ ViewWidget::ViewWidget(QWidget* parent)
     setMinimumSize(400, 400);
     setWindowTitle("QGraphicsScene Element Test");
     
-    MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
+    /*MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
     from_1->setPos(-50, 0);
 
     MultiArcStart *from_2 = new MultiArcStart(*n2, Image_Arc_Style);
@@ -69,10 +76,6 @@ ViewWidget::ViewWidget(QWidget* parent)
     MultiArcEnd *to_3_1 = new MultiArcEnd(from_3->arc());
     to_3_1->setPos(70, -5);
 
-
-    s->addItem(n1);
-    s->addItem(n2);
-    s->addItem(n3);
 
     MultiArcStart *from_4 = new MultiArcStart(*n3, Image_Arc_Style);
     from_4->setParentItem(n3);
@@ -105,6 +108,8 @@ ViewWidget::ViewWidget(QWidget* parent)
     //s->addItem(from_1);
     //s->addItem(from_2);
     //s->addItem(from_3);
+    */
+    
     
     Button *b;
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/dup_button"));

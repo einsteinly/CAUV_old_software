@@ -21,6 +21,7 @@ class AbstractArcSink: public QGraphicsObject,
         virtual ConnectionStatus doAcceptConnection(void* from_source) = 0;
     Q_SIGNALS:
         void geometryChanged();
+        void disconnected(AbstractArcSink*);
 };
 
 class ArcSink: public AbstractArcSink,
@@ -28,7 +29,7 @@ class ArcSink: public AbstractArcSink,
                public RequiresCutout{
     Q_OBJECT
     // No idea why this is required....
-    //Q_INTERFACES(QGraphicsLayoutItem)
+    Q_INTERFACES(QGraphicsLayoutItem)
     public:
         // or style could be delegated to something else...
         ArcSink(ArcStyle const& of_style,

@@ -11,9 +11,13 @@ class EphemeralArcEnd: public AbstractArcSink{
     Q_OBJECT
     public:
         EphemeralArcEnd(ArcStyle const& of_style);
-
-        void mousePressEvent(QGraphicsSceneMouseEvent *event); 
-        void mouseReleaseEvent(QGraphicsSceneMouseEvent *event); 
+        virtual ~EphemeralArcEnd();
+    
+        // these are forwarded from AbstractArcSink: the event object is
+        // in the *parent* coordinate system
+        void mousePressEvent(QGraphicsSceneMouseEvent *e); 
+        void mouseMoveEvent(QGraphicsSceneMouseEvent *e); 
+        void mouseReleaseEvent(QGraphicsSceneMouseEvent *e); 
 
         QRectF boundingRect() const; 
         void paint(QPainter *painter,
@@ -26,7 +30,7 @@ class EphemeralArcEnd: public AbstractArcSink{
 
     Q_SIGNALS:
         void geometryChanged();
-        void disconnected();
+        void disconnected(AbstractArcSink*);
 
     protected Q_SLOTS:
         void removeFromScene();

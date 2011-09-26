@@ -17,16 +17,18 @@ ArcSink::ArcSink(ArcStyle const& of_style,
       m_highlight(new QGraphicsEllipseItem()),
       m_rect(
         0,
-        -m_cutout_style.main_cutout.cutout_base/2,
+        -(1+m_cutout_style.main_cutout.cutout_base/2),
         m_cutout_style.main_cutout.cutout_depth,
-        m_cutout_style.main_cutout.cutout_base
+        2+m_cutout_style.main_cutout.cutout_base
       ){
     
     m_highlight->setRect(m_rect);
     m_highlight->setPen(Qt::NoPen);
     m_highlight->setBrush(QBrush(QColor(50,255,50,128)));
-
-    setGraphicsEffect(new QGraphicsBlurEffect());
+    
+    QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
+    blur->setBlurRadius(1.0);
+    setGraphicsEffect(blur);
 
     setSizePolicy(QSizePolicy::Fixed);
 

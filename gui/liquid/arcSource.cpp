@@ -5,6 +5,7 @@
 #include <QGraphicsSceneMouseEvent>
 
 #include <debug/cauv_debug.h>
+#include <utility/qt_streamops.h>
 
 #include "arc.h"
 #include "arcSink.h"
@@ -12,13 +13,16 @@
 using namespace liquid;
 
 /***************************** AbstractArcSource *****************************/
-AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
-                                     void* sourceDelegate,
+AbstractArcSource::AbstractArcSource(void* sourceDelegate,
                                      Arc* arc)
-    : m_style(of_style),
+    : m_style(arc->style()),
       m_arc(arc),
       m_sourceDelegate(sourceDelegate),
       m_ephemeral_sink(NULL){
+    debug() << "AbstractArcSource()" << this;
+}
+AbstractArcSource::~AbstractArcSource(){
+    debug() << "~AbstractArcSource()" << this;
 }
 
 Arc* AbstractArcSource::arc() const{
@@ -30,16 +34,20 @@ ArcStyle const& AbstractArcSource::style() const{
 }
 
 void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
+    debug() << "AbstractArcSource::mousePressEvent";
     if(e->button() & Qt::LeftButton){
         if(m_ephemeral_sink)
             error() << "unmatched mousePressEvent";
         m_ephemeral_sink = newArcEnd();
+        m_ephemeral_sink->setParentItem(this);
+
         m_arc->addTo(m_ephemeral_sink);
         // in item (this) coordinates (this is now parent of new end):
         // whole pixels matters!
-        QPointF centre = m_ephemeral_sink->boundingRect().center();
-        centre.rx() = std::floor(centre.rx());
-        m_ephemeral_sink->setPos(e->pos() - centre);
+        //QPointF centre = m_ephemeral_sink->boundingRect().size().center();
+        //centre.rx() = std::floor(centre.rx());
+        m_ephemeral_sink->setPos(e->pos());// - centre);
+        m_ephemeral_sink->mousePressEvent(e);
         // !!! TODO: check this
         QGraphicsObject::mousePressEvent(e); 
         e->accept();
@@ -49,7 +57,9 @@ void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
 }
 
 void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
+    debug() << "AbstractArcSource::mouseMoveEvent";
     if(m_ephemeral_sink){
+        // !!! TODO: sourceDelegate stuff...
         m_ephemeral_sink->mouseMoveEvent(e);
     }else{
         e->ignore();
@@ -57,10 +67,11 @@ void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
 }
 
 void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
+    debug() << "AbstractArcSource::mouseReleaseEvent";
     if(e->button() & Qt::LeftButton){
         if(m_ephemeral_sink){
+            // sink arranges its own deletion
             m_ephemeral_sink->mouseReleaseEvent(e);
-            m_ephemeral_sink->deleteLater();
             m_ephemeral_sink = NULL;
         }
         // accepted -> forward to base explicitly
@@ -73,18 +84,21 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
 
 #include "ephemeralArcEnd.h"
 AbstractArcSink* AbstractArcSource::newArcEnd(){
+    debug() << "newArcEnd:: this:" << this << "&style:" << &m_style;
     return new EphemeralArcEnd(m_style);
 }
 
 /********************************* ArcSource *********************************/
-ArcSource::ArcSource(ArcStyle const& of_style,
-                     void* sourceDelegate,
+ArcSource::ArcSource(void* sourceDelegate,
                      Arc* arc)
-    : AbstractArcSource(of_style, sourceDelegate, arc),
+    : AbstractArcSource(sourceDelegate, arc),
       m_front_line(NULL),
       m_back_line(NULL){
+    
+    arc->setFrom(this);
 
     setFlag(ItemHasNoContents);
+    setSizePolicy(QSizePolicy::Fixed);
 
     m_back_line = new QGraphicsLineItem(-m_style.back.start_length,0,0,0,this);
     m_front_line = new QGraphicsLineItem(-m_style.front.start_length,0,0,0,this);
@@ -110,8 +124,22 @@ ArcSource::ArcSource(ArcStyle const& of_style,
     ));
 }
 
+QSizeF ArcSource::sizeHint(Qt::SizeHint which, const QSizeF &constraint) const{
+    return boundingRect().size();
+}
+
+void ArcSource::setGeometry(QRectF const& rect){
+    prepareGeometryChange();
+    // sets geometry()
+    QGraphicsLayoutItem::setGeometry(rect);
+    debug() << "ArcSource::setGeometry" << rect << "(pos=" << pos() << ")";
+    setPos(rect.topLeft() - boundingRect().topLeft());
+}
+
+
+
 QRectF ArcSource::boundingRect() const{
-    return QRectF();
+    return m_back_line->boundingRect();
 }
 
 void ArcSource::paint(QPainter *painter,
