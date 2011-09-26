@@ -15,6 +15,7 @@
 
 #include "style.h"
 #include "nodeInput.h"
+#include "fNodeOutput.h"
 
 using cauv::gui::FNode;
 using namespace liquid;
@@ -126,8 +127,11 @@ FNode::FNode(Manager& m, QGraphicsItem *parent)
     addItem(new TestLayoutItem(QRectF(0,-5,90,10)));
     addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
 
-    addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
-    addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
-    addItem(new liquid::ArcSource(c, new liquid::Arc(Param_Arc_Style)));
+    //addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
+    //addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
+    //addItem(new liquid::ArcSource(c, new liquid::Arc(Param_Arc_Style)));
+    addItem(new FNodeOutput(c));
+    addItem(new FNodeOutput(c));
+    addItem(new FNodeOutput(c));
 }
 

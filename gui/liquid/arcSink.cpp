@@ -56,6 +56,8 @@ bool ArcSink::willAcceptConnection(void* from_source){
 }
 
 void ArcSink::doPresentHighlight(qreal intensity){
+    // !!! TODO: could probably do away with animation here - highlights will
+    // change smoothly anyway
     debug(8) << "doPresentHighlight:" << intensity;
     QPropertyAnimation *fadeHL = new QPropertyAnimation(this, "opacity");
     // !!! can't set zero opacity, because that renders this item invisible,
