@@ -39,8 +39,8 @@ EphemeralArcEnd::~EphemeralArcEnd(){
 }
 
 void EphemeralArcEnd::mousePressEvent(QGraphicsSceneMouseEvent *e){
-    Q_UNUSED(e);
     setFill(true);
+    mouseMoveEvent(e);
 }
 
 void EphemeralArcEnd::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
