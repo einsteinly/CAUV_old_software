@@ -4,6 +4,8 @@
 
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
+#include <QApplication>
+
 
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
@@ -45,9 +47,7 @@ void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
 
         m_arc->addTo(m_ephemeral_sink);
         // in item (this) coordinates (this is now parent of new end):
-        // !!! TODO: might be possible to use sendEvent to send the event
-        // properly...
-        m_ephemeral_sink->mousePressEvent(e);
+        QApplication::sendEvent(m_ephemeral_sink, e);
         // !!! TODO: check this
         QGraphicsObject::mousePressEvent(e); 
         e->accept();
@@ -60,7 +60,7 @@ void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
     debug() << "AbstractArcSource::mouseMoveEvent";
     if(m_ephemeral_sink){
         checkAndHighlightSinks(e->scenePos());
-        m_ephemeral_sink->mouseMoveEvent(e);
+        QApplication::sendEvent(m_ephemeral_sink, e);
     }else{
         e->ignore();
     }
@@ -73,7 +73,7 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
         // !!! TODO: call doAcceptConnection
         if(m_ephemeral_sink){
             // sink arranges its own deletion
-            m_ephemeral_sink->mouseReleaseEvent(e);
+            QApplication::sendEvent(m_ephemeral_sink, e);
             m_ephemeral_sink = NULL;
         }
         // accepted -> forward to base explicitly
@@ -133,7 +133,7 @@ ArcSource::ArcSource(void* sourceDelegate,
     arc->setFrom(this);
 
     setFlag(ItemHasNoContents);
-    setSizePolicy(QSizePolicy::Fixed);
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     m_back_line = new QGraphicsLineItem(-m_style.back.start_length,0,0,0,this);
     m_front_line = new QGraphicsLineItem(-m_style.front.start_length,0,0,0,this);
@@ -160,6 +160,8 @@ ArcSource::ArcSource(void* sourceDelegate,
 }
 
 QSizeF ArcSource::sizeHint(Qt::SizeHint which, const QSizeF &constraint) const{
+    Q_UNUSED(which);
+    Q_UNUSED(constraint);
     return boundingRect().size() + QSizeF(0,6);
 }
 

@@ -36,7 +36,7 @@ NodeInput::NodeInput(liquid::NodeStyle const& style,
       m_required(required),
       m_style(style){
     
-    setSizePolicy(QSizePolicy::Fixed);
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     /*
     setFlag(ItemStacksBehindParent);
@@ -78,6 +78,8 @@ void NodeInput::setGeometry(QRectF const& rect){
 }
 
 QSizeF NodeInput::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const{
+    Q_UNUSED(which);
+    Q_UNUSED(constraint);
     return m_rect.size();
 }
 

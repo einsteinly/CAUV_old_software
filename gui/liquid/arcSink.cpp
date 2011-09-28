@@ -40,7 +40,7 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     test_item->setPen(QPen(QColor(20,200,20,128)));
     */
 
-    setSizePolicy(QSizePolicy::Fixed);
+    QGraphicsLayoutItem::setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     setFlag(ItemHasNoContents);
     
