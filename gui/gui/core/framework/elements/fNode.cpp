@@ -27,7 +27,7 @@ class TestLayoutItem: public QGraphicsLayoutItem,
             : QGraphicsLayoutItem(),
               QGraphicsPathItem(),
               m_preferred_geom(preferred_geom){
-            setSizePolicy(QSizePolicy::Fixed);
+            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
             setPen(QPen(QColor(160,20,20,64)));
 
             setZValue(100);
