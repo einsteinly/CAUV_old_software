@@ -47,7 +47,7 @@ void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
 
         m_arc->addTo(m_ephemeral_sink);
         // in item (this) coordinates (this is now parent of new end):
-        QApplication::sendEvent(m_ephemeral_sink, e);
+        scene()->sendEvent(m_ephemeral_sink, e);
         // !!! TODO: check this
         QGraphicsObject::mousePressEvent(e); 
         e->accept();
@@ -60,7 +60,7 @@ void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
     debug() << "AbstractArcSource::mouseMoveEvent";
     if(m_ephemeral_sink){
         checkAndHighlightSinks(e->scenePos());
-        QApplication::sendEvent(m_ephemeral_sink, e);
+        scene()->sendEvent(m_ephemeral_sink, e);
     }else{
         e->ignore();
     }
@@ -73,7 +73,7 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
         // !!! TODO: call doAcceptConnection
         if(m_ephemeral_sink){
             // sink arranges its own deletion
-            QApplication::sendEvent(m_ephemeral_sink, e);
+            scene()->sendEvent(m_ephemeral_sink, e);
             m_ephemeral_sink = NULL;
         }
         // accepted -> forward to base explicitly
