@@ -26,6 +26,26 @@ void VanishingTextItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 }
 
 
+VanishingLineItem::VanishingLineItem( float lod, QGraphicsItem * parent) :
+        QGraphicsLineItem(parent), m_lod(lod) {
+}
+
+VanishingLineItem::VanishingLineItem ( float lod, const QLineF & line, QGraphicsItem * parent) :
+        QGraphicsLineItem(line, parent), m_lod(lod) {
+}
+
+VanishingLineItem::VanishingLineItem ( float lod, qreal x1, qreal y1, qreal x2, qreal y2, QGraphicsItem * parent) :
+        QGraphicsLineItem(x1,y1,x2,y2, parent), m_lod(lod) {
+}
+
+void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
+
+    const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
+    if(lod > m_lod)
+        QGraphicsLineItem::paint(painter, option, widget);
+}
+
+
 NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
     int sceneSize = 30000;
@@ -41,14 +61,18 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 
     // background lines
     for(int x = -sceneSize; x < sceneSize; x = x + 20) {
-        int colour = 241;
+        int colour = 244;
         if(x % 100 == 0) colour = 238;
-        addLine(-sceneSize, x, sceneSize, x, QPen(QColor(colour, colour, colour)));
+        VanishingLineItem * line = new VanishingLineItem(0.25, -sceneSize, x, sceneSize, x);
+        line->setPen(QPen(QColor(colour, colour, colour)));
+        this->addItem(line);
     }
     for(int y = -sceneSize; y < sceneSize; y = y + 20) {
-        int colour = 241;
+        int colour = 244;
         if(y % 100 == 0) colour = 238;
-        addLine(y, -sceneSize, y, sceneSize, QPen(QColor(colour, colour, colour)));
+        VanishingLineItem * line = new VanishingLineItem(0.25, y, -sceneSize, y, sceneSize);
+        line->setPen(QPen(QColor(colour, colour, colour)));
+        this->addItem(line);
     }
 
     // write on positions for debugging.

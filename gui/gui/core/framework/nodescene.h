@@ -6,6 +6,7 @@
 #include <QGraphicsItem>
 #include <QWidget>
 #include <QGraphicsProxyWidget>
+#include <QGraphicsLineItem>
 
 #include "../nodedragging.h"
 #include "elements/aiNode.h"
@@ -27,6 +28,20 @@ namespace cauv {
         protected:
             float m_lod;
         };
+
+        class VanishingLineItem : public QGraphicsLineItem {
+
+        public:
+            VanishingLineItem ( float lod, QGraphicsItem * parent = 0 );
+            VanishingLineItem ( float lod, const QLineF & line, QGraphicsItem * parent = 0 );
+            VanishingLineItem ( float lod, qreal x1, qreal y1, qreal x2, qreal y2, QGraphicsItem * parent = 0 );
+
+            void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+
+        protected:
+            float m_lod;
+        };
+
 
         class NodeScene : public QGraphicsScene, public NodeDropListener {
 
