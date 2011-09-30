@@ -72,8 +72,8 @@ class ReBroadcaster: public GeminiObserver{
                     << "start:" << h->m_startRange
                     << "end:" << h->m_endRange
                     << "numBeams:" << h->m_numBeams
-                    << "numChans:" << h->m_numChans
-                    << "sampChan:" << h->m_sampChan
+                    << "numChans:" << (int)h->m_numChans
+                    << "sampChan:" << (int)h->m_sampChan
                     << "speedOfSound:" << sos;
             // new ping:
             // each line is data from a particular distance away
@@ -120,7 +120,7 @@ class ReBroadcaster: public GeminiObserver{
             if(offset + num_beams > data.size())
                 error() << "invalid line index";
             for(uint32_t i = 0; i != num_beams; i++)
-                data[offset+i] = ((uint8_t*)l->m_startOfData)[i];
+                data[offset+i] = ((uint8_t*)&(l->m_startOfData))[i];
         }
          
         virtual void onCGemPingTailExtended(CGemPingTailExtended const*){
