@@ -27,6 +27,10 @@ def t_STRING(t):
     t.type = reserved.get(t.value,'STRING')    # Check for reserved words
     return t
 
+def t_ignore_COMMENT(t):
+    r'//.*'
+    pass
+
 t_ignore  = ' \t\n'# Error handling rule
 
 def t_error(t):
