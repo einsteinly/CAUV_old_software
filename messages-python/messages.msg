@@ -4,8 +4,10 @@ enum DebugType : int8 {
     Warning = 2,
     Error = 3
 }
+enum ImageEncodingType: int8 { RAW_uint8_1 }
 enum MotorID : int8 { Prop = 1, HBow = 2, VBow = 4, HStern = 8, VStern = 16 }
 enum CameraID: int8 { Forward = 1, Down = 2, Up = 3, Sonar = 4, File = 5, GemSonar = 6 }
+enum SonarID: int8 { Seasprite = 1, Gemini = 2 }
 enum LightID: int8 { Forward = 1, Down = 2, TO_FIX_NUMVALUES = 5 }
 enum NodeType : int8 {
     Invalid,
@@ -156,6 +158,24 @@ struct SonarDataLine
     bearingRange: int32;
     range: int32;
     scanWidth: int32;
+}
+struct PolarImage
+{
+    data: list<byte>;
+    // currently only raw uint8_t (isodistant responses in fastest varying index) is supported
+    encoding: ImageEncodingType;
+    // each bearing in range (-6400 to 6400) * 0x10000, these are the edges of
+    // the bins that each iso-bearing beam of data falls into, so there are
+    // num_beams + 1 values. The first bin is bearing_bins[0] --
+    // bearing_bins[1], and so on.
+    bearing_bins: list<int32>;
+    // number of bins = rangeEnd-rangeStart
+    rangeStart: int32;
+    rangeEnd: int32;
+    // rangeConversion = length of 1 bin in metres
+    rangeConversion: float;
+    // time of the ping from which the image is acquired
+    timeStamp : TimeStamp;
 }
 struct MotorDemand
 {
@@ -407,6 +427,48 @@ group sonarout
 	{
         line : SonarDataLine;
     }
+
+    message SonarImage : 31
+    {   
+        source : SonarID;
+        image : PolarImage;
+    }
+
+    message SpeedOfSound : 332
+    {
+        speedOfSound : float; // m/s
+    }
+
+    message GeminiStatus : 333
+    {
+        sonarId : uint16;
+        vccInt : uint16;
+        vccAux : uint16;
+        dcVolt : uint16;
+        // temperatures in degrees C
+        dieTemp : float;
+        vga1aTemp : float;
+        vga1bTemp : float;
+        vga2aTemp : float;
+        vga2bTemp : float;
+        TX1Temp : float;
+        TX2Temp : float;
+        TX3Temp : float;
+        // maximum acceptable temperatures:
+        dieOverTemp : float;
+        vga1aShutdownTemp : float;
+        vga1bShutdownTemp : float;
+        vga2aShutdownTemp : float;
+        vga2bShutdownTemp : float;
+        TX1ShutdownTemp : float;
+        TX2ShutdownTemp : float;
+        TX3ShutdownTemp : float;
+        // Other stuff:
+        transducerFrequency : float; // in kHz
+        linkType : int32; // bit 0 = VDSL, bit 1 = 10Mbps ethernet, bit 2 = 100Mbps, bit 3 = 1000Mbps
+        BOOTSTSRegister : uint32; // error codes last two boot attempts
+        shutdownStatus : uint16;  // bit 0 = shutdown due to overtemperature
+    }
 }
 group sonarctl
 {
@@ -419,8 +481,15 @@ group sonarctl
         rangeRes : uint32;
         angularRes : uint8;
     }
+    message GeminiControl : 33
+    {
+        range : float;  // in m (0-50)
+        gain : float;   // percentage (0-100)
+        rangeLines : uint32; // 0-4096: used for range compression setting        
+        continuous : bool;
+        interPingPeriod : float; // seconds (musec resolution)
+    }
 }
-
 group pipeline
 {
     message AddNode : 5

@@ -1,4 +1,4 @@
-#include "display_sonar_observer.h"
+#include "sonar_accumulator.h"
 
 #include <cmath>
 #include <algorithm>
@@ -11,6 +11,8 @@
 #include <common/image.h>
 #include <common/math.h>
 #include <debug/cauv_debug.h>
+#include <generated/types/SonarDataLine.h>
+#include <generated/types/PolarImage.h>
 
 using namespace std;
 using namespace cauv;
@@ -117,6 +119,34 @@ float sonar_cos(int bearing)
     return sonar_sin(bearing + 1600);
 }
 
+static float gem_sin(int32_t bearing){
+    // !!! TODO: better caching scheme....
+    // constant-time look-up would be nice
+    static std::map<int32_t, float> sin_cache;
+
+    std::map<int32_t, float>::const_iterator i = sin_cache.find(bearing);
+    if(i == sin_cache.end()){
+        const float r = std::sin(bearing / (6400.0*0x10000));
+        sin_cache[bearing] = r;
+        if(sin_cache.size() > 100000){
+            std::map<int32_t, float>::iterator to_remove = sin_cache.lower_bound(rand() % 6400*0x10000);
+            if(to_remove == sin_cache.end()){
+                // !!! really not good: values probably lie outside 0--6400*0x10000
+                sin_cache.erase(sin_cache.begin());
+            }else{
+                sin_cache.erase(to_remove);
+            }
+        }
+        return r;
+    }else{
+        return i->second;
+    }
+}
+
+static float gem_cos(uint32_t bearing){
+    return gem_sin(bearing + 1600*0x10000);
+}
+
 void SonarAccumulator::reset() {
     m_last_line_bearing = 0;
     m_image_completed = 0;
@@ -164,7 +194,6 @@ bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
     if (isFullImage)
         m_image_completed = 0;
 
-
     for (int b = 0; b < bincount; b++) {
         // All calculations assume centre is at (0,0)
         
@@ -211,7 +240,66 @@ bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
     return isFullImage;
 }
 
+bool SonarAccumulator::setWholeImage(PolarImage const& image){
+    std::vector<int32_t> const& bearing_bins = image.bearing_bins;
+    if(!bearing_bins.size()){
+        error() << "no bearings: wtf?";
+        return;
+    }
+    reset();
+    const uint32_t num_lines = image.rangeEnd - image.rangeStart;
+    cv::Mat m = m_img->mat();
+    const int32_t radius = floor((min(m.rows, m.cols)-1)/2);
+    const uint32_t num_bearings = bearing_bins.size()-1;
+    const float cx = radius;
+    const float cy = radius;
 
+    for(uint32_t line = 0; line < num_lines; line++){
+        const float inner_radius = radius * float(image.rangeStart) / image.rangeEnd;
+        const float outer_radius = radius * 1.0f;
+
+        for(uint32_t i = 0; i < num_bearings; i++){
+            int32_t from = bearing_bins[i];
+            int32_t to   = bearing_bins[i+1];
+
+            cv::Point2f pt_inner_from(inner_radius*gem_cos(from), inner_radius*gem_sin(from));
+            cv::Point2f pt_inner_to(inner_radius*gem_cos(to), inner_radius*gem_sin(to));
+            cv::Point2f pt_outer_from(outer_radius*gem_cos(from), outer_radius*gem_sin(from));
+            cv::Point2f pt_outer_to(outer_radius*gem_cos(to), outer_radius*gem_sin(to));
+            
+            cv::Rect innerbb = arcBound(inner_radius, pt_inner_from, pt_inner_to);
+            cv::Rect outerbb = arcBound(outer_radius, pt_outer_from, pt_outer_to);
+            cv::Rect bb = innerbb | outerbb;
+            
+            for(int y = bb.y; y < bb.y + bb.height; y++)
+            {
+                unsigned char* pm = &m.at<unsigned char>(cy - y, cx + bb.x);
+                for(int x = bb.x; x < bb.x + bb.width; x++, pm++)
+                {
+                    int r2 = x*x + y*y;
+            
+                    // Check if we're at least within the right radius
+                    if (r2 < inner_radius * inner_radius || r2 > outer_radius * outer_radius)
+                        continue;
+                    
+                    //  | P /  For P is inside the segment if
+                    //  |  /   it's ccw of from and cw of to.                 
+                    //  | /
+                    //  |/     
+                    bool ccwFrom = ccw<float>(pt_outer_from.x, pt_outer_from.y, x, y);
+                    bool ccwTo = ccw<float>(pt_outer_to.x, pt_outer_to.y, x, y);
+                    
+                    if (!ccwFrom || ccwTo)
+                        continue;
+
+                    // If we've got to here, then this must be valid. Shift to the centre and set the value.
+                    *pm = image.data[line * num_bearings + i];
+                }
+            }
+        }
+    }
+    return true;
+}
 
 boost::shared_ptr<Image> SonarAccumulator::img() const
 {
@@ -222,3 +310,5 @@ cv::Mat SonarAccumulator::mat() const
 {
     return m_img->mat();
 }
+
+

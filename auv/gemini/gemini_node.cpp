@@ -1,7 +1,9 @@
 #include "gemini_node.h"
 
+#include <limits>
+#include <cmath>
+
 #include <boost/make_shared.hpp>
-#include <boost/shared_array.hpp>
 #include <boost/program_options.hpp>
 #include <boost/thread.hpp>
 
@@ -9,86 +11,187 @@
 #include <common/cauv_utils.h>
 #include <common/image.h>
 #include <utility/threadsafe-observable.h>
+#include <utility/rounding.h>
 #include <generated/types/TimeStamp.h>
-#include <generated/types/ImageMessage.h>
+#include <generated/types/GeminiStatusMessage.h>
+#include <generated/types/SonarImageMessage.h>
+#include <generated/types/SpeedOfSoundMessage.h>
 
-
+// Gemini SDK comes last because it pollutes the global namespace
 #include "GeminiStructuresPublic.h"
 #include "GeminiCommsPublic.h"
 
 namespace cauv{
 
+static float floatTemp(uint16_t temp){
+    int16_t signedtemp;
+    float  ftemp;
+    bool present = temp & 0x8000;
+    if(present){
+        // 10 bits of data:
+        signedtemp = temp & 0x3ff;
+        // sign extend
+        bool negative = temp & 0x200;
+        if(negative)
+            signedtemp |= 0xfc00;
+        ftemp = signedtemp / 4.0f;
+        return ftemp;
+    }else{
+        return std::numeric_limits<float>::quiet_NaN();
+    }
+}
+
+static std::string fmtTemp(uint16_t temp){
+    if(temp & 0x8000)
+        return mkStr() << floatTemp(temp);
+    else
+        return "X";
+}
+
 class GeminiObserver{
     public:
-        // !!! TODO: it would be reasonable to pass the raw structures (without
-        // copying & wrapping in shared pointers) from the library to
-        // observers, as long as it is clear that the data becomes invalid once
-        // the function returns
-        virtual void onCGemPingHead(boost::shared_ptr<CGemPingHead const>){}
-        virtual void onCGemPingLine(boost::shared_ptr<CGemPingLine const>){}
-        virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){}
-        virtual void onCGemPingTailExtended(boost::shared_ptr<CGemPingTailExtended const>){}
-        virtual void onCGemStatusPacket(boost::shared_ptr<CGemStatusPacket const>){}
-        virtual void onCGemAcknowledge(boost::shared_ptr<CGemAcknowledge const>){}
-        virtual void onCGemBearingData(boost::shared_ptr<CGemBearingData const>){}
-        virtual void onUnknownData(boost::shared_array<uint8_t>){}
+        virtual void onCGemPingHead(CGemPingHead const*, float){}
+        virtual void onCGemPingLine(CGemPingLine const*){}
+        virtual void onCGemPingTail(CGemPingTail const*){}
+        virtual void onCGemPingTailExtended(CGemPingTailExtended const*){}
+        virtual void onCGemStatusPacket(CGemStatusPacket const*){}
+        virtual void onCGemAcknowledge(CGemAcknowledge const*){}
+        virtual void onCGemBearingData(CGemBearingData const*){}
+        virtual void onUnknownData(uint8_t const*){}
 };
 
-class LineReBroadcaster: public GeminiObserver{
+class ReBroadcaster: public GeminiObserver{
     public:
-        LineReBroadcaster(CauvNode& node)
+        ReBroadcaster(CauvNode& node)
             : m_node(node){
         }
         
-        virtual void onCGemPingHead(boost::shared_ptr<CGemPingHead const> h){
+        virtual void onCGemPingHead(CGemPingHead const* h, float range){
+            const float sos = h->m_spdSndVel / 10.0f;
             debug() << "PingHead:"
                     << "start:" << h->m_startRange
                     << "end:" << h->m_endRange
                     << "numBeams:" << h->m_numBeams
                     << "numChans:" << h->m_numChans
                     << "sampChan:" << h->m_sampChan
-                    << "speedOfSound:" << h->m_spdSndVel;
+                    << "speedOfSound:" << sos;
             // new ping:
+            // each line is data from a particular distance away
             uint32_t num_lines = h->m_endRange - h->m_startRange;
+            // each beam is data from a constant bearing
             uint32_t num_beams = h->m_numBeams;
             m_current_ping_id = h->m_pingID;
             m_current_ping_time = now();
-            m_current_image = boost::make_shared<Image>(cv::Mat::zeros(num_lines, num_beams, CV_8U));
+            //m_current_image = boost::make_shared<Image>(cv::Mat::zeros(num_lines, num_beams, CV_8U));
+            m_current_msg = boost::make_shared<SonarImageMessage>();
+            m_current_msg->source(SonarID::Gemini);
+            // !!! sneaky: probably okay, and really the only efficient way to
+            // do this without introducing multableX members to messages. This
+            // is okay because we haven't serialised it yet.
+            const_cast<PolarImage&>(m_current_msg->image()).data.resize(num_lines*num_beams);
+            const_cast<PolarImage&>(m_current_msg->image()).encoding = ImageEncodingType::RAW_uint8_1;
+            const_cast<PolarImage&>(m_current_msg->image()).bearing_bins = computeBearingBins(num_beams);
+            const_cast<PolarImage&>(m_current_msg->image()).rangeStart = h->m_startRange;
+            const_cast<PolarImage&>(m_current_msg->image()).rangeEnd = h->m_endRange;
+            // !!! TODO: not sure about this at all, check with Tritech
+            const_cast<PolarImage&>(m_current_msg->image()).rangeConversion = range / h->m_endRange;
             debug() << "New ping: ID=" << m_current_ping_id << "lines:" << num_lines << "beams:" << num_beams;
+
+            // This message also tells us the speed of sound: so broadcast it
+            // now:
+            m_node.send(boost::make_shared<SpeedOfSoundMessage>(sos));
         }
 
-        virtual void onCGemPingLine(boost::shared_ptr<CGemPingLine const> l){
+        virtual void onCGemPingLine(CGemPingLine const* l){
             // accumulate this line of equidistant data:
             int32_t line_id = l->m_lineID;
+            int32_t line_idx = line_id - m_current_msg->image().rangeStart;
             uint16_t ping_id = l->m_pingID;
             if((ping_id & 0xff) != (m_current_ping_id & 0xff)){
                 debug() << "bad pingID";
                 return;
             }
-            cv::Mat img = m_current_image->mat();
-            if(line_id  < img.rows)
-                // !!! TODO: erm, pass actual length of data to onCGemPingLine
-                // for safety
-                img.row(line_id) = cv::Mat(1, img.cols, CV_8U, (void*)&(l->m_startOfData), img.cols);
+            // !!! sneaky: probably okay, and really the only efficient way to
+            // do this without introducing multableX members to messages. This
+            // is okay because we haven't serialised it yet.
+            std::vector<uint8_t> &data = const_cast<PolarImage&>(m_current_msg->image()).data;
+            uint32_t num_beams = m_current_msg->image().bearing_bins.size() - 1;
+            uint32_t offset = line_idx * num_beams;
+            if(offset + num_beams > data.size())
+                error() << "invalid line index";
+            for(uint32_t i = 0; i != num_beams; i++)
+                data[offset+i] = ((uint8_t*)l->m_startOfData)[i];
         }
          
-        virtual void onCGemPingTailExtended(boost::shared_ptr<CGemPingTailExtended const>){
+        virtual void onCGemPingTailExtended(CGemPingTailExtended const*){
             pingComplete();
         }
 
-        virtual void onCGemPingTail(boost::shared_ptr<CGemPingTail const>){
+        virtual void onCGemPingTail(CGemPingTail const*){
             pingComplete();
         }
+
+        virtual void onCGemStatusPacket(CGemStatusPacket const* s){
+            boost::shared_ptr<GeminiStatusMessage> r = boost::make_shared<GeminiStatusMessage>();
+            r->sonarId(s->m_sonarId);
+            r->vccInt(s->m_vccInt);
+            r->vccAux(s->m_vccAux);
+            r->dcVolt(s->m_dcVolt);
+            r->dieTemp(((s->m_dieTemp * 503.975) / 1024.0) - 273.15);
+            r->vga1aTemp(floatTemp(s->m_vga1aTemp));
+            r->vga1bTemp(floatTemp(s->m_vga1bTemp));
+            r->vga2aTemp(floatTemp(s->m_vga2aTemp));
+            r->vga2bTemp(floatTemp(s->m_vga2bTemp));
+            r->TX1Temp(floatTemp(s->m_TX1Temp));
+            r->TX2Temp(floatTemp(s->m_TX2Temp));
+            r->TX3Temp(floatTemp(s->m_TX3Temp));
+            r->dieOverTemp(((s->m_dieOverTemp * 503.975) / 1024.0) - 273.15);
+            r->vga1aShutdownTemp(floatTemp(s->m_vga1aShutdownTemp));
+            r->vga1bShutdownTemp(floatTemp(s->m_vga1bShutdownTemp));
+            r->vga2aShutdownTemp(floatTemp(s->m_vga2aShutdownTemp));
+            r->vga2bShutdownTemp(floatTemp(s->m_vga2bShutdownTemp));
+            r->TX1ShutdownTemp(floatTemp(s->m_TX1ShutdownTemp));
+            r->TX2ShutdownTemp(floatTemp(s->m_TX2ShutdownTemp));
+            r->TX3ShutdownTemp(floatTemp(s->m_TX3ShutdownTemp));
+            switch(s->m_transducerFrequency){
+                case 0: r->transducerFrequency(868.0f); break;
+                case 1: r->transducerFrequency(723.0f); break;
+            }
+            r->linkType(s->m_linkType);
+            r->BOOTSTSRegister(s->m_BOOTSTSRegister);
+            r->shutdownStatus(s->m_shutdownStatus);
             
+            m_node.send(r);
+        }
+         
     private:
+        static std::vector<int32_t> computeBearingBinsNoCache(uint32_t num_beams){
+            std::vector<int32_t> r;
+            r.reserve(num_beams+2);
+            const double radConvert = (180.0 / M_PI) * (6400.0/360.0) * 0x10000;
+            for(uint32_t beam = 0; beam <= num_beams; beam++){
+                // see Gemini Interface Specification Appendix B
+                double radians = std::asin(((2*(beam+0.5) - num_beams) / num_beams) * 0.86602540);
+                r.push_back(round(radConvert * radians));
+            }
+            return r;
+        }
+        static std::vector<int32_t> computeBearingBins(uint32_t num_beams){
+            debug() << "computeBearings numbeams=" << num_beams;
+            static std::vector<int32_t> bearings_256 = computeBearingBinsNoCache(256);
+            if(num_beams == 256)
+                return bearings_256;
+            return computeBearingBinsNoCache(num_beams);
+        }
+
         void pingComplete(){
-            debug () << "sending image...";
-            m_node.send(boost::make_shared<ImageMessage>(CameraID::GemSonar, *m_current_image, m_current_ping_time));
+            debug() << "sending SonarImageMessage...";
+            m_node.send(m_current_msg);
         }
 
         uint16_t m_current_ping_id;
         TimeStamp m_current_ping_time;
-        boost::shared_ptr<Image> m_current_image;
+        boost::shared_ptr<SonarImageMessage> m_current_msg;
         CauvNode& m_node;
 };
 
@@ -98,6 +201,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         GeminiSonar(uint16_t sonar_id, uint32_t inter_ping_musec=1000000)
             : m_sonar_id(sonar_id),
               m_inter_ping_musec(inter_ping_musec),
+              m_range(0),
+              m_gain_percent(0),
               m_conn_state(){
             assert(!the_sonar);
             the_sonar = this;
@@ -107,6 +212,16 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
 
         ~GeminiSonar(){
             the_sonar = NULL;
+        }
+
+        float range() const{
+            return m_range;
+        }
+
+        void autoConfig(float range, float gain_percent){
+            m_range = range;
+            m_gain_percent = gain_percent;
+            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);
         }
 
         void init(){
@@ -146,25 +261,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                            << int(ipchrs[2]) << "."
                            << int(ipchrs[3]);
         }
-        static std::string fmtTemp(uint16_t temp){
-            int16_t signedtemp;
-            double  dtemp;
-            bool present = temp & 0x8000;
-            if(present){
-                // 10 bits of data:
-                signedtemp = temp & 0x3ff;
-                // sign extend
-                bool negative = temp & 0x200;
-                if(negative)
-                    signedtemp |= 0xfc00;
-                dtemp = signedtemp / 4.0;
-                return mkStr() << dtemp;
-            }else{
-                return "X";
-            }
-        }
         
-        void onStatusPacket(boost::shared_ptr<CGemStatusPacket const> status_packet){
+        void onStatusPacket(CGemStatusPacket const* status_packet){
             // state transitions to manage the connection:
             // uninitialised
             debug(8) << "onStatusPacket:"
@@ -271,49 +369,26 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }
         }
 
-        // deleters are required for structures that are variable length,
-        // either in-place (CGemPingLine), or holding pointers to data
-        // (CGemBearingData) that is owned by the structure
-        struct CGemPingLine_deleter{
-            void operator()(CGemPingLine const* p) const{
-                delete[] (uint8_t*) p;
-            }
-        };
-        struct CGemBearingData_deleter{
-            void operator()(CGemBearingData const* p) const{
-                delete[] p->m_pData;
-                delete p;
-            }
-        };
         static void CallBackFn(int eType, int len, char *data){
-            boost::shared_ptr<CGemPingHead const> ping_head;
-            boost::shared_ptr<CGemPingLine> ping_data;
-            boost::shared_ptr<CGemPingTail const> ping_tail;
-            boost::shared_ptr<CGemPingTailExtended const> ping_tail_ex;
-            boost::shared_ptr<CGemStatusPacket const> status_packet;
-            boost::shared_ptr<CGemAcknowledge const> acknowledge;
-            boost::shared_ptr<CGemBearingData> bearing_data;
-            boost::shared_array<uint8_t> unknown_data;
+            CGemPingHead const* ping_head = NULL;
+            CGemPingLine const* ping_data = NULL;
+            CGemPingTail const* ping_tail = NULL;
+            CGemPingTailExtended const* ping_tail_ex = NULL;
+            CGemStatusPacket const* status_packet = NULL;
+            CGemAcknowledge const* acknowledge = NULL;
+            CGemBearingData const* bearing_data = NULL;
+            uint8_t const* unknown_data = NULL;
 
             debug(8) << "RX:" << eType;
             switch(eType){
                 case PING_HEAD:
                     debug(6) << "RX: ping head";
-                    ping_head = boost::make_shared<CGemPingHead const>(*(CGemPingHead*)data);
+                    ping_head = (CGemPingHead*)data;
                     break;
 
                 case PING_DATA:
                     debug(7) << "RX: ping line: len=" << len;
-                    // here sizeof(X) + ... - 1 takes account that the first
-                    // element of the ping data is stored *on* the last byte of
-                    // the structure, then the ping data is continued in place.
-                    // This is a very 'c' way of doing things, and really the
-                    // structure should be POD...
-                    ping_data = boost::shared_ptr<CGemPingLine>(
-                        (CGemPingLine*) new uint8_t[sizeof(CGemPingLine) + len - 1],
-                        CGemPingLine_deleter()
-                    );
-                    memcpy(&(*ping_data), data, sizeof(CGemPingLine) + len - 1);
+                    ping_data = (CGemPingLine*)data;
                     break;
 
                 case PING_TAIL:
@@ -321,12 +396,12 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     // retry data structures were never created by the library,
                     // so there's no extra data for the library to add.
                     // (not sure why this might be, but it does happen)
-                    ping_tail = boost::make_shared<CGemPingTail const>(*(CGemPingTail*)data);
+                    ping_tail = (CGemPingTail*)data;
                     debug() << "RX: ping tail: id=" << ping_tail->m_pingID;
                     break;
 
                 case PING_TAIL_EX:
-                    ping_tail_ex = boost::make_shared<CGemPingTailExtended const>(*(CGemPingTailExtended*)data);
+                    ping_tail_ex = (CGemPingTailExtended*)data;
                     debug(6) << "RX: ping tail ex: id=" << int(ping_tail_ex->m_pingID);
                     debug() << BashColour::Purple
                             << "retry 1:"       << ping_tail_ex->m_firstPassRetries
@@ -340,36 +415,22 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
 
                 case GEM_STATUS:
                     debug(6) << "RX: status";
-                    status_packet = boost::make_shared<CGemStatusPacket const>(*(CGemStatusPacket*)data);
+                    status_packet = (CGemStatusPacket*)data;
                     break;
 
                 case GEM_ACKNOWLEDGE:
                     debug(6) << "RX: ack";
-                    acknowledge = boost::make_shared<CGemAcknowledge const>(*(CGemAcknowledge*)data);
+                    acknowledge = (CGemAcknowledge*)data;
                     break;
 
                 case GEM_BEARING_DATA:
                     debug(6) << "RX: bearing data";
-                    bearing_data = boost::shared_ptr<CGemBearingData>(
-                        new CGemBearingData(*(CGemBearingData*)data),
-                        CGemBearingData_deleter()
-                    );
-                    bearing_data->m_pData = new uint8_t[bearing_data->m_noSamples];
-                    if (bearing_data->m_pData) {
-                        // Copy the data from the original structure to the new structure
-                        std::memcpy(bearing_data->m_pData, ((CGemBearingData*)data)->m_pData, bearing_data->m_noSamples);
-                    }else{
-                        // Failed to allocate memory
-                        bearing_data->m_noSamples = 0;
-                    }
+                    bearing_data = (CGemBearingData*)data;
                     break;
 
                 case GEM_UNKNOWN_DATA:
                     debug() << "GEM: unknown data";
-                    /*unknown_data = boost::shared_array<uint8_t>(new uint8_t[len]);
-                    if(unknown_data){
-                        memcpy(unknown_data, data, len);
-                    }*/
+                    unknown_data = (uint8_t const*)data;
                     break;
 
                 case GEM_IP_CHANGED:
@@ -391,7 +452,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 boost::lock_guard<boost::recursive_mutex> l(the_sonar->m_observers_lock);
                 foreach(observer_ptr_t& p, the_sonar->m_observers){
                     if(ping_head)
-                        p->onCGemPingHead(ping_head);
+                        p->onCGemPingHead(ping_head, the_sonar->range());
                     else if(ping_data)
                         p->onCGemPingLine(ping_data);
                     else if(ping_tail)
@@ -415,6 +476,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
 
         uint16_t m_sonar_id;
         uint32_t m_inter_ping_musec;
+        float m_range;
+        float m_gain_percent;
 
         volatile struct{
             bool ok;
@@ -470,10 +533,10 @@ void GeminiNode::onRun()
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
     }
 
-    m_sonar->addObserver(boost::make_shared<LineReBroadcaster>(boost::ref(*this)));
+    m_sonar->addObserver(boost::make_shared<ReBroadcaster>(boost::ref(*this)));
 
-    debug() << "GEM_AutoPingConfig...";
-    GEM_AutoPingConfig(5.0f, 50, 1499.2f);
+    debug() << "autoConfig...";
+    m_sonar->autoConfig(5.0f, 50);
 
     while (true) {
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));

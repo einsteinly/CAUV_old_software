@@ -10,6 +10,7 @@ class Mat;
 namespace cauv{
 
 struct SonarDataLine;
+struct PolarImage;
 class Image;
 
 class SonarAccumulator
@@ -18,11 +19,13 @@ class SonarAccumulator
         SonarAccumulator();
         
         bool accumulateDataLine(const SonarDataLine& data);
+        bool setWholeImage(PolarImage const& image);
 
         boost::shared_ptr<Image> img() const;
         cv::Mat mat() const;
 
     protected:
+
         int m_last_line_bearing;    
         float m_image_completed;
         boost::shared_ptr<Image> m_img;
