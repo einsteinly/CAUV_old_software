@@ -121,12 +121,11 @@ float sonar_cos(int bearing)
 
 static float gem_sin(int32_t bearing){
     // !!! TODO: better caching scheme....
-    // constant-time look-up would be nice
     static std::map<int32_t, float> sin_cache;
 
     std::map<int32_t, float>::const_iterator i = sin_cache.find(bearing);
     if(i == sin_cache.end()){
-        const float r = std::sin(bearing / (6400.0*0x10000));
+        const float r = std::sin(M_PI * bearing / (3200.0*0x10000));
         sin_cache[bearing] = r;
         if(sin_cache.size() > 100000){
             std::map<int32_t, float>::iterator to_remove = sin_cache.lower_bound(rand() % 6400*0x10000);
@@ -244,7 +243,7 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
     std::vector<int32_t> const& bearing_bins = image.bearing_bins;
     if(!bearing_bins.size()){
         error() << "no bearings: wtf?";
-        return;
+        return false;
     }
     reset();
     const uint32_t num_lines = image.rangeEnd - image.rangeStart;
@@ -253,10 +252,12 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
     const uint32_t num_bearings = bearing_bins.size()-1;
     const float cx = radius;
     const float cy = radius;
+    const float bscale = (float)radius/image.rangeEnd;
 
     for(uint32_t line = 0; line < num_lines; line++){
-        const float inner_radius = radius * float(image.rangeStart) / image.rangeEnd;
-        const float outer_radius = radius * 1.0f;
+        uint32_t range_line = image.rangeStart + line;
+        float inner_radius = range_line * bscale;
+        float outer_radius = (range_line+1) * bscale;
 
         for(uint32_t i = 0; i < num_bearings; i++){
             int32_t from = bearing_bins[i];

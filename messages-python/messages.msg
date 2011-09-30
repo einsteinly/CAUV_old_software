@@ -177,6 +177,18 @@ struct PolarImage
     // time of the ping from which the image is acquired
     timeStamp : TimeStamp;
 }
+// Can't have these inline in the message otherwise it has too many fields:
+struct GeminiTemperatures
+{
+    dieTemp : float;
+    vga1aTemp : float;
+    vga1bTemp : float;
+    vga2aTemp : float;
+    vga2bTemp : float;
+    TX1Temp : float;
+    TX2Temp : float;
+    TX3Temp : float;
+}
 struct MotorDemand
 {
     prop: float;
@@ -446,23 +458,9 @@ group sonarout
         vccAux : uint16;
         dcVolt : uint16;
         // temperatures in degrees C
-        dieTemp : float;
-        vga1aTemp : float;
-        vga1bTemp : float;
-        vga2aTemp : float;
-        vga2bTemp : float;
-        TX1Temp : float;
-        TX2Temp : float;
-        TX3Temp : float;
+        currentTemps : GeminiTemperatures;
         // maximum acceptable temperatures:
-        dieOverTemp : float;
-        vga1aShutdownTemp : float;
-        vga1bShutdownTemp : float;
-        vga2aShutdownTemp : float;
-        vga2bShutdownTemp : float;
-        TX1ShutdownTemp : float;
-        TX2ShutdownTemp : float;
-        TX3ShutdownTemp : float;
+        criticalTemps : GeminiTemperatures;
         // Other stuff:
         transducerFrequency : float; // in kHz
         linkType : int32; // bit 0 = VDSL, bit 1 = 10Mbps ethernet, bit 2 = 100Mbps, bit 3 = 1000Mbps

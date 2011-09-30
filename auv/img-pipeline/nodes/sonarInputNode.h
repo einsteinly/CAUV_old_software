@@ -60,7 +60,7 @@ class SonarInputNode: public InputNode{
         /**
          * ...
          */
-        void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
+        virtual void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
             // backwards compatibilty: only the seasprite sends data one
             // line at a time:
             if(m_sonar_id != SonarID::Seasprite)
@@ -76,7 +76,7 @@ class SonarInputNode: public InputNode{
             }
         }
 
-        void onSonarImageMessage(boost::shared_ptr<const SonarImageMessage> m){
+        virtual void onSonarImageMessage(boost::shared_ptr<const SonarImageMessage> m){
             if(m_sonar_id != m->source())
                 return;
 
@@ -84,6 +84,11 @@ class SonarInputNode: public InputNode{
             // maybe dropping an old and unprocessed message here
             m_sonarimg_msg = m;
             setAllowQueue();
+        }
+
+        virtual void paramChanged(input_id const& param_id){
+            if(param_id == "Sonar ID")
+                m_sonar_id = SonarID::e(param<int>("Sonar ID"));
         }
 
     protected:

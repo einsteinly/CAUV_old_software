@@ -95,6 +95,12 @@ class ReBroadcaster: public GeminiObserver{
             const_cast<PolarImage&>(m_current_msg->image()).rangeEnd = h->m_endRange;
             // !!! TODO: not sure about this at all, check with Tritech
             const_cast<PolarImage&>(m_current_msg->image()).rangeConversion = range / h->m_endRange;
+            // Also check this, (needs converting from whatever the sonar's
+            // time base is into our unix time):
+            const_cast<PolarImage&>(m_current_msg->image()).timeStamp = TimeStamp(
+                h->m_transmitTimestampL/1e6+h->m_transmitTimestampH*double(0x100000000L)/1e6,
+                h->m_transmitTimestampL % 1000000
+            );
             debug() << "New ping: ID=" << m_current_ping_id << "lines:" << num_lines << "beams:" << num_beams;
 
             // This message also tells us the speed of sound: so broadcast it
@@ -137,22 +143,28 @@ class ReBroadcaster: public GeminiObserver{
             r->vccInt(s->m_vccInt);
             r->vccAux(s->m_vccAux);
             r->dcVolt(s->m_dcVolt);
-            r->dieTemp(((s->m_dieTemp * 503.975) / 1024.0) - 273.15);
-            r->vga1aTemp(floatTemp(s->m_vga1aTemp));
-            r->vga1bTemp(floatTemp(s->m_vga1bTemp));
-            r->vga2aTemp(floatTemp(s->m_vga2aTemp));
-            r->vga2bTemp(floatTemp(s->m_vga2bTemp));
-            r->TX1Temp(floatTemp(s->m_TX1Temp));
-            r->TX2Temp(floatTemp(s->m_TX2Temp));
-            r->TX3Temp(floatTemp(s->m_TX3Temp));
-            r->dieOverTemp(((s->m_dieOverTemp * 503.975) / 1024.0) - 273.15);
-            r->vga1aShutdownTemp(floatTemp(s->m_vga1aShutdownTemp));
-            r->vga1bShutdownTemp(floatTemp(s->m_vga1bShutdownTemp));
-            r->vga2aShutdownTemp(floatTemp(s->m_vga2aShutdownTemp));
-            r->vga2bShutdownTemp(floatTemp(s->m_vga2bShutdownTemp));
-            r->TX1ShutdownTemp(floatTemp(s->m_TX1ShutdownTemp));
-            r->TX2ShutdownTemp(floatTemp(s->m_TX2ShutdownTemp));
-            r->TX3ShutdownTemp(floatTemp(s->m_TX3ShutdownTemp));
+            GeminiTemperatures current(
+                ((s->m_dieTemp * 503.975) / 1024.0) - 273.15,
+                floatTemp(s->m_vga1aTemp),
+                floatTemp(s->m_vga1bTemp),
+                floatTemp(s->m_vga2aTemp),
+                floatTemp(s->m_vga2bTemp),
+                floatTemp(s->m_TX1Temp),
+                floatTemp(s->m_TX2Temp),
+                floatTemp(s->m_TX3Temp)
+            );
+            r->currentTemps(current);
+            GeminiTemperatures critical(
+                ((s->m_dieOverTemp * 503.975) / 1024.0) - 273.15,
+                floatTemp(s->m_vga1aShutdownTemp),
+                floatTemp(s->m_vga1bShutdownTemp),
+                floatTemp(s->m_vga2aShutdownTemp),
+                floatTemp(s->m_vga2bShutdownTemp),
+                floatTemp(s->m_TX1ShutdownTemp),
+                floatTemp(s->m_TX2ShutdownTemp),
+                floatTemp(s->m_TX3ShutdownTemp)
+            );
+            r->criticalTemps(critical);
             switch(s->m_transducerFrequency){
                 case 0: r->transducerFrequency(868.0f); break;
                 case 1: r->transducerFrequency(723.0f); break;
@@ -536,10 +548,10 @@ void GeminiNode::onRun()
     m_sonar->addObserver(boost::make_shared<ReBroadcaster>(boost::ref(*this)));
 
     debug() << "autoConfig...";
-    m_sonar->autoConfig(5.0f, 50);
+    m_sonar->autoConfig(2.0f, 80);
 
     while (true) {
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
         //GEM_AutoPingConfig(float range, unsigned short gain, float speedofsound)
         //GEM_SendGeminiPingConfig();
         debug() << "GEM_SendPingConfig...";

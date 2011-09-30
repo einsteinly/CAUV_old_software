@@ -3510,7 +3510,7 @@ void CGeminiNetwork::ProgramVelocimeterCoeffs(unsigned int CCoeff, unsigned int 
 	{
 		int nResult = 0;
 		nResult = pthread_mutex_unlock((pthread_mutex_t*)hMutex);
-		return nResult;
+		return 0 == nResult;
 	}	
 	
 	// NOTE: This only works for MUTEX handles!
