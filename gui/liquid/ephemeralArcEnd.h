@@ -29,7 +29,6 @@ class EphemeralArcEnd: public AbstractArcSink{
         virtual ConnectionStatus doAcceptConnection(void*){return Rejected;}
 
     Q_SIGNALS:
-        void geometryChanged();
         void disconnected(AbstractArcSink*);
 
     protected Q_SLOTS:

@@ -21,8 +21,9 @@ FView::FView(QWidget* parent)
     
     QGraphicsScene *s = new QGraphicsScene(this);
 
+    // !!! is this really what we want to do?
+    // items aren't added or removed a lot, just updated
     s->setItemIndexMethod(QGraphicsScene::NoIndex);
-    s->setSceneRect(-200,-200,400,400);
 
     setScene(s);
 
@@ -38,11 +39,10 @@ FView::FView(QWidget* parent)
     n3->setPos(-70.5, -120.5);
 
     setCacheMode(CacheBackground);
-    setViewportUpdateMode(MinimalViewportUpdate);
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(AnchorUnderMouse);
     scale(1.0,1.0);
-    setMinimumSize(400, 400);
+    setMinimumSize(100, 100);
     setWindowTitle("QGraphicsScene Element Test");
     
     MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
@@ -120,8 +120,5 @@ FView::FView(QWidget* parent)
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"));
     b->setPos(98,176);
     s->addItem(b);
-    
-    connect(s, SIGNAL(changed(const QList<QRectF>&)),
-            this, SLOT(updateScene(const QList<QRectF>&)));
 }
 

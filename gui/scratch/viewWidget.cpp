@@ -47,15 +47,6 @@ ViewWidget::ViewWidget(QWidget* parent)
 
     setScene(s);
 
-
-    QGraphicsRectItem * rect = new QGraphicsRectItem();
-    rect->setRect(0, 0, 20, 20);
-    s->addItem(rect);
-    QGraphicsLineItem * item = new QGraphicsLineItem(0,0,100,100);
-    item->setParentItem(rect);
-    rect->setFlag(QGraphicsItem::ItemIsMovable);
-
-    /*
     Manager m(s, NULL);
 
     liquid::LiquidNode *n1 = new FNode(m);
@@ -82,7 +73,7 @@ ViewWidget::ViewWidget(QWidget* parent)
     scale(1.0,1.0);
     setMinimumSize(400, 400);
     setWindowTitle("QGraphicsScene Element Test");
-    */
+    
     /*MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
     from_1->setPos(-50, 0);
 
@@ -157,7 +148,8 @@ ViewWidget::ViewWidget(QWidget* parent)
     b->setPos(98,176);
     s->addItem(b);
     
-    connect(s, SIGNAL(changed(const QList<QRectF>&)),
-            this, SLOT(updateScene(const QList<QRectF>&)));
+    // !!! this seems to cause rendering artifacts
+    //connect(s, SIGNAL(changed(const QList<QRectF>&)),
+    //        this, SLOT(updateScene(const QList<QRectF>&)));
 }
 

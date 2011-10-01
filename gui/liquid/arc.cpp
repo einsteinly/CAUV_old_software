@@ -87,11 +87,9 @@ QRectF Arc::boundingRect() const{
 void Arc::paint(QPainter *painter,
                 const QStyleOptionGraphicsItem *option,
                 QWidget *widget){
-    //Q_UNUSED(painter);
+    Q_UNUSED(painter);
     Q_UNUSED(option);
     Q_UNUSED(widget);
-
-    painter->drawRect(this->boundingRect().adjusted(1, 1, -1, -1));
 }
 
 void Arc::updateLayout(){
@@ -99,6 +97,8 @@ void Arc::updateLayout(){
         warning() << "no source!";
         return;
     }
+
+    debug() << "Updating arc layout" << this;
 
     prepareGeometryChange();
 
