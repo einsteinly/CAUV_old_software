@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <QPainter>
+
 #include <debug/cauv_debug.h>
 
 #include "arcSink.h"
@@ -55,10 +57,11 @@ std::set<AbstractArcSink *> Arc::sinks(){
 
 void Arc::setFrom(AbstractArcSource *from){
     debug() << "arc::setFrom:" << from;
+    if (m_source)
+        disconnect(m_source, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     m_source = from;
     setParentItem(from);
     connect(from, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
-    // !!! TODO: disconnect signal?
     updateLayout();
 }
 
@@ -84,9 +87,11 @@ QRectF Arc::boundingRect() const{
 void Arc::paint(QPainter *painter,
                 const QStyleOptionGraphicsItem *option,
                 QWidget *widget){
-    Q_UNUSED(painter);
+    //Q_UNUSED(painter);
     Q_UNUSED(option);
     Q_UNUSED(widget);
+
+    painter->drawRect(this->boundingRect().adjusted(1, 1, -1, -1));
 }
 
 void Arc::updateLayout(){

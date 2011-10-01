@@ -109,7 +109,7 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
     debug() << near_items.size() << "nearby items";    
     foreach(QGraphicsItem* g, near_items)
         if((k = dynamic_cast<AbstractArcSink*>(g)) &&
-           k->willAcceptConnection(m_sourceDelegate)){
+            k->willAcceptConnection(m_sourceDelegate)){
             near_set << k;
             QPointF d = k->scenePos() - scene_pos;
             qreal dl = d.x()*d.x() +d.y()*d.y();

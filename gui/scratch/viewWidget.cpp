@@ -10,16 +10,32 @@
 //#include "elements/multiArcStart.h"
 //#include "elements/multiArcEnd.h"
 #include "elements/fNode.h"
-//#include "elements/style.h"
+#include "elements/style.h"
 
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
 
 #include "cross.h"
 
+#include <QDebug>
+
+#include <QGraphicsRectItem>
+
 using namespace cauv;
 using namespace cauv::gui;
 using namespace liquid;
+
+
+struct ContainerRect : public QGraphicsRectItem {
+
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
+        this->setRect(boundingRect());
+        painter->setPen(QPen(Qt::black, 1));
+        qDebug() << boundingRect();
+        QGraphicsRectItem::paint(painter, option, widget);
+    }
+};
+
 
 ViewWidget::ViewWidget(QWidget* parent)
     : QGraphicsView(parent){
@@ -31,19 +47,32 @@ ViewWidget::ViewWidget(QWidget* parent)
 
     setScene(s);
 
+
+    QGraphicsRectItem * rect = new QGraphicsRectItem();
+    rect->setRect(0, 0, 20, 20);
+    s->addItem(rect);
+    QGraphicsLineItem * item = new QGraphicsLineItem(0,0,100,100);
+    item->setParentItem(rect);
+    rect->setFlag(QGraphicsItem::ItemIsMovable);
+
+    /*
     Manager m(s, NULL);
 
-    FNode *n1 = new FNode(m);
+    liquid::LiquidNode *n1 = new FNode(m);
     n1->setPos(20.5, 100.5);
 
-    FNode *n2 = new FNode(m);
+    liquid::LiquidNode *n2 = new FNode(m);
     n2->setPos(-50.5, -100.5);
     
-    FNode *n3 = new FNode(m);
+    liquid::LiquidNode *n3 = new FNode(m);
     n3->setPos(-70.5, -120.5);
     
+
+    ContainerRect * rect = new ContainerRect();
     s->addItem(n1);
     s->addItem(n2);
+    
+    s->addItem(rect);
     s->addItem(n3);
 
     setCacheMode(CacheBackground);
@@ -53,7 +82,7 @@ ViewWidget::ViewWidget(QWidget* parent)
     scale(1.0,1.0);
     setMinimumSize(400, 400);
     setWindowTitle("QGraphicsScene Element Test");
-    
+    */
     /*MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
     from_1->setPos(-50, 0);
 

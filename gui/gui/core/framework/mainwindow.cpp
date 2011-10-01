@@ -91,8 +91,7 @@ void CauvMainWindow::onRun()
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
 
-    m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
-
+    //m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
     AINode * w1 = new AINode();
     AINode * w2 = new AINode();

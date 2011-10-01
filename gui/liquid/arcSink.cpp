@@ -7,6 +7,12 @@
 
 using namespace liquid;
 
+AbstractArcSink::AbstractArcSink(QGraphicsItem * parent): QGraphicsObject(parent), ConnectionSink() {
+    debug() << "AbstractArcSink()";
+    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+}
+
 ArcSink::ArcSink(ArcStyle const& of_style,
     CutoutStyle const& with_cutout,
     ConnectionSink *connectionDelegate)
@@ -46,9 +52,6 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     
     // start out not presenting a highlight:
     doPresentHighlight(0);
-    
-    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
-    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }
 
 bool ArcSink::willAcceptConnection(void* from_source){

@@ -30,8 +30,6 @@ EphemeralArcEnd::EphemeralArcEnd(ArcStyle const& of_style)
       m_style(of_style){
     setFill(false);
     setFlag(ItemIsMovable);
-    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
-    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }
 
 EphemeralArcEnd::~EphemeralArcEnd(){

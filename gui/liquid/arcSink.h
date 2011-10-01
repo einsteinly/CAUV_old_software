@@ -16,6 +16,8 @@ class AbstractArcSink: public QGraphicsObject,
                        public ConnectionSink{
     Q_OBJECT
     public:
+        AbstractArcSink(QGraphicsItem * parent = 0);
+
         virtual bool willAcceptConnection(void* from_source) = 0;
         virtual void doPresentHighlight(qreal intensity) = 0;
         virtual ConnectionStatus doAcceptConnection(void* from_source) = 0;

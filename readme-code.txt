@@ -76,9 +76,6 @@ supermess:
     (This is currently unnecesary, but will likely replace spread in the future)
     libavahi-{core,client}
 
-gui/gui-java:
-    (This is somewhat obsolete now and should be deleted soon)
-    Qt Jambi
 
 ===========================================================
 == Getting Started on Windows (Still a work in progress) ==
