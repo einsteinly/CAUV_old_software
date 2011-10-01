@@ -20,7 +20,7 @@ class GeminiNode: public CauvNode{
         virtual int useOptionsMap(po::variables_map& vm,
                                   po::options_description& desc);
     private:
-        GeminiSonar *m_sonar;
+        boost::shared_ptr<GeminiSonar> m_sonar;
 };
 
 } // namespace cauv

@@ -16,6 +16,8 @@
 #include <generated/types/GeminiStatusMessage.h>
 #include <generated/types/SonarImageMessage.h>
 #include <generated/types/SpeedOfSoundMessage.h>
+#include <generated/types/GeminiControlMessage.h>
+#include <generated/message_observers.h>
 
 // Gemini SDK comes last because it pollutes the global namespace
 #include "GeminiStructuresPublic.h"
@@ -208,6 +210,7 @@ class ReBroadcaster: public GeminiObserver{
 };
 
 class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
+                   public MessageObserver,
                    boost::noncopyable{
     public:
         GeminiSonar(uint16_t sonar_id, uint32_t inter_ping_musec=1000000)
@@ -260,6 +263,19 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             return m_conn_state.initialised;
         }
 
+    // Message Observer:
+        virtual void onGeminiControlMessage(GeminiControlMessage_ptr m){
+            debug() << "received GeminiControlMessage:" << *m;
+            //range : float;  // in m (0-50)
+            //gain : float;   // percentage (0-100)
+            //rangeLines : uint32; // 0-4096: used for range compression setting        
+            //continuous : bool;
+            //interPingPeriod
+            m_range = m->range();
+            m_gain_percent = m->gain();
+            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);
+        }
+
     private:
         static std::string fmtIp(uint32_t ip4_addr){
             uint8_t ipchrs[4] = {
@@ -277,6 +293,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         void onStatusPacket(CGemStatusPacket const* status_packet){
             // state transitions to manage the connection:
             // uninitialised
+            {
             debug(8) << "onStatusPacket:"
                     << "m_firmwareVer =" << status_packet->m_firmwareVer
                     << "m_sonarId =" << status_packet->m_sonarId
@@ -329,6 +346,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     << "NetMask:"   << fmtIp(status_packet->m_subnetMask)
                     << "ShutdownStatus:" <<  status_packet->m_shutdownStatus
                     << "LinkType:"  << status_packet->m_linkType;
+            }
             if(m_conn_state.sonarId == 0){
                 if(status_packet){
                     m_conn_state.sonarId = status_packet->m_sonarId;
@@ -545,13 +563,15 @@ void GeminiNode::onRun()
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
     }
 
+    joinGroup("sonarctl");
     m_sonar->addObserver(boost::make_shared<ReBroadcaster>(boost::ref(*this)));
+    this->addMessageObserver(m_sonar);
 
     debug() << "autoConfig...";
-    m_sonar->autoConfig(2.0f, 80);
+    m_sonar->autoConfig(6.0f, 40);
 
     while (true) {
-	    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         //GEM_AutoPingConfig(float range, unsigned short gain, float speedofsound)
         //GEM_SendGeminiPingConfig();
         debug() << "GEM_SendPingConfig...";
@@ -583,7 +603,7 @@ int GeminiNode::useOptionsMap(po::variables_map& vm,
     if (ret != 0) return ret;
 
     uint16_t sonar_id = vm["sonar_id"].as<uint16_t>();
-    m_sonar = new GeminiSonar(sonar_id);
+    m_sonar = boost::make_shared<GeminiSonar>(sonar_id);
 
     /*
     if(!m_sonar->ok()){
