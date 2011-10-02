@@ -82,8 +82,9 @@ inline bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
 }
 
 
-SonarAccumulator::SonarAccumulator()
+SonarAccumulator::SonarAccumulator(uint32_t size)
 {   
+    m_size = size;
     reset();
     assert(m_img->mat().data);
 }
@@ -184,7 +185,7 @@ static float gem_cos_idx(uint32_t bearing_idx){
 void SonarAccumulator::reset() {
     m_last_line_bearing = 0;
     m_image_completed = 0;
-    m_img = boost::make_shared<Image>(cv::Mat::zeros(400,400,CV_8UC1));
+    m_img = boost::make_shared<Image>(cv::Mat::zeros(m_size,m_size,CV_8UC1));
 }
 
 bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
@@ -342,6 +343,13 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
         }
     }
     return true;
+}
+
+void SonarAccumulator::setSize(uint32_t size){
+    if(m_size != size){
+        m_size = size;
+        reset();
+    }
 }
 
 boost::shared_ptr<Image> SonarAccumulator::img() const

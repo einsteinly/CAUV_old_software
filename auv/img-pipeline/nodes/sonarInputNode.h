@@ -40,6 +40,7 @@ class SonarInputNode: public InputNode{
             registerParamID<int>("min range", 0, "minimum range of bins drawn");
             registerParamID<int>("derivative", 0, "use the nth derivative of the data line (negative values reverse the direction)");
             registerParamID<int>("Sonar ID", SonarID::Seasprite, "SonarID::Seasprite=1, SonarID::Gemini=2");
+            registerParamID<int>("Resolution", 400, "SonarAccumulator resolution");
 
             // three output images, three output parameters:
             registerOutputID<image_ptr_t>("image (buffer)");
@@ -230,6 +231,9 @@ class SonarInputNode: public InputNode{
 
         out_map_t doWork(in_image_map_t&){
             clearAllowQueue();
+            int resolution = param<int>("Resolution");
+            m_accumulator.setSize(resolution);
+            
             if(m_sonarimg_msg || m_sonar_id == SonarID::Gemini){
                 // in this case discard any SonarDataMessages that have been
                 // received, to prevent indefinite build-up if for some crazy

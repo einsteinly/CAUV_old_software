@@ -273,7 +273,10 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 error() << "will not ping: connection not ok";
                 return;
             }
-            GEM_SetEndRange(m_range_lines);
+            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);            
+            // Autoconfig sets this; there doesn't seem to be any way to reduce
+            // the range resolution
+            // GEM_SetEndRange(m_range_lines);
             if(m_range_lines <= 32){
                 GEM_SetGeminiEvoQuality(0);
             }else if(m_range_lines <= 64){
@@ -291,7 +294,6 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }else if(m_range_lines <= 4096){
                 GEM_SetGeminiEvoQuality(7);
             }
-            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);
             GEM_SetPingMode(m_ping_continuous);
             GEM_SetInterPingPeriod(m_inter_ping_musec);
             GEM_SendGeminiPingConfig();

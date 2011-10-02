@@ -483,7 +483,8 @@ group sonarctl
     {
         range : float;  // in m (0-50)
         gain : float;   // percentage (0-100)
-        rangeLines : uint32; // 0-4096: used for range compression setting        
+        rangeLines : uint32; // 0-4096: used for range compression setting: the
+                             // number of returned lines depends only on range!
         continuous : bool;
         interPingPeriod : float; // seconds (musec resolution)
     }

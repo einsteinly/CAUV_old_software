@@ -16,10 +16,12 @@ class Image;
 class SonarAccumulator
 {
     public: 
-        SonarAccumulator();
+        SonarAccumulator(uint32_t size=400);
         
         bool accumulateDataLine(const SonarDataLine& data);
         bool setWholeImage(PolarImage const& image);
+
+        void setSize(uint32_t size);
 
         boost::shared_ptr<Image> img() const;
         cv::Mat mat() const;
@@ -31,6 +33,8 @@ class SonarAccumulator
         boost::shared_ptr<Image> m_img;
         int m_bearingRange, m_range, m_scanWidth;
         size_t m_nbins;
+        // diameter of accumulator 
+        uint32_t m_size;
         
         void reset();
 };
