@@ -115,6 +115,7 @@ cauv_install( gui-core )
 
 target_link_libraries ( gui-core
         cauv_debug
+        liquid
         common
         ${Qwt6_LIBRARIES}
         ${OpenCV_LIBS}

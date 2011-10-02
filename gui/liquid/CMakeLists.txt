@@ -28,6 +28,7 @@ else()
 
     set (
         LIQUID_H
+        view.h
         node.h
         nodeHeader.h
         button.h
