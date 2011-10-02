@@ -42,7 +42,9 @@ ViewWidget::ViewWidget(QWidget* parent)
     
     QGraphicsScene *s = new QGraphicsScene(this);
 
-    s->setItemIndexMethod(QGraphicsScene::NoIndex);
+    // !!! is this really what we want to do?
+    // items aren't added or removed a lot, just updated
+    //s->setItemIndexMethod(QGraphicsScene::NoIndex);
     s->setSceneRect(-200,-200,400,400);
 
     setScene(s);

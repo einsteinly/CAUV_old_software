@@ -49,9 +49,9 @@ set ( GUI_CORE_SRCS
     framework/mainwindow.cpp
     framework/nodescene.cpp
     framework/elements/arc.cpp
-    framework/elements/multiArc.cpp
-    framework/elements/multiArcStart.cpp
-    framework/elements/multiArcEnd.cpp
+    #framework/elements/multiArc.cpp
+    #framework/elements/multiArcStart.cpp
+    #framework/elements/multiArcEnd.cpp
     framework/elements/aiNode.cpp
     framework/elements/fNode.cpp
     framework/elements/nodeInput.cpp
@@ -85,9 +85,9 @@ set ( GUI_CORE_H
     framework/treeitems.h
     framework/mainwindow.h
     framework/elements/arc.h
-    framework/elements/multiArc.h
-    framework/elements/multiArcStart.h
-    framework/elements/multiArcEnd.h
+    #framework/elements/multiArc.h
+    #framework/elements/multiArcStart.h
+    #framework/elements/multiArcEnd.h
     framework/elements/aiNode.h
     framework/elements/fNode.h
     #framework/elements/nodeInput.h

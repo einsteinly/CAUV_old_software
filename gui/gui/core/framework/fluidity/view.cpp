@@ -23,29 +23,39 @@ FView::FView(QWidget* parent)
 
     // !!! is this really what we want to do?
     // items aren't added or removed a lot, just updated
-    s->setItemIndexMethod(QGraphicsScene::NoIndex);
+    //s->setItemIndexMethod(QGraphicsScene::NoIndex);
+    s->setSceneRect(-200,-200,400,400);
 
     setScene(s);
 
     Manager m(s, NULL);
 
-    FNode *n1 = new FNode(m);
+    liquid::LiquidNode *n1 = new FNode(m);
     n1->setPos(20.5, 100.5);
 
-    FNode *n2 = new FNode(m);
+    liquid::LiquidNode *n2 = new FNode(m);
     n2->setPos(-50.5, -100.5);
     
-    FNode *n3 = new FNode(m);
+    liquid::LiquidNode *n3 = new FNode(m);
     n3->setPos(-70.5, -120.5);
+    
+
+    //ContainerRect * rect = new ContainerRect();
+    s->addItem(n1);
+    s->addItem(n2);
+    
+    //s->addItem(rect);
+    s->addItem(n3);
 
     setCacheMode(CacheBackground);
+    setViewportUpdateMode(MinimalViewportUpdate);
     setRenderHint(QPainter::Antialiasing);
     setTransformationAnchor(AnchorUnderMouse);
     scale(1.0,1.0);
-    setMinimumSize(100, 100);
+    setMinimumSize(400, 400);
     setWindowTitle("QGraphicsScene Element Test");
     
-    MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
+    /*MultiArcStart *from_1 = new MultiArcStart(*n2, Image_Arc_Style);
     from_1->setPos(-50, 0);
 
     MultiArcStart *from_2 = new MultiArcStart(*n2, Image_Arc_Style);
@@ -67,10 +77,6 @@ FView::FView(QWidget* parent)
     MultiArcEnd *to_3_1 = new MultiArcEnd(from_3->arc());
     to_3_1->setPos(70, -5);
 
-
-    s->addItem(n1);
-    s->addItem(n2);
-    s->addItem(n3);
 
     MultiArcStart *from_4 = new MultiArcStart(*n3, Image_Arc_Style);
     from_4->setParentItem(n3);
@@ -103,6 +109,8 @@ FView::FView(QWidget* parent)
     //s->addItem(from_1);
     //s->addItem(from_2);
     //s->addItem(from_3);
+    */
+    
     
     Button *b;
     b = new Button(QRectF(0,0,24,24), QString(":/resources/icons/dup_button"));
