@@ -67,7 +67,7 @@ class ReBroadcaster: public GeminiObserver{
         ReBroadcaster(CauvNode& node)
             : m_node(node){
         }
-        
+
         virtual void onCGemPingHead(CGemPingHead const* h, float range){
             const float sos = h->m_spdSndVel / 10.0f;
             debug() << "PingHead:"
@@ -130,7 +130,7 @@ class ReBroadcaster: public GeminiObserver{
             for(uint32_t i = 0; i != num_beams; i++)
                 data[offset+i] = ((uint8_t*)&(l->m_startOfData))[i];
         }
-         
+
         virtual void onCGemPingTailExtended(CGemPingTailExtended const*){
             pingComplete();
         }
@@ -174,10 +174,10 @@ class ReBroadcaster: public GeminiObserver{
             r->linkType(s->m_linkType);
             r->BOOTSTSRegister(s->m_BOOTSTSRegister);
             r->shutdownStatus(s->m_shutdownStatus);
-            
+
             m_node.send(r);
         }
-         
+
     private:
         static std::vector<int32_t> computeBearingBinsNoCache(uint32_t num_beams){
             std::vector<int32_t> r;
@@ -218,6 +218,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
               m_inter_ping_musec(inter_ping_musec),
               m_range(0),
               m_gain_percent(0),
+              m_range_lines(200),
+              m_ping_continuous(false),
               m_conn_state(){
             assert(!the_sonar);
             the_sonar = this;
@@ -236,7 +238,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         void autoConfig(float range, float gain_percent){
             m_range = range;
             m_gain_percent = gain_percent;
-            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);
+            applyConfigAndPing();
         }
 
         void init(){
@@ -263,17 +265,47 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             return m_conn_state.initialised;
         }
 
+        void applyConfigAndPing(){
+            if(!initialised()){
+                error() << "will not ping: connection not initialised";
+                return;
+            }else if(!ok()){
+                error() << "will not ping: connection not ok";
+                return;
+            }
+            GEM_SetEndRange(m_range_lines);
+            if(m_range_lines <= 32){
+                GEM_SetGeminiEvoQuality(0);
+            }else if(m_range_lines <= 64){
+                GEM_SetGeminiEvoQuality(1);
+            }else if(m_range_lines <= 128){
+                GEM_SetGeminiEvoQuality(2);
+            }else if(m_range_lines <= 256){
+                GEM_SetGeminiEvoQuality(3);
+            }else if(m_range_lines <= 512){
+                GEM_SetGeminiEvoQuality(4);
+            }else if(m_range_lines <= 1024){
+                GEM_SetGeminiEvoQuality(5);
+            }else if(m_range_lines <= 2048){
+                GEM_SetGeminiEvoQuality(6);
+            }else if(m_range_lines <= 4096){
+                GEM_SetGeminiEvoQuality(7);
+            }
+            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);
+            GEM_SetPingMode(m_ping_continuous);
+            GEM_SetInterPingPeriod(m_inter_ping_musec);
+            GEM_SendGeminiPingConfig();
+        }
+
     // Message Observer:
         virtual void onGeminiControlMessage(GeminiControlMessage_ptr m){
             debug() << "received GeminiControlMessage:" << *m;
-            //range : float;  // in m (0-50)
-            //gain : float;   // percentage (0-100)
-            //rangeLines : uint32; // 0-4096: used for range compression setting        
-            //continuous : bool;
-            //interPingPeriod
             m_range = m->range();
             m_gain_percent = m->gain();
-            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);
+            m_range_lines = m->rangeLines();
+            m_inter_ping_musec = m->interPingPeriod() * 1e6 + 0.5;
+            m_ping_continuous = m->continuous();
+            applyConfigAndPing();
         }
 
     private:
@@ -289,7 +321,21 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                            << int(ipchrs[2]) << "."
                            << int(ipchrs[3]);
         }
-        
+        static std::string fmtLinkType(uint32_t link_type){
+            mkStr r;
+            if(link_type & 0x1) r << "VDSL ";
+            if(link_type & 0x2) r << "10Mbit ";
+            if(link_type & 0x4) r << "100Mbit ";
+            if(link_type & 0x8) r << "1GBit ";
+            return r;
+        }
+        static std::string fmtShutdownStatus(uint32_t status){
+            mkStr r;        
+            if(status & 0x1) r << "Over-Temperature! ";
+            if(status & 0x2) r << "Out of water! ";
+            return r;
+        }
+
         void onStatusPacket(CGemStatusPacket const* status_packet){
             // state transitions to manage the connection:
             // uninitialised
@@ -344,8 +390,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     << "AltIp:"     << fmtIp(status_packet->m_sonarAltIp)
                     << "SurfaceIp:" << fmtIp(status_packet->m_surfaceIp)
                     << "NetMask:"   << fmtIp(status_packet->m_subnetMask)
-                    << "ShutdownStatus:" <<  status_packet->m_shutdownStatus
-                    << "LinkType:"  << status_packet->m_linkType;
+                    << "ShutdownStatus:" << fmtShutdownStatus(status_packet->m_shutdownStatus)
+                    << "LinkType:"  << fmtLinkType(status_packet->m_linkType);
             }
             if(m_conn_state.sonarId == 0){
                 if(status_packet){
@@ -440,7 +486,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                             << "RX Error count:"<< ping_tail_ex->m_recvErrorCount
                             << "RX Total:"      << ping_tail_ex->m_packetCount
                             << "Lines lost:"    << ping_tail_ex->m_linesLostThisPing;
-                           
+
                     break;
 
                 case GEM_STATUS:
@@ -508,6 +554,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
         uint32_t m_inter_ping_musec;
         float m_range;
         float m_gain_percent;
+        uint32_t m_range_lines;
+        bool m_ping_continuous;
 
         volatile struct{
             bool ok;
@@ -572,10 +620,7 @@ void GeminiNode::onRun()
 
     while (true) {
 	    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-        //GEM_AutoPingConfig(float range, unsigned short gain, float speedofsound)
-        //GEM_SendGeminiPingConfig();
-        debug() << "GEM_SendPingConfig...";
-        GEM_SendGeminiPingConfig();
+        GEM_SendGeminiStayAlive();
     }
 }
 
