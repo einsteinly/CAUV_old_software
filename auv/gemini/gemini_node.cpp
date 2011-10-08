@@ -296,6 +296,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }
             GEM_SetPingMode(m_ping_continuous);
             GEM_SetInterPingPeriod(m_inter_ping_musec);
+            debug() << "SendPingConfig: range" << m_range << "gain" << m_gain_percent;
             GEM_SendGeminiPingConfig();
         }
 

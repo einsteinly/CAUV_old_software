@@ -285,10 +285,11 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
     const uint32_t num_lines = image.rangeEnd - image.rangeStart;
     cv::Mat m = m_img->mat();
     const int32_t radius = floor((min(m.rows, m.cols)-1)/2);
+    debug() << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
     const uint32_t num_bearings = bearing_bins.size()-1;
     const float cx = radius;
     const float cy = radius;
-    const float bscale = (float)radius/image.rangeEnd;
+    const float bscale = float(radius)/image.rangeEnd;
 
     ensureGemAngleTablesFor(bearing_bins);
 
