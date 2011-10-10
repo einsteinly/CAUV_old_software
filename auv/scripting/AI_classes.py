@@ -271,6 +271,9 @@ class aiScriptOptions():
     def __init__(self, script_opts):
         for opt in script_opts:
             setattr(self, opt, script_opts[opt])
+    @classmethod
+    def get_default_options(cls):
+        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_'])
         
 class aiScript(aiProcess):
     def __init__(self, task_name, script_opts):
@@ -386,7 +389,8 @@ class aiDetector(messaging.MessageObserver):
 #------GENERAL STUFF------
 
 class subclassDict(object):
-    def __new__(cls, cls_with_subs):
+    def __init__(self, cls_with_subs):
+        self.classes = {}
         try:
             to_check = set(cls_with_subs.__subclasses__())
         except AttributeError:
@@ -395,7 +399,10 @@ class subclassDict(object):
         while len(to_check):
             cur = to_check.pop()
             checked.add(cur)
+            if not getattr(cur, '_abstract', False):
+                self.classes[cur.__name__] = cur
             for sub in cur.__subclasses__():
                 if not sub in checked:
                     to_check.add(sub)
-        return dict([(x.__name__, x) for x in checked if not getattr(x, '_abstract', False)])
+    def __getattr__(self, attr):
+        return self.classes[attr]

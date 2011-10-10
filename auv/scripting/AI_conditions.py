@@ -41,7 +41,8 @@ class stateCondition(aiCondition):
         try:
             if options['state'] != self.options.state:
                 self.options.state = options['state']
-                self.change_event.set()
+                if hasattr(self, 'change_event'):
+                    self.change_event.set()
         except KeyError:
             pass
     def get_state(self):
