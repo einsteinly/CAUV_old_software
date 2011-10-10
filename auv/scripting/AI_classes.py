@@ -338,9 +338,12 @@ class aiScript(aiProcess):
 
 #------AI DETECTORS STUFF------
 class aiDetectorOptions():
-    def __init__(self, opts):
+    def __init__(self, opts={}):
         for key, value in opts:
             setattr(self, key, value)
+    @classmethod
+    def get_default_options(cls):
+        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_'])
         
 class aiDetector(messaging.MessageObserver):
     def __init__(self, node, opts):
@@ -379,140 +382,20 @@ class aiDetector(messaging.MessageObserver):
         self.node.removeObserver(self)
     def optionChanged(self, option_name):
         pass
-
-#------AI TASKS STUFF------
-
-class aiCondition():
-    """
-    Basic condition that can be used for tasks, ie they may be set via task_manager from any other process
-    and then when they change task manager checks to see if the conditions for any task have been met
-    """
-    def __init__(self, name, state=False):
-        #defines what values are needed to re-init the condition when unpickled
-        self.store = ['name', 'state']
-        self.name = name
-        self.state = state
-        self.state_lock = threading.Lock()
-    #pickling stuff
-    def __getstate__(self):
-        #since bits and pieces need to be setup for a condition we will call init instead of restoring __dict__
-        return dict([(x,getattr(self, x)) for x in self.store])
-    def __setstate__(self, state):
-        #restore values
-        self.__init__(**state)
-    def register(self, task_manager):
-        with task_manager.task_lock:
-            while self.name in task_manager.conditions:
-                error('A condition named '+self.name+' already exists. Trying to register with new name')
-                self.name = self.name+'1'
-            task_manager.conditions[self.name]=self
-    def set_state(self, state):
-        with self.state_lock:
-            self.state = state
-    def get_state(self):
-        with self.state_lock:
-            state = self.state
-        return state
-    def deregister(self, task_manager):
-        with task_manager.task_lock:
-            task_manager.conditions.pop(self.name)
-        
-class timeCondition(aiCondition):
-    """
-    This condition only remains true for a certain time
-    """
-    def __init__(self, name, default_time=0, state=False):
-        self.store = ['name', 'default_time']
-        self.name = name
-        self.default_time = default_time
-        self.state_lock = threading.Lock()
-        self.timeout = time.time()+default_time if state else None
-    def set_state(self, state, time=None):
-        with self.state_lock:
-            if state:
-                self.timeout=time.time()+(time if time else self.default_time)
-            else:
-                self.timeout = None
-    def get_state(self):
-        with self.state_lock:
-            state = self.timeout>time.time()
-        return state
-        
-class timeoutCondition(timeCondition):
-    def __init__(self, name, default_time=30, state=False):
-        timeCondition.__init__(self, name, default_time, not state)
-    def get_state(self):
-        return not timeCondition.get_state(self)
     
-class detectorCondition(aiCondition):
-    """
-    This condition relies on the state of a detector
-    """
-    def __init__(self, name, detector_name, state=False):
-        aiCondition.__init__(self, name, state)
-        self.store.append('detector_name')
-        self.detector_name = detector_name
-    def register(self, task_manager):
-        aiCondition.register(self, task_manager)
-        #We need to tell the task manager to setup the detector, and redirect messages to this condition
-        task_manager.add_detector(self.detector_name, self)
-    def deregister(self, task_manager):
-        task_manager.remove_detector(self.detector_name, self)
-        aiCondition.deregister(self, task_manager)
+#------GENERAL STUFF------
 
-class aiTask():
-    def __init__(self, name, script_name, priority, running_priority=None, detectors_enabled=False, conditions=None, crash_limit=5, frequency_limit=30, options=None, **kwargs):
-        """
-        Defines a 'Task', a script to run and when to run it
-        Options:
-        -name, str, name of task
-        -script_name, str, the filename of the script (minus '.py')
-        -priority, int, the priority of the script, larger numbers = higher priority
-        -running_priority, int, the priority of the script once it has started (default to priority)
-        -detectors_enabled, bool, whether to keep the detectors running while the script is running (default false)
-        -conditions, [aicondition,] a list of conditions for the script to be run
-        -options, a dictionary of arg, value pairs to be passed to the script
-        Note: any left over keyword arguments are appened to options
-        The default is_available method waits till all conditions are True, this can be changed by redefining is_available()
-        """
-        self.name = name
-        self.script_name = script_name
-        self.conditions = conditions if conditions else []
-        self.priority = priority
-        self.running_priority = running_priority if running_priority else priority
-        self.detectors_enabled = detectors_enabled
-        self.options = options if options else {}
-        self.options.update(kwargs)
-        self.registered = False
-        self.active = False
-        self.crash_count = 0
-        self.crash_limit = crash_limit
-        self.frequency_limit = frequency_limit# once every
-        self.last_called = 0
-    def update_options(self, options={}, **kwargs):
-        """
-        Updates the options on the task, accepts dict or kwargs
-        """
-        self.options.update(options)
-        self.options.update(kwargs)
-    def register(self, task_manager):
-        if self.registered:
-            error('Task already setup')
-            return
-        task_manager.active_tasks.append(self)
-        for condition in self.conditions:
-            condition.register(task_manager)
-        self.registered = True
-    def deregister(self, task_manager):
-        if not self.registered:
-            error('Task not setup, so can not be deregistered')
-            return
-        task_manager.active_tasks.remove(self)
-        for condition in self.conditions:
-            condition.deregister(task_manager)
-        self.registered = False
-    def is_available(self):
-        for condition in self.conditions:
-            if not condition.get_state():
-                return False
-        return True
+class subclassDict(object):
+    def __new__(cls, cls_with_subs):
+        try:
+            to_check = set(cls_with_subs.__subclasses__())
+        except AttributeError:
+            raise TypeError('Class must ultimately derive from object (new-style classes) not old style classes')
+        checked = set()
+        while len(to_check):
+            cur = to_check.pop()
+            checked.add(cur)
+            for sub in cur.__subclasses__():
+                if not sub in checked:
+                    to_check.add(sub)
+        return dict([(x.__name__, x) for x in checked if not getattr(x, '_abstract', False)])
