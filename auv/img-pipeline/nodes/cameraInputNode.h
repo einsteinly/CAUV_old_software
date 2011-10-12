@@ -74,7 +74,9 @@ class CameraInputNode: public AsynchronousNode{
 
         void openCapture(){
             #ifdef __APPLE__
-            warning() << "Capture doesn't work without an NSEventLoop";
+            warning() << "Capture doesn't work on OS X:"
+                      << "I think the capture needs to be opened from the main"
+                      << "thread - which is the cauv-node sleeping thread.";
             #else
             int dev_id = param<int>("device id");
             if(dev_id >= MAX_DEVICES || dev_id < 0){

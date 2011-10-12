@@ -19,6 +19,34 @@ target_link_libraries (
 
 
 add_executable (
+    camera_server
+    server.cpp
+)
+
+target_link_libraries (
+    camera_server
+
+    cauv_debug
+    ${OpenCV_LIBS}
+    boost_system
+)
+
+#add_library (
+add_executable (
+    camera_client
+    client.cpp
+)
+
+target_link_libraries (
+    camera_client
+
+    cauv_debug
+    ${OpeNCV_LIBS}
+    boost_system
+)
+
+
+add_executable (
     opencv_test EXCLUDE_FROM_ALL
     
     opencv_test.c
@@ -41,3 +69,4 @@ target_link_libraries (
     common
     ${OpenCV_LIBS}
 )
+
