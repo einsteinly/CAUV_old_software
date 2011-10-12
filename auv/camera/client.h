@@ -26,6 +26,7 @@ class CameraServerConnection{
     public:
         CameraServerConnection();
         boost::shared_ptr<ImageWrapper> getImage(uint32_t camera_id, uint32_t w, uint32_t h);
+        SharedImage* getUnGuardedImage(uint32_t camera_id, uint32_t w, uint32_t h);
 
     private:
         void reInit();

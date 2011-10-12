@@ -80,6 +80,7 @@ enum NodeType : int8 {
     MathAddMultInt,
     MathAddMultFloat,
     MergeSimilarLines,
+    DirectCameraInput,
 }
 enum NodeStatus : int8 {
     None = 0,

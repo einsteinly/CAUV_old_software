@@ -40,6 +40,10 @@ CameraServerConnection::CameraServerConnection()
 }
 
 boost::shared_ptr<ImageWrapper> CameraServerConnection::getImage(uint32_t camera_id, uint32_t w, uint32_t h){
+    return boost::make_shared<ImageWrapper>(getUnGuardedImage(camera_id, w, h));
+}
+
+SharedImage* CameraServerConnection::getUnGuardedImage(uint32_t camera_id, uint32_t w, uint32_t h){
     if(!m_socket)
         reInit();
 
@@ -52,8 +56,6 @@ boost::shared_ptr<ImageWrapper> CameraServerConnection::getImage(uint32_t camera
     size_t reply_length = boost::asio::read(
         *m_socket, boost::asio::buffer(&resp, sizeof(resp))
     );
-
-    //debug() << "getImage handle:" << resp.image_offset;
 
     if(reply_length != sizeof(resp) || resp.image_offset == 0)
         throw std::runtime_error("could not get image");
@@ -68,7 +70,7 @@ boost::shared_ptr<ImageWrapper> CameraServerConnection::getImage(uint32_t camera
             << "pitch" << s->pitch
             << "bytes" << (void*) &(s->bytes[0]);
 
-    return boost::make_shared<ImageWrapper>(s);
+    return s;
 }
 
 void CameraServerConnection::reInit(){

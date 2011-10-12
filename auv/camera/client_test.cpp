@@ -11,7 +11,6 @@ using namespace cauv;
 
 int main(int, char**){
     try{
-        boost::asio::io_service iosv;
         CameraServerConnection C;
         
         {
