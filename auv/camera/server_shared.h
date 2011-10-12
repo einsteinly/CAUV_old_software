@@ -2,6 +2,7 @@
 #define __CAUV_CAMERA_SERVER_SHARED_H__
 
 #define SHMEM_SEGMENT_NAME "uk.co.cauv.shared.cameras"
+#define CAMERA_SERVER_PORT 16708
 
 namespace cauv{
 
@@ -21,7 +22,7 @@ struct InfoResponse{
 struct SharedImage{
     uint32_t width;
     uint32_t height;
-    uint32_t pitch; // currently unused! TODO: use it
+    uint32_t pitch;
     int32_t type;
     // set to 0 when it is OK for the server to delete this image
     volatile int32_t lock;

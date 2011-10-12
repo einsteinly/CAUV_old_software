@@ -16,7 +16,7 @@
 /* How camera sharing works:
  *
  * A client program that wants access to a camera connects to a magic port
- * (16708) on localhost.
+ * (CAMERA_SERVER_PORT) on localhost.
  *
  * The name of the shared memory segment used is uk.co.cauv.shared.cameras
  *

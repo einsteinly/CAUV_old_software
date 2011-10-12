@@ -128,6 +128,7 @@ void CameraManager::getImage(InfoResponse& resp,
                s->type == cap_type){
                 std::cout << BashColour::Brown << "=" << BashColour::None << std::flush;
                 did_allocate_in_place = true;
+                s->lock = 1;
                 cap->captureToMem(&(s->bytes[0]), s->pitch, req.w, req.h, cap_type);
                 resp.image_offset = m_segment.get_handle_from_address((void*)s);
                 i++;
@@ -144,14 +145,16 @@ void CameraManager::getImage(InfoResponse& resp,
         uint32_t alloc_size = offsetof(SharedImage, bytes) + (req.w+4)*req.h*3; 
         try{
             SharedImage *r = (SharedImage*) m_segment.allocate(alloc_size);
+            // !!! temp debug:
+            //memset((uint8_t*)r, 0xff, alloc_size);
             std::cout << BashColour::Green << "+" << BashColour::None << std::flush;
             r->width = req.w;
             r->height = req.h;
-            r->type = CV_8UC3;
+            r->type = cap_type;
             r->lock = 1;
             cap->captureToMem(&(r->bytes[0]), r->pitch, req.w, req.h, cap_type);
             resp.image_offset = m_segment.get_handle_from_address((void*)r);
-            active_images.push_back(resp.image_offset);
+            active_images.push_front(resp.image_offset);
         }catch(boost::interprocess::bad_alloc &e){
             error() << "could not allocate image!" << e.what();
             // !!! TODO: not sure if 0-offset is a valid allocation address,
@@ -188,28 +191,31 @@ void CameraManager::release(std::list<uint64_t> const& images){
 // CameraManager::Capture
 CameraManager::Capture::Capture(uint32_t cam_id)
     : cv::VideoCapture(cam_id){
+    //cv::namedWindow("shared mat", CV_WINDOW_KEEPRATIO);
+    //cv::namedWindow("internal mat", CV_WINDOW_KEEPRATIO);
 }
 
 void CameraManager::Capture::captureToMem(
     uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
 ){
-    cv::Mat shared_mat(w, h, type, p);
+    cv::Mat shared_mat(h, w, type, p);
     if(!grab())
         error() << "failed to grab frame";
     cv::Mat internal_mat;
     if(!retrieve(internal_mat))
         error() << "failed to retrieve frame";
-    
+
     // There is no way to avoid this copy (without re-writing V4L), so we can
     // at least do something useful at the same time as copying:
     if(type != internal_mat.type())
         error() << "converting type isn't supported yet";
     else
-        cv::resize(
-            internal_mat, shared_mat,
-            cv::Size(w, h)
-        );
+        cv::resize(internal_mat, shared_mat, cv::Size(w, h));
     pitch = shared_mat.step;
+
+    //cv::imshow("shared mat", shared_mat);
+    //cv::imshow("internal mat", internal_mat);
+    debug(8) << "w" << w << "h" << h << "type" << type << "pitch" << pitch << "bytes" << (void*)p;
 }
 
 // CameraServer
@@ -243,11 +249,10 @@ void CameraServer::_setupPendingConnection(){
 
 
 
-int main(int argc, char** argv){
-    uint32_t port = 16708;
+int main(int, char**){
     try{
         boost::asio::io_service iosv;
-        CameraServer s(iosv, port);
+        CameraServer s(iosv, CAMERA_SERVER_PORT);
         iosv.run();
         debug() << "run loop finished";
     }catch(std::exception& e){

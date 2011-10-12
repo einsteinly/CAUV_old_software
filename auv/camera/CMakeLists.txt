@@ -18,31 +18,31 @@ target_link_libraries (
 )
 
 
-add_executable (
-    camera_server
+add_executable (camera_server
     server.cpp
 )
-
-target_link_libraries (
-    camera_server
-
+target_link_libraries (camera_server
     cauv_debug
     ${OpenCV_LIBS}
     boost_system
 )
 
-#add_library (
-add_executable (
-    camera_client
+
+add_library (camera_client
     client.cpp
-)
-
-target_link_libraries (
-    camera_client
-
+) 
+target_link_libraries (camera_client
     cauv_debug
     ${OpeNCV_LIBS}
     boost_system
+)
+
+
+add_executable (camera_client_test
+    client_test.cpp
+)
+target_link_libraries (camera_client_test
+    camera_client
 )
 
 
