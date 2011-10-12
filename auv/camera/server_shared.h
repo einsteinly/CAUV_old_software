@@ -1,19 +1,33 @@
 #ifndef __CAUV_CAMERA_SERVER_SHARED_H__
 #define __CAUV_CAMERA_SERVER_SHARED_H__
 
+#define SHMEM_SEGMENT_NAME "uk.co.cauv.shared.cameras"
+
 namespace cauv{
 
 typedef volatile uint32_t* lock_ptr;
 
-const static uint32_t Max_InfoResponse_Name_Len = 128;
+struct ImageRequest{
+    uint32_t camera_id;
+    uint32_t w;
+    uint32_t h;
+};
+
 struct InfoResponse{
-    uint64_t lock_offset;
+    // handle for SharedImage structure 
     uint64_t image_offset;
+};
+
+struct SharedImage{
     uint32_t width;
     uint32_t height;
+    uint32_t pitch; // currently unused! TODO: use it
     int32_t type;
-    char name[Max_InfoResponse_Name_Len];
+    // set to 0 when it is OK for the server to delete this image
+    volatile int32_t lock;
+    uint8_t bytes[1];
 };
+
 
 } // namespace cauv
 

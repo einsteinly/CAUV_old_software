@@ -10,56 +10,70 @@
 #include <debug/cauv_debug.h>
 #include <common/cauv_utils.h>
 
+#include <generated/types/TimeStamp.h>
+
 #include "server_shared.h"
 
 using namespace cauv;
+
+struct ImageWrapper: boost::noncopyable{
+    ImageWrapper(SharedImage* s)
+        : m_shared_image(s){
+    }
+
+    ~ImageWrapper(){
+        m_shared_image->lock = 0;
+    }
+
+    cv::Mat mat(){
+        return cv::Mat(
+            m_shared_image->height,
+            m_shared_image->width,
+            m_shared_image->type,
+            &(m_shared_image->bytes[0]),
+            m_shared_image->pitch
+        );
+    }
+
+    SharedImage* m_shared_image;
+};
 
 class CameraServerConnection{
     typedef boost::asio::ip::tcp tcp;
     typedef boost::interprocess::managed_shared_memory::handle_t handle_t;
     public:
-        CameraServerConnection(uint32_t camera_id)
+        CameraServerConnection()
             : m_port(16708),
               m_service(),
               m_socket(),
-              m_camera_id(camera_id),
-              m_segment(),
-              m_lock_ptr(0),
-              m_image_ptr(0)
-            {
+              m_segment(){
             reInit();
         }
         
-        // Call finishedWithImage after each call to this. The returned image
-        // is in shared memory, do not modify it in place. 
-        cv::Mat getImage(){
+        boost::shared_ptr<ImageWrapper> getImage(uint32_t camera_id, uint32_t w, uint32_t h){
             if(!m_socket)
                 reInit();
-            cv::Mat shared_mat(
-                m_info_reply.height,
-                m_info_reply.width,
-                m_info_reply.type,
-                m_image_ptr
-            );
-            try{
-                *m_lock_ptr = 1;
-                boost::asio::write(*m_socket, boost::asio::buffer((uint8_t*)&m_camera_id, 4));
-                while (*m_lock_ptr != 2){
-                    debug() << "no image yet" << *m_lock_ptr;
-                    msleep(0);
-                }
-                return shared_mat;
-            }catch(std::exception& e){
-                error() << "failed to get image:" << e.what();
-                m_lock_ptr = 0;
-                m_image_ptr = 0;
-                m_socket.reset();
-            }
-            return cv::Mat();
-        }
 
-        void finishedWithImage(){
-            *m_lock_ptr = 0;
+            ImageRequest req = {
+                camera_id, w, h
+            };
+            boost::asio::write(*m_socket, boost::asio::buffer((uint8_t*)&req, sizeof(req)));
+
+            InfoResponse resp;
+            size_t reply_length = boost::asio::read(
+                *m_socket, boost::asio::buffer(&resp, sizeof(resp))
+            );
+
+            debug(7) << "getImage handle:" << resp.image_offset;
+
+            if(reply_length != sizeof(resp) || resp.image_offset == 0)
+                throw std::runtime_error("could not get image");
+
+            SharedImage *s = (SharedImage*) m_segment.get_address_from_handle(
+                handle_t(resp.image_offset)
+            );
+
+            return boost::make_shared<ImageWrapper>(s);
         }
 
     private:
@@ -72,52 +86,51 @@ class CameraServerConnection{
             
             boost::asio::connect(*m_socket, it);
             
-            debug() << "sending camera id...";
-            boost::asio::write(*m_socket, boost::asio::buffer((uint8_t*)&m_camera_id, 4));
-            
-            debug() << "reading reply...";
-            size_t reply_length = boost::asio::read(
-                *m_socket,
-                boost::asio::buffer(&m_info_reply, sizeof(m_info_reply))
-            );
-            debug() << "      reInit: RX" << reply_length;
-            debug() << " lock offset:" << m_info_reply.lock_offset;
-            debug() << "image offset:" << m_info_reply.image_offset;
-            debug() << "        name:" << m_info_reply.name;
-            debug() << "       width:" << m_info_reply.width;
-            debug() << "      height:" << m_info_reply.height;
-            
-
             m_segment = boost::interprocess::managed_shared_memory(
-                boost::interprocess::open_only, m_info_reply.name
+                boost::interprocess::open_only, SHMEM_SEGMENT_NAME
             );
-            handle_t lock_handle = m_info_reply.lock_offset;
-            handle_t image_handle = m_info_reply.image_offset;
-
-            m_lock_ptr = (lock_ptr) m_segment.get_address_from_handle(lock_handle);
-            m_image_ptr = (uint8_t*) m_segment.get_address_from_handle(image_handle);
         }
 
         uint32_t m_port;
         boost::asio::io_service m_service;
         boost::shared_ptr<tcp::socket> m_socket;
-        uint32_t m_camera_id;
 
         boost::interprocess::managed_shared_memory m_segment;
-        lock_ptr m_lock_ptr;
-        uint8_t *m_image_ptr;
-
-        InfoResponse m_info_reply;
-
 };
 
 int main(int argc, char** argv){
     try{
         boost::asio::io_service iosv;
-        CameraServerConnection c(1);
+        CameraServerConnection C;
+        
+        {
+            {boost::shared_ptr<ImageWrapper> a = C.getImage(0, 640, 480);}
+            {boost::shared_ptr<ImageWrapper> b = C.getImage(0, 640, 480);}
+            boost::shared_ptr<ImageWrapper> c = C.getImage(0, 640, 480);
+            boost::shared_ptr<ImageWrapper> d = C.getImage(0, 640, 480);
+            boost::shared_ptr<ImageWrapper> e = C.getImage(0, 640, 480);
+            {boost::shared_ptr<ImageWrapper> f = C.getImage(0, 640, 480);}
+            boost::shared_ptr<ImageWrapper> g = C.getImage(0, 640, 480);
+            boost::shared_ptr<ImageWrapper> h = C.getImage(0, 640, 480);
+        }
+        
+        {
+            {boost::shared_ptr<ImageWrapper> a = C.getImage(0, 640, 480);}
+            {boost::shared_ptr<ImageWrapper> b = C.getImage(0, 320, 240);}
+            {boost::shared_ptr<ImageWrapper> c = C.getImage(0, 100, 200);}
+            {boost::shared_ptr<ImageWrapper> d = C.getImage(0, 100, 200);}
+            boost::shared_ptr<ImageWrapper> e = C.getImage(0, 320, 240);
+            boost::shared_ptr<ImageWrapper> f = C.getImage(0, 320, 240);
+            boost::shared_ptr<ImageWrapper> g = C.getImage(0, 320, 240);
+        }
 
-        c.getImage();
-        c.finishedWithImage();
+        uint32_t N = 1000;
+        TimeStamp tstart = now();
+        for(uint32_t i = 0; i < N; i++)
+            C.getImage(0, 640, 480);
+        TimeStamp tend = now();
+        uint64_t musecdiff = tend.musecs - tstart.musecs + 1000000*(tend.secs - tstart.secs);
+        debug() << (1e6 * N) / musecdiff << "fps";
 
     }catch(std::exception& e){
         error() << e.what();
