@@ -81,6 +81,9 @@ inline bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
     return (p1_x * p2_y - p2_x * p1_y) > 0;
 }
 
+float cauv::msgPolarAngleToRadians(int32_t bearing){
+    return M_PI * bearing / (3200.0*0x10000);
+}
 
 SonarAccumulator::SonarAccumulator(uint32_t size)
 {   

@@ -13,6 +13,9 @@ struct SonarDataLine;
 struct PolarImage;
 class Image;
 
+
+float msgPolarAngleToRadians(int32_t angle);
+
 class SonarAccumulator
 {
     public: 

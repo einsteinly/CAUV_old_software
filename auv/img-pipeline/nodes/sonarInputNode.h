@@ -42,9 +42,10 @@ class SonarInputNode: public InputNode{
             registerParamID<int>("Sonar ID", SonarID::Seasprite, "SonarID::Seasprite=1, SonarID::Gemini=2");
             registerParamID<int>("Resolution", 400, "SonarAccumulator resolution");
 
-            // three output images, three output parameters:
+            // four output images, three output parameters:
             registerOutputID<image_ptr_t>("image (buffer)");
             registerOutputID<image_ptr_t>("image (synced)");
+            registerOutputID<image_ptr_t>("polar image");
             registerOutputID<image_ptr_t>("data line");
             registerOutputID<NodeParamValue>("bearing");
             registerOutputID<NodeParamValue>("bearing range");
@@ -210,6 +211,17 @@ class SonarInputNode: public InputNode{
             return r;
         }
         
+        // see comment below, where this structure is used
+        struct MessageImageDeleter{
+            MessageImageDeleter(boost::shared_ptr<const Message> m) : m_msg(m){ }
+            void operator()(Image* img){
+                delete img;
+                m_msg.reset();
+                // now m_msg may be deleted (depending on other outstanding
+                // shared pointers)
+            }
+            boost::shared_ptr<const Message> m_msg;
+        };
         out_map_t doWork_image(){
             out_map_t r;
             boost::shared_ptr<SonarImageMessage const> image_msg;            
@@ -223,6 +235,37 @@ class SonarInputNode: public InputNode{
             if(m_accumulator.setWholeImage(image_msg->image()))
                 // not a deep copy when we're accumulating whole images!
                 r["image (synced)"] = m_accumulator.img();
+            
+            // so here's some magic: avoid copying by pointing the polar image
+            // to the data that's in the message we received: this is a shared
+            // pointer, (as are images), so keep it alive for as long as the
+            // returned image exists by using a deleter that holds a copy
+            NonUniformPolarMat r_polar_mat;
+            r_polar_mat.mat = cv::Mat(image_msg->image().data);
+            r_polar_mat.bearings = boost::make_shared< std::vector<float> >(r_polar_mat.mat.cols);
+            r_polar_mat.ranges = boost::make_shared< std::vector<float> >(r_polar_mat.mat.rows);
+            std::vector<int32_t> const& bearing_bins = image_msg->image().bearing_bins;
+            for(int i = 0; i < int(bearing_bins.size())-1; i++){
+                // bearing_bins has the edge angles - not the centre angles:
+                // interpolate linearly (close enough)
+                int32_t a = bearing_bins[i];
+                int32_t b = bearing_bins[i+1];
+                (*r_polar_mat.bearings)[i] = (
+                    (msgPolarAngleToRadians(a) + msgPolarAngleToRadians(b)) / 2
+                );
+            }
+            float range_convert = image_msg->image().rangeConversion;
+            float range = image_msg->image().rangeStart;
+            for(int i = 0; i < r_polar_mat.mat.rows; i++){
+                range += range_convert;
+                (*r_polar_mat.ranges)[i] = range;
+            }
+
+            image_ptr_t r_polar_img = boost::shared_ptr<Image>(
+                new Image(r_polar_mat), MessageImageDeleter(image_msg)
+            );
+            r_polar_img->ts(image_msg->image().timeStamp);
+            r["polar image"] = r_polar_img;
                 
             // !!! TODO: probably want to set the single-line output to the
             // line pointing straight forwards, or something similar
