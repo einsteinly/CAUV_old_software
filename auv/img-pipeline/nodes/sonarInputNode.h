@@ -237,9 +237,13 @@ class SonarInputNode: public InputNode{
                 r["image (synced)"] = m_accumulator.img();
 
             NonUniformPolarMat r_polar_mat;
-            r_polar_mat.mat = cv::Mat(image_msg->image().data);
-            r_polar_mat.bearings = boost::make_shared< std::vector<float> >(r_polar_mat.mat.cols);
-            r_polar_mat.ranges = boost::make_shared< std::vector<float> >(r_polar_mat.mat.rows);
+            uint32_t rows = image_msg->image().rangeEnd - image_msg->image().rangeStart;
+            uint32_t cols = image_msg->image().bearing_bins.size();
+            // actually one less than bearing bins.size:
+            if(cols) cols--;
+            r_polar_mat.mat = cv::Mat(rows, cols, CV_8UC3, (void*) &(image_msg->image().data[0]));
+            r_polar_mat.bearings = boost::make_shared< std::vector<float> >(cols);
+            r_polar_mat.ranges = boost::make_shared< std::vector<float> >(rows);
             std::vector<int32_t> const& bearing_bins = image_msg->image().bearing_bins;
             for(int i = 0; i < int(bearing_bins.size())-1; i++){
                 // bearing_bins has the edge angles - not the centre angles:
