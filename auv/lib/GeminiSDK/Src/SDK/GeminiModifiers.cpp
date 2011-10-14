@@ -3,7 +3,8 @@
 #ifdef _WIN32
 	#include "stdafx.h"
 #endif
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 #include "GeminiNetwork.h"
 #include "GeminiModifiers.h"
 

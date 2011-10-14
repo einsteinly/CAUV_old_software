@@ -100,7 +100,7 @@ class ReBroadcaster: public GeminiObserver{
             // Also check this, (needs converting from whatever the sonar's
             // time base is into our unix time):
             const_cast<PolarImage&>(m_current_msg->image()).timeStamp = TimeStamp(
-                h->m_transmitTimestampL/1e6+h->m_transmitTimestampH*double(0x100000000L)/1e6,
+                h->m_transmitTimestampL/1e6+h->m_transmitTimestampH*double(100000000)/1e6,
                 h->m_transmitTimestampL % 1000000
             );
             debug() << "New ping: ID=" << m_current_ping_id << "lines:" << num_lines << "beams:" << num_beams;

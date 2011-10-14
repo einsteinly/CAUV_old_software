@@ -79,8 +79,13 @@ void CameraServerConnection::reInit(){
     tcp::resolver r(m_service);
     tcp::resolver::query q(tcp::v4(), "localhost", mkStr() << m_port);
     tcp::resolver::iterator it = r.resolve(q);
-    
-    boost::asio::connect(*m_socket, it);
+    boost::system::error_code e;
+    m_socket->connect(*it, e);
+    if(e){
+        error() << "Could not connect socket:" << e;
+        m_socket.reset();
+        return;
+    }
     
     m_segment = boost::interprocess::managed_shared_memory(
         boost::interprocess::open_only, SHMEM_SEGMENT_NAME

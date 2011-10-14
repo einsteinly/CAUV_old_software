@@ -11,7 +11,8 @@
 #endif
 
 #include "GeminiNetwork.h"
-#include "stdio.h"
+#include <cstdio>
+#include <cstring>
 
 
 #pragma pack (push, 1)
