@@ -235,11 +235,7 @@ class SonarInputNode: public InputNode{
             if(m_accumulator.setWholeImage(image_msg->image()))
                 // not a deep copy when we're accumulating whole images!
                 r["image (synced)"] = m_accumulator.img();
-            
-            // so here's some magic: avoid copying by pointing the polar image
-            // to the data that's in the message we received: this is a shared
-            // pointer, (as are images), so keep it alive for as long as the
-            // returned image exists by using a deleter that holds a copy
+
             NonUniformPolarMat r_polar_mat;
             r_polar_mat.mat = cv::Mat(image_msg->image().data);
             r_polar_mat.bearings = boost::make_shared< std::vector<float> >(r_polar_mat.mat.cols);
@@ -260,7 +256,11 @@ class SonarInputNode: public InputNode{
                 range += range_convert;
                 (*r_polar_mat.ranges)[i] = range;
             }
-
+            
+            // so here's some magic: avoid copying by pointing the polar image
+            // to the data that's in the message we received: this is a shared
+            // pointer, (as are images), so keep it alive for as long as the
+            // returned image exists by using a deleter that holds a copy
             image_ptr_t r_polar_img = boost::shared_ptr<Image>(
                 new Image(r_polar_mat), MessageImageDeleter(image_msg)
             );

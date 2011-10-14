@@ -412,6 +412,12 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     unsigned char nm_chrs[4] = {
                         255,255,255,0
                     };
+                    // note that the UseAltSonarIPAddress has to be called with
+                    // the sonar's existing alternate IP address: this call
+                    // cannot be used to set the alternate IP address (there is
+                    // an API call for that, but best to do it through
+                    // Tritech's own software, since it should be a
+                    // set-and-forget thing)
                     // this prints in the right format (according to the
                     // manual), so if endian issues happen, they'll be visible
                     debug() << "GEM_UseAltSonarIPAddress("
