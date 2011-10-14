@@ -30,6 +30,7 @@ cauv::PyramidMat cauv::PyramidMat::clone() const{
     return r;
 }
 
+namespace cauv{
 struct clone: public boost::static_visitor<cauv::augmented_mat_t>{
     template <typename T>
     cauv::augmented_mat_t operator()(T const& r) const
@@ -37,6 +38,7 @@ struct clone: public boost::static_visitor<cauv::augmented_mat_t>{
         return r.clone();
     }
 };
+} // namespace cauv
 
 cauv::Image::Image()
     : m_img(), m_ts(), m_compress_fmt(".jpg"), m_compress_params()
@@ -54,7 +56,7 @@ cauv::Image::Image(augmented_mat_t const& img)
 
 // Copy constructor; take a deep copy of the image data
 cauv::Image::Image(Image const& other)
-    : m_img(boost::apply_visitor(clone(), other.m_img)),
+    : m_img(boost::apply_visitor(cauv::clone(), other.m_img)),
        m_ts(other.m_ts), 
       m_compress_fmt(other.m_compress_fmt),
       m_compress_params(other.m_compress_params){
@@ -62,7 +64,7 @@ cauv::Image::Image(Image const& other)
 
 // deep copy
 cauv::Image& cauv::Image::operator=(Image const& other){
-    m_img = boost::apply_visitor(clone(), other.m_img);
+    m_img = boost::apply_visitor(cauv::clone(), other.m_img);
     m_ts = other.m_ts;
     m_compress_fmt = other.m_compress_fmt;
     m_compress_params = other.m_compress_params;
