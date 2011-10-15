@@ -26,6 +26,7 @@ target_link_libraries (
 
     common
     sonar_accumulator
+    camera_client
     boost_date_time
     boost_filesystem
     boost_system

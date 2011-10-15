@@ -39,41 +39,86 @@ class aiAccess():
         return aiForeignProcess(self.node, self.process_name, process)
         
 #this is actually a decorator, used to declare functions accessible to other processes
-def external_function(f):
-    f.ext_func = True
-    return f
-    
-def is_external(f):
-    try:
-        return f.ext_func
-    except AttributeError:
-        return False
+#note that it doesn't behave like a normal decorator, the function is extracted from it in the initialisation stages
+#be careful, only one external function can run at a time, and the process cannot receive other messages during this
+class external_function:
+    def __init__(self, f):
+        #mark if needs calling_process as well
+        if hasattr(f, 'func_code') and (not hasattr(f, 'caller')):
+            if 'calling_process' in f.func_code.co_varnames:
+                f.caller = True
+            else:
+                f.caller = False
+        self.func = f
 
-class aiProcess(messaging.MessageObserver):
-    def __init__(self, process_name):
+def force_calling_process(f):
+    f.caller = True
+    return f
+#The process class is no longer also the message observer
+#since it appears that if the metaclass is subclassed, boost
+#does not recognise the observer
+#(basically, it checks to see that the metaclass of the observer
+#class is boost.python.class rather than a subclass of it,
+#see http://boost.2283326.n4.nabble.com/Boost-Python-Metaclass-td3308127.html
+#it may be fixed in newer versions??)
+
+class aiMessageObserver(messaging.MessageObserver):
+    key_index = {'to': 0, 'from': 1, 'function': 2, 'args': 3, 'kwargs': 4}
+    def __init__(self, parent_process, function_names):
         messaging.MessageObserver.__init__(self)
+        self.parent_process = parent_process
+        self.function_names = function_names
+    def onAIMessage(self, m):
+        debug("onAIMessage in %s: %s" %(self.parent_process.process_name, m.msg), 6)
+        message = cPickle.loads(m.msg)
+        if message[0] == self.parent_process.process_name: #this is where the to string appears in the cpickle output
+            message = cPickle.loads(m.msg)
+            if message[2] in self.function_names:
+                try:
+                    debug("onAIMessage in %s, calling function." %(self.parent_process.process_name, ), 6)
+                    if getattr(self.parent_process, message[2]).caller:
+                        message[4]['calling_process'] = message[1]
+                    getattr(self.parent_process, message[2])(*message[3], **message[4])
+                except Exception as exc:
+                    error("Error occured because of message: %s" %(str(message)))
+                    traceback.print_exc()
+            else:
+                error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+
+class aiProcessBase(type):
+    def __init__(cls, name, bases, attrs):
+        super(aiProcessBase, cls).__init__(name, bases, attrs)
+        #list ext funcs in class, and extract function (don't accidentally wipe parent class functions)
+        if not hasattr(cls, '_ext_funcs'):
+            cls._ext_funcs = []
+        if not hasattr(cls, '_objects'):
+            cls._objects = []
+        for key, attr in attrs.iteritems():
+            if isinstance(attr, external_function):
+                cls._ext_funcs.append(key)
+                setattr(cls, key, attr.func)
+            else:
+                cls._objects.append(key)
+    def __call__(cls, *args, **kwargs):
+        inst = cls.__new__(cls, *args, **kwargs)
+        inst.__init__(*args, **kwargs)
+        inst._register()
+        inst._objects.extend(inst.__dict__.keys())
+        return inst
+
+class aiProcess():
+    __metaclass__ = aiProcessBase
+    def __init__(self, process_name):
+        self._msg_observer = aiMessageObserver(self, self._ext_funcs)
+        #set node name
         id = process_name[:6] if len(process_name)>6 else process_name
         self.node = cauv.node.Node("ai"+id)
         self.node.join("ai")
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
     def _register(self):
-        self.node.addObserver(self)
-        self.ai.STATE.REGISTER()
-    def onAIMessage(self, m):
-        debug("onAIMessage in %s: %s" %(self.process_name, m.msg), 6)
-        message = cPickle.loads(m.msg)
-        if message[0] == self.process_name: #this is where the to string appears in the cpickle output
-            message = cPickle.loads(m.msg)
-            if hasattr(self, message[2]) and is_external(getattr(self,message[2])):
-                try:
-                    debug("onAIMessage in %s, calling function." %(self.process_name, ), 6)
-                    getattr(self,message[2])(*message[3], **message[4])
-                except Exception as exc:
-                    error("Error occured because of message: %s" %(str(message)))
-                    traceback.print_exc()
-            else:
-                error("AI message %s did not call a valid function (make sure the function is declared as an external function" %(str(message)))
+        self.node.addObserver(self._msg_observer)
+        self.ai.manager.register()
     def log(self, message):
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")
@@ -91,7 +136,7 @@ class fakeSonarfunction():
         self.script = script
         self.attr = attr
     def __call__(self, *args, **kwargs):
-        self.script.ai.auv_control.sonar_command(self.script.task_name, self.attr, *args, **kwargs)
+        self.script.ai.auv_control.sonar_command(self.attr, *args, **kwargs)
     def __getattr__(self, attr):
         error('You can only call functions of sonar, one level deep')
         raise AttributeError('fakeSonarfunction has no attribute %s' %(attr,))
@@ -108,7 +153,7 @@ class fakeAUVfunction():
         self.attr = attr
     def __call__(self, *args, **kwargs):
         debug('fakeAUVfunction: __call__ args=%s kwargs=%s' % (str(args), str(kwargs)), 5)
-        self.script.ai.auv_control.auv_command(self.script.task_name, self.attr, *args, **kwargs)
+        self.script.ai.auv_control.auv_command(self.attr, *args, **kwargs)
     def __getattr__(self, attr):
         error('You can only call functions of AUV, one level deep (except sonar)')
         raise AttributeError('fakeAUVfunction has no attribute %s' %(attr,))
@@ -210,20 +255,6 @@ class fakeAUV(messaging.MessageObserver):
 
 class aiScriptOptionsBase(type):
     def __new__(cls, name, bases, attrs):
-        def __getattr2__(self, attr):
-            if not (attr in object.__getattribute__(self, '_dynamic')):
-                return object.__getattribute__(self, attr)
-            else:
-                with object.__getattribute__(self, '_dynamiclock'):
-                    #note, although once the object has been returned the lock is released, do the option can be modified
-                    #since modifiying requires passing a new value, this doesn't affect the object that was passed
-                    return object.__getattribute__(self, attr)
-        def set_option(self, option_name, option_value):
-            if option_name in self._dynamic:
-                with self._dynamiclock:
-                    setattr(self, option_name, option_value)
-            else:
-                info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
         attrs['_dynamic'] = []
         if 'Meta' in attrs:
             meta_data = attrs.pop('Meta')
@@ -232,9 +263,6 @@ class aiScriptOptionsBase(type):
                 for d in attrs['_dynamic']:
                     if not d in attrs:
                         raise AttributeError('The option %s is not defined, so cannot be dynamic' %(d,))
-                attrs['__getattribute__'] = __getattr2__ #no point doing this if there aren't any dynamic variables
-                attrs['_dynamiclock'] = threading.RLock()
-        attrs['set_option'] = set_option
         new_cls = super(aiScriptOptionsBase, cls).__new__(cls, name, bases, attrs)
         return new_cls
             
@@ -253,6 +281,8 @@ class aiScript(aiProcess):
         self.auv = fakeAUV(self)
         self._pl_enabled = False
         self._pl_setup = threading.Event()
+    def _register(self):
+        self.node.addObserver(self._msg_observer)
     def request_pl(self, pl_name, timeout=10):
         if not self._pl_enabled:
             self.node.join('processing')
@@ -273,9 +303,11 @@ class aiScript(aiProcess):
         self._pl_setup.set()
     @external_function
     def set_option(self, option_name, option_value):
-        self.options.set_option(option_name, option_value)
         if option_name in self.options._dynamic:
+            setattr(self, option_name, option_value)
             self.optionChanged(option_name)
+        else:
+            info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
     def optionChanged(self, option_name):
         pass
     @external_function

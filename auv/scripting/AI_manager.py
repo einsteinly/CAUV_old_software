@@ -8,6 +8,8 @@ from cauv.debug import info, debug, warning, error
 from cauv import messaging
 from cauv.node import Node
 
+from AI_classes import aiProcess, external_function
+
 from utils.ordereddict import OrderedDict
 
 """
@@ -49,11 +51,9 @@ process_data_list = (
             #('location', '/bin/sh ./run.sh ./AI_location.py', ['wait', 'timeout', 'script']),
             )
 
-class AImanager(messaging.MessageObserver):
+class AImanager(aiProcess):
     def __init__(self, **kwargs):
-        messaging.MessageObserver.__init__(self)
-        self.node = Node("aimanage")
-        self.node.join("ai")
+        aiProcess.__init__(self, "manager")
         self.kwargs = kwargs
         if 'disable' in self.kwargs:
             disable = self.kwargs.pop('disable')
@@ -61,7 +61,10 @@ class AImanager(messaging.MessageObserver):
         for process_data in process_data_list:
             if not process_data[0] in disable:
                 self.processes[process_data[0]] = Process(process_data[1].split(' '),opts=dict([(x,self.kwargs[x]) for x in process_data[2]]))
-        self.node.addObserver(self)
+    def _register(self):
+        #do this rather than register as registering registers with this process
+        print "registering"
+        self.node.addObserver(self._msg_observer)
     def run(self):
         for process_name in self.processes:
             self.processes[process_name].start()
@@ -73,14 +76,14 @@ class AImanager(messaging.MessageObserver):
                     process.start()
                 time.sleep(0.5)
             time.sleep(2)
-    def onAIMessage(self, m):
-        message = cPickle.loads(m.msg)
-        if message[0] == 'STATE':
-            if message[2] == 'REGISTER':
-                try:
-                    self.processes[message[1]].started.set()
-                except KeyError:
-                    pass
+    @external_function
+    def register(self, calling_process):
+        info('Registering %s' %calling_process)
+        try:
+            self.processes[calling_process].started.set()
+        except KeyError:
+            warning("Unknown process tried to register as started.")
+            
 if __name__ == '__main__':
     p = optparse.OptionParser()
     p.add_option('-r', '--restore', dest='restore', default=False,

@@ -8,7 +8,11 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <camera/client.h>
+#include <camera/server_shared.h>
+
 #include "asynchronousNode.h"
+
 
 #define MAX_DEVICES 5
 
@@ -21,7 +25,8 @@ class CameraInputNode: public AsynchronousNode{
     public:
         CameraInputNode(ConstructArgs const& args)
             : AsynchronousNode(args),
-              m_current_device(-1){
+              m_server_connection(boost::make_shared<CameraServerConnection>()){
+            setAllowQueue();
         }
 
         void init(){
@@ -31,86 +36,59 @@ class CameraInputNode: public AsynchronousNode{
             // one output:
             registerOutputID<image_ptr_t>("image_out");
             
-            // one parameter:
+            // parameters:
             registerParamID<int>("device id", 0);
-            
-            openCapture();
+            registerParamID<int>("width", 640);
+            registerParamID<int>("height", 480);
         }
 
         virtual ~CameraInputNode(){
             stop();
-            m_capture = cv::VideoCapture();
-            if(m_current_device != -1)
-                m_capture_lock[m_current_device].unlock();
-        }
-
-        virtual void paramChanged(input_id const& p){
-            if(p == "device id")
-            {
-                openCapture();
-            }
         }
 
     protected:
+        struct SharedImageDeleter{
+            // if the connection were to close whilst an image was active, then
+            // the memory is unmapped, and we'd get EXC_BAD_ACCESS trying to
+            // set the lock, or access the image - so pass a shared pointer to
+            // the connection around to keep it alive
+            SharedImageDeleter(SharedImage* s, boost::shared_ptr<CameraServerConnection> c)
+                : m_lock_ptr(&(s->lock)), m_connection(c){
+            }
+
+            void operator()(Image* img){
+                *m_lock_ptr = 0;
+                delete img;
+                m_connection.reset();
+            }
+
+            volatile int32_t* m_lock_ptr;
+            boost::shared_ptr<CameraServerConnection> m_connection;
+        };
+
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
+
+            int camera_id = param<int>("device id");
+            int w = param<int>("width");
+            int h = param<int>("height");
             
             debug(4) << "CameraInputNode::doWork";
             
-            if(!m_capture.isOpened()){
-                error() << "camera is not opened";
-            }else{
-                msleep(10);
-                
-                cv::Mat img;
-                m_capture >> img;
-                r["image_out"] = boost::make_shared<Image>(img);
-            }
+            SharedImage *s = m_server_connection->getUnGuardedImage(camera_id, w, h);
+
+            r["image_out"] = boost::shared_ptr<Image>(
+                new Image(cv::Mat(
+                    s->height, s->width, s->type, &(s->bytes[0]), s->pitch
+                )), SharedImageDeleter(s, m_server_connection)
+            );
 
             return r;
         }
 
-    private:
+    protected:
+        boost::shared_ptr<CameraServerConnection> m_server_connection;
 
-        void openCapture(){
-            #ifdef __APPLE__
-            warning() << "Capture doesn't work without an NSEventLoop";
-            #else
-            int dev_id = param<int>("device id");
-            if(dev_id >= MAX_DEVICES || dev_id < 0){
-                error() << "invalid camera:" << dev_id;
-            }else{
-                bool l = m_capture_lock[dev_id].try_lock();
-                if(!l){
-                    error() << "camera already open" << dev_id;
-                }else{
-                    if(m_current_device != -1)
-                        m_capture_lock[m_current_device].unlock();
-                    m_current_device = dev_id;
-                    try{
-                        m_capture = cv::VideoCapture(dev_id);
-                    }catch(cv::Exception& e){
-                        error() << "capture exception:" << e.what();
-                    }
-                   
-                    if(!m_capture.isOpened()){
-                        error() << "could not open camera" << dev_id;
-                        return;
-                    } 
-                    //m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-                    //m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-                    m_capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-                    m_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 280);
-                    setAllowQueue();
-                }
-            }
-            #endif
-        }
-        
-        cv::VideoCapture m_capture;
-        int m_current_device;
-        static boost::try_mutex m_capture_lock[MAX_DEVICES];
-    
     // Register this node type
     DECLARE_NFR;
 };

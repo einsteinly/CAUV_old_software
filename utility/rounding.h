@@ -34,7 +34,7 @@ inline static T max(T const& a, T const& b){
 
 template<typename TRet, typename TLow, typename TVal, typename THigh>
 inline static TRet clamp_cast(TLow const& low, TVal const& value, THigh const& high){
-    return value >= high? high : value <= low? low : TRet(value); 
+    return value >= high? TRet(high) : (value <= low? TRet(low) : TRet(value));
 }
 
 template<typename TRet, typename TVal>

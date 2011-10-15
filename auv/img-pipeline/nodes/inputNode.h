@@ -17,9 +17,11 @@ class InputNode: public Node{
             clearAllowQueue();
         }
 
-        virtual void onImageMessage(boost::shared_ptr<const ImageMessage>) throw() {}
+        virtual void onImageMessage(boost::shared_ptr<const ImageMessage>){}
         
         virtual void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage>){}
+
+        virtual void onSonarImageMessage(boost::shared_ptr<const SonarImageMessage>){}
 
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes

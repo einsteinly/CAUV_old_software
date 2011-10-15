@@ -75,6 +75,7 @@ class TexImg{
 
     private:
         void _genTexture(){
+            int err = 0;
             boost::shared_ptr<Image> img = m_img;
             if(!img){
                 error() << __func__ << __LINE__ << "no image";
@@ -113,12 +114,13 @@ class TexImg{
             cv::Mat t = img->mat(), m;
             int w = t.cols;
             int h = t.rows;
-            if (h > max_size && w > max_size)
+            if (h <= max_size && w <= max_size)
             {
                 m = t;
             }
             else
             {
+                debug() << "original img size:" << w << h;
                 int w_resized, h_resized;
                 if(h > w){
                     h_resized = max_size;
@@ -129,6 +131,7 @@ class TexImg{
                 }
                 w = w_resized;
                 h = h_resized;
+                debug() << "resized:" << w << h;
                 cv::resize(t, m, cv::Size(w,h), 0, 0, cv::INTER_LANCZOS4);
             }
 
@@ -159,13 +162,16 @@ class TexImg{
                 default:
                     error() << "unknown OpenCV image type depth:";
             }
-
+            
             if(m.channels() == 4)
-                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGRA, tex_type, m.data);
+                err = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGRA, tex_type, m.data);
             else if(m.channels() == 3)
-                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGR, tex_type, m.data);
+                err = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_BGR, tex_type, m.data);
             else if(m.channels() == 1)
-                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_LUMINANCE, tex_type, m.data);
+                err = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_LUMINANCE, tex_type, m.data);        
+            if(err){
+                error() << "GLU error:" << err;
+            }
             
             glCheckError();
         }

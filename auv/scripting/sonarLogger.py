@@ -1,30 +1,32 @@
 #!/usr/bin/env python
 
-import cauv.messaging as msg
-import cauv.node as node
-
-from cauv.debug import debug, info, warning, error
-
-import messageLogger
-
+# Standard Library
 import traceback
 import optparse
 
-class SonarLogger(messageLogger.Logger):
-    def __init__(self, cauv_node, shelf_fname, do_record):
-        self.__sonar_params = None        
-        messageLogger.Logger.__init__(self, cauv_node, shelf_fname, do_record)
+# CAUV
+import cauv.messaging as msg
+import cauv.node as node 
+import messageLogger
+from cauv.debug import debug, info, warning, error
+from utils.hacks import injectBase
+
+class SonarLogger(object):
+    def __init__(self, cauv_node, fname, do_record):
+        self.__sonar_params = None
+        # do not ask about, or change, this line:
+        super(self.__class__, self).__init__(cauv_node, fname, do_record)
         self.node.join('sonarctl')
         self.node.join('sonarout')
 
     def onNewSession(self):
-        self.shelveObject(self.__sonar_params)
+        self.logObject(self.__sonar_params)
 
     def onSonarDataMessage(self, m):
-        self.shelveMessage(m)
+        self.logMessage(m)
 
     def onSonarControlMessage(self, m):
-        self.shelveMessage(m)
+        self.logMessage(m)
         mdict = messageLogger.dictFromMessage(m)
         debug('sonar control message: %s' % mdict)
         self.__sonar_params = mdict
@@ -34,7 +36,13 @@ class SonarLoggerCmdPrompt(messageLogger.CmdPrompt):
         messageLogger.CmdPrompt.__init__(self, sonar_logger, 'Sonar Logger')
 
 def sonarLoggerMainLoop(cauv_node, opts):
-    sl = SonarLogger(cauv_node, opts.fname, not opts.no_record)
+    if opts.fname.endswith('.shelf'):
+        warning('using deprecated logging format because you specified a "shelf" filename') 
+        LoggerClass = injectBase(SonarLogger, messageLogger._DeprecatedShelfLogger)
+    else:
+        LoggerClass = injectBase(SonarLogger, messageLogger.CHILLogger)
+    sl = LoggerClass(cauv_node, opts.fname, not opts.no_record)
+    sl.profile_playback = opts.do_profile
     cli = SonarLoggerCmdPrompt(sl)
     playback_is_active = False
     try:
@@ -50,12 +58,13 @@ def sonarLoggerMainLoop(cauv_node, opts):
 
 if __name__ == '__main__':
     p = optparse.OptionParser()
-    p.add_option('-f', '--log-shelf', dest='fname',
-                 default='./sonar.shelf',
+    p.add_option('-f', '--log-file', dest='fname',
+                 default='./default.chil',
                  action='store', help='file to load/save sonar data lines from')
     p.add_option('-n', '--no-record', dest='no_record', default=False,
                  action='store_true', help="Don't start in recording mode")
-
+    p.add_option('-p', '--profile', dest='do_profile', default=False,
+                 action='store_true', help='use cProfile to run everything')
     opts, args = p.parse_args()
 
     if len(args) > 0:
@@ -63,8 +72,12 @@ if __name__ == '__main__':
         exit(1)
    
     cauv_node = node.Node("py-slog") 
-    try:
-        sonarLoggerMainLoop(cauv_node, opts)
+    try: 
+        if opts.do_profile:
+            import cProfile
+            cProfile.run('sonarLoggerMainLoop(cauv_node, opts)', 'sonarLogger.profile')
+        else:
+            sonarLoggerMainLoop(cauv_node, opts)
     finally:
         cauv_node.stop()
 

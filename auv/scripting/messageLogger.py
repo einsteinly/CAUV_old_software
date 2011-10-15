@@ -1,5 +1,5 @@
 #
-# Base class for shelf message loggers
+# Base class for message loggers
 # The shelf format is deprecated, use CHIL instead (utils/CHIL.py).
 #
 
@@ -18,6 +18,8 @@ import traceback
 import cauv.messaging as msg
 import cauv.node as node
 from cauv.debug import debug, info, warning, error
+from utils import CHIL
+from utils.hacks import tdToFloatSeconds
 
 
 #TODO: there's quite a lot of code duplication here, we should add some of this
@@ -29,7 +31,8 @@ def floatToDatetime(ftime):
 Datetime_Format = '%a %d %b %Y %H:%M:%S'
 
 Ignore_Message_Attrs = (
-    'group'
+    'group',
+    'chil'
 )
 
 # These three classes need to be kept around so we can load the saved data from
@@ -119,24 +122,215 @@ class MessageLoggerSession:
             self.info, self.datetime.strftime(Datetime_Format)
         )
 
-
-class Logger(msg.MessageObserver):
-    def __init__(self, cauv_node, shelf_fname, do_record, playback_rate = 1.0):
+class LoggerBase(msg.MessageObserver):
+    def __init__(self, cauv_node, do_record, playback_rate = 1.0):
         msg.MessageObserver.__init__(self)
         self.node = cauv_node
+        self.tzero = time.time()
+        self.profile_playback = False
         self.__recording = False
-        self.__shelf = None
-        self.__cached_keys = set()
-        self.__shelf_fname = None # set by setShelf
-        self.__tzero = time.time()
         self.__playback_lock = threading.Lock()
         self.__playback_active = False
         self.__playback_finished = threading.Condition()
         self.__playback_thread = None
         self.__playback_rate = playback_rate
         self.__playback_start_time = 0
-        self.setShelf(shelf_fname)
+    def relativeTime(self):
+        return time.time() - self.tzero
+    def playbackIsActive(self):
+        self.__playback_lock.acquire()
+        r =  self.__playback_active
+        self.__playback_lock.release()
+    def setPlaybackRate(self, rate):
+        # messages are played back at rate * real time (higher is faster)
+        self.__playback_rate = rate
+    def playbackRate(self):
+        return self.__playback_rate
+    def startPlayback(self, start_time):
+        if self.__playback_active:
+            error("can't start playback: playback is already active")
+            return
+        self.__playback_lock.acquire()
+        self.__playback_start_time = start_time
+        self.__playback_active = True
+        self.__playback_lock.release() 
+        if self.profile_playback:
+            self.__playback_thread = threading.Thread(target=self.profilePlayback)
+        else:
+            self.__playback_thread = threading.Thread(target=self.playbackRunloop)
+        self.__playback_thread.start()
+    def playbackStartTime(self):
+        # currently relative to the start of the particular message log
+        return self.__playback_start_time
+    def profilePlayback(self):
+        import profilehooks
+        profilehooks.profile(self.playbackRunloop,filename='messageLogger-playback.profile', )()
+    def playbackRunloop(self):
+        raise NotImplementedError()
+    def stopPlayback(self):
+        if not self.__playback_active:
+            return
+        self.__playback_lock.acquire()
+        self.__playback_active = False
+        self.__playback_lock.release()
+        self.__playback_finished.acquire()
+        debug('waiting for playback thread...')
+        self.__playback_finished.wait()
+        self.__playback_finished.release()
+        self.__playback_thead = None
+    def playbackHasBeenStopped(self):
+        r = False
+        self.__playback_lock.acquire()
+        if not self.__playback_active:
+            r = True
+        self.__playback_lock.release()
+        return r
+    def playbackDidFinish(self):
+        self.__playback_finished.acquire()
+        self.__playback_finished.notify()
+        self.__playback_finished.release()
+        self.__playback_lock.acquire()
+        self.__playback_active = False
+        self.__playback_lock.release()
+    def doRecord(self, do_record):
+        if self.__recording == do_record:
+            return
+        self.__recording = do_record
+        if do_record:
+            if self.playbackIsActive():
+                self.stopPlayback()
+            self.node.addObserver(self)
+            debug('recording started')            
+        else:
+            self.node.removeObserver(self)
+            debug('recording stopped')
+    def recordingIsActive(self):
+        return self.__recording
+
+class CHILLogger(LoggerBase):
+    def __init__(self, cauv_node, log_fname, do_record, playback_rate = 1.0):
+        LoggerBase.__init__(self, cauv_node, do_record, playback_rate)
+        self.__logger = None
+        self.dirname = None
+        self.subname = None
+        self.setFile(log_fname)
         self.doRecord(do_record)
+    def close(self):
+        self.doRecord(False)
+        if self.playbackIsActive():
+            self.stopPlayback()
+        if self.__logger:
+            self.__logger.close()
+        self.__logger = None
+        self.__player = None
+    def convertToCHIL(self, dname, subname=None):
+        info('log is already in CHIL format') 
+    def playbackRunloop(self):
+        debug('playback started')
+        p = CHIL.Player(self.dirname) 
+        # find time of first message:
+        p.setCursor(datetime.datetime(year=datetime.MINYEAR, month=1, day=1))
+        tzero = p.timeOfNextMessage()
+        p.setCursor(tzero + datetime.timedelta(seconds=self.playbackStartTime()))
+        # find the time of the last message:
+        # ... not implemented yet (wouldn't be too difficult)
+        # tend = p.timeOfLastMessage()
+        tstart_playback = self.relativeTime()
+        try:
+            while not self.playbackHasBeenStopped():
+                m, td = p.nextMessage()
+                if m is None:
+                    break
+                time_to_sleep_for = tdToFloatSeconds(td) - self.playbackRate() * (self.relativeTime() - tstart_playback)
+                debug('sleeping for %gs' % time_to_sleep_for, 5)
+                if time_to_sleep_for/self.playbackRate() > 10:
+                    warning('more than 10 seconds until next message will be sent (%gs)' %
+                            (time_to_sleep_for/self.playbackRate()))
+                while time_to_sleep_for > 0 and not self.playbackHasBeenStopped():
+                    playback_rate = self.playbackRate()
+                    sleep_step = min((time_to_sleep_for/playback_rate, 0.2))
+                    time_to_sleep_for -= sleep_step*playback_rate
+                    time.sleep(sleep_step)
+                self.node.send(m)
+        except Exception, e:
+            error('error in playback: ' + str(e))
+            raise
+        finally:
+            self.playbackDidFinish()
+        debug('playback finished')
+    def setFile(self, dirname, subname=None):
+        if subname is None:
+            dirname, subname = CHIL.CHILer.dirAndSubNamesFromPath(dirname)
+        if self.__logger is not None:
+            if self.__logger.dirname != dirname and \
+               self.__logger.basename != self.__logger.baseNameFromSubName(subname):
+                self.__logger.close()
+            else:
+                # else set to the same thing, nothing to do
+                return
+        self.dirname = dirname
+        self.subname = subname
+        self.__logger = CHIL.Logger(dirname, subname)
+        self.onNewSession()
+    def onNewSession(self):
+        # derived classes can override this
+        pass
+    def addComment(self, comment_str):
+        info('recoding comment "%s"' % comment_str)
+        self.logObject(MessageLoggerComment(comment_str))
+    def logObject(self, d):
+        warning('CHIL does not support generic object logging')
+        # TODO: save as pickle in string field of a message of some sort? 
+    def logMessage(self, m):
+        if self.recordingIsActive():        
+            self.__logger.log(m)
+    def close(self):
+        self.__logger.close()
+        self.__logger = None
+
+class _DeprecatedShelfLogger(LoggerBase):
+    def __init__(self, cauv_node, shelf_fname, do_record, playback_rate = 1.0):
+        LoggerBase.__init__(self, cauv_node, do_record, playback_rate)
+        self.__shelf = None
+        self.__cached_keys = set()
+        self.__shelf_fname = None # set by setFile
+        self.setFile(shelf_fname)
+        self.doRecord(do_record)
+        warning('This logging class is deprecated, use CHILLogger instead')
+
+    def setFile(self, fname):
+        if fname.endswith('chil'):
+            raise RuntimeError('CHIL files must be opened with a CHIL logger')
+        if self.__shelf is not None and self.__shelf_fname != fname:
+            self.stopPlayback()
+            old_shelf = self.__shelf()
+            self.__shelf = shelve.open(fname)
+            old_shelf.close()
+        elif self.__shelf is None:
+            self.__shelf = shelve.open(fname)
+        if self.__shelf is None or self.__shelf_fname != fname:
+            self.__shelf_fname = fname
+            # slow!
+            self.__cached_keys = set(map(float.fromhex, self.__shelf.keys()))
+            if len(self.__cached_keys) > 0:
+                # add our messages on at the end
+                debug('selected shelf already exists: appending at end')
+                self.__tzero = time.time() - (max(self.__cached_keys) + 1)
+            self.logObject(MessageLoggerSession(fname))
+            self.onNewSession()
+
+    def logObject(self, d):
+        if self.recordingIsActive():
+            t = self.relativeTime()
+            debug('shelving object: t=%g' % t, 6)
+            while t in self.__cached_keys:
+                t = incFloat(t)
+            self.__shelf[t.hex()] = d
+            self.__cached_keys.add(t)
+
+    def logMessage(self, m):
+        mdict = dictFromMessage(m)
+        self.logObject(mdict)
 
     def close(self):
         'This method MUST BE CALLED before destroying the class'
@@ -145,50 +339,10 @@ class Logger(msg.MessageObserver):
         self.__shelf.close()
         self.__shelf = None
         self.__cached_keys = None
-
-    def playbackIsActive(self):
-        self.__playback_lock.acquire()
-        r =  self.__playback_active
-        self.__playback_lock.release()
-    
-    def setPlaybackRate(self, rate):
-        # messages are played back at rate * real time (higher is faster)
-        self.__playback_rate = rate
-
-    def startPlayback(self, start_time):
-        if self.__playback_active:
-            error("can't start playback: playback is already active")
-            return
-        self.__playback_lock.acquire()
-        self.__playback_start_time = start_time
-        self.__playback_active = True
-        self.__playback_lock.release()
-        self.__playback_thread = threading.Thread(target=self.playbackRunloop)
-        self.__playback_thread.start()
-
-    def stopPlayback(self):
-        if not self.__playback_active:
-            return
-        self.__playback_lock.acquire()
-        self.__playback_active = False
-        self.__playback_lock.release()
-        self.__playback_finished.acquire()
-        self.__playback_finished.wait()
-        self.__playback_finished.release()
-        self.__playback_thead = None
-
-    def __playbackHasBeenStopped(self):
-        r = False
-        self.__playback_lock.acquire()
-        if not self.__playback_active:
-            r = True
-        self.__playback_lock.release()
-        return r
     
     def convertToCHIL(self, dname, subname=None):
-        from utils import CHIL
         logger = CHIL.Logger(dname, subname)
-        if self.__playback_active:
+        if self.playbackIsActive():
             info('you must stop playback before converting to chil format')
             return
         info('converting to CHIL: %s/%s' % (dname, subname if subname else ''))
@@ -218,10 +372,11 @@ class Logger(msg.MessageObserver):
             traceback.print_exc()
         finally:
             logger.close()
+
     def playbackRunloop(self):
-        debug('playback started')
+        debug('playback started at %fx' % self.playbackRate())
         sorted_keys = sorted(list(self.__cached_keys))
-        start_idx = bisect.bisect_left(sorted_keys, self.__playback_start_time)
+        start_idx = bisect.bisect_left(sorted_keys, self.playbackStartTime())
         sorted_keys = sorted_keys[start_idx:]
         if not len(sorted_keys):
             return
@@ -229,7 +384,7 @@ class Logger(msg.MessageObserver):
         tstart_playback = self.relativeTime()
         try:
             for i in xrange(0, len(sorted_keys)):
-                if self.__playbackHasBeenStopped():
+                if self.playbackHasBeenStopped():
                     info('playback stopped')
                     break
                 next_thing = self.__shelf[sorted_keys[i].hex()]
@@ -247,14 +402,15 @@ class Logger(msg.MessageObserver):
                 if i != len(sorted_keys) - 1:
                     next_time = sorted_keys[i+1]
                     time_to_sleep_for = (next_time - tstart_recorded) -\
-                                        self.__playback_rate * (self.relativeTime() - tstart_playback)
+                                        self.playbackRate() * (self.relativeTime() - tstart_playback)
                     #debug('sleeping for %gs' % time_to_sleep_for, 5)
-                    if time_to_sleep_for/self.__playback_rate > 10:
+                    if time_to_sleep_for/self.playbackRate() > 10:
                         warning('more than 10 seconds until next message will be sent (%gs)' %
-                              (time_to_sleep_for/self.__playback_rate))
-                    while time_to_sleep_for > 0 and not self.__playbackHasBeenStopped():
-                        sleep_step = min((time_to_sleep_for/self.__playback_rate, 0.2))
-                        time_to_sleep_for -= sleep_step*self.__playback_rate
+                              (time_to_sleep_for/self.playbackRate()))
+                    while time_to_sleep_for > 0 and not self.playbackHasBeenStopped():
+                        playback_rate = self.playbackRate()
+                        sleep_step = min((time_to_sleep_for/playback_rate, 0.2))
+                        time_to_sleep_for -= sleep_step*playback_rate
                         time.sleep(sleep_step)
             if i == len(sorted_keys)-1:
                 info('playback complete')
@@ -262,32 +418,8 @@ class Logger(msg.MessageObserver):
             error('error in playback: ' + str(e))
             raise
         finally:
-            self.__playback_finished.acquire()
-            self.__playback_finished.notify()
-            self.__playback_finished.release()
-            self.__playback_lock.acquire()
-            self.__playback_active = False
-            self.__playback_lock.release()
+            self.playbackDidFinish()
         debug('playback finished')
-
-    def setShelf(self, fname):
-        if self.__shelf is not None and self.__shelf_fname != fname:
-            self.stopPlayback()
-            old_shelf = self.__shelf()
-            self.__shelf = shelve.open(fname)
-            old_shelf.close()
-        elif self.__shelf is None:
-            self.__shelf = shelve.open(fname)
-        if self.__shelf is None or self.__shelf_fname != fname:
-            self.__shelf_fname = fname
-            # slow!
-            self.__cached_keys = set(map(float.fromhex, self.__shelf.keys()))
-            if len(self.__cached_keys) > 0:
-                # add our messages on at the end
-                debug('selected shelf already exists: appending at end')
-                self.__tzero = time.time() - (max(self.__cached_keys) + 1)
-            self.shelveObject(MessageLoggerSession(fname))
-            self.onNewSession()
 
     def onNewSession(self):
         # derived classes can override this
@@ -295,32 +427,7 @@ class Logger(msg.MessageObserver):
 
     def addComment(self, comment_str):
         info('recoding comment "%s"' % comment_str)
-        self.shelveObject(MessageLoggerComment(comment_str))
-
-    def doRecord(self, do_record):
-        if self.__recording == do_record:
-            return
-        if do_record == True:
-            self.stopPlayback()
-            self.node.addObserver(self)
-        else:
-            self.node.removeObserver(self)
-            self.__shelf.sync()
-
-    def relativeTime(self):
-        return time.time() - self.__tzero
-
-    def shelveObject(self, d):
-        t = self.relativeTime()
-        debug('shelving object: t=%g' % t, 6)
-        while t in self.__cached_keys:
-            t = incFloat(t)
-        self.__shelf[t.hex()] = d
-        self.__cached_keys.add(t)
-
-    def shelveMessage(self, m):
-        mdict = dictFromMessage(m)
-        self.shelveObject(mdict)
+        self.logObject(MessageLoggerComment(comment_str))
 
 
 class CmdPrompt(cmd.Cmd):
@@ -352,7 +459,7 @@ class CmdPrompt(cmd.Cmd):
     def do_filename(self, filename):
         '"filename FILENAME" - close the current shelf and use FILENAME as the shelf from now on'
         try:
-            self.ml.setShelf(filename)
+            self.ml.setFile(filename)
         except:
             print 'invalid filename "%s"' % filename
         self.setPrompt()
@@ -384,8 +491,8 @@ class CmdPrompt(cmd.Cmd):
                           the recoded data'''
         try:
             rate, start = l.split()
-        except ValueError:
-            rate = ''
+        except ValueError: 
+            rate = l
             start = ''
         start_time = 0.0
         if len(rate):

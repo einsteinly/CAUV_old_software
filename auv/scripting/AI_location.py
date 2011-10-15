@@ -82,7 +82,6 @@ class aiLocation(aiProcess):
         self.args = args
         self.timeout = threading.Event()
         self.auv = control.AUV(self.node)
-        self._register()
         
     def run(self):
         self.ai.auv_control.pause(self.process_name, self.options.timeout)

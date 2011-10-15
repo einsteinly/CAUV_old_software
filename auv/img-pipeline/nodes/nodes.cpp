@@ -5,6 +5,8 @@
 #include "fileOutputNode.h"
 #include "resizeNode.h"
 #include "localDisplayNode.h"
+#include "directCameraInputNode.h"
+#include "cameraInputNode.h"
 #include "cameraInputNode.h"
 #include "netInputNode.h"
 #include "houghLinesNode.h"
@@ -75,6 +77,7 @@ DEFINE_NFR(FileOutputNode, NodeType::FileOutput);
 DEFINE_NFR(ResizeNode, NodeType::Resize);
 DEFINE_NFR(LocalDisplayNode, NodeType::LocalDisplay);
 DEFINE_NFR(CameraInputNode, NodeType::CameraInput);
+DEFINE_NFR(DirectCameraInputNode, NodeType::DirectCameraInput);
 DEFINE_NFR(NetInputNode, NodeType::NetInput);
 DEFINE_NFR(HoughLinesNode, NodeType::HoughLines);
 DEFINE_NFR(CannyNode, NodeType::Canny);
@@ -140,7 +143,7 @@ template<> DEFINE_NFR(MathAddMultNode<float>, NodeType::MathAddMultFloat);
 DEFINE_NFR(MergeSimilarLinesNode, NodeType::MergeSimilarLines);
 
 
-boost::try_mutex CameraInputNode::m_capture_lock[MAX_DEVICES];
+boost::try_mutex DirectCameraInputNode::m_capture_lock[MAX_DEVICES];
 const std::string DelayNode::Delay_Param_Name = "delay (frames)";
 
 } // namespace imgproc

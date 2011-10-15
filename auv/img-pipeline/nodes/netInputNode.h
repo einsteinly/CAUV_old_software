@@ -48,7 +48,7 @@ class NetInputNode: public InputNode{
          *   take a copy of the image message pointer: store it, and
          *   if m_output_demanded, queue this node for execution
          */
-        void onImageMessage(boost::shared_ptr<const ImageMessage> m) throw() {
+        void onImageMessage(boost::shared_ptr<const ImageMessage> m){
             lock_t l(m_counters_lock);
             debug(4) << "Input node received an image";
             

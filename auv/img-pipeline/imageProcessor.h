@@ -49,6 +49,7 @@ class ImageProcessor: public MessageObserver
          */
         virtual void onImageMessage(ImageMessage_ptr m);
         virtual void onSonarDataMessage(SonarDataMessage_ptr m);
+        virtual void onSonarImageMessage(SonarImageMessage_ptr m);
         
         /**
          * These messages describe modifications to the pipeline

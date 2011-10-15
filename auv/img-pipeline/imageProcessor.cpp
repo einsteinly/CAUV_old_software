@@ -35,6 +35,14 @@ void ImageProcessor::onSonarDataMessage(SonarDataMessage_ptr m){
         (*i)->onSonarDataMessage(m);
 }
 
+void ImageProcessor::onSonarImageMessage(SonarImageMessage_ptr m){
+    lock_t l(m_nodes_lock);
+    std::set<input_node_ptr_t>::iterator i;        
+    debug(5) << __func__ << "notifying" << m_input_nodes.size() << "input nodes";
+    for(i = m_input_nodes.begin(); i != m_input_nodes.end(); i++)
+        (*i)->onSonarImageMessage(m);
+}
+
 void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     if(!_filterMatches(m))
         return;

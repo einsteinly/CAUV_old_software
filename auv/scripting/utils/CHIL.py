@@ -212,6 +212,21 @@ class CHILer:
         return t.strftime(Const.Keyframe_Strftime_Fmt)
     def serialiseMessage(self, s):
         return s.chil()
+    @classmethod
+    def dirAndSubNamesFromPath(cls, fname):
+        dot_chil_idx = fname.find(cls.Const.Dir_Extn)
+        subname = ''
+        dirname = None
+        if dot_chil_idx != -1:
+            split_idx = dot_chil_idx + len(cls.Const.Dir_Extn)
+            dirname = fname[:split_idx]
+            # !!! TODO: proper path handling
+            subname = fname[split_idx:].strip('./')
+        if not len(subname):
+            subname = None
+        if not dirname:
+            dirname = fname.rstrip('./') + '.chil'
+        return (dirname, subname)
     def baseNameFromSubName(self, subname):
         if subname is None:
             subname = datetime.datetime.now().strftime(Const.Dat_Fname_Strftime_Fmt) + self.Const.Dat_Extn
@@ -458,8 +473,8 @@ class ComponentPlayer(CHILer):
             return NotImplemented
         if self.__cursor is not other.__cursor:
             raise RuntimeError('other does not share cursor')
-        s_nm = self.nextMessageTime()
-        o_nm = other.nextMessageTime()
+        s_nm = self.timeOfNextMessage()
+        o_nm = other.timeOfNextMessage()
         if s_nm is None:
             return False
         elif o_nm is None:
@@ -471,7 +486,7 @@ class ComponentPlayer(CHILer):
             return NotImplemented
         if self.__cursor is not other.__cursor:
             raise RuntimeError('other does not share cursor')
-        return self.nextMessageTime() == other.nextMessageTime()
+        return self.timeOfNextMessage() == other.timeOfNextMessage()
     def absoluteTimeAtSeekPos(self):
         #print 'absoluteTimeAtSeekPos %d = %s' % (seekpos, self.seek_time_map[seekpos])
         return self.seek_time_map[self.datfile.tell()]
@@ -567,7 +582,7 @@ class ComponentPlayer(CHILer):
         while line and not self.isMsgLine(line):
             line = self.datfile.readline()
         return line
-    def nextMessageTime(self):
+    def timeOfNextMessage(self):
         return self.nextMessageAndTime(deserialise=False)[1]
     def nextMessageAndDelta(self, deserialise=True):
         msg, time = self.nextMessageAndTime(deserialise)
@@ -649,7 +664,7 @@ class ComponentPlayer(CHILer):
         else:
             return None, None
     def timeToNextMessage(self):
-        msgtime = self.nextMessageTime()
+        msgtime = self.timeOfNextMessage()
         if msgtime is None:
             return None
         if msgtime < self.cursor():
@@ -659,7 +674,6 @@ class ComponentPlayer(CHILer):
             print '   seek:', self.seek_map[self.cursor()]
             print 'abstime:', self.absoluteTimeAtSeekPos()
         return msgtime - self.cursor()
-
 
 class Player(CHILer):
     class PushCursor:
@@ -749,7 +763,7 @@ class Player(CHILer):
                 x_ttn = self.components[x].timeToNextMessage()
                 if n_ttn is not None and (x_ttn is None or n_ttn < x_ttn):
                     # sneaky
-                    print 'swap %d %d' % (x, x+1)
+                    #print 'swap %d %d' % (x, x+1)
                     self.components[x].swap(self.components[x+1])
                     x += 1
                 else:
@@ -766,6 +780,8 @@ class Player(CHILer):
         #        c_ttnm = c.timeToNextMessage()
         #        assert(c_ttnm is None or x_ttnm >= nextt)
         return nextt
+    def timeOfNextMessage(self):
+        return self.components[0].timeOfNextMessage()
     def msgDensity(self, start, stop, N=10):
         # density = mean(1 / (time from sample time to next message in microsec))
         samples = []

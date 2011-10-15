@@ -10,6 +10,7 @@
 #include <utility/bash_cout.h>
 
 #include <generated/types/SonarDataMessage.h>
+#include <generated/types/SonarImageMessage.h>
 
 #include "../node.h"
 
@@ -22,6 +23,7 @@ class SonarInputNode: public InputNode{
     public:
         SonarInputNode(ConstructArgs const& args)
             : InputNode(args),
+              m_sonar_id(SonarID::Seasprite),
               m_images_displayed(0),
               processed(0), m_counters_lock(),
               m_sonardata_msgs(), m_sonardata_lock() {
@@ -37,10 +39,13 @@ class SonarInputNode: public InputNode{
             registerParamID<int>("low-pass width", 0, "radius of a 1D low pass filter applied to the data line");
             registerParamID<int>("min range", 0, "minimum range of bins drawn");
             registerParamID<int>("derivative", 0, "use the nth derivative of the data line (negative values reverse the direction)");
+            registerParamID<int>("Sonar ID", SonarID::Seasprite, "SonarID::Seasprite=1, SonarID::Gemini=2");
+            registerParamID<int>("Resolution", 400, "SonarAccumulator resolution");
 
-            // three output images, three output parameters:
+            // four output images, three output parameters:
             registerOutputID<image_ptr_t>("image (buffer)");
             registerOutputID<image_ptr_t>("image (synced)");
+            registerOutputID<image_ptr_t>("polar image");
             registerOutputID<image_ptr_t>("data line");
             registerOutputID<NodeParamValue>("bearing");
             registerOutputID<NodeParamValue>("bearing range");
@@ -57,7 +62,12 @@ class SonarInputNode: public InputNode{
         /**
          * ...
          */
-        void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
+        virtual void onSonarDataMessage(boost::shared_ptr<const SonarDataMessage> m){
+            // backwards compatibilty: only the seasprite sends data one
+            // line at a time:
+            if(m_sonar_id != SonarID::Seasprite)
+                return;
+
             lock_t l(m_sonardata_lock);
             debug(4) << "Input node received sonar data";
             
@@ -68,11 +78,26 @@ class SonarInputNode: public InputNode{
             }
         }
 
+        virtual void onSonarImageMessage(boost::shared_ptr<const SonarImageMessage> m){
+            if(m_sonar_id != m->source())
+                return;
+
+            lock_t l(m_sonardata_lock);
+            // maybe dropping an old and unprocessed message here
+            m_sonarimg_msg = m;
+            setAllowQueue();
+        }
+
+        virtual void paramChanged(input_id const& param_id){
+            if(param_id == "Sonar ID")
+                m_sonar_id = SonarID::e(param<int>("Sonar ID"));
+        }
+
     protected:
-        out_map_t doWork(in_image_map_t&){
+        out_map_t doWork_dataLines(){
             out_map_t r;
             
-            debug(4) << "SonarInputNode::doWork";
+            debug(4) << "SonarInputNode::doWork_dataLines";
             
             std::vector< boost::shared_ptr<SonarDataMessage const> > msgs = latestSonarDataMessages();
             int nonMax = param<int>("non-maximum suppression");
@@ -183,9 +208,90 @@ class SonarInputNode: public InputNode{
                 r["image (synced)"] = boost::make_shared<Image>(fullImage);
             }
 
-            clearAllowQueue();
-
             return r;
+        }
+        
+        // see comment below, where this structure is used
+        struct MessageImageDeleter{
+            MessageImageDeleter(boost::shared_ptr<const Message> m) : m_msg(m){ }
+            void operator()(Image* img){
+                delete img;
+                m_msg.reset();
+                // now m_msg may be deleted (depending on other outstanding
+                // shared pointers)
+            }
+            boost::shared_ptr<const Message> m_msg;
+        };
+        out_map_t doWork_image(){
+            out_map_t r;
+            boost::shared_ptr<SonarImageMessage const> image_msg;            
+            
+            debug(4) << "SonarInputNode::doWork_image";
+
+            {  lock_t l(m_sonardata_lock);
+                image_msg.swap(m_sonarimg_msg);
+            }
+
+            if(m_accumulator.setWholeImage(image_msg->image()))
+                // not a deep copy when we're accumulating whole images!
+                r["image (synced)"] = m_accumulator.img();
+
+            NonUniformPolarMat r_polar_mat;
+            uint32_t rows = image_msg->image().rangeEnd - image_msg->image().rangeStart;
+            uint32_t cols = image_msg->image().bearing_bins.size();
+            // actually one less than bearing bins.size:
+            if(cols) cols--;
+            r_polar_mat.mat = cv::Mat(rows, cols, CV_8UC3, (void*) &(image_msg->image().data[0]));
+            r_polar_mat.bearings = boost::make_shared< std::vector<float> >(cols);
+            r_polar_mat.ranges = boost::make_shared< std::vector<float> >(rows);
+            std::vector<int32_t> const& bearing_bins = image_msg->image().bearing_bins;
+            for(int i = 0; i < int(bearing_bins.size())-1; i++){
+                // bearing_bins has the edge angles - not the centre angles:
+                // interpolate linearly (close enough)
+                int32_t a = bearing_bins[i];
+                int32_t b = bearing_bins[i+1];
+                (*r_polar_mat.bearings)[i] = (
+                    (msgPolarAngleToRadians(a) + msgPolarAngleToRadians(b)) / 2
+                );
+            }
+            float range_convert = image_msg->image().rangeConversion;
+            float range = image_msg->image().rangeStart;
+            for(int i = 0; i < r_polar_mat.mat.rows; i++){
+                range += range_convert;
+                (*r_polar_mat.ranges)[i] = range;
+            }
+            
+            // so here's some magic: avoid copying by pointing the polar image
+            // to the data that's in the message we received: this is a shared
+            // pointer, (as are images), so keep it alive for as long as the
+            // returned image exists by using a deleter that holds a copy
+            image_ptr_t r_polar_img = boost::shared_ptr<Image>(
+                new Image(r_polar_mat), MessageImageDeleter(image_msg)
+            );
+            r_polar_img->ts(image_msg->image().timeStamp);
+            r["polar image"] = r_polar_img;
+                
+            // !!! TODO: probably want to set the single-line output to the
+            // line pointing straight forwards, or something similar
+            return r;
+        }
+
+        out_map_t doWork(in_image_map_t&){
+            clearAllowQueue();
+            int resolution = param<int>("Resolution");
+            m_accumulator.setSize(resolution);
+            
+            if(m_sonarimg_msg || m_sonar_id == SonarID::Gemini){
+                // in this case discard any SonarDataMessages that have been
+                // received, to prevent indefinite build-up if for some crazy
+                // reason they are also being sent
+                {   lock_t l(m_sonardata_lock);
+                    m_sonardata_msgs.clear();
+                }
+                return doWork_image();
+            }else{
+                return doWork_dataLines();
+            }
         }
 
         std::vector< boost::shared_ptr<const SonarDataMessage> > latestSonarDataMessages(){
@@ -199,12 +305,14 @@ class SonarInputNode: public InputNode{
             return ret;
         }
         
-        unsigned int _get(std::vector<unsigned char> const& data, int i)
+        static unsigned int _get(std::vector<unsigned char> const& data, int i)
         {
             return data[clamp_cast<size_t>(0, i, (int)data.size()-1)];
         }
 
     private:
+        SonarID::e m_sonar_id;
+
         int m_images_displayed;
         SonarAccumulator m_accumulator;
     
@@ -212,6 +320,7 @@ class SonarInputNode: public InputNode{
         mutable boost::recursive_mutex m_counters_lock;
         
         std::vector < boost::shared_ptr<const SonarDataMessage> > m_sonardata_msgs;
+        boost::shared_ptr<const SonarImageMessage> m_sonarimg_msg;
         mutable boost::recursive_mutex m_sonardata_lock;
 
     // Register this node type
