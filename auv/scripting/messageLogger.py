@@ -284,9 +284,6 @@ class CHILLogger(LoggerBase):
     def logMessage(self, m):
         if self.recordingIsActive():        
             self.__logger.log(m)
-    def close(self):
-        self.__logger.close()
-        self.__logger = None
 
 class _DeprecatedShelfLogger(LoggerBase):
     def __init__(self, cauv_node, shelf_fname, do_record, playback_rate = 1.0):

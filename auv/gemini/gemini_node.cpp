@@ -403,7 +403,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     << "m_macAddress3 =" << status_packet->m_macAddress3
                     << "m_VDSLUpstreamSpeed1 =" << status_packet->m_VDSLUpstreamSpeed1
                     << "m_VDSLUpstreamSpeed2 =" << status_packet->m_VDSLUpstreamSpeed2;
-            debug() << "sonarId:"   << status_packet->m_sonarId
+            info() << "sonarId:"   << status_packet->m_sonarId
                     << "FixIp:"     << fmtIp(status_packet->m_sonarFixIp)
                     << "AltIp:"     << fmtIp(status_packet->m_sonarAltIp)
                     << "SurfaceIp:" << fmtIp(status_packet->m_surfaceIp)

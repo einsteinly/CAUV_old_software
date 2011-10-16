@@ -239,9 +239,9 @@ class CHILer:
 class Logger(CHILer):
     def __init__(self, dirname, subname=None):
         CHILer.__init__(self, dirname)
-        basename = self.baseNameFromSubName(subname)
-        self.idxname = basename + self.Const.Idx_Extn
-        self.datname = basename + self.Const.Dat_Extn
+        self.basename = self.baseNameFromSubName(subname)
+        self.idxname = self.basename + self.Const.Idx_Extn
+        self.datname = self.basename + self.Const.Dat_Extn
         print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
         self.datfile = self.lockAndOpenForA(self.datname)
         self.idxfile = self.lockAndOpenForA(self.idxname)
@@ -378,10 +378,10 @@ class ComponentPlayer(CHILer):
         #  indices higher than 0 being used to store a stack of previous
         #  cursors -- so only cursor[0] should ever be used anyway)
         CHILer.__init__(self, dirname)
-        basename = self.baseNameFromSubName(subname)
-        self.idxname = basename + self.Const.Idx_Extn
-        self.datname = basename + self.Const.Dat_Extn
-        print 'Scanning Component %s...' % basename
+        self.basename = self.baseNameFromSubName(subname)
+        self.idxname = self.basename + self.Const.Idx_Extn
+        self.datname = self.basename + self.Const.Dat_Extn
+        print 'Scanning Component %s...' % self.basename
         #print '%s\n\t%s\n\t%s' % (self.dirname, self.datname, self.idxname)
         self.datfile = self.openForR(self.datname)
         self.__cursor = cursor

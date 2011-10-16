@@ -38,9 +38,6 @@ class SonarLogger(object):
     def onGeminiStatusMessage(self, m):
         self.logMessage(m)
 
-    def onGeminiControlMessage(self, m):
-        self.logMessage(m)
-
     def onSonarControlMessage(self, m):
         self.logMessage(m)
         debug('sonar control message: %s' % m)
