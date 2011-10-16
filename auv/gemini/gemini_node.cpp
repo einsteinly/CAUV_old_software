@@ -257,6 +257,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
 
         void init(){
             int success = 0;
+            m_conn_state.sonarId = 0;
             success = GEM_StartGeminiNetworkWithResult(m_sonar_id);
             if(!success){
                 error() << "Could not start network connection to sonar" << m_sonar_id;
@@ -265,7 +266,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 // ('Evo' is the native mode for the sonar, John told us to use
                 // this mode, SeaNet is there for compatibility with Tritech's
                 // old software only. 'EvoC' means use range-line compression:
-                // lines further away are compres)
+                // lines further away are compressed)
                 GEM_SetGeminiSoftwareMode("EvoC");
                 GEM_SetHandlerFunction(&CallBackFn);
             }
@@ -463,6 +464,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                         0  // 0 = use velocimeter calculated speed of sound,
                            // 1 = use speed set in config message
                     );
+                    // pinging out of water is very useful for testing
+                    GEM_SetExtModeOutOfWaterOverride(1);
                     m_conn_state.initialised = true;
                 }
             }

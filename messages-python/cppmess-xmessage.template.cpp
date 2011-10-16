@@ -103,6 +103,9 @@ const_svec_ptr cauv::$className::toBytes() const{
     return r;
 }
 std::string cauv::$className::chil() const{
+    #if $len($m.fields)
+    checkDeserialised();
+    #end if
     return cauv::chil(*this);
 }
 
