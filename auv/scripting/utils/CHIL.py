@@ -505,7 +505,7 @@ class ComponentPlayer(CHILer):
         # returned
         # postcondition: tell() is at the start of the line following the 
         # returned line
-        bufsize = 512
+        bufsize = 4096
         lbegin = ''
         while True:
             try:
@@ -538,7 +538,7 @@ class ComponentPlayer(CHILer):
     def previousMsgLine_LeaveTellAtStart(self):
         # precondition: tell() at start of following line
         # postcondition: tell() at start of returned line
-        bufsize = 512
+        bufsize = 4096
         line = ''
         # move past previous newline
         try:
