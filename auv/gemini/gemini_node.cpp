@@ -21,6 +21,9 @@
 #include <boost/program_options.hpp>
 #include <boost/thread.hpp>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include <debug/cauv_debug.h>
 #include <common/cauv_utils.h>
 #include <common/image.h>
@@ -68,8 +71,8 @@ class GeminiObserver{
     public:
         virtual void onCGemPingHead(CGemPingHead const*, float){}
         virtual void onCGemPingLine(CGemPingLine const*){}
-        virtual void onCGemPingTail(CGemPingTail const*){}
-        virtual void onCGemPingTailExtended(CGemPingTailExtended const*){}
+        virtual void onCGemPingTail(CGemPingTail const*, uint32_t resize_to_rangelines){}
+        virtual void onCGemPingTailExtended(CGemPingTailExtended const*, uint32_t resize_to_rangelines){}
         virtual void onCGemStatusPacket(CGemStatusPacket const*){}
         virtual void onCGemAcknowledge(CGemAcknowledge const*){}
         virtual void onCGemBearingData(CGemBearingData const*){}
@@ -79,7 +82,11 @@ class GeminiObserver{
 class ReBroadcaster: public GeminiObserver{
     public:
         ReBroadcaster(CauvNode& node)
-            : m_node(node){
+            : GeminiObserver(),
+              m_current_ping_id(0),
+              m_current_msg(),
+              m_current_raw_data(),
+              m_node(node){
         }
 
         virtual void onCGemPingHead(CGemPingHead const* h, float range){
@@ -98,25 +105,25 @@ class ReBroadcaster: public GeminiObserver{
             uint32_t num_beams = h->m_numBeams;
             m_current_ping_id = h->m_pingID;
             m_current_ping_time = now();
-            //m_current_image = boost::make_shared<Image>(cv::Mat::zeros(num_lines, num_beams, CV_8U));
-            m_current_msg = boost::make_shared<SonarImageMessage>();
-            m_current_msg->source(SonarID::Gemini);
-            // !!! sneaky: probably okay, and really the only efficient way to
-            // do this without introducing multableX members to messages. This
-            // is okay because we haven't serialised it yet.
-            const_cast<PolarImage&>(m_current_msg->image()).data.resize(num_lines*num_beams);
-            const_cast<PolarImage&>(m_current_msg->image()).encoding = ImageEncodingType::RAW_uint8_1;
-            const_cast<PolarImage&>(m_current_msg->image()).bearing_bins = computeBearingBins(num_beams);
-            const_cast<PolarImage&>(m_current_msg->image()).rangeStart = h->m_startRange;
-            const_cast<PolarImage&>(m_current_msg->image()).rangeEnd = h->m_endRange;
-            // !!! TODO: not sure about this at all, check with Tritech
-            const_cast<PolarImage&>(m_current_msg->image()).rangeConversion = range / h->m_endRange;
-            // Also check this, (needs converting from whatever the sonar's
-            // time base is into our unix time):
-            const_cast<PolarImage&>(m_current_msg->image()).timeStamp = TimeStamp(
-                h->m_transmitTimestampL/1e6+h->m_transmitTimestampH*double(100000000)/1e6,
-                h->m_transmitTimestampL % 1000000
+            m_current_msg = boost::make_shared<SonarImageMessage>(
+                SonarID::Gemini,
+                PolarImage(
+                    std::vector<uint8_t>(), // this will be replaced later with downsampled data
+                    ImageEncodingType::RAW_uint8_1,
+                    computeBearingBins(num_beams),
+                    h->m_startRange,
+                    h->m_endRange,
+                    // !!! TODO: not sure about this at all, check with Tritech
+                    range / h->m_endRange,
+                    // Also check this, (needs converting from whatever the sonar's
+                    // time base is into our unix time):
+                    TimeStamp(
+                        h->m_transmitTimestampL/1e6+h->m_transmitTimestampH*double(100000000)/1e6,
+                        h->m_transmitTimestampL % 1000000
+                    )
+                )
             );
+            m_current_raw_data.resize(num_lines*num_beams);
             debug() << "New ping: ID=" << m_current_ping_id << "lines:" << num_lines << "beams:" << num_beams;
 
             // This message also tells us the speed of sound: so broadcast it
@@ -133,24 +140,25 @@ class ReBroadcaster: public GeminiObserver{
                 debug() << "bad pingID";
                 return;
             }
-            // !!! sneaky: probably okay, and really the only efficient way to
-            // do this without introducing multableX members to messages. This
-            // is okay because we haven't serialised it yet.
-            std::vector<uint8_t> &data = const_cast<PolarImage&>(m_current_msg->image()).data;
             uint32_t num_beams = m_current_msg->image().bearing_bins.size() - 1;
             uint32_t offset = line_idx * num_beams;
-            if(offset + num_beams > data.size())
-                error() << "invalid line index";
+            if(offset + num_beams > m_current_raw_data.size()){
+                static uint16_t last_error_ping_id = 0;
+                if(ping_id != last_error_ping_id){
+                    error() << "invalid line index (further errors for this ping will be suppressed)";
+                    last_error_ping_id = ping_id;
+                }
+            }
             for(uint32_t i = 0; i != num_beams; i++)
-                data[offset+i] = ((uint8_t*)&(l->m_startOfData))[i];
+                m_current_raw_data[offset+i] = ((uint8_t*)&(l->m_startOfData))[i];
         }
 
-        virtual void onCGemPingTailExtended(CGemPingTailExtended const*){
-            pingComplete();
+        virtual void onCGemPingTailExtended(CGemPingTailExtended const*, uint32_t resize_to_rangelines){
+            pingComplete(resize_to_rangelines);
         }
 
-        virtual void onCGemPingTail(CGemPingTail const*){
-            pingComplete();
+        virtual void onCGemPingTail(CGemPingTail const*, uint32_t resize_to_rangelines){
+            pingComplete(resize_to_rangelines);
         }
 
         virtual void onCGemStatusPacket(CGemStatusPacket const* s){
@@ -212,7 +220,37 @@ class ReBroadcaster: public GeminiObserver{
             return computeBearingBinsNoCache(num_beams);
         }
 
-        void pingComplete(){
+        void pingComplete(uint32_t resize_to_rangelines){
+            // Use opencv to downsample the data to the number of rangelines
+            // that we were configured to send:
+            uint32_t source_rangelines = m_current_msg->image().rangeEnd -
+                                         m_current_msg->image().rangeStart;
+            uint32_t bearing_beams = m_current_msg->image().bearing_bins.size() - 1;
+            cv::Mat full_resolution_image(
+                source_rangelines,
+                bearing_beams,
+                CV_8UC1,
+                &m_current_raw_data[0]
+            );
+            // !!! sneaky: probably okay, and really the only efficient way to
+            // do this without introducing multableX members to messages. This
+            // is okay because we haven't serialised it yet.
+            std::vector<uint8_t> &resized_data = const_cast<std::vector<uint8_t>&>(
+                m_current_msg->image().data
+            );
+            resized_data.resize(resize_to_rangelines * bearing_beams);
+            cv::Mat downsampled_image(
+                resize_to_rangelines,
+                bearing_beams,
+                CV_8UC1,
+                &m_current_raw_data[0]
+            );
+            cv::resize(
+                full_resolution_image,
+                downsampled_image,
+                downsampled_image.size(),
+                0, 0, cv::INTER_LINEAR
+            );
             debug() << "sending SonarImageMessage...";
             m_node.send(m_current_msg);
         }
@@ -220,6 +258,7 @@ class ReBroadcaster: public GeminiObserver{
         uint16_t m_current_ping_id;
         TimeStamp m_current_ping_time;
         boost::shared_ptr<SonarImageMessage> m_current_msg;
+        std::vector<uint8_t> m_current_raw_data;
         CauvNode& m_node;
 };
 
@@ -228,7 +267,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                    boost::noncopyable{
     public:
         GeminiSonar(uint16_t sonar_id, uint32_t inter_ping_musec=1000000)
-            : m_sonar_id(sonar_id),
+            : m_sos(1499.2f),
+              m_sonar_id(sonar_id),
               m_inter_ping_musec(inter_ping_musec),
               m_range(0),
               m_gain_percent(0),
@@ -288,7 +328,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 error() << "will not ping: connection not ok";
                 return;
             }
-            GEM_AutoPingConfig(m_range, m_gain_percent, 1499.2f);            
+            GEM_AutoPingConfig(m_range, m_gain_percent, m_sos);
             // Autoconfig sets this; there doesn't seem to be any way to reduce
             // the range resolution
             // GEM_SetEndRange(m_range_lines);
@@ -320,7 +360,13 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             debug() << "received GeminiControlMessage:" << *m;
             m_range = m->range();
             m_gain_percent = m->gain();
-            m_range_lines = m->rangeLines();
+            // make sure we have enough range lines for the range, not sure if
+            // this is how it's meant to be done...
+            // values from the geminiSDK
+            int32_t geminiModFrequency = 90422;
+            float one_line = m_sos / (2.0 * (float)geminiModFrequency);
+            uint8_t end_line = (uint8_t)floor((m_range / one_line) + 0.5);
+            m_range_lines = end_line;
             m_inter_ping_musec = m->interPingPeriod() * 1e6 + 0.5;
             m_ping_continuous = m->continuous();
             applyConfigAndPing();
@@ -345,6 +391,8 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             if(link_type & 0x2) r << "10Mbit ";
             if(link_type & 0x4) r << "100Mbit ";
             if(link_type & 0x8) r << "1GBit ";
+            if(link_type & 0xfffffff0)
+                r << std::hex << link_type;
             return r;
         }
         static std::string fmtShutdownStatus(uint32_t status){
@@ -558,9 +606,9 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                     else if(ping_data)
                         p->onCGemPingLine(ping_data);
                     else if(ping_tail)
-                        p->onCGemPingTail(ping_tail);
+                        p->onCGemPingTail(ping_tail, the_sonar->m_range_lines);
                     else if(ping_tail_ex)
-                        p->onCGemPingTailExtended(ping_tail_ex);
+                        p->onCGemPingTailExtended(ping_tail_ex, the_sonar->m_range_lines);
                     else if(status_packet)
                         p->onCGemStatusPacket(status_packet);
                     else if(acknowledge)
@@ -575,7 +623,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }
         }
 
-
+        float m_sos;
         uint16_t m_sonar_id;
         uint32_t m_inter_ping_musec;
         float m_range;
