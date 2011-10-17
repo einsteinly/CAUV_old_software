@@ -251,10 +251,12 @@ class SonarInputNode: public InputNode{
                 r["image (synced)"] = m_accumulator.img();
 
             NonUniformPolarMat r_polar_mat;
-            uint32_t rows = image_msg->image().rangeEnd - image_msg->image().rangeStart;
-            uint32_t cols = image_msg->image().bearing_bins.size();
+            const float end_range_m = image_msg->image().rangeEnd;
+            const float start_range_m = image_msg->image().rangeStart;
+            const float metres_per_bin = image_msg->image().rangeConversion;
+            const uint32_t rows = std::floor(0.5 + (end_range_m - start_range_m) / metres_per_bin);
             // actually one less than bearing bins.size:
-            if(cols) cols--;
+            const uint32_t cols = image_msg->image().bearing_bins.size() - 1;
             r_polar_mat.mat = cv::Mat(rows, cols, CV_8UC1, (void*) &(image_msg->image().data[0]));
             r_polar_mat.bearings = boost::make_shared< std::vector<float> >(cols);
             r_polar_mat.ranges = boost::make_shared< std::vector<float> >(rows);
@@ -284,7 +286,7 @@ class SonarInputNode: public InputNode{
             );
             r_polar_img->ts(image_msg->image().timeStamp);
             r["polar image"] = r_polar_img;
-                
+            
             // !!! TODO: probably want to set the single-line output to the
             // line pointing straight forwards, or something similar
             return r;

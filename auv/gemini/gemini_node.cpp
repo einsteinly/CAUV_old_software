@@ -71,8 +71,8 @@ class GeminiObserver{
     public:
         virtual void onCGemPingHead(CGemPingHead const*, float){}
         virtual void onCGemPingLine(CGemPingLine const*){}
-        virtual void onCGemPingTail(CGemPingTail const*, uint32_t resize_to_rangelines){}
-        virtual void onCGemPingTailExtended(CGemPingTailExtended const*, uint32_t resize_to_rangelines){}
+        virtual void onCGemPingTail(CGemPingTail const*, uint32_t){}
+        virtual void onCGemPingTailExtended(CGemPingTailExtended const*, uint32_t){}
         virtual void onCGemStatusPacket(CGemStatusPacket const*){}
         virtual void onCGemAcknowledge(CGemAcknowledge const*){}
         virtual void onCGemBearingData(CGemBearingData const*){}
@@ -86,6 +86,10 @@ class ReBroadcaster: public GeminiObserver{
               m_current_ping_id(0),
               m_current_msg(),
               m_current_raw_data(),
+              m_range_lines_start(0),
+              m_range_lines_end(0),
+              m_range(0),
+              m_rangecompression_mult(1),
               m_node(node){
         }
 
@@ -101,21 +105,37 @@ class ReBroadcaster: public GeminiObserver{
             // new ping:
             // each line is data from a particular distance away
             uint32_t num_lines = h->m_endRange - h->m_startRange;
+            // !!! NB: the DLL doesn't remove range-line compression: so
+            // actually the number of lines is fewer than this depending on
+            // h->m_rangeCompressionUsed:
+            if(h->m_rangeCompressionUsed == 1)
+                m_rangecompression_mult = 2;
+            else if(h->m_rangeCompressionUsed == 2)
+                m_rangecompression_mult = 4;
+            else if(h->m_rangeCompressionUsed == 3)
+                m_rangecompression_mult = 8;
+            else if(h->m_rangeCompressionUsed == 4)
+                m_rangecompression_mult = 16;
+            else
+                m_rangecompression_mult = 1;
+            num_lines /= m_rangecompression_mult;
             // each beam is data from a constant bearing
             uint32_t num_beams = h->m_numBeams;
             m_current_ping_id = h->m_pingID;
             m_current_ping_time = now();
+            m_range_lines_start = h->m_startRange;
+            m_range_lines_end = h->m_endRange;
+            m_range = range;
             m_current_msg = boost::make_shared<SonarImageMessage>(
                 SonarID::Gemini,
                 PolarImage(
                     std::vector<uint8_t>(), // this will be replaced later with downsampled data
                     ImageEncodingType::RAW_uint8_1,
                     computeBearingBins(num_beams),
-                    h->m_startRange,
-                    h->m_endRange,
-                    // !!! TODO: not sure about this at all, check with Tritech
-                    range / h->m_endRange,
-                    // Also check this, (needs converting from whatever the sonar's
+                    0, // filled in later
+                    0, // filled in later
+                    0, // filled in later
+                    // Check this, (needs converting from whatever the sonar's
                     // time base is into our unix time):
                     TimeStamp(
                         h->m_transmitTimestampL/1e6+h->m_transmitTimestampH*double(100000000)/1e6,
@@ -134,7 +154,7 @@ class ReBroadcaster: public GeminiObserver{
         virtual void onCGemPingLine(CGemPingLine const* l){
             // accumulate this line of equidistant data:
             int32_t line_id = l->m_lineID;
-            int32_t line_idx = line_id - m_current_msg->image().rangeStart;
+            int32_t line_idx = line_id - m_range_lines_start;
             uint16_t ping_id = l->m_pingID;
             if((ping_id & 0xff) != (m_current_ping_id & 0xff)){
                 debug() << "bad pingID";
@@ -220,11 +240,22 @@ class ReBroadcaster: public GeminiObserver{
             return computeBearingBinsNoCache(num_beams);
         }
 
+        static uint32_t nextPowerOfTwo(uint32_t n){
+            n--;
+            n |= n >> 1;
+            n |= n >> 2;
+            n |= n >> 4;
+            n |= n >> 8;
+            n |= n >> 16;
+            return ++n;
+        }
+
         void pingComplete(uint32_t resize_to_rangelines){
             // Use opencv to downsample the data to the number of rangelines
-            // that we were configured to send:
-            uint32_t source_rangelines = m_current_msg->image().rangeEnd -
-                                         m_current_msg->image().rangeStart;
+            // that we were configured to send: The range-compression in the
+            // sonar head has already reduced the number of lines by a factor
+            // of m_mrangecompression_mult
+            uint32_t source_rangelines = (m_range_lines_end - m_range_lines_start) / m_rangecompression_mult;
             uint32_t bearing_beams = m_current_msg->image().bearing_bins.size() - 1;
             cv::Mat full_resolution_image(
                 source_rangelines,
@@ -238,12 +269,27 @@ class ReBroadcaster: public GeminiObserver{
             std::vector<uint8_t> &resized_data = const_cast<std::vector<uint8_t>&>(
                 m_current_msg->image().data
             );
+            float &rangeStart = const_cast<float&>(m_current_msg->image().rangeStart);
+            float &rangeEnd   = const_cast<float&>(m_current_msg->image().rangeEnd);
+            float &rangeConv  = const_cast<float&>(m_current_msg->image().rangeConversion);
+            // range conversion in full-resolution image
+            float full_range_conversion = m_range / m_range_lines_end;
+            rangeStart = m_range_lines_start * full_range_conversion;
+            rangeEnd   = m_range_lines_end * full_range_conversion;
+            // range conversion in downsampled image
+            #ifndef NO_EXTRA_GEMSONAR_SUBSAMPLING
+            // limit the resizing to a power of two to avoid aliasing:
+            resize_to_rangelines = nextPowerOfTwo(resize_to_rangelines);
+            rangeConv  = m_range / resize_to_rangelines;
+            // This zero-initialises, but that isn't possible to avoid.
+            // Hopefully the compiler is smart enough to realise we're setting
+            // every element anyway... (it's a long shot):
             resized_data.resize(resize_to_rangelines * bearing_beams);
             cv::Mat downsampled_image(
                 resize_to_rangelines,
                 bearing_beams,
                 CV_8UC1,
-                &m_current_raw_data[0]
+                &resized_data[0]
             );
             cv::resize(
                 full_resolution_image,
@@ -251,7 +297,14 @@ class ReBroadcaster: public GeminiObserver{
                 downsampled_image.size(),
                 0, 0, cv::INTER_LINEAR
             );
-            debug() << "sending SonarImageMessage...";
+            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << resize_to_rangelines;            
+            #else
+            // !!! just rely on range compression, (now I understand how it
+            // works...), otherwise all we really do is introduce aliasing:
+            rangeConv = m_range / source_rangelines;
+            resized_data = m_current_raw_data;
+            debug() << "sending SonarImageMessage:" << bearing_beams << "x" << source_rangelines;            
+            #endif
             m_node.send(m_current_msg);
         }
 
@@ -259,6 +312,10 @@ class ReBroadcaster: public GeminiObserver{
         TimeStamp m_current_ping_time;
         boost::shared_ptr<SonarImageMessage> m_current_msg;
         std::vector<uint8_t> m_current_raw_data;
+        uint32_t m_range_lines_start;
+        uint32_t m_range_lines_end;
+        float m_range;
+        uint32_t m_rangecompression_mult;
         CauvNode& m_node;
 };
 
@@ -305,8 +362,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             }else{
                 // ('Evo' is the native mode for the sonar, John told us to use
                 // this mode, SeaNet is there for compatibility with Tritech's
-                // old software only. 'EvoC' means use range-line compression:
-                // lines further away are compressed)
+                // old software only. 'EvoC' means use range-line compression
                 GEM_SetGeminiSoftwareMode("EvoC");
                 GEM_SetHandlerFunction(&CallBackFn);
             }
@@ -329,9 +385,6 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
                 return;
             }
             GEM_AutoPingConfig(m_range, m_gain_percent, m_sos);
-            // Autoconfig sets this; there doesn't seem to be any way to reduce
-            // the range resolution
-            // GEM_SetEndRange(m_range_lines);
             if(m_range_lines <= 32){
                 GEM_SetGeminiEvoQuality(0);
             }else if(m_range_lines <= 64){
@@ -360,13 +413,7 @@ class GeminiSonar: public ThreadSafeObservable<GeminiObserver>,
             debug() << "received GeminiControlMessage:" << *m;
             m_range = m->range();
             m_gain_percent = m->gain();
-            // make sure we have enough range lines for the range, not sure if
-            // this is how it's meant to be done...
-            // values from the geminiSDK
-            int32_t geminiModFrequency = 90422;
-            float one_line = m_sos / (2.0 * (float)geminiModFrequency);
-            uint8_t end_line = (uint8_t)floor((m_range / one_line) + 0.5);
-            m_range_lines = end_line;
+            m_range_lines = m->rangeLines();
             m_inter_ping_musec = m->interPingPeriod() * 1e6 + 0.5;
             m_ping_continuous = m->continuous();
             applyConfigAndPing();

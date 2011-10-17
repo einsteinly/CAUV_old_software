@@ -170,9 +170,9 @@ struct PolarImage
     // num_beams + 1 values. The first bin is bearing_bins[0] --
     // bearing_bins[1], and so on.
     bearing_bins: list<int32>;
-    // number of bins = rangeEnd-rangeStart
-    rangeStart: int32;
-    rangeEnd: int32;
+    // number of bins = round(rangeEnd-rangeStart) / rangeConversion)
+    rangeStart: float;
+    rangeEnd: float;
     // rangeConversion = length of 1 bin in metres
     rangeConversion: float;
     // time of the ping from which the image is acquired
