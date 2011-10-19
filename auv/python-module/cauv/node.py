@@ -6,7 +6,7 @@
 import threading
 import traceback
 from cauv import messaging
-from cauv.debug import debug, error, warning, info
+from cauv.debug import debug, error, warning, info, setDebugName
 from utils import fileCached
 
 class Observer(messaging.MessageObserver):
@@ -39,6 +39,7 @@ def getVersionInfo():
 
 class Node(messaging.CauvNode):
     def __init__(self, name, spreadserver="localhost", spreadport=16707):
+        setDebugName(name)
         info('CAUV Python Node Initialisation...') 
         try:
             lc = getVersionInfo()[1]
