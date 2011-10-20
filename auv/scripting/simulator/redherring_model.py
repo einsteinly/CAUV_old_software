@@ -23,23 +23,23 @@ from cauv.debug import debug, error, warning, info
 #
 # front                                   back
 #
-#     Y_Bow     origin at CoM
-#       |<-------------|
-#                     CoM            Y_Stern
-#                      |--------------->|
+#               origin at CoM
 #
-#                      x
+#      hbow                           hstern
+#    .....|...........................|....
+#    <----X-----red-he-o-rring--------X---->y prop
+#    .....|............|..............|....
 #                      |
-#      hbow            |              hstern
-#     ..|..............|................|..
-#    <--X-------red-he-o-rring----------X-->y prop
-#    ...|...............................|..
+#                      |
+#                      |
+#                      x
+#
 #
 # Side View:
 # ==========
 #                      z
 #                      |
-#      hbow            |              hstern
+#      vbow            |              vstern
 #     ..|..............|................|..
 #    <--X-------red-he-o-rring----------X-->y prop
 #    ...|...............................|..
@@ -60,11 +60,12 @@ from cauv.debug import debug, error, warning, info
 # Rigid body model parameters:
 # Position vectors of centre of thrust, and vector of direction of thrust:
 # All in m:
-HBow_At   = np.array((0,-0.8,0)); HBow_Vec   = np.array(( 1,0,0))
-HStern_At = np.array((0, 0.8,0)); HStern_Vec = np.array(( 1,0,0))
+# All except VBow are inverted (see control.cpp)
+HBow_At   = np.array((0,-0.7,0)); HBow_Vec   = np.array((-1,0, 0))
+HStern_At = np.array((0, 0.7,0)); HStern_Vec = np.array((-1,0, 0))
 VBow_At   = np.array((0,-0.8,0)); VBow_Vec   = np.array(( 0,0,-1))
 VStern_At = np.array((0, 0.8,0)); VStern_Vec = np.array(( 0,0,-1))
-Prop_At   = np.array((0, 0.9,0)); Prop_Vec   = np.array(( 0,1,0))
+Prop_At   = np.array((0, 0.9,0)); Prop_Vec   = np.array(( 0,-1, 0))
 Mass      = 37.0      # kg
 Weight    = 0.1       # N upwards (i.e., slightly buoyant)
 Weight_At = np.array((0,0,0))
@@ -91,22 +92,13 @@ Drag_J = np.array((Max_Yaw_Moment / 45.0,   # yaw
                    Max_Roll_Moment / 5.0)) # roll
 
 def rotate(v, q):
-    q = q.q
-    t0 =  q[0] * q[1];
-    t1 =  q[0] * q[2];
-    t2 =  q[0] * q[3];
-    t3 = -q[1] * q[1];
-    t4 =  q[1] * q[2];
-    t5 =  q[1] * q[3];
-    t6 = -q[2] * q[2];
-    t7 =  q[2] * q[3];
-    t8 = -q[3] * q[3];
-    d = np.array((
-        2*((t6 + t8) * v[0] + (t4 - t2) * v[1] + (t1 + t5) * v[2]),
-        2*((t2 + t4) * v[0] + (t3 + t8) * v[1] + (t7 - t0) * v[2]),
-        2*((t5 - t1) * v[0] + (t0 + t7) * v[1] + (t3 + t6) * v[2])
-    ))
-    return v + d
+    # no idea why this isn't working...
+    #vq = Quat((v[0],v[1],v[2],0))
+    #rq = vq * q.inv()
+    #return (q * rq).q[:3]
+    # just apply the matrix instead:
+    return np.dot(q.transform, v)
+
 
 class Model(base_model.Model):
     def __init__(self, node):
@@ -181,9 +173,10 @@ class Model(base_model.Model):
              weight_moment)
         )
 
-        # convert moment to (yaw, pitch, roll) = (about z axis, about x axis, about y axis)
+        # convert moment to (yaw, pitch, roll) = (-about z axis, -about x axis, about y axis)
+        # TODO: check which way the xsens measures roll
         local_moment = np.array((
-            local_moment[2], local_moment[0], local_moment[1]
+            -local_moment[2], -local_moment[0], local_moment[1]
         ))
 
         # drag moments:
@@ -199,7 +192,7 @@ class Model(base_model.Model):
         roll_moment = np.array((0,0,-roll/2.0))
 
         moment = sum((local_moment, drag_moment, roll_moment))
-        
+
         # apply moment to angular velocity:
         domega = moment * dt / np.array((Izz, Ixx, Iyy))
         self.angular_velocity += domega
@@ -232,6 +225,9 @@ class Model(base_model.Model):
         depth_mult = 0.010395
         depth = float(-self.displacement[2])
         pressure = int((depth - depth_offset) / depth_mult)
+        # if somehow we're floating above the surface...
+        if pressure < 0:
+            pressure = 0
         orientation = messaging.floatYPR(*(float(x) for x in self.orientation.equatorial))
         #print 'pressure=', pressure, 'orientation=', orientation
         self.node.send(messaging.PressureMessage(pressure, pressure))

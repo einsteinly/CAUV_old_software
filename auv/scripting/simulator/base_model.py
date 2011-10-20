@@ -83,7 +83,7 @@ class Model(messaging.MessageObserver):
                 time.sleep(tdToFloatSeconds(tprev + tdelta - tnow))
 
     def onMotorStateMessage(self, m):
-        info(str(m))
+        debug(str(m))
         if not self.keep_going:
             return
         self.update_lock.acquire()
