@@ -37,8 +37,8 @@ class LLACoord:
         self.longitude = lng_deg
         self.altitude = alt_m
     def __add__(self, xyz):
-            # add XYZ in metres onto the current latitude/longitude/altitude
-            # z is positive altitude (-ve depth)
+        # add XYZ in metres onto the current latitude/longitude/altitude
+        # z is positive altitude (-ve depth)
         if isinstance(xyz, messaging.floatXYZ):
             new_lat = self.latitude  + xyz.x / metresPerDegreeLatitude(self.latitude)
             new_lng = self.longitude + xyz.y / metresPerDegreeLongitude(self.latitude)

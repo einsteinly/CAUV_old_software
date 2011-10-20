@@ -42,15 +42,16 @@ class MotorStates(object):
 class Model(messaging.MessageObserver):
     def __init__(self, node):
         messaging.MessageObserver.__init__(self)
-        self.__node = node
+        self.node = node
         self.update_frequency = 10.0
         self.datum = coordinates.Simulation_Datum
 
-        self.displacement = np.array(0,0,0)
-        self.velocity = np.array(0,0,0)
-
-        self.orientation = Quat((0,0,0)) # init from yaw,pitch,roll=0
-        self.angular_velocity = np.array(0,0,0) # dYaw/dt, dPitch/dt, dRoll/dt
+        self.displacement = np.array((0.0,0.0,0.0))
+        self.velocity = np.array((0.0,0.0,0.0))
+        
+        # Note that Quat uses degrees, NOT radians, (which is what we want)
+        self.orientation = Quat((0.0,0.0,5.0)) # init from yaw,pitch,roll=0
+        self.angular_velocity = np.array((0.0,0.0,0.0)) # dYaw/dt, dPitch/dt, dRoll/dt
 
         self.motor_states = MotorStates()
 
@@ -58,15 +59,20 @@ class Model(messaging.MessageObserver):
 
         self.thread = threading.Thread(target = self.runLoop)
         self.thread.daemon = False
-        self.thread.start()
+        self.keep_going = True
 
         node.join("gui")
         node.addObserver(self)
 
+    def start(self):
+        self.thread.start()
+    def stop(self):
+        self.keep_going = False
+        self.thread.join()
     def runLoop(self):
         tprev = datetime.datetime.now()
         tdelta = datetime.timedelta(seconds=1.0/self.update_frequency)
-        while True:
+        while self.keep_going:
             tnow = datetime.datetime.now()
             self.update_lock.acquire()
             self.processUpdate(self.motor_states)
@@ -77,6 +83,9 @@ class Model(messaging.MessageObserver):
                 time.sleep(tdToFloatSeconds(tprev + tdelta - tnow))
 
     def onMotorStateMessage(self, m):
+        info(str(m))
+        if not self.keep_going:
+            return
         self.update_lock.acquire()
         self.motor_states.update(m)
         self.processUpdate(self.motor_states)
@@ -96,5 +105,10 @@ class Model(messaging.MessageObserver):
 
     def position(self):
         r = self.datum + self.displacement
-        return r.latitude, r.longitude, r.altitude, quatToYPR(self.orientation), self.velocity
+        return float(r.latitude),\
+               float(r.longitude),\
+               float(r.altitude),\
+               quatToYPR(self.orientation),\
+               messaging.floatXYZ(*(float(x) for x in self.velocity))
+
 

@@ -28,12 +28,32 @@ import cauv.node
 from cauv.debug import debug, error, warning, info
 import base_model
 
+
+def fmtQuat(q):
+    ypr = q.equatorial
+    return '(y=%.2f p=%.2f r=%.2f)' % (ypr[0], ypr[1], ypr[2])
+
+def fmtArr(a):
+    r = ''
+    for x in a:
+        r += '%.2f,' % float(x)
+    if len(r):
+        return '[' + r[:-1] + ']'
+    else:
+        return '[]'
+
 def runLoop(auv_model, node):
     auv_model.start()
     while True:
         time.sleep(0.1)
-        (lt, ln, al, speed) = auv_model.position()
-        node.send(SimPositionMessage(lt, ln, al, speed))
+        (lt, ln, al, ori, speed) = auv_model.position()
+        node.send(messaging.SimPositionMessage(lt, ln, al, ori, speed))
+        info('displ=%s\tvel=%s\tori=%s\tomega=%s\t' %
+            (fmtArr(auv_model.displacement),
+             fmtArr(auv_model.velocity),
+             fmtQuat(auv_model.orientation),
+             fmtArr(auv_model.angular_velocity))
+        )
 
 
 if __name__ == '__main__':
@@ -47,8 +67,11 @@ if __name__ == '__main__':
     vehicle_module = importlib.import_module(vehicle_modname)
 
     node = cauv.node.Node('py-sim')
+    model = None
     try:
         model = vehicle_module.Model(node)
         runLoop(model, node)
     finally:
+        if model is not None:
+            model.stop()
         node.stop()
