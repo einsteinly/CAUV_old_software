@@ -277,10 +277,10 @@ class CHILLogger(LoggerBase):
         pass
     def addComment(self, comment_str):
         info('recoding comment "%s"' % comment_str)
-        self.logObject(MessageLoggerComment(comment_str))
+        self.logMessage(msg.DebugMessage(msg.DebugType.Info, comment_str))
     def logObject(self, d):
         warning('CHIL does not support generic object logging')
-        # TODO: save as pickle in string field of a message of some sort? 
+        self.logMessage(msg.DebugMessage(msg.DebugType.Debug, str(d)))
     def logMessage(self, m):
         if self.recordingIsActive():        
             self.__logger.log(m)
