@@ -81,6 +81,7 @@ enum NodeType : int8 {
     MathAddMultFloat,
     MergeSimilarLines,
     DirectCameraInput,
+    SonarSLAM,
 }
 enum NodeStatus : int8 {
     None = 0,

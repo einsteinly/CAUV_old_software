@@ -43,8 +43,7 @@ class MedianFilterNode: public Node{
             // one output
             registerOutputID<image_ptr_t>("image (not copied)");
             
-            // parameters: kernel radius: must be an odd integer
-            registerParamID<int>("kernel", 3);
+            registerParamID<int>("kernel", 3, "kernel diameter (radius?): must be an odd integer");
         }
         
         virtual ~MedianFilterNode(){
@@ -52,6 +51,22 @@ class MedianFilterNode: public Node{
         }
 
     protected:
+        // Apply Median blur in-place
+        struct applyMedian: boost::static_visitor<void>{
+            applyMedian(int ksize) : m_ksize(ksize){ }
+            void operator()(cv::Mat a) const{
+                cv::medianBlur(a, a, m_ksize);
+            }
+            void operator()(NonUniformPolarMat a) const{
+                // TODO: might want to filter with a range-dependent
+                // aperture...
+                operator()(a.mat);
+            }
+            void operator()(PyramidMat) const{
+                error() << "not implemented";
+            }
+            const int m_ksize;
+        };
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
@@ -60,14 +75,13 @@ class MedianFilterNode: public Node{
             int ksize = param<int>("kernel");
 
             if(!(ksize & 1))
-                warning() << "filter kernel size should be odd";
+                warning() << "filter kernel size must be odd";
 
             debug(4) << "MedianFilterNode:" << ksize;
             
             try{
-                cv::Mat m = img->mat();
-                cv::medianBlur(m, m, ksize);
-                img->mat(m);
+                augmented_mat_t m = img->augmentedMat();
+                boost::apply_visitor(applyMedian(ksize), m);
                 r["image (not copied)"] = img;
             }catch(cv::Exception& e){
                 error() << "MedianFilterNode:\n\t"
