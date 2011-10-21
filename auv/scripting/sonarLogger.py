@@ -13,23 +13,43 @@ from utils.hacks import injectBase
 
 class SonarLogger(object):
     def __init__(self, cauv_node, fname, do_record):
-        self.__sonar_params = None
+        self.__sonar_params_message = None
+        self.__gemini_params_message = None
         # do not ask about, or change, this line:
         super(self.__class__, self).__init__(cauv_node, fname, do_record)
         self.node.join('sonarctl')
         self.node.join('sonarout')
 
-    def onNewSession(self):
-        self.logObject(self.__sonar_params)
+        # set up messages to log:
+        # methods defined like this to short-circuit one function call...
+        # perhaps this is a little bit of unnecessary optimisation, but these
+        # functions do get called a *lot*
+        self.onSonarDataMessage = self.logMessage
+        self.onSonarImageMessage = self.logMessage
+        self.onSpeedOfSoundMessage = self.logMessage
+        self.onTelemetry = self.logMessage # Log telemetry so that we have orientation data to match the sonar images
+        self.onGeminiStatusMessage = self.logMessage
+        self.onSonarControlMessage = self.logMessage
+        # These are defined normally because they sometimes print information
+        # and they aren't sent very frequently anyway
+        #self.onSonarControlMessage = self.logMessage
+        #self.onGeminiControlMessage = self.logMessage
 
-    def onSonarDataMessage(self, m):
-        self.logMessage(m)
+    def onNewSession(self):
+        if self.__sonar_params_message is not None:
+            self.logMessage(self.__sonar_params_message)
+        if self.__gemini_params_message is not None:
+            self.logMessage(self.__gemini_params_message)
 
     def onSonarControlMessage(self, m):
         self.logMessage(m)
-        mdict = messageLogger.dictFromMessage(m)
-        debug('sonar control message: %s' % mdict)
-        self.__sonar_params = mdict
+        debug('sonar control message: %s' % m)
+        self.__sonar_params_message = m
+
+    def onGeminiControlMessage(self, m):
+        self.logMessage(m)
+        debug('gemini control message: %s' % m)
+        self.__gemini_params_message = m
 
 class SonarLoggerCmdPrompt(messageLogger.CmdPrompt):
     def __init__(self, sonar_logger):

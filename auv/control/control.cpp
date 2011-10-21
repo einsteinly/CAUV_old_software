@@ -291,7 +291,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
             : prop_value(0), hbow_value(0), vbow_value(0),
               hstern_value(0), vstern_value(0), m_max_motor_delta(255),
-              m_motor_updates_per_second(5), m_mb(mb)
+              m_motor_updates_per_second(5), m_mb(mb), m_simulation_mode(false)
         {
             const MotorMap def(5, -5, 127, -127);
             prop_map = def;
@@ -308,6 +308,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
         void set_mcb(boost::shared_ptr<MCBModule> mcb)
         {
             m_mcb = mcb;
+        }
+
+        void setSimulationMode(bool value)
+        {
+            m_simulation_mode = value;
         }
 
         void start()
@@ -356,6 +361,12 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     m_mb->sendMessage(m, SAFE_MESS);
                 }
             }
+        }
+
+        virtual void onStateMessage(StateMessage_ptr m)
+        {
+            if(m_simulation_mode)
+                onTelemetry(m->orientation());
         }
 
         virtual void onPressureMessage(PressureMessage_ptr m)
@@ -689,6 +700,8 @@ class ControlLoops : public MessageObserver, public XsensObserver
         unsigned m_motor_updates_per_second;
 
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+
+        bool m_simulation_mode;
 };
 
 class DeviceControlObserver : public MessageObserver
@@ -740,7 +753,9 @@ class DeviceControlObserver : public MessageObserver
 class TelemetryBroadcaster : public MessageObserver, public XsensObserver
 {
     public:
-        TelemetryBroadcaster(boost::shared_ptr<ReconnectingSpreadMailbox> mb) : m_mb(mb)
+        TelemetryBroadcaster(boost::shared_ptr<ReconnectingSpreadMailbox> mb,
+                             bool simulation_mode)
+            : m_mb(mb), m_simulation_mode(simulation_mode)
         {
         }
 
@@ -762,10 +777,21 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
             }
         }
 
+        void setSimulationMode(bool state)
+        {
+            m_simulation_mode = state;
+        }
+
 
         virtual void onTelemetry(const floatYPR& attitude)
         {
             m_orientation = attitude;
+        }
+
+        virtual void onStateMessage(StateMessage_ptr m)
+        {
+            if(m_simulation_mode)
+                m_orientation = m->orientation();
         }
 
         virtual void onPressureMessage(PressureMessage_ptr m)
@@ -785,6 +811,7 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
         }
     protected:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        bool m_simulation_mode;
 
         DepthCalibrationMessage_ptr m_depthCalibration;
     
@@ -874,7 +901,7 @@ ControlNode::ControlNode() : CauvNode("Control")
     m_stateObserver = boost::make_shared<StateObserver>(mailbox());
     addMessageObserver(m_stateObserver);
     
-    m_telemetryBroadcaster = boost::make_shared<TelemetryBroadcaster>(mailbox());
+    m_telemetryBroadcaster = boost::make_shared<TelemetryBroadcaster>(mailbox(), false);
     addMessageObserver(m_telemetryBroadcaster);
 }
 ControlNode::~ControlNode()
@@ -958,7 +985,8 @@ void ControlNode::addOptions(boost::program_options::options_description& desc, 
         ("mcb,m", po::value<std::string>()->default_value("/dev/ttyUSB0"), "TTY file for MCB serial comms")
 #endif
         ("depth-offset,o", po::value<float>()->default_value(0), "Depth calibration offset")
-        ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale");
+        ("depth-scale,s", po::value<float>()->default_value(0), "Depth calibration scale")
+        ("simulation,N", "Run in simulation mode");
 }
 int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost::program_options::options_description& desc)
 {
@@ -985,6 +1013,12 @@ int ControlNode::useOptionsMap(boost::program_options::variables_map& vm, boost:
     }
     else if (vm.count("depth-offset") || vm.count("depth-scale")) {
         warning() << "Need both offset and depth for calibration; ignoring calibration input";   
+    }
+    if(vm.count("simulation")){
+        m_telemetryBroadcaster->setSimulationMode(true);
+        m_controlLoops->setSimulationMode(true);
+        joinGroup("pressure");
+        joinGroup("state");
     }
     
     return 0;

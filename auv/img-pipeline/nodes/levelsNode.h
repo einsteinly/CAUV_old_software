@@ -1,3 +1,17 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #ifndef __LEVELS_NODE_H__
 #define __LEVELS_NODE_H__
 
@@ -42,26 +56,45 @@ class LevelsNode: public Node{
         }
 
     protected:
+        struct applyLevels: boost::static_visitor<void>{
+            applyLevels(int white, int black) : m_white(white), m_black(black){}
+            void operator()(cv::Mat a) const{
+                float scale = 1;
+                if(m_black != m_white)
+                    scale = 255.0f / (m_white - m_black);
+                a = (a - m_black) * scale;
+            }
+            void operator()(NonUniformPolarMat a) const{
+                float scale = 1;
+                if(m_black != m_white)
+                    scale = 255.0f / (m_white - m_black);
+                a.mat = (a.mat - m_black) * scale;
+            }
+            void operator()(PyramidMat a) const{
+                float scale = 1;
+                if(m_black != m_white)
+                    scale = 255.0f / (m_white - m_black);
+                foreach(cv::Mat m, a.levels)
+                    m = (m - m_black) * scale;
+            }
+            int m_white;
+            int m_black;
+        };
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            cv::Mat img = inputs["image"]->mat();
+            augmented_mat_t img = inputs["image"]->augmentedMat();
             
             int white_level = param<int>("white level");
             int black_level = param<int>("black level");
-            float scale = 1;
-            if(black_level != white_level)
-                scale = 255.0f / (white_level - black_level);
             
-            if(img.depth() != CV_8U)
-                throw(parameter_error("image must be unsigned bytes"));
-
-            img = (img - black_level) * scale;
+            boost::apply_visitor(applyLevels(white_level, black_level), img);
             
             r["image (not copied)"] = boost::make_shared<Image>(img);
             
             return r;
         }
+
     
     // Register this node type
     DECLARE_NFR;

@@ -17,6 +17,7 @@ add_executable (
     node.cpp
     scheduler.cpp
     nodes/nodes.cpp
+    nodes/nodes2.cpp
 )
 cauv_install ( img-pipeline )
 
@@ -26,6 +27,7 @@ target_link_libraries (
 
     common
     sonar_accumulator
+    camera_client
     boost_date_time
     boost_filesystem
     boost_system

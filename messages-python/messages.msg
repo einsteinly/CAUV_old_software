@@ -80,6 +80,8 @@ enum NodeType : int8 {
     MathAddMultInt,
     MathAddMultFloat,
     MergeSimilarLines,
+    DirectCameraInput,
+    SonarSLAM,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -169,9 +171,9 @@ struct PolarImage
     // num_beams + 1 values. The first bin is bearing_bins[0] --
     // bearing_bins[1], and so on.
     bearing_bins: list<int32>;
-    // number of bins = rangeEnd-rangeStart
-    rangeStart: int32;
-    rangeEnd: int32;
+    // number of bins = round(rangeEnd-rangeStart) / rangeConversion)
+    rangeStart: float;
+    rangeEnd: float;
     // rangeConversion = length of 1 bin in metres
     rangeConversion: float;
     // time of the ping from which the image is acquired
@@ -276,12 +278,12 @@ group debug
 
 group control
 {
-	message Motor : 2
-	{
-	    motorId : MotorID;
-	    speed : int8;
+    message Motor : 2
+    {
+        motorId : MotorID;
+        speed : int8;
     }
-    
+
     message BearingAutopilotEnabled : 60
     {
         enabled : bool;
@@ -293,10 +295,10 @@ group control
         Ki : float;
         Kd : float;
         scale : float;
-		Ap : float;
+        Ap : float;
         Ai : float;
         Ad : float;
-		thr : float;
+        thr : float;
         maxError : float;
     }
 
@@ -311,11 +313,11 @@ group control
         Ki : float;
         Kd : float;
         scale : float;
-		Ap : float;
+        Ap : float;
         Ai : float;
         Ad : float;
-		thr : float;
-        maxError : float;        
+        thr : float;
+        maxError : float;
     }
 
     message DepthCalibration : 80
@@ -337,11 +339,11 @@ group control
         Ki : float;
         Kd : float;
         scale : float;
-		Ap : float;
+        Ap : float;
         Ai : float;
         Ad : float;
-		thr : float;
-        maxError : float;        
+        thr : float;
+        maxError : float;
     }
 
     message StateRequest : 82
@@ -365,8 +367,8 @@ group control
         mapping : MotorMap;
     }
 
-	message ResetMCB : 85
-	{
+    message ResetMCB : 85
+    {
     }
 
     message CalibrateNoRotation : 90
@@ -378,15 +380,15 @@ group state
 {
     message State : 81
     {
-	    orientation : floatYPR;
+        orientation : floatYPR;
     }
 }
 
 group telemetry
 {
-	message Telemetry : 3
-	{
-	    orientation : floatYPR;
+    message Telemetry : 3
+    {
+        orientation : floatYPR;
         depth : float;
     }
     message BatteryUse : 86
@@ -417,7 +419,7 @@ group telemetry
         altitude : float;
         track : float;
         speed: float;
-        climb: float;    
+        climb: float;
     }
     message SonarLocation : 91
     {
@@ -426,22 +428,22 @@ group telemetry
 }
 group image
 {
-	message Image : 4
-	{
-	    source : CameraID;
-	    lazy image : Image;
+    message Image : 4
+    {
+        source : CameraID;
+        lazy image : Image;
         time : TimeStamp;
     }
 }
 group sonarout
 {
-	message SonarData : 30
-	{
+    message SonarData : 30
+    {
         line : SonarDataLine;
     }
 
     message SonarImage : 31
-    {   
+    {
         source : SonarID;
         image : PolarImage;
     }
@@ -470,8 +472,8 @@ group sonarout
 }
 group sonarctl
 {
-	message SonarControl : 32
-	{
+    message SonarControl : 32
+    {
         direction : uint16;
         width : uint16;
         gain : uint8;
@@ -493,7 +495,7 @@ group pipeline
 {
     message AddNode : 5
     {
-        pipelineName : string; 
+        pipelineName : string;
         nodeType : NodeType;
         parents : list<NodeInputArc>;
         children : list<NodeOutputArc>;
@@ -572,13 +574,13 @@ group processing
         name : string;
         corners : list<Corner>;
     }
-    
+
     message KeyPoints : 135
     {
         name : string;
         keypoints : list<KeyPoint>;
     }
-    
+
     message Histogram : 133
     {
         name : string;
@@ -605,14 +607,14 @@ group gui
         kp : float;
         ki : float;
         kd : float;
-        
+
         demand : MotorDemand;
     }
-   
+
     message MotorState : 101
     {
-	    motorId : MotorID;
-	    speed : int8;
+        motorId : MotorID;
+        speed : int8;
     }
 
     message ScriptResponse : 103
@@ -628,7 +630,7 @@ group gui
 }
 
 group pl_gui
-{ 
+{
     message NodeAdded : 115
     {
         pipelineName : string;
@@ -641,20 +643,20 @@ group pl_gui
 
     message NodeRemoved : 116
     {
-        pipelineName : string;    
+        pipelineName : string;
         nodeId : int32;
     }
 
     message NodeParameters : 117
     {
-        pipelineName : string;    
+        pipelineName : string;
         nodeId : int32;
         params : map<string, NodeParamValue>;
     }
 
     message GraphDescription : 118
     {
-        pipelineName : string;    
+        pipelineName : string;
         lazy nodeTypes : map<int32, NodeType>;
         lazy nodeInputs : map<int32, map<string, NodeOutput> >;
         lazy nodeOutputs : map<int32, map<string, list<NodeInput> > >;
@@ -663,63 +665,63 @@ group pl_gui
 
     message ArcAdded : 119
     {
-        pipelineName : string;    
+        pipelineName : string;
         from : NodeOutput;
         to : NodeInput;
     }
 
     message ArcRemoved : 120
     {
-        pipelineName : string;    
+        pipelineName : string;
         from : NodeOutput;
         to : NodeInput;
     }
 
     message Status : 121
     {
-        pipelineName : string;    
+        pipelineName : string;
         nodeId : int32;
         status : NodeStatus;
     }
 
     message InputStatus : 122
     {
-        pipelineName : string;    
+        pipelineName : string;
         nodeId : int32;
         inputId : string;
         status : NodeIOStatus;
     }
-    
+
     message OutputStatus : 123
     {
-        pipelineName : string;    
+        pipelineName : string;
         nodeId : int32;
         outputId : string;
         status : NodeIOStatus;
     }
-    
-	message GuiImage : 124
-	{
-        pipelineName : string;    
+
+    message GuiImage : 124
+    {
+        pipelineName : string;
         nodeId : int32;
-	    lazy image : Image;
+        lazy image : Image;
     }
 }
 
 
 group mcb
 {
-	message Alive : 40
-	{
+    message Alive : 40
+    {
     }
 }
 
 group pressure
 {
-	message Pressure : 50
-	{
-	    fore : uint16;
-	    aft : uint16;
+    message Pressure : 50
+    {
+        fore : uint16;
+        aft : uint16;
     }
 }
 
@@ -749,5 +751,16 @@ group external
     message BatteryStatus : 152
     {
         voltage : uint16;
+    }
+}
+group simulation
+{
+    message SimPosition : 800
+    {
+        latitude : double;
+        longitude : double;
+        altitude : float;
+        orientation : floatYPR;
+        speed : floatXYZ;
     }
 }

@@ -33,6 +33,10 @@ void cauvInfo(const char* s){
     info() << s;
 }
 
+void setDebugName(const char* s){
+    debug::setProgramName(s);
+}
+
 #ifdef EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 struct Blah{
     int monkey;
@@ -217,6 +221,7 @@ void emitDebug(){
     bp::def("warning", cauvWarning);
     bp::def("error", cauvError);
     bp::def("info", cauvInfo);
+    bp::def("setDebugName", setDebugName);
 }
 
 void emitMailbox(){

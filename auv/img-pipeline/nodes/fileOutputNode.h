@@ -1,3 +1,17 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #ifndef __FILE_OUTPUT_NODE_H__
 #define __FILE_OUTPUT_NODE_H__
 
@@ -40,6 +54,25 @@ class FileOutputNode: public OutputNode{
         }
 
     protected:
+        struct writeMat: boost::static_visitor<void>{
+            writeMat(std::string const& fname, std::vector<int> const& imwrite_params)
+                : m_fname(fname), m_imwrite_params(imwrite_params){
+            }
+            void operator()(cv::Mat a) const{
+                cv::imwrite(m_fname.c_str(), a, m_imwrite_params);
+            }
+            void operator()(NonUniformPolarMat a) const{
+                // !!! TODO: this throws away metadata which should somehow be
+                // saved (sidecar file?)
+                cv::imwrite(m_fname.c_str(), a.mat, m_imwrite_params);
+            }
+            void operator()(PyramidMat a) const{
+                // !!! TODO: presuming 0 is the only level worth saving
+                cv::imwrite(m_fname.c_str(), a.levels.at(0), m_imwrite_params);
+            }
+            std::string const& m_fname;
+            std::vector<int> const& m_imwrite_params;
+        };
         out_map_t doWork(in_image_map_t& inputs){
             using boost::algorithm::replace_all_copy;
             out_map_t r;
@@ -67,11 +100,8 @@ class FileOutputNode: public OutputNode{
             imwrite_params.push_back(png_comp);
             
             try{
-                cv::Mat in = img->mat();
-                if(!in.empty())
-                    cv::imwrite(fname.c_str(), in, imwrite_params);
-                else
-                    error() << "FileoutputNode: no image!";
+                augmented_mat_t t = img->augmentedMat();
+                boost::apply_visitor(writeMat(fname, imwrite_params), t);
             }catch(cv::Exception& e){
                 error() << "FileOutputNode:\n\t"
                         << e.err << "\n\t"

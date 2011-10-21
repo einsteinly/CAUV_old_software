@@ -1,3 +1,17 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #ifndef __DELAY_NODE_H__
 #define __DELAY_NODE_H__
 
@@ -58,10 +72,17 @@ class DelayNode: public Node{
             
             // make sure output size is (almost) always the same as input size
             // there is a race condition here, but it doesn't have any
-            // disastrous effects (simultaneous of in->mat())
-            if(in->mat().size() != m_queue_image_size){
-                m_queue = std::queue<image_ptr_t>();
-                m_queue_image_size = in->mat().size();
+            // disastrous effects (simultaneous modification of in->mat())
+            try{
+                if(in->mat().size() != m_queue_image_size){
+                    m_queue = std::queue<image_ptr_t>();
+                    m_queue_image_size = in->mat().size();
+                }
+            }catch(boost::bad_get& e){
+                // oops, can't get size... hope for the best!
+                // TODO: compare metadata of other sorts of image using a
+                // visitor
+                ;
             }
 
             while(m_queue.size() > unsigned(delay_by))
