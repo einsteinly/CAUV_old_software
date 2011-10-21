@@ -14,34 +14,80 @@ import traceback
 from os.path import getmtime
 
 from AI_classes import aiProcess, external_function
+from AI_tasks import tasks
+from AI_conditions import conditions
 
 """          
 task manager auto generates a list of what it should be running from these 'tasks', basically looking for these tasks and then running appropriate scripts
 """          
 
+class FakeEvent():
+    #more efficient than using an actual event when not neccesary
+    def __init__(self, multievent, name):
+        self.multievent=multievent
+        self.name=name
+    def set(self):
+        self.multievent.set(name)
+    def clear(self):
+        self.multievent.clear(name)
+    def is_set(self):
+        return self.multievent.is_set(name)
+
+class MultiEvent(threading.Event):
+    def __init__(self, event_names):
+        threading.Event.__init__(self)
+        self.event_lock = threading.Lock()
+        self.events = dict([(event_name, False) for event_name in event_names])
+    def set(self, event_name):
+        #set the particular event name, and the general event flag
+        if not event_name in self.events:
+            raise KeyError('Event %s not part of this MultiEvent' %(event_name,))
+        with self.event_lock:
+            self.events[event_name] = True
+        threading.Event.set(self)
+    def clear(self, event_name):
+        #clear the particular name, and the general flag if all are cleared
+        if not event_name in self.events:
+            raise KeyError('Event %s not part of this MultiEvent' %(event_name,))
+        with self.event_lock:
+            self.events[event_name] = True
+            if all(self.events.values()):
+                threading.Event.clear(self)
+    def get_event(self, event_name):
+        if not event_name in self.events:
+            raise KeyError('Event %s not part of this MultiEvent' %(event_name,))
+        return(FakeEvent(self.events, event_name)
+        
+
 class taskManager(aiProcess):
-    def __init__(self, mission, restore):
+    _store_values = ['task_nid', 'tasks', 'condition_nid', 'conditions', 'detector_nid', 'detectors_required', ]
+    #SETUP FUNCTIONS
+    def __init__(self, restore):
         aiProcess.__init__(self, 'task_manager')
-        #These variables maybe accessesed by more than one thread
+        self.events = MultiEvent(('conditions','detectors',))
         #Tasks - list of tasks that (in right conditions) should be called
-        self.task_lock = threading.RLock()
-        self.active_tasks = []
-        self.task_list = {}
-        self.request_stop = threading.Event()
-        self.req_start_task = None
-        #Conditions - note although conditions may be changed externally, the list of conditions may not
+        self.task_nid = 0
+        self.tasks = {}
+        #queues to add/remove
+        self.tasks_to_add = Queue.Queue()
+        self.tasks_to_remove = Queue.Queue()
+        #Conditions
+        self.condition_nid = 0
         self.conditions = {}
-        self.conditions_changed = threading.Event()
+        #queues to add/remove
+        self.conditions_to_add = Queue.Queue()
+        self.conditions_to_remove = Queue.Queue()
         #Detectors - definative list of what SHOULD be running
-        self.detector_lock = threading.Lock()
-        self.active_detectors = {}
+        self.detector_nid = 0
+        self.detectors_required = {}
+        self.detectors_last_known = Queue.LifoQueue()
         self.detectors_enabled = True
-        #These should only be accessed by this thread - details on whats currently running
+        #Details on whats currently running
         self.running_script = None
         self.current_task = None
         self.current_priority = 0
         #state data file
-        self.state = shelve.open(mission+'_state.shelf')
+        self.state_shelf = shelve.open('state_task_manager.shelf')
         #Setup intial values
         restored = False
         if restore:
@@ -49,99 +95,19 @@ class taskManager(aiProcess):
             if self.load_state():
                 restored = True
                 self.log('Task manager restored.')
-            else: info('No previous valid state file, loading from mission.py')
-        if not restored:    
-            self.mission = __import__(mission)
-            self.task_list = {}
-            with self.task_lock:
-                for task in self.mission.task_list:
-                    if task.name in self.task_list:
-                        warning('More than one task has the same name, the last task in the list will overwrite earlier tasks')
-                    self.task_list[task.name] = task
-                for task in self.mission.initial_tasks:
-                    self.task_list[task].register(self)
-            self.new_state(mission)
-        #Force evaluation of tasks
-        self.conditions_changed.set()
-    def add_detector(self, detector_name, listener):
-        with self.detector_lock:
-            if not (detector_name in self.active_detectors):
-                self.active_detectors[detector_name] = []
-                self.ai.detector_control.start(detector_name)
-            self.active_detectors[detector_name].append(listener)
-        self.save_state()
-    def remove_detector(self, detector_name, listener):
-        with self.detector_lock:
-            self.active_detectors[detector_name].remove(listener)
-            if not self.active_detectors[detector_name]:
-                self.active_detectors.pop(detector_name)
-                self.ai.detector_control.stop(detector_name)
-        self.save_state()
+            else: info('No previous valid state file')
+        self.run_processing_loop.set()
     def load_state(self):
-        if 'state_set' in self.state:
-            if getmtime(self.state['mission_name']+'.py') != self.state['mtime']:
-                warning('The mission script may have been modified. Continuing, but could cause errors')
-            self.mission = __import__(self.state['mission_name'])
-            with self.task_lock:
-                self.task_list = self.state['task_list']
-                for task in self.task_list.values():
-                    if task.registered:
-                        task.registered = False #oteherwise it will think its already setup -> error
-                        task.register(self)
-                    #TODO remove a task if it causes repeated crashes?
-            return True
-        #TODO Make sure to clear up any mess if this fails (ie reset all variables etc)
-        return False
-    @external_function
+        pass
     def save_state(self):
-        with self.task_lock:
-            self.state['task_list'] = self.task_list
-        self.state.sync()
-    def new_state(self, mission_name):
-        #some extra stuff to recorded the 1st time a state is set
-        self.state['mission_name'] = mission_name
-        self.state['mtime'] = getmtime(mission_name+'.py')
-        self.state['state_set'] = True
+        pass
+    
+    #ONMESSAGE FUNCTIONS
+    def onConditionMessage(self, msg):
         self.save_state()
-    @external_function
-    def update_detectors(self, detector_list):
-        with self.detector_lock:
-            if not self.detectors_enabled:
-                #should have been disabled, try again
-                self.ai.detector_control.disable()
-                return
-            #check against should be running
-            missing = set(self.active_detectors.keys())-set(detector_list)
-            additional  = set(detector_list)-set(self.active_detectors.keys())
-        for d in missing:
-            self.ai.detector_control.start(d)
-            debug("restarting detector %s" %(d))
-        for d in additional:
-            self.ai.detector_control.stop(d)
-            debug("stopping detector %s" %(d))
-    @external_function
-    def notify_condition(self, condition_name, *args, **kwargs):
-        self.conditions[condition_name].set_state(*args, **kwargs)
-        self.log('Condition '+condition_name+' sent parameters: '+', '.join([', '.join(map(str, args)),', '.join(['='.join(map(str,kwarg)) for kwarg in kwargs])]))
-        self.conditions_changed.set()
+    def onTaskMessage(self, msg):
         self.save_state()
-    @external_function
-    def notify_detector(self, detector_name, *args, **kwargs):
-        self.log('Detector '+detector_name+' sent parameters: '+', '.join([', '.join(map(str,args)),', '.join(['='.join(map(str,kwarg)) for kwarg in kwargs])]))
-        for listener in self.active_detectors[detector_name]:
-            listener.set_state(*args, **kwargs)
-        self.conditions_changed.set()
-        #Note, no saving state for detectors, as they are dynamic so there state shouldn't be saved
-    @external_function
-    def add_task(self, task_ref):
-        try:
-            with self.task_lock:
-                self.task_list[task_ref].register(self)
-        except KeyError:
-            error('Tried to setup non-existant task.')
-        self.save_state()
-    @external_function
-    def remove_task(self, task_ref):
+    def onRemoveTaskMessage(self, task_ref):
         try:
             with self.task_lock:
                 self.task_list[task_ref].deregister(self)
@@ -150,8 +116,7 @@ class taskManager(aiProcess):
         if self.task_list[task_ref].active:
             self.request_stop_script()
         self.save_state()
-    @external_function
-    def modify_task_options(self, task_ref, opt_dict):
+    def onTaskOpts(self, task_ref, opt_dict):
         with self.task_lock:
             self.task_list[task_ref].options.update(opt_dict)
             #try and update options in the running script
@@ -160,13 +125,18 @@ class taskManager(aiProcess):
                     getattr(self.ai, self.task_list[task_ref].script_name).set_option(x,opt_dict[x])
         self.save_state()
     @external_function
-    def export_task_data(self, file_name):
-        with self.task_lock:
-            f = open(file_name, 'w')
-            for task in self.task_list.values():
-                print task.options
-                f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) for x in task.options.items()])+'\n')
-            f.close()
+    def onStopScript(self):
+        pass
+    
+    #EXTERNAL FUNCTIONS
+    #from detector process
+    @external_function
+    def on_list_of_detectors(self, detector_list):
+        self.detectors_last_known.put(detector_list)
+    @external_function
+    def on_detector_state_change(self, id, state):
+        self.detectors[id].on_state_set(state)
+    #from control process
     @external_function
     def notify_begin_pause(self, message):
         if self.current_task:
@@ -175,8 +145,9 @@ class taskManager(aiProcess):
     def notify_end_pause(self, message):
         if self.current_task:
             getattr(self.ai, self.current_task).end_override_pause()
+    #from script
     @external_function
-    def on_script_exit(self, task, status):
+    def on_script_exit(self, task_id, status):
         if status == 'ERROR':
             try:
                 self.task_list[task].crash_count += 1
@@ -199,13 +170,23 @@ class taskManager(aiProcess):
         time.sleep(0.5) # otherwise script won't have a chance to stop
         self.conditions_changed.set()
     @external_function
-    def request_stop_script(self):
-        self.request_stop.set()
-        self.conditions_changed.set()
-    @external_function
-    def request_start_task(self, task_ref):
-        self.req_start_task = task_ref
-        self.conditions_changed.set()
+    def export_task_data(self, file_name):
+        with self.task_lock:
+            f = open(file_name, 'w')
+            for task in self.task_list.values():
+                print task.options
+                f.write(task.name+'\n  Options:\n'+'\n'.join(['    '+x[0]+': '+str(x[1]) for x in task.options.items()])+'\n')
+            f.close()
+            
+    #INTERNAL FUNCTIONS
+    def add_detector(self, detector_name, listener):
+        id = self.detector_nid
+        self.detector_nid += 1
+        self.detectors[id] = [listener]
+        self.ai.detector_control.start(id, detector_name)
+    def remove_detector(self, id):
+        self.detectors.pop(id)
+        self.ai.detector_control.stop(id)
     def stop_script(self):
         if self.running_script:
             try:
@@ -248,10 +229,20 @@ class taskManager(aiProcess):
             self.task_list[self.current_task].active = False
         self.current_task = task.name
         task.active = True
+        
+    #MAIN LOOP
     def run(self):
+        #processing list
+        #-stop script requests
+        #-add/remove conditions
+        #-add/remove tasks
+        #-set task options
+        #-set condition options
+        #-check detectors running
+        #-process conditions
+        #-run scripts (always)
         while True:
-            self.conditions_changed.wait(1)
-            self.conditions_changed.clear()
+            self.events.wait(5)
             if self.request_stop.is_set():
                 self.request_stop.clear()
                 self.stop_script()
@@ -277,14 +268,11 @@ class taskManager(aiProcess):
                 error('The running script appears to have stopped, returning to default.')
                 self.start_default_script()
             info("task_manager still alive")
-        #sleep
 
 if __name__ == '__main__':
     p = optparse.OptionParser()
     p.add_option('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")
-    p.add_option('-m', '--mission', dest='mission', default='mission',
-                 type=str, action='store', help='which mission script to run (default = mission)')
     opts, args = p.parse_args()
     
     tm = taskManager(**opts.__dict__)
