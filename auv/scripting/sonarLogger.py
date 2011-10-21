@@ -20,23 +20,26 @@ class SonarLogger(object):
         self.node.join('sonarctl')
         self.node.join('sonarout')
 
+        # set up messages to log:
+        # methods defined like this to short-circuit one function call...
+        # perhaps this is a little bit of unnecessary optimisation, but these
+        # functions do get called a *lot*
+        self.onSonarDataMessage = self.logMessage
+        self.onSonarImageMessage = self.logMessage
+        self.onSpeedOfSoundMessage = self.logMessage
+        self.onTelemetry = self.logMessage # Log telemetry so that we have orientation data to match the sonar images
+        self.onGeminiStatusMessage = self.logMessage
+        self.onSonarControlMessage = self.logMessage
+        # These are defined normally because they sometimes print information
+        # and they aren't sent very frequently anyway
+        #self.onSonarControlMessage = self.logMessage
+        #self.onGeminiControlMessage = self.logMessage
+
     def onNewSession(self):
         if self.__sonar_params_message is not None:
             self.logMessage(self.__sonar_params_message)
         if self.__gemini_params_message is not None:
             self.logMessage(self.__gemini_params_message)
-
-    def onSonarDataMessage(self, m):
-        self.logMessage(m)
-
-    def onSonarImageMessage(self, m):
-        self.logMessage(m)
-
-    def onSpeedOfSoundMessage(self, m):
-        self.logMessage(m)
-    
-    def onGeminiStatusMessage(self, m):
-        self.logMessage(m)
 
     def onSonarControlMessage(self, m):
         self.logMessage(m)
