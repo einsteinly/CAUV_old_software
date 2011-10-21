@@ -23,7 +23,7 @@
 #include <boost/math/special_functions/hypot.hpp>
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <generated/types/Line.h>
 
