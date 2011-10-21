@@ -48,8 +48,10 @@ class ResizeNode: public Node{
             registerOutputID<image_ptr_t>("image_out");
             
             // parameters: scale factor, interpolation mode
-            registerParamID<float>("scale factor", 1.0f);
+            registerParamID<float>("scale factor", 1.0f, "applies to dimensions for which fixed sizes are zero");
             registerParamID<int>("interpolation mode", cv::INTER_LINEAR);
+            registerParamID<int>("fixed width", 0, "if not zero");
+            registerParamID<int>("fixed height", 0, "if not zero");
         }
     
         virtual ~ResizeNode(){
@@ -57,6 +59,38 @@ class ResizeNode: public Node{
         }
 
     protected:
+        struct applyResize: boost::static_visitor<augmented_mat_t>{
+            applyResize(cv::Size fix, float scale, int interp_mode)
+                : m_fixed_size(fix), m_scale(scale), m_interp_mode(interp_mode){
+            }
+            augmented_mat_t operator()(cv::Mat a) const{
+                cv::Mat r;
+                cv::resize(a, r, m_fixed_size, m_scale, m_scale, m_interp_mode);
+                return r;
+            }
+            augmented_mat_t operator()(NonUniformPolarMat a) const{
+                NonUniformPolarMat r;
+                cv::resize(a.mat, r.mat, m_fixed_size, m_scale, m_scale, m_interp_mode);
+                r.ranges = boost::make_shared< std::vector<float> >(r.mat.rows);
+                r.bearings = boost::make_shared< std::vector<float> >(r.mat.cols);
+
+                cv::Mat old_rows(a.ranges->size(), 1, CV_32FC1, (void*) &((*a.ranges)[0]));
+                cv::Mat new_rows(r.ranges->size(), 1, CV_32FC1, (void*) &((*r.ranges)[0]));
+                cv::resize(old_rows, new_rows, cv::Size(1,r.ranges->size()), 0, 0, cv::INTER_LINEAR);
+
+                cv::Mat old_cols(a.bearings->size(), 1, CV_32FC1, (void*) &((*a.bearings)[0]));
+                cv::Mat new_cols(r.bearings->size(), 1, CV_32FC1, (void*) &((*r.bearings)[0]));
+                cv::resize(old_cols, new_cols, cv::Size(r.bearings->size(),1), 0, 0, cv::INTER_LINEAR);
+                return r;
+            }
+            augmented_mat_t operator()(PyramidMat a) const{
+                error() << "resize does not support pyramids";
+                return a;
+            }
+            cv::Size m_fixed_size;
+            float m_scale;
+            int m_interp_mode;
+        };
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
@@ -64,12 +98,15 @@ class ResizeNode: public Node{
             
             float scale_fac = param<float>("scale factor");
             int interp = param<int>("interpolation mode");
+            int w = param<int>("fixed width");
+            int h = param<int>("fixed height");
             
-            cv::Mat new_mat;
+            augmented_mat_t in = img->augmentedMat();
+            augmented_mat_t resized;
 
             try{
-                cv::resize(img->mat(), new_mat, cv::Size(), scale_fac, scale_fac, interp);
-                r["image_out"] = boost::make_shared<Image>(new_mat);
+                resized = boost::apply_visitor(applyResize(cv::Size(w,h), scale_fac, interp), in);
+                r["image_out"] = boost::make_shared<Image>(resized);
             }catch(cv::Exception& e){
                 error() << "ResizeNode:\n\t"
                         << e.err << "\n\t"

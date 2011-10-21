@@ -163,6 +163,7 @@ class CHILer:
         Idx_Keyframe_nFreq = 1000
         # Frequency of absolute time lines:
         Dat_Time_Line_Freq = datetime.timedelta(minutes=5)
+        Read_Buf_Size = 0x10000
     def __init__(self, dirname):
         if not dirname.endswith(self.Const.Dir_Extn):
             dirname = dirname.rstrip('/\\') + self.Const.Dir_Extn
@@ -505,7 +506,7 @@ class ComponentPlayer(CHILer):
         # returned
         # postcondition: tell() is at the start of the line following the 
         # returned line
-        bufsize = 4096
+        bufsize = self.Const.Read_Buf_Size
         lbegin = ''
         while True:
             try:
@@ -538,7 +539,7 @@ class ComponentPlayer(CHILer):
     def previousMsgLine_LeaveTellAtStart(self):
         # precondition: tell() at start of following line
         # postcondition: tell() at start of returned line
-        bufsize = 4096
+        bufsize = self.Const.Read_Buf_Size
         line = ''
         # move past previous newline
         try:
