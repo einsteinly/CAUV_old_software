@@ -72,10 +72,17 @@ class DelayNode: public Node{
             
             // make sure output size is (almost) always the same as input size
             // there is a race condition here, but it doesn't have any
-            // disastrous effects (simultaneous of in->mat())
-            if(in->mat().size() != m_queue_image_size){
-                m_queue = std::queue<image_ptr_t>();
-                m_queue_image_size = in->mat().size();
+            // disastrous effects (simultaneous modification of in->mat())
+            try{
+                if(in->mat().size() != m_queue_image_size){
+                    m_queue = std::queue<image_ptr_t>();
+                    m_queue_image_size = in->mat().size();
+                }
+            }catch(boost::bad_get& e){
+                // oops, can't get size... hope for the best!
+                // TODO: compare metadata of other sorts of image using a
+                // visitor
+                ;
             }
 
             while(m_queue.size() > unsigned(delay_by))

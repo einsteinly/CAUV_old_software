@@ -52,6 +52,26 @@ class GaussianBlurNode: public Node{
         }
 
     protected:
+        // Apply Gaussian blur in-place
+        struct applyGaussian: boost::static_visitor<void>{
+            applyGaussian(float sigma) : m_sigma(sigma){ }
+            void operator()(cv::Mat a) const{
+                cv::GaussianBlur(
+                    a, a, cv::Size(1+6*int(0.5+m_sigma), 1+6*int(0.5+m_sigma)), m_sigma, m_sigma
+                );
+            }
+            void operator()(NonUniformPolarMat a) const{
+                // TODO: might want to filter with a range-dependent
+                // aperture... (can apply different x-y blur using
+                // cv::GaussianBlur - so only bearing filter aperture would
+                // change with range)
+                operator()(a.mat);
+            }
+            void operator()(PyramidMat a) const{
+                error() << "not implemented";
+            }
+            const float m_sigma;
+        };
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
@@ -65,9 +85,8 @@ class GaussianBlurNode: public Node{
             debug(4) << "GaussianBlurNode:" << sigma;
             
             try{
-                cv::Mat m = img->mat();
-                cv::GaussianBlur(m, m, cv::Size(1+6*sigma, 1+6*sigma), sigma);
-                img->mat(m);
+                augmented_mat_t m = img->augmentedMat();
+                boost::apply_visitor(applyGaussian(sigma), m);
                 r["image (not copied)"] = img;
             }catch(cv::Exception& e){
                 error() << "GaussianBlurNode:\n\t"
