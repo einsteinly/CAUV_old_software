@@ -1,6 +1,8 @@
 This top-level directory contains, in order of importance:
 
 Important things:
+=================
+
 setup.sh        - script to setup various things for development
 auv/            - folder containing code that runs on the AUV
 common/         - library used by c++ programs to talk to the messaging system:
@@ -27,14 +29,49 @@ django/         - code for the web interface of the issue tracker (pitz)
 sim/            - Simulation node, the aim is to provide indistinguishable
                   output from the real hardware in order to test the rest of the 
                   software in a virtual environment.
-                  
+
 Less important things:
+=======================
+
 cmake/            - files for the build system
 CMakeLists.txt    - top-level build file for the CMake build system
 msg-format.txt    - description of the message format
 
 
+
+
+Installing Dependencies
+=======================
+
+On a linux system using the apt package manager, this will install most of the
+dependencies (it might take a while!)
+
+sudo apt-get install libboost-dev cmake cmake-curses-gui python-cheetah \
+python-ply python-numpy python-psutil python-setuptools qt4-dev-tools \
+libqt4-dev qt4-designer qt4-doc libftdi-dev libftgl-dev vim
+
+
+And some of the python dependencies are only available via easy install:
+
+sudo easy_install psi blist Quaternion
+
+
+These also need to be compiled from source: (email the mailing list if you
+have trouble or need help)
+
+OpenCV >= 2.3.1 (http://opencv.willowgarage.com/wiki/InstallGuide)
+libspread       (http://data.cambridgeauv.co.uk/deps/)
+libssrcspread   (http://data.cambridgeauv.co.uk/deps/)
+
+
+If you've installed all these, and something still seems to be missing, please
+add it to this list!  
+
+
+
+
 Random technical stuff:
+=======================
 Dependancies:
 This is an (incomplete!) list of the libraries required for things to build
 correctly:
@@ -50,6 +87,7 @@ common:
     boost- >= 1.43 (but go for the most recent available), including boost-python
     python 2.7
     OpenCV (>= 2.2)
+    !!! These configure commands might not be necessary
     spread (./configure --with-pic CFLAGS="-enable-shared -fPIC")
     libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
 
