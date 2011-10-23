@@ -60,8 +60,8 @@ These also need to be compiled from source: (email the mailing list if you
 have trouble or need help)
 
 OpenCV >= 2.3.1 (http://opencv.willowgarage.com/wiki/InstallGuide)
-libspread       (http://data.cambridgeauv.co.uk/deps/)
-libssrcspread   (http://data.cambridgeauv.co.uk/deps/)
+libspread       (http://data.cambridgeauv.co.uk/files/deps/spread-src-4.1.0.tbz)
+libssrcspread   (http://data.cambridgeauv.co.uk/files/deps/libssrcspread-1.0.9.tbz)
 
 
 If you've installed all these, and something still seems to be missing, please

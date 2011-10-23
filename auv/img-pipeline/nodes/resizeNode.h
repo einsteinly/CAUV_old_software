@@ -80,7 +80,7 @@ class ResizeNode: public Node{
 
                 cv::Mat old_cols(a.bearings->size(), 1, CV_32FC1, (void*) &((*a.bearings)[0]));
                 cv::Mat new_cols(r.bearings->size(), 1, CV_32FC1, (void*) &((*r.bearings)[0]));
-                cv::resize(old_cols, new_cols, cv::Size(r.bearings->size(),1), 0, 0, cv::INTER_LINEAR);
+                cv::resize(old_cols, new_cols, cv::Size(1,r.bearings->size()), 0, 0, cv::INTER_LINEAR);
                 return r;
             }
             augmented_mat_t operator()(PyramidMat a) const{
