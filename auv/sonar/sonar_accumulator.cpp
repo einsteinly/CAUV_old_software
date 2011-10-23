@@ -1,3 +1,17 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #include "sonar_accumulator.h"
 
 #include <cmath>
@@ -285,21 +299,26 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
         return false;
     }
     reset();
-    const uint32_t num_lines = image.rangeEnd - image.rangeStart;
+    const uint32_t num_lines = std::floor(0.5f + (image.rangeEnd - image.rangeStart) / image.rangeConversion);
+    const uint32_t start_line = std::floor(0.5f + image.rangeStart / image.rangeConversion);
+    const uint32_t end_line = std::floor(0.5f + image.rangeEnd / image.rangeConversion);
     cv::Mat m = m_img->mat();
     const int32_t radius = floor((min(m.rows, m.cols)-1)/2);
-    debug() << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
     const uint32_t num_bearings = bearing_bins.size()-1;
     const float cx = radius;
     const float cy = radius;
-    const float bscale = float(radius)/image.rangeEnd;
+    const float bscale = radius * image.rangeConversion / image.rangeEnd;
+
+    debug() << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
 
     ensureGemAngleTablesFor(bearing_bins);
 
     for(uint32_t line = 0; line < num_lines; line++){
-        uint32_t range_line = image.rangeStart + line;
+        uint32_t range_line = start_line + line;
         float inner_radius = range_line * bscale;
         float outer_radius = (range_line+1) * bscale;
+
+        assert(range_line != end_line);
 
         for(uint32_t i = 0; i < num_bearings; i++){
             /*int32_t from = bearing_bins[i];

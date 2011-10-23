@@ -251,6 +251,7 @@ class CHILLogger(LoggerBase):
                     sleep_step = min((time_to_sleep_for/playback_rate, 0.2))
                     time_to_sleep_for -= sleep_step*playback_rate
                     time.sleep(sleep_step)
+                sys.stdout.write('.'); sys.stdout.flush()
                 self.node.send(m)
         except Exception, e:
             error('error in playback: ' + str(e))
@@ -277,16 +278,13 @@ class CHILLogger(LoggerBase):
         pass
     def addComment(self, comment_str):
         info('recoding comment "%s"' % comment_str)
-        self.logObject(MessageLoggerComment(comment_str))
+        self.logMessage(msg.DebugMessage(msg.DebugType.Info, comment_str))
     def logObject(self, d):
         warning('CHIL does not support generic object logging')
-        # TODO: save as pickle in string field of a message of some sort? 
+        self.logMessage(msg.DebugMessage(msg.DebugType.Debug, str(d)))
     def logMessage(self, m):
         if self.recordingIsActive():        
             self.__logger.log(m)
-    def close(self):
-        self.__logger.close()
-        self.__logger = None
 
 class _DeprecatedShelfLogger(LoggerBase):
     def __init__(self, cauv_node, shelf_fname, do_record, playback_rate = 1.0):

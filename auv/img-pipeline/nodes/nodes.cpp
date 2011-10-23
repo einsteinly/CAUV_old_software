@@ -1,9 +1,11 @@
+// !!! add new nodes to nodes2.cpp, not here, this file takes too long to
+// compile already!
+
 #include "../nodeFactory.h"
 
 #include "copyNode.h"
 #include "fileInputNode.h"
 #include "fileOutputNode.h"
-#include "resizeNode.h"
 #include "localDisplayNode.h"
 #include "directCameraInputNode.h"
 #include "cameraInputNode.h"
@@ -14,7 +16,6 @@
 #include "convertColourNode.h"
 #include "guiOutputNode.h"
 #include "houghCirclesNode.h"
-#include "gaussianBlurNode.h"
 #include "medianFilterNode.h"
 #include "bilateralFilterNode.h"
 #include "splitRGBNode.h"
@@ -23,7 +24,6 @@
 #include "splitYUVNode.h"
 #include "combineYUVNode.h"
 #include "combineHSVNode.h"
-#include "levelsNode.h"
 #include "mixNode.h"
 #include "percentileNode.h"
 #include "sonarInputNode.h"
@@ -43,8 +43,6 @@
 #include "histogramSegmentationArbNode.h"
 #include "runningAverageNode.h"
 #include "copyNodeMask.h"
-#include "fastMedianNode.h"
-#include "fastCornersNode.h"
 #include "drawCornersNode.h"
 #include "broadcastCornersNode.h"
 #include "shiTomasiCornersNode.h"
@@ -63,7 +61,6 @@
 #include "surfCornersNode.h"
 #include "clampNode.h"
 #include "broadcastKeypointsNode.h"
-#include "drawKeyPointsNode.h"
 #include "mathAddMultNode.h"
 #include "mergeSimilarLinesNode.h"
 
@@ -74,7 +71,6 @@ namespace imgproc{
 DEFINE_NFR(CopyNode, NodeType::Copy);
 DEFINE_NFR(FileInputNode, NodeType::FileInput);
 DEFINE_NFR(FileOutputNode, NodeType::FileOutput);
-DEFINE_NFR(ResizeNode, NodeType::Resize);
 DEFINE_NFR(LocalDisplayNode, NodeType::LocalDisplay);
 DEFINE_NFR(CameraInputNode, NodeType::CameraInput);
 DEFINE_NFR(DirectCameraInputNode, NodeType::DirectCameraInput);
@@ -84,7 +80,6 @@ DEFINE_NFR(CannyNode, NodeType::Canny);
 DEFINE_NFR(ConvertColourNode, NodeType::ConvertColour);
 DEFINE_NFR(GuiOutputNode, NodeType::GuiOutput);
 DEFINE_NFR(HoughCirclesNode, NodeType::HoughCircles);
-DEFINE_NFR(GaussianBlurNode, NodeType::GaussianBlur);
 DEFINE_NFR(MedianFilterNode, NodeType::MedianFilter);
 DEFINE_NFR(BilateralFilterNode, NodeType::BilateralFilter);
 DEFINE_NFR(SplitRGBNode, NodeType::SplitRGB);
@@ -93,7 +88,6 @@ DEFINE_NFR(SplitHSVNode, NodeType::SplitHSV);
 DEFINE_NFR(SplitYUVNode, NodeType::SplitYUV);
 DEFINE_NFR(CombineYUVNode, NodeType::CombineYUV);
 DEFINE_NFR(CombineHSVNode, NodeType::CombineHSV);
-DEFINE_NFR(LevelsNode, NodeType::Levels);
 DEFINE_NFR(MixNode, NodeType::Mix);
 DEFINE_NFR(PercentileNode, NodeType::Percentile);
 DEFINE_NFR(SonarInputNode, NodeType::SonarInput);
@@ -113,8 +107,6 @@ DEFINE_NFR(CornerHarrisNode, NodeType::CornerHarris);
 DEFINE_NFR(HistogramSegmentationArbNode, NodeType::HistogramSegmentationArb);
 DEFINE_NFR(RunningAverageNode, NodeType::RunningAverage);
 DEFINE_NFR(CopyNodeMask, NodeType::CopyMask);
-DEFINE_NFR(FastMedianNode, NodeType::FastMedian);
-DEFINE_NFR(FASTCornersNode, NodeType::FASTCorners);
 DEFINE_NFR(DrawCornersNode, NodeType::DrawCorners);
 DEFINE_NFR(BroadcastCornersNode, NodeType::BroadcastCorners);
 DEFINE_NFR(ShiTomasiCornersNode, NodeType::ShiTomasiCorners);
@@ -137,7 +129,6 @@ template<> DEFINE_NFR(ClampNode<int>, NodeType::ClampInt);
 template<> DEFINE_NFR(ClampNode<float>, NodeType::ClampFloat);
 DEFINE_NFR(SURFCornersNode, NodeType::SURFCorners);
 DEFINE_NFR(BroadcastKeypointsNode, NodeType::BroadcastKeyPoints);
-DEFINE_NFR(DrawKeyPointsNode, NodeType::DrawKeyPoints);
 template<> DEFINE_NFR(MathAddMultNode<int>, NodeType::MathAddMultInt);
 template<> DEFINE_NFR(MathAddMultNode<float>, NodeType::MathAddMultFloat);
 DEFINE_NFR(MergeSimilarLinesNode, NodeType::MergeSimilarLines);

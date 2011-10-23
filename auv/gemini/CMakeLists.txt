@@ -13,6 +13,7 @@ target_link_libraries (
     gemini_node
     common
     GeminiSDK
+    ${OpenCV_LIBS}
 )
 
 

@@ -26,7 +26,9 @@ Default_Messages_To_Watch = (
 )
 
 Ignore_Message_Attrs = (
-    'group'
+    'group',
+    'chil',
+    'msgId'
 )
 
 def sendSavedMessages(node, shelf):

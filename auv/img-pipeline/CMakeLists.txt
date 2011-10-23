@@ -17,6 +17,7 @@ add_executable (
     node.cpp
     scheduler.cpp
     nodes/nodes.cpp
+    nodes/nodes2.cpp
 )
 cauv_install ( img-pipeline )
 

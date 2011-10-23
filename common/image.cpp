@@ -1,3 +1,17 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #include "image.h"
 
 #include <algorithm>
@@ -31,11 +45,26 @@ cauv::PyramidMat cauv::PyramidMat::clone() const{
 }
 
 namespace cauv{
-struct clone: public boost::static_visitor<cauv::augmented_mat_t>{
+struct clone: boost::static_visitor<cauv::augmented_mat_t>{
     template <typename T>
-    cauv::augmented_mat_t operator()(T const& r) const
-    {
+    cauv::augmented_mat_t operator()(T const& r) const{
         return r.clone();
+    }
+};
+// used for serialising
+// !!! TODO: serialise everything
+struct getPrincipalMat: boost::static_visitor<cv::Mat>{
+    cv::Mat operator()(cv::Mat a) const{
+        return a;
+    }
+    cv::Mat operator()(NonUniformPolarMat a) const{
+        return a.mat;
+    }
+    cv::Mat operator()(PyramidMat a) const{
+        if(a.levels.size())
+            return a.levels[0];
+        else
+            return cv::Mat();
     }
 };
 } // namespace cauv
@@ -123,7 +152,7 @@ void cauv::serialise(svec_ptr p, Image const& v){
     int32_t load_flags = -1;
     
     // !!! TODO: serialise augmented data
-    cv::Mat source = boost::get<cv::Mat>(v.m_img);
+    cv::Mat source = boost::apply_visitor(getPrincipalMat(), v.m_img);
     cv::Mat converted;
     switch(source.channels()){
         case 1:

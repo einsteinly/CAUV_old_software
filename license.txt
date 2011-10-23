@@ -1,0 +1,48 @@
+This file describes the copyright ownership of the CAUV software, it is
+relevant to all files referring to this file, license.txt.
+
+Cambridge Hydronautics Ltd. is a company established to own the copyright
+to CAUV software, so that it can be owned by a single entity, and there
+is no need to repeatedly contact the many and various contributors.
+
+This is desirable because all of the significant contributions to the
+software would not work without each other - they are each completely
+dependant on other parts in order to function, but unless each of the
+authors assigned copyright to a single entity then the parts of the code
+that each individual wrote would remain their property.
+
+The intent of this license is to create a platform on which new,
+advanced, and interested ideas for AUVs and autonomous software can be
+developed by providing a stable platform for them to be built on.
+In the future we hope that new members of the CAUV team will develop
+better and more advanced algorithms, and take advantage of this software
+platform that is and will remain freely given!
+
+New files, and files that don't include a notice of copyright ownership
+to Cambridge Hydronautics Ltd. are not covered by this license. They
+remain owned by whoever writes them.
+
+To perpetuate the arrangement, changes made to files which are marked as
+copyright Cambridge Hydronautics Ltd. must be made in the understanding
+Cambridge Hydronautics Ltd. retains copyright to the whole file.
+The work of third parties for which you do not have the right to assign
+copyright must not be included in these marked files. By editing these
+marked files you agree to indemnify Cambridge Hydronautics Ltd. in
+respect of claims made against it by third parties for copyright 
+infringement related to the publication of this software, or concerning
+the authorship of this software.
+
+Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+society for all purposes other than publication of this source code.
+
+
+Please direct queries to the officers of Cambridge Hydronautics:
+    James Crosby    james@camhydro.co.uk
+    Andy Pritchard   andy@camhydro.co.uk
+    Leszek Swirski leszek@camhydro.co.uk
+    Hugo Vincent     hugo@camhydro.co.uk
+
+Cambridge Hydronautics Ltd. is registered No. 07803296 in England & Wales.
+
+
+
