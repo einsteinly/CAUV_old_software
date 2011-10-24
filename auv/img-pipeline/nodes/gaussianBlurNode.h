@@ -67,7 +67,7 @@ class GaussianBlurNode: public Node{
                 // change with range)
                 operator()(a.mat);
             }
-            void operator()(PyramidMat a) const{
+            void operator()(PyramidMat) const{
                 error() << "not implemented";
             }
             const float m_sigma;

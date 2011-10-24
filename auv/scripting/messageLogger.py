@@ -251,6 +251,7 @@ class CHILLogger(LoggerBase):
                     sleep_step = min((time_to_sleep_for/playback_rate, 0.2))
                     time_to_sleep_for -= sleep_step*playback_rate
                     time.sleep(sleep_step)
+                #print 's: %s' % m.__class__.__name__
                 sys.stdout.write('.'); sys.stdout.flush()
                 self.node.send(m)
         except Exception, e:

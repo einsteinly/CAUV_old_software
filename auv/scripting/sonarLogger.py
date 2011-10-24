@@ -91,7 +91,7 @@ if __name__ == '__main__':
         print 'this program takes no arguments'
         exit(1)
    
-    cauv_node = node.Node("py-slog") 
+    cauv_node = node.Node("py-slog")
     try: 
         if opts.do_profile:
             import cProfile

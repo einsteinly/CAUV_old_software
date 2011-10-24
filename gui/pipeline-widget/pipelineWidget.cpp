@@ -540,8 +540,10 @@ void PipelineWidget::paintGL(){
     glTranslatef(-m_win_centre*m_pixels_per_unit);
     glTranslatef(m_overkey->m_pos);
     m_overkey->draw(drawtype_e::no_flags);
-
+    
+    #ifndef CAUV_NO_DEBUG
     glCheckError();
+    #endif
 
     l1.unlock();
     lock_t l2(m_redraw_posted_lock);
@@ -941,7 +943,10 @@ void PipelineWidget::calcLayout(){
     {
         node_map_t::iterator np = m_nodes.find(boost::lexical_cast<node_id>(n.name()));
         if (np != m_nodes.end()) {
-            np->second->m_pos = Point(n.coord().x - np->second->bbox().w() / 2.0, n.coord().y + np->second->bbox().h() / 2.0);   
+            np->second->m_pos = Point(
+                n.coord().x - np->second->bbox().w() / 2.0,
+                n.coord().y + np->second->bbox().h() / 2.0
+            );
         }
     }
  

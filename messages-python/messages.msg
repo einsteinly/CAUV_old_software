@@ -82,6 +82,7 @@ enum NodeType : int8 {
     MergeSimilarLines,
     DirectCameraInput,
     SonarSLAM,
+    BearingRangeToXY,
 }
 enum NodeStatus : int8 {
     None = 0,
