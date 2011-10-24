@@ -83,6 +83,7 @@ enum NodeType : int8 {
     DirectCameraInput,
     SonarSLAM,
     BearingRangeToXY,
+    TransformKeyPoints,
 }
 enum NodeStatus : int8 {
     None = 0,

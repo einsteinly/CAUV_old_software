@@ -7,15 +7,14 @@ if (NOT CAUV_SEND_IO_STATUS_MESSAGES)
 endif()
 
 
-# Visualisation can't work because of non-main-thread issues - at least on OS X
-option (CAUV_CLOUD_VISUALISATION "Display point clouds locally (requires pcl visualization library" OFF)
-if (CAUV_CLOUD_VISUALISATION)
-    find_package (PCL REQUIRED COMPONENTS common registration kdtree visualization)
+option (CAUV_CLOUD_DUMP "Dump point-clouds to file" OFF)
+if (CAUV_CLOUD_DUMP)
+    find_package (PCL REQUIRED COMPONENTS common registration kdtree io)
     set (PCL_LIBS ${PCL_COMMON_LIBRARIES}
                   ${PCL_REGISTRATION_LIBRARIES}
                   ${PCL_KDTREE_LIBRARIES}
-                  ${PCL_VISUALIZATION_LIBRARIES})
-    add_definitions (-DCAUV_CLOUD_VISUALISATION)
+                  ${PCL_IO_LIBRARIES})
+    add_definitions (-DCAUV_CLOUD_DUMP)
 else ()
     find_package (PCL REQUIRED COMPONENTS common registration kdtree) 
     set (PCL_LIBS ${PCL_COMMON_LIBRARIES}

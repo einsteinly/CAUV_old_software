@@ -1,8 +1,12 @@
 #include "sonarSLAMNode.h"
 
 #include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
+//#include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
 #include <pcl/common/transforms.h>
+#ifdef CAUV_CLOUD_DUMP
+#include <pcl/io/pcd_io.h>
+#endif
 #ifdef CAUV_CLOUD_VISUALISATION
 #include <pcl/visualization/cloud_viewer.h>
 #endif
@@ -15,7 +19,7 @@ typedef pcl::PointCloud<pt_t> cloud_t;
 // actually a boost shared_ptr (I think...):
 typedef cloud_t::Ptr cloud_ptr;
 
-static uint32_t Min_Initial_Points = 50;
+static uint32_t Min_Initial_Points = 10;
 
 // avoid including PCL stuff in the header:
 namespace cauv{
@@ -39,8 +43,10 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps, Eigen::Matrix4f co
     // split transform into affine parts:
     Eigen::Matrix3f rotate    = initial_transform.block<3,3>(0, 0);
     Eigen::Vector3f translate = initial_transform.block<3,1>(0, 3);
-
-    debug() << "kpsToCloud: rot:\n" << rotate << "\ntrans:\n" << translate;
+    
+    Eigen::Vector3f t = rotate*Eigen::Vector3f(1,0,0);
+    float rz = 180*M_PI*std::atan2(t[1], t[0]);
+    debug() << "kpsToCloud: rot:" << rz << "degrees, trans:" << translate[0] <<","<< translate[1];
 
     cloud_ptr r = boost::make_shared<cloud_t>();
     r->height = 1;
@@ -60,10 +66,7 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps, Eigen::Matrix4f co
 
 void SonarSLAMNode::init(){
     m_impl = boost::make_shared<SonarSLAMImpl>();
-    m_impl->last_transformation << 1,0,0,0,
-                                   0,1,0,0,
-                                   0,0,1,0,
-                                   0,0,0,1;
+    m_impl->last_transformation = Eigen::Matrix4f::Identity();
     
     #ifdef CAUV_CLOUD_VISUALISATION
     m_impl->viewer_count++;
@@ -77,6 +80,12 @@ void SonarSLAMNode::init(){
     // input (well, parameter input that must be new for the node to be
     // executed):
     registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints used to update map", Must_Be_New);
+    registerParamID("clear", bool(false), "true => discard accumulated point cloud");
+    registerParamID("max iters", int(500), "");
+    registerParamID("transform eps", float(1e-8), "difference between transforms in successive iters for convergence");
+    registerParamID("euclidean fitness", float(1e-6), "max error between consecutive steps for non-convergence");
+    registerParamID("reject threshold", float(5), "RANSAC outlier rejection distance");
+    registerParamID("max correspond dist", float(5), "");
     
     // outputs:
     //registerOutputID<image_ptr_t>("image_out");
@@ -87,6 +96,16 @@ void SonarSLAMNode::init(){
 
 Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     out_map_t r;
+
+    bool clear = param<bool>("clear");
+    if(clear)
+        m_impl->whole_cloud.reset();
+    
+    int max_iters = param<int>("max iters");
+    float euclidean_fitness = param<float>("euclidean fitness");
+    float transform_eps = param<float>("transform eps");
+    float reject_threshold = param<float>("reject threshold");
+    float max_correspond_dist = param<float>("max correspond dist");
     
     cloud_ptr new_cloud = kpsToCloud(
         param< std::vector<KeyPoint> >("keypoints"),
@@ -101,20 +120,26 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         if(new_cloud->points.size() > Min_Initial_Points){
             debug() << "new cloud with" << new_cloud->points.size() << "points";
             m_impl->whole_cloud = boost::make_shared<cloud_t>(*new_cloud);
-            debug() << "transformation is:\n" << m_impl->last_transformation;
+            debug(3) << "transformation is:\n" << m_impl->last_transformation;
         }else{
             debug() << "not enough points to initialise whole cloud";
         }
     }else{
         debug() << "trying to match" << new_cloud->points.size() << "points to cloud";
-        pcl::IterativeClosestPoint<pt_t,pt_t> icp;
+        /*
+        *m_impl->whole_cloud += *new_cloud;
+        pcl::io::savePCDFile("sonarSLAM.pcd", *m_impl->whole_cloud);
+        */
+        
+        pcl::IterativeClosestPointNonLinear<pt_t,pt_t> icp;
         icp.setInputCloud(new_cloud);
         icp.setInputTarget(m_impl->whole_cloud);
 
-        icp.setMaxCorrespondenceDistance(0.1);
-        icp.setMaximumIterations(50);
-        icp.setTransformationEpsilon(1e-6); // difference between transforms in successive iters for convergence
-        icp.setEuclideanFitnessEpsilon(1);  // max error between consecutive steps for non-convergence
+        icp.setMaxCorrespondenceDistance(max_correspond_dist);
+        icp.setMaximumIterations(max_iters);
+        icp.setTransformationEpsilon(transform_eps);
+        icp.setEuclideanFitnessEpsilon(euclidean_fitness);
+        icp.setRANSACOutlierRejectionThreshold(reject_threshold);
 
         cloud_t final;
         icp.align(final);
@@ -133,6 +158,13 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             #ifdef CAUV_CLOUD_VISUALISATION
             m_impl->viewer->showCloud(m_impl->whole_cloud);
             #endif
+
+            #ifdef CAUV_CLOUD_DUMP
+            static uint32_t n = 0;
+            pcl::io::savePCDFile(mkStr() << "sonarSLAM" << n++ << ".pcd", *m_impl->whole_cloud);
+            pcl::io::savePCDFile(mkStr() << "sonarSLAM.pcd",  *m_impl->whole_cloud);
+            #endif
+            
         }else{
             debug() << "points will not be added to the whole cloud (not converged)";
         }

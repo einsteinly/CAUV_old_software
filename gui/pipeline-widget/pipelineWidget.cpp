@@ -101,12 +101,7 @@ void PipelineWidget::initKeyBindings(){
     
     typedef boost::shared_ptr<GraphRequestMessage> mk_gr_msg_f_t(std::string const&);
     ok::action_ptr_t gm_msg_act = boost::make_shared<ok::Action>(
-        boost::bind(&PipelineWidget::send, this,
-            Defer< boost::shared_ptr<Message> >(boost::bind(
-                (mk_gr_msg_f_t*)boost::make_shared<GraphRequestMessage, std::string>,
-                Defer<std::string>(boost::bind(&PipelineWidget::pipelineName, this))
-            ))
-        ),
+        boost::bind(&PipelineWidget::reload, this),        
         ok::Action::null_f,
         "reload",
         boost::make_shared<Text>(this, "reload", dec_font, dec_font_size)
@@ -161,13 +156,7 @@ void PipelineWidget::setPipelineName(std::string const& name){
     lock_t l(m_lock);
     m_pipeline_name = name;
 
-    m_nodes.clear();
-    m_imgnodes.clear();
-    m_arcs.clear();
-    m_owning_mouse.clear();
-    m_receiving_move.clear();
-    m_contents.clear();
-
+    clear();
     info() << "controlled pipeline name set to" << name;
 
     // for anyone interested in the name, e.g. displaying it to identify this
@@ -224,6 +213,19 @@ void PipelineWidget::remove(menu_ptr_t p){
     if(m_menu == p)
         m_menu.reset();
     remove(renderable_ptr_t(p));
+}
+
+void PipelineWidget::clear(){
+    m_nodes.clear();
+    m_imgnodes.clear();
+    m_arcs.clear();
+    m_owning_mouse.clear();
+    m_receiving_move.clear();
+    m_contents.clear();
+}
+void PipelineWidget::reload(){
+    clear();
+    send(boost::make_shared<GraphRequestMessage, std::string>(pipelineName()));
 }
 
 void PipelineWidget::add(renderable_ptr_t r){
