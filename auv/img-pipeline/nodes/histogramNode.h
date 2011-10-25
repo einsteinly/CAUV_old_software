@@ -28,7 +28,7 @@ class HistogramNode: public Node{
             registerInputID("image_in");
             
             //Output histogram
-            registerOutputID<NodeParamValue>("histogram");
+            registerOutputID("histogram", std::vector<float>());
             
             //Parameters
             registerParamID<int>("Number of bins", 42);

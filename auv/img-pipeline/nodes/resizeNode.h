@@ -45,7 +45,7 @@ class ResizeNode: public Node{
             registerInputID("image_in");
             
             // one output
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID("image_out");
             
             // parameters: scale factor, interpolation mode
             registerParamID<float>("scale factor", 1.0f, "applies to dimensions for which fixed sizes are zero");

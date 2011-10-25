@@ -43,7 +43,7 @@ class CannyNode: public Node{
             registerInputID(Image_In_Name);
             
             // one output
-            registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
+            registerOutputID(Image_Out_Copied_Name, image_ptr_t());
             
             // parameters:
             registerParamID<float>("threshold 1", 50);

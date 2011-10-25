@@ -386,12 +386,22 @@ void Node::exec(){
     foreach(out_map_t::value_type& v, outputs){
         private_out_map_t::iterator i = m_outputs.find(v.first);
         if(i == m_outputs.end()){
-            error() << "exec() produced output at an unknown id:" << v.first
-                    << "(ignored)";
+            error() << *this << "exec() produced output at an unknown id:"
+                    << v.first << "(ignored)";
             continue;
         }
         const output_ptr op = i->second;
-        if(op->value.which() == v.second.which()){
+        if(op->value.which() != v.second.which()){
+            error() << *this << "exec() produced output of the wrong type for id:"
+                    << v.first << "(ignored)";
+        }else if(op->value.which() == OutType_Parameter &&
+                 boost::get<NodeParamValue>(op->value).which() !=
+                 boost::get<NodeParamValue>(v.second).which()){
+            uint32_t got_which = boost::get<NodeParamValue>(op->value).which();
+            uint32_t exp_which = boost::get<NodeParamValue>(v.second).which();
+            error() << *this << "exec() produced output of the wrong parameter type for id:"
+                    << v.first << "(ignored) - got type" << got_which << "expected" << exp_which;
+        }else{
             clearNewOutputDemanded(v.first);
             op->value = v.second;
             if(op->targets.size()){
@@ -414,9 +424,6 @@ void Node::exec(){
             }else{
                 debug(5) << "no children to prompt for output on:" << v.first;
             }
-        }else{
-            error() << "exec() produced output of the wrong type for id:"
-                    << v.first << "(ignored)";
         }
     }
     ol.unlock();

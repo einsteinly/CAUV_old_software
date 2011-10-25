@@ -43,7 +43,7 @@ class NetInputNode: public InputNode{
             // registerInputID()
             
             // one output:
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID("image_out");
             
             // one parameter: the source camera
             registerParamID<int>("camera id", CameraID::Forward);

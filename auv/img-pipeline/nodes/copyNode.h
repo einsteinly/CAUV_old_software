@@ -43,7 +43,7 @@ class CopyNode: public Node{
             registerInputID("image");
             
             // output:
-            registerOutputID<image_ptr_t>("image copy");
+            registerOutputID("image copy", image_ptr_t());
             
             // no parameters
             // registerParamID<>();

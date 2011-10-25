@@ -48,7 +48,7 @@ class CameraInputNode: public AsynchronousNode{
             // registerInputID()
             
             // one output:
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID("image_out", image_ptr_t());
             
             // parameters:
             registerParamID<int>("device id", 0);

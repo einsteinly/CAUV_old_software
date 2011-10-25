@@ -39,12 +39,8 @@ class LocalDisplayNode: public OutputNode{
             registerInputID("image_in");
             
             cv::namedWindow("LocalDisplayNode", CV_WINDOW_AUTOSIZE);
-            
             // no outputs
-            // registerOutputID<image_ptr_t>();
-            
-            // no parameter
-            // registerParamID<>(,);
+            // no parameters
         }
         
         virtual ~LocalDisplayNode(){

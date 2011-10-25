@@ -31,6 +31,8 @@
 namespace cauv{
 namespace imgproc{
 
+// !!! FIXME: actually only integer parameter now parameters have type-safety
+// this should probably be merged into the valueInput node
 class NullParamNode: public Node{
     public:
         NullParamNode(ConstructArgs const& args)
@@ -45,11 +47,10 @@ class NullParamNode: public Node{
             //registerInputID(Image_In_Name);
             
             // one output:
-            registerOutputID<NodeParamValue>("out");
+            registerOutputID("out", int());
             
             // parameters:
-            registerParamID<NodeParamValue>("in", NodeParamValue(),
-                                            "the input"); 
+            registerParamID("in", int(), "the input"); 
         }
     
         virtual ~NullParamNode(){

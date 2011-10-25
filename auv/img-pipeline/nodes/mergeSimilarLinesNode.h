@@ -48,7 +48,7 @@ class MergeSimilarLinesNode: public Node{
             m_speed = slow;
             
             // one output
-            registerOutputID< NodeParamValue >("lines");
+            registerOutputID("lines", std::vector<Line>());
             
             // parameters:
             registerParamID< float >("angle epsilon", 0.3f);

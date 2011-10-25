@@ -47,7 +47,7 @@ class SURFCornersNode: public Node{
             registerInputID(Image_In_Name);
             
             // one output:
-            registerOutputID< NodeParamValue >("corners (KeyPoint)");
+            registerOutputID("corners (KeyPoint)", std::vector<KeyPoint>());
             
             // parameters:
             registerParamID<float>("hessian threshold", 100,

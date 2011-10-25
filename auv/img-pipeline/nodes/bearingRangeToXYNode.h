@@ -49,7 +49,7 @@ class BearingRangeToXYNode: public Node{
             );
             
             // output
-            registerOutputID<NodeParamValue>("keypoints");
+            registerOutputID("keypoints", std::vector<KeyPoint>());
         }
     
         virtual ~BearingRangeToXYNode(){

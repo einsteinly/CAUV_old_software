@@ -43,7 +43,7 @@ class ConvertColourNode: public Node{
             registerInputID("image in");
             
             // one output
-            registerOutputID<image_ptr_t>("image out");
+            registerOutputID("image out", image_ptr_t());
             
             // parameter:
             registerParamID<std::string>("output format", "grey",

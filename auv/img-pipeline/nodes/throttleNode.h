@@ -57,8 +57,8 @@ class ThrottleNode: public Node{
             registerInputID(Image_In_Name);
 
             // outputs:
-            registerOutputID<image_ptr_t>(Image_Out_Name);
-            registerOutputID<NodeParamValue>("actual frequency");
+            registerOutputID(Image_Out_Name);
+            registerOutputID("actual frequency", float(0));
 
             // rate parameter (Hz)
             registerParamID<float>("target frequency", 20, "maximum frequency (Hz)");

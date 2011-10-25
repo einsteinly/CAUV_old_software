@@ -29,7 +29,7 @@ class QuickSegmentNode: public OutputNode{
             registerInputID("image");
             
             // one output:
-            registerOutputID<image_ptr_t>("mask");
+            registerOutputID("mask");
             
             // parameters:
             registerParamID<float>("scale", 1.0);

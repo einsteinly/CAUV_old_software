@@ -29,7 +29,7 @@ class ThresholdMaskNode: public Node{
             registerInputID("channel (not copied)"); // must be matrix of a single channel
 
             // one output
-            registerOutputID<image_ptr_t>("output mask");
+            registerOutputID("output mask");
 
             // one parameter
             registerParamID<int>("threshold (>= is masked)",127);

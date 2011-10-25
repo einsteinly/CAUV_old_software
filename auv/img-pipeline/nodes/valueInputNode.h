@@ -31,7 +31,7 @@ class ValueInputNode: public Node{
 
         void init(){
             registerParamID<Value_T>("value", Value_T(), "input value");
-            registerOutputID<NodeParamValue>("value");
+            registerOutputID("value", Value_T());
         }
     
         virtual ~ValueInputNode(){

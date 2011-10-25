@@ -44,7 +44,7 @@ class MixNode: public Node{
             registerInputID("mix");
 
             // one output
-            registerOutputID<image_ptr_t>("image (not copied)");
+            registerOutputID("image (not copied)");
             
             // parameters:
             registerParamID<float>("image fac", 1);
@@ -77,15 +77,18 @@ class MixNode: public Node{
                 return a;
             }
             augmented_mat_t operator()(NonUniformPolarMat a) const{
-                operator()(a.mat);
+                cv::Mat mix = boost::get<NonUniformPolarMat>(m_mix).mat;
+                a.mat = a.mat*m_img_fac + mix*m_mix_fac;
+                if (m_do_abs)
+                    a.mat = cv::abs(a.mat);
                 return a;
             }
             augmented_mat_t operator()(PyramidMat) const{
                 throw std::runtime_error("Pyramid Mat not supported");
             }
             const augmented_mat_t m_mix;
-            const float m_mix_fac;
             const float m_img_fac;
+            const float m_mix_fac;
             const bool m_do_abs;
         };
 

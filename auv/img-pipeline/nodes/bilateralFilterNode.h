@@ -41,7 +41,7 @@ class BilateralFilterNode: public Node{
             registerInputID("image in");
             
             // one output
-            registerOutputID<image_ptr_t>("image out");
+            registerOutputID("image out", image_ptr_t());
             
             // parameters:
             //  diameter - diameter of pixel neighborhood (if 0, computed from

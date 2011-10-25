@@ -41,7 +41,7 @@ class FastMedianNode: public Node{
             registerInputID("image");
 
             // one output
-            registerOutputID<image_ptr_t>("image");
+            registerOutputID("image");
             
             // parameter: 
             registerParamID<float>("radius", 5, "filter aperture (odd values only)");

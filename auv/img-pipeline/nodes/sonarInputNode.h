@@ -57,13 +57,13 @@ class SonarInputNode: public InputNode{
             registerParamID<int>("Resolution", 400, "SonarAccumulator resolution");
 
             // four output images, three output parameters:
-            registerOutputID<image_ptr_t>("image (buffer)");
-            registerOutputID<image_ptr_t>("image (synced)");
-            registerOutputID<image_ptr_t>("polar image");
-            registerOutputID<image_ptr_t>("data line");
-            registerOutputID<NodeParamValue>("bearing");
-            registerOutputID<NodeParamValue>("bearing range");
-            registerOutputID<NodeParamValue>("range");
+            registerOutputID("image (buffer)");
+            registerOutputID("image (synced)");
+            registerOutputID("polar image");
+            registerOutputID("data line");
+            registerOutputID("bearing", int32_t(0));
+            registerOutputID("bearing range", int32_t(0));
+            registerOutputID("range", int32_t(0));
         }
     
         virtual ~SonarInputNode(){

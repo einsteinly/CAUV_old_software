@@ -442,29 +442,39 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 m_pl_name, m_id, p, NodeIOStatus::None
             ));
         }
-
-        /* Template type is used to determine whether this is an image or a
-         * parameter output: supported types
-         *      - image_ptr_t
-         *      - NodeParamValue
-         */
+        
+        /* see registerOutputID */
         template<typename T>
-        void registerOutputID(output_id const& o, bool warnDuplicate = true){
+        void _explicitRegisterOutputID(output_id const& o, T default_value){
             lock_t l(m_outputs_lock);
-            if(m_outputs.count(o)){
-                if (warnDuplicate)
-                    warning() << "Duplicate output id:" << o;
-                return;
-            }
+            if(m_outputs.count(o))
+                throw parameter_error(mkStr() << "Duplicate output id:" << o);
 
             m_outputs.insert(private_out_map_t::value_type(
-                o, boost::make_shared<Output>(output_t(T()))
+                o, boost::make_shared<Output>(output_t(default_value))
             ));
 
             _statusMessage(boost::make_shared<OutputStatusMessage>(
                 m_pl_name, m_id, o, NodeIOStatus::None
             ));
+            
         }
+        
+        /* Template type is used to determine the complete type of the output
+         * (image, or NodeParamValue type) images are specialised, everything
+         * else gets shoved into a NodeParamValue:
+         */
+        template<typename T>
+        void registerOutputID(output_id const& o, T default_value){
+            _explicitRegisterOutputID<NodeParamValue>(o, NodeParamValue(default_value));
+        }
+        /* overload for image output type: I'm as shocked as you are that this
+         * works
+         */
+        void registerOutputID(output_id const& o, image_ptr_t default_value=image_ptr_t()){
+            _explicitRegisterOutputID<image_ptr_t>(o, default_value);
+        }
+
         void registerInputID(input_id const& i, InputSchedType const& st = Must_Be_New);
 
         bool unregisterOutputID(output_id const& o, bool warnNonexistent = true);

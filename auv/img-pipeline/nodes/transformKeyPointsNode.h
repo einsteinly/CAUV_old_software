@@ -33,7 +33,7 @@ class TransformKeyPointsNode: public Node{
         void init(){
             m_speed = fast;
             
-            registerOutputID<NodeParamValue>("keypoints");
+            registerOutputID("keypoints", std::vector<KeyPoint>());
 
             // parameters:
             registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints to transform", Must_Be_New);

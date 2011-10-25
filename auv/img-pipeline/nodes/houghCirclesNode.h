@@ -46,7 +46,7 @@ class HoughCirclesNode: public OutputNode{
             registerInputID("image_in");
             
             // one output
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID("image_out");
             
             // parameters:
             registerParamID<int>("method", CV_HOUGH_GRADIENT);

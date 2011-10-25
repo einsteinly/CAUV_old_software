@@ -51,8 +51,8 @@ class KMeansNode: public Node{
             registerInputID("image");
 
             // two outputs:
-            registerOutputID<image_ptr_t>("cluster ids");
-            registerOutputID<image_ptr_t>("image (not copied)");
+            registerOutputID("cluster ids");
+            registerOutputID("image (not copied)");
 
             // parameters:
             //   K: the number of clusters
