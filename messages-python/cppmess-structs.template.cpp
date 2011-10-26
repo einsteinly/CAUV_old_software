@@ -44,4 +44,16 @@ bool cauv::${s.name}::operator==(cauv::$s.name const& other) const
     #end for
 }
 
+bool cauv::${s.name}::operator<(cauv::$s.name const& other) const
+{
+    ##Compare fields in order - hopefully will optimise to memcmp...
+    #for i, f in $enumerate($s.fields)
+    if($f.name < other.$f.name)
+        return true;
+    else if(!($f.name == other.$f.name))
+        return false;
+    #end for
+    return false;
+}
+
 #end for 

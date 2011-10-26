@@ -47,6 +47,7 @@ struct $s.name
     #end if 
 
     bool operator==($s.name const& other) const;
+    bool operator<($s.name const& other) const;
 };
 void serialise(svec_ptr, $s.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);

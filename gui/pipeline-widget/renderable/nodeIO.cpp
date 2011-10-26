@@ -22,6 +22,16 @@ const static Colour New_Hint(0, 1, 0, 0.4);
 const static Colour Demanded_Hint(1, 1, 0, 0.4);
 const static Colour Invalid_Hint(0.6, 0, 0, 0.6);
 
+static Colour colourForParamType(int32_t param_type_id){
+    // give two bits to each rgb component, and apply them above a base level
+    // of 1/4:
+    float r = 0.25 + float((param_type_id >> 0) & 0x3) / 2;
+    float g = 0.25 + float((param_type_id >> 2) & 0x3) / 2;
+    float b = 0.25 + float((param_type_id >> 4) & 0x3) / 2;
+    return Colour(r, g, b, 0.5);
+}
+
+
 NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
                        bool suppress_text)
     : Renderable(node.get()), m_node(node), m_pw(pw),
@@ -30,7 +40,8 @@ NodeIOBlob::NodeIOBlob(node_ptr_t node, pw_ptr_t pw, std::string const& name,
       m_radius(6), m_radius_squared(m_radius*m_radius),
       m_normal_colour(IO_Normal_Colour),
       m_colour(m_normal_colour),
-      m_mouseover(false){
+      m_mouseover(false),
+      m_sub_type(-1){
     // put middle at 0 rather than baseline
     m_text->m_pos.y = -(m_text->bbox().min.y + m_text->bbox().h()/2);
 }
@@ -117,10 +128,14 @@ void NodeIOBlob::status(int s){
 node_id NodeIOBlob::nodeId() const{
     node_ptr_t tmp_node = m_node.lock();
     if (!tmp_node)
-        //FIXME get error id
         return 0;
     return tmp_node->id();
 }
+
+int32_t NodeIOBlob::subType() const{
+    return m_sub_type;
+}
+
 
 NodeInputBlob::NodeInputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n,
                              bool suppress_text)
@@ -150,9 +165,9 @@ bool NodeInputBlob::mousePressEvent(MouseEvent const& e){
                 }else{
                     m_pw->send(boost::make_shared<RemoveArcMessage>(
                         m_pw->pipelineName(),
-                        // type is ignored in imageProcessor.cpp
-                        NodeOutput(bsrc->nodeId(), bsrc->output(), OutputType::Image),
-                        NodeInput(bdst->nodeId(), bdst->input())
+                        // types (and sub types) are ignored in imageProcessor.cpp
+                        NodeOutput(bsrc->nodeId(), bsrc->output(), OutputType::Image, -1),
+                        NodeInput(bdst->nodeId(), bdst->input(), -1)
                     ));
                 }
                 // wait for ArcRemovedMessage
@@ -174,9 +189,10 @@ std::string NodeInputBlob::input() const{
 }
 
 
-NodeInputParamBlob::NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
+NodeInputParamBlob::NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx)
     : NodeInputBlob(d, p, n, true){
-    m_normal_colour = Param_Normal_Colour;
+    m_sub_type = type_idx;
+    m_normal_colour = colourForParamType(type_idx);
     m_colour = m_normal_colour;
     m_radius = 4;
     m_radius_squared = 16;
@@ -186,8 +202,13 @@ std::string NodeInputParamBlob::param() const{
     return input();
 }
 
-NodeOutputBlob::NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n)
+NodeOutputBlob::NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx)
     : NodeIOBlob(d, p, n){
+    m_sub_type = type_idx;
+    if(type_idx != -1){
+        m_normal_colour = colourForParamType(type_idx);
+        m_colour = m_normal_colour;
+    }
     m_text->m_pos.x = -m_text->bbox().max.x - m_radius - 3;
 }
 

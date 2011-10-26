@@ -60,8 +60,9 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
     public:
         // Public typedefs: used as return types
         typedef std::vector<NodeInput> msg_node_in_list_t;
-        typedef std::map<output_id, msg_node_in_list_t> msg_node_output_map_t;
-        typedef std::map<input_id, NodeOutput> msg_node_input_map_t;
+        typedef std::map<LocalNodeOutput, msg_node_in_list_t> msg_node_output_map_t;
+        typedef std::map<LocalNodeInput, NodeOutput> msg_node_input_map_t;
+        typedef std::map<LocalNodeInput, NodeParamValue> msg_node_param_map_t;
 
         typedef std::set<output_id> output_id_set_t;
         typedef std::set<input_id> input_id_set_t;
@@ -72,7 +73,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef boost::shared_ptr<Image> image_ptr_t;
 
         // NB: order here is important, don't change it!
-        enum OuputType {OutType_Image = 0, OutType_Parameter = 1};
+        // matches cauv::OutputType::e
         typedef boost::variant<image_ptr_t, NodeParamValue> output_t;
 
         typedef std::map<output_id, output_t> out_map_t;
@@ -220,7 +221,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             }
 
             bool isParam() const{
-                return value.which() == OutType_Parameter;
+                return value.which() == OutputType::Parameter;
             }
         };
         template<typename cT, typename tT>
@@ -284,6 +285,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         output_id_set_t outputs() const;
         output_id_set_t paramOutputs() const;
 
+        int32_t paramOutputType(output_id const& o_id) const;
+
         // TODO NPA: include param children
         /* parameters DO count, return everything not just connected things */
         msg_node_output_map_t outputLinks() const;
@@ -308,7 +311,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
         /* return all parameter values (without querying connected parents)
          */
-        std::map<input_id, NodeParamValue> parameters() const;
+        std::map<LocalNodeInput, NodeParamValue> parameters() const;
 
         /* set a parameter based on a message
          */

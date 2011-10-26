@@ -25,12 +25,23 @@ class NodeAddedMessage;
 class NodeParametersMessage;
 struct NodeOutput;
 struct NodeInput;
+struct LocalNodeInput;
+struct LocalNodeOutput;
 
 namespace pw{
 
 class Node: public Draggable,
             public Container,
             public boost::enable_shared_from_this<Node>{
+    public:
+        // public typedefs
+        typedef std::vector<NodeInput> msg_node_in_list_t;
+        typedef std::map<LocalNodeOutput, msg_node_in_list_t> msg_node_output_map_t;
+        typedef std::map<LocalNodeInput, NodeOutput> msg_node_input_map_t;
+        typedef std::map<LocalNodeInput, NodeParamValue> msg_node_param_map_t;
+    
+    private:
+        // private typedefs used internally:
         typedef std::set<renderable_ptr_t> renderable_set_t;
         typedef std::map<std::string, renderable_ptr_t> str_renderable_map_t;
         typedef boost::shared_ptr<NodeInputBlob> in_ptr_t;
@@ -57,13 +68,13 @@ class Node: public Draggable,
 
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
         void setType(NodeType::e const&);
-        void setInputs(std::map<std::string, NodeOutput> const&);
-        void setInputLinks(std::map<std::string, NodeOutput> const&);
-        void setOutputs(std::map<std::string, std::vector<NodeInput> > const&);
-        void setOutputLinks(std::map<std::string, std::vector<NodeInput> > const&);
-        void setParams(std::map<std::string, NodeParamValue> const&);
+        void setInputs(msg_node_input_map_t const&);
+        void setInputLinks(msg_node_input_map_t const&);
+        void setOutputs(msg_node_output_map_t const&);
+        void setOutputLinks(msg_node_output_map_t const&);
+        void setParams(msg_node_param_map_t const&);
         void setParams(boost::shared_ptr<NodeParametersMessage const> m);
-        void setParamLinks(std::map<std::string, NodeOutput> const& inputs);        
+        void setParamLinks(msg_node_input_map_t const& inputs);        
 
         virtual void draw(drawtype_e::e flags);
         virtual bool mousePressEvent(MouseEvent const&);

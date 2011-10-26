@@ -28,6 +28,8 @@ class NodeIOBlob: public Renderable,
         
         void status(int);
         node_id nodeId() const;
+        
+        int32_t subType() const;
 
     protected:
         bool contains(Point const& x) const;
@@ -43,6 +45,7 @@ class NodeIOBlob: public Renderable,
         Colour m_colour;
 
         bool m_mouseover;
+        int32_t m_sub_type;
 };
 
 class NodeInputBlob: public NodeIOBlob{
@@ -56,14 +59,14 @@ class NodeInputBlob: public NodeIOBlob{
 
 class NodeInputParamBlob: public NodeInputBlob{
     public:
-        NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n);
+        NodeInputParamBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx=-1);
         virtual ~NodeInputParamBlob(){ }
         std::string param() const;
 };
 
 class NodeOutputBlob: public NodeIOBlob{
     public:
-        NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n);
+        NodeOutputBlob(node_ptr_t d, pw_ptr_t p, std::string const& n, int32_t type_idx=-1);
         virtual ~NodeOutputBlob(){ }        
         std::string output() const;
 };

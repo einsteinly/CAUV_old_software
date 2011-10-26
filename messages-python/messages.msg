@@ -133,12 +133,25 @@ struct NodeInput
 {
     node : int32;
     input : string;
+    subType : int32;
+}
+struct LocalNodeInput
+{
+    input : string;
+    subType : int32;
 }
 struct NodeOutput
 {
     node : int32;
     output : string;
     type : OutputType;
+    subType : int32;
+}
+struct LocalNodeOutput
+{
+    output : string;
+    type : OutputType;
+    subType : int32;
 }
 struct NodeInputArc
 {
@@ -638,9 +651,9 @@ group pl_gui
         pipelineName : string;
         nodeId : int32;
         nodeType : NodeType;
-        inputs : map<string, NodeOutput>;
-        outputs : map<string, list<NodeInput> >;
-        params : map<string, NodeParamValue>;
+        inputs : map<LocalNodeInput, NodeOutput>;
+        outputs : map<LocalNodeOutput, list<NodeInput> >;
+        params : map<LocalNodeInput, NodeParamValue>;
     }
 
     message NodeRemoved : 116
@@ -653,16 +666,16 @@ group pl_gui
     {
         pipelineName : string;
         nodeId : int32;
-        params : map<string, NodeParamValue>;
+        params : map<LocalNodeInput, NodeParamValue>;
     }
 
     message GraphDescription : 118
     {
         pipelineName : string;
         lazy nodeTypes : map<int32, NodeType>;
-        lazy nodeInputs : map<int32, map<string, NodeOutput> >;
-        lazy nodeOutputs : map<int32, map<string, list<NodeInput> > >;
-        lazy nodeParams : map<int32, map<string, NodeParamValue> >;
+        lazy nodeInputs : map<int32, map<LocalNodeInput, NodeOutput> >;
+        lazy nodeOutputs : map<int32, map<LocalNodeOutput, list<NodeInput> > >;
+        lazy nodeParams : map<int32, map<LocalNodeInput, NodeParamValue> >;
     }
 
     message ArcAdded : 119

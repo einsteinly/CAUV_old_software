@@ -118,6 +118,12 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
                     << ip->target << "!=" << input_link_t(n, o_id);
             throw link_error("old arc must be removed first");
         }
+        // NB this check does grab the output lock on n temporarily
+        if(i->second->isParam() && ip->param_value.which() != n->paramOutputType(o_id))
+            throw link_error(
+                mkStr() << "setInput: unmatched parameter types"
+                        << *n << o_id << "->" << *this << i_id
+            );
         debug(-3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
         ip->status = NodeInputStatus::Old;
         ip->target = input_link_t(n, o_id);
@@ -176,12 +182,16 @@ Node::msg_node_input_map_t Node::inputLinks() const{
         t.output = link.id;
         // setInput enforces links are the same type (Image/Parameter) at both
         // ends, so we can check the type of the output from the type of the
-        // input
-        if(v.second->isParam())
+        // input (it also enforces sub-types for parameters)
+        if(v.second->isParam()){
             t.type = OutputType::Parameter;
-        else
+            t.subType = v.second->param_value.which();
+        }else{
             t.type = OutputType::Image;
-        r[id] = t;
+            t.subType = -1;
+        }
+        // we took the subtype for t from the input anyway
+        r[LocalNodeInput(id, t.subType)] = t;
     }
     return r;
 }
@@ -200,8 +210,15 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     const private_out_map_t::iterator i = m_outputs.find(o_id);
     if(i == m_outputs.end()){
         throw id_error("setOutput: Invalid output id" + toStr(o_id));
-    }else if(i->second->isParam() != n->parameters().count(i_id)){
-        throw link_error("setInput: Parameter <==> Image mismatch");
+    }else if(i->second->isParam() != !n->inputs().count(i_id)){
+        throw link_error("setOutput: Parameter <==> Image mismatch");
+    }
+    int32_t sub_type = i->second->isParam()?  boost::get<NodeParamValue>(i->second->value).which() : -1;    
+    if(i->second->isParam() && !n->parameters().count(LocalNodeInput(i_id, sub_type))){
+        throw link_error(
+            mkStr() << "setOutput: " << *this <<"::"<< o_id << " -> "
+                    << *n <<"::"<< i_id << ": parameter sub type mismatch"
+        );
     }else if(n->id() == id()){
         throw link_error("sorry, can't link nodes to themselves: blame shared mutexes being non-recursive");
     }else{
@@ -264,11 +281,19 @@ Node::output_id_set_t Node::outputs(int type_index) const{
 }
 
 Node::output_id_set_t Node::outputs() const{
-    return outputs(OutType_Image);
+    return outputs(OutputType::Image);
 }
 
 Node::output_id_set_t Node::paramOutputs() const{
-    return outputs(OutType_Parameter);
+    return outputs(OutputType::Parameter);
+}
+
+int32_t Node::paramOutputType(output_id const& o_id) const{
+    lock_t l(m_outputs_lock);
+    private_out_map_t::const_iterator i = m_outputs.find(o_id);
+    if(i == m_outputs.end() || !i->second->isParam())
+        throw parameter_error("unknown parameter output");
+    return boost::get<NodeParamValue>(i->second->value).which();
 }
 
 Node::msg_node_output_map_t Node::outputLinks() const{
@@ -276,9 +301,13 @@ Node::msg_node_output_map_t Node::outputLinks() const{
     msg_node_output_map_t r;
     foreach(private_out_map_t::value_type const& i, m_outputs){
         msg_node_in_list_t input_list;
+        int32_t sub_type = -1;
+        OutputType::e type = OutputType::e(i.second->value.which());
+        if(type == OutputType::Parameter)
+            sub_type = boost::get<NodeParamValue>(i.second->value).which();
         foreach(output_link_list_t::value_type const& j, i.second->targets)
-            input_list.push_back(NodeInput(m_pl.lookup(j.node), j.id));
-        r[i.first] = input_list;
+            input_list.push_back(NodeInput(m_pl.lookup(j.node), j.id, sub_type)); 
+        r[LocalNodeOutput(i.first,type,sub_type)] = input_list;
     }
     return r;
 }
@@ -394,7 +423,7 @@ void Node::exec(){
         if(op->value.which() != v.second.which()){
             error() << *this << "exec() produced output of the wrong type for id:"
                     << v.first << "(ignored)";
-        }else if(op->value.which() == OutType_Parameter &&
+        }else if(op->value.which() == OutputType::Parameter &&
                  boost::get<NodeParamValue>(op->value).which() !=
                  boost::get<NodeParamValue>(v.second).which()){
             uint32_t got_which = boost::get<NodeParamValue>(op->value).which();
@@ -476,12 +505,12 @@ NodeParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error)
 
 /* return all parameter values (without querying connected parents)
  */
-std::map<input_id, NodeParamValue> Node::parameters() const{
+std::map<LocalNodeInput, NodeParamValue> Node::parameters() const{
     lock_t l(m_inputs_lock);
-    std::map<input_id, NodeParamValue> r;
+    std::map<LocalNodeInput, NodeParamValue> r;
     foreach(private_in_map_t::value_type const& v, m_inputs)
         if(v.second->isParam())
-            r[v.first] = v.second->param_value;
+            r[LocalNodeInput(v.first, v.second->param_value.which())] = v.second->param_value;
     return r;
 }
 
