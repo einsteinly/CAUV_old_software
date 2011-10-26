@@ -126,7 +126,7 @@ class LoggerBase(msg.MessageObserver):
     def __init__(self, cauv_node, do_record, playback_rate = 1.0):
         msg.MessageObserver.__init__(self)
         self.node = cauv_node
-        self.tzero = time.time()
+        self.tzero = datetime.datetime.now()
         self.profile_playback = False
         self.__recording = False
         self.__playback_lock = threading.Lock()
@@ -136,7 +136,8 @@ class LoggerBase(msg.MessageObserver):
         self.__playback_rate = playback_rate
         self.__playback_start_time = 0
     def relativeTime(self):
-        return time.time() - self.tzero
+        # return relative time in floating point seconds since tzero
+        return tdToFloatSeconds(datetime.datetime.now() - self.tzero)
     def playbackIsActive(self):
         self.__playback_lock.acquire()
         r =  self.__playback_active
