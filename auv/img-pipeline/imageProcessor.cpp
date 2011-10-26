@@ -96,9 +96,7 @@ void ImageProcessor::onAddNodeMessage(AddNodeMessage_ptr m){
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }
-    NodeAddedMessage_ptr r = boost::make_shared<NodeAddedMessage>(m_name, new_id, m->nodeType(), inputs, outputs, params);
-    debug() << "sending:" << *r;
-    sendMessage(r);
+    sendMessage(boost::make_shared<NodeAddedMessage>(m_name, new_id, m->nodeType(), inputs, outputs, params));
 }
 
 void ImageProcessor::removeNode(node_id const& id){

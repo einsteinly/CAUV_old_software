@@ -136,11 +136,15 @@ class Model(messaging.MessageObserver):
                         str(node.params))
                 continue
             for param in node.params.keys():
+                if isinstance(param, messaging.LocalNodeInput):
+                    param_key = param.input
+                else:
+                    param_key = param
                 debug('%d.%s = %s' % (id, param, node.params[param]))
                 try:
-                    self.setParameterSynchronous(id, param, toNPV(node.params[param]), timeout)
+                    self.setParameterSynchronous(id, param_key, toNPV(node.params[param]), timeout)
                 except RuntimeError, e:
-                    error(str(e) + ": attempted to set parameter %s to %s" % ((id, param), node.params[param]))
+                    error(str(e) + ": attempted to set parameter %s to %s" % ((id, param_key), node.params[param]))
                     debug('attempting to continue...')
         # finally add links
         for old_id, node in state.nodes.items():
@@ -152,10 +156,14 @@ class Model(messaging.MessageObserver):
                         str(node.inarcs))
                 continue
             for input in node.inarcs.keys():
+                if isinstance(input, messaging.LocalNodeInput):
+                    input_key = input.input
+                else:
+                    input_key = input
                 (other, output) = node.inarcs[input]
                 if other != 0 and id_map[other] is not None:
                     try:
-                        self.addArcSynchronous(id_map[other], output, id, input, timeout)
+                        self.addArcSynchronous(id_map[other], output, id, input_key, timeout)
                     except RuntimeError, e:
                         error(str(e) + ': attempted to add arc %s --> %s' % ((id_map[other], output),(id, input)))
                         debug('attempting to continue...')
@@ -207,6 +215,7 @@ class Model(messaging.MessageObserver):
     def setParameterSynchronous(self, node, param, value, timeout=3.0):
         self.parameter_set_condition.acquire()
         self.parameter_set = None
+        print node, param, value
         self.send(messaging.SetNodeParameterMessage(
             self.pipeline_name, node, param, value
         ))
