@@ -42,9 +42,9 @@ class SplitRGBNode: public Node{
             registerInputID("image");
             
             // outputs:
-            registerOutputID<image_ptr_t>("R");
-            registerOutputID<image_ptr_t>("G");
-            registerOutputID<image_ptr_t>("B");
+            registerOutputID("R");
+            registerOutputID("G");
+            registerOutputID("B");
         }
     
         virtual ~SplitRGBNode(){

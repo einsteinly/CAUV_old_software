@@ -208,7 +208,7 @@ void Img::draw(drawtype_e::e flags){
     // delete any textures waiting to be deleted
     Textures_For_Deleting.deleteAndClear();
     
-    glColor(Colour(0.2, 0.5));
+    glColor(Colour(0.6, 0.05, 0.1, 0.5));
     glBox(m_bbox);
     
     CAUV_LOCK(m_img_mutex) {

@@ -40,7 +40,7 @@ class ClampNode: public Node{
             registerParamID<T>("Max", T(), "changing value");
 
             // outputs:
-            registerOutputID<NodeParamValue>("Value");
+            registerOutputID("Value", T());
         }
 
         virtual ~ClampNode(){

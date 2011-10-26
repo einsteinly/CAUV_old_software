@@ -91,6 +91,9 @@ class PipelineWidget: public QGLWidget,
 		virtual void postText(const std::string &text, const std::string &font);
         virtual void removeMenu(menu_ptr_t);
         virtual void remove(renderable_ptr_t);
+        
+        void clear();
+        void reload();
 
     public Q_SLOTS:
         // Causes GUI to discard all current state

@@ -41,10 +41,9 @@ class PercentileNode: public Node{
             registerInputID("image");
 
             // output parameters:
-            registerOutputID<NodeParamValue>("ch1 value");
-            registerOutputID<NodeParamValue>("ch2 value");
-            registerOutputID<NodeParamValue>("ch3 value");
-            // [dynamic]
+            registerOutputID("ch1 value", int(0));
+            registerOutputID("ch2 value", int(0));
+            registerOutputID("ch3 value", int(0));
             
             // parameter: 
             registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");

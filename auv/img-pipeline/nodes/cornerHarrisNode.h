@@ -30,7 +30,7 @@ class CornerHarrisNode: public Node{
             registerInputID("image_in");
             
             // one output
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID("image_out", image_ptr_t());
             
             // parameters:
             registerParamID<int>("block size", 2);

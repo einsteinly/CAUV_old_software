@@ -15,40 +15,26 @@
 #ifndef __SONAR_SLAM_NODE_H__
 #define __SONAR_SLAM_NODE_H__
 
-#include "../node.h"
+#include "outputNode.h"
+#include "../nodeFactory.h"
 
 namespace cauv{
 namespace imgproc{
 
-class SonarSLAMNode: public Node{
+struct SonarSLAMImpl;
+
+class SonarSLAMNode: public OutputNode{
     public:
-        SonarSLAMNode(ConstructArgs const& args) : Node(args){ }
+        SonarSLAMNode(ConstructArgs const& args) : OutputNode(args){ }
         virtual ~SonarSLAMNode(){ stop(); }
 
-        void init(){
-            // slow node (don't schedule nodes providing input until we've
-            // finished doing work here)
-            m_speed = slow;
-
-            // input (well, parameter input that must be new for the node to be
-            // executed):
-            registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints used to update map", Must_Be_New);
-            
-            // outputs:
-            //registerOutputID<image_ptr_t>("image_out");
-            
-            // parameters:
-            //registerParamID<float>("some scalar param", 1.0f, "...");
-        }
+        void init();
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        out_map_t doWork(in_image_map_t& inputs);
 
-
-            
-            return r;
-        }
+    private:
+        boost::shared_ptr<SonarSLAMImpl> m_impl;
     
     // Register this node type
     DECLARE_NFR;

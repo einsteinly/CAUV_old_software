@@ -42,7 +42,6 @@ class VideoFileOutputNode: public OutputNode{
             registerInputID("image");
             
             // no outputs
-            // registerOutputID<image_ptr_t>();
             
             // parameters: the filename, jpg compression, png compression
             registerParamID<std::string>("filename", "out.%d.%t.%c.avi");

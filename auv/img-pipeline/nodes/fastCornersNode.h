@@ -47,7 +47,7 @@ class FASTCornersNode: public Node{
             registerInputID(Image_In_Name);
             
             // one output:
-            registerOutputID< NodeParamValue >("keypoints");
+            registerOutputID("keypoints", std::vector<KeyPoint>());
             
             // parameters:
             registerParamID<int>("threshold", 20, // default value a complete guess

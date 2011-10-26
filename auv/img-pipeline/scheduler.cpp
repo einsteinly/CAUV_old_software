@@ -64,9 +64,9 @@ Scheduler::Scheduler() : m_stop(true), m_queues(), m_num_threads(), m_thread_gro
     m_thread_groups[priority_fast] = thread_group_ptr_t();
     m_thread_groups[priority_fastest] = thread_group_ptr_t();
 
-    m_queues[priority_slow] = boost::make_shared<node_queue_t>();
+    //m_queues[priority_slow] = boost::make_shared<node_queue_t>();
     m_queues[priority_fast] = boost::make_shared<node_queue_t>();
-    m_queues[priority_fastest] = boost::make_shared<node_queue_t>();
+    //m_queues[priority_fastest] = boost::make_shared<node_queue_t>();
 }
 
 /**
@@ -83,7 +83,8 @@ void Scheduler::addJob(node_wkptr_t node, SchedulerPriority p) const
     if(i != m_queues.end())
         i->second->push(node);
     else
-        error() << __func__ << " Error: no such priority: " << p;
+        // default: lowest priority
+        m_queues.begin()->second->push(node);
 }
 
 /**
@@ -98,8 +99,14 @@ node_ptr_t Scheduler::waitNextJob(SchedulerPriority p)
     boost::this_thread::yield();
     node_ptr_t n;
 
-    while(!n && !m_stop)
-        n = m_queues[p]->popWait().lock();
+    while(!n && !m_stop){
+        priority_queue_map_t::iterator q = m_queues.find(p);
+        if(q == m_queues.end())
+            // default: lowest priority
+            n = m_queues.begin()->second->popWait().lock();
+        else
+            n = q->second->popWait().lock();
+    }
 
     return n;
 }
@@ -162,9 +169,9 @@ boost::thread* Scheduler::_spawnThread(SchedulerPriority const& p)
     int min_p = sched_get_priority_min(SCHED_OTHER);
     int max_p = sched_get_priority_max(SCHED_OTHER);
     if(p < min_p)
-        warning() << "priority" << " < minimum (" << min_p << ")";
+        warning() << "priority" << p << " < minimum (" << min_p << ")";
     if(p > max_p)
-        warning() << "priority" << " > maximum (" << max_p << ")";
+        warning() << "priority" << p << " > maximum (" << max_p << ")";
     e = pthread_getschedparam(t->native_handle(), &policy, &param);
     if(e)
         error() << "failed to get thread schedparam: error=" << e;

@@ -48,7 +48,7 @@ class HoughLinesNode: public Node{
             registerInputID(Image_In_Name);
             
             // one output
-            registerOutputID<NodeParamValue>("lines");
+            registerOutputID("lines", std::vector<Line>());
             
             // parameters:
             registerParamID<bool>("probabilistic", true);

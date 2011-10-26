@@ -41,7 +41,7 @@ class FileOutputNode: public OutputNode{
             registerInputID("image_in");
             
             // no outputs
-            // registerOutputID<image_ptr_t>();
+            // registerOutputID("...", default_vaue);
             
             // parameters: the filename, jpg compression, png compression
             registerParamID<std::string>("filename", "out.%d.%t.%c.jpg");

@@ -30,7 +30,7 @@ class GrabCutNode: public Node{
             registerInputID("mask");
         
             // one output
-            registerOutputID<image_ptr_t>("mask (not copied)");
+            registerOutputID("mask (not copied)");
             
             // parameters:
             //    iterations: the number of iterations

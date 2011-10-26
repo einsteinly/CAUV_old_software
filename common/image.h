@@ -39,8 +39,8 @@ struct NonUniformPolarMat{
     // all elements in row[i] have range range[i]
     // all elements in column[j] have bearing bearing[j]
     cv::Mat mat;
-    boost::shared_ptr< std::vector<float> > ranges;    
-    boost::shared_ptr< std::vector<float> > bearings;
+    boost::shared_ptr< std::vector<float> > ranges;   // in metres
+    boost::shared_ptr< std::vector<float> > bearings; // in radians please!
 
     NonUniformPolarMat clone() const;
 };

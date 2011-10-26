@@ -47,8 +47,8 @@ class RunningAverageNode: public Node{
             // one input:
             registerInputID("image");
 
-            // two outputs:
-            registerOutputID<image_ptr_t>("image");
+            // one output:
+            registerOutputID("image");
 
             // parameters:
             //   K: the number of clusters

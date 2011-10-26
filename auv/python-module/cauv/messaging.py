@@ -8,7 +8,7 @@ AIMessageObserver = BufferedMessageObserver
 
 import copy_reg
 
-info('registering picklers...')
+#info('registering picklers...')
 
 # enum picklers:
 # http://stackoverflow.com/questions/3214969/pickling-an-enum-exposed-by-boost-python
@@ -62,5 +62,5 @@ if False:
         print thing
     f.close()
 
-info('pickle registration complete')
+#info('pickle registration complete')
 

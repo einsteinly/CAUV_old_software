@@ -45,7 +45,7 @@ class CombineRGBNode: public Node{
             registerInputID("B");
             
             // output:
-            registerOutputID<image_ptr_t>("image");
+            registerOutputID("image", image_ptr_t());
         }
     
         virtual ~CombineRGBNode(){

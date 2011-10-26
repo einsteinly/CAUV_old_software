@@ -43,7 +43,7 @@ class MixValueNode: public Node{
             registerInputID("image");
 
             // one output
-            registerOutputID<image_ptr_t>("image (not copied)");
+            registerOutputID("image (not copied)");
             
             // parameters:
             registerParamID<float>("image fac", 1);

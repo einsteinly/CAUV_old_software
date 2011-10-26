@@ -42,7 +42,7 @@ class DelayNode: public Node{
                 "much as possible.");
 
             // outputs:
-            registerOutputID<image_ptr_t>(Image_Out_Name);
+            registerOutputID(Image_Out_Name);
         }
 
         virtual ~DelayNode(){

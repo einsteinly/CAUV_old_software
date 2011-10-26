@@ -39,7 +39,7 @@ class MathAddMultNode: public Node{
         void init(){
             m_speed = fast;
             
-            registerOutputID<NodeParamValue>("A*Afac + B*Bfac");
+            registerOutputID("A*Afac + B*Bfac", T());
 
             // parameters:
             registerParamID<T>("A (triggers exec)", T(), "value that must be new for execution", Must_Be_New);

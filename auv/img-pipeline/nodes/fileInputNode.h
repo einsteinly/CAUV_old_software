@@ -44,7 +44,7 @@ class FileInputNode: public AsynchronousNode{
             // registerInputID()
             
             // one output:
-            registerOutputID<image_ptr_t>("image");
+            registerOutputID("image");
             
             // one parameter: the filename
             registerParamID<std::string>("filename", "default.jpg");

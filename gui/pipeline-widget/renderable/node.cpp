@@ -90,7 +90,7 @@ void Node::setType(NodeType::e const& n){
     refreshLayout();
 }
 
-void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
+void Node::setInputs(msg_node_input_map_t const& inputs){
     // remove any old inputs:
     for(str_in_map_t::const_iterator i = m_inputs.begin(); i != m_inputs.end(); i++){
         m_contents.remove(i->second);
@@ -98,27 +98,27 @@ void Node::setInputs(std::map<std::string, NodeOutput> const& inputs){
     }
     m_inputs.clear();
     
-    std::map<std::string, NodeOutput>::const_iterator j;
+    msg_node_input_map_t::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
         // don't add any inputs that are actually parameters!
         // TODO: fix the order-dependence here... really parameters should have
         // been filtered out by the time this function is called
-        if(!m_params.count(j->first)){
+        if(!m_params.count(j->first.input)){
             debug() << BashColour::Blue << "Node::" << __func__ << *j;
             in_ptr_t t = boost::make_shared<NodeInputBlob>(
-                    shared_from_this(), m_pw, j->first
+                    shared_from_this(), m_pw, j->first.input, j->first.subType
             );
-            m_inputs[j->first] = t;
+            m_inputs[j->first.input] = t;
             m_contents.push_back(t);
         }
     }
     // NB: layout not refreshed
 }
 
-void Node::setInputLinks(std::map<std::string, NodeOutput> const& inputs){
-    std::map<std::string, NodeOutput>::const_iterator j;
+void Node::setInputLinks(msg_node_input_map_t const& inputs){
+    msg_node_input_map_t::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
-        str_in_map_t::const_iterator k = m_inputs.find(j->first);
+        str_in_map_t::const_iterator k = m_inputs.find(j->first.input);
         // if connected, add the arc to this input:
         if(k != m_inputs.end() && j->second.node)
             m_pw->addArc(j->second.node, j->second.output, k->second);
@@ -126,7 +126,7 @@ void Node::setInputLinks(std::map<std::string, NodeOutput> const& inputs){
     refreshLayout();
 }
 
-void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outputs){
+void Node::setOutputs(msg_node_output_map_t const& outputs){
     // remove any old outputs:
     for(str_out_map_t::const_iterator i = m_outputs.begin(); i != m_outputs.end(); i++){
         m_contents.remove(i->second);
@@ -134,24 +134,24 @@ void Node::setOutputs(std::map<std::string, std::vector<NodeInput> > const& outp
     }
     m_outputs.clear();
 
-    std::map<std::string, std::vector<NodeInput> >::const_iterator i;
+    msg_node_output_map_t::const_iterator i;
     for(i = outputs.begin(); i != outputs.end(); i++){
         debug() << BashColour::Blue << "Node::" << __func__ << *i;
         out_ptr_t t = boost::make_shared<NodeOutputBlob>(
-                shared_from_this(), m_pw, i->first
+                shared_from_this(), m_pw, i->first.output, i->first.subType
         );
-        m_outputs[i->first] = t;
+        m_outputs[i->first.output] = t;
         m_contents.push_back(t);
     }
     // NB: layout not refreshed
 }
 
-void Node::setOutputLinks(std::map<std::string, std::vector<NodeInput> > const& outputs){
-    std::map<std::string, std::vector<NodeInput> >::const_iterator i;
+void Node::setOutputLinks(msg_node_output_map_t const& outputs){
+    msg_node_output_map_t::const_iterator i;
     for(i = outputs.begin(); i != outputs.end(); i++){
         // add the arcs (if any) from this output:
-        if(m_outputs.count(i->first)){
-            renderable_ptr_t t = m_outputs[i->first];
+        if(m_outputs.count(i->first.output)){
+            renderable_ptr_t t = m_outputs[i->first.output];
             std::vector<NodeInput>::const_iterator k;
             for(k = i->second.begin(); k != i->second.end(); k++){
                 m_pw->addArc(t, k->node, k->input);
@@ -215,17 +215,24 @@ protected:
 };
 
 boost::shared_ptr<PVPairEditableBase> makePVPair(
-    Node *n, std::pair<std::string, NodeParamValue> const& p, bool editable){
-    return boost::apply_visitor(PVPairVisitor(n, p.first, editable), p.second);
+    Node *n, std::pair<LocalNodeInput, NodeParamValue> const& p, bool editable){
+    return boost::apply_visitor(PVPairVisitor(n, p.first.input, editable), p.second);
 }
 
 }// namespace Unnamed
 
-void Node::setParams(std::map<std::string, NodeParamValue> const& params){
+static int countLocalInputsWithName(std::string const& name, Node::msg_node_param_map_t const& map){
+    foreach(Node::msg_node_param_map_t::value_type const& v, map)
+        if(v.first.input == name)
+            return 1;
+    return 0;
+}
+
+void Node::setParams(msg_node_param_map_t const& params){
     // remove any parameters that no longer exist
     str_inparam_map_t new_m_params;
     foreach(str_inparam_map_t::value_type const &i, m_params)
-        if(!params.count(i.first)){
+        if(!countLocalInputsWithName(i.first, params)){
             m_contents.remove(i.second.inblob);
             m_contents.remove(i.second.pvpair);
             m_pw->removeArc(i.second.inblob, m_node_id, i.first);
@@ -234,17 +241,17 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
         }
     m_params = new_m_params;
 
-    typedef std::map<std::string, NodeParamValue> pm_t; // TODO auto
+    typedef msg_node_param_map_t pm_t; // TODO auto
     foreach(pm_t::value_type const& j, params){
-        str_inparam_map_t::iterator k = m_params.find(j.first);
+        str_inparam_map_t::iterator k = m_params.find(j.first.input);
         if(k == m_params.end()){
             debug(3) << BashColour::Blue << *this << "new param:" << j;
             InParamPVPair t;
             t.pvpair = makePVPair(this, j, true);
             t.inblob = boost::make_shared<NodeInputParamBlob>(
-                    shared_from_this(), m_pw, j.first
+                    shared_from_this(), m_pw, j.first.input, j.first.subType
             );
-            m_params[j.first] = t;
+            m_params[j.first.input] = t;
             m_contents.push_back(t.inblob);
             m_contents.push_back(t.pvpair);
         }else{
@@ -263,10 +270,10 @@ void Node::setParams(std::map<std::string, NodeParamValue> const& params){
     refreshLayout();
 }
 
-void Node::setParamLinks(std::map<std::string, NodeOutput> const& inputs){
-    typedef std::map<std::string, NodeOutput> im_t;
+void Node::setParamLinks(msg_node_input_map_t const& inputs){
+    typedef msg_node_input_map_t im_t;
     foreach(im_t::value_type const& j, inputs){
-        str_inparam_map_t::const_iterator k = m_params.find(j.first);
+        str_inparam_map_t::const_iterator k = m_params.find(j.first.input);
         // if connected, add the arc to this parameter's input:
         if(k != m_params.end() && j.second.node){
             m_pw->addArc(j.second.node, j.second.output, k->second.inblob);
