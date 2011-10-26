@@ -128,7 +128,17 @@ class Model(messaging.MessageObserver):
                 id_map[old_id] = None
             node_map[old_id] = node
             #print id_map[old_id], 'is new id for', old_id, node.type, node.params
-        # then set all parameter values
+        connected_inputs = set()
+        for old_id, node in state.nodes.items():
+            for input in node.inarcs.keys():
+                if isinstance(input, messaging.LocalNodeInput):
+                    input_key = input.input
+                else:
+                    input_key = input
+                (other, output) = node.inarcs[input]
+                if other != 0 and id_map[other] is not None:
+                    connected_inputs.add((old_id, input_key))
+        # then set all parameter values (for non-connected parameters only)
         for old_id, node in state.nodes.items():
             id = id_map[old_id]
             if id is None:
@@ -140,6 +150,9 @@ class Model(messaging.MessageObserver):
                     param_key = param.input
                 else:
                     param_key = param
+                if (old_id, param_key) in connected_inputs:
+                    debug('skipping setting connceted parameter: %s:%s' % (old_id, param))
+                    continue
                 debug('%d.%s = %s' % (id, param, node.params[param]))
                 try:
                     self.setParameterSynchronous(id, param_key, toNPV(node.params[param]), timeout)
@@ -215,7 +228,6 @@ class Model(messaging.MessageObserver):
     def setParameterSynchronous(self, node, param, value, timeout=3.0):
         self.parameter_set_condition.acquire()
         self.parameter_set = None
-        print node, param, value
         self.send(messaging.SetNodeParameterMessage(
             self.pipeline_name, node, param, value
         ))
