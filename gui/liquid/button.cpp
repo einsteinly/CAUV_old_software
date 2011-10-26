@@ -44,7 +44,7 @@ Button::Button(QRectF clip,
     //setHandlesChildEvents(true);
 
     default_item->setParentItem(this);
-    
+
     if(m_hover)
         m_hover->hide();
     if(m_pressed)
@@ -55,7 +55,7 @@ Button::Button(QRectF clip,
         m_background->setFlag(ItemStacksBehindParent);
         m_background->setBrush(QBrush(Qt::white));
     }
-    
+
 }
 
 void Button::setPen(QPen pen){

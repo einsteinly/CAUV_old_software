@@ -26,16 +26,19 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     m_overlay_back = new QGraphicsPathItem(this);
     m_overlay_back->setPen(m_style.header.pen);
     m_overlay_back->setBrush(m_style.header.brush);
+    m_overlay_back->setZValue(1);
 
     m_title        = new QGraphicsSimpleTextItem(this);
     m_title->setPen(m_style.header.title.pen);
     m_title->setBrush(m_style.header.title.brush);
     m_title->setFont(m_style.header.title.font);
+    m_title->setZValue(2);
 
     m_info_text    = new QGraphicsSimpleTextItem(this);
     m_info_text->setPen(m_style.header.info.pen);
     m_info_text->setBrush(m_style.header.info.brush);
     m_info_text->setFont(m_style.header.info.font);
+    m_info_text->setZValue(2);
 
     m_title->setText("File Input");
     m_info_text->setText("12.6MB/s 17Hz");
@@ -80,7 +83,7 @@ void NodeHeader::addButton(QString name, Button *button){
     m_button_lookup[name] = button;
     m_buttons << button;
     button->setFlag(ItemIgnoresParentOpacity);
-    button->setFlag(ItemStacksBehindParent);
+    button->setZValue(0);
     // force re-layout
     setWidth(m_width);
 }

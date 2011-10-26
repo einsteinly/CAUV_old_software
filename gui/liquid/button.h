@@ -26,11 +26,12 @@ class Button: public QGraphicsWidget{
         // sets background pen & brush if the background is set
         void setPen(QPen pen);
         void setBrush(QBrush pen);
+        
+        virtual QRectF boundingRect() const;
+        virtual QPainterPath shape() const;
 
     protected:
         virtual QSizeF sizeHint(Qt::SizeHint which, const QSizeF &constraint = QSizeF()) const;
-        virtual QRectF boundingRect() const;
-        virtual QPainterPath shape() const;
 
         virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
         virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
