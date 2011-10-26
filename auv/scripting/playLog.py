@@ -42,6 +42,7 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
                     time_to_sleep_for -= sleep_step*rt_rate
                     time.sleep(sleep_step)
                 sys.stdout.write('.'); sys.stdout.flush()
+                #print m.__class__.__name__
                 node.send(m)
         except Exception, e:
             error('error in playback: ' + str(e))
@@ -58,6 +59,7 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
                 time_to_sleep_for = max(0,(tlast+1.0/fixed_rate)-tlast)
                 time.sleep(time_to_sleep_for)
                 sys.stdout.write('.'); sys.stdout.flush()
+                #print m.__class__.__name__
                 node.send(m)
         except Exception, e:
             error('error in playback: ' + str(e))

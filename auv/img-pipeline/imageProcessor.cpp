@@ -162,8 +162,8 @@ void ImageProcessor::onSetNodeParameterMessage(SetNodeParameterMessage_ptr m){
     try{
         node_ptr_t n = lookup(m->nodeId());
         n->setParam(m);
-        info() << "Node parameter set:"
-               << m->nodeId() <<  m->paramId() << std::boolalpha << m->value();
+        info() << "Node parameter set:" << m->nodeId() <<  m->paramId()
+               << std::string((mkStr() << std::boolalpha << m->value()).lengthLimit(100));
     }catch(std::exception& e){
         error() << __func__ << ":" << e.what();
     }

@@ -21,12 +21,19 @@
 class MakeString{
     public:
         MakeString()
-            : m_stream(){
+            : m_stream(),
+              m_length_limit(0){
         }
         
         MakeString(std::locale const& withLocale)
-            : m_stream(){
-            m_stream.imbue(withLocale);
+            : m_stream(),
+              m_length_limit(0){
+              m_stream.imbue(withLocale);
+        }
+
+        MakeString& lengthLimit(uint32_t l){
+            m_length_limit = l;
+            return *this;
         }
         
         template<typename T>
@@ -36,7 +43,11 @@ class MakeString{
         }
 
         operator std::string() const{
-            return m_stream.str();
+            std::string r = m_stream.str();
+            if((m_length_limit > 3) && r.size() > m_length_limit){
+                r = std::string(r.begin(), r.begin() + m_length_limit-3) + "...";
+            }
+            return r;
         }
 
         template<class T>
@@ -47,6 +58,7 @@ class MakeString{
 
     protected:
         std::stringstream m_stream;
+        uint32_t m_length_limit;
 };
 
 typedef MakeString mkStr;

@@ -35,9 +35,9 @@ namespace cauv{
 namespace imgproc{
 
 // NB: there must be at least one thread of each priority!
-const int Slow_Threads = 2; // Mimimum number of threads dedicated to slow processes
+const int Slow_Threads = 0; // Mimimum number of threads dedicated to slow processes
 const int Fast_Threads = 2; // Mimimum number of threads dedicated to fast processes
-const int Fastest_Threads = 1; // Number of fastest threads is fixed
+const int Fastest_Threads = 0; // Number of fastest threads is fixed
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>& operator<<(

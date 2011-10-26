@@ -23,11 +23,11 @@ const static Colour Demanded_Hint(1, 1, 0, 0.4);
 const static Colour Invalid_Hint(0.6, 0, 0, 0.6);
 
 static Colour colourForParamType(int32_t param_type_id){
-    // give two bits to each rgb component, and apply them above a base level
+    // assign some bits to each rgb component, and apply them above a base level
     // of 1/4:
-    float r = 0.25 + float((param_type_id >> 0) & 0x3) / 2;
-    float g = 0.25 + float((param_type_id >> 2) & 0x3) / 2;
-    float b = 0.25 + float((param_type_id >> 4) & 0x3) / 2;
+    float r = 0.25 + float((param_type_id >> 3) & 0x3) * 0.75 / 3;
+    float g = 0.25 + float((param_type_id >> 0) & 0x3) * 0.75 / 3;
+    float b = 0.25 + float((param_type_id >> 2) & 0x1) * 0.75;
     return Colour(r, g, b, 0.5);
 }
 

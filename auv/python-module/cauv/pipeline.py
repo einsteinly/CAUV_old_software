@@ -45,15 +45,19 @@ class Model(messaging.MessageObserver):
         self.graph_description = None
 
         self.node_added_condition = threading.Condition()
+        self.node_added_wait_for = None
         self.node_added = None
 
         self.node_removed_condition = threading.Condition()
+        self.node_removed_wait_for = None
         self.node_removed = None
 
         self.parameter_set_condition = threading.Condition()
+        self.parameter_set_wait_for = None
         self.parameter_set = None
 
         self.arc_added_condition = threading.Condition()
+        self.arc_added_wait_for = None
         self.arc_added = None
 
         node.join("pl_gui")
@@ -194,6 +198,7 @@ class Model(messaging.MessageObserver):
         debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))))
         self.node_added_condition.acquire()
         self.node_added = None
+        self.node_added_wait_for = messaging.NodeType(type)
         self.send(messaging.AddNodeMessage(
             self.pipeline_name,
             messaging.NodeType(type),
@@ -213,9 +218,10 @@ class Model(messaging.MessageObserver):
         debug('removeSynchronous %d' % (node,))
         self.node_removed_condition.acquire()
         self.node_removed = None
+        self.node_removed_wait_for = node
         self.send(messaging.RemoveNodeMessage(
             self.pipeline_name,
-            messaging.NodeType(node)
+            node
         ))
         self.node_removed_condition.wait(timeout)
         if self.node_removed is None:
@@ -228,6 +234,7 @@ class Model(messaging.MessageObserver):
     def setParameterSynchronous(self, node, param, value, timeout=3.0):
         self.parameter_set_condition.acquire()
         self.parameter_set = None
+        self.parameter_set_wait_for = (node, param)
         self.send(messaging.SetNodeParameterMessage(
             self.pipeline_name, node, param, value
         ))
@@ -244,13 +251,12 @@ class Model(messaging.MessageObserver):
         fr = messaging.NodeOutput()
         fr.node = src
         fr.output = out
-        # TODO: type is currently ignored by pipeline when adding arcs: type is
-        # checked anyway, and incorrect type rejected.
         fr.type = messaging.OutputType.Image
         to = messaging.NodeInput()
         to.node = dst
         to.input = inp
         debug('add arc: %s --> %s' % (fr, to))
+        self.arc_added_wait_for = (fr, to)
         self.send(messaging.AddArcMessage(self.pipeline_name, fr, to))
         self.arc_added_condition.wait(timeout)
         if self.arc_added is None:
@@ -271,26 +277,40 @@ class Model(messaging.MessageObserver):
 
     def onNodeAddedMessage(self, m):
         if not self.checkName(m): return
-        self.node_added_condition.acquire()
-        self.node_added = copy.deepcopy(m)
-        self.node_added_condition.notify()
-        self.node_added_condition.release()
+        if self.node_added_wait_for is not None and \
+           self.node_added_wait_for == m.nodeType:
+            self.node_added_wait_for = None
+            self.node_added_condition.acquire()
+            self.node_added = copy.deepcopy(m)
+            self.node_added_condition.notify()
+            self.node_added_condition.release()
+        else:
+            warning('ignoring message about unknown node being added')
 
     def onNodeRemovedMessage(self, m):
         if not self.checkName(m): return
-        self.node_removed_condition.acquire()
-        self.node_removed = copy.deepcopy(m)
-        self.node_removed_condition.notify()
-        self.node_removed_condition.release()
+        if self.node_removed_wait_for is not None and \
+           self.node_removed_wait_for == m.nodeId:
+            self.node_removed_wait_for = None
+            self.node_removed_condition.acquire()
+            self.node_removed = copy.deepcopy(m)
+            self.node_removed_condition.notify()
+            self.node_removed_condition.release()
+        else:
+            warning('ignoring message about unknown node being removed')
 
     def onNodeParametersMessage(self, m):
         if not self.checkName(m): return
-        # TODO: be discriminating about whether this parameter message actually
-        # corresponds to the one set in setParameterSynchronous
-        self.parameter_set_condition.acquire()
-        self.parameter_set = copy.deepcopy(m)
-        self.parameter_set_condition.notify()
-        self.parameter_set_condition.release()
+        if self.parameter_set_wait_for is not None and \
+           m.nodeId == self.parameter_set_wait_for[0] and\
+           self.parameter_set_wait_for[1] in map(lambda x: x.input, m.params.keys()):
+            self.parameter_set_wait_for = None
+            self.parameter_set_condition.acquire()
+            self.parameter_set = copy.deepcopy(m)
+            self.parameter_set_condition.notify()
+            self.parameter_set_condition.release()
+        else:
+            warning('ignoring message about unknown parameter being set')
 
     def onGraphDescriptionMessage(self, m):
         if not self.checkName(m): return
@@ -301,10 +321,21 @@ class Model(messaging.MessageObserver):
 
     def onArcAddedMessage(self, m):
         if not self.checkName(m): return
-        self.arc_added_condition.acquire()
-        self.arc_added = copy.deepcopy(m)
-        self.arc_added_condition.notify()
-        self.arc_added_condition.release()
+        # oops, shouldn't have called a message field, 'from'
+        # !!! TODO: here LocalNodeInput and LocalNodeOutput strucutres are
+        # compared by string representation because apparently direct
+        # comparison is always false (even when they are the same...)
+        # This is not good.
+        if self.arc_added_wait_for is not None and \
+           str(getattr(m, 'from')) == str(self.arc_added_wait_for[0]) and \
+           str(m.to) == str(self.arc_added_wait_for[1]):
+            self.arc_added_wait_for = None
+            self.arc_added_condition.acquire()
+            self.arc_added = copy.deepcopy(m)
+            self.arc_added_condition.notify()
+            self.arc_added_condition.release()
+        else:
+            warning('ignoring message about unknown arc being added')
 
     #def onArcRemovedMessage(self, m):
     #    if not self.checkName(m): return

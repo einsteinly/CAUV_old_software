@@ -11,12 +11,14 @@
 #include <pcl/visualization/cloud_viewer.h>
 #endif
 
+#include <utility/bash_cout.h>
+
 using namespace cauv;
 using namespace cauv::imgproc;
 
 typedef pcl::PointXYZ pt_t;
 typedef pcl::PointCloud<pt_t> cloud_t;
-// actually a boost shared_ptr (I think...):
+// actually a boost shared_ptr:
 typedef cloud_t::Ptr cloud_ptr;
 
 static uint32_t Min_Initial_Points = 10;
@@ -53,12 +55,15 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps, Eigen::Matrix4f co
     r->width = kps.size();
     r->is_dense = false; // TODO: true?
     r->points.resize(kps.size());
-
+    
+    bool warned_non_planar = false;
     for(size_t i = 0; i < kps.size(); i++){
         pt_t temp(kps[i].pt.x, kps[i].pt.y, 0);
         r->points[i].getVector3fMap() = rotate * temp.getVector3fMap() + translate;
-        if(r->points[i].z != 0)
+        if(!warned_non_planar && r->points[i].z != 0){
+            warned_non_planar = true;
             warning() << "non-planar!";
+        }
     }
 
     return r;
@@ -86,6 +91,7 @@ void SonarSLAMNode::init(){
     registerParamID("euclidean fitness", float(1e-6), "max error between consecutive steps for non-convergence");
     registerParamID("reject threshold", float(5), "RANSAC outlier rejection distance");
     registerParamID("max correspond dist", float(5), "");
+    registerParamID("score threshold", float(1), "keypoint set will be rejected if mean distance error is greater than this");
     
     // outputs:
     //registerOutputID<image_ptr_t>("image_out");
@@ -106,6 +112,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     float transform_eps = param<float>("transform eps");
     float reject_threshold = param<float>("reject threshold");
     float max_correspond_dist = param<float>("max correspond dist");
+    float score_thr = param<float>("score threshold");
     
     cloud_ptr new_cloud = kpsToCloud(
         param< std::vector<KeyPoint> >("keypoints"),
@@ -118,7 +125,8 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     
     if(!m_impl->whole_cloud){
         if(new_cloud->points.size() > Min_Initial_Points){
-            debug() << "new cloud with" << new_cloud->points.size() << "points";
+            info() << BashColour::Green
+                   << "new cloud with" << new_cloud->points.size() << "points";
             m_impl->whole_cloud = boost::make_shared<cloud_t>(*new_cloud);
             debug(3) << "transformation is:\n" << m_impl->last_transformation;
         }else{
@@ -144,16 +152,18 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         cloud_t final;
         icp.align(final);
         Eigen::Matrix4f final_transform = icp.getFinalTransformation();
-        debug() << "converged:" << icp.hasConverged()
-                << "score:" << icp.getFitnessScore()
-                << "transformation:\n" << final_transform;
-        if(icp.hasConverged()){
+        float score = icp.getFitnessScore();
+        info() << BashColour::Green
+               << "converged:" << icp.hasConverged()
+               << "score:" << score;
+        debug(3) << "transformation:\n" << final_transform;
+        if(icp.hasConverged() && score < score_thr){
             m_impl->last_transformation = final_transform;
             *(m_impl->whole_cloud) += final;
-            debug() << "added transformed points to the cloud";
             Eigen::Matrix3f r = final_transform.block<3,3>(0, 0);
             Eigen::Vector3f t = final_transform.block<3,1>(0, 3);
-            debug() << "position: " << t[0] << "," << t[1] << "," << t[2];
+            info() << BashColour::Green
+                   << "added transformed points at: " << t[0] << "," << t[1] << "," << t[2];
             
             #ifdef CAUV_CLOUD_VISUALISATION
             m_impl->viewer->showCloud(m_impl->whole_cloud);
@@ -165,8 +175,12 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             pcl::io::savePCDFile(mkStr() << "sonarSLAM.pcd",  *m_impl->whole_cloud);
             #endif
             
+        }else if(score >= score_thr){
+            info() << BashColour::Green
+                   << "points will not be added to the whole cloud (error too high)";
         }else{
-            debug() << "points will not be added to the whole cloud (not converged)";
+            info() << BashColour::Green
+                   << "points will not be added to the whole cloud (not converged)";
         }
     }
 
