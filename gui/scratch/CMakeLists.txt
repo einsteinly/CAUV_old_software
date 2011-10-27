@@ -7,12 +7,12 @@ set (
     scratch_srcs
     main.cpp
     viewWidget.cpp
-    ../gui/core/framework/elements/multiArc.cpp
-    ../gui/core/framework/elements/multiArcStart.cpp
-    ../gui/core/framework/elements/multiArcEnd.cpp
-    ../gui/core/framework/elements/fNode.cpp
-    ../gui/core/framework/elements/nodeInput.cpp
+    #../gui/core/framework/elements/multiArc.cpp
+    #../gui/core/framework/elements/multiArcStart.cpp
+    #../gui/core/framework/elements/multiArcEnd.cpp
+    #../gui/core/framework/elements/nodeInput.cpp
 
+    ../gui/core/framework/fluidity/fNode.cpp
     ../gui/core/framework/fluidity/managedElement.cpp
     ../gui/core/framework/fluidity/manager.cpp
 
@@ -22,11 +22,11 @@ set (
     scratch_H
     viewWidget.h
     cross.h
-    ../gui/core/framework/elements/multiArc.h
-    ../gui/core/framework/elements/multiArcStart.h
-    ../gui/core/framework/elements/multiArcEnd.h
-    ../gui/core/framework/elements/fNode.h
+    #../gui/core/framework/elements/multiArc.h
+    #../gui/core/framework/elements/multiArcStart.h
+    #../gui/core/framework/elements/multiArcEnd.h
 
+    ../gui/core/framework/fluidity/fNode.h
     ../gui/core/framework/fluidity/manager.h
 )
 
@@ -67,6 +67,7 @@ add_executable (
 target_link_libraries (
     scratch
     cauv_debug
+    common
     liquid
     ${QT_LIBRARIES}
 )

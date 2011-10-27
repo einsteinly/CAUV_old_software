@@ -1,28 +1,28 @@
 #include "viewWidget.h"
 
+#include <QDebug>
+#include <QGraphicsRectItem>
+
+#include <boost/make_shared.hpp>
+
 #include <liquid/button.h>
 //#include <liquid/arc.h>
 //#include <liquid/arcSource.h>
 //#include <liquid/arcSink.h>
 
-//#include "elements/multiArc.h"
-//#include "elements/arcSocket.h"
-//#include "elements/multiArcStart.h"
-//#include "elements/multiArcEnd.h"
-#include "elements/fNode.h"
 #include "elements/style.h"
 
+#include "fluidity/fNode.h"
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
 
 #include "cross.h"
 
-#include <QDebug>
 
-#include <QGraphicsRectItem>
+#include <common/cauv_node.h>
 
 using namespace cauv;
-using namespace cauv::gui;
+using namespace cauv::gui::f;
 using namespace liquid;
 
 
@@ -37,7 +37,7 @@ struct ContainerRect : public QGraphicsRectItem {
 };
 
 
-ViewWidget::ViewWidget(QWidget* parent)
+ViewWidget::ViewWidget(boost::shared_ptr<CauvNode> node, QWidget* parent)
     : QGraphicsView(parent){
     
     QGraphicsScene *s = new QGraphicsScene(this);
@@ -49,8 +49,11 @@ ViewWidget::ViewWidget(QWidget* parent)
 
     setScene(s);
 
-    Manager m(s, NULL);
-
+    m_cauv_node = node;
+    m_manager = boost::make_shared<Manager>(s, &(*m_cauv_node), "default");
+    m_manager->init();
+    
+    /*
     liquid::LiquidNode *n1 = new FNode(m);
     n1->setPos(20.5, 100.5);
 
@@ -67,6 +70,7 @@ ViewWidget::ViewWidget(QWidget* parent)
     
     s->addItem(rect);
     s->addItem(n3);
+    */
 
     setCacheMode(CacheBackground);
     setViewportUpdateMode(MinimalViewportUpdate);

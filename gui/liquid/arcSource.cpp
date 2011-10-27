@@ -131,6 +131,7 @@ ArcSource::ArcSource(void* sourceDelegate,
       m_back_line(NULL){
     
     arc->setFrom(this);
+    arc->setZValue(1);
 
     setFlag(ItemHasNoContents);
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

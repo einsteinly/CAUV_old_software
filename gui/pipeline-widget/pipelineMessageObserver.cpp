@@ -105,6 +105,8 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
             m_widget->remove(*j);
         }
     }
+    // !!! TODO: umm, we're not removing all the arcs that might have been
+    // removed here... only those that were connected to vanished nodes
     m_widget->sanitizeArcs();
 
     // make sure all nodes exist with the correct inputs and outputs

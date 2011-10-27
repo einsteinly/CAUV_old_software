@@ -1,7 +1,7 @@
 #include "managedElement.h"
 
 using namespace cauv;
-using namespace cauv::gui;
+using namespace cauv::gui::f;
 
 ManagedElement::ManagedElement(ManagedElement const& other)
     : m_manager(other.m_manager){

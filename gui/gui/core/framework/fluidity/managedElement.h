@@ -3,6 +3,7 @@
 
 namespace cauv{
 namespace gui{
+namespace f{
 
 class Manager;
 
@@ -21,6 +22,7 @@ class ManagedElement{
         Manager& m_manager;
 };
 
+} // namespace f
 } // namespace gui
 } // namespace cauv
 

@@ -7,7 +7,7 @@
 
 #include <liquid/arcSource.h>
 
-#include "style.h"
+#include "elements/style.h"
 
 namespace cauv{
 namespace gui{

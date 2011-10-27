@@ -13,11 +13,15 @@
 #include <liquid/arcSource.h>
 #include <liquid/arc.h>
 
-#include "style.h"
-#include "nodeInput.h"
-#include "fNodeOutput.h"
+#include "elements/style.h"
+#include "elements/nodeInput.h"
 
-using cauv::gui::FNode;
+#include "fNodeOutput.h"
+//#include "fNodeInput.h"
+
+#include "fluidity/types.h"
+
+using cauv::gui::f::FNode;
 using namespace liquid;
 
 class TestLayoutItem: public QGraphicsLayoutItem,
@@ -92,9 +96,10 @@ class MyConnectionSource{
 };
 
 
-FNode::FNode(Manager& m, QGraphicsItem *parent)
-    : liquid::LiquidNode(F_Node_Style, parent),
-      ManagedElement(m){
+FNode::FNode(Manager& m, node_id_t id)
+    : liquid::LiquidNode(F_Node_Style, NULL), 
+      ManagedElement(m),
+      m_node_id(id){
 
     Button *collapsebutton = new Button(
        QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
