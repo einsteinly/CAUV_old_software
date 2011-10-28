@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 #Estimates the location of the AUV w.r.t. the reference corner of the harbour
 #work in progress use at own risk
 

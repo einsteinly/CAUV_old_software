@@ -102,7 +102,7 @@ endif()
 set (GEND "${CAUV_SOURCE_DIR}/generated")
 set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 execute_process(
-    COMMAND python ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg 
+    COMMAND ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg 
     OUTPUT_VARIABLE CAUV_MESSAGE_FILES
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )

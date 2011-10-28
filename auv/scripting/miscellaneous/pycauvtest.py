@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 import cauv.node as node
 import cauv.messaging as messaging
 import cauv.pipeline as pipeline

@@ -36,7 +36,7 @@ endif()
 set(CAUV_PYTHON_INSTALL_PATH ${PYTHON_PREFIX}/${PYTHON_PACKAGES_PATH} CACHE STRING "Install path for the CAUV python_module. Recommended to use virtualenv for this.")
 
 execute_process(
-    COMMAND python ${PYMSGD}/msggen.py -l "python" -an -o ${SRCD} ${PYMSGD}/messages.msg 
+    COMMAND ${PYMSGD}/msggen.py -l "python" -an -o ${SRCD} ${PYMSGD}/messages.msg 
     OUTPUT_VARIABLE CAUV_MESSAGE_PYTHON_FILES
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # log-file writing process
 
 import cauv.messaging as msg

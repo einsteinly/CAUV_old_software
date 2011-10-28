@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 #
 # This module provides an as-user-friendly-as-possible wrapper around the
 # 'messaging' module (which exports the c++ messaging interface directly)

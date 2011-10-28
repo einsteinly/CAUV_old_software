@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 import traceback
 import optparse
@@ -98,7 +98,7 @@ processes_to_start = [
         CAUVTask('AI Detectors',    '', False, ['AI_detection_process']),
         CAUVTask('AI Task Manager', '', False, ['AI_task_manager']),
         CAUVTask('AI Pipeline Manager', '', False, ['AI_pipeline_manager']),
-        CAUVTask('AI default script', '', False, ['python ./AI_scriptparent.py default'])
+        CAUVTask('AI default script', '', False, ['./AI_scriptparent.py default'])
 ]
 
 def limitLength(string, length=48):

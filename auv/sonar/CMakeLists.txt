@@ -9,7 +9,7 @@ add_custom_command (
           ${MSGSRCD}/messages_fwd.h
           ${MSGSRCD}/messages_messages.h
    WORKING_DIRECTORY ${PYMSGD}
-   COMMAND python msggen.py -l "c++" -o ${MSGSRCD}/messages ${MSGSRCD}/messages.msg 
+   COMMAND ./msggen.py -l "c++" -o ${MSGSRCD}/messages ${MSGSRCD}/messages.msg 
    DEPENDS ${PYMSGD}/msggen.py
            ${PYMSGD}/message.template.cpp
            ${PYMSGD}/message.template.h

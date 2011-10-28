@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2.7
 
 # This program works with the 'control' program when it is run in simulation
 # mode. It receives:
