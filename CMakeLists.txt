@@ -59,6 +59,7 @@ function (cauv_install_link FROM TO)
             message(STATUS \"Linking ${FROM} -> ${TO}\")
             execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${TO} ${FROM})
         endif()
+        LIST(APPEND CMAKE_INSTALL_MANIFEST_FILES ${FROM})
     ")
 endfunction()
 
