@@ -7,6 +7,7 @@ import subprocess
 import threading
 import os
 import sys
+import collections
 import string
 import psi.process
 import psi.arch
@@ -107,36 +108,34 @@ def limitLength(string, length=48):
         string = string[:length-3] + '...'
     return string
 
+if isinstance(Arch, psi.arch.ArchLinux):
+    status_map = {
+        psi.process.PROC_STATUS_DEAD: 'dead',
+        psi.process.PROC_STATUS_DISKSLEEP: 'sleedsk',
+        psi.process.PROC_STATUS_PAGING: 'paging',
+        psi.process.PROC_STATUS_RUNNING: 'running',
+        psi.process.PROC_STATUS_SLEEPING: 'sleeping',
+        psi.process.PROC_STATUS_TRACINGSTOP: 'stopped',
+        psi.process.PROC_STATUS_ZOMBIE: 'zombie'
+    }
+elif isinstance(Arch, psi.arch.ArchDarwin):
+    status_map = {
+        psi.process.PROC_STATUS_SIDL: 'idle',
+        psi.process.PROC_STATUS_SRUN: 'running',
+        psi.process.PROC_STATUS_SLEEP: 'sleeping',
+        psi.process.PROC_STATUS_SSTOP: 'stopped',
+        psi.process.PROC_STATUS_SZOMB: 'zombie'
+    }
+else:
+    status_map = {}
+
+status_map = collections.defaultdict(lambda: 'unknown',status_map);
+
 def psiProcStatusToS(n):
     'return string describing process status value'
     #pylint: disable=E1101
-    if isinstance(Arch, psi.arch.ArchLinux):
-        if n == psi.process.PROC_STATUS_DEAD:
-            return 'dead'
-        elif n == psi.process.PROC_STATUS_DISKSLEEP:
-            return 'sleepdsk'
-        elif n == psi.process.PROC_STATUS_PAGING:
-            return 'paging'
-        elif n == psi.process.PROC_STATUS_RUNNING:
-            return 'running'
-        elif n == psi.process.PROC_STATUS_SLEEPING:
-            return 'sleeping'
-        elif n == psi.process.PROC_STATUS_TRACINGSTOP:
-            return 'stopped'
-        elif n == psi.process.PROC_STATUS_ZOMBIE:
-            return 'zombie'
-    else:
-        if n == psi.process.PROC_STATUS_SIDL:
-            return 'idle'
-        elif n == psi.process.PROC_STATUS_SRUN:
-            return 'running'
-        elif psi.process.PROC_STATUS_SSLEEP:
-            return 'sleeping'
-        elif psi.process.PROC_STATUS_SSTOP:
-            return 'stopped'
-        elif psi.process.PROC_STATUS_SZOMB:
-            return 'zombie'
-    return '?'
+
+    return status_map[n]
 
 def getProcesses():
     # returns dictionary of short name : CAUVTasks, all fields filled in
