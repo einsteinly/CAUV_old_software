@@ -127,6 +127,19 @@ def persistMainLoop(cauv_node, shelf, auto):
         info('closed the shelf')
     info('exiting...')
 
+def shelve_open(filename):
+    #hack because bsddb is broken by default on Arch
+    # 'depreciated module' doesn't mean you should hack it out
+    # breaking perfectly good modules in the process...
+    # see https://bugs.archlinux.org/task/25058
+    try:
+        shelf = shelve.open(filename)
+    except ImportError:
+        import bsddb3
+        _db = bsddb3.hashopen(filename)
+        shelf = shelve.Shelf(_db)
+    return shelf
+
 if __name__ == '__main__':
     p = optparse.OptionParser()
     p.add_option('-f', '--persistence-file', dest='fname',
@@ -145,7 +158,7 @@ if __name__ == '__main__':
         exit(1)
 
     cauv_node = node.Node("persist")
-    shelf = shelve.open(opts.fname)
+    shelf = shelve_open(opts.fname)
     
     if opts.restore:
         sendSavedMessages(cauv_node, shelf)
