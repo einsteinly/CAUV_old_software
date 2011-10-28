@@ -1,6 +1,5 @@
 project (python-module)
 
-set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 set (MSGSRCD ${AUV_SOURCE_DIR}/common)
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (BINDIR ${CMAKE_CURRENT_BINARY_DIR})

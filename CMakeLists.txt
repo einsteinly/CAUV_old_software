@@ -99,6 +99,8 @@ if (Boost_VERSION GREATER 104500)
 endif()
 
 
+add_subdirectory (messages-python)
+
 set (GEND "${CAUV_SOURCE_DIR}/generated")
 set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 execute_process(
@@ -115,7 +117,6 @@ endforeach()
 
 add_subdirectory (generated)
 add_subdirectory (common)
-add_subdirectory (messages-python)
 add_subdirectory (auv)
 add_subdirectory (gui)
 add_subdirectory (utility)

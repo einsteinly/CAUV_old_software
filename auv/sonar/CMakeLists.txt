@@ -2,7 +2,6 @@
 # this rule is duplicated from ../common because cmake can't track dependencies
 # on generated files in other directories...
 set (MSGSRCD ${AUV_SOURCE_DIR}/common)
-set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 add_custom_command (
    OUTPUT ${MSGSRCD}/messages.cpp
           ${MSGSRCD}/messages.h
