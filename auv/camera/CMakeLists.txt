@@ -26,6 +26,7 @@ target_link_libraries (camera_server
     ${OpenCV_LIBS}
     boost_system
 )
+cauv_install(camera_server)
 
 
 add_library (camera_client
