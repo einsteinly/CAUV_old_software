@@ -5,8 +5,9 @@ import cauv.control as control
 import cauv.sonar
 import cauv.node
 import time
+import sys
 
-node = cauv.node.Node('sonartest')
+node = cauv.node.Node('sonartest',sys.argv[1:])
 auv = control.AUV(node)
 sonar = cauv.sonar.Sonar(node)
 pl = pipeline.Model(node)

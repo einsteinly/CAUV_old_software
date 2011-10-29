@@ -6,7 +6,8 @@ import cauv.pipeline as pipeline
 import time
 
 def pipelineTest():
-    n = node.Node("pycauv-pl")
+    import sys
+    n = node.Node("pycauv-pl",sys.argv[1:])
     model = pipeline.Model(n)
     print 'Setting debug level to -3'
     n.send(messaging.DebugLevelMessage(-3), "debug")
@@ -30,7 +31,8 @@ def pipelineTest():
     print 'after:', model.get()
 
 def randomTest():
-    n = node.Node("pycauv")
+    import sys
+    n = node.Node("pycauv",sys.argv[1:])
     print "created node.Node"
 
     n.join("test")

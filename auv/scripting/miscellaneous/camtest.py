@@ -8,8 +8,9 @@ import cauv.messaging as msg
 import cauv.pipeline as pipeline
 
 import time
+import sys
 
-n = node.Node("py-camtest")
+n = node.Node("py-camtest",sys.argv[1:])
 
 pl = pipeline.Model(n)
 

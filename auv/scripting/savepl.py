@@ -9,12 +9,12 @@ from cauv.debug import debug, warning, error, info
 
 import time
 import pickle
-import optparse
+import argparse
 
-def savepl(spread, port, fname, timeout=3.0, name='default'):
+def savepl(args, fname, timeout=3.0, name='default'):
     with open(fname, 'wb') as outf:
         info('Connecting...')
-        n = node.Node("py-plsave", spread, port)
+        n = node.Node("py-plsave", args)
         try:
             info('Initializing pipeline model (%s)...' % name)
             model = pipeline.Model(n, name)
@@ -30,10 +30,10 @@ def savepl(spread, port, fname, timeout=3.0, name='default'):
             n.stop()
 
 
-def loadpl(spread, port, fname, timeout=3.0, name='default'):
+def loadpl(args, fname, timeout=3.0, name='default'):
     with open(fname, 'rb') as inf:
         info('Connecting...')
-        n = node.Node("py-plsave", spread, port)
+        n = node.Node("py-plsave", args)
         try:
             info('Initializing pipeline model (%s)...' % name)
             model = pipeline.Model(n, name)
@@ -48,9 +48,9 @@ def loadpl(spread, port, fname, timeout=3.0, name='default'):
         finally:
             n.stop()
 
-def clearpl(spread, port, name='default'):
+def clearpl(args, name='default'):
         info('Connecting...')
-        n = node.Node("py-plsave", spread, port)
+        n = node.Node("py-plsave", args)
         try:
             info('Initializing pipeline model (%s)...' % name)
             model = pipeline.Model(n, name)
@@ -64,25 +64,22 @@ def clearpl(spread, port, name='default'):
 
 
 if __name__ == '__main__':
-    parser = optparse.OptionParser(usage='usage: %prog [-f filename] (load|save|clear)')
-    parser.add_option("-f", "--file", dest="fname", default="pipeline.pipe")
-    parser.add_option("-n", "--pipeline-name", dest="name", default="default")
-    parser.add_option("-s", "--spread", dest="spread", default="localhost")
-    parser.add_option("-p", "--port", dest="port", type='int', default=16707)
-    parser.add_option("-t", "--timeout", dest="timeout", type='float', default=3.0)
+    parser = argparse.ArgumentParser(usage='usage: %prog [-f filename] (load|save|clear)')
+    parser.add_argument("-f", "--file", dest="fname", default="pipeline.pipe")
+    parser.add_argument("-n", "--pipeline-name", dest="name", default="default")
+    parser.add_argument("-t", "--timeout", dest="timeout", type='float', default=3.0)
 
-    (opts, args) = parser.parse_args()
-    port = opts.port
+    opts, args = parser.parse_known_args()
     fname = opts.fname
     timeout = opts.timeout
     name = opts.name
 
     if len(args) == 1 and args[0].lower() == 'save':
-        savepl(opts.spread, port, fname, timeout, name)
+        savepl(args, fname, timeout, name)
     elif len(args) == 1 and args[0].lower() == 'load':
-        loadpl(opts.spread, port, fname, timeout, name)
+        loadpl(args, fname, timeout, name)
     elif len(args) == 1 and args[0].lower() == 'clear':
-        clearpl(opts.spread, port, name)
+        clearpl(args, port, name)
     else:
          parser.print_help()
 

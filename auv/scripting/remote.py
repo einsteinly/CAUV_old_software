@@ -117,7 +117,8 @@ Available objects and functions:
         
 
 def main():
-    n = node.Node("pyscript")
+    import sys
+    n = node.Node("pyscript",sys.argv[1:])
     try:
         so = ScriptObserver(n)
         while True:

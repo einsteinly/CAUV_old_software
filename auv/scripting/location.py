@@ -11,7 +11,7 @@ from cauv.debug import debug, error, warning, info
 
 import time
 import math
-import optparse
+import argparse
 
 import displacement
 
@@ -120,13 +120,13 @@ class Location(messaging.MessageObserver):
         return r
 
 if __name__ == '__main__':
-    parser = optparse.OptionParser(usage='usage: %prog -m simple|exponential')
-    parser.add_option("-m", "--mode", dest="mode", default="simple",
+    parser = argparse.ArgumentParser(usage='usage: %prog -m simple|exponential')
+    parser.add_argument("-m", "--mode", dest="mode", default="simple",
             help="integration mode: 'simple' or 'exponential' see" +
             "displacement_integrator.py for exponential integrator constants")
-    opts, args = parser.parse_args()
+    opts, args = parser.parse_known_args()
 
-    node = cauv.node.Node('py-dspl')
+    node = cauv.node.Node('py-dspl',args)
     try:
         auv = control.AUV(node)
         d = Location(node, opts.mode)

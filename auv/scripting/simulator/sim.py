@@ -61,12 +61,12 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--vehicle', dest='vehicle',
         help='name of vehicle to model', default='red-herring')
 
-    opts  = parser.parse_args()
+    opts,args  = parser.parse_known_args()
 
     vehicle_modname = opts.vehicle.lower().replace('-','') + '_model'
     vehicle_module = importlib.import_module(vehicle_modname)
 
-    node = cauv.node.Node('py-sim')
+    node = cauv.node.Node('py-sim',args)
     model = None
     try:
         model = vehicle_module.Model(node)

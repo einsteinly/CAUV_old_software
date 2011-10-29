@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 
 import traceback
-import optparse
+import argparse
 import time
 import subprocess
 import threading
@@ -248,31 +248,27 @@ def startInactive(cauv_task_list):
                 cauv_task.start()
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-N', '--no-start', dest='no_start', default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument('-N', '--no-start', dest='no_start', default=False,
                  action='store_true', help="Don't start processes, just" +\
                  " report whether processes that would be started are running")
-    p.add_option('-d', '--show-details', dest='details', default=True,
+    p.add_argument('-d', '--show-details', dest='details', default=True,
                  action='store_true', help='display additional details')
-    p.add_option('-n', '--no-show-details', dest='details',
+    p.add_argument('-n', '--no-show-details', dest='details',
                  action='store_false', help='hide additional details')
-    p.add_option('-p', '--persistent', dest='persistent', default=False,
+    p.add_argument('-p', '--persistent', dest='persistent', default=False,
                  action='store_true', help='keep going until stopped')
-    p.add_option('-q', '--no-broadcast', dest='broadcast', default=True,
+    p.add_argument('-q', '--no-broadcast', dest='broadcast', default=True,
                  action='store_false', help="don't broadcast messages "+\
                  'containing information on running processes')
-    p.add_option('-e', '--exec-prefix', dest='cmd_prefix',
+    p.add_argument('-e', '--exec-prefix', dest='cmd_prefix',
                  default='cauv-', type=str,
                  action='store', help='exec prefix for cauv executables')
-    p.add_option('-s', '--script-dir', dest='script_dir', default='./',
+    p.add_argument('-s', '--script-dir', dest='script_dir', default='./',
                  type=str, action='store',
                  help='script directory (where to find run.sh)')
 
-    opts, args = p.parse_args()
-
-    if len(args) > 0:
-        print 'this program takes no arguments'
-        exit(1)
+    opts, args = p.parse_known_args()
 
     Exe_Prefix = opts.cmd_prefix
     Script_Dir = opts.script_dir
@@ -280,7 +276,7 @@ if __name__ == '__main__':
     cauv_node = None
     if opts.broadcast:
         import cauv.node as node
-        cauv_node = node.Node("watch")
+        cauv_node = node.Node("watch",args)
 
     try:
         while True:

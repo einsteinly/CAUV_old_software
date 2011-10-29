@@ -63,7 +63,8 @@ class LoggingObserver(msg.MessageObserver):
         self.writeLine()
 
 if __name__ == '__main__':
-    n = node.Node("py-log")
+    import sys
+    n = node.Node("py-log",sys.argv[1:])
     logger = LoggingObserver(n)
     try:
         while True:

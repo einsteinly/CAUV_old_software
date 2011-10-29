@@ -39,7 +39,8 @@ class GPSNode():
     
 if __name__ == '__main__':
     try:
-        n = node.Node("py-gps")
+        import sys
+        n = node.Node("py-gps",sys.argv[1:])
         while True:
             try:
                 GPSNode(n).run()

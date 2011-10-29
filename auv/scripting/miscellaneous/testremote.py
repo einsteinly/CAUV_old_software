@@ -5,12 +5,13 @@ import cauv.node as node
 import cauv.messaging as msg
 
 import time
+import sys
 
 class ScriptResponseObs(msg.BufferedMessageObserver):
     def onScriptResponseMessage(self, m):
         print '>>>', m.response
 
-n = node.Node("pyscript2")
+n = node.Node("pyscript2",sys.argv[1:])
 n.join("gui") 
 n.addObserver(ScriptResponseObs())
 

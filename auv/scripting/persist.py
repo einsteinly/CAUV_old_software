@@ -8,7 +8,7 @@ from cauv.debug import debug, info, warning, error
 import contextlib
 import shelve
 import traceback
-import optparse
+import argparse
 
 Default_Groups_To_Join = (
     'control',
@@ -141,23 +141,19 @@ def shelve_open(filename):
     return shelf
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-f', '--persistence-file', dest='fname',
+    p = argparse.ArgumentParser()
+    p.add_argument('-f', '--persistence-file', dest='fname',
                  default='./settings-persistence.shelf',
                  action='store', help='file name to save/load from (python shelf)')
-    p.add_option('-r', '--restore', dest='restore', default=False,
+    p.add_argument('-r', '--restore', dest='restore', default=False,
                  action='store_true', help='immediately broadcast messages for saved settings')
-    p.add_option('-n', '--no-auto', dest='auto', default=True,
+    p.add_argument('-n', '--no-auto', dest='auto', default=True,
                  action='store_false', help="don't automatically set parameters" +\
                  "when CAUV Nodes connect to the messaging system")
 
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
 
-    if len(args) > 0:
-        print 'this program takes no arguments'
-        exit(1)
-
-    cauv_node = node.Node("persist")
+    cauv_node = node.Node("persist",args)
     shelf = shelve_open(opts.fname)
     
     if opts.restore:

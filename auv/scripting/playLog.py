@@ -74,7 +74,7 @@ if __name__ == '__main__':
         help='start time offset (seconds)')
     p.add_argument('-r', '--rate', dest='rate', type=str, default='x1',
         help='messages per second (x1 for real-time, 2 for 2 messages per second)')
-    args = p.parse_args()
+    args = p.parse_known_args()
     
     tstart = args.start_t
     rt_rate = None
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     else:
         fixed_rate = float(args.rate)
     
-    node = cauv.node.Node('py-sim')
+    node = cauv.node.Node('py-sim',sys.argv[1:])
     try:
         print args.file
         play(args.file[0], node, tstart, rt_rate, fixed_rate)

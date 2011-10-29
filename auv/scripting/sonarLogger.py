@@ -2,7 +2,7 @@
 
 # Standard Library
 import traceback
-import optparse
+import argparse
 
 # CAUV
 import cauv.messaging as msg
@@ -77,21 +77,17 @@ def sonarLoggerMainLoop(cauv_node, opts):
     info('exiting...')
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-f', '--log-file', dest='fname',
+    p = argparse.ArgumentParser()
+    p.add_argument('-f', '--log-file', dest='fname',
                  default='./default.chil',
                  action='store', help='file to load/save sonar data lines from')
-    p.add_option('-n', '--no-record', dest='no_record', default=False,
+    p.add_argument('-n', '--no-record', dest='no_record', default=False,
                  action='store_true', help="Don't start in recording mode")
-    p.add_option('-p', '--profile', dest='do_profile', default=False,
+    p.add_argument('-p', '--profile', dest='do_profile', default=False,
                  action='store_true', help='use cProfile to run everything')
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
 
-    if len(args) > 0:
-        print 'this program takes no arguments'
-        exit(1)
-   
-    cauv_node = node.Node("py-slog")
+    cauv_node = node.Node("py-slog",args)
     try: 
         if opts.do_profile:
             import cProfile
