@@ -74,23 +74,23 @@ class CAUVTask:
 processes_to_start = [
         CAUVTask(
             'remote',     # short name
-            'nohup /bin/sh %SDIR/run.sh %SDIR/remote.py', # command: %SDIR expands to --script-dir, %EDIR to --exec-prefix
+            '%SDIR/remote.py', # command: %SDIR expands to --script-dir, %EDIR to --exec-prefix
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',          'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe default','nohup nice -n 15 %EDIRimg-pipeline -n default',        True, ['img-pipeline -n default', 'img-pipelined -n default']),
-        #CAUVTask('img-pipe ai',     'nohup nice -n 15 %EDIRimg-pipeline -n ai',            True, ['img-pipelined -n ai']),
-        #CAUVTask('img-pipe sonar',  'nohup nice -n 4 %EDIRimg-pipeline -n sonar',          True, ['img-pipelined -n sonar']),
-        CAUVTask('sonar',           'nohup nice -n 4 %EDIRsonard /dev/sonar0',              True, ['sonar']),
-        CAUVTask('control',         'nohup nice -n 2 %EDIRcontrold -m/dev/ttyUSB0 -x0',     True, ['control']),
-        CAUVTask('spread',          'nohup nice -n 2 spread',                               True, ['spread']),
-        CAUVTask('persist',         'nohup nice -n 0 /bin/sh %SDIR/run.sh %SDIR/persist.py',          False, ['persist.py']),
-        CAUVTask('battery',         'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
-        CAUVTask('gps',             'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py',  True, ['gpsd.py']),
-        CAUVTask('location',        'nohup nice -n 4 /bin/sh %SDIR/run.sh %SDIR/location.py --mode=exponential', True, ['location.py']),
-        CAUVTask('camera server',   'nohup nice -n 1 %EDIRcamera_server',                   True, ['camera_server']),
-        CAUVTask('gemini',          'nohup nice -n 1 %EDIRgemini_node 17',                  True, ['gemini_node']),
+        CAUVTask('logger',          'nice -n 5 %SDIR/logger.py', True, ['logger.py']),
+        CAUVTask('img-pipe default','nice -n 15 %EDIRimg-pipeline -n default',        True, ['img-pipeline -n default', 'img-pipelined -n default']),
+        #CAUVTask('img-pipe ai',     'nice -n 15 %EDIRimg-pipeline -n ai',            True, ['img-pipelined -n ai']),
+        #CAUVTask('img-pipe sonar',  'nice -n 4 %EDIRimg-pipeline -n sonar',          True, ['img-pipelined -n sonar']),
+        CAUVTask('sonar',           'nice -n 4 %EDIRsonar /dev/sonar0',              True, ['sonar']),
+        CAUVTask('control',         'nice -n 2 %EDIRcontrol -m/dev/ttyUSB0 -x0',     True, ['control']),
+        CAUVTask('spread',          'nice -n 2 spread',                               True, ['spread']),
+        CAUVTask('persist',         'nice -n 0 %SDIR/persist.py',          False, ['persist.py']),
+        CAUVTask('battery',         'nice -n 10 %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('gps',             'nice -n 10 %SDIR/gpsd.py',  True, ['gpsd.py']),
+        CAUVTask('location',        'nice -n 4 %SDIR/location.py --mode=exponential', True, ['location.py']),
+        CAUVTask('camera server',   'nice -n 1 %EDIRcamera_server',                   True, ['camera_server']),
+        CAUVTask('gemini',          'nice -n 1 %EDIRgemini_node 17',                  True, ['gemini_node']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
