@@ -8,6 +8,7 @@ import traceback
 from cauv import messaging
 from cauv.debug import debug, error, warning, info, setDebugName
 from utils import fileCached
+import sys
 
 class Observer(messaging.MessageObserver):
     pass
@@ -38,7 +39,7 @@ def getVersionInfo():
     return (summary, diff)
 
 class Node(messaging.CauvNode):
-    def __init__(self, name, spreadserver="localhost", spreadport=16707):
+    def __init__(self, name, args = None):
         setDebugName(name)
         info('CAUV Python Node Initialisation...') 
         try:
@@ -48,7 +49,12 @@ class Node(messaging.CauvNode):
         except IOError:
             # stupid OS X... apparently my os module was compiled wrong
             pass
-        messaging.CauvNode.__init__(self, name, spreadserver, spreadport)
+        messaging.CauvNode.__init__(self, name)
+        if args is None:
+            #this sets up default options
+            self.parseOptions(sys.argv[0:1])
+        else:
+            self.parseOptions(sys.argv[0:1] + args)
         
         #''' # synchronous version (python starts a thread)
         debug('CauvNode.__run thread...')   

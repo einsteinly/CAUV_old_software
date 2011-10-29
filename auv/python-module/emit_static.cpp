@@ -1,16 +1,52 @@
 #include "workarounds.h" // _must_ be first
 #include <boost/python.hpp>
+#include <boost/utility.hpp>
 
+#include <debug/cauv_debug.h>
 #include <common/cauv_node.h>
 #include <common/spread/msgsrc_mb_observer.h>
 #include <common/spread/spread_rc_mailbox.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
 
+#include <string>
+#include <cstring>
+
 #include "emit_static.h"
 
 namespace bp = boost::python;
 using namespace cauv;
+
+//python list -> std::string[] -> c string (char**)
+
+class pyListWrapper : boost::noncopyable{
+    public:
+    pyListWrapper(bp::list &list) :
+        length(bp::len(list)),
+        char_list(new char* [sizeof(char*) * length]) {
+
+        for (bp::ssize_t i = 0; i < length; i++) {
+            std::string str = bp::extract<std::string>(list[i]);
+            char_list[i] = new char [str.length() + 1];
+            strncpy(char_list[i],str.c_str(),str.length() + 1);
+        }
+    }
+    char ** get() {
+        return char_list;
+    }
+    bp::ssize_t len() {
+        return length;
+    }
+    ~pyListWrapper() {
+        for (bp::ssize_t i = 0; i < length; i++) {
+            delete[] char_list[i];
+        }
+        delete[] char_list;
+    }
+    private:
+    bp::ssize_t length;
+    char **char_list;
+};
 
 // NB: don't yield the GIL (otherwise it's possible *s could become invalid)
 void cauvDebug(const char* s, int l){
@@ -35,6 +71,12 @@ void cauvInfo(const char* s){
 
 void setDebugName(const char* s){
     debug::setProgramName(s);
+}
+
+int debugParseOptions(bp::list &argv){
+    GILLock l;
+    pyListWrapper argv_w(argv);
+    return debug::parseOptions(argv_w.len(),argv_w.get());
 }
 
 #ifdef EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
@@ -106,17 +148,13 @@ class MessageWrapper:
         }
 };
 
-
 class CauvNodeWrapper:
     public CauvNode,
     public bp::wrapper<CauvNode>
 {
     public:
-        CauvNodeWrapper(std::string const& name, std::string const& server, unsigned port)
+        CauvNodeWrapper(std::string const& name)
             : CauvNode(name){
-            defaultOptions();
-            m_server = server;
-            m_port = port;
         }
 
         void onRun(){
@@ -135,6 +173,12 @@ class CauvNodeWrapper:
 
         void run(bool synchronous){
             CauvNode::run(synchronous);
+        }
+
+        int parseOptions (bp::list& argv) {
+            GILLock l;
+            pyListWrapper argv_w(argv);
+            return CauvNode::parseOptions(argv_w.len(),argv_w.get());
         }
 
         /*int foo(boost::shared_ptr<Message const> m){
@@ -222,6 +266,7 @@ void emitDebug(){
     bp::def("error", cauvError);
     bp::def("info", cauvInfo);
     bp::def("setDebugName", setDebugName);
+    bp::def("debugParseOptions", debugParseOptions);
 }
 
 void emitMailbox(){
@@ -270,7 +315,7 @@ void emitMessage(){
 void emitCauvNode(){
     bp::class_<CauvNodeWrapper,
                boost::noncopyable
-              >("CauvNode", bp::init<std::string, std::string, unsigned>())
+              >("CauvNode", bp::init<std::string>())
          .def("run", wrap(&CauvNodeWrapper::run))
          .def("stop", wrap(&CauvNode::stopNode))
          .def("onRun", wrap(&CauvNodeWrapper::onRun))
@@ -278,6 +323,7 @@ void emitCauvNode(){
          .def("join", wrap(&CauvNode::joinGroup))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))
          .def("removeObserver", wrap(&CauvNode::removeMessageObserver))
+         .def("parseOptions", wrap(&CauvNodeWrapper::parseOptions))
          //.def("foo", wrap(&CauvNodeWrapper::foo))
          .add_property("mailbox", &CauvNodeWrapper::get_mailbox)
          //.add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
