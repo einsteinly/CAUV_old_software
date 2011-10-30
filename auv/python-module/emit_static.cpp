@@ -32,7 +32,7 @@ class pyListWrapper : boost::noncopyable{
         }
     }
     char ** get() {
-        return char_list;
+        return length? char_list : NULL;
     }
     bp::ssize_t len() {
         return length;
@@ -74,7 +74,6 @@ void setDebugName(const char* s){
 }
 
 int debugParseOptions(bp::list &argv){
-    GILLock l;
     pyListWrapper argv_w(argv);
     return debug::parseOptions(argv_w.len(),argv_w.get());
 }
@@ -176,7 +175,6 @@ class CauvNodeWrapper:
         }
 
         int parseOptions (bp::list& argv) {
-            GILLock l;
             pyListWrapper argv_w(argv);
             return CauvNode::parseOptions(argv_w.len(),argv_w.get());
         }
@@ -323,7 +321,7 @@ void emitCauvNode(){
          .def("join", wrap(&CauvNode::joinGroup))
          .def("addObserver", wrap(&CauvNode::addMessageObserver))
          .def("removeObserver", wrap(&CauvNode::removeMessageObserver))
-         .def("parseOptions", wrap(&CauvNodeWrapper::parseOptions))
+         .def("parseOptions", &CauvNodeWrapper::parseOptions)
          //.def("foo", wrap(&CauvNodeWrapper::foo))
          .add_property("mailbox", &CauvNodeWrapper::get_mailbox)
          //.add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
