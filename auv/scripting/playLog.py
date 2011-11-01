@@ -74,19 +74,19 @@ if __name__ == '__main__':
         help='start time offset (seconds)')
     p.add_argument('-r', '--rate', dest='rate', type=str, default='x1',
         help='messages per second (x1 for real-time, 2 for 2 messages per second)')
-    args = p.parse_known_args()
+    opts, unknown_args = p.parse_known_args()
     
-    tstart = args.start_t
+    tstart = opts.start_t
     rt_rate = None
     fixed_rate = None
-    if args.rate.startswith('x'):
-        rt_rate = float(args.rate[1:])
+    if opts.rate.startswith('x'):
+        rt_rate = float(opts.rate[1:])
     else:
-        fixed_rate = float(args.rate)
+        fixed_rate = float(opts.rate)
     
-    node = cauv.node.Node('py-sim',sys.argv[1:])
+    node = cauv.node.Node('py-sim',unknown_args)
     try:
-        print args.file
-        play(args.file[0], node, tstart, rt_rate, fixed_rate)
+        print opts.file
+        play(opts.file[0], node, tstart, rt_rate, fixed_rate)
     finally:
         node.stop()

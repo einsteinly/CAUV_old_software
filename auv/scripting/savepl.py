@@ -11,76 +11,64 @@ import time
 import pickle
 import argparse
 
-def savepl(args, fname, timeout=3.0, name='default'):
+def savepl(node, fname, timeout=3.0, name='default'):
     with open(fname, 'wb') as outf:
-        info('Connecting...')
-        n = node.Node("py-plsave", args)
-        try:
-            info('Initializing pipeline model (%s)...' % name)
-            model = pipeline.Model(n, name)
+        info('Initializing pipeline model (%s)...' % name)
+        model = pipeline.Model(node, name)
 
-            info('Getting pipeline state...')
-            saved = model.get(timeout)
-            
-            info('Pickling...')
-            pickle.dump(saved, outf)
+        info('Getting pipeline state...')
+        saved = model.get(timeout)
         
-            info('Done.')
-        finally:
-            n.stop()
+        info('Pickling...')
+        pickle.dump(saved, outf)
 
 
-def loadpl(args, fname, timeout=3.0, name='default'):
+def loadpl(node, fname, timeout=3.0, name='default'):
     with open(fname, 'rb') as inf:
-        info('Connecting...')
-        n = node.Node("py-plsave", args)
-        try:
-            info('Initializing pipeline model (%s)...' % name)
-            model = pipeline.Model(n, name)
+        info('Initializing pipeline model (%s)...' % name)
+        model = pipeline.Model(node, name)
 
-            info('UnPickling...')
-            saved = pickle.load(inf)
-            
-            info('Setting pipeline state...')
-            model.set(saved, timeout)
+        info('UnPickling...')
+        saved = pickle.load(inf)
+        
+        info('Setting pipeline state...')
+        model.set(saved, timeout)
 
-            info('Done.')
-        finally:
-            n.stop()
+def clearpl(node, name='default'):
+    info('Initializing pipeline model (%s)...' % name)
+    model = pipeline.Model(node, name)
 
-def clearpl(args, name='default'):
-        info('Connecting...')
-        n = node.Node("py-plsave", args)
-        try:
-            info('Initializing pipeline model (%s)...' % name)
-            model = pipeline.Model(n, name)
-
-            info('Clearing...')
-            model.clear()
-
-            info('Done.')
-        finally:
-            n.stop()
+    info('Clearing...')
+    model.clear()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(usage='usage: %prog [-f filename] (load|save|clear)')
+    parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", dest="fname", default="pipeline.pipe")
     parser.add_argument("-n", "--pipeline-name", dest="name", default="default")
-    parser.add_argument("-t", "--timeout", dest="timeout", type='float', default=3.0)
+    parser.add_argument("-t", "--timeout", dest="timeout", type=float, default=3.0)
+    parser.add_argument('clear', action='store_true', default=False)
+    parser.add_argument('verb', choices=('load', 'save', 'clear'))
 
-    opts, args = parser.parse_known_args()
+    opts, unknown_args = parser.parse_known_args()
     fname = opts.fname
     timeout = opts.timeout
     name = opts.name
+    
+    info('Connecting...')
+    node = node.Node("py-plsave", unknown_args)
+    try:
+        if opts.verb == 'clear':
+            clearpl(node, name) 
+        elif opts.verb == 'save':
+            savepl(node, fname, timeout, name)
+        elif opts.verb == 'load':
+            loadpl(node, fname, timeout, name)
+        info('Done.')
+    finally:
+        node.stop()
 
-    if len(args) == 1 and args[0].lower() == 'save':
-        savepl(args, fname, timeout, name)
-    elif len(args) == 1 and args[0].lower() == 'load':
-        loadpl(args, fname, timeout, name)
-    elif len(args) == 1 and args[0].lower() == 'clear':
-        clearpl(args, port, name)
-    else:
-         parser.print_help()
 
+
+    
 
