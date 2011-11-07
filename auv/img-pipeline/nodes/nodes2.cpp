@@ -6,7 +6,6 @@
 #include "drawKeyPointsNode.h"
 #include "gaussianBlurNode.h"
 #include "fastMedianNode.h"
-#include "sonarSLAMNode.h"
 #include "bearingRangeToXYNode.h"
 #include "transformKeyPointsNode.h"
 
@@ -19,7 +18,6 @@ DEFINE_NFR(FASTCornersNode, NodeType::FASTCorners);
 DEFINE_NFR(DrawKeyPointsNode, NodeType::DrawKeyPoints);
 DEFINE_NFR(GaussianBlurNode, NodeType::GaussianBlur);
 DEFINE_NFR(FastMedianNode, NodeType::FastMedian);
-DEFINE_NFR(SonarSLAMNode, NodeType::SonarSLAM);
 DEFINE_NFR(BearingRangeToXYNode, NodeType::BearingRangeToXY);
 DEFINE_NFR(TransformKeyPointsNode, NodeType::TransformKeyPoints);
 

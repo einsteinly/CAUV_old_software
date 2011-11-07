@@ -13,6 +13,14 @@
 
 #include <utility/bash_cout.h>
 
+namespace cauv{
+namespace imgproc{
+// register this node type in the factory thing that creates nodes
+DEFINE_NFR(SonarSLAMNode, NodeType::SonarSLAM);
+
+} // namespace imgproc
+} // namespace cauv
+
 using namespace cauv;
 using namespace cauv::imgproc;
 
@@ -172,6 +180,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             #ifdef CAUV_CLOUD_DUMP
             static uint32_t n = 0;
             pcl::io::savePCDFile(mkStr() << "sonarSLAM" << n++ << ".pcd", *m_impl->whole_cloud);
+            pcl::io::savePCDFile(mkStr() << "sonarSLAM-scan" << n++ << ".pcd", *new_cloud);
             pcl::io::savePCDFile(mkStr() << "sonarSLAM.pcd",  *m_impl->whole_cloud);
             #endif
             
