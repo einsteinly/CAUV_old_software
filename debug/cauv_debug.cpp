@@ -117,8 +117,14 @@ void SmartStreamBase::setLogfileName(std::string const& n)
 
 void SmartStreamBase::setLogDirName(std::string const& n)
 {
-    settings().logdir_name = n;
-    settings().logdir_name.append("/");
+    std::string new_logdir = n;
+    if(new_logdir.size()){
+        if(*new_logdir.rbegin() != '/')
+            new_logdir += "/";
+    }else{
+        new_logdir = "./";
+    }
+    settings().logdir_name = new_logdir;
 }
 
 void SmartStreamBase::printPrefix(std::ostream&)
@@ -295,7 +301,7 @@ std::locale const& SmartStreamBase::getTheLocale(){
 }
 
 void SmartStreamBase::addOptions(boost::program_options::options_description& desc,
-                                        boost::program_options::positional_options_description& pos)
+                                 boost::program_options::positional_options_description&/*pos*/)
 {
     namespace po = boost::program_options;
     desc.add_options ()
