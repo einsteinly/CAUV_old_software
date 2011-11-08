@@ -285,7 +285,8 @@ class Model(messaging.MessageObserver):
             self.node_added_condition.notify()
             self.node_added_condition.release()
         else:
-            warning('ignoring message about unknown node being added')
+            pass
+            #warning('ignoring message about unknown node being added')
 
     def onNodeRemovedMessage(self, m):
         if not self.checkName(m): return
@@ -297,7 +298,8 @@ class Model(messaging.MessageObserver):
             self.node_removed_condition.notify()
             self.node_removed_condition.release()
         else:
-            warning('ignoring message about unknown node being removed')
+            pass
+            #warning('ignoring message about unknown node being removed')
 
     def onNodeParametersMessage(self, m):
         if not self.checkName(m): return
@@ -310,7 +312,8 @@ class Model(messaging.MessageObserver):
             self.parameter_set_condition.notify()
             self.parameter_set_condition.release()
         else:
-            warning('ignoring message about unknown parameter being set')
+            pass
+            #warning('ignoring message about unknown parameter being set')
 
     def onGraphDescriptionMessage(self, m):
         if not self.checkName(m): return
@@ -335,7 +338,8 @@ class Model(messaging.MessageObserver):
             self.arc_added_condition.notify()
             self.arc_added_condition.release()
         else:
-            warning('ignoring message about unknown arc being added')
+            pass
+            #warning('ignoring message about unknown arc being added')
 
     #def onArcRemovedMessage(self, m):
     #    if not self.checkName(m): return
