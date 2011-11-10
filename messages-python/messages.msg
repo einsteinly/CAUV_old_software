@@ -84,6 +84,7 @@ enum NodeType : int8 {
     SonarSLAM,
     BearingRangeToXY,
     TransformKeyPoints,
+    Correlation1D,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -185,6 +186,8 @@ struct PolarImage
     // the bins that each iso-bearing beam of data falls into, so there are
     // num_beams + 1 values. The first bin is bearing_bins[0] --
     // bearing_bins[1], and so on.
+    // Note that these are *bearings* not angles (ie, clockwise from forwards, not
+    // anticlockwise from x axis (wherever that is...))
     bearing_bins: list<int32>;
     // number of bins = round(rangeEnd-rangeStart) / rangeConversion)
     rangeStart: float;

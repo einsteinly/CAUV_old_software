@@ -8,6 +8,7 @@
 #include "fastMedianNode.h"
 #include "bearingRangeToXYNode.h"
 #include "transformKeyPointsNode.h"
+#include "correlation1DNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -20,6 +21,7 @@ DEFINE_NFR(GaussianBlurNode, NodeType::GaussianBlur);
 DEFINE_NFR(FastMedianNode, NodeType::FastMedian);
 DEFINE_NFR(BearingRangeToXYNode, NodeType::BearingRangeToXY);
 DEFINE_NFR(TransformKeyPointsNode, NodeType::TransformKeyPoints);
+DEFINE_NFR(Correlation1DNode, NodeType::Correlation1D);
 
 } // namespace imgproc
 } // namespace cauv
