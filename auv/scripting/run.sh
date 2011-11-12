@@ -9,5 +9,5 @@ export PYTHONPATH="$SCRIPTING_DIR:$SCRIPTING_DIR/../python-module/:$PYTHONPATH"
 
 #echo $DYLD_LIBRARY_PATH
 
-python $@
+python2.7 $@
 

@@ -3,6 +3,10 @@
 
 from cauvinterface import *
 
+#happens first so debug options can be parsed before any output occurs
+import sys
+debugParseOptions(sys.argv)
+
 # until it works...
 AIMessageObserver = BufferedMessageObserver
 

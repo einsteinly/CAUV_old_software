@@ -4,7 +4,7 @@ from cauv.debug import debug, warning, error, info
 
 import time
 import threading, Queue
-import optparse
+import argparse
 
 from AI_classes import aiProcess, external_function, force_calling_process
 
@@ -195,10 +195,10 @@ morsetab = {
 }
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-d', '--disable_control', dest='disable_control', default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument('-d', '--disable_control', dest='disable_control', default=False,
                  action='store_true', help="stop AI script from controlling the sub")
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
     ac = auvControl()
     try:
         ac.run()

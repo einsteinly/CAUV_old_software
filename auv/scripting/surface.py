@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # surface, whatever else happens
 
 import cauv
@@ -21,9 +21,9 @@ def surface(delay):
         time.sleep(1)
 
 if __name__ == '__main__':
-    from optparse import OptionParser
-    op = OptionParser()
-    opts, args = op.parse_args()
+    from argparse import ArgumentParser
+    op = ArgumentParser()
+    opts, args = op.parse_known_args()
     if len(args) != 1:
         print 'one argument (time in seconds) must be supplied'
     else:

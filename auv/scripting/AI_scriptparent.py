@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 """
 run command: /bin/sh ./run.sh AI_scriptparent.py TASK_NAME SCRIPT_NAME
 where SCRIPT_NAME is the name of the script in the script_library folder

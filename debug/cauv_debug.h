@@ -23,6 +23,7 @@
 #include <boost/foreach.hpp>
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/program_options.hpp>
 
 #define CAUV_DEBUG_MUTEXES
 #define CAUV_DEBUG_PRINT_THREAD
@@ -102,6 +103,12 @@ class SmartStreamBase : public boost::noncopyable
         static void setCauvNode(cauv::CauvNode*);
         static void setProgramName(std::string const&);
         static void setLogfileName(std::string const&);
+        static void setLogDirName(std::string const&);
+        static void addOptions(boost::program_options::options_description& desc,
+                               boost::program_options::positional_options_description& /*pos*/);
+
+        static int parseOptions(int, char**);
+
 
     protected:
         struct Settings{
@@ -109,6 +116,7 @@ class SmartStreamBase : public boost::noncopyable
             cauv::CauvNode* cauv_node;
             std::string program_name;
             std::string logfile_name;
+            std::string logdir_name;
         };
 
         // helper functions for derived classes

@@ -95,6 +95,11 @@ auv:
     librt (this is include in libc6 most of the time)
     libftdi
     libsensors
+    PCL(http://pointclouds.org/) which requires octave,eigen3,flann,cminpack
+    gpsd
+    watch.py requires:
+        psutils (https://code.google.com/p/psutil/)
+        psi (http://www.psychofx.com/psi/)
 
 gui/gui-pipeline and gui/pipeline-widget:
     Qt 4.?, with OpenGL support

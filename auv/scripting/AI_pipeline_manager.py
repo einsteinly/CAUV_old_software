@@ -3,7 +3,7 @@ from AI_classes import aiProcess, external_function
 from cauv.debug import info, warning, error, debug
 from cauv import pipeline, messaging
 
-import threading, os.path, hashlib, cPickle, time, traceback, shelve, pickle, optparse, Queue
+import threading, os.path, hashlib, cPickle, time, traceback, shelve, pickle, argparse, Queue
 from glob import glob
 from datetime import datetime
 
@@ -777,16 +777,16 @@ if __name__ == '__main__':
         except RuntimeError:
             pass
     """
-    p = optparse.OptionParser()
-    p.add_option('-r', '--restore', dest='restore', default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")
-    p.add_option('-g', '--disable_gui', dest='disable_gui', default=False,
+    p.add_argument('-g', '--disable_gui', dest='disable_gui', default=False,
                  action='store_true', help="disable/ignore gui output nodes")
-    p.add_option('--reset_pls', dest='reset_pls', default=False,
+    p.add_argument('--reset_pls', dest='reset_pls', default=False,
                  action='store_true', help="reset pipelines to those stored in /pipelines")
-    p.add_option('--freeze_pls', dest='freeze_pls', default=False,
+    p.add_argument('--freeze_pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
     pm = pipelineManager('pipeline_manager')
     try:
         pm._setup(**opts.__dict__)

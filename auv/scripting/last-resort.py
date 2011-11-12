@@ -1,5 +1,5 @@
-#! /usr/bin/env python
-import optparse
+#!/usr/bin/env python2.7
+import argparse
 import os
 import time
 import sys
@@ -72,8 +72,8 @@ def lastResort(port, kill_after_seconds):
 
 
 if __name__ == '__main__':
-    parser = optparse.OptionParser(usage='usage: sudo %prog PORT TIME_IN_SECONDS')
-    opts, args = parser.parse_args()
+    parser = argparse.ArgumentParser(usage='usage: sudo %prog PORT TIME_IN_SECONDS')
+    opts, args = parser.parse_known_args()
     if len(args) != 2:
         parser.print_help()
         sys.exit(1)

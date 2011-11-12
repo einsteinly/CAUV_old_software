@@ -38,8 +38,9 @@ class BearingRangeToXYNode: public Node{
         }
 
         void init(){
-            // fast node:
-            m_speed = fast;
+            // slow node: so that nodes providing input aren't re-scheduled
+            // until we're done here - this is more likely to keep them in sync
+            m_speed = slow;
 
             // input polar image:
             registerInputID("polar image", Must_Be_New);

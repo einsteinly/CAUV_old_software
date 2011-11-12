@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 import traceback
-import optparse
+import argparse
 import time
 import subprocess
 import threading
 import os
 import sys
+import collections
 import string
 import psi.process
 import psi.arch
@@ -73,23 +74,23 @@ class CAUVTask:
 processes_to_start = [
         CAUVTask(
             'remote',     # short name
-            'nohup /bin/sh %SDIR/run.sh %SDIR/remote.py', # command: %SDIR expands to --script-dir, %EDIR to --exec-prefix
+            '%SDIR/remote.py', # command: %SDIR expands to --script-dir, %EDIR to --exec-prefix
             True,         # do start/restart this process
             ['remote.py'] # list of names to search for in processes
         ),
-        CAUVTask('logger',          'nohup nice -n 5 /bin/sh %SDIR/run.sh %SDIR/logger.py', True, ['logger.py']),
-        CAUVTask('img-pipe default','nohup nice -n 15 %EDIRimg-pipeline -n default',        True, ['img-pipeline -n default', 'img-pipelined -n default']),
-        #CAUVTask('img-pipe ai',     'nohup nice -n 15 %EDIRimg-pipeline -n ai',            True, ['img-pipelined -n ai']),
-        #CAUVTask('img-pipe sonar',  'nohup nice -n 4 %EDIRimg-pipeline -n sonar',          True, ['img-pipelined -n sonar']),
-        CAUVTask('sonar',           'nohup nice -n 4 %EDIRsonard /dev/sonar0',              True, ['sonar']),
-        CAUVTask('control',         'nohup nice -n 2 %EDIRcontrold -m/dev/ttyUSB0 -x0',     True, ['control']),
-        CAUVTask('spread',          'nohup nice -n 2 spread',                               True, ['spread']),
-        CAUVTask('persist',         'nohup nice -n 0 /bin/sh %SDIR/run.sh %SDIR/persist.py',          False, ['persist.py']),
-        CAUVTask('battery',         'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
-        CAUVTask('gps',             'nohup nice -n 10 /bin/sh %SDIR/run.sh %SDIR/gpsd.py',  True, ['gpsd.py']),
-        CAUVTask('location',        'nohup nice -n 4 /bin/sh %SDIR/run.sh %SDIR/location.py --mode=exponential', True, ['location.py']),
-        CAUVTask('camera server',   'nohup nice -n 1 %EDIRcamera_server',                   True, ['camera_server']),
-        CAUVTask('gemini',          'nohup nice -n 1 %EDIRgemini_node 17',                  True, ['gemini_node']),
+        CAUVTask('logger',          'nice -n 5 %SDIR/logger.py', True, ['logger.py']),
+        CAUVTask('img-pipe default','nice -n 15 %EDIRimg-pipeline -n default',        True, ['img-pipeline -n default', 'img-pipelined -n default']),
+        #CAUVTask('img-pipe ai',     'nice -n 15 %EDIRimg-pipeline -n ai',            True, ['img-pipelined -n ai']),
+        #CAUVTask('img-pipe sonar',  'nice -n 4 %EDIRimg-pipeline -n sonar',          True, ['img-pipelined -n sonar']),
+        CAUVTask('sonar',           'nice -n 4 %EDIRsonar /dev/sonar0',              True, ['sonar']),
+        CAUVTask('control',         'nice -n 2 %EDIRcontrol -m/dev/ttyUSB0 -x0',     True, ['control']),
+        CAUVTask('spread',          'nice -n 2 spread',                               True, ['spread']),
+        CAUVTask('persist',         'nice -n 0 %SDIR/persist.py',          False, ['persist.py']),
+        CAUVTask('battery',         'nice -n 10 %SDIR/battery_monitor.py', False, ['battery_monitor.py']),
+        CAUVTask('gps',             'nice -n 10 %SDIR/gpsd.py',  True, ['gpsd.py']),
+        CAUVTask('location',        'nice -n 4 %SDIR/location.py --mode=exponential', True, ['location.py']),
+        CAUVTask('camera server',   'nice -n 1 %EDIRcamera_server',                   True, ['camera_server']),
+        CAUVTask('gemini',          'nice -n 1 %EDIRgemini_node 17',                  True, ['gemini_node']),
         CAUVTask('sonar log',       '', False, ['sonarLogger.py']),
         CAUVTask('telemetry log',   '', False, ['telemetryLogger.py']),
         CAUVTask('watch',           '', False, ['watch.py']),
@@ -98,7 +99,7 @@ processes_to_start = [
         CAUVTask('AI Detectors',    '', False, ['AI_detection_process']),
         CAUVTask('AI Task Manager', '', False, ['AI_task_manager']),
         CAUVTask('AI Pipeline Manager', '', False, ['AI_pipeline_manager']),
-        CAUVTask('AI default script', '', False, ['python ./AI_scriptparent.py default'])
+        CAUVTask('AI default script', '', False, ['./AI_scriptparent.py default'])
 ]
 
 def limitLength(string, length=48):
@@ -107,36 +108,34 @@ def limitLength(string, length=48):
         string = string[:length-3] + '...'
     return string
 
+if isinstance(Arch, psi.arch.ArchLinux):
+    status_map = {
+        psi.process.PROC_STATUS_DEAD: 'dead',
+        psi.process.PROC_STATUS_DISKSLEEP: 'sleedsk',
+        psi.process.PROC_STATUS_PAGING: 'paging',
+        psi.process.PROC_STATUS_RUNNING: 'running',
+        psi.process.PROC_STATUS_SLEEPING: 'sleeping',
+        psi.process.PROC_STATUS_TRACINGSTOP: 'stopped',
+        psi.process.PROC_STATUS_ZOMBIE: 'zombie'
+    }
+elif isinstance(Arch, psi.arch.ArchDarwin):
+    status_map = {
+        psi.process.PROC_STATUS_SIDL: 'idle',
+        psi.process.PROC_STATUS_SRUN: 'running',
+        psi.process.PROC_STATUS_SLEEP: 'sleeping',
+        psi.process.PROC_STATUS_SSTOP: 'stopped',
+        psi.process.PROC_STATUS_SZOMB: 'zombie'
+    }
+else:
+    status_map = {}
+
+status_map = collections.defaultdict(lambda: 'unknown',status_map);
+
 def psiProcStatusToS(n):
     'return string describing process status value'
     #pylint: disable=E1101
-    if isinstance(Arch, psi.arch.ArchLinux):
-        if n == psi.process.PROC_STATUS_DEAD:
-            return 'dead'
-        elif n == psi.process.PROC_STATUS_DISKSLEEP:
-            return 'sleepdsk'
-        elif n == psi.process.PROC_STATUS_PAGING:
-            return 'paging'
-        elif n == psi.process.PROC_STATUS_RUNNING:
-            return 'running'
-        elif n == psi.process.PROC_STATUS_SLEEPING:
-            return 'sleeping'
-        elif n == psi.process.PROC_STATUS_TRACINGSTOP:
-            return 'stopped'
-        elif n == psi.process.PROC_STATUS_ZOMBIE:
-            return 'zombie'
-    else:
-        if n == psi.process.PROC_STATUS_SIDL:
-            return 'idle'
-        elif n == psi.process.PROC_STATUS_SRUN:
-            return 'running'
-        elif psi.process.PROC_STATUS_SSLEEP:
-            return 'sleeping'
-        elif psi.process.PROC_STATUS_SSTOP:
-            return 'stopped'
-        elif psi.process.PROC_STATUS_SZOMB:
-            return 'zombie'
-    return '?'
+
+    return status_map[n]
 
 def getProcesses():
     # returns dictionary of short name : CAUVTasks, all fields filled in
@@ -249,31 +248,27 @@ def startInactive(cauv_task_list):
                 cauv_task.start()
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-N', '--no-start', dest='no_start', default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument('-N', '--no-start', dest='no_start', default=False,
                  action='store_true', help="Don't start processes, just" +\
                  " report whether processes that would be started are running")
-    p.add_option('-d', '--show-details', dest='details', default=True,
+    p.add_argument('-d', '--show-details', dest='details', default=True,
                  action='store_true', help='display additional details')
-    p.add_option('-n', '--no-show-details', dest='details',
+    p.add_argument('-n', '--no-show-details', dest='details',
                  action='store_false', help='hide additional details')
-    p.add_option('-p', '--persistent', dest='persistent', default=False,
+    p.add_argument('-p', '--persistent', dest='persistent', default=False,
                  action='store_true', help='keep going until stopped')
-    p.add_option('-q', '--no-broadcast', dest='broadcast', default=True,
+    p.add_argument('-q', '--no-broadcast', dest='broadcast', default=True,
                  action='store_false', help="don't broadcast messages "+\
                  'containing information on running processes')
-    p.add_option('-e', '--exec-prefix', dest='cmd_prefix',
+    p.add_argument('-e', '--exec-prefix', dest='cmd_prefix',
                  default='cauv-', type=str,
                  action='store', help='exec prefix for cauv executables')
-    p.add_option('-s', '--script-dir', dest='script_dir', default='./',
+    p.add_argument('-s', '--script-dir', dest='script_dir', default='./',
                  type=str, action='store',
                  help='script directory (where to find run.sh)')
 
-    opts, args = p.parse_args()
-
-    if len(args) > 0:
-        print 'this program takes no arguments'
-        exit(1)
+    opts, args = p.parse_known_args()
 
     Exe_Prefix = opts.cmd_prefix
     Script_Dir = opts.script_dir
@@ -281,7 +276,7 @@ if __name__ == '__main__':
     cauv_node = None
     if opts.broadcast:
         import cauv.node as node
-        cauv_node = node.Node("watch")
+        cauv_node = node.Node("watch",args)
 
     try:
         while True:

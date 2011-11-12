@@ -6,7 +6,7 @@ add_executable (
     gemini_node
     gemini_node.cpp
 )
-#cauv_install ( gemini_test_node )
+cauv_install(gemini_node)
 
 # libs
 target_link_libraries (
