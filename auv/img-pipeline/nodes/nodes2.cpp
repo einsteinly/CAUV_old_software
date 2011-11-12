@@ -10,6 +10,7 @@
 #include "transformKeyPointsNode.h"
 #include "correlation1DNode.h"
 #include "rotateNode.h"
+#include "renderStringNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -24,6 +25,7 @@ DEFINE_NFR(BearingRangeToXYNode, NodeType::BearingRangeToXY);
 DEFINE_NFR(TransformKeyPointsNode, NodeType::TransformKeyPoints);
 DEFINE_NFR(Correlation1DNode, NodeType::Correlation1D);
 DEFINE_NFR(RotateNode, NodeType::Rotate);
+DEFINE_NFR(RenderStringNode, NodeType::RenderString);
 
 } // namespace imgproc
 } // namespace cauv

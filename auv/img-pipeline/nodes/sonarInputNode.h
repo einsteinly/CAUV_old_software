@@ -64,6 +64,7 @@ class SonarInputNode: public InputNode{
             registerOutputID("bearing", int32_t(0));
             registerOutputID("bearing range", int32_t(0));
             registerOutputID("range", int32_t(0));
+            registerOutputID("timestamp", std::string());
         }
     
         virtual ~SonarInputNode(){
@@ -286,6 +287,8 @@ class SonarInputNode: public InputNode{
             );
             r_polar_img->ts(image_msg->image().timeStamp);
             r["polar image"] = r_polar_img;
+
+            r["timestamp"] = timeStampToString(image_msg->image().timeStamp);
             
             // !!! TODO: probably want to set the single-line output to the
             // line pointing straight forwards, or something similar
@@ -324,6 +327,12 @@ class SonarInputNode: public InputNode{
         static unsigned int _get(std::vector<unsigned char> const& data, int i)
         {
             return data[clamp_cast<size_t>(0, i, (int)data.size()-1)];
+        }
+
+        static std::string timeStampToString(TimeStamp const& t){
+            boost::posix_time::ptime pt = boost::posix_time::from_time_t(t.secs);
+            pt += boost::posix_time::time_duration(0, 0, 0, t.musecs);
+            return mkStr() << pt;
         }
 
     private:

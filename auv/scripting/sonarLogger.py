@@ -27,7 +27,7 @@ class SonarLogger(object):
         self.onSonarDataMessage = self.logMessage
         self.onSonarImageMessage = self.logMessage
         self.onSpeedOfSoundMessage = self.logMessage
-        self.onTelemetry = self.logMessage # Log telemetry so that we have orientation data to match the sonar images
+        #self.onTelemetryMessage = self.logMessage # Log telemetry so that we have orientation data to match the sonar images
         self.onGeminiStatusMessage = self.logMessage
         self.onSonarControlMessage = self.logMessage
         # These are defined normally because they sometimes print information

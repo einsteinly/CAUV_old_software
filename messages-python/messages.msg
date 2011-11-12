@@ -86,6 +86,7 @@ enum NodeType : int8 {
     TransformKeyPoints,
     Correlation1D,
     Rotate,
+    RenderString,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -167,6 +168,8 @@ struct NodeOutputArc
 }
 struct TimeStamp
 {
+    // TODO: either use a base other than 1970, or more bits to store the
+    // seconds
     secs : int32;
     musecs : int32;
 }

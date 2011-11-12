@@ -17,6 +17,10 @@ from utils.hacks import tdToFloatSeconds
 from cauv.debug import debug, error, warning, info
 
 Strptime_Fmt = '%d/%m/%y-%H:%M:%S'
+# At the moment we don't convert the timestamps to the right format when saving
+# If this is true, then replace image timestamps with the time of the message
+# they were in (less accurate, but better than nothing)
+Sonar_Timestamp_Munge = True
 
 tzero = datetime.datetime.now()
 def relativeTime():
@@ -53,7 +57,21 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
                     time.sleep(sleep_step)
                 sys.stdout.write('.'); sys.stdout.flush()
                 if m is not None:
-                    node.send(m)
+                    if Sonar_Timestamp_Munge and isinstance(m, msg.SonarImageMessage):
+                        unix_time = time.mktime(p.cursor().timetuple()) + p.cursor().microsecond/1e6
+                        # for some reason the message seems to be immutable...
+                        m = msg.SonarImageMessage(
+                            m.source,
+                            msg.PolarImage(
+                                m.image.data,
+                                m.image.encoding,
+                                m.image.bearing_bins,
+                                m.image.rangeStart,
+                                m.image.rangeEnd,
+                                m.image.rangeConversion,
+                                msg.TimeStamp(int(unix_time), int(1e6*(unix_time-int(unix_time))))
+                            )
+                        )
         except Exception, e:
             error('error in playback: ' + str(e))
             raise
@@ -73,6 +91,21 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
                 time.sleep(time_to_sleep_for)
                 sys.stdout.write('.'); sys.stdout.flush()
                 if m is not None:
+                    if Sonar_Timestamp_Munge and isinstance(m, msg.SonarImageMessage):
+                        unix_time = time.mktime(p.cursor().timetuple()) + p.cursor().microsecond/1e6
+                        # for some reason the message seems to be immutable...
+                        m = msg.SonarImageMessage(
+                            m.source,
+                            msg.PolarImage(
+                                m.image.data,
+                                m.image.encoding,
+                                m.image.bearing_bins,
+                                m.image.rangeStart,
+                                m.image.rangeEnd,
+                                m.image.rangeConversion,
+                                msg.TimeStamp(int(unix_time), int(1e6*(unix_time-int(unix_time))))
+                            )
+                        )
                     node.send(m)
         except Exception, e:
             error('error in playback: ' + str(e))
