@@ -85,6 +85,7 @@ enum NodeType : int8 {
     BearingRangeToXY,
     TransformKeyPoints,
     Correlation1D,
+    Rotate,
 }
 enum NodeStatus : int8 {
     None = 0,

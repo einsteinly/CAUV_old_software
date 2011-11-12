@@ -49,6 +49,26 @@ uint32_t SonarSLAMImpl::viewer_count = 0;
 } // namespace imgproc
 } // namespace cauv
 
+static cv::Mat renderCloud(
+    pcl::PointCloud<pcl::PointXYZ> const& cloud,
+    Eigen::Vector2f origin,
+    Eigen::Vector2f step,
+    Eigen::Vector2i s
+){
+    cv::Mat r(s[0], s[1], CV_8UC1, cv::Scalar(0));
+
+    for(size_t i = 0; i < cloud.size(); i++){
+        float x_idx = 0.5+(cloud[i].x - origin[0]) / step[0];
+        float y_idx = 0.5+(cloud[i].y - origin[1]) / step[1];
+        if(x_idx >= 0 && x_idx < s[0] &&
+           y_idx >= 0 && y_idx < s[1]){
+            r.at<uint8_t>(int(x_idx),int(y_idx)) = 255;
+        }
+    }
+
+    return r;
+}
+
 static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps, Eigen::Matrix4f const& initial_transform){
     // split transform into affine parts:
     Eigen::Matrix3f rotate    = initial_transform.block<3,3>(0, 0);
@@ -61,7 +81,7 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps, Eigen::Matrix4f co
     cloud_ptr r = boost::make_shared<cloud_t>();
     r->height = 1;
     r->width = kps.size();
-    r->is_dense = false; // TODO: true?
+    r->is_dense = true;
     r->points.resize(kps.size());
     
     bool warned_non_planar = false;
@@ -90,9 +110,12 @@ void SonarSLAMNode::init(){
     // finished doing work here)
     m_speed = slow;
 
-    // input (well, parameter input that must be new for the node to be
+    // inputs (well, parameter input that must be new for the node to be
     // executed):
     registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints used to update map", Must_Be_New);
+    registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
+    
+    // parameters: may be old
     registerParamID("clear", bool(false), "true => discard accumulated point cloud");
     registerParamID("max iters", int(500), "");
     registerParamID("transform eps", float(1e-8), "difference between transforms in successive iters for convergence");
@@ -101,11 +124,14 @@ void SonarSLAMNode::init(){
     registerParamID("max correspond dist", float(5), "");
     registerParamID("score threshold", float(1), "keypoint set will be rejected if mean distance error is greater than this");
     
+    registerParamID("-render origin x", float(-20));
+    registerParamID("-render origin y", float(-20));
+    registerParamID("-render res", float(0.1));
+    registerParamID("-render size", float(400));
+
     // outputs:
-    //registerOutputID<image_ptr_t>("image_out");
-    
-    // parameters:
-    //registerParamID<float>("some scalar param", 1.0f, "...");
+    registerOutputID("whole cloud vis");
+    registerOutputID("last added vis");
 }
 
 Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
@@ -115,31 +141,46 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     if(clear)
         m_impl->whole_cloud.reset();
     
-    int max_iters = param<int>("max iters");
-    float euclidean_fitness = param<float>("euclidean fitness");
-    float transform_eps = param<float>("transform eps");
-    float reject_threshold = param<float>("reject threshold");
-    float max_correspond_dist = param<float>("max correspond dist");
-    float score_thr = param<float>("score threshold");
+    const int max_iters = param<int>("max iters");
+    const float euclidean_fitness = param<float>("euclidean fitness");
+    const float transform_eps = param<float>("transform eps");
+    const float reject_threshold = param<float>("reject threshold");
+    const float max_correspond_dist = param<float>("max correspond dist");
+    const float score_thr = param<float>("score threshold");
+    const float delta_theta = param<float>("delta theta");
+
+    const Eigen::Vector2f render_origin(param<float>("-render origin x"),param<float>("-render origin y"));
+    const Eigen::Vector2f render_step(param<float>("-render res"),param<float>("-render res"));
+    const Eigen::Vector2i render_sz(param<float>("-render size"),param<float>("-render size"));
     
+    Eigen::Matrix4f delta_transformation = Eigen::Matrix4f::Identity();
+    delta_transformation.block<3,3>(0,0) = Eigen::Matrix3f(Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ()));
+
     cloud_ptr new_cloud = kpsToCloud(
         param< std::vector<KeyPoint> >("keypoints"),
-        m_impl->last_transformation
+        m_impl->last_transformation * delta_transformation
     );
     // TODO: propagate sonar timestamp with keypoints... somehow... and use
     // that instead of an index
     static uint32_t cloud_num = 0;
     m_impl->clouds[++cloud_num] = new_cloud;
-    
+
     if(!m_impl->whole_cloud){
         if(new_cloud->points.size() > Min_Initial_Points){
             info() << BashColour::Green
                    << "new cloud with" << new_cloud->points.size() << "points";
             m_impl->whole_cloud = boost::make_shared<cloud_t>(*new_cloud);
             debug(3) << "transformation is:\n" << m_impl->last_transformation;
+    
+            r["whole cloud vis"] = boost::make_shared<Image>(renderCloud(
+                *(m_impl->whole_cloud), render_origin, render_step, render_sz
+            ));
         }else{
+            r["whole cloud vis"] =
+            boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
             debug() << "not enough points to initialise whole cloud";
         }
+        r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
     }else{
         debug() << "trying to match" << new_cloud->points.size() << "points to cloud";
         /*
@@ -160,6 +201,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         cloud_t final;
         icp.align(final);
         Eigen::Matrix4f final_transform = icp.getFinalTransformation();
+        // high is bad (score is sum of squared euclidean distances)
         float score = icp.getFitnessScore();
         info() << BashColour::Green
                << "converged:" << icp.hasConverged()
@@ -168,10 +210,10 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         if(icp.hasConverged() && score < score_thr){
             m_impl->last_transformation = final_transform;
             *(m_impl->whole_cloud) += final;
-            Eigen::Matrix3f r = final_transform.block<3,3>(0, 0);
-            Eigen::Vector3f t = final_transform.block<3,1>(0, 3);
+            Eigen::Matrix3f rot = final_transform.block<3,3>(0, 0);
+            Eigen::Vector3f trans = final_transform.block<3,1>(0, 3);
             info() << BashColour::Green
-                   << "added transformed points at: " << t[0] << "," << t[1] << "," << t[2];
+                   << "added transformed points at: " << trans[0] << "," << trans[1] << "," << trans[2];
             
             #ifdef CAUV_CLOUD_VISUALISATION
             m_impl->viewer->showCloud(m_impl->whole_cloud);
@@ -184,15 +226,24 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             pcl::io::savePCDFile(mkStr() << "sonarSLAM.pcd",  *m_impl->whole_cloud);
             #endif
             
+            r["last added vis"] = boost::make_shared<Image>(renderCloud(
+                *new_cloud, render_origin, render_step, render_sz
+            ));
         }else if(score >= score_thr){
+            r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
             info() << BashColour::Green
-                   << "points will not be added to the whole cloud (error too high)";
+                   << "points will not be added to the whole cloud (error too high: "
+                   << score << ">=" << score_thr <<")";
         }else{
+            r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
             info() << BashColour::Green
                    << "points will not be added to the whole cloud (not converged)";
         }
+        
+        r["whole cloud vis"] = boost::make_shared<Image>(renderCloud(
+            *(m_impl->whole_cloud), render_origin, render_step, render_sz
+        ));
     }
-
 
     return r;
 }

@@ -454,7 +454,10 @@ class ComponentPlayer(CHILer):
         decoder = self.decoders[seekpos]
         if decoder is None:
             decoder = self.default_decoder
-        return decoder.parseMessage(msgstring)
+        try:
+            return decoder.parseMessage(msgstring)
+        except Exception, e:
+            return "failed to parse message at %s:%d" % (self.datname, seekpos)
     def swap(self, other):
         # dum di dum di dum
         t = other.__dict__
@@ -784,6 +787,9 @@ class Player(CHILer):
     def timeOfNextMessage(self):
         return self.components[0].timeOfNextMessage()
     def msgDensity(self, start, stop, N=10):
+        # !!! TODO: use estimator for poisson/exponential Lambda parameter as
+        # density!
+        #
         # density = mean(1 / (time from sample time to next message in microsec))
         samples = []
         step = (stop - start) / N
@@ -1047,7 +1053,7 @@ def testDensityMap(r, start_t, end_t):
         #print 'density:', density
 
     def pdtshort(dt):
-        return dt.strftime('%H:%H:%S.%f')
+        return dt.strftime('%H:%M:%S.%f')
     drawVHistogram(
         densities, xaxis=(start_t, end_t),
         tick_bins=40, width=N, xaxis_print=pdtshort
