@@ -48,12 +48,13 @@ set ( GUI_CORE_SRCS
     framework/treeitems.cpp
     framework/mainwindow.cpp
     framework/nodescene.cpp
-    #framework/elements/arc.cpp
+    framework/elements/arc.cpp
     framework/elements/aiNode.cpp
     #framework/elements/nodeInput.cpp
     utils/noderecorder.cpp
     
-    framework/fluidity/fNode.cpp    
+    framework/fluidity/fNode.cpp
+    framework/fluidity/imgNode.cpp
     framework/fluidity/view.cpp 
     framework/fluidity/managedElement.cpp
     framework/fluidity/manager.cpp
@@ -81,13 +82,14 @@ set ( GUI_CORE_H
     framework/nodepicker.h
     framework/treeitems.h
     framework/mainwindow.h
-    #framework/elements/arc.h
+    framework/elements/arc.h
     framework/elements/aiNode.h
     #framework/elements/nodeInput.h
 
     framework/fluidity/view.h
     framework/fluidity/manager.h
     framework/fluidity/fNode.h
+    framework/fluidity/imgNode.h
     )
 
 set ( GUI_CORE_RCC

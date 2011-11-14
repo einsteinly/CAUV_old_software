@@ -13,6 +13,7 @@ set (
     #../gui/core/framework/elements/nodeInput.cpp
 
     ../gui/core/framework/fluidity/fNode.cpp
+    ../gui/core/framework/fluidity/imgNode.cpp
     ../gui/core/framework/fluidity/managedElement.cpp
     ../gui/core/framework/fluidity/manager.cpp
 
@@ -27,6 +28,7 @@ set (
     #../gui/core/framework/elements/multiArcEnd.h
 
     ../gui/core/framework/fluidity/fNode.h
+    ../gui/core/framework/fluidity/imgNode.h
     ../gui/core/framework/fluidity/manager.h
 )
 

@@ -4,16 +4,21 @@
 #include <map>
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
+
 #include <liquid/node.h>
 
 #include "fluidity/managedElement.h"
 #include "fluidity/types.h"
+
 
 #include <generated/types/LocalNodeInput.h>
 #include <generated/types/LocalNodeOutput.h>
 #include <generated/types/NodeInput.h>
 #include <generated/types/NodeOutput.h>
 #include <generated/types/NodeParamValue.h>
+#include <generated/types/NodeAddedMessage.h>
+#include <generated/types/NodeType.h>
 
 namespace cauv{
 namespace gui{
@@ -34,6 +39,21 @@ class FNode: public liquid::LiquidNode,
 
     public:
         FNode(Manager& m, node_id_t id);
+        FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
+
+        void setType(NodeType::e const&);
+        void setInputs(msg_node_input_map_t const&);
+        void setInputLinks(msg_node_input_map_t const&);
+        void setOutputs(msg_node_output_map_t const&);
+        void setOutputLinks(msg_node_output_map_t const&);
+        void setParams(msg_node_param_map_t const&);
+        void setParamLinks(msg_node_input_map_t const& inputs);
+    
+    public Q_SLOTS:
+
+    protected:
+        void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
+    
 
     protected:
         node_id_t m_node_id;

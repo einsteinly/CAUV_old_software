@@ -27,5 +27,9 @@ int main(int argc, char *argv[]){
     cauv::gui::f::ViewWidget view(node);
     view.show();
 
-    return app.exec();
+    int exit_status = app.exec();
+    
+    node->stopNode();
+
+    return exit_status;
 }

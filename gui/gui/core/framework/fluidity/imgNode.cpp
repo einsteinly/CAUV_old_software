@@ -9,4 +9,9 @@ ImgNode::ImgNode(Manager& m, node_id_t id)
     
 }
 
+ImgNode::ImgNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
+    : FNode(m, p){
+
+}
+
 

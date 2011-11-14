@@ -74,7 +74,7 @@ class Node: public Draggable,
         void setOutputLinks(msg_node_output_map_t const&);
         void setParams(msg_node_param_map_t const&);
         void setParams(boost::shared_ptr<NodeParametersMessage const> m);
-        void setParamLinks(msg_node_input_map_t const& inputs);        
+        void setParamLinks(msg_node_input_map_t const& inputs);
 
         virtual void draw(drawtype_e::e flags);
         virtual bool mousePressEvent(MouseEvent const&);

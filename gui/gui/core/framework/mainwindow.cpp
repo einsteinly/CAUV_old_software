@@ -109,7 +109,7 @@ void CauvMainWindow::onRun()
     w4->addItem(pw);
 
     QGraphicsProxyWidget * pw2 = new QGraphicsProxyWidget();
-    FView *pipeline_test_view = new FView();
+    f::FView *pipeline_test_view = new f::FView(shared_from_this());
     pw2->setWidget(pipeline_test_view);
     w2->addItem(pw2);
     w2->setSize(pw2->boundingRect().size() * 1.05);

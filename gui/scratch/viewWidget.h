@@ -17,7 +17,7 @@ class Manager;
 class ViewWidget: public QGraphicsView{
     Q_OBJECT
     public:
-        ViewWidget( boost::shared_ptr<CauvNode> node, QWidget *parent = NULL);
+        ViewWidget(boost::shared_ptr<CauvNode> node, QWidget *parent = NULL);
         virtual QSize sizeHint() const {return QSize(1280, 800);}
 
     private:

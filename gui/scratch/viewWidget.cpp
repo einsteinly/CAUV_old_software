@@ -38,7 +38,9 @@ struct ContainerRect : public QGraphicsRectItem {
 
 
 ViewWidget::ViewWidget(boost::shared_ptr<CauvNode> node, QWidget* parent)
-    : QGraphicsView(parent){
+    : QGraphicsView(parent),
+      m_cauv_node(node),
+      m_manager(){
     
     QGraphicsScene *s = new QGraphicsScene(this);
 
@@ -48,8 +50,6 @@ ViewWidget::ViewWidget(boost::shared_ptr<CauvNode> node, QWidget* parent)
     s->setSceneRect(-200,-200,400,400);
 
     setScene(s);
-
-    m_cauv_node = node;
     m_manager = boost::make_shared<Manager>(s, &(*m_cauv_node), "default");
     m_manager->init();
     

@@ -10,6 +10,7 @@
 #include <generated/message_observers.h>
 #include <generated/types/NodeOutput.h>
 #include <generated/types/NodeInput.h>
+#include <generated/types/NodeType.h>
 
 #include "fluidity/types.h"
 
@@ -33,7 +34,11 @@ class Manager: public QObject,
         void init();
 
         virtual void onGraphDescriptionMessage(GraphDescriptionMessage_ptr);
+        virtual void onNodeParametersMessage(NodeParametersMessage_ptr);
+        virtual void onNodeAddedMessage(NodeAddedMessage_ptr);
+        virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr);
         virtual void onArcAddedMessage(ArcAddedMessage_ptr);
+        virtual void onArcRemovedMessage(ArcRemovedMessage_ptr);
 
     public Q_SLOTS:
         /* When an arc is added: 
@@ -47,13 +52,14 @@ class Manager: public QObject,
          *
          */
         void requestArc(NodeOutput from, NodeInput to);
-        //void requestRemoveArc(NodeOutput from, NodeInput to);
-
-        void requestRemoveNode(node_id_t id);
+        void requestRemoveArc(NodeOutput from, NodeInput to);
+        void requestNode(NodeType::e const& type);
+        void requestRemoveNode(node_id_t const& id);
 
     protected:
-        void removeNode(node_id_t id);
-        void addNode(node_id_t id);
+        void removeNode(node_id_t const& id);
+        void addNode(NodeType::e const& type, node_id_t const& id);
+        void addNode(NodeAddedMessage_ptr);
         void clearNodes();
     
     protected Q_SLOTS:

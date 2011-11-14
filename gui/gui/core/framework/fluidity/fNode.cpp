@@ -140,3 +140,27 @@ FNode::FNode(Manager& m, node_id_t id)
     addItem(new FNodeOutput(c));
 }
 
+
+FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
+    : liquid::LiquidNode(F_Node_Style, NULL),
+      ManagedElement(m),
+      m_node_id(p->nodeId()){
+    /// ...
+}
+
+void FNode::setType(NodeType::e const&){
+}
+void FNode::setInputs(msg_node_input_map_t const&){
+}
+void FNode::setInputLinks(msg_node_input_map_t const&){
+}
+void FNode::setOutputs(msg_node_output_map_t const&){
+}
+void FNode::setOutputLinks(msg_node_output_map_t const&){
+}
+void FNode::setParams(msg_node_param_map_t const&){
+}
+void FNode::setParamLinks(msg_node_input_map_t const& inputs){
+}
+
+
