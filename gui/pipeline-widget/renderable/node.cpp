@@ -106,7 +106,7 @@ void Node::setInputs(msg_node_input_map_t const& inputs){
         if(!m_params.count(j->first.input)){
             debug() << BashColour::Blue << "Node::" << __func__ << *j;
             in_ptr_t t = boost::make_shared<NodeInputBlob>(
-                    shared_from_this(), m_pw, j->first.input, j->first.subType
+                    shared_from_this(), m_pw, j->first.input
             );
             m_inputs[j->first.input] = t;
             m_contents.push_back(t);

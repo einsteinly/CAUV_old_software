@@ -40,8 +40,9 @@ class DrawKeyPointsNode: public Node{
         }
 
         void init(){
-            // fast node:
-            m_speed = fast;
+            // slow node: so that nodes providing input aren't re-scheduled
+            // until we're done here - this is more likely to keep them in sync
+            m_speed = slow;
             
             // one input:
             registerInputID(Image_In_Name);

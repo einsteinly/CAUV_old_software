@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # log-file writing process
 
 import cauv.messaging as msg
@@ -39,7 +39,8 @@ class GPSNode():
     
 if __name__ == '__main__':
     try:
-        n = node.Node("py-gps")
+        import sys
+        n = node.Node("py-gps",sys.argv[1:])
         while True:
             try:
                 GPSNode(n).run()

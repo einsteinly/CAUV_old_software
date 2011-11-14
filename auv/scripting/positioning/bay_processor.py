@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 from cauv.debug import debug, warning, error, info
 
@@ -138,7 +138,8 @@ class locationProvider(aiLocationProvider):
 
 
 if __name__ == "__main__":
-    node = cauv.node.Node('py-sonPos')
+    import sys
+    node = cauv.node.Node('py-sonPos',sys.argv[1:])
     
     class TestObserver(msg.MessageObserver):
         sonarRange = 60000

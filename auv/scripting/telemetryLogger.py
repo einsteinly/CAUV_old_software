@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 # Standard Library
 import traceback
-import optparse
+import argparse
 
 # CAUV
 import cauv.messaging as msg
@@ -55,20 +55,16 @@ def telemetryLoggerMainLoop(cauv_node, opts):
     info('exiting...')
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-f', '--log-fname', dest='fname',
+    p = argparse.ArgumentParser()
+    p.add_argument('-f', '--log-fname', dest='fname',
                  default='./default.chil',
                  action='store', help='file to load/save telemetry data from')
-    p.add_option('-n', '--no-record', dest='no_record', default=False,
+    p.add_argument('-n', '--no-record', dest='no_record', default=False,
                  action='store_true', help="Don't start in recording mode")
 
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
 
-    if len(args) > 0:
-        print 'this program takes no arguments'
-        exit(1)
-   
-    cauv_node = node.Node("py-tlog") 
+    cauv_node = node.Node("py-tlog",args) 
     try:
         telemetryLoggerMainLoop(cauv_node, opts)
     finally:

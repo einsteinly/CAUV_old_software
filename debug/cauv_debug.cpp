@@ -26,6 +26,7 @@
 #include <boost/utility.hpp>
 #include <boost/variant.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 #if defined(CAUV_DEBUG_MUTEXES) || defined(CAUV_DEBUG_PRINT_THREAD)
 #include <boost/thread.hpp>
@@ -66,10 +67,12 @@ SmartStreamBase::SmartStreamBase(std::ostream& stream, BashColour::e col, bool p
 SmartStreamBase::~SmartStreamBase()
 {
     // print the contents of this temporary object when it's destroyed,
-    if(m_print)
-        printToStream(m_stream);
-    // always log
-    printToStream(logFile());
+    if(m_stuffs.size()) {
+        if(m_print)
+            printToStream(m_stream);
+        // always log
+        printToStream(logFile());
+    }
     // TODO: possible nastiness when setCauvNode is called from a different
     // thread while this is going on
     // if there's a cauv_node set, and this isn't a recursive call, send debug messages
@@ -99,12 +102,29 @@ void SmartStreamBase::setCauvNode(CauvNode* n)
 
 void SmartStreamBase::setProgramName(std::string const& n)
 {
-    settings().program_name = n;
+    //this can get set from multiple places. just go with the first one
+    static bool set = false;
+    if (!set) {
+        settings().program_name = n;
+        set = true;
+    }
 }
 
 void SmartStreamBase::setLogfileName(std::string const& n)
 {
     settings().logfile_name = n;
+}
+
+void SmartStreamBase::setLogDirName(std::string const& n)
+{
+    std::string new_logdir = n;
+    if(new_logdir.size()){
+        if(*new_logdir.rbegin() != '/')
+            new_logdir += "/";
+    }else{
+        new_logdir = "./";
+    }
+    settings().logdir_name = new_logdir;
 }
 
 void SmartStreamBase::printPrefix(std::ostream&)
@@ -121,6 +141,7 @@ SmartStreamBase::Settings& SmartStreamBase::settings(){
         CAUV_DEBUG_LEVEL,
         NULL,
         "unknown",
+        "",
         ""
     };
     return s;
@@ -239,17 +260,19 @@ std::ofstream& SmartStreamBase::logFile()
     static std::ofstream lf;
     static std::string lfn = settings().logfile_name;
     bool name_did_become_set = false;
+    std::string new_lfn;
 
-    if(settings().logfile_name.size() == 0){
-        if(settings().program_name.size())
-            settings().logfile_name = logFilePrefix() + settings().program_name + ".log";
-        else
-            settings().logfile_name = logFilePrefix() + "unknown.log";
-    }else if(settings().logfile_name ==  logFilePrefix() + "unknown.log"){
-        // program name is now set, now we have a name to use (note that
-        // subsequent changes to the program name will not be picked up)
-        name_did_become_set = true;
-        settings().logfile_name = logFilePrefix() + settings().program_name + ".log";
+    //there's room for optimisation here (using a flag to indicate changes
+    //instead of doing a string comparison each time), not sure if it's worth it..
+    new_lfn = settings().logdir_name + logFilePrefix() + settings().program_name + ".log";
+    if(settings().logfile_name != new_lfn) {
+        if (settings().logfile_name.size()) {
+            name_did_become_set = true;
+        }
+        if(!settings().program_name.size()) {
+            settings().program_name = "unknown";
+        }
+        settings().logfile_name = new_lfn;
     }
     if(lfn != settings().logfile_name)
     {
@@ -275,6 +298,32 @@ std::locale const& SmartStreamBase::getTheLocale(){
         new boost::posix_time::time_facet("%H:%M:%s")
     );
     return the_locale;
+}
+
+void SmartStreamBase::addOptions(boost::program_options::options_description& desc,
+                                 boost::program_options::positional_options_description&/*pos*/)
+{
+    namespace po = boost::program_options;
+    desc.add_options ()
+        ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
+        ("logdir,L", po::value<std::string>()->default_value("")->notifier(SmartStreamBase::setLogDirName), "The directory to log debug messages to")
+    ;
+};
+
+int SmartStreamBase::parseOptions(int argc, char** argv) {
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    po::positional_options_description pos;
+    if(argv && argc) {
+        setProgramName(boost::filesystem::path(argv[0]).leaf());
+    }
+    
+    addOptions(desc, pos);
+    
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).allow_unregistered().options(desc).run(), vm);
+    po::notify(vm);
+    return 0;
 }
 
 #if defined(CAUV_DEBUG_MUTEXES)

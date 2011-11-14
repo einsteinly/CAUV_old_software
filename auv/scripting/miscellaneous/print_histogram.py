@@ -33,7 +33,8 @@ class ColourFinder(messaging.BufferedMessageObserver):
             self.print_bins(m)
             
 if __name__ == '__main__':
-    node = cauv.node.Node('ColFind')
+    import sys
+    node = cauv.node.Node('ColFind',sys.argv[1:])
     auv = control.AUV(node)
     yellowFinder = ColourFinder(node, [11, 12])
     while True:
