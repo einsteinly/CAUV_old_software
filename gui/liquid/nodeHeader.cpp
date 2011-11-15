@@ -102,6 +102,10 @@ void NodeHeader::addButton(QString name, Button *button){
     setWidth(m_width);
 }
 
+Button* NodeHeader::getButton(QString name){
+     m_button_lookup.value(name);
+}
+
 void NodeHeader::setWidth(qreal w){
     prepareGeometryChange();
     m_width = w;

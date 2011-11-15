@@ -40,6 +40,7 @@ namespace f{
 
 class FNode: public liquid::LiquidNode,
              public ManagedElement{
+        Q_OBJECT
     public:
         // - public typedefs
         typedef std::vector<cauv::NodeInput> msg_node_in_list_t;
@@ -63,7 +64,12 @@ class FNode: public liquid::LiquidNode,
         void setParams(msg_node_param_map_t const&);
         void setParamLinks(msg_node_input_map_t const& inputs);
     
+    // overridden virtual slots (don't need to be marked as slots):
+        virtual void close();
+
     public Q_SLOTS:
+        virtual void fadeAndRemove();
+        virtual void remove();
 
     protected:
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);

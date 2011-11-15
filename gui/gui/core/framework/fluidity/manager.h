@@ -46,7 +46,11 @@ class Manager: public QObject,
         
         // a shared pointer to this must be held when this is called!
         void init();
-
+        
+        // these methods are called from the messaging thread(s), they MUST NOT
+        // modify anything directly: the general pattern is that these emit a
+        // corresponding signal, which is connected to a slot called on the
+        // main thread via a queued connection
         virtual void onGraphDescriptionMessage(GraphDescriptionMessage_ptr);
         virtual void onNodeParametersMessage(NodeParametersMessage_ptr);
         virtual void onNodeAddedMessage(NodeAddedMessage_ptr);
@@ -54,7 +58,22 @@ class Manager: public QObject,
         virtual void onArcAddedMessage(ArcAddedMessage_ptr);
         virtual void onArcRemovedMessage(ArcRemovedMessage_ptr);
 
+    Q_SIGNALS:
+        void receivedGraphDescription(GraphDescriptionMessage_ptr);
+        void receivedNodeParameters(NodeParametersMessage_ptr);
+        void receivedNodeAdded(NodeAddedMessage_ptr);
+        void receivedNodeRemoved(NodeRemovedMessage_ptr);
+        void receivedArcAdded(ArcAddedMessage_ptr);
+        void receivedArcRemoved(ArcRemovedMessage_ptr);
+
     public Q_SLOTS:
+        void onGraphDescription(GraphDescriptionMessage_ptr);
+        void onNodeParameters(NodeParametersMessage_ptr);
+        void onNodeAdded(NodeAddedMessage_ptr);
+        void onNodeRemoved(NodeRemovedMessage_ptr);
+        void onArcAdded(ArcAddedMessage_ptr);
+        void onArcRemoved(ArcRemovedMessage_ptr);
+
         /* When an arc is added: 
          * 1) GUI element emits arcRequested in response to drag & drop, or
          *    something

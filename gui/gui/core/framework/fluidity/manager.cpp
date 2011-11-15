@@ -14,6 +14,8 @@
 
 #include "manager.h"
 
+#include <QGraphicsScene>
+
 #include <common/cauv_node.h>
 #include <debug/cauv_debug.h>
 
@@ -57,6 +59,24 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
       m_nodes(),
       m_imgnodes(),
       m_pipeline_name(pipeline_name){
+    qRegisterMetaType<GraphDescriptionMessage_ptr>("GraphDescriptionMessage_ptr");
+    qRegisterMetaType<NodeParametersMessage_ptr>("NodeParametersMessage_ptr");
+    qRegisterMetaType<NodeAddedMessage_ptr>("NodeAddedMessage_ptr");
+    qRegisterMetaType<NodeRemovedMessage_ptr>("NodeRemovedMessage_ptr");
+    qRegisterMetaType<ArcAddedMessage_ptr>("ArcAddedMessage_ptr");
+    qRegisterMetaType<ArcRemovedMessage_ptr>("ArcRemovedMessage_ptr");
+    connect(this, SIGNAL(receivedGraphDescription(GraphDescriptionMessage_ptr)),
+            this, SLOT(onGraphDescription(GraphDescriptionMessage_ptr)));
+    connect(this, SIGNAL(receivedNodeParameters(NodeParametersMessage_ptr)),
+            this, SLOT(onNodeParameters(NodeParametersMessage_ptr)));
+    connect(this, SIGNAL(receivedNodeAdded(NodeAddedMessage_ptr)),
+            this, SLOT(onNodeAdded(NodeAddedMessage_ptr)));
+    connect(this, SIGNAL(receivedNodeRemoved(NodeRemovedMessage_ptr)),
+            this, SLOT(onNodeRemoved(NodeRemovedMessage_ptr)));
+    connect(this, SIGNAL(receivedArcAdded(ArcAddedMessage_ptr)),
+            this, SLOT(onArcAdded(ArcAddedMessage_ptr)));
+    connect(this, SIGNAL(receivedArcRemoved(ArcRemovedMessage_ptr)),
+            this, SLOT(onArcRemoved(ArcRemovedMessage_ptr)));
 }
 
 void Manager::init(){
@@ -64,8 +84,28 @@ void Manager::init(){
     m_cauv_node->joinGroup("pl_gui");
 }
 
-// - Message Observer Implementation:
+// - Message Observer Implementation: thunks
 void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
+    Q_EMIT receivedGraphDescription(m);
+}
+void Manager::onNodeParametersMessage(NodeParametersMessage_ptr m){
+    Q_EMIT receivedNodeParameters(m);
+}
+void Manager::onNodeAddedMessage(NodeAddedMessage_ptr m){
+    Q_EMIT receivedNodeAdded(m);
+}
+void Manager::onNodeRemovedMessage(NodeRemovedMessage_ptr m){
+    Q_EMIT receivedNodeRemoved(m);
+}
+void Manager::onArcAddedMessage(ArcAddedMessage_ptr m){
+    Q_EMIT receivedArcAdded(m);
+}
+void Manager::onArcRemovedMessage(ArcRemovedMessage_ptr m){
+    Q_EMIT receivedArcRemoved(m);
+}
+
+// - Message Handling Slots:
+void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
     if(!_nameMatches(m)) return;
 
     debug(7) << BashColour::Green << "Manager::" << __func__ << *m;
@@ -143,7 +183,7 @@ void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
     }
 }
 
-void Manager::onNodeParametersMessage(NodeParametersMessage_ptr m){
+void Manager::onNodeParameters(NodeParametersMessage_ptr m){
     if(!_nameMatches(m)) return;
     node_id_map_t::right_iterator i = m_nodes.right.find(m->nodeId());
     if(i != m_nodes.right.end())
@@ -152,21 +192,21 @@ void Manager::onNodeParametersMessage(NodeParametersMessage_ptr m){
         warning() << "unknown node" << m->nodeId();
 }
 
-void Manager::onNodeAddedMessage(NodeAddedMessage_ptr m){
+void Manager::onNodeAdded(NodeAddedMessage_ptr m){
     if(!_nameMatches(m)) return;
     addNode(m);
 }
 
-void Manager::onNodeRemovedMessage(NodeRemovedMessage_ptr m){
+void Manager::onNodeRemoved(NodeRemovedMessage_ptr m){
     if(!_nameMatches(m)) return;
     removeNode(m->nodeId());
 }
 
-void Manager::onArcAddedMessage(ArcAddedMessage_ptr m){
+void Manager::onArcAdded(ArcAddedMessage_ptr m){
     if(!_nameMatches(m)) return;
 }
 
-void Manager::onArcRemovedMessage(ArcRemovedMessage_ptr m){
+void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
     if(!_nameMatches(m)) return;
 }
 
@@ -187,9 +227,9 @@ void Manager::requestRemoveNode(node_id_t const& id){
 void Manager::removeNode(node_id_t const& id){
     node_id_map_t::right_iterator i = m_nodes.right.find(id);
     if(i != m_nodes.right.end()){
-        i->second->close();
         m_nodes.right.erase(i);
         m_imgnodes.right.erase(id);
+        i->second->fadeAndRemove();
     }else{
         error() << "no such node:" << id;
     }
@@ -206,8 +246,11 @@ void Manager::addNode(NodeType::e const& type, node_id_t const& id){
         imgnode_ptr p = new ImgNode(*this, id);
         m_nodes.insert(node_id_map_t::value_type(p, id));
         m_imgnodes.insert(imgnode_id_map_t::value_type(p, id));
+        m_scene->addItem(p);
     }else{
-        m_nodes.insert(node_id_map_t::value_type(new FNode(*this, id), id));
+        fnode_ptr p = new FNode(*this, id);
+        m_nodes.insert(node_id_map_t::value_type(p, id));
+        m_scene->addItem(p);
     }
 }
 
@@ -224,15 +267,21 @@ void Manager::addNode(NodeAddedMessage_ptr m){
         imgnode_ptr p = new ImgNode(*this, m);
         m_nodes.insert(node_id_map_t::value_type(p, id));
         m_imgnodes.insert(imgnode_id_map_t::value_type(p, id));
+        m_scene->addItem(p);        
     }else{
-        m_nodes.insert(node_id_map_t::value_type(new FNode(*this, m), id));
+        fnode_ptr p = new FNode(*this, m);
+        m_nodes.insert(node_id_map_t::value_type(p, id));
+        m_scene->addItem(p);
     }
 }
 
 void Manager::clearNodes(){
     node_id_map_t::right_iterator i;
-    for(i = m_nodes.right.begin(); i != m_nodes.right.end(); i++)
+    for(i = m_nodes.right.begin(); i != m_nodes.right.end(); i++){
+        m_scene->removeItem(i->second);
         i->second->close();
+    }
     m_nodes.clear();
+    m_imgnodes.clear();
 }
 

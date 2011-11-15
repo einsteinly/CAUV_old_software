@@ -38,7 +38,7 @@ public:
 Q_SIGNALS:
     void closed(LiquidNode *);
 public Q_SLOTS:
-    void close();
+    virtual void close();
 
 protected:
     virtual QRectF boundingRect() const;

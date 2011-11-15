@@ -46,6 +46,7 @@ class NodeHeader: public QGraphicsObject{
         void setTitle(QString title);
         void setInfo(QString info);
         void addButton(QString name, Button *button);
+        Button* getButton(QString name);
         void setWidth(qreal w);
 
     protected:

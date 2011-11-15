@@ -16,6 +16,9 @@
 
 #include <set>
 
+#include <QPropertyAnimation>
+#include <QGraphicsScene>
+
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
@@ -129,7 +132,6 @@ FNode::FNode(Manager& m, node_id_t id)
        QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
     );
     m_header->addButton("duplicate", dupbutton);
-    
 
     setSize(QSizeF(104,130));
     
@@ -177,4 +179,28 @@ void FNode::setParams(msg_node_param_map_t const&){
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
 }
 
+void FNode::close(){
+    Q_EMIT closed(this);
+    // don't delete yet! That happens when fadeAndRemove (or just remove) slots
+    // are triggered
+    QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
+    fade->setEndValue(0.25);
+    fade->setDuration(200);    
+    fade->start();
+}
+
+void FNode::fadeAndRemove(){
+    disconnect();
+    // now we are cut off from the outside world (apart from the scene), fade away:
+    QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
+    fade->setEndValue(0);
+    fade->setDuration(200);    
+    fade->start();
+    connect(fade, SIGNAL(finished()), this, SLOT(remove()));    
+}
+
+void FNode::remove(){
+    scene()->removeItem(this);
+    deleteLater();
+}
 
