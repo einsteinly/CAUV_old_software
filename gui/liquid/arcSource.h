@@ -71,6 +71,7 @@ class ArcSource: public AbstractArcSource,
     public:
         ArcSource(void* sourceDelegate,
                   Arc* arc);
+        virtual ~ArcSource(){ }
         
         virtual QSizeF sizeHint(Qt::SizeHint which,
                                 const QSizeF &constraint=QSizeF()) const;

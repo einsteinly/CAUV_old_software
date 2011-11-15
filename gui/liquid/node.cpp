@@ -72,13 +72,17 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     connect(m_contentWidget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
 }
 
+LiquidNode::~LiquidNode(){
+    debug() << "~LiquidNode()" << this;
+}
+
 void LiquidNode::close(){
     Q_EMIT closed(this);
     this->deleteLater();
 }
 
 QRectF LiquidNode::boundingRect() const{
-    // otherwise this's would never receive mouse events, and it needs to in
+    // otherwise 'this' would never receive mouse events, and it needs to in
     // order to be movable
     return m_back->boundingRect();
 }
@@ -91,9 +95,8 @@ void LiquidNode::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidget *
 }
 
 
-void LiquidNode::addButton(Button *button){
-    // !!! TODO
-    //m_layout->addItem(button);
+void LiquidNode::addButton(QString name, Button *button){
+    m_header->addButton(name, button);
 }
 
 void LiquidNode::addItem(QGraphicsLayoutItem *item){
@@ -106,7 +109,7 @@ void LiquidNode::addItem(QGraphicsLayoutItem *item){
         as_qgi->setParentItem(m_contentWidget);
 
     RequiresCutout *req_cutout = dynamic_cast<RequiresCutout*>(item);
-    debug() << "addItem:: requires cutout = " << req_cutout;
+    debug(7) << "addItem:: requires cutout = " << req_cutout;
     if(req_cutout)
         m_items_requiring_cutout << req_cutout;
 }
@@ -116,7 +119,7 @@ QSizeF LiquidNode::size() const{
 }
 
 void LiquidNode::setSize(QSizeF const& size){
-    debug(5) << "GraphicsWind::setSize(" << size << ")";
+    debug(8) << "GraphicsWind::setSize(" << size << ")";
     prepareGeometryChange();
     m_size = size;
     //m_buttonsWidget->setGeometry((cornerRadius()/2), -17,
@@ -134,7 +137,7 @@ void LiquidNode::setSize(QSizeF const& size){
 }
 
 void LiquidNode::resized(){
-    debug(5) << "GraphicsWind::resized()" << m_resizeHandle->newSize();
+    debug(8) << "GraphicsWind::resized()" << m_resizeHandle->newSize();
     QSizeF newSize(100, 100);
     if(m_resizeHandle->newSize().width() >= newSize.width())
         newSize.setWidth(m_resizeHandle->newSize().width());
@@ -154,9 +157,6 @@ void LiquidNode::setResizable(bool sizeable){
 }
 
 void LiquidNode::layoutChanged(){
-    // since this's geometry hangs off m_back:
-    this->prepareGeometryChange();
-
     QPainterPath p(QPointF(m_style.tl_radius, 0));
 
     const qreal width = size().width();
@@ -168,7 +168,7 @@ void LiquidNode::layoutChanged(){
             cutouts_at[m_contentWidget->pos().y() +
                        r->asQGI()->pos().y() +
                        g.main_cutout.y_offset] = g;
-    debug() << "layoutChanged:" << cutouts_at.size() << "cutouts";
+    debug(6) << "layoutChanged:" << cutouts_at.size() << "cutouts";
 
     p.lineTo(width, 0);
     p.lineTo(width, height);
@@ -183,7 +183,7 @@ void LiquidNode::layoutChanged(){
     typedef std::pair<qreal, CutoutStyle> y_style_pair_t;
     reverse_foreach(y_style_pair_t yg, cutouts_at){
         CutoutStyle::CutoutGeometry co = yg.second.main_cutout;
-        debug() << "Cutout y position:" << yg.first;
+        debug(8) << "Cutout y position:" << yg.first;
         p.lineTo(0, yg.first + co.cutout_base/2);
         p.lineTo(co.cutout_depth, yg.first + co.cutout_tip/2);
         p.lineTo(co.cutout_depth, yg.first - co.cutout_tip/2);
@@ -197,6 +197,8 @@ void LiquidNode::layoutChanged(){
     m_back->setPen(m_style.pen);
     m_back->setBrush(m_style.brush);
 
+    // since this's geometry hangs off m_back:
+    this->prepareGeometryChange();
     m_back->setPath(p);
 }
 

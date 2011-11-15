@@ -37,10 +37,10 @@ AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
       m_arc(arc),
       m_sourceDelegate(sourceDelegate),
       m_ephemeral_sink(NULL){
-    debug() << "AbstractArcSource()" << this;
+    debug(7) << "AbstractArcSource()" << this;
 }
 AbstractArcSource::~AbstractArcSource(){
-    debug() << "~AbstractArcSource()" << this;
+    debug(7) << "~AbstractArcSource()" << this;
 }
 
 Arc* AbstractArcSource::arc() const{
@@ -52,7 +52,7 @@ ArcStyle const& AbstractArcSource::style() const{
 }
 
 void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
-    debug() << "AbstractArcSource::mousePressEvent";
+    debug(5) << "AbstractArcSource::mousePressEvent";
     if(e->button() & Qt::LeftButton){
         if(m_ephemeral_sink)
             error() << "unmatched mousePressEvent";
@@ -71,7 +71,7 @@ void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
 }
 
 void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
-    debug() << "AbstractArcSource::mouseMoveEvent";
+    debug(5) << "AbstractArcSource::mouseMoveEvent";
     if(m_ephemeral_sink){
         checkAndHighlightSinks(e->scenePos());
         scene()->sendEvent(m_ephemeral_sink, e);
@@ -81,7 +81,7 @@ void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
 }
 
 void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
-    debug() << "AbstractArcSource::mouseReleaseEvent";
+    debug(5) << "AbstractArcSource::mouseReleaseEvent";
     if(e->button() & Qt::LeftButton){
         removeHighlights();
         // !!! TODO: call doAcceptConnection
@@ -100,7 +100,7 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
 
 #include "ephemeralArcEnd.h"
 AbstractArcSink* AbstractArcSource::newArcEnd(){
-    debug() << "newArcEnd:: this:" << this << "&style:" << &m_style;
+    debug(5) << "newArcEnd:: this:" << this << "&style:" << &m_style;
     return new EphemeralArcEnd(m_style);
 }
 
@@ -120,7 +120,7 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
     AbstractArcSink *k;
     QList<QGraphicsItem *> near_items = s->items(near_field);
     QSet<AbstractArcSink*> near_set;
-    debug() << near_items.size() << "nearby items";    
+    debug(5) << near_items.size() << "nearby items";    
     foreach(QGraphicsItem* g, near_items)
         if((k = dynamic_cast<AbstractArcSink*>(g)) &&
             k->willAcceptConnection(m_sourceDelegate)){
@@ -129,7 +129,7 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
             qreal dl = d.x()*d.x() +d.y()*d.y();
             k->doPresentHighlight(1.0/(1.0 + 0.002*dl));
         }
-    debug() << "now highlighting" << near_set.size() << "items";
+    debug(5) << "now highlighting" << near_set.size() << "items";
     // for each of the no longer highlighted items:
     foreach(AbstractArcSink* k, m_highlighted_items - near_set)
         k->doPresentHighlight(0);
@@ -184,7 +184,7 @@ void ArcSource::setGeometry(QRectF const& rect){
     prepareGeometryChange();
     // sets geometry()
     QGraphicsLayoutItem::setGeometry(rect);
-    debug() << "ArcSource::setGeometry" << rect << "(pos=" << pos() << ")";
+    debug(7) << "ArcSource::setGeometry" << rect << "(pos=" << pos() << ")";
     setPos(rect.topLeft() - boundingRect().topLeft());
 }
 

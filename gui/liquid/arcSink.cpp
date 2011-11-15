@@ -22,9 +22,12 @@
 using namespace liquid;
 
 AbstractArcSink::AbstractArcSink(QGraphicsItem * parent): QGraphicsObject(parent), ConnectionSink() {
-    debug() << "AbstractArcSink()";
+    debug(7) << "AbstractArcSink()";
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+}
+AbstractArcSink::~AbstractArcSink(){
+    debug() << "~AbstractArcSink(): scene=" << scene(); 
 }
 
 ArcSink::ArcSink(ArcStyle const& of_style,
@@ -48,9 +51,13 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     m_highlight->setPen(Qt::NoPen);
     m_highlight->setBrush(QBrush(QColor(50,255,50,160)));
     
-    QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
-    blur->setBlurRadius(3.0);
-    setGraphicsEffect(blur);
+    // FIXME: !!! adding this graphics effect causes a segfault (somtimes) when
+    // nodes containing arcsinks are removed from the scene: this is probably
+    // something to do with the blur changing the bounding rect (segfault
+    // occurs in BSP tree walking)
+    //QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
+    //blur->setBlurRadius(3.0);
+    //setGraphicsEffect(blur);
 
     /*QGraphicsPathItem *test_item = new QGraphicsPathItem(this);
     QPainterPath p;
@@ -66,6 +73,9 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     
     // start out not presenting a highlight:
     doPresentHighlight(0);
+}
+ArcSink::~ArcSink(){
+    debug() << "~ArcSink()"; 
 }
 
 bool ArcSink::willAcceptConnection(void* from_source){

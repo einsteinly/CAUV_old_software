@@ -31,6 +31,7 @@ class AbstractArcSink: public QGraphicsObject,
     Q_OBJECT
     public:
         AbstractArcSink(QGraphicsItem * parent = 0);
+        virtual ~AbstractArcSink();
 
         virtual bool willAcceptConnection(void* from_source) = 0;
         virtual void doPresentHighlight(qreal intensity) = 0;
@@ -51,6 +52,7 @@ class ArcSink: public AbstractArcSink,
         ArcSink(ArcStyle const& of_style,
                 CutoutStyle const& with_cutout,
                 ConnectionSink *connectionDelegate);
+        virtual ~ArcSink();
 
         // called whilst a drag operation is in progress to test & highlight
         // things, delegates the question to connectionDelgate

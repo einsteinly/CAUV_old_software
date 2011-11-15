@@ -18,13 +18,15 @@
 #include <QObject>
 
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/bimap.hpp>
+//#include <boost/bimap.hpp> boost bimap is utterly useless
 #include <boost/shared_ptr.hpp>
 
 #include <generated/message_observers.h>
 #include <generated/types/NodeOutput.h>
 #include <generated/types/NodeInput.h>
 #include <generated/types/NodeType.h>
+
+#include <utility/bimap.h>
 
 #include "fluidity/types.h"
 
@@ -106,9 +108,9 @@ class Manager: public QObject,
         QGraphicsScene *m_scene;
         CauvNode       *m_cauv_node;
         
-        typedef boost::bimap<fnode_ptr, node_id_t> node_id_map_t;
+        typedef cauv::bimap<fnode_ptr, node_id_t> node_id_map_t;
         node_id_map_t m_nodes;
-        typedef boost::bimap<imgnode_ptr, node_id_t> imgnode_id_map_t;
+        typedef cauv::bimap<imgnode_ptr, node_id_t> imgnode_id_map_t;
         imgnode_id_map_t m_imgnodes;
 
         std::string m_pipeline_name;

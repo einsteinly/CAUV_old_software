@@ -57,15 +57,16 @@ class TestLayoutItem: public QGraphicsLayoutItem,
             p.addRect(m_preferred_geom.adjusted(1,1,-1,-1));
             setPath(p);
         }
+        virtual ~TestLayoutItem(){}
         
         void setGeometry(QRectF const& rect){
             prepareGeometryChange();
             // sets geometry()
             QGraphicsLayoutItem::setGeometry(rect);
-            debug() << "setGeometry" << rect << "(pos=" << pos() << ")";
+            debug(3) << "setGeometry" << rect << "(pos=" << pos() << ")";
             setPos(rect.topLeft() - m_preferred_geom.topLeft());
 
-            debug() << "parent item is" << 	parentItem();
+            debug(3) << "parent item is" << 	parentItem();
         }
 
         /*void updateGeometry(){
@@ -95,12 +96,12 @@ class TestLayoutItem: public QGraphicsLayoutItem,
 class TempConnectionSink: public liquid::ConnectionSink{
     public:
         virtual bool willAcceptConnection(void* from_source){
-            debug() << "willAcceptConnection" << from_source;
+            debug(5) << "willAcceptConnection" << from_source;
             return true;
         }
 
         virtual ConnectionStatus doAcceptConnection(void* from_source){
-            debug() << "doAcceptConnection" << from_source;
+            debug(5) << "doAcceptConnection" << from_source;
             return Rejected;
         }
 };
@@ -117,21 +118,7 @@ FNode::FNode(Manager& m, node_id_t id)
     : liquid::LiquidNode(F_Node_Style, NULL), 
       ManagedElement(m),
       m_node_id(id){
-
-    Button *collapsebutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
-    );
-    m_header->addButton("collapse", collapsebutton);
-
-    Button *execbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
-    );
-    m_header->addButton("exec", execbutton);
-    
-    Button *dupbutton = new Button(
-       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
-    );
-    m_header->addButton("duplicate", dupbutton);
+    initButtons();
 
     setSize(QSizeF(104,130));
     
@@ -161,6 +148,7 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     : liquid::LiquidNode(F_Node_Style, NULL),
       ManagedElement(m),
       m_node_id(p->nodeId()){
+    initButtons();
     /// ...
 }
 
@@ -190,6 +178,7 @@ void FNode::close(){
 }
 
 void FNode::fadeAndRemove(){
+    debug() << "FNode::fadeAndRemove()" << this;
     disconnect();
     // now we are cut off from the outside world (apart from the scene), fade away:
     QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
@@ -200,7 +189,26 @@ void FNode::fadeAndRemove(){
 }
 
 void FNode::remove(){
+    debug() << "FNode::remove() (scene=" << scene() << ")" << this;
     scene()->removeItem(this);
     deleteLater();
+}
+
+
+void FNode::initButtons(){
+    Button *collapsebutton = new Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/collapse_button"), NULL, this
+    );
+    m_header->addButton("collapse", collapsebutton);
+
+    Button *execbutton = new Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/reexec_button"), NULL, this
+    );
+    m_header->addButton("exec", execbutton);
+    
+    Button *dupbutton = new Button(
+       QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
+    );
+    m_header->addButton("duplicate", dupbutton);
 }
 

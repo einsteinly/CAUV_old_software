@@ -30,7 +30,7 @@ class NodeHeader: public QGraphicsObject{
     Q_OBJECT
     public:
         NodeHeader(NodeStyle const& style, QGraphicsObject *parent=0);
-
+        virtual ~NodeHeader(){ }
 
     protected:
         virtual QRectF boundingRect() const;

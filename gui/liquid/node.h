@@ -34,6 +34,7 @@ class LiquidNode: public QGraphicsObject{
 
 public:
     LiquidNode(NodeStyle const& style, QGraphicsItem *parent=0);
+    virtual ~LiquidNode();
 
 Q_SIGNALS:
     void closed(LiquidNode *);
@@ -47,8 +48,8 @@ protected:
 public:
     virtual QSizeF size() const;
     virtual void setSize(QSizeF const&);
-
-    virtual void addButton(Button * button);
+    
+    virtual void addButton(QString name, Button * button);
     virtual void addItem(QGraphicsLayoutItem *item);
 
     virtual void setClosable(bool);

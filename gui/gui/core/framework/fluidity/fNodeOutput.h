@@ -43,6 +43,7 @@ class FNodeOutput: public QGraphicsWidget{
             hlayout->addItem(s);
             setLayout(hlayout);
         }
+        virtual ~FNodeOutput(){}
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
             Q_UNUSED(option);
             Q_UNUSED(widget);

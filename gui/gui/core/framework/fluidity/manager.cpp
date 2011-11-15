@@ -18,6 +18,7 @@
 
 #include <common/cauv_node.h>
 #include <debug/cauv_debug.h>
+#include <utility/bash_cout.h>
 
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>
@@ -121,11 +122,11 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 
     bool inconsistency_detected = false;
     std::vector<node_id_t> nodes_for_removal;
-    for(i = m_nodes.right.begin(); i != m_nodes.right.end(); i++){
-        j = m->nodeTypes().find(i->first);
+    for(i = m_nodes.right().begin(); i != m_nodes.right().end(); i++){
+        j = m->nodeTypes().find(i->right);
         if(j == m->nodeTypes().end())
-            nodes_for_removal.push_back(i->first);
-        else if(j->second != i->second->type())
+            nodes_for_removal.push_back(i->right);
+        else if(j->second != i->left->type())
             inconsistency_detected = true;
     }
     if(!inconsistency_detected){
@@ -145,14 +146,14 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
     for(j = m->nodeTypes().begin(); j != m->nodeTypes().end(); j++){
         const node_id_t id = j->first;
         const NodeType::e type = j->second;
-        i = m_nodes.right.find(id); 
-        if(i == m_nodes.right.end()){
+        i = m_nodes.right().find(id); 
+        if(i == m_nodes.right().end()){
             addNode(type, id);
-            i = m_nodes.right.find(j->first);
+            i = m_nodes.right().find(j->first);
         }
-        if(i == m_nodes.right.end())
+        if(i == m_nodes.right().end())
             continue;
-        fnode_ptr node = i->second;
+        fnode_ptr node = i->left;
         
         node_input_map_t::const_iterator inputs_it = m->nodeInputs().find(id);
         node_output_map_t::const_iterator outputs_it = m->nodeOutputs().find(id);
@@ -172,8 +173,8 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 
     for(j = m->nodeTypes().begin(); j != m->nodeTypes().end(); j++){
         const node_id_t id = j->first;
-        i = m_nodes.right.find(id);
-        fnode_ptr node = i->second;
+        i = m_nodes.right().find(id);
+        fnode_ptr node = i->left;
         
         node_input_map_t::const_iterator inputs_it = m->nodeInputs().find(id);
         node_output_map_t::const_iterator outputs_it = m->nodeOutputs().find(id);
@@ -185,9 +186,9 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 
 void Manager::onNodeParameters(NodeParametersMessage_ptr m){
     if(!_nameMatches(m)) return;
-    node_id_map_t::right_iterator i = m_nodes.right.find(m->nodeId());
-    if(i != m_nodes.right.end())
-        i->second->setParams(m->params());
+    node_id_map_t::right_iterator i = m_nodes.right().find(m->nodeId());
+    if(i != m_nodes.right().end())
+        i->left->setParams(m->params());
     else
         warning() << "unknown node" << m->nodeId();
 }
@@ -225,22 +226,24 @@ void Manager::requestRemoveNode(node_id_t const& id){
 
 // - General Protected Implementations
 void Manager::removeNode(node_id_t const& id){
-    node_id_map_t::right_iterator i = m_nodes.right.find(id);
-    if(i != m_nodes.right.end()){
-        m_nodes.right.erase(i);
-        m_imgnodes.right.erase(id);
-        i->second->fadeAndRemove();
+    debug() << BashColour::Red << "removeNode:" << id;
+    node_id_map_t::right_iterator i = m_nodes.right().find(id);
+    if(i != m_nodes.right().end()){
+        i->left->fadeAndRemove();
+        m_nodes.right().erase(i);
+        m_imgnodes.right().erase(id);
     }else{
         error() << "no such node:" << id;
     }
 }
 
 void Manager::addNode(NodeType::e const& type, node_id_t const& id){
+    debug() << BashColour::Green << "addNode:" << type << id;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;
     }else if(isInvalid(id)){
         warning() << "ignoring invalid node id" << id;
-    }else if(m_nodes.right.find(id) != m_nodes.right.end()){
+    }else if(m_nodes.right().find(id) != m_nodes.right().end()){
         error() << "node" << id << "already exists";
     }else if(isImageNode(type)){
         imgnode_ptr p = new ImgNode(*this, id);
@@ -257,11 +260,12 @@ void Manager::addNode(NodeType::e const& type, node_id_t const& id){
 void Manager::addNode(NodeAddedMessage_ptr m){
     const NodeType::e type = m->nodeType();
     const node_id_t id = m->nodeId();
+    debug() << BashColour::Green << "addNode:" << type << id;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;
     }else if(isInvalid(id)){
         warning() << "ignoring invalid node id" << id;
-    }else if(m_nodes.right.find(id) != m_nodes.right.end()){
+    }else if(m_nodes.right().find(id) != m_nodes.right().end()){
         error() << "node" << id << "already exists";
     }else if(isImageNode(type)){
         imgnode_ptr p = new ImgNode(*this, m);
@@ -276,11 +280,10 @@ void Manager::addNode(NodeAddedMessage_ptr m){
 }
 
 void Manager::clearNodes(){
+    debug() << BashColour::Red << "clearNodes";
     node_id_map_t::right_iterator i;
-    for(i = m_nodes.right.begin(); i != m_nodes.right.end(); i++){
-        m_scene->removeItem(i->second);
-        i->second->close();
-    }
+    for(i = m_nodes.right().begin(); i != m_nodes.right().end(); i++)
+        i->left->fadeAndRemove();
     m_nodes.clear();
     m_imgnodes.clear();
 }

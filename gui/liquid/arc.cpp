@@ -37,7 +37,7 @@ Arc::Arc(ArcStyle const& of_style,
       m_front(new QGraphicsPathItem(this)),
       m_ephemeral_end(new EphemeralArcEnd(of_style)){
 
-    debug() << "Arc()" << this;
+    debug(7) << "Arc()" << this;
 
     setFlag(ItemHasNoContents);
     
@@ -49,12 +49,13 @@ Arc::Arc(ArcStyle const& of_style,
         setFrom(from);
     if(to)
         addTo(to);
-
-    updateLayout();
+    
+    if(from)
+        updateLayout();
 }
 
 Arc::~Arc(){
-    debug() << "~Arc()" << this;
+    debug(7) << "~Arc()" << this;
 }
 
 ArcStyle const& Arc::style() const{
@@ -70,7 +71,7 @@ std::set<AbstractArcSink *> Arc::sinks(){
 }
 
 void Arc::setFrom(AbstractArcSource *from){
-    debug() << "arc::setFrom:" << from;
+    debug(7) << "arc::setFrom:" << from;
     if (m_source)
         disconnect(m_source, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     m_source = from;
@@ -80,7 +81,7 @@ void Arc::setFrom(AbstractArcSource *from){
 }
 
 void Arc::addTo(AbstractArcSink *to){
-    debug() << "Arc::addTo:" << to;
+    debug(7) << "Arc::addTo:" << to;
     m_sinks.insert(to);
     connect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     connect(to, SIGNAL(disconnected(AbstractArcSink*)),
@@ -89,7 +90,7 @@ void Arc::addTo(AbstractArcSink *to){
 }
 
 void Arc::removeTo(AbstractArcSink *to){
-    debug() << "Arc::removeTo:" << to;
+    debug(7) << "Arc::removeTo:" << to;
     m_sinks.erase(to);
     updateLayout();
 }
@@ -112,7 +113,7 @@ void Arc::updateLayout(){
         return;
     }
 
-    debug() << "Updating arc layout" << this;
+    debug(7) << "Updating arc layout" << this;
 
     prepareGeometryChange();
 
@@ -147,7 +148,8 @@ void Arc::updateLayout(){
         //path.lineTo(split_point + QPointF(4,0));
         m_ephemeral_end->show();
     }
-
+    
+    prepareGeometryChange();
     m_back->setPath(path);
     m_front->setPath(path);
 }

@@ -19,6 +19,8 @@ namespace liquid {
 
 class ConnectionSink{
     public:
+        virtual ~ConnectionSink(){ }
+
         // called whilst a drag operation is in progress to test & highlight things
         virtual bool willAcceptConnection(void* from_source) = 0;
 

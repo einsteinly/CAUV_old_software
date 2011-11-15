@@ -73,7 +73,7 @@ class FNode: public liquid::LiquidNode,
 
     protected:
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
-    
+        void initButtons();
 
     protected:
         node_id_t m_node_id;
