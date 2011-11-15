@@ -53,7 +53,7 @@ class FNode: public liquid::LiquidNode,
         
 
     public:
-        FNode(Manager& m, node_id_t id);
+        FNode(Manager& m, node_id_t id, NodeType::e const& type);
         FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
 
         void setType(NodeType::e const&);

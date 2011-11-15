@@ -23,7 +23,7 @@ namespace f{
 
 class ImgNode: public FNode{
     public:
-        ImgNode(Manager& m, node_id_t id);
+        ImgNode(Manager& m, node_id_t id, NodeType::e const& type);
         ImgNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
 
 };

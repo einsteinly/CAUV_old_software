@@ -53,9 +53,6 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     m_info_text->setBrush(m_style.header.info.brush);
     m_info_text->setFont(m_style.header.info.font);
     m_info_text->setZValue(2);
-
-    m_title->setText("File Input");
-    m_info_text->setText("12.6MB/s 17Hz");
 }
 
 QRectF NodeHeader::boundingRect() const{
@@ -86,10 +83,12 @@ void NodeHeader::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
 
 void NodeHeader::setTitle(QString title){
     m_title->setText(title);
+    setWidth(m_width);
 }
 
 void NodeHeader::setInfo(QString info){
     m_info_text->setText(info);
+    setWidth(m_width);
 }
 
 void NodeHeader::addButton(QString name, Button *button){
@@ -103,11 +102,12 @@ void NodeHeader::addButton(QString name, Button *button){
 }
 
 Button* NodeHeader::getButton(QString name){
-     m_button_lookup.value(name);
+     return m_button_lookup.value(name);
 }
 
 void NodeHeader::setWidth(qreal w){
-    prepareGeometryChange();
+    if(w != m_width)
+        prepareGeometryChange();
     m_width = w;
     size_t num_buttons = m_buttons.size();
     

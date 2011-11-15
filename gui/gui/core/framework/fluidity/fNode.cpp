@@ -41,6 +41,23 @@
 using cauv::gui::f::FNode;
 using namespace liquid;
 
+
+// - helper structures and classes
+// !!! TODO: move this to /utility or something
+#include <QTextStream>
+#include <QString>
+struct mkQStr{
+    mkQStr() : m_string(), m_stream(&m_string){ }
+    template<typename T>
+    mkQStr& operator<<(T const& t){
+        m_stream << t;
+        return *this;
+    }
+    operator QString() const{ return m_string; }
+    QString m_string;
+    QTextStream m_stream;
+};
+
 class TestLayoutItem: public QGraphicsLayoutItem,
                       public QGraphicsPathItem{
     public:
@@ -113,12 +130,20 @@ class MyConnectionSource{
         }
 };
 
+// - static functions
+static QString nodeTypeDesc(cauv::NodeType::e const& type){
+    std::string enum_name = mkStr() << type;
+    return mkQStr() << enum_name.substr(enum_name.rfind(':')+1).c_str();
+}
 
-FNode::FNode(Manager& m, node_id_t id)
+// - FNode
+
+FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     : liquid::LiquidNode(F_Node_Style, NULL), 
       ManagedElement(m),
       m_node_id(id){
     initButtons();
+    setType(type);    
 
     setSize(QSizeF(104,130));
     
@@ -141,6 +166,8 @@ FNode::FNode(Manager& m, node_id_t id)
     addItem(new FNodeOutput(c));
     addItem(new FNodeOutput(c));
     addItem(new FNodeOutput(c));
+
+    m_header->setInfo(mkQStr() << id << ": 0.0MB/s 0Hz");
 }
 
 
@@ -149,20 +176,31 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
       ManagedElement(m),
       m_node_id(p->nodeId()){
     initButtons();
-    /// ...
+    setType(p->nodeType());
+    m_header->setInfo(mkQStr() << p->nodeId() << ": 0.0MB/s 0Hz");
+
+    setOutputs(p->outputs());
+    setOutputLinks(p->outputs());
+
+    setParams(p->params());
+    setParamLinks(p->inputs()); // param links are inputs
+
+    setInputs(p->inputs());
+    setInputLinks(p->inputs());
 }
 
-void FNode::setType(NodeType::e const&){
+void FNode::setType(NodeType::e const& type){
+    m_header->setTitle(nodeTypeDesc(type));
 }
-void FNode::setInputs(msg_node_input_map_t const&){
+void FNode::setInputs(msg_node_input_map_t const& inputs){
 }
-void FNode::setInputLinks(msg_node_input_map_t const&){
+void FNode::setInputLinks(msg_node_input_map_t const& inputs){
 }
-void FNode::setOutputs(msg_node_output_map_t const&){
+void FNode::setOutputs(msg_node_output_map_t const& outputs){
 }
-void FNode::setOutputLinks(msg_node_output_map_t const&){
+void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
 }
-void FNode::setParams(msg_node_param_map_t const&){
+void FNode::setParams(msg_node_param_map_t const& params){
 }
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
 }

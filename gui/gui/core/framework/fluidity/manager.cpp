@@ -246,12 +246,12 @@ void Manager::addNode(NodeType::e const& type, node_id_t const& id){
     }else if(m_nodes.right().find(id) != m_nodes.right().end()){
         error() << "node" << id << "already exists";
     }else if(isImageNode(type)){
-        imgnode_ptr p = new ImgNode(*this, id);
+        imgnode_ptr p = new ImgNode(*this, id, type);
         m_nodes.insert(node_id_map_t::value_type(p, id));
         m_imgnodes.insert(imgnode_id_map_t::value_type(p, id));
         m_scene->addItem(p);
     }else{
-        fnode_ptr p = new FNode(*this, id);
+        fnode_ptr p = new FNode(*this, id, type);
         m_nodes.insert(node_id_map_t::value_type(p, id));
         m_scene->addItem(p);
     }
