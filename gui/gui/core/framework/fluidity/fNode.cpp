@@ -33,9 +33,9 @@
 #include "elements/style.h"
 #include "elements/nodeInput.h"
 
-#include "fNodeOutput.h"
-#include "fNodeInput.h"
-
+#include "fluidity/fNodeOutput.h"
+#include "fluidity/fNodeInput.h"
+#include "fluidity/manager.h"
 #include "fluidity/types.h"
 
 using cauv::gui::f::FNode;
@@ -117,6 +117,13 @@ static QString nodeTypeDesc(cauv::NodeType::e const& type){
     return mkQStr() << enum_name.substr(enum_name.rfind(':')+1).c_str();
 }
 
+static int countLocalInputsWithName(std::string const& name, FNode::msg_node_param_map_t const& map){
+    foreach(FNode::msg_node_param_map_t::value_type const& v, map)
+        if(v.first.input == name)
+            return 1;
+    return 0;
+}
+
 // - FNode
 
 FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
@@ -130,6 +137,7 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     
     // !!!
     
+    /*
     addItem(new FNodeImageInput(InputSchedType::Must_Be_New, this));
     addItem(new FNodeImageInput(InputSchedType::May_Be_Old, this));
     addItem(new FNodeParamInput(InputSchedType::May_Be_Old, 3, this));
@@ -141,6 +149,7 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     addItem(new FNodeOutput(this));
     addItem(new FNodeOutput(this));
     addItem(new FNodeOutput(this));
+    */
 
     m_header->setInfo(mkQStr() << id << ": 0.0MB/s 0Hz");
 }
@@ -168,6 +177,21 @@ void FNode::setType(NodeType::e const& type){
     m_header->setTitle(nodeTypeDesc(type));
 }
 void FNode::setInputs(msg_node_input_map_t const& inputs){
+    for(str_in_map_t::const_iterator i = m_inputs.begin(); i != m_inputs.end(); i++)
+        removeItem(i->second);
+    m_inputs.clear();
+    msg_node_input_map_t::const_iterator j;
+    for(j = inputs.begin(); j != inputs.end(); j++){
+        // don't add any inputs that are actually parameters!
+        // TODO: fix the order-dependence here... really parameters should have
+        // been filtered out by the time this function is called
+        if(!m_params.count(j->first.input)){
+            debug() << BashColour::Blue << "FNode:: new input:" << *j;
+            FNodeInput* t = new FNodeImageInput(j->first.schedType, this);
+            m_inputs[j->first.input] = t;
+            addItem(t);
+        }
+    }
 }
 void FNode::setInputLinks(msg_node_input_map_t const& inputs){
 }
@@ -176,12 +200,35 @@ void FNode::setOutputs(msg_node_output_map_t const& outputs){
 void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
 }
 void FNode::setParams(msg_node_param_map_t const& params){
+    str_in_map_t new_m_params;
+    foreach(str_in_map_t::value_type const &i, m_params)
+        if(!countLocalInputsWithName(i.first, params)){
+            removeItem(i.second);
+        }else{
+            new_m_params.insert(i);
+        }
+    m_params = new_m_params;
+    foreach(msg_node_param_map_t::value_type const& j, params){
+        str_in_map_t::iterator k = m_params.find(j.first.input);    
+        if(k == m_params.end()){
+            debug() << BashColour::Blue << "FNode:: new param:" << j;        
+            FNodeInput* t = new FNodeParamInput(j.first.schedType, j.first.subType, this);
+            m_params[j.first.input] = t;
+            addItem(t);
+            // .... TODO: parameter values, the great editable-GUI-value-unification
+        }else{
+            debug() << BashColour::Blue << "FNode:: update param:" << j;
+            // .... TODO: parameter values, the great editable-GUI-value-unification
+        }
+    }
+
 }
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
 }
 
 void FNode::close(){
-    Q_EMIT closed(this);
+    Q_EMIT LiquidNode::closed(this);
+    Q_EMIT closed(m_node_id);
     // don't delete yet! That happens when fadeAndRemove (or just remove) slots
     // are triggered
     QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
@@ -207,6 +254,13 @@ void FNode::remove(){
     deleteLater();
 }
 
+void FNode::reExec(){
+    // !!!
+}
+
+void FNode::duplicate(){
+    // !!!
+}
 
 void FNode::initButtons(){
     Button *collapsebutton = new Button(
@@ -223,5 +277,9 @@ void FNode::initButtons(){
        QRectF(0,0,24,24), QString(":/resources/icons/dup_button"), NULL, this
     );
     m_header->addButton("duplicate", dupbutton);
+    
+    connect(this, SIGNAL(closed(node_id_t const&)), &manager(), SLOT(requestRemoveNode(node_id_t const&)));
+    connect(dupbutton, SIGNAL(pressed()), this, SLOT(duplicate()));
+    connect(execbutton, SIGNAL(pressed()), this, SLOT(reExec()));
 }
 

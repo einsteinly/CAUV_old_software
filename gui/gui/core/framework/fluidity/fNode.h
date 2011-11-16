@@ -68,12 +68,19 @@ class FNode: public liquid::LiquidNode,
         void setParams(msg_node_param_map_t const&);
         void setParamLinks(msg_node_input_map_t const& inputs);
     
+    Q_SIGNALS:
+        void closed(node_id_t const);
+    
+    public:
     // overridden virtual slots (don't need to be marked as slots):
         virtual void close();
 
     public Q_SLOTS:
         virtual void fadeAndRemove();
         virtual void remove();
+        
+        virtual void reExec();
+        virtual void duplicate();
 
     protected:
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
@@ -82,7 +89,8 @@ class FNode: public liquid::LiquidNode,
     protected:
         node_id_t m_node_id;
     
-        str_in_map_t  m_inputs; // including parameters
+        str_in_map_t  m_inputs;
+        str_in_map_t  m_params;
         str_out_map_t m_outputs;
 };
 

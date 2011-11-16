@@ -16,6 +16,8 @@
 
 #include <QGraphicsScene>
 
+#include <boost/make_shared.hpp>
+
 #include <common/cauv_node.h>
 #include <debug/cauv_debug.h>
 #include <utility/bash_cout.h>
@@ -166,9 +168,9 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
             continue;
         }
         
+        node->setParams(params_it->second);        
         node->setInputs(inputs_it->second);
         node->setOutputs(outputs_it->second);
-        node->setParams(params_it->second);
     }
 
     for(j = m->nodeTypes().begin(); j != m->nodeTypes().end(); j++){
@@ -205,23 +207,35 @@ void Manager::onNodeRemoved(NodeRemovedMessage_ptr m){
 
 void Manager::onArcAdded(ArcAddedMessage_ptr m){
     if(!_nameMatches(m)) return;
+    // !!!
 }
 
 void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
     if(!_nameMatches(m)) return;
+    // !!!
 }
 
 // - Slot Implementations
 void Manager::requestArc(NodeOutput from, NodeInput to){
+    debug() << BashColour::Brown << BashIntensity::Bold << "requestArc" << from << to;
+    m_cauv_node->send(boost::make_shared<AddArcMessage>(m_pipeline_name, from, to));
 }
 
 void Manager::requestRemoveArc(NodeOutput from, NodeInput to){
+    debug() << BashColour::Brown << "requestRemoveArc" << from << to;
+    m_cauv_node->send(boost::make_shared<RemoveArcMessage>(m_pipeline_name, from, to));
 }
 
 void Manager::requestNode(NodeType::e const& type){
+    debug() << BashColour::Brown << BashIntensity::Bold << "requestAddNode" << type;
+    m_cauv_node->send(boost::make_shared<AddNodeMessage>(
+        m_pipeline_name, type, std::vector<NodeInputArc>(), std::vector<NodeOutputArc>()
+    ));
 }
 
 void Manager::requestRemoveNode(node_id_t const& id){
+    debug() << BashColour::Brown << "requestRemoveNode" << id;
+    m_cauv_node->send(boost::make_shared<RemoveNodeMessage>(m_pipeline_name, id));
 }
 
 // - General Protected Implementations

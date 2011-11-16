@@ -114,6 +114,21 @@ void LiquidNode::addItem(QGraphicsLayoutItem *item){
         m_items_requiring_cutout << req_cutout;
 }
 
+void LiquidNode::removeItem(QGraphicsLayoutItem *item){
+    m_contentLayout->removeItem(item);
+    RequiresCutout *req_cutout = dynamic_cast<RequiresCutout*>(item);
+    if(req_cutout)
+        // one should be equivalent to (but twice as fast as) removeAll
+        m_items_requiring_cutout.removeOne(req_cutout);
+    // removing things from a layout passes ownership, so make sure things are
+    // safely deleted:
+    QObject *as_qo = dynamic_cast<QObject*>(item);
+    if(as_qo)
+        as_qo->deleteLater();
+    else
+        delete item;
+}
+
 QSizeF LiquidNode::size() const{
     return m_size;
 }

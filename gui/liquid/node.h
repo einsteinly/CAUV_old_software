@@ -51,6 +51,7 @@ public:
     
     virtual void addButton(QString name, Button * button);
     virtual void addItem(QGraphicsLayoutItem *item);
+    virtual void removeItem(QGraphicsLayoutItem *item);
 
     virtual void setClosable(bool);
     virtual void setResizable(bool);
