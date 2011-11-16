@@ -38,6 +38,9 @@ namespace cauv{
 namespace gui{
 namespace f{
 
+class FNodeInput;
+class FNodeOutput;
+
 class FNode: public liquid::LiquidNode,
              public ManagedElement{
         Q_OBJECT
@@ -48,9 +51,10 @@ class FNode: public liquid::LiquidNode,
         typedef std::map<cauv::LocalNodeInput, cauv::NodeOutput> msg_node_input_map_t;
         typedef std::map<cauv::LocalNodeInput, cauv::NodeParamValue> msg_node_param_map_t;
 
-    private:
-        // - private typedefs
-        
+    protected:
+        // - protected typedefs
+        typedef std::map<std::string, FNodeInput*> str_in_map_t;
+        typedef std::map<std::string, FNodeOutput*> str_out_map_t;
 
     public:
         FNode(Manager& m, node_id_t id, NodeType::e const& type);
@@ -77,6 +81,9 @@ class FNode: public liquid::LiquidNode,
 
     protected:
         node_id_t m_node_id;
+    
+        str_in_map_t  m_inputs; // including parameters
+        str_out_map_t m_outputs;
 };
 
 } // namespace f

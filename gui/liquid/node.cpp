@@ -182,7 +182,7 @@ void LiquidNode::layoutChanged(){
     // relying on iteration order of map being the order of the keys
     typedef std::pair<qreal, CutoutStyle> y_style_pair_t;
     reverse_foreach(y_style_pair_t yg, cutouts_at){
-        CutoutStyle::CutoutGeometry co = yg.second.main_cutout;
+        CutoutStyle::CutoutGeometry const& co = yg.second.main_cutout;
         debug(8) << "Cutout y position:" << yg.first;
         p.lineTo(0, yg.first + co.cutout_base/2);
         p.lineTo(co.cutout_depth, yg.first + co.cutout_tip/2);

@@ -34,7 +34,7 @@ class Arc: public AbstractArcSource{
         virtual ~Arc();
 
         ArcStyle const& style() const;
-        void *source();
+        ArcSourceDelegate *source();
         std::set<AbstractArcSink *> sinks();        
         
         void setFrom(AbstractArcSource *from);

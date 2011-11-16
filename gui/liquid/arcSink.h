@@ -33,9 +33,9 @@ class AbstractArcSink: public QGraphicsObject,
         AbstractArcSink(QGraphicsItem * parent = 0);
         virtual ~AbstractArcSink();
 
-        virtual bool willAcceptConnection(void* from_source) = 0;
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source) = 0;
         virtual void doPresentHighlight(qreal intensity) = 0;
-        virtual ConnectionStatus doAcceptConnection(void* from_source) = 0;
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) = 0;
     Q_SIGNALS:
         void geometryChanged();
         void disconnected(AbstractArcSink*);
@@ -48,7 +48,13 @@ class ArcSink: public AbstractArcSink,
     // No idea why this is required....
     Q_INTERFACES(QGraphicsLayoutItem)
     public:
-        // or style could be delegated to something else...
+        // Note that in the current implementation the reference to each style
+        // is stored. The styles ARE NOT COPIED. This is a sensible because in
+        // practise styles are constant static global things, if we start
+        // generating them dyamically then we either need to pass them around
+        // by shared pointer, or by value (undesirable)
+        //
+        // or style could be delegated to something else... 
         ArcSink(ArcStyle const& of_style,
                 CutoutStyle const& with_cutout,
                 ConnectionSink *connectionDelegate);
@@ -56,7 +62,7 @@ class ArcSink: public AbstractArcSink,
 
         // called whilst a drag operation is in progress to test & highlight
         // things, delegates the question to connectionDelgate
-        virtual bool willAcceptConnection(void* from_source);
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source);
         
         // called whilst a during a drag operation to indicate that this is
         // something that might accept a connection (after willacceptConnection
@@ -67,7 +73,7 @@ class ArcSink: public AbstractArcSink,
 
         // called when the connection is dropped,  delegates the question to
         // connectionDelgate
-        virtual ConnectionStatus doAcceptConnection(void* from_source);
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source);
     
         // RequiresCutout:
         virtual QList<CutoutStyle> cutoutGeometry() const;

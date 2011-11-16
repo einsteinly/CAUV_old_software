@@ -34,7 +34,7 @@
 #include "elements/nodeInput.h"
 
 #include "fNodeOutput.h"
-//#include "fNodeInput.h"
+#include "fNodeInput.h"
 
 #include "fluidity/types.h"
 
@@ -110,25 +110,6 @@ class TestLayoutItem: public QGraphicsLayoutItem,
         QRectF m_preferred_geom;
 };
 
-class TempConnectionSink: public liquid::ConnectionSink{
-    public:
-        virtual bool willAcceptConnection(void* from_source){
-            debug(5) << "willAcceptConnection" << from_source;
-            return true;
-        }
-
-        virtual ConnectionStatus doAcceptConnection(void* from_source){
-            debug(5) << "doAcceptConnection" << from_source;
-            return Rejected;
-        }
-};
-
-class MyConnectionSource{
-    public:
-        void moo(){
-            debug() << "MyConnectionSource::moo";
-        }
-};
 
 // - static functions
 static QString nodeTypeDesc(cauv::NodeType::e const& type){
@@ -149,23 +130,17 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     
     // !!!
     
-    TempConnectionSink *k = new TempConnectionSink();
-    MyConnectionSource *c = new MyConnectionSource();
-
-    addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, k));
-    addItem(new liquid::ArcSink(Image_Arc_Style, Optional_Image_Input, k));
-    //addItem(new liquid::ArcSink(Param_Arc_Style, Required_Param_Input, k));
-    addItem(new liquid::ArcSink(Param_Arc_Style, Optional_Param_Input, k));
+    addItem(new FNodeImageInput(InputSchedType::Must_Be_New, this));
+    addItem(new FNodeImageInput(InputSchedType::May_Be_Old, this));
+    addItem(new FNodeParamInput(InputSchedType::May_Be_Old, 3, this));
+    addItem(new FNodeParamInput(InputSchedType::May_Be_Old, 4, this));
 
     addItem(new TestLayoutItem(QRectF(0,-5,90,10)));
     //addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
-
-    //addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
-    //addItem(new liquid::ArcSource(c, new liquid::Arc(Image_Arc_Style)));
-    //addItem(new liquid::ArcSource(c, new liquid::Arc(Param_Arc_Style)));
-    addItem(new FNodeOutput(c));
-    addItem(new FNodeOutput(c));
-    addItem(new FNodeOutput(c));
+    
+    addItem(new FNodeOutput(this));
+    addItem(new FNodeOutput(this));
+    addItem(new FNodeOutput(this));
 
     m_header->setInfo(mkQStr() << id << ": 0.0MB/s 0Hz");
 }

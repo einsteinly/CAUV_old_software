@@ -62,7 +62,7 @@ ArcStyle const& Arc::style() const{
     return m_style;
 }
 
-void *Arc::source(){
+ArcSourceDelegate *Arc::source(){
     return m_source;
 }
 
@@ -75,6 +75,7 @@ void Arc::setFrom(AbstractArcSource *from){
     if (m_source)
         disconnect(m_source, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     m_source = from;
+    setSourceDelegate(from->sourceDelegate());
     setParentItem(from);
     connect(from, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     updateLayout();

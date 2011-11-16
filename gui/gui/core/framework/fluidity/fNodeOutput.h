@@ -23,13 +23,21 @@
 
 #include "elements/style.h"
 
+#include "fNodeIO.h"
+
 namespace cauv{
 namespace gui{
+namespace f{
 
-class FNodeOutput: public QGraphicsWidget{
+// !!! TODO: note to self: this is far from the final class structure for node
+// outputs, quickly hacked together while working on inputs... 
+class FNodeOutput: public QGraphicsWidget,
+                   public FNodeIO,
+                   public liquid::ArcSourceDelegate{
     public:
-        FNodeOutput(void* sourceDelegate)
-            : QGraphicsWidget(){
+        FNodeOutput(FNode* node)
+            : QGraphicsWidget(),
+              FNodeIO(node){
             QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
                 Qt::Horizontal, this
             );
@@ -37,13 +45,22 @@ class FNodeOutput: public QGraphicsWidget{
             hlayout->setContentsMargins(0,0,0,0);
             hlayout->addStretch(1);
             liquid::ArcSource *s = new liquid::ArcSource(
-                sourceDelegate, new liquid::Arc(Image_Arc_Style)
+                this, new liquid::Arc(Image_Arc_Style)
             );
             s->setParentItem(this);
             hlayout->addItem(s);
             setLayout(hlayout);
         }
         virtual ~FNodeOutput(){}
+
+        virtual OutputType::e ioType() const{
+            return OutputType::Image;
+        }
+
+        virtual SubType subType() const{
+            return -1;
+        }
+
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
             Q_UNUSED(option);
             Q_UNUSED(widget);
@@ -51,8 +68,12 @@ class FNodeOutput: public QGraphicsWidget{
             painter->setBrush(Qt::NoBrush);
             painter->drawRect(boundingRect());
         }
+
+    private:
+        
 };
 
+} // namespace f
 } // namespace gui
 } // namespace cauv
 

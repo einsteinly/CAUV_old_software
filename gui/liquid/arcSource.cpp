@@ -31,16 +31,16 @@ using namespace liquid;
 
 /***************************** AbstractArcSource *****************************/
 AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
-                                     void* sourceDelegate,
+                                     ArcSourceDelegate* sourceDelegate,
                                      Arc* arc)
     : m_style(of_style),
       m_arc(arc),
       m_sourceDelegate(sourceDelegate),
       m_ephemeral_sink(NULL){
-    debug(7) << "AbstractArcSource()" << this;
+    debug() << "AbstractArcSource(delegate="<<sourceDelegate<<"): " << this;
 }
 AbstractArcSource::~AbstractArcSource(){
-    debug(7) << "~AbstractArcSource()" << this;
+    debug() << "~AbstractArcSource()" << this;
 }
 
 Arc* AbstractArcSource::arc() const{
@@ -49,6 +49,13 @@ Arc* AbstractArcSource::arc() const{
 
 ArcStyle const& AbstractArcSource::style() const{
     return m_style;
+}
+
+void AbstractArcSource::setSourceDelegate(ArcSourceDelegate *sourceDelegate){
+    m_sourceDelegate = sourceDelegate;
+}
+ArcSourceDelegate* AbstractArcSource::sourceDelegate() const{
+    return m_sourceDelegate;
 }
 
 void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
@@ -138,7 +145,7 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
 
 
 /********************************* ArcSource *********************************/
-ArcSource::ArcSource(void* sourceDelegate,
+ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
                      Arc* arc)
     : AbstractArcSource(arc->style(), sourceDelegate, arc),
       m_front_line(NULL),

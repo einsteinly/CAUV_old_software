@@ -78,7 +78,7 @@ ArcSink::~ArcSink(){
     debug() << "~ArcSink()"; 
 }
 
-bool ArcSink::willAcceptConnection(void* from_source){
+bool ArcSink::willAcceptConnection(ArcSourceDelegate* from_source){
     return m_connectionDelegate->willAcceptConnection(from_source);
 }
 
@@ -94,7 +94,7 @@ void ArcSink::doPresentHighlight(qreal intensity){
     fadeHL->start();
 }
 
-ArcSink::ConnectionStatus ArcSink::doAcceptConnection(void* from_source){
+ArcSink::ConnectionStatus ArcSink::doAcceptConnection(ArcSourceDelegate* from_source){
     return m_connectionDelegate->doAcceptConnection(from_source);
 }
 

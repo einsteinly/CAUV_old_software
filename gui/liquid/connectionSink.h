@@ -17,16 +17,18 @@
 
 namespace liquid {
 
+class ArcSourceDelegate;
+
 class ConnectionSink{
     public:
         virtual ~ConnectionSink(){ }
 
         // called whilst a drag operation is in progress to test & highlight things
-        virtual bool willAcceptConnection(void* from_source) = 0;
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source) = 0;
 
         // called when the connection is dropped, may return:
         enum ConnectionStatus{Rejected, Accepted, Pending};
-        virtual ConnectionStatus doAcceptConnection(void* from_source) = 0;
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) = 0;
 };
 
 } // namespace liquid

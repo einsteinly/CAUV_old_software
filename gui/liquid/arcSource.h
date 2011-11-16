@@ -25,16 +25,24 @@ struct ArcStyle;
 class AbstractArcSink;
 class Arc;
 
-class AbstractArcSource: public QGraphicsObject{
+class ArcSourceDelegate{
+    public:
+        virtual ~ArcSourceDelegate(){ }
+};
+
+class AbstractArcSource: public QGraphicsObject,
+                         public ArcSourceDelegate{
     Q_OBJECT
     public:
         AbstractArcSource(ArcStyle const& of_style,
-                          void* sourceDelegate,
+                          ArcSourceDelegate *sourceDelegate,
                           Arc* arc);
         virtual ~AbstractArcSource();
 
         Arc* arc() const;
         ArcStyle const& style() const;
+        void setSourceDelegate(ArcSourceDelegate *sourceDelegate);
+        ArcSourceDelegate* sourceDelegate() const;
     
     Q_SIGNALS:
         void geometryChanged();
@@ -57,11 +65,9 @@ class AbstractArcSource: public QGraphicsObject{
         void checkAndHighlightSinks(QPointF scene_pos);
 
      protected:
-        // ...style, currently highlighted scene item, connection source (which
-        // may be this), ...
         ArcStyle const& m_style;  
         Arc *m_arc;
-        void *m_sourceDelegate;
+        ArcSourceDelegate *m_sourceDelegate;
         AbstractArcSink *m_ephemeral_sink;
         QSet<AbstractArcSink*> m_highlighted_items;
 };
@@ -69,7 +75,7 @@ class AbstractArcSource: public QGraphicsObject{
 class ArcSource: public AbstractArcSource,
                  public QGraphicsLayoutItem{
     public:
-        ArcSource(void* sourceDelegate,
+        ArcSource(ArcSourceDelegate* sourceDelegate,
                   Arc* arc);
         virtual ~ArcSource(){ }
         
