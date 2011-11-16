@@ -427,8 +427,8 @@ class ComponentPlayer(CHILer):
                     except ImportError:
                         print 'No decoder for hg revision %s!' % parsed[0]
                         self.decoders[parsed[1]] = None
-                        import traceback
-                        traceback.print_exc()
+                        #import traceback
+                        #traceback.print_exc()
                     else:
                         print 'loaded decoder for %s' % parsed[0]
                 except pp.ParseException:

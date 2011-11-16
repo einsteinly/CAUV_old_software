@@ -63,7 +63,8 @@ class SonarInputNode: public InputNode{
             registerOutputID("data line");
             registerOutputID("bearing", int32_t(0));
             registerOutputID("bearing range", int32_t(0));
-            registerOutputID("range", int32_t(0));
+            registerOutputID("range", float(0));
+            registerOutputID("timestamp", std::string());
         }
     
         virtual ~SonarInputNode(){
@@ -210,7 +211,8 @@ class SonarInputNode: public InputNode{
             r["data line"] = boost::make_shared<Image>(cv::Mat(m_back->line().data, true).t());
             r["bearing"] = NodeParamValue(m_back->line().bearing);
             r["bearing range"] = NodeParamValue(m_back->line().bearingRange);
-            r["range"] = NodeParamValue(m_back->line().range);
+            // !!! TODO: convert range to metres
+            r["range"] = NodeParamValue(float(m_back->line().range));
             
             // NB: output is not copied! use a CopyNode if you don't want to
             // stamp all over the buffer
@@ -238,17 +240,13 @@ class SonarInputNode: public InputNode{
         };
         out_map_t doWork_image(){
             out_map_t r;
-            boost::shared_ptr<SonarImageMessage const> image_msg;            
+            boost::shared_ptr<SonarImageMessage const> image_msg;
             
             debug(4) << "SonarInputNode::doWork_image";
 
             {  lock_t l(m_sonardata_lock);
                 image_msg.swap(m_sonarimg_msg);
             }
-
-            if(m_accumulator.setWholeImage(image_msg->image()))
-                // not a deep copy when we're accumulating whole images!
-                r["image (synced)"] = m_accumulator.img();
 
             NonUniformPolarMat r_polar_mat;
             const float end_range_m = image_msg->image().rangeEnd;
@@ -285,10 +283,19 @@ class SonarInputNode: public InputNode{
                 new Image(r_polar_mat), MessageImageDeleter(image_msg)
             );
             r_polar_img->ts(image_msg->image().timeStamp);
-            r["polar image"] = r_polar_img;
             
-            // !!! TODO: probably want to set the single-line output to the
-            // line pointing straight forwards, or something similar
+
+            if(m_accumulator.setWholeImage(image_msg->image())){
+                r["image (buffer)"] = m_accumulator.img();
+                // not a deep copy when we're accumulating whole images!
+                r["image (synced)"] = m_accumulator.img();
+            }
+            r["polar image"] = r_polar_img;
+            r["timestamp"] = timeStampToString(image_msg->image().timeStamp);
+            r["range"] = NodeParamValue(float(end_range_m));
+            r["data line"] = boost::make_shared<Image>(
+                cv::Mat(r_polar_mat.mat,cv::Rect(int(cols+0.5)/2,0,1,rows)).clone()
+            );
             return r;
         }
 
@@ -324,6 +331,12 @@ class SonarInputNode: public InputNode{
         static unsigned int _get(std::vector<unsigned char> const& data, int i)
         {
             return data[clamp_cast<size_t>(0, i, (int)data.size()-1)];
+        }
+
+        static std::string timeStampToString(TimeStamp const& t){
+            boost::posix_time::ptime pt = boost::posix_time::from_time_t(t.secs);
+            pt += boost::posix_time::time_duration(0, 0, 0, t.musecs);
+            return mkStr() << pt;
         }
 
     private:

@@ -191,7 +191,7 @@ Node::msg_node_input_map_t Node::inputLinks() const{
             t.subType = -1;
         }
         // we took the subtype for t from the input anyway
-        r[LocalNodeInput(id, t.subType)] = t;
+        r[LocalNodeInput(id, t.subType, v.second->sched_type)] = t;
     }
     return r;
 }
@@ -213,8 +213,21 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     }else if(i->second->isParam() != !n->inputs().count(i_id)){
         throw link_error("setOutput: Parameter <==> Image mismatch");
     }
-    int32_t sub_type = i->second->isParam()?  boost::get<NodeParamValue>(i->second->value).which() : -1;    
-    if(i->second->isParam() && !n->parameters().count(LocalNodeInput(i_id, sub_type))){
+    const int32_t sub_type = i->second->isParam()?  boost::get<NodeParamValue>(i->second->value).which() : -1;
+    // so this is quite ugly, the sched_type field is included in comparison of
+    // LocalNodeInput structures (I've considered extending the messages.msg
+    // format to support a nocompare directive for fields) - but it isn't
+    // important for matching inputs and outputs, so we check for parameters of
+    // either sort of sched_type when checking to see if the sub type (which
+    // *does* matter) matches...
+    // implementing a nocompare directive wouldn't be very difficult, and if
+    // this sort of problem occurs anywhere else, then I'd go for that solution
+    // instead... seems overkill to solve this tiny little problem though
+    // 
+    if(i->second->isParam() && !(
+        n->parameters().count(LocalNodeInput(i_id, sub_type, May_Be_Old)) ||
+        n->parameters().count(LocalNodeInput(i_id, sub_type, Must_Be_New))
+    )){
         throw link_error(
             mkStr() << "setOutput: " << *this <<"::"<< o_id << " -> "
                     << *n <<"::"<< i_id << ": parameter sub type mismatch"
@@ -510,7 +523,8 @@ std::map<LocalNodeInput, NodeParamValue> Node::parameters() const{
     std::map<LocalNodeInput, NodeParamValue> r;
     foreach(private_in_map_t::value_type const& v, m_inputs)
         if(v.second->isParam())
-            r[LocalNodeInput(v.first, v.second->param_value.which())] = v.second->param_value;
+            r[LocalNodeInput(v.first, v.second->param_value.which(), v.second->sched_type)]
+                = v.second->param_value;
     return r;
 }
 
@@ -521,7 +535,7 @@ void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
     setParam(m->paramId(), m->value());
 }
 
-void Node::registerInputID(input_id const& i, InputSchedType const& st){
+void Node::registerInputID(input_id const& i, InputSchedType::e const& st){
     lock_t l(m_inputs_lock);
     // Avoid need for default Input constructor
     m_inputs.insert(
