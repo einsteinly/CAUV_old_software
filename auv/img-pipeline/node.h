@@ -35,6 +35,7 @@
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>
 #include <generated/types/NodeInputStatus.h>
+#include <generated/types/InputSchedType.h>
 
 // TODO: remove this dependency
 #include <ssrc/spread.h>
@@ -56,6 +57,10 @@ inline NodeParamValue getValue<NodeParamValue>(const NodeParamValue& v) {
     return v;
 }
 
+// !!! TODO: remove these and scope as appropriate
+using InputSchedType::Must_Be_New;
+using InputSchedType::May_Be_Old;
+
 class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
     public:
         // Public typedefs: used as return types
@@ -69,7 +74,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
     protected:
         // Protected typedefs: useful for derived nodes
-        enum InputSchedType {Must_Be_New, May_Be_Old};
         typedef boost::shared_ptr<Image> image_ptr_t;
 
         // NB: order here is important, don't change it!
@@ -81,8 +85,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
     private:
         // Private types and typedefs: only used internally
-        template<typename cT, typename tT>
-        friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, InputSchedType const&);
 
         enum InputType {InType_Parameter, InType_Image};
         template<typename cT, typename tT>
@@ -127,13 +129,13 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef boost::shared_ptr<Input> input_ptr;
         struct Input: TestableBase<Input>{
             input_link_t target;
-            InputSchedType sched_type;
+            InputSchedType::e sched_type;
             NodeInputStatus::e status;
             InputType input_type;
             mutable NodeParamValue param_value;
             std::string tip;
 
-            Input(InputSchedType s)
+            Input(InputSchedType::e s)
                 : TestableBase<Input>(*this),
                   target(),
                   sched_type(s),
@@ -143,7 +145,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                   tip(){
             }
 
-            Input(InputSchedType s, NodeParamValue const& default_value, std::string const& tip)
+            Input(InputSchedType::e s, NodeParamValue const& default_value, std::string const& tip)
                 : TestableBase<Input>(*this),
                   target(),
                   sched_type(s),
@@ -153,13 +155,13 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                   tip(tip){
             }
 
-            static input_ptr makeImageInputShared(InputSchedType const& st = Must_Be_New){
+            static input_ptr makeImageInputShared(InputSchedType::e const& st = Must_Be_New){
                 return boost::make_shared<Input>(boost::cref(st));
             }
 
             static input_ptr makeParamInputShared(NodeParamValue const& default_value,
                                                   std::string const& tip,
-                                                  InputSchedType const& st = May_Be_Old){
+                                                  InputSchedType::e const& st = May_Be_Old){
                 return boost::make_shared<Input>(
                     boost::cref(st), boost::cref(default_value), boost::cref(tip)
                 );
@@ -432,7 +434,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         template<typename T>
         void registerParamID(input_id const& p, T const& default_value,
                              std::string const& tip="",
-                             InputSchedType const& st = May_Be_Old){
+                             InputSchedType::e const& st = May_Be_Old){
             lock_t l(m_inputs_lock);
             if(m_inputs.count(p)){
                 error() << "Duplicate parameter id:" << p;
@@ -478,7 +480,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             _explicitRegisterOutputID<image_ptr_t>(o, default_value);
         }
 
-        void registerInputID(input_id const& i, InputSchedType const& st = Must_Be_New);
+        void registerInputID(input_id const& i, InputSchedType::e const& st = Must_Be_New);
 
         bool unregisterOutputID(output_id const& o, bool warnNonexistent = true);
 
@@ -600,16 +602,6 @@ std::basic_ostream<char_T, traits>& operator<<(
        << " id=" << l.id
        << "}";
     return os;
-}
-
-template<typename cT, typename tT>
-std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::InputSchedType const& st){
-    switch(st){
-        case Node::Must_Be_New: return os << "{InputSchedType Must be new}";
-        case Node::May_Be_Old:  return os << "{InputSchedType May be old}";
-        default:                return os << "{InputSchedType ?}";
-    }
-
 }
 
 template<typename cT, typename tT>

@@ -113,7 +113,10 @@ enum Controller : int8 {
     Depth = 2,
     ManualOverride = 3
 }
-
+enum InputSchedType : int8 {
+    Must_Be_New = 0,
+    May_Be_Old = 1
+}
 
 struct floatYPR
 {
@@ -142,6 +145,7 @@ struct LocalNodeInput
 {
     input : string;
     subType : int32;
+    schedType : InputSchedType;
 }
 struct NodeOutput
 {

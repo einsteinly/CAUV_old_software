@@ -108,7 +108,7 @@ class Correlation1DNode: public Node{
                 return max_i;
             }
             augmented_mat_t m_b;
-            mutable cv::Mat& m_correl_image;
+            cv::Mat& m_correl_image;
         };
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
