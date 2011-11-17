@@ -32,9 +32,11 @@
 
 using namespace liquid;
 
+const static QSizeF Minimum_Size = QSizeF(100, 100);
+
 LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     : QGraphicsObject(parent),
-      m_size(QSizeF(100,100)),
+      m_size(Minimum_Size),
       m_header(new NodeHeader(style, this)),
       m_contentWidget(new QGraphicsWidget(this)),
       m_contentLayout(new QGraphicsLinearLayout(Qt::Vertical)),
@@ -134,26 +136,22 @@ QSizeF LiquidNode::size() const{
 }
 
 void LiquidNode::setSize(QSizeF const& size){
-    debug(8) << "GraphicsWind::setSize(" << size << ")";
-    prepareGeometryChange();
-    m_size = size;
-    //m_buttonsWidget->setGeometry((cornerRadius()/2), -17,
-    //                             size.width()-(cornerRadius()/2), 30);
+    debug() << "LiquidNode::setSize(" << size << ")";
+
+    // this will cause updateLayout to be called via the geometryChanged
+    // signal, which in turn actually sets the new size
+    const float header_height = m_style.header.height + m_style.bl_radius/2;
     m_contentWidget->setGeometry(
         0, m_style.header.height,
-        size.width(), size.height()-(m_style.header.height + m_style.bl_radius/2)
+        size.width(), size.height() - header_height
     );
-
-    m_resizeHandle->setX(size.width() - m_resizeHandle->size().width());
-    m_resizeHandle->setY(size.height() - m_resizeHandle->size().height());
-
-    m_header->setWidth(size.width());
-    updateLayout();
+    //m_buttonsWidget->setGeometry((cornerRadius()/2), -17,
+    //                             size.width()-(cornerRadius()/2), 30);
 }
 
 void LiquidNode::resized(){
-    debug(8) << "GraphicsWind::resized()" << m_resizeHandle->newSize();
-    QSizeF newSize(100, 100);
+    debug(8) << "LiquidNode::resized()" << m_resizeHandle->newSize();
+    QSizeF newSize = Minimum_Size;
     if(m_resizeHandle->newSize().width() >= newSize.width())
         newSize.setWidth(m_resizeHandle->newSize().width());
     if(m_resizeHandle->newSize().height() >= newSize.height())
@@ -183,7 +181,7 @@ void LiquidNode::layoutChanged(){
             cutouts_at[m_contentWidget->pos().y() +
                        r->asQGI()->pos().y() +
                        g.main_cutout.y_offset] = g;
-    debug(6) << "layoutChanged:" << cutouts_at.size() << "cutouts";
+    debug() << "layoutChanged:" << cutouts_at.size() << "cutouts";
 
     p.lineTo(width, 0);
     p.lineTo(width, height);
@@ -218,7 +216,25 @@ void LiquidNode::layoutChanged(){
 }
 
 void LiquidNode::updateLayout(){
+    setSizeFromContents();
     layoutChanged();
 }
 
+void LiquidNode::setSizeFromContents(){
+    debug() << "LiquidNode::setSizeFromContents(" << m_contentWidget->size() << ")";
+
+    const float header_height = m_style.header.height + m_style.bl_radius/2;
+    m_size.setWidth(m_contentWidget->size().width());
+    m_size.setHeight(m_contentWidget->size().height() + header_height);
+
+    if(m_size.width() < Minimum_Size.width())
+        m_size.setWidth(Minimum_Size.width());
+    if(m_size.height() < Minimum_Size.height())
+        m_size.setHeight(Minimum_Size.height());
+
+    m_resizeHandle->setX(m_size.width() - m_resizeHandle->size().width());
+    m_resizeHandle->setY(m_size.height() - m_resizeHandle->size().height());
+
+    m_header->setWidth(m_size.width());
+}
 

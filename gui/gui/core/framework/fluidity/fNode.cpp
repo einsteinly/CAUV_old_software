@@ -176,6 +176,7 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
 void FNode::setType(NodeType::e const& type){
     m_header->setTitle(nodeTypeDesc(type));
 }
+
 void FNode::setInputs(msg_node_input_map_t const& inputs){
     for(str_in_map_t::const_iterator i = m_inputs.begin(); i != m_inputs.end(); i++)
         removeItem(i->second);
@@ -193,12 +194,27 @@ void FNode::setInputs(msg_node_input_map_t const& inputs){
         }
     }
 }
+
 void FNode::setInputLinks(msg_node_input_map_t const& inputs){
 }
+
 void FNode::setOutputs(msg_node_output_map_t const& outputs){
+    for(str_out_map_t::const_iterator i = m_outputs.begin(); i != m_outputs.end(); i++)
+        removeItem(i->second);
+    m_outputs.clear();
+    
+    msg_node_output_map_t::const_iterator i;
+    for(i = outputs.begin(); i != outputs.end(); i++){
+        debug() << BashColour::Blue << "FNode:: new output:" << *i;
+        FNodeOutput* t = new FNodeOutput(this);
+        m_outputs[i->first.output] = t;
+        addItem(t);
+    }
 }
+
 void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
 }
+
 void FNode::setParams(msg_node_param_map_t const& params){
     str_in_map_t new_m_params;
     foreach(str_in_map_t::value_type const &i, m_params)
@@ -223,6 +239,7 @@ void FNode::setParams(msg_node_param_map_t const& params){
     }
 
 }
+
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
 }
 

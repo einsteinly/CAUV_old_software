@@ -63,6 +63,9 @@ protected Q_SLOTS:
     void updateLayout();
     void resized();
 
+private:
+    void setSizeFromContents();
+
 protected:
     QSizeF m_size;
 
