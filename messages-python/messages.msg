@@ -115,7 +115,8 @@ enum Controller : int8 {
 }
 enum InputSchedType : int8 {
     Must_Be_New = 0,
-    May_Be_Old = 1
+    May_Be_Old = 1,
+    Optional = 2
 }
 
 struct floatYPR

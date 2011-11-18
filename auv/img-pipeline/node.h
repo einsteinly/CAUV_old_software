@@ -60,6 +60,7 @@ inline NodeParamValue getValue<NodeParamValue>(const NodeParamValue& v) {
 // !!! TODO: remove these and scope as appropriate
 using InputSchedType::Must_Be_New;
 using InputSchedType::May_Be_Old;
+using InputSchedType::Optional;
 
 class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
     public:
