@@ -135,6 +135,14 @@ static cv::Mat renderCloud(
     cv::Mat r(res[0], res[1], CV_8UC1, cv::Scalar(0));
     Eigen::Vector2f step((max[0]-min[0]) / res[0],
                          (max[1]-min[1]) / res[1]);
+    
+    float aspect = 1;
+    if(res[1] > 0)
+        aspect = res[0] / res[1];
+    if(step[0] > step[1])
+        step[1] = step[0] / aspect;
+    else
+        step[0] = step[1] * aspect;
 
     for(size_t i = 0; i < cloud.size(); i++){
         float x_idx = 0.5+(cloud[i].x - min[0]) / step[0];
@@ -263,6 +271,10 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     delta_transformation.block<3,3>(0,0) = Eigen::Matrix3f(Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ()));
     
     Eigen::Matrix4f guess = m_impl->last_transformation * delta_transformation;
+    // squish the z translation and x-y rotations!
+    guess(3,3) = 0;
+    //guess(0,2) = 0; guess(1,2) = 0;
+    //guess(2,0) = 0; guess(2,1) = 0;
 
     // weight-test throwing away low scorers:
     cloud_ptr new_cloud = kpsToCloud(
@@ -291,7 +303,8 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     }else{
         debug() << "trying to match" << new_cloud->points.size() << "points to cloud";
         
-        pcl::IterativeClosestPointNonLinear<pt_t,pt_t> icp;
+        //pcl::IterativeClosestPointNonLinear<pt_t,pt_t> icp;
+        pcl::IterativeClosestPoint<pt_t,pt_t> icp;
         icp.setInputCloud(new_cloud);
         icp.setInputTarget(m_impl->whole_cloud);
 
