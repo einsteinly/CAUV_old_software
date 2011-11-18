@@ -34,9 +34,19 @@ static uint32_t Min_Initial_Points = 10;
 // avoid including PCL stuff in the header:
 namespace cauv{
 namespace imgproc{
+
+struct SavedCloud{
+    SavedCloud(cloud_ptr p, Eigen::Matrix4f const& m)
+        : transformed_cloud(p), transformation(m){
+    }
+    cloud_ptr       transformed_cloud;
+    Eigen::Matrix4f transformation;
+};
+typedef boost::shared_ptr<SavedCloud> saved_cloud_ptr;
+
 struct SonarSLAMImpl{
     cloud_ptr whole_cloud;
-    std::map<uint32_t,cloud_ptr> clouds;
+    std::map<uint32_t,saved_cloud_ptr> clouds;
     Eigen::Matrix4f last_transformation;
     #ifdef CAUV_CLOUD_VISUALISATION
     boost::shared_ptr<pcl::visualization::CloudViewer> viewer;
@@ -50,24 +60,39 @@ uint32_t SonarSLAMImpl::viewer_count = 0;
 } // namespace cauv
 
 static cv::Mat renderCloud(
-    pcl::PointCloud<pcl::PointXYZ> const& cloud,
+    cloud_t const& cloud,
     Eigen::Vector2f origin,
     Eigen::Vector2f step,
-    Eigen::Vector2i s
+    Eigen::Vector2i s,
+    bool draw_weight = true
 ){
     cv::Mat r(s[0], s[1], CV_8UC1, cv::Scalar(0));
 
     for(size_t i = 0; i < cloud.size(); i++){
         float x_idx = 0.5+(cloud[i].x - origin[0]) / step[0];
         float y_idx = 0.5+(cloud[i].y - origin[1]) / step[1];
-        if(x_idx >= 0 && x_idx < s[0] &&
-           y_idx >= 0 && y_idx < s[1]){
-            r.at<uint8_t>(int(x_idx),int(y_idx)) = 255;
-        }
+        const int S = 3;
+        for(int dx = -S; dx <= S; dx++)
+            for(int dy = -S*(!dx); dy <= S*(!dx); dy++)
+            if(dx+x_idx >= 0 && dx+x_idx < s[0] &&
+               dy+y_idx >= 0 && dy+y_idx < s[1]){
+                if(draw_weight){
+                    if(cloud[i].getVector4fMap()[3] > r.at<uint8_t>(int(dx+x_idx),int(dy+y_idx)))
+                        r.at<uint8_t>(int(dx+x_idx),int(dy+y_idx)) = cloud[i].getVector4fMap()[3];
+                }else{
+                    r.at<uint8_t>(int(dx+x_idx),int(dy+y_idx)) = 255;
+                }
+            }
     }
 
     return r;
 }
+
+struct CompareKPByIntensity{
+    bool operator()(pt_t const& l, pt_t const& r) const{
+        return l.getVector4fMap()[3] < r.getVector4fMap()[3];
+    }
+};
 
 static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps, Eigen::Matrix4f const& initial_transform){
     // split transform into affine parts:
@@ -86,13 +111,20 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps, Eigen::Matrix4f co
     
     bool warned_non_planar = false;
     for(size_t i = 0; i < kps.size(); i++){
-        pt_t temp(kps[i].pt.x, kps[i].pt.y, 0);
+        pt_t temp(kps[i].pt.x, kps[i].pt.y, 0.0f);
         r->points[i].getVector3fMap() = rotate * temp.getVector3fMap() + translate;
+        r->points[i].getVector4fMap()[3] = kps[i].response;
         if(!warned_non_planar && r->points[i].z != 0){
             warned_non_planar = true;
             warning() << "non-planar!";
         }
     }
+    std::sort(r->points.rbegin(), r->points.rend(), CompareKPByIntensity());
+    debug d;
+    //d << "sorted kps: {";
+    //foreach(pt_t const& pt, r->points)
+    //    d <<"("<< pt.getVector4fMap()[3] <<":"<< pt.x <<","<< pt.y <<","<< pt.z <<"),";
+    //d << "}";
 
     return r;
 }
@@ -123,7 +155,8 @@ void SonarSLAMNode::init(){
     registerParamID("reject threshold", float(5), "RANSAC outlier rejection distance");
     registerParamID("max correspond dist", float(5), "");
     registerParamID("score threshold", float(1), "keypoint set will be rejected if mean distance error is greater than this");
-    
+    registerParamID("weight test", float(64), "keypoints with weights greater than this will be used for registration");
+
     registerParamID("-render origin x", float(-20));
     registerParamID("-render origin y", float(-20));
     registerParamID("-render res", float(0.1));
@@ -148,6 +181,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     const float max_correspond_dist = param<float>("max correspond dist");
     const float score_thr = param<float>("score threshold");
     const float delta_theta = param<float>("delta theta");
+    const float weight_test = param<float>("weight test");
 
     const Eigen::Vector2f render_origin(param<float>("-render origin x"),param<float>("-render origin y"));
     const Eigen::Vector2f render_step(param<float>("-render res"),param<float>("-render res"));
@@ -155,15 +189,17 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     
     Eigen::Matrix4f delta_transformation = Eigen::Matrix4f::Identity();
     delta_transformation.block<3,3>(0,0) = Eigen::Matrix3f(Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ()));
+    
+    Eigen::Matrix4f transformation = m_impl->last_transformation * delta_transformation;
 
     cloud_ptr new_cloud = kpsToCloud(
         param< std::vector<KeyPoint> >("keypoints"),
-        m_impl->last_transformation * delta_transformation
+        transformation
     );
     // TODO: propagate sonar timestamp with keypoints... somehow... and use
     // that instead of an index
     static uint32_t cloud_num = 0;
-    m_impl->clouds[++cloud_num] = new_cloud;
+    m_impl->clouds[++cloud_num] = boost::make_shared<SavedCloud>(new_cloud, transformation);
 
     if(!m_impl->whole_cloud){
         if(new_cloud->points.size() > Min_Initial_Points){
@@ -173,11 +209,10 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             debug(3) << "transformation is:\n" << m_impl->last_transformation;
     
             r["whole cloud vis"] = boost::make_shared<Image>(renderCloud(
-                *(m_impl->whole_cloud), render_origin, render_step, render_sz
+                *(m_impl->whole_cloud), render_origin, render_step, render_sz, false
             ));
         }else{
-            r["whole cloud vis"] =
-            boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
+            r["whole cloud vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
             debug() << "not enough points to initialise whole cloud";
         }
         r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
@@ -197,6 +232,13 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         icp.setTransformationEpsilon(transform_eps);
         icp.setEuclideanFitnessEpsilon(euclidean_fitness);
         icp.setRANSACOutlierRejectionThreshold(reject_threshold);
+        
+        boost::shared_ptr< std::vector<int> >indices = boost::make_shared<std::vector<int> >();
+        for(size_t i =0; i < new_cloud->points.size(); i++)
+            if(new_cloud->points[i].getVector4fMap()[3] > weight_test)
+                indices->push_back(i);
+        debug() << indices->size() << "points pass weight test";
+        icp.setIndices(indices);
 
         cloud_t final;
         icp.align(final);
@@ -222,26 +264,26 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             #ifdef CAUV_CLOUD_DUMP
             static uint32_t n = 0;
             pcl::io::savePCDFile(mkStr() << "sonarSLAM" << n++ << ".pcd", *m_impl->whole_cloud);
-            pcl::io::savePCDFile(mkStr() << "sonarSLAM-scan" << n++ << ".pcd", *new_cloud);
+            pcl::io::savePCDFile(mkStr() << "sonarSLAM-scan" << n++ << ".pcd", final);
             pcl::io::savePCDFile(mkStr() << "sonarSLAM.pcd",  *m_impl->whole_cloud);
             #endif
             
             r["last added vis"] = boost::make_shared<Image>(renderCloud(
-                *new_cloud, render_origin, render_step, render_sz
+                final, render_origin, render_step, render_sz, false
             ));
         }else if(score >= score_thr){
             r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
-            info() << BashColour::Green
+            info() << BashColour::Brown
                    << "points will not be added to the whole cloud (error too high: "
                    << score << ">=" << score_thr <<")";
         }else{
             r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
-            info() << BashColour::Green
+            info() << BashColour::Red
                    << "points will not be added to the whole cloud (not converged)";
         }
-        
+
         r["whole cloud vis"] = boost::make_shared<Image>(renderCloud(
-            *(m_impl->whole_cloud), render_origin, render_step, render_sz
+            *(m_impl->whole_cloud), render_origin, render_step, render_sz, false
         ));
     }
 

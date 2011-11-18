@@ -165,8 +165,8 @@ shared_ptr<SpreadMessage> SpreadMailbox::receiveMessage() {
         int ret = 0;
         while (true) {
             FD_SET(fd, &fds);
-            towait.tv_sec = 2;
-            towait.tv_usec = 0;
+            towait.tv_sec = 0;
+            towait.tv_usec = 200000;
             ret = select(fd+1, &fds, NULL, NULL, &towait);
             if (ret != 0) {
                 break;

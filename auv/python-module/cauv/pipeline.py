@@ -34,6 +34,44 @@ class State:
     def __repr__(self):
         return str(self.nodes)
 
+
+#
+# BEWARE:
+#  This little bit of unpickle machinery allows old saved pipelines to be
+#  loaded if any of the data structures or messages involved in setting the
+#  pipeline state change.
+#
+#  You SHOULD NOT RELY ON THESE HOOKS on anything other than a temporary basis:
+#  once you can load your old pipeline, save it in the new format, check that
+#  it works, then remove all copies of the old pipeline, and remove the hook
+#  code that you add here.
+#
+
+def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Must_Be_New):
+    return messaging.LocalNodeInput(input, subtype, schedType)
+
+Unpickle_Filters = {
+    #'LocalNodeInput' : makeNewLocalNodeInput
+}
+
+class FilterUnpickler(pickle.Unpickler):
+    def __init__(self, file):
+        pickle.Unpickler.__init__(self, file)
+
+    def load_reduce(self):
+        stack = self.stack
+        args = stack.pop()
+        func = stack[-1]
+        if func.__name__ in Unpickle_Filters:
+            warning('filtering pickle load of %s(%s)' % (func.__name__, args))
+            value = Unpickle_Filters[func.__name__](*args)
+        else:
+            value = func(*args)
+        stack[-1] = value
+    pickle.Unpickler.dispatch[pickle.REDUCE] = load_reduce
+
+
+
 class Model(messaging.MessageObserver):
     def __init__(self, node, pipeline_name = "default"):
         messaging.MessageObserver.__init__(self)
@@ -73,8 +111,17 @@ class Model(messaging.MessageObserver):
     
     def load(self, picklefname, timeout=3.0):
         with open(picklefname, 'rb') as inf:
-            saved = pickle.load(inf)
+            #saved = pickle.load(inf)
+            saved = FilterUnpickler(file).load()
             self.set(saved, timeout)
+
+    def loadFile(self, file):
+        #saved = pickle.load(inf)
+        saved = FilterUnpickler(file).load()
+        return saved
+    
+    def dumpFile(self, file, state):
+        pickle.dump(file, state)
 
     def get(self, timeout=3.0):
         graph = self.__getSynchronousGraphDescription(timeout)
