@@ -71,6 +71,9 @@ public:
 };
 
 
+NodePathFilter::NodePathFilter(QObject * parent) : QObject(parent), m_text(""){
+}
+
 void NodePathFilter::setText(QString const& string){
     m_text = string;
     Q_EMIT filterChanged();
@@ -81,11 +84,18 @@ QString NodePathFilter::getText(){
 }
 
 bool NodePathFilter::containsText(boost::shared_ptr<NodeBase> const& node){
+    debug(7) << "NODE = " << node;
+    debug(7) << "PATH = " << node->nodePath();
+    debug(7) << "TEXT = " << getText().toStdString();
+
     if(QString::fromStdString(node->nodePath()).contains(getText(), Qt::CaseInsensitive))
         return true;
-    BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, node->getChildren()){
-        if(containsText(node)) return true;
+
+    // might match somewhere in a child nodes path
+    foreach(boost::shared_ptr<NodeBase> const& child, node->getChildren()){
+        if(containsText(child)) return true;
     }
+
     return false;
 }
 
@@ -257,13 +267,13 @@ void NodeListView::applyFilters(NodeTreeItemBase * item){
     for (int i = 0; i < item->childCount(); i++){
         if(NodeTreeItemBase* nodeItem = dynamic_cast<NodeTreeItemBase*>(item->child(i))){
             applyFilters(nodeItem);
-        }
+        } else warning() << "applyFilters(item): non-NodeTreeItemBase class in tree";
     }
 }
 
 bool NodeListView::applyFilters(boost::shared_ptr<NodeBase> const& node){
     debug(2) << "applyFilters(boost::shared_ptr<NodeBase> node)";
-    BOOST_FOREACH(boost::shared_ptr<NodeListFilterInterface> const& filter, m_filters){
+    foreach(boost::shared_ptr<NodeListFilterInterface> const& filter, m_filters){
         // filtering is exclusive, so if any filter says no then the
         // node won't appear in the list
         if (!filter->filter(node)) return false;

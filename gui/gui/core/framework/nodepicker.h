@@ -46,6 +46,9 @@ namespace cauv {
         class NodePathFilter : public QObject, public NodeListFilterInterface {
             Q_OBJECT
 
+        public:
+            NodePathFilter(QObject * parent = NULL);
+
         public Q_SLOTS:
 
             void setText(QString const& string);
