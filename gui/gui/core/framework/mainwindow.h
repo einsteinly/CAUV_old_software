@@ -47,6 +47,7 @@ namespace cauv {
             virtual void closeEvent(QCloseEvent *);
 
             QApplication * m_application;
+            // actions are the way the GUI exposes itself and the vehicles model to plugins
             boost::shared_ptr<GuiActions> m_actions;
             std::vector<CauvInterfacePlugin *> m_plugins;
 

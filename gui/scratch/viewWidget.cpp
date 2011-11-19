@@ -30,8 +30,6 @@
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
 
-#include "cross.h"
-
 
 #include <common/cauv_node.h>
 

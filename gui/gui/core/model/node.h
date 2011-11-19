@@ -69,6 +69,19 @@ namespace cauv {
             virtual void setMutable(bool mut);
             boost::shared_ptr<NodeBase> getRoot();
 
+            template<class T> boost::shared_ptr<T> getClosestParentOfType(){
+                boost::shared_ptr<NodeBase> node = shared_from_this();
+
+                while(node->m_parent.lock()) {
+                    try {
+                        return node->to<T>();
+                    } catch (std::runtime_error ex) {
+                    }
+                    node = node->m_parent.lock();
+                }
+                throw std::out_of_range("Parent of correct not found");
+            }
+
             template <class T> boost::shared_ptr<T> to() {
                 if (dynamic_cast<T *>(this)) {
                     return boost::static_pointer_cast<T>(shared_from_this());
@@ -188,6 +201,16 @@ namespace cauv {
 
         protected:
             T m_value;
+        };
+
+
+
+        struct NodeFilterInterface {
+            // return false to filter out an item (and its children) from the list
+            virtual bool filter(boost::shared_ptr<NodeBase> const& node) = 0;
+
+            // should be implmented as a signal by subclasses
+            virtual void filterChanged() = 0;
         };
 
     } // namespace gui

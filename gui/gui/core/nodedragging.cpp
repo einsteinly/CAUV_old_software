@@ -18,6 +18,8 @@
 #include "model/nodes/groupingnode.h"
 #include "model/registry.h"
 
+#include <stdexcept>
+
 #include <debug/cauv_debug.h>
 
 #include <QDragEnterEvent>
@@ -80,12 +82,16 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
             if(mimeData->hasUrls()) {
                 foreach (QUrl url, mimeData->urls()){
                     if(url.scheme() == "varstream") {
-                        boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
-                        if(m_listener->accepts(node)){
-                            // accept the event as soon as we find one that we can handle
-                            dragEvent->acceptProposedAction();
-                            dragEvent->accept();
-                            return true;
+                        try {
+                            boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                            if(m_listener->accepts(node)){
+                                // accept the event as soon as we find one that we can handle
+                                dragEvent->acceptProposedAction();
+                                dragEvent->accept();
+                                return true;
+                            }
+                        } catch (std::runtime_error ex){
+                            warning() << ex.what();
                         }
                     }
                 }
@@ -96,17 +102,21 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
     else if ((event->type() == QEvent::Drop)) {
         QDropEvent *dropEvent = dynamic_cast<QDropEvent *>(event);
 
-        if (false) {
+        if (dropEvent) {
             const QMimeData * mimeData = dropEvent->mimeData();
             if(mimeData->hasUrls()) {
                 foreach (QUrl url, mimeData->urls()){
                     if(url.scheme() == "varstream") {
-                        boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
-                        if(m_listener->accepts(node)){
-                            // accept the event as soon as we find one that we can handle
-                            dropEvent->acceptProposedAction();
-                            dropEvent->accept();
-                            m_listener->routeNode(node,  QPointF(dropEvent->pos()));
+                        try {
+                            boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                            if(m_listener->accepts(node)){
+                                // accept the event as soon as we find one that we can handle
+                                dropEvent->acceptProposedAction();
+                                dropEvent->accept();
+                                m_listener->routeNode(node,  QPointF(dropEvent->pos()));
+                            }
+                        } catch (std::runtime_error ex){
+                            warning() << ex.what();
                         }
                     }
                 }
@@ -125,14 +135,18 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
             if(mimeData->hasUrls()) {
                 foreach (QUrl url, mimeData->urls()){
                     if(url.scheme() == "varstream") {
-                        boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
-                        if(m_listener->accepts(node)){
-                            // accept the event as soon as we find one that we can handle
-                            dndEvent->acceptProposedAction();
-                            dndEvent->accept();
-                            if(event->type() == QEvent::GraphicsSceneDrop) {
-                                m_listener->routeNode(node, dndEvent->scenePos());
+                        try {
+                            boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                            if(m_listener->accepts(node)){
+                                // accept the event as soon as we find one that we can handle
+                                dndEvent->acceptProposedAction();
+                                dndEvent->accept();
+                                if(event->type() == QEvent::GraphicsSceneDrop) {
+                                    m_listener->routeNode(node, dndEvent->scenePos());
+                                }
                             }
+                        } catch (std::runtime_error ex){
+                            warning() << ex.what();
                         }
                     }
                 }

@@ -108,7 +108,7 @@ bool NodePathFilter::filter(boost::shared_ptr<NodeBase> const& node){
 
 
 NodePicker::NodePicker(boost::shared_ptr<Vehicle> const& auv) :
-        ui(new Ui::DataStreamPicker())
+        ui(new Ui::NodePicker())
 {
     ui->setupUi(this);
 
@@ -118,11 +118,8 @@ NodePicker::NodePicker(boost::shared_ptr<Vehicle> const& auv) :
     ui->dataStreams->setAcceptDrops(false);
     ui->filter->installEventFilter(new EscapeFilter());
 
-
     // setup model data
-
     debug() << "Initialising data stream list";
-
     m_root = boost::make_shared<GroupingNodeTreeItem>(auv);
     ui->dataStreams->addTopLevelItem(m_root.get());
     m_root->setExpanded(true);
@@ -130,10 +127,11 @@ NodePicker::NodePicker(boost::shared_ptr<Vehicle> const& auv) :
         m_root->addNode(child);
     }
 
+    // The list supports node filtering as there's potentially a lot of nodes
     boost::shared_ptr<NodePathFilter> pathFilter = boost::make_shared<NodePathFilter>();
     ui->dataStreams->registerListFilter(pathFilter);
-
     ui->filter->connect(ui->filter, SIGNAL(textChanged(QString)), pathFilter.get(), SLOT(setText(QString)));
+    // and auto completion of the path filter
     QCompleter * completer = new NodePathCompleter(ui->dataStreams->model());
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     ui->filter->setCompleter(completer);
@@ -141,6 +139,8 @@ NodePicker::NodePicker(boost::shared_ptr<Vehicle> const& auv) :
     // if the tree changes whilst we're being filtered we need to re-apply filters
     auv->connect(auv.get(), SIGNAL(treeChanged()), ui->dataStreams, SLOT(applyFilters()));
 
+    // if the list is in focus (but keystrokes are not swalled by an edit box) then
+    // redirect focus so the filter gets the key events
     ui->dataStreams->connect(ui->dataStreams, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 }
 
@@ -169,6 +169,7 @@ NodeListView::NodeListView(QWidget * parent) : QTreeWidget(parent), m_dragStartP
     // cell. This is then removed once the focus is lost. It works but its not a very elegant solution
     // TODO: Better would be to use a full QAbstractItemModel implementation but this is quite a
     // big job as QAbstractItemModels are complicated.
+    // !!! todo: support proper editing controls in the list
     connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(editStarted(QTreeWidgetItem*,int)));
     connect(this, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemEdited(QTreeWidgetItem*,int)));
 }
@@ -197,12 +198,13 @@ void NodeListView::mouseMoveEvent(QMouseEvent *event)
             return;
 
     // have we moved far enough to be a drag event?
+    // and only allow dragging when clicking on an item
     if ((event->pos() - m_dragStartPosition).manhattanLength()
-        > QApplication::startDragDistance()) {
+        > QApplication::startDragDistance() && itemAt(m_dragStartPosition)) {
 
         // Get current selection
         QList<QTreeWidgetItem *> selectedItems = this->selectedItems();
-        // If the selected Item exists
+        // If the selected item exists...
         if (selectedItems.count() > 0)
         {
             debug(3) << "NodeListView is setting up a drag";
@@ -210,10 +212,9 @@ void NodeListView::mouseMoveEvent(QMouseEvent *event)
             // setup the objects for storing drag information
             QDrag *drag = new QDrag(this);
             QMimeData *mimeData = new QMimeData;
-            // and the data we're dragging - a list of URIs
             QList<QUrl> urls;
 
-            // add each selected item to the drag data
+            // add each selected item to the drag data in the form of a URL
             foreach(QTreeWidgetItem * selectedItem, selectedItems) {
                 // get path from the node
                 NodeTreeItemBase * nodeItem = dynamic_cast<NodeTreeItemBase * >(selectedItem);
@@ -221,7 +222,9 @@ void NodeListView::mouseMoveEvent(QMouseEvent *event)
                     boost::shared_ptr<NodeBase> node = nodeItem->getNode();
                     QUrl url = QUrl();
                     url.setScheme("varstream");
-                    url.setPath(QString::fromStdString(node->nodePath()));
+                    boost::shared_ptr<Vehicle> vehicleNode = node->getClosestParentOfType<Vehicle>();
+                    url.setHost(QString::fromStdString(vehicleNode->nodeName()));
+                    url.setPath(QString::fromStdString(node->nodePath()).remove(url.host().prepend("/")));
                     urls.append(url);
                     debug(5) << url.toString().toStdString() << "added to drag";
                 }
@@ -229,7 +232,6 @@ void NodeListView::mouseMoveEvent(QMouseEvent *event)
 
             mimeData->setUrls(urls);
             drag->setMimeData(mimeData);
-
             drag->exec(Qt::CopyAction);
             debug(3) << "NodeListView dragging ended";
         }
@@ -318,7 +320,7 @@ void NodeListView::applyFilters(NodeTreeItemBase * item){
 
 bool NodeListView::applyFilters(boost::shared_ptr<NodeBase> const& node){
     debug(2) << "applyFilters(boost::shared_ptr<NodeBase> node)";
-    foreach(boost::shared_ptr<NodeListFilterInterface> const& filter, m_filters){
+    foreach(boost::shared_ptr<NodeFilterInterface> const& filter, m_filters){
         // filtering is exclusive, so if any filter says no then the
         // node won't appear in the list
         if (!filter->filter(node)) return false;
@@ -326,7 +328,7 @@ bool NodeListView::applyFilters(boost::shared_ptr<NodeBase> const& node){
     return true;
 }
 
-void NodeListView::registerListFilter(boost::shared_ptr<NodeListFilterInterface>  const& filter){
+void NodeListView::registerListFilter(boost::shared_ptr<NodeFilterInterface>  const& filter){
     m_filters.push_back(filter);
     // all filters should have a filterChanged signal, but it's not actually enforced
     // by the interface as Qt doesn't handle multiple inhertiance for QObject

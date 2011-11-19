@@ -24,7 +24,7 @@
 
 
 namespace Ui {
-    class DataStreamPicker;
+    class NodePicker;
 }
 
 
@@ -33,23 +33,13 @@ namespace cauv {
 
         class NodeTreeItemBase;
 
-        struct NodeListFilterInterface {
 
-            // return false to filter out an item (and its children) from the list
-            virtual bool filter(boost::shared_ptr<NodeBase> const& node) = 0;
-
-            // should be implmented as a signal by subclasses
-            virtual void filterChanged() = 0;
-        };
-
-        class NodePathFilter : public QObject, public NodeListFilterInterface {
+        class NodePathFilter : public QObject, public NodeFilterInterface {
             Q_OBJECT
-
         public:
             NodePathFilter(QObject * parent = NULL);
 
         public Q_SLOTS:
-
             void setText(QString const& string);
             QString getText();
             bool filter(boost::shared_ptr<NodeBase> const& node);
@@ -60,16 +50,14 @@ namespace cauv {
 
         Q_SIGNALS:
             void filterChanged();
-
         };
+
 
         class NodeListView : public QTreeWidget{
             Q_OBJECT
         public:
             NodeListView(QWidget * parent);
-
-            virtual void registerListFilter(boost::shared_ptr<NodeListFilterInterface> const& filter);
-
+            virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
             void mousePressEvent(QMouseEvent *event);
             void mouseMoveEvent(QMouseEvent *event);
 
@@ -85,8 +73,7 @@ namespace cauv {
 
         protected:
             QPoint m_dragStartPosition;
-            std::vector<boost::shared_ptr<NodeListFilterInterface> > m_filters;
-
+            std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
             void keyPressEvent(QKeyEvent *event);
         };
 
@@ -106,7 +93,7 @@ namespace cauv {
             boost::shared_ptr<NodeTreeItemBase> m_root;
 
         private:
-            Ui::DataStreamPicker *ui;
+            Ui::NodePicker *ui;
         };
 
     } // namespace gui

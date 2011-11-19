@@ -13,14 +13,13 @@
  */
 
 #include "mainwindow.h"
+#include "ui_mainwindow.h"
 
 #include <QDir>
 #include <QString>
 #include <QPluginLoader>
 #include <QSettings>
 #include <QGLWidget>
-
-#include <QPushButton>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -32,15 +31,12 @@
 #include "../controller/messageobserver.h"
 #include "../framework/nodescene.h"
 #include "../framework/nodepicker.h"
-#include "../framework/elements/arc.h"
 
 #include "fluidity/view.h"
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
-
-#include "ui_mainwindow.h"
 
 
 using namespace cauv;
@@ -87,88 +83,36 @@ void CauvMainWindow::onRun()
     CauvNode::onRun();
 
     // data model and network access
-    // auv
+    // !!! todo: there shouldn't be a RedHerring class
+    // vehicle data should be sent from the AUV to a
+    // more generic Vehicle class. Things like motor
+    // setup, autopilots, etc.. should be defined there
+    // not hardcoded into the GUI.
     m_actions->auv = boost::make_shared<RedHerring>();
     m_actions->auv->initialise();
     VehicleRegistry::instance()->registerVehicle(m_actions->auv);
+
     // cauv node
     m_actions->node = shared_from_this();
     
-    // exposed interface elements
-    // node picker
+    // Exposed interface elements - plugins might need to access some
+    // elements of the main GUI framework. Here's where we can pass
+    // these bits in.
+    // NodePicker is exposed
     m_actions->nodes = new NodePicker(m_actions->auv);
     ui->streamsDock->setWidget(m_actions->nodes);
-    // main window
+    // And the main window
     m_actions->window = shared_from_this();
-    // view
+    // The main view onto the scene
     this->setCentralWidget(m_actions->view = new liquid::LiquidView());
-    //scene
+    // And ofcourse the scene itself
     m_actions->scene = boost::make_shared<NodeScene>();
     m_actions->view->setScene(m_actions->scene.get());
     m_actions->view->centerOn(0,0);
 
-    //m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    // Set the viewport to use OpenGl here. Nested Gl viewports don't work
+    m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
-    /*AINode * w1 = new AINode();
-    AINode * w2 = new AINode();
-    AINode * w3 = new AINode();
-    AINode * w4 = new AINode();
-    ConnectingArc * arc1 = new ConnectingArc(w1, w2);
-    ConnectingArc * arc2 = new ConnectingArc(w1, w3);
-    ConnectingArc * arc3 = new ConnectingArc(w3, w4);
-    arc1->setPen(QPen(QColor(255, 158, 57)));
-    arc2->setPen(QPen(QColor(255, 158, 57)));
-    arc3->setPen(QPen(QColor(255, 158, 57)));
-
-    QGraphicsProxyWidget * pw = new QGraphicsProxyWidget();
-    pw->setWidget(new QPushButton("hello"));
-    w4->addItem(pw);
-
-    QGraphicsProxyWidget * pw2 = new QGraphicsProxyWidget();
-    f::FView *pipeline_test_view = new f::FView(shared_from_this());
-    pw2->setWidget(pipeline_test_view);
-    w2->addItem(pw2);
-    w2->setSize(pw2->boundingRect().size() * 1.05);
-
-    m_actions->scene->addItem(w1);
-    m_actions->scene->addItem(w2);
-    m_actions->scene->addItem(w3);
-    m_actions->scene->addItem(w4);
-
-    w2->setParentItem(w1);
-    w3->setParentItem(w1);
-    w4->setParentItem(w3);
-    w2->setClosable(false);
-    w2->setResizable(true);
-    w4->setResizable(true);
-
-    w2->setPos(-250, 0);
-    w3->setPos(-250, 250);
-    w4->setPos(-500, 250);*/
-
-    /*m_actions->scene->onNodeDroppedAt(m_actions->auv->findOrCreate<TypedNumericNode<float> >("blah"), QPointF(0,0));
-
-
-    QGraphicsRectItem * rect = m_actions->scene->addRect(10, 10, 100, 100, QPen(Qt::red), QBrush(Qt::blue));
-    rect->setFlag(QGraphicsItem::ItemIsMovable);
-    rect->setFlag(QGraphicsItem::ItemIsSelectable);
-    QGraphicsRectItem * rect2 = m_actions->scene->addRect(10, 10, 100, 100, QPen(Qt::red), QBrush(Qt::blue));
-    rect2->setFlag(QGraphicsItem::ItemIsMovable);
-    rect2->setFlag(QGraphicsItem::ItemIsSelectable);
-*/
-    // test data
-   /*
-    NodeVisualiser * v = new NodeVisualiser();
-    v->setScene(new NodeScene());
-    //QPushButton * pb = new QPushButton("button");
-    v->scene()->addWidget(new QSpinBox());
-    v->setObjectName("testingView");
-    v->scene()->setObjectName("testing scene");
-    //QMainWindow * window = new QMainWindow();
-    //window->setCentralWidget(v);
-    QGraphicsProxyWidget * proxy = m_actions->scene->addWidget(v);
-    proxy->setObjectName("proxy object");
-*/
 
     // message input
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));
@@ -182,7 +126,7 @@ void CauvMainWindow::onRun()
     connect(m_actions->auv.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
             this, SLOT(send(boost::shared_ptr<const Message>)));
 
-    // load plugins
+    // Load external plugins (this includes things like gamepad support)
     // static plugins first
     foreach (QObject *plugin, QPluginLoader::staticInstances())
         loadPlugin(plugin);

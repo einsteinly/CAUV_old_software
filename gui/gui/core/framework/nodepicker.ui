@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DataStreamPicker</class>
- <widget class="QWidget" name="DataStreamPicker">
+ <class>NodePicker</class>
+ <widget class="QWidget" name="NodePicker">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -69,12 +69,6 @@
      </attribute>
      <attribute name="headerDefaultSectionSize">
       <number>150</number>
-     </attribute>
-     <attribute name="headerDefaultSectionSize">
-      <number>150</number>
-     </attribute>
-     <attribute name="headerVisible">
-      <bool>false</bool>
      </attribute>
      <column>
       <property name="text">
