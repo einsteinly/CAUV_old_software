@@ -37,7 +37,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<AUV> auv):
+GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<Vehicle> auv):
         m_auv(auv){
     qRegisterMetaType<boost::shared_ptr<const Message> >("boost::shared_ptr<const Message>");
 }

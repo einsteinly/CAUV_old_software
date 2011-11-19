@@ -26,11 +26,11 @@ namespace cauv {
 
         class MessageGenerator;
 
-        class AUV : public GroupingNode
+        class Vehicle : public GroupingNode
         {
             Q_OBJECT
         public:
-            AUV(std::string name) : GroupingNode(name) {
+            Vehicle(std::string name) : GroupingNode(name) {
             }
 
             virtual void initialise() = 0;
@@ -45,7 +45,7 @@ namespace cauv {
         };
 
 
-        class RedHerring : public AUV
+        class RedHerring : public Vehicle
         {
             Q_OBJECT
         public:

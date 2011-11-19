@@ -22,13 +22,13 @@
 namespace cauv{
     namespace gui {
 
-        class AUV;
+        class Vehicle;
 
         class GuiMessageObserver : public MessageObserver {
 
         public:
 
-            GuiMessageObserver(boost::shared_ptr< AUV > auv);
+            GuiMessageObserver(boost::shared_ptr< Vehicle > auv);
 
             virtual ~GuiMessageObserver();
 
@@ -52,7 +52,7 @@ namespace cauv{
             virtual void onLocationMessage(LocationMessage_ptr m);
 
         protected:
-            boost::shared_ptr< AUV > m_auv;
+            boost::shared_ptr< Vehicle > m_auv;
         };
 
     } // namespace gui

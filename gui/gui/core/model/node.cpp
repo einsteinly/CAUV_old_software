@@ -62,6 +62,9 @@ void NodeBase::addChild(boost::shared_ptr<NodeBase> const& child){
     child->m_parent = boost::weak_ptr<NodeBase>(shared_from_this());
     m_children.push_back(child);
     m_id_map[child->nodeId()] = child;
+    // also add the pretty name as a key to this node
+    // as this is used for reverse lookups (i.e. prop -> MotorID::Prop)
+    m_id_map[child->nodeName()] = child;
 
     // make sure all the objects belong to the thread of the root item
     // children get created in many threads (e.g. the messaging thread)

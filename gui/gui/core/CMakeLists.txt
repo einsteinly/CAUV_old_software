@@ -42,6 +42,7 @@ set ( GUI_CORE_SRCS
     model/node.cpp
     model/variants.cpp
     model/model.cpp
+    model/registry.cpp
     controller/messageobserver.cpp
     controller/messagegenerators.cpp
     framework/nodepicker.cpp
@@ -73,6 +74,7 @@ set ( GUI_CORE_H
     widgets/graph.h
     model/node.h
     model/model.h
+    model/registry.h
     model/nodes/numericnode.h
     model/nodes/compoundnodes.h
     model/nodes/stringnode.h

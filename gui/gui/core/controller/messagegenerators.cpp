@@ -25,13 +25,13 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-MessageGenerator::MessageGenerator(boost::shared_ptr<AUV> auv) :
+MessageGenerator::MessageGenerator(boost::shared_ptr<Vehicle> auv) :
         m_auv(auv) {
 }
 
 
 
-MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor):
+MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor):
         MessageGenerator(auv), m_id(boost::get<MotorID::e>(motor->nodeId()))
 {
     connect(motor.get(), SIGNAL(onSet(int)), this, SLOT(send(int)));
@@ -43,7 +43,7 @@ void MotorMessageGenerator::send(int value){
 
 
 
-AutopilotMessageGenerator::AutopilotMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NodeBase> autopilot):
+AutopilotMessageGenerator::AutopilotMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<NodeBase> autopilot):
         MessageGenerator(auv), m_autopilot(autopilot)
 {
     connect(autopilot.get(), SIGNAL(changed()), this, SLOT(send()));

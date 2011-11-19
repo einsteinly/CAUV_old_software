@@ -36,11 +36,11 @@ namespace cauv {
         {
             Q_OBJECT
         public:
-            MessageGenerator(boost::shared_ptr<AUV> auv);
+            MessageGenerator(boost::shared_ptr<Vehicle> auv);
 
         protected:
             // weak_ptr breaks the auv -> generator list -> auv cycle
-            boost::weak_ptr<AUV> m_auv;
+            boost::weak_ptr<Vehicle> m_auv;
 
         Q_SIGNALS:
             void messageGenerated(boost::shared_ptr<const Message> message);
@@ -51,7 +51,7 @@ namespace cauv {
         class MotorMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            MotorMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor);
+            MotorMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor);
 
         protected Q_SLOTS:
             void send(int value);
@@ -64,7 +64,7 @@ namespace cauv {
         class AutopilotMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            AutopilotMessageGenerator(boost::shared_ptr<AUV> auv, boost::shared_ptr<NodeBase> autopilot);
+            AutopilotMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<NodeBase> autopilot);
 
         protected Q_SLOTS:
             void send();

@@ -30,7 +30,7 @@ namespace cauv {
 
     namespace gui {
 
-        class AUV;
+        class Vehicle;
 
         class CauvInterfacePlugin {
 

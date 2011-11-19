@@ -28,6 +28,9 @@
 #include <QKeyEvent>
 #include <QCompleter>
 #include <QLabel>
+#include <QApplication>
+#include <QList>
+#include <QUrl>
 
 
 using namespace cauv;
@@ -104,26 +107,7 @@ bool NodePathFilter::filter(boost::shared_ptr<NodeBase> const& node){
 }
 
 
-std::vector<boost::shared_ptr<NodeBase> > NodeListView::getDroppedNodes() {
-    std::vector<boost::shared_ptr<NodeBase> > streams;
-
-    QModelIndexList items = this->selectedIndexes();
-    QModelIndexList::iterator i;
-    for (i = items.begin(); i != items.end(); ++i){
-        QModelIndex index = (*i);
-        if(index.column() == 0) {
-            QTreeWidgetItem *item = static_cast<QTreeWidgetItem*>(index.internalPointer());
-            NodeTreeItemBase * dsItem = dynamic_cast<NodeTreeItemBase*>(item);
-            if(dsItem)
-                streams.push_back(dsItem->getNode());
-        }
-    }
-    return streams;
-}
-
-
-
-NodePicker::NodePicker(boost::shared_ptr<AUV>  const& auv) :
+NodePicker::NodePicker(boost::shared_ptr<Vehicle> const& auv) :
         ui(new Ui::DataStreamPicker())
 {
     ui->setupUi(this);
@@ -178,7 +162,7 @@ NodePicker::~NodePicker(){
 
 
 
-NodeListView::NodeListView(QWidget * parent) : QTreeWidget(parent)
+NodeListView::NodeListView(QWidget * parent) : QTreeWidget(parent), m_dragStartPosition()
 {
     // Because QTreeWidgetItem can't let only one cell in a row be editable we have to hack it
     // around a bit. We set the item to be editable when it's double clicked in the editable
@@ -191,7 +175,68 @@ NodeListView::NodeListView(QWidget * parent) : QTreeWidget(parent)
 
 void NodeListView::keyPressEvent(QKeyEvent *event){
     Q_EMIT onKeyPressed(event);
+    QTreeWidget::keyPressEvent(event);
 }
+
+void NodeListView::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        // force early selection if we're over an item
+        if(itemAt(event->pos()))
+            mouseReleaseEvent(event);
+
+        m_dragStartPosition = event->pos();
+    }
+    QTreeWidget::mousePressEvent(event);
+}
+
+void NodeListView::mouseMoveEvent(QMouseEvent *event)
+{
+    if (!(event->buttons() & Qt::LeftButton))
+            return;
+
+    // have we moved far enough to be a drag event?
+    if ((event->pos() - m_dragStartPosition).manhattanLength()
+        > QApplication::startDragDistance()) {
+
+        // Get current selection
+        QList<QTreeWidgetItem *> selectedItems = this->selectedItems();
+        // If the selected Item exists
+        if (selectedItems.count() > 0)
+        {
+            debug(3) << "NodeListView is setting up a drag";
+
+            // setup the objects for storing drag information
+            QDrag *drag = new QDrag(this);
+            QMimeData *mimeData = new QMimeData;
+            // and the data we're dragging - a list of URIs
+            QList<QUrl> urls;
+
+            // add each selected item to the drag data
+            foreach(QTreeWidgetItem * selectedItem, selectedItems) {
+                // get path from the node
+                NodeTreeItemBase * nodeItem = dynamic_cast<NodeTreeItemBase * >(selectedItem);
+                if(nodeItem) {
+                    boost::shared_ptr<NodeBase> node = nodeItem->getNode();
+                    QUrl url = QUrl();
+                    url.setScheme("varstream");
+                    url.setPath(QString::fromStdString(node->nodePath()));
+                    urls.append(url);
+                    debug(5) << url.toString().toStdString() << "added to drag";
+                }
+            }
+
+            mimeData->setUrls(urls);
+            drag->setMimeData(mimeData);
+
+            drag->exec(Qt::CopyAction);
+            debug(3) << "NodeListView dragging ended";
+        }
+    }
+    else QTreeWidget::mouseMoveEvent(event);
+}
+
 
 void NodeListView::editStarted(QTreeWidgetItem* item, int column){
     if(column == 1){

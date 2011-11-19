@@ -20,7 +20,6 @@
 
 #include <debug/cauv_debug.h>
 
-#include "../nodedragging.h"
 #include "../model/model.h"
 
 
@@ -64,14 +63,15 @@ namespace cauv {
 
         };
 
-        class NodeListView : public QTreeWidget, public cauv::gui::NodeDragSource {
+        class NodeListView : public QTreeWidget{
             Q_OBJECT
         public:
             NodeListView(QWidget * parent);
 
-            std::vector<boost::shared_ptr<cauv::gui::NodeBase> > getDroppedNodes();
             virtual void registerListFilter(boost::shared_ptr<NodeListFilterInterface> const& filter);
 
+            void mousePressEvent(QMouseEvent *event);
+            void mouseMoveEvent(QMouseEvent *event);
 
         private Q_SLOTS:
             void editStarted(QTreeWidgetItem* item, int column);
@@ -84,6 +84,7 @@ namespace cauv {
             void onKeyPressed(QKeyEvent *event);
 
         protected:
+            QPoint m_dragStartPosition;
             std::vector<boost::shared_ptr<NodeListFilterInterface> > m_filters;
 
             void keyPressEvent(QKeyEvent *event);
@@ -95,7 +96,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            NodePicker(boost::shared_ptr<AUV>  const& auv);
+            NodePicker(boost::shared_ptr<Vehicle> const& auv);
             virtual ~NodePicker();
 
         protected Q_SLOTS:

@@ -23,9 +23,9 @@ try:
     sonar = cauv.sonar.Sonar(node)
     pl = pipeline.Model(node)
 
-    from IPython.Shell import IPShellEmbed
-    ipshell = IPShellEmbed()
-    ipshell()
+
+    import IPython
+    IPython.embed()
 finally:
     node.stop()
 "

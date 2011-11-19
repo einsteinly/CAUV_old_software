@@ -32,7 +32,7 @@ namespace cauv {
 
     namespace gui {
 
-        class AUV;
+        class Vehicle;
         class NodePicker;
         class CauvMainWindow;
         class NodeScene;
@@ -44,7 +44,7 @@ namespace cauv {
             boost::weak_ptr<CauvNode> node;
 
             // models
-            boost::shared_ptr<AUV> auv;
+            boost::shared_ptr<Vehicle> auv;
             boost::shared_ptr<NodeScene> scene;
 
             // gui elements

@@ -50,7 +50,6 @@ namespace cauv {
         public Q_SLOTS:
             NodeTreeItemBase * addNode(boost::shared_ptr<NodeBase> node);
             void updateValue(const QString value);
-            //bool filter(QString value);
         private:
             boost::shared_ptr<NodeBase> m_node;
         };

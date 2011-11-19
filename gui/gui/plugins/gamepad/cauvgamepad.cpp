@@ -27,7 +27,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_ptr<AUV> auv) :
+CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_ptr<Vehicle> auv) :
         m_auv(auv), m_gamepadInput(controller), m_timer(new QTimer()),
         m_autopilots(auv->findOrCreate<GroupingNode>("autopilots")),
         m_motors(auv->findOrCreate<GroupingNode>("motors")),
@@ -54,7 +54,7 @@ CauvGamepad::CauvGamepad(boost::shared_ptr<XBoxInput> controller, boost::shared_
 }
 
 
-CauvGamepad::CauvGamepad(boost::shared_ptr<PlaystationInput> controller, boost::shared_ptr<AUV> auv) :
+CauvGamepad::CauvGamepad(boost::shared_ptr<PlaystationInput> controller, boost::shared_ptr<Vehicle> auv) :
         m_auv(auv), m_gamepadInput(controller), m_timer(new QTimer()), m_bearingRate(0.f), m_pitchRate(0.f),
         m_forwardSpeed(0.f), m_strafeSpeed(0.f), m_depthRate(0.f), m_dirty(false), m_autopilotControl(true)
 {

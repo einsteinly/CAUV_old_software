@@ -16,6 +16,7 @@
 #include "model/nodes/compoundnodes.h"
 #include "model/nodes/imagenode.h"
 #include "model/nodes/groupingnode.h"
+#include "model/registry.h"
 
 #include <debug/cauv_debug.h>
 
@@ -23,6 +24,8 @@
 #include <QDropEvent>
 #include <QGraphicsSceneDragDropEvent>
 #include <QWidget>
+#include <QUrl>
+#include <QMimeData>
 
 #include "nodedragging.h"
 
@@ -71,13 +74,20 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
 {
     if ((event->type() == QEvent::DragEnter)) {
         QDragEnterEvent *dragEvent = dynamic_cast<QDragEnterEvent *>(event);
-        NodeDragSource * source = dynamic_cast<NodeDragSource*> (dragEvent->source());
-        if(source) {
-            BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, source->getDroppedNodes()){
-                if(m_listener->accepts(node)){
-                    dragEvent->acceptProposedAction();
-                    dragEvent->accept();
-                    return true;
+
+        if(dragEvent) {
+            const QMimeData * mimeData = dragEvent->mimeData();
+            if(mimeData->hasUrls()) {
+                foreach (QUrl url, mimeData->urls()){
+                    if(url.scheme() == "varstream") {
+                        boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                        if(m_listener->accepts(node)){
+                            // accept the event as soon as we find one that we can handle
+                            dragEvent->acceptProposedAction();
+                            dragEvent->accept();
+                            return true;
+                        }
+                    }
                 }
             }
         }
@@ -85,16 +95,23 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
 
     else if ((event->type() == QEvent::Drop)) {
         QDropEvent *dropEvent = dynamic_cast<QDropEvent *>(event);
-        NodeDragSource * source = dynamic_cast<NodeDragSource*> (dropEvent->source());
-        if(source) {
-            BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, source->getDroppedNodes()){
-                if(m_listener->accepts(node)){
-                    dropEvent->acceptProposedAction();
-                    dropEvent->accept();
-                    m_listener->routeNode(node, QPointF(dropEvent->pos()));
+
+        if (false) {
+            const QMimeData * mimeData = dropEvent->mimeData();
+            if(mimeData->hasUrls()) {
+                foreach (QUrl url, mimeData->urls()){
+                    if(url.scheme() == "varstream") {
+                        boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                        if(m_listener->accepts(node)){
+                            // accept the event as soon as we find one that we can handle
+                            dropEvent->acceptProposedAction();
+                            dropEvent->accept();
+                            m_listener->routeNode(node,  QPointF(dropEvent->pos()));
+                        }
+                    }
                 }
+                return true;
             }
-            return true;
         }
     }
 
@@ -102,18 +119,26 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
              event->type() == QEvent::GraphicsSceneDragMove ||
              event->type() == QEvent::GraphicsSceneDrop) {
         QGraphicsSceneDragDropEvent *dndEvent = dynamic_cast<QGraphicsSceneDragDropEvent *>(event);
-        NodeDragSource * source = dynamic_cast<NodeDragSource*> (dndEvent->source());
-        if(source) {
-            BOOST_FOREACH(boost::shared_ptr<NodeBase> const& node, source->getDroppedNodes()){
-                if(m_listener->accepts(node)){
-                    dndEvent->acceptProposedAction();
-                    dndEvent->accept();
-                    if(event->type() == QEvent::GraphicsSceneDrop) {
-                        m_listener->routeNode(node, dndEvent->scenePos());
+
+        if(dndEvent){
+            const QMimeData * mimeData = dndEvent->mimeData();
+            if(mimeData->hasUrls()) {
+                foreach (QUrl url, mimeData->urls()){
+                    if(url.scheme() == "varstream") {
+                        boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                        if(m_listener->accepts(node)){
+                            // accept the event as soon as we find one that we can handle
+                            dndEvent->acceptProposedAction();
+                            dndEvent->accept();
+                            if(event->type() == QEvent::GraphicsSceneDrop) {
+                                m_listener->routeNode(node, dndEvent->scenePos());
+                            }
+                        }
                     }
-                    else return true;
                 }
             }
+
+            if(dndEvent->isAccepted()) return true;
         }
     }
 

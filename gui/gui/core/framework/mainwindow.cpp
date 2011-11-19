@@ -27,6 +27,7 @@
 #include <boost/program_options.hpp>
 
 #include "../model/model.h"
+#include "../model/registry.h"
 #include "../cauvplugins.h"
 #include "../controller/messageobserver.h"
 #include "../framework/nodescene.h"
@@ -89,6 +90,7 @@ void CauvMainWindow::onRun()
     // auv
     m_actions->auv = boost::make_shared<RedHerring>();
     m_actions->auv->initialise();
+    VehicleRegistry::instance()->registerVehicle(m_actions->auv);
     // cauv node
     m_actions->node = shared_from_this();
     
@@ -107,7 +109,7 @@ void CauvMainWindow::onRun()
 
     //m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
-    AINode * w1 = new AINode();
+    /*AINode * w1 = new AINode();
     AINode * w2 = new AINode();
     AINode * w3 = new AINode();
     AINode * w4 = new AINode();
@@ -142,7 +144,7 @@ void CauvMainWindow::onRun()
 
     w2->setPos(-250, 0);
     w3->setPos(-250, 250);
-    w4->setPos(-500, 250);
+    w4->setPos(-500, 250);*/
 
     /*m_actions->scene->onNodeDroppedAt(m_actions->auv->findOrCreate<TypedNumericNode<float> >("blah"), QPointF(0,0));
 

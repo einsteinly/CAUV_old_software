@@ -23,7 +23,7 @@
 
 namespace cauv {
     namespace gui {
-        class AUV;
+        class Vehicle;
         class GamepadInput;
         class XBoxInput;
         class PlaystationInput;
@@ -34,8 +34,8 @@ namespace cauv {
         {
             Q_OBJECT
         public:
-            CauvGamepad(boost::shared_ptr<XBoxInput> input, boost::shared_ptr<AUV> auv);
-            CauvGamepad(boost::shared_ptr<PlaystationInput> input, boost::shared_ptr<AUV> auv);
+            CauvGamepad(boost::shared_ptr<XBoxInput> input, boost::shared_ptr<Vehicle> auv);
+            CauvGamepad(boost::shared_ptr<PlaystationInput> input, boost::shared_ptr<Vehicle> auv);
             ~CauvGamepad() {}
 
         public Q_SLOTS:
@@ -65,7 +65,7 @@ namespace cauv {
         protected:
             void startTimer();
 
-            boost::shared_ptr<AUV> m_auv;
+            boost::shared_ptr<Vehicle> m_auv;
             boost::shared_ptr<GamepadInput> m_gamepadInput;
             boost::scoped_ptr<QTimer> m_timer;
 

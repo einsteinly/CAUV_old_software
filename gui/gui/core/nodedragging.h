@@ -28,12 +28,6 @@
 namespace cauv {
     namespace gui {
 
-        class NodeDragSource{
-        public:
-            virtual std::vector<boost::shared_ptr<NodeBase> > getDroppedNodes() = 0;
-        };
-
-
         struct drop_not_handled : public std::exception {};
 
 

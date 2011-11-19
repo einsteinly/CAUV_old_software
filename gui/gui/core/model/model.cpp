@@ -21,14 +21,14 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-void AUV::addGenerator(boost::shared_ptr<MessageGenerator> generator){
+void Vehicle::addGenerator(boost::shared_ptr<MessageGenerator> generator){
     m_generators.push_back(generator);
     generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
                        this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
 }
 
 
-RedHerring::RedHerring() : AUV("redherring") {
+RedHerring::RedHerring() : Vehicle("redherring") {
     // don't populate anything in here as there isn't a shared pointer to
     // this object yet. We need to wait until after it's been fully constructed
 }
@@ -50,7 +50,7 @@ void RedHerring::setupMotor(boost::shared_ptr<NodeBase> node){
         motor->setMax(127);
         motor->setMin(-127);
         motor->setMutable(true);
-        addGenerator(boost::make_shared<MotorMessageGenerator>(boost::static_pointer_cast<AUV>(shared_from_this()), motor));
+        addGenerator(boost::make_shared<MotorMessageGenerator>(boost::static_pointer_cast<Vehicle>(shared_from_this()), motor));
     } catch (std::runtime_error){
         warning() << node->nodePath() << " should be a NumericNode";
     }
@@ -58,7 +58,7 @@ void RedHerring::setupMotor(boost::shared_ptr<NodeBase> node){
 
 void RedHerring::setupAutopilot(boost::shared_ptr<NodeBase> node){
 
-    addGenerator(boost::make_shared<AutopilotMessageGenerator>(boost::static_pointer_cast<AUV>(shared_from_this()), node));
+    addGenerator(boost::make_shared<AutopilotMessageGenerator>(boost::static_pointer_cast<Vehicle>(shared_from_this()), node));
     boost::shared_ptr<TypedNumericNode<float> > target = node->findOrCreate<TypedNumericNode<float> >("target");
     target->setMutable(true);
     node->findOrCreate<TypedNumericNode<bool> >("enabled")->setMutable(true);
