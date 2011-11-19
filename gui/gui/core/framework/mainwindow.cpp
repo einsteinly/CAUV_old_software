@@ -114,6 +114,13 @@ void CauvMainWindow::onRun()
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
 
+    AINode *node = new AINode();
+    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+    proxy->setWidget(new NodePicker(m_actions->auv));
+    node->addItem(proxy);
+    node->setResizable(true);
+    m_actions->scene->addItem(node);
+
     // message input
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
