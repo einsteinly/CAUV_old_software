@@ -74,17 +74,17 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
     addItem(dropArea);
 
     // background lines
-    for(int x = -sceneSize; x < sceneSize; x = x + 20) {
-        int colour = 244;
-        if(x % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.25, -sceneSize, x, sceneSize, x);
+    for(int x = -sceneSize; x < sceneSize; x = x + 25) {
+        int colour = 242;
+        //if(x % 100 == 0) colour = 238;
+        VanishingLineItem * line = new VanishingLineItem(0.01, -sceneSize, x, sceneSize, x);
         line->setPen(QPen(QColor(colour, colour, colour)));
         this->addItem(line);
     }
-    for(int y = -sceneSize; y < sceneSize; y = y + 20) {
-        int colour = 244;
-        if(y % 100 == 0) colour = 238;
-        VanishingLineItem * line = new VanishingLineItem(0.25, y, -sceneSize, y, sceneSize);
+    for(int y = -sceneSize; y < sceneSize; y = y + 25) {
+        int colour = 242;
+        //if(y % 100 == 0) colour = 238;
+        VanishingLineItem * line = new VanishingLineItem(0.01, y, -sceneSize, y, sceneSize);
         line->setPen(QPen(QColor(colour, colour, colour)));
         this->addItem(line);
     }
@@ -106,7 +106,6 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
             }
         }
     }
-
 }
 
 NodeScene::~NodeScene(){

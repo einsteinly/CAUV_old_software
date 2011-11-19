@@ -15,7 +15,8 @@
 #include "view.h"
 
 #include <QGraphicsProxyWidget>
-#include <QGLWidget>
+
+#include <debug/cauv_debug.h>
 
 using namespace liquid;
 
@@ -70,7 +71,7 @@ class ZoomFilter : public QObject {
 
 
 LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
-m_scaleFactor(1.25)
+    m_scaleFactor(1.25), m_minScale(0.03), m_maxScale(1)
 {
     this->setAcceptDrops(true);
 
@@ -120,9 +121,11 @@ void LiquidView::wheelEvent(QWheelEvent *event){
         //qDebug() << "pointBeforeScale" << pointBeforeScale;
 
         if(event->delta() > 0) {
-            scale(scaleFactor(), scaleFactor());
+            if(transform().m11() < maxScale())
+                scale(scaleFactor(), scaleFactor());
         } else {
-            scale(1.0 / scaleFactor(), 1.0 / scaleFactor());
+            if(transform().m11() > minScale())
+                scale(1.0 / scaleFactor(), 1.0 / scaleFactor());
         }
 
         //Get the position after scaling, in scene coords
@@ -151,3 +154,20 @@ float LiquidView::scaleFactor(){
 void LiquidView::setScaleFactor(float scaleFactor){
     m_scaleFactor = scaleFactor;
 }
+
+float LiquidView::minScale(){
+    return m_minScale;
+}
+
+void LiquidView::setMinScale(float scale){
+    m_minScale = scale;
+}
+
+float LiquidView::maxScale(){
+    return m_maxScale;
+}
+
+void LiquidView::setMaxScale(float scale){
+    m_maxScale = scale;
+}
+

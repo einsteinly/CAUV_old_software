@@ -26,12 +26,20 @@ public:
     LiquidView(QWidget * parent = NULL);
 
     virtual float scaleFactor();
-    virtual void setScaleFactor(float scaleFactor);            
+    virtual void setScaleFactor(float scaleFactor);
+
+    virtual float minScale();
+    virtual void setMinScale(float scale);
+
+    virtual float maxScale();
+    virtual void setMaxScale(float scale);
 
     void wheelEvent(QWheelEvent *event);
 
 protected:
     float m_scaleFactor;
+    float m_minScale;
+    float m_maxScale;
     QGraphicsScene * m_previousScene;
 };
 
