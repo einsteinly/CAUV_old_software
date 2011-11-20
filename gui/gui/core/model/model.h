@@ -21,6 +21,8 @@
 
 #include "../model/nodes/groupingnode.h"
 
+
+
 namespace cauv {
     namespace gui {
 
@@ -29,7 +31,11 @@ namespace cauv {
         class Vehicle : public GroupingNode
         {
             Q_OBJECT
+
         public:
+            friend class VehicleRegistry;
+
+        protected:
             Vehicle(std::string name) : GroupingNode(name) {
             }
 
@@ -48,8 +54,12 @@ namespace cauv {
         class RedHerring : public Vehicle
         {
             Q_OBJECT
+
         public:
-            RedHerring();
+            friend class VehicleRegistry;
+
+        protected:
+            RedHerring(std::string name);
             virtual void initialise();
 
         protected Q_SLOTS:

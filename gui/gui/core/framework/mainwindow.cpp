@@ -88,12 +88,10 @@ void CauvMainWindow::onRun()
     // data model and network access
     // !!! todo: there shouldn't be a RedHerring class
     // vehicle data should be sent from the AUV to a
-    // more generic Vehicle class. Things like motor
-    // setup, autopilots, etc.. should be defined there
-    // not hardcoded into the GUI.
-    m_actions->auv = boost::make_shared<RedHerring>();
-    m_actions->auv->initialise();
-    VehicleRegistry::instance()->registerVehicle(m_actions->auv);
+    // more generic version of the Vehicle class. Things
+    // like motor setup, autopilots, etc.. should be
+    // defined there not hardcoded into the GUI.
+    m_actions->auv = VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
 
     // cauv node
     m_actions->node = shared_from_this();

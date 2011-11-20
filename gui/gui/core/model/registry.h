@@ -22,15 +22,14 @@
 
 #include "nodes/groupingnode.h"
 
+#include "../model/model.h"
+
+
 namespace cauv {
     namespace gui {
 
-        class Vehicle;
-
         class VehicleRegistry : public GroupingNode
         {
-            Q_OBJECT
-
             public:
                 static boost::shared_ptr<VehicleRegistry> instance()
                 {
@@ -38,7 +37,13 @@ namespace cauv {
                     return m_instance;
                 }
 
-                void registerVehicle(boost::shared_ptr<Vehicle> vehicle);
+                template <class T> boost::shared_ptr<T> registerVehicle(std::string name){
+                    boost::shared_ptr<Vehicle> vehicle(new T(name));
+                    vehicle->initialise();
+                    addChild(vehicle);
+                    return boost::static_pointer_cast<T>(vehicle);
+                }
+
                 const std::vector<boost::shared_ptr<Vehicle> > getVehicles() const;
                 const boost::shared_ptr<NodeBase> getNode(QUrl url);
 

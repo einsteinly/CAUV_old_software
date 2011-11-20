@@ -28,7 +28,7 @@ void Vehicle::addGenerator(boost::shared_ptr<MessageGenerator> generator){
 }
 
 
-RedHerring::RedHerring() : Vehicle("redherring") {
+RedHerring::RedHerring(std::string name) : Vehicle(name) {
     // don't populate anything in here as there isn't a shared pointer to
     // this object yet. We need to wait until after it's been fully constructed
 }

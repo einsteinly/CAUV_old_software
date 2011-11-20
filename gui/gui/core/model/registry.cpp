@@ -14,8 +14,6 @@
 
 #include "registry.h"
 
-#include "../model/model.h"
-
 #include <QStringList>
 
 using namespace cauv;
@@ -23,10 +21,6 @@ using namespace cauv::gui;
 
 VehicleRegistry::VehicleRegistry() : GroupingNode("")
 {
-}
-
-void VehicleRegistry::registerVehicle(boost::shared_ptr<Vehicle> vehicle){
-    addChild(vehicle);
 }
 
 const std::vector<boost::shared_ptr<Vehicle> > VehicleRegistry::getVehicles() const {
