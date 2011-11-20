@@ -34,6 +34,9 @@
 
 #include "fluidity/view.h"
 
+#include <liquid/arcSink.h>
+#include <elements/style.h>
+
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
@@ -115,6 +118,9 @@ void CauvMainWindow::onRun()
 
 
     AINode *node = new AINode();
+    node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
+    node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
+    node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     proxy->setWidget(new NodePicker(m_actions->auv));
     node->addItem(proxy);

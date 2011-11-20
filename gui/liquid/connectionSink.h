@@ -31,6 +31,23 @@ class ConnectionSink{
         virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) = 0;
 };
 
+// convenience class
+class RejectingConnectionSink : public ConnectionSink {
+    public:
+        RejectingConnectionSink() : ConnectionSink() {
+        }
+
+        virtual bool willAcceptConnection(ArcSourceDelegate* from_source) {
+            Q_UNUSED(from_source);
+            return false;
+        }
+
+        virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) {
+            Q_UNUSED(from_source);
+            return Rejected;
+        }
+};
+
 } // namespace liquid
 
 #endif //  __LIQUID_CONNECTION_SINK_H__
