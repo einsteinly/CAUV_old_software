@@ -87,6 +87,8 @@ enum NodeType : int8 {
     Correlation1D,
     Rotate,
     RenderString,
+    MathDivideInt,
+    MathDivideFloat,
 }
 enum NodeStatus : int8 {
     None = 0,

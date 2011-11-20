@@ -45,6 +45,7 @@ add_executable (
     scheduler.cpp
     nodes/nodes.cpp
     nodes/nodes2.cpp
+    nodes/math/mathNodes.cpp
     ${CONDITIONAL_SOURCE_FILES}
 )
 cauv_install ( img-pipeline )
