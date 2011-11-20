@@ -67,6 +67,8 @@ namespace cauv {
             virtual const children_list_t getChildren() const;
             virtual bool isMutable() const;
             virtual void setMutable(bool mut);
+            virtual boost::shared_ptr<NodeBase> getParent();
+
             boost::shared_ptr<NodeBase> getRoot();
 
             template<class T> boost::shared_ptr<T> getClosestParentOfType(){

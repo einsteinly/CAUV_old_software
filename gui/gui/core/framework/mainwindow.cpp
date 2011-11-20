@@ -20,6 +20,7 @@
 #include <QPluginLoader>
 #include <QSettings>
 #include <QGLWidget>
+#include <QTreeView>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -114,13 +115,23 @@ void CauvMainWindow::onRun()
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
-
+/*
     AINode *node = new AINode();
     node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
     node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
     node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     proxy->setWidget(new NodePicker(m_actions->auv));
+    node->addItem(proxy);
+    node->setResizable(true);
+    m_actions->scene->addItem(node);
+*/
+
+    AINode *node = new AINode();
+    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+    QTreeView * view = new QTreeView();
+    view->setModel(new VehicleItemModel(VehicleRegistry::instance()));
+    proxy->setWidget(view);
     node->addItem(proxy);
     node->setResizable(true);
     m_actions->scene->addItem(node);

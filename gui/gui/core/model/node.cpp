@@ -99,3 +99,10 @@ boost::shared_ptr<NodeBase> NodeBase::getRoot() {
 
     return node;
 }
+
+boost::shared_ptr<NodeBase> NodeBase::getParent(){
+    if(boost::shared_ptr<NodeBase> parent = m_parent.lock())
+    {
+        return parent;
+    } else throw std::out_of_range("Node has no parent");
+}
