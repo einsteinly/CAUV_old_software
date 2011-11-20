@@ -15,32 +15,37 @@
 #ifndef GUI_IMAGENODE_H
 #define GUI_IMAGENODE_H
 
+#include <QMetaType>
+
 #include "../node.h"
+
+#include <common/image.h>
 
 namespace cauv {
     namespace gui {
 
+        typedef boost::shared_ptr<const Image> image_t;
 
-        class ImageNode : public Node<image_variant_t> {
+
+        class ImageNode : public Node {
             Q_OBJECT
 
         public:
-            ImageNode(id_variant_t const& id) : Node<image_variant_t>(GuiNodeType::ImageNode, id){
+            ImageNode(nid_t const& id) : Node(GuiNodeType::ImageNode, id){
+                qRegisterMetaType<image_t>("image_t");
+                m_value = QVariant::fromValue<image_t>(image_t());
             }
 
         public Q_SLOTS:
-
-            virtual void update(image_variant_t const& value){
-                Node<image_variant_t>::update(value);
+            virtual void update(image_t const& value){
+                Node::update(QVariant::fromValue<image_t>(value));
             }
-
-        Q_SIGNALS:
-            void onUpdate(image_variant_t const& value);
-            void onSet(image_variant_t const& value);
         };
-
 
     } //namespace gui
 } // namespace cauv
+
+
+Q_DECLARE_METATYPE(cauv::gui::image_t)
 
 #endif // GUI_IMAGENODE_H

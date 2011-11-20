@@ -45,7 +45,7 @@ namespace cauv {
                 }
 
                 const std::vector<boost::shared_ptr<Vehicle> > getVehicles() const;
-                const boost::shared_ptr<NodeBase> getNode(QUrl url);
+                const boost::shared_ptr<Node> getNode(QUrl url);
 
             private:
                 VehicleRegistry();

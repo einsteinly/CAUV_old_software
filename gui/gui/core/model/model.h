@@ -21,8 +21,7 @@
 
 #include <generated/types/message.h>
 
-#include "../model/nodes/groupingnode.h"
-
+#include "../model/nodes/vehiclenode.h"
 
 
 namespace cauv {
@@ -30,29 +29,10 @@ namespace cauv {
 
         class MessageGenerator;
 
-        class Vehicle : public GroupingNode
-        {
-            Q_OBJECT
 
-        public:
-            friend class VehicleRegistry;
-
-        protected:
-            Vehicle(std::string name) : GroupingNode(name) {
-            }
-
-            virtual void initialise() = 0;
-
-        Q_SIGNALS:
-            void messageGenerated(boost::shared_ptr<const Message>);
-
-        protected:
-            void addGenerator(boost::shared_ptr<MessageGenerator> generator);
-
-            std::vector<boost::shared_ptr<MessageGenerator> > m_generators;
-        };
-
-
+        // !!! todo: this class shouldn't exist. Vehicle config should be
+        // sent by the vehicle when the GUI connects and not hardcoded
+        // into the gui.
         class RedHerring : public Vehicle
         {
             Q_OBJECT
@@ -65,17 +45,9 @@ namespace cauv {
             virtual void initialise();
 
         protected Q_SLOTS:
-            void setupMotor(boost::shared_ptr<NodeBase>);
-            void setupAutopilot(boost::shared_ptr<NodeBase> node);
+            void setupMotor(boost::shared_ptr<Node>);
+            void setupAutopilot(boost::shared_ptr<Node> node);
         };
-
-
-
-
-
-
-
-
 
 
 
@@ -86,13 +58,13 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            VehicleItemModel(boost::shared_ptr<NodeBase> root, QObject * parent = 0) :
+            VehicleItemModel(boost::shared_ptr<Node> root, QObject * parent = 0) :
                 QAbstractItemModel(parent), m_root(root){
             }
 
             Qt::ItemFlags flags(const QModelIndex &index) const{
                 void * ptr = index.internalPointer();
-                NodeBase * node = static_cast<NodeBase *>(ptr);
+                Node * node = static_cast<Node *>(ptr);
                 if(node->isMutable()) return QAbstractItemModel::flags(index) & Qt::ItemIsEditable;
                 else return QAbstractItemModel::flags(index);
             }
@@ -100,7 +72,7 @@ namespace cauv {
             QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const {
 
                 void * ptr = index.internalPointer();
-                NodeBase * node = static_cast<NodeBase *>(ptr);
+                Node * node = static_cast<Node *>(ptr);
 
                 switch (role){
                 case Qt::DisplayRole:
@@ -182,11 +154,11 @@ namespace cauv {
 
 
             int rowCount ( const QModelIndex & parent = QModelIndex() ) const {
-                NodeBase *parentItem;
+                Node *parentItem;
                 if (!parent.isValid())
                     parentItem = m_root.get();
                 else
-                    parentItem = static_cast<NodeBase*>(parent.internalPointer());
+                    parentItem = static_cast<Node*>(parent.internalPointer());
 
                 return parentItem->getChildren().size();
             }
@@ -201,12 +173,12 @@ namespace cauv {
                 if (!child.isValid())
                     return QModelIndex();
 
-                NodeBase * childNode = static_cast<NodeBase *>(child.internalPointer());
+                Node * childNode = static_cast<Node *>(child.internalPointer());
 
                 try {
                     // work out the row of the parent with respect to its siblings
-                    NodeBase * parent = childNode->getParent().get();
-                    NodeBase * parentsParent;
+                    Node * parent = childNode->getParent().get();
+                    Node * parentsParent;
                     try {
                         parentsParent = parent->getParent().get();
                     } catch (std::out_of_range){
@@ -214,7 +186,7 @@ namespace cauv {
                     }
 
                     int row = 0;
-                    foreach (boost::shared_ptr<NodeBase> const & c, parentsParent->getChildren()){
+                    foreach (boost::shared_ptr<Node> const & c, parentsParent->getChildren()){
                         if (c.get() == parent) break;
                         row++;
                     }
@@ -231,14 +203,14 @@ namespace cauv {
                 if (!hasIndex(row, column, parent))
                     return QModelIndex();
 
-                NodeBase * parentNode;
+                Node * parentNode;
 
                 if(!parent.isValid())
                     parentNode = m_root.get();
-                else parentNode = static_cast<NodeBase *>(parent.internalPointer());
+                else parentNode = static_cast<Node *>(parent.internalPointer());
 
                 try {
-                    NodeBase * childNode = parentNode->getChildren().at(row).get();
+                    Node * childNode = parentNode->getChildren().at(row).get();
                     return createIndex(row, column, childNode);
                 } catch (std::out_of_range){
                     return QModelIndex();
@@ -246,18 +218,9 @@ namespace cauv {
             }
 
         protected:
-            boost::shared_ptr<NodeBase> m_root;
+            boost::shared_ptr<Node> m_root;
 
         };
-
-
-
-
-
-
-
-
-
 
 
 

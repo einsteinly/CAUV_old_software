@@ -86,7 +86,7 @@ QString NodePathFilter::getText(){
     return m_text;
 }
 
-bool NodePathFilter::containsText(boost::shared_ptr<NodeBase> const& node){
+bool NodePathFilter::containsText(boost::shared_ptr<Node> const& node){
     debug(7) << "NODE = " << node;
     debug(7) << "PATH = " << node->nodePath();
     debug(7) << "TEXT = " << getText().toStdString();
@@ -95,14 +95,14 @@ bool NodePathFilter::containsText(boost::shared_ptr<NodeBase> const& node){
         return true;
 
     // might match somewhere in a child nodes path
-    foreach(boost::shared_ptr<NodeBase> const& child, node->getChildren()){
+    foreach(boost::shared_ptr<Node> const& child, node->getChildren()){
         if(containsText(child)) return true;
     }
 
     return false;
 }
 
-bool NodePathFilter::filter(boost::shared_ptr<NodeBase> const& node){
+bool NodePathFilter::filter(boost::shared_ptr<Node> const& node){
     return getText().isEmpty() || containsText(node);
 }
 
@@ -120,10 +120,10 @@ NodePicker::NodePicker(boost::shared_ptr<Vehicle> const& auv) :
 
     // setup model data
     debug() << "Initialising data stream list";
-    m_root = boost::make_shared<GroupingNodeTreeItem>(auv);
+    m_root = boost::make_shared<NodeTreeItemBase>(auv);
     ui->dataStreams->addTopLevelItem(m_root.get());
     m_root->setExpanded(true);
-    foreach(boost::shared_ptr<NodeBase> child, auv->getChildren()){
+    foreach(boost::shared_ptr<Node> child, auv->getChildren()){
         m_root->addNode(child);
     }
 
@@ -219,7 +219,7 @@ void NodeListView::mouseMoveEvent(QMouseEvent *event)
                 // get path from the node
                 NodeTreeItemBase * nodeItem = dynamic_cast<NodeTreeItemBase * >(selectedItem);
                 if(nodeItem) {
-                    boost::shared_ptr<NodeBase> node = nodeItem->getNode();
+                    boost::shared_ptr<Node> node = nodeItem->getNode();
                     QUrl url = QUrl();
                     url.setScheme("varstream");
                     boost::shared_ptr<Vehicle> vehicleNode = node->getClosestParentOfType<Vehicle>();
@@ -318,7 +318,7 @@ void NodeListView::applyFilters(NodeTreeItemBase * item){
     }
 }
 
-bool NodeListView::applyFilters(boost::shared_ptr<NodeBase> const& node){
+bool NodeListView::applyFilters(boost::shared_ptr<Node> const& node){
     debug(2) << "applyFilters(boost::shared_ptr<NodeBase> node)";
     foreach(boost::shared_ptr<NodeFilterInterface> const& filter, m_filters){
         // filtering is exclusive, so if any filter says no then the

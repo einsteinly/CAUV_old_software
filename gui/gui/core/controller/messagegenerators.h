@@ -17,30 +17,29 @@
 
 #include <QObject>
 
-#include "../model/model.h"
-
 #include <generated/types/message.h>
 #include <generated/types/MotorID.h>
 #include <generated/types/Controller.h>
 
 #include <boost/shared_ptr.hpp>
 
+#include "../model/node.h"
 
 namespace cauv {
     namespace gui {
 
-        template<class T> class TypedNumericNode;
-        class NodeBase;
+        template<class T> class NumericNode;
+        class Node;
 
         class MessageGenerator : public QObject
         {
             Q_OBJECT
         public:
-            MessageGenerator(boost::shared_ptr<Vehicle> auv);
+            MessageGenerator(boost::shared_ptr<Node> auv);
 
         protected:
             // weak_ptr breaks the auv -> generator list -> auv cycle
-            boost::weak_ptr<Vehicle> m_auv;
+            boost::weak_ptr<Node> m_auv;
 
         Q_SIGNALS:
             void messageGenerated(boost::shared_ptr<const Message> message);
@@ -51,7 +50,7 @@ namespace cauv {
         class MotorMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            MotorMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor);
+            MotorMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<NumericNode<int> > motor);
 
         protected Q_SLOTS:
             void send(int value);
@@ -64,13 +63,13 @@ namespace cauv {
         class AutopilotMessageGenerator : public MessageGenerator {
             Q_OBJECT
         public:
-            AutopilotMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<NodeBase> autopilot);
+            AutopilotMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<Node> autopilot);
 
         protected Q_SLOTS:
             void send();
 
         protected:
-            boost::shared_ptr<NodeBase> m_autopilot;
+            boost::shared_ptr<Node> m_autopilot;
             Controller::e m_id;
         };
     } // namespace gui

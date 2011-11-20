@@ -20,29 +20,29 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-NodeBase::NodeBase(GuiNodeType::e t, id_variant_t const& id) :
+Node::Node(GuiNodeType::e t, nid_t const& id) :
         type(t), m_parent(), m_id(id), m_mutable(false) {
 
-    qRegisterMetaType<boost::shared_ptr<NodeBase> >("boost::shared_ptr<NodeBase>");
+    qRegisterMetaType<boost::shared_ptr<Node> >("boost::shared_ptr<NodeBase>");
 }
 
-NodeBase::~NodeBase(){
+Node::~Node(){
     debug(2) << "~NodeBase" << nodeName();
 }
 
-std::string NodeBase::nodeName() const {
+std::string Node::nodeName() const {
     return boost::apply_visitor(id_to_name(), m_id);
 }
 
-id_variant_t NodeBase::nodeId() const {
+nid_t Node::nodeId() const {
     return m_id;
 }
 
-std::string NodeBase::nodePath() const {
+std::string Node::nodePath() const {
     std::stringstream stream;
 
     if(!m_parent.expired()) {
-        boost::shared_ptr<NodeBase> parent = m_parent.lock();
+        boost::shared_ptr<Node> parent = m_parent.lock();
         if(parent)
             stream << parent->nodePath() << "/" << nodeName();
     }
@@ -51,15 +51,15 @@ std::string NodeBase::nodePath() const {
     return stream.str();
 }
 
-void NodeBase::addChild(boost::shared_ptr<NodeBase> const& child){
-    if(boost::shared_ptr<NodeBase> parent = child->m_parent.lock())
+void Node::addChild(boost::shared_ptr<Node> const& child){
+    if(boost::shared_ptr<Node> parent = child->m_parent.lock())
     {
         std::stringstream str;
         str << "Node already has a parent: " << parent->nodeName();
         throw std::runtime_error(str.str());
     }
 
-    child->m_parent = boost::weak_ptr<NodeBase>(shared_from_this());
+    child->m_parent = boost::weak_ptr<Node>(shared_from_this());
     m_children.push_back(child);
     m_id_map[child->nodeId()] = child;
     // also add the pretty name as a key to this node
@@ -79,20 +79,20 @@ void NodeBase::addChild(boost::shared_ptr<NodeBase> const& child){
     Q_EMIT treeChanged();
 }
 
-const NodeBase::children_list_t NodeBase::getChildren() const {
+const Node::children_list_t Node::getChildren() const {
     return m_children;
 }
 
-bool NodeBase::isMutable() const{
+bool Node::isMutable() const{
     return m_mutable;
 }
 
-void NodeBase::setMutable(bool mut){
+void Node::setMutable(bool mut){
     m_mutable = mut;
 }
 
-boost::shared_ptr<NodeBase> NodeBase::getRoot() {
-    boost::shared_ptr<NodeBase> node = shared_from_this();
+boost::shared_ptr<Node> Node::getRoot() {
+    boost::shared_ptr<Node> node = shared_from_this();
 
     while(node->m_parent.lock())
         node = node->m_parent.lock();
@@ -100,8 +100,8 @@ boost::shared_ptr<NodeBase> NodeBase::getRoot() {
     return node;
 }
 
-boost::shared_ptr<NodeBase> NodeBase::getParent(){
-    if(boost::shared_ptr<NodeBase> parent = m_parent.lock())
+boost::shared_ptr<Node> Node::getParent(){
+    if(boost::shared_ptr<Node> parent = m_parent.lock())
     {
         return parent;
     } else throw std::out_of_range("Node has no parent");

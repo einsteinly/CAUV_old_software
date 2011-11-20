@@ -116,14 +116,14 @@ void NodeScene::registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGrap
     m_handlers.push_back(handler);
 }
 
-bool NodeScene::accepts(boost::shared_ptr<NodeBase> const& node){
+bool NodeScene::accepts(boost::shared_ptr<Node> const& node){
     BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         if(handler->accepts(node)) return true;
     }
     return false;
 }
 
-void NodeScene::onNodeDroppedAt(boost::shared_ptr<NodeBase> const& node, QPointF pos){
+void NodeScene::onNodeDroppedAt(boost::shared_ptr<Node> const& node, QPointF pos){
     try {
         QGraphicsItem *  item = applyHandlers(node);
         if(item->scene() == this){
@@ -139,7 +139,7 @@ void NodeScene::onNodeDroppedAt(boost::shared_ptr<NodeBase> const& node, QPointF
     }
 }
 
-QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<NodeBase> const& node)
+QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<Node> const& node)
 {
     BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         try {

@@ -20,26 +20,27 @@
 namespace cauv {
     namespace gui {
 
-        class GroupingNode : public Node<std::string> {
+        class GroupingNode : public Node {
             Q_OBJECT
 
         public:
-            GroupingNode(const id_variant_t id) : Node<std::string>(GuiNodeType::GroupingNode, id){
+            GroupingNode(const nid_t id) : Node(GuiNodeType::GroupingNode, id){
             }
 
         public Q_SLOTS:
 
-            virtual void update(std::string const& value){
-                Node<std::string>::update(value);
+            virtual void update(QString const& value){
+                Node::update(value);
+                Q_EMIT onUpdate(value);
             }
 
-            virtual void set(std::string const& value){
-                Node<std::string>::set(value);
+            virtual void set(QString const& value){
+                Node::set(value);
             }
 
         Q_SIGNALS:
-            void onUpdate(std::string const& value);
-            void onSet(std::string const& value);
+            void onUpdate(QString const& value);
+            void onSet(QString const& value);
         };
 
 

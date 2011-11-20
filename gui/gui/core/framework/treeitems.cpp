@@ -20,15 +20,15 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<NodeBase> const& node, QTreeWidgetItem * parent):
+NodeTreeItemBase::NodeTreeItemBase(boost::shared_ptr<Node> const& node, QTreeWidgetItem * parent):
         QTreeWidgetItem(parent), m_node(node){
     this->setText(0, QString::fromStdString(node->nodeName()));
     if(node->isMutable()) {
         setTextColor(1, QColor::fromRgb(52, 138, 52));
     }
 
-    node->connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)),
-                  this, SLOT(addNode(boost::shared_ptr<NodeBase>)));
+    node->connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)),
+                  this, SLOT(addNode(boost::shared_ptr<Node>)));
 }
 
 void NodeTreeItemBase::updateValue(const QString value) {
@@ -42,46 +42,22 @@ bool NodeTreeItemBase::updateNode(QVariant const&) {
     return false;
 }
 
-boost::shared_ptr<NodeBase> NodeTreeItemBase::getNode(){
+boost::shared_ptr<Node> NodeTreeItemBase::getNode(){
     return m_node;
 }
 
-NodeTreeItemBase * NodeTreeItemBase::addNode(boost::shared_ptr<NodeBase> node) {
+NodeTreeItemBase * NodeTreeItemBase::addNode(boost::shared_ptr<Node> node) {
 
     debug() << "Adding NodeTreeItem for " << node->nodeName();
 
-    NodeTreeItemBase * item;
-
-    switch (node->type){
-    case GuiNodeType::GroupingNode:
-        item = new GroupingNodeTreeItem(boost::shared_static_cast<GroupingNode>(node), this);
-        break;
-
-    case GuiNodeType::NumericNode:
-        item = new NumericNodeTreeItem(boost::shared_static_cast<NumericNode>(node), this);
-        break;
-
-    case GuiNodeType::ImageNode:
-        item = new ImageNodeTreeItem(boost::shared_static_cast<ImageNode>(node), this);
-        break;
-
-    case GuiNodeType::StringNode:
-        item = new StringNodeTreeItem(boost::shared_static_cast<StringNode>(node), this);
-        break;
-
-    case GuiNodeType::FloatYPRNode:
-        item = new FloatYPRNodeTreeItem(boost::shared_static_cast<FloatYPRNode>(node), this);
-        break;
-
-    default:
         debug() << "Unsupported node:" << node->nodeName();
         NodeTreeItemBase * item = new NodeTreeItemBase(node, this);
         item->setText(0, item->text(0).append(" [unsupported]"));
         return item;
-    }
+
 
     // add items for all the nodes children
-    foreach(boost::shared_ptr<NodeBase> const& child, node->getChildren()){
+    foreach(boost::shared_ptr<Node> const& child, node->getChildren()){
         item->addNode(child);
     }
 

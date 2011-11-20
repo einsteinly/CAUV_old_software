@@ -47,87 +47,87 @@ GuiMessageObserver::~GuiMessageObserver() {
 }
 
 void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
-    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<TypedNumericNode<int8_t> >(message->motorId())->update(message->speed());
+    m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode<int> >(message->motorId())->update(message->speed());
 }
 
 void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Bearing);
-    autopilot->findOrCreate<TypedNumericNode<float> >("target")->update(message->target());
-    autopilot->findOrCreate<TypedNumericNode<bool> >("enabled")->update(message->enabled());
+    autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
+    autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
 void GuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(Controller::Bearing);
 
-    ap->findOrCreate<TypedNumericNode<float> >("Kp")->update(message->Kp());
-    ap->findOrCreate<TypedNumericNode<float> >("Ki")->update(message->Ki());
-    ap->findOrCreate<TypedNumericNode<float> >("Kd")->update(message->Kd());
-    ap->findOrCreate<TypedNumericNode<float> >("scale")->update(message->scale());
-    ap->findOrCreate<TypedNumericNode<float> >("aP")->update(message->Ad());
-    ap->findOrCreate<TypedNumericNode<float> >("aI")->update(message->Ai());
-    ap->findOrCreate<TypedNumericNode<float> >("aD")->update(message->Ad());
-    ap->findOrCreate<TypedNumericNode<float> >("thr")->update(message->thr());
-    ap->findOrCreate<TypedNumericNode<float> >("maxError")->update(message->maxError());
+    ap->findOrCreate<NumericNode<float> >("Kp")->update(message->Kp());
+    ap->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());
+    ap->findOrCreate<NumericNode<float> >("Kd")->update(message->Kd());
+    ap->findOrCreate<NumericNode<float> >("scale")->update(message->scale());
+    ap->findOrCreate<NumericNode<float> >("aP")->update(message->Ad());
+    ap->findOrCreate<NumericNode<float> >("aI")->update(message->Ai());
+    ap->findOrCreate<NumericNode<float> >("aD")->update(message->Ad());
+    ap->findOrCreate<NumericNode<float> >("thr")->update(message->thr());
+    ap->findOrCreate<NumericNode<float> >("maxError")->update(message->maxError());
 }
 
 void GuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Depth);
-    autopilot->findOrCreate<TypedNumericNode<float> >("target")->update(message->target());
-    autopilot->findOrCreate<TypedNumericNode<bool> >("enabled")->update(message->enabled());
+    autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
+    autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
 void GuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(Controller::Depth);
 
-    ap->findOrCreate<TypedNumericNode<float> >("Kp")->update(message->Kp());
-    ap->findOrCreate<TypedNumericNode<float> >("Ki")->update(message->Ki());
-    ap->findOrCreate<TypedNumericNode<float> >("Kd")->update(message->Kd());
-    ap->findOrCreate<TypedNumericNode<float> >("scale")->update(message->scale());
-    ap->findOrCreate<TypedNumericNode<float> >("aP")->update(message->Ad());
-    ap->findOrCreate<TypedNumericNode<float> >("aI")->update(message->Ai());
-    ap->findOrCreate<TypedNumericNode<float> >("aD")->update(message->Ad());
-    ap->findOrCreate<TypedNumericNode<float> >("thr")->update(message->thr());
-    ap->findOrCreate<TypedNumericNode<float> >("maxError")->update(message->maxError());
+    ap->findOrCreate<NumericNode<float> >("Kp")->update(message->Kp());
+    ap->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());
+    ap->findOrCreate<NumericNode<float> >("Kd")->update(message->Kd());
+    ap->findOrCreate<NumericNode<float> >("scale")->update(message->scale());
+    ap->findOrCreate<NumericNode<float> >("aP")->update(message->Ad());
+    ap->findOrCreate<NumericNode<float> >("aI")->update(message->Ai());
+    ap->findOrCreate<NumericNode<float> >("aD")->update(message->Ad());
+    ap->findOrCreate<NumericNode<float> >("thr")->update(message->thr());
+    ap->findOrCreate<NumericNode<float> >("maxError")->update(message->maxError());
 }
 
 void GuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Pitch);
-    autopilot->findOrCreate<TypedNumericNode<float> >("target")->update(message->target());
-    autopilot->findOrCreate<TypedNumericNode<bool> >("enabled")->update(message->enabled());
+    autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
+    autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
 void GuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(Controller::Pitch);
 
-    ap->findOrCreate<TypedNumericNode<float> >("Kp")->update(message->Kp());
-    ap->findOrCreate<TypedNumericNode<float> >("Ki")->update(message->Ki());
-    ap->findOrCreate<TypedNumericNode<float> >("Kd")->update(message->Kd());
-    ap->findOrCreate<TypedNumericNode<float> >("scale")->update(message->scale());
-    ap->findOrCreate<TypedNumericNode<float> >("aP")->update(message->Ad());
-    ap->findOrCreate<TypedNumericNode<float> >("aI")->update(message->Ai());
-    ap->findOrCreate<TypedNumericNode<float> >("aD")->update(message->Ad());
-    ap->findOrCreate<TypedNumericNode<float> >("thr")->update(message->thr());
-    ap->findOrCreate<TypedNumericNode<float> >("maxError")->update(message->maxError());
+    ap->findOrCreate<NumericNode<float> >("Kp")->update(message->Kp());
+    ap->findOrCreate<NumericNode<float> >("Ki")->update(message->Ki());
+    ap->findOrCreate<NumericNode<float> >("Kd")->update(message->Kd());
+    ap->findOrCreate<NumericNode<float> >("scale")->update(message->scale());
+    ap->findOrCreate<NumericNode<float> >("aP")->update(message->Ad());
+    ap->findOrCreate<NumericNode<float> >("aI")->update(message->Ai());
+    ap->findOrCreate<NumericNode<float> >("aD")->update(message->Ad());
+    ap->findOrCreate<NumericNode<float> >("thr")->update(message->thr());
+    ap->findOrCreate<NumericNode<float> >("maxError")->update(message->maxError());
 }
 
 
 void GuiMessageObserver::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("calibration");
-    group->findOrCreate<TypedNumericNode<float> >("aftMultiplier")->update(message->aftMultiplier());
-    group->findOrCreate<TypedNumericNode<float> >("aftOffset")->update(message->aftOffset());
-    group->findOrCreate<TypedNumericNode<float> >("foreMultiplier")->update(message->foreMultiplier());
-    group->findOrCreate<TypedNumericNode<float> >("foreOffset")->update(message->foreOffset());
+    group->findOrCreate<NumericNode<float> >("aftMultiplier")->update(message->aftMultiplier());
+    group->findOrCreate<NumericNode<float> >("aftOffset")->update(message->aftOffset());
+    group->findOrCreate<NumericNode<float> >("foreMultiplier")->update(message->foreMultiplier());
+    group->findOrCreate<NumericNode<float> >("foreOffset")->update(message->foreOffset());
 }
 
 void GuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("debug");
-    group->findOrCreate<TypedNumericNode<int> >("level")->update(message->level());
+    group->findOrCreate<NumericNode<int> >("level")->update(message->level());
 }
 
 void GuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
@@ -139,23 +139,23 @@ void GuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
 void GuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("image");
     boost::shared_ptr<ImageNode> sonar = group->findOrCreate<ImageNode>(CameraID::Sonar);
-    sonar->findOrCreate<TypedNumericNode<uint16_t> >("direction")->update(message->direction());
-    sonar->findOrCreate<TypedNumericNode<uint16_t> >("width")->update(message->width());
-    sonar->findOrCreate<TypedNumericNode<uint8_t> >("gain")->update(message->gain());
-    sonar->findOrCreate<TypedNumericNode<uint32_t> >("range")->update(message->range());
-    sonar->findOrCreate<TypedNumericNode<uint32_t> >("rangeRes")->update(message->rangeRes());
-    sonar->findOrCreate<TypedNumericNode<uint32_t> >("angularRes")->update(message->angularRes());
+    sonar->findOrCreate<NumericNode<int> >("direction")->update(message->direction());
+    sonar->findOrCreate<NumericNode<int> >("width")->update(message->width());
+    sonar->findOrCreate<NumericNode<int> >("gain")->update(message->gain());
+    sonar->findOrCreate<NumericNode<unsigned int> >("range")->update(message->range());
+    sonar->findOrCreate<NumericNode<unsigned int> >("rangeRes")->update(message->rangeRes());
+    sonar->findOrCreate<NumericNode<unsigned int> >("angularRes")->update(message->angularRes());
 }
 
 void GuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemtry");
-    group->findOrCreate<TypedNumericNode<float> >("depth")->update(message->depth());
-    group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
+    group->findOrCreate<NumericNode<float> >("depth")->update(message->depth());
+    //!!! group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
 
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreate<TypedNumericNode<float> >("actual")->update(message->orientation().yaw);
-    autopilots->findOrCreate<GroupingNode>("pitch")->findOrCreate<TypedNumericNode<float> >("actual")->update(message->orientation().pitch);
-    autopilots->findOrCreate<GroupingNode>("depth")->findOrCreate<TypedNumericNode<float> >("actual")->update(message->depth());
+    autopilots->findOrCreate<GroupingNode>("bearing")->findOrCreate<NumericNode<float> >("actual")->update(message->orientation().yaw);
+    autopilots->findOrCreate<GroupingNode>("pitch")->findOrCreate<NumericNode<float> >("actual")->update(message->orientation().pitch);
+    autopilots->findOrCreate<GroupingNode>("depth")->findOrCreate<NumericNode<float> >("actual")->update(message->depth());
 }
 
 void GuiMessageObserver::onLocationMessage(LocationMessage_ptr){
@@ -169,8 +169,8 @@ void GuiMessageObserver::onLocationMessage(LocationMessage_ptr){
 
 void GuiMessageObserver::onPressureMessage(PressureMessage_ptr message){
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("pressure");
-    group->findOrCreate<TypedNumericNode<uint16_t> >("fore")->update(message->fore());
-    group->findOrCreate<TypedNumericNode<uint16_t> >("aft")->update(message->aft());
+    group->findOrCreate<NumericNode<unsigned int> >("fore")->update(message->fore());
+    group->findOrCreate<NumericNode<unsigned int> >("aft")->update(message->aft());
 }
 
 void GuiMessageObserver::onScriptResponseMessage(ScriptResponseMessage_ptr){
@@ -180,18 +180,18 @@ void GuiMessageObserver::onScriptResponseMessage(ScriptResponseMessage_ptr){
 
 void GuiMessageObserver::onBatteryUseMessage(BatteryUseMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemetry")->findOrCreate<GroupingNode>("battery");
-    group->findOrCreate<TypedNumericNode<float> >("current")->update(message->estimate_current());
-    group->findOrCreate<TypedNumericNode<float> >("total")->update(message->estimate_total());
-    group->findOrCreate<TypedNumericNode<float> >("remaining")->update(message->fraction_remaining() * 100.f);
+    group->findOrCreate<NumericNode<float> >("current")->update(message->estimate_current());
+    group->findOrCreate<NumericNode<float> >("total")->update(message->estimate_total());
+    group->findOrCreate<NumericNode<float> >("remaining")->update(message->fraction_remaining() * 100.f);
 }
 
 void GuiMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("processes");
     boost::shared_ptr<GroupingNode> process = group->findOrCreate<GroupingNode>(message->process());
 
-    process->findOrCreate<TypedNumericNode<float> >("cpu")->update(message->cpu());
-    process->findOrCreate<TypedNumericNode<float> >("mem")->update(message->mem());
-    process->findOrCreate<TypedNumericNode<uint32_t> >("threads")->update(message->threads());
+    process->findOrCreate<NumericNode<float> >("cpu")->update(message->cpu());
+    process->findOrCreate<NumericNode<float> >("mem")->update(message->mem());
+    process->findOrCreate<NumericNode<unsigned int> >("threads")->update(message->threads());
     process->findOrCreate<StringNode>("status")->update(message->status());
 }
 
@@ -203,17 +203,17 @@ void GuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr mes
 
 
     boost::shared_ptr<GroupingNode> demands = state->findOrCreate<GroupingNode>("demands");
-    demands->findOrCreate<TypedNumericNode<float> >(MotorID::Prop)->update(message->demand().prop);
-    demands->findOrCreate<TypedNumericNode<float> >(MotorID::HBow)->update(message->demand().hbow);
-    demands->findOrCreate<TypedNumericNode<float> >(MotorID::HStern)->update(message->demand().hstern);
-    demands->findOrCreate<TypedNumericNode<float> >(MotorID::VBow)->update(message->demand().vbow);
-    demands->findOrCreate<TypedNumericNode<float> >(MotorID::VStern)->update(message->demand().vstern);
-    state->findOrCreate<TypedNumericNode<float> >("Kp")->update(message->kp());
-    state->findOrCreate<TypedNumericNode<float> >("Ki")->update(message->ki());
-    state->findOrCreate<TypedNumericNode<float> >("Kd")->update(message->kd());
-    state->findOrCreate<TypedNumericNode<float> >("error")->update(message->error());
-    state->findOrCreate<TypedNumericNode<float> >("derror")->update(message->derror());
-    state->findOrCreate<TypedNumericNode<float> >("ierror")->update(message->ierror());
-    state->findOrCreate<TypedNumericNode<float> >("mv")->update(message->mv());
+    demands->findOrCreate<NumericNode<float> >(MotorID::Prop)->update(message->demand().prop);
+    demands->findOrCreate<NumericNode<float> >(MotorID::HBow)->update(message->demand().hbow);
+    demands->findOrCreate<NumericNode<float> >(MotorID::HStern)->update(message->demand().hstern);
+    demands->findOrCreate<NumericNode<float> >(MotorID::VBow)->update(message->demand().vbow);
+    demands->findOrCreate<NumericNode<float> >(MotorID::VStern)->update(message->demand().vstern);
+    state->findOrCreate<NumericNode<float> >("Kp")->update(message->kp());
+    state->findOrCreate<NumericNode<float> >("Ki")->update(message->ki());
+    state->findOrCreate<NumericNode<float> >("Kd")->update(message->kd());
+    state->findOrCreate<NumericNode<float> >("error")->update(message->error());
+    state->findOrCreate<NumericNode<float> >("derror")->update(message->derror());
+    state->findOrCreate<NumericNode<float> >("ierror")->update(message->ierror());
+    state->findOrCreate<NumericNode<float> >("mv")->update(message->mv());
 }
 

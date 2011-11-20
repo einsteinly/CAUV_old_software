@@ -44,9 +44,9 @@ const QColor GraphWidget::colours[] = {
 };
 
 
-DataStreamSeriesData::DataStreamSeriesData(boost::shared_ptr<NumericNode> const& node, unsigned int maximum) :
-        DataRecorder<numeric_variant_t>(maximum), m_max(0), m_min(0) {
-    node->connect(node.get(), SIGNAL(onUpdate(numeric_variant_t)), this, SLOT(change(numeric_variant_t)));
+DataStreamSeriesData::DataStreamSeriesData(boost::shared_ptr<NumericNodeBase> const& node, unsigned int maximum) :
+        DataRecorder<float>(maximum), m_max(0), m_min(0) {
+    node->connect(node.get(), SIGNAL(onUpdate(float)), this, SLOT(change(float)));
 }
 
 size_t DataStreamSeriesData::size () const {
@@ -77,7 +77,7 @@ QPointF DataStreamSeriesData::sample (size_t i) const {
     }
 
     // times are shown as negative in seconds from the current time
-    return QPointF(-seconds, boost::apply_visitor(cast_to<float>(), this->m_history[sample]));
+    return QPointF(-seconds, this->m_history[sample]);
 }
 
 QRectF DataStreamSeriesData::boundingRect () const {
@@ -85,18 +85,16 @@ QRectF DataStreamSeriesData::boundingRect () const {
         return QRectF(-60, 0, 60, 10);
     else {
         // show the last 60 seconds;
-        return QRectF(-60, boost::apply_visitor(cast_to<float>(), m_min), 60,
-                      boost::apply_visitor(cast_to<float>(), m_max) -
-                      boost::apply_visitor(cast_to<float>(), m_min));
+        return QRectF(-60, m_min, 60, m_max - m_min);
     }
 }
 
-void DataStreamSeriesData::change(numeric_variant_t value){
+void DataStreamSeriesData::change(float value){
     if(m_max < value)
         m_max = value;
     if(value < m_min)
         m_min = value;
-    DataRecorder<numeric_variant_t>::update(value);
+    DataRecorder<float>::update(value);
 }
 
 
@@ -113,7 +111,7 @@ GraphWidget::GraphWidget():
     installEventFilter(new NodeDropFilter(this));
 }
 
-GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> const& node):
+GraphWidget::GraphWidget(boost::shared_ptr<NumericNodeBase> const& node):
         m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
 {
     ui->setupUi(this);
@@ -123,7 +121,7 @@ GraphWidget::GraphWidget(boost::shared_ptr<NumericNode> const& node):
     setupPlot();
 }
 
-void GraphWidget::addNode(boost::shared_ptr<NumericNode> const& node){
+void GraphWidget::addNode(boost::shared_ptr<NumericNodeBase> const& node){
     try {
         // see if this series has already been registered
         m_nodes.at(node->nodePath());
@@ -227,11 +225,11 @@ void GraphWidget::setupPlot() {
 }
 
 
-bool GraphWidget::accepts(boost::shared_ptr<NodeBase> const& node){
+bool GraphWidget::accepts(boost::shared_ptr<Node> const& node){
     return (node->type == GuiNodeType::NumericNode);
 }
 
-void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNode> const& node){
+void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNodeBase> const& node){
     addNode(node);
 }
 

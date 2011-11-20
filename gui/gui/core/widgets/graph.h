@@ -37,24 +37,24 @@ namespace Ui {
 namespace cauv {
     namespace gui {
 
-        class NumericNode;
+        class NumericNodeBase;
 
-        class DataStreamSeriesData : public QObject, public QwtSeriesData<QPointF>, public DataRecorder<numeric_variant_t> {
+        class DataStreamSeriesData : public QObject, public QwtSeriesData<QPointF>, public DataRecorder<float> {
         Q_OBJECT
 
         public:
-            DataStreamSeriesData(boost::shared_ptr<NumericNode> const& node, unsigned int maximum);
+            DataStreamSeriesData(boost::shared_ptr<NumericNodeBase> const& node, unsigned int maximum);
             size_t size () const;
             float toTime(boost::posix_time::ptime epoch, boost::posix_time::ptime time) const;
             QPointF sample (size_t i) const;
             QRectF boundingRect () const;
 
         public Q_SLOTS:
-            void change(numeric_variant_t value);
+            void change(float value);
 
         protected:
-            numeric_variant_t m_max;
-            numeric_variant_t m_min;
+            float m_max;
+            float m_min;
         };
 
 
@@ -64,19 +64,19 @@ namespace cauv {
             static const QColor colours[];
 
             GraphWidget();
-            GraphWidget(boost::shared_ptr<NumericNode> const&);
+            GraphWidget(boost::shared_ptr<NumericNodeBase> const&);
             ~GraphWidget();
 
             void setupPlot();
-            bool accepts(boost::shared_ptr<NodeBase> const&);
+            bool accepts(boost::shared_ptr<Node> const&);
 
-            void onNodeDropped(boost::shared_ptr<NumericNode> const&);
+            void onNodeDropped(boost::shared_ptr<NumericNodeBase> const&);
 
-            void addNode(boost::shared_ptr<NumericNode >  const&);
+            void addNode(boost::shared_ptr<NumericNodeBase >  const&);
             virtual std::string getName() const;
 
         protected:
-            typedef std::map<std::string, boost::shared_ptr<NumericNode> > series_map_t;
+            typedef std::map<std::string, boost::shared_ptr<NumericNodeBase> > series_map_t;
             series_map_t m_nodes;
             QTimer m_timer;
             QwtPlot * m_plot;

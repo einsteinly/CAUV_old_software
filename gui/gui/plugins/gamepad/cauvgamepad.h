@@ -27,7 +27,7 @@ namespace cauv {
         class GamepadInput;
         class XBoxInput;
         class PlaystationInput;
-        class NodeBase;
+        class Node;
 
 
         class CauvGamepad : public QObject
@@ -69,8 +69,8 @@ namespace cauv {
             boost::shared_ptr<GamepadInput> m_gamepadInput;
             boost::scoped_ptr<QTimer> m_timer;
 
-            boost::shared_ptr<NodeBase> m_autopilots;
-            boost::shared_ptr<NodeBase> m_motors;
+            boost::shared_ptr<Node> m_autopilots;
+            boost::shared_ptr<Node> m_motors;
 
             float m_bearingRate;
             float m_pitchRate;

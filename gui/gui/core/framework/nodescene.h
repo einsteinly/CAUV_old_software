@@ -65,10 +65,10 @@ namespace cauv {
 
             // drop handlers
             virtual void registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > >  const& handler);
-            QGraphicsItem * applyHandlers(boost::shared_ptr<NodeBase> const& node);
+            QGraphicsItem * applyHandlers(boost::shared_ptr<Node> const& node);
             // drop listener methods
-            bool accepts(boost::shared_ptr<NodeBase> const& node);
-            virtual void onNodeDroppedAt(boost::shared_ptr<NodeBase> const&, QPointF );
+            bool accepts(boost::shared_ptr<Node> const& node);
+            virtual void onNodeDroppedAt(boost::shared_ptr<Node> const&, QPointF );
 
         protected:
             std::vector<boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > > m_handlers;
@@ -77,11 +77,11 @@ namespace cauv {
 
         class ExampleDropHandler : public DropHandlerInterface<QGraphicsItem * > {
 
-            virtual bool accepts(boost::shared_ptr<NodeBase> const& node){
+            virtual bool accepts(boost::shared_ptr<Node> const& node){
                 return node->type == GuiNodeType::NumericNode;
             }
 
-            virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase> const&) {
+            virtual QGraphicsItem * handle(boost::shared_ptr<Node> const&) {
 
                 info() << "added AINode";
 
@@ -100,17 +100,17 @@ namespace cauv {
 
         class GraphDropHandler : public DropHandlerInterface<QGraphicsItem * > {
 
-            virtual bool accepts(boost::shared_ptr<NodeBase> const& node){
+            virtual bool accepts(boost::shared_ptr<Node> const& node){
                 return node->type == GuiNodeType::NumericNode;
             }
 
-            virtual QGraphicsItem * handle(boost::shared_ptr<NodeBase> const& node) {
+            virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
 
                 //if(m_graphs[node->nodePath()]){
                 //    return m_graphs[node->nodePath()];
                 //}
 
-                GraphWidget * graph = new GraphWidget(boost::static_pointer_cast<NumericNode>(node));
+                GraphWidget * graph = new GraphWidget(boost::static_pointer_cast<NumericNodeBase>(node));
 
                 QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
                 proxy->setWidget(graph);

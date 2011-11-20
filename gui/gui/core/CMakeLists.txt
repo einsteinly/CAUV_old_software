@@ -75,10 +75,10 @@ set ( GUI_CORE_H
     model/model.h
     model/registry.h
     model/nodes/numericnode.h
-    model/nodes/compoundnodes.h
     model/nodes/stringnode.h
     model/nodes/imagenode.h
     model/nodes/groupingnode.h
+    model/nodes/vehiclenode.h
     controller/messagegenerators.h
     framework/nodepicker.h
     framework/treeitems.h

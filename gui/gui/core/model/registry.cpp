@@ -27,15 +27,15 @@ const std::vector<boost::shared_ptr<Vehicle> > VehicleRegistry::getVehicles() co
     return getChildrenOfType<Vehicle>();
 }
 
-const boost::shared_ptr<NodeBase> VehicleRegistry::getNode(QUrl url) {
+const boost::shared_ptr<Node> VehicleRegistry::getNode(QUrl url) {
     if(url.scheme() == "varstream"){
         QString path = url.path().prepend(url.host()).prepend("/");
         QStringList list = path.split("/", QString::SkipEmptyParts);
 
-        boost::shared_ptr<NodeBase> parent = shared_from_this();
+        boost::shared_ptr<Node> parent = shared_from_this();
         foreach(QString part, list){
             std::string str = part.toStdString();
-            parent = parent->find<NodeBase>(str);
+            parent = parent->find<Node>(str);
         }
 
         return parent;

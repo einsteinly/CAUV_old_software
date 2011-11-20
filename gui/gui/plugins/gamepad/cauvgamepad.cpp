@@ -166,12 +166,12 @@ void CauvGamepad::down(bool go){
 void CauvGamepad::stop(bool){
 
     // disable all the autopilots
-    foreach(boost::shared_ptr<NodeBase> const& node, m_autopilots->getChildren()){
-        node->find<TypedNumericNode<bool> >("enabled")->set(false);
+    foreach(boost::shared_ptr<Node> const& node, m_autopilots->getChildren()){
+        node->find<NumericNode<bool> >("enabled")->set(false);
     }
 
     // stop all the motors
-    foreach(boost::shared_ptr<TypedNumericNode<int8_t> > const& node, m_motors->getChildrenOfType<TypedNumericNode<int8_t> >()){
+    foreach(boost::shared_ptr<NumericNode<int> > const& node, m_motors->getChildrenOfType<NumericNode<int> >()){
         node->set(0);
     }
 }
@@ -179,13 +179,13 @@ void CauvGamepad::stop(bool){
 
 void CauvGamepad::update(){
 
-    boost::shared_ptr<TypedNumericNode<float> > bearing = m_autopilots->findOrCreate<GroupingNode>(Controller::Bearing)->findOrCreate<TypedNumericNode<float> >("target");
-    boost::shared_ptr<TypedNumericNode<float> > pitch = m_autopilots->findOrCreate<GroupingNode>(Controller::Pitch)->findOrCreate<TypedNumericNode<float> >("target");
-    boost::shared_ptr<TypedNumericNode<float> > depth = m_autopilots->findOrCreate<GroupingNode>(Controller::Depth)->findOrCreate<TypedNumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > bearing = m_autopilots->findOrCreate<GroupingNode>(Controller::Bearing)->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > pitch = m_autopilots->findOrCreate<GroupingNode>(Controller::Pitch)->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > depth = m_autopilots->findOrCreate<GroupingNode>(Controller::Depth)->findOrCreate<NumericNode<float> >("target");
 
-    boost::shared_ptr<TypedNumericNode<int8_t> > hSternMotor = m_motors->findOrCreate<TypedNumericNode<int8_t> >(MotorID::HStern);
-    boost::shared_ptr<TypedNumericNode<int8_t> > hBowMotor = m_motors->findOrCreate<TypedNumericNode<int8_t> >(MotorID::HBow);
-    boost::shared_ptr<TypedNumericNode<int8_t> > prop = m_motors->findOrCreate<TypedNumericNode<int8_t> >(MotorID::Prop);
+    boost::shared_ptr<NumericNode<int> > hSternMotor = m_motors->findOrCreate<NumericNode<int> >(MotorID::HStern);
+    boost::shared_ptr<NumericNode<int> > hBowMotor = m_motors->findOrCreate<NumericNode<int> >(MotorID::HBow);
+    boost::shared_ptr<NumericNode<int> > prop = m_motors->findOrCreate<NumericNode<int> >(MotorID::Prop);
 
     // update bearing
     if(m_autopilotControl){

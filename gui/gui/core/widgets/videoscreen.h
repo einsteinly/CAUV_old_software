@@ -20,7 +20,7 @@
 
 #include <QWidget>
 
-#include "../model/variants.h"
+#include "../model/nodes/imagenode.h"
 
 class QSize;
 class QImage;
@@ -49,7 +49,7 @@ namespace cauv {
             void paintEvent(QPaintEvent *);
 
         public Q_SLOTS:
-            void setImage(const image_variant_t &image);
+            void setImage(const image_t &image);
 
             void setInfo(const QString text);
             void setInfo(const std::string text);

@@ -29,7 +29,7 @@
 using namespace cauv;
 using namespace cauv::gui;
 
-MotorBurstController::MotorBurstController(boost::shared_ptr<TypedNumericNode<int8_t> > motor, int8_t speed):
+MotorBurstController::MotorBurstController(boost::shared_ptr<NumericNode<int> > motor, int8_t speed):
         m_speed(speed), m_motor(motor){}
 
 void MotorBurstController::burst(){
@@ -43,16 +43,16 @@ void MotorBurstController::stop() {
 
 
 
-AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<NodeBase> node):
+AutopilotController::AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<Node> node):
         m_autopilot(node),
         m_enabled(enabled),
         m_target(target),
         m_actual(actual) {
 
 
-    boost::shared_ptr<TypedNumericNode<float> > targetNode = node->findOrCreate<TypedNumericNode<float> >("target");
-    boost::shared_ptr<TypedNumericNode<bool> > enabledNode = node->findOrCreate<TypedNumericNode<bool> >("enabled");
-    boost::shared_ptr<TypedNumericNode<float> > actualNode = node->findOrCreate<TypedNumericNode<float> >("actual");
+    boost::shared_ptr<NumericNode<float> > targetNode = node->findOrCreate<NumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<bool> > enabledNode = node->findOrCreate<NumericNode<bool> >("enabled");
+    boost::shared_ptr<NumericNode<float> > actualNode = node->findOrCreate<NumericNode<float> >("actual");
 
     // sets
     connect(target, SIGNAL(editingFinished()), this, SLOT(targetEditingFinished()));
@@ -84,7 +84,7 @@ void AutopilotController::targetEditingFinished(){
 
 
 void AutopilotController::configureTarget(){
-    boost::shared_ptr<TypedNumericNode<float> > targetNode = m_autopilot->findOrCreate<TypedNumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > targetNode = m_autopilot->findOrCreate<NumericNode<float> >("target");
 
     // set wrapping
     m_target->setWrapping(targetNode->getWraps());
@@ -128,11 +128,11 @@ void MotorControls::initialise(){
 
     // for new motors    
     boost::shared_ptr<GroupingNode> motors = m_auv->findOrCreate<GroupingNode>("motors");
-    motors->connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addMotor(boost::shared_ptr<NodeBase>)));
+    motors->connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(addMotor(boost::shared_ptr<Node>)));
 
     // new autopilots
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    autopilots->connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(addAutopilot(boost::shared_ptr<NodeBase>)));
+    autopilots->connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(addAutopilot(boost::shared_ptr<Node>)));
 }
 
 MotorControls::~MotorControls(){
@@ -140,8 +140,8 @@ MotorControls::~MotorControls(){
 }
 
 
-void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
-    boost::shared_ptr<TypedNumericNode<int8_t> > motor = node->to<TypedNumericNode<int8_t> >();
+void MotorControls::addMotor(boost::shared_ptr<Node> node) {
+    boost::shared_ptr<NumericNode<int> > motor = node->to<NumericNode<int> >();
 
     std::string forward = "Forward";
     std::string backward = "Back";
@@ -165,7 +165,7 @@ void MotorControls::addMotor(boost::shared_ptr<NodeBase> node) {
     ui->motorControlsLayout->addWidget(forwardButton, m_motorsCount, 2, 1, 1, Qt::AlignCenter);
 }
 
-void MotorControls::addAutopilot(boost::shared_ptr<NodeBase> node){
+void MotorControls::addAutopilot(boost::shared_ptr<Node> node){
 
     // set up ui
     QLabel * label = new QLabel(QString::fromStdString(node->nodeName()));

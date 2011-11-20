@@ -19,8 +19,8 @@
 namespace cauv {
     namespace gui {
 
-        class NodeBase;
-        class NumericNode;
+        class Node;
+        class NumericNodeBase;
         class ImageNode;
         class FloatYPRNode;
         class FloatXYZNode;

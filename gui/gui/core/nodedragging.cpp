@@ -35,7 +35,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> const& s, QPointF pos){
+bool NodeDropListener::routeNode(boost::shared_ptr<Node> const& s, QPointF pos){
 
     info() << "Routing stream" << s->nodeName();
 
@@ -44,17 +44,17 @@ bool NodeDropListener::routeNode(boost::shared_ptr<NodeBase> const& s, QPointF p
 
     switch (s->type){
     case GuiNodeType::NumericNode:
-        onNodeDropped(boost::static_pointer_cast<NumericNode>(s));
+        onNodeDropped(boost::static_pointer_cast<NumericNodeBase>(s));
         break;
     case GuiNodeType::ImageNode:
         onNodeDropped(boost::static_pointer_cast<ImageNode>(s));
         break;
-    case GuiNodeType::FloatYPRNode:
-        onNodeDropped(boost::static_pointer_cast<FloatYPRNode>(s));
-        break;
-    case GuiNodeType::FloatXYZNode:
-        onNodeDropped(boost::static_pointer_cast<FloatXYZNode>(s));
-        break;
+    //case GuiNodeType::FloatYPRNode:
+    //    onNodeDropped(boost::static_pointer_cast<FloatYPRNode>(s));
+    //    break;
+    //case GuiNodeType::FloatXYZNode:
+    //    onNodeDropped(boost::static_pointer_cast<FloatXYZNode>(s));
+    //    break;
     case GuiNodeType::GroupingNode:
         onNodeDropped(boost::static_pointer_cast<GroupingNode>(s));
         break;
@@ -83,7 +83,7 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                 foreach (QUrl url, mimeData->urls()){
                     if(url.scheme() == "varstream") {
                         try {
-                            boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                            boost::shared_ptr<Node> node = VehicleRegistry::instance()->getNode(url);
                             if(m_listener->accepts(node)){
                                 // accept the event as soon as we find one that we can handle
                                 dragEvent->acceptProposedAction();
@@ -108,7 +108,7 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                 foreach (QUrl url, mimeData->urls()){
                     if(url.scheme() == "varstream") {
                         try {
-                            boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                            boost::shared_ptr<Node> node = VehicleRegistry::instance()->getNode(url);
                             if(m_listener->accepts(node)){
                                 // accept the event as soon as we find one that we can handle
                                 dropEvent->acceptProposedAction();
@@ -136,7 +136,7 @@ bool NodeDropFilter::eventFilter(QObject *, QEvent *event)
                 foreach (QUrl url, mimeData->urls()){
                     if(url.scheme() == "varstream") {
                         try {
-                            boost::shared_ptr<NodeBase> node = VehicleRegistry::instance()->getNode(url);
+                            boost::shared_ptr<Node> node = VehicleRegistry::instance()->getNode(url);
                             if(m_listener->accepts(node)){
                                 // accept the event as soon as we find one that we can handle
                                 dndEvent->acceptProposedAction();

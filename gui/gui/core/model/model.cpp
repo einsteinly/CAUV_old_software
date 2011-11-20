@@ -21,13 +21,6 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-void Vehicle::addGenerator(boost::shared_ptr<MessageGenerator> generator){
-    m_generators.push_back(generator);
-    generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
-                       this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
-}
-
-
 RedHerring::RedHerring(std::string name) : Vehicle(name) {
     // don't populate anything in here as there isn't a shared pointer to
     // this object yet. We need to wait until after it's been fully constructed
@@ -36,17 +29,17 @@ RedHerring::RedHerring(std::string name) : Vehicle(name) {
 void RedHerring::initialise() {
     // when a child is added to the motors group we want to add a message generator for it
     boost::shared_ptr<GroupingNode> motors = findOrCreate<GroupingNode>("motors");
-    connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(setupMotor(boost::shared_ptr<NodeBase>)));
+    connect(motors.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupMotor(boost::shared_ptr<Node>)));
 
     // same for autopilots
     boost::shared_ptr<GroupingNode> autopilots = findOrCreate<GroupingNode>("autopilots");
-    connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<NodeBase>)), this, SLOT(setupAutopilot(boost::shared_ptr<NodeBase>)));
+    connect(autopilots.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupAutopilot(boost::shared_ptr<Node>)));
 
 }
 
-void RedHerring::setupMotor(boost::shared_ptr<NodeBase> node){
+void RedHerring::setupMotor(boost::shared_ptr<Node> node){
     try {
-        boost::shared_ptr<TypedNumericNode<int8_t> > motor = node->to<TypedNumericNode<int8_t> >();
+        boost::shared_ptr<NumericNode<int> > motor = node->to<NumericNode<int> >();
         motor->setMax(127);
         motor->setMin(-127);
         motor->setMutable(true);
@@ -56,12 +49,12 @@ void RedHerring::setupMotor(boost::shared_ptr<NodeBase> node){
     }
 }
 
-void RedHerring::setupAutopilot(boost::shared_ptr<NodeBase> node){
+void RedHerring::setupAutopilot(boost::shared_ptr<Node> node){
 
     addGenerator(boost::make_shared<AutopilotMessageGenerator>(boost::static_pointer_cast<Vehicle>(shared_from_this()), node));
-    boost::shared_ptr<TypedNumericNode<float> > target = node->findOrCreate<TypedNumericNode<float> >("target");
+    boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
     target->setMutable(true);
-    node->findOrCreate<TypedNumericNode<bool> >("enabled")->setMutable(true);
+    node->findOrCreate<NumericNode<bool> >("enabled")->setMutable(true);
 
     // target params
     float min, max; bool wraps; std::string units;

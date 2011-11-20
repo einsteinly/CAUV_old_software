@@ -45,7 +45,7 @@ VideoScreen::~VideoScreen(){
 }
 
 
-void VideoScreen::setImage(const image_variant_t &img){
+void VideoScreen::setImage(const image_t &img){
 
     // take a deep copy of the image before it's deleted
     // it will be used in a different thread so we can't

@@ -23,14 +23,14 @@
 
 namespace cauv {
     namespace gui {
-
+/*
         template<class T>
         class CompoundNode : public Node<T> {
 
         public:
             typedef T type;
 
-            CompoundNode(GuiNodeType::e GuiNodeType, id_variant_t const& id) :
+            CompoundNode(GuiNodeType::e GuiNodeType, nid_t const& id) :
                     Node<T>(GuiNodeType, id) {
             }
 
@@ -43,7 +43,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            FloatYPRNode(id_variant_t const& id) : CompoundNode<floatYPR>(GuiNodeType::FloatYPRNode, id)
+            FloatYPRNode(nid_t const& id) : CompoundNode<floatYPR>(GuiNodeType::FloatYPRNode, id)
             {
                 this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
@@ -79,7 +79,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            FloatXYZNode(id_variant_t const& id) : CompoundNode<floatXYZ>(GuiNodeType::FloatXYZNode, id)
+            FloatXYZNode(nid_t const& id) : CompoundNode<floatXYZ>(GuiNodeType::FloatXYZNode, id)
             {
                 this->connect(this, SIGNAL(changed()), this, SLOT(forceSet()));
             }
@@ -109,7 +109,7 @@ namespace cauv {
             void onSet(floatXYZ const& value);
         };
 
-
+*/
     } //namespace gui
 } // namespace cauv
 

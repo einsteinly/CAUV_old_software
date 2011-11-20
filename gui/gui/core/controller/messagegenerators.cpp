@@ -25,13 +25,13 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-MessageGenerator::MessageGenerator(boost::shared_ptr<Vehicle> auv) :
+MessageGenerator::MessageGenerator(boost::shared_ptr<Node> auv) :
         m_auv(auv) {
 }
 
 
 
-MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<TypedNumericNode<int8_t> > motor):
+MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<NumericNode<int> > motor):
         MessageGenerator(auv), m_id(boost::get<MotorID::e>(motor->nodeId()))
 {
     connect(motor.get(), SIGNAL(onSet(int)), this, SLOT(send(int)));
@@ -43,15 +43,15 @@ void MotorMessageGenerator::send(int value){
 
 
 
-AutopilotMessageGenerator::AutopilotMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<NodeBase> autopilot):
+AutopilotMessageGenerator::AutopilotMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<Node> autopilot):
         MessageGenerator(auv), m_autopilot(autopilot)
 {
     connect(autopilot.get(), SIGNAL(changed()), this, SLOT(send()));
 }
 
 void AutopilotMessageGenerator::send(){
-    bool enabled = m_autopilot->findOrCreate<TypedNumericNode<bool> >("enabled")->get();
-    float target = m_autopilot->findOrCreate<TypedNumericNode<float> >("target")->get();
+    bool enabled = m_autopilot->findOrCreate<NumericNode<bool> >("enabled")->get();
+    float target = m_autopilot->findOrCreate<NumericNode<float> >("target")->get();
 
     switch(boost::get<Controller::e>(m_autopilot->nodeId())) {
     case Controller::Bearing:

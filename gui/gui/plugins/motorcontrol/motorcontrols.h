@@ -35,13 +35,13 @@ class QLabel;
 namespace cauv {
     namespace gui {
 
-        template<class T> class TypedNumericNode;
-        class NodeBase;
+        template<class T> class NumericNode;
+        class Node;
 
         class MotorBurstController : public QObject {
             Q_OBJECT
         public:
-            MotorBurstController(boost::shared_ptr<TypedNumericNode<int8_t> > motor, int8_t speed);
+            MotorBurstController(boost::shared_ptr<NumericNode<int> > motor, int8_t speed);
 
         public Q_SLOTS:
             void burst();
@@ -49,7 +49,7 @@ namespace cauv {
 
         protected:
             int8_t m_speed;
-            boost::shared_ptr<TypedNumericNode<int8_t> > m_motor;
+            boost::shared_ptr<NumericNode<int> > m_motor;
         };
 
 
@@ -57,7 +57,7 @@ namespace cauv {
             Q_OBJECT
         public:
 
-            AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<NodeBase> autopilot);
+            AutopilotController(QCheckBox *enabled, QDoubleSpinBox *target, QLabel * actual, boost::shared_ptr<Node> autopilot);
 
         public Q_SLOTS:
             void updateTarget(double target);
@@ -65,7 +65,7 @@ namespace cauv {
             void configureTarget();
 
         protected:
-            boost::shared_ptr<NodeBase> m_autopilot;
+            boost::shared_ptr<Node> m_autopilot;
 
             QCheckBox * m_enabled;
             QDoubleSpinBox * m_target;
@@ -92,8 +92,8 @@ namespace cauv {
             int m_autopilotsCount;
 
         protected Q_SLOTS:
-            void addMotor(boost::shared_ptr<NodeBase> motor);
-            void addAutopilot(boost::shared_ptr<NodeBase> ap);
+            void addMotor(boost::shared_ptr<Node> motor);
+            void addAutopilot(boost::shared_ptr<Node> ap);
 
         private:
             Ui::MotorControls * ui;

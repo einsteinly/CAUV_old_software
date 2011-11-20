@@ -42,11 +42,11 @@ namespace cauv {
         public Q_SLOTS:
             void setText(QString const& string);
             QString getText();
-            bool filter(boost::shared_ptr<NodeBase> const& node);
+            bool filter(boost::shared_ptr<Node> const& node);
 
         protected:
             QString m_text;
-            bool containsText(boost::shared_ptr<NodeBase> const& node);
+            bool containsText(boost::shared_ptr<Node> const& node);
 
         Q_SIGNALS:
             void filterChanged();
@@ -66,7 +66,7 @@ namespace cauv {
             void itemEdited(QTreeWidgetItem* item, int column);
             void applyFilters();
             void applyFilters(NodeTreeItemBase *);
-            bool applyFilters(boost::shared_ptr<NodeBase> const&);
+            bool applyFilters(boost::shared_ptr<Node> const&);
 
         Q_SIGNALS:
             void onKeyPressed(QKeyEvent *event);
