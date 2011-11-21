@@ -93,6 +93,7 @@ void CauvMainWindow::onRun()
     // like motor setup, autopilots, etc.. should be
     // defined there not hardcoded into the GUI.
     m_actions->auv = VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
+    m_actions->root = boost::make_shared<VehicleItemModel>(VehicleRegistry::instance());
 
     // cauv node
     m_actions->node = shared_from_this();
@@ -101,7 +102,7 @@ void CauvMainWindow::onRun()
     // elements of the main GUI framework. Here's where we can pass
     // these bits in.
     // NodePicker is exposed
-    m_actions->nodes = new NodePicker(m_actions->auv);
+    m_actions->nodes = new NodePicker(m_actions->root);
     ui->streamsDock->setWidget(m_actions->nodes);
     // And the main window
     m_actions->window = shared_from_this();
@@ -130,11 +131,32 @@ void CauvMainWindow::onRun()
     AINode *node = new AINode();
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     QTreeView * view = new QTreeView();
-    view->setModel(new VehicleItemModel(VehicleRegistry::instance()));
+    QAbstractItemModel * model = new VehicleItemModel(VehicleRegistry::instance());
+    view->setModel(model);
     proxy->setWidget(view);
     node->addItem(proxy);
     node->setResizable(true);
     m_actions->scene->addItem(node);
+
+    AINode *node2 = new AINode();
+    QGraphicsProxyWidget * proxy2 = new QGraphicsProxyWidget();
+    QTreeView * view2 = new QTreeView();
+    view2->setModel(model);
+    proxy2->setWidget(view2);
+    node2->addItem(proxy2);
+    node2->setResizable(true);
+    m_actions->scene->addItem(node2);
+
+
+    AINode *node3 = new AINode();
+    QGraphicsProxyWidget * proxy3 = new QGraphicsProxyWidget();
+    QTreeView * view3 = new QTreeView();
+    QAbstractItemModel * model3 = new VehicleItemModel(VehicleRegistry::instance()->find<Node>("redherring"));
+    view3->setModel(model3);
+    proxy3->setWidget(view3);
+    node3->addItem(proxy3);
+    node3->setResizable(true);
+    m_actions->scene->addItem(node3);
 
     // message input
     this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));

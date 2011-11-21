@@ -23,7 +23,7 @@ using namespace cauv::gui;
 Node::Node(GuiNodeType::e t, nid_t const& id) :
         type(t), m_parent(), m_id(id), m_mutable(false) {
 
-    qRegisterMetaType<boost::shared_ptr<Node> >("boost::shared_ptr<NodeBase>");
+    qRegisterMetaType<boost::shared_ptr<Node> >("boost::shared_ptr<Node>");
 }
 
 Node::~Node(){

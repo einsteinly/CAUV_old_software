@@ -15,7 +15,7 @@
 #ifndef DATASTREAMDISPLAYS_H
 #define DATASTREAMDISPLAYS_H
 
-#include <QTreeWidget>
+#include <QTreeView>
 #include <QKeyEvent>
 
 #include <debug/cauv_debug.h>
@@ -33,7 +33,9 @@ namespace cauv {
 
         class NodeTreeItemBase;
 
-
+        /**
+          * Node filtering by entering a part of the path
+          */
         class NodePathFilter : public QObject, public NodeFilterInterface {
             Q_OBJECT
         public:
@@ -53,44 +55,44 @@ namespace cauv {
         };
 
 
-        class NodeListView : public QTreeWidget{
+        /**
+          * Filterable tree view onto the node model
+          */
+        class NodeTreeView : public QTreeView {
             Q_OBJECT
         public:
-            NodeListView(QWidget * parent);
+            NodeTreeView(QWidget * parent);
             virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
-            void mousePressEvent(QMouseEvent *event);
-            void mouseMoveEvent(QMouseEvent *event);
 
         private Q_SLOTS:
-            void editStarted(QTreeWidgetItem* item, int column);
-            void itemEdited(QTreeWidgetItem* item, int column);
             void applyFilters();
-            void applyFilters(NodeTreeItemBase *);
+            void applyFilters(QModelIndex const&);
             bool applyFilters(boost::shared_ptr<Node> const&);
 
         Q_SIGNALS:
             void onKeyPressed(QKeyEvent *event);
 
         protected:
-            QPoint m_dragStartPosition;
             std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
             void keyPressEvent(QKeyEvent *event);
         };
 
 
-
+        /**
+          * NodeTreeView with a filter entry box above it
+          */
         class NodePicker : public QWidget {
             Q_OBJECT
 
         public:
-            NodePicker(boost::shared_ptr<Vehicle> const& auv);
+            NodePicker(boost::shared_ptr<VehicleItemModel> const& root);
             virtual ~NodePicker();
 
         protected Q_SLOTS:
             void redirectKeyboardFocus(QKeyEvent* key);
 
         protected:
-            boost::shared_ptr<NodeTreeItemBase> m_root;
+            boost::shared_ptr<VehicleItemModel> m_root;
 
         private:
             Ui::NodePicker *ui;

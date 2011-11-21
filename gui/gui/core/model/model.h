@@ -16,6 +16,8 @@
 #define GUI_MODEL_H
 
 #include <QAbstractItemModel>
+#include <QMimeData>
+#include <QUrl>
 
 #include "node.h"
 
@@ -60,12 +62,14 @@ namespace cauv {
         public:
             VehicleItemModel(boost::shared_ptr<Node> root, QObject * parent = 0) :
                 QAbstractItemModel(parent), m_root(root){
+                connect(root.get(), SIGNAL(treeChanged()), this, SIGNAL(layoutChanged()));
             }
 
             Qt::ItemFlags flags(const QModelIndex &index) const{
                 void * ptr = index.internalPointer();
                 Node * node = static_cast<Node *>(ptr);
-                if(node->isMutable()) return QAbstractItemModel::flags(index) & Qt::ItemIsEditable;
+                if(index.column()!=0 && node->isMutable()) // column 0 is the node name which can't be chaged
+                    return QAbstractItemModel::flags(index) | Qt::ItemIsEditable;
                 else return QAbstractItemModel::flags(index);
             }
 
@@ -75,13 +79,13 @@ namespace cauv {
                 Node * node = static_cast<Node *>(ptr);
 
                 switch (role){
+                case Qt::EditRole:
                 case Qt::DisplayRole:
-                    return QVariant(QString::fromStdString(node->nodeName()));
+                    if (index.column() == 0)
+                        return QVariant(QString::fromStdString(node->nodeName()));
+                    else return node->get();
                 break;
                 case Qt::DecorationRole:
-                break;
-                case Qt::EditRole:
-                    return QVariant(QString::fromStdString(node->nodePath()));
                 break;
                 case Qt::ToolTipRole:
                     return QVariant(QString::fromStdString(node->nodePath()));
@@ -116,16 +120,14 @@ namespace cauv {
                 Q_UNUSED(orientation);
 
                 switch (role){
+                case Qt::ToolTipRole:
+                case Qt::EditRole:
                 case Qt::DisplayRole:
-                    return QString(section);
+                    if (orientation == Qt::Horizontal && section == 0) return "Name";
+                    if (orientation == Qt::Horizontal && section == 1) return "Value";
+                    else return QString("%1").arg(section);
                 break;
                 case Qt::DecorationRole:
-                break;
-                case Qt::EditRole:
-                    return QString(section);
-                break;
-                case Qt::ToolTipRole:
-                    return QString(section);
                 break;
                 case Qt::StatusTipRole:
                 break;
@@ -152,6 +154,46 @@ namespace cauv {
                 return QVariant();
             }
 
+            bool setData ( const QModelIndex & index, const QVariant & value, int role = Qt::EditRole ){
+
+                void * ptr = index.internalPointer();
+                Node * node = static_cast<Node *>(ptr);
+
+                switch (role){
+                case Qt::DisplayRole:
+                    // can't be edited
+                break;
+                case Qt::EditRole:
+                    node->set(value);
+                    Q_EMIT dataChanged(index, index);
+                    return true;
+                break;
+                default: break;
+                }
+                return false;
+            }
+
+            QMimeData * mimeData ( const QModelIndexList & indexes ) const {
+
+                QMimeData *mimeData = new QMimeData;
+                QList<QUrl> urls;
+
+                foreach (QModelIndex const & index, indexes){
+                    // get path from the node
+                    Node * node = static_cast<Node *>(index.internalPointer());
+                    QUrl url = QUrl();
+                    url.setScheme("varstream");
+                    boost::shared_ptr<Vehicle> vehicleNode = node->getClosestParentOfType<Vehicle>();
+                    url.setHost(QString::fromStdString(vehicleNode->nodeName()));
+                    url.setPath(QString::fromStdString(node->nodePath()).remove(url.host().prepend("/")));
+                    urls.append(url);
+                    debug(5) << url.toString().toStdString() << "added to drag";
+                }
+
+                mimeData->setUrls(urls);
+                return mimeData;
+            }
+
 
             int rowCount ( const QModelIndex & parent = QModelIndex() ) const {
                 Node *parentItem;
@@ -168,6 +210,8 @@ namespace cauv {
                 // !!! todo: variable column sizes
                 return 2;
             }
+
+
 
             QModelIndex parent(const QModelIndex &child) const {
                 if (!child.isValid())

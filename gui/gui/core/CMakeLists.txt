@@ -46,7 +46,6 @@ set ( GUI_CORE_SRCS
     controller/messageobserver.cpp
     controller/messagegenerators.cpp
     framework/nodepicker.cpp
-    framework/treeitems.cpp
     framework/mainwindow.cpp
     framework/nodescene.cpp
     framework/elements/aiNode.cpp
@@ -81,7 +80,6 @@ set ( GUI_CORE_H
     model/nodes/vehiclenode.h
     controller/messagegenerators.h
     framework/nodepicker.h
-    framework/treeitems.h
     framework/mainwindow.h
     framework/elements/aiNode.h
     #framework/elements/nodeInput.h
