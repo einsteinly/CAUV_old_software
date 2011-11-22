@@ -18,6 +18,8 @@
 
 #include <utility/bash_cout.h>
 
+#include "slamCloud.h"
+
 namespace cauv{
 namespace imgproc{
 // register this node type in the factory thing that creates nodes
@@ -30,7 +32,7 @@ using namespace cauv;
 using namespace cauv::imgproc;
 
 typedef pcl::PointXYZ pt_t;
-typedef pcl::PointCloud<pt_t> cloud_t;
+typedef SlamCloud<pt_t> cloud_t;
 // actually a boost shared_ptr:
 typedef cloud_t::Ptr cloud_ptr;
 
@@ -39,15 +41,6 @@ static uint32_t Min_Initial_Points = 10;
 // avoid including PCL stuff in the header:
 namespace cauv{
 namespace imgproc{
-
-struct SavedCloud{
-    SavedCloud(cloud_ptr p, Eigen::Matrix4f const& m)
-        : transformed_cloud(p), transformation(m){
-    }
-    cloud_ptr       transformed_cloud;
-    Eigen::Matrix4f transformation;
-};
-typedef boost::shared_ptr<SavedCloud> saved_cloud_ptr;
 
 static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
     // split transform into affine parts:
@@ -90,13 +83,14 @@ class SonarSLAMImpl{
             m_vis_buffer = cv::Mat(cv::Size(Vis_Res,Vis_Res), CV_8UC1, cv::Scalar(0));
         }
 
-        void addNewCloud(cloud_ptr cloud, Eigen::Matrix4f const& transformation){
+        void addNewCloud(cloud_ptr cloud,
+                         float point_merge_distance){
             // TODO: propagate sonar timestamp with keypoints... somehow... and use
             // that instead of an index
             static uint32_t cloud_num = 0;
-            clouds[++cloud_num] = boost::make_shared<SavedCloud>(cloud, transformation);
-            last_transformation = transformation;
-            *(whole_cloud) += *cloud;
+            clouds[++cloud_num] = cloud;
+            whole_cloud->merge(cloud, point_merge_distance);
+            last_transformation = cloud->transformation();            
             last_cloud = cloud;
 
             #ifdef CAUV_CLOUD_VISUALISATION
@@ -131,8 +125,8 @@ class SonarSLAMImpl{
                     img.at<uint8_t>(int(0.5+img_origin[0]+x),int(0.5+img_origin[1]+y)) = 0xff;
 
             cv::warpAffine(img, tmp, tr, m_vis_buffer.size(), CV_INTER_LINEAR);
-            for(uint32_t i = 0; i < Vis_Res; i++)
-                for(uint32_t j = 0; j < Vis_Res; j++)
+            for(int i = 0; i < Vis_Res; i++)
+                for(int j = 0; j < Vis_Res; j++)
                     m_vis_buffer.at<uint8_t>(i,j) = minMaxScreenBlend(m_vis_buffer.at<uint8_t>(i,j), tmp.at<uint8_t>(i,j));
         }
 
@@ -156,7 +150,7 @@ class SonarSLAMImpl{
     public:
         cloud_ptr whole_cloud;
         cloud_ptr last_cloud;
-        std::map<uint32_t,saved_cloud_ptr> clouds;
+        std::map<uint32_t,cloud_ptr> clouds;
         Eigen::Matrix4f last_transformation;
         #ifdef CAUV_CLOUD_VISUALISATION
         boost::shared_ptr<pcl::visualization::CloudViewer> viewer;
@@ -217,7 +211,7 @@ static cv::Mat renderCloud(
     for(size_t i = 0; i < cloud.size(); i++)
         drawX(r, 3, cloud[i].x, cloud[i].y, min, step, draw_weight? cloud[i].getVector4fMap()[3] : 0xff);
     
-    drawX(r, 21, cloud.points.back().x, cloud.points.back().y, min, step, 0xff);
+    drawX(r, 21, cloud.back().x, cloud.back().y, min, step, 0xff);
 
     // draw axes
     drawX(r, 7, 0, 0, min, step, 64);
@@ -230,11 +224,11 @@ static cv::Mat renderCloud(
     return r;
 }
 
-struct CompareKPByIntensity{
+/*struct CompareKPByIntensity{
     bool operator()(pt_t const& l, pt_t const& r) const{
         return l.getVector4fMap()[3] < r.getVector4fMap()[3];
     }
-};
+};*/
 
 static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
                             Eigen::Matrix4f const& initial_transform,
@@ -250,26 +244,27 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
     cloud_ptr r = boost::make_shared<cloud_t>();
     r->height = 1;
     r->is_dense = true;
-    r->points.reserve(kps.size());
+    r->reserve(kps.size());
 
     bool warned_non_planar = false;
     for(size_t i = 0; i < kps.size(); i++){
         if(kps[i].response > weight_test){
             r->points.push_back(pt_t());
+            r->descriptors().push_back(kps[i].response);
             pt_t temp(kps[i].pt.x, kps[i].pt.y, 0.0f);
-            r->points.back().getVector3fMap() = rotate * temp.getVector3fMap() + translate;
-            //r->points.back().getVector4fMap()[3] = kps[i].response;
+            r->back().getVector3fMap() = rotate * temp.getVector3fMap() + translate;
+            //r->back().getVector4fMap()[3] = kps[i].response;
             
             /*
             #warning debug sanity check:
             Eigen::Vector4f sc = initial_transform * Eigen::Vector4f(kps[i].pt.x, kps[i].pt.y, 0, 1);
-            Eigen::Vector3f rb = r->points.back().getVector3fMap();
+            Eigen::Vector3f rb = r->back().getVector3fMap();
             if((sc.block<3,1>(0,0) - rb).norm() > 1e-5)
                 warning() << "check:"<< sc[0] << "," << sc[1] << "," << sc[2]
                           << " != "  << rb[0] << "," << rb[1] << "," << rb[2];
             */
 
-            if(!warned_non_planar && r->points[i].z != 0){
+            if(!warned_non_planar && (*r)[i].z != 0){
                 warned_non_planar = true;
                 warning() << "non-planar!";
             }
@@ -277,16 +272,16 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
     }
     /*
     #warning hack: ensure cloud includes untransformed origin
-    r->points.push_back(pt_t());
-    r->points.back().getVector3fMap() = rotate * Eigen::Vector3f(0,0,0) + translate;
+    r->push_back(pt_t());
+    r->back().getVector3fMap() = rotate * Eigen::Vector3f(0,0,0) + translate;
     */
-    r->width = r->points.size();
+    r->width = r->size();
 
-    //std::sort(r->points.rbegin(), r->points.rend(), CompareKPByIntensity());
+    //std::sort(r->rbegin(), r->rend(), CompareKPByIntensity());
 
     //debug d;
     //d << "sorted kps: {";
-    //foreach(pt_t const& pt, r->points)
+    //foreach(pt_t const& pt, *r)
     //    d <<"("<< pt.getVector4fMap()[3] <<":"<< pt.x <<","<< pt.y <<","<< pt.z <<"),";
     //d << "}";
 
@@ -317,10 +312,8 @@ void SonarSLAMNode::init(){
     registerParamID("max correspond dist", float(5), "");
     registerParamID("score threshold", float(1), "keypoint set will be rejected if mean distance error is greater than this");
     registerParamID("weight test", float(25), "keypoints with weights greater than this will be used for registration");
+    registerParamID("feature merge distance", float(0.2), "keypoints closer to each other than this will be merged");
 
-    //registerParamID("-render origin x", float(-20));
-    //registerParamID("-render origin y", float(-20));
-    //registerParamID("-render res", float(0.1));
     registerParamID("-render size", float(400));
 
     // outputs:
@@ -336,17 +329,16 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     if(clear)
         m_impl->reset();
 
-    const int max_iters = param<int>("max iters");
-    const float euclidean_fitness = param<float>("euclidean fitness");
-    const float transform_eps = param<float>("transform eps");
-    const float reject_threshold = param<float>("reject threshold");
+    const int   max_iters   = param<int>("max iters");
+    const float euclidean_fitness   = param<float>("euclidean fitness");
+    const float transform_eps       = param<float>("transform eps");
+    const float reject_threshold    = param<float>("reject threshold");
     const float max_correspond_dist = param<float>("max correspond dist");
-    const float score_thr = param<float>("score threshold");
+    const float score_thr   = param<float>("score threshold");
     const float delta_theta = param<float>("delta theta");
     const float weight_test = param<float>("weight test");
+    const float point_merge_distance = param<float>("feature merge distance");
 
-    //const Eigen::Vector2f render_origin(param<float>("-render origin x"),param<float>("-render origin y"));
-    //const Eigen::Vector2f render_step(param<float>("-render res"),param<float>("-render res"));
     const Eigen::Vector2i render_sz(param<float>("-render size"),param<float>("-render size"));
 
     const float m_per_pix = param<float>("xy metres/px");
@@ -369,9 +361,9 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     );
 
     if(!m_impl->whole_cloud){
-        if(new_cloud->points.size() > Min_Initial_Points){
+        if(new_cloud->size() > Min_Initial_Points){
             info() << BashColour::Green
-                   << "new cloud with" << new_cloud->points.size() << "points";
+                   << "new cloud with" << new_cloud->size() << "points";
             m_impl->init(new_cloud);
             debug(3) << "transformation is:\n" << m_impl->last_transformation;
 
@@ -381,18 +373,18 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         }else{
             r["whole cloud vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
             debug() << "not enough points ("
-                    << new_cloud->points.size() << "<" << Min_Initial_Points
+                    << new_cloud->size() << "<" << Min_Initial_Points
                     << ") to initialise whole cloud";
         }
         r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
     }else{
-        debug() << "trying to match" << new_cloud->points.size() << "points to cloud";
+        debug() << "trying to match" << new_cloud->size() << "points to cloud";
 
         //pcl::IterativeClosestPointNonLinear<pt_t,pt_t> icp;
         pcl::IterativeClosestPoint<pt_t,pt_t> icp;
         icp.setInputCloud(new_cloud);
-        //icp.setInputTarget(m_impl->whole_cloud);
-        icp.setInputTarget(m_impl->last_cloud);
+        icp.setInputTarget(m_impl->whole_cloud);
+        //icp.setInputTarget(m_impl->last_cloud);
 
         icp.setMaxCorrespondenceDistance(max_correspond_dist);
         icp.setMaximumIterations(max_iters);
@@ -402,7 +394,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
 
         /* weight-test using indices vector:
         boost::shared_ptr< std::vector<int> >indices = boost::make_shared<std::vector<int> >();
-        for(size_t i =0; i < new_cloud->points.size(); i++)
+        for(size_t i =0; i < new_cloud->size(); i++)
             if(new_cloud->points[i].getVector4fMap()[3] > weight_test)
                 indices->push_back(i);
         debug() << indices->size() << "points pass weight test";
@@ -413,9 +405,13 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         cloud_ptr final = boost::make_shared<cloud_t>();
         icp.align(*final);
 
+        // icp doesn't copy data in the derived class...
+        final->descriptors() = new_cloud->descriptors();
+
         // guess was applied before icp determined to remaining transformation,
         // so post-multiply (ie, apply guess first)
         Eigen::Matrix4f final_transform = icp.getFinalTransformation() * guess;
+        final->transformation() = final_transform;
         
         /*
         debug() << "guess:\n" << guess;
@@ -424,7 +420,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
 
         // sanity check final transform:
         Eigen::Vector4f sc = final_transform * Eigen::Vector4f(0,0,0,1);
-        Eigen::Vector3f torg = final->points.back().getVector3fMap();
+        Eigen::Vector3f torg = final->back().getVector3fMap();
         if((sc.block<3,1>(0,0) - torg).norm() > 1e-6)
             warning() << "final transformation sanity check failed:"
                       << sc[0] << "," << sc[1] << "," << sc[2] << "!="
@@ -438,7 +434,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
                << "score:" << score;
         debug(3) << "transformation:\n" << final_transform;
         if(icp.hasConverged() && score < score_thr){
-            m_impl->addNewCloud(final, final_transform);
+            m_impl->addNewCloud(final, point_merge_distance);
             if(xy_image){
                 m_impl->updateVis(xy_image->mat(), final_transform, m_per_pix);
                 r["mosaic"] = boost::make_shared<Image>(m_impl->vis());

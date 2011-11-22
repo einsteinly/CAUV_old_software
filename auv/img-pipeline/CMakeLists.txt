@@ -11,20 +11,35 @@ endif()
 
 option (CAUV_POINTCLOUDS "Use PCL (enables sonar SLAM)" OFF)
 option (CAUV_CLOUD_DUMP "Dump point-clouds to file" OFF)
+option (CAUV_CLOUD_VISUALISATION "Local vis for clouds - means sonarSLAM needs an x-server!" OFF)
 
 if (CAUV_POINTCLOUDS)
+    set (REQ_PCL_COMPONENTS common registration kdtree)
+    
     if (CAUV_CLOUD_DUMP)
-        find_package (PCL REQUIRED COMPONENTS common registration kdtree io)
+        set (REQ_PCL_COMPONENTS ${REQ_PCL_COMPONENTS} io)
+    endif ()
+    if (CAUV_CLOUD_VISUALISATION)
+        set (REQ_PCL_COMPONENTS ${REQ_PCL_COMPONENTS} visualization)
+    endif ()
+
+    find_package (PCL REQUIRED COMPONENTS ${REQ_PCL_COMPONENTS})
+
+    if (CAUV_CLOUD_DUMP)
         set (PCL_LIBS ${PCL_COMMON_LIBRARIES}
                       ${PCL_REGISTRATION_LIBRARIES}
                       ${PCL_KDTREE_LIBRARIES}
                       ${PCL_IO_LIBRARIES})
         add_definitions (-DCAUV_CLOUD_DUMP)
     else ()
-        find_package (PCL REQUIRED COMPONENTS common registration kdtree) 
         set (PCL_LIBS ${PCL_COMMON_LIBRARIES}
                       ${PCL_REGISTRATION_LIBRARIES}
                       ${PCL_KDTREE_LIBRARIES})
+    endif()
+
+    if (CAUV_CLOUD_VISUALISATION)
+        add_definitions(-DCAUV_CLOUD_VISUALISATION)
+        set (PCL_LIBS ${PCL_LIBS} ${PCL_VISUALIZATION_LIBRARIES})
     endif()
 
     include_directories (${PCL_INCLUDE_DIRS})
