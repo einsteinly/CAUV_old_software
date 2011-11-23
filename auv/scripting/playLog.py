@@ -120,6 +120,7 @@ if __name__ == '__main__':
         help='start time: offset seconds or absolute %s' % Strptime_Fmt)
     p.add_argument('-r', '--rate', dest='rate', type=str, default='x1',
         help='messages per second (x1 for real-time, 2 for 2 messages per second)')
+    p.add_argument('-p', '--profile', dest='profile', default=False, action='store_true')
     opts, unknown_args = p.parse_known_args()
     
     tstart = opts.start_t
@@ -132,6 +133,13 @@ if __name__ == '__main__':
     
     node = cauv.node.Node('py-play',unknown_args)
     try:
-        play(opts.file, node, tstart, rt_rate, fixed_rate)
+        def playBound():
+            play(opts.file, node, tstart, rt_rate, fixed_rate)
+        if opts.profile:
+            import profilehooks
+            f = opts.file.replace('/', '-').replace('.','')
+            profilehooks.profile(playBound,filename='playLog-%s.profile' % f,)()
+        else:
+            playBound()
     finally:
         node.stop()
