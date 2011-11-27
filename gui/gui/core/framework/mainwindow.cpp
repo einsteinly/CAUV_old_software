@@ -93,7 +93,7 @@ void CauvMainWindow::onRun()
     // like motor setup, autopilots, etc.. should be
     // defined there not hardcoded into the GUI.
     m_actions->auv = VehicleRegistry::instance()->registerVehicle<RedHerring>("redherring");
-    m_actions->root = boost::make_shared<VehicleItemModel>(VehicleRegistry::instance());
+    m_actions->root = boost::make_shared<NodeItemModel>(VehicleRegistry::instance());
 
     // cauv node
     m_actions->node = shared_from_this();
@@ -131,7 +131,7 @@ void CauvMainWindow::onRun()
     AINode *node = new AINode();
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
     QTreeView * view = new QTreeView();
-    QAbstractItemModel * model = new VehicleItemModel(VehicleRegistry::instance());
+    QAbstractItemModel * model = new NodeItemModel(VehicleRegistry::instance());
     view->setModel(model);
     proxy->setWidget(view);
     node->addItem(proxy);
@@ -151,7 +151,7 @@ void CauvMainWindow::onRun()
     AINode *node3 = new AINode();
     QGraphicsProxyWidget * proxy3 = new QGraphicsProxyWidget();
     QTreeView * view3 = new QTreeView();
-    QAbstractItemModel * model3 = new VehicleItemModel(VehicleRegistry::instance()->find<Node>("redherring"));
+    QAbstractItemModel * model3 = new NodeItemModel(VehicleRegistry::instance()->find<Node>("redherring"));
     view3->setModel(model3);
     proxy3->setWidget(view3);
     node3->addItem(proxy3);

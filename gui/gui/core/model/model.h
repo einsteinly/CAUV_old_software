@@ -53,14 +53,11 @@ namespace cauv {
 
 
 
-
-
-
-        class VehicleItemModel : public QAbstractItemModel {
+        class NodeItemModel : public QAbstractItemModel {
             Q_OBJECT
 
         public:
-            VehicleItemModel(boost::shared_ptr<Node> root, QObject * parent = 0) :
+            NodeItemModel(boost::shared_ptr<Node> root, QObject * parent = 0) :
                 QAbstractItemModel(parent), m_root(root){
                 connect(root.get(), SIGNAL(treeChanged()), this, SIGNAL(layoutChanged()));
             }
@@ -69,8 +66,8 @@ namespace cauv {
                 void * ptr = index.internalPointer();
                 Node * node = static_cast<Node *>(ptr);
                 if(index.column()!=0 && node->isMutable()) // column 0 is the node name which can't be chaged
-                    return QAbstractItemModel::flags(index) | Qt::ItemIsEditable;
-                else return QAbstractItemModel::flags(index);
+                    return QAbstractItemModel::flags(index) | Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
+                else return QAbstractItemModel::flags(index) | Qt::ItemIsDragEnabled;
             }
 
             QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const {
@@ -154,7 +151,7 @@ namespace cauv {
                 return QVariant();
             }
 
-            bool setData ( const QModelIndex & index, const QVariant & value, int role = Qt::EditRole ){
+            bool setData ( const QModelIndex & index, const QVariant & value, int role = Qt::EditRole ) {
 
                 void * ptr = index.internalPointer();
                 Node * node = static_cast<Node *>(ptr);
@@ -179,21 +176,22 @@ namespace cauv {
                 QList<QUrl> urls;
 
                 foreach (QModelIndex const & index, indexes){
-                    // get path from the node
-                    Node * node = static_cast<Node *>(index.internalPointer());
-                    QUrl url = QUrl();
-                    url.setScheme("varstream");
-                    boost::shared_ptr<Vehicle> vehicleNode = node->getClosestParentOfType<Vehicle>();
-                    url.setHost(QString::fromStdString(vehicleNode->nodeName()));
-                    url.setPath(QString::fromStdString(node->nodePath()).remove(url.host().prepend("/")));
-                    urls.append(url);
-                    debug(5) << url.toString().toStdString() << "added to drag";
+                    if(index.column() == 0) {
+                        // get path from the node
+                        Node * node = static_cast<Node *>(index.internalPointer());
+                        QUrl url = QUrl();
+                        url.setScheme("varstream");
+                        boost::shared_ptr<Vehicle> vehicleNode = node->getClosestParentOfType<Vehicle>();
+                        url.setHost(QString::fromStdString(vehicleNode->nodeName()));
+                        url.setPath(QString::fromStdString(node->nodePath()).remove(url.host().prepend("/")));
+                        urls.append(url);
+                        debug(5) << url.toString().toStdString() << "added to drag";
+                    }
                 }
 
                 mimeData->setUrls(urls);
                 return mimeData;
             }
-
 
             int rowCount ( const QModelIndex & parent = QModelIndex() ) const {
                 Node *parentItem;
@@ -205,13 +203,10 @@ namespace cauv {
                 return parentItem->getChildren().size();
             }
 
-            int columnCount(const QModelIndex &/*parent*/) const
-            {
+            int columnCount(const QModelIndex &/*parent*/) const {
                 // !!! todo: variable column sizes
                 return 2;
             }
-
-
 
             QModelIndex parent(const QModelIndex &child) const {
                 if (!child.isValid())
@@ -265,10 +260,6 @@ namespace cauv {
             boost::shared_ptr<Node> m_root;
 
         };
-
-
-
-
 
 
     } // namespace gui

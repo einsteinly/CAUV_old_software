@@ -93,7 +93,7 @@ bool NodePathFilter::filter(boost::shared_ptr<Node> const& node){
 }
 
 
-NodePicker::NodePicker(boost::shared_ptr<VehicleItemModel> const& root) :
+NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
      m_root(root), ui(new Ui::NodePicker())
 {
     ui->setupUi(this);

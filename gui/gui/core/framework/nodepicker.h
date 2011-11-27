@@ -85,14 +85,14 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            NodePicker(boost::shared_ptr<VehicleItemModel> const& root);
+            NodePicker(boost::shared_ptr<NodeItemModel> const& root);
             virtual ~NodePicker();
 
         protected Q_SLOTS:
             void redirectKeyboardFocus(QKeyEvent* key);
 
         protected:
-            boost::shared_ptr<VehicleItemModel> m_root;
+            boost::shared_ptr<NodeItemModel> m_root;
 
         private:
             Ui::NodePicker *ui;

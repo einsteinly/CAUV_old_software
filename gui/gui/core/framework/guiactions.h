@@ -36,7 +36,7 @@ namespace cauv {
         class NodePicker;
         class CauvMainWindow;
         class NodeScene;
-        class VehicleItemModel;
+        class NodeItemModel;
 
         struct GuiActions {
             // weak ptrs to window (which is actually the same as node)
@@ -46,7 +46,7 @@ namespace cauv {
 
             // models
             boost::shared_ptr<Vehicle> auv;
-            boost::shared_ptr<VehicleItemModel> root;
+            boost::shared_ptr<NodeItemModel> root;
             boost::shared_ptr<NodeScene> scene;
 
             // gui elements
