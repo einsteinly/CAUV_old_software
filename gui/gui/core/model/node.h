@@ -136,13 +136,17 @@ namespace cauv {
             virtual void update(QVariant const& value){
                 m_value = value;
                 Q_EMIT onUpdate(value);
+                Q_EMIT onUpdate();
+                debug() << nodePath() << "updated to " << value.toString().toStdString();
             }
 
-            virtual void set(QVariant const& value){
+            virtual bool set(QVariant const& value){
                 debug(0) << nodePath() << "set to" << value.toString().toStdString();
                 update(value);
-                Q_EMIT changed();
                 Q_EMIT onSet(value);
+                Q_EMIT onSet();
+                Q_EMIT onBranchChanged();
+                return true;
             }
 
             virtual const QVariant get() const{
@@ -150,11 +154,15 @@ namespace cauv {
             }
 
         Q_SIGNALS:
+            // strctural signals
             void nodeAdded(boost::shared_ptr<Node> node);
-            void treeChanged();
-            void changed();
+            void structureChanged();
+            // data change signals
+            void onBranchChanged();
             void onUpdate(QVariant const& value);
+            void onUpdate();
             void onSet(QVariant const& value);
+            void onSet();
 
 
         protected:

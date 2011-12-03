@@ -52,6 +52,29 @@ namespace cauv {
         };
 
 
+        class ModelIndexUpdateNotfication : public QObject {
+            Q_OBJECT
+        public:
+            ModelIndexUpdateNotfication(QModelIndex start, QModelIndex end) :
+                m_start(start), m_end(end) {
+
+                debug() << "ModelIndexUpdateNotification()";
+
+            }
+
+        public Q_SLOTS:
+            void update(){
+                debug() << "update called";
+                Q_EMIT onUpdate(m_start, m_end);
+            }
+
+            Q_SIGNALS:
+            void onUpdate(QModelIndex start, QModelIndex end);
+
+        protected:
+            QModelIndex m_start, m_end;
+        };
+
 
         class NodeItemModel : public QAbstractItemModel {
             Q_OBJECT
@@ -59,7 +82,8 @@ namespace cauv {
         public:
             NodeItemModel(boost::shared_ptr<Node> root, QObject * parent = 0) :
                 QAbstractItemModel(parent), m_root(root){
-                connect(root.get(), SIGNAL(treeChanged()), this, SIGNAL(layoutChanged()));
+                connect(root.get(), SIGNAL(structureChanged()), this, SIGNAL(layoutChanged()));
+                createUpdater(root);
             }
 
             Qt::ItemFlags flags(const QModelIndex &index) const{
@@ -161,9 +185,11 @@ namespace cauv {
                     // can't be edited
                 break;
                 case Qt::EditRole:
-                    node->set(value);
-                    Q_EMIT dataChanged(index, index);
-                    return true;
+                    if (node->set(value))
+                    {
+                        Q_EMIT dataChanged(index, index);
+                        return true;
+                    }
                 break;
                 default: break;
                 }
@@ -256,9 +282,35 @@ namespace cauv {
                 }
             }
 
+        protected Q_SLOTS:
+            void createUpdater(boost::shared_ptr<Node> node){
+
+                int row = 0;
+                try {
+                    foreach (boost::shared_ptr<Node> const& child, node->getParent()->getChildren()){
+                        if (child.get() == node.get()) break;
+                        row++;
+                    }
+                } catch (std::out_of_range) {}
+
+                debug() << "CREATING UPDATER FOR " << node->nodePath();
+                QModelIndex index = createIndex(row, 1, node.get());
+
+                // !!! todo: fix memory leak
+                ModelIndexUpdateNotfication * updater = new ModelIndexUpdateNotfication(index, index);
+                node->connect(node.get(), SIGNAL(onUpdate()), updater, SLOT(update()));
+                this->connect(updater, SIGNAL(onUpdate(QModelIndex,QModelIndex)), this, SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+
+                foreach (boost::shared_ptr<Node> const & child, node->getChildren()){
+                    createUpdater(child);
+                }
+
+                connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(createUpdater(boost::shared_ptr<Node>)));
+            }
+
+
         protected:
             boost::shared_ptr<Node> m_root;
-
         };
 
 

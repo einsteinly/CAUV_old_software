@@ -72,11 +72,11 @@ void Node::addChild(boost::shared_ptr<Node> const& child){
     child->moveToThread(this->thread());
 
     // propagate changes upwards
-    child->connect(child.get(), SIGNAL(changed()), this, SIGNAL(changed()));
-    child->connect(child.get(), SIGNAL(treeChanged()), this, SIGNAL(treeChanged()));
+    child->connect(child.get(), SIGNAL(onBranchChanged()), this, SIGNAL(onBranchChanged()));
+    child->connect(child.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
 
     Q_EMIT nodeAdded(child);
-    Q_EMIT treeChanged();
+    Q_EMIT structureChanged();
 }
 
 const Node::children_list_t Node::getChildren() const {

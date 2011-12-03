@@ -120,7 +120,14 @@ namespace cauv {
                 } else return value;
             }
 
-            virtual void set(T const& value){
+
+            virtual bool set(QVariant const& value){
+                return set(value.value<T>());
+            }
+
+            virtual bool set(T const& value){
+                debug() << "NumericNode::set() cleaning value";
+
                 // validate the input as this has come from
                 // a user.
 
@@ -140,7 +147,7 @@ namespace cauv {
                         cleanVal = getMin();
                 }
 
-                NumericNodeBase::set(cleanVal);
+                return NumericNodeBase::set(cleanVal);
             }
 
             virtual T getMax() {

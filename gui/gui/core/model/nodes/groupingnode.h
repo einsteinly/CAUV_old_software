@@ -34,8 +34,8 @@ namespace cauv {
                 Q_EMIT onUpdate(value);
             }
 
-            virtual void set(QString const& value){
-                Node::set(value);
+            virtual bool set(QString const& value){
+                return Node::set(value);
             }
 
         Q_SIGNALS:

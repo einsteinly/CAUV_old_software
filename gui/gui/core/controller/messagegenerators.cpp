@@ -34,11 +34,11 @@ MessageGenerator::MessageGenerator(boost::shared_ptr<Node> auv) :
 MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<NumericNode<int> > motor):
         MessageGenerator(auv), m_id(boost::get<MotorID::e>(motor->nodeId()))
 {
-    connect(motor.get(), SIGNAL(onSet(int)), this, SLOT(send(int)));
+    connect(motor.get(), SIGNAL(onSet(QVariant)), this, SLOT(send(QVariant)));
 }
 
-void MotorMessageGenerator::send(int value){
-    Q_EMIT messageGenerated(boost::make_shared<MotorMessage>(m_id, (int8_t) value));
+void MotorMessageGenerator::send(QVariant value){
+    Q_EMIT messageGenerated(boost::make_shared<MotorMessage>(m_id, (int8_t) value.toInt()));
 }
 
 
@@ -46,7 +46,7 @@ void MotorMessageGenerator::send(int value){
 AutopilotMessageGenerator::AutopilotMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<Node> autopilot):
         MessageGenerator(auv), m_autopilot(autopilot)
 {
-    connect(autopilot.get(), SIGNAL(changed()), this, SLOT(send()));
+    connect(autopilot.get(), SIGNAL(onBranchChanged()), this, SLOT(send()));
 }
 
 void AutopilotMessageGenerator::send(){

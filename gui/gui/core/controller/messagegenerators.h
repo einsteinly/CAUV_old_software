@@ -53,7 +53,7 @@ namespace cauv {
             MotorMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<NumericNode<int> > motor);
 
         protected Q_SLOTS:
-            void send(int value);
+            void send(QVariant value);
 
         protected:
             MotorID::e m_id;

@@ -133,6 +133,8 @@ void CauvMainWindow::onRun()
     QTreeView * view = new QTreeView();
     QAbstractItemModel * model = new NodeItemModel(VehicleRegistry::instance());
     view->setModel(model);
+    view->setHeaderHidden(true);
+    view->setDragEnabled(true);
     proxy->setWidget(view);
     node->addItem(proxy);
     node->setResizable(true);
@@ -142,6 +144,8 @@ void CauvMainWindow::onRun()
     QGraphicsProxyWidget * proxy2 = new QGraphicsProxyWidget();
     QTreeView * view2 = new QTreeView();
     view2->setModel(model);
+    view2->setHeaderHidden(true);
+    view2->setDragEnabled(true);
     proxy2->setWidget(view2);
     node2->addItem(proxy2);
     node2->setResizable(true);
@@ -153,6 +157,8 @@ void CauvMainWindow::onRun()
     QTreeView * view3 = new QTreeView();
     QAbstractItemModel * model3 = new NodeItemModel(VehicleRegistry::instance()->find<Node>("redherring"));
     view3->setModel(model3);
+    view3->setHeaderHidden(true);
+    view3->setDragEnabled(true);
     proxy3->setWidget(view3);
     node3->addItem(proxy3);
     node3->setResizable(true);

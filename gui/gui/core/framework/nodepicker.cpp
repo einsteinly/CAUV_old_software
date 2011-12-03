@@ -119,7 +119,7 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     // if the tree changes whilst we're being filtered we need to re-apply filters
     QModelIndex index = root->index(0,0,QModelIndex());
     Node * rootNode = static_cast<Node*>(index.internalPointer());
-    root->connect(rootNode, SIGNAL(treeChanged()), ui->view, SLOT(applyFilters()));
+    root->connect(rootNode, SIGNAL(structureChanged()), ui->view, SLOT(applyFilters()));
 
     // if the list is in focus (but keystrokes are not swalled by an edit box) then
     // redirect focus so the filter gets the key events
