@@ -58,13 +58,12 @@ namespace cauv {
             ModelIndexUpdateNotfication(QModelIndex start, QModelIndex end) :
                 m_start(start), m_end(end) {
 
-                debug() << "ModelIndexUpdateNotification()";
+                debug(4) << "ModelIndexUpdateNotification()";
 
             }
 
         public Q_SLOTS:
             void update(){
-                debug() << "update called";
                 Q_EMIT onUpdate(m_start, m_end);
             }
 
@@ -293,7 +292,6 @@ namespace cauv {
                     }
                 } catch (std::out_of_range) {}
 
-                debug() << "CREATING UPDATER FOR " << node->nodePath();
                 QModelIndex index = createIndex(row, 1, node.get());
 
                 // !!! todo: fix memory leak
