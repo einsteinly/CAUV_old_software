@@ -143,7 +143,46 @@ NodePicker::~NodePicker(){
 }
 
 
+
+struct ProgressBarDelegate : public QStyledItemDelegate {
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+                               const QModelIndex &index) const
+    {
+        if (index.column() == 1) {
+            int progress = index.data().toInt();
+
+            QStyleOptionProgressBar progressBarOption;
+            progressBarOption.rect = option.rect;
+            progressBarOption.minimum = 0;
+            progressBarOption.maximum = 100;
+            progressBarOption.progress = progress;
+            progressBarOption.text = QString::number(progress) + "%";
+            progressBarOption.textVisible = true;
+
+            QApplication::style()->drawControl(QStyle::CE_ProgressBar,
+                                               &progressBarOption, painter);
+        } else
+            QStyledItemDelegate::paint(painter, option, index);
+
+    }
+};
+
+
+boost::shared_ptr<QAbstractItemDelegate> NodeDelegateFactory::getDelegateFor(boost::shared_ptr<Node> node){
+    switch (node->type) {
+    case GuiNodeType::NumericNode:
+        return boost::make_shared<ProgressBarDelegate>();
+        break;
+    default: return boost::make_shared<QStyledItemDelegate>();
+    }
+}
+
+
+
 NodeTreeView::NodeTreeView(QWidget *) {
+    header()->hide();
+    NodeDelegate *delegate = new NodeDelegate(this);
+    setItemDelegate(delegate);
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){

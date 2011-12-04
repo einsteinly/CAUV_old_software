@@ -137,11 +137,11 @@ namespace cauv {
                 m_value = value;
                 Q_EMIT onUpdate(value);
                 Q_EMIT onUpdate();
-                debug() << nodePath() << "updated to " << value.toString().toStdString();
+                debug(8) << nodePath() << "updated to " << value.toString().toStdString();
             }
 
             virtual bool set(QVariant const& value){
-                debug(0) << nodePath() << "set to" << value.toString().toStdString();
+                debug(2) << nodePath() << "set to" << value.toString().toStdString();
                 update(value);
                 Q_EMIT onSet(value);
                 Q_EMIT onSet();

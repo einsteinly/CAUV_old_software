@@ -130,10 +130,9 @@ void CauvMainWindow::onRun()
 
     AINode *node = new AINode();
     QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-    QTreeView * view = new QTreeView();
+    QTreeView * view = new NodeTreeView();
     QAbstractItemModel * model = new NodeItemModel(VehicleRegistry::instance());
     view->setModel(model);
-    view->setHeaderHidden(true);
     view->setDragEnabled(true);
     proxy->setWidget(view);
     node->addItem(proxy);
@@ -142,9 +141,8 @@ void CauvMainWindow::onRun()
 
     AINode *node2 = new AINode();
     QGraphicsProxyWidget * proxy2 = new QGraphicsProxyWidget();
-    QTreeView * view2 = new QTreeView();
+    QTreeView * view2 = new NodeTreeView();
     view2->setModel(model);
-    view2->setHeaderHidden(true);
     view2->setDragEnabled(true);
     proxy2->setWidget(view2);
     node2->addItem(proxy2);
@@ -154,10 +152,9 @@ void CauvMainWindow::onRun()
 
     AINode *node3 = new AINode();
     QGraphicsProxyWidget * proxy3 = new QGraphicsProxyWidget();
-    QTreeView * view3 = new QTreeView();
+    QTreeView * view3 = new NodeTreeView();
     QAbstractItemModel * model3 = new NodeItemModel(VehicleRegistry::instance()->find<Node>("redherring"));
     view3->setModel(model3);
-    view3->setHeaderHidden(true);
     view3->setDragEnabled(true);
     proxy3->setWidget(view3);
     node3->addItem(proxy3);

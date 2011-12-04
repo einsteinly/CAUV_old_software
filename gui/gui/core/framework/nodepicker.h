@@ -23,6 +23,10 @@
 #include "../model/model.h"
 
 
+#include <QPainter>
+
+#include <QStyledItemDelegate>
+
 namespace Ui {
     class NodePicker;
 }
@@ -55,13 +59,85 @@ namespace cauv {
         };
 
 
+
+
+
+        class NodeDelegateFactory
+        {
+        private:
+          NodeDelegateFactory(){}
+
+        public:
+          static boost::shared_ptr<QAbstractItemDelegate> getDelegateFor(boost::shared_ptr<Node> node);
+        };
+
+
+
+        class NodeDelegate : public QStyledItemDelegate
+        {
+            Q_OBJECT
+
+        public:
+            NodeDelegate(QObject *parent = 0){
+            }
+
+            void paint(QPainter *painter,
+                       const QStyleOptionViewItem &option,
+                       const QModelIndex &index) const{
+
+                // paint the background
+                painter->setBrush(QBrush(QColor(200, 200, 200)));
+                painter->setPen(QPen(QColor(200, 200, 200)));
+                painter->drawRect(option.rect);
+
+                // sort out list decoration
+                if (!hasParent(index)) {
+                    // Paint the top-item
+                } else if (isLast(index)) {
+                    // Paint the bottom item
+                } else {
+                    // Paint middle items
+                }
+
+                // display the node
+                if (Node * node = dynamic_cast<Node*>((Node*)index.internalPointer())) {
+                    boost::shared_ptr<QAbstractItemDelegate> delegate = NodeDelegateFactory::getDelegateFor(node->shared_from_this());
+                    delegate->paint(painter, option, index);
+                }
+            }
+
+            QSize sizeHint(const QStyleOptionViewItem &option,
+                           const QModelIndex &index) const{
+                return QSize(100, 30);
+            }
+
+        private:
+            bool hasParent(const QModelIndex &index) const{
+                if (index.parent().isValid())
+                    return true;
+
+                return false;
+            }
+
+            bool isLast(const QModelIndex &index) const{
+                if (index.parent().isValid())
+                    if (!index.parent().child(index.row()+1,
+                                              index.column()).isValid())
+                        return true;
+
+                return false;
+            }
+        };
+
+
+
         /**
           * Filterable tree view onto the node model
           */
         class NodeTreeView : public QTreeView {
             Q_OBJECT
         public:
-            NodeTreeView(QWidget * parent);
+            NodeTreeView(QWidget * parent = 0);
             virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
         private Q_SLOTS:
