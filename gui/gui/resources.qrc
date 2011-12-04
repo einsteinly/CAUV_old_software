@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/icon.png</file>
-
         <file>resources/icons/collapse_button.hover.png</file>
         <file>resources/icons/collapse_button.pressed.png</file>
         <file>resources/icons/collapse_button.png</file>
@@ -14,5 +13,6 @@
         <file>resources/icons/x_button.hover.png</file>
         <file>resources/icons/x_button.pressed.png</file>
         <file>resources/icons/x_button.png</file>
+        <file>resources/stylesheet.qss</file>
     </qresource>
 </RCC>

@@ -85,11 +85,6 @@ namespace cauv {
                        const QStyleOptionViewItem &option,
                        const QModelIndex &index) const{
 
-                // paint the background
-                painter->setBrush(QBrush(QColor(200, 200, 200)));
-                painter->setPen(QPen(QColor(200, 200, 200)));
-                painter->drawRect(option.rect);
-
                 // sort out list decoration
                 if (!hasParent(index)) {
                     // Paint the top-item
@@ -100,10 +95,11 @@ namespace cauv {
                 }
 
                 // display the node
-                if (Node * node = dynamic_cast<Node*>((Node*)index.internalPointer())) {
+                Node * node = dynamic_cast<Node*>((Node*)index.internalPointer());
+                if (node && index.column() == 1) {
                     boost::shared_ptr<QAbstractItemDelegate> delegate = NodeDelegateFactory::getDelegateFor(node->shared_from_this());
                     delegate->paint(painter, option, index);
-                }
+                } else QStyledItemDelegate::paint(painter, option, index);
             }
 
             QSize sizeHint(const QStyleOptionViewItem &option,

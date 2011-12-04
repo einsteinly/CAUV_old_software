@@ -63,6 +63,50 @@
      </property>
     </widget>
    </item>
+   <item>
+    <widget class="QSpinBox" name="spinBox">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"> QSpinBox {
+     border-width: 1px;
+     height: 30px;
+     border: 1px solid #939393;
+     background-color: #e8e8e8;
+     border-radius: 15px;
+     text-align: center;
+ }
+
+ 
+QSpinBox::down-button,
+QSpinBox::up-button {
+     subcontrol-origin: border;
+     subcontrol-position: center right; 
+     width: 20px;
+     height: 20px;
+	 background-color: rgb(255, 41, 137);
+     margin-right: 5px;
+     margin-left: 5px;
+     border-width: 10px;
+    border-radius: 10px;
+ }
+
+QSpinBox::down-button {
+     subcontrol-position: center left; 
+}</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="suffix">
+      <string>%</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>

@@ -105,7 +105,6 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->filter->installEventFilter(new EscapeFilter());
     ui->view->setModel(root.get());
 
-
     // The list supports node filtering as there's potentially a lot of nodes
     boost::shared_ptr<NodePathFilter> pathFilter = boost::make_shared<NodePathFilter>();
     ui->view->registerListFilter(pathFilter);
@@ -181,6 +180,13 @@ boost::shared_ptr<QAbstractItemDelegate> NodeDelegateFactory::getDelegateFor(boo
 
 NodeTreeView::NodeTreeView(QWidget *) {
     header()->hide();
+    setColumnWidth(0, 100);
+    setIndentation(15);
+    setRootIsDecorated(false);
+    setSelectionBehavior(QAbstractItemView::SelectRows);
+    setAllColumnsShowFocus(true);
+    setAnimated(true);
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
     NodeDelegate *delegate = new NodeDelegate(this);
     setItemDelegate(delegate);
 }
