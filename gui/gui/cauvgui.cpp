@@ -90,6 +90,10 @@ int CauvGui::findPlugins(const QDir& dir, int subdirs)
     
     int numFound = 0;
     foreach (QString fileName, dir.entryList(QDir::Files)) {
+        if (!(fileName.endsWith(".so") ||
+              fileName.endsWith(".dylib"))) {
+            continue;
+        }
         debug(1) << "Trying to load:"<< fileName.toStdString();
         QPluginLoader loader(dir.absoluteFilePath(fileName));
         if (!loader.load()) {
