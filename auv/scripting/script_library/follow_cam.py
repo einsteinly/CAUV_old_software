@@ -16,7 +16,7 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_pipeline_file  = 'follow_cam.pipe'
+    follow_pipeline_file  = 'cam_follow.pipe'
     centre_name = 'cam'
     lines_name = 'cam'
     histogram_name = 'cam'
