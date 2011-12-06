@@ -19,13 +19,12 @@ from cauv.debug import debug, warning, error, info
 #todo: check all these ae still neccesary
 import time
 import threading
+import Queue
 import subprocess
 import cPickle
 import shelve
 import argparse
 import traceback
-
-from os.path import getmtime
 
 from AI_classes import aiProcess, external_function
 from AI_tasks import tasks
@@ -36,7 +35,7 @@ task manager auto generates a list of what it should be running from these 'task
 """          
 
 TASK_CHECK_PERIOD = 1
-        
+
 class taskManager(aiProcess):
     _store_values = ['task_nid', 'tasks', 'condition_nid', 'conditions', 'detector_nid', 'detectors_required', ]
     #SETUP FUNCTIONS
@@ -72,24 +71,27 @@ class taskManager(aiProcess):
                 self.log('Task manager restored.')
             else:
                 info('No previous valid state file')
-        self.run_processing_loop.set()
     def load_state(self):
         pass
     def save_state(self):
         pass
     
     #ONMESSAGE FUNCTIONS
-    def onConditionMessage(self, msg):
-        self.processing_queue.put((condition_message, [msg], {}))
-    def onTaskMessage(self, msg):
-        self.processing_queue.put((process_task, [msg], {}))
     def onAddTaskMessage(self, msg):
-        self.processing_queue.put((add_task, [msg.task_type], {}))
+        self.processing_queue.put(('add_task', [tasks[msg.taskType]], {}))
     def onRemoveTaskMessage(self, msg):
         self.stop_script()
-        self.processing_queue.put((remove_task, [msg.task_id], {}))
-    def onTaskOptionsMessage(self, msg):
-        self.processing_queue.put((set_task_options, [msg.task_id, msg.task_options])
+        self.processing_queue.put(('remove_task', [msg.taskId], {}))
+    def onSetTaskStateMessage(self, msg):
+        self.processing_queue.put(('set_task_options', [msg.taskId, msg.taskOptions, msg.scriptOptions, msg.conditionIds], {}))
+        
+    def onAddConditionMessage(self, msg):
+        self.processing_queue.put(('add_condition', [conditions[msg.conditionType]], {}))
+    def onRemoveConditionMessage(self, msg):
+        self.processing_queue.put(('remove_condition', [msg.conditionId], {}))
+    def onSetConditionStateMessage(self, msg):
+        self.processing_queue.put(('set_condition_options', [msg.conditionId, msg.conditionOptions], {}))
+    
     @external_function
     def onStopScript(self):
         self.stop_script()
@@ -125,7 +127,7 @@ class taskManager(aiProcess):
                 warning('Unrecognised task %s crashed (or default script crashed)' %(task_id,))
         elif status == 'SUCCESS':
             self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))
-                    self.processing_queue.put(('remove_task', [task_id], {}))
+            self.processing_queue.put(('remove_task', [task_id], {}))
             info('%s has finished succesfully, so is being removed from active tasks.' %(task,))
         else:
             info('%s sent exit message %s' %(task_id, status))
@@ -148,6 +150,7 @@ class taskManager(aiProcess):
         self.detector_nid += 1
         self.detector_conditions[detector_id] = listener
         self.ai.detector_control.start(detector_id, detector_type)
+        return detector_id
     def remove_detector(self, detector_id):
         self.detector_conditions.pop(detector_id)
         self.ai.detector_control.stop(detector_id)
@@ -166,7 +169,7 @@ class taskManager(aiProcess):
         self.tasks[task_id].set_options(options)
         #not only need to change in task, need to try and change in running script
         self.tasks[task_id].set_script_options(options)
-        if task_id = self.current_task.id:
+        if task_id == self.current_task.id:
             getattr(self.ai, task_id).set_options(options)
         #need to tell task which conditions to use
         #remove current conditions
@@ -234,24 +237,22 @@ class taskManager(aiProcess):
         if to_start:
             self.start_task(to_start)
         #and finally set a timeout till we want to check again
-        self.periodic_timer = threading.Timer(TASK_CHECK_PERIOD, (self.add_periodic_to_queue, [], {}))
+        self.periodic_timer = threading.Timer(TASK_CHECK_PERIOD, self.add_periodic_to_queue)
+        self.periodic_timer.start()
     def add_periodic_to_queue(self):
-        self.processing_queue.put('process_periodic')
+        self.processing_queue.put(('process_periodic', [], {}))
         
     #MAIN LOOP
     def run(self):
-        self.periodic_timer = threading.Timer(TASK_CHECK_PERIOD, (self.add_periodic_to_queue, [], {}))
+        self.periodic_timer = threading.Timer(TASK_CHECK_PERIOD, self.add_periodic_to_queue)
+        self.periodic_timer.start()
         while True:
             try:
                 call = self.processing_queue.get(block=True)
                 getattr(self, call[0])(*call[1], **call[2])
             except Error as e:
-                error(e.message+' THIS SHOULD REALLY BE FIXED. NOW.'
-            self.events.wait(5)
-            if self.request_stop.is_set():
-                self.request_stop.clear()
-                self.stop_script()
-    def die():
+                error(e.message+' THIS SHOULD REALLY BE FIXED. NOW.')
+    def die(self):
         try:
             self.periodic_timer.cancel()
         except Exception as error:

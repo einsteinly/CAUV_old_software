@@ -44,7 +44,7 @@ class detectionControl(aiProcess):
             #update running detectors from requests (has to be done here as list of running detectors is constantly in use by this process)
             while True:
                 try:
-                    command = self.start_requests.get(block = True, timeout = MAX_WAITING_TIME)
+                    command = self.requests.get(block = True, timeout = MAX_WAITING_TIME)
                 except Queue.Empty:
                     break
                 if command[0] == 'start':
@@ -83,7 +83,7 @@ class detectionControl(aiProcess):
                         self.running_detectors.pop(detector_id)
                     except KeyError:
                         debug(detector_id+" does not exist, so cannot be stopped")
-                    except Exception as e:               :
+                    except Exception as e:
                         error('Could not kill detector %s.' %(detector_id,))
                         traceback.print_exc()
                     else:
@@ -95,7 +95,7 @@ class detectionControl(aiProcess):
                     except KeyError:
                         error("Detector %s doesn't exist, options can't be changed" %(detector_id))
             #send status
-            self.ai.task_manager.update_detectors(self.running_detectors.keys())
+            self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
             #run detection
             for detector_id, detector in self.running_detectors.iteritems():
                 #since each processing could take a while, and disabling needs to be pretty fast, check here

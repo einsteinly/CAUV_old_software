@@ -765,6 +765,14 @@ group ai
         msg : string;
     }
 }
+group guiai
+{
+    message SetConditionState: 202
+    {
+        conditionId : int32;
+        conditionOptions : map<string, int32>;
+    }
+}
 
 group external
 {
