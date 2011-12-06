@@ -5,15 +5,21 @@ from AI_classes import subclassDict
 
 class conditionOptions(object):
     def __init__(self, options={}):
+        #add default options defined in subclasses
         for key, attr in self.__class__.__dict__.iteritems():
             if key[0] != '_':
                 setattr(self, key, attr)
+        #overide default sith value set by init
         self.__dict__.update(options)
     def get_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
 
 class aiCondition(object):
-    class options():
+    """
+    base condition
+    """
+    #make sure there is definately an options class
+    class options(conditionOptions):
         pass
     def __new__(cls, *args, **kwargs):
         inst = super(aiCondition, cls).__new__(cls, *args, **kwargs)
@@ -23,11 +29,12 @@ class aiCondition(object):
     def __init__(self, options=None):
         if options:
             self.set_options(options)
+        self.task_ids = []
     def set_options(self, options):
         for name, value in options.iteritems():
             setattr(self.options, name, value)
     def register(self, task_manager):
-        self.id, self.change_event = task_manager.add_condition(self)
+        self.id  = task_manager.add_condition_inst(self)
     def deregister(self, task_manager):
         task_manager.remove_condition(self.id)
             
@@ -35,7 +42,7 @@ class stateCondition(aiCondition):
     """
     Basic condition that just has a settable state
     """
-    class options():
+    class options(conditionOptions):
         state = False
     def set_options(self, options):
         try:
@@ -68,6 +75,7 @@ class timeCondition(stateCondition):
             self.timer = threading.Timer(self.options.timeout, self.timeout)
             self.state = True
             self.timer.start()
+            self.change_event.set()
     def timeout(self):
         self.state = False
         self.change_event.set()
@@ -83,7 +91,7 @@ class timeoutCondition(timeCondition):
 
 class detectorConditionBase(type):
     """
-    anything with this metaclass will become a none!!!
+    anything with this metaclass will become a None (but the subclasses will be created)!!!
     """
     def __init__(cls, name, bases, attrs):
         #basically we want to create a whole load of new classes based on this one and some data from the detector library

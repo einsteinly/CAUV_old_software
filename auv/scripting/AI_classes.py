@@ -282,32 +282,18 @@ class aiScript(aiProcess):
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
-        self._pl_enabled = False
-        self._pl_setup = threading.Event()
     def _register(self):
         self.node.addObserver(self._msg_observer)
     def request_pl(self, pl_name, timeout=10):
-        if not self._pl_enabled:
-            self.node.join('processing')
-            self._pl_enabled = True
-        self.ai.pipeline_manager.request_pl('script', self.task_name, pl_name)
-        self._pl_setup.wait(timeout)
-        if self._pl_setup.is_set():
-            self._pl_setup.clear()
-            return
-        else:
-            raise CommunicationError('No response from pipeline management.')
+        pass
     def drop_pl(self, pl_name):
-        self.ai.pipeline_manager.drop_pl('script', self.task_name, pl_name)
+        pass
     def drop_all_pl(self):
-        self.ai.pipeline_manager.drop_all_pl('script', self.task_name)
-    @external_function
-    def pl_response(self):
-        self._pl_setup.set()
+        pass
     @external_function
     def set_option(self, option_name, option_value):
         if option_name in self.options._dynamic:
-            setattr(self, option_name, option_value)
+            setattr(self.options, option_name, option_value)
             self.optionChanged(option_name)
         else:
             info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
@@ -362,6 +348,9 @@ class aiDetector(messaging.MessageObserver):
         This should define a method to do any intensive (ie not on message) processing
         """
         pass
+    def set_option(self, option_name, option_value):
+        setattr(self.options, option_name, option_value)
+        self.optionChanged(option_name)
     def request_pl(self, pl_name):
         if pl_name in self._pl_requests:
             self._pl_requests[pl_name] += 1

@@ -41,24 +41,24 @@ class aiTask(object):
         self.options = self.__class__.options(options)
         #create instances of conditions
         self.conditions = []
-        for condition_class, options in self.__class__.conditions:
-            self.conditions.append(condition_class(options))
     def register(self, task_manager):
         if self.registered:
             error('Task already setup')
             return
         self.task_id = task_manager.register_task(self)
-        for condition in self.conditions:
-            condition.register(task_manager)
+        #any default conditions need to be added to the task manager
+        for condition_class, options in self.__class__.conditions:
+            task_manager.add_condition(condition_class, options)
         self.registered = True
     def deregister(self, task_manager):
         if not self.registered:
             error('Task not setup, so can not be deregistered')
             return
         task_manager.deregister_task(self.task_id)
-        for condition in self.conditions:
-            condition.deregister(task_manager)
         self.registered = False
+    def set_options(self, options):
+        for key, value in options.iteritems():
+            setattr(self.options, key, value)
     def is_available(self):
         for condition in self.conditions:
             if not condition.get_state():
@@ -116,6 +116,14 @@ class surface(aiTask):
         priority = 10
     conditions = [
         (c.timeoutCondition, {'timeout': 180, 'startTimer': True}),
+        ]
+        
+class default(aiTask):
+    class options(taskOptions):
+        script_name = 'spiral'
+        priority = 0
+    conditions = [
+        (c.stateCondition, {'state': True}),
         ]
         
 tasks = subclassDict(aiTask)
