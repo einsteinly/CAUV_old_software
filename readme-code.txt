@@ -59,6 +59,10 @@ sudo easy_install psi blist Quaternion
 These also need to be compiled from source: (email the mailing list if you
 have trouble or need help)
 
+For new ubunty install!!
+Follow the steps on this website to install ffm-peg first
+data.cambridgeauv.co.uk/files/deps/libssrcspread-1.0.9.tbz
+
 OpenCV >= 2.3.1 (http://opencv.willowgarage.com/wiki/InstallGuide)
 libspread       (http://data.cambridgeauv.co.uk/files/deps/spread-src-4.1.0.tbz)
 libssrcspread   (http://data.cambridgeauv.co.uk/files/deps/libssrcspread-1.0.9.tbz)
