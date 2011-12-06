@@ -48,7 +48,7 @@ dependencies (it might take a while!)
 
 sudo apt-get install libboost-dev cmake cmake-curses-gui python-cheetah \
 python-ply python-numpy python-psutil python-setuptools qt4-dev-tools \
-libqt4-dev qt4-designer qt4-doc libftdi-dev libftgl-dev vim
+libqt4-dev qt4-designer qt4-doc libftdi-dev libftgl-dev libqhull-dev vim
 
 
 And some of the python dependencies are only available via easy install:
@@ -66,7 +66,7 @@ data.cambridgeauv.co.uk/files/deps/libssrcspread-1.0.9.tbz
 OpenCV >= 2.3.1 (http://opencv.willowgarage.com/wiki/InstallGuide)
 libspread       (http://data.cambridgeauv.co.uk/files/deps/spread-src-4.1.0.tbz)
 libssrcspread   (http://data.cambridgeauv.co.uk/files/deps/libssrcspread-1.0.9.tbz)
-
+PCL             (http://pointclouds.org)
 
 If you've installed all these, and something still seems to be missing, please
 add it to this list!  
@@ -93,13 +93,18 @@ common:
     OpenCV (>= 2.2)
     !!! These configure commands might not be necessary
     spread (./configure --with-pic CFLAGS="-enable-shared -fPIC")
-    libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
+    libssrcspread (./configure --with-spread=/path/to/spread/install/probably/usr/local/ --enable-debug --disable-lua-binding --disable-perl-binding --disable-python-binding --enable-shared CXXFLAGS=-fPIC LDFLAGS=-fPIC CFLAGS=-fPIC --disable-ruby-binding --with-pic)
 
 auv:
     librt (this is include in libc6 most of the time)
     libftdi
     libsensors
-    PCL(http://pointclouds.org/) which requires octave,eigen3,flann,cminpack
+    PCL(http://pointclouds.org/) which requires:
+        octave,
+        eigen3,
+        flann,
+        cminpack,
+        qhull
     gpsd
     watch.py requires:
         psutils (https://code.google.com/p/psutil/)
@@ -113,7 +118,6 @@ gui/gui-pipeline and gui/pipeline-widget:
 gui/gui:
     Qt 4 (with Qt3 support library, but NOT qt3 dev packages, as this sets all of the defaults to qt3, meaning qwt6 won't build)
     Qwt 6 (Having earlier versions installed may cause a conflict when trying to make Qwt, needs to be >=rc5)
-    OpenCV
     Marble (optional) - for the map
     OIS (optional) - for gamepad controls
 

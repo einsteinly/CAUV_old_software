@@ -17,6 +17,7 @@
 #include <QDir>
 #include <QString>
 #include <QPluginLoader>
+#include <QLibrary>
 #include <QSettings>
 
 #include <model/auv_controller.h>
@@ -90,12 +91,12 @@ int CauvGui::findPlugins(const QDir& dir, int subdirs)
     
     int numFound = 0;
     foreach (QString fileName, dir.entryList(QDir::Files)) {
-        if (!(fileName.endsWith(".so") ||
-              fileName.endsWith(".dylib"))) {
+        if (!QLibrary::isLibrary(fileName)) {
             continue;
         }
-        debug(1) << "Trying to load:"<< fileName.toStdString();
         QPluginLoader loader(dir.absoluteFilePath(fileName));
+
+        debug(1) << "Trying to load:"<< fileName.toStdString();
         if (!loader.load()) {
             debug(1) << "Could mot load plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
         } else {
@@ -165,12 +166,14 @@ bool CauvGui::loadPlugin(QObject *plugin){
     if(basicPlugin) {
         basicPlugin->initialise(m_auv, shared_from_this());
         // see which groups the plugin needs us to join
-        foreach (QString group, basicPlugin->getGroups()){
+        QStringList groups = basicPlugin->getGroups();
+        foreach (QString group, groups){
             joinGroup(group.toStdString());
         }
 
         // tabs
-        foreach (QWidget * const widget, basicPlugin->getCentralWidgets()){
+        QList<QWidget* > widgets = basicPlugin->getCentralWidgets();
+        foreach (QWidget * const widget, widgets){
             addCentralTab(widget, basicPlugin->name());
         }
         // docks

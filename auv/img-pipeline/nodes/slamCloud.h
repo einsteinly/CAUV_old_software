@@ -5,6 +5,9 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
+//#include <pcl/surface/convex_hull.h>
+#include <pcl/surface/concave_hull.h>
+#include <pcl/filters/crop_hull.h>
 
 namespace cauv{
 namespace imgproc{
@@ -41,7 +44,11 @@ class SlamCloud: public pcl::PointCloud<PointT>,
         std::vector<descriptor_t>& descriptors(){ return m_point_descriptors; }
         std::vector<descriptor_t> const& descriptors() const{ return m_point_descriptors; }
 
-        void merge(Ptr source, float const& merge_distance){
+        /* Merge two clouds, merging each point from the source cloud with it's
+         * nearest neighbour in the target cloud if that neighbour is closer
+         * than merge_distance.
+         */
+        void mergeCollapseNearest(Ptr source, float const& merge_distance){
             pcl::KdTreeFLANN<PointT> kdtree;
             kdtree.setInputCloud(shared_from_this());
             typedef std::pair<int,int> idx_pair;
@@ -77,6 +84,35 @@ class SlamCloud: public pcl::PointCloud<PointT>,
                 }
                 width = size();
             }
+        }
+
+        void mergeOutsideConcaveHull(Ptr source, float const& alpha = 5.0f){
+            pcl::ConcaveHull<PointT> hull_calculator;
+            typename BaseT::Ptr hull(new BaseT);
+            BaseT output;            
+            std::vector<pcl::Vertices> polygons;
+
+            hull_calculator.setInputCloud(shared_from_this());
+            hull_calculator.setAlpha(alpha);
+            hull_calculator.reconstruct(*hull, polygons);
+  
+            int dim = hull_calculator.getDim();
+            if(dim != 2)
+                throw std::runtime_error("3D hull!");
+
+            debug() << "hull has" << hull->size() << "points:";
+
+            pcl::CropHull<PointT> crop_filter;
+            crop_filter.setInputCloud(source);
+            crop_filter.setHullCloud(hull);
+            crop_filter.setHullIndices(polygons);
+            crop_filter.setDim(dim);
+            crop_filter.setCropOutside(false);
+            
+            crop_filter.filter(output);
+            debug() << output.size() << "/" << source->size() << "passed filter";
+            
+            BaseT::operator+=(output);
         }
 
         // "overridden" methods: note that none of the base class methods are

@@ -84,12 +84,14 @@ class SonarSLAMImpl{
         }
 
         void addNewCloud(cloud_ptr cloud,
-                         float point_merge_distance){
+                         float point_merge_distance,
+                         float concave_hull_alpha){
             // TODO: propagate sonar timestamp with keypoints... somehow... and use
             // that instead of an index
             static uint32_t cloud_num = 0;
             clouds[++cloud_num] = cloud;
-            whole_cloud->merge(cloud, point_merge_distance);
+            //whole_cloud->mergeCollapseNearest(cloud, point_merge_distance);
+            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha);
             last_transformation = cloud->transformation();            
             last_cloud = cloud;
 
@@ -313,6 +315,7 @@ void SonarSLAMNode::init(){
     registerParamID("score threshold", float(1), "keypoint set will be rejected if mean distance error is greater than this");
     registerParamID("weight test", float(25), "keypoints with weights greater than this will be used for registration");
     registerParamID("feature merge distance", float(0.2), "keypoints closer to each other than this will be merged");
+    registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
 
     registerParamID("-render size", float(400));
 
@@ -338,6 +341,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     const float delta_theta = param<float>("delta theta");
     const float weight_test = param<float>("weight test");
     const float point_merge_distance = param<float>("feature merge distance");
+    const float map_merge_alpha = param<float>("map merge alpha");
 
     const Eigen::Vector2i render_sz(param<float>("-render size"),param<float>("-render size"));
 
@@ -434,7 +438,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
                << "score:" << score;
         debug(3) << "transformation:\n" << final_transform;
         if(icp.hasConverged() && score < score_thr){
-            m_impl->addNewCloud(final, point_merge_distance);
+            m_impl->addNewCloud(final, point_merge_distance, map_merge_alpha);
             if(xy_image){
                 m_impl->updateVis(xy_image->mat(), final_transform, m_per_pix);
                 r["mosaic"] = boost::make_shared<Image>(m_impl->vis());
