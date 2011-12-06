@@ -127,7 +127,8 @@ if __name__ == '__main__':
     p.add_argument('-r', '--rate', dest='rate', type=str, default='x1',
         help='messages per second (x1 for real-time, 2 for 2 messages per second)')
     p.add_argument('-p', '--profile', dest='profile', default=False, action='store_true')
-    p.add_argument('-f', '--filter', dest='filter', default=[], action='append')
+    p.add_argument('-f', '--filter', dest='filter', default=[], action='append',
+        help='if set, only the message names specified will be played back')
     opts, unknown_args = p.parse_known_args()
     
     tstart = opts.start_t
