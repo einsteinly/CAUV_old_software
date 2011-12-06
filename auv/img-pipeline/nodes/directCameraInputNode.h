@@ -43,7 +43,7 @@ class DirectCameraInputNode: public AsynchronousNode{
             // registerInputID()
             
             // one output:
-            registerOutputID<image_ptr_t>("image_out");
+            registerOutputID("image_out");
             
             // one parameter:
             registerParamID<int>("device id", 0);

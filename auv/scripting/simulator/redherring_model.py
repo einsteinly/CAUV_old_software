@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 
 # Standard Library Modules
 import operator
@@ -104,6 +104,7 @@ class Model(base_model.Model):
     def __init__(self, node):
         self.tzero = None
         self.last_t = self.relativeTime()
+        self.last_state_sent = self.relativeTime()
         base_model.Model.__init__(self, node)
 
     def relativeTime(self):
@@ -211,8 +212,12 @@ class Model(base_model.Model):
             debug('orientation quat denormalised: it will be renormalised')
             self.orientation = self.normalised_o
         
-        # last last thing: send messages reflecting the new state:
-        self.sendStateMessages()
+        # last last thing: send messages reflecting the new state: this has to
+        # be rate-limited since it can cause more motor state message to be
+        # sent from control - leading to a tight loop
+        if self.relativeTime() - self.last_state_sent > 0.05:
+            self.sendStateMessages()
+            self.last_state_sent = self.relativeTime()
 
     def sendStateMessages(self):
         # send:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # Motor test
 
 import cauv
@@ -9,7 +9,7 @@ from cauv.debug import debug, info, warning, error
 
 import time
 import traceback
-import optparse
+import argparse
 import random
 
 
@@ -105,27 +105,27 @@ def motorTest(node, auv, power=30, delay=3, quiet = False):
     info('Complete')
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option("-q", "--quiet", dest="quiet", default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument("-q", "--quiet", dest="quiet", default=False,
             action="store_true", help="don't print progress")
-    p.add_option("-d", "--delay", dest="delay", type=float, default=3.0,
+    p.add_argument("-d", "--delay", dest="delay", type=float, default=3.0,
             help="pause after each motor command")
-    p.add_option("-p", "--power", dest="power", help=" motor power", type=int,
+    p.add_argument("-p", "--power", dest="power", help=" motor power", type=int,
             default=30)
-    p.add_option('-R', "--random", dest="random", default=False,
+    p.add_argument('-R', "--random", dest="random", default=False,
             action="store_true",
             help="test random motors at random speeds with at most "+\
             "RAND_POWER_LIMIT total power for RAND_DURATION seconds")
-    p.add_option('-l', "--random-limit", dest="rand_power_limit", type=int)
-    p.add_option('-D', "--random-duration", dest="rand_duration", type=int)
+    p.add_argument('-l', "--random-limit", dest="rand_power_limit", type=int)
+    p.add_argument('-D', "--random-duration", dest="rand_duration", type=int)
 
 
-    p.add_option("-n", "--name", dest="name", default="py-my",
+    p.add_argument("-n", "--name", dest="name", default="py-my",
             help="CAUV Node name")
     
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
     
-    node = cauv.node.Node('py-mt')
+    node = cauv.node.Node('py-mt',args)
     try:
         auv = control.AUV(node)
         

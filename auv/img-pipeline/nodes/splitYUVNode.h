@@ -42,9 +42,9 @@ class SplitYUVNode: public Node{
             registerInputID("image");
             
             // outputs:
-            registerOutputID<image_ptr_t>("Y");
-            registerOutputID<image_ptr_t>("U");
-            registerOutputID<image_ptr_t>("V");
+            registerOutputID("Y");
+            registerOutputID("U");
+            registerOutputID("V");
         }
     
         virtual ~SplitYUVNode(){

@@ -1,6 +1,5 @@
 project (python-module)
 
-set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 set (MSGSRCD ${AUV_SOURCE_DIR}/common)
 set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 set (BINDIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -36,7 +35,7 @@ endif()
 set(CAUV_PYTHON_INSTALL_PATH ${PYTHON_PREFIX}/${PYTHON_PACKAGES_PATH} CACHE STRING "Install path for the CAUV python_module. Recommended to use virtualenv for this.")
 
 execute_process(
-    COMMAND python ${PYMSGD}/msggen.py -l "python" -an -o ${SRCD} ${PYMSGD}/messages.msg 
+    COMMAND ${PYMSGD}/msggen.py -l "python" -an -o ${SRCD} ${PYMSGD}/messages.msg 
     OUTPUT_VARIABLE CAUV_MESSAGE_PYTHON_FILES
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )

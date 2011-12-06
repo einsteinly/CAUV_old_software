@@ -92,9 +92,9 @@ void PipelineGuiMsgObs::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m)
     debug(2) << BashColour::Green << "PiplineGuiMsgObs:" << __func__ << *m;
 
     typedef std::map<node_id, NodeType::e> node_type_map_t;
-    typedef std::map<node_id, std::map<std::string, NodeOutput> > node_input_map_t;
-    typedef std::map<node_id, std::map<std::string, std::vector<NodeInput> > > node_output_map_t;
-    typedef std::map<node_id, std::map<std::string, NodeParamValue> > node_param_map_t;
+    typedef std::map<node_id, Node::msg_node_input_map_t> node_input_map_t;
+    typedef std::map<node_id, Node::msg_node_output_map_t> node_output_map_t;
+    typedef std::map<node_id, Node::msg_node_param_map_t> node_param_map_t;
 
     // remove arcs and nodes that shouldn't exist
     const std::vector<node_ptr_t> current_nodes = m_widget->nodes();

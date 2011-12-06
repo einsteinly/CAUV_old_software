@@ -10,7 +10,7 @@ export PYTHONPATH="$SCRIPTING_DIR:$SCRIPTING_DIR/../python-module/:$PYTHONPATH"
 #echo "LD path: $LD_LIBRARY_PATH"
 #echo "DYLD path: $DYLD_LIBRARY_PATH"
 
-python -c "import cauv
+python2.7 -c "import cauv
 import cauv.messaging as msg
 import cauv.pipeline as pipeline
 import cauv.control as control
@@ -23,9 +23,9 @@ try:
     sonar = cauv.sonar.Sonar(node)
     pl = pipeline.Model(node)
 
-    from IPython.Shell import IPShellEmbed
-    ipshell = IPShellEmbed()
-    ipshell()
+
+    import IPython
+    IPython.embed()
 finally:
     node.stop()
 "

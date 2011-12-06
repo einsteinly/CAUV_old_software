@@ -30,7 +30,7 @@ class CopyNodeMask: public Node{
             registerInputID("mask");
             
             // output:
-            registerOutputID<image_ptr_t>("image copy");
+            registerOutputID(Image_Out_Copied_Name, image_ptr_t());
             
             // no parameters
             // registerParamID<>();

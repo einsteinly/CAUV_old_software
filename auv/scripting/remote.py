@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 
 import cauv
 import cauv.messaging as msg
@@ -117,7 +117,8 @@ Available objects and functions:
         
 
 def main():
-    n = node.Node("pyscript")
+    import sys
+    n = node.Node("pyscript",sys.argv[1:])
     try:
         so = ScriptObserver(n)
         while True:

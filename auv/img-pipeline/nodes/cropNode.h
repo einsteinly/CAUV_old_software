@@ -31,7 +31,7 @@ class CropNode: public Node{
             registerInputID(Image_In_Name);
             
             // output:
-            registerOutputID<image_ptr_t>(Image_Out_Name);
+            registerOutputID(Image_Out_Name, image_ptr_t());
             
             // multiple parameters
             registerParamID<int>("top left (x)",0);

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 
 #from __future__ import with_satement
 
@@ -8,82 +8,66 @@ import cauv.pipeline as pipeline
 from cauv.debug import debug, warning, error, info
 
 import time
-import pickle
-import optparse
+import argparse
 
-def savepl(spread, port, fname, timeout=3.0, name='default'):
+def savepl(node, fname, timeout=3.0, name='default'):
     with open(fname, 'wb') as outf:
-        info('Connecting...')
-        n = node.Node("py-plsave", spread, port)
-        try:
-            info('Initializing pipeline model (%s)...' % name)
-            model = pipeline.Model(n, name)
+        info('Initializing pipeline model (%s)...' % name)
+        model = pipeline.Model(node, name)
 
-            info('Getting pipeline state...')
-            saved = model.get(timeout)
-            
-            info('Pickling...')
-            pickle.dump(saved, outf)
+        info('Getting pipeline state...')
+        saved = model.get(timeout)
         
-            info('Done.')
-        finally:
-            n.stop()
+        info('Pickling...')
+        model.dumpFile(saved, outf)
 
 
-def loadpl(spread, port, fname, timeout=3.0, name='default'):
+def loadpl(node, fname, timeout=3.0, name='default'):
     with open(fname, 'rb') as inf:
-        info('Connecting...')
-        n = node.Node("py-plsave", spread, port)
-        try:
-            info('Initializing pipeline model (%s)...' % name)
-            model = pipeline.Model(n, name)
+        info('Initializing pipeline model (%s)...' % name)
+        model = pipeline.Model(node, name)
 
-            info('UnPickling...')
-            saved = pickle.load(inf)
-            
-            info('Setting pipeline state...')
-            model.set(saved, timeout)
+        info('UnPickling...')
+        saved = model.loadFile(inf)
+        
+        info('Setting pipeline state...')
+        model.set(saved, timeout)
 
-            info('Done.')
-        finally:
-            n.stop()
+def clearpl(node, name='default'):
+    info('Initializing pipeline model (%s)...' % name)
+    model = pipeline.Model(node, name)
 
-def clearpl(spread, port, name='default'):
-        info('Connecting...')
-        n = node.Node("py-plsave", spread, port)
-        try:
-            info('Initializing pipeline model (%s)...' % name)
-            model = pipeline.Model(n, name)
-
-            info('Clearing...')
-            model.clear()
-
-            info('Done.')
-        finally:
-            n.stop()
+    info('Clearing...')
+    model.clear()
 
 
 if __name__ == '__main__':
-    parser = optparse.OptionParser(usage='usage: %prog [-f filename] (load|save|clear)')
-    parser.add_option("-f", "--file", dest="fname", default="pipeline.pipe")
-    parser.add_option("-n", "--pipeline-name", dest="name", default="default")
-    parser.add_option("-s", "--spread", dest="spread", default="localhost")
-    parser.add_option("-p", "--port", dest="port", type='int', default=16707)
-    parser.add_option("-t", "--timeout", dest="timeout", type='float', default=3.0)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", dest="fname", default="pipeline.pipe")
+    parser.add_argument("-n", "--pipeline-name", dest="name", default="default")
+    parser.add_argument("-t", "--timeout", dest="timeout", type=float, default=3.0)
+    parser.add_argument('clear', action='store_true', default=False)
+    parser.add_argument('verb', choices=('load', 'save', 'clear'))
 
-    (opts, args) = parser.parse_args()
-    port = opts.port
+    opts, unknown_args = parser.parse_known_args()
     fname = opts.fname
     timeout = opts.timeout
     name = opts.name
+    
+    info('Connecting...')
+    node = node.Node("py-plsave", unknown_args)
+    try:
+        if opts.verb == 'clear':
+            clearpl(node, name) 
+        elif opts.verb == 'save':
+            savepl(node, fname, timeout, name)
+        elif opts.verb == 'load':
+            loadpl(node, fname, timeout, name)
+        info('Done.')
+    finally:
+        node.stop()
 
-    if len(args) == 1 and args[0].lower() == 'save':
-        savepl(opts.spread, port, fname, timeout, name)
-    elif len(args) == 1 and args[0].lower() == 'load':
-        loadpl(opts.spread, port, fname, timeout, name)
-    elif len(args) == 1 and args[0].lower() == 'clear':
-        clearpl(opts.spread, port, name)
-    else:
-         parser.print_help()
 
+
+    
 

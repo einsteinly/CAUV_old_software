@@ -41,7 +41,7 @@ class MedianFilterNode: public Node{
             registerInputID("image");
 
             // one output
-            registerOutputID<image_ptr_t>("image (not copied)");
+            registerOutputID("image (not copied)");
             
             registerParamID<int>("kernel", 3, "kernel diameter (radius?): must be an odd integer");
         }

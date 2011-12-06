@@ -51,7 +51,6 @@
 #include "broadcastLinesNode.h"
 #include "nullParamNode.h"
 #include "drawHistogramNode.h"
-#include "valueInputNode.h"
 #include "broadcastHistogramNode.h"
 #include "nopNode.h"
 #include "throttleNode.h"
@@ -59,9 +58,7 @@
 #include "stitchNode.h"
 #include "recogniserNode.h"
 #include "surfCornersNode.h"
-#include "clampNode.h"
 #include "broadcastKeypointsNode.h"
-#include "mathAddMultNode.h"
 #include "mergeSimilarLinesNode.h"
 
 namespace cauv{
@@ -115,22 +112,14 @@ DEFINE_NFR(DrawLinesNode, NodeType::DrawLines);
 DEFINE_NFR(BroadcastLinesNode, NodeType::BroadcastLines);
 DEFINE_NFR(NullParamNode, NodeType::NullParam);
 DEFINE_NFR(DrawHistogramNode, NodeType::DrawHistogram);
-template<> DEFINE_NFR(ValueInputNode<int32_t>, NodeType::IntInput);
-template<> DEFINE_NFR(ValueInputNode<float>, NodeType::FloatInput);
-template<> DEFINE_NFR(ValueInputNode<bool>, NodeType::BoolInput);
-template<> DEFINE_NFR(ValueInputNode<std::string>, NodeType::StringInput);
 DEFINE_NFR(BroadcastHistogramNode, NodeType::BroadcastHistogram);
 DEFINE_NFR(NopNode, NodeType::Nop);
 DEFINE_NFR(ThrottleNode, NodeType::Throttle);
 DEFINE_NFR(DelayNode, NodeType::Delay);
 DEFINE_NFR(StitchNode, NodeType::Stitch);
 DEFINE_NFR(RecogniserNode, NodeType::Recogniser);
-template<> DEFINE_NFR(ClampNode<int>, NodeType::ClampInt);
-template<> DEFINE_NFR(ClampNode<float>, NodeType::ClampFloat);
 DEFINE_NFR(SURFCornersNode, NodeType::SURFCorners);
 DEFINE_NFR(BroadcastKeypointsNode, NodeType::BroadcastKeyPoints);
-template<> DEFINE_NFR(MathAddMultNode<int>, NodeType::MathAddMultInt);
-template<> DEFINE_NFR(MathAddMultNode<float>, NodeType::MathAddMultFloat);
 DEFINE_NFR(MergeSimilarLinesNode, NodeType::MergeSimilarLines);
 
 

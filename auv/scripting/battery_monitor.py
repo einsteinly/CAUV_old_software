@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 import cauv
 import cauv.messaging as messaging
@@ -7,7 +7,7 @@ from cauv.debug import debug, info
 
 import threading
 import time
-import optparse
+import argparse
 import traceback
 
 log_file = 'bat_log.log'
@@ -151,9 +151,9 @@ def reset():
     log.truncate()
     log.close
 
-def run(modules):
+def run(modules,args):
     #set up nodes
-    node = cauv.node.Node('pybatmon')
+    node = cauv.node.Node('pybatmon',args)
     try:
         #set up loggers
         slow_logger = slowLogger(filename=log_file, frequency=2, node=node, modules=modules)
@@ -163,12 +163,12 @@ def run(modules):
         node.stop()
     
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-r', '--reset', dest='reset', default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument('-r', '--reset', dest='reset', default=False,
                  action='store_true', help="create or reset battery log")
-    p.add_option('-e', '--enable', type='string', dest='enable', default='',
+    p.add_argument('-e', '--enable', type='string', dest='enable', default='',
                  action='store', help="enable estimates for these modules")
-    p.add_option('-d', '--disable', type='string', dest='disable', default='',
+    p.add_argument('-d', '--disable', type='string', dest='disable', default='',
                  action='store', help="disable estimates for these modules")
     
     """
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     v  -  voltage
     """
     modules = set(['m','l','c','v']) #default
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
     enable = opts.enable.split(',') if len(opts.enable) else []
     disable = opts.disable.split(',') if len(opts.disable) else []
     for opt in enable:
@@ -194,4 +194,4 @@ if __name__ == '__main__':
         reset()
     else:
         print 'Modules '+str(modules)+' enabled'
-        run(modules)
+        run(modules,args)

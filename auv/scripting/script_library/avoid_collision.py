@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 from AI_classes import aiScript, aiScriptOptions
 from cauv.debug import debug, info, warning, error

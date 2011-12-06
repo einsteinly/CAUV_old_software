@@ -32,7 +32,7 @@ class DrawHistogramNode: public Node{
             registerParamID< std::vector<float> >(
                 "histogram", std::vector<float>(), "values to plot", Must_Be_New
             );
-            registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
+            registerOutputID(Image_Out_Copied_Name);
         }
     
         virtual ~DrawHistogramNode(){

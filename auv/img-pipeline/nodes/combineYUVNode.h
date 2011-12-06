@@ -45,7 +45,7 @@ class CombineYUVNode: public Node{
             registerInputID("V");
             
             // output:
-            registerOutputID<image_ptr_t>("image");
+            registerOutputID("image", image_ptr_t());
         }
     
         virtual ~CombineYUVNode(){

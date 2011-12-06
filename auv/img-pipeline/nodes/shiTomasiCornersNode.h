@@ -47,7 +47,7 @@ class ShiTomasiCornersNode: public Node{
             registerInputID(Image_In_Name);
             
             // one output:
-            registerOutputID< NodeParamValue >("corners");
+            registerOutputID("corners", std::vector<Corner>());
             
             // parameters:
             registerParamID<int>("maxCorners", 100,

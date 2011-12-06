@@ -44,7 +44,7 @@ class MixNode: public Node{
             registerInputID("mix");
 
             // one output
-            registerOutputID<image_ptr_t>("image (not copied)");
+            registerOutputID("image (not copied)");
             
             // parameters:
             registerParamID<float>("image fac", 1);
@@ -65,20 +65,45 @@ class MixNode: public Node{
                 return unsigned(0.5 - f);
         }
 
+
+        struct applyMix: boost::static_visitor<augmented_mat_t>{
+            applyMix(augmented_mat_t mix, float img_fac, float mix_fac, bool do_abs)
+                : m_mix(mix), m_img_fac(img_fac), m_mix_fac(mix_fac), m_do_abs(do_abs){
+            }
+            augmented_mat_t operator()(cv::Mat a) const{
+                a = a*m_img_fac + boost::get<cv::Mat>(m_mix)*m_mix_fac;
+                if (m_do_abs)
+                    a = cv::abs(a);
+                return a;
+            }
+            augmented_mat_t operator()(NonUniformPolarMat a) const{
+                cv::Mat mix = boost::get<NonUniformPolarMat>(m_mix).mat;
+                a.mat = a.mat*m_img_fac + mix*m_mix_fac;
+                if (m_do_abs)
+                    a.mat = cv::abs(a.mat);
+                return a;
+            }
+            augmented_mat_t operator()(PyramidMat) const{
+                throw std::runtime_error("Pyramid Mat not supported");
+            }
+            const augmented_mat_t m_mix;
+            const float m_img_fac;
+            const float m_mix_fac;
+            const bool m_do_abs;
+        };
+
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
-            cv::Mat img = inputs["image"]->mat();
-            cv::Mat mix = inputs["mix"]->mat();
+            augmented_mat_t img = inputs["image"]->augmentedMat();
+            augmented_mat_t mix = inputs["mix"]->augmentedMat();
             
             float img_f = param<float>("image fac");
             float mix_f = param<float>("mix fac");
             bool do_abs = param<bool>("absolute value");
             
             try {
-                img = img*img_f + mix*mix_f;
-                if (do_abs)
-                    img = cv::abs(img);
+                boost::apply_visitor(applyMix(mix, img_f, mix_f, do_abs), img);
                 r["image (not copied)"] = boost::make_shared<Image>(img);
             } catch (cv::Exception& e) {
                 error() << "MixNode:\n\t"

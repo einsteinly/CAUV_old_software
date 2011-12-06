@@ -40,18 +40,20 @@ class DrawKeyPointsNode: public Node{
         }
 
         void init(){
-            // fast node:
-            m_speed = fast;
+            // slow node: so that nodes providing input aren't re-scheduled
+            // until we're done here - this is more likely to keep them in sync
+            m_speed = slow;
             
             // one input:
             registerInputID(Image_In_Name);
             
             // one output:
-            registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
+            registerOutputID(Image_Out_Copied_Name);
             
             // parameters:
-            registerParamID< std::vector<KeyPoint> >("KeyPoints", std::vector<KeyPoint>(),
-                                                     "the KeyPoints to draw"); 
+            registerParamID< std::vector<KeyPoint> >(
+                "KeyPoints", std::vector<KeyPoint>(), "the KeyPoints to draw", Must_Be_New
+            ); 
         }
     
         virtual ~DrawKeyPointsNode(){

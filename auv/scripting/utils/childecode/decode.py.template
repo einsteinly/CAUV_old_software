@@ -140,9 +140,10 @@ p_${vecn}.setParseAction(a__vec_gen(messaging.${vecn}))
 p_byteVec << pp.Optional(pp.Word(hexchars))
 def a_byteVec(arg):
     t = messaging.byteVec()
-    if len(arg):
-        for n in base64.b16decode(arg[0]):
-            t.append(int(ord(n)))
+    try:
+        map(lambda n: t.append(ord(n)), base64.b16decode(arg[0]))
+    except IndexError:
+        pass
     return t
 p_byteVec.setParseAction(a_byteVec)
 

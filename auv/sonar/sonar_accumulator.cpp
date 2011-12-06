@@ -95,8 +95,9 @@ inline bool ccw(T p1_x, T p1_y, T p2_x, T p2_y)
     return (p1_x * p2_y - p2_x * p1_y) > 0;
 }
 
+// converts bearing (+ve clockwise) to angle (+ve anticlockwise)
 float cauv::msgPolarAngleToRadians(int32_t bearing){
-    return M_PI * bearing / (3200.0*0x10000);
+    return -M_PI * bearing / (3200.0*0x10000);
 }
 
 SonarAccumulator::SonarAccumulator(uint32_t size)
@@ -141,26 +142,28 @@ static std::vector<float> gem_sins;
 static std::vector<float> gem_coss;
 static int32_t gem_sins_start_from = 0;
 
+// -ve because we're converting from bearing to angles
 static float gem_sin_nocache(int32_t bearing){
-    return std::sin(M_PI * bearing / (3200.0*0x10000));
+    return -std::sin(M_PI * bearing / (3200.0*0x10000));
 }
 
+// -ve because we're converting from bearing to angles
 static float gem_cos_nocache(int32_t bearing){
-    return gem_sin_nocache(bearing + 1600*0x10000);
+    return -gem_sin_nocache(bearing + 1600*0x10000);
 }
 
-void ensureGemAngleTablesFor(std::vector<int32_t> angles){
-    if(angles[0] == gem_sins_start_from &&
-       angles.size() == gem_sins.size()){
+void ensureGemAngleTablesFor(std::vector<int32_t> bearings){
+    if(bearings[0] == gem_sins_start_from &&
+       bearings.size() == gem_sins.size()){
         return;
     }
     gem_sins.clear();
     gem_coss.clear();
-    gem_sins.reserve(angles.size());
-    gem_coss.reserve(angles.size());
-    for(uint32_t i = 0; i < angles.size(); i++){
-        gem_sins[i] = gem_sin_nocache(angles[i]);
-        gem_coss[i] = gem_cos_nocache(angles[i]);
+    gem_sins.reserve(bearings.size());
+    gem_coss.reserve(bearings.size());
+    for(uint32_t i = 0; i < bearings.size(); i++){
+        gem_sins[i] = gem_sin_nocache(bearings[i]);
+        gem_coss[i] = gem_cos_nocache(bearings[i]);
     }
 }
 
@@ -334,8 +337,8 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
             cv::Point2f pt_outer_from(outer_radius*gem_cos_idx(i), outer_radius*gem_sin_idx(i));
             cv::Point2f pt_outer_to(outer_radius*gem_cos_idx(i+1), outer_radius*gem_sin_idx(i+1));
 
-            cv::Rect innerbb = arcBound(inner_radius, pt_inner_from, pt_inner_to);
-            cv::Rect outerbb = arcBound(outer_radius, pt_outer_from, pt_outer_to);
+            cv::Rect innerbb = arcBound(inner_radius, pt_inner_to, pt_inner_from);
+            cv::Rect outerbb = arcBound(outer_radius, pt_outer_to, pt_outer_from);
             cv::Rect bb = innerbb | outerbb;
             
             for(int y = bb.y; y < bb.y + bb.height; y++)
@@ -350,13 +353,13 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
                         continue;
                     
                     //  | P /  For P is inside the segment if
-                    //  |  /   it's ccw of from and cw of to.                 
+                    //  |  /   it's cw of from and ccw of to.
                     //  | /
                     //  |/     
                     bool ccwFrom = ccw<float>(pt_outer_from.x, pt_outer_from.y, x, y);
                     bool ccwTo = ccw<float>(pt_outer_to.x, pt_outer_to.y, x, y);
                     
-                    if (!ccwFrom || ccwTo)
+                    if (ccwFrom || !ccwTo)
                         continue;
 
                     // If we've got to here, then this must be valid. Shift to the centre and set the value.

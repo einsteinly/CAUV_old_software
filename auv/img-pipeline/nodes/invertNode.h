@@ -29,7 +29,7 @@ class InvertNode: public Node{
             registerInputID("image");
 
             // one output
-            registerOutputID<image_ptr_t>("image (not copied)");
+            registerOutputID("image (not copied)");
         }
         
         virtual ~InvertNode(){

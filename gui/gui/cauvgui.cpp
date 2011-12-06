@@ -17,6 +17,7 @@
 #include <QDir>
 #include <QString>
 #include <QPluginLoader>
+#include <QLibrary>
 #include <QSettings>
 
 #include <model/auv_controller.h>
@@ -90,8 +91,12 @@ int CauvGui::findPlugins(const QDir& dir, int subdirs)
     
     int numFound = 0;
     foreach (QString fileName, dir.entryList(QDir::Files)) {
-        debug(1) << "Trying to load:"<< fileName.toStdString();
+        if (!QLibrary::isLibrary(fileName)) {
+            continue;
+        }
         QPluginLoader loader(dir.absoluteFilePath(fileName));
+
+        debug(1) << "Trying to load:"<< fileName.toStdString();
         if (!loader.load()) {
             debug(1) << "Could mot load plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
         } else {

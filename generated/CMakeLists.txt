@@ -21,7 +21,7 @@ endforeach()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_custom_target (messages-gen
     ALL
-    COMMAND python ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg && cmake ${CMAKE_CACHEFILE_DIR} || exit 0
+    COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg && cmake ${CMAKE_CACHEFILE_DIR} || exit 0
     DEPENDS ${PYMSGD}/msggen.py
             ${PYMSGD}/cppmess-serialise.template.h
             ${PYMSGD}/cppmess-serialise.template.cpp

@@ -91,20 +91,22 @@ bool Arc::acceptsMouseEvents(){
 
 cauv::NodeOutput Arc::from(){
     boost::shared_ptr<NodeOutputBlob> optr;
-    cauv::NodeOutput r (0, "", OutputType::Image);
+    cauv::NodeOutput r (0, "", OutputType::Image, -1);
     if((optr = boost::dynamic_pointer_cast<NodeOutputBlob>(fromOutput()))){
         r.node = optr->nodeId();
         r.output = optr->output();
+        r.subType = optr->subType();
     }
     return r;
 }
 
 cauv::NodeInput Arc::to(){
     boost::shared_ptr<NodeInputBlob> iptr;
-    cauv::NodeInput r (0, "");
+    cauv::NodeInput r (0, "", -1);
     if((iptr = boost::dynamic_pointer_cast<NodeInputBlob>(toInput()))){
         r.node = iptr->nodeId();
         r.input = iptr->input();
+        r.subType = iptr->subType();
     }
     return r;
 }

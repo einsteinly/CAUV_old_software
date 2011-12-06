@@ -41,7 +41,7 @@ class GaussianBlurNode: public Node{
             registerInputID("image");
 
             // one output
-            registerOutputID<image_ptr_t>("image (not copied)");
+            registerOutputID("image (not copied)");
             
             // parameters: sigma: standard deviation of blur
             registerParamID<float>("sigma", 1);
@@ -67,7 +67,7 @@ class GaussianBlurNode: public Node{
                 // change with range)
                 operator()(a.mat);
             }
-            void operator()(PyramidMat a) const{
+            void operator()(PyramidMat) const{
                 error() << "not implemented";
             }
             const float m_sigma;

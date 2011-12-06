@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 ''' CAUV High-performance Information Log:
 
     Directory Structure:
@@ -388,6 +388,7 @@ class ComponentPlayer(CHILer):
         self.__cursor = cursor
         # recorded_msg_types
         self.recorded_msg_types = {}
+        self.ttn_cache = None
         # map of datetime -> seek value, linearly interpolates for values not
         # present
         self.seek_map = LinearpiecewiseApprox(round,interp=linearInterp_timedeltas)
@@ -427,8 +428,8 @@ class ComponentPlayer(CHILer):
                     except ImportError:
                         print 'No decoder for hg revision %s!' % parsed[0]
                         self.decoders[parsed[1]] = None
-                        import traceback
-                        traceback.print_exc()
+                        #import traceback
+                        #traceback.print_exc()
                     else:
                         print 'loaded decoder for %s' % parsed[0]
                 except pp.ParseException:
@@ -454,7 +455,10 @@ class ComponentPlayer(CHILer):
         decoder = self.decoders[seekpos]
         if decoder is None:
             decoder = self.default_decoder
-        return decoder.parseMessage(msgstring)
+        try:
+            return decoder.parseMessage(msgstring)
+        except Exception, e:
+            return "failed to parse message at %s:%d" % (self.datname, seekpos)
     def swap(self, other):
         # dum di dum di dum
         t = other.__dict__
@@ -665,8 +669,11 @@ class ComponentPlayer(CHILer):
         else:
             return None, None
     def timeToNextMessage(self):
+        if self.ttn_cache is not None and self.ttn_cache[0] == self.cursor():
+            return self.ttn_cache[1]
         msgtime = self.timeOfNextMessage()
-        if msgtime is None:
+        if msgtime is None: 
+            self.ttn_cache = (self.cursor(), None)
             return None
         if msgtime < self.cursor():
             warnings.warn('-ve time to next message!')
@@ -674,7 +681,8 @@ class ComponentPlayer(CHILer):
             print ' cursor:', self.cursor()
             print '   seek:', self.seek_map[self.cursor()]
             print 'abstime:', self.absoluteTimeAtSeekPos()
-        return msgtime - self.cursor()
+        self.ttn_cache = (self.cursor(), msgtime - self.cursor())
+        return self.ttn_cache[1]
 
 class Player(CHILer):
     class PushCursor:
@@ -784,6 +792,9 @@ class Player(CHILer):
     def timeOfNextMessage(self):
         return self.components[0].timeOfNextMessage()
     def msgDensity(self, start, stop, N=10):
+        # !!! TODO: use estimator for poisson/exponential Lambda parameter as
+        # density!
+        #
         # density = mean(1 / (time from sample time to next message in microsec))
         samples = []
         step = (stop - start) / N
@@ -1047,7 +1058,7 @@ def testDensityMap(r, start_t, end_t):
         #print 'density:', density
 
     def pdtshort(dt):
-        return dt.strftime('%H:%H:%S.%f')
+        return dt.strftime('%H:%M:%S.%f')
     drawVHistogram(
         densities, xaxis=(start_t, end_t),
         tick_bins=40, width=N, xaxis_print=pdtshort

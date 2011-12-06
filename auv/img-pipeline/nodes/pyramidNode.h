@@ -45,7 +45,7 @@ class PyramidNode: public Node{
             registerInputID(Image_In_Name);
             
             // output:
-            registerOutputID<image_ptr_t>(Image_Out_Copied_Name);
+            registerOutputID(Image_Out_Copied_Name);
             
             // multiple parameters
             registerParamID<int>("level",1,"positive level will call pyrdown, negative will call pyrup");

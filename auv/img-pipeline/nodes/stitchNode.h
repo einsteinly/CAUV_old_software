@@ -33,11 +33,11 @@ class StitchNode: public Node{
 
             registerParamID<float>("rejection threshold", 0.5, "0 = never reject anything, 1.0 = reject everything");
 
-            registerOutputID<image_ptr_t>("Stitch Buffer");
-            registerOutputID<NodeParamValue>("Last Stitch Location");    // centre of first image == 0,0
-            registerOutputID<NodeParamValue>("Last Stitch Orientation"); // up in first image = 0, (-180,180]
-            registerOutputID<NodeParamValue>("Last Stitch Scale");       // scale of first image = 1
-            registerOutputID<NodeParamValue>("Last Stitch Goodness");    // 
+            registerOutputID("Stitch Buffer");
+            registerOutputID("Last Stitch Location");    // centre of first image == 0,0
+            registerOutputID("Last Stitch Orientation"); // up in first image = 0, (-180,180]
+            registerOutputID("Last Stitch Scale");       // scale of first image = 1
+            registerOutputID("Last Stitch Goodness");    // 
         }
 
         virtual ~StitchNode(){

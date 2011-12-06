@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2.7
 #pylint: disable=E0611
 
 # to use this file you need to uncomment the Thing and ThingCaller exports in

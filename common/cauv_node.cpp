@@ -138,13 +138,14 @@ int CauvNode::defaultOptions()
 
 int CauvNode::parseOptions(int argc, char** argv)
 {
-    if(argv)
+    if(argv && argc)
         debug::setProgramName(boost::filesystem::path(argv[0]).leaf());
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     po::positional_options_description pos;
     
     addOptions(desc, pos);
+    info::addOptions(desc, pos);
     
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
@@ -160,7 +161,6 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
         ("help,h", "Print this help message")
         ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Server address for messages")
         ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Server port for messages")
-        ("verbose,v", po::value<unsigned int>()->implicit_value(1)->notifier(SmartStreamBase::setLevel), "Set the verbosity of debug messages")
         ("version,V", "show version information")
     ;
 }

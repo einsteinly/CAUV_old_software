@@ -40,9 +40,10 @@ class RecogniserNode: public Node{
             registerInputID("Image");
 
             // outputs:
-            registerOutputID<NodeParamValue>("Confidence");
-            registerOutputID<NodeParamValue>("Position");
-            registerOutputID<image_ptr_t>("Correspondence Image");
+            // TODO...
+            //registerOutputID<NodeParamValue>("Confidence");
+            //registerOutputID<NodeParamValue>("Position");
+            registerOutputID("Correspondence Image");
 
             // Parameters:
             //registerParamID<std::string>("algorithm", "FERN", "one of FAST STAR SIFT SURF MSER GFTT HARRIS")

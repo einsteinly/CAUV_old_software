@@ -5,9 +5,9 @@ from cauv.debug import debug, warning, error, info
 
 import time
 import random
+import sys
 
-
-n = node.Node("sonar-t")
+n = node.Node("sonar-t",sys.argv[1:])
 
 data_line = msg.SonarDataLine()
 data_line.bearing = 0

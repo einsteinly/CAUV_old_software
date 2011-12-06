@@ -82,6 +82,13 @@ enum NodeType : int8 {
     MergeSimilarLines,
     DirectCameraInput,
     SonarSLAM,
+    BearingRangeToXY,
+    TransformKeyPoints,
+    Correlation1D,
+    Rotate,
+    RenderString,
+    MathDivideInt,
+    MathDivideFloat,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -108,7 +115,11 @@ enum Controller : int8 {
     Depth = 2,
     ManualOverride = 3
 }
-
+enum InputSchedType : int8 {
+    Must_Be_New = 0,
+    May_Be_Old = 1,
+    Optional = 2
+}
 
 struct floatYPR
 {
@@ -131,12 +142,26 @@ struct NodeInput
 {
     node : int32;
     input : string;
+    subType : int32;
+}
+struct LocalNodeInput
+{
+    input : string;
+    subType : int32;
+    schedType : InputSchedType;
 }
 struct NodeOutput
 {
     node : int32;
     output : string;
     type : OutputType;
+    subType : int32;
+}
+struct LocalNodeOutput
+{
+    output : string;
+    type : OutputType;
+    subType : int32;
 }
 struct NodeInputArc
 {
@@ -150,6 +175,8 @@ struct NodeOutputArc
 }
 struct TimeStamp
 {
+    // TODO: either use a base other than 1970, or more bits to store the
+    // seconds
     secs : int32;
     musecs : int32;
 }
@@ -170,6 +197,8 @@ struct PolarImage
     // the bins that each iso-bearing beam of data falls into, so there are
     // num_beams + 1 values. The first bin is bearing_bins[0] --
     // bearing_bins[1], and so on.
+    // Note that these are *bearings* not angles (ie, clockwise from forwards, not
+    // anticlockwise from x axis (wherever that is...))
     bearing_bins: list<int32>;
     // number of bins = round(rangeEnd-rangeStart) / rangeConversion)
     rangeStart: float;
@@ -636,9 +665,9 @@ group pl_gui
         pipelineName : string;
         nodeId : int32;
         nodeType : NodeType;
-        inputs : map<string, NodeOutput>;
-        outputs : map<string, list<NodeInput> >;
-        params : map<string, NodeParamValue>;
+        inputs : map<LocalNodeInput, NodeOutput>;
+        outputs : map<LocalNodeOutput, list<NodeInput> >;
+        params : map<LocalNodeInput, NodeParamValue>;
     }
 
     message NodeRemoved : 116
@@ -651,16 +680,16 @@ group pl_gui
     {
         pipelineName : string;
         nodeId : int32;
-        params : map<string, NodeParamValue>;
+        params : map<LocalNodeInput, NodeParamValue>;
     }
 
     message GraphDescription : 118
     {
         pipelineName : string;
         lazy nodeTypes : map<int32, NodeType>;
-        lazy nodeInputs : map<int32, map<string, NodeOutput> >;
-        lazy nodeOutputs : map<int32, map<string, list<NodeInput> > >;
-        lazy nodeParams : map<int32, map<string, NodeParamValue> >;
+        lazy nodeInputs : map<int32, map<LocalNodeInput, NodeOutput> >;
+        lazy nodeOutputs : map<int32, map<LocalNodeOutput, list<NodeInput> > >;
+        lazy nodeParams : map<int32, map<LocalNodeInput, NodeParamValue> >;
     }
 
     message ArcAdded : 119

@@ -3,12 +3,16 @@
 
 from cauvinterface import *
 
+#happens first so debug options can be parsed before any output occurs
+import sys
+debugParseOptions(sys.argv)
+
 # until it works...
 AIMessageObserver = BufferedMessageObserver
 
 import copy_reg
 
-info('registering picklers...')
+#info('registering picklers...')
 
 # enum picklers:
 # http://stackoverflow.com/questions/3214969/pickling-an-enum-exposed-by-boost-python
@@ -62,5 +66,5 @@ if False:
         print thing
     f.close()
 
-info('pickle registration complete')
+#info('pickle registration complete')
 

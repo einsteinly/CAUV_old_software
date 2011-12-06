@@ -32,7 +32,7 @@ class HistogramSegmentationNodeArb: public OutputNode{
             registerInputID("image_in");
             
             //One output
-            registerOutputID<image_ptr_t>("Pixels");
+            registerOutputID("Pixels");
             
             //Parameters
             registerParamID<int>("Bin min", 100);

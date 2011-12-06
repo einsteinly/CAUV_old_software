@@ -42,9 +42,9 @@ class SplitHSVNode: public Node{
             registerInputID("image");
             
             // outputs:
-            registerOutputID<image_ptr_t>("H");
-            registerOutputID<image_ptr_t>("S");
-            registerOutputID<image_ptr_t>("V");
+            registerOutputID("H");
+            registerOutputID("S");
+            registerOutputID("V");
         }
     
         virtual ~SplitHSVNode(){

@@ -59,6 +59,7 @@ function (cauv_install_link FROM TO)
             message(STATUS \"Linking ${FROM} -> ${TO}\")
             execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${TO} ${FROM})
         endif()
+        LIST(APPEND CMAKE_INSTALL_MANIFEST_FILES ${FROM})
     ")
 endfunction()
 
@@ -99,10 +100,12 @@ if (Boost_VERSION GREATER 104500)
 endif()
 
 
+add_subdirectory (messages-python)
+
 set (GEND "${CAUV_SOURCE_DIR}/generated")
 set (PYMSGD ${PYMSGGEN_SOURCE_DIR})
 execute_process(
-    COMMAND python ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg 
+    COMMAND ${PYMSGD}/msggen.py -l "c++" -an -o ${GEND} ${PYMSGD}/messages.msg 
     OUTPUT_VARIABLE CAUV_MESSAGE_FILES
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -115,7 +118,6 @@ endforeach()
 
 add_subdirectory (generated)
 add_subdirectory (common)
-add_subdirectory (messages-python)
 add_subdirectory (auv)
 add_subdirectory (gui)
 add_subdirectory (utility)

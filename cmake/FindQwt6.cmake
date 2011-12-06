@@ -32,6 +32,7 @@ IF( QT4_FOUND )
     # Is Qwt6 installed? Look for header files
     FILE(GLOB POSSIBLE_QWT6_DIRS /usr/local/qwt*
                      /usr/qwt*
+                     /usr/include/qwt*
     )
     FIND_PATH( Qwt6_INCLUDE_DIR
         qwt.h

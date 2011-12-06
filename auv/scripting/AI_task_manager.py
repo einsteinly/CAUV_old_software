@@ -22,7 +22,7 @@ import threading
 import subprocess
 import cPickle
 import shelve
-import optparse
+import argparse
 import traceback
 
 from os.path import getmtime
@@ -259,10 +259,10 @@ class taskManager(aiProcess):
         super(taskManager, self).die()
 
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-r', '--restore', dest='restore', default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")
-    opts, args = p.parse_args()
+    opts, args = p.parse_known_args()
     
     tm = taskManager(**opts.__dict__)
     try:

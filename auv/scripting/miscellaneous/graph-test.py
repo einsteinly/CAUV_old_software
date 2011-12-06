@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # down, forwards, and up
 
 import cauv
@@ -16,7 +16,8 @@ import re
 YPR_re = re.compile('.*\{ yaw = ([-0-9.]+), pitch = ([-0-9.]+), roll = ([-0-9.]+) \}.*')
 
 if __name__ == '__main__':
-    node = cauv.node.Node('py-fake')
+    import sys
+    node = cauv.node.Node('py-fake',sys.argv[1:])
     auv = control.AUV(node)
         
 

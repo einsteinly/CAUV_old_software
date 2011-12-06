@@ -1,6 +1,6 @@
 import subprocess
 import time
-import optparse
+import argparse
 import cPickle
 import threading
 
@@ -47,7 +47,7 @@ process_data_list = (
             ('pipeline_manager', '/bin/sh ./run.sh ./AI_pipeline_manager.py', ['disable_gui', 'reset_pls', 'freeze_pls', 'restore']),
             ('auv_control', '/bin/sh ./run.sh ./AI_control_manager.py', []),
             ('detector_control', '/bin/sh ./run.sh ./AI_detection_process.py', ['disable_control']),
-            ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['restore']),
+            ('task_manager', '/bin/sh ./run.sh ./AI_task_manager.py', ['mission', 'restore']),
             #('location', '/bin/sh ./run.sh ./AI_location.py', ['wait', 'timeout', 'script']),
             )
 
@@ -85,23 +85,25 @@ class AImanager(aiProcess):
             warning("Unknown process tried to register as started.")
             
 if __name__ == '__main__':
-    p = optparse.OptionParser()
-    p.add_option('-r', '--restore', dest='restore', default=False,
+    p = argparse.ArgumentParser()
+    p.add_argument('-r', '--restore', dest='restore', default=False,
                  action='store_true', help="try and resume from last saved state")
-    p.add_option('--disable-gui', dest='disable_gui', default=False,
+    p.add_argument('-m', '--mission', dest='mission', default='mission',
+                 type=str, action='store', help='which mission script to run (default = mission)')
+    p.add_argument('--disable-gui', dest='disable_gui', default=False,
                  action='store_true', help="disable/ignore gui output nodes")
-    p.add_option('--disable-control', dest='disable_control', default=False,
+    p.add_argument('--disable-control', dest='disable_control', default=False,
                  action='store_true', help="stop AI script from controlling the sub")
-    p.add_option('--disable', dest='disable', default=[],
+    p.add_argument('--disable', dest='disable', default=[],
                  type=str, action='append', help="disable process by name")
-    p.add_option('--reset-pls', dest='reset_pls', default=False,
+    p.add_argument('--reset-pls', dest='reset_pls', default=False,
                  action='store_true', help="reset pipelines to those stored in /pipelines")
-    p.add_option('--freeze-pls', dest='freeze_pls', default=False,
+    p.add_argument('--freeze-pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
-    p.add_option('-w', '--loc-wait', dest='wait', type="int", default=30, help="time to wait inbetween captures")
-    p.add_option('-t', '--loc-timeout', dest='timeout', type="int", default=15, help='maximum time to wait for a position fix')
-    p.add_option('-s', '--loc-script', dest='script', default="bay_processor", help='script to process sonar data')
-    opts, args = p.parse_args()
+    p.add_argument('-w', '--loc-wait', dest='wait', type=int, default=30, help="time to wait inbetween captures")
+    p.add_argument('-t', '--loc-timeout', dest='timeout', type=int, default=15, help='maximum time to wait for a position fix')
+    p.add_argument('-s', '--loc-script', dest='script', default="bay_processor", help='script to process sonar data')
+    opts, args = p.parse_known_args()
     #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.
     ai = AImanager(**opts.__dict__)
     try:
