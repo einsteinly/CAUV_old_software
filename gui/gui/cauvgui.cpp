@@ -166,12 +166,14 @@ bool CauvGui::loadPlugin(QObject *plugin){
     if(basicPlugin) {
         basicPlugin->initialise(m_auv, shared_from_this());
         // see which groups the plugin needs us to join
-        foreach (QString group, basicPlugin->getGroups()){
+        QStringList groups = basicPlugin->getGroups();
+        foreach (QString group, groups){
             joinGroup(group.toStdString());
         }
 
         // tabs
-        foreach (QWidget * const widget, basicPlugin->getCentralWidgets()){
+        QList<QWidget* > widgets = basicPlugin->getCentralWidgets();
+        foreach (QWidget * const widget, widgets){
             addCentralTab(widget, basicPlugin->name());
         }
         // docks
