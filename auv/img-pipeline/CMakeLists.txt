@@ -14,7 +14,7 @@ option (CAUV_CLOUD_DUMP "Dump point-clouds to file" OFF)
 option (CAUV_CLOUD_VISUALISATION "Local vis for clouds - means sonarSLAM needs an x-server!" OFF)
 
 if (CAUV_POINTCLOUDS)
-    set (REQ_PCL_COMPONENTS common registration kdtree)
+    set (REQ_PCL_COMPONENTS common registration kdtree surface filters)
     
     if (CAUV_CLOUD_DUMP)
         set (REQ_PCL_COMPONENTS ${REQ_PCL_COMPONENTS} io)
@@ -29,12 +29,15 @@ if (CAUV_POINTCLOUDS)
         set (PCL_LIBS ${PCL_COMMON_LIBRARIES}
                       ${PCL_REGISTRATION_LIBRARIES}
                       ${PCL_KDTREE_LIBRARIES}
-                      ${PCL_IO_LIBRARIES})
+                      ${PCL_IO_LIBRARIES}
+                      ${PCL_SURFACE_LIBRARIES}
+                      ${PCL_FILTERS_LIBRARIES})
         add_definitions (-DCAUV_CLOUD_DUMP)
     else ()
         set (PCL_LIBS ${PCL_COMMON_LIBRARIES}
                       ${PCL_REGISTRATION_LIBRARIES}
-                      ${PCL_KDTREE_LIBRARIES})
+                      ${PCL_KDTREE_LIBRARIES}
+                      ${PCL_FILTERS_LIBRARIES})
     endif()
 
     if (CAUV_CLOUD_VISUALISATION)

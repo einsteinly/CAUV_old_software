@@ -247,6 +247,8 @@ class SonarInputNode: public InputNode{
             {  lock_t l(m_sonardata_lock);
                 image_msg.swap(m_sonarimg_msg);
             }
+            if(!image_msg)
+                throw parameter_error("no image message available");
 
             NonUniformPolarMat r_polar_mat;
             const float end_range_m = image_msg->image().rangeEnd;
