@@ -69,32 +69,39 @@ class PercentileNode: public Node{
             apply(float const& percentile): m_pct(percentile){ }
             std::vector<int> operator()(cv::Mat img) const{
                 const int channels = img.channels();
-                const int pct_pixel = int(img.total() * (m_pct/100.0f) + 0.5f);
+                const int pct_pixel = int(img.total() * (m_pct/100.0f));
                 
-                if(channels > 3)
-                    throw(parameter_error("image must have 3 or fewer channels"));
+                if(channels > 3 || channels < 1)
+                    throw(parameter_error("image must have 1--3 channels"));
                 if(img.depth() != CV_8U)
                     throw(parameter_error("image must be unsigned bytes"));
 
-                std::vector< std::vector<int> > value_histogram(channels, std::vector<int>(256, 0));
+                std::vector< std::vector<uint32_t> > value_histogram(channels, std::vector<uint32_t>(256, 0));
                 
                 int dims[3] = {img.rows, img.cols, channels};
                 size_t steps[2] = {img.step[0], img.step[1]};
                 cv::Mat imgWithChannels(3, dims, CV_8U, img.data, steps);
-                cv::MatIterator_<unsigned char> it = imgWithChannels.begin<unsigned char>(),
+                cv::MatConstIterator_<uint8_t> it = imgWithChannels.begin<unsigned char>(),
                                                end = imgWithChannels.end<unsigned char>();
-                while(it != end) {
-                    for(int ch = 0; ch < channels; ch++, it++) {
+                // FIXME: opencv bug? iterator version is broken for me
+                /*while(it != end) {
+                    for(int ch = 0; ch < channels; ch++) {
                         value_histogram[ch][*it]++;
                     }
-                }
+                    it++;
+                }*/
+                for(uint32_t row = 0; row < img.rows; row++)
+                    for(uint32_t col = 0; col < img.cols; col++)
+                        for(uint32_t ch = 0; ch < channels; ch++)
+                            value_histogram[ch][img.at<uint8_t>(row,col,ch)]++;
 
                 std::vector<int> channel_results;
                 for(int ch = 0; ch < channels; ch++){
                     int running_total = 0;
-                    for(int i = 0; i < 256; i++){
+                    int i;
+                    for(i = 0; i < 256; i++){
                         //debug(9) << "[" << BashColour::White << bar(running_total, img.total(), 50) << "]"
-                        //          << i << running_total;
+                        //         << i << running_total;
                         
                         running_total += value_histogram[ch][i];
                         if(running_total >= pct_pixel){
@@ -102,7 +109,10 @@ class PercentileNode: public Node{
                             break;
                         }
                     }
+                    if(i == 256)
+                        channel_results.push_back(255);
                 }
+                assert(channel_results.size() == uint32_t(channels));
 
                 return channel_results;
             }
