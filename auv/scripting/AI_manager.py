@@ -100,8 +100,8 @@ if __name__ == '__main__':
                  action='store_true', help="reset pipelines to those stored in /pipelines")
     p.add_argument('--freeze-pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
-    p.add_argument('-w', '--loc-wait', dest='wait', type="int", default=30, help="time to wait inbetween captures")
-    p.add_argument('-t', '--loc-timeout', dest='timeout', type="int", default=15, help='maximum time to wait for a position fix')
+    p.add_argument('-w', '--loc-wait', dest='wait', type=int, default=30, help="time to wait inbetween captures")
+    p.add_argument('-t', '--loc-timeout', dest='timeout', type=int, default=15, help='maximum time to wait for a position fix')
     p.add_argument('-s', '--loc-script', dest='script', default="bay_processor", help='script to process sonar data')
     opts, args = p.parse_known_args()
     #unfortunately opts looks like dict but is not. fortunately opts.__dict__ is.

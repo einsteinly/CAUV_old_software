@@ -147,8 +147,8 @@ class aiLocation(aiProcess):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     
-    p.add_argument('-w', '--wait', dest='wait', type="int", default=30, help="time to wait inbetween captures")
-    p.add_argument('-t', '--timeout', dest='timeout', type="int", default=15, help='maximum time to wait for a position fix')
+    p.add_argument('-w', '--wait', dest='wait', type=int, default=30, help="time to wait inbetween captures")
+    p.add_argument('-t', '--timeout', dest='timeout', type=int, default=15, help='maximum time to wait for a position fix')
     p.add_argument('-s', '--script', dest='script', default="bay_processor", help='script to process sonar data')
     
     (opts, args) = p.parse_known_args()

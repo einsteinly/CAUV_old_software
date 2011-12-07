@@ -15,13 +15,13 @@ task_list = [
 
 #a list of tasks to look out for at the beggining
 initial_tasks = [
-                'start',
+                #'start',
                 #'circle_buoy',
                 #'test',
                 #'follow_pipe',
                 #'test',
                 #'avoid_collision',
-                'surface',
+                #'surface',
                 ]
 #script that runs otherwise
 default_script = 'spiral'
