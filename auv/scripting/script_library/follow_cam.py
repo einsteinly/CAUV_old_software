@@ -16,7 +16,7 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_pipeline_file  = 'river_edges.pipe'
+    follow_cam_file  = 'river-edges.pipe'
     lines_name = 'cam'
     #Timeouts
     ready_timeout = 30
@@ -31,11 +31,12 @@ class scriptOptions(aiScriptOptions):
     # Control
     prop_speed = 80
     strafe_kPID  = (-300, 0, 0)
+
     
     class Meta:
         dynamic = [
             'ready_timeout', 'lost_timeout',
-            'strafe_kPID', 'depth_kPID',
+            'strafe_kPID',
             'prop_speed', 'average_time'
         ]
 
@@ -61,7 +62,28 @@ class script(aiScript):
             debug('follow pipe: ignoring lines message %s != %s' % (m.name, self.options.lines_name))
             return
         if len(m.lines):
+		
+	    parl_line_groups=[]
+	    #Filter out the lines that are paralle to each other by pairwise comparision
+	    for i in range(len(m.lines)):
+		for j in range(i):
+		    if degrees(abs(m.lines[i].angle - m.lines[j].angle)%180)<10:
+			#Check if the corresponding line is also parallel to the selected groups
+			for selected_group in parl_line_groups:
+		    		if degrees(abs(m.lines[i].angle - selected_group[0].angle)%180)<10:			    
+				    #Add to the newly considered line to the existing group if they are similar
+				    selected_group += [m.lines[i]]
+				    break
+			#Create a new group if it is totally different from the other ones
+			parl_line_groups.append([m.lines[i], m.lines[j]])
 
+	    debug('Number of parallel line groups: %i' %len(parl_line_groups))
+	    for selected_group in parl_line_groups:
+		debug('Number of lines in group: %i' %len(selected_group))
+			
+				    
+	
+	    x="""
 	    #Set the time stamp
 	    self.massage_time = time.time()
 
@@ -122,12 +144,14 @@ class script(aiScript):
                 )
                 self.ready.clear()
             
+ 	    """
 
     def run(self):
         self.log('Initiating following river cam.')
         follow_cam_file = self.options.follow_cam_file
-        self.request_pl(follow_cam_file)
-        
+        #self.request_pl(follow_cam_file)
+    
+	x='''    
         # now we wait for messages allowing us to work out how to align with
         # the pipe, but if this is taking too long then just give up as we've
         # probably drifted away from the pipe
@@ -139,25 +163,29 @@ class script(aiScript):
             self.drop_pl(follow_cam_file)
             self.notify_exit('ABORT')            
             return #timeout
-        
+	'''        
+
 	# Start following the River Cam until this process is killed
 	self.auv.prop(self.options.prop_speed)
 
 	
 	#Check every once a while if the edge of river cam is not found, stop if it is lost
-	while true:
+	while True:
 	    time.sleep(self.options.lost_timeout)	
-	    if (time.time()-self.massage_time)>self.option.slost_timeout:
+	    if (time.time()-self.massage_time)>self.options.lost_timeout:
 		self.auv.prop(0)
-		self.aub.depth(0)
                 self.log('The edge of River Cam is lost more than %f seconds.' %self.options.lost_timeout)
                 self.log('The edge of River Cam is lost more than %f seconds.' %self.options.lost_timeout)
             
     def stop(self):
 	self.auv.prop(0)
-	self.auv.depth(0)
         self.drop_pl(follow_cam_file)
         self.log('Stopping follwoing River Cam.')
         info('Stopping River Cam following')
         self.notify_exit('SUCCESS')
+
+
+if __name__=="__main__":
+	cam_follower=script()
+	cam_follower.run()
 

@@ -62,12 +62,21 @@ def force_calling_process(f):
 #see http://boost.2283326.n4.nabble.com/Boost-Python-Metaclass-td3308127.html
 #it may be fixed in newer versions??)
 
+def onMessageFactory(self, m_func_name):
+    def onMessageFunction(m):
+	print m
+	return getattr(self.parent_process,m_func_name)(m)
+    return onMessageFunction
+
 class aiMessageObserver(messaging.MessageObserver):
     key_index = {'to': 0, 'from': 1, 'function': 2, 'args': 3, 'kwargs': 4}
     def __init__(self, parent_process, function_names):
         messaging.MessageObserver.__init__(self)
         self.parent_process = parent_process
         self.function_names = function_names
+	for on_message in self.parent_process._on_messages:
+	    setattr(self, on_message, onMessageFactory(self, on_message))
+
     def onAIMessage(self, m):
         debug("onAIMessage in %s: %s" %(self.parent_process.process_name, m.msg), 6)
         message = cPickle.loads(m.msg)
@@ -91,6 +100,8 @@ class aiProcessBase(type):
         #list ext funcs in class, and extract function (don't accidentally wipe parent class functions)
         if not hasattr(cls, '_ext_funcs'):
             cls._ext_funcs = []
+        if not hasattr(cls, '_on_messages'):
+            cls._on_messages = []
         if not hasattr(cls, '_objects'):
             cls._objects = []
         for key, attr in attrs.iteritems():
@@ -99,6 +110,10 @@ class aiProcessBase(type):
                 setattr(cls, key, attr.func)
             else:
                 cls._objects.append(key)
+	    if key[:2]=='on' and key[-7:]=='Message':
+		cls._on_messages.append(key)
+
+
     def __call__(cls, *args, **kwargs):
         inst = cls.__new__(cls, *args, **kwargs)
         inst.__init__(*args, **kwargs)

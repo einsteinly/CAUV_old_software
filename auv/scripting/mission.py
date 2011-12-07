@@ -9,7 +9,9 @@ task_list = [
             aiTask('avoid_collision', 'avoid_collision', 10, conditions = [detectorCondition('collision_detector', 'collision_detector'),]),
             aiTask('head_to_poi', 'head_to_poi', 2, detectors_enabled=True, conditions = [detectorCondition('poi_detector', 'poi_detector'),]),
             aiTask('track_wall', 'track_wall', 3, conditions = [aiCondition('start_track_wall'),]),
-            aiTask('surface', 'surface', 10, conditions = [timeoutCondition('surface_timeout', 180),])
+            aiTask('surface', 'surface', 10, conditions = [timeoutCondition('surface_timeout', 180),]),
+            aiTask('follow_cam', 'follow_cam', 1, detectors_enabled=True),
+	    
             #aiTask(task_name, script, priority, running_priority=priority, detectors_enabled=False, conditions=None, options=task_options)
             ]
 
@@ -22,6 +24,7 @@ initial_tasks = [
                 #'test',
                 #'avoid_collision',
                 #'surface',
+		'follow_cam'
                 ]
 #script that runs otherwise
 default_script = 'spiral'
