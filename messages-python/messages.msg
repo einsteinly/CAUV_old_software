@@ -89,6 +89,8 @@ enum NodeType : int8 {
     RenderString,
     MathDivideInt,
     MathDivideFloat,
+    GlobalMaximum,
+    LocalMaxima,
 }
 enum NodeStatus : int8 {
     None = 0,
