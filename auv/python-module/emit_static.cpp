@@ -248,7 +248,7 @@ std::vector<uint8_t> mkByteVec(std::string const& b16encoded){
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     for(uint32_t i = 0; i < b16encoded.size()-1; i+= 2)
-        r.push_back((nibble_lookup[int(b16encoded[i])] << 2) | nibble_lookup[int(b16encoded[i+1])]);
+        r.push_back((nibble_lookup[int(b16encoded[i])] << 4) | nibble_lookup[int(b16encoded[i+1])]);
     return r;
 }
 
