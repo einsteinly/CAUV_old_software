@@ -26,6 +26,8 @@ import shelve
 import argparse
 import traceback
 
+from collections import deque
+
 from AI_classes import aiProcess, external_function
 from AI_tasks import tasks
 from AI_conditions import conditions
@@ -53,7 +55,7 @@ class taskManager(aiProcess):
         #Detectors - definative list of what SHOULD be running
         self.detector_nid = 0
         self.detectors_required = {}
-        self.detectors_last_known = Queue.LifoQueue()
+        self.detectors_last_known = deque()
         self.detectors_enabled = True
         self.detector_conditions = []
         #Details on whats currently running
@@ -100,7 +102,7 @@ class taskManager(aiProcess):
     #from detector process
     @external_function
     def on_list_of_detectors(self, detector_list):
-        self.detectors_last_known.put(detector_list)
+        self.detectors_last_known.append(detector_list)
     @external_function
     def on_detector_state_change(self, detector_id, state):
         self.detector_conditions[detector_id].on_state_set(state)
@@ -228,6 +230,12 @@ class taskManager(aiProcess):
         self.current_task = task.name
         task.active = True
     def process_periodic(self):
+        #check detectors
+        running_detectors = self.detectors_last_known.pop()
+        self.detectors_last_known.clear()
+        for d_id in self.detectors_required:
+            if not d_id in running_detectors:
+                self.ai.detector_control.start(d_id, self.detector_conditions.detector_type)
         #check tasks
         highest_priority = self.current_priority
         to_start = None

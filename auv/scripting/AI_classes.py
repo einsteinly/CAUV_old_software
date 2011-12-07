@@ -29,14 +29,16 @@ class aiForeignProcess():
         self.calling_process = calling_process
         self.process = process
     def __getattr__(self, function):
-        return aiForeignFunction(self.node, self.calling_process, self.process, function)
+        setattr(self, function, aiForeignFunction(self.node, self.calling_process, self.process, function))
+        return getattr(self, function)
         
 class aiAccess():
     def __init__(self, node, process_name):
         self.node = node
         self.process_name = process_name
     def __getattr__(self, process):
-        return aiForeignProcess(self.node, self.process_name, process)
+        setattr(self, process, aiForeignProcess(self.node, self.process_name, process))
+        return getattr(self, process)
         
 #this is actually a decorator, used to declare functions accessible to other processes
 #note that it doesn't behave like a normal decorator, the function is extracted from it in the initialisation stages
