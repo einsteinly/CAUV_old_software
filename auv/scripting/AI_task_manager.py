@@ -57,7 +57,7 @@ class taskManager(aiProcess):
         self.detectors_required = {}
         self.detectors_last_known = deque()
         self.detectors_enabled = True
-        self.detector_conditions = []
+        self.detector_conditions = {}
         #Details on whats currently running
         self.running_script = None
         self.current_task = None
@@ -80,7 +80,7 @@ class taskManager(aiProcess):
     
     #ONMESSAGE FUNCTIONS
     def onAddTaskMessage(self, msg):
-        self.processing_queue.put(('add_task', [tasks[msg.taskType]], {}))
+        self.processing_queue.put(('create_task', [tasks[msg.taskType]], {}))
     def onRemoveTaskMessage(self, msg):
         self.stop_script()
         self.processing_queue.put(('remove_task', [msg.taskId], {}))
@@ -88,7 +88,7 @@ class taskManager(aiProcess):
         self.processing_queue.put(('set_task_options', [msg.taskId, msg.taskOptions, msg.scriptOptions, msg.conditionIds], {}))
         
     def onAddConditionMessage(self, msg):
-        self.processing_queue.put(('add_condition', [conditions[msg.conditionType]], {}))
+        self.processing_queue.put(('create_condition', [conditions[msg.conditionType]], {}))
     def onRemoveConditionMessage(self, msg):
         self.processing_queue.put(('remove_condition', [msg.conditionId], {}))
     def onSetConditionStateMessage(self, msg):
@@ -148,26 +148,37 @@ class taskManager(aiProcess):
     #INTERNAL FUNCTIONS
     #add/remove/modify detectors
     def add_detector(self, detector_type, listener):
+        debug("Adding detector of type %s" %str(detector_type))
         detector_id = self.detector_nid
         self.detector_nid += 1
         self.detector_conditions[detector_id] = listener
         self.ai.detector_control.start(detector_id, detector_type)
         return detector_id
     def remove_detector(self, detector_id):
+        debug("Removing condition %s" %str(condition_id))
         self.detector_conditions.pop(detector_id)
         self.ai.detector_control.stop(detector_id)
     def set_detector_options(self, detector_id, options):
+        debug("Setting options %s on detector %s" %(str(options),str(detector_id)))
         self.ai.detector_control.set_options(detector_id, options)
-    #add/remove/modify tasks
-    def add_task(self, task_type):
+    #add/remove/modify/reg/dereg tasks
+    def create_task(self, task_type):
+        #create task of named type
+        debug("Creating task of type %s" %str(task_type))
+        task_type().register(self)
+    def register_task(self, task):
+        #give the task an id
         task_id = self.task_nid
         self.task_nid += 1
-        self.tasks[task_id] = task_type()
-        self.tasks[task_id].register(self)
+        self.tasks[task_id] = task
+        return task_id
     def remove_task(self, task_id):
+        debug("Removing task %s" %str(task_id))
+        #remove task of given id (don't forget to let the task do any clearing it wants)
         self.tasks[task_id].deregister(self)
         self.tasks.pop(task_id)
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
+        debug("Setting options %s on task %s" %(str((task_options, script_options, condition_ids)),str(task_id)))
         self.tasks[task_id].set_options(options)
         #not only need to change in task, need to try and change in running script
         self.tasks[task_id].set_script_options(options)
@@ -183,17 +194,22 @@ class taskManager(aiProcess):
             self.tasks[task_id].conditions.append(self.conditions[condition_id])
             self.conditions[condition_id].task_ids.append(task_id)
     #add/remove/modify conditions
-    def add_condition(self, condition_type, options):
+    def create_condition(self, condition_type, options):
+        debug("Creating condition of type %s" %str(condition_type))
+        #create and register with self
+        condition_type(options).register(self)
+    def register_condition(self, condition):
+        #give conditon an id and add to condition list
         condition_id = self.condition_nid
         self.condition_nid += 1
-        self.conditions[condition_id] = condition_type(options)
-        self.conditions[condition_id].register(self)
+        self.conditions[condition_id] = condition
+        return condition_id
     def remove_condition(self, condition_id):
-        for task_id in self.conditions[condition_id]:
-            self.tasks[task_id].conditions.remove(self.conditions[condition_id])
+        debug("Removing condition %s" %str(condition_id))
         self.conditions[condition_id].deregister(self)
         self.conditions.pop(condition_id)
     def set_condition_options(self, condition_id, options):
+        debug("Setting options %s on condition %s" %(str(options),str(condition_id)))
         self.conditions[condition_id].set_options(options)
     #script control
     def stop_script(self):
@@ -231,15 +247,19 @@ class taskManager(aiProcess):
         task.active = True
     def process_periodic(self):
         #check detectors
-        running_detectors = self.detectors_last_known.pop()
-        self.detectors_last_known.clear()
-        for d_id in self.detectors_required:
-            if not d_id in running_detectors:
-                self.ai.detector_control.start(d_id, self.detector_conditions.detector_type)
+        try:
+            running_detectors = self.detectors_last_known.pop()
+        except IndexError:
+            pass
+        else:
+            self.detectors_last_known.clear()
+            for d_id in self.detectors_required:
+                if not d_id in running_detectors:
+                    self.ai.detector_control.start(d_id, self.detector_conditions.detector_type)
         #check tasks
         highest_priority = self.current_priority
         to_start = None
-        for task in self.tasks:
+        for task in self.tasks.itervalues():
             if task != self.current_task and task.is_available() and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
                 to_start = task
         if to_start:
@@ -258,8 +278,8 @@ class taskManager(aiProcess):
             try:
                 call = self.processing_queue.get(block=True)
                 getattr(self, call[0])(*call[1], **call[2])
-            except Error as e:
-                error(e.message+' THIS SHOULD REALLY BE FIXED. NOW.')
+            except Exception:
+                error(traceback.format_exc())
     def die(self):
         try:
             self.periodic_timer.cancel()

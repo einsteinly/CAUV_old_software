@@ -64,18 +64,26 @@ def force_calling_process(f):
 #see http://boost.2283326.n4.nabble.com/Boost-Python-Metaclass-td3308127.html
 #it may be fixed in newer versions??)
 
+def onMessageFactory(self, m_func_name):
+    def onMessageFunction(m):
+        return getattr(self.parent_process, m_func_name)(m)
+    return onMessageFunction
+
 class aiMessageObserver(messaging.MessageObserver):
     key_index = {'to': 0, 'from': 1, 'function': 2, 'args': 3, 'kwargs': 4}
-    def __init__(self, parent_process, function_names):
+    def __init__(self, parent_process):
         messaging.MessageObserver.__init__(self)
         self.parent_process = parent_process
-        self.function_names = function_names
+        for on_message in self.parent_process._on_messages:
+            setattr(self, on_message, onMessageFactory(self, on_message))
+    def on_message(self, m_func, m):
+        return m_func(self.parent_process, m)
     def onAIMessage(self, m):
         debug("onAIMessage in %s: %s" %(self.parent_process.process_name, m.msg), 6)
         message = cPickle.loads(m.msg)
         if message[0] == self.parent_process.process_name: #this is where the to string appears in the cpickle output
             message = cPickle.loads(m.msg)
-            if message[2] in self.function_names:
+            if message[2] in self.parent_process._ext_funcs:
                 try:
                     debug("onAIMessage in %s, calling function." %(self.parent_process.process_name, ), 6)
                     if getattr(self.parent_process, message[2]).caller:
@@ -93,29 +101,29 @@ class aiProcessBase(type):
         #list ext funcs in class, and extract function (don't accidentally wipe parent class functions)
         if not hasattr(cls, '_ext_funcs'):
             cls._ext_funcs = []
-        if not hasattr(cls, '_objects'):
-            cls._objects = []
+        if not hasattr(cls, '_on_messages'):
+            cls._on_messages = []
         for key, attr in attrs.iteritems():
             if isinstance(attr, external_function):
                 cls._ext_funcs.append(key)
                 setattr(cls, key, attr.func)
-            else:
-                cls._objects.append(key)
+            if key[:2] == 'on' and key [-7:] == 'Message':
+                cls._on_messages.append(key)
     def __call__(cls, *args, **kwargs):
         inst = cls.__new__(cls, *args, **kwargs)
         inst.__init__(*args, **kwargs)
         inst._register()
-        inst._objects.extend(inst.__dict__.keys())
         return inst
 
 class aiProcess():
     __metaclass__ = aiProcessBase
     def __init__(self, process_name):
-        self._msg_observer = aiMessageObserver(self, self._ext_funcs)
+        self._msg_observer = aiMessageObserver(self)
         #set node name
         id = process_name[:6] if len(process_name)>6 else process_name
         self.node = cauv.node.Node("ai"+id)
         self.node.join("ai")
+        self.node.join("guiai")
         self.process_name = process_name
         self.ai = aiAccess(self.node, self.process_name)
     def _register(self):
@@ -395,5 +403,7 @@ class subclassDict(object):
             for sub in cur.__subclasses__():
                 if not sub in checked:
                     to_check.add(sub)
+    def __getitem__(self, attr):
+        return self.classes[attr]
     def __getattr__(self, attr):
         return self.classes[attr]

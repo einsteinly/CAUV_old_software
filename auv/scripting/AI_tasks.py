@@ -48,7 +48,7 @@ class aiTask(object):
         self.task_id = task_manager.register_task(self)
         #any default conditions need to be added to the task manager
         for condition_class, options in self.__class__.conditions:
-            task_manager.add_condition(condition_class, options)
+            task_manager.create_condition(condition_class, options)
         self.registered = True
     def deregister(self, task_manager):
         if not self.registered:

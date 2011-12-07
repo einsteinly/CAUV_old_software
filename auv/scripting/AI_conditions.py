@@ -34,9 +34,10 @@ class aiCondition(object):
         for name, value in options.iteritems():
             setattr(self.options, name, value)
     def register(self, task_manager):
-        self.id  = task_manager.add_condition_inst(self)
+        self.id  = task_manager.register_condition(self)
     def deregister(self, task_manager):
-        task_manager.remove_condition(self.id)
+        for task_id in self.task_ids:
+            task_manager.tasks[task_id].conditions.remove(self.conditions[condition_id])
             
 class stateCondition(aiCondition):
     """
