@@ -16,7 +16,7 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_pipeline_file  = 'follow_cam.pipe'
+    follow_pipeline_file  = 'cam_follow.pipe'
     centre_name = 'cam'
     lines_name = 'cam'
     histogram_name = 'cam'
@@ -56,12 +56,17 @@ class script(aiScript):
         self.strafeControl = PIDController(self.options.strafe_kPID)
 
         self.yAverage = TimeAverage(1)
+	self.massage_time = time.time()
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
             debug('follow pipe: ignoring lines message %s != %s' % (m.name, self.options.lines_name))
             return
         if len(m.lines):
+
+	    #Set the time stamp
+	    self.massage_time = time.time()
+
             #
             # Adjust the AUV's bearing to align with River Cam by line detection of the bank
             # calculate the average angle of the lines (assumes good line finding)
@@ -84,8 +89,32 @@ class script(aiScript):
 		self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
 		self.aligned.clear()
 
+
+	    #Centre the AUV in the middle of River Cam
+	    if len(m.lines)==2:			#Can only work out the middle of two lines
+		cam_centre=(m.lines[0].centre.x+m.lines[1].centre.x)/2
+		centre_err=cam_centre - 0.5
+
+		info('Centre error: %f' %centre_err)
+		if abs(centre_err) < 0.01:
+		    warning('ignoring centre at 0')
+		    return
+
+		strafe_demand = int(self.strafeControl.update(centre_err))
+		if strafe_demand < -127: strafe_demand = -127
+		elif strafe_demand > 127: strafe_demand = 127
+		self.auv.strafe(strafe_demand)
+		info('Cam follow: strafing %i' %(strafe_demand))
+
+		# set the flag used for determining if we're at the centre of River Cam
+		debug('Center Error=  %g, self.options.centre_error = %g' % (float(centre_err), self.options.centre_error))
+		if centre_err**2 < self.options.centre_error**2:
+		    self.centred.set() #ie within circle radius centre error
+		else:
+		    self.centred.clear()
+
             # set the flags that show if we're above the pipe
-            if self.centred.is_set() and self.aligned.is_set():# and self.depthed.is_set(): #TODO: fix this bit
+            if self.centred.is_set() and self.aligned.is_set():
                 self.ready.set()
                 debug('ready to follow Cam')
                 self.log('River Cam follower managed to align itself over the Cam.')
@@ -95,33 +124,6 @@ class script(aiScript):
                 )
                 self.ready.clear()
             
-            
-    def onCentreMessage(self, m):
-        if m.name != self.options.centre_name:
-            debug('follow Cam: ignoring centre message %s != %s' % (m.name, self.options.centre_name))
-            return
-        
-        
-        info('Centre error: %f' %(m.x - 0.5))
-        if abs(m.x) < 0.01:
-            warning('ignoring centre at 0')
-            return
-        strafe = int(self.strafeControl.update(m.x - 0.5))
-        if strafe < -127:
-            strafe = -127
-        elif strafe > 127:
-            strafe = 127
-        self.auv.strafe(strafe)
-        info('Cam follow: strafing %i' %(strafe))
-
-
-        # set the flag used for determining if we're at the centre of River Cam
-        debug('mx =  %g, self.options.centre_error = %g' % (float(m.x), self.options.centre_error))
-        if m.x**2 < self.options.centre_error**2:
-            self.centred.set() #ie within circle radius centre error
-        else:
-            self.centred.clear()
-
 
     def run(self):
         self.log('Initiating following river cam.')
@@ -140,20 +142,24 @@ class script(aiScript):
             self.notify_exit('ABORT')            
             return #timeout
         
-
+	# Start following the River Cam until this process is killed
 	self.auv.prop(self.options.prop_speed)
-	# follow the pipe along until the end
-	if not self.followPipeUntil(self.pipeEnded):
-	    self.log('Lost River Cam...')
-	    error("River Cam is lost")
-	    self.drop_pl(follow_cam_file)
-	    self.notify_exit('LOST')
-	    return
-            
 
-        
+	
+	#Check every once a while if the edge of river cam is not found, stop if it is lost
+	while true:
+	    time.sleep(self.options.lost_timeout)	
+	    if (time.time()-self.massage_time)>self.option.slost_timeout:
+		self.auv.prop(0)
+		self.aub.depth(0)
+                self.log('The edge of River Cam is lost more than %f seconds.' %self.options.lost_timeout)
+                self.log('The edge of River Cam is lost more than %f seconds.' %self.options.lost_timeout)
+            
+    def stop(self):
+	self.auv.prop(0)
+	self.auv.depth(0)
         self.drop_pl(follow_cam_file)
-        self.log('Finished follwoing River Cam.')
-        info('Finished River Cam following')
+        self.log('Stopping follwoing River Cam.')
+        info('Stopping River Cam following')
         self.notify_exit('SUCCESS')
 
