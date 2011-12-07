@@ -100,8 +100,10 @@ class RunningAverageNode: public Node{
             {
                 cv::accumulateWeighted(img, avg, alpha);
             }
-
-            r["image"] = boost::make_shared<Image>(avg.clone());
+            
+            cv::Mat byte_image;
+            avg.convertTo(byte_image, CV_8U);
+            r["image"] = boost::make_shared<Image>(byte_image);
             
             return r;
         }
