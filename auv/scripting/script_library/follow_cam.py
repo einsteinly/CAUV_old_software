@@ -16,10 +16,8 @@ import time
 
 class scriptOptions(aiScriptOptions):
     #Pipeline details
-    follow_pipeline_file  = 'cam_follow.pipe'
-    centre_name = 'cam'
+    follow_pipeline_file  = 'river_edges.pipe'
     lines_name = 'cam'
-    histogram_name = 'cam'
     #Timeouts
     ready_timeout = 30
     lost_timeout = 10
