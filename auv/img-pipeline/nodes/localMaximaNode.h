@@ -12,12 +12,10 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __GLOBAL_MAXIMUM_NODE_H__
-#define __GLOBAL_MAXIMUM_NODE_H__
+#ifndef __LOCAL_MAXIMA_NODE_H__
+#define __LOCAL_MAXIMA_NODE_H__
 
-#include <map>
-#include <vector>
-#include <string>
+#include <numeric>
 
 #include <boost/make_shared.hpp>
 
@@ -31,39 +29,49 @@
 namespace cauv{
 namespace imgproc{
 
-class GlobalMaximumNode: public Node{
+class LocalMaximaNode: public Node{
     public:
-        GlobalMaximumNode(ConstructArgs const& args)
+        LocalMaximaNode(ConstructArgs const& args)
             : Node(args){
         }
 
         void init(){
-            // fast node:
             m_speed = fast;
-
-            // one input:
-            registerInputID("image_in");
-            
-            // one output
+            registerInputID("image_in"); 
             registerOutputID("keypoints", std::vector<KeyPoint>());
+            registerParamID<float>("delta", 1.0f, "");
         }
     
-        virtual ~GlobalMaximumNode(){
+        virtual ~LocalMaximaNode(){
             stop();
         }
 
     protected:
         struct applyGlobalMaxima: boost::static_visitor< std::vector<KeyPoint> >{
-            applyGlobalMaxima(){ }
+            applyGlobalMaxima(float delta) : m_delta(delta){ }
             std::vector<KeyPoint> operator()(cv::Mat a) const{
+                std::vector<KeyPoint> r;
                 if(a.channels() != 1)
                     throw parameter_error("image must have 1 channel");
-                std::vector<KeyPoint> r;
-                double max_val;
-                cv::Point max_loc;
-                cv::minMaxLoc(a, NULL, &max_val, NULL, &max_loc);
-                r.push_back(KeyPoint(floatXY(max_loc.x,max_loc.y), 3, 0, max_val, 0, 0));
-                debug() << "globalMaximum:" << r;
+                if((a.type() & CV_MAT_DEPTH_MASK) != CV_8U)
+                    throw parameter_error("image must be unsigned bytes");
+                
+                for(uint32_t row = 1; row < a.rows-1; row++)
+                    for(uint32_t col = 1; col < a.cols-1; col++){
+                        const uint8_t v = a.at<uint8_t>(row,col);
+                        uint8_t s[8];
+                        if(v >= (s[0] = a.at<uint8_t>(row-1,col-1)+m_delta) && 
+                           v >= (s[1] = a.at<uint8_t>(row-1,col  )+m_delta) && 
+                           v >= (s[2] = a.at<uint8_t>(row-1,col+1)+m_delta) && 
+                           v >= (s[3] = a.at<uint8_t>(row,  col-1)+m_delta) && 
+                           v >= (s[4] = a.at<uint8_t>(row,  col+1)+m_delta) && 
+                           v >= (s[5] = a.at<uint8_t>(row+1,col-1)+m_delta) && 
+                           v >= (s[6] = a.at<uint8_t>(row+1,col  )+m_delta) && 
+                           v >= (s[7] = a.at<uint8_t>(row+1,col+1)+m_delta)){
+                            int surround_mean = std::accumulate(s,s+8,0) / 8 - m_delta;
+                            r.push_back(KeyPoint(floatXY(row,col), 3, 0, v - surround_mean, 0, 0));
+                        }
+                    }
                 return r;
             }
             std::vector<KeyPoint> operator()(NonUniformPolarMat a) const{
@@ -72,27 +80,28 @@ class GlobalMaximumNode: public Node{
                     k.pt.x = a.bearings->at(int(k.pt.x));
                     k.pt.y = a.ranges->at(int(k.pt.y));
                 }
-                debug() << "bearing/range globalMaximum:" << r;                
                 return r;
             }
             std::vector<KeyPoint> operator()(PyramidMat) const{
-                error() << "global min/max does not support pyramids";
+                error() << "local maxima does not support pyramids";
                 return std::vector<KeyPoint>();
             }
+            float m_delta;
         };
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
+            const float delta = param<float>("delta");
             
             augmented_mat_t in = img->augmentedMat();
 
             try{
                 r["keypoints"] = NodeParamValue(
-                    boost::apply_visitor(applyGlobalMaxima(), in)
+                    boost::apply_visitor(applyGlobalMaxima(delta), in)
                 );
             }catch(cv::Exception& e){
-                error() << "GlobalMaximumNode:\n\t"
+                error() << "LocalMaximaNode:\n\t"
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
@@ -107,5 +116,6 @@ class GlobalMaximumNode: public Node{
 } // namespace imgproc
 } // namespace cauv
 
-#endif // ndef __GLOBAL_MAXIMUM_NODE_H__
+#endif // ndef __LOCAL_MAXIMA_NODE_H__
+
 
