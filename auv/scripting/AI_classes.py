@@ -273,17 +273,40 @@ class aiScriptOptionsBase(type):
                 for d in attrs['_dynamic']:
                     if not d in attrs:
                         raise AttributeError('The option %s is not defined, so cannot be dynamic' %(d,))
-        new_cls = super(aiScriptOptionsBase, cls).__new__(cls, name, bases, attrs)
+        attrs2 = {}
+        for key, value in attrs.iteritems():
+            if not key[0] == '_':
+                if isinstance(value, (int,str,float,bool)):
+                    attrs2[key] = value
+                else:
+                    attrs2['_not_transmittable_'+key] = value
+                    warning('Option %s will not appear as is not a valid type' %key)
+            else:
+                attrs2[key] = value
+        new_cls = super(aiScriptOptionsBase, cls).__new__(cls, name, bases, attrs2)
         return new_cls
+    def __getattr__(cls, attr):
+        return cls.__getattribute__(cls, '_not_transmittable_'+attr)
+    def get_default_options(cls):
+        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_'])
+    def get_dynamic_options(cls):
+        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_' and item[0] in cls._dynamic])
+    def get_static_options(cls):
+        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_' and not item[0] in cls._dynamic])
             
 class aiScriptOptions():
     __metaclass__ = aiScriptOptionsBase
     def __init__(self, script_opts):
         for opt in script_opts:
             setattr(self, opt, script_opts[opt])
-    @classmethod
-    def get_default_options(cls):
-        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_'])
+    def __getattr__(self, attr):
+        return self.__getattribute__(self, '_not_transmittable_'+attr)
+    def get_default_options(self):
+        return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
+    def get_dynamic_options(self):
+        return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_' and item[0] in self._dynamic])
+    def get_static_options(self):
+        return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_' and not item[0] in self._dynamic])
         
 class aiScript(aiProcess):
     def __init__(self, task_name, script_opts):
@@ -336,13 +359,30 @@ class aiScript(aiProcess):
         aiProcess.die(self)
 
 #------AI DETECTORS STUFF------
+class aiDetectorOptionsBase(type):
+    def __new__(cls, name, bases, attrs):
+        attrs2 = {}
+        for key, value in attrs.iteritems():
+            if not key[0] == '_':
+                if isinstance(value, (int,str,float,bool)):
+                    attrs2[key] = value
+                else:
+                    attrs2['_not_transmittable_'+key] = value
+                    warning('Option %s will not appear as is not a valid type' %key)
+        new_cls = super(aiDetectorOptionsBase, cls).__new__(cls, name, bases, attrs2)
+        return new_cls
+    def get_default_options(cls):
+        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_'])
+        
 class aiDetectorOptions():
+    __metaclass__ = aiDetectorOptionsBase
     def __init__(self, opts={}):
         for key, value in opts:
             setattr(self, key, value)
-    @classmethod
-    def get_default_options(cls):
-        return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_'])
+    def get_default_options(self):
+        return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
+    def __getattr__(self, attr):
+        return getattr(self, '_not_transmittable_'+attr)
         
 class aiDetector(messaging.MessageObserver):
     def __init__(self, node, opts):

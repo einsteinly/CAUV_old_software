@@ -17,8 +17,8 @@ class detectionControl(aiProcess):
         self.enable_flag = threading.Event()
         self.enable_flag.set()
     @external_function
-    def start(self, detector_id, detection_file, options={}):
-        self.requests.put(('start', detector_id, detection_file, options))
+    def start(self, detector_id, detector_file, options={}):
+        self.requests.put(('start', detector_id, detector_file, options))
     @external_function
     def stop(self, detector_id):
         self.requests.put(('stop', detector_id))
@@ -53,29 +53,29 @@ class detectionControl(aiProcess):
                         debug("Detector id %s is already running." %(detector_id))
                     else:
                         #make sure that the detection file has been imported
-                        if not (detection_file in self.modules):
+                        if not (detector_file in self.modules):
                             #interesting behaviour of __import__ here
                             try:
-                                self.modules[detection_file] = __import__('detector_library.'+detection_file, fromlist=['detector_library'])
+                                self.modules[detector_file] = __import__('detector_library.'+detector_file, fromlist=['detector_library'])
                             except Exception:
-                                error('Could not import detector %s.' %(detection_file,))
+                                error('Could not import detector %s.' %(detector_file,))
                                 traceback.print_exc()
                                 continue
                         #load and set options
                         try:
-                            opts = self.modules[detection_file].detectorOptions(options)
+                            opts = self.modules[detector_file].detectorOptions(options)
                         except Exception:
-                            error('Could not initialise detector %s options, trying with no options.' %(detection_file,))
+                            error('Could not initialise detector %s options, trying with no options.' %(detector_file,))
                             traceback.print_exc()
                             opts = aiDetectorOptions({})
                         #start detector
                         try:
-                            self.running_detectors[detector_id] = self.modules[detection_file].detector(self.node, opts)
+                            self.running_detectors[detector_id] = self.modules[detector_file].detector(self.node, opts)
                         except Exception:
-                            error('Could not initialise detector %s.' %(detection_file,))
+                            error('Could not initialise detector %s.' %(detector_file,))
                             traceback.print_exc()
                             continue
-                        info("Started detector class, id %s, %s." %(detection_file, detector_id))
+                        info("Started detector class, id %s, %s." %(detector_file, detector_id))
                 elif command[0] == 'stop':
                     detector_id = command[1]
                     try:
@@ -91,7 +91,8 @@ class detectionControl(aiProcess):
                 elif command[0] == 'set_options':
                     detector_id, options = command[1], command[2]
                     try:
-                        self.running_detectors[detector_id].set_options(options)
+                        for key, value in options.iteritems():
+                            self.running_detectors[detector_id].set_option(key, value)
                     except KeyError:
                         error("Detector %s doesn't exist, options can't be changed" %(detector_id))
             #send status

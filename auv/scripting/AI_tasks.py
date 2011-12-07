@@ -14,7 +14,9 @@ class taskOptions(object):
     def __init__(self, options={}):
         if self.script_name:
             #we want to load script options
-            self._script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions.get_default_options()
+            script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
+            self._script_dynamic_options = script_options.get_dynamic_options()
+            self._script_static_options = script_options.get_static_options()
         for key, attr in self.__class__.__dict__.iteritems():
             if key[0] != '_':
                 setattr(self, key, attr)
@@ -23,10 +25,13 @@ class taskOptions(object):
         if attr == 'script_name' and value != self.script_name:
             if value:
                 #we want to reload script options
-                self._script_options =  __import__('script_library.'+value, fromlist=['scriptOptions']).scriptOptions.get_default_options()
+                script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
+                self._script_dynamic_options = script_options.get_dynamic_options()
+                self._script_static_options = get_static_options()
             else:
                 #we just want to clear the old vals
-                self._script_options = {}
+                self._script_dynamic_options = script_options.get_dynamic_options()
+                self._script_static_options = get_static_options()
         return object.__setattr__(self, attr, value)
     def get_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
@@ -40,27 +45,41 @@ class aiTask(object):
         #create instance of options
         self.options = self.__class__.options(options)
         #create instances of conditions
-        self.conditions = []
+        self.conditions = {}
+        self.active = False
     def register(self, task_manager):
         if self.registered:
             error('Task already setup')
             return
-        self.task_id = task_manager.register_task(self)
+        self.id = task_manager.register_task(self)
         #any default conditions need to be added to the task manager
+        condition_ids = []
         for condition_class, options in self.__class__.conditions:
-            task_manager.create_condition(condition_class, options)
+            condition_ids.append(task_manager.create_condition(condition_class, options))
+        task_manager.set_task_options(self.id, condition_ids=condition_ids)
         self.registered = True
     def deregister(self, task_manager):
         if not self.registered:
             error('Task not setup, so can not be deregistered')
             return
-        task_manager.deregister_task(self.task_id)
         self.registered = False
     def set_options(self, options):
         for key, value in options.iteritems():
             setattr(self.options, key, value)
+    def set_script_options(self, options):
+        for key, value in options.iteritems():
+            if key in self._script_dynamic_options:
+                self.options._script_dynamic_options[key] = value
+            else:
+                self.options._script_static_options[key] = value
+    def get_options(self):
+        return self.options.get_options()
+    def get_dynamic_options(self):
+        return self.options._script_dynamic_options
+    def get_static_options(self):
+        return self.options._script_static_options
     def is_available(self):
-        for condition in self.conditions:
+        for condition in self.conditions.values():
             if not condition.get_state():
                 return False
         #don't return true if there aren't any conditions, default should be false

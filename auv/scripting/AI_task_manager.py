@@ -54,7 +54,6 @@ class taskManager(aiProcess):
         self.periodic_timer = None
         #Detectors - definative list of what SHOULD be running
         self.detector_nid = 0
-        self.detectors_required = {}
         self.detectors_last_known = deque()
         self.detectors_enabled = True
         self.detector_conditions = {}
@@ -161,11 +160,20 @@ class taskManager(aiProcess):
     def set_detector_options(self, detector_id, options):
         debug("Setting options %s on detector %s" %(str(options),str(detector_id)))
         self.ai.detector_control.set_options(detector_id, options)
+        
     #add/remove/modify/reg/dereg tasks
     def create_task(self, task_type):
         #create task of named type
         debug("Creating task of type %s" %str(task_type))
-        task_type().register(self)
+        task = task_type()
+        task.register(self)
+        self.node.send(messaging.TaskStateMessage(task.id,
+                task.conditions.keys(),
+                task.get_options(),
+                task.get_dynamic_options(),
+                task.get_static_options(),
+                task.active))
+        return task.id
     def register_task(self, task):
         #give the task an id
         task_id = self.task_nid
@@ -177,27 +185,38 @@ class taskManager(aiProcess):
         #remove task of given id (don't forget to let the task do any clearing it wants)
         self.tasks[task_id].deregister(self)
         self.tasks.pop(task_id)
+        self.node.send(messaging.TaskRemovedMessage(task_id))
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
         debug("Setting options %s on task %s" %(str((task_options, script_options, condition_ids)),str(task_id)))
-        self.tasks[task_id].set_options(options)
+        task = self.tasks[task_id]
+        task.set_options(task_options)
         #not only need to change in task, need to try and change in running script
-        self.tasks[task_id].set_script_options(options)
-        if task_id == self.current_task.id:
+        task.set_script_options(script_options)
+        if self.current_task and task_id == self.current_task.id:
             getattr(self.ai, task_id).set_options(options)
         #need to tell task which conditions to use
         #remove current conditions
-        for condition in self.tasks[task_id].conditions:
-            self.condition.remove(task_id)
-        self.tasks[task_id].conditions = []
+        for condition in task.conditions.itervalues():
+            condition.remove(task_id)
+        task.conditions = {}
         #add new conditions
         for condition_id in condition_ids:
-            self.tasks[task_id].conditions.append(self.conditions[condition_id])
+            task.conditions[condition_id] = self.conditions[condition_id]
             self.conditions[condition_id].task_ids.append(task_id)
+        self.node.send(messaging.TaskStateMessage(task.id,
+                task.conditions.keys(),
+                task.get_options(),
+                task.get_dynamic_options(),
+                task.get_static_options(),
+                task.active))
+            
     #add/remove/modify conditions
     def create_condition(self, condition_type, options):
         debug("Creating condition of type %s" %str(condition_type))
         #create and register with self
-        condition_type(options).register(self)
+        condition = condition_type(options)
+        condition.register(self)
+        return condition.id
     def register_condition(self, condition):
         #give conditon an id and add to condition list
         condition_id = self.condition_nid
@@ -211,6 +230,7 @@ class taskManager(aiProcess):
     def set_condition_options(self, condition_id, options):
         debug("Setting options %s on condition %s" %(str(options),str(condition_id)))
         self.conditions[condition_id].set_options(options)
+        
     #script control
     def stop_script(self):
         self.ai.auv_control.set_task_id(None)
@@ -253,9 +273,10 @@ class taskManager(aiProcess):
             pass
         else:
             self.detectors_last_known.clear()
-            for d_id in self.detectors_required:
+            for d_id, listener in self.detector_conditions.iteritems():
                 if not d_id in running_detectors:
-                    self.ai.detector_control.start(d_id, self.detector_conditions.detector_type)
+                    self.ai.detector_control.start(d_id, listener.detector_name)
+                    self.set_detector_options(d_id, listener.options.get_options())
         #check tasks
         highest_priority = self.current_priority
         to_start = None

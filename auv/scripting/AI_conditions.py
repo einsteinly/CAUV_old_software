@@ -120,21 +120,21 @@ class detectorConditions(aiCondition):
         self.state = False
         self.detector = None
     def set_options(self, options):
-        self.detector.set_options(options)
-    def on_options_set(self, options):
-        for name, value in options.iteritems():
-            setattr(self.options, name, value)
+        self.task_manager.set_detector_options(self.detector_id, self.options.get_options())
     def on_state_set(self, state):
         if state != self.state:
             self.state = state
-            self.change_event.set()
     def register(self, task_manager):
         aiCondition.register(self, task_manager)
         #We need to tell the task manager to setup the detector, and redirect messages to this condition
-        self.detector = task_manager.add_detector(self.detector_name, self)
+        self.detector_id = task_manager.add_detector(self.detector_name, self)
+        task_manager.set_detector_options(self.detector_id, self.options.get_options())
+        self.task_manager = task_manager
     def deregister(self, task_manager):
         task_manager.remove_detector(self.detector_name, self)
         aiCondition.deregister(self, task_manager)
+    def get_state(self):
+        return self.state
 
 
 conditions = subclassDict(aiCondition)
