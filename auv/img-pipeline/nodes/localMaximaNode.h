@@ -69,7 +69,7 @@ class LocalMaximaNode: public Node{
                            v >= (s[6] = a.at<uint8_t>(row+1,col  )+m_delta) && 
                            v >= (s[7] = a.at<uint8_t>(row+1,col+1)+m_delta)){
                             int surround_mean = std::accumulate(s,s+8,0) / 8 - m_delta;
-                            r.push_back(KeyPoint(floatXY(row,col), 3, 0, v - surround_mean, 0, 0));
+                            r.push_back(KeyPoint(floatXY(col,row), 3, 0, v - surround_mean, 0, 0));
                         }
                     }
                 return r;
