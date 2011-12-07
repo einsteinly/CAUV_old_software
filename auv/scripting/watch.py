@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+#pylint: disable=E1101
 
 import traceback
 import argparse
