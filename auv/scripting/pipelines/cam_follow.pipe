@@ -30,15 +30,15 @@ I-1
 tp14
 Rp15
 (lp16
-(I12
-S'image_in'
+(I8
+S'image in'
 p17
 tp18
-a(I2
-S'image in'
+a(I12
+S'image_in'
 p19
 tp20
-a(I8
+a(I14
 S'image in'
 p21
 tp22
@@ -48,7 +48,7 @@ p23
 ccauvinterface
 LocalNodeInput
 p25
-(S'black level'
+(S'white level'
 p26
 I0
 g10
@@ -59,15 +59,15 @@ tp28
 Rp29
 tp30
 Rp31
-I0
+I34
 sg25
-(S'white level'
+(S'black level'
 p32
 I0
 g29
 tp33
 Rp34
-I35
+I0
 ssS'type'
 p35
 I22
@@ -147,7 +147,7 @@ I0
 g29
 tp70
 Rp71
-I20
+I3
 sg25
 (S'srn'
 p72
@@ -165,13 +165,13 @@ tp76
 Rp77
 I0
 sg25
-(S'maxLineGap'
+(S'minLineLength'
 p78
 I0
 g29
 tp79
 Rp80
-I1
+I20
 sg25
 (S'probabilistic'
 p81
@@ -197,19 +197,19 @@ tp88
 Rp89
 I1
 sg25
-(S'minLineLength'
+(S'maxLineGap'
 p90
 I0
 g29
 tp91
 Rp92
-I200
+I1
 ssg35
 I8
 sg36
 (dp93
 g25
-(S'srn'
+(S'rho'
 p94
 I0
 g29
@@ -220,85 +220,85 @@ S''
 p97
 tp98
 sg25
-(S'maxLineGap'
-p99
-I0
-g29
-tp100
-Rp101
-(I0
-g97
-tp102
-sg25
-(S'stn'
-p103
-I0
-g29
-tp104
-Rp105
-(I0
-g97
-tp106
-sg25
-(S'minLineLength'
-p107
-I0
-g29
-tp108
-Rp109
-(I0
-g97
-tp110
-sg25
-(S'theta'
-p111
-I1
-g29
-tp112
-Rp113
-(I0
-g97
-tp114
-sg25
-(S'probabilistic'
-p115
-I3
-g29
-tp116
-Rp117
-(I0
-g97
-tp118
-sg25
-(S'threshold'
-p119
-I0
-g29
-tp120
-Rp121
-(I0
-g97
-tp122
-sg25
-(S'rho'
-p123
-I0
-g29
-tp124
-Rp125
-(I0
-g97
-tp126
-sg25
 (S'image in'
-p127
+p99
 I-1
 g40
-tp128
-Rp129
-(I1
-S'image (not copied)'
-p130
+tp100
+Rp101
+(I14
+S'image out'
+p102
+tp103
+sg25
+(S'srn'
+p104
+I0
+g29
+tp105
+Rp106
+(I0
+g97
+tp107
+sg25
+(S'maxLineGap'
+p108
+I0
+g29
+tp109
+Rp110
+(I0
+g97
+tp111
+sg25
+(S'stn'
+p112
+I0
+g29
+tp113
+Rp114
+(I0
+g97
+tp115
+sg25
+(S'minLineLength'
+p116
+I0
+g29
+tp117
+Rp118
+(I0
+g97
+tp119
+sg25
+(S'theta'
+p120
+I1
+g29
+tp121
+Rp122
+(I0
+g97
+tp123
+sg25
+(S'probabilistic'
+p124
+I3
+g29
+tp125
+Rp126
+(I0
+g97
+tp127
+sg25
+(S'threshold'
+p128
+I0
+g29
+tp129
+Rp130
+(I0
+g97
 tp131
 ssbsI3
 (icauv.pipeline
@@ -316,26 +316,26 @@ tp136
 Rp137
 (lp138
 sg8
-(S'ch1 value'
+(S'ch3 value'
 p139
 g60
 I0
 tp140
 Rp141
 (lp142
-(I1
-S'black level'
+sg8
+(S'ch1 value'
 p143
-tp144
-asg8
-(S'ch3 value'
-p145
 g60
 I0
-tp146
-Rp147
-(lp148
-ssg23
+tp144
+Rp145
+(lp146
+(I1
+S'black level'
+p147
+tp148
+assg23
 (dp149
 g25
 (S'percentile'
@@ -350,25 +350,25 @@ I24
 sg36
 (dp153
 g25
-(S'image'
-p154
-I-1
-g40
-tp155
-Rp156
-(I7
-S'image_out'
-p157
-tp158
-sg25
 (S'percentile'
-p159
+p154
 I1
 g29
-tp160
-Rp161
+tp155
+Rp156
 (I0
 g97
+tp157
+sg25
+(S'image'
+p158
+I-1
+g40
+tp159
+Rp160
+(I7
+S'image_out'
+p161
 tp162
 ssbsI4
 (icauv.pipeline
@@ -378,26 +378,26 @@ p163
 g6
 (dp165
 g8
-(S'ch1 value'
+(S'ch2 value'
 p166
 g60
 I0
 tp167
 Rp168
 (lp169
-(I1
-S'white level'
+sg8
+(S'ch1 value'
 p170
-tp171
-asg8
-(S'ch2 value'
-p172
 g60
 I0
-tp173
-Rp174
-(lp175
-sg8
+tp171
+Rp172
+(lp173
+(I1
+S'white level'
+p174
+tp175
+asg8
 (S'ch3 value'
 p176
 g60
@@ -420,25 +420,25 @@ I24
 sg36
 (dp184
 g25
-(S'percentile'
-p185
-I1
-g29
-tp186
-Rp187
-(I0
-g97
-tp188
-sg25
 (S'image'
-p189
+p185
 I-1
 g40
-tp190
-Rp191
+tp186
+Rp187
 (I7
 S'image_out'
-p192
+p188
+tp189
+sg25
+(S'percentile'
+p190
+I1
+g29
+tp191
+Rp192
+(I0
+g97
 tp193
 ssbsI5
 (icauv.pipeline
@@ -504,7 +504,7 @@ Rp220
 ccauvinterface
 LineVec
 p221
-(S'-\x00\x00\x00\xd7\xa3@?H\xe1\x02?\x00\x00\x00\x00\x18\x8e\xd4\xbfT\xd8G?{\x14V?\x9a\x99\xe9>\x00\x00\x00\x00Q\x98\xd8\xbfs\n9?\x9a\x99Y?{\x14\xee>\x00\x00\x00\x00\x99\xff\xd4\xbfJ\xb22?\xf6(<?\xe1z\xd4>\x00\x00\x00\x00\xb3\xf3\xd1\xbfE\x8e\x13?\xe1zL?33\xf3>\x00\x00\x00\x00\xc7k\xd2\xbf\x97\x7fI?\\\x8f2?\x85\xeb\x01?\x00\x00\x00\x00\x7f\'\xe1\xbf\xfe\xd0\x08?)\\G?=\n\xf7>\x00\x00\x00\x00r\\\xd7\xbf\xb7\xeeH?\xc3\xf5`?H\xe1\xfa>\x00\x00\x00\x00\xcf\x94\xcb\xbfl\x97"?R\xb8N?\n\xd7\xf3>\x00\x00\x00\x00\xeb(\xd2\xbf\xb6BF?\xe1zD?R\xb8\xfe>\x00\x00\x00\x00\x83"\xd7\xbf@QF?\x9a\x999?{\x14\xde>\x00\x00\x00\x00\x1d\xc3\xd5\xbf\x9c#\x0e?\x9a\x99i?\xecQ\x00?\x00\x00\x00\x00\x9c\xe4\xc7\xbfu*\x0c?\xcd\xccT?q=\xea>\x00\x00\x00\x00\x93o\xd8\xbfd\xf2:?\xb8\x1e5?R\xb8\x1e?\x00\x00\x00\x00\xe0\xa1\xe7\xbf\x15\x80\x17?\xc3\xf5H?\xf6(\xec>\x00\x00\x00\x00\t\xa1\xd4\xbf\xfb\x91F?\x14\xaeg?\xecQ\x00?\x00\x00\x00\x00(\xef\xc7\xbf\x1fI\x11?\xc3\xf5P?R\xb8\x0e?\x00\x00\x00\x00\x95\xc6\xd1\xbf| \r?33C?\xc3\xf5\x00?\x00\x00\x00\x00\'.\xd7\xbfi\xaeE?\xa4pe?\xd7\xa3\x00?\x00\x00\x00\x00Vo\xc7\xbf]\r\x17?{\x14F?H\xe1\xfa>\x00\x00\x00\x00\xdds\xd7\xbf\x17\xa9G?\xcd\xcc4?\xb8\x1e\xf5>\x00\x00\x00\x00m\x80\xde\xbfA\\\x06?\\\x8fb?\xcd\xcc\xfc>\x00\x00\x00\x00\x0b\x17\xca\xbfy]\x1f?\xb8\x1eE?\xcd\xcc\xfc>\x00\x00\x00\x00\xf3\x16\xd7\xbf\x1c\xf4F?\x85\xeb9?\xa4p\r?\x00\x00\x00\x003n\xdc\xbf\xed\x906?{\x14N?\n\xd7\xf3>\x00\x00\x00\x00\xfe\x19\xd2\xbf\x92\x89G?\n\xd7S?R\xb8\xee>\x00\x00\x00\x00\xa1B\xd8\xbf\x81\xb17?\x85\xebI?\x85\xeb\xf1>\x00\x00\x00\x00\xe3\xb3\xd4\xbfS]L?\xaeGY?q=\xca>\x00\x00\x00\x00w5\xd3\xbf8d\t?\n\xd73?H\xe1\xfa>\x00\x00\x00\x00\x041\xe0\xbf\xc4R\x07?)\\_?\xf6(\xdc>\x00\x00\x00\x00W\xa6\xcc\xbf\x89\x03\t?\n\xd7c?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xf6(\x1c?fff?\xecQ\x00?\x00\x00\x00\x00\x97\xf6\xc7\xbf  \x15?=\ng?\x00\x00\x00?\x00\x00\x00\x00\xec\xf2\xc7\xbf\xa04\x13?33S?\x9a\x99\x11?\x00\x00\x00\x00\xd8\x82\xd4\xbf\xf8J\x0f?\xcd\xcc\\?)\\\xef>\x00\x00\x00\x00x\xde\xd0\xbf\x0c\xfe\'?ff6?\x00\x00\x10?\x00\x00\x00\x00da\xe1\xbf\xf2r)?)\\W?=\n\xe7>\x00\x00\x00\x00m\xdc\xd6\xbf\n\xb4\x14?\xa4pU?q=\xea>\x00\x00\x00\x00\xa4\x8a\xd8\xbf\x16\xad9?\x1f\x85S?\x85\xeb\x01?\x00\x00\x00\x00$,\xd7\xbf=\xb4(?H\xe1B?\xd7\xa3\x08?\x00\x00\x00\x00\xb5\xf3\xd5\xbf\x86\x9d8?\xe1zd?\xecQ\xf8>\x00\x00\x00\x00\xdb\x0f\xc9\xbf33\x13?\xd7\xa3H?\xecQ\xc8>\x00\x00\x00\x00\x99\xaa\xd4\xbft\x96"?\x8f\xc2U?\xcd\xcc\x0c?\x00\x00\x00\x00\x8e\x1e\xd8\xbf\xa4\xc7\r?\xa4pM?\n\xd7\xf3>\x00\x00\x00\x00A\x0b\xd2\xbfq\xd0H?{\x14F?)\\\xcf>\x00\x00\x00\x00\xf5\xeb\xd5\xbfA\x86\x1f?'
+(S'\x03\x00\x00\x00\x1f\x85C?\xf6(,?\x00\x00\x00\x008cm\xbf\x00\x00\x80=\xd7\xa3 ?\xa4p\x8d>\x00\x00\x00\x00\xb6\xb9\x85\xbf=\x89\xb7={\x14~?)\\\xff>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\x14\xae\xc7='
 p222
 tp223
 Rp224
@@ -609,9 +609,9 @@ Rp264
 g97
 tp265
 sg25
-(S'scale factor'
+(S'fixed width'
 p266
-I1
+I0
 g29
 tp267
 Rp268
@@ -619,30 +619,30 @@ Rp268
 g97
 tp269
 sg25
-(S'image_in'
-p270
-I-1
-g40
-tp271
-Rp272
-(I9
-S'image (not copied)'
-p273
-tp274
-sg25
 (S'fixed height'
-p275
+p270
 I0
 g29
-tp276
-Rp277
+tp271
+Rp272
 (I0
 g97
+tp273
+sg25
+(S'image_in'
+p274
+I-1
+g40
+tp275
+Rp276
+(I9
+S'image (not copied)'
+p277
 tp278
 sg25
-(S'fixed width'
+(S'scale factor'
 p279
-I0
+I1
 g29
 tp280
 Rp281
@@ -678,7 +678,7 @@ g29
 tp294
 Rp295
 g221
-(S"2\x00\x00\x00=\nW?)\\\x07?\x00\x00\x00\x00\xbfj\xbd\xbfN(7?\xf6(L?\xcd\xcc\xfc>\x00\x00\x00\x00O\xad\xca\xbfj\xe5J?\x00\x00@?\xa4p\xfd>\x00\x00\x00\x00\xe4\xaa\xc3\xbf8\xabT?\xc3\xf5H?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf)\\O?\xe1zD?)\\\xff>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xb8\x1eU?\xcd\xcc$?33\xd3>\x00\x00\x00\x006.\xaf\xbft\xa9\x02?ffF?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf33S?\xe1z\\?33\x03?\x00\x00\x00\x00\x99\xd9\xc3\xbf\x80\xf1,?\x9a\x999?R\xb8\xee>\x00\x00\x00\x00m\xa9\xc1\xbf\x84_G?\xd7\xa3P?R\xb8\xfe>\x00\x00\x00\x00\x95\x80\xc6\xbf\xd3\t@?\xa4p5?\n\xd7\xf3>\x00\x00\x00\x00;1\xc4\xbf\x0c\x189?=\n??\x1f\x85\xfb>\x00\x00\x00\x00\x8e\t\xc4\xbf\xdb\x00T?\xa4p=?\x9a\x99\xf9>\x00\x00\x00\x000/\xc5\xbf\x05LS?\xd7\xa38?\xcd\xcc\xec>\x00\x00\x00\x00\xd9\x1f\xc1\xbf\x977D?\n\xd7+?\x9a\x99\xe9>\x00\x00\x00\x00\x08\xd8\xbd\xbf\xa1\x8c\x19?\xcd\xccd?)\\\x07?\x00\x00\x00\x00}\xd2\xbe\xbf\xaa*\x18?\xaeGa?\x00\x00\x08?\x00\x00\x00\x00\x14\xdf\xbd\xbf\x81A!?\xa4p-?H\xe1\xea>\x00\x00\x00\x00Z\xb8\xbe\xbf\xee\x98\x1e?\x9a\x99I?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf{\x14N?\x9a\x991?\xf6(\xec>\x00\x00\x00\x008\x1a\xc0\xbf\xa3\xdd-?fff?\xaeG\t?\x00\x00\x00\x00\xcf\xe4\xbf\xbf>\x16\x0f?{\x14N?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\x14\xaeG?\xb8\x1eE?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xe1zT?\xd7\xa30?\xa4p\xed>\x00\x00\x00\x00\x84a\xc0\xbf\xa5\xfd)?\x14\xaeG?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xd7\xa3P?\xecQH?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xd7\xa3P?\xc3\xf5(?ff\xe6>\x00\x00\x00\x00'\x01\xba\xbf\xa4\xc7\r?33c?\xecQ\x08?\x00\x00\x00\x00T\x8d\xbd\xbf \xcb\x1c?q=J?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xcd\xccL?q=b?\xd7\xa3\x08?\x00\x00\x00\x00[-\xbd\xbf\x8d\xc3\x1e?=\nG?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\x85\xebQ?\x85\xeb9?\xf6(\xfc>\x00\x00\x00\x00G\x9e\xc1\xbfI2;?\n\xd73?\xaeG\xf1>\x00\x00\x00\x00\xa2\xb0\xc2\xbf%\x104?\x00\x008?\xc3\xf5\xe8>\x00\x00\x00\x00\xf9\xb7\xc1\xbf\x8f\xc0=?\n\xd7[?\xaeG\xf1>\x00\x00\x00\x00\xa7\xf8\xc2\xbf\xed\x01\x14?\xaeGQ?\xecQ\xf8>\x00\x00\x00\x00Ie\xc6\xbf)\\8?\x8f\xc2E?R\xb8\xfe>\x00\x00\x00\x00\xdb\x0f\xc9\xbf33S?\x00\x000?\xf6(\xec>\x00\x00\x00\x002.\xc0\xbf\xea(&?\n\xd7S?{\x14\xce>\x00\x00\x00\x00\xf9\xe5\xc7\xbfJ\xce\x0c?R\xb8^?\x1f\x85\xfb>\x00\x00\x00\x00\xff\xbe\xc2\xbf\xa3\xb5\x1b?{\x14.?\x8f\xc2\xf5>\x00\x00\x00\x00nQ\xbf\xbf\x8bz\x17?H\xe1B?\xecQ\x08?\x00\x00\x00\x00\xc1\xd2\xc7\xbf\xc8hF?q=R?H\xe1\xea>\x00\x00\x00\x00\xaa\xa5\xc6\xbfS\xa1)?H\xe1J?\xb8\x1e\x05?\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xaeGA?\x9a\x999?\xc3\xf5\x18?\x00\x00\x00\x00\x11\x9f\xc0\xbf\xbd\xf9\x07?\xb8\x1ee?)\\\x0f?\x00\x00\x00\x00\xd4\x1d\xc0\xbf/P\x00?33c?\\\x8f\x12?\x00\x00\x00\x00\xde#\xbf\xbf\xb0<\x04?R\xb8N?\xa4p\xdd>\x00\x00\x00\x00\xdb\x0f\xc9\xbf\xb8\x1e%?\xaeGA?\xd7\xa3\x10?\x00\x00\x00\x00\x84`\xc6\xbf\x8d\x147?\n\xd7C?\xecQ ?\x00\x00\x00\x00\xdb\x0f\xc9\xbfR\xb8\x0e?"
+(S'\x03\x00\x00\x00R\xb86?\\\x8f:?\x00\x00\x00\x00\xdb\x0fI\xbf:\x80\xc3=\xf6(\x1c?\xcd\xcc\x9c>\x00\x00\x00\x00\x07a\x85\xbf{\xf0\x83>H\xe1b?\xaeGA>\x00\x00\x00\x00\xc0q\x0f\xc0Z\x82\xbd='
 p296
 tp297
 Rp298
@@ -687,25 +687,25 @@ I48
 sg36
 (dp299
 g25
-(S'lines'
+(S'image in'
 p300
-I5
-g29
+I-1
+g40
 tp301
 Rp302
-(I2
-S'lines'
+(I1
+S'image (not copied)'
 p303
 tp304
 sg25
-(S'image in'
+(S'lines'
 p305
-I-1
-g40
+I5
+g29
 tp306
 Rp307
-(I1
-S'image (not copied)'
+(I2
+S'lines'
 p308
 tp309
 ssbsI9
@@ -812,31 +812,31 @@ p350
 g6
 (dp352
 g8
-(S'polar image'
+(S'range'
 p353
-g13
-I-1
+g60
+I1
 tp354
 Rp355
 (lp356
 sg8
-(S'bearing range'
+(S'data line'
 p357
-g60
-I0
+g13
+I-1
 tp358
 Rp359
 (lp360
 sg8
-(S'range'
+(S'timestamp'
 p361
 g60
-I1
+I2
 tp362
 Rp363
 (lp364
 sg8
-(S'data line'
+(S'image (buffer)'
 p365
 g13
 I-1
@@ -844,22 +844,22 @@ tp366
 Rp367
 (lp368
 sg8
-(S'timestamp'
+(S'image (synced)'
 p369
-g60
-I2
+g13
+I-1
 tp370
 Rp371
 (lp372
-sg8
-(S'image (buffer)'
+(I9
+S'image'
 p373
-g13
-I-1
 tp374
-Rp375
-(lp376
-sg8
+a(I13
+S'image_in'
+p375
+tp376
+asg8
 (S'bearing'
 p377
 g60
@@ -868,22 +868,22 @@ tp378
 Rp379
 (lp380
 sg8
-(S'image (synced)'
+(S'polar image'
 p381
 g13
 I-1
 tp382
 Rp383
 (lp384
-(I13
-S'image_in'
+sg8
+(S'bearing range'
 p385
+g60
+I0
 tp386
-a(I9
-S'image'
-p387
-tp388
-assg23
+Rp387
+(lp388
+ssg23
 (dp389
 g25
 (S'min range'
@@ -946,7 +946,7 @@ I25
 sg36
 (dp411
 g25
-(S'low-pass width'
+(S'non-maximum suppression'
 p412
 I0
 g29
@@ -956,7 +956,7 @@ Rp414
 g97
 tp415
 sg25
-(S'min range'
+(S'derivative'
 p416
 I0
 g29
@@ -966,7 +966,7 @@ Rp418
 g97
 tp419
 sg25
-(S'Resolution'
+(S'low-pass width'
 p420
 I0
 g29
@@ -976,7 +976,7 @@ Rp422
 g97
 tp423
 sg25
-(S'non-maximum epsilon'
+(S'min range'
 p424
 I0
 g29
@@ -986,7 +986,7 @@ Rp426
 g97
 tp427
 sg25
-(S'Sonar ID'
+(S'Resolution'
 p428
 I0
 g29
@@ -996,7 +996,7 @@ Rp430
 g97
 tp431
 sg25
-(S'non-maximum suppression'
+(S'non-maximum epsilon'
 p432
 I0
 g29
@@ -1006,7 +1006,7 @@ Rp434
 g97
 tp435
 sg25
-(S'derivative'
+(S'Sonar ID'
 p436
 I0
 g29
@@ -1079,24 +1079,178 @@ I11
 sg36
 (dp464
 g25
-(S'image_in'
-p465
-I-1
-g40
-tp466
-Rp467
-(I11
-S'image (synced)'
-p468
-tp469
-sg25
 (S'jpeg quality'
-p470
+p465
 I0
 g29
-tp471
-Rp472
+tp466
+Rp467
 (I0
 g97
+tp468
+sg25
+(S'image_in'
+p469
+I-1
+g40
+tp470
+Rp471
+(I11
+S'image (synced)'
+p472
 tp473
+ssbsI14
+(icauv.pipeline
+Node
+p474
+(dp475
+g6
+(dp476
+g8
+(S'image out'
+p477
+g13
+I-1
+tp478
+Rp479
+(lp480
+(I2
+S'image in'
+p481
+tp482
+a(I15
+S'image_in'
+p483
+tp484
+assg23
+(dp485
+g25
+(S'threshold 2'
+p486
+I1
+g29
+tp487
+Rp488
+F300.0
+sg25
+(S'aperture size'
+p489
+I0
+g29
+tp490
+Rp491
+I3
+sg25
+(S'L2 gradient'
+p492
+I0
+g29
+tp493
+Rp494
+I0
+sg25
+(S'threshold 1'
+p495
+I1
+g29
+tp496
+Rp497
+F60.0
+ssg35
+I9
+sg36
+(dp498
+g25
+(S'L2 gradient'
+p499
+I0
+g29
+tp500
+Rp501
+(I0
+g97
+tp502
+sg25
+(S'image in'
+p503
+I-1
+g40
+tp504
+Rp505
+(I1
+S'image (not copied)'
+p506
+tp507
+sg25
+(S'threshold 2'
+p508
+I1
+g29
+tp509
+Rp510
+(I0
+g97
+tp511
+sg25
+(S'threshold 1'
+p512
+I1
+g29
+tp513
+Rp514
+(I0
+g97
+tp515
+sg25
+(S'aperture size'
+p516
+I0
+g29
+tp517
+Rp518
+(I0
+g97
+tp519
+ssbsI15
+(icauv.pipeline
+Node
+p520
+(dp521
+g6
+(dp522
+sg23
+(dp523
+g25
+(S'jpeg quality'
+p524
+I0
+g29
+tp525
+Rp526
+I85
+ssg35
+I11
+sg36
+(dp527
+g25
+(S'image_in'
+p528
+I-1
+g40
+tp529
+Rp530
+(I14
+S'image out'
+p531
+tp532
+sg25
+(S'jpeg quality'
+p533
+I0
+g29
+tp534
+Rp535
+(I0
+g97
+tp536
 ssbssb.
