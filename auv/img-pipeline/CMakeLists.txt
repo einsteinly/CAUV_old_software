@@ -81,4 +81,4 @@ target_link_libraries (
     ${OpenCV_LIBS}
     ${CONDITIONAL_LIBS}
 )
-
+depends_on_messages(img-pipeline)

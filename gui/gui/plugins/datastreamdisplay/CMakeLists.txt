@@ -35,8 +35,8 @@ add_library( dsdplugin MODULE
     ${DSD_PLUGIN_UIS_H}
     ${DSD_PLUGIN_MOC_H}
 )
-
-cauv_install_plugin( dsdplugin )
+depends_on_messages(dsdplugin)
+cauv_install_plugin(dsdplugin)
                                      
 target_link_libraries( dsdplugin
     guicpp-core

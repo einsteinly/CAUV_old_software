@@ -28,4 +28,4 @@ target_link_libraries (
     cmt
     ${ftdi_LIBRARIES}
 )
-
+depends_on_messages(control)

@@ -12,15 +12,9 @@ target_link_libraries (
     common
 )
 
-foreach(F IN LISTS CAUV_MESSAGE_FILES)
-    file(RELATIVE_PATH FREL "${SRCD}" "${F}")
-    set_source_files_properties("${FREL}"
-                                PROPERTIES GENERATED TRUE)
-endforeach()
-
-add_custom_target (
-    messages-gen
-    COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg && cmake ${CMAKE_CACHEFILE_DIR} || exit 0
+add_custom_command (
+    OUTPUT ${CAUV_MESSAGE_FILES}
+    COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg
     DEPENDS ${PYMSGD}/msggen.py
             ${PYMSGD}/cppmess-serialise.template.h
             ${PYMSGD}/cppmess-serialise.template.cpp
@@ -42,31 +36,36 @@ add_custom_target (
     COMMENT "Generating messages"
 )
 
-add_dependencies(messages messages-gen)
+add_custom_target (
+    messages-gen
+    DEPENDS ${CAUV_MESSAGE_FILES}
+    COMMENT "Generating messages"
+)
+
+depends_on_messages(messages)
 
 add_custom_command (
-    OUTPUT ${SRCD}/cauv_logo_large.h
-    COMMAND xxd -i - ${SRCD}/cauv_logo_large.h < ${SRCD}/cauv_logo_large.txt
+    OUTPUT ${GEND}/cauv_logo_large.h
+    COMMAND xxd -i - ${GEND}/cauv_logo_large.h < ${SRCD}/cauv_logo_large.txt
     DEPENDS ${SRCD}/cauv_logo_large.txt
     COMMENT "Generating cauv_logo_large.h with xxd"
 )
 
 add_custom_target (
     logo-headers
-    DEPENDS ${SRCD}/cauv_logo_large.h
+    DEPENDS ${GEND}/cauv_logo_large.h
     COMMENT "Depending on generated logo header"
 )
 
 add_custom_command (
-    OUTPUT ${SRCD}/version.h
-    COMMAND hg -R ${SRCD}/../ summary | sed "s/^/    /" | xxd -i - ${SRCD}/version.h
+    OUTPUT ${GEND}/version.h
+    COMMAND hg -R ${SRCD}/../ summary | sed "s/^/    /" | xxd -i - ${GEND}/version.h
     DEPENDS ${SRCD}/../.hg
     COMMENT "Generating version header"
 )
 
 add_custom_target (
     version-header
-    DEPENDS ${SRCD}/version.h
+    DEPENDS ${GEND}/version.h
     COMMENT "Depending on version header"
 )
-

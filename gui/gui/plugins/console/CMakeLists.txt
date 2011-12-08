@@ -37,3 +37,4 @@ target_link_libraries( consoleplugin
     qconsole2
     guicpp-core
 )
+depends_on_messages(consoleplugin)

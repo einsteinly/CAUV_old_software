@@ -8,6 +8,7 @@ add_library (
     camera.cpp
     img_daemon.cpp
 )
+depends_on_messages(camera)
 
 # libs
 target_link_libraries (
@@ -26,6 +27,7 @@ target_link_libraries (camera_server
     ${OpenCV_LIBS}
     boost_system
 )
+depends_on_messages(camera_server)
 cauv_install(camera_server)
 
 
@@ -37,6 +39,7 @@ target_link_libraries (camera_client
     ${OpeNCV_LIBS}
     boost_system
 )
+depends_on_messages(camera_client)
 
 
 add_executable (camera_client_test
@@ -46,6 +49,7 @@ add_executable (camera_client_test
 target_link_libraries (camera_client_test
     camera_client
 )
+depends_on_messages(camera_client_test)
 
 
 add_executable (
@@ -58,6 +62,7 @@ target_link_libraries (
     
     ${OpenCV_LIBS}
 )
+depends_on_messages(opencv_test)
 
 add_executable (
     img_daemon EXCLUDE_FROM_ALL
@@ -71,4 +76,4 @@ target_link_libraries (
     common
     ${OpenCV_LIBS}
 )
-
+depends_on_messages(img_daemon)
