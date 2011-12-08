@@ -3,7 +3,6 @@ set (SRCD ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library (
     messages STATIC
-
     ${CAUV_MESSAGE_FILES}
 )
 
@@ -18,9 +17,9 @@ foreach(F IN LISTS CAUV_MESSAGE_FILES)
     set_source_files_properties("${FREL}"
                                 PROPERTIES GENERATED TRUE)
 endforeach()
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_custom_target (messages-gen
-    ALL
+
+add_custom_target (
+    messages-gen
     COMMAND ${PYMSGD}/msggen.py -l "c++" -o ${GEND} ${PYMSGD}/messages.msg && cmake ${CMAKE_CACHEFILE_DIR} || exit 0
     DEPENDS ${PYMSGD}/msggen.py
             ${PYMSGD}/cppmess-serialise.template.h
@@ -42,6 +41,7 @@ add_custom_target (messages-gen
             ${PYMSGD}/messages.msg
     COMMENT "Generating messages"
 )
+
 add_dependencies(messages messages-gen)
 
 add_custom_command (

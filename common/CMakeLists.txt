@@ -18,6 +18,7 @@ add_library (
     spread/spread_rc_mailbox.cpp
     spread/spread_messages.cpp
 )
+
 target_link_libraries (
     common
 

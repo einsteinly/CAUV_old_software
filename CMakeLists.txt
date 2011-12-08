@@ -109,12 +109,6 @@ execute_process(
     OUTPUT_VARIABLE CAUV_MESSAGE_FILES
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-foreach(F IN LISTS CAUV_MESSAGE_FILES)
-    file(RELATIVE_PATH FREL "${CAUV_SOURCE_DIR}" "${F}")
-    set_source_files_properties("${FREL}"
-                                PROPERTIES GENERATED TRUE)
-endforeach()
-
 
 add_subdirectory (generated)
 add_subdirectory (common)
