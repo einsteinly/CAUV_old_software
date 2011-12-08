@@ -64,7 +64,7 @@ def force_calling_process(f):
 
 def onMessageFactory(self, m_func_name):
     def onMessageFunction(m):
-        print m
+        #print m
         return getattr(self.parent_process,m_func_name)(m)
     return onMessageFunction
 
