@@ -280,7 +280,8 @@ class aiScriptOptionsBase(type):
                     attrs2[key] = value
                 else:
                     attrs2['_not_transmittable_'+key] = value
-                    warning('Option %s will not appear as is not a valid type' %key)
+                    if not callable(value):
+                        warning('Option %s will not appear as is not a valid type' %key)
             else:
                 attrs2[key] = value
         new_cls = super(aiScriptOptionsBase, cls).__new__(cls, name, bases, attrs2)
@@ -368,7 +369,8 @@ class aiDetectorOptionsBase(type):
                     attrs2[key] = value
                 else:
                     attrs2['_not_transmittable_'+key] = value
-                    warning('Option %s will not appear as is not a valid type' %key)
+                    if not callable(value):
+                        warning('Option %s will not appear as is not a valid type' %key)
             else:
                 attrs2[key] = value
         new_cls = super(aiDetectorOptionsBase, cls).__new__(cls, name, bases, attrs2)
@@ -445,7 +447,6 @@ class subclassDict(object):
             for sub in cur.__subclasses__():
                 if not sub in checked:
                     to_check.add(sub)
-        print "available classes", self.classes
     def __getitem__(self, attr):
         return self.classes[attr]
     def __getattr__(self, attr):

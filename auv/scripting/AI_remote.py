@@ -57,17 +57,17 @@ def remove_task(ainode):
 def set_task_options(ainode):
     task_id = int(raw_input('Enter task id: '))
     task_options = input('Enter task options (as dict): ')
-    ainode.node.send(messaging.SetTaskOptionsMessage(task_id, [], task_options, {}))
+    ainode.node.send(messaging.SetTaskStateMessage(task_id, [], task_options, {}))
     
 def set_script_options(ainode):
     task_id = int(raw_input('Enter task id: '))
     script_options = input('Enter script options (as dict): ')
-    ainode.node.send(messaging.SetTaskOptionsMessage(task_id, [], {}, script_options))
+    ainode.node.send(messaging.SetTaskStateMessage(task_id, [], {}, script_options))
     
 def set_task_conditions(ainode):
     task_id = int(raw_input('Enter task id: '))
     conditions = input('Enter script options (as list): ')
-    ainode.node.send(messaging.SetTaskOptionsMessage(task_id, conditions, {}, {}))
+    ainode.node.send(messaging.SetTaskStateMessage(task_id, conditions, {}, {}))
     
 def add_condition(ainode):
     condition_type = raw_input('Enter condition type: ')
@@ -80,7 +80,7 @@ def remove_condition(ainode):
 def set_condition_options(ainode):
     condition_id = int(raw_input('Enter condition id: '))
     condition_options = input('Enter condition options (as dict): ')
-    ainode.node.send(messaging.SetTaskOptionsMessage(condition_id, condition_options))
+    ainode.node.send(messaging.SetConditionStateMessage(condition_id, condition_options))
     
 def stop_script(ainode):
     ainode.node.send(messaging.ScriptControlMessage(messaging.ScriptCommand.Stop))
