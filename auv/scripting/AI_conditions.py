@@ -39,6 +39,7 @@ class aiCondition(object):
         self.id  = task_manager.register_condition(self)
     def deregister(self, task_manager):
         for task_id in self.task_ids:
+            debug('removing condition %d from task %d' %(self.id, task_id), 5)
             task_manager.tasks[task_id].conditions.pop(self.id)
     def get_options(self):
         return self.options.get_options()
@@ -109,8 +110,6 @@ class detectorConditionBase(type):
                 attrs['_abstract'] = False
                 attrs['detector_name'] = detector_name
                 list_of_subclasses.append(type(detector_name+'Condition', (cls, ), attrs))
-                for cls in aiCondition.__subclasses__():
-                    print cls, cls.__subclasses__()
         attrs['_subclass_list_do_not_edit_please_this_is_here_just_to_keep_references'] = list_of_subclasses
         return super(detectorConditionBase, cls).__init__(name, bases, attrs)
 

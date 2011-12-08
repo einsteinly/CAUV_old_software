@@ -116,10 +116,11 @@ class taskManager(aiProcess):
     #from script
     @external_function
     def on_script_exit(self, task_id, status):
+        task_id = int(task_id)
         if status == 'ERROR':
             try:
-                self.tasks[task_id].crash_count += 1
-                if self.tasks[task_id].crash_count >= self.tasks[task_id].crash_limit:
+                self.tasks[task_id].options.crash_count += 1
+                if self.tasks[task_id].options.crash_count >= self.tasks[task_id].options.crash_limit:
                     self.processing_queue.put(('remove_task', [task_id], {}))
                     warning('%d had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
                 self.log('Task %d failed after an exception in the script.' %(task_id, ))
@@ -131,9 +132,9 @@ class taskManager(aiProcess):
             info('%d has finished succesfully, so is being removed from active tasks.' %(task_id,))
         else:
             info('%d sent exit message %s' %(task_id, status))
-            self.log('Task %d failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].frequency_limit))
-            self.tasks[task_id].last_called = time.time()
-        getattr(self.ai,task_id).confirm_exit()
+            self.log('Task %d failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
+            self.tasks[task_id].options.last_called = time.time()
+        getattr(self.ai,str(task_id)).confirm_exit()
     #helpful diagnostics
     @external_function
     def export_task_data(self, file_name):
@@ -195,7 +196,7 @@ class taskManager(aiProcess):
         #not only need to change in task, need to try and change in running script
         task.set_script_options(script_options)
         if self.current_task and task_id == self.current_task.id:
-            getattr(self.ai, task_id).set_options(options)
+            getattr(self.ai, str(task_id)).set_options(options)
         #need to tell task which conditions to use
         #remove current conditions
         for condition in task.conditions.itervalues():
@@ -254,7 +255,7 @@ class taskManager(aiProcess):
     def start_script(self, task_id, script_name, script_opts={}):
         self.ai.auv_control.signal(task_id)
         self.stop_script()
-        self.ai.auv_control.set_task_id(task_id)
+        self.ai.auv_control.set_task_id(str(task_id))
         info('Starting script: %s  (Task %s)' %(script_name, task_id))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
         self.running_script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts)])
@@ -280,6 +281,11 @@ class taskManager(aiProcess):
                 self.running_script = None
                 self.current_task = None
                 self.current_priority = -1
+                #make sure detector are running
+        if not self.running_script: #must recheck as set in above if
+            if not self.detectors_enabled:
+                self.detectors_enabled = True
+                self.ai.detector_control.enable()
         #check detectors, sort out anything that has gone wrong here
         try:
             running_detectors = self.detectors_last_known.pop()

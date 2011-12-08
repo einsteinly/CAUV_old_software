@@ -230,7 +230,7 @@ class SpreadMessageWrapper:
             l.release();
             error() << "1. Spread Messages should not be exposed to Python";
             error() << "2. You should DEFINITELY not be using them";
-            assert(0);
+            throw std::runtime_error("Spread Messages are not usable from Python");
         }
 };
 
