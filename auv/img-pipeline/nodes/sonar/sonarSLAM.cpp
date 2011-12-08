@@ -20,6 +20,8 @@
 
 #include "slamCloud.h"
 
+#include "../../nodeFactory.h"
+
 namespace cauv{
 namespace imgproc{
 // register this node type in the factory thing that creates nodes

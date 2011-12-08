@@ -56,8 +56,8 @@ class LocalMaximaNode: public Node{
                 if((a.type() & CV_MAT_DEPTH_MASK) != CV_8U)
                     throw parameter_error("image must be unsigned bytes");
                 
-                for(uint32_t row = 1; row < a.rows-1; row++)
-                    for(uint32_t col = 1; col < a.cols-1; col++){
+                for(int row = 1; row < a.rows-1; row++)
+                    for(int col = 1; col < a.cols-1; col++){
                         const uint8_t v = a.at<uint8_t>(row,col);
                         uint8_t s[8];
                         if(v >= (s[0] = a.at<uint8_t>(row-1,col-1)+m_delta) && 

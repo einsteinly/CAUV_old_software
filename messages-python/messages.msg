@@ -91,6 +91,7 @@ enum NodeType : int8 {
     MathDivideFloat,
     GlobalMaximum,
     LocalMaxima,
+    SonarShadowFilter,
 }
 enum NodeStatus : int8 {
     None = 0,

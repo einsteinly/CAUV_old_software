@@ -26,7 +26,6 @@
 #include "combineHSVNode.h"
 #include "mixNode.h"
 #include "percentileNode.h"
-#include "sonarInputNode.h"
 #include "broadcastImageNode.h"
 #include "videoFileOutputNode.h"
 #include "invertNode.h"
@@ -87,7 +86,6 @@ DEFINE_NFR(CombineYUVNode, NodeType::CombineYUV);
 DEFINE_NFR(CombineHSVNode, NodeType::CombineHSV);
 DEFINE_NFR(MixNode, NodeType::Mix);
 DEFINE_NFR(PercentileNode, NodeType::Percentile);
-DEFINE_NFR(SonarInputNode, NodeType::SonarInput);
 DEFINE_NFR(BroadcastImageNode, NodeType::BroadcastImage);
 DEFINE_NFR(VideoFileOutputNode, NodeType::VideoFileOutput);
 DEFINE_NFR(InvertNode, NodeType::Invert);

@@ -20,13 +20,15 @@
 #include <string>
 #include <cstring>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <sonar/sonar_accumulator.h>
 #include <utility/bash_cout.h>
 
 #include <generated/types/SonarDataMessage.h>
 #include <generated/types/SonarImageMessage.h>
 
-#include "../node.h"
+#include "../inputNode.h"
 
 
 namespace cauv{

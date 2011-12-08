@@ -49,7 +49,7 @@ if (CAUV_POINTCLOUDS)
     add_definitions (${PCL_DEFINITIONS})
     link_directories (${PCL_LIBRARY_DIRS})
 
-    set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES} nodes/sonarSLAM.cpp)
+    set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES} nodes/sonar/sonarSLAM.cpp)
     set (CONDITIONAL_LIBS ${CONDITIONAL_LIBS} ${PCL_LIBS})
 endif()
 
@@ -64,6 +64,7 @@ add_executable (
     nodes/nodes.cpp
     nodes/nodes2.cpp
     nodes/math/mathNodes.cpp
+    nodes/sonar/sonarNodes.cpp
     ${CONDITIONAL_SOURCE_FILES}
 )
 cauv_install ( img-pipeline )

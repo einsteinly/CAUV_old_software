@@ -15,8 +15,8 @@
 #ifndef __SONAR_SLAM_NODE_H__
 #define __SONAR_SLAM_NODE_H__
 
-#include "outputNode.h"
-#include "../nodeFactory.h"
+#include "../outputNode.h"
+#include "../../nodeFactory.h"
 
 namespace cauv{
 namespace imgproc{
