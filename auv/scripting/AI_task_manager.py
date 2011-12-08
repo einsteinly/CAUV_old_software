@@ -116,10 +116,11 @@ class taskManager(aiProcess):
     #from script
     @external_function
     def on_script_exit(self, task_id, status):
+        task_id = int(task_id)
         if status == 'ERROR':
             try:
-                self.tasks[task_id].crash_count += 1
-                if self.tasks[task_id].crash_count >= self.tasks[task_id].crash_limit:
+                self.tasks[task_id].options.crash_count += 1
+                if self.tasks[task_id].options.crash_count >= self.tasks[task_id].options.crash_limit:
                     self.processing_queue.put(('remove_task', [task_id], {}))
                     warning('%d had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
                 self.log('Task %d failed after an exception in the script.' %(task_id, ))
@@ -131,9 +132,9 @@ class taskManager(aiProcess):
             info('%d has finished succesfully, so is being removed from active tasks.' %(task_id,))
         else:
             info('%d sent exit message %s' %(task_id, status))
-            self.log('Task %d failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].frequency_limit))
-            self.tasks[task_id].last_called = time.time()
-        getattr(self.ai,task_id).confirm_exit()
+            self.log('Task %d failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].options.frequency_limit))
+            self.tasks[task_id].options.last_called = time.time()
+        getattr(self.ai,str(task_id)).confirm_exit()
     #helpful diagnostics
     @external_function
     def export_task_data(self, file_name):
