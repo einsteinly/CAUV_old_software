@@ -196,7 +196,7 @@ class taskManager(aiProcess):
         #not only need to change in task, need to try and change in running script
         task.set_script_options(script_options)
         if self.current_task and task_id == self.current_task.id:
-            getattr(self.ai, task_id).set_options(options)
+            getattr(self.ai, str(task_id)).set_options(options)
         #need to tell task which conditions to use
         #remove current conditions
         for condition in task.conditions.itervalues():
@@ -255,7 +255,7 @@ class taskManager(aiProcess):
     def start_script(self, task_id, script_name, script_opts={}):
         self.ai.auv_control.signal(task_id)
         self.stop_script()
-        self.ai.auv_control.set_task_id(task_id)
+        self.ai.auv_control.set_task_id(str(task_id))
         info('Starting script: %s  (Task %s)' %(script_name, task_id))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
         self.running_script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts)])
@@ -281,6 +281,11 @@ class taskManager(aiProcess):
                 self.running_script = None
                 self.current_task = None
                 self.current_priority = -1
+                #make sure detector are running
+        if not self.running_script: #must recheck as set in above if
+            if not self.detectors_enabled:
+                self.detectors_enabled = True
+                self.ai.detector_control.enable()
         #check detectors, sort out anything that has gone wrong here
         try:
             running_detectors = self.detectors_last_known.pop()
