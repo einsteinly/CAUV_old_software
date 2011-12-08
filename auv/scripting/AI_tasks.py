@@ -142,6 +142,14 @@ class surface(aiTask):
         (c.timeoutCondition, {'timeout': 180, 'startTimer': True}),
         ]
         
+class follow_cam(aiTask):
+    class options(taskOptions):
+        script_name = 'follow_cam'
+        priority = 1
+    conditions = [
+        (c.stateCondition, {'state': True}),
+        ]
+        
 class default(aiTask):
     class options(taskOptions):
         script_name = 'spiral'
