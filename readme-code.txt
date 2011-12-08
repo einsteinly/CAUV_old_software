@@ -61,7 +61,7 @@ have trouble or need help)
 
 For new ubunty install!!
 Follow the steps on this website to install ffm-peg first
-data.cambridgeauv.co.uk/files/deps/libssrcspread-1.0.9.tbz
+http://ubuntuforums.org/showthread.php?t=786095
 
 OpenCV >= 2.3.1 (http://opencv.willowgarage.com/wiki/InstallGuide)
 libspread       (http://data.cambridgeauv.co.uk/files/deps/spread-src-4.1.0.tbz)

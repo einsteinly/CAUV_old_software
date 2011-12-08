@@ -572,10 +572,10 @@ struct from_python_dict
 
     static void* convertible(PyObject* obj_ptr)
     {
-        debug() << "map convertible start";
+        debug(15) << "map convertible start";
         if(!PyDict_Check(obj_ptr))
             return 0;
-        debug() << "map convertible dict ok";
+        debug(15) << "map convertible dict ok";
         boost::python::handle<> obj_hdl(boost::python::borrowed(obj_ptr));
         boost::python::object obj_obj(obj_hdl);
         boost::python::extract<boost::python::dict> obj_proxy(obj_obj);
@@ -583,15 +583,15 @@ struct from_python_dict
             return 0;
         boost::python::dict obj_dict = obj_proxy();
        
-        debug() << "map convertible proxy ok";
+        debug(15) << "map convertible proxy ok";
 
         if (ConversionPolicy::check_convertibility_per_element()) {
             if (!ConversionPolicy::check_size(boost::type<MapType>(), boost::python::len(obj_dict)))
                 return 0;
-        debug() << "map convertible size ok";
+        debug(15) << "map convertible size ok";
             if (!all_elements_convertible(obj_dict))
                 return 0;
-        debug() << "map convertible elms ok";
+        debug(15) << "map convertible elms ok";
         }
 
         return obj_ptr;
@@ -602,21 +602,21 @@ struct from_python_dict
     {
         boost::python::list keys = obj_dict.keys();
         int len_keys = boost::python::len(keys);
-        debug() << "map convertible elms";
+        debug(15) << "map convertible elms";
         for(int i=0;i<len_keys;i++) {
-        debug() << "map convertible elm"<<i;
+        debug(15) << "map convertible elm"<<i;
             boost::python::object key_obj = keys[i];
             boost::python::extract<k_t> key_proxy(key_obj);
             if (!key_proxy.check()) {
                 return false;
             }
-        debug() << "map convertible elm"<<i<<"key ok";
+        debug(15) << "map convertible elm"<<i<<"key ok";
             boost::python::object value_obj = obj_dict[key_obj];
             boost::python::extract<m_t> value_proxy(value_obj);
             if (!value_proxy.check()) {
                 return false;
             }
-        debug() << "map convertible elm"<<i<<"val ok";
+        debug(15) << "map convertible elm"<<i<<"val ok";
         }
         return true;
     }
