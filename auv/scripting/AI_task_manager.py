@@ -223,7 +223,7 @@ class taskManager(aiProcess):
         self.ai.auv_control.set_task_id(task_ref)
         info('Starting script: %s  (Task %s)' %(script_name, task_ref))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', task_ref, script_name, cPickle.dumps(script_opts)])
+        self.running_script = subprocess.Popen(['python2.7','./AI_scriptparent.py', task_ref, script_name, cPickle.dumps(script_opts)])
     def start_default_script(self):
         self.current_priority = 0
         self.current_task = None
