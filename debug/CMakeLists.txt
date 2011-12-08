@@ -17,5 +17,5 @@ target_link_libraries (
     boost_system
 )
 
-add_dependencies (cauv_debug messages-headers)
+add_dependencies (cauv_debug messages-gen)
 
