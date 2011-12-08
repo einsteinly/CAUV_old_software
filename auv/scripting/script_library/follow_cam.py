@@ -25,7 +25,7 @@ class scriptOptions(aiScriptOptions):
     centre_error = 0.1 # of image
     align_error  = 10   # degrees 
     # Control
-    prop_speed = 80
+    prop_speed = 100
     strafe_kPID  = (-300, 0, 0)
 
     
@@ -108,7 +108,7 @@ class script(aiScript):
                     
                     # calculate the bearing of River Cam (relative to the sub),
                     # mod 180 as we dont want to accidentally turn the sub around
-                    corrected_angle=(90+angle)%180          
+                    corrected_angle=(90+angle)          
 
 
                     if abs(corrected_angle) < self.options.align_error: 
@@ -165,16 +165,18 @@ class script(aiScript):
             #Check if the river edge is detected recently
             if (time.time()-self.last_detect_time)<self.options.lost_timeout:
                 #Start moving as soon as alignment and centre is ready
-                self.ready.wait()
+                #self.ready.wait()
                 self.auv.prop(self.options.prop_speed)        
                 time.sleep(self.options.lost_timeout)        #Sleep until the start of next cycle
             else:
-                self.auv.prop(-127)        #Stop immediatly if the River edge is lost for too long
+                self.auv.stop()        #Stop immediatly if the River edge is lost for too long
                 self.detected.clear()
-                time.sleep(2)
+                #time.sleep(2)
                 info('Cam follow: The edge of River Cam is lost, trying to find it by rotating.')            
-                self.auv.bearing(self.auv.getBearing()+359) #Perform 1 revolution of self rotation until the AUV is aligned again
+                self.auv.bearing(self.auv.getBearing()+90) #Perform 1 revolution of self rotation until the AUV is aligned again
                 self.detected.wait()
+		self.auv.bearing(self.auv.getBearing()-180)
+		self.detected.wait()
                 self.auv.bearing(self.auv.getBearing())   #Stop spinning if the AUV is aligned
 
 
