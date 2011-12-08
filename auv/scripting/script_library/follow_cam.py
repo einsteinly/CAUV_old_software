@@ -25,7 +25,7 @@ class scriptOptions(aiScriptOptions):
     target_width = 0.2 # of image
     width_error   = 0.1 # of image
     centre_error = 0.2 # of image
-    align_error  = 5   # degrees 
+    align_error  = 10   # degrees 
     average_time = 1   # seconds
     intensity_trigger = 0.10
     # Control
@@ -59,7 +59,7 @@ class script(aiScript):
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
-            debug('follow pipe: ignoring lines message %s != %s' % (m.name, self.options.lines_name))
+            debug('Cam follow: ignoring lines message %s != %s' % (m.name, self.options.lines_name))
             return
 
         if len(m.lines):                
@@ -95,10 +95,10 @@ class script(aiScript):
             if detected is True:
                 
 
-                    debug('River edge detected')
-                    debug('Angle: %f, %F' %(degrees(edges[0].angle), degrees(edges[1].angle)))
-                    debug('Posistion: %f, %f' %(edges[0].centre.x, edges[1].centre.x))
-                    debug('Apart: %f' %((edges[0].centre.x-edges[1].centre.x)**2+(edges[0].centre.y-edges[1].centre.y)**2)**0.5)
+                    debug('Cam follow: River edge detected')
+                    debug('Cam follow: Angle: %f, %F' %(degrees(edges[0].angle), degrees(edges[1].angle)))
+                    debug('Cam follow: Posistion: %f, %f' %(edges[0].centre.x, edges[1].centre.x))
+                    debug('Cam follow: Apart: %f' %((edges[0].centre.x-edges[1].centre.x)**2+(edges[0].centre.y-edges[1].centre.y)**2)**0.5)
 
                           
                     #Set the time stamp
@@ -107,11 +107,11 @@ class script(aiScript):
                     #
                     # Adjust the AUV's bearing to align with River Cam by line detection of the bank
                     # calculate the average angle of the lines (assumes good line finding)
-                    angle = sum([x.angle for x in edges])/len(edges)
+                    angle = degrees(sum([x.angle for x in edges])/len(edges))
                     
                     # calculate the bearing of River Cam (relative to the sub),
                     # mod 180 as we dont want to accidentally turn the sub around
-                    corrected_angle=90+degrees(angle)%180          
+                    corrected_angle=(90+angle)%180          
 
 
                     if abs(corrected_angle) < self.options.align_error: 
@@ -123,7 +123,7 @@ class script(aiScript):
                         if current_bearing: #watch out for none bearings
                             self.auv.bearing((current_bearing+corrected_angle)%360) 
                             self.aligned.clear()
-                            debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
+                            debug('Cam follow: Adjusting Bearing by: %g (uncorrected=%g)' % (corrected_angle, angle))
 
 
                     #Centre the AUV in the middle of River Cam
@@ -148,10 +148,10 @@ class script(aiScript):
                     # set the flags that show if we're above the pipe
                     if self.centred.is_set() and self.aligned.is_set():
                         self.ready.set()
-                        debug('ready to start moving')
-                        self.log('River Cam follower managed to align itself over the Cam.')
+                        debug('Cam follow: ready to start moving')
+                        self.log('Cam follow: Done aligning and centering.')
                     else:
-                        debug('centred:%s aligned:%s' %
+                        debug('Cam follow: centred:%s aligned:%s' %
                                 (self.centred.is_set(), self.aligned.is_set())
                         )
                         self.ready.clear()
@@ -159,7 +159,7 @@ class script(aiScript):
 
 
     def run(self):
-        self.log('Initiating following river cam.')
+        self.log('Cam follow: Initiating following river cam.')
         follow_cam_file = self.options.follow_cam_file
         #self.request_pl(follow_cam_file)
     
@@ -170,12 +170,12 @@ class script(aiScript):
                 #Start moving as soon as alignment and centre is ready
                 self.ready.wait()
                 self.auv.prop(self.options.prop_speed)        
-                    time.sleep(self.options.lost_timeout)        #Sleep until the start of next cycle
+                time.sleep(self.options.lost_timeout)        #Sleep until the start of next cycle
             else:
                 self.auv.prop(-127)        #Stop immediatly if the River edge is lost for too long
                 time.sleep(2)
-                self.log('The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
-                debug('The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
+                self.log('Cam follow: The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
+                debug('Cam follow: The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
                 self.auv.bearing(current_bearing+359) #Perform 1 revolution of self rotation until the AUV is aligned again
                 self.aligned.wait()
                 self.auv.bearing(current_bearing)   #Stop spinning if the AUV is aligned
@@ -186,8 +186,8 @@ class script(aiScript):
     def stop(self):
         self.auv.prop(0)
         self.drop_pl(follow_cam_file)
-        self.log('Stopping follwoing River Cam.')
-        info('Stopping River Cam following')
+        self.log('Cam follow: Stopping follwoing River Cam.')
+        info('Cam follow: Stopping River Cam following')
         self.notify_exit('SUCCESS')
 
 
