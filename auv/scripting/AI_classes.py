@@ -300,7 +300,7 @@ class aiScriptOptions():
         for opt in script_opts:
             setattr(self, opt, script_opts[opt])
     def __getattr__(self, attr):
-        return self.__getattribute__(self, '_not_transmittable_'+attr)
+        return self.__getattribute__('_not_transmittable_'+attr)
     def get_default_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
     def get_dynamic_options(self):
@@ -384,7 +384,7 @@ class aiDetectorOptions(object):
     def get_default_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
     def __getattr__(self, attr):
-        return getattr(self, '_not_transmittable_'+attr)
+        return self.__getattribute__('_not_transmittable_'+attr)
         
 class aiDetector(messaging.MessageObserver):
     def __init__(self, node, opts):

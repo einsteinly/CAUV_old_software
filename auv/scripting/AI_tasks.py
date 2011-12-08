@@ -62,6 +62,8 @@ class aiTask(object):
         if not self.registered:
             error('Task not setup, so can not be deregistered')
             return
+        for condition in self.conditions.itervalues():
+            condition.task_ids.pop(self.id)
         self.registered = False
     def set_options(self, options):
         for key, value in options.items():
@@ -123,7 +125,7 @@ class avoid_collision(aiTask):
         script_name = 'avoid_collision'
         priority = 10
     conditions = [
-        (c.collision_detectorCondition, {}),
+        (c.sonar_collision_detectorCondition, {}),
         ]
             
 class track_wall(aiTask):
@@ -140,6 +142,14 @@ class surface(aiTask):
         priority = 10
     conditions = [
         (c.timeoutCondition, {'timeout': 180, 'startTimer': True}),
+        ]
+        
+class follow_cam(aiTask):
+    class options(taskOptions):
+        script_name = 'follow_cam'
+        priority = 1
+    conditions = [
+        (c.stateCondition, {'state': True}),
         ]
         
 class default(aiTask):
