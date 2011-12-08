@@ -61,8 +61,8 @@ class script(aiScript):
         if m.name != self.options.lines_name:
             debug('follow pipe: ignoring lines message %s != %s' % (m.name, self.options.lines_name))
             return
-        if len(m.lines):
-		
+
+        if len(m.lines):		
 	    detected=False
 	    
 	    for i in range(len(m.lines)):
@@ -82,7 +82,7 @@ class script(aiScript):
 					#Also check if the AUV is in between the two lines
 					if max(m.lines[i].centre.x, m.lines[j].centre.x)>0.40 and min(m.lines[i].centre.x, m.lines[j].centre.x)<0.60:
 					    #debug('got middle')
-					    river_edges=[m.lines[i], m.lines[j]]
+					    edges=[m.lines[i], m.lines[j]]
 					    detected = True
 					    break
 
@@ -92,70 +92,69 @@ class script(aiScript):
 
 	
 	    #Don't don anything else if the river edge is not detected
-	    if detected is False:
-		return
-			
+	    if detected is True:
+		
 
-    	    debug('River edge detected')
-	    debug('Angle: %f, %F' %(degrees(river_edges[0].angle), degrees(river_edges[1].angle)))
-	    debug('Posistion: %f, %f' %(river_edges[0].centre.x, river_edges[1].centre.x))
-	    debug('Apart: %f' %((river_edges[0].centre.x-river_edges[1].centre.x)**2+(river_edges[0].centre.y-river_edges[1].centre.y)**2)**0.5)
+	    	    debug('River edge detected')
+		    debug('Angle: %f, %F' %(degrees(edges[0].angle), degrees(edges[1].angle)))
+		    debug('Posistion: %f, %f' %(edges[0].centre.x, edges[1].centre.x))
+		    debug('Apart: %f' %((edges[0].centre.x-edges[1].centre.x)**2+(edges[0].centre.y-edges[1].centre.y)**2)**0.5)
 
-	  	
-	    #Set the time stamp
-	    self.last_detect_time = time.time()
+		  	
+		    #Set the time stamp
+		    self.last_detect_time = time.time()
 
-            #
-            # Adjust the AUV's bearing to align with River Cam by line detection of the bank
-            # calculate the average angle of the lines (assumes good line finding)
-            angle = sum([x.angle for x in river_edges])/len(river_edges)
-            
-            # calculate the bearing of River Cam (relative to the sub),
-            # mod 180 as we dont want to accidentally turn the sub around
-            corrected_angle=90+degrees(angle)%180          
-
-
-            if abs(corrected_angle) < self.options.align_error: 
-                self.aligned.set()
-
-            #Align the AUV to River Cam if the error is outside of tolerance
-            else: 
-		current_bearing = self.auv.getBearing()
-		if current_bearing: #watch out for none bearings
-		    self.auv.bearing((current_bearing+corrected_angle)%360) 
-		    self.aligned.clear()
-		    debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
+		    #
+		    # Adjust the AUV's bearing to align with River Cam by line detection of the bank
+		    # calculate the average angle of the lines (assumes good line finding)
+		    angle = sum([x.angle for x in edges])/len(edges)
+		    
+		    # calculate the bearing of River Cam (relative to the sub),
+		    # mod 180 as we dont want to accidentally turn the sub around
+		    corrected_angle=90+degrees(angle)%180          
 
 
-	    #Centre the AUV in the middle of River Cam
-	    if aligned.is_set():			#Only centre if the AUV is aligned
-		cam_centre=(river_edges[0].centre.x+river_edges[1].centre.x)/2
-		centre_err=cam_centre - 0.5
+		    if abs(corrected_angle) < self.options.align_error: 
+		        self.aligned.set()
 
-		info('Centre error: %f' %centre_err)
-		if abs(centre_err) < 0.01:
-		    warning('ignoring centre at 0')
-		    self.centred.set()
-		else:
-
-		    strafe_demand = int(self.strafeControl.update(centre_err))
-		    if strafe_demand < -127: strafe_demand = -127
-		    elif strafe_demand > 127: strafe_demand = 127
-		    self.auv.strafe(strafe_demand)
-		    info('Cam follow: strafing %i' %(strafe_demand))
-		    self.centred.clear()
+		    #Align the AUV to River Cam if the error is outside of tolerance
+		    else: 
+			current_bearing = self.auv.getBearing()
+			if current_bearing: #watch out for none bearings
+			    self.auv.bearing((current_bearing+corrected_angle)%360) 
+			    self.aligned.clear()
+			    debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
 
 
-            # set the flags that show if we're above the pipe
-            if self.centred.is_set() and self.aligned.is_set():
-                self.ready.set()
-                debug('ready to start moving')
-                self.log('River Cam follower managed to align itself over the Cam.')
-            else:
-                debug('centred:%s aligned:%s' %
-                        (self.centred.is_set(), self.aligned.is_set())
-                )
-                self.ready.clear()
+		    #Centre the AUV in the middle of River Cam
+		    if self.aligned.is_set():			#Only centre if the AUV is aligned
+			cam_centre=(edges[0].centre.x+edges[1].centre.x)/2
+			centre_err=cam_centre - 0.5
+
+			info('Centre error: %f' %centre_err)
+			if abs(centre_err) < 0.01:
+			    warning('ignoring centre at 0')
+			    self.centred.set()
+			else:
+
+			    strafe_demand = int(self.strafeControl.update(centre_err))
+			    if strafe_demand < -127: strafe_demand = -127
+			    elif strafe_demand > 127: strafe_demand = 127
+			    self.auv.strafe(strafe_demand)
+			    info('Cam follow: strafing %i' %(strafe_demand))
+			    self.centred.clear()
+
+
+		    # set the flags that show if we're above the pipe
+		    if self.centred.is_set() and self.aligned.is_set():
+		        self.ready.set()
+		        debug('ready to start moving')
+		        self.log('River Cam follower managed to align itself over the Cam.')
+		    else:
+		        debug('centred:%s aligned:%s' %
+		                (self.centred.is_set(), self.aligned.is_set())
+		        )
+		        self.ready.clear()
 
 
 
@@ -165,7 +164,7 @@ class script(aiScript):
         #self.request_pl(follow_cam_file)
     
 	while True:
-	
+
 	    #Check if the river edge is detected recently
 	    if (time.time()-self.last_detect_time)<self.options.lost_timeout:
 		#Start moving as soon as alignment and centre is ready
@@ -181,7 +180,7 @@ class script(aiScript):
 		self.aligned.wait()
 		self.auv.bearing(current_bearing)   #Stop spinning if the AUV is aligned
 
-	
+
 
             
     def stop(self):
