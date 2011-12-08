@@ -22,7 +22,7 @@ class scriptOptions(aiScriptOptions):
     ready_timeout = 30
     lost_timeout = 15
     # Calibration
-    centre_error = 0.2 # of image
+    centre_error = 0.1 # of image
     align_error  = 10   # degrees 
     # Control
     prop_speed = 80
