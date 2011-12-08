@@ -20,7 +20,7 @@ class scriptOptions(aiScriptOptions):
     lines_name = 'cam'
     #Timeouts
     ready_timeout = 30
-    lost_timeout = 10
+    lost_timeout = 15
     # Calibration
     target_width = 0.2 # of image
     width_error   = 0.1 # of image
@@ -49,13 +49,13 @@ class script(aiScript):
         # parameters to say if the auv is in the middle and aligned to the pipe
         self.centred = threading.Event()
         self.aligned = threading.Event()
-        self.ready = threading.Event()
+	self.ready = threading.Event()
         
         # controllers for staying above the pipe
         self.strafeControl = PIDController(self.options.strafe_kPID)
 
         self.yAverage = TimeAverage(1)
-	self.massage_time = time.time()
+	self.last_detect_time = time.time()
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
@@ -63,40 +63,56 @@ class script(aiScript):
             return
         if len(m.lines):
 		
-	    parl_line_groups=[]
-	    #Filter out the lines that are paralle to each other by pairwise comparision
+	    detected=False
+	    
 	    for i in range(len(m.lines)):
 		for j in range(i):
-		    if degrees(abs(m.lines[i].angle - m.lines[j].angle)%180)<10:
-			#Check if the corresponding line is also parallel to the selected groups
-			for selected_group in parl_line_groups:
-		    		if degrees(abs(m.lines[i].angle - selected_group[0].angle)%180)<10:			    
-				    #Add to the newly considered line to the existing group if they are similar
-				    selected_group += [m.lines[i]]
-				    break
-			#Create a new group if it is totally different from the other ones
-			parl_line_groups.append([m.lines[i], m.lines[j]])
+			#Filter out the lines that are vaguly pointing up
+			if abs(degrees(m.lines[i].angle)+90)<30 and abs(degrees(m.lines[j].angle)+90)<30:
+			    #debug('got straigh lines')
 
-	    debug('Number of parallel line groups: %i' %len(parl_line_groups))
-	    for selected_group in parl_line_groups:
-		debug('Number of lines in group: %i' %len(selected_group))
-			
-				    
+			    #Filter out the lines that are paralle to each other by pairwise comparision
+			    if degrees(abs(m.lines[i].angle - m.lines[j].angle)%180)<30:
+				    #debug('got paralle')
+
+				    #Filter out the lines that are too close apart
+				    if ((m.lines[i].centre.x - m.lines[j].centre.x)**2+(m.lines[i].centre.y - m.lines[j].centre.y)**2)**0.5>0.3:
+					#debug('got apart')
+
+					#Also check if the AUV is in between the two lines
+					if max(m.lines[i].centre.x, m.lines[j].centre.x)>0.40 and min(m.lines[i].centre.x, m.lines[j].centre.x)<0.60:
+					    #debug('got middle')
+					    river_edges=[m.lines[i], m.lines[j]]
+					    detected = True
+					    break
+
+		#Break out of the outer for loop
+		if detected is True:
+			break 	
+
 	
-	    x="""
+	    #Don't don anything else if the river edge is not detected
+	    if detected is False:
+		return
+			
+
+    	    debug('River edge detected')
+	    debug('Angle: %f, %F' %(degrees(river_edges[0].angle), degrees(river_edges[1].angle)))
+	    debug('Posistion: %f, %f' %(river_edges[0].centre.x, river_edges[1].centre.x))
+	    debug('Apart: %f' %((river_edges[0].centre.x-river_edges[1].centre.x)**2+(river_edges[0].centre.y-river_edges[1].centre.y)**2)**0.5)
+
+	  	
 	    #Set the time stamp
-	    self.massage_time = time.time()
+	    self.last_detect_time = time.time()
 
             #
             # Adjust the AUV's bearing to align with River Cam by line detection of the bank
             # calculate the average angle of the lines (assumes good line finding)
-            angle = sum([x.angle for x in m.lines])/len(m.lines)
+            angle = sum([x.angle for x in river_edges])/len(river_edges)
             
             # calculate the bearing of River Cam (relative to the sub),
             # mod 180 as we dont want to accidentally turn the sub around
-            corrected_angle=90-degrees(angle)%180
-            debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
-            
+            corrected_angle=90+degrees(angle)%180          
 
 
             if abs(corrected_angle) < self.options.align_error: 
@@ -106,76 +122,67 @@ class script(aiScript):
             else: 
 		current_bearing = self.auv.getBearing()
 		if current_bearing: #watch out for none bearings
-		self.auv.bearing((current_bearing-corrected_angle)%360) #- as angle is opposite direction to bearing
-		self.aligned.clear()
+		    self.auv.bearing((current_bearing+corrected_angle)%360) 
+		    self.aligned.clear()
+		    debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
 
 
 	    #Centre the AUV in the middle of River Cam
-	    if len(m.lines)==2:			#Can only work out the middle of two lines
-		cam_centre=(m.lines[0].centre.x+m.lines[1].centre.x)/2
+	    if aligned.is_set():			#Only centre if the AUV is aligned
+		cam_centre=(river_edges[0].centre.x+river_edges[1].centre.x)/2
 		centre_err=cam_centre - 0.5
 
 		info('Centre error: %f' %centre_err)
 		if abs(centre_err) < 0.01:
 		    warning('ignoring centre at 0')
-		    return
-
-		strafe_demand = int(self.strafeControl.update(centre_err))
-		if strafe_demand < -127: strafe_demand = -127
-		elif strafe_demand > 127: strafe_demand = 127
-		self.auv.strafe(strafe_demand)
-		info('Cam follow: strafing %i' %(strafe_demand))
-
-		# set the flag used for determining if we're at the centre of River Cam
-		debug('Center Error=  %g, self.options.centre_error = %g' % (float(centre_err), self.options.centre_error))
-		if centre_err**2 < self.options.centre_error**2:
-		    self.centred.set() #ie within circle radius centre error
+		    self.centred.set()
 		else:
+
+		    strafe_demand = int(self.strafeControl.update(centre_err))
+		    if strafe_demand < -127: strafe_demand = -127
+		    elif strafe_demand > 127: strafe_demand = 127
+		    self.auv.strafe(strafe_demand)
+		    info('Cam follow: strafing %i' %(strafe_demand))
 		    self.centred.clear()
+
 
             # set the flags that show if we're above the pipe
             if self.centred.is_set() and self.aligned.is_set():
                 self.ready.set()
-                debug('ready to follow Cam')
+                debug('ready to start moving')
                 self.log('River Cam follower managed to align itself over the Cam.')
             else:
                 debug('centred:%s aligned:%s' %
                         (self.centred.is_set(), self.aligned.is_set())
                 )
                 self.ready.clear()
-            
- 	    """
+
+
 
     def run(self):
         self.log('Initiating following river cam.')
         follow_cam_file = self.options.follow_cam_file
         #self.request_pl(follow_cam_file)
     
-	x='''    
-        # now we wait for messages allowing us to work out how to align with
-        # the pipe, but if this is taking too long then just give up as we've
-        # probably drifted away from the pipe
-        debug('Waiting for ready...')
-        self.ready.wait(self.options.ready_timeout)
-        if not self.ready.is_set():
-            self.log('Cam follower could not position itself at the centre of River Cam (timed out).')
-            error("Took too long to become ready, aborting")
-            self.drop_pl(follow_cam_file)
-            self.notify_exit('ABORT')            
-            return #timeout
-	'''        
-
-	# Start following the River Cam until this process is killed
-	self.auv.prop(self.options.prop_speed)
+	while True:
+	
+	    #Check if the river edge is detected recently
+	    if (time.time()-self.last_detect_time)<self.options.lost_timeout:
+		#Start moving as soon as alignment and centre is ready
+		self.ready.wait()
+		self.auv.prop(self.options.prop_speed)	
+	    	time.sleep(self.options.lost_timeout)	#Sleep until the start of next cycle
+	    else:
+		self.auv.prop(-127)	#Stop immediatly if the River edge is lost for too long
+		time.sleep(2)
+                self.log('The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
+                debug('The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
+		self.auv.bearing(current_bearing+359) #Perform 1 revolution of self rotation until the AUV is aligned again
+		self.aligned.wait()
+		self.auv.bearing(current_bearing)   #Stop spinning if the AUV is aligned
 
 	
-	#Check every once a while if the edge of river cam is not found, stop if it is lost
-	while True:
-	    time.sleep(self.options.lost_timeout)	
-	    if (time.time()-self.massage_time)>self.options.lost_timeout:
-		self.auv.prop(0)
-                self.log('The edge of River Cam is lost more than %f seconds.' %self.options.lost_timeout)
-                self.log('The edge of River Cam is lost more than %f seconds.' %self.options.lost_timeout)
+
             
     def stop(self):
 	self.auv.prop(0)
