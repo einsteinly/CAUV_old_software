@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 
 # Standard Library
 import math
@@ -17,6 +18,7 @@ class detectorOptions(aiDetectorOptions):
     Metres_Per_Px = 35.0 / 400
     Too_Close_Static = 0.5 # metres
     Too_Close_Threshold = 3 # higher = less likely to detect collision from close objects
+    Dynamic_Vehicle_Width = 1
 
 class detector(aiDetector, RelativeTimeCapability):
     def __init__(self, node, opts):
@@ -47,6 +49,7 @@ class detector(aiDetector, RelativeTimeCapability):
     def checkDynamicCollisions(self, kps_last, kps_now, dt):
         # we're dealing with a small number of keypoints so this is okay!
         kp_vectors = []
+        m_per_px = self.options.Metres_Per_Px
         for kp in kps_now:
             # associate each keypoint with closest previous keypoint:
             closest_kp = kps_last[0]
@@ -58,10 +61,36 @@ class detector(aiDetector, RelativeTimeCapability):
                 if sqdist < closest_kp_sqdist:
                     closest_kp_sqdist = sqdist
                     closest_kp = last
-            # calculate speeds, project 3*dt into the future, see if we'd collide
-            # with the object:
-            # ...
-            # TODO
+            (vx, vy) = ((kp.pt.x-closest_kp.pt.x)/dt,
+                        (kp.pt.y-closest_kp.pt.y)/dt)
+            if vx <= 0:
+                debug('kp moving away: vx=%s %s' % (vx*m_per_px, kp))
+                continue
+            # 0-----------------0---->x
+            # |           o   |       60
+            # |\        /     |
+            # ||      o       |
+            # ||vehicle width - 50
+            # ||   .          |
+            # |/ .            |
+            # |.              |
+            #.y               - 100
+            #
+            time_to_collision = kp.pt.x / vx
+            if time_to_collision > min((3*dt,1.0)):
+                debug('kp moving slowly: vx=%s: %s' % (vx*m_per_px, kp))
+                continue
+            y_pos_at_collision = kp.pt.y + vy * time_to_collision 
+            vehicle_width_in_px = self.options.Dynamic_Vehicle_Width / m_per_px
+            vehicle_y_min = 50 - 0.5*vehicle_width_in_px
+            vehicle_y_max = 50 + 0.5*vehicle_width_in_px
+            if y_pos_at_collision < vehicle_y_min:
+                debug('kp missing left(?): %s' % kp)
+                continue
+            if y_pos_at_collision > vehicle_y_max:
+                debug('kp missing right(?): %s' % kp)
+                continue
+            
 
     def onKeyPointsMessage(self, m):
         if m.name != self.Keypoints_Name:

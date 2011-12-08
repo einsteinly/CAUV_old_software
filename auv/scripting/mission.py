@@ -11,7 +11,7 @@ task_list = [
             aiTask('track_wall', 'track_wall', 3, conditions = [aiCondition('start_track_wall'),]),
             aiTask('surface', 'surface', 10, conditions = [timeoutCondition('surface_timeout', 180),]),
             aiTask('follow_cam', 'follow_cam', 1, detectors_enabled=True),
-            
+            aiTask('collide', 'test', 4, conditions = [detectorCondition('sonar_collision_detector', 'sonar_collision_detector')]),
             #aiTask(task_name, script, priority, running_priority=priority, detectors_enabled=False, conditions=None, options=task_options)
             ]
 
@@ -24,7 +24,8 @@ initial_tasks = [
                 #'test',
                 #'avoid_collision',
                 #'surface',
-                'follow_cam'
+                #'follow_cam'
+                'collide'
                 ]
 #script that runs otherwise
 default_script = 'spiral'
