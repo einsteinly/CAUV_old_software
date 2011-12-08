@@ -26,6 +26,10 @@ class aiStateListener(messaging.MessageObserver):
         print m
     def onConditionStateMessage(self, m):
         print m
+    def onTaskRemovedMessage(self, m):
+        print m
+    def onConditionRemovedMessage(self, m):
+        print m
     def die(self):
         self.node.removeObserver(self)
         

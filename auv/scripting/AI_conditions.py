@@ -33,17 +33,18 @@ class aiCondition(object):
             self.set_options(options)
         self.task_ids = []
     def set_options(self, options):
-        for name, value in options.iteritems():
+        for name, value in options.items():
             setattr(self.options, name, value)
     def register(self, task_manager):
         self.id  = task_manager.register_condition(self)
     def deregister(self, task_manager):
         for task_id in self.task_ids:
-            task_manager.tasks[task_id].conditions.remove(self.conditions[condition_id])
+            task_manager.tasks[task_id].conditions.pop(self.id)
     def get_options(self):
         return self.options.get_options()
     def get_debug_values(self):
         warning('Debug values not implemented in condition %s' %str(self.__class__))
+        return {}
             
 class stateCondition(aiCondition):
     """
@@ -102,11 +103,15 @@ class detectorConditionBase(type):
     """
     def __init__(cls, name, bases, attrs):
         #basically we want to create a whole load of new classes based on this one and some data from the detector library
+        list_of_subclasses = []
         if attrs.pop('_abstract', False):
             for detector_name in detector_library.__all__:
                 attrs['_abstract'] = False
                 attrs['detector_name'] = detector_name
-                type(detector_name+'Condition', (cls, ), attrs)
+                list_of_subclasses.append(type(detector_name+'Condition', (cls, ), attrs))
+                for cls in aiCondition.__subclasses__():
+                    print cls, cls.__subclasses__()
+        attrs['_subclass_list_do_not_edit_please_this_is_here_just_to_keep_references'] = list_of_subclasses
         return super(detectorConditionBase, cls).__init__(name, bases, attrs)
 
 class detectorConditions(aiCondition):
@@ -137,7 +142,7 @@ class detectorConditions(aiCondition):
         task_manager.set_detector_options(self.detector_id, self.options.get_options())
         self.task_manager = task_manager
     def deregister(self, task_manager):
-        task_manager.remove_detector(self.detector_name, self)
+        task_manager.remove_detector(self.detector_id)
         aiCondition.deregister(self, task_manager)
     def get_state(self):
         return self.state

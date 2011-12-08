@@ -87,7 +87,7 @@ class detectionControl(aiProcess):
                         error('Could not kill detector %s.' %(detector_id,))
                         traceback.print_exc()
                     else:
-                        info("Stopped detection class %s." %(detectior_id))
+                        info("Stopped detector %s." %(detector_id))
                 elif command[0] == 'set_options':
                     detector_id, options = command[1], command[2]
                     try:

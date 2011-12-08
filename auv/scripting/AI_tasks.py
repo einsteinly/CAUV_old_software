@@ -17,7 +17,7 @@ class taskOptions(object):
             script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
             self._script_dynamic_options = script_options.get_dynamic_options()
             self._script_static_options = script_options.get_static_options()
-        for key, attr in self.__class__.__dict__.iteritems():
+        for key, attr in self.__class__.__dict__.items():
             if key[0] != '_':
                 setattr(self, key, attr)
         self.__dict__.update(options)
@@ -34,7 +34,7 @@ class taskOptions(object):
                 self._script_static_options = get_static_options()
         return object.__setattr__(self, attr, value)
     def get_options(self):
-        return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
+        return dict([item for item in self.__dict__.items() if item[0][0] != '_'])
 
 class aiTask(object):
     class options(taskOptions):
@@ -64,10 +64,10 @@ class aiTask(object):
             return
         self.registered = False
     def set_options(self, options):
-        for key, value in options.iteritems():
+        for key, value in options.items():
             setattr(self.options, key, value)
     def set_script_options(self, options):
-        for key, value in options.iteritems():
+        for key, value in options.items():
             if key in self._script_dynamic_options:
                 self.options._script_dynamic_options[key] = value
             else:

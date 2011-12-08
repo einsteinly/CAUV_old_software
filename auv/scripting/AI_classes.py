@@ -445,6 +445,7 @@ class subclassDict(object):
             for sub in cur.__subclasses__():
                 if not sub in checked:
                     to_check.add(sub)
+        print "available classes", self.classes
     def __getitem__(self, attr):
         return self.classes[attr]
     def __getattr__(self, attr):
@@ -457,7 +458,10 @@ class RepeatTimer(threading.Thread):
         self.func = function
         self.args = args
         self.kwargs = kwargs
+        self.die = False
     def run(self):
         while True:
             time.sleep(self.time)
             self.func(*self.args, **self.kwargs)
+            if self.die:
+                break

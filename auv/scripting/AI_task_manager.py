@@ -81,7 +81,6 @@ class taskManager(aiProcess):
     def onAddTaskMessage(self, msg):
         self.processing_queue.put(('create_task', [tasks[msg.taskType]], {}))
     def onRemoveTaskMessage(self, msg):
-        self.stop_script()
         self.processing_queue.put(('remove_task', [msg.taskId], {}))
     def onSetTaskStateMessage(self, msg):
         self.processing_queue.put(('set_task_options', [msg.taskId, msg.taskOptions, msg.scriptOptions, msg.conditionIds], {}))
@@ -155,7 +154,7 @@ class taskManager(aiProcess):
         self.ai.detector_control.start(detector_id, detector_type)
         return detector_id
     def remove_detector(self, detector_id):
-        debug("Removing condition %s" %str(condition_id))
+        debug("Detector condition %s" %str(detector_id))
         self.detector_conditions.pop(detector_id)
         self.ai.detector_control.stop(detector_id)
     def set_detector_options(self, detector_id, options):
@@ -186,6 +185,8 @@ class taskManager(aiProcess):
         #remove task of given id (don't forget to let the task do any clearing it wants)
         self.tasks[task_id].deregister(self)
         self.tasks.pop(task_id)
+        if task_id == self.current_task.id:
+            self.stop_script()
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
         debug("Setting options %s on task %d" %(str((task_options, script_options, condition_ids)), task_id))
@@ -212,7 +213,7 @@ class taskManager(aiProcess):
                 task.active))
             
     #add/remove/modify conditions
-    def create_condition(self, condition_type, options):
+    def create_condition(self, condition_type, options={}):
         debug("Creating condition of type %s" %str(condition_type))
         #create and register with self
         condition = condition_type(options)
@@ -232,7 +233,8 @@ class taskManager(aiProcess):
         self.node.send(messaging.ConditionRemovedMessage(condition_id))
     def set_condition_options(self, condition_id, options):
         debug("Setting options %s on condition %s" %(str(options), condition_id))
-        self.conditions[condition_id].set_options(options)
+        condition = self.conditions[condition_id]
+        condition.set_options(options)
         self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values()))
         
     #script control
@@ -246,6 +248,7 @@ class taskManager(aiProcess):
                 self.running_script.kill()
             except OSError:
                 debug('Could not kill running script (probably already dead)')
+        info('Stopping Script')
                 
     #--function run by periodic loop--
     def start_script(self, task_id, script_name, script_opts={}):
@@ -254,7 +257,7 @@ class taskManager(aiProcess):
         self.ai.auv_control.set_task_id(task_id)
         info('Starting script: %s  (Task %s)' %(script_name, task_id))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts)])
+        self.running_script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts)])
     def start_task(self, task):
         #disable/enable detectors according to task
         self.detectors_enabled = task.options.detectors_enabled_while_running
@@ -313,7 +316,7 @@ class taskManager(aiProcess):
                 error(traceback.format_exc())
     def die(self):
         try:
-            self.periodic_timer.cancel()
+            self.periodic_timer.die = True
         except Exception as error:
             debug(error.message)
         super(taskManager, self).die()
