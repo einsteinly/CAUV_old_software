@@ -1,6 +1,8 @@
 import detector_library
 import threading
 
+from cauv.debug import debug, warning, error, info
+
 from AI_classes import subclassDict
 
 class conditionOptions(object):
@@ -38,6 +40,10 @@ class aiCondition(object):
     def deregister(self, task_manager):
         for task_id in self.task_ids:
             task_manager.tasks[task_id].conditions.remove(self.conditions[condition_id])
+    def get_options(self):
+        return self.options.get_options()
+    def get_debug_values(self):
+        warning('Debug values not implemented in condition %s' %str(self.__class__))
             
 class stateCondition(aiCondition):
     """
@@ -54,7 +60,7 @@ class stateCondition(aiCondition):
         except KeyError:
             pass
     def get_state(self):
-        return self.options['state']
+        return self.options.state
         
 class timeCondition(stateCondition):
     """

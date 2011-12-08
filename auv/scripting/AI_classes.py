@@ -369,15 +369,17 @@ class aiDetectorOptionsBase(type):
                 else:
                     attrs2['_not_transmittable_'+key] = value
                     warning('Option %s will not appear as is not a valid type' %key)
+            else:
+                attrs2[key] = value
         new_cls = super(aiDetectorOptionsBase, cls).__new__(cls, name, bases, attrs2)
         return new_cls
     def get_default_options(cls):
         return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_'])
         
-class aiDetectorOptions():
+class aiDetectorOptions(object):
     __metaclass__ = aiDetectorOptionsBase
-    def __init__(self, opts={}):
-        for key, value in opts:
+    def __init__(self, options={}):
+        for key, value in options:
             setattr(self, key, value)
     def get_default_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
@@ -447,3 +449,15 @@ class subclassDict(object):
         return self.classes[attr]
     def __getattr__(self, attr):
         return self.classes[attr]
+
+class RepeatTimer(threading.Thread):
+    def __init__(self, time, function, args=[], kwargs={}):
+        threading.Thread.__init__(self)
+        self.time = time
+        self.func = function
+        self.args = args
+        self.kwargs = kwargs
+    def run(self):
+        while True:
+            time.sleep(self.time)
+            self.func(*self.args, **self.kwargs)

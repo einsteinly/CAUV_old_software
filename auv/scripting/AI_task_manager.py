@@ -28,7 +28,7 @@ import traceback
 
 from collections import deque
 
-from AI_classes import aiProcess, external_function
+from AI_classes import aiProcess, external_function, RepeatTimer
 from AI_tasks import tasks
 from AI_conditions import conditions
 
@@ -51,7 +51,7 @@ class taskManager(aiProcess):
         self.conditions = {}
         #queues to add/remove
         self.processing_queue = Queue.Queue()
-        self.periodic_timer = None
+        self.periodic_timer = RepeatTimer(1, self.add_periodic_to_queue)
         #Detectors - definative list of what SHOULD be running
         self.detector_nid = 0
         self.detectors_last_known = deque()
@@ -60,7 +60,7 @@ class taskManager(aiProcess):
         #Details on whats currently running
         self.running_script = None
         self.current_task = None
-        self.current_priority = 0
+        self.current_priority = -1
         #state data file
         self.state_shelf = shelve.open('state_task_manager.shelf')
         #Setup intial values
@@ -73,9 +73,9 @@ class taskManager(aiProcess):
             else:
                 info('No previous valid state file')
     def load_state(self):
-        pass
+        raise NotImplementedError
     def save_state(self):
-        pass
+        raise NotImplementedError
     
     #ONMESSAGE FUNCTIONS
     def onAddTaskMessage(self, msg):
@@ -93,9 +93,9 @@ class taskManager(aiProcess):
     def onSetConditionStateMessage(self, msg):
         self.processing_queue.put(('set_condition_options', [msg.conditionId, msg.conditionOptions], {}))
     
-    @external_function
-    def onStopScript(self):
-        self.stop_script()
+    def onScriptControlMessage(self, msg):
+        if msg.command == messaging.ScriptCommand.Stop:
+            self.stop_script()
     
     #EXTERNAL FUNCTIONS
     #from detector process
@@ -109,11 +109,11 @@ class taskManager(aiProcess):
     @external_function
     def notify_begin_pause(self, message):
         if self.current_task:
-            getattr(self.ai, self.current_task).begin_override_pause()
+            getattr(self.ai, self.current_task.id).begin_override_pause()
     @external_function
     def notify_end_pause(self, message):
         if self.current_task:
-            getattr(self.ai, self.current_task).end_override_pause()
+            getattr(self.ai, self.current_task.id).end_override_pause()
     #from script
     @external_function
     def on_script_exit(self, task_id, status):
@@ -122,19 +122,19 @@ class taskManager(aiProcess):
                 self.tasks[task_id].crash_count += 1
                 if self.tasks[task_id].crash_count >= self.tasks[task_id].crash_limit:
                     self.processing_queue.put(('remove_task', [task_id], {}))
-                    warning('%s had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
-                self.log('Task %s failed after an exception in the script.' %(task_id, ))
+                    warning('%d had too many unhandled exceptions, so has been removed from task list.' %(task_id,))
+                self.log('Task %d failed after an exception in the script.' %(task_id, ))
             except KeyError:
-                warning('Unrecognised task %s crashed (or default script crashed)' %(task_id,))
+                warning('Unrecognised task %d crashed (or default script crashed)' %(task_id,))
         elif status == 'SUCCESS':
-            self.log('Task %s suceeded, no longer trying to complete this task.' %(task_id, ))
+            self.log('Task %d suceeded, no longer trying to complete this task.' %(task_id, ))
             self.processing_queue.put(('remove_task', [task_id], {}))
-            info('%s has finished succesfully, so is being removed from active tasks.' %(task,))
+            info('%d has finished succesfully, so is being removed from active tasks.' %(task_id,))
         else:
-            info('%s sent exit message %s' %(task_id, status))
-            self.log('Task %s failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].frequency_limit))
+            info('%d sent exit message %s' %(task_id, status))
+            self.log('Task %d failed, waiting atleast %ds before trying again.' %(task_id, self.tasks[task_id].frequency_limit))
             self.tasks[task_id].last_called = time.time()
-        getattr(self.ai,task).confirm_exit()
+        getattr(self.ai,task_id).confirm_exit()
     #helpful diagnostics
     @external_function
     def export_task_data(self, file_name):
@@ -145,6 +145,7 @@ class taskManager(aiProcess):
         f.close()
             
     #INTERNAL FUNCTIONS
+    #--functions run on incoming messages--
     #add/remove/modify detectors
     def add_detector(self, detector_type, listener):
         debug("Adding detector of type %s" %str(detector_type))
@@ -158,10 +159,10 @@ class taskManager(aiProcess):
         self.detector_conditions.pop(detector_id)
         self.ai.detector_control.stop(detector_id)
     def set_detector_options(self, detector_id, options):
-        debug("Setting options %s on detector %s" %(str(options),str(detector_id)))
+        debug("Setting options %s on detector %d" %(str(options), detector_id))
         self.ai.detector_control.set_options(detector_id, options)
         
-    #add/remove/modify/reg/dereg tasks
+    #add/remove/modify/reg tasks
     def create_task(self, task_type):
         #create task of named type
         debug("Creating task of type %s" %str(task_type))
@@ -181,13 +182,13 @@ class taskManager(aiProcess):
         self.tasks[task_id] = task
         return task_id
     def remove_task(self, task_id):
-        debug("Removing task %s" %str(task_id))
+        debug("Removing task %d" %task_id)
         #remove task of given id (don't forget to let the task do any clearing it wants)
         self.tasks[task_id].deregister(self)
         self.tasks.pop(task_id)
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
-        debug("Setting options %s on task %s" %(str((task_options, script_options, condition_ids)),str(task_id)))
+        debug("Setting options %s on task %d" %(str((task_options, script_options, condition_ids)), task_id))
         task = self.tasks[task_id]
         task.set_options(task_options)
         #not only need to change in task, need to try and change in running script
@@ -197,7 +198,7 @@ class taskManager(aiProcess):
         #need to tell task which conditions to use
         #remove current conditions
         for condition in task.conditions.itervalues():
-            condition.remove(task_id)
+            condition.task_ids.remove(task_id)
         task.conditions = {}
         #add new conditions
         for condition_id in condition_ids:
@@ -216,6 +217,7 @@ class taskManager(aiProcess):
         #create and register with self
         condition = condition_type(options)
         condition.register(self)
+        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values()))
         return condition.id
     def register_condition(self, condition):
         #give conditon an id and add to condition list
@@ -224,12 +226,14 @@ class taskManager(aiProcess):
         self.conditions[condition_id] = condition
         return condition_id
     def remove_condition(self, condition_id):
-        debug("Removing condition %s" %str(condition_id))
+        debug("Removing condition %d" %condition_id)
         self.conditions[condition_id].deregister(self)
         self.conditions.pop(condition_id)
+        self.node.send(messaging.ConditionRemovedMessage(condition_id))
     def set_condition_options(self, condition_id, options):
-        debug("Setting options %s on condition %s" %(str(options),str(condition_id)))
+        debug("Setting options %s on condition %s" %(str(options), condition_id))
         self.conditions[condition_id].set_options(options)
+        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values()))
         
     #script control
     def stop_script(self):
@@ -239,34 +243,41 @@ class taskManager(aiProcess):
         self.ai.auv_control.lights_off()
         if self.running_script:
             try:
-                self.running_script.terminate()
+                self.running_script.kill()
             except OSError:
                 debug('Could not kill running script (probably already dead)')
+                
+    #--function run by periodic loop--
     def start_script(self, task_id, script_name, script_opts={}):
         self.ai.auv_control.signal(task_id)
         self.stop_script()
         self.ai.auv_control.set_task_id(task_id)
         info('Starting script: %s  (Task %s)' %(script_name, task_id))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', task_id, script_name, cPickle.dumps(script_opts)])
-    #task control
+        self.running_script = subprocess.Popen(['python','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts)])
     def start_task(self, task):
         #disable/enable detectors according to task
-        with self.detector_lock:
-            self.detectors_enabled = task.detectors_enabled
-            if self.detectors_enabled: self.ai.detector_control.enable()
-            else: self.ai.detector_control.disable()
+        self.detectors_enabled = task.options.detectors_enabled_while_running
+        if self.detectors_enabled: self.ai.detector_control.enable()
+        else: self.ai.detector_control.disable()
         #start the new script
-        self.start_script(task.name, task.script_name, task.options)
+        self.start_script(task.id, task.options.script_name, task.get_script_options())
         #set priority
-        self.current_priority = task.running_priority
+        self.current_priority = task.options.running_priority
         #mark last task not active, current task active
         if self.current_task:
-            self.task_list[self.current_task].active = False
-        self.current_task = task.name
+            self.current_task.active = False
+        self.current_task = task
         task.active = True
+        
     def process_periodic(self):
-        #check detectors
+        #check running script, clear up if has died
+        if self.running_script:
+            if self.running_script.poll():
+                self.running_script = None
+                self.current_task = None
+                self.current_priority = -1
+        #check detectors, sort out anything that has gone wrong here
         try:
             running_detectors = self.detectors_last_known.pop()
         except IndexError:
@@ -277,23 +288,22 @@ class taskManager(aiProcess):
                 if not d_id in running_detectors:
                     self.ai.detector_control.start(d_id, listener.detector_name)
                     self.set_detector_options(d_id, listener.options.get_options())
-        #check tasks
+        #check tasks, run as appropriate
         highest_priority = self.current_priority
         to_start = None
         for task in self.tasks.itervalues():
-            if task != self.current_task and task.is_available() and task.priority > highest_priority and time.time()-task.last_called > task.frequency_limit:
+            if task != self.current_task and task.is_available() and \
+               task.options.priority > highest_priority and \
+               time.time()-task.options.last_called > task.options.frequency_limit:
                 to_start = task
+                highest_priority = task.options.priority
         if to_start:
             self.start_task(to_start)
-        #and finally set a timeout till we want to check again
-        self.periodic_timer = threading.Timer(TASK_CHECK_PERIOD, self.add_periodic_to_queue)
-        self.periodic_timer.start()
     def add_periodic_to_queue(self):
         self.processing_queue.put(('process_periodic', [], {}))
         
     #MAIN LOOP
     def run(self):
-        self.periodic_timer = threading.Timer(TASK_CHECK_PERIOD, self.add_periodic_to_queue)
         self.periodic_timer.start()
         while True:
             try:
@@ -305,7 +315,7 @@ class taskManager(aiProcess):
         try:
             self.periodic_timer.cancel()
         except Exception as error:
-            self.debug(error.message)
+            debug(error.message)
         super(taskManager, self).die()
 
 if __name__ == '__main__':

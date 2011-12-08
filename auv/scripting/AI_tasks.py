@@ -74,6 +74,11 @@ class aiTask(object):
                 self.options._script_static_options[key] = value
     def get_options(self):
         return self.options.get_options()
+    def get_script_options(self):
+        options = {}
+        options.update(self.get_dynamic_options())
+        options.update(self.get_static_options())
+        return options
     def get_dynamic_options(self):
         return self.options._script_dynamic_options
     def get_static_options(self):
@@ -141,6 +146,7 @@ class default(aiTask):
     class options(taskOptions):
         script_name = 'spiral'
         priority = 0
+        detectors_enabled_while_running = True
     conditions = [
         (c.stateCondition, {'state': True}),
         ]
