@@ -40,6 +40,7 @@ target_link_libraries (camera_client
 
 
 add_executable (camera_client_test
+    EXCLUDE_FROM_ALL
     client_test.cpp
 )
 target_link_libraries (camera_client_test
