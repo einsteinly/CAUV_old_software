@@ -39,9 +39,51 @@ def listen(ainode):
     aml.die()
     
 def listen_state(ainode):
-    asl = aiStateListener(ainode.node)
-    raw_input('Hit enter to stop listening.')
-    asl.die()
+    if not hasattr(ainode, 'asl') or not ainode.asl:
+        ainode.asl = aiStateListener(ainode.node)
+
+def stop_listen_state(ainode):
+    ainode.asl.die()
+    ainode.asl = None
+    
+def add_task(ainode):
+    task_type = raw_input('Enter task type: ')
+    ainode.node.send(messaging.AddTaskMessage(task_type))
+    
+def remove_task(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    ainode.node.send(messaging.RemoveTaskMessage(task_id))
+    
+def set_task_options(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    task_options = input('Enter task options (as dict): ')
+    ainode.node.send(messaging.SetTaskOptionsMessage(task_id, [], task_options, {}))
+    
+def set_script_options(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    script_options = input('Enter script options (as dict): ')
+    ainode.node.send(messaging.SetTaskOptionsMessage(task_id, [], {}, script_options))
+    
+def set_task_conditions(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    conditions = input('Enter script options (as list): ')
+    ainode.node.send(messaging.SetTaskOptionsMessage(task_id, conditions, {}, {}))
+    
+def add_condition(ainode):
+    condition_type = raw_input('Enter condition type: ')
+    ainode.node.send(messaging.AddConditionMessage(condition_type))
+    
+def remove_condition(ainode):
+    condition_id = int(raw_input('Enter condition id: '))
+    ainode.node.send(messaging.RemoveConditionMessage(condition_id))
+    
+def set_condition_options(ainode):
+    condition_id = int(raw_input('Enter condition id: '))
+    condition_options = input('Enter condition options (as dict): ')
+    ainode.node.send(messaging.SetTaskOptionsMessage(condition_id, condition_options))
+    
+def stop_script(ainode):
+    ainode.node.send(messaging.ScriptControlMessage(messaging.ScriptCommand.Stop))
     
 def shell(ainode):
     print """
@@ -95,8 +137,28 @@ if __name__=='__main__':
     
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})
-    m.addFunction('Listen to State', listen_state, 'Listen to ai state messages', {})
+    m.addFunction('Listen to state', listen_state, 'Listen to ai state messages', {})
+    m.addFunction('Stop listening to state', stop_listen_state, 'Stop listening to ai state messages', {})
     m.addFunction('Shell', shell, '', {})
+    
+    t = menu('Task menu', '')
+    t.addFunction('Add Task', add_task, '', {})
+    t.addFunction('Remove Task', remove_task, '', {})
+    t.addFunction('Set Task Options', set_task_options, '', {})
+    t.addFunction('Set Script Options', set_script_options, '', {})
+    t.addFunction('Set Task Conditions', set_task_conditions, '', {})
+    
+    c = menu('Condition menu', '')
+    c.addFunction('Add Condition', add_condition, '', {})
+    c.addFunction('Remove Condition', remove_condition, '', {})
+    c.addFunction('Set Condition Options', set_condition_options, '', {})
+    
+    s = menu('Script menu', '')
+    s.addFunction('Stop Script', stop_script, '', {})
+    
+    m.addMenu(t)
+    m.addMenu(c)
+    m.addMenu(s)
     
     try:
         m(ainode)

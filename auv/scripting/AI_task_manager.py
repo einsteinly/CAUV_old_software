@@ -185,7 +185,7 @@ class taskManager(aiProcess):
         #remove task of given id (don't forget to let the task do any clearing it wants)
         self.tasks[task_id].deregister(self)
         self.tasks.pop(task_id)
-        if task_id == self.current_task.id:
+        if self.current_task and task_id == self.current_task.id:
             self.stop_script()
         self.node.send(messaging.TaskRemovedMessage(task_id))
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
