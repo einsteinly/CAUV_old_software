@@ -64,8 +64,8 @@ def force_calling_process(f):
 
 def onMessageFactory(self, m_func_name):
     def onMessageFunction(m):
-	print m
-	return getattr(self.parent_process,m_func_name)(m)
+        print m
+        return getattr(self.parent_process,m_func_name)(m)
     return onMessageFunction
 
 class aiMessageObserver(messaging.MessageObserver):
@@ -74,8 +74,8 @@ class aiMessageObserver(messaging.MessageObserver):
         messaging.MessageObserver.__init__(self)
         self.parent_process = parent_process
         self.function_names = function_names
-	for on_message in self.parent_process._on_messages:
-	    setattr(self, on_message, onMessageFactory(self, on_message))
+        for on_message in self.parent_process._on_messages:
+            setattr(self, on_message, onMessageFactory(self, on_message))
 
     def onAIMessage(self, m):
         debug("onAIMessage in %s: %s" %(self.parent_process.process_name, m.msg), 6)
@@ -110,8 +110,8 @@ class aiProcessBase(type):
                 setattr(cls, key, attr.func)
             else:
                 cls._objects.append(key)
-	    if key[:2]=='on' and key[-7:]=='Message':
-		cls._on_messages.append(key)
+            if key[:2]=='on' and key[-7:]=='Message':
+                cls._on_messages.append(key)
 
 
     def __call__(cls, *args, **kwargs):
