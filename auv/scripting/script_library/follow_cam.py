@@ -89,7 +89,8 @@ class script(aiScript):
             self.detected.clear()
         
             #Don't don anything else if the river edge is not detected
-            if detected is True:
+            if detected is True:            
+                    self.auv.bearing(self.auv.getBearing())   #Stop oscillating if it is
                     self.detected.set()
 
                     info('Cam follow: River edge detected')
@@ -171,15 +172,13 @@ class script(aiScript):
             else:
                 self.auv.stop()        #Stop immediatly if the River edge is lost for too long
                 self.detected.clear()
-                #time.sleep(2)
-                info('Cam follow: The edge of River Cam is lost, trying to find it by rotating.')            
-                self.auv.bearing(self.auv.getBearing()+90) #Perform 1 revolution of self rotation until the AUV is aligned again
-                self.detected.wait()
-		self.auv.bearing(self.auv.getBearing()-180)
-		self.detected.wait()
-                self.auv.bearing(self.auv.getBearing())   #Stop spinning if the AUV is aligned
-
-
+                info('Cam follow: The edge of River Cam is lost, trying to find it again.')            
+		        for angle in range(5,505):
+		            if self.detected.is_set() is False:
+		                info('oscillating by %i degrees' %str(angle))
+                        self.auv.bearing((self.auv.getBearing()+angle)%360) #Perform 1 revolution of self rotation until the AUV is aligned again
+		                self.auv.bearing((self.auv.getBearing()-angle*2)%360)
+		                self.auv.bearing((self.auv.getBearing()+angle)%360)
 
             
     def stop(self):
