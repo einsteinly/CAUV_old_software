@@ -83,16 +83,17 @@ class PercentileNode: public Node{
                 cv::Mat imgWithChannels(3, dims, CV_8U, img.data, steps);
                 cv::MatConstIterator_<uint8_t> it = imgWithChannels.begin<unsigned char>(),
                                                end = imgWithChannels.end<unsigned char>();
-                // FIXME: opencv bug? iterator version is broken for me
+                // FIXME: opencv bug? iterator version is broken for me on
+                // single channel images (begin+1 == end)
                 /*while(it != end) {
                     for(int ch = 0; ch < channels; ch++) {
                         value_histogram[ch][*it]++;
                     }
                     it++;
                 }*/
-                for(uint32_t row = 0; row < img.rows; row++)
-                    for(uint32_t col = 0; col < img.cols; col++)
-                        for(uint32_t ch = 0; ch < channels; ch++)
+                for(int row = 0; row < img.rows; row++)
+                    for(int col = 0; col < img.cols; col++)
+                        for(int ch = 0; ch < channels; ch++)
                             value_histogram[ch][img.at<uint8_t>(row,col,ch)]++;
 
                 std::vector<int> channel_results;

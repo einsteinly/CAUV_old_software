@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+#pylint: disable=E1101
 
 # Standard Library
 import traceback
