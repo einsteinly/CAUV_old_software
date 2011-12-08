@@ -22,12 +22,8 @@ class scriptOptions(aiScriptOptions):
     ready_timeout = 30
     lost_timeout = 15
     # Calibration
-    target_width = 0.2 # of image
-    width_error   = 0.1 # of image
     centre_error = 0.2 # of image
     align_error  = 10   # degrees 
-    average_time = 1   # seconds
-    intensity_trigger = 0.10
     # Control
     prop_speed = 80
     strafe_kPID  = (-300, 0, 0)
@@ -36,8 +32,8 @@ class scriptOptions(aiScriptOptions):
     class Meta:
         dynamic = [
             'ready_timeout', 'lost_timeout',
-            'strafe_kPID',
-            'prop_speed', 'average_time'
+            'strafe_kPID', 'centre_error',
+            'prop_speed', 'align_error'
         ]
 
 
@@ -50,12 +46,13 @@ class script(aiScript):
         self.centred = threading.Event()
         self.aligned = threading.Event()
         self.ready = threading.Event()
+        self.detected = threading.Event()
         
         # controllers for staying above the pipe
         self.strafeControl = PIDController(self.options.strafe_kPID)
 
         self.yAverage = TimeAverage(1)
-        self.last_detect_time = time.time()
+        self.last_detect_time = 0
 
     def onLinesMessage(self, m):
         if m.name != self.options.lines_name:
@@ -89,13 +86,13 @@ class script(aiScript):
                 #Break out of the outer for loop
                 if detected is True:
                         break         
-
+            self.detected.clear()
         
             #Don't don anything else if the river edge is not detected
             if detected is True:
-                
+                    self.detected.set()
 
-                    debug('Cam follow: River edge detected')
+                    info('Cam follow: River edge detected')
                     debug('Cam follow: Angle: %f, %F' %(degrees(edges[0].angle), degrees(edges[1].angle)))
                     debug('Cam follow: Posistion: %f, %f' %(edges[0].centre.x, edges[1].centre.x))
                     debug('Cam follow: Apart: %f' %((edges[0].centre.x-edges[1].centre.x)**2+(edges[0].centre.y-edges[1].centre.y)**2)**0.5)
@@ -123,7 +120,7 @@ class script(aiScript):
                         if current_bearing: #watch out for none bearings
                             self.auv.bearing((current_bearing+corrected_angle)%360) 
                             self.aligned.clear()
-                            debug('Cam follow: Adjusting Bearing by: %g (uncorrected=%g)' % (corrected_angle, angle))
+                            info('Cam follow: Adjusting Bearing by: %g (uncorrected=%g)' % (corrected_angle, angle))
 
 
                     #Centre the AUV in the middle of River Cam
@@ -131,9 +128,9 @@ class script(aiScript):
                         cam_centre=(edges[0].centre.x+edges[1].centre.x)/2
                         centre_err=cam_centre - 0.5
 
-                        info('Centre error: %f' %centre_err)
-                        if abs(centre_err) < 0.01:
-                            warning('ignoring centre at 0')
+                        debug('Cam follow: Centre error: %f' %centre_err)
+                        if abs(centre_err) < self.options.centre_error:
+                            info('Cam follow: AUV is at the centre')
                             self.centred.set()
                         else:
 
@@ -145,10 +142,10 @@ class script(aiScript):
                             self.centred.clear()
 
 
-                    # set the flags that show if we're above the pipe
+                    # set the flags that show if we're aligned and centred at the Cam
                     if self.centred.is_set() and self.aligned.is_set():
                         self.ready.set()
-                        debug('Cam follow: ready to start moving')
+                        info('Cam follow: AUV is centred and aligned')
                         self.log('Cam follow: Done aligning and centering.')
                     else:
                         debug('Cam follow: centred:%s aligned:%s' %
@@ -173,12 +170,12 @@ class script(aiScript):
                 time.sleep(self.options.lost_timeout)        #Sleep until the start of next cycle
             else:
                 self.auv.prop(-127)        #Stop immediatly if the River edge is lost for too long
+                self.detected.clear()
                 time.sleep(2)
-                self.log('Cam follow: The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
-                debug('Cam follow: The edge of River Cam is lost, trying to find it by rotating.' %self.options.lost_timeout)
-                self.auv.bearing(current_bearing+359) #Perform 1 revolution of self rotation until the AUV is aligned again
-                self.aligned.wait()
-                self.auv.bearing(current_bearing)   #Stop spinning if the AUV is aligned
+                info('Cam follow: The edge of River Cam is lost, trying to find it by rotating.')            
+                self.auv.bearing(self.auv.getBearing()+359) #Perform 1 revolution of self rotation until the AUV is aligned again
+                self.detected.wait()
+                self.auv.bearing(self.auv.getBearing())   #Stop spinning if the AUV is aligned
 
 
 
