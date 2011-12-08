@@ -1,5 +1,5 @@
 # This is a generated file, do not edit!
-# Generated for 7eb9af91918fd2e2779c60b3f5d59116611f1dfe
+# Generated for f092148e56e57b290787b2ee6e7cadc2f88c0b25
 
 
 # Standard Library
@@ -96,6 +96,7 @@ p_NodeInputStatus = pp.Forward()
 p_NodeIOStatus = pp.Forward()
 p_OutputType = pp.Forward()
 p_Controller = pp.Forward()
+p_InputSchedType = pp.Forward()
 
 # Parse Structs
 p_floatYPR << pp.Group(l \
@@ -123,7 +124,8 @@ p_NodeInput << pp.Group(l \
 p_NodeInput.setParseAction(lambda x: messaging.NodeInput(*x[0]))
 p_LocalNodeInput << pp.Group(l \
     + p_str + c \
-    + p_int \
+    + p_int + c \
+    + p_InputSchedType \
     + r)
 p_LocalNodeInput.setParseAction(lambda x: messaging.LocalNodeInput(*x[0]))
 p_NodeOutput << pp.Group(l \
@@ -360,6 +362,8 @@ p_OutputType << p_int
 p_OutputType.setParseAction(lambda x: messaging.OutputType(x[0]))
 p_Controller << p_int
 p_Controller.setParseAction(lambda x: messaging.Controller(x[0]))
+p_InputSchedType << p_int
+p_InputSchedType.setParseAction(lambda x: messaging.InputSchedType(x[0]))
 
 # Parse Messages
 p_MembershipChangedMessage = pp.Group(l \

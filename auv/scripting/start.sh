@@ -25,7 +25,9 @@ try:
 
 
     import IPython
-    IPython.embed()
+    from IPython.Shell import IPShellEmbed
+    s = IPShellEmbed()
+    s()
 finally:
     node.stop()
 "

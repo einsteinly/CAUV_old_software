@@ -8,7 +8,7 @@ import traceback
 #do a preliminary 360 degree sweep
 
 class scriptOptions(aiScriptOptions):
-    loops = 5 #number of times to go round
+    loops = 10 #number of times to go round
     power = 127 #motor power
     unit = 7
     depth = 2

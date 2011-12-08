@@ -462,7 +462,7 @@ class ComponentPlayer(CHILer):
     def swap(self, other):
         # dum di dum di dum
         t = other.__dict__
-        other.__dict__ = self.__dict__
+        other.__dict__ = self.__dict__ #pylint: disable=E0203
         self.__dict__ = t
     def close(self):
         self.datfile.close()

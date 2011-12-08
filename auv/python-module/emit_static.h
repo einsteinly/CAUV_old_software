@@ -12,5 +12,7 @@ void emitAIMessageObserver();
 
 void emitSpreadMessage(); // not really needed?
 
+void emitPostGenerated();
+
 #endif // EMIT_STATIC_H
 

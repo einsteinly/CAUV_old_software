@@ -306,12 +306,9 @@ p_NodeInputArcVec.setParseAction(a__vec_gen(messaging.NodeInputArcVec))
 # Special Case! Override byteVec definition
 p_byteVec << pp.Optional(pp.Word(hexchars))
 def a_byteVec(arg):
-    t = messaging.byteVec()
-    try:
-        map(lambda n: t.append(ord(n)), base64.b16decode(arg[0]))
-    except IndexError:
-        pass
-    return t
+    if len(arg):
+        return messaging.mkByteVec(arg[0])
+    return messageing.byteVec()
 p_byteVec.setParseAction(a_byteVec)
 
 # Parse action generator for map types

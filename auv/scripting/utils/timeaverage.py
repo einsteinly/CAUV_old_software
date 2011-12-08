@@ -35,7 +35,6 @@ class TimeAverage:
         self.entries.clear()
 
 
-
 if __name__ == '__main__':
     av = TimeAverage(1)
     print av.update(2.0)
