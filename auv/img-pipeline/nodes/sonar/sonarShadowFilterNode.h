@@ -49,7 +49,8 @@ class SonarShadowFilterNode: public Node{
             
             // parameters: scale factor, interpolation mode
             registerParamID<float>("object size", 0.2f, "size (in m) of +ve part of filter");
-            registerParamID<float>("shadow size", 0.2f, "size (in m) of -ve part of filter");
+            registerParamID<float>("shadow size", 5.0f, "size (in m) of -ve part of filter");
+            registerParamID<float>("object importance", 1.0f, "relative weight of object in calculation");
             registerParamID<float>("shadow importance", 1.0f, "relative weight of shadow in calculation");
         }
     
@@ -59,8 +60,11 @@ class SonarShadowFilterNode: public Node{
 
     protected:
         struct applyFilter: boost::static_visitor<augmented_mat_t>{
-            applyFilter(float object_size, float shadow_size, float shadow_weight)
-                : m_object_size(object_size), m_shadow_size(shadow_size), m_shadow_importance(shadow_weight){
+            applyFilter(float object_size, float shadow_size, float object_weight, float shadow_weight)
+                : m_object_size(object_size),
+                  m_shadow_size(shadow_size),
+                  m_object_importance(object_weight),
+                  m_shadow_importance(shadow_weight){
             }
             augmented_mat_t operator()(cv::Mat) const{
                 throw parameter_error("only polar images are supported");
@@ -72,18 +76,19 @@ class SonarShadowFilterNode: public Node{
                 NonUniformPolarMat r;
                 r.bearings = a.bearings;
                 r.ranges = a.ranges;
-                r.mat = cv::Mat(cv::Size(rows, cols), CV_8UC1);
+                r.mat = cv::Mat(cv::Size(cols, rows), CV_8UC1);
 
                 // first create an integral image along each bearing line
                 // (column):
-                cv::Mat integral(cv::Size(rows, cols), CV_32FC1);
+                cv::Mat integral(cv::Size(cols, rows), CV_32FC1);
                 for(int row = 0; row < rows; row++)
-                    if(row == 0)
+                    if(row == 0){
                         for(int col = 0; col < cols; col++)
                             integral.at<float>(row, col) = a.mat.at<uint8_t>(row, col);
-                    else
+                    }else{
                         for(int col = 0; col < cols; col++)
                             integral.at<float>(row, col) = integral.at<float>(row-1, col) + a.mat.at<uint8_t>(row, col);
+                    }
 
                 // apply 1D filter in range to detect objects casting shadows:
                 // assuming range resolution is constant:
@@ -105,8 +110,8 @@ class SonarShadowFilterNode: public Node{
                         const float object_end_val = integral.at<float>(object_end_row, col);
                         const float shadow_end_val = integral.at<float>(shadow_end_row, col);
                         const float filter_value = (1.0f/object_sz) *(
-                            (object_end_val - object_start_val) -
-                            m_shadow_importance * (object_start_val - shadow_end_val)
+                            m_object_importance * (object_end_val - object_start_val) -
+                            m_shadow_importance * (shadow_end_val - object_end_val)
                         );
                         r.mat.at<uint8_t>(row,col) = clamp_cast<uint8_t>(0.0f, filter_value, 255.0f);
                     }
@@ -119,6 +124,7 @@ class SonarShadowFilterNode: public Node{
             }
             const float m_object_size;
             const float m_shadow_size;
+            const float m_object_importance;            
             const float m_shadow_importance;
         };
         out_map_t doWork(in_image_map_t& inputs){
@@ -128,13 +134,16 @@ class SonarShadowFilterNode: public Node{
             
             const float object_size = param<float>("object size");
             const float shadow_size = param<float>("shadow size");
+            const float object_importance = param<float>("object importance");
             const float shadow_importance = param<float>("shadow importance");
             
             augmented_mat_t in = img->augmentedMat();
             augmented_mat_t out;
 
             try{
-                out = boost::apply_visitor(applyFilter(object_size, shadow_size, shadow_importance), in);
+                out = boost::apply_visitor(applyFilter(
+                    object_size, shadow_size, object_importance, shadow_importance
+                ), in);
                 r["polar image"] = boost::make_shared<Image>(out);
             }catch(cv::Exception& e){
                 error() << "SonarShadowFilterNode:\n\t"
