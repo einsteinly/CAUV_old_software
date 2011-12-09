@@ -182,8 +182,11 @@ class script(aiScript):
                         if self.detected.is_set() is False:
                             info('oscillating by %i degrees' %angle)
                             self.auv.bearingAndWait((current_bearing+angle)%360) #Perform 1 revolution of self rotation until the AUV is aligned again
+                        if self.detected.is_set() is False:
                             self.auv.bearingAndWait((current_bearing-angle)%360)
-                            self.auv.bearingAndWait((current_bearing)%360)
+                        if self.detected.is_set() is True:
+                            break
+
                 else:
                     time.sleep(1)
             
