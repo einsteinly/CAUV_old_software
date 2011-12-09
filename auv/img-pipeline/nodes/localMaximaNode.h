@@ -76,6 +76,8 @@ class LocalMaximaNode: public Node{
             }
             std::vector<KeyPoint> operator()(NonUniformPolarMat a) const{
                 std::vector<KeyPoint> r = operator()(a.mat);
+                // TODO: should probably leave this conversion to a
+                // bearingRangeToXYNode...
                 foreach(KeyPoint& k, r){
                     k.pt.x = a.bearings->at(int(k.pt.x));
                     k.pt.y = a.ranges->at(int(k.pt.y));

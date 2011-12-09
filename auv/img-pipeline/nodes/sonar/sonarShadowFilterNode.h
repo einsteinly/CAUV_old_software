@@ -94,12 +94,14 @@ class SonarShadowFilterNode: public Node{
                 // assuming range resolution is constant:
                 uint32_t object_sz = 0;
                 uint32_t shadow_sz = 0;
-                for(int i = 0; i < int(a.ranges->size()) && object_sz == 0 && shadow_sz == 0; i++){
+                for(int i = 0; i < int(a.ranges->size()) && (object_sz == 0 || shadow_sz == 0); i++){
                     if(object_sz == 0 && (*a.ranges)[i] >= m_object_size)
                         object_sz = i;
                     if(shadow_sz == 0 && (*a.ranges)[i] >= m_shadow_size)
                         shadow_sz = i;
                 }
+                debug() << "object sz=" << m_object_size << "m =" << object_sz << "px"
+                        << "shadow sz=" << m_shadow_size << "m =" << shadow_sz << "px";
 
                 for(int row = 0; row < rows; row++){
                     const int object_start_row = row - object_sz/2;

@@ -4,8 +4,10 @@
 import math
 
 # CAUV:
+import cauv
 from AI_classes import aiDetector, aiDetectorOptions
 from cauv.debug import debug, info, warning, error
+import cauv.messaging as msg
 
 import cauv.pipeline as pipeline
 
@@ -14,11 +16,11 @@ from utils.timeutils import RelativeTimeCapability
 
 class detectorOptions(aiDetectorOptions):
     Sonar_Range = 35
-    KeyPoints_Name = 'sonar_local_maxima'
-    Metres_Per_Px = 35.0 / 400
+    KeyPoints_Name = 'sonar_local_maxima_bearing_range'
     Too_Close_Static = 0.5 # metres
     Too_Close_Threshold = 3 # higher = less likely to detect collision from close objects
     Dynamic_Vehicle_Width = 1
+    Max_Velocity = 2 # metres per second
 
 class detector(aiDetector, RelativeTimeCapability):
     def __init__(self, node, opts):
@@ -33,7 +35,7 @@ class detector(aiDetector, RelativeTimeCapability):
     def checkStaticCollision(self, keypoints):
         nearby = 0
         for kp in keypoints:
-            if kp.x * self.options.Metres_Per_Px < self.options.Too_Close_Static:
+            if kp.pt.x < self.options.Too_Close_Static:
                 nearby += 1
         if nearby == 0 and self.nearby_detected > 0:
             self.nearby_detected /= 1.2
@@ -49,7 +51,6 @@ class detector(aiDetector, RelativeTimeCapability):
     def checkDynamicCollisions(self, kps_last, kps_now, dt):
         # we're dealing with a small number of keypoints so this is okay!
         kp_vectors = []
-        m_per_px = self.options.Metres_Per_Px
         for kp in kps_now:
             # associate each keypoint with closest previous keypoint:
             closest_kp = kps_last[0]
@@ -63,44 +64,82 @@ class detector(aiDetector, RelativeTimeCapability):
                     closest_kp = last
             (vx, vy) = ((kp.pt.x-closest_kp.pt.x)/dt,
                         (kp.pt.y-closest_kp.pt.y)/dt)
-            if vx <= 0:
-                debug('kp moving away: vx=%s %s' % (vx*m_per_px, kp))
+            if vy >= 0:
+                debug('kp moving away: vx=%s %s' % (vx, kp.pt))
                 continue
-            # 0-----------------0---->x
+            # +---------------------->y
             # |           o   |       60
             # |\        /     |
             # ||      o       |
-            # ||vehicle width - 50
+            # 0|vehicle width - 0
             # ||   .          |
             # |/ .            |
             # |.              |
-            #.y               - 100
+            #.x               - +
             #
-            time_to_collision = kp.pt.x / vx
+            time_to_collision = kp.pt.y / vy
             if time_to_collision > min((3*dt,1.0)):
-                debug('kp moving slowly: vx=%s: %s' % (vx*m_per_px, kp))
+                debug('kp moving slowly: vy=%s: %s' % (vy, kp.pt))
                 continue
-            y_pos_at_collision = kp.pt.y + vy * time_to_collision 
-            vehicle_width_in_px = self.options.Dynamic_Vehicle_Width / m_per_px
-            vehicle_y_min = 50 - 0.5*vehicle_width_in_px
-            vehicle_y_max = 50 + 0.5*vehicle_width_in_px
-            if y_pos_at_collision < vehicle_y_min:
-                debug('kp missing left(?): %s' % kp)
+            if vx**2 + vy**2 > self.options.Max_Velocity**2:
+                debug('kp moving too quickly (probably noise): %s,%s: %s' % (vx,vy,kp.pt))
                 continue
-            if y_pos_at_collision > vehicle_y_max:
-                debug('kp missing right(?): %s' % kp)
+            x_pos_at_collision = kp.pt.x + vx * time_to_collision 
+            vehicle_width = self.options.Dynamic_Vehicle_Width
+            vehicle_x_min = -0.5*vehicle_width
+            vehicle_x_max =  0.5*vehicle_width
+            if x_pos_at_collision < vehicle_x_min:
+                debug('kp missing left(?): %s' % kp.pt)
                 continue
-            
+            if x_pos_at_collision > vehicle_x_max:
+                debug('kp missing right(?): %s' % kp.pt)
+                continue
+    
+    def convertKPsToMetres(self, kps_bearingrange):
+        # because the localmaxima node uses x and y to store bearing range,
+        # which is somewhat wrong, but nevermind:
+        r = []
+        for kp in kps_bearingrange:
+            bearing = kp.pt.x
+            range = kp.pt.y
+            t = msg.KeyPoint(
+                msg.floatXY(-range*math.sin(bearing), range*math.cos(bearing)),
+                kp.size,
+                kp.angle,
+                kp.response,
+                kp.octave,
+                kp.class_id
+            )
+            r.append(t)
+        return r
 
     def onKeyPointsMessage(self, m):
         if m.name != self.Keypoints_Name:
             return
-        self.checkStaticCollision(m.keypoints)
+        kps = self.convertKPsToMetres(m.keypoints)
+        self.checkStaticCollision(kps)
         if self.last_keypoints is None or not len(self.last_keypoints):
-            self.last_keypoints = m.keypoints
+            self.last_keypoints = kps
         else:
             now = self.relativeTime()
-            self.checkDynamicCollisions(self.last_keypoints, m.keypoints, now - self.last_time)
+            self.checkDynamicCollisions(self.last_keypoints, kps, now - self.last_time)
+            self.last_keypoints = kps
             self.last_time = now
             
+
+if __name__ == '__main__':
+    import argparse
+    p = argparse.ArgumentParser()
+    opts, args = p.parse_known_args()
+    
+    node = cauv.node.Node('py-ctst',args)
+    try:
+        d = detector(node, detectorOptions())
+        node.join('processing')
+        node.addObserver(d)
+        import time
+        while True:
+            time.sleep(0.1)
+    finally:
+        node.stop()
 
