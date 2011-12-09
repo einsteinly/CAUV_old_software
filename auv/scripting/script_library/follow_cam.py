@@ -182,12 +182,13 @@ class script(aiScript):
                             self.auv.bearingAndWait((current_bearing+angle)%360) #Perform 1 revolution of self rotation until the AUV is aligned again
                             self.auv.bearingAndWait((current_bearing-angle*2)%360)
                             self.auv.bearingAndWait((current_bearing+angle)%360)
-
+                else:
+                    time.sleep(1)
             
     def stop(self):
         self.auv.prop(0)
         self.drop_pl(follow_cam_file)
-        self.log('Cam follow: Stopping follwoing River Cam.')
+        self.log('Cam follow: Stopping followoing River Cam.')
         info('Cam follow: Stopping River Cam following')
 
 
