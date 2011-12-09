@@ -322,7 +322,6 @@ class taskManager(aiProcess):
                 except IndexError:
                     time.sleep(0.2)
                     continue
-                print call
                 getattr(self, call[0])(*call[1], **call[2])
             except Exception:
                 error(traceback.format_exc())
