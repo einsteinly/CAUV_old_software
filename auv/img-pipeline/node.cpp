@@ -326,6 +326,14 @@ Node::msg_node_output_map_t Node::outputLinks() const{
     return r;
 }
 
+bool Node::hasChildOnOutput(output_id const& o) const{
+    lock_t l(m_outputs_lock);
+    foreach(private_out_map_t::value_type const& i, m_outputs)
+        if(i.first == o)
+            return true;
+    return false;
+}
+
 std::set<node_ptr_t> Node::children() const{
     lock_t l(m_outputs_lock);
     std::set<node_ptr_t> r;

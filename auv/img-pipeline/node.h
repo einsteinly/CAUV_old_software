@@ -293,6 +293,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         // TODO NPA: include param children
         /* parameters DO count, return everything not just connected things */
         msg_node_output_map_t outputLinks() const;
+        bool hasChildOnOutput(output_id const&) const;
 
         // TODO NPA: include param children
         std::set<node_ptr_t> children() const;

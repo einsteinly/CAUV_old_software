@@ -288,11 +288,13 @@ class SonarInputNode: public InputNode{
             );
             r_polar_img->ts(image_msg->image().timeStamp);
             
-
-            if(m_accumulator.setWholeImage(image_msg->image())){
-                r["image (buffer)"] = m_accumulator.img();
-                // not a deep copy when we're accumulating whole images!
-                r["image (synced)"] = m_accumulator.img();
+            if(hasChildOnOutput("image (buffer)") ||
+               hasChildOnOutput("image (synced)")){
+                if(m_accumulator.setWholeImage(image_msg->image())){
+                    r["image (buffer)"] = m_accumulator.img();
+                    // not a deep copy when we're accumulating whole images!
+                    r["image (synced)"] = m_accumulator.img();
+                }
             }
             r["polar image"] = r_polar_img;
             r["timestamp"] = timeStampToString(image_msg->image().timeStamp);

@@ -34,23 +34,33 @@ class detector(aiDetector, RelativeTimeCapability):
     
     def checkStaticCollision(self, keypoints):
         nearby = 0
+        thr = self.options.Too_Close_Threshold
         for kp in keypoints:
-            if kp.pt.x < self.options.Too_Close_Static:
+            if kp.pt.y < self.options.Too_Close_Static:
                 nearby += 1
         if nearby == 0 and self.nearby_detected > 0:
+            if self.nearby_detected > 3*thr:
+                self.bearby_detected = 3*thr
             self.nearby_detected /= 1.2
         else:
             self.nearby_detected += nearby
-        msg = 'nearby sonar responses: %s/%s' % (self.nearby_detected, self.options.Too_Close_Threshold)
-        if self.nearby_detected > self.options.Too_Close_Threshold:
+        msg = 'nearby sonar responses: %s/%s' % (self.nearby_detected, thr)
+        if self.nearby_detected > thr:
             info(msg)
             self.detected = True
         else:
             debug(msg)
+            self.detected = False
     
     def checkDynamicCollisions(self, kps_last, kps_now, dt):
         # we're dealing with a small number of keypoints so this is okay!
         kp_vectors = []
+        moving_away = 0
+        moving_slowly = 0
+        moving_quickly = 0
+        missing_left = 0
+        missing_right = 0
+        hit = 0
         for kp in kps_now:
             # associate each keypoint with closest previous keypoint:
             closest_kp = kps_last[0]
@@ -65,7 +75,8 @@ class detector(aiDetector, RelativeTimeCapability):
             (vx, vy) = ((kp.pt.x-closest_kp.pt.x)/dt,
                         (kp.pt.y-closest_kp.pt.y)/dt)
             if vy >= 0:
-                debug('kp moving away: vx=%s %s' % (vx, kp.pt))
+                #debug('kp moving away: vx=%s %s' % (vx, kp.pt))
+                moving_away += 1
                 continue
             # +---------------------->y
             # |           o   |       60
@@ -79,21 +90,33 @@ class detector(aiDetector, RelativeTimeCapability):
             #
             time_to_collision = kp.pt.y / vy
             if time_to_collision > min((3*dt,1.0)):
-                debug('kp moving slowly: vy=%s: %s' % (vy, kp.pt))
+                #debug('kp moving slowly: vy=%s: %s' % (vy, kp.pt))
+                moving_slowly += 1
                 continue
             if vx**2 + vy**2 > self.options.Max_Velocity**2:
-                debug('kp moving too quickly (probably noise): %s,%s: %s' % (vx,vy,kp.pt))
+                #debug('kp moving too quickly (probably noise): %s,%s: %s' % (vx,vy,kp.pt))
+                moving_quickly += 1
                 continue
             x_pos_at_collision = kp.pt.x + vx * time_to_collision 
             vehicle_width = self.options.Dynamic_Vehicle_Width
             vehicle_x_min = -0.5*vehicle_width
             vehicle_x_max =  0.5*vehicle_width
             if x_pos_at_collision < vehicle_x_min:
-                debug('kp missing left(?): %s' % kp.pt)
+                #debug('kp missing right: %s' % kp.pt)
+                missing_right += 1
                 continue
             if x_pos_at_collision > vehicle_x_max:
-                debug('kp missing right(?): %s' % kp.pt)
+                #debug('kp missing right(?): %s' % kp.pt)
+                missing_left += 1
                 continue
+            debug('kp hit!: %s,%s: %s' % (vx,vy,kp.pt))
+            hit += 1
+        debug('hit: %d, miss: away=%d slowly=%d tooquick=%d left=%d right=%d' % (
+            hit, moving_away, moving_slowly, moving_quickly, missing_left, missing_right
+        ))
+        if hit > 0:
+            info('%d hits projected' % hit)
+            self.detected = True
     
     def convertKPsToMetres(self, kps_bearingrange):
         # because the localmaxima node uses x and y to store bearing range,
