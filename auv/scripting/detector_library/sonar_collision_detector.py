@@ -64,7 +64,6 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             self.setDetected()
         else:
             debug(msg)
-            self.setDetected()
     
     def checkDynamicCollisions(self, kps_last, kps_now, dt):
         # we're dealing with a small number of keypoints so this is okay!
@@ -170,12 +169,16 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
     def run(self):
         while True:
             time.sleep(0.1)
+            set = False
             if self.time_detected is not None and\
                self.relativeTime() - self.time_detected < self.options.Run_Away_Time:
                 info('running away!')
-                self.auv.prop(-127)
+                #self.auv.prop(-127)
+                set  = True
             else:
-                self.auv.prop(0)
+                if set:
+                    #self.auv.prop(0)
+                    set = False
                 self.clearDetected()
 
 if __name__ == '__main__':
