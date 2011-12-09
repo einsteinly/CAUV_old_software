@@ -25,3 +25,4 @@ target_link_libraries (
     boost_iostreams
     ${ftdi_LIBRARIES}
 )
+depends_on_messages(module)

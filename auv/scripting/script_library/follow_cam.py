@@ -89,7 +89,9 @@ class script(aiScript):
             self.detected.clear()
         
             #Don't don anything else if the river edge is not detected
-            if detected is True:
+            if detected is True:            
+                    if self.auv.getBearing():  #In case it is none type
+                        self.auv.bearing(self.auv.getBearing())   #Stop oscillating if it is
                     self.detected.set()
 
                     info('Cam follow: River edge detected')
@@ -171,15 +173,15 @@ class script(aiScript):
             else:
                 self.auv.stop()        #Stop immediatly if the River edge is lost for too long
                 self.detected.clear()
-                #time.sleep(2)
-                info('Cam follow: The edge of River Cam is lost, trying to find it by rotating.')            
-                self.auv.bearing(self.auv.getBearing()+90) #Perform 1 revolution of self rotation until the AUV is aligned again
-                self.detected.wait()
-		self.auv.bearing(self.auv.getBearing()-180)
-		self.detected.wait()
-                self.auv.bearing(self.auv.getBearing())   #Stop spinning if the AUV is aligned
-
-
+                info('Cam follow: The edge of River Cam is lost, trying to find it again.') 
+                if self.auv.getBearing():  #In case it is none type     
+                    current_bearing = self.auv.getBearing()   
+                    for angle in range(5,50, 5):
+                        if self.detected.is_set() is False:
+                            info('oscillating by %i degrees' %angle)
+                            self.auv.bearingAndWait((current_bearing+angle)%360) #Perform 1 revolution of self rotation until the AUV is aligned again
+                            self.auv.bearingAndWait((current_bearing-angle*2)%360)
+                            self.auv.bearingAndWait((current_bearing+angle)%360)
 
             
     def stop(self):
@@ -187,7 +189,7 @@ class script(aiScript):
         self.drop_pl(follow_cam_file)
         self.log('Cam follow: Stopping follwoing River Cam.')
         info('Cam follow: Stopping River Cam following')
-        self.notify_exit('SUCCESS')
+        #self.notify_exit('SUCCESS')
 
 
 if __name__=="__main__":

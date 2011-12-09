@@ -51,3 +51,4 @@ target_link_libraries ( guicpp-core
         model
         ${QT_LIBRARIES}
     )
+depends_on_messages(guicpp-core)

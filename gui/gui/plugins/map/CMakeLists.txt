@@ -36,7 +36,8 @@ add_library( mapplugin MODULE
     ${MAP_PLUGIN_UIS_H}
     ${MAP_PLUGIN_MOC_H}
 )
-cauv_install_plugin( mapplugin )
+cauv_install_plugin(mapplugin)
+depends_on_messages(mapplugin)
 
 target_link_libraries( mapplugin
     guicpp-core

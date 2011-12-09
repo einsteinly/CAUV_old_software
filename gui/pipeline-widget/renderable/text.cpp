@@ -12,11 +12,11 @@
 #include <debug/cauv_debug.h>
 
 const static unsigned char Mono_Font_Data[] = {
-#include "../LiberationMono-Regular.h"
+#include <LiberationMono-Regular.h>
 };
 
 const static unsigned char Sans_Font_Data[] = {
-#include "../LiberationSans-Regular.h"
+#include <LiberationSans-Regular.h>
 };
 
 using namespace cauv::pw;

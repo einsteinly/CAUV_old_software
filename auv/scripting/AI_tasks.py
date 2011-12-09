@@ -1,17 +1,20 @@
 from AI_conditions import conditions as c
 from AI_classes import subclassDict
 
+from cauv.debug import debug, warning, error, info
+
 class taskOptions(object):
     script_name = None
     _script_options = {}
     priority = 1
-    running_priority = None
     detectors_enabled_while_running = False
     crash_count = 0
     crash_limit = 5
     frequency_limit = 30# once every x seconds
     last_called = 0
     def __init__(self, options={}):
+        if not hasattr(self.__class__, 'running_priority'):
+            self.running_priority = self.priority
         if self.script_name:
             #we want to load script options
             script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
@@ -63,6 +66,7 @@ class aiTask(object):
             error('Task not setup, so can not be deregistered')
             return
         for condition in self.conditions.itervalues():
+            debug('removing task %d from condition %d' %(self.id, condition.id), 5)
             condition.task_ids.pop(self.id)
         self.registered = False
     def set_options(self, options):
@@ -148,6 +152,7 @@ class follow_cam(aiTask):
     class options(taskOptions):
         script_name = 'follow_cam'
         priority = 1
+        frequency_limit = 10
     conditions = [
         (c.stateCondition, {'state': True}),
         ]

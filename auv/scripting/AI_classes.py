@@ -184,13 +184,12 @@ class fakeAUV(messaging.MessageObserver):
         self.longitude = None
         self.altitude = None
         self.speed = None
-        self.bearingCV = threading.Condition()
-        self.depthCV = threading.Condition()
-        self.pitchCV = threading.Condition()
+        self.bearingCV = interruptibleCondition()
+        self.depthCV = interruptibleCondition()
+        self.pitchCV = interruptibleCondition()
         
     def onTelemetryMessage(self, m):
         #self.bearing = m.orientation.yaw
-        #print "message"
         self.current_bearing = m.orientation.yaw
         self.current_depth = m.depth
         self.current_pitch = m.orientation.pitch
@@ -213,7 +212,7 @@ class fakeAUV(messaging.MessageObserver):
     def getBearing(self):
         return self.current_bearing
     
-    def bearingAndWait(self, bearing, epsilon = 5, timeout = 30):
+    def bearingAndWait(self, bearing, epsilon = 5, timeout = 20):
         if bearing == None:
             self.bearing(None)
             return True
@@ -229,7 +228,7 @@ class fakeAUV(messaging.MessageObserver):
                 return True
         return False
         
-    def depthAndWait(self, depth, epsilon = 5, timeout = 30):
+    def depthAndWait(self, depth, epsilon = 5, timeout = 20):
         if depth == None:
             self.depth(None)
             return True
@@ -244,7 +243,7 @@ class fakeAUV(messaging.MessageObserver):
                 return True
         return False
 
-    def pitchAndWait(self, pitch, epsilon = 5, timeout = 30):
+    def pitchAndWait(self, pitch, epsilon = 5, timeout = 20):
         if pitch == None:
             self.pitch(None)
             return True
@@ -280,7 +279,8 @@ class aiScriptOptionsBase(type):
                     attrs2[key] = value
                 else:
                     attrs2['_not_transmittable_'+key] = value
-                    warning('Option %s will not appear as is not a valid type' %key)
+                    if not callable(value):
+                        warning('Option %s will not appear as is not a valid type' %key)
             else:
                 attrs2[key] = value
         new_cls = super(aiScriptOptionsBase, cls).__new__(cls, name, bases, attrs2)
@@ -341,13 +341,12 @@ class aiScript(aiProcess):
     @external_function
     def end_override_pause(self):
         pass
-    def notify_exit(self, exit_status):
+    def _notify_exit(self, exit_status):
         #make sure to drop pipelines
         self.drop_all_pl()
-        for x in range(5):
-            self.ai.task_manager.on_script_exit(self.task_name, exit_status)
-            if self.exit_confirmed.wait(1.0):
-                return
+        self.ai.task_manager.on_script_exit(self.task_name, exit_status)
+        if self.exit_confirmed.wait(5.0):
+            return
         error("Task manager failed to acknowledge script "+self.task_name+" exit")
         return
     @external_function
@@ -357,7 +356,7 @@ class aiScript(aiProcess):
         self.ai.auv_control.stop()
         self.ai.auv_control.lights_off()
         aiProcess.die(self)
-
+        
 #------AI DETECTORS STUFF------
 class aiDetectorOptionsBase(type):
     def __new__(cls, name, bases, attrs):
@@ -368,7 +367,8 @@ class aiDetectorOptionsBase(type):
                     attrs2[key] = value
                 else:
                     attrs2['_not_transmittable_'+key] = value
-                    warning('Option %s will not appear as is not a valid type' %key)
+                    if not callable(value):
+                        warning('Option %s will not appear as is not a valid type' %key)
             else:
                 attrs2[key] = value
         new_cls = super(aiDetectorOptionsBase, cls).__new__(cls, name, bases, attrs2)
@@ -445,7 +445,6 @@ class subclassDict(object):
             for sub in cur.__subclasses__():
                 if not sub in checked:
                     to_check.add(sub)
-        print "available classes", self.classes
     def __getitem__(self, attr):
         return self.classes[attr]
     def __getattr__(self, attr):
@@ -465,3 +464,15 @@ class RepeatTimer(threading.Thread):
             self.func(*self.args, **self.kwargs)
             if self.die:
                 break
+
+def interruptibleCondition(*args, **kwargs):
+    cond = threading.Condition(*args, **kwargs)
+    def wait(timeout=None):
+        while timeout >= 1 or timeout == None:
+            if cond.__class__.wait(cond, timeout=1):
+                return True
+            if timeout:
+                timeout -= 1
+        return cond.__class__.wait(cond, timeout=timeout)
+    cond.wait = wait
+    return cond

@@ -11,6 +11,7 @@ target_link_libraries (
     model
     common
 )
+depends_on_messages(model)
 
 add_executable (
     model_test EXCLUDE_FROM_ALL
@@ -22,3 +23,4 @@ target_link_libraries (
     common
     model
 )
+depends_on_messages(model_test)
