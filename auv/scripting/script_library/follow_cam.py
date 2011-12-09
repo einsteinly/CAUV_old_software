@@ -187,7 +187,7 @@ class script(aiScript):
         self.drop_pl(follow_cam_file)
         self.log('Cam follow: Stopping follwoing River Cam.')
         info('Cam follow: Stopping River Cam following')
-        self.notify_exit('SUCCESS')
+        #self.notify_exit('SUCCESS')
 
 
 if __name__=="__main__":

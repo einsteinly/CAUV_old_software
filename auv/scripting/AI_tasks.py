@@ -152,6 +152,7 @@ class follow_cam(aiTask):
     class options(taskOptions):
         script_name = 'follow_cam'
         priority = 1
+        frequency_limit = 10
     conditions = [
         (c.stateCondition, {'state': True}),
         ]
