@@ -128,6 +128,7 @@ class avoid_collision(aiTask):
     class options(taskOptions):
         script_name = 'avoid_collision'
         priority = 10
+        frequency_limit = 0
     conditions = [
         (c.sonar_collision_detectorCondition, {}),
         ]

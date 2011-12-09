@@ -14,8 +14,7 @@ class scriptOptions(aiScriptOptions):
 class script(aiScript):
     def run(self):
         if self.options.already_run:
-            self.notify_exit('SUCCESS')
-            return
+            return 'SUCCESS'
         self.ai.task_manager.modify_task_options(self.task_name, {'already_run':True})
         self.log('Diving to %d to start mission' %(self.options.depth))
         self.auv.depthAndWait(self.options.depth)
@@ -23,4 +22,4 @@ class script(aiScript):
         self.auv.prop(self.options.forward_speed)
         time.sleep(self.options.forward_time)
         self.auv.prop(0)
-        self.notify_exit('SUCCESS')
+        return 'SUCCESS'

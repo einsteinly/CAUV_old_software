@@ -105,4 +105,4 @@ class script(aiScript):
             info('Stopping')
         info('Complete!')
         # tell the AI framwork that everything went ok (or didn't)
-        self.notify_exit(exit_status)
+        return exit_status
