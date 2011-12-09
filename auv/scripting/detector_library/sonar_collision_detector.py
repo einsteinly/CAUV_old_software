@@ -172,8 +172,10 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             time.sleep(0.1)
             if self.time_detected is not None and\
                self.relativeTime() - self.time_detected < self.options.Run_Away_Time:
+                info('running away!')
                 self.auv.prop(-127)
             else:
+                self.auv.prop(0)
                 self.clearDetected()
 
 if __name__ == '__main__':
