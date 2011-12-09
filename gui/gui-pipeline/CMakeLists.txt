@@ -36,6 +36,7 @@ target_link_libraries (
     pipeline-widget
     ${QT_LIBRARIES}
 )
+depends_on_messages(standalone)
 #cauv_install ( standalone )
 
 

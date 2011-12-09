@@ -52,10 +52,12 @@ add_library (
     pipeline-widget SHARED
     ${pipeline-widget_srcs}
     ${pipeline-widget_MOC_SRCS}
-    ${SRCD}/LiberationSans-Regular.h
-    ${SRCD}/LiberationMono-Regular.h
+    ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular.h
+    ${CMAKE_CURRENT_BINARY_DIR}/LiberationMono-Regular.h
 )
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 cauv_install(pipeline-widget)
+depends_on_messages(pipeline-widget)
 
 target_link_libraries (
     pipeline-widget
@@ -66,14 +68,14 @@ target_link_libraries (
     ${graphviz_LIBRARIES}
 )
 add_custom_command (
-    OUTPUT ${SRCD}/LiberationSans-Regular.h
-    COMMAND xxd -i - ${SRCD}/LiberationSans-Regular.h < ${SRCD}/LiberationSans-Regular.ttf 
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular.h
+    COMMAND xxd -i - ${CMAKE_CURRENT_BINARY_DIR}/LiberationSans-Regular.h < ${SRCD}/LiberationSans-Regular.ttf 
     DEPENDS ${SRCD}/LiberationSans-Regular.ttf
     COMMENT "Header-ising sans font for pipeline-widget"
 )
 add_custom_command (
-    OUTPUT ${SRCD}/LiberationMono-Regular.h
-    COMMAND xxd -i - ${SRCD}/LiberationMono-Regular.h < ${SRCD}/LiberationMono-Regular.ttf
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LiberationMono-Regular.h
+    COMMAND xxd -i - ${CMAKE_CURRENT_BINARY_DIR}/LiberationMono-Regular.h < ${SRCD}/LiberationMono-Regular.ttf
     DEPENDS ${SRCD}/LiberationMono-Regular.ttf
     COMMENT "Header-ising mono font for pipeline-widget"
 )
