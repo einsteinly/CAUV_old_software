@@ -258,5 +258,5 @@ class script(aiScript):
             info('Stopping...')
             self.auv.stop()
         info('Complete!')
-        self.notify_exit(exit_status)
+        return exit_status
 
