@@ -72,7 +72,7 @@
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true"> QSpinBox {
+      <string notr="true"> /*QSpinBox {
      border-width: 1px;
      height: 30px;
      border: 1px solid #939393;
@@ -97,7 +97,7 @@ QSpinBox::up-button {
 
 QSpinBox::down-button {
      subcontrol-position: center left; 
-}</string>
+}*/</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

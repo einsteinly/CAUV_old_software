@@ -33,11 +33,15 @@
 using namespace std;
 using namespace cauv;
 
+
+
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
     Q_INIT_RESOURCE(resources);
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+
+    QApplication::setStyle(new cauv::gui::CauvStyle());
 
     QFile qss(":/resources/stylesheet.qss");
     qss.open(QFile::ReadOnly);

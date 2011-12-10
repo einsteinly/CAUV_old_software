@@ -43,6 +43,8 @@
 #include <debug/cauv_debug.h>
 
 
+#include <gui/core/model/nodes/numericnode.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -188,6 +190,10 @@ void CauvMainWindow::onRun()
     QSettings settings("CAUV", "Cambridge AUV");
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
+
+
+    m_actions->auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode<int> >(MotorID::Prop);
+
 
     show();
     m_application->exec();
