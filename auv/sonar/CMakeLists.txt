@@ -1,29 +1,16 @@
 
-# this rule is duplicated from ../common because cmake can't track dependencies
-# on generated files in other directories...
-set (MSGSRCD ${AUV_SOURCE_DIR}/common)
-add_custom_command (
-   OUTPUT ${MSGSRCD}/messages.cpp
-          ${MSGSRCD}/messages.h
-          ${MSGSRCD}/messages_fwd.h
-          ${MSGSRCD}/messages_messages.h
-   WORKING_DIRECTORY ${PYMSGD}
-   COMMAND ./msggen.py -l "c++" -o ${MSGSRCD}/messages ${MSGSRCD}/messages.msg 
-   DEPENDS ${PYMSGD}/msggen.py
-           ${PYMSGD}/message.template.cpp
-           ${PYMSGD}/message.template.h
-           ${PYMSGD}/message_fwd.template.h
-           ${PYMSGD}/message_messages.template.h
-           ${PYMSGD}/msggenyacc.py
-           ${PYMSGD}/msggenlex.py
-           ${MSGSRCD}/messages.msg
-   COMMENT "Generating messages.cpp and mesages*.h with messages-python (for debug)"
-)
-
 # lib for img-pipeline
 add_library (
     sonar_accumulator
     sonar_accumulator.cpp
+    ${GEND}/types/SonarDataLine.h
+    ${GEND}/types/PolarImage.h
+)
+depends_on_messages (sonar_accumulator)
+
+target_link_libraries (
+    sonar_accumulator
+    messages
 )
 
 # sources
@@ -35,8 +22,16 @@ add_executable (
     seanet_sonar.cpp
     seanet_serial_port.cpp
     seanet_packet.cpp
+    ${GEND}/types/SonarDataLine.h
+    ${GEND}/types/PolarImage.h
+    ${GEND}/types/SonaroutGroup.h
+    ${GEND}/types/SonarctlGroup.h
+    ${GEND}/types/TelemetryMessage.h
+    ${GEND}/types/SpeedOfSoundMessage.h
+    ${GEND}/types/GeminiControlMessage.h
 )
 cauv_install ( sonar )
+depends_on_messages (sonar)
 
 # libs
 target_link_libraries (
@@ -44,6 +39,4 @@ target_link_libraries (
     sonar_accumulator
     common
 )
-
-add_dependencies (sonar messages-shared)
 

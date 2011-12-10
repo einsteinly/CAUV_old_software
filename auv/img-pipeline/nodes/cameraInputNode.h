@@ -39,7 +39,7 @@ class CameraInputNode: public AsynchronousNode{
     public:
         CameraInputNode(ConstructArgs const& args)
             : AsynchronousNode(args),
-              m_server_connection(boost::make_shared<CameraServerConnection>()){
+              m_server_connection(){
             setAllowQueue();
         }
 
@@ -82,6 +82,9 @@ class CameraInputNode: public AsynchronousNode{
 
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
+
+            if(!m_server_connection)
+                m_server_connection = boost::make_shared<CameraServerConnection>();
 
             int camera_id = param<int>("device id");
             int w = param<int>("width");

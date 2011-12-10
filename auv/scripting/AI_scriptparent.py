@@ -10,12 +10,12 @@ import cPickle
 import traceback
 from cauv.debug import error, info
 
-from AI_classes import aiScriptOptions, aiProcess
+from AI_classes import aiScriptOptions
 
 if __name__ == '__main__':
     try:
         try:
-            task_ref = sys.argv[1]
+            task_id = sys.argv[1]
             script_name = sys.argv[2]
         except IndexError as e:
             error('Tried to run script with wrong command parameters: '+str(sys.argv))
@@ -40,15 +40,12 @@ if __name__ == '__main__':
         except AttributeError:
             info('No default options found for script, assuming none')
             options_class = aiScriptOptions
-        script = script_class(task_ref, options_class(script_opts))
-        script.run()
+        script = script_class(task_id, options_class(script_opts))
+        result = script.run()
+        script._notify_exit(result)
     except Exception as e:
-        ainode = aiProcess('script_error_reporter')
-        ainode.ai.auv_control.stop()
-        ainode.ai.auv_control.lights_off()
-        ainode.ai.task_manager.on_script_exit(task_ref, 'ERROR')
         error(traceback.format_exc())
-        ainode.die()
+        script._notify_exit('ERROR')
         raise e
     finally:
         try:

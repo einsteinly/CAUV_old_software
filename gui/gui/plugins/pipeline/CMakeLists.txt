@@ -28,7 +28,8 @@ add_library( pipelineplugin MODULE
     ${PIPELINE_PLUGIN_UIS_H}
     ${PIPELINE_PLUGIN_MOC_H}
 )
-cauv_install_plugin( pipelineplugin )
+depends_on_messages(pipelineplugin)
+cauv_install_plugin(pipelineplugin)
                                       
 target_link_libraries( pipelineplugin
     gui-core

@@ -18,6 +18,7 @@ add_library (
     spread/spread_rc_mailbox.cpp
     spread/spread_messages.cpp
 )
+
 target_link_libraries (
     common
 
@@ -31,6 +32,7 @@ target_link_libraries (
     boost_signals
     boost_program_options
 )
+depends_on_messages(common)
 
 # dynamic lib:
 add_library (
@@ -59,7 +61,8 @@ target_link_libraries (
     boost_signals
     boost_program_options
 )
-cauv_install ( common-shared )
+depends_on_messages(common-shared)
+cauv_install(common-shared)
 
 add_dependencies(common logo-headers version-header)
 add_dependencies(common-shared logo-headers version-header)

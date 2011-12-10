@@ -20,7 +20,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include "../model/model.h"
+#include "model/model.h"
 
 
 #include <QPainter>

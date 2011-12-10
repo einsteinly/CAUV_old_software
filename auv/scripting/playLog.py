@@ -26,7 +26,7 @@ tzero = datetime.datetime.now()
 def relativeTime():
     return tdToFloatSeconds(datetime.datetime.now() - tzero)
 
-def play(fname, node, tstart, rt_rate, fixed_rate):
+def play(fname, node, tstart, rt_rate, fixed_rate, filter_names=()):
     p = CHIL.Player(fname)
     try:
         tstart_float = float(tstart)
@@ -47,6 +47,8 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
                 if isinstance(m, str):
                     warning(m)
                     m = None
+                if len(filter_names) and m.__class__.__name__ not in filter_names:
+                    continue
                 time_to_sleep_for = tdToFloatSeconds(td) - rt_rate * (relativeTime() - tstart_playback)
                 if time_to_sleep_for/rt_rate > 10:
                     warning('more than 10 seconds until next message will be sent (%gs)' %
@@ -72,6 +74,7 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
                                 msg.TimeStamp(int(unix_time), int(1e6*(unix_time-int(unix_time))))
                             )
                         )
+                    node.send(m)
         except Exception, e:
             error('error in playback: ' + str(e))
             raise
@@ -79,21 +82,23 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
     else:
         assert(fixed_rate is not None)
         try:
+            tlast = relativeTime()
             while True:
-                tlast = relativeTime() 
                 m, td = p.nextMessage()
                 if m is None:
                     break
                 if isinstance(m, str):
                     warning(m)
                     m = None
+                if len(filter_names) and m.__class__.__name__ not in filter_names:
+                    continue
                 time_to_sleep_for = max(0,(tlast+1.0/fixed_rate)-tlast)
                 time.sleep(time_to_sleep_for)
                 sys.stdout.write('.'); sys.stdout.flush()
                 if m is not None:
                     if Sonar_Timestamp_Munge and isinstance(m, msg.SonarImageMessage):
                         unix_time = time.mktime(p.cursor().timetuple()) + p.cursor().microsecond/1e6
-                        # for some reason the message seems to be immutable...
+                        # !!! TODO: for some reason the message seems to be immutable...
                         m = msg.SonarImageMessage(
                             m.source,
                             msg.PolarImage(
@@ -107,6 +112,7 @@ def play(fname, node, tstart, rt_rate, fixed_rate):
                             )
                         )
                     node.send(m)
+                tlast = relativeTime()
         except Exception, e:
             error('error in playback: ' + str(e))
             raise
@@ -117,9 +123,12 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description='play a CHIL log file')
     p.add_argument('file', metavar='FILE', type=str)
     p.add_argument('-s', '--start', dest='start_t', default="0",
-        help='start time: offset seconds or absolute %s' % Strptime_Fmt)
+        help='start time: offset seconds or absolute %s' % Strptime_Fmt.replace('%','%%'))
     p.add_argument('-r', '--rate', dest='rate', type=str, default='x1',
         help='messages per second (x1 for real-time, 2 for 2 messages per second)')
+    p.add_argument('-p', '--profile', dest='profile', default=False, action='store_true')
+    p.add_argument('-f', '--filter', dest='filter', default=[], action='append',
+        help='if set, only the message names specified will be played back')
     opts, unknown_args = p.parse_known_args()
     
     tstart = opts.start_t
@@ -132,6 +141,13 @@ if __name__ == '__main__':
     
     node = cauv.node.Node('py-play',unknown_args)
     try:
-        play(opts.file, node, tstart, rt_rate, fixed_rate)
+        def playBound():
+            play(opts.file, node, tstart, rt_rate, fixed_rate, opts.filter)
+        if opts.profile:
+            import profilehooks
+            f = opts.file.replace('/', '-').replace('.','')
+            profilehooks.profile(playBound,filename='playLog-%s.profile' % f,)()
+        else:
+            playBound()
     finally:
         node.stop()

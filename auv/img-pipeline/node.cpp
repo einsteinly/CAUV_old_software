@@ -226,7 +226,8 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     // 
     if(i->second->isParam() && !(
         n->parameters().count(LocalNodeInput(i_id, sub_type, May_Be_Old)) ||
-        n->parameters().count(LocalNodeInput(i_id, sub_type, Must_Be_New))
+        n->parameters().count(LocalNodeInput(i_id, sub_type, Must_Be_New)) ||
+        n->parameters().count(LocalNodeInput(i_id, sub_type, Optional)) // actually Optional only makes sense for image inputs...
     )){
         throw link_error(
             mkStr() << "setOutput: " << *this <<"::"<< o_id << " -> "
@@ -325,6 +326,14 @@ Node::msg_node_output_map_t Node::outputLinks() const{
     return r;
 }
 
+bool Node::hasChildOnOutput(output_id const& o) const{
+    lock_t l(m_outputs_lock);
+    private_out_map_t::const_iterator i = m_outputs.find(o);
+    if(i != m_outputs.end() && i->second->targets.size())
+        return true;
+    return false;
+}
+
 std::set<node_ptr_t> Node::children() const{
     lock_t l(m_outputs_lock);
     std::set<node_ptr_t> r;
@@ -371,15 +380,16 @@ void Node::exec(){
         foreach(private_in_map_t::value_type const& v, m_inputs){
             if(!v.second->isParam()){
                 const input_ptr ip = v.second;
-                if(!*ip){
+                if(!*ip && ip->sched_type != Optional){
                     warning() << "exec: no parent or valid input on: " << v.first;
                     clearValidInput(v.first);
                     throw bad_input_error(v.first);
-                }
-                inputs[v.first] = ip->getImage();
-                if(!inputs[v.first]){
-                    warning() << "exec: no output from: " << ip->target << "->" << v.first;
-                    throw bad_input_error(v.first);
+                }else if(*ip){
+                    inputs[v.first] = ip->getImage();
+                    if(!inputs[v.first] && ip->sched_type != Optional){
+                        warning() << "exec: no output from: " << ip->target << "->" << v.first;
+                        throw bad_input_error(v.first);
+                    }
                 }
             }
         }
@@ -719,7 +729,7 @@ bool Node::ensureValidInput(){
     bool invalid_input = false;
     parents.reserve(m_inputs.size()); 
     foreach(private_in_map_t::value_type& i, m_inputs)
-        if(!*i.second){
+        if(!*i.second && i.second->sched_type != Optional){
             invalid_input = true;
             if(i.second->target){
                 parents.push_back(i.second->target);

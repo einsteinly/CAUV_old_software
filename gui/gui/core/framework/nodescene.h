@@ -22,13 +22,13 @@
 #include <QGraphicsProxyWidget>
 #include <QGraphicsLineItem>
 
-#include "../nodedragging.h"
-#include "elements/aiNode.h"
+#include "nodedragging.h"
+#include "framework/elements/aiNode.h"
 
 #include <gui/core/model/node.h>
 #include <gui/core/model/nodes/numericnode.h>
 
-#include "../widgets/graph.h"
+#include "widgets/graph.h"
 
 namespace cauv {
     namespace gui {

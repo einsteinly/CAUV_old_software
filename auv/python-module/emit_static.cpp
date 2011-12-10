@@ -230,10 +230,27 @@ class SpreadMessageWrapper:
             l.release();
             error() << "1. Spread Messages should not be exposed to Python";
             error() << "2. You should DEFINITELY not be using them";
-            assert(0);
+            throw std::runtime_error("Spread Messages are not usable from Python");
         }
 };
 
+std::vector<uint8_t> mkByteVec(std::string const& b16encoded){
+    std::vector<uint8_t> r;
+    r.reserve(b16encoded.size()/2);
+    const static uint8_t nibble_lookup[256] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
+        0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+    for(uint32_t i = 0; i < b16encoded.size()-1; i+= 2)
+        r.push_back((nibble_lookup[int(b16encoded[i])] << 4) | nibble_lookup[int(b16encoded[i+1])]);
+    return r;
+}
 
 #if EMIT_SILLY_BOOSTPYTHON_TEST_STRUCTURES
 /*** Actual Functions to Generate the Interface: ***/
@@ -360,3 +377,6 @@ void emitAIMessageObserver(){
    ;*/
 }
 
+void emitPostGenerated(){
+    bp::def("mkByteVec", mkByteVec);
+}

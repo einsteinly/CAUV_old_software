@@ -8,7 +8,6 @@ import cauv.pipeline as pipeline
 from cauv.debug import debug, warning, error, info
 
 import time
-import pickle
 import argparse
 
 def savepl(node, fname, timeout=3.0, name='default'):
@@ -20,7 +19,7 @@ def savepl(node, fname, timeout=3.0, name='default'):
         saved = model.get(timeout)
         
         info('Pickling...')
-        pickle.dump(saved, outf)
+        model.dumpFile(saved, outf)
 
 
 def loadpl(node, fname, timeout=3.0, name='default'):
@@ -29,7 +28,7 @@ def loadpl(node, fname, timeout=3.0, name='default'):
         model = pipeline.Model(node, name)
 
         info('UnPickling...')
-        saved = pickle.load(inf)
+        saved = model.loadFile(inf)
         
         info('Setting pipeline state...')
         model.set(saved, timeout)

@@ -41,5 +41,8 @@ BOOST_PYTHON_MODULE(cauvinterface)
     emitObservers();
     emitContainers();
     emitVariants();
+
+    // post-generated static stuff:
+    emitPostGenerated();
 }
 

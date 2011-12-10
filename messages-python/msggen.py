@@ -424,12 +424,7 @@ def main():
 
     if options.nowrite:
         print ";".join(map(lambda f: os.path.abspath(f), filesWritten))
-        return 0
-    else:
-        if len(filesWritten) == 0:
-            return 1
-        else:
-            return 0
+    return 0
 
 if __name__ == '__main__':
     ret = main()

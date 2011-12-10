@@ -16,7 +16,7 @@
 
 #include <debug/cauv_debug.h>
 
-#include "elements/style.h"
+#include "framework/elements/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;

@@ -58,5 +58,6 @@ else()
         liquid
         ${QT_LIBRARIES}
     )
+    depends_on_messages(gui)
 
 endif()

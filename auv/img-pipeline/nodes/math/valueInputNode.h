@@ -15,9 +15,7 @@
 #ifndef __VALUE_INPUT_NODE_H__
 #define __VALUE_INPUT_NODE_H__
 
-#include "../node.h"
-
-#include <algorithm>
+#include "../../node.h"
 
 namespace cauv{
 namespace imgproc{

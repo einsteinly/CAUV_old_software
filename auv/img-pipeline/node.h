@@ -60,6 +60,7 @@ inline NodeParamValue getValue<NodeParamValue>(const NodeParamValue& v) {
 // !!! TODO: remove these and scope as appropriate
 using InputSchedType::Must_Be_New;
 using InputSchedType::May_Be_Old;
+using InputSchedType::Optional;
 
 class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
     public:
@@ -292,6 +293,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         // TODO NPA: include param children
         /* parameters DO count, return everything not just connected things */
         msg_node_output_map_t outputLinks() const;
+        bool hasChildOnOutput(output_id const&) const;
 
         // TODO NPA: include param children
         std::set<node_ptr_t> children() const;

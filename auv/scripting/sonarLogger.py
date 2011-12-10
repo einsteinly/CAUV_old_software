@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+#pylint: disable=E1101
 
 # Standard Library
 import traceback
@@ -19,6 +20,7 @@ class SonarLogger(object):
         super(self.__class__, self).__init__(cauv_node, fname, do_record)
         self.node.join('sonarctl')
         self.node.join('sonarout')
+        self.node.join('telemetry')
 
         # set up messages to log:
         # methods defined like this to short-circuit one function call...
@@ -27,7 +29,7 @@ class SonarLogger(object):
         self.onSonarDataMessage = self.logMessage
         self.onSonarImageMessage = self.logMessage
         self.onSpeedOfSoundMessage = self.logMessage
-        #self.onTelemetryMessage = self.logMessage # Log telemetry so that we have orientation data to match the sonar images
+        self.onTelemetryMessage = self.logMessage # Log telemetry so that we have orientation data to match the sonar images
         self.onGeminiStatusMessage = self.logMessage
         self.onSonarControlMessage = self.logMessage
         # These are defined normally because they sometimes print information

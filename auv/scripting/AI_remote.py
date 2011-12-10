@@ -16,52 +16,74 @@ class aiMessageListener(messaging.MessageObserver):
         debug('AI message: %s: %s.%s(%s, %s)' %(message[1],message[0],message[2],', '.join(map(str,message[3])),', '.join(['='.join(map(str, x)) for x in message[4].items()])))
     def die(self):
         self.node.removeObserver(self)
+
+class aiStateListener(messaging.MessageObserver):
+    def __init__(self, node):
+        messaging.MessageObserver.__init__(self)
+        self.node = node
+        self.node.addObserver(self)
+    def onTaskStateMessage(self, m):
+        print m
+    def onConditionStateMessage(self, m):
+        print m
+    def onTaskRemovedMessage(self, m):
+        print m
+    def onConditionRemovedMessage(self, m):
+        print m
+    def die(self):
+        self.node.removeObserver(self)
         
 def listen(ainode):
     aml = aiMessageListener(ainode.node)
     raw_input('Hit enter to stop listening.')
     aml.die()
     
-def add_task(ainode, task_ref):
-    ainode.ai.task_manager.add_task(task_ref)
+def listen_state(ainode):
+    if not hasattr(ainode, 'asl') or not ainode.asl:
+        ainode.asl = aiStateListener(ainode.node)
+
+def stop_listen_state(ainode):
+    ainode.asl.die()
+    ainode.asl = None
     
-def remove_task(ainode, task_ref):
-    ainode.ai.task_manager.remove_task(task_ref)
+def add_task(ainode):
+    task_type = raw_input('Enter task type: ')
+    ainode.node.send(messaging.AddTaskMessage(task_type))
     
-def modify_task_options(ainode, task_ref):
-    print 'Please be careful, this field executes python you write in it'
-    opt_dict = input('Please enter a dictionary of option_name: value pairs: ')
-    ainode.ai.task_manager.modify_task_options(task_ref, opt_dict)
+def remove_task(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    ainode.node.send(messaging.RemoveTaskMessage(task_id))
     
-def export_task_data(ainode, file_name):
-    ainode.ai.task_manager.export_task_data(file_name)
+def set_task_options(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    task_options = input('Enter task options (as dict): ')
+    ainode.node.send(messaging.SetTaskStateMessage(task_id, [], task_options, {}))
     
-def force_start(ainode, task_ref):
-    ainode.ai.task_manager.request_start_task(task_ref)
+def set_script_options(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    script_options = input('Enter script options (as dict): ')
+    ainode.node.send(messaging.SetTaskStateMessage(task_id, [], {}, script_options))
     
-def force_save(ainode):
-    ainode.ai.task_manager.save_state()
+def set_task_conditions(ainode):
+    task_id = int(raw_input('Enter task id: '))
+    conditions = input('Enter script options (as list): ')
+    ainode.node.send(messaging.SetTaskStateMessage(task_id, conditions, {}, {}))
+    
+def add_condition(ainode):
+    condition_type = raw_input('Enter condition type: ')
+    ainode.node.send(messaging.AddConditionMessage(condition_type))
+    
+def remove_condition(ainode):
+    condition_id = int(raw_input('Enter condition id: '))
+    ainode.node.send(messaging.RemoveConditionMessage(condition_id))
+    
+def set_condition_options(ainode):
+    condition_id = int(raw_input('Enter condition id: '))
+    condition_options = input('Enter condition options (as dict): ')
+    ainode.node.send(messaging.SetConditionStateMessage(condition_id, condition_options))
     
 def stop_script(ainode):
-    ainode.ai.task_manager.request_stop_script()
-    
-def enable_control(ainode):
-    ainode.ai.auv_control.enable()
-    
-def disable_control(ainode):
-    ainode.ai.auv_control.disable()
-    
-def add_request(ainode, pipeline_name):
-    ainode.ai.pipeline_manager.request_pl('other', 'airemote', pipeline_name)
-    
-def drop_request(ainode, pipeline_name):
-    ainode.ai.pipeline_manager.drop_pl('other', 'airemote', pipeline_name)
-    
-def export_pls(ainode):
-    ainode.ai.pipeline_manager.export_pipelines()
-    
-def list_pls(ainode):
-    ainode.ai.pipeline_manager.list_pls()
+    ainode.node.send(messaging.ScriptControlMessage(messaging.ScriptCommand.Stop))
     
 def shell(ainode):
     print """
@@ -113,31 +135,30 @@ if __name__=='__main__':
     ainode = aiProcess('remote')
     ainode._register()
     
-    taskm = menu('Tasks', '')
-    taskm.addFunction('Add task', add_task, 'Setup an (already existing) task', {'task_ref': str})
-    taskm.addFunction('Remove task', remove_task, 'Unsetup an (already existing) task', {'task_ref': str})
-    taskm.addFunction('Modify task options', modify_task_options, 'Change an options on an (already existing) task', {'task_ref': str})
-    taskm.addFunction('Export task data', export_task_data, 'Save options etc to file.', {'file_name': str})
-    taskm.addFunction('Force task start', force_start, 'Force an active task to start its script (may not be entirely thread safe)', {'task_ref': str})
-    
-    scriptm = menu('Script', '')
-    scriptm.addFunction('Stop script', stop_script, 'Stop the current script (if conditions true may immediately restart)', {})
-    scriptm.addFunction('Enable script control', enable_control, 'Allow scripts to move the AUV', {})
-    scriptm.addFunction('Disable script control', disable_control, 'Stop scripts from moving the AUV', {})
-    
-    imgm = menu('Image Pipeline', '')
-    imgm.addFunction('Add request', add_request, '', {'pipeline_name': str})
-    imgm.addFunction('Drop request', drop_request, '', {'pipeline_name': str})
-    imgm.addFunction('Show Running Pipelines', list_pls, '', {})
-    imgm.addFunction('Export Pipelines', export_pls, '', {})
-    
     m = menu('Main menu', '')
     m.addFunction('Listen', listen, 'Listen to ai messages', {})
-    m.addFunction('Force Save', force_save, 'Force the task manager to save the current state', {})
-    m.addMenu(taskm)
-    m.addMenu(scriptm)
-    m.addMenu(imgm)
+    m.addFunction('Listen to state', listen_state, 'Listen to ai state messages', {})
+    m.addFunction('Stop listening to state', stop_listen_state, 'Stop listening to ai state messages', {})
     m.addFunction('Shell', shell, '', {})
+    
+    t = menu('Task menu', '')
+    t.addFunction('Add Task', add_task, '', {})
+    t.addFunction('Remove Task', remove_task, '', {})
+    t.addFunction('Set Task Options', set_task_options, '', {})
+    t.addFunction('Set Script Options', set_script_options, '', {})
+    t.addFunction('Set Task Conditions', set_task_conditions, '', {})
+    
+    c = menu('Condition menu', '')
+    c.addFunction('Add Condition', add_condition, '', {})
+    c.addFunction('Remove Condition', remove_condition, '', {})
+    c.addFunction('Set Condition Options', set_condition_options, '', {})
+    
+    s = menu('Script menu', '')
+    s.addFunction('Stop Script', stop_script, '', {})
+    
+    m.addMenu(t)
+    m.addMenu(c)
+    m.addMenu(s)
     
     try:
         m(ainode)

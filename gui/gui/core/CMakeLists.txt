@@ -17,11 +17,7 @@ set ( GUI_CORE_AUX_DIRS
 
 # include files
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/controller)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/framework)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/model)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/widgets)
 
 # generated files includes
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -115,3 +111,4 @@ target_link_libraries ( gui-core
         ${OpenCV_LIBS}
         ${QT_LIBRARIES}
     )
+depends_on_messages(gui-core)

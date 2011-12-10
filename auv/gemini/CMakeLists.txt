@@ -15,5 +15,4 @@ target_link_libraries (
     GeminiSDK
     ${OpenCV_LIBS}
 )
-
-
+depends_on_messages(gemini_node)

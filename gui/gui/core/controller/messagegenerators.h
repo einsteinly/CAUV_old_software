@@ -23,7 +23,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "../model/node.h"
+#include <gui/core/model/node.h>
 
 namespace cauv {
     namespace gui {

@@ -159,8 +159,6 @@ void CameraManager::getImage(InfoResponse& resp,
         uint32_t alloc_size = offsetof(SharedImage, bytes) + (req.w+4)*req.h*3; 
         try{
             SharedImage *r = (SharedImage*) m_segment.allocate(alloc_size);
-            // !!! temp debug:
-            //memset((uint8_t*)r, 0xff, alloc_size);
             std::cout << BashColour::Green << "+" << BashColour::None << std::flush;
             r->width = req.w;
             r->height = req.h;
@@ -205,8 +203,6 @@ void CameraManager::release(std::list<uint64_t> const& images){
 // CameraManager::Capture
 CameraManager::Capture::Capture(uint32_t cam_id)
     : cv::VideoCapture(cam_id){
-    //cv::namedWindow("shared mat", CV_WINDOW_KEEPRATIO);
-    //cv::namedWindow("internal mat", CV_WINDOW_KEEPRATIO);
 }
 
 void CameraManager::Capture::captureToMem(
@@ -221,14 +217,16 @@ void CameraManager::Capture::captureToMem(
 
     // There is no way to avoid this copy (without re-writing V4L), so we can
     // at least do something useful at the same time as copying:
-    if(type != internal_mat.type())
-        error() << "converting type isn't supported yet";
-    else
-        cv::resize(internal_mat, shared_mat, cv::Size(w, h));
+    if(type != internal_mat.type()){
+        // TODO: support Bayer conversion (somehow recognise bayer cameras??)
+        cv::Mat tmp;
+        cv::resize(internal_mat, tmp, cv::Size(w, h));
+        internal_mat.convertTo(shared_mat, type);
+    }else{
+        cv::resize(internal_mat, shared_mat, cv::Size(w, h));    
+    }
     pitch = shared_mat.step;
 
-    //cv::imshow("shared mat", shared_mat);
-    //cv::imshow("internal mat", internal_mat);
     debug(8) << "w" << w << "h" << h << "type" << type << "pitch" << pitch << "bytes" << (void*)p;
 }
 

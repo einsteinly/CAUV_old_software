@@ -26,12 +26,12 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
-#include "../model/model.h"
-#include "../model/registry.h"
-#include "../cauvplugins.h"
-#include "../controller/messageobserver.h"
-#include "../framework/nodescene.h"
-#include "../framework/nodepicker.h"
+#include "model/model.h"
+#include "model/registry.h"
+#include "cauvplugins.h"
+#include "controller/messageobserver.h"
+#include "framework/nodescene.h"
+#include "framework/nodepicker.h"
 
 #include "fluidity/view.h"
 

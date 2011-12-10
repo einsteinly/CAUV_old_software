@@ -87,6 +87,11 @@ enum NodeType : int8 {
     Correlation1D,
     Rotate,
     RenderString,
+    MathDivideInt,
+    MathDivideFloat,
+    GlobalMaximum,
+    LocalMaxima,
+    SonarShadowFilter,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -115,7 +120,13 @@ enum Controller : int8 {
 }
 enum InputSchedType : int8 {
     Must_Be_New = 0,
-    May_Be_Old = 1
+    May_Be_Old = 1,
+    Optional = 2
+}
+enum ScriptCommand : int8 {
+    Start,
+    Stop,
+    Restart,
 }
 
 struct floatYPR
@@ -265,6 +276,10 @@ variant NodeParamValue
     list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>
 }
+variant AiParamValue
+{
+    int32, float, string, bool
+}
 struct ScriptResponse
 {
     response : string;
@@ -380,6 +395,7 @@ group control
     {
         request : ScriptExecRequest;
     }
+
 
     message MotorRampRate : 83
     {
@@ -637,15 +653,16 @@ group gui
         demand : MotorDemand;
     }
 
+    message ScriptResponse : 103
+    {
+        response : ScriptResponse;
+    }
+
+
     message MotorState : 101
     {
         motorId : MotorID;
         speed : int8;
-    }
-
-    message ScriptResponse : 103
-    {
-        response : ScriptResponse;
     }
 
     message Graphable : 104
@@ -760,6 +777,81 @@ group ai
     message AIlog : 201
     {
         msg : string;
+    }
+}
+group guiai
+{
+    message AddTask : 202
+    {
+        taskType : string;
+    }
+    message RemoveTask : 203
+    {
+        taskId : int32;
+    }
+    message SetTaskState : 204
+    {
+        taskId : int32;
+        conditionIds : list<int32>;
+        taskOptions : map<string, AiParamValue>;
+        scriptOptions : map<string, AiParamValue>;
+    }
+    message TaskRemoved : 205
+    {
+        taskId : int32;
+    }
+    message TaskState : 206
+    {
+        taskId : int32;
+        conditionIds : list<int32>;
+        taskOptions : map<string, AiParamValue>;
+        dynamicScriptOptions : map<string, AiParamValue>;
+        staticScriptOptions : map<string, AiParamValue>;
+        isCurrentlyRunning : bool;
+    }
+    message ScriptState : 207
+    {
+        taskId : int32;
+        debugValues : map<string, AiParamValue>;
+        pipelineIds : list<string>;
+    }
+    message AddCondition : 208
+    {
+        conditionType : string;
+    }
+    message RemoveCondition : 209
+    {
+        conditionId : int32;
+    }
+    message SetConditionState : 210
+    {
+        conditionId : int32;
+        conditionOptions : map<string, AiParamValue>;
+    }
+    message ConditionRemoved : 211
+    {
+        conditionId : int32;
+    }
+    message ConditionState : 212
+    {
+        conditionId : int32;
+        conditionOptions : map<string, AiParamValue>;
+        debugValues : map<string, AiParamValue>;
+    }
+    message TaskTypes : 213
+    {
+        typeNames : list<string>;
+    }
+    message ConditionTypes : 214
+    {
+        conditionTypes : map<string, list<string>>;
+    }
+    message RequestStateMessage : 215
+    {
+    }
+    message ScriptControl : 216
+    {
+        command : ScriptCommand;
     }
 }
 

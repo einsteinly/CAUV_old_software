@@ -77,7 +77,7 @@ class script(aiScript):
             
             # calculate the bearing of the pipe (relative to the sub),
             # mod 180 as we dont want to accidentally turn the sub around
-            corrected_angle=90-degrees(angle)%180
+            corrected_angle=90-degrees(angle)%180 #TODO this mod 180 probably is not needed from observation of cam following
             debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
             
             # work out the actual bearing of the pipe using the current bearing of the AUV
@@ -199,8 +199,7 @@ class script(aiScript):
             self.log('Pipeline follower could not position itself over the pipe (timed out).')
             error("Took too long to become ready, aborting")
             self.drop_pl(follow_pipe_file)
-            self.notify_exit('ABORT')            
-            return #timeout
+            return 'ABORT'
         
         for i in range(3):
             self.log('Attempting to follow pipe.')
@@ -210,8 +209,7 @@ class script(aiScript):
                 self.log('Lost the pipeline...')
                 error("Pipeline lost on pass %d" %(i,))
                 self.drop_pl(follow_pipe_file)
-                self.notify_exit('LOST')
-                return
+                return 'LOST'
             
             # turn 180
             self.log('Detected the end of the pipeline, turning and heading back.')
@@ -222,6 +220,6 @@ class script(aiScript):
         self.drop_pl(follow_pipe_file)
         self.log('Finished follwoing the pipe.')
         info('Finished pipe following')
-        self.notify_exit('SUCCESS')
+        return 'SUCCESS'
 
 

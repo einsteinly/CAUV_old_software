@@ -23,7 +23,7 @@
 
 #include <generated/types/message.h>
 
-#include "../model/nodes/vehiclenode.h"
+#include "nodes/vehiclenode.h"
 
 
 namespace cauv {

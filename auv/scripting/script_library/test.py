@@ -37,9 +37,9 @@ class script(aiScript):
         #self.drop_pl('circle_buoy.pipe')
         a = raw_input('Something was detected, has it been confirmed? y/n: ')
         if a == 'y':
-            self.notify_exit('SUCCESS')
+            return 'SUCCESS'
         elif a == 'n':
-            self.notify_exit('FAILURE')
+            return 'FAILURE'
         else:
             raise Exception
             

@@ -21,7 +21,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QDebug>
 
-#include "../model/node.h"
+#include "model/node.h"
 
 using namespace cauv;
 using namespace cauv::gui;

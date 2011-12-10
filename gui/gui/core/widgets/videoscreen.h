@@ -20,7 +20,7 @@
 
 #include <QWidget>
 
-#include "../model/nodes/imagenode.h"
+#include "model/nodes/imagenode.h"
 
 class QSize;
 class QImage;

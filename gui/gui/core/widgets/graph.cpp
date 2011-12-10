@@ -17,7 +17,7 @@
 
 #include <common/cauv_utils.h>
 
-#include "../model/nodes/numericnode.h"
+#include "model/nodes/numericnode.h"
 
 #include <QPen>
 #include <QRectF>

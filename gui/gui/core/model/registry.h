@@ -22,7 +22,7 @@
 
 #include "nodes/groupingnode.h"
 
-#include "../model/model.h"
+#include "model.h"
 
 
 namespace cauv {
