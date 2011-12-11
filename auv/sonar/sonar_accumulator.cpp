@@ -292,6 +292,8 @@ bool SonarAccumulator::setWholeImage(NonUniformPolarMat image){
     const int32_t radius = floor((min(m.rows, m.cols)-1)/2);
     const float cx = radius;
     const float cy = radius;
+    const float max_radius_m = image.ranges->back() + (image.ranges->back() - image.ranges->at(num_lines-2))/2;
+    const float rscale = radius / max_radius_m;
 
     // convert centre-of-bin values to edge-of-bin values, and set-up the
     // sin-cos cache: if this proves a bottleneck we should avoid calculating
@@ -316,15 +318,16 @@ bool SonarAccumulator::setWholeImage(NonUniformPolarMat image){
     float inner_radius;
     float outer_radius;
     for(uint32_t line = 0; line < num_lines; line++){
+        // !!! FIXME: ranges should be in image coordinates, not m
         if(line == 0){
-            inner_radius = ((*image.ranges)[line] - ((*image.ranges)[line+1]-(*image.ranges)[line])/2);
-            outer_radius = ((*image.ranges)[line] + (*image.ranges)[line+1])/2;
+            inner_radius = rscale * ((*image.ranges)[line] - ((*image.ranges)[line+1]-(*image.ranges)[line])/2);
+            outer_radius = rscale * ((*image.ranges)[line] + (*image.ranges)[line+1])/2;
         }else if(line == num_lines-1){
-            inner_radius = ((*image.ranges)[line] + (*image.ranges)[line-1])/2;
-            outer_radius = ((*image.ranges)[line] + ((*image.ranges)[line]-(*image.ranges)[line-1])/2);
+            inner_radius = rscale * ((*image.ranges)[line] + (*image.ranges)[line-1])/2;
+            outer_radius = radius;
         }else{
-            inner_radius = ((*image.ranges)[line] + (*image.ranges)[line-1])/2;
-            outer_radius = ((*image.ranges)[line] + (*image.ranges)[line+1])/2;
+            inner_radius = rscale * ((*image.ranges)[line] + (*image.ranges)[line-1])/2;
+            outer_radius = rscale * ((*image.ranges)[line] + (*image.ranges)[line+1])/2;
         }
 
         for(uint32_t i = 0; i < num_bearings; i++){
