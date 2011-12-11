@@ -107,101 +107,6 @@ SonarAccumulator::SonarAccumulator(uint32_t size)
     assert(m_img->mat().data);
 }
 
-
-std::vector<float> precalculate_sonar_sins()
-{
-    std::vector<float> ret;
-    ret.reserve(1600);
-    for (int b = 0; b < 1600; ++b)
-        ret.push_back(sin((M_PI / 3200) * b));
-    return ret;
-}
-static std::vector<float> sonar_sins = precalculate_sonar_sins();
-
-float sonar_sin(int bearing)
-{
-    bearing = bearing % 6400;
-    if (bearing < 0)
-        bearing += 6400;
-    
-    if (bearing < 1600)
-        return sonar_sins[bearing];
-    else if (bearing < 3200)
-        return sonar_sins[3200 - bearing];
-    else if (bearing < 4800)
-        return -sonar_sins[bearing - 3200];
-    else
-        return -sonar_sins[6400 - bearing];   
-}
-float sonar_cos(int bearing)
-{
-    return sonar_sin(bearing + 1600);
-}
-
-static std::vector<float> gem_sins;
-static std::vector<float> gem_coss;
-static int32_t gem_sins_start_from = 0;
-
-// -ve because we're converting from bearing to angles
-static float gem_sin_nocache(int32_t bearing){
-    return -std::sin(M_PI * bearing / (3200.0*0x10000));
-}
-
-// -ve because we're converting from bearing to angles
-static float gem_cos_nocache(int32_t bearing){
-    return -gem_sin_nocache(bearing + 1600*0x10000);
-}
-
-void ensureGemAngleTablesFor(std::vector<int32_t> bearings){
-    if(bearings[0] == gem_sins_start_from &&
-       bearings.size() == gem_sins.size()){
-        return;
-    }
-    gem_sins.clear();
-    gem_coss.clear();
-    gem_sins.reserve(bearings.size());
-    gem_coss.reserve(bearings.size());
-    for(uint32_t i = 0; i < bearings.size(); i++){
-        gem_sins[i] = gem_sin_nocache(bearings[i]);
-        gem_coss[i] = gem_cos_nocache(bearings[i]);
-    }
-}
-
-static float gem_sin_safe(int32_t bearing){
-    // !!! TODO: better caching scheme....
-    static std::map<int32_t, float> sin_cache;
-
-    std::map<int32_t, float>::const_iterator i = sin_cache.find(bearing);
-    if(i == sin_cache.end()){
-        const float r = gem_sin_nocache(bearing);
-        sin_cache[bearing] = r;
-        if(sin_cache.size() > 100000){
-            std::map<int32_t, float>::iterator to_remove = sin_cache.lower_bound(rand() % 6400*0x10000);
-            if(to_remove == sin_cache.end()){
-                // !!! really not good: values probably lie outside 0--6400*0x10000
-                sin_cache.erase(sin_cache.begin());
-            }else{
-                sin_cache.erase(to_remove);
-            }
-        }
-        return r;
-    }else{
-        return i->second;
-    }
-}
-
-static float gem_cos_safe(int32_t bearing){
-    return gem_sin_safe(bearing + 1600*0x10000);
-}
-
-static float gem_sin_idx(uint32_t bearing_idx){
-    return gem_sins[bearing_idx];
-}
-
-static float gem_cos_idx(uint32_t bearing_idx){
-    return gem_coss[bearing_idx];
-}
-
 void SonarAccumulator::reset() {
     m_last_line_bearing = 0;
     m_image_completed = 0;
@@ -255,10 +160,10 @@ bool SonarAccumulator::accumulateDataLine(const SonarDataLine& line)
         float inner_radius = b * bscale;
         float outer_radius = (b+1) * bscale;
 
-        cv::Point2f pt_inner_from(inner_radius*sonar_cos(from), inner_radius*sonar_sin(from));
-        cv::Point2f pt_inner_to(inner_radius*sonar_cos(to), inner_radius*sonar_sin(to));
-        cv::Point2f pt_outer_from(outer_radius*sonar_cos(from), outer_radius*sonar_sin(from));
-        cv::Point2f pt_outer_to(outer_radius*sonar_cos(to), outer_radius*sonar_sin(to));
+        cv::Point2f pt_inner_from(inner_radius*seanet_cached.cos(from), inner_radius*seanet_cached.sin(from));
+        cv::Point2f pt_inner_to(inner_radius*seanet_cached.cos(to), inner_radius*seanet_cached.sin(to));
+        cv::Point2f pt_outer_from(outer_radius*seanet_cached.cos(from), outer_radius*seanet_cached.sin(from));
+        cv::Point2f pt_outer_to(outer_radius*seanet_cached.cos(to), outer_radius*seanet_cached.sin(to));
         
         cv::Rect innerbb = arcBound(inner_radius, pt_inner_from, pt_inner_to);
         cv::Rect outerbb = arcBound(outer_radius, pt_outer_from, pt_outer_to);
@@ -314,7 +219,7 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
 
     debug() << "radius =" << radius << "rows=" << m.rows << "cols=" << m.cols << "rangeEnd=" << image.rangeEnd;
 
-    ensureGemAngleTablesFor(bearing_bins);
+    gem_cached.ensureTablesFor(bearing_bins);
 
     for(uint32_t line = 0; line < num_lines; line++){
         uint32_t range_line = start_line + line;
@@ -332,38 +237,129 @@ bool SonarAccumulator::setWholeImage(PolarImage const& image){
             cv::Point2f pt_outer_from(outer_radius*gem_cos_safe(from), outer_radius*gem_sin_safe(from));
             cv::Point2f pt_outer_to(outer_radius*gem_cos_safe(to), outer_radius*gem_sin_safe(to));
             */
-            cv::Point2f pt_inner_from(inner_radius*gem_cos_idx(i), inner_radius*gem_sin_idx(i));
-            cv::Point2f pt_inner_to(inner_radius*gem_cos_idx(i+1), inner_radius*gem_sin_idx(i+1));
-            cv::Point2f pt_outer_from(outer_radius*gem_cos_idx(i), outer_radius*gem_sin_idx(i));
-            cv::Point2f pt_outer_to(outer_radius*gem_cos_idx(i+1), outer_radius*gem_sin_idx(i+1));
+            cv::Point2f pt_inner_from(inner_radius*gem_cached.cos_idx(i), inner_radius*gem_cached.sin_idx(i));
+            cv::Point2f pt_inner_to(inner_radius*gem_cached.cos_idx(i+1), inner_radius*gem_cached.sin_idx(i+1));
+            cv::Point2f pt_outer_from(outer_radius*gem_cached.cos_idx(i), outer_radius*gem_cached.sin_idx(i));
+            cv::Point2f pt_outer_to(outer_radius*gem_cached.cos_idx(i+1), outer_radius*gem_cached.sin_idx(i+1));
 
             cv::Rect innerbb = arcBound(inner_radius, pt_inner_to, pt_inner_from);
             cv::Rect outerbb = arcBound(outer_radius, pt_outer_to, pt_outer_from);
             cv::Rect bb = innerbb | outerbb;
-            
+
             for(int y = bb.y; y < bb.y + bb.height; y++)
             {
                 unsigned char* pm = &m.at<unsigned char>(cy - y, cx + bb.x);
                 for(int x = bb.x; x < bb.x + bb.width; x++, pm++)
                 {
                     int r2 = x*x + y*y;
-            
+
                     // Check if we're at least within the right radius
                     if (r2 < inner_radius * inner_radius || r2 > outer_radius * outer_radius)
                         continue;
-                    
+
                     //  | P /  For P is inside the segment if
                     //  |  /   it's cw of from and ccw of to.
                     //  | /
-                    //  |/     
+                    //  |/
                     bool ccwFrom = ccw<float>(pt_outer_from.x, pt_outer_from.y, x, y);
                     bool ccwTo = ccw<float>(pt_outer_to.x, pt_outer_to.y, x, y);
-                    
+
                     if (ccwFrom || !ccwTo)
                         continue;
 
                     // If we've got to here, then this must be valid. Shift to the centre and set the value.
                     *pm = image.data[line * num_bearings + i];
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool SonarAccumulator::setWholeImage(NonUniformPolarMat image){
+    if(!image.bearings || !image.ranges){
+        error() << "invalid non-uniform polar image: no data";
+        return false;
+    }
+    reset();
+    const uint32_t num_lines = image.ranges->size();
+    const uint32_t num_bearings = image.bearings->size();
+    float cx;
+    float cy;
+    if(!num_lines || !num_bearings){
+        error() << "invalid non-uniform polar image: empty data";
+        return false;
+    }
+    cv::Mat m = m_img->mat();
+
+    // convert centre-of-bin values to edge-of-bin values, and set-up the
+    // sin-cos cache: if this proves a bottleneck we should avoid calculating
+    // bearing_bins if the cache is already up to data (cache hangs of the
+    // number of bins and the first angle)
+    {
+        std::vector<float> bearing_bins;
+        bearing_bins.reserve(num_bearings+1);
+
+        std::vector<float>::const_iterator it, next;
+        it = image.bearings->begin();
+        next = it;
+        bearing_bins.push_back(*it - (*next-*it)/2);
+        next++;
+        for(;next != image.bearings->end(); next++, it++)
+            bearing_bins.push_back((*it + *next)/2);
+        bearing_bins.push_back(*it + (*it - bearing_bins.back()));
+        cx = cy = bearing_bins.back();
+
+        cached_trig.ensureTablesFor(bearing_bins);
+    }
+
+    float inner_radius;
+    float outer_radius;
+    for(uint32_t line = 0; line < num_lines; line++){
+        if(line == 0){
+            inner_radius = ((*image.ranges)[line] - ((*image.ranges)[line+1]-(*image.ranges)[line])/2);
+            outer_radius = ((*image.ranges)[line] + (*image.ranges)[line+1])/2;
+        }else if(line == num_lines-1){
+            inner_radius = ((*image.ranges)[line] + (*image.ranges)[line-1])/2;
+            outer_radius = ((*image.ranges)[line] + ((*image.ranges)[line]-(*image.ranges)[line-1])/2);
+        }else{
+            inner_radius = ((*image.ranges)[line] + (*image.ranges)[line-1])/2;
+            outer_radius = ((*image.ranges)[line] + (*image.ranges)[line+1])/2;
+        }
+
+        for(uint32_t i = 0; i < num_bearings+1; i++){
+            cv::Point2f pt_inner_from(inner_radius*cached_trig.cos_idx(i), inner_radius*cached_trig.sin_idx(i));
+            cv::Point2f pt_inner_to(inner_radius*cached_trig.cos_idx(i+1), inner_radius*cached_trig.sin_idx(i+1));
+            cv::Point2f pt_outer_from(outer_radius*cached_trig.cos_idx(i), outer_radius*cached_trig.sin_idx(i));
+            cv::Point2f pt_outer_to(outer_radius*cached_trig.cos_idx(i+1), outer_radius*cached_trig.sin_idx(i+1));
+
+            cv::Rect innerbb = arcBound(inner_radius, pt_inner_from, pt_inner_to);
+            cv::Rect outerbb = arcBound(outer_radius, pt_outer_from, pt_outer_to);
+            cv::Rect bb = innerbb | outerbb;
+
+            for(int y = bb.y; y < bb.y + bb.height; y++)
+            {
+                unsigned char* pm = &m.at<unsigned char>(cy - y, cx + bb.x);
+                for(int x = bb.x; x < bb.x + bb.width; x++, pm++)
+                {
+                    int r2 = x*x + y*y;
+
+                    // Check if we're at least within the right radius
+                    if (r2 < inner_radius * inner_radius || r2 > outer_radius * outer_radius)
+                        continue;
+
+                    //  | P /  For P is inside the segment if
+                    //  |  /   it's cw of from and ccw of to.
+                    //  | /
+                    //  |/
+                    bool ccwFrom = ccw<float>(pt_outer_from.x, pt_outer_from.y, x, y);
+                    bool ccwTo = ccw<float>(pt_outer_to.x, pt_outer_to.y, x, y);
+
+                    if (ccwFrom || !ccwTo)
+                        continue;
+
+                    // If we've got to here, then this must be valid. Shift to the centre and set the value.
+                    *pm = image.mat.at<uint8_t>(line, i);
                 }
             }
         }
