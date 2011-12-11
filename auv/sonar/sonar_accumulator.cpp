@@ -284,13 +284,14 @@ bool SonarAccumulator::setWholeImage(NonUniformPolarMat image){
     reset();
     const uint32_t num_lines = image.ranges->size();
     const uint32_t num_bearings = image.bearings->size();
-    float cx;
-    float cy;
-    if(!num_lines || !num_bearings){
+    if(num_lines < 2 || !num_bearings){
         error() << "invalid non-uniform polar image: empty data";
         return false;
     }
     cv::Mat m = m_img->mat();
+    const int32_t radius = floor((min(m.rows, m.cols)-1)/2);
+    const float cx = radius;
+    const float cy = radius;
 
     // convert centre-of-bin values to edge-of-bin values, and set-up the
     // sin-cos cache: if this proves a bottleneck we should avoid calculating
@@ -308,7 +309,6 @@ bool SonarAccumulator::setWholeImage(NonUniformPolarMat image){
         for(;next != image.bearings->end(); next++, it++)
             bearing_bins.push_back((*it + *next)/2);
         bearing_bins.push_back(*it + (*it - bearing_bins.back()));
-        cx = cy = bearing_bins.back();
 
         cached_trig.ensureTablesFor(bearing_bins);
     }
@@ -327,7 +327,7 @@ bool SonarAccumulator::setWholeImage(NonUniformPolarMat image){
             outer_radius = ((*image.ranges)[line] + (*image.ranges)[line+1])/2;
         }
 
-        for(uint32_t i = 0; i < num_bearings+1; i++){
+        for(uint32_t i = 0; i < num_bearings; i++){
             cv::Point2f pt_inner_from(inner_radius*cached_trig.cos_idx(i), inner_radius*cached_trig.sin_idx(i));
             cv::Point2f pt_inner_to(inner_radius*cached_trig.cos_idx(i+1), inner_radius*cached_trig.sin_idx(i+1));
             cv::Point2f pt_outer_from(outer_radius*cached_trig.cos_idx(i), outer_radius*cached_trig.sin_idx(i));

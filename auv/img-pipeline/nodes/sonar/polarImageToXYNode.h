@@ -36,6 +36,8 @@ class PolarImageToXYNode: public Node{
             // input polar image:
             registerInputID("polar image");
             registerOutputID("image", image_ptr_t());
+
+            registerParamID("Resolution", int(400), "resolution of conversion");
         }
 
     protected:
@@ -62,6 +64,8 @@ class PolarImageToXYNode: public Node{
 
             image_ptr_t img = inputs["polar image"];
             augmented_mat_t in = img->augmentedMat();
+
+            m_accumulator.setSize(param<int>("Resolution"));
 
             r["image"] = image_ptr_t(boost::make_shared<Image>(
                 boost::apply_visitor(
