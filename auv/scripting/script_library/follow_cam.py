@@ -26,6 +26,8 @@ class scriptOptions(aiScriptOptions):
     align_error  = 10   # degrees 
     # Control
     prop_speed = 100
+    max_search_angle = 50
+    search_angle_increment = 5
     strafe_kPID  = (-300, 0, 0)
 
     
@@ -64,96 +66,96 @@ class script(aiScript):
             
             for i in range(len(m.lines)):
                 for j in range(i):
-                        #Filter out the lines that are vaguly pointing up
-                        if abs(degrees(m.lines[i].angle)+90)<30 and abs(degrees(m.lines[j].angle)+90)<30:
-                            #debug('got straigh lines')
+                    #Filter out the lines that are vaguly pointing up
+                    if abs(degrees(m.lines[i].angle)+90)<30 and abs(degrees(m.lines[j].angle)+90)<30:
+                        #debug('got straigh lines')
 
-                            #Filter out the lines that are paralle to each other by pairwise comparision
-                            if degrees(abs(m.lines[i].angle - m.lines[j].angle)%180)<30:
-                                    #debug('got paralle')
+                        #Filter out the lines that are paralle to each other by pairwise comparision
+                        if degrees(abs(m.lines[i].angle - m.lines[j].angle)%180)<30:
+                            #debug('got paralle')
 
-                                    #Filter out the lines that are too close apart
-                                    if ((m.lines[i].centre.x - m.lines[j].centre.x)**2+(m.lines[i].centre.y - m.lines[j].centre.y)**2)**0.5>0.3:
-                                        #debug('got apart')
+                            #Filter out the lines that are too close apart
+                            if ((m.lines[i].centre.x - m.lines[j].centre.x)**2+(m.lines[i].centre.y - m.lines[j].centre.y)**2)**0.5>0.3:
+                                #debug('got apart')
 
-                                        #Also check if the AUV is in between the two lines
-                                        if max(m.lines[i].centre.x, m.lines[j].centre.x)>0.40 and min(m.lines[i].centre.x, m.lines[j].centre.x)<0.60:
-                                            #debug('got middle')
-                                            edges=[m.lines[i], m.lines[j]]
-                                            detected = True
-                                            break
+                                #Also check if the AUV is in between the two lines
+                                if max(m.lines[i].centre.x, m.lines[j].centre.x)>0.40 and min(m.lines[i].centre.x, m.lines[j].centre.x)<0.60:
+                                    #debug('got middle')
+                                    edges=[m.lines[i], m.lines[j]]
+                                    detected = True
+                                    break
 
                 #Break out of the outer for loop
                 if detected is True:
-                        break         
+                    break         
             self.detected.clear()
         
-            #Don't don anything else if the river edge is not detected
+            #Don't do anything else if the river edge is not detected
             if detected is True:            
-                    if self.auv.getBearing():  #In case it is none type
-                        self.auv.bearing(self.auv.getBearing())   #Stop oscillating if it is
-                    self.detected.set()
+                if self.auv.getBearing():  #In case it is none type
+                    self.auv.bearing(self.auv.getBearing())   #Stop oscillating if it is
+                self.detected.set()
 
-                    info('Cam follow: River edge detected')
-                    debug('Cam follow: Angle: %f, %F' %(degrees(edges[0].angle), degrees(edges[1].angle)))
-                    debug('Cam follow: Posistion: %f, %f' %(edges[0].centre.x, edges[1].centre.x))
-                    debug('Cam follow: Apart: %f' %((edges[0].centre.x-edges[1].centre.x)**2+(edges[0].centre.y-edges[1].centre.y)**2)**0.5)
+                info('Cam follow: River edge detected')
+                debug('Cam follow: Angle: %f, %F' %(degrees(edges[0].angle), degrees(edges[1].angle)))
+                debug('Cam follow: Posistion: %f, %f' %(edges[0].centre.x, edges[1].centre.x))
+                debug('Cam follow: Apart: %f' %((edges[0].centre.x-edges[1].centre.x)**2+(edges[0].centre.y-edges[1].centre.y)**2)**0.5)
 
-                          
-                    #Set the time stamp
-                    self.last_detect_time = time.time()
+                        
+                #Set the time stamp
+                self.last_detect_time = time.time()
 
-                    #
-                    # Adjust the AUV's bearing to align with River Cam by line detection of the bank
-                    # calculate the average angle of the lines (assumes good line finding)
-                    angle = degrees(sum([x.angle for x in edges])/len(edges))
-                    
-                    # calculate the bearing of River Cam (relative to the sub),
-                    # mod 180 as we dont want to accidentally turn the sub around
-                    corrected_angle=(90+angle)          
-
-
-                    if abs(corrected_angle) < self.options.align_error: 
-                        self.aligned.set()
-
-                    #Align the AUV to River Cam if the error is outside of tolerance
-                    else: 
-                        current_bearing = self.auv.getBearing()
-                        if current_bearing: #watch out for none bearings
-                            self.auv.bearing((current_bearing+corrected_angle)%360) 
-                            self.aligned.clear()
-                            info('Cam follow: Adjusting Bearing by: %g (uncorrected=%g)' % (corrected_angle, angle))
+                #
+                # Adjust the AUV's bearing to align with River Cam by line detection of the bank
+                # calculate the average angle of the lines (assumes good line finding)
+                angle = degrees(sum([x.angle for x in edges])/len(edges))
+                
+                # calculate the bearing of River Cam (relative to the sub),
+                # mod 180 as we dont want to accidentally turn the sub around
+                corrected_angle=(90+angle)          
 
 
-                    #Centre the AUV in the middle of River Cam
-                    if self.aligned.is_set():                        #Only centre if the AUV is aligned
-                        cam_centre=(edges[0].centre.x+edges[1].centre.x)/2
-                        centre_err=cam_centre - 0.5
+                if abs(corrected_angle) < self.options.align_error: 
+                    self.aligned.set()
 
-                        debug('Cam follow: Centre error: %f' %centre_err)
-                        if abs(centre_err) < self.options.centre_error:
-                            info('Cam follow: AUV is at the centre')
-                            self.centred.set()
-                        else:
-
-                            strafe_demand = int(self.strafeControl.update(centre_err))
-                            if strafe_demand < -127: strafe_demand = -127
-                            elif strafe_demand > 127: strafe_demand = 127
-                            self.auv.strafe(strafe_demand)
-                            info('Cam follow: strafing %i' %(strafe_demand))
-                            self.centred.clear()
+                #Align the AUV to River Cam if the error is outside of tolerance
+                else: 
+                    current_bearing = self.auv.getBearing()
+                    if current_bearing: #watch out for none bearings
+                        self.auv.bearing((current_bearing+corrected_angle)%360) 
+                        self.aligned.clear()
+                        info('Cam follow: Adjusting Bearing by: %g (uncorrected=%g)' % (corrected_angle, angle))
 
 
-                    # set the flags that show if we're aligned and centred at the Cam
-                    if self.centred.is_set() and self.aligned.is_set():
-                        self.ready.set()
-                        info('Cam follow: AUV is centred and aligned')
-                        self.log('Cam follow: Done aligning and centering.')
+                #Centre the AUV in the middle of River Cam
+                if self.aligned.is_set():                        #Only centre if the AUV is aligned
+                    cam_centre=(edges[0].centre.x+edges[1].centre.x)/2
+                    centre_err=cam_centre - 0.5
+
+                    debug('Cam follow: Centre error: %f' %centre_err)
+                    if abs(centre_err) < self.options.centre_error:
+                        info('Cam follow: AUV is at the centre')
+                        self.centred.set()
                     else:
-                        debug('Cam follow: centred:%s aligned:%s' %
-                                (self.centred.is_set(), self.aligned.is_set())
-                        )
-                        self.ready.clear()
+
+                        strafe_demand = int(self.strafeControl.update(centre_err))
+                        if strafe_demand < -127: strafe_demand = -127
+                        elif strafe_demand > 127: strafe_demand = 127
+                        self.auv.strafe(strafe_demand)
+                        info('Cam follow: strafing %i' %(strafe_demand))
+                        self.centred.clear()
+
+
+                # set the flags that show if we're aligned and centred at the Cam
+                if self.centred.is_set() and self.aligned.is_set():
+                    self.ready.set()
+                    info('Cam follow: AUV is centred and aligned')
+                    self.log('Cam follow: Done aligning and centering.')
+                else:
+                    debug('Cam follow: centred:%s aligned:%s' %
+                            (self.centred.is_set(), self.aligned.is_set())
+                    )
+                    self.ready.clear()
 
 
 
@@ -176,12 +178,15 @@ class script(aiScript):
                 info('Cam follow: The edge of River Cam is lost, trying to find it again.') 
                 if self.auv.getBearing():  #In case it is none type     
                     current_bearing = self.auv.getBearing()   
-                    for angle in range(5,50, 5):
+                    for angle in range(self.options.search_angle_increment, self.options.max_search_angle, self.options.search_angle_increment):
                         if self.detected.is_set() is False:
                             info('oscillating by %i degrees' %angle)
                             self.auv.bearingAndWait((current_bearing+angle)%360) #Perform 1 revolution of self rotation until the AUV is aligned again
-                            self.auv.bearingAndWait((current_bearing-angle*2)%360)
-                            self.auv.bearingAndWait((current_bearing+angle)%360)
+                        if self.detected.is_set() is False:
+                            self.auv.bearingAndWait((current_bearing-angle)%360)
+                        if self.detected.is_set() is True:
+                            break
+
                 else:
                     time.sleep(1)
             
