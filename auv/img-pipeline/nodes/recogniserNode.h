@@ -57,10 +57,6 @@ class RecogniserNode: public Node{
             registerParamID<int>("FERN compressionMethod", 0, "");
         }
 
-        virtual ~RecogniserNode(){
-            stop();
-        }
-
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;

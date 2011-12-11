@@ -51,11 +51,14 @@ Node::Node(ConstructArgs const& args)
       m_allow_queue_lock(),
       m_sched(args.sched),
       m_pl(args.pl),
-      m_pl_name(args.pl_name){
+      m_pl_name(args.pl_name),
+      m_stopped(false){
 }
 
 
 Node::~Node(){
+    if(!m_stopped)
+        stop();
     debug() << "~Node" << *this;
 }
 
@@ -87,6 +90,7 @@ void Node::stop(){
     m_allow_queue_lock.unlock();
 
     debug(-3) << BashColour::Purple << "stop()" << *this << ", done";
+    m_stopped = true;
 }
 
 NodeType::e const& Node::type() const{

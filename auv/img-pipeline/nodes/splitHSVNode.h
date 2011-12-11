@@ -46,10 +46,6 @@ class SplitHSVNode: public Node{
             registerOutputID("S");
             registerOutputID("V");
         }
-    
-        virtual ~SplitHSVNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

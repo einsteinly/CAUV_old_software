@@ -51,10 +51,6 @@ class BroadcastKeypointsNode: public OutputNode{
             registerParamID<std::string>("name", "unnamed keypoints",
                                          "name for detected set of keypoints");
         }
-    
-        virtual ~BroadcastKeypointsNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

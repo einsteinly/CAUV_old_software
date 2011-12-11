@@ -63,10 +63,6 @@ class ShiTomasiCornersNode: public Node{
             registerParamID<float>("k", 0.04,
                                    "Free parameter of Harris detector");
         }
-    
-        virtual ~ShiTomasiCornersNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

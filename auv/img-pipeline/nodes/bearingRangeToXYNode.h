@@ -52,10 +52,6 @@ class BearingRangeToXYNode: public Node{
             // output
             registerOutputID("keypoints", std::vector<KeyPoint>());
         }
-    
-        virtual ~BearingRangeToXYNode(){
-            stop();
-        }
 
     protected:
         typedef std::vector<KeyPoint> kp_vec;

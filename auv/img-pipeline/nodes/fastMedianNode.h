@@ -46,10 +46,6 @@ class FastMedianNode: public Node{
             // parameter: 
             registerParamID<float>("radius", 5, "filter aperture (odd values only)");
         }
-    
-        virtual ~FastMedianNode(){
-            stop();
-        }
 
     protected:
         struct HistAccumulator{

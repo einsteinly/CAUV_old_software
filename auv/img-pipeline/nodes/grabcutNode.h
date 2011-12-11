@@ -41,10 +41,6 @@ class GrabCutNode: public Node{
             registerParamID<int>("height", 0);
             registerParamID<bool>("use_mask", false);
         }
-    
-        virtual ~GrabCutNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

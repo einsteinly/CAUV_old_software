@@ -59,10 +59,6 @@ class HoughCirclesNode: public OutputNode{
             registerParamID<std::string>("name", "unnamed hough circles",
                                          "name for detected set of circle");
         }
-    
-        virtual ~HoughCirclesNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

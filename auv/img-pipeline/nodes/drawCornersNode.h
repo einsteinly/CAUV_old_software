@@ -53,10 +53,6 @@ class DrawCornersNode: public Node{
             registerParamID< std::vector<Corner> >("corners", std::vector<Corner>(),
                                                    "the corners to draw"); 
         }
-    
-        virtual ~DrawCornersNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

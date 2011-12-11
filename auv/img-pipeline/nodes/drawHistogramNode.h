@@ -34,10 +34,6 @@ class DrawHistogramNode: public Node{
             );
             registerOutputID(Image_Out_Copied_Name);
         }
-    
-        virtual ~DrawHistogramNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

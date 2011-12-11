@@ -37,10 +37,6 @@ class CornerHarrisNode: public Node{
             registerParamID<int>("aperture size", 3);
             registerParamID<float>("free parameter", 0.04);
         }
-    
-        virtual ~CornerHarrisNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

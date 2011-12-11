@@ -39,10 +39,6 @@ class HistogramSegmentationNodeArb: public OutputNode{
             registerParamID<int>("Bin max", 127);
             
         }
-    
-        virtual ~HistogramSegmentationNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

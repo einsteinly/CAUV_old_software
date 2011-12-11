@@ -56,10 +56,6 @@ class CameraInputNode: public AsynchronousNode{
             registerParamID<int>("height", 480);
         }
 
-        virtual ~CameraInputNode(){
-            stop();
-        }
-
     protected:
         struct SharedImageDeleter{
             // if the connection were to close whilst an image was active, then

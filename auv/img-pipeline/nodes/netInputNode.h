@@ -50,7 +50,6 @@ class NetInputNode: public InputNode{
         }
     
         virtual ~NetInputNode(){
-            stop();
             info() << "~NetInputNode statistics"
                    << "\n\tignored" << ignored
                    << "\n\tprocessed" <<  processed

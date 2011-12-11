@@ -45,10 +45,6 @@ class DelayNode: public Node{
             registerOutputID(Image_Out_Name);
         }
 
-        virtual ~DelayNode(){
-            stop();
-        }
-
         virtual void paramChanged(input_id const& p){
             if(p == Delay_Param_Name && param<int>(Delay_Param_Name) < 0){
                 warning() << "Can't set delay less than 0: If I knew the"

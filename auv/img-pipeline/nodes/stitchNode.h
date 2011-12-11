@@ -40,10 +40,6 @@ class StitchNode: public Node{
             registerOutputID("Last Stitch Goodness");    // 
         }
 
-        virtual ~StitchNode(){
-            stop();
-        }
-
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;

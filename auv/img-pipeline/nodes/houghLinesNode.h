@@ -62,10 +62,6 @@ class HoughLinesNode: public Node{
             registerParamID<int>("srn", 0);
             registerParamID<int>("stn", 0);
         }
-    
-        virtual ~HoughLinesNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

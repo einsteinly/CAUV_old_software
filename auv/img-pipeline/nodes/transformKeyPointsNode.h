@@ -42,10 +42,6 @@ class TransformKeyPointsNode: public Node{
             registerParamID("*x", 1.0f);
             registerParamID("*y", 1.0f);
         }
-    
-        virtual ~TransformKeyPointsNode(){
-            stop();
-        }
 
     protected:
 

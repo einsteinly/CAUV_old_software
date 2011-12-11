@@ -70,7 +70,6 @@ class SonarInputNode: public InputNode{
         }
     
         virtual ~SonarInputNode(){
-            stop();
             info() << "~SonarInputNode statistics"
                    << "\n\tprocessed" <<  processed
                    << "\n\twaiting" << m_sonardata_msgs.size();

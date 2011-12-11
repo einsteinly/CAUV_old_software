@@ -34,10 +34,6 @@ class QuickSegmentNode: public OutputNode{
             // parameters:
             registerParamID<float>("scale", 1.0);
         }
-    
-        virtual ~QuickSegmentNode(){
-            stop();
-        }
         
     protected:
         out_map_t doWork(in_image_map_t& inputs){

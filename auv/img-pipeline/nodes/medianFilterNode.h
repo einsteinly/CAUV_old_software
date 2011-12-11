@@ -45,10 +45,6 @@ class MedianFilterNode: public Node{
             
             registerParamID<int>("kernel", 3, "kernel diameter (radius?): must be an odd integer");
         }
-        
-        virtual ~MedianFilterNode(){
-            stop();
-        }
 
     protected:
         // Apply Median blur in-place

@@ -55,10 +55,6 @@ class FASTCornersNode: public Node{
             registerParamID<bool>("non-maximum suppression", true,
                                   "omit non-maximal corners within 3x3 pixels");
         }
-    
-        virtual ~FASTCornersNode(){
-            stop();
-        }
 
     protected:
         struct findFASTCorners: boost::static_visitor< std::vector<cauv::KeyPoint> >{

@@ -43,10 +43,6 @@ class ClampNode: public Node{
             registerOutputID("Value", T());
         }
 
-        virtual ~ClampNode(){
-            stop();
-        }
-
     protected:
         out_map_t doWork(in_image_map_t&){
             out_map_t r;

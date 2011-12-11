@@ -51,10 +51,6 @@ class Correlation1DNode: public Node{
             
             // no parameters
         }
-    
-        virtual ~Correlation1DNode(){
-            stop();
-        }
 
     protected:
         struct applyCorrelation1D: boost::static_visitor<double>{

@@ -52,10 +52,6 @@ class MixNode: public Node{
             registerParamID<bool>("absolute value", true, "take absolute value "
                 "before clamping into pixel range");
         }
-    
-        virtual ~MixNode(){
-            stop();
-        }
 
     protected:
         static unsigned absRound(const float& f){
