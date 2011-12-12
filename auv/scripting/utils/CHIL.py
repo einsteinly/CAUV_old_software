@@ -158,9 +158,9 @@ class CHILer:
         Dir_Extn = '.chil'
         Super_Index = 'megasuperlog'
         # Frequency to write keyframes to index files:
-        Idx_Keyframe_Freq = datetime.timedelta(seconds=60)
+        Idx_Keyframe_Freq = datetime.timedelta(seconds=30)
         # Maximum number of recorded messages between keyframes:
-        Idx_Keyframe_nFreq = 1000
+        Idx_Keyframe_nFreq = 500
         # Frequency of absolute time lines:
         Dat_Time_Line_Freq = datetime.timedelta(minutes=5)
         Read_Buf_Size = 0x10000
@@ -256,7 +256,7 @@ class Indexer(CHILer):
         l_dat = 'Format %s\n' % fmt
         self.datfile.write(l_dat)
     def writeTimeLineToIndex(self, t):
-        self.idxfile.write('%s %s\n' % (self.datfile.tell()+1, self.timeFormat(t)))
+        self.idxfile.write('%s %s\n' % (self.datfile.tell(), self.timeFormat(t)))
     def writeTimeLineToDatfile(self, t):
         self.datfile.write('Time %s\n' % self.timeFormat(t)) 
 
@@ -599,6 +599,7 @@ class ComponentPlayer(CHILer):
             raise RuntimeError('other does not share cursor')
         return self.timeOfNextMessage() == other.timeOfNextMessage()
     def absoluteTimeAtSeekPos(self):
+        print 'datfile.tell():', self.datfile.tell()
         #print 'absoluteTimeAtSeekPos %d = %s' % (seekpos, self.seek_time_map[seekpos])
         return self.seek_time_map[self.datfile.tell()]
     def isMsgLine(self, line):
