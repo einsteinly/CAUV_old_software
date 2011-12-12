@@ -23,7 +23,19 @@
 
 #include "guiactions.h"
 
-#define BASESTYLE QPlastiqueStyle
+#include "nodepicker.h"
+
+
+#if defined _WIN32 || defined _WIN64
+    #include <QWindowsXPStyle>
+    #define BASESTYLE QWindowsXPStyle
+#elif __APPLE__
+    #include <QMacStyle>
+    #define BASESTYLE QMacStyle
+#else
+    #include <QPlastiqueStyle>
+    #define BASESTYLE QPlastiqueStyle
+#endif
 
 namespace Ui {
 class MainWindow;
@@ -251,8 +263,8 @@ public:
         case QStyle::SC_SpinBoxEditField: {
             QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
             QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
-            rect.setLeft(rect.height()+10);
-            rect.setRight(frame.right()-frame.height()-10);
+            rect.setLeft(frame.height());
+            rect.setRight(frame.right()-frame.height());
             return rect;
         }
         break;
@@ -264,28 +276,53 @@ public:
     void drawControl(ControlElement control, const QStyleOption *option,
                      QPainter *painter, const QWidget *widget) const{
 
-        /*switch (control) {
-                    case CE_PushButtonLabel:
-                        {
-                            QStyleOptionButton myButtonOption;
-                            const QStyleOptionButton *buttonOption =
-                                    qstyleoption_cast<const QStyleOptionButton *>(option);
-                            if (buttonOption) {
-                                myButtonOption = *buttonOption;
-                                if (myButtonOption.palette.currentColorGroup()
-                                        != QPalette::Disabled) {
-                                    if (myButtonOption.state & (State_Sunken | State_On)) {
-                                        myButtonOption.palette.setBrush(QPalette::ButtonText,
-                                                myButtonOption.palette.brightText());
-                                    }
-                                }
-                            }
-                            BASESTYLE::drawControl(control, &myButtonOption, painter, widget);
-                        }
-                        break;
-                    default:*/
-        BASESTYLE::drawControl(control, option, painter, widget);
-        //}
+            switch(control) {
+            case CE_ProgressBar: {
+                const QStyleOptionProgressBar * progressOptions = static_cast<const QStyleOptionProgressBar*>(option);
+
+                int hueRange = 90;
+                int range = progressOptions->maximum - progressOptions->minimum;
+                int adjustedValue = progressOptions->progress - progressOptions->minimum;
+                float progress = (float) adjustedValue / (float) range;
+                int hue = hueRange - (hueRange * progress);
+
+                QStyleOptionProgressBar po (*progressOptions);
+
+                QColor progressColor(QColor::fromHsl(hue, 160, 162));
+                po.palette.setColor(QPalette::Highlight, progressColor);
+
+                BASESTYLE::drawControl(control, &po, painter, widget);
+            }
+            break;
+
+            default:
+                BASESTYLE::drawControl(control, option, painter, widget);
+
+            }
+    }
+
+    void drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const{
+        switch (control) {
+        case CC_SpinBox:
+        {
+            const QSpinBox * spin = qobject_cast<const QSpinBox*>(widget);
+            if(spin){
+                QStyleOptionProgressBar progressOptions;
+                progressOptions.rect = option->rect;
+                progressOptions.direction = Qt::LeftToRight;
+                progressOptions.state = QStyle::State_Enabled;
+                progressOptions.minimum = spin->minimum();
+                progressOptions.maximum = spin->maximum();
+                progressOptions.progress = spin->value();
+                progressOptions.textVisible = false;
+
+                drawControl(CE_ProgressBar, &progressOptions, painter, widget);
+            }
+        }
+        break;
+        default:
+            BASESTYLE::drawComplexControl(control, option, painter, widget);
+        }
     }
 
 private:

@@ -20,12 +20,15 @@
 
 #include <debug/cauv_debug.h>
 
-#include "model/model.h"
+#include <gui/core/model/model.h>
 
 
 #include <QPainter>
 
 #include <QStyledItemDelegate>
+#include <QItemEditorFactory>
+#include <QItemEditorCreator>
+#include <QSpinBox>
 
 namespace Ui {
     class NodePicker;
@@ -60,6 +63,30 @@ namespace cauv {
 
 
 
+        class ProgressSpinBox : public QSpinBox {
+            Q_OBJECT
+
+        public:
+
+            Q_PROPERTY(int neutral READ getNeutral WRITE setNeutral USER true)
+            Q_PROPERTY(int value READ value WRITE setValue USER true)
+
+            ProgressSpinBox(QWidget * parent = 0) : QSpinBox(parent){
+                this->setAlignment(Qt::AlignHCenter);
+            }
+
+            int getNeutral(){
+                return m_neutral;
+            }
+
+            void setNeutral(int neutral){
+                m_neutral = neutral;
+            }
+
+        protected:
+            int m_neutral;
+        };
+
 
 
         class NodeDelegateFactory
@@ -78,7 +105,14 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            NodeDelegate(QObject *parent = 0){
+            NodeDelegate(QObject *parent = 0) : QStyledItemDelegate(parent){
+
+                QItemEditorFactory * factory = new QItemEditorFactory();
+
+                factory->registerEditor(QVariant::Int, new QItemEditorCreator<ProgressSpinBox>("value"));
+                factory->registerEditor(QVariant::UInt, new QItemEditorCreator<ProgressSpinBox>("value"));
+
+                setItemEditorFactory(factory);
             }
 
             void paint(QPainter *painter,
