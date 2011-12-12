@@ -26,7 +26,6 @@ template<typename T>
 class MathDivideNode: public Node{
     public:
         MathDivideNode(ConstructArgs const& args) : Node(args){ }
-        virtual ~MathDivideNode(){ stop(); }
 
         void init(){
             m_speed = fast;

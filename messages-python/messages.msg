@@ -92,6 +92,7 @@ enum NodeType : int8 {
     GlobalMaximum,
     LocalMaxima,
     SonarShadowFilter,
+    PolarImageToXY,
 }
 enum NodeStatus : int8 {
     None = 0,

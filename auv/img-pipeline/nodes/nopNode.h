@@ -36,10 +36,6 @@ class NopNode: public Node{
             registerOutputID(Image_Out_Name);
         }
 
-        virtual ~NopNode(){
-            stop();
-        }
-
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;

@@ -51,10 +51,6 @@ class DrawLinesNode: public Node{
             // parameters:
             registerParamID< std::vector<Line> >("lines", std::vector<Line>());
         }
-    
-        virtual ~DrawLinesNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

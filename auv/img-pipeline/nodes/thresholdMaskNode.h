@@ -34,11 +34,6 @@ class ThresholdMaskNode: public Node{
             // one parameter
             registerParamID<int>("threshold (>= is masked)",127);
         }
-        
-        virtual ~ThresholdMaskNode(){
-            stop();
-        }
-    
 
     protected:
 

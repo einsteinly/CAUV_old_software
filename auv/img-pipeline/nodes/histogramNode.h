@@ -35,10 +35,6 @@ class HistogramNode: public Node{
             registerParamID<std::string>("name", "unused" "");
             
         }
-    
-        virtual ~HistogramNode(){
-            stop();
-        }
 
     protected:
         struct calcHistogram: boost::static_visitor< std::vector<float> >{

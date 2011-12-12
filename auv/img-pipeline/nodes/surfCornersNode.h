@@ -57,10 +57,6 @@ class SURFCornersNode: public Node{
             registerParamID<int>("octave layers", 2,
                                   "number of layers per octave");
         }
-    
-        virtual ~SURFCornersNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

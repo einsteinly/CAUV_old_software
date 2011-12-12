@@ -55,10 +55,6 @@ class DrawKeyPointsNode: public Node{
                 "KeyPoints", std::vector<KeyPoint>(), "the KeyPoints to draw", Must_Be_New
             ); 
         }
-    
-        virtual ~DrawKeyPointsNode(){
-            stop();
-        }
 
     protected:
         // return a simple cv-mat image whatever the input type

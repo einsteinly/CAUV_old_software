@@ -47,10 +47,6 @@ class MathAddMultNode: public Node{
             registerParamID<T>("B", T());
             registerParamID<float>("Bfac", 1);
         }
-    
-        virtual ~MathAddMultNode(){
-            stop();
-        }
 
     protected:
 

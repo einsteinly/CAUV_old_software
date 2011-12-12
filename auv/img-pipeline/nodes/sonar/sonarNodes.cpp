@@ -16,6 +16,7 @@
 
 #include "sonarInputNode.h"
 #include "sonarShadowFilterNode.h"
+#include "polarImageToXYNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -23,6 +24,7 @@ namespace imgproc{
 // Register node types (actually definitions of static data members)
 DEFINE_NFR(SonarInputNode, NodeType::SonarInput);
 DEFINE_NFR(SonarShadowFilterNode, NodeType::SonarShadowFilter);
+DEFINE_NFR(PolarImageToXYNode, NodeType::PolarImageToXY);
 
 } // namespace imgproc
 } // namespace cauv

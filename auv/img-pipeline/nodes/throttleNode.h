@@ -85,7 +85,6 @@ class ThrottleNode: public Node{
             }
 
             m_ioservice_thread.join();
-            stop();
 
             // if you get a deadlock here on the destruction of m_ioservice,
             // then upgrade to boost 1.46.1

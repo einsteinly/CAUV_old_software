@@ -36,10 +36,6 @@ class GuiOutputNode: public OutputNode{
             // transmission
             registerParamID<int>("jpeg quality", 85); // 0-100
         }
-    
-        virtual ~GuiOutputNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

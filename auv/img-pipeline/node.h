@@ -584,6 +584,15 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         ImageProcessor& m_pl;
         const std::string m_pl_name;
+        
+        /* Derived classes may call stop() in their destructors if they have
+         * cleanup that requires execution to be halted first.
+         *
+         * Currently stop() just performs integrity checks, since by the time a
+         * node is being destroyed it is definitely not about to be executed,
+         * but in the future it may do other stuff.
+         */
+        bool m_stopped;
 };
 
 template<typename char_T, typename traits>

@@ -50,10 +50,6 @@ class RotateNode: public Node{
             registerParamID<float>("radians", 0.0f, "angle to rotate through (about image centre)");
             registerParamID<bool>("extend", false, "extend image to avoid cropping");
         }
-    
-        virtual ~RotateNode(){
-            stop();
-        }
 
     protected:
         struct applyRotate: boost::static_visitor<augmented_mat_t>{

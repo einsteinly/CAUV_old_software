@@ -37,10 +37,6 @@ class CentreFinderNode : public OutputNode{
                                          "name for detected centre");
             
         }
-    
-        virtual ~CentreFinderNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

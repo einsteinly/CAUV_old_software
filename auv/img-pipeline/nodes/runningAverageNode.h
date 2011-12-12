@@ -55,11 +55,6 @@ class RunningAverageNode: public Node{
             //   colorise: colour each pixel with its clusters centre (otherwise, colour with cluster id)
             registerParamID<float>("alpha", 0.01);
         }
-    
-        virtual ~RunningAverageNode()
-        {
-            stop();
-        }
         
     protected:
 

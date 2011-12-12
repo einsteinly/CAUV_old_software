@@ -55,10 +55,6 @@ class BroadcastHistogramNode: public OutputNode{
                                          "unnamed histogram",
                                          "name for histogram");
         }
-    
-        virtual ~BroadcastHistogramNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

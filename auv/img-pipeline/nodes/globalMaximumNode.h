@@ -47,10 +47,6 @@ class GlobalMaximumNode: public Node{
             // one output
             registerOutputID("keypoints", std::vector<KeyPoint>());
         }
-    
-        virtual ~GlobalMaximumNode(){
-            stop();
-        }
 
     protected:
         struct applyGlobalMaxima: boost::static_visitor< std::vector<KeyPoint> >{
