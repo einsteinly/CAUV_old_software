@@ -599,7 +599,6 @@ class ComponentPlayer(CHILer):
             raise RuntimeError('other does not share cursor')
         return self.timeOfNextMessage() == other.timeOfNextMessage()
     def absoluteTimeAtSeekPos(self):
-        print 'datfile.tell():', self.datfile.tell()
         #print 'absoluteTimeAtSeekPos %d = %s' % (seekpos, self.seek_time_map[seekpos])
         return self.seek_time_map[self.datfile.tell()]
     def isMsgLine(self, line):
