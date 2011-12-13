@@ -184,9 +184,9 @@ class fakeAUV(messaging.MessageObserver):
         self.longitude = None
         self.altitude = None
         self.speed = None
-        self.bearingCV = interruptibleCondition()
-        self.depthCV = interruptibleCondition()
-        self.pitchCV = interruptibleCondition()
+        self.bearingCV = threading.Condition()
+        self.depthCV = threading.Condition()
+        self.pitchCV = threading.Condition()
         
     def onTelemetryMessage(self, m):
         #self.bearing = m.orientation.yaw
@@ -429,26 +429,22 @@ class aiDetector(messaging.MessageObserver):
     
 #------GENERAL STUFF------
 
-class subclassDict(object):
-    def __init__(self, cls_with_subs):
-        self.classes = {}
-        try:
-            to_check = set(cls_with_subs.__subclasses__())
-        except AttributeError:
-            raise TypeError('Class must ultimately derive from object (new-style classes) not old style classes')
-        checked = set()
-        while len(to_check):
-            cur = to_check.pop()
-            checked.add(cur)
-            if not getattr(cur, '_abstract', False):
-                self.classes[cur.__name__] = cur
-            for sub in cur.__subclasses__():
-                if not sub in checked:
-                    to_check.add(sub)
-    def __getitem__(self, attr):
-        return self.classes[attr]
-    def __getattr__(self, attr):
-        return self.classes[attr]
+def subclassDict(cls_with_subs):
+    classes = {}
+    try:
+        to_check = set(cls_with_subs.__subclasses__())
+    except AttributeError:
+        raise TypeError('Class must ultimately derive from object (new-style classes) not old style classes')
+    checked = set()
+    while len(to_check):
+        cur = to_check.pop()
+        checked.add(cur)
+        if not getattr(cur, '_abstract', False):
+            classes[cur.__name__] = cur
+        for sub in cur.__subclasses__():
+            if not sub in checked:
+                to_check.add(sub)
+    return classes
 
 class RepeatTimer(threading.Thread):
     def __init__(self, time, function, args=[], kwargs={}):
@@ -464,15 +460,3 @@ class RepeatTimer(threading.Thread):
             self.func(*self.args, **self.kwargs)
             if self.die:
                 break
-
-def interruptibleCondition(*args, **kwargs):
-    cond = threading.Condition(*args, **kwargs)
-    def wait(timeout=None):
-        while timeout >= 1 or timeout == None:
-            if cond.__class__.wait(cond, timeout=1):
-                return True
-            if timeout:
-                timeout -= 1
-        return cond.__class__.wait(cond, timeout=timeout)
-    cond.wait = wait
-    return cond

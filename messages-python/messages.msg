@@ -847,7 +847,7 @@ group guiai
     {
         conditionTypes : map<string, list<string>>;
     }
-    message RequestStateMessage : 215
+    message RequestAIState : 215
     {
     }
     message ScriptControl : 216
