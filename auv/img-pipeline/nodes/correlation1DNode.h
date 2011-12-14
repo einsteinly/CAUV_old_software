@@ -118,7 +118,7 @@ class Correlation1DNode: public Node{
 
             try{
                 double correl_max = boost::apply_visitor(applyCorrelation1D(b, correl_image), a);
-                r["max correl location"] = NodeParamValue(float(correl_max));
+                r["max correl location"] = ParamValue(float(correl_max));
                 r["correlation image"] = boost::make_shared<Image>(correl_image);
             }catch(cv::Exception& e){
                 error() << "Correlation1DNode:\n\t"

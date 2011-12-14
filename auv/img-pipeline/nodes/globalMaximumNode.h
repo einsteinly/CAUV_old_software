@@ -84,7 +84,7 @@ class GlobalMaximumNode: public Node{
             augmented_mat_t in = img->augmentedMat();
 
             try{
-                r["keypoints"] = NodeParamValue(
+                r["keypoints"] = ParamValue(
                     boost::apply_visitor(applyGlobalMaxima(), in)
                 );
             }catch(cv::Exception& e){

@@ -215,7 +215,7 @@ protected:
 };
 
 boost::shared_ptr<PVPairEditableBase> makePVPair(
-    Node *n, std::pair<LocalNodeInput, NodeParamValue> const& p, bool editable){
+    Node *n, std::pair<LocalNodeInput, ParamValue> const& p, bool editable){
     return boost::apply_visitor(PVPairVisitor(n, p.first.input, editable), p.second);
 }
 

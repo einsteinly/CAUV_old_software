@@ -41,8 +41,8 @@ class RecogniserNode: public Node{
 
             // outputs:
             // TODO...
-            //registerOutputID<NodeParamValue>("Confidence");
-            //registerOutputID<NodeParamValue>("Position");
+            //registerOutputID<ParamValue>("Confidence");
+            //registerOutputID<ParamValue>("Position");
             registerOutputID("Correspondence Image");
 
             // Parameters:

@@ -43,9 +43,9 @@ class MathDivideNode: public Node{
             T a = param<T>("A (triggers exec)");
             T b = param<T>("B");
             if(b != T(0))
-                r["A/B"] = NodeParamValue(float(a)/float(b));
+                r["A/B"] = ParamValue(float(a)/float(b));
             else
-                r["A/B"] = NodeParamValue(float(0));
+                r["A/B"] = ParamValue(float(0));
             return r;
         }
     

@@ -11,7 +11,7 @@ def fromNPV(npv):
     return npv.value
 
 def toNPV(value):
-    return messaging.NodeParamValue.create(value);
+    return messaging.ParamValue.create(value);
  
 class Node:
     def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):
