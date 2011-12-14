@@ -93,6 +93,7 @@ enum NodeType : int8 {
     LocalMaxima,
     SonarShadowFilter,
     PolarImageToXY,
+    SonarImageEdge,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -847,7 +848,7 @@ group guiai
     {
         conditionTypes : map<string, list<string>>;
     }
-    message RequestStateMessage : 215
+    message RequestAIState : 215
     {
     }
     message ScriptControl : 216

@@ -30,6 +30,10 @@ class aiStateListener(messaging.MessageObserver):
         print m
     def onConditionRemovedMessage(self, m):
         print m
+    def onConditionTypesMessage(self, m):
+        print m
+    def onTaskTypesMessage(self, m):
+        print m
     def die(self):
         self.node.removeObserver(self)
         
@@ -81,6 +85,9 @@ def set_condition_options(ainode):
     condition_id = int(raw_input('Enter condition id: '))
     condition_options = input('Enter condition options (as dict): ')
     ainode.node.send(messaging.SetConditionStateMessage(condition_id, condition_options))
+    
+def resend_data(ainode):
+    ainode.node.send(messaging.RequestAIStateMessage())
     
 def stop_script(ainode):
     ainode.node.send(messaging.ScriptControlMessage(messaging.ScriptCommand.Stop))
@@ -139,7 +146,7 @@ if __name__=='__main__':
     m.addFunction('Listen', listen, 'Listen to ai messages', {})
     m.addFunction('Listen to state', listen_state, 'Listen to ai state messages', {})
     m.addFunction('Stop listening to state', stop_listen_state, 'Stop listening to ai state messages', {})
-    m.addFunction('Shell', shell, '', {})
+    m.addFunction('Resend data', resend_data, '', {})
     
     t = menu('Task menu', '')
     t.addFunction('Add Task', add_task, '', {})

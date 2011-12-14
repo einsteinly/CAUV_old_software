@@ -17,6 +17,7 @@
 #include "sonarInputNode.h"
 #include "sonarShadowFilterNode.h"
 #include "polarImageToXYNode.h"
+#include "sonarImageEdgeNode.h"
 
 namespace cauv{
 namespace imgproc{
@@ -25,6 +26,7 @@ namespace imgproc{
 DEFINE_NFR(SonarInputNode, NodeType::SonarInput);
 DEFINE_NFR(SonarShadowFilterNode, NodeType::SonarShadowFilter);
 DEFINE_NFR(PolarImageToXYNode, NodeType::PolarImageToXY);
+DEFINE_NFR(SonarImageEdgeNode, NodeType::SonarImageEdge);
 
 } // namespace imgproc
 } // namespace cauv
