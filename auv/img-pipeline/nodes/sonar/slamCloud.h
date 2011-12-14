@@ -86,10 +86,9 @@ class SlamCloud: public pcl::PointCloud<PointT>,
             }
         }
 
-        void mergeOutsideConcaveHull(Ptr source, float const& alpha = 5.0f){
+        void mergeOutsideConcaveHull(Ptr source, float const& alpha = 5.0f, float const& merge_distance=0.0f){
             pcl::ConcaveHull<PointT> hull_calculator;
             typename BaseT::Ptr hull(new BaseT);
-            BaseT output;            
             std::vector<pcl::Vertices> polygons;
 
             hull_calculator.setInputCloud(shared_from_this());
@@ -109,10 +108,26 @@ class SlamCloud: public pcl::PointCloud<PointT>,
             crop_filter.setDim(dim);
             crop_filter.setCropOutside(false);
             
-            crop_filter.filter(output);
-            debug() << output.size() << "/" << source->size() << "passed filter";
+            std::vector<int> output_indices;
+            crop_filter.filter(output_indices); 
+            debug() << output_indices.size() << "/" << source->size() << "passed filter";
+
+            Ptr output(new SlamCloud<PointT>); 
+            output->m_transformation = source->m_transformation;
+            output->reserve(output_indices.size());
+            foreach(int i, output_indices)
+                output->push_back(source->points[i], source->m_point_descriptors[i]);
             
-            BaseT::operator+=(output);
+            if(merge_distance == 0.0f){
+                BaseT::operator+=(*output);
+                m_point_descriptors.insert(
+                    m_point_descriptors.end(),
+                    output->m_point_descriptors.begin(),
+                    output->m_point_descriptors.end()
+                );
+            }else{
+                mergeCollapseNearest(output, merge_distance);
+            }
         }
 
         // "overridden" methods: note that none of the base class methods are
@@ -121,6 +136,11 @@ class SlamCloud: public pcl::PointCloud<PointT>,
         void reserve(std::size_t s){
             BaseT::reserve(s);
             m_point_descriptors.reserve(s);
+        }
+
+        inline void push_back(PointT const& p, descriptor_t const& d){
+            BaseT::push_back(p);
+            m_point_descriptors.push_back(d);
         }
 
     private:
