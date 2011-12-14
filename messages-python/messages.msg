@@ -93,6 +93,7 @@ enum NodeType : int8 {
     LocalMaxima,
     SonarShadowFilter,
     PolarImageToXY,
+    SonarImageEdge,
 }
 enum NodeStatus : int8 {
     None = 0,
