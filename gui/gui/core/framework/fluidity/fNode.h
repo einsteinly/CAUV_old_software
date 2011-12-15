@@ -30,7 +30,7 @@
 #include <generated/types/LocalNodeOutput.h>
 #include <generated/types/NodeInput.h>
 #include <generated/types/NodeOutput.h>
-#include <generated/types/NodeParamValue.h>
+#include <generated/types/ParamValue.h>
 #include <generated/types/NodeAddedMessage.h>
 #include <generated/types/NodeType.h>
 
@@ -49,7 +49,7 @@ class FNode: public liquid::LiquidNode,
         typedef std::vector<cauv::NodeInput> msg_node_in_list_t;
         typedef std::map<cauv::LocalNodeOutput, msg_node_in_list_t> msg_node_output_map_t;
         typedef std::map<cauv::LocalNodeInput, cauv::NodeOutput> msg_node_input_map_t;
-        typedef std::map<cauv::LocalNodeInput, cauv::NodeParamValue> msg_node_param_map_t;
+        typedef std::map<cauv::LocalNodeInput, cauv::ParamValue> msg_node_param_map_t;
 
     protected:
         // - protected typedefs
