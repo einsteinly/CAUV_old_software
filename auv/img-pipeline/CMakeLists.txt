@@ -37,6 +37,7 @@ if (CAUV_POINTCLOUDS)
         set (PCL_LIBS ${PCL_COMMON_LIBRARIES}
                       ${PCL_REGISTRATION_LIBRARIES}
                       ${PCL_KDTREE_LIBRARIES}
+                      ${PCL_SURFACE_LIBRARIES}
                       ${PCL_FILTERS_LIBRARIES})
     endif()
 
