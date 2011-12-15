@@ -51,7 +51,7 @@ def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Mus
     return messaging.LocalNodeInput(input, subtype, schedType)
 
 Unpickle_Filters = {
-    'LocalNodeInput' : makeNewLocalNodeInput
+    'LocalNodeInput' : makeNewLocalNodeInput,
 }
 
 class FilterUnpickler(pickle.Unpickler):

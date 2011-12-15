@@ -272,12 +272,6 @@ struct KeyPoint
     octave : float;
     class_id : float;
 }
-variant ParamValue
-{
-    int32, float, string, bool,
-    list<Corner>, list<Line>, list<Circle>, list<float>,
-    list<KeyPoint>
-}
 struct ScriptResponse
 {
     response : string;
@@ -292,7 +286,26 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
+enum BoundedFloatType : int8 {
+    Clamps, Wraps
+}
+struct BoundedFloatBase
+{
+    value : float;
+    min : float;
+    max : float;
+    type : BoundedFloatType;
+}
 class Image : <common/image.h>
+class BoundedFloat : <common/bounded_float.h>
+
+variant ParamValue
+{
+    int32, float, string, bool,
+    list<Corner>, list<Line>, list<Circle>, list<float>,
+    list<KeyPoint>,
+    BoundedFloat
+}
 
 group membership
 {

@@ -193,6 +193,15 @@ struct makePVPairHelper< const std::vector<T> >
         return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
     }
 };
+template<>
+struct makePVPairHelper< const BoundedFloat >
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const BoundedFloat& val, bool) {
+        std::stringstream ss;
+        ss << val.min <<":"<< val.value <<":"<< val.max; 
+        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
+    }
+};
 
 struct PVPairVisitor: public boost::static_visitor< boost::shared_ptr<PVPairEditableBase> >
 {
