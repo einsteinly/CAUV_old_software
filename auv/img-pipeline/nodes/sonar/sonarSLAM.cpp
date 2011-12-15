@@ -56,8 +56,6 @@ static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
 
 class SonarSLAMImpl{
     public:
-        const static int Vis_Res = 800;
-
         SonarSLAMImpl()
             : whole_cloud(),
               last_cloud(),
@@ -68,8 +66,9 @@ class SonarSLAMImpl{
               #endif
               m_min(std::numeric_limits<float>().max(), std::numeric_limits<float>().max()),
               m_max(-std::numeric_limits<float>().max(), -std::numeric_limits<float>().max()),
-              m_vis_buffer(cv::Size(Vis_Res,Vis_Res), CV_8UC1, cv::Scalar(0)),
-              m_vis_origin(Vis_Res/2,Vis_Res/2){
+              m_vis_res(800),
+              m_vis_origin(m_vis_res/2,m_vis_res/2),              
+              m_vis_buffer(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0)){
         }
 
         void init(cloud_ptr cloud){
@@ -82,7 +81,7 @@ class SonarSLAMImpl{
         void reset(){
             whole_cloud.reset();
             clouds.clear();
-            m_vis_buffer = cv::Mat(cv::Size(Vis_Res,Vis_Res), CV_8UC1, cv::Scalar(0));
+            m_vis_buffer = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
         }
 
         void addNewCloud(cloud_ptr cloud,
@@ -93,7 +92,7 @@ class SonarSLAMImpl{
             static uint32_t cloud_num = 0;
             clouds[++cloud_num] = cloud;
             //whole_cloud->mergeCollapseNearest(cloud, point_merge_distance);
-            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha);
+            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha, point_merge_distance);
             last_transformation = cloud->transformation();            
             last_cloud = cloud;
 
@@ -116,7 +115,7 @@ class SonarSLAMImpl{
             return std::min(std::max(src, dst), uint8_t(0xff - ((0xff-src)*(0xff-dst))/0xff));
         }
         void updateVis(cv::Mat img, Eigen::Matrix4f transformation, float m_per_px){
-            cv::Mat tmp = cv::Mat(cv::Size(Vis_Res,Vis_Res), CV_8UC1, cv::Scalar(0));
+            cv::Mat tmp = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
             Eigen::Vector2f img_origin(img.cols/2.0, img.rows/2.0);
             Eigen::Vector3f xytheta = xythetaFrom4dAffine(transformation);
             cv::Mat tr = cv::getRotationMatrix2D(cv::Point2f(img_origin[0], img_origin[1]), -xytheta[2], 1.0);
@@ -129,13 +128,23 @@ class SonarSLAMImpl{
                     img.at<uint8_t>(int(0.5+img_origin[0]+x),int(0.5+img_origin[1]+y)) = 0xff;
 
             cv::warpAffine(img, tmp, tr, m_vis_buffer.size(), CV_INTER_LINEAR);
-            for(int i = 0; i < Vis_Res; i++)
-                for(int j = 0; j < Vis_Res; j++)
-                    m_vis_buffer.at<uint8_t>(i,j) = minMaxScreenBlend(m_vis_buffer.at<uint8_t>(i,j), tmp.at<uint8_t>(i,j));
+            for(int i = 0; i < m_vis_res; i++)
+                for(int j = 0; j < m_vis_res; j++)
+                    m_vis_buffer.at<uint8_t>(i,j) = minMaxScreenBlend(
+                        m_vis_buffer.at<uint8_t>(i,j), tmp.at<uint8_t>(i,j)
+                    );
         }
 
         cv::Mat const& vis(){
             return m_vis_buffer;
+        }
+
+        void setVisProperties(int size, Eigen::Vector2f const& origin){
+            if(m_vis_res != size || m_vis_origin != origin){
+                m_vis_res = size;
+                m_vis_origin = origin;
+                m_vis_buffer = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
+            }
         }
 
         void updateMinMax(cloud_t const& cloud){
@@ -164,8 +173,9 @@ class SonarSLAMImpl{
     private:
         Eigen::Vector2f m_min;
         Eigen::Vector2f m_max;
-        cv::Mat m_vis_buffer;
+        int m_vis_res;        
         Eigen::Vector2f m_vis_origin;
+        cv::Mat m_vis_buffer;
 };
 #ifdef CAUV_CLOUD_VISUALISATION
 uint32_t SonarSLAMImpl::viewer_count = 0;
@@ -320,6 +330,9 @@ void SonarSLAMNode::init(){
     registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
 
     registerParamID("-render size", float(400));
+    registerParamID("-vis size", int(800));
+    registerParamID("-vis origin x", int(400));
+    registerParamID("-vis origin y", int(400));
 
     // outputs:
     registerOutputID("whole cloud vis");
@@ -348,6 +361,10 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     const Eigen::Vector2i render_sz(param<float>("-render size"),param<float>("-render size"));
 
     const float m_per_pix = param<float>("xy metres/px");
+    const int vis_size = param<int>("-vis size");
+    const Eigen::Vector2f vis_origin(param<int>("-vis origin x"), param<int>("-vis origin y"));
+    m_impl->setVisProperties(vis_size, vis_origin);
+
     image_ptr_t xy_image = inputs["xy image"];
 
     Eigen::Matrix4f delta_transformation = Eigen::Matrix4f::Identity();

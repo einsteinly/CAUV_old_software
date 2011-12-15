@@ -56,7 +56,7 @@ class MathAddMultNode: public Node{
             T b = param<T>("B");
             float a_fac = param<float>("Afac");
             float b_fac = param<float>("Bfac");
-            r["A*Afac + B*Bfac"] = NodeParamValue(T(a*a_fac + b*b_fac));
+            r["A*Afac + B*Bfac"] = ParamValue(T(a*a_fac + b*b_fac));
             return r;
         }
     

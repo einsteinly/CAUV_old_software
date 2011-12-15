@@ -12,10 +12,29 @@ from AI_classes import aiProcess, external_function, force_calling_process
 
 control_listen_to = ['prop', 'strafe', ]
 
+class slightlyModifiedAUV(control.AUV):
+    def __init__(self, node):
+        control.AUV.__init__(self, node)
+        self.depth_limit = None
+        self.prop_limit = None
+    def depth(self, value):
+        if self.depth_limit and self.depth_limit<value:
+            control.AUV.depth(self, self.depth_limit)
+            getattr(self.ai, self.current_task_id).depthOverridden()
+        else:
+            control.AUV.depth(self, value)
+    def prop(self, value):
+        if self.prop_limit and self.prop_limit<value:
+            control.AUV.prop(self, self.prop_limit)
+            getattr(self.ai, self.current_task_id).propOverridden()
+        else:
+            control.AUV.prop(self, value)
+    
+
 class auvControl(aiProcess):
     def __init__(self, **kwargs):
         aiProcess.__init__(self, 'auv_control')
-        self.auv = control.AUV(self.node)
+        self.auv = slightlyModifiedAUV(self.node)
         self.sonar = sonar.Sonar(self.node)
         self.current_calling_process = None
         self.enabled = threading.Event()
@@ -28,6 +47,8 @@ class auvControl(aiProcess):
         self.signal_msgs = Queue.Queue(5)
         self._control_state = {}
         self._sonar_state = {}
+        
+    #SCRIPT COMMANDS
     @external_function
     @force_calling_process
     def auv_command(self, command, *args, **kwargs):
@@ -38,22 +59,54 @@ class auvControl(aiProcess):
         #note, we don't care about errors here, cos they'l be caught by the message handler.
         #Also the message handler will tell us which message from who caused the error
         debug('auvControl::auv_command(self, calling_process=%s, cmd=%s, args=%s, kwargs=%s)' % (calling_process, command, args, kwargs), 5)
-        if self.enabled.is_set() and (not self.paused.is_set()) and self.current_calling_process == calling_process:
-            debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
-            getattr(self.auv, command)(*args, **kwargs)
-            self._control_state[command] = (args, kwargs)
+        if self.enabled.is_set() and (not self.paused.is_set()):
+            if self.current_calling_process == calling_process:
+                debug('Will call %s(*args, **kwargs)' % (getattr(self.auv, command)), 5)
+                getattr(self.auv, command)(*args, **kwargs)
+                self._control_state[command] = (args, kwargs)
+            else:
+                warning('Script %s tried to move auv when scipt %s was in control' %(calling_process, self.current_calling_process))
         else:
-            debug('Function not called, auv disabled or called from non-current script.', 5)
+            debug('Function not calledas paused or disabled.', 5)
     @external_function
     @force_calling_process
     def sonar_command(self, command, *args, **kwargs):
         calling_process = kwargs.pop('calling_process')
         if self.enabled.is_set() and (not self.paused.is_set()) and self.current_calling_process == calling_process:
             getattr(self.sonar, command)(*args, **kwargs)
+            
+    #GENERAL FUNCTIONS (that could be called from anywhere)
+    @external_function
+    def stop(self):
+        #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value
+        self.auv.prop(0)
+        self.auv.hbow(0)
+        self.auv.vbow(0)
+        self.auv.hstern(0)
+        self.auv.vstern(0)
+        if self.auv.bearing != None:
+            self.auv.bearing(self.auv.current_bearing)
+        self.auv.pitch(0)
+        if self.auv.depth != None:
+            self.auv.depth(self.auv.current_depth)
+    @external_function
+    def lights_off(self):
+        self.auv.downlights(0)
+        self.auv.forwardlights(0)
+    @external_function
+    def signal(self, value):
+        try:
+            self.signal_msgs.put(value)
+        except Queue.Full:
+            error('Signalling queue is full, dropping request for signal')
+    
+    #TASK MANAGER COMMANDS
     @external_function
     def set_task_id(self, task_id):
         #different name to avoid auto replace
         self.current_calling_process = task_id
+        
+    #OBSTACLE AVOIDANCE COMMANDS
     @external_function
     def enable(self):
         self.enabled.set()
@@ -82,7 +135,7 @@ class auvControl(aiProcess):
     def timeout_resume(self, calling_process):
         result = self.resume(calling_process)
         if result:
-            getattr(self.ai, calling_process).onPauseTimeout()
+            getattr(self.ai, calling_process).on_pause_timeout()
     @external_function
     def resume(self, calling_process):
         #restore control values, hopefully won't timeout at same time as manual resume
@@ -96,38 +149,13 @@ class auvControl(aiProcess):
             return True
         return False
     @external_function
-    def stop(self):
-        #if the sub keeps turning to far, it might be an idea instead of calling stop which disables auto pilots to set them to the current value
-        self.auv.prop(0)
-        self.auv.hbow(0)
-        self.auv.vbow(0)
-        self.auv.hstern(0)
-        self.auv.vstern(0)
-        if self.auv.bearing != None:
-            self.auv.bearing(self.auv.current_bearing)
-        self.auv.pitch(0)
-        if self.auv.depth != None:
-            self.auv.depth(self.auv.current_depth)
-    @external_function
-    def lights_off(self):
-        self.auv.downlights(0)
-        self.auv.forwardlights(0)
-    @external_function
-    def signal(self, value):
-        try:
-            self.signal_msgs.put(value)
-        except Queue.Full:
-            error('Signalling queue is full, dropping request for signal')
-    @external_function
-    def depth(self, value):
-        if self.depth_limit and self.depth_limit<value:
-            self.auv.depth(self.depth_limit)
-            getattr(self.ai, self.current_task_id).depthOverridden()
-        else:
-            self.auv.depth(value)
-    @external_function
     def limit_depth(self, value):
-        self.depth_limit = value
+        self.auv.depth_limit = value
+    @external_function
+    def limit_prop(self, value):
+        self.auv.prop_limit = value
+        
+    #MAIN LOOP
     def run(self):
         self.auv.forwardlights(0)
         while True:

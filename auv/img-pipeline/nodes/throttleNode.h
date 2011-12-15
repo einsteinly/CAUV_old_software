@@ -172,9 +172,9 @@ class ThrottleNode: public Node{
             TimeStamp n = now();
             double tdiff = (n.secs - m_last_exec.secs) + (n.musecs - m_last_exec.musecs)/1e6;
             if(tdiff > 0)
-                r["actual frequency"] = NodeParamValue(float(1.0/tdiff));
+                r["actual frequency"] = ParamValue(float(1.0/tdiff));
             else
-                r["actual frequency"] = NodeParamValue(0.0f);
+                r["actual frequency"] = ParamValue(0.0f);
 
             m_last_exec = now();
 

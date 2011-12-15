@@ -36,7 +36,7 @@ class ValueInputNode: public Node{
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
             const Value_T value = param<Value_T>("value");
-            r["value"] = NodeParamValue(value);
+            r["value"] = ParamValue(value);
             return r;
         }
     

@@ -93,6 +93,7 @@ enum NodeType : int8 {
     LocalMaxima,
     SonarShadowFilter,
     PolarImageToXY,
+    SonarImageEdge,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -271,16 +272,6 @@ struct KeyPoint
     octave : float;
     class_id : float;
 }
-variant NodeParamValue
-{
-    int32, float, string, bool,
-    list<Corner>, list<Line>, list<Circle>, list<float>,
-    list<KeyPoint>
-}
-variant AiParamValue
-{
-    int32, float, string, bool
-}
 struct ScriptResponse
 {
     response : string;
@@ -295,7 +286,26 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
+enum BoundedFloatType : int8 {
+    Clamps, Wraps
+}
+struct BoundedFloatBase
+{
+    value : float;
+    min : float;
+    max : float;
+    type : BoundedFloatType;
+}
 class Image : <common/image.h>
+class BoundedFloat : <common/bounded_float.h>
+
+variant ParamValue
+{
+    int32, float, string, bool,
+    list<Corner>, list<Line>, list<Circle>, list<float>,
+    list<KeyPoint>,
+    BoundedFloat
+}
 
 group membership
 {
@@ -560,7 +570,7 @@ group pipeline
         pipelineName : string;
         nodeId : int32;
         paramId : string;
-        value : NodeParamValue;
+        value : ParamValue;
     }
 
     message AddArc : 9
@@ -682,7 +692,7 @@ group pl_gui
         nodeType : NodeType;
         inputs : map<LocalNodeInput, NodeOutput>;
         outputs : map<LocalNodeOutput, list<NodeInput> >;
-        params : map<LocalNodeInput, NodeParamValue>;
+        params : map<LocalNodeInput, ParamValue>;
     }
 
     message NodeRemoved : 116
@@ -695,7 +705,7 @@ group pl_gui
     {
         pipelineName : string;
         nodeId : int32;
-        params : map<LocalNodeInput, NodeParamValue>;
+        params : map<LocalNodeInput, ParamValue>;
     }
 
     message GraphDescription : 118
@@ -704,7 +714,7 @@ group pl_gui
         lazy nodeTypes : map<int32, NodeType>;
         lazy nodeInputs : map<int32, map<LocalNodeInput, NodeOutput> >;
         lazy nodeOutputs : map<int32, map<LocalNodeOutput, list<NodeInput> > >;
-        lazy nodeParams : map<int32, map<LocalNodeInput, NodeParamValue> >;
+        lazy nodeParams : map<int32, map<LocalNodeInput, ParamValue> >;
     }
 
     message ArcAdded : 119
@@ -794,8 +804,8 @@ group guiai
     {
         taskId : int32;
         conditionIds : list<int32>;
-        taskOptions : map<string, AiParamValue>;
-        scriptOptions : map<string, AiParamValue>;
+        taskOptions : map<string, ParamValue>;
+        scriptOptions : map<string, ParamValue>;
     }
     message TaskRemoved : 205
     {
@@ -805,15 +815,15 @@ group guiai
     {
         taskId : int32;
         conditionIds : list<int32>;
-        taskOptions : map<string, AiParamValue>;
-        dynamicScriptOptions : map<string, AiParamValue>;
-        staticScriptOptions : map<string, AiParamValue>;
+        taskOptions : map<string, ParamValue>;
+        dynamicScriptOptions : map<string, ParamValue>;
+        staticScriptOptions : map<string, ParamValue>;
         isCurrentlyRunning : bool;
     }
     message ScriptState : 207
     {
         taskId : int32;
-        debugValues : map<string, AiParamValue>;
+        debugValues : map<string, ParamValue>;
         pipelineIds : list<string>;
     }
     message AddCondition : 208
@@ -827,7 +837,7 @@ group guiai
     message SetConditionState : 210
     {
         conditionId : int32;
-        conditionOptions : map<string, AiParamValue>;
+        conditionOptions : map<string, ParamValue>;
     }
     message ConditionRemoved : 211
     {
@@ -836,8 +846,8 @@ group guiai
     message ConditionState : 212
     {
         conditionId : int32;
-        conditionOptions : map<string, AiParamValue>;
-        debugValues : map<string, AiParamValue>;
+        conditionOptions : map<string, ParamValue>;
+        debugValues : map<string, ParamValue>;
     }
     message TaskTypes : 213
     {
@@ -847,7 +857,7 @@ group guiai
     {
         conditionTypes : map<string, list<string>>;
     }
-    message RequestStateMessage : 215
+    message RequestAIState : 215
     {
     }
     message ScriptControl : 216

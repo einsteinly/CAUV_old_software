@@ -11,7 +11,7 @@ def fromNPV(npv):
     return npv.value
 
 def toNPV(value):
-    return messaging.NodeParamValue.create(value);
+    return messaging.ParamValue.create(value);
  
 class Node:
     def __init__(self, id, type, parameters = None, inputarcs = None, outputarcs = None):
@@ -51,7 +51,7 @@ def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Mus
     return messaging.LocalNodeInput(input, subtype, schedType)
 
 Unpickle_Filters = {
-    'LocalNodeInput' : makeNewLocalNodeInput
+    'LocalNodeInput' : makeNewLocalNodeInput,
 }
 
 class FilterUnpickler(pickle.Unpickler):

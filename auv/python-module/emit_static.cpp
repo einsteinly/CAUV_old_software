@@ -6,6 +6,7 @@
 #include <common/cauv_node.h>
 #include <common/spread/msgsrc_mb_observer.h>
 #include <common/spread/spread_rc_mailbox.h>
+#include <common/bounded_float.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
 
@@ -379,4 +380,11 @@ void emitAIMessageObserver(){
 
 void emitPostGenerated(){
     bp::def("mkByteVec", mkByteVec);
+    
+    // lacking in doc comments...
+    bp::class_<BoundedFloat,
+               bp::bases<BoundedFloatBase>,
+               boost::shared_ptr<BoundedFloat> 
+              >("BoundedFloat",bp::init<float,float,float,BoundedFloatType::e>())
+        ;
 }

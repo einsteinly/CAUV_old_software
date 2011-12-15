@@ -115,7 +115,7 @@ class BearingRangeToXYNode: public Node{
             kp_vec in_kps = param< kp_vec >("keypoints");
             augmented_mat_t in = img->augmentedMat();
 
-            r["keypoints"] = NodeParamValue(boost::apply_visitor(
+            r["keypoints"] = ParamValue(boost::apply_visitor(
                 convertKeyPoints(in_kps), in
             ));
             

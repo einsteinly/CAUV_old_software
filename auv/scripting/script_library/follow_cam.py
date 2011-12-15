@@ -22,13 +22,13 @@ class scriptOptions(aiScriptOptions):
     ready_timeout = 30
     lost_timeout = 15
     # Calibration
-    centre_error = 0.1 # of image
+    centre_error = 0.05 # of image
     align_error  = 10   # degrees 
     # Control
     prop_speed = 100
-    max_search_angle = 50
+    max_search_angle = 65
     search_angle_increment = 5
-    strafe_kPID  = (-300, 0, 0)
+    strafe_kPID  = (-280, 0, 0)
 
     
     class Meta:
@@ -178,10 +178,11 @@ class script(aiScript):
                 info('Cam follow: The edge of River Cam is lost, trying to find it again.') 
                 if self.auv.getBearing():  #In case it is none type     
                     current_bearing = self.auv.getBearing()   
+                    #Osicllate rotating with increasing angle to find the river edge again
                     for angle in range(self.options.search_angle_increment, self.options.max_search_angle, self.options.search_angle_increment):
                         if self.detected.is_set() is False:
                             info('oscillating by %i degrees' %angle)
-                            self.auv.bearingAndWait((current_bearing+angle)%360) #Perform 1 revolution of self rotation until the AUV is aligned again
+                            self.auv.bearingAndWait((current_bearing+angle)%360)
                         if self.detected.is_set() is False:
                             self.auv.bearingAndWait((current_bearing-angle)%360)
                         if self.detected.is_set() is True:
@@ -198,6 +199,9 @@ class script(aiScript):
 
 
 if __name__=="__main__":
-        cam_follower=script()
-        cam_follower.run()
+        cam_follower=script('cam_follow', scriptOptions())
+        try:
+            cam_follower.run()
+        finally:
+            cam_follower.stop()
 

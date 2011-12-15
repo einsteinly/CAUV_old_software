@@ -5,6 +5,7 @@ tags
 *.a
 *~
 *.old?
+*.sed0
 *.orig
 *.lex.*
 *.yacc.*

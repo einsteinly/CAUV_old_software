@@ -9,7 +9,7 @@
 
 #include <debug/cauv_debug.h>
 #include <generated/types/NodeType.h>
-#include <generated/types/NodeParamValue.h>
+#include <generated/types/ParamValue.h>
 #include <generated/types/SetNodeParameterMessage.h>
 #include <generated/types/GraphRequestMessage.h>
 #include <generated/types/RemoveNodeMessage.h>
@@ -38,7 +38,7 @@ class Node: public Draggable,
         typedef std::vector<NodeInput> msg_node_in_list_t;
         typedef std::map<LocalNodeOutput, msg_node_in_list_t> msg_node_output_map_t;
         typedef std::map<LocalNodeInput, NodeOutput> msg_node_input_map_t;
-        typedef std::map<LocalNodeInput, NodeParamValue> msg_node_param_map_t;
+        typedef std::map<LocalNodeInput, ParamValue> msg_node_param_map_t;
     
     private:
         // private typedefs used internally:
@@ -111,7 +111,7 @@ class Node: public Draggable,
             debug() << "Node::paramValueChanged" << param << v;
             boost::shared_ptr<SetNodeParameterMessage> sp =
                 boost::make_shared<SetNodeParameterMessage>();
-            NodeParamValue pv = v;
+            ParamValue pv = v;
             sp->pipelineName(m_pw->pipelineName());
             sp->nodeId(m_node_id);
             sp->paramId(param);

@@ -210,10 +210,10 @@ class SonarInputNode: public InputNode{
             boost::shared_ptr<SonarDataMessage const> m_back = msgs.back();
 
             r["data line"] = boost::make_shared<Image>(cv::Mat(m_back->line().data, true).t());
-            r["bearing"] = NodeParamValue(m_back->line().bearing);
-            r["bearing range"] = NodeParamValue(m_back->line().bearingRange);
+            r["bearing"] = ParamValue(m_back->line().bearing);
+            r["bearing range"] = ParamValue(m_back->line().bearingRange);
             // !!! TODO: convert range to metres
-            r["range"] = NodeParamValue(float(m_back->line().range));
+            r["range"] = ParamValue(float(m_back->line().range));
             
             // NB: output is not copied! use a CopyNode if you don't want to
             // stamp all over the buffer
@@ -297,7 +297,7 @@ class SonarInputNode: public InputNode{
             }
             r["polar image"] = r_polar_img;
             r["timestamp"] = timeStampToString(image_msg->image().timeStamp);
-            r["range"] = NodeParamValue(float(end_range_m));
+            r["range"] = ParamValue(float(end_range_m));
             r["data line"] = boost::make_shared<Image>(
                 cv::Mat(r_polar_mat.mat,cv::Rect(int(cols+0.5)/2,0,1,rows)).clone()
             );

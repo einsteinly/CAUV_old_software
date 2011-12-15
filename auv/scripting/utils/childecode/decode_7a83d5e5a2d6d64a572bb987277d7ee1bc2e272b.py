@@ -61,7 +61,7 @@ p_KeyPoint = pp.Forward()
 p_ScriptResponse = pp.Forward()
 p_ScriptExecRequest = pp.Forward()
 
-p_NodeParamValue = pp.Forward()
+p_ParamValue = pp.Forward()
 
 p_int32Vec = pp.Forward()
 p_NodeOutputArcVec = pp.Forward()
@@ -74,12 +74,12 @@ p_byteVec = pp.Forward()
 p_CircleVec = pp.Forward()
 p_NodeInputArcVec = pp.Forward()
 
-p_int32stringNodeParamValueMapMap = pp.Forward()
+p_int32stringParamValueMapMap = pp.Forward()
 p_int32NodeTypeEMap = pp.Forward()
 p_int32stringNodeInputVecMapMap = pp.Forward()
 p_stringNodeInputVecMap = pp.Forward()
 p_int32stringNodeOutputMapMap = pp.Forward()
-p_stringNodeParamValueMap = pp.Forward()
+p_stringParamValueMap = pp.Forward()
 p_stringNodeOutputMap = pp.Forward()
 
 p_DebugType = pp.Forward()
@@ -226,34 +226,34 @@ p_ScriptExecRequest << pp.Group(l \
 p_ScriptExecRequest.setParseAction(lambda x: messaging.ScriptExecRequest(*x[0]))
 
 # Parse Variants
-p_NodeParamValue_0 = l + pp.Literal('0') + c + p_int  + r
-p_NodeParamValue_0.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_1 = l + pp.Literal('1') + c + p_float  + r
-p_NodeParamValue_1.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_2 = l + pp.Literal('2') + c + p_str  + r
-p_NodeParamValue_2.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_3 = l + pp.Literal('3') + c + p_bool  + r
-p_NodeParamValue_3.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_4 = l + pp.Literal('4') + c + p_CornerVec  + r
-p_NodeParamValue_4.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_5 = l + pp.Literal('5') + c + p_LineVec  + r
-p_NodeParamValue_5.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_6 = l + pp.Literal('6') + c + p_CircleVec  + r
-p_NodeParamValue_6.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_7 = l + pp.Literal('7') + c + p_floatVec  + r
-p_NodeParamValue_7.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue_8 = l + pp.Literal('8') + c + p_KeyPointVec  + r
-p_NodeParamValue_8.setParseAction(lambda x: messaging.NodeParamValue.create(x[1]))
-p_NodeParamValue << (
-    p_NodeParamValue_0 ^
-    p_NodeParamValue_1 ^
-    p_NodeParamValue_2 ^
-    p_NodeParamValue_3 ^
-    p_NodeParamValue_4 ^
-    p_NodeParamValue_5 ^
-    p_NodeParamValue_6 ^
-    p_NodeParamValue_7 ^
-    p_NodeParamValue_8)
+p_ParamValue_0 = l + pp.Literal('0') + c + p_int  + r
+p_ParamValue_0.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_1 = l + pp.Literal('1') + c + p_float  + r
+p_ParamValue_1.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_2 = l + pp.Literal('2') + c + p_str  + r
+p_ParamValue_2.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_3 = l + pp.Literal('3') + c + p_bool  + r
+p_ParamValue_3.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_4 = l + pp.Literal('4') + c + p_CornerVec  + r
+p_ParamValue_4.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_5 = l + pp.Literal('5') + c + p_LineVec  + r
+p_ParamValue_5.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_6 = l + pp.Literal('6') + c + p_CircleVec  + r
+p_ParamValue_6.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_7 = l + pp.Literal('7') + c + p_floatVec  + r
+p_ParamValue_7.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue_8 = l + pp.Literal('8') + c + p_KeyPointVec  + r
+p_ParamValue_8.setParseAction(lambda x: messaging.ParamValue.create(x[1]))
+p_ParamValue << (
+    p_ParamValue_0 ^
+    p_ParamValue_1 ^
+    p_ParamValue_2 ^
+    p_ParamValue_3 ^
+    p_ParamValue_4 ^
+    p_ParamValue_5 ^
+    p_ParamValue_6 ^
+    p_ParamValue_7 ^
+    p_ParamValue_8)
 
 # Parse action generator for vector types
 def a__vec_gen(T):
@@ -305,8 +305,8 @@ def a__map_gen(T):
     return a__map
 
 # Parse Map Types
-p_int32stringNodeParamValueMapMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_int + c + p_stringNodeParamValueMap + r)) + r)
-p_int32stringNodeParamValueMapMap.setParseAction(a__map_gen(messaging.int32stringNodeParamValueMapMap))
+p_int32stringParamValueMapMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_int + c + p_stringParamValueMap + r)) + r)
+p_int32stringParamValueMapMap.setParseAction(a__map_gen(messaging.int32stringParamValueMapMap))
 p_int32NodeTypeEMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_int + c + p_NodeType + r)) + r)
 p_int32NodeTypeEMap.setParseAction(a__map_gen(messaging.int32NodeTypeEMap))
 p_int32stringNodeInputVecMapMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_int + c + p_stringNodeInputVecMap + r)) + r)
@@ -315,8 +315,8 @@ p_stringNodeInputVecMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_str +
 p_stringNodeInputVecMap.setParseAction(a__map_gen(messaging.stringNodeInputVecMap))
 p_int32stringNodeOutputMapMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_int + c + p_stringNodeOutputMap + r)) + r)
 p_int32stringNodeOutputMapMap.setParseAction(a__map_gen(messaging.int32stringNodeOutputMapMap))
-p_stringNodeParamValueMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_str + c + p_NodeParamValue + r)) + r)
-p_stringNodeParamValueMap.setParseAction(a__map_gen(messaging.stringNodeParamValueMap))
+p_stringParamValueMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_str + c + p_ParamValue + r)) + r)
+p_stringParamValueMap.setParseAction(a__map_gen(messaging.stringParamValueMap))
 p_stringNodeOutputMap << pp.Group(l + pp.Optional(pp.delimitedList(l + p_str + c + p_NodeOutput + r)) + r)
 p_stringNodeOutputMap.setParseAction(a__map_gen(messaging.stringNodeOutputMap))
 
@@ -559,7 +559,7 @@ p_SetNodeParameterMessage = pp.Group(l \
     + p_str + c \
     + p_int + c \
     + p_str + c \
-    + p_NodeParamValue \
+    + p_ParamValue \
     + r).streamline()
 p_SetNodeParameterMessage.setParseAction(lambda x: messaging.SetNodeParameterMessage(*x[0]))
 p_AddArcMessage = pp.Group(l \
@@ -653,7 +653,7 @@ p_NodeAddedMessage = pp.Group(l \
     + p_NodeType + c \
     + p_stringNodeOutputMap + c \
     + p_stringNodeInputVecMap + c \
-    + p_stringNodeParamValueMap \
+    + p_stringParamValueMap \
     + r).streamline()
 p_NodeAddedMessage.setParseAction(lambda x: messaging.NodeAddedMessage(*x[0]))
 p_NodeRemovedMessage = pp.Group(l \
@@ -664,7 +664,7 @@ p_NodeRemovedMessage.setParseAction(lambda x: messaging.NodeRemovedMessage(*x[0]
 p_NodeParametersMessage = pp.Group(l \
     + p_str + c \
     + p_int + c \
-    + p_stringNodeParamValueMap \
+    + p_stringParamValueMap \
     + r).streamline()
 p_NodeParametersMessage.setParseAction(lambda x: messaging.NodeParametersMessage(*x[0]))
 p_GraphDescriptionMessage = pp.Group(l \
@@ -672,7 +672,7 @@ p_GraphDescriptionMessage = pp.Group(l \
     + p_int32NodeTypeEMap + c \
     + p_int32stringNodeOutputMapMap + c \
     + p_int32stringNodeInputVecMapMap + c \
-    + p_int32stringNodeParamValueMapMap \
+    + p_int32stringParamValueMapMap \
     + r).streamline()
 p_GraphDescriptionMessage.setParseAction(lambda x: messaging.GraphDescriptionMessage(*x[0]))
 p_ArcAddedMessage = pp.Group(l \
