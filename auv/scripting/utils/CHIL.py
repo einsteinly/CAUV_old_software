@@ -564,6 +564,8 @@ class ComponentPlayer(CHILer):
         try:
             return decoder.parseMessage(msgstring)
         except Exception, e:
+            import traceback
+            traceback.print_exc()
             return "failed to parse message at %s:%d" % (self.datname, seekpos)
     def swap(self, other):
         # dum di dum di dum
