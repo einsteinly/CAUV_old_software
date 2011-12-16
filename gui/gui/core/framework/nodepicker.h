@@ -21,7 +21,7 @@
 #include <debug/cauv_debug.h>
 
 #include <gui/core/model/model.h>
-
+#include <gui/core/model/nodes/numericnode.h>
 
 #include <QPainter>
 
@@ -29,6 +29,7 @@
 #include <QItemEditorFactory>
 #include <QItemEditorCreator>
 #include <QSpinBox>
+
 
 namespace Ui {
     class NodePicker;
@@ -61,103 +62,6 @@ namespace cauv {
             void filterChanged();
         };
 
-
-
-        class ProgressSpinBox : public QSpinBox {
-            Q_OBJECT
-
-        public:
-
-            Q_PROPERTY(int neutral READ getNeutral WRITE setNeutral USER true)
-            Q_PROPERTY(int value READ value WRITE setValue USER true)
-
-            ProgressSpinBox(QWidget * parent = 0) : QSpinBox(parent){
-                this->setAlignment(Qt::AlignHCenter);
-            }
-
-            int getNeutral(){
-                return m_neutral;
-            }
-
-            void setNeutral(int neutral){
-                m_neutral = neutral;
-            }
-
-        protected:
-            int m_neutral;
-        };
-
-
-
-        class NodeDelegateFactory
-        {
-        private:
-          NodeDelegateFactory(){}
-
-        public:
-          static boost::shared_ptr<QAbstractItemDelegate> getDelegateFor(boost::shared_ptr<Node> node);
-        };
-
-
-
-        class NodeDelegate : public QStyledItemDelegate
-        {
-            Q_OBJECT
-
-        public:
-            NodeDelegate(QObject *parent = 0) : QStyledItemDelegate(parent){
-
-                QItemEditorFactory * factory = new QItemEditorFactory();
-
-                factory->registerEditor(QVariant::Int, new QItemEditorCreator<ProgressSpinBox>("value"));
-                factory->registerEditor(QVariant::UInt, new QItemEditorCreator<ProgressSpinBox>("value"));
-
-                setItemEditorFactory(factory);
-            }
-
-            void paint(QPainter *painter,
-                       const QStyleOptionViewItem &option,
-                       const QModelIndex &index) const{
-
-                // sort out list decoration
-                if (!hasParent(index)) {
-                    // Paint the top-item
-                } else if (isLast(index)) {
-                    // Paint the bottom item
-                } else {
-                    // Paint middle items
-                }
-
-                // display the node
-                Node * node = dynamic_cast<Node*>((Node*)index.internalPointer());
-                if (node && index.column() == 1) {
-                    boost::shared_ptr<QAbstractItemDelegate> delegate = NodeDelegateFactory::getDelegateFor(node->shared_from_this());
-                    delegate->paint(painter, option, index);
-                } else QStyledItemDelegate::paint(painter, option, index);
-            }
-
-            QSize sizeHint(const QStyleOptionViewItem &option,
-                           const QModelIndex &index) const{
-                return QSize(100, 30);
-            }
-
-        private:
-            bool hasParent(const QModelIndex &index) const{
-                if (index.parent().isValid())
-                    return true;
-
-                return false;
-            }
-
-            bool isLast(const QModelIndex &index) const{
-                if (index.parent().isValid())
-                    if (!index.parent().child(index.row()+1,
-                                              index.column()).isValid())
-                        return true;
-
-                return false;
-            }
-        };
 
 
 
@@ -193,6 +97,8 @@ namespace cauv {
         public:
             NodePicker(boost::shared_ptr<NodeItemModel> const& root);
             virtual ~NodePicker();
+
+            void registerDelegate(GuiNodeType::e nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
 
         protected Q_SLOTS:
             void redirectKeyboardFocus(QKeyEvent* key);

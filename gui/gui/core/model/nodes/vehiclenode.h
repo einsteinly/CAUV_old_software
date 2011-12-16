@@ -15,8 +15,8 @@
 #ifndef GUI_VEHICLENODE_H
 #define GUI_VEHICLENODE_H
 
-#include "groupingnode.h"
-#include "../../controller/messagegenerators.h"
+#include <gui/core/model/nodes/groupingnode.h>
+#include <gui/core/model/messagegenerators.h>
 
 #include <generated/types/message.h>
 

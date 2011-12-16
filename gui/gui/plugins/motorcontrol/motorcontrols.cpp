@@ -91,10 +91,10 @@ void AutopilotController::configureTarget(){
 
     // max / min values
     if(targetNode->isMaxSet()){
-        m_target->setMaximum(targetNode->getMax());
+        m_target->setMaximum(targetNode->getMax().toDouble());
     }
     if(targetNode->isMinSet()) {
-        m_target->setMinimum(targetNode->getMin());
+        m_target->setMinimum(targetNode->getMin().toDouble());
     }
 
     // units
@@ -102,8 +102,8 @@ void AutopilotController::configureTarget(){
 
     // and a sensible step size
     if(targetNode->isMaxSet() && targetNode->isMinSet()){
-        float min = targetNode->getMin();
-        float max = targetNode->getMax();
+        float min = targetNode->getMin().toFloat();
+        float max = targetNode->getMax().toFloat();
         m_target->setSingleStep((max-min)/360.0); // 360 is a arbitary value
                                                     // just chosen to because its
                                                     // nice for degrees

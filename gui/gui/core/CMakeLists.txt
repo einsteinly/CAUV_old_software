@@ -33,20 +33,26 @@ include_directories (${guis_SOURCE_DIR})
 set ( GUI_CORE_SRCS
     nodedragging.cpp
     cauvbasicplugin.cpp
+
     widgets/videoscreen.cpp
     widgets/graph.cpp
+    widgets/neutralspinbox.cpp
+
     model/node.cpp
     model/variants.cpp
     model/model.cpp
     model/registry.cpp
-    controller/messageobserver.cpp
-    controller/messagegenerators.cpp
+    model/messageobserver.cpp
+    model/messagegenerators.cpp
+    model/utils/noderecorder.cpp
+
     framework/nodepicker.cpp
     framework/mainwindow.cpp
     framework/nodescene.cpp
     framework/elements/aiNode.cpp
+    framework/style.cpp
+
     #framework/elements/nodeInput.cpp
-    utils/noderecorder.cpp
 
     framework/fluidity/fNode.cpp
     framework/fluidity/imgNode.cpp
@@ -64,8 +70,11 @@ set ( GUI_CORE_UIS
 
 set ( GUI_CORE_H
     nodedragging.h
+
     widgets/videoscreen.h
     widgets/graph.h
+    widgets/neutralspinbox.h
+
     model/node.h
     model/model.h
     model/registry.h
@@ -74,10 +83,13 @@ set ( GUI_CORE_H
     model/nodes/imagenode.h
     model/nodes/groupingnode.h
     model/nodes/vehiclenode.h
-    controller/messagegenerators.h
+    model/messagegenerators.h
+
     framework/nodepicker.h
     framework/mainwindow.h
     framework/elements/aiNode.h
+    framework/style.h
+    framework/delegates.h
     #framework/elements/nodeInput.h
 
     framework/fluidity/view.h

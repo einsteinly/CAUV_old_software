@@ -26,22 +26,20 @@
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 
+#include "cauvplugins.h"
+
 #include "model/model.h"
 #include "model/registry.h"
-#include "cauvplugins.h"
-#include "controller/messageobserver.h"
+#include "model/messageobserver.h"
+
 #include "framework/nodescene.h"
 #include "framework/nodepicker.h"
 
 #include "fluidity/view.h"
 
-#include <liquid/arcSink.h>
-#include <elements/style.h>
-
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
-
 
 #include <gui/core/model/nodes/numericnode.h>
 

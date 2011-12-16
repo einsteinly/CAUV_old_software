@@ -14,7 +14,7 @@
 
 #include "model.h"
 
-#include "../controller/messagegenerators.h"
+#include "../model/messagegenerators.h"
 #include "../model/nodes/numericnode.h"
 
 using namespace cauv;

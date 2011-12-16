@@ -27,6 +27,7 @@
 #include <QFile>
 
 #include <gui/core/framework/mainwindow.h>
+#include <gui/core/framework/style.h>
 
 #include <common/cauv_utils.h>
 

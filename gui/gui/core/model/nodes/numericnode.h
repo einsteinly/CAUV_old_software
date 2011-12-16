@@ -18,6 +18,7 @@
 #include "../node.h"
 
 #include <QMetaType>
+#include <QVariant>
 
 namespace cauv {
     namespace gui {
@@ -33,7 +34,7 @@ namespace cauv {
 
 
         public:
-            std::string getUnits(){
+            std::string getUnits() const {
                 return m_units;
             }
 
@@ -41,15 +42,15 @@ namespace cauv {
                 m_units = units;
             }
 
-            bool isMaxSet(){
+            bool isMaxSet() const {
                 return m_maxSet;
             }
 
-            bool isMinSet(){
+            bool isMinSet() const{
                 return m_minSet;
             }
 
-            bool getWraps() {
+            bool getWraps() const {
                 return m_wraps;
             }
 
@@ -65,7 +66,7 @@ namespace cauv {
                 Q_EMIT paramsUpdated();
             }
 
-            unsigned int getPrecision(){
+            unsigned int getPrecision() const {
                 return m_precision;
             }
 
@@ -81,6 +82,14 @@ namespace cauv {
                 m_maxSet = true;
 
                 Q_EMIT paramsUpdated();
+            }
+
+            virtual QVariant getMax() const {
+                return m_max;
+            }
+
+            virtual QVariant getMin() const {
+                return m_min;
             }
 
         Q_SIGNALS:
@@ -107,30 +116,38 @@ namespace cauv {
                 return m_value.value<T>();
             }
 
-            virtual T wrap(T const& value){
+            virtual T wrap(T const& value) const {
                 // work out the range
-                T range = getMax()-getMin();
 
-                if(value < getMin()){
+                QVariant minV = getMin();
+                QVariant maxV = getMax();
+
+                T min = minV.value<T>();
+                T max = maxV.value<T>();
+                T range = max - min;
+
+                if(value < min){
                     T var = value + range;
                     return wrap(var);
-                } else if (value > getMax()){
+                } else if (value > max){
                     T var = value - range;
                     return wrap(var);
                 } else return value;
             }
 
 
-            virtual bool set(QVariant const& value){
+            virtual bool set(QVariant const& value) {
                 return set(value.value<T>());
             }
 
             virtual bool set(T const& value){
                 debug() << "NumericNode::set() cleaning value";
 
+                QVariant minV = getMin();
+                QVariant maxV = getMax();
+
                 // validate the input as this has come from
                 // a user.
-
                 T cleanVal = value;
 
                 // first check if the data wraps
@@ -139,23 +156,15 @@ namespace cauv {
                 // if not then maybe it's clamped?
                 else {
                     // upper bound check
-                    if(isMaxSet() && cleanVal > getMax())
-                        cleanVal = getMax();
+                    if(isMaxSet() && cleanVal > maxV.value<T>())
+                        cleanVal = maxV.value<T>();
 
                     // lower bound check
-                    if(isMinSet() && cleanVal < getMin())
-                        cleanVal = getMin();
+                    if(isMinSet() && cleanVal < minV.value<T>())
+                        cleanVal = minV.value<T>();
                 }
 
                 return NumericNodeBase::set(cleanVal);
-            }
-
-            virtual T getMax() {
-                return m_max.value<T>();
-            }
-
-            virtual T getMin() {
-                return m_min.value<T>();
             }
 
             virtual void setMin(T min){

@@ -22,9 +22,9 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "model/variants.h"
-#include "nodedragging.h"
-#include "utils/noderecorder.h"
+#include <gui/core/model/variants.h>
+#include <gui/core/model/utils/noderecorder.h>
+#include <gui/core/nodedragging.h>
 
 #include <qwt_series_data.h>
 #include <qwt_plot.h>
