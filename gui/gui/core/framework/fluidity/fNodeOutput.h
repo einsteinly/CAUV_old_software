@@ -63,7 +63,8 @@ class FNodeOutput: public QGraphicsWidget,
             m_text = new QGraphicsProxyWidget();
             m_text->setWidget(text_label);
             hlayout->addItem(m_text);
-
+            hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignRight);
+            
             hlayout->setItemSpacing(1, 4.0);
 
             m_source = new liquid::ArcSource(
@@ -71,6 +72,7 @@ class FNodeOutput: public QGraphicsWidget,
             );
             m_source->setParentItem(this);
             hlayout->addItem(m_source);
+            hlayout->setAlignment(m_source, Qt::AlignVCenter | Qt::AlignRight);            
 
             setLayout(hlayout);
             

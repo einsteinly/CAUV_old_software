@@ -112,8 +112,16 @@ void LiquidNode::addItem(QGraphicsLayoutItem *item){
 
     RequiresCutout *req_cutout = dynamic_cast<RequiresCutout*>(item);
     debug(7) << "addItem:: requires cutout = " << req_cutout;
-    if(req_cutout)
+    if(req_cutout){
+        // this ugly signal connection is necessary because if the cutout
+        // positions depend on the layout of the contents of a widget added as
+        // an item, then if the layout changes we need to change where the
+        // cutouts are:
+        QGraphicsWidget* as_widget = dynamic_cast<QGraphicsWidget*>(item);
+        if(as_widget)
+            connect(as_widget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
         m_items_requiring_cutout << req_cutout;
+    }
 }
 
 void LiquidNode::removeItem(QGraphicsLayoutItem *item){

@@ -133,8 +133,8 @@ QList<CutoutStyle> ArcSink::cutoutGeometry() const{
 // QGraphicsLayoutItem:
 void ArcSink::setGeometry(QRectF const& rect){
     debug(9) << "ArcSink::setGeometry" << rect.topLeft().x() << rect.topLeft().y() << rect.width() << rect.height();
+    QGraphicsLayoutItem::setGeometry(rect);    
     setPos(rect.topLeft() - m_rect.topLeft());
-    //QGraphicsLayoutItem::setGeometry(rect);
 }
 
 QSizeF ArcSink::sizeHint(Qt::SizeHint which,

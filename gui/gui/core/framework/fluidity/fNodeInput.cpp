@@ -52,6 +52,7 @@ FNodeInput::FNodeInput(Manager& m,
 
     m_arc_sink->setParentItem(this);
     hlayout->addItem(m_arc_sink);
+    hlayout->setAlignment(m_arc_sink, Qt::AlignVCenter | Qt::AlignLeft);
 
     QLabel* text_label = new QLabel(QString::fromStdString(text));
     text_label->setTextInteractionFlags(Qt::NoTextInteraction);
@@ -59,6 +60,7 @@ FNodeInput::FNodeInput(Manager& m,
     m_text = new QGraphicsProxyWidget();
     m_text->setWidget(text_label);
     hlayout->addItem(m_text);
+    hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignLeft);
 
     hlayout->setItemSpacing(1, 4.0); 
     

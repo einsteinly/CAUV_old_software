@@ -243,7 +243,7 @@ ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
 QSizeF ArcSource::sizeHint(Qt::SizeHint which, const QSizeF &constraint) const{
     Q_UNUSED(which);
     Q_UNUSED(constraint);
-    return boundingRect().size() + QSizeF(0,6);
+    return boundingRect().size();// + QSizeF(0,6);
 }
 
 void ArcSource::setGeometry(QRectF const& rect){
