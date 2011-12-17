@@ -30,6 +30,7 @@
 #include "fluidity/managedElement.h"
 #include "fluidity/manager.h"
 
+#include "../gui/core/framework/style.h"
 
 #include <common/cauv_node.h>
 
@@ -60,6 +61,7 @@ ViewWidget::ViewWidget(boost::shared_ptr<CauvNode> node, QWidget* parent)
     // items aren't added or removed a lot, just updated
     //s->setItemIndexMethod(QGraphicsScene::NoIndex);
     s->setSceneRect(-200,-200,400,400);
+    s->setStyle(new CauvStyle());
 
     setScene(s);
     m_manager = boost::make_shared<Manager>(s, &(*m_cauv_node), "default");

@@ -16,6 +16,7 @@
 
 #include <QPropertyAnimation>
 #include <QGraphicsBlurEffect>
+#include <QPainter>
 
 #include <debug/cauv_debug.h>
 
@@ -82,9 +83,9 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     // nodes containing arcsinks are removed from the scene: this is probably
     // something to do with the blur changing the bounding rect (segfault
     // occurs in BSP tree walking)
-    //QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
-    //blur->setBlurRadius(3.0);
-    //setGraphicsEffect(blur);
+    /*QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
+    blur->setBlurRadius(3.0);
+    setGraphicsEffect(blur);*/
 
     /*QGraphicsPathItem *test_item = new QGraphicsPathItem(this);
     QPainterPath p;
@@ -96,8 +97,6 @@ ArcSink::ArcSink(ArcStyle const& of_style,
 
     QGraphicsLayoutItem::setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    setFlag(ItemHasNoContents);
-    
     // start out not presenting a highlight:
     doPresentHighlight(0);
 }
@@ -133,7 +132,9 @@ QList<CutoutStyle> ArcSink::cutoutGeometry() const{
 
 // QGraphicsLayoutItem:
 void ArcSink::setGeometry(QRectF const& rect){
+    debug(9) << "ArcSink::setGeometry" << rect.topLeft().x() << rect.topLeft().y() << rect.width() << rect.height();
     setPos(rect.topLeft() - m_rect.topLeft());
+    //QGraphicsLayoutItem::setGeometry(rect);
 }
 
 QSizeF ArcSink::sizeHint(Qt::SizeHint which,
@@ -149,8 +150,10 @@ QRectF ArcSink::boundingRect() const{
 void ArcSink::paint(QPainter *painter,
                     const QStyleOptionGraphicsItem *option,
                     QWidget *widget){
-    Q_UNUSED(painter);
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    painter->setPen(QPen(QColor(180,10,120,64)));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(boundingRect());
 }
 

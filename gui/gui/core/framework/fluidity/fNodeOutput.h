@@ -18,6 +18,9 @@
 #include <QGraphicsWidget>
 #include <QGraphicsLinearLayout>
 #include <QPainter>
+#include <QLabel>
+#include <QGraphicsProxyWidget>
+#include <QGraphicsScene>
 
 #include <liquid/arcSource.h>
 #include <liquid/arc.h>
@@ -35,28 +38,40 @@ namespace cauv{
 namespace gui{
 namespace f{
 
-// !!! TODO: note to self: this is far from the final class structure for node
-// outputs, quickly hacked together while working on inputs... 
 class FNodeOutput: public QGraphicsWidget,
                    public FNodeIO,
                    public liquid::ArcSourceDelegate{
     Q_OBJECT
     public:
-        FNodeOutput(FNode* node)
-            : QGraphicsWidget(),
+        FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, std::string const& text)
+            : QGraphicsWidget(node),
               FNodeIO(node),
-              m_source(NULL){
+              m_source(NULL),
+              m_text(NULL){
             QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
                 Qt::Horizontal, this
             );
             hlayout->setSpacing(0);
             hlayout->setContentsMargins(0,0,0,0);
+            
             hlayout->addStretch(1);
-            /*m_pending_source = new liquid::ArcSource(
-                this, new liquid::Arc(Pending_Arc_Style)
+
+            QLabel* text_label = new QLabel(QString::fromStdString(text));
+            text_label->setTextInteractionFlags(Qt::NoTextInteraction);
+            text_label->setFont(F_Node_Style.text.font);
+            text_label->setBackgroundRole(QPalette::Window);
+            m_text = new QGraphicsProxyWidget();
+            m_text->setWidget(text_label);
+            hlayout->addItem(m_text);
+
+            hlayout->setItemSpacing(1, 4.0);
+
+            m_source = new liquid::ArcSource(
+                this, new liquid::Arc(arc_style)
             );
-            m_pending_source->setParentItem(this);
-            hlayout->addItem(m_pending_source);*/
+            m_source->setParentItem(this);
+            hlayout->addItem(m_source);
+
             setLayout(hlayout);
             
             connect(node, SIGNAL(xChanged()), this, SIGNAL(xChanged()));
@@ -73,13 +88,6 @@ class FNodeOutput: public QGraphicsWidget,
         liquid::Arc* arc() const{
             return m_source->arc();
         }
-        /*liquid::Arc* pendingArc() const{
-            return m_pending_source->arc();
-        }*/
-
-        QGraphicsLinearLayout* layout(){
-            return dynamic_cast<QGraphicsLinearLayout*>(QGraphicsWidget::layout());
-        }
 
     protected Q_SLOTS:
         void test(){
@@ -88,18 +96,13 @@ class FNodeOutput: public QGraphicsWidget,
 
     protected:
         liquid::ArcSource* m_source;
-        //liquid::ArcSource* m_pending_source;
+        QGraphicsProxyWidget* m_text;
 };
 
 class FNodeImageOutput: public FNodeOutput{
     public:
         FNodeImageOutput(LocalNodeOutput const& output, FNode* node)
-            : FNodeOutput(node){
-            m_source = new liquid::ArcSource(
-                this, new liquid::Arc(Image_Arc_Style)
-            );
-            m_source->setParentItem(this);
-            layout()->addItem(m_source);
+            : FNodeOutput(node, Image_Arc_Style, output.output){
         }
 
         virtual OutputType::e ioType() const{
@@ -118,12 +121,8 @@ class FNodeImageOutput: public FNodeOutput{
 class FNodeParamOutput: public FNodeOutput{
     public:
         FNodeParamOutput(LocalNodeOutput const& output, FNode* node)
-            : FNodeOutput(node), m_subType(output.subType){
-            m_source = new liquid::ArcSource(
-                this, new liquid::Arc(Param_Arc_Style)
-            );
-            m_source->setParentItem(this);
-            layout()->addItem(m_source);
+            : FNodeOutput(node, Param_Arc_Style, output.output), m_subType(output.subType){
+            
         }
 
         virtual OutputType::e ioType() const{

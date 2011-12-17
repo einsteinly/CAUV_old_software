@@ -14,6 +14,13 @@
 
 #include "fNodeInput.h"
 
+#include <liquid/arcSink.h>
+
+#include <QGraphicsProxyWidget>
+#include <QLabel>
+#include <QGraphicsWidget>
+#include <QGraphicsLinearLayout>
+
 #include <generated/types/LocalNodeInput.h>
 
 #include <debug/cauv_debug.h>
@@ -28,14 +35,72 @@ using namespace cauv::gui::f;
 FNodeInput::FNodeInput(Manager& m,
                        liquid::ArcStyle const& of_style,
                        liquid::CutoutStyle const& with_cutout,
-                       FNode* node)
-    : liquid::ArcSink(of_style, with_cutout, this),
+                       FNode* node,
+                       std::string const& text)
+    : QGraphicsWidget(node),
+      RequiresCutout(),
       FNodeIO(node),
-      ManagedElement(m){
-    connect(node, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
-    connect(node, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+      ManagedElement(m),
+      m_arc_sink(new liquid::ArcSink(of_style, with_cutout, this)),
+      m_text(NULL){
+
+    QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
+        Qt::Horizontal, this
+    );
+    hlayout->setSpacing(0);
+    hlayout->setContentsMargins(0,0,0,0);
+
+    m_arc_sink->setParentItem(this);
+    hlayout->addItem(m_arc_sink);
+
+    QLabel* text_label = new QLabel(QString::fromStdString(text));
+    text_label->setTextInteractionFlags(Qt::NoTextInteraction);
+    text_label->setFont(F_Node_Style.text.font);
+    m_text = new QGraphicsProxyWidget();
+    m_text->setWidget(text_label);
+    hlayout->addItem(m_text);
+
+    hlayout->setItemSpacing(1, 4.0); 
+    
+    hlayout->addStretch(1);
+
+    setLayout(hlayout);
+     
+    connect(node, SIGNAL(xChanged()), m_arc_sink, SIGNAL(geometryChanged()));
+    connect(node, SIGNAL(yChanged()), m_arc_sink, SIGNAL(geometryChanged()));
 }
-FNodeInput::~FNodeInput(){}
+
+FNodeInput::~FNodeInput(){
+}
+
+QList<liquid::CutoutStyle> FNodeInput::cutoutGeometry() const{
+    QList<liquid::CutoutStyle> sink_cutouts =  m_arc_sink->cutoutGeometry();
+    QList<liquid::CutoutStyle> r;
+    foreach(liquid::CutoutStyle const& c, sink_cutouts){
+        liquid::CutoutStyle t = c;
+        t.main_cutout.y_offset += m_arc_sink->pos().y();
+        t.second_cutout.y_offset += m_arc_sink->pos().y();
+        r << t;
+    }
+    return r;
+}
+
+
+void FNodeInput::paint(QPainter *painter,
+                       const QStyleOptionGraphicsItem *option,
+                       QWidget *widget){
+    Q_UNUSED(option);
+    Q_UNUSED(widget);
+    painter->setPen(QPen(QColor(20,180,40,64)));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(boundingRect());
+    debug(11) << "arc sink is at:"
+              << m_arc_sink->pos().x()
+              << m_arc_sink->pos().y()
+              << m_arc_sink->geometry().width()
+              << m_arc_sink->geometry().height()
+              << m_arc_sink->parentItem();
+}
 
 bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
     FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
@@ -54,8 +119,7 @@ FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDel
        output->ioType() == ioType() &&
        output->subType() == subType() &&
        output->node() != node()){
-        // TODO:
-        //manager().requestArc(NodeOutput(), NodeInput());
+        manager().requestArc(NodeOutput(), NodeInput());
         return Pending;
     }
     return Rejected;
@@ -64,7 +128,7 @@ FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDel
 
 // - FNodeImageInput
 FNodeImageInput::FNodeImageInput(Manager& m, LocalNodeInput const& input, FNode* node)
-    : FNodeInput(m, Image_Arc_Style, cutoutStyleForSchedType(input.schedType), node){
+    : FNodeInput(m, Image_Arc_Style, cutoutStyleForSchedType(input.schedType), node, input.input){
 }
 
 OutputType::e FNodeImageInput::ioType() const{
@@ -87,7 +151,7 @@ liquid::CutoutStyle const& FNodeImageInput::cutoutStyleForSchedType(InputSchedTy
 
 // - FNodeParamInput
 FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node)
-    : FNodeInput(m, Image_Arc_Style, cutoutStyleForSchedType(input.schedType), node),
+    : FNodeInput(m, Image_Arc_Style, cutoutStyleForSchedType(input.schedType), node, input.input),
       m_subtype(input.subType){
 }
 

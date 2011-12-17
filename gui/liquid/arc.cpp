@@ -135,7 +135,7 @@ void Arc::updateLayout(){
         return;
     }
 
-    debug() << "Updating arc layout" << this;
+    debug(7) << "Updating arc layout" << this;
 
     prepareGeometryChange();
 

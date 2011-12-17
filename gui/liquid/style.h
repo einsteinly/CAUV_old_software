@@ -84,6 +84,10 @@ namespace liquid {
 
         QPen item_separator_pen;
         QPen resize_handle_pen;
+        
+        // NB: colour is ignored - widget text is drawn by re-styled QLabel
+        // Widgets, so style comes from CauvStyle
+        TextStyle text;
     };
 
 } // namespace liquid

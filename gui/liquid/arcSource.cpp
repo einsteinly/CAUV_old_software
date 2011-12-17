@@ -29,7 +29,7 @@
 
 using namespace liquid;
 
-/***************************** AbstractArcSource *****************************/
+// - AbstractArcSource
 AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
                                      ArcSourceDelegate* sourceDelegate,
                                      Arc* arc)
@@ -203,7 +203,7 @@ void AbstractArcSource::connectParentSignals(QGraphicsItem* p){
 }
 
 
-/********************************* ArcSource *********************************/
+// - ArcSource
 ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
                      Arc* arc)
     : AbstractArcSource(arc->style(), sourceDelegate, arc),

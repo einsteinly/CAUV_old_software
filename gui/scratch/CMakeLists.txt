@@ -2,11 +2,13 @@ project (gui-scratch)
 
 # for <gui/core/...>
 include_directories (${guis_SOURCE_DIR})
+include_directories (${guis_SOURCE_DIR}/gui/core/)
 
 set (
     scratch_srcs
     main.cpp
     viewWidget.cpp
+    ../gui/core/framework/style.cpp
 
     ../gui/core/framework/fluidity/fNode.cpp
     ../gui/core/framework/fluidity/imgNode.cpp
@@ -18,6 +20,7 @@ set (
 set (
     scratch_H
     viewWidget.h
+    ../gui/core/framework/style.h    
 
     ../gui/core/framework/fluidity/fNode.h 
     ../gui/core/framework/fluidity/fNodeOutput.h

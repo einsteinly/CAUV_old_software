@@ -20,11 +20,9 @@
 
 #include "connectionSink.h"
 #include "requiresCutout.h"
+#include "forward.h"
 
 namespace liquid {
-
-struct ArcStyle;
-struct CutoutStyle;
 
 class AbstractArcSink: public QGraphicsObject,
                        public ConnectionSink{

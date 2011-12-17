@@ -17,6 +17,8 @@
 
 #include "style.h"
 
+#include <QGraphicsItem>
+
 namespace liquid{
 
 class RequiresCutout{

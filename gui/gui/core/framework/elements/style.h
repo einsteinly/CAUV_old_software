@@ -96,7 +96,12 @@ const static liquid::NodeStyle F_Node_Style = {
         }
     },
     QPen(QColor(255,255,255)),
-    QPen(QBrush(QColor(190,190,190)), 2, Qt::SolidLine, Qt::RoundCap)
+    QPen(QBrush(QColor(190,190,190)), 2, Qt::SolidLine, Qt::RoundCap),
+    {
+        QPen(Qt::NoPen),
+        QBrush(QColor(12,12,12)),
+        QFont("Verdana", 10, 1)
+    }
 };
 
 const static liquid::NodeStyle AI_Node_Style = F_Node_Style;
