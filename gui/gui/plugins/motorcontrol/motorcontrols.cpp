@@ -142,6 +142,7 @@ MotorControls::~MotorControls(){
 
 void MotorControls::addMotor(boost::shared_ptr<Node> node) {
     boost::shared_ptr<NumericNode<int> > motor = node->to<NumericNode<int> >();
+    assert(motor);
 
     std::string forward = "Forward";
     std::string backward = "Back";

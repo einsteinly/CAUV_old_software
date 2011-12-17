@@ -19,8 +19,10 @@
     #include <QWindowsXPStyle>
     #define BASESTYLE QWindowsXPStyle
 #elif __APPLE__
-    #include <QMacStyle>
-    #define BASESTYLE QMacStyle
+    //#include <QMacStyle>
+    //#define BASESTYLE QMacStyle
+    #include <QMotifStyle>
+    #define BASESTYLE QMotifStyle
 #else
     #include <QPlastiqueStyle>
     #define BASESTYLE QPlastiqueStyle

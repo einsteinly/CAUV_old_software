@@ -24,18 +24,6 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-#if defined _WIN32 || defined _WIN64
-#include <QWindowsXPStyle>
-#define BASESTYLE QWindowsXPStyle
-#elif __APPLE__
-#include <QMacStyle>
-#define BASESTYLE QMacStyle
-#else
-#include <QPlastiqueStyle>
-#define BASESTYLE QPlastiqueStyle
-#endif
-
-
 CauvStyle::CauvStyle() {
 }
 

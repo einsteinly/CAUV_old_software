@@ -12,14 +12,16 @@ set (
     ../gui/core/framework/fluidity/imgNode.cpp
     ../gui/core/framework/fluidity/managedElement.cpp
     ../gui/core/framework/fluidity/manager.cpp
-
+    ../gui/core/framework/fluidity/fNodeInput.cpp
 )
 
 set (
     scratch_H
     viewWidget.h
 
-    ../gui/core/framework/fluidity/fNode.h
+    ../gui/core/framework/fluidity/fNode.h 
+    ../gui/core/framework/fluidity/fNodeOutput.h
+    ../gui/core/framework/fluidity/fNodeInput.h
     ../gui/core/framework/fluidity/imgNode.h
     ../gui/core/framework/fluidity/manager.h
 )

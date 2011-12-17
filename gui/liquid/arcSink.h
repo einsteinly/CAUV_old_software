@@ -36,9 +36,18 @@ class AbstractArcSink: public QGraphicsObject,
         virtual bool willAcceptConnection(ArcSourceDelegate* from_source) = 0;
         virtual void doPresentHighlight(qreal intensity) = 0;
         virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) = 0;
+
+        // !!! base QGraphicsItem::setParentItem isn't virtual, so this is
+        // probably a bad idea!
+        virtual void setParentItem(QGraphicsItem* item);
+
     Q_SIGNALS:
         void geometryChanged();
         void disconnected(AbstractArcSink*);
+
+    private:
+        void disconnectParentSignals(QGraphicsItem* parent);
+        void    connectParentSignals(QGraphicsItem* parent);
 };
 
 class ArcSink: public AbstractArcSink,

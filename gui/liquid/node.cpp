@@ -75,7 +75,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
 }
 
 LiquidNode::~LiquidNode(){
-    debug() << "~LiquidNode()" << this;
+    debug(7) << "~LiquidNode()" << this;
 }
 
 void LiquidNode::close(){
@@ -136,7 +136,7 @@ QSizeF LiquidNode::size() const{
 }
 
 void LiquidNode::setSize(QSizeF const& size){
-    debug() << "LiquidNode::setSize(" << size << ")";
+    debug(6) << "LiquidNode::setSize(" << size << ")";
 
     // this will cause updateLayout to be called via the geometryChanged
     // signal, which in turn actually sets the new size
@@ -181,7 +181,7 @@ void LiquidNode::layoutChanged(){
             cutouts_at[m_contentWidget->pos().y() +
                        r->asQGI()->pos().y() +
                        g.main_cutout.y_offset] = g;
-    debug() << "layoutChanged:" << cutouts_at.size() << "cutouts";
+    debug(5) << "layoutChanged:" << cutouts_at.size() << "cutouts";
 
     p.lineTo(width, 0);
     p.lineTo(width, height);
@@ -221,7 +221,7 @@ void LiquidNode::updateLayout(){
 }
 
 void LiquidNode::setSizeFromContents(){
-    debug() << "LiquidNode::setSizeFromContents(" << m_contentWidget->size() << ")";
+    debug(6) << "LiquidNode::setSizeFromContents(" << m_contentWidget->size() << ")";
 
     const float header_height = m_style.header.height + m_style.bl_radius/2;
     m_size.setWidth(m_contentWidget->size().width());

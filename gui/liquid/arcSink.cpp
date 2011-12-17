@@ -25,9 +25,36 @@ AbstractArcSink::AbstractArcSink(QGraphicsItem * parent): QGraphicsObject(parent
     debug(7) << "AbstractArcSink()";
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+    connectParentSignals(parent);
 }
 AbstractArcSink::~AbstractArcSink(){
-    debug() << "~AbstractArcSink(): scene=" << scene(); 
+    debug(7) << "~AbstractArcSink(): scene=" << scene(); 
+    Q_EMIT(disconnected(this));
+}
+
+void AbstractArcSink::setParentItem(QGraphicsItem* item){
+    disconnectParentSignals(parentItem());
+    connectParentSignals(item);
+    QGraphicsObject::setParentItem(item);
+}
+
+void AbstractArcSink::disconnectParentSignals(QGraphicsItem* p){
+    QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
+    if(parent){
+        disconnect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+        disconnect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+        disconnect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));
+    }
+}
+
+void AbstractArcSink::connectParentSignals(QGraphicsItem* p){
+    QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
+    debug(7) << "connectParentSignals:" << parent;
+    if(parent){
+        connect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+        connect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+        connect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));
+    }
 }
 
 ArcSink::ArcSink(ArcStyle const& of_style,
@@ -75,7 +102,7 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     doPresentHighlight(0);
 }
 ArcSink::~ArcSink(){
-    debug() << "~ArcSink()"; 
+    debug(7) << "~ArcSink()"; 
 }
 
 bool ArcSink::willAcceptConnection(ArcSourceDelegate* from_source){

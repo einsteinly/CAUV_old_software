@@ -90,14 +90,35 @@ void Arc::addTo(AbstractArcSink *to){
     updateLayout();
 }
 
+void Arc::addPending(AbstractArcSink *to){
+    warning() << "add pending isn't implemented yet, calling addTo instead";
+    // when this is implemented, implement promotePending to promote from
+    // pending to added - the pending arcs will have a consistent difference in
+    // style - probably semitransparent (or maybe dashed lines)
+    addTo(to);
+}
+
 void Arc::removeTo(AbstractArcSink *to){
     debug(7) << "Arc::removeTo:" << to;
+    disconnect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
+    disconnect(to, SIGNAL(disconnected(AbstractArcSink*)),
+               this, SLOT(removeTo(AbstractArcSink*)));
     m_sinks.erase(to);
     updateLayout();
 }
 
+void Arc::promotePending(AbstractArcSink *to){
+    m_pending_sinks.erase(to);
+    addTo(to);
+}
+
+
 QRectF Arc::boundingRect() const{
     return m_back->boundingRect() | m_ephemeral_end->boundingRect();
+}
+
+QPainterPath Arc::shape() const{
+    return m_back->shape() | m_ephemeral_end->shape();
 }
 
 void Arc::paint(QPainter *painter,
@@ -114,7 +135,7 @@ void Arc::updateLayout(){
         return;
     }
 
-    debug(7) << "Updating arc layout" << this;
+    debug() << "Updating arc layout" << this;
 
     prepareGeometryChange();
 

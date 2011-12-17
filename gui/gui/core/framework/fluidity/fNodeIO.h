@@ -21,6 +21,8 @@ namespace cauv{
 namespace gui{
 namespace f{
 
+class FNode;
+
 // !!! corresponds to messages.msg
 typedef int32_t SubType;
 
