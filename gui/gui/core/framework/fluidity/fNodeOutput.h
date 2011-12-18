@@ -43,9 +43,9 @@ class FNodeOutput: public QGraphicsWidget,
                    public liquid::ArcSourceDelegate{
     Q_OBJECT
     public:
-        FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, std::string const& text)
+        FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, std::string const& id)
             : QGraphicsWidget(node),
-              FNodeIO(node),
+              FNodeIO(node, id),
               m_source(NULL),
               m_text(NULL){
             QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
@@ -56,7 +56,7 @@ class FNodeOutput: public QGraphicsWidget,
             
             hlayout->addStretch(1);
 
-            QLabel* text_label = new QLabel(QString::fromStdString(text));
+            QLabel* text_label = new QLabel(QString::fromStdString(id));
             text_label->setTextInteractionFlags(Qt::NoTextInteraction);
             text_label->setFont(F_Node_Style.text.font);
             text_label->setBackgroundRole(QPalette::Window);
@@ -71,6 +71,7 @@ class FNodeOutput: public QGraphicsWidget,
                 this, new liquid::Arc(arc_style)
             );
             m_source->setParentItem(this);
+            m_source->setZValue(10);
             hlayout->addItem(m_source);
             hlayout->setAlignment(m_source, Qt::AlignVCenter | Qt::AlignRight);            
 

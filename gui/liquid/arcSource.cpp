@@ -123,7 +123,7 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
 #include "ephemeralArcEnd.h"
 AbstractArcSink* AbstractArcSource::newArcEnd(){
     debug(5) << "newArcEnd:: this:" << this << "&style:" << &m_style;
-    return new EphemeralArcEnd(m_style);
+    return new EphemeralArcEnd(0, m_style);
 }
 
 void AbstractArcSource::removeHighlights(){
@@ -144,7 +144,8 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
         return;
     }
     AbstractArcSink *k;
-    QList<QGraphicsItem *> near_items = s->items(near_field);
+    QList<QGraphicsItem *> near_items = s->items(near_field, Qt::ContainsItemBoundingRect);
+    //
     QSet<AbstractArcSink*> near_set;
     debug(5) << near_items.size() << "nearby items";    
     foreach(QGraphicsItem* g, near_items)

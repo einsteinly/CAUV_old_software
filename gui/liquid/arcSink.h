@@ -81,7 +81,7 @@ class ArcSink: public AbstractArcSink,
         // called when the connection is dropped,  delegates the question to
         // connectionDelgate
         virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source);
-    
+
         // RequiresCutout:
         virtual QList<CutoutStyle> cutoutGeometry() const;
         

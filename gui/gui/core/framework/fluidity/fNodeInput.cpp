@@ -36,10 +36,10 @@ FNodeInput::FNodeInput(Manager& m,
                        liquid::ArcStyle const& of_style,
                        liquid::CutoutStyle const& with_cutout,
                        FNode* node,
-                       std::string const& text)
+                       std::string const& id)
     : QGraphicsWidget(node),
       RequiresCutout(),
-      FNodeIO(node),
+      FNodeIO(node, id),
       ManagedElement(m),
       m_arc_sink(new liquid::ArcSink(of_style, with_cutout, this)),
       m_text(NULL){
@@ -54,7 +54,7 @@ FNodeInput::FNodeInput(Manager& m,
     hlayout->addItem(m_arc_sink);
     hlayout->setAlignment(m_arc_sink, Qt::AlignVCenter | Qt::AlignLeft);
 
-    QLabel* text_label = new QLabel(QString::fromStdString(text));
+    QLabel* text_label = new QLabel(QString::fromStdString(id));
     text_label->setTextInteractionFlags(Qt::NoTextInteraction);
     text_label->setFont(F_Node_Style.text.font);
     m_text = new QGraphicsProxyWidget();
@@ -121,7 +121,10 @@ FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDel
        output->ioType() == ioType() &&
        output->subType() == subType() &&
        output->node() != node()){
-        manager().requestArc(NodeOutput(), NodeInput());
+        manager().requestArc(
+            NodeOutput(output->node()->id(), output->id(), ioType(), subType()),
+            NodeInput(node()->id(), id(), subType())
+        );
         return Pending;
     }
     return Rejected;

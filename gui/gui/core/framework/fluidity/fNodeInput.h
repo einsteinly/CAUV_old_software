@@ -49,7 +49,7 @@ class FNodeInput: public QGraphicsWidget,
                    FNode* node,
                    std::string const& text);
         virtual ~FNodeInput();
-        
+
         // RequiresCutout:
         virtual QList<liquid::CutoutStyle> cutoutGeometry() const;
         

@@ -58,6 +58,7 @@ class Arc: public AbstractArcSource{
         AbstractArcSource *m_source;
         std::set<AbstractArcSink*> m_sinks;
         std::set<AbstractArcSink*> m_pending_sinks;
+        std::map<AbstractArcSink*, EphemeralArcEnd*> m_ends;
         QGraphicsPathItem *m_back;
         QGraphicsPathItem *m_front;
         EphemeralArcEnd *m_ephemeral_end;
