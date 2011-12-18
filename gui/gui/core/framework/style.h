@@ -36,21 +36,19 @@ namespace cauv {
 
     namespace CauvStyleOptions {
         enum e{
-            StyleOptionNeutralBar = QStyleOption::SO_CustomBase + 1
+            StyleOptionNeutralSpinBox = QStyleOption::SO_CustomBase + 1
         };
     }
 
-
-    class StyleOptionNeutralBar : public QStyleOptionProgressBarV2 {
+    class StyleOptionNeutralSpinBox : public QStyleOptionSpinBox {
     public:
-        enum StyleOptionType { Type = CauvStyleOptions::StyleOptionNeutralBar };
-        StyleOptionNeutralBar() : QStyleOptionProgressBarV2(), neutral(0){
-                type = CauvStyleOptions::StyleOptionNeutralBar;
+        enum StyleOptionType { Type = CauvStyleOptions::StyleOptionNeutralSpinBox };
+        StyleOptionNeutralSpinBox() : QStyleOptionSpinBox(), level(0){
+                type = CauvStyleOptions::StyleOptionNeutralSpinBox;
         }
 
-        float neutral;
+        float level;
     };
-
 
 
     class CauvStyle : public BASESTYLE

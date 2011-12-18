@@ -26,12 +26,14 @@ namespace cauv {
         public:
 
             Q_PROPERTY(int value READ value WRITE setValue USER true)
-            Q_PROPERTY(int neutral READ getNeutral WRITE setNeutral USER false)
+            Q_PROPERTY(int neutral READ neutral WRITE setNeutral USER false)
 
             NeutralSpinBox(QWidget * parent = 0);
 
-            int getNeutral() const;
+            int neutral() const;
             void setNeutral(int neutral);
+
+            void paintEvent(QPaintEvent *);
 
         protected:
             int m_neutral;
@@ -50,6 +52,8 @@ namespace cauv {
 
             double neutral() const;
             void setNeutral(double neutral);
+
+            void paintEvent(QPaintEvent *);
 
         protected:
             double m_neutral;
