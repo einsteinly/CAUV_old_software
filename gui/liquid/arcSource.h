@@ -43,7 +43,11 @@ class AbstractArcSource: public QGraphicsObject,
         ArcStyle const& style() const;
         void setSourceDelegate(ArcSourceDelegate *sourceDelegate);
         ArcSourceDelegate* sourceDelegate() const;
-    
+        
+        // !!! base QGraphicsItem::setParentItem isn't virtual, so this is
+        // probably a bad idea!
+        virtual void setParentItem(QGraphicsItem* item);
+
     Q_SIGNALS:
         void geometryChanged();
 
@@ -64,7 +68,16 @@ class AbstractArcSource: public QGraphicsObject,
         void removeHighlights();
         void checkAndHighlightSinks(QPointF scene_pos);
 
-     protected:
+    protected Q_SLOTS:
+        void highlightedItemDisconnected(AbstractArcSink*);
+    
+    private:
+        void checkDoAcceptConnection(AbstractArcSink* item);
+
+        void disconnectParentSignals(QGraphicsItem* parent);
+        void    connectParentSignals(QGraphicsItem* parent);
+
+    protected:
         ArcStyle const& m_style;  
         Arc *m_arc;
         ArcSourceDelegate *m_sourceDelegate;

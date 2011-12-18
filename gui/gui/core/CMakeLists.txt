@@ -59,6 +59,7 @@ set ( GUI_CORE_SRCS
     framework/fluidity/view.cpp 
     framework/fluidity/managedElement.cpp
     framework/fluidity/manager.cpp
+    framework/fluidity/fNodeInput.cpp
     )
 
 set ( GUI_CORE_UIS
@@ -95,6 +96,8 @@ set ( GUI_CORE_H
     framework/fluidity/view.h
     framework/fluidity/manager.h
     framework/fluidity/fNode.h
+    framework/fluidity/fNodeOutput.h
+    framework/fluidity/fNodeInput.h
     framework/fluidity/imgNode.h
     )
 

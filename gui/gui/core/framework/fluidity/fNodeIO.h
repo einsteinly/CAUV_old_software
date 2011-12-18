@@ -21,24 +21,29 @@ namespace cauv{
 namespace gui{
 namespace f{
 
+class FNode;
+
 // !!! corresponds to messages.msg
 typedef int32_t SubType;
 
 class FNodeIO{
     public:
-        FNodeIO(FNode* node)
-            : m_node(node){
+        FNodeIO(FNode* node, std::string const& id)
+            : m_node(node), m_id(id){
         }
 
         FNode* node() const{
             return m_node;
         }
+
+        std::string const& id() const{ return m_id; }
         
         virtual SubType subType() const = 0;
         virtual OutputType::e ioType() const = 0;
 
     protected:
         FNode* m_node;
+        std::string m_id;
 };
 
 } // namespace f

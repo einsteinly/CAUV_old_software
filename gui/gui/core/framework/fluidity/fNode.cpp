@@ -188,7 +188,7 @@ void FNode::setInputs(msg_node_input_map_t const& inputs){
         // been filtered out by the time this function is called
         if(!m_params.count(j->first.input)){
             debug() << BashColour::Blue << "FNode:: new input:" << *j;
-            FNodeInput* t = new FNodeImageInput(j->first.schedType, this);
+            FNodeInput* t = new FNodeImageInput(manager(), j->first, this);
             m_inputs[j->first.input] = t;
             addItem(t);
         }
@@ -206,7 +206,11 @@ void FNode::setOutputs(msg_node_output_map_t const& outputs){
     msg_node_output_map_t::const_iterator i;
     for(i = outputs.begin(); i != outputs.end(); i++){
         debug() << BashColour::Blue << "FNode:: new output:" << *i;
-        FNodeOutput* t = new FNodeOutput(this);
+        FNodeOutput* t;
+        if(i->first.type == OutputType::Image)
+            t = new FNodeImageOutput(i->first, this);
+        else
+            t = new FNodeParamOutput(i->first, this);
         m_outputs[i->first.output] = t;
         addItem(t);
     }
@@ -228,7 +232,7 @@ void FNode::setParams(msg_node_param_map_t const& params){
         str_in_map_t::iterator k = m_params.find(j.first.input);    
         if(k == m_params.end()){
             debug() << BashColour::Blue << "FNode:: new param:" << j;        
-            FNodeInput* t = new FNodeParamInput(j.first.schedType, j.first.subType, this);
+            FNodeInput* t = new FNodeParamInput(manager(), j.first, this);
             m_params[j.first.input] = t;
             addItem(t);
             // .... TODO: parameter values, the great editable-GUI-value-unification

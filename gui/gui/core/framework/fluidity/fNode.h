@@ -60,6 +60,8 @@ class FNode: public liquid::LiquidNode,
         FNode(Manager& m, node_id_t id, NodeType::e const& type);
         FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
 
+        node_id_t id() const{ return m_node_id; }
+
         void setType(NodeType::e const&);
         void setInputs(msg_node_input_map_t const&);
         void setInputLinks(msg_node_input_map_t const&);

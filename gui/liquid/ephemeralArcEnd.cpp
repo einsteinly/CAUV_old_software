@@ -37,13 +37,15 @@ static QGraphicsPolygonItem* endArrow(liquid::ArcStyle::SingleArcStyle const& s,
     return new QGraphicsPolygonItem(shape, parent);
 }
 
-EphemeralArcEnd::EphemeralArcEnd(ArcStyle const& of_style)
-    : AbstractArcSink(),
+EphemeralArcEnd::EphemeralArcEnd(QGraphicsItem* parent, ArcStyle const& of_style, bool cosmetic)
+    : AbstractArcSink(parent),
       m_back_poly(endArrow(of_style.back, this)),
       m_front_poly(endArrow(of_style.front, this)),
       m_style(of_style){
     setFill(false);
     setFlag(ItemIsMovable);
+    if(cosmetic)
+        setAcceptedMouseButtons(Qt::NoButton);
 }
 
 EphemeralArcEnd::~EphemeralArcEnd(){

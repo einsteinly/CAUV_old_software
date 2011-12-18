@@ -26,7 +26,7 @@ class AbstractArcSink;
 class EphemeralArcEnd;
 
 class Arc: public AbstractArcSource{
-        Q_OBJECT;
+        Q_OBJECT
     public:
         Arc(ArcStyle const& of_style,
             AbstractArcSource *from=NULL,
@@ -39,21 +39,26 @@ class Arc: public AbstractArcSource{
         
         void setFrom(AbstractArcSource *from);
         void addTo(AbstractArcSink *to);
+        void addPending(AbstractArcSink *to);
 
     protected:
         virtual QRectF boundingRect() const;
+        virtual QPainterPath shape() const;
         virtual void paint(QPainter *painter,
                            const QStyleOptionGraphicsItem *option,
                            QWidget *widget = 0);
-
-    protected Q_SLOTS:
+    
+    public Q_SLOTS:
         void updateLayout();
         void removeTo(AbstractArcSink *to);
+        void promotePending(AbstractArcSink *to);
 
     protected:
         ArcStyle const& m_style;
         AbstractArcSource *m_source;
         std::set<AbstractArcSink*> m_sinks;
+        std::set<AbstractArcSink*> m_pending_sinks;
+        std::map<AbstractArcSink*, EphemeralArcEnd*> m_ends;
         QGraphicsPathItem *m_back;
         QGraphicsPathItem *m_front;
         EphemeralArcEnd *m_ephemeral_end;

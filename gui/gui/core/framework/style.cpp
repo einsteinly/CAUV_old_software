@@ -24,25 +24,13 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-#if defined _WIN32 || defined _WIN64
-#include <QWindowsXPStyle>
-#define BASESTYLE QWindowsXPStyle
-#elif __APPLE__
-#include <QMacStyle>
-#define BASESTYLE QMacStyle
-#else
-#include <QPlastiqueStyle>
-#define BASESTYLE QPlastiqueStyle
-#endif
-
-
 CauvStyle::CauvStyle() {
 }
 
 QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComplex * option,
                                   SubControl subControl, const QWidget * widget) const {
     switch(subControl) {
-    case QStyle::SC_SpinBoxUp: {
+    /*case QStyle::SC_SpinBoxUp: {
         QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
         QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
         rect.setX((frame.x()+frame.width())-frame.height());
@@ -72,7 +60,7 @@ QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComp
         rect.setRight(frame.right()-frame.height());
         return rect;
     }
-    break;
+    break;*/
 
     default: return BASESTYLE::subControlRect(control, option, subControl, widget);
     }
@@ -84,7 +72,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
     switch(control) {
     case CE_ProgressBar: {
 
-        const QStyleOptionProgressBarV2 * progressOptions = static_cast<const QStyleOptionProgressBarV2 *>(option);
+        /*const QStyleOptionProgressBarV2 * progressOptions = static_cast<const QStyleOptionProgressBarV2 *>(option);
         const StyleOptionNeutralBar *neutralOptions = qstyleoption_cast<const StyleOptionNeutralBar *>(option);
 
         QStyleOptionProgressBarV2 outputOptions(*progressOptions);
@@ -117,7 +105,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
         QColor progressColor(QColor::fromHsl(hue, 160, 162));
         outputOptions.palette.setColor(QPalette::Highlight, progressColor);
 
-        BASESTYLE::drawControl(control, &outputOptions, painter, widget);
+        BASESTYLE::drawControl(control, &outputOptions, painter, widget);*/
     }
     break;
 
@@ -129,7 +117,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
 void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const{
     switch (control) {
-    case CC_SpinBox:
+    /*case CC_SpinBox:
     {
         const QSpinBox * spin = qobject_cast<const QSpinBox*>(widget);
         if(spin){
@@ -167,7 +155,7 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
 
         }
     }
-    break;
+    break;*/
     default:
         BASESTYLE::drawComplexControl(control, option, painter, widget);
     }

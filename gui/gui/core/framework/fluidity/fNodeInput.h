@@ -15,101 +15,78 @@
 #ifndef __CAUV_GUI_FNODE_INPUT_H__
 #define __CAUV_GUI_FNODE_INPUT_H__
 
-#include <QGraphicsWidget>
-#include <QGraphicsLinearLayout>
-#include <QPainter>
-
-#include <liquid/arcSink.h>
 #include <liquid/connectionSink.h>
+#include <liquid/requiresCutout.h>
+#include <liquid/connectionSink.h>
+#include <liquid/forward.h>
+
+#include <QGraphicsWidget>
 
 #include "elements/style.h"
 
-#include "fNodeIO.h"
+#include "fluidity/managedElement.h"
+#include "fluidity/fNode.h"
+#include "fluidity/fNodeIO.h"
+
+class QGraphicsProxyWidget;
 
 namespace cauv{
+
+struct LocalNodeInput;
+
 namespace gui{
 namespace f{
 
-class FNodeInput: public liquid::ArcSink,
-                  public FNodeIO{
-    public:
-        FNodeInput(liquid::ArcStyle const& of_style,
+class FNodeInput: public QGraphicsWidget,
+                  public liquid::RequiresCutout,
+                  public liquid::ConnectionSink,
+                  public FNodeIO,
+                  public ManagedElement{
+    protected:
+        FNodeInput(Manager& m,
+                   liquid::ArcStyle const& of_style,
                    liquid::CutoutStyle const& with_cutout,
-                   FNode* node)
-            : liquid::ArcSink(of_style, with_cutout, this),
-              FNodeIO(node){
-        }
-        virtual ~FNodeInput(){}
+                   FNode* node,
+                   std::string const& text);
+        virtual ~FNodeInput();
 
-        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source){
-            FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
-            debug() << "fNodeInput::willAcceptConnection from_source=" << from_source << output;
-            if(output)
-                return output->ioType() == ioType() &&
-                       output->subType() == subType() &&
-                       output->node() != node();
-            return false;
-        }
-        virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source){
-            debug() << "FNodeInput::doAcceptConnection:" << dynamic_cast<FNodeOutput*>(from_source);
-            return Rejected;
-        }
+        // RequiresCutout:
+        virtual QList<liquid::CutoutStyle> cutoutGeometry() const;
+        
+        // QGraphicsItem:
+        virtual void paint(QPainter *painter,
+                           const QStyleOptionGraphicsItem *option,
+                           QWidget *widget = 0);
+        
+        // ConnectionSink:
+        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
+        virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
+
+    protected:
+        liquid::ArcSink* m_arc_sink;
+        QGraphicsProxyWidget* m_text;
 };
-
 
 
 class FNodeImageInput: public FNodeInput{
     public:
-        FNodeImageInput(InputSchedType::e const& sched_type, FNode* node)
-            : FNodeInput(Image_Arc_Style, cutoutStyleForSchedType(sched_type), node){
-        }
-
-        virtual OutputType::e ioType() const{
-            return OutputType::Image;
-        }
-
-        virtual SubType subType() const{
-            return -1;
-        }
+        FNodeImageInput(Manager& m, LocalNodeInput const& input, FNode* node); 
+        virtual OutputType::e ioType() const;
+        virtual SubType subType() const;
     
     private:
-        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st){
-            switch(st){
-                case InputSchedType::Must_Be_New: return Required_Image_Input;
-                case InputSchedType::May_Be_Old: return Optional_Image_Input;
-                default:
-                    error() << "unknown InputSchedtype:" << st;
-                    return Required_Image_Input;
-            }
-        }
+        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
 };
+
 
 class FNodeParamInput: public FNodeInput{
     public:
-        FNodeParamInput(InputSchedType::e const& sched_type,
-                        SubType const& subtype,
-                        FNode* node)
-            : FNodeInput(Image_Arc_Style, cutoutStyleForSchedType(sched_type), node), m_subtype(subtype){
-        }
-
-        virtual OutputType::e ioType() const{
-            return OutputType::Parameter;
-        }
-
-        virtual SubType subType() const{
-            return m_subtype;
-        }
+        FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node);
+        virtual OutputType::e ioType() const;
+        virtual SubType subType() const;
     
     private:
-        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st){
-            switch(st){
-                case InputSchedType::Must_Be_New: return Required_Param_Input;
-                case InputSchedType::May_Be_Old: return Optional_Param_Input;
-                default:
-                    error() << "unknown InputSchedtype:" << st;
-                    return Required_Image_Input;
-            }
-        }
+        static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
 
         SubType m_subtype;
 };

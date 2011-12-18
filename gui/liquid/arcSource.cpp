@@ -29,7 +29,7 @@
 
 using namespace liquid;
 
-/***************************** AbstractArcSource *****************************/
+// - AbstractArcSource
 AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
                                      ArcSourceDelegate* sourceDelegate,
                                      Arc* arc)
@@ -37,10 +37,12 @@ AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
       m_arc(arc),
       m_sourceDelegate(sourceDelegate),
       m_ephemeral_sink(NULL){
-    debug() << "AbstractArcSource(delegate="<<sourceDelegate<<"): " << this;
+    debug(7) << "AbstractArcSource(delegate="<<sourceDelegate<<"): " << this;
+    connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+    connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }
 AbstractArcSource::~AbstractArcSource(){
-    debug() << "~AbstractArcSource()" << this;
+    debug(7) << "~AbstractArcSource()" << this;
 }
 
 Arc* AbstractArcSource::arc() const{
@@ -56,6 +58,13 @@ void AbstractArcSource::setSourceDelegate(ArcSourceDelegate *sourceDelegate){
 }
 ArcSourceDelegate* AbstractArcSource::sourceDelegate() const{
     return m_sourceDelegate;
+}
+
+
+void AbstractArcSource::setParentItem(QGraphicsItem* item){
+    disconnectParentSignals(parentItem());
+    connectParentSignals(item);
+    QGraphicsObject::setParentItem(item);
 }
 
 void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
@@ -91,7 +100,13 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
     debug(5) << "AbstractArcSource::mouseReleaseEvent";
     if(e->button() & Qt::LeftButton){
         removeHighlights();
-        // !!! TODO: call doAcceptConnection
+        QList<QGraphicsItem*> items_at_drop = scene()->items(
+            e->scenePos(), Qt::IntersectsItemShape, Qt::AscendingOrder
+        );
+        AbstractArcSink* sink;
+        foreach(QGraphicsItem* item, items_at_drop)
+            if((sink = dynamic_cast<AbstractArcSink*>(item)))
+                checkDoAcceptConnection(sink);
         if(m_ephemeral_sink){
             // sink arranges its own deletion
             scene()->sendEvent(m_ephemeral_sink, e);
@@ -108,12 +123,16 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
 #include "ephemeralArcEnd.h"
 AbstractArcSink* AbstractArcSource::newArcEnd(){
     debug(5) << "newArcEnd:: this:" << this << "&style:" << &m_style;
-    return new EphemeralArcEnd(m_style);
+    return new EphemeralArcEnd(0, m_style);
 }
 
 void AbstractArcSource::removeHighlights(){
-    foreach(AbstractArcSink* k, m_highlighted_items)
+    foreach(AbstractArcSink* k, m_highlighted_items){
+        disconnect(k, SIGNAL(disconnected(AbstractArcSink*)),
+                   this, SLOT(highlightedItemDisconnected(AbstractArcSink*)));
         k->doPresentHighlight(0);
+    }
+    m_highlighted_items.clear();
 }
 
 void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
@@ -125,7 +144,8 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
         return;
     }
     AbstractArcSink *k;
-    QList<QGraphicsItem *> near_items = s->items(near_field);
+    QList<QGraphicsItem *> near_items = s->items(near_field, Qt::ContainsItemBoundingRect);
+    //
     QSet<AbstractArcSink*> near_set;
     debug(5) << near_items.size() << "nearby items";    
     foreach(QGraphicsItem* g, near_items)
@@ -138,13 +158,53 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
         }
     debug(5) << "now highlighting" << near_set.size() << "items";
     // for each of the no longer highlighted items:
-    foreach(AbstractArcSink* k, m_highlighted_items - near_set)
+    foreach(AbstractArcSink* k, m_highlighted_items - near_set){
         k->doPresentHighlight(0);
+        connect(k, SIGNAL(disconnected(AbstractArcSink*)),
+                this, SLOT(highlightedItemDisconnected(AbstractArcSink*)));
+    }
     m_highlighted_items = near_set;
 }
 
+void AbstractArcSource::highlightedItemDisconnected(AbstractArcSink* sink){
+    debug() << "highlightedItemDisconnected (async remove while highlighted?)" << sink;
+    // sink has probably been deleted by this point
+    m_highlighted_items.remove(sink);
+}
 
-/********************************* ArcSource *********************************/
+void AbstractArcSource::checkDoAcceptConnection(AbstractArcSink* item){
+    ConnectionSink::ConnectionStatus status = item->doAcceptConnection(m_sourceDelegate);
+    if(status == ConnectionSink::Accepted){
+        m_arc->addTo(item);
+    }else if(status == ConnectionSink::Pending){
+        m_arc->addPending(item);
+    }else{
+        debug() << "connection rejected:" << m_sourceDelegate << "-->" << item;
+    }
+}
+
+
+
+void AbstractArcSource::disconnectParentSignals(QGraphicsItem* p){
+    QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
+    if(parent){
+        disconnect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+        disconnect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+        disconnect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));
+    }
+}
+
+void AbstractArcSource::connectParentSignals(QGraphicsItem* p){
+    QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
+    if(parent){
+        connect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+        connect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+        connect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));
+    }
+}
+
+
+// - ArcSource
 ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
                      Arc* arc)
     : AbstractArcSource(arc->style(), sourceDelegate, arc),
@@ -184,7 +244,7 @@ ArcSource::ArcSource(ArcSourceDelegate* sourceDelegate,
 QSizeF ArcSource::sizeHint(Qt::SizeHint which, const QSizeF &constraint) const{
     Q_UNUSED(which);
     Q_UNUSED(constraint);
-    return boundingRect().size() + QSizeF(0,6);
+    return boundingRect().size();// + QSizeF(0,6);
 }
 
 void ArcSource::setGeometry(QRectF const& rect){

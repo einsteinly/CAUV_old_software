@@ -24,7 +24,7 @@ struct ArcStyle;
 class EphemeralArcEnd: public AbstractArcSink{
     Q_OBJECT
     public:
-        EphemeralArcEnd(ArcStyle const& of_style);
+        EphemeralArcEnd(QGraphicsItem* parent, ArcStyle const& of_style, bool cosmetic=false);
         virtual ~EphemeralArcEnd();
     
         // these are forwarded from AbstractArcSink: the event object is

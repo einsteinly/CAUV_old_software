@@ -75,7 +75,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
 }
 
 LiquidNode::~LiquidNode(){
-    debug() << "~LiquidNode()" << this;
+    debug(7) << "~LiquidNode()" << this;
 }
 
 void LiquidNode::close(){
@@ -112,8 +112,16 @@ void LiquidNode::addItem(QGraphicsLayoutItem *item){
 
     RequiresCutout *req_cutout = dynamic_cast<RequiresCutout*>(item);
     debug(7) << "addItem:: requires cutout = " << req_cutout;
-    if(req_cutout)
+    if(req_cutout){
+        // this ugly signal connection is necessary because if the cutout
+        // positions depend on the layout of the contents of a widget added as
+        // an item, then if the layout changes we need to change where the
+        // cutouts are:
+        QGraphicsWidget* as_widget = dynamic_cast<QGraphicsWidget*>(item);
+        if(as_widget)
+            connect(as_widget, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
         m_items_requiring_cutout << req_cutout;
+    }
 }
 
 void LiquidNode::removeItem(QGraphicsLayoutItem *item){
@@ -136,7 +144,7 @@ QSizeF LiquidNode::size() const{
 }
 
 void LiquidNode::setSize(QSizeF const& size){
-    debug() << "LiquidNode::setSize(" << size << ")";
+    debug(6) << "LiquidNode::setSize(" << size << ")";
 
     // this will cause updateLayout to be called via the geometryChanged
     // signal, which in turn actually sets the new size
@@ -181,7 +189,7 @@ void LiquidNode::layoutChanged(){
             cutouts_at[m_contentWidget->pos().y() +
                        r->asQGI()->pos().y() +
                        g.main_cutout.y_offset] = g;
-    debug() << "layoutChanged:" << cutouts_at.size() << "cutouts";
+    debug(5) << "layoutChanged:" << cutouts_at.size() << "cutouts";
 
     p.lineTo(width, 0);
     p.lineTo(width, height);
@@ -221,7 +229,7 @@ void LiquidNode::updateLayout(){
 }
 
 void LiquidNode::setSizeFromContents(){
-    debug() << "LiquidNode::setSizeFromContents(" << m_contentWidget->size() << ")";
+    debug(6) << "LiquidNode::setSizeFromContents(" << m_contentWidget->size() << ")";
 
     const float header_height = m_style.header.height + m_style.bl_radius/2;
     m_size.setWidth(m_contentWidget->size().width());

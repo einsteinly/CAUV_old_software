@@ -18,47 +18,98 @@
 #include <QGraphicsWidget>
 #include <QGraphicsLinearLayout>
 #include <QPainter>
+#include <QLabel>
+#include <QGraphicsProxyWidget>
+#include <QGraphicsScene>
 
 #include <liquid/arcSource.h>
+#include <liquid/arc.h>
+
+#include <generated/types/LocalNodeOutput.h>
 
 #include "elements/style.h"
 
 #include "fNodeIO.h"
+#include "fNode.h"
+
+#include <debug/cauv_debug.h>
 
 namespace cauv{
 namespace gui{
 namespace f{
 
-// !!! TODO: note to self: this is far from the final class structure for node
-// outputs, quickly hacked together while working on inputs... 
 class FNodeOutput: public QGraphicsWidget,
                    public FNodeIO,
                    public liquid::ArcSourceDelegate{
+    Q_OBJECT
     public:
-        FNodeOutput(FNode* node)
-            : QGraphicsWidget(),
-              FNodeIO(node){
+        FNodeOutput(FNode* node, liquid::ArcStyle const& arc_style, std::string const& id)
+            : QGraphicsWidget(node),
+              FNodeIO(node, id),
+              m_source(NULL),
+              m_text(NULL){
             QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
                 Qt::Horizontal, this
             );
             hlayout->setSpacing(0);
             hlayout->setContentsMargins(0,0,0,0);
+            
             hlayout->addStretch(1);
-            liquid::ArcSource *s = new liquid::ArcSource(
-                this, new liquid::Arc(Image_Arc_Style)
+
+            QLabel* text_label = new QLabel(QString::fromStdString(id));
+            text_label->setTextInteractionFlags(Qt::NoTextInteraction);
+            text_label->setFont(F_Node_Style.text.font);
+            text_label->setBackgroundRole(QPalette::Window);
+            m_text = new QGraphicsProxyWidget();
+            m_text->setWidget(text_label);
+            hlayout->addItem(m_text);
+            hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignRight);
+            
+            hlayout->setItemSpacing(1, 4.0);
+
+            m_source = new liquid::ArcSource(
+                this, new liquid::Arc(arc_style)
             );
-            s->setParentItem(this);
-            hlayout->addItem(s);
+            m_source->setParentItem(this);
+            m_source->setZValue(10);
+            hlayout->addItem(m_source);
+            hlayout->setAlignment(m_source, Qt::AlignVCenter | Qt::AlignRight);            
+
             setLayout(hlayout);
+            
+            connect(node, SIGNAL(xChanged()), this, SIGNAL(xChanged()));
+            connect(node, SIGNAL(yChanged()), this, SIGNAL(yChanged()));
         }
         virtual ~FNodeOutput(){}
 
-        virtual OutputType::e ioType() const{
-            return OutputType::Image;
-        }
+        virtual OutputType::e ioType() const = 0;
 
         virtual SubType subType() const{
             return -1;
+        }
+
+        liquid::Arc* arc() const{
+            return m_source->arc();
+        }
+
+    protected Q_SLOTS:
+        void test(){
+            debug() << "TEST SLOT";
+        }
+
+    protected:
+        liquid::ArcSource* m_source;
+        QGraphicsProxyWidget* m_text;
+};
+
+class FNodeImageOutput: public FNodeOutput{
+    public:
+        FNodeImageOutput(LocalNodeOutput const& output, FNode* node)
+            : FNodeOutput(node, Image_Arc_Style, output.output){
+        }
+
+        virtual OutputType::e ioType() const{
+            return OutputType::Image;
         }
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
@@ -68,10 +119,33 @@ class FNodeOutput: public QGraphicsWidget,
             painter->setBrush(Qt::NoBrush);
             painter->drawRect(boundingRect());
         }
-
-    private:
-        
 };
+
+class FNodeParamOutput: public FNodeOutput{
+    public:
+        FNodeParamOutput(LocalNodeOutput const& output, FNode* node)
+            : FNodeOutput(node, Param_Arc_Style, output.output), m_subType(output.subType){
+            
+        }
+
+        virtual OutputType::e ioType() const{
+            return OutputType::Parameter;
+        }
+        virtual SubType subType() const{
+            return m_subType;
+        }
+
+        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
+            Q_UNUSED(option);
+            Q_UNUSED(widget);
+            painter->setPen(QPen(QColor(200,20,30,64)));
+            painter->setBrush(Qt::NoBrush);
+            painter->drawRect(boundingRect());
+        }
+    private:
+        SubType m_subType;
+};
+
 
 } // namespace f
 } // namespace gui

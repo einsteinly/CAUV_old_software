@@ -20,11 +20,9 @@
 
 #include "connectionSink.h"
 #include "requiresCutout.h"
+#include "forward.h"
 
 namespace liquid {
-
-struct ArcStyle;
-struct CutoutStyle;
 
 class AbstractArcSink: public QGraphicsObject,
                        public ConnectionSink{
@@ -36,9 +34,18 @@ class AbstractArcSink: public QGraphicsObject,
         virtual bool willAcceptConnection(ArcSourceDelegate* from_source) = 0;
         virtual void doPresentHighlight(qreal intensity) = 0;
         virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source) = 0;
+
+        // !!! base QGraphicsItem::setParentItem isn't virtual, so this is
+        // probably a bad idea!
+        virtual void setParentItem(QGraphicsItem* item);
+
     Q_SIGNALS:
         void geometryChanged();
         void disconnected(AbstractArcSink*);
+
+    private:
+        void disconnectParentSignals(QGraphicsItem* parent);
+        void    connectParentSignals(QGraphicsItem* parent);
 };
 
 class ArcSink: public AbstractArcSink,
@@ -74,7 +81,7 @@ class ArcSink: public AbstractArcSink,
         // called when the connection is dropped,  delegates the question to
         // connectionDelgate
         virtual ConnectionStatus doAcceptConnection(ArcSourceDelegate* from_source);
-    
+
         // RequiresCutout:
         virtual QList<CutoutStyle> cutoutGeometry() const;
         

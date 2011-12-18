@@ -16,6 +16,7 @@
 
 #include <QPropertyAnimation>
 #include <QGraphicsBlurEffect>
+#include <QPainter>
 
 #include <debug/cauv_debug.h>
 
@@ -25,9 +26,36 @@ AbstractArcSink::AbstractArcSink(QGraphicsItem * parent): QGraphicsObject(parent
     debug(7) << "AbstractArcSink()";
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+    connectParentSignals(parent);
 }
 AbstractArcSink::~AbstractArcSink(){
-    debug() << "~AbstractArcSink(): scene=" << scene(); 
+    debug(7) << "~AbstractArcSink(): scene=" << scene(); 
+    Q_EMIT(disconnected(this));
+}
+
+void AbstractArcSink::setParentItem(QGraphicsItem* item){
+    disconnectParentSignals(parentItem());
+    connectParentSignals(item);
+    QGraphicsObject::setParentItem(item);
+}
+
+void AbstractArcSink::disconnectParentSignals(QGraphicsItem* p){
+    QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
+    if(parent){
+        disconnect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+        disconnect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+        disconnect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));
+    }
+}
+
+void AbstractArcSink::connectParentSignals(QGraphicsItem* p){
+    QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
+    debug(7) << "connectParentSignals:" << parent;
+    if(parent){
+        connect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
+        connect(parent, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
+        connect(parent, SIGNAL(parentChanged()), this, SIGNAL(geometryChanged()));
+    }
 }
 
 ArcSink::ArcSink(ArcStyle const& of_style,
@@ -55,9 +83,9 @@ ArcSink::ArcSink(ArcStyle const& of_style,
     // nodes containing arcsinks are removed from the scene: this is probably
     // something to do with the blur changing the bounding rect (segfault
     // occurs in BSP tree walking)
-    //QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
-    //blur->setBlurRadius(3.0);
-    //setGraphicsEffect(blur);
+    /*QGraphicsBlurEffect *blur = new QGraphicsBlurEffect();
+    blur->setBlurRadius(3.0);
+    setGraphicsEffect(blur);*/
 
     /*QGraphicsPathItem *test_item = new QGraphicsPathItem(this);
     QPainterPath p;
@@ -69,13 +97,11 @@ ArcSink::ArcSink(ArcStyle const& of_style,
 
     QGraphicsLayoutItem::setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    setFlag(ItemHasNoContents);
-    
     // start out not presenting a highlight:
     doPresentHighlight(0);
 }
 ArcSink::~ArcSink(){
-    debug() << "~ArcSink()"; 
+    debug(7) << "~ArcSink()"; 
 }
 
 bool ArcSink::willAcceptConnection(ArcSourceDelegate* from_source){
@@ -106,6 +132,8 @@ QList<CutoutStyle> ArcSink::cutoutGeometry() const{
 
 // QGraphicsLayoutItem:
 void ArcSink::setGeometry(QRectF const& rect){
+    debug(9) << "ArcSink::setGeometry" << rect.topLeft().x() << rect.topLeft().y() << rect.width() << rect.height();
+    QGraphicsLayoutItem::setGeometry(rect);    
     setPos(rect.topLeft() - m_rect.topLeft());
 }
 
@@ -122,8 +150,10 @@ QRectF ArcSink::boundingRect() const{
 void ArcSink::paint(QPainter *painter,
                     const QStyleOptionGraphicsItem *option,
                     QWidget *widget){
-    Q_UNUSED(painter);
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    painter->setPen(QPen(QColor(180,10,120,64)));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(boundingRect());
 }
 

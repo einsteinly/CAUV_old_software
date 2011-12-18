@@ -15,6 +15,10 @@
 #ifndef __LIQUID_CONNECTION_SINK_H__
 #define __LIQUID_CONNECTION_SINK_H__
 
+#include "forward.h"
+
+#include <QtGlobal>
+
 namespace liquid {
 
 class ArcSourceDelegate;

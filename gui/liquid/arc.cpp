@@ -33,17 +33,15 @@ Arc::Arc(ArcStyle const& of_style,
       m_style(of_style),
       m_source(from),
       m_sinks(),
+      m_pending_sinks(),
+      m_ends(),
       m_back(new QGraphicsPathItem(this)),
       m_front(new QGraphicsPathItem(this)),
-      m_ephemeral_end(new EphemeralArcEnd(of_style)){
+      m_ephemeral_end(new EphemeralArcEnd(this, of_style, true)){
 
     debug(7) << "Arc()" << this;
 
     setFlag(ItemHasNoContents);
-    
-    // this is just cosmetic: should probably do drawing locally...
-    m_ephemeral_end->setParentItem(this);
-    m_ephemeral_end->setAcceptedMouseButtons(Qt::NoButton);
     
     if(from)
         setFrom(from);
@@ -84,20 +82,52 @@ void Arc::setFrom(AbstractArcSource *from){
 void Arc::addTo(AbstractArcSink *to){
     debug(7) << "Arc::addTo:" << to;
     m_sinks.insert(to);
+    m_ends[to] = new EphemeralArcEnd(this, m_style, true);
     connect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     connect(to, SIGNAL(disconnected(AbstractArcSink*)),
             this, SLOT(removeTo(AbstractArcSink*)));
     updateLayout();
 }
 
+void Arc::addPending(AbstractArcSink *to){
+    warning() << "add pending isn't implemented yet, calling addTo instead";
+    // when this is implemented, implement promotePending to promote from
+    // pending to added - the pending arcs will have a consistent difference in
+    // style - probably semitransparent (or maybe dashed lines)
+    addTo(to);
+}
+
 void Arc::removeTo(AbstractArcSink *to){
     debug(7) << "Arc::removeTo:" << to;
+    disconnect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
+    disconnect(to, SIGNAL(disconnected(AbstractArcSink*)),
+               this, SLOT(removeTo(AbstractArcSink*)));
     m_sinks.erase(to);
+    m_ends[to]->deleteLater();
+    m_ends.erase(to);
     updateLayout();
 }
 
+void Arc::promotePending(AbstractArcSink *to){
+    m_pending_sinks.erase(to);
+    addTo(to);
+}
+
+
 QRectF Arc::boundingRect() const{
-    return m_back->boundingRect() | m_ephemeral_end->boundingRect();
+    QRectF r = m_back->boundingRect() | m_ephemeral_end->boundingRect();
+    std::map<AbstractArcSink*, EphemeralArcEnd*>::const_iterator i;
+    for(i = m_ends.begin(); i != m_ends.end(); i++)
+        r |= i->second->boundingRect();
+    return r;
+}
+
+QPainterPath Arc::shape() const{
+    QPainterPath r = m_back->shape() | m_ephemeral_end->shape();
+    std::map<AbstractArcSink*, EphemeralArcEnd*>::const_iterator i;
+    for(i = m_ends.begin(); i != m_ends.end(); i++)
+        r |= i->second->shape();
+    return r;
 }
 
 void Arc::paint(QPainter *painter,
@@ -153,5 +183,8 @@ void Arc::updateLayout(){
     prepareGeometryChange();
     m_back->setPath(path);
     m_front->setPath(path);
+
+    foreach(AbstractArcSink* ci, m_sinks)
+        m_ends[ci]->setPos(mapFromScene(ci->scenePos()));
 }
 
