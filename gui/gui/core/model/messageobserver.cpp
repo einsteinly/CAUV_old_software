@@ -16,6 +16,8 @@
 
 #include <vector>
 
+#include <QMetaType>
+
 #include <debug/cauv_debug.h>
 
 #include <generated/types/ControlGroup.h>
@@ -26,10 +28,11 @@
 #include <generated/types/TelemetryGroup.h>
 #include <generated/types/ImageGroup.h>
 #include <generated/types/PressureGroup.h>
+#include <generated/types/GuiaiGroup.h>
+
 
 #include "model/model.h"
 #include "model/nodes/numericnode.h"
-#include "model/nodes/compoundnodes.h"
 #include "model/nodes/groupingnode.h"
 #include "model/nodes/stringnode.h"
 #include "model/nodes/imagenode.h"
@@ -40,24 +43,31 @@ using namespace cauv::gui;
 GuiMessageObserver::GuiMessageObserver(boost::shared_ptr<Vehicle> auv):
         m_auv(auv){
     qRegisterMetaType<boost::shared_ptr<const Message> >("boost::shared_ptr<const Message>");
+    qRegisterMetaType<BoundedFloat>("BoundedFloat");
 }
 
 GuiMessageObserver::~GuiMessageObserver() {
     debug(2) << "~GuiMessageObserver()";
 }
 
-void GuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
+
+
+DefaultGuiMessageObserver::DefaultGuiMessageObserver(boost::shared_ptr<Vehicle> auv):
+        GuiMessageObserver(auv){
+}
+
+void DefaultGuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr message) {
     m_auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode<int> >(message->motorId())->update(message->speed());
 }
 
-void GuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
+void DefaultGuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Bearing);
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
     autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
-void GuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
+void DefaultGuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(Controller::Bearing);
 
@@ -72,14 +82,14 @@ void GuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsM
     ap->findOrCreate<NumericNode<float> >("maxError")->update(message->maxError());
 }
 
-void GuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
+void DefaultGuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Depth);
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
     autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
-void GuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
+void DefaultGuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(Controller::Depth);
 
@@ -94,14 +104,14 @@ void GuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessa
     ap->findOrCreate<NumericNode<float> >("maxError")->update(message->maxError());
 }
 
-void GuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
+void DefaultGuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Pitch);
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
     autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
-void GuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
+void DefaultGuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(Controller::Pitch);
 
@@ -117,7 +127,7 @@ void GuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessa
 }
 
 
-void GuiMessageObserver::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
+void DefaultGuiMessageObserver::onDepthCalibrationMessage(DepthCalibrationMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("calibration");
     group->findOrCreate<NumericNode<float> >("aftMultiplier")->update(message->aftMultiplier());
     group->findOrCreate<NumericNode<float> >("aftOffset")->update(message->aftOffset());
@@ -125,18 +135,18 @@ void GuiMessageObserver::onDepthCalibrationMessage(DepthCalibrationMessage_ptr m
     group->findOrCreate<NumericNode<float> >("foreOffset")->update(message->foreOffset());
 }
 
-void GuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr message) {
+void DefaultGuiMessageObserver::onDebugLevelMessage(DebugLevelMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("debug");
     group->findOrCreate<NumericNode<int> >("level")->update(message->level());
 }
 
-void GuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
+void DefaultGuiMessageObserver::onImageMessage(ImageMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("image");
     boost::shared_ptr<Image> shared_image= boost::make_shared<Image>(message->image());
     group->findOrCreate<ImageNode>(message->source())->update(shared_image);
 }
 
-void GuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) {
+void DefaultGuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("image");
     boost::shared_ptr<ImageNode> sonar = group->findOrCreate<ImageNode>(CameraID::Sonar);
     sonar->findOrCreate<NumericNode<int> >("direction")->update(message->direction());
@@ -147,7 +157,7 @@ void GuiMessageObserver::onSonarControlMessage(SonarControlMessage_ptr message) 
     sonar->findOrCreate<NumericNode<unsigned int> >("angularRes")->update(message->angularRes());
 }
 
-void GuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
+void DefaultGuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemtry");
     group->findOrCreate<NumericNode<float> >("depth")->update(message->depth());
     //!!! group->findOrCreate<FloatYPRNode>("orientation")->update(message->orientation());
@@ -158,7 +168,7 @@ void GuiMessageObserver::onTelemetryMessage(TelemetryMessage_ptr message){
     autopilots->findOrCreate<GroupingNode>("depth")->findOrCreate<NumericNode<float> >("actual")->update(message->depth());
 }
 
-void GuiMessageObserver::onLocationMessage(LocationMessage_ptr){
+void DefaultGuiMessageObserver::onLocationMessage(LocationMessage_ptr){
     //boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemetry")->findOrCreate<GroupingNode>("location");
 
     //group->findOrCreate<NumericNode>("speed")->update(message->aft());
@@ -167,25 +177,20 @@ void GuiMessageObserver::onLocationMessage(LocationMessage_ptr){
     //m_auv->sensors.location->update(*(m.get()));
 }
 
-void GuiMessageObserver::onPressureMessage(PressureMessage_ptr message){
+void DefaultGuiMessageObserver::onPressureMessage(PressureMessage_ptr message){
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("sensors")->findOrCreate<GroupingNode>("pressure");
     group->findOrCreate<NumericNode<unsigned int> >("fore")->update(message->fore());
     group->findOrCreate<NumericNode<unsigned int> >("aft")->update(message->aft());
 }
 
-void GuiMessageObserver::onScriptResponseMessage(ScriptResponseMessage_ptr){
-//    boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("console");
-//    group->findOrCreate<StringNode>("response")->update(message->response());
-}
-
-void GuiMessageObserver::onBatteryUseMessage(BatteryUseMessage_ptr message) {
+void DefaultGuiMessageObserver::onBatteryUseMessage(BatteryUseMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("telemetry")->findOrCreate<GroupingNode>("battery");
     group->findOrCreate<NumericNode<float> >("current")->update(message->estimate_current());
     group->findOrCreate<NumericNode<float> >("total")->update(message->estimate_total());
     group->findOrCreate<NumericNode<float> >("remaining")->update(message->fraction_remaining() * 100.f);
 }
 
-void GuiMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
+void DefaultGuiMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr message) {
     boost::shared_ptr<GroupingNode> group = m_auv->findOrCreate<GroupingNode>("processes");
     boost::shared_ptr<GroupingNode> process = group->findOrCreate<GroupingNode>(message->process());
 
@@ -195,7 +200,7 @@ void GuiMessageObserver::onProcessStatusMessage(ProcessStatusMessage_ptr message
     process->findOrCreate<StringNode>("status")->update(message->status());
 }
 
-void GuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr message){
+void DefaultGuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr message){
 
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
     boost::shared_ptr<GroupingNode> ap = autopilots->findOrCreate<GroupingNode>(message->contoller());
@@ -216,4 +221,3 @@ void GuiMessageObserver::onControllerStateMessage(ControllerStateMessage_ptr mes
     state->findOrCreate<NumericNode<float> >("ierror")->update(message->ierror());
     state->findOrCreate<NumericNode<float> >("mv")->update(message->mv());
 }
-

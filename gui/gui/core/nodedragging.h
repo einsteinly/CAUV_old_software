@@ -62,8 +62,6 @@ namespace cauv {
             // then they also get passed into one of these
             virtual void onNodeDropped(boost::shared_ptr<NumericNodeBase> const& ) {}
             virtual void onNodeDropped(boost::shared_ptr<ImageNode> const& ) {}
-            virtual void onNodeDropped(boost::shared_ptr<FloatYPRNode> const& ) {}
-            virtual void onNodeDropped(boost::shared_ptr<FloatXYZNode> const& ) {}
             virtual void onNodeDropped(boost::shared_ptr<GroupingNode> const& ) {}
         };
 

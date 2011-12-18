@@ -49,7 +49,6 @@ set ( GUI_CORE_SRCS
     framework/nodepicker.cpp
     framework/mainwindow.cpp
     framework/nodescene.cpp
-    framework/elements/aiNode.cpp
     framework/style.cpp
 
     #framework/elements/nodeInput.cpp
@@ -87,7 +86,6 @@ set ( GUI_CORE_H
 
     framework/nodepicker.h
     framework/mainwindow.h
-    framework/elements/aiNode.h
     framework/style.h
     framework/delegates.h
     #framework/elements/nodeInput.h

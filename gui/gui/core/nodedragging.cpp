@@ -13,7 +13,6 @@
  */
 
 #include "model/nodes/numericnode.h"
-#include "model/nodes/compoundnodes.h"
 #include "model/nodes/imagenode.h"
 #include "model/nodes/groupingnode.h"
 #include "model/registry.h"
@@ -43,19 +42,13 @@ bool NodeDropListener::routeNode(boost::shared_ptr<Node> const& s, QPointF pos){
     onNodeDropped(s);
 
     switch (s->type){
-    case GuiNodeType::NumericNode:
+    case GuiNodeType::Numeric:
         onNodeDropped(boost::static_pointer_cast<NumericNodeBase>(s));
         break;
-    case GuiNodeType::ImageNode:
+    case GuiNodeType::Image:
         onNodeDropped(boost::static_pointer_cast<ImageNode>(s));
         break;
-    //case GuiNodeType::FloatYPRNode:
-    //    onNodeDropped(boost::static_pointer_cast<FloatYPRNode>(s));
-    //    break;
-    //case GuiNodeType::FloatXYZNode:
-    //    onNodeDropped(boost::static_pointer_cast<FloatXYZNode>(s));
-    //    break;
-    case GuiNodeType::GroupingNode:
+    case GuiNodeType::Grouping:
         onNodeDropped(boost::static_pointer_cast<GroupingNode>(s));
         break;
     default:

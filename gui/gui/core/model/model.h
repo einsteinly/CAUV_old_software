@@ -24,7 +24,7 @@
 #include <generated/types/message.h>
 
 #include "nodes/vehiclenode.h"
-
+#include "nodes/numericnode.h"
 
 namespace cauv {
     namespace gui {
@@ -52,14 +52,13 @@ namespace cauv {
         };
 
 
+
         class ModelIndexUpdateNotfication : public QObject {
             Q_OBJECT
         public:
             ModelIndexUpdateNotfication(QModelIndex start, QModelIndex end) :
                 m_start(start), m_end(end) {
-
                 debug(4) << "ModelIndexUpdateNotification()";
-
             }
 
         public Q_SLOTS:
@@ -75,10 +74,19 @@ namespace cauv {
         };
 
 
+
         class NodeItemModel : public QAbstractItemModel {
             Q_OBJECT
 
         public:
+            enum Roles {
+                MinValue = Qt::UserRole + 1,
+                MaxValue,
+                NeutralValue,
+                Wraps,
+                Units
+            };
+
             NodeItemModel(boost::shared_ptr<Node> root, QObject * parent = 0) :
                 QAbstractItemModel(parent), m_root(root){
                 connect(root.get(), SIGNAL(structureChanged()), this, SIGNAL(layoutChanged()));
@@ -97,8 +105,27 @@ namespace cauv {
 
                 void * ptr = index.internalPointer();
                 Node * node = static_cast<Node *>(ptr);
+                NumericNodeBase * numNode = dynamic_cast<NumericNodeBase *>(node);
+
+                //!!! todo: don't use numeric node any more, use ParamValue types like
+                // bounded float
 
                 switch (role){
+                case MinValue:
+                    if(numNode) return numNode->getMin();
+                    break;
+                case MaxValue:
+                    if(numNode) return numNode->getMax();
+                    break;
+                case NeutralValue:
+                    return QVariant(0);
+                    break;
+                case Units:
+                    if(numNode) return QVariant(QString::fromStdString(numNode->getUnits()));
+                    else return QVariant("");
+                    break;
+                case Wraps:
+                    break;
                 case Qt::EditRole:
                 case Qt::DisplayRole:
                     if (index.column() == 0)

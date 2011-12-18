@@ -20,11 +20,14 @@
 #include <QPluginLoader>
 #include <QSettings>
 #include <QGLWidget>
-#include <QTreeView>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
+
+#include <common/cauv_global.h>
+#include <common/cauv_utils.h>
+#include <debug/cauv_debug.h>
 
 #include "cauvplugins.h"
 
@@ -37,11 +40,10 @@
 
 #include "fluidity/view.h"
 
-#include <common/cauv_global.h>
-#include <common/cauv_utils.h>
-#include <debug/cauv_debug.h>
-
+//!!! just for testing
 #include <gui/core/model/nodes/numericnode.h>
+#include <common/bounded_float.h>
+
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -116,56 +118,12 @@ void CauvMainWindow::onRun()
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
-/*
-    AINode *node = new AINode();
-    node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
-    node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
-    node->addItem(new liquid::ArcSink(Image_Arc_Style, Required_Image_Input, new liquid::RejectingConnectionSink()));
-    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-    proxy->setWidget(new NodePicker(m_actions->auv));
-    node->addItem(proxy);
-    node->setResizable(true);
-    m_actions->scene->addItem(node);
-*/
-
-    AINode *node = new AINode();
-    QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-    QTreeView * view = new NodeTreeView();
-    QAbstractItemModel * model = new NodeItemModel(VehicleRegistry::instance());
-    view->setModel(model);
-    view->setDragEnabled(true);
-    proxy->setWidget(view);
-    node->addItem(proxy);
-    node->setResizable(true);
-    m_actions->scene->addItem(node);
-
-    AINode *node2 = new AINode();
-    QGraphicsProxyWidget * proxy2 = new QGraphicsProxyWidget();
-    QTreeView * view2 = new NodeTreeView();
-    view2->setModel(model);
-    view2->setDragEnabled(true);
-    proxy2->setWidget(view2);
-    node2->addItem(proxy2);
-    node2->setResizable(true);
-    m_actions->scene->addItem(node2);
-
-
-    AINode *node3 = new AINode();
-    QGraphicsProxyWidget * proxy3 = new QGraphicsProxyWidget();
-    QTreeView * view3 = new NodeTreeView();
-    QAbstractItemModel * model3 = new NodeItemModel(VehicleRegistry::instance()->find<Node>("redherring"));
-    view3->setModel(model3);
-    view3->setDragEnabled(true);
-    proxy3->setWidget(view3);
-    node3->addItem(proxy3);
-    node3->setResizable(true);
-    m_actions->scene->addItem(node3);
 
     // message input
-    this->addMessageObserver(boost::make_shared<GuiMessageObserver>(m_actions->auv));
+    this->addMessageObserver(boost::make_shared<DefaultGuiMessageObserver>(m_actions->auv));
     this->addMessageObserver(boost::make_shared<DebugMessageObserver>(5));
 
-    // always need at least the gui group
+    // always need at least the gui and control group
     this->joinGroup("gui");
     this->joinGroup("control");
 
@@ -190,8 +148,10 @@ void CauvMainWindow::onRun()
     restoreState(settings.value("windowState").toByteArray());
 
 
-    m_actions->auv->findOrCreate<GroupingNode>("motors")->findOrCreate<NumericNode<int> >(MotorID::Prop);
-
+    //!!! just for testing
+    boost::shared_ptr<NumericNode<BoundedFloat> > n = m_actions->auv->findOrCreate<GroupingNode>("test")->findOrCreate<NumericNode<BoundedFloat> >(MotorID::Prop);
+    n->setMutable(true);
+    n->update(QVariant::fromValue(BoundedFloat(3.0, 2, 7, BoundedFloatType::Wraps)));
 
     show();
     m_application->exec();

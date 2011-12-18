@@ -37,13 +37,12 @@ namespace cauv {
 
         namespace GuiNodeType {
             enum e {
-                NumericNode,
-                StringNode,
-                ImageNode,
-                FloatYPRNode,
-                FloatXYZNode,
-                GroupingNode,
-                ExternalNode = 127
+                Node,
+                Numeric,
+                String,
+                Image,
+                Grouping,
+                External = 1000
             };
         };
 
@@ -57,13 +56,14 @@ namespace cauv {
 
             GuiNodeType::e type;
 
-            Node(GuiNodeType::e t, nid_t const& id);
+            Node(nid_t const& id, GuiNodeType::e t = GuiNodeType::Node);
             virtual ~Node();
 
             virtual nid_t nodeId() const;
             virtual std::string nodeName() const;
             virtual std::string nodePath() const;
             virtual void addChild(boost::shared_ptr<Node> const& child);
+            virtual void removeChild(boost::shared_ptr<Node> const& child);
             virtual const children_list_t getChildren() const;
             virtual bool isMutable() const;
             virtual void setMutable(bool mut);
@@ -156,6 +156,7 @@ namespace cauv {
         Q_SIGNALS:
             // strctural signals
             void nodeAdded(boost::shared_ptr<Node> node);
+            void nodeRemoved(boost::shared_ptr<Node> node);
             void structureChanged();
             // data change signals
             void onBranchChanged();
@@ -202,6 +203,18 @@ namespace cauv {
 
             // should be implmented as a signal by subclasses
             virtual void filterChanged() = 0;
+        };
+
+
+        template<class T>
+        struct TypedNode : public Node{
+            virtual void update(T const& value){
+                Node::update(QVariant::fromValue(value));
+            }
+
+            virtual bool set(T const& value){
+                return Node::set(QVariant::fromValue(value));
+            }
         };
 
     } // namespace gui

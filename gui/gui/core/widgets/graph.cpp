@@ -226,7 +226,7 @@ void GraphWidget::setupPlot() {
 
 
 bool GraphWidget::accepts(boost::shared_ptr<Node> const& node){
-    return (node->type == GuiNodeType::NumericNode);
+    return (node->type == GuiNodeType::Numeric);
 }
 
 void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNodeBase> const& node){

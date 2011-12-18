@@ -19,6 +19,7 @@ endfunction()
 #add_subdirectory (pipeline)
 #add_subdirectory (processes)
 add_subdirectory (motorcontrol)
+add_subdirectory (ai)
 #add_subdirectory (logs)
 
 #if (CAUV_GUI_MAP)

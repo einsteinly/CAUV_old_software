@@ -2,9 +2,9 @@
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
- *
+ * 
  * See license.txt for details.
- *
+ * 
  * Please direct queries to the officers of Cambridge Hydronautics:
  *     James Crosby    james@camhydro.co.uk
  *     Andy Pritchard   andy@camhydro.co.uk
@@ -12,24 +12,27 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef GUI_GROUPINGNODE_H
-#define GUI_GROUPINGNODE_H
+#ifndef AIPLUGIN_H
+#define AIPLUGIN_H
 
-#include <gui/core/model/node.h>
+#include <gui/core/cauvbasicplugin.h>
+
+#include <QObject>
 
 namespace cauv {
     namespace gui {
 
-        class GroupingNode : public Node {
+        class AiPlugin : public QObject, public CauvBasicPlugin
+        {
             Q_OBJECT
+            Q_INTERFACES(cauv::gui::CauvInterfacePlugin)
 
         public:
-            GroupingNode(const nid_t id) : Node(id, GuiNodeType::Grouping){
-            }
+            virtual const QString name() const;
+            virtual void initialise();
+
         };
-
-
-    } //namespace gui
+    } // namespace gui
 } // namespace cauv
 
-#endif // GUI_GROUPINGNODE_H
+#endif // AIPLUGIN_H

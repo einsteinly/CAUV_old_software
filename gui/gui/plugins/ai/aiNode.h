@@ -19,18 +19,37 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <gui/core/model/node.h>
+
 #include <liquid/node.h>
+
+#include <gui/core/nodedragging.h>
 
 namespace cauv {
     namespace gui {
 
-        class AINode : public liquid::LiquidNode
+        class AiNode : public liquid::LiquidNode
         {
             Q_OBJECT
             typedef liquid::LiquidNode base_t;
         public:
-            AINode(QGraphicsItem *parent = 0);
-            virtual ~AINode();
+            AiNode(QGraphicsItem *parent = 0);
+            virtual ~AiNode();
+        };
+
+
+        class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
+
+            virtual bool accepts(boost::shared_ptr<Node> const& node){
+                return node->type == GuiNodeType::Numeric;
+            }
+
+            virtual QGraphicsItem * handle(boost::shared_ptr<Node> const&) {
+
+                info() << "added AiNode";
+
+                return new AiNode();
+            }
         };
 
     } // namespace gui

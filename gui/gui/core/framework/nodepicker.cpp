@@ -166,7 +166,7 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setItemDelegate(delegate);
-    delegate->registerDelegate(GuiNodeType::NumericNode, boost::make_shared<ProgressBarDelegate>());
+    delegate->registerDelegate(GuiNodeType::Numeric, boost::make_shared<ProgressBarDelegate>());
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){

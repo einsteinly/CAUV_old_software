@@ -20,7 +20,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-Node::Node(GuiNodeType::e t, nid_t const& id) :
+Node::Node(nid_t const& id, GuiNodeType::e t) :
         type(t), m_parent(), m_id(id), m_mutable(false) {
 
     qRegisterMetaType<boost::shared_ptr<Node> >("boost::shared_ptr<Node>");
@@ -76,6 +76,26 @@ void Node::addChild(boost::shared_ptr<Node> const& child){
     child->connect(child.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
 
     Q_EMIT nodeAdded(child);
+    Q_EMIT structureChanged();
+}
+
+
+void Node::removeChild(boost::shared_ptr<Node> const& child){
+
+    //check it's actually a child of this node (throws exception if not)
+    find<Node>(child->nodeId());
+
+    // clear parent from child
+    child->m_parent.reset();
+    m_children.erase(std::find(m_children.begin(), m_children.end(), child));
+    m_id_map.erase(child->nodeId());
+    m_id_map.erase(child->nodeName());
+
+    // disconnect propagation signals
+    child->disconnect(child.get(), SIGNAL(onBranchChanged()), this, SIGNAL(onBranchChanged()));
+    child->disconnect(child.get(), SIGNAL(structureChanged()), this, SIGNAL(structureChanged()));
+
+    Q_EMIT nodeRemoved(child);
     Q_EMIT structureChanged();
 }
 

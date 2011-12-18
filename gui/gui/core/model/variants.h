@@ -37,7 +37,7 @@ namespace cauv {
         /**
           * Variant definitions
           */
-        typedef boost::variant<std::string, MotorID::e, Controller::e, CameraID::e> nid_t;
+        typedef boost::variant<std::string, MotorID::e, Controller::e, CameraID::e, uint32_t> nid_t;
 
         /**
           * Useful variant visitors

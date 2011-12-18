@@ -17,7 +17,7 @@
 
 #include <QMetaType>
 
-#include "../node.h"
+#include <gui/core/model/node.h>
 
 #include <common/image.h>
 
@@ -31,7 +31,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            ImageNode(nid_t const& id) : Node(GuiNodeType::ImageNode, id){
+            ImageNode(nid_t const& id) : Node(id, GuiNodeType::Image){
                 qRegisterMetaType<image_t>("image_t");
                 m_value = QVariant::fromValue<image_t>(image_t());
             }

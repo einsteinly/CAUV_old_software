@@ -15,7 +15,7 @@
 #ifndef GUI_NUMERICNODE_H
 #define GUI_NUMERICNODE_H
 
-#include "../node.h"
+#include <gui/core/model/node.h>
 
 #include <QMetaType>
 #include <QVariant>
@@ -27,7 +27,7 @@ namespace cauv {
             Q_OBJECT
 
         protected:
-            NumericNodeBase(nid_t const& id) : Node(GuiNodeType::NumericNode, id),
+            NumericNodeBase(nid_t const& id) : Node(id, GuiNodeType::Numeric),
             m_maxSet(false), m_minSet(false), m_wraps(false), m_precision(3)
             {
             }
@@ -109,7 +109,7 @@ namespace cauv {
         public:
             NumericNode(nid_t const& id) : NumericNodeBase(id)
             {
-                m_value = QVariant(T());
+                m_value = QVariant::fromValue(T());
             }
 
             T get() {
@@ -118,7 +118,7 @@ namespace cauv {
 
             virtual T wrap(T const& value) const {
                 // work out the range
-
+                /*
                 QVariant minV = getMin();
                 QVariant maxV = getMax();
 
@@ -132,7 +132,8 @@ namespace cauv {
                 } else if (value > max){
                     T var = value - range;
                     return wrap(var);
-                } else return value;
+                } else return value;*/
+                return value;
             }
 
 
@@ -164,15 +165,15 @@ namespace cauv {
                         cleanVal = minV.value<T>();
                 }
 
-                return NumericNodeBase::set(cleanVal);
+                return NumericNodeBase::set(QVariant::fromValue(cleanVal));
             }
 
             virtual void setMin(T min){
-                NumericNodeBase::setMin(min);
+                NumericNodeBase::setMin(QVariant::fromValue(min));
             }
 
             virtual void setMax(T max){
-                NumericNodeBase::setMax(max);
+                NumericNodeBase::setMax(QVariant::fromValue(max));
             }
         };
 

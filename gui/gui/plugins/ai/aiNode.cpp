@@ -16,18 +16,20 @@
 
 #include <debug/cauv_debug.h>
 
-#include "framework/elements/style.h"
+#include <gui/core/framework/elements/style.h>
+
+#include <generated/types/GuiaiGroup.h>
 
 using namespace cauv;
 using namespace cauv::gui;
 
 
-AINode::AINode(QGraphicsItem *parent) :
+AiNode::AiNode(QGraphicsItem *parent) :
         liquid::LiquidNode(AI_Node_Style, parent)
 {
     setSize(QSizeF(200, 200));
 }
 
-AINode::~AINode(){
+AiNode::~AiNode(){
     debug(2) << "~AINode()";
 }

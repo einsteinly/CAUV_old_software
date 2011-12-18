@@ -23,6 +23,8 @@
 
 #include "model/node.h"
 
+#include "widgets/graph.h"
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -60,11 +62,42 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 }
 
 
+
+//!!! todo: make a graphs plugin?
+class GraphDropHandler : public DropHandlerInterface<QGraphicsItem * > {
+
+    virtual bool accepts(boost::shared_ptr<Node> const& node){
+        return node->type == GuiNodeType::Numeric;
+    }
+
+    virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
+
+        //if(m_graphs[node->nodePath()]){
+        //    return m_graphs[node->nodePath()];
+        //}
+
+        GraphWidget * graph = new GraphWidget(boost::static_pointer_cast<NumericNodeBase>(node));
+
+        QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+        proxy->setWidget(graph);
+        proxy->setFlag(QGraphicsItem::ItemIsMovable);
+        proxy->setFlag(QGraphicsItem::ItemIsSelectable);
+        proxy->installEventFilter(new NodeDropFilter(graph));
+
+        //m_graphs[node->nodePath()] = proxy;
+
+        return proxy;
+    }
+
+//protected:
+//    std::map<std::string, QGraphicsProxyWidget *> m_graphs;
+};
+
+
+
 NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
     int sceneSize = 30000;
-
-    registerDropHandler(boost::make_shared<ExampleDropHandler>());
 
     // a special background element that recieves drops and other events that aren't
     // accepted by items futher up the tree

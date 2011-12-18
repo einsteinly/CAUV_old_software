@@ -68,5 +68,10 @@ std::basic_ostream<char_T, traits>& operator<<(
 
 } // namespace cauv
 
+#ifdef QT_VERSION
+#include <QMetaType>
+Q_DECLARE_METATYPE(cauv::BoundedFloat)
+#endif
+
 #endif // ndef __CAUV_COMMON_BOUNDED_FLOAT_H__
 

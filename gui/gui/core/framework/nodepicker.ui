@@ -61,6 +61,9 @@
      <property name="allColumnsShowFocus">
       <bool>true</bool>
      </property>
+     <attribute name="headerDefaultSectionSize">
+      <number>200</number>
+     </attribute>
     </widget>
    </item>
    <item>

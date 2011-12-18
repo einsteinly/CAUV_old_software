@@ -15,7 +15,7 @@
 #ifndef GUI_STRINGNODE_H
 #define GUI_STRINGNODE_H
 
-#include "../node.h"
+#include <gui/core/model/node.h>
 
 namespace cauv {
     namespace gui {
@@ -24,7 +24,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            StringNode(nid_t const& id) : Node(GuiNodeType::StringNode, id){
+            StringNode(nid_t const& id) : Node(id, GuiNodeType::String){
             }
 
         public Q_SLOTS:
