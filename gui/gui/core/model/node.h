@@ -35,6 +35,13 @@
 #include "variants.h"
 
 
+#define GENERATE_SIMPLE_NODE(X) \
+    class X : public Node { \
+    public: \
+        X(const nid_t id) : Node(id, nodeType<X>()){ \
+        } \
+};
+
 namespace cauv {
     namespace gui {
 
@@ -70,7 +77,8 @@ namespace cauv {
             virtual std::string nodeName() const;
             virtual std::string nodePath() const;
             virtual void addChild(boost::shared_ptr<Node> const& child);
-            virtual void removeChild(boost::shared_ptr<Node> const& child);
+            virtual bool removeChild(boost::shared_ptr<Node> const& child);
+            virtual bool removeChild(nid_t const& childId);
             virtual const children_list_t getChildren() const;
             virtual bool isMutable() const;
             virtual void setMutable(bool mut);
@@ -210,18 +218,6 @@ namespace cauv {
 
             // should be implmented as a signal by subclasses
             virtual void filterChanged() = 0;
-        };
-
-
-        template<class T>
-        struct TypedNode : public Node{
-            virtual void update(T const& value){
-                Node::update(QVariant::fromValue(value));
-            }
-
-            virtual bool set(T const& value){
-                return Node::set(QVariant::fromValue(value));
-            }
         };
 
     } // namespace gui

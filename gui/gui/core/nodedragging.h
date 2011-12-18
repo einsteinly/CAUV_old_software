@@ -23,10 +23,10 @@
 #include <QEvent>
 #include <QGraphicsRectItem>
 
-#include "model/nodes_fwd.h"
-
 namespace cauv {
     namespace gui {
+
+        class Node;
 
         struct drop_not_handled : public std::exception {};
 

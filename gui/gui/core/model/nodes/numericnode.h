@@ -16,8 +16,7 @@
 #define GUI_NUMERICNODE_H
 
 #include <gui/core/model/node.h>
-
-#include <common/bounded_float.h>
+#include <gui/core/model/paramvalues.h>
 
 #include <QMetaType>
 #include <QVariant>

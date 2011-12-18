@@ -28,6 +28,11 @@
 namespace cauv {
     namespace gui {
 
+        GENERATE_SIMPLE_NODE(AiMissionNode)
+        GENERATE_SIMPLE_NODE(AiTaskNode)
+        GENERATE_SIMPLE_NODE(AiConditionNode)
+        GENERATE_SIMPLE_NODE(PipelineNode) //!!! todo: this shouldn't be deifned here
+
         class AiNode : public liquid::LiquidNode
         {
             Q_OBJECT

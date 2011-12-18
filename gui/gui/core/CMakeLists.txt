@@ -84,6 +84,7 @@ set ( GUI_CORE_H
     model/nodes/groupingnode.h
     model/nodes/vehiclenode.h
     model/messagegenerators.h
+    model/messageobserver.h
 
     framework/nodepicker.h
     framework/mainwindow.h

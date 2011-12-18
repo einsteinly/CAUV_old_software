@@ -14,6 +14,7 @@
 
 #include "neutralspinbox.h"
 
+#include <limits>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -21,6 +22,8 @@ using namespace cauv::gui;
 
 NeutralSpinBox::NeutralSpinBox(QWidget * parent) : QSpinBox(parent), m_neutral(0){
     this->setAlignment(Qt::AlignHCenter);
+    this->setMaximum(std::numeric_limits<int>::max());
+    this->setMinimum(std::numeric_limits<int>::min());
 }
 
 int NeutralSpinBox::getNeutral() const {
@@ -34,6 +37,8 @@ void NeutralSpinBox::setNeutral(int neutral){
 
 NeutralDoubleSpinBox::NeutralDoubleSpinBox(QWidget * parent) : QDoubleSpinBox(parent), m_neutral(0){
     this->setAlignment(Qt::AlignHCenter);
+    this->setMaximum(std::numeric_limits<float>::max());
+    this->setMinimum(std::numeric_limits<float>::min());
 }
 
 double NeutralDoubleSpinBox::neutral() const {

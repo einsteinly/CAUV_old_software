@@ -19,6 +19,8 @@
 
 #include <QVariant>
 
+#include <gui/core/model/node.h>
+
 // register param values types as qt meta types
 //!!! todo: generate these?
 #include <QMetaType>
@@ -29,15 +31,14 @@ Q_DECLARE_METATYPE(std::vector<cauv::Line>)
 Q_DECLARE_METATYPE(std::vector<cauv::Circle>)
 Q_DECLARE_METATYPE(std::vector<float>)
 Q_DECLARE_METATYPE(std::vector<cauv::KeyPoint>)
+Q_DECLARE_METATYPE(cauv::BoundedFloat)
 
 namespace cauv {
     namespace gui {
 
-    class Node;
-
     struct ParamValueToNode : public boost::static_visitor<boost::shared_ptr<Node> >
     {
-        ParamValueToNode(nid_t id, boost::shared_ptr<Node> parent);
+        ParamValueToNode(const nid_t id, boost::shared_ptr<Node> parent);
 
         template <typename T> boost::shared_ptr<Node> operator()( T & ) const
         {
@@ -55,7 +56,7 @@ namespace cauv {
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
 
     template <class T>
-    boost::shared_ptr<Node>  paramValueToNode(nid_t id, boost::shared_ptr<Node> parent, T boostVariant){
+    boost::shared_ptr<Node> paramValueToNode(nid_t id, boost::shared_ptr<Node> parent, T boostVariant){
         return boost::apply_visitor(ParamValueToNode(id, parent), boostVariant);
     }
 
@@ -67,6 +68,8 @@ namespace cauv {
             return QVariant::fromValue(operand);
         }
     };
+
+    template <> QVariant ParamValueToQVariant::operator()(std::string & ) const;
 
     template <class T>
     QVariant paramValueToQVariant(T boostVariant){

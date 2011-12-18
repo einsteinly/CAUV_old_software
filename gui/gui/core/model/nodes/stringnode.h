@@ -30,11 +30,16 @@ namespace cauv {
         public Q_SLOTS:
 
             virtual void update(QString const& value){
-                Node::update(value);
+                Node::update(QVariant(value));
             }
 
             virtual void update(std::string const& value){
-                Node::update(QString::fromStdString(value));
+                update(QString::fromStdString(value));
+            }
+
+            virtual void update(QVariant const& value){
+                error() << "string updated to " << value.toString().toStdString();
+                Node::update(value);
             }
 
             virtual bool set(QString const& value){

@@ -26,6 +26,8 @@
 #include <gui/core/model/nodes/stringnode.h>
 #include <gui/core/model/nodes/numericnode.h>
 
+#include <gui/plugins/ai/aiNode.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -63,42 +65,67 @@ void AIMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
 void AIMessageObserver::onConditionRemovedMessage(ConditionRemovedMessage_ptr m){
 
 }
+*/
 
-void AIMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
 
+void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
+    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("active_taks");
+    boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
+
+    boost::shared_ptr<GroupingNode> debugValues = task->findOrCreate<GroupingNode>("debug");
+    foreach(param_map_t::value_type i, m->debugValues()){
+        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), debugValues, i.second);
+        node->update(paramValueToQVariant(i.second));
+    }
+
+    boost::shared_ptr<GroupingNode> pipelineIds = task->findOrCreate<GroupingNode>("pipelines");
+    foreach(std::string const& i, m->pipelineIds()){
+        pipelineIds->findOrCreate<PipelineNode>(i);
+    }
 }
 
-void AIMessageObserver::onScriptControlMessage(ScriptControlMessage_ptr m){
 
-}
-
-
-
-void AIMessageObserver::onTaskRemovedMessage(TaskRemovedMessage_ptr m){
-
-}*/
-
-void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
+void AiMessageObserver::onTaskRemovedMessage(TaskRemovedMessage_ptr m){
     boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("active_tasks");
-    boost::shared_ptr<GroupingNode> task = tasks->findOrCreate<GroupingNode>(m->taskId());
+    tasks->removeChild(m->taskId());
+}
+
+void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
+    info() << *(m.get());
+
+    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+    boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("active_tasks");
+    boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
 
     task->findOrCreate<NumericNode<bool > >("running")->update(m->isCurrentlyRunning());
 
-    foreach(param_map_t::value_type i, m->dynamicScriptOptions()){
-        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), task, i.second);
+    boost::shared_ptr<GroupingNode> staticOptions = task->findOrCreate<GroupingNode>("static");
+    foreach(param_map_t::value_type i, m->staticScriptOptions()){
+        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), staticOptions, i.second);
         node->update(paramValueToQVariant(i.second));
-
-        //QVariant v = paramValueToQVariant(i.second);
-        //if(v.isValid())
-            //task->findOrCreate<Node>(i.first)->update(v);
+        node->setMutable(true);
     }
 
+    boost::shared_ptr<GroupingNode> dynamicOptions = task->findOrCreate<GroupingNode>("dynamic");
+    foreach(param_map_t::value_type i, m->dynamicScriptOptions()){
+        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), dynamicOptions, i.second);
+        node->update(paramValueToQVariant(i.second));
+        node->setMutable(true);
+    }
 
-    /*m->conditionIds();
-    m->dynamicScriptOptions();
-    m->staticScriptOptions();
-    m->taskOptions();*/
+    boost::shared_ptr<GroupingNode> taskOptions = task->findOrCreate<GroupingNode>("dynamic");
+    foreach(param_map_t::value_type i, m->taskOptions()){
+        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), taskOptions, i.second);
+        node->update(paramValueToQVariant(i.second));
+        node->setMutable(true);
+    }
+
+    boost::shared_ptr<GroupingNode> conditionIds = task->findOrCreate<GroupingNode>("conditions");
+    foreach(int i, m->conditionIds()){
+        conditionIds->findOrCreate<AiConditionNode>(i);
+    }
 }
 
 
@@ -125,14 +152,3 @@ void AiMessageObserver::onConditionTypesMessage(ConditionTypesMessage_ptr m){
     }
 }
 
-void AiMessageObserver::onTaskRemovedMessage(TaskRemovedMessage_ptr m){
-    boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
-    boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("active_tasks");
-
-
-    try {
-        tasks->removeChild(tasks->find<Node>(m->taskId()));
-    } catch (std::out_of_range){
-        warning() << "AiMessageObserver tried to remove an unknown task ("<<m->taskId()<<")";
-    }
-}

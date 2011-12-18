@@ -41,15 +41,12 @@ namespace cauv{
             /*
             virtual void onConditionStateMessage(ConditionStateMessage_ptr m);
             virtual void onConditionRemovedMessage(ConditionRemovedMessage_ptr m);
-
-            virtual void onScriptStateMessage(ScriptStateMessage_ptr m);
-            virtual void onScriptControlMessage(ScriptControlMessage_ptr m);
-
-            virtual void onTaskRemovedMessage(TaskRemovedMessage_ptr m);*/
+            */
             virtual void onTaskTypesMessage(TaskTypesMessage_ptr m);
             virtual void onConditionTypesMessage(ConditionTypesMessage_ptr m);
             virtual void onTaskRemovedMessage(TaskRemovedMessage_ptr m);
             virtual void onTaskStateMessage(TaskStateMessage_ptr m);
+            virtual void onScriptStateMessage(ScriptStateMessage_ptr m);
         };
 
     } // namespace gui

@@ -20,6 +20,11 @@ using namespace cauv::gui;
 #include "nodes/numericnode.h"
 #include "nodes/stringnode.h"
 
+
+ParamValueToNode::ParamValueToNode(const nid_t id, boost::shared_ptr<Node> parent) :
+    m_id(id), m_parent(parent){
+}
+
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int &) const
 {
     return m_parent->findOrCreate<NumericNode<int> >(m_id);
@@ -43,4 +48,14 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand 
 template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const
 {
     return m_parent->findOrCreate<NumericNode<BoundedFloat> >(m_id);
+}
+
+
+
+template <> QVariant ParamValueToQVariant::operator()(std::string & s) const {
+    error() << "input value: " << s;
+    QVariant v = QVariant::fromValue(QString::fromStdString(s));
+    error() << "valid? " << v.isValid();
+    error() << "variant value: " << v.toString().toStdString();
+    return v;
 }

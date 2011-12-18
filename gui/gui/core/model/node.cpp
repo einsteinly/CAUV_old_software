@@ -84,10 +84,14 @@ void Node::addChild(boost::shared_ptr<Node> const& child){
 }
 
 
-void Node::removeChild(boost::shared_ptr<Node> const& child){
+bool Node::removeChild(boost::shared_ptr<Node> const& child){
 
-    //check it's actually a child of this node (throws exception if not)
-    find<Node>(child->nodeId());
+    //check it's actually a child of this node
+    try {
+        find<Node>(child->nodeId());
+    } catch (std::out_of_range){
+        return false;
+    }
 
     // clear parent from child
     child->m_parent.reset();
@@ -101,6 +105,12 @@ void Node::removeChild(boost::shared_ptr<Node> const& child){
 
     Q_EMIT nodeRemoved(child);
     Q_EMIT structureChanged();
+
+    return true;
+}
+
+bool Node::removeChild(nid_t const& childId){
+    return removeChild(find<Node>(childId));
 }
 
 const Node::children_list_t Node::getChildren() const {

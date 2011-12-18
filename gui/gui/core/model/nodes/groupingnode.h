@@ -20,14 +20,7 @@
 namespace cauv {
     namespace gui {
 
-        class GroupingNode : public Node {
-            Q_OBJECT
-
-        public:
-            GroupingNode(const nid_t id) : Node(id, nodeType<GroupingNode>()){
-            }
-        };
-
+        GENERATE_SIMPLE_NODE(GroupingNode)
 
     } //namespace gui
 } // namespace cauv
