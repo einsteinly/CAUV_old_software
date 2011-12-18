@@ -67,7 +67,7 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 class GraphDropHandler : public DropHandlerInterface<QGraphicsItem * > {
 
     virtual bool accepts(boost::shared_ptr<Node> const& node){
-        return node->type == GuiNodeType::Numeric;
+        return node->type == nodeType<NumericNodeBase>();
     }
 
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {

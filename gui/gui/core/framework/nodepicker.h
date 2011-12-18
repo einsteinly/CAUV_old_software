@@ -98,7 +98,7 @@ namespace cauv {
             NodePicker(boost::shared_ptr<NodeItemModel> const& root);
             virtual ~NodePicker();
 
-            void registerDelegate(GuiNodeType::e nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
+            void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
 
         protected Q_SLOTS:
             void redirectKeyboardFocus(QKeyEvent* key);

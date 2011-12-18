@@ -27,25 +27,32 @@
 
 #include <vector>
 #include <stdexcept>
+#include <typeinfo>
+#include <map>
 
 #include <debug/cauv_debug.h>
 
 #include "variants.h"
 
+
 namespace cauv {
     namespace gui {
 
-        namespace GuiNodeType {
-            enum e {
-                Node,
-                Numeric,
-                String,
-                Image,
-                Grouping,
-                External = 1000
-            };
+        typedef int node_type;
+
+        struct node_types {
+            static node_type count;
+            static std::map<std::string, node_type> typeMap;
         };
 
+        template<class T> node_type nodeType(){
+            node_types types;
+            try {
+                return types.typeMap.at(typeid(T).name());
+            } catch (std::out_of_range) {
+                return types.typeMap[typeid(T).name()] = types.count++;
+            }
+        }
 
         class Node : public QObject, public boost::enable_shared_from_this<Node> {
             Q_OBJECT
@@ -54,9 +61,9 @@ namespace cauv {
             typedef boost::unordered_map<nid_t, boost::shared_ptr<Node> > id_map_t;
             typedef std::vector<boost::shared_ptr<Node> > children_list_t;
 
-            GuiNodeType::e type;
+            node_type type;
 
-            Node(nid_t const& id, GuiNodeType::e t = GuiNodeType::Node);
+            Node(nid_t const& id, node_type type);
             virtual ~Node();
 
             virtual nid_t nodeId() const;

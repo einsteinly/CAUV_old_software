@@ -15,7 +15,6 @@
 #ifndef GUI_VEHICLENODE_H
 #define GUI_VEHICLENODE_H
 
-#include <gui/core/model/nodes/groupingnode.h>
 #include <gui/core/model/messagegenerators.h>
 
 #include <generated/types/message.h>
@@ -23,7 +22,7 @@
 namespace cauv {
     namespace gui {
 
-        class Vehicle : public GroupingNode
+        class Vehicle : public Node
         {
             Q_OBJECT
 
@@ -31,7 +30,7 @@ namespace cauv {
             friend class VehicleRegistry;
 
         protected:
-            Vehicle(std::string name) : GroupingNode(name) {
+            Vehicle(std::string name) : Node(name, nodeType<Vehicle>()) {
             }
 
             virtual void initialise() = 0;

@@ -20,6 +20,7 @@
 
 #include <generated/types/GuiaiGroup.h>
 
+#include <gui/core/model/paramvalues.h>
 #include <gui/core/model/model.h>
 #include <gui/core/model/nodes/groupingnode.h>
 #include <gui/core/model/nodes/stringnode.h>
@@ -27,45 +28,6 @@
 
 using namespace cauv;
 using namespace cauv::gui;
-
-
-struct ParamValueToQVariant : public boost::static_visitor<QVariant>
-{
-    template <typename T> QVariant operator()( T & operand ) const
-    {
-        // unsupported
-        return QVariant();
-    }
-};
-
-
-template <> QVariant ParamValueToQVariant::operator()(int & operand ) const
-{
-    return QVariant(operand);
-}
-
-template <> QVariant ParamValueToQVariant::operator()(float & operand ) const
-{
-    return QVariant(operand);
-}
-
-template <> QVariant ParamValueToQVariant::operator()(std::string & operand ) const
-{
-    return QVariant(QString::fromStdString(operand));
-}
-
-template <> QVariant ParamValueToQVariant::operator()(bool & operand ) const
-{
-    return QVariant(operand);
-}
-
-
-template <class T>
-QVariant paramValueToQVariant(T boostVariant){
-    return boost::apply_visitor(ParamValueToQVariant(), boostVariant);
-}
-
-
 
 
 AiMessageObserver::AiMessageObserver(boost::shared_ptr<Vehicle> auv):
@@ -124,9 +86,12 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
     task->findOrCreate<NumericNode<bool > >("running")->update(m->isCurrentlyRunning());
 
     foreach(param_map_t::value_type i, m->dynamicScriptOptions()){
-        QVariant v = paramValueToQVariant(i.second);
-        if(v.isValid())
-            task->findOrCreate<Node>(i.first)->update(v);
+        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), task, i.second);
+        node->update(paramValueToQVariant(i.second));
+
+        //QVariant v = paramValueToQVariant(i.second);
+        //if(v.isValid())
+            //task->findOrCreate<Node>(i.first)->update(v);
     }
 
 

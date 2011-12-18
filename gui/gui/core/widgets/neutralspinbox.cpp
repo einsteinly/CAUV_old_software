@@ -32,36 +32,15 @@ void NeutralSpinBox::setNeutral(int neutral){
 }
 
 
-BoundedFloatSpinBox::BoundedFloatSpinBox(QWidget * parent) : QDoubleSpinBox(parent), m_boundedValue(), m_neutral(0){
+NeutralDoubleSpinBox::NeutralDoubleSpinBox(QWidget * parent) : QDoubleSpinBox(parent), m_neutral(0){
     this->setAlignment(Qt::AlignHCenter);
-    info() << "BoundedFloatSpinBox()";
 }
 
-/*void BoundedFloatSpinBox::setValue(double value){
-    info() << "setting value";
-    info() << value;
-
-    //QDoubleSpinBox::setValue(value.value);
-    //setMinimum(value.min);
-    //setMaximum(value.max);
-    //setWrapping(value.type == BoundedFloatType::Wraps);
-    //m_boundedValue = value;
-}
-
-double BoundedFloatSpinBox::value() const{
-    info() << "reading value" << QDoubleSpinBox::value();
-    //BoundedFloat r(m_boundedValue);
-    //r.value = QDoubleSpinBox::value();
-    //info() << r;
-    return 2;//r;
-    //return BoundedFloat(value(),minimum(),maximum(), wrapping() ? BoundedFloatType::Wraps : BoundedFloatType::Clamps);
-}*/
-
-double BoundedFloatSpinBox::neutral() const {
+double NeutralDoubleSpinBox::neutral() const {
     return m_neutral;
 }
 
-void BoundedFloatSpinBox::setNeutral(double neutral){
+void NeutralDoubleSpinBox::setNeutral(double neutral){
     m_neutral = neutral;
 }
 

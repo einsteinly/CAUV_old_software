@@ -16,6 +16,7 @@
 
 #include "../model/messagegenerators.h"
 #include "../model/nodes/numericnode.h"
+#include "../model/nodes/groupingnode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

@@ -21,6 +21,7 @@
 
 #include <QVariant>
 
+
 namespace cauv{
     namespace gui {
 
@@ -66,5 +67,6 @@ namespace cauv{
 
     } // namespace gui
 } // namespace cauv
+
 
 #endif // GUIMESSAGEOBSERVER_H

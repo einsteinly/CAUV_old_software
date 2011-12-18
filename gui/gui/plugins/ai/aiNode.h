@@ -19,7 +19,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <gui/core/model/node.h>
+#include <gui/core/model/nodes/numericnode.h>
 
 #include <liquid/node.h>
 
@@ -41,7 +41,7 @@ namespace cauv {
         class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
 
             virtual bool accepts(boost::shared_ptr<Node> const& node){
-                return node->type == GuiNodeType::Numeric;
+                return node->type == nodeType<NumericNodeBase>();
             }
 
             virtual QGraphicsItem * handle(boost::shared_ptr<Node> const&) {

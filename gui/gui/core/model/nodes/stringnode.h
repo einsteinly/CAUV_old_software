@@ -24,7 +24,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            StringNode(nid_t const& id) : Node(id, GuiNodeType::String){
+            StringNode(nid_t const& id) : Node(id, nodeType<StringNode>()){
             }
 
         public Q_SLOTS:

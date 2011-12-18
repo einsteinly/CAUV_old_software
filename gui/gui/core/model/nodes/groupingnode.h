@@ -24,7 +24,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            GroupingNode(const nid_t id) : Node(id, GuiNodeType::Grouping){
+            GroupingNode(const nid_t id) : Node(id, nodeType<GroupingNode>()){
             }
         };
 

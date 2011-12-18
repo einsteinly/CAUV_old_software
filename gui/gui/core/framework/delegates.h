@@ -40,8 +40,7 @@ namespace cauv {
         NodeDelegateMapper(QObject *parent = 0){
         }
 
-
-        void registerDelegate(GuiNodeType::e nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
+        void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
             m_default_delegates[nodeType] = delegate;
         }
 
@@ -61,7 +60,6 @@ namespace cauv {
 
         QWidget * createEditor ( QWidget * parent, const QStyleOptionViewItem & option,
                                  const QModelIndex & index ) const {
-
             const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
             try {
                 boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
@@ -94,7 +92,7 @@ namespace cauv {
 
     protected:
         std::map<boost::shared_ptr<Node>, boost::shared_ptr<QAbstractItemDelegate> > m_delegates;
-        std::map<GuiNodeType::e, boost::shared_ptr<QAbstractItemDelegate> > m_default_delegates;
+        std::map<node_type, boost::shared_ptr<QAbstractItemDelegate> > m_default_delegates;
     };
 
 
@@ -106,33 +104,23 @@ namespace cauv {
             this->setItemEditorFactory(factory);
             factory->registerEditor(QVariant::Int, new QItemEditorCreator<NeutralSpinBox>("value"));
             factory->registerEditor(QVariant::UInt, new QItemEditorCreator<NeutralSpinBox>("value"));
-            factory->registerEditor(QVariant::Double, new QItemEditorCreator<BoundedFloatSpinBox>("value"));
-            factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<BoundedFloatSpinBox>("value"));
-            factory->registerEditor((QVariant::Type)qMetaTypeId<BoundedFloat>(), new QItemEditorCreator<BoundedFloatSpinBox>("boundedValue"));
+            factory->registerEditor(QVariant::Double, new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
+            factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
         }
 
         void paint(QPainter *painter, const QStyleOptionViewItem &option,
                                    const QModelIndex &index) const
         {
-
-            QVariant min = index.data(NodeItemModel::MinValue);
-            QVariant max = index.data(NodeItemModel::MaxValue);
-
-            if (index.column() == 1 && min.isValid() && max.isValid()) {
-                int progress = index.data().toInt();
-
-                const NumericNodeBase * node = static_cast<const NumericNodeBase * >(index.internalPointer());
-
-                QVariant neutral = index.data(NodeItemModel::NeutralValue);
-
+            const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
+            if (node && index.column() == 1 && node->isMaxSet() && node->isMinSet()) {
                 StyleOptionNeutralBar progressBarOption;
                 progressBarOption.rect = option.rect;
-                progressBarOption.progress = progress;
-                progressBarOption.text = QString::number(progress).append(QString::fromStdString(node->getUnits()));
+                progressBarOption.progress = index.data().toInt();
+                progressBarOption.text = QString::number(index.data().value<double>()).append(QString::fromStdString(node->getUnits()));
                 progressBarOption.textVisible = true;
-                progressBarOption.maximum = max.toInt();
-                progressBarOption.minimum = min.toInt();
-                progressBarOption.neutral = neutral.isValid() ? neutral.toInt() : 0;
+                info() << "max" << (progressBarOption.maximum = node->getMax().toInt());
+                info() << "min" << (progressBarOption.minimum = node->getMin().toInt());
+                info() << "neutral" << (progressBarOption.neutral = node->getMin().toInt()); //!!! todo
 
                 QApplication::style()->drawControl(QStyle::CE_ProgressBar,
                                                    &progressBarOption, painter);
@@ -141,33 +129,26 @@ namespace cauv {
 
         }
 
-        void setEditorData(QWidget *editor, const QModelIndex &index) const{
-
-            info() << "setting editor data for type" << index.data().typeName();//.value<BoundedFloat>();
-            //if(BoundedFloatSpinBox*spin = dynamic_cast<BoundedFloatSpinBox*>(editor)){
-            //    spin->setValue2(index.data().value<BoundedFloat>());
-            //}
-
-            if(!index.data().isValid()){
-                error() << "invalid variant";
-            }
-
-
-            editor->setProperty(editor->metaObject()->userProperty().name(), index.data());
-
-            QStyledItemDelegate::setEditorData(editor, index);
-
-        }
-
-
-
-        QWidget * createEditor ( QWidget * parent, const QStyleOptionViewItem & option,
-                                 const QModelIndex & index ) const {
+        QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const{
             QWidget * editor = QStyledItemDelegate::createEditor(parent, option, index);
 
-            info() << "creating editor for type" << index.data().typeName();//.value<BoundedFloat>();
+            const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
 
-            setEditorData(editor, index);
+            if(node && node->isMaxSet() && node->isMinSet()) {
+                if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){
+                    neutral->setMinimum(node->getMin().toInt());
+                    neutral->setMaximum(node->getMax().toInt());
+                    neutral->setWrapping(node->getWraps());
+                    neutral->setNeutral(node->getMin().toInt()); //!!! todo
+                }
+
+                if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
+                    neutral->setMinimum(node->getMin().toDouble());
+                    neutral->setMaximum(node->getMax().toDouble());
+                    neutral->setWrapping(node->getWraps());
+                    neutral->setNeutral(node->getMin().toFloat()); //!!! todo
+                }
+            }
 
             return editor;
         }

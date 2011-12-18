@@ -17,6 +17,8 @@
 
 #include <gui/core/model/node.h>
 
+#include <common/bounded_float.h>
+
 #include <QMetaType>
 #include <QVariant>
 
@@ -27,57 +29,64 @@ namespace cauv {
             Q_OBJECT
 
         protected:
-            NumericNodeBase(nid_t const& id) : Node(id, GuiNodeType::Numeric),
+            NumericNodeBase(nid_t const& id) : Node(id, nodeType<NumericNodeBase>()),
             m_maxSet(false), m_minSet(false), m_wraps(false), m_precision(3)
             {
             }
 
 
         public:
-            std::string getUnits() const {
+
+            virtual std::string getUnits() const {
                 return m_units;
             }
 
-            void setUnits(std::string const& units) {
+            virtual void setUnits(std::string const& units) {
                 m_units = units;
             }
 
-            bool isMaxSet() const {
+            virtual bool isMaxSet() const {
                 return m_maxSet;
             }
 
-            bool isMinSet() const{
+            virtual bool isMinSet() const{
                 return m_minSet;
             }
 
-            bool getWraps() const {
+            virtual bool getWraps() const {
                 return m_wraps;
             }
 
-            void setWraps(bool wraps){
+            virtual void setWraps(bool wraps){
                 m_wraps = wraps;
 
                 Q_EMIT paramsUpdated();
             }
 
-            void setPrecision(unsigned int precision){
+            virtual void setPrecision(unsigned int precision){
                 m_precision = precision;
 
                 Q_EMIT paramsUpdated();
             }
 
-            unsigned int getPrecision() const {
+            virtual unsigned int getPrecision() const {
                 return m_precision;
             }
 
-            void setMin(QVariant const& min){
+            virtual void setMin(QVariant const& min){
+                // only update if its actually changed
+                if (min == getMin()) return;
+
                 m_min = min;
                 m_minSet = true;
 
                 Q_EMIT paramsUpdated();
             }
 
-            void setMax(QVariant const& max){
+            virtual void setMax(QVariant const& max){
+                // only update if its actually changed
+                if (max == getMax()) return;
+
                 m_max = max;
                 m_maxSet = true;
 
@@ -118,7 +127,7 @@ namespace cauv {
 
             virtual T wrap(T const& value) const {
                 // work out the range
-                /*
+
                 QVariant minV = getMin();
                 QVariant maxV = getMax();
 
@@ -132,10 +141,9 @@ namespace cauv {
                 } else if (value > max){
                     T var = value - range;
                     return wrap(var);
-                } else return value;*/
+                } else return value;
                 return value;
             }
-
 
             virtual bool set(QVariant const& value) {
                 return set(value.value<T>());
@@ -176,6 +184,50 @@ namespace cauv {
                 NumericNodeBase::setMax(QVariant::fromValue(max));
             }
         };
+
+
+        template<>
+        class NumericNode<BoundedFloat> : public NumericNodeBase {
+        public:
+            NumericNode(nid_t const& id) : NumericNodeBase(id)
+            {
+            }
+
+            float get() {
+                return NumericNodeBase::get().value<float>();
+            }
+
+            virtual bool set(float const& value){
+                return NumericNodeBase::set(value);
+            }
+
+            virtual void update(QVariant const& value) {
+                if(value.userType() == qMetaTypeId<BoundedFloat>())
+                    update(value.value<BoundedFloat>());
+                else NumericNodeBase::update(value);
+            }
+
+            virtual void update(BoundedFloat const& value){
+                setMax(value.max);
+                setMin(value.min);
+                setWraps(value.type==BoundedFloatType::Wraps);
+                NumericNodeBase::update(value.value);
+            }
+
+        private:
+            virtual void setMin(float min){
+                NumericNodeBase::setMin(min);
+            }
+
+            virtual void setMax(float max){
+                NumericNodeBase::setMax(max);
+            }
+
+            virtual void setWraps(bool wraps){
+                NumericNodeBase::setWraps(wraps);
+            }
+        };
+
 
     } //namespace gui
 } // namespace cauv

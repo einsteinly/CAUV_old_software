@@ -35,31 +35,11 @@ using namespace cauv::gui;
 
 
 bool NodeDropListener::routeNode(boost::shared_ptr<Node> const& s, QPointF pos){
-
     info() << "Routing stream" << s->nodeName();
-
     onNodeDroppedAt(s, pos);
     onNodeDropped(s);
-
-    switch (s->type){
-    case GuiNodeType::Numeric:
-        onNodeDropped(boost::static_pointer_cast<NumericNodeBase>(s));
-        break;
-    case GuiNodeType::Image:
-        onNodeDropped(boost::static_pointer_cast<ImageNode>(s));
-        break;
-    case GuiNodeType::Grouping:
-        onNodeDropped(boost::static_pointer_cast<GroupingNode>(s));
-        break;
-    default:
-        warning() << "Unknown node type dropped";
-        return false;
-    }
-
     return true;
 }
-
-
 
 
 NodeDropFilter::NodeDropFilter(NodeDropListener * listener) : m_listener(listener) {

@@ -20,7 +20,11 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-Node::Node(nid_t const& id, GuiNodeType::e t) :
+int node_types::count = 0;
+std::map<std::string, int> node_types::typeMap;
+
+
+Node::Node(nid_t const& id, node_type t) :
         type(t), m_parent(), m_id(id), m_mutable(false) {
 
     qRegisterMetaType<boost::shared_ptr<Node> >("boost::shared_ptr<Node>");

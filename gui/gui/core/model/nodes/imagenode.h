@@ -31,7 +31,7 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            ImageNode(nid_t const& id) : Node(id, GuiNodeType::Image){
+            ImageNode(nid_t const& id) : Node(id, nodeType<ImageNode>()){
                 qRegisterMetaType<image_t>("image_t");
                 m_value = QVariant::fromValue<image_t>(image_t());
             }

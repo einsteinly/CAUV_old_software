@@ -226,11 +226,12 @@ void GraphWidget::setupPlot() {
 
 
 bool GraphWidget::accepts(boost::shared_ptr<Node> const& node){
-    return (node->type == GuiNodeType::Numeric);
+    return (node->type == nodeType<NumericNodeBase>());
 }
 
-void GraphWidget::onNodeDropped(boost::shared_ptr<NumericNodeBase> const& node){
-    addNode(node);
+void GraphWidget::onNodeDropped(boost::shared_ptr<Node> const& node){
+    if(node->type == nodeType<NumericNodeBase>())
+        addNode(node->to<NumericNodeBase>());
 }
 
 std::string GraphWidget::getName() const{

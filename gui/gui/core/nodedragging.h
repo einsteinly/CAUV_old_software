@@ -54,15 +54,8 @@ namespace cauv {
             bool routeNode(boost::shared_ptr<Node> const& s, QPointF pos);
 
         protected:
-
-            // all nodes get passed into this
             virtual void onNodeDroppedAt(boost::shared_ptr<Node> const&, QPointF ) {}
             virtual void onNodeDropped(boost::shared_ptr<Node> const&) {}
-
-            // then they also get passed into one of these
-            virtual void onNodeDropped(boost::shared_ptr<NumericNodeBase> const& ) {}
-            virtual void onNodeDropped(boost::shared_ptr<ImageNode> const& ) {}
-            virtual void onNodeDropped(boost::shared_ptr<GroupingNode> const& ) {}
         };
 
 

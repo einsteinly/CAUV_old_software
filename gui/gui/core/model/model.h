@@ -79,13 +79,6 @@ namespace cauv {
             Q_OBJECT
 
         public:
-            enum Roles {
-                MinValue = Qt::UserRole + 1,
-                MaxValue,
-                NeutralValue,
-                Wraps,
-                Units
-            };
 
             NodeItemModel(boost::shared_ptr<Node> root, QObject * parent = 0) :
                 QAbstractItemModel(parent), m_root(root){
@@ -105,27 +98,8 @@ namespace cauv {
 
                 void * ptr = index.internalPointer();
                 Node * node = static_cast<Node *>(ptr);
-                NumericNodeBase * numNode = dynamic_cast<NumericNodeBase *>(node);
-
-                //!!! todo: don't use numeric node any more, use ParamValue types like
-                // bounded float
 
                 switch (role){
-                case MinValue:
-                    if(numNode) return numNode->getMin();
-                    break;
-                case MaxValue:
-                    if(numNode) return numNode->getMax();
-                    break;
-                case NeutralValue:
-                    return QVariant(0);
-                    break;
-                case Units:
-                    if(numNode) return QVariant(QString::fromStdString(numNode->getUnits()));
-                    else return QVariant("");
-                    break;
-                case Wraps:
-                    break;
                 case Qt::EditRole:
                 case Qt::DisplayRole:
                     if (index.column() == 0)

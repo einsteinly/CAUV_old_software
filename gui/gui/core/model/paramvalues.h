@@ -1,0 +1,80 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ *
+ * See license.txt for details.
+ *
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
+#ifndef GUI_PARAMVALUES_H
+#define GUI_PARAMVALUES_H
+
+#include <gui/core/model/variants.h>
+
+#include <QVariant>
+
+// register param values types as qt meta types
+//!!! todo: generate these?
+#include <QMetaType>
+#include <generated/types/ParamValue.h>
+Q_DECLARE_METATYPE(std::basic_string<char>)
+Q_DECLARE_METATYPE(std::vector<cauv::Corner>)
+Q_DECLARE_METATYPE(std::vector<cauv::Line>)
+Q_DECLARE_METATYPE(std::vector<cauv::Circle>)
+Q_DECLARE_METATYPE(std::vector<float>)
+Q_DECLARE_METATYPE(std::vector<cauv::KeyPoint>)
+
+namespace cauv {
+    namespace gui {
+
+    class Node;
+
+    struct ParamValueToNode : public boost::static_visitor<boost::shared_ptr<Node> >
+    {
+        ParamValueToNode(nid_t id, boost::shared_ptr<Node> parent);
+
+        template <typename T> boost::shared_ptr<Node> operator()( T & ) const
+        {
+            throw std::runtime_error("Unsupported ParamValue type");
+        }
+
+        nid_t m_id;
+        boost::shared_ptr<Node> m_parent;
+    };
+
+    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int &) const;
+    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & ) const;
+    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string & ) const;
+    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand ) const;
+    template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
+
+    template <class T>
+    boost::shared_ptr<Node>  paramValueToNode(nid_t id, boost::shared_ptr<Node> parent, T boostVariant){
+        return boost::apply_visitor(ParamValueToNode(id, parent), boostVariant);
+    }
+
+
+    struct ParamValueToQVariant : public boost::static_visitor<QVariant>
+    {
+        template <typename T> QVariant operator()( T & operand ) const
+        {
+            return QVariant::fromValue(operand);
+        }
+    };
+
+    template <class T>
+    QVariant paramValueToQVariant(T boostVariant){
+        return boost::apply_visitor(ParamValueToQVariant(), boostVariant);
+    }
+
+    } // namespace gui
+} // namespace cauv
+
+
+#endif // GUI_PARAMVALUES_H

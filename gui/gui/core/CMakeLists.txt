@@ -44,6 +44,7 @@ set ( GUI_CORE_SRCS
     model/registry.cpp
     model/messageobserver.cpp
     model/messagegenerators.cpp
+    model/paramvalues.cpp
     model/utils/noderecorder.cpp
 
     framework/nodepicker.cpp

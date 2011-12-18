@@ -70,7 +70,7 @@ namespace cauv {
             void setupPlot();
             bool accepts(boost::shared_ptr<Node> const&);
 
-            void onNodeDropped(boost::shared_ptr<NumericNodeBase> const&);
+            void onNodeDropped(boost::shared_ptr<Node> const&);
 
             void addNode(boost::shared_ptr<NumericNodeBase >  const&);
             virtual std::string getName() const;
