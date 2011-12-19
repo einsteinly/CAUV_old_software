@@ -33,6 +33,10 @@ class FView: public liquid::LiquidView {
     public:
         FView(boost::shared_ptr<CauvNode> node, QWidget *parent = NULL);
         
+    protected:
+        // QWidget
+        void contextMenuEvent(QContextMenuEvent *event);
+
     private:
         boost::shared_ptr<CauvNode> m_cauv_node;
         boost::shared_ptr<Manager> m_manager;
