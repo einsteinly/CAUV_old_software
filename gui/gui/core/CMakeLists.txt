@@ -99,6 +99,7 @@ set ( GUI_CORE_H
     framework/fluidity/fNodeOutput.h
     framework/fluidity/fNodeInput.h
     framework/fluidity/imgNode.h
+    framework/fluidity/menu.h
     )
 
 set ( GUI_CORE_RCC

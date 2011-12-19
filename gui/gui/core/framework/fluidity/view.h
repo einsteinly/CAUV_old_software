@@ -38,8 +38,13 @@ class FView: public liquid::LiquidView {
         void contextMenuEvent(QContextMenuEvent *event);
 
     private:
+        void buildMenus();
+
+    private:
         boost::shared_ptr<CauvNode> m_cauv_node;
         boost::shared_ptr<Manager> m_manager;
+
+        QList<QAction*> m_contextmenu_actions;
 };
 
 } // namespace f

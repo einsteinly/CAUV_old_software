@@ -25,6 +25,9 @@
 //#include <liquid/arcSource.h>
 //#include <liquid/arcSink.h>
 
+#include <utility/string.h>
+#include <generated/types/NodeType.h>
+
 #include "elements/style.h"
 #include "style.h"
 
@@ -42,18 +45,20 @@ using namespace liquid;
 FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     : LiquidView(parent),
       m_cauv_node(node),
-      m_manager(){
-    
+      m_manager(),
+      m_contextmenu_actions(){
+    buildMenus();
+
     QGraphicsScene *s = new QGraphicsScene(this);
 
     // !!! is this really what we want to do?
     // items aren't added or removed a lot, just updated
     //s->setItemIndexMethod(QGraphicsScene::NoIndex);
     s->setSceneRect(-200,-200,400,400);
-    s->setStyle(new CauvStyle());    
+    s->setStyle(new CauvStyle());
 
     setScene(s);
-    m_manager = boost::make_shared<Manager>(s, &(*m_cauv_node), "default");    
+    m_manager = boost::make_shared<Manager>(s, &(*m_cauv_node), "default");
     m_manager->init();
     
     setMinimumSize(1280, 720);
@@ -77,19 +82,28 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     s->addItem(b);
 }
 
+void FView::buildMenus(){
+    for(int i = 0; i < NodeType::NumValues; i++){
+        QString n = QString::fromStdString(mkStr() << NodeType::e(i));
+        n.replace("NodeType::","");
+        n += "Node";
+        QAction* a = new QAction(n, this);
+        // ... TODO: connect signals
+        m_contextmenu_actions << a;
+    }
+    /*
+    QAction* separator = new QAction(this);
+    separator->setSeparator(true);
+    menu.addAction(separator);
+    */
+}
 
 void FView::contextMenuEvent(QContextMenuEvent *event){
     debug() << "contextMenuEvent";
 
     cauv::gui::f::Menu menu(this);
-    menu.addAction(new QAction("MacVim", this));
-    menu.addAction(new QAction("File", this));
-    menu.addAction(new QAction("Edit", this));
-    QAction* separator = new QAction(this);
-    separator->setSeparator(true);
-    menu.addAction(separator);
-    menu.addAction(new QAction("Tools", this));
-    menu.addAction(new QAction("Syntax", this));
+    foreach(QAction* a, m_contextmenu_actions)
+        menu.addAction(a);
 
     menu.exec(event->globalPos());
 }

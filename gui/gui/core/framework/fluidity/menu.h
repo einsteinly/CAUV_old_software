@@ -17,6 +17,7 @@
 
 #include <QMenu>
 #include <QTextEdit>
+#include <QScrollBar>
 
 #include <debug/cauv_debug.h>
 
@@ -35,12 +36,17 @@ class Menu: protected QMenu{
             m_textedit = new QTextEdit(""/*"Beware, egregious hack!"*/, this);
             m_textedit->setLineWrapMode(QTextEdit::NoWrap);
             m_textedit->setFocus(Qt::PopupFocusReason);
+            m_textedit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            m_textedit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            //m_textedit->verticalScrollbar()->hide();
             connect(m_textedit, SIGNAL(textChanged()), this, SLOT(updateSearch()));
             // leave space for the search box (has to draw within rect())
             //setTitle doesn't seem to add a title to contextmenus...
-            //setTitle(m_header_string); 
+            //setTitle(m_header_string);
             QMenu::addAction(m_header_string);
-            m_textedit->setGeometry(0,0,400,22);
+            QAction* separator = new QAction(this);
+            separator->setSeparator(true);
+            QMenu::addAction(separator);
         }
 
         void addAction(QAction* action){
@@ -50,6 +56,7 @@ class Menu: protected QMenu{
         }
 
         QAction* exec(QPoint const& p, QAction* action = 0){
+            updateTextBoxGeom();
             return QMenu::exec(p, action);
         }
 
@@ -58,11 +65,12 @@ class Menu: protected QMenu{
             debug() << __func__ << m_textedit->toPlainText().toStdString();
             QString search = m_textedit->toPlainText();
             QList<QAction*> current_actions = actions();
+            //for(int i = m_unfiltered_actions.size()-1; i >=0; i--){
             for(int i = 0; i < m_unfiltered_actions.size(); i++){
                 QAction* a = m_unfiltered_actions.at(i);
                 if(current_actions.contains(a)){
                     if(!a->text().contains(search, Qt::CaseInsensitive) &&
-                       !a->isSeparator() && 
+                       !a->isSeparator() &&
                        a->text() != m_header_string){
                         QMenu::removeAction(a);
                     }
@@ -85,7 +93,7 @@ class Menu: protected QMenu{
 
     private:
         void updateTextBoxGeom(){
-            m_textedit->setGeometry(0,0,rect().width(),22);
+            m_textedit->setGeometry(2,2,rect().width()-4,24);
         }
 
     private:
