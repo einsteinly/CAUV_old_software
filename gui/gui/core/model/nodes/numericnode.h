@@ -73,21 +73,22 @@ namespace cauv {
             }
 
             virtual void setMin(QVariant const& min){
+                m_minSet = true;
+
                 // only update if its actually changed
                 if (min == getMin()) return;
-
                 m_min = min;
-                m_minSet = true;
 
                 Q_EMIT paramsUpdated();
             }
 
             virtual void setMax(QVariant const& max){
+                m_maxSet = true;
+
                 // only update if its actually changed
                 if (max == getMax()) return;
 
                 m_max = max;
-                m_maxSet = true;
 
                 Q_EMIT paramsUpdated();
             }

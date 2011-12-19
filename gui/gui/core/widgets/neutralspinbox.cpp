@@ -14,7 +14,13 @@
 
 #include "neutralspinbox.h"
 
+#include <QPaintEvent>
+#include <QPainter>
+
+
 #include <limits>
+
+#include "style.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -26,13 +32,24 @@ NeutralSpinBox::NeutralSpinBox(QWidget * parent) : QSpinBox(parent), m_neutral(0
     this->setMinimum(std::numeric_limits<int>::min());
 }
 
-int NeutralSpinBox::getNeutral() const {
+int NeutralSpinBox::neutral() const {
     return m_neutral;
 }
 
 void NeutralSpinBox::setNeutral(int neutral){
     m_neutral = neutral;
 }
+
+void NeutralSpinBox::paintEvent(QPaintEvent * e)
+ {
+    StyleOptionNeutralSpinBox option;
+    option.initFrom(this);
+    option.level = 0.5;//this->neutral();
+
+    QPainter painter(this);
+    style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
+}
+
 
 
 NeutralDoubleSpinBox::NeutralDoubleSpinBox(QWidget * parent) : QDoubleSpinBox(parent), m_neutral(0){
@@ -49,5 +66,14 @@ void NeutralDoubleSpinBox::setNeutral(double neutral){
     m_neutral = neutral;
 }
 
+void NeutralDoubleSpinBox::paintEvent(QPaintEvent * e)
+ {
+    StyleOptionNeutralSpinBox option;
+    option.initFrom(this);
+    option.level = 0.5;//this->neutral();
+
+    QPainter painter(this);
+    style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
+}
 
 

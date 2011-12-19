@@ -113,14 +113,13 @@ namespace cauv {
         {
             const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
             if (node && index.column() == 1 && node->isMaxSet() && node->isMinSet()) {
-                StyleOptionNeutralBar progressBarOption;
+                QStyleOptionProgressBarV2 progressBarOption;
                 progressBarOption.rect = option.rect;
                 progressBarOption.progress = index.data().toInt();
                 progressBarOption.text = QString::number(index.data().value<double>()).append(QString::fromStdString(node->getUnits()));
                 progressBarOption.textVisible = true;
                 info() << "max" << (progressBarOption.maximum = node->getMax().toInt());
                 info() << "min" << (progressBarOption.minimum = node->getMin().toInt());
-                info() << "neutral" << (progressBarOption.neutral = node->getMin().toInt()); //!!! todo
 
                 QApplication::style()->drawControl(QStyle::CE_ProgressBar,
                                                    &progressBarOption, painter);
@@ -133,6 +132,8 @@ namespace cauv {
             QWidget * editor = QStyledItemDelegate::createEditor(parent, option, index);
 
             const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
+
+            debug() << "Created editor: " << editor->metaObject()->className();
 
             if(node && node->isMaxSet() && node->isMinSet()) {
                 if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){

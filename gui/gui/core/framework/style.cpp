@@ -18,6 +18,8 @@
 
 #include <widgets/neutralspinbox.h>
 
+#include <cmath>
+
 #include <QtGui>
 
 using namespace cauv;
@@ -30,7 +32,7 @@ CauvStyle::CauvStyle() {
 QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComplex * option,
                                   SubControl subControl, const QWidget * widget) const {
     switch(subControl) {
-    /*case QStyle::SC_SpinBoxUp: {
+    case QStyle::SC_SpinBoxUp: {
         QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
         QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
         rect.setX((frame.x()+frame.width())-frame.height());
@@ -60,7 +62,7 @@ QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComp
         rect.setRight(frame.right()-frame.height());
         return rect;
     }
-    break;*/
+    break;
 
     default: return BASESTYLE::subControlRect(control, option, subControl, widget);
     }
@@ -72,25 +74,9 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
     switch(control) {
     case CE_ProgressBar: {
 
-        /*const QStyleOptionProgressBarV2 * progressOptions = static_cast<const QStyleOptionProgressBarV2 *>(option);
-        const StyleOptionNeutralBar *neutralOptions = qstyleoption_cast<const StyleOptionNeutralBar *>(option);
+        const QStyleOptionProgressBarV2 * progressOptions = static_cast<const QStyleOptionProgressBarV2 *>(option);
 
         QStyleOptionProgressBarV2 outputOptions(*progressOptions);
-
-        if ((neutralOptions) && (neutralOptions->type == CauvStyleOptions::StyleOptionNeutralBar)){
-
-            float neutral = neutralOptions->neutral;
-
-            if (progressOptions->progress < neutral){
-                outputOptions.minimum = neutral;
-                outputOptions.maximum = neutral + (neutral - progressOptions->minimum);
-                outputOptions.progress = neutral + (neutral - progressOptions->progress);
-            } else{
-                outputOptions.minimum = neutral;
-                outputOptions.maximum = progressOptions->maximum;
-                outputOptions.progress = progressOptions->progress;
-            }
-        }
 
         int hueRange = 90;
         int range = outputOptions.maximum - outputOptions.minimum;
@@ -105,7 +91,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
         QColor progressColor(QColor::fromHsl(hue, 160, 162));
         outputOptions.palette.setColor(QPalette::Highlight, progressColor);
 
-        BASESTYLE::drawControl(control, &outputOptions, painter, widget);*/
+        BASESTYLE::drawControl(control, &outputOptions, painter, widget);
     }
     break;
 
@@ -117,30 +103,22 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
 void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const{
     switch (control) {
-    /*case CC_SpinBox:
+    case CC_SpinBox:
     {
-        const QSpinBox * spin = qobject_cast<const QSpinBox*>(widget);
+        const StyleOptionNeutralSpinBox *spin = qstyleoption_cast<const StyleOptionNeutralSpinBox *>(option);
         if(spin){
-            StyleOptionNeutralBar neutralOptions;
-            neutralOptions.rect = option->rect;
-            neutralOptions.direction = Qt::LeftToRight;
-            neutralOptions.state = QStyle::State_Enabled;
-            neutralOptions.minimum = spin->minimum();
-            neutralOptions.neutral = spin->minimum();
-            neutralOptions.maximum = spin->maximum();
-            neutralOptions.progress = spin->value();
-            neutralOptions.textVisible = false;
+            QStyleOptionProgressBarV2 progressOptions;
+            progressOptions.rect = option->rect;
+            progressOptions.direction = Qt::LeftToRight;
+            progressOptions.state = QStyle::State_Enabled;
+            progressOptions.minimum = 0;
+            progressOptions.maximum = 1000;
+            progressOptions.progress = (int)std::abs(spin->level) * 1000.0;
+            progressOptions.textVisible = false;
 
-            // neutral spins have a neutral value to show where the default value is
-            const NeutralSpinBox * neutralSpin = qobject_cast<const NeutralSpinBox*>(widget);
-            if(neutralSpin) {
-                neutralOptions.neutral = neutralSpin->getNeutral();
-            }
-
-            drawControl(CE_ProgressBar, &neutralOptions, painter, widget);
+            drawControl(CE_ProgressBar, &progressOptions, painter, widget);
 
             painter->setOpacity(0.5);
-
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setBrush(QBrush(QColor(200,200,200)));
             int buttonSize = option->rect.height()-12;
@@ -152,10 +130,9 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
             painter->drawRoundRect(QRect(10, 5 + (buttonSize/2), buttonSize-9, 2), 4, 4);
             painter->drawRoundRect(QRect(option->rect.right()-(10+buttonSize) + 8, 5 + (buttonSize/2), buttonSize-8, 2), 3, 3);
             painter->drawRoundRect(QRect(option->rect.right()-(buttonSize/2) - 7, 10, 2, buttonSize-8), 3, 3);
-
         }
     }
-    break;*/
+    break;
     default:
         BASESTYLE::drawComplexControl(control, option, painter, widget);
     }
