@@ -27,6 +27,9 @@ class EphemeralArcEnd;
 
 class Arc: public AbstractArcSource{
         Q_OBJECT
+    private:
+        typedef std::set<AbstractArcSink*> arcsink_set_t;
+        typedef std::map<AbstractArcSink*, EphemeralArcEnd*> sink_end_map_t;
     public:
         Arc(ArcStyle const& of_style,
             AbstractArcSource *from=NULL,
@@ -41,9 +44,13 @@ class Arc: public AbstractArcSource{
         void addTo(AbstractArcSink *to);
         void addPending(AbstractArcSink *to);
 
+        // QGraphicsItem:
+        // overloaded for performance
+        virtual QPainterPath shape() const;
+        // TODO: also override contains?
+
     protected:
         virtual QRectF boundingRect() const;
-        virtual QPainterPath shape() const;
         virtual void paint(QPainter *painter,
                            const QStyleOptionGraphicsItem *option,
                            QWidget *widget = 0);
@@ -56,12 +63,16 @@ class Arc: public AbstractArcSource{
     protected:
         ArcStyle const& m_style;
         AbstractArcSource *m_source;
-        std::set<AbstractArcSink*> m_sinks;
-        std::set<AbstractArcSink*> m_pending_sinks;
-        std::map<AbstractArcSink*, EphemeralArcEnd*> m_ends;
+        arcsink_set_t m_sinks;
+        arcsink_set_t m_pending_sinks;
+        sink_end_map_t m_ends;
         QGraphicsPathItem *m_back;
         QGraphicsPathItem *m_front;
         EphemeralArcEnd *m_ephemeral_end;
+
+        // caches:
+        mutable bool m_cached_shape_invalid;
+        mutable QPainterPath m_cached_shape;
 };
 
 } // namespace liquid

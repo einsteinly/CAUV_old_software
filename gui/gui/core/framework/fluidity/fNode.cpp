@@ -98,6 +98,7 @@ class TestLayoutItem: public QGraphicsLayoutItem,
         }*/
 
         QSizeF sizeHint(Qt::SizeHint which, QSizeF const& constraint=QSizeF()) const{
+            Q_UNUSED(constraint);
             switch(which){
                 default:
                 case Qt::MinimumSize:
@@ -197,6 +198,8 @@ void FNode::setInputLinks(msg_node_input_map_t const& inputs){
         }
         fnode_ptr from = manager().lookup(j->second.node);
         FNodeOutput* output = NULL;
+        // !!! TODO:
+        //k->second->disconnect();
         if(from && (output = from->output(j->second.output)))
             output->arc()->addTo(k->second->sink());
     }
@@ -270,6 +273,14 @@ void FNode::setParamLinks(msg_node_input_map_t const& inputs){
     }
 }
 
+void FNode::connectOutputTo(std::string const& output_id, fnode_ptr to, std::string const& input_id){
+    FNodeOutput* output = this->output(output_id);
+    FNodeInput* input = to->input(input_id);
+    if(output && input)
+        // !!! TODO: input->disconnect()
+        output->arc()->addTo(input->sink());
+}
+
 void FNode::close(){
     Q_EMIT LiquidNode::closed(this);
     Q_EMIT closed(m_node_id);
@@ -311,6 +322,17 @@ FNodeOutput* FNode::output(std::string const& id){
     if(i != m_outputs.end())
         return i->second;
     error() << "no such output: " << id;
+    return NULL;
+}
+
+FNodeInput* FNode::input(std::string const& id){
+    str_in_map_t::const_iterator i = m_inputs.find(id);
+    if(i != m_inputs.end())
+        return i->second;
+    i = m_params.find(id);
+    if(i != m_params.end())
+        return i->second;
+    error() << "no such input: " << id;
     return NULL;
 }
 

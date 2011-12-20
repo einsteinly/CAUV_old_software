@@ -69,6 +69,7 @@ class FNode: public liquid::LiquidNode,
         //void setOutputLinks(msg_node_output_map_t const&); completely redundant
         void setParams(msg_node_param_map_t const&);
         void setParamLinks(msg_node_input_map_t const& inputs);
+        void connectOutputTo(std::string const& output, fnode_ptr, std::string const& input);
     
     Q_SIGNALS:
         void closed(node_id_t const);
@@ -86,6 +87,7 @@ class FNode: public liquid::LiquidNode,
 
     protected:
         FNodeOutput* output(std::string const& id);
+        FNodeInput* input(std::string const& id);
 
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
         void initButtons();

@@ -37,11 +37,14 @@ Arc::Arc(ArcStyle const& of_style,
       m_ends(),
       m_back(new QGraphicsPathItem(this)),
       m_front(new QGraphicsPathItem(this)),
-      m_ephemeral_end(new EphemeralArcEnd(this, of_style, true)){
+      m_ephemeral_end(new EphemeralArcEnd(this, of_style, true)),
+      m_cached_shape_invalid(true),
+      m_cached_shape(){
 
     debug(7) << "Arc()" << this;
 
-    setFlag(ItemHasNoContents);
+    // tmp debug
+    //setFlag(ItemHasNoContents);
     
     if(from)
         setFrom(from);
@@ -113,20 +116,23 @@ void Arc::promotePending(AbstractArcSink *to){
     addTo(to);
 }
 
+QPainterPath Arc::shape() const{
+    if(m_cached_shape_invalid){
+        debug(5) << "cached shape invalid, updating...";
+        m_cached_shape = m_back->shape();
+        for(sink_end_map_t::const_iterator i = m_ends.begin(); i != m_ends.end(); i++)
+            m_cached_shape |= i->second->shape().translated(i->second->pos());
+        #warning the path is being treated as closed when it isn't fix this!
+        m_cached_shape_invalid = false;
+    }
+    return m_cached_shape;
+}
 
 QRectF Arc::boundingRect() const{
     QRectF r = m_back->boundingRect() | m_ephemeral_end->boundingRect();
-    std::map<AbstractArcSink*, EphemeralArcEnd*>::const_iterator i;
+    sink_end_map_t::const_iterator i;
     for(i = m_ends.begin(); i != m_ends.end(); i++)
-        r |= i->second->boundingRect();
-    return r;
-}
-
-QPainterPath Arc::shape() const{
-    QPainterPath r = m_back->shape() | m_ephemeral_end->shape();
-    std::map<AbstractArcSink*, EphemeralArcEnd*>::const_iterator i;
-    for(i = m_ends.begin(); i != m_ends.end(); i++)
-        r |= i->second->shape();
+        r |= i->second->boundingRect().translated(i->second->pos());
     return r;
 }
 
@@ -136,6 +142,12 @@ void Arc::paint(QPainter *painter,
     Q_UNUSED(painter);
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    painter->setBrush(QBrush(QColor(200,20,20,64)));
+    painter->drawPath(shape());
+    m_back->setFlag(ItemStacksBehindParent);
+    sink_end_map_t::const_iterator i;    
+    for(i = m_ends.begin(); i != m_ends.end(); i++)
+        i->second->setFlag(ItemStacksBehindParent);
 }
 
 void Arc::updateLayout(){
@@ -145,6 +157,7 @@ void Arc::updateLayout(){
     }
 
     debug(7) << "Updating arc layout" << this;
+    m_cached_shape_invalid = true;
 
     prepareGeometryChange();
 

@@ -216,7 +216,10 @@ void Manager::onNodeRemoved(NodeRemovedMessage_ptr m){
 
 void Manager::onArcAdded(ArcAddedMessage_ptr m){
     if(!_nameMatches(m)) return;
-    // !!!
+    fnode_ptr from = lookup(m->from().node);
+    fnode_ptr to = lookup(m->to().node);
+    if(from && to)
+        from->connectOutputTo(m->from().output, to, m->to().input);
 }
 
 void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
