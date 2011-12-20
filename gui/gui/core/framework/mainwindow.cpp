@@ -151,7 +151,8 @@ void CauvMainWindow::onRun()
     //!!! just for testing
     boost::shared_ptr<NumericNode<BoundedFloat> > n = m_actions->auv->findOrCreate<GroupingNode>("test")->findOrCreate<NumericNode<BoundedFloat> >(MotorID::Prop);
     n->setMutable(true);
-    n->update(QVariant::fromValue(BoundedFloat(3.0, 2, 7, BoundedFloatType::Wraps)));
+    n->update(QVariant::fromValue(BoundedFloat(3.0, 0, 100, BoundedFloatType::Clamps)));
+    n->setNeutral(0);
 
     show();
     m_application->exec();

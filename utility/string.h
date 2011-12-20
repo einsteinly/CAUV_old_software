@@ -17,6 +17,7 @@
 
 #include <sstream>
 #include <string>
+#include <stdint.h>
 
 class MakeString{
     public:

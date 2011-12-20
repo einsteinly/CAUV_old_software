@@ -43,11 +43,12 @@ namespace cauv {
     class StyleOptionNeutralSpinBox : public QStyleOptionSpinBox {
     public:
         enum StyleOptionType { Type = CauvStyleOptions::StyleOptionNeutralSpinBox };
-        StyleOptionNeutralSpinBox() : QStyleOptionSpinBox(), level(0){
+        StyleOptionNeutralSpinBox() : QStyleOptionSpinBox(), level(0), invertColours(true){
                 type = CauvStyleOptions::StyleOptionNeutralSpinBox;
         }
 
         float level;
+        bool invertColours;
     };
 
 
