@@ -75,6 +75,10 @@ FNodeInput::FNodeInput(Manager& m,
 FNodeInput::~FNodeInput(){
 }
 
+liquid::AbstractArcSink* FNodeInput::sink() const{
+    return m_arc_sink;
+}
+
 QList<liquid::CutoutStyle> FNodeInput::cutoutGeometry() const{
     QList<liquid::CutoutStyle> sink_cutouts =  m_arc_sink->cutoutGeometry();
     QList<liquid::CutoutStyle> r;

@@ -87,6 +87,13 @@ void Manager::init(){
     m_cauv_node->joinGroup("pl_gui");
 }
 
+fnode_ptr Manager::lookup(node_id_t const& id){
+    node_id_map_t::right_const_iterator i = m_nodes.find(id);
+    if(i != m_nodes.right().end())
+        return i->left;
+    return NULL;
+}
+
 // - Message Observer Implementation: thunks
 void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
     Q_EMIT receivedGraphDescription(m);
@@ -182,7 +189,9 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         node_output_map_t::const_iterator outputs_it = m->nodeOutputs().find(id);
 
         node->setInputLinks(inputs_it->second);
-        node->setOutputLinks(outputs_it->second);
+        node->setParamLinks(inputs_it->second);
+        // setOutputLinks is completely redundant
+        //node->setOutputLinks(outputs_it->second);
     }
 }
 
@@ -251,8 +260,9 @@ void Manager::removeNode(node_id_t const& id){
     }
 }
 
-void Manager::addNode(NodeType::e const& type, node_id_t const& id){
+fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
     debug() << BashColour::Green << "addNode:" << type << id;
+    fnode_ptr r = NULL;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;
     }else if(isInvalid(id)){
@@ -264,16 +274,19 @@ void Manager::addNode(NodeType::e const& type, node_id_t const& id){
         m_nodes.insert(node_id_map_t::value_type(p, id));
         m_imgnodes.insert(imgnode_id_map_t::value_type(p, id));
         m_scene->addItem(p);
+        r = p;
     }else{
-        fnode_ptr p = new FNode(*this, id, type);
-        m_nodes.insert(node_id_map_t::value_type(p, id));
-        m_scene->addItem(p);
+        r = new FNode(*this, id, type);
+        m_nodes.insert(node_id_map_t::value_type(r, id));
+        m_scene->addItem(r);
     }
+    return r;
 }
 
-void Manager::addNode(NodeAddedMessage_ptr m){
+fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
     const NodeType::e type = m->nodeType();
     const node_id_t id = m->nodeId();
+    fnode_ptr r = NULL;
     debug() << BashColour::Green << "addNode:" << type << id;
     if(isInvalid(type)){
         warning() << "ignoring invalid node type" << type;
@@ -285,12 +298,14 @@ void Manager::addNode(NodeAddedMessage_ptr m){
         imgnode_ptr p = new ImgNode(*this, m);
         m_nodes.insert(node_id_map_t::value_type(p, id));
         m_imgnodes.insert(imgnode_id_map_t::value_type(p, id));
-        m_scene->addItem(p);        
-    }else{
-        fnode_ptr p = new FNode(*this, m);
-        m_nodes.insert(node_id_map_t::value_type(p, id));
         m_scene->addItem(p);
+        r = p;
+    }else{
+        r = new FNode(*this, m);
+        m_nodes.insert(node_id_map_t::value_type(r, id));
+        m_scene->addItem(r);
     }
+    return r;
 }
 
 void Manager::clearNodes(){

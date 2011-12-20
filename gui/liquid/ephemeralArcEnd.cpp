@@ -49,7 +49,7 @@ EphemeralArcEnd::EphemeralArcEnd(QGraphicsItem* parent, ArcStyle const& of_style
 }
 
 EphemeralArcEnd::~EphemeralArcEnd(){
-    debug() << "~EphemeralArcEnd()";
+    debug(8) << "~EphemeralArcEnd()";
 }
 
 void EphemeralArcEnd::mousePressEvent(QGraphicsSceneMouseEvent *e){

@@ -42,6 +42,9 @@ class FNodeInput: public QGraphicsWidget,
                   public liquid::ConnectionSink,
                   public FNodeIO,
                   public ManagedElement{
+    public:
+        liquid::AbstractArcSink* sink() const;
+    
     protected:
         FNodeInput(Manager& m,
                    liquid::ArcStyle const& of_style,

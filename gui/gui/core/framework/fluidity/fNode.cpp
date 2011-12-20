@@ -39,6 +39,8 @@
 #include "fluidity/types.h"
 
 using cauv::gui::f::FNode;
+using cauv::gui::f::FNodeOutput;
+using cauv::gui::f::FNodeInput;
 using namespace liquid;
 
 
@@ -136,20 +138,6 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     setSize(QSizeF(104,130));
     
     // !!!
-    
-    /*
-    addItem(new FNodeImageInput(InputSchedType::Must_Be_New, this));
-    addItem(new FNodeImageInput(InputSchedType::May_Be_Old, this));
-    addItem(new FNodeParamInput(InputSchedType::May_Be_Old, 3, this));
-    addItem(new FNodeParamInput(InputSchedType::May_Be_Old, 4, this));
-
-    addItem(new TestLayoutItem(QRectF(0,-5,90,10)));
-    //addItem(new TestLayoutItem(QRectF(0,-5,50,10)));
-    
-    addItem(new FNodeOutput(this));
-    addItem(new FNodeOutput(this));
-    addItem(new FNodeOutput(this));
-    */
 
     m_header->setInfo(mkQStr() << id << ": 0.0MB/s 0Hz");
 }
@@ -164,7 +152,7 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     m_header->setInfo(mkQStr() << p->nodeId() << ": 0.0MB/s 0Hz");
 
     setOutputs(p->outputs());
-    setOutputLinks(p->outputs());
+    //setOutputLinks(p->outputs());
 
     setParams(p->params());
     setParamLinks(p->inputs()); // param links are inputs
@@ -196,6 +184,22 @@ void FNode::setInputs(msg_node_input_map_t const& inputs){
 }
 
 void FNode::setInputLinks(msg_node_input_map_t const& inputs){
+    msg_node_input_map_t::const_iterator j;
+    for(j = inputs.begin(); j != inputs.end(); j++){
+        str_in_map_t::const_iterator k = m_inputs.find(j->first.input);
+        // if connected, add the arc to this input:
+        if(k == m_inputs.end()){
+            continue;
+        }
+        if(!j->second.node){
+            debug() << "zero-link!";
+            continue;
+        }
+        fnode_ptr from = manager().lookup(j->second.node);
+        FNodeOutput* output = NULL;
+        if(from && (output = from->output(j->second.output)))
+            output->arc()->addTo(k->second->sink());
+    }
 }
 
 void FNode::setOutputs(msg_node_output_map_t const& outputs){
@@ -216,8 +220,8 @@ void FNode::setOutputs(msg_node_output_map_t const& outputs){
     }
 }
 
-void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
-}
+//void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
+//}
 
 void FNode::setParams(msg_node_param_map_t const& params){
     str_in_map_t new_m_params;
@@ -245,6 +249,25 @@ void FNode::setParams(msg_node_param_map_t const& params){
 }
 
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
+    typedef msg_node_input_map_t im_t;
+    foreach(im_t::value_type const& j, inputs){
+        str_in_map_t::const_iterator k = m_params.find(j.first.input);
+        // if connected, add the arc to this parameter's input:
+        if(k == m_params.end()){
+            continue;
+        }
+        if(j.second.node){
+            fnode_ptr from = manager().lookup(j.second.node);
+            FNodeOutput* output = NULL;
+            if(from && (output = from->output(j.second.output)))
+                output->arc()->addTo(k->second->sink());
+            // TODO: parameter values
+            //k->second.pvpair->editable(false);
+        }else{
+            // TODO: parameter values
+            //k->second.pvpair->editable(true);
+        }
+    }
 }
 
 void FNode::close(){
@@ -281,6 +304,14 @@ void FNode::reExec(){
 
 void FNode::duplicate(){
     // !!!
+}
+
+FNodeOutput* FNode::output(std::string const& id){
+    str_out_map_t::const_iterator i = m_outputs.find(id);
+    if(i != m_outputs.end())
+        return i->second;
+    error() << "no such output: " << id;
+    return NULL;
 }
 
 void FNode::initButtons(){

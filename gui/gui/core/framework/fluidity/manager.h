@@ -48,6 +48,8 @@ class Manager: public QObject,
         
         // a shared pointer to this must be held when this is called!
         void init();
+
+        fnode_ptr lookup(node_id_t const& id);
         
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
@@ -93,8 +95,8 @@ class Manager: public QObject,
 
     protected:
         void removeNode(node_id_t const& id);
-        void addNode(NodeType::e const& type, node_id_t const& id);
-        void addNode(NodeAddedMessage_ptr);
+        fnode_ptr addNode(NodeType::e const& type, node_id_t const& id);
+        fnode_ptr addNode(NodeAddedMessage_ptr);
         void clearNodes();
     
     protected Q_SLOTS:

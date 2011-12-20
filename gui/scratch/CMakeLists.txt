@@ -19,9 +19,9 @@ set (
 
 set (
     scratch_H
-    ../gui/core/framework/style.h    
+    ../gui/core/framework/style.h
 
-    ../gui/core/framework/fluidity/fNode.h 
+    ../gui/core/framework/fluidity/fNode.h
     ../gui/core/framework/fluidity/fNodeOutput.h
     ../gui/core/framework/fluidity/fNodeInput.h
     ../gui/core/framework/fluidity/imgNode.h

@@ -72,6 +72,12 @@ class bimap{
                 throw std::runtime_error("cauv::bimap::operator[] does not create values");
             return i->left;
         }
+ 
+        right_const_iterator find(R const& key) const{ return right().find(key); }
+        left_const_iterator find(L const& key) const{ return left().find(key); }
+
+        right_iterator find(R const& key) { return right().find(key); }
+        left_iterator find(L const& key) { return left().find(key); }
         
         void insert(value_type const& v){ m_map.insert(v); }
 

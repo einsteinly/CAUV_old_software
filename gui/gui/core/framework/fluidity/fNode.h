@@ -66,7 +66,7 @@ class FNode: public liquid::LiquidNode,
         void setInputs(msg_node_input_map_t const&);
         void setInputLinks(msg_node_input_map_t const&);
         void setOutputs(msg_node_output_map_t const&);
-        void setOutputLinks(msg_node_output_map_t const&);
+        //void setOutputLinks(msg_node_output_map_t const&); completely redundant
         void setParams(msg_node_param_map_t const&);
         void setParamLinks(msg_node_input_map_t const& inputs);
     
@@ -85,6 +85,8 @@ class FNode: public liquid::LiquidNode,
         virtual void duplicate();
 
     protected:
+        FNodeOutput* output(std::string const& id);
+
         void initFromMessage(boost::shared_ptr<NodeAddedMessage const> m);
         void initButtons();
 
