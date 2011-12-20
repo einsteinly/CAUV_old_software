@@ -27,6 +27,7 @@
 #include <QApplication>
 
 #include <common/bounded_float.h>
+#include <common/cauv_utils.h>
 
 namespace cauv {
     namespace gui {
@@ -115,11 +116,15 @@ namespace cauv {
             if (node && index.column() == 1 && node->isMaxSet() && node->isMinSet()) {
                 QStyleOptionProgressBarV2 progressBarOption;
                 progressBarOption.rect = option.rect;
-                progressBarOption.progress = index.data().toInt();
                 progressBarOption.text = QString::number(index.data().value<double>()).append(QString::fromStdString(node->getUnits()));
                 progressBarOption.textVisible = true;
-                info() << "max" << (progressBarOption.maximum = node->getMax().toInt());
-                info() << "min" << (progressBarOption.minimum = node->getMin().toInt());
+                progressBarOption.invertedAppearance = true;
+                progressBarOption.maximum = 1000;
+                progressBarOption.minimum = 0;
+                progressBarOption.progress = (int)(fabs(pivot(node->getMin().toDouble(),
+                                                             node->getNeutral().toDouble(),
+                                                             node->getMax().toDouble(),
+                                                             node->get().toDouble()))*progressBarOption.maximum);
 
                 QApplication::style()->drawControl(QStyle::CE_ProgressBar,
                                                    &progressBarOption, painter);
@@ -140,24 +145,21 @@ namespace cauv {
                     neutral->setMinimum(node->getMin().toInt());
                     neutral->setMaximum(node->getMax().toInt());
                     neutral->setWrapping(node->getWraps());
-                    neutral->setNeutral(node->getMin().toInt()); //!!! todo
+                    neutral->setNeutral(node->getNeutral().toInt());
                 }
 
                 if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
                     neutral->setMinimum(node->getMin().toDouble());
                     neutral->setMaximum(node->getMax().toDouble());
                     neutral->setWrapping(node->getWraps());
-                    neutral->setNeutral(node->getMin().toFloat()); //!!! todo
+                    neutral->setNeutral(node->getNeutral().toDouble());
+                    neutral->setDecimals(node->getPrecision());
                 }
             }
 
             return editor;
         }
     };
-
-
-
-
 
     } // namespace gui
 } // namespace cauv

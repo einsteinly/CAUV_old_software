@@ -93,12 +93,25 @@ namespace cauv {
                 Q_EMIT paramsUpdated();
             }
 
+            virtual void setNeutral(QVariant const& neutral){
+                // only update if its actually changed
+                if (neutral == getNeutral()) return;
+
+                m_neutral = neutral;
+
+                Q_EMIT paramsUpdated();
+            }
+
             virtual QVariant getMax() const {
                 return m_max;
             }
 
             virtual QVariant getMin() const {
                 return m_min;
+            }
+
+            virtual QVariant getNeutral() const {
+                return m_neutral;
             }
 
         Q_SIGNALS:
@@ -110,6 +123,7 @@ namespace cauv {
             QVariant m_min;
             bool m_maxSet, m_minSet, m_wraps;
             unsigned int m_precision;
+            QVariant m_neutral;
         };
 
 
@@ -182,6 +196,10 @@ namespace cauv {
 
             virtual void setMax(T max){
                 NumericNodeBase::setMax(QVariant::fromValue(max));
+            }
+
+            virtual void setNeutral(T neutral){
+                NumericNodeBase::setNeutral(QVariant::fromValue(neutral));
             }
         };
 

@@ -69,6 +69,22 @@ protected:
     const unsigned int m_period;
 };
 
+template <typename T>
+inline static T pivot(T min, T neutral, T max, T value){
+    T leftRange = neutral - min;
+    T rightRange = max - neutral;
+
+    // left of neutral
+    if (value < neutral) {
+        if (leftRange == 0) return 0;
+        return clamp(-1, (value - neutral) / leftRange, 0);
+    // right of neutral
+    } else {
+        if (rightRange == 0) return 0;
+        return clamp(0, (value - neutral) / rightRange, 1);
+    }
+}
+
 } // namespace cauv
 
 #define CAUV_LOCK(MUTEX) if (bool _lock_guard_bool = false) {} else for (boost::lock_guard<BOOST_TYPEOF(MUTEX)> _lock_guard(MUTEX); !_lock_guard_bool; _lock_guard_bool = true)
