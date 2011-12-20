@@ -20,6 +20,7 @@
 #include <gui/core/model/node.h>
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/widgets/neutralspinbox.h>
+#include <gui/core/widgets/graphbar.h>
 #include <gui/core/model/model.h>
 
 #include <QStyledItemDelegate>
@@ -103,10 +104,10 @@ namespace cauv {
         ProgressBarDelegate(QObject * parent = 0) : QStyledItemDelegate(parent) {
             QItemEditorFactory * factory = new QItemEditorFactory();
             this->setItemEditorFactory(factory);
-            factory->registerEditor(QVariant::Int, new QItemEditorCreator<NeutralSpinBox>("value"));
-            factory->registerEditor(QVariant::UInt, new QItemEditorCreator<NeutralSpinBox>("value"));
-            factory->registerEditor(QVariant::Double, new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
-            factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
+            factory->registerEditor(QVariant::Int, new QItemEditorCreator<GraphingSpinBox>("value"));
+            factory->registerEditor(QVariant::UInt, new QItemEditorCreator<GraphingSpinBox>("value"));
+            factory->registerEditor(QVariant::Double, new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
+            factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
         }
 
         void paint(QPainter *painter, const QStyleOptionViewItem &option,
@@ -141,18 +142,18 @@ namespace cauv {
             debug() << "Created editor: " << editor->metaObject()->className();
 
             if(node && node->isMaxSet() && node->isMinSet()) {
-                if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){
+                if(GraphingSpinBox * neutral = qobject_cast<GraphingSpinBox*>(editor)){
                     neutral->setMinimum(node->getMin().toInt());
                     neutral->setMaximum(node->getMax().toInt());
                     neutral->setWrapping(node->getWraps());
-                    neutral->setNeutral(node->getNeutral().toInt());
+                    //neutral->setNeutral(node->getNeutral().toInt());
                 }
 
-                if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
+                if(GraphingDoubleSpinBox * neutral = qobject_cast<GraphingDoubleSpinBox*>(editor)){
                     neutral->setMinimum(node->getMin().toDouble());
                     neutral->setMaximum(node->getMax().toDouble());
                     neutral->setWrapping(node->getWraps());
-                    neutral->setNeutral(node->getNeutral().toDouble());
+                    //neutral->setNeutral(node->getNeutral().toDouble());
                     neutral->setDecimals(node->getPrecision());
                 }
             }

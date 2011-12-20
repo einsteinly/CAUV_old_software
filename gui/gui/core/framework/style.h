@@ -36,7 +36,8 @@ namespace cauv {
 
     namespace CauvStyleOptions {
         enum e{
-            StyleOptionNeutralSpinBox = QStyleOption::SO_CustomBase + 1
+            StyleOptionNeutralSpinBox = QStyleOption::SO_CustomBase + 1,
+            StyleOptionGraphingSpinBox
         };
     }
 
@@ -51,6 +52,18 @@ namespace cauv {
         bool invertColours;
     };
 
+
+    class StyleOptionGraphingSpinBox : public QStyleOptionSpinBox {
+    public:
+        enum StyleOptionType { Type = CauvStyleOptions::StyleOptionGraphingSpinBox };
+        StyleOptionGraphingSpinBox() : QStyleOptionSpinBox(), samples() {
+                type = CauvStyleOptions::StyleOptionGraphingSpinBox;
+        }
+
+        int maximum;
+        int minimum;
+        QList<int> samples;
+    };
 
     class CauvStyle : public BASESTYLE
     {
