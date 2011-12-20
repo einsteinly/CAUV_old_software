@@ -78,17 +78,21 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
         QStyleOptionProgressBarV2 outputOptions(*progressOptions);
 
-        int hueRange = 90;
+        int hueRange = 100;
         int range = outputOptions.maximum - outputOptions.minimum;
         if (range < 0) range = 0;
 
         float progress = 0;
         if(range != 0)
-            progress = (float) outputOptions.progress / (float) range;
+            progress = (float) (outputOptions.progress - outputOptions.minimum) / (float) range;
 
-        int hue = hueRange - (hueRange * progress);
+        int hue = hueRange * progress;
 
-        QColor progressColor(QColor::fromHsl(hue, 160, 162));
+        if (progressOptions->invertedAppearance)
+            hue = hueRange - hue;
+        outputOptions.invertedAppearance = false;
+
+        QColor progressColor(QColor::fromHsl(hue+1, 160, 162));
         outputOptions.palette.setColor(QPalette::Highlight, progressColor);
 
         BASESTYLE::drawControl(control, &outputOptions, painter, widget);
@@ -108,13 +112,15 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
         const StyleOptionNeutralSpinBox *spin = qstyleoption_cast<const StyleOptionNeutralSpinBox *>(option);
         if(spin){
             QStyleOptionProgressBarV2 progressOptions;
+            progressOptions.initFrom(widget);
             progressOptions.rect = option->rect;
-            progressOptions.direction = Qt::LeftToRight;
-            progressOptions.state = QStyle::State_Enabled;
+            progressOptions.direction = option->direction;
+            progressOptions.state = option->state;
             progressOptions.minimum = 0;
             progressOptions.maximum = 1000;
-            progressOptions.progress = (int)std::abs(spin->level) * 1000.0;
+            progressOptions.progress = (int)(fabs(spin->level) * 1000.0);
             progressOptions.textVisible = false;
+            progressOptions.invertedAppearance = spin->invertColours;
 
             drawControl(CE_ProgressBar, &progressOptions, painter, widget);
 

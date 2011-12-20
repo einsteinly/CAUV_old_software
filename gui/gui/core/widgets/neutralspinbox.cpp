@@ -17,6 +17,9 @@
 #include <QPaintEvent>
 #include <QPainter>
 
+#include <common/cauv_utils.h>
+
+#include <debug/cauv_debug.h>
 
 #include <limits>
 
@@ -44,7 +47,8 @@ void NeutralSpinBox::paintEvent(QPaintEvent * e)
  {
     StyleOptionNeutralSpinBox option;
     option.initFrom(this);
-    option.level = 0.5;//this->neutral();
+
+    option.level = pivot(minimum(), neutral(), maximum(), value());
 
     QPainter painter(this);
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
@@ -70,10 +74,10 @@ void NeutralDoubleSpinBox::paintEvent(QPaintEvent * e)
  {
     StyleOptionNeutralSpinBox option;
     option.initFrom(this);
-    option.level = 0.5;//this->neutral();
+
+    option.level = pivot(minimum(), neutral(), maximum(), value());
 
     QPainter painter(this);
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
 }
-
 
