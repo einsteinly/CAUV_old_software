@@ -7,7 +7,6 @@ include_directories (${guis_SOURCE_DIR}/gui/core/)
 set (
     scratch_srcs
     main.cpp
-    viewWidget.cpp
     ../gui/core/framework/style.cpp
 
     ../gui/core/framework/fluidity/fNode.cpp
@@ -15,11 +14,11 @@ set (
     ../gui/core/framework/fluidity/managedElement.cpp
     ../gui/core/framework/fluidity/manager.cpp
     ../gui/core/framework/fluidity/fNodeInput.cpp
+    ../gui/core/framework/fluidity/view.cpp
 )
 
 set (
     scratch_H
-    viewWidget.h
     ../gui/core/framework/style.h    
 
     ../gui/core/framework/fluidity/fNode.h 
@@ -27,6 +26,8 @@ set (
     ../gui/core/framework/fluidity/fNodeInput.h
     ../gui/core/framework/fluidity/imgNode.h
     ../gui/core/framework/fluidity/manager.h
+    ../gui/core/framework/fluidity/view.h
+    ../gui/core/framework/fluidity/menu.h
 )
 
 

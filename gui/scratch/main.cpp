@@ -19,7 +19,7 @@
 
 #include <common/cauv_node.h>
 
-#include "viewWidget.h"
+#include "fluidity/view.h"
 
 class ScratchNode: public cauv::CauvNode, public QThread{
     public:
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
     node->parseOptions(argc, argv);
     node->start();
 
-    cauv::gui::f::ViewWidget view(node);
+    cauv::gui::f::FView view(node);
     view.show();
 
     int exit_status = app.exec();

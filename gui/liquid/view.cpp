@@ -71,7 +71,7 @@ class ZoomFilter : public QObject {
 
 
 LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
-    m_scaleFactor(1.25), m_minScale(0.03), m_maxScale(2)
+    m_scaleFactor(1.25), m_minScale(0.03), m_maxScale(1)
 {
     this->setAcceptDrops(true);
 
@@ -86,8 +86,10 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
     setTransformationAnchor(LiquidView::AnchorViewCenter);
     
     centerOn(0,0);
-
-    setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    
+    setRenderHints(QPainter::Antialiasing |
+                   QPainter::TextAntialiasing |
+                   QPainter::SmoothPixmapTransform);
 }
 
 
