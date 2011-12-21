@@ -47,6 +47,7 @@ set ( GUI_CORE_SRCS
     model/messagegenerators.cpp
     model/paramvalues.cpp
     model/utils/noderecorder.cpp
+    model/utils/nodesampler.cpp
 
     framework/nodepicker.cpp
     framework/mainwindow.cpp
@@ -88,6 +89,7 @@ set ( GUI_CORE_H
     model/nodes/vehiclenode.h
     model/messagegenerators.h
     model/messageobserver.h
+    model/utils/nodesampler.h
 
     framework/nodepicker.h
     framework/mainwindow.h

@@ -44,7 +44,7 @@ QList<int> GraphingSpinBox::values() const {
 
 void GraphingSpinBox::paintEvent(QPaintEvent * e)
  {
-    StyleOptionGraphingSpinBox option;
+    StyleOptionGraphingWidget option;
     option.initFrom(this);
 
     option.maximum = maximum();
@@ -72,7 +72,7 @@ QList<double> GraphingDoubleSpinBox::values() const {
 
 void GraphingDoubleSpinBox::paintEvent(QPaintEvent * e)
  {
-    StyleOptionGraphingSpinBox option;
+    StyleOptionGraphingWidget option;
     option.initFrom(this);
 
     //!!! HACK. this needs doing a different way

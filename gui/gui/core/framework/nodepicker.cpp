@@ -24,7 +24,6 @@
 #include <QDebug>
 
 #include "widgets/neutralspinbox.h"
-#include "widgets/graphbar.h"
 
 #include "model/nodes/numericnode.h"
 
@@ -137,10 +136,6 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     // redirect focus so the filter gets the key events
     ui->view->connect(ui->view, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 
-    GraphingSpinBox * gsb = new GraphingSpinBox();
-    gsb->setMaximum(100);
-    gsb->setMinimum(-100);
-    ui->verticalLayout->addWidget(gsb);
 }
 
 void NodePicker::redirectKeyboardFocus(QKeyEvent* event){
@@ -172,7 +167,7 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setItemDelegate(delegate);
-    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<ProgressBarDelegate>());
+    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<GraphingDelegate>());
 
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
 }

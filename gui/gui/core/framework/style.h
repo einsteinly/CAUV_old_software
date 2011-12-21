@@ -51,10 +51,6 @@ namespace cauv {
     }
 
 
-
-
-
-
     namespace CauvStyleOptions {
         enum e{
             StyleOptionNeutralSpinBox = QStyleOption::SO_CustomBase + 1,
@@ -74,10 +70,10 @@ namespace cauv {
     };
 
 
-    class StyleOptionGraphingSpinBox : public QStyleOptionSpinBox {
+    class StyleOptionGraphingWidget : public QStyleOptionSpinBox {
     public:
         enum StyleOptionType { Type = CauvStyleOptions::StyleOptionGraphingSpinBox };
-        StyleOptionGraphingSpinBox() : QStyleOptionSpinBox(), samples() {
+        StyleOptionGraphingWidget() : QStyleOptionSpinBox(), samples() {
                 type = CauvStyleOptions::StyleOptionGraphingSpinBox;
         }
 
@@ -91,10 +87,17 @@ namespace cauv {
         Q_OBJECT
 
     public:
+        enum CauvControlElement {
+            CE_Graph = QStyle::CE_CustomBase + 1
+        };
+
         CauvStyle();
 
         QRect subControlRect ( ComplexControl control, const QStyleOptionComplex * option,
                                SubControl subControl, const QWidget * widget = 0 ) const;
+
+        void drawControl(CauvControlElement control, const QStyleOption *option,
+                         QPainter *painter, const QWidget *widget) const;
 
         void drawControl(ControlElement control, const QStyleOption *option,
                          QPainter *painter, const QWidget *widget) const;

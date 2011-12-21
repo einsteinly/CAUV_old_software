@@ -20,12 +20,13 @@
 #include <gui/core/model/node.h>
 #include <gui/core/model/nodes/numericnode.h>
 #include <gui/core/widgets/neutralspinbox.h>
-#include <gui/core/widgets/graphbar.h>
 #include <gui/core/model/model.h>
+#include <gui/core/model/utils/nodesampler.h>
 
 #include <QStyledItemDelegate>
 #include <QItemEditorFactory>
 #include <QApplication>
+#include <QMap>
 
 #include <common/bounded_float.h>
 #include <common/cauv_utils.h>
@@ -99,15 +100,75 @@ namespace cauv {
 
 
 
-    struct ProgressBarDelegate : public QStyledItemDelegate {
 
-        ProgressBarDelegate(QObject * parent = 0) : QStyledItemDelegate(parent) {
+
+    struct GraphingDelegate : public QStyledItemDelegate {
+
+        void paint(QPainter *painter, const QStyleOptionViewItem &option,
+                                   const QModelIndex &index) const
+        {
+            NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
+            if (node && index.column() == 1 && node->isMaxSet() && node->isMinSet()) {
+
+                if(!m_options.contains(index)){
+                    info() << "created node sampler";
+                    m_options[index] = boost::make_shared<NodeSampler<int> >(node->shared_from_this());
+                }
+
+                if(!m_options.contains(index)){
+                    error() << "GraphingDelegate: Can't find sampler!";
+                    return;
+                }
+                StyleOptionGraphingWidget graphingOption;
+                graphingOption.maximum = node->getMax().toInt();
+                graphingOption.minimum = node->getMin().toInt();
+                graphingOption.samples = m_options[index]->samples();
+                QApplication::style()->drawControl((QStyle::ControlElement)CauvStyle::CE_Graph, &graphingOption, painter);
+
+            } else
+                QStyledItemDelegate::paint(painter, option, index);
+
+        }
+
+        QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const{
+            QWidget * editor = QStyledItemDelegate::createEditor(parent, option, index);
+
+            NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
+
+            if(node && node->isMaxSet() && node->isMinSet()) {
+
+                if(QSpinBox * neutral = qobject_cast<QSpinBox*>(editor)){
+                    neutral->setMinimum(node->getMin().toInt());
+                    neutral->setMaximum(node->getMax().toInt());
+                    neutral->setWrapping(node->getWraps());
+                }
+
+                if(QDoubleSpinBox * neutral = qobject_cast<QDoubleSpinBox*>(editor)){
+                    neutral->setMinimum(node->getMin().toDouble());
+                    neutral->setMaximum(node->getMax().toDouble());
+                    neutral->setWrapping(node->getWraps());
+                    neutral->setDecimals(node->getPrecision());
+                }
+            }
+
+            return editor;
+        }
+
+    protected:
+        mutable QMap<QModelIndex, boost::shared_ptr<NodeSampler<int> > > m_options;
+    };
+
+
+
+    struct ProgressDelegate : public QStyledItemDelegate {
+
+        ProgressDelegate(QObject * parent = 0) : QStyledItemDelegate(parent) {
             QItemEditorFactory * factory = new QItemEditorFactory();
             this->setItemEditorFactory(factory);
-            factory->registerEditor(QVariant::Int, new QItemEditorCreator<GraphingSpinBox>("value"));
-            factory->registerEditor(QVariant::UInt, new QItemEditorCreator<GraphingSpinBox>("value"));
-            factory->registerEditor(QVariant::Double, new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
-            factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
+            factory->registerEditor(QVariant::Int, new QItemEditorCreator<NeutralSpinBox>("value"));
+            factory->registerEditor(QVariant::UInt, new QItemEditorCreator<NeutralSpinBox>("value"));
+            factory->registerEditor(QVariant::Double, new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
+            factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
         }
 
         void paint(QPainter *painter, const QStyleOptionViewItem &option,
@@ -139,21 +200,19 @@ namespace cauv {
 
             const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
 
-            debug() << "Created editor: " << editor->metaObject()->className();
-
             if(node && node->isMaxSet() && node->isMinSet()) {
-                if(GraphingSpinBox * neutral = qobject_cast<GraphingSpinBox*>(editor)){
+                if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){
                     neutral->setMinimum(node->getMin().toInt());
                     neutral->setMaximum(node->getMax().toInt());
                     neutral->setWrapping(node->getWraps());
-                    //neutral->setNeutral(node->getNeutral().toInt());
+                    neutral->setNeutral(node->getNeutral().toInt());
                 }
 
-                if(GraphingDoubleSpinBox * neutral = qobject_cast<GraphingDoubleSpinBox*>(editor)){
+                if(NeutralDoubleSpinBox * neutral = qobject_cast<NeutralDoubleSpinBox*>(editor)){
                     neutral->setMinimum(node->getMin().toDouble());
                     neutral->setMaximum(node->getMax().toDouble());
                     neutral->setWrapping(node->getWraps());
-                    //neutral->setNeutral(node->getNeutral().toDouble());
+                    neutral->setNeutral(node->getNeutral().toDouble());
                     neutral->setDecimals(node->getPrecision());
                 }
             }
