@@ -155,7 +155,8 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
            painter->drawLine(canvas.left(), y, canvas.right(), y);
 
            QPainterPath path;
-           path.moveTo(x, y);
+           path.moveTo(x, canvas.bottom() - yOffset);;
+           path.lineTo(x, y);
            path.setFillRule(Qt::WindingFill);
 
            int lastSample = 0;
