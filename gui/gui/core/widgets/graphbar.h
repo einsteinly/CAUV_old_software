@@ -58,7 +58,7 @@ namespace cauv {
             }
 
             virtual void sample(){
-                enqueue(m_target->value());
+                QQueue<TVal>::enqueue(m_target->value());
                 while (QQueue<TVal>::size() > m_maxLength) QQueue<TVal>::dequeue();
             }
 
