@@ -69,10 +69,10 @@ protected:
     const unsigned int m_period;
 };
 
-template <typename T>
-inline static T pivot(T min, T neutral, T max, T value){
-    T leftRange = neutral - min;
-    T rightRange = max - neutral;
+template <typename TMin, typename TNeutral, typename TMax, typename TVal>
+inline static TVal pivot(TMin min, TNeutral neutral, TMax max, TVal value){
+    TVal leftRange = neutral - min;
+    TVal rightRange = max - neutral;
 
     // left of neutral
     if (value < neutral) {

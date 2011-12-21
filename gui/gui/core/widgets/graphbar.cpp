@@ -69,15 +69,27 @@ QList<double> GraphingDoubleSpinBox::values() const {
     return m_samples;
 }
 
-/*
+
 void GraphingDoubleSpinBox::paintEvent(QPaintEvent * e)
  {
-    StyleOptionNeutralSpinBox option;
+    StyleOptionGraphingSpinBox option;
     option.initFrom(this);
 
-    option.level = pivot(minimum(), neutral(), maximum(), value());
+    //!!! HACK. this needs doing a different way
+    // put the values into some sensible integer representation
+
+
+    QList<int> asInts;
+    float scalar = 1000 / (maximum() - minimum());
+    foreach(double sample, (QList<double>) m_samples){
+        asInts.append(sample*scalar);
+    }
+
+    option.maximum = maximum() * scalar;
+    option.minimum = minimum() * scalar;
+    option.samples = asInts;
 
     QPainter painter(this);
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
-}*/
+}
 

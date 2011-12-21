@@ -40,7 +40,6 @@ namespace cauv {
 
         protected Q_SLOTS:
             virtual void sample() = 0;
-
         };
 
 
@@ -100,7 +99,7 @@ namespace cauv {
 
             QList<double> values() const;
 
-            //void paintEvent(QPaintEvent *);
+            void paintEvent(QPaintEvent *);
 
         protected:
             SamplingQueue<GraphingDoubleSpinBox, double> m_samples;

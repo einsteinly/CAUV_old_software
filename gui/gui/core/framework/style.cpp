@@ -28,6 +28,8 @@
 
 #include <QPainterPath>
 
+#include <limits>
+
 using namespace cauv;
 using namespace cauv::gui;
 
@@ -135,51 +137,51 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
       const StyleOptionGraphingSpinBox *graphingSpin = qstyleoption_cast<const StyleOptionGraphingSpinBox *>(option);
        if(graphingSpin){
 
+           painter->eraseRect(option->rect);
+
            painter->setRenderHint(QPainter::Antialiasing);
-
            QRect canvas = option->rect;
-
+           canvas.setBottom(canvas.bottom()+1);
            QList<int> samples = graphingSpin->samples;
 
-           qDebug() << samples;
-
-
            float stepSize = ((float)canvas.width()) / (float)samples.size();
-           float offset = graphingSpin->minimum * heightScalar;
-
            int range = graphingSpin->maximum - graphingSpin->minimum;
            float heightScalar = ((float)canvas.height())/(float)range;
            float x = canvas.left();
-           float y = canvas.bottom() + (canvas.height() - (offset + (samples.first() * heightScalar)));
+           float yOffset = abs(graphingSpin->minimum) * heightScalar;
+           float y = canvas.bottom() - (yOffset + (samples.first() * heightScalar));
 
-           QPainterPath posPath;
-           path.moveTo(canvas.bottomLeft());
+           painter->setPen(QPen(QColor(238, 238, 238)));
+           painter->drawLine(canvas.left(), y, canvas.right(), y);
 
+           QPainterPath path;
+           path.moveTo(x, y);
+           path.setFillRule(Qt::WindingFill);
 
-
-           /*
-           path.moveTo(canvas.bottomLeft());
-           path.lineTo(x, y);
+           int lastSample = 0;
            foreach (int sample, samples){
                int clampedSample = clamp(graphingSpin->minimum, sample, graphingSpin->maximum);
 
                float height = clampedSample * heightScalar;
+               if((lastSample == 0) && (clampedSample == 0))
+                   path.moveTo(x,  canvas.bottom() - (yOffset + height));
+               else path.lineTo(x,  canvas.bottom() - (yOffset + height));
 
-               qDebug() << "rect info: " << canvas.bottom() << canvas.top();
-
-               qDebug() << (canvas.top() + height);
-
-               path.lineTo(x,  (canvas.height() - (canvas.top() + height)));
-
+               lastSample = clampedSample;
                x += stepSize;
            }
-*/
-           painter->setPen(QPen(QColor(225, 235, 246), 2));
+
+
+           QColor outline = cauvColorMap((float)graphingSpin->minimum, (float)graphingSpin->maximum, (float)samples.last());
+           QColor fill = cauvColorMap((float)graphingSpin->minimum, (float)graphingSpin->maximum, (float)samples.last(),
+                                      true, 100, QColor::fromHsl(0,160,230));
+
+           painter->setPen(QPen(outline, 2));
            painter->drawPath(path);
 
-           path.lineTo(canvas.bottomRight());
+           path.lineTo(x, canvas.bottom() - yOffset);
            path.closeSubpath();
-           painter->fillPath(path, QBrush(QColor(242, 246, 251)));
+           painter->fillPath(path, QBrush(fill));
        }
 
 

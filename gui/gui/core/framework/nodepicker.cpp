@@ -173,6 +173,15 @@ NodeTreeView::NodeTreeView(QWidget *) {
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setItemDelegate(delegate);
     delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<ProgressBarDelegate>());
+
+    connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
+}
+
+void NodeTreeView::forceEdit(QModelIndex const& index){
+    // force edit on column 1
+    QModelIndex forcedColumn = index.model()->index(index.row(), 1, index.parent());
+    if(forcedColumn.flags() & Qt::ItemIsEditable)
+        edit(forcedColumn);
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){

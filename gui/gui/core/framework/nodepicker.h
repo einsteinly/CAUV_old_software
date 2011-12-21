@@ -75,6 +75,7 @@ namespace cauv {
             virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
         private Q_SLOTS:
+            void forceEdit(QModelIndex const& index);
             void applyFilters();
             void applyFilters(QModelIndex const&);
             bool applyFilters(boost::shared_ptr<Node> const&);

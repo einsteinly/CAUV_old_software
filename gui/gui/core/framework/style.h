@@ -30,9 +30,30 @@
 
 #include <QStyleOptionProgressBarV2>
 
+#include <common/cauv_utils.h>
 
 namespace cauv {
     namespace gui {
+
+
+
+    template<class T>
+    QColor cauvColorMap(T min, T max, T value, bool inverted = true, int hueRange = 100, QColor startingColor = QColor::fromHsl(0, 160, 200)){
+
+        T scalar = pivot(min, 0, max, value);
+
+        int hue = hueRange * scalar;
+        if (inverted)
+            hue = hueRange - hue;
+
+        startingColor.setHsl(startingColor.hue() + hue, startingColor.saturation(), startingColor.lightness());
+        return startingColor;
+    }
+
+
+
+
+
 
     namespace CauvStyleOptions {
         enum e{
