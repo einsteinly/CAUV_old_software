@@ -20,7 +20,7 @@
 #include <Qt>
 #include <QtPlugin>
 
-#include "framework/guiactions.h"
+#include <gui/core/framework/guiactions.h>
 
 class QString;
 

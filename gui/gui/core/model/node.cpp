@@ -25,7 +25,7 @@ std::map<std::string, int> node_types::typeMap;
 
 
 Node::Node(nid_t const& id, node_type t) :
-        type(t), m_parent(), m_id(id), m_mutable(false) {
+    type(t), m_parent(), m_id(id), m_mutable(false) {
 
     qRegisterMetaType<boost::shared_ptr<Node> >("boost::shared_ptr<Node>");
 }
@@ -134,9 +134,25 @@ boost::shared_ptr<Node> Node::getRoot() {
     return node;
 }
 
-boost::shared_ptr<Node> Node::getParent(){
+boost::shared_ptr<Node> Node::getParent() {
     if(boost::shared_ptr<Node> parent = m_parent.lock())
     {
         return parent;
     } else throw std::out_of_range("Node has no parent");
+}
+
+int Node::row() const{
+    // work out the row of the parent with respect to its siblings
+    boost::shared_ptr<const Node> parent = m_parent.lock();
+    if(!parent) return 0; // root node
+    int row = 0;
+    foreach (boost::shared_ptr<Node> const& c, parent->getChildren()){
+        if (c == parent) break;
+        row++;
+    }
+    return row;
+}
+
+int Node::columnCount() const{
+    return 1;
 }

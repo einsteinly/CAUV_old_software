@@ -12,8 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef GRAPHWIDGET_H
-#define GRAPHWIDGET_H
+#ifndef __CAUV_QWTGRAPHWIDGET_H__
+#define __CAUV_QWTGRAPHWIDGET_H__
 
 #include <QPointF>
 #include <QTimer>
@@ -23,7 +23,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <gui/core/model/variants.h>
-#include <gui/core/model/utils/noderecorder.h>
+#include <gui/core/model/utils/datarecorder.h>
 #include <gui/core/nodedragging.h>
 
 #include <qwt_series_data.h>
@@ -36,10 +36,10 @@ namespace Ui {
 
 namespace cauv {
     namespace gui {
-
+/*
         class NumericNodeBase;
 
-        class DataStreamSeriesData : public QObject, public QwtSeriesData<QPointF>, public DataRecorder<float> {
+        class DataStreamSeriesData : public QObject, public QwtSeriesData<QPointF> {//, public DataRecorder<float> {
         Q_OBJECT
 
         public:
@@ -65,7 +65,7 @@ namespace cauv {
 
             GraphWidget();
             GraphWidget(boost::shared_ptr<NumericNodeBase> const&);
-            ~GraphWidget();
+            //~GraphWidget();
 
             void setupPlot();
             bool accepts(boost::shared_ptr<Node> const&);
@@ -80,9 +80,9 @@ namespace cauv {
             series_map_t m_nodes;
             QTimer m_timer;
             QwtPlot * m_plot;
-            Ui::GraphWidget * ui;
-        };
+            //Ui::GraphWidget * ui;
+        };*/
     } // namespace gui
 } // namespace cauv
 
-#endif // GRAPHWIDGET_H
+#endif // __CAUV_QWTGRAPHWIDGET_H__

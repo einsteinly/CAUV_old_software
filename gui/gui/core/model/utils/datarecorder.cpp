@@ -12,5 +12,5 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#include "noderecorder.h"
+#include "datarecorder.h"
 

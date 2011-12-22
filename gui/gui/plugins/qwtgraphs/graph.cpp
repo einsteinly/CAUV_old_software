@@ -13,11 +13,7 @@
  */
 
 #include "graph.h"
-#include "ui_graph.h"
-
-#include <common/cauv_utils.h>
-
-#include "model/nodes/numericnode.h"
+//#include "ui_graph.h"
 
 #include <QPen>
 #include <QRectF>
@@ -33,92 +29,100 @@
 #include <qwt_plot_zoomer.h>
 #include <qwt_plot_panner.h>
 
+#include <common/cauv_utils.h>
+
+#include <gui/core/model/nodes/numericnode.h>
+
 using namespace cauv;
 using namespace cauv::gui;
 
+/*
+//const QColor GraphWidget::colours[] = {
+//    Qt::darkBlue, Qt::red, Qt::darkGreen,  Qt::yellow,
+//    Qt::darkCyan, Qt::darkGray, Qt::darkMagenta, Qt::darkRed, Qt::darkYellow,
+//    Qt::blue, Qt::cyan, Qt::gray, Qt::green, Qt::magenta,
+//};
 
-const QColor GraphWidget::colours[] = {
-    Qt::darkBlue, Qt::red, Qt::darkGreen,  Qt::yellow,
-    Qt::darkCyan, Qt::darkGray, Qt::darkMagenta, Qt::darkRed, Qt::darkYellow,
-    Qt::blue, Qt::cyan, Qt::gray, Qt::green, Qt::magenta,
-};
 
-
-DataStreamSeriesData::DataStreamSeriesData(boost::shared_ptr<NumericNodeBase> const& node, unsigned int maximum) :
-        DataRecorder<float>(maximum), m_max(0), m_min(0) {
-    node->connect(node.get(), SIGNAL(onUpdate(float)), this, SLOT(change(float)));
+DataStreamSeriesData::DataStreamSeriesData(boost::shared_ptr<NumericNodeBase> const& node, unsigned int maximum)
+     {  // DataRecorder<float>(maximum), m_max(0), m_min(0) {
+    //node->connect(node.get(), SIGNAL(onUpdate(float)), this, SLOT(change(float)));
 }
 
 size_t DataStreamSeriesData::size () const {
     // times 2 as we plot 2 points for each sample
     // this creates the step effect
-    return (this->m_history.size())*2;
+    //return (this->m_history.size())*2;
+    return 0;
 }
 
 float DataStreamSeriesData::toTime(boost::posix_time::ptime epoch, boost::posix_time::ptime time) const{
-    boost::posix_time::time_duration delta = epoch - time;
-    return ((float)delta.ticks())/(float)delta.ticks_per_second();
+  //  boost::posix_time::time_duration delta = epoch - time;
+  //  return ((float)delta.ticks())/(float)delta.ticks_per_second();
+    return 0;
 }
 
 QPointF DataStreamSeriesData::sample (size_t i) const {
 
     // as each sample is represented by two points the actual sample we're plotting is
     // at half of the total plot size
-    size_t sample = (i>>1);
+   // size_t sample = (i>>1);
 
     // for even samples we use the time at "sample" otherwise we use the
     // time of the next sample (to show it as a step change instead of
     // ramping to it)
-    float seconds = toTime(boost::posix_time::microsec_clock::local_time(), this->m_timestamps[sample + (i&0x01)]);
+  //  float seconds = toTime(boost::posix_time::microsec_clock::local_time(), this->m_timestamps[sample + (i&0x01)]);
 
     // the very last point should be pegged at zero seconds so that it's stretched
-    if(i == (this->m_history.size()*2)-1){
-        seconds = 0.0;
-    }
+  //  if(i == (this->m_history.size()*2)-1){
+  //      seconds = 0.0;
+  //  }
 
     // times are shown as negative in seconds from the current time
-    return QPointF(-seconds, this->m_history[sample]);
+  //  return QPointF(-seconds, this->m_history[sample]);
+    return QPointF();
 }
 
 QRectF DataStreamSeriesData::boundingRect () const {
-    if(this->m_history.empty())
-        return QRectF(-60, 0, 60, 10);
-    else {
-        // show the last 60 seconds;
-        return QRectF(-60, m_min, 60, m_max - m_min);
-    }
+   // if(this->m_history.empty())
+   //     return QRectF(-60, 0, 60, 10);
+  //  else {
+  //      // show the last 60 seconds;
+  //      return QRectF(-60, m_min, 60, m_max - m_min);
+  //  }
+    return QRectF();
 }
 
 void DataStreamSeriesData::change(float value){
-    if(m_max < value)
-        m_max = value;
-    if(value < m_min)
-        m_min = value;
-    DataRecorder<float>::update(value);
+   // if(m_max < value)
+   //     m_max = value;
+   // if(value < m_min)
+  //      m_min = value;
+  //  DataRecorder<float>::update(value);
 }
 
 
 
 
 GraphWidget::GraphWidget():
-        m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
+        m_plot(new QwtPlot())//, ui(new Ui::GraphWidget())
 {
-    ui->setupUi(this);
-    ui->optionsWidget->hide();
-    this->setAcceptDrops(true);
-    setupPlot();
+    //ui->setupUi(this);
+   // ui->optionsWidget->hide();
+  //  this->setAcceptDrops(true);
+ //   setupPlot();
 
-    installEventFilter(new NodeDropFilter(this));
+ //   installEventFilter(new NodeDropFilter(this));
 }
 
-GraphWidget::GraphWidget(boost::shared_ptr<NumericNodeBase> const& node):
-        m_plot(new QwtPlot()), ui(new Ui::GraphWidget())
+GraphWidget::GraphWidget(boost::shared_ptr<NumericNodeBase> const& node)
+  //      m_plot(new QwtPlot())//, ui(new Ui::GraphWidget())
 {
-    ui->setupUi(this);
-    ui->optionsWidget->hide();
-    onNodeDropped(node);
-    this->setAcceptDrops(true);
-    setupPlot();
+   // ui->setupUi(this);
+   // ui->optionsWidget->hide();
+  //  onNodeDropped(node);
+ //   this->setAcceptDrops(true);
+ //   setupPlot();
 }
 
 void GraphWidget::addNode(boost::shared_ptr<NumericNodeBase> const& node){
@@ -150,14 +154,14 @@ void GraphWidget::addNode(boost::shared_ptr<NumericNodeBase> const& node){
     }
 }
 
-GraphWidget::~GraphWidget(){
-    delete ui;
-}
+//GraphWidget::~GraphWidget(){
+//    delete ui;
+//}
 
 
 void GraphWidget::setupPlot() {
-
-    ui->widgets->addWidget(m_plot);
+/*
+   // ui->widgets->addWidget(m_plot);
     QwtPainter::setPolylineSplitting(true);
 
     // Insert grid
@@ -206,7 +210,6 @@ void GraphWidget::setupPlot() {
     m_timer.setSingleShot(false);
     m_timer.start(100);
 
-    /*
     //zoomer
     QwtPlotZoomer* zoomer = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yRight, m_plot->canvas());
     zoomer->setMousePattern(QwtEventPattern::MouseSelect1, Qt::RightButton);
@@ -216,8 +219,7 @@ void GraphWidget::setupPlot() {
     QwtPlotMagnifier* magnifier = new QwtPlotMagnifier(m_plot->canvas());
     magnifier->setMouseButton(Qt::NoButton);
     magnifier->setAxisEnabled(QwtPlot::yLeft, false);
-*/
-    // panner
+   // panner
     QwtPlotPanner * panner = new QwtPlotPanner(m_plot->canvas());
     panner->setAxisEnabled(QwtPlot::yLeft, false);
     panner->setMouseButton(Qt::LeftButton);
@@ -226,21 +228,22 @@ void GraphWidget::setupPlot() {
 
 
 bool GraphWidget::accepts(boost::shared_ptr<Node> const& node){
-    return (node->type == nodeType<NumericNodeBase>());
+    return false;//return (node->type == nodeType<NumericNodeBase>());
 }
 
 void GraphWidget::onNodeDropped(boost::shared_ptr<Node> const& node){
-    if(node->type == nodeType<NumericNodeBase>())
-        addNode(node->to<NumericNodeBase>());
+   // if(node->type == nodeType<NumericNodeBase>())
+   //     addNode(node->to<NumericNodeBase>());
 }
 
 std::string GraphWidget::getName() const{
-    std::set<std::string> names;
+  //  std::set<std::string> names;
 
-    BOOST_FOREACH(series_map_t::value_type i, m_nodes){
-        names.insert(i.second->nodeName());
-    }
+ //   foreach(series_map_t::value_type i, m_nodes){
+  //      names.insert(i.second->nodeName());
+ //   }
 
-    return implode(", ", names);
+ //   return implode(", ", names);
+    return "";
 }
-
+*/

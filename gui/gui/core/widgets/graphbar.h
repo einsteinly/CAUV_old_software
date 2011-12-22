@@ -22,6 +22,8 @@
 
 #include <debug/cauv_debug.h>
 
+#include <gui/core/model/utils/sampler.h>
+
 namespace cauv {
     namespace gui {
 
@@ -34,12 +36,14 @@ namespace cauv {
 
             GraphingSpinBox(QWidget * parent = 0);
 
-            QList<int> sampler() const;
+            void setSampler(boost::shared_ptr<SampleQueue<QVariant> > sampler);
+
+            boost::shared_ptr<SampleQueue<QVariant> > sampler() const;
 
             void paintEvent(QPaintEvent *);
 
         protected:
-            SamplingQueue<GraphingSpinBox, int> m_samples;
+            boost::shared_ptr<SampleQueue<QVariant> > m_sampler;
         };
 
 
@@ -52,12 +56,14 @@ namespace cauv {
 
             GraphingDoubleSpinBox(QWidget * parent = 0);
 
-            QList<double> values() const;
+            void setSampler(boost::shared_ptr<SampleQueue<QVariant> > sampler);
+
+            boost::shared_ptr<SampleQueue<QVariant> > sampler() const;
 
             void paintEvent(QPaintEvent *);
 
         protected:
-            Sampler<GraphingDoubleSpinBox, double> m_samples;
+            boost::shared_ptr<SampleQueue<QVariant> > m_sampler;
         };
 
     } // namespace gui

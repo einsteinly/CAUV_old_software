@@ -12,27 +12,25 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef CAUVGUI_H
-#define CAUVGUI_H
+#ifndef __CAUV_MAINWINDOW_H__
+#define __CAUV_MAINWINDOW_H__
 
 #include <QMainWindow>
 #include <boost/enable_shared_from_this.hpp>
 #include <common/cauv_node.h>
 
-#include <gui/core/framework/guiactions.h>
-#include <gui/core/framework/nodepicker.h>
-
+class QDir;
 
 namespace Ui {
 class MainWindow;
 }
-class QDir;
 
 namespace cauv {
 namespace gui {
 
-class CauvInterfacePlugin;
 
+class CauvInterfacePlugin;
+class GuiActions;
 
 
 class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvMainWindow> {
@@ -64,4 +62,4 @@ private:
 } //namespace gui
 } // namespace cauv
 
-#endif // CAUVGUI_H
+#endif // __CAUV_MAINWINDOW_H__

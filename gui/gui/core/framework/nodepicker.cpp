@@ -15,21 +15,14 @@
 #include "nodepicker.h"
 #include "ui_nodepicker.h"
 
-#include <common/cauv_utils.h>
-
-#include <QMdiSubWindow>
 #include <QKeyEvent>
 #include <QCompleter>
 
-#include <QDebug>
-
-#include "widgets/neutralspinbox.h"
+#include <debug/cauv_debug.h>
 
 #include "model/nodes/numericnode.h"
-
 #include "delegates.h"
-
-#include <debug/cauv_debug.h>
+#include "model/model.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -103,8 +96,6 @@ bool NodePathFilter::filter(boost::shared_ptr<Node> const& node){
 
 
 
-
-
 NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
      m_root(root), ui(new Ui::NodePicker())
 {
@@ -167,8 +158,10 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setItemDelegate(delegate);
-    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<GraphingDelegate>());
+    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<HybridDelegate>());
+    this->setMouseTracking(true);
 
+    //connect(this, SIGNAL(entered(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
 }
 
