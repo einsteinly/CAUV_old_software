@@ -43,8 +43,7 @@ Arc::Arc(ArcStyle const& of_style,
 
     debug(7) << "Arc()" << this;
 
-    // tmp debug
-    //setFlag(ItemHasNoContents);
+    setFlag(ItemHasNoContents);
     
     if(from)
         setFrom(from);
@@ -122,7 +121,6 @@ QPainterPath Arc::shape() const{
         m_cached_shape = m_back->shape();
         for(sink_end_map_t::const_iterator i = m_ends.begin(); i != m_ends.end(); i++)
             m_cached_shape |= i->second->shape().translated(i->second->pos());
-        #warning the path is being treated as closed when it isn't fix this!
         m_cached_shape_invalid = false;
     }
     return m_cached_shape;
@@ -142,12 +140,14 @@ void Arc::paint(QPainter *painter,
     Q_UNUSED(painter);
     Q_UNUSED(option);
     Q_UNUSED(widget);
-    painter->setBrush(QBrush(QColor(200,20,20,64)));
+    /*painter->setBrush(QBrush(QColor(200,20,20,64)));
+    painter->setPen(QPen(Qt::NoPen));
     painter->drawPath(shape());
     m_back->setFlag(ItemStacksBehindParent);
     sink_end_map_t::const_iterator i;    
     for(i = m_ends.begin(); i != m_ends.end(); i++)
         i->second->setFlag(ItemStacksBehindParent);
+    */
 }
 
 void Arc::updateLayout(){
@@ -185,6 +185,9 @@ void Arc::updateLayout(){
             QPointF c1(split_point + QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             QPointF c2(end_point   - QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             path.cubicTo(c1, c2, end_point);
+            // return along the same path: non-closed paths draw okay, but have
+            // broken shape() functions
+            path.cubicTo(c2, c1, split_point);
             //debug() << "f=" << start_point << "s=" << split_point << "t=" << end_point;
             //path.lineTo(end_point);
         }
@@ -192,6 +195,8 @@ void Arc::updateLayout(){
         //path.lineTo(split_point + QPointF(4,0));
         m_ephemeral_end->show();
     }
+
+    path.lineTo(start_point);
     
     prepareGeometryChange();
     m_back->setPath(path);

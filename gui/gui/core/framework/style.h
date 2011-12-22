@@ -16,16 +16,19 @@
 #define __CAUV_STYLE_H__
 
 #if defined _WIN32 || defined _WIN64
-#include <QWindowsXPStyle>
-#define BASESTYLE QWindowsXPStyle
+    #include <QWindowsXPStyle>
+    #define BASESTYLE QWindowsXPStyle
 #elif __APPLE__
-#include <QMacStyle>
-#define BASESTYLE QMacStyle
-//#include <QMotifStyle>
-//#define BASESTYLE QMotifStyle
+    #ifdef USE_QMacStyle
+        #include <QMacStyle>
+        #define BASESTYLE QMacStyle
+    #else
+        #include <QMotifStyle> 
+        #define BASESTYLE QMotifStyle
+    #endif
 #else
-#include <QPlastiqueStyle>
-#define BASESTYLE QPlastiqueStyle
+    #include <QPlastiqueStyle>
+    #define BASESTYLE QPlastiqueStyle
 #endif
 
 #include <QStyleOptionSpinBox>
@@ -34,6 +37,7 @@
 
 namespace cauv {
 namespace gui {
+
 
 
 template<class T>
