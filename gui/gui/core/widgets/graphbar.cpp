@@ -30,26 +30,30 @@ using namespace cauv::gui;
 
 
 GraphingSpinBox::GraphingSpinBox(QWidget * parent) :
-    QSpinBox(parent), m_samples(this){
+    QSpinBox(parent) {
     this->setAlignment(Qt::AlignHCenter);
     this->setMaximum(std::numeric_limits<int>::max());
     this->setMinimum(std::numeric_limits<int>::min());
-    m_samples.connect(&m_samples, SIGNAL(timeout()), this, SLOT(repaint()));
 }
 
+void GraphingSpinBox::setSampler(boost::shared_ptr<SampleQueue<QVariant> > sampler){
+    disconnect(this, SLOT(repaint()));
+    m_sampler = sampler;
+    connect(m_sampler.get(), SIGNAL(timeout()), this, SLOT(repaint()));
+}
 
-QList<int> GraphingSpinBox::values() const {
-    return m_samples;
+boost::shared_ptr<SampleQueue<QVariant> > GraphingSpinBox::sampler() const {
+    return m_sampler;
 }
 
 void GraphingSpinBox::paintEvent(QPaintEvent * e)
  {
-    StyleOptionGraphingSpinBox option;
+    StyleOptionGraphingWidget option;
     option.initFrom(this);
 
     option.maximum = maximum();
     option.minimum = minimum();
-    option.samples = values();
+    option.samples = m_sampler->samples();
 
     QPainter painter(this);
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
@@ -58,38 +62,42 @@ void GraphingSpinBox::paintEvent(QPaintEvent * e)
 
 
 GraphingDoubleSpinBox::GraphingDoubleSpinBox(QWidget * parent) :
-    QDoubleSpinBox(parent), m_samples(this) {
+    QDoubleSpinBox(parent) {
     this->setAlignment(Qt::AlignHCenter);
     this->setMaximum(std::numeric_limits<float>::max());
     this->setMinimum(std::numeric_limits<float>::min());
-    m_samples.connect(&m_samples, SIGNAL(timeout()), this, SLOT(repaint()));
 }
 
-QList<double> GraphingDoubleSpinBox::values() const {
-    return m_samples;
+void GraphingDoubleSpinBox::setSampler(boost::shared_ptr<SampleQueue<QVariant> > sampler){
+    disconnect(this, SLOT(repaint()));
+    m_sampler = sampler;
+    connect(m_sampler.get(), SIGNAL(timeout()), this, SLOT(repaint()));
+}
+
+boost::shared_ptr<SampleQueue<QVariant> > GraphingDoubleSpinBox::sampler() const {
+    return m_sampler;
 }
 
 
 void GraphingDoubleSpinBox::paintEvent(QPaintEvent * e)
  {
-    StyleOptionGraphingSpinBox option;
-    option.initFrom(this);
+    StyleOptionNeutralSpinBox o;
+    o.initFrom(this);
 
-    //!!! HACK. this needs doing a different way
-    // put the values into some sensible integer representation
-
-
-    QList<int> asInts;
-    float scalar = 1000 / (maximum() - minimum());
-    foreach(double sample, (QList<double>) m_samples){
-        asInts.append(sample*scalar);
-    }
-
-    option.maximum = maximum() * scalar;
-    option.minimum = minimum() * scalar;
-    option.samples = asInts;
+    o.level = pivot(minimum(), 0, maximum(), value());
 
     QPainter painter(this);
+    style()->drawComplexControl(QStyle::CC_SpinBox, &o, &painter, this);
+
+
+    painter.setOpacity(0.5);
+    StyleOptionGraphingWidget option;
+    option.initFrom(this);
+
+    option.maximum = maximum();
+    option.minimum = minimum();
+    option.samples = m_sampler->samples();
+
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);
 }
 

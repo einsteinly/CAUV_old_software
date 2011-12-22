@@ -14,21 +14,11 @@
 
 #include "style.h"
 
-#include <debug/cauv_debug.h>
-
-#include <widgets/neutralspinbox.h>
-
-#include <cmath>
-
 #include <QtGui>
-
-#include <QDebug>
-
-#include <utility/rounding.h>
-
 #include <QPainterPath>
 
-#include <limits>
+#include <debug/cauv_debug.h>
+#include <utility/rounding.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -76,10 +66,78 @@ QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComp
     }
 }
 
+void CauvStyle::drawControl(CauvControlElement control, const QStyleOption *option,
+                            QPainter *painter, const QWidget *widget) const{
+    drawControl((QStyle::ControlElement) control, option, painter, widget);
+}
+
 void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
                             QPainter *painter, const QWidget *widget) const{
 
+    switch((CauvControlElement) control) {
+
+    case CE_Graph: {
+
+        const StyleOptionGraphingWidget *graphing = qstyleoption_cast<const StyleOptionGraphingWidget *>(option);
+        if(graphing){
+            painter->setRenderHint(QPainter::Antialiasing);
+            QRect canvas = option->rect;
+            canvas.setTop(canvas.top() + 5);
+            canvas.setLeft(canvas.left() + 2);
+            canvas.setRight(canvas.right() - 2);
+            QList<QVariant> samples = graphing->samples;
+
+            if(samples.empty()) return;
+
+            float minimum = graphing->minimum.toFloat();
+            float maximum = graphing->maximum.toFloat();
+
+            float stepSize = ((float)canvas.width()) / (float)samples.size();
+            float range = maximum - minimum;
+            float heightScalar = ((float)canvas.height())/(float)range;
+            float x = canvas.left();
+            float yOffset = fabs(minimum) * heightScalar;
+            float y = canvas.bottom() - (yOffset + (samples.first().toFloat() * heightScalar));
+
+            painter->setPen(QPen(QColor(238, 238, 238)));
+            painter->drawLine(canvas.left(), yOffset, canvas.right(), yOffset);
+
+            QPainterPath path;
+            path.moveTo(x, canvas.bottom() - yOffset);
+            path.lineTo(x, y);
+            path.setFillRule(Qt::WindingFill);
+            x += stepSize;
+
+            float lastSample = 0;
+            foreach (QVariant sample, samples){
+                float clampedSample = clamp(minimum, sample.toFloat(), maximum);
+
+                float height = clampedSample * heightScalar;
+                if((lastSample == 0) && (clampedSample == 0))
+                    path.moveTo(x,  canvas.bottom() - (yOffset + height));
+                else path.lineTo(x,  canvas.bottom() - (yOffset + height));
+
+                lastSample = clampedSample;
+                x += stepSize;
+            }
+
+            QColor outline = QColor(200, 200, 200);//cauvColorMap(minimum, maximum, samples.last().toFloat());
+            QColor fill = QColor(230, 230, 230);//cauvColorMap(minimum, maximum, samples.last().toFloat(),
+                          //             true, 100, QColor::fromHsl(0,160,230));
+
+            painter->strokePath(path, QPen(outline, 1));
+
+            path.lineTo(canvas.right(), y);
+            path.lineTo(canvas.right(), canvas.bottom() - yOffset);
+            painter->fillPath(path, QBrush(fill));
+
+            return;
+        }
+    }
+    }
+
     switch(control) {
+
     case CE_ProgressBar: {
 
         const QStyleOptionProgressBarV2 * progressOptions = static_cast<const QStyleOptionProgressBarV2 *>(option);
@@ -131,62 +189,14 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
             progressOptions.invertedAppearance = neutralSpin->invertColours;
 
             drawControl(CE_ProgressBar, &progressOptions, painter, widget);
-      }
+        }
 
+        const StyleOptionGraphingWidget *graphingSpin = qstyleoption_cast<const StyleOptionGraphingWidget *>(option);
+        if(graphingSpin){
+            drawControl(CE_Graph, graphingSpin, painter, widget);
+        }
 
-      const StyleOptionGraphingSpinBox *graphingSpin = qstyleoption_cast<const StyleOptionGraphingSpinBox *>(option);
-       if(graphingSpin){
-
-           painter->eraseRect(option->rect);
-
-           painter->setRenderHint(QPainter::Antialiasing);
-           QRect canvas = option->rect;
-           canvas.setBottom(canvas.bottom()+1);
-           QList<int> samples = graphingSpin->samples;
-
-           float stepSize = ((float)canvas.width()) / (float)samples.size();
-           int range = graphingSpin->maximum - graphingSpin->minimum;
-           float heightScalar = ((float)canvas.height())/(float)range;
-           float x = canvas.left();
-           float yOffset = abs(graphingSpin->minimum) * heightScalar;
-           float y = canvas.bottom() - (yOffset + (samples.first() * heightScalar));
-
-           painter->setPen(QPen(QColor(238, 238, 238)));
-           painter->drawLine(canvas.left(), y, canvas.right(), y);
-
-           QPainterPath path;
-           path.moveTo(x, canvas.bottom() - yOffset);;
-           path.lineTo(x, y);
-           path.setFillRule(Qt::WindingFill);
-
-           int lastSample = 0;
-           foreach (int sample, samples){
-               int clampedSample = clamp(graphingSpin->minimum, sample, graphingSpin->maximum);
-
-               float height = clampedSample * heightScalar;
-               if((lastSample == 0) && (clampedSample == 0))
-                   path.moveTo(x,  canvas.bottom() - (yOffset + height));
-               else path.lineTo(x,  canvas.bottom() - (yOffset + height));
-
-               lastSample = clampedSample;
-               x += stepSize;
-           }
-
-
-           QColor outline = cauvColorMap((float)graphingSpin->minimum, (float)graphingSpin->maximum, (float)samples.last());
-           QColor fill = cauvColorMap((float)graphingSpin->minimum, (float)graphingSpin->maximum, (float)samples.last(),
-                                      true, 100, QColor::fromHsl(0,160,230));
-
-           painter->setPen(QPen(outline, 2));
-           painter->drawPath(path);
-
-           path.lineTo(x, canvas.bottom() - yOffset);
-           path.closeSubpath();
-           painter->fillPath(path, QBrush(fill));
-       }
-
-
-       if(graphingSpin || neutralSpin){
+        if(graphingSpin || neutralSpin){
             painter->setOpacity(0.5);
             painter->setBrush(QBrush(QColor(200,200,200)));
             int buttonSize = option->rect.height()-12;
@@ -198,6 +208,7 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
             painter->drawRoundRect(QRect(10, 5 + (buttonSize/2), buttonSize-9, 2), 4, 4);
             painter->drawRoundRect(QRect(option->rect.right()-(10+buttonSize) + 8, 5 + (buttonSize/2), buttonSize-8, 2), 3, 3);
             painter->drawRoundRect(QRect(option->rect.right()-(buttonSize/2) - 7, 10, 2, buttonSize-8), 3, 3);
+            painter->setOpacity(1);
         }
     }
     break;
@@ -205,5 +216,3 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
         BASESTYLE::drawComplexControl(control, option, painter, widget);
     }
 }
-
-

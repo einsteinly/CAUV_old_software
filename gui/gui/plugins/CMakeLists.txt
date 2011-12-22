@@ -1,7 +1,7 @@
 project (gui)
 
 # main GUI options
-option(CAUV_GUI_MAP "True if the GUI should have a map of the Earth. For some reason." ON)
+option(CAUV_GUI_MAP "True if the GUI should have a map of the Earth" ON)
 option(CAUV_GUI_GAMEPAD "True if the GUI should support game controllers" ON)
 
 
@@ -20,6 +20,7 @@ endfunction()
 #add_subdirectory (processes)
 add_subdirectory (motorcontrol)
 add_subdirectory (ai)
+add_subdirectory (qwtgraphs)
 #add_subdirectory (logs)
 
 #if (CAUV_GUI_MAP)

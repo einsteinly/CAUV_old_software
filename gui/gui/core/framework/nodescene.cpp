@@ -16,14 +16,18 @@
 
 #include <debug/cauv_debug.h>
 
-#include <QTextStream>
 #include <QGraphicsView>
 #include <QStyleOptionGraphicsItem>
 #include <QDebug>
 
 #include "model/node.h"
+#include "model/nodes/groupingnode.h"
+#include "model/model.h"
+#include "nodepicker.h"
 
-#include "widgets/graph.h"
+#include <liquid/node.h>
+
+#include <gui/core/framework/elements/style.h>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -63,11 +67,16 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 
 
 
-//!!! todo: make a graphs plugin?
-class GraphDropHandler : public DropHandlerInterface<QGraphicsItem * > {
+
+class GroupDropHandler : public DropHandlerInterface<QGraphicsItem * > {
+
+    //GroupDropHandler(boost::shared_ptr<NodeItemModel> model) :
+    //    m_model(model){
+    //
+    //}
 
     virtual bool accepts(boost::shared_ptr<Node> const& node){
-        return node->type == nodeType<NumericNodeBase>();
+        return node->type == nodeType<GroupingNode>();
     }
 
     virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
@@ -76,22 +85,23 @@ class GraphDropHandler : public DropHandlerInterface<QGraphicsItem * > {
         //    return m_graphs[node->nodePath()];
         //}
 
-        GraphWidget * graph = new GraphWidget(boost::static_pointer_cast<NumericNodeBase>(node));
-
+        liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style);
+        ln->setResizable(true);
+        NodeItemModel * model = new NodeItemModel(node);
+        NodeTreeView * view = new NodeTreeView();
+        view->setModel(model);
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-        proxy->setWidget(graph);
-        proxy->setFlag(QGraphicsItem::ItemIsMovable);
-        proxy->setFlag(QGraphicsItem::ItemIsSelectable);
-        proxy->installEventFilter(new NodeDropFilter(graph));
+        proxy->setWidget(view);
 
-        //m_graphs[node->nodePath()] = proxy;
+        ln->addItem(proxy);
 
-        return proxy;
+        return ln;
     }
 
-//protected:
-//    std::map<std::string, QGraphicsProxyWidget *> m_graphs;
+    protected:
+        boost::shared_ptr<NodeItemModel> m_model;
 };
+
 
 
 
@@ -139,6 +149,8 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
             }
         }
     }
+
+    registerDropHandler(boost::make_shared<GroupDropHandler>());
 }
 
 NodeScene::~NodeScene(){
@@ -149,8 +161,13 @@ void NodeScene::registerDropHandler(boost::shared_ptr<DropHandlerInterface<QGrap
     m_handlers.push_back(handler);
 }
 
+void NodeScene::removeDropHandler(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler){
+    if(std::find(m_handlers.begin(), m_handlers.end(), handler)!=m_handlers.end())
+        m_handlers.erase(std::find(m_handlers.begin(), m_handlers.end(), handler));
+}
+
 bool NodeScene::accepts(boost::shared_ptr<Node> const& node){
-    BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
+    foreach(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         if(handler->accepts(node)) return true;
     }
     return false;
@@ -174,7 +191,7 @@ void NodeScene::onNodeDroppedAt(boost::shared_ptr<Node> const& node, QPointF pos
 
 QGraphicsItem *  NodeScene::applyHandlers(boost::shared_ptr<Node> const& node)
 {
-    BOOST_FOREACH(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
+    foreach(boost::shared_ptr<DropHandlerInterface<QGraphicsItem * > > const& handler, m_handlers) {
         try {
             // accept the first handler that matches
             if(handler->accepts(node))

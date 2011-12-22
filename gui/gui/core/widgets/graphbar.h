@@ -22,53 +22,10 @@
 
 #include <debug/cauv_debug.h>
 
+#include <gui/core/model/utils/sampler.h>
+
 namespace cauv {
     namespace gui {
-
-
-
-
-        class Sampler : public QTimer {
-            Q_OBJECT
-
-        public:
-            Sampler(){
-                setSingleShot(false);
-                connect(this, SIGNAL(timeout()), this, SLOT(sample()));
-                start();
-            }
-
-        protected Q_SLOTS:
-            virtual void sample() = 0;
-        };
-
-
-        template<class TTar, class TVal>
-        class SamplingQueue : public Sampler, public QQueue<TVal>{
-
-        public:
-            SamplingQueue(TTar * target, int maxLength = 120, int sampleTime = 500) :
-                m_maxLength(maxLength), m_sampleTime(sampleTime), m_target(target){
-                setInterval(sampleTime);
-
-                // fill queue
-                for(int i = 0; i < maxLength; i++){
-                    sample();
-                }
-            }
-
-            virtual void sample(){
-                QQueue<TVal>::enqueue(m_target->value());
-                while (QQueue<TVal>::size() > m_maxLength) QQueue<TVal>::dequeue();
-            }
-
-        protected:
-            int m_maxLength;
-            int m_sampleTime;
-            TTar * m_target;
-        };
-
-
 
         class GraphingSpinBox : public QSpinBox {
             Q_OBJECT
@@ -79,12 +36,14 @@ namespace cauv {
 
             GraphingSpinBox(QWidget * parent = 0);
 
-            QList<int> values() const;
+            void setSampler(boost::shared_ptr<SampleQueue<QVariant> > sampler);
+
+            boost::shared_ptr<SampleQueue<QVariant> > sampler() const;
 
             void paintEvent(QPaintEvent *);
 
         protected:
-            SamplingQueue<GraphingSpinBox, int> m_samples;
+            boost::shared_ptr<SampleQueue<QVariant> > m_sampler;
         };
 
 
@@ -97,12 +56,14 @@ namespace cauv {
 
             GraphingDoubleSpinBox(QWidget * parent = 0);
 
-            QList<double> values() const;
+            void setSampler(boost::shared_ptr<SampleQueue<QVariant> > sampler);
+
+            boost::shared_ptr<SampleQueue<QVariant> > sampler() const;
 
             void paintEvent(QPaintEvent *);
 
         protected:
-            SamplingQueue<GraphingDoubleSpinBox, double> m_samples;
+            boost::shared_ptr<SampleQueue<QVariant> > m_sampler;
         };
 
     } // namespace gui

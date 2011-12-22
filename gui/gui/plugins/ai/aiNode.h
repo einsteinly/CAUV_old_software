@@ -46,7 +46,9 @@ namespace cauv {
         class AiDropHandler : public DropHandlerInterface<QGraphicsItem * > {
 
             virtual bool accepts(boost::shared_ptr<Node> const& node){
-                return node->type == nodeType<NumericNodeBase>();
+                return (node->type == nodeType<AiMissionNode>() ||
+                        node->type == nodeType<AiTaskNode>() ||
+                        node->type == nodeType<AiConditionNode>());
             }
 
             virtual QGraphicsItem * handle(boost::shared_ptr<Node> const&) {

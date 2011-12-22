@@ -83,6 +83,10 @@ namespace cauv {
             virtual bool isMutable() const;
             virtual void setMutable(bool mut);
 
+            // QAbstractItemModel helpers
+            virtual int row() const;
+            virtual int columnCount() const;
+
             boost::shared_ptr<Node> getParent();
             boost::shared_ptr<Node> getRoot();
 

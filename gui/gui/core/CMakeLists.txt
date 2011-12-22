@@ -2,8 +2,6 @@ project (gui-core)
 
 # required packages
 find_package (Qt4 REQUIRED)
-find_package (Qwt6 REQUIRED)
-include_directories (SYSTEM ${Qwt6_INCLUDE_DIRS})
 find_package (OpenCV REQUIRED)
 
 
@@ -35,7 +33,6 @@ set ( GUI_CORE_SRCS
     cauvbasicplugin.cpp
 
     widgets/videoscreen.cpp
-    widgets/graph.cpp
     widgets/neutralspinbox.cpp
     widgets/graphbar.cpp
 
@@ -46,14 +43,14 @@ set ( GUI_CORE_SRCS
     model/messageobserver.cpp
     model/messagegenerators.cpp
     model/paramvalues.cpp
-    model/utils/noderecorder.cpp
+    model/utils/datarecorder.cpp
+    model/utils/sampler.cpp
 
     framework/nodepicker.cpp
     framework/mainwindow.cpp
     framework/nodescene.cpp
     framework/style.cpp
-
-    #framework/elements/nodeInput.cpp
+    framework/delegates.cpp
 
     framework/fluidity/fNode.cpp
     framework/fluidity/imgNode.cpp
@@ -67,33 +64,28 @@ set ( GUI_CORE_UIS
     widgets/videoscreen.ui
     framework/nodepicker.ui
     framework/mainwindow.ui
-    widgets/graph.ui
     )
 
 set ( GUI_CORE_H
     nodedragging.h
 
     widgets/videoscreen.h
-    widgets/graph.h
     widgets/neutralspinbox.h
     widgets/graphbar.h
 
     model/node.h
     model/model.h
-    model/registry.h
     model/nodes/numericnode.h
     model/nodes/stringnode.h
     model/nodes/imagenode.h
-    model/nodes/groupingnode.h
     model/nodes/vehiclenode.h
     model/messagegenerators.h
-    model/messageobserver.h
+    model/utils/sampler.h
 
     framework/nodepicker.h
     framework/mainwindow.h
     framework/style.h
     framework/delegates.h
-    #framework/elements/nodeInput.h
 
     framework/fluidity/view.h
     framework/fluidity/manager.h
@@ -125,7 +117,6 @@ target_link_libraries ( gui-core
         cauv_debug
         liquid
         common
-        ${Qwt6_LIBRARIES}
         ${OpenCV_LIBS}
         ${QT_LIBRARIES}
     )

@@ -15,22 +15,14 @@
 #include "nodepicker.h"
 #include "ui_nodepicker.h"
 
-#include <common/cauv_utils.h>
-
-#include <QMdiSubWindow>
 #include <QKeyEvent>
 #include <QCompleter>
 
-#include <QDebug>
-
-#include "widgets/neutralspinbox.h"
-#include "widgets/graphbar.h"
+#include <debug/cauv_debug.h>
 
 #include "model/nodes/numericnode.h"
-
 #include "delegates.h"
-
-#include <debug/cauv_debug.h>
+#include "model/model.h"
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -104,8 +96,6 @@ bool NodePathFilter::filter(boost::shared_ptr<Node> const& node){
 
 
 
-
-
 NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
      m_root(root), ui(new Ui::NodePicker())
 {
@@ -137,10 +127,6 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     // redirect focus so the filter gets the key events
     ui->view->connect(ui->view, SIGNAL(onKeyPressed(QKeyEvent*)), this, SLOT(redirectKeyboardFocus(QKeyEvent*)));
 
-    GraphingSpinBox * gsb = new GraphingSpinBox();
-    gsb->setMaximum(100);
-    gsb->setMinimum(-100);
-    ui->verticalLayout->addWidget(gsb);
 }
 
 void NodePicker::redirectKeyboardFocus(QKeyEvent* event){
@@ -172,8 +158,10 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setItemDelegate(delegate);
-    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<ProgressBarDelegate>());
+    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<HybridDelegate>());
+    this->setMouseTracking(true);
 
+    //connect(this, SIGNAL(entered(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
 }
 

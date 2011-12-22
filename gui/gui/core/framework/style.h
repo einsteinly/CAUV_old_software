@@ -12,10 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef CAUV_STYLE_H
-#define CAUV_STYLE_H
-
-#define USE_QMacStyle
+#ifndef __CAUV_STYLE_H__
+#define __CAUV_STYLE_H__
 
 #if defined _WIN32 || defined _WIN64
     #include <QWindowsXPStyle>
@@ -33,84 +31,91 @@
     #define BASESTYLE QPlastiqueStyle
 #endif
 
-#include <QStyleOptionProgressBarV2>
+#include <QStyleOptionSpinBox>
 
 #include <common/cauv_utils.h>
 
 namespace cauv {
-    namespace gui {
+namespace gui {
 
 
 
-    template<class T>
-    QColor cauvColorMap(T min, T max, T value, bool inverted = true, int hueRange = 100, QColor startingColor = QColor::fromHsl(0, 160, 200)){
+template<class T>
+QColor cauvColorMap(T min, T max, T value, bool inverted = true, int hueRange = 100, QColor startingColor = QColor::fromHsl(0, 160, 200)){
 
-        T scalar = pivot(min, 0, max, value);
+    T scalar = pivot(min, 0, max, value);
 
-        int hue = hueRange * scalar;
-        if (inverted)
-            hue = hueRange - hue;
+    int hue = hueRange * scalar;
+    if (inverted)
+        hue = hueRange - hue;
 
-        startingColor.setHsl(startingColor.hue() + hue, startingColor.saturation(), startingColor.lightness());
-        return startingColor;
+    startingColor.setHsl(startingColor.hue() + hue, startingColor.saturation(), startingColor.lightness());
+    return startingColor;
+}
+
+
+namespace CauvStyleOptions {
+enum e{
+    StyleOptionNeutralSpinBox = QStyleOption::SO_CustomBase + 1,
+    StyleOptionGraphingSpinBox
+};
+}
+
+class StyleOptionNeutralSpinBox : public QStyleOptionSpinBox {
+public:
+    enum StyleOptionType { Type = CauvStyleOptions::StyleOptionNeutralSpinBox };
+    StyleOptionNeutralSpinBox() : QStyleOptionSpinBox(), level(0), invertColours(true){
+        type = CauvStyleOptions::StyleOptionNeutralSpinBox;
     }
 
+    float level;
+    bool invertColours;
+};
 
 
-
-
-
-    namespace CauvStyleOptions {
-        enum e{
-            StyleOptionNeutralSpinBox = QStyleOption::SO_CustomBase + 1,
-            StyleOptionGraphingSpinBox
-        };
+class StyleOptionGraphingWidget : public QStyleOptionSpinBox {
+public:
+    enum StyleOptionType { Type = CauvStyleOptions::StyleOptionGraphingSpinBox };
+    StyleOptionGraphingWidget() : QStyleOptionSpinBox(), samples() {
+        type = CauvStyleOptions::StyleOptionGraphingSpinBox;
     }
 
-    class StyleOptionNeutralSpinBox : public QStyleOptionSpinBox {
-    public:
-        enum StyleOptionType { Type = CauvStyleOptions::StyleOptionNeutralSpinBox };
-        StyleOptionNeutralSpinBox() : QStyleOptionSpinBox(), level(0), invertColours(true){
-                type = CauvStyleOptions::StyleOptionNeutralSpinBox;
-        }
+    //!!! todo:
+    // this is very inefficient
+    // it should all be done as integer artihmetic
+    // but this was quicker to implement to try it out
+    QVariant maximum;
+    QVariant minimum;
+    QList<QVariant> samples;
+};
 
-        float level;
-        bool invertColours;
+class CauvStyle : public BASESTYLE
+{
+    Q_OBJECT
+
+public:
+    enum CauvControlElement {
+        CE_Graph = QStyle::CE_CustomBase + 1
     };
 
+    CauvStyle();
 
-    class StyleOptionGraphingSpinBox : public QStyleOptionSpinBox {
-    public:
-        enum StyleOptionType { Type = CauvStyleOptions::StyleOptionGraphingSpinBox };
-        StyleOptionGraphingSpinBox() : QStyleOptionSpinBox(), samples() {
-                type = CauvStyleOptions::StyleOptionGraphingSpinBox;
-        }
+    QRect subControlRect ( ComplexControl control, const QStyleOptionComplex * option,
+                           SubControl subControl, const QWidget * widget = 0 ) const;
 
-        int maximum;
-        int minimum;
-        QList<int> samples;
-    };
+    void drawControl(CauvControlElement control, const QStyleOption *option,
+                     QPainter *painter, const QWidget *widget) const;
 
-    class CauvStyle : public BASESTYLE
-    {
-        Q_OBJECT
+    void drawControl(ControlElement control, const QStyleOption *option,
+                     QPainter *painter, const QWidget *widget) const;
 
-    public:
-        CauvStyle();
-
-        QRect subControlRect ( ComplexControl control, const QStyleOptionComplex * option,
-                               SubControl subControl, const QWidget * widget = 0 ) const;
-
-        void drawControl(ControlElement control, const QStyleOption *option,
-                         QPainter *painter, const QWidget *widget) const;
-
-        void drawComplexControl(ComplexControl control, const QStyleOptionComplex *option,
-                                QPainter *painter, const QWidget *widget) const;
-    };
+    void drawComplexControl(ComplexControl control, const QStyleOptionComplex *option,
+                            QPainter *painter, const QWidget *widget) const;
+};
 
 
-    } // namespace gui
+} // namespace gui
 } // namespace cauv
 
 
-#endif // CAUV_STYLE_H
+#endif // __CAUV_STYLE_H__

@@ -12,107 +12,94 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef DATASTREAMDISPLAYS_H
-#define DATASTREAMDISPLAYS_H
+#ifndef __CAUV_NODEPICKER_H__
+#define __CAUV_NODEPICKER_H__
 
 #include <QTreeView>
 #include <QKeyEvent>
 
-#include <debug/cauv_debug.h>
-
-#include <gui/core/model/model.h>
-#include <gui/core/model/nodes/numericnode.h>
-
-#include <QPainter>
-
-#include <QStyledItemDelegate>
-#include <QItemEditorFactory>
-#include <QItemEditorCreator>
-#include <QSpinBox>
-
+#include <gui/core/model/node.h>
 
 namespace Ui {
-    class NodePicker;
+class NodePicker;
 }
 
-
 namespace cauv {
-    namespace gui {
+namespace gui {
 
-        class NodeTreeItemBase;
+class NodeTreeItemBase;
+class NodeItemModel;
 
-        /**
-          * Node filtering by entering a part of the path
-          */
-        class NodePathFilter : public QObject, public NodeFilterInterface {
-            Q_OBJECT
-        public:
-            NodePathFilter(QObject * parent = NULL);
+/**
+* Node filtering by entering a part of the path
+*/
+class NodePathFilter : public QObject, public NodeFilterInterface {
+    Q_OBJECT
+public:
+    NodePathFilter(QObject * parent = NULL);
 
-        public Q_SLOTS:
-            void setText(QString const& string);
-            QString getText();
-            bool filter(boost::shared_ptr<Node> const& node);
+public Q_SLOTS:
+    void setText(QString const& string);
+    QString getText();
+    bool filter(boost::shared_ptr<Node> const& node);
 
-        protected:
-            QString m_text;
-            bool containsText(boost::shared_ptr<Node> const& node);
+protected:
+    QString m_text;
+    bool containsText(boost::shared_ptr<Node> const& node);
 
-        Q_SIGNALS:
-            void filterChanged();
-        };
-
-
-
-
-        /**
-          * Filterable tree view onto the node model
-          */
-        class NodeTreeView : public QTreeView {
-            Q_OBJECT
-        public:
-            NodeTreeView(QWidget * parent = 0);
-            virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
-
-        private Q_SLOTS:
-            void forceEdit(QModelIndex const& index);
-            void applyFilters();
-            void applyFilters(QModelIndex const&);
-            bool applyFilters(boost::shared_ptr<Node> const&);
-
-        Q_SIGNALS:
-            void onKeyPressed(QKeyEvent *event);
-
-        protected:
-            std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
-            void keyPressEvent(QKeyEvent *event);
-        };
+Q_SIGNALS:
+    void filterChanged();
+};
 
 
-        /**
-          * NodeTreeView with a filter entry box above it
-          */
-        class NodePicker : public QWidget {
-            Q_OBJECT
+/**
+* Filterable tree view onto the node model
+*/
+class NodeTreeView : public QTreeView {
+    Q_OBJECT
+public:
+    NodeTreeView(QWidget * parent = 0);
+    virtual void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
-        public:
-            NodePicker(boost::shared_ptr<NodeItemModel> const& root);
-            virtual ~NodePicker();
+private Q_SLOTS:
+    void forceEdit(QModelIndex const& index);
+    void applyFilters();
+    void applyFilters(QModelIndex const&);
+    bool applyFilters(boost::shared_ptr<Node> const&);
 
-            void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
+Q_SIGNALS:
+    void onKeyPressed(QKeyEvent *event);
 
-        protected Q_SLOTS:
-            void redirectKeyboardFocus(QKeyEvent* key);
+protected:
+    std::vector<boost::shared_ptr<NodeFilterInterface> > m_filters;
+    void keyPressEvent(QKeyEvent *event);
+};
 
-        protected:
-            boost::shared_ptr<NodeItemModel> m_root;
 
-        private:
-            Ui::NodePicker *ui;
-        };
+/**
+* NodeTreeView with a filter entry box above it
+*/
+class NodePicker : public QWidget {
+    Q_OBJECT
 
-    } // namespace gui
+public:
+    NodePicker(boost::shared_ptr<NodeItemModel> const& root);
+    virtual ~NodePicker();
+
+    void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
+
+protected Q_SLOTS:
+    void redirectKeyboardFocus(QKeyEvent* key);
+
+protected:
+    boost::shared_ptr<NodeItemModel> m_root;
+
+private:
+    Ui::NodePicker *ui;
+};
+
+} // namespace gui
 } // namespace cauv
 
 
-#endif // DATASTREAMDISPLAYS_H
+#endif // __CAUV_NODEPICKER_H__
