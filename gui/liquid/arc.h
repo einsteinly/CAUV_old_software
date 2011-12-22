@@ -68,6 +68,8 @@ class Arc: public AbstractArcSource{
         sink_end_map_t m_ends;
         QGraphicsPathItem *m_back;
         QGraphicsPathItem *m_front;
+        QGraphicsPathItem *m_pending_back;
+        QGraphicsPathItem *m_pending_front;
         EphemeralArcEnd *m_ephemeral_end;
 
         // caches:
