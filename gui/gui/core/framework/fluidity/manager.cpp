@@ -25,6 +25,8 @@
 #include <generated/types/PipelineGroup.h>
 #include <generated/types/Pl_GuiGroup.h>
 
+#include <liquid/layout.h>
+
 #include "fNode.h"
 #include "imgNode.h"
 
@@ -193,6 +195,8 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         // setOutputLinks is completely redundant
         //node->setOutputLinks(outputs_it->second);
     }
+
+    liquid::LayoutItems::updateLayout(m_scene);
 }
 
 void Manager::onNodeParameters(NodeParametersMessage_ptr m){
@@ -224,7 +228,10 @@ void Manager::onArcAdded(ArcAddedMessage_ptr m){
 
 void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
     if(!_nameMatches(m)) return;
-    // !!!
+    fnode_ptr from = lookup(m->from().node);
+    fnode_ptr to = lookup(m->to().node);
+    if(from && to)
+        from->disconnectOutputFrom(m->from().output, to, m->to().input);
 }
 
 // - Slot Implementations

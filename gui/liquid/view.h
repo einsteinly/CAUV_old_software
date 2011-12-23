@@ -34,7 +34,9 @@ public:
     virtual float maxScale();
     virtual void setMaxScale(float scale);
 
-    void wheelEvent(QWheelEvent *event);
+protected:
+    virtual void wheelEvent(QWheelEvent *event);
+    virtual void keyPressEvent(QKeyEvent *event);
 
 protected:
     float m_scaleFactor;

@@ -70,6 +70,7 @@ class FNode: public liquid::LiquidNode,
         void setParams(msg_node_param_map_t const&);
         void setParamLinks(msg_node_input_map_t const& inputs);
         void connectOutputTo(std::string const& output, fnode_ptr, std::string const& input);
+        void disconnectOutputFrom(std::string const& output, fnode_ptr, std::string const& input);
     
     Q_SIGNALS:
         void closed(node_id_t const);

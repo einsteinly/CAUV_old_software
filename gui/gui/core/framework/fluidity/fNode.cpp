@@ -281,6 +281,13 @@ void FNode::connectOutputTo(std::string const& output_id, fnode_ptr to, std::str
         output->arc()->addTo(input->sink());
 }
 
+void FNode::disconnectOutputFrom(std::string const& output_id, fnode_ptr to, std::string const& input_id){
+    FNodeOutput* output = this->output(output_id);
+    FNodeInput* input = to->input(input_id);
+    if(output && input)
+        output->arc()->removeTo(input->sink());
+}
+
 void FNode::close(){
     Q_EMIT LiquidNode::closed(this);
     Q_EMIT closed(m_node_id);

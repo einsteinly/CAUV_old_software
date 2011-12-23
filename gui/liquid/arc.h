@@ -18,6 +18,7 @@
 #include <set>
 
 #include "arcSource.h"
+#include "layout.h"
 
 namespace liquid {
 
@@ -25,7 +26,8 @@ struct ArcStyle;
 class AbstractArcSink;
 class EphemeralArcEnd;
 
-class Arc: public AbstractArcSource{
+class Arc: public _::AbstractArcSourceInternal,
+           protected LayoutItems{
         Q_OBJECT
     private:
         typedef std::set<AbstractArcSink*> arcsink_set_t;
@@ -37,12 +39,8 @@ class Arc: public AbstractArcSource{
         virtual ~Arc();
 
         ArcStyle const& style() const;
-        ArcSourceDelegate *source();
-        std::set<AbstractArcSink *> sinks();        
-        
-        void setFrom(AbstractArcSource *from);
-        void addTo(AbstractArcSink *to);
-        void addPending(AbstractArcSink *to);
+        AbstractArcSource *source();
+        std::set<AbstractArcSink *> sinks(); 
 
         // QGraphicsItem:
         // overloaded for performance
@@ -56,7 +54,11 @@ class Arc: public AbstractArcSource{
                            QWidget *widget = 0);
     
     public Q_SLOTS:
-        void updateLayout();
+        void updateLayout();    
+        
+        void setFrom(AbstractArcSource *from);
+        void addTo(AbstractArcSink *to);
+        void addPending(AbstractArcSink *to);
         void removeTo(AbstractArcSink *to);
         void promotePending(AbstractArcSink *to);
 

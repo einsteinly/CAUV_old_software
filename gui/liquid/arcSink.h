@@ -21,11 +21,13 @@
 #include "connectionSink.h"
 #include "requiresCutout.h"
 #include "forward.h"
+#include "layout.h"
 
 namespace liquid {
 
 class AbstractArcSink: public QGraphicsObject,
-                       public ConnectionSink{
+                       public ConnectionSink,
+                       protected LayoutItems{
     Q_OBJECT
     public:
         AbstractArcSink(QGraphicsItem * parent = 0);
@@ -38,6 +40,11 @@ class AbstractArcSink: public QGraphicsObject,
         // !!! base QGraphicsItem::setParentItem isn't virtual, so this is
         // probably a bad idea!
         virtual void setParentItem(QGraphicsItem* item);
+        
+        /* Return the top-level QGraphicsItem of which this is a child: used
+         * for arc-directed layout.
+         */
+        virtual QGraphicsItem* ultimateParent();
 
     Q_SIGNALS:
         void geometryChanged();

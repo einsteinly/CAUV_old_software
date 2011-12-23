@@ -13,6 +13,7 @@
  */
 
 #include "view.h"
+#include "layout.h" // temporary, see keyPressEvent
 
 #include <QGraphicsProxyWidget>
 
@@ -148,6 +149,20 @@ void LiquidView::wheelEvent(QWheelEvent *event){
 
     //QGraphicsView::wheelEvent(event);
 }
+
+void LiquidView::keyPressEvent(QKeyEvent *event){
+    // temporary debug stuff: expect some sort of global hotkey system like
+    // OverKey, but better
+    switch(event->key()){
+        case Qt::Key_L:
+            LayoutItems::updateLayout(scene());
+            return;
+        default:
+            QGraphicsView::keyPressEvent(event);
+            return;
+    }
+}
+
 
 float LiquidView::scaleFactor(){
     return m_scaleFactor;

@@ -19,6 +19,8 @@
 #include <QGraphicsLayoutItem>
 #include <QGraphicsSceneMouseEvent>
 
+#include "layout.h"
+
 namespace liquid {
 
 struct ArcStyle;
@@ -30,14 +32,23 @@ class ArcSourceDelegate{
         virtual ~ArcSourceDelegate(){ }
 };
 
-class AbstractArcSource: public QGraphicsObject,
+// okay, so:
+// AbstractArcSource that everything apart from Arc derives from must be
+// derived from LayoutItems, Arc already derives from LayoutItems, and can't
+// multiply derive because that would just break everything.
+// so, there's an internal, non-LayoutItems AbstractArcSourceInternal, hidden
+// in this namespace, and a trivial subclass that is accessible in liquid:: for
+// everyone else
+namespace _{
+
+class AbstractArcSourceInternal: public QGraphicsObject,
                          public ArcSourceDelegate{
     Q_OBJECT
     public:
-        AbstractArcSource(ArcStyle const& of_style,
+        AbstractArcSourceInternal(ArcStyle const& of_style,
                           ArcSourceDelegate *sourceDelegate,
                           Arc* arc);
-        virtual ~AbstractArcSource();
+        virtual ~AbstractArcSourceInternal();
 
         Arc* arc() const;
         ArcStyle const& style() const;
@@ -47,6 +58,11 @@ class AbstractArcSource: public QGraphicsObject,
         // !!! base QGraphicsItem::setParentItem isn't virtual, so this is
         // probably a bad idea!
         virtual void setParentItem(QGraphicsItem* item);
+        
+        /* Return the top-level QGraphicsItem of which this is a child: used
+         * for arc-directed layout.
+         */
+        virtual QGraphicsItem* ultimateParent();
 
     Q_SIGNALS:
         void geometryChanged();
@@ -83,6 +99,22 @@ class AbstractArcSource: public QGraphicsObject,
         ArcSourceDelegate *m_sourceDelegate;
         AbstractArcSink *m_ephemeral_sink;
         QSet<AbstractArcSink*> m_highlighted_items;
+};
+
+} // namespace _
+
+class AbstractArcSource: public _::AbstractArcSourceInternal,
+                         protected LayoutItems{
+    public:
+        AbstractArcSource(ArcStyle const& of_style,
+                          ArcSourceDelegate *sourceDelegate,
+                          Arc* arc)
+            : _::AbstractArcSourceInternal(of_style, sourceDelegate, arc),
+              LayoutItems(this){
+        }
+        virtual ~AbstractArcSource(){
+            LayoutItems::unRegisterSourceItem(this);
+        }
 };
 
 class ArcSource: public AbstractArcSource,

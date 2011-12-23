@@ -28,47 +28,58 @@
 #include "arcSink.h"
 
 using namespace liquid;
+using namespace liquid::_;
 
-// - AbstractArcSource
-AbstractArcSource::AbstractArcSource(ArcStyle const& of_style,
+// - AbstractArcSourceInternal
+AbstractArcSourceInternal::AbstractArcSourceInternal(ArcStyle const& of_style,
                                      ArcSourceDelegate* sourceDelegate,
                                      Arc* arc)
-    : m_style(of_style),
+    : QGraphicsObject(),
+      ArcSourceDelegate(),
+      m_style(of_style),
       m_arc(arc),
       m_sourceDelegate(sourceDelegate),
       m_ephemeral_sink(NULL){
-    debug(7) << "AbstractArcSource(delegate="<<sourceDelegate<<"): " << this;
+    debug(7) << "AbstractArcSourceInternal(delegate="<<sourceDelegate<<"): " << this;
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
 }
-AbstractArcSource::~AbstractArcSource(){
-    debug(7) << "~AbstractArcSource()" << this;
+AbstractArcSourceInternal::~AbstractArcSourceInternal(){
+    debug(7) << "~AbstractArcSourceInternal()" << this;
 }
 
-Arc* AbstractArcSource::arc() const{
+Arc* AbstractArcSourceInternal::arc() const{
     return m_arc;
 }
 
-ArcStyle const& AbstractArcSource::style() const{
+ArcStyle const& AbstractArcSourceInternal::style() const{
     return m_style;
 }
 
-void AbstractArcSource::setSourceDelegate(ArcSourceDelegate *sourceDelegate){
+void AbstractArcSourceInternal::setSourceDelegate(ArcSourceDelegate *sourceDelegate){
     m_sourceDelegate = sourceDelegate;
 }
-ArcSourceDelegate* AbstractArcSource::sourceDelegate() const{
+ArcSourceDelegate* AbstractArcSourceInternal::sourceDelegate() const{
     return m_sourceDelegate;
 }
 
 
-void AbstractArcSource::setParentItem(QGraphicsItem* item){
+void AbstractArcSourceInternal::setParentItem(QGraphicsItem* item){
     disconnectParentSignals(parentItem());
     connectParentSignals(item);
     QGraphicsObject::setParentItem(item);
 }
 
-void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
-    debug(5) << "AbstractArcSource::mousePressEvent";
+QGraphicsItem* AbstractArcSourceInternal::ultimateParent(){
+    QGraphicsItem* last_parent = this;
+    QGraphicsItem* parent = NULL;
+    while((parent = last_parent->parentItem()))
+        last_parent = parent;
+    return last_parent;
+}
+
+void AbstractArcSourceInternal::mousePressEvent(QGraphicsSceneMouseEvent *e){
+    debug(5) << "AbstractArcSourceInternal::mousePressEvent";
     if(e->button() & Qt::LeftButton){
         if(m_ephemeral_sink)
             error() << "unmatched mousePressEvent";
@@ -86,8 +97,8 @@ void AbstractArcSource::mousePressEvent(QGraphicsSceneMouseEvent *e){
     }
 }
 
-void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
-    debug(5) << "AbstractArcSource::mouseMoveEvent";
+void AbstractArcSourceInternal::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
+    debug(5) << "AbstractArcSourceInternal::mouseMoveEvent";
     if(m_ephemeral_sink){
         checkAndHighlightSinks(e->scenePos());
         scene()->sendEvent(m_ephemeral_sink, e);
@@ -96,8 +107,8 @@ void AbstractArcSource::mouseMoveEvent(QGraphicsSceneMouseEvent *e){
     }
 }
 
-void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
-    debug(5) << "AbstractArcSource::mouseReleaseEvent";
+void AbstractArcSourceInternal::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
+    debug(5) << "AbstractArcSourceInternal::mouseReleaseEvent";
     if(e->button() & Qt::LeftButton){
         removeHighlights();
         QList<QGraphicsItem*> items_at_drop = scene()->items(
@@ -121,12 +132,12 @@ void AbstractArcSource::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
 
 
 #include "ephemeralArcEnd.h"
-AbstractArcSink* AbstractArcSource::newArcEnd(){
+AbstractArcSink* AbstractArcSourceInternal::newArcEnd(){
     debug(5) << "newArcEnd:: this:" << this << "&style:" << &m_style;
     return new EphemeralArcEnd(0, m_style);
 }
 
-void AbstractArcSource::removeHighlights(){
+void AbstractArcSourceInternal::removeHighlights(){
     foreach(AbstractArcSink* k, m_highlighted_items){
         disconnect(k, SIGNAL(disconnected(AbstractArcSink*)),
                    this, SLOT(highlightedItemDisconnected(AbstractArcSink*)));
@@ -135,7 +146,7 @@ void AbstractArcSource::removeHighlights(){
     m_highlighted_items.clear();
 }
 
-void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
+void AbstractArcSourceInternal::checkAndHighlightSinks(QPointF scene_pos){
     QPointF ds(40,40);
     QRectF near_field(scene_pos - ds, scene_pos + ds);
     QGraphicsScene *s = scene();
@@ -166,13 +177,13 @@ void AbstractArcSource::checkAndHighlightSinks(QPointF scene_pos){
     m_highlighted_items = near_set;
 }
 
-void AbstractArcSource::highlightedItemDisconnected(AbstractArcSink* sink){
+void AbstractArcSourceInternal::highlightedItemDisconnected(AbstractArcSink* sink){
     debug() << "highlightedItemDisconnected (async remove while highlighted?)" << sink;
     // sink has probably been deleted by this point
     m_highlighted_items.remove(sink);
 }
 
-void AbstractArcSource::checkDoAcceptConnection(AbstractArcSink* item){
+void AbstractArcSourceInternal::checkDoAcceptConnection(AbstractArcSink* item){
     ConnectionSink::ConnectionStatus status = item->doAcceptConnection(m_sourceDelegate);
     if(status == ConnectionSink::Accepted){
         m_arc->addTo(item);
@@ -185,7 +196,7 @@ void AbstractArcSource::checkDoAcceptConnection(AbstractArcSink* item){
 
 
 
-void AbstractArcSource::disconnectParentSignals(QGraphicsItem* p){
+void AbstractArcSourceInternal::disconnectParentSignals(QGraphicsItem* p){
     QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
     if(parent){
         disconnect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
@@ -194,7 +205,7 @@ void AbstractArcSource::disconnectParentSignals(QGraphicsItem* p){
     }
 }
 
-void AbstractArcSource::connectParentSignals(QGraphicsItem* p){
+void AbstractArcSourceInternal::connectParentSignals(QGraphicsItem* p){
     QGraphicsObject* parent = dynamic_cast<QGraphicsObject*>(p);
     if(parent){
         connect(parent, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));

@@ -29,7 +29,8 @@ using namespace liquid;
 Arc::Arc(ArcStyle const& of_style,
          AbstractArcSource *from,
          AbstractArcSink *to)
-    : AbstractArcSource(of_style, from, this),
+    : AbstractArcSourceInternal(of_style, from, this),
+      LayoutItems(this),
       m_style(of_style),
       m_source(from),
       m_sinks(),
@@ -72,13 +73,14 @@ Arc::Arc(ArcStyle const& of_style,
 
 Arc::~Arc(){
     debug(7) << "~Arc()" << this;
+    LayoutItems::unRegisterConnection(this);
 }
 
 ArcStyle const& Arc::style() const{
     return m_style;
 }
 
-ArcSourceDelegate *Arc::source(){
+AbstractArcSource *Arc::source(){
     return m_source;
 }
 
@@ -133,6 +135,7 @@ void Arc::removeTo(AbstractArcSink *to){
     disconnect(to, SIGNAL(disconnected(AbstractArcSink*)),
                this, SLOT(removeTo(AbstractArcSink*)));
     m_sinks.erase(to);
+    m_pending_sinks.erase(to);
     m_ends[to]->deleteLater();
     m_ends.erase(to);
     updateLayout();
@@ -182,6 +185,10 @@ void Arc::paint(QPainter *painter,
         i->second->setFlag(ItemStacksBehindParent);*/
 }
 
+// !!! TODO: the updateLayout slot should only set a dirty flag on the layout,
+// which causes re-layout the next time paint() contains() shape() or something
+// gets called - at the moment updateLayout() can be called many times for a
+// single paint, and it's a pretty big performance bottleneck
 void Arc::updateLayout(){
     if(!m_source){
         warning() << "no source!";

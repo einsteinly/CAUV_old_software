@@ -22,7 +22,10 @@
 
 using namespace liquid;
 
-AbstractArcSink::AbstractArcSink(QGraphicsItem * parent): QGraphicsObject(parent), ConnectionSink() {
+AbstractArcSink::AbstractArcSink(QGraphicsItem * parent)
+    : QGraphicsObject(parent),
+      ConnectionSink(),
+      LayoutItems(this){
     debug(7) << "AbstractArcSink()";
     connect(this, SIGNAL(xChanged()), this, SIGNAL(geometryChanged()));
     connect(this, SIGNAL(yChanged()), this, SIGNAL(geometryChanged()));
@@ -31,12 +34,21 @@ AbstractArcSink::AbstractArcSink(QGraphicsItem * parent): QGraphicsObject(parent
 AbstractArcSink::~AbstractArcSink(){
     debug(7) << "~AbstractArcSink(): scene=" << scene(); 
     Q_EMIT(disconnected(this));
+    LayoutItems::unRegisterSinkItem(this);
 }
 
 void AbstractArcSink::setParentItem(QGraphicsItem* item){
     disconnectParentSignals(parentItem());
     connectParentSignals(item);
     QGraphicsObject::setParentItem(item);
+}
+
+QGraphicsItem* AbstractArcSink::ultimateParent(){
+    QGraphicsItem* last_parent = this;
+    QGraphicsItem* parent = NULL;
+    while((parent = last_parent->parentItem()))
+        last_parent = parent;
+    return last_parent;
 }
 
 void AbstractArcSink::disconnectParentSignals(QGraphicsItem* p){
