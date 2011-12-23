@@ -159,8 +159,8 @@ NodeTreeView::NodeTreeView(QWidget *) {
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setItemDelegate(delegate);
     delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<HybridDelegate>());
-    this->setMouseTracking(true);
 
+    //this->setMouseTracking(true);
     //connect(this, SIGNAL(entered(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
 }
