@@ -114,7 +114,7 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     QPushButton * button = new QPushButton("X");
     button->setCursor(Qt::PointingHandCursor);
     button->connect(button, SIGNAL(clicked()), ui->filter, SLOT(clear()));
-    layout->addWidget(button, 0, Qt::AlignRight);
+    layout->addWidget(button, 0, Qt::AlignLeft);
     layout->setMargin(0);
     layout->setContentsMargins(0, 0, 5, 0);
 

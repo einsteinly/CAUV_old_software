@@ -75,7 +75,7 @@
        </property>
        <property name="font">
         <font>
-         <pointsize>12</pointsize>
+         <pointsize>11</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -93,7 +93,7 @@
      border-radius: 10px;
      border-top-right-radius: 0px;
      border-bottom-right-radius: 0px;
-     padding: 2 8 2 8px;
+     padding: 2 8 2 22px;
      background: white;
  }
 
@@ -102,7 +102,7 @@ QPushButton {
      border-radius: 9px;
      background: rgba(100, 100, 100, 20);
      color: white;
-     margin-right: 4px;
+     margin-left: 4px;
      min-width: 18px;
      min-height: 18px;
      max-width: 18px;

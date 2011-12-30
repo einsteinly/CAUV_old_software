@@ -145,26 +145,63 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
         const QStyleOptionProgressBarV2 * progressOptions = static_cast<const QStyleOptionProgressBarV2 *>(option);
 
-        QStyleOptionProgressBarV2 outputOptions(*progressOptions);
-
         int hueRange = 100;
-        int range = outputOptions.maximum - outputOptions.minimum;
+        int range = progressOptions->maximum - progressOptions->minimum;
         if (range < 0) range = 0;
 
         float progress = 0;
         if(range != 0)
-            progress = (float) (outputOptions.progress - outputOptions.minimum) / (float) range;
+            progress = (float) (progressOptions->progress - progressOptions->minimum) / (float) range;
 
         int hue = hueRange * progress;
-
         if (progressOptions->invertedAppearance)
             hue = hueRange - hue;
-        outputOptions.invertedAppearance = false;
-
         QColor progressColor(QColor::fromHsl(hue+1, 160, 162));
-        outputOptions.palette.setColor(QPalette::Highlight, progressColor);
 
-        BASESTYLE::drawControl(control, &outputOptions, painter, widget);
+        painter->setRenderHint(QPainter::Antialiasing, true);
+        QRect border = progressOptions->rect;
+        border.setHeight(border.height()-4);
+        border.setWidth(border.width()-4);
+        border.setX(border.x()+4);
+        border.setY(border.y()+4);
+
+
+        // draw frame
+        QPen pen(Qt::gray);
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(pen);
+        painter->drawRoundedRect(border, 5, 5);
+
+        // clear background
+        QRect fill = border;
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(QBrush(QColor(248, 248, 248)));
+        painter->drawRoundedRect(border, 5, 5);
+
+        // draw progress
+        fill.setWidth(fill.width()*progress);
+        QLinearGradient gradient(0, 0, 10, 2);
+        gradient.setSpread(QLinearGradient::ReflectSpread);
+        gradient.setColorAt(0, progressColor);
+        gradient.setColorAt(1, progressColor.darker(105));
+        painter->setBrush(gradient);
+        painter->drawRoundedRect(fill, 5, 5);
+
+
+        if(progressOptions->textVisible){
+            QFont font = painter->font();
+            font.setBold(true);
+            painter->setFont(font);
+            painter->setPen(QPen(Qt::black));
+            int width = progressOptions->fontMetrics.width(progressOptions->text);
+            int x = option->rect.x() + (option->rect.width()/2 - width/2);
+            int height = progressOptions->fontMetrics.height();
+            int y = option->rect.y() + (option->rect.height()/2 - height/2);
+            QRect textRect(x, y, width, height);
+            painter->drawText(textRect, progressOptions->text);
+        }
+
+        //BASESTYLE::drawControl(control, &outputOptions, painter, widget);
     }
     break;
 
