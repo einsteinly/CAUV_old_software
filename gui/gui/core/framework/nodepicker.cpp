@@ -17,6 +17,8 @@
 
 #include <QKeyEvent>
 #include <QCompleter>
+#include <QPushButton>
+#include <QLayout>
 
 #include <debug/cauv_debug.h>
 
@@ -107,6 +109,14 @@ NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
     ui->view->setAcceptDrops(false);
     ui->filter->installEventFilter(new EscapeFilter());
     ui->view->setModel(root.get());
+
+    QHBoxLayout * layout = new QHBoxLayout(ui->filter);
+    QPushButton * button = new QPushButton("X");
+    button->setCursor(Qt::PointingHandCursor);
+    button->connect(button, SIGNAL(clicked()), ui->filter, SLOT(clear()));
+    layout->addWidget(button, 0, Qt::AlignRight);
+    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 5, 0);
 
     // The list supports node filtering as there's potentially a lot of nodes
     boost::shared_ptr<NodePathFilter> pathFilter = boost::make_shared<NodePathFilter>();

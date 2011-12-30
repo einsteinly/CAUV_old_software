@@ -13,29 +13,133 @@
   <property name="windowTitle">
    <string>Data Streams</string>
   </property>
+  <property name="autoFillBackground">
+   <bool>true</bool>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>0</number>
+    <number>5</number>
    </property>
    <property name="leftMargin">
     <number>5</number>
    </property>
    <property name="topMargin">
-    <number>5</number>
+    <number>10</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>5</number>
    </property>
    <property name="bottomMargin">
     <number>5</number>
    </property>
    <item>
-    <widget class="QLineEdit" name="filter"/>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="WindowText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>110</red>
+             <green>110</green>
+             <blue>110</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="WindowText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>110</red>
+             <green>110</green>
+             <blue>110</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled>
+          <colorrole role="WindowText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>69</red>
+             <green>69</green>
+             <blue>69</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
+        </palette>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>LIVE DATA</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="filter">
+       <property name="styleSheet">
+        <string notr="true"> QLineEdit {
+     border: 1px solid gray;
+     border-radius: 10px;
+     padding: 2 8 2 8px;
+     background: white;
+ }
+
+QPushButton {
+     border: 0px solid;
+     border-radius: 9px;
+     background: rgba(100, 100, 100, 20);
+     color: white;
+     margin-right: 4px;
+     min-width: 18px;
+     min-height: 18px;
+     max-width: 18px;
+     max-height: 18px;
+	 font: 75 12pt &quot;Lucida Grande&quot;;
+}
+
+QPushButton:hover {
+     background: rgba(100, 100, 100, 190);
+}</string>
+       </property>
+       <property name="placeholderText">
+        <string>Filter...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="cauv::gui::NodeTreeView" name="view">
+     <property name="styleSheet">
+      <string notr="true"> QTreeView {
+     border: 1px solid gray;
+     border-radius: 10px;
+     padding-top: 0px;
+     padding-bottom: 10px;
+     show-decoration-selected: 1;
+     background: white;
+ }
+</string>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
      <property name="editTriggers">
       <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+     </property>
+     <property name="tabKeyNavigation">
+      <bool>true</bool>
      </property>
      <property name="alternatingRowColors">
       <bool>true</bool>
@@ -52,8 +156,8 @@
      <property name="verticalScrollMode">
       <enum>QAbstractItemView::ScrollPerPixel</enum>
      </property>
-     <property name="indentation">
-      <number>10</number>
+     <property name="uniformRowHeights">
+      <bool>true</bool>
      </property>
      <property name="animated">
       <bool>true</bool>
@@ -61,8 +165,20 @@
      <property name="allColumnsShowFocus">
       <bool>true</bool>
      </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="headerHidden">
+      <bool>true</bool>
+     </property>
+     <attribute name="headerCascadingSectionResizes">
+      <bool>true</bool>
+     </attribute>
      <attribute name="headerDefaultSectionSize">
-      <number>200</number>
+      <number>100</number>
+     </attribute>
+     <attribute name="headerMinimumSectionSize">
+      <number>30</number>
      </attribute>
     </widget>
    </item>

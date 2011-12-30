@@ -15,6 +15,8 @@
 #ifndef __CAUV_STYLE_H__
 #define __CAUV_STYLE_H__
 
+#define USE_QMacStyle
+
 #if defined _WIN32 || defined _WIN64
     #include <QWindowsXPStyle>
     #define BASESTYLE QWindowsXPStyle

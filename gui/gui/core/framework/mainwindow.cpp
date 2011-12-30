@@ -59,6 +59,8 @@ CauvMainWindow::CauvMainWindow(QApplication * app) :
     // more misc ui setup
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
     this->setWindowState(Qt::WindowMaximized);
+
+    setUnifiedTitleAndToolBarOnMac(true);
 }
 
 CauvMainWindow::~CauvMainWindow(){

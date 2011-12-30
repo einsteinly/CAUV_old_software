@@ -138,6 +138,9 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
     switch(control) {
 
+    case CE_FocusFrame:
+        return;
+
     case CE_ProgressBar: {
 
         const QStyleOptionProgressBarV2 * progressOptions = static_cast<const QStyleOptionProgressBarV2 *>(option);
