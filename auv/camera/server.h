@@ -27,6 +27,10 @@
 
 #include "server_shared.h"
 
+#ifdef CAUV_USE_DC1394
+#include <dc1394/dc1394.h>
+#endif // def CAUV_USE_DC1394 
+
 /* How camera sharing works:
  *
  * A client program that wants access to a camera connects to a magic port
@@ -126,15 +130,37 @@ class CameraManager{
         void release(std::list<uint64_t> const& images);
 
     private:
-        class Capture: public cv::VideoCapture{
+        class Capture{
             public:
-                Capture(uint32_t cam_id);
-                void captureToMem(
+                virtual void captureToMem(
+                    uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
+                ) = 0;
+                virtual ~Capture(){}
+        };
+        class CVCapture: public Capture, public cv::VideoCapture{
+            public:
+                CVCapture(int32_t cam_id);
+                virtual void captureToMem(
                     uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
                 );
-
-            private:
         };
+        #ifdef CAUV_USE_DC1394
+        class DC1394Capture: public Capture{
+            public:
+                DC1394Capture(ImageRequest const& req);
+                virtual ~DC1394Capture();
+                virtual void captureToMem(
+                    uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
+                );
+            private:
+                dc1394_t* m_dc1394;
+                dc1394camera_t *m_camera;
+                dc1394video_mode_t m_video_mode;
+        };
+        #endif // def CAUV_USE_DC1394
+
+        static boost::shared_ptr<Capture> openCam(ImageRequest const& req);
+        
 
         boost::interprocess::managed_shared_memory m_segment;
         std::map<uint32_t, boost::shared_ptr<Capture> > m_open_cameras;
