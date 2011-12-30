@@ -27,6 +27,8 @@
 
 #include <debug/cauv_debug.h>
 
+#include <liquid/node.h>
+
 #include "cauvplugins.h"
 
 #include "model/model.h"
@@ -40,11 +42,48 @@
 
 //!!! just for testing
 #include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/groupingnode.h>
 #include <common/bounded_float.h>
-
+#include "framework/elements/style.h"
 
 using namespace cauv;
 using namespace cauv::gui;
+
+
+
+
+class GroupDropHandler : public DropHandlerInterface<QGraphicsItem * > {
+public:
+    GroupDropHandler(boost::shared_ptr<NodeItemModel> model) :
+        m_model(model){
+
+    }
+
+    virtual bool accepts(boost::shared_ptr<Node> const& node){
+        return node->type == nodeType<GroupingNode>();
+    }
+
+    virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
+
+        liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style);
+        ln->setResizable(true);
+        NodeTreeView * view = new NodeTreeView();
+        view->setModel(m_model.get());
+        view->setRootIndex(m_model->indexFromNode(node));
+        QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
+        proxy->setWidget(view);
+
+        ln->addItem(proxy);
+
+        return ln;
+    }
+
+    protected:
+        boost::shared_ptr<NodeItemModel> m_model;
+};
+
+
+
 
 CauvMainWindow::CauvMainWindow(QApplication * app) :
         CauvNode("CauvGui"),
@@ -118,6 +157,8 @@ void CauvMainWindow::onRun()
     // Set the viewport to use OpenGl here. Nested Gl viewports don't work
     m_actions->view->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
+
+    m_actions->scene->registerDropHandler(boost::make_shared<GroupDropHandler>(m_actions->root));
 
     // message input
     this->addMessageObserver(boost::make_shared<DefaultGuiMessageObserver>(m_actions->auv));

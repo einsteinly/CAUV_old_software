@@ -66,6 +66,7 @@ private Q_SLOTS:
     void applyFilters();
     void applyFilters(QModelIndex const&);
     bool applyFilters(boost::shared_ptr<Node> const&);
+    void toggleExpanded(QModelIndex const&);
 
 Q_SIGNALS:
     void onKeyPressed(QKeyEvent *event);

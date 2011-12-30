@@ -91,6 +91,8 @@
         <string notr="true"> QLineEdit {
      border: 1px solid gray;
      border-radius: 10px;
+     border-top-right-radius: 0px;
+     border-bottom-right-radius: 0px;
      padding: 2 8 2 8px;
      background: white;
  }
@@ -125,10 +127,15 @@ QPushButton:hover {
       <string notr="true"> QTreeView {
      border: 1px solid gray;
      border-radius: 10px;
+     border-top-right-radius: 0px;
+     border-bottom-right-radius: 0px;
      padding-top: 0px;
      padding-bottom: 10px;
      show-decoration-selected: 1;
      background: white;
+     selection-background-color: transparent;
+     selection-color: black;
+     color: black;
  }
 </string>
      </property>
@@ -155,9 +162,6 @@ QPushButton:hover {
      </property>
      <property name="verticalScrollMode">
       <enum>QAbstractItemView::ScrollPerPixel</enum>
-     </property>
-     <property name="uniformRowHeights">
-      <bool>true</bool>
      </property>
      <property name="animated">
       <bool>true</bool>

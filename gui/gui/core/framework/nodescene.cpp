@@ -66,45 +66,6 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 }
 
 
-
-
-class GroupDropHandler : public DropHandlerInterface<QGraphicsItem * > {
-
-    //GroupDropHandler(boost::shared_ptr<NodeItemModel> model) :
-    //    m_model(model){
-    //
-    //}
-
-    virtual bool accepts(boost::shared_ptr<Node> const& node){
-        return node->type == nodeType<GroupingNode>();
-    }
-
-    virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
-
-        //if(m_graphs[node->nodePath()]){
-        //    return m_graphs[node->nodePath()];
-        //}
-
-        liquid::LiquidNode * ln = new liquid::LiquidNode(AI_Node_Style);
-        ln->setResizable(true);
-        NodeItemModel * model = new NodeItemModel(node);
-        NodeTreeView * view = new NodeTreeView();
-        view->setModel(model);
-        QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
-        proxy->setWidget(view);
-
-        ln->addItem(proxy);
-
-        return ln;
-    }
-
-    protected:
-        boost::shared_ptr<NodeItemModel> m_model;
-};
-
-
-
-
 NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
     int sceneSize = 30000;
@@ -149,8 +110,6 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
             }
         }
     }
-
-    registerDropHandler(boost::make_shared<GroupDropHandler>());
 }
 
 NodeScene::~NodeScene(){

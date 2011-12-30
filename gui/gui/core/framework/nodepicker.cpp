@@ -173,13 +173,19 @@ NodeTreeView::NodeTreeView(QWidget *) {
     //this->setMouseTracking(true);
     //connect(this, SIGNAL(entered(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
     connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
+    connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(toggleExpanded(QModelIndex)));
 }
+
 
 void NodeTreeView::forceEdit(QModelIndex const& index){
     // force edit on column 1
     QModelIndex forcedColumn = index.model()->index(index.row(), 1, index.parent());
     if(forcedColumn.flags() & Qt::ItemIsEditable)
         edit(forcedColumn);
+}
+
+void NodeTreeView::toggleExpanded(QModelIndex const& index){
+    setExpanded(index, !isExpanded(index));
 }
 
 void NodeTreeView::keyPressEvent(QKeyEvent *event){
