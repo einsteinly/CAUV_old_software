@@ -66,36 +66,25 @@ void AiPlugin::initialise(){
         node->addItem(proxy);
         node->setResizable(true);
         m_actions->scene->addItem(node);
-    */
+*/
 
         AiNode *node1 = new AiNode();
         QGraphicsProxyWidget * proxy = new QGraphicsProxyWidget();
         QTreeView * view = new NodeTreeView();
-        QAbstractItemModel * model = new NodeItemModel(VehicleRegistry::instance());
-        view->setModel(model);
+        view->setModel(m_actions->root.get());
         view->setDragEnabled(true);
         proxy->setWidget(view);
         node1->addItem(proxy);
         node1->setResizable(true);
         m_actions->scene->addItem(node1);
 
-        AiNode *node2 = new AiNode();
-        QGraphicsProxyWidget * proxy2 = new QGraphicsProxyWidget();
-        QTreeView * view2 = new NodeTreeView();
-        view2->setModel(model);
-        view2->setDragEnabled(true);
-        proxy2->setWidget(view2);
-        node2->addItem(proxy2);
-        node2->setResizable(true);
-        m_actions->scene->addItem(node2);
-
 
         AiNode *node3 = new AiNode();
         QGraphicsProxyWidget * proxy3 = new QGraphicsProxyWidget();
         QTreeView * view3 = new NodeTreeView();
-        QAbstractItemModel * model3 = new NodeItemModel(VehicleRegistry::instance()->find<Node>("redherring"));
-        view3->setModel(model3);
+        view3->setModel(m_actions->root.get());
         view3->setDragEnabled(true);
+        view3->setRootIndex(m_actions->root->indexFromNode(VehicleRegistry::instance()->find<Node>("redherring")));
         proxy3->setWidget(view3);
         node3->addItem(proxy3);
         node3->setResizable(true);

@@ -92,7 +92,7 @@ NodeItemModel::NodeItemModel(boost::shared_ptr<Node> root, QObject * parent) :
 }
 
 QModelIndex NodeItemModel::indexFromNode(boost::shared_ptr<Node> node) const{
-    return createIndex(node->row(), 0, node.get());
+    return createIndex(node->row(), 1, node.get());
 }
 
 boost::shared_ptr<Node> NodeItemModel::nodeFromIndex(QModelIndex const& index) const{

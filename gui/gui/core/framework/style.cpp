@@ -175,7 +175,11 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
         // clear background
         QRect fill = border;
         painter->setPen(Qt::NoPen);
-        painter->setBrush(QBrush(QColor(248, 248, 248)));
+        QLinearGradient bg(0, 20, 0, 0);
+        bg.setSpread(QLinearGradient::ReflectSpread);
+        bg.setColorAt(0, QColor(248, 248, 248));
+        bg.setColorAt(1, QColor(248, 248, 248).darker(105));
+        painter->setBrush(bg);
         painter->drawRoundedRect(border, 5, 5);
 
         // draw progress

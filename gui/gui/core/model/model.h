@@ -63,6 +63,7 @@ namespace cauv {
 
         public Q_SLOTS:
             void update(){
+                info() << "notifying model of update";
                 Q_EMIT onUpdate(m_start, m_end);
             }
 
