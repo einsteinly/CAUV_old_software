@@ -35,6 +35,7 @@ set ( GUI_CORE_SRCS
     widgets/videoscreen.cpp
     widgets/neutralspinbox.cpp
     widgets/graphbar.cpp
+    widgets/onoff.cpp
 
     model/node.cpp
     model/variants.cpp
@@ -72,6 +73,7 @@ set ( GUI_CORE_H
     widgets/videoscreen.h
     widgets/neutralspinbox.h
     widgets/graphbar.h
+    widgets/onoff.h
 
     model/node.h
     model/model.h

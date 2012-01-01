@@ -39,7 +39,7 @@ QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComp
 
         return rect;
     }
-    break;
+        break;
 
     case QStyle::SC_SpinBoxDown: {
         QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
@@ -51,7 +51,7 @@ QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComp
 
         return rect;
     }
-    break;
+        break;
 
     case QStyle::SC_SpinBoxEditField: {
         QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
@@ -60,7 +60,7 @@ QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComp
         rect.setRight(frame.right()-frame.height());
         return rect;
     }
-    break;
+        break;
 
     default: return BASESTYLE::subControlRect(control, option, subControl, widget);
     }
@@ -78,7 +78,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
     case CE_Graph: {
 
-        const StyleOptionGraphingWidget *graphing = qstyleoption_cast<const StyleOptionGraphingWidget *>(option);
+        const StyleOptionGraphingSpinBox *graphing = qstyleoption_cast<const StyleOptionGraphingSpinBox *>(option);
         if(graphing){
             painter->setRenderHint(QPainter::Antialiasing);
             QRect canvas = option->rect;
@@ -123,7 +123,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
             QColor outline = QColor(200, 200, 200);//cauvColorMap(minimum, maximum, samples.last().toFloat());
             QColor fill = QColor(230, 230, 230);//cauvColorMap(minimum, maximum, samples.last().toFloat(),
-                          //             true, 100, QColor::fromHsl(0,160,230));
+            //             true, 100, QColor::fromHsl(0,160,230));
 
             painter->strokePath(path, QPen(outline, 1));
 
@@ -139,6 +139,87 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
     switch(control) {
 
     case CE_FocusFrame:
+        return;
+
+    case CE_CheckBox: {
+
+        if (const StyleOptionOnOff * onOffOption = qstyleoption_cast<const StyleOptionOnOff *>(option)) {
+
+            painter->setRenderHint(QPainter::Antialiasing, true);
+            QRect canvas = option->rect;
+            canvas.setHeight(canvas.height()-4);
+            canvas.setWidth(60);
+            canvas.setX(canvas.x()+4);
+            canvas.setY(canvas.y()+4);
+
+            // draw frame
+            painter->setBrush(Qt::NoBrush);
+            painter->setPen(QPen(Qt::gray));
+            painter->drawRoundedRect(canvas, 5, 5);
+
+            // clear background
+            painter->setPen(Qt::NoPen);
+            QLinearGradient bg(0, 20, 0, 0);
+            bg.setSpread(QLinearGradient::ReflectSpread);
+            bg.setColorAt(0, QColor(148, 148, 148));
+            bg.setColorAt(1, QColor(148, 148, 148).darker(110));
+            painter->setBrush(bg);
+            painter->drawRoundedRect(canvas, 5, 5);
+
+
+
+            QRect on = canvas;
+            on.setWidth((canvas.width()/2) + 5);
+
+            // draw frame
+            painter->setBrush(Qt::NoBrush);
+            painter->setPen(QPen(Qt::gray));
+            painter->drawRoundedRect(on, 5, 5);
+
+            // clear background
+            QColor onColor(QColor::fromHsl(100, 160, 162));
+            painter->setPen(Qt::NoPen);
+            QLinearGradient onbg(0, 20, 0, 0);
+            onbg.setSpread(QLinearGradient::ReflectSpread);
+            onbg.setColorAt(0, onColor);
+            onbg.setColorAt(1, onColor.darker(110));
+            painter->setBrush(onbg);
+            painter->drawRoundedRect(on, 5, 5);
+
+
+            float position = clamp(0, onOffOption->position, 1);
+            QRect slider = on.translated((canvas.width() - on.width()) * position, 0);
+
+            // draw frame
+            painter->setBrush(Qt::NoBrush);
+            painter->setPen(QPen(Qt::gray));
+            painter->drawRoundedRect(slider, 5, 5);
+
+            // clear background
+            QColor sliderColour(248, 248, 248);
+            painter->setPen(Qt::NoPen);
+            QLinearGradient sliderbg(0, 20, 0, 0);
+            sliderbg.setSpread(QLinearGradient::ReflectSpread);
+            sliderbg.setColorAt(0, sliderColour);
+            sliderbg.setColorAt(1, sliderColour.darker(105));
+            painter->setBrush(sliderbg);
+            painter->drawRoundedRect(slider, 5, 5);
+
+
+            if(onOffOption->marked) {
+                painter->setPen(QPen(sliderColour.darker(110)));
+                painter->setBrush(QBrush(sliderColour.darker(115)));
+                painter->drawRect(slider.right() - (slider.width()/2) -7, slider.y() + 5,
+                                  1,  (slider.height() - 10));
+                painter->drawRect(slider.right() - (slider.width()/2), slider.y() + 5,
+                                  1,  (slider.height() - 10));
+                painter->drawRect(slider.right() - (slider.width()/2) + 7, slider.y() + 5,
+                                  1,  (slider.height() - 10));
+            }
+        } else {
+            BASESTYLE::drawControl(control, option, painter, widget);
+        }
+    }
         return;
 
     case CE_ProgressBar: {
@@ -165,15 +246,16 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
         border.setX(border.x()+4);
         border.setY(border.y()+4);
 
+        QRect fill = border;
+        fill.setWidth(fill.width()*progress);
+
 
         // draw frame
-        QPen pen(Qt::gray);
         painter->setBrush(Qt::NoBrush);
-        painter->setPen(pen);
+        painter->setPen(QPen(Qt::gray));
         painter->drawRoundedRect(border, 5, 5);
 
         // clear background
-        QRect fill = border;
         painter->setPen(Qt::NoPen);
         QLinearGradient bg(0, 20, 0, 0);
         bg.setSpread(QLinearGradient::ReflectSpread);
@@ -182,8 +264,12 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
         painter->setBrush(bg);
         painter->drawRoundedRect(border, 5, 5);
 
+        // draw underlying fill frame
+        //painter->setBrush(Qt::NoBrush);
+        //painter->setPen(QPen(progressColor.darker(130)));
+        //painter->drawRoundedRect(fill, 5, 5);
+
         // draw progress
-        fill.setWidth(fill.width()*progress);
         QLinearGradient gradient(0, 0, 10, 2);
         gradient.setSpread(QLinearGradient::ReflectSpread);
         gradient.setColorAt(0, progressColor);
@@ -207,7 +293,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
         //BASESTYLE::drawControl(control, &outputOptions, painter, widget);
     }
-    break;
+        break;
 
     default:
         BASESTYLE::drawControl(control, option, painter, widget);
@@ -235,7 +321,7 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
             drawControl(CE_ProgressBar, &progressOptions, painter, widget);
         }
 
-        const StyleOptionGraphingWidget *graphingSpin = qstyleoption_cast<const StyleOptionGraphingWidget *>(option);
+        const StyleOptionGraphingSpinBox *graphingSpin = qstyleoption_cast<const StyleOptionGraphingSpinBox *>(option);
         if(graphingSpin){
             drawControl(CE_Graph, graphingSpin, painter, widget);
         }
@@ -255,7 +341,7 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
             painter->setOpacity(1);
         }
     }
-    break;
+        break;
     default:
         BASESTYLE::drawComplexControl(control, option, painter, widget);
     }

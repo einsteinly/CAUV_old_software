@@ -48,7 +48,7 @@ boost::shared_ptr<SampleQueue<QVariant> > GraphingSpinBox::sampler() const {
 
 void GraphingSpinBox::paintEvent(QPaintEvent * e)
  {
-    StyleOptionGraphingWidget option;
+    StyleOptionGraphingSpinBox option;
     option.initFrom(this);
 
     option.maximum = maximum();
@@ -91,7 +91,7 @@ void GraphingDoubleSpinBox::paintEvent(QPaintEvent * e)
 
 
     painter.setOpacity(0.5);
-    StyleOptionGraphingWidget option;
+    StyleOptionGraphingSpinBox option;
     option.initFrom(this);
 
     option.maximum = maximum();

@@ -59,7 +59,8 @@ QColor cauvColorMap(T min, T max, T value, bool inverted = true, int hueRange = 
 namespace CauvStyleOptions {
 enum e{
     StyleOptionNeutralSpinBox = QStyleOption::SO_CustomBase + 1,
-    StyleOptionGraphingSpinBox
+    StyleOptionGraphingSpinBox,
+    StyleOptionOnOff
 };
 }
 
@@ -74,11 +75,22 @@ public:
     bool invertColours;
 };
 
+class StyleOptionOnOff : public QStyleOptionButton {
+public:
+    enum StyleOptionType { Type = CauvStyleOptions::StyleOptionOnOff };
+    StyleOptionOnOff() : QStyleOptionButton(), position(0), marked(true) {
+        type = CauvStyleOptions::StyleOptionOnOff;
+    }
 
-class StyleOptionGraphingWidget : public QStyleOptionSpinBox {
+    float position;
+    bool marked;
+};
+
+
+class StyleOptionGraphingSpinBox : public QStyleOptionSpinBox {
 public:
     enum StyleOptionType { Type = CauvStyleOptions::StyleOptionGraphingSpinBox };
-    StyleOptionGraphingWidget() : QStyleOptionSpinBox(), samples() {
+    StyleOptionGraphingSpinBox() : QStyleOptionSpinBox(), samples() {
         type = CauvStyleOptions::StyleOptionGraphingSpinBox;
     }
 
