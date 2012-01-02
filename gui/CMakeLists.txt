@@ -19,6 +19,10 @@ if (CAUV_BUILD_GUI)
 
         find_package (OpenCV REQUIRED)
 
+        # -DBOOST_TT... is a hack to workaround a moc bug with boost 1.48, see
+        # https://bugreports.qt.nokia.com/browse/QTBUG-22829
+        set (MOC_BOOST_HACK OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
+
         add_subdirectory (pipeline-widget)
         add_subdirectory (gui-pipeline)
         add_subdirectory (gui)

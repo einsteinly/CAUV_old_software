@@ -28,7 +28,7 @@ set ( DSD_PLUGIN_H
 )
      
 qt4_wrap_ui (DSD_PLUGIN_UIS_H ${DSD_PLUGIN_UIS})
-qt4_wrap_cpp (DSD_PLUGIN_MOC_H ${DSD_PLUGIN_H})
+qt4_wrap_cpp (DSD_PLUGIN_MOC_H ${DSD_PLUGIN_H} ${MOC_BOOST_HACK}) 
 
 add_library( dsdplugin MODULE
     ${DSD_PLUGIN_SRCS}

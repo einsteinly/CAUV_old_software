@@ -41,7 +41,7 @@ set (
     pipelineWidgetPlugin.h
 )
 
-QT4_WRAP_CPP(pipeline-widget_MOC_SRCS ${pipeline-widget_MOC_HDRS})
+QT4_WRAP_CPP(pipeline-widget_MOC_SRCS ${pipeline-widget_MOC_HDRS} ${MOC_BOOST_HACK})
 
 
 add_definitions(${QT_DEFINITIONS})
