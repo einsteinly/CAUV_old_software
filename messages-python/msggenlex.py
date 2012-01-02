@@ -3,13 +3,16 @@ import ply.lex as lex
 reserved = {
     "struct" : "STRUCT",
     "class" : "CLASS",
+    "subclass" : "SUBCLASS",
     "variant" : "VARIANT",
     "group" : "GROUP",
     "message" : "MSG",
     "list" : "LIST",
     "map" : "MAP",
     "enum" : "ENUM",
-    "lazy" : "LAZY"
+    "lazy" : "LAZY",
+    "eq" : "EQUALITY",
+    "cmp" : "COMPARE"
 }
 tokens = [
     "STRING",
@@ -31,8 +34,9 @@ def t_ignore_COMMENT(t):
     r'//.*'
     pass
 
-t_ignore  = ' \t\n'# Error handling rule
+t_ignore  = ' \t\n'
 
+# Error handling rule
 def t_error(t):
     print "Illegal character '%s'" % t.value[0]
     t.lexer.skip(1)

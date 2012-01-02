@@ -139,14 +139,14 @@ struct floatYPR
 }
 struct floatXYZ
 {
-    x : float;
-    y : float;
-    z : float;
+    eq x : float;
+    eq y : float;
+    eq z : float;
 }
 struct floatXY
 {
-    x : float;
-    y : float;
+    eq x : float;
+    eq y : float;
 }
 struct NodeInput
 {
@@ -156,9 +156,9 @@ struct NodeInput
 }
 struct LocalNodeInput
 {
-    input : string;
-    subType : int32;
-    schedType : InputSchedType;
+    cmp input : string;
+    cmp subType : int32;
+    cmp schedType : InputSchedType;
 }
 struct NodeOutput
 {
@@ -169,9 +169,9 @@ struct NodeOutput
 }
 struct LocalNodeOutput
 {
-    output : string;
-    type : OutputType;
-    subType : int32;
+    cmp output : string;
+    cmp type : OutputType;
+    cmp subType : int32;
 }
 struct NodeInputArc
 {
@@ -240,21 +240,21 @@ struct MotorDemand
 }
 struct Line
 {
-    centre : floatXYZ;
-    angle : float;
-    length : float;
+    eq centre : floatXYZ;
+    eq angle : float;
+    eq length : float;
 }
 struct Circle
 {
-    centre : floatXYZ;
-    radius : float;
+    eq centre : floatXYZ;
+    eq radius : float;
 }
 struct Corner
 {
-    centre : floatXYZ;
-    size : float;
-    angle : float;
-    response : float;
+    eq centre : floatXYZ;
+    eq size : float;
+    eq angle : float;
+    eq response : float;
 }
 struct MotorMap
 {
@@ -265,12 +265,12 @@ struct MotorMap
 }
 struct KeyPoint
 {
-    pt : floatXY;
-    size : float;
-    angle : float;
-    response : float;
-    octave : float;
-    class_id : float;
+    eq pt : floatXY;
+    eq size : float;
+    eq angle : float;
+    eq response : float;
+    eq octave : float;
+    eq class_id : float;
 }
 struct ScriptResponse
 {
@@ -291,13 +291,13 @@ enum BoundedFloatType : int8 {
 }
 struct BoundedFloatBase
 {
-    value : float;
-    min : float;
-    max : float;
-    type : BoundedFloatType;
+    eq value : float;
+    eq min : float;
+    eq max : float;
+    eq type : BoundedFloatType;
 }
 class Image : <common/image.h>
-class BoundedFloat : <common/bounded_float.h>
+BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 
 variant ParamValue
 {

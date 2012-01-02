@@ -50,8 +50,10 @@ int32_t deserialise(const_svec_ptr, uint32_t, $v.name&);
 #end for
 
 #for $t in $included_types
+#if $t.superclass is None
 void serialise(svec_ptr, $t.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $t.name&);
+#end if
 #end for
 
 // CHIL serialisation
@@ -68,7 +70,9 @@ std::string chil($v.name const&);
 #end for
 
 #for $t in $included_types
+#if $t.superclass is None
 std::string chil($t.name const&);
+#end if
 #end for
 
 } // namespace cauv
