@@ -136,11 +136,6 @@ QVariant NodeItemModel::data(const QModelIndex & index, int role) const {
     case Qt::ForegroundRole:
         break;
     case Qt::CheckStateRole:
-        if (index.column() == 1 && node->get().type() == qMetaTypeId<bool>()){
-            if(node->get().value<bool>()){
-                return Qt::Checked;
-            } else return Qt::Unchecked;
-        }
         break;
     case Qt::AccessibleTextRole:
         break;

@@ -19,6 +19,7 @@
 
 #include "model/nodes/numericnode.h"
 #include "widgets/neutralspinbox.h"
+#include "widgets/onoff.h"
 #include "widgets/graphbar.h"
 #include "model/utils/sampler.h"
 #include "style.h"
@@ -106,7 +107,7 @@ void GraphingDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
             error() << "GraphingDelegate: Can't find sampler!";
             return;
         }
-        StyleOptionGraphingWidget graphingOption;
+        StyleOptionGraphingSpinBox graphingOption;
         graphingOption.rect = option.rect;
         graphingOption.maximum = node->getMax();
         graphingOption.minimum = node->getMin();
@@ -214,7 +215,8 @@ QWidget * ProgressDelegate::createEditor(QWidget *parent, const QStyleOptionView
 
 HybridDelegate::HybridDelegate(QObject * parent) : GraphingDelegate(parent), ProgressDelegate(parent) {
     QItemEditorFactory * factory = new QItemEditorFactory();
-    setItemEditorFactory(factory);
+    GraphingDelegate::setItemEditorFactory(factory);
+    factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));
     factory->registerEditor(QVariant::Int, new QItemEditorCreator<GraphingSpinBox>("value"));
     factory->registerEditor(QVariant::UInt, new QItemEditorCreator<GraphingSpinBox>("value"));
     factory->registerEditor(QVariant::Double, new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
@@ -233,7 +235,23 @@ void HybridDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
         }
     }
 
-    ProgressDelegate::paint(painter, option, index);
+    if (node->get().type() == qMetaTypeId<bool>()){
+        StyleOptionOnOff onOffOption;
+        onOffOption.rect = option.rect;
+        onOffOption.position = node->get().value<bool>() ? 1 : 0;
+        onOffOption.marked = false;
+        QApplication::style()->drawControl(QStyle::CE_CheckBox,
+                                           &onOffOption, painter);
+    }
+    else ProgressDelegate::paint(painter, option, index);
+}
+
+void HybridDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const{
+    if(OnOffSlider * slider = dynamic_cast<OnOffSlider *>(editor)){
+        info() << "setting editor data for OnOff";
+        NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
+        slider->setChecked(!node->get().value<bool>());
+    }
 }
 
 QWidget * HybridDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,

@@ -93,9 +93,12 @@ struct HybridDelegate : public GraphingDelegate, public ProgressDelegate{
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
+    void setEditorData(QWidget *editor, const QModelIndex &index) const;
+
     QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                            const QModelIndex &index) const;
 };
+
 
 } // namespace gui
 } // namespace cauv
