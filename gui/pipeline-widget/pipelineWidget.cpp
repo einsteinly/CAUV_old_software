@@ -9,6 +9,7 @@
 //#include <boost/graph/graphviz.hpp>
 
 #include <QtGui>
+#include <GL/glu.h>
 
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>

@@ -15,6 +15,7 @@
 #include "imgNode.h"
 
 #include <QtOpenGL>
+#include <GL/glu.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
