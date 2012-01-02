@@ -16,6 +16,7 @@
 #define __CAUV_ONOFF_H
 
 #include <QCheckBox>
+#include <QPropertyAnimation>
 
 #include <debug/cauv_debug.h>
 
@@ -28,14 +29,27 @@ namespace cauv {
         public:
 
             Q_PROPERTY(bool checked READ isChecked WRITE setChecked USER true)
+            Q_PROPERTY(float position READ position WRITE setPosition USER false)
 
             void mouseReleaseEvent(QMouseEvent *e);
-
-            void mousePressEvent(QMouseEvent *);
 
             OnOffSlider(QWidget * parent = 0);
 
             void paintEvent(QPaintEvent *);
+
+            void switchTo(bool);
+
+            void setChecked(bool);
+
+            Q_SIGNALS:
+            void switched();
+
+        protected:
+            float m_position;
+            QPropertyAnimation m_animation;
+
+            float position();
+            void setPosition(float position);
         };
 
     } // namespace gui

@@ -59,6 +59,16 @@ QWidget * NodeDelegateMapper::createEditor ( QWidget * parent, const QStyleOptio
     }
 }
 
+void NodeDelegateMapper::setEditorData(QWidget *editor, const QModelIndex &index) const{
+    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
+    try {
+        boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
+        return delegate->setEditorData(editor, index);
+    } catch (std::out_of_range){
+        return QStyledItemDelegate::setEditorData(editor, index);
+    }
+}
+
 void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                const QModelIndex &index) const{
 
@@ -250,7 +260,8 @@ void HybridDelegate::setEditorData(QWidget *editor, const QModelIndex &index) co
     if(OnOffSlider * slider = dynamic_cast<OnOffSlider *>(editor)){
         info() << "setting editor data for OnOff";
         NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
-        slider->setChecked(!node->get().value<bool>());
+        slider->setChecked(node->get().value<bool>());
+        slider->switchTo(!node->get().value<bool>());
     }
 }
 

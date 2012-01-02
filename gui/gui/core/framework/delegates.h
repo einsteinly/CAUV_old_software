@@ -43,6 +43,8 @@ public:
     QWidget * createEditor ( QWidget * parent, const QStyleOptionViewItem & option,
                              const QModelIndex & index ) const;
 
+    void setEditorData(QWidget *editor, const QModelIndex &index) const;
+
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
@@ -87,7 +89,8 @@ struct ProgressDelegate : public virtual QStyledItemDelegate {
 
 
 struct HybridDelegate : public GraphingDelegate, public ProgressDelegate{
-
+Q_OBJECT
+public:
     HybridDelegate(QObject * parent = 0);
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
