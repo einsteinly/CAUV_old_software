@@ -150,38 +150,38 @@ struct floatXY
 }
 struct NodeInput
 {
-    node : int32;
-    input : string;
-    subType : int32;
+    eq node : int32;
+    eq input : string;
+    eq subType : int32;
 }
 struct LocalNodeInput
 {
-    cmp input : string;
-    cmp subType : int32;
-    cmp schedType : InputSchedType;
+    eq cmp input : string;
+    eq cmp subType : int32;
+    eq cmp schedType : InputSchedType;
 }
 struct NodeOutput
 {
-    node : int32;
-    output : string;
-    type : OutputType;
-    subType : int32;
+    eq node : int32;
+    eq output : string;
+    eq type : OutputType;
+    eq subType : int32;
 }
 struct LocalNodeOutput
 {
-    cmp output : string;
-    cmp type : OutputType;
-    cmp subType : int32;
+    eq cmp output : string;
+    eq cmp type : OutputType;
+    eq cmp subType : int32;
 }
 struct NodeInputArc
 {
-    input : string;
-    src : NodeOutput;
+    eq input : string;
+    eq src : NodeOutput;
 }
 struct NodeOutputArc
 {
-    dst : NodeInput;
-    output : string;
+    eq dst : NodeInput;
+    eq output : string;
 }
 struct TimeStamp
 {
