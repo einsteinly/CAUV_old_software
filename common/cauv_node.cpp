@@ -31,6 +31,7 @@
 
 #include "cauv_node.h"
 #include "cauv_utils.h"
+#include "mailbox.h"
 
 using namespace cauv;
 
@@ -118,7 +119,7 @@ int CauvNode::send(boost::shared_ptr<const Message> m, Spread::service st)
     return 0;
 }
 
-boost::shared_ptr<ReconnectingSpreadMailbox> CauvNode::mailbox() const
+boost::shared_ptr<Mailbox> CauvNode::mailbox() const
 {
     return m_mailbox;
 }

@@ -23,6 +23,7 @@
 #include <boost/thread.hpp>
 #include <boost/utility.hpp>
 
+#include <common/mailbox.h>
 #include "spread_mailbox.h"
 
 namespace cauv{
@@ -34,7 +35,7 @@ namespace cauv{
  * the behaviour we want.
  */
 
-class ReconnectingSpreadMailbox: boost::noncopyable{
+class ReconnectingSpreadMailbox: public Mailbox, boost::noncopyable {
     typedef boost::recursive_mutex mutex_t;
     typedef boost::lock_guard<mutex_t> lock_t;
 public:
@@ -70,13 +71,12 @@ public:
     /**
      * @return The number of bytes sent
      */
-    int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType);
-    
-    void handleConnectionError(ConnectionError& e);
+    virtual int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType);
+
     /**
      * @return The number of bytes sent
      */
-    int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType,
+    virtual int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType,
                     const std::string &destinationGroup);
     
     /**
@@ -93,6 +93,8 @@ public:
      * @return An object containing the received message and associated metadata.
      */
     virtual boost::shared_ptr<SpreadMessage> receiveMessage();
+
+    void handleConnectionError(ConnectionError& e);
 
     int waitingMessageByteCount();
 

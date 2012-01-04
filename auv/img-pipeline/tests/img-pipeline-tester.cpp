@@ -21,7 +21,7 @@
 #include <boost/thread.hpp>
 
 #include <common/cauv_node.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
 

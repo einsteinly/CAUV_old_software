@@ -4,8 +4,9 @@
 
 #include <debug/cauv_debug.h>
 #include <common/cauv_node.h>
+#include <common/mailbox.h>
 #include <common/spread/msgsrc_mb_observer.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <common/bounded_float.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
@@ -187,7 +188,7 @@ class CauvNodeWrapper:
             return 9;
         }*/
 
-        boost::shared_ptr<ReconnectingSpreadMailbox> get_mailbox() const{
+        boost::shared_ptr<Mailbox> get_mailbox() const{
             return CauvNode::mailbox();
         }
 };
@@ -286,6 +287,7 @@ void emitDebug(){
 }
 
 void emitMailbox(){
+#if 0
     /* need to explicitly resolve pointer to overloaded function: */
     typedef int (ReconnectingSpreadMailbox::*sm_ptr3_t)(
         boost::shared_ptr<const Message>, Spread::service, std::string const&
@@ -301,6 +303,18 @@ void emitMailbox(){
          */
         .def("receive", wrap(&ReconnectingSpreadMailbox::receiveMessage))
     ;
+#else
+    /* need to explicitly resolve pointer to overloaded function: */
+    typedef int (Mailbox::*sm_ptr3_t)(
+        boost::shared_ptr<const Message>, Spread::service, std::string const&
+    );
+    bp::class_<Mailbox,
+               boost::noncopyable,
+               boost::shared_ptr<Mailbox>
+              >("Mailbox", bp::no_init)
+        .def("send", wrap((sm_ptr3_t) &Mailbox::sendMessage))
+    ;
+#endif
 
     bp::class_<MessageSource,
                boost::noncopyable,
@@ -316,7 +330,6 @@ void emitMailbox(){
         .def("addObserver", wrap(&MessageSource::addObserver)) // addObserver is a member of base class MessageSource
     ;
 }
-
 
 void emitMessage(){
     bp::class_<MessageWrapper,

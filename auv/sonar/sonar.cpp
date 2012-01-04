@@ -18,7 +18,7 @@
 #include <boost/program_options.hpp>
 
 #include <debug/cauv_debug.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <generated/types/SonaroutGroup.h>
 #include <generated/types/SonarctlGroup.h>
 #include <generated/types/TelemetryMessage.h>
@@ -35,7 +35,7 @@ SonarNode::SonarNode() : CauvNode("Sonar")
 class SpreadSonarObserver : public SonarObserver, public MessageObserver
 {
     public:
-        SpreadSonarObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox) : m_mailbox(mailbox)
+        SpreadSonarObserver(boost::shared_ptr<Mailbox> mailbox) : m_mailbox(mailbox)
         {
         }
         
@@ -49,7 +49,7 @@ class SpreadSonarObserver : public SonarObserver, public MessageObserver
             m_mailbox->sendMessage(m, SAFE_MESS);
         }
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
+        boost::shared_ptr<Mailbox> m_mailbox;
 
         floatYPR m_orientation;
 

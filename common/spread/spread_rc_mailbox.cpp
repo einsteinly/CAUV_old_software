@@ -61,6 +61,7 @@ class ErrOnExit: boost::noncopyable{
 
 
 ReconnectingSpreadMailbox::ReconnectingSpreadMailbox() :
+    Mailbox(),
     m_connection_state_lock(),
     m_connection_state(DISCONNECTED),
     m_mailbox(),

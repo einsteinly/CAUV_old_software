@@ -11,7 +11,7 @@
 #include "spread_exceptions.h"
 #include "spread_messages.h"
 
-namespace cauv{
+namespace cauv {
 
 /**
  * ConnectionTimeout is a simple wrapper around Spread::sp_time, the %Spread C

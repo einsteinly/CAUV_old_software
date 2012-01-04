@@ -13,7 +13,7 @@
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
 #include <common/math.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <debug/cauv_debug.h>
 #include <generated/types/TimeStamp.h>
 #include <generated/types/MotorDemand.h>
@@ -263,7 +263,7 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
 class StateObserver : public MessageObserver, public XsensObserver
 {
     public:
-        StateObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        StateObserver(boost::shared_ptr<Mailbox> mb)
             : m_mb(mb)
         {
         }
@@ -278,7 +278,7 @@ class StateObserver : public MessageObserver, public XsensObserver
         }
 
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
         
         floatYPR m_orientation;
 };
@@ -288,7 +288,7 @@ using namespace Controller;
 class ControlLoops : public MessageObserver, public XsensObserver
 {
     public:
-        ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        ControlLoops(boost::shared_ptr<Mailbox> mb)
             : prop_value(0), hbow_value(0), vbow_value(0),
               hstern_value(0), vstern_value(0), m_max_motor_delta(255),
               m_motor_updates_per_second(5), m_mb(mb), m_simulation_mode(false)
@@ -699,7 +699,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
         unsigned m_max_motor_delta;
         unsigned m_motor_updates_per_second;
 
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
 
         bool m_simulation_mode;
 };
@@ -753,7 +753,7 @@ class DeviceControlObserver : public MessageObserver
 class TelemetryBroadcaster : public MessageObserver, public XsensObserver
 {
     public:
-        TelemetryBroadcaster(boost::shared_ptr<ReconnectingSpreadMailbox> mb,
+        TelemetryBroadcaster(boost::shared_ptr<Mailbox> mb,
                              bool simulation_mode)
             : m_mb(mb), m_simulation_mode(simulation_mode)
         {
@@ -810,7 +810,7 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
             m_depthCalibration = m;
         }
     protected:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
         bool m_simulation_mode;
 
         DepthCalibrationMessage_ptr m_depthCalibration;
@@ -838,7 +838,7 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
 class MCBForwardingObserver : public BufferedMessageObserver
 {
     public:
-        MCBForwardingObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
+        MCBForwardingObserver(boost::shared_ptr<Mailbox> mb)
             : m_pressure_min_msecs(50),
               m_battery_min_msecs(5000),
               m_last_pressure_sent(now()),
@@ -875,7 +875,7 @@ class MCBForwardingObserver : public BufferedMessageObserver
         float m_battery_min_msecs;
         TimeStamp m_last_pressure_sent;
         TimeStamp m_last_battery_sent;
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mb;
+        boost::shared_ptr<Mailbox> m_mb;
 };
 
 class NotRootException : public std::exception
@@ -1064,22 +1064,10 @@ void ControlNode::onRun()
     m_telemetryBroadcaster->start();
 }
 
-static ControlNode* node;
-
-void cleanup()
-{
-    info() << "Cleaning up..." << endl;
-    CauvNode* oldnode = node;
-    node = 0;
-    delete oldnode;
-    info() << "Clean up done." << endl;
-}
-
 void interrupt(int sig)
 {
     cout << endl;
     info() << BashColour::Red << "Interrupt caught!";
-    cleanup();
     signal(SIGINT, SIG_DFL);
     raise(sig);
 }
@@ -1089,17 +1077,16 @@ int main(int argc, char** argv)
     signal(SIGINT, interrupt);
     
     try {
-        node = new ControlNode();
+        ControlNode node;
     
-        int ret = node->parseOptions(argc, argv);
+        int ret = node.parseOptions(argc, argv);
         if(ret != 0) return ret;
         
-        node->run();
+        node.run();
     }
     catch (NotRootException& e) {
         error() << e.what();
     }
     
-    cleanup();
     return 0;
 }
