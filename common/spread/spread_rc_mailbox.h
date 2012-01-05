@@ -71,19 +71,19 @@ public:
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType);
+    virtual int sendMessage(boost::shared_ptr<const Message> message, messageReliability reliability);
 
     /**
      * @return The number of bytes sent
      */
-    virtual int sendMessage(boost::shared_ptr<const Message> message, Spread::service serviceType,
+    virtual int sendMessage(boost::shared_ptr<const Message> message, messageReliability reliability,
                     const std::string &destinationGroup);
     
     /**
      * @return The number of bytes sent
      */
     virtual int sendMultigroupMessage(boost::shared_ptr<const Message> message,
-                                      Spread::service serviceType,
+                                      messageReliability reliability,
                                       const std::vector<std::string> &groupNames);
 
 

@@ -68,3 +68,4 @@ add_dependencies(common logo-headers version-header)
 add_dependencies(common-shared logo-headers version-header)
 
 add_subdirectory(supermess)
+add_subdirectory(zeromq)

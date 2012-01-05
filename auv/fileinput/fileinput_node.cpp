@@ -47,7 +47,7 @@ class FileinputObserver: public MessageObserver{
 
         void sendImage(){
             debug() << "sending image...";
-            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(CameraID::File, m_img, now()), UNRELIABLE_MESS);
+            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(CameraID::File, m_img, now()), UNRELIABLE_MSG);
             debug() << "(sent)";
         }
 

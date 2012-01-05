@@ -287,26 +287,9 @@ void emitDebug(){
 }
 
 void emitMailbox(){
-#if 0
-    /* need to explicitly resolve pointer to overloaded function: */
-    typedef int (ReconnectingSpreadMailbox::*sm_ptr3_t)(
-        boost::shared_ptr<const Message>, Spread::service, std::string const&
-    );
-    bp::class_<ReconnectingSpreadMailbox,
-               boost::noncopyable,
-               boost::shared_ptr<ReconnectingSpreadMailbox>
-              >("Mailbox", bp::no_init)
-        .def("join", wrap(&ReconnectingSpreadMailbox::joinGroup))
-        .def("send", wrap((sm_ptr3_t) &ReconnectingSpreadMailbox::sendMessage))
-        /* does this function actually serve any useful purpose other than
-         * maybe testing, and causing crashes? -- don't expose it?
-         */
-        .def("receive", wrap(&ReconnectingSpreadMailbox::receiveMessage))
-    ;
-#else
     /* need to explicitly resolve pointer to overloaded function: */
     typedef int (Mailbox::*sm_ptr3_t)(
-        boost::shared_ptr<const Message>, Spread::service, std::string const&
+        boost::shared_ptr<const Message>, messageReliability, std::string const&
     );
     bp::class_<Mailbox,
                boost::noncopyable,
@@ -314,7 +297,6 @@ void emitMailbox(){
               >("Mailbox", bp::no_init)
         .def("send", wrap((sm_ptr3_t) &Mailbox::sendMessage))
     ;
-#endif
 
     bp::class_<MessageSource,
                boost::noncopyable,
@@ -328,6 +310,11 @@ void emitMailbox(){
                boost::shared_ptr<MsgSrcMBMonitor>
               >("Monitor", bp::no_init)
         .def("addObserver", wrap(&MessageSource::addObserver)) // addObserver is a member of base class MessageSource
+    ;
+
+    bp::enum_<messageReliability>("messageReliability")
+        .value("RELIABLE_MSG",RELIABLE_MSG)
+        .value("UNRELIABLE_MSG",UNRELIABLE_MSG)
     ;
 }
 

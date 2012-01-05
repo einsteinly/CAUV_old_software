@@ -133,8 +133,8 @@ void ReconnectingSpreadMailbox::leaveGroup(const std::string &groupName) {
  * @return The number of bytes sent
  */
 int ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<const Message> message,
-                                           Spread::service serviceType) {
-    return sendMessage(message, serviceType, message->group());
+                                           messageReliability reliability) {
+    return sendMessage(message, reliability, message->group());
 }
 
 void ReconnectingSpreadMailbox::handleConnectionError(ConnectionError& e){
@@ -147,10 +147,16 @@ void ReconnectingSpreadMailbox::handleConnectionError(ConnectionError& e){
  * @return The number of bytes sent
  */
 int ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<const Message> message,
-                                           Spread::service serviceType,
+                                           messageReliability reliability,
                                            const std::string &destinationGroup) {
     ErrOnExit err("Failed to send message "); 
     int r = 0;
+    Spread::service serviceType;
+    if (reliability == UNRELIABLE_MSG) {
+        serviceType = UNRELIABLE_MESS;
+    } else {
+        serviceType = SAFE_MESS;
+    }
     if(_waitConnected(500)){
         try{
             if(m_mailbox){
@@ -171,10 +177,16 @@ int ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<const Message> mess
  * @return The number of bytes sent
  */
 int ReconnectingSpreadMailbox::sendMultigroupMessage(boost::shared_ptr<const Message> message,
-                                                     Spread::service serviceType,
+                                                     messageReliability reliability,
                                                      const std::vector<std::string> &groupNames) {
     ErrOnExit err("Failed to send multigroup message "); 
     int r = 0;
+    Spread::service serviceType;
+    if (reliability == UNRELIABLE_MSG) {
+        serviceType = UNRELIABLE_MESS;
+    } else {
+        serviceType = SAFE_MESS;
+    }
     if(_waitConnected(500)){
         try{
             if(m_mailbox){

@@ -274,7 +274,7 @@ class StateObserver : public MessageObserver, public XsensObserver
         }
         virtual void onStateRequestMessage(StateRequestMessage_ptr)
         {
-            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), SAFE_MESS);
+            m_mb->sendMessage(boost::make_shared<StateMessage>(m_orientation), RELIABLE_MSG);
         }
 
     protected:
@@ -338,11 +338,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Bearing].stateMsg();
                 msg->demand(m_demand[Bearing]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Bearing-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
             
@@ -354,11 +354,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Pitch].stateMsg();
                 msg->demand(m_demand[Pitch]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
                 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Pitch-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
         }
@@ -398,11 +398,11 @@ class ControlLoops : public MessageObserver, public XsensObserver
                 
                 boost::shared_ptr<ControllerStateMessage> msg = m_controllers[Depth].stateMsg();
                 msg->demand(m_demand[Depth]);
-                m_mb->sendMessage(msg, SAFE_MESS);
+                m_mb->sendMessage(msg, RELIABLE_MSG);
                 
                 foreach(boost::shared_ptr<GraphableMessage> m, m_controllers[Bearing].extraStateMessages()){
                     m->name("Depth-" + m->name());
-                    m_mb->sendMessage(m, SAFE_MESS);
+                    m_mb->sendMessage(m, RELIABLE_MSG);
                 }
             }
         }
@@ -584,7 +584,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     
                     boost::shared_ptr<ControllerStateMessage> msg = m_controllers[i].stateMsg();
                     msg->demand(m_demand[i]);
-                    m_mb->sendMessage(msg, SAFE_MESS);
+                    m_mb->sendMessage(msg, RELIABLE_MSG);
                 }
                 m_controllers[Controller::Pitch].is_angle = true;
                 m_controllers[Controller::Bearing].is_angle = true;
@@ -680,7 +680,7 @@ class ControlLoops : public MessageObserver, public XsensObserver
                     else
                         m_mcb->send(boost::make_shared<MotorMessage>(mid, newvalue));
                 }
-                m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), SAFE_MESS);
+                m_mb->sendMessage(boost::make_shared<MotorStateMessage>(mid, newvalue), RELIABLE_MSG);
             }
         }
 
@@ -825,7 +825,7 @@ class TelemetryBroadcaster : public MessageObserver, public XsensObserver
                 debug() << "Send telemetry thread started";
                 while(true)
                 {
-                    m_mb->sendMessage(boost::make_shared<TelemetryMessage>(m_orientation, m_depth), SAFE_MESS);
+                    m_mb->sendMessage(boost::make_shared<TelemetryMessage>(m_orientation, m_depth), RELIABLE_MSG);
                     msleep(100);
                 }
             } catch (boost::thread_interrupted&) {
@@ -853,7 +853,7 @@ class MCBForwardingObserver : public BufferedMessageObserver
         {
             if(now() - m_last_pressure_sent > m_pressure_min_msecs){        
                 debug(5) << "MCBForwardingObserver: Forwarding pressure message:" << *m;
-                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_mb->sendMessage(m, UNRELIABLE_MSG);
                 m_last_pressure_sent = now();
             }
         }
@@ -861,14 +861,14 @@ class MCBForwardingObserver : public BufferedMessageObserver
         {
             if(now() - m_last_battery_sent > m_battery_min_msecs){
                 debug(5) << "MCBForwardingObserver: Forwarding battery status message:" << *m;
-                m_mb->sendMessage(m, UNRELIABLE_MESS);
+                m_mb->sendMessage(m, UNRELIABLE_MSG);
                 m_last_battery_sent = now();
             }
         }
         virtual void onDebugMessage(DebugMessage_ptr m)
         {
             debug(5) << "MCBForwardingObserver: Forwarding debug message:" << *m;
-            m_mb->sendMessage(m, SAFE_MESS);
+            m_mb->sendMessage(m, RELIABLE_MSG);
         }
     protected:
         float m_pressure_min_msecs;

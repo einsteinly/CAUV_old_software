@@ -319,8 +319,8 @@ void ImageProcessor::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestM
     sendMessage(boost::make_shared<PipelineDiscoveryResponseMessage>(m_name));
 }
 
-void ImageProcessor::sendMessage(const boost::shared_ptr<const Message> msg, service_t service_type) const{
-    m_mailbox->sendMessage(msg, service_type);
+void ImageProcessor::sendMessage(const boost::shared_ptr<const Message> msg, messageReliability reliability) const{
+    m_mailbox->sendMessage(msg, reliability);
 }
 
 ImageProcessor::~ImageProcessor(){

@@ -49,7 +49,7 @@ class BroadcastImageNode: public OutputNode{
 
             debug(4) << "BroadcastImageNode::doWork()" << camid << *img;
             img->serializeQuality(qual);
-            sendMessage(boost::make_shared<ImageMessage>((CameraID::e)camid, *img, now()), UNRELIABLE_MESS);
+            sendMessage(boost::make_shared<ImageMessage>((CameraID::e)camid, *img, now()), UNRELIABLE_MSG);
 
             return r;
         }

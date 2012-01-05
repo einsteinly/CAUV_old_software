@@ -88,12 +88,12 @@ class ImgPipeTestNode : public CauvNode{
             
             // clear the pipeline
             cp = boost::make_shared<ClearPipelineMessage>();
-            sent = mailbox()->sendMessage(cp, SAFE_MESS);
+            sent = mailbox()->sendMessage(cp, RELIABLE_MSG);
 
             // Add input node
             an = boost::make_shared<AddNodeMessage>(NodeType::NetInput, arcs_in, arcs_out); 
             info() << "adding net input node";
-            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG); 
             int input_node_id = m_obs->waitOnNodeAdded();
 
             // Add output node
@@ -104,7 +104,7 @@ class ImgPipeTestNode : public CauvNode{
             ai.src = no;
             arcs_in.push_back(ai);
             an = boost::make_shared<AddNodeMessage>(NodeType::FileOutput, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG); 
             int output_node_id = m_obs->waitOnNodeAdded();
 
 
@@ -114,7 +114,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "file-out.jpg";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
 
             info() << "Setting source camera:";
             sp->nodeId(input_node_id);
@@ -122,7 +122,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::Int32;
             pv.intValue = 0;
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
         }
             
         void clearPipeline(){
@@ -131,7 +131,7 @@ class ImgPipeTestNode : public CauvNode{
             
             // clear the pipeline
             cp = boost::make_shared<ClearPipelineMessage>();
-            mailbox()->sendMessage(cp, SAFE_MESS);
+            mailbox()->sendMessage(cp, RELIABLE_MSG);
         }
 
         void setupFileIOTests(){
@@ -154,7 +154,7 @@ class ImgPipeTestNode : public CauvNode{
             // Add input node
             info() << "Add file input node:";
             an = boost::make_shared<AddNodeMessage>(NodeType::FileInput, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int file_input_node_id = m_obs->waitOnNodeAdded();
             
             // Add output node
@@ -165,7 +165,7 @@ class ImgPipeTestNode : public CauvNode{
             ai.src = no;
             arcs_in.push_back(ai);
             an = boost::make_shared<AddNodeMessage>(NodeType::FileOutput, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG); 
             int file_output_node_id = m_obs->waitOnNodeAdded();
             
             // Set input image parameter
@@ -175,12 +175,12 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "test.jpg";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
             
             info() << "Trying to set invalid parameter:";
             sp->paramId("void param");
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS); 
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG); 
             
             info() << "Setting output image parameter:";
             sp->nodeId(file_output_node_id);
@@ -188,7 +188,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "pt-out0.png";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS); 
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG); 
             
             info() << "Setting output image compression:";
             sp->nodeId(file_output_node_id);
@@ -196,7 +196,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::Int32;
             pv.intValue = 80;
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS); 
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG); 
             
             info() << "Setting output image parameter:";
             sp->nodeId(file_output_node_id);
@@ -204,7 +204,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "pt-out1.tiff";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
             
             info() << "Setting output image parameter:";
             sp->nodeId(file_output_node_id);
@@ -212,7 +212,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "pt-out0.png";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
             
             info() << "Setting output image parameter:";
             sp->nodeId(file_output_node_id); 
@@ -220,7 +220,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "pt-out0.jpg";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
         }
 
         void setupCameraToDisplay(){
@@ -243,7 +243,7 @@ class ImgPipeTestNode : public CauvNode{
             // Add input node
             an = boost::make_shared<AddNodeMessage>(NodeType::CameraInput, arcs_in, arcs_out); 
             info() << "adding camera input node";
-            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG); 
             int input_node_id = m_obs->waitOnNodeAdded();
 
             info() << "Setting source camera:";
@@ -252,7 +252,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::Int32;
             pv.intValue = 0;
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
 
             // Add convert node: default conversion is RGB->Grey
             info() << "Adding Colour Conversion node:";
@@ -262,7 +262,7 @@ class ImgPipeTestNode : public CauvNode{
             ai.src = no;
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(NodeType::ConvertColour, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int convert_node_id = m_obs->waitOnNodeAdded();
             
             // add Canny node
@@ -274,7 +274,7 @@ class ImgPipeTestNode : public CauvNode{
             arcs_in.clear();
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(NodeType::Canny, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int canny_node_id = m_obs->waitOnNodeAdded();
 
             // add Hough lines node
@@ -286,7 +286,7 @@ class ImgPipeTestNode : public CauvNode{
             arcs_in.clear();
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(NodeType::HoughLines, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int hough_node_id = m_obs->waitOnNodeAdded();
 
             // Add a display node:
@@ -298,7 +298,7 @@ class ImgPipeTestNode : public CauvNode{
             arcs_in.clear();
             arcs_in.push_back(ai);
             an = boost::make_shared<AddNodeMessage>(NodeType::LocalDisplay, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             m_obs->waitOnNodeAdded();
         }
 
@@ -322,7 +322,7 @@ class ImgPipeTestNode : public CauvNode{
             // Add input node
             info() << "Add file input node:";
             an = boost::make_shared<AddNodeMessage>(NodeType::FileInput, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int file_input_node_id = m_obs->waitOnNodeAdded();
             
             // Set input image parameter
@@ -332,7 +332,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "test.jpg";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS);
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG);
 
             // Add convert node: default conversion is RGB->Grey
             info() << "Adding Colour Conversion node:";
@@ -342,7 +342,7 @@ class ImgPipeTestNode : public CauvNode{
             ai.src = no;
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(NodeType::ConvertColour, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int convert_node_id = m_obs->waitOnNodeAdded();
             
             info() << "Setting number of channels for conversion output";
@@ -351,7 +351,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::Int32;
             pv.intValue = 1;
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS); 
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG); 
             
             // add Canny node
             info() << "Adding Canny node:";
@@ -362,7 +362,7 @@ class ImgPipeTestNode : public CauvNode{
             arcs_in.clear();
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(NodeType::Canny, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int canny_node_id = m_obs->waitOnNodeAdded();
 
             // add Hough lines node
@@ -374,7 +374,7 @@ class ImgPipeTestNode : public CauvNode{
             arcs_in.clear();
             arcs_in.push_back(ai); 
             an = boost::make_shared<AddNodeMessage>(NodeType::HoughLines, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS);
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG);
             int hough_node_id = m_obs->waitOnNodeAdded();
 
             // Add output node
@@ -386,7 +386,7 @@ class ImgPipeTestNode : public CauvNode{
             arcs_in.clear();
             arcs_in.push_back(ai);
             an = boost::make_shared<AddNodeMessage>(NodeType::FileOutput, arcs_in, arcs_out);
-            sent = mailbox()->sendMessage(an, SAFE_MESS); 
+            sent = mailbox()->sendMessage(an, RELIABLE_MSG); 
             int file_output_node_id = m_obs->waitOnNodeAdded();
             
             info() << "Setting output image filename:";
@@ -395,7 +395,7 @@ class ImgPipeTestNode : public CauvNode{
             pv.type = ParamType::String;
             pv.stringValue = "hough_out.jpg";
             sp->value(pv);
-            sent = mailbox()->sendMessage(sp, SAFE_MESS); 
+            sent = mailbox()->sendMessage(sp, RELIABLE_MSG); 
         }
         
         virtual void onRun(){

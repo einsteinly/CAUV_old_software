@@ -20,9 +20,7 @@
 #include <iostream>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
-
-#include <ssrc/spread.h>
+#include "mailbox.h"
 
 
 namespace boost {
@@ -61,7 +59,7 @@ class CauvNode
         void clearMessageObservers();
 
         int send(boost::shared_ptr<const Message> message,
-                 Spread::service serviceType = SAFE_MESS);
+                 messageReliability reliability = RELIABLE_MSG);
 
     protected:
         std::string m_name;
