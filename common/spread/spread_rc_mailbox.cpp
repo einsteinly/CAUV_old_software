@@ -133,7 +133,7 @@ void ReconnectingSpreadMailbox::leaveGroup(const std::string &groupName) {
  * @return The number of bytes sent
  */
 int ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<const Message> message,
-                                           messageReliability reliability) {
+                                           MessageReliability reliability) {
     return sendMessage(message, reliability, message->group());
 }
 
@@ -147,7 +147,7 @@ void ReconnectingSpreadMailbox::handleConnectionError(ConnectionError& e){
  * @return The number of bytes sent
  */
 int ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<const Message> message,
-                                           messageReliability reliability,
+                                           MessageReliability reliability,
                                            const std::string &destinationGroup) {
     ErrOnExit err("Failed to send message "); 
     int r = 0;
@@ -177,7 +177,7 @@ int ReconnectingSpreadMailbox::sendMessage(boost::shared_ptr<const Message> mess
  * @return The number of bytes sent
  */
 int ReconnectingSpreadMailbox::sendMultigroupMessage(boost::shared_ptr<const Message> message,
-                                                     messageReliability reliability,
+                                                     MessageReliability reliability,
                                                      const std::vector<std::string> &groupNames) {
     ErrOnExit err("Failed to send multigroup message "); 
     int r = 0;

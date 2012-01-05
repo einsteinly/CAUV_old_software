@@ -482,7 +482,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
         bool unregisterOutputID(output_id const& o, bool warnNonexistent = true);
 
-        void sendMessage(boost::shared_ptr<Message const>, messageReliability reliability = RELIABLE_MSG) const;
+        void sendMessage(boost::shared_ptr<Message const>, MessageReliability reliability = RELIABLE_MSG) const;
 
         /* Keep a record of which inputs are new (have changed since they were
          * last used by this node)

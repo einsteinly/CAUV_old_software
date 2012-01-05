@@ -319,7 +319,7 @@ void ImageProcessor::onPipelineDiscoveryRequestMessage(PipelineDiscoveryRequestM
     sendMessage(boost::make_shared<PipelineDiscoveryResponseMessage>(m_name));
 }
 
-void ImageProcessor::sendMessage(const boost::shared_ptr<const Message> msg, messageReliability reliability) const{
+void ImageProcessor::sendMessage(const boost::shared_ptr<const Message> msg, MessageReliability reliability) const{
     m_mailbox->sendMessage(msg, reliability);
 }
 

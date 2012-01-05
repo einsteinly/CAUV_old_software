@@ -59,7 +59,7 @@ class CauvNode
         void clearMessageObservers();
 
         int send(boost::shared_ptr<const Message> message,
-                 messageReliability reliability = RELIABLE_MSG);
+                 MessageReliability reliability = RELIABLE_MSG);
 
     protected:
         std::string m_name;

@@ -80,7 +80,7 @@ class Node(messaging.CauvNode):
     def __run(self):
         self.__callRunWithTryFinally(False)
     
-    def send(self, message, groups=None, service_level=messaging.messageReliability.RELIABLE_MSG):
+    def send(self, message, groups=None, service_level=messaging.MessageReliability.RELIABLE_MSG):
         if groups == None:
             groups = message.group
         self.mailbox.send(message, service_level, groups)

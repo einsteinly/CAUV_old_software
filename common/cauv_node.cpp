@@ -110,7 +110,7 @@ void CauvNode::clearMessageObservers()
         error() << "CauvNode::clearObservers: no mailbox monitor";
 }
 
-int CauvNode::send(boost::shared_ptr<const Message> m, messageReliability rel)
+int CauvNode::send(boost::shared_ptr<const Message> m, MessageReliability rel)
 {
     if(m_mailbox)
         return m_mailbox->sendMessage(m, rel);

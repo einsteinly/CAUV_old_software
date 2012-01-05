@@ -289,7 +289,7 @@ void emitDebug(){
 void emitMailbox(){
     /* need to explicitly resolve pointer to overloaded function: */
     typedef int (Mailbox::*sm_ptr3_t)(
-        boost::shared_ptr<const Message>, messageReliability, std::string const&
+        boost::shared_ptr<const Message>, MessageReliability, std::string const&
     );
     bp::class_<Mailbox,
                boost::noncopyable,
@@ -312,7 +312,7 @@ void emitMailbox(){
         .def("addObserver", wrap(&MessageSource::addObserver)) // addObserver is a member of base class MessageSource
     ;
 
-    bp::enum_<messageReliability>("messageReliability")
+    bp::enum_<MessageReliability>("MessageReliability")
         .value("RELIABLE_MSG",RELIABLE_MSG)
         .value("UNRELIABLE_MSG",UNRELIABLE_MSG)
     ;
