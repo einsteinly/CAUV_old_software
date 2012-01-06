@@ -116,7 +116,7 @@ void MotorControls::initialise(boost::shared_ptr<AUV> auv, boost::shared_ptr<Cau
         ui->autopilotControlsLayout->addWidget(label, count, 0, 1, 1, Qt::AlignCenter);
 
         QDoubleSpinBox * target = new QDoubleSpinBox();
-        target->setWrapping(true);
+        target->setWrapping(i.second->wraps());
         target->setButtonSymbols(QAbstractSpinBox::PlusMinus);
         target->setMaximum(i.second->getMax());
         target->setMinimum(i.second->getMin());

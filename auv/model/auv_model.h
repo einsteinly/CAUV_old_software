@@ -137,6 +137,10 @@ namespace cauv{
                 else return value;
             }
 
+            bool wraps(void) {
+                return m_wraps;
+            }
+
             void set(const T &data){
                 if(data > getMax()) {
                     if(m_wraps) MutableDataStream<T>::set(wrap(data));
