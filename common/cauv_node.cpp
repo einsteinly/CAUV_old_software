@@ -23,7 +23,6 @@
 #include <common/cauv_global.h> 
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
-#include <common/spread/msgsrc_mb_observer.h>
 #include <debug/cauv_debug.h>
 #include <generated/message_observers.h>
 #include <generated/types/DebugLevelMessage.h>
@@ -53,7 +52,9 @@ void CauvNode::run(bool synchronous)
     info() << "Module: " << m_name;
     info() << "Version:\n" << Version_Information;
 
-    m_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
+    if (m_spread_mailbox) {
+        m_spread_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
+    }
     if(!synchronous)
         m_event_monitor->startMonitoringAsync();
 
@@ -90,22 +91,22 @@ void CauvNode::joinGroup(std::string const& group)
 
 void CauvNode::addMessageObserver(boost::shared_ptr<MessageObserver> o)
 {
-    if(m_mailbox_monitor)
-        m_mailbox_monitor->addObserver(o);
+    if(m_event_monitor)
+        m_event_monitor->addMessageObserver(o);
     else
         error() << "CauvNode::addMessageObserver: no mailbox monitor";
 }
 void CauvNode::removeMessageObserver(boost::shared_ptr<MessageObserver> o)
 {
-    if(m_mailbox_monitor)
-        m_mailbox_monitor->removeObserver(o);
+    if(m_event_monitor)
+        m_event_monitor->removeMessageObserver(o);
     else
         error() << "CauvNode::removeMessageObserver: no mailbox monitor";
 }
 void CauvNode::clearMessageObservers()
 {
-    if(m_mailbox_monitor)
-        m_mailbox_monitor->clearObservers();
+    if(m_event_monitor)
+        m_event_monitor->clearMessageObservers();
     else
         error() << "CauvNode::clearObservers: no mailbox monitor";
 }
@@ -160,8 +161,8 @@ void CauvNode::addOptions(boost::program_options::options_description& desc,
     namespace po = boost::program_options;
     desc.add_options()
         ("help,h", "Print this help message")
-        ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Server address for messages")
-        ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Server port for messages")
+        ("server,s", po::value<std::string>(&m_server)->default_value("localhost"), "Spread server address for messages")
+        ("port,p", po::value<unsigned int>(&m_port)->default_value(16707), "Spread server port for messages")
         ("version,V", "show version information")
     ;
 }
@@ -189,13 +190,12 @@ void CauvNode::stopNode(){
 
 CauvNode::CauvNode(const std::string& name)
     : m_name(name),
-      m_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
-      m_event_monitor(boost::make_shared<MailboxEventMonitor>(m_mailbox)),
-      m_mailbox_monitor(boost::make_shared<MsgSrcMBMonitor>()),
+      m_spread_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
+      m_mailbox(m_spread_mailbox),
+      m_event_monitor(boost::make_shared<SpreadMailboxEventMonitor>(m_spread_mailbox)),
       m_running(false)
 {
     debug::setProgramName(name);
-    m_event_monitor->addObserver(m_mailbox_monitor);
     
     addMessageObserver(boost::make_shared<DBGLevelObserver>());
     joinGroup("debug");
