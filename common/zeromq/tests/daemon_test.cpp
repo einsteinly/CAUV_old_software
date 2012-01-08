@@ -48,7 +48,6 @@ void multicast_pub(std::string msg_str) {
 
 void send_debug_message(std::string message) {
     cauv::ZeroMQMailbox mb;
-    mb.joinGroup("debug");
     mb.sendMessage(boost::make_shared<cauv::DebugMessage>(cauv::DebugType::Info,message),cauv::RELIABLE_MSG);
 }
 

@@ -21,8 +21,17 @@
 
 #include <utility/string.h>
 #include <common/cauv_global.h> 
+
+#define ZEROMQ_MESSAGING
+
+#ifdef ZEROMQ_MESSAGING
+#include <common/zeromq/zeromq_mailbox.h>
+#include <common/zeromq/zeromq_mailbox_monitor.h>
+#else
 #include <common/spread/spread_rc_mailbox.h>
 #include <common/spread/mailbox_monitor.h>
+#endif
+
 #include <debug/cauv_debug.h>
 #include <generated/message_observers.h>
 #include <generated/types/DebugLevelMessage.h>
@@ -52,9 +61,11 @@ void CauvNode::run(bool synchronous)
     info() << "Module: " << m_name;
     info() << "Version:\n" << Version_Information;
 
+#ifndef ZEROMQ_MESSAGING
     if (m_spread_mailbox) {
         m_spread_mailbox->connect(MakeString() << m_port << "@" << m_server, m_name);
     }
+#endif
     if(!synchronous)
         m_event_monitor->startMonitoringAsync();
 
@@ -190,9 +201,15 @@ void CauvNode::stopNode(){
 
 CauvNode::CauvNode(const std::string& name)
     : m_name(name),
+#ifdef ZEROMQ_MESSAGING
+      m_zeromq_mailbox(boost::make_shared<ZeroMQMailbox>()),
+      m_mailbox(m_zeromq_mailbox),
+      m_event_monitor(boost::make_shared<ZeroMQMailboxEventMonitor>(m_zeromq_mailbox)),
+#else
       m_spread_mailbox(boost::make_shared<ReconnectingSpreadMailbox>()),
       m_mailbox(m_spread_mailbox),
       m_event_monitor(boost::make_shared<SpreadMailboxEventMonitor>(m_spread_mailbox)),
+#endif
       m_running(false)
 {
     debug::setProgramName(name);

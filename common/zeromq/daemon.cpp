@@ -35,6 +35,7 @@ void ZmqGroupDaemon::run(void) {
     items[1].socket = zm_recv_sock;
     items[1].events = ZMQ_POLLIN;
 
+    info() << "daemon for group" << name << "started";
     while(true) {
         if (zmq::poll(items,2) > 0) {
             debug(9) << "poll triggered";
@@ -79,7 +80,6 @@ int main (int argc, char** argv) {
     }
 
     cauv::ZmqGroupDaemon daemon(vars["group"].as<std::string>());
-    info() << "waiting for message";
 
     if (vars.count("test")) {
         daemon.test();

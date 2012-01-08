@@ -3,6 +3,9 @@ find_package (ssrcspread REQUIRED)
 include_directories (${ssrcspread_INCLUDE_DIR})
 link_directories (${ssrcspread_LIBRARY_DIR})
 
+find_package (ZeroMq REQUIRED)
+include_directories (${ZEROMQ_INCLUDE_DIRS})
+
 find_package (OpenCV REQUIRED)
 
 add_library (
@@ -26,6 +29,8 @@ target_link_libraries (
     cauv_debug
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
+    zeromq_msg
+    ${ZEROMQ_LIBRARY}
     boost_thread
     boost_date_time
     boost_iostreams
@@ -55,6 +60,8 @@ target_link_libraries (
     cauv_debug
     ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
+    zeromq_msg
+    ${ZEROMQ_LIBRARY}
     boost_thread
     boost_date_time
     boost_iostreams

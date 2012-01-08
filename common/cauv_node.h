@@ -36,6 +36,7 @@ namespace cauv{
 /* Forward Declarations */
 class Mailbox;
 class ReconnectingSpreadMailbox;
+class ZeroMQMailbox;
 class MailboxEventMonitor;
 class MessageObserver;
 class Message;
@@ -77,6 +78,7 @@ class CauvNode
 
     private:
         boost::shared_ptr<ReconnectingSpreadMailbox> m_spread_mailbox;
+        boost::shared_ptr<ZeroMQMailbox> m_zeromq_mailbox;
         boost::shared_ptr<Mailbox> m_mailbox;
         boost::shared_ptr<MailboxEventMonitor> m_event_monitor;
         volatile bool m_running;

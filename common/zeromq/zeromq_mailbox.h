@@ -16,11 +16,12 @@ namespace cauv {
 
 class ZeroMQGroup : boost::noncopyable {
     public:
-    ZeroMQGroup(zmq::context_t &context, const std::string name);
+    ZeroMQGroup(zmq::context_t &context, const std::string name, bool write_only = true);
     zmq::pollitem_t poll_item;
     zmq::socket_t push_skt;
     zmq::socket_t sub_skt;
     const std::string name;
+    bool write_only;
 };
 
 class ZeroMQMailboxEventMonitor;
@@ -45,7 +46,7 @@ class ZeroMQMailbox : public Mailbox, boost::noncopyable {
     friend class ZeroMQMailboxEventMonitor;
 
     private:
-    int send_message_to_group(boost::shared_ptr<const Message>, boost::shared_ptr<ZeroMQGroup> group);
+    int send_message_to_group(boost::shared_ptr<const Message>, const std::string &groupName);
     std::vector <boost::shared_ptr<ZeroMQGroup> > get_groups(void);
 
     zmq::context_t zm_context;

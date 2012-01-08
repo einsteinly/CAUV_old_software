@@ -68,18 +68,29 @@ void ZeroMQMailboxEventMonitor::doMonitoring(void) {
                 zm_poll_items.push_back(group->poll_item);
             }
         }
-        if (zmq::poll(&zm_poll_items[0],zm_poll_items.size(),1000000)) {
-            for (unsigned int i = 0; i < zm_poll_items.size(); i++) {
-                if (zm_poll_items[i].revents == ZMQ_POLLIN) {
-                    debug() << "received message from group" << zm_groups[i]->name;
-                    zm_groups[i]->sub_skt.recv(&msg,ZMQ_NOBLOCK);
-                    //!!! seems like the copy involved here could be avoided
-                    //somehow...
-                    notifyObservers(boost::make_shared<const svec_t>((byte*)msg.data(),(byte*)msg.data() + msg.size()));
+        try {
+            if (zmq::poll(&zm_poll_items[0],zm_poll_items.size(),1000000)) {
+                for (unsigned int i = 0; i < zm_poll_items.size(); i++) {
+                    if (zm_poll_items[i].revents == ZMQ_POLLIN) {
+#ifdef CAUV_DEBUG_MESSAGES
+                        debug(10) << "received message from group" << zm_groups[i]->name;
+#endif
+                        zm_groups[i]->sub_skt.recv(&msg,ZMQ_NOBLOCK);
+                        byte *dataptr = reinterpret_cast<byte*>(msg.data());
+                        //!!! seems like the copy involved here could be avoided
+                        //somehow...
+                        notifyObservers(boost::make_shared<const svec_t>(dataptr,dataptr + msg.size()));
+                    }
                 }
+            }
+        //might be interrupted, just keep going
+        } catch (zmq::error_t err) {
+            if (err.num() != EINTR) {
+                throw err;
             }
         }
     }
+    m_monitoring = false;
 }
 
 }
