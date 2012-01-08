@@ -1,6 +1,7 @@
 #ifndef CAUV_MAILBOX_H
 #define CAUV_MAILBOX_H
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 namespace cauv {
 

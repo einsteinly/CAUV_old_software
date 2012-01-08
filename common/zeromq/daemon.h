@@ -2,9 +2,9 @@
 
 namespace cauv {
 
-class ZmqGroup {
+class ZmqGroupDaemon {
     public:
-    ZmqGroup(const std::string name);
+    ZmqGroupDaemon(const std::string name);
     void test(void);
     void run(void);
     private:
@@ -12,7 +12,8 @@ class ZmqGroup {
     zmq::context_t zm_context;
     zmq::socket_t zm_pub_sock;
     zmq::socket_t zm_recv_sock;
-    zmq::socket_t zm_control_sock;
+    zmq::socket_t zm_control_pub;
+    zmq::socket_t zm_control_sub;
 };
 
 }
