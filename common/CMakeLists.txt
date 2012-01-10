@@ -1,41 +1,55 @@
 # required libraries:
-find_package (ssrcspread REQUIRED)
-include_directories (${ssrcspread_INCLUDE_DIR})
-link_directories (${ssrcspread_LIBRARY_DIR})
-
-find_package (ZeroMq REQUIRED)
-include_directories (${ZEROMQ_INCLUDE_DIRS})
-
 find_package (OpenCV REQUIRED)
 
-add_library (
-    common STATIC
-    
+option(ZEROMQ_MESSAGING "use zeromq for messaging instead of spread" OFF)
+if(ZEROMQ_MESSAGING)
+    add_definitions(-DZEROMQ_MESSAGING)
+    add_subdirectory(zeromq)
+else()
+    add_subdirectory(spread)
+endif()
+
+add_subdirectory(supermess)
+
+set (
+    common_files
+
     cauv_global.cpp
     cauv_node.cpp
     cauv_utils.cpp
     image.cpp
     math.cpp
-    spread/mailbox_monitor.cpp
-    spread/spread_mailbox.cpp
-    spread/spread_rc_mailbox.cpp
-    spread/spread_messages.cpp
 )
 
-target_link_libraries (
-    common
+set (
+    common_links
 
     messages
     cauv_debug
-    ${ssrcspread_LIBRARIES}
     ${OpenCV_LIBS}
-    zeromq_msg
-    ${ZEROMQ_LIBRARY}
     boost_thread
     boost_date_time
     boost_iostreams
     boost_signals
     boost_program_options
+)
+
+if (ZEROMQ_MESSAGING)
+    list(APPEND common_links zeromq_msg)
+else()
+    list(APPEND common_links spread_msg)
+endif()
+
+add_library (
+    common STATIC
+
+    ${common_files}
+)
+
+target_link_libraries (
+    common
+
+    ${common_links}
 )
 depends_on_messages(common)
 
@@ -43,30 +57,12 @@ depends_on_messages(common)
 add_library (
     common-shared SHARED
     
-    cauv_global.cpp
-    cauv_node.cpp
-    cauv_utils.cpp
-    image.cpp
-    math.cpp
-    spread/mailbox_monitor.cpp
-    spread/spread_mailbox.cpp
-    spread/spread_rc_mailbox.cpp
-    spread/spread_messages.cpp
+    ${common_files}
 )
 target_link_libraries (
     common-shared
 
-    messages
-    cauv_debug
-    ${ssrcspread_LIBRARIES}
-    ${OpenCV_LIBS}
-    zeromq_msg
-    ${ZEROMQ_LIBRARY}
-    boost_thread
-    boost_date_time
-    boost_iostreams
-    boost_signals
-    boost_program_options
+    ${common_links}
 )
 depends_on_messages(common-shared)
 cauv_install(common-shared)
@@ -74,5 +70,3 @@ cauv_install(common-shared)
 add_dependencies(common logo-headers version-header)
 add_dependencies(common-shared logo-headers version-header)
 
-add_subdirectory(supermess)
-add_subdirectory(zeromq)

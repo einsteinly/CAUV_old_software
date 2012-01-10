@@ -5,17 +5,15 @@
 
 namespace cauv {
 
-const std::string get_local_sub(const std::string groupName) {
-    return std::string("ipc:///tmp/" + groupName);
-}
+bool is_daemon_running(const std::string groupName);
 
-const std::string get_local_push(const std::string groupName) {
-    return std::string("ipc:///tmp/pub_" + groupName);
-}
+const std::string get_local_sub(const std::string groupName);
 
-const std::string get_multicast_control() {
-    return std::string("epgm://eth0;239.192.1.1:5555");
-}
+const std::string get_local_push(const std::string groupName);
+
+const std::string get_multicast_control();
+
+const std::string get_multicast_group(const std::string groupName);
 
 }
 

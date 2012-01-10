@@ -64,7 +64,7 @@ class Node(messaging.CauvNode):
          # synchronous = True => Consume this thread
         try:
             self.run(synchronous)
-        except Exception, e:
+        except:
             error(traceback.format_exc())
         finally:
             self.stop()

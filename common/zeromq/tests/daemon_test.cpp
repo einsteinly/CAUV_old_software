@@ -13,6 +13,7 @@
 
 #include <common/zeromq/zeromq_mailbox.h>
 #include <common/zeromq/zeromq_mailbox_monitor.h>
+#include <common/zeromq/addresses.h>
 
 void send_message(std::string group_name, std::string msg_str) {
     zmq::context_t test_context(1);
@@ -38,7 +39,7 @@ void receive_messages(std::string group_name) {
 void multicast_pub(std::string msg_str) {
     zmq::context_t test_context(1);
     zmq::socket_t zm_pub_sock(test_context,ZMQ_PUB);
-    zm_pub_sock.connect("epgm://eth0;239.192.1.1:5555");
+    zm_pub_sock.connect(cauv::get_multicast_control().c_str());
     zmq::message_t msg(msg_str.size() + 1);
     memcpy(msg.data(),msg_str.c_str(),msg_str.size() + 1);
     info() << "sending message: \"" << msg_str << "\" to multicast";

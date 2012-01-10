@@ -22,8 +22,6 @@
 #include <utility/string.h>
 #include <common/cauv_global.h> 
 
-#define ZEROMQ_MESSAGING
-
 #ifdef ZEROMQ_MESSAGING
 #include <common/zeromq/zeromq_mailbox.h>
 #include <common/zeromq/zeromq_mailbox_monitor.h>

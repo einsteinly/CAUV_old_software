@@ -2,6 +2,7 @@
 #include "addresses.h"
 #include <debug/cauv_debug.h>
 #include <generated/types/message.h>
+#include <generated/types/MembershipChangedMessage.h>
 
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
@@ -115,14 +116,18 @@ void ZeroMQMailbox::joinGroup (const std::string &groupName) {
     
     zm_groups[groupName] = boost::make_shared<ZeroMQGroup>(boost::ref(zm_context),groupName);
     m_group_gen++;
+    send_message_to_group(boost::make_shared<MembershipChangedMessage>(groupName),groupName);
 }
 
 void ZeroMQMailbox::leaveGroup (const std::string &groupName) {
     if (!zm_groups.erase(groupName)) {
         warning() << "tried to leave group " << groupName << " which hasn't been joined yet!";
+        return;
     }
     debug() << "leaving group" << groupName;
+    zm_groups.erase(groupName);
     m_group_gen++;
+    send_message_to_group(boost::make_shared<MembershipChangedMessage>(groupName),groupName);
 }
 
 std::vector <boost::shared_ptr <ZeroMQGroup> >
