@@ -63,7 +63,7 @@ target_link_libraries (
     pipeline-widget
     common-shared
     ${FTGL_LIBRARIES}
-    ${OPENGL_LIBRARY}
+    ${OPENGL_LIBRARIES}
     ${QT_LIBRARIES}
     ${graphviz_LIBRARIES}
 )

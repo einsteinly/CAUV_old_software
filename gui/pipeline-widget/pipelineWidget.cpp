@@ -9,7 +9,12 @@
 //#include <boost/graph/graphviz.hpp>
 
 #include <QtGui>
+
+#ifndef __APPLE__
 #include <GL/glu.h>
+#else
+#include <OpenGL/glu.h>
+#endif // else ndef __APPLE__
 
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
