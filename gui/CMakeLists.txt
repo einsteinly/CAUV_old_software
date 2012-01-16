@@ -16,6 +16,7 @@ if (CAUV_BUILD_GUI)
 
         # shiny OpenGL
         find_package(OpenGL REQUIRED)
+        include_directories (${OPENGL_INCLUDE_DIR})
 
         find_package (OpenCV REQUIRED)
 

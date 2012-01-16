@@ -15,7 +15,12 @@
 #include "imgNode.h"
 
 #include <QtOpenGL>
+
+#ifndef __APPLE__
 #include <GL/glu.h>
+#else
+#include <OpenGL/glu.h>
+#endif // else ndef __APPLE__
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
