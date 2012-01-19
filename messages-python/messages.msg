@@ -158,7 +158,8 @@ struct LocalNodeInput
 {
     eq cmp input : string;
     eq cmp subType : int32;
-    eq cmp schedType : InputSchedType;
+    // NB: schedType is excluded from comparison and equality testing
+    schedType : InputSchedType;
 }
 struct NodeOutput
 {
