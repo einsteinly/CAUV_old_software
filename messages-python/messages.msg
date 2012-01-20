@@ -94,6 +94,7 @@ enum NodeType : int8 {
     SonarShadowFilter,
     PolarImageToXY,
     SonarImageEdge,
+    LearnedKeyPoints,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -305,7 +306,8 @@ variant ParamValue
     int32, float, string, bool,
     list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>,
-    BoundedFloat
+    BoundedFloat,
+    list<int32>
 }
 
 group membership

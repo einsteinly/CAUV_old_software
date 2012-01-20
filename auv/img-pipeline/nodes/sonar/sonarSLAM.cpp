@@ -309,9 +309,9 @@ void SonarSLAMNode::init(){
     // finished doing work here)
     m_speed = slow;
 
-    // inputs (well, parameter input that must be new for the node to be
-    // executed):
+    // inputs:
     registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints used to update map", Must_Be_New);
+    registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
 
     // parameters: may be old
@@ -338,6 +338,11 @@ void SonarSLAMNode::init(){
     registerOutputID("whole cloud vis");
     registerOutputID("last added vis");
     registerOutputID("mosaic");
+    
+    // training outputs for feature extractor:
+    registerOutputID("training: keypoints", std::vector<cauv::KeyPoint>());
+    registerOutputID("training: keypoints image");
+    registerOutputID("training: goodness", std::vector<int>());
 }
 
 Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
