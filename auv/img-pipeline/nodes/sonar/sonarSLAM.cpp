@@ -86,13 +86,14 @@ class SonarSLAMImpl{
 
         void addNewCloud(cloud_ptr cloud,
                          float point_merge_distance,
-                         float concave_hull_alpha){
+                         float concave_hull_alpha,
+                         std::vector<int>& keypoint_goodness){
             // TODO: propagate sonar timestamp with keypoints... somehow... and use
             // that instead of an index
             static uint32_t cloud_num = 0;
             clouds[++cloud_num] = cloud;
             //whole_cloud->mergeCollapseNearest(cloud, point_merge_distance);
-            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha, point_merge_distance);
+            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha, point_merge_distance, keypoint_goodness);
             last_transformation = cloud->transformation();            
             last_cloud = cloud;
 
@@ -303,6 +304,8 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
 }
 
 void SonarSLAMNode::init(){
+    typedef std::vector<KeyPoint> kp_vec;
+
     m_impl = boost::make_shared<SonarSLAMImpl>();
 
     // slow node (don't schedule nodes providing input until we've
@@ -310,7 +313,8 @@ void SonarSLAMNode::init(){
     m_speed = slow;
 
     // inputs:
-    registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints used to update map", Must_Be_New);
+    registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", Must_Be_New);
+    registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
     registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
 
@@ -340,17 +344,21 @@ void SonarSLAMNode::init(){
     registerOutputID("mosaic");
     
     // training outputs for feature extractor:
-    registerOutputID("training: keypoints", std::vector<cauv::KeyPoint>());
+    registerOutputID("training: keypoints", kp_vec());
     registerOutputID("training: keypoints image");
     registerOutputID("training: goodness", std::vector<int>());
 }
 
 Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
+    typedef std::vector<KeyPoint> kp_vec;
     out_map_t r;
 
     bool clear = param<bool>("clear");
     if(clear)
         m_impl->reset();
+
+    const std::vector<KeyPoint> keypoints = param<kp_vec>("keypoints");
+    const std::vector<KeyPoint> training_keypoints = param<kp_vec>("training: polar keypoints");
 
     const int   max_iters   = param<int>("max iters");
     const float euclidean_fitness   = param<float>("euclidean fitness");
@@ -383,7 +391,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
 
     // weight-test throwing away low scorers:
     cloud_ptr new_cloud = kpsToCloud(
-        param< std::vector<KeyPoint> >("keypoints"),
+        keypoints,
         guess,
         weight_test
     );
@@ -462,7 +470,9 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
                << "score:" << score;
         debug(3) << "transformation:\n" << final_transform;
         if(icp.hasConverged() && score < score_thr){
-            m_impl->addNewCloud(final, point_merge_distance, map_merge_alpha);
+            // start out assuming all keypoints are good
+            std::vector<int> point_goodness(keypoints.size(), 1);
+            m_impl->addNewCloud(final, point_merge_distance, map_merge_alpha, point_goodness);
             if(xy_image){
                 m_impl->updateVis(xy_image->mat(), final_transform, m_per_pix);
                 r["mosaic"] = boost::make_shared<Image>(m_impl->vis());
@@ -475,6 +485,11 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             r["last added vis"] = boost::make_shared<Image>(renderCloud(
                 *final, Eigen::Vector2f(xytheta[0],xytheta[1]), m_impl->min(), m_impl->max(), render_sz, false
             ));
+           
+            r["training: keypoints"] = training_keypoints;
+            r["training: keypoints image"] = inputs["keypoints image"];
+            r["training: goodness"] = point_goodness;
+
         }else if(score >= score_thr){
             r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
             info() << BashColour::Brown
