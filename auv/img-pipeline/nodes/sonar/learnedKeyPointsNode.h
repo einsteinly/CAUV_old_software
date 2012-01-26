@@ -28,13 +28,17 @@
 #include <boost/random/uniform_real_distribution.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #else // old boost random hacks
-#warning please update your boost version to 1.47 or greater
+#warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#warning !! please update your boost version to 1.47 or greater, this is way too hacky !!
+#warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #include<boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real.hpp>
 #include <boost/random/uniform_int.hpp>
 namespace boost{
 namespace random{
 typedef boost::mt19937 mt19937;
+template<typename T> struct uniform_real_distribution: boost::uniform_real_distribution{ };
+template<typename T> struct uniform_int_distribution: boost::uniform_int_distribution{ };
 } // namespace random
 } // namespace boost
 #endif // old boost random hacks
