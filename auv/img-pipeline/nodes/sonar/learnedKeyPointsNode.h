@@ -372,6 +372,7 @@ class Forest{
             }else{
                 m_trees.push_back(p);
             }
+            info() << "addTree:" << size() << "trees";
         }
         
         bool test(cv::Point const& pt, cv::Mat const& image) const{
@@ -382,7 +383,7 @@ class Forest{
         }
 
         inline kp_vec filter(kp_vec const& in_kps, cv::Mat const& image) const{
-            debug() << "filter: " << in_kps.size() << "keypoints...";
+            info() << "filter: " << in_kps.size() << "keypoints...";
             if(!m_trees.size()){
                 debug() << "filter: no forest!";
                 return in_kps;
@@ -392,7 +393,7 @@ class Forest{
             foreach(KeyPoint const& k, in_kps)
                 if(test(cv::Point(int(k.pt.x), int(k.pt.y)), image))
                     r.push_back(k);
-            debug() << "filter: " << r.size() << "passed";
+            info() << "filter: " << r.size() << "passed";
             return r;
         }
 
@@ -585,8 +586,8 @@ class LearnedKeyPointsNode: public Node{
         };
 
         void _train(kp_vec const& keypoints, int_vec const& goodness, image_ptr_t img){
-            debug() << keypoints.size() <<  "kps, "
-                    << goodness.size() << "values for training";
+            info() << keypoints.size() <<  "kps, "
+                   << goodness.size() << "values for training";
             
             pt_vec kps_as_points;
             kps_as_points.reserve(keypoints.size());
@@ -599,9 +600,8 @@ class LearnedKeyPointsNode: public Node{
             TreeNode_ptr new_tree = boost::apply_visitor(
                 TreeGrowingVisitor(kps_as_points, goodness, questions), m
             );
-
-            m_forest.addTree(new_tree);
             
+            m_forest.addTree(new_tree);
         }
 
     private:
