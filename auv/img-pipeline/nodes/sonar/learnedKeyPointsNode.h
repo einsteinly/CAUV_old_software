@@ -24,11 +24,22 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
-// for boost > 1.46 these are deprecated, and become:
-// #include <boost/random/uniform_real_distribution.hpp>
-// #include <boost/random/uniform_int_distribution.hpp>
+#if BOOST_VERSION >= 104700
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#else // old boost random hacks
+#warning please update your boost version to 1.47 or greater
+#include<boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real.hpp>
 #include <boost/random/uniform_int.hpp>
+namespace boost{
+namespace random{
+typedef boost::mt19937 mt19937;
+template<typename T> struct uniform_real_distribution: boost::uniform_real_distribution<T>{ };
+template<typename T> struct uniform_int_distribution: boost::uniform_int_distribution<T>{ };
+} // namespace random
+} // namespace boost
+#endif // old boost random hacks
 #include <boost/random/mersenne_twister.hpp>
 
 #include <opencv2/core/core.hpp>
