@@ -37,8 +37,8 @@
 namespace boost{
 namespace random{
 typedef boost::mt19937 mt19937;
-template<typename T> struct uniform_real_distribution: boost::uniform_real_distribution{ };
-template<typename T> struct uniform_int_distribution: boost::uniform_int_distribution{ };
+template<typename T> struct uniform_real_distribution: boost::uniform_real{ };
+template<typename T> struct uniform_int_distribution: boost::uniform_int{ };
 } // namespace random
 } // namespace boost
 #endif // old boost random hacks
