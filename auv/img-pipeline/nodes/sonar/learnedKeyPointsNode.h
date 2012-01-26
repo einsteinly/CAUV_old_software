@@ -24,8 +24,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
-#include <boost/random/uniform_real_distribution.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
+// for boost > 1.46 these are deprecated, and become:
+// #include <boost/random/uniform_real_distribution.hpp>
+// #include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/uniform_real.hpp>
+#include <boost/random/uniform_int.hpp>
 #include <boost/random/mersenne_twister.hpp>
 
 #include <opencv2/core/core.hpp>
@@ -150,6 +153,8 @@ class RFQuestion{
             return false;
         }
 };
+typedef boost::shared_ptr<RFQuestion> Question_ptr;
+typedef boost::shared_ptr<RFQuestion const> Question_constptr;
 
 class PxRatioQuestion: public RFQuestion{
     public:
@@ -178,7 +183,7 @@ typedef boost::shared_ptr<TreeNode> TreeNode_ptr;
 
 class TreeNode{
     public:
-        TreeNode(RFQuestion const& question, int terminal_flags)
+        TreeNode(Question_constptr question, int terminal_flags)
             : m_question(question),
               m_true_side((TreeNode*)(!!(terminal_flags & TrueGood)), null_deleter),
               m_false_side((TreeNode*)(!!(terminal_flags & FalseGood)), null_deleter),
@@ -195,7 +200,7 @@ class TreeNode{
         }
 
         inline bool test(cv::Point const& pt, cv::Mat const& image) const{
-            if(m_question.apply(pt, image)){
+            if(m_question->apply(pt, image)){
                 if(m_terminal & TerminalTrue){
                     return m_true_side; // pointer non-zero (but invalid) if good, zero if bad
                 }else{
@@ -215,7 +220,7 @@ class TreeNode{
             void operator()(TreeNode*) const {}
         } null_deleter;
 
-        RFQuestion const& m_question;
+        Question_constptr m_question;
         TreeNode_ptr m_true_side;
         TreeNode_ptr m_false_side;
         const int m_terminal;
@@ -223,7 +228,7 @@ class TreeNode{
 
 class ListOfRandomRFQuestions{
     private:
-        typedef std::list< boost::shared_ptr<RFQuestion> > qlist_t;
+        typedef std::list<Question_ptr> qlist_t;
         typedef RFQuestion::entropy_t entropy_t;
 
     public:
@@ -235,13 +240,13 @@ class ListOfRandomRFQuestions{
 
         // NB: pass by reference of shared pointer - a different pointer might
         // be returned to the one passed in.
-        RFQuestion const& bestQuestionFor(pt_vec const& points,
-                                          idx_vec const& pt_indices,
-                                          int_vec const& goodness,
-                                          cv::Mat const& image,
-                                          int& best_terminal_flags,
-                                          idx_vec_ptr &test_true,
-                                          idx_vec_ptr &test_false) const{
+        Question_constptr bestQuestionFor(pt_vec const& points,
+                                         idx_vec const& pt_indices,
+                                         int_vec const& goodness,
+                                         cv::Mat const& image,
+                                         int& best_terminal_flags,
+                                         idx_vec_ptr &test_true,
+                                         idx_vec_ptr &test_false) const{
             idx_vec_ptr test_true_temp = boost::make_shared<idx_vec>();
             idx_vec_ptr test_false_temp = boost::make_shared<idx_vec>();
             test_true_temp->reserve(pt_indices.size());
@@ -300,9 +305,9 @@ class ListOfRandomRFQuestions{
                 test_false.swap(test_false_temp);
                 // if we can't distinguish, presume points are bad:
                 best_terminal_flags = test_true->size()? TrueBadFalseGood : TrueGoodFalseBad;
-                return *m_questions.back();
+                return m_questions.back();
             }
-            return **best;
+            return *best;
         }
 
     private:
@@ -322,6 +327,44 @@ class ListOfRandomRFQuestions{
         boost::random::mt19937 &m_rng;
 };
 
+
+class Forest{
+    public:
+        Forest(int max_num_trees)
+            : m_trees(), m_max_num_trees(max_num_trees){
+        }
+
+        void setMaxSize(int max_num_trees){
+            m_max_num_trees = max_num_trees;
+        }
+
+        std::size_t size() const{
+            return m_trees.size();
+        }
+        
+        void addTree(TreeNode_ptr p){
+            m_trees.push_back(p);
+            if(m_trees.size() > std::size_t(m_max_num_trees)){
+                // !!! TODO: remove random tree
+            }
+        }
+        
+        bool test(cv::Point const& pt, cv::Mat const& image) const{
+            unsigned good = 0;
+            foreach(TreeNode_ptr t, m_trees)
+                good += t->test(pt, image);
+            return good > m_trees.size()/2;
+        } 
+
+        //inline std::vector<cauv::KeyPoint> extract(cv::Mat const& image) const{
+        //    
+        //}
+
+    private:
+        std::list<TreeNode_ptr> m_trees;
+        int m_max_num_trees;
+};
+
 // - LearnedKeyPointsNode
 
 /* 
@@ -333,6 +376,7 @@ class LearnedKeyPointsNode: public Node{
     public:
         LearnedKeyPointsNode(ConstructArgs const& args)
             : Node(args),
+              m_forest(100),
               m_number_of_questions(10)
         {
         }
@@ -354,7 +398,8 @@ class LearnedKeyPointsNode: public Node{
             registerOutputID("keypoints", kp_vec());
             registerOutputID("image");
 
-            registerParamID("questions", int(10), "number of questions to use for each tree in the classifier forest");
+            registerParamID("questions", int(200), "number of questions to use for each tree in the classifier forest");
+            registerParamID("trees", int(100), "maximum number of trees in the forest");
         }
     
     protected:
@@ -386,6 +431,7 @@ class LearnedKeyPointsNode: public Node{
             int_vec training_goodness = param< int_vec >("training: goodness");
             image_ptr_t training_img = inputs["training: keypoints image"];
 
+            m_forest.setMaxSize(param<int>("trees"));
             const int num_questions = param<int>("questions");
             if(num_questions != m_number_of_questions){
                 if(m_forest.size())
@@ -455,7 +501,7 @@ class LearnedKeyPointsNode: public Node{
                     idx_vec_ptr test_false = boost::make_shared<idx_vec>();
                     test_true->reserve(pt_indices.size());
                     test_false->reserve(pt_indices.size());
-                    RFQuestion const& best_question = m_questions.bestQuestionFor(
+                    Question_constptr best_question = m_questions.bestQuestionFor(
                         points, pt_indices, goodness, m, terminal, test_true, test_false
                     );
 
@@ -493,12 +539,12 @@ class LearnedKeyPointsNode: public Node{
                 TreeGrowingVisitor(kps_as_points, goodness, questions), m
             );
 
-            m_forest.push_back(new_tree);
+            m_forest.addTree(new_tree);
             
         }
 
     private:
-        std::list<TreeNode_ptr> m_forest;
+        Forest m_forest;
 
         int m_number_of_questions;
         boost::random::mt19937 m_rng;
