@@ -351,11 +351,13 @@ class Forest{
     
     public:
         Forest(int max_num_trees)
-            : m_trees(), m_max_num_trees(max_num_trees){
+            : m_trees(), m_max_num_trees(max_num_trees), m_rng(){
         }
 
         void setMaxSize(int max_num_trees){
             m_max_num_trees = max_num_trees;
+            // !!! TODO: remove a random set of items if we need to reduce the
+            // number of trees
         }
 
         std::size_t size() const{
@@ -363,9 +365,12 @@ class Forest{
         }
         
         void addTree(TreeNode_ptr p){
-            m_trees.push_back(p);
             if(m_trees.size() > std::size_t(m_max_num_trees)){
-                // !!! TODO: remove random tree
+                boost::random::uniform_int_distribution<int> remove_idx_dist(0,m_trees.size()-2);
+                std::swap(m_trees.back(), m_trees[remove_idx_dist(m_rng)]);
+                m_trees.pop_back();
+            }else{
+                m_trees.push_back(p);
             }
         }
         
@@ -377,11 +382,17 @@ class Forest{
         }
 
         inline kp_vec filter(kp_vec const& in_kps, cv::Mat const& image) const{
+            debug() << "filter: " << in_kps.size() << "keypoints...";
+            if(!m_trees.size()){
+                debug() << "filter: no forest!";
+                return in_kps;
+            }
             kp_vec r;
             r.reserve(in_kps.size());
             foreach(KeyPoint const& k, in_kps)
                 if(test(cv::Point(int(k.pt.x), int(k.pt.y)), image))
                     r.push_back(k);
+            debug() << "filter: " << r.size() << "passed";
             return r;
         }
 
@@ -390,8 +401,9 @@ class Forest{
         //}
 
     private:
-        std::list<TreeNode_ptr> m_trees;
+        std::vector<TreeNode_ptr> m_trees;
         int m_max_num_trees;
+        boost::random::mt19937 m_rng;        
 };
 
 // - LearnedKeyPointsNode
@@ -415,7 +427,7 @@ class LearnedKeyPointsNode: public Node{
             
             // source image input:
             registerInputID("image");
-            registerParamID("boostrap keypoints", kp_vec());
+            registerParamID("bootstrap keypoints", kp_vec());
 
             // training inputs:
             // These must be set from the same node
@@ -557,9 +569,9 @@ class LearnedKeyPointsNode: public Node{
                     TreeNode_ptr r = boost::make_shared<TreeNode>(
                         boost::cref(best_question), terminal
                     );
-                    debug() << "Tree Node: true=" << test_true->size()
-                            << "false=" << test_false->size()
-                            << "terminal=" << (int)terminal;
+                    debug(7) << "Tree Node: true=" << test_true->size()
+                             << "false=" << test_false->size()
+                             << "terminal=" << (int)terminal;
                     if(!(terminal & TerminalTrue))
                         r->setTrueSide(_trainTree(m, points, *test_true, goodness));                    
                     if(!(terminal & TerminalFalse))
