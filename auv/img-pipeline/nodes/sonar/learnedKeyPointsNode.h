@@ -90,12 +90,12 @@ class RFQuestion{
         // test_true and test_false must be clear, the value of terminal
         // doesn't matter
         virtual entropy_t entropyOverTarget(pt_vec const& points,
-                                        idx_vec const& pt_indices,
-                                        int_vec const& target,
-                                        cv::Mat const& image,
-                                        int& terminal_flags,
-                                        idx_vec_ptr test_true,
-                                        idx_vec_ptr test_false) const{
+                                            idx_vec const& pt_indices,
+                                            int_vec const& target,
+                                            cv::Mat const& image,
+                                            int& terminal_flags,
+                                            idx_vec_ptr test_true,
+                                            idx_vec_ptr test_false) const{
             unsigned good_true = 0;
             unsigned good_false = 0;
             unsigned bad_true = 0;
@@ -330,7 +330,7 @@ class ListOfRandomRFQuestions{
     private:
         boost::shared_ptr<PxRatioQuestion> _randomPxRatioQuestion(){
             const int Max_Px_Offset = 5;
-            boost::random::uniform_real_distribution<float> ratio_dist(1.0/256, 256);
+            boost::random::uniform_real_distribution<float> ratio_dist(1.0, 256);
             boost::random::uniform_int_distribution<int> pxoffset_dist(-Max_Px_Offset,Max_Px_Offset);
             const float ratio = ratio_dist(m_rng);
             const cv::Point a(pxoffset_dist(m_rng), pxoffset_dist(m_rng));
@@ -346,6 +346,9 @@ class ListOfRandomRFQuestions{
 
 
 class Forest{
+    private:
+        typedef std::vector<cauv::KeyPoint> kp_vec;
+    
     public:
         Forest(int max_num_trees)
             : m_trees(), m_max_num_trees(max_num_trees){
@@ -371,7 +374,16 @@ class Forest{
             foreach(TreeNode_ptr t, m_trees)
                 good += t->test(pt, image);
             return good > m_trees.size()/2;
-        } 
+        }
+
+        inline kp_vec filter(kp_vec const& in_kps, cv::Mat const& image) const{
+            kp_vec r;
+            r.reserve(in_kps.size());
+            foreach(KeyPoint const& k, in_kps)
+                if(test(cv::Point(int(k.pt.x), int(k.pt.y)), image))
+                    r.push_back(k);
+            return r;
+        }
 
         //inline std::vector<cauv::KeyPoint> extract(cv::Mat const& image) const{
         //    
@@ -412,9 +424,11 @@ class LearnedKeyPointsNode: public Node{
             registerParamID("training: goodness", int_vec(), "score values to update training data", May_Be_Old);
 
             // outputs
-            registerOutputID("keypoints", kp_vec());
+            registerOutputID("keypoints", kp_vec()); // all of them
             registerOutputID("image");
-
+            registerOutputID("good keypoints", kp_vec()); // ones that passed the classifier in its current state
+            
+            // parameters:
             registerParamID("questions", int(200), "number of questions to use for each tree in the classifier forest");
             registerParamID("trees", int(100), "maximum number of trees in the forest");
         }
@@ -437,6 +451,21 @@ class LearnedKeyPointsNode: public Node{
                 return kp_vec();
             }
             private:
+        };
+
+        struct FilterKeyPoints: boost::static_visitor< kp_vec >{
+            FilterKeyPoints(Forest const& forest, kp_vec const& kps)
+                : m_forest(forest), m_kps(kps){
+            }
+            kp_vec operator()(cv::Mat a) const{ return m_forest.filter(m_kps, a); }
+            kp_vec operator()(NonUniformPolarMat a) const{ return m_forest.filter(m_kps, a.mat); }
+            kp_vec operator()(PyramidMat) const{
+                error () << __FILE__ << ":" << __LINE__ << "not implemented yet";
+                return kp_vec();
+            }
+            private:
+                Forest const& m_forest;
+                kp_vec const& m_kps;
         };
 
         out_map_t doWork(in_image_map_t& inputs){
@@ -474,7 +503,10 @@ class LearnedKeyPointsNode: public Node{
                 }
                 r["keypoints"] = kps;
             }else{
-                r["keypoints"] = param< kp_vec >("boostrap keypoints");
+                const kp_vec bootstrap_keypoints = param< kp_vec >("bootstrap keypoints");
+                r["keypoints"] = ParamValue(bootstrap_keypoints);
+                augmented_mat_t m = img->augmentedMat();
+                r["good keypoints"] = ParamValue(boost::apply_visitor(FilterKeyPoints(m_forest, bootstrap_keypoints), m));
             }
 
             r["image"] = img;
