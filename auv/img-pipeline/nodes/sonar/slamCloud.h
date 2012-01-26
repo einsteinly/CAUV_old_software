@@ -204,6 +204,7 @@ class SlamCloud: public pcl::PointCloud<PointT>,
         SlamCloud()
             : BaseT(),
               m_point_descriptors(),
+              m_keypoint_indices(),
               m_transformation(Eigen::Matrix4f::Identity()){
         }
         
@@ -213,11 +214,17 @@ class SlamCloud: public pcl::PointCloud<PointT>,
         std::vector<descriptor_t>& descriptors(){ return m_point_descriptors; }
         std::vector<descriptor_t> const& descriptors() const{ return m_point_descriptors; }
 
+        std::vector<std::size_t>& ptIndices(){ return m_keypoint_indices; }
+        std::vector<std::size_t> const& ptIndices() const{ return m_keypoint_indices; }
+        
+
         /* Merge two clouds, merging each point from the source cloud with it's
          * nearest neighbour in the target cloud if that neighbour is closer
          * than merge_distance.
          */
         void mergeCollapseNearest(Ptr source, float const& merge_distance, std::vector<int>& keypoint_goodness){
+            assert(keypoint_goodness.size() >= source->m_keypoint_indices.size());
+
             pcl::KdTreeFLANN<PointT> kdtree;
             kdtree.setInputCloud(shared_from_this());
             typedef std::pair<int,int> idx_pair;
@@ -225,6 +232,7 @@ class SlamCloud: public pcl::PointCloud<PointT>,
             std::vector<int> no_correspondence;
             std::vector<int>   pt_indices(1);
             std::vector<float> pt_squared_dists(1);
+
             for(size_t i=0; i < source->size(); i++){
                 if(kdtree.nearestKSearch((*source)[i], 1, pt_indices, pt_squared_dists) > 0 &&
                    pt_squared_dists[0] < merge_distance){
@@ -244,7 +252,7 @@ class SlamCloud: public pcl::PointCloud<PointT>,
                 m_point_descriptors[c.second] += source->descriptors()[c.first];
 
                 // this was a good keypoint in the input cloud
-                keypoint_goodness[c.first] |= 1;
+                keypoint_goodness[source->m_keypoint_indices[c.first]] |= 1;
             }
 
             if(no_correspondence.size()){
@@ -266,6 +274,8 @@ class SlamCloud: public pcl::PointCloud<PointT>,
             pcl::ConcaveHull<PointT> hull_calculator;
             typename BaseT::Ptr hull(new BaseT);
             std::vector<pcl::Vertices> polygons;
+
+            assert(keypoint_goodness.size() >= source->m_keypoint_indices.size());
 
             hull_calculator.setInputCloud(shared_from_this());
             hull_calculator.setAlpha(alpha);
@@ -295,8 +305,8 @@ class SlamCloud: public pcl::PointCloud<PointT>,
                 // for the points that passed the crop test, default to being
                 // bad, unless they are merged with an existing point:
                 if(merge_distance != 0.0f)
-                    keypoint_goodness[i] = 0;
-                output->push_back(source->points[i], source->m_point_descriptors[i]);
+                    keypoint_goodness[source->m_keypoint_indices[i]] = 0;
+                output->push_back(source->points[i], source->m_point_descriptors[i], source->m_keypoint_indices[i]);
             }
             
             if(merge_distance == 0.0f){
@@ -319,9 +329,10 @@ class SlamCloud: public pcl::PointCloud<PointT>,
             m_point_descriptors.reserve(s);
         }
 
-        inline void push_back(PointT const& p, descriptor_t const& d){
+        inline void push_back(PointT const& p, descriptor_t const& d, std::size_t const& idx){
             BaseT::push_back(p);
             m_point_descriptors.push_back(d);
+            m_keypoint_indices.push_back(idx);
         }
 
     private:
@@ -329,6 +340,12 @@ class SlamCloud: public pcl::PointCloud<PointT>,
 
         // point descriptors
         std::vector<descriptor_t> m_point_descriptors;
+
+        // original indices of the keypoints from which the points in this
+        // cloud were derived - used to generate training data for those
+        // keypoints: these are not generally preserved by operations on the
+        // point cloud
+        std::vector<std::size_t> m_keypoint_indices;
 
         // transformation that has been applied to this cloud
         Eigen::Matrix4f m_transformation;

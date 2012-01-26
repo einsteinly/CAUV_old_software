@@ -24,8 +24,13 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/ref.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
 
 #include <opencv2/core/core.hpp>
+
+#include "utility/bash_cout.h"
 
 namespace cauv{
 namespace imgproc{
@@ -33,54 +38,107 @@ namespace imgproc{
 typedef std::vector<cv::Point> pt_vec;
 typedef std::vector<int> int_vec;
 typedef std::vector<std::size_t> idx_vec;
+typedef boost::shared_ptr<idx_vec> idx_vec_ptr;
+
+// !!! belongs in TreeNode really:
+enum terminal_e {
+    NotTerminal=0,
+    TrueGood=1,
+    TrueBad=2,
+    TerminalTrue=3,
+    FalseGood=4,
+    FalseBad=8,
+    TrueGoodFalseBad=9,
+    TrueBadFalseGood=6,
+    TerminalFalse=12,    
+};
 
 // - Random Forest Classes
 class RFQuestion{
     public:
+        typedef float entropy_t;
+
         /* Apply this question to the data.
          */
-        virtual void apply(pt_vec const& keypoints,
+        virtual void apply(pt_vec const& points,
                           cv::Mat const& image,
                           std::vector<int>& answers) const{
-            for(int i = 0; i < keypoints.size(); i++)
-                answers[i] = apply(keypoints[i], image);
+            for(std::size_t i = 0; i < points.size(); i++)
+                answers[i] = apply(points[i], image);
         }
 
-        virtual float entropyOverTarget(pt_vec const& keypoints, 
+        // test_true and test_false must be clear, the value of terminal
+        // doesn't matter
+        virtual entropy_t entropyOverTarget(pt_vec const& points,
+                                        idx_vec const& pt_indices,
                                         int_vec const& target,
-                                        cv::Mat const& image) const{
+                                        cv::Mat const& image,
+                                        int& terminal_flags,
+                                        idx_vec_ptr test_true,
+                                        idx_vec_ptr test_false) const{
             unsigned good_true = 0;
             unsigned good_false = 0;
             unsigned bad_true = 0;
 
-            assert(keypoints.size() == target.size());
+            assert(points.size() == target.size());
 
-            for(int i = 0; i < keypoints.size(); i++){
-                if(apply(keypoints[i], image)){
-                    good_true += target[i];
-                    bad_true += !target[i];
+            for(std::size_t i = 0; i < pt_indices.size(); i++){
+                const size_t idx = pt_indices[i];
+                if(apply(points[idx], image)){
+                    assert(target[idx] == 1 || target[idx] == 0);
+                    good_true += target[idx];
+                    bad_true += !target[idx];
+                    test_true->push_back(idx);
                 }else{
-                    good_false += !target[i];
+                    good_false += target[idx];
+                    test_false->push_back(idx);
                 }
             }
 
-            const unsigned n = keypoints.size();
+            const unsigned n = pt_indices.size();
             const unsigned bad_false = n - (good_true + good_false + bad_true);
             
             //const unsigned ngood = good_true + good_false;
             //const unsigned nbad = n - good;
             const unsigned ntrue = good_true + bad_true;
             const unsigned nfalse = n - ntrue;
-
-            if(ntrue == 0 || nfalse == 0)
-                // this question tells us nothing!
-                return std::numeric_limits<float>::infinity();
+            assert(test_true->size() == ntrue);
+            assert(test_false->size() == nfalse);
             
-            // entropy of returned sets (summed)
-            return  -(good_true * good_true * std::log(float(good_true)/ntrue) +
-                      bad_true * bad_true * std::log(float(bad_true)/ntrue)) / ntrue
-                    -(good_false * good_false * std::log(float(good_false)/nfalse) +
-                      bad_false * bad_false * std::log(float(bad_false)/nfalse)) / nfalse;
+            // terminal if the question is perfect on either side:
+            terminal_flags = 0;
+            if(good_true && !bad_true)
+                terminal_flags |= TrueGood;
+            else if(bad_true && !good_true)
+                terminal_flags |= TrueBad;
+
+            if(bad_false && !good_false)
+                terminal_flags |= FalseBad;
+            else if(good_false && !bad_false)
+                terminal_flags |= FalseGood;
+
+            if(ntrue == 0 || nfalse == 0){
+                // this question tells us nothing!
+                debug(11) << this << "no information over" << n
+                          << "points:" << good_true << good_false
+                          << bad_true << bad_false;
+                return std::numeric_limits<entropy_t>::infinity();
+            }
+            
+            // entropy of returned sets: 0 * std::log(0) = NaN, hence the need
+            // to check each part of the sum
+            entropy_t r = 0;
+            if(good_true)
+                r -= (good_true * good_true * std::log(entropy_t(good_true)/ntrue)) / ntrue;
+            if(bad_true)
+                r -= (bad_true * bad_true * std::log(entropy_t(bad_true)/ntrue)) / ntrue;
+            if(good_false)
+                r -= (good_false * good_false * std::log(entropy_t(good_false)/nfalse)) / nfalse;
+            if(bad_false)
+                r -= (bad_false * bad_false * std::log(entropy_t(bad_false)/nfalse)) / nfalse;
+            debug(11) << this << "entropy of" << r << "over" << pt_indices.size() << "points:"
+                      << good_true << good_false << bad_true << bad_false << terminal_flags;
+            return r;
         }
 
         virtual bool apply(cv::Point const& pt, cv::Mat const& image) const = 0;
@@ -120,35 +178,31 @@ typedef boost::shared_ptr<TreeNode> TreeNode_ptr;
 
 class TreeNode{
     public:
-        TreeNode(RFQuestion const& question, bool terminal)
-            : m_question(question), m_terminal(terminal){
-        }
-        
-        // for terminal nodes only
-        void setTrueGoodness(bool good){
-            assert(m_terminal);
-            m_true_side = TreeNode_ptr((TreeNode*)good);
-            m_false_side = TreeNode_ptr((TreeNode*)!good);
+        TreeNode(RFQuestion const& question, int terminal_flags)
+            : m_question(question),
+              m_true_side((TreeNode*)(!!(terminal_flags & TrueGood)), null_deleter),
+              m_false_side((TreeNode*)(!!(terminal_flags & FalseGood)), null_deleter),
+              m_terminal(terminal_flags){
         }
 
         void setTrueSide(TreeNode_ptr p){
-            assert(!m_terminal);
+            assert(!(m_terminal & TerminalTrue));
             m_true_side = p;
         }
         void setFalseSide(TreeNode_ptr p){
-            assert(!m_terminal);
+            assert(!(m_terminal & TerminalFalse));
             m_false_side = p;
         }
 
-        inline bool test(cv::Point const& pt, cv::Mat const& image){
+        inline bool test(cv::Point const& pt, cv::Mat const& image) const{
             if(m_question.apply(pt, image)){
-                if(m_terminal){
+                if(m_terminal & TerminalTrue){
                     return m_true_side; // pointer non-zero (but invalid) if good, zero if bad
                 }else{
                     return m_true_side->test(pt, image);                
                 }
             }else{
-                if(m_terminal){
+                if(m_terminal & TerminalFalse){
                     return m_false_side; // pointer non-zero (but invalid) if good, zero if bad
                 }else{
                     return m_false_side->test(pt, image);
@@ -157,54 +211,115 @@ class TreeNode{
         }
 
     private:
+        static struct NullDeleter{
+            void operator()(TreeNode*) const {}
+        } null_deleter;
+
         RFQuestion const& m_question;
-        TreeNode_ptr m_false_side;
         TreeNode_ptr m_true_side;
-        const bool m_terminal;
+        TreeNode_ptr m_false_side;
+        const int m_terminal;
 };
 
 class ListOfRandomRFQuestions{
     private:
         typedef std::list< boost::shared_ptr<RFQuestion> > qlist_t;
+        typedef RFQuestion::entropy_t entropy_t;
 
     public:
-        ListOfRandomRFQuestions(unsigned number_of_questions)
-            : m_questions(){
+        ListOfRandomRFQuestions(unsigned number_of_questions, boost::random::mt19937& rng)
+            : m_questions(), m_rng(rng){
             for(unsigned i = 0; i < number_of_questions; i++)
                 m_questions.push_back(_randomPxRatioQuestion());
         }
-        
+
+        // NB: pass by reference of shared pointer - a different pointer might
+        // be returned to the one passed in.
         RFQuestion const& bestQuestionFor(pt_vec const& points,
                                           idx_vec const& pt_indices,
                                           int_vec const& goodness,
                                           cv::Mat const& image,
-                                          bool& terminal,
-                                          idx_vec& test_true,
-                                          idx_vec& test_false) const{
-            // !!! TODO: EDITING HERE, update this function for new signature
-
-            qlist_t::const_iterator best = m_questions.begin();
-            float best_entropy = std::numeric_limits<float>::infinity();
-            for(qlist_t::const_iterator i = m_questions.begin(); i != m_questions.end(); i++){
-                const float entropy = (*i)->entropyOverTarget(points, goodness, image);
+                                          int& best_terminal_flags,
+                                          idx_vec_ptr &test_true,
+                                          idx_vec_ptr &test_false) const{
+            idx_vec_ptr test_true_temp = boost::make_shared<idx_vec>();
+            idx_vec_ptr test_false_temp = boost::make_shared<idx_vec>();
+            test_true_temp->reserve(pt_indices.size());
+            test_false_temp->reserve(pt_indices.size());
+            entropy_t best_entropy = std::numeric_limits<entropy_t>::infinity();
+            int terminal;
+            qlist_t::const_iterator best = m_questions.end();
+            qlist_t::const_iterator i;
+            int num_useless_questions = 0;
+            for(i = m_questions.begin(); i != m_questions.end(); i++){
+                test_true_temp->clear();
+                test_false_temp->clear();
+                const entropy_t entropy = (*i)->entropyOverTarget(
+                    points, pt_indices, goodness, image, terminal,
+                    test_true_temp, test_false_temp
+                );
                 if(entropy < best_entropy){
                     best = i;
                     best_entropy = entropy;
+                    best_terminal_flags = terminal;
+                    test_true.swap(test_true_temp);
+                    test_false.swap(test_false_temp);
+                    //debug(5) << "swap" << entropy << "true:" << test_true->size() << "false:" << test_false->size();
+                }
+                if(entropy == std::numeric_limits<entropy_t>::infinity()){
+                    num_useless_questions++;
+                }
+                if(terminal == TrueGoodFalseBad ||
+                   terminal == TrueBadFalseGood){
+                    debug(9) << "terminal(" << terminal << ") entropy=" << entropy
+                             << "best=" << best_entropy
+                             << "test_true:" << test_true->size()
+                             << "test_false:" << test_false->size();
+                    assert(entropy <= best_entropy);
+                    break;
+                }else if(terminal){
+                    if(entropy == best_entropy)
+                        debug(9) << "one-sided terminal(" << terminal << ") entropy=" << entropy
+                                 << "best=" << best_entropy
+                                 << "test_true:" << test_true->size()
+                                 << "test_false:" << test_false->size();
+                    else
+                        debug(9) << "one-sided terminal(" << terminal << ") entropy=" << entropy
+                                 << "best=" << best_entropy
+                                 << "test_true:" << test_true_temp->size()
+                                 << "test_false:" << test_false_temp->size();
                 }
             }
-            // !!! TODO: handle case where no questions could distinguish at
-            // all between keypoints.
-            assert(best != m_questions.end());
+            debug() << 100*float(num_useless_questions) / m_questions.size() << "% useless questions";
+            if(best == m_questions.end()){
+                debug() << BashColour::Brown
+                        << "Tree cannot not distinguish between"
+                        << pt_indices.size() << "/" << points.size()
+                        << "points";
+                test_true.swap(test_true_temp);
+                test_false.swap(test_false_temp);
+                // if we can't distinguish, presume points are bad:
+                best_terminal_flags = test_true->size()? TrueBadFalseGood : TrueGoodFalseBad;
+                return *m_questions.back();
+            }
             return **best;
         }
 
     private:
         boost::shared_ptr<PxRatioQuestion> _randomPxRatioQuestion(){
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: actual random questions
-            return boost::make_shared<PxRatioQuestion>(cv::Point(0,0), cv::Point(2,2), 2.0);
+            const int Max_Px_Offset = 5;
+            boost::random::uniform_real_distribution<float> ratio_dist(1.0/256, 256);
+            boost::random::uniform_int_distribution<int> pxoffset_dist(-Max_Px_Offset,Max_Px_Offset);
+            const float ratio = ratio_dist(m_rng);
+            const cv::Point a(pxoffset_dist(m_rng), pxoffset_dist(m_rng));
+            const cv::Point b(pxoffset_dist(m_rng), pxoffset_dist(m_rng));
+            debug(8) << "PxRatioQuestion: (" << a.x <<","<< a.y << "), ("
+                     << b.x <<"," << b.y << "), ratio=" << ratio;
+            return boost::make_shared<PxRatioQuestion>(a, b, ratio);
         }
 
         qlist_t m_questions;
+        boost::random::mt19937 &m_rng;
 };
 
 // - LearnedKeyPointsNode
@@ -217,7 +332,8 @@ class LearnedKeyPointsNode: public Node{
 
     public:
         LearnedKeyPointsNode(ConstructArgs const& args)
-            : Node(args)
+            : Node(args),
+              m_number_of_questions(10)
         {
         }
 
@@ -231,12 +347,14 @@ class LearnedKeyPointsNode: public Node{
             // training inputs:
             // These must be set from the same node
             registerParamID("training: keypoints", kp_vec(), "keypoints to update training data", May_Be_Old);
-            registerInputID("training: keypoints image", Optional);            
+            registerInputID("training: keypoints image", Optional);
             registerParamID("training: goodness", int_vec(), "score values to update training data", May_Be_Old);
 
             // outputs
             registerOutputID("keypoints", kp_vec());
             registerOutputID("image");
+
+            registerParamID("questions", int(10), "number of questions to use for each tree in the classifier forest");
         }
     
     protected:
@@ -267,6 +385,13 @@ class LearnedKeyPointsNode: public Node{
             kp_vec training_keypoints = param< kp_vec >("training: keypoints");
             int_vec training_goodness = param< int_vec >("training: goodness");
             image_ptr_t training_img = inputs["training: keypoints image"];
+
+            const int num_questions = param<int>("questions");
+            if(num_questions != m_number_of_questions){
+                if(m_forest.size())
+                    warning() << "Changing number of questions after training has started";
+                m_number_of_questions = num_questions;
+            }
             
             if(training_keypoints.size() && training_img){
                 _train(training_keypoints, training_goodness, training_img);
@@ -325,20 +450,26 @@ class LearnedKeyPointsNode: public Node{
                                                pt_vec const& points,
                                                idx_vec const& pt_indices,
                                                int_vec const& goodness) const{
-                    bool terminal = false;
-                    idx_vec test_true; test_true.reserve(0.8*points.size());
-                    idx_vec test_false; test_false.reserve(0.8*points.size());
+                    int terminal;
+                    idx_vec_ptr test_true = boost::make_shared<idx_vec>();
+                    idx_vec_ptr test_false = boost::make_shared<idx_vec>();
+                    test_true->reserve(pt_indices.size());
+                    test_false->reserve(pt_indices.size());
                     RFQuestion const& best_question = m_questions.bestQuestionFor(
                         points, pt_indices, goodness, m, terminal, test_true, test_false
                     );
 
-                    TreeNode_ptr r = boost::make_shared<TreeNode>(boost::cref(best_question), terminal);
-                    if(terminal){
-                        r->setTrueGoodness(goodness[test_true[0]]);
-                    }else{
-                        r->setTrueSide(_trainTree(m, points, test_true, goodness));
-                        r->setFalseSide(_trainTree(m, points, test_false, goodness));
-                    }
+                    TreeNode_ptr r = boost::make_shared<TreeNode>(
+                        boost::cref(best_question), terminal
+                    );
+                    debug() << "Tree Node: true=" << test_true->size()
+                            << "false=" << test_false->size()
+                            << "terminal=" << (int)terminal;
+                    if(!(terminal & TerminalTrue))
+                        r->setTrueSide(_trainTree(m, points, *test_true, goodness));                    
+                    if(!(terminal & TerminalFalse))
+                        r->setFalseSide(_trainTree(m, points, *test_false, goodness));
+                    return r;
                 }
 
                 pt_vec const& m_points;
@@ -347,28 +478,30 @@ class LearnedKeyPointsNode: public Node{
         };
 
         void _train(kp_vec const& keypoints, int_vec const& goodness, image_ptr_t img){
-            debug() << keypoints.size() <<  "kps, " << goodness.size() << "values for training";
+            debug() << keypoints.size() <<  "kps, "
+                    << goodness.size() << "values for training";
             
             pt_vec kps_as_points;
             kps_as_points.reserve(keypoints.size());
-            { 
-            debug d; // TEMP: sanity checking coordinate values
-            d << "sanity check kp coordinates (should be integers):";
-            foreach(KeyPoint const& kp, keypoints){
-                d << kp.pt;
+            foreach(KeyPoint const& kp, keypoints)
                 kps_as_points.push_back(cv::Point(int(kp.pt.x), int(kp.pt.y)));
-            }
-            }
             
             augmented_mat_t m = img->augmentedMat();
             
-            ListOfRandomRFQuestions questions(5);
-            TreeNode_ptr new_tree = boost::apply_visitor(TreeGrowingVisitor(kps_as_points, goodness, questions), m);
+            ListOfRandomRFQuestions questions(m_number_of_questions, m_rng);
+            TreeNode_ptr new_tree = boost::apply_visitor(
+                TreeGrowingVisitor(kps_as_points, goodness, questions), m
+            );
+
+            m_forest.push_back(new_tree);
             
         }
 
     private:
         std::list<TreeNode_ptr> m_forest;
+
+        int m_number_of_questions;
+        boost::random::mt19937 m_rng;
 
     DECLARE_NFR;
 };
