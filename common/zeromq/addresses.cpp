@@ -5,13 +5,16 @@
 #include <exception>
 #include <debug/cauv_debug.h>
 
+#include <cstdio>
+#include <sstream>
+
 namespace cauv {
 
 #ifndef DEFAULT_MULTICAST_IFACE
 #define DEFAULT_MULTICAST_IFACE "eth0"
 #endif
 
-const std::string get_multicast_interface(void) {
+static std::string get_multicast_interface(void) {
     char *interface = getenv("CAUV_MULTICAST_IFACE");
     if (!interface) {
         return std::string(DEFAULT_MULTICAST_IFACE);
@@ -19,12 +22,28 @@ const std::string get_multicast_interface(void) {
     return std::string(interface);
 }
 
-const std::string get_local_sub_filename(const std::string groupName) {
+static std::string get_local_sub_filename(const std::string groupName) {
     return std::string("/tmp/cauv_sub_" + groupName);
 }
 
-const std::string get_local_push_filename(const std::string groupName) {
+static std::string get_local_push_filename(const std::string groupName) {
     return std::string("/tmp/cauv_push_" + groupName);
+}
+
+// !!! TODO: move to utility:
+static std::string exec(const char* cmd) {
+    FILE* pipe = popen(cmd, "r");
+    if(!pipe){
+        error() << "failed to popen pipe";
+        return "";
+    }
+    char buffer[4096];
+    std::string result = "";
+    while(!std::feof(pipe))
+        if(std::fgets(buffer, 4096, pipe))
+            result += buffer;
+    pclose(pipe);
+    return result;
 }
 
 //!!! hacky as hell, and non-portable. have fun figuring it out on OSX
@@ -32,6 +51,16 @@ const std::string get_local_push_filename(const std::string groupName) {
 bool is_daemon_running (const std::string groupName) {
     std::string sub_filename(get_local_sub_filename(groupName));
     std::string push_filename(get_local_push_filename(groupName));
+    #ifdef __APPLE__
+    // This was fun :) Did you know lsof does machine-readable output? I
+    // didn't!
+    std::stringstream domain_socket_files(exec("lsof -UFn"));
+    std::string line;
+    while(std::getline(domain_socket_files, line))
+        if(line.substr(1) == sub_filename ||
+           line.substr(1) == push_filename)
+            return true;
+    #else // def __APPLE__
     std::fstream unix_file("/proc/net/unix",std::fstream::in);
     if (unix_file.fail()) {
         warning() << "could not open /proc/net/unix, so can't tell if anything is bound to the sockets we want to use. assuming there isn't";
@@ -47,6 +76,7 @@ bool is_daemon_running (const std::string groupName) {
             return true;
         }
     }
+    #endif // else def __APPLE__
     return false;
 }
 
