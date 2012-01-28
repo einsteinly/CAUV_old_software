@@ -60,6 +60,8 @@ boost::shared_ptr<ImageWrapper> CameraServerConnection::getImage(uint32_t camera
 SharedImage* CameraServerConnection::getUnGuardedImage(uint32_t camera_id, uint32_t w, uint32_t h){
     if(!m_socket)
         reInit();
+    if(!m_socket)
+        throw std::runtime_error("could not connect to camera server");
 
     ImageRequest req = {
         camera_id, w, h
