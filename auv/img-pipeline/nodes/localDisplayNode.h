@@ -42,10 +42,6 @@ class LocalDisplayNode: public OutputNode{
             // no outputs
             // no parameters
         }
-        
-        virtual ~LocalDisplayNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

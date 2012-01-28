@@ -53,10 +53,6 @@ class ResizeNode: public Node{
             registerParamID<int>("fixed width", 0, "if not zero");
             registerParamID<int>("fixed height", 0, "if not zero");
         }
-    
-        virtual ~ResizeNode(){
-            stop();
-        }
 
     protected:
         struct applyResize: boost::static_visitor<augmented_mat_t>{

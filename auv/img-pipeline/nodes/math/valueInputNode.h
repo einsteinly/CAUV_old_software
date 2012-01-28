@@ -31,16 +31,12 @@ class ValueInputNode: public Node{
             registerParamID<Value_T>("value", Value_T(), "input value");
             registerOutputID("value", Value_T());
         }
-    
-        virtual ~ValueInputNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
             const Value_T value = param<Value_T>("value");
-            r["value"] = NodeParamValue(value);
+            r["value"] = ParamValue(value);
             return r;
         }
     

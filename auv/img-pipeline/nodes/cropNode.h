@@ -39,10 +39,6 @@ class CropNode: public Node{
             registerParamID<int>("width", 1);
             registerParamID<int>("height", 1);
         }
-    
-        virtual ~CropNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

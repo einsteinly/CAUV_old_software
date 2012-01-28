@@ -41,8 +41,8 @@ class RecogniserNode: public Node{
 
             // outputs:
             // TODO...
-            //registerOutputID<NodeParamValue>("Confidence");
-            //registerOutputID<NodeParamValue>("Position");
+            //registerOutputID<ParamValue>("Confidence");
+            //registerOutputID<ParamValue>("Position");
             registerOutputID("Correspondence Image");
 
             // Parameters:
@@ -55,10 +55,6 @@ class RecogniserNode: public Node{
             registerParamID<int>("FERN structSize", 9, "");
             registerParamID<int>("FERN nviews", 1000, "");
             registerParamID<int>("FERN compressionMethod", 0, "");
-        }
-
-        virtual ~RecogniserNode(){
-            stop();
         }
 
     protected:

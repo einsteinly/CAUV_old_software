@@ -50,10 +50,6 @@ class LevelsNode: public Node{
             registerParamID<int>("white level", 255);
             registerParamID<int>("black level", 0);
         }
-    
-        virtual ~LevelsNode(){
-            stop();
-        }
 
     protected:
         struct applyLevels: boost::static_visitor<void>{

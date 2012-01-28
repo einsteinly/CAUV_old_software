@@ -51,11 +51,14 @@ Node::Node(ConstructArgs const& args)
       m_allow_queue_lock(),
       m_sched(args.sched),
       m_pl(args.pl),
-      m_pl_name(args.pl_name){
+      m_pl_name(args.pl_name),
+      m_stopped(false){
 }
 
 
 Node::~Node(){
+    if(!m_stopped)
+        stop();
     debug() << "~Node" << *this;
 }
 
@@ -87,6 +90,7 @@ void Node::stop(){
     m_allow_queue_lock.unlock();
 
     debug(-3) << BashColour::Purple << "stop()" << *this << ", done";
+    m_stopped = true;
 }
 
 NodeType::e const& Node::type() const{
@@ -213,21 +217,11 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     }else if(i->second->isParam() != !n->inputs().count(i_id)){
         throw link_error("setOutput: Parameter <==> Image mismatch");
     }
-    const int32_t sub_type = i->second->isParam()?  boost::get<NodeParamValue>(i->second->value).which() : -1;
-    // so this is quite ugly, the sched_type field is included in comparison of
-    // LocalNodeInput structures (I've considered extending the messages.msg
-    // format to support a nocompare directive for fields) - but it isn't
-    // important for matching inputs and outputs, so we check for parameters of
-    // either sort of sched_type when checking to see if the sub type (which
-    // *does* matter) matches...
-    // implementing a nocompare directive wouldn't be very difficult, and if
-    // this sort of problem occurs anywhere else, then I'd go for that solution
-    // instead... seems overkill to solve this tiny little problem though
-    // 
+    const int32_t sub_type = i->second->isParam()?  boost::get<ParamValue>(i->second->value).which() : -1;
+    // note that the schedType field (May_Be_Old here) is excluded from the
+    // comparison of LocalNodeInput structures
     if(i->second->isParam() && !(
-        n->parameters().count(LocalNodeInput(i_id, sub_type, May_Be_Old)) ||
-        n->parameters().count(LocalNodeInput(i_id, sub_type, Must_Be_New)) ||
-        n->parameters().count(LocalNodeInput(i_id, sub_type, Optional)) // actually Optional only makes sense for image inputs...
+        n->parameters().count(LocalNodeInput(i_id, sub_type, May_Be_Old))
     )){
         throw link_error(
             mkStr() << "setOutput: " << *this <<"::"<< o_id << " -> "
@@ -307,7 +301,7 @@ int32_t Node::paramOutputType(output_id const& o_id) const{
     private_out_map_t::const_iterator i = m_outputs.find(o_id);
     if(i == m_outputs.end() || !i->second->isParam())
         throw parameter_error("unknown parameter output");
-    return boost::get<NodeParamValue>(i->second->value).which();
+    return boost::get<ParamValue>(i->second->value).which();
 }
 
 Node::msg_node_output_map_t Node::outputLinks() const{
@@ -318,7 +312,7 @@ Node::msg_node_output_map_t Node::outputLinks() const{
         int32_t sub_type = -1;
         OutputType::e type = OutputType::e(i.second->value.which());
         if(type == OutputType::Parameter)
-            sub_type = boost::get<NodeParamValue>(i.second->value).which();
+            sub_type = boost::get<ParamValue>(i.second->value).which();
         foreach(output_link_list_t::value_type const& j, i.second->targets)
             input_list.push_back(NodeInput(m_pl.lookup(j.node), j.id, sub_type)); 
         r[LocalNodeOutput(i.first,type,sub_type)] = input_list;
@@ -447,10 +441,10 @@ void Node::exec(){
             error() << *this << "exec() produced output of the wrong type for id:"
                     << v.first << "(ignored)";
         }else if(op->value.which() == OutputType::Parameter &&
-                 boost::get<NodeParamValue>(op->value).which() !=
-                 boost::get<NodeParamValue>(v.second).which()){
-            uint32_t got_which = boost::get<NodeParamValue>(op->value).which();
-            uint32_t exp_which = boost::get<NodeParamValue>(v.second).which();
+                 boost::get<ParamValue>(op->value).which() !=
+                 boost::get<ParamValue>(v.second).which()){
+            uint32_t got_which = boost::get<ParamValue>(op->value).which();
+            uint32_t exp_which = boost::get<ParamValue>(v.second).which();
             error() << *this << "exec() produced output of the wrong parameter type for id:"
                     << v.first << "(ignored) - got type" << got_which << "expected" << exp_which;
         }else{
@@ -510,15 +504,15 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id,
     return r;
 }
 
-NodeParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error){
+ParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error){
     lock_t l(m_outputs_lock);
     const private_out_map_t::const_iterator i = m_outputs.find(o_id);
-    NodeParamValue r;
+    ParamValue r;
     if(i != m_outputs.end()){
         try{
-            r = boost::get<NodeParamValue>(i->second->value);
+            r = boost::get<ParamValue>(i->second->value);
         }catch(boost::bad_get&){
-            throw id_error("requested output is not a NodeParamValue" + toStr(o_id));
+            throw id_error("requested output is not a ParamValue" + toStr(o_id));
         }
     }else{
         throw id_error("no such output" + toStr(o_id));
@@ -528,9 +522,9 @@ NodeParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error)
 
 /* return all parameter values (without querying connected parents)
  */
-std::map<LocalNodeInput, NodeParamValue> Node::parameters() const{
+std::map<LocalNodeInput, ParamValue> Node::parameters() const{
     lock_t l(m_inputs_lock);
-    std::map<LocalNodeInput, NodeParamValue> r;
+    std::map<LocalNodeInput, ParamValue> r;
     foreach(private_in_map_t::value_type const& v, m_inputs)
         if(v.second->isParam())
             r[LocalNodeInput(v.first, v.second->param_value.which(), v.second->sched_type)]

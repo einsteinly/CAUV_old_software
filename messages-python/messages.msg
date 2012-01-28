@@ -92,6 +92,9 @@ enum NodeType : int8 {
     GlobalMaximum,
     LocalMaxima,
     SonarShadowFilter,
+    PolarImageToXY,
+    SonarImageEdge,
+    LearnedKeyPoints,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -137,49 +140,50 @@ struct floatYPR
 }
 struct floatXYZ
 {
-    x : float;
-    y : float;
-    z : float;
+    eq x : float;
+    eq y : float;
+    eq z : float;
 }
 struct floatXY
 {
-    x : float;
-    y : float;
+    eq x : float;
+    eq y : float;
 }
 struct NodeInput
 {
-    node : int32;
-    input : string;
-    subType : int32;
+    eq node : int32;
+    eq input : string;
+    eq subType : int32;
 }
 struct LocalNodeInput
 {
-    input : string;
-    subType : int32;
+    eq cmp input : string;
+    eq cmp subType : int32;
+    // NB: schedType is excluded from comparison and equality testing
     schedType : InputSchedType;
 }
 struct NodeOutput
 {
-    node : int32;
-    output : string;
-    type : OutputType;
-    subType : int32;
+    eq node : int32;
+    eq output : string;
+    eq type : OutputType;
+    eq subType : int32;
 }
 struct LocalNodeOutput
 {
-    output : string;
-    type : OutputType;
-    subType : int32;
+    eq cmp output : string;
+    eq cmp type : OutputType;
+    eq cmp subType : int32;
 }
 struct NodeInputArc
 {
-    input : string;
-    src : NodeOutput;
+    eq input : string;
+    eq src : NodeOutput;
 }
 struct NodeOutputArc
 {
-    dst : NodeInput;
-    output : string;
+    eq dst : NodeInput;
+    eq output : string;
 }
 struct TimeStamp
 {
@@ -238,21 +242,21 @@ struct MotorDemand
 }
 struct Line
 {
-    centre : floatXYZ;
-    angle : float;
-    length : float;
+    eq centre : floatXYZ;
+    eq angle : float;
+    eq length : float;
 }
 struct Circle
 {
-    centre : floatXYZ;
-    radius : float;
+    eq centre : floatXYZ;
+    eq radius : float;
 }
 struct Corner
 {
-    centre : floatXYZ;
-    size : float;
-    angle : float;
-    response : float;
+    eq centre : floatXYZ;
+    eq size : float;
+    eq angle : float;
+    eq response : float;
 }
 struct MotorMap
 {
@@ -263,22 +267,12 @@ struct MotorMap
 }
 struct KeyPoint
 {
-    pt : floatXY;
-    size : float;
-    angle : float;
-    response : float;
-    octave : float;
-    class_id : float;
-}
-variant NodeParamValue
-{
-    int32, float, string, bool,
-    list<Corner>, list<Line>, list<Circle>, list<float>,
-    list<KeyPoint>
-}
-variant AiParamValue
-{
-    int32, float, string, bool
+    eq pt : floatXY;
+    eq size : float;
+    eq angle : float;
+    eq response : float;
+    eq octave : float;
+    eq class_id : float;
 }
 struct ScriptResponse
 {
@@ -294,7 +288,27 @@ struct ScriptExecRequest
     id : string;
     seq : uint32;
 }
+enum BoundedFloatType : int8 {
+    Clamps, Wraps
+}
+struct BoundedFloatBase
+{
+    eq value : float;
+    eq min : float;
+    eq max : float;
+    eq type : BoundedFloatType;
+}
 class Image : <common/image.h>
+BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
+
+variant ParamValue
+{
+    int32, float, string, bool,
+    list<Corner>, list<Line>, list<Circle>, list<float>,
+    list<KeyPoint>,
+    BoundedFloat,
+    list<int32>
+}
 
 group membership
 {
@@ -559,7 +573,7 @@ group pipeline
         pipelineName : string;
         nodeId : int32;
         paramId : string;
-        value : NodeParamValue;
+        value : ParamValue;
     }
 
     message AddArc : 9
@@ -681,7 +695,7 @@ group pl_gui
         nodeType : NodeType;
         inputs : map<LocalNodeInput, NodeOutput>;
         outputs : map<LocalNodeOutput, list<NodeInput> >;
-        params : map<LocalNodeInput, NodeParamValue>;
+        params : map<LocalNodeInput, ParamValue>;
     }
 
     message NodeRemoved : 116
@@ -694,7 +708,7 @@ group pl_gui
     {
         pipelineName : string;
         nodeId : int32;
-        params : map<LocalNodeInput, NodeParamValue>;
+        params : map<LocalNodeInput, ParamValue>;
     }
 
     message GraphDescription : 118
@@ -703,7 +717,7 @@ group pl_gui
         lazy nodeTypes : map<int32, NodeType>;
         lazy nodeInputs : map<int32, map<LocalNodeInput, NodeOutput> >;
         lazy nodeOutputs : map<int32, map<LocalNodeOutput, list<NodeInput> > >;
-        lazy nodeParams : map<int32, map<LocalNodeInput, NodeParamValue> >;
+        lazy nodeParams : map<int32, map<LocalNodeInput, ParamValue> >;
     }
 
     message ArcAdded : 119
@@ -793,8 +807,8 @@ group guiai
     {
         taskId : int32;
         conditionIds : list<int32>;
-        taskOptions : map<string, AiParamValue>;
-        scriptOptions : map<string, AiParamValue>;
+        taskOptions : map<string, ParamValue>;
+        scriptOptions : map<string, ParamValue>;
     }
     message TaskRemoved : 205
     {
@@ -804,15 +818,15 @@ group guiai
     {
         taskId : int32;
         conditionIds : list<int32>;
-        taskOptions : map<string, AiParamValue>;
-        dynamicScriptOptions : map<string, AiParamValue>;
-        staticScriptOptions : map<string, AiParamValue>;
+        taskOptions : map<string, ParamValue>;
+        dynamicScriptOptions : map<string, ParamValue>;
+        staticScriptOptions : map<string, ParamValue>;
         isCurrentlyRunning : bool;
     }
     message ScriptState : 207
     {
         taskId : int32;
-        debugValues : map<string, AiParamValue>;
+        debugValues : map<string, ParamValue>;
         pipelineIds : list<string>;
     }
     message AddCondition : 208
@@ -826,7 +840,7 @@ group guiai
     message SetConditionState : 210
     {
         conditionId : int32;
-        conditionOptions : map<string, AiParamValue>;
+        conditionOptions : map<string, ParamValue>;
     }
     message ConditionRemoved : 211
     {
@@ -835,8 +849,8 @@ group guiai
     message ConditionState : 212
     {
         conditionId : int32;
-        conditionOptions : map<string, AiParamValue>;
-        debugValues : map<string, AiParamValue>;
+        conditionOptions : map<string, ParamValue>;
+        debugValues : map<string, ParamValue>;
     }
     message TaskTypes : 213
     {
@@ -846,7 +860,7 @@ group guiai
     {
         conditionTypes : map<string, list<string>>;
     }
-    message RequestStateMessage : 215
+    message RequestAIState : 215
     {
     }
     message ScriptControl : 216

@@ -50,10 +50,6 @@ class PyramidNode: public Node{
             // multiple parameters
             registerParamID<int>("level",1,"positive level will call pyrdown, negative will call pyrup");
         }
-    
-        virtual ~PyramidNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

@@ -47,10 +47,6 @@ class CombineHSVNode: public Node{
             // output:
             registerOutputID("image", image_ptr_t());
         }
-    
-        virtual ~CombineHSVNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t& inputs){

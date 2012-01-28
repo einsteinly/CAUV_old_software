@@ -77,7 +77,7 @@ class script(aiScript):
             
             # calculate the bearing of the pipe (relative to the sub),
             # mod 180 as we dont want to accidentally turn the sub around
-            corrected_angle=90-degrees(angle)%180
+            corrected_angle=90-degrees(angle)%180 #TODO this mod 180 probably is not needed from observation of cam following
             debug('follow pipe: mean lines direction: %g (uncorrected=%g)' % (corrected_angle, angle))
             
             # work out the actual bearing of the pipe using the current bearing of the AUV

@@ -105,7 +105,7 @@ class start(aiTask):
         detectors_enabled=True
     #need 1 condition or else won't start
     conditions = [
-        (c.stateCondition, {'state': True}),
+        (c['stateCondition'], {'state': True}),
         ]
         
 class follow_pipe(aiTask):
@@ -113,7 +113,7 @@ class follow_pipe(aiTask):
         script_name = 'follow_pipe'
         priority = 3
     conditions = [
-        (c.pipe_detectorCondition, {}),
+        (c['pipe_detectorCondition'], {}),
         ]
         
 class circle_buoy(aiTask):
@@ -121,7 +121,7 @@ class circle_buoy(aiTask):
         script_name = 'circle_buoy'
         priority = 3
     conditions = [
-        (c.buoy_detectorCondition, {}),
+        (c['buoy_detectorCondition'], {}),
         ]
         
 class avoid_collision(aiTask):
@@ -130,7 +130,7 @@ class avoid_collision(aiTask):
         priority = 10
         frequency_limit = 0
     conditions = [
-        (c.sonar_collision_detectorCondition, {}),
+        (c['sonar_collision_detectorCondition'], {}),
         ]
             
 class track_wall(aiTask):
@@ -138,7 +138,7 @@ class track_wall(aiTask):
         script_name = 'track_wall'
         priority = 3
     conditions = [
-        (c.stateCondition, {'state': False}),
+        (c['stateCondition'], {'state': False}),
         ]
 
 class surface(aiTask):
@@ -146,7 +146,7 @@ class surface(aiTask):
         script_name = 'surface'
         priority = 10
     conditions = [
-        (c.timeoutCondition, {'timeout': 180, 'startTimer': True}),
+        (c['timeoutCondition'], {'timeout': 180, 'startTimer': True}),
         ]
         
 class follow_cam(aiTask):
@@ -155,7 +155,7 @@ class follow_cam(aiTask):
         priority = 1
         frequency_limit = 10
     conditions = [
-        (c.stateCondition, {'state': True}),
+        (c['stateCondition'], {'state': True}),
         ]
         
 class default(aiTask):
@@ -164,7 +164,7 @@ class default(aiTask):
         priority = 0
         detectors_enabled_while_running = True
     conditions = [
-        (c.stateCondition, {'state': True}),
+        (c['stateCondition'], {'state': True}),
         ]
         
 tasks = subclassDict(aiTask)

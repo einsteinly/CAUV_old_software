@@ -55,10 +55,6 @@ class MergeSimilarLinesNode: public Node{
             registerParamID< float >("distance epsilon", 0.1f);
             registerParamID< std::vector<Line> >("lines", std::vector<Line>(), "", Must_Be_New);
         }
-    
-        virtual ~MergeSimilarLinesNode(){
-            stop();
-        }
 
     protected:
         float crossProdVal(Eigen::Vector2f const& v1, Eigen::Vector2f const& v2) {

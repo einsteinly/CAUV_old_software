@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#include "trig.h"
+
 namespace cv{
 class Mat;
 }
@@ -28,7 +30,7 @@ namespace cauv{
 struct SonarDataLine;
 struct PolarImage;
 class Image;
-
+class NonUniformPolarMat;
 
 float msgPolarAngleToRadians(int32_t angle);
 
@@ -39,6 +41,7 @@ class SonarAccumulator
         
         bool accumulateDataLine(const SonarDataLine& data);
         bool setWholeImage(PolarImage const& image);
+        bool setWholeImage(NonUniformPolarMat image);
 
         void setSize(uint32_t size);
 
@@ -54,6 +57,10 @@ class SonarAccumulator
         size_t m_nbins;
         // diameter of accumulator 
         uint32_t m_size;
+
+        // cos/sin caches:
+        GemCachedTrig gem_cached;
+        CachedTrig cached_trig;
         
         void reset();
 };

@@ -1,5 +1,11 @@
 find_package (OpenCV REQUIRED)
 
+option(CAUV_USE_DC1394 "Use libdc1394" ON)
+if (CAUV_USE_DC1394)
+    find_library(libdc1394_LIBRARIES dc1394 REQUIRED)
+    add_definitions(-DCAUV_USE_DC1394)
+endif()
+
 # sources
 add_library (
     camera STATIC
@@ -25,7 +31,9 @@ add_executable (camera_server
 target_link_libraries (camera_server
     cauv_debug
     ${OpenCV_LIBS}
+    ${libdc1394_LIBRARIES}
     boost_system
+    rt
 )
 depends_on_messages(camera_server)
 cauv_install(camera_server)
@@ -38,6 +46,7 @@ target_link_libraries (camera_client
     cauv_debug
     ${OpeNCV_LIBS}
     boost_system
+    rt
 )
 depends_on_messages(camera_client)
 

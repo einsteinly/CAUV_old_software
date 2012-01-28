@@ -48,10 +48,6 @@ class PercentileNode: public Node{
             // parameter: 
             registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
         }
-    
-        virtual ~PercentileNode(){
-            stop();
-        }
 
     protected:
         static std::string bar(float value, float max, int w){
@@ -139,8 +135,8 @@ class PercentileNode: public Node{
             unsigned ch;
             for (ch = 0; ch < channel_results.size() && ch < 3; ++ch) {
                 output_id id = MakeString() << "ch" << (ch+1) << " value";
-                //registerOutputID<NodeParamValue>(id, false);
-                r[id] = NodeParamValue(channel_results[ch]);
+                //registerOutputID<ParamValue>(id, false);
+                r[id] = ParamValue(channel_results[ch]);
             }
             //for (; removed; ++ch)
                 //if (ch > 0)

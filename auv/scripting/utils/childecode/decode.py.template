@@ -41,7 +41,10 @@ p_float.setParseAction(lambda x: float(x[0]))
 p_str = pp.Optional(pp.Word(hexchars))
 p_str.setParseAction(lambda x: base64.b16decode(x[0]) if len(x) else '')
 
+\# External Type Forward Declarations
+\# TODO: autogenerate these
 p_Image = pp.Forward()
+p_BoundedFloat = pp.Forward()
 
 \# Forward declarations
 #for $s in $structs
@@ -116,6 +119,9 @@ p_${v.name} << (
 ##p_${v.name}.setParseAction(lambda x: x[0])
 ##print p_${v.name}
 #end for
+
+\# Parse definitions for external types:
+p_BoundedFloat << p_BoundedFloatBase
 
 # Parse action generator for vector types
 def a__vec_gen(T):

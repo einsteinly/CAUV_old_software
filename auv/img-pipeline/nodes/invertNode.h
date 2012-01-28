@@ -31,11 +31,6 @@ class InvertNode: public Node{
             // one output
             registerOutputID("image (not copied)");
         }
-        
-        virtual ~InvertNode(){
-            stop();
-        }
-    
 
     protected:
 

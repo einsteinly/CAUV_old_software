@@ -48,10 +48,6 @@ class FileOutputNode: public OutputNode{
             registerParamID<int>("jpeg quality", 95); // 0-100
             registerParamID<int>("png compression", 9); // 0-9
         }
-    
-        virtual ~FileOutputNode(){
-            stop();
-        }
 
     protected:
         struct writeMat: boost::static_visitor<void>{

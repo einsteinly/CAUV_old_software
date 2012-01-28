@@ -46,10 +46,6 @@ class GaussianBlurNode: public Node{
             // parameters: sigma: standard deviation of blur
             registerParamID<float>("sigma", 1);
         }
-    
-        virtual ~GaussianBlurNode(){
-            stop();
-        }
 
     protected:
         // Apply Gaussian blur in-place

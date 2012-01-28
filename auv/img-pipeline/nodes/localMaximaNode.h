@@ -41,10 +41,6 @@ class LocalMaximaNode: public Node{
             registerOutputID("keypoints", std::vector<KeyPoint>());
             registerParamID<float>("delta", 1.0f, "");
         }
-    
-        virtual ~LocalMaximaNode(){
-            stop();
-        }
 
     protected:
         struct applyGlobalMaxima: boost::static_visitor< std::vector<KeyPoint> >{
@@ -99,7 +95,7 @@ class LocalMaximaNode: public Node{
             augmented_mat_t in = img->augmentedMat();
 
             try{
-                r["keypoints"] = NodeParamValue(
+                r["keypoints"] = ParamValue(
                     boost::apply_visitor(applyGlobalMaxima(delta), in)
                 );
             }catch(cv::Exception& e){

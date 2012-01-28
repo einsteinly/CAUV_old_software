@@ -51,10 +51,6 @@ class BroadcastCornersNode: public OutputNode{
             registerParamID<std::string>("name", "unnamed corners",
                                          "name for detected set of corners");
         }
-    
-        virtual ~BroadcastCornersNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

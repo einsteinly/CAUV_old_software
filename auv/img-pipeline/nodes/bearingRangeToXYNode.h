@@ -43,7 +43,7 @@ class BearingRangeToXYNode: public Node{
             m_speed = slow;
 
             // input polar image:
-            registerInputID("polar image", Must_Be_New);
+            registerInputID("polar image", May_Be_Old);
             // param input:
             registerParamID< std::vector<KeyPoint> >(
                 "keypoints", std::vector<KeyPoint>(), "the KeyPoints to convert", Must_Be_New
@@ -51,10 +51,6 @@ class BearingRangeToXYNode: public Node{
             
             // output
             registerOutputID("keypoints", std::vector<KeyPoint>());
-        }
-    
-        virtual ~BearingRangeToXYNode(){
-            stop();
         }
 
     protected:
@@ -119,7 +115,7 @@ class BearingRangeToXYNode: public Node{
             kp_vec in_kps = param< kp_vec >("keypoints");
             augmented_mat_t in = img->augmentedMat();
 
-            r["keypoints"] = NodeParamValue(boost::apply_visitor(
+            r["keypoints"] = ParamValue(boost::apply_visitor(
                 convertKeyPoints(in_kps), in
             ));
             

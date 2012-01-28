@@ -18,13 +18,11 @@
 
 \#include "message.h"
 
-\#include <string>
 \#include <vector>
 \#include <list>
 \#include <map>
 \#include <boost/shared_ptr.hpp>
 \#include <utility/streamops.h>
-\#include <utility/serialisation-types.h>
 
 #for $i in $includes
 \#include ${i}

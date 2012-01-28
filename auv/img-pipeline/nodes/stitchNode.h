@@ -40,10 +40,6 @@ class StitchNode: public Node{
             registerOutputID("Last Stitch Goodness");    // 
         }
 
-        virtual ~StitchNode(){
-            stop();
-        }
-
     protected:
         out_map_t doWork(in_image_map_t& inputs){
             out_map_t r;
@@ -70,11 +66,11 @@ class StitchNode: public Node{
         }
 
     private:
-        NodeParamValue _mkLocation(float x, float y){
+        ParamValue _mkLocation(float x, float y){
             std::vector<float> r(2);
             r[0] = x;
             r[1] = y;
-            return NodeParamValue(r);
+            return ParamValue(r);
         }
 
         cv::Point2i m_buffer_origin;

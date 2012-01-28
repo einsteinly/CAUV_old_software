@@ -54,10 +54,6 @@ class BroadcastLinesNode: public OutputNode{
             registerParamID<std::string>("name", "unnamed lines",
                                          "name for detected set of lines");
         }
-    
-        virtual ~BroadcastLinesNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){

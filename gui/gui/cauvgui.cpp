@@ -98,11 +98,11 @@ int CauvGui::findPlugins(const QDir& dir, int subdirs)
 
         debug(1) << "Trying to load:"<< fileName.toStdString();
         if (!loader.load()) {
-            debug(1) << "Could mot load plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
+            debug(1) << "Could not load plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
         } else {
             QObject *plugin = loader.instance();
             if (!plugin) {
-                debug(1) << "Could mot instantiate plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
+                debug(1) << "Could not instantiate plugin" << fileName.toStdString() << ":" << loader.errorString().toStdString();
             } else {
                 if (loadPlugin(plugin)) {
                     info() << "Loaded plugin"<< fileName.toStdString();

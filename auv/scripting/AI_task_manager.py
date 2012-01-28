@@ -28,8 +28,8 @@ import traceback
 from collections import deque
 
 from AI_classes import aiProcess, external_function, RepeatTimer
-from AI_tasks import tasks
-from AI_conditions import conditions
+from AI_tasks import tasks as task_classes
+from AI_conditions import conditions as condition_classes
 
 """          
 task manager auto generates a list of what it should be running from these 'tasks', basically looking for these tasks and then running appropriate scripts
@@ -78,14 +78,14 @@ class taskManager(aiProcess):
     
     #ONMESSAGE FUNCTIONS
     def onAddTaskMessage(self, msg):
-        self.processing_queue.append(('create_task', [tasks[msg.taskType]], {}))
+        self.processing_queue.append(('create_task', [task_classes[msg.taskType]], {}))
     def onRemoveTaskMessage(self, msg):
         self.processing_queue.append(('remove_task', [msg.taskId], {}))
     def onSetTaskStateMessage(self, msg):
         self.processing_queue.append(('set_task_options', [msg.taskId, msg.taskOptions, msg.scriptOptions, msg.conditionIds], {}))
         
     def onAddConditionMessage(self, msg):
-        self.processing_queue.append(('create_condition', [conditions[msg.conditionType]], {}))
+        self.processing_queue.append(('create_condition', [condition_classes[msg.conditionType]], {}))
     def onRemoveConditionMessage(self, msg):
         self.processing_queue.append(('remove_condition', [msg.conditionId], {}))
     def onSetConditionStateMessage(self, msg):
@@ -94,6 +94,34 @@ class taskManager(aiProcess):
     def onScriptControlMessage(self, msg):
         if msg.command == messaging.ScriptCommand.Stop:
             self.stop_script()
+            
+    def onRequestAIStateMessage(self, msg):
+        self.processing_queue.append(('gui_send_all', [], {}))
+    
+    #MESSAGES TO GUI
+    def gui_update_task(self, task):
+        self.node.send(messaging.TaskStateMessage(task.id,
+                task.conditions.keys(),
+                task.get_options(),
+                task.get_dynamic_options(),
+                task.get_static_options(),
+                task.active))
+    def gui_update_condition(self, condition):
+        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values()))
+    def gui_remove_task(self, task_id):
+        self.node.send(messaging.TaskRemovedMessage(task_id))
+    def gui_remove_condition(self, condition_id):
+        self.node.send(messaging.ConditionRemovedMessage(condition_id))
+    def gui_send_all(self):
+        #send type info
+        self.node.send(messaging.TaskTypesMessage([task_name for task_name in task_classes]))
+        self.node.send(messaging.ConditionTypesMessage(dict([(condition_name, condition.get_pipeline_names()) for condition_name, condition in condition_classes.iteritems()])))
+        #send conditions (first, since tasks depend on conditions)
+        for condition in self.conditions.itervalues():
+            self.gui_update_condition(condition)
+        #send tasks
+        for task in self.tasks.itervalues():
+            self.gui_update_task(task)
     
     #EXTERNAL FUNCTIONS
     #from detector process
@@ -149,12 +177,7 @@ class taskManager(aiProcess):
         debug("Creating task of type %s" %str(task_type))
         task = task_type()
         task.register(self)
-        self.node.send(messaging.TaskStateMessage(task.id,
-                task.conditions.keys(),
-                task.get_options(),
-                task.get_dynamic_options(),
-                task.get_static_options(),
-                task.active))
+        #self.gui_update_task(task) skip here since is already sent by updating task options
         return task.id
     def register_task(self, task):
         #give the task an id
@@ -169,7 +192,7 @@ class taskManager(aiProcess):
         self.tasks.pop(task_id)
         if self.current_task and task_id == self.current_task.id:
             self.stop_script()
-        self.node.send(messaging.TaskRemovedMessage(task_id))
+        self.gui_remove_task(task_id)
     def set_task_options(self, task_id, task_options={}, script_options={}, condition_ids=[]):
         debug("Setting options %s on task %d" %(str((task_options, script_options, condition_ids)), task_id))
         task = self.tasks[task_id]
@@ -187,12 +210,7 @@ class taskManager(aiProcess):
         for condition_id in condition_ids:
             task.conditions[condition_id] = self.conditions[condition_id]
             self.conditions[condition_id].task_ids.append(task_id)
-        self.node.send(messaging.TaskStateMessage(task.id,
-                task.conditions.keys(),
-                task.get_options(),
-                task.get_dynamic_options(),
-                task.get_static_options(),
-                task.active))
+        self.gui_update_task(task)
             
     #add/remove/modify conditions
     def create_condition(self, condition_type, options={}):
@@ -200,7 +218,7 @@ class taskManager(aiProcess):
         #create and register with self
         condition = condition_type(options)
         condition.register(self)
-        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values()))
+        self.gui_update_condition(condition)
         return condition.id
     def register_condition(self, condition):
         #give conditon an id and add to condition list
@@ -212,12 +230,12 @@ class taskManager(aiProcess):
         debug("Removing condition %d" %condition_id)
         self.conditions[condition_id].deregister(self)
         self.conditions.pop(condition_id)
-        self.node.send(messaging.ConditionRemovedMessage(condition_id))
+        self.gui_remove_condition(condition_id)
     def set_condition_options(self, condition_id, options):
         debug("Setting options %s on condition %s" %(str(options), condition_id))
         condition = self.conditions[condition_id]
         condition.set_options(options)
-        self.node.send(messaging.ConditionStateMessage(condition.id, condition.get_options(), condition.get_debug_values()))
+        self.gui_update_condition(condition)
         
     #script control
     def stop_script(self):
@@ -274,6 +292,13 @@ class taskManager(aiProcess):
             self.current_task.active = False
         self.current_task = task
         task.active = True
+        #update task status to gui
+        self.node.send(messaging.TaskStateMessage(task.id,
+                task.conditions.keys(),
+                task.get_options(),
+                task.get_dynamic_options(),
+                task.get_static_options(),
+                task.active))
         
     def process_periodic(self):
         #check running script, clear up if has died
@@ -315,6 +340,7 @@ class taskManager(aiProcess):
     #MAIN LOOP
     def run(self):
         self.periodic_timer.start()
+        self.gui_send_all() #need to make sure gui gets initial data
         while True:
             try:
                 try:

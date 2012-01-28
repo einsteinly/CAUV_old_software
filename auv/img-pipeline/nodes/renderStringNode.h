@@ -48,8 +48,6 @@ class RenderStringNode: public Node{
             registerParamID<int>("position: y", 0, "");
             registerParamID<float>("size", 1, "");
         }
-    
-        virtual ~RenderStringNode(){ stop(); }
 
     protected:
         struct applyRenderString: boost::static_visitor<augmented_mat_t>{

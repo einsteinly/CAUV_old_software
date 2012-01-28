@@ -35,10 +35,6 @@ class HistogramNode: public Node{
             registerParamID<std::string>("name", "unused" "");
             
         }
-    
-        virtual ~HistogramNode(){
-            stop();
-        }
 
     protected:
         struct calcHistogram: boost::static_visitor< std::vector<float> >{
@@ -90,7 +86,7 @@ class HistogramNode: public Node{
 
             const int bins = param<int>("Number of bins");
             augmented_mat_t img = inputs["image_in"]->augmentedMat();
-            r["histogram"] = NodeParamValue(boost::apply_visitor(calcHistogram(bins), img));
+            r["histogram"] = ParamValue(boost::apply_visitor(calcHistogram(bins), img));
 
             return r;
         }

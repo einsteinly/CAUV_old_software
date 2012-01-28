@@ -26,7 +26,6 @@ struct SonarSLAMImpl;
 class SonarSLAMNode: public OutputNode{
     public:
         SonarSLAMNode(ConstructArgs const& args) : OutputNode(args){ }
-        virtual ~SonarSLAMNode(){ stop(); }
 
         void init();
 

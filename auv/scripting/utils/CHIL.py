@@ -158,9 +158,9 @@ class CHILer:
         Dir_Extn = '.chil'
         Super_Index = 'megasuperlog'
         # Frequency to write keyframes to index files:
-        Idx_Keyframe_Freq = datetime.timedelta(seconds=60)
+        Idx_Keyframe_Freq = datetime.timedelta(seconds=30)
         # Maximum number of recorded messages between keyframes:
-        Idx_Keyframe_nFreq = 1000
+        Idx_Keyframe_nFreq = 500
         # Frequency of absolute time lines:
         Dat_Time_Line_Freq = datetime.timedelta(minutes=5)
         Read_Buf_Size = 0x10000
@@ -175,11 +175,15 @@ class CHILer:
     def __ensureDirectory(self, f):
         if not os.path.exists(f):
             os.makedirs(f)
-    def lockAndOpenForA(self, fname):
-        f = open(self.fileName(fname), 'a+b')
+    def lockAndOpenForMode(self, fname, mode):
+        f = open(self.fileName(fname), mode)
         # on OS X, this blocks until lock is available
         fcntl.lockf(f, fcntl.LOCK_EX)
         return f
+    def lockAndOpenForA(self, fname):
+        return self.lockAndOpenForMode(fname, 'a+b')
+    def lockAndOpenForW(self, fname):
+        return self.lockAndOpenForMode(fname, 'w+b')
     def releaseAndClose(self, fobj):
         fobj.flush()
         fcntl.lockf(fobj, fcntl.LOCK_UN)
@@ -237,9 +241,115 @@ class CHILer:
             basename = subname
         return basename
 
-class Logger(CHILer):
-    def __init__(self, dirname, subname=None):
+class Indexer(CHILer):
+    def __init__(self, dirname):
         CHILer.__init__(self, dirname)
+        self.idxfile = None
+        self.datfile = None
+    def writeKeyframeToIndex(self, t):
+        l = '%s %s\n' % (self.timeFormat(t), self.datfile.tell())
+        self.idxfile.write(l) 
+    def writeFormatToIndex(self, fmt):
+        l = 'Format %s %s\n' % (fmt, self.datfile.tell())
+        self.idxfile.write(l)
+    def writeFormatToDatfile(self, fmt):
+        l_dat = 'Format %s\n' % fmt
+        self.datfile.write(l_dat)
+    def writeTimeLineToIndex(self, t):
+        self.idxfile.write('%s %s\n' % (self.datfile.tell(), self.timeFormat(t)))
+    def writeTimeLineToDatfile(self, t):
+        self.datfile.write('Time %s\n' % self.timeFormat(t)) 
+
+class ReIndexer(Indexer):
+    def __init__(self, dirname):
+        Indexer.__init__(self, dirname)
+        self.megaindex = None
+
+    def scanDir(self):
+        log_files = filter(lambda x: x.endswith(self.Const.Dat_Extn), os.listdir(self.dirname))
+        print 'log files in directory:', log_files
+        return log_files
+    
+    def reIndex(self):
+        log_files = self.scanDir()
+        print 'reindexing: %d log files to process' % len(log_files)
+        self.megaindex = self.lockAndOpenForW(self.Const.Super_Index)
+        self.megaindex.write('CHILSUPERIDX\n')
+        for fname in log_files:
+            print '\t%s:' % fname
+            recorded_msg_types = {}
+            last_format = None
+            with self.openForR(fname) as self.datfile:
+                self.idxfile = self.lockAndOpenForW(fname[:-len(self.Const.Dat_Extn)] + self.Const.Idx_Extn)
+                self.idxfile.write('CHILIDX\n')
+                last_keyframe_time = None
+                last_timepos_line = None
+                n_since_last_keyframe = 0
+                while True:
+                    line = self.datfile.readline()
+                    if not line:
+                        break
+                    try:
+                        fmt_line = IdxGrammar.p_format_line.parseString(line)
+                        print 'format line:', fmt_line
+                        self.writeFormatToIndex(fmt_line[0])
+                        if last_format is not None:
+                            # TODO: merge this logic too:
+                            l = 'Format %s\n' % fmt_line[0]
+                            self.megaindex.write(l)
+                            for k, v in recorded_msg_types.iteritems():
+                                self.megaindex.write('%s ([%d %s--%s],)\n' % (
+                                    fname, k, self.timeFormat(v[0]), self.timeFormat(v[1])
+                                ))
+                            recorded_msg_types = {}
+                        last_format = fmt_line[0]
+                        continue
+                    except pp.ParseException:
+                        pass
+                    try:
+                        tm_line = IdxGrammar.p_time_line.parseString(line)
+                        print 'time line:', tm_line
+                        self.writeTimeLineToIndex(tm_line[0])
+                        if last_timepos_line is None:
+                            self.writeKeyframeToIndex(tm_line[0])
+                        last_timepos_line = tm_line[0]
+                        last_keyframe_time = tm_line[0]
+                        continue
+                    except pp.ParseException:
+                        pass
+                    record_time = last_timepos_line + datetime.timedelta(microseconds=long(line.split()[0]))
+                    if record_time - last_keyframe_time > self.Const.Idx_Keyframe_Freq or\
+                       n_since_last_keyframe > self.Const.Idx_Keyframe_nFreq:
+                        print 'keyframe line:', record_time
+                        last_keyframe_time = record_time
+                        n_since_last_keyframe = 0
+                        self.writeKeyframeToIndex(record_time)
+                    else:
+                        n_since_last_keyframe += 1
+                    # TODO: merge this logic with the same from the Logger
+                    # class:
+                    msgId = long(line[line.find(' '):line.find('(')])
+                    t_range = recorded_msg_types.get(msgId, (record_time, record_time))
+                    if record_time < t_range[0]:
+                        t_range = (record_time, t_range[1])
+                    elif record_time > t_range[1]:
+                        t_range = (t_range[0], record_time)
+                    recorded_msg_types[msgId] = t_range
+                self.releaseAndClose(self.idxfile)
+                self.idxfile = None
+            # TODO: merge this logic too:
+            l = 'Format %s\n' % last_format
+            self.megaindex.write(l)
+            for k, v in recorded_msg_types.iteritems():
+                self.megaindex.write('%s ([%d %s--%s],)\n' % (
+                    fname, k, self.timeFormat(v[0]), self.timeFormat(v[1])
+                ))
+        self.releaseAndClose(self.megaindex)
+        self.megaindex = None
+
+class Logger(Indexer):
+    def __init__(self, dirname, subname=None):
+        Indexer.__init__(self, dirname)
         self.basename = self.baseNameFromSubName(subname)
         self.idxname = self.basename + self.Const.Idx_Extn
         self.datname = self.basename + self.Const.Dat_Extn
@@ -256,24 +366,20 @@ class Logger(CHILer):
         # not public        
         if t is None:
             t = datetime.datetime.now()
-        l = '%s %s\n' % (self.timeFormat(t), self.datfile.tell())
         self.last_keyframe_time = t
-        self.idxfile.write(l)
+        self.writeKeyframeToIndex(t)
     def __writeFormatLines(self):
-        # not public        
-        l_dat = 'Format %s\n' % self.source_revision
-        self.datfile.write(l_dat)
-        l_idx = 'Format %s %s\n' % (self.source_revision, self.datfile.tell())
-        self.idxfile.write(l_idx)
+        # not public
+        self.writeFormatToDatfile(self.source_revision)
+        self.writeFormatToIndex(self.source_revision)
     def __writeTimeLine(self, t=None):
         # not public
         if t is None:
              t = datetime.datetime.now()
         self.last_absolute_time = t
-        l = self.timeFormat(t)
         #print 'Time', l
-        self.idxfile.write('%s %s\n' % (self.datfile.tell()+1, l))
-        self.datfile.write('Time %s\n' % l)
+        self.writeTimeLineToIndex(t)
+        self.writeTimeLineToDatfile(t)
     def log(self, msg, record_time=None):
         # Log message msg at time record_time if record_time is omitted the
         # current time is used.
@@ -397,8 +503,10 @@ class ComponentPlayer(CHILer):
         self.seek_time_map = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
         self.decoders = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
         self.default_decoder = None
+        got_decoder = False
         try:
             self.default_decoder = self.importDecoder(sourceRevision())
+            got_decoder = True
         except ImportError:
             print 'WARNING: no default decoder (current revision) available.'
             #import traceback
@@ -425,6 +533,7 @@ class ComponentPlayer(CHILer):
                     try:
                         decoder = self.importDecoder(parsed[0])
                         self.decoders[parsed[1]] = decoder
+                        got_decoder = True
                     except ImportError:
                         print 'No decoder for hg revision %s!' % parsed[0]
                         self.decoders[parsed[1]] = None
@@ -434,6 +543,8 @@ class ComponentPlayer(CHILer):
                         print 'loaded decoder for %s' % parsed[0]
                 except pp.ParseException:
                     pass
+        if not got_decoder:
+            raise ImportError('no decoders available')
         #print 'seek-time map: %s' % '\n\t'.join(map(str, sorted(self.seek_time_map.items())))
         #print '     seek map: %s' % '\n\t'.join(map(str, sorted(self.seek_map.items())))
         #print '     decoders: %s' % self.decoders
@@ -445,9 +556,9 @@ class ComponentPlayer(CHILer):
             try:
                 importlib.import_module(package)
                 return importlib.import_module(modname, package)
-            except ImportError:
+            except ImportError, e:
                 pass
-            except AttributeError:
+            except AttributeError, e:
                 pass
         raise
         
@@ -458,6 +569,8 @@ class ComponentPlayer(CHILer):
         try:
             return decoder.parseMessage(msgstring)
         except Exception, e:
+            import traceback
+            traceback.print_exc()
             return "failed to parse message at %s:%d" % (self.datname, seekpos)
     def swap(self, other):
         # dum di dum di dum
@@ -968,25 +1081,25 @@ def testLogCoverage(loops=200):
         l.log(m.AddNodeMessage('pipeline name', m.NodeType.FileInput, parents, children))
         l.log(m.RemoveNodeMessage('nnnnn', 12345))
         l.log(m.ClearPipelineMessage('mm'))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'int param', m.NodeParamValue.create(123)))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'float param', m.NodeParamValue.create(1.23)))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'string param', m.NodeParamValue.create('test')))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'bool param', m.NodeParamValue.create(False)))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Corner> param', m.NodeParamValue.create(m.CornerVec())))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'int param', m.ParamValue.create(123)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'float param', m.ParamValue.create(1.23)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'string param', m.ParamValue.create('test')))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'bool param', m.ParamValue.create(False)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Corner> param', m.ParamValue.create(m.CornerVec())))
         corners = m.CornerVec(); corners.append(m.Corner())
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Corner> param', m.NodeParamValue.create(corners)))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Line> param', m.NodeParamValue.create(m.LineVec())))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Corner> param', m.ParamValue.create(corners)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Line> param', m.ParamValue.create(m.LineVec())))
         lines = m.LineVec(); lines.append(m.Line()); lines.append(m.Line())
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Line> param', m.NodeParamValue.create(lines)))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Circle> param', m.NodeParamValue.create(m.CircleVec())))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Line> param', m.ParamValue.create(lines)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Circle> param', m.ParamValue.create(m.CircleVec())))
         circles = m.CircleVec(); circles.append(m.Circle())
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Circle> param', m.NodeParamValue.create(circles)))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(m.floatVec())))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'list<Circle> param', m.ParamValue.create(circles)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.ParamValue.create(m.floatVec())))
         floats = m.floatVec(); floats.append(1); floats.append(2)
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(floats)))
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(m.KeyPointVec())))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.ParamValue.create(floats)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.ParamValue.create(m.KeyPointVec())))
         kps = m.KeyPointVec(); kps.append(m.KeyPoint())
-        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.NodeParamValue.create(kps)))
+        l.log(m.SetNodeParameterMessage('some pl', 3, 'a param', m.ParamValue.create(kps)))
         l.log(m.AddArcMessage('', m.NodeOutput(12,'',m.OutputType.Image), m.NodeInput(13, '')))
         l.log(m.RemoveArcMessage('', m.NodeOutput(12,'',m.OutputType.Image), m.NodeInput(13, '')))
         import struct

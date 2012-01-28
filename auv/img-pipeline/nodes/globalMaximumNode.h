@@ -47,10 +47,6 @@ class GlobalMaximumNode: public Node{
             // one output
             registerOutputID("keypoints", std::vector<KeyPoint>());
         }
-    
-        virtual ~GlobalMaximumNode(){
-            stop();
-        }
 
     protected:
         struct applyGlobalMaxima: boost::static_visitor< std::vector<KeyPoint> >{
@@ -88,7 +84,7 @@ class GlobalMaximumNode: public Node{
             augmented_mat_t in = img->augmentedMat();
 
             try{
-                r["keypoints"] = NodeParamValue(
+                r["keypoints"] = ParamValue(
                     boost::apply_visitor(applyGlobalMaxima(), in)
                 );
             }catch(cv::Exception& e){

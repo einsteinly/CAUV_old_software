@@ -45,15 +45,15 @@
 namespace cauv{
 namespace imgproc{
 
-/* Getter for NodeParamValue. Specialised for the case where we want the
+/* Getter for ParamValue. Specialised for the case where we want the
  * actual variant
  */
 template<typename T>
-inline T getValue(const NodeParamValue& v) {
+inline T getValue(const ParamValue& v) {
     return boost::get<T>(v);
 }
 template<>
-inline NodeParamValue getValue<NodeParamValue>(const NodeParamValue& v) {
+inline ParamValue getValue<ParamValue>(const ParamValue& v) {
     return v;
 }
 
@@ -68,7 +68,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef std::vector<NodeInput> msg_node_in_list_t;
         typedef std::map<LocalNodeOutput, msg_node_in_list_t> msg_node_output_map_t;
         typedef std::map<LocalNodeInput, NodeOutput> msg_node_input_map_t;
-        typedef std::map<LocalNodeInput, NodeParamValue> msg_node_param_map_t;
+        typedef std::map<LocalNodeInput, ParamValue> msg_node_param_map_t;
 
         typedef std::set<output_id> output_id_set_t;
         typedef std::set<input_id> input_id_set_t;
@@ -79,7 +79,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
         // NB: order here is important, don't change it!
         // matches cauv::OutputType::e
-        typedef boost::variant<image_ptr_t, NodeParamValue> output_t;
+        typedef boost::variant<image_ptr_t, ParamValue> output_t;
 
         typedef std::map<output_id, output_t> out_map_t;
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
@@ -133,7 +133,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             InputSchedType::e sched_type;
             NodeInputStatus::e status;
             InputType input_type;
-            mutable NodeParamValue param_value;
+            mutable ParamValue param_value;
             std::string tip;
 
             Input(InputSchedType::e s)
@@ -146,7 +146,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                   tip(){
             }
 
-            Input(InputSchedType::e s, NodeParamValue const& default_value, std::string const& tip)
+            Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip)
                 : TestableBase<Input>(*this),
                   target(),
                   sched_type(s),
@@ -160,7 +160,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 return boost::make_shared<Input>(boost::cref(st));
             }
 
-            static input_ptr makeParamInputShared(NodeParamValue const& default_value,
+            static input_ptr makeParamInputShared(ParamValue const& default_value,
                                                   std::string const& tip,
                                                   InputSchedType::e const& st = May_Be_Old){
                 return boost::make_shared<Input>(
@@ -175,10 +175,10 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             }
 
             // NB: no locks are necessarily held when calling this
-            NodeParamValue getParam(bool& did_change) const{
+            ParamValue getParam(bool& did_change) const{
                 did_change = false;
                 if(target){
-                    NodeParamValue parent_value = target.node->getOutputParam(target.id);
+                    ParamValue parent_value = target.node->getOutputParam(target.id);
                     if(param_value.which() == parent_value.which()){
                         if(!(param_value == parent_value)){
                             did_change = true;
@@ -310,12 +310,12 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
 
         /* Get the parameter associated with a parameter output
          */
-        NodeParamValue getOutputParam(output_id const& o_id) const throw(id_error);
+        ParamValue getOutputParam(output_id const& o_id) const throw(id_error);
 
 
         /* return all parameter values (without querying connected parents)
          */
-        std::map<LocalNodeInput, NodeParamValue> parameters() const;
+        std::map<LocalNodeInput, ParamValue> parameters() const;
 
         /* set a parameter based on a message
          */
@@ -443,7 +443,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 return;
             }
             m_inputs.insert(private_in_map_t::value_type(
-                p, Input::makeParamInputShared(NodeParamValue(default_value), tip, st)
+                p, Input::makeParamInputShared(ParamValue(default_value), tip, st)
             ));
             _statusMessage(boost::make_shared<InputStatusMessage>(
                 m_pl_name, m_id, p, NodeIOStatus::None
@@ -468,12 +468,12 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         }
         
         /* Template type is used to determine the complete type of the output
-         * (image, or NodeParamValue type) images are specialised, everything
-         * else gets shoved into a NodeParamValue:
+         * (image, or ParamValue type) images are specialised, everything
+         * else gets shoved into a ParamValue:
          */
         template<typename T>
         void registerOutputID(output_id const& o, T default_value){
-            _explicitRegisterOutputID<NodeParamValue>(o, NodeParamValue(default_value));
+            _explicitRegisterOutputID<ParamValue>(o, ParamValue(default_value));
         }
         /* overload for image output type: I'm as shocked as you are that this
          * works
@@ -584,6 +584,15 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         ImageProcessor& m_pl;
         const std::string m_pl_name;
+        
+        /* Derived classes may call stop() in their destructors if they have
+         * cleanup that requires execution to be halted first.
+         *
+         * Currently stop() just performs integrity checks, since by the time a
+         * node is being destroyed it is definitely not about to be executed,
+         * but in the future it may do other stuff.
+         */
+        bool m_stopped;
 };
 
 template<typename char_T, typename traits>

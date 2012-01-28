@@ -52,15 +52,11 @@ class NullParamNode: public Node{
             // parameters:
             registerParamID("in", int(), "the input"); 
         }
-    
-        virtual ~NullParamNode(){
-            stop();
-        }
 
     protected:
         out_map_t doWork(in_image_map_t&){
             out_map_t r;
-            r["out"] = param<NodeParamValue>("in");
+            r["out"] = param<ParamValue>("in");
             return r;
         }
     private:

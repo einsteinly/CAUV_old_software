@@ -53,10 +53,6 @@ class SonarShadowFilterNode: public Node{
             registerParamID<float>("object importance", 1.0f, "relative weight of object in calculation");
             registerParamID<float>("shadow importance", 1.0f, "relative weight of shadow in calculation");
         }
-    
-        virtual ~SonarShadowFilterNode(){
-            stop();
-        }
 
     protected:
         struct applyFilter: boost::static_visitor<augmented_mat_t>{

@@ -224,7 +224,7 @@ bool SmartStreamBase::mayAddSpaceNow(std::string const& s){
     if(s.find("\033[") == 0)
         return false;
     switch(s[0]){
-        case ',': case '.':
+        case ',': case '.': case '%': case ':': case ';':
         case '=':
         case ')': case ']': case '}':
         case '"': case '\'':
