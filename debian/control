@@ -1,0 +1,13 @@
+Source: cauv-software
+Section: electronics
+Priority: extra
+Maintainer: unknown <builduser@unknown>
+Build-Depends: debhelper (>= 8.0.0), cmake
+Standards-Version: 3.9.2
+Homepage: http://www.cambridgeauv.co.uk/
+
+Package: cauv-software
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: CAUV software package
+ everything!

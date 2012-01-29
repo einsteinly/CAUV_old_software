@@ -29,7 +29,7 @@ set ( MAP_PLUGIN_H
 )
      
 qt4_wrap_ui (MAP_PLUGIN_UIS_H ${MAP_PLUGIN_UIS})
-qt4_wrap_cpp (MAP_PLUGIN_MOC_H ${MAP_PLUGIN_H})
+qt4_wrap_cpp (MAP_PLUGIN_MOC_H ${MAP_PLUGIN_H} ${MOC_BOOST_HACK})
 
 add_library( mapplugin MODULE
     ${MAP_PLUGIN_SRCS}

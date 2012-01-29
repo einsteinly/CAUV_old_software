@@ -20,7 +20,7 @@ class scriptOptions(aiScriptOptions):
     lines_name = 'cam'
     #Timeouts
     ready_timeout = 30
-    lost_timeout = 15
+    lost_timeout = 5
     # Calibration
     centre_error = 0.05 # of image
     align_error  = 10   # degrees 

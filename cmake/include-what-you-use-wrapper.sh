@@ -20,6 +20,15 @@ then
 else
     echo logging to $IWYU_OUTPUT_DIR/include-what-you-use.log
     include-what-you-use $iwyu_flags &>> "$IWYU_OUTPUT_DIR/include-what-you-use.log"
+
+    errr=$?
+    if [ $errr -gt 127 ]
+    then
+        echo exited abnormally, saving errors to $IWYU_OUTPUT_DIR
+        echo exited with code $errr >> $IWYU_OUTPUT_DIR/iwyu-errors.log
+        echo command: >> $IWYU_OUTPUT_DIR/iwyu-errors.log
+        echo include-what-you-use $iwyu_flags >> $IWYU_OUTPUT_DIR/iwyu-errors.log
+    fi
 fi
 clang++ $@
 exit $?

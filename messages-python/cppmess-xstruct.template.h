@@ -46,8 +46,12 @@ struct $s.name
 #*           *#);
     #end if 
 
+#if $s.numEqualityFields > 0
     bool operator==($s.name const& other) const;
+#end if
+#if $s.numCompareFields > 0
     bool operator<($s.name const& other) const;
+#end if
 };
 void serialise(svec_ptr, $s.name const&);
 int32_t deserialise(const_svec_ptr, uint32_t, $s.name&);

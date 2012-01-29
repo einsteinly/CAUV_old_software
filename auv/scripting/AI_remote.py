@@ -54,22 +54,22 @@ def add_task(ainode):
     ainode.node.send(messaging.AddTaskMessage(task_type))
     
 def remove_task(ainode):
-    task_id = int(raw_input('Enter task id: '))
+    task_id = str(raw_input('Enter task id: '))
     ainode.node.send(messaging.RemoveTaskMessage(task_id))
     
 def set_task_options(ainode):
-    task_id = int(raw_input('Enter task id: '))
+    task_id = str(raw_input('Enter task id: '))
     task_options = input('Enter task options (as dict): ')
     ainode.node.send(messaging.SetTaskStateMessage(task_id, [], task_options, {}))
     
 def set_script_options(ainode):
-    task_id = int(raw_input('Enter task id: '))
+    task_id = str(raw_input('Enter task id: '))
     script_options = input('Enter script options (as dict): ')
     ainode.node.send(messaging.SetTaskStateMessage(task_id, [], {}, script_options))
     
 def set_task_conditions(ainode):
-    task_id = int(raw_input('Enter task id: '))
-    conditions = input('Enter script options (as list): ')
+    task_id = str(raw_input('Enter task id: '))
+    conditions = input('Enter conditions (as list): ')
     ainode.node.send(messaging.SetTaskStateMessage(task_id, conditions, {}, {}))
     
 def add_condition(ainode):
@@ -77,11 +77,11 @@ def add_condition(ainode):
     ainode.node.send(messaging.AddConditionMessage(condition_type))
     
 def remove_condition(ainode):
-    condition_id = int(raw_input('Enter condition id: '))
+    condition_id = str(raw_input('Enter condition id: '))
     ainode.node.send(messaging.RemoveConditionMessage(condition_id))
     
 def set_condition_options(ainode):
-    condition_id = int(raw_input('Enter condition id: '))
+    condition_id = str(raw_input('Enter condition id: '))
     condition_options = input('Enter condition options (as dict): ')
     ainode.node.send(messaging.SetConditionStateMessage(condition_id, condition_options))
     

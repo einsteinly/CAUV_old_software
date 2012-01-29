@@ -503,8 +503,10 @@ class ComponentPlayer(CHILer):
         self.seek_time_map = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
         self.decoders = LinearpiecewiseApprox(rfunc=lambda x:x, interp=zeroOrderInterp)
         self.default_decoder = None
+        got_decoder = False
         try:
             self.default_decoder = self.importDecoder(sourceRevision())
+            got_decoder = True
         except ImportError:
             print 'WARNING: no default decoder (current revision) available.'
             #import traceback
@@ -531,6 +533,7 @@ class ComponentPlayer(CHILer):
                     try:
                         decoder = self.importDecoder(parsed[0])
                         self.decoders[parsed[1]] = decoder
+                        got_decoder = True
                     except ImportError:
                         print 'No decoder for hg revision %s!' % parsed[0]
                         self.decoders[parsed[1]] = None
@@ -540,6 +543,8 @@ class ComponentPlayer(CHILer):
                         print 'loaded decoder for %s' % parsed[0]
                 except pp.ParseException:
                     pass
+        if not got_decoder:
+            raise ImportError('no decoders available')
         #print 'seek-time map: %s' % '\n\t'.join(map(str, sorted(self.seek_time_map.items())))
         #print '     seek map: %s' % '\n\t'.join(map(str, sorted(self.seek_map.items())))
         #print '     decoders: %s' % self.decoders
@@ -551,9 +556,9 @@ class ComponentPlayer(CHILer):
             try:
                 importlib.import_module(package)
                 return importlib.import_module(modname, package)
-            except ImportError:
+            except ImportError, e:
                 pass
-            except AttributeError:
+            except AttributeError, e:
                 pass
         raise
         

@@ -86,13 +86,14 @@ class SonarSLAMImpl{
 
         void addNewCloud(cloud_ptr cloud,
                          float point_merge_distance,
-                         float concave_hull_alpha){
+                         float concave_hull_alpha,
+                         std::vector<int>& keypoint_goodness){
             // TODO: propagate sonar timestamp with keypoints... somehow... and use
             // that instead of an index
             static uint32_t cloud_num = 0;
             clouds[++cloud_num] = cloud;
             //whole_cloud->mergeCollapseNearest(cloud, point_merge_distance);
-            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha, point_merge_distance);
+            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha, point_merge_distance, keypoint_goodness);
             last_transformation = cloud->transformation();            
             last_cloud = cloud;
 
@@ -238,12 +239,6 @@ static cv::Mat renderCloud(
     return r;
 }
 
-/*struct CompareKPByIntensity{
-    bool operator()(pt_t const& l, pt_t const& r) const{
-        return l.getVector4fMap()[3] < r.getVector4fMap()[3];
-    }
-};*/
-
 static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
                             Eigen::Matrix4f const& initial_transform,
                             float const& weight_test){
@@ -263,8 +258,7 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
     bool warned_non_planar = false;
     for(size_t i = 0; i < kps.size(); i++){
         if(kps[i].response > weight_test){
-            r->points.push_back(pt_t());
-            r->descriptors().push_back(kps[i].response);
+            r->push_back(pt_t(), kps[i].response, i);
             pt_t temp(kps[i].pt.x, kps[i].pt.y, 0.0f);
             r->back().getVector3fMap() = rotate * temp.getVector3fMap() + translate;
             //r->back().getVector4fMap()[3] = kps[i].response;
@@ -284,51 +278,48 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
             }
         }
     }
-    /*
-    #warning hack: ensure cloud includes untransformed origin
-    r->push_back(pt_t());
-    r->back().getVector3fMap() = rotate * Eigen::Vector3f(0,0,0) + translate;
-    */
+
     r->width = r->size();
-
-    //std::sort(r->rbegin(), r->rend(), CompareKPByIntensity());
-
-    //debug d;
-    //d << "sorted kps: {";
-    //foreach(pt_t const& pt, *r)
-    //    d <<"("<< pt.getVector4fMap()[3] <<":"<< pt.x <<","<< pt.y <<","<< pt.z <<"),";
-    //d << "}";
 
     return r;
 }
 
 void SonarSLAMNode::init(){
+    typedef std::vector<KeyPoint> kp_vec;
+
     m_impl = boost::make_shared<SonarSLAMImpl>();
 
     // slow node (don't schedule nodes providing input until we've
     // finished doing work here)
-    m_speed = slow;
+    //m_speed = slow; // !!! slow can cause inputs to get out of sync under high load
+    m_speed = fast;
 
-    // inputs (well, parameter input that must be new for the node to be
-    // executed):
-    registerParamID("keypoints", std::vector<KeyPoint>(), "keypoints used to update map", Must_Be_New);
+    // inputs:
+    registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", Must_Be_New);
+    registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
+    registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
 
     // parameters: may be old
+    // Parameters that are really inputs:
     registerInputID("xy image", /*"image to use for map visualisation (may be unconnected)", */Optional);
     registerParamID("xy metres/px", float(1), "range conversion for visualisation image");
-
+    
+    // Control Parameters:
     registerParamID("clear", bool(false), "true => discard accumulated point cloud");
-    registerParamID("max iters", int(50), "");
-    registerParamID("transform eps", float(1e-8), "difference between transforms in successive iters for convergence");
-    registerParamID("euclidean fitness", float(1e-6), "max error between consecutive steps for non-convergence");
-    registerParamID("reject threshold", float(5), "RANSAC outlier rejection distance");
-    registerParamID("max correspond dist", float(5), "");
-    registerParamID("score threshold", float(1), "keypoint set will be rejected if mean distance error is greater than this");
-    registerParamID("weight test", float(25), "keypoints with weights greater than this will be used for registration");
-    registerParamID("feature merge distance", float(0.2), "keypoints closer to each other than this will be merged");
     registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
-
+    registerParamID("score threshold", float(2), "keypoint set will be rejected if mean distance error is greater than this");
+    registerParamID("weight test", float(5), "keypoints with weights greater than this will be used for registration");
+    registerParamID("feature merge distance", float(0.05), "keypoints closer to each other than this will be merged");
+    
+    // ICP Parameters:
+    registerParamID("max iters", int(20), "");
+    registerParamID("transform eps", float(1e-9), "difference between transforms in successive iters for convergence");
+    registerParamID("euclidean fitness", float(1e-7), "max error between consecutive steps for non-convergence");
+    registerParamID("reject threshold", float(0.5), "RANSAC outlier rejection distance");
+    registerParamID("max correspond dist", float(1), "");
+    
+    // Visualisation Parameters:
     registerParamID("-render size", float(400));
     registerParamID("-vis size", int(800));
     registerParamID("-vis origin x", int(400));
@@ -338,14 +329,24 @@ void SonarSLAMNode::init(){
     registerOutputID("whole cloud vis");
     registerOutputID("last added vis");
     registerOutputID("mosaic");
+    
+    // training outputs for feature extractor:
+    registerOutputID("training: keypoints", kp_vec());
+    registerOutputID("training: keypoints image");
+    registerOutputID("training: goodness", std::vector<int>());
 }
 
 Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
+    typedef std::vector<KeyPoint> kp_vec;
     out_map_t r;
 
     bool clear = param<bool>("clear");
     if(clear)
         m_impl->reset();
+
+    const std::vector<KeyPoint> keypoints = param<kp_vec>("keypoints");
+    const std::vector<KeyPoint> training_keypoints = param<kp_vec>("training: polar keypoints");
+    assert(keypoints.size() == training_keypoints.size());
 
     const int   max_iters   = param<int>("max iters");
     const float euclidean_fitness   = param<float>("euclidean fitness");
@@ -378,7 +379,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
 
     // weight-test throwing away low scorers:
     cloud_ptr new_cloud = kpsToCloud(
-        param< std::vector<KeyPoint> >("keypoints"),
+        keypoints,
         guess,
         weight_test
     );
@@ -430,6 +431,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
 
         // icp doesn't copy data in the derived class...
         final->descriptors() = new_cloud->descriptors();
+        final->ptIndices() = new_cloud->ptIndices();
 
         // guess was applied before icp determined to remaining transformation,
         // so post-multiply (ie, apply guess first)
@@ -457,7 +459,14 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
                << "score:" << score;
         debug(3) << "transformation:\n" << final_transform;
         if(icp.hasConverged() && score < score_thr){
-            m_impl->addNewCloud(final, point_merge_distance, map_merge_alpha);
+            // start out assuming all keypoints that have passed the weight
+            // test are good:
+            std::vector<int> point_goodness(training_keypoints.size(), 0);
+            for(std::size_t i = 0; i < final->ptIndices().size(); i++)
+                point_goodness[final->ptIndices()[i]] = 1;
+
+            m_impl->addNewCloud(final, point_merge_distance, map_merge_alpha, point_goodness);
+
             if(xy_image){
                 m_impl->updateVis(xy_image->mat(), final_transform, m_per_pix);
                 r["mosaic"] = boost::make_shared<Image>(m_impl->vis());
@@ -470,6 +479,11 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             r["last added vis"] = boost::make_shared<Image>(renderCloud(
                 *final, Eigen::Vector2f(xytheta[0],xytheta[1]), m_impl->min(), m_impl->max(), render_sz, false
             ));
+           
+            r["training: keypoints"] = training_keypoints;
+            r["training: keypoints image"] = inputs["keypoints image"];
+            r["training: goodness"] = point_goodness;
+
         }else if(score >= score_thr){
             r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));
             info() << BashColour::Brown
