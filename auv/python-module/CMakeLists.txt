@@ -103,9 +103,9 @@ install(DIRECTORY ${SRCD}/cauv DESTINATION ${CAUV_PYTHON_INSTALL_PATH}
         FILES_MATCHING PATTERN "*.py")
 
 # Fake install by linking
-option(SYMLINK_CAUVINTERFACE "symlink cauvinterface to source directory for run.sh" ON)
-if (SYMLINK_CAUVINTERFACE)
-    get_target_property(CAUV_INTERFACE_LOCATION cauvinterface ${CONFIG}_LOCATION)
+option(CAUV_SYMLINK_CAUVINTERFACE "symlink cauvinterface to source directory for run.sh" ON)
+if (CAUV_SYMLINK_CAUVINTERFACE)
+    get_target_property(CAUV_INTERFACE_LOCATION cauvinterface LOCATION_${CONFIG})
     get_filename_component(CAUV_INTERFACE_BASENAME "${CAUV_INTERFACE_LOCATION}" NAME_WE)
 
     cauv_install_link("${SRCD}/cauvinterface.so" ${CAUV_INTERFACE_LOCATION})

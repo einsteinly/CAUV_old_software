@@ -128,6 +128,13 @@ void CameraManager::getImage(InfoResponse& resp,
 
     boost::shared_ptr<Capture> cap = m_open_cameras[req.camera_id];
 
+    if(!cap->ok()){
+        std::cout << BashColour::Red << "!";
+        debug() << "capture not available!";
+        m_open_cameras.erase(req.camera_id);
+        return;
+    }
+
     int32_t cap_type = CV_8UC3;
 
     // release any images that this client isn't using any more, and possibly
@@ -246,6 +253,10 @@ void CameraManager::CVCapture::captureToMem(
     debug(8) << "w" << w << "h" << h << "type" << type << "pitch" << pitch << "bytes" << (void*)p;
 }
 
+bool CameraManager::CVCapture::ok() const{
+    return isOpened();
+}
+
 #ifdef CAUV_USE_DC1394
 // CameraManager::DC1394Capture
 CameraManager::DC1394Capture::DC1394Capture(ImageRequest const& req)
@@ -361,7 +372,7 @@ void CameraManager::DC1394Capture::captureToMem(
     dc1394error_t err;    
     uint32_t width;
     uint32_t height;
-    
+
     // get a pointer to a frame in the buffer
     err=dc1394_capture_dequeue(m_camera, DC1394_CAPTURE_POLICY_WAIT, &frame);
     if(err){
@@ -398,6 +409,11 @@ void CameraManager::DC1394Capture::captureToMem(
 
     debug(8) << "w" << w << "h" << h << "type" << type << "pitch" << pitch << "bytes" << (void*)p;
 }
+
+bool CameraManager::DC1394Capture::ok() const{
+    return m_camera && m_dc1394;
+}
+
 #endif // def CAUV_USE_DC1394
 
 // CameraServer

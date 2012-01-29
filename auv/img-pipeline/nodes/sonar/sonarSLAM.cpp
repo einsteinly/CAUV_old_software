@@ -301,20 +301,25 @@ void SonarSLAMNode::init(){
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
 
     // parameters: may be old
+    // Parameters that are really inputs:
     registerInputID("xy image", /*"image to use for map visualisation (may be unconnected)", */Optional);
     registerParamID("xy metres/px", float(1), "range conversion for visualisation image");
-
+    
+    // Control Parameters:
     registerParamID("clear", bool(false), "true => discard accumulated point cloud");
-    registerParamID("max iters", int(50), "");
-    registerParamID("transform eps", float(1e-8), "difference between transforms in successive iters for convergence");
-    registerParamID("euclidean fitness", float(1e-6), "max error between consecutive steps for non-convergence");
-    registerParamID("reject threshold", float(5), "RANSAC outlier rejection distance");
-    registerParamID("max correspond dist", float(5), "");
-    registerParamID("score threshold", float(1), "keypoint set will be rejected if mean distance error is greater than this");
-    registerParamID("weight test", float(25), "keypoints with weights greater than this will be used for registration");
-    registerParamID("feature merge distance", float(0.2), "keypoints closer to each other than this will be merged");
     registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
-
+    registerParamID("score threshold", float(2), "keypoint set will be rejected if mean distance error is greater than this");
+    registerParamID("weight test", float(5), "keypoints with weights greater than this will be used for registration");
+    registerParamID("feature merge distance", float(0.05), "keypoints closer to each other than this will be merged");
+    
+    // ICP Parameters:
+    registerParamID("max iters", int(20), "");
+    registerParamID("transform eps", float(1e-9), "difference between transforms in successive iters for convergence");
+    registerParamID("euclidean fitness", float(1e-7), "max error between consecutive steps for non-convergence");
+    registerParamID("reject threshold", float(0.5), "RANSAC outlier rejection distance");
+    registerParamID("max correspond dist", float(1), "");
+    
+    // Visualisation Parameters:
     registerParamID("-render size", float(400));
     registerParamID("-vis size", int(800));
     registerParamID("-vis origin x", int(400));
