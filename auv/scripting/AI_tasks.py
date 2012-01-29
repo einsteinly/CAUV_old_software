@@ -1,11 +1,10 @@
 from AI_conditions import conditions as c
-from AI_classes import subclassDict
+from AI_classes import subclassDict, aiOptions
 
 from cauv.debug import debug, warning, error, info
 
-class taskOptions(object):
+class taskOptions(aiOptions):
     script_name = None
-    _script_options = {}
     priority = 1
     detectors_enabled_while_running = False
     crash_count = 0
@@ -15,35 +14,25 @@ class taskOptions(object):
     def __init__(self, options={}):
         if not hasattr(self.__class__, 'running_priority'):
             self.running_priority = self.priority
-        if self.script_name:
-            #we want to load script options
-            self._script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions()
-        else:
-            self._script_options = None
-        for key, attr in self.__class__.__dict__.items():
-            if key[0] != '_':
-                setattr(self, key, attr)
-        self.__dict__.update(options)
-    def __setattr__(self, attr, value):
-        if attr == 'script_name' and value != self.script_name:
-            if value:
-                #we want to reload script options
-                self._script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions()
-        return object.__setattr__(self, attr, value)
-    def get_options(self):
-        return dict([item for item in self.__dict__.items() if item[0][0] != '_'])
+        aiOptions.__init__(self, options)
 
 class aiTask(object):
     class options(taskOptions):
         pass
+    script_options = None
     conditions = []
     def __init__(self, options={}):
         self.registered = False
         #create instance of options
         self.options = self.__class__.options(options)
+        #get script options
+        self.load_script_options()
         #create instances of conditions
         self.conditions = {}
         self.active = False
+    def load_script_options(self):
+        if self.options.script_name:
+            self.script_options=__import__('script_library.'+self.options.script_name, fromlist=['scriptOptions']).scriptOptions()
     def register(self, task_manager):
         if self.registered:
             error('Task already setup')
@@ -66,21 +55,24 @@ class aiTask(object):
     def set_options(self, options):
         for key, value in options.items():
             setattr(self.options, key, value)
+            if key == 'script_name' and value != self.options.script_name:
+                #we want to reload script options
+                self.load_script_options()
     def set_script_options(self, options):
         for key, value in options.items():
-            setattr(self.options._script_options, key, value)
+            setattr(self.script_options, key, value)
     def get_options(self):
         return self.options.get_options()
     def get_script_options(self):
-        return self.options._script_options.get_options()
+        return self.script_options.get_options()
     def get_dynamic_options(self):
-        return self.options._script_options.get_dynamic_options()
+        return self.script_options.get_dynamic_options()
     def get_static_options(self):
-        return self.options._script_options.get_static_options()
+        return self.script_options.get_static_options()
     def get_dynamic_options_as_params(self):
-        return self.options._script_options.get_dynamic_options_as_params()
+        return self.script_options.get_dynamic_options_as_params()
     def get_static_options_as_params(self):
-        return self.options._script_options.get_static_options_as_params()
+        return self.script_options.get_static_options_as_params()
     def is_available(self):
         for condition in self.conditions.values():
             if not condition.get_state():
