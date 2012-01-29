@@ -17,9 +17,9 @@ class taskOptions(object):
             self.running_priority = self.priority
         if self.script_name:
             #we want to load script options
-            script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
-            self._script_dynamic_options = script_options.get_dynamic_options()
-            self._script_static_options = script_options.get_static_options()
+            self._script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions()
+        else:
+            self._script_options = None
         for key, attr in self.__class__.__dict__.items():
             if key[0] != '_':
                 setattr(self, key, attr)
@@ -28,13 +28,7 @@ class taskOptions(object):
         if attr == 'script_name' and value != self.script_name:
             if value:
                 #we want to reload script options
-                script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
-                self._script_dynamic_options = script_options.get_dynamic_options()
-                self._script_static_options = get_static_options()
-            else:
-                #we just want to clear the old vals
-                self._script_dynamic_options = script_options.get_dynamic_options()
-                self._script_static_options = get_static_options()
+                self._script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions()
         return object.__setattr__(self, attr, value)
     def get_options(self):
         return dict([item for item in self.__dict__.items() if item[0][0] != '_'])
@@ -74,21 +68,19 @@ class aiTask(object):
             setattr(self.options, key, value)
     def set_script_options(self, options):
         for key, value in options.items():
-            if key in self._script_dynamic_options:
-                self.options._script_dynamic_options[key] = value
-            else:
-                self.options._script_static_options[key] = value
+            setattr(self.options._script_options, key, value)
     def get_options(self):
         return self.options.get_options()
     def get_script_options(self):
-        options = {}
-        options.update(self.get_dynamic_options())
-        options.update(self.get_static_options())
-        return options
+        return self.options._script_options.get_options()
     def get_dynamic_options(self):
-        return self.options._script_dynamic_options
+        return self.options._script_options.get_dynamic_options()
     def get_static_options(self):
-        return self.options._script_static_options
+        return self.options._script_options.get_static_options()
+    def get_dynamic_options_as_params(self):
+        return self.options._script_options.get_dynamic_options_as_params()
+    def get_static_options_as_params(self):
+        return self.options._script_options.get_static_options_as_params()
     def is_available(self):
         for condition in self.conditions.values():
             if not condition.get_state():

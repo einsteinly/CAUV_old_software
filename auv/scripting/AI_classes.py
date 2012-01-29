@@ -272,10 +272,15 @@ class aiScriptOptionsBase(type):
                 for d in attrs['_dynamic']:
                     if not d in attrs:
                         raise AttributeError('The option %s is not defined, so cannot be dynamic' %(d,))
-        attrs2 = {}
+        attrs2 = {'_option_classes':{}}
         for key, value in attrs.iteritems():
             if not key[0] == '_':
-                if isinstance(value, (int,str,float,bool)):
+                #if the script defines a type for the option, force the type, and store type in meta
+                if isinstance(value, tuple) and len(value)==2 and callable(value[1]):
+                    attrs2[key] = value[1](value[0])
+                    attrs2['_option_classes'][key]=value[1]
+                #else just leave, but watch out for 'extra' attributes
+                elif isinstance(value, (int,str,float,bool)):
                     attrs2[key] = value
                 else:
                     attrs2['_not_transmittable_'+key] = value
@@ -294,19 +299,29 @@ class aiScriptOptionsBase(type):
     def get_static_options(cls):
         return dict([item for item in cls.__dict__.iteritems() if item[0][0] != '_' and not item[0] in cls._dynamic])
             
-class aiScriptOptions():
+class aiScriptOptions(object):
     __metaclass__ = aiScriptOptionsBase
-    def __init__(self, script_opts):
-        for opt in script_opts:
+    def __init__(self, script_opts={}):
+        self.__dict__.update(self.__class__.get_default_options())
+        for opt, val in script_opts.iteritems():
             setattr(self, opt, script_opts[opt])
     def __getattr__(self, attr):
         return self.__getattribute__('_not_transmittable_'+attr)
-    def get_default_options(self):
+    def __setattr__(self, key, attr):
+        #force type if specified in meta
+        if key in self._option_classes:
+            attr=self._option_classes[key](attr)
+        object.__setattr__(self, key, attr)
+    def get_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
     def get_dynamic_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_' and item[0] in self._dynamic])
     def get_static_options(self):
-        return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_' and not item[0] in self._dynamic])
+        return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_' and (not item[0] in self._dynamic)])
+    def get_dynamic_options_as_params(self):
+        return dict([(key, self._option_classes[key](attr) if key in self._option_classes else attr) for key, attr in self.__dict__.iteritems() if key[0] != '_' and key in self._dynamic])
+    def get_static_options_as_params(self):
+        return dict([(key, self._option_classes[key](attr) if key in self._option_classes else attr) for key, attr in self.__dict__.iteritems() if key[0] != '_' and (not key in self._dynamic)])
         
 class aiScript(aiProcess):
     def __init__(self, task_name, script_opts):
@@ -330,6 +345,10 @@ class aiScript(aiProcess):
             self.optionChanged(option_name)
         else:
             info('Changed the value of a static option while the script was running. Script will not see change until script restart.')
+    @external_function
+    def set_options(self, options):
+        for key, val in options.items():
+            self.set_option(key,val)
     def optionChanged(self, option_name):
         pass
     @external_function
@@ -379,6 +398,7 @@ class aiDetectorOptionsBase(type):
 class aiDetectorOptions(object):
     __metaclass__ = aiDetectorOptionsBase
     def __init__(self, options={}):
+        self.__dict__.update(self.__class__.get_default_options())
         for key, value in options:
             setattr(self, key, value)
     def get_default_options(self):

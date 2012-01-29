@@ -801,23 +801,23 @@ group guiai
     }
     message RemoveTask : 203
     {
-        taskId : int32;
+        taskId : string;
     }
     message SetTaskState : 204
     {
-        taskId : int32;
+        taskId : string;
         conditionIds : list<int32>;
         taskOptions : map<string, ParamValue>;
         scriptOptions : map<string, ParamValue>;
     }
     message TaskRemoved : 205
     {
-        taskId : int32;
+        taskId : string;
     }
     message TaskState : 206
     {
-        taskId : int32;
-        conditionIds : list<int32>;
+        taskId : string;
+        conditionIds : list<string>;
         taskOptions : map<string, ParamValue>;
         dynamicScriptOptions : map<string, ParamValue>;
         staticScriptOptions : map<string, ParamValue>;
@@ -825,7 +825,7 @@ group guiai
     }
     message ScriptState : 207
     {
-        taskId : int32;
+        taskId : string;
         debugValues : map<string, ParamValue>;
         pipelineIds : list<string>;
     }
@@ -835,20 +835,20 @@ group guiai
     }
     message RemoveCondition : 209
     {
-        conditionId : int32;
+        conditionId : string;
     }
     message SetConditionState : 210
     {
-        conditionId : int32;
+        conditionId : string;
         conditionOptions : map<string, ParamValue>;
     }
     message ConditionRemoved : 211
     {
-        conditionId : int32;
+        conditionId : string;
     }
     message ConditionState : 212
     {
-        conditionId : int32;
+        conditionId : string;
         conditionOptions : map<string, ParamValue>;
         debugValues : map<string, ParamValue>;
     }
