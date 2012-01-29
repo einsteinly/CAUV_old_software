@@ -18,7 +18,7 @@ set ( MOTORS_PLUGIN_H
 
      
 qt4_wrap_ui (MOTORS_PLUGIN_UIS_H ${MOTORS_PLUGIN_UIS})
-qt4_wrap_cpp (MOTORS_PLUGIN_MOC_H ${MOTORS_PLUGIN_H})
+qt4_wrap_cpp (MOTORS_PLUGIN_MOC_H ${MOTORS_PLUGIN_H} ${MOC_BOOST_HACK})
 
 add_library( motorsplugin MODULE
     ${MOTORS_PLUGIN_SRCS}

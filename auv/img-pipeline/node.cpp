@@ -218,20 +218,10 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
         throw link_error("setOutput: Parameter <==> Image mismatch");
     }
     const int32_t sub_type = i->second->isParam()?  boost::get<ParamValue>(i->second->value).which() : -1;
-    // so this is quite ugly, the sched_type field is included in comparison of
-    // LocalNodeInput structures (I've considered extending the messages.msg
-    // format to support a nocompare directive for fields) - but it isn't
-    // important for matching inputs and outputs, so we check for parameters of
-    // either sort of sched_type when checking to see if the sub type (which
-    // *does* matter) matches...
-    // implementing a nocompare directive wouldn't be very difficult, and if
-    // this sort of problem occurs anywhere else, then I'd go for that solution
-    // instead... seems overkill to solve this tiny little problem though
-    // 
+    // note that the schedType field (May_Be_Old here) is excluded from the
+    // comparison of LocalNodeInput structures
     if(i->second->isParam() && !(
-        n->parameters().count(LocalNodeInput(i_id, sub_type, May_Be_Old)) ||
-        n->parameters().count(LocalNodeInput(i_id, sub_type, Must_Be_New)) ||
-        n->parameters().count(LocalNodeInput(i_id, sub_type, Optional)) // actually Optional only makes sense for image inputs...
+        n->parameters().count(LocalNodeInput(i_id, sub_type, May_Be_Old))
     )){
         throw link_error(
             mkStr() << "setOutput: " << *this <<"::"<< o_id << " -> "

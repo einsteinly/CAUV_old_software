@@ -94,6 +94,7 @@ enum NodeType : int8 {
     SonarShadowFilter,
     PolarImageToXY,
     SonarImageEdge,
+    LearnedKeyPoints,
 }
 enum NodeStatus : int8 {
     None = 0,
@@ -139,49 +140,50 @@ struct floatYPR
 }
 struct floatXYZ
 {
-    x : float;
-    y : float;
-    z : float;
+    eq x : float;
+    eq y : float;
+    eq z : float;
 }
 struct floatXY
 {
-    x : float;
-    y : float;
+    eq x : float;
+    eq y : float;
 }
 struct NodeInput
 {
-    node : int32;
-    input : string;
-    subType : int32;
+    eq node : int32;
+    eq input : string;
+    eq subType : int32;
 }
 struct LocalNodeInput
 {
-    input : string;
-    subType : int32;
+    eq cmp input : string;
+    eq cmp subType : int32;
+    // NB: schedType is excluded from comparison and equality testing
     schedType : InputSchedType;
 }
 struct NodeOutput
 {
-    node : int32;
-    output : string;
-    type : OutputType;
-    subType : int32;
+    eq node : int32;
+    eq output : string;
+    eq type : OutputType;
+    eq subType : int32;
 }
 struct LocalNodeOutput
 {
-    output : string;
-    type : OutputType;
-    subType : int32;
+    eq cmp output : string;
+    eq cmp type : OutputType;
+    eq cmp subType : int32;
 }
 struct NodeInputArc
 {
-    input : string;
-    src : NodeOutput;
+    eq input : string;
+    eq src : NodeOutput;
 }
 struct NodeOutputArc
 {
-    dst : NodeInput;
-    output : string;
+    eq dst : NodeInput;
+    eq output : string;
 }
 struct TimeStamp
 {
@@ -240,21 +242,21 @@ struct MotorDemand
 }
 struct Line
 {
-    centre : floatXYZ;
-    angle : float;
-    length : float;
+    eq centre : floatXYZ;
+    eq angle : float;
+    eq length : float;
 }
 struct Circle
 {
-    centre : floatXYZ;
-    radius : float;
+    eq centre : floatXYZ;
+    eq radius : float;
 }
 struct Corner
 {
-    centre : floatXYZ;
-    size : float;
-    angle : float;
-    response : float;
+    eq centre : floatXYZ;
+    eq size : float;
+    eq angle : float;
+    eq response : float;
 }
 struct MotorMap
 {
@@ -265,12 +267,12 @@ struct MotorMap
 }
 struct KeyPoint
 {
-    pt : floatXY;
-    size : float;
-    angle : float;
-    response : float;
-    octave : float;
-    class_id : float;
+    eq pt : floatXY;
+    eq size : float;
+    eq angle : float;
+    eq response : float;
+    eq octave : float;
+    eq class_id : float;
 }
 struct ScriptResponse
 {
@@ -291,20 +293,21 @@ enum BoundedFloatType : int8 {
 }
 struct BoundedFloatBase
 {
-    value : float;
-    min : float;
-    max : float;
-    type : BoundedFloatType;
+    eq value : float;
+    eq min : float;
+    eq max : float;
+    eq type : BoundedFloatType;
 }
 class Image : <common/image.h>
-class BoundedFloat : <common/bounded_float.h>
+BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 
 variant ParamValue
 {
     int32, float, string, bool,
     list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>,
-    BoundedFloat
+    BoundedFloat,
+    list<int32>
 }
 
 group membership
@@ -798,23 +801,23 @@ group guiai
     }
     message RemoveTask : 203
     {
-        taskId : int32;
+        taskId : string;
     }
     message SetTaskState : 204
     {
-        taskId : int32;
+        taskId : string;
         conditionIds : list<int32>;
         taskOptions : map<string, ParamValue>;
         scriptOptions : map<string, ParamValue>;
     }
     message TaskRemoved : 205
     {
-        taskId : int32;
+        taskId : string;
     }
     message TaskState : 206
     {
-        taskId : int32;
-        conditionIds : list<int32>;
+        taskId : string;
+        conditionIds : list<string>;
         taskOptions : map<string, ParamValue>;
         dynamicScriptOptions : map<string, ParamValue>;
         staticScriptOptions : map<string, ParamValue>;
@@ -822,7 +825,7 @@ group guiai
     }
     message ScriptState : 207
     {
-        taskId : int32;
+        taskId : string;
         debugValues : map<string, ParamValue>;
         pipelineIds : list<string>;
     }
@@ -832,20 +835,20 @@ group guiai
     }
     message RemoveCondition : 209
     {
-        conditionId : int32;
+        conditionId : string;
     }
     message SetConditionState : 210
     {
-        conditionId : int32;
+        conditionId : string;
         conditionOptions : map<string, ParamValue>;
     }
     message ConditionRemoved : 211
     {
-        conditionId : int32;
+        conditionId : string;
     }
     message ConditionState : 212
     {
-        conditionId : int32;
+        conditionId : string;
         conditionOptions : map<string, ParamValue>;
         debugValues : map<string, ParamValue>;
     }

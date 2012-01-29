@@ -22,8 +22,10 @@ namespace cauv{
 
 typedef volatile uint32_t* lock_ptr;
 
+// +ve IDs are OpenCV cameras, -ve IDs are libdc1394 cameras (if available)
+// TODO: try to interpret IDs as dc1394 GUIDs first
 struct ImageRequest{
-    uint32_t camera_id;
+    int32_t camera_id;
     uint32_t w;
     uint32_t h;
 };

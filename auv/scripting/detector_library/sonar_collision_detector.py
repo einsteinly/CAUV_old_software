@@ -18,12 +18,12 @@ from utils.timeutils import RelativeTimeCapability
 class detectorOptions(aiDetectorOptions):
     Sonar_Range = 35
     KeyPoints_Name = 'sonar_local_maxima_bearing_range'
-    Too_Close_Static = 0.5  # metres
-    Too_Close_Threshold = 3 # higher = less likely to detect collision from close objects
-    Dynamic_Vehicle_Width = 1
+    Too_Close_Static = 0.2  # metres
+    Too_Close_Threshold = 12 # higher = less likely to detect collision from close objects
+    Dynamic_Vehicle_Width = 0.2
     Max_Velocity = 2 # metres per second
-    Max_Range = 5    # maximum range to consider targets
-    Run_Away_Time = 4 # seconds
+    Max_Range = 4    # maximum range to consider targets
+    Run_Away_Time = 1 # seconds
 
 class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
     def __init__(self, opts):
@@ -54,7 +54,7 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
                 nearby += 1
         if nearby == 0 and self.nearby_detected > 0:
             if self.nearby_detected > 3*thr:
-                self.bearby_detected = 3*thr
+                self.nearby_detected = 3*thr
             self.nearby_detected /= 1.2
         else:
             self.nearby_detected += nearby
@@ -64,7 +64,6 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             self.setDetected()
         else:
             debug(msg)
-            self.setDetected()
     
     def checkDynamicCollisions(self, kps_last, kps_now, dt):
         # we're dealing with a small number of keypoints so this is okay!
@@ -102,7 +101,7 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             # |.              |
             #.x               - +
             #
-            time_to_collision = -kp.pt.y / vy
+            time_to_collision = kp.pt.y / vy
             if time_to_collision > min((3*dt,1.0)):
                 #debug('kp moving slowly: vy=%s: %s' % (vy, kp.pt))
                 moving_slowly += 1
@@ -175,7 +174,9 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
                 info('running away!')
                 self.auv.prop(-127)
             else:
-                self.auv.prop(0)
+                if self.time_detected is not None and \
+                   self.relativeTime() - self.time_detected < self.options.Run_Away_Time + 0.5:
+                    self.auv.prop(0)
                 self.clearDetected()
 
 if __name__ == '__main__':
