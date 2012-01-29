@@ -379,13 +379,17 @@ class aiScript(aiProcess):
 #------AI DETECTORS STUFF------
 class aiDetectorOptionsBase(type):
     def __new__(cls, name, bases, attrs):
-        attrs2 = {}
+        attrs2 = {'_option_classes':{}}
         for key, value in attrs.iteritems():
             if not key[0] == '_':
-                if isinstance(value, (int,str,float,bool)):
+                if isinstance(value, tuple) and len(value)==2 and callable(value[1]):
+                    attrs2[key] = value[1](value[0])
+                    attrs2['_option_classes'][key]=value[1]
+                elif isinstance(value, (int,str,float,bool)):
                     attrs2[key] = value
                 else:
                     attrs2['_not_transmittable_'+key] = value
+                    #dont warn about functions
                     if not callable(value):
                         warning('Option %s will not appear as is not a valid type' %key)
             else:
@@ -401,10 +405,17 @@ class aiDetectorOptions(object):
         self.__dict__.update(self.__class__.get_default_options())
         for key, value in options:
             setattr(self, key, value)
-    def get_default_options(self):
+    def get_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_'])
+    def get_options_as_params(self):
+        return dict([(key, self._option_classes[key](attr) if key in self._option_classes else attr) for key, attr in self.__dict__.iteritems()])
     def __getattr__(self, attr):
         return self.__getattribute__('_not_transmittable_'+attr)
+    def __setattr__(self, key, attr):
+        #force type if specified in meta
+        if key in self._option_classes:
+            attr=self._option_classes[key](attr)
+        object.__setattr__(self, key, attr)
         
 class aiDetector(messaging.MessageObserver):
     def __init__(self, node, opts):

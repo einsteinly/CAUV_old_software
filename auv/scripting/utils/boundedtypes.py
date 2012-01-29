@@ -3,6 +3,7 @@ from cauv import messaging
 
 class BoundedFloatBase(object):
     def __new__(self, value):
+        value=float(value)
         if self.lower<=value and value<=self.upper:
             return value
         elif self.wraps:
@@ -22,6 +23,7 @@ def BoundFloat(lower, upper, wraps):
 
 class BoundedIntBase(object):
     def __new__(self, value):
+        value=int(value)
         if self.lower<=value and value<=self.upper:
             return value
         elif self.wraps:
