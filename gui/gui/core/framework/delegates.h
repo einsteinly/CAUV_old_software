@@ -59,39 +59,10 @@ protected:
 
 
 
-struct GraphingDelegate : public virtual QStyledItemDelegate {
-
-    GraphingDelegate(QObject * parent = 0);
-
-    void paint(QPainter *painter, const QStyleOptionViewItem &option,
-               const QModelIndex &index) const;
-
-    QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                           const QModelIndex &index) const;
-
-protected:
-    static QMap<QModelIndex, boost::shared_ptr<SampleQueue<QVariant> > > m_samplers;
-};
-
-
-
-
-struct ProgressDelegate : public virtual QStyledItemDelegate {
-
-    ProgressDelegate(QObject * parent = 0);
-
-    void paint(QPainter *painter, const QStyleOptionViewItem &option,
-               const QModelIndex &index) const;
-
-    QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                           const QModelIndex &index) const;
-};
-
-
-struct HybridDelegate : public GraphingDelegate, public ProgressDelegate{
+struct NumericDelegate : public QStyledItemDelegate {
 Q_OBJECT
 public:
-    HybridDelegate(QObject * parent = 0);
+    NumericDelegate(QObject * parent = 0);
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const;

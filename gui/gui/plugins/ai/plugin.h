@@ -16,6 +16,7 @@
 #define AIPLUGIN_H
 
 #include <gui/core/cauvbasicplugin.h>
+#include <gui/core/model/node.h>
 
 #include <QObject>
 
@@ -31,7 +32,11 @@ namespace cauv {
             virtual const QString name() const;
             virtual void initialise();
 
+        public Q_SLOTS:
+            void setupTask(boost::shared_ptr<Node> node);
+
         };
+
     } // namespace gui
 } // namespace cauv
 

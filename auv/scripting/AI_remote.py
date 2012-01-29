@@ -4,7 +4,6 @@ from cauv.debug import info, error, debug, warning
 from AI_classes import aiProcess
 
 import cPickle
-from IPython.Shell import IPShellEmbed
 
 class aiMessageListener(messaging.MessageObserver):
     def __init__(self, node):
@@ -97,8 +96,8 @@ def shell(ainode):
     To access AI use ainode, e.g.
     -to change a condition, run ainode.ai.task_manager.notify_condition(condition_name, *args, **kwargs)
     """
-    ipshell = IPShellEmbed()
-    ipshell()
+    import IPython
+    IPython.embed()
 
 class option():
     def __init__(self, name, func, desc, params):

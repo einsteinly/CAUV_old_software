@@ -59,3 +59,4 @@ template <> QVariant ParamValueToQVariant::operator()(std::string & s) const {
     error() << "variant value: " << v.toString().toStdString();
     return v;
 }
+

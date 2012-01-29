@@ -158,11 +158,12 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
             painter->drawRoundedRect(canvas, 5, 5);
 
             // clear background
+            QColor offColor(148, 148, 148);
             painter->setPen(Qt::NoPen);
             QLinearGradient bg(0, 20, 0, 0);
             bg.setSpread(QLinearGradient::ReflectSpread);
-            bg.setColorAt(0, QColor(148, 148, 148));
-            bg.setColorAt(1, QColor(148, 148, 148).darker(110));
+            bg.setColorAt(0, offColor);
+            bg.setColorAt(1, offColor.darker(110));
             painter->setBrush(bg);
             painter->drawRoundedRect(canvas, 5, 5);
 
@@ -185,6 +186,15 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
             onbg.setColorAt(1, onColor.darker(110));
             painter->setBrush(onbg);
             painter->drawRoundedRect(on, 5, 5);
+
+            painter->setBrush(onColor.darker(120));
+            painter->setPen(onColor.darker(110));
+            painter->drawRect(on.center().x() - 7, (on.center().y() - (on.height()/2)) + 6, 2, on.height()-10);
+
+
+            painter->setBrush(QBrush());
+            painter->setPen(QPen(offColor.lighter(107), 3));
+            painter->drawEllipse(QPoint(on.center().x() + on.width()-5, on.center().y()+1), (on.height()-12)/3, (on.height()-12)/2);
 
 
             float position = clamp(0, onOffOption->position, 1);
@@ -228,6 +238,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
         int hueRange = 100;
         int range = progressOptions->maximum - progressOptions->minimum;
+        bool hasRange = (range != 0);
         if (range < 0) range = 0;
 
         float progress = 0;
@@ -257,12 +268,13 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
         // clear background
         painter->setPen(Qt::NoPen);
-        QLinearGradient bg(0, 20, 0, 0);
-        bg.setSpread(QLinearGradient::ReflectSpread);
+        QLinearGradient bg(hasRange?20:0, 20, 0, 0);
+        bg.setSpread(hasRange?QLinearGradient::RepeatSpread:QLinearGradient::ReflectSpread);
         bg.setColorAt(0, QColor(248, 248, 248));
         bg.setColorAt(1, QColor(248, 248, 248).darker(105));
         painter->setBrush(bg);
         painter->drawRoundedRect(border, 5, 5);
+
 
         // draw underlying fill frame
         //painter->setBrush(Qt::NoBrush);
@@ -282,7 +294,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
             QFont font = painter->font();
             font.setBold(true);
             painter->setFont(font);
-            painter->setPen(QPen(Qt::black));
+            painter->setPen(progressOptions->palette.color(QPalette::Text));
             int width = progressOptions->fontMetrics.width(progressOptions->text);
             int x = option->rect.x() + (option->rect.width()/2 - width/2);
             int height = progressOptions->fontMetrics.height();

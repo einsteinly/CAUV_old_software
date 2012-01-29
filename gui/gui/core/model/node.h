@@ -116,8 +116,7 @@ namespace cauv {
 
                 foreach (boost::shared_ptr<Node> const& child, getChildren()) {
                     if (dynamic_cast<T *>(child.get())) {
-                        boost::shared_ptr<T> ptr = boost::static_pointer_cast<T>(child);
-                        output.push_back(ptr);
+                        output.push_back(boost::static_pointer_cast<T>(child));
                     }
                 }
 

@@ -28,7 +28,7 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-NodeDelegateMapper::NodeDelegateMapper(QObject *parent){}
+NodeDelegateMapper::NodeDelegateMapper(QObject *){}
 
 void NodeDelegateMapper::registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate){
     m_default_delegates[nodeType] = delegate;
@@ -84,102 +84,50 @@ void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &op
     } else QStyledItemDelegate::paint(painter, option, index);
 }
 
-QSize NodeDelegateMapper::sizeHint(const QStyleOptionViewItem &option,
-                                   const QModelIndex &index) const{
+QSize NodeDelegateMapper::sizeHint(const QStyleOptionViewItem &,
+                                   const QModelIndex &) const{
     return QSize(100, 30);
 }
 
 
 
-
-QMap<QModelIndex, boost::shared_ptr<SampleQueue<QVariant> > > GraphingDelegate::m_samplers;
-
-GraphingDelegate::GraphingDelegate(QObject * parent) : QStyledItemDelegate(parent) {
+NumericDelegate::NumericDelegate(QObject * parent) : QStyledItemDelegate(parent) {
     QItemEditorFactory * factory = new QItemEditorFactory();
-    this->setItemEditorFactory(factory);
-    factory->registerEditor(QVariant::Int, new QItemEditorCreator<GraphingSpinBox>("value"));
-    factory->registerEditor(QVariant::UInt, new QItemEditorCreator<GraphingSpinBox>("value"));
-    factory->registerEditor(QVariant::Double, new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
-    factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
-}
-
-void GraphingDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
-                             const QModelIndex &index) const
-{
-    NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
-    if (node && index.column() == 1 && node->isMaxSet() && node->isMinSet()) {
-
-        if(!m_samplers.contains(index)){
-            m_samplers[index] = boost::make_shared<SampleQueue<QVariant> >(boost::bind(&Node::get, node));
-        }
-
-        if(!m_samplers.contains(index)){
-            error() << "GraphingDelegate: Can't find sampler!";
-            return;
-        }
-        StyleOptionGraphingSpinBox graphingOption;
-        graphingOption.rect = option.rect;
-        graphingOption.maximum = node->getMax();
-        graphingOption.minimum = node->getMin();
-        graphingOption.samples = m_samplers[index]->samples();
-        QApplication::style()->drawControl((QStyle::ControlElement)CauvStyle::CE_Graph, &graphingOption, painter);
-
-    } else {
-        QStyledItemDelegate::paint(painter, option, index);
-    }
-
-}
-
-QWidget * GraphingDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                                         const QModelIndex &index) const{
-    QWidget * editor = QStyledItemDelegate::createEditor(parent, option, index);
-
-    NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
-
-    if(node && node->isMaxSet() && node->isMinSet()) {
-
-        if(GraphingSpinBox * neutral = qobject_cast<GraphingSpinBox*>(editor)){
-            neutral->setMinimum(node->getMin().toInt());
-            neutral->setMaximum(node->getMax().toInt());
-            neutral->setWrapping(node->getWraps());
-            neutral->setSampler(m_samplers[index]);
-        }
-
-        if(GraphingDoubleSpinBox * neutral = qobject_cast<GraphingDoubleSpinBox*>(editor)){
-            neutral->setMinimum(node->getMin().toDouble());
-            neutral->setMaximum(node->getMax().toDouble());
-            neutral->setWrapping(node->getWraps());
-            neutral->setDecimals(node->getPrecision());
-            neutral->setSampler(m_samplers[index]);
-        }
-    }
-
-    return editor;
-}
-
-
-
-
-ProgressDelegate::ProgressDelegate(QObject * parent) : QStyledItemDelegate(parent) {
-    QItemEditorFactory * factory = new QItemEditorFactory();
-    this->setItemEditorFactory(factory);
+    setItemEditorFactory(factory);
+    factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));
     factory->registerEditor(QVariant::Int, new QItemEditorCreator<NeutralSpinBox>("value"));
     factory->registerEditor(QVariant::UInt, new QItemEditorCreator<NeutralSpinBox>("value"));
     factory->registerEditor(QVariant::Double, new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
     factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<NeutralDoubleSpinBox>("value"));
 }
 
-void ProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
+
+void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                              const QModelIndex &index) const
 {
-    const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
-    if (node && index.column() == 1 && node->isMaxSet() && node->isMinSet()) {
+
+    NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
+
+    if (node && node->get().type() == qMetaTypeId<bool>()){
+        StyleOptionOnOff onOffOption;
+        onOffOption.rect = option.rect;
+        onOffOption.position = node->get().value<bool>() ? 1 : 0;
+        onOffOption.marked = node->isMutable();
+        QApplication::style()->drawControl(QStyle::CE_CheckBox,
+                                           &onOffOption, painter);
+    }
+    else if (node && index.column() == 1) {
         QStyleOptionProgressBarV2 progressBarOption;
         progressBarOption.rect = option.rect;
-        progressBarOption.text = QString::number(index.data().value<double>()).append(QString::fromStdString(node->getUnits()));
+        progressBarOption.text = QString::number(index.data().value<double>()).append(
+                    QString::fromStdString(node->getUnits()));
         progressBarOption.textVisible = true;
         progressBarOption.invertedAppearance = true;
-        progressBarOption.maximum = 1000;
+        progressBarOption.palette.setColor(QPalette::Text, Qt::black);
+        if(!node->isMutable())
+            progressBarOption.palette.setColor(QPalette::Text, QColor(100,100,100));
+
+        progressBarOption.maximum = (node->isMaxSet() && node->isMinSet()) ? 1000 : 0;
         progressBarOption.minimum = 0;
         progressBarOption.progress = (int)(fabs(pivot(node->getMin().toDouble(),
                                                       node->getNeutral().toDouble(),
@@ -188,13 +136,25 @@ void ProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
 
         QApplication::style()->drawControl(QStyle::CE_ProgressBar,
                                            &progressBarOption, painter);
-    } else
+    } else {
         QStyledItemDelegate::paint(painter, option, index);
-
+    }
 }
 
-QWidget * ProgressDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                                         const QModelIndex &index) const{
+void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const{
+    if(OnOffSlider * slider = dynamic_cast<OnOffSlider *>(editor)){
+        NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
+        slider->setChecked(node->get().value<bool>());
+        slider->setAnimation(true);
+        slider->toggle();
+    } else {
+        return QStyledItemDelegate::setEditorData(editor, index);
+    }
+}
+
+QWidget * NumericDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                                       const QModelIndex &index) const{
+
     QWidget * editor = QStyledItemDelegate::createEditor(parent, option, index);
 
     const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
@@ -217,55 +177,4 @@ QWidget * ProgressDelegate::createEditor(QWidget *parent, const QStyleOptionView
     }
 
     return editor;
-}
-
-
-
-
-
-HybridDelegate::HybridDelegate(QObject * parent) : GraphingDelegate(parent), ProgressDelegate(parent) {
-    QItemEditorFactory * factory = new QItemEditorFactory();
-    GraphingDelegate::setItemEditorFactory(factory);
-    factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));
-    factory->registerEditor(QVariant::Int, new QItemEditorCreator<GraphingSpinBox>("value"));
-    factory->registerEditor(QVariant::UInt, new QItemEditorCreator<GraphingSpinBox>("value"));
-    factory->registerEditor(QVariant::Double, new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
-    factory->registerEditor((QVariant::Type)qMetaTypeId<float>(), new QItemEditorCreator<GraphingDoubleSpinBox>("value"));
-}
-
-
-void HybridDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
-                             const QModelIndex &index) const
-{
-
-    NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
-    if (node && index.column() == 1 && node->isMaxSet() && node->isMinSet()) {
-        if(!m_samplers.contains(index)){
-            m_samplers[index] = boost::make_shared<SampleQueue<QVariant> >(boost::bind(&Node::get, node));
-        }
-    }
-
-    if (node->get().type() == qMetaTypeId<bool>()){
-        StyleOptionOnOff onOffOption;
-        onOffOption.rect = option.rect;
-        onOffOption.position = node->get().value<bool>() ? 1 : 0;
-        onOffOption.marked = false;
-        QApplication::style()->drawControl(QStyle::CE_CheckBox,
-                                           &onOffOption, painter);
-    }
-    else ProgressDelegate::paint(painter, option, index);
-}
-
-void HybridDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const{
-    if(OnOffSlider * slider = dynamic_cast<OnOffSlider *>(editor)){
-        info() << "setting editor data for OnOff";
-        NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
-        slider->setChecked(node->get().value<bool>());
-        slider->switchTo(!node->get().value<bool>());
-    }
-}
-
-QWidget * HybridDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                                       const QModelIndex &index) const{
-    return GraphingDelegate::createEditor(parent, option, index);
 }

@@ -25,21 +25,22 @@ using namespace cauv::gui;
 
 OnOffSlider::OnOffSlider(QWidget * parent) :
     QCheckBox(parent), m_position(0), m_animation(this, "position") {
-    m_animation.connect(&m_animation, SIGNAL(finished()), this, SIGNAL(switched()));
-    this->connect(this, SIGNAL(switched()), this, SLOT(toggle()));
-    m_animation.setDuration(100);
+    m_animation.setDuration(0);
+    this->connect(this, SIGNAL(stateChanged(int)), this, SLOT(onStateChange(int)));
 }
 
 void OnOffSlider::mouseReleaseEvent(QMouseEvent *e) {
-    bool checked = this->isChecked();
-    QCheckBox::mouseReleaseEvent(e);
-    switchTo(!checked);
+    toggle();
 }
 
-void OnOffSlider::switchTo(bool state) {
+void OnOffSlider::onStateChange(int){
+    animateSwitch();
+}
+
+void OnOffSlider::animateSwitch() {
     m_animation.stop();
     m_animation.setStartValue(position());
-    m_animation.setEndValue(state ? 1.0 : 0.0);
+    m_animation.setEndValue(isChecked() ? 1.0 : 0.0);
     m_animation.start();
 }
 
@@ -52,10 +53,10 @@ float OnOffSlider::position(){
     return m_position;
 }
 
-void OnOffSlider::setChecked(bool state){
-    m_animation.stop();
-    QCheckBox::setChecked(state);
-    m_position = state ? 1 : 0;
+void OnOffSlider::setAnimation(bool animates){
+    if(animates){
+        m_animation.setDuration(100);
+    } else m_animation.setDuration(0);
 }
 
 void OnOffSlider::paintEvent(QPaintEvent * e)

@@ -179,7 +179,7 @@ QPushButton:hover {
       <bool>true</bool>
      </attribute>
      <attribute name="headerDefaultSectionSize">
-      <number>100</number>
+      <number>170</number>
      </attribute>
      <attribute name="headerMinimumSectionSize">
       <number>30</number>

@@ -52,6 +52,23 @@ Q_SIGNALS:
 };
 
 
+
+class NodeExclusionFilter : public QObject, public NodeFilterInterface {
+    Q_OBJECT
+public:
+    NodeExclusionFilter(QObject * parent = NULL);
+
+public Q_SLOTS:
+    bool filter(boost::shared_ptr<Node> const& node);
+    void addNode(boost::shared_ptr<Node> node);
+
+Q_SIGNALS:
+    void filterChanged();
+
+protected:
+    std::vector<boost::shared_ptr<Node> > m_nodes;
+};
+
 /**
 * Filterable tree view onto the node model
 */
@@ -88,6 +105,7 @@ public:
     virtual ~NodePicker();
 
     void registerDelegate(node_type nodeType, boost::shared_ptr<QAbstractItemDelegate> delegate);
+    void registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter);
 
 protected Q_SLOTS:
     void redirectKeyboardFocus(QKeyEvent* key);

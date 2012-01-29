@@ -30,7 +30,10 @@
 #include <generated/types/GuiaiGroup.h>
 
 #include "messageobserver.h"
+#include "messagegenerators.h"
 #include "aiNode.h"
+
+#include <stdexcept>
 
 using namespace cauv;
 using namespace cauv::gui;
@@ -92,6 +95,24 @@ void AiPlugin::initialise(){
 
         node->send(boost::make_shared<RemoveTaskMessage>(1));
 
+        boost::shared_ptr<NodeExclusionFilter> filter = boost::make_shared<NodeExclusionFilter>();
+        filter->addNode(m_auv->findOrCreate<GroupingNode>("ai")->findOrCreate<GroupingNode>("task_types"));
+        filter->addNode(m_auv->findOrCreate<GroupingNode>("ai")->findOrCreate<GroupingNode>("condition_types"));
+        m_actions->nodes->registerListFilter(filter);
+
+
+        boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
+        boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
+        connect(tasks.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(setupTask(boost::shared_ptr<Node>)));
+}
+
+void AiPlugin::setupTask(boost::shared_ptr<Node> node){
+    try {
+        m_auv->addGenerator(boost::make_shared<AiMessageGenerator>(m_auv, node->to<AiTaskNode>()));
+    } catch(std::runtime_error e) {
+        error() << "AiPlugin::setupTask: Expecting AiTaskNode" << e.what();
+
+    }
 }
 
 Q_EXPORT_PLUGIN2(cauv_aiplugin, AiPlugin)

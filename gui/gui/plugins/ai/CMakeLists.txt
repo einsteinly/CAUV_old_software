@@ -3,6 +3,7 @@ project (gui)
 set ( AI_PLUGIN_SRCS
     plugin.cpp
     messageobserver.cpp
+    messagegenerators.cpp
     aiNode.cpp
 )
 
@@ -12,6 +13,7 @@ set ( AI_PLUGIN_UIS
 set ( AI_PLUGIN_H
     plugin.h
     messageobserver.h
+    messagegenerators.h
     aiNode.h
 )
 

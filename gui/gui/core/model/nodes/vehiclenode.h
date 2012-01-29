@@ -38,7 +38,7 @@ namespace cauv {
         Q_SIGNALS:
             void messageGenerated(boost::shared_ptr<const Message>);
 
-        protected:
+        public:
             void addGenerator(boost::shared_ptr<MessageGenerator> generator)
             {
                 m_generators.push_back(generator);

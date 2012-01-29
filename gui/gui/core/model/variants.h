@@ -15,6 +15,10 @@
 #ifndef GUI_VARIANTS_H
 #define GUI_VARIANTS_H
 
+#include <QVariant>
+
+#include <boost/mpl/pop_front.hpp>
+
 #include <boost/variant/variant.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/apply_visitor.hpp>
@@ -28,16 +32,49 @@
 
 #include <sstream>
 
+#include <debug/cauv_debug.h>
+
 using namespace std::rel_ops;
 
 namespace cauv {
     namespace gui {
 
 
+        namespace mpl = boost::mpl;
+
+        template <typename T_Variant, typename Types>
+        typename boost::enable_if< mpl::empty<Types>, T_Variant >::type
+        qvariant2variant_helper( const QVariant & ) {
+          throw std::bad_cast();
+        }
+
+        template <typename T_Variant, typename Types>
+        typename boost::disable_if< mpl::empty<Types>, T_Variant >::type
+        qvariant2variant_helper( const QVariant & qv ) {
+          // split Types into Head and Tail:
+          typedef typename mpl::front<Types>::type Head;
+          typedef typename mpl::pop_front<Types>::type Tail;
+          // processing:
+            info() << qv.type() << "="<<qMetaTypeId<Head>();
+          if ( qv.type() == qMetaTypeId<Head>() ) {
+              info() << qv.toString().toStdString() << "when cast" << qv.value<Head>();
+            return T_Variant( qv.value<Head>() );
+          }
+          else
+            return qvariant2variant_helper<T_Variant,Tail>( qv );
+        }
+
+        template <typename T_Variant>
+        T_Variant qvariant2variant( const QVariant & qv ) {
+            info() << "recieved qvariant: " << qv.toString().toStdString();
+          return qvariant2variant_helper<T_Variant,typename T_Variant::types>( qv );
+        }
+
+
         /**
           * Variant definitions
           */
-        typedef boost::variant<std::string, MotorID::e, Controller::e, CameraID::e, uint32_t> nid_t;
+        typedef boost::variant<std::string, MotorID::e, Controller::e, CameraID::e, uint32_t, int32_t> nid_t;
 
         /**
           * Useful variant visitors

@@ -97,6 +97,20 @@ bool NodePathFilter::filter(boost::shared_ptr<Node> const& node){
 }
 
 
+NodeExclusionFilter::NodeExclusionFilter(QObject *parent) : QObject(parent){
+}
+
+bool NodeExclusionFilter::filter(boost::shared_ptr<Node> const& node){
+    foreach(boost::shared_ptr<Node> n, m_nodes){
+        if(n.get() == node.get()) return false;
+    }
+    return true;
+}
+
+void NodeExclusionFilter::addNode(boost::shared_ptr<Node> node){
+    m_nodes.push_back(node);
+}
+
 
 NodePicker::NodePicker(boost::shared_ptr<NodeItemModel> const& root) :
      m_root(root), ui(new Ui::NodePicker())
@@ -151,6 +165,10 @@ void NodePicker::redirectKeyboardFocus(QKeyEvent* event){
     }
 }
 
+void NodePicker::registerListFilter(boost::shared_ptr<NodeFilterInterface> const& filter){
+   ui->view->registerListFilter(filter);
+}
+
 NodePicker::~NodePicker(){
     delete ui;
 }
@@ -159,7 +177,7 @@ NodePicker::~NodePicker(){
 
 NodeTreeView::NodeTreeView(QWidget *) {
     header()->hide();
-    setColumnWidth(0, 100);
+    setColumnWidth(0, 200);
     setIndentation(15);
     setRootIsDecorated(false);
     setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -168,7 +186,7 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setItemDelegate(delegate);
-    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<HybridDelegate>());
+    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
 
     //this->setMouseTracking(true);
     //connect(this, SIGNAL(entered(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));

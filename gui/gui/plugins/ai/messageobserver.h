@@ -38,10 +38,9 @@ namespace cauv{
 
             virtual ~AiMessageObserver();
 
-            /*
+
             virtual void onConditionStateMessage(ConditionStateMessage_ptr m);
             virtual void onConditionRemovedMessage(ConditionRemovedMessage_ptr m);
-            */
             virtual void onTaskTypesMessage(TaskTypesMessage_ptr m);
             virtual void onConditionTypesMessage(ConditionTypesMessage_ptr m);
             virtual void onTaskRemovedMessage(TaskRemovedMessage_ptr m);

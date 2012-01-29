@@ -76,6 +76,25 @@ namespace cauv {
         return boost::apply_visitor(ParamValueToQVariant(), boostVariant);
     }
 
+    template<class T>
+    ParamValue nodeToParamValue(const boost::shared_ptr<T> node){
+        return qvariant2variant<ParamValue>(node->get());
+    }
+
+    template<class T>
+    std::map<std::string, ParamValue> nodeListToParamValueMap(const std::vector<boost::shared_ptr<T> > nodes){
+        std::map<std::string, ParamValue> values;
+        foreach(boost::shared_ptr<T> const& node, nodes) {
+            try {
+                values[boost::get<std::string>(node->nodeId())] = nodeToParamValue(node);
+            } catch (std::bad_cast){
+                error() << "Failed while converting QVariant to Variant for " << node->nodePath();
+                continue;
+            }
+        }
+        return values;
+    }
+
     } // namespace gui
 } // namespace cauv
 

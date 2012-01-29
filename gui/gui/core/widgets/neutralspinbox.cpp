@@ -16,6 +16,7 @@
 
 #include <QPaintEvent>
 #include <QPainter>
+#include <QLineEdit>
 
 #include <common/cauv_utils.h>
 
@@ -33,6 +34,11 @@ NeutralSpinBox::NeutralSpinBox(QWidget * parent) : QSpinBox(parent), m_neutral(0
     this->setAlignment(Qt::AlignHCenter);
     this->setMaximum(std::numeric_limits<int>::max());
     this->setMinimum(std::numeric_limits<int>::min());
+
+    QPalette pal = this->palette();
+    pal.setColor(QPalette::Base, Qt::transparent);
+    this->setPalette(pal);
+
 }
 
 int NeutralSpinBox::neutral() const {
@@ -60,6 +66,11 @@ NeutralDoubleSpinBox::NeutralDoubleSpinBox(QWidget * parent) : QDoubleSpinBox(pa
     this->setAlignment(Qt::AlignHCenter);
     this->setMaximum(std::numeric_limits<float>::max());
     this->setMinimum(std::numeric_limits<float>::min());
+
+    QPalette pal = this->palette();
+    pal.setColor(QPalette::Base, Qt::transparent);
+    this->setPalette(pal);
+
 }
 
 double NeutralDoubleSpinBox::neutral() const {

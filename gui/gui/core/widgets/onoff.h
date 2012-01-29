@@ -37,9 +37,12 @@ namespace cauv {
 
             void paintEvent(QPaintEvent *);
 
-            void switchTo(bool);
+            void animateSwitch();
 
-            void setChecked(bool);
+            void setAnimation(bool);
+
+        protected Q_SLOTS:
+            void onStateChange(int);
 
             Q_SIGNALS:
             void switched();

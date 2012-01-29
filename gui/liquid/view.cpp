@@ -96,8 +96,8 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
 
 void LiquidView::wheelEvent(QWheelEvent *event){
 
-    event->ignore();
-
+   // event->ignore();
+/*
     // The passing of events between QGraphicsView and a QGraphicsView embedded
     // in a QGraphicsScene seems to have a bug where the accepted flag is not set
     // correctly, so this has to be hacked around a bit to achieve what we're after
@@ -146,8 +146,8 @@ void LiquidView::wheelEvent(QWheelEvent *event){
 
         event->accept();
     }
-
-    //QGraphicsView::wheelEvent(event);
+*/
+    QGraphicsView::wheelEvent(event);
 }
 
 void LiquidView::keyPressEvent(QKeyEvent *event){
