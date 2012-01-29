@@ -357,13 +357,26 @@ class aiScriptOptions(aiOptions):
     def get_static_options_as_params(self):
         return dict([(key, self._option_classes[key](attr) if key in self._option_classes else attr) for key, attr in self.__dict__.iteritems() if key[0] != '_' and (not key in self._dynamic)])
         
+class aiScriptState(object):
+    def __init__(self, parent_script):
+        self._parent_script = parent_script
+    def __setattr__(self, key, attr):
+        object.__setattr__(self, key, attr)
+        if not key[0] == '_':
+            print self._parent_script.task_name, key, attr
+            self._parent_script.ai.task_manager.on_persist_state_change(self._parent_script.task_name, key, attr)
+        
 class aiScript(aiProcess):
-    def __init__(self, task_name, script_opts):
+    class persistState(aiScriptState):
+        pass
+    def __init__(self, task_name, script_opts, persistent_state):
         aiProcess.__init__(self, task_name)
         self.exit_confirmed = threading.Event()
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
+        self.persist = self.persistState(self)
+        self.persist.__dict__.update(persistent_state)
     def _register(self):
         self.node.addObserver(self._msg_observer)
     def request_pl(self, pl_name, timeout=10):

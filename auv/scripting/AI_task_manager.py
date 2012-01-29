@@ -149,6 +149,9 @@ class taskManager(aiProcess):
     @external_function
     def modify_script_options(self, task_id, options):
         self.processing_queue.append(('set_task_options', [task_id, {}, options, []], {}))
+    @external_function
+    def on_persist_state_change(self, task_id, key, attr):
+        self.processing_queue.append(('set_task_persist_state', [task_id, key, attr], {}))
         
     #helpful diagnostics
     @external_function
@@ -217,6 +220,8 @@ class taskManager(aiProcess):
             task.conditions[condition_id] = self.conditions[condition_id]
             self.conditions[condition_id].task_ids.append(task_id)
         self.gui_update_task(task)
+    def set_task_persist_state(self, task_id, key, attr):
+        self.tasks[task_id].persist_state[key] = attr
             
     #add/remove/modify conditions
     def create_condition(self, condition_type, options={}):
@@ -277,20 +282,20 @@ class taskManager(aiProcess):
         getattr(self.ai,str(task_id)).confirm_exit()
                 
     #--function run by periodic loop--
-    def start_script(self, task_id, script_name, script_opts={}):
+    def start_script(self, task_id, script_name, script_opts={}, persist_state={}):
         self.ai.auv_control.signal(task_id)
         self.stop_script()
         self.ai.auv_control.set_task_id(str(task_id))
         info('Starting script: %s  (Task %s)' %(script_name, task_id))
         # Unfortunately if you start a process with ./run.sh (ie in shell) you cant kill it... (kills the shell, not the process)
-        self.running_script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts)])
+        self.running_script = subprocess.Popen(['python2.7','./AI_scriptparent.py', str(task_id), script_name, cPickle.dumps(script_opts), cPickle.dumps(persist_state)])
     def start_task(self, task):
         #disable/enable detectors according to task
         self.detectors_enabled = task.options.detectors_enabled_while_running
         if self.detectors_enabled: self.ai.detector_control.enable()
         else: self.ai.detector_control.disable()
         #start the new script
-        self.start_script(task.id, task.options.script_name, task.get_script_options())
+        self.start_script(task.id, task.options.script_name, task.get_script_options(), task.persist_state)
         #set priority
         self.current_priority = task.options.running_priority
         #mark last task not active, current task active

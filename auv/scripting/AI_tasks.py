@@ -29,6 +29,7 @@ class aiTask(object):
         self.load_script_options()
         #create instances of conditions
         self.conditions = {}
+        self.persist_state = {}
         self.active = False
     def load_script_options(self):
         if self.options.script_name:
@@ -49,8 +50,8 @@ class aiTask(object):
             error('Task not setup, so can not be deregistered')
             return
         for condition in self.conditions.itervalues():
-            debug('removing task %d from condition %d' %(self.id, condition.id), 5)
-            condition.task_ids.pop(self.id)
+            debug('removing task %s from condition %s' %(self.id, condition.id), 5)
+            condition.task_ids.remove(self.id)
         self.registered = False
     def set_options(self, options):
         for key, value in options.items():
