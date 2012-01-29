@@ -11,7 +11,8 @@ class BoundedFloatBase(object):
             return ((value-self.lower)%(self.upper-self.lower))+self.lower
         else:
             raise TypeError('Value set exceeded clamped bounds')
-    def asParamValue(self, value):
+    @staticmethod
+    def asParamValue(value):
         if self.wraps:
             bound_type = messaging.BoundedFloatType.Wraps
         else:
