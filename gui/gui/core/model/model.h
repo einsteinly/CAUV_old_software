@@ -58,7 +58,7 @@ namespace cauv {
         public:
             ModelIndexUpdateNotfication(QModelIndex start, QModelIndex end) :
                 m_start(start), m_end(end) {
-                debug(4) << "ModelIndexUpdateNotification()";
+                debug(8) << "ModelIndexUpdateNotification()";
             }
 
         public Q_SLOTS:

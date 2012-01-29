@@ -47,7 +47,7 @@ void AiMessageGenerator::send(){
     const std::vector<boost::shared_ptr<Node> > task  =
             m_aiNode->findOrCreate<GroupingNode>("task")->getChildren();
     foreach (boost::shared_ptr<Node> const& node, task){
-        error() << node->nodePath() << "=" << node->get()->toString()->toStdString();
+        error() << node->nodePath() << "=" << node->get().toString().toStdString();
     }
 
     taskOptions = nodeListToParamValueMap(task);

@@ -39,35 +39,58 @@ using namespace std::rel_ops;
 namespace cauv {
     namespace gui {
 
+        //
+        // helper functions to convert between boost variants and QVariants
+        // boost::variant to QVariant
+        //
+        struct variantToQVariantVisitor : boost::static_visitor<QVariant> {
 
+            QVariant operator()( std::string const& str ) const {
+                return QString::fromStdString( str );
+            }
+
+            template <typename T>
+            QVariant operator()( const T & operand ) const {
+                return qVariantFromValue( operand );
+            }
+        };
+
+        template <class T>
+        QVariant variantToQVariant(T boostVariant){
+            return boost::apply_visitor(variantToQVariantVisitor(), boostVariant);
+        }
+
+        //
+        // QVariant to boost::variant
+        // (meta-programming, sorry)
+        //
         namespace mpl = boost::mpl;
 
         template <typename T_Variant, typename Types>
         typename boost::enable_if< mpl::empty<Types>, T_Variant >::type
-        qvariant2variant_helper( const QVariant & ) {
-          throw std::bad_cast();
+        qVariantToVariant_helper( const QVariant & ) {
+            throw std::bad_cast();
         }
 
         template <typename T_Variant, typename Types>
         typename boost::disable_if< mpl::empty<Types>, T_Variant >::type
-        qvariant2variant_helper( const QVariant & qv ) {
-          // split Types into Head and Tail:
-          typedef typename mpl::front<Types>::type Head;
-          typedef typename mpl::pop_front<Types>::type Tail;
-          // processing:
-            info() << qv.type() << "="<<qMetaTypeId<Head>();
-          if ( qv.type() == qMetaTypeId<Head>() ) {
-              info() << qv.toString().toStdString() << "when cast" << qv.value<Head>();
-            return T_Variant( qv.value<Head>() );
-          }
-          else
-            return qvariant2variant_helper<T_Variant,Tail>( qv );
+        qVariantToVariant_helper( const QVariant & qv ) {
+            typedef typename mpl::front<Types>::type Head;
+            typedef typename mpl::pop_front<Types>::type Tail;
+
+            //info() << qv.userType() << "=" << qMetaTypeId<Head>();
+            if ( ((unsigned)qv.userType()) == qMetaTypeId<Head>() ) {
+                //info() << qv.toString().toStdString() << "when cast" << qv.value<Head>();
+                return T_Variant( qv.value<Head>() );
+            }
+            else
+                return qVariantToVariant_helper<T_Variant,Tail>( qv );
         }
 
         template <typename T_Variant>
-        T_Variant qvariant2variant( const QVariant & qv ) {
-            info() << "recieved qvariant: " << qv.toString().toStdString();
-          return qvariant2variant_helper<T_Variant,typename T_Variant::types>( qv );
+        T_Variant qVariantToVariant( const QVariant & qv ) {
+            //info() << "recieved qvariant: " << qv.toString().toStdString();
+            return qVariantToVariant_helper<T_Variant,typename T_Variant::types>( qv );
         }
 
 
@@ -102,7 +125,7 @@ namespace cauv {
 
         // gets the value of a variant cast to R
         // useful for mixing variants with various Qt classes
-        template<class R>
+        /*template<class R>
         struct cast_to : public boost::static_visitor<R>
         {
             template <typename T> R operator()( T & operand ) const
@@ -110,7 +133,7 @@ namespace cauv {
                 return (R) operand;
             }
         };
-
+*/
 
         // hashes variants so they can be used as Keys in maps etc...
         struct hash_value : public boost::static_visitor<std::size_t>

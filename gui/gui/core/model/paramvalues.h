@@ -61,32 +61,13 @@ namespace cauv {
     }
 
 
-    struct ParamValueToQVariant : public boost::static_visitor<QVariant>
-    {
-        template <typename T> QVariant operator()( T & operand ) const
-        {
-            return QVariant::fromValue(operand);
-        }
-    };
-
-    template <> QVariant ParamValueToQVariant::operator()(std::string & ) const;
-
-    template <class T>
-    QVariant paramValueToQVariant(T boostVariant){
-        return boost::apply_visitor(ParamValueToQVariant(), boostVariant);
-    }
-
-    template<class T>
-    ParamValue nodeToParamValue(const boost::shared_ptr<T> node){
-        return qvariant2variant<ParamValue>(node->get());
-    }
 
     template<class T>
     std::map<std::string, ParamValue> nodeListToParamValueMap(const std::vector<boost::shared_ptr<T> > nodes){
         std::map<std::string, ParamValue> values;
         foreach(boost::shared_ptr<T> const& node, nodes) {
             try {
-                values[boost::get<std::string>(node->nodeId())] = nodeToParamValue(node);
+                values[boost::get<std::string>(node->nodeId())] = qVariantToVariant<ParamValue>(node->get());
             } catch (std::bad_cast){
                 error() << "Failed while converting QVariant to Variant for " << node->nodePath();
                 continue;

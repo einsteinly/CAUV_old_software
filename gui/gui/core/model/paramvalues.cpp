@@ -40,7 +40,7 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string & )
     return m_parent->findOrCreate<StringNode>(m_id);
 }
 
-template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand ) const
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & ) const
 {
     return m_parent->findOrCreate<NumericNode<bool> >(m_id);
 }
@@ -49,14 +49,3 @@ template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & 
 {
     return m_parent->findOrCreate<NumericNode<BoundedFloat> >(m_id);
 }
-
-
-
-template <> QVariant ParamValueToQVariant::operator()(std::string & s) const {
-    error() << "input value: " << s;
-    QVariant v = QVariant::fromValue(QString::fromStdString(s));
-    error() << "valid? " << v.isValid();
-    error() << "variant value: " << v.toString().toStdString();
-    return v;
-}
-

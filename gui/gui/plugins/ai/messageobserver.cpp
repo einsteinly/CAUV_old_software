@@ -49,7 +49,7 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> debugValues = task->findOrCreate<GroupingNode>("debug");
     foreach(param_map_t::value_type i, m->debugValues()){
         boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), debugValues, i.second);
-        node->update(paramValueToQVariant(i.second));
+        node->update(variantToQVariant(i.second));
     }
 
     boost::shared_ptr<GroupingNode> pipelineIds = task->findOrCreate<GroupingNode>("pipelines");
@@ -76,21 +76,21 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> staticOptions = task->findOrCreate<GroupingNode>("static");
     foreach(param_map_t::value_type i, m->staticScriptOptions()){
         boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), staticOptions, i.second);
-        node->update(paramValueToQVariant(i.second));
+        node->update(variantToQVariant(i.second));
         node->setMutable(true);
     }
 
     boost::shared_ptr<GroupingNode> dynamicOptions = task->findOrCreate<GroupingNode>("dynamic");
     foreach(param_map_t::value_type i, m->dynamicScriptOptions()){
         boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), dynamicOptions, i.second);
-        node->update(paramValueToQVariant(i.second));
+        node->update(variantToQVariant(i.second));
         node->setMutable(true);
     }
 
     boost::shared_ptr<GroupingNode> taskOptions = task->findOrCreate<GroupingNode>("task");
     foreach(param_map_t::value_type i, m->taskOptions()){
         boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), taskOptions, i.second);
-        node->update(paramValueToQVariant(i.second));
+        node->update(variantToQVariant(i.second));
         node->setMutable(true);
     }
 
@@ -132,13 +132,13 @@ void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> options = condition->findOrCreate<GroupingNode>("options");
     foreach(param_map_t::value_type i, m->conditionOptions()){
         boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), options, i.second);
-        node->update(paramValueToQVariant(i.second));
+        node->update(variantToQVariant(i.second));
     }
 
     boost::shared_ptr<GroupingNode> debugValues = condition->findOrCreate<GroupingNode>("debug");
     foreach(param_map_t::value_type i, m->debugValues()){
         boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), debugValues, i.second);
-        node->update(paramValueToQVariant(i.second));
+        node->update(variantToQVariant(i.second));
     }
 }
 
