@@ -54,7 +54,7 @@ void AiMessageGenerator::send(){
 
 
     Q_EMIT messageGenerated(boost::make_shared<SetTaskStateMessage>(
-                                boost::get<int>(m_aiNode->nodeId()), conditionIds, taskOptions, scriptOptions));
+                                boost::get<std::string>(m_aiNode->nodeId()), conditionIds, taskOptions, scriptOptions));
 }
 
 

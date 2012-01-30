@@ -32,6 +32,7 @@ Q_DECLARE_METATYPE(std::vector<cauv::Circle>)
 Q_DECLARE_METATYPE(std::vector<float>)
 Q_DECLARE_METATYPE(std::vector<cauv::KeyPoint>)
 Q_DECLARE_METATYPE(cauv::BoundedFloat)
+Q_DECLARE_METATYPE(std::vector<int32_t>)
 
 namespace cauv {
     namespace gui {
