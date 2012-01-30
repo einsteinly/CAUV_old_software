@@ -60,7 +60,7 @@ protected:
 
 
 struct NumericDelegate : public QStyledItemDelegate {
-Q_OBJECT
+    Q_OBJECT
 public:
     NumericDelegate(QObject * parent = 0);
 

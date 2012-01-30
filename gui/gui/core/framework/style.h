@@ -40,8 +40,6 @@
 namespace cauv {
 namespace gui {
 
-
-
 template<class T>
 QColor cauvColorMap(T min, T max, T value, bool inverted = true, int hueRange = 100, QColor startingColor = QColor::fromHsl(0, 160, 200)){
 

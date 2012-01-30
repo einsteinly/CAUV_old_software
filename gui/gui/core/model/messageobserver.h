@@ -23,49 +23,48 @@
 
 
 namespace cauv{
-    namespace gui {
+namespace gui {
 
-        class Vehicle;
-
-
-        class GuiMessageObserver : public MessageObserver {
-
-        public:
-            GuiMessageObserver(boost::shared_ptr< Vehicle > auv);
-            virtual ~GuiMessageObserver();
-
-        protected:
-            boost::shared_ptr< Vehicle > m_auv;
-        };
+class Vehicle;
 
 
+class GuiMessageObserver : public MessageObserver {
 
-        class DefaultGuiMessageObserver : public GuiMessageObserver {
+    public:
+        GuiMessageObserver(boost::shared_ptr< Vehicle > auv);
+        virtual ~GuiMessageObserver();
 
-        public:
+    protected:
+        boost::shared_ptr< Vehicle > m_auv;
+};
 
-            DefaultGuiMessageObserver(boost::shared_ptr< Vehicle > auv);
 
-            virtual void onDebugLevelMessage(DebugLevelMessage_ptr);
-            virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr);
-            virtual void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr);
-            virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr);
-            virtual void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr);
-            virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr);
-            virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr);
-            virtual void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr);
-            virtual void onTelemetryMessage(TelemetryMessage_ptr) ;
-            virtual void onImageMessage(ImageMessage_ptr);
-            virtual void onSonarControlMessage(SonarControlMessage_ptr);
-            virtual void onPressureMessage(PressureMessage_ptr);
-            virtual void onControllerStateMessage(ControllerStateMessage_ptr m);
-            virtual void onBatteryUseMessage(BatteryUseMessage_ptr m);
-            virtual void onMotorStateMessage(MotorStateMessage_ptr m);
-            virtual void onProcessStatusMessage(ProcessStatusMessage_ptr m);
-            virtual void onLocationMessage(LocationMessage_ptr m);
-        };
 
-    } // namespace gui
+class DefaultGuiMessageObserver : public GuiMessageObserver {
+
+    public:
+        DefaultGuiMessageObserver(boost::shared_ptr< Vehicle > auv);
+
+        virtual void onDebugLevelMessage(DebugLevelMessage_ptr);
+        virtual void onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr);
+        virtual void onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr);
+        virtual void onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr);
+        virtual void onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr);
+        virtual void onDepthCalibrationMessage(DepthCalibrationMessage_ptr);
+        virtual void onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr);
+        virtual void onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr);
+        virtual void onTelemetryMessage(TelemetryMessage_ptr) ;
+        virtual void onImageMessage(ImageMessage_ptr);
+        virtual void onSonarControlMessage(SonarControlMessage_ptr);
+        virtual void onPressureMessage(PressureMessage_ptr);
+        virtual void onControllerStateMessage(ControllerStateMessage_ptr m);
+        virtual void onBatteryUseMessage(BatteryUseMessage_ptr m);
+        virtual void onMotorStateMessage(MotorStateMessage_ptr m);
+        virtual void onProcessStatusMessage(ProcessStatusMessage_ptr m);
+        virtual void onLocationMessage(LocationMessage_ptr m);
+    };
+
+} // namespace gui
 } // namespace cauv
 
 

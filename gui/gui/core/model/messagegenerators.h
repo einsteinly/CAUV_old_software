@@ -12,8 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef MESSAGEGENERATORS_H
-#define MESSAGEGENERATORS_H
+#ifndef __CAUV_MESSAGEGENERATORS_H__
+#define __CAUV_MESSAGEGENERATORS_H__
 
 #include <QObject>
 
@@ -26,53 +26,52 @@
 #include <gui/core/model/node.h>
 
 namespace cauv {
-    namespace gui {
+namespace gui {
 
-        class Node;
+class Node;
 
-        struct MessageGenerator : public QObject
-        {
-            Q_OBJECT
+struct MessageGenerator : public QObject
+{
+    Q_OBJECT
+    public:
+        void attach(boost::shared_ptr<Node> to) {
+            if(m_attachedTo)
+                disconnect(m_attachedTo.get(), SIGNAL(onBranchChanged()), this, SLOT(generate()));
+            m_attachedTo = to;
+            connect(m_attachedTo.get(), SIGNAL(onBranchChanged()), this, SLOT(generate()));
+        }
 
-        public:
-            void attach(boost::shared_ptr<Node> to) {
-                if(m_attachedTo)
-                    disconnect(m_attachedTo.get(), SIGNAL(onBranchChanged()), this, SLOT(generate()));
-                m_attachedTo = to;
-                connect(m_attachedTo.get(), SIGNAL(onBranchChanged()), this, SLOT(generate()));
-            }
+    private Q_SLOTS:
+        virtual void generate(){
+            if(m_attachedTo)
+                Q_EMIT messageGenerated(generate(m_attachedTo));
+        }
 
-        private Q_SLOTS:
-            virtual void generate(){
-                if(m_attachedTo)
-                    Q_EMIT messageGenerated(generate(m_attachedTo));
-            }
+    public Q_SLOTS:
+        virtual boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo) = 0;
 
-        public Q_SLOTS:
-            virtual boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo) = 0;
+    Q_SIGNALS:
+        void messageGenerated(boost::shared_ptr<const Message> message);
 
-        Q_SIGNALS:
-            void messageGenerated(boost::shared_ptr<const Message> message);
+    protected:
+        boost::shared_ptr<Node> m_attachedTo;
 
-        protected:
-            boost::shared_ptr<Node> m_attachedTo;
-
-        };
+};
 
 
-        struct MotorMessageGenerator : public MessageGenerator {
-            Q_OBJECT
-        public Q_SLOTS:
-            boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
-        };
+struct MotorMessageGenerator : public MessageGenerator {
+    Q_OBJECT
+    public Q_SLOTS:
+        boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
+};
 
-        struct AutopilotMessageGenerator : public MessageGenerator {
-            Q_OBJECT
-        public Q_SLOTS:
-            boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
-        };
+struct AutopilotMessageGenerator : public MessageGenerator {
+    Q_OBJECT
+    public Q_SLOTS:
+        boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
+};
 
-    } // namespace gui
+} // namespace gui
 } // namesapce cauv
 
 #endif // MESSAGEGENERATORS_H

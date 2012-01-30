@@ -15,6 +15,7 @@
 #include "node.h"
 
 #include <QMetaType>
+#include <QUrl>
 
 using namespace cauv;
 using namespace cauv::gui;
