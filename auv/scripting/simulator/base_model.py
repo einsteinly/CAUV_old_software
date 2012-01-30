@@ -27,7 +27,21 @@ from utils.hacks import tdToFloatSeconds
 # euler angles
 
 def quatToYPR(q):
-    return messaging.floatYPR(q.ra, q.dec, q.roll)
+    return messaging.floatYPR(globalYaw(q), q.equatorial[2], q.equatorial[1])
+
+def rotate(v, q):
+    # no idea why this isn't working...
+    #vq = Quat((v[0],v[1],v[2],0))
+    #rq = vq * q.inv()
+    #return (q * rq).q[:3]
+    # just apply the matrix instead:
+    return np.dot(q.transform, v)
+
+def globalYaw(q):
+    global_yaw = float(-q.inv().equatorial[0])
+    while global_yaw < 0:
+        global_yaw += 360
+    return global_yaw
 
 class MotorStates(object):
     def __init__(self):
@@ -38,6 +52,8 @@ class MotorStates(object):
         self.VStern = 0
     def update(self, motor_state_message):
         setattr(self,str(motor_state_message.motorId), motor_state_message.speed)
+    def __repr__(self):
+        return 'p=%4s hb=%4s hs=%4s vb=%4s vs=%4s' % (self.Prop, self.HBow, self.HStern, self.VBow, self.VStern)
 
 class Model(messaging.MessageObserver):
     def __init__(self, node):
@@ -46,12 +62,13 @@ class Model(messaging.MessageObserver):
         self.update_frequency = 10.0
         self.datum = coordinates.Simulation_Datum
 
-        self.displacement = np.array((0.0,0.0,0.0))
+        self.displacement = np.array((0.0,0.0,-5))
         self.velocity = np.array((0.0,0.0,0.0))
         
         # Note that Quat uses degrees, NOT radians, (which is what we want)
-        self.orientation = Quat((0.0,0.0,5.0)) # init from yaw,pitch,roll=0
-        self.angular_velocity = np.array((0.0,0.0,0.0)) # dYaw/dt, dPitch/dt, dRoll/dt
+        # the yaw component is the LOCAL YAW (about the LOCAL z axis)
+        self.orientation = Quat((0.0,0.0,45.0)) # init from yaw,roll,pitch=0
+        self.angular_velocity = np.array((0.0,0.0,0.0)) # dYaw/dt, dRoll/dt, dPitch/dt
 
         self.motor_states = MotorStates()
 
