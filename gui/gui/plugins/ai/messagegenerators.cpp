@@ -44,16 +44,8 @@ boost::shared_ptr<const Message> AiTaskMessageGenerator::generate(boost::shared_
             nodeListToParamValueMap(attachedTo->findOrCreate<GroupingNode>("dynamic")->getChildren());
     scriptOptions.insert(dynamicOptions.begin(), dynamicOptions.end());
 
-<<<<<<< local
     return boost::make_shared<SetTaskStateMessage>(
-                                boost::get<int>(attachedTo->nodeId()), conditionIds, taskOptions, scriptOptions);
-=======
-    taskOptions = nodeListToParamValueMap(task);
-
-
-    Q_EMIT messageGenerated(boost::make_shared<SetTaskStateMessage>(
-                                boost::get<std::string>(m_aiNode->nodeId()), conditionIds, taskOptions, scriptOptions));
->>>>>>> other
+                                boost::get<std::string>(attachedTo->nodeId()), conditionIds, taskOptions, scriptOptions);
 }
 
 boost::shared_ptr<const Message> AiConditionMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
