@@ -79,7 +79,7 @@ namespace cauv {
             typedef typename mpl::pop_front<Types>::type Tail;
 
             //info() << qv.userType() << "=" << qMetaTypeId<Head>();
-            if ( ((unsigned)qv.userType()) == qMetaTypeId<Head>() ) {
+            if ( ((unsigned)qv.userType()) == ((unsigned)qMetaTypeId<Head>()) ) {
                 //info() << qv.toString().toStdString() << "when cast" << qv.value<Head>();
                 return T_Variant( qv.value<Head>() );
             }
@@ -123,17 +123,6 @@ namespace cauv {
             }
         };
 
-        // gets the value of a variant cast to R
-        // useful for mixing variants with various Qt classes
-        /*template<class R>
-        struct cast_to : public boost::static_visitor<R>
-        {
-            template <typename T> R operator()( T & operand ) const
-            {
-                return (R) operand;
-            }
-        };
-*/
 
         // hashes variants so they can be used as Keys in maps etc...
         struct hash_value : public boost::static_visitor<std::size_t>

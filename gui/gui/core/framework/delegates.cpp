@@ -108,7 +108,7 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
 
     NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
 
-    if (node && node->get().type() == qMetaTypeId<bool>()){
+    if (node && (unsigned)node->get().type() == (unsigned)qMetaTypeId<bool>()){
         StyleOptionOnOff onOffOption;
         onOffOption.rect = option.rect;
         onOffOption.position = node->get().value<bool>() ? 1 : 0;

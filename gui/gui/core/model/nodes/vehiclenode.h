@@ -39,9 +39,11 @@ namespace cauv {
             void messageGenerated(boost::shared_ptr<const Message>);
 
         public:
-            void addGenerator(boost::shared_ptr<MessageGenerator> generator)
+            void attachGenerator(boost::shared_ptr<Node> node, boost::shared_ptr<MessageGenerator> generator)
             {
+                info() << "Generator attached to " << node->nodePath();
                 m_generators.push_back(generator);
+                generator->attach(node);
                 generator->connect(generator.get(), SIGNAL(messageGenerated(boost::shared_ptr<const Message>)),
                                    this, SIGNAL(messageGenerated(boost::shared_ptr<const Message>)));
             }

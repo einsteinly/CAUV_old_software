@@ -28,50 +28,50 @@
 namespace cauv {
     namespace gui {
 
-        template<class T> class NumericNode;
         class Node;
 
-        class MessageGenerator : public QObject
+        struct MessageGenerator : public QObject
         {
             Q_OBJECT
-        public:
-            MessageGenerator(boost::shared_ptr<Node> auv);
 
-        protected:
-            // weak_ptr breaks the auv -> generator list -> auv cycle
-            boost::weak_ptr<Node> m_auv;
+        public:
+            void attach(boost::shared_ptr<Node> to) {
+                if(m_attachedTo)
+                    disconnect(m_attachedTo.get(), SIGNAL(onBranchChanged()), this, SLOT(generate()));
+                m_attachedTo = to;
+                connect(m_attachedTo.get(), SIGNAL(onBranchChanged()), this, SLOT(generate()));
+            }
+
+        private Q_SLOTS:
+            virtual void generate(){
+                if(m_attachedTo)
+                    Q_EMIT messageGenerated(generate(m_attachedTo));
+            }
+
+        public Q_SLOTS:
+            virtual boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo) = 0;
 
         Q_SIGNALS:
             void messageGenerated(boost::shared_ptr<const Message> message);
 
-        };
-
-
-        class MotorMessageGenerator : public MessageGenerator {
-            Q_OBJECT
-        public:
-            MotorMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<NumericNode<int> > motor);
-
-        protected Q_SLOTS:
-            void send(QVariant value);
-
         protected:
-            MotorID::e m_id;
+            boost::shared_ptr<Node> m_attachedTo;
+
         };
 
 
-        class AutopilotMessageGenerator : public MessageGenerator {
+        struct MotorMessageGenerator : public MessageGenerator {
             Q_OBJECT
-        public:
-            AutopilotMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<Node> autopilot);
-
-        protected Q_SLOTS:
-            void send();
-
-        protected:
-            boost::shared_ptr<Node> m_autopilot;
-            Controller::e m_id;
+        public Q_SLOTS:
+            boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
         };
+
+        struct AutopilotMessageGenerator : public MessageGenerator {
+            Q_OBJECT
+        public Q_SLOTS:
+            boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
+        };
+
     } // namespace gui
 } // namesapce cauv
 

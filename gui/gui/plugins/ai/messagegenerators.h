@@ -22,24 +22,24 @@
 #include <boost/shared_ptr.hpp>
 
 #include <gui/core/model/node.h>
-#include <gui/core/model/nodes/vehiclenode.h>
-#include <gui/plugins/ai/aiNode.h>
+
+#include <gui/core/model/messagegenerators.h>
 
 namespace cauv {
     namespace gui {
 
         class Node;
 
-        class AiMessageGenerator : public MessageGenerator {
+        class AiTaskMessageGenerator : public MessageGenerator {
             Q_OBJECT
-        public:
-            AiMessageGenerator(boost::shared_ptr<Vehicle> auv, boost::shared_ptr<AiTaskNode> aiNode);
+        public Q_SLOTS:
+            boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
+        };
 
-        protected Q_SLOTS:
-            void send();
-
-        protected:
-            boost::shared_ptr<AiTaskNode> m_aiNode;
+        class AiConditionMessageGenerator : public MessageGenerator {
+            Q_OBJECT
+        public Q_SLOTS:
+            boost::shared_ptr<const Message> generate(boost::shared_ptr<Node> attachedTo);
         };
 
     } // namespace gui

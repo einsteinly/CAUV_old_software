@@ -133,6 +133,7 @@ void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
     foreach(param_map_t::value_type i, m->conditionOptions()){
         boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), options, i.second);
         node->update(variantToQVariant(i.second));
+        node->setMutable(true);
     }
 
     boost::shared_ptr<GroupingNode> debugValues = condition->findOrCreate<GroupingNode>("debug");

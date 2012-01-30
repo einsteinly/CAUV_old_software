@@ -28,9 +28,6 @@
 #include <generated/types/TelemetryGroup.h>
 #include <generated/types/ImageGroup.h>
 #include <generated/types/PressureGroup.h>
-#include <generated/types/GuiaiGroup.h>
-
-#include "paramvalues.h"
 
 #include "model/model.h"
 #include "model/nodes/numericnode.h"

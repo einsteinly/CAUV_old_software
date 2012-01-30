@@ -44,7 +44,7 @@ void RedHerring::setupMotor(boost::shared_ptr<Node> node){
         motor->setMax(127);
         motor->setMin(-127);
         motor->setMutable(true);
-        addGenerator(boost::make_shared<MotorMessageGenerator>(boost::static_pointer_cast<Vehicle>(shared_from_this()), motor));
+        attachGenerator(motor, boost::make_shared<MotorMessageGenerator>());
     } catch (std::runtime_error){
         warning() << node->nodePath() << " should be a NumericNode";
     }
@@ -52,7 +52,7 @@ void RedHerring::setupMotor(boost::shared_ptr<Node> node){
 
 void RedHerring::setupAutopilot(boost::shared_ptr<Node> node){
 
-    addGenerator(boost::make_shared<AutopilotMessageGenerator>(boost::static_pointer_cast<Vehicle>(shared_from_this()), node));
+    attachGenerator(node, boost::make_shared<AutopilotMessageGenerator>());
     boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
     target->setMutable(true);
     node->findOrCreate<NumericNode<bool> >("enabled")->setMutable(true);

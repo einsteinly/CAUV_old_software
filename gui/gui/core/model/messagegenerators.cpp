@@ -25,44 +25,21 @@ using namespace cauv;
 using namespace cauv::gui;
 
 
-MessageGenerator::MessageGenerator(boost::shared_ptr<Node> auv) :
-        m_auv(auv) {
+boost::shared_ptr<const Message> MotorMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
+    return boost::make_shared<MotorMessage>(boost::get<MotorID::e>(attachedTo->nodeId()), (int8_t) attachedTo->get().toInt());
 }
 
+boost::shared_ptr<const Message> AutopilotMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
+    bool enabled = attachedTo->findOrCreate<NumericNode<bool> >("enabled")->get();
+    float target = attachedTo->findOrCreate<NumericNode<float> >("target")->get();
 
-
-MotorMessageGenerator::MotorMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<NumericNode<int> > motor):
-        MessageGenerator(auv), m_id(boost::get<MotorID::e>(motor->nodeId()))
-{
-    connect(motor.get(), SIGNAL(onSet(QVariant)), this, SLOT(send(QVariant)));
-}
-
-void MotorMessageGenerator::send(QVariant value){
-    Q_EMIT messageGenerated(boost::make_shared<MotorMessage>(m_id, (int8_t) value.toInt()));
-}
-
-
-
-AutopilotMessageGenerator::AutopilotMessageGenerator(boost::shared_ptr<Node> auv, boost::shared_ptr<Node> autopilot):
-        MessageGenerator(auv), m_autopilot(autopilot)
-{
-    connect(autopilot.get(), SIGNAL(onBranchChanged()), this, SLOT(send()));
-}
-
-void AutopilotMessageGenerator::send(){
-    bool enabled = m_autopilot->findOrCreate<NumericNode<bool> >("enabled")->get();
-    float target = m_autopilot->findOrCreate<NumericNode<float> >("target")->get();
-
-    switch(boost::get<Controller::e>(m_autopilot->nodeId())) {
+    switch(boost::get<Controller::e>(attachedTo->nodeId())) {
     case Controller::Bearing:
-        Q_EMIT messageGenerated(boost::make_shared<BearingAutopilotEnabledMessage>(enabled, target));
-        break;
+        return boost::make_shared<BearingAutopilotEnabledMessage>(enabled, target);
     case Controller::Pitch:
-        Q_EMIT messageGenerated(boost::make_shared<PitchAutopilotEnabledMessage>(enabled, target));
-        break;
+        return boost::make_shared<PitchAutopilotEnabledMessage>(enabled, target);
     case Controller::Depth:
-        Q_EMIT messageGenerated(boost::make_shared<DepthAutopilotEnabledMessage>(enabled, target));
-        break;
-    default: error() << "Unknown ControllerID passed to AutopilotMessageGenerator";
+        return boost::make_shared<DepthAutopilotEnabledMessage>(enabled, target);
+    default: throw std::runtime_error("Unknown ControllerID passed to AutopilotMessageGenerator");
     }
 }

@@ -67,7 +67,10 @@ namespace cauv {
         std::map<std::string, ParamValue> values;
         foreach(boost::shared_ptr<T> const& node, nodes) {
             try {
-                values[boost::get<std::string>(node->nodeId())] = qVariantToVariant<ParamValue>(node->get());
+                QVariant v = node->get();
+                if ((unsigned)v.type() == (unsigned)qMetaTypeId<QString>())
+                    v = QVariant::fromValue(v.value<QString>().toStdString());
+                values[boost::get<std::string>(node->nodeId())] = qVariantToVariant<ParamValue>(v);
             } catch (std::bad_cast){
                 error() << "Failed while converting QVariant to Variant for " << node->nodePath();
                 continue;

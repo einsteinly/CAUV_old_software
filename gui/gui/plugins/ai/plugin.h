@@ -34,6 +34,7 @@ namespace cauv {
 
         public Q_SLOTS:
             void setupTask(boost::shared_ptr<Node> node);
+            void setupCondition(boost::shared_ptr<Node> node);
 
         };
 
