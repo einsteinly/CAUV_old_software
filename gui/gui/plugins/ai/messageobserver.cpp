@@ -95,8 +95,8 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
     }
 
     boost::shared_ptr<GroupingNode> conditionIds = task->findOrCreate<GroupingNode>("conditions");
-    foreach(int i, m->conditionIds()){
-        conditionIds->findOrCreate<AiConditionNode>(i);
+    foreach(std::string const& id, m->conditionIds()){
+        conditionIds->findOrCreate<AiConditionNode>(id);
     }
 }
 

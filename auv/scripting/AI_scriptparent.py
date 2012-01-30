@@ -26,6 +26,11 @@ if __name__ == '__main__':
             info('No valid options set for script, using default')
             script_opts = {}
         try:
+            state = cPickle.loads(sys.argv[4])
+        except Exception as e:
+            info('No valid persistent state found, using default')
+            state = {}
+        try:
             script_module = __import__('script_library.'+script_name,fromlist=['script_library'])
         except ImportError as e:
             error('Could not import '+script_name+' from script library')
@@ -40,7 +45,7 @@ if __name__ == '__main__':
         except AttributeError:
             info('No default options found for script, assuming none')
             options_class = aiScriptOptions
-        script = script_class(task_id, options_class(script_opts))
+        script = script_class(task_id, options_class(script_opts), state)
         result = script.run()
         script._notify_exit(result)
     except Exception as e:

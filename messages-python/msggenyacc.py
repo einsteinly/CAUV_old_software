@@ -21,10 +21,11 @@ class Group(Expr):
         return s
 
 class Included(Expr):
-    def __init__(self, type, name, location):
+    def __init__(self, type, name, location, superclass = None):
         self.type = type
         self.name = name
         self.location = location
+        self.superclass = superclass
     def __repr__(self):
         s = "%s %s : %s\n" % (self.type, self.name, self.location)
         return s
@@ -33,6 +34,10 @@ class Struct(Expr):
     def __init__(self, name, fields):
         self.name = name
         self.fields = fields
+    def numEqualityFields(self):
+        return len([f for f in self.fields if f.equality])
+    def numCompareFields(self):
+        return len([f for f in self.fields if f.compare])
     def __repr__(self):
         s = "struct %s\n" % self.name
         s = s + "{\n"
@@ -78,12 +83,10 @@ class Message(Expr):
         self.name = name
         self.id = id
         self.fields = fields
+
     def numLazyFields(self):
-        r = 0
-        for f in self.fields:
-            if f.lazy:
-                r += 1
-        return r
+        return len([f for f in self.fields if f.lazy])
+
     def __repr__(self):
         s = "message %s : %d\n" % (self.name, self.id)
         s = s + "{\n"
@@ -93,12 +96,21 @@ class Message(Expr):
         return s
 
 class Field(Expr):
-    def __init__(self, name, type, lazy=False):
+    def __init__(self, name, type, lazy=False, equality=False, compare=False):
         self.name = name
         self.type = type
         self.lazy = lazy
+        self.equality = equality
+        self.compare = compare
     def __repr__(self):
-        return "%s : %s %s" % (self.name, ("","lazy")[self.lazy], self.type)
+        modifiers = []
+        if self.lazy:
+            modifiers.append('lazy')
+        if self.equality:
+            modifiers.append('eq')
+        if self.compare:
+            modifiers.append('cmp')
+        return "%s %s : %s" % (' '.join(modifiers), self.name, self.type)
 
 class BaseType(Expr):
     def __init__(self, name):
@@ -221,8 +233,12 @@ def p_struct_contents(p):
 
 def p_included(p):
     """included : STRUCT STRING ':' includepath
-               | CLASS STRING ':' includepath"""
+                | CLASS STRING ':' includepath"""
     p[0] = Included(p[1], p[2], p[4])
+
+def p_included_sub(p):
+    "included : STRING SUBCLASS STRING ':' includepath"
+    p[0] = Included('class', p[3], p[5], superclass = p[1])
 
 def p_includepath(p):
     """includepath : '<' path '>'
@@ -315,13 +331,29 @@ def p_field_list(p):
         p[0] = p[1]
 
 def p_field(p):
-    "field : STRING ':' type ';'"
-    p[0] = Field(p[1], p[3])
+    "field : field_modifier_list STRING ':' type ';'"
+    p[0] = Field(p[2], p[4], **p[1])
 
-def p_lazy_field(p):
-    "field : LAZY STRING ':' type ';'"
-    p[0] = Field(p[2], p[4], True)
+def p_field_modifier_list(p):
+    """field_modifier_list :
+                           | field_modifier_list field_modifier"""
+    if len(p) == 1:
+        p[0] = {}
+    else:
+        p[1][p[2]] = True
+        p[0] = p[1]
 
+def p_field_modifier_lazy(p):
+    "field_modifier : LAZY"
+    p[0] = 'lazy'
+
+def p_field_modifier_equality(p):
+    "field_modifier : EQUALITY"
+    p[0] = 'equality'
+
+def p_field_modifier_compare(p):
+    "field_modifier : COMPARE"
+    p[0] = 'compare'
 
 def p_variant_type_list(p):
     """variant_type_list : type

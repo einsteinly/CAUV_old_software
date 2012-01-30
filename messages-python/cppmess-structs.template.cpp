@@ -36,24 +36,31 @@ cauv::${s.name}::${s.name}(#slurp
 { }
 #end if
 
+#if $s.numEqualityFields > 0
 bool cauv::${s.name}::operator==(cauv::$s.name const& other) const
 {
     return
     #for i, f in $enumerate($s.fields)
-        $f.name == other.$f.name#if $i < $len($s.fields) - 1# &&#else#;#end if
+        #if f.equality
+        $f.name == other.$f.name#if $i < $s.numEqualityFields - 1# &&#else#;#end if
+        #end if
     #end for
 }
+#end if
 
+#if $s.numCompareFields > 0
 bool cauv::${s.name}::operator<(cauv::$s.name const& other) const
 {
-    ##Compare fields in order - hopefully will optimise to memcmp...
     #for i, f in $enumerate($s.fields)
+    #if f.compare
     if($f.name < other.$f.name)
         return true;
     else if(!($f.name == other.$f.name))
         return false;
+    #end if
     #end for
     return false;
 }
+#end if
 
 #end for 
