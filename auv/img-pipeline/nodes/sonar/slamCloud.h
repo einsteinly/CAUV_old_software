@@ -137,7 +137,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                     << relative_guess;
 
             // do the hard work!
-            cloud_ptr final = boost::make_shared<cloud_t>();
+            typename cloud_t::base_cloud_t::Ptr final = boost::make_shared<typename cloud_t::base_cloud_t>();
             icp.align(*final, relative_guess);
             // in map's coordinate system:
             const Eigen::Matrix4f final_transform = icp.getFinalTransformation();
@@ -213,7 +213,7 @@ class SlamCloudLocation{
         }
 
         template<typename PointT>
-        SlamCloudLocation(SlamCloudPart<PointT> const& p)
+        explicit SlamCloudLocation(boost::shared_ptr<SlamCloudPart<PointT> > const& p)
             : m_relative_to(p->m_relative_to),
               m_relative_transformation(p->m_relative_transformation),
               m_time(p->m_time){
@@ -261,6 +261,7 @@ class SlamCloudPart: public SlamCloudLocation,
                      public boost::enable_shared_from_this< SlamCloudPart<PointT> >{
     public:
         // - public types
+        typedef pcl::PointCloud<PointT> base_cloud_t;
         typedef boost::shared_ptr<SlamCloudPart<PointT> > Ptr;
         typedef boost::shared_ptr<const SlamCloudPart<PointT> > ConstPtr;
         typedef pcl::PointCloud<PointT> BaseT;
@@ -294,7 +295,6 @@ class SlamCloudPart: public SlamCloudLocation,
             this->is_dense = true;
             reserve(kps.size());
 
-            bool warned_non_planar = false;
             for(size_t i = 0; i < kps.size(); i++){
                 if(!filter(kps[i]))
                     continue;
