@@ -27,14 +27,14 @@ using namespace cauv::gui;
 
 boost::shared_ptr<const Message> AiTaskMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
 
-    std::vector< int32_t > conditionIds;
+    std::vector< std::string > conditionIds;
     std::map< std::string, ParamValue > taskOptions;
     std::map< std::string, ParamValue > scriptOptions;
 
     const std::vector<boost::shared_ptr<AiConditionNode> > conditions =
             attachedTo->findOrCreate<GroupingNode>("conditions")->getChildrenOfType<AiConditionNode>();
     foreach(boost::shared_ptr<AiConditionNode> cond, conditions){
-        conditionIds.push_back(boost::get<int32_t>(cond->nodeId()));
+        conditionIds.push_back(boost::get<std::string>(cond->nodeId()));
     }
 
     taskOptions = nodeListToParamValueMap(attachedTo->findOrCreate<GroupingNode>("task")->getChildren());
