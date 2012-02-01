@@ -7,9 +7,9 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
-//#include <pcl/surface/convex_hull.h>
-#include <pcl/surface/concave_hull.h>
-#include <pcl/filters/crop_hull.h>
+#include <pcl/surface/convex_hull.h>
+
+#include <clipper.hpp> // Boost Software License
 
 namespace cauv{
 namespace imgproc{
@@ -195,6 +195,7 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
             Eigen::Matrix4f& transformation
         ) const {
             // TODO
+            assert(0);
         }
 };
 
@@ -223,7 +224,7 @@ class SlamCloudLocation{
         void transform(Eigen::Matrix4f const& transformation){
             m_relative_transformation = m_relative_transformation * transformation;
         }
-        
+
         void setRelativeToNone(){
             m_relative_to.reset();
         }
@@ -346,8 +347,12 @@ template<typename PointT>
 class SlamCloudGraph{
     public:
         // - public types
-        typedef boost::shared_ptr<SlamCloudPart<PointT> > cloud_ptr;
+        typedef SlamCloudPart<PointT> cloud_t;
+        typedef boost::shared_ptr<cloud_t> cloud_ptr;
         typedef boost::shared_ptr<SlamCloudLocation> location_ptr;
+
+        typedef typename cloud_t::base_cloud_t base_cloud_t;
+        typedef typename base_cloud_t::Ptr base_cloud_ptr;
 
     private:
         // - private types
@@ -485,7 +490,12 @@ class SlamCloudGraph{
          *
          */
         cloud_vec overlappingClouds(cloud_ptr p) const{
-
+            cloud_vec r;
+            foreach(cloud_ptr m, key_scans){
+                if(overlapPercent(m, p) > Overlap_Threshold)
+                    r.push_back(m);
+            }
+            return r;
         }
 
         /* overload to find overlaps at a different transformation to the
@@ -500,10 +510,68 @@ class SlamCloudGraph{
             return r;
         }
 
+
+        static void calcConvexHull(cloud_ptr p,
+                                   base_cloud_ptr& hull_points,
+                                   std::vector<pcl::Vertices>& polygons){
+            int dim;
+
+            pcl::ConvexHull<PointT> hull_calculator;
+            hull_points = (boost::make_shared<base_cloud_t>());
+            hull_points->is_dense = true;
+
+            hull_calculator.setInputCloud(p);
+            hull_calculator.reconstruct(*hull_points, polygons);
+            dim = hull_calculator.getDim();
+
+            assert(dim == 2);
+        }
+
         /* Judge degree of overlap: new parts are added to the map when the
          * overlap with existing parts is less than Overlap_Threshold
          */
         float overlapPercent(cloud_ptr a, cloud_ptr b) const{
+            // !!! TODO: cache convex hulls with point clouds
+            std::vector<pcl::Vertices> a_polys;
+            std::vector<pcl::Vertices> b_polys;
+            base_cloud_ptr a_points;
+            base_cloud_ptr b_points;
+            calcConvexHull(a, a_points, a_polys);
+            calcConvexHull(b, b_points, b_polys);
+            pcl::transformPointCloud(*a_points, *a_points, a->globalTransform());
+            pcl::transformPointCloud(*b_points, *b_points, b->globalTransform());
+
+            assert(a_polys.size() == 1);
+            assert(b_polys.size() == 1);
+
+            ClipperLib::Polygons clipper_polys_a(1);
+            ClipperLib::Polygons clipper_polys_b(1);
+            ClipperLib::Polygons solution;
+
+            //clipperlib works in 64-bit fixed point, so scale our 1m=1
+            // floating point data down by 1000 to 1mm=1
+
+            clipper_polys_a[0].reserve(a_polys[0].vertices.size());
+            foreach(uint32_t i, a_polys[0].vertices)
+                clipper_polys_a[0].push_back(ClipperLib::IntPoint((*a_points)[i].x/1000,(*a_points)[i].y/1000));
+
+            clipper_polys_b[0].reserve(b_polys[0].vertices.size());
+            foreach(uint32_t i, b_polys[0].vertices)
+                clipper_polys_b[0].push_back(ClipperLib::IntPoint((*b_points)[i].x/1000,(*b_points)[i].y/1000));
+
+            ClipperLib::Clipper c;
+            c.AddPolygons(clipper_polys_a, ClipperLib::ptSubject);
+            c.AddPolygons(clipper_polys_b, ClipperLib::ptClip);
+            c.Execute(ClipperLib::ctIntersection, solution);
+            assert(solution.size() == 0);
+
+            // return area of overlap as fraction of union of areas of input
+            // polys
+            const double union_area = ClipperLib::Area(solution[0]);
+            const double a_area = ClipperLib::Area(clipper_polys_a[0]);
+            const double b_area = ClipperLib::Area(clipper_polys_b[0]);
+
+            return union_area / (a_area + b_area);
         }
 
         /* judge how good initial cloud is by a combination of the number of
@@ -550,10 +618,18 @@ class SlamCloudGraph{
 
 
 
+} // namespace cauv
+} // namespace imgproc
 
 
+#if 0
 // - deprecated
 
+#include <pcl/surface/concave_hull.h>
+#include <pcl/filters/crop_hull.h>
+
+namespace cauv{
+namespace imgproc{
 
 template<typename PointT>
 class SlamCloud: public pcl::PointCloud<PointT>,
@@ -725,5 +801,7 @@ class SlamCloud: public pcl::PointCloud<PointT>,
 
 } // namespace cauv
 } // namespace imgproc
+
+#endif // 0
 
 #endif //ndef __CAUV_SONAR_SLAM_CLOUD_H__
