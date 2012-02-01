@@ -26,6 +26,8 @@
 #include "serialisation-types.h"
 #include "string.h"
 
+#define CAUV_RESTRICT __restrict__ 
+
 namespace cauv{
 
 /* add the bytes representing T to the back of the vector:
@@ -40,9 +42,10 @@ namespace cauv{
 namespace impl{
 /* helper function: serialise by copying bytes */
 template<typename T>
-inline static void copyBytes(svec_ptr p, T& v){
-    p->insert(
-        p->end(),
+inline static void copyBytes(svec_ptr p, T& CAUV_RESTRICT v){
+    svec_ptr::element_type* const CAUV_RESTRICT restrict_p = p.get();
+    restrict_p->insert(
+        restrict_p->end(),
         reinterpret_cast<byte const*>(&v),
         reinterpret_cast<byte const*>(&v) + sizeof(T)
     );
@@ -218,6 +221,11 @@ template<typename T>
 inline void serialise(svec_ptr p, std::vector<T> const& v){
     assert(v.size() < 0x80000000);
     int32_t num = int32_t(v.size());
+    // 2 * p->size to preserve O(Length) amortized time with the gcc
+    // reserve-means-reserve-exactly implementation...
+    const std::size_t add_length = sizeof(int32_t) + (sizeof(T)) * num;
+    if(p->capacity() < p->size() + add_length)
+        p->reserve(2*p->size() + add_length);
     serialise(p, num);
     
     typename std::vector<T>::const_iterator i;
@@ -286,6 +294,12 @@ template<typename S, typename T>
 inline void serialise(svec_ptr p, std::map<S,T> const& v){
     assert(v.size() < 0x80000000);
     int32_t num = int32_t(v.size());
+
+    // 2 * p->size to preserve O(Length) amortized time with the gcc
+    // reserve-means-reserve-exactly implementation...
+    const std::size_t add_length = sizeof(int32_t) + num * (sizeof(S)+sizeof(T));
+    if(p->capacity() < p->size() + add_length)
+        p->reserve(2*p->size() + add_length);
     serialise(p, num);
 
     typename std::map<S,T>::const_iterator i;

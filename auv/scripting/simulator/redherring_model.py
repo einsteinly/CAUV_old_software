@@ -11,6 +11,7 @@ import numpy as np # BSD-type license
 
 # CAUV Modules
 import base_model
+from base_model import rotate, globalYaw
 from utils.hacks import tdToFloatSeconds
 import cauv.messaging as messaging
 from cauv.debug import debug, error, warning, info
@@ -24,15 +25,12 @@ from cauv.debug import debug, error, warning, info
 # front                                   back
 #
 #               origin at CoM
-#
-#      hbow                           hstern
-#    .....|...........................|....
-#    <----X-----red-he-o-rring--------X---->y prop
-#    .....|............|..............|....
-#                      |
-#                      |
-#                      |
 #                      x
+#      hbow            |              hstern
+#    .....|............|..............|....
+#  y <----X-----red-he-o-rring--------X---->  prop
+#    .....|...........................|....
+#
 #
 #
 # Side View:
@@ -41,7 +39,7 @@ from cauv.debug import debug, error, warning, info
 #                      |
 #      vbow            |              vstern
 #     ..|..............|................|..
-#    <--X-------red-he-o-rring----------X-->y prop
+#  y <--X-------red-he-o-rring----------X-->  prop
 #    ...|...............................|..
 #
 # Weight: expect to be slightly negative, taking into account buoyancy, and
@@ -58,14 +56,14 @@ from cauv.debug import debug, error, warning, info
 # TODO: measure these, they are my educated guesses at the moment:
 
 # Rigid body model parameters:
-# Position vectors of centre of thrust, and vector of direction of thrust:
+# Position vectors of centre of thrust, and vector of direction of thrust: (ie,
+# opposite to jet of water when motor is set positive)
 # All in m:
-# All except VBow are inverted (see control.cpp)
-HBow_At   = np.array((0,-0.7,0)); HBow_Vec   = np.array((-1,0, 0))
-HStern_At = np.array((0, 0.7,0)); HStern_Vec = np.array((-1,0, 0))
-VBow_At   = np.array((0,-0.8,0)); VBow_Vec   = np.array(( 0,0,-1))
-VStern_At = np.array((0, 0.8,0)); VStern_Vec = np.array(( 0,0,-1))
-Prop_At   = np.array((0, 0.9,0)); Prop_Vec   = np.array(( 0,-1, 0))
+HBow_At   = np.array((0, 0.7,0)); HBow_Vec   = np.array((-1.0,   0,   0))
+HStern_At = np.array((0,-0.7,0)); HStern_Vec = np.array((-1.0,   0,   0))
+VBow_At   = np.array((0, 0.8,0)); VBow_Vec   = np.array((   0,   0,-1.0))
+VStern_At = np.array((0,-0.8,0)); VStern_Vec = np.array((   0,   0,-1.0))
+Prop_At   = np.array((0,-0.9,0)); Prop_Vec   = np.array((   0, 1.0,   0))
 Mass      = 37.0      # kg
 Weight    = 0.1       # N upwards (i.e., slightly buoyant)
 Weight_At = np.array((0,0,0))
@@ -88,17 +86,8 @@ Drag_F = np.array((Max_Thrust*2 / 0.3, # x (sideways)
 # Drag Torque: Newton metres per degree per second, measured from complete
 # guesses at maximum rotation rates:
 Drag_J = np.array((Max_Yaw_Moment / 45.0,   # yaw
-                   Max_Pitch_Moment / 45.0, # pitch
-                   Max_Roll_Moment / 5.0)) # roll
-
-def rotate(v, q):
-    # no idea why this isn't working...
-    #vq = Quat((v[0],v[1],v[2],0))
-    #rq = vq * q.inv()
-    #return (q * rq).q[:3]
-    # just apply the matrix instead:
-    return np.dot(q.transform, v)
-
+                   Max_Roll_Moment / 45.0,  # roll
+                   Max_Pitch_Moment / 5.0)) # pitch
 
 class Model(base_model.Model):
     def __init__(self, node):
@@ -115,16 +104,19 @@ class Model(base_model.Model):
 
     def processUpdate(self, s):
         # state is stored in:
-        # self.displacement = (x,y,z)
-        # self.velocity = (x,y,z)
-        # self.orientation = Quat(...)
-        # self.angular_velocity = (dYaw/dt, dPitch/dt, dRoll/dt)
+        # self.displacement = (x,y,z)   - global coordinates
+        # self.velocity = (x,y,z)       - global coordinates
+        # self.orientation = Quat(...)  - about vehicle centre:
+        #   a_global_vec = rotate(local vec, orientation)
+        #   a_local_vec = rotate(global vec, orientation.inv())
+        # self.angular_velocity = (dYaw/dt, dRoll/dt, dPitch/dt)
         #
         # yaw is rotation about the z axis
         # pitch is rotation about the x axis
         # roll is rotation about the y axis
         #
         weight_vec = np.array((0,0,1))
+        #debug(str(s))
 
         now = self.relativeTime()
         dt = now - self.last_t
@@ -141,6 +133,8 @@ class Model(base_model.Model):
         local_force = sum(
             (hbow_force, vbow_force, hstern_force, vstern_force, prop_force)
         )
+
+        #debug('local force = %s' % local_force)
         
         # now in global coordinates:
         global_force = rotate(local_force, self.orientation)
@@ -163,7 +157,6 @@ class Model(base_model.Model):
         hstern_moment = np.cross(hstern_force, HStern_At)
         vstern_moment = np.cross(vstern_force, VStern_At)
         prop_moment   = np.cross(prop_force, Prop_At) # expect this to be zero!
-        # TODO: test this inverse:
         weight_local_force = rotate(weight_force, self.orientation.inv())
         weight_moment = np.cross(weight_local_force, Weight_At) # this is zero anyway...
         
@@ -173,11 +166,14 @@ class Model(base_model.Model):
              prop_moment,
              weight_moment)
         )
+        #debug('local moment = %s' % local_moment)
 
-        # convert moment to (yaw, pitch, roll) = (-about z axis, -about x axis, about y axis)
-        # TODO: check which way the xsens measures roll
+        # convert moment to (yaw, roll, pitch) = (about z axis, about y axis, about x axis)
+
+        # !!! FIXME not sure why this -ve is required here - might be because
+        # yaw/roll are mixed around in the quaternion...
         local_moment = np.array((
-            -local_moment[2], -local_moment[0], local_moment[1]
+            local_moment[2], local_moment[1], -local_moment[0]
         ))
 
         # drag moments:
@@ -186,16 +182,16 @@ class Model(base_model.Model):
         # roll-restoring moment:
         # could model this as a pendulum with trig and stuff, but since the
         # vehicle shouldn't ever be rolling anyway...
-        roll = self.orientation.equatorial[2]
+        roll = self.orientation.equatorial[1]
         # handle wrap-around from 360-0
-        if roll > 180:
+        while roll > 180:
             roll = roll - 360
-        roll_moment = np.array((0,0,-roll/2.0))
+        roll_moment = np.array((0, -self.angular_velocity[1]-2*roll, 0))
 
         moment = sum((local_moment, drag_moment, roll_moment))
 
         # apply moment to angular velocity:
-        domega = moment * dt / np.array((Izz, Ixx, Iyy))
+        domega = moment * dt / np.array((Izz, Iyy, Ixx))
         self.angular_velocity += domega
 
         # Update positions with velocities:
@@ -233,7 +229,12 @@ class Model(base_model.Model):
         # if somehow we're floating above the surface...
         if pressure < 0:
             pressure = 0
-        orientation = messaging.floatYPR(*(float(x) for x in self.orientation.equatorial))
+        
+        # on-the-wire convention for bearing is positive-clockwise
+        global_yaw = globalYaw(self.orientation)
+        pitch = float(self.orientation.equatorial[2])
+        roll = float(self.orientation.equatorial[1])
+        orientation = messaging.floatYPR(global_yaw, pitch, roll)
         #print 'pressure=', pressure, 'orientation=', orientation
         self.node.send(messaging.PressureMessage(pressure, pressure))
         self.node.send(messaging.StateMessage(orientation))

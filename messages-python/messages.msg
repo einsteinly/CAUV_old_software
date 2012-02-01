@@ -806,7 +806,7 @@ group guiai
     message SetTaskState : 204
     {
         taskId : string;
-        conditionIds : list<int32>;
+        conditionIds : list<string>;
         taskOptions : map<string, ParamValue>;
         scriptOptions : map<string, ParamValue>;
     }
