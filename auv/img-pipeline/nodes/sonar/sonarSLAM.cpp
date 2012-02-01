@@ -7,12 +7,13 @@
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
 #include <pcl/common/transforms.h>
-#ifdef CAUV_CLOUD_DUMP
+/*#ifdef CAUV_CLOUD_DUMP
 #include <pcl/io/pcd_io.h>
 #endif
 #ifdef CAUV_CLOUD_VISUALISATION
 #include <pcl/visualization/cloud_viewer.h>
 #endif
+*/
 
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -34,16 +35,17 @@ using namespace cauv;
 using namespace cauv::imgproc;
 
 typedef pcl::PointXYZ pt_t;
-typedef SlamCloud<pt_t> cloud_t;
+typedef SlamCloudPart<pt_t> cloud_t;
 // actually a boost shared_ptr:
 typedef cloud_t::Ptr cloud_ptr;
 
-static uint32_t Min_Initial_Points = 10;
+//static uint32_t Min_Initial_Points = 10;
 
 // avoid including PCL stuff in the header:
 namespace cauv{
 namespace imgproc{
 
+/*
 static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
     // split transform into affine parts:
     const Eigen::Matrix3f rotate    = transform.block<3,3>(0, 0);
@@ -53,11 +55,15 @@ static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
     const float rz = (180/M_PI)*std::atan2(t[1], t[0]);
     return Eigen::Vector3f(translate[0], translate[1], rz);
 }
+*/
 
+// !!! TODO: will become thin wrapper around SlamCloudGraph, with additional
+// visualisation routines 
 class SonarSLAMImpl{
     public:
         SonarSLAMImpl()
-            : whole_cloud(),
+            : m_graph()
+              /*whole_cloud(),
               last_cloud(),
               clouds(),
               last_transformation(Eigen::Matrix4f::Identity()),
@@ -68,23 +74,40 @@ class SonarSLAMImpl{
               m_max(-std::numeric_limits<float>().max(), -std::numeric_limits<float>().max()),
               m_vis_res(800),
               m_vis_origin(m_vis_res/2,m_vis_res/2),              
-              m_vis_buffer(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0)){
+              m_vis_buffer(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0))*/{
         }
 
-        void init(cloud_ptr cloud){
+        /*void init(cloud_ptr cloud){
             last_transformation = Eigen::Matrix4f::Identity();
             whole_cloud = cloud;
             last_cloud = cloud;
             updateMinMax(*cloud);
-        }
+        }*/
 
         void reset(){
-            whole_cloud.reset();
+            /*whole_cloud.reset();
             clouds.clear();
             m_vis_buffer = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
+            */
+            m_graph.reset();
         }
 
-        void addNewCloud(cloud_ptr cloud,
+
+        float registerScan(cloud_ptr scan,
+                           PairwiseMatcher<pt_t> const& scan_matcher,
+                           Eigen::Matrix4f const& relative_transformation_guess,
+                           Eigen::Matrix4f& global_transformation){
+            Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(scan->time());
+
+            // !!! TODO:
+            // include guess generated externally too...
+            //guess = (guess + relative_transformation_guess) / 2;
+
+            return m_graph.registerScan(scan, guess, scan_matcher, global_transformation);
+        }
+
+
+        /*void addNewCloud(cloud_ptr cloud,
                          float point_merge_distance,
                          float concave_hull_alpha,
                          std::vector<int>& keypoint_goodness){
@@ -109,9 +132,10 @@ class SonarSLAMImpl{
             #endif
 
             updateMinMax(*cloud);
-        }
+        }*/
 
-
+        
+        /*
         static uint8_t minMaxScreenBlend(uint8_t src, uint8_t dst){
             return std::min(std::max(src, dst), uint8_t(0xff - ((0xff-src)*(0xff-dst))/0xff));
         }
@@ -135,7 +159,12 @@ class SonarSLAMImpl{
                         m_vis_buffer.at<uint8_t>(i,j), tmp.at<uint8_t>(i,j)
                     );
         }
+        */
+        
+        void setVisProperties(int size, Eigen::Vector2f const& origin){
+        }
 
+        /*
         cv::Mat const& vis(){
             return m_vis_buffer;
         }
@@ -159,24 +188,31 @@ class SonarSLAMImpl{
 
         Eigen::Vector2f min() const{ return m_min; }
         Eigen::Vector2f max() const{ return m_max; }
+        */
 
 
     public:
-        cloud_ptr whole_cloud;
-        cloud_ptr last_cloud;
-        std::map<uint32_t,cloud_ptr> clouds;
+        /*
+        //cloud_ptr whole_cloud;
+        //cloud_ptr last_cloud;
+        //std::map<uint32_t,cloud_ptr> clouds;
         Eigen::Matrix4f last_transformation;
         #ifdef CAUV_CLOUD_VISUALISATION
         boost::shared_ptr<pcl::visualization::CloudViewer> viewer;
         static uint32_t viewer_count;
         #endif
+        */
 
     private:
+        SlamCloudGraph<pt_t> m_graph;
+        
+        /*
         Eigen::Vector2f m_min;
         Eigen::Vector2f m_max;
         int m_vis_res;        
         Eigen::Vector2f m_vis_origin;
         cv::Mat m_vis_buffer;
+        */
 };
 #ifdef CAUV_CLOUD_VISUALISATION
 uint32_t SonarSLAMImpl::viewer_count = 0;
@@ -185,6 +221,7 @@ uint32_t SonarSLAMImpl::viewer_count = 0;
 } // namespace cauv
 
 
+#if 0 // rendering
 static void drawX(cv::Mat r, int S, float x, float y,
                   Eigen::Vector2f const& min,
                   Eigen::Vector2f const& step,
@@ -238,7 +275,9 @@ static cv::Mat renderCloud(
 
     return r;
 }
+#endif // 0
 
+#if 0 // kpstocloud
 static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
                             Eigen::Matrix4f const& initial_transform,
                             float const& weight_test){
@@ -283,6 +322,7 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
 
     return r;
 }
+#endif // 0
 
 void SonarSLAMNode::init(){
     typedef std::vector<KeyPoint> kp_vec;
@@ -353,11 +393,12 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     const float transform_eps       = param<float>("transform eps");
     const float reject_threshold    = param<float>("reject threshold");
     const float max_correspond_dist = param<float>("max correspond dist");
+
     const float score_thr   = param<float>("score threshold");
     const float delta_theta = param<float>("delta theta");
     const float weight_test = param<float>("weight test");
-    const float point_merge_distance = param<float>("feature merge distance");
-    const float map_merge_alpha = param<float>("map merge alpha");
+    //const float point_merge_distance = param<float>("feature merge distance");
+    //const float map_merge_alpha = param<float>("map merge alpha");
 
     const Eigen::Vector2i render_sz(param<float>("-render size"),param<float>("-render size"));
 
@@ -368,6 +409,49 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
 
     image_ptr_t xy_image = inputs["xy image"];
 
+    
+    // !!! TODO: propagate timestamps with sonar images, or something
+    cloud_ptr scan = boost::make_shared<cloud_t>(
+        keypoints, now(), SlamCloudPart<pt_t>::FilterResponse(weight_test)
+    );
+
+    ICPPairwiseMatcher<pt_t> scan_matcher(
+        max_iters, euclidean_fitness, transform_eps,
+        reject_threshold, max_correspond_dist, score_thr
+    );
+
+    Eigen::Matrix4f relative_transformation_guess = Eigen::Matrix4f::Identity();
+    relative_transformation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
+        Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
+    );
+    
+    Eigen::Matrix4f global_transformation = Eigen::Matrix4f::Zero();
+    
+    const float confidence = m_impl->registerScan(
+        scan,
+        scan_matcher,
+        relative_transformation_guess,
+        global_transformation
+    );
+
+    
+    if(confidence == 0){ // not added
+        r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));    
+    }else{
+        /*m_impl->updateVis(xy_image->mat(), global_transformation, m_per_pix);    
+        r["mosaic"] = boost::make_shared<Image>(m_impl->vis());
+        r["last added vis"] = boost::make_shared<Image>(renderCloud(
+            *scan, Eigen::Vector2f(xytheta[0],xytheta[1]), m_impl->min(), m_impl->max(), render_sz, false
+        ));*/
+    }
+    
+    
+    r["training: keypoints"] = training_keypoints;
+    r["training: keypoints image"] = inputs["keypoints image"];
+    r["training: goodness"] = scan->keyPointGoodness();
+
+
+#if 0
     Eigen::Matrix4f delta_transformation = Eigen::Matrix4f::Identity();
     delta_transformation.block<3,3>(0,0) = Eigen::Matrix3f(Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ()));
 
@@ -376,6 +460,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     guess(2,3) = 0;
     //guess(0,2) = 0; guess(1,2) = 0;
     //guess(2,0) = 0; guess(2,1) = 0;
+
 
     // weight-test throwing away low scorers:
     cloud_ptr new_cloud = kpsToCloud(
@@ -499,6 +584,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             *(m_impl->whole_cloud), Eigen::Vector2f(0,0), m_impl->min(), m_impl->max(), render_sz, false
         ));
     }
+#endif // 0
 
     return r;
 }
