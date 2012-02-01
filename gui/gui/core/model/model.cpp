@@ -14,9 +14,11 @@
 
 #include "model.h"
 
-#include "../model/messagegenerators.h"
-#include "../model/nodes/numericnode.h"
-#include "../model/nodes/groupingnode.h"
+#include <QUrl>
+
+#include "messagegenerators.h"
+#include "nodes/numericnode.h"
+#include "nodes/groupingnode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

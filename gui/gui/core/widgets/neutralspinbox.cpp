@@ -49,7 +49,7 @@ void NeutralSpinBox::setNeutral(int neutral){
     m_neutral = neutral;
 }
 
-void NeutralSpinBox::paintEvent(QPaintEvent * e)
+void NeutralSpinBox::paintEvent(QPaintEvent * )
  {
     StyleOptionNeutralSpinBox option;
     option.initFrom(this);
@@ -81,7 +81,7 @@ void NeutralDoubleSpinBox::setNeutral(double neutral){
     m_neutral = neutral;
 }
 
-void NeutralDoubleSpinBox::paintEvent(QPaintEvent * e)
+void NeutralDoubleSpinBox::paintEvent(QPaintEvent * )
  {
     StyleOptionNeutralSpinBox option;
     option.initFrom(this);

@@ -46,7 +46,7 @@ boost::shared_ptr<SampleQueue<QVariant> > GraphingSpinBox::sampler() const {
     return m_sampler;
 }
 
-void GraphingSpinBox::paintEvent(QPaintEvent * e)
+void GraphingSpinBox::paintEvent(QPaintEvent *)
  {
     StyleOptionGraphingSpinBox option;
     option.initFrom(this);
@@ -79,7 +79,7 @@ boost::shared_ptr<SampleQueue<QVariant> > GraphingDoubleSpinBox::sampler() const
 }
 
 
-void GraphingDoubleSpinBox::paintEvent(QPaintEvent * e)
+void GraphingDoubleSpinBox::paintEvent(QPaintEvent * )
  {
     StyleOptionNeutralSpinBox o;
     o.initFrom(this);

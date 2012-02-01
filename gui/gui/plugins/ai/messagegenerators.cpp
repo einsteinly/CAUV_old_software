@@ -51,7 +51,7 @@ boost::shared_ptr<const Message> AiTaskMessageGenerator::generate(boost::shared_
 boost::shared_ptr<const Message> AiConditionMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
     std::map< std::string, ParamValue > conditionOptions;
     conditionOptions = nodeListToParamValueMap(attachedTo->findOrCreate<GroupingNode>("options")->getChildren());
-    return boost::make_shared<SetConditionStateMessage>(boost::get<int>(attachedTo->nodeId()), conditionOptions);
+    return boost::make_shared<SetConditionStateMessage>(boost::get<std::string>(attachedTo->nodeId()), conditionOptions);
 }
 
 
