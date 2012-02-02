@@ -440,6 +440,10 @@ class SlamCloudGraph{
                         warning() << "final overlap too small";
                         return 0;
                     }
+                    // !!! TODO NEXT OR SOON
+                    // !!! TODO: at this stage, extract training data for the
+                    // keypoints (set m_keypoint_goodness on input cloud)
+
                     if(final_overlaps.size() == 1){
                         if(final_overlaps[0] != initial_overlaps[0]){
                             warning() << "final overlap different";
@@ -531,6 +535,8 @@ class SlamCloudGraph{
          * overlap with existing parts is less than Overlap_Threshold
          */
         float overlapPercent(cloud_ptr a, cloud_ptr b) const{
+            assert(a->size() != 0 && b->size() != 0);
+
             // !!! TODO: cache convex hulls with point clouds
             std::vector<pcl::Vertices> a_polys;
             std::vector<pcl::Vertices> b_polys;
@@ -544,34 +550,38 @@ class SlamCloudGraph{
             assert(a_polys.size() == 1);
             assert(b_polys.size() == 1);
 
-            ClipperLib::Polygons clipper_polys_a(1);
-            ClipperLib::Polygons clipper_polys_b(1);
+            ClipperLib::Polygon clipper_poly_a;
+            ClipperLib::Polygon clipper_poly_b;
             ClipperLib::Polygons solution;
 
             //clipperlib works in 64-bit fixed point, so scale our 1m=1
-            // floating point data down by 1000 to 1mm=1
+            // floating point data up by 1000 to 1mm=1
 
-            clipper_polys_a[0].reserve(a_polys[0].vertices.size());
+            clipper_poly_a.reserve(a_polys[0].vertices.size());
             foreach(uint32_t i, a_polys[0].vertices)
-                clipper_polys_a[0].push_back(ClipperLib::IntPoint((*a_points)[i].x/1000,(*a_points)[i].y/1000));
+                clipper_poly_a.push_back(ClipperLib::IntPoint((*a_points)[i].x*1000,(*a_points)[i].y*1000));
 
-            clipper_polys_b[0].reserve(b_polys[0].vertices.size());
+            clipper_poly_b.reserve(b_polys[0].vertices.size());
             foreach(uint32_t i, b_polys[0].vertices)
-                clipper_polys_b[0].push_back(ClipperLib::IntPoint((*b_points)[i].x/1000,(*b_points)[i].y/1000));
+                clipper_poly_b.push_back(ClipperLib::IntPoint((*b_points)[i].x*1000,(*b_points)[i].y*1000));
 
             ClipperLib::Clipper c;
-            c.AddPolygons(clipper_polys_a, ClipperLib::ptSubject);
-            c.AddPolygons(clipper_polys_b, ClipperLib::ptClip);
+            c.AddPolygon(clipper_poly_a, ClipperLib::ptSubject);
+            c.AddPolygon(clipper_poly_b, ClipperLib::ptClip);
             c.Execute(ClipperLib::ctIntersection, solution);
-            assert(solution.size() == 0);
+            assert(solution.size() != 0);
 
             // return area of overlap as fraction of union of areas of input
             // polys
             const double union_area = ClipperLib::Area(solution[0]);
-            const double a_area = ClipperLib::Area(clipper_polys_a[0]);
-            const double b_area = ClipperLib::Area(clipper_polys_b[0]);
+            const double a_area = ClipperLib::Area(clipper_poly_a);
+            const double b_area = ClipperLib::Area(clipper_poly_b);
 
-            return union_area / (a_area + b_area);
+            debug() << "overlap pct =" << union_area
+                    << "/ (" << a_area << "+" << b_area << ") ="
+                    << union_area / (a_area + b_area);
+            // areas can be negative due to vertex order, hence the fabs-ing
+            return std::fabs(union_area) / (std::fabs(a_area) + std::fabs(b_area));
         }
 
         /* judge how good initial cloud is by a combination of the number of
