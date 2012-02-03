@@ -46,16 +46,16 @@ void AiMessageObserver::onScriptStateMessage(ScriptStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
 
-    boost::shared_ptr<GroupingNode> debugValues = task->findOrCreate<GroupingNode>("debug");
-    foreach(param_map_t::value_type i, m->debugValues()){
-        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), debugValues, i.second);
-        node->update(variantToQVariant(i.second));
-    }
+    //boost::shared_ptr<GroupingNode> debugValues = task->findOrCreate<GroupingNode>("debug");
+    //foreach(param_map_t::value_type i, m->debugValues()){
+    //    boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), debugValues, i.second);
+    //    node->update(variantToQVariant(i.second));
+   // }
 
-    boost::shared_ptr<GroupingNode> pipelineIds = task->findOrCreate<GroupingNode>("pipelines");
-    foreach(std::string const& i, m->pipelineIds()){
-        pipelineIds->findOrCreate<PipelineNode>(i);
-    }
+    //boost::shared_ptr<GroupingNode> pipelineIds = task->findOrCreate<GroupingNode>("pipelines");
+    //foreach(std::string const& i, m->pipelineIds()){
+    //    pipelineIds->findOrCreate<PipelineNode>(i);
+    //}
 }
 
 
@@ -71,32 +71,24 @@ void AiMessageObserver::onTaskStateMessage(TaskStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
     boost::shared_ptr<AiTaskNode> task = tasks->findOrCreate<AiTaskNode>(m->taskId());
 
-    task->findOrCreate<NumericNode<bool > >("running")->update(m->isCurrentlyRunning());
+    task->update(m->isCurrentlyRunning());
 
-    boost::shared_ptr<GroupingNode> staticOptions = task->findOrCreate<GroupingNode>("static");
     foreach(param_map_t::value_type i, m->staticScriptOptions()){
-        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), staticOptions, i.second);
-        node->update(variantToQVariant(i.second));
-        node->setMutable(true);
+        task->setStaticOption(i.first, i.second)->setMutable(true);
     }
 
-    boost::shared_ptr<GroupingNode> dynamicOptions = task->findOrCreate<GroupingNode>("dynamic");
     foreach(param_map_t::value_type i, m->dynamicScriptOptions()){
-        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), dynamicOptions, i.second);
-        node->update(variantToQVariant(i.second));
-        node->setMutable(true);
+        task->setDynamicOption(i.first, i.second)->setMutable(true);
     }
 
-    boost::shared_ptr<GroupingNode> taskOptions = task->findOrCreate<GroupingNode>("task");
     foreach(param_map_t::value_type i, m->taskOptions()){
-        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), taskOptions, i.second);
-        node->update(variantToQVariant(i.second));
-        node->setMutable(true);
+        task->setTaskOption(i.first, i.second)->setMutable(true);
     }
 
-    boost::shared_ptr<GroupingNode> conditionIds = task->findOrCreate<GroupingNode>("conditions");
+
+    boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     foreach(std::string const& id, m->conditionIds()){
-        conditionIds->findOrCreate<AiConditionNode>(id);
+        task->addCondition(conditions->findOrCreate<AiConditionNode>(id));
     }
 }
 
@@ -129,18 +121,18 @@ void AiMessageObserver::onConditionStateMessage(ConditionStateMessage_ptr m){
     boost::shared_ptr<GroupingNode> conditions = ai->findOrCreate<GroupingNode>("conditions");
     boost::shared_ptr<GroupingNode> condition = conditions->findOrCreate<GroupingNode>(m->conditionId());
 
-    boost::shared_ptr<GroupingNode> options = condition->findOrCreate<GroupingNode>("options");
-    foreach(param_map_t::value_type i, m->conditionOptions()){
-        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), options, i.second);
-        node->update(variantToQVariant(i.second));
-        node->setMutable(true);
-    }
+    //boost::shared_ptr<GroupingNode> options = condition->findOrCreate<GroupingNode>("options");
+    //foreach(param_map_t::value_type i, m->conditionOptions()){
+    //    boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), options, i.second);
+    //    node->update(variantToQVariant(i.second));
+    //    node->setMutable(true);
+    //}
 
-    boost::shared_ptr<GroupingNode> debugValues = condition->findOrCreate<GroupingNode>("debug");
-    foreach(param_map_t::value_type i, m->debugValues()){
-        boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), debugValues, i.second);
-        node->update(variantToQVariant(i.second));
-    }
+    //boost::shared_ptr<GroupingNode> debugValues = condition->findOrCreate<GroupingNode>("debug");
+    //foreach(param_map_t::value_type i, m->debugValues()){
+    //    boost::shared_ptr<Node> node = paramValueToNode(nid_t(i.first), debugValues, i.second);
+    //    node->update(variantToQVariant(i.second));
+    //}
 }
 
 void AiMessageObserver::onConditionRemovedMessage(ConditionRemovedMessage_ptr m){

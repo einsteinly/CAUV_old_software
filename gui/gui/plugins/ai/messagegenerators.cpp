@@ -27,31 +27,37 @@ using namespace cauv::gui;
 
 boost::shared_ptr<const Message> AiTaskMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
 
+    if(attachedTo->type != nodeType<AiTaskNode>()) {
+        error() << "AiTaskMessageGenerator attached to a node that's not an AiTaskNode";
+    }
+
+    boost::shared_ptr<AiTaskNode> taskNode = attachedTo->to<AiTaskNode>();
+
     std::vector< std::string > conditionIds;
     std::map< std::string, ParamValue > taskOptions;
-    std::map< std::string, ParamValue > scriptOptions;
+    std::map< std::string, ParamValue > staticOptions;
+    std::map< std::string, ParamValue > dynamicOptions;
 
-    const std::vector<boost::shared_ptr<AiConditionNode> > conditions =
-            attachedTo->findOrCreate<GroupingNode>("conditions")->getChildrenOfType<AiConditionNode>();
-    foreach(boost::shared_ptr<AiConditionNode> cond, conditions){
+    foreach(boost::shared_ptr<AiConditionNode> cond, taskNode->getConditions()){
         conditionIds.push_back(boost::get<std::string>(cond->nodeId()));
     }
 
-    taskOptions = nodeListToParamValueMap(attachedTo->findOrCreate<GroupingNode>("task")->getChildren());
+    taskOptions = nodeMapToParamValueMap(taskNode->getTaskOptions());
+    staticOptions = nodeMapToParamValueMap(taskNode->getStaticOptions());
+    dynamicOptions = nodeMapToParamValueMap(taskNode->getDynamicOptions());
 
-    scriptOptions = nodeListToParamValueMap(attachedTo->findOrCreate<GroupingNode>("static")->getChildren());
-    std::map< std::string, ParamValue > dynamicOptions =
-            nodeListToParamValueMap(attachedTo->findOrCreate<GroupingNode>("dynamic")->getChildren());
+    std::map< std::string, ParamValue > scriptOptions = staticOptions;
     scriptOptions.insert(dynamicOptions.begin(), dynamicOptions.end());
 
-    return boost::make_shared<SetTaskStateMessage>(
-                                boost::get<std::string>(attachedTo->nodeId()), conditionIds, taskOptions, scriptOptions);
+    return boost::make_shared<SetTaskStateMessage>(boost::get<std::string>(
+                attachedTo->nodeId()), conditionIds, taskOptions, scriptOptions);
 }
 
 boost::shared_ptr<const Message> AiConditionMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
-    std::map< std::string, ParamValue > conditionOptions;
-    conditionOptions = nodeListToParamValueMap(attachedTo->findOrCreate<GroupingNode>("options")->getChildren());
-    return boost::make_shared<SetConditionStateMessage>(boost::get<std::string>(attachedTo->nodeId()), conditionOptions);
+    throw "d";
+    //std::map< std::string, ParamValue > conditionOptions;
+    //conditionOptions = nodeMapToParamValueMap(attachedTo->findOrCreate<GroupingNode>("options")->getChildren());
+    //return boost::make_shared<SetConditionStateMessage>(boost::get<std::string>(attachedTo->nodeId()), conditionOptions);
 }
 
 

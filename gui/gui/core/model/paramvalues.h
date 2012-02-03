@@ -17,6 +17,8 @@
 
 #include <gui/core/model/variants.h>
 
+#include <map>
+
 #include <QVariant>
 
 #include <gui/core/model/node.h>
@@ -39,7 +41,7 @@ namespace cauv {
 
     struct ParamValueToNode : public boost::static_visitor<boost::shared_ptr<Node> >
     {
-        ParamValueToNode(const nid_t id, boost::shared_ptr<Node> parent);
+        ParamValueToNode(const nid_t id);
 
         template <typename T> boost::shared_ptr<Node> operator()( T & ) const
         {
@@ -47,7 +49,6 @@ namespace cauv {
         }
 
         nid_t m_id;
-        boost::shared_ptr<Node> m_parent;
     };
 
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int &) const;
@@ -57,23 +58,24 @@ namespace cauv {
     template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const;
 
     template <class T>
-    boost::shared_ptr<Node> paramValueToNode(nid_t id, boost::shared_ptr<Node> parent, T boostVariant){
-        return boost::apply_visitor(ParamValueToNode(id, parent), boostVariant);
+    boost::shared_ptr<Node> paramValueToNode(nid_t id, T boostVariant){
+        return boost::apply_visitor(ParamValueToNode(id), boostVariant);
     }
 
 
 
     template<class T>
-    std::map<std::string, ParamValue> nodeListToParamValueMap(const std::vector<boost::shared_ptr<T> > nodes){
+    std::map<std::string, ParamValue> nodeMapToParamValueMap(const std::map<std::string, boost::shared_ptr<T> > nodes){
         std::map<std::string, ParamValue> values;
-        foreach(boost::shared_ptr<T> const& node, nodes) {
+        typedef std::map<std::string, boost::shared_ptr<T> > param_map;
+        for (typename param_map::const_iterator it = nodes.begin(); it != nodes.end(); ++it) {
             try {
-                QVariant v = node->get();
+                QVariant v = it->second->get();
                 if ((unsigned)v.type() == (unsigned)qMetaTypeId<QString>())
                     v = QVariant::fromValue(v.value<QString>().toStdString());
-                values[boost::get<std::string>(node->nodeId())] = qVariantToVariant<ParamValue>(v);
+                values[boost::get<std::string>(it->second->nodeId())] = qVariantToVariant<ParamValue>(v);
             } catch (std::bad_cast){
-                error() << "Failed while converting QVariant to Variant for " << node->nodePath();
+                error() << "Failed while converting QVariant to Variant for " << it->second->nodePath();
                 continue;
             }
         }

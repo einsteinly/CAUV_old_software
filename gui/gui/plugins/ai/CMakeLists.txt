@@ -4,7 +4,8 @@ set ( AI_PLUGIN_SRCS
     plugin.cpp
     messageobserver.cpp
     messagegenerators.cpp
-    aiNode.cpp
+    ainode.cpp
+    tasknode.cpp
 )
 
 set ( AI_PLUGIN_UIS
@@ -14,7 +15,8 @@ set ( AI_PLUGIN_H
     plugin.h
     messageobserver.h
     messagegenerators.h
-    aiNode.h
+    ainode.h
+    tasknode.h
 )
 
      

@@ -12,8 +12,8 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __CAUV_ELEMENT_AI_NODE_H__
-#define __CAUV_ELEMENT_AI_NODE_H__
+#ifndef __CAUV_ELEMENT_AI_NODES_H__
+#define __CAUV_ELEMENT_AI_NODES_H__
 
 #include <QGraphicsObject>
 
@@ -25,13 +25,10 @@
 
 #include <gui/core/nodedragging.h>
 
+#include <gui/plugins/ai/tasknode.h>
+
 namespace cauv {
     namespace gui {
-
-        GENERATE_SIMPLE_NODE(AiMissionNode)
-        GENERATE_SIMPLE_NODE(AiTaskNode)
-        GENERATE_SIMPLE_NODE(AiConditionNode)
-        GENERATE_SIMPLE_NODE(PipelineNode) //!!! todo: this shouldn't be deifned here
 
         class AiNode : public liquid::LiquidNode
         {
@@ -62,4 +59,4 @@ namespace cauv {
     } // namespace gui
 } // namespace cauv
 
-#endif // ndef __CAUV_ELEMENT_AI_NODE_H__
+#endif // ndef __CAUV_ELEMENT_AI_NODES_H__

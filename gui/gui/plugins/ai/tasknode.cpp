@@ -12,23 +12,12 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#include "ainode.h"
+#include "tasknode.h"
 
 #include <debug/cauv_debug.h>
 
-#include <gui/core/framework/elements/style.h>
-
-#include <generated/types/GuiaiGroup.h>
 
 using namespace cauv;
 using namespace cauv::gui;
 
 
-AiNode::AiNode(QGraphicsItem *parent) :
-        liquid::LiquidNode(AI_Node_Style, parent)
-{
-}
-
-AiNode::~AiNode(){
-    debug(2) << "~AINode()";
-}

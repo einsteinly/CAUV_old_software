@@ -21,31 +21,41 @@ using namespace cauv::gui;
 #include "nodes/stringnode.h"
 
 
-ParamValueToNode::ParamValueToNode(const nid_t id, boost::shared_ptr<Node> parent) :
-    m_id(id), m_parent(parent){
+ParamValueToNode::ParamValueToNode(const nid_t id) :
+    m_id(id) {
 }
 
-template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int &) const
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(int & operand) const
 {
-    return m_parent->findOrCreate<NumericNode<int> >(m_id);
+    boost::shared_ptr<NumericNode<int> > node = boost::make_shared<NumericNode<int> >(m_id);
+    node->update(operand);
+    return node;
 }
 
-template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & ) const
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(float & operand) const
 {
-    return m_parent->findOrCreate<NumericNode<float> >(m_id);
+    boost::shared_ptr<NumericNode<float> > node = boost::make_shared<NumericNode<float> >(m_id);
+    node->update(operand);
+    return node;
 }
 
-template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string & ) const
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(std::string & operand) const
 {
-    return m_parent->findOrCreate<StringNode>(m_id);
+    boost::shared_ptr<StringNode> node = boost::make_shared<StringNode>(m_id);
+    node->update(operand);
+    return node;
 }
 
-template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & ) const
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(bool & operand) const
 {
-    return m_parent->findOrCreate<NumericNode<bool> >(m_id);
+    boost::shared_ptr<NumericNode<bool> > node = boost::make_shared<NumericNode<bool> >(m_id);
+    node->update(operand);
+    return node;
 }
 
-template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & ) const
+template <> boost::shared_ptr<Node> ParamValueToNode::operator()(BoundedFloat & operand) const
 {
-    return m_parent->findOrCreate<NumericNode<BoundedFloat> >(m_id);
+    boost::shared_ptr<NumericNode<BoundedFloat> > node = boost::make_shared<NumericNode<BoundedFloat> >(m_id);
+    node->update(operand);
+    return node;
 }
