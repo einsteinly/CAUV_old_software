@@ -31,7 +31,7 @@
 
 #include "messageobserver.h"
 #include "messagegenerators.h"
-#include "aiNode.h"
+#include "ainode.h"
 
 #include <stdexcept>
 

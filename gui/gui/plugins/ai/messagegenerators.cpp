@@ -20,7 +20,7 @@
 #include <generated/types/SetTaskStateMessage.h>
 #include <generated/types/SetConditionStateMessage.h>
 
-#include "aiNode.h"
+#include "ainode.h"
 
 using namespace cauv;
 using namespace cauv::gui;

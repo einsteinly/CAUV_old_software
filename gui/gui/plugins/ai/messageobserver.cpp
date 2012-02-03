@@ -26,7 +26,7 @@
 #include <gui/core/model/nodes/stringnode.h>
 #include <gui/core/model/nodes/numericnode.h>
 
-#include <gui/plugins/ai/aiNode.h>
+#include <gui/plugins/ai/ainode.h>
 
 using namespace cauv;
 using namespace cauv::gui;
