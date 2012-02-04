@@ -381,14 +381,27 @@ class SlamCloudGraph{
     public:
         // - public methods
         SlamCloudGraph()
-            : Overlap_Threshold(0.3),
-              Keyframe_Spacing(3),
-              Min_Initial_Points(10){
+            : m_overlap_threshold(0.3),
+              m_keyframe_spacing(2),
+              m_min_initial_points(10){
         }
 
         void reset(){
             key_scans.clear();
             all_scans.clear();
+        }
+
+        void setParams(float overlap_threshold,
+                       float keyframe_spacing,
+                       float min_initial_points){
+            if(overlap_threshold > 0.5){
+                warning() << "invalid overlap threshold" << overlap_threshold
+                          << "(>0.5) will be ignored";
+                overlap_threshold = m_overlap_threshold;
+            }
+            m_overlap_threshold = overlap_threshold;
+            m_keyframe_spacing = keyframe_spacing;
+            m_min_initial_points = min_initial_points;
         }
 
         cloud_vec const& keyScans() const{
@@ -488,7 +501,7 @@ class SlamCloudGraph{
                         // enough from the previous position, add a new part
                         // to the map:
                         Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
-                        if(relative_displacement.norm() > Keyframe_Spacing){
+                        if(relative_displacement.norm() > m_keyframe_spacing){
                             // key scans are transformed to absolute coordinate
                             // frame?
                             // !!! TODO: should they be relative to each other?
@@ -517,6 +530,44 @@ class SlamCloudGraph{
                 warning() << "loop closing not implemented!";
                 // loop close:
                 // TODO
+
+                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // below is temporary, non-loop closing solution
+                cloud_ptr map_cloud = final_overlaps.back();
+                r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation);
+                p->setRelativeTransform(relative_transformation);
+                p->setRelativeTo(map_cloud);
+                // we apply transformations by pre-multiplying, so
+                // post-multiply the transformation that should be applied
+                // first.
+                transformation = relative_transformation * map_cloud->relativeTransform();
+
+                // find new overlaps at the final position
+                final_overlaps = overlappingClouds(p);
+
+                if(final_overlaps.size() == 0){
+                    warning() << "final overlap too small";
+                    return 0;
+                }
+                // one correspondence in existing map: if we're far
+                // enough from the previous position, add a new part
+                // to the map:
+                Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
+                if(relative_displacement.norm() > m_keyframe_spacing){
+                    // key scans are transformed to absolute coordinate
+                    // frame?
+                    // !!! TODO: should they be relative to each other?
+                    p->setRelativeTransform(p->globalTransform());
+                    p->setRelativeToNone();
+                    key_scans.push_back(p);
+                    all_scans.push_back(p);
+                    debug() << "key frame at" << transformation.block<3,1>(0, 3);
+                }else{
+                    // discard all the point data for non-key scans
+                    all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
+                    debug() << "non-key frame at" << transformation.block<3,1>(0, 3);
+                }
+                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                
             }
 
             return r;
@@ -525,13 +576,13 @@ class SlamCloudGraph{
     private:
         // - private methods
         /* Return all cloud parts in the map that overlap with p by more than
-         * Overlap_Threshold.
+         * m_overlap_threshold.
          *
          */
         cloud_vec overlappingClouds(cloud_ptr p) const{
             cloud_vec r;
             foreach(cloud_ptr m, key_scans){
-                if(overlapPercent(m, p) > Overlap_Threshold)
+                if(overlapPercent(m, p) > m_overlap_threshold)
                     r.push_back(m);
             }
             return r;
@@ -550,7 +601,7 @@ class SlamCloudGraph{
         }
 
         /* Judge degree of overlap: new parts are added to the map when the
-         * overlap with existing parts is less than Overlap_Threshold
+         * overlap with existing parts is less than m_overlap_threshold
          */
         float overlapPercent(cloud_ptr a, cloud_ptr b) const{
             assert(a->size() != 0 && b->size() != 0);
@@ -608,13 +659,13 @@ class SlamCloudGraph{
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
             // !!! TODO: more sophisticated check
-            return (p->size() > Min_Initial_Points);
+            return (p->size() > m_min_initial_points);
         }
 
         // - private data
-        const float Overlap_Threshold; // a fraction (0--1)
-        const float Keyframe_Spacing;  // in metres
-        const float Min_Initial_Points; // for first keyframe
+        float m_overlap_threshold; // a fraction (0--0.5)
+        float m_keyframe_spacing;  // in metres
+        float m_min_initial_points; // for first keyframe
 
         // TODO: to remain efficient there MUST be a way of searching for
         // SlamCloudParts near a location without iterating through all nodes
