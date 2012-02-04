@@ -52,7 +52,10 @@ template<typename PointT>
 class PairwiseMatcher{
     public:
         // - public types
-        typedef boost::shared_ptr<SlamCloudPart<PointT> > cloud_ptr;
+        typedef SlamCloudPart<PointT> cloud_t;
+        typedef boost::shared_ptr<cloud_t> cloud_ptr;
+        typedef typename cloud_t::base_cloud_t base_cloud_t;
+        typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
         // - public methods
 
@@ -83,7 +86,8 @@ class PairwiseMatcher{
             cloud_ptr map,
             cloud_ptr new_cloud,
             Eigen::Matrix4f const& guess,
-            Eigen::Matrix4f& transformation
+            Eigen::Matrix4f& transformation,
+            base_cloud_ptr& transformed_cloud
         ) const = 0;
 };
 
@@ -92,7 +96,9 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
     public:
         // - public types
         typedef SlamCloudPart<PointT> cloud_t;
-        typedef boost::shared_ptr<SlamCloudPart<PointT> > cloud_ptr;
+        typedef boost::shared_ptr<cloud_t> cloud_ptr;
+        typedef typename cloud_t::base_cloud_t base_cloud_t;
+        typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
         ICPPairwiseMatcher(int max_iters,
                            float euclidean_fitness,
@@ -114,7 +120,8 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             cloud_ptr map,
             cloud_ptr new_cloud,
             Eigen::Matrix4f const& guess,
-            Eigen::Matrix4f& transformation
+            Eigen::Matrix4f& transformation,
+            base_cloud_ptr& transformed_cloud
         ) const {
             debug() << "ICPPairwiseMatcher" << map->size() << ":" << new_cloud->size() << "points";
 
@@ -137,8 +144,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                     << relative_guess;
 
             // do the hard work!
-            typename cloud_t::base_cloud_t::Ptr final = boost::make_shared<typename cloud_t::base_cloud_t>();
-            icp.align(*final, relative_guess);
+            icp.align(*transformed_cloud, relative_guess);
             // in map's coordinate system:
             const Eigen::Matrix4f final_transform = icp.getFinalTransformation();
 
@@ -184,15 +190,18 @@ template<typename PointT>
 class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
     public:
         // - public types
-        //using PairwiseMatcher<PointT>::cloud_ptr;
-        typedef boost::shared_ptr<SlamCloudPart<PointT> > cloud_ptr;
+        typedef SlamCloudPart<PointT> cloud_t;
+        typedef boost::shared_ptr<cloud_t> cloud_ptr;
+        typedef typename cloud_t::base_cloud_t base_cloud_t;
+        typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
         // - public methods
         virtual float transformcloudToMatch(
             cloud_ptr map,
             cloud_ptr new_cloud,
             Eigen::Matrix4f const& guess,
-            Eigen::Matrix4f& transformation
+            Eigen::Matrix4f& transformation,
+            base_cloud_ptr& transformed_cloud
         ) const {
             // TODO
             assert(0);
@@ -290,7 +299,12 @@ class SlamCloudPart: public SlamCloudLocation,
               boost::enable_shared_from_this< SlamCloudPart<PointT> >(),
               m_point_descriptors(),
               m_keypoint_indices(),
-              m_keypoint_goodness(kps.size(), 0){
+              m_keypoint_goodness(kps.size(), 0),
+              m_kdtree(),
+              m_kdtree_invalid(true),
+              m_local_convexhull_verts(),
+              m_local_convexhull_cloud(),
+              m_local_convexhull_invalid(true){
 
             this->height = 1;
             this->is_dense = true;
@@ -306,25 +320,34 @@ class SlamCloudPart: public SlamCloudLocation,
             }
         }
 
+        virtual ~SlamCloudPart(){
+            // undo the circular-reference workarounds, to avoid double-free:
+
+        }
+
         void getLocalConvexHull(base_cloud_ptr& hull_points,
                                 std::vector<pcl::Vertices>& polygons){
-            // !!! TODO: cache this result
-            pcl::ConvexHull<PointT> hull_calculator;
-            hull_points = (boost::make_shared<base_cloud_t>());
-            hull_points->is_dense = true;
-
-            hull_calculator.setInputCloud(shared_from_this());
-            hull_calculator.reconstruct(*hull_points, polygons);
-            int dim = hull_calculator.getDim();
-
-            assert(dim == 2);
+            ensureLocalConvexHull();
+            hull_points = m_local_convexhull_cloud;
+            polygons = m_local_convexhull_verts;
         }
-        
+
         void getGlobalConvexHull(base_cloud_ptr& hull_points,
                                 std::vector<pcl::Vertices>& polygons){
             // !!! TODO: cache this result too
-            getLocalConvexHull(hull_points, polygons);
-            pcl::transformPointCloud(*hull_points, *hull_points, globalTransform());
+            ensureLocalConvexHull();
+            polygons = m_local_convexhull_verts;
+            hull_points = boost::make_shared<base_cloud_t>();
+            pcl::transformPointCloud(*m_local_convexhull_cloud, *hull_points, globalTransform());
+        }
+
+
+        int nearestKSearch(const PointT &point,
+                            int k,
+                            std::vector<int> &k_indices,
+                            std::vector<float> &k_sqr_distances){
+            ensureKdTree();
+            return m_kdtree.nearestKSearch(point, k, k_indices, k_sqr_distances);
         }
 
         std::vector<descriptor_t>& descriptors(){ return m_point_descriptors; }
@@ -348,9 +371,38 @@ class SlamCloudPart: public SlamCloudLocation,
             base_cloud_t::push_back(p);
             m_point_descriptors.push_back(d);
             m_keypoint_indices.push_back(idx);
+            m_kdtree_invalid = true;
+            m_local_convexhull_invalid = true;
         }
 
     private:
+        void ensureKdTree(){
+            if(m_kdtree_invalid){
+                m_kdtree_invalid = false;
+                m_kdtree.setInputCloud(shared_from_this());
+                // clear the circular reference just created through call to
+                // base version of setInputCloud, which doesn't clobber the
+                // kdtree...
+                m_kdtree.pcl::KdTree<PointT>::setInputCloud(base_cloud_ptr());
+           }
+        }
+
+        void ensureLocalConvexHull(){
+            if(m_local_convexhull_invalid){
+                m_local_convexhull_invalid = false;
+
+                pcl::ConvexHull<PointT> hull_calculator;
+                m_local_convexhull_cloud = (boost::make_shared<base_cloud_t>());
+                m_local_convexhull_cloud->is_dense = true;
+
+                hull_calculator.setInputCloud(shared_from_this());
+                hull_calculator.reconstruct(*m_local_convexhull_cloud, m_local_convexhull_verts);
+
+                int dim = hull_calculator.getDim();
+                assert(dim == 2);
+            }
+        }
+
         std::vector<descriptor_t> m_point_descriptors;
 
         // original indices of the keypoints from which the points in this
@@ -362,6 +414,13 @@ class SlamCloudPart: public SlamCloudLocation,
         // 1 = keypoint turned out to be good, 0 = keypoint turned out to be
         // bad
         std::vector<int> m_keypoint_goodness;
+
+        pcl::KdTreeFLANN<PointT> m_kdtree;
+        bool m_kdtree_invalid;
+
+        std::vector<pcl::Vertices> m_local_convexhull_verts;
+        base_cloud_ptr m_local_convexhull_cloud;
+        bool m_local_convexhull_invalid;
 };
 
 template<typename PointT>
@@ -374,7 +433,7 @@ class SlamCloudGraph{
 
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename base_cloud_t::Ptr base_cloud_ptr;
-        
+
         typedef std::deque<location_ptr> location_vec;
         typedef std::deque<cloud_ptr> cloud_vec;
 
@@ -383,7 +442,8 @@ class SlamCloudGraph{
         SlamCloudGraph()
             : m_overlap_threshold(0.3),
               m_keyframe_spacing(2),
-              m_min_initial_points(10){
+              m_min_initial_points(10),
+              m_good_keypoint_distance(0.2){
         }
 
         void reset(){
@@ -424,12 +484,22 @@ class SlamCloudGraph{
                     assert(!all_scans.back()->relativeTo());
                     return all_scans.back()->globalTransform();
                 default:{
+                    // !!! TODO: use more than one previous point for smooth
+                    // estimate?
                     location_vec::const_reverse_iterator i = all_scans.rbegin();
                     const Eigen::Matrix4f r1 = (*i)->globalTransform();
                     const TimeStamp t1 = (*i)->time();
                     const Eigen::Matrix4f r2 = (*++i)->globalTransform();
                     const TimeStamp t2 = (*i)->time();
-                    return r2 + (r2-r1)*(t - t2)/(t2 - t1);
+                    Eigen::Matrix4f r = r1 + (r1-r2)*(t - t1)/(t1 - t2);
+                    const float Max_Speed = 4.0; // m/s
+                    const float frac_speed = (r.block<3,1>(0,3).norm() / (t2 - t1)) / Max_Speed;
+                    if(frac_speed >= 1.0){
+                        warning() << "predicted motion > max speed (x"
+                                  << frac_speed << "), will throttle";
+                        return r1 + (1.0 / frac_speed) * (r1-r2)*(t - t1)/(t1 - t2);
+                    }
+                    return r;
                 }
             }
         }
@@ -447,8 +517,8 @@ class SlamCloudGraph{
                     key_scans.push_back(p);
                     all_scans.push_back(p);
                     transformation = Eigen::Matrix4f::Identity();
-                    p->setRelativeToNone();                    
-                    p->setRelativeTransform(transformation);                    
+                    p->setRelativeToNone();
+                    p->setRelativeTransform(transformation);
                     return 1.0f;
                 }else{
                     debug() << "cloud not good enough for initialisation";
@@ -473,13 +543,32 @@ class SlamCloudGraph{
                 }else if(initial_overlaps.size() == 1){
                     // one pairwise match at the initial guess position
                     cloud_ptr map_cloud = initial_overlaps[0];
-                    r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation);
+                    base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
+                    r = m.transformcloudToMatch(
+                        map_cloud, p, guess, relative_transformation, transformed
+                    );
                     p->setRelativeTransform(relative_transformation);
                     p->setRelativeTo(map_cloud);
                     // we apply transformations by pre-multiplying, so
                     // post-multiply the transformation that should be applied
                     // first.
                     transformation = relative_transformation * map_cloud->relativeTransform();
+
+                    // 'transformed' in in the same coordinate frame as
+                    // map_cloud, so we can easily find nearest neighbors in
+                    // map_cloud to use as a measure of how good the keypoints
+                    // were:
+                    /*std::vector<int>   pt_indices(1);
+                    std::vector<float> pt_squared_dists(1);
+
+                    for(size_t i=0; i < transformed->size(); i++){
+                        if(map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
+                           pt_squared_dists[0] < m_good_keypoint_distance)
+                            p->keyPointGoodness()[p->ptIndices()[i]] = 1;
+                        else
+                            p->keyPointGoodness()[p->ptIndices()[i]] = 0;
+                    }
+                    */
 
                     // find new overlaps at the final position
                     final_overlaps = overlappingClouds(p);
@@ -488,9 +577,6 @@ class SlamCloudGraph{
                         warning() << "final overlap too small";
                         return 0;
                     }
-                    // !!! TODO NEXT OR SOON
-                    // !!! TODO: at this stage, extract training data for the
-                    // keypoints (set m_keypoint_goodness on input cloud)
 
                     if(final_overlaps.size() == 1){
                         if(final_overlaps[0] != initial_overlaps[0]){
@@ -509,11 +595,13 @@ class SlamCloudGraph{
                             p->setRelativeToNone();
                             key_scans.push_back(p);
                             all_scans.push_back(p);
-                            debug() << "key frame at" << transformation.block<3,1>(0, 3);
+                            debug() << "key frame at"
+                                    << transformation.block<3,1>(0, 3).transpose();
                         }else{
                             // discard all the point data for non-key scans
                             all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
-                            debug() << "non-key frame at" << transformation.block<3,1>(0, 3);
+                            debug() << "non-key frame at"
+                                    << transformation.block<3,1>(0,3).transpose();
                         }
                     }
                 }else{
@@ -535,7 +623,8 @@ class SlamCloudGraph{
                 // below is temporary, non-loop closing solution
                 try{
                     cloud_ptr map_cloud = final_overlaps.back();
-                    r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation);
+                    base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
+                    r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation, transformed);
                     p->setRelativeTransform(relative_transformation);
                     p->setRelativeTo(map_cloud);
                     // we apply transformations by pre-multiplying, so
@@ -673,6 +762,9 @@ class SlamCloudGraph{
         float m_overlap_threshold; // a fraction (0--0.5)
         float m_keyframe_spacing;  // in metres
         float m_min_initial_points; // for first keyframe
+        /* new keypoints with nearest nieghbours better than this are
+         * considered good for training: */
+        float m_good_keypoint_distance;
 
         // TODO: to remain efficient there MUST be a way of searching for
         // SlamCloudParts near a location without iterating through all nodes

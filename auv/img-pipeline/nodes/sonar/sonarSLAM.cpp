@@ -578,6 +578,8 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         global_transformation
     );
 
+    info() << "sonarSLAM scan confidence" << confidence;
+
     m_impl->updateVis();
 
     if(m_impl->vis().rows > 0 && m_impl->vis().cols > 0)
