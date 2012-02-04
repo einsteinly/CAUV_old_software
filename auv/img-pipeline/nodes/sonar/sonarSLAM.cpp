@@ -234,8 +234,7 @@ class SonarSLAMImpl{
 
             cloud_vec::const_iterator i;
             cloud_vec const& key_scans = m_graph.keyScans();
-            // !!! TODO: start from i = begin() + m_vis_keyframes_included
-            for(i = key_scans.begin(); i != key_scans.end(); i++){
+            for(i = key_scans.begin() + m_vis_keyframes_included; i != key_scans.end(); i++){
                 Eigen::Matrix4f const& global_transform = (*i)->globalTransform();
                 const Eigen::Vector2f image_pt = toVisCoords(
                     global_transform.block<3,1>(0,3)
@@ -260,17 +259,17 @@ class SonarSLAMImpl{
                 drawPoly(
                     m_vis_buffer, image_hull_pts, cv::Scalar(40,100,120)
                 );
-                foreach(Eigen::Vector2f const& p, image_hull_pts)
+                /*foreach(Eigen::Vector2f const& p, image_hull_pts)
                     drawCircle(
                         m_vis_buffer, p, 0.1/m_vis_metres_per_px, cv::Scalar(0,0,140)
-                    );
+                    );*/
             }
             m_vis_keyframes_included = key_scans.size();            
 
             location_vec::const_iterator j;
             location_vec const& all_scans = m_graph.allScans();
 
-            for(j = all_scans.begin(); j != all_scans.end(); j++){
+            for(j = all_scans.begin() + m_vis_allframes_included; j != all_scans.end(); j++){
                 Eigen::Matrix4f const& global_transform = (*j)->globalTransform();            
                 const Eigen::Vector2f image_pt = toVisCoords(
                     global_transform.block<3,1>(0,3)

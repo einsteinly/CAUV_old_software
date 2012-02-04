@@ -533,42 +533,49 @@ class SlamCloudGraph{
 
                 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // below is temporary, non-loop closing solution
-                cloud_ptr map_cloud = final_overlaps.back();
-                r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation);
-                p->setRelativeTransform(relative_transformation);
-                p->setRelativeTo(map_cloud);
-                // we apply transformations by pre-multiplying, so
-                // post-multiply the transformation that should be applied
-                // first.
-                transformation = relative_transformation * map_cloud->relativeTransform();
+                try{
+                    cloud_ptr map_cloud = final_overlaps.back();
+                    r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation);
+                    p->setRelativeTransform(relative_transformation);
+                    p->setRelativeTo(map_cloud);
+                    // we apply transformations by pre-multiplying, so
+                    // post-multiply the transformation that should be applied
+                    // first.
+                    transformation = relative_transformation * map_cloud->relativeTransform();
 
-                // find new overlaps at the final position
-                final_overlaps = overlappingClouds(p);
+                    // find new overlaps at the final position
+                    final_overlaps = overlappingClouds(p);
 
-                if(final_overlaps.size() == 0){
-                    warning() << "final overlap too small";
+                    if(final_overlaps.size() == 0){
+                        warning() << "final overlap too small";
+                        return 0;
+                    }
+                    // one correspondence in existing map: if we're far
+                    // enough from the previous position, add a new part
+                    // to the map:
+                    Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
+                    if(relative_displacement.norm() > m_keyframe_spacing){
+                        // key scans are transformed to absolute coordinate
+                        // frame?
+                        // !!! TODO: should they be relative to each other?
+                        p->setRelativeTransform(p->globalTransform());
+                        p->setRelativeToNone();
+                        key_scans.push_back(p);
+                        all_scans.push_back(p);
+                        debug() << "key frame at" << transformation.block<3,1>(0, 3);
+                    }else{
+                        // discard all the point data for non-key scans
+                        all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
+                        debug() << "non-key frame at" << transformation.block<3,1>(0, 3);
+                    }
+                }catch(PairwiseMatchException& e){
+                    error() << "failed to match cloud part to single overlap: (loop close not implemented yet)"
+                            << e.what();
                     return 0;
                 }
-                // one correspondence in existing map: if we're far
-                // enough from the previous position, add a new part
-                // to the map:
-                Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
-                if(relative_displacement.norm() > m_keyframe_spacing){
-                    // key scans are transformed to absolute coordinate
-                    // frame?
-                    // !!! TODO: should they be relative to each other?
-                    p->setRelativeTransform(p->globalTransform());
-                    p->setRelativeToNone();
-                    key_scans.push_back(p);
-                    all_scans.push_back(p);
-                    debug() << "key frame at" << transformation.block<3,1>(0, 3);
-                }else{
-                    // discard all the point data for non-key scans
-                    all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
-                    debug() << "non-key frame at" << transformation.block<3,1>(0, 3);
-                }
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                
             }
+            // end hack
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             return r;
         }
