@@ -57,12 +57,43 @@ static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
 }
 */
 
-// !!! TODO: will become thin wrapper around SlamCloudGraph, with additional
-// visualisation routines 
+// - static functions
+static void drawCircle(cv::Mat& image, Eigen::Vector2f const& image_coords,
+                       float scale, cv::Scalar const& col){
+    const int shift = 4;
+    // NB: subpixel precision
+    cv::Point centre(image_coords[0]*(1<<shift),
+                     image_coords[1]*(1<<shift));
+    int radius = scale * (1<<shift);
+    if(radius < 1)
+        radius = 1;
+    cv::circle(image, centre, radius, col, 1/*thickness*/, 4/*4-connected*/, shift);
+}
+
+static void drawPoly(cv::Mat& image, std::vector<Eigen::Vector2f> const& poly,
+                     cv::Scalar const& col){
+    const int shift = 4;
+    std::vector<cv::Point> cv_pts;
+    cv_pts.reserve(poly.size());
+    foreach(Eigen::Vector2f const& p, poly)
+        cv_pts.push_back(cv::Point(p[0]*(1<<shift), p[1]*(1<<shift)));
+    const int npts = cv_pts.size();
+    cv::Point const* pts = &(cv_pts[0]);
+    cv::polylines(image, &pts, &npts, 1, false, col, 1, CV_AA, shift);
+}
+
+// - local classes
 class SonarSLAMImpl{
     public:
         SonarSLAMImpl()
-            : m_graph()
+            : m_graph(),
+              m_vis_metres_per_px(0),
+              m_vis_origin(0,0),
+              m_vis_res(0,0),
+              m_vis_parameters_changed(false),
+              m_vis_buffer(cv::Size(0,0), CV_8UC3, cv::Scalar(0)),
+              m_vis_keyframes_included(0),
+              m_vis_allframes_included(0)
               /*whole_cloud(),
               last_cloud(),
               clouds(),
@@ -73,7 +104,7 @@ class SonarSLAMImpl{
               m_min(std::numeric_limits<float>().max(), std::numeric_limits<float>().max()),
               m_max(-std::numeric_limits<float>().max(), -std::numeric_limits<float>().max()),
               m_vis_res(800),
-              m_vis_origin(m_vis_res/2,m_vis_res/2),              
+              m_vis_origin(m_vis_res/2,m_vis_res/2),
               m_vis_buffer(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0))*/{
         }
 
@@ -90,6 +121,7 @@ class SonarSLAMImpl{
             m_vis_buffer = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
             */
             m_graph.reset();
+            initVis();
         }
 
 
@@ -117,7 +149,7 @@ class SonarSLAMImpl{
             clouds[++cloud_num] = cloud;
             //whole_cloud->mergeCollapseNearest(cloud, point_merge_distance);
             whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha, point_merge_distance, keypoint_goodness);
-            last_transformation = cloud->transformation();            
+            last_transformation = cloud->transformation();
             last_cloud = cloud;
 
             #ifdef CAUV_CLOUD_VISUALISATION
@@ -134,7 +166,7 @@ class SonarSLAMImpl{
             updateMinMax(*cloud);
         }*/
 
-        
+
         /*
         static uint8_t minMaxScreenBlend(uint8_t src, uint8_t dst){
             return std::min(std::max(src, dst), uint8_t(0xff - ((0xff-src)*(0xff-dst))/0xff));
@@ -160,15 +192,89 @@ class SonarSLAMImpl{
                     );
         }
         */
-        
-        void setVisProperties(int size, Eigen::Vector2f const& origin){
+
+        void setVisProperties(Eigen::Vector2i const& res,
+                              Eigen::Vector2f const& origin,
+                              float const& m_per_px){
+            if(m_vis_metres_per_px != m_per_px ||
+               m_vis_origin != origin ||
+               m_vis_res != res){
+                m_vis_metres_per_px = m_per_px;
+                m_vis_origin = origin;
+                m_vis_res = res;
+                m_vis_parameters_changed = true;
+            }
         }
 
-        /*
-        cv::Mat const& vis(){
+        void initVis(){
+            m_vis_parameters_changed = false;
+            m_vis_buffer = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0)),
+            m_vis_keyframes_included = 0;
+            m_vis_allframes_included = 0;
+        }
+
+        Eigen::Vector2f toVisCoords(Eigen::Vector3f const& p) const{
+            return (p.block<2,1>(0,0) - m_vis_origin) / m_vis_metres_per_px;
+        }
+
+        void updateVis(){
+            if(m_vis_parameters_changed)
+                initVis();
+
+            typedef SlamCloudGraph<pt_t>::cloud_vec cloud_vec;
+            typedef SlamCloudGraph<pt_t>::location_vec location_vec;
+
+            cloud_vec::const_iterator i;
+            cloud_vec const& key_scans = m_graph.keyScans();
+            for(i = key_scans.begin(); i != key_scans.end(); i++){
+                Eigen::Matrix4f const& global_transform = (*i)->globalTransform();
+                const Eigen::Vector2f image_pt = toVisCoords(
+                    global_transform.block<3,1>(0,3)
+                );
+                drawCircle(
+                    m_vis_buffer, image_pt, 0.5/m_vis_metres_per_px,
+                    cv::Scalar(60, 260, 60)
+                );
+
+                cloud_t::base_cloud_ptr hull_cloud;
+                std::vector<pcl::Vertices> hull_polys;
+                (*i)->getGlobalConvexHull(hull_cloud, hull_polys);
+                assert(hull_polys.size() == 1);
+
+                std::vector<Eigen::Vector2f> image_hull_pts;
+                image_hull_pts.reserve(hull_polys[0].vertices.size());
+                for(std::size_t j = 0; j < hull_polys[0].vertices.size(); j++){
+                    image_hull_pts.push_back(toVisCoords(
+                        (*hull_cloud)[hull_polys[0].vertices[j]].getVector3fMap()
+                    ));
+                }
+                drawPoly(
+                    m_vis_buffer, image_hull_pts, cv::Scalar(40,100,120)
+                );
+            }
+            m_vis_keyframes_included = key_scans.size();            
+
+            location_vec::const_iterator j;
+            location_vec const& all_scans = m_graph.allScans();
+
+            for(j = all_scans.begin(); j != all_scans.end(); j++){
+                Eigen::Matrix4f const& global_transform = (*j)->globalTransform();            
+                const Eigen::Vector2f image_pt = toVisCoords(
+                    global_transform.block<3,1>(0,3)
+                );
+                drawCircle(
+                    m_vis_buffer, image_pt, 0.25/m_vis_metres_per_px,
+                    cv::Scalar(105, 40, 40)
+                );
+            }
+            m_vis_allframes_included = all_scans.size();
+        }
+
+        cv::Mat const& vis() const{
             return m_vis_buffer;
         }
 
+        /*
         void setVisProperties(int size, Eigen::Vector2f const& origin){
             if(m_vis_res != size || m_vis_origin != origin){
                 m_vis_res = size;
@@ -205,14 +311,24 @@ class SonarSLAMImpl{
 
     private:
         SlamCloudGraph<pt_t> m_graph;
-        
+
         /*
         Eigen::Vector2f m_min;
         Eigen::Vector2f m_max;
-        int m_vis_res;        
+        int m_vis_res;
         Eigen::Vector2f m_vis_origin;
         cv::Mat m_vis_buffer;
         */
+
+        float m_vis_metres_per_px;
+        Eigen::Vector2f m_vis_origin;
+        Eigen::Vector2i m_vis_res;
+        bool m_vis_parameters_changed;
+
+        cv::Mat m_vis_buffer;
+        int m_vis_keyframes_included;
+        int m_vis_allframes_included;
+
 };
 #ifdef CAUV_CLOUD_VISUALISATION
 uint32_t SonarSLAMImpl::viewer_count = 0;
@@ -262,7 +378,7 @@ static cv::Mat renderCloud(
 
     for(size_t i = 0; i < cloud.size(); i++)
         drawX(r, 3, cloud[i].x, cloud[i].y, min, step, draw_weight? cloud[i].getVector4fMap()[3] : 0xff);
-    
+
     drawX(r, 21, cloud.back().x, cloud.back().y, min, step, 0xff);
 
     // draw axes
@@ -301,7 +417,7 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
             pt_t temp(kps[i].pt.x, kps[i].pt.y, 0.0f);
             r->back().getVector3fMap() = rotate * temp.getVector3fMap() + translate;
             //r->back().getVector4fMap()[3] = kps[i].response;
-            
+
             /*
             #warning debug sanity check:
             Eigen::Vector4f sc = initial_transform * Eigen::Vector4f(kps[i].pt.x, kps[i].pt.y, 0, 1);
@@ -324,6 +440,7 @@ static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
 }
 #endif // 0
 
+// - SonarSLAMNode implementation
 void SonarSLAMNode::init(){
     typedef std::vector<KeyPoint> kp_vec;
 
@@ -344,32 +461,36 @@ void SonarSLAMNode::init(){
     // Parameters that are really inputs:
     registerInputID("xy image", /*"image to use for map visualisation (may be unconnected)", */Optional);
     registerParamID("xy metres/px", float(1), "range conversion for visualisation image");
-    
+
     // Control Parameters:
     registerParamID("clear", bool(false), "true => discard accumulated point cloud");
     registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
     registerParamID("score threshold", float(2), "keypoint set will be rejected if mean distance error is greater than this");
     registerParamID("weight test", float(5), "keypoints with weights greater than this will be used for registration");
     registerParamID("feature merge distance", float(0.05), "keypoints closer to each other than this will be merged");
-    
+
     // ICP Parameters:
     registerParamID("max iters", int(20), "");
     registerParamID("transform eps", float(1e-9), "difference between transforms in successive iters for convergence");
     registerParamID("euclidean fitness", float(1e-7), "max error between consecutive steps for non-convergence");
     registerParamID("reject threshold", float(0.5), "RANSAC outlier rejection distance");
     registerParamID("max correspond dist", float(1), "");
-    
+
     // Visualisation Parameters:
-    registerParamID("-render size", float(400));
-    registerParamID("-vis size", int(800));
-    registerParamID("-vis origin x", int(400));
-    registerParamID("-vis origin y", int(400));
+    //registerParamID("-render resolution", float(400), "in pixels");
+    //registerParamID("-render size", float(100), "in metres");
+    //registerParamID("-render origin x", int(400));
+    //registerParamID("-render origin y", int(400));
+
+    registerParamID("-vis size", float(100));
+    registerParamID("-vis resolution", int(600));
+    registerParamID("-vis origin x", float(0));
+    registerParamID("-vis origin y", float(0));
 
     // outputs:
-    registerOutputID("whole cloud vis");
-    registerOutputID("last added vis");
-    registerOutputID("mosaic");
-    
+    registerOutputID("cloud visualisation");
+    //registerOutputID("render");
+
     // training outputs for feature extractor:
     registerOutputID("training: keypoints", kp_vec());
     registerOutputID("training: keypoints image");
@@ -400,16 +521,22 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     //const float point_merge_distance = param<float>("feature merge distance");
     //const float map_merge_alpha = param<float>("map merge alpha");
 
-    const Eigen::Vector2i render_sz(param<float>("-render size"),param<float>("-render size"));
+    const Eigen::Vector2f vis_origin(param<float>("-vis origin x"),
+                                     param<float>("-vis origin y"));
+    const Eigen::Vector2i vis_res(param<int>("-vis resolution"),
+                                  param<int>("-vis resolution"));
+    const float vis_size = param<float>("-vis size");
 
-    const float m_per_pix = param<float>("xy metres/px");
-    const int vis_size = param<int>("-vis size");
-    const Eigen::Vector2f vis_origin(param<int>("-vis origin x"), param<int>("-vis origin y"));
-    m_impl->setVisProperties(vis_size, vis_origin);
+    //const float xy_m_per_pix = param<float>("xy metres/px");
+    //const int render_size = param<int>("-vis size");
+    //const Eigen::Vector2f render_origin(param<int>("-render origin x"),
+    //                                 param<int>("-render origin y"));
+
+    m_impl->setVisProperties(vis_res, vis_origin, vis_size/vis_res[0]);
 
     image_ptr_t xy_image = inputs["xy image"];
 
-    
+
     // !!! TODO: propagate timestamps with sonar images, or something
     cloud_ptr scan = boost::make_shared<cloud_t>(
         keypoints, now(), SlamCloudPart<pt_t>::FilterResponse(weight_test)
@@ -424,9 +551,9 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     relative_transformation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
         Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
     );
-    
+
     Eigen::Matrix4f global_transformation = Eigen::Matrix4f::Zero();
-    
+
     const float confidence = m_impl->registerScan(
         scan,
         scan_matcher,
@@ -434,18 +561,11 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         global_transformation
     );
 
-    
-    if(confidence == 0){ // not added
-        r["last added vis"] = boost::make_shared<Image>(cv::Mat(render_sz[0],render_sz[1],CV_8UC1,cv::Scalar(0)));    
-    }else{
-        /*m_impl->updateVis(xy_image->mat(), global_transformation, m_per_pix);    
-        r["mosaic"] = boost::make_shared<Image>(m_impl->vis());
-        r["last added vis"] = boost::make_shared<Image>(renderCloud(
-            *scan, Eigen::Vector2f(xytheta[0],xytheta[1]), m_impl->min(), m_impl->max(), render_sz, false
-        ));*/
-    }
-    
-    
+    m_impl->updateVis();
+
+    if(m_impl->vis().rows > 0 && m_impl->vis().cols > 0)
+        r["cloud visualisation"] = boost::make_shared<Image>(m_impl->vis());
+
     r["training: keypoints"] = training_keypoints;
     r["training: keypoints image"] = inputs["keypoints image"];
     r["training: goodness"] = scan->keyPointGoodness();
@@ -522,7 +642,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         // so post-multiply (ie, apply guess first)
         Eigen::Matrix4f final_transform = icp.getFinalTransformation() * guess;
         final->transformation() = final_transform;
-        
+
         /*
         debug() << "guess:\n" << guess;
         debug() << "icp transform:\n" << icp.getFinalTransformation();
@@ -564,7 +684,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
             r["last added vis"] = boost::make_shared<Image>(renderCloud(
                 *final, Eigen::Vector2f(xytheta[0],xytheta[1]), m_impl->min(), m_impl->max(), render_sz, false
             ));
-           
+
             r["training: keypoints"] = training_keypoints;
             r["training: keypoints image"] = inputs["keypoints image"];
             r["training: goodness"] = point_goodness;

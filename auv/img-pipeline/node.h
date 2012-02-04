@@ -333,16 +333,20 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 l.unlock();
                 if(ip->input_type == InType_Parameter){
                     debug() << "param" << p << "set to" << std::boolalpha << v;
-                    ip->param_value = v;
-                    ip->status = NodeInputStatus::New;
-                    sendMessage(boost::make_shared<NodeParametersMessage>(
-                        m_pl_name, id(), parameters()
-                    ));
-                    // provide notification that parameters have changed: principally
-                    // for asynchronous nodes
-                    paramChanged(p);
-                    // check to see if the node should be re-scheduled
-                    setNewInput(p);
+                    if(ip->param_value.which() == ParamValue(v).which()){
+                        ip->param_value = v;
+                        ip->status = NodeInputStatus::New;
+                        sendMessage(boost::make_shared<NodeParametersMessage>(
+                            m_pl_name, id(), parameters()
+                        ));
+                        // provide notification that parameters have changed: principally
+                        // for asynchronous nodes
+                        paramChanged(p);
+                        // check to see if the node should be re-scheduled
+                        setNewInput(p);
+                    }else{
+                        error() << p << "has different type to current value" << ip->param_value;
+                    }
                 }else{
                     error() << p << "is an input not a parameter";
                 }

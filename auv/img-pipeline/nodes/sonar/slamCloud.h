@@ -210,14 +210,14 @@ class SlamCloudLocation{
               m_time(t){
         }
 
-        virtual ~SlamCloudLocation(){
-        }
-
         template<typename PointT>
         explicit SlamCloudLocation(boost::shared_ptr<SlamCloudPart<PointT> > const& p)
             : m_relative_to(p->m_relative_to),
               m_relative_transformation(p->m_relative_transformation),
               m_time(p->m_time){
+        }
+
+        virtual ~SlamCloudLocation(){
         }
 
         // post-multiply
@@ -238,7 +238,7 @@ class SlamCloudLocation{
 
         Eigen::Matrix4f globalTransform() const{
             Eigen::Matrix4f r = relativeTransform();
-            location_ptr p = m_relative_to;
+            location_ptr p = relativeTo();
             while(p){
                 r = p->relativeTransform() * r;
                 p = p->relativeTo();
@@ -262,10 +262,10 @@ class SlamCloudPart: public SlamCloudLocation,
                      public boost::enable_shared_from_this< SlamCloudPart<PointT> >{
     public:
         // - public types
-        typedef pcl::PointCloud<PointT> base_cloud_t;
         typedef boost::shared_ptr<SlamCloudPart<PointT> > Ptr;
         typedef boost::shared_ptr<const SlamCloudPart<PointT> > ConstPtr;
-        typedef pcl::PointCloud<PointT> BaseT;
+        typedef pcl::PointCloud<PointT> base_cloud_t;
+        typedef typename base_cloud_t::Ptr base_cloud_ptr;
 
         using pcl::PointCloud<PointT>::points;
         using pcl::PointCloud<PointT>::width;
@@ -306,6 +306,27 @@ class SlamCloudPart: public SlamCloudLocation,
             }
         }
 
+        void getLocalConvexHull(base_cloud_ptr& hull_points,
+                                std::vector<pcl::Vertices>& polygons){
+            // !!! TODO: cache this result
+            pcl::ConvexHull<PointT> hull_calculator;
+            hull_points = (boost::make_shared<base_cloud_t>());
+            hull_points->is_dense = true;
+
+            hull_calculator.setInputCloud(shared_from_this());
+            hull_calculator.reconstruct(*hull_points, polygons);
+            int dim = hull_calculator.getDim();
+
+            assert(dim == 2);
+        }
+        
+        void getGlobalConvexHull(base_cloud_ptr& hull_points,
+                                std::vector<pcl::Vertices>& polygons){
+            // !!! TODO: cache this result too
+            getLocalConvexHull(hull_points, polygons);
+            pcl::transformPointCloud(*hull_points, *hull_points, globalTransform());
+        }
+
         std::vector<descriptor_t>& descriptors(){ return m_point_descriptors; }
         std::vector<descriptor_t> const& descriptors() const{ return m_point_descriptors; }
 
@@ -319,12 +340,12 @@ class SlamCloudPart: public SlamCloudLocation,
         // virtual, so these are only called if the call is made through a
         // pointer to this derived type
         void reserve(std::size_t s){
-            BaseT::reserve(s);
+            base_cloud_t::reserve(s);
             m_point_descriptors.reserve(s);
         }
 
         inline void push_back(PointT const& p, descriptor_t const& d, std::size_t const& idx){
-            BaseT::push_back(p);
+            base_cloud_t::push_back(p);
             m_point_descriptors.push_back(d);
             m_keypoint_indices.push_back(idx);
         }
@@ -353,9 +374,7 @@ class SlamCloudGraph{
 
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename base_cloud_t::Ptr base_cloud_ptr;
-
-    private:
-        // - private types
+        
         typedef std::deque<location_ptr> location_vec;
         typedef std::deque<cloud_ptr> cloud_vec;
 
@@ -363,13 +382,21 @@ class SlamCloudGraph{
         // - public methods
         SlamCloudGraph()
             : Overlap_Threshold(0.3),
-              Keyframe_Spacing(10),
+              Keyframe_Spacing(3),
               Min_Initial_Points(10){
         }
 
         void reset(){
             key_scans.clear();
             all_scans.clear();
+        }
+
+        cloud_vec const& keyScans() const{
+            return key_scans;
+        }
+
+        location_vec const& allScans() const{
+            return all_scans;
         }
 
         /* Guess a transformation for a time based on simple extrapolation of
@@ -405,12 +432,20 @@ class SlamCloudGraph{
             if(!key_scans.size()){
                 if(cloudIsGoodEnoughForInitialisation(p)){
                     key_scans.push_back(p);
+                    all_scans.push_back(p);
                     transformation = Eigen::Matrix4f::Identity();
+                    p->setRelativeToNone();                    
+                    p->setRelativeTransform(transformation);                    
                     return 1.0f;
                 }else{
                     debug() << "cloud not good enough for initialisation";
                     return 0.0f;
                 }
+            }
+
+            if(p->size() < 3){
+                warning() << "too few points in cloud (<3) to even consider it";
+                return 0.0f;
             }
 
             const cloud_vec initial_overlaps = overlappingClouds(p, guess);
@@ -514,23 +549,6 @@ class SlamCloudGraph{
             return r;
         }
 
-
-        static void calcConvexHull(cloud_ptr p,
-                                   base_cloud_ptr& hull_points,
-                                   std::vector<pcl::Vertices>& polygons){
-            int dim;
-
-            pcl::ConvexHull<PointT> hull_calculator;
-            hull_points = (boost::make_shared<base_cloud_t>());
-            hull_points->is_dense = true;
-
-            hull_calculator.setInputCloud(p);
-            hull_calculator.reconstruct(*hull_points, polygons);
-            dim = hull_calculator.getDim();
-
-            assert(dim == 2);
-        }
-
         /* Judge degree of overlap: new parts are added to the map when the
          * overlap with existing parts is less than Overlap_Threshold
          */
@@ -542,10 +560,8 @@ class SlamCloudGraph{
             std::vector<pcl::Vertices> b_polys;
             base_cloud_ptr a_points;
             base_cloud_ptr b_points;
-            calcConvexHull(a, a_points, a_polys);
-            calcConvexHull(b, b_points, b_polys);
-            pcl::transformPointCloud(*a_points, *a_points, a->globalTransform());
-            pcl::transformPointCloud(*b_points, *b_points, b->globalTransform());
+            a->getGlobalConvexHull(a_points, a_polys);
+            b->getGlobalConvexHull(b_points, b_polys);
 
             assert(a_polys.size() == 1);
             assert(b_polys.size() == 1);
@@ -569,19 +585,22 @@ class SlamCloudGraph{
             c.AddPolygon(clipper_poly_a, ClipperLib::ptSubject);
             c.AddPolygon(clipper_poly_b, ClipperLib::ptClip);
             c.Execute(ClipperLib::ctIntersection, solution);
-            assert(solution.size() != 0);
 
-            // return area of overlap as fraction of union of areas of input
-            // polys
-            const double union_area = ClipperLib::Area(solution[0]);
-            const double a_area = ClipperLib::Area(clipper_poly_a);
-            const double b_area = ClipperLib::Area(clipper_poly_b);
+            if(solution.size() != 0){
+                // return area of overlap as fraction of union of areas of input
+                // polys
+                const double union_area = ClipperLib::Area(solution[0]);
+                const double a_area = ClipperLib::Area(clipper_poly_a);
+                const double b_area = ClipperLib::Area(clipper_poly_b);
 
-            debug() << "overlap pct =" << union_area
-                    << "/ (" << a_area << "+" << b_area << ") ="
-                    << union_area / (a_area + b_area);
-            // areas can be negative due to vertex order, hence the fabs-ing
-            return std::fabs(union_area) / (std::fabs(a_area) + std::fabs(b_area));
+                debug() << "overlap pct =" << union_area
+                        << "/ (" << a_area << "+" << b_area << ") ="
+                        << union_area / (a_area + b_area);
+                // areas can be negative due to vertex order, hence the fabs-ing
+                return std::fabs(union_area) / (std::fabs(a_area) + std::fabs(b_area));
+            }else{
+                return 0;
+            }
         }
 
         /* judge how good initial cloud is by a combination of the number of
