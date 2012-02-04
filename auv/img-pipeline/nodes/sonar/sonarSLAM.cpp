@@ -60,7 +60,9 @@ static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
 // - static functions
 static void drawCircle(cv::Mat& image, Eigen::Vector2f const& image_coords,
                        float scale, cv::Scalar const& col){
-    const int shift = 4;
+    // !!! FIXME in my version of opencv shift doesn't work for drawing
+    // circles...
+    const int shift = 0;
     // NB: subpixel precision
     cv::Point centre(image_coords[0]*(1<<shift),
                      image_coords[1]*(1<<shift));
@@ -72,7 +74,7 @@ static void drawCircle(cv::Mat& image, Eigen::Vector2f const& image_coords,
 
 static void drawPoly(cv::Mat& image, std::vector<Eigen::Vector2f> const& poly,
                      cv::Scalar const& col){
-    const int shift = 4;
+    const int shift = 0;
     std::vector<cv::Point> cv_pts;
     cv_pts.reserve(poly.size());
     foreach(Eigen::Vector2f const& p, poly)
@@ -226,6 +228,7 @@ class SonarSLAMImpl{
 
             cloud_vec::const_iterator i;
             cloud_vec const& key_scans = m_graph.keyScans();
+            // !!! TODO: start from i = begin() + m_vis_keyframes_included
             for(i = key_scans.begin(); i != key_scans.end(); i++){
                 Eigen::Matrix4f const& global_transform = (*i)->globalTransform();
                 const Eigen::Vector2f image_pt = toVisCoords(
@@ -251,6 +254,10 @@ class SonarSLAMImpl{
                 drawPoly(
                     m_vis_buffer, image_hull_pts, cv::Scalar(40,100,120)
                 );
+                foreach(Eigen::Vector2f const& p, image_hull_pts)
+                    drawCircle(
+                        m_vis_buffer, p, 0.1/m_vis_metres_per_px, cv::Scalar(0,0,140)
+                    );
             }
             m_vis_keyframes_included = key_scans.size();            
 

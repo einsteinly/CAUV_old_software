@@ -589,15 +589,15 @@ class SlamCloudGraph{
             if(solution.size() != 0){
                 // return area of overlap as fraction of union of areas of input
                 // polys
-                const double union_area = ClipperLib::Area(solution[0]);
-                const double a_area = ClipperLib::Area(clipper_poly_a);
-                const double b_area = ClipperLib::Area(clipper_poly_b);
-
-                debug() << "overlap pct =" << union_area
-                        << "/ (" << a_area << "+" << b_area << ") ="
-                        << union_area / (a_area + b_area);
                 // areas can be negative due to vertex order, hence the fabs-ing
-                return std::fabs(union_area) / (std::fabs(a_area) + std::fabs(b_area));
+                const double union_area = std::fabs(ClipperLib::Area(solution[0]));
+                const double a_area = std::fabs(ClipperLib::Area(clipper_poly_a));
+                const double b_area = std::fabs(ClipperLib::Area(clipper_poly_b));
+
+                debug() << "overlap pct =" << 1e-6*union_area
+                        << "/ (" << -1e-6*a_area << "+" << -1e-6*b_area << ") ="
+                        << union_area / (a_area + b_area) << "(m^2)";
+                return union_area / (a_area + b_area);
             }else{
                 return 0;
             }
