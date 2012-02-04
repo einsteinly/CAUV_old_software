@@ -164,12 +164,12 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                 transformation = final_transform;
             }else if(score >= m_score_thr){
                 info() << BashColour::Brown
-                       << "points will not be added to the whole cloud (error too high: "
+                       << "ICP pairwise match failed (error too high: "
                        << score << ">=" << m_score_thr <<")";
                 throw PairwiseMatchException("error too high");
             }else{
                 info() << BashColour::Red
-                       << "points will not be added to the whole cloud (not converged)";
+                       << "ICP pairwise match failed (not converged)";
                 throw PairwiseMatchException("failed to converge");
             }
 
@@ -492,8 +492,8 @@ class SlamCloudGraph{
                     const Eigen::Matrix4f r2 = (*++i)->globalTransform();
                     const TimeStamp t2 = (*i)->time();
                     Eigen::Matrix4f r = r1 + (r1-r2)*(t - t1)/(t1 - t2);
-                    const float Max_Speed = 4.0; // m/s
-                    const float frac_speed = (r.block<3,1>(0,3).norm() / (t2 - t1)) / Max_Speed;
+                    const float Max_Speed = 1.0; // m/s
+                    const float frac_speed = std::fabs(r.block<3,1>(0,3).norm() / (t1 - t2)) / Max_Speed;
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
                                   << frac_speed << "), will throttle";
@@ -558,17 +558,22 @@ class SlamCloudGraph{
                     // map_cloud, so we can easily find nearest neighbors in
                     // map_cloud to use as a measure of how good the keypoints
                     // were:
-                    /*std::vector<int>   pt_indices(1);
+                    std::vector<int>   pt_indices(1);
                     std::vector<float> pt_squared_dists(1);
-
+                    
+                    int ngood = 0;
+                    int nbad = 0;
                     for(size_t i=0; i < transformed->size(); i++){
                         if(map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
-                           pt_squared_dists[0] < m_good_keypoint_distance)
+                           pt_squared_dists[0] < m_good_keypoint_distance){
                             p->keyPointGoodness()[p->ptIndices()[i]] = 1;
-                        else
+                            ngood++;
+                        }else{
                             p->keyPointGoodness()[p->ptIndices()[i]] = 0;
+                            nbad++;
+                        }
                     }
-                    */
+                    debug() << float(ngood)/(nbad+ngood) << "keypoints proved good";
 
                     // find new overlaps at the final position
                     final_overlaps = overlappingClouds(p);
