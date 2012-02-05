@@ -490,8 +490,12 @@ class LearnedKeyPointsNode: public Node{
             image_ptr_t training_img = inputs["training: keypoints image"];
 
             m_forest.setMaxSize(param<int>("trees"));
-            const int num_questions = param<int>("questions");
+            int num_questions = param<int>("questions");
             if(num_questions != m_number_of_questions){
+                if(num_questions < 1){
+                    error() << "cannot set questions < 1";
+                    num_questions = 1;
+                }
                 if(m_forest.size())
                     warning() << "Changing number of questions after training has started";
                 m_number_of_questions = num_questions;

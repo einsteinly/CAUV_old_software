@@ -37,7 +37,7 @@ static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
 static double operator-(cauv::TimeStamp const& left, cauv::TimeStamp const& right){
     const double dsecs = left.secs - right.secs;
     const double dmusecs = left.musecs - right.musecs;
-    return dsecs + 1e6*dmusecs;
+    return dsecs + 1e-6*dmusecs;
 }
 
 // - Pairwise Matching
@@ -138,8 +138,8 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
 
             const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
 
-            debug() << BashColour::Green << "guess:\n"
-                    << guess;
+            debug(3) << BashColour::Green << "guess:\n"
+                     << guess;
             debug() << BashColour::Green << "relative guess:\n"
                     << relative_guess;
 
@@ -437,13 +437,16 @@ class SlamCloudGraph{
         typedef std::deque<location_ptr> location_vec;
         typedef std::deque<cloud_ptr> cloud_vec;
 
+        typedef std::multimap<float, cloud_ptr> cloud_overlap_map;
+
     public:
         // - public methods
         SlamCloudGraph()
             : m_overlap_threshold(0.3),
               m_keyframe_spacing(2),
               m_min_initial_points(10),
-              m_good_keypoint_distance(0.2){
+              m_good_keypoint_distance(0.2),
+              m_max_speed(2.0){
         }
 
         void reset(){
@@ -489,11 +492,33 @@ class SlamCloudGraph{
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
                     location_vec::const_reverse_iterator i = all_scans.rbegin();
+                    const Eigen::Vector3f p1 = (*i)->globalTransform().block<3,1>(0,3);
+                    const TimeStamp t1 = (*i)->time();
+                    const Eigen::Vector3f p2 = (*++i)->globalTransform().block<3,1>(0,3);
+                    const TimeStamp t2 = (*i)->time();
+                    const Eigen::Vector3f p = p1 + (p1-p2)*(t-t1)/(t1-t2);                    
+                    
+                    const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
+                    Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
+                    r.block<3,1>(0,3) = p1 + (p1-p2)*(t-t1)/(t1-t2);
+                    if(frac_speed >= 1.0){
+                        warning() << "predicted motion > max speed (x"
+                                  << frac_speed << "), will throttle";
+                        r.block<3,1>(0,3) = p1 + (1.0/frac_speed) * (p1-p2)*(t-t1)/(t1-t2);
+                    }
+                    if((p-p1).norm() > m_keyframe_spacing){
+                        warning() << "predicted motion > keyframe spacing, will throttle";
+                        r.block<3,1>(0,3) = p1 + m_keyframe_spacing * (p1-p2).normalized();
+                    }
+                    return r;
+
+                    /*
                     const Eigen::Matrix4f r1 = (*i)->globalTransform();
                     const TimeStamp t1 = (*i)->time();
                     const Eigen::Matrix4f r2 = (*++i)->globalTransform();
                     const TimeStamp t2 = (*i)->time();
                     Eigen::Matrix4f r = r1 + (r1-r2)*(t - t1)/(t1 - t2);
+                    
                     const float Max_Speed = 0.1; // m/s
                     const float frac_speed = std::fabs((r-r1).block<3,1>(0,3).norm() / (t1 - t2)) / Max_Speed;
                     if(frac_speed >= 1.0){
@@ -502,6 +527,7 @@ class SlamCloudGraph{
                         return r1 + (1.0 / frac_speed) * (r1-r2)*(t - t1)/(t1 - t2);
                     }
                     return r;
+                    */
                 }
             }
         }
@@ -533,18 +559,18 @@ class SlamCloudGraph{
                 return 0.0f;
             }
 
-            const cloud_vec initial_overlaps = overlappingClouds(p, guess);
-            cloud_vec final_overlaps;
+            const cloud_overlap_map initial_overlaps = overlappingClouds(p, guess);
+            cloud_overlap_map final_overlaps;
             Eigen::Matrix4f relative_transformation;
             float r = 0.0f;
 
             try{
                 if(initial_overlaps.size() == 0){
-                    debug() << "new scan falls outside map!";
+                    error() << "new scan falls outside map!";
                     return 0;
                 }else if(initial_overlaps.size() == 1){
                     // one pairwise match at the initial guess position
-                    cloud_ptr map_cloud = initial_overlaps[0];
+                    cloud_ptr map_cloud = initial_overlaps.rbegin()->second;
                     base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
                     r = m.transformcloudToMatch(
                         map_cloud, p, guess, relative_transformation, transformed
@@ -555,6 +581,22 @@ class SlamCloudGraph{
                     // post-multiply the transformation that should be applied
                     // first.
                     transformation = relative_transformation * map_cloud->relativeTransform();
+
+                    // find new overlaps at the final position
+                    final_overlaps = overlappingClouds(p);
+
+                    if(final_overlaps.size() == 0){
+                        warning() << "final overlap too small";
+                        return 0;
+                    }
+                    
+                    if(all_scans.size()){
+                        Eigen::Matrix4f last_transform = all_scans.back()->globalTransform();
+                        if((transformation - last_transform).block<3,1>(0,3).norm() > m_max_speed){
+                            warning() << "match implies moving too fast: ignoring";
+                            return 0;
+                        }
+                    }
 
                     // 'transformed' in in the same coordinate frame as
                     // map_cloud, so we can easily find nearest neighbors in
@@ -577,16 +619,8 @@ class SlamCloudGraph{
                     }
                     debug() << float(ngood)/(nbad+ngood) << "keypoints proved good";
 
-                    // find new overlaps at the final position
-                    final_overlaps = overlappingClouds(p);
-
-                    if(final_overlaps.size() == 0){
-                        warning() << "final overlap too small";
-                        return 0;
-                    }
-
                     if(final_overlaps.size() == 1){
-                        if(final_overlaps[0] != initial_overlaps[0]){
+                        if(final_overlaps.rbegin()->second != initial_overlaps.rbegin()->second){
                             warning() << "final overlap different";
                             return 0;
                         }
@@ -629,7 +663,7 @@ class SlamCloudGraph{
                 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // below is temporary, non-loop closing solution
                 try{
-                    cloud_ptr map_cloud = final_overlaps.back();
+                    cloud_ptr map_cloud = final_overlaps.rbegin()->second;
                     base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
                     r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation, transformed);
                     p->setRelativeTransform(relative_transformation);
@@ -704,11 +738,12 @@ class SlamCloudGraph{
          * m_overlap_threshold.
          *
          */
-        cloud_vec overlappingClouds(cloud_ptr p) const{
-            cloud_vec r;
+        cloud_overlap_map overlappingClouds(cloud_ptr p) const{
+            cloud_overlap_map r;
             foreach(cloud_ptr m, key_scans){
-                if(overlapPercent(m, p) > m_overlap_threshold)
-                    r.push_back(m);
+                float overlap = overlapPercent(m, p);
+                if(overlap > m_overlap_threshold)
+                    r.insert(typename cloud_overlap_map::value_type(overlap, m));
             }
             return r;
         }
@@ -717,10 +752,10 @@ class SlamCloudGraph{
          * current one (additional transformation is applied last, ie:
          * global_point = p->relativeTo().relativeTransform() *  p->relativeTransform() * additional_transform * cloud_point;
          */
-        cloud_vec overlappingClouds(cloud_ptr p, Eigen::Matrix4f const& additional_transform){
+        cloud_overlap_map overlappingClouds(cloud_ptr p, Eigen::Matrix4f const& additional_transform){
             Eigen::Matrix4f saved_transform = p->relativeTransform();
             p->setRelativeTransform(saved_transform * additional_transform);
-            cloud_vec r = overlappingClouds(p);
+            cloud_overlap_map r = overlappingClouds(p);
             p->setRelativeTransform(saved_transform);
             return r;
         }
@@ -794,6 +829,7 @@ class SlamCloudGraph{
         /* new keypoints with nearest nieghbours better than this are
          * considered good for training: */
         float m_good_keypoint_distance;
+        float m_max_speed;
 
         // TODO: to remain efficient there MUST be a way of searching for
         // SlamCloudParts near a location without iterating through all nodes

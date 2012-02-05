@@ -58,8 +58,10 @@ static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
 */
 
 // - static functions
-static void drawCircle(cv::Mat& image, Eigen::Vector2f const& image_coords,
-                       float scale, cv::Scalar const& col){
+static void drawCircle(cv::Mat& image,
+                       Eigen::Vector2f const& image_coords,
+                       float scale,
+                       cv::Scalar const& col){
     // !!! FIXME in my version of opencv shift doesn't work for drawing
     // circles...
     const int shift = 0;
@@ -72,8 +74,21 @@ static void drawCircle(cv::Mat& image, Eigen::Vector2f const& image_coords,
     cv::circle(image, centre, radius, col, 1/*thickness*/, 4/*4-connected*/, shift);
 }
 
-static void drawPoly(cv::Mat& image, std::vector<Eigen::Vector2f> const& poly,
-                     cv::Scalar const& col){
+static void drawLine(cv::Mat& image,
+                     Eigen::Vector2f const& pt1,
+                     Eigen::Vector2f const& pt2,
+                     cv::Scalar const& col,
+                     int thickness=1){
+    const int shift = 0;
+    cv::Point a(pt1[0]*(1<<shift), pt1[1]*(1<<shift));
+    cv::Point b(pt2[0]*(1<<shift), pt2[1]*(1<<shift));
+    line(image, a, b, col, thickness, CV_AA, shift);
+}
+
+static void drawPoly(cv::Mat& image,
+                     std::vector<Eigen::Vector2f> const& poly,
+                     cv::Scalar const& col,
+                     int thickness=1){
     const int shift = 0;
     std::vector<cv::Point> cv_pts;
     cv_pts.reserve(poly.size());
@@ -81,7 +96,7 @@ static void drawPoly(cv::Mat& image, std::vector<Eigen::Vector2f> const& poly,
         cv_pts.push_back(cv::Point(p[0]*(1<<shift), p[1]*(1<<shift)));
     const int npts = cv_pts.size();
     cv::Point const* pts = &(cv_pts[0]);
-    cv::polylines(image, &pts, &npts, 1, false, col, 1, CV_AA, shift);
+    cv::polylines(image, &pts, &npts, 1, false, col, thickness, CV_AA, shift);
 }
 
 // - local classes
@@ -139,13 +154,15 @@ class SonarSLAMImpl{
 
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
-                           Eigen::Matrix4f const& relative_transformation_guess,
+                           Eigen::Matrix4f const& external_guess,
                            Eigen::Matrix4f& global_transformation){
             Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(scan->time());
 
-            // !!! TODO:
-            // include guess generated externally too...
-            //guess = (guess + relative_transformation_guess) / 2;
+            // use rotation from external guess, and translation from internal
+            // guess:
+            if(external_guess.block<3,1>(0,3).norm() > 1e-3)
+                warning() << "external translation prediction is ignored";
+            guess.block<3,3>(0,0) = external_guess.block<3,3>(0,0);
 
             return m_graph.registerScan(scan, guess, scan_matcher, global_transformation);
         }
@@ -245,8 +262,26 @@ class SonarSLAMImpl{
                 );
                 drawCircle(
                     m_vis_buffer, image_pt, 0.5/m_vis_metres_per_px,
-                    cv::Scalar(60, 260, 60)
+                    cv::Scalar(80, 255, 60)
                 );
+                //const Eigen::Vector2f based_on_image_pt = toVisCoords(
+                //    (*i)->relativeTo()->globalTransform().block<3,1>(0,3)
+                //);
+                //drawLine(
+                //    m_vis_buffer, image_pt, based_on_image_pt,
+                //    cv::Scalar(60, 235, 40)                    
+                //);
+
+                for(std::size_t j = 0; j < (*i)->size(); j++){
+                    const Eigen::Vector2f pt = toVisCoords(
+                        (*i)->globalTransform().block<3,3>(0,0) * (**i)[j].getVector3fMap() +
+                        (*i)->globalTransform().block<3,1>(0,3)
+                    );
+                    drawCircle(
+                        m_vis_buffer, pt, 0.1/m_vis_metres_per_px,
+                        cv::Scalar(64, 64, 64)
+                    );
+                }
 
                 cloud_t::base_cloud_ptr hull_cloud;
                 std::vector<pcl::Vertices> hull_polys;
@@ -261,7 +296,7 @@ class SonarSLAMImpl{
                     ));
                 }
                 drawPoly(
-                    m_vis_buffer, image_hull_pts, cv::Scalar(40,100,120)
+                    m_vis_buffer, image_hull_pts, cv::Scalar(100,90,100)
                 );
                 /*foreach(Eigen::Vector2f const& p, image_hull_pts)
                     drawCircle(
