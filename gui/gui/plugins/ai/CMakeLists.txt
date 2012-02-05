@@ -6,6 +6,7 @@ set ( AI_PLUGIN_SRCS
     messagegenerators.cpp
     ainode.cpp
     tasknode.cpp
+    conditionnode.cpp
 )
 
 set ( AI_PLUGIN_UIS
@@ -16,7 +17,6 @@ set ( AI_PLUGIN_H
     messageobserver.h
     messagegenerators.h
     ainode.h
-    tasknode.h
 )
 
      

@@ -93,13 +93,6 @@ void AiPlugin::initialise(){
         node3->setResizable(true);
         m_actions->scene->addItem(node3);
 
-        node->send(boost::make_shared<RemoveTaskMessage>("some task id"));
-
-        boost::shared_ptr<NodeExclusionFilter> filter = boost::make_shared<NodeExclusionFilter>();
-        filter->addNode(m_auv->findOrCreate<GroupingNode>("ai")->findOrCreate<GroupingNode>("task_types"));
-        filter->addNode(m_auv->findOrCreate<GroupingNode>("ai")->findOrCreate<GroupingNode>("condition_types"));
-        m_actions->nodes->registerListFilter(filter);
-
 
         boost::shared_ptr<GroupingNode> ai = m_auv->findOrCreate<GroupingNode>("ai");
         boost::shared_ptr<GroupingNode> tasks = ai->findOrCreate<GroupingNode>("tasks");
