@@ -17,6 +17,7 @@
 
 #include <QGraphicsView>
 #include <QWheelEvent>
+#include <QGestureEvent>
 
 namespace liquid {
 
@@ -34,7 +35,11 @@ public:
     virtual float maxScale();
     virtual void setMaxScale(float scale);
 
+    void scaleAround(QPointF point, qreal scaleFactor);
+
 protected:
+    virtual bool event(QEvent *event);
+    virtual bool gestureEvent(QGestureEvent *event);
     virtual void wheelEvent(QWheelEvent *event);
     virtual void keyPressEvent(QKeyEvent *event);
 

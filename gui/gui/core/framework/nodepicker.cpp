@@ -185,6 +185,7 @@ NodeTreeView::NodeTreeView(QWidget *) {
     setAnimated(true);
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
+    setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setItemDelegate(delegate);
     delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
 
