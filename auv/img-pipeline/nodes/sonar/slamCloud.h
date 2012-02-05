@@ -629,10 +629,11 @@ class SlamCloudGraph{
 
                     if(all_scans.size()){
                         Eigen::Matrix4f last_transform = all_scans.back()->globalTransform();
-                        if((transformation - last_transform).block<3,1>(0,3).norm() /
-                           (p->time() - all_scans.back()->time()) > m_max_speed){
-                            warning() << "match implies moving too fast: ignoring (";
-                                      <<
+                        const float speed = (transformation - last_transform).block<3,1>(0,3).norm() /
+                                            (p->time() - all_scans.back()->time());
+                        if(speed > m_max_speed){
+                            warning() << "match implies moving too fast: ignoring ("
+                                      << speed << "/" << m_max_speed << ")";
                             return 0;
                         }
                     }
