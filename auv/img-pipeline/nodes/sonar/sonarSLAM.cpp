@@ -128,8 +128,12 @@ class SonarSLAMImpl{
 
         void setGraphProperties(float overlap_threshold,
                                 float keyframe_spacing,
-                                float min_initial_points){
-            m_graph.setParams(overlap_threshold, keyframe_spacing, min_initial_points);
+                                float min_initial_points,
+                                float good_keypoint_distance){
+            m_graph.setParams(
+                overlap_threshold, keyframe_spacing, min_initial_points,
+                good_keypoint_distance
+            );
         }
 
 
@@ -532,7 +536,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     const float score_thr   = param<float>("score threshold");
     const float delta_theta = param<float>("delta theta");
     const float weight_test = param<float>("weight test");
-    //const float point_merge_distance = param<float>("feature merge distance");
+    const float point_merge_distance = param<float>("feature merge distance");
     //const float map_merge_alpha = param<float>("map merge alpha");
     const float overlap_threshold = param<float>("overlap threshold");
     const float keyframe_spacing = param<float>("keyframe spacing");
@@ -548,7 +552,7 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
     //const Eigen::Vector2f render_origin(param<int>("-render origin x"),
     //                                 param<int>("-render origin y"));
     
-    m_impl->setGraphProperties(overlap_threshold, keyframe_spacing, 10);
+    m_impl->setGraphProperties(overlap_threshold, keyframe_spacing, 10, point_merge_distance);
     m_impl->setVisProperties(vis_res, vis_origin, vis_size/vis_res[0]);
 
     image_ptr_t xy_image = inputs["xy image"];

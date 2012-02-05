@@ -365,13 +365,12 @@ class Forest{
         }
         
         void addTree(TreeNode_ptr p){
-            if(m_trees.size() > std::size_t(m_max_num_trees)){
+            if(m_trees.size() >= std::size_t(m_max_num_trees)){
                 boost::random::uniform_int_distribution<int> remove_idx_dist(0,m_trees.size()-2);
                 std::swap(m_trees.back(), m_trees[remove_idx_dist(m_rng)]);
                 m_trees.pop_back();
-            }else{
-                m_trees.push_back(p);
             }
+            m_trees.push_back(p);
             info() << "addTree:" << size() << "trees";
         }
         

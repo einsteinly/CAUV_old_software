@@ -453,7 +453,8 @@ class SlamCloudGraph{
 
         void setParams(float overlap_threshold,
                        float keyframe_spacing,
-                       float min_initial_points){
+                       float min_initial_points,
+                       float good_keypoint_distance){
             if(overlap_threshold > 0.5){
                 warning() << "invalid overlap threshold" << overlap_threshold
                           << "(>0.5) will be ignored";
@@ -462,6 +463,7 @@ class SlamCloudGraph{
             m_overlap_threshold = overlap_threshold;
             m_keyframe_spacing = keyframe_spacing;
             m_min_initial_points = min_initial_points;
+            m_good_keypoint_distance = good_keypoint_distance;
         }
 
         cloud_vec const& keyScans() const{
@@ -492,8 +494,8 @@ class SlamCloudGraph{
                     const Eigen::Matrix4f r2 = (*++i)->globalTransform();
                     const TimeStamp t2 = (*i)->time();
                     Eigen::Matrix4f r = r1 + (r1-r2)*(t - t1)/(t1 - t2);
-                    const float Max_Speed = 1.0; // m/s
-                    const float frac_speed = std::fabs(r.block<3,1>(0,3).norm() / (t1 - t2)) / Max_Speed;
+                    const float Max_Speed = 0.1; // m/s
+                    const float frac_speed = std::fabs((r-r1).block<3,1>(0,3).norm() / (t1 - t2)) / Max_Speed;
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
                                   << frac_speed << "), will throttle";
@@ -644,6 +646,28 @@ class SlamCloudGraph{
                         warning() << "final overlap too small";
                         return 0;
                     }
+                    
+                    // 'transformed' in in the same coordinate frame as
+                    // map_cloud, so we can easily find nearest neighbors in
+                    // map_cloud to use as a measure of how good the keypoints
+                    // were:
+                    std::vector<int>   pt_indices(1);
+                    std::vector<float> pt_squared_dists(1);
+                    
+                    int ngood = 0;
+                    int nbad = 0;
+                    for(size_t i=0; i < transformed->size(); i++){
+                        if(map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
+                           pt_squared_dists[0] < m_good_keypoint_distance){
+                            p->keyPointGoodness()[p->ptIndices()[i]] = 1;
+                            ngood++;
+                        }else{
+                            p->keyPointGoodness()[p->ptIndices()[i]] = 0;
+                            nbad++;
+                        }
+                    }
+                    debug() << float(ngood)/(nbad+ngood) << "keypoints proved good";
+
                     // one correspondence in existing map: if we're far
                     // enough from the previous position, add a new part
                     // to the map:
