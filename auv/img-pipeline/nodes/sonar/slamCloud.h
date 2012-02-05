@@ -91,6 +91,36 @@ class PairwiseMatcher{
         ) const = 0;
 };
 
+
+template <typename PtSrc, typename PtTgt>
+class ICP: public pcl::IterativeClosestPoint<PtSrc,PtTgt>{
+        typedef pcl::IterativeClosestPoint<PtSrc,PtTgt> base_t;
+    public:
+        int numIters() const{
+            return pcl::IterativeClosestPoint<PtSrc,PtTgt>::nr_iterations_;
+        }
+        int maxNumIters() const{
+            return base_t::max_iterations_;
+        }
+        float transformationChange() const{
+            // should match the check in termination condition of ICP
+            return std::fabs((base_t::transformation_ - base_t::previous_transformation_).sum());
+        }
+        float transformationEpsilon() const{
+            return base_t::transformation_epsilon_;
+        }
+        /*float euclideanFitness() const{
+            // should match the check in termination condition of ICP
+            return std::fabs(base_t::getFitnessScore(
+                base_t::correspondence_distances_,
+                base_t::previous_correspondence_distances
+            ));
+        }
+        float euclideanFitnessEpsilon() const{
+            return base_t::euclidean_fitness_epsilon_;
+        }*/
+
+};
 template<typename PointT>
 class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
     public:
@@ -126,7 +156,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             debug() << "ICPPairwiseMatcher" << map->size() << ":" << new_cloud->size() << "points";
 
             //pcl::IterativeClosestPointNonLinear<PointT,PointT> icp;
-            pcl::IterativeClosestPoint<PointT,PointT> icp;
+            ICP<PointT,PointT> icp;
             icp.setInputCloud(new_cloud);
             icp.setInputTarget(map);
 
@@ -152,7 +182,13 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
             const float score = icp.getFitnessScore();
             info() << BashColour::Green
                    << "converged:" << icp.hasConverged()
-                   << "score:" << score;
+                   << "score:" << score
+                   << "after" << icp.numIters() << "/" << m_max_iters
+                   << "iterations."
+                   << "Transformation change:" << icp.transformationChange()
+                   << "/epsilon:" << icp.transformationEpsilon();
+                   /*<< "Fitness:" << icp.euclideanFitness()
+                   << "/epsilon:" << icp.euclideanFitnessEpsilon();*/
 
             if(icp.hasConverged() && score < m_score_thr){
                 debug() << BashColour::Green << "final transform\n:"
@@ -205,6 +241,7 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
         ) const {
             // TODO
             assert(0);
+            return 0;
         }
 };
 
@@ -496,8 +533,8 @@ class SlamCloudGraph{
                     const TimeStamp t1 = (*i)->time();
                     const Eigen::Vector3f p2 = (*++i)->globalTransform().block<3,1>(0,3);
                     const TimeStamp t2 = (*i)->time();
-                    const Eigen::Vector3f p = p1 + (p1-p2)*(t-t1)/(t1-t2);                    
-                    
+                    const Eigen::Vector3f p = p1 + (p1-p2)*(t-t1)/(t1-t2);
+
                     const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
                     Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
                     r.block<3,1>(0,3) = p1 + (p1-p2)*(t-t1)/(t1-t2);
@@ -518,7 +555,7 @@ class SlamCloudGraph{
                     const Eigen::Matrix4f r2 = (*++i)->globalTransform();
                     const TimeStamp t2 = (*i)->time();
                     Eigen::Matrix4f r = r1 + (r1-r2)*(t - t1)/(t1 - t2);
-                    
+
                     const float Max_Speed = 0.1; // m/s
                     const float frac_speed = std::fabs((r-r1).block<3,1>(0,3).norm() / (t1 - t2)) / Max_Speed;
                     if(frac_speed >= 1.0){
@@ -589,11 +626,13 @@ class SlamCloudGraph{
                         warning() << "final overlap too small";
                         return 0;
                     }
-                    
+
                     if(all_scans.size()){
                         Eigen::Matrix4f last_transform = all_scans.back()->globalTransform();
-                        if((transformation - last_transform).block<3,1>(0,3).norm() > m_max_speed){
-                            warning() << "match implies moving too fast: ignoring";
+                        if((transformation - last_transform).block<3,1>(0,3).norm() /
+                           (p->time() - all_scans.back()->time()) > m_max_speed){
+                            warning() << "match implies moving too fast: ignoring (";
+                                      <<
                             return 0;
                         }
                     }
@@ -604,7 +643,7 @@ class SlamCloudGraph{
                     // were:
                     std::vector<int>   pt_indices(1);
                     std::vector<float> pt_squared_dists(1);
-                    
+
                     int ngood = 0;
                     int nbad = 0;
                     for(size_t i=0; i < transformed->size(); i++){
@@ -680,14 +719,14 @@ class SlamCloudGraph{
                         warning() << "final overlap too small";
                         return 0;
                     }
-                    
+
                     // 'transformed' in in the same coordinate frame as
                     // map_cloud, so we can easily find nearest neighbors in
                     // map_cloud to use as a measure of how good the keypoints
                     // were:
                     std::vector<int>   pt_indices(1);
                     std::vector<float> pt_squared_dists(1);
-                    
+
                     int ngood = 0;
                     int nbad = 0;
                     for(size_t i=0; i < transformed->size(); i++){
