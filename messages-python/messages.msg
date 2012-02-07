@@ -131,6 +131,11 @@ enum ScriptCommand : int8 {
     Stop,
     Restart,
 }
+enum SensorUIDBase : int32 {
+    // !!! TODO: support hex integer literals...
+    Camera = 16, // cameras are 0x10 +- ID: range [0x1--0x1F]
+    Sonar = 256, // sonars are 0x100 + ID: range [0x100:0x110]
+}
 
 struct floatYPR
 {
@@ -287,6 +292,13 @@ struct ScriptExecRequest
     timeout : float;
     id : string;
     seq : uint32;
+}
+struct UID
+{
+    eq host : int32;   // unique (constant) per-host, eg IP address / end of MAC
+    eq sensor : int32; // unique (constant) per-sensor
+    eq seq1 : int32;   // 
+    eq seq2 : int32;   // sequence per-sensor
 }
 enum BoundedFloatType : int8 {
     Clamps, Wraps

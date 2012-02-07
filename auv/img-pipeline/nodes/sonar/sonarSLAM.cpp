@@ -110,33 +110,10 @@ class SonarSLAMImpl{
               m_vis_parameters_changed(false),
               m_vis_buffer(cv::Size(0,0), CV_8UC3, cv::Scalar(0)),
               m_vis_keyframes_included(0),
-              m_vis_allframes_included(0)
-              /*whole_cloud(),
-              last_cloud(),
-              clouds(),
-              last_transformation(Eigen::Matrix4f::Identity()),
-              #ifdef CAUV_CLOUD_VISUALISATION
-              viewer(boost::make_shared<pcl::visualization::CloudViewer>(mkStr() << "SonarSLAM " << ++viewer_count)),
-              #endif
-              m_min(std::numeric_limits<float>().max(), std::numeric_limits<float>().max()),
-              m_max(-std::numeric_limits<float>().max(), -std::numeric_limits<float>().max()),
-              m_vis_res(800),
-              m_vis_origin(m_vis_res/2,m_vis_res/2),
-              m_vis_buffer(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0))*/{
+              m_vis_allframes_included(0){
         }
 
-        /*void init(cloud_ptr cloud){
-            last_transformation = Eigen::Matrix4f::Identity();
-            whole_cloud = cloud;
-            last_cloud = cloud;
-            updateMinMax(*cloud);
-        }*/
-
         void reset(){
-            /*whole_cloud.reset();
-            clouds.clear();
-            m_vis_buffer = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
-            */
             m_graph.reset();
             initVis();
         }
@@ -166,61 +143,6 @@ class SonarSLAMImpl{
 
             return m_graph.registerScan(scan, guess, scan_matcher, global_transformation);
         }
-
-
-        /*void addNewCloud(cloud_ptr cloud,
-                         float point_merge_distance,
-                         float concave_hull_alpha,
-                         std::vector<int>& keypoint_goodness){
-            // TODO: propagate sonar timestamp with keypoints... somehow... and use
-            // that instead of an index
-            static uint32_t cloud_num = 0;
-            clouds[++cloud_num] = cloud;
-            //whole_cloud->mergeCollapseNearest(cloud, point_merge_distance);
-            whole_cloud->mergeOutsideConcaveHull(cloud, concave_hull_alpha, point_merge_distance, keypoint_goodness);
-            last_transformation = cloud->transformation();
-            last_cloud = cloud;
-
-            #ifdef CAUV_CLOUD_VISUALISATION
-            viewer->showCloud(whole_cloud);
-            #endif
-
-            #ifdef CAUV_CLOUD_DUMP
-            static uint32_t n = 0;
-            pcl::io::savePCDFile(mkStr() << "sonarSLAM" << n++ << ".pcd", *whole_cloud);
-            pcl::io::savePCDFile(mkStr() << "sonarSLAM-scan" << n++ << ".pcd", *cloud);
-            pcl::io::savePCDFile(mkStr() << "sonarSLAM.pcd",  *whole_cloud);
-            #endif
-
-            updateMinMax(*cloud);
-        }*/
-
-
-        /*
-        static uint8_t minMaxScreenBlend(uint8_t src, uint8_t dst){
-            return std::min(std::max(src, dst), uint8_t(0xff - ((0xff-src)*(0xff-dst))/0xff));
-        }
-        void updateVis(cv::Mat img, Eigen::Matrix4f transformation, float m_per_px){
-            cv::Mat tmp = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
-            Eigen::Vector2f img_origin(img.cols/2.0, img.rows/2.0);
-            Eigen::Vector3f xytheta = xythetaFrom4dAffine(transformation);
-            cv::Mat tr = cv::getRotationMatrix2D(cv::Point2f(img_origin[0], img_origin[1]), -xytheta[2], 1.0);
-            tr.at<double>(0,2) += xytheta[0] / m_per_px + m_vis_origin[0]-img_origin[0];
-            tr.at<double>(1,2) += xytheta[1] / m_per_px + m_vis_origin[1]-img_origin[1];
-            // draw a + at the origin:
-            const int S = 5;
-            for(int x = -S; x <= S; x++)
-                for(int y = -S*(!x); y <= S*(!x); y++)
-                    img.at<uint8_t>(int(0.5+img_origin[0]+x),int(0.5+img_origin[1]+y)) = 0xff;
-
-            cv::warpAffine(img, tmp, tr, m_vis_buffer.size(), CV_INTER_LINEAR);
-            for(int i = 0; i < m_vis_res; i++)
-                for(int j = 0; j < m_vis_res; j++)
-                    m_vis_buffer.at<uint8_t>(i,j) = minMaxScreenBlend(
-                        m_vis_buffer.at<uint8_t>(i,j), tmp.at<uint8_t>(i,j)
-                    );
-        }
-        */
 
         void setVisProperties(Eigen::Vector2i const& res,
                               Eigen::Vector2f const& origin,
@@ -269,7 +191,7 @@ class SonarSLAMImpl{
                 //);
                 //drawLine(
                 //    m_vis_buffer, image_pt, based_on_image_pt,
-                //    cv::Scalar(60, 235, 40)                    
+                //    cv::Scalar(60, 235, 40)
                 //);
 
                 for(std::size_t j = 0; j < (*i)->size(); j++){
@@ -279,7 +201,7 @@ class SonarSLAMImpl{
                     );
                     drawCircle(
                         m_vis_buffer, pt, 0.1/m_vis_metres_per_px,
-                        cv::Scalar(64, 64, 64)
+                        cv::Scalar(160, 160, 160)
                     );
                 }
 
@@ -303,13 +225,13 @@ class SonarSLAMImpl{
                         m_vis_buffer, p, 0.1/m_vis_metres_per_px, cv::Scalar(0,0,140)
                     );*/
             }
-            m_vis_keyframes_included = key_scans.size();            
+            m_vis_keyframes_included = key_scans.size();
 
             location_vec::const_iterator j;
             location_vec const& all_scans = m_graph.allScans();
 
             for(j = all_scans.begin() + m_vis_allframes_included; j != all_scans.end(); j++){
-                Eigen::Matrix4f const& global_transform = (*j)->globalTransform();            
+                Eigen::Matrix4f const& global_transform = (*j)->globalTransform();
                 const Eigen::Vector2f image_pt = toVisCoords(
                     global_transform.block<3,1>(0,3)
                 );
@@ -317,6 +239,15 @@ class SonarSLAMImpl{
                     m_vis_buffer, image_pt, 0.25/m_vis_metres_per_px,
                     cv::Scalar(105, 40, 40)
                 );
+                if((*j)->relativeTo()){
+                    const Eigen::Vector2f based_on_image_pt = toVisCoords(
+                        (*j)->relativeTo()->globalTransform().block<3,1>(0,3)
+                    );
+                    drawLine(
+                        m_vis_buffer, image_pt, based_on_image_pt,
+                        cv::Scalar(97.5, 160, 50)
+                    );
+                }
             }
             m_vis_allframes_included = all_scans.size();
         }

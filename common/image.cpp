@@ -70,17 +70,27 @@ struct getPrincipalMat: boost::static_visitor<cv::Mat>{
 } // namespace cauv
 
 cauv::Image::Image()
-    : m_img(), m_ts(), m_compress_fmt(".jpg"), m_compress_params()
+    : m_img(), m_ts(now()), m_compress_fmt(".jpg"), m_compress_params(), m_uid(mkUID())
 {
-    m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-    m_compress_params.push_back(Compress_JPEG_Quality);
+    setDefaultCompressParams();
 }
 
 cauv::Image::Image(augmented_mat_t const& img)
-    : m_img(img), m_ts(), m_compress_fmt(".jpg"), m_compress_params()
+    : m_img(img), m_ts(now()), m_compress_fmt(".jpg"), m_compress_params(), m_uid(mkUID())
 {
-    m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-    m_compress_params.push_back(Compress_JPEG_Quality);
+    setDefaultCompressParams();
+}
+
+cauv::Image::Image(augmented_mat_t const& img, TimeStamp const& ts)
+    : m_img(img), m_ts(ts), m_compress_fmt(".jpg"), m_compress_params(), m_uid(mkUID())
+{
+    setDefaultCompressParams();
+}
+
+cauv::Image::Image(augmented_mat_t const& img, TimeStamp const& ts, UID const& id)
+    : m_img(img), m_ts(ts), m_compress_fmt(".jpg"), m_compress_params(), m_uid(id)
+{
+    setDefaultCompressParams();
 }
 
 // Copy constructor; take a deep copy of the image data
@@ -144,6 +154,12 @@ void cauv::Image::serializeQuality(int q){
         m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         m_compress_params.push_back(q);
     }
+}
+
+void cauv::Image::setDefaultCompressParams(){
+    m_compress_params.clear();
+    m_compress_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    m_compress_params.push_back(Compress_JPEG_Quality);
 }
 
 void cauv::serialise(svec_ptr p, Image const& v){

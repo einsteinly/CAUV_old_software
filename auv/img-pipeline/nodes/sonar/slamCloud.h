@@ -526,6 +526,8 @@ class SlamCloudGraph{
                     assert(!all_scans.back()->relativeTo());
                     return all_scans.back()->globalTransform();
                 default:{
+                    return all_scans.back()->globalTransform();
+                    /*
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
                     location_vec::const_reverse_iterator i = all_scans.rbegin();
@@ -546,22 +548,6 @@ class SlamCloudGraph{
                     if((p-p1).norm() > m_keyframe_spacing){
                         warning() << "predicted motion > keyframe spacing, will throttle";
                         r.block<3,1>(0,3) = p1 + m_keyframe_spacing * (p1-p2).normalized();
-                    }
-                    return r;
-
-                    /*
-                    const Eigen::Matrix4f r1 = (*i)->globalTransform();
-                    const TimeStamp t1 = (*i)->time();
-                    const Eigen::Matrix4f r2 = (*++i)->globalTransform();
-                    const TimeStamp t2 = (*i)->time();
-                    Eigen::Matrix4f r = r1 + (r1-r2)*(t - t1)/(t1 - t2);
-
-                    const float Max_Speed = 0.1; // m/s
-                    const float frac_speed = std::fabs((r-r1).block<3,1>(0,3).norm() / (t1 - t2)) / Max_Speed;
-                    if(frac_speed >= 1.0){
-                        warning() << "predicted motion > max speed (x"
-                                  << frac_speed << "), will throttle";
-                        return r1 + (1.0 / frac_speed) * (r1-r2)*(t - t1)/(t1 - t2);
                     }
                     return r;
                     */

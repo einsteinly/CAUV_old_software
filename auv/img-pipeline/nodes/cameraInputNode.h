@@ -25,6 +25,8 @@
 #include <camera/client.h>
 #include <camera/server_shared.h>
 
+#include <generated/types/SensorUIDBase.h>
+
 #include "asynchronousNode.h"
 
 
@@ -39,7 +41,8 @@ class CameraInputNode: public AsynchronousNode{
     public:
         CameraInputNode(ConstructArgs const& args)
             : AsynchronousNode(args),
-              m_server_connection(){
+              m_server_connection(),
+              m_seq(0){
             setAllowQueue();
         }
 
@@ -91,16 +94,21 @@ class CameraInputNode: public AsynchronousNode{
             SharedImage *s = m_server_connection->getUnGuardedImage(camera_id, w, h);
 
             r["image_out"] = boost::shared_ptr<Image>(
-                new Image(cv::Mat(
-                    s->height, s->width, s->type, &(s->bytes[0]), s->pitch
-                )), SharedImageDeleter(s, m_server_connection)
+                new Image(
+                    cv::Mat(s->height, s->width, s->type, &(s->bytes[0]), s->pitch),
+                    now(),
+                    mkUID(SensorUIDBase::Camera + camera_id, ++m_seq)
+                ),
+                SharedImageDeleter(s, m_server_connection)
             );
 
             return r;
         }
 
     protected:
+
         boost::shared_ptr<CameraServerConnection> m_server_connection;
+        uint64_t m_seq;
 
     // Register this node type
     DECLARE_NFR;

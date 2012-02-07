@@ -24,6 +24,8 @@
 
 #include "asynchronousNode.h"
 
+#include <generated/types/SensorUIDBase.h>
+
 #define MAX_DEVICES 5
 
 namespace cauv{
@@ -35,7 +37,8 @@ class DirectCameraInputNode: public AsynchronousNode{
     public:
         DirectCameraInputNode(ConstructArgs const& args)
             : AsynchronousNode(args),
-              m_current_device(-1){
+              m_current_device(-1),
+              m_seq(0){
         }
 
         void init(){
@@ -78,7 +81,7 @@ class DirectCameraInputNode: public AsynchronousNode{
                 
                 cv::Mat img;
                 m_capture >> img;
-                r["image_out"] = boost::make_shared<Image>(img);
+                r["image_out"] = boost::make_shared<Image>(img, now(), mkUID(SensorUIDBase::Camera + m_current_device, ++m_seq));
             }
 
             return r;
@@ -123,6 +126,7 @@ class DirectCameraInputNode: public AsynchronousNode{
         
         cv::VideoCapture m_capture;
         int m_current_device;
+        uint64_t m_seq;
         static boost::try_mutex m_capture_lock[MAX_DEVICES];
     
     // Register this node type
