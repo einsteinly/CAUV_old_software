@@ -168,13 +168,13 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                     if(!uid_set)
                         m_uid = mkUID();
                     if(inputs.size() && uid_inherited){
-                        debug() << "default UID inherited from inputs:" << std::hex
+                        debug(5) << "default UID inherited from inputs:" << std::hex
                                 << m_uid << ":" << *this;
                     }else if(inputs.size() && uid_set){
-                        debug() << "default UID new (input UIDs differ):" << std::hex
+                        debug(5) << "default UID new (input UIDs differ):" << std::hex
                                 << m_uid << ":" << *this;
                     }else{
-                        debug() << "default UID new (no valid inputs)";
+                        debug(5) << "default UID new (no valid inputs)";
                     }
                 }
                 // yay, triply nested class:
