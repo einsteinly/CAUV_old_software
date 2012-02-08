@@ -134,37 +134,47 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 // from - the UIDs of the inputs are used to decide the UID
                 // used for outputs
                 ProtectedOutputMap(in_image_map_t const& inputs)
-                    : m_uid(mkUID()){
-                    if(inputs.size()){
-                        m_uid = inputs.begin()->second->id();
-                        in_image_map_t::const_iterator i;
-                        for(i = ++inputs.begin(); i != inputs.end(); i++){
-                            // != == !==
-                            if(!(i->second->id() == m_uid)){
-                                // if inputs have a mixture of UIDs, set
-                                // output to a completely new UID (but this
-                                // single UID will be shared between however
-                                // many outputs are produce)
-                                // !!! actually, just set the sequence number
-                                // to 0 for now. If it proves necessary to have
-                                // one, then can think carefully about how it
-                                // should be set.
-                                // // The sequence number is derived from the
-                                // // first input
-                                // uint64_t seq = (uint64_t(m_uid.seq1) << 32) | m_uid.seq2;
-                                m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
-                                break;
-                            }
+                    : m_uid(){
+                    bool uid_inherited = false;
+                    bool uid_set = false;
+                    in_image_map_t::const_iterator i = inputs.begin();
+                    while(!i->second && i != inputs.end())
+                       i++;
+                    if(i->second && i != inputs.end()){
+                        uid_inherited = true;
+                        uid_set = true;
+                        m_uid = i->second->id();
+                        i++;
+                    }
+                    for(; i != inputs.end(); i++){
+                        // != == !==
+                        if(i->second && !(i->second->id() == m_uid)){
+                            // if inputs have a mixture of UIDs, set output to
+                            // a completely new UID (but this single UID will
+                            // be shared between however many outputs are
+                            // produce)
+                            // !!! actually, just set the sequence number to 0
+                            // for now. If it proves necessary to have one,
+                            // then can think carefully about how it should be
+                            // set.
+                            // // The sequence number is derived from the first
+                            // // input/
+                            // uint64_t seq = (uint64_t(m_uid.seq1) << 32) | m_uid.seq2;
+                            m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
+                            uid_inherited = false;
+                            break;
                         }
                     }
-                    if(inputs.size() && m_uid == inputs.begin()->second->id()){
+                    if(!uid_set)
+                        m_uid = mkUID();
+                    if(inputs.size() && uid_inherited){
                         debug() << "default UID inherited from inputs:" << std::hex
                                 << m_uid << ":" << *this;
-                    }else if(inputs.size()){
+                    }else if(inputs.size() && uid_set){
                         debug() << "default UID new (input UIDs differ):" << std::hex
                                 << m_uid << ":" << *this;
                     }else{
-                        debug() << "default UID new (no inputs)";
+                        debug() << "default UID new (no valid inputs)";
                     }
                 }
                 // yay, triply nested class:
@@ -180,8 +190,10 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                     // if an image is assigned, same rule applies - but images
                     // have an internal UID instead of being wrapped in a
                     // pipeline-specific structure:
+                    // Images can also be NULL...
                     inline void operator=(image_ptr_t const& img){
-                        img->id(m_uid_to_add);
+                        if(img)
+                            img->id(m_uid_to_add);
                         m_ref = output_t(img);
                     }
                     
