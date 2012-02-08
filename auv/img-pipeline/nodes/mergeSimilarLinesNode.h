@@ -160,9 +160,7 @@ class MergeSimilarLinesNode: public Node{
             return mod<float>(a, M_PI);
         }
 
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
-
+        void doWork(in_image_map_t&, out_map_t& r){
             const float angleEpsilon = param< float >("angle epsilon");
             const float distanceEpsilon = param< float >("distance epsilon");
             const std::vector<Line> lines = param< std::vector<Line> >("lines");
@@ -190,8 +188,6 @@ class MergeSimilarLinesNode: public Node{
                         << e.err << "\n\t"
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
-
-            return r;
         }
 
     // Register this node type

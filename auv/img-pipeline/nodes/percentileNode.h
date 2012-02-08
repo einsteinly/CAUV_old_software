@@ -122,8 +122,7 @@ class PercentileNode: public Node{
             }
             float m_pct;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             augmented_mat_t img = inputs["image"]->augmentedMat();
             
@@ -143,7 +142,6 @@ class PercentileNode: public Node{
                     //removed = unregisterOutputID(MakeString() << "ch" << (ch+1) << " value", false);
 
 
-            return r;
         }
     
     // Register this node type

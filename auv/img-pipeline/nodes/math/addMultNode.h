@@ -49,15 +49,12 @@ class MathAddMultNode: public Node{
         }
 
     protected:
-
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
+        void doWork(in_image_map_t&, out_map_t& r){
             T a = param<T>("A (triggers exec)");
             T b = param<T>("B");
             float a_fac = param<float>("Afac");
             float b_fac = param<float>("Bfac");
             r["A*Afac + B*Bfac"] = ParamValue(T(a*a_fac + b*b_fac));
-            return r;
         }
     
     // Register this node type

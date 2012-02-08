@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -123,7 +123,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
             throw link_error("old arc must be removed first");
         }
         // NB this check does grab the output lock on n temporarily
-        if(i->second->isParam() && ip->param_value.which() != n->paramOutputType(o_id))
+        if(i->second->isParam() && ip->param_value.param.which() != n->paramOutputType(o_id))
             throw link_error(
                 mkStr() << "setInput: unmatched parameter types"
                         << *n << o_id << "->" << *this << i_id
@@ -189,7 +189,7 @@ Node::msg_node_input_map_t Node::inputLinks() const{
         // input (it also enforces sub-types for parameters)
         if(v.second->isParam()){
             t.type = OutputType::Parameter;
-            t.subType = v.second->param_value.which();
+            t.subType = v.second->param_value.param.which();
         }else{
             t.type = OutputType::Image;
             t.subType = -1;
@@ -366,7 +366,6 @@ struct _COD{_COD(Type& m):m(m){}~_COD(){m.member();}Type& m;}
 void Node::exec(){
     CallOnDestruct(Node, clearExecQueued) cod(*this);
     in_image_map_t inputs;
-    out_map_t outputs;
 
     lock_t il(m_inputs_lock);
 
@@ -403,18 +402,19 @@ void Node::exec(){
     NodeStatus::e status = NodeStatus::None;
     if(allowQueue()) status |= NodeStatus::AllowQueue;
     _statusMessage(boost::make_shared<StatusMessage>(m_pl_name, m_id, status | NodeStatus::Executing));
+    out_map_t outputs(inputs);    
     try{
         if(m_speed == asynchronous){
             // doWork will arrange for demandNewParentInput to be called when
             // appropriate
-            outputs = this->doWork(inputs);
+            this->doWork(inputs, outputs);
         }else if(this->m_speed < medium){
             // if this is a fast node: request new image from parents before executing
             demandNewParentInput();
-            outputs = this->doWork(inputs);
+            this->doWork(inputs, outputs);
         }else{
             // if this is a slow node, request new images from parents after executing
-            outputs = this->doWork(inputs);
+            this->doWork(inputs, outputs);
             demandNewParentInput();
         }
     }catch(std::exception& e){
@@ -504,13 +504,13 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id,
     return r;
 }
 
-ParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error){
+Node::InternalParamValue Node::getOutputParam(output_id const& o_id) const throw(id_error){
     lock_t l(m_outputs_lock);
     const private_out_map_t::const_iterator i = m_outputs.find(o_id);
-    ParamValue r;
+    InternalParamValue r;
     if(i != m_outputs.end()){
         try{
-            r = boost::get<ParamValue>(i->second->value);
+            r = boost::get<InternalParamValue>(i->second->value);
         }catch(boost::bad_get&){
             throw id_error("requested output is not a ParamValue" + toStr(o_id));
         }
@@ -527,8 +527,8 @@ std::map<LocalNodeInput, ParamValue> Node::parameters() const{
     std::map<LocalNodeInput, ParamValue> r;
     foreach(private_in_map_t::value_type const& v, m_inputs)
         if(v.second->isParam())
-            r[LocalNodeInput(v.first, v.second->param_value.which(), v.second->sched_type)]
-                = v.second->param_value;
+            r[LocalNodeInput(v.first, v.second->param_value.param.which(), v.second->sched_type)]
+                = v.second->param_value.param;
     return r;
 }
 

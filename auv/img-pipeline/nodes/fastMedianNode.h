@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -230,8 +230,7 @@ class FastMedianNode: public Node{
             const float m_sigma;
         };
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             float radius = param<float>("radius");
 
@@ -240,7 +239,6 @@ class FastMedianNode: public Node{
 
             r["image"] = boost::make_shared<Image>(out);
 
-            return r;
         }
     
     // Register this node type

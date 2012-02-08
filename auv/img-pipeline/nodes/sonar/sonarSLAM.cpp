@@ -481,9 +481,8 @@ void SonarSLAMNode::init(){
     registerOutputID("training: goodness", std::vector<int>());
 }
 
-Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
+void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     typedef std::vector<KeyPoint> kp_vec;
-    out_map_t r;
 
     bool clear = param<bool>("clear");
     if(clear)
@@ -694,7 +693,5 @@ Node::out_map_t SonarSLAMNode::doWork(in_image_map_t& inputs){
         ));
     }
 #endif // 0
-
-    return r;
 }
 

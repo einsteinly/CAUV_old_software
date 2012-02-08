@@ -122,6 +122,14 @@ void cauv::Image::ts(cauv::TimeStamp const& t){
     m_ts = t;
 }
 
+cauv::UID cauv::Image::id() const{
+    return m_uid;
+}
+
+void cauv::Image::id(cauv::UID const& uid){
+    m_uid = uid;
+}
+
 cv::Mat cauv::Image::mat() const {
     // will throw if this isn't the right type
     return boost::get<cv::Mat>(m_img);

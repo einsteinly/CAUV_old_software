@@ -37,8 +37,7 @@ class CopyNodeMask: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             
             cv::Mat img = inputs["image"]->mat();
             cv::Mat mask = inputs["mask"]->mat();
@@ -53,7 +52,6 @@ class CopyNodeMask: public Node{
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
             
-            return r;
         }
         
         // Register this node type

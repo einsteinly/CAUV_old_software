@@ -480,8 +480,7 @@ class LearnedKeyPointsNode: public Node{
                 kp_vec const& m_kps;
         };
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img = inputs["image"];
 
@@ -527,7 +526,6 @@ class LearnedKeyPointsNode: public Node{
 
             r["image"] = img;
 
-            return r;
         }
 
         class TreeGrowingVisitor: public boost::static_visitor<TreeNode_ptr>{

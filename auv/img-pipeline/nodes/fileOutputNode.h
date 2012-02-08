@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -69,9 +69,8 @@ class FileOutputNode: public OutputNode{
             std::string const& m_fname;
             std::vector<int> const& m_imwrite_params;
         };
-        out_map_t doWork(in_image_map_t& inputs){
+        void doWork(in_image_map_t& inputs, out_map_t&){
             using boost::algorithm::replace_all_copy;
-            out_map_t r;
 
             image_ptr_t img = inputs["image_in"];
             
@@ -105,7 +104,6 @@ class FileOutputNode: public OutputNode{
                 throw(img_pipeline_error("FileOutputNode: could not write file"));
             }
             
-            return r;
         }
 
         int m_counter;

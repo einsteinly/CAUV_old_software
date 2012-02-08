@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -76,8 +76,7 @@ class LevelsNode: public Node{
             int m_white;
             int m_black;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             augmented_mat_t img = inputs["image"]->augmentedMat();
             
@@ -88,7 +87,6 @@ class LevelsNode: public Node{
             
             r["image (not copied)"] = boost::make_shared<Image>(img);
             
-            return r;
         }
 
     

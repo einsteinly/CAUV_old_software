@@ -39,8 +39,7 @@ class CornerHarrisNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image_in"]->mat();
             
@@ -52,7 +51,6 @@ class CornerHarrisNode: public Node{
             if (img.elemSize() != 1){
                 error() << "ThresholdMaskNode:\n\t"
                         << "Invalid image input - must be 8-bit";
-                return r;
             }
 
             int bs = param<int>("block size");
@@ -72,7 +70,6 @@ class CornerHarrisNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
             
-            return r;
         }
     
     // Register this node type

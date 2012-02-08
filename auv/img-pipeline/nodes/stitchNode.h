@@ -41,8 +41,7 @@ class StitchNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             bool first_run = false;
 
             if(!m_buffer){
@@ -62,7 +61,6 @@ class StitchNode: public Node{
             // ..... TODO
             
             r["Stitch Buffer"] = m_buffer;
-            return r;
         }
 
     private:

@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -69,9 +69,7 @@ class DirectCameraInputNode: public AsynchronousNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
-            
+        void doWork(in_image_map_t&, out_map_t& r){
             debug(4) << "DirectCameraInputNode::doWork";
             
             if(!m_capture.isOpened()){
@@ -81,10 +79,9 @@ class DirectCameraInputNode: public AsynchronousNode{
                 
                 cv::Mat img;
                 m_capture >> img;
-                r["image_out"] = boost::make_shared<Image>(img, now(), mkUID(SensorUIDBase::Camera + m_current_device, ++m_seq));
+                // use internalValue to avoid automatic UID setting on outputs                
+                r.internalValue("image_out") = boost::make_shared<Image>(img, now(), mkUID(SensorUIDBase::Camera + m_current_device, ++m_seq));
             }
-
-            return r;
         }
 
     private:

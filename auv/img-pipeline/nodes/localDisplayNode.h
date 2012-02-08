@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -44,8 +44,7 @@ class LocalDisplayNode: public OutputNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t&){
 
             image_ptr_t img = inputs["image_in"];
             
@@ -54,7 +53,6 @@ class LocalDisplayNode: public OutputNode{
             cv::imshow("LocalDisplayNode", img->mat());
             cv::waitKey(10);
 
-            return r;
         }
     
     // Register this node type

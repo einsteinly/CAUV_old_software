@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -36,6 +36,7 @@
 #include <generated/types/Pl_GuiGroup.h>
 #include <generated/types/NodeInputStatus.h>
 #include <generated/types/InputSchedType.h>
+#include <generated/types/SensorUIDBase.h>
 
 // TODO: remove this dependency
 #include <ssrc/spread.h>
@@ -74,15 +75,138 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef std::set<input_id> input_id_set_t;
 
     protected:
-        // Protected typedefs: useful for derived nodes
+        // Protected types and typedefs: useful for derived nodes
+
+        // Actually this one should not normally be of interest to derived
+        // types, except perhaps for debug purposes...
+        // Inside the image pipeline we track the origins of data with
+        // UIDs tagged onto every parameter.
+        // Image objects also have an internal UID - the UID of a parameter is
+        // set to that of the image that it was derived from if the value was
+        // derived from an image.
+        struct InternalParamValue{
+            ParamValue param;
+            UID        uid;
+
+            InternalParamValue()
+                : param(), uid(mkUID()){
+            }
+
+            InternalParamValue(ParamValue const& param, UID const& uid)
+                : param(param), uid(uid){
+            }
+
+            explicit InternalParamValue(ParamValue const& param)
+                : param(param), uid(mkUID()){
+            }
+            
+            template<typename T>
+            InternalParamValue(T const& v, UID const& uid)
+                : param(v), uid(uid){
+            }
+
+            operator ParamValue() const{
+                return param;
+            }
+
+            bool operator==(InternalParamValue const& other) const{
+                return param == other.param;
+            }
+        };
+        template<typename cT, typename tT>
+        friend std::basic_ostream<cT, tT>& operator<<(
+            std::basic_ostream<cT, tT>&, InternalParamValue const&
+        );
+
         typedef boost::shared_ptr<Image> image_ptr_t;
 
         // NB: order here is important, don't change it!
         // matches cauv::OutputType::e
-        typedef boost::variant<image_ptr_t, ParamValue> output_t;
-
-        typedef std::map<output_id, output_t> out_map_t;
+        typedef boost::variant<image_ptr_t, InternalParamValue> output_t;
+        
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
+
+        class ProtectedOutputMap: public std::map<output_id, output_t>{
+            private:
+                typedef std::map<output_id, output_t> base_t;
+            public:
+                // constructed from the inputs that the outputs will be derived
+                // from - the UIDs of the inputs are used to decide the UID
+                // used for outputs
+                ProtectedOutputMap(in_image_map_t const& inputs)
+                    : m_uid(mkUID()){
+                    if(inputs.size()){
+                        m_uid = inputs.begin()->second->id();
+                        in_image_map_t::const_iterator i;
+                        for(i = ++inputs.begin(); i != inputs.end(); i++){
+                            // != == !==
+                            if(!(i->second->id() == m_uid)){
+                                // if inputs have a mixture of UIDs, set
+                                // output to a completely new UID (but this
+                                // single UID will be shared between however
+                                // many outputs are produce)
+                                // !!! actually, just set the sequence number
+                                // to 0 for now. If it proves necessary to have
+                                // one, then can think carefully about how it
+                                // should be set.
+                                // // The sequence number is derived from the
+                                // // first input
+                                // uint64_t seq = (uint64_t(m_uid.seq1) << 32) | m_uid.seq2;
+                                m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
+                                break;
+                            }
+                        }
+                    }
+                    if(inputs.size() && m_uid == inputs.begin()->second->id()){
+                        debug() << "default UID inherited from inputs:" << std::hex
+                                << m_uid << ":" << *this;
+                    }else if(inputs.size()){
+                        debug() << "default UID new (input UIDs differ):" << std::hex
+                                << m_uid << ":" << *this;
+                    }else{
+                        debug() << "default UID new (no inputs)";
+                    }
+                }
+                // yay, triply nested class:
+                struct UIDAddingProxy{
+                    UIDAddingProxy(output_t& ref, UID const& uid)
+                        : m_ref(ref), m_uid_to_add(uid){
+                    }
+                    // return void to stop people doing crazy operator chaining
+                    // and confusing themselves:
+                    inline void operator=(ParamValue const& v){
+                        m_ref = output_t(InternalParamValue(v, m_uid_to_add));
+                    }
+                    // if an image is assigned, same rule applies - but images
+                    // have an internal UID instead of being wrapped in a
+                    // pipeline-specific structure:
+                    inline void operator=(image_ptr_t const& img){
+                        img->id(m_uid_to_add);
+                        m_ref = output_t(img);
+                    }
+                    
+                    output_t& m_ref;
+                    UID const& m_uid_to_add;
+                };
+                // use this operator to set outputs in the map: it
+                // automatically attaches a UID as the value is added to the
+                // internal map
+                inline UIDAddingProxy operator[](output_id const& oid){
+                    return UIDAddingProxy(base_t::operator[](oid), m_uid);
+                }
+                // Note that derived node types *can* use the base operator[]
+                // to specify internal paramvalues directly; the base operator
+                // is provided by this function in order to be explicit:
+                // In fact, using the operator is REQUIRED if you don't want
+                // the id in 
+                output_t& internalValue(output_id const& oid){
+                    return base_t::operator[](oid);
+                }
+            private:
+                UID m_uid;
+        };
+
+        typedef ProtectedOutputMap out_map_t;
 
     private:
         // Private types and typedefs: only used internally
@@ -133,7 +257,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             InputSchedType::e sched_type;
             NodeInputStatus::e status;
             InputType input_type;
-            mutable ParamValue param_value;
+            mutable InternalParamValue param_value;
             std::string tip;
 
             Input(InputSchedType::e s)
@@ -175,19 +299,22 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             }
 
             // NB: no locks are necessarily held when calling this
-            ParamValue getParam(bool& did_change) const{
+            InternalParamValue getParam(bool& did_change) const{
                 did_change = false;
                 if(target){
-                    ParamValue parent_value = target.node->getOutputParam(target.id);
-                    if(param_value.which() == parent_value.which()){
+                    InternalParamValue parent_value = target.node->getOutputParam(target.id);
+                    if(param_value.param.which() == parent_value.param.which()){
                         if(!(param_value == parent_value)){
                             did_change = true;
-                            param_value = parent_value;
                         }
+                        // even if it compared equal, assign anyway: metatdata
+                        // isn't counted in comparison, but we always want to
+                        // make sure we have the latest
+                        param_value = parent_value;
                     }else{
                         debug() << "Type mismatch on parameter link:" << *this
-                                << " (param=" << param_value.which() << "vs link="
-                                << parent_value.which()
+                                << " (param=" << param_value.param.which()
+                                << "vs link=" << parent_value.param.which()
                                 << ") the default parameter value will be returned";
                     }
                 }
@@ -303,16 +430,6 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         void exec();
 
 
-        /* Get the actual image data associated with an output
-         */
-        image_ptr_t getOutputImage(output_id const& o_id,
-                                   bool suppress_null_warning = false) const throw(id_error);
-
-        /* Get the parameter associated with a parameter output
-         */
-        ParamValue getOutputParam(output_id const& o_id) const throw(id_error);
-
-
         /* return all parameter values (without querying connected parents)
          */
         std::map<LocalNodeInput, ParamValue> parameters() const;
@@ -333,8 +450,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 l.unlock();
                 if(ip->input_type == InType_Parameter){
                     debug() << "param" << p << "set to" << std::boolalpha << v;
-                    if(ip->param_value.which() == ParamValue(v).which()){
-                        ip->param_value = v;
+                    if(ip->param_value.param.which() == ParamValue(v).which()){
+                        ip->param_value = InternalParamValue(v, mkUID(SensorUIDBase::Network));
                         ip->status = NodeInputStatus::New;
                         sendMessage(boost::make_shared<NodeParametersMessage>(
                             m_pl_name, id(), parameters()
@@ -373,7 +490,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 l.unlock();
                 bool did_change = false;
                 try{
-                    T val = getValue<T>(ip->getParam(did_change));
+                    T val = getValue<T>(ip->getParam(did_change).param);
                     if(did_change){
                         // TODO: is this desirable?
                         //paramChanged(p);
@@ -406,6 +523,16 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         void checkAddSched(SchedMode m = AllNew);
 
     protected:
+        /* Get the actual image data associated with an output
+         */
+        image_ptr_t getOutputImage(output_id const& o_id,
+                                   bool suppress_null_warning = false) const throw(id_error);
+
+        /* Get the parameter associated with a parameter output
+         */
+        InternalParamValue getOutputParam(output_id const& o_id) const throw(id_error);
+
+
         /* Static Constants */
         static const char* Image_In_Name;
         static const char* Image_Out_Name;
@@ -414,7 +541,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         /* Derived classes override this to do whatever image processing it is
          * that they do.
          */
-        virtual out_map_t doWork(in_image_map_t&) = 0;
+        virtual void doWork(in_image_map_t&, out_map_t&) = 0;
 
         /* Priority of this node; this might change dynamically.
          * Used when this node is added to a scheduler queue
@@ -477,7 +604,9 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         template<typename T>
         void registerOutputID(output_id const& o, T default_value){
-            _explicitRegisterOutputID<ParamValue>(o, ParamValue(default_value));
+            _explicitRegisterOutputID<InternalParamValue>(o,
+                InternalParamValue(ParamValue(default_value))
+            );
         }
         /* overload for image output type: I'm as shocked as you are that this
          * works
@@ -654,6 +783,11 @@ std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::Out
        << o.targets << o.value << "demanded=" << std::boolalpha << o.demanded
        << "}";
     return os;
+}
+
+template<typename cT, typename tT>
+std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::InternalParamValue const& v){
+    return os << "{value=" << v.param << " id=" << std::hex << v.uid << "}";
 }
 
 } // namespace imgproc

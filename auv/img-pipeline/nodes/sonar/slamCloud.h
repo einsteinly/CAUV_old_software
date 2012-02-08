@@ -526,8 +526,6 @@ class SlamCloudGraph{
                     assert(!all_scans.back()->relativeTo());
                     return all_scans.back()->globalTransform();
                 default:{
-                    return all_scans.back()->globalTransform();
-                    /*
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
                     location_vec::const_reverse_iterator i = all_scans.rbegin();
@@ -550,7 +548,6 @@ class SlamCloudGraph{
                         r.block<3,1>(0,3) = p1 + m_keyframe_spacing * (p1-p2).normalized();
                     }
                     return r;
-                    */
                 }
             }
         }
@@ -754,7 +751,6 @@ class SlamCloudGraph{
             }
             // end hack
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
             return r;
         }
 

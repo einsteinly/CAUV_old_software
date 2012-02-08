@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -53,15 +53,11 @@ class BroadcastKeypointsNode: public OutputNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
-
+        void doWork(in_image_map_t&, out_map_t&){
             const std::string name = param<std::string>("name");
             const std::vector<cauv::KeyPoint> keypoints = param< std::vector<cauv::KeyPoint> >("keypoints");
 
             sendMessage(boost::make_shared<KeyPointsMessage>(name, keypoints));
-
-            return r;
         }
     private:
 

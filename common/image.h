@@ -89,6 +89,7 @@ class Image{
         // multiple sensors, then it should probably get a new UID at that
         // point.
         cauv::UID id() const;
+        void id(cauv::UID const& uid);
         
         // Nodes that wish to support pyramid images (not implemented yet), or
         // polar images should use only the augmentedMat functions

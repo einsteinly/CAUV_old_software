@@ -48,8 +48,7 @@ class SplitRGBNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             image_ptr_t img = inputs["image"];
             
             cv::Mat out[3];
@@ -66,7 +65,6 @@ class SplitRGBNode: public Node{
             r["G"] = boost::make_shared<Image>(out[1]);
             r["B"] = boost::make_shared<Image>(out[2]);
             
-            return r;
         }
     
     // Register this node type
