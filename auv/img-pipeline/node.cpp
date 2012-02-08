@@ -217,7 +217,7 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     }else if(i->second->isParam() != !n->inputs().count(i_id)){
         throw link_error("setOutput: Parameter <==> Image mismatch");
     }
-    const int32_t sub_type = i->second->isParam()?  boost::get<ParamValue>(i->second->value).which() : -1;
+    const int32_t sub_type = i->second->isParam()? boost::get<InternalParamValue>(i->second->value).param.which() : -1;
     // note that the schedType field (May_Be_Old here) is excluded from the
     // comparison of LocalNodeInput structures
     if(i->second->isParam() && !(
@@ -301,7 +301,7 @@ int32_t Node::paramOutputType(output_id const& o_id) const{
     private_out_map_t::const_iterator i = m_outputs.find(o_id);
     if(i == m_outputs.end() || !i->second->isParam())
         throw parameter_error("unknown parameter output");
-    return boost::get<ParamValue>(i->second->value).which();
+    return boost::get<InternalParamValue>(i->second->value).param.which();
 }
 
 Node::msg_node_output_map_t Node::outputLinks() const{
@@ -312,7 +312,7 @@ Node::msg_node_output_map_t Node::outputLinks() const{
         int32_t sub_type = -1;
         OutputType::e type = OutputType::e(i.second->value.which());
         if(type == OutputType::Parameter)
-            sub_type = boost::get<ParamValue>(i.second->value).which();
+            sub_type = boost::get<InternalParamValue>(i.second->value).param.which();
         foreach(output_link_list_t::value_type const& j, i.second->targets)
             input_list.push_back(NodeInput(m_pl.lookup(j.node), j.id, sub_type)); 
         r[LocalNodeOutput(i.first,type,sub_type)] = input_list;
@@ -441,10 +441,10 @@ void Node::exec(){
             error() << *this << "exec() produced output of the wrong type for id:"
                     << v.first << "(ignored)";
         }else if(op->value.which() == OutputType::Parameter &&
-                 boost::get<ParamValue>(op->value).which() !=
-                 boost::get<ParamValue>(v.second).which()){
-            uint32_t got_which = boost::get<ParamValue>(op->value).which();
-            uint32_t exp_which = boost::get<ParamValue>(v.second).which();
+                 boost::get<InternalParamValue>(op->value).param.which() !=
+                 boost::get<InternalParamValue>(v.second).param.which()){
+            uint32_t got_which = boost::get<InternalParamValue>(op->value).param.which();
+            uint32_t exp_which = boost::get<InternalParamValue>(v.second).param.which();
             error() << *this << "exec() produced output of the wrong parameter type for id:"
                     << v.first << "(ignored) - got type" << got_which << "expected" << exp_which;
         }else{
