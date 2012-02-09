@@ -19,6 +19,7 @@
 
 #include <common/cauv_node.h>
 
+#include "style.h"
 #include "fluidity/view.h"
 
 class ScratchNode: public cauv::CauvNode, public QThread{
@@ -33,7 +34,9 @@ class ScratchNode: public cauv::CauvNode, public QThread{
 
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
-    
+
+    QApplication::setStyle(new cauv::gui::CauvStyle());
+
     boost::shared_ptr<ScratchNode> node = boost::make_shared<ScratchNode>("scratch");
     node->parseOptions(argc, argv);
     node->start();

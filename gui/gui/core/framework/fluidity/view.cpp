@@ -55,7 +55,6 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     // items aren't added or removed a lot, just updated
     //s->setItemIndexMethod(QGraphicsScene::NoIndex);
     s->setSceneRect(-200,-200,400,400);
-    s->setStyle(new CauvStyle());
 
     setScene(s);
     m_manager = boost::make_shared<Manager>(s, &(*m_cauv_node), "default");

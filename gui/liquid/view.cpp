@@ -135,7 +135,7 @@ void LiquidView::scaleAround(QPointF point, qreal scaleFactor){
 
 void LiquidView::wheelEvent(QWheelEvent *event){
 
-    if(!(QApplication::keyboardModifiers() == Qt::ControlModifier)) {
+    if(!(QApplication::keyboardModifiers() & Qt::ControlModifier)) {
         return QGraphicsView::wheelEvent(event);
     } else {
         scaleAround(event->pos(), (((float)event->delta())*0.005)+1);

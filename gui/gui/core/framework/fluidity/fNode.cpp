@@ -134,7 +134,7 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
       ManagedElement(m),
       m_node_id(id){
     initButtons();
-    setType(type);    
+    setType(type);
 
     setSize(QSizeF(104,130));
     
@@ -172,9 +172,8 @@ void FNode::setInputs(msg_node_input_map_t const& inputs){
     m_inputs.clear();
     msg_node_input_map_t::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
-        // don't add any inputs that are actually parameters!
-        // TODO: fix the order-dependence here... really parameters should have
-        // been filtered out by the time this function is called
+        // Don't add any inputs that are actually parameters! Note that
+        // setParams must be called first, so this information is available.
         if(!m_params.count(j->first.input)){
             debug() << BashColour::Blue << "FNode:: new input:" << *j;
             FNodeInput* t = new FNodeImageInput(manager(), j->first, this);
