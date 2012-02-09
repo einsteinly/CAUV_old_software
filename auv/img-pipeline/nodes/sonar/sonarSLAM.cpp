@@ -436,6 +436,8 @@ void SonarSLAMNode::init(){
     // inputs:
     registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", Must_Be_New);
     registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
+    requireSyncInputs("keypoints", "training: polar keypoints");
+    
     registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
 

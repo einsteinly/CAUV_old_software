@@ -21,6 +21,156 @@
 using namespace cauv;
 using namespace cauv::imgproc;
 
+
+// - Nested Class Definitions:
+
+// - Node::InternalParamValue
+Node::InternalParamValue::InternalParamValue()
+    : param(), uid(mkUID()){
+}
+
+Node::InternalParamValue::InternalParamValue(ParamValue const& param,
+                                             UID const& uid) 
+    : param(param), uid(uid){
+}
+
+Node::InternalParamValue::InternalParamValue(ParamValue const& param)
+    : param(param), uid(mkUID()){
+}
+
+Node::InternalParamValue::operator ParamValue() const{
+    return param;
+}
+
+bool Node::InternalParamValue::operator==(this_t const& other) const{
+    return param == other.param;
+}
+
+// - Node::_OutMap
+// constructed from the inputs that the outputs will be derived
+// from - the UIDs of the inputs are used to decide the UID
+// used for outputs
+Node::_OutMap::_OutMap(in_image_map_t const& inputs)
+    : m_uid(){
+    bool uid_inherited = false;
+    bool uid_set = false;
+    in_image_map_t::const_iterator i = inputs.begin();
+    while(!i->second && i != inputs.end())
+       i++;
+    if(i->second && i != inputs.end()){
+        uid_inherited = true;
+        uid_set = true;
+        m_uid = i->second->id();
+        i++;
+    }
+    for(; i != inputs.end(); i++){
+        // != == !==
+        if(i->second && !(i->second->id() == m_uid)){
+            // if inputs have a mixture of UIDs, set output to a completely new
+            // UID (but this single UID will be shared between however many
+            // outputs are produced)
+            // !!! actually, just set the sequence number to 0 for now. If it
+            // proves necessary to have one, then can think carefully about how
+            // it should be set.
+            // // The sequence number is derived from the first input/
+            // uint64_t seq = (uint64_t(m_uid.seq1) << 32) | m_uid.seq2;
+            m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
+            uid_inherited = false;
+            break;
+        }
+    }
+    if(!uid_set)
+        m_uid = mkUID();
+    if(inputs.size() && uid_inherited){
+        debug(5) << "default UID inherited from inputs:"
+                 << std::hex << m_uid;
+    }else if(inputs.size() && uid_set){
+        debug(5) << "default UID new (input UIDs differ):"
+                 << std::hex << m_uid;
+    }else{
+        debug(5) << "default UID new (no valid inputs)";
+    }
+}
+
+// - Node::_OutMap::UIDAddingProxy
+// (defined in header, it's all inlined)
+
+// - Node::Input
+Node::Input::Input(InputSchedType::e s)
+    : TestableBase<Input>(*this),
+      target(),
+      sched_type(s),
+      status(NodeInputStatus::New),
+      input_type(InType_Image),
+      param_value(),
+      tip(){
+}
+
+Node::Input::Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip)
+    : TestableBase<Input>(*this),
+      target(),
+      sched_type(s),
+      status(NodeInputStatus::New),
+      input_type(InType_Parameter),
+      param_value(default_value),
+      tip(tip){
+}
+
+Node::input_ptr Node::Input::makeImageInputShared(InputSchedType::e const& st){
+    return boost::make_shared<Input>(boost::cref(st));
+}
+
+Node::input_ptr Node::Input::makeParamInputShared(
+    ParamValue const& default_value, std::string const& tip, InputSchedType::e const& st
+){
+    return boost::make_shared<Input>(
+        boost::cref(st), boost::cref(default_value), boost::cref(tip)
+    );
+}
+
+Node::image_ptr_t Node::Input::getImage() const{
+    if(target)
+        return target.node->getOutputImage(target.id);
+    return image_ptr_t(); // NULL
+}
+
+// NB: no locks are necessarily held when calling this
+Node::InternalParamValue Node::Input::getParam(bool& did_change) const{
+    did_change = false;
+    if(target){
+        InternalParamValue parent_value = target.node->getOutputParam(target.id);
+        if(param_value.param.which() == parent_value.param.which()){
+            if(!(param_value == parent_value)){
+                did_change = true;
+            }
+            // even if it compared equal, assign anyway: metatdata
+            // isn't counted in comparison, but we always want to
+            // make sure we have the latest
+            param_value = parent_value;
+        }else{
+            debug() << "Type mismatch on parameter link:" << *this
+                    << " (param=" << param_value.param.which()
+                    << "vs link=" << parent_value.param.which()
+                    << ") the default parameter value will be returned";
+        }
+    }
+    return param_value;
+}
+
+bool Node::Input::valid() const{
+    // parameters have default values and thus are always valid
+    if(input_type == InType_Parameter)
+        return true;
+    if(target && status != NodeInputStatus::Invalid)
+        return true;
+    return false;
+}
+
+bool Node::Input::isParam() const{
+    return input_type == InType_Parameter;
+}
+
+// - Node Definition
 const char* Node::Image_In_Name = "image in";
 const char* Node::Image_Out_Name = "image out (not copied)";
 const char* Node::Image_Out_Copied_Name = "image out";
@@ -541,11 +691,30 @@ void Node::setParam(boost::shared_ptr<const SetNodeParameterMessage>  m){
 
 void Node::registerInputID(input_id const& i, InputSchedType::e const& st){
     lock_t l(m_inputs_lock);
-    // Avoid need for default Input constructor
+    if(m_inputs.count(i)){
+        error() << "Duplicate input/parameter id:" << i;
+        return;
+    }
     m_inputs.insert(
         private_in_map_t::value_type(i, Input::makeImageInputShared(st))
     );
     _statusMessage(boost::make_shared<InputStatusMessage>(m_pl_name, m_id, i, NodeIOStatus::None));
+}
+
+void Node::requireSyncInputs(input_id const& a, input_id const& b){
+    lock_t l(m_inputs_lock);
+    private_in_map_t::iterator ai = m_inputs.find(a);
+    private_in_map_t::iterator bi = m_inputs.find(b);
+    if(ai == m_inputs.end()){
+        error() << "No such input:" << a;
+        return;
+    }
+    if(bi == m_inputs.end()){
+        error() << "No such input:" << b;
+        return;
+    }
+    ai->synchronised_with.insert(b);
+    bi->synchronised_with.insert(a);
 }
 
 bool Node::unregisterOutputID(output_id const& o, bool warnNonExistent) {

@@ -85,33 +85,22 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         // set to that of the image that it was derived from if the value was
         // derived from an image.
         struct InternalParamValue{
+            typedef InternalParamValue this_t;
+
             ParamValue param;
             UID        uid;
 
-            InternalParamValue()
-                : param(), uid(mkUID()){
-            }
+            InternalParamValue();
+            InternalParamValue(ParamValue const& param, UID const& uid);
+            explicit InternalParamValue(ParamValue const& param);
 
-            InternalParamValue(ParamValue const& param, UID const& uid)
-                : param(param), uid(uid){
-            }
-
-            explicit InternalParamValue(ParamValue const& param)
-                : param(param), uid(mkUID()){
-            }
-            
             template<typename T>
             InternalParamValue(T const& v, UID const& uid)
                 : param(v), uid(uid){
             }
 
-            operator ParamValue() const{
-                return param;
-            }
-
-            bool operator==(InternalParamValue const& other) const{
-                return param == other.param;
-            }
+            operator ParamValue() const;
+            bool operator==(InternalParamValue const& other) const;
         };
         template<typename cT, typename tT>
         friend std::basic_ostream<cT, tT>& operator<<(
@@ -123,60 +112,17 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         // NB: order here is important, don't change it!
         // matches cauv::OutputType::e
         typedef boost::variant<image_ptr_t, InternalParamValue> output_t;
-        
+
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
 
-        class ProtectedOutputMap: public std::map<output_id, output_t>{
+        class _OutMap: public std::map<output_id, output_t>{
             private:
                 typedef std::map<output_id, output_t> base_t;
             public:
                 // constructed from the inputs that the outputs will be derived
                 // from - the UIDs of the inputs are used to decide the UID
                 // used for outputs
-                ProtectedOutputMap(in_image_map_t const& inputs)
-                    : m_uid(){
-                    bool uid_inherited = false;
-                    bool uid_set = false;
-                    in_image_map_t::const_iterator i = inputs.begin();
-                    while(!i->second && i != inputs.end())
-                       i++;
-                    if(i->second && i != inputs.end()){
-                        uid_inherited = true;
-                        uid_set = true;
-                        m_uid = i->second->id();
-                        i++;
-                    }
-                    for(; i != inputs.end(); i++){
-                        // != == !==
-                        if(i->second && !(i->second->id() == m_uid)){
-                            // if inputs have a mixture of UIDs, set output to
-                            // a completely new UID (but this single UID will
-                            // be shared between however many outputs are
-                            // produce)
-                            // !!! actually, just set the sequence number to 0
-                            // for now. If it proves necessary to have one,
-                            // then can think carefully about how it should be
-                            // set.
-                            // // The sequence number is derived from the first
-                            // // input/
-                            // uint64_t seq = (uint64_t(m_uid.seq1) << 32) | m_uid.seq2;
-                            m_uid = mkUID(SensorUIDBase::Multiple, 0);//seq);
-                            uid_inherited = false;
-                            break;
-                        }
-                    }
-                    if(!uid_set)
-                        m_uid = mkUID();
-                    if(inputs.size() && uid_inherited){
-                        debug(5) << "default UID inherited from inputs:" << std::hex
-                                << m_uid << ":" << *this;
-                    }else if(inputs.size() && uid_set){
-                        debug(5) << "default UID new (input UIDs differ):" << std::hex
-                                << m_uid << ":" << *this;
-                    }else{
-                        debug(5) << "default UID new (no valid inputs)";
-                    }
-                }
+                _OutMap(in_image_map_t const& inputs);
                 // yay, triply nested class:
                 struct UIDAddingProxy{
                     UIDAddingProxy(output_t& ref, UID const& uid)
@@ -196,7 +142,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                             img->id(m_uid_to_add);
                         m_ref = output_t(img);
                     }
-                    
+
                     output_t& m_ref;
                     UID const& m_uid_to_add;
                 };
@@ -208,17 +154,17 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 }
                 // Note that derived node types *can* use the base operator[]
                 // to specify internal paramvalues directly; the base operator
-                // is provided by this function in order to be explicit:
-                // In fact, using the operator is REQUIRED if you don't want
-                // the id in 
-                output_t& internalValue(output_id const& oid){
+                // is provided by this function in order to be explicit: This
+                // access method is required if you want to set a
+                // non-automagical UID. (i.e. by input nodes);
+                inline output_t& internalValue(output_id const& oid){
                     return base_t::operator[](oid);
                 }
             private:
                 UID m_uid;
         };
 
-        typedef ProtectedOutputMap out_map_t;
+        typedef _OutMap out_map_t;
 
     private:
         // Private types and typedefs: only used internally
@@ -271,80 +217,20 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             InputType input_type;
             mutable InternalParamValue param_value;
             std::string tip;
+            std::set<std::string> synchronised_with;
 
-            Input(InputSchedType::e s)
-                : TestableBase<Input>(*this),
-                  target(),
-                  sched_type(s),
-                  status(NodeInputStatus::New),
-                  input_type(InType_Image),
-                  param_value(),
-                  tip(){
-            }
+            Input(InputSchedType::e s);
+            Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip);
 
-            Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip)
-                : TestableBase<Input>(*this),
-                  target(),
-                  sched_type(s),
-                  status(NodeInputStatus::New),
-                  input_type(InType_Parameter),
-                  param_value(default_value),
-                  tip(tip){
-            }
-
-            static input_ptr makeImageInputShared(InputSchedType::e const& st = Must_Be_New){
-                return boost::make_shared<Input>(boost::cref(st));
-            }
-
+            static input_ptr makeImageInputShared(InputSchedType::e const& st = Must_Be_New);
             static input_ptr makeParamInputShared(ParamValue const& default_value,
                                                   std::string const& tip,
-                                                  InputSchedType::e const& st = May_Be_Old){
-                return boost::make_shared<Input>(
-                    boost::cref(st), boost::cref(default_value), boost::cref(tip)
-                );
-            }
-
-            image_ptr_t getImage() const{
-                if(target)
-                    return target.node->getOutputImage(target.id);
-                return image_ptr_t(); // NULL
-            }
-
+                                                  InputSchedType::e const& st = May_Be_Old);
+            image_ptr_t getImage() const;
             // NB: no locks are necessarily held when calling this
-            InternalParamValue getParam(bool& did_change) const{
-                did_change = false;
-                if(target){
-                    InternalParamValue parent_value = target.node->getOutputParam(target.id);
-                    if(param_value.param.which() == parent_value.param.which()){
-                        if(!(param_value == parent_value)){
-                            did_change = true;
-                        }
-                        // even if it compared equal, assign anyway: metatdata
-                        // isn't counted in comparison, but we always want to
-                        // make sure we have the latest
-                        param_value = parent_value;
-                    }else{
-                        debug() << "Type mismatch on parameter link:" << *this
-                                << " (param=" << param_value.param.which()
-                                << "vs link=" << parent_value.param.which()
-                                << ") the default parameter value will be returned";
-                    }
-                }
-                return param_value;
-            }
-
-            bool valid() const{
-                // parameters have default values and thus are always valid
-                if(input_type == InType_Parameter)
-                    return true;
-                if(target && status != NodeInputStatus::Invalid)
-                    return true;
-                return false;
-            }
-
-            bool isParam() const{
-                return input_type == InType_Parameter;
-            }
+            InternalParamValue getParam(bool& did_change) const;
+            bool valid() const;
+            bool isParam() const;
         };
         template<typename cT, typename tT>
         friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, Input const&);
@@ -582,7 +468,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                              InputSchedType::e const& st = May_Be_Old){
             lock_t l(m_inputs_lock);
             if(m_inputs.count(p)){
-                error() << "Duplicate parameter id:" << p;
+                error() << "Duplicate input/parameter id:" << p;
                 return;
             }
             m_inputs.insert(private_in_map_t::value_type(
@@ -628,6 +514,8 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         }
 
         void registerInputID(input_id const& i, InputSchedType::e const& st = Must_Be_New);
+
+        void requireSyncInputs(input_id const& a, input_id const& b);
 
         bool unregisterOutputID(output_id const& o, bool warnNonexistent = true);
 
