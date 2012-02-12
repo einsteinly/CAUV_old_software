@@ -196,11 +196,9 @@ void LiquidTaskNode::buildContents(){
         //this->addItem(new liquid::ArcSource(this, new liquid::Arc(Param_Arc_Style)));
         liquid::ArcSink * sink  = new liquid::ArcSink(Param_Arc_Style, Required_Param_Input,
                                                       new liquid::RejectingConnectionSink());
-        liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(Param_Arc_Style,
-                                                        Required_Param_Input,
+        liquid::ArcSinkLabel * label = new liquid::ArcSinkLabel(sink,
                                                         this,
-                                                        sink,
-                                                        "test");
+                                                        QString("test"));
         sink->setParentItem(this);
         this->addItem(label);
     }

@@ -23,15 +23,13 @@
 namespace liquid {
 
 class ArcSinkLabel: public QGraphicsWidget,
-                    public liquid::RequiresCutout {
+                    public RequiresCutout {
     public:
-        liquid::AbstractArcSink* sink() const;
+        AbstractArcSink* sink() const;
 
-        ArcSinkLabel(liquid::ArcStyle const& of_style,
-                     liquid::CutoutStyle const& with_cutout,
-                     liquid::LiquidNode* node,
-                     ConnectionSink *sink,
-                     const std::string &id);
+        ArcSinkLabel(ArcSink *arc_sink,
+                     LiquidNode *node,
+                     const QString &id);
         virtual ~ArcSinkLabel();
 
         // RequiresCutout:

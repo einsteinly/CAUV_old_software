@@ -27,14 +27,12 @@ using namespace liquid;
 
 
 // - ArcSinkLabel
-ArcSinkLabel::ArcSinkLabel(liquid::ArcStyle const& of_style,
-                           liquid::CutoutStyle const& with_cutout,
-                           liquid::LiquidNode* node,
-                           liquid::ConnectionSink * sink,
-                           std::string const& id)
+ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
+                           LiquidNode* node,
+                           QString const& id)
     : QGraphicsWidget(node),
       RequiresCutout(),
-      m_arc_sink(new liquid::ArcSink(of_style, with_cutout, sink)),
+      m_arc_sink(arc_sink),
       m_text(NULL){
 
     QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
@@ -47,7 +45,7 @@ ArcSinkLabel::ArcSinkLabel(liquid::ArcStyle const& of_style,
     hlayout->addItem(m_arc_sink);
     hlayout->setAlignment(m_arc_sink, Qt::AlignVCenter | Qt::AlignLeft);
 
-    QLabel* text_label = new QLabel(QString::fromStdString(id));
+    QLabel* text_label = new QLabel(id);
     text_label->setTextInteractionFlags(Qt::NoTextInteraction);
     text_label->setFont(node->style().text.font);
 
@@ -77,15 +75,15 @@ ArcSinkLabel::ArcSinkLabel(liquid::ArcStyle const& of_style,
 ArcSinkLabel::~ArcSinkLabel(){
 }
 
-liquid::AbstractArcSink* ArcSinkLabel::sink() const{
+AbstractArcSink* ArcSinkLabel::sink() const{
     return m_arc_sink;
 }
 
-QList<liquid::CutoutStyle> ArcSinkLabel::cutoutGeometry() const{
-    QList<liquid::CutoutStyle> sink_cutouts =  m_arc_sink->cutoutGeometry();
-    QList<liquid::CutoutStyle> r;
-    foreach(liquid::CutoutStyle const& c, sink_cutouts){
-        liquid::CutoutStyle t = c;
+QList<CutoutStyle> ArcSinkLabel::cutoutGeometry() const{
+    QList<CutoutStyle> sink_cutouts =  m_arc_sink->cutoutGeometry();
+    QList<CutoutStyle> r;
+    foreach(CutoutStyle const& c, sink_cutouts){
+        CutoutStyle t = c;
         t.main_cutout.y_offset += m_arc_sink->pos().y();
         t.second_cutout.y_offset += m_arc_sink->pos().y();
         r << t;
