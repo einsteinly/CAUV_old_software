@@ -27,6 +27,8 @@
 using namespace cauv;
 using namespace cauv::gui;
 
+#include "nodepicker.h"
+
 
 NodeDelegateMapper::NodeDelegateMapper(QObject *){}
 
@@ -69,6 +71,20 @@ void NodeDelegateMapper::setEditorData(QWidget *editor, const QModelIndex &index
     }
 }
 
+
+
+void NodeDelegateMapper::updateEditorGeometry(QWidget *editor,
+                          const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const{
+    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
+    try {
+        boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);
+        return delegate->updateEditorGeometry(editor, option, index);
+    } catch (std::out_of_range){
+        return QStyledItemDelegate::updateEditorGeometry(editor, option, index);
+    }
+}
+
 void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                const QModelIndex &index) const{
 
@@ -91,7 +107,7 @@ QSize NodeDelegateMapper::sizeHint(const QStyleOptionViewItem &,
 
 
 
-NumericDelegate::NumericDelegate(QObject * parent) : QStyledItemDelegate(parent) {
+NumericDelegate::NumericDelegate(NodeTreeView * tree, QObject * parent) : QStyledItemDelegate(parent), m_view(tree) {
     QItemEditorFactory * factory = new QItemEditorFactory();
     setItemEditorFactory(factory);
     factory->registerEditor(QVariant::Bool, new QItemEditorCreator<OnOffSlider>("checked"));
@@ -142,24 +158,18 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
 }
 
 void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const{
+    NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
+
+    //if(m_hasEditor.find(index) == m_hasEditor.end()) {
+    //    m_hasEditor.insert(index);
+    //    m_view->openPersistentEditor(index);
+    //}
+
     if(OnOffSlider * slider = dynamic_cast<OnOffSlider *>(editor)){
-        NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
         slider->setChecked(node->get().value<bool>());
         slider->setAnimation(true);
         slider->toggle();
-    } else {
-        return QStyledItemDelegate::setEditorData(editor, index);
-    }
-}
-
-QWidget * NumericDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                                       const QModelIndex &index) const{
-
-    QWidget * editor = QStyledItemDelegate::createEditor(parent, option, index);
-
-    const NumericNodeBase * node = dynamic_cast<const NumericNodeBase*>((Node*)index.internalPointer());
-
-    if(node && node->isMaxSet() && node->isMinSet()) {
+    } else if(node && node->isMaxSet() && node->isMinSet()) {
         if(NeutralSpinBox * neutral = qobject_cast<NeutralSpinBox*>(editor)){
             neutral->setMinimum(node->getMin().toInt());
             neutral->setMaximum(node->getMax().toInt());
@@ -174,7 +184,7 @@ QWidget * NumericDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
             neutral->setNeutral(node->getNeutral().toDouble());
             neutral->setDecimals(node->getPrecision());
         }
+    } else {
+        return QStyledItemDelegate::setEditorData(editor, index);
     }
-
-    return editor;
 }

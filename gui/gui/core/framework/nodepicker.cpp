@@ -187,7 +187,7 @@ NodeTreeView::NodeTreeView(QWidget *) {
     NodeDelegateMapper *delegate = new NodeDelegateMapper(this);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setItemDelegate(delegate);
-    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>());
+    delegate->registerDelegate(nodeType<NumericNodeBase>(), boost::make_shared<NumericDelegate>(this));
 
     //this->setMouseTracking(true);
     //connect(this, SIGNAL(entered(QModelIndex)), this, SLOT(forceEdit(QModelIndex)));
@@ -197,10 +197,10 @@ NodeTreeView::NodeTreeView(QWidget *) {
 
 
 void NodeTreeView::forceEdit(QModelIndex const& index){
-    // force edit on column 1
-    QModelIndex forcedColumn = index.model()->index(index.row(), 1, index.parent());
-    if(forcedColumn.flags() & Qt::ItemIsEditable)
-        edit(forcedColumn);
+    if(index.column() == 1) {
+        if(index.flags() & Qt::ItemIsEditable)
+            edit(index);
+    }
 }
 
 void NodeTreeView::toggleExpanded(QModelIndex const& index){

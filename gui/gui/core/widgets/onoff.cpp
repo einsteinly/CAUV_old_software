@@ -29,10 +29,6 @@ OnOffSlider::OnOffSlider(QWidget * parent) :
     this->connect(this, SIGNAL(stateChanged(int)), this, SLOT(onStateChange(int)));
 }
 
-void OnOffSlider::mouseReleaseEvent(QMouseEvent *e) {
-    toggle();
-}
-
 void OnOffSlider::onStateChange(int){
     animateSwitch();
 }
@@ -59,12 +55,28 @@ void OnOffSlider::setAnimation(bool animates){
     } else m_animation.setDuration(0);
 }
 
+
+
+void OnOffSlider::mouseReleaseEvent(QMouseEvent *e) {
+    toggle();
+    e->accept();
+}
+
+void OnOffSlider::mouseMoveEvent(QMouseEvent *e){
+    e->accept();
+}
+
+void OnOffSlider::mousePressEvent(QMouseEvent *e){
+    e->accept();
+}
+
 void OnOffSlider::paintEvent(QPaintEvent * e)
  {
     StyleOptionOnOff option;
     option.initFrom(this);
 
     option.position = m_position;
+    option.marked = true;
 
     QPainter painter(this);
     style()->drawControl(QStyle::CE_CheckBox, &option, &painter, this);

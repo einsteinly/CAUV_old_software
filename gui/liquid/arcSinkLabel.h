@@ -1,0 +1,52 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ *
+ * See license.txt for details.
+ *
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
+#ifndef __LIQUID_ARC_SINK_LABEL_H__
+#define __LIQUID_ARC_SINK_LABEL_H__
+
+#include <QGraphicsProxyWidget>
+#include <QGraphicsWidget>
+
+#include "arcSink.h"
+
+namespace liquid {
+
+class ArcSinkLabel: public QGraphicsWidget,
+                    public liquid::RequiresCutout {
+    public:
+        liquid::AbstractArcSink* sink() const;
+
+        ArcSinkLabel(liquid::ArcStyle const& of_style,
+                     liquid::CutoutStyle const& with_cutout,
+                     liquid::LiquidNode* node,
+                     ConnectionSink *sink,
+                     const std::string &id);
+        virtual ~ArcSinkLabel();
+
+        // RequiresCutout:
+        virtual QList<liquid::CutoutStyle> cutoutGeometry() const;
+
+        // QGraphicsItem:
+        virtual void paint(QPainter *painter,
+                           const QStyleOptionGraphicsItem *option,
+                           QWidget *widget = 0);
+
+    protected:
+        liquid::ArcSink* m_arc_sink;
+        QGraphicsProxyWidget* m_text;
+};
+
+} // namespace liquid
+
+#endif //  __LIQUID_ARC_SINK_LABEL_H__

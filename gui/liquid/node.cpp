@@ -246,3 +246,6 @@ void LiquidNode::setSizeFromContents(){
     m_header->setWidth(m_size.width());
 }
 
+NodeStyle LiquidNode::style() const{
+    return m_style;
+}

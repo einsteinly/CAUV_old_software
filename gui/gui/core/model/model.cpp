@@ -57,7 +57,7 @@ void RedHerring::setupAutopilot(boost::shared_ptr<Node> node){
     attachGenerator(node, boost::make_shared<AutopilotMessageGenerator>());
     boost::shared_ptr<NumericNode<float> > target = node->findOrCreate<NumericNode<float> >("target");
     target->setMutable(true);
-    node->findOrCreate<NumericNode<bool> >("enabled")->setMutable(true);
+    node->setMutable(true);
 
     // target params
     float min, max; bool wraps; std::string units;
@@ -86,11 +86,27 @@ void RedHerring::setupAutopilot(boost::shared_ptr<Node> node){
 }
 
 
+NodeUpdateModelNotfication::NodeUpdateModelNotfication(NodeItemModel * model) : m_model(model) {
+    debug(8) << "NodeUpdateModelNotfication()";
+}
+
+void NodeUpdateModelNotfication::update(){
+    if (Node * n = dynamic_cast<Node*>(this->sender())) {
+        boost::shared_ptr<Node> node = n->shared_from_this();
+        QModelIndex index = m_model->indexFromNode(node);
+        Q_EMIT m_model->dataChanged(index, index);
+        //!!! layoutChanged() shouldn't be required here but dataChanged isn't causing the
+        // views to be redrawn properly. This might be a problem with the way the indexes are
+        // worked out
+        Q_EMIT m_model->layoutChanged();
+    }
+}
+
 
 NodeItemModel::NodeItemModel(boost::shared_ptr<Node> root, QObject * parent) :
-    QAbstractItemModel(parent), m_root(root){
+    QAbstractItemModel(parent), m_root(root), m_updater(this){
     connect(root.get(), SIGNAL(structureChanged()), this, SIGNAL(layoutChanged()));
-    createUpdater(root);
+    connectUpdater(root);
 }
 
 QModelIndex NodeItemModel::indexFromNode(boost::shared_ptr<Node> node) const{
@@ -277,17 +293,13 @@ QModelIndex NodeItemModel::index(int row, int column, const QModelIndex &parent)
     }
 }
 
-void NodeItemModel::createUpdater(boost::shared_ptr<Node> node){
-    // !!! todo: fix memory leak
-    QModelIndex index = indexFromNode(node);
-    ModelIndexUpdateNotfication * updater = new ModelIndexUpdateNotfication(index, index);
-    node->connect(node.get(), SIGNAL(onUpdate()), updater, SLOT(update()));
-    this->connect(updater, SIGNAL(onUpdate(QModelIndex,QModelIndex)), this, SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+void NodeItemModel::connectUpdater(boost::shared_ptr<Node> node){
+    node->connect(node.get(), SIGNAL(onUpdate()), &m_updater, SLOT(update()));
 
     foreach (boost::shared_ptr<Node> const & child, node->getChildren()){
-        createUpdater(child);
+        connectUpdater(child);
     }
 
-    connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(createUpdater(boost::shared_ptr<Node>)));
+    connect(node.get(), SIGNAL(nodeAdded(boost::shared_ptr<Node>)), this, SLOT(connectUpdater(boost::shared_ptr<Node>)));
 }
 

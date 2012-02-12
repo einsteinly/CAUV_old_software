@@ -35,7 +35,7 @@ public:
     virtual float maxScale();
     virtual void setMaxScale(float scale);
 
-    void scaleAround(QPointF point, qreal scaleFactor);
+    void scaleAround(QPoint point, qreal scaleFactor);
 
 protected:
     virtual bool event(QEvent *event);

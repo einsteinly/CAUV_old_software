@@ -66,7 +66,7 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    setTransformationAnchor(LiquidView::AnchorViewCenter);
+    setTransformationAnchor(QGraphicsView::NoAnchor);
     
     centerOn(0,0);
     
@@ -86,49 +86,34 @@ bool LiquidView::gestureEvent(QGestureEvent *event)
 {
     if (QGesture *gesture = event->gesture(Qt::PinchGesture)){
         QPinchGesture * pinch = static_cast<QPinchGesture *>(gesture);
-        scaleAround(pinch->startCenterPoint(), ((pinch->scaleFactor()-1)*0.1)+1);
+        scaleAround(pinch->startCenterPoint().toPoint(), ((pinch->scaleFactor()-1)*0.1)+1);
     }
     return true;
 }
 
 
 
-void LiquidView::scaleAround(QPointF point, qreal scaleFactor){
+void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
 
-    if((scaleFactor > 1) && (transform().m11() > maxScale())) return;
+    if((scaleFactor >= 1) && (transform().m11() > maxScale())) return;
     if((scaleFactor < 1) && (transform().m11() < minScale())) return;
 
-    //QPoint viewportCenter = QPoint(rect().width()>>1, rect().height()>>1);
-    //qDebug() << "viewportCenter" << viewportCenter;
-    //QPointF screenCenter = mapToScene(viewportCenter);
-    //qDebug() << "screenCenter" << screenCenter;
+    QPointF around = mapToScene(point);
 
+    qDebug() << around;
 
-    //Get the position of the mouse before scaling, in scene coords
-    //QPointF pointBeforeScale(mapToScene(point.toPoint()));
-    //qDebug() << "pointBeforeScale" << pointBeforeScale;
+    QMatrix translation(1, 0, 0, 1, around.x(), around.y());
+    QMatrix reverseTranslation(1, 0, 0, 1, -around.x(), -around.y());
 
-    QTransform t = transform();
-    float scale = t.m11() * scaleFactor;
-    scale = clamp(minScale(), scale, maxScale());
-    QTransform newT(scale, t.m12(), t.m13(),
-                  t.m21(), scale, t.m23(),
-                  t.m31(), t.m32(), t.m33());
+    float scalar = transform().m11() * scaleFactor;
+    scalar = clamp(minScale(), scalar, maxScale());
+    QMatrix scale(scalar, 0, 0, scalar, 1, 1);
 
-    setTransform(newT);
-
-    //Get the position after scaling, in scene coords
-    //QPointF pointAfterScale(mapToScene(point.toPoint()));
-    //qDebug() << "pointAfterScale" << pointAfterScale;
-
-
-    //Get the offset of how the screen moved
-    //QPointF offset = pointAfterScale - pointBeforeScale;
-    //qDebug() << "offset" << offset;
-
-    //QPointF newCenter = screenCenter - offset;
-    //qDebug() << "newCenter" << newCenter;
-    //centerOn(newCenter);
+    // some weird behaviour here (on mac at least)
+    // the initial scaling work for a bit, then it goes mental
+    // not sure why yet...
+    //setTransform(QTransform((reverseTranslation * scale) * translation));
+    setTransform(QTransform(scale));
 }
 
 

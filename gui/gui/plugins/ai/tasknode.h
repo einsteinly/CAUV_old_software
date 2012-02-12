@@ -17,6 +17,9 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <liquid/node.h>
+#include <liquid/arcSource.h>
+
 #include <generated/types/ParamValue.h>
 
 #include <gui/core/model/node.h>
@@ -32,6 +35,7 @@ GENERATE_SIMPLE_NODE(PipelineNode) //!!! todo: this shouldn't be deifned here, s
 
 class AiTaskNode : public Node {
     public:
+
         AiTaskNode(const nid_t id);
 
         void addCondition(boost::shared_ptr<AiConditionNode> condition);
@@ -72,6 +76,17 @@ class AiTaskNode : public Node {
         static std::set<std::string> m_types;
 
 };
+
+class LiquidTaskNode : public liquid::LiquidNode, public liquid::ArcSourceDelegate
+{
+public:
+    LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem *parent = 0);
+    void buildContents();
+
+protected:
+    boost::shared_ptr<AiTaskNode> m_node;
+};
+
 
 } // namespace gui
 } // namespace cauv

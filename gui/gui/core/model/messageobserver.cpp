@@ -60,9 +60,9 @@ void DefaultGuiMessageObserver::onMotorStateMessage(MotorStateMessage_ptr messag
 
 void DefaultGuiMessageObserver::onBearingAutopilotEnabledMessage(BearingAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Bearing);
+    boost::shared_ptr<NumericNode<bool> > autopilot = autopilots->findOrCreate<NumericNode<bool> >(Controller::Bearing);
+    autopilot->update(message->enabled());
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
-    autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
 void DefaultGuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilotParamsMessage_ptr message) {
@@ -82,9 +82,9 @@ void DefaultGuiMessageObserver::onBearingAutopilotParamsMessage(BearingAutopilot
 
 void DefaultGuiMessageObserver::onDepthAutopilotEnabledMessage(DepthAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Depth);
+    boost::shared_ptr<NumericNode<bool> > autopilot = autopilots->findOrCreate<NumericNode<bool> >(Controller::Depth);
+    autopilot->update(message->enabled());
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
-    autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
 void DefaultGuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotParamsMessage_ptr message) {
@@ -104,9 +104,9 @@ void DefaultGuiMessageObserver::onDepthAutopilotParamsMessage(DepthAutopilotPara
 
 void DefaultGuiMessageObserver::onPitchAutopilotEnabledMessage(PitchAutopilotEnabledMessage_ptr message) {
     boost::shared_ptr<GroupingNode> autopilots = m_auv->findOrCreate<GroupingNode>("autopilots");
-    boost::shared_ptr<GroupingNode> autopilot = autopilots->findOrCreate<GroupingNode>(Controller::Pitch);
+    boost::shared_ptr<NumericNode<bool> > autopilot = autopilots->findOrCreate<NumericNode<bool> >(Controller::Pitch);
+    autopilot->update(message->enabled());
     autopilot->findOrCreate<NumericNode<float> >("target")->update(message->target());
-    autopilot->findOrCreate<NumericNode<bool> >("enabled")->update(message->enabled());
 }
 
 void DefaultGuiMessageObserver::onPitchAutopilotParamsMessage(PitchAutopilotParamsMessage_ptr message) {

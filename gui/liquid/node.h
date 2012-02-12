@@ -56,6 +56,8 @@ public:
     virtual void setClosable(bool);
     virtual void setResizable(bool);
 
+    virtual NodeStyle style() const;
+
 protected:
     void layoutChanged();
 

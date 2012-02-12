@@ -54,7 +54,7 @@ void NeutralSpinBox::paintEvent(QPaintEvent * )
     StyleOptionNeutralSpinBox option;
     option.initFrom(this);
 
-    option.level = pivot(minimum(), neutral(), maximum(), value());
+    option.level = pivot((double)minimum(), (double)neutral(), (double)maximum(), (double)value());
 
     QPainter painter(this);
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, &painter, this);

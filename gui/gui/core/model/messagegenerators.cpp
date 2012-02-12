@@ -30,7 +30,7 @@ boost::shared_ptr<const Message> MotorMessageGenerator::generate(boost::shared_p
 }
 
 boost::shared_ptr<const Message> AutopilotMessageGenerator::generate(boost::shared_ptr<Node> attachedTo){
-    bool enabled = attachedTo->findOrCreate<NumericNode<bool> >("enabled")->get();
+    bool enabled = attachedTo->get().toBool();
     float target = attachedTo->findOrCreate<NumericNode<float> >("target")->get();
 
     switch(boost::get<Controller::e>(attachedTo->nodeId())) {

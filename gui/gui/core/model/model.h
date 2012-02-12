@@ -17,6 +17,7 @@
 
 #include <QAbstractItemModel>
 #include <QMimeData>
+#include <QModelIndex>
 
 #include <gui/core/model/node.h>
 #include <gui/core/model/nodes/vehiclenode.h>
@@ -48,31 +49,28 @@ class RedHerring : public Vehicle
         void setupAutopilot(boost::shared_ptr<Node> node);
 };
 
+class NodeItemModel;
 
-
-class ModelIndexUpdateNotfication : public QObject {
+class NodeUpdateModelNotfication : public QObject {
     Q_OBJECT
     public:
-        ModelIndexUpdateNotfication(QModelIndex start, QModelIndex end) :
-            m_start(start), m_end(end) {
-            debug(8) << "ModelIndexUpdateNotification()";
-        }
+    NodeUpdateModelNotfication(NodeItemModel * model);
 
     public Q_SLOTS:
-        void update(){
-            Q_EMIT onUpdate(m_start, m_end);
-        }
+        void update();
 
     Q_SIGNALS:
         void onUpdate(QModelIndex start, QModelIndex end);
 
     protected:
-        QModelIndex m_start, m_end;
+        NodeItemModel * m_model;
 };
 
 
 class NodeItemModel : public QAbstractItemModel {
     Q_OBJECT
+    friend class NodeUpdateModelNotfication;
+
     public:
         NodeItemModel(boost::shared_ptr<Node> root, QObject * parent = 0);
 
@@ -93,10 +91,11 @@ class NodeItemModel : public QAbstractItemModel {
         QModelIndex index(int row, int column, const QModelIndex &parent) const ;
 
     protected Q_SLOTS:
-        void createUpdater(boost::shared_ptr<Node> node);
+        void connectUpdater(boost::shared_ptr<Node> node);
 
     protected:
         boost::shared_ptr<Node> m_root;
+        NodeUpdateModelNotfication m_updater;
 };
 
 } // namespace gui

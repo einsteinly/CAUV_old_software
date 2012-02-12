@@ -29,42 +29,47 @@ CauvStyle::CauvStyle() {
 
 QRect CauvStyle::subControlRect ( ComplexControl control, const QStyleOptionComplex * option,
                                   SubControl subControl, const QWidget * widget) const {
-    switch(subControl) {
-    case QStyle::SC_SpinBoxUp: {
-        QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
-        QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
-        rect.setX((frame.x()+frame.width())-frame.height());
-        rect.setWidth(frame.height());
-        rect.setHeight(frame.height());
+    if(control == QStyle::CC_SpinBox) {
+        switch(subControl) {
+            case QStyle::SC_SpinBoxUp: {
+                QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
+                QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
+                rect.setX((frame.x()+frame.width())-frame.height());
+                rect.setWidth(frame.height());
+                rect.setHeight(frame.height());
 
-        return rect;
+                return rect;
+            }
+                break;
+
+            case QStyle::SC_SpinBoxDown: {
+                QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
+                QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
+                rect.setY(frame.y());
+                rect.setX(frame.x());
+                rect.setWidth(frame.height());
+                rect.setHeight(frame.height());
+
+                return rect;
+            }
+                break;
+
+            case QStyle::SC_SpinBoxEditField: {
+                QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
+                QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
+                rect.setLeft(frame.height());
+                rect.setRight(frame.right()-frame.height());
+                return rect;
+            }
+                break;
+
+            default: break;
+        }
     }
-        break;
 
-    case QStyle::SC_SpinBoxDown: {
-        QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
-        QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
-        rect.setY(frame.y());
-        rect.setX(frame.x());
-        rect.setWidth(frame.height());
-        rect.setHeight(frame.height());
-
-        return rect;
-    }
-        break;
-
-    case QStyle::SC_SpinBoxEditField: {
-        QRect frame = BASESTYLE::subControlRect(control, option, SC_SpinBoxFrame, widget);
-        QRect rect = BASESTYLE::subControlRect(control, option, subControl, widget);
-        rect.setLeft(frame.height());
-        rect.setRight(frame.right()-frame.height());
-        return rect;
-    }
-        break;
-
-    default: return BASESTYLE::subControlRect(control, option, subControl, widget);
-    }
+    return BASESTYLE::subControlRect(control, option, subControl, widget);
 }
+
 
 void CauvStyle::drawControl(CauvControlElement control, const QStyleOption *option,
                             QPainter *painter, const QWidget *widget) const{

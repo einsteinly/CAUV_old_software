@@ -31,8 +31,6 @@ namespace cauv {
             Q_PROPERTY(bool checked READ isChecked WRITE setChecked USER true)
             Q_PROPERTY(float position READ position WRITE setPosition USER false)
 
-            void mouseReleaseEvent(QMouseEvent *e);
-
             OnOffSlider(QWidget * parent = 0);
 
             void paintEvent(QPaintEvent *);
@@ -40,6 +38,10 @@ namespace cauv {
             void animateSwitch();
 
             void setAnimation(bool);
+
+            void mouseReleaseEvent(QMouseEvent *e);
+            void mouseMoveEvent(QMouseEvent *e);
+            void mousePressEvent(QMouseEvent *e);
 
         protected Q_SLOTS:
             void onStateChange(int);

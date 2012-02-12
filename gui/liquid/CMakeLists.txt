@@ -21,6 +21,7 @@ else()
         arcSource.cpp
         ephemeralArcEnd.cpp
         layout.cpp
+        arcSinkLabel.cpp
     )
 
     set (
@@ -39,6 +40,7 @@ else()
         arcSource.h
         ephemeralArcEnd.h
         layout.h
+        arcSinkLabel.h
     )
 
     set (

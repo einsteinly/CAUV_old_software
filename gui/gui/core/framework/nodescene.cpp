@@ -68,7 +68,7 @@ void VanishingLineItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 
 NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
 {
-    int sceneSize = 30000;
+    int sceneSize = 10000;
 
     // a special background element that recieves drops and other events that aren't
     // accepted by items futher up the tree
@@ -92,6 +92,8 @@ NodeScene::NodeScene(QObject * parent) : QGraphicsScene(parent)
         line->setPen(QPen(QColor(colour, colour, colour)));
         this->addItem(line);
     }
+
+    addRect(-sceneSize, -sceneSize, sceneSize*2, sceneSize*2);
 
     // write on positions for debugging.
     // don't use in production as it's really slow

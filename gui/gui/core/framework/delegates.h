@@ -23,7 +23,9 @@
 namespace cauv {
 namespace gui {
 
-template <class T> class SampleQueue;
+
+class NodeTreeView;
+
 
 
 class NodeDelegateMapper : public QStyledItemDelegate
@@ -45,6 +47,11 @@ public:
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const;
 
+
+    void updateEditorGeometry(QWidget *editor,
+                              const QStyleOptionViewItem &option,
+                              const QModelIndex &index) const;
+
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
@@ -62,15 +69,16 @@ protected:
 struct NumericDelegate : public QStyledItemDelegate {
     Q_OBJECT
 public:
-    NumericDelegate(QObject * parent = 0);
+    NumericDelegate(NodeTreeView * tree, QObject * parent = 0);
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const;
 
-    QWidget * createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                           const QModelIndex &index) const;
+protected:
+    NodeTreeView * m_view;
+    mutable std::set<QModelIndex> m_hasEditor;
 };
 
 

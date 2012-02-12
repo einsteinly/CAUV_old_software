@@ -38,7 +38,6 @@ namespace cauv {
             }
 
             virtual void update(QVariant const& value){
-                error() << "string updated to " << value.toString().toStdString();
                 Node::update(value);
             }
 

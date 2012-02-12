@@ -48,9 +48,13 @@ namespace cauv {
                         node->type == nodeType<AiConditionNode>());
             }
 
-            virtual QGraphicsItem * handle(boost::shared_ptr<Node> const&) {
+            virtual QGraphicsItem * handle(boost::shared_ptr<Node> const& node) {
 
-                info() << "added AiNode";
+                if (node->type == nodeType<AiTaskNode>()) {
+                    LiquidTaskNode * n = new LiquidTaskNode(boost::static_pointer_cast<AiTaskNode>(node));
+                    n->setSize(QSizeF(300,300));
+                    return n;
+                }
 
                 return new AiNode();
             }
