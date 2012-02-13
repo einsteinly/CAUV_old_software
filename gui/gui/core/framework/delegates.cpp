@@ -158,6 +158,9 @@ void NumericDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
 }
 
 void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const{
+
+    QStyledItemDelegate::setEditorData(editor, index);
+
     NumericNodeBase * node = dynamic_cast<NumericNodeBase*>((Node*)index.internalPointer());
 
     //if(m_hasEditor.find(index) == m_hasEditor.end()) {
@@ -166,7 +169,6 @@ void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) c
     //}
 
     if(OnOffSlider * slider = dynamic_cast<OnOffSlider *>(editor)){
-        slider->setChecked(node->get().value<bool>());
         slider->setAnimation(true);
         slider->toggle();
     } else if(node && node->isMaxSet() && node->isMinSet()) {
@@ -184,7 +186,5 @@ void NumericDelegate::setEditorData(QWidget *editor, const QModelIndex &index) c
             neutral->setNeutral(node->getNeutral().toDouble());
             neutral->setDecimals(node->getPrecision());
         }
-    } else {
-        return QStyledItemDelegate::setEditorData(editor, index);
     }
 }

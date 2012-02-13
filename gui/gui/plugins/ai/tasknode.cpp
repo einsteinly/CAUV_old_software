@@ -145,43 +145,6 @@ std::set<std::string> AiTaskNode::getTypes(){
     return m_types;
 }
 
-/*
-
-class ArcSinkLabel : public QGraphicsLinearLayout {
-public:
-    ArcSinkLabel(liquid::ArcSink * sink, QString label, QGraphicsLayoutItem * parent = 0) :
-        QGraphicsLinearLayout(Qt::Horizontal, parent), m_sink(sink), m_label(new QLabel(label)) {
-        setSpacing(0);
-        setContentsMargins(0,0,0,0);
-
-        addItem(sink);
-        setAlignment(sink, Qt::AlignVCenter | Qt::AlignLeft);
-
-        m_label->setTextInteractionFlags(Qt::NoTextInteraction);
-
-        QPalette transparent_bg = m_label->palette();
-        for(int i=0; i < QPalette::NColorGroups; i++){
-             QColor color = transparent_bg.brush(QPalette::ColorGroup(i), QPalette::Window).color();
-             color.setAlpha(0);
-             transparent_bg.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
-        }
-        m_label->setPalette(transparent_bg);
-
-        QGraphicsProxyWidget * text = new QGraphicsProxyWidget();
-        text->setWidget(m_label);
-        addItem(text);
-        setAlignment(text, Qt::AlignVCenter | Qt::AlignLeft);
-
-        setItemSpacing(1, 4.0);
-        addStretch(1);
-    }
-
-protected:
-    liquid::ArcSink * m_sink;
-    QLabel * m_label;
-};
-*/
-
 
 
 LiquidTaskNode::LiquidTaskNode(boost::shared_ptr<AiTaskNode> node, QGraphicsItem * parent) :
