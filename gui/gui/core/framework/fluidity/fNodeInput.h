@@ -19,8 +19,7 @@
 #include <liquid/requiresCutout.h>
 #include <liquid/connectionSink.h>
 #include <liquid/forward.h>
-
-#include <QGraphicsWidget>
+#include <liquid/arcSinkLabel.h>
 
 #include "elements/style.h"
 
@@ -37,14 +36,10 @@ struct LocalNodeInput;
 namespace gui{
 namespace f{
 
-class FNodeInput: public QGraphicsWidget,
-                  public liquid::RequiresCutout,
+class FNodeInput: public liquid::ArcSinkLabel,
                   public liquid::ConnectionSink,
                   public FNodeIO,
                   public ManagedElement{
-    public:
-        liquid::AbstractArcSink* sink() const;
-    
     protected:
         FNodeInput(Manager& m,
                    liquid::ArcStyle const& of_style,
@@ -52,22 +47,11 @@ class FNodeInput: public QGraphicsWidget,
                    FNode* node,
                    std::string const& text);
         virtual ~FNodeInput();
-
-        // RequiresCutout:
-        virtual QList<liquid::CutoutStyle> cutoutGeometry() const;
-        
-        // QGraphicsItem:
-        virtual void paint(QPainter *painter,
-                           const QStyleOptionGraphicsItem *option,
-                           QWidget *widget = 0);
         
         // ConnectionSink:
         virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
         virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
 
-    protected:
-        liquid::ArcSink* m_arc_sink;
-        QGraphicsProxyWidget* m_text;
 };
 
 

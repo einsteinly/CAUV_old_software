@@ -22,6 +22,7 @@
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <utility/qt_streamops.h>
+#include <utility/qstring.h>
 
 #include <liquid/button.h>
 #include <liquid/nodeHeader.h>
@@ -41,24 +42,11 @@
 using cauv::gui::f::FNode;
 using cauv::gui::f::FNodeOutput;
 using cauv::gui::f::FNodeInput;
+using cauv::mkQStr;
 using namespace liquid;
 
 
 // - helper structures and classes
-// !!! TODO: move this to /utility or something
-#include <QTextStream>
-#include <QString>
-struct mkQStr{
-    mkQStr() : m_string(), m_stream(&m_string){ }
-    template<typename T>
-    mkQStr& operator<<(T const& t){
-        m_stream << t;
-        return *this;
-    }
-    operator QString() const{ return m_string; }
-    QString m_string;
-    QTextStream m_stream;
-};
 
 class TestLayoutItem: public QGraphicsLayoutItem,
                       public QGraphicsPathItem{

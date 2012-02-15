@@ -20,6 +20,7 @@
 
 #include "style.h"
 #include "node.h"
+#include "label.h"
 
 #include <debug/cauv_debug.h>
 
@@ -45,17 +46,8 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     hlayout->addItem(m_arc_sink);
     hlayout->setAlignment(m_arc_sink, Qt::AlignVCenter | Qt::AlignLeft);
 
-    QLabel* text_label = new QLabel(id);
-    text_label->setTextInteractionFlags(Qt::NoTextInteraction);
+    LiquidLabel* text_label = new LiquidLabel(id);
     text_label->setFont(node->style().text.font);
-
-    QPalette transparent_bg = palette();
-    for(int i=0; i < QPalette::NColorGroups; i++){
-         QColor color = transparent_bg.brush(QPalette::ColorGroup(i), QPalette::Window).color();
-         color.setAlpha(0);
-         transparent_bg.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
-    }
-    text_label->setPalette(transparent_bg);
 
     m_text = new QGraphicsProxyWidget();
     m_text->setWidget(text_label);

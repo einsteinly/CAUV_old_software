@@ -24,6 +24,7 @@
 
 #include <liquid/arcSource.h>
 #include <liquid/arc.h>
+#include <liquid/label.h>
 
 #include <generated/types/LocalNodeOutput.h>
 
@@ -56,18 +57,8 @@ class FNodeOutput: public QGraphicsWidget,
             
             hlayout->addStretch(1);
 
-            QLabel* text_label = new QLabel(QString::fromStdString(id));
-            text_label->setTextInteractionFlags(Qt::NoTextInteraction);
+            liquid::LiquidLabel* text_label = new liquid::LiquidLabel(QString::fromStdString(id));
             text_label->setFont(F_Node_Style.text.font);
-            text_label->setBackgroundRole(QPalette::Window);
-            
-            QPalette transparent_bg = palette();
-            for(int i=0; i < QPalette::NColorGroups; i++){
-                 QColor color = transparent_bg.brush(QPalette::ColorGroup(i), QPalette::Window).color();
-                 color.setAlpha(0);
-                 transparent_bg.setBrush(QPalette::ColorGroup(i), QPalette::Window, QBrush(color));
-            }
-            text_label->setPalette(transparent_bg);
 
             m_text = new QGraphicsProxyWidget();
             m_text->setWidget(text_label);
