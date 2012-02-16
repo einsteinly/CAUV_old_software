@@ -21,6 +21,9 @@
 #include <liquid/forward.h>
 #include <liquid/arcSinkLabel.h>
 
+#include "model/model.h"
+#include "framework/nodepicker.h"
+
 #include "elements/style.h"
 
 #include "fluidity/managedElement.h"
@@ -45,13 +48,15 @@ class FNodeInput: public liquid::ArcSinkLabel,
                    liquid::ArcStyle const& of_style,
                    liquid::CutoutStyle const& with_cutout,
                    FNode* node,
-                   std::string const& text);
+                   std::string const& id);
         virtual ~FNodeInput();
         
         // ConnectionSink:
         virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
         virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
-
+    
+    protected:
+        std::string m_id;
 };
 
 
@@ -65,17 +70,25 @@ class FNodeImageInput: public FNodeInput{
         static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
 };
 
-
 class FNodeParamInput: public FNodeInput{
     public:
         FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node);
         virtual OutputType::e ioType() const;
         virtual SubType subType() const;
+
+        void setValue(ParamValue const& v);
     
     private:
         static liquid::CutoutStyle const& cutoutStyleForSchedType(InputSchedType::e const& st);
 
+        void initView();
+
         SubType m_subtype;
+        
+        NodeItemModel* m_model;
+        boost::shared_ptr<Node> m_model_node;
+        NodeTreeView* m_view;
+        QGraphicsProxyWidget* m_view_proxy;
 };
 
 } // namespace f

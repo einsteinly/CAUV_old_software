@@ -226,13 +226,18 @@ void FNode::setParams(msg_node_param_map_t const& params){
         str_in_map_t::iterator k = m_params.find(j.first.input);    
         if(k == m_params.end()){
             debug() << BashColour::Blue << "FNode:: new param:" << j;        
-            FNodeInput* t = new FNodeParamInput(manager(), j.first, this);
+            FNodeParamInput* t = new FNodeParamInput(manager(), j.first, this);
             m_params[j.first.input] = t;
             addItem(t);
-            // .... TODO: parameter values, the great editable-GUI-value-unification
+            t->setValue(j.second);
         }else{
             debug() << BashColour::Blue << "FNode:: update param:" << j;
-            // .... TODO: parameter values, the great editable-GUI-value-unification
+            FNodeParamInput* t = dynamic_cast<FNodeParamInput*>(k->second);
+            if(t){
+                t->setValue(j.second);
+            }else{
+                error() << j.first << "is not a parameter! Value cannot be set.";
+            }
         }
     }
 

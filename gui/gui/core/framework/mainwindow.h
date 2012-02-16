@@ -30,7 +30,7 @@ namespace gui {
 
 
 class CauvInterfacePlugin;
-class GuiActions;
+struct GuiActions;
 
 
 class CauvMainWindow : public QMainWindow, public CauvNode, public boost::enable_shared_from_this<CauvMainWindow> {
