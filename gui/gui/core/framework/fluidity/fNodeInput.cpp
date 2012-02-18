@@ -183,7 +183,7 @@ void FNodeParamInput::modelValueChanged(QVariant value){
     ParamValue pv;
     try{
         pv = qVariantToVariant<ParamValue>(value);
-    }catch(boost::bad_get& e){
+    }catch(std::bad_cast& e){
         error() << "modelValueChanged:" << e.what();
         return;
     }

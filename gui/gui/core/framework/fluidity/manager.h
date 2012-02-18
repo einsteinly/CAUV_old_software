@@ -41,7 +41,8 @@ namespace f{
 
 class Manager: public QObject,
                public BufferedMessageObserver,
-               public boost::enable_shared_from_this<Manager>{
+               public boost::enable_shared_from_this<Manager>,
+               public boost::noncopyable{
     Q_OBJECT
     public:
         Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipeline_name);

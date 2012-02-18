@@ -79,18 +79,23 @@ namespace cauv {
             typedef typename mpl::pop_front<Types>::type Tail;
 
             //info() << qv.userType() << "=" << qMetaTypeId<Head>();
-            if ( ((unsigned)qv.userType()) == ((unsigned)qMetaTypeId<Head>()) ) {
+            if(qv.userType() == qMetaTypeId<Head>()){
                 //info() << qv.toString().toStdString() << "when cast" << qv.value<Head>();
                 return T_Variant( qv.value<Head>() );
-            }
-            else
+            }else{
                 return qVariantToVariant_helper<T_Variant,Tail>( qv );
+            }
         }
 
         template <typename T_Variant>
         T_Variant qVariantToVariant( const QVariant & qv ) {
             //info() << "recieved qvariant: " << qv.toString().toStdString();
-            return qVariantToVariant_helper<T_Variant,typename T_Variant::types>( qv );
+            if(qv.userType() == qMetaTypeId<QString>()){
+                // QStrings get converted to std::strings on the way out:
+                return T_Variant(qv.value<QString>().toStdString());
+            }else{
+                return qVariantToVariant_helper<T_Variant,typename T_Variant::types>( qv );
+            }
         }
 
 
