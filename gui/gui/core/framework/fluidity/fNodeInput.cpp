@@ -21,17 +21,20 @@
 
 #include <liquid/arcSink.h>
 
-#include "model/node.h"
-#include "model/variants.h"
-#include "model/nodes/numericnode.h"
-#include "model/nodes/stringnode.h"
-
-#include <generated/types/LocalNodeInput.h>
+#include <gui/core/model/node.h>
+#include <gui/core/model/variants.h>
+#include <gui/core/model/nodes/numericnode.h>
+#include <gui/core/model/nodes/stringnode.h>
+#include <gui/core/model/singleItemModel.h>
+#include <gui/core/framework/nodepicker.h>
 
 #include <debug/cauv_debug.h>
 
 #include "fluidity/manager.h"
 #include "fluidity/fNodeOutput.h"
+
+#include <generated/types/LocalNodeInput.h>
+#include <generated/types/SetNodeParameterMessage.h>
 
 using namespace cauv;
 using namespace cauv::gui::f;
@@ -46,8 +49,7 @@ FNodeInput::FNodeInput(Manager& m,
                    node,
                    QString::fromStdString(id)),
       FNodeIO(node, id),
-      ManagedElement(m),
-      m_id(id){
+      ManagedElement(m){
 }
 
 FNodeInput::~FNodeInput(){
@@ -168,12 +170,22 @@ SubType FNodeParamInput::subType() const{
 
 void FNodeParamInput::setValue(ParamValue const& v){
     if(!m_model){
-        m_model_node = makeModelNodeForInput(m_id, v);
-        m_model = new NodeItemModel(m_model_node);
+        m_model_node = makeModelNodeForInput(id(), v);
+        m_model = new SingleNodeItemModel(m_model_node);
+        connect(m_model_node.get(), SIGNAL(onSet(QVariant)), this, SLOT(modelValueChanged(QVariant)));
         initView();
     }
-    //m_model_node->update(variantToQVariant(v));
-    m_model_node->set(variantToQVariant(v));
+    m_model_node->update(variantToQVariant(v));
+}
+
+void FNodeParamInput::modelValueChanged(QVariant value){
+    debug() << "modelValueChanged:" << id() << qVariantToVariant<ParamValue>(value);
+    manager().sendMessage(boost::make_shared<SetNodeParameterMessage>(
+        manager().pipelineName(),
+        node()->id(),
+        id(),
+        qVariantToVariant<ParamValue>(value)
+    ));
 }
 
 liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedType::e const& st){
@@ -190,17 +202,18 @@ void FNodeParamInput::initView(){
     assert(m_model);
 
     m_view = new NodeTreeView();
-    m_view_proxy = new QGraphicsProxyWidget();
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_view->setMinimumSize(QSize(1,1));
-    m_view->setModel(m_model); 
+    m_view->setMinimumSize(QSize(60,20));
+    m_view->setModel(m_model);
+    m_view->setColumnWidth(0,80);
+
+    m_view_proxy = new QGraphicsProxyWidget();
     m_view_proxy->setWidget(m_view);
     // !!! I don't like the current way the layout is set by the label, and
     // inherited here: this class (well, the FNodeInput) should really compose
     // the label, rather than inherit from it, that way layout management is
     // done here, without this nastiness:
-
     dynamic_cast<QGraphicsLinearLayout*>(layout())->addItem(m_view_proxy);
 }
 

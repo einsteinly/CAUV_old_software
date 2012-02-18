@@ -89,7 +89,12 @@ void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &op
                                const QModelIndex &index) const{
 
     // display the node
-    const boost::shared_ptr<Node> node = static_cast<Node*>(index.internalPointer())->shared_from_this();
+    void* ptr = index.internalPointer();
+    if(!ptr){
+        error() << "NodeDelegateMapper:: nothing to paint!";
+        return;
+    }
+    const boost::shared_ptr<Node> node = static_cast<Node*>(ptr)->shared_from_this();
     if (node && index.column() == 1) {
         try {
             boost::shared_ptr<QAbstractItemDelegate> delegate = getDelegate(node);

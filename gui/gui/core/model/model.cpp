@@ -126,7 +126,8 @@ Qt::ItemFlags NodeItemModel::flags(const QModelIndex &index) const{
 
 QVariant NodeItemModel::data(const QModelIndex & index, int role) const {
     boost::shared_ptr<Node> node = nodeFromIndex(index);
-
+    
+    // !!! no index validation? /jc
     switch (role){
     case Qt::EditRole:
     case Qt::DisplayRole:

@@ -50,6 +50,10 @@ class Manager: public QObject,
         void init();
 
         fnode_ptr lookup(node_id_t const& id);
+
+        void sendMessage(boost::shared_ptr<const Message>) const;
+
+        std::string const& pipelineName() const;
         
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a

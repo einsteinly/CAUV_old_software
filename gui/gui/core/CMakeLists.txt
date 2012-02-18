@@ -77,6 +77,7 @@ set ( GUI_CORE_H
 
     model/node.h
     model/model.h
+    model/singleItemModel.h
     model/nodes/numericnode.h
     model/nodes/stringnode.h
     model/nodes/imagenode.h

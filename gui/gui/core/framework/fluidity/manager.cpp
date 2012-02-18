@@ -96,6 +96,14 @@ fnode_ptr Manager::lookup(node_id_t const& id){
     return NULL;
 }
 
+void Manager::sendMessage(boost::shared_ptr<const Message> m) const{
+    m_cauv_node->send(m);
+}
+
+std::string const& Manager::pipelineName() const{
+    return m_pipeline_name;
+}
+
 // - Message Observer Implementation: thunks
 void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
     Q_EMIT receivedGraphDescription(m);
