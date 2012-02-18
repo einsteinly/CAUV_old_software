@@ -96,6 +96,7 @@ class Manager: public QObject,
         void requestRemoveArc(NodeOutput from, NodeInput to);
         void requestNode(NodeType::e const& type);
         void requestRemoveNode(node_id_t const& id);
+        void requestRefresh();
 
     protected:
         void removeNode(node_id_t const& id);

@@ -179,12 +179,19 @@ void FNodeParamInput::setValue(ParamValue const& v){
 }
 
 void FNodeParamInput::modelValueChanged(QVariant value){
-    debug() << "modelValueChanged:" << id() << qVariantToVariant<ParamValue>(value);
+    debug() << "modelValueChanged:" << id() << value.typeName();
+    ParamValue pv;
+    try{
+        pv = qVariantToVariant<ParamValue>(value);
+    }catch(boost::bad_get& e){
+        error() << "modelValueChanged:" << e.what();
+        return;
+    }
     manager().sendMessage(boost::make_shared<SetNodeParameterMessage>(
         manager().pipelineName(),
         node()->id(),
         id(),
-        qVariantToVariant<ParamValue>(value)
+        pv
     ));
 }
 

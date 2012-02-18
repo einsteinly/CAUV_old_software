@@ -32,7 +32,7 @@
 
 using namespace liquid;
 
-const static QSizeF Minimum_Size = QSizeF(100, 100);
+const static QSizeF Minimum_Size = QSizeF(100, 40);
 
 LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     : QGraphicsObject(parent),

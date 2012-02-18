@@ -140,14 +140,14 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     setType(p->nodeType());
     m_header->setInfo(mkQStr() << p->nodeId() << ": 0.0MB/s 0Hz");
 
-    setOutputs(p->outputs());
-    //setOutputLinks(p->outputs());
-
     setParams(p->params());
     setParamLinks(p->inputs()); // param links are inputs
 
     setInputs(p->inputs());
     setInputLinks(p->inputs());
+    
+    setOutputs(p->outputs());
+    //setOutputLinks(p->outputs());
 }
 
 void FNode::setType(NodeType::e const& type){

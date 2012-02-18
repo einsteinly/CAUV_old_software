@@ -265,6 +265,10 @@ void Manager::requestRemoveNode(node_id_t const& id){
     m_cauv_node->send(boost::make_shared<RemoveNodeMessage>(m_pipeline_name, id));
 }
 
+void Manager::requestRefresh(){
+    m_cauv_node->send(boost::make_shared<GraphRequestMessage>(m_pipeline_name));
+}
+
 // - General Protected Implementations
 void Manager::removeNode(node_id_t const& id){
     debug() << BashColour::Red << "removeNode:" << id;

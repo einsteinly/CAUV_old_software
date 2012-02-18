@@ -16,11 +16,8 @@
 #include "layout.h" // temporary, see keyPressEvent
 
 #include <QGraphicsProxyWidget>
-
 #include <QApplication>
-
 #include <QGesture>
-
 #include <QDebug>
 
 #include <debug/cauv_debug.h>

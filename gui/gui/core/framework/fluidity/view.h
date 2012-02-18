@@ -15,7 +15,7 @@
 #ifndef __CAUV_F_VIEW_H__
 #define __CAUV_F_VIEW_H__
 
-#include <boost/shared_ptr.hpp> 
+#include <boost/shared_ptr.hpp>
 
 #include <liquid/view.h>
 
@@ -32,19 +32,33 @@ class FView: public liquid::LiquidView {
     Q_OBJECT
     public:
         FView(boost::shared_ptr<CauvNode> node, QWidget *parent = NULL);
-        
+
     protected:
         // QWidget
         void contextMenuEvent(QContextMenuEvent *event);
+        //void resizeEvent(QResizeEvent* event);
+        //void scrollContentsBy(int dx, int dy);
+        void paintEvent(QPaintEvent * event);
+
+        // temporary keyboard shortcut hook:
+        virtual void keyPressEvent(QKeyEvent *event);
 
     private:
         void buildMenus();
 
     private:
+        void _updateOverlays();
+
         boost::shared_ptr<CauvNode> m_cauv_node;
         boost::shared_ptr<Manager> m_manager;
 
         QList<QAction*> m_contextmenu_actions;
+
+        // +ve coordinates are relative to left and top, -ve coordinates are
+        // relative to right and bottom of the view:
+        // This is used, for example, to draw buttons inside the view in a
+        // consistent position as the view is moved around.
+        std::vector< std::pair<QPoint, QGraphicsWidget*> > m_overlay_items;
 };
 
 } // namespace f
