@@ -81,6 +81,11 @@ void NodeHeader::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
     fadeIn->start();
 }
 
+float NodeHeader::minimumWidth() const{
+    return std::max(m_title->boundingRect().width(),
+                    m_info_text->boundingRect().width());
+}
+
 void NodeHeader::setTitle(QString title){
     m_title->setText(title);
     setWidth(m_width);

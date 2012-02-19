@@ -39,6 +39,8 @@ class NodeHeader: public QGraphicsObject{
         virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
         virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
 
+        float minimumWidth() const;
+
     Q_SIGNALS:
         /* none */
 
