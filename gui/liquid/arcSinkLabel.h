@@ -20,6 +20,8 @@
 
 #include "arcSink.h"
 
+class QGraphicsLinearLayout;
+
 namespace liquid {
 
 class ArcSinkLabel: public QGraphicsWidget,
@@ -39,6 +41,9 @@ class ArcSinkLabel: public QGraphicsWidget,
         virtual void paint(QPainter *painter,
                            const QStyleOptionGraphicsItem *option,
                            QWidget *widget = 0);
+
+        // Safe access to the layout:
+        QGraphicsLinearLayout* vLayout() const;
 
     protected:
         liquid::ArcSink* m_arc_sink;

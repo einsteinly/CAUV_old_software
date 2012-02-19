@@ -106,6 +106,9 @@ class FNodeImageOutput: public FNodeOutput{
     public:
         FNodeImageOutput(LocalNodeOutput const& output, FNode* node)
             : FNodeOutput(node, Image_Arc_Style, output.output){
+            #ifndef CAUV_DEBUG_DRAW_LAYOUT
+            setFlag(ItemHasNoContents);
+            #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
         }
 
         virtual OutputType::e ioType() const{
@@ -115,9 +118,11 @@ class FNodeImageOutput: public FNodeOutput{
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
             Q_UNUSED(option);
             Q_UNUSED(widget);
+            #ifdef CAUV_DEBUG_DRAW_LAYOUT
             painter->setPen(QPen(QColor(20,20,200,64)));
             painter->setBrush(Qt::NoBrush);
             painter->drawRect(boundingRect());
+            #endif // def CAUV_DEBUG_DRAW_LAYOUT
         }
 };
 
@@ -125,7 +130,9 @@ class FNodeParamOutput: public FNodeOutput{
     public:
         FNodeParamOutput(LocalNodeOutput const& output, FNode* node)
             : FNodeOutput(node, Param_Arc_Style, output.output), m_subType(output.subType){
-            
+            #ifndef CAUV_DEBUG_DRAW_LAYOUT
+            setFlag(ItemHasNoContents);
+            #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
         }
 
         virtual OutputType::e ioType() const{
@@ -138,9 +145,11 @@ class FNodeParamOutput: public FNodeOutput{
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
             Q_UNUSED(option);
             Q_UNUSED(widget);
+            #ifdef CAUV_DEBUG_DRAW_LAYOUT
             painter->setPen(QPen(QColor(200,20,30,64)));
             painter->setBrush(Qt::NoBrush);
             painter->drawRect(boundingRect());
+            #endif // def CAUV_DEBUG_DRAW_LAYOUT
         }
     private:
         SubType m_subType;

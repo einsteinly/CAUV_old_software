@@ -211,16 +211,14 @@ void FNodeParamInput::initView(){
     m_view = new NodeTreeView();
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_view->setMinimumSize(QSize(60,20));
+    m_view->setMinimumSize(QSize(60,30));
     m_view->setModel(m_model);
     m_view->setColumnWidth(0,80);
+    //m_view->resizeRowsToContents();
 
-    m_view_proxy = new QGraphicsProxyWidget();
+    m_view_proxy = new QGraphicsProxyWidget();    m_view_proxy->setWidget(m_view);
     m_view_proxy->setWidget(m_view);
-    // !!! I don't like the current way the layout is set by the label, and
-    // inherited here: this class (well, the FNodeInput) should really compose
-    // the label, rather than inherit from it, that way layout management is
-    // done here, without this nastiness:
-    dynamic_cast<QGraphicsLinearLayout*>(layout())->addItem(m_view_proxy);
+    
+    vLayout()->addItem(m_view_proxy);
 }
 

@@ -36,11 +36,39 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
       m_arc_sink(arc_sink),
       m_text(NULL){
 
+    /*
+     *    This widget
+     * o---------------------------+
+     * |                           |
+     * |   this->layout() (V)      |
+     * | +-----------------------+ |
+     * | |        h layout       | |
+     * | | +----++-------------+ | |
+     * | | |sink||    label    | | |
+     * | | +----++-------------+ | |
+     * | +-----------------------+ |
+     * | : other stuff added to  : |
+     * | :    this->layout()     : |
+     * | + - - - - - - - - - - - + |
+     * | :                       : |
+     * | :                       : |
+     * | + - - - - - - - - - - - + |
+     * |                           |
+     * +---------------------------+
+     */
+    
+    QGraphicsLinearLayout *vlayout = new QGraphicsLinearLayout(
+        Qt::Vertical, this
+    );
+    vlayout->setSpacing(0);
+    vlayout->setContentsMargins(0,0,0,0);    
+
     QGraphicsLinearLayout *hlayout = new QGraphicsLinearLayout(
-        Qt::Horizontal, this
+        Qt::Horizontal, vlayout
     );
     hlayout->setSpacing(0);
     hlayout->setContentsMargins(0,0,0,0);
+    vlayout->addItem(hlayout);
 
     m_arc_sink->setParentItem(this);
     hlayout->addItem(m_arc_sink);
@@ -55,13 +83,16 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignLeft);
 
     hlayout->setItemSpacing(1, 4.0);
-
     hlayout->addStretch(1);
 
-    setLayout(hlayout);
+    setLayout(vlayout);
 
     connect(node, SIGNAL(xChanged()), m_arc_sink, SIGNAL(geometryChanged()));
     connect(node, SIGNAL(yChanged()), m_arc_sink, SIGNAL(geometryChanged()));
+    
+    #ifndef CAUV_DEBUG_DRAW_LAYOUT
+    setFlag(ItemHasNoContents);
+    #endif // ndef CAUV_DEBUG_DRAW_LAYOUT
 }
 
 ArcSinkLabel::~ArcSinkLabel(){
@@ -89,6 +120,7 @@ void ArcSinkLabel::paint(QPainter *painter,
                        QWidget *widget){
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    #ifdef CAUV_DEBUG_DRAW_LAYOUT
     painter->setPen(QPen(QColor(20,180,40,64)));
     painter->setBrush(Qt::NoBrush);
     painter->drawRect(boundingRect());
@@ -98,4 +130,10 @@ void ArcSinkLabel::paint(QPainter *painter,
               << m_arc_sink->geometry().width()
               << m_arc_sink->geometry().height()
               << m_arc_sink->parentItem();
+    #endif // def CAUV_DEBUG_DRAW_LAYOUT
 }
+
+QGraphicsLinearLayout* ArcSinkLabel::vLayout() const{
+    return dynamic_cast<QGraphicsLinearLayout*>(QGraphicsWidget::layout());
+}
+

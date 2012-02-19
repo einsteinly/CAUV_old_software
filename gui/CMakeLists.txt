@@ -3,6 +3,10 @@ project (guis)
 option(CAUV_BUILD_GUI "Whether or not to use the GUI" ON)
 
 if (CAUV_BUILD_GUI)
+    option(CAUV_DEBUG_GUI_LAYOUT "Draw bounding boxes around some GUI items." OFF)
+    if(CAUV_DEBUG_GUI_LAYOUT)
+        add_definitions(-DCAUV_DEBUG_DRAW_LAYOUT)
+    endif()
 
     find_package (Qt4)
 
