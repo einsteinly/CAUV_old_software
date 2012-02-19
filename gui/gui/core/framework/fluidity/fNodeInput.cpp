@@ -179,8 +179,7 @@ void FNodeParamInput::setValue(ParamValue const& v){
 }
 
 void FNodeParamInput::setEditable(bool editable){
-    // !!! TODO: indicate this differently?
-    m_view->setEnabled(editable);
+    m_model_node->setMutable(editable);
 }
 
 void FNodeParamInput::modelValueChanged(QVariant value){
