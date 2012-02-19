@@ -14,6 +14,8 @@
 
 #include "nodeHeader.h"
 
+#include <algorithm>
+
 #include <QGraphicsPathItem>
 #include <QGraphicsSimpleTextItem>
 #include <QGraphicsSceneHoverEvent>
@@ -55,6 +57,13 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     m_info_text->setZValue(2);
 }
 
+float NodeHeader::minimumWidth() const{
+    return m_style.tl_radius/2 + std::max(
+        m_title->boundingRect().width(),
+        m_info_text->boundingRect().width()
+    );
+}
+
 QRectF NodeHeader::boundingRect() const{
     return QRectF(0,0,m_width,m_style.header.height);
 }
@@ -79,11 +88,6 @@ void NodeHeader::hoverLeaveEvent(QGraphicsSceneHoverEvent *event){
     fadeIn->setEndValue(1.0);
     fadeIn->setDuration(100);
     fadeIn->start();
-}
-
-float NodeHeader::minimumWidth() const{
-    return std::max(m_title->boundingRect().width(),
-                    m_info_text->boundingRect().width());
 }
 
 void NodeHeader::setTitle(QString title){

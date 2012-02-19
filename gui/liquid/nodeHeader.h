@@ -32,14 +32,14 @@ class NodeHeader: public QGraphicsObject{
         NodeHeader(NodeStyle const& style, QGraphicsObject *parent=0);
         virtual ~NodeHeader(){ }
 
+        float minimumWidth() const;
+
     protected:
         virtual QRectF boundingRect() const;
         virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget *w=0);
     
         virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
         virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-
-        float minimumWidth() const;
 
     Q_SIGNALS:
         /* none */

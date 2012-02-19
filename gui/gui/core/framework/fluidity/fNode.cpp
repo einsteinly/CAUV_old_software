@@ -120,7 +120,8 @@ static int countLocalInputsWithName(std::string const& name, FNode::msg_node_par
 FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     : liquid::LiquidNode(F_Node_Style, NULL), 
       ManagedElement(m),
-      m_node_id(id){
+      m_node_id(id),
+      m_type(type){
     initButtons();
     setType(type);
 
@@ -135,7 +136,8 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
 FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     : liquid::LiquidNode(F_Node_Style, NULL),
       ManagedElement(m),
-      m_node_id(p->nodeId()){
+      m_node_id(p->nodeId()),
+      m_type(p->nodeType()){
     initButtons();
     setType(p->nodeType());
     m_header->setInfo(mkQStr() << p->nodeId() << ": 0.0MB/s 0Hz");
@@ -147,10 +149,11 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     setInputLinks(p->inputs());
     
     setOutputs(p->outputs());
-    //setOutputLinks(p->outputs());
+    setOutputLinks(p->outputs());
 }
 
 void FNode::setType(NodeType::e const& type){
+    m_type = type;
     m_header->setTitle(nodeTypeDesc(type));
 }
 
@@ -172,17 +175,17 @@ void FNode::setInputs(msg_node_input_map_t const& inputs){
 }
 
 void FNode::setInputLinks(msg_node_input_map_t const& inputs){
+    m_input_links.clear();
     msg_node_input_map_t::const_iterator j;
     for(j = inputs.begin(); j != inputs.end(); j++){
         str_in_map_t::const_iterator k = m_inputs.find(j->first.input);
-        // if connected, add the arc to this input:
-        if(k == m_inputs.end()){
+        // if connected, add the arc to this input: 
+        if(!j->second.node) // not connected
             continue;
-        }
-        if(!j->second.node){
-            debug() << "zero-link!";
+        if(k == m_inputs.end()) // parameter, not an input
             continue;
-        }
+        m_input_links.push_back(NodeInputArc(j->first.input, j->second));
+
         fnode_ptr from = manager().lookup(j->second.node);
         FNodeOutput* output = NULL;
         // !!! TODO:
@@ -210,12 +213,23 @@ void FNode::setOutputs(msg_node_output_map_t const& outputs){
     }
 }
 
-//void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
-//}
+void FNode::setOutputLinks(msg_node_output_map_t const& outputs){
+    // don't construct any output links - that would be completely redundant,
+    // but do record what out output links are, so this node can be duplicated
+    m_output_links.clear();
+    msg_node_output_map_t::const_iterator j;
+    for(j = outputs.begin(); j != outputs.end(); j++){
+        msg_node_in_list_t::const_iterator i;
+        for(i = j->second.begin(); i != j->second.end(); i++){
+            m_output_links.push_back(NodeOutputArc(*i, j->first.output));
+        }
+    }
+    
+}
 
 void FNode::setParams(msg_node_param_map_t const& params){
-    str_in_map_t new_m_params;
-    foreach(str_in_map_t::value_type const &i, m_params)
+    str_inparam_map_t new_m_params;
+    foreach(str_inparam_map_t::value_type const &i, m_params)
         if(!countLocalInputsWithName(i.first, params)){
             removeItem(i.second);
         }else{
@@ -223,7 +237,7 @@ void FNode::setParams(msg_node_param_map_t const& params){
         }
     m_params = new_m_params;
     foreach(msg_node_param_map_t::value_type const& j, params){
-        str_in_map_t::iterator k = m_params.find(j.first.input);    
+        str_inparam_map_t::iterator k = m_params.find(j.first.input);    
         if(k == m_params.end()){
             debug() << BashColour::Blue << "FNode:: new param:" << j;        
             FNodeParamInput* t = new FNodeParamInput(manager(), j.first, this);
@@ -246,21 +260,19 @@ void FNode::setParams(msg_node_param_map_t const& params){
 void FNode::setParamLinks(msg_node_input_map_t const& inputs){
     typedef msg_node_input_map_t im_t;
     foreach(im_t::value_type const& j, inputs){
-        str_in_map_t::const_iterator k = m_params.find(j.first.input);
+        str_inparam_map_t::const_iterator k = m_params.find(j.first.input);
         // if connected, add the arc to this parameter's input:
-        if(k == m_params.end()){
+        if(k == m_params.end()) // input not param
             continue;
-        }
         if(j.second.node){
+            m_input_links.push_back(NodeInputArc(j.first.input, j.second));
             fnode_ptr from = manager().lookup(j.second.node);
             FNodeOutput* output = NULL;
             if(from && (output = from->output(j.second.output)))
                 output->arc()->addTo(k->second->sink());
-            // TODO: parameter values
-            //k->second.pvpair->editable(false);
+            k->second->setEditable(false);
         }else{
-            // TODO: parameter values
-            //k->second.pvpair->editable(true);
+            k->second->setEditable(true);            
         }
     }
 }
@@ -285,21 +297,29 @@ void FNode::close(){
     Q_EMIT closed(m_node_id);
     // don't delete yet! That happens when fadeAndRemove (or just remove) slots
     // are triggered
-    QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
-    fade->setEndValue(0.25);
-    fade->setDuration(200);    
-    fade->start();
+    if(manager().animationPermitted()){
+        QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
+        fade->setEndValue(0.25);
+        fade->setDuration(200);
+        fade->start();
+    }else{
+        setOpacity(0.25);
+    }
 }
 
 void FNode::fadeAndRemove(){
     debug() << "FNode::fadeAndRemove()" << this;
     disconnect();
     // now we are cut off from the outside world (apart from the scene), fade away:
-    QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
-    fade->setEndValue(0);
-    fade->setDuration(200);    
-    fade->start();
-    connect(fade, SIGNAL(finished()), this, SLOT(remove()));    
+    if(manager().animationPermitted()){
+        QPropertyAnimation *fade = new QPropertyAnimation(this, "opacity");
+        fade->setEndValue(0);
+        fade->setDuration(200);    
+        fade->start();
+        connect(fade, SIGNAL(finished()), this, SLOT(remove()));
+    }else{
+        remove();
+    }
 }
 
 void FNode::remove(){
@@ -309,11 +329,13 @@ void FNode::remove(){
 }
 
 void FNode::reExec(){
-    // !!!
+    manager().requestForceExec(id());
 }
 
 void FNode::duplicate(){
-    // !!!
+    // Don't duplicate output links - this would break the connections of the
+    // duplicated node
+    manager().requestNode(m_type, m_input_links/*, m_output_links*/);
 }
 
 FNodeOutput* FNode::output(std::string const& id){
@@ -328,9 +350,9 @@ FNodeInput* FNode::input(std::string const& id){
     str_in_map_t::const_iterator i = m_inputs.find(id);
     if(i != m_inputs.end())
         return i->second;
-    i = m_params.find(id);
-    if(i != m_params.end())
-        return i->second;
+    str_inparam_map_t::const_iterator j = m_params.find(id);
+    if(j != m_params.end())
+        return j->second;
     error() << "no such input: " << id;
     return NULL;
 }

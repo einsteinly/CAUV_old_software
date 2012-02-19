@@ -121,15 +121,16 @@ bool ArcSink::willAcceptConnection(ArcSourceDelegate* from_source){
 }
 
 void ArcSink::doPresentHighlight(qreal intensity){
-    // !!! TODO: could probably do away with animation here - highlights will
-    // change smoothly anyway
     debug(8) << "doPresentHighlight:" << intensity;
+    setOpacity(std::max(intensity, 0.01));
+    /*
     QPropertyAnimation *fadeHL = new QPropertyAnimation(this, "opacity");
     // !!! can't set zero opacity, because that renders this item invisible,
     // and then it won't be picked up by the proximity test!
     fadeHL->setEndValue(std::max(intensity, 0.01));
     fadeHL->setDuration(100);    
     fadeHL->start();
+    */
 }
 
 ArcSink::ConnectionStatus ArcSink::doAcceptConnection(ArcSourceDelegate* from_source){
@@ -164,8 +165,11 @@ void ArcSink::paint(QPainter *painter,
                     QWidget *widget){
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    Q_UNUSED(painter);
+    #ifdef CAUV_DEBUG_DRAW_LAYOUT
     painter->setPen(QPen(QColor(180,10,120,64)));
     painter->setBrush(Qt::NoBrush);
     painter->drawRect(boundingRect());
+    #endif // def CAUV_DEBUG_DRAW_LAYOUT 
 }
 

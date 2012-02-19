@@ -82,7 +82,8 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     hlayout->addItem(m_text);
     hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignLeft);
 
-    hlayout->setItemSpacing(1, 4.0);
+    hlayout->setItemSpacing(0, 4.0);
+    hlayout->setItemSpacing(1, 2.0);
     hlayout->addStretch(1);
 
     setLayout(vlayout);
@@ -120,6 +121,7 @@ void ArcSinkLabel::paint(QPainter *painter,
                        QWidget *widget){
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    Q_UNUSED(painter);
     #ifdef CAUV_DEBUG_DRAW_LAYOUT
     painter->setPen(QPen(QColor(20,180,40,64)));
     painter->setBrush(Qt::NoBrush);

@@ -33,12 +33,15 @@
 #include <generated/types/ParamValue.h>
 #include <generated/types/NodeAddedMessage.h>
 #include <generated/types/NodeType.h>
+#include <generated/types/NodeOutputArc.h>
+#include <generated/types/NodeInputArc.h>
 
 namespace cauv{
 namespace gui{
 namespace f{
 
 class FNodeInput;
+class FNodeParamInput;
 class FNodeOutput;
 
 class FNode: public liquid::LiquidNode,
@@ -54,6 +57,7 @@ class FNode: public liquid::LiquidNode,
     protected:
         // - protected typedefs
         typedef std::map<std::string, FNodeInput*> str_in_map_t;
+        typedef std::map<std::string, FNodeParamInput*> str_inparam_map_t;
         typedef std::map<std::string, FNodeOutput*> str_out_map_t;
 
     public:
@@ -66,7 +70,7 @@ class FNode: public liquid::LiquidNode,
         void setInputs(msg_node_input_map_t const&);
         void setInputLinks(msg_node_input_map_t const&);
         void setOutputs(msg_node_output_map_t const&);
-        //void setOutputLinks(msg_node_output_map_t const&); completely redundant
+        void setOutputLinks(msg_node_output_map_t const&);
         void setParams(msg_node_param_map_t const&);
         void setParamLinks(msg_node_input_map_t const& inputs);
         void connectOutputTo(std::string const& output, fnode_ptr, std::string const& input);
@@ -95,10 +99,16 @@ class FNode: public liquid::LiquidNode,
 
     protected:
         node_id_t m_node_id;
+        NodeType::e m_type;
     
-        str_in_map_t  m_inputs;
-        str_in_map_t  m_params;
-        str_out_map_t m_outputs;
+        str_in_map_t       m_inputs;
+        str_inparam_map_t  m_params;
+        str_out_map_t      m_outputs;
+        
+        // NB: do not assume these always correspond to m_inputs and m_outputs,
+        // this is not the case while arcs are pending addition or removal.
+        std::vector<cauv::NodeInputArc> m_input_links; // includes parameters
+        std::vector<cauv::NodeOutputArc> m_output_links;
 };
 
 } // namespace f

@@ -100,7 +100,7 @@ void Arc::setFrom(AbstractArcSource *from){
 }
 
 void Arc::addTo(AbstractArcSink *to){
-    debug() << "Arc::addTo:" << to;
+    debug(3) << "Arc::addTo:" << to;
     if(m_pending_sinks.count(to)){
         promotePending(to);
     }else if(!m_sinks.count(to)){
@@ -116,7 +116,7 @@ void Arc::addTo(AbstractArcSink *to){
 }
 
 void Arc::addPending(AbstractArcSink *to){
-    debug() << "Arc::addPending:" << to;
+    debug(3) << "Arc::addPending:" << to;
     if(!m_pending_sinks.count(to) && !m_sinks.count(to)){
         m_pending_sinks.insert(to);
         m_ends[to] = new EphemeralArcEnd(this, m_style, true);
@@ -130,7 +130,7 @@ void Arc::addPending(AbstractArcSink *to){
 }
 
 void Arc::removeTo(AbstractArcSink *to){
-    debug() << "Arc::removeTo:" << to;
+    debug(3) << "Arc::removeTo:" << to;
     disconnect(to, SIGNAL(geometryChanged()), this, SLOT(updateLayout()));
     disconnect(to, SIGNAL(disconnected(AbstractArcSink*)),
                this, SLOT(removeTo(AbstractArcSink*)));
@@ -142,7 +142,7 @@ void Arc::removeTo(AbstractArcSink *to){
 }
 
 void Arc::promotePending(AbstractArcSink *to){
-    debug() << "Arc::promotePending:" << to;
+    debug(3) << "Arc::promotePending:" << to;
     m_sinks.insert(to);
     m_pending_sinks.erase(to);
     updateLayout();

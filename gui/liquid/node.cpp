@@ -15,6 +15,7 @@
 #include "node.h"
 
 #include <set>
+#include <algorithm>
 
 #include <QGraphicsPathItem>
 #include <QGraphicsLayoutItem>
@@ -232,7 +233,7 @@ void LiquidNode::setSizeFromContents(){
     debug(6) << "LiquidNode::setSizeFromContents(" << m_contentWidget->size() << ")";
 
     const float header_height = m_style.header.height + m_style.bl_radius/2;
-    const float header_min_width = m_header->minimumWidth();
+    const double header_min_width = m_header->minimumWidth();
     m_size.setWidth(std::max(m_contentWidget->size().width(), header_min_width));
     m_size.setHeight(m_contentWidget->size().height() + header_height);
 

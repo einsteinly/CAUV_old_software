@@ -64,6 +64,8 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
       m_nodes(),
       m_imgnodes(),
       m_pipeline_name(pipeline_name){
+    m_animation_permitted.push(true);
+
     qRegisterMetaType<GraphDescriptionMessage_ptr>("GraphDescriptionMessage_ptr");
     qRegisterMetaType<NodeParametersMessage_ptr>("NodeParametersMessage_ptr");
     qRegisterMetaType<NodeAddedMessage_ptr>("NodeAddedMessage_ptr");
@@ -87,6 +89,7 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
 void Manager::init(){
     m_cauv_node->addMessageObserver(shared_from_this());
     m_cauv_node->joinGroup("pl_gui");
+    requestRefresh();
 }
 
 fnode_ptr Manager::lookup(node_id_t const& id){
@@ -102,6 +105,18 @@ void Manager::sendMessage(boost::shared_ptr<const Message> m) const{
 
 std::string const& Manager::pipelineName() const{
     return m_pipeline_name;
+}
+
+bool Manager::animationPermitted() const{
+   return m_animation_permitted.top();
+}
+
+void Manager::pushAnimationPermittedState(bool permitted){
+    m_animation_permitted.push(permitted);
+}
+
+void Manager::popAnimationPermittedState(){
+    m_animation_permitted.pop();
 }
 
 // - Message Observer Implementation: thunks
@@ -135,6 +150,8 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
     typedef std::map<node_id_t, FNode::msg_node_output_map_t> node_output_map_t;
     typedef std::map<node_id_t, FNode::msg_node_param_map_t> node_param_map_t;
     
+    AnimationPermittedState(*this, false);
+
     // remove nodes that shouldn't exist
     node_id_map_t::right_iterator i;
     node_type_map_t::const_iterator j;
@@ -200,8 +217,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 
         node->setInputLinks(inputs_it->second);
         node->setParamLinks(inputs_it->second);
-        // setOutputLinks is completely redundant
-        //node->setOutputLinks(outputs_it->second);
+        node->setOutputLinks(outputs_it->second);
     }
 
     liquid::LayoutItems::updateLayout(m_scene);
@@ -253,10 +269,12 @@ void Manager::requestRemoveArc(NodeOutput from, NodeInput to){
     m_cauv_node->send(boost::make_shared<RemoveArcMessage>(m_pipeline_name, from, to));
 }
 
-void Manager::requestNode(NodeType::e const& type){
+void Manager::requestNode(NodeType::e const& type,
+                          std::vector<NodeInputArc> const& inputs,
+                          std::vector<NodeOutputArc> const& outputs){
     debug() << BashColour::Brown << BashIntensity::Bold << "requestAddNode" << type;
     m_cauv_node->send(boost::make_shared<AddNodeMessage>(
-        m_pipeline_name, type, std::vector<NodeInputArc>(), std::vector<NodeOutputArc>()
+        m_pipeline_name, type, inputs, outputs
     ));
 }
 
@@ -267,6 +285,10 @@ void Manager::requestRemoveNode(node_id_t const& id){
 
 void Manager::requestRefresh(){
     m_cauv_node->send(boost::make_shared<GraphRequestMessage>(m_pipeline_name));
+}
+
+void Manager::requestForceExec(node_id_t const& id){
+    m_cauv_node->send(boost::make_shared<ForceExecRequestMessage>(m_pipeline_name, id));
 }
 
 // - General Protected Implementations

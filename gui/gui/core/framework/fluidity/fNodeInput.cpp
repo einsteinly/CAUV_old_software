@@ -112,32 +112,32 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
     // catch-all for uneditable types...
     template<typename T>
     boost::shared_ptr<cauv::gui::Node> operator()(T const&) const{
-        debug() << "MakeModelNode: catch all (string)";    
+        debug(7) << "MakeModelNode: catch all (string)";    
         return boost::make_shared< cauv::gui::StringNode >(cauv::gui::nid_t(id));
     }
 
     boost::shared_ptr<cauv::gui::Node> operator()(float const&) const{
-        debug() << "MakeModelNode: float";
+        debug(7) << "MakeModelNode: float";
         return boost::make_shared< cauv::gui::NumericNode<float> >(cauv::gui::nid_t(id));
     }
     
     boost::shared_ptr<cauv::gui::Node> operator()(bool const&) const{
-        debug() << "MakeModelNode: bool";    
+        debug(7) << "MakeModelNode: bool";    
         return boost::make_shared< cauv::gui::NumericNode<bool> >(cauv::gui::nid_t(id));
     }
     
     boost::shared_ptr<cauv::gui::Node> operator()(int32_t const&) const{
-        debug() << "MakeModelNode: int";    
+        debug(7) << "MakeModelNode: int";    
         return boost::make_shared< cauv::gui::NumericNode<int32_t> >(cauv::gui::nid_t(id));
     }
 
     boost::shared_ptr<cauv::gui::Node> operator()(cauv::BoundedFloat const&) const{
-        debug() << "MakeModelNode: BoundedFloat";    
+        debug(7) << "MakeModelNode: BoundedFloat";    
         return boost::make_shared< cauv::gui::NumericNode<cauv::BoundedFloat> >(cauv::gui::nid_t(id));
     }
 
     boost::shared_ptr<cauv::gui::Node> operator()(std::string const&) const{
-        debug() << "MakeModelNode: string";    
+        debug(7) << "MakeModelNode: string";    
         return boost::make_shared<cauv::gui::StringNode>(cauv::gui::nid_t(id));
     }
 
@@ -178,6 +178,11 @@ void FNodeParamInput::setValue(ParamValue const& v){
     m_model_node->update(variantToQVariant(v));
 }
 
+void FNodeParamInput::setEditable(bool editable){
+    // !!! TODO: indicate this differently?
+    m_view->setEnabled(editable);
+}
+
 void FNodeParamInput::modelValueChanged(QVariant value){
     debug() << "modelValueChanged:" << id() << value.typeName();
     ParamValue pv;
@@ -215,6 +220,8 @@ void FNodeParamInput::initView(){
     m_view->setModel(m_model);
     m_view->setColumnWidth(0,80);
     //m_view->resizeRowsToContents();
+    // umm, doesn't play well with editing widgets!
+    //m_view->setStyleSheet("QTreeView {background-color: transparent}");
 
     m_view_proxy = new QGraphicsProxyWidget();    m_view_proxy->setWidget(m_view);
     m_view_proxy->setWidget(m_view);

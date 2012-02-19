@@ -63,7 +63,7 @@ class FNodeOutput: public QGraphicsWidget,
             m_text = new QGraphicsProxyWidget();
             m_text->setWidget(text_label);
             hlayout->addItem(m_text);
-            hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignRight);
+            hlayout->setAlignment(m_text, Qt::AlignBottom | Qt::AlignRight);
             
             hlayout->setItemSpacing(1, 4.0);
 
@@ -73,7 +73,7 @@ class FNodeOutput: public QGraphicsWidget,
             m_source->setParentItem(this);
             m_source->setZValue(10);
             hlayout->addItem(m_source);
-            hlayout->setAlignment(m_source, Qt::AlignVCenter | Qt::AlignRight);            
+            hlayout->setAlignment(m_source, Qt::AlignBottom | Qt::AlignRight);            
 
             setLayout(hlayout);
             
@@ -118,6 +118,7 @@ class FNodeImageOutput: public FNodeOutput{
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
             Q_UNUSED(option);
             Q_UNUSED(widget);
+            Q_UNUSED(painter);
             #ifdef CAUV_DEBUG_DRAW_LAYOUT
             painter->setPen(QPen(QColor(20,20,200,64)));
             painter->setBrush(Qt::NoBrush);
@@ -145,6 +146,7 @@ class FNodeParamOutput: public FNodeOutput{
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget=0){
             Q_UNUSED(option);
             Q_UNUSED(widget);
+            Q_UNUSED(painter);            
             #ifdef CAUV_DEBUG_DRAW_LAYOUT
             painter->setPen(QPen(QColor(200,20,30,64)));
             painter->setBrush(Qt::NoBrush);

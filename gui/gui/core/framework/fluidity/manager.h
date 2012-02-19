@@ -17,6 +17,8 @@
 
 #include <QObject>
 
+#include <stack>
+
 #include <boost/enable_shared_from_this.hpp>
 //#include <boost/bimap.hpp> boost bimap is utterly useless
 #include <boost/shared_ptr.hpp>
@@ -25,6 +27,8 @@
 #include <generated/types/NodeOutput.h>
 #include <generated/types/NodeInput.h>
 #include <generated/types/NodeType.h>
+#include <generated/types/NodeInputArc.h>
+#include <generated/types/NodeOutputArc.h>
 
 #include <utility/bimap.h>
 
@@ -55,6 +59,10 @@ class Manager: public QObject,
         void sendMessage(boost::shared_ptr<const Message>) const;
 
         std::string const& pipelineName() const;
+
+        bool animationPermitted() const;
+        void pushAnimationPermittedState(bool permitted);
+        void popAnimationPermittedState();
         
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
@@ -95,9 +103,12 @@ class Manager: public QObject,
          */
         void requestArc(NodeOutput from, NodeInput to);
         void requestRemoveArc(NodeOutput from, NodeInput to);
-        void requestNode(NodeType::e const& type);
+        void requestNode(NodeType::e const& type,
+                         std::vector<NodeInputArc> const& inputs = std::vector<NodeInputArc>(),
+                         std::vector<NodeOutputArc> const& outputs = std::vector<NodeOutputArc>()); 
         void requestRemoveNode(node_id_t const& id);
         void requestRefresh();
+        void requestForceExec(node_id_t const& id);
 
     protected:
         void removeNode(node_id_t const& id);
@@ -122,7 +133,21 @@ class Manager: public QObject,
         imgnode_id_map_t m_imgnodes;
 
         std::string m_pipeline_name;
+        
+        std::stack<bool> m_animation_permitted;
+};
 
+class AnimationPermittedState{
+    public:
+        AnimationPermittedState(Manager& m, bool animation_permitted)
+            : m_manager(m){
+            m_manager.pushAnimationPermittedState(animation_permitted);
+        }
+        ~AnimationPermittedState(){
+            m_manager.popAnimationPermittedState();
+        }
+    private:
+        Manager& m_manager;
 };
 
 } // namespace f

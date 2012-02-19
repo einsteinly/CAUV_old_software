@@ -78,6 +78,8 @@ class FNodeParamInput: public FNodeInput{
 
         void setValue(ParamValue const& v);
 
+        void setEditable(bool editable);
+
     protected Q_SLOTS:
         void modelValueChanged(QVariant value);
     
