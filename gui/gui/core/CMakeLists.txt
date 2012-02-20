@@ -54,11 +54,11 @@ set ( GUI_CORE_SRCS
     framework/delegates.cpp
 
     framework/fluidity/fNode.cpp
-    framework/fluidity/imgNode.cpp
     framework/fluidity/view.cpp 
     framework/fluidity/managedElement.cpp
     framework/fluidity/manager.cpp
     framework/fluidity/fNodeInput.cpp
+    framework/fluidity/videoWidget.cpp
     )
 
 set ( GUI_CORE_UIS
@@ -95,8 +95,9 @@ set ( GUI_CORE_H
     framework/fluidity/fNode.h
     framework/fluidity/fNodeOutput.h
     framework/fluidity/fNodeInput.h
-    framework/fluidity/imgNode.h
     framework/fluidity/menu.h
+    framework/fluidity/imageSource.h
+    framework/fluidity/videoWidget.h
     )
 
 set ( GUI_CORE_RCC

@@ -38,6 +38,8 @@
 #include "fluidity/fNodeInput.h"
 #include "fluidity/manager.h"
 #include "fluidity/types.h"
+#include "fluidity/imageSource.h"
+#include "fluidity/videoWidget.h"
 
 using cauv::gui::f::FNode;
 using cauv::gui::f::FNodeOutput;
@@ -290,6 +292,20 @@ void FNode::disconnectOutputFrom(std::string const& output_id, fnode_ptr to, std
     FNodeInput* input = to->input(input_id);
     if(output && input)
         output->arc()->removeTo(input->sink());
+}
+
+void FNode::addImageDisplayOnInput(std::string const& input, boost::shared_ptr<ImageSource> src){
+    str_in_map_t::const_iterator i = m_inputs.find(input);
+    if(i == m_inputs.end()){
+        error() << "no such input (yet)" << input;
+        return;
+    }
+    
+    VideoWidget* w = new VideoWidget(i->second);
+    connect(src.get(), SIGNAL(newImageAvailable(boost::shared_ptr<const GuiImageMessage>)),
+            w, SLOT(displayImage(boost::shared_ptr<const GuiImageMessage>)));
+    i->second->addWidget(w);
+    setResizable(true);
 }
 
 void FNode::close(){

@@ -78,6 +78,9 @@ class bimap{
 
         right_iterator find(R const& key) { return right().find(key); }
         left_iterator find(L const& key) { return left().find(key); }
+
+        size_t count(L const& key) const { return left().count(key); }
+        size_t count(R const& key) const { return right().count(key); }
         
         void insert(value_type const& v){ m_map.insert(v); }
 

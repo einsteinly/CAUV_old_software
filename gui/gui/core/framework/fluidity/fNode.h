@@ -43,6 +43,7 @@ namespace f{
 class FNodeInput;
 class FNodeParamInput;
 class FNodeOutput;
+class ImageSource;
 
 class FNode: public liquid::LiquidNode,
              public ManagedElement{
@@ -65,6 +66,7 @@ class FNode: public liquid::LiquidNode,
         FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
 
         node_id_t id() const{ return m_node_id; }
+        NodeType::e nodeType() const{ return m_type; }
 
         void setType(NodeType::e const&);
         void setInputs(msg_node_input_map_t const&);
@@ -75,6 +77,7 @@ class FNode: public liquid::LiquidNode,
         void setParamLinks(msg_node_input_map_t const& inputs);
         void connectOutputTo(std::string const& output, fnode_ptr, std::string const& input);
         void disconnectOutputFrom(std::string const& output, fnode_ptr, std::string const& input);
+        void addImageDisplayOnInput(std::string const& input, boost::shared_ptr<ImageSource>);
     
     Q_SIGNALS:
         void closed(node_id_t const);

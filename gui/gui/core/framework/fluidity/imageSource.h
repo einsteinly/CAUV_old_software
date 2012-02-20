@@ -12,24 +12,32 @@
  *     Hugo Vincent     hugo@camhydro.co.uk
  */
 
-#ifndef __CAUV_FLUIDITY_IMGNODE_H__
-#define __CAUV_FLUIDITY_IMGNODE_H__
+#ifndef __CAUV_GUI_F_IMAGE_SOURCE_H__
+#define __CAUV_GUI_F_IMAGE_SOURCE_H__
 
-#include "fluidity/fNode.h"
+#include <QObject>
+
+#include <boost/shared_ptr.hpp>
 
 namespace cauv{
+
+class GuiImageMessage;
+
 namespace gui{
 namespace f{
 
-class ImgNode: public FNode{
+class ImageSource: public QObject{
+        Q_OBJECT
     public:
-        ImgNode(Manager& m, node_id_t id, NodeType::e const& type);
-        ImgNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p);
-
+        void emitImage(boost::shared_ptr<const GuiImageMessage> msg){
+            Q_EMIT newImageAvailable(msg);
+        }
+    Q_SIGNALS:
+        void newImageAvailable(boost::shared_ptr<const GuiImageMessage>);
 };
 
 } // namespace f
 } // namespace gui
 } // namespace cauv
 
-#endif // ndef __CAUV_FLUIDITY_IMGNODE_H__
+#endif // ndef __CAUV_GUI_F_IMAGE_SOURCE_H__

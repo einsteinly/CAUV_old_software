@@ -43,6 +43,8 @@ class CauvNode;
 namespace gui{
 namespace f{
 
+class ImageSource;
+
 class Manager: public QObject,
                public BufferedMessageObserver,
                public boost::enable_shared_from_this<Manager>,
@@ -74,6 +76,7 @@ class Manager: public QObject,
         virtual void onNodeRemovedMessage(NodeRemovedMessage_ptr);
         virtual void onArcAddedMessage(ArcAddedMessage_ptr);
         virtual void onArcRemovedMessage(ArcRemovedMessage_ptr);
+        virtual void onGuiImageMessage(GuiImageMessage_ptr);
 
     Q_SIGNALS:
         void receivedGraphDescription(GraphDescriptionMessage_ptr);
@@ -82,6 +85,7 @@ class Manager: public QObject,
         void receivedNodeRemoved(NodeRemovedMessage_ptr);
         void receivedArcAdded(ArcAddedMessage_ptr);
         void receivedArcRemoved(ArcRemovedMessage_ptr);
+        void receivedGuiImage(GuiImageMessage_ptr);
 
     public Q_SLOTS:
         void onGraphDescription(GraphDescriptionMessage_ptr);
@@ -90,6 +94,7 @@ class Manager: public QObject,
         void onNodeRemoved(NodeRemovedMessage_ptr);
         void onArcAdded(ArcAddedMessage_ptr);
         void onArcRemoved(ArcRemovedMessage_ptr);
+        void onGuiImage(GuiImageMessage_ptr);
 
         /* When an arc is added: 
          * 1) GUI element emits arcRequested in response to drag & drop, or
@@ -123,18 +128,21 @@ class Manager: public QObject,
         template<typename message_T>
         bool _nameMatches(boost::shared_ptr<const message_T> msg);
 
+        void _checkAddImageSource(node_id_t);
+
     protected:
         QGraphicsScene *m_scene;
         CauvNode       *m_cauv_node;
         
         typedef cauv::bimap<fnode_ptr, node_id_t> node_id_map_t;
         node_id_map_t m_nodes;
-        typedef cauv::bimap<imgnode_ptr, node_id_t> imgnode_id_map_t;
-        imgnode_id_map_t m_imgnodes;
 
         std::string m_pipeline_name;
         
         std::stack<bool> m_animation_permitted;
+        
+        typedef std::map<node_id_t, boost::shared_ptr<ImageSource> > id_imgsrc_map_t;
+        id_imgsrc_map_t m_image_sources;
 };
 
 class AnimationPermittedState{

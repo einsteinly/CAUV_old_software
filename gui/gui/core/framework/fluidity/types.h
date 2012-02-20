@@ -22,10 +22,8 @@ namespace gui{
 namespace f{
 
 class FNode;
-class ImgNode;
 
 typedef FNode* fnode_ptr;
-typedef ImgNode* imgnode_ptr;
 
 typedef int32_t node_id_t;
 

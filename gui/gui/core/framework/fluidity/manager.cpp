@@ -28,7 +28,7 @@
 #include <liquid/layout.h>
 
 #include "fNode.h"
-#include "imgNode.h"
+#include "imageSource.h"
 
 using namespace cauv;
 using namespace cauv::gui::f;
@@ -62,7 +62,6 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
       m_scene(scene),
       m_cauv_node(node),
       m_nodes(),
-      m_imgnodes(),
       m_pipeline_name(pipeline_name){
     m_animation_permitted.push(true);
 
@@ -72,6 +71,7 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
     qRegisterMetaType<NodeRemovedMessage_ptr>("NodeRemovedMessage_ptr");
     qRegisterMetaType<ArcAddedMessage_ptr>("ArcAddedMessage_ptr");
     qRegisterMetaType<ArcRemovedMessage_ptr>("ArcRemovedMessage_ptr");
+    qRegisterMetaType<GuiImageMessage_ptr>("GuiImageMessage_ptr");
     connect(this, SIGNAL(receivedGraphDescription(GraphDescriptionMessage_ptr)),
             this, SLOT(onGraphDescription(GraphDescriptionMessage_ptr)));
     connect(this, SIGNAL(receivedNodeParameters(NodeParametersMessage_ptr)),
@@ -84,6 +84,8 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
             this, SLOT(onArcAdded(ArcAddedMessage_ptr)));
     connect(this, SIGNAL(receivedArcRemoved(ArcRemovedMessage_ptr)),
             this, SLOT(onArcRemoved(ArcRemovedMessage_ptr)));
+    connect(this, SIGNAL(receivedGuiImage(GuiImageMessage_ptr)),
+            this, SLOT(onGuiImage(GuiImageMessage_ptr)));
 }
 
 void Manager::init(){
@@ -121,28 +123,36 @@ void Manager::popAnimationPermittedState(){
 
 // - Message Observer Implementation: thunks
 void Manager::onGraphDescriptionMessage(GraphDescriptionMessage_ptr m){
+    if(!_nameMatches(m)) return;
     Q_EMIT receivedGraphDescription(m);
 }
 void Manager::onNodeParametersMessage(NodeParametersMessage_ptr m){
+    if(!_nameMatches(m)) return;
     Q_EMIT receivedNodeParameters(m);
 }
 void Manager::onNodeAddedMessage(NodeAddedMessage_ptr m){
+    if(!_nameMatches(m)) return;
     Q_EMIT receivedNodeAdded(m);
 }
 void Manager::onNodeRemovedMessage(NodeRemovedMessage_ptr m){
+    if(!_nameMatches(m)) return;
     Q_EMIT receivedNodeRemoved(m);
 }
 void Manager::onArcAddedMessage(ArcAddedMessage_ptr m){
+    if(!_nameMatches(m)) return;
     Q_EMIT receivedArcAdded(m);
 }
 void Manager::onArcRemovedMessage(ArcRemovedMessage_ptr m){
+    if(!_nameMatches(m)) return;
     Q_EMIT receivedArcRemoved(m);
+}
+void Manager::onGuiImageMessage(GuiImageMessage_ptr m){
+    if(!_nameMatches(m)) return;
+    Q_EMIT receivedGuiImage(m);
 }
 
 // - Message Handling Slots:
 void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
-    if(!_nameMatches(m)) return;
-
     debug(7) << BashColour::Green << "Manager::" << __func__ << *m;
 
     typedef std::map<node_id_t, NodeType::e> node_type_map_t;
@@ -162,7 +172,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         j = m->nodeTypes().find(i->right);
         if(j == m->nodeTypes().end())
             nodes_for_removal.push_back(i->right);
-        else if(j->second != i->left->type())
+        else if(j->second != i->left->nodeType())
             inconsistency_detected = true;
     }
     if(!inconsistency_detected){
@@ -205,6 +215,8 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         node->setParams(params_it->second);        
         node->setInputs(inputs_it->second);
         node->setOutputs(outputs_it->second);
+        
+        _checkAddImageSource(id);
     }
 
     for(j = m->nodeTypes().begin(); j != m->nodeTypes().end(); j++){
@@ -224,7 +236,6 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
 }
 
 void Manager::onNodeParameters(NodeParametersMessage_ptr m){
-    if(!_nameMatches(m)) return;
     node_id_map_t::right_iterator i = m_nodes.right().find(m->nodeId());
     if(i != m_nodes.right().end())
         i->left->setParams(m->params());
@@ -233,17 +244,15 @@ void Manager::onNodeParameters(NodeParametersMessage_ptr m){
 }
 
 void Manager::onNodeAdded(NodeAddedMessage_ptr m){
-    if(!_nameMatches(m)) return;
     addNode(m);
+    _checkAddImageSource(m->nodeId());
 }
 
 void Manager::onNodeRemoved(NodeRemovedMessage_ptr m){
-    if(!_nameMatches(m)) return;
     removeNode(m->nodeId());
 }
 
 void Manager::onArcAdded(ArcAddedMessage_ptr m){
-    if(!_nameMatches(m)) return;
     fnode_ptr from = lookup(m->from().node);
     fnode_ptr to = lookup(m->to().node);
     if(from && to)
@@ -251,12 +260,21 @@ void Manager::onArcAdded(ArcAddedMessage_ptr m){
 }
 
 void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
-    if(!_nameMatches(m)) return;
     fnode_ptr from = lookup(m->from().node);
     fnode_ptr to = lookup(m->to().node);
     if(from && to)
         from->disconnectOutputFrom(m->from().output, to, m->to().input);
 }
+
+void Manager::onGuiImage(GuiImageMessage_ptr m){
+    id_imgsrc_map_t::const_iterator i = m_image_sources.find(m->nodeId());
+    if(i != m_image_sources.end()){
+        i->second->emitImage(m);
+    }else{
+        warning() << "node" << m->nodeId() << "does not display images";
+    }
+}
+
 
 // - Slot Implementations
 void Manager::requestArc(NodeOutput from, NodeInput to){
@@ -298,7 +316,6 @@ void Manager::removeNode(node_id_t const& id){
     if(i != m_nodes.right().end()){
         i->left->fadeAndRemove();
         m_nodes.right().erase(i);
-        m_imgnodes.right().erase(id);
     }else{
         error() << "no such node:" << id;
     }
@@ -313,12 +330,6 @@ fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
         warning() << "ignoring invalid node id" << id;
     }else if(m_nodes.right().find(id) != m_nodes.right().end()){
         error() << "node" << id << "already exists";
-    }else if(isImageNode(type)){
-        imgnode_ptr p = new ImgNode(*this, id, type);
-        m_nodes.insert(node_id_map_t::value_type(p, id));
-        m_imgnodes.insert(imgnode_id_map_t::value_type(p, id));
-        m_scene->addItem(p);
-        r = p;
     }else{
         r = new FNode(*this, id, type);
         m_nodes.insert(node_id_map_t::value_type(r, id));
@@ -338,12 +349,6 @@ fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
         warning() << "ignoring invalid node id" << id;
     }else if(m_nodes.right().find(id) != m_nodes.right().end()){
         error() << "node" << id << "already exists";
-    }else if(isImageNode(type)){
-        imgnode_ptr p = new ImgNode(*this, m);
-        m_nodes.insert(node_id_map_t::value_type(p, id));
-        m_imgnodes.insert(imgnode_id_map_t::value_type(p, id));
-        m_scene->addItem(p);
-        r = p;
     }else{
         r = new FNode(*this, m);
         m_nodes.insert(node_id_map_t::value_type(r, id));
@@ -358,6 +363,14 @@ void Manager::clearNodes(){
     for(i = m_nodes.right().begin(); i != m_nodes.right().end(); i++)
         i->left->fadeAndRemove();
     m_nodes.clear();
-    m_imgnodes.clear();
 }
 
+void Manager::_checkAddImageSource(node_id_t id){
+    if(!isInvalid(id) && m_nodes.count(id) &&
+       isImageNode(NodeType::e(m_nodes[id]->nodeType()))){
+        boost::shared_ptr<ImageSource> image_src = boost::make_shared<ImageSource>();
+        // !!! TODO: include information about which inputs images are associated with
+        m_nodes[id]->addImageDisplayOnInput("image_in", image_src);
+        m_image_sources[id] = image_src;
+    }
+}

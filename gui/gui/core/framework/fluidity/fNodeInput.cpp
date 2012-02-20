@@ -55,6 +55,10 @@ FNodeInput::FNodeInput(Manager& m,
 FNodeInput::~FNodeInput(){
 }
 
+void FNodeInput::addWidget(QGraphicsWidget* w){
+    vLayout()->addItem(w);
+}
+
 bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
     FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
     debug(7) << "fNodeInput::willAcceptConnection from_source=" << from_source << output
@@ -221,10 +225,10 @@ void FNodeParamInput::initView(){
     //m_view->resizeRowsToContents();
     // umm, doesn't play well with editing widgets!
     //m_view->setStyleSheet("QTreeView {background-color: transparent}");
-
+    
     m_view_proxy = new QGraphicsProxyWidget();    m_view_proxy->setWidget(m_view);
     m_view_proxy->setWidget(m_view);
     
-    vLayout()->addItem(m_view_proxy);
+    addWidget(m_view_proxy);
 }
 
