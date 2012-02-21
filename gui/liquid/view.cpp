@@ -57,13 +57,15 @@ LiquidView::LiquidView(QWidget * parent) : QGraphicsView(parent),
 
     setAttribute(Qt::WA_AcceptTouchEvents);
     grabGesture(Qt::PinchGesture);
+    grabGesture(Qt::PanGesture);
 
     setDragMode(QGraphicsView::ScrollHandDrag);
 
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    setTransformationAnchor(QGraphicsView::NoAnchor);
+    //setTransformationAnchor(QGraphicsView::NoAnchor);
+    setTransformationAnchor(QGraphicsView::AnchorViewCenter);
     
     centerOn(0,0);
     
@@ -92,12 +94,18 @@ bool LiquidView::gestureEvent(QGestureEvent *event)
 
 void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
 
-    if((scaleFactor >= 1) && (transform().m11() > maxScale())) return;
-    if((scaleFactor < 1) && (transform().m11() < minScale())) return;
+    if(scaleFactor * transform().m11() >= maxScale()){
+        scaleFactor = maxScale() / transform().m11();
+    }
+    if(scaleFactor * transform().m11() < minScale()){
+        scaleFactor = minScale() / transform().m11();
+    }
 
     QPointF around = mapToScene(point);
 
     qDebug() << around;
+
+    /*
 
     QMatrix translation(1, 0, 0, 1, around.x(), around.y());
     QMatrix reverseTranslation(1, 0, 0, 1, -around.x(), -around.y());
@@ -110,10 +118,14 @@ void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
     // the initial scaling work for a bit, then it goes mental
     // not sure why yet...
     //setTransform(QTransform((reverseTranslation * scale) * translation));
-    setTransform(QTransform(scale));
+    setTransform(QTransform(scale));*/
+    
+    scale(scaleFactor, scaleFactor);
 }
 
-
+void LiquidView::panBy(QPointF delta){
+    QGraphicsView::translate(delta.x(), delta.y());
+}
 
 void LiquidView::wheelEvent(QWheelEvent *event){
 
@@ -122,20 +134,24 @@ void LiquidView::wheelEvent(QWheelEvent *event){
     } else {
         scaleAround(event->pos(), (((float)event->delta())*0.005)+1);
         event->accept();
-        QGraphicsView::wheelEvent(event);
+        //QGraphicsView::wheelEvent(event);
     }
 }
 
 void LiquidView::keyPressEvent(QKeyEvent *event){
     // temporary debug stuff: expect some sort of global hotkey system like
     // OverKey, but better
-    switch(event->key()){
-        case Qt::Key_L:
-            LayoutItems::updateLayout(scene());
-            return;
-        default:
-            QGraphicsView::keyPressEvent(event);
-            return;
+    QGraphicsView::keyPressEvent(event);
+    if(!event->isAccepted()){
+        event->accept();
+        switch(event->key()){
+            case Qt::Key_L:
+                LayoutItems::updateLayout(scene());
+                break;
+            default:
+                event->ignore();
+                break;
+        }
     }
 }
 

@@ -58,7 +58,7 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
     // !!! is this really what we want to do?
     // items aren't added or removed a lot, just updated
     //s->setItemIndexMethod(QGraphicsScene::NoIndex);
-    s->setSceneRect(-200,-200,400,400);
+    s->setSceneRect(-4000,-4000,8000,8000);
 
     setScene(s);
     m_manager = boost::make_shared<Manager>(s, m_cauv_node.get(), "default");
@@ -240,13 +240,17 @@ void FView::paintEvent(QPaintEvent * event){
 
 // !!! temporary keyboard shortcut hack
 void FView::keyPressEvent(QKeyEvent *event){
-    switch(event->key()){
-        case Qt::Key_R:
-            m_manager->requestRefresh();
-            return;
-        default:
-            LiquidView::keyPressEvent(event);
-            return;
+    LiquidView::keyPressEvent(event);
+    if(!event->isAccepted()){
+        event->accept();    
+        switch(event->key()){
+            case Qt::Key_R:
+                m_manager->requestRefresh();
+                break;
+            default:
+                event->ignore();
+                break;
+        }
     }
 }
 
