@@ -43,6 +43,7 @@ public Q_SLOTS:
 
 protected:
     virtual QRectF boundingRect() const;
+    virtual QPainterPath shape() const;
     virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget *w=0);
 
 public:

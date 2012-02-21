@@ -44,6 +44,8 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
       m_back(new QGraphicsPathItem(this)),
       m_style(style){
 
+    setCacheMode(DeviceCoordinateCache);
+
     setFlag(ItemIsMovable);
     setFlag(ItemHasNoContents);
 
@@ -88,6 +90,10 @@ QRectF LiquidNode::boundingRect() const{
     // otherwise 'this' would never receive mouse events, and it needs to in
     // order to be movable
     return m_back->boundingRect();
+}
+
+QPainterPath LiquidNode::shape() const{
+    return m_back->shape();
 }
 
 void LiquidNode::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidget *w){

@@ -46,7 +46,10 @@ Arc::Arc(ArcStyle const& of_style,
 
     debug(7) << "Arc()" << this;
     
+    #ifndef CAUV_DEBUG_DRAW_LAYOUT
     setFlag(ItemHasNoContents);
+    #endif
+    setCacheMode(DeviceCoordinateCache);    
     
     if(from)
         setFrom(from);
@@ -160,13 +163,18 @@ QPainterPath Arc::shape() const{
 }
 
 QRectF Arc::boundingRect() const{
-    QRectF r = m_back->boundingRect() |
+    /*QRectF r = m_back->boundingRect() |
                m_pending_back->boundingRect() |
                m_ephemeral_end->boundingRect();
     sink_end_map_t::const_iterator i;
     for(i = m_ends.begin(); i != m_ends.end(); i++)
         r |= i->second->boundingRect().translated(i->second->pos());
-    return r;
+    return r;*/
+
+    // !!! Qt bug workaround: the boudning rectangles of QPainterPaths with
+    // cubic curves in are over-estimates (by 50%), at least in our usage: this
+    // returns a much tighter bounding rect, which is better for performance
+    return shape().boundingRect();
 }
 
 void Arc::paint(QPainter *painter,
@@ -182,7 +190,21 @@ void Arc::paint(QPainter *painter,
     m_front->setFlag(ItemStacksBehindParent);
     sink_end_map_t::const_iterator i;    
     for(i = m_ends.begin(); i != m_ends.end(); i++)
-        i->second->setFlag(ItemStacksBehindParent);*/
+        i->second->setFlag(ItemStacksBehindParent);
+    */
+    #ifdef CAUV_DEBUG_DRAW_LAYOUT    
+    painter->setPen(QPen(QColor(200,20,20,24)));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(boundingRect());
+    painter->setPen(QPen(QColor(20,120,20,24)));
+    painter->drawRect(m_back->boundingRect());
+    painter->setPen(QPen(QColor(20,20,220,24)));
+    painter->drawRect(m_ephemeral_end->boundingRect());
+    painter->setPen(QPen(QColor(120,20,220,24)));
+    sink_end_map_t::const_iterator i;
+    for(i = m_ends.begin(); i != m_ends.end(); i++)
+       painter->drawRect(i->second->boundingRect().translated(i->second->pos()));
+    #endif // def CAUV_DEBUG_DRAW_LAYOUT
 }
 
 // !!! TODO: the updateLayout slot should only set a dirty flag on the layout,

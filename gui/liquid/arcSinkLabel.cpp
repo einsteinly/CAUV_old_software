@@ -91,6 +91,7 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     connect(node, SIGNAL(xChanged()), m_arc_sink, SIGNAL(geometryChanged()));
     connect(node, SIGNAL(yChanged()), m_arc_sink, SIGNAL(geometryChanged()));
     
+    setCacheMode(DeviceCoordinateCache);    
     #ifndef CAUV_DEBUG_DRAW_LAYOUT
     setFlag(ItemHasNoContents);
     #endif // ndef CAUV_DEBUG_DRAW_LAYOUT

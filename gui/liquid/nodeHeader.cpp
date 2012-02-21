@@ -38,6 +38,7 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
       m_info_text(){
     setAcceptHoverEvents(true);
     setFlag(ItemHasNoContents);
+    setCacheMode(DeviceCoordinateCache);
 
     m_overlay_back = new QGraphicsPathItem(this);
     m_overlay_back->setPen(m_style.header.pen);
