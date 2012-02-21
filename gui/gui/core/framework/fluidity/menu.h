@@ -17,7 +17,8 @@
 
 #include <QMenu>
 #include <QTextEdit>
-#include <QScrollBar>
+#include <QCoreApplication>
+#include <QKeyEvent>
 
 #include <debug/cauv_debug.h>
 
@@ -25,14 +26,16 @@ namespace cauv{
 namespace gui{
 namespace f{
 
-class Menu: protected QMenu{
+class Menu: public QMenu{
     Q_OBJECT
     public:
         Menu(QWidget* parent=0)
             : QMenu(parent),
               m_textedit(NULL),
               m_header_string("----------"),
-              m_unfiltered_actions(){
+              m_unfiltered_actions(),
+              m_unfiltered_menus(),
+              m_parent_menu(NULL){
             m_textedit = new QTextEdit(""/*"Beware, egregious hack!"*/, this);
             m_textedit->setLineWrapMode(QTextEdit::NoWrap);
             m_textedit->setFocus(Qt::PopupFocusReason);
@@ -49,10 +52,26 @@ class Menu: protected QMenu{
             QMenu::addAction(separator);
         }
 
+        // Use to construct a submenu (no search box)
+        Menu(QString topic, QWidget* parent=0)
+            : QMenu(topic, parent),
+              m_textedit(NULL),
+              m_header_string(),
+              m_unfiltered_actions(),
+              m_unfiltered_menus(),
+              m_parent_menu(dynamic_cast<Menu*>(parent)){
+        }
+
+
         void addAction(QAction* action){
             // NB: ownership of action NOT transferred
             QMenu::addAction(action);
             m_unfiltered_actions << action;
+        }
+
+        void addMenu(Menu* m){
+            QMenu::addMenu(m);
+            m_unfiltered_menus << m;
         }
 
         QAction* exec(QPoint const& p, QAction* action = 0){
@@ -62,10 +81,44 @@ class Menu: protected QMenu{
 
     public Q_SLOTS:
         void updateSearch(){
-            debug() << __func__ << m_textedit->toPlainText().toStdString();
             QString search = m_textedit->toPlainText();
+            updateSearchWithString(search);
+        }
+
+
+    protected:
+        virtual void keyPressEvent(QKeyEvent* e){
+            static bool recursed_hack = false;
+            if(m_parent_menu){
+                debug() << "forward keypress to parent menu...";
+                m_parent_menu->keyPressEvent(e);
+            }else{
+                assert(m_textedit);
+                if(!recursed_hack){
+                    recursed_hack = true;
+                    QCoreApplication::sendEvent(
+                        m_textedit,
+                        new QKeyEvent(
+                            e->type(), e->key(), e->modifiers(), e->text(), e->isAutoRepeat(), e->count()
+                        )
+                    );
+                    recursed_hack = false;
+                }
+            }
+            e->accept();
+        }
+        
+        // make sure the textedit is appropriately resized
+        virtual void showEvent(QShowEvent* event){
+            updateTextBoxGeom();
+            QMenu::showEvent(event);
+        }
+
+        void updateSearchWithString(QString search){
+            debug(3) << __func__ << search.toStdString();
             QList<QAction*> current_actions = actions();
             //for(int i = m_unfiltered_actions.size()-1; i >=0; i--){
+            QAction* single_active_action = NULL;
             for(int i = 0; i < m_unfiltered_actions.size(); i++){
                 QAction* a = m_unfiltered_actions.at(i);
                 if(current_actions.contains(a)){
@@ -73,6 +126,8 @@ class Menu: protected QMenu{
                        !a->isSeparator() &&
                        a->text() != m_header_string){
                         QMenu::removeAction(a);
+                    }else{
+                        single_active_action = a;
                     }
                 }else{
                     if(a->text().contains(search, Qt::CaseInsensitive) ||
@@ -84,22 +139,68 @@ class Menu: protected QMenu{
                                 next_a = maybe_next;
                         }
                         QMenu::insertAction(next_a, a);
+                        single_active_action = a;                        
                     }
                 }
             }
+            if(actions().size() - m_unfiltered_menus.size() != 1){
+                single_active_action = NULL;
+            }
+            // Filter submenus... (the menus actions are included in actions(),
+            // but disable them instead of removing/adding)
+            int num_active_submenus = 0;
+            QAction* single_active_submenu_action = NULL;
+            foreach(Menu* m, m_unfiltered_menus){
+                m->updateSearchWithString(search);
+                QAction* ma = m->menuAction();
+                if(m->filteredSize()){
+                    if(!ma->isEnabled()){
+                        //ma->setVisible(true);
+                        ma->setEnabled(true);
+                    } 
+                    num_active_submenus++;
+                    single_active_submenu_action = ma;
+                }else if((!m->filteredSize()) && ma->isEnabled()){
+                    //ma->setVisible(false);
+                    ma->setEnabled(false);
+                }
+            }
+            // can't get this to work:
+            /*if(single_active_action && num_active_submenus == 0){
+                debug() << "set single active action";            
+                setActiveAction(single_active_action);
+            }else if(num_active_submenus == 1){
+                debug() << "set single active submenu";
+                setActiveAction(single_active_submenu_action);
+            }*/
             updateTextBoxGeom();
         }
-
+        
+        struct HasNonFilteredStuff{
+            bool operator()(Menu* m){
+                return m->filteredSize();
+            }
+        };
+        int filteredSize() const{
+            // this made sense at the time, and it works
+            return actions().size() - m_unfiltered_menus.size() +
+                std::count_if(
+                    m_unfiltered_menus.begin(), m_unfiltered_menus.end(), HasNonFilteredStuff()
+                );
+        }
 
     private:
         void updateTextBoxGeom(){
-            m_textedit->setGeometry(2,2,rect().width()-4,24);
+            if(m_textedit)
+                m_textedit->setGeometry(2,2,rect().width()-4,24);
         }
 
     private:
         QTextEdit* m_textedit;
         QString m_header_string;
         QList<QAction*> m_unfiltered_actions;
+        QList<Menu*> m_unfiltered_menus;
+        Menu* m_parent_menu;
 };
 
 } // namespace f

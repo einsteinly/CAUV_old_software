@@ -19,6 +19,8 @@
 
 #include <liquid/view.h>
 
+class QMenu;
+
 namespace cauv{
 
 class CauvNode;
@@ -27,6 +29,7 @@ namespace gui{
 namespace f{
 
 class Manager;
+class Menu;
 
 class FView: public liquid::LiquidView {
     Q_OBJECT
@@ -44,15 +47,32 @@ class FView: public liquid::LiquidView {
         virtual void keyPressEvent(QKeyEvent *event);
 
     private:
-        void buildMenus();
+        // types
+        typedef boost::shared_ptr<QAction> QAction_ptr;
+        typedef QSet<QAction_ptr> QAction_ptr_set;
+        struct MenuNode{
+            QAction_ptr action;
+            QString group_name;
+            QList< boost::shared_ptr<MenuNode> > kids;
+        };
 
     private:
+        // methods
+        static float split(std::string const& word, QAction_ptr_set actions);
+        void initMenu();
+        void initMenu(MenuNode& parent, QAction_ptr_set actions);
         void _updateOverlays();
+        void _buildMenu(cauv::gui::f::Menu* menu, MenuNode const& node);
 
+    private Q_SLOTS:
+        // slots
+        void menuActioned();
+
+    private:
+        // data
         boost::shared_ptr<CauvNode> m_cauv_node;
         boost::shared_ptr<Manager> m_manager;
-
-        QList<QAction*> m_contextmenu_actions;
+        MenuNode m_contextmenu_root;
 
         // +ve coordinates are relative to left and top, -ve coordinates are
         // relative to right and bottom of the view:
