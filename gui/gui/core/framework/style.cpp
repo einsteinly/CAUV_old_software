@@ -152,10 +152,10 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
 
             painter->setRenderHint(QPainter::Antialiasing, true);
             QRect canvas = option->rect;
-            canvas.setHeight(canvas.height()-4);
+            canvas.setHeight(canvas.height()-2);
             canvas.setWidth(60);
-            canvas.setX(canvas.x()+4);
-            canvas.setY(canvas.y()+4);
+            canvas.setX(canvas.x()+2);
+            canvas.setY(canvas.y()+2);
 
             // draw frame
             painter->setBrush(Qt::NoBrush);
@@ -256,11 +256,7 @@ void CauvStyle::drawControl(ControlElement control, const QStyleOption *option,
         QColor progressColor(QColor::fromHsl(hue+1, 160, 162));
 
         painter->setRenderHint(QPainter::Antialiasing, true);
-        QRect border = progressOptions->rect;
-        border.setHeight(border.height()-4);
-        border.setWidth(border.width()-4);
-        border.setX(border.x()+4);
-        border.setY(border.y()+4);
+        QRect border = progressOptions->rect.adjusted(2,2,-2,-2);
 
         QRect fill = border;
         fill.setWidth(fill.width()*progress);
@@ -346,15 +342,36 @@ void CauvStyle::drawComplexControl(ComplexControl control, const QStyleOptionCom
         if(graphingSpin || neutralSpin){
             painter->setOpacity(0.5);
             painter->setBrush(QBrush(QColor(200,200,200)));
-            int buttonSize = option->rect.height()-12;
-            painter->drawRoundedRect(QRect(6, 6, buttonSize, buttonSize), 10, 10);
-            painter->drawRoundedRect(QRect(option->rect.right()-(6+buttonSize), 6, buttonSize, buttonSize), 10, 10);
+            int b = 3; // b for border            
+            int buttonSize = option->rect.height()-b*2;
+            /*
+             *   option->rect
+             * +---------------------------------------------------------------------------------+
+             * |                                                                                 |
+             * |      <-------buttonSize------>                   <-------buttonSize------>      |
+             * |  -   +-----------------------+                   +-----------------------+  -   |
+             * |  |   |(1)                    |                   |(2)    +--------+      |  |   |
+             * |  |   |   <buttonSize*0.6->   |                   |       |(5)     |      |  |   |
+             * |  |   |   +---------------+   |                   |   +---|--------|---+  |  |   |
+             * |button|   |(3)            |   |                   |   |(4)|        |   |  |button|
+             * |Size  |   |height=butSz*.2|   |                   |   |   |        |   |  |Size  |
+             * |  |   |   +---------------+   |                   |   +---|--------|---+  |  |   |
+             * |  |   |                       |                   |       |        |      |  |   |
+             * |  |   |                       |                   |       +--------+      |  |   |
+             * |<-b-->+-----------------------+                   +-----------------------+<--b->|
+             * |      b                                                                   b      |
+             * |      |                                                                   |      |
+             * +---------------------------------------------------------------------------------+ 
+             *
+             */
+            painter->drawRoundedRect(QRect(b, b, buttonSize, buttonSize), 10, 10); // (1)
+            painter->drawRoundedRect(QRect(option->rect.right()-(b+buttonSize), b, buttonSize, buttonSize), 10, 10); // (2)
 
-            painter->setBrush(QBrush(Qt::gray));
-            painter->setPen(QPen(QBrush(Qt::gray), 3.0));
-            painter->drawRoundRect(QRect(10, 5 + (buttonSize/2), buttonSize-9, 2), 4, 4);
-            painter->drawRoundRect(QRect(option->rect.right()-(10+buttonSize) + 8, 5 + (buttonSize/2), buttonSize-8, 2), 3, 3);
-            painter->drawRoundRect(QRect(option->rect.right()-(buttonSize/2) - 7, 10, 2, buttonSize-8), 3, 3);
+            painter->setBrush(QBrush(Qt::black));
+            painter->setPen(QPen(QBrush(Qt::white), 1.0));
+            painter->drawRoundRect(QRect(b+0.2*buttonSize, b+0.4*buttonSize, buttonSize*0.6, buttonSize*0.2), 3, 3); // (3)
+            painter->drawRoundRect(QRect(option->rect.right()-(b+buttonSize*0.8), b+0.4*buttonSize, buttonSize*0.6, buttonSize*0.2), 3, 3); // (4)
+            painter->drawRoundRect(QRect(option->rect.right()-(b+buttonSize*0.6), b+0.2*buttonSize, buttonSize*0.2, buttonSize*0.6), 3, 3); // (5)
             painter->setOpacity(1);
         }
     }

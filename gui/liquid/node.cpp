@@ -53,7 +53,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     m_back->setZValue(10);
     
     m_contentLayout->setSpacing(0);
-    m_contentLayout->setContentsMargins(0,0,0,0);
+    m_contentLayout->setContentsMargins(1,1,1,1);
     m_contentWidget->setLayout(m_contentLayout);
     m_contentWidget->setPos(0, m_style.header.height);
 

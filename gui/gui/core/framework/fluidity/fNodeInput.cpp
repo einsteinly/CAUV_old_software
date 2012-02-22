@@ -14,12 +14,12 @@
 
 #include "fNodeInput.h" 
 
-#include <QGraphicsProxyWidget>
 #include <QLabel>
 #include <QGraphicsWidget>
 #include <QGraphicsLinearLayout>
 
 #include <liquid/arcSink.h>
+#include <liquid/proxyWidget.h>
 
 #include <gui/core/model/node.h>
 #include <gui/core/model/variants.h>
@@ -219,14 +219,25 @@ void FNodeParamInput::initView(){
     m_view = new NodeTreeView();
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_view->setMinimumSize(QSize(60,30));
+    m_view->setMinimumSize(QSize(60,21));
+    m_view->setMaximumSize(QSize(1000,21));
     m_view->setModel(m_model);
     m_view->setColumnWidth(0,80);
     //m_view->resizeRowsToContents();
+
     // umm, doesn't play well with editing widgets!
-    //m_view->setStyleSheet("QTreeView {background-color: transparent}");
-    
-    m_view_proxy = new QGraphicsProxyWidget();    m_view_proxy->setWidget(m_view);
+    //m_view->setStyleSheet("QTreeView {background-color: transparent;}");
+
+    // And this seems to cause weird corruption (but looks just right) :(
+    //m_view->setStyleSheet("QTreeView {background-color: #f3f3f3; border: 0px; padding: 0px;}");
+
+    // playing around...
+    //m_view->setStyleSheet("QTreeView::item { border: 0px; padding: 0px; }");
+    //m_view->setStyleSheet("QTreeView::item {background: transparent;}");
+    //m_view->setStyleSheet("QTreeView::item {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #e7effd, stop: 1 #cbdaf1);}");
+
+    m_view_proxy = new liquid::ProxyWidget();
+    m_view_proxy->setWidget(m_view);
     m_view_proxy->setWidget(m_view);
     
     addWidget(m_view_proxy);

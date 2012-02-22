@@ -87,7 +87,6 @@ void NodeDelegateMapper::updateEditorGeometry(QWidget *editor,
 
 void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                const QModelIndex &index) const{
-
     // display the node
     void* ptr = index.internalPointer();
     if(!ptr){
@@ -107,7 +106,7 @@ void NodeDelegateMapper::paint(QPainter *painter, const QStyleOptionViewItem &op
 
 QSize NodeDelegateMapper::sizeHint(const QStyleOptionViewItem &,
                                    const QModelIndex &) const{
-    return QSize(100, 30);
+    return QSize(100, 21);
 }
 
 

@@ -36,7 +36,6 @@ public:
     virtual void setMaxScale(float scale);
 
     void scaleAround(QPoint point, qreal scaleFactor);
-    void panBy(QPointF delta);
 
 protected:
     virtual bool event(QEvent *event);

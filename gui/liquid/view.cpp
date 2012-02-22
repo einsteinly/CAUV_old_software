@@ -123,10 +123,6 @@ void LiquidView::scaleAround(QPoint point, qreal scaleFactor){
     scale(scaleFactor, scaleFactor);
 }
 
-void LiquidView::panBy(QPointF delta){
-    QGraphicsView::translate(delta.x(), delta.y());
-}
-
 void LiquidView::wheelEvent(QWheelEvent *event){
 
     if(!(QApplication::keyboardModifiers() & Qt::ControlModifier)) {
