@@ -25,6 +25,7 @@
 
 #include "button.h"
 #include "style.h"
+#include "proxyWidget.h"
 
 using namespace liquid;
 
@@ -51,7 +52,7 @@ NodeHeader::NodeHeader(NodeStyle const& style, QGraphicsObject *parent)
     m_title->setFont(m_style.header.title.font);
     m_title->setZValue(2);
 
-    m_info_text    = new QGraphicsSimpleTextItem(this);
+    m_info_text    = new LODItem<QGraphicsSimpleTextItem>(this);
     m_info_text->setPen(m_style.header.info.pen);
     m_info_text->setBrush(m_style.header.info.brush);
     m_info_text->setFont(m_style.header.info.font);

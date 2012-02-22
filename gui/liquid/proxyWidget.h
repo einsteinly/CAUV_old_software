@@ -20,7 +20,39 @@
 #include <QBrush>
 #include <QStyleOptionGraphicsItem>
 
+//#include "lod.h"
+
 namespace liquid {
+
+// Generic LOD wrapper
+template<typename ItemT>
+class LODItem: public ItemT{
+        // error if we don't inherit from LODCapable
+        //typedef _t ItemT::must_inherit_LODCapable;
+
+    public:
+        LODItem(QGraphicsItem* parent=0)
+            : ItemT(parent){
+        }
+
+        virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
+            const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
+            if(lod < 0.5){
+                if(lod < 0.25){
+                    // one of the few times that an explicit call through
+                    // this-> is ever necessary:
+                    painter->fillRect(this->boundingRect(), option->palette.color(QPalette::Window));
+                }else{
+                    painter->setBrush(QBrush(option->palette.color(QPalette::Window)));
+                    painter->setPen(Qt::NoPen);
+                    painter->drawPath(this->shape());
+                }
+                return;
+            }else{
+                ItemT::paint(painter, option, widget);
+            }
+        }
+};
 
 // Add LOD support to the standard QGraphicsProxyWidget
 class ProxyWidget: public QGraphicsProxyWidget{
@@ -43,6 +75,13 @@ class ProxyWidget: public QGraphicsProxyWidget{
             }else{
                 QGraphicsProxyWidget::paint(painter, option, widget);
             }
+        }
+
+        // for completely different reasons make sure that geometry() is an
+        // integral size: (so that in layouts item positions stay at integers,
+        // and lines and text all draw nicely)
+        virtual void setGeometry(const QRectF & rect){
+            QGraphicsProxyWidget::setGeometry(QRectF(rect.toRect()));
         }
 };
 

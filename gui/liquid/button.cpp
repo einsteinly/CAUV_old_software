@@ -20,6 +20,8 @@
 #include <QTimer>
 #include <QAbstractGraphicsShapeItem>
 
+#include "proxyWidget.h"
+
 using namespace liquid;
 
 Button::Button(QRectF clip,
@@ -172,7 +174,8 @@ QGraphicsPixmapItem* Button::loadPix(QString n){
         p.load(n);
         QPixmapCache::insert(n, p);
     }
-    QGraphicsPixmapItem *r = new QGraphicsPixmapItem(p, this);
+    QGraphicsPixmapItem *r = new LODItem<QGraphicsPixmapItem>(this);
+    r->setPixmap(p);
 
     return r;
 }

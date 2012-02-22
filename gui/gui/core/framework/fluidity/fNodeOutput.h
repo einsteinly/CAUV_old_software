@@ -25,6 +25,7 @@
 #include <liquid/arcSource.h>
 #include <liquid/arc.h>
 #include <liquid/label.h>
+#include <liquid/proxyWidget.h>
 
 #include <generated/types/LocalNodeOutput.h>
 
@@ -60,7 +61,7 @@ class FNodeOutput: public QGraphicsWidget,
             liquid::LiquidLabel* text_label = new liquid::LiquidLabel(QString::fromStdString(id));
             text_label->setFont(F_Node_Style.text.font);
 
-            m_text = new QGraphicsProxyWidget();
+            m_text = new liquid::ProxyWidget();
             m_text->setWidget(text_label);
             hlayout->addItem(m_text);
             hlayout->setAlignment(m_text, Qt::AlignBottom | Qt::AlignRight);

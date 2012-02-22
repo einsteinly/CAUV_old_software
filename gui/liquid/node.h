@@ -45,6 +45,10 @@ protected:
     virtual QRectF boundingRect() const;
     virtual QPainterPath shape() const;
     virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget *w=0);
+    
+    // override to limit node positions to whole numbers of px - so that thin
+    // lines and text are drawn nicely
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
 
 public:
     virtual QSizeF size() const;

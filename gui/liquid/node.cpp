@@ -20,6 +20,7 @@
 #include <QGraphicsPathItem>
 #include <QGraphicsLayoutItem>
 #include <QGraphicsLinearLayout>
+#include <QGraphicsSceneMouseEvent>
 
 #include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
@@ -103,6 +104,15 @@ void LiquidNode::paint(QPainter* p, const QStyleOptionGraphicsItem* o, QWidget *
     Q_UNUSED(w);
 }
 
+void LiquidNode::mouseMoveEvent(QGraphicsSceneMouseEvent* event){
+    if((event->buttons() & Qt::LeftButton) && (flags() & ItemIsMovable)){
+        QPointF newPos(mapToParent(event->pos()) - matrix().map(event->buttonDownPos(Qt::LeftButton)));
+        // enforce whole-px coordinates
+        setPos(QPointF(newPos.toPoint()));
+    }else{
+        event->ignore();
+    }
+}
 
 void LiquidNode::addButton(QString name, Button *button){
     m_header->addButton(name, button);
@@ -227,6 +237,10 @@ void LiquidNode::layoutChanged(){
 
     // since this's geometry hangs off m_back:
     this->prepareGeometryChange();
+
+    // translate moves the path to the centre of pixels (pos() is forced to be
+    // an integer in mouseMoveEvent)
+    p.translate(0.5,0.5);
     m_back->setPath(p);
 }
 

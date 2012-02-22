@@ -61,7 +61,6 @@ class NodeHeader: public QGraphicsObject{
         QGraphicsPathItem* m_overlay_back;
         QGraphicsSimpleTextItem* m_title;
         QGraphicsSimpleTextItem* m_info_text;
-
 };
 
 } // namespace liquid

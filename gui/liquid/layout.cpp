@@ -89,7 +89,7 @@ std::set<liquid::Arc*> liquid::LayoutItems::g_arcs;
             }
         qgi_ec_map::iterator j;
         for(j = item_energy_change.begin(); j != item_energy_change.end(); j++)
-            j->first->setPos(j->first->pos() + lambda * j->second.d_dl);
+            j->first->setPos(QPointF((j->first->pos() + lambda * j->second.d_dl).toPoint()));
     }
 }*/
 
@@ -166,7 +166,7 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
         qgi_position_vote_map::iterator j;
         for(j = item_position_votes.begin(); j != item_position_votes.end(); j++){
             if(j->second.size())
-                j->first->setPos(consensus(j->second));
+                j->first->setPos(QPointF(consensus(j->second).toPoint()));
         }
     }
 }

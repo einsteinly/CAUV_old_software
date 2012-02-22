@@ -62,7 +62,9 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
       m_scene(scene),
       m_cauv_node(node),
       m_nodes(),
-      m_pipeline_name(pipeline_name){
+      m_pipeline_name(pipeline_name),
+      m_image_sources(), 
+      m_focus_scenepos(0,0){
     m_animation_permitted.push(true);
 
     m_scene->installEventFilter(new FocusPositionForwarder(*this));
@@ -124,7 +126,7 @@ void Manager::popAnimationPermittedState(){
 }
 
 void Manager::setFocusPosition(QPointF p){
-    m_focus_scenepos = p;
+    m_focus_scenepos = QPointF(qRound(p.x()), qRound(p.y()));
 }
 
 // - Message Observer Implementation: thunks
