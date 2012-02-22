@@ -65,6 +65,8 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
       m_pipeline_name(pipeline_name){
     m_animation_permitted.push(true);
 
+    m_scene->installEventFilter(new FocusPositionForwarder(*this));
+
     qRegisterMetaType<GraphDescriptionMessage_ptr>("GraphDescriptionMessage_ptr");
     qRegisterMetaType<NodeParametersMessage_ptr>("NodeParametersMessage_ptr");
     qRegisterMetaType<NodeAddedMessage_ptr>("NodeAddedMessage_ptr");
@@ -119,6 +121,10 @@ void Manager::pushAnimationPermittedState(bool permitted){
 
 void Manager::popAnimationPermittedState(){
     m_animation_permitted.pop();
+}
+
+void Manager::setFocusPosition(QPointF p){
+    m_focus_scenepos = p;
 }
 
 // - Message Observer Implementation: thunks
@@ -334,6 +340,7 @@ fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
         r = new FNode(*this, id, type);
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);
+        r->setPos(m_focus_scenepos + QPointF(qrand()%50, qrand()%50));        
     }
     return r;
 }
@@ -353,6 +360,7 @@ fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
         r = new FNode(*this, m);
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);
+        r->setPos(m_focus_scenepos + QPointF(qrand()%50, qrand()%50));
     }
     return r;
 }

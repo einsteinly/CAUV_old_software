@@ -16,11 +16,12 @@
 #define __CAUV_F_MANAGER_H__
 
 #include <QObject>
+#include <QPointF>
+#include <QGraphicsSceneMouseEvent>
 
 #include <stack>
 
 #include <boost/enable_shared_from_this.hpp>
-//#include <boost/bimap.hpp> boost bimap is utterly useless
 #include <boost/shared_ptr.hpp>
 
 #include <generated/message_observers.h>
@@ -65,6 +66,8 @@ class Manager: public QObject,
         bool animationPermitted() const;
         void pushAnimationPermittedState(bool permitted);
         void popAnimationPermittedState();
+
+        void setFocusPosition(QPointF p);
         
         // these methods are called from the messaging thread(s), they MUST NOT
         // modify anything directly: the general pattern is that these emit a
@@ -143,6 +146,27 @@ class Manager: public QObject,
         
         typedef std::map<node_id_t, boost::shared_ptr<ImageSource> > id_imgsrc_map_t;
         id_imgsrc_map_t m_image_sources;
+
+        QPointF m_focus_scenepos;
+};
+
+class FocusPositionForwarder: public QObject{
+     Q_OBJECT
+    public:
+        FocusPositionForwarder(Manager& m)
+            : m_manager(m){
+        }
+
+    protected:
+        bool eventFilter(QObject *obj, QEvent *event){
+            if(event->type() == QEvent::GraphicsSceneMouseMove){    
+                m_manager.setFocusPosition(static_cast<QGraphicsSceneMouseEvent*>(event)->scenePos());
+            }
+            return QObject::eventFilter(obj, event);
+        }
+
+    private:
+        Manager& m_manager;
 };
 
 class AnimationPermittedState{

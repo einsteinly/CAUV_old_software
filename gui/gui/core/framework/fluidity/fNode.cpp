@@ -168,7 +168,8 @@ void FNode::setInputs(msg_node_input_map_t const& inputs){
         // Don't add any inputs that are actually parameters! Note that
         // setParams must be called first, so this information is available.
         if(!m_params.count(j->first.input)){
-            debug() << BashColour::Blue << "FNode:: new input:" << *j;
+            debug() << BashColour::Blue << "FNode:: new input:"
+                    << std::string(mkStr().lengthLimit(180) << *j);
             FNodeInput* t = new FNodeImageInput(manager(), j->first, this);
             m_inputs[j->first.input] = t;
             addItem(t);
@@ -204,7 +205,8 @@ void FNode::setOutputs(msg_node_output_map_t const& outputs){
     
     msg_node_output_map_t::const_iterator i;
     for(i = outputs.begin(); i != outputs.end(); i++){
-        debug() << BashColour::Blue << "FNode:: new output:" << *i;
+        debug() << BashColour::Blue << "FNode:: new output:"
+                << std::string(mkStr().lengthLimit(180) << *i);
         FNodeOutput* t;
         if(i->first.type == OutputType::Image)
             t = new FNodeImageOutput(i->first, this);
@@ -241,13 +243,15 @@ void FNode::setParams(msg_node_param_map_t const& params){
     foreach(msg_node_param_map_t::value_type const& j, params){
         str_inparam_map_t::iterator k = m_params.find(j.first.input);    
         if(k == m_params.end()){
-            debug() << BashColour::Blue << "FNode:: new param:" << j;        
+            debug() << BashColour::Blue << "FNode:: new param:"
+                    << std::string(mkStr().lengthLimit(180) << j);
             FNodeParamInput* t = new FNodeParamInput(manager(), j.first, this);
             m_params[j.first.input] = t;
             addItem(t);
             t->setValue(j.second);
         }else{
-            debug() << BashColour::Blue << "FNode:: update param:" << j;
+            debug() << BashColour::Blue << "FNode:: update param:"
+                    << std::string(mkStr().lengthLimit(180) << j);
             FNodeParamInput* t = dynamic_cast<FNodeParamInput*>(k->second);
             if(t){
                 t->setValue(j.second);

@@ -41,6 +41,7 @@ else()
         ephemeralArcEnd.h
         layout.h
         arcSinkLabel.h
+        proxyWidget.h
     )
 
     set (

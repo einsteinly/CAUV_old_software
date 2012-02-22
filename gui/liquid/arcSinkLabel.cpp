@@ -21,6 +21,7 @@
 #include "style.h"
 #include "node.h"
 #include "label.h"
+#include "proxyWidget.h"
 
 #include <debug/cauv_debug.h>
 
@@ -77,7 +78,7 @@ ArcSinkLabel::ArcSinkLabel(ArcSink * arc_sink,
     LiquidLabel* text_label = new LiquidLabel(id);
     text_label->setFont(node->style().text.font);
 
-    m_text = new QGraphicsProxyWidget();
+    m_text = new ProxyWidget();
     m_text->setWidget(text_label);
     hlayout->addItem(m_text);
     hlayout->setAlignment(m_text, Qt::AlignVCenter | Qt::AlignLeft);
