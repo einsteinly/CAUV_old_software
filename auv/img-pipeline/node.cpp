@@ -713,8 +713,8 @@ void Node::requireSyncInputs(input_id const& a, input_id const& b){
         error() << "No such input:" << b;
         return;
     }
-    ai->synchronised_with.insert(b);
-    bi->synchronised_with.insert(a);
+    ai->second->synchronised_with.insert(b);
+    bi->second->synchronised_with.insert(a);
 }
 
 bool Node::unregisterOutputID(output_id const& o, bool warnNonExistent) {

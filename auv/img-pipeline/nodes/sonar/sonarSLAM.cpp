@@ -1,17 +1,26 @@
+/* Copyright 2011 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #include "sonarSLAMNode.h"
 
 #include <algorithm>
 #include <limits>
 
 #include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-#include <pcl/registration/icp_nl.h>
 #include <pcl/common/transforms.h>
 /*#ifdef CAUV_CLOUD_DUMP
 #include <pcl/io/pcd_io.h>
-#endif
-#ifdef CAUV_CLOUD_VISUALISATION
-#include <pcl/visualization/cloud_viewer.h>
 #endif
 */
 
@@ -19,7 +28,7 @@
 
 #include <utility/bash_cout.h>
 
-#include "slamCloud.h"
+#include "mapping/slamCloud.h"
 
 #include "../../nodeFactory.h"
 
@@ -256,51 +265,8 @@ class SonarSLAMImpl{
             return m_vis_buffer;
         }
 
-        /*
-        void setVisProperties(int size, Eigen::Vector2f const& origin){
-            if(m_vis_res != size || m_vis_origin != origin){
-                m_vis_res = size;
-                m_vis_origin = origin;
-                m_vis_buffer = cv::Mat(cv::Size(m_vis_res,m_vis_res), CV_8UC1, cv::Scalar(0));
-            }
-        }
-
-        void updateMinMax(cloud_t const& cloud){
-            foreach(pt_t const& p, cloud.points){
-                if(p.x < m_min[0]) m_min[0] = p.x;
-                if(p.x > m_max[0]) m_max[0] = p.x;
-                if(p.y < m_min[1]) m_min[1] = p.y;
-                if(p.y > m_max[1]) m_max[1] = p.y;
-            }
-        }
-
-        Eigen::Vector2f min() const{ return m_min; }
-        Eigen::Vector2f max() const{ return m_max; }
-        */
-
-
-    public:
-        /*
-        //cloud_ptr whole_cloud;
-        //cloud_ptr last_cloud;
-        //std::map<uint32_t,cloud_ptr> clouds;
-        Eigen::Matrix4f last_transformation;
-        #ifdef CAUV_CLOUD_VISUALISATION
-        boost::shared_ptr<pcl::visualization::CloudViewer> viewer;
-        static uint32_t viewer_count;
-        #endif
-        */
-
     private:
         SlamCloudGraph<pt_t> m_graph;
-
-        /*
-        Eigen::Vector2f m_min;
-        Eigen::Vector2f m_max;
-        int m_vis_res;
-        Eigen::Vector2f m_vis_origin;
-        cv::Mat m_vis_buffer;
-        */
 
         float m_vis_metres_per_px;
         Eigen::Vector2f m_vis_origin;
@@ -312,115 +278,10 @@ class SonarSLAMImpl{
         int m_vis_allframes_included;
 
 };
-#ifdef CAUV_CLOUD_VISUALISATION
-uint32_t SonarSLAMImpl::viewer_count = 0;
-#endif
+
 } // namespace imgproc
 } // namespace cauv
 
-
-#if 0 // rendering
-static void drawX(cv::Mat r, int S, float x, float y,
-                  Eigen::Vector2f const& min,
-                  Eigen::Vector2f const& step,
-                  uint8_t weight){
-    const float x_idx = 0.5+(x - min[0]) / step[0];
-    const float y_idx = 0.5+(y - min[1]) / step[1];
-    const Eigen::Vector2i res(r.rows, r.cols);
-    for(int dx = -S; dx <= S; dx++)
-        for(int dy = -S*(!dx); dy <= S*(!dx); dy++)
-            if(dx+x_idx >= 0 && dx+x_idx < res[0] &&
-               dy+y_idx >= 0 && dy+y_idx < res[1])
-                r.at<uint8_t>(int(dy+y_idx),int(dx+x_idx)) = weight;
-}
-
-static cv::Mat renderCloud(
-    cloud_t const& cloud,
-    Eigen::Vector2f transformed_origin,
-    Eigen::Vector2f min, Eigen::Vector2f max,
-    Eigen::Vector2i res,
-    bool draw_weight = true
-){
-    if(min[0] > -1) min[0] = -1;
-    if(min[1] > -1) min[1] = -1;
-    if(max[0] < 1) max[0] = 1;
-    if(max[0] < 1) max[0] = 1;
-
-    cv::Mat r(res[1], res[0], CV_8UC1, cv::Scalar(0));
-    Eigen::Vector2f step((max[0]-min[0]) / res[0],
-                         (max[1]-min[1]) / res[1]);
-
-    float aspect = 1;
-    if(res[1] > 0)
-        aspect = res[0] / res[1];
-    if(step[0] > step[1])
-        step[1] = step[0] / aspect;
-    else
-        step[0] = step[1] * aspect;
-
-    for(size_t i = 0; i < cloud.size(); i++)
-        drawX(r, 3, cloud[i].x, cloud[i].y, min, step, draw_weight? cloud[i].getVector4fMap()[3] : 0xff);
-
-    drawX(r, 21, cloud.back().x, cloud.back().y, min, step, 0xff);
-
-    // draw axes
-    drawX(r, 7, 0, 0, min, step, 64);
-    drawX(r, 7, 1, 0, min, step, 64);
-    drawX(r, 7, 0, 1, min, step, 64);
-
-    // draw transformed origin
-    drawX(r, 9, transformed_origin[0], transformed_origin[1], min, step, 128);
-
-    return r;
-}
-#endif // 0
-
-#if 0 // kpstocloud
-static cloud_ptr kpsToCloud(std::vector<KeyPoint> const& kps,
-                            Eigen::Matrix4f const& initial_transform,
-                            float const& weight_test){
-
-    const Eigen::Vector3f xytheta = xythetaFrom4dAffine(initial_transform);
-    const Eigen::Matrix3f rotate  = initial_transform.block<3,3>(0, 0);
-    const Eigen::Vector3f translate(xytheta[0], xytheta[1], 0);
-    const float rz = xytheta[2];
-
-    debug() << "kpsToCloud: rot:" << rz << "degrees, trans:" << translate[0] <<","<< translate[1];
-
-    cloud_ptr r = boost::make_shared<cloud_t>();
-    r->height = 1;
-    r->is_dense = true;
-    r->reserve(kps.size());
-
-    bool warned_non_planar = false;
-    for(size_t i = 0; i < kps.size(); i++){
-        if(kps[i].response > weight_test){
-            r->push_back(pt_t(), kps[i].response, i);
-            pt_t temp(kps[i].pt.x, kps[i].pt.y, 0.0f);
-            r->back().getVector3fMap() = rotate * temp.getVector3fMap() + translate;
-            //r->back().getVector4fMap()[3] = kps[i].response;
-
-            /*
-            #warning debug sanity check:
-            Eigen::Vector4f sc = initial_transform * Eigen::Vector4f(kps[i].pt.x, kps[i].pt.y, 0, 1);
-            Eigen::Vector3f rb = r->back().getVector3fMap();
-            if((sc.block<3,1>(0,0) - rb).norm() > 1e-5)
-                warning() << "check:"<< sc[0] << "," << sc[1] << "," << sc[2]
-                          << " != "  << rb[0] << "," << rb[1] << "," << rb[2];
-            */
-
-            if(!warned_non_planar && (*r)[i].z != 0){
-                warned_non_planar = true;
-                warning() << "non-planar!";
-            }
-        }
-    }
-
-    r->width = r->size();
-
-    return r;
-}
-#endif // 0
 
 // - SonarSLAMNode implementation
 void SonarSLAMNode::init(){
@@ -436,7 +297,8 @@ void SonarSLAMNode::init(){
     // inputs:
     registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", Must_Be_New);
     registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
-    requireSyncInputs("keypoints", "training: polar keypoints");
+    // ... not implemented yet
+    //requireSyncInputs("keypoints", "training: polar keypoints");
     
     registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
@@ -448,10 +310,10 @@ void SonarSLAMNode::init(){
 
     // Control Parameters:
     registerParamID("clear", bool(false), "true => discard accumulated point cloud");
-    /*unused*/ registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
+    ///*unused*/ registerParamID("map merge alpha", float(5), "alpha-hull parameter for map merging");
     registerParamID("score threshold", float(2), "keypoint set will be rejected if mean distance error is greater than this");
     registerParamID("weight test", float(5), "keypoints with weights greater than this will be used for registration");
-    /*unused*/ registerParamID("feature merge distance", float(0.05), "keypoints closer to each other than this will be merged");
+    registerParamID("feature merge distance", float(0.05), "keypoints closer to each other than this will be merged"); // now used for deciding whether points were good for training
     registerParamID("overlap threshold", float(0.3), "overlap of convex hulls required to consider matching a pair of scans");
     registerParamID("keyframe spacing", float(2.0), "minimum distance between keyframes");
 
