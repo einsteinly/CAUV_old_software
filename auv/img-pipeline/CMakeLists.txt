@@ -52,7 +52,10 @@ if (CAUV_POINTCLOUDS)
 
     find_library(CLIPPER_LIBRARY clipper REQUIRED)
 
-    set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES} nodes/sonar/sonarSLAM.cpp)
+    set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES}
+        nodes/sonar/sonarSLAM.cpp
+        nodes/sonar/mapping/graphOptimiser.cpp
+    )
     set (CONDITIONAL_LIBS ${CONDITIONAL_LIBS} ${PCL_LIBS} ${CLIPPER_LIBRARY})
 endif()
 

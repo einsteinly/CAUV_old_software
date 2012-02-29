@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -23,13 +23,10 @@
 #include <pcl/registration/icp_nl.h>
 #include <pcl/point_cloud.h>
 
+#include "common.h"
+
 namespace cauv{
 namespace imgproc{
-
-// - Forward Declarations
-class SlamCloudLocation;
-template<typename PointT> class SlamCloudPart;
-template<typename PointT> class SlamCloudGraph;
 
 // - Static Utility Functions
 static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
@@ -56,6 +53,7 @@ class PairwiseMatcher{
         // - public types
         typedef SlamCloudPart<PointT> cloud_t;
         typedef boost::shared_ptr<cloud_t> cloud_ptr;
+        typedef boost::shared_ptr<const cloud_t> cloud_const_ptr;
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
@@ -85,8 +83,8 @@ class PairwiseMatcher{
          *
          */
         virtual float transformcloudToMatch(
-            cloud_ptr map,
-            cloud_ptr new_cloud,
+            cloud_const_ptr map,
+            cloud_const_ptr new_cloud,
             Eigen::Matrix4f const& guess,
             Eigen::Matrix4f& transformation,
             base_cloud_ptr& transformed_cloud
@@ -129,6 +127,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
         // - public types
         typedef SlamCloudPart<PointT> cloud_t;
         typedef boost::shared_ptr<cloud_t> cloud_ptr;
+        typedef boost::shared_ptr<const cloud_t> cloud_const_ptr;        
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
@@ -149,8 +148,8 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
 
         // - public methods
         virtual float transformcloudToMatch(
-            cloud_ptr map,
-            cloud_ptr new_cloud,
+            cloud_const_ptr map,
+            cloud_const_ptr new_cloud,
             Eigen::Matrix4f const& guess,
             Eigen::Matrix4f& transformation,
             base_cloud_ptr& transformed_cloud
@@ -230,13 +229,14 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
         // - public types
         typedef SlamCloudPart<PointT> cloud_t;
         typedef boost::shared_ptr<cloud_t> cloud_ptr;
+        typedef boost::shared_ptr<const cloud_t> cloud_const_ptr;        
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
         // - public methods
         virtual float transformcloudToMatch(
-            cloud_ptr map,
-            cloud_ptr new_cloud,
+            cloud_const_ptr map,
+            cloud_const_ptr new_cloud,
             Eigen::Matrix4f const& guess,
             Eigen::Matrix4f& transformation,
             base_cloud_ptr& transformed_cloud

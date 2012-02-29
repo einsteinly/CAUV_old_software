@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -28,7 +28,9 @@
 
 #include <utility/bash_cout.h>
 
-#include "mapping/slamCloud.h"
+#include "mapping/slamCloud.h" 
+#include "mapping/scanMatching.h"
+#include "mapping/graphOptimiser.h"
 
 #include "../../nodeFactory.h"
 
@@ -140,6 +142,7 @@ class SonarSLAMImpl{
 
         float registerScan(cloud_ptr scan,
                            PairwiseMatcher<pt_t> const& scan_matcher,
+                           GraphOptimiser const& graph_optimiser,
                            Eigen::Matrix4f const& external_guess,
                            Eigen::Matrix4f& global_transformation){
             Eigen::Matrix4f guess = m_graph.guessTransformationAtTime(scan->time());
@@ -150,7 +153,9 @@ class SonarSLAMImpl{
                 warning() << "external translation prediction is ignored";
             guess.block<3,3>(0,0) = external_guess.block<3,3>(0,0);
 
-            return m_graph.registerScan(scan, guess, scan_matcher, global_transformation);
+            return m_graph.registerScan(
+                scan, guess, scan_matcher, graph_optimiser, global_transformation
+            );
         }
 
         void setVisProperties(Eigen::Vector2i const& res,
@@ -182,7 +187,6 @@ class SonarSLAMImpl{
                 initVis();
 
             typedef SlamCloudGraph<pt_t>::cloud_vec cloud_vec;
-            typedef SlamCloudGraph<pt_t>::location_vec location_vec;
 
             cloud_vec::const_iterator i;
             cloud_vec const& key_scans = m_graph.keyScans();
@@ -397,6 +401,8 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
         reject_threshold, max_correspond_dist, score_thr
     );
 
+    GraphOptimiserV1 graph_optimiser;
+
     Eigen::Matrix4f relative_transformation_guess = Eigen::Matrix4f::Identity();
     relative_transformation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
         Eigen::AngleAxisf(delta_theta, Eigen::Vector3f::UnitZ())
@@ -407,6 +413,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     const float confidence = m_impl->registerScan(
         scan,
         scan_matcher,
+        graph_optimiser,
         relative_transformation_guess,
         global_transformation
     );
