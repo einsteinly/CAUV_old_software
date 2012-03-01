@@ -61,6 +61,10 @@ struct IncrementalPoseConstraint{
     location_ptr a;
     location_ptr b;
     
+    // tag is used as temporary storage for the 'level' of the constraint
+    // during graph optimisation
+    int tag;
+    
     // IncrementalPose has Eigen::Vector3f as member
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -73,9 +77,11 @@ struct IncrementalPoseConstraint{
 // - Graph Optimisation Classes
 class GraphOptimiser{
     public:
-        /* Optimise a constraint graph.
+        /* Optimise a constraint graph. The constraints passed in may be
+         * modified, in particular some implementations may find it useful to
+         * sort them, but elements MUST NOT be added or removed.
          */
-        virtual void optimiseGraph(constraint_vec const& constraints,
+        virtual void optimiseGraph(constraint_vec& constraints,
                                    constraint_vec const& new_constraints) const = 0;
 };
 
@@ -90,7 +96,7 @@ class GraphOptimiserV1: public GraphOptimiser{
          *     so that methods can be easily compared.
          */
         virtual void optimiseGraph(
-            constraint_vec const& constraints,
+            constraint_vec& constraints,
             constraint_vec const& new_constraints = constraint_vec()
         ) const;
 };
