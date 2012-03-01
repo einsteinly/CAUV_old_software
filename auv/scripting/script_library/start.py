@@ -13,6 +13,7 @@ class scriptState(aiScriptState):
     already_run = False
 
 class script(aiScript):
+    debug_values = ['persist.already_run',]
     def run(self):
         if self.persist.already_run:
             return 'SUCCESS'
