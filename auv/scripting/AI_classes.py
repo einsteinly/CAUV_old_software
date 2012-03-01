@@ -144,6 +144,12 @@ class aiProcess():
 class aiOptionsBase(type):
     def __new__(cls, name, bases, attrs):
         new_attrs = {'_option_classes':{}}
+        #add in 'inherited' options from parent class
+        for base in bases:
+            for key, attr in base.__dict__.iteritems():
+                #but don't overwrite values
+                if not key in attrs:
+                    attrs[key] = attr
         for key, value in attrs.iteritems():
             #don't process 'system' values
             if not key[0] == '_':
@@ -348,6 +354,7 @@ class aiScriptOptionsBase(aiOptionsBase):
             
 class aiScriptOptions(aiOptions):
     __metaclass__ = aiScriptOptionsBase
+    reporting_frequency = 2
     def get_dynamic_options(self):
         return dict([item for item in self.__dict__.iteritems() if item[0][0] != '_' and item[0] in self._dynamic])
     def get_static_options(self):
@@ -358,25 +365,30 @@ class aiScriptOptions(aiOptions):
         return dict([(key, self._option_classes[key](attr) if key in self._option_classes else attr) for key, attr in self.__dict__.iteritems() if key[0] != '_' and (not key in self._dynamic)])
         
 class aiScriptState(object):
-    def __init__(self, parent_script):
+    def __init__(self, state):
+        for key, val in state.items():
+            object.__setattr__(self, key, val)
+    def own(self, parent_script):
         self._parent_script = parent_script
     def __setattr__(self, key, attr):
         object.__setattr__(self, key, attr)
         if not key[0] == '_':
-            print self._parent_script.task_name, key, attr
             self._parent_script.ai.task_manager.on_persist_state_change(self._parent_script.task_name, key, attr)
         
 class aiScript(aiProcess):
-    class persistState(aiScriptState):
-        pass
+    debug_values = []
     def __init__(self, task_name, script_opts, persistent_state):
         aiProcess.__init__(self, task_name)
+        self.die_flag = threading.Event() #for any subthreads
         self.exit_confirmed = threading.Event()
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
-        self.persist = self.persistState(self)
-        self.persist.__dict__.update(persistent_state)
+        self.persist = persistent_state
+        #take ownership to ensure that changes get directed back
+        self.persist.own(self)
+        self.reporting_thread=threading.Thread(target=self.report_loop)
+        self.reporting_thread.start()
     def _register(self):
         self.node.addObserver(self._msg_observer)
     def request_pl(self, pl_name, timeout=10):
@@ -407,6 +419,28 @@ class aiScript(aiProcess):
     @external_function
     def end_override_pause(self):
         pass
+    def report_status(self):
+        debug = {}
+        for key_str in self.debug_values:
+            keys = key_str.split('.')
+            value = self
+            try:
+                for key in keys:
+                    value = getattr(value, key)
+                #make sure that we can transmit it
+                value = messaging.ParamValue.create(value)
+            except Exception:
+                warning("Could not get/encode attribute %s, skipping from debug value report" %key_str)
+                continue
+            debug[key_str] = value
+        try:
+            self.node.send(messaging.ScriptStateMessage(self.task_name,debug,[]))
+        except Exception as e:
+            traceback.print_exc()
+    def report_loop(self):
+        while not self.die_flag.wait(self.options.reporting_frequency):
+            self.report_status()
+        debug("Exiting reporting thread")
     def _notify_exit(self, exit_status):
         #make sure to drop pipelines
         self.drop_all_pl()
@@ -419,6 +453,7 @@ class aiScript(aiProcess):
     def confirm_exit(self):
         self.exit_confirmed.set()
     def die(self):
+        self.die_flag.set()
         self.ai.auv_control.stop()
         self.ai.auv_control.lights_off()
         aiProcess.die(self)
