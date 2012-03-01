@@ -77,21 +77,25 @@ struct Node{
 static void adoptSubTree(Node_ptr new_parent, Arc_ptr a, Node_ptr child){
     assert(child);
     assert(new_parent);
+    assert(a->to == child);
+    assert(a->from == new_parent);
 
-    Arc_ptr old_parent_link = child->parent_link;
+    Arc_ptr b = child->parent_link;
     child->parent_link = a;
-    // reverse direction of relationship:
-    old_parent_link->x = -old_parent_link->x;
-    assert(old_parent_link->to == child);
-    old_parent_link->to = old_parent_link->from;
-    old_parent_link->from = child;
-    child->child_links.push_back(old_parent_link);
-    
-    new_parent = child;
-    a = old_parent_link;
-    child = old_parent_link->to;
-    if(child){
-        // recurse
+    if(b){
+        // reverse direction of relationship:
+        b->x = -b->x;
+        assert(b->to == child); 
+        std::vector<Arc_ptr>::iterator t = std::remove(b->from->child_links.begin(), b->from->child_links.end(), b);
+        assert(t == (b->from->child_links.end()-1));
+        b->from->child_links.pop_back();
+        b->to = b->from;
+        b->from = child;
+        child->child_links.push_back(b);
+
+        new_parent = child;
+        a = b;
+        child = b->to;
         adoptSubTree(new_parent, a, child);
     }
 }
@@ -126,7 +130,7 @@ static Node_ptr spanningTree(
 
     // set_root[tag] = root node of disjoint set
     set_root.push_back(root);
-    
+
     int non_spanning = 0;
 
     debug() << "spanning tree construction over" << constraints.size() << "constraints...";
@@ -144,8 +148,7 @@ static Node_ptr spanningTree(
                 a->to->parent_link = a;
                 a->to->tag = a->from->tag;
                 a->x = p->a_to_b;
-
-                node_lookup[p->b] = a->to;
+                node_lookup[a->to->p] = a->to;
             }else{
                 // if a is not connected to b, this arc connects them:
                 if(set_root[i->second->tag] != set_root[j->second->tag]){
@@ -153,11 +156,13 @@ static Node_ptr spanningTree(
                     if((!i->second->parent_link) || (!j->second->parent_link)){
                         if(i->second->parent_link){
                             a->from = i->second;
+                            a->from->child_links.push_back(a);
                             a->to = j->second;
                             a->to->parent_link = a;
                             a->x = p->a_to_b;
                         }else{
                             a->from = j->second;
+                            a->from->child_links.push_back(a);
                             a->to = i->second;
                             a->to->parent_link = a;
                             // NB unary -
@@ -171,7 +176,7 @@ static Node_ptr spanningTree(
                         a->from = i->second;
                         a->to = j->second;
                         a->x = p->a_to_b;
-                        // Make i the new parent of tree j->second via arc a                        
+                        // Make i the new parent of tree j->second via arc a
                         adoptSubTree(i->second, a, j->second);
                         set_root[a->to->tag] = set_root[a->from->tag];
                     }
@@ -190,20 +195,21 @@ static Node_ptr spanningTree(
                 // add p->a relative to existing p->b
                 Arc_ptr a(new Arc);
                 a->from = j->second;
+                a->from->child_links.push_back(a);
                 a->to = boost::make_shared<Node>();
                 a->to->p = p->a;
                 a->to->parent_link = a;
                 a->to->tag = a->from->tag;
                 // NB: unary minus here
                 a->x = -p->a_to_b;
-
-                node_lookup[p->a] = a->to;
+                node_lookup[a->to->p] = a->to;
             }else{
                 // add new disjoint arc
                 ++tag;
 
                 Arc_ptr a(new Arc);
                 a->from = boost::make_shared<Node>();
+                a->from->child_links.push_back(a);
                 a->from->parent_link.reset();
                 a->from->tag = tag;
                 a->from->p = p->a;
@@ -212,6 +218,8 @@ static Node_ptr spanningTree(
                 a->to->tag = tag;
                 a->to->p = p->b;
                 a->x = p->a_to_b;
+                node_lookup[a->from->p] = a->from;
+                node_lookup[a->to->p] = a->to;
 
                 set_root.push_back(a->from);
             }
@@ -237,7 +245,7 @@ void visitBetweenNodes(Node_ptr a, Node_ptr b, Funct f){
         std::swap(a, b);
     // Generate the complete path before traversing it, path order is from
     // lowest level node to highest level node
-        
+
     std::vector<Node_ptr> path_end;   // end (a) is at the start of this
     std::vector<Node_ptr> path_start; // start (b) is at the start of this
 
@@ -247,7 +255,7 @@ void visitBetweenNodes(Node_ptr a, Node_ptr b, Funct f){
         path_end.push_back(a);
         a = a->parent_link->from;
     }
-    
+
     // now move both nodes up until we reach a common parent:
     while(a != b){
         path_end.push_back(a);
@@ -255,7 +263,7 @@ void visitBetweenNodes(Node_ptr a, Node_ptr b, Funct f){
         a = a->parent_link->from;
         b = b->parent_link->from;
     }
-    
+
     // now visit it with the supplied function:
     foreach(Node_ptr p, path_start)
         f(*p);
@@ -297,6 +305,7 @@ void GraphOptimiserV1::optimiseGraph(
     const int max_iters = 1;
 
     std::map<location_ptr, Node_ptr> node_lookup;
+    std::map<location_ptr, Node_ptr>::const_iterator ait, bit;
     Node_ptr root = spanningTree(constraints, node_lookup);
 
     // Sort the constraints into the best order for processing: to do this,
@@ -305,9 +314,13 @@ void GraphOptimiserV1::optimiseGraph(
     // tree
     foreach(pose_constraint_ptr p, constraints){
         p->tag = 0;
-        visitBetweenNodes(node_lookup[p->a], node_lookup[p->b], MaxLevel(p->tag));
+        ait = node_lookup.find(p->a);
+        bit = node_lookup.find(p->b);
+        assert(ait != node_lookup.end());
+        assert(bit != node_lookup.end());
+        visitBetweenNodes(ait->second, bit->second, MaxLevel(p->tag));
     }
-    
+
     std::sort(constraints.begin(), constraints.end(), poseConstraintTagLess);
 
     for(int iter = 0; iter < max_iters; iter++){
