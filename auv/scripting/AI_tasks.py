@@ -87,7 +87,8 @@ class start(aiTask):
     class options(taskOptions):
         script_name = 'start'
         priority = 1
-        detectors_enabled=True
+        detectors_enabled_while_running=True
+        frequency_limit=1
     #need 1 condition or else won't start
     conditions = [
         (c['stateCondition'], {'state': True}),

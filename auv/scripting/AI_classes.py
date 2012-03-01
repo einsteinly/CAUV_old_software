@@ -144,6 +144,12 @@ class aiProcess():
 class aiOptionsBase(type):
     def __new__(cls, name, bases, attrs):
         new_attrs = {'_option_classes':{}}
+        #add in 'inherited' options from parent class
+        for base in bases:
+            for key, attr in base.__dict__.iteritems():
+                #but don't overwrite values
+                if not key in attrs:
+                    attrs[key] = attr
         for key, value in attrs.iteritems():
             #don't process 'system' values
             if not key[0] == '_':
