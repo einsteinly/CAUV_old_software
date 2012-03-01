@@ -121,7 +121,8 @@ class SonarSLAMImpl{
               m_vis_parameters_changed(false),
               m_vis_buffer(cv::Size(0,0), CV_8UC3, cv::Scalar(0)),
               m_vis_keyframes_included(0),
-              m_vis_allframes_included(0){
+              m_vis_allframes_included(0),
+              m_vis_graphopt_number(0){
         }
 
         void reset(){
@@ -176,6 +177,7 @@ class SonarSLAMImpl{
             m_vis_buffer = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0)),
             m_vis_keyframes_included = 0;
             m_vis_allframes_included = 0;
+            m_vis_graphopt_number = m_graph.graphOptimisationsCount();
         }
 
         Eigen::Vector2f toVisCoords(Eigen::Vector3f const& p) const{
@@ -183,7 +185,7 @@ class SonarSLAMImpl{
         }
 
         void updateVis(){
-            if(m_vis_parameters_changed)
+            if(m_vis_parameters_changed || m_vis_graphopt_number != m_graph.graphOptimisationsCount())
                 initVis();
 
             typedef SlamCloudGraph<pt_t>::cloud_vec cloud_vec;
@@ -206,6 +208,16 @@ class SonarSLAMImpl{
                 //    m_vis_buffer, image_pt, based_on_image_pt,
                 //    cv::Scalar(60, 235, 40)
                 //);
+                
+                foreach(location_ptr p, (*i)->constrainedTo()){
+                    const Eigen::Vector2f based_on_image_pt = toVisCoords(
+                        p->globalTransform().block<3,1>(0,3)
+                    );
+                    drawLine(
+                        m_vis_buffer, image_pt, based_on_image_pt,
+                        cv::Scalar(40, 170, 30)
+                    );
+                }
 
                 for(std::size_t j = 0; j < (*i)->size(); j++){
                     const Eigen::Vector2f pt = toVisCoords(
@@ -258,7 +270,7 @@ class SonarSLAMImpl{
                     );
                     drawLine(
                         m_vis_buffer, image_pt, based_on_image_pt,
-                        cv::Scalar(97.5, 160, 50)
+                        cv::Scalar(100, 120, 50)
                     );
                 }
             }
@@ -280,7 +292,7 @@ class SonarSLAMImpl{
         cv::Mat m_vis_buffer;
         int m_vis_keyframes_included;
         int m_vis_allframes_included;
-
+        int m_vis_graphopt_number;
 };
 
 } // namespace imgproc

@@ -93,11 +93,11 @@ class PairwiseMatcher{
 
 
 template <typename PtSrc, typename PtTgt>
-class ICP: public pcl::IterativeClosestPoint<PtSrc,PtTgt>{
-        typedef pcl::IterativeClosestPoint<PtSrc,PtTgt> base_t;
+class ICP: public pcl::IterativeClosestPointNonLinear<PtSrc,PtTgt>{
+        typedef pcl::IterativeClosestPointNonLinear<PtSrc,PtTgt> base_t;
     public:
         int numIters() const{
-            return pcl::IterativeClosestPoint<PtSrc,PtTgt>::nr_iterations_;
+            return base_t::nr_iterations_;
         }
         int maxNumIters() const{
             return base_t::max_iterations_;
@@ -121,6 +121,8 @@ class ICP: public pcl::IterativeClosestPoint<PtSrc,PtTgt>{
         }*/
 
 };
+
+
 template<typename PointT>
 class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
     public:

@@ -115,6 +115,8 @@ class SlamCloudLocation{
         Eigen::Matrix4f const& relativeTransform() const{ return m_relative_transformation; }
         location_ptr relativeTo() const{ return m_relative_to; }
         TimeStamp const& time() const{ return m_time; }
+
+        location_vec const& constrainedTo() const{ return m_constrained_to; }
         
 
         // We have an Eigen::Matrix4f as a member
@@ -345,12 +347,18 @@ class SlamCloudGraph{
               m_min_initial_points(10),
               m_good_keypoint_distance(0.2),
               m_max_speed(2.0),
-              m_max_considered_overlaps(5){
+              m_max_considered_overlaps(5),
+              m_graph_optimisation_count(0){
         }
 
         void reset(){
             m_key_scans.clear();
             m_all_scans.clear();
+            m_graph_optimisation_count = 0;
+        }
+
+        int graphOptimisationsCount() const{
+            return m_graph_optimisation_count;
         }
 
         void setParams(float overlap_threshold,
@@ -456,6 +464,7 @@ class SlamCloudGraph{
             // goodness, align this new scan to the overlapping one, and save
             // the resulting transformation:
             int limit = m_max_considered_overlaps;
+            int succeeded_match = 0;
             typename cloud_overlap_map::const_iterator i;
             debug() << "matching to overlapping scans...";
             int failed_match = 0;
@@ -472,12 +481,13 @@ class SlamCloudGraph{
                             relative_transformation, map_cloud, transformed
                         )
                     ));
+                    succeeded_match++;
                 }catch(PairwiseMatchException& e){
                     failed_match++;
                     continue;
                 }
             }
-            debug() << overlaps.size() - failed_match << "matches succeeded"
+            debug() << succeeded_match << "matches succeeded"
                     << failed_match << "failed";
             
             # if 0
@@ -546,7 +556,7 @@ class SlamCloudGraph{
                 // do the optimisation, hint at which constraints are new so
                 // they can be prioritised
                 graph_optimiser.optimiseGraph(m_key_constraints, new_constraints);
-
+                m_graph_optimisation_count++;
             }else{
                 // discard all the point data for non-key scans
                 m_all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
@@ -700,6 +710,10 @@ class SlamCloudGraph{
         float m_good_keypoint_distance;
         float m_max_speed;
         int m_max_considered_overlaps;
+        
+        // +1 each time graph optimiser is run - i.e. this number changes
+        // whenever everything might have moved
+        int m_graph_optimisation_count;
 
         // TODO: to remain efficient there MUST be a way of searching for
         // SlamCloudParts near a location without iterating through all nodes
