@@ -8,13 +8,11 @@ class scriptOptions(aiScriptOptions):
     depth = 1.0
     forward_time = 60
     forward_speed = 100, MotorValue
-    already_run = False, bool
-    class Meta:
-        dynamic = ['already_run']
+        
+class scriptState(aiScriptState):
+    already_run = False
 
 class script(aiScript):
-    class persistState(aiScriptState):
-        already_run = False
     def run(self):
         if self.persist.already_run:
             return 'SUCCESS'
@@ -23,6 +21,7 @@ class script(aiScript):
         self.auv.depthAndWait(self.options.depth)
         self.log('Heading forwards through validation gate')
         self.auv.prop(self.options.forward_speed)
+        debug("Heading blindly in this direction until something stops me or %d seconds elapse" %(self.options.forward_time))
         time.sleep(self.options.forward_time)
         self.auv.prop(0)
         return 'SUCCESS'
