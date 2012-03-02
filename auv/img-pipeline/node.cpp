@@ -55,7 +55,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
     bool uid_inherited = false;
     bool uid_set = false;
     in_image_map_t::const_iterator i = inputs.begin();
-    while(!i->second && i != inputs.end())
+    while(i != inputs.end() && !i->second)
        i++;
     if(i->second && i != inputs.end()){
         uid_inherited = true;
