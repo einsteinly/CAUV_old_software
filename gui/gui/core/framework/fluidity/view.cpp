@@ -51,6 +51,11 @@ FView::FView(boost::shared_ptr<CauvNode> node, QWidget* parent)
       m_cauv_node(node),
       m_manager(),
       m_contextmenu_root(){
+    // QGraphicsView spends most of its time testing the intersection of
+    // boinding boxes without this set, and in any case OpenGL doesn't
+    // support partial updates:
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+
     initMenu();
 
     QGraphicsScene *s = new QGraphicsScene(this);

@@ -33,8 +33,16 @@ class LODItem: public ItemT{
     public:
         LODItem(QGraphicsItem* parent=0)
             : ItemT(parent){
+            // this seems to mostly hide the effects of LOD stuff... (and gives
+            // a *significant* performance improvement)
+            ItemT::setCacheMode(QGraphicsItem::ItemCoordinateCache);
+            // ItemCoordinateCache is definitely faster
+            //ItemT::setCacheMode(QGraphicsItem::DeviceCoordinateCache);
         }
 
+        // Ideas for improving performance at mid-range LODs:
+        //  -> Disable text antialiasing
+        //  -> ??
         virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
             const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
             if(lod < 0.5){
@@ -59,8 +67,9 @@ class ProxyWidget: public QGraphicsProxyWidget{
     public:
         ProxyWidget(QGraphicsItem* parent=0, Qt::WindowFlags wFlags=0)
             : QGraphicsProxyWidget(parent, wFlags){
+            setCacheMode(QGraphicsItem::ItemCoordinateCache);
         }
-        
+
         virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
             const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
             if(lod < 0.5){
