@@ -15,10 +15,12 @@
 #include "manager.h"
 
 #include <QGraphicsScene>
+#include <QTimer>
 
 #include <boost/make_shared.hpp>
 
 #include <common/cauv_node.h>
+#include <common/cauv_utils.h>
 #include <debug/cauv_debug.h>
 #include <utility/bash_cout.h>
 
@@ -252,15 +254,18 @@ void Manager::onNodeParameters(NodeParametersMessage_ptr m){
 }
 
 void Manager::onNodeAdded(NodeAddedMessage_ptr m){
+    _animAutoDisableTick();
     addNode(m);
     _checkAddImageSource(m->nodeId());
 }
 
 void Manager::onNodeRemoved(NodeRemovedMessage_ptr m){
+    _animAutoDisableTick();
     removeNode(m->nodeId());
 }
 
 void Manager::onArcAdded(ArcAddedMessage_ptr m){
+    _animAutoDisableTick();
     fnode_ptr from = lookup(m->from().node);
     fnode_ptr to = lookup(m->to().node);
     if(from && to)
@@ -268,6 +273,7 @@ void Manager::onArcAdded(ArcAddedMessage_ptr m){
 }
 
 void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
+    _animAutoDisableTick();
     fnode_ptr from = lookup(m->from().node);
     fnode_ptr to = lookup(m->to().node);
     if(from && to)
@@ -373,6 +379,25 @@ void Manager::clearNodes(){
     for(i = m_nodes.right().begin(); i != m_nodes.right().end(); i++)
         i->left->fadeAndRemove();
     m_nodes.clear();
+}
+
+// !!! FIXME this is a bit untidy and not entirely the right way to do things:
+void Manager::_animAutoDisableTick(){
+    // only worry if animation isn't already disabled - prevent creating a
+    // milllion timers
+    if(animationPermitted()){
+        TimeStamp tick = now();
+            
+        float sdiff = tick.secs - m_last_anim_auto_disable_check.secs;
+        float musdiff = tick.musecs - m_last_anim_auto_disable_check.musecs; 
+
+        if(sdiff + 1e-6*musdiff < 0.2){
+            pushAnimationPermittedState(false);
+            QTimer::singleShot(1000, this, SLOT(popAnimatonPermittedState()));
+        }
+        
+        m_last_anim_auto_disable_check = tick;
+    }
 }
 
 void Manager::_checkAddImageSource(node_id_t id){

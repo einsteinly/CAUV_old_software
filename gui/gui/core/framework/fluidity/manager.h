@@ -64,8 +64,6 @@ class Manager: public QObject,
         std::string const& pipelineName() const;
 
         bool animationPermitted() const;
-        void pushAnimationPermittedState(bool permitted);
-        void popAnimationPermittedState();
 
         void setFocusPosition(QPointF p);
         
@@ -118,6 +116,9 @@ class Manager: public QObject,
         void requestRefresh();
         void requestForceExec(node_id_t const& id);
 
+        void pushAnimationPermittedState(bool permitted);
+        void popAnimationPermittedState();
+
     protected:
         void removeNode(node_id_t const& id);
         fnode_ptr addNode(NodeType::e const& type, node_id_t const& id);
@@ -130,6 +131,10 @@ class Manager: public QObject,
     private:
         template<typename message_T>
         bool _nameMatches(boost::shared_ptr<const message_T> msg);
+        
+        // if this is called at a high frequency animations will be disabled
+        // for a while
+        void _animAutoDisableTick();
 
         void _checkAddImageSource(node_id_t);
 
@@ -148,6 +153,8 @@ class Manager: public QObject,
         id_imgsrc_map_t m_image_sources;
 
         QPointF m_focus_scenepos;
+
+        TimeStamp m_last_anim_auto_disable_check;
 };
 
 class FocusPositionForwarder: public QObject{
