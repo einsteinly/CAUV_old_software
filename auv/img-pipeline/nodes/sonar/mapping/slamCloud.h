@@ -27,6 +27,9 @@
 
 #include <clipper.hpp> // Boost Software License
 
+#include <generated/types/TimeStamp.h>
+#include <generated/types/KeyPoint.h>
+
 #include "scanMatching.h"
 #include "graphOptimiser.h"
 #include "common.h"
@@ -118,7 +121,7 @@ class SlamCloudLocation{
 
         location_vec const& constrainedTo() const{ return m_constrained_to; }
 
-        // (relative) expensive: use sparingly
+        // (relatively) expensive: use sparingly
         typedef std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f> > v3f_vec;
         v3f_vec constraintEndsGlobal() const{
             v3f_vec r;
@@ -366,6 +369,7 @@ class SlamCloudGraph{
         void reset(){
             m_key_scans.clear();
             m_all_scans.clear();
+            m_key_constraints.clear();
             m_graph_optimisation_count = 0;
         }
 
@@ -675,9 +679,9 @@ class SlamCloudGraph{
                 const double a_area = std::fabs(ClipperLib::Area(clipper_poly_a));
                 const double b_area = std::fabs(ClipperLib::Area(clipper_poly_b));
 
-                debug() << "overlap pct =" << 1e-6*union_area
-                        << "/ (" << -1e-6*a_area << "+" << -1e-6*b_area << ") ="
-                        << union_area / (a_area + b_area) << "(m^2)";
+                debug(3) << "overlap pct =" << 1e-6*union_area
+                         << "/ (" << -1e-6*a_area << "+" << -1e-6*b_area << ") ="
+                         << union_area / (a_area + b_area) << "(m^2)";
                 return union_area / (a_area + b_area);
             }else{
                 return 0;

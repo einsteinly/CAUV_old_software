@@ -28,19 +28,18 @@
 
 #include <debug/cauv_debug.h>
 
+#include "slamCloud.h"
+
 using namespace cauv;
 using namespace cauv::imgproc;
 
 IncrementalPose IncrementalPose::from4dAffine(Eigen::Matrix4f const& a){
-    const Eigen::Matrix3f r = a.block<3,3>(0, 0);
-    const Eigen::Vector3f t = a.block<3,1>(0, 3);
+    const Eigen::Matrix2f r = a.block<2,2>(0, 0);
+    const Eigen::Vector2f t = a.block<2,1>(0, 3);
 
-    const Eigen::Vector3f tmp = r*Eigen::Vector3f(1,0,0);
-    const float rz = (180/M_PI)*std::atan2(tmp[1], tmp[0]);
-    IncrementalPose incr = {
-        Eigen::Vector3f(t[0], t[1], rz)
-    };
-    return incr;
+    const Eigen::Vector2f tmp = r*Eigen::Vector2f(1,0);
+    const float rz = std::atan2(tmp[1], tmp[0]);
+    return IncrementalPose(Eigen::Vector3f(t[0], t[1], rz));
 }
 
 IncrementalPose IncrementalPose::from4dAffineDiff(
@@ -85,6 +84,10 @@ struct Node{
     int tag;
 };
 
+std::ostream& operator<<(std::ostream& os, IncrementalPose const& a){
+    // convert angle to degrees for display
+    return os << "IncrPose{dx:"<< a.x[0] << " dy:" << a.x[1] << "dth:"<< (180/M_PI)*a.x[2] << "}";
+}
 std::ostream& operator<<(std::ostream& os, Arc const& a){
     return os << "Arc{fr:"<< a.from << " to:" << a.to <<"}";
 }
@@ -157,7 +160,7 @@ static Node_ptr spanningTree(
 
     int non_spanning = 0;
 
-    debug() << "spanning tree construction over" << constraints.size() << "constraints...";
+    debug(5) << "spanning tree construction over" << constraints.size() << "constraints...";
     foreach(pose_constraint_ptr p, constraints){
         i = node_lookup.find(p->a);
         j = node_lookup.find(p->b);
@@ -188,7 +191,7 @@ static Node_ptr spanningTree(
                             a->x = -p->a_to_b;
                         }
                         a->from->child_links.push_back(a);
-                        debug() << "reparent (easy)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
+                        debug(7) << "reparent (easy)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
                     }else{
                         // both sides of this constraint have parents already -
                         // need to reverse parent/child relations in one of the
@@ -197,7 +200,7 @@ static Node_ptr spanningTree(
                         a->to = j->second;
                         a->x = p->a_to_b;
                         a->from->child_links.push_back(a);
-                        debug() << "reparent (hard)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
+                        debug(7) << "reparent (hard)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
                         // Make i the new parent of tree j->second via arc a
                         adoptSubTree(i->second, a, j->second);
                         assert(a->to->parent_link == a);
@@ -244,9 +247,9 @@ static Node_ptr spanningTree(
             assert(!(np->parent_link));
         }
     }
-    debug() << "spanning tree construction complete:"
-            << node_lookup.size() << "nodes, "
-            << non_spanning << "non-spanning constraints";
+    debug(3) << "spanning tree construction complete:"
+             << node_lookup.size() << "nodes, "
+             << non_spanning << "non-spanning constraints";
 
     // spanning tree invariant:
     if(non_spanning != int(constraints.size() - (node_lookup.size()-1))){
@@ -305,8 +308,10 @@ static Node_ptr spanningTree(
     return set_root[0];
 }
 
-template<typename Funct>
-void visitBetweenNodes(Node_ptr a, Node_ptr b, Funct const& f){
+// Visit nodes and arcs (static typing means arc visits will be optimised out
+// if v has no-ops for them). Return the number of nodes visited
+template<typename PathVisitor>
+static uint32_t visitBetweenNodes(Node_ptr a, Node_ptr b, PathVisitor const& v){
     if(b->tag > a->tag)
         std::swap(a, b);
     // Generate the complete path before traversing it, path order is from
@@ -330,11 +335,31 @@ void visitBetweenNodes(Node_ptr a, Node_ptr b, Funct const& f){
         b = b->parent_link->from;
     }
 
-    // now visit it with the supplied function:
-    foreach(Node_ptr p, path_start)
-        f(*p);
-    reverse_foreach(Node_ptr p, path_end)
-        f(*p);
+    // now visit it with the supplied visitor: operator() is applied to nodes,
+    // ascend() and descend() are applied to arcs
+    foreach(Node_ptr p, path_start){
+        v(*p);
+        v.ascend(*p->parent_link);
+    }
+    // visit top-level node (== a == b)
+    v(*a);
+    reverse_foreach(Node_ptr p, path_end){
+        v.descend(*p->parent_link);
+        v(*p);
+    }
+
+    return 1 + path_start.size() + path_end.size();
+}
+
+// visits every node, and every arc in each direction, 
+template<typename NodeVisitor>
+static void visitDepthFirst(Node_ptr root, NodeVisitor const& v){
+    v(*root);
+    foreach(Arc_ptr const& a, root->child_links){
+        v.descend(*a);
+        visitDepthFirst(a->to, v);
+        v.ascend(*a);
+    }
 }
 
 struct MaxLevel{
@@ -347,6 +372,8 @@ struct MaxLevel{
             max_level = node.tag;
         }
     }
+    void ascend(Arc const&) const { }
+    void descend(Arc const&) const { }
 
     int& max_level;
 };
@@ -358,16 +385,75 @@ struct PrintNode{
         m_debug_stream << "Path{levels:";
     }
     ~PrintNode(){
-        m_debug_stream << "\n" << m_count << "nodes total}";
+        m_debug_stream << /*"\n" <<*/ ": "<< m_count << "nodes total}";
     }
     void operator()(Node const& node) const{
         //m_debug_stream << "\n\t" << node;
         m_debug_stream << node.tag << ", ";
         m_count++;
     }
+    void ascend(Arc const&) const { }
+    void descend(Arc const&) const { }
 
     mutable int m_count;
     mutable debug m_debug_stream;
+};
+
+struct AccumulatePose{
+    AccumulatePose(IncrementalPose& p)
+        : m_pose(p){
+    }
+
+    void operator()(Node const& node) const{ }
+
+    void ascend(Arc const& arc) const {
+        m_pose -= arc.x;
+    }
+    void descend(Arc const& arc) const {
+        m_pose += arc.x;
+    }
+    
+    IncrementalPose& m_pose;
+};
+
+// this one actually modifies the tree: add p to descending arcs traversed,
+// subtract it from ascending ones
+struct AddPose{
+    AddPose(IncrementalPose const& p)
+        : m_pose_to_add(p){
+    }
+
+    void operator()(Node const&) const{ }
+
+    void ascend(Arc& arc) const {
+        // subtract on the way up
+        arc.x -= m_pose_to_add;
+    }
+    void descend(Arc& arc) const {
+        // add on the way down
+        arc.x += m_pose_to_add;
+    }
+
+    IncrementalPose const& m_pose_to_add;
+};
+
+// only apply this to top-down visits (ie, root first!)
+struct ApplyPose{
+    void operator()(Node const& node) const{
+        assert(!node.p->relativeTo());
+        if(node.parent_link){
+            node.p->setRelativeTransform(
+                node.parent_link->x.applyTo(node.parent_link->from->p->relativeTransform())
+            );
+        }else{
+            // tree root stays in the same place!
+            // !!! TODO: the tree root is a pretty arbitrary node - really the
+            // oldest one should stay in the same place, or something
+        }
+    }
+
+    void ascend(Arc const&) const { }
+    void descend(Arc const&) const { }
 };
 
 static bool poseConstraintTagLess(
@@ -386,7 +472,7 @@ void GraphOptimiserV1::optimiseGraph(
     constraint_vec& constraints,
     constraint_vec const& new_constraints // currently ignored, could be used to choose tree parametrisation, or more intrusively
 ) const{
-    const int max_iters = 1;
+    const int max_iters = 4;
 
     std::map<location_ptr, Node_ptr> node_lookup;
     std::map<location_ptr, Node_ptr>::const_iterator ait, bit;
@@ -405,7 +491,8 @@ void GraphOptimiserV1::optimiseGraph(
     }
 
     std::sort(constraints.begin(), constraints.end(), poseConstraintTagLess);
-
+    
+    float lambda = 1.0f;
     for(int iter = 0; iter < max_iters; iter++){
         debug() << "SGD iter" << iter;
 
@@ -414,10 +501,48 @@ void GraphOptimiserV1::optimiseGraph(
             ait = node_lookup.find(p->a); assert(ait != node_lookup.end());
             bit = node_lookup.find(p->b); assert(bit != node_lookup.end());
             
-            PrintNode printer;
-            visitBetweenNodes(ait->second, bit->second, printer);
+            //PrintNode printer;
+            //visitBetweenNodes(ait->second, bit->second, printer);
+            
+            // Get the error
+            IncrementalPose actual_end_relative_to_start;
+            uint32_t num_nodes = visitBetweenNodes(
+                ait->second, bit->second, AccumulatePose(actual_end_relative_to_start)
+            );
+            
+            IncrementalPose error = p->a_to_b - actual_end_relative_to_start;
+
+            // if the error is too big (>45 degrees, or >1m and >2* the
+            // distance) ignore it:
+            float error_sqlength = error.x[0]*error.x[0] + error.x[1]*error.x[1]; 
+            float current_sqlength = actual_end_relative_to_start.x[0]*actual_end_relative_to_start.x[0] +
+                                     actual_end_relative_to_start.x[1]*actual_end_relative_to_start.x[1];
+            if(error_sqlength > 1 && error_sqlength > current_sqlength*2){
+                debug() << "ignore constraint: distance error too big";
+                continue;
+            }
+            if(std::fabs(error.x[2])*(180/M_PI) > 45){
+                debug() << "ignore constraint: angle error too big";
+                continue;
+            }
+            
+            debug() << "error over loop:" << error << "(=" << p->a_to_b << "-"
+                    << actual_end_relative_to_start << ")";
+            
+            assert(num_nodes > 1);
+            // distribute the error along the path in the simplest possible
+            // way:
+            // (Olsen et al & Grisetti et al use weighting schemes based on the
+            //  information matrix of each component constraint, but this will
+            //  do to start with)
+            IncrementalPose d_pose =  error * (lambda / (num_nodes-1));
+            visitBetweenNodes(ait->second, bit->second, AddPose(d_pose));
         }
+        lambda *= 0.5;
     }
+
+    // now convert back to global pose
+    visitDepthFirst(root, ApplyPose());
 }
 
 
