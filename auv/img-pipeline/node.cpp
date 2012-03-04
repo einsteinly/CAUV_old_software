@@ -192,6 +192,35 @@ Node::InternalParamValue Node::Input::getParam(bool& did_change) const{
     return param_value;
 }
 
+Node::InternalParamValue Node::Input::getParam(bool& did_change, UID const& uid) const{
+    did_change = false;
+    if(target){
+        InternalParamValue parent_value;    
+        if(synchronised_with){
+            parent_value = target.node->getOutputParamWithUID(target.id, uid);
+            if(!(parent_value.uid == uid))
+                throw parameter_error("no value with specified UID");
+        }else{
+            throw parameter_error("can only get parameter with specific UID on synchronised inputs");
+        }
+        if(param_value.param.which() == parent_value.param.which()){
+            if(!(param_value == parent_value)){
+                did_change = true;
+            }
+            // even if it compared equal, assign anyway: metatdata
+            // isn't counted in comparison, but we always want to
+            // make sure we have the latest
+            param_value = parent_value;
+        }else{
+            debug() << "Type mismatch on parameter link:" << *this
+                    << " (param=" << param_value.param.which()
+                    << "vs link=" << parent_value.param.which()
+                    << ") the last valid parameter value will be returned";
+        }
+    }
+    return param_value;
+}
+
 bool Node::Input::valid() const{
     // parameters have default values and thus are always valid
     if(input_type == InType_Parameter)
@@ -1144,16 +1173,19 @@ bool Node::execQueued() const{
     return m_exec_queued;
 }
 
-
-Node::InternalParamValue Node::_getAndNotifyIfChangedInternalParam(input_id const& p) const{
-lock_t l(m_inputs_lock);
+Node::InternalParamValue Node::_getAndNotifyIfChangedInternalParam(input_id const& p, UID const* uid) const{
+    lock_t l(m_inputs_lock);
     private_in_map_t::const_iterator i = m_inputs.find(p);
     if(i != m_inputs.end() && *(i->second) && i->second->input_type == InType_Parameter){
         input_ptr ip = i->second;
         // now we can release the inputs lock
         l.unlock();
         bool did_change = false;
-        InternalParamValue r = ip->getParam(did_change);
+        InternalParamValue r;
+        if(uid)
+            r = ip->getParam(did_change, *uid);
+        else
+            r = ip->getParam(did_change);
         if(did_change){
             // TODO: is this desirable?
             //paramChanged(p);

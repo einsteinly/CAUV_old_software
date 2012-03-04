@@ -244,8 +244,9 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                                                   InputSchedType::e const& st = May_Be_Old);
             void clear();
             image_ptr_t getImage() const;
-            // NB: no locks are necessarily held when calling this
+            // NB: no locks are necessarily held when calling these:
             InternalParamValue getParam(bool& did_change) const;
+            InternalParamValue getParam(bool& did_change, UID const&) const;
             bool valid() const;
             bool isParam() const;
             
@@ -438,6 +439,22 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 throw parameter_error(e.what());
             }
         }
+
+        /* return the parameter value with a specific UID, throws if not
+         * possible: use requireSyncInputs, paramAndUID and this function
+         * together to get pairs of parameters that are synchronised.
+         */
+        template<typename T>
+        T param(input_id const& p, UID const& uid) const{
+            try{
+                return
+                getValue<T>(_getAndNotifyIfChangedInternalParam(p, &uid).param);
+            }catch(boost::bad_get& e){
+                error() << p << "is not of requested type:" << e.what();
+                throw parameter_error(e.what());
+            }
+        }
+
         /* return a single parameter value, and its UID. Retrieves value from parent if the
          * parameter is linked to the output of a parent
          */
@@ -615,7 +632,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         void demandNewParentInput() throw();
     private:
-        InternalParamValue _getAndNotifyIfChangedInternalParam(input_id const& p) const;
+        InternalParamValue _getAndNotifyIfChangedInternalParam(input_id const& p, UID const* uid = NULL) const;
 
         void demandNewParentInput(input_id const& id) throw();
         
