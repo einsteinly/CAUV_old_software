@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -36,7 +36,8 @@ class FileInputNode: public AsynchronousNode{
     public:
         FileInputNode(ConstructArgs const& args)
             : AsynchronousNode(args),
-              m_is_directory(false), m_iter(){
+              m_is_directory(false), m_iter(), m_seq(0),
+              m_instance_num(nextInstanceNum()){
         }
 
         void init(){
@@ -80,9 +81,7 @@ class FileInputNode: public AsynchronousNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
-            
+        void doWork(in_image_map_t&, out_map_t& r){
             debug(4) << "fileInputNode::doWork";
         
             std::string fname = param<std::string>("filename");
@@ -122,9 +121,7 @@ class FileInputNode: public AsynchronousNode{
                     warning() << "no images in directory" << fname;
                 // NB: allowQueue not cleared
             }
-            r["image"] = boost::make_shared<Image>(image);
-
-            return r;
+            r.internalValue("image") = boost::make_shared<Image>(image, now(), mkUID(SensorUIDBase::File + m_instance_num, ++m_seq));
         }
 
         cv::Mat readImage(std::string const& fname, bool warn=true) const{
@@ -161,6 +158,16 @@ class FileInputNode: public AsynchronousNode{
         }
 
     private:
+        static uint32_t nextInstanceNum(){
+            // node creation actually always happens on the same thread, so we
+            // don't need a lock here
+            static uint32_t instance_num = 0;
+            instance_num++;
+            // if there are more than 32 fileinput nodes, this will be a
+            // problem:
+            return instance_num % 0x20;
+        }
+
         boost::recursive_mutex m_dir_mutex;
 
         bool m_is_directory;
@@ -168,6 +175,9 @@ class FileInputNode: public AsynchronousNode{
 
         cv::VideoCapture m_capture;
         boost::recursive_mutex m_capture_lock;
+
+        uint64_t m_seq;
+        uint32_t m_instance_num;
     
         // Register this node type
         DECLARE_NFR;

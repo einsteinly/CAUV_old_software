@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -77,8 +77,7 @@ class KMeansNode: public Node{
         boost::uniform_smallint<> bytedist;
         boost::variate_generator<boost::mt19937&, boost::uniform_smallint<> > randbyte;
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image"]->mat();
             
@@ -88,7 +87,6 @@ class KMeansNode: public Node{
             if(K < 1)
             {
                 error() << "must be at least one cluster";
-                return r;
             }
             else if (K > 255) {
                 error() << "too many clusters";
@@ -257,7 +255,6 @@ class KMeansNode: public Node{
             r["cluster ids"] = boost::make_shared<Image>(clusteridsMat);
             r["image (not copied)"] = boost::make_shared<Image>(img);
             
-            return r;
         }
     
     // Register this node type

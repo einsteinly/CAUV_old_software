@@ -34,22 +34,19 @@ class InvertNode: public Node{
 
     protected:
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image"]->mat();
             
             if (img.depth() != CV_8U){
                 error() << "InvertNode:\n\t"
                             << "Invalid image input - must be 8-bit";
-                return r;
             }
 
             img = 255 - img;
             
             r["image (not copied)"] = boost::make_shared<Image>(img);
             
-            return r;
         }
     
     // Register this node type

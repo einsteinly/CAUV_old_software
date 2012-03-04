@@ -52,8 +52,7 @@ class PyramidNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             try{
                 int level = param<int>("level");
             
@@ -85,7 +84,6 @@ class PyramidNode: public Node{
                         << e.err << "\n\t"
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
-            return r;
         }
         
         // Register this node type

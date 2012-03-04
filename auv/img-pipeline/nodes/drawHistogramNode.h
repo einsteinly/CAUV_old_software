@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -36,11 +36,10 @@ class DrawHistogramNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
+        void doWork(in_image_map_t&, out_map_t& r){
             const unsigned Min_Width = 256;
             const unsigned rows = 100;
             unsigned cols_per_bar = 1;
-            out_map_t r;
             
             const std::vector<float> histogram = param< std::vector<float> >("histogram");
             if(!histogram.size())
@@ -61,8 +60,6 @@ class DrawHistogramNode: public Node{
                     }
 
             r[Image_Out_Copied_Name] = boost::make_shared<Image>(out);
-
-            return r;
         }
 
         int m_counter;

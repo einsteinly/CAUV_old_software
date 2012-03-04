@@ -60,20 +60,17 @@ class RunningAverageNode: public Node{
 
         cv::Mat avg;
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image"]->mat();
             int imgChannels = img.channels();
             if (imgChannels != 1 && imgChannels != 3)
             {
                 error() << "image must have 1 or 3 channels";
-                return r;    
             }
             int imgDepth = img.depth();
             if (imgDepth != CV_8U && imgDepth != CV_8S && imgDepth != CV_32F) {
                 error() << "image must be 8-bit or 32-bit float";
-                return r;
             }
 
             float alpha = param<float>("alpha");
@@ -81,7 +78,6 @@ class RunningAverageNode: public Node{
             if(alpha < 0 || alpha > 1)
             {
                 error() << "alpha must be within [0,1]";
-                return r;
             }
 
             if (avg.empty()
@@ -100,7 +96,6 @@ class RunningAverageNode: public Node{
             avg.convertTo(byte_image, CV_8U);
             r["image"] = boost::make_shared<Image>(byte_image);
             
-            return r;
         }
     
     // Register this node type

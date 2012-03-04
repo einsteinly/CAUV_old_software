@@ -38,15 +38,13 @@ class MathDivideNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
+        void doWork(in_image_map_t&, out_map_t& r){
             T a = param<T>("A (triggers exec)");
             T b = param<T>("B");
             if(b != T(0))
                 r["A/B"] = ParamValue(float(a)/float(b));
             else
                 r["A/B"] = ParamValue(float(0));
-            return r;
         }
     
     // Register this node type

@@ -45,8 +45,7 @@ class TransformKeyPointsNode: public Node{
 
     protected:
 
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
+        void doWork(in_image_map_t&, out_map_t& r){
             std::vector<KeyPoint> kps = param< std::vector<KeyPoint> >("keypoints");
             float px = param<float>("+x");
             float py = param<float>("+y");
@@ -60,8 +59,6 @@ class TransformKeyPointsNode: public Node{
             }
 
             r["keypoints"] = transformed;
-
-            return r;
         }
     
     // Register this node type

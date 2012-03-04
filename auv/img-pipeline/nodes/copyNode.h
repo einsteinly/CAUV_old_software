@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -50,9 +50,7 @@ class CopyNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
-            
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             image_ptr_t img = inputs["image"];
             
             try{
@@ -62,8 +60,6 @@ class CopyNode: public Node{
                         << e.err << "\n\t"
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
             }
-            
-            return r;
         }
         
         // Register this node type

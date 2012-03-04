@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -106,8 +106,7 @@ class Correlation1DNode: public Node{
             augmented_mat_t m_b;
             cv::Mat& m_correl_image;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img_a = inputs["Image A"];
             image_ptr_t img_b = inputs["Image B"];
@@ -126,7 +125,6 @@ class Correlation1DNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
-            return r;
         }
     
     // Register this node type

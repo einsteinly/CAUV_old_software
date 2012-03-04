@@ -34,7 +34,7 @@ namespace imgproc{
 class VideoFileOutputNode: public OutputNode{
     public:
         VideoFileOutputNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : OutputNode(args), m_counter(0){
         }
 
         void init(){
@@ -60,9 +60,8 @@ class VideoFileOutputNode: public OutputNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
+        void doWork(in_image_map_t& inputs, out_map_t&){
             using boost::algorithm::replace_all_copy;
-            out_map_t r;
 
             cv::Mat img = inputs["image"]->mat();
              
@@ -93,7 +92,6 @@ class VideoFileOutputNode: public OutputNode{
                 throw img_pipeline_error("VideoFileOutputNode: could not write file");
             }
             
-            return r;
         }
 
         void openVideo(cv::Size const& size){

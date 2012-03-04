@@ -44,13 +44,11 @@ class ClampNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
+        void doWork(in_image_map_t&, out_map_t& r){
             T min   = param<T>("Min");
             T max   = param<T>("Max");
             T value = param<T>("Value");
             r["Value"] = clamp(min, value, max);
-            return r;
         }
     
     private:

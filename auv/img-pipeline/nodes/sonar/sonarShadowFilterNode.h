@@ -114,7 +114,6 @@ class SonarShadowFilterNode: public Node{
                         r.mat.at<uint8_t>(row,col) = clamp_cast<uint8_t>(0.0f, filter_value, 255.0f);
                     }
                 }
-
                 return r;
             }
             augmented_mat_t operator()(PyramidMat) const{
@@ -125,8 +124,7 @@ class SonarShadowFilterNode: public Node{
             const float m_object_importance;            
             const float m_shadow_importance;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img = inputs["polar image"];
             
@@ -149,7 +147,6 @@ class SonarShadowFilterNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
-            return r;
         }
     
     // Register this node type

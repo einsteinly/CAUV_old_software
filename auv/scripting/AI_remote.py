@@ -23,6 +23,8 @@ class aiStateListener(messaging.MessageObserver):
         self.node.addObserver(self)
     def onTaskStateMessage(self, m):
         print m
+    def onScriptStateMessage(self, m):
+        print m
     def onConditionStateMessage(self, m):
         print m
     def onTaskRemovedMessage(self, m):

@@ -1,3 +1,17 @@
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
+ *
+ * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
+ * society for all purposes other than publication of this source code.
+ * 
+ * See license.txt for details.
+ * 
+ * Please direct queries to the officers of Cambridge Hydronautics:
+ *     James Crosby    james@camhydro.co.uk
+ *     Andy Pritchard   andy@camhydro.co.uk
+ *     Leszek Swirski leszek@camhydro.co.uk
+ *     Hugo Vincent     hugo@camhydro.co.uk
+ */
+
 #ifndef __CAUV_SONAR_SLAM_CLOUD_H__
 #define __CAUV_SONAR_SLAM_CLOUD_H__
 
@@ -9,209 +23,27 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/convex_hull.h>
 
+#include <Eigen/StdVector>
+
 #include <clipper.hpp> // Boost Software License
+
+#include "scanMatching.h"
+#include "graphOptimiser.h"
+#include "common.h"
 
 namespace cauv{
 namespace imgproc{
-
-// - Typedefs
-typedef float descriptor_t;
-
-// - Forward Declarations
-class SlamCloudLocation;
-template<typename PointT> class SlamCloudPart;
-template<typename PointT> class SlamCloudGraph;
-
-// - Static Utility Functions
-static Eigen::Vector3f xythetaFrom4dAffine(Eigen::Matrix4f const& transform){
-    // split transform into affine parts:
-    const Eigen::Matrix3f rotate    = transform.block<3,3>(0, 0);
-    const Eigen::Vector3f translate = transform.block<3,1>(0, 3);
-
-    const Eigen::Vector3f t = rotate*Eigen::Vector3f(1,0,0);
-    const float rz = (180/M_PI)*std::atan2(t[1], t[0]);
-    return Eigen::Vector3f(translate[0], translate[1], rz);
-}
 
 // return value in double-precision floating point seconds (musec precision)
 static double operator-(cauv::TimeStamp const& left, cauv::TimeStamp const& right){
     const double dsecs = left.secs - right.secs;
     const double dmusecs = left.musecs - right.musecs;
-    return dsecs + 1e6*dmusecs;
+    return dsecs + 1e-6*dmusecs;
 }
-
-// - Pairwise Matching
-class PairwiseMatchException: public std::runtime_error{
-    public:
-        PairwiseMatchException(std::string const& msg)
-            : std::runtime_error(msg){
-        }
-};
-
-template<typename PointT>
-class PairwiseMatcher{
-    public:
-        // - public types
-        typedef SlamCloudPart<PointT> cloud_t;
-        typedef boost::shared_ptr<cloud_t> cloud_ptr;
-        typedef typename cloud_t::base_cloud_t base_cloud_t;
-        typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
-
-        // - public methods
-
-        /* return confidence (0 - did not match), non-zero, did match, with
-         * (0--1] confidence value.
-         *
-         * The guess is assumed to be in the global coordinate system. It is
-         * transformed into 'map's coordinate system:
-         *
-         * note that:
-         * global_point = cloud.relativeTo().relativeTransform() * cloud.relativeTransform() * cloud_point;
-         *
-         * so:
-         * guess * new_cloud_global = map_global
-         * guess * (new_cloud.relativeTo().relativeTransform() * new_cloud.relativeTransform() * new_cloud) = map.relativeTransform() * map
-         *
-         * relative_guess = map.relativeTransform().inverse() * guess * new_cloud.relativeTo().relativeTransform() * new_cloud.relativeTransform()
-         *
-         * so:
-         * guess * new_cloud_local = map_local
-         *
-         * The returned 'transformation' is in THE MAP's coordinate system -
-         * assuming that new_cloud.relativeTo will be set to 'map', but it is
-         * the caller's responsibility to do this!
-         *
-         */
-        virtual float transformcloudToMatch(
-            cloud_ptr map,
-            cloud_ptr new_cloud,
-            Eigen::Matrix4f const& guess,
-            Eigen::Matrix4f& transformation,
-            base_cloud_ptr& transformed_cloud
-        ) const = 0;
-};
-
-template<typename PointT>
-class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
-    public:
-        // - public types
-        typedef SlamCloudPart<PointT> cloud_t;
-        typedef boost::shared_ptr<cloud_t> cloud_ptr;
-        typedef typename cloud_t::base_cloud_t base_cloud_t;
-        typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
-
-        ICPPairwiseMatcher(int max_iters,
-                           float euclidean_fitness,
-                           float transform_eps,
-                           float reject_threshold,
-                           float max_correspond_dist,
-                           float score_thr)
-            : PairwiseMatcher<PointT>(),
-              m_max_iters(max_iters),
-              m_euclidean_fitness(euclidean_fitness),
-              m_transform_eps(transform_eps),
-              m_reject_threshold(reject_threshold),
-              m_max_correspond_dist(max_correspond_dist),
-              m_score_thr(score_thr){
-        }
-
-        // - public methods
-        virtual float transformcloudToMatch(
-            cloud_ptr map,
-            cloud_ptr new_cloud,
-            Eigen::Matrix4f const& guess,
-            Eigen::Matrix4f& transformation,
-            base_cloud_ptr& transformed_cloud
-        ) const {
-            debug() << "ICPPairwiseMatcher" << map->size() << ":" << new_cloud->size() << "points";
-
-            //pcl::IterativeClosestPointNonLinear<PointT,PointT> icp;
-            pcl::IterativeClosestPoint<PointT,PointT> icp;
-            icp.setInputCloud(new_cloud);
-            icp.setInputTarget(map);
-
-            icp.setMaxCorrespondenceDistance(m_max_correspond_dist);
-            icp.setMaximumIterations(m_max_iters);
-            icp.setTransformationEpsilon(m_transform_eps);
-            icp.setEuclideanFitnessEpsilon(m_euclidean_fitness);
-            icp.setRANSACOutlierRejectionThreshold(m_reject_threshold);
-
-            const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
-
-            debug() << BashColour::Green << "guess:\n"
-                    << guess;
-            debug() << BashColour::Green << "relative guess:\n"
-                    << relative_guess;
-
-            // do the hard work!
-            icp.align(*transformed_cloud, relative_guess);
-            // in map's coordinate system:
-            const Eigen::Matrix4f final_transform = icp.getFinalTransformation();
-
-            // high is bad (score is sum of squared euclidean distances)
-            const float score = icp.getFitnessScore();
-            info() << BashColour::Green
-                   << "converged:" << icp.hasConverged()
-                   << "score:" << score;
-
-            if(icp.hasConverged() && score < m_score_thr){
-                debug() << BashColour::Green << "final transform\n:"
-                        << final_transform;
-                Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
-                info() << BashColour::Green << "pairwise match:"
-                       << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "deg";
-
-                transformation = final_transform;
-            }else if(score >= m_score_thr){
-                info() << BashColour::Brown
-                       << "ICP pairwise match failed (error too high: "
-                       << score << ">=" << m_score_thr <<")";
-                throw PairwiseMatchException("error too high");
-            }else{
-                info() << BashColour::Red
-                       << "ICP pairwise match failed (not converged)";
-                throw PairwiseMatchException("failed to converge");
-            }
-
-            // TODO: more rigorous match metric
-            return 1.0 / (1.0 + score);
-        }
-
-    private:
-        const int m_max_iters;
-        const float m_euclidean_fitness;
-        const float m_transform_eps;
-        const float m_reject_threshold;
-        const float m_max_correspond_dist;
-        const float m_score_thr;
-};
-
-template<typename PointT>
-class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
-    public:
-        // - public types
-        typedef SlamCloudPart<PointT> cloud_t;
-        typedef boost::shared_ptr<cloud_t> cloud_ptr;
-        typedef typename cloud_t::base_cloud_t base_cloud_t;
-        typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
-
-        // - public methods
-        virtual float transformcloudToMatch(
-            cloud_ptr map,
-            cloud_ptr new_cloud,
-            Eigen::Matrix4f const& guess,
-            Eigen::Matrix4f& transformation,
-            base_cloud_ptr& transformed_cloud
-        ) const {
-            // TODO
-            assert(0);
-        }
-};
 
 // - SLAM Clouds
 class SlamCloudLocation{
     public:
-        typedef boost::shared_ptr<SlamCloudLocation> location_ptr;
 
         SlamCloudLocation(TimeStamp const& t)
             : m_relative_to(),
@@ -232,26 +64,51 @@ class SlamCloudLocation{
         // post-multiply
         void transform(Eigen::Matrix4f const& transformation){
             m_relative_transformation = m_relative_transformation * transformation;
+            transformationChanged();
         }
 
         void setRelativeToNone(){
-            m_relative_to.reset();
+            if(m_relative_to){
+                m_relative_to.reset();
+                transformationChanged();
+            }
         }
         void setRelativeTo(location_ptr p){
-            m_relative_to = p;
+            if(p != m_relative_to){
+                m_relative_to = p;
+                transformationChanged();
+            }
+        }
+        
+        // add constraint from this -> p (p observed from this) t is the
+        // RELATIVE (not incremental) pose at which p is observed
+        IncrementalPose addConstraintTo(location_ptr p, Eigen::Matrix4f const& t){
+            const Eigen::Matrix4f p_global_t = globalTransform() * t;
+            IncrementalPose incr_pose = IncrementalPose::from4dAffineDiff(globalTransform(), p_global_t);
+            
+            m_constrained_to.push_back(p);
+            m_constraints.push_back(incr_pose);
+            
+            return incr_pose;
+        }
+
+        static pose_constraint_ptr addConstraintBetween(location_ptr from,
+                                                        location_ptr to,
+                                                        Eigen::Matrix4f from_to_to){
+            const IncrementalPose incr_pose = from->addConstraintTo(to, from_to_to);
+            return boost::make_shared<IncrementalPoseConstraint>(incr_pose, from, to);
         }
 
         void setRelativeTransform(Eigen::Matrix4f const& m){
             m_relative_transformation = m;
+            transformationChanged();            
         }
 
         Eigen::Matrix4f globalTransform() const{
             Eigen::Matrix4f r = relativeTransform();
             location_ptr p = relativeTo();
-            while(p){
-                r = p->relativeTransform() * r;
-                p = p->relativeTo();
-            }
+            if(p)
+                return p->globalTransform() * r;
             return r;
         }
 
@@ -259,9 +116,37 @@ class SlamCloudLocation{
         location_ptr relativeTo() const{ return m_relative_to; }
         TimeStamp const& time() const{ return m_time; }
 
+        location_vec const& constrainedTo() const{ return m_constrained_to; }
+
+        // (relative) expensive: use sparingly
+        typedef std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f> > v3f_vec;
+        v3f_vec constraintEndsGlobal() const{
+            v3f_vec r;
+            foreach(IncrementalPose const& icrp, m_constraints){
+                Eigen::Vector3f gpos = globalTransform().block<3,1>(0,3);
+                gpos[0] -= icrp.dx();
+                gpos[1] -= icrp.dy();
+                r.push_back(gpos);
+            }
+            return r;
+        }
+        
+
+        // We have an Eigen::Matrix4f as a member
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    protected:
+        virtual void transformationChanged(){}
+
     private:
-        location_ptr    m_relative_to;              // TODO: list?
-        Eigen::Matrix4f m_relative_transformation;  // TODO: list?
+        typedef std::vector<IncrementalPose> incr_pose_vec;
+    
+        location_ptr    m_relative_to;
+        Eigen::Matrix4f m_relative_transformation;
+
+        location_vec  m_constrained_to;
+        incr_pose_vec m_constraints;
+
         TimeStamp       m_time;
 };
 
@@ -321,8 +206,6 @@ class SlamCloudPart: public SlamCloudLocation,
         }
 
         virtual ~SlamCloudPart(){
-            // undo the circular-reference workarounds, to avoid double-free:
-
         }
 
         void getLocalConvexHull(base_cloud_ptr& hull_points,
@@ -374,6 +257,17 @@ class SlamCloudPart: public SlamCloudLocation,
             m_kdtree_invalid = true;
             m_local_convexhull_invalid = true;
         }
+        
+
+        // this type derives from something with an Eigen::Matrix4f as a
+        // member:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    protected:
+        virtual void transformationChanged(){
+            m_kdtree_invalid = true;
+            m_local_convexhull_invalid = true;
+        }
 
     private:
         void ensureKdTree(){
@@ -392,14 +286,12 @@ class SlamCloudPart: public SlamCloudLocation,
                 m_local_convexhull_invalid = false;
 
                 pcl::ConvexHull<PointT> hull_calculator;
+                hull_calculator.setDimension(2); // if you get a compile error here, update your PCL version
                 m_local_convexhull_cloud = (boost::make_shared<base_cloud_t>());
                 m_local_convexhull_cloud->is_dense = true;
 
                 hull_calculator.setInputCloud(shared_from_this());
                 hull_calculator.reconstruct(*m_local_convexhull_cloud, m_local_convexhull_verts);
-
-                int dim = hull_calculator.getDim();
-                assert(dim == 2);
             }
         }
 
@@ -429,13 +321,34 @@ class SlamCloudGraph{
         // - public types
         typedef SlamCloudPart<PointT> cloud_t;
         typedef boost::shared_ptr<cloud_t> cloud_ptr;
-        typedef boost::shared_ptr<SlamCloudLocation> location_ptr;
 
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename base_cloud_t::Ptr base_cloud_ptr;
 
-        typedef std::deque<location_ptr> location_vec;
-        typedef std::deque<cloud_ptr> cloud_vec;
+        typedef std::vector<cloud_ptr> cloud_vec;
+        
+        typedef float overlap_t;
+        typedef std::multimap<overlap_t, cloud_ptr> cloud_overlap_map;
+        // ++11 tuple would be useful...
+        struct mat_cloud_transformed_t{
+            Eigen::Matrix4f mat;
+            cloud_ptr cloud;
+            base_cloud_ptr transformed;
+            
+            // required for Matrix4f member
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+            mat_cloud_transformed_t(Eigen::Matrix4f const& m, cloud_ptr cloud, base_cloud_ptr transformed)
+                : mat(m), cloud(cloud), transformed(transformed){
+            }
+        };
+        typedef std::multimap<
+            score_t,
+            mat_cloud_transformed_t,
+            std::less<score_t>,
+            Eigen::aligned_allocator< std::pair<const score_t, mat_cloud_transformed_t> >
+        > cloud_constraint_map;
+
 
     public:
         // - public methods
@@ -443,12 +356,21 @@ class SlamCloudGraph{
             : m_overlap_threshold(0.3),
               m_keyframe_spacing(2),
               m_min_initial_points(10),
-              m_good_keypoint_distance(0.2){
+              m_min_initial_area(5), // m^2
+              m_good_keypoint_distance(0.2),
+              m_max_speed(2.0),
+              m_max_considered_overlaps(5),
+              m_graph_optimisation_count(0){
         }
 
         void reset(){
-            key_scans.clear();
-            all_scans.clear();
+            m_key_scans.clear();
+            m_all_scans.clear();
+            m_graph_optimisation_count = 0;
+        }
+
+        int graphOptimisationsCount() const{
+            return m_graph_optimisation_count;
         }
 
         void setParams(float overlap_threshold,
@@ -467,11 +389,11 @@ class SlamCloudGraph{
         }
 
         cloud_vec const& keyScans() const{
-            return key_scans;
+            return m_key_scans;
         }
 
         location_vec const& allScans() const{
-            return all_scans;
+            return m_all_scans;
         }
 
         /* Guess a transformation for a time based on simple extrapolation of
@@ -479,27 +401,33 @@ class SlamCloudGraph{
          * Returned transformation is in the global coordinate system
          */
         Eigen::Matrix4f guessTransformationAtTime(TimeStamp const& t) const{
-            switch(all_scans.size()){
+            switch(m_all_scans.size()){
                 case 0:
                     return Eigen::Matrix4f::Identity();
                 case 1:
-                    assert(!all_scans.back()->relativeTo());
-                    return all_scans.back()->globalTransform();
+                    assert(!m_all_scans.back()->relativeTo());
+                    return m_all_scans.back()->globalTransform();
                 default:{
                     // !!! TODO: use more than one previous point for smooth
                     // estimate?
-                    location_vec::const_reverse_iterator i = all_scans.rbegin();
-                    const Eigen::Matrix4f r1 = (*i)->globalTransform();
+                    location_vec::const_reverse_iterator i = m_all_scans.rbegin();
+                    const Eigen::Vector3f p1 = (*i)->globalTransform().block<3,1>(0,3);
                     const TimeStamp t1 = (*i)->time();
-                    const Eigen::Matrix4f r2 = (*++i)->globalTransform();
+                    const Eigen::Vector3f p2 = (*++i)->globalTransform().block<3,1>(0,3);
                     const TimeStamp t2 = (*i)->time();
-                    Eigen::Matrix4f r = r1 + (r1-r2)*(t - t1)/(t1 - t2);
-                    const float Max_Speed = 0.1; // m/s
-                    const float frac_speed = std::fabs((r-r1).block<3,1>(0,3).norm() / (t1 - t2)) / Max_Speed;
+                    const Eigen::Vector3f p = p1 + (p1-p2)*(t-t1)/(t1-t2);
+
+                    const float frac_speed = std::fabs((p-p1).norm() / (t-t1)) / m_max_speed;
+                    Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
+                    r.block<3,1>(0,3) = p1 + (p1-p2)*(t-t1)/(t1-t2);
                     if(frac_speed >= 1.0){
                         warning() << "predicted motion > max speed (x"
                                   << frac_speed << "), will throttle";
-                        return r1 + (1.0 / frac_speed) * (r1-r2)*(t - t1)/(t1 - t2);
+                        r.block<3,1>(0,3) = p1 + (1.0/frac_speed) * (p1-p2)*(t-t1)/(t1-t2);
+                    }
+                    if((p-p1).norm() > m_keyframe_spacing){
+                        warning() << "predicted motion > keyframe spacing, will throttle";
+                        r.block<3,1>(0,3) = p1 + m_keyframe_spacing * (p1-p2).normalized();
                     }
                     return r;
                 }
@@ -513,11 +441,12 @@ class SlamCloudGraph{
         float registerScan(cloud_ptr p,
                            Eigen::Matrix4f const& guess,
                            PairwiseMatcher<PointT> const& m,
+                           GraphOptimiser const& graph_optimiser,
                            Eigen::Matrix4f& transformation){
-            if(!key_scans.size()){
+            if(!m_key_scans.size()){
                 if(cloudIsGoodEnoughForInitialisation(p)){
-                    key_scans.push_back(p);
-                    all_scans.push_back(p);
+                    m_key_scans.push_back(p);
+                    m_all_scans.push_back(p);
                     transformation = Eigen::Matrix4f::Identity();
                     p->setRelativeToNone();
                     p->setRelativeTransform(transformation);
@@ -533,167 +462,143 @@ class SlamCloudGraph{
                 return 0.0f;
             }
 
-            const cloud_vec initial_overlaps = overlappingClouds(p, guess);
-            cloud_vec final_overlaps;
+            const cloud_overlap_map overlaps = overlappingClouds(p, guess);
+            cloud_constraint_map transformations;
+
             Eigen::Matrix4f relative_transformation;
             float r = 0.0f;
 
-            try{
-                if(initial_overlaps.size() == 0){
-                    debug() << "new scan falls outside map!";
-                    return 0;
-                }else if(initial_overlaps.size() == 1){
-                    // one pairwise match at the initial guess position
-                    cloud_ptr map_cloud = initial_overlaps[0];
+            if(overlaps.size() == 0){
+                error() << "new scan falls outside map!";
+                return 0;
+            }
+            // for each overlap (up to m_max_considered_overlaps), in order of
+            // goodness, align this new scan to the overlapping one, and save
+            // the resulting transformation:
+            int limit = m_max_considered_overlaps;
+            int succeeded_match = 0;
+            typename cloud_overlap_map::const_iterator i;
+            debug() << "matching to overlapping scans...";
+            int failed_match = 0;
+            for(i = overlaps.begin(); i != overlaps.end() && limit; i++, limit--){
+                try{
+                    cloud_ptr map_cloud = i->second;
                     base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
-                    r = m.transformcloudToMatch(
+                    float score = m.transformcloudToMatch(
                         map_cloud, p, guess, relative_transformation, transformed
                     );
-                    p->setRelativeTransform(relative_transformation);
-                    p->setRelativeTo(map_cloud);
-                    // we apply transformations by pre-multiplying, so
-                    // post-multiply the transformation that should be applied
-                    // first.
-                    transformation = relative_transformation * map_cloud->relativeTransform();
-
-                    // 'transformed' in in the same coordinate frame as
-                    // map_cloud, so we can easily find nearest neighbors in
-                    // map_cloud to use as a measure of how good the keypoints
-                    // were:
-                    std::vector<int>   pt_indices(1);
-                    std::vector<float> pt_squared_dists(1);
-                    
-                    int ngood = 0;
-                    int nbad = 0;
-                    for(size_t i=0; i < transformed->size(); i++){
-                        if(map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
-                           pt_squared_dists[0] < m_good_keypoint_distance){
-                            p->keyPointGoodness()[p->ptIndices()[i]] = 1;
-                            ngood++;
-                        }else{
-                            p->keyPointGoodness()[p->ptIndices()[i]] = 0;
-                            nbad++;
-                        }
-                    }
-                    debug() << float(ngood)/(nbad+ngood) << "keypoints proved good";
-
-                    // find new overlaps at the final position
-                    final_overlaps = overlappingClouds(p);
-
-                    if(final_overlaps.size() == 0){
-                        warning() << "final overlap too small";
-                        return 0;
-                    }
-
-                    if(final_overlaps.size() == 1){
-                        if(final_overlaps[0] != initial_overlaps[0]){
-                            warning() << "final overlap different";
-                            return 0;
-                        }
-                        // one correspondence in existing map: if we're far
-                        // enough from the previous position, add a new part
-                        // to the map:
-                        Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
-                        if(relative_displacement.norm() > m_keyframe_spacing){
-                            // key scans are transformed to absolute coordinate
-                            // frame?
-                            // !!! TODO: should they be relative to each other?
-                            p->setRelativeTransform(p->globalTransform());
-                            p->setRelativeToNone();
-                            key_scans.push_back(p);
-                            all_scans.push_back(p);
-                            debug() << "key frame at"
-                                    << transformation.block<3,1>(0, 3).transpose();
-                        }else{
-                            // discard all the point data for non-key scans
-                            all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
-                            debug() << "non-key frame at"
-                                    << transformation.block<3,1>(0,3).transpose();
-                        }
-                    }
-                }else{
-                    debug() << "multiple significant initial overlaps";
-                    // loop close with the initial overlaps:
-                    final_overlaps = initial_overlaps;
+                    transformations.insert(std::make_pair(
+                        score,
+                        mat_cloud_transformed_t(
+                            relative_transformation, map_cloud, transformed
+                        )
+                    ));
+                    succeeded_match++;
+                }catch(PairwiseMatchException& e){
+                    failed_match++;
+                    continue;
                 }
-            }catch(PairwiseMatchException& e){
-                error() << "failed to match cloud part with single overlap:" << e.what();
+            }
+            debug() << succeeded_match << "matches succeeded"
+                    << failed_match << "failed";
+            
+            # if 0
+            // remove scans that imply moving too fast?
+                ... code previously used to do this: (transformation is
+                relative_transformation * map_cloud->relativeTransform() for
+                each map_cloud in transformations)
+
+                Eigen::Matrix4f last_transform = m_all_scans.back()->globalTransform();
+                const float speed = (transformation - last_transform).block<3,1>(0,3).norm() /
+                                    (p->time() - m_all_scans.back()->time());
+                if(speed > m_max_speed){
+                    warning() << "match implies moving too fast: ignoring ("
+                              << speed << "/" << m_max_speed << ")";
+                    return 0;
+                }
+            #endif // 0
+
+            if(transformations.size() == 0){
+                error() << "no overlapping scans matched!";
                 return 0;
             }
 
-            if(final_overlaps.size() > 1){
-                warning() << "loop closing not implemented!";
-                // loop close:
-                // TODO
+            debug() << transformations.size() << "overlapping scans matched"
+                    << "scores"
+                    << transformations.rbegin()->first << "--"
+                    << transformations.begin()->first;
 
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // below is temporary, non-loop closing solution
-                try{
-                    cloud_ptr map_cloud = final_overlaps.back();
-                    base_cloud_ptr transformed = boost::make_shared<base_cloud_t>();
-                    r = m.transformcloudToMatch(map_cloud, p, guess, relative_transformation, transformed);
-                    p->setRelativeTransform(relative_transformation);
-                    p->setRelativeTo(map_cloud);
-                    // we apply transformations by pre-multiplying, so
-                    // post-multiply the transformation that should be applied
-                    // first.
-                    transformation = relative_transformation * map_cloud->relativeTransform();
+            // Choose the best *score* (not overlap) out of these matches, and use as the
+            // parent for this scan:
+            const cloud_ptr       parent_map_cloud   = transformations.rbegin()->second.cloud;
+            const Eigen::Matrix4f rel_transformation = transformations.rbegin()->second.mat;
+            const base_cloud_ptr  transformed        = transformations.rbegin()->second.transformed;
+            r = transformations.rbegin()->first;
 
-                    // find new overlaps at the final position
-                    final_overlaps = overlappingClouds(p);
+            p->setRelativeTransform(rel_transformation);
+            p->setRelativeTo(parent_map_cloud);
+            // set the returned transformation (if there are other constraints,
+            // then we set this again after graph optimisation)
+            transformation = rel_transformation * parent_map_cloud->globalTransform();
+            
+            // this scan is a key scan if it is more than a minimum distance
+            // from other key-scans
+            // !!! TODO: include keyscans other than the direct parent in this
+            // check:
+            Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
+            if(relative_displacement.norm() > m_keyframe_spacing){
+                // key scans are transformed to global coordinate
+                // frame
+                p->setRelativeTransform(p->globalTransform());
+                p->setRelativeToNone();
+                m_key_scans.push_back(p);
+                m_all_scans.push_back(p);
+                debug() << "key frame at"
+                        << transformation.block<3,1>(0, 3).transpose();
 
-                    if(final_overlaps.size() == 0){
-                        warning() << "final overlap too small";
-                        return 0;
-                    }
-                    
-                    // 'transformed' in in the same coordinate frame as
-                    // map_cloud, so we can easily find nearest neighbors in
-                    // map_cloud to use as a measure of how good the keypoints
-                    // were:
-                    std::vector<int>   pt_indices(1);
-                    std::vector<float> pt_squared_dists(1);
-                    
-                    int ngood = 0;
-                    int nbad = 0;
-                    for(size_t i=0; i < transformed->size(); i++){
-                        if(map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
-                           pt_squared_dists[0] < m_good_keypoint_distance){
-                            p->keyPointGoodness()[p->ptIndices()[i]] = 1;
-                            ngood++;
-                        }else{
-                            p->keyPointGoodness()[p->ptIndices()[i]] = 0;
-                            nbad++;
-                        }
-                    }
-                    debug() << float(ngood)/(nbad+ngood) << "keypoints proved good";
+                // If this is a new key scan, we need to re-run the graph
+                // optimiser:
 
-                    // one correspondence in existing map: if we're far
-                    // enough from the previous position, add a new part
-                    // to the map:
-                    Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
-                    if(relative_displacement.norm() > m_keyframe_spacing){
-                        // key scans are transformed to absolute coordinate
-                        // frame?
-                        // !!! TODO: should they be relative to each other?
-                        p->setRelativeTransform(p->globalTransform());
-                        p->setRelativeToNone();
-                        key_scans.push_back(p);
-                        all_scans.push_back(p);
-                        debug() << "key frame at" << transformation.block<3,1>(0, 3);
-                    }else{
-                        // discard all the point data for non-key scans
-                        all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
-                        debug() << "non-key frame at" << transformation.block<3,1>(0, 3);
-                    }
-                }catch(PairwiseMatchException& e){
-                    error() << "failed to match cloud part to single overlap: (loop close not implemented yet)"
-                            << e.what();
-                    return 0;
+                // convert relative positions into incremental position
+                // constraints
+                constraint_vec new_constraints = addConstraintsFromTransformations(
+                    p, transformations.rbegin(), transformations.rend()
+                ); 
+                
+                // do the optimisation, hint at which constraints are new so
+                // they can be prioritised
+                graph_optimiser.optimiseGraph(m_key_constraints, new_constraints);
+                m_graph_optimisation_count++;
+            }else{
+                // discard all the point data for non-key scans
+                m_all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
+                debug() << "non-key frame at"
+                        << transformation.block<3,1>(0,3).transpose();
+            }
+
+
+            // Set keypoint goodness for training:
+            // !!! TODO: this should include more than just points from the direct parent
+
+            // 'transformed' is in the same coordinate frame as
+            // parent_map_cloud, so we can easily find nearest neighbors in
+            // map_cloud to use as a measure of how good the keypoints  were:
+            std::vector<int>   pt_indices(1);
+            std::vector<float> pt_squared_dists(1);
+
+            int ngood = 0;
+            int nbad = 0;
+            for(size_t i=0; i < transformed->size(); i++){
+                if(parent_map_cloud->nearestKSearch((*transformed)[i], 1, pt_indices, pt_squared_dists) > 0 &&
+                   pt_squared_dists[0] < m_good_keypoint_distance){
+                    p->keyPointGoodness()[p->ptIndices()[i]] = 1;
+                    ngood++;
+                }else{
+                    p->keyPointGoodness()[p->ptIndices()[i]] = 0;
+                    nbad++;
                 }
             }
-            // end hack
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            debug() << float(ngood)/(nbad+ngood) << "keypoints proved good";
 
             return r;
         }
@@ -702,13 +607,13 @@ class SlamCloudGraph{
         // - private methods
         /* Return all cloud parts in the map that overlap with p by more than
          * m_overlap_threshold.
-         *
          */
-        cloud_vec overlappingClouds(cloud_ptr p) const{
-            cloud_vec r;
-            foreach(cloud_ptr m, key_scans){
-                if(overlapPercent(m, p) > m_overlap_threshold)
-                    r.push_back(m);
+        cloud_overlap_map overlappingClouds(cloud_ptr p) const{
+            cloud_overlap_map r;
+            foreach(cloud_ptr m, m_key_scans){
+                float overlap = overlapPercent(m, p);
+                if(overlap > m_overlap_threshold)
+                    r.insert(typename cloud_overlap_map::value_type(overlap, m));
             }
             return r;
         }
@@ -717,10 +622,10 @@ class SlamCloudGraph{
          * current one (additional transformation is applied last, ie:
          * global_point = p->relativeTo().relativeTransform() *  p->relativeTransform() * additional_transform * cloud_point;
          */
-        cloud_vec overlappingClouds(cloud_ptr p, Eigen::Matrix4f const& additional_transform){
+        cloud_overlap_map overlappingClouds(cloud_ptr p, Eigen::Matrix4f const& additional_transform){
             Eigen::Matrix4f saved_transform = p->relativeTransform();
             p->setRelativeTransform(saved_transform * additional_transform);
-            cloud_vec r = overlappingClouds(p);
+            cloud_overlap_map r = overlappingClouds(p);
             p->setRelativeTransform(saved_transform);
             return r;
         }
@@ -778,42 +683,85 @@ class SlamCloudGraph{
                 return 0;
             }
         }
+        
+        // return area of conveh hull in m^2
+        static float area(cloud_ptr a){
+           assert(a->size() != 0);
+
+            // !!! TODO: cache convex hulls with point clouds
+            std::vector<pcl::Vertices> a_polys;
+            base_cloud_ptr a_points;
+            a->getGlobalConvexHull(a_points, a_polys);
+
+            assert(a_polys.size() == 1);
+
+            ClipperLib::Polygon clipper_poly_a;
+
+            //clipperlib works in 64-bit fixed point, so scale our 1m=1
+            // floating point data up by 1000 to 1mm=1
+            clipper_poly_a.reserve(a_polys[0].vertices.size());
+            foreach(uint32_t i, a_polys[0].vertices)
+                clipper_poly_a.push_back(ClipperLib::IntPoint((*a_points)[i].x*1000,(*a_points)[i].y*1000));
+
+            return 1e-6 * std::fabs(ClipperLib::Area(clipper_poly_a));
+        }
 
         /* judge how good initial cloud is by a combination of the number of
          * features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
-            // !!! TODO: more sophisticated check
-            return (p->size() > m_min_initial_points);
+            return (p->size() > m_min_initial_points) &&
+                   (area(p) > m_min_initial_area);
         }
+
+        /* add constraints based on relative transformations, return the added
+         * constraints as well as adding them to key_constraints
+         */
+        template<typename IterT>
+        constraint_vec addConstraintsFromTransformations(
+            cloud_ptr p, IterT it, IterT end_it
+        ){
+            constraint_vec r;
+            
+            while(it != end_it){
+                r.push_back(SlamCloudLocation::addConstraintBetween(
+                    p, it->second.cloud, it->second.mat
+                ));
+                it++;
+            }
+            
+            m_key_constraints.insert(m_key_constraints.end(), r.begin(), r.end());
+            return r;
+        }
+
 
         // - private data
         float m_overlap_threshold; // a fraction (0--0.5)
         float m_keyframe_spacing;  // in metres
         float m_min_initial_points; // for first keyframe
+        float m_min_initial_area;   //
         /* new keypoints with nearest nieghbours better than this are
          * considered good for training: */
         float m_good_keypoint_distance;
+        float m_max_speed;
+        int m_max_considered_overlaps;
+        
+        // +1 each time graph optimiser is run - i.e. this number changes
+        // whenever everything might have moved
+        int m_graph_optimisation_count;
 
         // TODO: to remain efficient there MUST be a way of searching for
         // SlamCloudParts near a location without iterating through all nodes
         // (kdtree probably)
-        cloud_vec key_scans;
+        cloud_vec m_key_scans;
+        
+        // similarly, this will need some thought to scale well
+        constraint_vec m_key_constraints;
 
         // for these scans, all data apart from the time and relative location
         // is discarded
-        location_vec all_scans;
+        location_vec m_all_scans;
 };
-
-
-
-
-
-
-
-
-
-
 
 
 
