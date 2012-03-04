@@ -20,6 +20,7 @@
 #include <string>
 
 #include <boost/make_shared.hpp>
+#include <boost/tuple/tuple.hpp> // for tie()
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -79,6 +80,7 @@ class BearingRangeToXYNode: public Node{
                 r.reserve(m_polar_keypoints.size());
                 if(a.bearings->size() == 0 || a.ranges->size() == 0)
                     throw parameter_error("invalid polar image: no metadata");
+                debug() << "bearingRangeToXY: range" << a.ranges->at(0) << "--" << a.ranges->back();
                 foreach(KeyPoint const& k, m_polar_keypoints){
                     float bearing_idx = k.pt.x;
                     float range_idx = k.pt.y;
@@ -111,12 +113,22 @@ class BearingRangeToXYNode: public Node{
 
             image_ptr_t img = inputs["polar image"];
             
-            kp_vec in_kps = param< kp_vec >("keypoints");
-            augmented_mat_t in = img->augmentedMat();
+            // In a rather special case, we want to propagate the uid from the
+            // input keypoints to the output keypoints, NOT have the out_map_t
+            // autmagially assign a uid based on the input (an image that we
+            // only use for its metadata)
+            kp_vec in_kps;
+            UID kps_uid;
+            boost::tie(in_kps, kps_uid) = paramAndUID< kp_vec >("keypoints");
 
-            r["keypoints"] = ParamValue(boost::apply_visitor(
-                convertKeyPoints(in_kps), in
-            ));
+            augmented_mat_t in = img->augmentedMat();
+            
+            debug() << "BearingRangeToXYNode:" << in_kps.size() << "kps, img:"
+                    << img->id() << "output will have uid:" << kps_uid;
+            
+            r.internalValue("keypoints") = InternalParamValue(
+                boost::apply_visitor(convertKeyPoints(in_kps), in), kps_uid
+            );
             
         }
     

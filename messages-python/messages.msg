@@ -299,10 +299,10 @@ struct ScriptExecRequest
 }
 struct UID
 {
-    eq host : int32;   // unique (constant) per-host, eg IP address / end of MAC
-    eq sensor : int32; // unique (constant) per-sensor
-    eq seq1 : int32;   // 
-    eq seq2 : int32;   // sequence per-sensor
+    eq cmp host : int32;   // unique (constant) per-host, eg IP address / end of MAC
+    eq cmp sensor : int32; // unique (constant) per-sensor
+    eq cmp seq1 : int32;   // 
+    eq cmp seq2 : int32;   // sequence per-sensor
 }
 enum BoundedFloatType : int8 {
     Clamps, Wraps

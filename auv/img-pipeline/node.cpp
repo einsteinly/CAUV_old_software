@@ -14,6 +14,8 @@
 
 #include "node.h"
 
+#include <algorithm>
+
 #include "imageProcessor.h"
 #include "pipelineTypes.h"
 #include "nodeFactory.h"
@@ -21,6 +23,18 @@
 using namespace cauv;
 using namespace cauv::imgproc;
 
+// - std set intersection
+template<typename T>
+std::set<T> operator&(std::set<T> const& l, std::set<T> const& r){
+    std::set<T> ret;
+    // Ok so it's possible to do it faster than this, but the sets we're
+    // concerned with are generally very small here...
+    typename std::set<T>::const_iterator i;
+    for(i = l.begin(); i != l.end(); i++)
+        if(r.count(*i))
+            ret.insert(*i);
+    return ret;
+}
 
 // - Nested Class Definitions:
 
@@ -57,7 +71,7 @@ Node::_OutMap::_OutMap(in_image_map_t const& inputs)
     in_image_map_t::const_iterator i = inputs.begin();
     while(i != inputs.end() && !i->second)
        i++;
-    if(i->second && i != inputs.end()){
+    if(i != inputs.end() && i->second){
         uid_inherited = true;
         uid_set = true;
         m_uid = i->second->id();
@@ -129,16 +143,37 @@ Node::input_ptr Node::Input::makeParamInputShared(
 }
 
 Node::image_ptr_t Node::Input::getImage() const{
-    if(target)
+    if(target){ 
+        if(synchronised_with){
+            error() << "synchronised image inputs aren't implemented yet";
+        }
         return target.node->getOutputImage(target.id);
+    }
     return image_ptr_t(); // NULL
+}
+
+void Node::Input::clear(){
+    if(synchronised_with && target.node){ 
+        // NB this does grab the output lock on n
+        target.node->_popQueueOutputForSync(target.id);
+    }
+    target.clearConnection();
 }
 
 // NB: no locks are necessarily held when calling this
 Node::InternalParamValue Node::Input::getParam(bool& did_change) const{
     did_change = false;
     if(target){
-        InternalParamValue parent_value = target.node->getOutputParam(target.id);
+        InternalParamValue parent_value;    
+        if(synchronised_with){
+            UID latest_common_uid = latestUIDSharedWithSync();
+            //debug() << "getParam (synchronised)" << target.id << "        uid:" << latest_common_uid;
+            parent_value = target.node->getOutputParamWithUID(target.id, latest_common_uid);
+            debug(6) << "getParam (synchronised)" << target.id << " actual uid:" << parent_value.uid;            
+        }else{
+            parent_value = target.node->getOutputParam(target.id);
+            debug(6) << "getParam (no sync)" << target.id << "uid:" << parent_value.uid;            
+        }
         if(param_value.param.which() == parent_value.param.which()){
             if(!(param_value == parent_value)){
                 did_change = true;
@@ -151,7 +186,7 @@ Node::InternalParamValue Node::Input::getParam(bool& did_change) const{
             debug() << "Type mismatch on parameter link:" << *this
                     << " (param=" << param_value.param.which()
                     << "vs link=" << parent_value.param.which()
-                    << ") the default parameter value will be returned";
+                    << ") the last valid parameter value will be returned";
         }
     }
     return param_value;
@@ -168,6 +203,38 @@ bool Node::Input::valid() const{
 
 bool Node::Input::isParam() const{
     return input_type == InType_Parameter;
+}
+
+UID Node::Input::latestUIDSharedWithSync() const{
+    input_link_t syncwith_tgt;
+    if(synchronised_with)
+        syncwith_tgt = synchronised_with->target;
+    if(!target || !synchronised_with || !syncwith_tgt){
+        error() << "impossible? synchronised-with badness";
+        return UID();
+    }
+    std::set<UID> common_uids =
+        target.node->getOutputParamUIDs(target.id) &
+        syncwith_tgt.node->getOutputParamUIDs(syncwith_tgt.id);
+
+    debug() << "common UIDs:" << common_uids;
+    // go though in most recent order to find which is latest:
+    
+    return syncwith_tgt.node->mostRecentUIDOnOutputInSet(syncwith_tgt.id, common_uids);
+}
+
+bool Node::Input::synchronisedInputAvailable() const{
+    input_link_t syncwith_tgt;
+    if(synchronised_with)
+        syncwith_tgt = synchronised_with->target;
+    if(!target || !synchronised_with || !syncwith_tgt){
+        error() << "impossible? synchronised-with badness";
+        return false;
+    }
+    return (
+        target.node->getOutputParamUIDs(target.id) & // set intersection, defined above
+        syncwith_tgt.node->getOutputParamUIDs(syncwith_tgt.id)
+    ).size();
 }
 
 // - Node Definition
@@ -281,6 +348,14 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
         debug(-3) << BashColour::Green << "adding parent link on" << i_id << "->" << *n << o_id;
         ip->status = NodeInputStatus::Old;
         ip->target = input_link_t(n, o_id);
+
+        if(ip->synchronised_with){
+            // outputs connected to synchronised inputs must queue what they
+            // produce
+            // NB this does grab the output lock on n again
+            n->_pushQueueOutputForSync(o_id);
+        }
+
         if(ip->target){
             l.unlock();
             setNewInput(i_id);
@@ -295,7 +370,7 @@ void Node::clearInput(input_id const& i_id){
     const private_in_map_t::iterator i = m_inputs.find(i_id);
     if(i != m_inputs.end()){
         debug(-3) << BashColour::Purple << *this << "removing parent link on " << i_id;
-        i->second->target.clear();
+        i->second->clear();
     }else
         throw id_error("clearInput: Invalid input id" + toStr(i_id));
 }
@@ -305,14 +380,14 @@ void Node::clearInputs(node_ptr_t parent){
     debug(-3) << BashColour::Purple << *this << "removing parent links to" << *parent;
     foreach(private_in_map_t::value_type& v, m_inputs)
         if(v.second->target.node == parent)
-            v.second->target.clear();
+            v.second->clear();
 }
 
 void Node::clearInputs(){
     lock_t l(m_inputs_lock);
     debug(-3) << BashColour::Purple << *this << "removing all parent links";
     foreach(private_in_map_t::value_type& v, m_inputs)
-        v.second->target.clear();
+        v.second->clear();
 }
 
 Node::input_id_set_t Node::inputs() const{
@@ -367,7 +442,7 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     }else if(i->second->isParam() != !n->inputs().count(i_id)){
         throw link_error("setOutput: Parameter <==> Image mismatch");
     }
-    const int32_t sub_type = i->second->isParam()? boost::get<InternalParamValue>(i->second->value).param.which() : -1;
+    const int32_t sub_type = i->second->isParam()?  boost::get<InternalParamValue>(i->second->value()).param.which() : -1;
     // note that the schedType field (May_Be_Old here) is excluded from the
     // comparison of LocalNodeInput structures
     if(i->second->isParam() && !(
@@ -433,7 +508,7 @@ Node::output_id_set_t Node::outputs(int type_index) const{
     output_id_set_t r;
     lock_t n(m_outputs_lock);
     foreach(private_out_map_t::value_type const& i, m_outputs)
-        if(i.second->value.which() == type_index)
+        if(i.second->which() == type_index)
             r.insert(i.first);
     return r;
 }
@@ -451,7 +526,7 @@ int32_t Node::paramOutputType(output_id const& o_id) const{
     private_out_map_t::const_iterator i = m_outputs.find(o_id);
     if(i == m_outputs.end() || !i->second->isParam())
         throw parameter_error("unknown parameter output");
-    return boost::get<InternalParamValue>(i->second->value).param.which();
+    return boost::get<InternalParamValue>(i->second->value()).param.which();
 }
 
 Node::msg_node_output_map_t Node::outputLinks() const{
@@ -460,9 +535,9 @@ Node::msg_node_output_map_t Node::outputLinks() const{
     foreach(private_out_map_t::value_type const& i, m_outputs){
         msg_node_in_list_t input_list;
         int32_t sub_type = -1;
-        OutputType::e type = OutputType::e(i.second->value.which());
+        OutputType::e type = OutputType::e(i.second->which());
         if(type == OutputType::Parameter)
-            sub_type = boost::get<InternalParamValue>(i.second->value).param.which();
+            sub_type = boost::get<InternalParamValue>(i.second->value()).param.which();
         foreach(output_link_list_t::value_type const& j, i.second->targets)
             input_list.push_back(NodeInput(m_pl.lookup(j.node), j.id, sub_type)); 
         r[LocalNodeOutput(i.first,type,sub_type)] = input_list;
@@ -510,7 +585,8 @@ static NodeIOStatus::e operator|(NodeIOStatus::e const& l, NodeIOStatus::e const
     return NodeIOStatus::e(unsigned(l) | unsigned(r));
 }
 
-// there must be a nicer way to do this...
+// there must be a nicer way to do this... (yeah, it would involve pointers to
+// member functions)
 #define CallOnDestruct(Type, member) \
 struct _COD{_COD(Type& m):m(m){}~_COD(){m.member();}Type& m;}
 void Node::exec(){
@@ -587,19 +663,19 @@ void Node::exec(){
             continue;
         }
         const output_ptr op = i->second;
-        if(op->value.which() != v.second.which()){
+        if(op->which() != v.second.which()){
             error() << *this << "exec() produced output of the wrong type for id:"
                     << v.first << "(ignored)";
-        }else if(op->value.which() == OutputType::Parameter &&
-                 boost::get<InternalParamValue>(op->value).param.which() !=
+        }else if(op->which() == OutputType::Parameter &&
+                 boost::get<InternalParamValue>(op->value()).param.which() !=
                  boost::get<InternalParamValue>(v.second).param.which()){
-            uint32_t got_which = boost::get<InternalParamValue>(op->value).param.which();
+            uint32_t got_which = boost::get<InternalParamValue>(op->value()).param.which();
             uint32_t exp_which = boost::get<InternalParamValue>(v.second).param.which();
             error() << *this << "exec() produced output of the wrong parameter type for id:"
                     << v.first << "(ignored) - got type" << got_which << "expected" << exp_which;
         }else{
             clearNewOutputDemanded(v.first);
-            op->value = v.second;
+            op->setValue(v.second);
             if(op->targets.size()){
                 debug(5) << "Prompting" << op->targets.size()
                          << "children of new output on:" << v.first;
@@ -642,7 +718,7 @@ Node::image_ptr_t Node::getOutputImage(output_id const& o_id,
     image_ptr_t r;
     if(i != m_outputs.end()){
         try{
-            r = boost::get<image_ptr_t>(i->second->value);
+            r = boost::get<image_ptr_t>(i->second->value());
         }catch(boost::bad_get&){
             throw id_error("requested output is not an image_ptr_t" + toStr(o_id));
         }
@@ -660,7 +736,59 @@ Node::InternalParamValue Node::getOutputParam(output_id const& o_id) const throw
     InternalParamValue r;
     if(i != m_outputs.end()){
         try{
-            r = boost::get<InternalParamValue>(i->second->value);
+            r = boost::get<InternalParamValue>(i->second->value());
+        }catch(boost::bad_get&){
+            throw id_error("requested output is not a ParamValue" + toStr(o_id));
+        }
+    }else{
+        throw id_error("no such output" + toStr(o_id));
+    }
+    return r;
+}
+
+std::set<UID> Node::getOutputParamUIDs(output_id const& o_id) const{
+    std::set<UID> r;
+    lock_t l(m_outputs_lock);
+    const private_out_map_t::const_iterator i = m_outputs.find(o_id);
+    if(i != m_outputs.end()){
+        foreach(output_t const& o, i->second->value_queue){
+            r.insert(boost::apply_visitor(output_t_GetUID(), o));
+        }
+    }else{
+        throw id_error("no such output" + toStr(o_id));
+    }
+    debug(7) << __func__ << "node:" << id() << "output:" << o_id << ":" << r;
+    return r;
+}
+
+UID Node::mostRecentUIDOnOutputInSet(output_id const& o_id,  std::set<UID> const& uid_set) const{
+    lock_t l(m_outputs_lock);
+    const private_out_map_t::const_iterator i = m_outputs.find(o_id);
+    if(i != m_outputs.end()){
+        reverse_foreach(output_t const& o, i->second->value_queue){
+            UID t = boost::apply_visitor(output_t_GetUID(), o);
+            if(uid_set.count(t)){
+                debug() << __func__ << "seq2=" << t.seq2;
+                return t;
+            }
+        }
+    }else{
+        throw id_error("no such output" + toStr(o_id));
+    }
+    throw img_pipeline_error("no matching UIDs on output" + toStr(o_id));
+}
+
+
+Node::InternalParamValue Node::getOutputParamWithUID(
+    output_id const& o_id,
+    UID const& uid
+) const{
+    lock_t l(m_outputs_lock);
+    const private_out_map_t::const_iterator i = m_outputs.find(o_id);
+    InternalParamValue r;
+    if(i != m_outputs.end()){
+        try{
+            r = boost::get<InternalParamValue>(i->second->popToValueWithUID(uid));
         }catch(boost::bad_get&){
             throw id_error("requested output is not a ParamValue" + toStr(o_id));
         }
@@ -713,8 +841,14 @@ void Node::requireSyncInputs(input_id const& a, input_id const& b){
         error() << "No such input:" << b;
         return;
     }
-    ai->second->synchronised_with.insert(b);
-    bi->second->synchronised_with.insert(a);
+    if(ai->second->synchronised_with || bi->second->synchronised_with)
+        throw img_pipeline_error("only pairs of inputs can be synchronised: this pair involves an already synchronised input");
+    ai->second->synchronised_with = bi->second;
+    bi->second->synchronised_with = ai->second;
+    if(ai->second->target)
+        ai->second->target.node->_pushQueueOutputForSync(ai->second->target.id);
+    if(bi->second->target)
+        bi->second->target.node->_pushQueueOutputForSync(bi->second->target.id);
 }
 
 bool Node::unregisterOutputID(output_id const& o, bool warnNonExistent) {
@@ -778,6 +912,29 @@ void Node::checkAddSched(SchedMode m){
             break;
         case Force:
             break;
+    }
+
+    lock_t il(m_inputs_lock);
+    private_in_map_t::iterator i;
+    bool wait_for_synchronisation = false;
+    std::set<node_ptr_t> demanded_additional_output_from;
+    for(i = m_inputs.begin(); i != m_inputs.end(); i++){
+        // actually we check each link twice here, hence the checking we don't
+        // demand output more often than necessary
+        const input_ptr ip = i->second;
+        if(ip->synchronised_with && ip->target.node && !ip->synchronisedInputAvailable()){
+            debug() << "(need sync input on: " << i->first << ")";
+            if(!demanded_additional_output_from.count(ip->target.node)){
+                ip->target.node->setNewOutputDemanded(ip->target.id);
+                demanded_additional_output_from.insert(ip->target.node);
+                wait_for_synchronisation = true;
+            }
+        }
+    }
+
+    if(wait_for_synchronisation){
+        debug() << __func__ << "Cannot enqueue" << *this << ", synchronisation required";
+        return;
     }
 
     // still going? then everything is ok for scheduling:
@@ -987,6 +1144,27 @@ bool Node::execQueued() const{
     return m_exec_queued;
 }
 
+
+Node::InternalParamValue Node::_getAndNotifyIfChangedInternalParam(input_id const& p) const{
+lock_t l(m_inputs_lock);
+    private_in_map_t::const_iterator i = m_inputs.find(p);
+    if(i != m_inputs.end() && *(i->second) && i->second->input_type == InType_Parameter){
+        input_ptr ip = i->second;
+        // now we can release the inputs lock
+        l.unlock();
+        bool did_change = false;
+        InternalParamValue r = ip->getParam(did_change);
+        if(did_change){
+            // TODO: is this desirable?
+            //paramChanged(p);
+            sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
+        }
+        return r;
+    }else{
+        throw(id_error("Invalid parameter id: " + toStr(p)));
+    }
+}
+
 void Node::demandNewParentInput() throw(){
     lock_t l(m_inputs_lock);
     debug(5) << *this << "demanding new output from all parents";
@@ -1016,6 +1194,24 @@ void Node::demandNewParentInput(input_id const& iid) throw(){
     l.unlock();
     if(n)
         n->setNewOutputDemanded(parent.id);
+}
+
+void Node::_pushQueueOutputForSync(output_id const& o_id){
+    lock_t l(m_outputs_lock);
+    private_out_map_t::iterator i = m_outputs.find(o_id);
+    if(i != m_outputs.end())
+        i->second->pushShouldQueue();
+    else
+        error() << "no such output:" << o_id;
+}
+
+void Node::_popQueueOutputForSync(output_id const& o_id){
+    lock_t l(m_outputs_lock);
+    private_out_map_t::iterator i = m_outputs.find(o_id);
+    if(i != m_outputs.end())
+        i->second->popShouldQueue();
+    else
+        error() << "no such output:" << o_id;
 }
 
 #ifndef NO_NODE_IO_STATUS

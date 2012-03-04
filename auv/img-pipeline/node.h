@@ -20,6 +20,7 @@
 #include <set>
 #include <stdexcept>
 #include <iostream>
+#include <deque>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -112,6 +113,18 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         // NB: order here is important, don't change it!
         // matches cauv::OutputType::e
         typedef boost::variant<image_ptr_t, InternalParamValue> output_t;
+        
+        // visitor to get UID from output_t
+        struct output_t_GetUID: boost::static_visitor<UID>{
+            UID operator()(image_ptr_t const& img) const{
+                if(img)
+                    return img->id();
+                return UID();
+            }
+            UID operator()(InternalParamValue const& ipv) const{
+                return ipv.uid;
+            }
+        };
 
         typedef std::map<input_id, image_ptr_t> in_image_map_t;
 
@@ -160,6 +173,9 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 inline output_t& internalValue(output_id const& oid){
                     return base_t::operator[](oid);
                 }
+                UID const& uidThatWillBeAdded() const{
+                    return m_uid;
+                }
             private:
                 UID m_uid;
         };
@@ -188,7 +204,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                 : TestableBase< link_target<T_ID> >(*this), node(n), id(i){
             }
 
-            void clear() { node = node_t(); id = id_t(); }
+            void clearConnection() { node = node_t(); id = id_t(); }
 
             bool valid() const{
                 //debug() << "valid():" << node << id;
@@ -217,7 +233,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             InputType input_type;
             mutable InternalParamValue param_value;
             std::string tip;
-            std::set<std::string> synchronised_with;
+            input_ptr synchronised_with;
 
             Input(InputSchedType::e s);
             Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip);
@@ -226,11 +242,15 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             static input_ptr makeParamInputShared(ParamValue const& default_value,
                                                   std::string const& tip,
                                                   InputSchedType::e const& st = May_Be_Old);
+            void clear();
             image_ptr_t getImage() const;
             // NB: no locks are necessarily held when calling this
             InternalParamValue getParam(bool& did_change) const;
             bool valid() const;
             bool isParam() const;
+            
+            UID latestUIDSharedWithSync() const;            
+            bool synchronisedInputAvailable() const;
         };
         template<typename cT, typename tT>
         friend std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>&, Input const&);
@@ -241,15 +261,46 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         typedef boost::shared_ptr<Output> output_ptr;
         struct Output{
             output_link_list_t targets;
-            output_t value;
+            std::deque<output_t> value_queue;
+            int should_queue; // actually a count of connected inputs that require queuing
             bool demanded;
 
             Output(output_t const& value)
-                : targets(), value(value), demanded(false){
+                : targets(), value_queue(1, value), should_queue(0), demanded(false){
+            }
+
+            void pushShouldQueue(){ should_queue++; }
+            void popShouldQueue(){ should_queue--; assert(should_queue >= 0); }
+
+            output_t const& value() const{
+                return value_queue.back();
+            } 
+
+            output_t const& popToValueWithUID(UID const& id){
+                // (! ==) == (!=)
+                while(!(boost::apply_visitor(output_t_GetUID(), value_queue.front()) == id) &&
+                      value_queue.size() > 1){
+                    value_queue.pop_front();
+                }
+                if(!(boost::apply_visitor(output_t_GetUID(), value_queue.front()) == id)){
+                    error() << __func__ << "not possible!";
+                }
+                return value_queue.front();
+            }
+
+            void setValue(output_t const& value){
+                if(should_queue)
+                    value_queue.push_back(value);
+                else
+                    value_queue.back() = value;
+            }
+
+            int which() const{
+                return value_queue.back().which();
             }
 
             bool isParam() const{
-                return value.which() == OutputType::Parameter;
+                return value_queue.back().which() == OutputType::Parameter;
             }
         };
         template<typename cT, typename tT>
@@ -380,29 +431,27 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         template<typename T>
         T param(input_id const& p) const {
-            lock_t l(m_inputs_lock);
-            private_in_map_t::const_iterator i = m_inputs.find(p);
-            if(i != m_inputs.end() && *(i->second) && i->second->input_type == InType_Parameter){
-                input_ptr ip = i->second;
-                // now we can release the inputs lock
-                l.unlock();
-                bool did_change = false;
-                try{
-                    T val = getValue<T>(ip->getParam(did_change).param);
-                    if(did_change){
-                        // TODO: is this desirable?
-                        //paramChanged(p);
-                        sendMessage(boost::make_shared<NodeParametersMessage>(m_pl_name, id(), parameters()));
-                    }
-                    return val;
-                }catch(boost::bad_get& e){
-                    error() << p << "is not of requested type:" << e.what();
-                    throw parameter_error(e.what());
-                }
-            }else{
-                throw(id_error("Invalid parameter id: " + toStr(p)));
+            try{
+                return getValue<T>(_getAndNotifyIfChangedInternalParam(p).param);
+            }catch(boost::bad_get& e){
+                error() << p << "is not of requested type:" << e.what();
+                throw parameter_error(e.what());
             }
         }
+        /* return a single parameter value, and its UID. Retrieves value from parent if the
+         * parameter is linked to the output of a parent
+         */
+        template<typename T>
+        std::pair<T, UID> paramAndUID(input_id const& p) const{
+            try{
+                InternalParamValue val_internal = _getAndNotifyIfChangedInternalParam(p);
+                return std::pair<T, UID>(getValue<T>(val_internal.param), val_internal.uid);
+            }catch(boost::bad_get& e){
+                error() << p << "is not of requested type:" << e.what();
+                throw parameter_error(e.what());
+            }
+        }
+
 
         /* input nodes need to be identified so that onImageMessage() can be
          * efficiently called on only input nodes
@@ -429,7 +478,10 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
         /* Get the parameter associated with a parameter output
          */
         InternalParamValue getOutputParam(output_id const& o_id) const throw(id_error);
-
+        
+        InternalParamValue getOutputParamWithUID(output_id const& o_id, UID const& uid) const;
+        std::set<UID> getOutputParamUIDs(output_id const& o_id) const;
+        UID mostRecentUIDOnOutputInSet(output_id const& o_id,  std::set<UID> const& uid_set) const;
 
         /* Static Constants */
         static const char* Image_In_Name;
@@ -563,7 +615,13 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
          */
         void demandNewParentInput() throw();
     private:
+        InternalParamValue _getAndNotifyIfChangedInternalParam(input_id const& p) const;
+
         void demandNewParentInput(input_id const& id) throw();
+        
+        // synchronised inputs require connected outputs to be queued
+        void _pushQueueOutputForSync(output_id const& o_id);
+        void _popQueueOutputForSync(output_id const& o_id);
 
         void _statusMessage(boost::shared_ptr<Message const>);
         static node_id _newID() throw();
@@ -680,7 +738,7 @@ std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::Inp
 template<typename cT, typename tT>
 std::basic_ostream<cT, tT>& operator<<(std::basic_ostream<cT, tT>& os, Node::Output const& o){
     os << "{Output "
-       << o.targets << o.value << "demanded=" << std::boolalpha << o.demanded
+       << o.targets << o.value_queue << "demanded=" << std::boolalpha << o.demanded
        << "}";
     return os;
 }
