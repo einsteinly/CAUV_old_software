@@ -35,6 +35,10 @@ class ScratchNode: public cauv::CauvNode, public QThread{
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
 
+    QIcon icon;
+    icon.addFile(QString::fromUtf8(":/resources/icon.png"), QSize(), QIcon::Normal, QIcon::Off);
+    app.setWindowIcon(icon);
+
     QApplication::setStyle(new cauv::gui::CauvStyle());
 
     boost::shared_ptr<ScratchNode> node = boost::make_shared<ScratchNode>("scratch");

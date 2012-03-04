@@ -18,6 +18,7 @@ set (
 
 set (
     scratch_RCC
+    ../gui/resources.qrc    
 )
 
 qt4_wrap_cpp (scratch_MOC_H ${scratch_H})
