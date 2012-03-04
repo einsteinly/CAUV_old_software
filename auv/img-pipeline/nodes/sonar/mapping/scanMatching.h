@@ -93,8 +93,8 @@ class PairwiseMatcher{
 
 
 template <typename PtSrc, typename PtTgt>
-class ICP: public pcl::IterativeClosestPointNonLinear<PtSrc,PtTgt>{
-        typedef pcl::IterativeClosestPointNonLinear<PtSrc,PtTgt> base_t;
+class ICP: public pcl::IterativeClosestPoint/*NonLinear*/<PtSrc,PtTgt>{
+        typedef pcl::IterativeClosestPoint/*NonLinear*/<PtSrc,PtTgt> base_t;
     public:
         int numIters() const{
             return base_t::nr_iterations_;
@@ -194,7 +194,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                    << "/epsilon:" << icp.euclideanFitnessEpsilon();*/
 
             if(icp.hasConverged() && score < m_score_thr){
-                debug() << BashColour::Green << "final transform\n:"
+                debug() << BashColour::Green << "final transform:\n"
                         << final_transform;
                 Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
                 info() << BashColour::Green << "pairwise match:"

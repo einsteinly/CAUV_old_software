@@ -29,9 +29,9 @@ struct IncrementalPose{
     // have Eigen::Vector3f as member    
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    float const dx() const;
-    float const dy() const;
-    float const detheta() const;
+    float const dx() const{ return x[0]; }
+    float const dy() const{ return x[1]; }
+    float const detheta() const{ return x[2]; }
 
     static IncrementalPose from4dAffine(Eigen::Matrix4f const& a);
     static IncrementalPose from4dAffineDiff(Eigen::Matrix4f const& from, Eigen::Matrix4f const& to);

@@ -23,6 +23,8 @@
 #include <boost/make_shared.hpp>
 
 #include <utility/foreach.h>
+#include <utility/streamops.h>
+#include <utility/string.h>
 
 #include <debug/cauv_debug.h>
 
@@ -64,6 +66,16 @@ struct Arc{
 };
 
 struct Node{
+    Node() : p(), parent_link(), child_links(), tag(-1){ }
+    Node(location_ptr const& p,
+         Arc_ptr const& parent_link,
+         Arc_ptr const& child = Arc_ptr(),
+         int const& tag = -1)
+        : p(p), parent_link(parent_link), child_links(), tag(tag){
+        if(child)
+            child_links.push_back(child);
+    }
+
     location_ptr p;
     Arc_ptr parent_link;
     std::vector<Arc_ptr> child_links;
@@ -73,6 +85,18 @@ struct Node{
     int tag;
 };
 
+std::ostream& operator<<(std::ostream& os, Arc const& a){
+    return os << "Arc{fr:"<< a.from << " to:" << a.to <<"}";
+}
+std::ostream& operator<<(std::ostream& os, Arc_ptr const& a){
+    if(a)
+        return os << *a;
+    else    
+        return os << "Arc_ptr(NULL)";
+}
+std::ostream& operator<<(std::ostream& os, Node const& n){
+    return os << "Node{("<<&n<<")p:"<< n.p <<" pl:"<< n.parent_link <<" kids:"<< n.child_links << " tag:" << n.tag << "}";
+}
 
 static void adoptSubTree(Node_ptr new_parent, Arc_ptr a, Node_ptr child){
     assert(child);
@@ -143,10 +167,7 @@ static Node_ptr spanningTree(
                 Arc_ptr a(new Arc);
                 a->from = i->second;
                 a->from->child_links.push_back(a);
-                a->to = boost::make_shared<Node>();
-                a->to->p = p->b;
-                a->to->parent_link = a;
-                a->to->tag = a->from->tag;
+                a->to = boost::make_shared<Node>(p->b, a, Arc_ptr(), a->from->tag);
                 a->x = p->a_to_b;
                 node_lookup[a->to->p] = a->to;
             }else{
@@ -156,19 +177,18 @@ static Node_ptr spanningTree(
                     if((!i->second->parent_link) || (!j->second->parent_link)){
                         if(i->second->parent_link){
                             a->from = i->second;
-                            a->from->child_links.push_back(a);
                             a->to = j->second;
                             a->to->parent_link = a;
                             a->x = p->a_to_b;
                         }else{
                             a->from = j->second;
-                            a->from->child_links.push_back(a);
                             a->to = i->second;
                             a->to->parent_link = a;
                             // NB unary -
                             a->x = -p->a_to_b;
                         }
-                        set_root[a->to->tag] = set_root[a->from->tag];
+                        a->from->child_links.push_back(a);
+                        debug() << "reparent (easy)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
                     }else{
                         // both sides of this constraint have parents already -
                         // need to reverse parent/child relations in one of the
@@ -176,11 +196,16 @@ static Node_ptr spanningTree(
                         a->from = i->second;
                         a->to = j->second;
                         a->x = p->a_to_b;
+                        a->from->child_links.push_back(a);
+                        debug() << "reparent (hard)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
                         // Make i the new parent of tree j->second via arc a
                         adoptSubTree(i->second, a, j->second);
-                        set_root[a->to->tag] = set_root[a->from->tag];
+                        assert(a->to->parent_link == a);
                     }
-                    a->from->child_links.push_back(a);
+                    // careful not to pass a reference to an element in the
+                    // vector to the replace algorithm!
+                    Node_ptr replace_this = set_root[a->to->tag];
+                    std::replace(set_root.begin(), set_root.end(), replace_this, set_root[a->from->tag]);
                 }else{
                     // already in the tree
 
@@ -196,10 +221,7 @@ static Node_ptr spanningTree(
                 Arc_ptr a(new Arc);
                 a->from = j->second;
                 a->from->child_links.push_back(a);
-                a->to = boost::make_shared<Node>();
-                a->to->p = p->a;
-                a->to->parent_link = a;
-                a->to->tag = a->from->tag;
+                a->to = boost::make_shared<Node>(p->a, a, Arc_ptr(), a->from->tag);
                 // NB: unary minus here
                 a->x = -p->a_to_b;
                 node_lookup[a->to->p] = a->to;
@@ -208,39 +230,83 @@ static Node_ptr spanningTree(
                 ++tag;
 
                 Arc_ptr a(new Arc);
-                a->from = boost::make_shared<Node>();
-                a->from->child_links.push_back(a);
-                a->from->parent_link.reset();
-                a->from->tag = tag;
-                a->from->p = p->a;
-                a->to = boost::make_shared<Node>();
-                a->to->parent_link = a;
-                a->to->tag = tag;
-                a->to->p = p->b;
+                a->from = boost::make_shared<Node>(p->a, Arc_ptr(), a, tag);
+                a->to   = boost::make_shared<Node>(p->b, a, Arc_ptr(), tag);
                 a->x = p->a_to_b;
                 node_lookup[a->from->p] = a->from;
                 node_lookup[a->to->p] = a->to;
 
+                assert(set_root.size() == unsigned(tag));
                 set_root.push_back(a->from);
             }
+        }
+        foreach(Node_ptr const& np, set_root){
+            assert(!(np->parent_link));
         }
     }
     debug() << "spanning tree construction complete:"
             << node_lookup.size() << "nodes, "
             << non_spanning << "non-spanning constraints";
+
     // spanning tree invariant:
-    assert(non_spanning == int(constraints.size() - (node_lookup.size()-1)));
+    if(non_spanning != int(constraints.size() - (node_lookup.size()-1))){
+        // uh oh, not a spanning tree. What went wrong?
+
+        std::set<Node_ptr> node_dump;
+        std::set<Arc_ptr> arc_dump;
+        for(std::map<location_ptr, Node_ptr>::const_iterator i = node_lookup.begin(); i != node_lookup.end(); i++){
+            node_dump.insert(i->second);
+            if(i->second->parent_link)
+                arc_dump.insert(i->second->parent_link);
+            foreach(Arc_ptr ap, i->second->child_links)
+                arc_dump.insert(ap);
+        }
+        mkStr s;
+        s << "Nodes:\n\t" << node_dump;
+        s << "\nArcs:\n\t" << arc_dump;
+
+        error() << "spanning tree failure: not a spanning tree!"
+                << "\n\tconstraints:" << constraints.size()
+                << "\n\tnon-spaning:" << non_spanning
+                << "\n\t   spanning:" << node_lookup.size()
+                << "\n\t  set roots:" << set_root
+                << "\n\t       tree:" << std::string(s);
+        assert(0);
+    }
 
     // re-tag the tree so that tag counts the depth from the root node (this
     // lets common parent nodes be identified easily)
     retagByDepth(0, set_root[0]);
 
-    assert(!set_root[0]->parent_link);
+    if(set_root[0]->parent_link){
+        // uh oh, not a spanning tree. What went wrong?
+
+        std::set<Node_ptr> node_dump;
+        std::set<Arc_ptr> arc_dump;
+        for(std::map<location_ptr, Node_ptr>::const_iterator i = node_lookup.begin(); i != node_lookup.end(); i++){
+            node_dump.insert(i->second);
+            if(i->second->parent_link)
+                arc_dump.insert(i->second->parent_link);
+            foreach(Arc_ptr ap, i->second->child_links)
+                arc_dump.insert(ap);
+        }
+        mkStr s;
+        s << "Nodes:\n\t" << node_dump;
+        s << "\nArcs:\n\t" << arc_dump;
+
+        error() << "spanning tree failure: root has a parent!"
+                << "\n\tconstraints:" << constraints.size()
+                << "\n\tnon-spaning:" << non_spanning
+                << "\n\t   spanning:" << node_lookup.size()
+                << "\n\t  set roots:" << set_root
+                << "\n\t       tree:" << std::string(s);
+        assert(0);
+    }
     return set_root[0];
 }
 
 template<typename Funct>
-void visitBetweenNodes(Node_ptr a, Node_ptr b, Funct f){
+void visitBetweenNodes(Node_ptr a, Node_ptr b, Funct const& f){
     if(b->tag > a->tag)
         std::swap(a, b);
     // Generate the complete path before traversing it, path order is from
@@ -285,12 +351,30 @@ struct MaxLevel{
     int& max_level;
 };
 
+// for dev:
+struct PrintNode{
+    PrintNode()
+        : m_count(0), m_debug_stream(){
+        m_debug_stream << "Path{levels:";
+    }
+    ~PrintNode(){
+        m_debug_stream << "\n" << m_count << "nodes total}";
+    }
+    void operator()(Node const& node) const{
+        //m_debug_stream << "\n\t" << node;
+        m_debug_stream << node.tag << ", ";
+        m_count++;
+    }
+
+    mutable int m_count;
+    mutable debug m_debug_stream;
+};
 
 static bool poseConstraintTagLess(
     pose_constraint_ptr const& l,
     pose_constraint_ptr const& r
 ){
-    return r->tag < l->tag;
+    return l->tag < r->tag;
 }
 
 /* Optimise a constraint graph.
@@ -306,6 +390,7 @@ void GraphOptimiserV1::optimiseGraph(
 
     std::map<location_ptr, Node_ptr> node_lookup;
     std::map<location_ptr, Node_ptr>::const_iterator ait, bit;
+
     Node_ptr root = spanningTree(constraints, node_lookup);
 
     // Sort the constraints into the best order for processing: to do this,
@@ -314,18 +399,24 @@ void GraphOptimiserV1::optimiseGraph(
     // tree
     foreach(pose_constraint_ptr p, constraints){
         p->tag = 0;
-        ait = node_lookup.find(p->a);
-        bit = node_lookup.find(p->b);
-        assert(ait != node_lookup.end());
-        assert(bit != node_lookup.end());
+        ait = node_lookup.find(p->a); assert(ait != node_lookup.end());
+        bit = node_lookup.find(p->b); assert(bit != node_lookup.end());
         visitBetweenNodes(ait->second, bit->second, MaxLevel(p->tag));
     }
 
     std::sort(constraints.begin(), constraints.end(), poseConstraintTagLess);
 
     for(int iter = 0; iter < max_iters; iter++){
+        debug() << "SGD iter" << iter;
 
-
+        foreach(pose_constraint_ptr p, constraints){
+            debug() << "process constraint: level" << p->tag;
+            ait = node_lookup.find(p->a); assert(ait != node_lookup.end());
+            bit = node_lookup.find(p->b); assert(bit != node_lookup.end());
+            
+            PrintNode printer;
+            visitBetweenNodes(ait->second, bit->second, printer);
+        }
     }
 }
 
