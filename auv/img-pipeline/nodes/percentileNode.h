@@ -87,10 +87,30 @@ class PercentileNode: public Node{
                     }
                     it++;
                 }*/
-                for(int row = 0; row < img.rows; row++)
-                    for(int col = 0; col < img.cols; col++)
-                        for(int ch = 0; ch < channels; ch++)
-                            value_histogram[ch][img.at<uint8_t>(row,col,ch)]++;
+                switch(channels){
+                    case 1:
+                        for(int row = 0; row < img.rows; row++)
+                            for(int col = 0; col < img.cols; col++)
+                                value_histogram[0][img.at<uint8_t>(row,col)]++;
+                        break;
+
+                    case 2:
+                        for(int row = 0; row < img.rows; row++)
+                            for(int col = 0; col < img.cols; col++)
+                                for(int ch = 0; ch < channels; ch++)
+                                    value_histogram[ch][img.at<cv::Vec2b>(row,col)[ch]]++;
+                        break;
+
+                    case 3:
+                        for(int row = 0; row < img.rows; row++)
+                            for(int col = 0; col < img.cols; col++)
+                                for(int ch = 0; ch < channels; ch++)
+                                    value_histogram[ch][img.at<cv::Vec3b>(row,col)[ch]]++;
+                        break;
+
+                    default:
+                        assert(0); // not possible, we checked earlier
+                }
 
                 std::vector<int> channel_results;
                 for(int ch = 0; ch < channels; ch++){
