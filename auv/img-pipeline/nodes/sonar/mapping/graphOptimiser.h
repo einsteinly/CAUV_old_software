@@ -36,6 +36,7 @@ struct IncrementalPose{
     
     IncrementalPose() : x(Eigen::Vector3f::Zero()) { }
     explicit IncrementalPose(Eigen::Vector3f const& v) : x(v) { }
+    explicit IncrementalPose(float dx, float dy, float dradians) : x(dx, dy, dradians) { }
 
     static IncrementalPose from4dAffine(Eigen::Matrix4f const& a);
     static IncrementalPose from4dAffineDiff(Eigen::Matrix4f const& from, Eigen::Matrix4f const& to);

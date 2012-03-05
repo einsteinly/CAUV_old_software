@@ -86,7 +86,7 @@ struct Node{
 
 std::ostream& operator<<(std::ostream& os, IncrementalPose const& a){
     // convert angle to degrees for display
-    return os << "IncrPose{dx:"<< a.x[0] << " dy:" << a.x[1] << "dth:"<< (180/M_PI)*a.x[2] << "}";
+    return os << "IncrPose{dx:"<< a.x[0] << " dy:" << a.x[1] << " dth:"<< (180/M_PI)*a.x[2] << "}";
 }
 std::ostream& operator<<(std::ostream& os, Arc const& a){
     return os << "Arc{fr:"<< a.from << " to:" << a.to <<"}";
@@ -311,9 +311,12 @@ static Node_ptr spanningTree(
 // Visit nodes and arcs (static typing means arc visits will be optimised out
 // if v has no-ops for them). Return the number of nodes visited
 template<typename PathVisitor>
-static uint32_t visitBetweenNodes(Node_ptr a, Node_ptr b, PathVisitor const& v){
-    if(b->tag > a->tag)
+static uint32_t visitBetweenNodes(Node_ptr b, Node_ptr a, PathVisitor const& v){
+    bool reverse_order = false;
+    if(b->tag > a->tag){
         std::swap(a, b);
+        reverse_order = true;
+    }
     // Generate the complete path before traversing it, path order is from
     // lowest level node to highest level node
 
@@ -334,18 +337,31 @@ static uint32_t visitBetweenNodes(Node_ptr a, Node_ptr b, PathVisitor const& v){
         a = a->parent_link->from;
         b = b->parent_link->from;
     }
-
+    
     // now visit it with the supplied visitor: operator() is applied to nodes,
     // ascend() and descend() are applied to arcs
-    foreach(Node_ptr p, path_start){
-        v(*p);
-        v.ascend(*p->parent_link);
-    }
-    // visit top-level node (== a == b)
-    v(*a);
-    reverse_foreach(Node_ptr p, path_end){
-        v.descend(*p->parent_link);
-        v(*p);
+    if(reverse_order){
+        foreach(Node_ptr p, path_end){
+            v(*p);
+            v.ascend(*p->parent_link);
+        }
+        // visit top-level node (== a == b)
+        v(*a);
+        reverse_foreach(Node_ptr p, path_start){
+            v.descend(*p->parent_link);
+            v(*p);
+        }
+    }else{
+        foreach(Node_ptr p, path_start){
+            v(*p);
+            v.ascend(*p->parent_link);
+        }
+        // visit top-level node (== a == b)
+        v(*a);
+        reverse_foreach(Node_ptr p, path_end){
+            v.descend(*p->parent_link);
+            v(*p);
+        }
     }
 
     return 1 + path_start.size() + path_end.size();
@@ -389,11 +405,11 @@ struct PrintNode{
     }
     void operator()(Node const& node) const{
         //m_debug_stream << "\n\t" << node;
-        m_debug_stream << node.tag << ", ";
+        m_debug_stream << " " << node.tag << " ";
         m_count++;
     }
-    void ascend(Arc const&) const { }
-    void descend(Arc const&) const { }
+    void ascend(Arc const&) const { m_debug_stream << "u"; }
+    void descend(Arc const&) const { m_debug_stream << "d"; }
 
     mutable int m_count;
     mutable debug m_debug_stream;
@@ -404,7 +420,7 @@ struct AccumulatePose{
         : m_pose(p){
     }
 
-    void operator()(Node const& node) const{ }
+    void operator()(Node const&) const{ }
 
     void ascend(Arc const& arc) const {
         m_pose -= arc.x;
@@ -470,9 +486,9 @@ static bool poseConstraintTagLess(
  */
 void GraphOptimiserV1::optimiseGraph(
     constraint_vec& constraints,
-    constraint_vec const& new_constraints // currently ignored, could be used to choose tree parametrisation, or more intrusively
+    constraint_vec const& /*new_constraints*/ // currently ignored, could be used to choose tree parametrisation, or more intrusively
 ) const{
-    const int max_iters = 4;
+    const int max_iters = 5;
 
     std::map<location_ptr, Node_ptr> node_lookup;
     std::map<location_ptr, Node_ptr>::const_iterator ait, bit;
@@ -501,8 +517,12 @@ void GraphOptimiserV1::optimiseGraph(
             ait = node_lookup.find(p->a); assert(ait != node_lookup.end());
             bit = node_lookup.find(p->b); assert(bit != node_lookup.end());
             
-            //PrintNode printer;
-            //visitBetweenNodes(ait->second, bit->second, printer);
+            /*debug() << "visit" << *ait->second <<"\n"<< ait->second->p->globalTransform() << "\n"
+                    << "to" << *bit->second <<"\n"<< bit->second->p->globalTransform();
+            {
+                PrintNode printer;
+                visitBetweenNodes(ait->second, bit->second, printer);
+            }*/
             
             // Get the error
             IncrementalPose actual_end_relative_to_start;
@@ -512,12 +532,12 @@ void GraphOptimiserV1::optimiseGraph(
             
             IncrementalPose error = p->a_to_b - actual_end_relative_to_start;
 
-            // if the error is too big (>45 degrees, or >1m and >2* the
+            // if the error is too big (>45 degrees, or >3m and >4* the
             // distance) ignore it:
             float error_sqlength = error.x[0]*error.x[0] + error.x[1]*error.x[1]; 
             float current_sqlength = actual_end_relative_to_start.x[0]*actual_end_relative_to_start.x[0] +
                                      actual_end_relative_to_start.x[1]*actual_end_relative_to_start.x[1];
-            if(error_sqlength > 1 && error_sqlength > current_sqlength*2){
+            if(error_sqlength > 9 && error_sqlength > current_sqlength*16){
                 debug() << "ignore constraint: distance error too big";
                 continue;
             }
@@ -535,9 +555,22 @@ void GraphOptimiserV1::optimiseGraph(
             // (Olsen et al & Grisetti et al use weighting schemes based on the
             //  information matrix of each component constraint, but this will
             //  do to start with)
-            IncrementalPose d_pose =  error * (lambda / (num_nodes-1));
+            IncrementalPose d_pose = error * (lambda / num_nodes); // not num_nodes-1 since include the new constraint in distribution of error
             visitBetweenNodes(ait->second, bit->second, AddPose(d_pose));
+            
+            // sanity checking:
+            #if !defined(CAUV_NO_DEBUG)
+            IncrementalPose sanity_check_actual_end_relative_to_start;
+            visitBetweenNodes(
+                ait->second, bit->second, AccumulatePose(sanity_check_actual_end_relative_to_start)
+            );
+            IncrementalPose sanity_check_error = p->a_to_b - actual_end_relative_to_start;            
+            float sanity_check_error_sqlen = sanity_check_error.x[0]*sanity_check_error.x[0] +
+                                             sanity_check_error.x[1]*sanity_check_error.x[1];
+            assert(sanity_check_error_sqlen <= error_sqlength + 1e-8); // allow for a tiiiny bit of numerical error
+            #endif // !defined(CAUV_NO_DEBUG)
         }
+
         lambda *= 0.5;
     }
 

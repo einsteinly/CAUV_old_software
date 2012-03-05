@@ -61,6 +61,14 @@ class SlamCloudLocation{
               m_time(p->m_time){
         }
 
+        explicit SlamCloudLocation(float x, float y, float theta_radians)
+            : m_relative_to(), 
+              m_relative_transformation(Eigen::Matrix4f::Identity()),
+              m_time(){
+            m_relative_transformation.block<2,1>(0,3) = Eigen::Vector2f(x, y);
+            m_relative_transformation.block<2,2>(0,0) *= Eigen::Matrix2f(Eigen::Rotation2D<float>(theta_radians));
+        }
+
         virtual ~SlamCloudLocation(){
         }
 
@@ -289,7 +297,9 @@ class SlamCloudPart: public SlamCloudLocation,
                 m_local_convexhull_invalid = false;
 
                 pcl::ConvexHull<PointT> hull_calculator;
-                hull_calculator.setDimension(2); // if you get a compile error here, update your PCL version
+                #if PCL_VERSION >= PCL_VERSION_CALC(1,5,0)
+                hull_calculator.setDimension(2);
+                #endif
                 m_local_convexhull_cloud = (boost::make_shared<base_cloud_t>());
                 m_local_convexhull_cloud->is_dense = true;
 

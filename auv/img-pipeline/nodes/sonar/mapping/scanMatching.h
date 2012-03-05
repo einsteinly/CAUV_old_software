@@ -23,6 +23,9 @@
 #include <pcl/registration/icp_nl.h>
 #include <pcl/point_cloud.h>
 
+#include <debug/cauv_debug.h>
+#include <utility/foreach.h>
+
 #include "common.h"
 
 namespace cauv{
