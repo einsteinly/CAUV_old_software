@@ -18,6 +18,8 @@
 #include <sstream>
 #include <string>
 
+#include <boost/cstdint.hpp>
+
 class MakeString{
     public:
         MakeString()
