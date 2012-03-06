@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <limits>
 
+#include <boost/tuple/tuple.hpp> // for tie()
+
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 /*#ifdef CAUV_CLOUD_DUMP
@@ -121,7 +123,8 @@ class SonarSLAMImpl{
               m_vis_parameters_changed(false),
               m_vis_buffer(cv::Size(0,0), CV_8UC3, cv::Scalar(0)),
               m_vis_keyframes_included(0),
-              m_vis_allframes_included(0){
+              m_vis_allframes_included(0),
+              m_vis_graphopt_number(0){
         }
 
         void reset(){
@@ -176,6 +179,7 @@ class SonarSLAMImpl{
             m_vis_buffer = cv::Mat(cv::Size(m_vis_res[0], m_vis_res[1]), CV_8UC3, cv::Scalar(0)),
             m_vis_keyframes_included = 0;
             m_vis_allframes_included = 0;
+            m_vis_graphopt_number = m_graph.graphOptimisationsCount();
         }
 
         Eigen::Vector2f toVisCoords(Eigen::Vector3f const& p) const{
@@ -183,7 +187,7 @@ class SonarSLAMImpl{
         }
 
         void updateVis(){
-            if(m_vis_parameters_changed)
+            if(m_vis_parameters_changed || m_vis_graphopt_number != m_graph.graphOptimisationsCount())
                 initVis();
 
             typedef SlamCloudGraph<pt_t>::cloud_vec cloud_vec;
@@ -206,6 +210,30 @@ class SonarSLAMImpl{
                 //    m_vis_buffer, image_pt, based_on_image_pt,
                 //    cv::Scalar(60, 235, 40)
                 //);
+                
+                // draw relative constraints:
+                foreach(location_ptr p, (*i)->constrainedTo()){
+                    const Eigen::Vector2f to_img_pt = toVisCoords(
+                        p->globalTransform().block<3,1>(0,3)
+                    );
+                    drawLine(
+                        m_vis_buffer, image_pt, to_img_pt,
+                        cv::Scalar(40, 170, 30)
+                    );
+                }
+                // draw all the constraints completely relaxed: (ie, they won't
+                // end in nodes)
+                foreach(Eigen::Vector3f const& p, (*i)->constraintEndsGlobal()){
+                    const Eigen::Vector2f to_img_pt = toVisCoords(p);
+                    drawLine(
+                        m_vis_buffer, image_pt, to_img_pt,
+                        cv::Scalar(20, 110, 110)
+                    );
+                    drawCircle(
+                        m_vis_buffer, to_img_pt, 0.25/m_vis_metres_per_px,
+                        cv::Scalar(20, 110, 110)
+                    );
+                }
 
                 for(std::size_t j = 0; j < (*i)->size(); j++){
                     const Eigen::Vector2f pt = toVisCoords(
@@ -258,7 +286,7 @@ class SonarSLAMImpl{
                     );
                     drawLine(
                         m_vis_buffer, image_pt, based_on_image_pt,
-                        cv::Scalar(97.5, 160, 50)
+                        cv::Scalar(100, 120, 50)
                     );
                 }
             }
@@ -280,7 +308,7 @@ class SonarSLAMImpl{
         cv::Mat m_vis_buffer;
         int m_vis_keyframes_included;
         int m_vis_allframes_included;
-
+        int m_vis_graphopt_number;
 };
 
 } // namespace imgproc
@@ -302,7 +330,7 @@ void SonarSLAMNode::init(){
     registerParamID("keypoints", kp_vec(), "(xy) keypoints used to update map", Must_Be_New);
     registerParamID("training: polar keypoints", kp_vec(), "", Must_Be_New);
     // ... not implemented yet
-    //requireSyncInputs("keypoints", "training: polar keypoints");
+    requireSyncInputs("keypoints", "training: polar keypoints");
     
     registerInputID("keypoints image", Optional); // image from which the keypoints came: actually just passed straight back out with the keypoints training data
     registerParamID("delta theta", float(0), "estimated change in orientation (radians) since last image", Must_Be_New);
@@ -355,11 +383,19 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     bool clear = param<bool>("clear");
     if(clear)
         m_impl->reset();
+    
+    // Synchronised parameters: keypoints & training_keypoints
+    kp_vec keypoints;
+    UID keypoints_uid;
+    boost::tie(keypoints, keypoints_uid) = paramAndUID<kp_vec>("keypoints");
 
-    const std::vector<KeyPoint> keypoints = param<kp_vec>("keypoints");
-    const std::vector<KeyPoint> training_keypoints = param<kp_vec>("training: polar keypoints");
+    // Because we set the parameters as synchronised, there's guaranteed to be
+    // training keypoints with the same UID
+    const kp_vec training_keypoints = param<kp_vec>("training: polar keypoints", keypoints_uid);
+
     assert(keypoints.size() == training_keypoints.size());
-
+    
+    // The rest of the parameters
     const int   max_iters   = param<int>("max iters");
     const float euclidean_fitness   = param<float>("euclidean fitness");
     const float transform_eps       = param<float>("transform eps");

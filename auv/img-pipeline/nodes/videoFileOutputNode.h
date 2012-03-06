@@ -34,7 +34,7 @@ namespace imgproc{
 class VideoFileOutputNode: public OutputNode{
     public:
         VideoFileOutputNode(ConstructArgs const& args)
-            : OutputNode(args){
+            : OutputNode(args), m_counter(0){
         }
 
         void init(){

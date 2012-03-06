@@ -23,6 +23,9 @@
 #include <pcl/registration/icp_nl.h>
 #include <pcl/point_cloud.h>
 
+#include <debug/cauv_debug.h>
+#include <utility/foreach.h>
+
 #include "common.h"
 
 namespace cauv{
@@ -93,11 +96,11 @@ class PairwiseMatcher{
 
 
 template <typename PtSrc, typename PtTgt>
-class ICP: public pcl::IterativeClosestPoint<PtSrc,PtTgt>{
-        typedef pcl::IterativeClosestPoint<PtSrc,PtTgt> base_t;
+class ICP: public pcl::IterativeClosestPoint/*NonLinear*/<PtSrc,PtTgt>{
+        typedef pcl::IterativeClosestPoint/*NonLinear*/<PtSrc,PtTgt> base_t;
     public:
         int numIters() const{
-            return pcl::IterativeClosestPoint<PtSrc,PtTgt>::nr_iterations_;
+            return base_t::nr_iterations_;
         }
         int maxNumIters() const{
             return base_t::max_iterations_;
@@ -121,6 +124,8 @@ class ICP: public pcl::IterativeClosestPoint<PtSrc,PtTgt>{
         }*/
 
 };
+
+
 template<typename PointT>
 class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
     public:
@@ -192,7 +197,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
                    << "/epsilon:" << icp.euclideanFitnessEpsilon();*/
 
             if(icp.hasConverged() && score < m_score_thr){
-                debug() << BashColour::Green << "final transform\n:"
+                debug() << BashColour::Green << "final transform:\n"
                         << final_transform;
                 Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
                 info() << BashColour::Green << "pairwise match:"

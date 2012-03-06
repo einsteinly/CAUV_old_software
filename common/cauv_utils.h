@@ -23,13 +23,10 @@
 #include <boost/typeof/typeof.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#ifndef foreach
-#   include <boost/foreach.hpp>
-#   define foreach BOOST_FOREACH
-#endif
 
 #include <utility/string.h>
 #include <utility/rounding.h>
+#include <utility/foreach.h>
 
 namespace cauv{
 

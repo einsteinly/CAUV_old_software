@@ -27,6 +27,9 @@
 
 #include <clipper.hpp> // Boost Software License
 
+#include <generated/types/TimeStamp.h>
+#include <generated/types/KeyPoint.h>
+
 #include "scanMatching.h"
 #include "graphOptimiser.h"
 #include "common.h"
@@ -56,6 +59,14 @@ class SlamCloudLocation{
             : m_relative_to(p->m_relative_to),
               m_relative_transformation(p->m_relative_transformation),
               m_time(p->m_time){
+        }
+
+        explicit SlamCloudLocation(float x, float y, float theta_radians)
+            : m_relative_to(), 
+              m_relative_transformation(Eigen::Matrix4f::Identity()),
+              m_time(){
+            m_relative_transformation.block<2,1>(0,3) = Eigen::Vector2f(x, y);
+            m_relative_transformation.block<2,2>(0,0) *= Eigen::Matrix2f(Eigen::Rotation2D<float>(theta_radians));
         }
 
         virtual ~SlamCloudLocation(){
@@ -115,6 +126,21 @@ class SlamCloudLocation{
         Eigen::Matrix4f const& relativeTransform() const{ return m_relative_transformation; }
         location_ptr relativeTo() const{ return m_relative_to; }
         TimeStamp const& time() const{ return m_time; }
+
+        location_vec const& constrainedTo() const{ return m_constrained_to; }
+
+        // (relatively) expensive: use sparingly
+        typedef std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f> > v3f_vec;
+        v3f_vec constraintEndsGlobal() const{
+            v3f_vec r;
+            foreach(IncrementalPose const& icrp, m_constraints){
+                Eigen::Vector3f gpos = globalTransform().block<3,1>(0,3);
+                gpos[0] -= icrp.dx();
+                gpos[1] -= icrp.dy();
+                r.push_back(gpos);
+            }
+            return r;
+        }
         
 
         // We have an Eigen::Matrix4f as a member
@@ -271,14 +297,14 @@ class SlamCloudPart: public SlamCloudLocation,
                 m_local_convexhull_invalid = false;
 
                 pcl::ConvexHull<PointT> hull_calculator;
+                #if PCL_VERSION >= PCL_VERSION_CALC(1,5,0)
+                hull_calculator.setDimension(2);
+                #endif
                 m_local_convexhull_cloud = (boost::make_shared<base_cloud_t>());
                 m_local_convexhull_cloud->is_dense = true;
 
                 hull_calculator.setInputCloud(shared_from_this());
                 hull_calculator.reconstruct(*m_local_convexhull_cloud, m_local_convexhull_verts);
-
-                int dim = hull_calculator.getDim();
-                assert(dim == 2);
             }
         }
 
@@ -343,14 +369,22 @@ class SlamCloudGraph{
             : m_overlap_threshold(0.3),
               m_keyframe_spacing(2),
               m_min_initial_points(10),
+              m_min_initial_area(5), // m^2
               m_good_keypoint_distance(0.2),
               m_max_speed(2.0),
-              m_max_considered_overlaps(5){
+              m_max_considered_overlaps(5),
+              m_graph_optimisation_count(0){
         }
 
         void reset(){
             m_key_scans.clear();
             m_all_scans.clear();
+            m_key_constraints.clear();
+            m_graph_optimisation_count = 0;
+        }
+
+        int graphOptimisationsCount() const{
+            return m_graph_optimisation_count;
         }
 
         void setParams(float overlap_threshold,
@@ -456,6 +490,7 @@ class SlamCloudGraph{
             // goodness, align this new scan to the overlapping one, and save
             // the resulting transformation:
             int limit = m_max_considered_overlaps;
+            int succeeded_match = 0;
             typename cloud_overlap_map::const_iterator i;
             debug() << "matching to overlapping scans...";
             int failed_match = 0;
@@ -472,12 +507,13 @@ class SlamCloudGraph{
                             relative_transformation, map_cloud, transformed
                         )
                     ));
+                    succeeded_match++;
                 }catch(PairwiseMatchException& e){
                     failed_match++;
                     continue;
                 }
             }
-            debug() << overlaps.size() - failed_match << "matches succeeded"
+            debug() << succeeded_match << "matches succeeded"
                     << failed_match << "failed";
             
             # if 0
@@ -546,7 +582,7 @@ class SlamCloudGraph{
                 // do the optimisation, hint at which constraints are new so
                 // they can be prioritised
                 graph_optimiser.optimiseGraph(m_key_constraints, new_constraints);
-
+                m_graph_optimisation_count++;
             }else{
                 // discard all the point data for non-key scans
                 m_all_scans.push_back(boost::make_shared<SlamCloudLocation>(p));
@@ -653,21 +689,43 @@ class SlamCloudGraph{
                 const double a_area = std::fabs(ClipperLib::Area(clipper_poly_a));
                 const double b_area = std::fabs(ClipperLib::Area(clipper_poly_b));
 
-                debug() << "overlap pct =" << 1e-6*union_area
-                        << "/ (" << -1e-6*a_area << "+" << -1e-6*b_area << ") ="
-                        << union_area / (a_area + b_area) << "(m^2)";
+                debug(3) << "overlap pct =" << 1e-6*union_area
+                         << "/ (" << -1e-6*a_area << "+" << -1e-6*b_area << ") ="
+                         << union_area / (a_area + b_area) << "(m^2)";
                 return union_area / (a_area + b_area);
             }else{
                 return 0;
             }
+        }
+        
+        // return area of conveh hull in m^2
+        static float area(cloud_ptr a){
+           assert(a->size() != 0);
+
+            // !!! TODO: cache convex hulls with point clouds
+            std::vector<pcl::Vertices> a_polys;
+            base_cloud_ptr a_points;
+            a->getGlobalConvexHull(a_points, a_polys);
+
+            assert(a_polys.size() == 1);
+
+            ClipperLib::Polygon clipper_poly_a;
+
+            //clipperlib works in 64-bit fixed point, so scale our 1m=1
+            // floating point data up by 1000 to 1mm=1
+            clipper_poly_a.reserve(a_polys[0].vertices.size());
+            foreach(uint32_t i, a_polys[0].vertices)
+                clipper_poly_a.push_back(ClipperLib::IntPoint((*a_points)[i].x*1000,(*a_points)[i].y*1000));
+
+            return 1e-6 * std::fabs(ClipperLib::Area(clipper_poly_a));
         }
 
         /* judge how good initial cloud is by a combination of the number of
          * features, and how well it matches with itself, or something.
          */
         bool cloudIsGoodEnoughForInitialisation(cloud_ptr p) const{
-            // !!! TODO: more sophisticated check
-            return (p->size() > m_min_initial_points);
+            return (p->size() > m_min_initial_points) &&
+                   (area(p) > m_min_initial_area);
         }
 
         /* add constraints based on relative transformations, return the added
@@ -695,11 +753,16 @@ class SlamCloudGraph{
         float m_overlap_threshold; // a fraction (0--0.5)
         float m_keyframe_spacing;  // in metres
         float m_min_initial_points; // for first keyframe
+        float m_min_initial_area;   //
         /* new keypoints with nearest nieghbours better than this are
          * considered good for training: */
         float m_good_keypoint_distance;
         float m_max_speed;
         int m_max_considered_overlaps;
+        
+        // +1 each time graph optimiser is run - i.e. this number changes
+        // whenever everything might have moved
+        int m_graph_optimisation_count;
 
         // TODO: to remain efficient there MUST be a way of searching for
         // SlamCloudParts near a location without iterating through all nodes
