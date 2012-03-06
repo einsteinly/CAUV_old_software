@@ -102,7 +102,7 @@ class auvControl(aiProcess):
     
     #TASK MANAGER COMMANDS
     @external_function
-    def set_task_id(self, task_id):
+    def set_current_task_id(self, task_id):
         #different name to avoid auto replace
         self.current_calling_process = task_id
         
