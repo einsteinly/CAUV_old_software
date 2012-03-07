@@ -21,6 +21,7 @@
 
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
+#include <pcl/registration/ndt_2d.h>
 #include <pcl/point_cloud.h>
 
 #include <debug/cauv_debug.h>
@@ -94,10 +95,11 @@ class PairwiseMatcher{
         ) const = 0;
 };
 
-
-template <typename PtSrc, typename PtTgt>
-class ICP: public pcl::IterativeClosestPoint/*NonLinear*/<PtSrc,PtTgt>{
-        typedef pcl::IterativeClosestPoint/*NonLinear*/<PtSrc,PtTgt> base_t;
+namespace scan_matching_internal{
+// Valid BaseT are pcl::IterativeClosestPoint and // pcl::IterativeClosestPointNonLinear
+template <typename BaseT>
+class ICP: public BaseT{
+        typedef BaseT base_t;
     public:
         int numIters() const{
             return base_t::nr_iterations_;
@@ -125,9 +127,8 @@ class ICP: public pcl::IterativeClosestPoint/*NonLinear*/<PtSrc,PtTgt>{
 
 };
 
-
-template<typename PointT>
-class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
+template<typename PointT, typename BaseT>
+class _ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
     public:
         // - public types
         typedef SlamCloudPart<PointT> cloud_t;
@@ -136,7 +137,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
-        ICPPairwiseMatcher(int max_iters,
+        _ICPPairwiseMatcher(int max_iters,
                            float euclidean_fitness,
                            float transform_eps,
                            float reject_threshold,
@@ -161,8 +162,7 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
         ) const {
             debug() << "ICPPairwiseMatcher" << map->size() << ":" << new_cloud->size() << "points";
 
-            //pcl::IterativeClosestPointNonLinear<PointT,PointT> icp;
-            ICP<PointT,PointT> icp;
+            ICP<BaseT> icp;
             icp.setInputCloud(new_cloud);
             icp.setInputTarget(map);
 
@@ -227,6 +227,43 @@ class ICPPairwiseMatcher: public PairwiseMatcher<PointT>{
         const float m_max_correspond_dist;
         const float m_score_thr;
 };
+} // namespace scan_matching_internal
+
+// !!! when my compiler supports template typedefs the PointT can be a template parameter
+typedef scan_matching_internal::_ICPPairwiseMatcher<
+    pcl::PointXYZ,
+    pcl::IterativeClosestPoint<
+        pcl::PointXYZ, pcl::PointXYZ
+    >
+> ICPPairwiseMatcher;
+
+typedef scan_matching_internal::_ICPPairwiseMatcher<
+    pcl::PointXYZ,
+    pcl::IterativeClosestPointNonLinear<
+        pcl::PointXYZ, pcl::PointXYZ
+    >
+> ICPNonLinearPairwiseMatcher;
+
+
+template <typename PtSrc, typename PtTgt>
+class NDT: public pcl::NormalDistributionsTransform2D<PtSrc,PtTgt>{
+        typedef pcl::NormalDistributionsTransform2D<PtSrc,PtTgt> base_t;
+    public:
+        int numIters() const{
+            return base_t::nr_iterations_;
+        }
+        int maxNumIters() const{
+            return base_t::max_iterations_;
+        }
+        float transformationChange() const{
+            // should match the check in termination condition of NDT
+            return std::fabs((base_t::transformation_ - base_t::previous_transformation_).sum());
+        }
+        float transformationEpsilon() const{
+            return base_t::transformation_epsilon_;
+        }
+};
+
 
 template<typename PointT>
 class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
@@ -238,6 +275,18 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
         typedef typename cloud_t::base_cloud_t base_cloud_t;
         typedef typename cloud_t::base_cloud_t::Ptr base_cloud_ptr;
 
+
+        NDTPairwiseMatcher(int max_iters,
+                           float euclidean_fitness,
+                           float transform_eps,
+                           float score_thr)
+            : PairwiseMatcher<PointT>(),
+              m_max_iters(max_iters),
+              m_euclidean_fitness(euclidean_fitness),
+              m_transform_eps(transform_eps),
+              m_score_thr(score_thr){
+        }
+
         // - public methods
         virtual float transformcloudToMatch(
             cloud_const_ptr map,
@@ -246,10 +295,68 @@ class NDTPairwiseMatcher: public PairwiseMatcher<PointT>{
             Eigen::Matrix4f& transformation,
             base_cloud_ptr& transformed_cloud
         ) const {
-            // TODO
-            assert(0);
-            return 0;
+            debug() << "NDTPairwiseMatcher" << map->size() << ":" << new_cloud->size() << "points";
+
+            NDT<PointT,PointT> ndt;
+            ndt.setInputCloud(new_cloud);
+            ndt.setInputTarget(map);
+            
+            ndt.setGridExtent(Eigen::Vector2f(40,40));
+            ndt.setGridStep(Eigen::Vector2f(2.5,2.5));
+            ndt.setMaximumIterations(m_max_iters);
+            ndt.setTransformationEpsilon(m_transform_eps);
+            ndt.setEuclideanFitnessEpsilon(m_euclidean_fitness);
+
+            const Eigen::Matrix4f relative_guess = map->relativeTransform().inverse() * guess * new_cloud->globalTransform();
+
+            debug(3) << BashColour::Green << "guess:\n"
+                     << guess;
+            debug() << BashColour::Green << "relative guess:\n"
+                    << relative_guess;
+
+            // do the hard work!
+            ndt.align(*transformed_cloud, relative_guess);
+            // in map's coordinate system:
+            const Eigen::Matrix4f final_transform = ndt.getFinalTransformation();
+
+            // high is bad (score is sum of squared euclidean distances)
+            const float score = ndt.getFitnessScore();
+            info() << BashColour::Green
+                   << "converged:" << ndt.hasConverged()
+                   << "score:" << score
+                   << "after" << ndt.numIters() << "/" << m_max_iters
+                   << "iterations."
+                   << "Transformation change:" << ndt.transformationChange()
+                   << "/epsilon:" << ndt.transformationEpsilon();
+
+            if(ndt.hasConverged() && score < m_score_thr){
+                debug() << BashColour::Green << "final transform:\n"
+                        << final_transform;
+                Eigen::Vector3f xytheta = xythetaFrom4dAffine(final_transform);
+                info() << BashColour::Green << "pairwise match:"
+                       << xytheta[0] << "," << xytheta[1] << "rot=" << xytheta[2] << "deg";
+
+                transformation = final_transform;
+            }else if(score >= m_score_thr){
+                info() << BashColour::Brown
+                       << "NDT pairwise match failed (error too high: "
+                       << score << ">=" << m_score_thr <<")";
+                throw PairwiseMatchException("error too high");
+            }else{
+                info() << BashColour::Red
+                       << "NDT pairwise match failed (not converged)";
+                throw PairwiseMatchException("failed to converge");
+            }
+
+            // TODO: more rigorous match metric
+            return 1.0 / (1.0 + score);
         }
+        
+    private:
+        const int m_max_iters;
+        const float m_euclidean_fitness;
+        const float m_transform_eps;
+        const float m_score_thr;
 };
 
 } // namespace cauv
