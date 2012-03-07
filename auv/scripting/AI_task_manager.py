@@ -135,15 +135,6 @@ class taskManager(aiProcess):
     @external_function
     def on_detector_state_change(self, detector_id, state):
         self.detector_conditions[detector_id].on_state_set(state)
-    #from control process
-    @external_function
-    def notify_begin_pause(self, message):
-        if self.current_task:
-            getattr(self.ai, self.current_task.id).begin_override_pause()
-    @external_function
-    def notify_end_pause(self, message):
-        if self.current_task:
-            getattr(self.ai, self.current_task.id).end_override_pause()
     #from script
     @external_function
     def on_script_exit(self, task_id, status):
@@ -264,7 +255,7 @@ class taskManager(aiProcess):
                 debug('Could not kill running script (probably already dead)')
         info('Stopping additional script for task %s' %task_id)
     def stop_current_script(self):
-        self.ai.auv_control.set_current_task_id(None)
+        self.ai.auv_control.set_current_task_id(None, 0)
         #make sure the sub actually stops
         self.ai.auv_control.stop()
         self.ai.auv_control.lights_off()
@@ -308,7 +299,7 @@ class taskManager(aiProcess):
         if task.options.solo:
             self.stop_current_script()
             self.running_script = script
-            self.ai.auv_control.set_current_task_id(str(task.id))
+            self.ai.auv_control.set_current_task_id(task.id, task.options.priority)
             #disable/enable detectors according to task
             self.detectors_enabled = task.options.detectors_enabled_while_running
             if self.detectors_enabled: self.ai.detector_control.enable()
@@ -325,6 +316,8 @@ class taskManager(aiProcess):
                 self.stop_script(task.id)
                 warning("Detected script already started, killing old script first")
             #then just add it to the list
+            #THIS MIGHT BREAK (RAPID REMOVAL/ADDITION OF THE SAME ID)
+            self.ai.auv_control.add_additional_task_id(task.id, task.options.running_priority)
             self.additional_tasks[task.id]=(task,script)
         task.active = True
         #update task status to gui
