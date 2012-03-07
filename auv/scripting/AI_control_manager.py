@@ -96,8 +96,10 @@ class auvControl(aiProcess):
     @force_calling_process
     def drop_control(self, *args, **kwargs):
         self.processing_queue.put(('drop_control_local',[kwargs['calling_process']],{}))
-    def drop_control_local(self, calling_process):
-        self.waiting_for_control.pop(calling_process, None)
+    def drop_control_local(self, task_id):
+        self.waiting_for_control.pop(task_id, None)
+        #need to tel script its been paused, else if it wants control in the future it will think it already has it.
+        getattr(self.ai, task_id)._set_paused()
             
     #GENERAL FUNCTIONS (that could be called from anywhere)
     @external_function
@@ -151,6 +153,7 @@ class auvControl(aiProcess):
         self.active_tasks.pop(task_id)
         #try to remove from waiting for control list
         self.waiting_for_control.pop(task_id, None)
+        getattr(self.ai, task_id)._set_paused()
         
     #OBSTACLE AVOIDANCE COMMANDS
     @external_function
@@ -193,15 +196,20 @@ class auvControl(aiProcess):
     #MAIN LOOP
     def reevaluate(self):
         #filter out requests that have timed out
-        print self.waiting_for_control
-        self.waiting_for_control = dict([item for item in self.waiting_for_control.iteritems() if (item[1][1] > time.time()) or not item[1][1]])
-        print self.waiting_for_control
+        new_dict = {}
+        for task_id, (priority, timeout) in self.waiting_for_control.iteritems():
+            if timeout and timeout < time.time():
+                getattr(self.ai, task_id)._set_unpaused()
+                getattr(self.ai, task_id).control_timed_out()
+                continue
+            new_dict[task_id] = (priority, timeout)
+        self.waiting_for_control = new_dict
         #find highest priority
         try:
             highest_priority_task = max(self.waiting_for_control.iteritems(), key=lambda x: x[1][0])[0]
         except ValueError:
             #list is empty
-            return
+            highest_priority_task = None
         if self.current_task == highest_priority_task:
             #no change, so don't do anything
             return
@@ -210,17 +218,22 @@ class auvControl(aiProcess):
         if self.current_task == self.default_task:
             self._sonar_state_default = self.sonar.__dict__.copy()
             self._control_state_default = self._control_state.copy()
-        elif highest_priority_task == self.default_task:
+        #stop current script and restore values
+        self.current_task = None
+        self.stop()
+        if highest_priority_task == self.default_task:
             for command, (args, kwargs) in self._control_state_default.items():
                 getattr(self.auv, command)(*args, **kwargs)
+            self._control_state = self._control_state_default
             #restore sonar state
             self.sonar.__dict__.update(self._sonar_state_default)
             self.sonar.update()
         self.current_task = highest_priority_task
         for task_id in self.waiting_for_control:
             if task_id != self.current_task:
-                getattr(self.ai, task_id).set_paused()
-        getattr(self.ai, self.current_task).set_unpaused()
+                getattr(self.ai, task_id)._set_paused()
+        if self.current_task:
+            getattr(self.ai, self.current_task)._set_unpaused()
                     
     def run(self):
         signalling_thread = threading.Thread(target=self.signal_loop)
