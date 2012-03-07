@@ -101,6 +101,13 @@ std::ostream& operator<<(std::ostream& os, Node const& n){
     return os << "Node{("<<&n<<")p:"<< n.p <<" pl:"<< n.parent_link <<" kids:"<< n.child_links << " tag:" << n.tag << "}";
 }
 
+/* Make new_parent the new parent of child along arc a (which may require
+ * child's existing parent to be recursively reparented)
+ *
+ * pre-conditions: a->from and a->to are set as if the parenting has already
+ * taken place, but child->parent_link has not yet been changed from its old
+ * value.
+ */
 static void adoptSubTree(Node_ptr new_parent, Arc_ptr a, Node_ptr child){
     assert(child);
     assert(new_parent);
@@ -127,6 +134,8 @@ static void adoptSubTree(Node_ptr new_parent, Arc_ptr a, Node_ptr child){
     }
 }
 
+/* Tag nodes in the tree with their distance from the root.
+ */
 static void retagByDepth(int depth, Node_ptr p){
     p->tag = depth;
     foreach(Arc_ptr const& a, p->child_links){
@@ -137,6 +146,14 @@ static void retagByDepth(int depth, Node_ptr p){
 }
 
 
+/* Build a spanning tree from a set of constraints. Each link in the tree
+ * defines the incremental pose (as defined by Grisetti et al) between two
+ * nodes (which are poses).
+ * The initial values of the incremental pose are calculated from THE CURRENT
+ * POSITIONS OF THE NODES, not from the values of the constraints that are used
+ * to build the form of the tree: think of the constraints as being used to
+ * choose a sensible parametrisation for the problem.
+ */
 static Node_ptr spanningTree(
     constraint_vec const& constraints,
     std::map<location_ptr, Node_ptr>& node_lookup
@@ -171,7 +188,7 @@ static Node_ptr spanningTree(
                 a->from = i->second;
                 a->from->child_links.push_back(a);
                 a->to = boost::make_shared<Node>(p->b, a, Arc_ptr(), a->from->tag);
-                a->x = p->a_to_b;
+                a->x = IncrementalPose::from4dAffineDiff(a->from->p->globalTransform(), a->to->p->globalTransform());
                 node_lookup[a->to->p] = a->to;
             }else{
                 // if a is not connected to b, this arc connects them:
@@ -182,13 +199,10 @@ static Node_ptr spanningTree(
                             a->from = i->second;
                             a->to = j->second;
                             a->to->parent_link = a;
-                            a->x = p->a_to_b;
                         }else{
                             a->from = j->second;
                             a->to = i->second;
                             a->to->parent_link = a;
-                            // NB unary -
-                            a->x = -p->a_to_b;
                         }
                         a->from->child_links.push_back(a);
                         debug(7) << "reparent (easy)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
@@ -198,50 +212,44 @@ static Node_ptr spanningTree(
                         // trees :(
                         a->from = i->second;
                         a->to = j->second;
-                        a->x = p->a_to_b;
                         a->from->child_links.push_back(a);
                         debug(7) << "reparent (hard)" << a->to->tag << "to" << a->from->tag << "(" << set_root[a->from->tag] << ")";
                         // Make i the new parent of tree j->second via arc a
                         adoptSubTree(i->second, a, j->second);
                         assert(a->to->parent_link == a);
                     }
+                    a->x = IncrementalPose::from4dAffineDiff(a->from->p->globalTransform(), a->to->p->globalTransform());
                     // careful not to pass a reference to an element in the
                     // vector to the replace algorithm!
                     Node_ptr replace_this = set_root[a->to->tag];
                     std::replace(set_root.begin(), set_root.end(), replace_this, set_root[a->from->tag]);
                 }else{
                     // already in the tree
-
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    // make a separate list of non-spanning constraints?
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     non_spanning++;
                 }
             }
         }else{
+            Arc_ptr a(new Arc);
             if(j != node_lookup.end()){
                 // add p->a relative to existing p->b
-                Arc_ptr a(new Arc);
                 a->from = j->second;
                 a->from->child_links.push_back(a);
                 a->to = boost::make_shared<Node>(p->a, a, Arc_ptr(), a->from->tag);
-                // NB: unary minus here
-                a->x = -p->a_to_b;
                 node_lookup[a->to->p] = a->to;
             }else{
                 // add new disjoint arc
                 ++tag;
 
-                Arc_ptr a(new Arc);
                 a->from = boost::make_shared<Node>(p->a, Arc_ptr(), a, tag);
                 a->to   = boost::make_shared<Node>(p->b, a, Arc_ptr(), tag);
-                a->x = p->a_to_b;
                 node_lookup[a->from->p] = a->from;
                 node_lookup[a->to->p] = a->to;
 
                 assert(set_root.size() == unsigned(tag));
                 set_root.push_back(a->from);
             }
+            // set incremental pose to current state:
+            a->x = IncrementalPose::from4dAffineDiff(a->from->p->globalTransform(), a->to->p->globalTransform());
         }
         foreach(Node_ptr const& np, set_root){
             assert(!(np->parent_link));
@@ -251,7 +259,7 @@ static Node_ptr spanningTree(
              << node_lookup.size() << "nodes, "
              << non_spanning << "non-spanning constraints";
 
-    // spanning tree invariant:
+    // spanning tree property invariant check:
     if(non_spanning != int(constraints.size() - (node_lookup.size()-1))){
         // uh oh, not a spanning tree. What went wrong?
 
@@ -280,7 +288,8 @@ static Node_ptr spanningTree(
     // re-tag the tree so that tag counts the depth from the root node (this
     // lets common parent nodes be identified easily)
     retagByDepth(0, set_root[0]);
-
+    
+    // root node invariant check:
     if(set_root[0]->parent_link){
         // uh oh, not a spanning tree. What went wrong?
 
@@ -488,8 +497,6 @@ void GraphOptimiserV1::optimiseGraph(
     constraint_vec& constraints,
     constraint_vec const& /*new_constraints*/ // currently ignored, could be used to choose tree parametrisation, or more intrusively
 ) const{
-    const int max_iters = 5;
-
     std::map<location_ptr, Node_ptr> node_lookup;
     std::map<location_ptr, Node_ptr>::const_iterator ait, bit;
 
@@ -501,6 +508,7 @@ void GraphOptimiserV1::optimiseGraph(
     // tree
     foreach(pose_constraint_ptr p, constraints){
         p->tag = 0;
+        //p->weight = 1.0; DONT reset weights: let them be persistent :)
         ait = node_lookup.find(p->a); assert(ait != node_lookup.end());
         bit = node_lookup.find(p->b); assert(bit != node_lookup.end());
         visitBetweenNodes(ait->second, bit->second, MaxLevel(p->tag));
@@ -509,11 +517,12 @@ void GraphOptimiserV1::optimiseGraph(
     std::sort(constraints.begin(), constraints.end(), poseConstraintTagLess);
     
     float lambda = 1.0f;
-    for(int iter = 0; iter < max_iters; iter++){
+    for(int iter = 0; iter < m_max_iters; iter++){
         debug() << "SGD iter" << iter;
-
+        
+        float sum_weighted_error = 0;
         foreach(pose_constraint_ptr p, constraints){
-            debug() << "process constraint: level" << p->tag;
+            debug(3) << "process constraint: level" << p->tag;
             ait = node_lookup.find(p->a); assert(ait != node_lookup.end());
             bit = node_lookup.find(p->b); assert(bit != node_lookup.end());
             
@@ -531,23 +540,32 @@ void GraphOptimiserV1::optimiseGraph(
             );
             
             IncrementalPose error = p->a_to_b - actual_end_relative_to_start;
+            // !!! TODO: better angle normalisation
+            while(error.x[2] > M_PI)
+                error.x[2] -= M_PI*2;
+            while(error.x[2] < -M_PI)
+                error.x[2] += M_PI*2;
 
             // if the error is too big (>45 degrees, or >3m and >4* the
             // distance) ignore it:
             float error_sqlength = error.x[0]*error.x[0] + error.x[1]*error.x[1]; 
             float current_sqlength = actual_end_relative_to_start.x[0]*actual_end_relative_to_start.x[0] +
                                      actual_end_relative_to_start.x[1]*actual_end_relative_to_start.x[1];
+            
+            sum_weighted_error += error_sqlength * p->weight;
+            p->weight = 5.0 / (5 + error_sqlength);
+
+            debug(3) << "error over loop:" << error << "(=" << p->a_to_b << "-"
+                     << actual_end_relative_to_start << ")";
+
             if(error_sqlength > 9 && error_sqlength > current_sqlength*16){
-                debug() << "ignore constraint: distance error too big";
+                debug(3) << "ignore constraint: distance error too big";
                 continue;
             }
             if(std::fabs(error.x[2])*(180/M_PI) > 45){
-                debug() << "ignore constraint: angle error too big";
+                debug(3) << "ignore constraint: angle error too big";
                 continue;
             }
-            
-            debug() << "error over loop:" << error << "(=" << p->a_to_b << "-"
-                    << actual_end_relative_to_start << ")";
             
             assert(num_nodes > 1);
             // distribute the error along the path in the simplest possible
@@ -570,6 +588,9 @@ void GraphOptimiserV1::optimiseGraph(
             assert(sanity_check_error_sqlen <= error_sqlength + 1e-8); // allow for a tiiiny bit of numerical error
             #endif // !defined(CAUV_NO_DEBUG)
         }
+        
+        // error is from previous iteration...
+        info() << "iter:" << iter-1 << "weighted error:" << sum_weighted_error;
 
         lambda *= 0.5;
     }

@@ -83,12 +83,14 @@ struct IncrementalPoseConstraint{
     // tag is used as temporary storage for the 'level' of the constraint
     // during graph optimisation
     int tag;
+
+    float weight;
     
     // IncrementalPose has Eigen::Vector3f as member
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     IncrementalPoseConstraint(IncrementalPose const& a_to_b, location_ptr a, location_ptr b)
-        : a_to_b(a_to_b), a(a), b(b){
+        : a_to_b(a_to_b), a(a), b(b), tag(0), weight(1){
     }
 };
 
@@ -109,6 +111,10 @@ class GraphOptimiser{
  */
 class GraphOptimiserV1: public GraphOptimiser{
     public:
+        GraphOptimiserV1(int max_iters)
+            : m_max_iters(max_iters){
+        }
+
         /* Optimise a constraint graph.
          * !!! paper ref here (Olson et al, Grisetti et al)
          * !!! this could be provided by an external class like scan matching
@@ -118,6 +124,9 @@ class GraphOptimiserV1: public GraphOptimiser{
             constraint_vec& constraints,
             constraint_vec const& new_constraints = constraint_vec()
         ) const;
+    
+    private:
+        int m_max_iters;
 };
 
 } // namespace imgproc
