@@ -520,6 +520,7 @@ void GraphOptimiserV1::optimiseGraph(
     for(int iter = 0; iter < m_max_iters; iter++){
         debug() << "SGD iter" << iter;
         
+        int ignored_constraints = 0;
         float sum_weighted_error = 0;
         foreach(pose_constraint_ptr p, constraints){
             debug(3) << "process constraint: level" << p->tag;
@@ -558,12 +559,14 @@ void GraphOptimiserV1::optimiseGraph(
             debug(3) << "error over loop:" << error << "(=" << p->a_to_b << "-"
                      << actual_end_relative_to_start << ")";
 
-            if(error_sqlength > 9 && error_sqlength > current_sqlength*16){
+            if(error_sqlength > 9 && error_sqlength > current_sqlength*9){
                 debug(3) << "ignore constraint: distance error too big";
+                ignored_constraints++;
                 continue;
             }
             if(std::fabs(error.x[2])*(180/M_PI) > 45){
                 debug(3) << "ignore constraint: angle error too big";
+                ignored_constraints++;
                 continue;
             }
             
@@ -590,7 +593,9 @@ void GraphOptimiserV1::optimiseGraph(
         }
         
         // error is from previous iteration...
-        info() << "iter:" << iter-1 << "weighted error:" << sum_weighted_error;
+        info() << "iter:" << iter-1 << "weighted error:" << sum_weighted_error
+               << "ignored:" << ignored_constraints << "/" << constraints.size()
+               << "=" << 100*ignored_constraints/constraints.size() << "% constraints";
 
         lambda *= 0.5;
     }

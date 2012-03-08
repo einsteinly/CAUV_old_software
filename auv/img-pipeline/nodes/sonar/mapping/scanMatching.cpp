@@ -313,7 +313,7 @@ boost::shared_ptr<PairwiseMatcher<pcl::PointXYZ> > makeICPPairwiseMatcherShared(
     float max_correspond_dist,
     float score_thr
 ){
-    return boost::make_shared<ICPNonLinearPairwiseMatcher>(
+    return boost::make_shared<ICPPairwiseMatcher>(
         max_iters, euclidean_fitness, transform_eps, reject_threshold, max_correspond_dist, score_thr
     );
 }
