@@ -89,21 +89,20 @@ class SlamCloudLocation{
         
         // add constraint from this -> p (p observed from this) t is the
         // RELATIVE (not incremental) pose at which p is observed
-        IncrementalPose addConstraintTo(location_ptr p, Eigen::Matrix4f const& t){
-            const Eigen::Matrix4f p_global_t = globalTransform() * t;
-            IncrementalPose incr_pose = IncrementalPose::from4dAffineDiff(globalTransform(), p_global_t);
+        RelativePose addConstraintTo(location_ptr p, Eigen::Matrix4f const& t){
+            const RelativePose r = RelativePose::from4dAffine(t);
             
             m_constrained_to.push_back(p);
-            m_constraints.push_back(incr_pose);
+            m_constraints.push_back(r);
             
-            return incr_pose;
+            return r;
         }
 
         static pose_constraint_ptr addConstraintBetween(location_ptr from,
                                                         location_ptr to,
                                                         Eigen::Matrix4f from_to_to){
-            const IncrementalPose incr_pose = from->addConstraintTo(to, from_to_to);
-            return boost::make_shared<IncrementalPoseConstraint>(incr_pose, from, to);
+            const RelativePose rel_pose = from->addConstraintTo(to, from_to_to);
+            return boost::make_shared<RelativePoseConstraint>(rel_pose, from, to);
         }
 
         void setRelativeTransform(Eigen::Matrix4f const& m){
@@ -129,11 +128,10 @@ class SlamCloudLocation{
         typedef std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f> > v3f_vec;
         v3f_vec constraintEndsGlobal() const{
             v3f_vec r;
-            foreach(IncrementalPose const& icrp, m_constraints){
-                Eigen::Vector3f gpos = globalTransform().block<3,1>(0,3);
-                gpos[0] += icrp.dx();
-                gpos[1] += icrp.dy();
-                r.push_back(gpos);
+            foreach(RelativePose const& rel, m_constraints){
+                const Eigen::Matrix4f pt_transform = globalTransform() * rel.to4dAffine();
+                const Eigen::Vector3f pt = pt_transform.block<3,1>(0,3);
+                r.push_back(pt);
             }
             return r;
         }
@@ -146,13 +144,13 @@ class SlamCloudLocation{
         virtual void transformationChanged(){}
 
     private:
-        typedef std::vector<IncrementalPose> incr_pose_vec;
+        typedef std::vector< RelativePose, Eigen::aligned_allocator<RelativePose> > rel_pose_vec;
     
         location_ptr    m_relative_to;
         Eigen::Matrix4f m_relative_transformation;
 
         location_vec  m_constrained_to;
-        incr_pose_vec m_constraints;
+        rel_pose_vec  m_constraints;
 
         TimeStamp       m_time;
 };

@@ -27,7 +27,8 @@ class SlamCloudLocation;
 template<typename PointT> class SlamCloudPart;
 template<typename PointT> class SlamCloudGraph;
 struct IncrementalPose;
-struct IncrementalPoseConstraint;
+struct RelativePose;
+struct RelativePoseConstraint;
 
 class GraphOptimiser;
 
@@ -39,7 +40,7 @@ typedef float descriptor_t;
 typedef float score_t;
 
 typedef boost::shared_ptr<SlamCloudLocation> location_ptr;
-typedef boost::shared_ptr<IncrementalPoseConstraint> pose_constraint_ptr;
+typedef boost::shared_ptr<RelativePoseConstraint> pose_constraint_ptr;
 
 typedef std::vector<location_ptr> location_vec;
 typedef std::vector<pose_constraint_ptr> constraint_vec;

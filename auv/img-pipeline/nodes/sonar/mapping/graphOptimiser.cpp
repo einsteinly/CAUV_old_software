@@ -37,7 +37,7 @@ IncrementalPose IncrementalPose::from4dAffine(Eigen::Matrix4f const& a){
     const Eigen::Matrix2f r = a.block<2,2>(0, 0);
     const Eigen::Vector2f t = a.block<2,1>(0, 3);
 
-    const Eigen::Vector2f tmp = r*Eigen::Vector2f(1,0);
+    const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
     const float rz = std::atan2(tmp[1], tmp[0]);
     return IncrementalPose(Eigen::Vector3f(t[0], t[1], rz));
 }
@@ -48,6 +48,22 @@ IncrementalPose IncrementalPose::from4dAffineDiff(
     return from4dAffine(to) -= from4dAffine(from);
 }
 
+
+RelativePose RelativePose::from4dAffine(Eigen::Matrix4f const& a){
+    const Eigen::Matrix2f r = a.block<2,2>(0, 0);
+    const Eigen::Vector2f t = a.block<2,1>(0, 3);
+
+    const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
+    const float rz = std::atan2(tmp[1], tmp[0]);
+    return RelativePose(Eigen::Vector3f(t[0], t[1], rz));
+}
+
+Eigen::Matrix4f RelativePose::to4dAffine() const{
+    Eigen::Matrix4f r = Eigen::Matrix4f::Identity();
+    r.block<2,1>(0,3) = Eigen::Vector2f(x[0], x[1]);
+    r.block<2,2>(0,0) *= Eigen::Matrix2f(Eigen::Rotation2D<float>(x[2]));
+    return r;
+}
 
 class Node;
 class Arc;
@@ -387,6 +403,15 @@ static void visitDepthFirst(Node_ptr root, NodeVisitor const& v){
     }
 }
 
+template<typename NodeVisitor>
+static void visitToRoot(Node_ptr n, NodeVisitor const& v){
+    v(*n);
+    if(n->parent_link){
+        v.ascend(*n->parent_link);
+        return visitToRoot(n->parent_link->from, v);
+    }
+}
+
 struct MaxLevel{
     MaxLevel(int& result)
         : max_level(result){
@@ -441,6 +466,23 @@ struct AccumulatePose{
     IncrementalPose& m_pose;
 };
 
+struct AccumulatePoseReverse{
+    AccumulatePoseReverse(IncrementalPose& p)
+        : m_pose(p){
+    }
+
+    void operator()(Node const&) const{ }
+
+    void ascend(Arc const& arc) const {
+        m_pose += arc.x;
+    }
+    void descend(Arc const& arc) const {
+        m_pose -= arc.x;
+    }
+    
+    IncrementalPose& m_pose;
+};
+
 // this one actually modifies the tree: add p to descending arcs traversed,
 // subtract it from ascending ones
 struct AddPose{
@@ -467,6 +509,10 @@ struct ApplyPose{
     void operator()(Node const& node) const{
         assert(!node.p->relativeTo());
         if(node.parent_link){
+            // !!! use relativeTransform() here because we know that all
+            // nodes in the graph are relative to none
+            assert(!node.p->relativeTo());
+            assert(!node.parent_link->from->p->relativeTo());
             node.p->setRelativeTransform(
                 node.parent_link->x.applyTo(node.parent_link->from->p->relativeTransform())
             );
@@ -516,12 +562,13 @@ void GraphOptimiserV1::optimiseGraph(
 
     std::sort(constraints.begin(), constraints.end(), poseConstraintTagLess);
     
-    float lambda = 1.0f;
+    const float gamma = 1.0f;
     for(int iter = 0; iter < m_max_iters; iter++){
         debug() << "SGD iter" << iter;
         
         int ignored_constraints = 0;
         float sum_weighted_error = 0;
+        const float alpha = 1.0 / (gamma * (1+iter));
         foreach(pose_constraint_ptr p, constraints){
             debug(3) << "process constraint: level" << p->tag;
             ait = node_lookup.find(p->a); assert(ait != node_lookup.end());
@@ -535,37 +582,57 @@ void GraphOptimiserV1::optimiseGraph(
             }*/
             
             // Get the error
-            IncrementalPose actual_end_relative_to_start;
+            IncrementalPose actual_end_rel_to_start;
             uint32_t num_nodes = visitBetweenNodes(
-                ait->second, bit->second, AccumulatePose(actual_end_relative_to_start)
+                ait->second, bit->second, AccumulatePose(actual_end_rel_to_start)
             );
             
-            IncrementalPose error = p->a_to_b - actual_end_relative_to_start;
+            IncrementalPose a_wrt_root;
+            visitToRoot(ait->second, AccumulatePoseReverse(a_wrt_root));
+            
+            //const IncrementalPose constraint_end = IncrementalPose::from4dAffine(p->a->globalTransform() * p->b_wrt_a.to4dAffine());
+            const IncrementalPose constraint_end = IncrementalPose::from4dAffine(
+                a_wrt_root.applyTo(root->p->globalTransform()) * p->b_wrt_a.to4dAffine()
+            );
+            //const IncrementalPose constraint_start = IncrementalPose::from4dAffine(p->a->globalTransform());
+            const IncrementalPose constraint_start = IncrementalPose::from4dAffine(
+                a_wrt_root.applyTo(root->p->globalTransform())
+            );
+            const IncrementalPose constraint_end_rel_to_start = constraint_end - constraint_start;
+            IncrementalPose error = constraint_end_rel_to_start - actual_end_rel_to_start;
+
+            #if !defined(CAUV_NO_DEBUG)
+            IncrementalPose b_wrt_root;
+            visitToRoot(bit->second, AccumulatePoseReverse(b_wrt_root));
+            assert(((b_wrt_root - a_wrt_root) - actual_end_rel_to_start).x.squaredNorm() < 1e-5);
+            #endif // !defined(CAUV_NO_DEBUG)
+
             // !!! TODO: better angle normalisation
             while(error.x[2] > M_PI)
                 error.x[2] -= M_PI*2;
-            while(error.x[2] < -M_PI)
+            while(error.x[2] <= -M_PI)
                 error.x[2] += M_PI*2;
 
             // if the error is too big (>45 degrees, or >3m and >4* the
             // distance) ignore it:
             float error_sqlength = error.x[0]*error.x[0] + error.x[1]*error.x[1]; 
-            float current_sqlength = actual_end_relative_to_start.x[0]*actual_end_relative_to_start.x[0] +
-                                     actual_end_relative_to_start.x[1]*actual_end_relative_to_start.x[1];
+            float current_sqlength = actual_end_rel_to_start.x[0]*actual_end_rel_to_start.x[0] +
+                                     actual_end_rel_to_start.x[1]*actual_end_rel_to_start.x[1];
             
             sum_weighted_error += error_sqlength * p->weight;
             p->weight = 5.0 / (5 + error_sqlength);
 
-            debug(3) << "error over loop:" << error << "(=" << p->a_to_b << "-"
-                     << actual_end_relative_to_start << ")";
+            debug(3) << "error over loop:" << error << "(=" << constraint_end_rel_to_start << "-"
+                     << actual_end_rel_to_start << ")";
 
             if(error_sqlength > 9 && error_sqlength > current_sqlength*9){
                 debug(3) << "ignore constraint: distance error too big";
                 ignored_constraints++;
                 continue;
             }
-            if(std::fabs(error.x[2])*(180/M_PI) > 45){
-                debug(3) << "ignore constraint: angle error too big";
+            if(std::fabs(error.x[2])*(180/M_PI) > 50){
+                debug(3) << "ignore constraint: angle error too big: "
+                         << std::fabs(error.x[2])*(180/M_PI) << "degrees";
                 ignored_constraints++;
                 continue;
             }
@@ -576,16 +643,16 @@ void GraphOptimiserV1::optimiseGraph(
             // (Olsen et al & Grisetti et al use weighting schemes based on the
             //  information matrix of each component constraint, but this will
             //  do to start with)
-            IncrementalPose d_pose = error * (lambda / num_nodes); // not num_nodes-1 since include the new constraint in distribution of error
+            IncrementalPose d_pose = error * (alpha / num_nodes); // not num_nodes-1 since include the new constraint in distribution of error
             visitBetweenNodes(ait->second, bit->second, AddPose(d_pose));
             
             // sanity checking:
             #if !defined(CAUV_NO_DEBUG)
-            IncrementalPose sanity_check_actual_end_relative_to_start;
+            IncrementalPose sanity_check_actual_end_rel_to_start;
             visitBetweenNodes(
-                ait->second, bit->second, AccumulatePose(sanity_check_actual_end_relative_to_start)
+                ait->second, bit->second, AccumulatePose(sanity_check_actual_end_rel_to_start)
             );
-            IncrementalPose sanity_check_error = p->a_to_b - actual_end_relative_to_start;            
+            IncrementalPose sanity_check_error = constraint_end_rel_to_start - sanity_check_actual_end_rel_to_start;            
             float sanity_check_error_sqlen = sanity_check_error.x[0]*sanity_check_error.x[0] +
                                              sanity_check_error.x[1]*sanity_check_error.x[1];
             assert(sanity_check_error_sqlen <= error_sqlength + 1e-8); // allow for a tiiiny bit of numerical error
@@ -593,11 +660,11 @@ void GraphOptimiserV1::optimiseGraph(
         }
         
         // error is from previous iteration...
-        info() << "iter:" << iter-1 << "weighted error:" << sum_weighted_error
+        info() << "iter:"  << std::string(mkStr() << std::setw(3) << iter+1)
+               << "alpha:" << std::string(mkStr() << std::setw(10) << alpha)
+               << "weighted error:" << std::string(mkStr() << std::setw(10) << sum_weighted_error)
                << "ignored:" << ignored_constraints << "/" << constraints.size()
                << "=" << 100*ignored_constraints/constraints.size() << "% constraints";
-
-        lambda *= 0.5;
     }
 
     // now convert back to global pose

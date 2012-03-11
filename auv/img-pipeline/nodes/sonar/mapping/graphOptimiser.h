@@ -75,6 +75,7 @@ struct IncrementalPose{
     }
 };
 
+/*
 struct IncrementalPoseConstraint{
     IncrementalPose a_to_b;
     location_ptr a;
@@ -91,6 +92,49 @@ struct IncrementalPoseConstraint{
 
     IncrementalPoseConstraint(IncrementalPose const& a_to_b, location_ptr a, location_ptr b)
         : a_to_b(a_to_b), a(a), b(b), tag(0), weight(1){
+    }
+};
+*/
+
+struct RelativePose{
+    Eigen::Vector3f x; // [dx, dy, dtheta] (radians)
+    
+    // have Eigen::Vector3f as member    
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    float const dx() const{ return x[0]; }
+    float const dy() const{ return x[1]; }
+    float const detheta() const{ return x[2]; }
+     
+    RelativePose() : x(Eigen::Vector3f::Zero()) { }
+    explicit RelativePose(Eigen::Vector3f const& v) : x(v) { }
+    explicit RelativePose(float dx, float dy, float dradians) : x(dx, dy, dradians) { }
+
+    static RelativePose from4dAffine(Eigen::Matrix4f const& a);
+    Eigen::Matrix4f to4dAffine() const;
+
+    Eigen::Matrix4f applyTo(Eigen::Matrix4f const& pose) const{
+        return pose * to4dAffine();
+    }
+
+};
+
+struct RelativePoseConstraint{
+    RelativePose b_wrt_a;
+    location_ptr a;
+    location_ptr b;
+
+    // tag is used as temporary storage for the 'level' of the constraint
+    // during graph optimisation
+    int tag;
+
+    float weight;    
+    
+    // RelativePose has Eigen::Vector3f as member
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
+    RelativePoseConstraint(RelativePose const& b_wrt_a, location_ptr a, location_ptr b)
+        : b_wrt_a(b_wrt_a), a(a), b(b), tag(0), weight(1){
     }
 };
 
