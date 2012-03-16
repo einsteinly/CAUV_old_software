@@ -36,6 +36,7 @@
 #include "fluidity/types.h"
 
 class QGraphicsScene;
+class QTimer;
 
 namespace cauv{
 
@@ -53,6 +54,7 @@ class Manager: public QObject,
     Q_OBJECT
     public:
         Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipeline_name);
+        ~Manager();
         
         // a shared pointer to this must be held when this is called!
         void init();
@@ -126,7 +128,7 @@ class Manager: public QObject,
         void clearNodes();
     
     protected Q_SLOTS:
-
+        void updateLayoutNow();
 
     private:
         template<typename message_T>
@@ -135,6 +137,8 @@ class Manager: public QObject,
         // if this is called at a high frequency animations will be disabled
         // for a while
         void _animAutoDisableTick();
+
+        void _layoutSoonIfNothingHappens();
 
         void _checkAddImageSource(node_id_t);
 
@@ -155,6 +159,8 @@ class Manager: public QObject,
         QPointF m_focus_scenepos;
 
         TimeStamp m_last_anim_auto_disable_check;
+
+        QTimer* m_layout_soon_timer;
 };
 
 class FocusPositionForwarder: public QObject{

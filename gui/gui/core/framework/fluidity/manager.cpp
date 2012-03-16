@@ -66,7 +66,8 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
       m_nodes(),
       m_pipeline_name(pipeline_name),
       m_image_sources(), 
-      m_focus_scenepos(0,0){
+      m_focus_scenepos(0,0),
+      m_layout_soon_timer(new QTimer()){
     m_animation_permitted.push(true);
 
     m_scene->installEventFilter(new FocusPositionForwarder(*this));
@@ -92,7 +93,15 @@ Manager::Manager(QGraphicsScene *scene, CauvNode *node, std::string const& pipel
             this, SLOT(onArcRemoved(ArcRemovedMessage_ptr)));
     connect(this, SIGNAL(receivedGuiImage(GuiImageMessage_ptr)),
             this, SLOT(onGuiImage(GuiImageMessage_ptr)));
+    
+    m_layout_soon_timer->setSingleShot(true);
+    connect(m_layout_soon_timer, SIGNAL(timeout()), this, SLOT(updateLayoutNow()));
 }
+
+Manager::~Manager(){
+    delete m_layout_soon_timer;
+}
+
 
 void Manager::init(){
     m_cauv_node->addMessageObserver(shared_from_this());
@@ -242,7 +251,7 @@ void Manager::onGraphDescription(GraphDescriptionMessage_ptr m){
         node->setOutputLinks(outputs_it->second);
     }
 
-    liquid::LayoutItems::updateLayout(m_scene);
+    _layoutSoonIfNothingHappens();
 }
 
 void Manager::onNodeParameters(NodeParametersMessage_ptr m){
@@ -270,6 +279,7 @@ void Manager::onArcAdded(ArcAddedMessage_ptr m){
     fnode_ptr to = lookup(m->to().node);
     if(from && to)
         from->connectOutputTo(m->from().output, to, m->to().input);
+    _layoutSoonIfNothingHappens();
 }
 
 void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
@@ -278,6 +288,7 @@ void Manager::onArcRemoved(ArcRemovedMessage_ptr m){
     fnode_ptr to = lookup(m->to().node);
     if(from && to)
         from->disconnectOutputFrom(m->from().output, to, m->to().input);
+    _layoutSoonIfNothingHappens();
 }
 
 void Manager::onGuiImage(GuiImageMessage_ptr m){
@@ -330,6 +341,7 @@ void Manager::removeNode(node_id_t const& id){
     if(i != m_nodes.right().end()){
         i->left->fadeAndRemove();
         m_nodes.right().erase(i);
+        _layoutSoonIfNothingHappens();
     }else{
         error() << "no such node:" << id;
     }
@@ -348,7 +360,9 @@ fnode_ptr Manager::addNode(NodeType::e const& type, node_id_t const& id){
         r = new FNode(*this, id, type);
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);
-        r->setPos(m_focus_scenepos + QPointF(qrand()%50, qrand()%50));        
+        r->setPos(m_focus_scenepos + QPointF(qrand()%50, qrand()%50));
+        // this is a bit annoying
+        //_layoutSoonIfNothingHappens();
     }
     return r;
 }
@@ -369,6 +383,8 @@ fnode_ptr Manager::addNode(NodeAddedMessage_ptr m){
         m_nodes.insert(node_id_map_t::value_type(r, id));
         m_scene->addItem(r);
         r->setPos(m_focus_scenepos + QPointF(qrand()%50, qrand()%50));
+        // this is a bit annoying        
+        //_layoutSoonIfNothingHappens();
     }
     return r;
 }
@@ -379,6 +395,10 @@ void Manager::clearNodes(){
     for(i = m_nodes.right().begin(); i != m_nodes.right().end(); i++)
         i->left->fadeAndRemove();
     m_nodes.clear();
+}
+
+void Manager::updateLayoutNow(){
+    liquid::LayoutItems::updateLayout(m_scene);
 }
 
 // !!! FIXME this is a bit untidy and not entirely the right way to do things:
@@ -393,11 +413,15 @@ void Manager::_animAutoDisableTick(){
 
         if(sdiff + 1e-6*musdiff < 0.2){
             pushAnimationPermittedState(false);
-            QTimer::singleShot(1000, this, SLOT(popAnimatonPermittedState()));
+            QTimer::singleShot(1000, this, SLOT(popAnimationPermittedState()));
         }
         
         m_last_anim_auto_disable_check = tick;
     }
+}
+
+void Manager::_layoutSoonIfNothingHappens(){
+    m_layout_soon_timer->start(500);
 }
 
 void Manager::_checkAddImageSource(node_id_t id){

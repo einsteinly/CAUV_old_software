@@ -33,7 +33,7 @@
 #include "util.h"
 #include "renderable.h"
 #include "buildMenus.h"
-#include "graphviz.h"
+#include "utility/graphviz.h"
 #include "renderable/overKey.h"
 #include "renderable/box.h"
 #include "renderable/node.h"

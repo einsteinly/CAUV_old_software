@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -20,6 +20,13 @@
 #include <QGraphicsItem>
 #include <QGraphicsScene>
 
+#include <QGraphicsItemAnimation>
+#include <QTimeLine>
+
+#include <utility/graphviz.h>
+#include <utility/bimap.h>
+#include <utility/string.h>
+
 #include "arcSource.h"
 #include "arcSink.h"
 #include "arc.h"
@@ -27,7 +34,7 @@
 
 // - static helper stuff
 // TODO: second derivative & NR optimisation
-struct EnergyChange{
+/*struct EnergyChange{
     QPointF  d_dl;
     //QMatrix2x2 d2_dx2;
     EnergyChange& operator+=(EnergyChange const& r){ d_dl += r.d_dl; return *this; }
@@ -50,7 +57,7 @@ static EnergyChange dEdXForLink(QPointF link){
         //QMatrix2x2()
     };
     return r;
-}
+}*/
 
 // - LayoutItems Implementation
 
@@ -93,8 +100,9 @@ std::set<liquid::Arc*> liquid::LayoutItems::g_arcs;
     }
 }*/
 
+/*
 static QPointF consensus(QList<QPointF> l){
-    /*const int Iters = 1;
+    const int Iters = 1;
     QPointF best;
     int best_support = 0;
     float support_mhdist = 100000;
@@ -115,11 +123,12 @@ static QPointF consensus(QList<QPointF> l){
             best = sac;
         }
     }
-    return best;*/
+    // Use support of best to produce better position:
     QPointF r(0,0);
     foreach(QPointF p, l)
-        r += p;
-    return r / l.size();
+        if(std::fabs((p - best).manhattanLength()) < support_mhdist)
+            r += p;
+    return r / best_support;
 }
 
 void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
@@ -169,6 +178,99 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
                 j->first->setPos(QPointF(consensus(j->second).toPoint()));
         }
     }
+}*/
+
+void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
+    namespace gv = graphviz;
+
+    std::map<AbstractArcSink*, QGraphicsItem*> sink_parent_lut;
+    std::map<AbstractArcSource*, QGraphicsItem*> src_parent_lut;
+    std::set<QGraphicsItem*> nodes;
+    cauv::bimap<std::string, QGraphicsItem*> node_names;
+    int next_name = 0;
+
+    for(std::set<AbstractArcSink*>::const_iterator i = g_sinks.begin(); i != g_sinks.end(); i++)
+        if((*i)->scene() == scene){
+            QGraphicsItem* node = (*i)->ultimateParent();
+            sink_parent_lut[*i] = node;
+            if(!nodes.count(*i)){
+                node_names.insert(node, mkStr() << next_name++);
+                nodes.insert(node);
+            }
+        }
+    for(std::set<AbstractArcSource*>::const_iterator i = g_srcs.begin(); i != g_srcs.end(); i++)
+        if((*i)->scene() == scene){
+            QGraphicsItem* node = (*i)->ultimateParent();        
+            src_parent_lut[*i] = node;
+            if(!nodes.count(*i)){
+                node_names.insert(node, mkStr() << next_name++);
+                nodes.insert(node);
+            }
+        }
+    
+    gv::Context c;
+
+    float dpi = 96;
+
+    gv::Graph g("nodes", AGDIGRAPH);
+    g.addGraphAttr("dpi", dpi);
+    g.addGraphAttr("rankdir", "LR");
+    g.addGraphAttr("nodesep", 1);
+    g.addGraphAttr("ranksep", 1);
+    g.addNodeAttr("shape","box");
+    g.addNodeAttr("height", 1);
+    g.addNodeAttr("width", 1);
+
+    foreach(QGraphicsItem* n, nodes)
+    {
+        gv::Node gn = g.node(node_names[n]);
+        gn.attr("width", n->boundingRect().width() / dpi);
+        gn.attr("height", n->boundingRect().height() / dpi);
+    }
+    foreach(Arc* a, g_arcs)
+    {   
+        QGraphicsItem* from_node = src_parent_lut[a->source()];
+        gv::Node gfrom_node = g.node(node_names[from_node]);
+        
+        foreach(AbstractArcSink* s, a->sinks()){
+            QGraphicsItem* to_node = sink_parent_lut[s];
+            gv::Node gto_node = g.node(node_names[to_node]);
+
+            g.edge(gfrom_node, gto_node);
+        }
+    }
+
+    gv::gvLayout(c.get(), g.get(), "dot");
+    gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
+    
+    QRectF layout_rect(0,0,0,0);
+    foreach(const gv::Node& gn, g.nodes)
+    {
+        QGraphicsItem* n = node_names[gn.name()];
+        QPointF pos = QPointF(gn.coord().x, gn.coord().y) - n->boundingRect().center();
+        layout_rect |= n->boundingRect().translated(pos);
+    }
+
+    // use a single timeline for all the animations
+    QTimeLine *timer = new QTimeLine(3000);
+    timer->setFrameRange(0, 100);
+
+    foreach(const gv::Node& gn, g.nodes)
+    {
+        QGraphicsItem* n = node_names[gn.name()];
+        QPointF pos = QPointF(gn.coord().x, gn.coord().y) - n->boundingRect().center();
+
+
+        QGraphicsItemAnimation *anim = new QGraphicsItemAnimation;
+        anim->setItem(n);
+        anim->setTimeLine(timer);
+        anim->setPosAt(0, n->pos());
+        anim->setPosAt(0.99, pos - layout_rect.center());
+    }
+
+    timer->start();
+ 
+    gv::gvFreeLayout(c.get(), g.get());
 }
 
 liquid::LayoutItems::LayoutItems(AbstractArcSink* sink){

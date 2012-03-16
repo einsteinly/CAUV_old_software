@@ -83,6 +83,8 @@ class bimap{
         size_t count(R const& key) const { return right().count(key); }
         
         void insert(value_type const& v){ m_map.insert(v); }
+        void insert(L const& l, R const& r){ m_map.insert(value_type(l, r)); }
+        void insert(R const& r, L const& l){ m_map.insert(value_type(l, r)); }
 
         void erase(R const& key){ m_map.template get<Left>().erase(key); }
         void erase(L const& key){ m_map.template get<Right>().erase(key); }
