@@ -233,7 +233,7 @@ void Arc::updateLayout(){
         m_ephemeral_end->hide();
         foreach(AbstractArcSink* ci, m_sinks){
             path.moveTo(split_point);
-            QPointF end_point(mapFromScene(ci->scenePos()));
+            QPointF end_point(mapFromScene(ci->scenePos()).toPoint());
             QPointF c1(split_point + QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             QPointF c2(end_point   - QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             path.cubicTo(c1, c2, end_point);
@@ -243,7 +243,7 @@ void Arc::updateLayout(){
         }
         foreach(AbstractArcSink* ci, m_pending_sinks){
             ppth.moveTo(split_point);
-            QPointF end_point(mapFromScene(ci->scenePos()));
+            QPointF end_point(mapFromScene(ci->scenePos()).toPoint());
             QPointF c1(split_point + QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             QPointF c2(end_point   - QPointF(15+std::fabs(end_point.x() - split_point.x())/2, 0));
             ppth.cubicTo(c1, c2, end_point);

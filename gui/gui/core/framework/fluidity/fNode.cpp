@@ -355,6 +355,7 @@ void FNode::reExec(){
 void FNode::duplicate(){
     // Don't duplicate output links - this would break the connections of the
     // duplicated node
+    debug() << "duplicate()" << m_type << m_input_links;
     manager().requestNode(m_type, m_input_links/*, m_output_links*/);
 }
 

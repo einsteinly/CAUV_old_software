@@ -79,7 +79,8 @@ ArcSink::ArcSink(ArcStyle const& of_style,
       m_arc_style(of_style),
       m_cutout_style(with_cutout),
       m_connectionDelegate(connectionDelegate),
-      m_highlight(new QGraphicsEllipseItem(this)),
+      m_highlight(new QGraphicsPathItem(this)),
+      m_back(new QGraphicsPathItem(this)),
       m_rect(
         0,
         -(1+m_cutout_style.main_cutout.cutout_base/2),
@@ -87,9 +88,62 @@ ArcSink::ArcSink(ArcStyle const& of_style,
         2+m_cutout_style.main_cutout.cutout_base
       ){
     
-    m_highlight->setRect(m_rect.adjusted(2,2,-2,-2));
+    
+    QPainterPath hl_path(m_rect.topLeft() - QPointF(9, 3));
+    hl_path.lineTo(m_rect.right(), 1);
+    hl_path.lineTo(m_rect.bottomLeft() - QPointF(9, -3));
+    hl_path.lineTo(m_rect.topLeft() - QPointF(9, 3));
+
+    //m_highlight->setRect(m_rect.adjusted(2,2,-2,-2));
     m_highlight->setPen(Qt::NoPen);
     m_highlight->setBrush(QBrush(QColor(50,255,50,160)));
+    m_highlight->setPath(hl_path);
+
+    m_highlight->setZValue(10);
+    
+    /* |
+     * |<--------->| cutout_depth
+     *  "-_                         -
+     *      "-_                     |
+     *          "-_  -              |
+     *             | | cutout_tip   | cutout_base
+     *          _-"  -              |
+     *      _-"                     |
+     *  _-"                         -
+     * |
+     * |
+     */
+    float main_depth = m_cutout_style.main_cutout.cutout_depth;
+    float main_tip = m_cutout_style.main_cutout.cutout_tip;
+    float main_base = m_cutout_style.main_cutout.cutout_base;
+    float second_depth = m_cutout_style.second_cutout.cutout_depth;
+    float second_tip = m_cutout_style.second_cutout.cutout_tip;
+    float second_base = m_cutout_style.second_cutout.cutout_base;
+    
+    // pixelcentrestupidalignmenthackhacksorryabouthis
+    QPointF offset(-0.5, 0.5);
+
+    QPainterPath back_path;
+    back_path.moveTo(offset + QPointF(0,          -main_base/2));
+
+    back_path.lineTo(offset + QPointF(main_depth, -main_tip/2));
+    back_path.lineTo(offset + QPointF(main_depth,  main_tip/2));
+    back_path.lineTo(offset + QPointF(0,           main_base/2));
+
+    back_path.lineTo(offset + QPointF(0,             second_base/2));
+    back_path.lineTo(offset + QPointF(second_depth,  second_tip/2));
+    back_path.lineTo(offset + QPointF(second_depth, -second_tip/2));
+    back_path.lineTo(offset + QPointF(0,            -second_base/2));
+
+    back_path.lineTo(offset + QPointF(0,          -main_base/2));    
+
+    m_back->setPen(m_cutout_style.style.pen);
+    m_back->setBrush(m_cutout_style.style.brush);
+    m_back->setPath(back_path);
+
+    m_back->setZValue(-10);
+    m_back->setFlag(ItemStacksBehindParent);
+
     
     // FIXME: !!! adding this graphics effect causes a segfault (somtimes) when
     // nodes containing arcsinks are removed from the scene: this is probably
@@ -111,6 +165,10 @@ ArcSink::ArcSink(ArcStyle const& of_style,
 
     // start out not presenting a highlight:
     doPresentHighlight(0);
+
+    #if !defined(CAUV_DEBUG_DRAW_LAYOUT)
+    setFlag(ItemHasNoContents);
+    #endif // !defined(CAUV_DEBUG_DRAW_LAYOUT)
 }
 ArcSink::~ArcSink(){
     debug(7) << "~ArcSink()"; 
@@ -122,15 +180,7 @@ bool ArcSink::willAcceptConnection(ArcSourceDelegate* from_source){
 
 void ArcSink::doPresentHighlight(qreal intensity){
     debug(8) << "doPresentHighlight:" << intensity;
-    setOpacity(std::max(intensity, 0.01));
-    /*
-    QPropertyAnimation *fadeHL = new QPropertyAnimation(this, "opacity");
-    // !!! can't set zero opacity, because that renders this item invisible,
-    // and then it won't be picked up by the proximity test!
-    fadeHL->setEndValue(std::max(intensity, 0.01));
-    fadeHL->setDuration(100);    
-    fadeHL->start();
-    */
+    m_highlight->setOpacity(std::max(intensity, 0.01));
 }
 
 ArcSink::ConnectionStatus ArcSink::doAcceptConnection(ArcSourceDelegate* from_source){

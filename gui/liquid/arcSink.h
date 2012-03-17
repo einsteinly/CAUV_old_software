@@ -109,7 +109,8 @@ class ArcSink: public AbstractArcSink,
         CutoutStyle const& m_cutout_style;
 
         ConnectionSink *m_connectionDelegate;
-        QGraphicsEllipseItem *m_highlight;
+        QGraphicsPathItem *m_highlight;
+        QGraphicsPathItem *m_back;
 
         QRect m_rect;
 };

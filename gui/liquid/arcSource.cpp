@@ -147,7 +147,7 @@ void AbstractArcSourceInternal::removeHighlights(){
 }
 
 void AbstractArcSourceInternal::checkAndHighlightSinks(QPointF scene_pos){
-    QPointF ds(40,40);
+    QPointF ds(120,120);
     QRectF near_field(scene_pos - ds, scene_pos + ds);
     QGraphicsScene *s = scene();
     if(!s){
@@ -165,7 +165,7 @@ void AbstractArcSourceInternal::checkAndHighlightSinks(QPointF scene_pos){
             near_set << k;
             QPointF d = k->scenePos() - scene_pos;
             qreal dl = d.x()*d.x() +d.y()*d.y();
-            k->doPresentHighlight(1.0/(1.0 + 0.002*dl));
+            k->doPresentHighlight(1.0/(1.0 + 0.001*dl));
         }
     debug(5) << "now highlighting" << near_set.size() << "items";
     // for each of the no longer highlighted items:

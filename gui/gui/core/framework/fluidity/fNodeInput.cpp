@@ -102,7 +102,8 @@ SubType FNodeImageInput::subType() const{
 liquid::CutoutStyle const& FNodeImageInput::cutoutStyleForSchedType(InputSchedType::e const& st){
     switch(st){
         case InputSchedType::Must_Be_New: return Required_Image_Input;
-        case InputSchedType::May_Be_Old: return Optional_Image_Input;
+        case InputSchedType::May_Be_Old:  return Optional_Image_Input;
+        case InputSchedType::Optional:    return Optional_Image_Input;
         default:
             error() << "unknown InputSchedtype:" << st;
             return Required_Image_Input;
@@ -206,10 +207,11 @@ void FNodeParamInput::modelValueChanged(QVariant value){
 liquid::CutoutStyle const& FNodeParamInput::cutoutStyleForSchedType(InputSchedType::e const& st){
     switch(st){
         case InputSchedType::Must_Be_New: return Required_Param_Input;
-        case InputSchedType::May_Be_Old: return Optional_Param_Input;
+        case InputSchedType::May_Be_Old:  return Optional_Param_Input;
+        case InputSchedType::Optional:    return Optional_Param_Input;
         default:
             error() << "unknown InputSchedtype:" << st;
-            return Required_Image_Input;
+            return Required_Param_Input;
     }
 }
 
