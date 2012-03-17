@@ -34,7 +34,9 @@ class GuiOutputNode: public OutputNode{
             
             // one parameter: image compression quality for network
             // transmission
-            registerParamID<int>("jpeg quality", 85); // 0-100
+            registerParamID<BoundedFloat>(
+                "jpeg quality", BoundedFloat(85, 0, 100, BoundedFloatType::Clamps)
+            ); // 0-100
         }
 
     protected:
@@ -42,10 +44,10 @@ class GuiOutputNode: public OutputNode{
             using boost::algorithm::replace_all_copy;
 
             image_ptr_t img = inputs["image_in"];
-            int qual = param<int>("jpeg quality");
+            float qual = param<BoundedFloat>("jpeg quality");
             
             debug(4) << "GuiOutputNode::doWork()" << *this;
-            img->serializeQuality(qual);
+            img->serializeQuality(int(qual));
             sendMessage(boost::make_shared<GuiImageMessage>(plName(), id(), *img), UNRELIABLE_MESS);
 
         }

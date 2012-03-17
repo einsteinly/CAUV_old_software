@@ -46,7 +46,8 @@ class PercentileNode: public Node{
             registerOutputID("ch3 value", int(0));
             
             // parameter: 
-            registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
+            //registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
+            registerParamID<BoundedFloat>("percentile", BoundedFloat(50,0,100,BoundedFloatType::Clamps), "percentile of pixel values");
         }
 
     protected:
@@ -146,7 +147,7 @@ class PercentileNode: public Node{
 
             augmented_mat_t img = inputs["image"]->augmentedMat();
             
-            float pct = param<float>("percentile");
+            float pct = param<BoundedFloat>("percentile");
             
             std::vector<int> channel_results = boost::apply_visitor(apply(pct), img);
 
