@@ -22,7 +22,8 @@ Default_Messages_To_Watch = (
     'PitchAutopilotParams',
     'SetMotorMap',
     'MotorRampRate',
-    'SonarControl'
+    'SonarControl',
+    'GeminiControl'
 )
 
 Ignore_Message_Attrs = (

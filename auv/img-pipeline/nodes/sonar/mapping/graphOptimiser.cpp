@@ -564,8 +564,6 @@ void GraphOptimiserV1::optimiseGraph(
     
     const float gamma = 1.0f;
     for(int iter = 0; iter < m_max_iters; iter++){
-        debug() << "SGD iter" << iter;
-        
         int ignored_constraints = 0;
         float sum_weighted_error = 0;
         const float alpha = 1.0 / (gamma * (1+iter));

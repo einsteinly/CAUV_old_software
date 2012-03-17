@@ -314,6 +314,21 @@ struct BoundedFloatBase
     eq max : float;
     eq type : BoundedFloatType;
 }
+struct ImageRegion
+{
+    eq top_left : floatXY;
+    eq size     : floatXY;
+}
+struct Range
+{
+    eq min : float;
+    eq max : float;
+}
+struct DynamicEnum
+{
+    eq value : string;
+    eq possible : list<string>;
+}
 class Image : <common/image.h>
 BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 
@@ -323,7 +338,11 @@ variant ParamValue
     list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>,
     BoundedFloat,
-    list<int32>
+    list<int32>,
+    ImageRegion,
+    Range,
+    floatXY,
+    DynamicEnum
 }
 
 group membership

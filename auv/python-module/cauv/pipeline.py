@@ -71,6 +71,56 @@ class FilterUnpickler(pickle.Unpickler):
     pickle.Unpickler.dispatch[pickle.REDUCE] = load_reduce
 
 
+def filterPercentileNodeParameters(params_in):
+    params_out = {}
+    for param, value in params_in.items():
+        if param == 'percentile' and isinstance(value, float):
+            params_out[param] = messaging.BoundedFloat(value, 0, 100, messaging.BoundedFloatType.Clamps)
+        else:
+            params_out[param] = value;
+    return params_out
+
+def filterClampXNodeParameters(params_in):
+    params_out = {}
+    range_max = None
+    range_min = None
+    for param, value in params_in.items():
+        if param == 'Max':
+            range_max = value
+        elif param == 'Min':
+            range_min = value
+        else:
+            params_out[param] = value;
+    params_out['Range'] = messaging.Range(float(range_min), float(range_max))
+    return params_out
+
+def filterLevelsNodeParameters(params_in):
+    params_out = {}
+    for param, value in params_in.items():
+        if param == 'black level' and isinstance(value, int):
+            params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
+        elif param == 'white level' and isinstance(value, int):
+            params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
+        else:
+            params_out[param] = value;
+    return params_out
+
+def filterGuiOutputNodeParameters(params_in):
+    params_out = {}
+    for param, value in params_in.items():
+        if param == 'jpeg quality' and isinstance(value, int):
+            params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
+        else:
+            params_out[param] = value;
+    return params_out
+
+NodeParam_Filters = {
+    messaging.NodeType.Percentile : filterPercentileNodeParameters,
+    messaging.NodeType.ClampInt   : filterClampXNodeParameters,
+    messaging.NodeType.ClampFloat : filterClampXNodeParameters,
+    messaging.NodeType.Levels     : filterLevelsNodeParameters,
+    messaging.NodeType.GuiOutput  : filterGuiOutputNodeParameters
+}
 
 class Model(messaging.MessageObserver):
     def __init__(self, node, pipeline_name = "default"):
@@ -196,7 +246,12 @@ class Model(messaging.MessageObserver):
                 warning('skipping parameters for node that was not added: %s' %
                         str(node.params))
                 continue
-            for param in node.params.keys():
+            if node.type in NodeParam_Filters:
+                warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
+                params = NodeParam_Filters[node.type](node.params)
+            else:
+                params = node.params
+            for param in params.keys():
                 if isinstance(param, messaging.LocalNodeInput):
                     param_key = param.input
                 else:
