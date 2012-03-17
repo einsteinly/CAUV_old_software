@@ -18,9 +18,9 @@
 #include <limits>
 
 #include <boost/tuple/tuple.hpp> // for tie()
+#include <boost/algorithm/string.hpp> // for iequals
 
 #include <pcl/point_types.h>
-#include <pcl/common/transforms.h>
 /*#ifdef CAUV_CLOUD_DUMP
 #include <pcl/io/pcd_io.h>
 #endif
@@ -349,12 +349,18 @@ void SonarSLAMNode::init(){
     registerParamID("overlap threshold", float(0.3), "overlap of convex hulls required to consider matching a pair of scans");
     registerParamID("keyframe spacing", float(2.0), "minimum distance between keyframes");
 
-    // ICP Parameters:
+    // Registration Parameters:
     registerParamID("max iters", int(20), "");
     registerParamID("transform eps", float(1e-9), "difference between transforms in successive iters for convergence");
     registerParamID("euclidean fitness", float(1e-7), "max error between consecutive steps for non-convergence");
+    // ICP only:
     registerParamID("reject threshold", float(0.5), "RANSAC outlier rejection distance");
     registerParamID("max correspond dist", float(1), "");
+    // ICP / NDT / NDT non-linear
+    registerParamID("match algorithm", std::string("ICP"), "ICP, Non-Linear ICP, or NDT");
+    
+    // Graph Optimisation Parameters
+    registerParamID("graph iters", int(10), "Iterations of graph optimisation per key-scan");
 
     // Visualisation Parameters:
     //registerParamID("-render resolution", float(400), "in pixels");
@@ -401,6 +407,9 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     const float transform_eps       = param<float>("transform eps");
     const float reject_threshold    = param<float>("reject threshold");
     const float max_correspond_dist = param<float>("max correspond dist");
+    const std::string match_algorithm = param<std::string>("match algorithm");    
+
+    const int graph_iters = param<int>("graph iters");
 
     const float score_thr   = param<float>("score threshold");
     const float delta_theta = param<float>("delta theta");
@@ -431,13 +440,30 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
     cloud_ptr scan = boost::make_shared<cloud_t>(
         keypoints, now(), SlamCloudPart<pt_t>::FilterResponse(weight_test)
     );
+    
+    boost::shared_ptr< PairwiseMatcher<pt_t> > scan_matcher;
+    if(boost::iequals(match_algorithm, "NDT")){
+        scan_matcher = makeNDTPairwiseMatcherShared(
+            max_iters, euclidean_fitness, transform_eps, score_thr
+        );
+    }else if(boost::iequals(match_algorithm, "ICP")){
+        scan_matcher = makeICPPairwiseMatcherShared(
+            max_iters, euclidean_fitness, transform_eps,
+            reject_threshold, max_correspond_dist, score_thr
+        );
+    }else if(boost::iequals(match_algorithm, "non-linear ICP")){
+        scan_matcher = makeICPNonLinearPairwiseMatcherShared(
+            max_iters, euclidean_fitness, transform_eps,
+            reject_threshold, max_correspond_dist, score_thr
+        );
+    }else{
+        throw parameter_error(
+            "invalid scan matching method: \""+ match_algorithm +
+            "\": valid methods are ICP, non-linear ICP, NDT"
+        );
+    }
 
-    ICPPairwiseMatcher<pt_t> scan_matcher(
-        max_iters, euclidean_fitness, transform_eps,
-        reject_threshold, max_correspond_dist, score_thr
-    );
-
-    GraphOptimiserV1 graph_optimiser;
+    GraphOptimiserV1 graph_optimiser(graph_iters);
 
     Eigen::Matrix4f relative_transformation_guess = Eigen::Matrix4f::Identity();
     relative_transformation_guess.block<3,3>(0,0) = Eigen::Matrix3f(
@@ -448,7 +474,7 @@ void SonarSLAMNode::doWork(in_image_map_t& inputs, out_map_t& r){
 
     const float confidence = m_impl->registerScan(
         scan,
-        scan_matcher,
+        *scan_matcher,
         graph_optimiser,
         relative_transformation_guess,
         global_transformation

@@ -19,6 +19,8 @@
 #include <string>
 #include <stdint.h>
 
+#include <boost/cstdint.hpp>
+
 class MakeString{
     public:
         MakeString()

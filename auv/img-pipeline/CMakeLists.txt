@@ -54,9 +54,21 @@ if (CAUV_POINTCLOUDS)
 
     set (CONDITIONAL_SOURCE_FILES ${CONDITIONAL_SOURCE_FILES}
         nodes/sonar/sonarSLAM.cpp
+        nodes/sonar/mapping/scanMatching.cpp        
         nodes/sonar/mapping/graphOptimiser.cpp
     )
     set (CONDITIONAL_LIBS ${CONDITIONAL_LIBS} ${PCL_LIBS} ${CLIPPER_LIBRARY})
+
+    add_executable (
+        test_graphOptimiser
+        nodes/sonar/mapping/test_graphOptimiser.cpp
+        nodes/sonar/mapping/graphOptimiser.cpp
+    )
+    target_link_libraries (
+        test_graphOptimiser
+        common
+        ${CONDITIONAL_LIBS}
+    )
 endif()
 
 # sources:
@@ -89,3 +101,5 @@ target_link_libraries (
     ${CONDITIONAL_LIBS}
 )
 depends_on_messages(img-pipeline)
+
+

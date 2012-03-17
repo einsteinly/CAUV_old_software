@@ -20,6 +20,7 @@ class script(aiScript):
             if i.lower() == 'n':
                 break
             elif i.lower() == 'm':
+                self.request_control_and_wait()
                 debug('calling self.auv.strafe()...')
                 self.auv.strafe(42)
                 debug('calling self.auv.prop()...')
@@ -29,6 +30,7 @@ class script(aiScript):
                 self.auv.strafe(0)
                 self.auv.prop(0)
                 debug('self.auv: %s' % str(self.auv))
+                self.drop_control()
             else:
                 print self.options.initial, self.options.variable
                 time.sleep(1)
