@@ -111,9 +111,9 @@ void AbstractArcSourceInternal::mouseReleaseEvent(QGraphicsSceneMouseEvent *e){
     debug(5) << "AbstractArcSourceInternal::mouseReleaseEvent";
     if(e->button() & Qt::LeftButton){
         removeHighlights();
-        QList<QGraphicsItem*> items_at_drop = scene()->items(
-            e->scenePos(), Qt::IntersectsItemShape, Qt::AscendingOrder
-        );
+        QPointF ds(8,8);
+        QRectF near_field(e->scenePos() - ds, e->scenePos() + ds);
+        QList<QGraphicsItem *> items_at_drop = scene()->items(near_field, Qt::IntersectsItemShape);
         AbstractArcSink* sink;
         foreach(QGraphicsItem* item, items_at_drop)
             if((sink = dynamic_cast<AbstractArcSink*>(item)))
