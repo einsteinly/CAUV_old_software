@@ -103,7 +103,7 @@ void liquid::LayoutItems::updateLayout(QGraphicsScene* scene){
     }
 
     gv::gvLayout(c.get(), g.get(), "dot");
-    gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
+    //gv::gvRenderFilename(c.get(), g.get(), "png", "out.png");
     
     QRectF layout_rect(0,0,0,0);
     foreach(const gv::Node& gn, g.nodes)
