@@ -156,8 +156,65 @@ class SlamCloudLocation{
 };
 
 template<typename PointT>
+class KDTreeCachingCloud: public pcl::PointCloud<PointT>,
+                          public boost::enable_shared_from_this< KDTreeCachingCloud<PointT> >{
+    public:
+        // - public types
+        typedef boost::shared_ptr<SlamCloudPart<PointT> > Ptr;
+        typedef boost::shared_ptr<const SlamCloudPart<PointT> > ConstPtr;
+        typedef pcl::PointCloud<PointT> base_cloud_t;
+        typedef typename base_cloud_t::Ptr base_cloud_ptr;
+
+        using boost::enable_shared_from_this< KDTreeCachingCloud<PointT> >::shared_from_this;
+    
+        KDTreeCachingCloud()
+            : pcl::PointCloud<PointT>(), m_kdtree(), m_kdtree_invalid(true){
+        }
+
+        inline void push_back(PointT const& p){
+            base_cloud_t::push_back(p);
+            m_kdtree_invalid = true;
+        }
+
+        int nearestKSearch(PointT const& point,
+                            int k,
+                            std::vector<int> &k_indices,
+                            std::vector<float> &k_sqr_distances){
+            ensureKdTree();
+            return m_kdtree.nearestKSearch(point, k, k_indices, k_sqr_distances);
+        }
+
+        float nearestSquaredDist(PointT const& point){
+            std::vector<int> k_indices(1);
+            std::vector<float> k_sqr_distances(1);
+            ensureKdTree();
+            m_kdtree.nearestKSearch(point, 1, k_indices, k_sqr_distances);
+            return k_sqr_distances[0];
+        }
+    
+        void invalidateKDTree(){
+            m_kdtree_invalid = true;
+        }
+        
+    private:
+        void ensureKdTree(){
+            if(m_kdtree_invalid){
+                m_kdtree_invalid = false;
+                m_kdtree.setInputCloud(shared_from_this());
+                // clear the circular reference just created through call to
+                // base version of setInputCloud, which doesn't clobber the
+                // kdtree...
+                m_kdtree.pcl::KdTree<PointT>::setInputCloud(base_cloud_ptr());
+           }
+        }
+
+        pcl::KdTreeFLANN<PointT> m_kdtree;
+        bool m_kdtree_invalid;
+};
+
+template<typename PointT>
 class SlamCloudPart: public SlamCloudLocation,
-                     public pcl::PointCloud<PointT>,
+                     public KDTreeCachingCloud<PointT>,
                      public boost::enable_shared_from_this< SlamCloudPart<PointT> >{
     public:
         // - public types
@@ -185,13 +242,10 @@ class SlamCloudPart: public SlamCloudLocation,
         template<typename Callable>
         SlamCloudPart(std::vector<KeyPoint> const& kps, TimeStamp const& t, Callable const& filter)
             : SlamCloudLocation(t),
-              pcl::PointCloud<PointT>(),
               boost::enable_shared_from_this< SlamCloudPart<PointT> >(),
               m_point_descriptors(),
               m_keypoint_indices(),
               m_keypoint_goodness(kps.size(), 0),
-              m_kdtree(),
-              m_kdtree_invalid(true),
               m_local_convexhull_verts(),
               m_local_convexhull_cloud(),
               m_local_convexhull_invalid(true){
@@ -229,15 +283,6 @@ class SlamCloudPart: public SlamCloudLocation,
             pcl::transformPointCloud(*m_local_convexhull_cloud, *hull_points, globalTransform());
         }
 
-
-        int nearestKSearch(const PointT &point,
-                            int k,
-                            std::vector<int> &k_indices,
-                            std::vector<float> &k_sqr_distances){
-            ensureKdTree();
-            return m_kdtree.nearestKSearch(point, k, k_indices, k_sqr_distances);
-        }
-
         std::vector<descriptor_t>& descriptors(){ return m_point_descriptors; }
         std::vector<descriptor_t> const& descriptors() const{ return m_point_descriptors; }
 
@@ -256,10 +301,9 @@ class SlamCloudPart: public SlamCloudLocation,
         }
 
         inline void push_back(PointT const& p, descriptor_t const& d, std::size_t const& idx){
-            base_cloud_t::push_back(p);
+            KDTreeCachingCloud<PointT>::push_back(p);
             m_point_descriptors.push_back(d);
             m_keypoint_indices.push_back(idx);
-            m_kdtree_invalid = true;
             m_local_convexhull_invalid = true;
         }
         
@@ -270,22 +314,11 @@ class SlamCloudPart: public SlamCloudLocation,
 
     protected:
         virtual void transformationChanged(){
-            m_kdtree_invalid = true;
+            this->invalidateKDTree();
             m_local_convexhull_invalid = true;
         }
 
     private:
-        void ensureKdTree(){
-            if(m_kdtree_invalid){
-                m_kdtree_invalid = false;
-                m_kdtree.setInputCloud(shared_from_this());
-                // clear the circular reference just created through call to
-                // base version of setInputCloud, which doesn't clobber the
-                // kdtree...
-                m_kdtree.pcl::KdTree<PointT>::setInputCloud(base_cloud_ptr());
-           }
-        }
-
         void ensureLocalConvexHull(){
             if(m_local_convexhull_invalid){
                 m_local_convexhull_invalid = false;
@@ -313,9 +346,6 @@ class SlamCloudPart: public SlamCloudLocation,
         // 1 = keypoint turned out to be good, 0 = keypoint turned out to be
         // bad
         std::vector<int> m_keypoint_goodness;
-
-        pcl::KdTreeFLANN<PointT> m_kdtree;
-        bool m_kdtree_invalid;
 
         std::vector<pcl::Vertices> m_local_convexhull_verts;
         base_cloud_ptr m_local_convexhull_cloud;
