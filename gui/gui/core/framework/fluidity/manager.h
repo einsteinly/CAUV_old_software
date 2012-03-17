@@ -121,6 +121,8 @@ class Manager: public QObject,
         void pushAnimationPermittedState(bool permitted);
         void popAnimationPermittedState();
 
+        void considerUpdatingLayout();
+
     protected:
         void removeNode(node_id_t const& id);
         fnode_ptr addNode(NodeType::e const& type, node_id_t const& id);

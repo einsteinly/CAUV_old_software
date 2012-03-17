@@ -34,7 +34,7 @@
 
 using namespace liquid;
 
-const static QSizeF Minimum_Size = QSizeF(100, 40);
+QSizeF LiquidNode::Minimum_Size = QSizeF(100, 40);
 
 LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     : QGraphicsObject(parent),
@@ -69,7 +69,7 @@ LiquidNode::LiquidNode(NodeStyle const& style, QGraphicsItem *parent)
     m_resizeHandle->setPen(m_style.resize_handle_pen);
 
 
-    Button* close_button = new Button(
+    Button *close_button = new Button(
        QRectF(0,0,24,24), QString(":/resources/icons/x_button"), NULL, this
     );
     m_header->addButton("close", close_button);
@@ -165,29 +165,39 @@ void LiquidNode::setSize(QSizeF const& size){
 
     // this will cause updateLayout to be called via the geometryChanged
     // signal, which in turn actually sets the new size
-    const float header_height = m_style.header.height + m_style.bl_radius/2;
+    const double header_height = m_style.header.height + m_style.bl_radius/2;
+    const double header_width = m_header->minimumWidth();
     m_contentWidget->setGeometry(
         0, m_style.header.height,
-        size.width(), size.height() - header_height
+        std::max(size.width(), header_width), std::max(0.0, size.height() - header_height)
     );
     //m_buttonsWidget->setGeometry((cornerRadius()/2), -17,
     //                             size.width()-(cornerRadius()/2), 30);
 }
 
 void LiquidNode::resized(){
-    debug(8) << "LiquidNode::resized()" << m_resizeHandle->newSize();
-    QSizeF newSize = Minimum_Size;
-    if(m_resizeHandle->newSize().width() >= newSize.width())
-        newSize.setWidth(m_resizeHandle->newSize().width());
-    if(m_resizeHandle->newSize().height() >= newSize.height())
-        newSize.setHeight(m_resizeHandle->newSize().height());
-    setSize(newSize);
+    if(m_resizeHandle->isVisible()){
+        debug(6) << "LiquidNode::resized()" << m_resizeHandle->newSize();
+        QSizeF newSize = Minimum_Size;
+        if(m_resizeHandle->newSize().width() >= newSize.width())
+            newSize.setWidth(m_resizeHandle->newSize().width());
+        if(m_resizeHandle->newSize().height() >= newSize.height())
+            newSize.setHeight(m_resizeHandle->newSize().height());
+        setSize(newSize);
+    }else{
+        debug(6) << "LiquidNode::resized() NOT resized: handle not active";
+    }
 }
 
 
 void LiquidNode::setClosable(bool close){
-    // !! TODO
-    //m_closeButton->setVisible(close);
+    Button *closebutton = m_header->getButton("close");
+    if(closebutton){
+        if(close)
+            closebutton->show();
+        else
+            closebutton->hide();
+    }
 }
 
 void LiquidNode::setResizable(bool sizeable){
@@ -245,6 +255,7 @@ void LiquidNode::layoutChanged(){
 }
 
 void LiquidNode::updateLayout(){
+    m_contentLayout->invalidate();
     setSizeFromContents();
     layoutChanged();
 }

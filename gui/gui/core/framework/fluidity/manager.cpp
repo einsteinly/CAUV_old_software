@@ -136,6 +136,10 @@ void Manager::popAnimationPermittedState(){
     m_animation_permitted.pop();
 }
 
+void Manager::considerUpdatingLayout(){
+    _layoutSoonIfNothingHappens();
+}
+
 void Manager::setFocusPosition(QPointF p){
     m_focus_scenepos = QPointF(qRound(p.x()), qRound(p.y()));
 }

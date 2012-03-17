@@ -19,6 +19,8 @@
 #include <QSizeF>
 #include <QRectF>
 
+#include <ostream>
+
 template<typename char_T, typename traits>
 std::basic_ostream<char_T, traits>& operator<<(
     std::basic_ostream<char_T, traits>& os, QPointF const& p){

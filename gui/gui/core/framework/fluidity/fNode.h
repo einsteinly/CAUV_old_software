@@ -92,6 +92,7 @@ class FNode: public liquid::LiquidNode,
         
         virtual void reExec();
         virtual void duplicate();
+        virtual void toggleCollapsed();
 
     protected:
         FNodeOutput* output(std::string const& id);
@@ -112,6 +113,8 @@ class FNode: public liquid::LiquidNode,
         // this is not the case while arcs are pending addition or removal.
         std::vector<cauv::NodeInputArc> m_input_links; // includes parameters
         std::vector<cauv::NodeOutputArc> m_output_links;
+
+        bool m_collapsed;
 };
 
 } // namespace f

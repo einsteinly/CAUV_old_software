@@ -58,7 +58,10 @@ class FNodeInput: public liquid::ArcSinkLabel,
         virtual ConnectionStatus doAcceptConnection(liquid::ArcSourceDelegate* from_source);
 
     public:
-        void addWidget(QGraphicsWidget* w);    
+        void addWidget(QGraphicsWidget* w);
+        void removeWidget(QGraphicsWidget* w);
+
+        virtual void setCollapsed(bool state);
 };
 
 
@@ -76,8 +79,11 @@ class FNodeParamInput: public FNodeInput{
     Q_OBJECT
     public:
         FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node);
+        ~FNodeParamInput();
         virtual OutputType::e ioType() const;
         virtual SubType subType() const;
+
+        virtual void setCollapsed(bool state);
 
         void setValue(ParamValue const& v);
 

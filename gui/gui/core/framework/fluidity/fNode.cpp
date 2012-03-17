@@ -123,7 +123,8 @@ FNode::FNode(Manager& m, node_id_t id, NodeType::e const& type)
     : liquid::LiquidNode(F_Node_Style, NULL), 
       ManagedElement(m),
       m_node_id(id),
-      m_type(type){
+      m_type(type),
+      m_collapsed(false){
     initButtons();
     setType(type);
 
@@ -139,7 +140,8 @@ FNode::FNode(Manager& m, boost::shared_ptr<NodeAddedMessage const> p)
     : liquid::LiquidNode(F_Node_Style, NULL),
       ManagedElement(m),
       m_node_id(p->nodeId()),
-      m_type(p->nodeType()){
+      m_type(p->nodeType()),
+      m_collapsed(false){
     initButtons();
     setType(p->nodeType());
     m_header->setInfo(mkQStr() << p->nodeId() << ": 0.0MB/s 0Hz");
@@ -359,6 +361,18 @@ void FNode::duplicate(){
     manager().requestNode(m_type, m_input_links/*, m_output_links*/);
 }
 
+void FNode::toggleCollapsed(){
+    m_collapsed = !m_collapsed;
+    for(int i = 0; i < m_contentLayout->count(); i++){
+        FNodeInput* ip = dynamic_cast<FNodeInput*>(m_contentLayout->itemAt(i)->graphicsItem());
+        if(ip)
+            ip->setCollapsed(m_collapsed);
+    }
+    setSize(Minimum_Size);
+    //updateLayout();
+    manager().considerUpdatingLayout();
+}
+
 FNodeOutput* FNode::output(std::string const& id){
     str_out_map_t::const_iterator i = m_outputs.find(id);
     if(i != m_outputs.end())
@@ -397,5 +411,6 @@ void FNode::initButtons(){
     connect(this, SIGNAL(closed(node_id_t const&)), &manager(), SLOT(requestRemoveNode(node_id_t const&)));
     connect(dupbutton, SIGNAL(pressed()), this, SLOT(duplicate()));
     connect(execbutton, SIGNAL(pressed()), this, SLOT(reExec()));
+    connect(collapsebutton, SIGNAL(pressed()), this, SLOT(toggleCollapsed()));
 }
 

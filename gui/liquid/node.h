@@ -87,6 +87,8 @@ protected:
     QList<RequiresCutout*> m_items_requiring_cutout;
 
     NodeStyle const& m_style;
+
+    static QSizeF Minimum_Size;
 };
 
 } // namespace liquid

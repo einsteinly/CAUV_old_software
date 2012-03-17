@@ -55,8 +55,16 @@ FNodeInput::FNodeInput(Manager& m,
 FNodeInput::~FNodeInput(){
 }
 
+void FNodeInput::setCollapsed(bool state){
+    Q_UNUSED(state);
+}
+
 void FNodeInput::addWidget(QGraphicsWidget* w){
     vLayout()->addItem(w);
+}
+
+void FNodeInput::removeWidget(QGraphicsWidget* w){
+    vLayout()->removeItem(w);
 }
 
 bool FNodeInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
@@ -164,6 +172,13 @@ FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode*
       m_view(NULL),
       m_view_proxy(NULL){
 }
+FNodeParamInput::~FNodeParamInput(){
+    // if it isn't in the layout, then need to delete the view proxy
+    for(int i = 0; i < vLayout()->count(); i++)
+        if(vLayout()->itemAt(i) == m_view_proxy)
+            return;
+    m_view_proxy->deleteLater();
+}
 
 OutputType::e FNodeParamInput::ioType() const{
     return OutputType::Parameter;
@@ -181,6 +196,19 @@ void FNodeParamInput::setValue(ParamValue const& v){
         initView();
     }
     m_model_node->update(variantToQVariant(v));
+}
+
+void FNodeParamInput::setCollapsed(bool collapsed){
+    if(collapsed){
+        removeWidget(m_view_proxy);
+        m_view_proxy->hide();
+    }else{
+        addWidget(m_view_proxy);
+        m_view_proxy->show();
+    }
+    // update the layout here before returning to caller (so everything is
+    // up-to-date)
+    vLayout()->activate();
 }
 
 void FNodeParamInput::setEditable(bool editable){
