@@ -170,6 +170,7 @@ struct LocalNodeInput
     eq cmp subType : int32;
     // NB: schedType is excluded from comparison and equality testing
     schedType : InputSchedType;
+    compatibleSubTypes : list<int32>;
 }
 struct NodeOutput
 {
@@ -314,6 +315,21 @@ struct BoundedFloatBase
     eq max : float;
     eq type : BoundedFloatType;
 }
+struct ImageRegion
+{
+    eq top_left : floatXY;
+    eq size     : floatXY;
+}
+struct Range
+{
+    eq min : float;
+    eq max : float;
+}
+struct DynamicEnum
+{
+    eq value : string;
+    eq possible : list<string>;
+}
 class Image : <common/image.h>
 BoundedFloadBase subclass BoundedFloat : <common/bounded_float.h>
 
@@ -323,7 +339,23 @@ variant ParamValue
     list<Corner>, list<Line>, list<Circle>, list<float>,
     list<KeyPoint>,
     BoundedFloat,
-    list<int32>
+    list<int32>,
+    ImageRegion,
+    Range,
+    floatXY,
+    DynamicEnum
+}
+// !!! should generate this for each variant
+enum ParamValueType : int8 {
+    int32Type, floatType, stringType, boolType,
+    listCornerType, listLineType, listCircleType, listFloatType,
+    listKeyPointType,
+    BoundedFloatType,
+    listint32Type,
+    ImageRegionType,
+    RangeType,
+    floatXYType,
+    DynamicEnumType,
 }
 
 group membership

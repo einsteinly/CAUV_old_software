@@ -48,16 +48,77 @@ namespace cauv{
 namespace imgproc{
 
 /* Getter for ParamValue. Specialised for the case where we want the
- * actual variant
+ * actual variant. This is also the mechanism by which compatible types are
+ * converted.
+ * The compatible type conversions here should correspond to the
+ * CompatibleSubTypes visitor defined below.
  */
 template<typename T>
 inline T getValue(const ParamValue& v) {
     return boost::get<T>(v);
 }
 template<>
+inline float getValue<float>(const ParamValue& v) {
+    try{
+        return boost::get<float>(v);
+    }catch(boost::bad_get&){
+        return boost::get<BoundedFloat>(v);
+    }
+}
+template<>
+inline int32_t getValue<int32_t>(const ParamValue& v) {
+    try{
+        return boost::get<int32_t>(v);
+    }catch(boost::bad_get&){
+        return int32_t(float(boost::get<BoundedFloat>(v)));
+    }
+}
+template<>
+inline BoundedFloat getValue<BoundedFloat>(const ParamValue& v) {
+    try{
+        return boost::get<BoundedFloat>(v);
+    }catch(boost::bad_get&){}
+
+    // in these cases no range information is available!
+    try{
+        return BoundedFloat(boost::get<float>(v), 0, 0, BoundedFloatType::Clamps);
+    }catch(boost::bad_get&){}
+
+    return BoundedFloat(boost::get<int32_t>(v), 0, 0, BoundedFloatType::Clamps);
+}
+template<>
 inline ParamValue getValue<ParamValue>(const ParamValue& v) {
     return v;
 }
+
+
+struct CompatibleSubTypes: public boost::static_visitor< std::vector<int32_t> >{
+    template<typename T>
+    std::vector<int32_t> operator()(T const& v) const{
+        std::vector<int32_t> r;
+        r.push_back(ParamValue(v).which());
+        return r;
+    }
+    std::vector<int32_t> operator()(float const&) const{
+        std::vector<int32_t> r;
+        r.push_back(ParamValue(float()).which());
+        r.push_back(ParamValue(BoundedFloat()).which());
+        return r;
+    }
+    std::vector<int32_t> operator()(int32_t const&) const{
+        std::vector<int32_t> r;
+        r.push_back(ParamValue(int32_t()).which());
+        r.push_back(ParamValue(BoundedFloat()).which());
+        return r;
+    }
+    std::vector<int32_t> operator()(BoundedFloat const&) const{
+        std::vector<int32_t> r;
+        r.push_back(ParamValue(BoundedFloat()).which());
+        r.push_back(ParamValue(float()).which());
+        r.push_back(ParamValue(int32_t()).which());
+        return r;
+    }
+};
 
 // !!! TODO: remove these and scope as appropriate
 using InputSchedType::Must_Be_New;
@@ -232,11 +293,15 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             NodeInputStatus::e status;
             InputType input_type;
             mutable InternalParamValue param_value;
+            std::set<int32_t> compatible_subtypes;
             std::string tip;
             input_ptr synchronised_with;
 
             Input(InputSchedType::e s);
-            Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip);
+            Input(InputSchedType::e s,
+                  ParamValue const& default_value,
+                  std::string const& tip,
+                  std::vector<int32_t> const& compatible_subtypes);
 
             static input_ptr makeImageInputShared(InputSchedType::e const& st = Must_Be_New);
             static input_ptr makeParamInputShared(ParamValue const& default_value,
@@ -412,7 +477,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                         // check to see if the node should be re-scheduled
                         setNewInput(p);
                     }else{
-                        error() << p << "has different type to current value" << ip->param_value;
+                        error() << p << ":" << v << "has different type to current value" << ip->param_value;
                     }
                 }else{
                     error() << p << "is an input not a parameter";

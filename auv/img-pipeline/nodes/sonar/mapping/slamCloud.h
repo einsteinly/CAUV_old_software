@@ -88,8 +88,10 @@ class SlamCloudGraph{
               m_min_initial_area(5), // m^2
               m_good_keypoint_distance(0.2),
               m_max_speed(2.0),
-              m_max_considered_overlaps(5),
-              m_graph_optimisation_count(0){
+              m_max_considered_overlaps(3),
+              m_rotation_scale(2),
+              m_graph_optimisation_count(0),
+              m_key_scan_locations(new KDTreeCachingCloud<PointT>()){
         }
 
         void reset(){
@@ -97,6 +99,7 @@ class SlamCloudGraph{
             m_all_scans.clear();
             m_key_constraints.clear();
             m_graph_optimisation_count = 0;
+            m_key_scan_locations->clear();
         }
 
         int graphOptimisationsCount() const{
@@ -276,18 +279,21 @@ class SlamCloudGraph{
             
             // this scan is a key scan if it is more than a minimum distance
             // from other key-scans
-            // !!! TODO: include keyscans other than the direct parent in this
-            // check:
-            Eigen::Vector3f relative_displacement = relative_transformation.block<3,1>(0, 3);
-            if(relative_displacement.norm() > m_keyframe_spacing){
+            const Eigen::Vector3f xyr = xytFromScanTransformation(p->globalTransform());
+            const PointT xyr_space_loc = PointT(xyr[0], xyr[1], xyr[2]);
+            const float squared_keyframe_spacing = m_keyframe_spacing * m_keyframe_spacing;
+            if(m_key_scan_locations->nearestSquaredDist(xyr_space_loc) > squared_keyframe_spacing){
                 // key scans are transformed to global coordinate
                 // frame
                 p->setRelativeTransform(p->globalTransform());
                 p->setRelativeToNone();
                 m_key_scans.push_back(p);
+                m_key_scan_locations->points.push_back(PointT(xyr_space_loc));
                 m_all_scans.push_back(p);
                 debug() << "key frame at"
-                        << transformation.block<3,1>(0, 3).transpose();
+                        << transformation.block<3,1>(0, 3).transpose()
+                        << ":" << std::sqrt(squared_keyframe_spacing)
+                        << "from previous scans";
 
                 // If this is a new key scan, we need to re-run the graph
                 // optimiser:
@@ -311,7 +317,7 @@ class SlamCloudGraph{
 
 
             // Set keypoint goodness for training:
-            // !!! TODO: this should include more than just points from the direct parent
+            // !!! TODO: this should ideally include more than just points from the direct parent
 
             // 'transformed' is in the same coordinate frame as
             // parent_map_cloud, so we can easily find nearest neighbors in
@@ -447,6 +453,19 @@ class SlamCloudGraph{
                    (area(p) > m_min_initial_area);
         }
 
+        /* Convert 4d affine transformation of a scan origin into 3D (x, y,
+         * scaled rotation) space in which a constant distance metric is used
+         * to decide on placement of new key scans
+         */
+        Eigen::Vector3f xytFromScanTransformation(Eigen::Matrix4f const& a) const{
+            const Eigen::Matrix2f r = a.block<2,2>(0, 0);
+            const Eigen::Vector2f t = a.block<2,1>(0, 3);
+
+            const Eigen::Vector2f tmp = r * Eigen::Vector2f(1,0);
+            const float rz = std::atan2(tmp[1], tmp[0]);
+            return Eigen::Vector3f(t[0], t[1], m_rotation_scale * rz);
+        }
+
         /* add constraints based on relative transformations, return the added
          * constraints as well as adding them to key_constraints
          */
@@ -478,6 +497,10 @@ class SlamCloudGraph{
         float m_good_keypoint_distance;
         float m_max_speed;
         int m_max_considered_overlaps;
+        // Used to map rotation to a Euclidean distance when deciding to place
+        // a new keyframe if:
+        // m_rotation_scale * (rotation_A - rotation_B) >= m_keyframe_spacing
+        float m_rotation_scale;
         
         // +1 each time graph optimiser is run - i.e. this number changes
         // whenever everything might have moved
@@ -487,6 +510,11 @@ class SlamCloudGraph{
         // SlamCloudParts near a location without iterating through all nodes
         // (kdtree probably)
         cloud_vec m_key_scans;
+        
+        // each point in this cloud is a key scan (same order as m_key_scans):
+        // x,y,z map to x,y,m_rotation_scale*rotation 
+        boost::shared_ptr< KDTreeCachingCloud<PointT> > m_key_scan_locations;
+        
         
         // similarly, this will need some thought to scale well
         constraint_vec m_key_constraints;
