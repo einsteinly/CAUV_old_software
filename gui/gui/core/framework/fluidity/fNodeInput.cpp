@@ -35,6 +35,7 @@
 
 #include <generated/types/LocalNodeInput.h>
 #include <generated/types/SetNodeParameterMessage.h>
+#include <generated/types/ParamValueType.h>
 
 using namespace cauv;
 using namespace cauv::gui::f;
@@ -152,6 +153,7 @@ struct MakeModelNode: boost::static_visitor<boost::shared_ptr<cauv::gui::Node> >
 
     boost::shared_ptr<cauv::gui::Node> operator()(std::string const&) const{
         debug(7) << "MakeModelNode: string";    
+        // !!! need a non-editable node
         return boost::make_shared<cauv::gui::StringNode>(cauv::gui::nid_t(id));
     }
 
@@ -172,7 +174,8 @@ FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode*
       m_model(),
       m_model_node(),
       m_view(NULL),
-      m_view_proxy(NULL){
+      m_view_proxy(NULL),
+      m_value(){
 }
 FNodeParamInput::~FNodeParamInput(){
     // if it isn't in the layout, then need to delete the view proxy
@@ -190,6 +193,7 @@ SubType FNodeParamInput::subType() const{ return m_subtype;
 }
 
 void FNodeParamInput::setValue(ParamValue const& v){
+    m_value = v;
     if(!m_model){
         m_model_node = makeModelNodeForInput(id(), v);
         m_model = new SingleNodeItemModel(m_model_node);
@@ -231,9 +235,18 @@ void FNodeParamInput::modelValueChanged(QVariant value){
     debug() << "modelValueChanged:" << id() << value.typeName();
     ParamValue pv;
     try{
-        pv = qVariantToVariant<ParamValue>(value);
+        // !!! TODO: this is a workaround for the fact that the true type isn't
+        // available in the onUpdate signal
+        pv = m_value;
+        if(pv.which() == ParamValueType::BoundedFloatType){
+            boost::get<BoundedFloat>(pv).value = value.toFloat();
+        }else{
+            pv = qVariantToVariant<ParamValue>(value);
+        }
     }catch(std::bad_cast& e){
-        error() << "modelValueChanged:" << e.what();
+        error() << "modelValueChanged:" << e.what()
+                << "value type:" << value.typeName()
+                << "expected types:" << m_compatible_subtypes;
         return;
     }
     manager().sendMessage(boost::make_shared<SetNodeParameterMessage>(

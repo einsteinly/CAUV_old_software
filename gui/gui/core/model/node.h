@@ -154,11 +154,11 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
             m_value = value;
             Q_EMIT onUpdate(value);
             Q_EMIT onUpdate();
-            debug(8) << nodePath() << "updated to " << value.toString().toStdString();
+            debug(8) << nodePath() << "updated to " << value.toString().toStdString() << "type:" << value.typeName();
         }
 
         virtual bool set(QVariant const& value){
-            debug(2) << nodePath() << "set to" << value.toString().toStdString();
+            debug(2) << nodePath() << "set to" << value.toString().toStdString() << "type:" << value.typeName();
             update(value);
             Q_EMIT onSet(value);
             Q_EMIT onSet();

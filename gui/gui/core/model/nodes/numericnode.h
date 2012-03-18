@@ -219,11 +219,33 @@ namespace cauv {
                 return NumericNodeBase::set(value);
             }
 
+            /*virtual void update(QVariant const& value) {
+                if(value.userType() == qMetaTypeId<BoundedFloat>()){
+                    update(value.value<BoundedFloat>());
+                }else{
+                    BoundedFloat old_value = m_value.value<BoundedFloat>();
+                    old_value.value = value.toFloat();
+                    m_value.setValue(old_value);
+                    Q_EMIT onUpdate(value);
+                    Q_EMIT onUpdate();
+                }
+            }*/
+
             virtual void update(QVariant const& value) {
                 if(value.userType() == qMetaTypeId<BoundedFloat>())
                     update(value.value<BoundedFloat>());
                 else NumericNodeBase::update(value);
             }
+
+            /*virtual void update(BoundedFloat const& value){
+                setMax(value.max);
+                setMin(value.min);
+                setWraps(value.type==BoundedFloatType::Wraps);
+
+                m_value.setValue(value);
+                Q_EMIT onUpdate(m_value);
+                Q_EMIT onUpdate();
+            }*/
 
             virtual void update(BoundedFloat const& value){
                 setMax(value.max);
