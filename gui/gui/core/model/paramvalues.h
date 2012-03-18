@@ -35,6 +35,10 @@ Q_DECLARE_METATYPE(std::vector<float>)
 Q_DECLARE_METATYPE(std::vector<cauv::KeyPoint>)
 Q_DECLARE_METATYPE(cauv::BoundedFloat)
 Q_DECLARE_METATYPE(std::vector<int32_t>)
+Q_DECLARE_METATYPE(cauv::ImageRegion)
+Q_DECLARE_METATYPE(cauv::Range)
+Q_DECLARE_METATYPE(cauv::floatXY)
+Q_DECLARE_METATYPE(cauv::DynamicEnum)
 
 namespace cauv {
     namespace gui {
