@@ -382,6 +382,7 @@ class aiScript(aiProcess):
         self.die_flag = threading.Event() #for any subthreads
         self.exit_confirmed = threading.Event()
         self.in_control = threading.Event()
+        self.pl_confirmed = threading.Event()
         self.task_name = task_name
         self.options = script_opts
         self.auv = fakeAUV(self)
@@ -392,19 +393,19 @@ class aiScript(aiProcess):
         self.reporting_thread.start()
     def _register(self):
         self.node.addObserver(self._msg_observer)
+    #image pipeline stuff
     def request_pl(self, pl_name, timeout=10):
-        pass
+        self.pl_confirmed.clear()
+        self.ai.pl_manager.request_pipeline(pl_name)
+        return self.pl_confirmed.wait(timeout)
     def drop_pl(self, pl_name):
-        pass
+        self.ai.pl_manager.drop_pipeline(pl_name)
     def drop_all_pl(self):
-        pass
-    def request_control(self, timeout=None):
-        self.ai.auv_control.request_control(timeout)
-    def request_control_and_wait(self, wait_timeout=5, control_timeout=None):
-        self.ai.auv_control.request_control(control_timeout)
-        return self.in_control.wait(wait_timeout)
-    def drop_control(self):
-        self.ai.auv_control.drop_control()
+        self.ai.pl_manager.drop_all_pipelines()
+    @external_function
+    def confirm_pl_request(self):
+        self.pl_confirmed.set()
+    #option stuff
     @external_function
     def set_option(self, option_name, option_value):
         if option_name in self.options._dynamic:
@@ -418,6 +419,14 @@ class aiScript(aiProcess):
             self.set_option(key,val)
     def optionChanged(self, option_name):
         pass
+    #control stuff
+    def request_control(self, timeout=None):
+        self.ai.auv_control.request_control(timeout)
+    def request_control_and_wait(self, wait_timeout=5, control_timeout=None):
+        self.ai.auv_control.request_control(control_timeout)
+        return self.in_control.wait(wait_timeout)
+    def drop_control(self):
+        self.ai.auv_control.drop_control()
     @external_function
     def depthOverridden(self):
         warning('%s tried to set a depth but was overridden and has no method to deal with this.' %(self.task_name,))
@@ -437,6 +446,7 @@ class aiScript(aiProcess):
     @external_function
     def control_timed_out(self):
         warning('AUV control by %s timed out, but this script has no method to deal with this event' %(self.task_name,))
+    #debug value reporting etc
     def report_status(self):
         debug = {}
         for key_str in self.debug_values:
@@ -481,14 +491,13 @@ class aiDetectorOptions(aiOptions):
     pass
         
 class aiDetector(messaging.MessageObserver):
+    pipelines = []
     def __init__(self, node, opts):
         messaging.MessageObserver.__init__(self)
         self.options = opts
         self.node = node
         self.node.addObserver(self)
         self.detected = False
-        self._pl_enabled = False
-        self._pl_requests = {}
     def process(self):
         """
         This should define a method to do any intensive (ie not on message) processing
@@ -497,18 +506,6 @@ class aiDetector(messaging.MessageObserver):
     def set_option(self, option_name, option_value):
         setattr(self.options, option_name, option_value)
         self.optionChanged(option_name)
-    def request_pl(self, pl_name):
-        if pl_name in self._pl_requests:
-            self._pl_requests[pl_name] += 1
-        else: self._pl_requests[pl_name] = 1
-    def drop_pl(self, pl_name):
-        if pl_name in self._pl_requests:
-            if self._pl_requests[pl_name] > 0:
-                self._pl_requests[pl_name] -= 1
-                return
-        error("Can't drop pipeline that hasn't been requested")
-    def drop_all_pl(self):
-        self._pl_requests = {}
     def log(self, message):
         try:
             self.node.send(messaging.AIlogMessage(message), "ai")

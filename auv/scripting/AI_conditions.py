@@ -126,7 +126,9 @@ class detectorConditions(aiCondition):
     """
     def __new__(cls, *args, **kwargs):
         #need to get default options
-        opts = __import__('detector_library.'+cls.detector_name, fromlist=['detectorOptions']).detectorOptions.get_default_options()
+        module = __import__('detector_library.'+cls.detector_name, fromlist=['detectorOptions'])
+        opts = module.detectorOptions.get_default_options()
+        cls.pipelines = module.detector.pipelines
         cls.options = type('options', (conditionOptions, ), opts)
         return super(detectorConditions, cls).__new__(cls, *args, **kwargs)
     def __init__(self, options={}):
