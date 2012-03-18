@@ -89,6 +89,9 @@ class FNodeParamInput: public FNodeInput{
 
         void setEditable(bool editable);
 
+        // ConnectionSink:
+        virtual bool willAcceptConnection(liquid::ArcSourceDelegate* from_source);
+
     protected Q_SLOTS:
         void modelValueChanged(QVariant value);
     
@@ -98,6 +101,7 @@ class FNodeParamInput: public FNodeInput{
         void initView();
 
         SubType m_subtype;
+        std::set<int32_t> m_compatible_subtypes;
         
         SingleNodeItemModel* m_model;
         boost::shared_ptr<Node> m_model_node;

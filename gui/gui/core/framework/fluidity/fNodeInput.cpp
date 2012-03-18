@@ -82,7 +82,8 @@ FNodeInput::ConnectionStatus FNodeInput::doAcceptConnection(liquid::ArcSourceDel
     debug() << "FNodeInput::doAcceptConnection:" << output;
     if(output &&
        output->ioType() == ioType() &&
-       output->subType() == subType() &&
+       // for now, allow people to try to force connections to the wrong place if they really want to
+       //output->subType() == subType() && 
        output->node() != node()){
         manager().requestArc(
             NodeOutput(output->node()->id(), output->id(), ioType(), subType()),
@@ -167,6 +168,7 @@ static boost::shared_ptr<cauv::gui::Node> makeModelNodeForInput(std::string cons
 FNodeParamInput::FNodeParamInput(Manager& m, LocalNodeInput const& input, FNode* node)
     : FNodeInput(m, Image_Arc_Style, cutoutStyleForSchedType(input.schedType), node, input.input),
       m_subtype(input.subType),
+      m_compatible_subtypes(input.compatibleSubTypes.begin(), input.compatibleSubTypes.end()),
       m_model(),
       m_model_node(),
       m_view(NULL),
@@ -184,8 +186,7 @@ OutputType::e FNodeParamInput::ioType() const{
     return OutputType::Parameter;
 }
 
-SubType FNodeParamInput::subType() const{
-    return m_subtype;
+SubType FNodeParamInput::subType() const{ return m_subtype;
 }
 
 void FNodeParamInput::setValue(ParamValue const& v){
@@ -213,6 +214,17 @@ void FNodeParamInput::setCollapsed(bool collapsed){
 
 void FNodeParamInput::setEditable(bool editable){
     m_model_node->setMutable(editable);
+}
+
+bool FNodeParamInput::willAcceptConnection(liquid::ArcSourceDelegate* from_source){
+    FNodeOutput* output = dynamic_cast<FNodeOutput*>(from_source);
+    debug(7) << "FNodeParamInput::willAcceptConnection from_source=" << from_source << output
+             << (output && (output->ioType() == ioType() && m_compatible_subtypes.count(output->subType()) && output->node() != node()));
+    if(output)
+        return output->ioType() == ioType() &&
+               m_compatible_subtypes.count(output->subType()) &&
+               output->node() != node();
+    return false;
 }
 
 void FNodeParamInput::modelValueChanged(QVariant value){
