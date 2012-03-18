@@ -130,34 +130,13 @@ Node::Input::Input(InputSchedType::e s,
       status(NodeInputStatus::New),
       input_type(InType_Parameter),
       param_value(default_value),
-      compatible_subtypes(compatible_subtypes),
+      compatible_subtypes(compatible_subtypes.begin(), compatible_subtypes.end()),
       tip(tip){
 }
 
 Node::input_ptr Node::Input::makeImageInputShared(InputSchedType::e const& st){
     return boost::make_shared<Input>(boost::cref(st));
 }
-
-struct CompatibleSubTypes: public boost::static_visitor< std::vector<int32_t> >{
-    template<typename T>
-    std::vector<int32_t> operator()(T const& v) const{
-        std::vector<int32_t> r;
-        r.push_back(ParamValue(v).which());
-        return r;
-    }
-    std::vector<int32_t> operator()(float const&) const{
-        std::vector<int32_t> r;
-        r.push_back(ParamValue(float()).which());
-        r.push_back(ParamValue(BoundedFloat()).which());
-        return r;
-    }
-    std::vector<int32_t> operator()(BoundedFloat const&) const{
-        std::vector<int32_t> r;
-        r.push_back(ParamValue(BoundedFloat()).which());
-        r.push_back(ParamValue(float()).which());
-        return r;
-    }
-};
 
 Node::input_ptr Node::Input::makeParamInputShared(
     ParamValue const& default_value, std::string const& tip, InputSchedType::e const& st
@@ -199,7 +178,7 @@ Node::InternalParamValue Node::Input::getParam(bool& did_change) const{
             parent_value = target.node->getOutputParam(target.id);
             debug(6) << "getParam (no sync)" << target.id << "uid:" << parent_value.uid;            
         }
-        if(param_value.param.which() == parent_value.param.which()){
+        if(compatible_subtypes.count(parent_value.param.which())){
             if(!(param_value == parent_value)){
                 did_change = true;
             }
@@ -394,11 +373,7 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
             throw link_error("old arc must be removed first");
         }
         // NB this check does grab the output lock on n temporarily 
-        if(i->second->isParam() && !std::count(
-            ip->compatible_subtypes.begin(),
-            ip->compatible_subtypes.end(),
-            n->paramOutputType(o_id)
-        ))
+        if(i->second->isParam() && !ip->compatible_subtypes.count(n->paramOutputType(o_id)))
             throw link_error(
                 mkStr() << "setInput: unmatched parameter types"
                         << *n << o_id << "->" << *this << i_id
@@ -478,7 +453,12 @@ Node::msg_node_input_map_t Node::inputLinks() const{
             t.subType = -1;
         }
         // we took the subtype for t from the input anyway
-        r[LocalNodeInput(id, t.subType, v.second->sched_type, v.second->compatible_subtypes)] = t;
+        r[LocalNodeInput(
+            id,
+            t.subType,
+            v.second->sched_type,
+            std::vector<int32_t>(v.second->compatible_subtypes.begin(), v.second->compatible_subtypes.end())
+        )] = t;
     }
     return r;
 }
@@ -881,7 +861,10 @@ std::map<LocalNodeInput, ParamValue> Node::parameters() const{
     foreach(private_in_map_t::value_type const& v, m_inputs)
         if(v.second->isParam())
             r[LocalNodeInput(
-                v.first, v.second->param_value.param.which(), v.second->sched_type, v.second->compatible_subtypes
+                v.first,
+                v.second->param_value.param.which(),
+                v.second->sched_type,
+                std::vector<int32_t>(v.second->compatible_subtypes.begin(), v.second->compatible_subtypes.end())
             )] = v.second->param_value.param;
     return r;
 }
