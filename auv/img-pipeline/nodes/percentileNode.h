@@ -46,7 +46,6 @@ class PercentileNode: public Node{
             registerOutputID("ch3 value", int(0));
             
             // parameter: 
-            //registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
             registerParamID<BoundedFloat>("percentile", BoundedFloat(50,0,100,BoundedFloatType::Clamps), "percentile of pixel values");
         }
 

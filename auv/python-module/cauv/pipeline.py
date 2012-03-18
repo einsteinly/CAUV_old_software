@@ -57,7 +57,7 @@ def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Mus
         compatible_subtypes.append(messaging.ParamValueType.BoundedFloatType)
     if subtype == messaging.ParamValueType.int32Type:
         compatible_subtypes.append(messaging.ParamValueType.BoundedFloatType)
-    return messaging.LocalNodeInput(input, subtype, schedType, messaging.int32List(compatible_subtypes))
+    return messaging.LocalNodeInput(input, subtype, schedType, compatible_subtypes)
 
 Unpickle_Filters = {
     'LocalNodeInput' : makeNewLocalNodeInput,
@@ -125,7 +125,7 @@ def filterLevelsNodeParameters(params_in):
 def filterGuiOutputNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param.input == 'jpeg quality':
+        if param.input == 'jpeg quality' and isinstance(param, int):
             params_out[param] = messaging.BoundedFloat(float(value), 0, 100, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
