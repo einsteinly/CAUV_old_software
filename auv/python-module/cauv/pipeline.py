@@ -52,7 +52,10 @@ def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Mus
         compatible_subtypes = [subtype]
     if subtype == messaging.ParamValueType.BoundedFloatType:
         compatible_subtypes.append(messaging.ParamValueType.floatType)
+        compatible_subtypes.append(messaging.ParamValueType.int32Type)
     if subtype == messaging.ParamValueType.floatType:
+        compatible_subtypes.append(messaging.ParamValueType.BoundedFloatType)
+    if subtype == messaging.ParamValueType.int32Type:
         compatible_subtypes.append(messaging.ParamValueType.BoundedFloatType)
     return messaging.LocalNodeInput(input, subtype, schedType, messaging.int32List(compatible_subtypes))
 
@@ -76,6 +79,13 @@ class FilterUnpickler(pickle.Unpickler):
         stack[-1] = value
     pickle.Unpickler.dispatch[pickle.REDUCE] = load_reduce
 
+
+#
+# SIMILARLY, don't rely on these filters to image pipeline node parameters
+# either: they're designed to scale into a progressive migrations system
+# (multiple filters could easily be applied progressively), but performance
+# would necessarily get pretty awful pretty quickly
+#
 
 def filterPercentileNodeParameters(params_in):
     params_out = {}
@@ -120,6 +130,7 @@ def filterGuiOutputNodeParameters(params_in):
         else:
             params_out[param] = value;
     return params_out
+
 
 NodeParam_Filters = {
     messaging.NodeType.Percentile : filterPercentileNodeParameters,
