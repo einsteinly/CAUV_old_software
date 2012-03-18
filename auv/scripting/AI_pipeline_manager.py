@@ -30,7 +30,7 @@ class NewModel(pipeline.Model):
         self.pl2manager = {}
         self.nodes = {}#record of what we think is in the pipeline
         self.temp_number = 0#labeling for any new user created nodes
-        self.bad_ids #list of node ids that cause crashes
+        self.bad_ids = []#list of node ids that cause crashes
     def get(self, timeout=3.0): #needs nnid to know where new nodes are out of the way
         try:
             state = self.catch_pl_errors(pipeline.Model.get, args=(self, timeout))
@@ -177,7 +177,7 @@ class PipelinesSet():
             return
         #load pipeline
         try:
-            pl_state = cPickle.load(open(os.path.join('pipelines', pl_name, '.pipe')))
+            pl_state = cPickle.load(open(os.path.join('pipelines', filename)+'.pipe'))
         except:
             error('Error loading pipeline %s' %(filename,))
             traceback.print_exc()
@@ -192,12 +192,12 @@ class PipelinesSet():
             self.nnid += 1
         #relabel inarcs, remove troublesome outputs and zeroes
         for node in nodes.itervalues():
-            to_remove = []
+            new_inarcs = {}
             for input, inarc in node.inarcs.items():
                 if inarc[0] == 0:
-                    to_remove.append(input)
+                    continue
                 else:
-                    inarc[0] = old_id2new_id[inarc[0]]
+                    new_inarcs[input] = (old_id2new_id[inarc[0]],inarc[1])
             node.outarcs = None
         self.pipelines[filename] = Pipeline(nodes)
         self.request2filename[name] = filename
