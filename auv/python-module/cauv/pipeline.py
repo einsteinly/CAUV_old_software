@@ -134,8 +134,8 @@ def filterGuiOutputNodeParameters(params_in):
 
 NodeParam_Filters = {
     messaging.NodeType.Percentile : filterPercentileNodeParameters,
-    messaging.NodeType.ClampInt   : filterClampXNodeParameters,
-    messaging.NodeType.ClampFloat : filterClampXNodeParameters,
+    #messaging.NodeType.ClampInt   : filterClampXNodeParameters,
+    #messaging.NodeType.ClampFloat : filterClampXNodeParameters,
     messaging.NodeType.Levels     : filterLevelsNodeParameters,
     messaging.NodeType.GuiOutput  : filterGuiOutputNodeParameters
 }

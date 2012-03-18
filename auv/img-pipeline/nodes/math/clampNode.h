@@ -36,7 +36,8 @@ class ClampNode: public Node{
 
             // input:
             registerParamID<T>("Value", T(), "changing value", Must_Be_New);
-            registerParamID<Range>("Range", Range(0,1), "range to clamp into");
+            registerParamID<T>("Min", T(), "changing value");
+            registerParamID<T>("Max", T(), "changing value");
 
             // outputs:
             registerOutputID("Value", T());
@@ -44,9 +45,10 @@ class ClampNode: public Node{
 
     protected:
         void doWork(in_image_map_t&, out_map_t& r){
-            Range range = param<Range>("Range");
+            T min   = param<T>("Min");
+            T max   = param<T>("Max");
             T value = param<T>("Value");
-            r["Value"] = clamp(T(range.min), value, T(range.max));
+            r["Value"] = clamp(min, value, max);
         }
     
     private:
