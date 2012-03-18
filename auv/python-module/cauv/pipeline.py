@@ -47,8 +47,14 @@ class State:
 #  code that you add here.
 #
 
-def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Must_Be_New):
-    return messaging.LocalNodeInput(input, subtype, schedType)
+def makeNewLocalNodeInput(input, subtype, schedType=messaging.InputSchedType.Must_Be_New, compatible_subtypes=None):
+    if compatible_subtypes is None:
+        compatible_subtypes = [subtype]
+    if subtype == messaging.ParamValueType.BoundedFloatType:
+        compatible_subtypes.append(messaging.ParamValueType.floatType)
+    if subtype == messaging.ParamValueType.floatType:
+        compatible_subtypes.append(messaging.ParamValueType.BoundedFloatType)
+    return messaging.LocalNodeInput(input, subtype, schedType, messaging.int32List(compatible_subtypes))
 
 Unpickle_Filters = {
     'LocalNodeInput' : makeNewLocalNodeInput,
@@ -74,7 +80,7 @@ class FilterUnpickler(pickle.Unpickler):
 def filterPercentileNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param == 'percentile' and isinstance(value, float):
+        if param.input == 'percentile' and isinstance(value, float):
             params_out[param] = messaging.BoundedFloat(value, 0, 100, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
@@ -85,21 +91,22 @@ def filterClampXNodeParameters(params_in):
     range_max = None
     range_min = None
     for param, value in params_in.items():
-        if param == 'Max':
+        if param.input == 'Max':
             range_max = value
-        elif param == 'Min':
+        elif param.input == 'Min':
             range_min = value
         else:
             params_out[param] = value;
-    params_out['Range'] = messaging.Range(float(range_min), float(range_max))
+    if range_min is not None and range_max is not None:
+        params_out['Range'] = messaging.Range(float(range_min), float(range_max))
     return params_out
 
 def filterLevelsNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param == 'black level' and isinstance(value, int):
+        if param.input == 'black level' and isinstance(value, int):
             params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
-        elif param == 'white level' and isinstance(value, int):
+        elif param.input == 'white level' and isinstance(value, int):
             params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
@@ -108,8 +115,8 @@ def filterLevelsNodeParameters(params_in):
 def filterGuiOutputNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param == 'jpeg quality' and isinstance(value, int):
-            params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
+        if param.input == 'jpeg quality':
+            params_out[param] = messaging.BoundedFloat(float(value), 0, 100, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
     return params_out
@@ -249,6 +256,7 @@ class Model(messaging.MessageObserver):
             if node.type in NodeParam_Filters:
                 warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
                 params = NodeParam_Filters[node.type](node.params)
+                debug('Filtered parameters:\n%s' % params)
             else:
                 params = node.params
             for param in params.keys():
@@ -257,13 +265,13 @@ class Model(messaging.MessageObserver):
                 else:
                     param_key = param
                 if (old_id, param_key) in connected_inputs:
-                    debug('skipping setting connceted parameter: %s:%s' % (old_id, param))
+                    debug('skipping setting connected parameter: %s:%s' % (old_id, param))
                     continue
-                debug('%d.%s = %s' % (id, param, node.params[param]))
+                debug('%d.%s = %s (%s)' % (id, param, params[param], type(params[param])))
                 try:
-                    self.setParameterSynchronous(id, param_key, toNPV(node.params[param]), timeout)
+                    self.setParameterSynchronous(id, param_key, toNPV(params[param]), timeout)
                 except RuntimeError, e:
-                    error(str(e) + ": attempted to set parameter %s to %s" % ((id, param_key), node.params[param]))
+                    error(str(e) + ": attempted to set parameter %s to %s" % ((id, param_key), params[param]))
                     debug('attempting to continue...')
         # finally add links
         for old_id, node in state.nodes.items():
@@ -337,9 +345,11 @@ class Model(messaging.MessageObserver):
         self.parameter_set_condition.acquire()
         self.parameter_set = None
         self.parameter_set_wait_for = (node, param)
-        self.send(messaging.SetNodeParameterMessage(
+        msg = messaging.SetNodeParameterMessage(
             self.pipeline_name, node, param, value
-        ))
+        )
+        debug('setParameterSynchronous: %s' % msg)
+        self.send(msg)
         self.parameter_set_condition.wait(timeout)
         if self.parameter_set is None:
             self.parameter_set_condition.release()

@@ -170,6 +170,7 @@ struct LocalNodeInput
     eq cmp subType : int32;
     // NB: schedType is excluded from comparison and equality testing
     schedType : InputSchedType;
+    compatibleSubTypes : list<int32>;
 }
 struct NodeOutput
 {
@@ -343,6 +344,18 @@ variant ParamValue
     Range,
     floatXY,
     DynamicEnum
+}
+// !!! should generate this for each variant
+enum ParamValueType : int8 {
+    int32Type, floatType, stringType, boolType,
+    listCornerType, listLineType, listFloatType,
+    listKeyPointType,
+    BoundedFloatType,
+    listint32Type,
+    ImageRegionType,
+    RangeType,
+    floatXYType,
+    DynamicEnumType,
 }
 
 group membership

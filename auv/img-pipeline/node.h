@@ -48,11 +48,29 @@ namespace cauv{
 namespace imgproc{
 
 /* Getter for ParamValue. Specialised for the case where we want the
- * actual variant
+ * actual variant. This is also the mechanism by which compatible types are
+ * converted.
  */
 template<typename T>
 inline T getValue(const ParamValue& v) {
     return boost::get<T>(v);
+}
+template<>
+inline float getValue<float>(const ParamValue& v) {
+    try{
+        return boost::get<float>(v);
+    }catch(boost::bad_get&){
+        return boost::get<BoundedFloat>(v);
+    }
+}
+template<>
+inline BoundedFloat getValue<BoundedFloat>(const ParamValue& v) {
+    try{
+        return boost::get<BoundedFloat>(v);
+    }catch(boost::bad_get&){
+        // in this case no range information is available!
+        return BoundedFloat(boost::get<float>(v), 0, 0, BoundedFloatType::Clamps);
+    }
 }
 template<>
 inline ParamValue getValue<ParamValue>(const ParamValue& v) {
@@ -232,11 +250,15 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
             NodeInputStatus::e status;
             InputType input_type;
             mutable InternalParamValue param_value;
+            std::vector<int32_t> compatible_subtypes;
             std::string tip;
             input_ptr synchronised_with;
 
             Input(InputSchedType::e s);
-            Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip);
+            Input(InputSchedType::e s,
+                  ParamValue const& default_value,
+                  std::string const& tip,
+                  std::vector<int32_t> const& compatible_subtypes);
 
             static input_ptr makeImageInputShared(InputSchedType::e const& st = Must_Be_New);
             static input_ptr makeParamInputShared(ParamValue const& default_value,
@@ -412,7 +434,7 @@ class Node: public boost::enable_shared_from_this<Node>, boost::noncopyable{
                         // check to see if the node should be re-scheduled
                         setNewInput(p);
                     }else{
-                        error() << p << "has different type to current value" << ip->param_value;
+                        error() << p << ":" << v << "has different type to current value" << ip->param_value;
                     }
                 }else{
                     error() << p << "is an input not a parameter";

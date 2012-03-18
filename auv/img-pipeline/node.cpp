@@ -120,13 +120,17 @@ Node::Input::Input(InputSchedType::e s)
       tip(){
 }
 
-Node::Input::Input(InputSchedType::e s, ParamValue const& default_value, std::string const& tip)
+Node::Input::Input(InputSchedType::e s,
+                   ParamValue const& default_value,
+                   std::string const& tip,
+                   std::vector<int32_t> const& compatible_subtypes)
     : TestableBase<Input>(*this),
       target(),
       sched_type(s),
       status(NodeInputStatus::New),
       input_type(InType_Parameter),
       param_value(default_value),
+      compatible_subtypes(compatible_subtypes),
       tip(tip){
 }
 
@@ -134,11 +138,32 @@ Node::input_ptr Node::Input::makeImageInputShared(InputSchedType::e const& st){
     return boost::make_shared<Input>(boost::cref(st));
 }
 
+struct CompatibleSubTypes: public boost::static_visitor< std::vector<int32_t> >{
+    template<typename T>
+    std::vector<int32_t> operator()(T const& v) const{
+        std::vector<int32_t> r;
+        r.push_back(ParamValue(v).which());
+        return r;
+    }
+    std::vector<int32_t> operator()(float const&) const{
+        std::vector<int32_t> r;
+        r.push_back(ParamValue(float()).which());
+        r.push_back(ParamValue(BoundedFloat()).which());
+        return r;
+    }
+    std::vector<int32_t> operator()(BoundedFloat const&) const{
+        std::vector<int32_t> r;
+        r.push_back(ParamValue(BoundedFloat()).which());
+        r.push_back(ParamValue(float()).which());
+        return r;
+    }
+};
+
 Node::input_ptr Node::Input::makeParamInputShared(
     ParamValue const& default_value, std::string const& tip, InputSchedType::e const& st
 ){
     return boost::make_shared<Input>(
-        boost::cref(st), boost::cref(default_value), boost::cref(tip)
+        boost::cref(st), boost::cref(default_value), boost::cref(tip), boost::apply_visitor(CompatibleSubTypes(), default_value)
     );
 }
 
@@ -368,8 +393,12 @@ void Node::setInput(input_id const& i_id, node_ptr_t n, output_id const& o_id){
                     << ip->target << "!=" << input_link_t(n, o_id);
             throw link_error("old arc must be removed first");
         }
-        // NB this check does grab the output lock on n temporarily
-        if(i->second->isParam() && ip->param_value.param.which() != n->paramOutputType(o_id))
+        // NB this check does grab the output lock on n temporarily 
+        if(i->second->isParam() && !std::count(
+            ip->compatible_subtypes.begin(),
+            ip->compatible_subtypes.end(),
+            n->paramOutputType(o_id)
+        ))
             throw link_error(
                 mkStr() << "setInput: unmatched parameter types"
                         << *n << o_id << "->" << *this << i_id
@@ -449,7 +478,7 @@ Node::msg_node_input_map_t Node::inputLinks() const{
             t.subType = -1;
         }
         // we took the subtype for t from the input anyway
-        r[LocalNodeInput(id, t.subType, v.second->sched_type)] = t;
+        r[LocalNodeInput(id, t.subType, v.second->sched_type, v.second->compatible_subtypes)] = t;
     }
     return r;
 }
@@ -463,6 +492,22 @@ std::set<node_ptr_t> Node::parents() const{
     return r;
 }
 
+
+struct ParamCompatible{
+    ParamCompatible(input_id const& with_input, int32_t of_subtype)
+        : m_input(with_input), m_subtype(of_subtype){
+    }
+    bool operator()(std::pair<LocalNodeInput, ParamValue> const& v) const{
+        return v.first.input == m_input && std::count(
+            v.first.compatibleSubTypes.begin(),
+            v.first.compatibleSubTypes.end(),
+            m_subtype
+        );
+    }
+    input_id const& m_input;
+    int32_t m_subtype;
+};
+
 void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     lock_t l(m_outputs_lock);
     const private_out_map_t::iterator i = m_outputs.find(o_id);
@@ -473,9 +518,10 @@ void Node::setOutput(output_id const& o_id, node_ptr_t n, input_id const& i_id){
     }
     const int32_t sub_type = i->second->isParam()?  boost::get<InternalParamValue>(i->second->value()).param.which() : -1;
     // note that the schedType field (May_Be_Old here) is excluded from the
-    // comparison of LocalNodeInput structures
-    if(i->second->isParam() && !(
-        n->parameters().count(LocalNodeInput(i_id, sub_type, May_Be_Old))
+    // comparison of LocalNodeInput structures, so the value doesn't matter
+    const std::map<LocalNodeInput, ParamValue> params = n->parameters();
+    if(i->second->isParam() && !(std::count_if(
+        params.begin(), params.end(), ParamCompatible(i_id, sub_type))
     )){
         throw link_error(
             mkStr() << "setOutput: " << *this <<"::"<< o_id << " -> "
@@ -834,8 +880,9 @@ std::map<LocalNodeInput, ParamValue> Node::parameters() const{
     std::map<LocalNodeInput, ParamValue> r;
     foreach(private_in_map_t::value_type const& v, m_inputs)
         if(v.second->isParam())
-            r[LocalNodeInput(v.first, v.second->param_value.param.which(), v.second->sched_type)]
-                = v.second->param_value.param;
+            r[LocalNodeInput(
+                v.first, v.second->param_value.param.which(), v.second->sched_type, v.second->compatible_subtypes
+            )] = v.second->param_value.param;
     return r;
 }
 
