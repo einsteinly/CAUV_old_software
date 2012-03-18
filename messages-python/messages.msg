@@ -348,7 +348,7 @@ variant ParamValue
 // !!! should generate this for each variant
 enum ParamValueType : int8 {
     int32Type, floatType, stringType, boolType,
-    listCornerType, listLineType, listFloatType,
+    listCornerType, listLineType, listCircleType, listFloatType,
     listKeyPointType,
     BoundedFloatType,
     listint32Type,
