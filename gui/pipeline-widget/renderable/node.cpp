@@ -202,6 +202,42 @@ struct makePVPairHelper< const BoundedFloat >
         return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
     }
 };
+template<>
+struct makePVPairHelper< const Range >
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const Range& val, bool) {
+        std::stringstream ss;
+        ss << val.min <<":"<< val.max; 
+        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
+    }
+};
+template<>
+struct makePVPairHelper< const ImageRegion >
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const ImageRegion& val, bool) {
+        std::stringstream ss;
+	ss << "unsupported :(";
+        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
+    }
+};
+template<>
+struct makePVPairHelper< const DynamicEnum >
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const DynamicEnum& val, bool) {
+        std::stringstream ss;
+	ss << "unsupported :(";
+        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
+    }
+};
+template<>
+struct makePVPairHelper< const floatXY >
+{
+    static boost::shared_ptr<PVPairEditableBase> exec(Node *n, const std::string& name, const floatXY& val, bool) {
+        std::stringstream ss;
+	ss << "unsupported :(";
+        return boost::make_shared< PVPair<std::string> >(n, name, ss.str(), false);
+    }
+};
 
 struct PVPairVisitor: public boost::static_visitor< boost::shared_ptr<PVPairEditableBase> >
 {
