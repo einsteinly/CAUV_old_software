@@ -219,7 +219,8 @@ namespace cauv {
                 return NumericNodeBase::set(value);
             }
 
-            /*virtual void update(QVariant const& value) {
+            /*
+            virtual void update(QVariant const& value) {
                 if(value.userType() == qMetaTypeId<BoundedFloat>()){
                     update(value.value<BoundedFloat>());
                 }else{
@@ -232,12 +233,10 @@ namespace cauv {
             }*/
 
             virtual void update(QVariant const& value) {
-                if(value.userType() == qMetaTypeId<BoundedFloat>())
-                    update(value.value<BoundedFloat>());
-                else NumericNodeBase::update(value);
+                update(value.value<BoundedFloat>());
             }
-
-            /*virtual void update(BoundedFloat const& value){
+/*
+            virtual void update(BoundedFloat const& value){
                 setMax(value.max);
                 setMin(value.min);
                 setWraps(value.type==BoundedFloatType::Wraps);
@@ -245,13 +244,13 @@ namespace cauv {
                 m_value.setValue(value);
                 Q_EMIT onUpdate(m_value);
                 Q_EMIT onUpdate();
-            }*/
-
+            }
+*/
             virtual void update(BoundedFloat const& value){
                 setMax(value.max);
                 setMin(value.min);
                 setWraps(value.type==BoundedFloatType::Wraps);
-                NumericNodeBase::update(value.value);
+                NumericNodeBase::update(QVariant::fromValue(value));
             }
 
         private:

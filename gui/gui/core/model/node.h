@@ -151,6 +151,9 @@ class Node : public QObject, public boost::enable_shared_from_this<Node> {
     public Q_SLOTS:
 
         virtual void update(QVariant const& value){
+            if(m_value.userType() != value.userType()) {
+                error() << "Type mismatch in Node variant:" << nodePath();
+            }
             m_value = value;
             Q_EMIT onUpdate(value);
             Q_EMIT onUpdate();
