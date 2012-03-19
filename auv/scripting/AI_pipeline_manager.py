@@ -3,29 +3,41 @@ from AI_classes import aiProcess, external_function
 from cauv.debug import info, warning, error, debug
 from cauv import pipeline, messaging
 
-import threading, os.path, hashlib, cPickle, time, traceback, shelve, pickle, argparse, Queue
+import threading, os.path, cPickle, time, traceback, pickle, argparse, Queue, subprocess
 from glob import glob
 from datetime import datetime
 
-"""
-NOTE - if broken: did someone change the node type numbers, or edit the copy node, since copy nodes are manually added, so type needs to be updated etc
-                  did outarcs get dropped/become important? this uses output arcs when importing pipelines, but ignores them afterwards (e.g. when setting up pipelines)
-TODO - more advanced optimisation
-     - actually save optimised pipelines... inc. ones to avoid?
-     - do copy nodes copy other data types? something to watch out for...
-     - strip of GUI outputs (and related processing)...
-     - save state (only once pieline succefully loaded) and restore on restart
-"""
+IMG_PIPELINE = 'cauv-img-pipeline'
+IMG_PIPELINE_START_TIME = 2
 
 #lets modify pipeline.Model class a bit so its a bit more flexible
 class NewModel(pipeline.Model):
-    def __init__(self, *args, **kwargs):
-        pipeline.Model.__init__(self, *args, **kwargs)
+    """
+    Major features as compared to the original pipeline model:
+     - Runs it's own image pipeline, complete with dealing with crashes
+     - Keeps nodes labeled the same as they were handed to it, and supports relabeling nodes
+    """
+    def __init__(self, node, pipeline_name, *args, **kwargs):
+        self.img_pipeline_name = pipeline_name
+        self.img_pipeline = subprocess.Popen([IMG_PIPELINE, pipeline_name])
+        try:
+            pipeline.Model.__init__(self, node, pipeline_name, *args, **kwargs)
+        except RuntimeError as e:
+            error('Communication problems while initialising model, giving up.')
+            traceback.print_exc()
+            raise e
         self.manager2pl = {}#node ids here: node ids in pl
         self.pl2manager = {}
-        self.temp_number = 0
+        self.nodes = {}#record of what we think is in the pipeline
+        self.temp_number = 0#labeling for any new user created nodes
+        self.bad_ids = []#list of node ids that cause crashes
     def get(self, timeout=3.0): #needs nnid to know where new nodes are out of the way
-        state = pipeline.Model.get(self, timeout)
+        try:
+            state = self.catch_pl_errors(pipeline.Model.get, args=(self, timeout))
+        except RuntimeError:
+            error('Communication problems while trying to get the state of the pipeline, giving up after too many attempts to reinitialise.')
+            traceback.print_exc()
+            raise e
         renumbered_state = pipeline.State()
         new_nodes = []
         #check for new nodes
@@ -46,12 +58,21 @@ class NewModel(pipeline.Model):
             for output, outarcs in node.outarcs.items():
                 node.outarcs[output] = [(self.pl2manager[outarc[0]], outarc[1]) for outarc in outarcs]
             renumbered_state.nodes[self.pl2manager[node_id]] = node
+        #update internal state
+        self.nodes = renumbered_state.nodes
         return renumbered_state, new_nodes
     def reassign(self, relabel):
-        for old_id, new_id in relabel.items():
-            self.pl2manager[self.manager2pl[old_id]] = new_id
-            self.manager2pl[new_id] = self.manager2pl[old_id]
-            self.manager2pl.pop(old_id)
+        new_manager2pl = {}
+        new_pl2manager = {}
+        for old_id in self.manager2pl:
+            if old_id in relabel:
+                new_pl2manager[self.manager2pl[old_id]] = relabel[old_id]
+                new_manager2pl[relabel[old_id]] = self.manager2pl[old_id]
+            else:
+                new_pl2manager[self.manager2pl[old_id]] = old_id
+                new_manager2pl[old_id] = self.manager2pl[old_id]
+        self.manager2pl = new_manager2pl
+        self.pl2manager = new_pl2manager
     def set(self, state):
         raise NotImplementedError
     def add(self, nodes, timeout=5.0):
@@ -59,352 +80,214 @@ class NewModel(pipeline.Model):
             if node_id in self.manager2pl:
                 warning('Node already added, skipping')
                 continue
+            if node_id in self.bad_ids:
+                warning('Node is marked as bad, ignoring')
+                continue
             try:
-                new_node_id = self.addSynchronous(node.type, timeout)
+                new_node_id = self.catch_pl_errors(self.addSynchronous, args=(node.type, timeout), limit=1)
             except RuntimeError:
-                error("Couldn't add node %d, skipping" %(new_node_id))
+                error("Couldn't add node %d, marking as bad and skipping" %(new_node_id))
+                self.bad_ids.append(node_id)
                 continue
             self.manager2pl[node_id] = new_node_id
             self.pl2manager[new_node_id] = node_id
+            self.nodes[node_id]=node
+            bad_params = []
             for param, value in node.params.items():
                 try:
-                    self.setParameterSynchronous(new_node_id, param, value, timeout)
+                    self.catch_pl_errors(self.setParameterSynchronous, args=(new_node_id, param, value, timeout), limit=1)
                 except RuntimeError:
                     error("Couldn't set parameter: "+str((param,value)))
+                    #remove parameter to avoid future errors
+                    bad_params.append(param)
+            for param in bad_params:
+                node.params.pop(param)
+                    
         #now all added, add arcs
         for node_id, node in nodes.items():
+            bad_arcs = []
             for input, (from_node_id, from_node_field) in node.inarcs.items():
                 try:
                     try:
-                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input, timeout)
+                        self.catch_pl_errors(self.addArcSynchronous, args=(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input, timeout), limit=1)
                     except KeyError:
                         error('Could not add arc from %d to %d, a node does not exist.' %(from_node_id, node_id))
                 except RuntimeError:
-                    error("Couldn't add arc from %d (%s) to %d (%s) (%d to %d in pipeline), no response from pipeline" %(from_node_id, from_node_field, node_id, input, self.manager2pl[from_node_id], self.manager2pl[node_id]))
+                    error("Couldn't add arc from %d (%s) to %d (%s) (%d to %d in pipeline), removing arc" %(from_node_id, from_node_field, node_id, input, self.manager2pl[from_node_id], self.manager2pl[node_id]))
+                    bad_arcs.append(input)
+            for input in bad_arcs:
+                node.inarcs.pop(input)
+                #This could cause errors if we ever use outarcs
     def remove(self, nodes, timeout=5.0):
         for node_id in nodes:
             try:
                 try:
-                    self.removeSynchronous(self.manager2pl[node_id], timeout)
+                    self.catch_pl_errors(self.removeSynchronous, args=(self.manager2pl[node_id], timeout))
                 except RuntimeError:
-                    error("Couldn't remove node: pipeline did not respond")
-                #want to remove nodes regardless otherwise wont be able to add them again
-                self.pl2manager.pop(self.manager2pl[node_id])
-                self.manager2pl.pop(node_id)
+                    error("Couldn't remove node: removing from state and restarting pipeline to flush badness")
             except KeyError:
                 error("Couldn't remove node: no record of node exists")
+            #want to remove nodes regardless otherwise wont be able to add them again
+            self.pl2manager.pop(self.manager2pl[node_id])
+            self.manager2pl.pop(node_id)
+            self.nodes.pop(node_id)
+            self.restart_pipeline()
+    def restart_pipeline(self):
+        self.img_pipeline.kill()
+        self.img_pipeline = subprocess.Popen([IMG_PIPELINE, pipeline_name])
+        time.sleep(IMG_PIPELINE_START_TIME)
+        #copy nodes, then reset
+        nodes = self.nodes
+        self.nodes = {}
+        self.add(nodes)
+    def catch_pl_errors(function, args=[], kwargs={}, limit=3):
+        for attempt in range(limit):
+            try:
+                return function(*args, **kwargs)
+            except RuntimeError:
+                pass
+            #check that pipeline hasn't died
+            if not self.img_pipeline.poll():
+                self.restart_pipeline()
+                continue
+            #check that the pipeline is still responding by getting state
+            try:
+                pipeline.Model.get(3.0)
+            except RuntimeError:
+                self.restart_pipeline()
+                continue
+            #appears to be working fine, probably a bad function call, so don't bother retrying
+            break
+        raise RuntimeError('Pipeline seems fine, bad function call?')
 
-class Branch():
+class Pipeline():
     def __init__(self, nodes):
-        #inputs = {input_node_id: (branch_id, output_node_id),}
-        self.nodes = nodes
-    def compare(self, other_branch):
-        #first check to see if same number of nodes
-        if len(self.nodes)!=len(other_branch.nodes):
-            return None
-        #split into equivalent nodes
-        node_map = {} #node_id:[other_node_ids]
-        for node_id, node in self.nodes.items():
-            node_map[node_id] = []
-            for other_node_id, other_node in other_branch.nodes.items():
-                if node.type == other_node.type and node.params == other_node.params:
-                    node_map[node_id].append(other_node_id)
-        #check there are the right no. of equivalent nodes, and relabel where possible
-        relabel = {} #self_label: other_label
-        possible = {} #list of nodes that aren't in relabel as there are more than one possibility, node_id: possible_node_ids
-        for node_id, other_node_ids in node_map.items():
-            if len(other_node_ids) == 0:
-                #no possible matches, no relabeling
-                return None
-            elif len(other_node_ids) == 1:
-                #check hasnt already been used
-                if other_node_ids[0] in relabel.values():
-                    return None
-                #if not already used, if relabeling exist must relabel to this
-                relabel[node_id] = other_node_ids[0]
-            else:
-                #multiple possible nodes match
-                possible[node_id] = other_node_ids
-        #now generate possible relabellings
-        #basically known possibilities, and for a node that hasn't yet been relabeled, add all the possible things it could be relabeled to
-        possibles = [relabel,] #list of possisible relabels (starts of with those that have just one possibility)
-        for self_node_id, other_node_ids in possible.items():
-            new_possibles = []
-            for relabeling in possibles:
-                for other_node_id in other_node_ids:
-                    #if the other_node_id has already been used, don't create a new relabelling since that would relabel 2 things to the same thing
-                    if not other_node_id in relabeling.values():
-                        #very inefficient copying...
-                        new_relabeling = dict([(x,y) for x,y in relabeling.items()])
-                        new_relabeling[self_node_id] = other_node_id
-                        new_possibles.append(new_relabeling)
-            possibles = new_possibles
-        #now check to see whether any relabelings give an equivalent branch
-        for relabeling in possibles:
-            if self.equiv(other_branch, relabeling):
-                return relabeling
-        #no possibilities gave a matching
-        return None
-    def equiv(self, other_branch, relabel):
-        #basically, take advantage of pythons ability to compare dictionaries
-        #compare dict of nodes, compring nodes would always fail as they are different instances
-        other_branch_dict = dict([(node_id, node.__dict__) for node_id, node in other_branch.nodes.items()])
-        #careful not to actually relabel, create new copy instead (otherwise we'll relabel the original, and everything will be broken)
-        relabeled_dict = {}
-        for node_id, node in self.nodes.items():
-            copied_node_dict = {'type':node.type,'params':node.params,'inarcs':{},'outarcs':{}}
-            for input, inarc in node.inarcs.items():
-                copied_node_dict['inarcs'][input] = (relabel[inarc[0]], inarc[1]) if inarc[0] in relabel else inarc
-            #ignore outarcs, not used anyway
-            #for output, outarcs in node.outarcs.items():
-            #    copied_node_dict['outarcs'][output] = [(relabel[outarc[0]], outarc[1]) for outarc in outarcs]
-            relabeled_dict[relabel[node_id]] = copied_node_dict
-        #check all the nodes exist in both (otherwise we'll get an error later)
-        if set(relabeled_dict.keys()) != set(other_branch_dict.keys()):
-            return False
-        #more complicated since we are ignoring outarcs so cannot just compare __dict__
-        return all([all([other_branch_dict[nodeid][prop] == relabeled_dict[nodeid][prop] for prop in ('type', 'inarcs', 'params')]) for nodeid in relabeled_dict])
-    def split(self, node_groups):
-        branches = {} #branch_id, branch
-        branch_id = 1
-        #check that node_groups doesn't overlap and covers all nodes
-        covered_nodes = []
-        for node_group in node_groups:
-            for node_id in node_group:
-                if node_id in covered_nodes: raise Exception('Tried to split a branch into overlapping node groups')
-                else: covered_nodes.append(node_id)
-        #add the remaining nodes not in a group to the last group
-        uncovered = [node_id for node_id in self.nodes if not node_id in covered_nodes]
-        if len(uncovered): node_groups.append(uncovered)
-        for node_group in node_groups:
-            node_group_nodes = {}
-            #create new branch based on nodes
-            for node_id in node_group:
-                node_group_nodes[node_id] = self.nodes[node_id]
-            branches[branch_id] = Branch(node_group_nodes)
-            branch_id += 1
-        return branches
-    def renumber(self, relabel):
-        #renumber inputs (e.g. if branches it happens to depend on are equivalent to existing branches, we want to renumber to depend on nodes in the already existing branches)
-        for node in self.nodes.values():
+        self.nodes = nodes #node_id: node
+    
+class PipelinesSet():
+    def __init__(self):
+        self.request2filename = {}
+        self.pipelines = {}
+        self.node_id2pipeline = {} #for fast lookups
+        self.nnid = 0
+    def add_pipeline(self, name, filename):
+        #check whether we've already loaded this pipeline
+        if filename in self.pipelines:
+            self.request2filename[name] = filename
+            return
+        #load pipeline
+        try:
+            pl_state = cPickle.load(open(os.path.join('pipelines', filename)+'.pipe'))
+        except:
+            error('Error loading pipeline %s' %(filename,))
+            traceback.print_exc()
+            return
+        old_id2new_id = {}
+        nodes = {}
+        #relabel nodes
+        for node_id, node in pl_state.nodes.items():
+            old_id2new_id[node_id] = self.nnid
+            nodes[self.nnid] = node
+            self.node_id2pipeline[self.nnid]=filename
+            self.nnid += 1
+        #relabel inarcs, remove troublesome outputs and zeroes
+        for node in nodes.itervalues():
             new_inarcs = {}
             for input, inarc in node.inarcs.items():
-                new_inarcs[input] = (relabel[inarc[0]], inarc[1]) if inarc[0] in relabel else inarc
-            node.inarcs = new_inarcs
-            
-class oPipeline():
-    #basically represents the original pipelines
-    def __init__(self, branches, md5):
-        self.branches = branches
-        self.md5 = md5
-    
-class OptimisedPipelines():
-    def __init__(self):
-        self.branches = {} #branch_id, branch
-        self.nodeid2branch = {}
-        self.pipelines = {}
-        self.old_pipelines = {} #use to store, e.g. if branch is update
-        self.names = []
-        self.nbid = 0
-        self.nnid = 0
-    def add_branches(self, branches):
-        #add branches that may already have dependancies. things with prefix are new nodes
-        mapping = {} #old:new
-        max_n = 0
-        #relabel nodes
-        for branch in branches.values():
-            for node_id, node in branch.nodes.items():
-                branch.nodes[self.nnid+max_n] = node
-                branch.nodes.pop(node_id)
-                mapping[node_id] = self.nnid+max_n
-                max_n += 1
-            #relabel arcs
-            for node in branch.nodes.values():
-                for input, inarc in node.inarcs.items():
-                    if inarc[0] in mapping:
-                        node.inarcs[input] = (mapping[inarc[0]], inarc[1])
-                for output, outarcs in node.outarcs.items():
-                    node.outarcs[output] = [((mapping[outarc[0]], outarc[1]) if outarc[0] in mapping else outarc) for outarc in outarcs]
-        self.nnid += max_n
-        branch_relabeling, node_relabeling = self.add(branches)
-        node_relabeling2 = {}
-        for old_node_id, med_node_id in mapping.items():
-            node_relabeling2[old_node_id] = node_relabeling[med_node_id] if med_node_id in node_relabeling else med_node_id
-        return branch_relabeling, node_relabeling2
-    def add_pl(self, pl_name, branches, md5):
-        #add branches that have no already existing dependancies
-        #renumber nodes so that they are above the highest node id already in optimised pipelines (this way we don't have to renumber them later)
-        #for simplicity sake, just add the nnid (next node id) to all the node ids
-        max_n = self.nnid
-        for branch in branches.values():
-            new_nodes = {}
-            for nodeid, node in branch.nodes.items():
-                new_node = pipeline.Node(nodeid+self.nnid, node.type, node.params)
-                for input, (innodeid, field) in node.inarcs.items():
-                    new_node.inarcs[input] = (innodeid+self.nnid, field)
-                for output, outarcs in node.outarcs.items():
-                    new_node.outarcs[output] = [(outnodeid+self.nnid, field) for outnodeid, field in outarcs]
-                new_nodes[nodeid+self.nnid] = new_node
-                max_n = self.nnid+nodeid if self.nnid+nodeid>max_n else max_n
-            branch.nodes = new_nodes
-        self.nnid = max_n + 1
-        branch_relabeling, node_relabeling = self.add(branches)
-        info('New pipeline contains %d new branches and %d existing branches' %(len([k for k, v in branch_relabeling.items() if k==v]),len(branch_relabeling)))
-        #finally add the pipeline
-        self.pipelines[pl_name] = oPipeline(branch_relabeling.values(), md5)
-    def add(self, branches):
-        #add branches that have already had their node numbering sorted to not conflict with existing branches
-        branch_relabeling = {}
-        node_relabeling = {}
-        #check whther branch already exists, else add as new branch, and work out relabelling
-        #note we cant compare branches unless all the thing they depend on have been relabeled (otherwise dependancies check will fail)
-        branch_ids = branches.keys() #branches to process
-        counter = 0
-        no_change = 0
-        while len(branch_ids) != 0:
-            counter = counter%len(branch_ids)
-            branch_id = branch_ids[counter]
-            branch = branches[branch_id]
-            #check to see whether all the branches it depends
-            if not all([all([((inarc[0] in branch.nodes) or (inarc[0] in self.nodeid2branch)) for inarc in node.inarcs.values()]) for node in branch.nodes.values()]):
-                #not ready yet, skip for the moment
-                counter = counter+1
-                #check to stop us infinite looping
-                if no_change > len(branch_ids):
-                    error('Could not add branch of image pipeline, either circular links or depends on non-existant nodes')
-                    break
-                no_change += 1
-                continue
-            no_change = 0
-            for branch2_id, branch2 in self.branches.items():
-                relabel = branch.compare(branch2) #returns relabelling branch => branch2
-                #existing branch
-                if relabel:
-                    #need to relabel other branches not yet added accordingly
-                    for branch3 in branches.values():
-                        branch3.renumber(relabel)
-                    branch_relabeling[branch_id] = branch2_id
-                    node_relabeling.update(relabel)
-                    break
+                if inarc[0] == 0:
+                    continue
+                else:
+                    new_inarcs[input] = (old_id2new_id[inarc[0]],inarc[1])
+            node.outarcs = None
+        self.pipelines[filename] = Pipeline(nodes)
+        self.request2filename[name] = filename
+    def merge_and_update(self, merged_pls):
+        for pipelines, nodes in merged_pls:
+            #1) merge pipelines
+            if len(pipelines)>1:
+                #first need generate a name for our merge
+                pl_names = []
+                for pl in pipelines:
+                    if pl.startswith(merged):
+                        pl_names.extend(pl.split('__')[1:-1])
+                    else:
+                        pl_names.append(pl)
+                    #remove old pipelines
+                    self.pl_data.pipelines.pop(pl)
+                pipeline = 'merged__'+'__'.join(pl_names)+'__all'
+                #update requests to map to this new pl
+                for pl in pipelines:
+                    if pl.startswith(merged):
+                        for name in pl.split('__')[1:-1]:
+                            self.pl_data.request2filename[name] = pipeline
+                    else:
+                        self.pl_data.request2filename[pl] = pipeline
             else:
-                #there were no relabelings for any existing branch, so this is not the same as any existing branch, so add it
-                self.branches[self.nbid] = branch
-                branch_relabeling[branch_id] = self.nbid
-                #add all the nodes to nodeid2branch
-                #check to see if names already used (print warning if so)
-                for node_id, node in branch.nodes.items():
-                    self.nodeid2branch[node_id] = self.nbid
-                    if 'name' in node.params:
-                        if node.params['name'] in self.names:
-                            warning('Node name %s used more than once' %(node.params['name']))
-                        else:
-                            self.names.append(node.params['name'])
-                self.nbid += 1
-            branch_ids.remove(branch_id)
-        return branch_relabeling, node_relabeling
+                pipeline = pipelines[0]
+            #2) set pipeline to have new nodes
+            self.pl_data.pipelines = Pipeline(nodes)
+    def get_relabeling(new_node_ids):
+        self.nnid += len(new_node_ids)
+        return dict([(node_id, self.nnid-index-1) for index, node_id in enumerate(new_node_ids)])
 
 class pipelineManager(aiProcess):
     def _setup(self, *args, **kwargs):
+        #TODO make options actuall work
         self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
-        self.state = shelve.open('pl_manager.state')
         self.request_queue = Queue.Queue()
-        self.shelf = shelve.open('optimised.pipes')
-        if 'reset_pls' in kwargs:
-            if kwargs['reset_pls']:
-                self.shelf.pop('pl_data')
-                self.shelf.sync()
         self.freeze = False
         if 'freeze_pls' in kwargs:
             if kwargs['freeze_pls']:
                 self.freeze = True
+        #TODO state saving
         try:
             if kwargs['restore']:
-                self.requests = self.state['requests']
-                self.reeval = True
+                pass
             else:
                 self.requests = {'script':{}, 'other':{}}
         except KeyError:
             self.requests = {'script':{}, 'other':{}} #script_name: pl_names
-        self.det_reqs = []
+        self.detector_requests = []
+        self.pl_data = PipelinesSet()
         self.load_pl_data()
-        #self.script_pl = pipeline.Model(self.node, 'default')
+        #this should probably be replaced with multiple pipelines
         self._pl = NewModel(self.node, 'ai')
-        #save any old data just in case
-        try:
-            self._pl.save('%d_pl.temp' %(time.time(),))
-            self._pl.clear()
-        except RuntimeError:
-            error("Couldn't communicate with pipeline, major problems with img-pipeline dependant stuff ahead")
         self.pl_state = pipeline.State()
-        self.node_mapping = {}#node_ids here: node_ids in pipeline
-        #notify detector_process that this proces is running with no pls
         self.reeval = False
     def load_pl_data(self):
-        #try and load optimised pipelines
-        try:
-            self.pl_data = self.shelf['pl_data']
-            info('Found optimised pipelines data')
-        except KeyError:
-            self.pl_data = OptimisedPipelines()
+        """
+        try and load pipelines
+        syntax for merged pipelines
+        merged__PLNAME1__PLNAME2...__1/2/../all (so if multiple pls get merged, we still get what we want)
+        The strategy is 1) look for all pipelines (except merged__...__1/2.../n since these are only part pipelines)
+        2)group all pipelines with the same name 3)choose most recently modified pl
+        """
         #scan the pipelines
-        pipeline_names = [x[10:] for x in glob(os.path.join('pipelines', '*.pipe'))] #we'll drop the 'pipelines/' prefix
-        for pl_name in pipeline_names:
-            try:
-                info('Loading pipeline %s' %(pl_name,))
-                #for all new pipelines
-                if not pl_name in self.pl_data.pipelines:
-                    #add new pl
-                    self.add_pl(pl_name)
-                    warning('Found a new pipeline, %s, has been auto added to optimised pipelines file' %(pl_name,))
-                #for all modified pipelines
-                elif hashlib.md5(open(os.path.join('pipelines', pl_name)).read()).hexdigest() != self.pl_data.pipelines[pl_name].md5:
-                    #move old version to old_pipelines
-                    self.pl_data.old_pipelines[pl_name+str(time.time())] = self.pl_data.pipelines.pop(pl_name)
-                    #add new version
-                    self.add_pl(pl_name)
-                    warning('Pipeline %s was externally modified. The old version has been moved to old_pipelines.' %(pl_name,))
-            except Exception as e:
-                error('Could not load pipeline %s' %(pl_name,))
-                traceback.print_exc()
-    def add_pl(self, pl_name):
-        #load pipeline state
-        pl_state = cPickle.load(open(os.path.join('pipelines', pl_name)))
-        md5result = hashlib.md5(open(os.path.join('pipelines', pl_name)).read()).hexdigest()
-        #find out which nodes are 'inputs', and what the next node id should be
-        inputs = []
-        next_id = 1
-        for node_id, node in pl_state.nodes.items():
-            if all([x[0]==0 for x in node.inarcs.values()]): inputs.append(node_id)
-            if next_id <= node_id: next_id = node_id + 1
-            #get rid of troublesome zeros
-            for input, inarc in node.inarcs.items():
-                if inarc[0] == 0:
-                    node.inarcs.pop(input)
-        input_node2branch = {}
-        for node_id in inputs:
-            node = pl_state.nodes[node_id]
-            #add copy to avoid interference between branches
-            #may need multiple copies if input has multiple outputs
-            #check to see whether anything actually uses it
-            if not len(node.outarcs):
-                continue
-            for output_name, outarcs in node.outarcs.items():
-                #if copy node changes, need to change this bit
-                copy_node = pipeline.Node(next_id, int(messaging.NodeType.Copy), inputarcs={'image': (node_id, output_name)}, outputarcs={'image copy': outarcs})
-                for to_node_id, to_node_field in outarcs:
-                    pl_state.nodes[to_node_id].inarcs[to_node_field] = (next_id, 'image copy')
-                node.outarcs[output_name] = [(next_id, 'image')]
-                pl_state.nodes[next_id] = copy_node
-                next_id += 1
-        #create all encompassing branch, then split off inputs (so camera etc do not get added to the pipeline tomany times)
-        branches = Branch(pl_state.nodes).split([(x,) for x in inputs])
-        self.pl_data.add_pl(pl_name, branches, md5result)
+        pipeline_names = [x[10:-5] for x in glob(os.path.join('pipelines', '*.pipe'))] #we'll drop the 'pipelines/' prefix and '.pipe'
+        pipeline_groups = {} #pipeline main name: filenames
+        for name in pipeline_names:
+            if name.startswith('merged'):
+                if not name.endswith('all'):
+                    #so is only a partial pl, so ignore
+                    continue
+                warning('Found merged pipelines in file %s.pipe, it is recommended these are split and the merged file deleted' %(name,))
+                names = name.split('__')[1:-1]
+                for pl_name in names:
+                    try:
+                        pipeline_groups[pl_name].append(name)
+                    except KeyError:
+                        pipeline_groups[pl_name] = [name]
+            else:
+                try:
+                    pipeline_groups[name].append(name)
+                except KeyError:
+                    pipeline_groups[name] = [name]
+        for name, filenames in pipeline_groups.iteritems():
+            filename = max(filenames, key=lambda x: os.path.getmtime('pipelines/'+x+'.pipe'))
+            self.pl_data.add_pipeline(name, filename)
     @external_function
     def force_save(self, pipelines=None, temporary=False):
         self.reeval = True
-    @external_function
-    def clear_old(self):
-        self.pl_data.old_pipelines = {}
     @external_function
     def request_pl(self, requestor_type, requestor_name, requested_pl):
         #VERY IMPORTANT: make sure requestor_name is same as process_name
@@ -417,25 +300,13 @@ class pipelineManager(aiProcess):
     def drop_all_pl(self, requestor_type, requestor_name):
         self.request_queue.put(('unsetup_all',{'requestor_type':requestor_type, 'requestor_name':requestor_name}))
     @external_function
-    def drop_script_pls(self):
-        self.request_queue.put(('unsetup_script',{}))
+    def drop_task_pls(self, task_id):
+        self.request_queue.put(('unsetup_task',{'task_id':task_id}))
     @external_function
-    def set_detector_pl(self, req_list):
-        self.request_queue.put(('setup_detector',{'req_list':req_list}))
-    @external_function
-    def list_pls(self):
-        print self.det_reqs
-        print self.requests
+    def set_detector_pls(self, req_list):
+        self.request_queue.put(('setup_detectors',{'req_list':req_list}))
     def setup_pl(self, requestor_type, requestor_name, requested_pl):
-        if requestor_type == 'script':
-            #clear out other script requests on the basis that a) script won't request close together or b) the running script will be last to request
-            for script_name in self.requests['script']:
-                if script_name != requestor_name:
-                    for pl_name in self.requests['script'][script_name]:
-                        self.drop_pl(requestor_type, requestor_name, pl_name)
-        elif requestor_type == 'other':
-            pass
-        else:
+        if not requestor_type in self.requests:
             error('Invalid requestor type %s, named %s' %(requestor_type, requestor_name))
             return
         if not requested_pl in self.pl_data.pipelines:
@@ -448,7 +319,7 @@ class pipelineManager(aiProcess):
             self.requests[requestor_type][requestor_name] = [requested_pl]
         #confirm setup (atm only scripts)
         if requestor_type == 'script':
-            getattr(self.ai, requestor_name).pl_response()
+            getattr(self.ai, requestor_name).confirm_pl_response()
         self.reeval = True
     def unsetup_pl(self, requestor_type, requestor_name, requested_pl):
         if not requestor_type in self.requests:
@@ -457,11 +328,10 @@ class pipelineManager(aiProcess):
             error('Requestor does not have any pipelines to drop')
         elif not requested_pl in self.requests[requestor_type][requestor_name]:
             error('Requestor has not requested this pipeline %s' %(requested_pl,))
+        elif not requested_pl in self.pl_data.pipelines:
+            warning('Could not drop request %s, may have left things in the pipeline.' %(requested_pl, ))
         else:
-            if not requested_pl in self.pl_data.pipelines:
-                warning('Could not drop request %s, may have left things in the pipeline.' %(requested_pl, ))
-            else:
-                self.requests[requestor_type][requestor_name].remove(requested_pl)
+            self.requests[requestor_type][requestor_name].remove(requested_pl)
         self.reeval = True
     def unsetup_all(self, requestor_type, requestor_name):
         try:
@@ -469,30 +339,25 @@ class pipelineManager(aiProcess):
         except KeyError:
             error('Could not drop pls, requestor type %s invalid' %(requestor_type,))
         self.reeval = True
-    def unsetup_script(self):
-        self.requests['script'] = {}
+    def unsetup_task(self, task_id):
+        self.requests['script'][task_id] = []
         self.reeval = True
-    def setup_detector(self, req_list):
-        if set(req_list) != set(self.det_reqs):
-            self.det_reqs = req_list
+    def setup_detectors(self, req_list):
+        if set(req_list) != set(self.detector_requests):
+            self.detector_requests = req_list
             self.reeval = True
-    def eval_branches(self):
+    def eval_state(self):
         """
-        Note if gui nodes disabled, ignore gui-nodes
+        TODO allow gui disabling
         1) get the current state (also returns a list of new nodes)
             check that state isn't empty, if it is (andpl_state isn't) probably crashed, so don't do checking
-        2) group new nodes into branches
-            scan node for inputs and split off
-            TODO add copy node
+        IF NOT FROZEN:
+        2) change all the temporary nodes to proper nodes
         3) modify 'state' and model to reflect moving nodes from temp to proper - note outarcs invalid after this point
-        4) scan existing nodes for:
-            lost nodes - remove all traces - TODO if a whole branch is removed, remove branch not node
-            changes to params
-            changes to inarcs
-        5) check pipeline dependencies
-        6) if any of our new branches haven't been used, guess which pipeline they're supposed to be added to
-        7) calculate branches that need to be there
-        8) calculate nodes that needed to be added removed to manage this
+        4) group nodes into connected groups
+        5) determine which pipeline groups should be in by which pipelines the nodes were in
+        
+        6) calculate nodes that needed to be added/removed to get desired pipelines
         """
         #1
         try:
@@ -502,179 +367,81 @@ class pipelineManager(aiProcess):
             return
         if len(state.nodes) and not self.freeze:
             #2
-            traced = [] #nodes that have been added to a group
-            node_relabelings = {} #summary of how node names in state -> node names in optimised pipelines
-            new_branch_ids = [] #list of newly created branches
-            info('Found %d new nodes.' %(len(new_nodes),))
-            for node_id in new_nodes:
-                if node_id in traced: continue #if the node is already part of a grouping, ignore it
-                depends_on = [] #list of nodes that this group depends on
-                nodes = {} #node_id (opt_pipe):node, list of nodes in this group
-                to_map = [node_id,] #nodes that need to be checked
-                #map outwards until you hit already existing things
-                while len(to_map)>0:
-                    for inarc in state.nodes[to_map[0]].inarcs.values():
-                        #for all inputs, if the input is from a node inside this group
-                        #(and we haven't already mapped it, or put it in the list to map), then we need to 'map' it
-                        #else its outside the group, so the group depends on it
-                        if (inarc[0] in new_nodes) and (not inarc[0] in traced) and (not inarc[0] in to_map):
-                            to_map.append(inarc[0])
-                        else:
-                            depends_on.append(to_map[0])
-                    for outarcs in state.nodes[to_map[0]].outarcs.values():
-                        #for outarcs, just need to check if any new nodes need to be in the group
-                        for outarc in outarcs:
-                            if (outarc[0] in new_nodes) and (not outarc[0] in traced) and (not outarc[0] in to_map):
-                                to_map.append(outarc[0])
-                    traced.append(to_map[0])
-                    nodes[to_map[0]] = state.nodes[to_map[0]]
-                    to_map.remove(to_map[0])
-                #check for inputs
-                inputs = []
-                for node_id, node in nodes.items():
-                    if len(node.inarcs) == 0:
-                        inputs.append(node_id)
-                #TODO add copy node
-                #create new branches
-                branches = Branch(nodes).split([[x] for x in inputs])
-                branch_relabeling, node_relabeling = self.pl_data.add_branches(branches)
-                node_relabelings.update(node_relabeling)
-                new_branch_ids.extend(branch_relabeling.values())
+            relabeling = self.pl_data.get_relabeling(new_nodes)
             #3
             #reassign the new nodes with optimised pipeline number from the temporary references originally given
-            self._pl.reassign(node_relabelings)
+            self._pl.reassign(relabeling)
             #renumber node_ids in state so that future references give right number
+            #NOTE uses items not iteritems as this means its preevaluated, so can remove while looping
             for node_id, node in state.nodes.items():
                 for input, inarc in node.inarcs.items():
-                    if inarc[0] in node_relabelings:
-                        node.inarcs[input] = (node_relabelings[inarc[0]], inarc[1])
-                if node_id in node_relabelings:
+                    if inarc[0] in relabeling:
+                        node.inarcs[input] = (relabeling[inarc[0]], inarc[1])
+                if node_id in relabeling:
                     state.nodes.pop(node_id)
-                    state.nodes[node_relabelings[node_id]] = node
+                    state.nodes[relabeling[node_id]] = node
             #4
-            for node_id, node in self.pl_state.nodes.items():
-                #check for nodes lost
-                if (not node_id in state.nodes) and (not self.disable_gui or node.type != int(messaging.NodeType.GuiOutput)):
-                    info('Detected node %d removed.' %(node_id,))
-                    #node lost, remove all traces
-                    for branch in self.pl_data.branches.values():
-                        for node_id2, node2 in branch.nodes.items():
-                            if node_id2 == node_id:
-                                branch.nodes.pop(node_id)
-                                continue
-                            for input, inarc in node2.inarcs.items():
-                                if inarc[0] == node_id:
-                                    node2.inarcs.pop(input)
-                    continue
-                #check for properties changed on existing nodes
-                if node.params != state.nodes[node_id].params:
-                    info('Detected node %d params changed.' %(node_id,))
-                    self.pl_data.branches[self.pl_data.nodeid2branch[node_id]].nodes[node_id].params = state.nodes[node_id].params
-                #and check for changed inarcs on existing nodes
-                for input, inarc in node.inarcs.items():
-                    if input in state.nodes[node_id].inarcs:
-                        if state.nodes[node_id].inarcs[input] != inarc:
-                            #inarc changed
-                            info('Detected node %d input to %s changed.' %(node_id, input))
-                            self.pl_data.branches[self.pl_data.nodeid2branch[node_id]].nodes[node_id].inarcs[input] = state.nodes[node_id].inarcs[input]
-                        #no change
-                    else:
-                        #inarc removed
-                        info('Detected node %d input to %s removed.' %(node_id, input))
-                        self.pl_data.branches[self.pl_data.nodeid2branch[node_id]].nodes[node_id].inarcs.pop(input)
-                for input, inarc in state.nodes[node_id].inarcs.items():
-                    if not input in node.inarcs:
-                        #new inarc
-                        info('Detected node %d new input to %s.' %(node_id, input))
-                        self.pl_data.branches[self.pl_data.nodeid2branch[node_id]].nodes[node_id].inarcs[input] = (node_relabelings[inarc[0]],inarc[1]) if state.nodes[node_id].inarcs[input][0] in node_relabelings else inarc
+            traced = [] #nodes that have been added to a group
+            groups = [] #node_list, pipelines
+            info('Found %d new nodes.' %(len(new_nodes),))
+            for node_id in state.nodes:
+                if node_id in traced: continue #if the node is already part of a grouping, ignore it
+                nodes = {} #node_id:node, list of nodes in this group
+                pipelines = set()
+                to_map = [node_id,] #nodes that need to be checked
+                #map outwards as far as possible
+                while len(to_map)>0:
+                    for inarc in state.nodes[to_map[0]].inarcs.values():
+                        #for all inputs, if we haven't already mapped it, or put it in the list to map
+                        #then we need to 'map' it
+                        if (not inarc[0] in traced) and (not inarc[0] in to_map):
+                            to_map.append(inarc[0])
+                    for outarcs in state.nodes[to_map[0]].outarcs.values():
+                        for outarc in outarcs:
+                            if (not outarc[0] in traced) and (not outarc[0] in to_map):
+                                to_map.append(outarc[0])
+                    #mark the node as traced, add to this group, add the pipeline its in to this group, remove it from the to check list
+                    traced.append(to_map[0])
+                    nodes[to_map[0]] = state.nodes[to_map[0]]
+                    try:
+                        pipelines.add(self.pl_data.node_id2pipeline[to_map[0]])
+                    except KeyError:
+                        #isn't in a pipeline
+                        pass
+                    to_map.remove(to_map[0])
+                groups.append((nodes,pipelines))
             #5
-            #check to see whether any pipeline branch dependancies have changed
-            for pl_name, pl in self.pl_data.pipelines.items():
-                #check to see if any new branches haven't been added somewhere
-                #find out which branches this is dependant on
-                to_check = list(pl.branches)
-                depends_on_branches = []
-                while len(to_check):
-                    for node in self.pl_data.branches[to_check[0]].nodes.values():
-                        for node2_id, node2field in node.inarcs.values():
-                            if (not self.pl_data.nodeid2branch[node2_id] in depends_on_branches):
-                                to_check.append(self.pl_data.nodeid2branch[node2_id])
-                                depends_on_branches.append(self.pl_data.nodeid2branch[node2_id])
-                    if to_check[0] in new_branch_ids:
-                        new_branch_ids.remove(to_check[0])
-                    to_check.remove(to_check[0])
-                #add branches to pl
-                info('Adding '+str(depends_on_branches)+' to '+pl_name+'.')
-                for branch in depends_on_branches:
-                    if not branch in pl.branches:
-                        pl.branches.append(branch)
-            #6
-            #if for nodes which things aren't dependant on
-            if len(new_branch_ids): info('Found %d new branches that no pipeline depends on, guessing...' %(len(new_branch_ids),))
-            #counter to check we are getting somewhere
-            added = []
-            for branch_id in new_branch_ids:
-                if branch_id in added:
-                    continue
-                #find the dependancies of the branch
-                to_check = [branch_id]
-                depends_on_branches = []
-                while len(to_check):
-                    for node in self.pl_data.branches[to_check[0]].nodes.values():
-                        for node2_id, node2field in node.inarcs.values():
-                            if (not self.pl_data.nodeid2branch[node2_id] in depends_on_branches) and (not self.pl_data.nodeid2branch[node2_id] == branch_id):
-                                to_check.append(self.pl_data.nodeid2branch[node2_id])
-                                depends_on_branches.append(self.pl_data.nodeid2branch[node2_id])
-                    to_check.remove(to_check[0])
-                info('New branch dependant on '+str(depends_on_branches))
-                #now find all the pipelines that have all the branches this branch is dependant on (except other new branches that haven't been used)
-                if len(depends_on_branches): #else will get attached to every pl
-                    attached_to = {}
-                    extras = {} #new branches to be added to the pl
-                    for pl_name, pl in self.pl_data.pipelines.items():
-                        extras[pl_name] = [branch_id]
-                        for branch2_id in depends_on_branches:
-                            if branch2_id in pl.branches:
-                                continue
-                            elif branch2_id in new_branch_ids:
-                                extras[pl_name].append(branch2_id)
-                                continue
-                            break
-                        else:
-                            #this is attached to this pl
-                            attached_to[pl_name] = pl
-                            info('New branch could be attached to %s' %(pl_name, ))
-                    for pl_name, pl in attached_to.items():
-                        info('Adding to pipeline %s.' %(pl_name,))
-                        pl.branches.extend(extras[pl_name])
-                        for bid in extras[pl_name]:
-                            added.append(bid)
-            for branch_id in new_branch_ids:
-                if not branch_id in added:
-                    warning('Could not attach some branches (nodes will be lost)')
-                    warning('TEMPORARY WARNING: unlinked nodes will probably cause a crash!!!')
-                    break
-                #TODO create pl. possibly add request
-            #save modifications
-            self.shelf['pl_data'] = self.pl_data
-            self.shelf.sync()
+            #deals with pipelines getting merged (by connecting)
+            merged_pls = [] #[(pipelines,nodes)]
+            pl2merged_pl = {} #pipeline, merged_pl index
+            for group, pipelines in groups:
+                for pipeline in pipelines:
+                    if pipeline in pl2merged_pl:
+                        merged_pl_id = pl2merged_pl
+                        break
+                else:
+                    merged_pl_id = len(merged_pls)
+                    merged_pls.append([set(),{}])
+                for pipeline in pipelines:
+                    pl2merged_pl[pipeline] = merged_pl_id
+                merged_pls[merged_pl_id][1].update(group)
+                merged_pls[merged_pl_id][0].update(pipelines)
+            self.pl_data.merge_and_update(merged_pls)
+        #7
         #set current state to state from pipeline
         self.pl_state = state
         #generate 'clean' new state
         new_state = pipeline.State()
-        #7
         for reqname2reqs in self.requests.values():
             for reqs in reqname2reqs.values():
                 for req in reqs:
-                    for branch_id in self.pl_data.pipelines[req].branches:
-                        new_state.nodes.update(self.pl_data.branches[branch_id].nodes)
-        for req in self.det_reqs:
+                    new_state.nodes.update(self.pl_data.pipelines[self.pl_data.request2filename[req]].nodes)
+        for req in self.detector_requests:
             if not req in self.pl_data.pipelines:
                 error('Requested non-existant pipeline %s' %(req, ))
                 continue
-            for branch_id in self.pl_data.pipelines[req].branches:
-                new_state.nodes.update(self.pl_data.branches[branch_id].nodes)
-        self.cur_det_reqs = self.det_reqs
+            new_state.nodes.update(self.pl_data.pipelines[self.pl_data.request2filename[req]].nodes)
+        self.cur_det_reqs = self.detector_requests
         #8
         add_nodes = {}
         remove_nodes = {}
@@ -684,7 +451,7 @@ class pipelineManager(aiProcess):
                 remove_nodes[node_id] = node
         #calculate nodes to add
         for node_id, node in new_state.nodes.items():
-            if not node_id in self.pl_state.nodes and (not self.disable_gui or node.type != int(messaging.NodeType.GuiOutput)):
+            if not node_id in self.pl_state.nodes:# and (not self.disable_gui or node.type != int(messaging.NodeType.GuiOutput)):
                 add_nodes[node_id] = node
         #update pl_state
         self.pl_state.nodes.update(add_nodes)
@@ -710,17 +477,8 @@ class pipelineManager(aiProcess):
             if self.reeval:
                 self.eval_branches()
                 self.reeval = False
-                self.state['requests'] = self.requests
-                self.state.sync()
-    #extra functions
-    @external_function
-    def export_pipelines(self):
-        for pl_name, pl in self.pl_data.pipelines.items():
-            new_state = pipeline.State()
-            for branch_id in pl.branches:
-                new_state.nodes.update(self.pl_data.branches[branch_id].nodes)
-            with open('dev-pipelines/'+pl_name[:-5]+datetime.now().isoformat()+pl_name[-5:], 'wb') as outf:
-                pickle.dump(new_state, outf)
+                #self.state['requests'] = self.requests
+                #self.state.sync()
     
 
 # These are the BSD ones
