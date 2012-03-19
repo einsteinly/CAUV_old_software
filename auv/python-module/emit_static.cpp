@@ -4,9 +4,10 @@
 
 #include <debug/cauv_debug.h>
 #include <common/cauv_node.h>
-#include <common/spread/msgsrc_mb_observer.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
+#include <common/mailbox.h>
 #include <common/bounded_float.h>
+#include <generated/message_observers.h>
 #include <generated/types/message.h>
 #include <generated/types/MembershipChangedMessage.h>
 
@@ -187,7 +188,7 @@ class CauvNodeWrapper:
             return 9;
         }*/
 
-        boost::shared_ptr<ReconnectingSpreadMailbox> get_mailbox() const{
+        boost::shared_ptr<Mailbox> get_mailbox() const{
             return CauvNode::mailbox();
         }
 };
@@ -216,24 +217,6 @@ class AIMessageObserver:
         }
 };
 */
-
-
-class SpreadMessageWrapper:
-    public SpreadMessage,
-    public bp::wrapper<SpreadMessage>
-{
-    public:
-        virtual MessageFlavour getMessageFlavour() const{
-            GILLock l;
-            if(bp::override f = this->get_override("getMessageFlavour")){
-                return f();
-            }
-            l.release();
-            error() << "1. Spread Messages should not be exposed to Python";
-            error() << "2. You should DEFINITELY not be using them";
-            throw std::runtime_error("Spread Messages are not usable from Python");
-        }
-};
 
 std::vector<uint8_t> mkByteVec(std::string const& b16encoded){
     std::vector<uint8_t> r;
@@ -287,19 +270,14 @@ void emitDebug(){
 
 void emitMailbox(){
     /* need to explicitly resolve pointer to overloaded function: */
-    typedef int (ReconnectingSpreadMailbox::*sm_ptr3_t)(
-        boost::shared_ptr<const Message>, Spread::service, std::string const&
+    typedef int (Mailbox::*sm_ptr3_t)(
+        boost::shared_ptr<const Message>, MessageReliability, std::string const&
     );
-    bp::class_<ReconnectingSpreadMailbox,
+    bp::class_<Mailbox,
                boost::noncopyable,
-               boost::shared_ptr<ReconnectingSpreadMailbox>
+               boost::shared_ptr<Mailbox>
               >("Mailbox", bp::no_init)
-        .def("join", wrap(&ReconnectingSpreadMailbox::joinGroup))
-        .def("send", wrap((sm_ptr3_t) &ReconnectingSpreadMailbox::sendMessage))
-        /* does this function actually serve any useful purpose other than
-         * maybe testing, and causing crashes? -- don't expose it?
-         */
-        .def("receive", wrap(&ReconnectingSpreadMailbox::receiveMessage))
+        .def("send", wrap((sm_ptr3_t) &Mailbox::sendMessage))
     ;
 
     bp::class_<MessageSource,
@@ -308,15 +286,11 @@ void emitMailbox(){
               >("__MessageSourceBase")
     ;
 
-    bp::class_<MsgSrcMBMonitor,
-               bp::bases<MessageSource>, // also MailboxObserver, but that is never instantiated
-               boost::noncopyable,
-               boost::shared_ptr<MsgSrcMBMonitor>
-              >("Monitor", bp::no_init)
-        .def("addObserver", wrap(&MessageSource::addObserver)) // addObserver is a member of base class MessageSource
+    bp::enum_<MessageReliability>("MessageReliability")
+        .value("RELIABLE_MSG",RELIABLE_MSG)
+        .value("UNRELIABLE_MSG",UNRELIABLE_MSG)
     ;
 }
-
 
 void emitMessage(){
     bp::class_<MessageWrapper,
@@ -345,29 +319,6 @@ void emitCauvNode(){
          //.add_property("monitor", &CauvNodeWrapper::get_mailboxMonitor)
     ;
 }
-
-
-void emitSpreadMessage(){
-    bp::class_<SpreadMessageWrapper,
-               boost::noncopyable,
-               boost::shared_ptr<SpreadMessage>
-              >("__SpreadMessage", bp::no_init)
-        .def("getMessageFlavour", wrap(&SpreadMessageWrapper::getMessageFlavour))
-    ;
-
-    bp::class_<RegularMessage,
-               bp::bases<SpreadMessage>,
-               boost::shared_ptr<RegularMessage>
-              >("__RegularMessage", bp::no_init)
-    ;
-
-    bp::class_<MembershipMessage,
-               bp::bases<SpreadMessage>,
-               boost::shared_ptr<MembershipMessage>
-              >("__MembershipMessage", bp::no_init)
-    ;
-}
-
 
 void emitAIMessageObserver(){
     /*bp::class_<AIMessageObserver,

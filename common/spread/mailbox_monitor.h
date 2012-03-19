@@ -1,5 +1,5 @@
-#ifndef __CAUV_MAILBOX_MONITOR_H__
-#define __CAUV_MAILBOX_MONITOR_H__
+#ifndef __CAUV_SPREAD_MAILBOX_MONITOR_H__
+#define __CAUV_SPREAD_MAILBOX_MONITOR_H__
 
 #include <list>
 #include <iostream>
@@ -8,6 +8,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <utility/threadsafe-observable.h>
+#include <common/mailbox_monitor.h>
 
 namespace cauv{
 
@@ -15,6 +16,7 @@ class ReconnectingSpreadMailbox;
 class SpreadMessage;
 class RegularMessage;
 class MembershipMessage;
+class MsgSrcMBMonitor;
 
 class MailboxObserver {
     public:
@@ -30,27 +32,31 @@ class TestMBObserver: public MailboxObserver{
         void membershipMessageReceived(boost::shared_ptr<const MembershipMessage>);
 };
 
-class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public boost::noncopyable {
+class SpreadMailboxEventMonitor : public MailboxEventMonitor, public ThreadSafeObservable<MailboxObserver>, public boost::noncopyable {
     public:
-        MailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox);
+        SpreadMailboxEventMonitor(boost::shared_ptr<ReconnectingSpreadMailbox> mailbox);
 
         /**
          * Spawns a new thread listening for new messages on the associated mailbox.
          * Whenever a new message is received, all observers are informed.
          */
-        void startMonitoringAsync();
+        virtual void startMonitoringAsync();
 
-        void startMonitoringSync();
+        virtual void startMonitoringSync();
 
-        void stopMonitoring();
+        virtual void stopMonitoring();
 
-        bool isMonitoring();
+        virtual bool isMonitoring();
 
+        virtual void addMessageObserver(boost::shared_ptr<MessageObserver>);
+        virtual void removeMessageObserver(boost::shared_ptr<MessageObserver>);
+        virtual void clearMessageObservers(void);
     private:
         void doMonitoring();
 
         boost::thread m_thread;
         boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
+        boost::shared_ptr<MsgSrcMBMonitor> m_mb_monitor;
         volatile bool m_interupted;
         volatile bool m_monitoring;
         boost::thread::id m_sync_thread_id;
@@ -58,5 +64,5 @@ class MailboxEventMonitor : public ThreadSafeObservable<MailboxObserver>, public
 
 } // namespace cauv
 
-#endif//__CAUV_MAILBOX_MONITOR_H__
+#endif//__CAUV_SPREAD_MAILBOX_MONITOR_H__
 

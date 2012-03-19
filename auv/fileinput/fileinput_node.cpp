@@ -25,14 +25,14 @@
 
 #include <common/cauv_global.h>
 #include <common/cauv_utils.h>
-#include <common/spread/spread_rc_mailbox.h>
+#include <common/mailbox.h>
 #include <generated/messages.h>
 #include <debug/cauv_debug.h>
 
 using namespace cauv;
 
 class FileinputObserver: public MessageObserver{
-        typedef boost::shared_ptr<ReconnectingSpreadMailbox> mb_ptr_t;
+        typedef boost::shared_ptr<Mailbox> mb_ptr_t;
     public:
     
         FileinputObserver(Image const& img, mb_ptr_t mailbox)
@@ -47,7 +47,7 @@ class FileinputObserver: public MessageObserver{
 
         void sendImage(){
             debug() << "sending image...";
-            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(CameraID::File, m_img, now()), UNRELIABLE_MESS);
+            m_mailbox->sendMessage(boost::make_shared<ImageMessage>(CameraID::File, m_img, now()), UNRELIABLE_MSG);
             debug() << "(sent)";
         }
 
