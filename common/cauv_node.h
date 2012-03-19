@@ -20,8 +20,7 @@
 #include <iostream>
 
 #include <boost/shared_ptr.hpp>
-
-#include <ssrc/spread.h>
+#include "mailbox.h"
 
 
 namespace boost {
@@ -35,18 +34,19 @@ namespace program_options {
 namespace cauv{
 
 /* Forward Declarations */
+class Mailbox;
 class ReconnectingSpreadMailbox;
+class ZeroMQMailbox;
 class MailboxEventMonitor;
-class MsgSrcMBMonitor;
 class MessageObserver;
 class Message;
 
 class CauvNode
 {
-	public:
+    public:
         virtual ~CauvNode();
         virtual void stopNode();
-		 
+
         void run(bool synchronous=false);
         bool isRunning();
 
@@ -57,19 +57,19 @@ class CauvNode
         void addMessageObserver(boost::shared_ptr<MessageObserver>);
         void removeMessageObserver(boost::shared_ptr<MessageObserver>);
         void clearMessageObservers();
-   
+
         int send(boost::shared_ptr<const Message> message,
-                 Spread::service serviceType = SAFE_MESS);
-        
-	protected:
-		std::string m_name;
-		std::string m_server;
-		unsigned int m_port;
-        boost::shared_ptr<ReconnectingSpreadMailbox> mailbox() const;
+                 MessageReliability reliability = RELIABLE_MSG);
+
+    protected:
+        std::string m_name;
+        std::string m_server;
+        unsigned int m_port;
+        boost::shared_ptr<Mailbox> mailbox() const;
 
         CauvNode(const std::string& name);
-            
-		virtual void onRun();
+
+        virtual void onRun();
         virtual void addOptions(boost::program_options::options_description& desc,
                                 boost::program_options::positional_options_description& pos);
         virtual int useOptionsMap(boost::program_options::variables_map& vm,
@@ -77,9 +77,10 @@ class CauvNode
 
 
     private:
-        boost::shared_ptr<ReconnectingSpreadMailbox> m_mailbox;
+        boost::shared_ptr<ReconnectingSpreadMailbox> m_spread_mailbox;
+        boost::shared_ptr<ZeroMQMailbox> m_zeromq_mailbox;
+        boost::shared_ptr<Mailbox> m_mailbox;
         boost::shared_ptr<MailboxEventMonitor> m_event_monitor;
-        boost::shared_ptr<MsgSrcMBMonitor> m_mailbox_monitor;
         volatile bool m_running;
 };
 

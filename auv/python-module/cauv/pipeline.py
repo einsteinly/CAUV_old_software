@@ -90,7 +90,8 @@ class FilterUnpickler(pickle.Unpickler):
 def filterPercentileNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param.input == 'percentile' and isinstance(value, float):
+        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
+        if param_key == 'percentile' and isinstance(value, float):
             params_out[param] = messaging.BoundedFloat(value, 0, 100, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
@@ -101,9 +102,10 @@ def filterClampXNodeParameters(params_in):
     range_max = None
     range_min = None
     for param, value in params_in.items():
-        if param.input == 'Max':
+        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
+        if param_key == 'Max':
             range_max = value
-        elif param.input == 'Min':
+        elif param_key == 'Min':
             range_min = value
         else:
             params_out[param] = value;
@@ -114,9 +116,10 @@ def filterClampXNodeParameters(params_in):
 def filterLevelsNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param.input == 'black level' and isinstance(value, int):
+        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
+        if param_key == 'black level' and isinstance(value, int):
             params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
-        elif param.input == 'white level' and isinstance(value, int):
+        elif param_key == 'white level' and isinstance(value, int):
             params_out[param] = messaging.BoundedFloat(float(value), 0, 255, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
@@ -125,7 +128,8 @@ def filterLevelsNodeParameters(params_in):
 def filterGuiOutputNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param.input == 'jpeg quality' and isinstance(param, int):
+        param_key = param.input if isinstance(param, messaging.LocalNodeInput) else param
+        if param_key == 'jpeg quality' and isinstance(value, int):
             params_out[param] = messaging.BoundedFloat(float(value), 0, 100, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
@@ -235,6 +239,7 @@ class Model(messaging.MessageObserver):
         return s
     
     def set(self, state, timeout=3.0, clear=True):
+        #NOTE PLEASE MAKE SURE ANY CHANGES ARE REFLECTED IN AI_PIPELINE_MANAGER (since it overides this method)
         if clear: self.clear()
         id_map = {}
         node_map = {}

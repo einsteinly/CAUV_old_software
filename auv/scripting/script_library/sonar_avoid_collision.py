@@ -168,11 +168,14 @@ class script(aiScript, RelativeTimeCapability):
             if self.time_detected is not None and\
                self.relativeTime() - self.time_detected < self.options.Run_Away_Time:
                 info('running away!')
+                if not self.in_control.is_set():
+                    self.request_control_and_wait(1, control_timeout=5)
                 self.auv.prop(-127)
             else:
                 if self.time_detected is not None and \
                    self.relativeTime() - self.time_detected < self.options.Run_Away_Time + 0.5:
                     self.auv.prop(0)
+                    self.drop_control()
                 self.clearDetected()
 
 if __name__ == '__main__':

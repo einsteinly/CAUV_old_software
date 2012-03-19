@@ -13,15 +13,6 @@ import sys
 class Observer(messaging.MessageObserver):
     pass
 
-class ServiceLevel:
-    Unreliable = 0x01
-    Reliable   = 0x02
-    Fifo       = 0x04
-    Causal     = 0x08
-    Agreed     = 0x10
-    Safe       = 0x20
-    Regular    = 0X3f
-
 @fileCached(30)
 def getVersionInfo():
     import os, shlex, subprocess
@@ -73,7 +64,7 @@ class Node(messaging.CauvNode):
          # synchronous = True => Consume this thread
         try:
             self.run(synchronous)
-        except Exception, e:
+        except:
             error(traceback.format_exc())
         finally:
             self.stop()
@@ -89,7 +80,7 @@ class Node(messaging.CauvNode):
     def __run(self):
         self.__callRunWithTryFinally(False)
     
-    def send(self, message, groups=None, service_level=ServiceLevel.Safe):
+    def send(self, message, groups=None, service_level=messaging.MessageReliability.RELIABLE_MSG):
         if groups == None:
             groups = message.group
         self.mailbox.send(message, service_level, groups)
