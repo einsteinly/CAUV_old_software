@@ -4,7 +4,7 @@ from cauv.debug import info, warning, error, debug
 from cauv import messaging
 import cauv.pipeline
 
-import threading, os.path, cPickle, time, traceback, pickle, argparse, Queue, subprocess
+import threading, os, os.path, cPickle, time, traceback, pickle, argparse, Queue, subprocess
 from glob import glob
 from datetime import datetime
 
@@ -185,7 +185,7 @@ class PipelinesSet():
                 #first need generate a name for our merge
                 pl_names = []
                 for pl in pipelines:
-                    if pl.startswith('temp__'):
+                    if pl.startswith('temp'):
                         pl_names.extend(pl.split('__')[1:-1])
                     else:
                         pl_names.append(pl)
@@ -195,19 +195,19 @@ class PipelinesSet():
                 #update requests to map to this new pl
                 for name, filename in self.request2filename.items():
                     if filename in pipelines:
-                        self.request2filename[name] = 'temp__'+pipeline+'__all'
+                        self.request2filename[name] = os.path.join('temp','__')+pipeline+'__all'
             else:
                 pipeline = 'temporary'
             #2) set pipeline to have new nodes, and save
             all_nodes = {}
             for index, node_group in enumerate(node_groups):
                 all_nodes.update(node_group)
-                with open(os.path.join('pipelines','temp__')+pipeline+'__'+str(index)+'.pipe', 'wb') as outf:
+                with open(os.path.join('pipelines','temp','__')+pipeline+'__'+str(index)+'.pipe', 'wb') as outf:
                     st = cauv.pipeline.State()
                     st.nodes = node_group
                     pickle.dump(st, outf)
-            self.pipelines['temp__'+pipeline+'__all'] = Pipeline(all_nodes)
-            with open(os.path.join('pipelines','temp__')+pipeline+'__all'+'.pipe', 'wb') as outf:
+            self.pipelines[os.path.join('temp','__')+pipeline+'__all'] = Pipeline(all_nodes)
+            with open(os.path.join('pipelines','temp','__')+pipeline+'__all'+'.pipe', 'wb') as outf:
                 st = cauv.pipeline.State()
                 st.nodes = all_nodes
                 pickle.dump(st, outf)
@@ -218,6 +218,10 @@ class PipelinesSet():
 class pipelineManager(aiProcess):
     def __init__(self, *args, **kwargs):
         aiProcess.__init__(self, *args, **kwargs)
+        try:
+            os.mkdir(os.path.join('pipelines','temp'))
+        except OSError:
+            pass
         #TODO make options actuall work
         self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
         self.request_queue = Queue.Queue()
@@ -246,10 +250,11 @@ class pipelineManager(aiProcess):
         2)group all pipelines with the same name 3)choose most recently modified pl
         """
         #scan the pipelines
-        pipeline_names = [x[10:-5] for x in glob(os.path.join('pipelines', '*.pipe'))] #we'll drop the 'pipelines/' prefix and '.pipe'
+        pipeline_names = [x[10:-5] for x in glob(os.path.join('pipelines', '*.pipe'))]
+        pipeline_names.extend([x[10:-5] for x in glob(os.path.join('pipelines','temp','*.pipe'))])#we'll drop the 'pipelines/' prefix and '.pipe'
         pipeline_groups = {} #pipeline main name: filenames
         for name in pipeline_names:
-            if name.startswith('temp__'):
+            if name.startswith('temp'):
                 if not name.endswith('__all'):
                     #so is only a partial pl, so ignore
                     continue
