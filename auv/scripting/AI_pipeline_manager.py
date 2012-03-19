@@ -149,7 +149,7 @@ class PipelinesSet():
             return
         #load pipeline
         try:
-            pl_state = cPickle.load(open(os.path.join('pipelines', filename)+'.pipe'))
+            pl_state = cauv.pipeline.Model.loadFile(open(os.path.join('pipelines', filename)+'.pipe'))
         except:
             error('Error loading pipeline %s' %(filename,))
             traceback.print_exc()
@@ -270,7 +270,7 @@ class pipelineManager(aiProcess):
     def drop_pl(self, requestor_type, requestor_name, requested_pl):
         self.request_queue.put(('unsetup_pl',{'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl}))
     @external_function
-    def drop_all_pl(self, requestor_type, requestor_name):
+    def drop_all_pls(self, requestor_type, requestor_name):
         self.request_queue.put(('unsetup_all',{'requestor_type':requestor_type, 'requestor_name':requestor_name}))
     @external_function
     def drop_task_pls(self, task_id):
@@ -292,7 +292,7 @@ class pipelineManager(aiProcess):
             self.requests[requestor_type][requestor_name] = [requested_pl]
         #confirm setup (atm only scripts)
         if requestor_type == 'script':
-            getattr(self.ai, requestor_name).confirm_pl_response()
+            getattr(self.ai, requestor_name).confirm_pl_request()
         self.reeval = True
     def unsetup_pl(self, requestor_type, requestor_name, requested_pl):
         if not requestor_type in self.requests:
@@ -398,7 +398,7 @@ class pipelineManager(aiProcess):
             for group, pipelines in groups:
                 for pipeline in pipelines:
                     if pipeline in pl2merged_pl:
-                        merged_pl_id = pl2merged_pl
+                        merged_pl_id = pl2merged_pl[pipeline]
                         break
                 else:
                     merged_pl_id = len(merged_pls)

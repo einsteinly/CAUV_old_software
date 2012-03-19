@@ -247,7 +247,7 @@ class taskManager(aiProcess):
     def stop_script(self, task_id):
         #make sure additional task isnt blocking other tasks from doing stuff, and doesn't have any leftover pipelines
         self.ai.auv_control.remove_additional_task_id(task_id)
-        self.ai.pl_manager.remove_task_pls(task_id)
+        self.ai.pl_manager.drop_task_pls(task_id)
         script = self.additional_tasks.pop(task_id)[1]
         if script:
             try:
