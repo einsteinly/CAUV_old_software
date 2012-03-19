@@ -491,13 +491,19 @@ class aiDetectorOptions(aiOptions):
     pass
         
 class aiDetector(messaging.MessageObserver):
-    pipelines = []
     def __init__(self, node, opts):
         messaging.MessageObserver.__init__(self)
+        self._pipelines = []
         self.options = opts
         self.node = node
         self.node.addObserver(self)
         self.detected = False
+    def request_pl(self, name):
+        self._pipelines.append(name)
+    def drop_pl(self, name):
+        self._pipelines.remove(name)
+    def drop_all_pl(self, name):
+        self._pipelines = []
     def process(self):
         """
         This should define a method to do any intensive (ie not on message) processing

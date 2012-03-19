@@ -8,6 +8,7 @@ import threading, os.path, cPickle, time, traceback, pickle, argparse, Queue, su
 from glob import glob
 from datetime import datetime
 
+#WORKS, BUT MAY BE MODIFYING SUPPOSEDLY IMMUTABLE OBJECTS
 #lets modify pipeline.Model class a bit so its a bit more flexible
 class NewModel(cauv.pipeline.Model):
     """
@@ -85,8 +86,12 @@ class NewModel(cauv.pipeline.Model):
             self.nodes[node_id]=node
             bad_params = []
             for param, value in node.params.items():
+                if isinstance(param, messaging.LocalNodeInput):
+                    param_key = param.input
+                else:
+                    param_key = param
                 try:
-                    self.setParameterSynchronous(new_node_id, param, value, timeout)
+                    self.setParameterSynchronous(new_node_id, param_key, value, timeout)
                 except RuntimeError:
                     error("Couldn't set parameter: "+str((param,value)))
                     #remove parameter to avoid future errors
@@ -98,9 +103,13 @@ class NewModel(cauv.pipeline.Model):
         for node_id, node in nodes.items():
             bad_arcs = []
             for input, (from_node_id, from_node_field) in node.inarcs.items():
+                if isinstance(input, messaging.LocalNodeInput):
+                    input_key = input.input
+                else:
+                    input_key = input
                 try:
                     try:
-                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input, timeout)
+                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input_key, timeout)
                     except KeyError:
                         error('Could not add arc from %d to %d, a node does not exist.' %(from_node_id, node_id))
                 except RuntimeError:
