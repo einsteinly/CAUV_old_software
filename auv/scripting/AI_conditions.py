@@ -39,7 +39,7 @@ class aiCondition(object):
         self.id  = task_manager.register_condition(self)
     def deregister(self, task_manager):
         for task_id in self.task_ids:
-            debug('removing condition %d from task %d' %(self.id, task_id), 5)
+            debug('removing condition %s from task %s' %(self.id, task_id), 5)
             task_manager.tasks[task_id].conditions.pop(self.id)
     def get_options(self):
         return self.options.get_options()
@@ -126,7 +126,9 @@ class detectorConditions(aiCondition):
     """
     def __new__(cls, *args, **kwargs):
         #need to get default options
-        opts = __import__('detector_library.'+cls.detector_name, fromlist=['detectorOptions']).detectorOptions.get_default_options()
+        module = __import__('detector_library.'+cls.detector_name, fromlist=['detectorOptions'])
+        opts = module.detectorOptions.get_default_options()
+        cls.pipelines = ["ai"]
         cls.options = type('options', (conditionOptions, ), opts)
         return super(detectorConditions, cls).__new__(cls, *args, **kwargs)
     def __init__(self, options={}):

@@ -72,8 +72,7 @@ class RenderStringNode: public Node{
             float m_sz;
             std::string const& m_str;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img = inputs["image_in"];
             
@@ -94,7 +93,6 @@ class RenderStringNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
-            return r;
         }
     
     // Register this node type

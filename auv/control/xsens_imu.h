@@ -20,18 +20,13 @@
 
 #include <xsens/cmt3.h>
 
-#include <generated/types/floatYPR.h>
 #include <utility/observable.h>
+
+#include "imu.h"
 
 namespace cauv{
 
-class XsensObserver
-{
-    public:
-        virtual void onTelemetry(const floatYPR& attitude) = 0;
-};
-
-class XsensIMU : public Observable<XsensObserver>, boost::noncopyable
+class XsensIMU : public Observable<IMUObserver>, boost::noncopyable
 {
     public:
         XsensIMU(int id);

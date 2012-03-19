@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -53,15 +53,11 @@ class BroadcastCornersNode: public OutputNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
-
+        void doWork(in_image_map_t&, out_map_t&){
             const std::string name = param<std::string>("name");
             const std::vector<Corner> corners = param< std::vector<Corner> >("corners");
 
             sendMessage(boost::make_shared<CornersMessage>(name, corners));
-
-            return r;
         }
     private:
 

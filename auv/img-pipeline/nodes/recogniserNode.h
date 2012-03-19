@@ -58,8 +58,7 @@ class RecogniserNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             //std::vector<KeyPoint> ref_kps = param< std::vector<KeyPoint> >("Reference KeyPoints");
             //std::vector<cv::KeyPoint> img_kps = _cvKeyPointVec(param< std::vector<KeyPoint> >("Image KeyPoints"));
@@ -102,7 +101,6 @@ class RecogniserNode: public Node{
             printf("Done\n");
             
             r["Correspondence Image"] = _drawCorresp(ref_img, kp1, img, kp2, matches2to1);
-            return r;
         }
         
         std::vector<cv::KeyPoint> _cvKeyPointVec(std::vector<KeyPoint> const& v){

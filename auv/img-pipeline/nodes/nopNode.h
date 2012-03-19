@@ -37,12 +37,10 @@ class NopNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             r[Image_Out_Name] = inputs[Image_In_Name];
 
-            return r;
         }
 
     // Register this node type

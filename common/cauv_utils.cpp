@@ -14,10 +14,15 @@
 
 #include "cauv_utils.h"
 
+#include <sstream>
+
 #include <generated/types/TimeStamp.h>
+#include <generated/types/UID.h>
 
 #include <boost/date_time.hpp>
 #include <boost/thread/thread.hpp>
+
+#include <utility/exec.h>
 
 uint16_t cauv::sumOnesComplement(std::vector<uint16_t> bytes)
 {
@@ -32,6 +37,26 @@ uint16_t cauv::sumOnesComplement(std::vector<uint16_t> bytes)
     return ~(uint16_t)sum;
 }
 
+static uint32_t getHostID(){
+    // Don't look: this gets the last 32 bits of each of the mac addresses on
+    // the system, as strings...
+    // (if you can do this faster and neater without the system() in a *nix
+    //  compatible way, go for it...)
+    std::string ids = cauv::exec(
+        "ifconfig | grep ..:..:..:.. | sed \"s/.*\\(..\\):\\(..\\):\\(..\\):\\(..\\).*/\\1\\2\\3\\4/\""
+    );
+    // that's right, move along, you didn't see anything
+    uint32_t r;
+    std::stringstream s;
+    s << std::hex << ids;
+    s >> r;
+    return r;
+}
+
+cauv::UID cauv::mkUID(uint32_t sensor, uint64_t sequence){
+    static uint32_t cached_host_id = getHostID();
+    return cauv::UID(cached_host_id, sensor, uint32_t(sequence>>32), uint32_t(sequence));
+}
 
 cauv::TimeStamp cauv::now(){
     cauv::TimeStamp r;

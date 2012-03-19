@@ -5,38 +5,32 @@ import math
 import time
 
 # CAUV:
-import cauv
-from AI_classes import aiProcess, aiDetectorOptions
+from AI_classes import aiScript, aiScriptOptions
 from cauv.debug import debug, info, warning, error
 import cauv.messaging as msg
-import cauv.control   as control
 import cauv.pipeline  as pipeline
 
 from utils.timeutils import RelativeTimeCapability
 
 
-class detectorOptions(aiDetectorOptions):
+class scriptOptions(aiScriptOptions):
     Sonar_Range = 35
     KeyPoints_Name = 'sonar_local_maxima_bearing_range'
-    Too_Close_Static = 0.5  # metres
-    Too_Close_Threshold = 3 # higher = less likely to detect collision from close objects
-    Dynamic_Vehicle_Width = 1
+    Too_Close_Static = 0.2  # metres
+    Too_Close_Threshold = 12 # higher = less likely to detect collision from close objects
+    Dynamic_Vehicle_Width = 0.2
     Max_Velocity = 2 # metres per second
-    Max_Range = 5    # maximum range to consider targets
-    Run_Away_Time = 4 # seconds
+    Max_Range = 4    # maximum range to consider targets
+    Run_Away_Time = 1 # seconds
 
-class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
-    def __init__(self, opts):
-        aiProcess.__init__(self, 'SonarCollisionAvoider')
+class script(aiScript, RelativeTimeCapability):
+    def __init__(self, *arg, **kwargs):
+        aiScript.__init__(self, *arg, **kwargs)
         RelativeTimeCapability.__init__(self)
-        self.options = opts
         self.Keypoints_Name = self.options.KeyPoints_Name
         self.last_keypoints = None
         self.nearby_detected = 0
         self.last_time = 0
-        self.auv = auv = control.AUV(self.node)
-        self.node.join('processing')
-        #self.request_pl('sonar_collisions.pipe')
         self.time_detected = None
     
     def setDetected(self):
@@ -54,7 +48,7 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
                 nearby += 1
         if nearby == 0 and self.nearby_detected > 0:
             if self.nearby_detected > 3*thr:
-                self.bearby_detected = 3*thr
+                self.nearby_detected = 3*thr
             self.nearby_detected /= 1.2
         else:
             self.nearby_detected += nearby
@@ -64,7 +58,6 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             self.setDetected()
         else:
             debug(msg)
-            self.setDetected()
     
     def checkDynamicCollisions(self, kps_last, kps_now, dt):
         # we're dealing with a small number of keypoints so this is okay!
@@ -102,7 +95,7 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             # |.              |
             #.x               - +
             #
-            time_to_collision = -kp.pt.y / vy
+            time_to_collision = kp.pt.y / vy
             if time_to_collision > min((3*dt,1.0)):
                 #debug('kp moving slowly: vy=%s: %s' % (vy, kp.pt))
                 moving_slowly += 1
@@ -168,14 +161,21 @@ class SonarCollisionAvoider(aiProcess, RelativeTimeCapability):
             self.last_time = now
             
     def run(self):
+        self.node.join('processing')
+        self.request_pl('sonar_collisions')
         while True:
             time.sleep(0.1)
             if self.time_detected is not None and\
                self.relativeTime() - self.time_detected < self.options.Run_Away_Time:
                 info('running away!')
+                if not self.in_control.is_set():
+                    self.request_control_and_wait(1, control_timeout=5)
                 self.auv.prop(-127)
             else:
-                self.auv.prop(0)
+                if self.time_detected is not None and \
+                   self.relativeTime() - self.time_detected < self.options.Run_Away_Time + 0.5:
+                    self.auv.prop(0)
+                    self.drop_control()
                 self.clearDetected()
 
 if __name__ == '__main__':

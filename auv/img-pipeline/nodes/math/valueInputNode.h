@@ -33,11 +33,9 @@ class ValueInputNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
+        void doWork(in_image_map_t&, out_map_t& r){
             const Value_T value = param<Value_T>("value");
             r["value"] = ParamValue(value);
-            return r;
         }
     
     // Register this node type

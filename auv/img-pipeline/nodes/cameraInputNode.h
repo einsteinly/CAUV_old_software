@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -25,6 +25,8 @@
 #include <camera/client.h>
 #include <camera/server_shared.h>
 
+#include <generated/types/SensorUIDBase.h>
+
 #include "asynchronousNode.h"
 
 
@@ -39,7 +41,8 @@ class CameraInputNode: public AsynchronousNode{
     public:
         CameraInputNode(ConstructArgs const& args)
             : AsynchronousNode(args),
-              m_server_connection(){
+              m_server_connection(),
+              m_seq(0){
             setAllowQueue();
         }
 
@@ -76,8 +79,7 @@ class CameraInputNode: public AsynchronousNode{
             boost::shared_ptr<CameraServerConnection> m_connection;
         };
 
-        out_map_t doWork(in_image_map_t&){
-            out_map_t r;
+        void doWork(in_image_map_t&, out_map_t& r){
 
             if(!m_server_connection)
                 m_server_connection = boost::make_shared<CameraServerConnection>();
@@ -89,18 +91,23 @@ class CameraInputNode: public AsynchronousNode{
             debug(4) << "CameraInputNode::doWork";
             
             SharedImage *s = m_server_connection->getUnGuardedImage(camera_id, w, h);
-
-            r["image_out"] = boost::shared_ptr<Image>(
-                new Image(cv::Mat(
-                    s->height, s->width, s->type, &(s->bytes[0]), s->pitch
-                )), SharedImageDeleter(s, m_server_connection)
+            
+            // use internalValue to avoid automatic UID setting on outputs
+            r.internalValue("image_out") = boost::shared_ptr<Image>(
+                new Image(
+                    cv::Mat(s->height, s->width, s->type, &(s->bytes[0]), s->pitch),
+                    now(),
+                    mkUID(SensorUIDBase::Camera + camera_id, ++m_seq)
+                ),
+                SharedImageDeleter(s, m_server_connection)
             );
 
-            return r;
         }
 
     protected:
+
         boost::shared_ptr<CameraServerConnection> m_server_connection;
+        uint64_t m_seq;
 
     // Register this node type
     DECLARE_NFR;

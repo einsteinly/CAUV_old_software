@@ -166,9 +166,9 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('-r', '--reset', dest='reset', default=False,
                  action='store_true', help="create or reset battery log")
-    p.add_argument('-e', '--enable', type='string', dest='enable', default='',
+    p.add_argument('-e', '--enable', type=string, dest='enable', default='',
                  action='store', help="enable estimates for these modules")
-    p.add_argument('-d', '--disable', type='string', dest='disable', default='',
+    p.add_argument('-d', '--disable', type=string, dest='disable', default='',
                  action='store', help="disable estimates for these modules")
     
     """

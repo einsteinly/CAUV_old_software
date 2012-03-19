@@ -42,7 +42,7 @@ bool cauv::${s.name}::operator==(cauv::$s.name const& other) const
     return
     #for i, f in $enumerate($s.fields)
         #if f.equality
-        $f.name == other.$f.name#if $i < $len($s.fields) - 1# &&#else#;#end if
+        $f.name == other.$f.name#if $i < $s.numEqualityFields - 1# &&#else#;#end if
         #end if
     #end for
 }

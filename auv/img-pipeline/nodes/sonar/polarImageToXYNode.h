@@ -59,8 +59,7 @@ class PolarImageToXYNode: public Node{
             SonarAccumulator& m_acc;
         };
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img = inputs["polar image"];
             augmented_mat_t in = img->augmentedMat();
@@ -73,7 +72,6 @@ class PolarImageToXYNode: public Node{
                 )
             ));
             
-            return r;
         }
 
         SonarAccumulator m_accumulator;

@@ -136,6 +136,7 @@ class CameraManager{
                     uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
                 ) = 0;
                 virtual ~Capture(){}
+                virtual bool ok() const = 0;
         };
         class CVCapture: public Capture, public cv::VideoCapture{
             public:
@@ -143,6 +144,7 @@ class CameraManager{
                 virtual void captureToMem(
                     uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
                 );
+                virtual bool ok() const;
         };
         #ifdef CAUV_USE_DC1394
         class DC1394Capture: public Capture{
@@ -152,6 +154,7 @@ class CameraManager{
                 virtual void captureToMem(
                     uint8_t *p, uint32_t& pitch, uint32_t w, uint32_t h, int32_t type
                 );
+                virtual bool ok() const;
             private:
                 dc1394_t* m_dc1394;
                 dc1394camera_t *m_camera;

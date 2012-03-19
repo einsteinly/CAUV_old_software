@@ -1,55 +1,40 @@
 from AI_conditions import conditions as c
-from AI_classes import subclassDict
+from AI_classes import subclassDict, aiOptions
 
 from cauv.debug import debug, warning, error, info
 
-class taskOptions(object):
+class taskOptions(aiOptions):
     script_name = None
-    _script_options = {}
     priority = 1
     detectors_enabled_while_running = False
     crash_count = 0
     crash_limit = 5
     frequency_limit = 30# once every x seconds
     last_called = 0
+    solo = True
     def __init__(self, options={}):
         if not hasattr(self.__class__, 'running_priority'):
             self.running_priority = self.priority
-        if self.script_name:
-            #we want to load script options
-            script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
-            self._script_dynamic_options = script_options.get_dynamic_options()
-            self._script_static_options = script_options.get_static_options()
-        for key, attr in self.__class__.__dict__.items():
-            if key[0] != '_':
-                setattr(self, key, attr)
-        self.__dict__.update(options)
-    def __setattr__(self, attr, value):
-        if attr == 'script_name' and value != self.script_name:
-            if value:
-                #we want to reload script options
-                script_options =  __import__('script_library.'+self.script_name, fromlist=['scriptOptions']).scriptOptions
-                self._script_dynamic_options = script_options.get_dynamic_options()
-                self._script_static_options = get_static_options()
-            else:
-                #we just want to clear the old vals
-                self._script_dynamic_options = script_options.get_dynamic_options()
-                self._script_static_options = get_static_options()
-        return object.__setattr__(self, attr, value)
-    def get_options(self):
-        return dict([item for item in self.__dict__.items() if item[0][0] != '_'])
+        aiOptions.__init__(self, options)
 
 class aiTask(object):
     class options(taskOptions):
         pass
+    script_options = None
     conditions = []
     def __init__(self, options={}):
         self.registered = False
         #create instance of options
         self.options = self.__class__.options(options)
+        #get script options
+        self.load_script_options()
         #create instances of conditions
         self.conditions = {}
+        self.persist_state = {}
         self.active = False
+    def load_script_options(self):
+        if self.options.script_name:
+            self.script_options=__import__('script_library.'+self.options.script_name, fromlist=['scriptOptions']).scriptOptions()
     def register(self, task_manager):
         if self.registered:
             error('Task already setup')
@@ -66,29 +51,30 @@ class aiTask(object):
             error('Task not setup, so can not be deregistered')
             return
         for condition in self.conditions.itervalues():
-            debug('removing task %d from condition %d' %(self.id, condition.id), 5)
-            condition.task_ids.pop(self.id)
+            debug('removing task %s from condition %s' %(self.id, condition.id), 5)
+            condition.task_ids.remove(self.id)
         self.registered = False
     def set_options(self, options):
         for key, value in options.items():
             setattr(self.options, key, value)
+            if key == 'script_name' and value != self.options.script_name:
+                #we want to reload script options
+                self.load_script_options()
     def set_script_options(self, options):
         for key, value in options.items():
-            if key in self._script_dynamic_options:
-                self.options._script_dynamic_options[key] = value
-            else:
-                self.options._script_static_options[key] = value
+            setattr(self.script_options, key, value)
     def get_options(self):
         return self.options.get_options()
     def get_script_options(self):
-        options = {}
-        options.update(self.get_dynamic_options())
-        options.update(self.get_static_options())
-        return options
+        return self.script_options.get_options()
     def get_dynamic_options(self):
-        return self.options._script_dynamic_options
+        return self.script_options.get_dynamic_options()
     def get_static_options(self):
-        return self.options._script_static_options
+        return self.script_options.get_static_options()
+    def get_dynamic_options_as_params(self):
+        return self.script_options.get_dynamic_options_as_params()
+    def get_static_options_as_params(self):
+        return self.script_options.get_static_options_as_params()
     def is_available(self):
         for condition in self.conditions.values():
             if not condition.get_state():
@@ -102,7 +88,20 @@ class start(aiTask):
     class options(taskOptions):
         script_name = 'start'
         priority = 1
-        detectors_enabled=True
+        detectors_enabled_while_running=True
+        frequency_limit=1
+    #need 1 condition or else won't start
+    conditions = [
+        (c['stateCondition'], {'state': True}),
+        ]
+
+class test(aiTask):
+    class options(taskOptions):
+        script_name = 'test'
+        priority = 1
+        detectors_enabled_while_running=True
+        frequency_limit=1
+        solo=False
     #need 1 condition or else won't start
     conditions = [
         (c['stateCondition'], {'state': True}),
@@ -126,11 +125,13 @@ class circle_buoy(aiTask):
         
 class avoid_collision(aiTask):
     class options(taskOptions):
-        script_name = 'avoid_collision'
+        script_name = 'sonar_avoid_collision'
         priority = 10
         frequency_limit = 0
+        solo= False
+        detectors_enabled_while_running=True
     conditions = [
-        (c['sonar_collision_detectorCondition'], {}),
+        (c['stateCondition'], {'state': True}),
         ]
             
 class track_wall(aiTask):

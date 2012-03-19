@@ -41,8 +41,7 @@ class CropNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             try{
                 int top_left_x = param<int>("top left (x)");
                 int top_left_y = param<int>("top left (y)");
@@ -52,14 +51,14 @@ class CropNode: public Node{
                 if (width < 0 || height < 0) {
                     error() << "CropNode:\n\t"
                             << "width and height must be greater than 0.";
-                    return r;
+                    return;
                 }
                 cv::Mat inp_img = inputs[Image_In_Name]->mat();
                 if (top_left_x >= inp_img.cols || top_left_y >= inp_img.rows ||   // Whole of image is being cropped
                     width < -top_left_x || height < -top_left_y) {
                     error() << "CropNode:\n\t"
                              << "whole of image is being cropped."; 
-                    return r;
+                    return;
                 }   
 
                    cv::Rect cropRect(top_left_x,top_left_y, width, height); //Create the rectangle used to crop the picture
@@ -109,11 +108,7 @@ class CropNode: public Node{
                 error() << "CropNode:\n\t"
                         << e.err << "\n\t"
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
-            }
-            return r;
-        
-
-         
+            }         
 /*
         try{
             cv::Mat cropped_img = cv::Mat(img->cvMat(),cropRect); //Perform the cropping
@@ -134,10 +129,9 @@ class CropNode: public Node{
                 error() << "CropNode:\n\t"
                         << e.err << "\n\t"
                         << e.func << "," << e.file << ":" << e.line << "\n\t";
-                return r;
+                return;
             }
-            
-            return r; */
+            */
         }
         
         // Register this node type

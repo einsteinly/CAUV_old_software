@@ -39,9 +39,7 @@ class CentreFinderNode : public OutputNode{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
-
+        void doWork(in_image_map_t& inputs, out_map_t&){
             std::string name = param<std::string>("name");
 
             cv::Mat img = inputs["image_in"]->mat();
@@ -78,7 +76,6 @@ class CentreFinderNode : public OutputNode{
                 y = ((float) totalY) / ((float) sum);
             }
             sendMessage(boost::make_shared<CentreMessage>(name, x / img.cols, y / img.rows));
-            return r;
         }
 
     //Register this node type

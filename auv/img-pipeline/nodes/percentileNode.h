@@ -46,7 +46,7 @@ class PercentileNode: public Node{
             registerOutputID("ch3 value", int(0));
             
             // parameter: 
-            registerParamID<float>("percentile", 50, "0-100 percentile of pixel values");
+            registerParamID<BoundedFloat>("percentile", BoundedFloat(50,0,100,BoundedFloatType::Clamps), "percentile of pixel values");
         }
 
     protected:
@@ -87,10 +87,30 @@ class PercentileNode: public Node{
                     }
                     it++;
                 }*/
-                for(int row = 0; row < img.rows; row++)
-                    for(int col = 0; col < img.cols; col++)
-                        for(int ch = 0; ch < channels; ch++)
-                            value_histogram[ch][img.at<uint8_t>(row,col,ch)]++;
+                switch(channels){
+                    case 1:
+                        for(int row = 0; row < img.rows; row++)
+                            for(int col = 0; col < img.cols; col++)
+                                value_histogram[0][img.at<uint8_t>(row,col)]++;
+                        break;
+
+                    case 2:
+                        for(int row = 0; row < img.rows; row++)
+                            for(int col = 0; col < img.cols; col++)
+                                for(int ch = 0; ch < channels; ch++)
+                                    value_histogram[ch][img.at<cv::Vec2b>(row,col)[ch]]++;
+                        break;
+
+                    case 3:
+                        for(int row = 0; row < img.rows; row++)
+                            for(int col = 0; col < img.cols; col++)
+                                for(int ch = 0; ch < channels; ch++)
+                                    value_histogram[ch][img.at<cv::Vec3b>(row,col)[ch]]++;
+                        break;
+
+                    default:
+                        assert(0); // not possible, we checked earlier
+                }
 
                 std::vector<int> channel_results;
                 for(int ch = 0; ch < channels; ch++){
@@ -122,12 +142,11 @@ class PercentileNode: public Node{
             }
             float m_pct;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             augmented_mat_t img = inputs["image"]->augmentedMat();
             
-            float pct = param<float>("percentile");
+            float pct = param<BoundedFloat>("percentile");
             
             std::vector<int> channel_results = boost::apply_visitor(apply(pct), img);
 
@@ -143,7 +162,6 @@ class PercentileNode: public Node{
                     //removed = unregisterOutputID(MakeString() << "ch" << (ch+1) << " value", false);
 
 
-            return r;
         }
     
     // Register this node type

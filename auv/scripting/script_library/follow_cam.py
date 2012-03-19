@@ -20,7 +20,7 @@ class scriptOptions(aiScriptOptions):
     lines_name = 'cam'
     #Timeouts
     ready_timeout = 30
-    lost_timeout = 15
+    lost_timeout = 5
     # Calibration
     centre_error = 0.05 # of image
     align_error  = 10   # degrees 
@@ -40,8 +40,8 @@ class scriptOptions(aiScriptOptions):
 
 
 class script(aiScript):
-    def __init__(self, script_name, opts):
-        aiScript.__init__(self, script_name, opts) 
+    def __init__(self, script_name, opts, state):
+        aiScript.__init__(self, script_name, opts, state) 
         self.node.join("processing")
         
         # parameters to say if the auv is in the middle and aligned to the pipe
@@ -67,7 +67,7 @@ class script(aiScript):
             for i in range(len(m.lines)):
                 for j in range(i):
                     #Filter out the lines that are vaguly pointing up
-                    if abs(degrees(m.lines[i].angle)+90)<30 and abs(degrees(m.lines[j].angle)+90)<30:
+                    if abs(degrees(m.lines[i].angle)+90)<40 and abs(degrees(m.lines[j].angle)+90)<40:
                         #debug('got straigh lines')
 
                         #Filter out the lines that are paralle to each other by pairwise comparision

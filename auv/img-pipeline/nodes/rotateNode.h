@@ -92,8 +92,7 @@ class RotateNode: public Node{
             float m_theta;
             bool m_extend;
         };
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             image_ptr_t img = inputs["image_in"];
             
@@ -112,7 +111,6 @@ class RotateNode: public Node{
                         << "in" << e.func << "," << e.file << ":" << e.line;
             }
             
-            return r;
         }
     
     // Register this node type

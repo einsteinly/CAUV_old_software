@@ -59,8 +59,7 @@ class SURFCornersNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs[Image_In_Name]->mat();
             
@@ -84,7 +83,6 @@ class SURFCornersNode: public Node{
                 kps.push_back(_cauvKeyPoint(kp));
             r["corners (KeyPoint)"] = kps;
 
-            return r;
         }
     private:
         static cauv::KeyPoint _cauvKeyPoint(cv::KeyPoint const& kp){

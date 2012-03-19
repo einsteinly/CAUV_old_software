@@ -55,8 +55,7 @@ class MixValueNode: public Node{
 
     protected:
 
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
 
             cv::Mat img = inputs["image"]->mat();
             
@@ -87,7 +86,6 @@ class MixValueNode: public Node{
             
             r["image (not copied)"] = boost::make_shared<Image>(img);
             
-            return r;
         }
     
     // Register this node type

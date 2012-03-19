@@ -1,4 +1,4 @@
-/* Copyright 2011 Cambridge Hydronautics Ltd.
+/* Copyright 2011-2012 Cambridge Hydronautics Ltd.
  *
  * Cambridge Hydronautics Ltd. licenses this software to the CAUV student
  * society for all purposes other than publication of this source code.
@@ -54,8 +54,7 @@ class DelayNode: public Node{
         }
 
     protected:
-        out_map_t doWork(in_image_map_t& inputs){
-            out_map_t r;
+        void doWork(in_image_map_t& inputs, out_map_t& r){
             
             int delay_by = param<int>("delay (frames)");
 
@@ -88,7 +87,6 @@ class DelayNode: public Node{
 
             r[Image_Out_Name] = m_queue.front();
 
-            return r;
         }
 
     private:
