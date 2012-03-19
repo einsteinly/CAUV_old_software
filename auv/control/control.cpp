@@ -47,10 +47,10 @@ void sendAlive(boost::shared_ptr<MCBModule> mcb)
 }
 
 
-class DebugXsensObserver : public XsensObserver
+class DebugIMUObserver : public IMUObserver
 {
     public:
-        DebugXsensObserver(unsigned int level = 1) : m_level(level)
+        DebugIMUObserver(unsigned int level = 1) : m_level(level)
         {
         }
         virtual void onTelemetry(const floatYPR& attitude)
@@ -260,7 +260,7 @@ MotorDemand& operator+=(MotorDemand& l, MotorDemand const& r){
     return l;
 }
 
-class StateObserver : public MessageObserver, public XsensObserver
+class StateObserver : public MessageObserver, public IMUObserver
 {
     public:
         StateObserver(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
@@ -285,7 +285,7 @@ class StateObserver : public MessageObserver, public XsensObserver
 
 using namespace Controller;
 
-class ControlLoops : public MessageObserver, public XsensObserver
+class ControlLoops : public MessageObserver, public IMUObserver
 {
     public:
         ControlLoops(boost::shared_ptr<ReconnectingSpreadMailbox> mb)
@@ -750,7 +750,7 @@ class DeviceControlObserver : public MessageObserver
         boost::shared_ptr<XsensIMU> m_xsens;
 };
 
-class TelemetryBroadcaster : public MessageObserver, public XsensObserver
+class TelemetryBroadcaster : public MessageObserver, public IMUObserver
 {
     public:
         TelemetryBroadcaster(boost::shared_ptr<ReconnectingSpreadMailbox> mb,
@@ -1049,7 +1049,7 @@ void ControlNode::onRun()
     if (m_xsens) {
         m_deviceControl->set_xsens(m_xsens);
         
-        m_xsens->addObserver(boost::make_shared<DebugXsensObserver>(5));
+        m_xsens->addObserver(boost::make_shared<DebugIMUObserver>(5));
         m_xsens->addObserver(m_telemetryBroadcaster);
         m_xsens->addObserver(m_controlLoops);
         m_xsens->addObserver(m_stateObserver);
