@@ -97,8 +97,10 @@ class detectionControl(aiProcess):
                         error("Detector %s doesn't exist, options can't be changed" %(detector_id))
             #send status
             self.ai.task_manager.on_list_of_detectors(self.running_detectors.keys())
+            pipelines = []
             #run detection
             for detector_id, detector in self.running_detectors.iteritems():
+                pipelines.extend(detector.pipelines)
                 #since each processing could take a while, and disabling needs to be pretty fast, check here
                 if not self.enable_flag.is_set():
                     break
@@ -109,6 +111,7 @@ class detectionControl(aiProcess):
                     traceback.print_exc()
                 if detector.detected:
                     self.ai.task_manager.notify_detector(detector_id, True)
+            self.ai.pl_manager.set_detector_pls(pipelines)
 
 if __name__ == '__main__':
     try:

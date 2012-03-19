@@ -1,17 +1,15 @@
 from AI_classes import aiProcess, external_function
 
 from cauv.debug import info, warning, error, debug
-from cauv import pipeline, messaging
+from cauv import messaging
+import cauv.pipeline
 
 import threading, os.path, cPickle, time, traceback, pickle, argparse, Queue, subprocess
 from glob import glob
 from datetime import datetime
 
-IMG_PIPELINE = 'cauv-img-pipeline'
-IMG_PIPELINE_START_TIME = 2
-
 #lets modify pipeline.Model class a bit so its a bit more flexible
-class NewModel(pipeline.Model):
+class NewModel(cauv.pipeline.Model):
     """
     Major features as compared to the original pipeline model:
      - Runs it's own image pipeline, complete with dealing with crashes
@@ -19,9 +17,8 @@ class NewModel(pipeline.Model):
     """
     def __init__(self, node, pipeline_name, *args, **kwargs):
         self.img_pipeline_name = pipeline_name
-        self.img_pipeline = subprocess.Popen([IMG_PIPELINE, pipeline_name])
         try:
-            pipeline.Model.__init__(self, node, pipeline_name, *args, **kwargs)
+            cauv.pipeline.Model.__init__(self, node, pipeline_name, *args, **kwargs)
         except RuntimeError as e:
             error('Communication problems while initialising model, giving up.')
             traceback.print_exc()
@@ -30,15 +27,15 @@ class NewModel(pipeline.Model):
         self.pl2manager = {}
         self.nodes = {}#record of what we think is in the pipeline
         self.temp_number = 0#labeling for any new user created nodes
-        self.bad_ids = []#list of node ids that cause crashes
+        self.bad_ids = []#list of node ids that don't work
     def get(self, timeout=3.0): #needs nnid to know where new nodes are out of the way
         try:
-            state = self.catch_pl_errors(pipeline.Model.get, args=(self, timeout))
-        except RuntimeError:
-            error('Communication problems while trying to get the state of the pipeline, giving up after too many attempts to reinitialise.')
+            state = cauv.pipeline.Model.get(self, timeout)
+        except RuntimeError as e:
+            error('Communication problems while trying to get the state of the pipeline, giving up.')
             traceback.print_exc()
             raise e
-        renumbered_state = pipeline.State()
+        renumbered_state = cauv.pipeline.State()
         new_nodes = []
         #check for new nodes
         for node_id in state.nodes.keys():
@@ -62,17 +59,11 @@ class NewModel(pipeline.Model):
         self.nodes = renumbered_state.nodes
         return renumbered_state, new_nodes
     def reassign(self, relabel):
-        new_manager2pl = {}
-        new_pl2manager = {}
-        for old_id in self.manager2pl:
-            if old_id in relabel:
-                new_pl2manager[self.manager2pl[old_id]] = relabel[old_id]
-                new_manager2pl[relabel[old_id]] = self.manager2pl[old_id]
-            else:
-                new_pl2manager[self.manager2pl[old_id]] = old_id
-                new_manager2pl[old_id] = self.manager2pl[old_id]
-        self.manager2pl = new_manager2pl
-        self.pl2manager = new_pl2manager
+        for old_id, new_id in relabel.iteritems():
+            self.pl2manager[self.manager2pl[old_id]] = new_id
+            self.manager2pl[new_id] = self.manager2pl[old_id]
+            self.nodes[new_id] = self.nodes[old_id]
+            self.nodes.pop(old_id)
     def set(self, state):
         raise NotImplementedError
     def add(self, nodes, timeout=5.0):
@@ -84,7 +75,7 @@ class NewModel(pipeline.Model):
                 warning('Node is marked as bad, ignoring')
                 continue
             try:
-                new_node_id = self.catch_pl_errors(self.addSynchronous, args=(node.type, timeout), limit=1)
+                new_node_id = self.addSynchronous(node.type, timeout)
             except RuntimeError:
                 error("Couldn't add node %d, marking as bad and skipping" %(new_node_id))
                 self.bad_ids.append(node_id)
@@ -95,7 +86,7 @@ class NewModel(pipeline.Model):
             bad_params = []
             for param, value in node.params.items():
                 try:
-                    self.catch_pl_errors(self.setParameterSynchronous, args=(new_node_id, param, value, timeout), limit=1)
+                    self.setParameterSynchronous(new_node_id, param, value, timeout)
                 except RuntimeError:
                     error("Couldn't set parameter: "+str((param,value)))
                     #remove parameter to avoid future errors
@@ -109,7 +100,7 @@ class NewModel(pipeline.Model):
             for input, (from_node_id, from_node_field) in node.inarcs.items():
                 try:
                     try:
-                        self.catch_pl_errors(self.addArcSynchronous, args=(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input, timeout), limit=1)
+                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input, timeout)
                     except KeyError:
                         error('Could not add arc from %d to %d, a node does not exist.' %(from_node_id, node_id))
                 except RuntimeError:
@@ -122,43 +113,15 @@ class NewModel(pipeline.Model):
         for node_id in nodes:
             try:
                 try:
-                    self.catch_pl_errors(self.removeSynchronous, args=(self.manager2pl[node_id], timeout))
+                    self.removeSynchronous(self.manager2pl[node_id], timeout)
                 except RuntimeError:
-                    error("Couldn't remove node: removing from state and restarting pipeline to flush badness")
+                    error("Couldn't remove node: removing from state, suggest restarting pipeline to flush badness")
             except KeyError:
                 error("Couldn't remove node: no record of node exists")
             #want to remove nodes regardless otherwise wont be able to add them again
             self.pl2manager.pop(self.manager2pl[node_id])
             self.manager2pl.pop(node_id)
             self.nodes.pop(node_id)
-            self.restart_pipeline()
-    def restart_pipeline(self):
-        self.img_pipeline.kill()
-        self.img_pipeline = subprocess.Popen([IMG_PIPELINE, pipeline_name])
-        time.sleep(IMG_PIPELINE_START_TIME)
-        #copy nodes, then reset
-        nodes = self.nodes
-        self.nodes = {}
-        self.add(nodes)
-    def catch_pl_errors(function, args=[], kwargs={}, limit=3):
-        for attempt in range(limit):
-            try:
-                return function(*args, **kwargs)
-            except RuntimeError:
-                pass
-            #check that pipeline hasn't died
-            if not self.img_pipeline.poll():
-                self.restart_pipeline()
-                continue
-            #check that the pipeline is still responding by getting state
-            try:
-                pipeline.Model.get(3.0)
-            except RuntimeError:
-                self.restart_pipeline()
-                continue
-            #appears to be working fine, probably a bad function call, so don't bother retrying
-            break
-        raise RuntimeError('Pipeline seems fine, bad function call?')
 
 class Pipeline():
     def __init__(self, nodes):
@@ -198,6 +161,7 @@ class PipelinesSet():
                     continue
                 else:
                     new_inarcs[input] = (old_id2new_id[inarc[0]],inarc[1])
+            node.inarcs = new_inarcs
             node.outarcs = None
         self.pipelines[filename] = Pipeline(nodes)
         self.request2filename[name] = filename
@@ -213,25 +177,28 @@ class PipelinesSet():
                     else:
                         pl_names.append(pl)
                     #remove old pipelines
-                    self.pl_data.pipelines.pop(pl)
+                    self.pipelines.pop(pl)
                 pipeline = 'merged__'+'__'.join(pl_names)+'__all'
                 #update requests to map to this new pl
                 for pl in pipelines:
                     if pl.startswith(merged):
                         for name in pl.split('__')[1:-1]:
-                            self.pl_data.request2filename[name] = pipeline
+                            self.request2filename[name] = pipeline
                     else:
-                        self.pl_data.request2filename[pl] = pipeline
-            else:
+                        self.request2filename[pl] = pipeline
+            elif len(pipelines):
                 pipeline = pipelines[0]
+            else:
+                pipeline = 'temp'
             #2) set pipeline to have new nodes
-            self.pl_data.pipelines = Pipeline(nodes)
-    def get_relabeling(new_node_ids):
+            self.pipelines[pipeline] = Pipeline(nodes)
+    def get_relabeling(self, new_node_ids):
         self.nnid += len(new_node_ids)
         return dict([(node_id, self.nnid-index-1) for index, node_id in enumerate(new_node_ids)])
 
 class pipelineManager(aiProcess):
-    def _setup(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        aiProcess.__init__(self, *args, **kwargs)
         #TODO make options actuall work
         self.disable_gui = kwargs['disable_gui'] if 'disable_gui' in kwargs else False
         self.request_queue = Queue.Queue()
@@ -250,9 +217,6 @@ class pipelineManager(aiProcess):
         self.detector_requests = []
         self.pl_data = PipelinesSet()
         self.load_pl_data()
-        #this should probably be replaced with multiple pipelines
-        self._pl = NewModel(self.node, 'ai')
-        self.pl_state = pipeline.State()
         self.reeval = False
     def load_pl_data(self):
         """
@@ -377,6 +341,14 @@ class pipelineManager(aiProcess):
                 for input, inarc in node.inarcs.items():
                     if inarc[0] in relabeling:
                         node.inarcs[input] = (relabeling[inarc[0]], inarc[1])
+                for output, outarcs in node.outarcs.items():
+                    new_outarcs = []
+                    for outarc in outarcs:
+                        if outarc[0] in relabeling:
+                            new_outarcs.append((relabeling[outarc[0]],outarc[1]))
+                        else:
+                            new_outarcs.append(outarc)
+                    node.outarcs[output]=new_outarcs
                 if node_id in relabeling:
                     state.nodes.pop(node_id)
                     state.nodes[relabeling[node_id]] = node
@@ -422,16 +394,17 @@ class pipelineManager(aiProcess):
                 else:
                     merged_pl_id = len(merged_pls)
                     merged_pls.append([set(),{}])
-                for pipeline in pipelines:
-                    pl2merged_pl[pipeline] = merged_pl_id
+                for pipeline_name in pipelines:
+                    pl2merged_pl[pipeline_name] = merged_pl_id
                 merged_pls[merged_pl_id][1].update(group)
                 merged_pls[merged_pl_id][0].update(pipelines)
+            #turn set into list
+            for merged_pl in merged_pls:
+                merged_pl[0] = list(merged_pl[0])
             self.pl_data.merge_and_update(merged_pls)
         #7
-        #set current state to state from pipeline
-        self.pl_state = state
         #generate 'clean' new state
-        new_state = pipeline.State()
+        new_state = cauv.pipeline.State()
         for reqname2reqs in self.requests.values():
             for reqs in reqname2reqs.values():
                 for req in reqs:
@@ -446,20 +419,18 @@ class pipelineManager(aiProcess):
         add_nodes = {}
         remove_nodes = {}
         #calculate nodes to remove
-        for node_id, node in self.pl_state.nodes.items():
+        for node_id, node in self._pl.nodes.items():
             if (not node_id in new_state.nodes):
                 remove_nodes[node_id] = node
         #calculate nodes to add
         for node_id, node in new_state.nodes.items():
-            if not node_id in self.pl_state.nodes:# and (not self.disable_gui or node.type != int(messaging.NodeType.GuiOutput)):
+            if not node_id in self._pl.nodes:# and (not self.disable_gui or node.type != int(messaging.NodeType.GuiOutput)):
                 add_nodes[node_id] = node
-        #update pl_state
-        self.pl_state.nodes.update(add_nodes)
-        for node_id in remove_nodes:
-            self.pl_state.nodes.pop(node_id)
         self._pl.add(add_nodes)
         self._pl.remove(remove_nodes)
     def run(self):
+        #this should probably be replaced with multiple pipelines
+        self._pl = NewModel(self.node,'ai')
         while True:
             for x in range(5):
                 try:
@@ -475,7 +446,7 @@ class pipelineManager(aiProcess):
                 if self.request_queue.qsize()>5:
                     warning('Pipeline manager request queue is large, there may be delays')
             if self.reeval:
-                self.eval_branches()
+                self.eval_state()
                 self.reeval = False
                 #self.state['requests'] = self.requests
                 #self.state.sync()
@@ -545,9 +516,8 @@ if __name__ == '__main__':
     p.add_argument('--freeze_pls', dest='freeze_pls', default=False,
                  action='store_true', help="ignore changes to the pipeline")
     opts, args = p.parse_known_args()
-    pm = pipelineManager('pipeline_manager')
+    pm = pipelineManager('pl_manager')
     try:
-        pm._setup(**opts.__dict__)
         pm.run()
     finally:
         pm.die()
