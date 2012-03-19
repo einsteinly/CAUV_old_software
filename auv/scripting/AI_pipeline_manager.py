@@ -84,10 +84,8 @@ class NewModel(cauv.pipeline.Model):
             self.manager2pl[node_id] = new_node_id
             self.pl2manager[new_node_id] = node_id
             self.nodes[node_id]=node
-            print node.type
             if node.type in cauv.pipeline.NodeParam_Filters:
                 warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
-                print cauv.pipeline.NodeParam_Filters[node.type](node.params)
                 node.params = cauv.pipeline.NodeParam_Filters[node.type](node.params)
                 debug('Filtered parameters:\n%s' % node.params)
             bad_params = []
