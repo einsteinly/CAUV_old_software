@@ -212,10 +212,10 @@ class Model(messaging.MessageObserver):
         for id, pvps in graph.nodeParams.items():
             for param, value in pvps.items():
                 if (id, param) in linked_inputs:
-                    debug('not saving parameter %d:%s (linked)' % (id, param))
+                    debug('not saving parameter %d:%s (linked)' % (id, param), 3)
                 else:
                     s.nodes[id].params[param] = fromNPV(value)
-                    debug('%s = %s (%d)' % (param, str(value), value.which))
+                    debug('%s = %s (%d)' % (param, str(value), value.which), 5)
         for id in graph.nodeInputs.keys():
             inputlinks = graph.nodeInputs[id]
             for input in inputlinks.keys():
@@ -243,7 +243,7 @@ class Model(messaging.MessageObserver):
                 id_map[old_id] = self.addSynchronous(node.type, timeout)
             except RuntimeError, e:
                 error(str(e) + ": attempted to add node %s" % node.type)
-                debug('attempting to continue...')
+                error('attempting to continue...')
                 id_map[old_id] = None
             node_map[old_id] = node
             #print id_map[old_id], 'is new id for', old_id, node.type, node.params
@@ -267,7 +267,6 @@ class Model(messaging.MessageObserver):
             if node.type in NodeParam_Filters:
                 warning('filtering parameters of type %s node' % messaging.NodeType(node.type))
                 params = NodeParam_Filters[node.type](node.params)
-                debug('Filtered parameters:\n%s' % params)
             else:
                 params = node.params
             for param in params.keys():
@@ -276,14 +275,14 @@ class Model(messaging.MessageObserver):
                 else:
                     param_key = param
                 if (old_id, param_key) in connected_inputs:
-                    debug('skipping setting connected parameter: %s:%s' % (old_id, param))
+                    debug('skipping setting connected parameter: %s:%s' % (old_id, param), 3)
                     continue
-                debug('%d.%s = %s (%s)' % (id, param, params[param], type(params[param])))
+                debug('%d.%s = %s (%s)' % (id, param, params[param], type(params[param])), 5)
                 try:
                     self.setParameterSynchronous(id, param_key, toNPV(params[param]), timeout)
                 except RuntimeError, e:
                     error(str(e) + ": attempted to set parameter %s to %s" % ((id, param_key), params[param]))
-                    debug('attempting to continue...')
+                    error('attempting to continue...')
         # finally add links
         for old_id, node in state.nodes.items():
             # strictly speaking only one of these should be necessary, since
@@ -304,7 +303,7 @@ class Model(messaging.MessageObserver):
                         self.addArcSynchronous(id_map[other], output, id, input_key, timeout)
                     except RuntimeError, e:
                         error(str(e) + ': attempted to add arc %s --> %s' % ((id_map[other], output),(id, input)))
-                        debug('attempting to continue...')
+                        error('attempting to continue...')
             #for output in node.outarcs.keys():
             #    (other, input) = node.outarcs[output]
             #    if other != 0:
@@ -316,7 +315,7 @@ class Model(messaging.MessageObserver):
 
 
     def addSynchronous(self, type, timeout=3.0):
-        debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))))
+        debug('addSynchronous %d = %s' % (type, str(messaging.NodeType(type))), 5)
         self.node_added_condition.acquire()
         self.node_added = None
         self.node_added_wait_for = messaging.NodeType(type)
@@ -331,7 +330,7 @@ class Model(messaging.MessageObserver):
             self.node_added_condition.release()
             raise RuntimeError('No response from pipeline, is it running?')
         r = self.node_added.nodeId
-        debug('Node id = %d' %(r,))
+        debug('Node id = %d' %(r,), 5)
         self.node_added_condition.release()
         return r
         
@@ -359,7 +358,7 @@ class Model(messaging.MessageObserver):
         msg = messaging.SetNodeParameterMessage(
             self.pipeline_name, node, param, value
         )
-        debug('setParameterSynchronous: %s' % msg)
+        debug('setParameterSynchronous: %s' % msg, 5)
         self.send(msg)
         self.parameter_set_condition.wait(timeout)
         if self.parameter_set is None:
@@ -378,7 +377,7 @@ class Model(messaging.MessageObserver):
         to = messaging.NodeInput()
         to.node = dst
         to.input = inp
-        debug('add arc: %s --> %s' % (fr, to))
+        debug('add arc: %s --> %s' % (fr, to), 5)
         self.arc_added_wait_for = (fr, to)
         self.send(messaging.AddArcMessage(self.pipeline_name, fr, to))
         self.arc_added_condition.wait(timeout)
