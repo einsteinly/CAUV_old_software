@@ -39,7 +39,7 @@ class aiCondition(object):
         self.id  = task_manager.register_condition(self)
     def deregister(self, task_manager):
         for task_id in self.task_ids:
-            debug('removing condition %d from task %d' %(self.id, task_id), 5)
+            debug('removing condition %s from task %s' %(self.id, task_id), 5)
             task_manager.tasks[task_id].conditions.pop(self.id)
     def get_options(self):
         return self.options.get_options()
