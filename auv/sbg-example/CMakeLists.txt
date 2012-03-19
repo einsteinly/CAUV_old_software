@@ -8,7 +8,7 @@ include_directories(${SDL_INCLUDE_DIR})
 
 # sources
 add_executable (
-    cube3d
+    cube3d EXCLUDE_FROM_ALL
 
     cube3D.c
     ig500.c
