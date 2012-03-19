@@ -8,6 +8,7 @@ import threading, os.path, cPickle, time, traceback, pickle, argparse, Queue, su
 from glob import glob
 from datetime import datetime
 
+#WORKS, BUT MAY BE MODIFYING SUPPOSEDLY IMMUTABLE OBJECTS
 #lets modify pipeline.Model class a bit so its a bit more flexible
 class NewModel(cauv.pipeline.Model):
     """
@@ -85,8 +86,12 @@ class NewModel(cauv.pipeline.Model):
             self.nodes[node_id]=node
             bad_params = []
             for param, value in node.params.items():
+                if isinstance(param, messaging.LocalNodeInput):
+                    param_key = param.input
+                else:
+                    param_key = param
                 try:
-                    self.setParameterSynchronous(new_node_id, param, value, timeout)
+                    self.setParameterSynchronous(new_node_id, param_key, value, timeout)
                 except RuntimeError:
                     error("Couldn't set parameter: "+str((param,value)))
                     #remove parameter to avoid future errors
@@ -98,9 +103,13 @@ class NewModel(cauv.pipeline.Model):
         for node_id, node in nodes.items():
             bad_arcs = []
             for input, (from_node_id, from_node_field) in node.inarcs.items():
+                if isinstance(input, messaging.LocalNodeInput):
+                    input_key = input.input
+                else:
+                    input_key = input
                 try:
                     try:
-                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input, timeout)
+                        self.addArcSynchronous(self.manager2pl[from_node_id], from_node_field, self.manager2pl[node_id], input_key, timeout)
                     except KeyError:
                         error('Could not add arc from %d to %d, a node does not exist.' %(from_node_id, node_id))
                 except RuntimeError:
@@ -140,7 +149,7 @@ class PipelinesSet():
             return
         #load pipeline
         try:
-            pl_state = cPickle.load(open(os.path.join('pipelines', filename)+'.pipe'))
+            pl_state = cauv.pipeline.Model.loadFile(open(os.path.join('pipelines', filename)+'.pipe'))
         except:
             error('Error loading pipeline %s' %(filename,))
             traceback.print_exc()
@@ -261,7 +270,7 @@ class pipelineManager(aiProcess):
     def drop_pl(self, requestor_type, requestor_name, requested_pl):
         self.request_queue.put(('unsetup_pl',{'requestor_type':requestor_type, 'requestor_name':requestor_name, 'requested_pl':requested_pl}))
     @external_function
-    def drop_all_pl(self, requestor_type, requestor_name):
+    def drop_all_pls(self, requestor_type, requestor_name):
         self.request_queue.put(('unsetup_all',{'requestor_type':requestor_type, 'requestor_name':requestor_name}))
     @external_function
     def drop_task_pls(self, task_id):
@@ -283,7 +292,7 @@ class pipelineManager(aiProcess):
             self.requests[requestor_type][requestor_name] = [requested_pl]
         #confirm setup (atm only scripts)
         if requestor_type == 'script':
-            getattr(self.ai, requestor_name).confirm_pl_response()
+            getattr(self.ai, requestor_name).confirm_pl_request()
         self.reeval = True
     def unsetup_pl(self, requestor_type, requestor_name, requested_pl):
         if not requestor_type in self.requests:
@@ -389,7 +398,7 @@ class pipelineManager(aiProcess):
             for group, pipelines in groups:
                 for pipeline in pipelines:
                     if pipeline in pl2merged_pl:
-                        merged_pl_id = pl2merged_pl
+                        merged_pl_id = pl2merged_pl[pipeline]
                         break
                 else:
                     merged_pl_id = len(merged_pls)

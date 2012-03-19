@@ -100,7 +100,7 @@ class detectionControl(aiProcess):
             pipelines = []
             #run detection
             for detector_id, detector in self.running_detectors.iteritems():
-                pipelines.extend(detector.pipelines)
+                pipelines.extend(detector._pipelines)
                 #since each processing could take a while, and disabling needs to be pretty fast, check here
                 if not self.enable_flag.is_set():
                     break
