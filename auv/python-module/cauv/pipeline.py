@@ -125,7 +125,7 @@ def filterLevelsNodeParameters(params_in):
 def filterGuiOutputNodeParameters(params_in):
     params_out = {}
     for param, value in params_in.items():
-        if param.input == 'jpeg quality' and isinstance(param, int):
+        if param.input == 'jpeg quality' and isinstance(value, int):
             params_out[param] = messaging.BoundedFloat(float(value), 0, 100, messaging.BoundedFloatType.Clamps)
         else:
             params_out[param] = value;
@@ -235,6 +235,7 @@ class Model(messaging.MessageObserver):
         return s
     
     def set(self, state, timeout=3.0, clear=True):
+        #NOTE PLEASE MAKE SURE ANY CHANGES ARE REFLECTED IN AI_PIPELINE_MANAGER (since it overides this method)
         if clear: self.clear()
         id_map = {}
         node_map = {}
