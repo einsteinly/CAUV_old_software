@@ -358,10 +358,10 @@ void printSensors(SbgOutput *output)
 {
 	if (output)
 	{
-		gotoxy(0,0);
-		printf("--- 3D Cube for IG-500 - C example with console and OpenGL output---\n");
-		printf("SBG Systems Copyright 2007-2008 - www.sbg-systems.com\n\n\n");
-		printf("Calibrated sensor output:\n");
+		//gotoxy(0,0);
+		//printf("--- 3D Cube for IG-500 - C example with console and OpenGL output---\n");
+		//printf("SBG Systems Copyright 2007-2008 - www.sbg-systems.com\n\n\n");
+		//printf("Calibrated sensor output:\n");
 		printf("Acceleromters:\t%3.2f\t%3.2f\t%3.2f\t                   \n",output->accelerometers[0],output->accelerometers[1],output->accelerometers[2]);
 		printf("Gyroscopes:\t%3.2f\t%3.2f\t%3.2f\t                  \n",RADTODEG(output->gyroscopes[0]),RADTODEG(output->gyroscopes[1]),RADTODEG(output->gyroscopes[2]));
 		printf("Magnetometers:\t%3.2f\t%3.2f\t%3.2f\t                 \n",output->magnetometers[0],output->magnetometers[1],output->magnetometers[2]);
@@ -370,8 +370,8 @@ void printSensors(SbgOutput *output)
 		printf("\n                                        \n");
 		printf("Orientation output:\n");
 		printf("Euler Angles:\t%3.2f\t%3.2f\t%3.2f\t             \n",RADTODEG(output->stateEuler[0]),RADTODEG(output->stateEuler[1]),RADTODEG(output->stateEuler[2]));
-		printf("Pressure : %u                         \n",output->baroPressure >> 2);
-		printf("Gps position: %x\t%x\t%x       \n", output->gpsTimeMs, output->gpsFlags, output->gpsNbSats);
+		//printf("Pressure : %u                         \n",output->baroPressure >> 2);
+		//printf("Gps position: %x\t%x\t%x       \n", output->gpsTimeMs, output->gpsFlags, output->gpsNbSats);
 	}
 	else
 	{

@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 		//
 		// Init our IG-500 thread (Please change here the com port and baudrate)
 		//
-		if (igThreadInit("COM35", 115200))
+		if (igThreadInit("/dev/ttyUSB1", 115200))
 		{
 			//
 			// Handle main loop until we have to exit
