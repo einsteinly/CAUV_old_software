@@ -18,6 +18,8 @@
 #include <boost/program_options.hpp>
 #include <boost/thread.hpp>
 
+#include <utility/foreach.h>
+
 #include <model/auv_model.h>
 #include <model/auv_controller.h>
 
