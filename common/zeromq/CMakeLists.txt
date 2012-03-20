@@ -1,5 +1,5 @@
 find_package(ZeroMq REQUIRED)
-find_package(Ns3c)
+find_package(Ns3)
 include_directories(${ZEROMQ_INCLUDE_DIRS})
 
 add_executable(
