@@ -38,7 +38,7 @@ const char* sbgException::what() const throw ()
 
 //XsensIMU::XsensIMU(int id)
 sbgIMU::sbgIMU(const char* port, int baud_rate, int pause_time)
-    : Observable<IMUObserver>(),	  
+	:  
       m_port(port),
       m_baud_rate(baud_rate),
       m_pause_time(pause_time)
