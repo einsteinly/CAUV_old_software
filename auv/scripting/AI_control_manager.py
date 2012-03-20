@@ -48,7 +48,7 @@ class auvControl(aiProcess):
         self.depth_limit = None
         self.signal_msgs = Queue.Queue(5)
         self.processing_queue = Queue.Queue()
-        self._control_state = {}
+        self._control_state = {'prop':([0],{})}
         self._control_state_default = {}
         self._sonar_state_default = {}
         
@@ -169,6 +169,8 @@ class auvControl(aiProcess):
     @external_function
     def limit_prop(self, value):
         self.auv.prop_limit = value
+        if self.auv._control_state['prop'][0][0]>value: #_control_state[function][args/kwargs]
+            self.auv.prop(value)
         
     #signaling thread
     def signal_loop(self):
